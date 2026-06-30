@@ -583,6 +583,62 @@ void NeighborSearch::init(const AtomProvider& ucell, double sr, int mpi_rank)
     this->init(ucell, sr, mpi_rank, 1);
 }
 
+void NeighborSearch::init_distributed(const std::vector<LocalAtom>& owned_atoms,
+                                      const std::vector<LocalAtom>& ghost_atoms,
+                                      double sr,
+                                      double lat0)
+{
+    inside_atoms_.clear();
+    ghost_atoms_.clear();
+    all_atoms_.clear();
+    bin_manager_.clear();
+
+    search_radius_ = sr / lat0;
+    glayerX_ = glayerY_ = glayerZ_ = 0;
+    glayerX_minus_ = glayerY_minus_ = glayerZ_minus_ = 0;
+    x_ = y_ = z_ = 0;
+    wide_x_ = wide_y_ = wide_z_ = 0.0;
+
+    all_atoms_.reserve(owned_atoms.size() + ghost_atoms.size());
+    inside_atoms_.reserve(owned_atoms.size());
+    ghost_atoms_.reserve(ghost_atoms.size());
+
+    for (size_t iat = 0; iat < owned_atoms.size(); ++iat)
+    {
+        const LocalAtom& local = owned_atoms[iat];
+        NeighborAtom atom(local.cart.x,
+                          local.cart.y,
+                          local.cart.z,
+                          local.type,
+                          local.type_index,
+                          static_cast<int>(all_atoms_.size()),
+                          local.global_id,
+                          local.owner_rank);
+        atom.is_inside = true;
+        all_atoms_.push_back(atom);
+        inside_atoms_.push_back(atom);
+    }
+
+    for (size_t iat = 0; iat < ghost_atoms.size(); ++iat)
+    {
+        const LocalAtom& local = ghost_atoms[iat];
+        NeighborAtom atom(local.cart.x,
+                          local.cart.y,
+                          local.cart.z,
+                          local.type,
+                          local.type_index,
+                          static_cast<int>(all_atoms_.size()),
+                          local.global_id,
+                          local.owner_rank);
+        atom.is_inside = false;
+        all_atoms_.push_back(atom);
+        ghost_atoms_.push_back(atom);
+    }
+
+    neighbor_list_.initialize(inside_atoms_.size(),
+                              std::max(1, static_cast<int>(all_atoms_.size()) * neighbor_reserve_factor));
+}
+
 void NeighborSearch::init(const AtomProvider& ucell, double sr, int mpi_rank, int mpi_size)
 {
     // clear possible residual data from previous runs

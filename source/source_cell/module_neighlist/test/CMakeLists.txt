@@ -37,6 +37,7 @@ AddTest(
 if(ENABLE_MPI)
   add_executable(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark
     neighbor_search_mpi_benchmark.cpp
+    ../domain_decomposition.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp

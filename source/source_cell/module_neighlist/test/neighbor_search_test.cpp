@@ -64,6 +64,39 @@ TEST(NeighborSearchTest, NoNeighbor)
     EXPECT_EQ(list.get_numneigh(1), 0);
 }
 
+TEST(NeighborSearchTest, DistributedInputUsesOwnedCentersAndGhostNeighbors)
+{
+    std::vector<LocalAtom> owned_atoms;
+    std::vector<LocalAtom> ghost_atoms;
+    owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    0,
+                                    0,
+                                    0,
+                                    0,
+                                    false));
+    ghost_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.5, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.5, 0.0, 0.0),
+                                    0,
+                                    1,
+                                    1,
+                                    1,
+                                    true));
+
+    NeighborSearch ns;
+    ns.init_distributed(owned_atoms, ghost_atoms, 1.0, 1.0);
+    ns.build_neighbors();
+
+    const NeighborList& list = ns.get_neighbor_list();
+    ASSERT_EQ(list.get_nlocal(), 1);
+    ASSERT_EQ(list.get_numneigh(0), 1);
+    const int neighbor_id = list.get_firstneigh(0)[0];
+    ASSERT_GE(neighbor_id, 0);
+    ASSERT_LT(neighbor_id, static_cast<int>(ns.get_all_atoms().size()));
+    EXPECT_EQ(ns.get_all_atoms()[neighbor_id].global_id, 1);
+    EXPECT_EQ(ns.get_all_atoms()[neighbor_id].owner_rank, 1);
+}
+
 TEST(NeighborSearchUnit, DistanceBox)
 {
     NeighborSearch ns;

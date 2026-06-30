@@ -8,6 +8,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #ifdef __MPI
+#include "source_cell/module_neighlist/domain_decomposition.h"
 #include "source_base/parallel_reduce.h"
 #endif
 
@@ -79,7 +80,13 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
     {
         ModuleBase::timer::start("ESolverLJ", "mpi_total");
         ModuleBase::timer::start("ESolverLJ", "neigh_init");
-        neighbor_search.init(ucell_lite, search_radius, GlobalV::MY_RANK, GlobalV::NPROC);
+        DomainDecomposition decomp;
+        decomp.init(MPI_COMM_WORLD, ucell_lite.get_latvec(), ucell_lite.get_lat0(), search_radius, 0.0);
+        std::vector<LocalAtom> owned_atoms;
+        std::vector<LocalAtom> ghost_atoms;
+        decomp.split_owned_atoms_from_ucell(ucell_lite, owned_atoms);
+        decomp.exchange_ghost_atoms(owned_atoms, ghost_atoms);
+        neighbor_search.init_distributed(owned_atoms, ghost_atoms, search_radius, ucell_lite.get_lat0());
         ModuleBase::timer::end("ESolverLJ", "neigh_init");
         ModuleBase::timer::start("ESolverLJ", "neigh_bld");
         neighbor_search.build_neighbors();

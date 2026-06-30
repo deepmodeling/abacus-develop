@@ -1,4 +1,5 @@
 #include "source_cell/module_neighlist/neighbor_search.h"
+#include "source_cell/module_neighlist/domain_decomposition.h"
 #include "source_cell/module_neighlist/unitcell_lite.h"
 
 #include <mpi.h>
@@ -168,8 +169,14 @@ int main(int argc, char** argv)
     {
         MPI_Barrier(MPI_COMM_WORLD);
         const double t0 = MPI_Wtime();
+        DomainDecomposition decomp;
+        std::vector<LocalAtom> owned_atoms;
+        std::vector<LocalAtom> ghost_atoms;
         NeighborSearch ns;
-        ns.init(ucell, cutoff, mpi_rank, mpi_size);
+        decomp.init(MPI_COMM_WORLD, ucell.get_latvec(), ucell.get_lat0(), cutoff, 0.0);
+        decomp.split_owned_atoms_from_ucell(ucell, owned_atoms);
+        decomp.exchange_ghost_atoms(owned_atoms, ghost_atoms);
+        ns.init_distributed(owned_atoms, ghost_atoms, cutoff, ucell.get_lat0());
         const double t1 = MPI_Wtime();
         ns.build_neighbors();
         const double t2 = MPI_Wtime();

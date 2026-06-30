@@ -5,6 +5,7 @@
 #include "source_cell/module_neighlist/bin_manager.h"
 #include "source_cell/module_neighlist/neighbor_list.h"
 #include "source_cell/module_neighlist/atom_provider.h"
+#include "source_cell/module_neighlist/local_atom.h"
 
 /**
  * @brief Neighbor search algorithm for building atom neighbor lists.
@@ -57,6 +58,22 @@ public:
      * @param mpi_size Total number of MPI processes.
      */
     void init(const AtomProvider& ucell, double sr, int mpi_rank, int mpi_size);
+
+    /**
+     * @brief Initialize from rank-local owned atoms and exchanged ghost atoms.
+     *
+     * This distributed entry point does not inspect a global UnitCell. The
+     * caller is responsible for domain ownership and ghost exchange.
+     *
+     * @param owned_atoms Atoms owned by this rank and used as list centers.
+     * @param ghost_atoms Cutoff halo atoms received from neighboring ranks.
+     * @param sr Search radius (cutoff distance) in Bohr.
+     * @param lat0 Lattice constant in Bohr.
+     */
+    void init_distributed(const std::vector<LocalAtom>& owned_atoms,
+                          const std::vector<LocalAtom>& ghost_atoms,
+                          double sr,
+                          double lat0);
 
     /**
      * @brief Build the neighbor list for all inside atoms.

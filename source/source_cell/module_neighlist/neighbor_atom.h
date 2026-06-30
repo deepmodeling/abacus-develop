@@ -31,6 +31,12 @@ public:
     /// Unique atom ID across all domains and periodic images
     int atom_id;
 
+    /// Global atom ID in the primary cell. Rank-local images share this ID.
+    long long global_id;
+
+    /// MPI rank that owns the primary atom.
+    int owner_rank;
+
     /// Whether this atom is inside the local MPI domain
     bool is_inside;
 
@@ -46,7 +52,28 @@ public:
      */
     NeighborAtom(double x, double y, double z, int type, int index, int id)
         : position_x(x), position_y(y), position_z(z),
-          atom_type(type), atom_index(index), atom_id(id), is_inside(false) {}
+          atom_type(type), atom_index(index), atom_id(id),
+          global_id(id), owner_rank(0), is_inside(false) {}
+
+    NeighborAtom(double x,
+                 double y,
+                 double z,
+                 int type,
+                 int index,
+                 int id,
+                 long long global_id_in,
+                 int owner_rank_in)
+        : position_x(x),
+          position_y(y),
+          position_z(z),
+          atom_type(type),
+          atom_index(index),
+          atom_id(id),
+          global_id(global_id_in),
+          owner_rank(owner_rank_in),
+          is_inside(false)
+    {
+    }
 };
 
 /**
