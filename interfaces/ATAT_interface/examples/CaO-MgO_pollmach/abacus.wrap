@@ -7,5 +7,5 @@ basis_type     lcao
 kspacing       0.5
 scf_nmax       100
 # ... 其他参数 ...
-pseudo_dir     ../../tests/PP_ORB/
-orbital_dir    ../../tests/PP_ORB/
+pseudo_dir     ../../../../../tests/PP_ORB/PP
+orbital_dir    ../../../../../tests/PP_ORB/ORB
