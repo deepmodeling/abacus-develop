@@ -9,7 +9,9 @@ void Plus_U::output(const UnitCell& ucell)
 {
     ModuleBase::TITLE("Plus_U", "output");
 
-    GlobalV::ofs_running << "//=========================L(S)DA+U===========================//" << std::endl;
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    GlobalV::ofs_running << " | #DFT+U INFORMATION# |" << std::endl;
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     for (int T = 0; T < ucell.ntype; T++)
     {
@@ -28,8 +30,8 @@ void Plus_U::output(const UnitCell& ucell)
 
                 if (!Yukawa)
                 {
-                    GlobalV::ofs_running << "atom_type=" << T << "  L=" << L << "  chi=" << 0
-                                         << "    U=" << this->U[T] * ModuleBase::Ry_to_eV << "eV" << std::endl;
+                    GlobalV::ofs_running << " Type=" << T+1 << " L=" << L << " ORBITAL=" << 0
+                                         << " U=" << this->U[T] * ModuleBase::Ry_to_eV << " eV" << std::endl;
                 }
                 else
                 {
@@ -40,9 +42,9 @@ void Plus_U::output(const UnitCell& ucell)
                             continue;
                         }
                         double Ueff = (this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n]) * ModuleBase::Ry_to_eV;
-                        GlobalV::ofs_running << "atom_type=" << T << "  L=" << L << "  chi=" << n
-                                             << "    U=" << this->U_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "eV    "
-                                             << "J=" << this->J_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "eV"
+                        GlobalV::ofs_running << " Type=" << T+1 << " L=" << L << "  ORBITAL=" << n
+                                             << " U=" << this->U_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << " eV"
+                                             << " J=" << this->J_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << " eV"
                                              << std::endl;
                     }
                 }
@@ -50,9 +52,8 @@ void Plus_U::output(const UnitCell& ucell)
         }
     }
 
-    GlobalV::ofs_running << "Local occupation matrices" << std::endl;
+    GlobalV::ofs_running << " Local Occupation Matrices for each atom" << std::endl;
     this->write_occup_m(ucell, GlobalV::ofs_running, true);
-    GlobalV::ofs_running << "//=======================================================//" << std::endl;
 
     // Write onsite.dm
     std::ofstream ofdftu;
@@ -65,11 +66,15 @@ void Plus_U::output(const UnitCell& ucell)
     }
     if (!ofdftu)
     {
-        std::cout << "Plus_U::write_occup_m. Can't create file onsite.dm!" << std::endl;
+        std::cout << " Plus_U::write_occup_m. Can't create file onsite.dm" << std::endl;
         exit(0);
     }
     this->write_occup_m(ucell, ofdftu);
     ofdftu.close();
+
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    GlobalV::ofs_running << " | # END DFT+U INFO    |" << std::endl;
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl << std::endl;
 
     return;
 }
@@ -100,8 +105,6 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
-            ofs << "atoms"
-                << "  " << iat << std::endl;
 
             for (int l = 0; l < NL; l++)
             {
@@ -111,8 +114,6 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                 }
 
                 const int N = ucell.atoms[T].l_nchi[l];
-                ofs << "L"
-                    << "  " << l << std::endl;
 
                 for (int n = 0; n < N; n++)
                 {
@@ -122,8 +123,9 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                         continue;
                     }
 
-                    ofs << "zeta"
-                        << "  " << n << std::endl;
+                    ofs << "\n Atom=" << iat+1;
+                    ofs << " L=" << l;
+                    ofs << " ORBITAL=" << n << std::endl;
 
                     if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
                     {
@@ -142,24 +144,22 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                                 }
                                 std::vector<double> eigenvalues = CalculateEigenvalues(A, 2 * l + 1);
                                 sum0[is] = 0.0;
-                                ofs << "eigenvalues"
-                                    << "  " << is << std::endl;
+                                ofs << " Eigenvalues for spin=" << is+1 << std::endl;
+				ofs << std::setprecision(8) << std::fixed;
                                 for (int i = 0; i < 2 * l + 1; i++)
                                 {
-                                    ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                        << eigenvalues[i];
+                                    ofs << std::setw(12) << eigenvalues[i];
                                     sum0[is] += eigenvalues[i];
                                 }
-                                ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                    << sum0[is] << std::endl;
+				ofs << std::endl;
+                                ofs << " sum is " << std::setw(12) << sum0[is] << std::endl;
                             }
-                            ofs << "spin"
-                                << "  " << is << std::endl;
+                            ofs << " spin=" << is+1 << std::endl;
                             for (int m0 = 0; m0 < 2 * l + 1; m0++)
                             {
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    ofs << std::setw(12) << std::setprecision(8) << std::fixed
+                                    ofs << std::setw(12) 
                                         << locale[iat][l][n][is](m0, m1);
                                 }
                                 ofs << std::endl;
@@ -168,7 +168,8 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                         if (diag)
                         {
                             ofs << std::setw(12) << std::setprecision(8)
-                                << std::fixed << "atomic mag: " << iat << " " << sum0[0] - sum0[1] << std::endl;
+                                << std::fixed << " Magnetism for atom " << iat+1 << ": " << sum0[0] - sum0[1]
+				<< std::endl;
                         }
                     }
                     else if (PARAM.inp.nspin == 4) // SOC
