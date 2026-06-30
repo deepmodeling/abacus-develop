@@ -10,6 +10,9 @@
 namespace module_rt
 {
 
+/**
+ * @brief Radial projector channel integrated against one LCAO orbital.
+ */
 struct ProjectorChannel
 {
     int l = 0;
@@ -20,12 +23,20 @@ struct ProjectorChannel
     const double* radial_grid = nullptr;
 };
 
+/**
+ * @brief Numerical quadrature settings for projector snapshots.
+ *
+ * The default values reproduce the production RT-TDDFT path.
+ */
 struct SnapIntegrationOptions
 {
     int radial_grid_num = 140;
     int lebedev_grid_points = 110;
 };
 
+/**
+ * @brief Compute <phi|exp(-i A r)|projector> with default quadrature settings.
+ */
 void snap_projector_half_tddft(const LCAO_Orbitals& orb,
                                const std::vector<ProjectorChannel>& projector_channels,
                                std::vector<std::vector<std::complex<double>>>& nlm,
@@ -39,6 +50,11 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
                                const bool& calc_r,
                                const char* timer_name);
 
+/**
+ * @brief Compute <phi|exp(-i A r)|projector> with explicit quadrature settings.
+ *
+ * If calc_r is true, nlm[1..3] also store the Cartesian position moments.
+ */
 void snap_projector_half_tddft(const LCAO_Orbitals& orb,
                                const std::vector<ProjectorChannel>& projector_channels,
                                std::vector<std::vector<std::complex<double>>>& nlm,

@@ -25,6 +25,9 @@ namespace
 constexpr int default_radial_grid_num = 140;
 constexpr int default_lebedev_grid_points = 110;
 
+/**
+ * @brief Cached Gauss-Legendre radial grid for a requested grid size.
+ */
 struct GaussLegendreGrid
 {
     explicit GaussLegendreGrid(const int ngrid) : x(ngrid), w(ngrid)
@@ -38,6 +41,7 @@ struct GaussLegendreGrid
 
 const GaussLegendreGrid& gauss_legendre_grid(const int ngrid)
 {
+    // Tests may request non-default radial grids, so cache by grid size.
     static std::map<int, std::shared_ptr<const GaussLegendreGrid>> cache;
     static std::mutex cache_mutex;
 
@@ -50,6 +54,9 @@ const GaussLegendreGrid& gauss_legendre_grid(const int ngrid)
     return *grid;
 }
 
+/**
+ * @brief Owned Lebedev-Laikov angular grid generated at runtime.
+ */
 struct AngularGridData
 {
     explicit AngularGridData(const int ngrid) : x(ngrid), y(ngrid), z(ngrid), w(ngrid)
@@ -73,6 +80,9 @@ struct AngularGridData
     std::vector<double> w;
 };
 
+/**
+ * @brief Non-owning view used by the integration loops.
+ */
 struct AngularGridView
 {
     int size = 0;
@@ -100,6 +110,7 @@ AngularGridView angular_grid(const int ngrid)
 
     if (ngrid == default_lebedev_grid_points)
     {
+        // Keep the production path on the historical static 110-point table.
         AngularGridView view;
         view.size = default_lebedev_grid_points;
         view.x = ModuleBase::Integral::Lebedev_Laikov_grid110_x;
@@ -109,6 +120,7 @@ AngularGridView angular_grid(const int ngrid)
         return view;
     }
 
+    // Higher-order grids are generated lazily for tests and future callers.
     static std::map<int, std::shared_ptr<const AngularGridData>> cache;
     static std::mutex cache_mutex;
 
@@ -150,6 +162,7 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
                                const bool& calc_r,
                                const char* timer_name)
 {
+    // Preserve the production default while allowing tests to call the overload.
     SnapIntegrationOptions options;
     options.radial_grid_num = default_radial_grid_num;
     options.lebedev_grid_points = default_lebedev_grid_points;
@@ -214,6 +227,7 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
         return;
     }
 
+    // The LCAO orbital is sampled at r + R0 - R1 around the projector center.
     const auto& phi_ln = orb.Phi[T1].PhiLN(L1, N1);
     const int mesh_r1 = phi_ln.getNr();
     const double* psi_1 = phi_ln.getPsi();
@@ -267,6 +281,7 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
         const double A_phase = A * R0;
         const std::complex<double> exp_iAR0 = std::exp(ModuleBase::IMAG_UNIT * A_phase);
 
+        // Y_lm(projector direction) only depends on the angular grid.
         for (int ian = 0; ian < lebedev.size; ++ian)
         {
             ModuleBase::Ylm::rl_sph_harm(L0, lebedev.x[ian], lebedev.y[ian], lebedev.z[ian], rly0_cache[ian]);
@@ -332,6 +347,7 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
                 const double ylm_L1_val = rly1[L1 * L1 + m1];
                 const std::complex<double> common_factor = exp_iAr * ylm_L1_val * interp_psi * w_ang;
 
+                // Accumulate all magnetic components of the same projector channel.
                 const std::vector<double>& rly0_vec = rly0_cache[ian];
                 const int offset_L0 = L0 * L0;
                 for (int m0 = 0; m0 < num_m0; ++m0)

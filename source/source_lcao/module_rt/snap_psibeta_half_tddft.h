@@ -11,7 +11,11 @@
 
 namespace module_rt
 {
-// calculate the tddft nonlocal potential term
+/**
+ * @brief Compute RT-TDDFT velocity-gauge beta-projector overlaps.
+ *
+ * This overload uses the production quadrature settings.
+ */
 void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                              const InfoNonlocal& infoNL_,
                              std::vector<std::vector<std::complex<double>>>& nlm,
@@ -25,6 +29,11 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                              const ModuleBase::Vector3<double>& A,
                              const bool& calc_r);
 
+/**
+ * @brief Compute RT-TDDFT velocity-gauge beta-projector overlaps.
+ *
+ * This overload is used by tests to select the radial and Lebedev-Laikov grids.
+ */
 void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
                              const InfoNonlocal& infoNL_,
                              std::vector<std::vector<std::complex<double>>>& nlm,
