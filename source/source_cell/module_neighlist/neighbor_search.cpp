@@ -11,6 +11,11 @@ namespace
 {
 struct OriginalAtom
 {
+    OriginalAtom(const std::array<double, 3>& frac_in, int atom_type_in, int atom_index_in)
+        : frac(frac_in), atom_type(atom_type_in), atom_index(atom_index_in)
+    {
+    }
+
     std::array<double, 3> frac;
     int atom_type = 0;
     int atom_index = 0;
@@ -18,6 +23,10 @@ struct OriginalAtom
 
 struct PeriodicInterval
 {
+    PeriodicInterval(double lo_in, double hi_in, int shift_in) : lo(lo_in), hi(hi_in), shift(shift_in)
+    {
+    }
+
     double lo = 0.0;
     double hi = 0.0;
     int shift = 0;
