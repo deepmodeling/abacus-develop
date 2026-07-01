@@ -1,4 +1,6 @@
 #include "source_estate/elecstate.h"
+#include "source_base/tool_quit.h"
+#include <complex> // use std::complex
 
 namespace elecstate
 {
@@ -14,6 +16,12 @@ void ElecState::set_exx(const double& Eexx, const bool cal_exx, const double hyb
         this->f_en.exx = hybrid_alpha * Eexx;
     }
     return;
+}
+
+void ElecState::set_exx(const std::complex<double>& Eexx, const bool cal_exx, const double hybrid_alpha)
+{
+    ModuleBase::WARNING_QUIT("ElecState::set_exx",
+                             "std::complex<double> version is not implemented yet");
 }
 
 }

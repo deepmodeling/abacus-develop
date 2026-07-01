@@ -1,5 +1,6 @@
 #include "exx_helper.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 #include "source_pw/module_pwdft/hamilt_pw.h" // use HamiltPW
 #include "source_estate/update_pot.h" // use elecstate::update_pot
@@ -16,12 +17,12 @@ void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, c
         return;
     }
 
-    if (op_exx == nullptr)
+    if (!GlobalC::exx_info.info_global.cal_exx)
     {
         return;
     }
 
-    if (op_exx->separate_loop)
+    if (GlobalC::exx_info.info_global.separate_loop)
     {
         XC_Functional::set_xc_first_loop(ucell);
         this->set_firstiter();
@@ -40,8 +41,8 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_pa
         return;
     }
 
-    /// Return if not PW basis
-    if (inp.basis_type != "pw")
+    /// Return if EXX is not enabled or not PW basis
+    if (!GlobalC::exx_info.info_global.cal_exx || inp.basis_type != "pw")
     {
         return;
     }

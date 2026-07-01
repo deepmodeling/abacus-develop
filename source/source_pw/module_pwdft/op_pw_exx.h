@@ -185,8 +185,8 @@ void get_exx_potential(const K_Vectors* kv,
                        double ucell_omega,
                        int ik,
                        int iq,
-                       bool is_stress = false,
-                       const CoulombParam& coulomb_param_in = {});
+                       bool is_stress,
+                       const CoulombParam& coulomb_param_in);
 
 template <typename Real, typename Device>
 void get_exx_stress_potential(const K_Vectors* kv,
