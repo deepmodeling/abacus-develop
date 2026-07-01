@@ -337,7 +337,9 @@ std::string XC_Functional::output_info()
         ss<<" Libxc v"<<xc_version_string()<<std::endl;
         ss<<"\t"<<xc_reference()<<std::endl;
 
-        std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED);
+        double hybrid_alpha = 0.0;
+        double hse_omega = 0.0;
+        std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, hybrid_alpha, hse_omega);
         for(const auto &func : funcs)
         {
             const xc_func_info_type *info = xc_func_get_info(&func);

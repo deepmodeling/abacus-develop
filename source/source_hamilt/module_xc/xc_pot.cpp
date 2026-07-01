@@ -181,10 +181,12 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     // which is not used here
     std::vector<double> dum;
     double hybrid_alpha = 0.0;
+    double hse_omega = 0.0;
 #ifdef __EXX
     hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    hse_omega = GlobalC::exx_info.info_global.hse_omega;
 #endif
-    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z, hybrid_alpha);
+    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z, hybrid_alpha, hse_omega);
 
     // parallel code : collect vtxc,etxc
     // mohan add 2008-06-01

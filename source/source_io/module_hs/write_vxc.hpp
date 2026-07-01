@@ -287,7 +287,7 @@ void write_Vxc(const int nspin,
     {
         write_orb_energy(kv, nspin0, nbands, e_orb_tot, "vxc", "");
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (cal_exx)
         {
             write_orb_energy(kv, nspin0, nbands, e_orb_locxc, "vxc", "local");
             write_orb_energy(kv, nspin0, nbands, e_orb_exx, "vxc", "exx");

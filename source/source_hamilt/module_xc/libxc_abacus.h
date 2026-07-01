@@ -192,7 +192,9 @@ namespace XC_Functional_Libxc
         double &v1xcdw,
         double &v2xcup,
         double &v2xcdw,
-        double &v2xcud);
+        double &v2xcud,
+        const double hybrid_alpha,
+        const double hse_omega);
 
 
 //-------------------
@@ -209,7 +211,8 @@ namespace XC_Functional_Libxc
         double &v1xc,
         double &v2xc,
         double &v3xc,
-        const double &hybrid_alpha);
+        const double &hybrid_alpha,
+        const double &hse_omega);
 
     extern void tau_xc_spin(
         const std::vector<int> &func_id,
@@ -227,7 +230,8 @@ namespace XC_Functional_Libxc
         double &v2xcud,
         double &v3xcup,
         double &v3xcdw,
-        const double &hybrid_alpha);
+        const double &hybrid_alpha,
+        const double &hse_omega);
 
 } // namespace XC_Functional_Libxc
 

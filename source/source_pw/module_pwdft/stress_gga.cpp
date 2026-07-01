@@ -30,14 +30,16 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
     ModuleBase::matrix dum3;
     const bool is_stress = true;
     double hybrid_alpha = 0.0;
+    double hse_omega = 0.0;
 #ifdef __EXX
     hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    hse_omega = GlobalC::exx_info.info_global.hse_omega;
 #endif
     XC_Functional::gradcorr(
         dum1, dum2, dum3, chr, rho_basis, &ucell,
         stress_gga, is_stress,
         PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
-        hybrid_alpha);
+        hybrid_alpha, hse_omega);
 
     for(int l = 0;l< 3;l++)
     {
