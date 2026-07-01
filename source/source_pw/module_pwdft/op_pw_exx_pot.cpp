@@ -608,7 +608,8 @@ template void get_exx_stress_potential<float, base_device::DEVICE_GPU>(const K_V
                                                                        bool,
                                                                        double,
                                                                        int,
-                                                                       int);
+                                                                       int,
+                                                                       const CoulombParam&);
 template void get_exx_stress_potential<double, base_device::DEVICE_GPU>(const K_Vectors*,
                                                                         const ModulePW::PW_Basis_K*,
                                                                         ModulePW::PW_Basis*,
@@ -617,6 +618,7 @@ template void get_exx_stress_potential<double, base_device::DEVICE_GPU>(const K_
                                                                         bool,
                                                                         double,
                                                                         int,
-                                                                        int);
+                                                                        int,
+                                                                        const CoulombParam&);
 #endif
 } // namespace hamilt
