@@ -8,6 +8,9 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h"
+#endif
 
 #include <xc.h>
 
@@ -38,9 +41,17 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     // https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
     //----------------------------------------------------------
 
+    double hybrid_alpha = 0.0;
+    double hse_omega = 0.0;
+#ifdef __EXX
+    hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    hse_omega = GlobalC::exx_info.info_global.hse_omega;
+#endif
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
-        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED);
+        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED,
+        /* hybrid_alpha = */ hybrid_alpha,
+        /* hse_omega = */ hse_omega);
 
     const bool is_gga = [&funcs]()
     {
@@ -230,9 +241,17 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     // use can check on website, for example:
     // https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
     //----------------------------------------------------------
+    double hybrid_alpha = 0.0;
+    double hse_omega = 0.0;
+#ifdef __EXX
+    hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    hse_omega = GlobalC::exx_info.info_global.hse_omega;
+#endif
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
-        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED);
+        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED,
+        /* hybrid_alpha = */ hybrid_alpha,
+        /* hse_omega = */ hse_omega);
 
     const std::vector<double> rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
     const std::vector<std::vector<ModuleBase::Vector3<double>>> gdr

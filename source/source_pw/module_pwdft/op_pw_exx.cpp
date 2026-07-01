@@ -37,8 +37,11 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                         const ModulePW::PW_Basis_K* wfcpw_in,
                                         const ModulePW::PW_Basis* rhopw_in,
                                         K_Vectors *kv_in,
-                                        const UnitCell *ucell)
-    : isk(isk_in), wfcpw(wfcpw_in), rhopw(rhopw_in), kv(kv_in), ucell(ucell)
+                                        const UnitCell *ucell,
+                                        const bool separate_loop_in,
+                                        const Real hybrid_alpha_in)
+    : isk(isk_in), wfcpw(wfcpw_in), rhopw(rhopw_in), kv(kv_in), ucell(ucell),
+      separate_loop(separate_loop_in), hybrid_alpha(hybrid_alpha_in)
 {
     if (GlobalV::KPAR != 1 && PARAM.inp.exxace == false)
     {
@@ -186,7 +189,7 @@ void OperatorEXXPW<T, Device>::act(const int nbands,
         setmem_complex_op()(tmhpsi, 0, nbasis*nbands/npol);
     }
 
-    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
+    if (PARAM.inp.exxace && this->separate_loop)
     {
         act_op_ace(nbands, nbasis, npol, tmpsi_in, tmhpsi, ngk_ik, is_first_node);
     }
@@ -282,8 +285,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
 
         } // end of iq
         T* h_psi_nk = tmhpsi + n_iband * nbasis;
-        Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-        wfcpw->real_to_recip(ctx, h_psi_real, h_psi_nk, this->ik, true, hybrid_alpha);
+        wfcpw->real_to_recip(ctx, h_psi_real, h_psi_nk, this->ik, true, this->hybrid_alpha);
         setmem_complex_op()(h_psi_real, 0, rhopw_dev->nrxx);
 
     }
@@ -383,8 +385,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
                 Real tmp_scalar = wg_mqb / wk_ik / nqs; // wk_ik works for now, but wrong for symmetry.
 
                 T* h_psi_nk = tmhpsi + n_iband * nbasis;
-                Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-                wfcpw->real_to_recip(ctx, density_real, h_psi_nk, this->ik, true, hybrid_alpha * tmp_scalar);
+                wfcpw->real_to_recip(ctx, density_real, h_psi_nk, this->ik, true, this->hybrid_alpha * tmp_scalar);
 
 
             } // end of m_iband
@@ -495,7 +496,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op
 template <typename T, typename Device>
 double OperatorEXXPW<T, Device>::cal_exx_energy(psi::Psi<T, Device> *psi_) const
 {
-    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
+    if (PARAM.inp.exxace && this->separate_loop)
     {
         return cal_exx_energy_ace(psi_);
     }

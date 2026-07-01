@@ -67,7 +67,7 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* ps
     }
 
     /// Handle separate_loop mode
-    if (GlobalC::exx_info.info_global.separate_loop)
+    if (op_exx->separate_loop)
     {
         if (conv_esolver)
         {
@@ -131,7 +131,7 @@ bool Exx_Helper<T, Device>::exx_after_converge(int &iter, bool ene_conv)
     {
         op_exx->first_iter = false;
     }
-    else if (!GlobalC::exx_info.info_global.separate_loop)
+    else if (!op_exx->separate_loop)
     {
         return true;
     }
@@ -163,7 +163,7 @@ void Exx_Helper<T, Device>::set_psi(void* psi_)
         return;
     this->psi = psi;
     op_exx->set_psi(*psi);
-    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
+    if (PARAM.inp.exxace && op_exx->separate_loop)
     {
         op_exx->construct_ace();
     }

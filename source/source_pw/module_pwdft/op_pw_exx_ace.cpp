@@ -295,7 +295,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device>* ppsi_) 
     psi::Psi<T, Device> psi_ = *ppsi_;
     int* ik_ = const_cast<int*>(&this->ik);
     int ik_save = this->ik;
-    Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    Real hybrid_alpha = this->hybrid_alpha;
     for (int i = 0; i < wfcpw->nks; i++)
     {
         setmem_complex_op()(h_psi_ace, 0, psi_.get_nbands() * psi_.get_nbasis());

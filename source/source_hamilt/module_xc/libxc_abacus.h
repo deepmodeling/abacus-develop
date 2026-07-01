@@ -45,7 +45,9 @@ namespace XC_Functional_Libxc
      */
     extern std::vector<xc_func_type> init_func(
         const std::vector<int> &func_id,
-        const int xc_polarized);
+        const int xc_polarized,
+        const double hybrid_alpha,
+        const double hse_omega);
 
     extern void finish_func(std::vector<xc_func_type> &funcs);
 
