@@ -409,12 +409,15 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //! 15) Output Hexx matrix in LCAO basis
     // (see `out_chg` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
+    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+    bool real_number = GlobalC::exx_info.info_ri.real_number;
+
     if (inp.out_chg[0])
     {
-        if (GlobalC::exx_info.info_global.cal_exx && inp.calculation != "nscf") // Peize Lin add if 2022.11.14
+        if (cal_exx && inp.calculation != "nscf") // Peize Lin add if 2022.11.14
         {
             const std::string file_name_exx = global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (real_number)
             {
                 ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exd->get_Hexxs());
             }

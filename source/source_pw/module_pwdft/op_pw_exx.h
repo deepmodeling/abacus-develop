@@ -33,7 +33,7 @@ class OperatorEXXPW : public OperatorPW<T, Device>
                   const UnitCell* ucell,
                   const bool separate_loop_in,
                   const Real hybrid_alpha_in,
-                  const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param_in);
+                  const CoulombParam& coulomb_param_in);
 
     template <typename T_in, typename Device_in = Device>
     explicit OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op_exx);
@@ -59,7 +59,7 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     bool first_iter = true;
     bool separate_loop = false;
     Real hybrid_alpha = 0.0;
-    std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>> coulomb_param;
+    CoulombParam coulomb_param;
 
     static std::vector<Real> fock_div, erfc_div;
 
@@ -186,7 +186,7 @@ void get_exx_potential(const K_Vectors* kv,
                        int ik,
                        int iq,
                        bool is_stress = false,
-                       const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param_in = {});
+                       const CoulombParam& coulomb_param_in = {});
 
 template <typename Real, typename Device>
 void get_exx_stress_potential(const K_Vectors* kv,
@@ -198,7 +198,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
                               double ucell_omega,
                               int ik,
                               int iq,
-                              const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param_in);
+                              const CoulombParam& coulomb_param_in);
 
 double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
                       double erfc_omega,

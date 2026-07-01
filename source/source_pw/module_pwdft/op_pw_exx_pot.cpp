@@ -15,7 +15,7 @@ void get_exx_potential(const K_Vectors* kv,
                        int ik,
                        int iq,
                        bool is_stress,
-                       const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param_in)
+                       const CoulombParam& coulomb_param_in)
 {
     using setmem_real_cpu_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
     using syncmem_real_c2d_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
@@ -222,7 +222,7 @@ void get_exx_stress_potential(const K_Vectors* kv,
                               double ucell_omega,
                               int ik,
                               int iq,
-                              const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param_in)
+                              const CoulombParam& coulomb_param_in)
 {
     using setmem_real_cpu_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
     using syncmem_real_c2d_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
@@ -531,7 +531,7 @@ template void get_exx_potential<float, base_device::DEVICE_CPU>(const K_Vectors*
                                                                 int,
                                                                 int,
                                                                 bool,
-                                                                const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
+                                                                const CoulombParam&);
 template void get_exx_potential<double, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                  const ModulePW::PW_Basis_K*,
                                                                  ModulePW::PW_Basis*,
@@ -542,7 +542,7 @@ template void get_exx_potential<double, base_device::DEVICE_CPU>(const K_Vectors
                                                                  int,
                                                                  int,
                                                                  bool,
-                                                                 const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
+                                                                 const CoulombParam&);
 template void get_exx_stress_potential<float, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                        const ModulePW::PW_Basis_K*,
                                                                        ModulePW::PW_Basis*,
@@ -552,7 +552,7 @@ template void get_exx_stress_potential<float, base_device::DEVICE_CPU>(const K_V
                                                                        double,
                                                                        int,
                                                                        int,
-                                                                       const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
+                                                                       const CoulombParam&);
 template void get_exx_stress_potential<double, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                         const ModulePW::PW_Basis_K*,
                                                                         ModulePW::PW_Basis*,
@@ -562,7 +562,7 @@ template void get_exx_stress_potential<double, base_device::DEVICE_CPU>(const K_
                                                                         double,
                                                                         int,
                                                                         int,
-                                                                        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
+                                                                        const CoulombParam&);
 #if ((defined __CUDA) || (defined __ROCM))
 template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>;
 template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>;
@@ -576,7 +576,7 @@ template void get_exx_potential<float, base_device::DEVICE_GPU>(const K_Vectors*
                                                                 int,
                                                                 int,
                                                                 bool,
-                                                                const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
+                                                                const CoulombParam&);
 template void get_exx_potential<double, base_device::DEVICE_GPU>(const K_Vectors*,
                                                                  const ModulePW::PW_Basis_K*,
                                                                  ModulePW::PW_Basis*,
@@ -587,7 +587,7 @@ template void get_exx_potential<double, base_device::DEVICE_GPU>(const K_Vectors
                                                                  int,
                                                                  int,
                                                                  bool,
-                                                                 const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
+                                                                 const CoulombParam&);
 template void get_exx_stress_potential<float, base_device::DEVICE_GPU>(const K_Vectors*,
                                                                        const ModulePW::PW_Basis_K*,
                                                                        ModulePW::PW_Basis*,

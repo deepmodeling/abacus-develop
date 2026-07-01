@@ -12,7 +12,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                                            const K_Vectors *p_kv,
                                            const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in, const UnitCell& ucell,
                                            const double hybrid_alpha,
-                                           const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param)
+                                           const CoulombParam& coulomb_param)
 {
     bool gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
     bool is_mp = p_kv->get_is_mp();

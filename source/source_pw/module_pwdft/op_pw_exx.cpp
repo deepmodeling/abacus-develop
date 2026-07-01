@@ -39,7 +39,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                         const UnitCell *ucell,
                                         const bool separate_loop_in,
                                         const Real hybrid_alpha_in,
-                                        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param_in)
+                                        const CoulombParam& coulomb_param_in)
     : isk(isk_in), wfcpw(wfcpw_in), rhopw(rhopw_in), kv(kv_in), ucell(ucell),
       separate_loop(separate_loop_in), hybrid_alpha(hybrid_alpha_in),
       coulomb_param(coulomb_param_in)
