@@ -3,6 +3,10 @@ name: Atomic Simulation Environment (ASE) Plugin Test
 on:
   pull_request:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: abacuslite
@@ -33,6 +37,14 @@ jobs:
           cd interfaces/ASE_interface
           pip install .
 
+      - name: Install external tools from toolchain
+        run: |
+          sudo apt update && sudo apt install -y xz-utils ninja-build
+          cd toolchain
+          ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
+          ./scripts/stage4/install_stage4.sh
+          cd ..
+
       - name: Configure & Build ABACUS (GNU)
         run: |
           git config --global --add safe.directory `pwd`
@@ -40,8 +52,9 @@ jobs:
           export PKG_CONFIG_PATH=${GKLIB_ROOT}/lib/pkgconfig:${METIS32_ROOT}/lib/pkgconfig:${PARMETIS32_ROOT}/lib/pkgconfig:${SUPERLU32_DIST_ROOT}/lib/pkgconfig:${PEXSI32_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH}
           export CPATH=${GKLIB_ROOT}/include:${METIS32_ROOT}/include:${PARMETIS32_ROOT}/include:${SUPERLU32_DIST_ROOT}/include:${PEXSI32_ROOT}/include:${CPATH}
           export CMAKE_PREFIX_PATH=${PEXSI32_ROOT}:${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH}
+          source toolchain/install/setup
           rm -rf build
-          cmake -B build
+          cmake -B build -G Ninja
           cmake --build build -j2
       
       - name: Install and Soft Link ABACUS

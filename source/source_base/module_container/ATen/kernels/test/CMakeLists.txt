@@ -5,4 +5,4 @@ AddTest(
   memory_test.cpp linalg_test.cpp
 )
 
-target_link_libraries(MODULE_BASE_container_kernels_uts container base device)
+target_link_libraries(MODULE_BASE_container_kernels_uts PRIVATE container base device)

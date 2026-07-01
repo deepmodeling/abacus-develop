@@ -4,6 +4,10 @@ on:
   workflow_dispatch:
   pull_request:
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -28,13 +32,21 @@ jobs:
       - name: Install Ccache
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache
+          sudo apt-get install -y ccache xz-utils ninja-build
+
+      - name: Install external tools from toolchain
+        run: |
+          cd toolchain
+          ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
+          ./scripts/stage4/install_stage4.sh
+          cd ..
 
       - name: Configure & Build
         run: |
           nvidia-smi
+          source toolchain/install/setup
           rm -rf build
-          cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
+          cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON
           cmake --build build -j4
           cmake --install build
 
