@@ -61,7 +61,7 @@ jobs:
 
       - name: Install external tools from toolchain
         run: |
-          apt update && apt install -y gfortran ninja-build xz-utils
+          sudo apt update && sudo apt install -y gfortran ninja-build xz-utils
           cd toolchain
           ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run ${{matrix.external_toolchain_args}}
           ./scripts/stage4/install_stage4.sh
