@@ -126,9 +126,10 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // EXX PW stress
-    if (GlobalC::exx_info.info_global.cal_exx)
+    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    if (cal_exx)
     {
-        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
         this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell, hybrid_alpha);
     }
 
@@ -170,7 +171,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         {
             ModuleIO::print_stress("ONSITE    STRESS", sigmaonsite, screen, ry, GlobalV::ofs_running);
         }
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (cal_exx)
         {
             ModuleIO::print_stress("EXX    STRESS", sigmaexx, screen, ry, GlobalV::ofs_running);
         }

@@ -149,9 +149,11 @@ namespace ModuleESolver
 
         // add exx
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
+        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        if (cal_exx)
         {
-            this->pelec->set_exx(this->exx_lip->get_exx_energy()); // Peize Lin add 2019-03-09
+            this->pelec->set_exx(this->exx_lip->get_exx_energy(), cal_exx, hybrid_alpha); // Peize Lin add 2019-03-09
         }
 #endif
 
