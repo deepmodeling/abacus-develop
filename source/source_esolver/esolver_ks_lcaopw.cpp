@@ -3,6 +3,7 @@
 #include "source_pw/module_pwdft/elecond.h"
 #include "source_io/module_parameter/input_conv.h"
 #include "source_io/module_output/output_log.h"
+#include "source_hamilt/module_xc/exx_info.h"
 
 #include <iostream>
 
@@ -247,7 +248,9 @@ namespace ModuleESolver
                                 this->locpp.vloc,
                                 this->chr,
                                 this->kv,
-                                this->pelec->wg
+                                this->pelec->wg,
+                                GlobalC::exx_info.info_global.cal_exx,
+                                GlobalC::exx_info.info_global.hybrid_alpha
 #ifdef __EXX
                                 ,
                                 *this->exx_lip
