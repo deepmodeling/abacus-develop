@@ -5,6 +5,7 @@
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "stress_func.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
+#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Stress_PW : public Stress_Func<FPTYPE, Device>
@@ -46,7 +47,8 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
                     const K_Vectors* p_kv,
                     const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in,
                     const UnitCell& ucell,
-                    const double hybrid_alpha); // exx stress in PW basis
+                    const double hybrid_alpha,
+                    const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param); // exx stress in PW basis
 
     const elecstate::ElecState* pelec = nullptr;
 };

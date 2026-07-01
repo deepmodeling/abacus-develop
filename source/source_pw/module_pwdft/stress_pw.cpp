@@ -128,9 +128,10 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     // EXX PW stress
     bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
     double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    auto coulomb_param = GlobalC::exx_info.info_global.coulomb_param;
     if (cal_exx)
     {
-        this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell, hybrid_alpha);
+        this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell, hybrid_alpha, coulomb_param);
     }
 
 

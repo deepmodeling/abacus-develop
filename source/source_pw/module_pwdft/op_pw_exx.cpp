@@ -16,8 +16,7 @@
 #include "source_pw/module_pwdft/kernels/exx_cal_energy_op.h"
 #include "source_pw/module_pwdft/kernels/mul_potential_op.h"
 #include "source_pw/module_pwdft/kernels/vec_mul_vec_complex_op.h"
-#include "source_io/module_parameter/parameter.h" // use PARAM
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_io/module_parameter/parameter.h"
 
 #include <cmath>
 #include <complex>
@@ -39,9 +38,11 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                         K_Vectors *kv_in,
                                         const UnitCell *ucell,
                                         const bool separate_loop_in,
-                                        const Real hybrid_alpha_in)
+                                        const Real hybrid_alpha_in,
+                                        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param_in)
     : isk(isk_in), wfcpw(wfcpw_in), rhopw(rhopw_in), kv(kv_in), ucell(ucell),
-      separate_loop(separate_loop_in), hybrid_alpha(hybrid_alpha_in)
+      separate_loop(separate_loop_in), hybrid_alpha(hybrid_alpha_in),
+      coulomb_param(coulomb_param_in)
 {
     if (GlobalV::KPAR != 1 && PARAM.inp.exxace == false)
     {
@@ -101,7 +102,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
     rhopw_dev->setuptransform();
     rhopw_dev->collect_local_pw();
 
-    auto param_fock = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock];
+    auto param_fock = this->coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock];
     for (auto param: param_fock)
     {
         fock_div.push_back(exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Fock,
@@ -113,7 +114,7 @@ OperatorEXXPW<T, Device>::OperatorEXXPW(const int* isk_in,
                                           gamma_extrapolation,
                                           ucell->omega));
     }
-    auto param_erfc = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc];
+    auto param_erfc = this->coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc];
     for (auto param: param_erfc)
     {
         erfc_div.push_back(exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc,
@@ -237,7 +238,7 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
         Real nqs = q_points.size();
         for (int iq: q_points)
         {
-            get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq % nk);
+            get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq % nk, false, this->coulomb_param);
             for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
             {
                 double wg_mqb_real = (*wg)(this->ik, m_iband);
@@ -321,7 +322,7 @@ void OperatorEXXPW<T, Device>::act_op_kpar(const int nbands,
     for (int iq = 0; iq < nqs; iq++)
     {
         // for \psi_nk, get the pw of iq and band m
-        get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq);
+        get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq, false, this->coulomb_param);
 
         // decide which pool does the iq belong to
         int iq_pool = kv->para_k.whichpool[iq];
@@ -579,7 +580,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
             for (int iq: q_points)
             {
                 int nk = wfcpw->nks / nk_fac;
-                get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq % nk);
+                get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq % nk, false, this->coulomb_param);
                 for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
                 {
                     double wg_iqb_real = (*wg)(iq, m_iband);

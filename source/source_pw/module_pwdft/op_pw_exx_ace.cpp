@@ -159,7 +159,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                     iq = iq0 + ispin * nk; // iq in the same spin channel
 
                     // for \psi_nk, get the pw of iq and band m
-                    get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq);
+                    get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq, false, this->coulomb_param);
 
                     // decide which pool does the iq belong to
                     int iq_pool = kv->para_k.whichpool[iq0];

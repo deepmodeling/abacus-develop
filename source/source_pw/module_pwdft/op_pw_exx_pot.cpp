@@ -1,7 +1,6 @@
 #include "op_pw_exx.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 namespace hamilt
 {
@@ -15,7 +14,8 @@ void get_exx_potential(const K_Vectors* kv,
                        double ucell_omega,
                        int ik,
                        int iq,
-                       bool is_stress)
+                       bool is_stress,
+                       const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param_in)
 {
     using setmem_real_cpu_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
     using syncmem_real_c2d_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
@@ -46,10 +46,10 @@ void get_exx_potential(const K_Vectors* kv,
     }
 
     // calculate Fock pot
-    auto param_fock = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock];
-    for (int i = 0; i < param_fock.size(); i++)
+    auto it_fock = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
+    for (int i = 0; i < it_fock->second.size(); i++)
     {
-        auto param = param_fock[i];
+        auto param = it_fock->second[i];
         double exx_div = OperatorEXXPW<std::complex<Real>, Device>::fock_div[i];
         double alpha = std::stod(param["alpha"]);
         const ModuleBase::Vector3<double> k_c = wfcpw->kvec_c[ik];
@@ -106,10 +106,10 @@ void get_exx_potential(const K_Vectors* kv,
     }
 
     // calculate erfc pot
-    auto param_erfc = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc];
-    for (int i = 0; i < param_erfc.size(); i++)
+    auto it_erfc = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
+    for (int i = 0; i < it_erfc->second.size(); i++)
     {
-        auto param = param_erfc[i];
+        auto param = it_erfc->second[i];
         double erfc_omega = std::stod(param["omega"]);
         double erfc_omega2 = erfc_omega * erfc_omega;
         double alpha = std::stod(param["alpha"]);
@@ -221,7 +221,8 @@ void get_exx_stress_potential(const K_Vectors* kv,
                               bool gamma_extrapolation,
                               double ucell_omega,
                               int ik,
-                              int iq)
+                              int iq,
+                              const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>& coulomb_param_in)
 {
     using setmem_real_cpu_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
     using syncmem_real_c2d_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
@@ -238,8 +239,8 @@ void get_exx_stress_potential(const K_Vectors* kv,
     setmem_real_cpu_op()(pot_cpu, 0, npw);
 
     // calculate Fock pot
-    auto param_fock = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock];
-    for (auto param: param_fock)
+    auto it_fock = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Fock);
+    for (auto param: it_fock->second)
     {
         // double exx_div = exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type::Fock,
         //                                 0.0,
@@ -300,8 +301,8 @@ void get_exx_stress_potential(const K_Vectors* kv,
     }
 
     // calculate erfc pot
-    auto param_erfc = GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc];
-    for (auto param: param_erfc)
+    auto it_erfc = coulomb_param_in.find(Conv_Coulomb_Pot_K::Coulomb_Type::Erfc);
+    for (auto param: it_erfc->second)
     {
         double erfc_omega = std::stod(param["omega"]);
         double erfc_omega2 = erfc_omega * erfc_omega;
@@ -529,7 +530,8 @@ template void get_exx_potential<float, base_device::DEVICE_CPU>(const K_Vectors*
                                                                 double,
                                                                 int,
                                                                 int,
-                                                                        bool);
+                                                                bool,
+                                                                const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
 template void get_exx_potential<double, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                  const ModulePW::PW_Basis_K*,
                                                                  ModulePW::PW_Basis*,
@@ -539,7 +541,8 @@ template void get_exx_potential<double, base_device::DEVICE_CPU>(const K_Vectors
                                                                  double,
                                                                  int,
                                                                  int,
-                                                                        bool);
+                                                                 bool,
+                                                                 const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
 template void get_exx_stress_potential<float, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                        const ModulePW::PW_Basis_K*,
                                                                        ModulePW::PW_Basis*,
@@ -548,7 +551,8 @@ template void get_exx_stress_potential<float, base_device::DEVICE_CPU>(const K_V
                                                                        bool,
                                                                        double,
                                                                        int,
-                                                                       int);
+                                                                       int,
+                                                                       const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
 template void get_exx_stress_potential<double, base_device::DEVICE_CPU>(const K_Vectors*,
                                                                         const ModulePW::PW_Basis_K*,
                                                                         ModulePW::PW_Basis*,
@@ -557,7 +561,8 @@ template void get_exx_stress_potential<double, base_device::DEVICE_CPU>(const K_
                                                                         bool,
                                                                         double,
                                                                         int,
-                                                                        int);
+                                                                        int,
+                                                                        const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
 #if ((defined __CUDA) || (defined __ROCM))
 template class OperatorEXXPW<std::complex<float>, base_device::DEVICE_GPU>;
 template class OperatorEXXPW<std::complex<double>, base_device::DEVICE_GPU>;
@@ -570,7 +575,8 @@ template void get_exx_potential<float, base_device::DEVICE_GPU>(const K_Vectors*
                                                                 double,
                                                                 int,
                                                                 int,
-                                                                bool);
+                                                                bool,
+                                                                const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
 template void get_exx_potential<double, base_device::DEVICE_GPU>(const K_Vectors*,
                                                                  const ModulePW::PW_Basis_K*,
                                                                  ModulePW::PW_Basis*,
@@ -580,7 +586,8 @@ template void get_exx_potential<double, base_device::DEVICE_GPU>(const K_Vectors
                                                                  double,
                                                                  int,
                                                                  int,
-                                                                 bool);
+                                                                 bool,
+                                                                 const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>&);
 template void get_exx_stress_potential<float, base_device::DEVICE_GPU>(const K_Vectors*,
                                                                        const ModulePW::PW_Basis_K*,
                                                                        ModulePW::PW_Basis*,
