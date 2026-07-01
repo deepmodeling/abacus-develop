@@ -35,7 +35,8 @@ void XC_Functional::gradcorr(
     const bool is_stress,
     const int nspin,
     const bool domag,
-    const bool domag_z)
+    const bool domag_z,
+    const double hybrid_alpha_in)
 {
     ModuleBase::TITLE("XC_Functional","gradcorr");
 
@@ -301,11 +302,7 @@ void XC_Functional::gradcorr(
                         {
                             double v3xc = 0.0;
                             double atau = chr->kin_r[0][ir]/2.0;
-                            double hybrid_alpha = 0.0;
-#ifdef __EXX
-                            hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-#endif
-                            XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, atau, sxc, v1xc, v2xc, v3xc, hybrid_alpha);
+                            XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, atau, sxc, v1xc, v2xc, v3xc, hybrid_alpha_in);
                         }
                         else
                         {
@@ -370,14 +367,10 @@ void XC_Functional::gradcorr(
                         double v3xcdw = 0.0;
                         double atau1 = chr->kin_r[0][ir]/2.0;
                         double atau2 = chr->kin_r[1][ir]/2.0;
-                        double hybrid_alpha = 0.0;
-#ifdef __EXX
-                        hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-#endif
                         XC_Functional_Libxc::tau_xc_spin(
                             func_id,
                             rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir],
-                            atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw, hybrid_alpha);
+                            atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw, hybrid_alpha_in);
                     }
                     else
                     {

@@ -212,7 +212,8 @@ class XC_Functional
         const bool is_stress,
         const int nspin,
         const bool domag,
-        const bool domag_z);
+        const bool domag_z,
+        const double hybrid_alpha);
 
     template <typename T, typename Device,
               typename Real = typename GetTypeReal<T>::type>

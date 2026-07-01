@@ -235,6 +235,8 @@ namespace ModuleESolver
 #ifdef __LCAO
         if (PARAM.inp.out_mat_xc)
         {
+            bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+            double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
             ModuleIO::write_Vxc(PARAM.inp.nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
@@ -249,8 +251,8 @@ namespace ModuleESolver
                                 this->chr,
                                 this->kv,
                                 this->pelec->wg,
-                                GlobalC::exx_info.info_global.cal_exx,
-                                GlobalC::exx_info.info_global.hybrid_alpha
+                                cal_exx,
+                                hybrid_alpha
 #ifdef __EXX
                                 ,
                                 *this->exx_lip

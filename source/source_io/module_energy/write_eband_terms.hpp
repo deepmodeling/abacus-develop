@@ -182,6 +182,7 @@ void write_eband_terms(const int nspin,
         // 5. xc (including exx)
         if (!PARAM.inp.out_mat_xc)  // avoid duplicate output
         {
+            bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
             write_Vxc<TK, TR>(nspin,
                               nbasis,
                               drank,
@@ -198,7 +199,7 @@ void write_eband_terms(const int nspin,
                               orb_cutoff,
                               wg,
                               gd,
-                              GlobalC::exx_info.info_global.cal_exx
+                              cal_exx
 #ifdef __EXX
                               ,
                               Hexxd,

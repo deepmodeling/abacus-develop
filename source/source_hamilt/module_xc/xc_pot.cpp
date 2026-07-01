@@ -11,6 +11,9 @@
 
 #ifdef USE_LIBXC
 #include "libxc_abacus.h"
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h"
+#endif
 #endif
 
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
@@ -177,7 +180,11 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     // the dummy variable dum contains gradient correction to stress
     // which is not used here
     std::vector<double> dum;
-    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z);
+    double hybrid_alpha = 0.0;
+#ifdef __EXX
+    hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+#endif
+    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z, hybrid_alpha);
 
     // parallel code : collect vtxc,etxc
     // mohan add 2008-06-01
