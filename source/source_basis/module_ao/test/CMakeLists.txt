@@ -1,4 +1,4 @@
-remove_definitions(-D__EXX)
+abacus_disable_feature_definitions(__EXX)
 
 list(APPEND depend_files
  ../../../source_base/math_integral.cpp

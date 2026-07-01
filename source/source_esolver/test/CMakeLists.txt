@@ -1,5 +1,5 @@
-remove_definitions(-D__MPI)
-remove_definitions(-D__LCAO)
+abacus_disable_feature_definitions(__MPI)
+abacus_disable_feature_definitions(__LCAO)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 

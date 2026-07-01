@@ -28,6 +28,7 @@ dnf -qy install \
   vim-common \
   wget \
   which \
+  xz \
   zlib-devel \
   zlib-static
 

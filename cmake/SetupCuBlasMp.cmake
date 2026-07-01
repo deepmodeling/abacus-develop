@@ -5,7 +5,7 @@
 include_guard(GLOBAL)
 
 function(abacus_setup_cublasmp target_name)
-  add_compile_definitions(__CUBLASMP)
+  abacus_add_feature_definitions(__CUBLASMP)
 
   # 1. Search for cuBLASMp library and header files
   # libcublasmp.so
@@ -72,7 +72,7 @@ function(abacus_setup_cublasmp target_name)
         INTERFACE_INCLUDE_DIRECTORIES "${CUBLASMP_INCLUDE_DIR}")
   endif()
 
-  # 5. Link the library to the target
-  target_link_libraries(${target_name} cublasMp::cublasMp)
+  # 5. Propagate library usage requirements to all ABACUS targets.
+  target_link_libraries(abacus_external_deps INTERFACE cublasMp::cublasMp)
 
 endfunction()

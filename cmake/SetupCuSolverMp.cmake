@@ -5,7 +5,7 @@
 include_guard(GLOBAL)
 
 function(abacus_setup_cusolvermp target_name)
-  add_compile_definitions(__CUSOLVERMP)
+  abacus_add_feature_definitions(__CUSOLVERMP)
 
   # Find cuSOLVERMp first, then decide communicator backend.
   find_library(CUSOLVERMP_LIBRARY NAMES cusolverMp
@@ -75,7 +75,7 @@ function(abacus_setup_cusolvermp target_name)
   # - _use_cal=ON  -> cal communicator backend
   # - _use_cal=OFF -> NCCL communicator backend
   if(_use_cal)
-    add_compile_definitions(__USE_CAL)
+    abacus_add_feature_definitions(__USE_CAL)
 
     find_library(CAL_LIBRARY NAMES cal
         HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
@@ -126,14 +126,10 @@ function(abacus_setup_cusolvermp target_name)
         INTERFACE_INCLUDE_DIRECTORIES "${CUSOLVERMP_INCLUDE_DIR}")
   endif()
 
-  # === Link libraries ===
+  # === Link libraries and propagate include directories ===
   if(_use_cal)
-    target_link_libraries(${target_name}
-        CAL::CAL
-        cusolverMp::cusolverMp)
+    target_link_libraries(abacus_external_deps INTERFACE CAL::CAL cusolverMp::cusolverMp)
   else()
-    target_link_libraries(${target_name}
-        NCCL::NCCL
-        cusolverMp::cusolverMp)
+    target_link_libraries(abacus_external_deps INTERFACE NCCL::NCCL cusolverMp::cusolverMp)
   endif()
 endfunction()

@@ -1,6 +1,6 @@
-remove_definitions(-D__LCAO)
-remove_definitions(-D__MLALGO)
-remove_definitions(-D__CUDA)
+abacus_disable_feature_definitions(__LCAO)
+abacus_disable_feature_definitions(__MLALGO)
+abacus_disable_feature_definitions(__CUDA)
 
 AddTest(
     TARGET MODULE_PW_Hamilt_Kernels_UTs

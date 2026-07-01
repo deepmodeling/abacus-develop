@@ -132,15 +132,17 @@ add_library(device OBJECT ${device_srcs})
 
 if(USE_CUDA)
   target_link_libraries(
-    device 
-    cusolver 
-    cublas 
+    device
+    PRIVATE
+    cusolver
+    cublas
     cufft
   )
 elseif(USE_ROCM)
   target_link_libraries(
-    device 
-    device_rocm 
+    device
+    PRIVATE
+    device_rocm
     hip::host
     hip::device
     hip::hipfft

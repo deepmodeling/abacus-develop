@@ -1,5 +1,5 @@
-remove_definitions(-D__LCAO )
-remove_definitions(-DUSE_LIBXC)
+abacus_disable_feature_definitions(__LCAO)
+abacus_disable_feature_definitions(USE_LIBXC)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 list(APPEND depend_files 
