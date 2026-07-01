@@ -161,6 +161,8 @@ void Exx_Helper<T, Device>::set_psi(void* psi_)
     if (psi == nullptr)
         return;
     this->psi = psi;
+    if (op_exx == nullptr)
+        return;
     op_exx->set_psi(*psi);
     if (PARAM.inp.exxace && op_exx->separate_loop)
     {
