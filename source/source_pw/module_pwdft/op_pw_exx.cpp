@@ -237,7 +237,6 @@ void OperatorEXXPW<T, Device>::act_op(const int nbands,
             get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, this->ik, iq % nk);
             for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
             {
-                // double wg_mqb_real = GlobalC::exx_helper.wg(iq, m_iband);
                 double wg_mqb_real = (*wg)(this->ik, m_iband);
                 T wg_mqb = wg_mqb_real;
                 if (wg_mqb_real < 1e-12)
@@ -534,7 +533,6 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
             setmem_complex_op()(density_real, 0, rhopw_dev->nrxx);
             setmem_complex_op()(density_recip, 0, rhopw_dev->npw);
 
-            // double wg_ikb_real = GlobalC::exx_helper.wg(this->ik, n_iband);
             double wg_ikb_real = (*wg)(ik, n_iband);
             T wg_ikb = wg_ikb_real;
             if (wg_ikb_real < 1e-12)
@@ -583,7 +581,6 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_op(psi::Psi<T, Device> *ppsi_) c
                 get_exx_potential<Real, Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq % nk);
                 for (int m_iband = 0; m_iband < psi.get_nbands(); m_iband++)
                 {
-                    // double wg_f = GlobalC::exx_helper.wg(iq, m_iband);
                     double wg_iqb_real = (*wg)(iq, m_iband);
                     T wg_iqb = wg_iqb_real;
                     if (wg_iqb_real < 1e-12)

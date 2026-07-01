@@ -148,8 +148,6 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
             auto col_indexes = pv->get_indexes_col(iat2);
 
             const ModuleBase::Vector3<double>& tau1 = ucell.get_tau(iat1);
-            // std::cout << "tau1: " << tau1 << " tau2: " << GlobalC::ucell.get_tau(iat2) << " r_index: " << r_index
-            //           << std::endl;
             const ModuleBase::Vector3<double> tau2 = tau1 + dtau;
             for (int iw1l = 0; iw1l < row_indexes.size(); iw1l += npol)
             {
@@ -389,19 +387,6 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
         {
             hamilt::folding_HR(sR, sk, kv.kvec_d[ik], nrow, 1);
         }
-        // for (int ir = 0; ir < pv->nrow; ir++)
-        // {
-        //     const int iwt1 = pv->local2global_row(ir);
-        //     const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
-        //     for (int ic = 0; ic < pv->ncol; ic++)
-        //     {
-        //         const int iwt2 = pv->local2global_col(ic);
-        //         const int iat2 = GlobalC::ucell.iwt2iat[iwt2];
-        //         const int irc = ic * pv->nrow + ir;
-        //         std::cout << "ik: " << ik << " iat1:" << iat1 << " iat2:" << iat2 << " iwt1: " << iwt1
-        //                   << " iwt2: " << iwt2 << " hk: " << hk[irc] << std::endl;
-        //     }
-        // }
         // 2. set inverse S(k) -> sk will be changed to sk_inv
         int* ipiv = new int[pv->nloc];
         int info = 0;
@@ -470,22 +455,6 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             {
                 module_rt::folding_partial_HR(ucell, sR, partial_sk, kv.kvec_d[ik], i_alpha, nrow, 1);
             }
-            //  if(i_alpha == 2)
-            // {
-            //     for(int ir=0;ir< pv->nrow; ir++)
-            //     {
-            //         const int iwt1 = pv->local2global_row(ir);
-            //         const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
-            //         for(int ic=0;ic< pv->ncol; ic++)
-            //         {
-            //             const int iwt2 = pv->local2global_col(ic);
-            //             const int iat2 = GlobalC::ucell.iwt2iat[iwt2];
-            //             const int irc=ic*pv->nrow + ir;
-            //             std::cout<<"ik: "<<ik<<" i_alpha: "<<i_alpha<<" iat1:"<<iat1<<" iat2:"<<iat2<<" iwt1:
-            //             "<<iwt1<<" iwt2: "<<iwt2<<" partial_sk: "<<partial_sk[irc]<<std::endl;
-            //         }
-            //     }
-            // }
             // 3.3 set r(k)
             // std::cout << "set r(k): " << "i_alpha: " << i_alpha << std::endl;
             ModuleBase::GlobalFunc::ZEROS(rk, pv->nloc);
@@ -498,24 +467,6 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
             {
                 hamilt::folding_HR(*rR[i_alpha], rk, kv.kvec_d[ik], nrow, 1); // set r(k)
             }
-            // if (i_alpha == 2)
-            // {
-            //     std::cout << "ik: " << ik << " i_alpha: " << i_alpha << std::endl;
-            //     for (int ir = 0; ir < pv->nrow; ir++)
-            //     {
-            //         const int iwt1 = pv->local2global_row(ir);
-            //         const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
-            //         for (int ic = 0; ic < pv->ncol; ic++)
-            //         {
-            //             const int iwt2 = pv->local2global_col(ic);
-            //             const int iat2 = GlobalC::ucell.iwt2iat[iwt2];
-            //             const int irc = ic * pv->nrow + ir;
-            //             std::cout << " iat1: " << iat1 << " iat2: " << iat2 << " iw1: " <<
-            //             GlobalC::ucell.iwt2iw[iwt1]
-            //                       << " iw2: " << GlobalC::ucell.iwt2iw[iwt2] << " rk: " << rk[irc] << std::endl;
-            //         }
-            //     }
-            // }
             // 4. calculate <\vu,k|v_a|\mu,k> = partial_Hk + IMAG_UNIT * (Hk * Sk_inv * rk) - IMAG_UNIT * (rk * Sk_inv *
             // Hk) - Hk * Sk_inv * partial_Sk
             // 4.1.1 Hk * Sk_inv (note 2.)
@@ -667,23 +618,7 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                       pv->desc);
             // 5. copy h_is_ps to velocity_basis_k[ik][i_alpha]
             BlasConnector::copy(pv->nloc, h_is_ps, 1, velocity_basis_k[ik][i_alpha], 1);
-            // if(i_alpha == 2)
-            // {
-            //     for(int ir=0;ir< pv->nrow; ir++)
-            //     {
-            //         const int iwt1 = pv->local2global_row(ir);
-            //         const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
-            //         for(int ic=0;ic< pv->ncol; ic++)
-            //         {
-            //             const int iwt2 = pv->local2global_col(ic);
-            //             const int iat2 = GlobalC::ucell.iwt2iat[iwt2];
-            //             const int irc=ic*pv->nrow + ir;
-            //             std::cout<<"ik: "<<ik<<" i_alpha: "<<i_alpha<<" iat1:"<<iat1<<" iat2:"<<iat2<<" v_basis_k:
-            //             "<<velocity_basis_k[ik][i_alpha][irc]<<std::endl;
-            //         }
-            //     }
-            // }
-        }
+                    }
     }
 
     delete[] hk;
@@ -771,21 +706,12 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
 
             for (int ir = 0; ir < PARAM.inp.nbands; ++ir)
             {
-                // const int iwt1 = pv->local2global_row(ir);
-                // const int iat1 = GlobalC::ucell.iwt2iat[iwt1];
                 for (int ic = 0; ic < PARAM.inp.nbands; ++ic)
                 {
                     const int irc = ic * pv->nrow + ir;
                     if (pv->in_this_processor(ir, ic))
                     {
-                        // const int iwt2 = pv->local2global_col(ic);
-                        // const int iat2 = GlobalC::ucell.iwt2iat[iwt2];
                         velocity_k[ik][i_alpha](ir, ic) = vk_c[irc];
-                        // if (i_alpha == 0)
-                        // {
-                        //     std::cout<<"ik: "<<ik<<" i_alpha: "<<i_alpha<<" iat1:"<<iat1<<" iat2:"<<iat2<<" vk:
-                        //     "<<velocity_basis_k[ik][i_alpha][irc]<<std::endl;
-                        // }
                     }
                 }
             }

@@ -253,9 +253,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
             // readl sep potential, currently using the pseudopotential folder (pseudo_dir in INPUT)
             //==========================
             if (PARAM.inp.dfthalf_type > 0) {
-                // GlobalC::sep_cell.init(this->ntype);
-                // ok3 = GlobalC::sep_cell.read_sep_potentials(ifa, PARAM.inp.pseudo_dir, GlobalV::ofs_warning, this->atom_label);
-
                 sep_cell.init(this->ntype);
                 ok3 = sep_cell.read_sep_potentials(ifa, PARAM.inp.pseudo_dir, GlobalV::ofs_warning, this->atom_label);
             }
@@ -285,7 +282,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
 
 #ifdef __MPI
     unitcell::bcast_unitcell(*this);
-    // GlobalC::sep_cell.bcast_sep_cell();
     sep_cell.bcast_sep_cell();
 #endif
 
@@ -350,7 +346,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     //===================================
     this->set_iat2itia();
 
-    // GlobalC::sep_cell.set_omega(this->omega, this->tpiba2);
     sep_cell.set_omega(this->omega, this->tpiba2);
 
     return;

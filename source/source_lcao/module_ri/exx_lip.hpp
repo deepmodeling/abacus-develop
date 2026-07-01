@@ -127,11 +127,6 @@ Exx_Lip<T, Device>::Exx_Lip(const Exx_Info_Lip& info_in,
     {
         this->q_pack = this->k_pack;
     }
-    // else if(PARAM.inp.init_chg=="file")
-    // {
-    //     read_q_pack(symm, this->wfc_basis, sf);
-    // }
-
     this->phi.resize(PARAM.globalv.nlocal);
     for (int iw = 0; iw < PARAM.globalv.nlocal; ++iw)
         { this->phi[iw].resize(this->rho_basis->nrxx); }
@@ -537,89 +532,5 @@ void Exx_Lip<T, Device>::write_q_pack() const
     }
     ModuleBase::timer::end("Exx_Lip", "write_q_pack");
 }
-
-/*
-void Exx_Lip::read_q_pack(const ModuleSymmetry::Symmetry& symm,
-                          const ModulePW::PW_Basis_K* this->wfc_basis,
-                          const Structure_Factor& sf)
-{
-    const std::string exx_q_pack = "exx_q_pack/";
-    this->q_pack = new k_package();
-    this->q_pack->kv_ptr = new K_Vectors();
-    const std::string exx_kpoint_card = PARAM.globalv.global_out_dir + exx_q_pack + PARAM.inp.kpoint_file;
-    this->q_pack->kv_ptr->set( symm, exx_kpoint_card, PARAM.inp.nspin, this->ucell_ptr->G, this->ucell_ptr->latvec, GlobalV::ofs_running );
-    this->q_pack->wf_ptr = new wavefunc();
-    this->q_pack->wf_ptr->allocate(this->q_pack->kv_ptr->get_nkstot(),
-                             this->q_pack->kv_ptr->get_nks(),
-                             this->q_pack->kv_ptr->ngk.data(),
-                             this->wfc_basis->npwk_max); // mohan update 2021-02-25
-    //	this->q_pack->wf_ptr->init(this->q_pack->kv_ptr->get_nks(),this->q_pack->kv_ptr,this->ucell_ptr,old_pwptr,&ppcell,&GlobalC::ORB,&hm,&Pkpoints);
-    this->q_pack->wf_ptr->table_local.create(ucell.ntype, ucell.nmax_total, PARAM.globalv.nqx);
-    // this->q_pack->wf_ptr->table_local.create(this->q_pack->wf_ptr->this->ucell_ptr->ntype, this->q_pack->wf_ptr->this->ucell_ptr->nmax_total, PARAM.globalv.nqx);
-  #ifdef __LCAO
-    Wavefunc_in_pw::make_table_q(GlobalC::ORB.orbital_file, this->q_pack->wf_ptr->table_local);
-    // Wavefunc_in_pw::make_table_q(this->q_pack->wf_ptr->ORB_ptr->orbital_file, this->q_pack->wf_ptr->table_local, this->q_pack->wf_ptr);
-    for(int iq=0; iq<this->q_pack->kv_ptr->get_nks(); ++iq)
-    {
-        Wavefunc_in_pw::produce_local_basis_in_pw(iq,
-                                                  this->wfc_basis,
-                                                  sf,
-                                                  this->q_pack->wf_ptr->wanf2[iq],
-                                                  this->q_pack->wf_ptr->table_local);
-        //		Wavefunc_in_pw::produce_local_basis_in_pw(iq, this->q_pack->wf_ptr->wanf2[iq], this->q_pack->wf_ptr->table_local,
-        // this->q_pack->wf_ptr);
-    }
-  #endif
-    this->q_pack->wf_wg.create(this->q_pack->kv_ptr->get_nks(),PARAM.inp.nbands);
-    if(!GlobalV::RANK_IN_POOL)
-    {
-        std::stringstream ss_wf_wg;
-        ss_wf_wg << PARAM.globalv.global_out_dir << exx_q_pack << "wf_wg_" << GlobalV::MY_POOL;
-        std::ifstream ifs_wf_wg(ss_wf_wg.str().c_str());
-        for( int iq = 0; iq < this->q_pack->kv_ptr->get_nks(); ++iq)
-        {
-            for( int ib=0; ib<PARAM.inp.nbands; ++ib)
-            {
-                ifs_wf_wg>>this->q_pack->wf_wg(iq,ib);
-            }
-        }
-        ifs_wf_wg.close();
-    }
-    #ifdef __MPI
-    MPI_Bcast( this->q_pack->wf_wg.c, this->q_pack->kv_ptr->get_nks()*PARAM.inp.nbands, MPI_DOUBLE, 0, POOL_WORLD);
-    #endif
-    this->q_pack->hvec_array = new ModuleBase::ComplexMatrix [this->q_pack->kv_ptr->get_nks()];
-    for( int iq=0; iq<this->q_pack->kv_ptr->get_nks(); ++iq)
-    {
-        this->q_pack->hvec_array[iq].create(PARAM.globalv.nlocal,PARAM.inp.nbands);
-    }
-    if(!GlobalV::RANK_IN_POOL)
-    {
-        std::stringstream ss_hvec;
-        ss_hvec	<< PARAM.globalv.global_out_dir << exx_q_pack << "hvec_" << GlobalV::MY_POOL;
-        std::ifstream ifs_hvec(ss_hvec.str().c_str());
-        for( int iq=0; iq<this->q_pack->kv_ptr->get_nks(); ++iq)
-        {
-            for( int iw=0; iw<PARAM.globalv.nlocal; ++iw)
-            {
-                for( int ib=0; ib<PARAM.inp.nbands; ++ib)
-                {
-                    double a,this->b;
-                    ifs_hvec>>a>>this->b;
-                    this->q_pack->hvec_array[iq](iw,ib) = {a,this->b};
-                }
-            }
-        }
-        ifs_hvec.close();
-    }
-    #ifdef __MPI
-    for( int iq=0; iq<this->q_pack->kv_ptr->get_nks(); ++iq)
-    {
-        MPI_Bcast( this->q_pack->hvec_array[iq].c, PARAM.globalv.nlocal*PARAM.inp.nbands, MPI_DOUBLE_COMPLEX, 0, POOL_WORLD);
-    }
-    #endif
-    return;
-}
-*/
 
 #endif

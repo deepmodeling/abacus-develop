@@ -66,9 +66,4 @@ class Sep_Cell
     double tpiba2; // tpiba ^ 2
 };
 
-// namespace GlobalC
-// {
-// extern Sep_Cell sep_cell;
-// }
-
 #endif // SEP_CEll
