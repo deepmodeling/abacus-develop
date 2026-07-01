@@ -1,4 +1,4 @@
-remove_definitions(-D__CUDA)
+abacus_disable_feature_definitions(__CUDA)
 
 AddTest(
   TARGET dftu_pw_test
