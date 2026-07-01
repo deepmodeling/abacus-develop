@@ -2,6 +2,7 @@
 
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
+#include "source_hamilt/module_xc/exx_info.h"
 
 #include "../module_energy/write_proj_band_lcao.h" // projcted band structure
 #include "../module_dos/cal_ldos.h" // cal LDOS
@@ -70,7 +71,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     kv,
                                     orb.cutoffs(),
                                     pelec->wg,
-                                    gd
+                                    gd,
+                                    GlobalC::exx_info.info_global.cal_exx
 #ifdef __EXX
                                     ,
                                     exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
@@ -92,7 +94,10 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       chr,
                                       kv,
                                       orb.cutoffs(),
-                                      gd
+                                      gd,
+                                      GlobalC::exx_info.info_global.cal_exx,
+                                      GlobalC::exx_info.info_global.hybrid_alpha,
+                                      GlobalC::exx_info.info_ri.real_number
 #ifdef __EXX
                                       ,
                                       exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
