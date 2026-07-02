@@ -11,49 +11,29 @@ AddTest(
   LIBS base device parameter
   SOURCES ri_cv_io_test.cpp
 )
-add_executable(MODULE_RI_ewald_tail_utils_test ewald_tail_utils_test.cpp)
-install(TARGETS MODULE_RI_ewald_tail_utils_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
-add_test(
-  NAME MODULE_RI_ewald_tail_utils_test
-  COMMAND ./MODULE_RI_ewald_tail_utils_test
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+AddTest(
+  TARGET MODULE_RI_sternheimer_rpa_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_rpa_test.cpp ../sternheimer_rpa.cpp
 )
-add_executable(MODULE_RI_gaussian_abfs_cutoff_test gaussian_abfs_cutoff_test.cpp)
-install(TARGETS MODULE_RI_gaussian_abfs_cutoff_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
-add_test(
-  NAME MODULE_RI_gaussian_abfs_cutoff_test
-  COMMAND ./MODULE_RI_gaussian_abfs_cutoff_test
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+AddTest(
+  TARGET MODULE_RI_sternheimer_fd_hamiltonian_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_fd_hamiltonian_test.cpp ../sternheimer_fd_hamiltonian.cpp
 )
-add_executable(MODULE_RI_gaussian_abfs_2d_integrals_test gaussian_abfs_2d_integrals_test.cpp)
-install(TARGETS MODULE_RI_gaussian_abfs_2d_integrals_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
-add_test(
-  NAME MODULE_RI_gaussian_abfs_2d_integrals_test
-  COMMAND ./MODULE_RI_gaussian_abfs_2d_integrals_test
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+AddTest(
+  TARGET MODULE_RI_sternheimer_fd_solver_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_fd_solver_test.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_rpa.cpp
 )
-add_executable(MODULE_RI_librpa_stru_units_test librpa_stru_units_test.cpp)
-install(TARGETS MODULE_RI_librpa_stru_units_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
-add_test(
-  NAME MODULE_RI_librpa_stru_units_test
-  COMMAND ./MODULE_RI_librpa_stru_units_test
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+AddTest(
+  TARGET MODULE_RI_sternheimer_dft_zero_order_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_dft_zero_order_test.cpp ../sternheimer_dft_zero_order.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_rpa.cpp
 )
-add_executable(MODULE_RI_librpa_2d_coulomb_head_test librpa_2d_coulomb_head_test.cpp)
-install(TARGETS MODULE_RI_librpa_2d_coulomb_head_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
-add_test(
-  NAME MODULE_RI_librpa_2d_coulomb_head_test
-  COMMAND ./MODULE_RI_librpa_2d_coulomb_head_test
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+AddTest(
+  TARGET MODULE_RI_sternheimer_abacus_fd_adapter_test
+  LIBS base ${math_libs}
+  SOURCES sternheimer_abacus_fd_adapter_test.cpp ../sternheimer_abacus_fd_adapter.cpp ../sternheimer_fd_hamiltonian.cpp
 )
-if(ENABLE_MPI)
-  add_executable(MODULE_RI_ewald_mpi_distribution_test ewald_mpi_distribution_test.cpp)
-  target_link_libraries(MODULE_RI_ewald_mpi_distribution_test MPI::MPI_CXX)
-  install(TARGETS MODULE_RI_ewald_mpi_distribution_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
-  add_test(
-    NAME MODULE_RI_ewald_mpi_distribution_test_parallel
-    COMMAND mpirun -np 4 ./MODULE_RI_ewald_mpi_distribution_test
-    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-  )
-endif()
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
