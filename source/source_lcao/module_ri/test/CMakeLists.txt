@@ -46,4 +46,17 @@ AddTest(
   LIBS parameter base ${math_libs} device container
   SOURCES sternheimer_abacus_fd_adapter_test.cpp ../sternheimer_abacus_fd_adapter.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp
 )
+AddTest(
+  TARGET MODULE_RI_sternheimer_abacus_fd_nonlocal_test
+  LIBS parameter base ${math_libs} device container
+  SOURCES sternheimer_abacus_fd_nonlocal_test.cpp
+          ../sternheimer_abacus_fd_nonlocal.cpp
+          ../sternheimer_fd_projector_sampler.cpp
+          ../sternheimer_fd_nonlocal_projector.cpp
+          ../../../source_cell/atom_spec.cpp
+          ../../../source_cell/atom_pseudo.cpp
+          ../../../source_cell/pseudo.cpp
+          ../../../source_cell/test/support/mock_unitcell.cpp
+          ../../../source_io/module_output/output.cpp
+)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
