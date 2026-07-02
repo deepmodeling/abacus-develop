@@ -1,8 +1,10 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/module_ri/sternheimer_abacus_fd_adapter.h"
+#include "source_lcao/module_ri/sternheimer_abacus_fd_nonlocal.h"
 
 #include <stdexcept>
+#include <utility>
 
 namespace ModuleRI
 {
@@ -50,9 +52,28 @@ SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian(const elecstate::Potent
                                                          const double kinetic_prefactor)
 {
     const SternheimerABACUSFDGridData grid_data = make_sternheimer_fd_grid(pw_basis);
-    return SternheimerFDHamiltonian(grid_data.grid,
-                                    copy_sternheimer_local_potential(potential, pw_basis, spin),
-                                    kinetic_prefactor);
+    return make_sternheimer_fd_hamiltonian_from_local_potential(grid_data,
+                                                                copy_sternheimer_local_potential(potential,
+                                                                                                  pw_basis,
+                                                                                                  spin),
+                                                                kinetic_prefactor);
+}
+
+SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian(const elecstate::Potential& potential,
+                                                         const ModulePW::PW_Basis& pw_basis,
+                                                         const UnitCell& ucell,
+                                                         const int spin,
+                                                         const double kinetic_prefactor)
+{
+    const SternheimerABACUSFDGridData grid_data = make_sternheimer_fd_grid(pw_basis);
+    auto nonlocal_projector
+        = make_sternheimer_fd_nonlocal_projector_from_unitcell(ucell, grid_data.grid, grid_data.volume_element);
+    return make_sternheimer_fd_hamiltonian_from_local_potential(grid_data,
+                                                                copy_sternheimer_local_potential(potential,
+                                                                                                  pw_basis,
+                                                                                                  spin),
+                                                                kinetic_prefactor,
+                                                                std::move(nonlocal_projector));
 }
 
 } // namespace ModuleRI

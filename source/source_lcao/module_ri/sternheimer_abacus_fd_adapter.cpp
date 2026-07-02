@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cmath>
 #include <stdexcept>
+#include <utility>
 
 namespace
 {
@@ -82,6 +83,18 @@ SternheimerABACUSFDGridData make_sternheimer_fd_grid_from_lattice(const int nx,
     grid_data.grid.periodic = true;
     grid_data.volume_element = grid_data.grid.hx * grid_data.grid.hy * grid_data.grid.hz;
     return grid_data;
+}
+
+SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian_from_local_potential(
+    const SternheimerABACUSFDGridData& grid_data,
+    std::vector<double> local_potential,
+    const double kinetic_prefactor,
+    std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector)
+{
+    return SternheimerFDHamiltonian(grid_data.grid,
+                                    std::move(local_potential),
+                                    kinetic_prefactor,
+                                    std::move(nonlocal_projector));
 }
 
 } // namespace ModuleRI

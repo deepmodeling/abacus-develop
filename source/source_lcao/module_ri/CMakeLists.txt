@@ -14,6 +14,7 @@ if (ENABLE_LIBRI)
         sternheimer_abacus_fd_bindings.cpp
         sternheimer_abacus_fd_adapter.cpp
         sternheimer_abacus_fd_nonlocal.cpp
+        sternheimer_abacus_fd_smoke.cpp
         sternheimer_dft_zero_order.cpp
         sternheimer_fd_hamiltonian.cpp
         sternheimer_fd_nonlocal_projector.cpp

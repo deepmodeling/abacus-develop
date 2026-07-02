@@ -59,4 +59,9 @@ AddTest(
           ../../../source_cell/test/support/mock_unitcell.cpp
           ../../../source_io/module_output/output.cpp
 )
+AddTest(
+  TARGET MODULE_RI_sternheimer_abacus_fd_smoke_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_abacus_fd_smoke_test.cpp
+)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

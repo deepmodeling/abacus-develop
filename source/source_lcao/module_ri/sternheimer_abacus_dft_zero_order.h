@@ -6,6 +6,8 @@
 
 #include <vector>
 
+class UnitCell;
+
 namespace elecstate
 {
 class ElecState;
@@ -32,6 +34,18 @@ struct SternheimerABACUSDFTZeroOrderResult
 SternheimerABACUSDFTZeroOrderResult compare_sternheimer_abacus_fd_zero_order_to_dft(
     const elecstate::Potential& potential,
     const ModulePW::PW_Basis& pw_basis,
+    const elecstate::ElecState& elec_state,
+    int spin,
+    int k_index,
+    int num_bands,
+    double eigenvalue_tolerance,
+    int max_dense_size = 4096,
+    double kinetic_prefactor = 1.0);
+
+SternheimerABACUSDFTZeroOrderResult compare_sternheimer_abacus_fd_zero_order_to_dft(
+    const elecstate::Potential& potential,
+    const ModulePW::PW_Basis& pw_basis,
+    const UnitCell& ucell,
     const elecstate::ElecState& elec_state,
     int spin,
     int k_index,

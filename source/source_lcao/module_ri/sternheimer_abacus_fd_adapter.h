@@ -3,7 +3,10 @@
 
 #include "source_lcao/module_ri/sternheimer_fd_hamiltonian.h"
 
+#include <memory>
 #include <vector>
+
+class UnitCell;
 
 namespace ModuleBase
 {
@@ -44,8 +47,20 @@ std::vector<double> copy_sternheimer_local_potential(const elecstate::Potential&
                                                      const ModulePW::PW_Basis& pw_basis,
                                                      int spin);
 
+SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian_from_local_potential(
+    const SternheimerABACUSFDGridData& grid_data,
+    std::vector<double> local_potential,
+    double kinetic_prefactor = 1.0,
+    std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector = nullptr);
+
 SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian(const elecstate::Potential& potential,
                                                          const ModulePW::PW_Basis& pw_basis,
+                                                         int spin,
+                                                         double kinetic_prefactor = 1.0);
+
+SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian(const elecstate::Potential& potential,
+                                                         const ModulePW::PW_Basis& pw_basis,
+                                                         const UnitCell& ucell,
                                                          int spin,
                                                          double kinetic_prefactor = 1.0);
 
