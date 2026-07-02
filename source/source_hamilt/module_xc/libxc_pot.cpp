@@ -25,7 +25,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         const int nspin_in,
         const bool domag,
         const bool domag_z,
-        const std::map<int, double>* scaling_factor)
+        const std::map<int, double>* scaling_factor,
+        const double hybrid_alpha,
+        const double hse_omega)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_libxc");
     ModuleBase::timer::start("XC_Functional_Libxc","v_xc_libxc");
@@ -41,12 +43,6 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     // https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
     //----------------------------------------------------------
 
-    double hybrid_alpha = 0.0;
-    double hse_omega = 0.0;
-#ifdef __EXX
-    hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-    hse_omega = GlobalC::exx_info.info_global.hse_omega;
-#endif
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
         /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED,
@@ -222,7 +218,9 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     const double &omega, // volume of cell
     const double tpiba,
     const Charge* const chr,
-    const int nspin)
+    const int nspin,
+    const double hybrid_alpha,
+    const double hse_omega)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_meta");
     ModuleBase::timer::start("XC_Functional_Libxc","v_xc_meta");
@@ -241,12 +239,6 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     // use can check on website, for example:
     // https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
     //----------------------------------------------------------
-    double hybrid_alpha = 0.0;
-    double hse_omega = 0.0;
-#ifdef __EXX
-    hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-    hse_omega = GlobalC::exx_info.info_global.hse_omega;
-#endif
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
         /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED,
