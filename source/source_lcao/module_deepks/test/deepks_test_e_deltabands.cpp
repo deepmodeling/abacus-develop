@@ -9,21 +9,21 @@
 template <typename T>
 void test_deepks<T>::cal_V_delta()
 {
-    hamilt::HS_Matrix_K<T>* hsk = new hamilt::HS_Matrix_K<T>(&ParaO);
-    hamilt::HContainer<double>* hR = new hamilt::HContainer<double>(ucell, &ParaO);
-    hamilt::Operator<T>* op_deepks = new hamilt::DeePKS<hamilt::OperatorLCAO<T, double>>(hsk,
-                                                                                         kv.kvec_d,
-                                                                                         hR,
-                                                                                         &ucell,
-                                                                                         &Test_Deepks::GridD,
-                                                                                         &overlap_orb_alpha_,
-                                                                                         &ORB,
-                                                                                         kv.get_nkstot(),
-                                                                                         p_elec_DM,
-                                                                                         &this->ld);
+    hamilt::HS_Matrix_K<T> hsk(&ParaO);
+    hamilt::HContainer<double> hR(ucell, &ParaO);
+    hamilt::DeePKS<hamilt::OperatorLCAO<T, double>> op_deepks(&hsk,
+                                                              kv.kvec_d,
+                                                              &hR,
+                                                              &ucell,
+                                                              &Test_Deepks::GridD,
+                                                              &overlap_orb_alpha_,
+                                                              &ORB,
+                                                              kv.get_nkstot(),
+                                                              p_elec_DM,
+                                                              &this->ld);
     for (int ik = 0; ik < kv.get_nkstot(); ++ik)
     {
-        op_deepks->init(ik);
+        op_deepks.init(ik);
     }
 }
 

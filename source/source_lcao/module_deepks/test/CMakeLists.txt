@@ -1,4 +1,15 @@
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+set(DEEPKS_UT_PP_ORB_DIR "${PROJECT_SOURCE_DIR}/tests/PP_ORB")
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/support/NO_GO_deepks_UT/STRU
+    ${CMAKE_CURRENT_BINARY_DIR}/support/NO_GO_deepks_UT/STRU
+    @ONLY
+)
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/support/NO_KP_deepks_UT/STRU
+    ${CMAKE_CURRENT_BINARY_DIR}/support/NO_KP_deepks_UT/STRU
+    @ONLY
+)
 
 set(DEEPKS_UNIT_COMMON_SOURCES
     deepks_test_prep.cpp

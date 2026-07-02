@@ -59,7 +59,6 @@ void prepare_workdir()
     std::ostringstream command;
     command << "rm -rf " << shell_quote(run_root) << " && "
             << "mkdir -p " << shell_quote(run_root) << " && "
-            << "cp -R support/PP_ORB " << shell_quote(run_root + "/PP_ORB") << " && "
             << "cp -R " << shell_quote("support/" + case_dir) << " " << shell_quote(run_root + "/" + case_dir);
 
     ASSERT_EQ(std::system(command.str().c_str()), 0) << "Failed to prepare DeePKS unit-test work directory";
@@ -80,13 +79,14 @@ void run_typed_check()
     DEEPKS_UT_RUNNER(test);
 }
 
-bool gamma_only_case()
+void gamma_only_case(bool* gamma_only_local)
 {
     std::ifstream ifs("INPUT");
     std::string key;
-    bool gamma_only_local = false;
-    ifs >> key >> gamma_only_local;
-    return gamma_only_local;
+    ASSERT_TRUE(ifs.is_open()) << "Cannot open DeePKS unit-test INPUT";
+    ASSERT_TRUE(ifs >> key) << "Cannot read gamma_only_local key from DeePKS unit-test INPUT";
+    ASSERT_EQ(key, "gamma_only_local") << "Unexpected first entry in DeePKS unit-test INPUT";
+    ASSERT_TRUE(ifs >> *gamma_only_local) << "Cannot read gamma_only_local value from DeePKS unit-test INPUT";
 }
 } // namespace
 
@@ -94,7 +94,10 @@ TEST(DeePKSUnitTest, ConfiguredCheck)
 {
     prepare_workdir();
 
-    if (gamma_only_case())
+    bool gamma_only_local = false;
+    ASSERT_NO_FATAL_FAILURE(gamma_only_case(&gamma_only_local));
+
+    if (gamma_only_local)
     {
         run_typed_check<double>();
     }

@@ -1,7 +1,43 @@
 #include "deepks_test.h"
 
+#include <cerrno>
 #include <complex>
+#include <cstdlib>
 #include <gtest/gtest.h>
+#include <string>
+
+namespace
+{
+bool parse_double_token(const std::string& token, double* value)
+{
+    char* end = nullptr;
+    errno = 0;
+    const double parsed = std::strtod(token.c_str(), &end);
+    if (end == token.c_str() || *end != '\0' || errno == ERANGE)
+    {
+        return false;
+    }
+    *value = parsed;
+    return true;
+}
+
+bool parse_complex_token(const std::string& token, double* real, double* imag)
+{
+    if (token.size() < 5 || token[0] != '(' || token[token.size() - 1] != ')')
+    {
+        return false;
+    }
+
+    const std::string value = token.substr(1, token.size() - 2);
+    const std::string::size_type comma = value.find(',');
+    if (comma == std::string::npos || comma == 0 || comma == value.size() - 1)
+    {
+        return false;
+    }
+
+    return parse_double_token(value.substr(0, comma), real) && parse_double_token(value.substr(comma + 1), imag);
+}
+} // namespace
 
 namespace Test_Deepks
 {
@@ -44,21 +80,30 @@ void test_deepks<T>::assert_file_matches_reference(const std::string& actual_fil
     {
         ASSERT_TRUE(reference >> reference_word)
             << reference_file << " has fewer entries than " << actual_file << " at entry " << entry;
-        if ((actual_word[0] - '0' >= 0 && actual_word[0] - '0' < 10) || actual_word[0] == '-')
+
+        double actual_num = 0.0;
+        double reference_num = 0.0;
+        const bool actual_is_number = parse_double_token(actual_word, &actual_num);
+        const bool reference_is_number = parse_double_token(reference_word, &reference_num);
+        double actual_real = 0.0;
+        double actual_imag = 0.0;
+        double reference_real = 0.0;
+        double reference_imag = 0.0;
+        const bool actual_is_complex = parse_complex_token(actual_word, &actual_real, &actual_imag);
+        const bool reference_is_complex = parse_complex_token(reference_word, &reference_real, &reference_imag);
+
+        if (actual_is_number || reference_is_number)
         {
-            const double num1 = std::stod(actual_word);
-            const double num2 = std::stod(reference_word);
-            EXPECT_NEAR(num1, num2, test_thr) << "numeric mismatch at entry " << entry;
+            ASSERT_TRUE(actual_is_number) << "Cannot parse actual numeric entry " << entry << ": " << actual_word;
+            ASSERT_TRUE(reference_is_number)
+                << "Cannot parse reference numeric entry " << entry << ": " << reference_word;
+            EXPECT_NEAR(actual_num, reference_num, test_thr) << "numeric mismatch at entry " << entry;
         }
-        else if (actual_word[0] == '(' && actual_word[actual_word.size() - 1] == ')' && reference_word[0] == '('
-                 && reference_word[reference_word.size() - 1] == ')')
+        else if (actual_is_complex || reference_is_complex)
         {
-            const std::string actual_str = actual_word.substr(1, actual_word.size() - 2);
-            const std::string reference_str = reference_word.substr(1, reference_word.size() - 2);
-            const double actual_real = std::stod(actual_str.substr(0, actual_str.find(',')));
-            const double actual_imag = std::stod(actual_str.substr(actual_str.find(',') + 1));
-            const double reference_real = std::stod(reference_str.substr(0, reference_str.find(',')));
-            const double reference_imag = std::stod(reference_str.substr(reference_str.find(',') + 1));
+            ASSERT_TRUE(actual_is_complex) << "Cannot parse actual complex entry " << entry << ": " << actual_word;
+            ASSERT_TRUE(reference_is_complex)
+                << "Cannot parse reference complex entry " << entry << ": " << reference_word;
             EXPECT_NEAR(actual_real, reference_real, test_thr) << "complex real mismatch at entry " << entry;
             EXPECT_NEAR(actual_imag, reference_imag, test_thr) << "complex imag mismatch at entry " << entry;
         }
