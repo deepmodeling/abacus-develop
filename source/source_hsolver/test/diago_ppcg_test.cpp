@@ -8,9 +8,8 @@
  *      Exact eigenvalues are the diagonal entries.  Simplest possible
  *      smoke test — should converge in very few iterations.
  *
- * Tests primarily exercise the default CONJUGATE_GRADIENT strategy, with a
- * BLOCK_SUBSPACE smoke test to keep the explicit experimental path finite on a
- * small Hermitian problem.
+ * Tests primarily exercise the production BLOCK_SUBSPACE strategy, with
+ * CONJUGATE_GRADIENT kept available as an explicit fallback path.
  */
 
 #include "../diago_ppcg.h"
@@ -114,7 +113,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGTridiagTest, ConjugateGradient)
+TEST_F(DiagoPPCGTridiagTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -125,7 +124,7 @@ TEST_F(DiagoPPCGTridiagTest, ConjugateGradient)
         /* sbsize   = */ 4,
         /* rr_step  = */ 4,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -139,10 +138,10 @@ TEST_F(DiagoPPCGTridiagTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "Tridiag CG: eigenvalue[" << i << "] mismatch";
+            << "Tridiag BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(100))
-        << "Tridiag CG: too many iterations";
+        << "Tridiag BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -208,7 +207,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGDiagonalTest, ConjugateGradient)
+TEST_F(DiagoPPCGDiagonalTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -219,7 +218,7 @@ TEST_F(DiagoPPCGDiagonalTest, ConjugateGradient)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -233,10 +232,10 @@ TEST_F(DiagoPPCGDiagonalTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "Diagonal CG: eigenvalue[" << i << "] mismatch";
+            << "Diagonal BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(50))
-        << "Diagonal CG: too many iterations";
+        << "Diagonal BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -300,7 +299,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCG2x2Test, ConjugateGradient)
+TEST_F(DiagoPPCG2x2Test, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -311,7 +310,7 @@ TEST_F(DiagoPPCG2x2Test, ConjugateGradient)
         /* sbsize   = */ 2,
         /* rr_step  = */ 2,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -325,10 +324,10 @@ TEST_F(DiagoPPCG2x2Test, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "2x2 CG: eigenvalue[" << i << "] mismatch";
+            << "2x2 BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(50))
-        << "2x2 CG: too many iterations";
+        << "2x2 BLOCK: too many iterations";
 }
 
 TEST(DiagoPPCGComplexHermitianTest, DefaultKeepsImaginaryProjection)
@@ -482,7 +481,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGDegenerateTest, ConjugateGradient)
+TEST_F(DiagoPPCGDegenerateTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -493,7 +492,7 @@ TEST_F(DiagoPPCGDegenerateTest, ConjugateGradient)
         /* sbsize   = */ 4,
         /* rr_step  = */ 4,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -507,10 +506,10 @@ TEST_F(DiagoPPCGDegenerateTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "Degenerate CG: eigenvalue[" << i << "] mismatch";
+            << "Degenerate BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(100))
-        << "Degenerate CG: too many iterations";
+        << "Degenerate BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -575,7 +574,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGLargeTridiagTest, ConjugateGradient)
+TEST_F(DiagoPPCGLargeTridiagTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -586,7 +585,7 @@ TEST_F(DiagoPPCGLargeTridiagTest, ConjugateGradient)
         /* sbsize   = */ 5,
         /* rr_step  = */ 5,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -600,10 +599,10 @@ TEST_F(DiagoPPCGLargeTridiagTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "Large Tridiag CG: eigenvalue[" << i << "] mismatch";
+            << "Large Tridiag BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(150))
-        << "Large Tridiag CG: too many iterations";
+        << "Large Tridiag BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -711,7 +710,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGDenseTest, ConjugateGradient)
+TEST_F(DiagoPPCGDenseTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -722,7 +721,7 @@ TEST_F(DiagoPPCGDenseTest, ConjugateGradient)
         /* sbsize   = */ 4,
         /* rr_step  = */ 4,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -736,10 +735,10 @@ TEST_F(DiagoPPCGDenseTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "Dense CG: eigenvalue[" << i << "] mismatch";
+            << "Dense BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(200))
-        << "Dense CG: too many iterations";
+        << "Dense BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -837,7 +836,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGWithSTest, ConjugateGradient)
+TEST_F(DiagoPPCGWithSTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -855,7 +854,7 @@ TEST_F(DiagoPPCGWithSTest, ConjugateGradient)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -873,9 +872,9 @@ TEST_F(DiagoPPCGWithSTest, ConjugateGradient)
     // this positive-definite problem).
     for (int i = 0; i < nband; ++i) {
         EXPECT_GT(eval[i], 0.0)
-            << "WithS CG: eigenvalue[" << i << "] should be positive";
+            << "WithS BLOCK: eigenvalue[" << i << "] should be positive";
         EXPECT_LT(eval[i], 10.0)
-            << "WithS CG: eigenvalue[" << i << "] unreasonably large";
+            << "WithS BLOCK: eigenvalue[" << i << "] unreasonably large";
     }
 
     // Residual check: ||Hψ_i - ε_i S ψ_i|| / |ε_i| < ethr
@@ -888,11 +887,11 @@ TEST_F(DiagoPPCGWithSTest, ConjugateGradient)
             res[j] = hpsi[j] - T(eval[i], 0) * spsi[j];
         Real res_nrm = column_norm(res.data(), n_dim);
         EXPECT_LE(res_nrm, std::max(1e-6, 1e2 * ethr[i]))
-            << "WithS CG: residual[" << i << "] too large, r=" << res_nrm;
+            << "WithS BLOCK: residual[" << i << "] too large, r=" << res_nrm;
     }
 
     EXPECT_LE(avg_iter, static_cast<double>(100))
-        << "WithS CG: too many iterations";
+        << "WithS BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -958,7 +957,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGGammaG0Test, ConjugateGradient)
+TEST_F(DiagoPPCGGammaG0Test, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -969,7 +968,7 @@ TEST_F(DiagoPPCGGammaG0Test, ConjugateGradient)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3,
         /* gamma_g0 = */ true,   // <-- Force G=0 wavefunctions to be real
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -983,7 +982,7 @@ TEST_F(DiagoPPCGGammaG0Test, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "GammaG0 CG: eigenvalue[" << i << "] mismatch";
+            << "GammaG0 BLOCK: eigenvalue[" << i << "] mismatch";
     }
 
     // Verify G=0 band (first band) is real
@@ -991,10 +990,10 @@ TEST_F(DiagoPPCGGammaG0Test, ConjugateGradient)
     for (int i = 0; i < n_dim; ++i)
         max_imag = std::max(max_imag, std::abs(std::imag(psi_run[i])));
     EXPECT_LT(max_imag, 1e-12)
-        << "GammaG0 CG: G=0 band has non-zero imaginary part: " << max_imag;
+        << "GammaG0 BLOCK: G=0 band has non-zero imaginary part: " << max_imag;
 
     EXPECT_LE(avg_iter, static_cast<double>(100))
-        << "GammaG0 CG: too many iterations";
+        << "GammaG0 BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1048,7 +1047,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGSingleBandTest, ConjugateGradient)
+TEST_F(DiagoPPCGSingleBandTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -1059,7 +1058,7 @@ TEST_F(DiagoPPCGSingleBandTest, ConjugateGradient)
         /* sbsize   = */ 1,
         /* rr_step  = */ 1,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -1072,9 +1071,9 @@ TEST_F(DiagoPPCGSingleBandTest, ConjugateGradient)
     );
 
     EXPECT_NEAR(eval[0], exact[0], 1e-8)
-        << "SingleBand CG: eigenvalue mismatch";
+        << "SingleBand BLOCK: eigenvalue mismatch";
     EXPECT_LE(avg_iter, static_cast<double>(50))
-        << "SingleBand CG: too many iterations";
+        << "SingleBand BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1141,7 +1140,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGEigenvectorTest, ConjugateGradient)
+TEST_F(DiagoPPCGEigenvectorTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -1152,7 +1151,7 @@ TEST_F(DiagoPPCGEigenvectorTest, ConjugateGradient)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -1167,7 +1166,7 @@ TEST_F(DiagoPPCGEigenvectorTest, ConjugateGradient)
     // --- Eigenvalue check ---
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "Eigenvec CG: eigenvalue[" << i << "] mismatch";
+            << "Eigenvec BLOCK: eigenvalue[" << i << "] mismatch";
     }
 
     // --- Residual check: ||Hψ_i - ε_i ψ_i|| < 1e-6 ---
@@ -1179,7 +1178,7 @@ TEST_F(DiagoPPCGEigenvectorTest, ConjugateGradient)
             res[j] = hpsi[j] - eval[i] * psi_run[j + i * ld];
         Real res_nrm = column_norm(res.data(), n_dim);
         EXPECT_LT(res_nrm, 1e-6)
-            << "Eigenvec CG: residual[" << i << "] too large: " << res_nrm;
+            << "Eigenvec BLOCK: residual[" << i << "] too large: " << res_nrm;
     }
 
     // --- Orthogonality check: |ψ_i^H ψ_j - δ_ij| < 1e-8 ---
@@ -1190,17 +1189,17 @@ TEST_F(DiagoPPCGEigenvectorTest, ConjugateGradient)
                 dot += std::conj(psi_run[k + i * ld]) * psi_run[k + j * ld];
             if (i == j)
                 EXPECT_NEAR(std::abs(dot), 1.0, 1e-8)
-                    << "Eigenvec CG: ψ[" << i << "] not normalized, |dot|="
+                    << "Eigenvec BLOCK: ψ[" << i << "] not normalized, |dot|="
                     << std::abs(dot);
             else
                 EXPECT_LT(std::abs(dot), 1e-8)
-                    << "Eigenvec CG: ψ[" << i << "] not orthogonal to ψ[" << j
+                    << "Eigenvec BLOCK: ψ[" << i << "] not orthogonal to ψ[" << j
                     << "], |dot|=" << std::abs(dot);
         }
     }
 
     EXPECT_LE(avg_iter, static_cast<double>(100))
-        << "Eigenvec CG: too many iterations";
+        << "Eigenvec BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1266,7 +1265,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGAllBandsTest, ConjugateGradient)
+TEST_F(DiagoPPCGAllBandsTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -1277,7 +1276,7 @@ TEST_F(DiagoPPCGAllBandsTest, ConjugateGradient)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -1291,10 +1290,10 @@ TEST_F(DiagoPPCGAllBandsTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "AllBands CG: eigenvalue[" << i << "] mismatch";
+            << "AllBands BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(100))
-        << "AllBands CG: too many iterations";
+        << "AllBands BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1359,7 +1358,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGMediumTridiagTest, ConjugateGradient)
+TEST_F(DiagoPPCGMediumTridiagTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -1370,7 +1369,7 @@ TEST_F(DiagoPPCGMediumTridiagTest, ConjugateGradient)
         /* sbsize   = */ 4,
         /* rr_step  = */ 4,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -1384,10 +1383,10 @@ TEST_F(DiagoPPCGMediumTridiagTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "Medium Tridiag CG: eigenvalue[" << i << "] mismatch";
+            << "Medium Tridiag BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(120))
-        << "Medium Tridiag CG: too many iterations";
+        << "Medium Tridiag BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1453,7 +1452,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGGammaG0SmallTest, ConjugateGradient)
+TEST_F(DiagoPPCGGammaG0SmallTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -1464,7 +1463,7 @@ TEST_F(DiagoPPCGGammaG0SmallTest, ConjugateGradient)
         /* sbsize   = */ 2,
         /* rr_step  = */ 2,
         /* gamma_g0 = */ true,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -1478,7 +1477,7 @@ TEST_F(DiagoPPCGGammaG0SmallTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "GammaG0Small CG: eigenvalue[" << i << "] mismatch";
+            << "GammaG0Small BLOCK: eigenvalue[" << i << "] mismatch";
     }
 
     // Both bands should be real-valued when gamma_g0_real is true
@@ -1488,12 +1487,12 @@ TEST_F(DiagoPPCGGammaG0SmallTest, ConjugateGradient)
             max_imag = std::max(max_imag,
                                std::abs(std::imag(psi_run[i + j * ld])));
         EXPECT_LT(max_imag, 1e-12)
-            << "GammaG0Small CG: band[" << j
+            << "GammaG0Small BLOCK: band[" << j
             << "] has non-zero imaginary part: " << max_imag;
     }
 
     EXPECT_LE(avg_iter, static_cast<double>(100))
-        << "GammaG0Small CG: too many iterations";
+        << "GammaG0Small BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1570,7 +1569,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGPentaTest, ConjugateGradient)
+TEST_F(DiagoPPCGPentaTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -1581,7 +1580,7 @@ TEST_F(DiagoPPCGPentaTest, ConjugateGradient)
         /* sbsize   = */ 4,
         /* rr_step  = */ 4,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -1595,10 +1594,10 @@ TEST_F(DiagoPPCGPentaTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "Penta CG: eigenvalue[" << i << "] mismatch";
+            << "Penta BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(150))
-        << "Penta CG: too many iterations";
+        << "Penta BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1661,7 +1660,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPCGGappedSpectrumTest, ConjugateGradient)
+TEST_F(DiagoPCGGappedSpectrumTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -1672,7 +1671,7 @@ TEST_F(DiagoPCGGappedSpectrumTest, ConjugateGradient)
         /* sbsize   = */ 3,
         /* rr_step  = */ 3,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -1686,10 +1685,10 @@ TEST_F(DiagoPCGGappedSpectrumTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "Gapped CG: eigenvalue[" << i << "] mismatch";
+            << "Gapped BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(100))
-        << "Gapped CG: too many iterations";
+        << "Gapped BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1757,7 +1756,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGBadPrecTest, ConjugateGradient)
+TEST_F(DiagoPPCGBadPrecTest, BlockSubspace)
 {
     std::vector<T>    psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
@@ -1768,7 +1767,7 @@ TEST_F(DiagoPPCGBadPrecTest, ConjugateGradient)
         /* sbsize   = */ 4,
         /* rr_step  = */ 4,
         /* gamma_g0 = */ false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
     );
 
     auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
@@ -1782,10 +1781,10 @@ TEST_F(DiagoPPCGBadPrecTest, ConjugateGradient)
 
     for (int i = 0; i < nband; ++i) {
         EXPECT_NEAR(eval[i], exact[i], 1e-8)
-            << "BadPrec CG: eigenvalue[" << i << "] mismatch";
+            << "BadPrec BLOCK: eigenvalue[" << i << "] mismatch";
     }
     EXPECT_LE(avg_iter, static_cast<double>(200))
-        << "BadPrec CG: too many iterations";
+        << "BadPrec BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1814,20 +1813,20 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCG1x1Test, ConjugateGradient)
+TEST_F(DiagoPPCG1x1Test, BlockSubspace)
 {
     std::vector<T> psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
         1e-12, 10, 1, 1, false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT);
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE);
     auto h_op = [this](T* in, T* out, int ldi, int nc) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ldi, nc);
     };
     double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim,
         psi_run.data(), eval.data(), ethr, prec.data());
-    EXPECT_NEAR(eval[0], exact[0], 1e-8) << "1x1 CG: mismatch";
-    EXPECT_LE(avg_iter, 10.0) << "1x1 CG: too many iterations";
+    EXPECT_NEAR(eval[0], exact[0], 1e-8) << "1x1 BLOCK: mismatch";
+    EXPECT_LE(avg_iter, 10.0) << "1x1 BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1876,13 +1875,13 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGScaledTest, ConjugateGradient)
+TEST_F(DiagoPPCGScaledTest, BlockSubspace)
 {
     std::vector<T> psi_run = psi;
     std::vector<Real> eval(nband, 0.0);
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
         1e-10, 120, 4, 4, false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT);
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE);
     auto h_op = [this](T* in, T* out, int ldi, int nc) {
         dense_h_multiply(H_mat.data(), n_dim, in, out, ldi, nc);
     };
@@ -1890,8 +1889,8 @@ TEST_F(DiagoPPCGScaledTest, ConjugateGradient)
         psi_run.data(), eval.data(), ethr, prec.data());
     for (int i=0;i<nband;++i)
         EXPECT_NEAR(eval[i], exact[i], 1e-6)
-            << "Scaled CG: eigenvalue["<<i<<"] mismatch";
-    EXPECT_LE(avg_iter, 120.0) << "Scaled CG: too many iterations";
+            << "Scaled BLOCK: eigenvalue["<<i<<"] mismatch";
+    EXPECT_LE(avg_iter, 120.0) << "Scaled BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1936,20 +1935,20 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGManyBandsTest, ConjugateGradient)
+TEST_F(DiagoPPCGManyBandsTest, BlockSubspace)
 {
     std::vector<T> psi_run=psi;
     std::vector<Real> eval(nband,0.0);
     hsolver::DiagoPPCG<T,hsolver::base_device::DEVICE_CPU> solver(
-        1e-12,150,4,4,false,hsolver::PpcgStrategy::CONJUGATE_GRADIENT);
+        1e-12,150,4,4,false,hsolver::PpcgStrategy::BLOCK_SUBSPACE);
     auto h_op=[this](T*in,T*out,int ldi,int nc){
         dense_h_multiply(H_mat.data(),n_dim,in,out,ldi,nc);};
     double avg_iter=solver.diag(h_op,nullptr,ld,nband,n_dim,
         psi_run.data(),eval.data(),ethr,prec.data());
     for(int i=0;i<nband;++i)
         EXPECT_NEAR(eval[i],exact[i],1e-8)
-            <<"ManyBands CG: eigenvalue["<<i<<"] mismatch";
-    EXPECT_LE(avg_iter,150.0)<<"ManyBands CG: too many iterations";
+            <<"ManyBands BLOCK: eigenvalue["<<i<<"] mismatch";
+    EXPECT_LE(avg_iter,150.0)<<"ManyBands BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1992,21 +1991,21 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGRrStep1Test, ConjugateGradient)
+TEST_F(DiagoPPCGRrStep1Test, BlockSubspace)
 {
     std::vector<T> psi_run=psi;
     std::vector<Real> eval(nband,0.0);
     hsolver::DiagoPPCG<T,hsolver::base_device::DEVICE_CPU> solver(
         1e-12,100,3,1/*rr_step=1*/,false,
-        hsolver::PpcgStrategy::CONJUGATE_GRADIENT);
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE);
     auto h_op=[this](T*in,T*out,int ldi,int nc){
         dense_h_multiply(H_mat.data(),n_dim,in,out,ldi,nc);};
     double avg_iter=solver.diag(h_op,nullptr,ld,nband,n_dim,
         psi_run.data(),eval.data(),ethr,prec.data());
     for(int i=0;i<nband;++i)
         EXPECT_NEAR(eval[i],exact[i],1e-8)
-            <<"RrStep1 CG: eigenvalue["<<i<<"] mismatch";
-    EXPECT_LE(avg_iter,100.0)<<"RrStep1 CG: too many iterations";
+            <<"RrStep1 BLOCK: eigenvalue["<<i<<"] mismatch";
+    EXPECT_LE(avg_iter,100.0)<<"RrStep1 BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -2052,20 +2051,20 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGNeumannTest, ConjugateGradient)
+TEST_F(DiagoPPCGNeumannTest, BlockSubspace)
 {
     std::vector<T> psi_run=psi;
     std::vector<Real> eval(nband,0.0);
     hsolver::DiagoPPCG<T,hsolver::base_device::DEVICE_CPU> solver(
-        1e-12,100,4,4,false,hsolver::PpcgStrategy::CONJUGATE_GRADIENT);
+        1e-12,100,4,4,false,hsolver::PpcgStrategy::BLOCK_SUBSPACE);
     auto h_op=[this](T*in,T*out,int ldi,int nc){
         dense_h_multiply(H_mat.data(),n_dim,in,out,ldi,nc);};
     double avg_iter=solver.diag(h_op,nullptr,ld,nband,n_dim,
         psi_run.data(),eval.data(),ethr,prec.data());
     for(int i=0;i<nband;++i)
         EXPECT_NEAR(eval[i],exact[i],1e-8)
-            <<"Neumann CG: eigenvalue["<<i<<"] mismatch";
-    EXPECT_LE(avg_iter,100.0)<<"Neumann CG: too many iterations";
+            <<"Neumann BLOCK: eigenvalue["<<i<<"] mismatch";
+    EXPECT_LE(avg_iter,100.0)<<"Neumann BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -2108,20 +2107,20 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGTightEthrTest, ConjugateGradient)
+TEST_F(DiagoPPCGTightEthrTest, BlockSubspace)
 {
     std::vector<T> psi_run=psi;
     std::vector<Real> eval(nband,0.0);
     hsolver::DiagoPPCG<T,hsolver::base_device::DEVICE_CPU> solver(
-        1e-14,200,3,3,false,hsolver::PpcgStrategy::CONJUGATE_GRADIENT);
+        1e-14,200,3,3,false,hsolver::PpcgStrategy::BLOCK_SUBSPACE);
     auto h_op=[this](T*in,T*out,int ldi,int nc){
         dense_h_multiply(H_mat.data(),n_dim,in,out,ldi,nc);};
     double avg_iter=solver.diag(h_op,nullptr,ld,nband,n_dim,
         psi_run.data(),eval.data(),ethr,prec.data());
     for(int i=0;i<nband;++i)
         EXPECT_NEAR(eval[i],exact[i],1e-8)
-            <<"TightEthr CG: eigenvalue["<<i<<"] mismatch";
-    EXPECT_LE(avg_iter,200.0)<<"TightEthr CG: too many iterations";
+            <<"TightEthr BLOCK: eigenvalue["<<i<<"] mismatch";
+    EXPECT_LE(avg_iter,200.0)<<"TightEthr BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -2179,7 +2178,7 @@ protected:
     std::vector<T> psi;
 };
 
-TEST_F(DiagoPPCGTridiagSTest, ConjugateGradient)
+TEST_F(DiagoPPCGTridiagSTest, BlockSubspace)
 {
     std::vector<T> psi_run=psi;
     std::vector<Real> eval(nband,0.0);
@@ -2189,7 +2188,7 @@ TEST_F(DiagoPPCGTridiagSTest, ConjugateGradient)
             if(i>0)out[i+j*ldi]+=T(0.2,0)*in[(i-1)+j*ldi];
             if(i<n_dim-1)out[i+j*ldi]+=T(0.2,0)*in[(i+1)+j*ldi];}};
     hsolver::DiagoPPCG<T,hsolver::base_device::DEVICE_CPU> solver(
-        1e-10,150,3,3,false,hsolver::PpcgStrategy::CONJUGATE_GRADIENT);
+        1e-10,150,3,3,false,hsolver::PpcgStrategy::BLOCK_SUBSPACE);
     auto h_op=[this](T*in,T*out,int ldi,int nc){
         dense_h_multiply(H_mat.data(),n_dim,in,out,ldi,nc);};
     double avg_iter=solver.diag(h_op,spsi_func,ld,nband,n_dim,
@@ -2205,20 +2204,20 @@ TEST_F(DiagoPPCGTridiagSTest, ConjugateGradient)
         spsi_func(psi_run.data()+i*ld,spsi.data(),n_dim,1);
         for(int j=0;j<n_dim;++j)res[j]=hpsi[j]-T(eval[i],0)*spsi[j];
         Real rn=column_norm(res.data(),n_dim);
-        EXPECT_LT(rn,1e-4)<<"TridiagS CG: residual["<<i<<"] too large: "<<rn;}
-    EXPECT_LE(avg_iter,150.0)<<"TridiagS CG: too many iterations";
+        EXPECT_LT(rn,1e-4)<<"TridiagS BLOCK: residual["<<i<<"] too large: "<<rn;}
+    EXPECT_LE(avg_iter,150.0)<<"TridiagS BLOCK: too many iterations";
 }
 
 // =============================================================================
-// Performance benchmark: PPCG vs CG vs Davidson comparison
+// Performance benchmark: PPCG vs BLOCK vs Davidson comparison
 //
 // Runs PPCG on random sparse symmetric matrices of various sizes (matching
-// the CG/Davidson test sizes: npw=100,200,500) and reports avg_iter and
+// the BLOCK/Davidson test sizes: npw=100,200,500) and reports avg_iter and
 // wall-clock time.  avg_iter is the primary metric — it counts the average
 // number of H·psi applications per band.
 //
-// Typical results from the existing CG/Davidson tests (for reference):
-//   CG:       avg_iter ~ 20-50  on random sparse, ~ 5-15 on tridiagonal
+// Typical results from the existing BLOCK/Davidson tests (for reference):
+//   BLOCK:       avg_iter ~ 20-50  on random sparse, ~ 5-15 on tridiagonal
 //   Davidson: avg_iter ~ 15-40  on random sparse (but each iter is heavier)
 //   PPCG:     avg_iter ~ 2-10  on tridiagonal/diagonal, varies with sparsity
 //
@@ -2290,7 +2289,7 @@ protected:
 
         hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
             1e-8, 500, nband, std::min(nband, 4), false,
-            hsolver::PpcgStrategy::CONJUGATE_GRADIENT);
+            hsolver::PpcgStrategy::BLOCK_SUBSPACE);
 
         auto t0 = std::chrono::high_resolution_clock::now();
         double avg_iter = solver.diag(h_op, nullptr, ld, nband, n,

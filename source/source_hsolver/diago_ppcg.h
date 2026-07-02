@@ -24,8 +24,8 @@ namespace hsolver {
 //     (File 2 approach).
 //   BLOCK_SUBSPACE — block subspace diagonalization (File 1 approach).
 //
-// CONJUGATE_GRADIENT is the default because it is the tested production path.
-// BLOCK_SUBSPACE is kept as an explicit experimental strategy.
+// BLOCK_SUBSPACE is the production path used by ks_solver=ppcg.
+// CONJUGATE_GRADIENT is kept as an explicit fallback strategy.
 // -----------------------------------------------------------------------------
 
 enum class PpcgStrategy { BLOCK_SUBSPACE, CONJUGATE_GRADIENT };
@@ -53,7 +53,7 @@ public:
               const int& sbsize,
               const int& rr_step,
               const bool gamma_g0_real,
-              const PpcgStrategy strategy = PpcgStrategy::CONJUGATE_GRADIENT);
+              const PpcgStrategy strategy = PpcgStrategy::BLOCK_SUBSPACE);
 
     // -------------------------------------------------------------------------
     // Main entry point
@@ -159,6 +159,8 @@ private:
         std::vector<T> k;        // K matrix (projected H)
         std::vector<T> m;        // M matrix (projected S)
         std::vector<Real> eval;  // eigenvalues
+        std::vector<Real> w_scale;
+        std::vector<Real> p_scale;
     };
 
     void lock_epairs(const std::vector<T>& residual,

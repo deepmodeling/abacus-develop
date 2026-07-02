@@ -51,7 +51,7 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
                               sbsize,
                               rr_step,
                               gamma_only,
-                              PpcgStrategy::CONJUGATE_GRADIENT);
+                              PpcgStrategy::BLOCK_SUBSPACE);
 
     return ppcg.diag(hpsi_func,
                      spsi_func,
