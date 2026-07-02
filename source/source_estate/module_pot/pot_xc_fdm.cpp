@@ -7,10 +7,6 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 
-#ifdef __EXX
-#include "source_hamilt/module_xc/exx_info.h"
-#endif
-
 namespace elecstate
 {
 
@@ -26,7 +22,7 @@ PotXC_FDM::PotXC_FDM(
 
 	const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
 #ifdef __EXX
-	const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+	const double hse_omega = XC_Functional::get_hse_omega();
 #else
 	const double hse_omega = 0.0;
 #endif
@@ -64,7 +60,7 @@ void PotXC_FDM::cal_v_eff(
 
 	const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
 #ifdef __EXX
-	const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+	const double hse_omega = XC_Functional::get_hse_omega();
 #else
 	const double hse_omega = 0.0;
 #endif

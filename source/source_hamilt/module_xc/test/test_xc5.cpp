@@ -2,7 +2,6 @@
 #include "../libxc_abacus.h"
 #include "gtest/gtest.h"
 #include "xctest.h"
-#include "../exx_info.h"
 #include "xc3_mock.h"
 #include "source_base/matrix.h"
 #include "../../../source_base/parallel_reduce.h"
@@ -79,7 +78,7 @@ class XCTest_VXC : public XCTest
             XC_Functional::set_xc_type("PBE");
 
             const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
-            const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+            const double hse_omega = XC_Functional::get_hse_omega();
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
                 = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z, hybrid_alpha, hse_omega);
             et1 = std::get<0>(etxc_vtxc_v);
@@ -183,7 +182,7 @@ class XCTest_VXC_Libxc : public XCTest
             XC_Functional::set_xc_type("GGA_X_PBE+GGA_C_PBE");
 
             const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
-            const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+            const double hse_omega = XC_Functional::get_hse_omega();
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
                 = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z, hybrid_alpha, hse_omega);
             et1 = std::get<0>(etxc_vtxc_v);
@@ -295,7 +294,7 @@ class XCTest_VXC_meta : public XCTest
             XC_Functional::set_xc_type("SCAN");
 
             const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
-            const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+            const double hse_omega = XC_Functional::get_hse_omega();
             std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
                 = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin1, hybrid_alpha, hse_omega);
             et1 = std::get<0>(etxc_vtxc_v);

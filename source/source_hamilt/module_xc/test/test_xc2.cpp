@@ -495,7 +495,7 @@ class XCTest_PZ_SPN_LibXC : public XCTest
             std::vector<double> zeta = {0.0, 0.0, 0.2, 0.5, 0.8, 1.0};
 
             const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
-            const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+            const double hse_omega = XC_Functional::get_hse_omega();
             for(int i=0;i<5;i++)
             {
                 double e,v1,v2;

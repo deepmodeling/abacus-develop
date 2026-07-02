@@ -10,10 +10,6 @@
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 
-#ifdef __EXX
-#include "source_hamilt/module_xc/exx_info.h"
-#endif
-
 
 //NLCC term, need to be tested
 template <typename FPTYPE, typename Device>
@@ -57,7 +53,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	ModuleBase::matrix vxc;
     const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
 #ifdef __EXX
-    const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+    const double hse_omega = XC_Functional::get_hse_omega();
 #else
     const double hse_omega = 0.0;
 #endif

@@ -882,7 +882,7 @@ class XCTest_PBE_LibXC : public XCTest
             std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
 
             const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
-            const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+            const double hse_omega = XC_Functional::get_hse_omega();
             for(int i=0;i<5;i++)
             {
                 double e,v,v1,v2;

@@ -2,9 +2,6 @@
 #include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
-#ifdef __EXX
-#include "source_hamilt/module_xc/exx_info.h"
-#endif
 
 //calculate the GGA stress correction in PW and LCAO
 template <typename FPTYPE, typename Device>
@@ -29,12 +26,8 @@ void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
     FPTYPE dum2=0.0;
     ModuleBase::matrix dum3;
     const bool is_stress = true;
-    double hybrid_alpha = 0.0;
-    double hse_omega = 0.0;
-#ifdef __EXX
-    hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-    hse_omega = GlobalC::exx_info.info_global.hse_omega;
-#endif
+    const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+    const double hse_omega = XC_Functional::get_hse_omega();
     XC_Functional::gradcorr(
         dum1, dum2, dum3, chr, rho_basis, &ucell,
         stress_gga, is_stress,
