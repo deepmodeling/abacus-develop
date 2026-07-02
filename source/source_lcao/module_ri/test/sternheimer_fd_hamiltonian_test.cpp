@@ -3,6 +3,7 @@
 #include <cmath>
 #include <complex>
 #include <gtest/gtest.h>
+#include <memory>
 #include <vector>
 
 namespace
@@ -86,6 +87,30 @@ TEST(SternheimerFDHamiltonian, DenseMatrixMatchesApply)
         EXPECT_NEAR(hpsi[ir].real(), matrix_hpsi[ir].real(), 1.0e-12);
         EXPECT_NEAR(hpsi[ir].imag(), matrix_hpsi[ir].imag(), 1.0e-12);
     }
+}
+
+TEST(SternheimerFDHamiltonian, ApplyIncludesNonlocalProjector)
+{
+    Hamiltonian::Grid grid{2, 1, 1, 1.0, 1.0, 1.0, true};
+    ModuleRI::SternheimerFDNonlocalProjector::ProjectorBlock block;
+    block.projectors = {{Complex(1.0, 0.0), Complex(0.0, 0.0)}};
+    block.d_matrix = {{Complex(2.0, 0.0)}};
+    auto nonlocal_projector = std::make_shared<ModuleRI::SternheimerFDNonlocalProjector>(
+        grid.size(),
+        1.0,
+        std::vector<ModuleRI::SternheimerFDNonlocalProjector::ProjectorBlock>{block});
+    Hamiltonian hamiltonian(grid, std::vector<double>(grid.size(), 0.0), 0.0, nonlocal_projector);
+
+    const Vector psi = {Complex(3.0, 0.0), Complex(4.0, 0.0)};
+    Vector hpsi;
+    hamiltonian.apply(psi, hpsi);
+
+    ASSERT_EQ(hpsi.size(), psi.size());
+    EXPECT_NEAR(hpsi[0].real(), 6.0, 1.0e-12);
+    EXPECT_NEAR(hpsi[0].imag(), 0.0, 1.0e-12);
+    EXPECT_NEAR(hpsi[1].real(), 0.0, 1.0e-12);
+    EXPECT_NEAR(hpsi[1].imag(), 0.0, 1.0e-12);
+    ASSERT_NE(hamiltonian.nonlocal_projector(), nullptr);
 }
 
 TEST(SternheimerFDHamiltonian, DenseMatrixIsHermitianForLocalRealPotential)

@@ -18,8 +18,13 @@ int SternheimerFDHamiltonian::Grid::size() const
 
 SternheimerFDHamiltonian::SternheimerFDHamiltonian(Grid grid,
                                                    std::vector<double> local_potential,
-                                                   const double kinetic_prefactor)
-    : grid_(grid), local_potential_(std::move(local_potential)), kinetic_prefactor_(kinetic_prefactor)
+                                                   const double kinetic_prefactor,
+                                                   std::shared_ptr<const SternheimerFDNonlocalProjector>
+                                                       nonlocal_projector)
+    : grid_(grid),
+      local_potential_(std::move(local_potential)),
+      kinetic_prefactor_(kinetic_prefactor),
+      nonlocal_projector_(std::move(nonlocal_projector))
 {
     if (grid_.nx <= 0 || grid_.ny <= 0 || grid_.nz <= 0)
     {
@@ -37,6 +42,10 @@ SternheimerFDHamiltonian::SternheimerFDHamiltonian(Grid grid,
     {
         throw std::invalid_argument("SternheimerFDHamiltonian requires a non-negative kinetic prefactor.");
     }
+    if (nonlocal_projector_ != nullptr && nonlocal_projector_->grid_size() != grid_.size())
+    {
+        throw std::invalid_argument("SternheimerFDHamiltonian nonlocal projector size does not match the grid.");
+    }
 }
 
 const SternheimerFDHamiltonian::Grid& SternheimerFDHamiltonian::grid() const
@@ -52,6 +61,11 @@ const std::vector<double>& SternheimerFDHamiltonian::local_potential() const
 double SternheimerFDHamiltonian::kinetic_prefactor() const
 {
     return kinetic_prefactor_;
+}
+
+const SternheimerFDNonlocalProjector* SternheimerFDHamiltonian::nonlocal_projector() const
+{
+    return nonlocal_projector_.get();
 }
 
 int SternheimerFDHamiltonian::index(const int ix, const int iy, const int iz) const
@@ -133,6 +147,11 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi) const
                 hpsi[center] = -kinetic_prefactor_ * laplacian + local_potential_[center] * psi_center;
             }
         }
+    }
+
+    if (nonlocal_projector_ != nullptr)
+    {
+        nonlocal_projector_->add_to(psi, hpsi);
     }
 }
 

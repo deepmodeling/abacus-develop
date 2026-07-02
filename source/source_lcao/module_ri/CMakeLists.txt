@@ -15,6 +15,7 @@ if (ENABLE_LIBRI)
         sternheimer_abacus_fd_adapter.cpp
         sternheimer_dft_zero_order.cpp
         sternheimer_fd_hamiltonian.cpp
+        sternheimer_fd_nonlocal_projector.cpp
         sternheimer_fd_solver.cpp
         sternheimer_rpa.cpp
   )

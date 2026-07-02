@@ -1,7 +1,10 @@
 #ifndef STERNHEIMER_FD_HAMILTONIAN_H
 #define STERNHEIMER_FD_HAMILTONIAN_H
 
+#include "source_lcao/module_ri/sternheimer_fd_nonlocal_projector.h"
+
 #include <complex>
+#include <memory>
 #include <vector>
 
 namespace ModuleRI
@@ -35,11 +38,15 @@ class SternheimerFDHamiltonian
 
     // kinetic_prefactor = 0.5 gives the Hartree convention -1/2 laplacian.
     // ABACUS PW eigenvalues are in Ry, so ABACUS bindings pass 1.0.
-    SternheimerFDHamiltonian(Grid grid, std::vector<double> local_potential, double kinetic_prefactor = 0.5);
+    SternheimerFDHamiltonian(Grid grid,
+                             std::vector<double> local_potential,
+                             double kinetic_prefactor = 0.5,
+                             std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector = nullptr);
 
     const Grid& grid() const;
     const std::vector<double>& local_potential() const;
     double kinetic_prefactor() const;
+    const SternheimerFDNonlocalProjector* nonlocal_projector() const;
 
     void apply(const Vector& psi, Vector& hpsi) const;
 
@@ -58,6 +65,7 @@ class SternheimerFDHamiltonian
     Grid grid_;
     std::vector<double> local_potential_;
     double kinetic_prefactor_ = 0.5;
+    std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector_;
 };
 
 } // namespace ModuleRI
