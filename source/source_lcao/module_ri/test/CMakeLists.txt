@@ -37,6 +37,11 @@ AddTest(
   SOURCES sternheimer_fd_nonlocal_projector_test.cpp ../sternheimer_fd_nonlocal_projector.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_fd_projector_sampler_test
+  LIBS parameter base ${math_libs} device container
+  SOURCES sternheimer_fd_projector_sampler_test.cpp ../sternheimer_fd_projector_sampler.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_abacus_fd_adapter_test
   LIBS parameter base ${math_libs} device container
   SOURCES sternheimer_abacus_fd_adapter_test.cpp ../sternheimer_abacus_fd_adapter.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp
