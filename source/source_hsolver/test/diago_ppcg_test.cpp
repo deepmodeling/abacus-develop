@@ -2331,7 +2331,7 @@ TEST_F(DiagoPPCGBenchmarkTest, DISABLED_FullBenchmark)
     SUCCEED();
 }
 
-// Quick benchmark: just one representative case, fast enough for CI.
+// Quick convergence smoke test: one representative case, fast enough for CI.
 TEST_F(DiagoPPCGBenchmarkTest, QuickBenchmark)
 {
     std::vector<T> H;
@@ -2339,9 +2339,6 @@ TEST_F(DiagoPPCGBenchmarkTest, QuickBenchmark)
     make_random_hamilt(80, 60, H, prec);
     const std::pair<double, double> result = run_ppcg(80, 8, H, prec);
     const double avg_iter = result.first;
-    const double wall = result.second;
-    std::cout << "[PPCG QuickBench] n=80 nband=8 sparsity=60%"
-              << " avg_iter=" << avg_iter << " wall=" << wall << "s\n";
     EXPECT_LE(avg_iter, 500.0) << "PPCG did not converge within 500 iters";
     SUCCEED();
 }
