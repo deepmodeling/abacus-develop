@@ -46,20 +46,63 @@ struct HermitianLapack
 
     static void sygvd(int n, Scalar* a, Scalar* b, Real* w)
     {
-        std::vector<Scalar> eigvec(n * n, Scalar(0));
-        container::kernels::lapack_hegvd<Scalar, Device>()(n, n, a, b, w, eigvec.data());
+        std::vector<Scalar> r(b, b + n * n);
+        potrf(n, r.data());
+        trtri(n, r.data());
+
+        std::vector<Scalar> c(n * n, Scalar(0));
+        for (int j = 0; j < n; ++j)
+        {
+            for (int i = 0; i < n; ++i)
+            {
+                Scalar sum = Scalar(0);
+                for (int p = 0; p <= i; ++p)
+                {
+                    const Scalar rip = r[p + i * n];
+                    if (rip == Scalar(0))
+                        continue;
+                    for (int q = 0; q <= j; ++q)
+                    {
+                        const Scalar rqj = r[q + j * n];
+                        if (rqj != Scalar(0))
+                            sum += std::conj(rip) * a[p + q * n] * rqj;
+                    }
+                }
+                c[i + j * n] = sum;
+            }
+        }
+        for (const Scalar& cij : c)
+        {
+            if (!std::isfinite(std::real(cij))
+                || !std::isfinite(std::imag(cij)))
+                throw std::runtime_error("PPCG: reduced matrix is non-finite.");
+        }
+
+        syevd(n, c.data(), w);
         for (int j = 0; j < n; ++j)
         {
             if (!std::isfinite(w[j]))
-                throw std::runtime_error("PPCG: hegvd returned non-finite eigenvalue.");
+                throw std::runtime_error("PPCG: syevd returned non-finite eigenvalue.");
+        }
 
+        std::fill(a, a + n * n, Scalar(0));
+        for (int j = 0; j < n; ++j)
+        {
             Real nrm2 = 0;
             for (int i = 0; i < n; ++i)
-                nrm2 += static_cast<Real>(std::norm(eigvec[i + j * n]));
+            {
+                Scalar sum = Scalar(0);
+                for (int p = i; p < n; ++p)
+                    sum += r[i + p * n] * c[p + j * n];
+                if (!std::isfinite(std::real(sum))
+                    || !std::isfinite(std::imag(sum)))
+                    throw std::runtime_error("PPCG: back-transformed eigenvector is non-finite.");
+                a[i + j * n] = sum;
+                nrm2 += static_cast<Real>(std::norm(sum));
+            }
             if (nrm2 <= static_cast<Real>(1e-30))
-                throw std::runtime_error("PPCG: hegvd returned a zero eigenvector.");
+                throw std::runtime_error("PPCG: back-transformed eigenvector is zero.");
         }
-        std::copy(eigvec.begin(), eigvec.end(), a);
     }
 
     static void potrf(int n, Scalar* a)
