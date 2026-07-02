@@ -167,18 +167,50 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
         set_zero(spsi_);
         set_zero(hpsi_);
 
+        const T one = T(1);
+        const T zero = T(0);
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         n_band_,
+                                         n_band_,
+                                         &one,
+                                         psi_old.data(),
+                                         ld_psi_,
+                                         hsub.data(),
+                                         n_band_,
+                                         &zero,
+                                         psi,
+                                         ld_psi_);
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         n_band_,
+                                         n_band_,
+                                         &one,
+                                         spsi_old.data(),
+                                         ld_psi_,
+                                         hsub.data(),
+                                         n_band_,
+                                         &zero,
+                                         spsi_.data(),
+                                         ld_psi_);
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         n_band_,
+                                         n_band_,
+                                         &one,
+                                         hpsi_old.data(),
+                                         ld_psi_,
+                                         hsub.data(),
+                                         n_band_,
+                                         &zero,
+                                         hpsi_.data(),
+                                         ld_psi_);
+
         for (int j = 0; j < n_band_; ++j)
         {
-            for (int i = 0; i < n_band_; ++i)
-            {
-                const T c = hsub[i + j * n_band_];
-                for (int ig = 0; ig < n_dim_; ++ig)
-                {
-                    psi[ idx(ig, j, ld_psi_)] += psi_old[ idx(ig, i, ld_psi_)] * c;
-                    spsi_[idx(ig, j, ld_psi_)] += spsi_old[idx(ig, i, ld_psi_)] * c;
-                    hpsi_[idx(ig, j, ld_psi_)] += hpsi_old[idx(ig, i, ld_psi_)] * c;
-                }
-            }
             eigenvalue[j] = eval[j];
         }
     }

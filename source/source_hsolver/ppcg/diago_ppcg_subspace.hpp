@@ -213,41 +213,79 @@ void DiagoPPCG<T, Device>::update_one_block(
     std::vector<T> sp_new(ld_psi_ * l, T(0));
     std::vector<T> hp_new(ld_psi_ * l, T(0));
 
+    std::vector<T> coeff_state(dim * l, T(0));
+    std::vector<T> coeff_dir(dim * l, T(0));
     for (int j = 0; j < l; ++j)
     {
         for (int i = 0; i < l; ++i)
         {
-            const T cpsi = eigvec[i + j * dim];
-            const T cw   = eigvec[(l + i) + j * dim] * subspace.w_scale[i];
-
-            for (int ig = 0; ig < n_dim_; ++ig)
-            {
-                psi_new[idx(ig, j, ld_psi_)]  += psi_l[idx(ig, i, ld_psi_)] * cpsi
-                                                + w_l[ idx(ig, i, ld_psi_)] * cw;
-                spsi_new[idx(ig, j, ld_psi_)] += spsi_l[idx(ig, i, ld_psi_)] * cpsi
-                                                + sw_l[ idx(ig, i, ld_psi_)] * cw;
-                hpsi_new[idx(ig, j, ld_psi_)] += hpsi_l[idx(ig, i, ld_psi_)] * cpsi
-                                                + hw_l[ idx(ig, i, ld_psi_)] * cw;
-                p_new[idx(ig, j, ld_psi_)]    += w_l[ idx(ig, i, ld_psi_)] * cw;
-                sp_new[idx(ig, j, ld_psi_)]   += sw_l[ idx(ig, i, ld_psi_)] * cw;
-                hp_new[idx(ig, j, ld_psi_)]   += hw_l[ idx(ig, i, ld_psi_)] * cw;
-            }
-
+            coeff_state[i + j * dim] = eigvec[i + j * dim];
+            const T cw = eigvec[(l + i) + j * dim] * subspace.w_scale[i];
+            coeff_state[(l + i) + j * dim] = cw;
+            coeff_dir[(l + i) + j * dim] = cw;
             if (use_p)
             {
                 const T cp = eigvec[(2*l + i) + j * dim] * subspace.p_scale[i];
-                for (int ig = 0; ig < n_dim_; ++ig)
-                {
-                    psi_new[idx(ig, j, ld_psi_)]  += p_l[ idx(ig, i, ld_psi_)] * cp;
-                    spsi_new[idx(ig, j, ld_psi_)] += sp_l[idx(ig, i, ld_psi_)] * cp;
-                    hpsi_new[idx(ig, j, ld_psi_)] += hp_l[idx(ig, i, ld_psi_)] * cp;
-                    p_new[idx(ig, j, ld_psi_)]    += p_l[ idx(ig, i, ld_psi_)] * cp;
-                    sp_new[idx(ig, j, ld_psi_)]   += sp_l[idx(ig, i, ld_psi_)] * cp;
-                    hp_new[idx(ig, j, ld_psi_)]   += hp_l[idx(ig, i, ld_psi_)] * cp;
-                }
+                coeff_state[(2*l + i) + j * dim] = cp;
+                coeff_dir[(2*l + i) + j * dim] = cp;
             }
         }
     }
+
+    auto fill_basis = [&](const std::vector<T>& a,
+                          const std::vector<T>& b,
+                          const std::vector<T>& c,
+                          std::vector<T>& basis)
+    {
+        basis.assign(ld_psi_ * dim, T(0));
+        for (int j = 0; j < l; ++j)
+        {
+            std::copy(a.begin() + j * ld_psi_,
+                      a.begin() + (j + 1) * ld_psi_,
+                      basis.begin() + j * ld_psi_);
+            std::copy(b.begin() + j * ld_psi_,
+                      b.begin() + (j + 1) * ld_psi_,
+                      basis.begin() + (l + j) * ld_psi_);
+            if (use_p)
+            {
+                std::copy(c.begin() + j * ld_psi_,
+                          c.begin() + (j + 1) * ld_psi_,
+                          basis.begin() + (2 * l + j) * ld_psi_);
+            }
+        }
+    };
+
+    auto combine = [&](const std::vector<T>& a,
+                       const std::vector<T>& b,
+                       const std::vector<T>& c,
+                       const std::vector<T>& coeff,
+                       std::vector<T>& out)
+    {
+        std::vector<T> basis;
+        fill_basis(a, b, c, basis);
+        const T one = T(1);
+        const T zero = T(0);
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         l,
+                                         dim,
+                                         &one,
+                                         basis.data(),
+                                         ld_psi_,
+                                         coeff.data(),
+                                         dim,
+                                         &zero,
+                                         out.data(),
+                                         ld_psi_);
+    };
+
+    combine(psi_l, w_l, p_l, coeff_state, psi_new);
+    combine(spsi_l, sw_l, sp_l, coeff_state, spsi_new);
+    combine(hpsi_l, hw_l, hp_l, coeff_state, hpsi_new);
+    combine(psi_l, w_l, p_l, coeff_dir, p_new);
+    combine(spsi_l, sw_l, sp_l, coeff_dir, sp_new);
+    combine(hpsi_l, hw_l, hp_l, coeff_dir, hp_new);
 
     scatter_cols(psi, cols, psi_new);
     scatter_cols(spsi_.data(), cols, spsi_new);

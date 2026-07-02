@@ -1,6 +1,37 @@
 #include "source_base/kernels/math_kernel_op.h"
+#include "source_base/parallel_reduce.h"
 
 namespace hsolver {
+
+namespace {
+
+template <typename Value>
+void reduce_pool_if_mpi_ready(Value& value)
+{
+#ifdef __MPI
+    int initialized = 0;
+    int finalized = 0;
+    MPI_Initialized(&initialized);
+    MPI_Finalized(&finalized);
+    if (initialized && !finalized)
+        Parallel_Reduce::reduce_pool(value);
+#endif
+}
+
+template <typename Value>
+void reduce_pool_if_mpi_ready(Value* value, const int n)
+{
+#ifdef __MPI
+    int initialized = 0;
+    int finalized = 0;
+    MPI_Initialized(&initialized);
+    MPI_Finalized(&finalized);
+    if (initialized && !finalized)
+        Parallel_Reduce::reduce_pool(value, n);
+#endif
+}
+
+} // anonymous namespace
 
 // =============================================================================
 // Constructor
@@ -93,7 +124,9 @@ template <typename T, typename Device>
 typename DiagoPPCG<T, Device>::Real
 DiagoPPCG<T, Device>::gamma_dot(const T* x, const T* y) const
 {
-    return ModuleBase::dot_real_op<T, Device>()(n_dim_, x, y, false);
+    Real result = ModuleBase::dot_real_op<T, Device>()(n_dim_, x, y, false);
+    reduce_pool_if_mpi_ready(result);
+    return result;
 }
 
 template <typename T, typename Device>
@@ -102,6 +135,7 @@ T DiagoPPCG<T, Device>::complex_dot(const T* x, const T* y) const
     T acc = T(0);
     for (int i = 0; i < n_dim_; ++i)
         acc += std::conj(x[i]) * y[i];
+    reduce_pool_if_mpi_ready(&acc, 1);
     return acc;
 }
 
@@ -115,10 +149,22 @@ void DiagoPPCG<T, Device>::gram(const T* a, const T* b,
                                  int ld_out) const
 {
     out.assign(ld_out * ncol_b, T(0));
-    for (int jb = 0; jb < ncol_b; ++jb)
-        for (int ia = 0; ia < ncol_a; ++ia)
-            out[ia + jb * ld_out] = complex_dot(a + ia * ld_psi_,
-                                                 b + jb * ld_psi_);
+    const T one = T(1);
+    const T zero = T(0);
+    ModuleBase::gemm_op<T, Device>()('C',
+                                     'N',
+                                     ncol_a,
+                                     ncol_b,
+                                     n_dim_,
+                                     &one,
+                                     a,
+                                     ld_psi_,
+                                     b,
+                                     ld_psi_,
+                                     &zero,
+                                     out.data(),
+                                     ld_out);
+    reduce_pool_if_mpi_ready(out.data(), ld_out * ncol_b);
 }
 
 // =============================================================================
