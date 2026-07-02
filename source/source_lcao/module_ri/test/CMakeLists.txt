@@ -38,7 +38,7 @@ AddTest(
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_abacus_fd_adapter_test
-  LIBS base ${math_libs}
+  LIBS parameter base ${math_libs} device container
   SOURCES sternheimer_abacus_fd_adapter_test.cpp ../sternheimer_abacus_fd_adapter.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp
 )
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
