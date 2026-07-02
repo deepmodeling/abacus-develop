@@ -48,7 +48,7 @@ private:
         int image_shift[3];
         int type;
         int type_index;
-        long long global_id;
+        ModuleNeighList::GlobalAtomId global_id;
         int owner_rank;
     };
 

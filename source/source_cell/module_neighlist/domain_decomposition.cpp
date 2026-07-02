@@ -1,6 +1,7 @@
 #include "source_cell/module_neighlist/domain_decomposition.h"
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstring>
 
@@ -48,6 +49,7 @@ double DomainDecomposition::wrap_fractional(double value)
 
 int DomainDecomposition::floor_div(int value, int divisor)
 {
+    assert(divisor!=0);
     int quotient = value / divisor;
     const int remainder = value % divisor;
     if (remainder != 0 && ((remainder < 0) != (divisor < 0)))
@@ -204,7 +206,7 @@ void DomainDecomposition::split_owned_atoms_from_ucell(const AtomProvider& ucell
     owned_atoms.clear();
     owned_atoms.reserve(static_cast<size_t>(ucell.get_natom() / std::max(1, size_) + 1));
 
-    long long global_id = 0;
+    ModuleNeighList::GlobalAtomId global_id = 0;
     for (int it = 0; it < ucell.get_ntype(); ++it)
     {
         for (int ia = 0; ia < ucell.get_na(it); ++ia)

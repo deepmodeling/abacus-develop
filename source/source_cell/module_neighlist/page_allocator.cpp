@@ -1,6 +1,9 @@
 #include "page_allocator.h"
 #include "source_base/tool_quit.h"
 
+#include <stdexcept>
+#include <utility>
+
 PageAllocator::PageAllocator() : pgsize_(default_pgsize)
 {
     new_page_();
@@ -8,6 +11,10 @@ PageAllocator::PageAllocator() : pgsize_(default_pgsize)
 
 PageAllocator::PageAllocator(int pgsize) : pgsize_(pgsize)
 {
+    if (pgsize_ <= 0)
+    {
+        throw std::invalid_argument("PageAllocator page size must be positive.");
+    }
     new_page_();
 }
 
@@ -60,6 +67,10 @@ int PageAllocator::get_pgsize() const
 
 void PageAllocator::new_page_()
 {
+    if (pgsize_ <= 0)
+    {
+        throw std::invalid_argument("PageAllocator page size must be positive.");
+    }
     Page p;
     p.capacity = pgsize_;
     p.offset = 0;

@@ -1,5 +1,6 @@
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/module_neighlist/domain_decomposition.h"
+#include "source_cell/module_neighlist/neighbor_types.h"
 #include "source_cell/module_neighlist/unitcell_lite.h"
 
 #include <mpi.h>
@@ -142,7 +143,7 @@ int main(int argc, char** argv)
     {
         NeighborSearch serial;
         const double t0 = MPI_Wtime();
-        serial.init(ucell, cutoff, 0);
+        serial.init(ucell, cutoff);
         const double t1 = MPI_Wtime();
         serial.build_neighbors();
         const double t2 = MPI_Wtime();
@@ -201,7 +202,8 @@ int main(int argc, char** argv)
 
             for (size_t atom_id = 0; atom_id < all_atoms.size(); ++atom_id)
             {
-                if (all_atoms[atom_id].atom_id != static_cast<int>(atom_id))
+                if (all_atoms[atom_id].atom_id !=
+                    ModuleNeighList::checked_local_atom_index(atom_id, "benchmark atom id"))
                 {
                     local_failure = 1;
                 }
@@ -219,7 +221,7 @@ int main(int argc, char** argv)
                 for (int ad = 0; ad < list.get_numneigh(local_i); ++ad)
                 {
                     const int neighbor_id = list.get_firstneigh(local_i)[ad];
-                    if (neighbor_id < 0 || neighbor_id >= static_cast<int>(all_atoms.size()))
+                    if (neighbor_id < 0 || static_cast<size_t>(neighbor_id) >= all_atoms.size())
                     {
                         local_failure = 1;
                     }

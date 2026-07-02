@@ -1,6 +1,7 @@
 #ifndef LOCAL_ATOM_H
 #define LOCAL_ATOM_H
 
+#include "source_cell/module_neighlist/neighbor_types.h"
 #include "source_base/vector3.h"
 
 /**
@@ -17,7 +18,7 @@ struct LocalAtom
     ModuleBase::Vector3<double> frac;
     int type;
     int type_index;
-    long long global_id;
+    ModuleNeighList::GlobalAtomId global_id;
     int owner_rank;
     bool is_ghost;
 
@@ -36,7 +37,7 @@ struct LocalAtom
               const ModuleBase::Vector3<double>& frac_in,
               int type_in,
               int type_index_in,
-              long long global_id_in,
+              ModuleNeighList::GlobalAtomId global_id_in,
               int owner_rank_in,
               bool is_ghost_in)
         : cart(cart_in),

@@ -4,6 +4,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/cif_io.h"
+#include "source_cell/module_neighlist/neighbor_types.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
@@ -13,6 +14,7 @@
 #endif
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <vector>
 
@@ -75,8 +77,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
     double distance = 0.0;
     ModuleBase::Vector3<double> tau1, tau2, dtau;
 
-#ifdef __MPI
-    if (GlobalV::NPROC > 1)
+    #ifdef __MPI
     {
         ModuleBase::timer::start("ESolverLJ", "mpi_total");
         ModuleBase::timer::start("ESolverLJ", "neigh_init");
@@ -102,8 +103,10 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
             atom_start[it + 1] = atom_start[it] + ucell.atoms[it].na;
         }
 
-        std::vector<double> potential_by_atom(ucell.nat, 0.0);
-        std::vector<double> virial_by_atom(ucell.nat * 9, 0.0);
+        const std::size_t local_virial_size
+            = ModuleNeighList::checked_size_product(inside_atoms.size(), 9, "ESolver_LJ local virial size");
+        std::vector<double> potential_by_local_atom(inside_atoms.size(), 0.0);
+        std::vector<double> virial_by_local_atom(local_virial_size, 0.0);
 
         ModuleBase::timer::start("ESolverLJ", "force_loc");
         for (int local_i = 0; local_i < neighbor_list.get_nlocal(); ++local_i)
@@ -128,7 +131,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
                 distance = dtau.norm();
                 if (distance < lj_rcut(it, it2))
                 {
-                    potential_by_atom[global_i] += LJ_energy(distance, it, it2) - en_shift(it, it2);
+                    potential_by_local_atom[local_i] += LJ_energy(distance, it, it2) - en_shift(it, it2);
                     ModuleBase::Vector3<double> f_ij = LJ_force(dtau, it, it2);
                     lj_force(global_i, 0) += f_ij.x;
                     lj_force(global_i, 1) += f_ij.y;
@@ -137,7 +140,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
                     {
                         for (int j = 0; j < 3; ++j)
                         {
-                            virial_by_atom[global_i * 9 + i * 3 + j] += dtau[i] * f_ij[j];
+                            virial_by_local_atom[local_i * 9 + i * 3 + j] += dtau[i] * f_ij[j];
                         }
                     }
                 }
@@ -145,31 +148,41 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         }
         ModuleBase::timer::end("ESolverLJ", "force_loc");
 
+        double local_potential = 0.0;
+        std::array<double, 9> local_virial{};
+        for (std::size_t local_i = 0; local_i < potential_by_local_atom.size(); ++local_i)
+        {
+            local_potential += potential_by_local_atom[local_i];
+            for (int component = 0; component < 9; ++component)
+            {
+                local_virial[component] += virial_by_local_atom[local_i * 9 + component];
+            }
+        }
+
         ModuleBase::timer::start("ESolverLJ", "reduce");
-        Parallel_Reduce::reduce_all(potential_by_atom.data(), static_cast<int>(potential_by_atom.size()));
+        Parallel_Reduce::reduce_all(&local_potential, 1);
+        Parallel_Reduce::reduce_all(local_virial.data(), static_cast<int>(local_virial.size()));
+        // Existing MD code expects a full global force matrix on each rank.
+        // Keeping this reduction preserves current behavior; removing the global
+        // force layout requires a distributed MD data model.
         Parallel_Reduce::reduce_all(lj_force.c, lj_force.nr * lj_force.nc);
-        Parallel_Reduce::reduce_all(virial_by_atom.data(), static_cast<int>(virial_by_atom.size()));
         ModuleBase::timer::end("ESolverLJ", "reduce");
 
-        for (int iat = 0; iat < ucell.nat; ++iat)
+        lj_potential += local_potential;
+        for (int i = 0; i < 3; ++i)
         {
-            lj_potential += potential_by_atom[iat];
-            for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
             {
-                for (int j = 0; j < 3; ++j)
-                {
-                    lj_virial(i, j) += virial_by_atom[iat * 9 + i * 3 + j];
-                }
+                lj_virial(i, j) += local_virial[i * 3 + j];
             }
         }
         ModuleBase::timer::end("ESolverLJ", "mpi_total");
     }
-    else
-#endif
+    #else
     {
         ModuleBase::timer::start("ESolverLJ", "serial_tot");
         ModuleBase::timer::start("ESolverLJ", "ser_neigh");
-        neighbor_search.init(ucell_lite, search_radius, 0);
+        neighbor_search.init(ucell_lite, search_radius);
         neighbor_search.build_neighbors();
         ModuleBase::timer::end("ESolverLJ", "ser_neigh");
 
@@ -208,51 +221,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         ModuleBase::timer::end("ESolverLJ", "ser_force");
         ModuleBase::timer::end("ESolverLJ", "serial_tot");
     }
-
-
-    /*Grid_Driver grid_neigh(PARAM.inp.test_deconstructor, PARAM.inp.test_grid);
-    atom_arrange::search(PARAM.globalv.search_pbc,
-                         GlobalV::ofs_running,
-                         grid_neigh,
-                         ucell,
-                         search_radius,
-                         PARAM.inp.test_atom_input);
-
-    double distance = 0.0;
-    int index = 0;
-
-    // Important! potential, force, virial must be zero per step
-    lj_potential = 0;
-    lj_force.zero_out();
-    lj_virial.zero_out();
-
-    ModuleBase::Vector3<double> tau1, tau2, dtau;
-    for (int it = 0; it < ucell.ntype; ++it)
-    {
-        Atom* atom1 = &ucell.atoms[it];
-        for (int ia = 0; ia < atom1->na; ++ia)
-        {
-            tau1 = atom1->tau[ia];
-            grid_neigh.Find_atom(ucell, tau1, it, ia);
-            for (int ad = 0; ad < grid_neigh.getAdjacentNum(); ++ad)
-            {
-                tau2 = grid_neigh.getAdjacentTau(ad);
-                int it2 = grid_neigh.getType(ad);
-                dtau = (tau1 - tau2) * ucell.lat0;
-                distance = dtau.norm();
-                if (distance < lj_rcut(it, it2))
-                {
-                    lj_potential += LJ_energy(distance, it, it2) - en_shift(it, it2);
-                    ModuleBase::Vector3<double> f_ij = LJ_force(dtau, it, it2);
-                    lj_force(index, 0) += f_ij.x;
-                    lj_force(index, 1) += f_ij.y;
-                    lj_force(index, 2) += f_ij.z;
-                    LJ_virial(f_ij, dtau);
-                }
-            }
-            index++;
-        }
-    }*/
+    #endif
 
     lj_potential /= 2.0;
     GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << lj_potential * ModuleBase::Ry_to_eV << " eV"
@@ -266,7 +235,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
             lj_virial(i, j) /= (2.0 * ucell.omega);
         }
     }
-    }
+}
 
     double ESolver_LJ::cal_energy()
     {
