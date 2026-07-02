@@ -48,6 +48,17 @@ struct HermitianLapack
     {
         std::vector<Scalar> eigvec(n * n, Scalar(0));
         container::kernels::lapack_hegvd<Scalar, Device>()(n, n, a, b, w, eigvec.data());
+        for (int j = 0; j < n; ++j)
+        {
+            if (!std::isfinite(w[j]))
+                throw std::runtime_error("PPCG: hegvd returned non-finite eigenvalue.");
+
+            Real nrm2 = 0;
+            for (int i = 0; i < n; ++i)
+                nrm2 += static_cast<Real>(std::norm(eigvec[i + j * n]));
+            if (nrm2 <= static_cast<Real>(1e-30))
+                throw std::runtime_error("PPCG: hegvd returned a zero eigenvector.");
+        }
         std::copy(eigvec.begin(), eigvec.end(), a);
     }
 

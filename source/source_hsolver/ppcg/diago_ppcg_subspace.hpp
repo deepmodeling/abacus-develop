@@ -168,8 +168,12 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
     // All attempts failed — set eigenvectors to identity (no update).
     std::fill(subspace.k.begin(), subspace.k.end(), T(0));
     for (int i = 0; i < dim; ++i)
+    {
         subspace.k[i + i * dim] = T(1);
-    std::fill(subspace.eval.begin(), subspace.eval.end(), static_cast<Real>(0));
+        subspace.eval[i] = static_cast<Real>(std::real(k0[i + i * dim]))
+                         / std::max(static_cast<Real>(std::real(m0[i + i * dim])),
+                                    static_cast<Real>(1e-30));
+    }
 }
 
 // ---------------------------------------------------------------------------
