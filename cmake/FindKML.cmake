@@ -74,6 +74,26 @@ if(DEFINED ENV{KML_ROOT})
 endif()
 list(APPEND _kml_prefix_hints /usr/local/kml)
 
+# Check if an explicitly selected compiler-specific KML prefix matches the compiler.
+set(_kml_explicit_root "${KML_ROOT}")
+if(NOT _kml_explicit_root AND DEFINED ENV{KML_ROOT})
+  set(_kml_explicit_root "$ENV{KML_ROOT}")
+endif()
+get_filename_component(_kml_root_name "${_kml_explicit_root}" NAME)
+if(_kml_root_name STREQUAL "gcc")
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    message(FATAL_ERROR
+      "KML_ROOT points to the GCC KML bundle, but the C++ compiler is "
+      "${CMAKE_CXX_COMPILER_ID}.")
+  endif()
+elseif(_kml_root_name STREQUAL "bisheng")
+  if(NOT CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+    message(FATAL_ERROR
+      "KML_ROOT points to the BiShengLLVM KML bundle, but the C++ compiler is "
+      "${CMAKE_CXX_COMPILER_ID}.")
+  endif()
+endif()
+
 find_path(KML_INCLUDE_DIR
   NAMES kblas.h klapack.h kscalapack.h
   HINTS ${_kml_prefix_hints}
