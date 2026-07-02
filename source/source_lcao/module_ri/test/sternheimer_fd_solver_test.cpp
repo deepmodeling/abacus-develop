@@ -58,6 +58,34 @@ TEST(SternheimerFDSolver, DenseZeroOrderRejectsInvalidArguments)
     EXPECT_THROW(ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 1, 0.0), std::invalid_argument);
 }
 
+TEST(SternheimerFDSolver, LanczosZeroOrderMatchesDenseLowStates)
+{
+    Hamiltonian::Grid grid{6, 1, 1, 0.75, 1.0, 1.0, true};
+    const double volume_element = 0.75;
+    const std::vector<double> potential = {0.30, -0.15, 0.05, 0.20, -0.05, 0.10};
+    Hamiltonian hamiltonian(grid, potential);
+
+    const auto dense_states = ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 3, volume_element);
+
+    ModuleRI::SternheimerFDLanczosOptions options;
+    options.max_subspace_size = 12;
+    options.residual_tolerance = 1.0e-11;
+    options.initial_seed = 17;
+    const auto lanczos_states
+        = ModuleRI::solve_sternheimer_fd_zero_order_lanczos(hamiltonian, 3, volume_element, options);
+
+    ASSERT_EQ(lanczos_states.eigenvalues.size(), dense_states.eigenvalues.size());
+    ASSERT_EQ(lanczos_states.wavefunctions.size(), dense_states.wavefunctions.size());
+    for (std::size_t ib = 0; ib != dense_states.eigenvalues.size(); ++ib)
+    {
+        EXPECT_NEAR(lanczos_states.eigenvalues[ib], dense_states.eigenvalues[ib], 1.0e-9);
+        EXPECT_NEAR(ModuleRI::sternheimer_fd_grid_norm(lanczos_states.wavefunctions[ib], volume_element),
+                    1.0,
+                    1.0e-10);
+        EXPECT_LT(lanczos_states.residual_norms[ib], 1.0e-9);
+    }
+}
+
 TEST(SternheimerFDSolver, LinearResponseSolvesProjectedEigenmode)
 {
     Hamiltonian::Grid grid{4, 1, 1, 0.5, 1.0, 1.0, true};

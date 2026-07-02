@@ -17,6 +17,13 @@ struct SternheimerFDZeroOrderStates
     std::vector<double> residual_norms;
 };
 
+struct SternheimerFDLanczosOptions
+{
+    int max_subspace_size = 120;
+    double residual_tolerance = 1.0e-8;
+    unsigned int initial_seed = 1;
+};
+
 struct SternheimerFDLinearResponse
 {
     SternheimerFDHamiltonian::Vector delta_wavefunction;
@@ -34,6 +41,12 @@ SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_dense(const Sternhe
                                                                    int num_states,
                                                                    double volume_element,
                                                                    int max_size = 4096);
+
+SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_lanczos(
+    const SternheimerFDHamiltonian& hamiltonian,
+    int num_states,
+    double volume_element,
+    const SternheimerFDLanczosOptions& options = SternheimerFDLanczosOptions());
 
 SternheimerFDLinearResponse solve_sternheimer_fd_linear_response(
     const SternheimerFDHamiltonian& hamiltonian,

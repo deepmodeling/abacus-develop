@@ -1,10 +1,106 @@
 #include "source_lcao/module_ri/sternheimer_fd_solver.h"
 
+#include "source_base/module_external/lapack_connector.h"
+
+#include <algorithm>
 #include <cmath>
+#include <random>
 #include <stdexcept>
+#include <string>
+#include <utility>
 
 namespace ModuleRI
 {
+namespace
+{
+
+using Complex = SternheimerFDHamiltonian::Complex;
+using Vector = SternheimerFDHamiltonian::Vector;
+
+void scale_vector(Vector& vector, const Complex factor)
+{
+    for (Complex& value: vector)
+    {
+        value *= factor;
+    }
+}
+
+void axpy(const Complex alpha, const Vector& x, Vector& y)
+{
+    if (x.size() != y.size())
+    {
+        throw std::invalid_argument("Sternheimer FD vector axpy sizes do not match.");
+    }
+    for (std::size_t ir = 0; ir != x.size(); ++ir)
+    {
+        y[ir] += alpha * x[ir];
+    }
+}
+
+void normalize_vector(Vector& vector, const double volume_element)
+{
+    const double norm = sternheimer_fd_grid_norm(vector, volume_element);
+    if (norm <= 0.0)
+    {
+        throw std::runtime_error("Sternheimer FD Lanczos generated a zero vector.");
+    }
+    scale_vector(vector, Complex(1.0 / norm, 0.0));
+}
+
+std::vector<double> diagonalize_real_symmetric(std::vector<double>& matrix, const int size)
+{
+    char jobz = 'V';
+    char uplo = 'U';
+    const int lda = size;
+    int info = 0;
+    std::vector<double> eigenvalues(size, 0.0);
+    double work_query = 0.0;
+    const int minus_one = -1;
+
+    dsyev_(&jobz, &uplo, &size, matrix.data(), &lda, eigenvalues.data(), &work_query, &minus_one, &info);
+    if (info != 0)
+    {
+        throw std::runtime_error("Sternheimer FD Lanczos Ritz diagonalization workspace query failed.");
+    }
+
+    const int lwork = std::max(1, static_cast<int>(std::ceil(work_query)));
+    std::vector<double> work(lwork, 0.0);
+    dsyev_(&jobz, &uplo, &size, matrix.data(), &lda, eigenvalues.data(), work.data(), &lwork, &info);
+    if (info != 0)
+    {
+        throw std::runtime_error("Sternheimer FD Lanczos Ritz diagonalization failed.");
+    }
+    return eigenvalues;
+}
+
+SternheimerFDZeroOrderStates build_zero_order_states_from_wavefunctions(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<double>& eigenvalues,
+    std::vector<Vector> wavefunctions,
+    const double volume_element)
+{
+    SternheimerFDZeroOrderStates states;
+    states.eigenvalues = eigenvalues;
+    states.wavefunctions = std::move(wavefunctions);
+    states.residual_norms.assign(states.eigenvalues.size(), 0.0);
+
+    for (std::size_t ib = 0; ib != states.wavefunctions.size(); ++ib)
+    {
+        normalize_vector(states.wavefunctions[ib], volume_element);
+
+        Vector hpsi;
+        hamiltonian.apply(states.wavefunctions[ib], hpsi);
+        Vector residual(hpsi.size());
+        for (std::size_t ir = 0; ir != hpsi.size(); ++ir)
+        {
+            residual[ir] = hpsi[ir] - states.eigenvalues[ib] * states.wavefunctions[ib][ir];
+        }
+        states.residual_norms[ib] = sternheimer_fd_grid_norm(residual, volume_element);
+    }
+    return states;
+}
+
+} // namespace
 
 SternheimerFDHamiltonian::Complex sternheimer_fd_grid_dot(const SternheimerFDHamiltonian::Vector& lhs,
                                                           const SternheimerFDHamiltonian::Vector& rhs,
@@ -77,6 +173,129 @@ SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_dense(const Sternhe
     }
 
     return states;
+}
+
+SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_lanczos(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const int num_states,
+    const double volume_element,
+    const SternheimerFDLanczosOptions& options)
+{
+    const int grid_size = hamiltonian.grid().size();
+    if (num_states <= 0)
+    {
+        throw std::invalid_argument("Sternheimer FD Lanczos zero-order solver requires a positive number of states.");
+    }
+    if (num_states > grid_size)
+    {
+        throw std::invalid_argument("Sternheimer FD Lanczos zero-order solver requested more states than grid points.");
+    }
+    if (volume_element <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer FD Lanczos zero-order solver requires a positive volume element.");
+    }
+    if (options.max_subspace_size < num_states)
+    {
+        throw std::invalid_argument(
+            "Sternheimer FD Lanczos zero-order solver requires max_subspace_size >= num_states.");
+    }
+    if (options.residual_tolerance < 0.0)
+    {
+        throw std::invalid_argument(
+            "Sternheimer FD Lanczos zero-order solver requires a non-negative residual tolerance.");
+    }
+
+    const int subspace_limit = std::min(options.max_subspace_size, grid_size);
+    std::mt19937 generator(options.initial_seed);
+    std::uniform_real_distribution<double> distribution(-0.5, 0.5);
+
+    Vector q(grid_size, Complex(0.0, 0.0));
+    for (Complex& value: q)
+    {
+        value = Complex(distribution(generator), distribution(generator));
+    }
+    normalize_vector(q, volume_element);
+
+    std::vector<Vector> basis;
+    basis.reserve(subspace_limit);
+    std::vector<double> alpha;
+    alpha.reserve(subspace_limit);
+    std::vector<double> beta;
+    beta.reserve(std::max(0, subspace_limit - 1));
+
+    Vector previous(grid_size, Complex(0.0, 0.0));
+    double beta_previous = 0.0;
+    constexpr double breakdown_tolerance = 1.0e-14;
+
+    for (int iter = 0; iter != subspace_limit; ++iter)
+    {
+        basis.push_back(q);
+
+        Vector work;
+        hamiltonian.apply(q, work);
+        if (iter > 0)
+        {
+            axpy(Complex(-beta_previous, 0.0), previous, work);
+        }
+
+        const double alpha_value = std::real(sternheimer_fd_grid_dot(q, work, volume_element));
+        alpha.push_back(alpha_value);
+        axpy(Complex(-alpha_value, 0.0), q, work);
+
+        for (int pass = 0; pass != 2; ++pass)
+        {
+            for (const Vector& basis_vector: basis)
+            {
+                const Complex overlap = sternheimer_fd_grid_dot(basis_vector, work, volume_element);
+                axpy(-overlap, basis_vector, work);
+            }
+        }
+
+        const double beta_value = sternheimer_fd_grid_norm(work, volume_element);
+        if (iter + 1 == subspace_limit || beta_value < breakdown_tolerance)
+        {
+            break;
+        }
+
+        beta.push_back(beta_value);
+        previous = q;
+        q = std::move(work);
+        scale_vector(q, Complex(1.0 / beta_value, 0.0));
+        beta_previous = beta_value;
+    }
+
+    const int subspace_size = static_cast<int>(basis.size());
+    if (subspace_size < num_states)
+    {
+        throw std::runtime_error("Sternheimer FD Lanczos subspace is smaller than the requested state count.");
+    }
+
+    std::vector<double> ritz_matrix(subspace_size * subspace_size, 0.0);
+    for (int i = 0; i != subspace_size; ++i)
+    {
+        ritz_matrix[i + subspace_size * i] = alpha[i];
+    }
+    for (int i = 0; i + 1 != subspace_size; ++i)
+    {
+        ritz_matrix[i + (i + 1) * subspace_size] = beta[i];
+        ritz_matrix[i + 1 + i * subspace_size] = beta[i];
+    }
+
+    const std::vector<double> ritz_values = diagonalize_real_symmetric(ritz_matrix, subspace_size);
+
+    std::vector<double> eigenvalues(num_states, 0.0);
+    std::vector<Vector> wavefunctions(num_states, Vector(grid_size, Complex(0.0, 0.0)));
+    for (int ib = 0; ib != num_states; ++ib)
+    {
+        eigenvalues[ib] = ritz_values[ib];
+        for (int j = 0; j != subspace_size; ++j)
+        {
+            const double coefficient = ritz_matrix[j + ib * subspace_size];
+            axpy(Complex(coefficient, 0.0), basis[j], wavefunctions[ib]);
+        }
+    }
+
+    return build_zero_order_states_from_wavefunctions(hamiltonian, eigenvalues, std::move(wavefunctions), volume_element);
 }
 
 SternheimerFDLinearResponse solve_sternheimer_fd_linear_response(
