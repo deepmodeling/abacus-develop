@@ -307,7 +307,7 @@ void XC_Functional::gradcorr(
                         }
                         else
                         {
-                            XC_Functional_Libxc::gcxc_libxc( func_id, arho, grho2a, sxc, v1xc, v2xc);
+                            XC_Functional_Libxc::gcxc_libxc( func_id, arho, grho2a, sxc, v1xc, v2xc, hybrid_alpha_in, hse_omega_in);
                         }
 #endif
                     }

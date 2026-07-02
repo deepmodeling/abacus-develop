@@ -494,12 +494,14 @@ class XCTest_PZ_SPN_LibXC : public XCTest
             std::vector<double> rho  = {-1, 0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
             std::vector<double> zeta = {0.0, 0.0, 0.2, 0.5, 0.8, 1.0};
 
+            const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+            const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
             for(int i=0;i<5;i++)
             {
                 double e,v1,v2;
                 double r1 = rho[i] * (1+zeta[i]) / 2.0;
                 double r2 = rho[i] * (1-zeta[i]) / 2.0;
-                XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), r1,r2,e,v1,v2);
+                XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), r1,r2,e,v1,v2, hybrid_alpha, hse_omega);
                 e_lda.push_back(e);
                 v1_lda.push_back(v1);
                 v2_lda.push_back(v2);

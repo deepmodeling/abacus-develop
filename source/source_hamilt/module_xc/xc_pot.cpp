@@ -23,7 +23,9 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     const UnitCell* ucell,
     const int nspin,
     const bool domag,
-    const bool domag_z)
+    const bool domag_z,
+    const double hybrid_alpha,
+    const double hse_omega)
 {
     ModuleBase::TITLE("XC_Functional", "v_xc");
 
@@ -38,7 +40,9 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
                                                nspin,
                                                domag,
                                                domag_z,
-                                               &(scaling_factor_xc));
+                                               &(scaling_factor_xc),
+                                               hybrid_alpha,
+                                               hse_omega);
 #else
         ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
@@ -143,7 +147,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
 #ifdef USE_LIBXC
                     double rhoup = arhox * (1.0+zeta) / 2.0;
                     double rhodw = arhox * (1.0-zeta) / 2.0;
-                    XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), rhoup, rhodw, exc, vxc[0], vxc[1]);
+                    XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), rhoup, rhodw, exc, vxc[0], vxc[1], hybrid_alpha, hse_omega);
 #else
                     ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
@@ -180,12 +184,6 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     // the dummy variable dum contains gradient correction to stress
     // which is not used here
     std::vector<double> dum;
-    double hybrid_alpha = 0.0;
-    double hse_omega = 0.0;
-#ifdef __EXX
-    hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-    hse_omega = GlobalC::exx_info.info_global.hse_omega;
-#endif
     gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z, hybrid_alpha, hse_omega);
 
     // parallel code : collect vtxc,etxc

@@ -10,6 +10,10 @@
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h"
+#endif
+
 
 //NLCC term, need to be tested
 template <typename FPTYPE, typename Device>
@@ -51,12 +55,18 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 
 	//recalculate the exchange-correlation potential
 	ModuleBase::matrix vxc;
+    const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+    const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+#else
+    const double hse_omega = 0.0;
+#endif
     if (XC_Functional::get_ked_flag())
     {
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v
             = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rho_basis->nrxx, ucell.omega, ucell.tpiba, chr,
-                                             PARAM.inp.nspin);
+                                             PARAM.inp.nspin, hybrid_alpha, hse_omega);
 
         // etxc = std::get<0>(etxc_vtxc_v);
         // vtxc = std::get<1>(etxc_vtxc_v);
@@ -71,7 +81,9 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell,
                                               PARAM.inp.nspin,
                                               PARAM.globalv.domag,
-                                              PARAM.globalv.domag_z);
+                                              PARAM.globalv.domag_z,
+                                              hybrid_alpha,
+                                              hse_omega);
         // etxc = std::get<0>(etxc_vtxc_v); // may delete?
         // vtxc = std::get<1>(etxc_vtxc_v); // may delete?
         vxc = std::get<2>(etxc_vtxc_v);

@@ -8,6 +8,10 @@
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h"
+#endif
+
 namespace elecstate
 {
 
@@ -24,9 +28,15 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
     if (XC_Functional::get_ked_flag())
     {
 #ifdef USE_LIBXC
+        const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+        const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+#else
+        const double hse_omega = 0.0;
+#endif
         const std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
             = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), nrxx_current, ucell->omega, ucell->tpiba, chg,
-                                             PARAM.inp.nspin);
+                                             PARAM.inp.nspin, hybrid_alpha, hse_omega);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);
@@ -37,11 +47,19 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
     }
     else
     {
+        const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+        const double hse_omega = GlobalC::exx_info.info_global.hse_omega;
+#else
+        const double hse_omega = 0.0;
+#endif
         const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
             = XC_Functional::v_xc(nrxx_current, chg, ucell,
                                   PARAM.inp.nspin,
                                   PARAM.globalv.domag,
-                                  PARAM.globalv.domag_z);
+                                  PARAM.globalv.domag_z,
+                                  hybrid_alpha,
+                                  hse_omega);
         *(this->etxc_) = std::get<0>(etxc_vtxc_v);
         *(this->vtxc_) = std::get<1>(etxc_vtxc_v);
         v_eff += std::get<2>(etxc_vtxc_v);

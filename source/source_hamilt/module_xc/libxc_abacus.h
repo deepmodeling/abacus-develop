@@ -65,7 +65,9 @@ namespace XC_Functional_Libxc
         const int nspin,
         const bool domag,
         const bool domag_z,
-        const std::map<int, double>* scaling_factor);
+        const std::map<int, double>* scaling_factor,
+        const double hybrid_alpha,
+        const double hse_omega);
 
     // for mGGA functional
     extern std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> v_xc_meta(
@@ -74,7 +76,9 @@ namespace XC_Functional_Libxc
         const double &omega, // volume of cell
         const double tpiba,
         const Charge* const chr,
-        const int nspin);
+        const int nspin,
+        const double hybrid_alpha,
+        const double hse_omega);
 
 
 //-------------------
@@ -164,7 +168,9 @@ namespace XC_Functional_Libxc
         const double &rhodw,
         double &exc,
         double &vxcup,
-        double &vxcdw);
+        double &vxcdw,
+        const double hybrid_alpha,
+        const double hse_omega);
 
 
 //-------------------
@@ -178,7 +184,9 @@ namespace XC_Functional_Libxc
         const double &grho,
         double &sxc,
         double &v1xc,
-        double &v2xc);
+        double &v2xc,
+        const double hybrid_alpha,
+        const double hse_omega);
 
     // the entire GGA functional, for nspin=2 case
     extern void gcxc_spin_libxc(

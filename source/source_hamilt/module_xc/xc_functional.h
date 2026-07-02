@@ -50,7 +50,9 @@ class XC_Functional
         const UnitCell *ucell, // charge density
         const int nspin,
         const bool domag,
-        const bool domag_z);
+        const bool domag_z,
+        const double hybrid_alpha,
+        const double hse_omega);
 
 //-------------------
 //  xc_functional.cpp
