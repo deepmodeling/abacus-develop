@@ -78,6 +78,7 @@ if (ENABLE_MPI)
     LIBS parameter  ${math_libs} psi device base container
     SOURCES test_hsolver_pw.cpp ../hsolver_pw.cpp ../hsolver_lcaopw.cpp ../diago_bpcg.cpp ../diago_dav_subspace.cpp ../diago_ppcg.cpp ../diag_const_nums.cpp ../diago_iter_assist.cpp ../para_linear_transform.cpp
     ../../source_estate/elecstate_tools.cpp ../../source_estate/occupy.cpp ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
+    ../../source_hamilt/module_xc/exx_info.cpp
   )
 
   AddTest(
