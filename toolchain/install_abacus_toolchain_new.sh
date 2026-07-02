@@ -50,7 +50,7 @@ main() {
     # Initialize configuration with command line arguments
     if ! config_init "${args[@]}"; then
         show_help
-        exit 0
+        exit 1
     fi
     
     # Handle special version-related requests
