@@ -288,6 +288,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 for (int ig = 0; ig < n_dim_; ++ig)
                     nrm2 += static_cast<Real>(
                         std::norm(grad[idx(ig, i, ld_psi_)]));
+                reduce_pool_if_mpi_ready(nrm2);
                 if (std::sqrt(nrm2) > std::max(static_cast<Real>(ethr_band[i]),
                                                diag_thr_))
                 {

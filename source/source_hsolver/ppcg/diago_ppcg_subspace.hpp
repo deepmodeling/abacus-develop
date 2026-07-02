@@ -19,6 +19,7 @@ void DiagoPPCG<T, Device>::lock_epairs(
         Real nrm2 = 0;
         for (int ig = 0; ig < n_dim_; ++ig)
             nrm2 += static_cast<Real>(std::norm(residual[idx(ig, j, ld_psi_)]));
+        reduce_pool_if_mpi_ready(nrm2);
         const Real rnrm = std::sqrt(std::max(nrm2, static_cast<Real>(0)));
         const Real thr = std::max(static_cast<Real>(ethr_band[j]), diag_thr_);
         if (rnrm > thr)
@@ -80,6 +81,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
             for (int ig = 0; ig < n_dim_; ++ig)
                 sn2 += std::real(std::conj(x[idx(ig, j, ld_psi_)])
                                  * sx[idx(ig, j, ld_psi_)]);
+            reduce_pool_if_mpi_ready(sn2);
             Real sn = std::sqrt(std::max(sn2, static_cast<Real>(1e-30)));
             // Only scale if the norm is non-negligible; a near-zero
             // column is a converged band whose contribution is harmless.

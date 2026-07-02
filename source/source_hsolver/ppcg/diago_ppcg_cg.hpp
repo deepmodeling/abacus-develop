@@ -39,11 +39,9 @@ void DiagoPPCG<T, Device>::orth_gradient(
         for (int i = 0; i < n_band_; ++i)
         {
             // Full complex inner product <psi_i | grad_j>
-            T coeff = 0;
             const T* pi = psi + i * ld_psi_;
             const T* gj = grad.data() + j * ld_psi_;
-            for (int ig = 0; ig < n_dim_; ++ig)
-                coeff += std::conj(pi[ig]) * gj[ig];
+            const T coeff = complex_dot(pi, gj);
             if (std::abs(coeff) <= std::numeric_limits<Real>::epsilon())
                 continue;
             // grad_j -= S|psi_i> * coeff
@@ -102,6 +100,8 @@ void DiagoPPCG<T, Device>::update_polak_ribiere(
             beta_num_zr += static_cast<Real>(std::real(z * std::conj(g[ig])));
             beta_num_zo += static_cast<Real>(std::real(z * std::conj(r_old)));
         }
+        reduce_pool_if_mpi_ready(beta_num_zr);
+        reduce_pool_if_mpi_ready(beta_num_zo);
 
         Real beta = 0;
         const Real denom = beta_denom[j];

@@ -1,37 +1,5 @@
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_base/parallel_reduce.h"
-
 namespace hsolver {
-
-namespace {
-
-template <typename Value>
-void reduce_pool_if_mpi_ready(Value& value)
-{
-#ifdef __MPI
-    int initialized = 0;
-    int finalized = 0;
-    MPI_Initialized(&initialized);
-    MPI_Finalized(&finalized);
-    if (initialized && !finalized)
-        Parallel_Reduce::reduce_pool(value);
-#endif
-}
-
-template <typename Value>
-void reduce_pool_if_mpi_ready(Value* value, const int n)
-{
-#ifdef __MPI
-    int initialized = 0;
-    int finalized = 0;
-    MPI_Initialized(&initialized);
-    MPI_Finalized(&finalized);
-    if (initialized && !finalized)
-        Parallel_Reduce::reduce_pool(value, n);
-#endif
-}
-
-} // anonymous namespace
 
 // =============================================================================
 // Constructor
@@ -220,11 +188,9 @@ void DiagoPPCG<T, Device>::project_against(
         for (const int bc : basis_cols)
         {
             // Full complex inner product <basis_bc | sx_c>
-            T coeff = 0;
             const T* bb = basis + bc * ld_psi_;
             const T* sc = sx.data() + c * ld_psi_;
-            for (int ig = 0; ig < n_dim_; ++ig)
-                coeff += std::conj(bb[ig]) * sc[ig];
+            const T coeff = complex_dot(bb, sc);
             if (std::abs(coeff) <= std::numeric_limits<Real>::epsilon())
                 continue;
             const T* sb = sbasis + bc * ld_psi_;

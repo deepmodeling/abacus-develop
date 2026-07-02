@@ -1,5 +1,7 @@
 #include <ATen/kernels/lapack.h>
 
+#include "source_base/parallel_reduce.h"
+
 #include <cstdlib>
 #include <fstream>
 
@@ -9,6 +11,32 @@ namespace hsolver {
 // LAPACK wrapper (specialized per real type)
 // =============================================================================
 namespace {
+
+template <typename Value>
+void reduce_pool_if_mpi_ready(Value& value)
+{
+#ifdef __MPI
+    int initialized = 0;
+    int finalized = 0;
+    MPI_Initialized(&initialized);
+    MPI_Finalized(&finalized);
+    if (initialized && !finalized)
+        Parallel_Reduce::reduce_pool(value);
+#endif
+}
+
+template <typename Value>
+void reduce_pool_if_mpi_ready(Value* value, const int n)
+{
+#ifdef __MPI
+    int initialized = 0;
+    int finalized = 0;
+    MPI_Initialized(&initialized);
+    MPI_Finalized(&finalized);
+    if (initialized && !finalized)
+        Parallel_Reduce::reduce_pool(value, n);
+#endif
+}
 
 template <typename T, typename Real>
 Real max_generalized_residual(
@@ -28,6 +56,7 @@ Real max_generalized_residual(
             const T r = hpsi[ig + j * ld] - T(eigenvalue[j]) * spsi[ig + j * ld];
             nrm2 += static_cast<Real>(std::norm(r));
         }
+        reduce_pool_if_mpi_ready(nrm2);
         max_res = std::max(max_res, std::sqrt(nrm2));
     }
     return max_res;
