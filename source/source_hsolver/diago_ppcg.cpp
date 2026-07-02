@@ -1,6 +1,6 @@
 #include "diago_ppcg.h"
 
-#include "source_base/module_container/base/third_party/lapack.h"
+#include <ATen/kernels/lapack.h>
 
 #include <cstdlib>
 #include <fstream>
@@ -11,8 +11,6 @@ namespace hsolver {
 // LAPACK wrapper (specialized per real type)
 // =============================================================================
 namespace {
-
-namespace lapackConnector = container::lapackConnector;
 
 template <typename T, typename Real>
 Real max_generalized_residual(
@@ -37,463 +35,57 @@ Real max_generalized_residual(
     return max_res;
 }
 
-template <typename Real>
-struct Lapack;
-
 template <typename Scalar>
-struct HermitianLapack;
-
-template <>
-struct Lapack<double>
+struct HermitianLapack
 {
-    static void syevd(int n, double* a, double* w)
-    {
-        const char jobz = 'V';
-        const char uplo = 'U';
-        const int lda = n;
-        int info = 0;
-        int lwork = -1;
-        int liwork = -1;
-        std::vector<double> work(1);
-        std::vector<int> iwork(1);
-        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
-                               work.data(), lwork, nullptr, 0,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 1 + 6 * n + 2 * n * n);
-            liwork = std::max(1, 3 + 5 * n);
-        }
-        else
-        {
-            lwork = static_cast<int>(work[0]);
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), 0.0);
-        iwork.assign(static_cast<size_t>(liwork), 0);
-        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
-                               work.data(), lwork, nullptr, 0,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: dsyevd failed.");
-    }
-
-    static void sygvd(int n, double* a, double* b, double* w)
-    {
-        const int itype = 1;
-        const char jobz = 'V';
-        const char uplo = 'U';
-        const int lda = n;
-        const int ldb = n;
-        int info = 0;
-        int lwork = -1;
-        int liwork = -1;
-        std::vector<double> work(1);
-        std::vector<int> iwork(1);
-        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
-                               work.data(), lwork, nullptr, 0,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 1 + 18 * n + 10 * n * n);
-            liwork = std::max(1, 3 + 10 * n);
-        }
-        else
-        {
-            lwork = static_cast<int>(work[0]);
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), 0.0);
-        iwork.assign(static_cast<size_t>(liwork), 0);
-        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
-                               work.data(), lwork, nullptr, 0,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: dsygvd failed.");
-    }
-
-    static void potrf(int n, double* a)
-    {
-        const char uplo = 'U';
-        const int lda = n;
-        int info = 0;
-
-        // Save a copy so we can restore and retry with a diagonal shift.
-        double diag_max = 0;
-        for (int i = 0; i < n; ++i)
-            diag_max = std::max(diag_max, std::abs(a[i + i * lda]));
-        std::vector<double> a0(a, a + n * lda);
-
-        for (const double shift : {0.0, 1e-12, 1e-10, 1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 1e-1, 1.0}) {
-            // Restore original and apply shift
-            std::copy(a0.begin(), a0.end(), a);
-            if (shift > 0) {
-                for (int i = 0; i < n; ++i)
-                    a[i + i * lda] += shift * std::max(diag_max, 1.0);
-            }
-            info = 0;
-            lapackConnector::potrf(uplo, n, a, lda, info);
-            if (info == 0) return;
-        }
-        throw std::runtime_error("PPCG: dpotrf failed.");
-    }
-
-    static void trtri(int n, double* a)
-    {
-        const char uplo = 'U';
-        const char diag = 'N';
-        const int lda = n;
-        int info = 0;
-        lapackConnector::trtri(uplo, diag, n, a, lda, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: dtrtri failed.");
-    }
-};
-
-template <>
-struct Lapack<float>
-{
-    static void syevd(int n, float* a, float* w)
-    {
-        const char jobz = 'V';
-        const char uplo = 'U';
-        const int lda = n;
-        int info = 0;
-        int lwork = -1;
-        int liwork = -1;
-        std::vector<float> work(1);
-        std::vector<int> iwork(1);
-        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
-                               work.data(), lwork, nullptr, 0,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 1 + 6 * n + 2 * n * n);
-            liwork = std::max(1, 3 + 5 * n);
-        }
-        else
-        {
-            lwork = static_cast<int>(work[0]);
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), 0.0f);
-        iwork.assign(static_cast<size_t>(liwork), 0);
-        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
-                               work.data(), lwork, nullptr, 0,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: ssyevd failed.");
-    }
-
-    static void sygvd(int n, float* a, float* b, float* w)
-    {
-        const int itype = 1;
-        const char jobz = 'V';
-        const char uplo = 'U';
-        const int lda = n;
-        const int ldb = n;
-        int info = 0;
-        int lwork = -1;
-        int liwork = -1;
-        std::vector<float> work(1);
-        std::vector<int> iwork(1);
-        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
-                               work.data(), lwork, nullptr, 0,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 1 + 18 * n + 10 * n * n);
-            liwork = std::max(1, 3 + 10 * n);
-        }
-        else
-        {
-            lwork = static_cast<int>(work[0]);
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), 0.0f);
-        iwork.assign(static_cast<size_t>(liwork), 0);
-        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
-                               work.data(), lwork, nullptr, 0,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: ssygvd failed.");
-    }
-
-    static void potrf(int n, float* a)
-    {
-        const char uplo = 'U';
-        const int lda = n;
-        int info = 0;
-
-        float diag_max = 0;
-        for (int i = 0; i < n; ++i)
-            diag_max = std::max(diag_max, std::abs(a[i + i * lda]));
-        std::vector<float> a0(a, a + n * lda);
-
-        for (const float shift : {0.0f, 1e-12f, 1e-10f, 1e-8f, 1e-6f, 1e-4f, 1e-3f, 1e-2f, 1e-1f, 1.0f}) {
-            std::copy(a0.begin(), a0.end(), a);
-            if (shift > 0) {
-                for (int i = 0; i < n; ++i)
-                    a[i + i * lda] += shift * std::max(diag_max, 1.0f);
-            }
-            info = 0;
-            lapackConnector::potrf(uplo, n, a, lda, info);
-            if (info == 0) return;
-        }
-        throw std::runtime_error("PPCG: spotrf failed.");
-    }
-
-    static void trtri(int n, float* a)
-    {
-        const char uplo = 'U';
-        const char diag = 'N';
-        const int lda = n;
-        int info = 0;
-        lapackConnector::trtri(uplo, diag, n, a, lda, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: strtri failed.");
-    }
-};
-
-template <>
-struct HermitianLapack<double> : Lapack<double> {};
-
-template <>
-struct HermitianLapack<float> : Lapack<float> {};
-
-template <>
-struct HermitianLapack<std::complex<double>>
-{
-    using Scalar = std::complex<double>;
-    using Real = double;
+    using Real = typename container::GetTypeReal<Scalar>::type;
+    using Device = container::DEVICE_CPU;
 
     static void syevd(int n, Scalar* a, Real* w)
     {
-        const char jobz = 'V';
-        const char uplo = 'U';
-        const int lda = n;
-        int info = 0;
-        int lwork = -1;
-        int lrwork = -1;
-        int liwork = -1;
-        std::vector<Scalar> work(1);
-        std::vector<Real> rwork(1);
-        std::vector<int> iwork(1);
-        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
-                               work.data(), lwork, rwork.data(), lrwork,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 2 * n + n * n);
-            lrwork = std::max(1, 1 + 5 * n + 2 * n * n);
-            liwork = std::max(1, 3 + 5 * n);
-        }
-        else
-        {
-            lwork = std::max(1, static_cast<int>(std::real(work[0])));
-            lrwork = std::max(1, static_cast<int>(rwork[0]));
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), Scalar(0));
-        rwork.assign(static_cast<size_t>(lrwork), Real(0));
-        iwork.assign(static_cast<size_t>(liwork), 0);
-        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
-                               work.data(), lwork, rwork.data(), lrwork,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: zheevd failed.");
+        container::kernels::lapack_heevd<Scalar, Device>()(n, a, n, w);
     }
 
     static void sygvd(int n, Scalar* a, Scalar* b, Real* w)
     {
-        const int itype = 1;
-        const char jobz = 'V';
-        const char uplo = 'U';
-        const int lda = n;
-        const int ldb = n;
-        int info = 0;
-        int lwork = -1;
-        int lrwork = -1;
-        int liwork = -1;
-        std::vector<Scalar> work(1);
-        std::vector<Real> rwork(1);
-        std::vector<int> iwork(1);
-        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
-                               work.data(), lwork, rwork.data(), lrwork,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 2 * n + n * n);
-            lrwork = std::max(1, 1 + 5 * n + 2 * n * n);
-            liwork = std::max(1, 3 + 5 * n);
-        }
-        else
-        {
-            lwork = std::max(1, static_cast<int>(std::real(work[0])));
-            lrwork = std::max(1, static_cast<int>(rwork[0]));
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), Scalar(0));
-        rwork.assign(static_cast<size_t>(lrwork), Real(0));
-        iwork.assign(static_cast<size_t>(liwork), 0);
-        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
-                               work.data(), lwork, rwork.data(), lrwork,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: zhegvd failed.");
+        std::vector<Scalar> eigvec(n * n, Scalar(0));
+        container::kernels::lapack_hegvd<Scalar, Device>()(n, n, a, b, w, eigvec.data());
+        std::copy(eigvec.begin(), eigvec.end(), a);
     }
 
     static void potrf(int n, Scalar* a)
     {
-        const char uplo = 'U';
-        const int lda = n;
-        int info = 0;
-
         Real diag_max = 0;
         for (int i = 0; i < n; ++i)
-            diag_max = std::max(diag_max, std::abs(a[i + i * lda]));
-        std::vector<Scalar> a0(a, a + n * lda);
+            diag_max = std::max(diag_max, std::abs(a[i + i * n]));
+        std::vector<Scalar> a0(a, a + n * n);
 
-        for (const Real shift : {0.0, 1e-12, 1e-10, 1e-8, 1e-6, 1e-4, 1e-3, 1e-2, 1e-1, 1.0}) {
+        for (const Real shift : {Real(0), Real(1e-12), Real(1e-10), Real(1e-8),
+                                 Real(1e-6), Real(1e-4), Real(1e-3), Real(1e-2),
+                                 Real(1e-1), Real(1)})
+        {
             std::copy(a0.begin(), a0.end(), a);
-            if (shift > 0) {
+            if (shift > 0)
+            {
                 for (int i = 0; i < n; ++i)
-                    a[i + i * lda] += Scalar(shift * std::max(diag_max, Real(1)), 0);
+                    a[i + i * n] += Scalar(shift * std::max(diag_max, Real(1)), 0);
             }
-            info = 0;
-            lapackConnector::potrf(uplo, n, a, lda, info);
-            if (info == 0) return;
+            try
+            {
+                container::kernels::lapack_potrf<Scalar, Device>()('U', n, a, n);
+                return;
+            }
+            catch (const std::runtime_error&)
+            {
+                // Try the next diagonal shift.
+            }
         }
-        throw std::runtime_error("PPCG: zpotrf failed.");
+        throw std::runtime_error("PPCG: potrf failed.");
     }
 
     static void trtri(int n, Scalar* a)
     {
-        const char uplo = 'U';
-        const char diag = 'N';
-        const int lda = n;
-        int info = 0;
-        lapackConnector::trtri(uplo, diag, n, a, lda, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: ztrtri failed.");
-    }
-};
-
-template <>
-struct HermitianLapack<std::complex<float>>
-{
-    using Scalar = std::complex<float>;
-    using Real = float;
-
-    static void syevd(int n, Scalar* a, Real* w)
-    {
-        const char jobz = 'V';
-        const char uplo = 'U';
-        const int lda = n;
-        int info = 0;
-        int lwork = -1;
-        int lrwork = -1;
-        int liwork = -1;
-        std::vector<Scalar> work(1);
-        std::vector<Real> rwork(1);
-        std::vector<int> iwork(1);
-        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
-                               work.data(), lwork, rwork.data(), lrwork,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 2 * n + n * n);
-            lrwork = std::max(1, 1 + 5 * n + 2 * n * n);
-            liwork = std::max(1, 3 + 5 * n);
-        }
-        else
-        {
-            lwork = std::max(1, static_cast<int>(std::real(work[0])));
-            lrwork = std::max(1, static_cast<int>(rwork[0]));
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), Scalar(0));
-        rwork.assign(static_cast<size_t>(lrwork), Real(0));
-        iwork.assign(static_cast<size_t>(liwork), 0);
-        lapackConnector::heevd(jobz, uplo, n, a, lda, w,
-                               work.data(), lwork, rwork.data(), lrwork,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: cheevd failed.");
-    }
-
-    static void sygvd(int n, Scalar* a, Scalar* b, Real* w)
-    {
-        const int itype = 1;
-        const char jobz = 'V';
-        const char uplo = 'U';
-        const int lda = n;
-        const int ldb = n;
-        int info = 0;
-        int lwork = -1;
-        int lrwork = -1;
-        int liwork = -1;
-        std::vector<Scalar> work(1);
-        std::vector<Real> rwork(1);
-        std::vector<int> iwork(1);
-        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
-                               work.data(), lwork, rwork.data(), lrwork,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-        {
-            lwork = std::max(1, 2 * n + n * n);
-            lrwork = std::max(1, 1 + 5 * n + 2 * n * n);
-            liwork = std::max(1, 3 + 5 * n);
-        }
-        else
-        {
-            lwork = std::max(1, static_cast<int>(std::real(work[0])));
-            lrwork = std::max(1, static_cast<int>(rwork[0]));
-            liwork = std::max(1, iwork[0]);
-        }
-        work.assign(static_cast<size_t>(lwork), Scalar(0));
-        rwork.assign(static_cast<size_t>(lrwork), Real(0));
-        iwork.assign(static_cast<size_t>(liwork), 0);
-        lapackConnector::hegvd(itype, jobz, uplo, n, a, lda, b, ldb, w,
-                               work.data(), lwork, rwork.data(), lrwork,
-                               iwork.data(), liwork, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: chegvd failed.");
-    }
-
-    static void potrf(int n, Scalar* a)
-    {
-        const char uplo = 'U';
-        const int lda = n;
-        int info = 0;
-
-        Real diag_max = 0;
-        for (int i = 0; i < n; ++i)
-            diag_max = std::max(diag_max, std::abs(a[i + i * lda]));
-        std::vector<Scalar> a0(a, a + n * lda);
-
-        for (const Real shift : {0.0f, 1e-12f, 1e-10f, 1e-8f, 1e-6f, 1e-4f, 1e-3f, 1e-2f, 1e-1f, 1.0f}) {
-            std::copy(a0.begin(), a0.end(), a);
-            if (shift > 0) {
-                for (int i = 0; i < n; ++i)
-                    a[i + i * lda] += Scalar(shift * std::max(diag_max, Real(1)), 0);
-            }
-            info = 0;
-            lapackConnector::potrf(uplo, n, a, lda, info);
-            if (info == 0) return;
-        }
-        throw std::runtime_error("PPCG: cpotrf failed.");
-    }
-
-    static void trtri(int n, Scalar* a)
-    {
-        const char uplo = 'U';
-        const char diag = 'N';
-        const int lda = n;
-        int info = 0;
-        lapackConnector::trtri(uplo, diag, n, a, lda, info);
-        if (info != 0)
-            throw std::runtime_error("PPCG: ctrtri failed.");
+        container::kernels::lapack_trtri<Scalar, Device>()('U', 'N', n, a, n);
     }
 };
 

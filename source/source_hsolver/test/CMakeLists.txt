@@ -123,7 +123,7 @@ if (ENABLE_MPI)
 endif()
 AddTest(
   TARGET MODULE_HSOLVER_ppcg
-  LIBS ${math_libs}
+  LIBS ${math_libs} container
   SOURCES diago_ppcg_test.cpp ../diago_ppcg.cpp
 )
 
