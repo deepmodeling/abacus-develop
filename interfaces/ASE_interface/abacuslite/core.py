@@ -54,6 +54,7 @@ from abacuslite.io.generalio import (
     read_input,
     read_stru,
     read_kpt,
+    species_group_indices,
     write_input,
     write_stru,
     write_kpt
@@ -142,7 +143,7 @@ class AbacusProfile(BaseProfile):
 class AbacusTemplate(CalculatorTemplate):
     
     implemented_properties = [
-        'energy', 'forces', 'stress', 'free_energy', 'magmom', 'dipole'
+        'energy', 'forces', 'stress', 'free_energy', 'magmom'
     ]
     _label = 'abacus'
 
@@ -184,10 +185,6 @@ class AbacusTemplate(CalculatorTemplate):
     @staticmethod
     def get_magmom_keywords(self) -> Dict[str, str]:
         return {'nspin': '2'}
-    
-    @staticmethod
-    def get_dipole_keywords(self) -> Dict[str, str]:
-        return {'esolver_type': 'tddft', 'out_dipole': '1'}
 
     def get_property_keywords(self,
                               parameters: Dict[str, str],
@@ -204,17 +201,28 @@ class AbacusTemplate(CalculatorTemplate):
         properties : list of str
             The list of properties to calculate
         '''
-        # update the parameters with the keywords for the properties
-        # however, one should also consider that there may be the case that
-        # contradictory keywords are needed. In this kind of cases, 
-        # we should raise a ValueError
-        param_cache_ = {}
+        def normalize_keyword_value(value):
+            if isinstance(value, (list, tuple, set)):
+                return ' '.join(str(i) for i in value)
+            return str(value)
+
+        param_cache_ = {
+            key: normalize_keyword_value(value)
+            for key, value in parameters.items()
+            if value is not None
+        }
+
         def counter(param_new: Dict[str, str]) -> Dict[str, str]:
-            info = 'desired properties required contradictory keywords'
+            info = 'desired properties or explicit parameters required contradictory keywords'
+            staged = {}
             for k, v in param_new.items():
-                if k in param_cache_ and param_cache_[k] != v:
+                if v is None:
+                    continue
+                normalized_value = normalize_keyword_value(v)
+                if k in param_cache_ and param_cache_[k] != normalized_value:
                     raise ValueError(f'{info}: {k}={v} (now), {param_cache_[k]} (before)')
-            # if it is alright, pass through
+                staged[k] = normalized_value
+            param_cache_.update(staged)
             return param_new
 
         # update the parameters with the keywords for the properties
@@ -260,9 +268,9 @@ class AbacusTemplate(CalculatorTemplate):
 
         # STRU
         _ = file_safe_backup(directory / parameters.get('stru_file', 'STRU'))
-        # reorder the atoms according to the alphabet. Keep the reverse map
+        # group atoms by first-occurrence species order. Keep the reverse map
         # so that we will recover the order in function read_results()
-        ind = sorted(range(len(atoms)), key=lambda i: atoms[i].symbol)
+        ind = species_group_indices(atoms.get_chemical_symbols())
         self.atomorder = sorted(range(len(atoms)), key=lambda i: ind[i]) # revmap
         # then we write
         _ = write_stru(atoms[ind], 
@@ -662,6 +670,29 @@ class TestAbacusCalculator(unittest.TestCase):
         self.assertTrue(switch_io_backend_version('v3.10.0'))
         self.assertFalse(switch_io_backend_version('v3.11.0-beta.2'))
         self.assertFalse(switch_io_backend_version('v3.11.0'))
+
+    def test_property_keywords_reject_conflicting_user_parameters(self):
+        template = AbacusTemplate()
+        with self.assertRaises(ValueError):
+            template.get_property_keywords({'nspin': 1}, ['magmom'])
+
+        parameters = template.get_property_keywords({'nspin': 2}, ['magmom'])
+        self.assertEqual(str(parameters['nspin']), '2')
+
+    def test_property_keywords_reject_conflicting_properties(self):
+        template = AbacusTemplate()
+        template.implemented_properties = ['prop_a', 'prop_b']
+        template.get_prop_a_keywords = lambda parameters: {'calculation': 'scf'}
+        template.get_prop_b_keywords = lambda parameters: {'calculation': 'md'}
+
+        with self.assertRaises(ValueError):
+            template.get_property_keywords({}, ['prop_a', 'prop_b'])
+
+    def test_dipole_property_is_not_implemented(self):
+        template = AbacusTemplate()
+        self.assertNotIn('dipole', template.implemented_properties)
+        with self.assertRaises(AssertionError):
+            template.get_property_keywords({}, ['dipole'])
 
 if __name__ == '__main__':
     unittest.main()
