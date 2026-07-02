@@ -160,9 +160,8 @@ endfunction()
 
 # enable json support
 if(ENABLE_RAPIDJSON)
-  find_package(RapidJSON CONFIG REQUIRED)
-  abacus_add_feature_definitions(__RAPIDJSON)
-  target_link_libraries(abacus_external_deps INTERFACE RapidJSON)
+  include(cmake/AbacusRapidJSON.cmake)
+  abacus_configure_rapidjson(abacus_external_deps)
 endif()
 
 # get commit info
