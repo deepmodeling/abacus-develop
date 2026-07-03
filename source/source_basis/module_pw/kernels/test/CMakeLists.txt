@@ -1,4 +1,4 @@
-add_definitions(-D__NORMAL)
+abacus_add_local_feature_definitions(__NORMAL)
 
 AddTest(
     TARGET MODULE_PW_PW_Kernels_UTs

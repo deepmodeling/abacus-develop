@@ -8,12 +8,10 @@ ABACUS use exchange-correlation functionals by default. However, for some functi
 
 Dependency: [Libxc](https://tddft.org/programs/libxc/) >= 5.1.7 .
 
-> Note: Building Libxc from source with Makefile does NOT support using it in CMake here. Please compile Libxc with CMake instead.
-
-If Libxc is not installed in standard path (i.e. installed with a custom prefix path), you can set `Libxc_DIR` to the corresponding directory.
+> Note: Building Libxc from source with Autotools is NOT supported when building ABACUS with CMake. Please compile Libxc with CMake instead and pass its installation prefix path to `CMAKE_PREFIX_PATH` environment variable.
 
 ```bash
-cmake -B build -DLibxc_DIR=~/libxc
+cmake -B build -DENABLE_LIBXC=ON
 ```
 
 ## Build with ML-ALGO

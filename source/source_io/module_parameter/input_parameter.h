@@ -33,6 +33,7 @@ struct Input_para
     int kpar = 1;                   ///< ecch pool is for one k point
     int bndpar = 1;                 ///< parallel for stochastic/deterministic bands
     std::string latname = "user_defined_lattice";   ///< lattice name
+    std::string assume_isolated = "none"; ///< isolated-system correction: none or makov-payne
     double ecutwfc = 0;             ///< energy cutoff for wavefunctions
     double ecutrho = 0;             ///< energy cutoff for charge/potential
 
@@ -400,6 +401,9 @@ struct Input_para
                                   ///< KS-orbital representation.
     std::vector<int> out_mat_xc2 = {0, 8};  ///< output Vxc(R) matrix with precision
     bool out_eband_terms = false; ///< output the band energy terms separately
+    bool out_hr_npz = false;      ///< output H(R) matrix in npz format
+    bool out_hsr_npz = false;     ///< output H(R) and S(R) matrices in npz format
+    bool out_dm_npz = false;      ///< output DM(R) matrix in npz format
     int out_interval = 1;
     bool out_app_flag = true; ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                               ///< in an append manner during MD liuyu 2023-03-20
@@ -599,11 +603,16 @@ struct Input_para
     double sc_thr = 1e-06;          ///< threshold for spin-constrained DFT in uB
     int nsc = 100;                  ///< maximum number of inner lambda loop
     int nsc_min = 2;                ///< minimum number of inner lambda loop
-    int sc_scf_nmin = 2;            ///< minimum number of outer scf loop before initial lambda loop
     double alpha_trial = 0.01;      ///< initial trial step size for lambda in eV/uB^2
     double sccut = 3.0;             ///< restriction of step size in eV/uB
     double sc_scf_thr = 1e-3;       ///< minimum number of outer scf loop before initial lambda loop
     double sc_drop_thr = 1e-3;      ///< threshold for lambda-loop threshold cutoff in spin-constrained DFT
+    std::string sc_lambda_strategy = "bfgs";  ///< lambda update strategy: bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, linear_scan
+    bool sc_direction_only = false; ///< only optimize the direction of magnetization
+    // linear_scan parameters
+    double sc_scan_lambda_start = 0.0;  ///< start value for lambda scan (eV/uB)
+    double sc_scan_lambda_end = 1.0;    ///< end value for lambda scan (eV/uB)
+    int sc_scan_steps = 20;             ///< number of steps in lambda scan
 
     // ==============   #Parameters (18.Quasiatomic Orbital analysis) =========
     ///<==========================================================

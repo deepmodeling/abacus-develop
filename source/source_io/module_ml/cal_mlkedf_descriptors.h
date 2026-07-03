@@ -90,7 +90,7 @@ public:
     std::vector<double> chi_pnl = {1.0};
     std::vector<double> chi_qnl = {1.0};
 
-    int nx = 0;
+    int nrxx = 0;
     double dV = 0.;
     double rho0 = 0.; // average rho
     double kF = 0.; // Fermi vector kF = (3 pi^2 rho0)^(1/3)

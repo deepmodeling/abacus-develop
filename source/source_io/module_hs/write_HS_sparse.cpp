@@ -1,20 +1,157 @@
 #include "write_HS_sparse.h"
 
-#include "source_io/module_parameter/parameter.h"
+#include "source_base/global_function.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "single_R_io.h"
 
+#include <algorithm>
+#include <cmath>
+#include <complex>
+#include <vector>
+
+namespace
+{
+template <typename Tdata>
+std::vector<long long> count_nonzeros_by_R(
+    const ModuleIO::SparseRMatrix<Tdata>& smat,
+    const std::set<ModuleIO::RCoordinate>& all_R_coor,
+    const double threshold,
+    const bool reduce)
+{
+    std::vector<long long> nonzero_num(all_R_coor.size(), 0);
+    int count = 0;
+    for (const auto& R_coor: all_R_coor)
+    {
+        const auto iter = smat.find(R_coor);
+        if (iter != smat.end())
+        {
+            for (const auto& row_loop: iter->second)
+            {
+                for (const auto& col_value: row_loop.second)
+                {
+                    if (std::abs(col_value.second) > threshold)
+                    {
+                        ++nonzero_num[count];
+                    }
+                }
+            }
+        }
+        ++count;
+    }
+
+    if (reduce)
+    {
+        Parallel_Reduce::reduce_all(nonzero_num.data(), static_cast<int>(nonzero_num.size()));
+    }
+    return nonzero_num;
+}
+
+int count_output_R(const std::vector<long long>& nonzero_num)
+{
+    int output_R_number = 0;
+    for (const long long count: nonzero_num)
+    {
+        if (count != 0)
+        {
+            ++output_R_number;
+        }
+    }
+    return output_R_number;
+}
+
+void open_sparse_file(std::ofstream& ofs, const ModuleIO::SparseWriteOptions& options)
+{
+    std::ios_base::openmode mode = std::ios::out;
+    if (options.binary)
+    {
+        mode |= std::ios::binary;
+    }
+    if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && options.istep)
+    {
+        mode |= std::ios::app;
+    }
+    ofs.open(options.filename.c_str(), mode);
+    if (!ofs.is_open())
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::open_sparse_file",
+                                 "Cannot open sparse matrix file: " + options.filename);
+    }
+}
+
+void write_sparse_header(std::ofstream& ofs,
+                         const ModuleIO::SparseWriteOptions& options,
+                         const int nlocal,
+                         const int output_R_number)
+{
+    const int step = std::max(options.istep, 0);
+    if (options.binary)
+    {
+        ofs.write(reinterpret_cast<const char*>(&step), sizeof(int));
+        ofs.write(reinterpret_cast<const char*>(&nlocal), sizeof(int));
+        ofs.write(reinterpret_cast<const char*>(&output_R_number), sizeof(int));
+    }
+    else
+    {
+        ofs << "STEP: " << step << std::endl;
+        ofs << "Matrix Dimension of " + options.label + "(R): " << nlocal
+            << std::endl;
+        ofs << "Matrix number of " + options.label + "(R): "
+            << output_R_number << std::endl;
+    }
+}
+
+void write_R_record(std::ofstream& ofs,
+                    const ModuleIO::RCoordinate& R_coor,
+                    const long long nonzero_count,
+                    const bool binary)
+{
+    int dRx = R_coor.x;
+    int dRy = R_coor.y;
+    int dRz = R_coor.z;
+    if (binary)
+    {
+        const int count = static_cast<int>(nonzero_count);
+        ofs.write(reinterpret_cast<char*>(&dRx), sizeof(int));
+        ofs.write(reinterpret_cast<char*>(&dRy), sizeof(int));
+        ofs.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+        ofs.write(reinterpret_cast<const char*>(&count), sizeof(int));
+    }
+    else
+    {
+        ofs << dRx << " " << dRy << " " << dRz << " " << nonzero_count
+            << std::endl;
+    }
+}
+
+void check_output_file_open(const std::ofstream& ofs,
+                            const std::string& filename,
+                            const std::string& context)
+{
+    if (!ofs.is_open())
+    {
+        ModuleBase::WARNING_QUIT(context, "Cannot open sparse matrix file: " + filename);
+    }
+}
+} // namespace
 
 void ModuleIO::save_dH_sparse(const int& istep,
                               const Parallel_Orbitals& pv,
                               LCAO_HS_Arrays& HS_Arrays,
                               const double& sparse_thr,
                               const bool& binary,
-                              const std::string& fileflag) {
+                              const std::string& fileflag,
+                              const int precision) {
     ModuleBase::TITLE("ModuleIO", "save_dH_sparse");
     ModuleBase::timer::start("ModuleIO", "save_dH_sparse");
+    SparseWriteOptions single_R_options;
+    single_R_options.threshold = sparse_thr;
+    single_R_options.binary = binary;
+    single_R_options.precision = precision;
+    single_R_options.reduce = true;
+    single_R_options.temp_dir = PARAM.globalv.global_out_dir;
 
     auto& all_R_coor_ptr = HS_Arrays.all_R_coor;
     auto& output_R_coor_ptr = HS_Arrays.output_R_coor;
@@ -25,11 +162,11 @@ void ModuleIO::save_dH_sparse(const int& istep,
     auto& dHRz_sparse_ptr = HS_Arrays.dHRz_sparse;
     auto& dHRz_soc_sparse_ptr = HS_Arrays.dHRz_soc_sparse;
 
-    int total_R_num = all_R_coor_ptr.size();
+    const int total_R_num = static_cast<int>(all_R_coor_ptr.size());
     int output_R_number = 0;
-    int* dHx_nonzero_num[2] = {nullptr, nullptr};
-    int* dHy_nonzero_num[2] = {nullptr, nullptr};
-    int* dHz_nonzero_num[2] = {nullptr, nullptr};
+    std::vector<long long> dHx_nonzero_num[2];
+    std::vector<long long> dHy_nonzero_num[2];
+    std::vector<long long> dHz_nonzero_num[2];
     int step = istep;
 
     int spin_loop = 1;
@@ -37,81 +174,41 @@ void ModuleIO::save_dH_sparse(const int& istep,
         spin_loop = 2;
     }
 
-    for (int ispin = 0; ispin < spin_loop; ++ispin) {
-        dHx_nonzero_num[ispin] = new int[total_R_num];
-        ModuleBase::GlobalFunc::ZEROS(dHx_nonzero_num[ispin], total_R_num);
-        dHy_nonzero_num[ispin] = new int[total_R_num];
-        ModuleBase::GlobalFunc::ZEROS(dHy_nonzero_num[ispin], total_R_num);
-        dHz_nonzero_num[ispin] = new int[total_R_num];
-        ModuleBase::GlobalFunc::ZEROS(dHz_nonzero_num[ispin], total_R_num);
+    if (PARAM.inp.nspin != 4)
+    {
+        for (int ispin = 0; ispin < spin_loop; ++ispin)
+        {
+            dHx_nonzero_num[ispin] = count_nonzeros_by_R(dHRx_sparse_ptr[ispin], all_R_coor_ptr, sparse_thr, true);
+            dHy_nonzero_num[ispin] = count_nonzeros_by_R(dHRy_sparse_ptr[ispin], all_R_coor_ptr, sparse_thr, true);
+            dHz_nonzero_num[ispin] = count_nonzeros_by_R(dHRz_sparse_ptr[ispin], all_R_coor_ptr, sparse_thr, true);
+        }
+    }
+    else
+    {
+        dHx_nonzero_num[0] = count_nonzeros_by_R(dHRx_soc_sparse_ptr, all_R_coor_ptr, sparse_thr, true);
+        dHy_nonzero_num[0] = count_nonzeros_by_R(dHRy_soc_sparse_ptr, all_R_coor_ptr, sparse_thr, true);
+        dHz_nonzero_num[0] = count_nonzeros_by_R(dHRz_soc_sparse_ptr, all_R_coor_ptr, sparse_thr, true);
     }
 
-    int count = 0;
-    for (auto& R_coor: all_R_coor_ptr) {
-        if (PARAM.inp.nspin != 4) {
-            for (int ispin = 0; ispin < spin_loop; ++ispin) {
-                auto iter1 = dHRx_sparse_ptr[ispin].find(R_coor);
-                if (iter1 != dHRx_sparse_ptr[ispin].end()) {
-                    for (auto& row_loop: iter1->second) {
-                        dHx_nonzero_num[ispin][count] += row_loop.second.size();
-                    }
-                }
-
-                auto iter2 = dHRy_sparse_ptr[ispin].find(R_coor);
-                if (iter2 != dHRy_sparse_ptr[ispin].end()) {
-                    for (auto& row_loop: iter2->second) {
-                        dHy_nonzero_num[ispin][count] += row_loop.second.size();
-                    }
-                }
-
-                auto iter3 = dHRz_sparse_ptr[ispin].find(R_coor);
-                if (iter3 != dHRz_sparse_ptr[ispin].end()) {
-                    for (auto& row_loop: iter3->second) {
-                        dHz_nonzero_num[ispin][count] += row_loop.second.size();
-                    }
-                }
-            }
-        } else {
-            auto iter = dHRx_soc_sparse_ptr.find(R_coor);
-            if (iter != dHRx_soc_sparse_ptr.end()) {
-                for (auto& row_loop: iter->second) {
-                    dHx_nonzero_num[0][count] += row_loop.second.size();
-                }
+    const auto has_output_R = [&](const int index) {
+        for (int ispin = 0; ispin < spin_loop; ++ispin)
+        {
+            if (dHx_nonzero_num[ispin][index] != 0
+                || dHy_nonzero_num[ispin][index] != 0
+                || dHz_nonzero_num[ispin][index] != 0)
+            {
+                return true;
             }
         }
+        return false;
+    };
 
-        count++;
-    }
-
-    for (int ispin = 0; ispin < spin_loop; ++ispin) {
-        Parallel_Reduce::reduce_all(dHx_nonzero_num[ispin], total_R_num);
-        Parallel_Reduce::reduce_all(dHy_nonzero_num[ispin], total_R_num);
-        Parallel_Reduce::reduce_all(dHz_nonzero_num[ispin], total_R_num);
-    }
-
-	if (PARAM.inp.nspin == 2) 
-	{
-		for (int index = 0; index < total_R_num; ++index) 
-		{
-			if (dHx_nonzero_num[0][index] != 0 || dHx_nonzero_num[1][index] != 0
-					|| dHy_nonzero_num[0][index] != 0
-					|| dHy_nonzero_num[1][index] != 0
-					|| dHz_nonzero_num[0][index] != 0
-					|| dHz_nonzero_num[1][index] != 0) 
-			{
-				output_R_number++;
-			}
-		}
-	} else 
-	{
-		for (int index = 0; index < total_R_num; ++index) 
-		{
-			if (dHx_nonzero_num[0][index] != 0 || dHy_nonzero_num[0][index] != 0
-					|| dHz_nonzero_num[0][index] != 0) 
-			{
-				output_R_number++;
-			}
-		}
+    for (int index = 0; index < total_R_num; ++index)
+    {
+        if (has_output_R(index))
+        {
+            output_R_number++;
+        }
     }
 
     std::stringstream sshx[2];
@@ -169,6 +266,9 @@ void ModuleIO::save_dH_sparse(const int& istep,
                     g1y[ispin].open(sshy[ispin].str().c_str(),std::ios::binary);
                     g1z[ispin].open(sshz[ispin].str().c_str(),std::ios::binary);
                 }
+                check_output_file_open(g1x[ispin], sshx[ispin].str(), "ModuleIO::save_dH_sparse");
+                check_output_file_open(g1y[ispin], sshy[ispin].str(), "ModuleIO::save_dH_sparse");
+                check_output_file_open(g1z[ispin], sshz[ispin].str(), "ModuleIO::save_dH_sparse");
 
                 g1x[ispin].write(reinterpret_cast<char*>(&step), sizeof(int));
                 g1x[ispin].write(reinterpret_cast<char*>(&nlocal),
@@ -208,6 +308,9 @@ void ModuleIO::save_dH_sparse(const int& istep,
                     g1y[ispin].open(sshy[ispin].str().c_str());
                     g1z[ispin].open(sshz[ispin].str().c_str());
                 }
+                check_output_file_open(g1x[ispin], sshx[ispin].str(), "ModuleIO::save_dH_sparse");
+                check_output_file_open(g1y[ispin], sshy[ispin].str(), "ModuleIO::save_dH_sparse");
+                check_output_file_open(g1z[ispin], sshz[ispin].str(), "ModuleIO::save_dH_sparse");
 
                 g1x[ispin] << "STEP: " << step << std::endl;
                 g1x[ispin] << "Matrix Dimension of dHx(R): " << PARAM.globalv.nlocal
@@ -232,27 +335,16 @@ void ModuleIO::save_dH_sparse(const int& istep,
 
     output_R_coor_ptr.clear();
 
-    count = 0;
+    int count = 0;
     for (auto& R_coor: all_R_coor_ptr) {
         int dRx = R_coor.x;
         int dRy = R_coor.y;
         int dRz = R_coor.z;
 
-        if (PARAM.inp.nspin == 2) {
-            if (dHx_nonzero_num[0][count] == 0 && dHx_nonzero_num[1][count] == 0
-                && dHy_nonzero_num[0][count] == 0
-                && dHy_nonzero_num[1][count] == 0
-                && dHz_nonzero_num[0][count] == 0
-                && dHz_nonzero_num[1][count] == 0) {
-                count++;
-                continue;
-            }
-        } else {
-            if (dHx_nonzero_num[0][count] == 0 && dHy_nonzero_num[0][count] == 0
-                && dHz_nonzero_num[0][count] == 0) {
-                count++;
-                continue;
-            }
+        if (!has_output_R(count))
+        {
+            count++;
+            continue;
         }
 
         output_R_coor_ptr.insert(R_coor);
@@ -260,15 +352,17 @@ void ModuleIO::save_dH_sparse(const int& istep,
         if (GlobalV::DRANK == 0) {
             if (binary) {
                 for (int ispin = 0; ispin < spin_loop; ++ispin) {
+                    const int dHx_count = static_cast<int>(dHx_nonzero_num[ispin][count]);
+                    const int dHy_count = static_cast<int>(dHy_nonzero_num[ispin][count]);
+                    const int dHz_count = static_cast<int>(dHz_nonzero_num[ispin][count]);
                     g1x[ispin].write(reinterpret_cast<char*>(&dRx),
                                      sizeof(int));
                     g1x[ispin].write(reinterpret_cast<char*>(&dRy),
                                      sizeof(int));
                     g1x[ispin].write(reinterpret_cast<char*>(&dRz),
                                      sizeof(int));
-                    g1x[ispin].write(
-                        reinterpret_cast<char*>(&dHx_nonzero_num[ispin][count]),
-                        sizeof(int));
+                    g1x[ispin].write(reinterpret_cast<const char*>(&dHx_count),
+                                     sizeof(int));
 
                     g1y[ispin].write(reinterpret_cast<char*>(&dRx),
                                      sizeof(int));
@@ -276,9 +370,8 @@ void ModuleIO::save_dH_sparse(const int& istep,
                                      sizeof(int));
                     g1y[ispin].write(reinterpret_cast<char*>(&dRz),
                                      sizeof(int));
-                    g1y[ispin].write(
-                        reinterpret_cast<char*>(&dHy_nonzero_num[ispin][count]),
-                        sizeof(int));
+                    g1y[ispin].write(reinterpret_cast<const char*>(&dHy_count),
+                                     sizeof(int));
 
                     g1z[ispin].write(reinterpret_cast<char*>(&dRx),
                                      sizeof(int));
@@ -286,9 +379,8 @@ void ModuleIO::save_dH_sparse(const int& istep,
                                      sizeof(int));
                     g1z[ispin].write(reinterpret_cast<char*>(&dRz),
                                      sizeof(int));
-                    g1z[ispin].write(
-                        reinterpret_cast<char*>(&dHz_nonzero_num[ispin][count]),
-                        sizeof(int));
+                    g1z[ispin].write(reinterpret_cast<const char*>(&dHz_count),
+                                     sizeof(int));
                 }
             } else {
                 for (int ispin = 0; ispin < spin_loop; ++ispin) {
@@ -307,45 +399,39 @@ void ModuleIO::save_dH_sparse(const int& istep,
                 if (PARAM.inp.nspin != 4) {
                     output_single_R(g1x[ispin],
                                     dHRx_sparse_ptr[ispin][R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 } else {
                     output_single_R(g1x[ispin],
                                     dHRx_soc_sparse_ptr[R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 }
             }
             if (dHy_nonzero_num[ispin][count] > 0) {
                 if (PARAM.inp.nspin != 4) {
                     output_single_R(g1y[ispin],
                                     dHRy_sparse_ptr[ispin][R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 } else {
                     output_single_R(g1y[ispin],
                                     dHRy_soc_sparse_ptr[R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 }
             }
             if (dHz_nonzero_num[ispin][count] > 0) {
                 if (PARAM.inp.nspin != 4) {
                     output_single_R(g1z[ispin],
                                     dHRz_sparse_ptr[ispin][R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 } else {
                     output_single_R(g1z[ispin],
                                     dHRz_soc_sparse_ptr[R_coor],
-                                    sparse_thr,
-                                    binary,
-                                    pv);
+                                    pv,
+                                    single_R_options);
                 }
             }
         }
@@ -365,123 +451,62 @@ void ModuleIO::save_dH_sparse(const int& istep,
         }
     }
 
-    for (int ispin = 0; ispin < spin_loop; ++ispin) {
-        delete[] dHx_nonzero_num[ispin];
-        dHx_nonzero_num[ispin] = nullptr;
-        delete[] dHy_nonzero_num[ispin];
-        dHy_nonzero_num[ispin] = nullptr;
-        delete[] dHz_nonzero_num[ispin];
-        dHz_nonzero_num[ispin] = nullptr;
-    }
-
     ModuleBase::timer::end("ModuleIO", "save_dH_sparse");
     return;
 }
 
 template <typename Tdata>
 void ModuleIO::save_sparse(
-    const std::map<Abfs::Vector3_Order<int>,
-                   std::map<size_t, std::map<size_t, Tdata>>>& smat,
-    const std::set<Abfs::Vector3_Order<int>>& all_R_coor,
-    const double& sparse_thr,
-    const bool& binary,
-    const std::string& filename,
+    const SparseRMatrix<Tdata>& smat,
+    const std::set<RCoordinate>& all_R_coor,
     const Parallel_Orbitals& pv,
-    const std::string& label,
-    const int& istep,
-    const bool& reduce) {
+    const SparseWriteOptions& options) {
     ModuleBase::TITLE("ModuleIO", "save_sparse");
     ModuleBase::timer::start("ModuleIO", "save_sparse");
-
-    int total_R_num = all_R_coor.size();
-    std::vector<long long> nonzero_num(total_R_num, 0);
-    int count = 0;
-    for (auto& R_coor: all_R_coor) {
-        auto iter = smat.find(R_coor);
-        if (iter != smat.end()) {
-            for (auto& row_loop: iter->second) {
-                nonzero_num[count] += row_loop.second.size();
-            }
-        }
-        ++count;
-    }
-    if (reduce) {
-        Parallel_Reduce::reduce_all(nonzero_num.data(), total_R_num);
+    const int nlocal = pv.get_global_row_size();
+    if (nlocal <= 0)
+    {
+        ModuleBase::WARNING_QUIT("ModuleIO::save_sparse",
+                                 "Parallel_Orbitals global row size must be positive.");
     }
 
-    int output_R_number = 0;
-    for (int index = 0; index < total_R_num; ++index) {
-        if (nonzero_num[index] != 0) {
-            ++output_R_number;
-        }
-    }
-
-    std::stringstream sss;
-    sss << filename;
+    const std::vector<long long> nonzero_num
+        = count_nonzeros_by_R(smat, all_R_coor, options.threshold, options.reduce);
+    const int output_R_number = count_output_R(nonzero_num);
     std::ofstream ofs;
-    if (!reduce || GlobalV::DRANK == 0) {
-        if (binary) {
-            int nlocal = PARAM.globalv.nlocal;
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
-                && istep) {
-                ofs.open(sss.str().c_str(), std::ios::binary | std::ios::app);
-            } else {
-                ofs.open(sss.str().c_str(), std::ios::binary);
-            }
-            ofs.write(reinterpret_cast<char*>(0), sizeof(int));
-            ofs.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
-            ofs.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
-        } else {
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag
-                && istep) {
-                ofs.open(sss.str().c_str(), std::ios::app);
-            } else {
-                ofs.open(sss.str().c_str());
-            }
-            ofs << "STEP: " << std::max(istep, 0) << std::endl;
-            ofs << "Matrix Dimension of " + label + "(R): " << PARAM.globalv.nlocal
-                << std::endl;
-            ofs << "Matrix number of " + label + "(R): " << output_R_number
-                << std::endl;
-        }
+    if (!options.reduce || GlobalV::DRANK == 0)
+    {
+        open_sparse_file(ofs, options);
+        write_sparse_header(ofs, options, nlocal, output_R_number);
     }
 
-    count = 0;
-    for (auto& R_coor: all_R_coor) {
-        int dRx = R_coor.x;
-        int dRy = R_coor.y;
-        int dRz = R_coor.z;
-
-        if (nonzero_num[count] == 0) {
+    int count = 0;
+    for (const auto& R_coor: all_R_coor)
+    {
+        if (nonzero_num[count] == 0)
+        {
             count++;
             continue;
         }
 
-        if (!reduce || GlobalV::DRANK == 0) {
-            if (binary) {
-                ofs.write(reinterpret_cast<char*>(&dRx), sizeof(int));
-                ofs.write(reinterpret_cast<char*>(&dRy), sizeof(int));
-                ofs.write(reinterpret_cast<char*>(&dRz), sizeof(int));
-                ofs.write(reinterpret_cast<char*>(&nonzero_num[count]),
-                          sizeof(int));
-            } else {
-                ofs << dRx << " " << dRy << " " << dRz << " "
-                    << nonzero_num[count] << std::endl;
-            }
+        if (!options.reduce || GlobalV::DRANK == 0)
+        {
+            write_R_record(ofs, R_coor, nonzero_num[count], options.binary);
         }
 
         if (smat.count(R_coor))
         {
-            output_single_R(ofs, smat.at(R_coor), sparse_thr, binary, pv, reduce);
+            output_single_R(ofs, smat.at(R_coor), pv, options);
         }
         else
         {
-            std::map<size_t, std::map<size_t, Tdata>> empty_map;
-            output_single_R(ofs, empty_map, sparse_thr, binary, pv, reduce);
+            SparseRBlock<Tdata> empty_map;
+            output_single_R(ofs, empty_map, pv, options);
         }
         ++count;
     }
-    if (!reduce || GlobalV::DRANK == 0) {
+    if (!options.reduce || GlobalV::DRANK == 0)
+    {
         ofs.close();
     }
 
@@ -489,25 +514,13 @@ void ModuleIO::save_sparse(
 }
 
 template void ModuleIO::save_sparse<double>(
-    const std::map<Abfs::Vector3_Order<int>,
-                   std::map<size_t, std::map<size_t, double>>>&,
-    const std::set<Abfs::Vector3_Order<int>>&,
-    const double&,
-    const bool&,
-    const std::string&,
+    const SparseRMatrix<double>&,
+    const std::set<RCoordinate>&,
     const Parallel_Orbitals&,
-    const std::string&,
-    const int&,
-    const bool&);
+    const SparseWriteOptions&);
 
 template void ModuleIO::save_sparse<std::complex<double>>(
-    const std::map<Abfs::Vector3_Order<int>,
-                   std::map<size_t, std::map<size_t, std::complex<double>>>>&,
-    const std::set<Abfs::Vector3_Order<int>>&,
-    const double&,
-    const bool&,
-    const std::string&,
+    const SparseRMatrix<std::complex<double>>&,
+    const std::set<RCoordinate>&,
     const Parallel_Orbitals&,
-    const std::string&,
-    const int&,
-    const bool&);
+    const SparseWriteOptions&);

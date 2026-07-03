@@ -385,8 +385,8 @@ void toWannier90_LCAO::unkdotkb(const UnitCell& ucell,
         int atom_j = tmp_FR_container->get_atom_pair(iap).get_atom_j();
         int start_i = ParaV->atom_begin_row[atom_i];
         int start_j = ParaV->atom_begin_col[atom_j];
-        int row_size = ParaV->get_row_size(atom_i);
-        int col_size = ParaV->get_col_size(atom_j);
+        int row_size = ParaV->get_nrow_atom(atom_i);
+        int col_size = ParaV->get_ncol_atom(atom_j);
         for (int iR = 0; iR < tmp_FR_container->get_atom_pair(iap).get_R_size(); ++iR)
         {
             auto& matrix = tmp_FR_container->get_atom_pair(iap).get_HR_values(iR);

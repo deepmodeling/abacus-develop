@@ -131,8 +131,9 @@ void folding_HR(const hamilt::HContainer<double>& hR,
         // if TK==double, kphase is 1.0
         double kphase = 1.0;
 
-        // Hk = HR 
-        hR.get_atom_pair(i).add_to_matrix(hk, hk_ld  , kphase, hk_type);
+        // Hk = HR
+        // Gamma-only case: only R_index=0 exists, pass it explicitly
+        hR.get_atom_pair(i).add_to_matrix(0, hk, hk_ld, kphase, hk_type);
     }
 }
 

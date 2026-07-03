@@ -19,7 +19,7 @@
 #include "source_cell/pseudo.h"
 #include "source_cell/setup_nonlocal.h"
 #include "source_cell/unitcell.h"
-#include "source_estate/magnetism.h"
+#include "source_cell/magnetism.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/parallel_grid.h"

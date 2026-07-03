@@ -3,26 +3,23 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_gint/gint.h"
 #include "source_base/formatter.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_io/module_unk/berryphase.h"
 #include "source_io/module_chgpot/get_pchg_lcao.h"
 #include "source_io/module_wf/get_wf_lcao.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_wf/read_wfc_nao.h"
 #include "source_io/module_hs/write_HS_R.h"
-#include "source_io/module_chgpot/write_elecstat_pot.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 
 #ifdef __EXX
-#include "source_io/module_restart/restart_exx_csr.h"
 #endif
 
 // mohan add 2025-03-06
@@ -156,6 +153,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
                    PARAM.inp.sccut,
                    PARAM.inp.sc_drop_thr,
                    ucell,
+                   PARAM.inp.sc_direction_only,
                    &(this->pv),
                    PARAM.inp.nspin,
                    this->kv,

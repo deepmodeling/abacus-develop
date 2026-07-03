@@ -1,11 +1,11 @@
-remove_definitions(-D__MLALGO)
-remove_definitions(-D__CUDA)
-remove_definitions(-D__ROCM)
+abacus_disable_feature_definitions(__MLALGO)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 if(TARGET MODULE_ESTATE_dm_io_test_serial)
-  remove_definitions(-D__MPI)
+  abacus_disable_feature_definitions(__MPI)
 endif()
 
 AddTest(
@@ -16,7 +16,7 @@ AddTest(
   ${ABACUS_SOURCE_DIR}/source_lcao/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/source_lcao/module_hcontainer/atom_pair.cpp
   ${ABACUS_SOURCE_DIR}/source_basis/module_ao/parallel_orbitals.cpp
-  ${ABACUS_SOURCE_DIR}/source_io/module_output/output.cpp
+
 )
 
 AddTest(

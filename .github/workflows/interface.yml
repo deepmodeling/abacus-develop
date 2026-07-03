@@ -3,6 +3,10 @@ name: interface
 on:
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   wannier-interface:
     name: "wannier interface — ${{ matrix.name }}"
@@ -30,7 +34,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v6

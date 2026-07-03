@@ -11,8 +11,9 @@
 #include "../module_unk/berryphase.h"                          // use berryphase
 #include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
+#include "source_io/module_ml/io_npz.h"                       // use ModuleIO::output_mat_npz()
 #include "../module_hs/write_HS_R.h"                          // use ModuleIO::write_hsr()
-#include "../module_mulliken/output_mulliken.h"                     // use cal_mag()
+#include "../module_mulliken/cal_mag.h"                          // use cal_mag()
 #include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
 #include "../module_wannier/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
 #include "../module_hs/write_HS.h"                            // use ModuleIO::write_hsk()
@@ -193,8 +194,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #ifdef __MLALGO
     // need control parameter
     hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = p_hamilt;
-    std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&deepks.ld, [](LCAO_Deepks<TK>*) {});
-    LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
+    LCAO_Deepks_Interface<TK, TR> deepks_interface(&deepks.ld);
 
     deepks_interface.out_deepks_labels(pelec->f_en.etot,
                                        kv.get_nks(),
@@ -229,14 +229,52 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
+    //! 7a.1) Output H(R), S(R), and DM(R) matrices in NPZ format
+    //------------------------------------------------------------------
+    if (inp.out_hsr_npz)
+    {
+        std::string zipname = PARAM.globalv.global_out_dir + "output_SR.npz";
+        ModuleIO::output_mat_npz(ucell, zipname, *(p_hamilt->getSR()));
+    }
+
+    if (inp.out_hr_npz || inp.out_hsr_npz)
+    {
+        std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
+        for (int ispin = 0; ispin < hr_vec.size(); ++ispin)
+        {
+            std::string zipname
+                = PARAM.globalv.global_out_dir + "output_HR" + std::to_string(ispin) + ".npz";
+            ModuleIO::output_mat_npz(ucell, zipname, *(hr_vec[ispin]));
+        }
+    }
+
+    if (inp.out_dm_npz)
+    {
+        const std::vector<hamilt::HContainer<double>*>& dmr_vec = dm->get_DMR_vector();
+        for (int ispin = 0; ispin < dmr_vec.size(); ++ispin)
+        {
+            std::string zipname
+                = PARAM.globalv.global_out_dir + "output_DM" + std::to_string(ispin) + ".npz";
+            ModuleIO::output_mat_npz(ucell, zipname, *(dmr_vec[ispin]));
+        }
+    }
+
+    //------------------------------------------------------------------
     //! 7b) Output dH, dS, T, r matrices (old sparse path, without H/S)
     //------------------------------------------------------------------
     hamilt::Hamilt<TK>* p_ham_tk = static_cast<hamilt::Hamilt<TK>*>(p_hamilt);
 
-    ModuleIO::output_mat_sparse(inp.out_mat_dh[0],
-                                inp.out_mat_ds[0],
-                                inp.out_mat_t[0],
-                                inp.out_mat_r[0],
+    ModuleIO::MatSparseOutputOptions mat_sparse_options;
+    mat_sparse_options.out_mat_dh = inp.out_mat_dh[0];
+    mat_sparse_options.out_mat_ds = inp.out_mat_ds[0];
+    mat_sparse_options.out_mat_t = inp.out_mat_t[0];
+    mat_sparse_options.out_mat_r = inp.out_mat_r[0];
+    mat_sparse_options.dh_precision = inp.out_mat_dh[1];
+    mat_sparse_options.ds_precision = inp.out_mat_ds[1];
+    mat_sparse_options.t_precision = inp.out_mat_t[1];
+    mat_sparse_options.r_precision = inp.out_mat_r[1];
+
+    ModuleIO::output_mat_sparse(mat_sparse_options,
                                 istep,
                                 pelec->pot->get_eff_v(),
                                 pv,

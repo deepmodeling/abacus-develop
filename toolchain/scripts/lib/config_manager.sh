@@ -567,6 +567,11 @@ config_apply_env_logic() {
             echo "Using MKL, so fftw is disabled."
             CONFIG_CACHE["with_fftw"]="__DONTUSE__"
         fi
+        if [ "${CONFIG_CACHE[with_libtorch]}" = "__INSTALL__" ]; then
+            report_error ${LINENO} \
+                "Installing the current prebuilt libtorch package is disabled for oneMKL builds due to known conflicts between bundled and externally linked oneMKL libraries. Please provide a compatible libtorch installation via --with-libtorch=system or --with-libtorch=<path>."
+            exit 1
+        fi
     fi
 
     # Select the correct compute number based on the GPU architecture

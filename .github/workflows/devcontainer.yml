@@ -9,6 +9,10 @@ on:
       - 'v*'
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build_container_and_push:
     runs-on: X64
@@ -24,7 +28,7 @@ jobs:
           sudo find ${{ github.workspace }} -mindepth 1 -delete
         
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Docker meta
         id: meta

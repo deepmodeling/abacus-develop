@@ -1,6 +1,6 @@
-remove_definitions(-D__CUDA)
-remove_definitions(-D__ROCM)
-remove_definitions(-D__EXX)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
+abacus_disable_feature_definitions(__EXX)
 
 if (ENABLE_MPI)
   AddTest(

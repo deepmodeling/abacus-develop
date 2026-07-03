@@ -22,7 +22,7 @@ jobs:
         - /tmp/ccache:/github/home/.ccache
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # We will handle submodules manually after fixing ownership
@@ -36,20 +36,37 @@ jobs:
       - name: Install CI tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y gfortran ccache ca-certificates python-is-python3 python3-pip
+          sudo apt-get install -y \
+            gfortran \
+            ccache \
+            ca-certificates \
+            python-is-python3 \
+            python3-pip \
+            ninja-build \
+            xz-utils
           sudo pip install clang-format clang-tidy
 
-      - name: Install dftd4 from toolchain
+      - name: Install external tools from toolchain
         run: |
           cd toolchain
           ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
-          ./scripts/stage4/install_dftd4.sh
+          ./scripts/stage4/install_stage4.sh
           cd ..
 
       - name: Configure
         run: |
           source toolchain/install/setup
-          cmake -B build -DBUILD_TESTING=ON -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_GOOGLEBENCH=ON -DENABLE_RAPIDJSON=ON  -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -DENABLE_FLOAT_FFTW=ON -DENABLE_DFTD4=ON
+          cmake -B build -G Ninja \
+            -DBUILD_TESTING=ON \
+            -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
+            -DENABLE_MLALGO=ON \
+            -DENABLE_LIBXC=ON \
+            -DENABLE_LIBRI=ON \
+            -DENABLE_GOOGLEBENCH=ON \
+            -DENABLE_RAPIDJSON=ON \
+            -DENABLE_FLOAT_FFTW=ON \
+            -DENABLE_DFTD4=ON \
+            -Werror=dev
 
 # Temporarily removed because no one maintains this now.
 # And it will break the CI test workflow.
@@ -249,9 +266,16 @@ jobs:
         run: |
           ctest --test-dir build -V --timeout 1700 -R 10_others
           
+#      - name: 17_DS_DFTU Test
+#        env:
+#          GTEST_COLOR: 'yes'
+#          OMP_NUM_THREADS: '2'
+#        run: |
+#          ctest --test-dir build -V --timeout 1700 -R 17_DS_DFTU
+          
       - name: Other Unittests
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'
+          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|17_DS_DFTU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'

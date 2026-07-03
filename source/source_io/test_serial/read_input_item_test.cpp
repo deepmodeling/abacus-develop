@@ -973,6 +973,24 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.out_mat_hs[0], 1);
     }
+    { // out_hr_npz
+        auto it = find_label("out_hr_npz", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hr_npz, true);
+    }
+    { // out_hsr_npz
+        auto it = find_label("out_hsr_npz", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsr_npz, true);
+    }
+    { // out_dm_npz
+        auto it = find_label("out_dm_npz", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_dm_npz, true);
+    }
 }
 TEST_F(InputTest, Item_test2)
 {
@@ -1684,14 +1702,6 @@ TEST_F(InputTest, Item_test2)
     { // nsc_min
         auto it = find_label("nsc_min", readinput.input_lists);
         param.input.nsc_min = 0;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
-    { // sc_scf_nmin
-        auto it = find_label("sc_scf_nmin", readinput.input_lists);
-        param.input.sc_scf_nmin = 1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();

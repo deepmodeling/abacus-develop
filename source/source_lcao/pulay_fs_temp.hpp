@@ -75,15 +75,15 @@ namespace PulayForceStress
                     double Ry = ra->info[iat][cb][1];
                     double Rz = ra->info[iat][cb][2];
                     // get BaseMatrix
-                    if (pv.get_row_size(iat1) <= 0 || pv.get_col_size(iat2) <= 0) { continue; }
+                    if (pv.is_invalid_atom_pair(iat1, iat2)) { continue; }
                     std::vector<hamilt::BaseMatrix<double>*> tmp_matrix;
                     for (int is = 0; is < nspin_DMR; ++is)
                     {
                         tmp_matrix.push_back(dm.get_DMR_pointer(is + 1)->find_matrix(iat1, iat2, Rx, Ry, Rz));
                     }
-                    for (int mu = 0; mu < pv.get_row_size(iat1); ++mu)
+                    for (int mu = 0; mu < pv.get_nrow_atom(iat1); ++mu)
                     {
-                        for (int nu = 0; nu < pv.get_col_size(iat2); ++nu)
+                        for (int nu = 0; nu < pv.get_ncol_atom(iat2); ++nu)
                         {
                             // the DMR should not be summed over spin, do the summation here
                             double dm2d1 = 0.0;
