@@ -204,8 +204,7 @@ if(ENABLE_LCAO)
       ${PEXSI_LIBRARY}
       ${SuperLU_DIST_LIBRARY}
       ${ParMETIS_LIBRARY}
-      ${METIS_LIBRARY}
-      pexsi)
+      ${METIS_LIBRARY})
     list(APPEND _abacus_feature_include_dirs
       ${PEXSI_INCLUDE_DIR}
       ${ParMETIS_INCLUDE_DIR})
@@ -643,6 +642,9 @@ if(ENABLE_LCAO)
       rdmft)
   if(USE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
+  endif()
+  if(ENABLE_PEXSI)
+    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE pexsi)
   endif()
   if(USE_CUDA)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE diag_cusolver)
