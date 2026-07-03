@@ -52,6 +52,16 @@ private:
         int owner_rank;
     };
 
+    struct GhostExchangeSlot
+    {
+        std::array<int, 3> offset;
+        std::array<int, 3> target_coords;
+        std::array<int, 3> image_shift;
+        std::array<int, 3> recv_image_shift;
+        int send_rank;
+        int recv_rank;
+    };
+
     MPI_Comm comm_;
     MPI_Comm cart_comm_;
     bool owns_cart_comm_;
@@ -84,6 +94,7 @@ private:
                                    const std::array<int, 3>& target_coords,
                                    const std::array<int, 3>& image_shift) const;
     int neighbor_layer(int dim) const;
+    void build_ghost_exchange_slots(std::vector<GhostExchangeSlot>& slots) const;
     PackedAtom pack_atom(const LocalAtom& atom, const std::array<int, 3>& image_shift) const;
     LocalAtom unpack_ghost_atom(const PackedAtom& packed) const;
 };

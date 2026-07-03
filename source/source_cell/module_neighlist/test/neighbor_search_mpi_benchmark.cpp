@@ -7,8 +7,11 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <iostream>
+#include <limits>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -32,6 +35,21 @@ double cell_volume(const ModuleBase::Matrix3& latvec)
     return std::abs(latvec.e11 * cx + latvec.e12 * cy + latvec.e13 * cz);
 }
 
+ModuleBase::Matrix3 make_simple_lattice_latvec(int nx, int ny, int nz, double spacing, double skew)
+{
+    ModuleBase::Matrix3 latvec;
+    latvec.e11 = nx * spacing;
+    latvec.e12 = 0.0;
+    latvec.e13 = 0.0;
+    latvec.e21 = skew * ny * spacing;
+    latvec.e22 = ny * spacing;
+    latvec.e23 = 0.0;
+    latvec.e31 = 0.25 * skew * nz * spacing;
+    latvec.e32 = 0.5 * skew * nz * spacing;
+    latvec.e33 = nz * spacing;
+    return latvec;
+}
+
 ModuleBase::Vector3<double> direct_to_cartesian(const ModuleBase::Matrix3& latvec,
                                                 double fx,
                                                 double fy,
@@ -44,16 +62,7 @@ ModuleBase::Vector3<double> direct_to_cartesian(const ModuleBase::Matrix3& latve
 
 UnitCellLite make_simple_lattice_ucell(int nx, int ny, int nz, double spacing, double skew)
 {
-    ModuleBase::Matrix3 latvec;
-    latvec.e11 = nx * spacing;
-    latvec.e12 = 0.0;
-    latvec.e13 = 0.0;
-    latvec.e21 = skew * ny * spacing;
-    latvec.e22 = ny * spacing;
-    latvec.e23 = 0.0;
-    latvec.e31 = 0.25 * skew * nz * spacing;
-    latvec.e32 = 0.5 * skew * nz * spacing;
-    latvec.e33 = nz * spacing;
+    const ModuleBase::Matrix3 latvec = make_simple_lattice_latvec(nx, ny, nz, spacing, skew);
 
     std::vector<ModuleBase::Vector3<double>> tau;
     tau.reserve(static_cast<size_t>(nx) * ny * nz);
@@ -78,6 +87,83 @@ UnitCellLite make_simple_lattice_ucell(int nx, int ny, int nz, double spacing, d
     return ucell;
 }
 
+long long checked_lattice_atom_count(int nx, int ny, int nz)
+{
+    const long long lx = nx;
+    const long long ly = ny;
+    const long long lz = nz;
+    if (lx > std::numeric_limits<long long>::max() / ly ||
+        lx * ly > std::numeric_limits<long long>::max() / lz)
+    {
+        throw std::overflow_error("benchmark lattice atom count overflows.");
+    }
+    return lx * ly * lz;
+}
+
+long long owner_begin_index(long long n, int coord, int dims)
+{
+    return (static_cast<long long>(coord) * n + dims - 1) / dims;
+}
+
+long long owner_end_index(long long n, int coord, int dims)
+{
+    return (static_cast<long long>(coord + 1) * n + dims - 1) / dims;
+}
+
+void generate_owned_atoms_from_lattice(const DomainDecomposition& decomp,
+                                       const ModuleBase::Matrix3& latvec,
+                                       int nx,
+                                       int ny,
+                                       int nz,
+                                       std::vector<LocalAtom>& owned_atoms)
+{
+    owned_atoms.clear();
+
+    const auto& coords = decomp.coords();
+    const auto& dims = decomp.dims();
+
+    const long long ix_begin = owner_begin_index(nx, coords[0], dims[0]);
+    const long long ix_end = owner_end_index(nx, coords[0], dims[0]);
+    const long long iy_begin = owner_begin_index(ny, coords[1], dims[1]);
+    const long long iy_end = owner_end_index(ny, coords[1], dims[1]);
+    const long long iz_begin = owner_begin_index(nz, coords[2], dims[2]);
+    const long long iz_end = owner_end_index(nz, coords[2], dims[2]);
+
+    const std::size_t local_count
+        = ModuleNeighList::checked_size_product(
+            static_cast<std::size_t>(ix_end - ix_begin),
+            ModuleNeighList::checked_size_product(static_cast<std::size_t>(iy_end - iy_begin),
+                                                  static_cast<std::size_t>(iz_end - iz_begin),
+                                                  "benchmark local atom count"),
+            "benchmark local atom count");
+    owned_atoms.reserve(local_count);
+
+    for (long long ix = ix_begin; ix < ix_end; ++ix)
+    {
+        for (long long iy = iy_begin; iy < iy_end; ++iy)
+        {
+            for (long long iz = iz_begin; iz < iz_end; ++iz)
+            {
+                const double fx = static_cast<double>(ix) / nx;
+                const double fy = static_cast<double>(iy) / ny;
+                const double fz = static_cast<double>(iz) / nz;
+                const ModuleBase::Vector3<double> frac(fx, fy, fz);
+                const ModuleBase::Vector3<double> cart = direct_to_cartesian(latvec, fx, fy, fz);
+                const ModuleNeighList::GlobalAtomId global_id
+                    = static_cast<ModuleNeighList::GlobalAtomId>((ix * ny + iy) * nz + iz);
+
+                owned_atoms.push_back(LocalAtom(cart,
+                                                frac,
+                                                0,
+                                                0,
+                                                global_id,
+                                                decomp.rank(),
+                                                false));
+            }
+        }
+    }
+}
+
 long long count_neighbor_pairs(const NeighborList& list)
 {
     long long pairs = 0;
@@ -90,7 +176,12 @@ long long count_neighbor_pairs(const NeighborList& list)
 
 long long square_sum(long long n)
 {
-    return n * (n - 1) * (2 * n - 1) / 6;
+    const __int128 value = static_cast<__int128>(n) * (n - 1) * (2 * n - 1) / 6;
+    if (value > std::numeric_limits<long long>::max())
+    {
+        throw std::overflow_error("benchmark square sum exceeds long long range.");
+    }
+    return static_cast<long long>(value);
 }
 } // namespace
 
@@ -133,7 +224,9 @@ int main(int argc, char** argv)
         return 2;
     }
 
-    UnitCellLite ucell = make_simple_lattice_ucell(nx, ny, nz, spacing, skew);
+    const ModuleBase::Matrix3 latvec = make_simple_lattice_latvec(nx, ny, nz, spacing, skew);
+    const double lat0 = 1.0;
+    const long long nat = checked_lattice_atom_count(nx, ny, nz);
 
     long long serial_all_atoms = -1;
     long long serial_neighbor_pairs = -1;
@@ -141,6 +234,7 @@ int main(int argc, char** argv)
     double serial_build_time = 0.0;
     if (mpi_rank == 0 && check_serial)
     {
+        UnitCellLite ucell = make_simple_lattice_ucell(nx, ny, nz, spacing, skew);
         NeighborSearch serial;
         const double t0 = MPI_Wtime();
         serial.init(ucell, cutoff);
@@ -174,10 +268,10 @@ int main(int argc, char** argv)
         std::vector<LocalAtom> owned_atoms;
         std::vector<LocalAtom> ghost_atoms;
         NeighborSearch ns;
-        decomp.init(MPI_COMM_WORLD, ucell.get_latvec(), ucell.get_lat0(), cutoff, 0.0);
-        decomp.split_owned_atoms_from_ucell(ucell, owned_atoms);
+        decomp.init(MPI_COMM_WORLD, latvec, lat0, cutoff, 0.0);
+        generate_owned_atoms_from_lattice(decomp, latvec, nx, ny, nz, owned_atoms);
         decomp.exchange_ghost_atoms(owned_atoms, ghost_atoms);
-        ns.init_distributed(owned_atoms, ghost_atoms, cutoff, ucell.get_lat0());
+        ns.init_distributed(owned_atoms, ghost_atoms, cutoff, lat0);
         const double t1 = MPI_Wtime();
         ns.build_neighbors();
         const double t2 = MPI_Wtime();
@@ -211,8 +305,8 @@ int main(int argc, char** argv)
 
             for (const NeighborAtom& atom : inside_atoms)
             {
-                inside_index_sum += atom.atom_index;
-                inside_index_square_sum += static_cast<long long>(atom.atom_index) * atom.atom_index;
+                inside_index_sum += atom.global_id;
+                inside_index_square_sum += static_cast<long long>(atom.global_id) * atom.global_id;
             }
 
             for (int local_i = 0; local_i < list.get_nlocal(); ++local_i)
@@ -268,7 +362,6 @@ int main(int argc, char** argv)
     MPI_Reduce(&build_time, &max_build_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
     MPI_Reduce(&total_time, &max_total_time, 1, MPI_DOUBLE, MPI_MAX, 0, MPI_COMM_WORLD);
 
-    const long long nat = static_cast<long long>(ucell.get_natom());
     const bool ownership_ok = global_inside == nat &&
                               global_index_sum == nat * (nat - 1) / 2 &&
                               global_index_square_sum == square_sum(nat);
