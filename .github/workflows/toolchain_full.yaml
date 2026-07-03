@@ -8,6 +8,11 @@ on:
         description: "Comma-separated variants: gnu,intel,cuda"
         required: false
         default: "gnu,intel,cuda"
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   full-build-gnu:
     if: contains(inputs.variants || 'gnu,intel,cuda', 'gnu')

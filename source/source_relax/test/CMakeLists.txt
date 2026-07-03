@@ -1,8 +1,8 @@
-remove_definitions(-D__MPI)
-remove_definitions(-D__LCAO)
-remove_definitions(-D__MLALGO)
-remove_definitions(-D__CUDA)
-remove_definitions(-D__ROCM)
+abacus_disable_feature_definitions(__MPI)
+abacus_disable_feature_definitions(__LCAO)
+abacus_disable_feature_definitions(__MLALGO)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
@@ -19,7 +19,7 @@ AddTest(
     ../../source_base/global_function.cpp ../../source_base/complexmatrix.cpp ../../source_base/matrix.cpp
     ../../source_base/complexarray.cpp ../../source_base/tool_quit.cpp ../../source_base/realarray.cpp
     ../../source_base/module_external/blas_connector_base.cpp ../../source_base/module_external/blas_connector_vector.cpp ../../source_base/module_external/blas_connector_matrix.cpp
-    ../../source_cell/update_cell.cpp ../../source_cell/print_cell.cpp  ../../source_cell/bcast_cell.cpp ../../source_io/module_output/output.cpp
+    ../../source_cell/update_cell.cpp ../../source_cell/print_cell.cpp  ../../source_cell/bcast_cell.cpp ../../source_base/output.cpp
     LIBS parameter ${math_libs} 
 )
 
@@ -27,7 +27,6 @@ list(APPEND cell_source_files
     ../../source_cell/update_cell.cpp
     ../../source_cell/bcast_cell.cpp
     ../../source_cell/print_cell.cpp
-    ../../source_io/module_output/output.cpp
 )
 AddTest(
   TARGET MODULE_RELAX_lattice_change_methods_test
@@ -84,6 +83,26 @@ AddTest(
           ../relax_data.cpp
           ../../source_io/module_output/orb_io.cpp
           ${cell_source_files}
+)
+
+AddTest(
+  TARGET MODULE_RELAX_ions_move_methods_test
+  LIBS parameter ${math_libs} base device
+  SOURCES ions_move_methods_test.cpp
+          ../ions_move_methods.cpp
+          ../ions_move_bfgs.cpp
+          ../ions_move_bfgs2.cpp
+          ../ions_move_cg.cpp
+          ../ions_move_sd.cpp
+          ../ions_move_lbfgs.cpp
+          ../ions_move_basic.cpp
+          ../bfgs_basic.cpp
+          ../cg_base.cpp
+          ../matrix_methods.cpp
+          ../relax_data.cpp
+          ../../source_io/module_output/orb_io.cpp
+          ../../source_cell/bcast_cell.cpp
+          ../../source_cell/print_cell.cpp
 )
 
 AddTest(

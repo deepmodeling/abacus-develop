@@ -37,7 +37,6 @@ list(APPEND objects
     module_charge/symmetry_rho.cpp
     module_charge/symmetry_rhog.cpp
     fp_energy.cpp
-    magnetism.cpp
     occupy.cpp
     cal_ux.cpp
     read_orb.cpp

@@ -64,11 +64,11 @@ void UnitCellLite::set_atoms(int ntype,
                               const std::vector<ModuleBase::Vector3<double>>& tau) {
     assert(ntype >= 0);
     assert(na.size() == static_cast<size_t>(ntype));
-    
+
     ntype_ = ntype;
     na_ = na;
     tau_ = tau;
-    
+
     // compute total number of atoms
     std::size_t nat = 0;
     for (int i = 0; i < ntype_; ++i) {
@@ -77,7 +77,7 @@ void UnitCellLite::set_atoms(int ntype,
     }
     nat_ = ModuleNeighList::checked_int_size(nat, "UnitCellLite atom count");
     assert(tau_.size() == static_cast<size_t>(nat_));
-    
+
     // compute cumulative counts
     compute_naa_();
 }

@@ -5,6 +5,10 @@ on:
     - cron: '0 16 * * 0'
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: Dynamic analysis
@@ -14,9 +18,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+      - name: Install external tools from toolchain
+        run: |
+          sudo apt update && sudo apt install -y xz-utils ninja-build
+          cd toolchain
+          ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
+          ./scripts/stage4/install_stage4.sh
+          cd ..
       - name: Building
         run: |
-          cmake -B build -DENABLE_ASAN=1 -DENABLE_MLALGO=1 -DENABLE_LIBXC=1
+          source toolchain/install/setup
+          cmake -B build -G Ninja -DENABLE_ASAN=ON -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON
           cmake --build build -j8
           cmake --install build
       - name: Testing

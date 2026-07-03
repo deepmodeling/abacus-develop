@@ -94,6 +94,10 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "mpi_comm_parent", MPI_Comm_c2f(comm), &error);
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "process_row", myprow, &error);
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "process_col", mypcol, &error);
+    // blacs_context is required by ELPA for internal MPI operations
+    // (e.g. MPI_Bcast in complex Cholesky/invert_triangular);
+    // previously missing in this constructor but present in the otherParameter one
+    elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "blacs_context", cblacs_ctxt, &error);
 
     error = elpa_setup(NEW_ELPA_HANDLE_POOL[handle_id]);
     // cout<<"elpa handle is setup\n";

@@ -572,7 +572,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output r(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md."
+        item.description = "Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. The optional second parameter controls text output precision. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-rR-sparse.csr.";
         item.default_value = "False 8";
         item.unit = "Bohr";
@@ -594,7 +594,7 @@ Also controled by out_freq_ion and out_app_flag.
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.inp.out_mat_r[0] || para.inp.out_mat_hs2[0] || para.inp.out_mat_t[0] || para.inp.out_mat_dh[0]
-                 || para.inp.dm_to_rho)
+                 || para.inp.out_hr_npz || para.inp.out_hsr_npz || para.inp.out_dm_npz || para.inp.dm_to_rho)
                 && para.sys.gamma_only_local)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -610,7 +610,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output T(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+        item.description = "Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.";
         item.default_value = "False 8";
         item.unit = "Ry";
@@ -637,8 +637,8 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_mat_dh");
         item.annotation = "output Hamiltonian derivatives dH/dR matrices";
         item.category = "Output information";
-        item.type = "Integer";
-        item.description = "Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+        item.type = R"(Boolean \[Integer\](optional))";
+        item.description = "Whether to print files containing the derivatives of the Hamiltonian matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.";
         item.default_value = "0 8";
         item.unit = "Ry/Bohr";
@@ -672,7 +672,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output of derivative of S(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s."
+        item.description = "Whether to print files containing the derivatives of the overlap matrix. The optional second parameter controls text output precision. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.";
         item.default_value = "False 8";
         item.unit = "Ry/Bohr";
@@ -814,6 +814,72 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.unit = "";
         item.availability = "Numerical atomic orbital basis";
         read_sync_bool(input.out_eband_terms);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_hr_npz");
+        item.annotation = "output H(R) matrix in npz format";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to print Hamiltonian matrices H(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.default_value = "False";
+        item.unit = "Ry";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_hr_npz);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_hr_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_hsr_npz");
+        item.annotation = "output H(R) and S(R) matrices in npz format";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.default_value = "False";
+        item.unit = "Ry";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_hsr_npz);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_hsr_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_dm_npz");
+        item.annotation = "output DM(R) matrix in npz format";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to print density matrices DM(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_dm_npz);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_dm_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
         this->add_item(item);
     }
     {

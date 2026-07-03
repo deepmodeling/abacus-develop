@@ -9,6 +9,10 @@ on:
       - 'v*'
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build_container_and_push:
     runs-on: X64

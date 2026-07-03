@@ -3,6 +3,10 @@ on:
   push:
   pull_request:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -13,30 +17,38 @@ jobs:
             build_args: ""
             name: "Build with GNU toolchain"
           - tag: intel
+            external_toolchain_args: "--with-intel"
             build_args: ""
             name: "Build with Intel toolchain"
 
           - tag: gnu
-            build_args: "-DENABLE_LIBXC=1 -DENABLE_MLALGO=1 -DENABLE_LIBRI=1"
+            external_toolchain_args: ""
+            build_args: "-DENABLE_LIBXC=ON -DENABLE_MLALGO=ON -DENABLE_LIBRI=ON"
             name: "Build extra components with GNU toolchain"
           - tag: intel
-            build_args: "-DENABLE_LIBXC=1 -DENABLE_PEXSI=1 -DENABLE_MLALGO=1 -DENABLE_LIBRI=1"
+            external_toolchain_args: "--with-intel"
+            build_args: "-DENABLE_LIBXC=ON -DENABLE_PEXSI=ON -DENABLE_MLALGO=ON -DENABLE_LIBRI=ON"
             name: "Build extra components with Intel toolchain"
 
           - tag: cuda
-            build_args: "-DUSE_CUDA=1"
+            external_toolchain_args: ""
+            build_args: "-DUSE_CUDA=ON"
             name: "Build with CUDA support"
           - tag: gnu
-            build_args: "-DENABLE_LCAO=0"
+            external_toolchain_args: ""
+            build_args: "-DENABLE_LCAO=OFF"
             name: "Build without LCAO"
           - tag: gnu
-            build_args: "-DUSE_ELPA=0 "
+            external_toolchain_args: ""
+            build_args: "-DUSE_ELPA=OFF "
             name: "Build without ELPA"
           - tag: gnu
-            build_args: "-DENABLE_MPI=0"
+            external_toolchain_args: ""
+            build_args: "-DENABLE_MPI=OFF"
             name: "Build without MPI"
           - tag: gnu
-            build_args: "-DENABLE_MPI=0 -DENABLE_LCAO=0"
+            external_toolchain_args: ""
+            build_args: "-DENABLE_MPI=OFF -DENABLE_LCAO=OFF"
             name: "Build without LCAO and MPI"
 
     name: ${{ matrix.name }}
@@ -47,6 +59,14 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Install external tools from toolchain
+        run: |
+          sudo apt update && sudo apt install -y gfortran ninja-build xz-utils
+          cd toolchain
+          ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run ${{matrix.external_toolchain_args}}
+          ./scripts/stage4/install_stage4.sh
+          cd ..
+
       - name: Build
         run: |
           git config --global --add safe.directory `pwd`
@@ -54,6 +74,7 @@ jobs:
           export PKG_CONFIG_PATH=${GKLIB_ROOT}/lib/pkgconfig:${METIS32_ROOT}/lib/pkgconfig:${PARMETIS32_ROOT}/lib/pkgconfig:${SUPERLU32_DIST_ROOT}/lib/pkgconfig:${PEXSI32_ROOT}/lib/pkgconfig:${PKG_CONFIG_PATH}
           export CPATH=${GKLIB_ROOT}/include:${METIS32_ROOT}/include:${PARMETIS32_ROOT}/include:${SUPERLU32_DIST_ROOT}/include:${PEXSI32_ROOT}/include:${CPATH}
           export CMAKE_PREFIX_PATH=${PEXSI32_ROOT}:${SUPERLU_DIST32_ROOT}:${PARMETIS32_ROOT}:${METIS32_ROOT}:${GKLIB_ROOT}:${CMAKE_PREFIX_PATH}
+          source toolchain/install/setup
           rm -rf build
-          cmake -B build ${{ matrix.build_args }}
-          cmake --build build -j2
+          cmake -B build -G Ninja ${{ matrix.build_args }}
+          cmake --build build -j $(nproc)

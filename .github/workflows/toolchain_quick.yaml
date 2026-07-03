@@ -11,6 +11,11 @@ on:
       - toolchain/**
       - .github/workflows/toolchain_quick.yaml
   workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
 jobs:
   lint-and-sanity:
     runs-on: ubuntu-latest

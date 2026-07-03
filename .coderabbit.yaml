@@ -1,0 +1,47 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+language: en-US
+
+reviews:
+  auto_review:
+    enabled: true
+    drafts: false
+  request_changes_workflow: false
+  high_level_summary: true
+  poem: false
+  path_instructions:
+    - path: "source/**"
+      instructions: |
+        Apply the ABACUS agent governance rules before general style feedback.
+        Focus on newly introduced GlobalV/GlobalC/PARAM dependencies, default
+        parameters in headers, module placement, CMakeLists.txt linkage, C++11
+        compatibility, and focused tests for behavior changes.
+    - path: "source/source_io/module_parameter/**"
+      instructions: |
+        Treat INPUT parameter metadata, parsing, defaults, descriptions, and
+        availability changes as user-visible behavior. Require matching updates
+        to docs/parameters.yaml and docs/advanced/input_files/input-main.md, or
+        a clear no-update explanation in the PR.
+    - path: "docs/**"
+      instructions: |
+        Check that documentation changes match the implementation and do not
+        weaken the rule grading matrix without an explicit rationale.
+    - path: ".github/**"
+      instructions: |
+        Check workflow, PR-template, CodeRabbit, and Copilot instruction
+        changes for consistency with AGENTS.md and
+        docs/developers_guide/agent_governance.md.
+    - path: "tools/03_code_analysis/**"
+      instructions: |
+        Review governance checker changes for false positives, missing
+        diff-scoping, test coverage, and consistency with the GitHub Actions
+        summary output. Prefer deterministic checks for low-noise blockers and
+        leave semantic ownership decisions to AI and human review.
+
+knowledge_base:
+  code_guidelines:
+    enabled: true
+    filePatterns:
+      - "AGENTS.md"
+      - "docs/developers_guide/agent_governance.md"
+      - ".github/copilot-instructions.md"
+      - ".github/instructions/*.instructions.md"

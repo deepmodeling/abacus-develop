@@ -1,10 +1,15 @@
 #include "source_base/vector3.h"
 #include "source_cell/unitcell.h"
 // mock of TD_info
-class TD_info {
-public:
-    TD_info() {}
-    ~TD_info() {}
+class TD_info
+{
+  public:
+    TD_info()
+    {
+    }
+    ~TD_info()
+    {
+    }
     const UnitCell* get_ucell()
     {
         return nullptr;

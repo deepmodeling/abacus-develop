@@ -25,10 +25,10 @@ namespace ModuleESolver
     UnitCellLite ESolver_LJ::change_from_ucell_to_ucell_lite(const UnitCell& ucell)
     {
         UnitCellLite ucell_lite;
-        
+
         // Set lattice parameters
         ucell_lite.set_lattice(ucell.lat0, ucell.omega, ucell.latvec);
-        
+
         // Build atom information
         std::vector<int> na;
         std::vector<ModuleBase::Vector3<double>> tau;
@@ -39,7 +39,7 @@ namespace ModuleESolver
             }
         }
         ucell_lite.set_atoms(ucell.ntype, na, tau);
-        
+
         return ucell_lite;
     }
 
