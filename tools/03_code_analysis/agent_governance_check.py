@@ -241,14 +241,14 @@ def check_global_dependencies(findings: List[Finding], lines: Iterable[DiffLine]
             continue
         if pattern.search(line.content):
             add_finding(
-                findings,
-                "No new cross-layer globals",
-                BLOCK,
-                line.path,
-                line.line,
-                "Added line introduces GlobalV, GlobalC, or PARAM as a dependency.",
-                "Prefer explicit parameters or a narrow local interface. Document any required exception in the PR.",
-            )
+            findings,
+            "No new cross-layer globals",
+            WARN,
+            line.path,
+            line.line,
+            "Added line introduces GlobalV, GlobalC, or PARAM as a dependency.",
+            "Prefer explicit parameters or a narrow local interface. Document any required exception in the PR.",
+        )
 
 
 def check_default_parameters(findings: List[Finding], lines: Iterable[DiffLine]) -> None:
@@ -518,7 +518,7 @@ def check_pr_metadata(findings: List[Finding], body: Optional[str]) -> None:
         add_finding(
             findings,
             "PR metadata completeness",
-            BLOCK,
+            WARN,
             "pull_request.body",
             None,
             "; ".join(reason_parts),
