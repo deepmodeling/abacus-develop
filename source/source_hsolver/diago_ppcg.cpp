@@ -1,6 +1,7 @@
 #include "diago_ppcg.h"
 
-#include "ppcg/diago_ppcg_lapack.hpp"
+#include "ppcg/diago_ppcg_reduce.hpp"
+#include "ppcg/diago_ppcg_small_eigen.hpp"
 #include "ppcg/diago_ppcg_ops.hpp"
 #include "ppcg/diago_ppcg_subspace.hpp"
 #include "ppcg/diago_ppcg_orth.hpp"
