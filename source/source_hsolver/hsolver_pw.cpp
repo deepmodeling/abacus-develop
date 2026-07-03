@@ -456,8 +456,8 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             pre_condition.data(),
             this->diag_thr,
             this->diag_iter_max,
-            PARAM.inp.pw_diag_ndim,
-            PARAM.globalv.gamma_only_pw,
+            DiagoIterAssist<T, Device>::PW_DIAG_NDIM,
+            this->wfc_basis->gamma_only,
             std::is_same<Device, base_device::DEVICE_CPU>());
     }
     ModuleBase::timer::end("HSolverPW", "solve_psik");

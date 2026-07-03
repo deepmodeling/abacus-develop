@@ -178,7 +178,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             line_minimize(psi_in, hpsi_.data(), spsi_.data(),
                           p.data(), hp.data(), sp.data(), ncol);
 
-            const bool do_rr = (iter % rr_step_ == 0);
+            const bool do_rr = (iter % rr_step_) == 0;
             if (do_rr)
             {
                 // Rayleigh-Ritz: full subspace diagonalization.
