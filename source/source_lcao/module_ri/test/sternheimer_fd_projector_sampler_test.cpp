@@ -49,14 +49,41 @@ TEST(SternheimerFDProjectorSampler, SamplesSProjectorWithoutMinimumImage)
     EXPECT_NEAR(block.d_matrix[0][0].real(), 1.5, 1.0e-14);
 }
 
+TEST(SternheimerFDProjectorSampler, WritesProjectorsInABACUSRealSpaceIndexOrder)
+{
+    ModuleRI::SternheimerFDRadialProjectorSet radial_set;
+    radial_set.radial_grid = {0.0, 1.0, 2.0};
+    radial_set.beta_radials = {{0.0, 1.0, 2.0}};
+    radial_set.angular_momenta = {0};
+    radial_set.d_radial = {{{1.0, 0.0}}};
+
+    ModuleRI::SternheimerFDHamiltonian::Grid grid;
+    grid.nx = 2;
+    grid.ny = 2;
+    grid.nz = 2;
+    grid.hx = 1.0;
+    grid.hy = 1.0;
+    grid.hz = 1.0;
+    grid.periodic = false;
+
+    const auto block = ModuleRI::sample_sternheimer_fd_projector_block(
+        radial_set, grid, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+
+    ASSERT_EQ(block.projectors.size(), 1);
+    ASSERT_EQ(block.projectors[0].size(), 8);
+    EXPECT_NEAR(block.projectors[0][4].real(), 1.0 * y00(), 1.0e-14); // (ix, iy, iz) = (1, 0, 0)
+    EXPECT_NEAR(block.projectors[0][1].real(), 1.0 * y00(), 1.0e-14); // (ix, iy, iz) = (0, 0, 1)
+    EXPECT_NEAR(block.projectors[0][6].real(), std::sqrt(2.0) * y00(), 1.0e-14); // (1, 1, 0)
+}
+
 TEST(SternheimerFDProjectorSampler, BuildsRadialSetFromABACUSMatrices)
 {
     ModuleBase::matrix betar(2, 3);
-    betar(0, 0) = 1.0;
+    betar(0, 0) = 0.0;
     betar(0, 1) = 2.0;
-    betar(0, 2) = 3.0;
-    betar(1, 0) = 4.0;
-    betar(1, 1) = 5.0;
+    betar(0, 2) = 6.0;
+    betar(1, 0) = 0.0;
+    betar(1, 1) = 4.0;
     betar(1, 2) = 6.0;
 
     ModuleBase::matrix dion(2, 2);
@@ -70,7 +97,10 @@ TEST(SternheimerFDProjectorSampler, BuildsRadialSetFromABACUSMatrices)
 
     EXPECT_EQ(radial_set.radial_grid.size(), 3);
     ASSERT_EQ(radial_set.beta_radials.size(), 2);
-    EXPECT_DOUBLE_EQ(radial_set.beta_radials[1][2], 6.0);
+    EXPECT_DOUBLE_EQ(radial_set.beta_radials[0][0], 2.0);
+    EXPECT_DOUBLE_EQ(radial_set.beta_radials[0][2], 3.0);
+    EXPECT_DOUBLE_EQ(radial_set.beta_radials[1][0], 0.0);
+    EXPECT_DOUBLE_EQ(radial_set.beta_radials[1][2], 3.0);
     ASSERT_EQ(radial_set.d_radial.size(), 2);
     EXPECT_DOUBLE_EQ(radial_set.d_radial[0][1].real(), 8.0);
     EXPECT_EQ(radial_set.angular_momenta[1], 1);

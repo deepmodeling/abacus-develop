@@ -38,6 +38,7 @@ SternheimerABACUSDFTZeroOrderResult compare_sternheimer_abacus_fd_zero_order_to_
     const double kinetic_prefactor)
 {
     SternheimerABACUSDFTZeroOrderResult result;
+    result.hamiltonian_mode = "local_only";
     result.grid_data = make_sternheimer_fd_grid(pw_basis);
     const std::vector<double> local_potential = copy_sternheimer_local_potential(potential, pw_basis, spin);
     const SternheimerFDHamiltonian hamiltonian(result.grid_data.grid, local_potential, kinetic_prefactor);
@@ -65,6 +66,7 @@ SternheimerABACUSDFTZeroOrderResult compare_sternheimer_abacus_fd_zero_order_to_
     const double kinetic_prefactor)
 {
     SternheimerABACUSDFTZeroOrderResult result;
+    result.hamiltonian_mode = "full_nc_nonlocal";
     result.grid_data = make_sternheimer_fd_grid(pw_basis);
     const SternheimerFDHamiltonian hamiltonian
         = make_sternheimer_fd_hamiltonian(potential, pw_basis, ucell, spin, kinetic_prefactor);

@@ -28,6 +28,10 @@ void validate_unitcell(const UnitCell& ucell)
     {
         throw std::invalid_argument("Sternheimer ABACUS nonlocal projector received negative ntype.");
     }
+    if (ucell.lat0 <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer ABACUS nonlocal projector requires a positive lat0.");
+    }
     if (ucell.ntype > 0 && ucell.atoms == nullptr)
     {
         throw std::invalid_argument("Sternheimer ABACUS nonlocal projector received a null atom list.");
@@ -103,7 +107,7 @@ make_sternheimer_fd_nonlocal_projector_from_unitcell(const UnitCell& ucell,
                                                                             atom.ncpp.dion);
         for (int ia = 0; ia != atom.na; ++ia)
         {
-            blocks.push_back(sample_sternheimer_fd_projector_block(radial_set, grid, atom.tau[ia]));
+            blocks.push_back(sample_sternheimer_fd_projector_block(radial_set, grid, atom.tau[ia] * ucell.lat0));
         }
     }
 

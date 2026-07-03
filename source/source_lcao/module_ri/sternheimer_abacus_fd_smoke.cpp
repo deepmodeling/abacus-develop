@@ -22,6 +22,7 @@ constexpr const char* kOutputEnv = "ABACUS_STERNHEIMER_FD_ZERO_ORDER_OUT";
 constexpr const char* kBandsEnv = "ABACUS_STERNHEIMER_FD_ZERO_ORDER_BANDS";
 constexpr const char* kMaxDenseEnv = "ABACUS_STERNHEIMER_FD_ZERO_ORDER_MAX_DENSE";
 constexpr const char* kToleranceEnv = "ABACUS_STERNHEIMER_FD_ZERO_ORDER_TOLERANCE";
+constexpr const char* kLocalOnlyEnv = "ABACUS_STERNHEIMER_FD_ZERO_ORDER_LOCAL_ONLY";
 
 std::string lower_string(std::string value)
 {
@@ -142,17 +143,28 @@ void run_sternheimer_fd_zero_order_smoke(const elecstate::Potential& potential,
         const int max_dense_size = positive_int_from_env(kMaxDenseEnv, 4096);
         const double eigenvalue_tolerance = nonnegative_double_from_env(kToleranceEnv, 1.0e-2);
 
-        const SternheimerABACUSDFTZeroOrderResult result = compare_sternheimer_abacus_fd_zero_order_to_dft(
-            potential,
-            pw_basis,
-            ucell,
-            elec_state,
-            0,
-            0,
-            num_bands,
-            eigenvalue_tolerance,
-            max_dense_size,
-            1.0);
+        const bool local_only = env_is_true(kLocalOnlyEnv);
+        const SternheimerABACUSDFTZeroOrderResult result
+            = local_only
+                  ? compare_sternheimer_abacus_fd_zero_order_to_dft(potential,
+                                                                     pw_basis,
+                                                                     elec_state,
+                                                                     0,
+                                                                     0,
+                                                                     num_bands,
+                                                                     eigenvalue_tolerance,
+                                                                     max_dense_size,
+                                                                     1.0)
+                  : compare_sternheimer_abacus_fd_zero_order_to_dft(potential,
+                                                                     pw_basis,
+                                                                     ucell,
+                                                                     elec_state,
+                                                                     0,
+                                                                     0,
+                                                                     num_bands,
+                                                                     eigenvalue_tolerance,
+                                                                     max_dense_size,
+                                                                     1.0);
 
         out << format_sternheimer_fd_zero_order_report(result);
         GlobalV::ofs_running << " Sternheimer FD zero-order smoke report: " << report_path << std::endl;

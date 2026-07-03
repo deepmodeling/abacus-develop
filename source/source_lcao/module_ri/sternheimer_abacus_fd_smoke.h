@@ -34,6 +34,10 @@ inline std::string format_sternheimer_fd_zero_order_report(const SternheimerABAC
         << result.grid_data.volume_element << '\n';
     out << "spacing " << result.grid_data.grid.hx << ' ' << result.grid_data.grid.hy << ' '
         << result.grid_data.grid.hz << '\n';
+    if (!result.hamiltonian_mode.empty())
+    {
+        out << "hamiltonian_mode " << result.hamiltonian_mode << '\n';
+    }
     out << "band fd_eigenvalue_Ry dft_eigenvalue_Ry fd_minus_dft_Ry occupation fd_residual_norm "
            "eigenvalue_within_tolerance\n";
 

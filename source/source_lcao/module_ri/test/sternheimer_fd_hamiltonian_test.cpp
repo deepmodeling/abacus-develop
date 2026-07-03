@@ -33,6 +33,42 @@ TEST(SternheimerFDHamiltonian, ConstantFunctionHasOnlyLocalPotential)
     }
 }
 
+TEST(SternheimerFDHamiltonian, UsesABACUSRealSpaceIndexOrder)
+{
+    Hamiltonian::Grid grid{2, 3, 4, 1.0, 1.0, 1.0, true};
+    std::vector<double> potential(grid.size(), 0.0);
+    for (int ix = 0; ix != grid.nx; ++ix)
+    {
+        for (int iy = 0; iy != grid.ny; ++iy)
+        {
+            for (int iz = 0; iz != grid.nz; ++iz)
+            {
+                const int abacus_index = (ix * grid.ny + iy) * grid.nz + iz;
+                potential[abacus_index] = static_cast<double>(100 * ix + 10 * iy + iz);
+            }
+        }
+    }
+
+    Hamiltonian hamiltonian(grid, potential, 0.0);
+    const Vector psi(grid.size(), Complex(1.0, 0.0));
+    Vector hpsi;
+    hamiltonian.apply(psi, hpsi);
+
+    for (int ix = 0; ix != grid.nx; ++ix)
+    {
+        for (int iy = 0; iy != grid.ny; ++iy)
+        {
+            for (int iz = 0; iz != grid.nz; ++iz)
+            {
+                const int abacus_index = (ix * grid.ny + iy) * grid.nz + iz;
+                EXPECT_EQ(hamiltonian.index(ix, iy, iz), abacus_index);
+                EXPECT_DOUBLE_EQ(hpsi[abacus_index].real(), potential[abacus_index]);
+                EXPECT_DOUBLE_EQ(hpsi[abacus_index].imag(), 0.0);
+            }
+        }
+    }
+}
+
 TEST(SternheimerFDHamiltonian, PlaneWaveHasSecondOrderFiniteDifferenceKineticEnergy)
 {
     constexpr int nx = 12;

@@ -70,7 +70,7 @@ const SternheimerFDNonlocalProjector* SternheimerFDHamiltonian::nonlocal_project
 
 int SternheimerFDHamiltonian::index(const int ix, const int iy, const int iz) const
 {
-    return ix + grid_.nx * (iy + grid_.ny * iz);
+    return (ix * grid_.ny + iy) * grid_.nz + iz;
 }
 
 int SternheimerFDHamiltonian::shifted_index(int ix, int iy, int iz) const

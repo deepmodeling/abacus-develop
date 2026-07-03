@@ -24,7 +24,7 @@ int grid_size(const ModuleRI::SternheimerFDHamiltonian::Grid& grid)
 
 int grid_index(const ModuleRI::SternheimerFDHamiltonian::Grid& grid, const int ix, const int iy, const int iz)
 {
-    return ix + grid.nx * (iy + grid.ny * iz);
+    return (ix * grid.ny + iy) * grid.nz + iz;
 }
 
 void validate_grid(const ModuleRI::SternheimerFDHamiltonian::Grid& grid)
@@ -93,13 +93,13 @@ std::vector<ProjectorChannel> build_channels(const std::vector<int>& angular_mom
     for (int ip = 0; ip != static_cast<int>(angular_momenta.size()); ++ip)
     {
         const int l = angular_momenta[ip];
-        for (int m = -l; m <= l; ++m)
+        for (int m_index = 0; m_index != 2 * l + 1; ++m_index)
         {
             ProjectorChannel channel;
             channel.radial_index = ip;
             channel.angular_momentum = l;
-            channel.magnetic_index = m;
-            channel.ylm_index = l * l + l + m;
+            channel.magnetic_index = m_index;
+            channel.ylm_index = l * l + m_index;
             channels.push_back(channel);
         }
     }
@@ -137,6 +137,33 @@ double interpolate_radial(const std::vector<double>& radial_grid, const std::vec
     const double width = radial_grid[hi] - radial_grid[lo];
     const double t = (radius - radial_grid[lo]) / width;
     return (1.0 - t) * values[lo] + t * values[hi];
+}
+
+double abacus_betar_to_real_space_beta(const std::vector<double>& radial_grid,
+                                       const ModuleBase::matrix& beta_radials,
+                                       const std::vector<int>& angular_momenta,
+                                       const int ip,
+                                       const int ir)
+{
+    const double radius = radial_grid[ir];
+    if (radius > 0.0)
+    {
+        return beta_radials(ip, ir) / radius;
+    }
+
+    if (angular_momenta[ip] > 0)
+    {
+        return 0.0;
+    }
+
+    for (int jr = ir + 1; jr != static_cast<int>(radial_grid.size()); ++jr)
+    {
+        if (radial_grid[jr] > 0.0)
+        {
+            return beta_radials(ip, jr) / radial_grid[jr];
+        }
+    }
+    return 0.0;
 }
 
 void evaluate_real_spherical_harmonics(const int lmax,
@@ -192,7 +219,8 @@ make_sternheimer_fd_radial_projector_set_from_abacus_matrices(const std::vector<
     {
         for (int ir = 0; ir != nr; ++ir)
         {
-            radial_set.beta_radials[ip][ir] = beta_radials(ip, ir);
+            radial_set.beta_radials[ip][ir]
+                = abacus_betar_to_real_space_beta(radial_grid, beta_radials, angular_momenta, ip, ir);
         }
         for (int jp = 0; jp != nproj; ++jp)
         {

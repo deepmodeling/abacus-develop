@@ -4,6 +4,7 @@
 #include "source_lcao/module_ri/sternheimer_abacus_fd_adapter.h"
 #include "source_lcao/module_ri/sternheimer_dft_zero_order.h"
 
+#include <string>
 #include <vector>
 
 class UnitCell;
@@ -29,6 +30,7 @@ struct SternheimerABACUSDFTZeroOrderResult
     std::vector<double> dft_eigenvalues;
     std::vector<double> dft_occupations;
     SternheimerDFTZeroOrderComparison comparison;
+    std::string hamiltonian_mode;
 };
 
 SternheimerABACUSDFTZeroOrderResult compare_sternheimer_abacus_fd_zero_order_to_dft(

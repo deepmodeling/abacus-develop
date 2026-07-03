@@ -54,6 +54,7 @@ void fill_single_s_projector(Atom& atom)
 
 void fill_one_atom_cell(UnitCell& ucell)
 {
+    ucell.lat0 = 1.0;
     ucell.ntype = 1;
     ucell.nat = 1;
     ucell.set_atom_flag = true;
@@ -76,16 +77,40 @@ TEST(SternheimerABACUSFDNonlocal, BuildsProjectorFromUnitCellAtomPseudo)
     ASSERT_NE(projector, nullptr);
     ASSERT_EQ(projector->blocks().size(), 1);
     ASSERT_EQ(projector->blocks()[0].projectors.size(), 1);
-    EXPECT_NEAR(projector->blocks()[0].projectors[0][0].real(), 2.0 * y00(), 1.0e-14);
+    EXPECT_NEAR(projector->blocks()[0].projectors[0][0].real(), 4.0 * y00(), 1.0e-14);
     EXPECT_NEAR(projector->blocks()[0].projectors[0][1].real(), 4.0 * y00(), 1.0e-14);
-    EXPECT_NEAR(projector->blocks()[0].projectors[0][2].real(), 6.0 * y00(), 1.0e-14);
+    EXPECT_NEAR(projector->blocks()[0].projectors[0][2].real(), 3.0 * y00(), 1.0e-14);
     EXPECT_NEAR(projector->blocks()[0].d_matrix[0][0].real(), 1.5, 1.0e-14);
+}
+
+TEST(SternheimerABACUSFDNonlocal, ConvertsAtomTauFromLat0UnitsToBohr)
+{
+    UnitCell ucell;
+    ucell.lat0 = 2.0;
+    ucell.ntype = 1;
+    ucell.nat = 1;
+    ucell.set_atom_flag = true;
+    ucell.atoms = new Atom[1];
+    ucell.atoms[0].na = 1;
+    ucell.atoms[0].tau = {ModuleBase::Vector3<double>(0.5, 0.0, 0.0)};
+    fill_single_s_projector(ucell.atoms[0]);
+    ucell.atoms[0].ncpp.betar(0, 0) = 0.0;
+    ucell.atoms[0].ncpp.betar(0, 1) = 3.0;
+    ucell.atoms[0].ncpp.betar(0, 2) = 4.0;
+
+    const auto projector
+        = ModuleRI::make_sternheimer_fd_nonlocal_projector_from_unitcell(ucell, line_grid(), 1.0);
+
+    ASSERT_NE(projector, nullptr);
+    ASSERT_EQ(projector->blocks()[0].projectors.size(), 1);
+    EXPECT_NEAR(projector->blocks()[0].projectors[0][2].real(), 3.0 * y00(), 1.0e-14);
 }
 
 TEST(SternheimerABACUSFDNonlocal, ReturnsNullWhenNoAtomsCarryProjectors)
 {
     UnitCell ucell;
     ucell.ntype = 1;
+    ucell.lat0 = 1.0;
     ucell.nat = 1;
     ucell.set_atom_flag = true;
     ucell.atoms = new Atom[1];
