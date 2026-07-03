@@ -13,8 +13,6 @@ project(
   HOMEPAGE_URL "https://github.com/deepmodeling/abacus-develop"
   LANGUAGES CXX)
 
-include(CTest)
-
 option(ENABLE_MPI "Enable MPI" ON)
 option(USE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
@@ -59,6 +57,8 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
 option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
+
+include(CTest)
 
 if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
   set(NVHPC_ROOT_DIR
