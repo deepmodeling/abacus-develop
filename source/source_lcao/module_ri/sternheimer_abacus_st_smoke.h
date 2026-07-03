@@ -92,6 +92,12 @@ void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
                                      const elecstate::ElecState& elec_state,
                                      const std::string& output_dir);
 
+void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
+                                        const ModulePW::PW_Basis& pw_basis,
+                                        const UnitCell& ucell,
+                                        const elecstate::ElecState& elec_state,
+                                        const std::string& output_dir);
+
 } // namespace ModuleRI
 
 #endif

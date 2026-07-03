@@ -388,6 +388,11 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
                                                   ucell,
                                                   *(this->pelec),
                                                   PARAM.globalv.global_out_dir);
+        ModuleRI::run_sternheimer_abacus_chi0_output(*(this->pelec->pot),
+                                                     *(this->pw_rho),
+                                                     ucell,
+                                                     *(this->pelec),
+                                                     PARAM.globalv.global_out_dir);
 #endif
     }
 #endif

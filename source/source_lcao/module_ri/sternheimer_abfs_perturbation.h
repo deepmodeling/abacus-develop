@@ -25,6 +25,7 @@ struct SternheimerABFGridChannel
 {
     int channel_index = -1;
     int atom_index = -1;
+    int atom_local_index = -1;
     int type_index = -1;
     int angular_momentum = 0;
     int radial_index = 0;

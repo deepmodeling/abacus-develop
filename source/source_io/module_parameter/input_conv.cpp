@@ -197,8 +197,127 @@ void Input_Conv::Convert()
     Exx_Info local_exx_info;
     const bool generate_opt_orb = init_exx_info(local_exx_info, PARAM.inp);
 
-    // Set XC_Functional global parameters from the local Exx_Info.
-    if (local_exx_info.info_global.cal_exx
+        GlobalC::exx_info.info_global.hybrid_alpha = 0;
+        std::vector<double> fock_alpha(PARAM.inp.exx_fock_alpha.size());
+        for(std::size_t i=0; i<fock_alpha.size(); ++i)
+        {
+            fock_alpha[i] = std::stod(PARAM.inp.exx_fock_alpha[i]);
+            GlobalC::exx_info.info_global.hybrid_alpha = std::max(std::abs(fock_alpha[i]), GlobalC::exx_info.info_global.hybrid_alpha);
+        }
+        std::vector<double> erfc_alpha(PARAM.inp.exx_erfc_alpha.size());
+        for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+        {
+            erfc_alpha[i] = std::stod(PARAM.inp.exx_erfc_alpha[i]);
+            GlobalC::exx_info.info_global.hybrid_alpha = std::max(std::abs(erfc_alpha[i]), GlobalC::exx_info.info_global.hybrid_alpha);
+        }
+        assert(GlobalC::exx_info.info_global.hybrid_alpha>0);
+        for(std::size_t i=0; i<fock_alpha.size(); ++i)
+            { fock_alpha[i] /= GlobalC::exx_info.info_global.hybrid_alpha; }
+        for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+            { erfc_alpha[i] /= GlobalC::exx_info.info_global.hybrid_alpha; }
+
+        if(!fock_alpha.empty())
+        {
+            if(PARAM.inp.basis_type == "lcao")
+            {
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                for(std::size_t i=0; i<fock_alpha.size(); ++i)
+                {
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
+                        {"singularity_correction", PARAM.inp.exx_singularity_correction} }};
+                }
+            }
+            else if(PARAM.inp.basis_type == "lcao_in_pw")
+            {
+                assert(fock_alpha.size() == PARAM.inp.exx_fock_lambda.size());
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                for(std::size_t i=0; i<fock_alpha.size(); ++i)
+                {
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
+                        {"lambda", PARAM.inp.exx_fock_lambda[i]} }};
+                }
+            }
+            else if(PARAM.inp.basis_type == "pw")
+            {
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                for(std::size_t i=0; i<fock_alpha.size(); ++i)
+                {
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])} }};
+                }
+            }
+            else
+            {
+                throw std::invalid_argument(std::string(__FILE__)+" line "+std::to_string(__LINE__));
+            }
+        }
+        if(!erfc_alpha.empty())
+        {
+            assert(erfc_alpha.size() == PARAM.inp.exx_erfc_omega.size());
+            if(PARAM.inp.basis_type == "lcao")
+            {
+                GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
+                for(std::size_t i=0; i<erfc_alpha.size(); ++i)
+                {
+                    GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+                        {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
+                        {"omega", ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.exx_erfc_omega[i])},
+                        {"singularity_correction", PARAM.inp.exx_singularity_correction} }};
+                }
+            }
+        }
+    }
+#ifdef __EXX
+    else if (dft_functional_lower == "opt_orb")
+    {
+        GlobalC::exx_info.info_global.cal_exx = false;
+        generate_opt_orb = true;
+    }
+#endif
+    else
+    {
+        GlobalC::exx_info.info_global.cal_exx = false;
+    }
+
+    if (PARAM.inp.rpa && GlobalC::exx_info.info_global.coulomb_param.empty())
+    {
+        if (PARAM.inp.basis_type != "lcao")
+        {
+            throw std::invalid_argument("RPA currently expects basis_type=lcao when initializing RI Coulomb parameters.");
+        }
+        const std::string singularity_correction
+            = PARAM.inp.exx_singularity_correction == "default" ? "massidda" : PARAM.inp.exx_singularity_correction;
+        GlobalC::exx_info.info_global.hybrid_alpha = 1.0;
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+        GlobalC::exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+            {"alpha", "1"},
+            {"singularity_correction", singularity_correction}
+        }};
+    }
+
+    // info_global.ccp_type will be removed in the future. these codes for pw and lcao_in_pw temporarily
+    if (dft_functional_lower == "hf"
+     || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
+     || dft_functional_lower == "scan0"
+     || dft_functional_lower == "muller" || dft_functional_lower == "power")
+    {
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+    }
+    // use the error function erf(w|r-r'|), exx just has the short-range part
+    else if (dft_functional_lower == "hse"
+          || dft_functional_lower == "cwp22")
+    {
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
+    }
+    // use the error function erf(w|r-r'|), exx just has the long-range part
+    else if ( dft_functional_lower == "wp22" )
+    {
+        GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf;
+    }
+
+    if (GlobalC::exx_info.info_global.cal_exx
 #ifdef __EXX
         || generate_opt_orb
         || PARAM.inp.rpa

@@ -161,6 +161,7 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
         {
             throw std::invalid_argument("Sternheimer ABFS perturbation atom type is out of range.");
         }
+        int atom_local_index = 0;
         for (const SternheimerRadialPerturbation& radial: radials_by_type[type])
         {
             validate_radial(radial);
@@ -176,6 +177,7 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
                 SternheimerABFGridChannel channel;
                 channel.channel_index = channel_index++;
                 channel.atom_index = static_cast<int>(iat);
+                channel.atom_local_index = atom_local_index++;
                 channel.type_index = type;
                 channel.angular_momentum = radial.angular_momentum;
                 channel.radial_index = radial.radial_index;
@@ -216,4 +218,3 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
 }
 
 } // namespace ModuleRI
-

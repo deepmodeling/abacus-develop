@@ -46,7 +46,11 @@ option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
-option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
+option(USE_ELPA "Enable ELPA for LCAO" ON)
+option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
+option(ENABLE_LIBCOMM "Enable LibComm" OFF)
+option(ENABLE_GREENX_MINIMAX "Enable bundled GreenX minimax grids for Sternheimer response" ON)
+option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
 option(DEBUG_INFO "Print message to debug" OFF)
@@ -607,6 +611,25 @@ if(ENABLE_LIBRI)
   find_package(cereal REQUIRED CONFIG)
 endif()
 
+if(ENABLE_LIBRI OR DEFINED LIBCOMM_DIR)
+  set(ENABLE_LIBCOMM ON)
+endif()
+if(ENABLE_LIBCOMM)
+  if(LIBCOMM_DIR)
+  else()
+    find_package(LibComm REQUIRED)
+  endif()
+  include_directories(${LIBCOMM_DIR}/include)
+endif()
+
+if(ENABLE_LIBRI AND ENABLE_GREENX_MINIMAX)
+  enable_language(Fortran)
+  add_compile_definitions(__GREENX_MINIMAX)
+endif()
+
+if(DEFINED Libxc_DIR)
+  set(ENABLE_LIBXC ON)
+endif()
 if(ENABLE_LIBXC)
   find_package(Libxc CONFIG REQUIRED)
   if(Libxc_VERSION VERSION_LESS "5.1.7")
@@ -634,3 +657,86 @@ endif()
 # Target construction, final link ordering, installation, and test targets are
 # intentionally centralized in source/CMakeLists.txt.
 add_subdirectory(source)
+
+if(TARGET abacus_greenx_minimax)
+  target_link_libraries(${ABACUS_BIN_NAME} abacus_greenx_minimax)
+endif()
+
+include(cmake/BuildInfo.cmake)
+setup_build_info()
+
+target_link_libraries(
+  ${ABACUS_BIN_NAME}
+  base
+  parameter
+  cell
+  symmetry
+  md
+  planewave
+  surchem
+  neighbor
+  io_input
+  io_basic
+  io_advanced
+  relax
+  driver
+  xc_
+  hsolver
+  elecstate
+  hamilt_general
+  module_pwdft
+  module_ofdft
+  module_stodft
+  psi
+  psi_initializer
+  psi_overall_init
+  esolver
+  vdw
+  device
+  container
+  dftu
+  deltaspin)
+if(ENABLE_LCAO)
+  target_link_libraries(
+    ${ABACUS_BIN_NAME}
+    hamilt_lcao
+    tddft
+    orb
+    gint
+    hcontainer
+    numerical_atomic_orbitals
+    lr
+    rdmft)
+  if(USE_ELPA)
+    target_link_libraries(${ABACUS_BIN_NAME} genelpa)
+  endif()
+  if(USE_CUDA)
+    target_link_libraries(${ABACUS_BIN_NAME} diag_cusolver)
+  endif()
+endif()
+if(ENABLE_RAPIDJSON)
+  target_link_libraries(${ABACUS_BIN_NAME} json_output)
+endif()
+
+if (USE_SW)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswfft.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswscalapack.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswlapack.a)
+  target_link_libraries(${ABACUS_BIN_NAME} ${SW_MATH}/libswblas.a)
+  list(APPEND math_libs gfortran)
+endif()
+
+list(APPEND math_libs m)
+target_link_libraries(${ABACUS_BIN_NAME} ${math_libs})
+
+install(PROGRAMS ${ABACUS_BIN_PATH}
+        TYPE BIN
+        # DESTINATION ${CMAKE_INSTALL_BINDIR}
+)
+
+# Create a symbolic link 'abacus' pointing to the actual executable
+install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ABACUS_BIN_NAME} ${CMAKE_INSTALL_PREFIX}/bin/abacus WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
+
+if(ENABLE_COVERAGE)
+  coverage_evaluate()
+endif()

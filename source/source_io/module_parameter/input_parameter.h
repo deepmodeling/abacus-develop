@@ -657,6 +657,9 @@ struct Input_para
     bool out_ri_cv = false; ///< Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V
     bool out_unshrinked_v = false; ///< whether to output the large Vq matrix in unshrinked auxiliary basis
     int out_librpa_reader_version = 0; ///< 0: legacy ABACUS LibRPA text files; 1: LibRPA reader-v1 binary files
+    bool out_sternheimer_librpa = false; ///< whether to output Sternheimer chi0 files for LibRPA
+    int sternheimer_nfreq = 6; ///< number of minimax imaginary-frequency points for Sternheimer chi0 output
+    std::string sternheimer_frequency_grid_file = ""; ///< optional fixed omega/weight grid for Sternheimer chi0 output
     bool exx_coul_moment = false;                 ///< whether to use moment method for Coulomb calculation
     bool exx_rotate_abfs = false;                 ///< whether to rotate auxiliary basis for Coulomb calculation
     double exx_multip_moments_threshold = 1e-10; ///< threshold to screen multipole moments in Coulomb calculation

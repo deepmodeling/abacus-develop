@@ -28,6 +28,7 @@ TEST(SternheimerABFSPerturbation, SamplesSChannelOnFDGrid)
 
     ASSERT_EQ(channels.size(), 1);
     EXPECT_EQ(channels[0].atom_index, 0);
+    EXPECT_EQ(channels[0].atom_local_index, 0);
     EXPECT_EQ(channels[0].angular_momentum, 0);
     EXPECT_EQ(channels[0].magnetic_index, 0);
     ASSERT_EQ(channels[0].potential_r.size(), 2);
@@ -37,4 +38,3 @@ TEST(SternheimerABFSPerturbation, SamplesSChannelOnFDGrid)
     EXPECT_NEAR(channels[0].potential_r[1], 4.0 * y00, 1.0e-14);
     EXPECT_NEAR(channels[0].max_abs, 4.0 * y00, 1.0e-14);
 }
-

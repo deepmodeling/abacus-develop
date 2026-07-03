@@ -11,9 +11,14 @@ AddTest(
   LIBS base device parameter
   SOURCES ri_cv_io_test.cpp
 )
+
+set(STERNHEIMER_RPA_TEST_LIBS ${math_libs})
+if(TARGET abacus_greenx_minimax)
+  list(APPEND STERNHEIMER_RPA_TEST_LIBS abacus_greenx_minimax)
+endif()
 AddTest(
   TARGET MODULE_RI_sternheimer_rpa_test
-  LIBS ${math_libs}
+  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
   SOURCES sternheimer_rpa_test.cpp ../sternheimer_rpa.cpp
 )
 AddTest(

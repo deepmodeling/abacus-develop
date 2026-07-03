@@ -17,9 +17,12 @@
 #include <cctype>
 #include <cstdlib>
 #include <fstream>
+#include <iomanip>
 #include <map>
 #include <stdexcept>
+#include <sstream>
 #include <string>
+#include <utility>
 
 namespace ModuleRI
 {
@@ -125,6 +128,66 @@ std::string default_report_path(const std::string& output_dir)
     return output_dir + "/STERNHEIMER_FD_ST.dat";
 }
 
+std::string join_output_path(const std::string& output_dir, const std::string& filename)
+{
+    if (output_dir.empty())
+    {
+        return filename;
+    }
+    if (output_dir.back() == '/')
+    {
+        return output_dir + filename;
+    }
+    return output_dir + "/" + filename;
+}
+
+std::string chi0_status_path(const std::string& output_dir)
+{
+    return join_output_path(output_dir, "STERNHEIMER_CHI0.dat");
+}
+
+std::string chi0_v1_filename(const int iq, const int ifrequency)
+{
+    std::ostringstream out;
+    out << "v1_sternheimer_chi0_iq_" << iq << "_ifreq_" << ifrequency << "_rank" << GlobalV::MY_RANK << ".dat";
+    return out.str();
+}
+
+int occupied_band_count(const elecstate::ElecState& elec_state, const int k_index)
+{
+    int count = 0;
+    for (int ib = 0; ib != elec_state.wg.nc; ++ib)
+    {
+        if (elec_state.wg(k_index, ib) > 1.0e-8)
+        {
+            count = ib + 1;
+        }
+    }
+    return count;
+}
+
+std::vector<double> eigenvalues_ry_from_elec_state(const elecstate::ElecState& elec_state, const int k_index)
+{
+    std::vector<double> eigenvalues;
+    eigenvalues.reserve(static_cast<std::size_t>(elec_state.ekb.nc));
+    for (int ib = 0; ib != elec_state.ekb.nc; ++ib)
+    {
+        eigenvalues.push_back(elec_state.ekb(k_index, ib));
+    }
+    return eigenvalues;
+}
+
+std::vector<double> occupations_from_elec_state(const elecstate::ElecState& elec_state, const int k_index)
+{
+    std::vector<double> occupations;
+    occupations.reserve(static_cast<std::size_t>(elec_state.wg.nc));
+    for (int ib = 0; ib != elec_state.wg.nc; ++ib)
+    {
+        occupations.push_back(elec_state.wg(k_index, ib));
+    }
+    return occupations;
+}
+
 std::vector<std::string> split_orbital_file_list(const std::string& raw)
 {
     std::vector<std::string> files;
@@ -161,7 +224,11 @@ std::string join_path(const std::string& dir, const std::string& file)
     {
         return file;
     }
-    return dir + file;
+    if (dir.empty() || dir.back() == '/')
+    {
+        return dir + file;
+    }
+    return dir + "/" + file;
 }
 
 void validate_orbital_files(const std::string& orbital_dir, const std::vector<std::string>& orbital_files)
@@ -284,6 +351,84 @@ std::vector<SternheimerABFGridChannel> build_abfs_ccp_grid_channels(const UnitCe
     }
 
     return sample_sternheimer_abf_grid_channels(radials_by_type, atom_types, atom_positions, grid, max_channels);
+}
+
+std::vector<std::vector<double>> collect_channel_potentials(const std::vector<SternheimerABFGridChannel>& channels)
+{
+    std::vector<std::vector<double>> potentials;
+    potentials.reserve(channels.size());
+    for (const SternheimerABFGridChannel& channel: channels)
+    {
+        potentials.push_back(channel.potential_r);
+    }
+    return potentials;
+}
+
+SternheimerRPA::Chi0V1Metadata make_chi0_v1_metadata(const UnitCell& ucell,
+                                                     const std::vector<SternheimerABFGridChannel>& channels,
+                                                     const int ifrequency,
+                                                     const double omega_ha,
+                                                     const double weight_ha)
+{
+    SternheimerRPA::Chi0V1Metadata metadata;
+    metadata.iq = 1;
+    metadata.ifrequency = ifrequency;
+    metadata.omega = omega_ha;
+    metadata.weight = weight_ha;
+    metadata.atom_naux.assign(static_cast<std::size_t>(ucell.nat), 0);
+    for (const SternheimerABFGridChannel& channel: channels)
+    {
+        if (channel.atom_index < 0 || channel.atom_index >= ucell.nat)
+        {
+            throw std::runtime_error("Sternheimer chi0 found an ABFS channel with invalid atom index.");
+        }
+        if (channel.atom_local_index < 0)
+        {
+            throw std::runtime_error("Sternheimer chi0 found an ABFS channel with invalid local index.");
+        }
+        int& atom_naux = metadata.atom_naux[static_cast<std::size_t>(channel.atom_index)];
+        atom_naux = std::max(atom_naux, channel.atom_local_index + 1);
+    }
+    return metadata;
+}
+
+std::vector<SternheimerRPA::AuxiliaryChannel> make_chi0_auxiliary_channels(
+    const std::vector<SternheimerABFGridChannel>& channels)
+{
+    std::vector<SternheimerRPA::AuxiliaryChannel> auxiliary_channels;
+    auxiliary_channels.reserve(channels.size());
+    for (const SternheimerABFGridChannel& channel: channels)
+    {
+        SternheimerRPA::AuxiliaryChannel auxiliary_channel;
+        auxiliary_channel.channel_index = channel.channel_index;
+        auxiliary_channel.atom_index = channel.atom_index;
+        auxiliary_channel.atom_local_index = channel.atom_local_index;
+        auxiliary_channels.push_back(auxiliary_channel);
+    }
+    return auxiliary_channels;
+}
+
+void write_chi0_index_file(const std::string& filename,
+                           const std::vector<std::pair<std::string, SternheimerRPA::Chi0V1Metadata>>& entries)
+{
+    std::ofstream out(filename.c_str(), std::ios::out | std::ios::trunc);
+    if (!out)
+    {
+        throw std::runtime_error("Failed to open Sternheimer chi0 index file: " + filename);
+    }
+    out << std::setprecision(16);
+    out << "# ABACUS Sternheimer chi0 v1 index\n";
+    out << "format_version 1\n";
+    out << "marker " << SternheimerRPA::chi0_v1_marker() << '\n';
+    out << "nq 1\n";
+    out << "nfreq " << entries.size() << '\n';
+    out << "iq ifrequency omega_Ha weight_Ha filename\n";
+    for (const auto& entry: entries)
+    {
+        const SternheimerRPA::Chi0V1Metadata& metadata = entry.second;
+        out << metadata.iq << ' ' << metadata.ifrequency << ' ' << metadata.omega << ' ' << metadata.weight << ' '
+            << entry.first << '\n';
+    }
 }
 
 SternheimerFDZeroOrderStates solve_fd_zero_order_auto(const SternheimerFDHamiltonian& hamiltonian,
@@ -472,6 +617,219 @@ void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
         write_failure_report(out, error.what());
         GlobalV::ofs_running << " Sternheimer FD ST smoke failed: " << error.what() << std::endl;
         GlobalV::ofs_running << " Sternheimer FD ST smoke report: " << report_path << std::endl;
+    }
+}
+
+void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
+                                        const ModulePW::PW_Basis& pw_basis,
+                                        const UnitCell& ucell,
+                                        const elecstate::ElecState& elec_state,
+                                        const std::string& output_dir)
+{
+    if (!PARAM.inp.out_sternheimer_librpa || GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
+
+    const std::string status_path = chi0_status_path(output_dir);
+    std::ofstream out(status_path.c_str(), std::ios::out | std::ios::trunc);
+    if (!out)
+    {
+        GlobalV::ofs_running << " Sternheimer chi0 output: failed to open " << status_path << std::endl;
+        return;
+    }
+    out << std::setprecision(16);
+    out << "# ABACUS Sternheimer chi0 output for LibRPA\n";
+
+    try
+    {
+        if (PARAM.inp.out_librpa_reader_version != 1)
+        {
+            throw std::runtime_error("out_sternheimer_librpa requires out_librpa_reader_version=1.");
+        }
+        if (GlobalV::NPROC != 1)
+        {
+            throw std::runtime_error(
+                "The current Sternheimer chi0 output requires a single MPI rank so pw_basis.nrxx is the full grid.");
+        }
+        if (elec_state.ekb.nc <= 0 || elec_state.wg.nc <= 0)
+        {
+            throw std::runtime_error("ABACUS DFT eigenvalues or occupations are not available.");
+        }
+
+        const int occupied_count = occupied_band_count(elec_state, 0);
+        if (occupied_count <= 0)
+        {
+            throw std::runtime_error("No occupied DFT bands are available for Sternheimer chi0 output.");
+        }
+
+        const int requested_bands = positive_int_from_env(kBandsEnv, occupied_count);
+        const int num_bands = std::min(requested_bands, elec_state.ekb.nc);
+        if (num_bands < occupied_count)
+        {
+            throw std::runtime_error("Sternheimer chi0 output requires all occupied bands; use the smoke test for "
+                                     "band-limited debugging.");
+        }
+
+        const int max_dense_size = positive_int_from_env(kMaxDenseEnv, 4096);
+        const int lanczos_max_subspace_size = positive_int_from_env(kLanczosSubspaceEnv, 320);
+        const double solver_tolerance = positive_double_from_env(kSolverToleranceEnv, 1.0e-8);
+        const int solver_max_iter = positive_int_from_env(kSolverMaxIterEnv, 300);
+        const double pca_threshold = nonnegative_double_from_env(kPCAThresholdEnv, PARAM.inp.exx_pca_threshold);
+        const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
+        const int nfreq = PARAM.inp.sternheimer_nfreq;
+        const std::string frequency_grid_file = PARAM.inp.sternheimer_frequency_grid_file;
+
+        const std::vector<double> eigenvalues_ry = eigenvalues_ry_from_elec_state(elec_state, 0);
+        const std::vector<double> occupations = occupations_from_elec_state(elec_state, 0);
+        const SternheimerRPA::TransitionEnergyWindow transition_window
+            = SternheimerRPA::transition_energy_window_from_eigenvalues_ry(eigenvalues_ry, occupations);
+        const bool use_frequency_grid_file = !frequency_grid_file.empty();
+        const std::string frequency_grid_source = use_frequency_grid_file ? "file" : "greenx_minimax";
+        const SternheimerRPA::FrequencyGrid frequency_grid
+            = use_frequency_grid_file
+                  ? SternheimerRPA::read_frequency_grid_file(frequency_grid_file, nfreq)
+                  : SternheimerRPA::generate_greenx_minimax_frequency_grid(nfreq,
+                                                                           transition_window.emin_ha,
+                                                                           transition_window.emax_ha);
+
+        const SternheimerABACUSFDGridData grid_data = make_sternheimer_fd_grid(pw_basis);
+        const SternheimerFDHamiltonian hamiltonian = make_sternheimer_fd_hamiltonian(potential, pw_basis, ucell, 0, 1.0);
+        const SternheimerFDZeroOrderStates states = solve_fd_zero_order_auto(hamiltonian,
+                                                                             num_bands,
+                                                                             grid_data.volume_element,
+                                                                             max_dense_size,
+                                                                             lanczos_max_subspace_size);
+        const std::vector<SternheimerFDHamiltonian::Vector> occupied
+            = occupied_wavefunctions_from_states(states, elec_state, 0);
+        if (occupied.empty())
+        {
+            throw std::runtime_error("No occupied FD zero-order states are available for Sternheimer chi0 output.");
+        }
+
+        const std::vector<SternheimerABFGridChannel> channels
+            = build_abfs_ccp_grid_channels(ucell, grid_data.grid, -1, pca_threshold, ccp_rmesh_times);
+        if (channels.empty())
+        {
+            throw std::runtime_error("No ABFS CCP perturbation channels were generated.");
+        }
+
+        const std::vector<std::vector<double>> potentials = collect_channel_potentials(channels);
+        const int num_channels = static_cast<int>(channels.size());
+
+        SternheimerRPA::SolverOptions solver_options;
+        solver_options.max_iter = solver_max_iter;
+        solver_options.residual_tol = solver_tolerance;
+
+        bool all_converged = true;
+        int solved_equations = 0;
+        double max_solver_relative_residual = 0.0;
+        double max_equation_residual_norm = 0.0;
+        std::vector<std::pair<std::string, SternheimerRPA::Chi0V1Metadata>> index_entries;
+        index_entries.reserve(frequency_grid.omega_ha.size());
+
+        for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
+        {
+            std::vector<SternheimerRPA::Complex> chi0_branch(
+                static_cast<std::size_t>(num_channels) * static_cast<std::size_t>(num_channels),
+                SternheimerRPA::Complex(0.0, 0.0));
+
+            const double omega_ha = frequency_grid.omega_ha[static_cast<std::size_t>(ifrequency)];
+            const double omega_ry = 2.0 * omega_ha;
+
+            for (int ib = 0; ib != static_cast<int>(states.wavefunctions.size()); ++ib)
+            {
+                const double occupation = elec_state.wg(0, ib);
+                if (occupation <= 1.0e-8)
+                {
+                    continue;
+                }
+
+                for (int ichannel = 0; ichannel != num_channels; ++ichannel)
+                {
+                    SternheimerFDHamiltonian::Vector rhs;
+                    SternheimerRPA::build_rhs_from_hartree_perturbation(channels[static_cast<std::size_t>(ichannel)]
+                                                                            .potential_r,
+                                                                        states.wavefunctions[ib],
+                                                                        rhs);
+                    const SternheimerFDLinearResponse response
+                        = solve_sternheimer_fd_linear_response(hamiltonian,
+                                                               occupied,
+                                                               states.eigenvalues[ib],
+                                                               rhs,
+                                                               omega_ry,
+                                                               grid_data.volume_element,
+                                                               solver_options);
+                    SternheimerRPA::accumulate_chi0_branch_column(potentials,
+                                                                  states.wavefunctions[ib],
+                                                                  response.delta_wavefunction,
+                                                                  grid_data.volume_element,
+                                                                  occupation,
+                                                                  ichannel,
+                                                                  chi0_branch);
+                    all_converged = all_converged && response.solver.converged;
+                    ++solved_equations;
+                    max_solver_relative_residual
+                        = std::max(max_solver_relative_residual, response.solver.relative_residual);
+                    max_equation_residual_norm = std::max(max_equation_residual_norm, response.residual_norm);
+                }
+            }
+
+            const std::vector<SternheimerRPA::Complex> chi0
+                = SternheimerRPA::symmetrize_chi0_imaginary_frequency(chi0_branch, num_channels);
+            const SternheimerRPA::Chi0V1Metadata metadata
+                = make_chi0_v1_metadata(ucell,
+                                        channels,
+                                        ifrequency + 1,
+                                        omega_ha,
+                                        frequency_grid.weights_ha[static_cast<std::size_t>(ifrequency)]);
+            const std::vector<SternheimerRPA::AuxiliaryChannel> auxiliary_channels
+                = make_chi0_auxiliary_channels(channels);
+            const std::string data_file = chi0_v1_filename(metadata.iq, metadata.ifrequency);
+            SternheimerRPA::write_chi0_v1_file(data_file, metadata, auxiliary_channels, chi0);
+            index_entries.push_back({data_file, metadata});
+            GlobalV::ofs_running << " Sternheimer chi0 v1 output: " << data_file << std::endl;
+        }
+
+        write_chi0_index_file("v1_sternheimer_chi0_index.dat", index_entries);
+
+        const int grid_size = grid_data.grid.nx * grid_data.grid.ny * grid_data.grid.nz;
+        out << "status success\n";
+        out << "format v1\n";
+        out << "data_files " << index_entries.size() << '\n';
+        out << "index_file v1_sternheimer_chi0_index.dat\n";
+        out << "grid " << grid_data.grid.nx << ' ' << grid_data.grid.ny << ' ' << grid_data.grid.nz << " size "
+            << grid_size << " dV " << grid_data.volume_element << '\n';
+        out << "nfreq " << nfreq << '\n';
+        out << "frequency_grid_source " << frequency_grid_source << '\n';
+        if (use_frequency_grid_file)
+        {
+            out << "frequency_grid_file " << frequency_grid_file << '\n';
+        }
+        out << "transition_window_Ha " << transition_window.emin_ha << ' ' << transition_window.emax_ha << '\n';
+        out << "ifrequency omega_Ha weight_Ha omega_Ry data_file\n";
+        for (const auto& entry: index_entries)
+        {
+            const SternheimerRPA::Chi0V1Metadata& metadata = entry.second;
+            out << metadata.ifrequency << ' ' << metadata.omega << ' ' << metadata.weight << ' '
+                << 2.0 * metadata.omega << ' ' << entry.first << '\n';
+        }
+        out << "pca_threshold " << pca_threshold << '\n';
+        out << "ccp_rmesh_times " << ccp_rmesh_times << '\n';
+        out << "occupied_bands " << occupied.size() << '\n';
+        out << "abfs_channels " << num_channels << '\n';
+        out << "solved_equations " << solved_equations << '\n';
+        out << "all_converged " << (all_converged ? "yes" : "no") << '\n';
+        out << "max_solver_relative_residual " << max_solver_relative_residual << '\n';
+        out << "max_equation_residual_norm " << max_equation_residual_norm << '\n';
+        GlobalV::ofs_running << " Sternheimer chi0 status: " << status_path << std::endl;
+    }
+    catch (const std::exception& error)
+    {
+        out << "status failed\n";
+        out << "reason " << error.what() << '\n';
+        GlobalV::ofs_running << " Sternheimer chi0 output failed: " << error.what() << std::endl;
+        GlobalV::ofs_running << " Sternheimer chi0 status: " << status_path << std::endl;
     }
 }
 

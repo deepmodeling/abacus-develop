@@ -1,7 +1,10 @@
 if (ENABLE_LIBRI)
 
   add_subdirectory(module_exx_symmetry)
-
+  if(ENABLE_GREENX_MINIMAX)
+    add_subdirectory(greenx_minimax)
+  endif()
+  
   list(APPEND objects
         Matrix_Orbs11.cpp
         Matrix_Orbs21.cpp
@@ -45,6 +48,10 @@ if (ENABLE_LIBRI)
       ${objects}
   )
 
+  if(TARGET abacus_greenx_minimax)
+    target_link_libraries(ri PUBLIC abacus_greenx_minimax)
+  endif()
+  
   if(BUILD_TESTING)
     if(ENABLE_MPI)
       add_subdirectory(test)

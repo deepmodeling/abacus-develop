@@ -654,6 +654,11 @@ void ReadInput::item_exx()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.exx_singularity_correction == "default")
             {  
+                if (para.input.rpa)
+                {
+                    para.input.exx_singularity_correction = "massidda";
+                    return;
+                }
                 std::string& dft_functional = para.input.dft_functional;
                 std::string dft_functional_lower = dft_functional;
                 std::transform(dft_functional.begin(), dft_functional.end(), dft_functional_lower.begin(), tolower);

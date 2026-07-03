@@ -2,7 +2,9 @@
 #define STERNHEIMER_RPA_H
 
 #include <complex>
+#include <cstdint>
 #include <functional>
+#include <string>
 #include <vector>
 
 namespace ModuleRI
@@ -27,6 +29,34 @@ class SternheimerRPA
         int iterations = 0;
         double absolute_residual = 0.0;
         double relative_residual = 0.0;
+    };
+
+    struct AuxiliaryChannel
+    {
+        int channel_index = -1;
+        int atom_index = -1;
+        int atom_local_index = -1;
+    };
+
+    struct Chi0V1Metadata
+    {
+        int iq = 1;
+        int ifrequency = 1;
+        double omega = 0.0;
+        double weight = 1.0;
+        std::vector<int> atom_naux;
+    };
+
+    struct TransitionEnergyWindow
+    {
+        double emin_ha = 0.0;
+        double emax_ha = 0.0;
+    };
+
+    struct FrequencyGrid
+    {
+        std::vector<double> omega_ha;
+        std::vector<double> weights_ha;
     };
 
     struct LinearProblem
@@ -62,6 +92,33 @@ class SternheimerRPA
                                                           const Vector& psi_r,
                                                           const Vector& delta_psi_r,
                                                           double grid_weight);
+
+    static void accumulate_chi0_branch_column(const std::vector<std::vector<double>>& hartree_potentials_r,
+                                              const Vector& psi_r,
+                                              const Vector& delta_psi_r,
+                                              double grid_weight,
+                                              double occupation,
+                                              int column_index,
+                                              std::vector<Complex>& branch_matrix);
+
+    static std::vector<Complex> symmetrize_chi0_imaginary_frequency(const std::vector<Complex>& branch_matrix,
+                                                                    int num_channels);
+
+    static std::int32_t chi0_v1_marker();
+
+    static TransitionEnergyWindow transition_energy_window_from_eigenvalues_ry(
+        const std::vector<double>& eigenvalues_ry,
+        const std::vector<double>& occupations,
+        double occupation_tolerance = 1.0e-8);
+
+    static FrequencyGrid generate_greenx_minimax_frequency_grid(int nfreq, double emin_ha, double emax_ha);
+
+    static FrequencyGrid read_frequency_grid_file(const std::string& filename, int expected_size);
+
+    static void write_chi0_v1_file(const std::string& filename,
+                                   const Chi0V1Metadata& metadata,
+                                   const std::vector<AuxiliaryChannel>& channels,
+                                   const std::vector<Complex>& chi0_matrix);
 
     static Complex local_grid_dot(const Vector& lhs, const Vector& rhs, double grid_weight);
 

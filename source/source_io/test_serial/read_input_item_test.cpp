@@ -1740,6 +1740,13 @@ TEST_F(InputTest, Item_test2)
         param.input.dft_functional = "HSE";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.exx_singularity_correction, "limits");
+
+        param.input.exx_singularity_correction = "default";
+        param.input.dft_functional = "PBE";
+        param.input.rpa = true;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.exx_singularity_correction, "massidda");
+        param.input.rpa = false;
     }
     { // exx_ccp_rmesh_times
         auto it = find_label("exx_ccp_rmesh_times", readinput.input_lists);
@@ -1819,6 +1826,30 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // sternheimer_nfreq
+        auto it = find_label("sternheimer_nfreq", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.sternheimer_nfreq, 6);
+
+        it->second.str_values = {"10"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.sternheimer_nfreq, 10);
+
+        param.input.sternheimer_nfreq = 0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // sternheimer_frequency_grid_file
+        auto it = find_label("sternheimer_frequency_grid_file", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_TRUE(param.input.sternheimer_frequency_grid_file.empty());
+
+        it->second.str_values = {"fixed_frequency_grid.dat"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.sternheimer_frequency_grid_file, "fixed_frequency_grid.dat");
     }
     { // berry_phase
         auto it = find_label("berry_phase", readinput.input_lists);
