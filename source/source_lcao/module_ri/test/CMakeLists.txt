@@ -64,4 +64,14 @@ AddTest(
   LIBS ${math_libs}
   SOURCES sternheimer_abacus_fd_smoke_test.cpp
 )
+AddTest(
+  TARGET MODULE_RI_sternheimer_abfs_perturbation_test
+  LIBS parameter base ${math_libs} device container
+  SOURCES sternheimer_abfs_perturbation_test.cpp ../sternheimer_abfs_perturbation.cpp
+)
+AddTest(
+  TARGET MODULE_RI_sternheimer_abacus_st_smoke_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_abacus_st_smoke_test.cpp
+)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

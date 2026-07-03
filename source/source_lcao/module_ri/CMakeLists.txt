@@ -11,6 +11,7 @@ if (ENABLE_LIBRI)
         Mix_Matrix.cpp
         sternheimer_abacus_dft_zero_order.cpp
         sternheimer_abacus_dft_reference.cpp
+        sternheimer_abfs_perturbation.cpp
         sternheimer_abacus_fd_bindings.cpp
         sternheimer_abacus_fd_adapter.cpp
         sternheimer_abacus_fd_nonlocal.cpp
@@ -26,11 +27,12 @@ if (ENABLE_LIBRI)
   if(ENABLE_LCAO)
     list(APPEND objects
         conv_coulomb_pot_k.cpp
-        exx_abfs_ctor_orbs.cpp
-        exx_abfs_io.cpp
-        exx_abfs_jle.cpp
-        abfs_construct_pca.cpp
-        exx_opt_orb_print.cpp
+        sternheimer_abacus_st_smoke.cpp
+        exx_abfs-construct_orbs.cpp
+        exx_abfs-io.cpp
+        exx_abfs-jle.cpp
+        ABFs_Construct-PCA.cpp
+        exx_opt_orb-print.cpp
         exx_opt_orb.cpp
         gaussian_abfs.cpp
         singular_value.cpp

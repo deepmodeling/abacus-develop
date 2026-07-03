@@ -351,7 +351,7 @@ SternheimerFDLinearResponse solve_sternheimer_fd_linear_response(
 
     SternheimerFDLinearResponse response;
     response.delta_wavefunction.assign(grid_size, SternheimerFDHamiltonian::Complex(0.0, 0.0));
-    response.solver = SternheimerRPA::solve_bicgstab(problem, projected_rhs, response.delta_wavefunction, options);
+    response.solver = SternheimerRPA::solve_gmres(problem, projected_rhs, response.delta_wavefunction, options);
     SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, response.delta_wavefunction);
 
     SternheimerFDHamiltonian::Vector applied;

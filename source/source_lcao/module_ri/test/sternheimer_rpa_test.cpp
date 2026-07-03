@@ -110,3 +110,39 @@ TEST(SternheimerRPA, SolveBiCGStabDiagonalComplexSystem)
         EXPECT_NEAR(solution[i].imag(), exact[i].imag(), 1.0e-10);
     }
 }
+
+TEST(SternheimerRPA, SolveGMRESDiagonalComplexSystem)
+{
+    const Vector diagonal = {Complex(2.0, 1.0), Complex(3.0, -0.5), Complex(4.0, 2.0)};
+    const Vector exact = {Complex(1.0, -0.5), Complex(-2.0, 1.0), Complex(0.25, 0.75)};
+    Vector rhs(exact.size());
+    for (std::size_t i = 0; i != exact.size(); ++i)
+    {
+        rhs[i] = diagonal[i] * exact[i];
+    }
+
+    ModuleRI::SternheimerRPA::LinearProblem problem;
+    problem.apply = [&diagonal](const Vector& input, Vector& output) {
+        output.resize(input.size());
+        for (std::size_t i = 0; i != input.size(); ++i)
+        {
+            output[i] = diagonal[i] * input[i];
+        }
+    };
+    problem.dot = dot;
+
+    ModuleRI::SternheimerRPA::SolverOptions options;
+    options.max_iter = 10;
+    options.residual_tol = 1.0e-12;
+
+    Vector solution(exact.size(), Complex(0.0, 0.0));
+    const auto result = ModuleRI::SternheimerRPA::solve_gmres(problem, rhs, solution, options, 3);
+
+    EXPECT_TRUE(result.converged);
+    EXPECT_LE(result.relative_residual, options.residual_tol);
+    for (std::size_t i = 0; i != exact.size(); ++i)
+    {
+        EXPECT_NEAR(solution[i].real(), exact[i].real(), 1.0e-10);
+        EXPECT_NEAR(solution[i].imag(), exact[i].imag(), 1.0e-10);
+    }
+}

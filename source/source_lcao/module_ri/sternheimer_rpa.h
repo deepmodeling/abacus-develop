@@ -48,6 +48,12 @@ class SternheimerRPA
                                        Vector& solution,
                                        const SolverOptions& options);
 
+    static SolverResult solve_gmres(const LinearProblem& problem,
+                                    const Vector& rhs,
+                                    Vector& solution,
+                                    const SolverOptions& options,
+                                    int restart_dimension = 50);
+
     static void build_rhs_from_hartree_perturbation(const std::vector<double>& hartree_potential_r,
                                                     const Vector& psi_r,
                                                     Vector& rhs_r);
