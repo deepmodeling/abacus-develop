@@ -841,7 +841,7 @@ def read_stru(fpath):
     if 'LATTICE_VECTORS' in blocks:
         stru['lat']['vec'] = [[float(x) for x in line.split()] for line in blocks['LATTICE_VECTORS']]
     elif 'LATTICE_PARAMETER' in blocks:
-        stru['lat']['param'] = [float(x) for x in blocks['LATTICE_PARAMETERS'].split()]
+        stru['lat']['param'] = [float(x) for x in blocks['LATTICE_PARAMETER'][0].split()]
 
     #============ ATOMIC_SPECIES ============
     stru['species'] = [ dict(zip(['symbol', 'mass', 'pp_file', 'pp_type'], line.split())) for line in blocks['ATOMIC_SPECIES'] ]

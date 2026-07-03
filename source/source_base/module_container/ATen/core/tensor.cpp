@@ -196,7 +196,7 @@ Tensor Tensor::slice(const std::vector<int> &start, const std::vector<int> &size
                 int offset_out = i * size[1] * size[2] + j * size[2];
                 TEMPLATE_ALL_2(this->data_type_, this->device_,
                                kernels::synchronize_memory<T_, DEVICE_, DEVICE_>()(
-                                       output.data<T_>() + offset_out, this->data<T_>() + offset, size[1]))
+                                       output.data<T_>() + offset_out, this->data<T_>() + offset, size[2]))
             }
         }
     }
