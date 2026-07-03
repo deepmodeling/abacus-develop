@@ -21,6 +21,58 @@
 # archives must be handled locally by the corresponding package target or
 # adapter rather than by wrapping the entire ABACUS link line in a linker group.
 
+# This target intentionally carries compile usage requirements only. It must
+# not link an external library: internal object libraries and unit tests consume
+# it for headers, flags, and definitions, while the final executable owns the
+# complete link closure below.
+add_library(abacus_compile_requirements INTERFACE)
+add_library(abacus::compile_requirements ALIAS abacus_compile_requirements)
+
+target_include_directories(abacus_compile_requirements INTERFACE
+  ${ABACUS_SOURCE_DIR}
+  ${ABACUS_SOURCE_DIR}/source_base/module_container)
+
+if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
+  target_include_directories(abacus_compile_requirements INTERFACE
+    ${ABACUS_COMMIT_INFO_INCLUDE_DIR})
+endif()
+
+function(abacus_add_target_compile_requirements target)
+  if(NOT TARGET "${target}")
+    return()
+  endif()
+
+  get_target_property(_include_dirs "${target}" INTERFACE_INCLUDE_DIRECTORIES)
+  if(_include_dirs)
+    target_include_directories(abacus_compile_requirements INTERFACE
+      ${_include_dirs})
+  endif()
+
+  get_target_property(_system_include_dirs "${target}" INTERFACE_SYSTEM_INCLUDE_DIRECTORIES)
+  if(_system_include_dirs)
+    target_include_directories(abacus_compile_requirements SYSTEM INTERFACE
+      ${_system_include_dirs})
+  endif()
+
+  get_target_property(_compile_definitions "${target}" INTERFACE_COMPILE_DEFINITIONS)
+  if(_compile_definitions)
+    target_compile_definitions(abacus_compile_requirements INTERFACE
+      ${_compile_definitions})
+  endif()
+
+  get_target_property(_compile_options "${target}" INTERFACE_COMPILE_OPTIONS)
+  if(_compile_options)
+    target_compile_options(abacus_compile_requirements INTERFACE
+      ${_compile_options})
+  endif()
+
+  get_target_property(_compile_features "${target}" INTERFACE_COMPILE_FEATURES)
+  if(_compile_features)
+    target_compile_features(abacus_compile_requirements INTERFACE
+      ${_compile_features})
+  endif()
+endfunction()
+
 add_library(abacus_linalg_libs INTERFACE)
 add_library(abacus::linalg_libs ALIAS abacus_linalg_libs)
 
@@ -33,15 +85,6 @@ add_library(abacus::link_libs ALIAS abacus_link_libs)
 target_link_libraries(abacus_link_libs INTERFACE
   abacus::feature_libs
   abacus::linalg_libs)
-
-target_include_directories(abacus_feature_libs INTERFACE
-  ${ABACUS_SOURCE_DIR}
-  ${ABACUS_SOURCE_DIR}/source_base/module_container)
-
-if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
-  target_include_directories(abacus_feature_libs INTERFACE
-    ${ABACUS_COMMIT_INFO_INCLUDE_DIR})
-endif()
 
 # ------------------------------------------------------------------------------
 # Ordered numerical backends and runtime closure
@@ -57,12 +100,13 @@ if(USE_KML)
     list(APPEND _abacus_linalg_libs KML::LAPACK)
   endif()
   list(APPEND _abacus_linalg_libs KML::FFTW3)
+  list(APPEND _abacus_linalg_include_dirs ${KML_INCLUDE_DIRS})
   if(ENABLE_FLOAT_FFTW)
     list(APPEND _abacus_linalg_libs KML::FFTW3_FLOAT)
   endif()
 elseif(MKLROOT)
   list(APPEND _abacus_linalg_libs MKL::MKL)
-  list(APPEND _abacus_linalg_include_dirs ${MKL_INCLUDE}/fftw)
+  list(APPEND _abacus_linalg_include_dirs ${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     list(APPEND _abacus_linalg_libs ifcore)
   endif()
@@ -88,6 +132,7 @@ else()
     FFTW3::FFTW3
     LAPACK::LAPACK
     BLAS::BLAS)
+  list(APPEND _abacus_linalg_include_dirs ${FFTW3_INCLUDE_DIRS})
   if(ENABLE_FLOAT_FFTW)
     list(APPEND _abacus_linalg_libs FFTW3::FFTW3_FLOAT)
   endif()
@@ -114,6 +159,23 @@ endif()
 
 target_link_libraries(abacus_linalg_libs INTERFACE ${_abacus_linalg_libs})
 target_include_directories(abacus_linalg_libs INTERFACE ${_abacus_linalg_include_dirs})
+
+target_include_directories(abacus_compile_requirements INTERFACE
+  ${_abacus_linalg_include_dirs})
+
+foreach(_abacus_linalg_target IN ITEMS
+    Threads::Threads
+    MPI::MPI_CXX
+    OpenMP::OpenMP_CXX
+    FFTW3::FFTW3
+    FFTW3::FFTW3_OMP
+    FFTW3::FFTW3_FLOAT
+    KML::LAPACK
+    KML::ScaLAPACK
+    KML::FFTW3
+    KML::FFTW3_FLOAT)
+  abacus_add_target_compile_requirements(${_abacus_linalg_target})
+endforeach()
 
 # ------------------------------------------------------------------------------
 # Optional external feature libraries
@@ -257,8 +319,34 @@ if(ENABLE_ASAN)
 endif()
 
 target_link_libraries(abacus_feature_libs INTERFACE ${_abacus_feature_libs})
-target_include_directories(abacus_feature_libs INTERFACE ${_abacus_feature_include_dirs})
-target_compile_options(abacus_feature_libs INTERFACE ${_abacus_feature_compile_options})
+
+target_include_directories(abacus_compile_requirements INTERFACE
+  ${_abacus_feature_include_dirs})
+target_compile_options(abacus_compile_requirements INTERFACE
+  ${_abacus_feature_compile_options})
+
+foreach(_abacus_feature_target IN ITEMS
+    RapidJSON
+    cereal::cereal
+    ELPA::ELPA
+    Libxc::xc
+    dftd4::dftd4
+    DeePMD::deepmd_c
+    DeePMD::deepmd_cc
+    NEP::nep
+    TensorFlow::tensorflow_cc
+    ZLIB::ZLIB
+    NCCL::NCCL
+    CAL::CAL
+    cusolverMp::cusolverMp
+    cublasMp::cublasMp
+    hip::host
+    hip::device
+    hip::hipfft
+    roc::hipblas
+    roc::hipsolver)
+  abacus_add_target_compile_requirements(${_abacus_feature_target})
+endforeach()
 
 # ------------------------------------------------------------------------------
 # Per-target feature definitions and common compile usage requirements
@@ -319,13 +407,13 @@ function(abacus_apply_build_options target)
     target_compile_definitions("${target}" PRIVATE ${_defs})
   endif()
 
-  target_link_libraries("${target}" PRIVATE abacus::link_libs)
+  target_link_libraries("${target}" PRIVATE abacus::compile_requirements)
 endfunction()
 
 function(abacus_apply_build_options_to_dir dir)
   # FetchContent adds third-party projects as subdirectories of its caller.
   # Keep the recursive application strictly within ABACUS's own source tree so
-  # exported third-party targets never acquire abacus::link_libs.
+  # exported third-party targets never acquire ABACUS compile requirements.
   set(_abacus_source_root "${PROJECT_SOURCE_DIR}/source/")
   string(FIND "${dir}/" "${_abacus_source_root}" _abacus_source_pos)
   if(NOT _abacus_source_pos EQUAL 0)

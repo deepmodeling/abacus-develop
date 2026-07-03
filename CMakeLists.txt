@@ -58,6 +58,8 @@ option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
 option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
 
+# CTest defines BUILD_TESTING when it is first included. Include it only after
+# ABACUS has declared its OFF-by-default option above.
 include(CTest)
 
 if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
