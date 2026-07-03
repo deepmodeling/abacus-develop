@@ -86,7 +86,7 @@ set(DEEPKS_UNIT_LIBS
     gint
     numerical_atomic_orbitals
     symmetry
-    ${math_libs}
+
 )
 
 set(DEEPKS_UNIT_PHIALPHA_SOURCES

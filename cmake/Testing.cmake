@@ -39,16 +39,16 @@ endif()
     endif()
 
     # dependencies & link library
-    target_link_libraries(${UT_TARGET} PRIVATE ${UT_LIBS} Threads::Threads
-                          GTest::gtest_main GTest::gmock_main)
+    target_link_libraries(${UT_TARGET} PRIVATE
+      ${UT_LIBS}
+      GTest::gtest_main
+      GTest::gmock_main
+      abacus::link_libs)
     if(ENABLE_GOOGLEBENCH)
       target_link_libraries(
         ${UT_TARGET} PRIVATE benchmark::benchmark)
     endif()
 
-    if(USE_OPENMP)
-      target_link_libraries(${UT_TARGET} PRIVATE OpenMP::OpenMP_CXX)
-    endif()
 
     # Link to build info if needed
     if("${UT_SOURCES}" MATCHES "parse_args.cpp")
@@ -64,7 +64,6 @@ endif()
 
 if(BUILD_TESTING)
   set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital
-  include(CTest)
   enable_testing()
   find_package(GTest HINTS /usr/local/lib/ ${GTEST_DIR})
   if(NOT ${GTest_FOUND})
@@ -79,5 +78,4 @@ if(BUILD_TESTING)
   endif()
   # TODO: Try the GoogleTest module.
   # https://cmake.org/cmake/help/latest/module/GoogleTest.html
-  add_subdirectory(tests) # Contains integration tests
 endif()

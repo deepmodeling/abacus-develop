@@ -5,7 +5,7 @@ abacus_disable_feature_definitions(__ROCM)
 if(ENABLE_LCAO)
 AddTest(
   TARGET MODULE_LCAO_init_dm_from_file_test
-  LIBS parameter ${math_libs} base device
+  LIBS parameter base device
   SOURCES test_init_dm_from_file.cpp tmp_mocks.cpp
     ${ABACUS_SOURCE_DIR}/source_estate/module_dm/density_matrix.cpp
     ${ABACUS_SOURCE_DIR}/source_estate/module_dm/density_matrix_io.cpp
@@ -28,7 +28,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_output_hcontainer_consistency_test
-  LIBS parameter ${math_libs} base device
+  LIBS parameter base device
   SOURCES test_output_hcontainer_consistency.cpp tmp_mocks.cpp
     ${ABACUS_SOURCE_DIR}/source_lcao/module_hcontainer/base_matrix.cpp
     ${ABACUS_SOURCE_DIR}/source_lcao/module_hcontainer/hcontainer.cpp
@@ -47,7 +47,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_init_chg_hr_error_test
-  LIBS parameter ${math_libs} base device
+  LIBS parameter base device
   SOURCES test_init_chg_hr_error.cpp
 )
 endif()

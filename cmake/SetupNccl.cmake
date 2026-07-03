@@ -2,7 +2,7 @@ include_guard(GLOBAL)
 
 include(CheckIncludeFileCXX)
 
-function(abacus_setup_nccl target_name)
+function(abacus_setup_nccl)
   find_library(NCCL_LIBRARY NAMES nccl
       HINTS ${NCCL_PATH} ${NVHPC_ROOT_DIR}
       PATH_SUFFIXES lib lib64 comm_libs/nccl/lib)
@@ -39,5 +39,4 @@ function(abacus_setup_nccl target_name)
     endif()
   endif()
 
-  target_link_libraries(abacus_external_deps INTERFACE NCCL::NCCL)
 endfunction()
