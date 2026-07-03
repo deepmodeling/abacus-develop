@@ -23,6 +23,7 @@ constexpr const char* kBandsEnv = "ABACUS_STERNHEIMER_FD_ZERO_ORDER_BANDS";
 constexpr const char* kMaxDenseEnv = "ABACUS_STERNHEIMER_FD_ZERO_ORDER_MAX_DENSE";
 constexpr const char* kToleranceEnv = "ABACUS_STERNHEIMER_FD_ZERO_ORDER_TOLERANCE";
 constexpr const char* kLocalOnlyEnv = "ABACUS_STERNHEIMER_FD_ZERO_ORDER_LOCAL_ONLY";
+constexpr const char* kLanczosSubspaceEnv = "ABACUS_STERNHEIMER_FD_ZERO_ORDER_LANCZOS_SUBSPACE";
 
 std::string lower_string(std::string value)
 {
@@ -141,6 +142,7 @@ void run_sternheimer_fd_zero_order_smoke(const elecstate::Potential& potential,
         const int requested_bands = positive_int_from_env(kBandsEnv, 4);
         const int num_bands = std::min(requested_bands, elec_state.ekb.nc);
         const int max_dense_size = positive_int_from_env(kMaxDenseEnv, 4096);
+        const int lanczos_max_subspace_size = positive_int_from_env(kLanczosSubspaceEnv, 320);
         const double eigenvalue_tolerance = nonnegative_double_from_env(kToleranceEnv, 1.0e-2);
 
         const bool local_only = env_is_true(kLocalOnlyEnv);
@@ -154,7 +156,8 @@ void run_sternheimer_fd_zero_order_smoke(const elecstate::Potential& potential,
                                                                      num_bands,
                                                                      eigenvalue_tolerance,
                                                                      max_dense_size,
-                                                                     1.0)
+                                                                     1.0,
+                                                                     lanczos_max_subspace_size)
                   : compare_sternheimer_abacus_fd_zero_order_to_dft(potential,
                                                                      pw_basis,
                                                                      ucell,
@@ -164,7 +167,8 @@ void run_sternheimer_fd_zero_order_smoke(const elecstate::Potential& potential,
                                                                      num_bands,
                                                                      eigenvalue_tolerance,
                                                                      max_dense_size,
-                                                                     1.0);
+                                                                     1.0,
+                                                                     lanczos_max_subspace_size);
 
         out << format_sternheimer_fd_zero_order_report(result);
         GlobalV::ofs_running << " Sternheimer FD zero-order smoke report: " << report_path << std::endl;

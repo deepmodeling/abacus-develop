@@ -38,6 +38,10 @@ inline std::string format_sternheimer_fd_zero_order_report(const SternheimerABAC
     {
         out << "hamiltonian_mode " << result.hamiltonian_mode << '\n';
     }
+    if (result.lanczos_max_subspace_size > 0)
+    {
+        out << "lanczos_max_subspace_size " << result.lanczos_max_subspace_size << '\n';
+    }
     out << "band fd_eigenvalue_Ry dft_eigenvalue_Ry fd_minus_dft_Ry occupation fd_residual_norm "
            "eigenvalue_within_tolerance\n";
 

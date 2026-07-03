@@ -31,6 +31,7 @@ struct SternheimerABACUSDFTZeroOrderResult
     std::vector<double> dft_occupations;
     SternheimerDFTZeroOrderComparison comparison;
     std::string hamiltonian_mode;
+    int lanczos_max_subspace_size = 0;
 };
 
 SternheimerABACUSDFTZeroOrderResult compare_sternheimer_abacus_fd_zero_order_to_dft(
@@ -42,7 +43,8 @@ SternheimerABACUSDFTZeroOrderResult compare_sternheimer_abacus_fd_zero_order_to_
     int num_bands,
     double eigenvalue_tolerance,
     int max_dense_size = 4096,
-    double kinetic_prefactor = 1.0);
+    double kinetic_prefactor = 1.0,
+    int lanczos_max_subspace_size = 320);
 
 SternheimerABACUSDFTZeroOrderResult compare_sternheimer_abacus_fd_zero_order_to_dft(
     const elecstate::Potential& potential,
@@ -54,7 +56,8 @@ SternheimerABACUSDFTZeroOrderResult compare_sternheimer_abacus_fd_zero_order_to_
     int num_bands,
     double eigenvalue_tolerance,
     int max_dense_size = 4096,
-    double kinetic_prefactor = 1.0);
+    double kinetic_prefactor = 1.0,
+    int lanczos_max_subspace_size = 320);
 
 } // namespace ModuleRI
 

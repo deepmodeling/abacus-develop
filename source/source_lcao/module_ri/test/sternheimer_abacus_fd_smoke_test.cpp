@@ -18,6 +18,7 @@ TEST(SternheimerABACUSFDSmoke, FormatsZeroOrderComparisonReport)
     result.dft_eigenvalues = {-0.41, 0.25};
     result.dft_occupations = {1.0, 0.0};
     result.hamiltonian_mode = "full_nc_nonlocal";
+    result.lanczos_max_subspace_size = 640;
 
     result.comparison.max_abs_fd_minus_dft = 0.05;
     result.comparison.all_eigenvalues_within_tolerance = false;
@@ -31,6 +32,7 @@ TEST(SternheimerABACUSFDSmoke, FormatsZeroOrderComparisonReport)
     EXPECT_NE(report.find("# ABACUS Sternheimer FD zero-order smoke test"), std::string::npos);
     EXPECT_NE(report.find("grid 2 3 4 size 24 dV 0.125"), std::string::npos);
     EXPECT_NE(report.find("hamiltonian_mode full_nc_nonlocal"), std::string::npos);
+    EXPECT_NE(report.find("lanczos_max_subspace_size 640"), std::string::npos);
     EXPECT_NE(report.find("band fd_eigenvalue_Ry dft_eigenvalue_Ry fd_minus_dft_Ry occupation fd_residual_norm eigenvalue_within_tolerance"), std::string::npos);
     EXPECT_NE(report.find("0 -0.4 -0.41 0.01 1 1e-10 yes"), std::string::npos);
     EXPECT_NE(report.find("1 0.2 0.25 -0.05 0 2e-09 no"), std::string::npos);
