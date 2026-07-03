@@ -302,14 +302,10 @@ void DiagoPPCG<T, Device>::update_one_block(
         }
     };
 
-    auto combine = [&](const std::vector<T>& a,
-                       const std::vector<T>& b,
-                       const std::vector<T>& c,
+    auto combine = [&](const std::vector<T>& basis,
                        const std::vector<T>& coeff,
                        std::vector<T>& out)
     {
-        std::vector<T> basis;
-        fill_basis(a, b, c, basis);
         const T one = T(1);
         const T zero = T(0);
         ModuleBase::gemm_op<T, Device>()('N',
@@ -327,12 +323,19 @@ void DiagoPPCG<T, Device>::update_one_block(
                                          ld_psi_);
     };
 
-    combine(psi_l, w_l, p_l, coeff_state, psi_new);
-    combine(spsi_l, sw_l, sp_l, coeff_state, spsi_new);
-    combine(hpsi_l, hw_l, hp_l, coeff_state, hpsi_new);
-    combine(psi_l, w_l, p_l, coeff_dir, p_new);
-    combine(spsi_l, sw_l, sp_l, coeff_dir, sp_new);
-    combine(hpsi_l, hw_l, hp_l, coeff_dir, hp_new);
+    std::vector<T> psi_basis;
+    std::vector<T> spsi_basis;
+    std::vector<T> hpsi_basis;
+    fill_basis(psi_l, w_l, p_l, psi_basis);
+    fill_basis(spsi_l, sw_l, sp_l, spsi_basis);
+    fill_basis(hpsi_l, hw_l, hp_l, hpsi_basis);
+
+    combine(psi_basis, coeff_state, psi_new);
+    combine(spsi_basis, coeff_state, spsi_new);
+    combine(hpsi_basis, coeff_state, hpsi_new);
+    combine(psi_basis, coeff_dir, p_new);
+    combine(spsi_basis, coeff_dir, sp_new);
+    combine(hpsi_basis, coeff_dir, hp_new);
 
     scatter_cols(psi, cols, psi_new);
     scatter_cols(spsi_.data(), cols, spsi_new);
