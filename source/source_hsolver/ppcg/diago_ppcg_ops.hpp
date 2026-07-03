@@ -73,6 +73,9 @@ void DiagoPPCG<T, Device>::apply_s(const SPsiFunc& spsi_func,
     if (spsi_func)
         spsi_func(psi_in, spsi_out, ld_psi_, ncol);
     else
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (ld_psi_ * ncol > 4096)
+#endif
         for (int j = 0; j < ncol; ++j)
             std::copy(psi_in + j * ld_psi_, psi_in + (j + 1) * ld_psi_,
                       spsi_out + j * ld_psi_);
@@ -144,7 +147,11 @@ void DiagoPPCG<T, Device>::copy_cols(const T* src,
                                       std::vector<T>& dst) const
 {
     dst.assign(ld_psi_ * cols.size(), T(0));
-    for (int j = 0; j < static_cast<int>(cols.size()); ++j)
+    const int ncols = static_cast<int>(cols.size());
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (ld_psi_ * ncols > 4096)
+#endif
+    for (int j = 0; j < ncols; ++j)
     {
         const int c = cols[j];
         std::copy(src + c * ld_psi_, src + c * ld_psi_ + ld_psi_,
@@ -161,7 +168,11 @@ void DiagoPPCG<T, Device>::scatter_cols(
     const std::vector<int>& cols,
     const std::vector<T>& src) const
 {
-    for (int j = 0; j < static_cast<int>(cols.size()); ++j)
+    const int ncols = static_cast<int>(cols.size());
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (ld_psi_ * ncols > 4096)
+#endif
+    for (int j = 0; j < ncols; ++j)
     {
         const int c = cols[j];
         std::copy(src.begin() + j * ld_psi_,
@@ -214,10 +225,17 @@ void DiagoPPCG<T, Device>::divide_by_preconditioner(
     const Real* prec,
     std::vector<T>& x) const
 {
-    for (const int c : active_cols)
+    const int ncols = static_cast<int>(active_cols.size());
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * ncols > 4096)
+#endif
+    for (int j = 0; j < ncols; ++j)
+    {
+        const int c = active_cols[j];
         for (int ig = 0; ig < n_dim_; ++ig)
             x[idx(ig, c, ld_psi_)] /=
                 std::max(prec[ig], static_cast<Real>(1.0e-12));
+    }
 }
 
 } // namespace hsolver

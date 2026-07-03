@@ -17,6 +17,9 @@ void DiagoPPCG<T, Device>::calc_gradient(
     std::vector<T>& grad) const
 {
     grad.assign(ld_psi_ * n_band_, T(0));
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > 4096)
+#endif
     for (int j = 0; j < n_band_; ++j)
     {
         const Real ej = eigenvalue[j];
@@ -88,6 +91,9 @@ void DiagoPPCG<T, Device>::update_polak_ribiere(
         Real beta_num_zr = 0;
         Real beta_num_zo = 0;
 
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : beta_num_zr, beta_num_zo) schedule(static) if (n_dim_ > 4096)
+#endif
         for (int ig = 0; ig < n_dim_; ++ig)
         {
             // z_new = -P^{-1} * grad
@@ -113,6 +119,9 @@ void DiagoPPCG<T, Device>::update_polak_ribiere(
         }
 
         // d_new = z_new + beta * d_old
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ > 4096)
+#endif
         for (int ig = 0; ig < n_dim_; ++ig)
             pj[ig] = zn[ig] + beta * pj[ig];
 
@@ -230,9 +239,12 @@ void DiagoPPCG<T, Device>::line_minimize(
             alpha = alpha_linear;
         }
 
+        const T step = T(alpha) * phase;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ > 4096)
+#endif
         for (int ig = 0; ig < n_dim_; ++ig)
         {
-            const T step = T(alpha) * phase;
             pj[ig] += step * pp[ig];
             hj[ig] += step * hpp[ig];
             sj[ig] += step * spp[ig];
@@ -269,31 +281,52 @@ void DiagoPPCG<T, Device>::orth_cholesky(
         HermitianLapack<T>::potrf(ncol, gram_s.data());
         HermitianLapack<T>::trtri(ncol, gram_s.data());
 
+        const T one = T(1);
+        const T zero = T(0);
         std::vector<T> tmp(ld_psi_ * ncol, T(0));
-        for (int j = 0; j < ncol; ++j)
-            for (int i = 0; i < ncol; ++i) {
-                const T uinv = gram_s[i + j * ncol];
-                for (int ig = 0; ig < n_dim_; ++ig)
-                    tmp[idx(ig, j, ld_psi_)] += psi[idx(ig, i, ld_psi_)] * uinv;
-            }
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         ncol,
+                                         ncol,
+                                         &one,
+                                         psi,
+                                         ld_psi_,
+                                         gram_s.data(),
+                                         ncol,
+                                         &zero,
+                                         tmp.data(),
+                                         ld_psi_);
         std::copy(tmp.begin(), tmp.end(), psi);
 
-        set_zero(tmp);
-        for (int j = 0; j < ncol; ++j)
-            for (int i = 0; i < ncol; ++i) {
-                const T uinv = gram_s[i + j * ncol];
-                for (int ig = 0; ig < n_dim_; ++ig)
-                    tmp[idx(ig, j, ld_psi_)] += hpsi[idx(ig, i, ld_psi_)] * uinv;
-            }
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         ncol,
+                                         ncol,
+                                         &one,
+                                         hpsi,
+                                         ld_psi_,
+                                         gram_s.data(),
+                                         ncol,
+                                         &zero,
+                                         tmp.data(),
+                                         ld_psi_);
         std::copy(tmp.begin(), tmp.end(), hpsi);
 
-        set_zero(tmp);
-        for (int j = 0; j < ncol; ++j)
-            for (int i = 0; i < ncol; ++i) {
-                const T uinv = gram_s[i + j * ncol];
-                for (int ig = 0; ig < n_dim_; ++ig)
-                    tmp[idx(ig, j, ld_psi_)] += spsi[idx(ig, i, ld_psi_)] * uinv;
-            }
+        ModuleBase::gemm_op<T, Device>()('N',
+                                         'N',
+                                         n_dim_,
+                                         ncol,
+                                         ncol,
+                                         &one,
+                                         spsi,
+                                         ld_psi_,
+                                         gram_s.data(),
+                                         ncol,
+                                         &zero,
+                                         tmp.data(),
+                                         ld_psi_);
         std::copy(tmp.begin(), tmp.end(), spsi);
 
         cholesky_ok = is_s_orthonormal(psi, spsi, ncol);

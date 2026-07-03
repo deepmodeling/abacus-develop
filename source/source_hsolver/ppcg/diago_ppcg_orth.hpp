@@ -8,6 +8,9 @@ void DiagoPPCG<T, Device>::right_solve_upper(
     const std::vector<T>& r, int n, std::vector<T>& x) const
 {
     std::vector<T> b = x;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * n > 4096)
+#endif
     for (int row = 0; row < n_dim_; ++row)
     {
         for (int j = 0; j < n; ++j)
@@ -59,6 +62,9 @@ void DiagoPPCG<T, Device>::s_gram_schmidt(
             {
                 T coeff = complex_dot(psi + k * ld_psi_,
                                       spsi + j * ld_psi_);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ > 4096)
+#endif
                 for (int ig = 0; ig < n_dim_; ++ig)
                 {
                     psi [idx(ig, j, ld_psi_)] -= coeff * psi [idx(ig, k, ld_psi_)];
@@ -72,6 +78,9 @@ void DiagoPPCG<T, Device>::s_gram_schmidt(
             gamma_dot(psi + j * ld_psi_, spsi + j * ld_psi_),
             static_cast<Real>(1e-30)));
         Real inv_nrm = static_cast<Real>(1) / nrm;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ > 4096)
+#endif
         for (int ig = 0; ig < n_dim_; ++ig)
         {
             psi [idx(ig, j, ld_psi_)] *= inv_nrm;
@@ -223,6 +232,9 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
 
     // Compute residual: w_i = H|psi_i> - eps_i * S|psi_i>
     set_zero(w_);
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > 4096)
+#endif
     for (int j = 0; j < n_band_; ++j)
         for (int ig = 0; ig < n_dim_; ++ig)
             w_[idx(ig, j, ld_psi_)] = hpsi_[idx(ig, j, ld_psi_)]

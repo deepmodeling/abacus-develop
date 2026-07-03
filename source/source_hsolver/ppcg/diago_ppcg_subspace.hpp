@@ -17,6 +17,9 @@ void DiagoPPCG<T, Device>::lock_epairs(
     for (int j = 0; j < n_band_; ++j)
     {
         Real nrm2 = 0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : nrm2) schedule(static) if (n_dim_ > 4096)
+#endif
         for (int ig = 0; ig < n_dim_; ++ig)
             nrm2 += static_cast<Real>(std::norm(residual[idx(ig, j, ld_psi_)]));
         reduce_pool_if_mpi_ready(nrm2);
@@ -78,6 +81,9 @@ void DiagoPPCG<T, Device>::build_small_subspace(
                                        std::vector<Real>& scale) {
         for (int j = 0; j < lcols; ++j) {
             Real sn2 = 0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sn2) schedule(static) if (n_dim_ > 4096)
+#endif
             for (int ig = 0; ig < n_dim_; ++ig)
                 sn2 += std::real(std::conj(x[idx(ig, j, ld_psi_)])
                                  * sx[idx(ig, j, ld_psi_)]);
@@ -88,6 +94,9 @@ void DiagoPPCG<T, Device>::build_small_subspace(
             if (sn > static_cast<Real>(1e-15)) {
                 Real inv = static_cast<Real>(1) / sn;
                 scale[j] = inv;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ > 4096)
+#endif
                 for (int ig = 0; ig < n_dim_; ++ig) {
                     x[ idx(ig, j, ld_psi_)]  *= inv;
                     sx[idx(ig, j, ld_psi_)] *= inv;
@@ -217,6 +226,9 @@ void DiagoPPCG<T, Device>::update_one_block(
 
     std::vector<T> coeff_state(dim * l, T(0));
     std::vector<T> coeff_dir(dim * l, T(0));
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (l * l > 4096)
+#endif
     for (int j = 0; j < l; ++j)
     {
         for (int i = 0; i < l; ++i)
@@ -240,6 +252,9 @@ void DiagoPPCG<T, Device>::update_one_block(
                           std::vector<T>& basis)
     {
         basis.assign(ld_psi_ * dim, T(0));
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (ld_psi_ * l > 4096)
+#endif
         for (int j = 0; j < l; ++j)
         {
             std::copy(a.begin() + j * ld_psi_,
