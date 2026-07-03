@@ -224,18 +224,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 // so the Ritz values are exact for this subspace.
                 std::vector<T> h_sub(ncol * ncol, T(0));
                 std::vector<T> s_sub(ncol * ncol, T(0));
-                for (int jj = 0; jj < ncol; ++jj)
-                {
-                    for (int ii = 0; ii < ncol; ++ii)
-                    {
-                        h_sub[ii + jj * ncol]
-                            = complex_dot(psi_in + ii * ld_psi_,
-                                          hpsi_.data() + jj * ld_psi_);
-                        s_sub[ii + jj * ncol]
-                            = complex_dot(psi_in + ii * ld_psi_,
-                                          spsi_.data() + jj * ld_psi_);
-                    }
-                }
+                gram(psi_in, hpsi_.data(), ncol, ncol, h_sub, ncol);
+                gram(psi_in, spsi_.data(), ncol, ncol, s_sub, ncol);
 
                 std::vector<Real> eval_cg(ncol, static_cast<Real>(0));
                 try
@@ -248,18 +238,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 {
                     // Fallback: diagonal Rayleigh quotients.
                     // h_sub and s_sub may be corrupted by sygvd; re-form them.
-                    for (int jj = 0; jj < ncol; ++jj)
-                    {
-                        for (int ii = 0; ii < ncol; ++ii)
-                        {
-                            h_sub[ii + jj * ncol]
-                                = complex_dot(psi_in + ii * ld_psi_,
-                                              hpsi_.data() + jj * ld_psi_);
-                            s_sub[ii + jj * ncol]
-                                = complex_dot(psi_in + ii * ld_psi_,
-                                              spsi_.data() + jj * ld_psi_);
-                        }
-                    }
+                    gram(psi_in, hpsi_.data(), ncol, ncol, h_sub, ncol);
+                    gram(psi_in, spsi_.data(), ncol, ncol, s_sub, ncol);
                     for (int ii = 0; ii < ncol; ++ii)
                         eval_cg[ii] =
                             static_cast<Real>(std::real(h_sub[ii + ii * ncol]))

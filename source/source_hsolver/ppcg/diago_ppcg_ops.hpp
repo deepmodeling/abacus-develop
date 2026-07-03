@@ -194,23 +194,36 @@ void DiagoPPCG<T, Device>::project_against(
     if (basis_cols.empty() || x_cols.empty())
         return;
 
-    for (const int c : x_cols)
+    std::vector<T> basis_l;
+    std::vector<T> sx_l;
+    copy_cols(basis, basis_cols, basis_l);
+    copy_cols(sx.data(), x_cols, sx_l);
+
+    const int nbasis = static_cast<int>(basis_cols.size());
+    const int nx = static_cast<int>(x_cols.size());
+    std::vector<T> coeff(nbasis * nx, T(0));
+    gram(basis_l.data(), sx_l.data(), nbasis, nx, coeff, nbasis);
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * nx > 4096)
+#endif
+    for (int jc = 0; jc < nx; ++jc)
     {
-        for (const int bc : basis_cols)
+        const int c = x_cols[jc];
+        T* xc = x.data() + c * ld_psi_;
+        T* sxc = sx.data() + c * ld_psi_;
+        for (int ib = 0; ib < nbasis; ++ib)
         {
-            // Full complex inner product <basis_bc | sx_c>
-            const T* bb = basis + bc * ld_psi_;
-            const T* sc = sx.data() + c * ld_psi_;
-            const T coeff = complex_dot(bb, sc);
-            if (std::abs(coeff) <= std::numeric_limits<Real>::epsilon())
+            const int bc = basis_cols[ib];
+            const T cproj = coeff[ib + jc * nbasis];
+            if (std::abs(cproj) <= std::numeric_limits<Real>::epsilon())
                 continue;
+            const T* bb = basis + bc * ld_psi_;
             const T* sb = sbasis + bc * ld_psi_;
-            T* xc = x.data() + c * ld_psi_;
-            T* sxc = sx.data() + c * ld_psi_;
             for (int ig = 0; ig < n_dim_; ++ig)
             {
-                xc[ig] -= bb[ig] * coeff;
-                sxc[ig] -= sb[ig] * coeff;
+                xc[ig] -= bb[ig] * cproj;
+                sxc[ig] -= sb[ig] * cproj;
             }
         }
     }

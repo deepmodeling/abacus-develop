@@ -32,12 +32,13 @@ bool DiagoPPCG<T, Device>::is_s_orthonormal(
 {
     const Real orth_tol = static_cast<Real>(10)
                         * std::sqrt(std::numeric_limits<Real>::epsilon());
+    std::vector<T> gram_s;
+    gram(psi, spsi, ncol, ncol, gram_s, ncol);
     for (int j = 0; j < ncol; ++j)
     {
         for (int i = 0; i < ncol; ++i)
         {
-            const T sij = complex_dot(psi + i * ld_psi_,
-                                      spsi + j * ld_psi_);
+            const T sij = gram_s[i + j * ncol];
             const T target = (i == j) ? T(1) : T(0);
             if (std::abs(sij - target) > orth_tol)
                 return false;

@@ -37,21 +37,24 @@ void DiagoPPCG<T, Device>::orth_gradient(
     const T* psi, const T* spsi,
     std::vector<T>& grad) const
 {
+    std::vector<T> coeff(n_band_ * n_band_, T(0));
+    gram(psi, grad.data(), n_band_, n_band_, coeff, n_band_);
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > 4096)
+#endif
     for (int j = 0; j < n_band_; ++j)
     {
         for (int i = 0; i < n_band_; ++i)
         {
-            // Full complex inner product <psi_i | grad_j>
-            const T* pi = psi + i * ld_psi_;
-            const T* gj = grad.data() + j * ld_psi_;
-            const T coeff = complex_dot(pi, gj);
-            if (std::abs(coeff) <= std::numeric_limits<Real>::epsilon())
+            const T cproj = coeff[i + j * n_band_];
+            if (std::abs(cproj) <= std::numeric_limits<Real>::epsilon())
                 continue;
             // grad_j -= S|psi_i> * coeff
             const T* si = spsi + i * ld_psi_;
             T* gj_out = grad.data() + j * ld_psi_;
             for (int ig = 0; ig < n_dim_; ++ig)
-                gj_out[ig] -= si[ig] * coeff;
+                gj_out[ig] -= si[ig] * cproj;
         }
     }
 }
@@ -163,6 +166,58 @@ void DiagoPPCG<T, Device>::line_minimize(
     const T* p, const T* hp, const T* sp,
     int ncol) const
 {
+    std::vector<double> h_ii_all(ncol, 0.0);
+    std::vector<double> s_ii_all(ncol, 0.0);
+    std::vector<double> h_pp_all(ncol, 0.0);
+    std::vector<double> s_pp_all(ncol, 0.0);
+    std::vector<T> h_ip_all(ncol, T(0));
+    std::vector<T> s_ip_all(ncol, T(0));
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * ncol > 4096)
+#endif
+    for (int j = 0; j < ncol; ++j)
+    {
+        const int off = j * ld_psi_;
+        const T* pj = psi + off;
+        const T* hj = hpsi + off;
+        const T* sj = spsi + off;
+        const T* pp = p + off;
+        const T* hpp = hp + off;
+        const T* spp = sp + off;
+
+        Real h_ii = 0;
+        Real s_ii = 0;
+        Real h_pp = 0;
+        Real s_pp = 0;
+        T h_ip = T(0);
+        T s_ip = T(0);
+
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            h_ii += static_cast<Real>(std::real(std::conj(pj[ig]) * hj[ig]));
+            s_ii += static_cast<Real>(std::real(std::conj(pj[ig]) * sj[ig]));
+            h_ip += std::conj(pj[ig]) * hpp[ig];
+            s_ip += std::conj(pj[ig]) * spp[ig];
+            h_pp += static_cast<Real>(std::real(std::conj(pp[ig]) * hpp[ig]));
+            s_pp += static_cast<Real>(std::real(std::conj(pp[ig]) * spp[ig]));
+        }
+
+        h_ii_all[j] = static_cast<double>(h_ii);
+        s_ii_all[j] = static_cast<double>(s_ii);
+        h_ip_all[j] = h_ip;
+        s_ip_all[j] = s_ip;
+        h_pp_all[j] = static_cast<double>(h_pp);
+        s_pp_all[j] = static_cast<double>(s_pp);
+    }
+
+    reduce_pool_if_mpi_ready(h_ii_all.data(), ncol);
+    reduce_pool_if_mpi_ready(s_ii_all.data(), ncol);
+    reduce_pool_if_mpi_ready(h_ip_all.data(), ncol);
+    reduce_pool_if_mpi_ready(s_ip_all.data(), ncol);
+    reduce_pool_if_mpi_ready(h_pp_all.data(), ncol);
+    reduce_pool_if_mpi_ready(s_pp_all.data(), ncol);
+
     for (int j = 0; j < ncol; ++j)
     {
         const int off = j * ld_psi_;
@@ -173,12 +228,12 @@ void DiagoPPCG<T, Device>::line_minimize(
         const T* hpp = hp + off;
         const T* spp = sp + off;
 
-        Real h_ii = gamma_dot(pj, hj);
-        Real s_ii = gamma_dot(pj, sj);
-        const T h_ip_c = complex_dot(pj, hpp);
-        const T s_ip_c = complex_dot(pj, spp);
-        Real h_pp = gamma_dot(pp, hpp);
-        Real s_pp = gamma_dot(pp, spp);
+        Real h_ii = static_cast<Real>(h_ii_all[j]);
+        Real s_ii = static_cast<Real>(s_ii_all[j]);
+        const T h_ip_c = h_ip_all[j];
+        const T s_ip_c = s_ip_all[j];
+        Real h_pp = static_cast<Real>(h_pp_all[j]);
+        Real s_pp = static_cast<Real>(s_pp_all[j]);
 
         // Rotate the search direction so the first-order Rayleigh quotient
         // derivative is real. The scalar alpha solve below stays unchanged for
@@ -269,11 +324,8 @@ void DiagoPPCG<T, Device>::orth_cholesky(
     std::vector<T> spsi_orig(spsi, spsi + ld_psi_ * ncol);
 
     // Gram matrix of S-orthonormality: J_{ij} = <psi_i | S | psi_j>
-    std::vector<T> gram_s(ncol * ncol, T(0));
-    for (int j = 0; j < ncol; ++j)
-        for (int i = 0; i < ncol; ++i)
-            gram_s[i + j * ncol] = complex_dot(psi + i * ld_psi_,
-                                                spsi + j * ld_psi_);
+    std::vector<T> gram_s;
+    gram(psi, spsi, ncol, ncol, gram_s, ncol);
 
     bool cholesky_ok = false;
     try
