@@ -4,8 +4,6 @@
 //----------------IO-----------------
 #include "source_base/global_variable.h"
 #include "source_io/module_ctrl/ctrl_output_td.h"
-#include "source_io/module_current/td_current_io.h"
-#include "source_io/module_dipole/dipole_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_wf/read_wfc_nao.h"
 //------LCAO HSolver ElecState-------

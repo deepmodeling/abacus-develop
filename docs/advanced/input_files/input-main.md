@@ -177,6 +177,9 @@
     - [out\_mat\_l](#out_mat_l)
     - [out\_xc\_r](#out_xc_r)
     - [out\_eband\_terms](#out_eband_terms)
+    - [out\_hr\_npz](#out_hr_npz)
+    - [out\_hsr\_npz](#out_hsr_npz)
+    - [out\_dm\_npz](#out_dm_npz)
     - [out\_mul](#out_mul)
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
@@ -2047,6 +2050,28 @@
 - **Type**: Boolean
 - **Availability**: *Numerical atomic orbital basis*
 - **Description**: Whether to print the band energy terms separately in the file OUT.{term}_out.dat. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).
+- **Default**: False
+
+### out_hr_npz
+
+- **Type**: Boolean
+- **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
+- **Description**: Whether to print Hamiltonian matrices H(R) in npz format. The output files are named output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
+- **Default**: False
+- **Unit**: Ry
+
+### out_hsr_npz
+
+- **Type**: Boolean
+- **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
+- **Description**: Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. The output files are named output_SR.npz, output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
+- **Default**: False
+
+### out_dm_npz
+
+- **Type**: Boolean
+- **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
+- **Description**: Whether to print density matrices DM(R) in npz format. The output files are named output_DM0.npz, output_DM1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
 - **Default**: False
 
 ### out_mul

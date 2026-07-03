@@ -973,6 +973,24 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.out_mat_hs[0], 1);
     }
+    { // out_hr_npz
+        auto it = find_label("out_hr_npz", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hr_npz, true);
+    }
+    { // out_hsr_npz
+        auto it = find_label("out_hsr_npz", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsr_npz, true);
+    }
+    { // out_dm_npz
+        auto it = find_label("out_dm_npz", readinput.input_lists);
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_dm_npz, true);
+    }
 }
 TEST_F(InputTest, Item_test2)
 {

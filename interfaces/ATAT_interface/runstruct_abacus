@@ -1,0 +1,543 @@
+#!/bin/bash
+
+# ============================================================================
+# runstruct_abacus - ATAT interface for ABACUS
+# ============================================================================
+# Generates ABACUS INPUT + STRU from ATAT str.out and abacus.wrap template
+# 
+# Command line options:
+#   -w file    : specify custom wrap file (default: abacus.wrap)
+#   -nr        : do not run ABACUS, just generate input files
+#   -ex        : do not generate input, just extract results from output
+#   -clean     : delete all ABACUS output files (CAUTION)
+#   cmdprefix  : prefix for running ABACUS, e.g., "mpirun -n 4"
+# ============================================================================
+# Author: Shengjun Chen @ Peking University TMC
+# Date: 2026-06-26
+# ============================================================================
+
+set -e
+
+# ============================================================================
+# 1. Command Line Parsing
+# ============================================================================
+
+wrapfilename="abacus.wrap"
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        -h)
+            cat << 'EOF'
+runstruct_abacus [-w file] [-nr] [-ex] [-clean] [cmdprefix]
+  where file is an optional alternate wrap file (default: abacus.wrap)
+    If the wrap file is not found in the current directory,
+    it searches in the parent directories .. and ../.. and ../../..
+  -nr means do not run ABACUS, just generate input files
+  -ex means do not generate input, do not run ABACUS, but extract info from output
+  -clean deletes ALL ABACUS output files: CAUTION.
+  cmdprefix is the prefix needed for ABACUS to run on multiple cores,
+            such as "mpirun -n 4"
+EOF
+            exit 1
+            ;;
+        -w)
+            wrapfilename="$2"
+            shift 2
+            ;;
+        -nr)
+            notrunabacus=1
+            shift
+            ;;
+        -ex)
+            extractonly=1
+            shift
+            ;;
+        -clean)
+            rm -rf OUT.ABACUS/ running_*.log log.out energy str_relax.out force.out
+            exit 0
+            ;;
+        *)
+            break
+            ;;
+    esac
+done
+
+CMDPREFIX="$1"
+
+# ============================================================================
+# 2. Extract-Only Mode (-ex)
+#    Skip all input generation, directly extract from existing output
+# ============================================================================
+
+if [ -n "$extractonly" ]; then
+    goto_extract=1
+else
+
+# ============================================================================
+# 3. Locate Structure File (ATAT str.out or str_hint.out)
+#    Only needed for input generation mode
+# ============================================================================
+
+strout="str_hint.out"
+if [ ! -e "$strout" ]; then
+    strout="str.out"
+fi
+
+if [ ! -e "$strout" ]; then
+    echo "str.out or str_hint.out does not exist"
+    echo "NOTE: runstruct_abacus needs to be run within the subdirectory containing a structure."
+    exit 1
+fi
+
+# ============================================================================
+# 4. Locate abacus.wrap Template File
+# ============================================================================
+
+wrapfile="$wrapfilename"
+found_wrap=0
+for dir in "." ".." "../.." "../../.." "../../../.."; do
+    if [ -e "$dir/$wrapfile" ]; then
+        wrapfile="$dir/$wrapfile"
+        found_wrap=1
+        break
+    fi
+done
+
+if [ $found_wrap -eq 0 ]; then
+    echo "You need a $wrapfilename file in $PWD, $PWD/.., $PWD/../.. or $PWD/../../.."
+    echo "NOTE: runstruct_abacus needs to be run within the numbered subdirectory."
+    exit 1
+fi
+
+# ============================================================================
+# 5. Source User Configuration (~/.abacus.rc)
+# ============================================================================
+
+if [ -e ~/.abacus.rc ]; then
+    source ~/.abacus.rc
+else
+    cat > ~/.abacus.rc << 'EOF'
+#!/bin/bash
+# ABACUS executable path
+ABACUSCMD="abacus"
+EOF
+    echo "I have created a default ~/.abacus.rc file. Please edit it to match your configuration."
+    exit 1
+fi
+
+# ============================================================================
+# 6. Parse abacus.wrap
+#    - species: script control, consumed not written
+#      Format: species <element> <mass> <pp_file> [<orb_file>]
+#      Use '-' for mass/orb_file to indicate auto-search / built-in
+#    - All other lines (including pseudo_dir, orbital_dir): write to INPUT
+# ============================================================================
+
+declare -A explicit_pp      # element -> pseudopotential filename
+declare -A explicit_orb     # element -> orbital filename
+declare -A explicit_mass    # element -> atomic mass
+
+while IFS= read -r line || [ -n "$line" ]; do
+    # Skip empty lines and comments
+    line_trimmed="${line#"${line%%[![:space:]]*}"}"
+    [ -z "$line_trimmed" ] && continue
+    [ "${line_trimmed:0:1}" = "#" ] && continue
+    
+    key=$(echo "$line_trimmed" | awk '{print $1}')
+    
+    case "$key" in
+        # ------------------------------------------------------------------
+        # Unified species specification (single line per element)
+        # Format: species  Element  Mass  PP_File  [Orb_File]
+        # Use '-' for Mass or Orb_File to use auto-search / built-in table
+        # ------------------------------------------------------------------
+        species)
+            elem=$(echo "$line_trimmed" | awk '{print $2}')
+            massval=$(echo "$line_trimmed" | awk '{print $3}')
+            ppfile=$(echo "$line_trimmed" | awk '{print $4}')
+            orbfile=$(echo "$line_trimmed" | awk '{print $5}')
+            
+            # Mass: if not '-', use specified value
+            if [ "$massval" != "-" ] && [ -n "$massval" ]; then
+                explicit_mass["$elem"]="$massval"
+            fi
+            
+            # Pseudopotential: if not '-', use specified file
+            if [ "$ppfile" != "-" ] && [ -n "$ppfile" ]; then
+                explicit_pp["$elem"]="$ppfile"
+            fi
+            
+            # Orbital: if provided and not '-', use specified file
+            if [ "$orbfile" != "-" ] && [ -n "$orbfile" ]; then
+                explicit_orb["$elem"]="$orbfile"
+            fi
+            ;;
+        
+        # All other lines (pseudo_dir, orbital_dir, calculation, etc.): write to INPUT
+        *)
+            echo "$line" >> INPUT
+            ;;
+    esac
+done < "$wrapfile"
+
+# ============================================================================
+# 7. Read pseudo_dir and orbital_dir from generated INPUT
+# ============================================================================
+
+pseudo_dir=$(grep -m1 "^[[:space:]]*pseudo_dir" INPUT | awk '{print $2}' || true)
+orbital_dir=$(grep -m1 "^[[:space:]]*orbital_dir" INPUT | awk '{print $2}' || true)
+
+if [ -z "$pseudo_dir" ]; then
+    echo "ERROR: pseudo_dir must be set in $wrapfilename"
+    rm -f INPUT
+    exit 1
+fi
+
+if [ ! -d "$pseudo_dir" ]; then
+    echo "ERROR: pseudo_dir '$pseudo_dir' does not exist"
+    rm -f INPUT
+    exit 1
+fi
+
+# Check if LCAO calculation (needs orbitals)
+basis_type_lcao=0
+if grep -qi "basis_type[[:space:]]*lcao" INPUT; then
+    basis_type_lcao=1
+    if [ -z "$orbital_dir" ]; then
+        echo "ERROR: orbital_dir must be set in $wrapfilename for LCAO calculation"
+        rm -f INPUT
+        exit 1
+    fi
+    if [ ! -d "$orbital_dir" ]; then
+        echo "ERROR: orbital_dir '$orbital_dir' does not exist"
+        rm -f INPUT
+        exit 1
+    fi
+fi
+
+# ============================================================================
+# 8. Process Structure Data from str.out
+# ============================================================================
+
+cellcvrt -f -sig=9 < "$strout" > str.tmp
+
+# Extract lattice vectors (lines 1-3, in Angstrom)
+head -3 str.tmp > latvec.tmp
+
+# Extract atom coordinates and element types (line 7 onwards)
+tail -n +7 str.tmp > atoms_coord.tmp
+
+# Get unique element types (sorted for deterministic output)
+elements=($(awk '{print $4}' atoms_coord.tmp | sort -u))
+ntype=${#elements[@]}
+
+# ============================================================================
+# 9. Search for Pseudopotentials and Numerical Orbitals
+#    Priority: species line in wrap > auto-search in dir
+#    Auto-search rule: filename must start with ElementSymbol[_-.]
+# ============================================================================
+
+declare -A pp_files
+declare -A orb_files
+declare -A atom_masses
+
+# Built-in atomic mass table (common elements)
+declare -A mass_table=(
+    ["H"]=1.008 ["He"]=4.003 ["Li"]=6.941 ["Be"]=9.012 ["B"]=10.811
+    ["C"]=12.011 ["N"]=14.007 ["O"]=15.999 ["F"]=18.998 ["Ne"]=20.180
+    ["Na"]=22.990 ["Mg"]=24.305 ["Al"]=26.982 ["Si"]=28.086 ["P"]=30.974
+    ["S"]=32.065 ["Cl"]=35.453 ["Ar"]=39.948 ["K"]=39.098 ["Ca"]=40.078
+    ["Sc"]=44.956 ["Ti"]=47.867 ["V"]=50.942 ["Cr"]=51.996 ["Mn"]=54.938
+    ["Fe"]=55.845 ["Co"]=58.933 ["Ni"]=58.693 ["Cu"]=63.546 ["Zn"]=65.380
+    ["Ga"]=69.723 ["Ge"]=72.640 ["As"]=74.922 ["Se"]=78.960 ["Br"]=79.904
+    ["Kr"]=83.798 ["Rb"]=85.468 ["Sr"]=87.620 ["Y"]=88.906 ["Zr"]=91.224
+    ["Nb"]=92.906 ["Mo"]=95.960 ["Tc"]=98.000 ["Ru"]=101.070 ["Rh"]=102.906
+    ["Pd"]=106.420 ["Ag"]=107.868 ["Cd"]=112.411 ["In"]=114.818 ["Sn"]=118.710
+    ["Sb"]=121.760 ["Te"]=127.600 ["I"]=126.905 ["Xe"]=131.293 ["Cs"]=132.905
+    ["Ba"]=137.327 ["La"]=138.906 ["Ce"]=140.116 ["Pr"]=140.908 ["Nd"]=144.242
+    ["Pm"]=145.000 ["Sm"]=150.360 ["Eu"]=151.964 ["Gd"]=157.250 ["Tb"]=158.925
+    ["Dy"]=162.500 ["Ho"]=164.930 ["Er"]=167.259 ["Tm"]=168.934 ["Yb"]=173.054
+    ["Lu"]=174.967 ["Hf"]=178.490 ["Ta"]=180.948 ["W"]=183.840 ["Re"]=186.207
+    ["Os"]=190.230 ["Ir"]=192.217 ["Pt"]=195.084 ["Au"]=196.967 ["Hg"]=200.590
+    ["Tl"]=204.383 ["Pb"]=207.200 ["Bi"]=208.980
+)
+
+for elem in "${elements[@]}"; do
+    # --- Pseudopotential ---
+    if [ -n "${explicit_pp[$elem]}" ]; then
+        pp_file="${explicit_pp[$elem]}"
+        if [ ! -f "$pseudo_dir/$pp_file" ]; then
+            echo "ERROR: Species-specified pseudopotential not found:"
+            echo "  $pseudo_dir/$pp_file"
+            echo "  (specified for element '$elem' in $wrapfilename)"
+            rm -f INPUT str.tmp latvec.tmp atoms_coord.tmp
+            exit 1
+        fi
+        pp_files["$elem"]="$pp_file"
+    else
+        # Auto-search in pseudo_dir
+        matches=()
+        while IFS= read -r f; do
+            [ -n "$f" ] && matches+=("$f")
+        done < <(find "$pseudo_dir" -maxdepth 1 -type f -printf '%f\n' | grep -i "^${elem}[_\.\-]" | grep -i "\.upf$")
+        
+        nmatches=${#matches[@]}
+        
+        if [ $nmatches -eq 0 ]; then
+            echo "ERROR: No pseudopotential found for element '$elem' in $pseudo_dir"
+            echo "Please specify in $wrapfilename:"
+            echo "  species  $elem  <mass>  <pp_filename>  [<orb_filename>]"
+            rm -f INPUT str.tmp latvec.tmp atoms_coord.tmp
+            exit 1
+        elif [ $nmatches -gt 1 ]; then
+            echo "ERROR: Multiple pseudopotentials found for element '$elem' in $pseudo_dir:"
+            for m in "${matches[@]}"; do
+                echo "  - $m"
+            done
+            echo "Please specify in $wrapfilename:"
+            echo "  species  $elem  <mass>  <pp_filename>  [<orb_filename>]"
+            rm -f INPUT str.tmp latvec.tmp atoms_coord.tmp
+            exit 1
+        else
+            pp_files["$elem"]="${matches[0]}"
+        fi
+    fi
+    
+    # --- Numerical Orbital (LCAO only) ---
+    if [ $basis_type_lcao -eq 1 ]; then
+        if [ -n "${explicit_orb[$elem]}" ]; then
+            orb_file="${explicit_orb[$elem]}"
+            if [ ! -f "$orbital_dir/$orb_file" ]; then
+                echo "ERROR: Species-specified orbital not found:"
+                echo "  $orbital_dir/$orb_file"
+                echo "  (specified for element '$elem' in $wrapfilename)"
+                rm -f INPUT str.tmp latvec.tmp atoms_coord.tmp
+                exit 1
+            fi
+            orb_files["$elem"]="$orb_file"
+        else
+            matches=()
+            while IFS= read -r f; do
+                [ -n "$f" ] && matches+=("$f")
+            done < <(find "$orbital_dir" -maxdepth 1 -type f -printf '%f\n' | grep -i "^${elem}[_\.\-]" | grep -i "\.orb$")
+            
+            nmatches=${#matches[@]}
+            
+            if [ $nmatches -eq 0 ]; then
+                echo "ERROR: No numerical orbital found for element '$elem' in $orbital_dir"
+                echo "Please specify in $wrapfilename:"
+                echo "  species  $elem  <mass>  <pp_filename>  <orb_filename>"
+                rm -f INPUT str.tmp latvec.tmp atoms_coord.tmp
+                exit 1
+            elif [ $nmatches -gt 1 ]; then
+                echo "ERROR: Multiple numerical orbitals found for element '$elem' in $orbital_dir:"
+                for m in "${matches[@]}"; do
+                    echo "  - $m"
+                done
+                echo "Please specify in $wrapfilename:"
+                echo "  species  $elem  <mass>  <pp_filename>  <orb_filename>"
+                rm -f INPUT str.tmp latvec.tmp atoms_coord.tmp
+                exit 1
+            else
+                orb_files["$elem"]="${matches[0]}"
+            fi
+        fi
+    fi
+    
+    # --- Atomic Mass ---
+    if [ -n "${explicit_mass[$elem]}" ]; then
+        atom_masses["$elem"]="${explicit_mass[$elem]}"
+    elif [ -n "${mass_table[$elem]}" ]; then
+        atom_masses["$elem"]="${mass_table[$elem]}"
+    else
+        echo "ERROR: Unknown atomic mass for element '$elem'"
+        echo "Please specify in $wrapfilename:"
+        echo "  species  $elem  <mass>  <pp_filename>  [<orb_filename>]"
+        rm -f INPUT str.tmp latvec.tmp atoms_coord.tmp
+        exit 1
+    fi
+done
+
+# ============================================================================
+# 10. Generate STRU File
+# ============================================================================
+
+{
+    echo "ATOMIC_SPECIES"
+    for elem in "${elements[@]}"; do
+        printf "%s %.3f %s\n" "$elem" "${atom_masses[$elem]}" "${pp_files[$elem]}"
+    done
+    
+    if [ $basis_type_lcao -eq 1 ]; then
+        echo ""
+        echo "NUMERICAL_ORBITAL"
+        for elem in "${elements[@]}"; do
+            echo "${orb_files[$elem]}"
+        done
+    fi
+    
+    echo ""
+    echo "LATTICE_CONSTANT"
+    echo "1.889726"
+    
+    echo ""
+    echo "LATTICE_VECTORS"
+    cat latvec.tmp
+    
+    echo ""
+    echo "ATOMIC_POSITIONS"
+    echo "Direct"
+    
+    for elem in "${elements[@]}"; do
+        echo ""
+        echo "$elem"
+        echo "0.0"
+        
+        count=$(grep -c "^[[:space:]]*[^[:space:]]\+[[:space:]]\+[^[:space:]]\+[[:space:]]\+[^[:space:]]\+[[:space:]]\+${elem}[[:space:]]*$" atoms_coord.tmp || true)
+        echo "$count"
+        
+        grep "^[[:space:]]*[^[:space:]]\+[[:space:]]\+[^[:space:]]\+[[:space:]]\+[^[:space:]]\+[[:space:]]\+${elem}[[:space:]]*$" atoms_coord.tmp | \
+            awk '{print $1, $2, $3, "1 1 1"}'
+    done
+    
+} > STRU
+
+rm -f str.tmp latvec.tmp atoms_coord.tmp
+
+# ============================================================================
+# 11. Run ABACUS (unless -nr specified)
+# ============================================================================
+
+if [ -z "$notrunabacus" ]; then
+    $CMDPREFIX $ABACUSCMD > log.out 2>&1
+fi
+
+fi  # end of extractonly skip block
+
+# ============================================================================
+# 12. Extract Results
+#    Executed in: normal mode (after run) OR -ex mode (direct extraction)
+#    Skipped in:  -nr mode
+# ============================================================================
+
+if [ -z "$notrunabacus" ] || [ -n "$extractonly" ]; then
+    
+    # Read suffix from INPUT, default to "ABACUS"
+    suffix="ABACUS"
+    if [ -e "INPUT" ]; then
+        suffix_from_input=$(grep -m1 "^[[:space:]]*suffix" INPUT | awk '{print $2}' || true)
+        if [ -n "$suffix_from_input" ]; then
+            suffix="$suffix_from_input"
+        fi
+    fi
+    
+    outdir="OUT.${suffix}"
+    
+    # ABACUS log files are in OUT.${suffix}/ directory
+    logfile=$(ls -1t ${outdir}/running_*.log 2>/dev/null | head -1 || true)
+    
+    if [ -z "$logfile" ]; then
+        echo "ERROR: No ${outdir}/running_*.log file found for extraction"
+        exit 1
+    fi
+    
+    # Extract total energy from !FINAL_ETOT_IS line
+    # Format: !FINAL_ETOT_IS -3279.184577878498 eV
+    grep "!FINAL_ETOT_IS" "$logfile" | tail -1 | awk '{print $2}' > energy
+    
+    # do not need to extract forces
+    # if grep -q "TOTAL-FORCE" "$logfile"; then
+    #     awk '/TOTAL-FORCE \(eV\/Angstrom\)/,/Total force =/' "$logfile" | \
+    #         grep -E "^[[:space:]]*[0-9]" | awk '{print $2, $3, $4}' > force.out
+    # fi
+    
+    # ============================================================================
+    # Parse optimized structure from ABACUS STRU format: OUT.${suffix}/STRU_ION_D
+    # ATAT str_relax.out format:
+    #   1-3: lattice vectors (Angstrom)
+    #   4-6: identity matrix
+    #   7+ : fractional coordinates + element symbol
+    # Conversion: lattice = LATTICE_VECTORS * LATTICE_CONSTANT / 1.889726
+    # ============================================================================
+    strufile="${outdir}/STRU_ION_D"
+    
+    if [ -e "$strufile" ]; then
+        awk '
+        BEGIN { latconst = 0; nvec = 0; n_atoms = 0; skip_count = 0 }
+        
+        /LATTICE_CONSTANT/ {
+            getline
+            latconst = $1
+            next
+        }
+        
+        /LATTICE_VECTORS/ {
+            for (i = 1; i <= 3; i++) {
+                getline
+                nvec++
+                v[nvec,1] = $1; v[nvec,2] = $2; v[nvec,3] = $3
+            }
+            next
+        }
+        
+        /ATOMIC_POSITIONS/ {
+            in_pos = 1
+            next
+        }
+        
+        # Inside ATOMIC_POSITIONS block
+        in_pos && NF > 0 {
+            # Skip "Direct" or "Cartesian" line
+            if ($0 ~ /^[[:space:]]*Direct/ || $0 ~ /^[[:space:]]*Cartesian/) next
+            
+            # Element header line: starts with letters, not a number
+            # e.g. "Sn #label" or "Fe"
+            if ($0 ~ /^[[:space:]]*[A-Za-z]/) {
+                current_elem = $1
+                skip_count = 0  # reset: next two numeric lines are magnetism and count
+                next
+            }
+            
+            # Numeric lines after element header:
+            # Line 1: magnetism (e.g. "0.0000" or "0.0")
+            # Line 2: atom count (e.g. "2")
+            # Line 3+: actual coordinates
+            if ($0 ~ /^[[:space:]]*[0-9\-\.]/) {
+                skip_count++
+                if (skip_count <= 2) next  # skip magnetism and count lines
+                
+                # Coordinate line: first 3 fields must be valid numbers
+                # (could have "m 1 1 1" after coordinates)
+                n_atoms++
+                x[n_atoms] = $1; y[n_atoms] = $2; z[n_atoms] = $3
+                elem[n_atoms] = current_elem
+                next
+            }
+        }
+        
+        END {
+            sc = latconst / 1.889726
+            
+            # Lattice vectors
+            for (i = 1; i <= 3; i++) {
+                printf "%.9g %.9g %.9g\n", v[i,1]*sc, v[i,2]*sc, v[i,3]*sc
+            }
+            
+            # Identity matrix
+            print "1 0 0"
+            print "0 1 0"
+            print "0 0 1"
+            
+            # Fractional coordinates + element symbol
+            for (i = 1; i <= n_atoms; i++) {
+                printf "%.16g %.16g %.16g\t%s\n", x[i], y[i], z[i], elem[i]
+            }
+        }
+        ' "$strufile" > str_relax.out
+    else
+        echo "WARNING: Optimized structure file ${strufile} not found"
+    fi
+    
+fi
+
+echo "runstruct_abacus completed successfully."
