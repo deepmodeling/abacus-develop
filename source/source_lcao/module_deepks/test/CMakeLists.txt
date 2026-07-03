@@ -67,6 +67,7 @@ set(DEEPKS_UNIT_COMMON_SOURCES
 )
 
 add_library(deepks_unit_support OBJECT ${DEEPKS_UNIT_COMMON_SOURCES})
+target_link_libraries(deepks_unit_support PRIVATE GTest::gtest)
 
 if(ENABLE_COVERAGE)
   add_coverage(deepks_unit_support)
