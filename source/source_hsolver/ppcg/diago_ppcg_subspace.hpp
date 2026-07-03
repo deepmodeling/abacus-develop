@@ -14,16 +14,22 @@ void DiagoPPCG<T, Device>::lock_epairs(
     std::vector<int>& active_cols) const
 {
     active_cols.clear();
+    std::vector<double> nrm2_all(n_band_, 0.0);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > 4096)
+#endif
     for (int j = 0; j < n_band_; ++j)
     {
-        Real nrm2 = 0;
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+ : nrm2) schedule(static) if (n_dim_ > 4096)
-#endif
+        double nrm2 = 0.0;
         for (int ig = 0; ig < n_dim_; ++ig)
-            nrm2 += static_cast<Real>(std::norm(residual[idx(ig, j, ld_psi_)]));
-        reduce_pool_if_mpi_ready(nrm2);
-        const Real rnrm = std::sqrt(std::max(nrm2, static_cast<Real>(0)));
+            nrm2 += static_cast<double>(std::norm(residual[idx(ig, j, ld_psi_)]));
+        nrm2_all[j] = nrm2;
+    }
+    reduce_pool_if_mpi_ready(nrm2_all.data(), n_band_);
+    for (int j = 0; j < n_band_; ++j)
+    {
+        const Real rnrm = std::sqrt(std::max(static_cast<Real>(nrm2_all[j]),
+                                             static_cast<Real>(0)));
         const Real thr = std::max(static_cast<Real>(ethr_band[j]), diag_thr_);
         if (rnrm > thr)
             active_cols.push_back(j);
@@ -79,16 +85,21 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     auto scale_to_unit_snorm = [this](std::vector<T>& x, std::vector<T>& sx,
                                        std::vector<T>& hx, int lcols,
                                        std::vector<Real>& scale) {
-        for (int j = 0; j < lcols; ++j) {
-            Real sn2 = 0;
+        std::vector<double> sn2_all(lcols, 0.0);
 #ifdef _OPENMP
-#pragma omp parallel for reduction(+ : sn2) schedule(static) if (n_dim_ > 4096)
+#pragma omp parallel for schedule(static) if (n_dim_ * lcols > 4096)
 #endif
+        for (int j = 0; j < lcols; ++j) {
+            double sn2 = 0.0;
             for (int ig = 0; ig < n_dim_; ++ig)
-                sn2 += std::real(std::conj(x[idx(ig, j, ld_psi_)])
-                                 * sx[idx(ig, j, ld_psi_)]);
-            reduce_pool_if_mpi_ready(sn2);
-            Real sn = std::sqrt(std::max(sn2, static_cast<Real>(1e-30)));
+                sn2 += static_cast<double>(std::real(std::conj(x[idx(ig, j, ld_psi_)])
+                                                     * sx[idx(ig, j, ld_psi_)]));
+            sn2_all[j] = sn2;
+        }
+        reduce_pool_if_mpi_ready(sn2_all.data(), lcols);
+        for (int j = 0; j < lcols; ++j) {
+            Real sn = std::sqrt(std::max(static_cast<Real>(sn2_all[j]),
+                                         static_cast<Real>(1e-30)));
             // Only scale if the norm is non-negligible; a near-zero
             // column is a converged band whose contribution is harmless.
             if (sn > static_cast<Real>(1e-15)) {

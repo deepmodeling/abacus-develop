@@ -48,16 +48,24 @@ Real max_generalized_residual(
     int ncol)
 {
     Real max_res = 0;
+    std::vector<double> nrm2_all(ncol, 0.0);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim * ncol > 4096)
+#endif
     for (int j = 0; j < ncol; ++j)
     {
-        Real nrm2 = 0;
+        double nrm2 = 0.0;
         for (int ig = 0; ig < n_dim; ++ig)
         {
             const T r = hpsi[ig + j * ld] - T(eigenvalue[j]) * spsi[ig + j * ld];
-            nrm2 += static_cast<Real>(std::norm(r));
+            nrm2 += static_cast<double>(std::norm(r));
         }
-        reduce_pool_if_mpi_ready(nrm2);
-        max_res = std::max(max_res, std::sqrt(nrm2));
+        nrm2_all[j] = nrm2;
+    }
+    reduce_pool_if_mpi_ready(nrm2_all.data(), ncol);
+    for (int j = 0; j < ncol; ++j)
+    {
+        max_res = std::max(max_res, std::sqrt(static_cast<Real>(nrm2_all[j])));
     }
     return max_res;
 }

@@ -83,20 +83,20 @@ void DiagoPPCG<T, Device>::update_polak_ribiere(
     }
 
     std::vector<T> z_new(ld_psi_ * n_band_, T(0));
+    std::vector<double> beta_nums(2 * n_band_, 0.0);
 
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > 4096)
+#endif
     for (int j = 0; j < n_band_; ++j)
     {
         const T* g  = grad.data() + j * ld_psi_;
-        T* pj  = p.data() + j * ld_psi_;
         T* zn  = z_new.data() + j * ld_psi_;
         T* zo  = z_old.data() + j * ld_psi_;
 
         Real beta_num_zr = 0;
         Real beta_num_zo = 0;
 
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+ : beta_num_zr, beta_num_zo) schedule(static) if (n_dim_ > 4096)
-#endif
         for (int ig = 0; ig < n_dim_; ++ig)
         {
             // z_new = -P^{-1} * grad
@@ -109,9 +109,17 @@ void DiagoPPCG<T, Device>::update_polak_ribiere(
             beta_num_zr += static_cast<Real>(std::real(z * std::conj(g[ig])));
             beta_num_zo += static_cast<Real>(std::real(z * std::conj(r_old)));
         }
-        reduce_pool_if_mpi_ready(beta_num_zr);
-        reduce_pool_if_mpi_ready(beta_num_zo);
+        beta_nums[j] = static_cast<double>(beta_num_zr);
+        beta_nums[n_band_ + j] = static_cast<double>(beta_num_zo);
+    }
+    reduce_pool_if_mpi_ready(beta_nums.data(), static_cast<int>(beta_nums.size()));
 
+    for (int j = 0; j < n_band_; ++j)
+    {
+        T* pj  = p.data() + j * ld_psi_;
+        T* zn  = z_new.data() + j * ld_psi_;
+        const Real beta_num_zr = static_cast<Real>(beta_nums[j]);
+        const Real beta_num_zo = static_cast<Real>(beta_nums[n_band_ + j]);
         Real beta = 0;
         const Real denom = beta_denom[j];
         if (denom > static_cast<Real>(1.0e-30))
@@ -166,12 +174,8 @@ void DiagoPPCG<T, Device>::line_minimize(
     const T* p, const T* hp, const T* sp,
     int ncol) const
 {
-    std::vector<double> h_ii_all(ncol, 0.0);
-    std::vector<double> s_ii_all(ncol, 0.0);
-    std::vector<double> h_pp_all(ncol, 0.0);
-    std::vector<double> s_pp_all(ncol, 0.0);
-    std::vector<T> h_ip_all(ncol, T(0));
-    std::vector<T> s_ip_all(ncol, T(0));
+    std::vector<double> real_coeffs(4 * ncol, 0.0);
+    std::vector<T> mixed_coeffs(2 * ncol, T(0));
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n_dim_ * ncol > 4096)
@@ -203,37 +207,29 @@ void DiagoPPCG<T, Device>::line_minimize(
             s_pp += static_cast<Real>(std::real(std::conj(pp[ig]) * spp[ig]));
         }
 
-        h_ii_all[j] = static_cast<double>(h_ii);
-        s_ii_all[j] = static_cast<double>(s_ii);
-        h_ip_all[j] = h_ip;
-        s_ip_all[j] = s_ip;
-        h_pp_all[j] = static_cast<double>(h_pp);
-        s_pp_all[j] = static_cast<double>(s_pp);
+        real_coeffs[j] = static_cast<double>(h_ii);
+        real_coeffs[ncol + j] = static_cast<double>(s_ii);
+        real_coeffs[2 * ncol + j] = static_cast<double>(h_pp);
+        real_coeffs[3 * ncol + j] = static_cast<double>(s_pp);
+        mixed_coeffs[j] = h_ip;
+        mixed_coeffs[ncol + j] = s_ip;
     }
 
-    reduce_pool_if_mpi_ready(h_ii_all.data(), ncol);
-    reduce_pool_if_mpi_ready(s_ii_all.data(), ncol);
-    reduce_pool_if_mpi_ready(h_ip_all.data(), ncol);
-    reduce_pool_if_mpi_ready(s_ip_all.data(), ncol);
-    reduce_pool_if_mpi_ready(h_pp_all.data(), ncol);
-    reduce_pool_if_mpi_ready(s_pp_all.data(), ncol);
+    reduce_pool_if_mpi_ready(real_coeffs.data(), static_cast<int>(real_coeffs.size()));
+    reduce_pool_if_mpi_ready(mixed_coeffs.data(), static_cast<int>(mixed_coeffs.size()));
 
+    std::vector<T> steps(ncol, T(0));
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (ncol > 16)
+#endif
     for (int j = 0; j < ncol; ++j)
     {
-        const int off = j * ld_psi_;
-        T* pj  = psi  + off;
-        T* hj  = hpsi + off;
-        T* sj  = spsi + off;
-        const T* pp = p   + off;
-        const T* hpp = hp + off;
-        const T* spp = sp + off;
-
-        Real h_ii = static_cast<Real>(h_ii_all[j]);
-        Real s_ii = static_cast<Real>(s_ii_all[j]);
-        const T h_ip_c = h_ip_all[j];
-        const T s_ip_c = s_ip_all[j];
-        Real h_pp = static_cast<Real>(h_pp_all[j]);
-        Real s_pp = static_cast<Real>(s_pp_all[j]);
+        Real h_ii = static_cast<Real>(real_coeffs[j]);
+        Real s_ii = static_cast<Real>(real_coeffs[ncol + j]);
+        const T h_ip_c = mixed_coeffs[j];
+        const T s_ip_c = mixed_coeffs[ncol + j];
+        Real h_pp = static_cast<Real>(real_coeffs[2 * ncol + j]);
+        Real s_pp = static_cast<Real>(real_coeffs[3 * ncol + j]);
 
         // Rotate the search direction so the first-order Rayleigh quotient
         // derivative is real. The scalar alpha solve below stays unchanged for
@@ -294,15 +290,20 @@ void DiagoPPCG<T, Device>::line_minimize(
             alpha = alpha_linear;
         }
 
-        const T step = T(alpha) * phase;
+        steps[j] = T(alpha) * phase;
+    }
+
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ > 4096)
+#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * ncol > 4096)
 #endif
+    for (int j = 0; j < ncol; ++j)
+    {
         for (int ig = 0; ig < n_dim_; ++ig)
         {
-            pj[ig] += step * pp[ig];
-            hj[ig] += step * hpp[ig];
-            sj[ig] += step * spp[ig];
+            const int off = idx(ig, j, ld_psi_);
+            psi[off] += steps[j] * p[off];
+            hpsi[off] += steps[j] * hp[off];
+            spsi[off] += steps[j] * sp[off];
         }
     }
 }

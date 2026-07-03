@@ -262,15 +262,23 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
             // Convergence check.
             bool all_converged = true;
+            std::vector<double> grad_nrm2(ncol, 0.0);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n_dim_ * ncol > 4096)
+#endif
             for (int i = 0; i < ncol; ++i)
             {
-                Real nrm2 = 0;
+                double nrm2 = 0.0;
                 for (int ig = 0; ig < n_dim_; ++ig)
-                    nrm2 += static_cast<Real>(
+                    nrm2 += static_cast<double>(
                         std::norm(grad[idx(ig, i, ld_psi_)]));
-                reduce_pool_if_mpi_ready(nrm2);
-                if (std::sqrt(nrm2) > std::max(static_cast<Real>(ethr_band[i]),
-                                               diag_thr_))
+                grad_nrm2[i] = nrm2;
+            }
+            reduce_pool_if_mpi_ready(grad_nrm2.data(), ncol);
+            for (int i = 0; i < ncol; ++i)
+            {
+                if (std::sqrt(static_cast<Real>(grad_nrm2[i]))
+                    > std::max(static_cast<Real>(ethr_band[i]), diag_thr_))
                 {
                     all_converged = false;
                     break;
