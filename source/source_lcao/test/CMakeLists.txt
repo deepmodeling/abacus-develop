@@ -1,6 +1,6 @@
-remove_definitions(-D__MLALGO)
-remove_definitions(-D__CUDA)
-remove_definitions(-D__ROCM)
+abacus_disable_feature_definitions(__MLALGO)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
 
 if(ENABLE_LCAO)
 AddTest(

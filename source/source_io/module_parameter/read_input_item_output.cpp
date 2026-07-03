@@ -594,7 +594,7 @@ Also controled by out_freq_ion and out_app_flag.
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.inp.out_mat_r[0] || para.inp.out_mat_hs2[0] || para.inp.out_mat_t[0] || para.inp.out_mat_dh[0]
-                 || para.inp.dm_to_rho)
+                 || para.inp.out_hr_npz || para.inp.out_hsr_npz || para.inp.out_dm_npz || para.inp.dm_to_rho)
                 && para.sys.gamma_only_local)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -814,6 +814,72 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.unit = "";
         item.availability = "Numerical atomic orbital basis";
         read_sync_bool(input.out_eband_terms);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_hr_npz");
+        item.annotation = "output H(R) matrix in npz format";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to print Hamiltonian matrices H(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.default_value = "False";
+        item.unit = "Ry";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_hr_npz);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_hr_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_hsr_npz");
+        item.annotation = "output H(R) and S(R) matrices in npz format";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.default_value = "False";
+        item.unit = "Ry";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_hsr_npz);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_hsr_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_dm_npz");
+        item.annotation = "output DM(R) matrix in npz format";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to print density matrices DM(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_dm_npz);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_dm_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
         this->add_item(item);
     }
     {

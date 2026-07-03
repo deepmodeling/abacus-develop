@@ -1,7 +1,5 @@
-remove_definitions(-D __MPI)
-
 add_library(tddft_test_lib tddft_test.cpp)
-target_link_libraries(tddft_test_lib Threads::Threads GTest::gtest_main GTest::gmock_main)
+target_link_libraries(tddft_test_lib PRIVATE Threads::Threads GTest::gtest_main GTest::gmock_main)
 #target_include_directories(tddft_test_lib PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${GTEST_INCLUDE_DIRS}>)
 
 AddTest(
@@ -34,3 +32,8 @@ AddTest(
   SOURCES propagator_test1.cpp propagator_test2.cpp propagator_test3.cpp ../propagator.cpp ../propagator_cn2.cpp ../propagator_taylor.cpp ../propagator_etrs.cpp
 )
 
+AddTest(
+  TARGET MODULE_LCAO_tddft_snap_psibeta_half_test
+  LIBS parameter ${math_libs} base device orb numerical_atomic_orbitals tddft_test_lib
+  SOURCES snap_psibeta_half_tddft_test.cpp ../snap_projector_half_tddft.cpp ../snap_psibeta_half_tddft.cpp
+)

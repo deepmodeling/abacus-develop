@@ -612,7 +612,14 @@ void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double
     assert(vu.size() == vu_tmp.size());
 #endif
 
-    // TR == std::complex<double> transfer from double to std::complex<double>
+    // Pauli-to-spinor conversion for DFT+U potential:
+    // V = V_0*I + V_x*sigma_x + V_y*sigma_y + V_z*sigma_z
+    // sigma_y = [[0,-i],[i,0]], so:
+    //   V_{up,up}   = 0.5*(V_0 + V_z)
+    //   V_{down,down} = 0.5*(V_0 - V_z)
+    //   V_{up,down}  = 0.5*(V_x - i*V_y)  <- note: minus sign from sigma_y
+    //   V_{down,up}  = 0.5*(V_x + i*V_y)  <- note: plus sign from sigma_y
+    // This is consistent with the convention in gint_common.cpp merge_hr_part_to_hR().
     const int m_size = int(sqrt(vu.size()) / 2);
     const int m_size2 = m_size * m_size;
     vu.resize(vu_tmp.size());
@@ -627,9 +634,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double
             index[3] = m2 * m_size + m1 + m_size2 * 3;
             vu[index[0]] = 0.5 * (vu_tmp[index[0]] + vu_tmp[index[3]]);
             vu[index[3]] = 0.5 * (vu_tmp[index[0]] - vu_tmp[index[3]]);
-            // vu should be std::complex<double> type, but here we use double type for test
-            vu[index[1]] = 0.5 * (vu_tmp[index[1]] + std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
-            vu[index[2]] = 0.5 * (vu_tmp[index[1]] - std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
+            vu[index[1]] = 0.5 * (vu_tmp[index[1]] - std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
+            vu[index[2]] = 0.5 * (vu_tmp[index[1]] + std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
         }
     }
 }

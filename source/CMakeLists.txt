@@ -87,6 +87,7 @@ if(USE_CUDA)
     source_base/kernels/cuda/math_kernel_op.cu
     source_base/kernels/cuda/math_kernel_op_vec.cu
     source_hamilt/module_xc/kernels/cuda/xc_functional_op.cu
+    source_pw/module_ofdft/kernels/cuda/kedf_wt_gpu.cu
     source_pw/module_pwdft/kernels/cuda/cal_density_real_op.cu
     source_pw/module_pwdft/kernels/cuda/mul_potential_op.cu
     source_pw/module_pwdft/kernels/cuda/vec_mul_vec_complex.cu
@@ -132,15 +133,17 @@ add_library(device OBJECT ${device_srcs})
 
 if(USE_CUDA)
   target_link_libraries(
-    device 
-    cusolver 
-    cublas 
+    device
+    PRIVATE
+    cusolver
+    cublas
     cufft
   )
 elseif(USE_ROCM)
   target_link_libraries(
-    device 
-    device_rocm 
+    device
+    PRIVATE
+    device_rocm
     hip::host
     hip::device
     hip::hipfft

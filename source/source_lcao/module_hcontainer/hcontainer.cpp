@@ -38,7 +38,9 @@ HContainer<T>::HContainer(const HContainer<T>& HR_in, T* data_array)
     this->allocated_size = 0;
     this->atom_pairs = HR_in.atom_pairs;
     // data of HR_in will not be copied, please call add() after this constructor to copy data.
-    this->allocate(this->wrapper_pointer, true);
+    // Only zero memory when allocating fresh data (data_array==nullptr);
+    // when wrapping existing data (data_array!=nullptr), preserve the original content.
+    this->allocate(this->wrapper_pointer, data_array == nullptr);
     // tmp terms not copied
 }
 

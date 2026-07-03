@@ -1,11 +1,11 @@
-remove_definitions(-D__MLALGO)
-remove_definitions(-D__CUDA)
-remove_definitions(-D__ROCM)
+abacus_disable_feature_definitions(__MLALGO)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 if(TARGET MODULE_ESTATE_dm_io_test_serial)
-  remove_definitions(-D__MPI)
+  abacus_disable_feature_definitions(__MPI)
 endif()
 
 AddTest(

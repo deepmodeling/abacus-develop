@@ -1,4 +1,4 @@
-remove_definitions(-D__MPI)
+abacus_disable_feature_definitions(__MPI)
 
 AddTest(
   TARGET MODULE_PW_Sto_Tool_UTs

@@ -6,6 +6,7 @@ obj
 OUT.*
 log.txt
 result.out
+test.sum
 *.dat
 .DS_Store
 .cache
