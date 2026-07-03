@@ -44,10 +44,11 @@ if(ENABLE_MPI)
     ../unitcell_lite.cpp
   )
   target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark
+    PRIVATE
     parameter ${math_libs} base device Threads::Threads MPI::MPI_CXX
   )
   if(USE_OPENMP)
-    target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark OpenMP::OpenMP_CXX)
+    target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE OpenMP::OpenMP_CXX)
   endif()
   install(TARGETS MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark DESTINATION ${CMAKE_BINARY_DIR}/tests)
   add_test(NAME MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark_np4
