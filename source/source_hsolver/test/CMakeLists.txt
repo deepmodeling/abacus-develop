@@ -88,7 +88,7 @@ if (ENABLE_MPI)
     )
 
   if(ENABLE_LCAO)
-    if(USE_ELPA)
+    if(TARGET ELPA::ELPA)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO
       LIBS parameter  ELPA::ELPA base genelpa psi device
@@ -146,30 +146,42 @@ install(FILES diago_pexsi_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DI
 install(FILES parallel_k2d_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 
-if (USE_ELPA)
-  AddTest(
-    TARGET MODULE_HSOLVER_diago_hs_parallel
-    LIBS parameter  ELPA::ELPA base device MPI::MPI_CXX genelpa psi
-    SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_elpa.cpp ../diago_scalapack.cpp 
-  )
-else()
-  AddTest(
+if(ENABLE_MPI)
+  if(TARGET ELPA::ELPA)
+    AddTest(
       TARGET MODULE_HSOLVER_diago_hs_parallel
-      LIBS parameter  base device MPI::MPI_CXX psi
-      SOURCES test_diago_hs_para.cpp ../diag_hs_para.cpp ../diago_pxxxgvx.cpp ../diago_scalapack.cpp 
+      LIBS parameter ELPA::ELPA base device MPI::MPI_CXX genelpa psi
+      SOURCES
+        test_diago_hs_para.cpp
+        ../diag_hs_para.cpp
+        ../diago_pxxxgvx.cpp
+        ../diago_elpa.cpp
+        ../diago_scalapack.cpp
     )
+  else()
+    AddTest(
+      TARGET MODULE_HSOLVER_diago_hs_parallel
+      LIBS parameter base device MPI::MPI_CXX psi
+      SOURCES
+        test_diago_hs_para.cpp
+        ../diag_hs_para.cpp
+        ../diago_pxxxgvx.cpp
+        ../diago_scalapack.cpp
+    )
+  endif()
+
+  AddTest(
+    TARGET MODULE_HSOLVER_linear_trans
+    LIBS parameter base device MPI::MPI_CXX
+    SOURCES test_para_linear_trans.cpp ../para_linear_transform.cpp
+  )
+
+  add_test(
+    NAME MODULE_HSOLVER_para_linear_trans
+    COMMAND mpirun -np 4 ./MODULE_HSOLVER_linear_trans
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
 endif()
-
-AddTest(
-  TARGET MODULE_HSOLVER_linear_trans
-  LIBS parameter  base device MPI::MPI_CXX
-  SOURCES test_para_linear_trans.cpp ../para_linear_transform.cpp
-)
-
-add_test(NAME MODULE_HSOLVER_para_linear_trans
-  COMMAND mpirun -np 4 ./MODULE_HSOLVER_linear_trans
-  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
 
 find_program(BASH bash)
 if (ENABLE_MPI)
