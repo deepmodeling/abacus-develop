@@ -187,11 +187,19 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell,
         }
     }
 
-    iw2it.resize(PARAM.globalv.nlocal);
-    iw2ia.resize(PARAM.globalv.nlocal);
-    iw2iL.resize(PARAM.globalv.nlocal);
-    iw2iN.resize(PARAM.globalv.nlocal);
-    iw2im.resize(PARAM.globalv.nlocal);
+    int map_size = PARAM.globalv.nlocal;
+    int required_orbitals = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        required_orbitals += ucell.atoms[it].nw * ucell.atoms[it].na;
+    }
+    map_size = std::max(map_size, required_orbitals);
+
+    iw2it.resize(map_size);
+    iw2ia.resize(map_size);
+    iw2iL.resize(map_size);
+    iw2iN.resize(map_size);
+    iw2im.resize(map_size);
 
     int iw = 0;
     for (int it = 0; it < ucell.ntype; it++)
@@ -419,11 +427,19 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
         }
     }
 
-    iw2it.resize(PARAM.globalv.nlocal);
-    iw2ia.resize(PARAM.globalv.nlocal);
-    iw2iL.resize(PARAM.globalv.nlocal);
-    iw2iN.resize(PARAM.globalv.nlocal);
-    iw2im.resize(PARAM.globalv.nlocal);
+    int map_size = PARAM.globalv.nlocal;
+    int required_orbitals = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        required_orbitals += ucell.atoms[it].nw * ucell.atoms[it].na;
+    }
+    map_size = std::max(map_size, required_orbitals);
+
+    iw2it.resize(map_size);
+    iw2ia.resize(map_size);
+    iw2iL.resize(map_size);
+    iw2iN.resize(map_size);
+    iw2im.resize(map_size);
 
     int iw = 0;
     for (int it = 0; it < ucell.ntype; it++)
