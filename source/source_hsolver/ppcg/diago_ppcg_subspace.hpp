@@ -120,35 +120,54 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     if (use_p)
         scale_to_unit_snorm(p_l, sp_l, hp_l, l, subspace.p_scale);
 
-    auto fill_sym = [&](const std::vector<T>& a, const std::vector<T>& b,
-                        int r0, int c0, std::vector<T>& mat)
+    auto copy_block = [&](const std::vector<T>& src,
+                          const int col0,
+                          std::vector<T>& dst)
     {
-        std::vector<T> g;
-        gram(a.data(), b.data(), l, l, g, l);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (ld_psi_ * l > 4096)
+#endif
         for (int j = 0; j < l; ++j)
-            for (int i = 0; i < l; ++i)
-            {
-                mat[(r0 + i) + (c0 + j) * dim] = g[i + j * l];
-                mat[(c0 + j) + (r0 + i) * dim] = std::conj(g[i + j * l]);
-            }
+            std::copy(src.begin() + j * ld_psi_,
+                      src.begin() + (j + 1) * ld_psi_,
+                      dst.begin() + (col0 + j) * ld_psi_);
     };
 
-    fill_sym(psi_l, hpsi_l, 0,   0,   subspace.k);
-    fill_sym(psi_l, spsi_l, 0,   0,   subspace.m);
-    fill_sym(w_l,   hw_l,   l,   l,   subspace.k);
-    fill_sym(w_l,   sw_l,   l,   l,   subspace.m);
-    fill_sym(psi_l, hw_l,   0,   l,   subspace.k);
-    fill_sym(psi_l, sw_l,   0,   l,   subspace.m);
+    auto hermitize = [&](std::vector<T>& mat)
+    {
+        for (int j = 0; j < dim; ++j)
+        {
+            mat[j + j * dim] = T(std::real(mat[j + j * dim]), 0);
+            for (int i = j + 1; i < dim; ++i)
+            {
+                const T avg = (mat[i + j * dim] + std::conj(mat[j + i * dim]))
+                            * static_cast<Real>(0.5);
+                mat[i + j * dim] = avg;
+                mat[j + i * dim] = std::conj(avg);
+            }
+        }
+    };
 
+    std::vector<T> basis(ld_psi_ * dim, T(0));
+    std::vector<T> hbasis(ld_psi_ * dim, T(0));
+    std::vector<T> sbasis(ld_psi_ * dim, T(0));
+    copy_block(psi_l, 0, basis);
+    copy_block(hpsi_l, 0, hbasis);
+    copy_block(spsi_l, 0, sbasis);
+    copy_block(w_l, l, basis);
+    copy_block(hw_l, l, hbasis);
+    copy_block(sw_l, l, sbasis);
     if (use_p)
     {
-        fill_sym(p_l, hp_l, 2*l, 2*l, subspace.k);
-        fill_sym(p_l, sp_l, 2*l, 2*l, subspace.m);
-        fill_sym(psi_l, hp_l, 0,   2*l, subspace.k);
-        fill_sym(psi_l, sp_l, 0,   2*l, subspace.m);
-        fill_sym(w_l,   hp_l, l,   2*l, subspace.k);
-        fill_sym(w_l,   sp_l, l,   2*l, subspace.m);
+        copy_block(p_l, 2 * l, basis);
+        copy_block(hp_l, 2 * l, hbasis);
+        copy_block(sp_l, 2 * l, sbasis);
     }
+
+    gram(basis.data(), hbasis.data(), dim, dim, subspace.k, dim);
+    gram(basis.data(), sbasis.data(), dim, dim, subspace.m, dim);
+    hermitize(subspace.k);
+    hermitize(subspace.m);
 }
 
 // ---------------------------------------------------------------------------
