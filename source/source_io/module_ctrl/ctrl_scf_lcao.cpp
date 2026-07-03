@@ -11,6 +11,7 @@
 #include "../module_unk/berryphase.h"                          // use berryphase
 #include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
+#include "source_io/module_ml/io_npz.h"                       // use ModuleIO::output_mat_npz()
 #include "../module_hs/write_HS_R.h"                          // use ModuleIO::write_hsr()
 #include "../module_mulliken/cal_mag.h"                          // use cal_mag()
 #include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
@@ -225,6 +226,37 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 
         ModuleIO::write_hsr(hr_vec, sr, &ucell, precision, pv,
                             out_app_flag, ucell.get_iat2iwt(), ucell.nat, istep);
+    }
+
+    //------------------------------------------------------------------
+    //! 7a.1) Output H(R), S(R), and DM(R) matrices in NPZ format
+    //------------------------------------------------------------------
+    if (inp.out_hsr_npz)
+    {
+        std::string zipname = PARAM.globalv.global_out_dir + "output_SR.npz";
+        ModuleIO::output_mat_npz(ucell, zipname, *(p_hamilt->getSR()));
+    }
+
+    if (inp.out_hr_npz || inp.out_hsr_npz)
+    {
+        std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
+        for (int ispin = 0; ispin < hr_vec.size(); ++ispin)
+        {
+            std::string zipname
+                = PARAM.globalv.global_out_dir + "output_HR" + std::to_string(ispin) + ".npz";
+            ModuleIO::output_mat_npz(ucell, zipname, *(hr_vec[ispin]));
+        }
+    }
+
+    if (inp.out_dm_npz)
+    {
+        const std::vector<hamilt::HContainer<double>*>& dmr_vec = dm->get_DMR_vector();
+        for (int ispin = 0; ispin < dmr_vec.size(); ++ispin)
+        {
+            std::string zipname
+                = PARAM.globalv.global_out_dir + "output_DM" + std::to_string(ispin) + ".npz";
+            ModuleIO::output_mat_npz(ucell, zipname, *(dmr_vec[ispin]));
+        }
     }
 
     //------------------------------------------------------------------

@@ -1,0 +1,55 @@
+name: Agent Governance
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  governance:
+    name: Governance checks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run ABACUS governance checker
+        id: governance
+        run: |
+          set +e
+          base_sha="${{ github.event.pull_request.base.sha }}"
+          head_sha="${{ github.event.pull_request.head.sha }}"
+          merge_base="$(git merge-base "$base_sha" "$head_sha")"
+          merge_base_status=$?
+          if [ "$merge_base_status" -ne 0 ]; then
+            {
+              echo "## Agent Governance Check"
+              echo
+              echo "Failed to compute the pull request merge base."
+            } > agent_governance_summary.md
+            exit "$merge_base_status"
+          fi
+          python3 tools/03_code_analysis/agent_governance_check.py \
+            --base "$merge_base" \
+            --head "$head_sha" \
+            --event-path "$GITHUB_EVENT_PATH" \
+            --format markdown | tee agent_governance_summary.md
+          status=${PIPESTATUS[0]}
+          if [ ! -s agent_governance_summary.md ]; then
+            {
+              echo "## Agent Governance Check"
+              echo
+              echo "Checker failed before producing a summary."
+            } > agent_governance_summary.md
+          fi
+          exit "$status"
+
+      - name: Publish governance summary
+        if: always()
+        run: |
+          cat agent_governance_summary.md >> "$GITHUB_STEP_SUMMARY"

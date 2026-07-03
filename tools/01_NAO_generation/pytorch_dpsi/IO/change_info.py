@@ -56,12 +56,12 @@ def change_info(info_old, weight_old):
 	info_element =
 	{'C': {
 		'Ecut': 200,
-    	'Ne': 19,
-    	'Nl': 3,
-    	'Nu': [2, 2, 1],
-    	'Rcut': 6,
-    	'dr': 0.01,
-    	'index': 0},
+	'Ne': 19,
+	'Nl': 3,
+	'Nu': [2, 2, 1],
+	'Rcut': 6,
+	'dr': 0.01,
+	'index': 0},
 	 'O': {
 		'Ecut': 200,
 		'Ne': 19,
@@ -95,4 +95,4 @@ def get_info_max(info_stru, info_element):
 	"""
 	[{'Na': 2, 'Nb': 6, 'Ne': 19, 'Nl': 3, 'Nm': 5, 'Nt': 1, 'Nu': 2},
 	 {'Na': 2, 'Nb': 6, 'Ne': 19, 'Nl': 3, 'Nm': 5, 'Nt': 1, 'Nu': 2}]
-	"""	
+	"""

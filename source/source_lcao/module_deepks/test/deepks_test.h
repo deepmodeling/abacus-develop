@@ -1,14 +1,12 @@
-#include "klist.h"
+#include "../LCAO_deepks.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/ORB_read.h"
+#include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/module_dm/density_matrix.h"
-//#include "parallel_orbitals.h"
-
-#include "../LCAO_deepks.h"
 
 #include <fstream>
 #include <iomanip>
@@ -39,11 +37,8 @@ class test_deepks
     UnitCell ucell;
 
     Parallel_Orbitals ParaO;
-    Test_Deepks::K_Vectors kv;
+    K_Vectors kv;
     LCAO_Deepks<T> ld;
-
-    int failed_check = 0;
-    int total_check = 0;
 
     int my_rank = 0;
 
@@ -56,12 +51,24 @@ class test_deepks
 
     int lmax = 2;
     int ntype = 0;
+    int nlocal = 0;
+    int nbands = 0;
+    int npol = 1;
+    int nspin = 1;
+    bool gamma_only_local = false;
+    bool cal_force = true;
+    bool deepks_setorb = true;
+    bool test_atom_input = false;
+    bool search_pbc = true;
+    bool out_element_info = false;
+    std::string orbital_dir = "";
+    std::string out_level = "ie";
 
     using TH = std::conditional_t<std::is_same<T, double>::value, ModuleBase::matrix, ModuleBase::ComplexMatrix>;
 
     std::vector<TH> dm;
     std::vector<std::vector<T>> dm_new;
-    elecstate::DensityMatrix<T, double>* p_elec_DM;
+    elecstate::DensityMatrix<T, double>* p_elec_DM = nullptr;
 
     // preparation
     void preparation();
@@ -112,5 +119,5 @@ class test_deepks
     void check_o_delta();
 
     // compares numbers stored in two files
-    void compare_with_ref(const std::string f1, const std::string f2);
+    void assert_file_matches_reference(const std::string& actual_file, const std::string& reference_file);
 };

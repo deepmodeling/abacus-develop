@@ -14,3 +14,11 @@ else()
         WORKING_DIRECTORY ${ABACUS_TEST_DIR}/03_NAO_multik
     )
 endif()
+
+if(ENABLE_CNPY)
+    add_test(
+        NAME 03_NAO_multik_npz
+        COMMAND ${BASH} ../integrate/Autotest.sh -a ${ABACUS_BIN_PATH} -n 4 -f CASES_CNPY.txt
+        WORKING_DIRECTORY ${ABACUS_TEST_DIR}/03_NAO_multik
+    )
+endif()

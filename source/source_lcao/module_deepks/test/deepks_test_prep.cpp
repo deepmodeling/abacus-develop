@@ -1,10 +1,23 @@
-#include "LCAO_deepks_test.h"
+#include "deepks_test.h"
 #include "source_base/global_variable.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "source_estate/read_pseudo.h"
 #include "source_hamilt/module_xc/exx_info.h"
+#include "source_io/module_parameter/parameter.h"
+
+#include <gtest/gtest.h>
+
+namespace
+{
+Input_para& mutable_input_for_deepks_unit()
+{
+    return const_cast<Input_para&>(PARAM.inp);
+}
+
+System_para& mutable_system_for_deepks_unit()
+{
+    return const_cast<System_para&>(PARAM.globalv);
+}
+} // namespace
 
 Magnetism::Magnetism()
 {
@@ -26,6 +39,10 @@ void test_deepks<T>::preparation()
 {
     this->count_ntype();
     this->set_parameters();
+    if (testing::Test::HasFatalFailure())
+    {
+        return;
+    }
 
     this->setup_cell();
 
@@ -35,33 +52,50 @@ void test_deepks<T>::preparation()
     this->set_orbs();
     this->prep_neighbour();
 
-    this->ParaO.set_serial(PARAM.globalv.nlocal, PARAM.globalv.nlocal);
-    this->ParaO.nrow_bands = PARAM.globalv.nlocal;
-    this->ParaO.ncol_bands = PARAM.inp.nbands;
+    this->ParaO.set_serial(this->nlocal, this->nlocal);
+    this->ParaO.nrow_bands = this->nlocal;
+    this->ParaO.ncol_bands = this->nbands;
     // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
 
-    this->ParaO.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, PARAM.globalv.nlocal);
+    this->ParaO.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nlocal);
 }
 
 template <typename T>
 void test_deepks<T>::set_parameters()
 {
-    PARAM.input.basis_type = "lcao";
-    // GlobalV::global_pseudo_type= "auto";
-    PARAM.input.pseudo_rcut = 15.0;
-    PARAM.sys.global_out_dir = "./";
+    Input_para& input = mutable_input_for_deepks_unit();
+    System_para& system = mutable_system_for_deepks_unit();
+
+    input.basis_type = "lcao";
+    input.kpoint_file = "KPT";
+    input.pseudo_rcut = 15.0;
+    input.cal_force = this->cal_force;
+    input.gamma_only = this->gamma_only_local;
+    input.nspin = this->nspin;
+    input.orbital_dir = this->orbital_dir;
+    input.out_element_info = this->out_element_info;
+    system.global_out_dir = "./";
     GlobalV::ofs_warning.open("warning.log");
     GlobalV::ofs_running.open("running.log");
-    PARAM.sys.deepks_setorb = true;
-    PARAM.input.cal_force = 1;
+    system.deepks_setorb = this->deepks_setorb;
 
     std::ifstream ifs("INPUT");
+    ASSERT_TRUE(ifs.is_open()) << "Cannot open DeePKS unit-test INPUT";
     char word[80];
-    ifs >> word;
-    ifs >> PARAM.sys.gamma_only_local;
+    ASSERT_TRUE(ifs >> word);
+    ASSERT_STREQ(word, "gamma_only_local");
+    ASSERT_TRUE(ifs >> this->gamma_only_local);
     ifs.close();
 
-    ucell.latName = "none";
+    input.gamma_only = this->gamma_only_local;
+    system.gamma_only_local = this->gamma_only_local;
+    system.npol = this->npol;
+    GlobalV::KPAR = 1;
+    GlobalV::MY_POOL = 0;
+    GlobalV::RANK_IN_POOL = 0;
+    GlobalV::NPROC_IN_POOL = 1;
+
+    ucell.latName = "user_defined_lattice";
     ucell.ntype = ntype;
     return;
 }
@@ -158,6 +192,9 @@ void test_deepks<T>::setup_cell()
 {
     ucell.setup_cell("STRU", GlobalV::ofs_running);
     elecstate::read_pseudo(GlobalV::ofs_running, ucell);
+    this->nlocal = PARAM.globalv.nlocal;
+    this->nbands = PARAM.inp.nbands;
+    this->npol = PARAM.globalv.npol;
 
     return;
 }
@@ -166,17 +203,17 @@ template <typename T>
 void test_deepks<T>::prep_neighbour()
 {
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                   PARAM.input.out_level,
+                                                   this->out_level,
                                                    ORB.get_rcutmax_Phi(),
                                                    ucell.infoNL.get_rcutmax_Beta(),
-                                                   PARAM.sys.gamma_only_local);
+                                                   this->gamma_only_local);
 
-    atom_arrange::search(PARAM.globalv.search_pbc,
+    atom_arrange::search(this->search_pbc,
                          GlobalV::ofs_running,
                          Test_Deepks::GridD,
                          ucell,
                          search_radius,
-                         PARAM.inp.test_atom_input);
+                         this->test_atom_input);
 }
 
 template <typename T>
@@ -184,7 +221,7 @@ void test_deepks<T>::set_orbs()
 {
     ORB.init(GlobalV::ofs_running,
              ucell.ntype,
-             PARAM.inp.orbital_dir,
+             this->orbital_dir,
              ucell.orbital_fn.data(),
              ucell.descriptor_file,
              ucell.lmax,
@@ -192,17 +229,17 @@ void test_deepks<T>::set_orbs()
              lcao_dk,
              lcao_dr,
              lcao_rmax,
-             PARAM.sys.deepks_setorb,
+             this->deepks_setorb,
              out_mat_r,
-             PARAM.inp.out_element_info,
-             PARAM.input.cal_force,
+             this->out_element_info,
+             this->cal_force,
              my_rank);
 
     ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);
 
     orb_.build(ntype, ucell.orbital_fn.data());
 
-    std::string file_alpha = PARAM.inp.orbital_dir + ucell.descriptor_file;
+    std::string file_alpha = this->orbital_dir + ucell.descriptor_file;
     alpha_.build(1, &file_alpha);
 
     double rmax = std::max(orb_.rcut_max(), alpha_.rcut_max());
@@ -220,13 +257,14 @@ void test_deepks<T>::set_orbs()
 template <typename T>
 void test_deepks<T>::setup_kpt()
 {
-    this->kv.set("KPT",
-                 PARAM.input.nspin,
+    ModuleSymmetry::Symmetry::symm_flag = -1;
+    this->kv.set(ucell,
+                 ucell.symm,
+                 PARAM.inp.kpoint_file,
+                 this->nspin,
                  ucell.G,
                  ucell.latvec,
-                 PARAM.sys.gamma_only_local,
-                 GlobalV::ofs_running,
-                 GlobalV::ofs_warning);
+                 GlobalV::ofs_running);
 }
 
 template class test_deepks<double>;

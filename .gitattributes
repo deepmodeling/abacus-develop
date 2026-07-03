@@ -1,7 +1,8 @@
-# Shell scripts and the bash-parsed integration-test case lists must keep LF
-# endings so they run under bash, including MSYS2/Git-Bash on Windows where
-# core.autocrlf may rewrite them to CRLF (which breaks `#!/bin/bash` and adds
-# stray \r to parsed lines such as the case names in CASES_*.txt).
+# Text files use LF by default. Windows command scripts keep CRLF because
+# cmd.exe and installer tooling may depend on it.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
 *.sh text eol=lf
 CASES_*.txt text eol=lf
 
