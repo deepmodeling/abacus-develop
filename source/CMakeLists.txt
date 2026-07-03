@@ -221,7 +221,6 @@ if(ENABLE_MLALGO)
 endif()
 
 if(ENABLE_MLALGO OR DEFINED Torch_DIR)
-  list(APPEND _abacus_feature_libs ${TORCH_LIBRARIES})
   list(APPEND _abacus_feature_include_dirs ${TORCH_INCLUDE_DIRS})
   list(APPEND _abacus_feature_compile_options ${ABACUS_TORCH_CXX_FLAGS})
 endif()
@@ -663,6 +662,11 @@ endif()
 
 # External closure: feature consumers precede numerical providers and runtimes.
 target_link_libraries(${ABACUS_BIN_NAME} PRIVATE abacus::link_libs)
+
+# Torch includes some LAPACK routines, but with floating-point exceptions.
+if(ENABLE_MLALGO OR DEFINED Torch_DIR)
+  target_link_libraries(${ABACUS_BIN_NAME} PRIVATE ${TORCH_LIBRARIES})
+endif()
 
 # Apply feature definitions and common compile usage requirements only after all
 # source targets have been created.
