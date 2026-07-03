@@ -146,8 +146,8 @@ void DiagoPPCG<T, Device>::copy_cols(const T* src,
                                       const std::vector<int>& cols,
                                       std::vector<T>& dst) const
 {
-    dst.assign(ld_psi_ * cols.size(), T(0));
     const int ncols = static_cast<int>(cols.size());
+    dst.resize(ld_psi_ * ncols);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (ld_psi_ * ncols > 4096)
 #endif
@@ -194,15 +194,31 @@ void DiagoPPCG<T, Device>::project_against(
     if (basis_cols.empty() || x_cols.empty())
         return;
 
-    std::vector<T> basis_l;
     std::vector<T> sx_l;
-    copy_cols(basis, basis_cols, basis_l);
     copy_cols(sx.data(), x_cols, sx_l);
 
     const int nbasis = static_cast<int>(basis_cols.size());
     const int nx = static_cast<int>(x_cols.size());
+    bool contiguous_basis = true;
+    for (int i = 0; i < nbasis; ++i)
+    {
+        if (basis_cols[i] != i)
+        {
+            contiguous_basis = false;
+            break;
+        }
+    }
+
+    std::vector<T> basis_l;
+    const T* basis_data = basis;
+    if (!contiguous_basis)
+    {
+        copy_cols(basis, basis_cols, basis_l);
+        basis_data = basis_l.data();
+    }
+
     std::vector<T> coeff(nbasis * nx, T(0));
-    gram(basis_l.data(), sx_l.data(), nbasis, nx, coeff, nbasis);
+    gram(basis_data, sx_l.data(), nbasis, nx, coeff, nbasis);
 
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n_dim_ * nx > 4096)

@@ -80,6 +80,11 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         apply_s_current(psi_in, spsi_.data(), ncol);
         record_residual(0, "initial_rr");
 
+        std::vector<T> w_active;
+        std::vector<T> hw_active;
+        std::vector<int> cols;
+        SmallSubspace subspace;
+
         while (!active_cols.empty() && iter <= maxiter_)
         {
             const int nact = static_cast<int>(active_cols.size());
@@ -91,10 +96,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             project_against(psi_in, spsi_.data(), all_cols, w_, sw_, active_cols);
 
             // Apply H to the search direction.
-            std::vector<T> w_active;
             copy_cols(w_.data(), active_cols, w_active);
             force_g0_real(w_active.data(), nact);
-            std::vector<T> hw_active(ld_psi_ * nact, T(0));
+            hw_active.assign(ld_psi_ * nact, T(0));
             scatter_cols(w_.data(), active_cols, w_active);
             apply_h(hpsi_func, w_active.data(), hw_active.data(), nact);
             scatter_cols(hw_.data(), active_cols, hw_active);
@@ -117,10 +121,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             {
                 const int i0 = isb * sbsize_;
                 const int l = std::min(sbsize_, nact - i0);
-                std::vector<int> cols(active_cols.begin() + i0,
-                                      active_cols.begin() + i0 + l);
+                cols.assign(active_cols.begin() + i0,
+                            active_cols.begin() + i0 + l);
 
-                SmallSubspace subspace;
                 build_small_subspace(psi_in, cols, use_p_now, subspace);
                 solve_small_generalized((use_p_now ? 3 : 2) * l, subspace);
                 update_one_block(psi_in, cols, l, use_p_now, subspace);
@@ -166,11 +169,13 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         update_polak_ribiere(grad, p, grad_old_, z_old_, beta_denom_, prec);
 
         // CG iteration loop.
+        std::vector<T> hp;
+        std::vector<T> sp;
         while (iter <= maxiter_)
         {
             // Apply H and S to search direction.
-            std::vector<T> hp(ld_psi_ * ncol, T(0));
-            std::vector<T> sp(ld_psi_ * ncol, T(0));
+            hp.assign(ld_psi_ * ncol, T(0));
+            sp.assign(ld_psi_ * ncol, T(0));
             apply_h(hpsi_func, p.data(), hp.data(), ncol);
             apply_s_current(p.data(), sp.data(), ncol);
 
