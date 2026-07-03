@@ -1,10 +1,9 @@
 #include "read_stru.h"
 
+#include <sstream>
+
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/tool_title.h"
-#ifdef __EXX
-#include "source_lcao/module_ri/serialization_cereal.h"
-#endif
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 namespace unitcell

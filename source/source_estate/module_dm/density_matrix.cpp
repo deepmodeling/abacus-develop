@@ -86,8 +86,8 @@ void DensityMatrix_Tools::cal_DMR(
             // get global indexes of whole matrix for each atom in this process
             const int row_ap = dm._paraV->atom_begin_row[iat1];
             const int col_ap = dm._paraV->atom_begin_col[iat2];
-            const int row_size = dm._paraV->get_row_size(iat1);
-            const int col_size = dm._paraV->get_col_size(iat2);
+            const int row_size = dm._paraV->get_nrow_atom(iat1);
+            const int col_size = dm._paraV->get_ncol_atom(iat2);
             const int mat_size = row_size * col_size;
             const int R_size = target_ap.get_R_size();
             assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
@@ -241,8 +241,8 @@ void DensityMatrix_Tools::cal_DMR_td(
             // get global indexes of whole matrix for each atom in this process
             const int row_ap = dm._paraV->atom_begin_row[iat1];
             const int col_ap = dm._paraV->atom_begin_col[iat2];
-            const int row_size = dm._paraV->get_row_size(iat1);
-            const int col_size = dm._paraV->get_col_size(iat2);
+            const int row_size = dm._paraV->get_nrow_atom(iat1);
+            const int col_size = dm._paraV->get_ncol_atom(iat2);
             const int mat_size = row_size * col_size;
             const int R_size = target_ap.get_R_size();
             assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
@@ -398,8 +398,8 @@ void DensityMatrix_Tools::cal_DMR_full(
         // get global indexes of whole matrix for each atom in this process
         const int row_ap = dm._paraV->atom_begin_row[iat1];
         const int col_ap = dm._paraV->atom_begin_col[iat2];
-        const int row_size = dm._paraV->get_row_size(iat1);
-        const int col_size = dm._paraV->get_col_size(iat2);
+        const int row_size = dm._paraV->get_nrow_atom(iat1);
+        const int col_size = dm._paraV->get_ncol_atom(iat2);
         const int mat_size = row_size * col_size;
         const int R_size = target_ap.get_R_size();
         assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
@@ -507,8 +507,8 @@ void DensityMatrix<double, double>::cal_DMR(const int ik_in)
             // get global indexes of whole matrix for each atom in this process
             const int row_ap = this->_paraV->atom_begin_row[iat1];
             const int col_ap = this->_paraV->atom_begin_col[iat2];
-            const int row_size = this->_paraV->get_row_size(iat1);
-            const int col_size = this->_paraV->get_col_size(iat2);
+            const int row_size = this->_paraV->get_nrow_atom(iat1);
+            const int col_size = this->_paraV->get_ncol_atom(iat2);
             const int R_size = target_ap.get_R_size();
             assert(row_ap != -1 && col_ap != -1 && "Atom-pair not belong this process");
             assert(R_size == 1);
@@ -655,7 +655,7 @@ void DensityMatrix_Tools::func_xyz_to_updown<double>(const std::complex<double> 
 {
     target_DMR_mat[icol + step_trace[0]] = tmp[0].real() + tmp[3].real();  // rho_0 = (rho_upup + rho_downdown).real()
     target_DMR_mat[icol + step_trace[1]] = tmp[1].real() + tmp[2].real();  // rho_x = (rho_updown + rho_downup).real()
-    target_DMR_mat[icol + step_trace[2]] = -tmp[1].imag() + tmp[2].imag(); // rho_y = (i * (rho_updown - rho_downup)).real()
+    target_DMR_mat[icol + step_trace[2]] = tmp[1].imag() - tmp[2].imag(); // rho_y = Im(rho_updown - rho_downup)
     target_DMR_mat[icol + step_trace[3]] = tmp[0].real() - tmp[3].real();  // rho_z = (rho_upup - rho_downdown).real()
 }
 
@@ -664,7 +664,7 @@ void DensityMatrix_Tools::func_xyz_to_updown<std::complex<double>>(const std::co
 {
     target_DMR_mat[icol + step_trace[0]] = tmp[0] + tmp[3];                                         // rho_0 = (rho_upup + rho_downdown)
     target_DMR_mat[icol + step_trace[1]] = tmp[1] + tmp[2];                                         // rho_x = (rho_updown + rho_downup)
-    target_DMR_mat[icol + step_trace[2]] = ModuleBase::IMAG_UNIT * (tmp[1].imag() - tmp[2].imag()); // rho_y = (i * (rho_updown - rho_downup))
+    target_DMR_mat[icol + step_trace[2]] = -ModuleBase::IMAG_UNIT * (tmp[1] - tmp[2]); // rho_y = -i*(rho_updown - rho_downup)
     target_DMR_mat[icol + step_trace[3]] = tmp[0] - tmp[3];                                         // rho_z = (rho_upup - rho_downdown)
 }
 

@@ -153,6 +153,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
 - Compilers
   - `CMAKE_CXX_COMPILER`: C++ compiler; usually `g++`(GNU C++ compiler) or `icpx`(Intel C++ compiler). Can also set from environment variable `CXX`. It is OK to use MPI compiler here.
   - `MPI_CXX_COMPILER`: MPI wrapper for C++ compiler; usually `mpicxx` or `mpiicpx`(for Intel toolkits) or `mpiicpc`(for classic Intel Compiler Classic MPI before 2024.0).
+
 - Requirements: Unless indicated, CMake will try to find under default paths.
   - `MKLROOT`: If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e. not using `LAPACK`, `ScaLAPACK` and `FFTW`. To disable MKL, unset environment variable `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
   - `LAPACK_DIR`: Path to OpenBLAS library `libopenblas.so`(including BLAS and LAPACK)
@@ -161,16 +162,17 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   > Note: In ABACUS v3.5.1 or earlier, if you install ELPA from source , please add a symlink to avoid the additional include file folder with version name: `ln -s elpa/include/elpa-2021.05.002/elpa elpa/include/elpa` to help the build system find ELPA headers.
 
   - `FFTW3_DIR`: Path to FFTW3.
-  - `CEREAL_INCLUDE_DIR`: Path to the parent folder of `cereal/cereal.hpp`. Will download from GitHub if absent.
-  - `Libxc_DIR`: (Optional) Path to Libxc.
-  > Note: In ABACUS v3.5.1 or earlier, Libxc built from source with Makefile is NOT supported; please compile Libxc with CMake instead.
   - `LIBRI_DIR`: (Optional) Path to LibRI.
   - `LIBCOMM_DIR`: (Optional) Path to LibComm.
 
+```{important}
+For some dependencies built with CMake, such as Libxc, dftd4, cereal, and RapidJSON, you'll have to add their prefix paths to the environment variable `CMAKE_PREFIX_PATH` so that CMake can correctly find and use their CMake configuration files. A non-general variable such as `PKG_DIR` is discouraged for these packages.
+```
+
 - Components: The values of these variables should be 'ON', '1' or 'OFF', '0'. The default values are given below.
   - `ENABLE_LCAO=ON`: Enable LCAO calculation. If SCALAPACK, ELPA or CEREAL is absent and only require plane-wave calculations, the feature of calculating LCAO basis can be turned off.
-  - `ENABLE_LIBXC=OFF`: [Enable Libxc](../advanced/install.md#add-libxc-support) to suppport variety of functionals. If `Libxc_DIR` is defined, `ENABLE_LIBXC` will set to 'ON'.
-  - `ENABLE_LIBRI=OFF`: [Enable LibRI](../advanced/install.md#add-libri-support) to suppport variety of functionals. If `LIBRI_DIR` and `LIBCOMM_DIR` is defined, `ENABLE_LIBRI` will set to 'ON'.
+  - `ENABLE_LIBXC=OFF`: [Enable Libxc](../advanced/install.md#add-libxc-support) to suppport variety of functionals.
+  - `ENABLE_LIBRI=OFF`: [Enable LibRI](../advanced/install.md#add-libri-support) to suppport variety of functionals. If `LIBRI_DIR` and `LIBCOMM_DIR` are defined, `ENABLE_LIBRI` will set to 'ON'.
   - `USE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested yet.
   - `BUILD_TESTING=OFF`: [Build unit tests](../advanced/install.md#build-unit-tests).
   - `ENABLE_GOOGLEBENCH=OFF`: [Build performance tests](../advanced/install.md#build-performance-tests)
@@ -182,7 +184,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
 Here is an example:
 
 ```bash
-CXX=mpiicpx cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2025.01.001/build -DCEREAL_INCLUDE_DIR=~/cereal/include
+CXX=mpiicpx cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2025.01.001/build
 ```
 
 ### Build and Install

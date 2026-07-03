@@ -33,6 +33,7 @@ struct Input_para
     int kpar = 1;                   ///< ecch pool is for one k point
     int bndpar = 1;                 ///< parallel for stochastic/deterministic bands
     std::string latname = "user_defined_lattice";   ///< lattice name
+    std::string assume_isolated = "none"; ///< isolated-system correction: none or makov-payne
     double ecutwfc = 0;             ///< energy cutoff for wavefunctions
     double ecutrho = 0;             ///< energy cutoff for charge/potential
 
@@ -400,6 +401,9 @@ struct Input_para
                                   ///< KS-orbital representation.
     std::vector<int> out_mat_xc2 = {0, 8};  ///< output Vxc(R) matrix with precision
     bool out_eband_terms = false; ///< output the band energy terms separately
+    bool out_hr_npz = false;      ///< output H(R) matrix in npz format
+    bool out_hsr_npz = false;     ///< output H(R) and S(R) matrices in npz format
+    bool out_dm_npz = false;      ///< output DM(R) matrix in npz format
     int out_interval = 1;
     bool out_app_flag = true; ///< whether output r(R), H(R), S(R), T(R), and dH(R) matrices
                               ///< in an append manner during MD liuyu 2023-03-20

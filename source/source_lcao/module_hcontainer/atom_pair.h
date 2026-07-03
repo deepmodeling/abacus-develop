@@ -189,22 +189,35 @@ class AtomPair
 
     // interface for get (rx, ry, rz) of index-th R-index in this->R_index, the return should be ModuleBase::Vector3<int>
     ModuleBase::Vector3<int> get_R_index(const int& index) const;
-    // interface for get (rx, ry, rz) of current_R, the return should be ModuleBase::Vector3<int>
-    ModuleBase::Vector3<int> get_R_index() const;
-    // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
+    // interface for search (rx, ry, rz) in this->R_index, if found, return index, else return -1
     int find_R(const int& rx_in, const int& ry_in, const int& rz_in) const;
     int find_R(const ModuleBase::Vector3<int>& R_in) const;
-    // interface for search (rx, ry, rz) in this->R_index, if found, current_R would be set to index
-    // and return BaseMatrix<T>* of this->values[index]
+    // interface for search (rx, ry, rz) in this->R_index, if found, return BaseMatrix<T>* of this->values[index]
     const BaseMatrix<T>* find_matrix(const int& rx_in, const int& ry_in, const int& rz_in) const;
     BaseMatrix<T>* find_matrix(const int& rx_in, const int& ry_in, const int& rz_in);
     const BaseMatrix<T>* find_matrix(const ModuleBase::Vector3<int>& R_in) const;
     BaseMatrix<T>* find_matrix(const ModuleBase::Vector3<int>& R_in);
 
-    // this interface will call get_value in this->values
-    // these four interface can be used only when R-index has been choosed (current_R >= 0)
-    T& get_value(const int& i) const;
-    T& get_value(const int& row, const int& col) const;
+    /**
+     * @brief Get value at position i in the matrix values[R_index].
+     * Thread-safe version: explicitly pass R_index.
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param i Position in the flattened matrix (row * col_size + col)
+     * @return T& Reference to the value
+     */
+    T& get_value(const int R_index, const int& i) const;
+
+    /**
+     * @brief Get value at position (row, col) in the matrix values[R_index].
+     * Thread-safe version: explicitly pass R_index.
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param row Row index
+     * @param col Column index
+     * @return T& Reference to the value
+     */
+    T& get_value(const int R_index, const int& row, const int& col) const;
 
     /**
      * @brief get values of this->values[ir] for a whole matrix
@@ -213,12 +226,13 @@ class AtomPair
      * std::vector<int>(4) contains (row_begin_index, row_size, col_begin_index, col_size)
      * T* is pointer of values[ir].value_begin, legal index is [0, row_size*col_size)
     */
-    std::tuple<std::vector<int>, T*> get_matrix_values(int ir = -1) const;
+    std::tuple<std::vector<int>, T*> get_matrix_values(int ir) const;
 
     /**
      * @brief get pointer of value from a submatrix
+     * @param ir index of this->values
     */
-    T* get_pointer(int ir=-1) const;
+    T* get_pointer(int ir) const;
 
     // add another BaseMatrix<T> to this->values with specific R index.
     void convert_add(const BaseMatrix<T>& target, int rx_in, int ry_in, int rz_in);
@@ -236,27 +250,40 @@ class AtomPair
     void merge_to_gamma();
 
     /**
-     * @brief Add this->value[current_R] * kphase as a block matrix of hk.
+     * @brief Add this->value[R_index] * kphase as a block matrix of hk.
+     * Thread-safe version: explicitly pass R_index.
      *
-     * For row major dense matrix (hk_type == 0): value[current_R][i*col_size+j] -> hk[(row_ap+i) * ld_hk + col_ap + j]
-     * For column major dense matrix (hk_type == 1): value[current_R][i*col_size+j] -> hk[row_ap + i + (col_ap+j) *
-     * ld_hk] For sparse matrix (hk_type == 2): not implemented yet
+     * For row major dense matrix (hk_type == 0): value[R_index][i*col_size+j] -> hk[(row_ap+i) * ld_hk + col_ap + j]
+     * For column major dense matrix (hk_type == 1): value[R_index][i*col_size+j] -> hk[row_ap + i + (col_ap+j) * ld_hk]
      *
+     * @param R_index Index of the R vector in this->values
      * @param hk Pointer to the target matrix.
      * @param ld_hk Leading dimension of the target matrix.
      * @param kphase Complex scalar to be multiplied with the block matrix.
      * @param hk_type The type of matrix layout (default: 0).
      */
-    void add_to_matrix(std::complex<T>* hk,
+    void add_to_matrix(const int R_index,
+                       std::complex<T>* hk,
                        const int ld_hk,
                        const std::complex<T>& kphase,
                        const int hk_type = 0) const;
 
     /**
-     * @brief Add this->value[current_R] * kphase as a block matrix of hk.
+     * @brief Add this->value[R_index] * kphase as a block matrix of hk.
+     * Thread-safe version: explicitly pass R_index.
      * for non-collinear spin case only
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param hk Pointer to the target matrix.
+     * @param ld_hk Leading dimension of the target matrix.
+     * @param kphase Scalar to be multiplied with the block matrix.
+     * @param hk_type The type of matrix layout (default: 0).
      */
-    void add_to_matrix(T* hk, const int ld_hk, const T& kphase, const int hk_type = 0) const;
+    void add_to_matrix(const int R_index,
+                       T* hk,
+                       const int ld_hk,
+                       const T& kphase,
+                       const int hk_type = 0) const;
 
     void add_from_matrix(const std::complex<T>* hk,
                        const int ld_hk,
@@ -266,15 +293,58 @@ class AtomPair
     void add_from_matrix(const T* hk, const int ld_hk, const T& kphase, const int hk_type = 0);
 
     /**
-     * @brief Add this->value[current_R] * kphase to an array.
-     * T = double or float
+     * @brief Add data from hk to this->value[R_index].
+     * Thread-safe version: explicitly pass R_index.
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param hk Pointer to the source matrix.
+     * @param ld_hk Leading dimension of the source matrix.
+     * @param kphase Complex scalar to be multiplied with the source matrix.
+     * @param hk_type The type of matrix layout (default: 0).
      */
-    void add_to_array(std::complex<T>* target_array, const std::complex<T>& kphase) const;
+    void add_from_matrix(const int R_index,
+                         const std::complex<T>* hk,
+                         const int ld_hk,
+                         const std::complex<T>& kphase,
+                         const int hk_type = 0);
+
     /**
-     * @brief Add this->value[current_R] * kphase to an array.
-     * for non-collinear spin case only (T = std::complex<double> or complex<float>)
+     * @brief Add data from hk to this->value[R_index].
+     * Thread-safe version: explicitly pass R_index.
+     * for non-collinear spin case only
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param hk Pointer to the source matrix.
+     * @param ld_hk Leading dimension of the source matrix.
+     * @param kphase Scalar to be multiplied with the source matrix.
+     * @param hk_type The type of matrix layout (default: 0).
      */
-    void add_to_array(T* target_array, const T& kphase) const;
+    void add_from_matrix(const int R_index,
+                         const T* hk,
+                         const int ld_hk,
+                         const T& kphase,
+                         const int hk_type = 0);
+
+    /**
+     * @brief Add this->value[R_index] * kphase to an array.
+     * Thread-safe version: explicitly pass R_index.
+     * T = double or float
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param target_array Pointer to the target array.
+     * @param kphase Scalar to be multiplied with the block matrix.
+     */
+    void add_to_array(const int R_index, std::complex<T>* target_array, const std::complex<T>& kphase) const;
+    /**
+     * @brief Add this->value[R_index] * kphase to an array.
+     * Thread-safe version: explicitly pass R_index.
+     * for non-collinear spin case only (T = std::complex<double> or complex<float>)
+     *
+     * @param R_index Index of the R vector in this->values
+     * @param target_array Pointer to the target array.
+     * @param kphase Scalar to be multiplied with the block matrix.
+     */
+    void add_to_array(const int R_index, T* target_array, const T& kphase) const;
 
     // comparation function, used for sorting
     bool operator<(const AtomPair& other) const;
@@ -308,13 +378,6 @@ class AtomPair
 
     // only for 2d-block
     const Parallel_Orbitals* paraV = nullptr;
-
-    // the default R index is (0, 0, 0)
-    // if current_R > 0, it means R index has been fixed
-    // if current_R == 0, it means R index refers to the first cell
-    // if current_R == 0 with gamma_only, it means R index refers to the center cell
-    // !!!!!!!!!!! BE CAREFUL, current_R IS NOT THREADING-SAFE !!!!!!!!!!!!!!!!!!!!!
-    mutable int current_R = 0;
 
     // index for identifying atom I and J for this atom-pair
     int atom_i = -1;

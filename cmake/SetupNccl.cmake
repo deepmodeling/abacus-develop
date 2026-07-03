@@ -39,11 +39,5 @@ function(abacus_setup_nccl target_name)
     endif()
   endif()
 
-  if(NCCL_INCLUDE_DIR)
-    # `parallel_device.cpp` is compiled inside the later `base` OBJECT library,
-    # so the header path must also be visible to targets created in subdirs.
-    include_directories(${NCCL_INCLUDE_DIR})
-    target_include_directories(${target_name} PRIVATE ${NCCL_INCLUDE_DIR})
-  endif()
-  target_link_libraries(${target_name} NCCL::NCCL)
+  target_link_libraries(abacus_external_deps INTERFACE NCCL::NCCL)
 endfunction()

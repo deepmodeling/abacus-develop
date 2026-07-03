@@ -124,7 +124,8 @@ public:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
 private:
-    Mix_DMk_2D mix_DMk_2D;
+
+    Mix_DMk_2D<T> mix_DMk_2D;
 
     bool exx_spacegroup_symmetry = false;
     ModuleSymmetry::Symmetry_rotation symrot_;

@@ -147,9 +147,8 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
             }
             calculated_pairs.push_back(std::make_tuple(ibt1, ibt2, dR.x, dR.y, dR.z));
 
-            dm_pair.find_R(dR);
-            hamilt::BaseMatrix<double>* dmr_ptr = dm_pair.find_matrix(dR);
-            dmr_ptr->set_zero(); // must reset to zero to avoid accumulation!
+            const int r_index = dm_pair.find_R(dR);
+            dm_pair.get_HR_values(r_index).set_zero(); // must reset to zero to avoid accumulation!
 
             for (int ik = 0; ik < dmk.size(); ik++)
             {
@@ -166,11 +165,11 @@ void DeePKS_domain::update_dmr(const std::vector<ModuleBase::Vector3<double>>& k
                 TK* kphase_ptr = reinterpret_cast<TK*>(&kphase);
                 if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                 {
-                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_row_size(), *kphase_ptr, 1);
+                    dm_pair.add_from_matrix(r_index, dmk[ik].data(), pv.get_row_size(), *kphase_ptr, 1);
                 }
                 else
                 {
-                    dm_pair.add_from_matrix(dmk[ik].data(), pv.get_col_size(), *kphase_ptr, 0);
+                    dm_pair.add_from_matrix(r_index, dmk[ik].data(), pv.get_col_size(), *kphase_ptr, 0);
                 }
             }
         }

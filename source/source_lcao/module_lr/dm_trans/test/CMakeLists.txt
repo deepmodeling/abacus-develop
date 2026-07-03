@@ -1,4 +1,4 @@
-remove_definitions(-DUSE_LIBXC)
+abacus_disable_feature_definitions(USE_LIBXC)
 AddTest(
   TARGET MODULE_LR_dm_trans_test
   LIBS parameter psi base ${math_libs} device container

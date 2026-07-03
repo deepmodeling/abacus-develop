@@ -1,6 +1,6 @@
-remove_definitions(-D__CUDA)
-remove_definitions(-D__ROCM)
-remove_definitions(-D__EXX)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
+abacus_disable_feature_definitions(__EXX)
 
 
 
@@ -13,6 +13,8 @@ AddTest(
     neighbor_search_test.cpp
   ../neighbor_search.cpp
   ../bin_manager.cpp
+  ../page_allocator.cpp
+  ../unitcell_lite.cpp
 )
 
 AddTest(
@@ -21,6 +23,7 @@ AddTest(
   SOURCES
     bin_manager_test.cpp
     ../bin_manager.cpp
+    ../page_allocator.cpp
 )
 
 AddTest(
@@ -28,6 +31,7 @@ AddTest(
   LIBS parameter ${math_libs} base device
   SOURCES
   neighbor_list_test.cpp
+  ../page_allocator.cpp
 )
 
 

@@ -25,22 +25,6 @@ namespace Parallel_Global
 int mpi_number = 0;
 int omp_number = 0;
 } // namespace Parallel_Global
-
-void Parallel_Global::myProd(std::complex<double>* in, std::complex<double>* inout, int* len, MPI_Datatype* dptr)
-{
-    for (int i = 0; i < *len; i++)
-    {
-        //		(*inout).real()=(*inout).real()+(*in).real();
-        //		(*inout).imag()=(*inout).imag()+(*in).imag();
-
-        // mohan updat 2011-09-21
-        (*inout) = std::complex<double>((*inout).real() + (*in).real(), (*inout).imag() + (*in).imag());
-
-        in++;
-        inout++;
-    }
-    return;
-}
 #endif
 
 void Parallel_Global::split_diag_world(const int& diag_np,
@@ -108,8 +92,6 @@ void Parallel_Global::read_pal_param(int argc,
     MPI_Init(&argc, &argv); // Peize Lin change 2018-07-12
 #endif //_OPENMP
 
-    //  KPAR = atoi(argv[1]); // mohan abandon 2010-06-09
-
     // get world size --> NPROC
     // get global rank --> MY_RANK
     MPI_Comm_size(MPI_COMM_WORLD, &NPROC);
@@ -174,26 +156,10 @@ void Parallel_Global::read_pal_param(int argc,
 
     NTHREAD_PER_PROC = current_thread_num;
 
-    // for test
-    /*
-    for (int i=0; i<NPROC; i++)
-    {
-        if (MY_RANK == i)
-        {
-            std::cout << " PROCESSOR " << std::setw(4) << MY_RANK+1 << " IS READY." << std::endl;
-        }
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-    */
-
-    // This section can be chosen !!
-    // mohan 2011-03-15
     if (MY_RANK != 0)
     {
-        // std::cout.rdbuf(NULL);
-        std::cout.setstate(std::ios::failbit); // qianrui modify 2020-10-14
+        std::cout.setstate(std::ios::failbit);
     }
-    // end test
 #endif //__MPI
     return;
 }
@@ -229,6 +195,7 @@ void Parallel_Global::finalize_mpi()
 }
 #endif
 
+#ifdef __MPI
 void Parallel_Global::init_pools(const int& NPROC,
                                  const int& MY_RANK,
                                  const int& BNDPAR,
@@ -240,10 +207,6 @@ void Parallel_Global::init_pools(const int& NPROC,
                                  int& RANK_IN_POOL,
                                  int& MY_POOL)
 {
-#ifdef __MPI
-    //----------------------------------------------------------
-    // CALL Function : divide_pools
-    //----------------------------------------------------------
     Parallel_Global::divide_pools(NPROC,
                                   MY_RANK,
                                   BNDPAR,
@@ -254,42 +217,8 @@ void Parallel_Global::init_pools(const int& NPROC,
                                   NPROC_IN_POOL,
                                   RANK_IN_POOL,
                                   MY_POOL);
-
-    // for test
-    // turn on when you want to check the index of pools.
-    /*
-        if (GlobalV::MY_RANK==0)
-        {
-            std::cout << "\n     " << std::setw(8) << "MY_RANK"
-                 << std::setw(8) << "MY_POOL"
-                 << std::setw(13) << "RANK_IN_POOL"
-                 << std::setw(6) << "NPROC"
-                 << std::setw(6) << "KPAR"
-                 << std::setw(14) << "NPROC_IN_POOL" << std::endl;
-        }
-        for (int i=0; i<GlobalV::NPROC; i++)
-        {
-            if (GlobalV::MY_RANK == i)
-            {
-                std::cout << " I'm " << std::setw(8) << GlobalV::MY_RANK
-                     << std::setw(8) << GlobalV::MY_POOL
-                     << std::setw(13) << GlobalV::RANK_IN_POOL
-                     << std::setw(6) << GlobalV::NPROC
-                     << std::setw(6) << GlobalV::KPAR
-                     << std::setw(14) << GlobalV::NPROC_IN_POOL << std::endl;
-            }
-            MPI_Barrier(MPI_COMM_WORLD);
-        }
-
-        if (GlobalV::MY_RANK != 0 )
-        {
-            std::cout.rdbuf(NULL);
-        }
-    */
-
-    return;
-#endif
 }
+#endif
 
 #ifdef __MPI
 void Parallel_Global::divide_pools(const int& NPROC,

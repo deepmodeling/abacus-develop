@@ -6,13 +6,19 @@
 #include "source_base/module_container/ATen/core/tensor.h"     // ct::Tensor
 #include "source_base/module_device/device.h"                  // base_device
 #include "source_base/module_device/memory_op.h"               // memory operations
-#include "source_esolver/esolver_ks_lcao.h"
-#include "source_esolver/esolver_ks_lcao_tddft.h"
-#include "source_lcao/hamilt_lcao.h"
+#include "source_hamilt/hamilt.h"
 #include "source_lcao/module_rt/gather_mat.h" // MPI gathering and distributing functions
 #include "source_lcao/module_rt/kernels/cublasmp_context.h"
 #include "source_lcao/module_rt/td_moving_gauge.h"
 #include "source_psi/psi.h"
+
+namespace ModuleESolver
+{
+template <typename TK, typename TR>
+class ESolver_KS_LCAO;
+template <typename TR, typename Device>
+class ESolver_KS_LCAO_TDDFT;
+} // namespace ModuleESolver
 
 //-----------------------------------------------------------
 // mohan add 2021-02-09

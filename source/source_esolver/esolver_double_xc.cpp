@@ -15,7 +15,6 @@
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_hs/write_HS.h" // use ModuleIO::write_hsk()
 #include "source_lcao/setup_deepks.h" // use deepks, mohan add 2025-10-10
 
 namespace ModuleESolver
@@ -225,8 +224,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
 #ifdef __MLALGO
         // ---------- output tot and precalc ----------
         hamilt::HamiltLCAO<TK, TR>* p_ham_deepks = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
-        std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&this->deepks.ld, [](LCAO_Deepks<TK>*) {});
-        LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
+        LCAO_Deepks_Interface<TK, TR> deepks_interface(&this->deepks.ld);
 
 		deepks_interface.out_deepks_labels(this->pelec->f_en.etot,
 				this->kv.get_nks(),

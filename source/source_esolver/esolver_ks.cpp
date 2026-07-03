@@ -2,7 +2,6 @@
 #include "source_base/timer_wrapper.h"
 
 // for jason output information
-#include "source_io/module_json/init_info.h"
 #include "source_io/module_json/output_info.h"
 
 #include "source_estate/update_pot.h" // mohan add 20251016
@@ -14,7 +13,6 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
-#include "source_io/module_output/print_info.h" // print_parameters
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
 
 namespace ModuleESolver

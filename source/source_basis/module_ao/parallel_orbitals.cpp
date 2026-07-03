@@ -6,10 +6,7 @@
 
 Parallel_Orbitals::Parallel_Orbitals()
 {
-    this->loc_sizes = nullptr;
     // in multi-k, 2D-block-division variables for FT (R<->k)
-    this->nlocdim = nullptr;
-    this->nlocstart = nullptr;
     this->nnr = 1;
     this->ncol_bands = 0;
     this->nrow_bands=0;
@@ -17,16 +14,12 @@ Parallel_Orbitals::Parallel_Orbitals()
     this->nloc_Eij=0;
     this->lastband_in_proc=0;
     this->lastband_number=0;
-    this->loc_size=0;
     this->nbands = 0;
 
 }
 
 Parallel_Orbitals::~Parallel_Orbitals()
 {
-    delete[] loc_sizes;    
-    delete[] nlocdim;
-    delete[] nlocstart;
 }
 
 int Parallel_Orbitals::get_wfc_global_nbands() const
@@ -92,7 +85,7 @@ void Parallel_Orbitals::set_atomic_trace(const int* iat2iwt, const int &nat, con
 }
 
 // Get the number of columns of the orbital matrix of the iat-th atom
-int Parallel_Orbitals::get_col_size(int iat) const
+int Parallel_Orbitals::get_ncol_atom(int iat) const
 {
     int size = this->atom_begin_col[iat];
     // If the iat-th atom does not have an orbital matrix, return 0
@@ -112,10 +105,10 @@ int Parallel_Orbitals::get_col_size(int iat) const
         iat++;
     }
     // If the orbital matrix is not found after all atoms are traversed, throw an exception
-    throw std::string("error in get_col_size(iat)");
+    throw std::string("error in get_ncol_atom(iat)");
 }
 // Get the number of rows of the orbital matrix of the iat-th atom
-int Parallel_Orbitals::get_row_size(int iat) const
+int Parallel_Orbitals::get_nrow_atom(int iat) const
 {
     int size = this->atom_begin_row[iat];
     if(size == -1)
@@ -133,7 +126,12 @@ int Parallel_Orbitals::get_row_size(int iat) const
         iat++;
     }
     // If the orbital matrix is not found after all atoms are traversed, throw an exception
-    throw std::string("error in get_col_size(iat)");
+    throw std::string("error in get_nrow_atom(iat)");
+}
+
+bool Parallel_Orbitals::is_invalid_atom_pair(int iat1, int iat2) const
+{
+    return get_nrow_atom(iat1) <= 0 || get_ncol_atom(iat2) <= 0;
 }
 
 // Get the global indexes of the rows of the parallel orbital matrix
@@ -167,7 +165,7 @@ std::vector<int> Parallel_Orbitals::get_indexes_col() const
 // Get the global indexes of the rows of the orbital matrix of the iat-th atom
 std::vector<int> Parallel_Orbitals::get_indexes_row(int iat) const
 {
-    int size = this->get_row_size(iat);
+    int size = this->get_nrow_atom(iat);
     if(size == 0)
     {
         return std::vector<int>();
@@ -188,7 +186,7 @@ std::vector<int> Parallel_Orbitals::get_indexes_row(int iat) const
 // Get the global indexes of the columns of the orbital matrix of the iat-th atom
 std::vector<int> Parallel_Orbitals::get_indexes_col(int iat) const
 {
-    int size = this->get_col_size(iat);
+    int size = this->get_ncol_atom(iat);
     if(size == 0)
     {
         return std::vector<int>();
@@ -252,7 +250,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
         }
     }
     int col_b_bands = block / dim1;
-    if (coord[1] < block % dim1)
+    if (get_coord_col() < block % dim1)
     {
         col_b_bands++;
     }
@@ -264,7 +262,7 @@ int Parallel_Orbitals::set_nloc_wfc_Eij(
     {
         end_id = block % dim1 - 1;
     }
-    if (coord[1] == end_id)
+    if (get_coord_col() == end_id)
     {
         this->ncol_bands = (col_b_bands - 1) * nb + (N_A - (block - 1) * nb);
     }

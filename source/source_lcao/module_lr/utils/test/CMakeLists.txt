@@ -1,4 +1,4 @@
-remove_definitions(-DUSE_LIBXC)
+abacus_disable_feature_definitions(USE_LIBXC)
 AddTest(
   TARGET MODULE_LR_lr_util_phys_test
   LIBS parameter base ${math_libs} device container planewave #for FFT

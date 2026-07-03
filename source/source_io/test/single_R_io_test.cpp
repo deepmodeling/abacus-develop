@@ -6,6 +6,11 @@
 #include "source_io/module_hs/single_R_io.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include <complex>
+#include <cstdio>
+#include <fstream>
+#include <sstream>
+#include <vector>
 /************************************************
  *  unit test of output_single_R
  ***********************************************/
@@ -24,12 +29,20 @@ Parallel_Orbitals::~Parallel_Orbitals()
 
 void Parallel_2D::set_serial(const int M_A, const int N_A)
 {
+    this->nrow = M_A;
+    this->ncol = N_A;
+    this->is_serial = true;
     this->global2local_row_.resize(M_A);
     this->global2local_row_[0] = 0;
     this->global2local_row_[1] = 1;
     this->global2local_row_[2] = -1;
     this->global2local_row_[3] = 2;
     this->global2local_row_[4] = -1; //Some rows have global2local_row_ < 0
+}
+
+int Parallel_2D::get_global_row_size() const
+{
+    return this->nrow;
 }
 
 TEST(ModuleIOTest, OutputSingleR)
@@ -44,16 +57,21 @@ TEST(ModuleIOTest, OutputSingleR)
     const double sparse_threshold = 1e-8;
     const bool binary = false;
     Parallel_Orbitals pv;
-    PARAM.sys.nlocal = 5;
-    pv.set_serial(PARAM.sys.nlocal, PARAM.sys.nlocal);
+    PARAM.sys.nlocal = 99;
+    pv.set_serial(5, 5);
     std::map<size_t, std::map<size_t, double>> XR = {
         {0, {{1, 0.5}, {3, 0.3}}},
         {1, {{0, 0.2}, {2, 0.4}}},
         {3, {{1, 0.1}, {4, 0.7}}}
     };
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = sparse_threshold;
+    options.binary = binary;
+    options.reduce = true;
+    options.temp_dir = "./";
 
     // Call function under test
-    ModuleIO::output_single_R(ofs, XR, sparse_threshold, binary, pv);
+    ModuleIO::output_single_R(ofs, XR, pv, options);
 
     // Close output file and open it for reading
     ofs.close();
@@ -101,6 +119,92 @@ TEST(ModuleIOTest, OutputSingleR)
     }
     EXPECT_THAT(indptr, testing::ElementsAre(0, 2, 4, 4, 6, 6));
     std::remove("test_output_single_R_0.dat");
+}
+
+TEST(ModuleIOTest, OutputSingleRComplexKeepsHighPrecision)
+{
+    const std::string filename = "test_output_single_R_complex.dat";
+    std::remove(filename.c_str());
+    GlobalV::DRANK = 0;
+    std::ofstream ofs(filename);
+
+    Parallel_Orbitals pv;
+    pv.set_serial(5, 5);
+    ModuleIO::SparseRBlock<std::complex<double>> XR = {
+        {0, {{1, std::complex<double>(1.234567890123456, -2.345678901234567)}}}
+    };
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = 1e-12;
+    options.binary = false;
+    options.reduce = false;
+    options.temp_dir = "./";
+
+    ModuleIO::output_single_R(ofs, XR, pv, options);
+    ofs.close();
+
+    std::ifstream ifs(filename);
+    const std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(output, testing::HasSubstr("(1.2345678901234560e+00,-2.3456789012345669e+00)"));
+    EXPECT_THAT(output, testing::Not(testing::HasSubstr("(1.23457,-2.34568)")));
+
+    std::remove(filename.c_str());
+}
+
+TEST(ModuleIOTest, OutputSingleRUsesConfiguredPrecision)
+{
+    const std::string filename = "test_output_single_R_precision.dat";
+    std::remove(filename.c_str());
+    GlobalV::DRANK = 0;
+    std::ofstream ofs(filename);
+
+    Parallel_Orbitals pv;
+    pv.set_serial(5, 5);
+    ModuleIO::SparseRBlock<std::complex<double>> XR = {
+        {0, {{1, std::complex<double>(1.234567890123456, -2.5)}}}
+    };
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = 1e-12;
+    options.binary = false;
+    options.precision = 8;
+    options.reduce = false;
+    options.temp_dir = "./";
+
+    ModuleIO::output_single_R(ofs, XR, pv, options);
+    ofs.close();
+
+    std::ifstream ifs(filename);
+    const std::string output((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
+    EXPECT_THAT(output, testing::HasSubstr("(1.23456789e+00,-2.50000000e+00)"));
+    EXPECT_THAT(output, testing::Not(testing::HasSubstr("1.2345678901234560e+00")));
+
+    std::remove(filename.c_str());
+}
+
+void write_out_of_range_sparse_column(const char* filename)
+{
+    GlobalV::DRANK = 0;
+    std::ofstream ofs(filename);
+    Parallel_Orbitals pv;
+    pv.set_serial(5, 5);
+    ModuleIO::SparseRBlock<double> XR;
+    XR[0][5] = 1.0;
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = 1e-12;
+    options.binary = false;
+    options.reduce = false;
+    options.temp_dir = "/tmp/";
+    ModuleIO::output_single_R(ofs, XR, pv, options);
+}
+
+TEST(ModuleIOTest, OutputSingleRRejectsOutOfRangeColumn)
+{
+    const char* filename = "/tmp/test_output_single_R_invalid.dat";
+    std::remove(filename);
+    EXPECT_EXIT(
+        write_out_of_range_sparse_column(filename),
+        ::testing::ExitedWithCode(1),
+        "Sparse column index out of range");
+    std::remove(filename);
 }
 
 int main(int argc, char **argv)
