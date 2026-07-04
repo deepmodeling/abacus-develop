@@ -221,9 +221,10 @@ void DiagoPPCG<T, Device>::project_against(
     }
 
     bool contiguous_basis = true;
+    const int basis_first = basis_cols.front();
     for (int i = 0; i < nbasis; ++i)
     {
-        if (basis_cols[i] != i)
+        if (basis_cols[i] != basis_first + i)
         {
             contiguous_basis = false;
             break;
@@ -232,8 +233,8 @@ void DiagoPPCG<T, Device>::project_against(
 
     std::vector<T> basis_l;
     std::vector<T> sbasis_l;
-    const T* basis_data = basis;
-    const T* sbasis_data = sbasis;
+    const T* basis_data = basis + basis_first * ld_psi_;
+    const T* sbasis_data = sbasis + basis_first * ld_psi_;
     if (!contiguous_basis)
     {
         copy_cols(basis, basis_cols, basis_l);
