@@ -98,6 +98,12 @@ private:
     std::vector<T> p_;       // previous search direction (for block subspace)
     std::vector<T> sp_;      // S * p
     std::vector<T> hp_;      // H * p
+    std::vector<T> rr_psi_;  // Rayleigh-Ritz rotation workspace
+    std::vector<T> rr_spsi_;
+    std::vector<T> rr_hpsi_;
+    std::vector<T> rr_hsub_;
+    std::vector<T> rr_ssub_;
+    std::vector<Real> rr_eval_;
 
     // Polak-Ribiere state (CONJUGATE_GRADIENT strategy)
     std::vector<T> grad_old_;   // previous gradient

@@ -33,6 +33,12 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     p_.assign(sz, T(0));
     sp_.assign(sz, T(0));
     hp_.assign(sz, T(0));
+    rr_psi_.resize(sz);
+    rr_spsi_.resize(sz);
+    rr_hpsi_.resize(sz);
+    rr_hsub_.resize(ncol * ncol);
+    rr_ssub_.resize(ncol * ncol);
+    rr_eval_.resize(ncol);
 
     std::vector<int> all_cols(ncol);
     std::iota(all_cols.begin(), all_cols.end(), 0);

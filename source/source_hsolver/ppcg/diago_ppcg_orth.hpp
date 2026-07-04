@@ -141,37 +141,35 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
     std::vector<int>& active_cols,
     const std::vector<double>& ethr_band)
 {
-    std::vector<T> hsub(n_band_ * n_band_, T(0));
-    std::vector<T> ssub(n_band_ * n_band_, T(0));
-    gram(psi, hpsi_.data(), n_band_, n_band_, hsub, n_band_);
-    gram(psi, spsi_.data(), n_band_, n_band_, ssub, n_band_);
+    gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
+    gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
 
-    std::vector<Real> eval(n_band_, static_cast<Real>(0));
     bool sygvd_ok = false;
     try
     {
-        HermitianLapack<T>::sygvd(n_band_, hsub.data(), ssub.data(),
-                                  eval.data());
+        HermitianLapack<T>::sygvd(n_band_, rr_hsub_.data(), rr_ssub_.data(),
+                                  rr_eval_.data());
         sygvd_ok = true;
     }
     catch (const std::runtime_error&)
     {
         // Fallback: diagonal Rayleigh quotients.
         // hsub and ssub may be corrupted by sygvd; re-form them.
-        gram(psi, hpsi_.data(), n_band_, n_band_, hsub, n_band_);
-        gram(psi, spsi_.data(), n_band_, n_band_, ssub, n_band_);
+        gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
+        gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
         for (int ii = 0; ii < n_band_; ++ii)
-            eval[ii] = static_cast<Real>(std::real(hsub[ii + ii * n_band_]))
+            rr_eval_[ii] = static_cast<Real>(std::real(rr_hsub_[ii + ii * n_band_]))
                      / std::max(static_cast<Real>(
-                                    std::real(ssub[ii + ii * n_band_])),
+                                    std::real(rr_ssub_[ii + ii * n_band_])),
                                 static_cast<Real>(1e-30));
     }
 
     if (sygvd_ok)
     {
-        std::vector<T> psi_old(psi, psi + ld_psi_ * n_band_);
-        std::vector<T> spsi_old = spsi_;
-        std::vector<T> hpsi_old = hpsi_;
+        const int sz = ld_psi_ * n_band_;
+        std::copy(psi, psi + sz, rr_psi_.begin());
+        std::copy(spsi_.begin(), spsi_.end(), rr_spsi_.begin());
+        std::copy(hpsi_.begin(), hpsi_.end(), rr_hpsi_.begin());
 
         std::fill(psi, psi + ld_psi_ * n_band_, T(0));
         set_zero(spsi_);
@@ -185,9 +183,9 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
                                          n_band_,
                                          n_band_,
                                          &one,
-                                         psi_old.data(),
+                                         rr_psi_.data(),
                                          ld_psi_,
-                                         hsub.data(),
+                                         rr_hsub_.data(),
                                          n_band_,
                                          &zero,
                                          psi,
@@ -198,9 +196,9 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
                                          n_band_,
                                          n_band_,
                                          &one,
-                                         spsi_old.data(),
+                                         rr_spsi_.data(),
                                          ld_psi_,
-                                         hsub.data(),
+                                         rr_hsub_.data(),
                                          n_band_,
                                          &zero,
                                          spsi_.data(),
@@ -211,9 +209,9 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
                                          n_band_,
                                          n_band_,
                                          &one,
-                                         hpsi_old.data(),
+                                         rr_hpsi_.data(),
                                          ld_psi_,
-                                         hsub.data(),
+                                         rr_hsub_.data(),
                                          n_band_,
                                          &zero,
                                          hpsi_.data(),
@@ -221,14 +219,14 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
 
         for (int j = 0; j < n_band_; ++j)
         {
-            eigenvalue[j] = eval[j];
+            eigenvalue[j] = rr_eval_[j];
         }
     }
     else
     {
         // No rotation: just update eigenvalues with Rayleigh quotients.
         for (int j = 0; j < n_band_; ++j)
-            eigenvalue[j] = eval[j];
+            eigenvalue[j] = rr_eval_[j];
     }
 
     // Compute residual: w_i = H|psi_i> - eps_i * S|psi_i>
