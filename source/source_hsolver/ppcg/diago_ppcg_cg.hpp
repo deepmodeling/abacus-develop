@@ -40,23 +40,21 @@ void DiagoPPCG<T, Device>::orth_gradient(
     std::vector<T> coeff(n_band_ * n_band_, T(0));
     gram(psi, grad.data(), n_band_, n_band_, coeff, n_band_);
 
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > 4096)
-#endif
-    for (int j = 0; j < n_band_; ++j)
-    {
-        for (int i = 0; i < n_band_; ++i)
-        {
-            const T cproj = coeff[i + j * n_band_];
-            if (std::abs(cproj) <= std::numeric_limits<Real>::epsilon())
-                continue;
-            // grad_j -= S|psi_i> * coeff
-            const T* si = spsi + i * ld_psi_;
-            T* gj_out = grad.data() + j * ld_psi_;
-            for (int ig = 0; ig < n_dim_; ++ig)
-                gj_out[ig] -= si[ig] * cproj;
-        }
-    }
+    const T minus_one = T(-1);
+    const T one = T(1);
+    ModuleBase::gemm_op<T, Device>()('N',
+                                     'N',
+                                     n_dim_,
+                                     n_band_,
+                                     n_band_,
+                                     &minus_one,
+                                     spsi,
+                                     ld_psi_,
+                                     coeff.data(),
+                                     n_band_,
+                                     &one,
+                                     grad.data(),
+                                     ld_psi_);
 }
 
 // ---------------------------------------------------------------------------
