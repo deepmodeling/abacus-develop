@@ -250,12 +250,11 @@ void DiagoPPCG<T, Device>::update_one_block(
     std::vector<T> psi_new(ld_psi_ * l, T(0));
     std::vector<T> spsi_new(ld_psi_ * l, T(0));
     std::vector<T> hpsi_new(ld_psi_ * l, T(0));
-    std::vector<T> p_new(ld_psi_ * l, T(0));
-    std::vector<T> sp_new(ld_psi_ * l, T(0));
-    std::vector<T> hp_new(ld_psi_ * l, T(0));
 
     std::vector<T> coeff_state(dim * l, T(0));
-    std::vector<T> coeff_dir(dim * l, T(0));
+    std::vector<T> coeff_dir;
+    if (use_p)
+        coeff_dir.assign(dim * l, T(0));
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (l * l > 4096)
 #endif
@@ -266,9 +265,9 @@ void DiagoPPCG<T, Device>::update_one_block(
             coeff_state[i + j * dim] = eigvec[i + j * dim];
             const T cw = eigvec[(l + i) + j * dim] * subspace.w_scale[i];
             coeff_state[(l + i) + j * dim] = cw;
-            coeff_dir[(l + i) + j * dim] = cw;
             if (use_p)
             {
+                coeff_dir[(l + i) + j * dim] = cw;
                 const T cp = eigvec[(2*l + i) + j * dim] * subspace.p_scale[i];
                 coeff_state[(2*l + i) + j * dim] = cp;
                 coeff_dir[(2*l + i) + j * dim] = cp;
@@ -333,16 +332,22 @@ void DiagoPPCG<T, Device>::update_one_block(
     combine(psi_basis, coeff_state, psi_new);
     combine(spsi_basis, coeff_state, spsi_new);
     combine(hpsi_basis, coeff_state, hpsi_new);
-    combine(psi_basis, coeff_dir, p_new);
-    combine(spsi_basis, coeff_dir, sp_new);
-    combine(hpsi_basis, coeff_dir, hp_new);
 
     scatter_cols(psi, cols, psi_new);
     scatter_cols(spsi_.data(), cols, spsi_new);
     scatter_cols(hpsi_.data(), cols, hpsi_new);
-    scatter_cols(p_.data(), cols, p_new);
-    scatter_cols(sp_.data(), cols, sp_new);
-    scatter_cols(hp_.data(), cols, hp_new);
+    if (use_p)
+    {
+        std::vector<T> p_new(ld_psi_ * l, T(0));
+        std::vector<T> sp_new(ld_psi_ * l, T(0));
+        std::vector<T> hp_new(ld_psi_ * l, T(0));
+        combine(psi_basis, coeff_dir, p_new);
+        combine(spsi_basis, coeff_dir, sp_new);
+        combine(hpsi_basis, coeff_dir, hp_new);
+        scatter_cols(p_.data(), cols, p_new);
+        scatter_cols(sp_.data(), cols, sp_new);
+        scatter_cols(hp_.data(), cols, hp_new);
+    }
 }
 
 } // namespace hsolver
