@@ -14,6 +14,7 @@ void DiagoPPCG<T, Device>::lock_epairs(
     std::vector<int>& active_cols) const
 {
     active_cols.clear();
+    active_cols.reserve(n_band_);
     std::vector<double> nrm2_all(n_band_, 0.0);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > 4096)

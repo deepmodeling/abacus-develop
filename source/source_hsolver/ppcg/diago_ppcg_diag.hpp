@@ -47,6 +47,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     double avg_iter = 1.0;
     int iter = 1;
     std::vector<int> active_cols;
+    active_cols.reserve(ncol);
 
     std::ofstream residual_trace;
     if (const char* path = std::getenv("ABACUS_PPCG_RESIDUAL_TRACE"))
@@ -86,7 +87,11 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         std::vector<T> w_active;
         std::vector<T> sw_active;
         std::vector<T> hw_active;
+        w_active.reserve(sz);
+        sw_active.reserve(sz);
+        hw_active.reserve(sz);
         std::vector<int> cols;
+        cols.reserve(std::min(sbsize_, ncol));
         SmallSubspace subspace;
 
         while (!active_cols.empty() && iter <= maxiter_)
@@ -174,6 +179,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // CG iteration loop.
         std::vector<T> hp;
         std::vector<T> sp;
+        hp.reserve(sz);
+        sp.reserve(sz);
         while (iter <= maxiter_)
         {
             // Apply H and S to search direction.
