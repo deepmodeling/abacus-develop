@@ -269,6 +269,72 @@ TEST_F(DiagoPPCGDiagonalTest, ConjugateGradientFallback)
         << "Diagonal CG fallback: too many iterations";
 }
 
+TEST(DiagoPPCGLeadingDimensionTest, BlockSubspaceWithPadding)
+{
+    const int n_dim = 5;
+    const int nband = 3;
+    const int ld = 8;
+
+    std::vector<T> H_mat(n_dim * n_dim, T(0));
+    for (int i = 0; i < n_dim; ++i)
+        H_mat[i + i * n_dim] = T(static_cast<Real>(i + 1), 0);
+
+    std::vector<Real> prec(n_dim);
+    for (int i = 0; i < n_dim; ++i)
+        prec[i] = static_cast<Real>(i + 1);
+
+    std::vector<T> psi(ld * nband, T(17.0, -3.0));
+    std::mt19937 rng(7);
+    std::uniform_real_distribution<Real> dist(-1.0, 1.0);
+    for (int j = 0; j < nband; ++j)
+        for (int i = 0; i < n_dim; ++i)
+            psi[i + j * ld] = T(dist(rng), 0.0);
+
+    for (int j = 0; j < nband; ++j) {
+        for (int k = 0; k < j; ++k) {
+            T dot = 0;
+            for (int i = 0; i < n_dim; ++i)
+                dot += std::conj(psi[i + k * ld]) * psi[i + j * ld];
+            for (int i = 0; i < n_dim; ++i)
+                psi[i + j * ld] -= dot * psi[i + k * ld];
+        }
+        Real nrm = 0;
+        for (int i = 0; i < n_dim; ++i)
+            nrm += std::norm(psi[i + j * ld]);
+        nrm = std::sqrt(nrm);
+        for (int i = 0; i < n_dim; ++i)
+            psi[i + j * ld] /= nrm;
+    }
+
+    std::vector<Real> eval(nband, 0.0);
+    std::vector<double> ethr(nband, 1e-10);
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1e-12,
+        /* max_iter = */ 80,
+        /* sbsize   = */ 2,
+        /* rr_step  = */ 3,
+        /* gamma_g0 = */ false,
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
+    );
+
+    auto h_op = [&H_mat, n_dim](T* in, T* out, int ld_in, int ncol) {
+        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+
+    double avg_iter = solver.diag(
+        h_op, nullptr, ld, nband, n_dim,
+        psi.data(), eval.data(), ethr, prec.data()
+    );
+
+    const Real exact[] = {1.0, 2.0, 3.0};
+    for (int i = 0; i < nband; ++i) {
+        EXPECT_NEAR(eval[i], exact[i], 1e-8)
+            << "Padded ld BLOCK: eigenvalue[" << i << "] mismatch";
+    }
+    EXPECT_LE(avg_iter, static_cast<double>(80))
+        << "Padded ld BLOCK: too many iterations";
+}
+
 // =============================================================================
 // Test fixture: 2×2 matrix — smallest non-trivial case
 // H = [[2, 1], [1, 2]], eigenvalues: 1, 3
