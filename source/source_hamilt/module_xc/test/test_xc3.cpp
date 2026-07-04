@@ -41,7 +41,7 @@ class XCTest_GRADCORR : public XCTest
             bool domag = false;
             bool domag_z = false;
             bool domag_true = true;
-            
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;

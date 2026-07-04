@@ -10,3 +10,4 @@ This section provides guidelines and resources for developers working on the ABA
    :caption: Developer Resources
 
    basic_types_class.md
+   agent_governance.md

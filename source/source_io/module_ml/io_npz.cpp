@@ -321,7 +321,8 @@ void read_mat_npz(const Parallel_Orbitals* paraV,
 #endif
 }
 
-void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::HContainer<double>& hR)
+template <typename T>
+void output_mat_npz_impl(const UnitCell& ucell, std::string& zipname, const hamilt::HContainer<T>& hR)
 {
     ModuleBase::TITLE("ModuleIO", "output_mat_npz");
 
@@ -412,13 +413,13 @@ void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::H
 
 //fourth block: hr(i0,jR)
 #ifdef __MPI
-    hamilt::HContainer<double>* HR_serial;
+    hamilt::HContainer<T>* HR_serial;
     Parallel_Orbitals serialV;
     serialV.set_serial(PARAM.globalv.nlocal, PARAM.globalv.nlocal);
     serialV.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, PARAM.globalv.nlocal);
     if(GlobalV::MY_RANK == 0)
     {
-        HR_serial = new hamilt::HContainer<double>(&serialV);
+        HR_serial = new hamilt::HContainer<T>(&serialV);
     }
     hamilt::gatherParallels(hR, HR_serial, 0);
 
@@ -469,6 +470,18 @@ void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::H
     }
 #endif
 #endif
+}
+
+void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::HContainer<double>& hR)
+{
+    output_mat_npz_impl(ucell, zipname, hR);
+}
+
+void output_mat_npz(const UnitCell& ucell,
+                    std::string& zipname,
+                    const hamilt::HContainer<std::complex<double>>& hR)
+{
+    output_mat_npz_impl(ucell, zipname, hR);
 }
 
 } // namespace ModuleIO

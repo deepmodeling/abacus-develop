@@ -15,7 +15,7 @@ PageAllocator::~PageAllocator() = default;
 
 int* PageAllocator::allocate(int n)
 {
-    if (n <= 0) 
+    if (n <= 0)
     {
         return nullptr;
     }
@@ -28,7 +28,7 @@ int* PageAllocator::allocate(int n)
         );
     }
 
-    if (pages_.empty()) 
+    if (pages_.empty())
     {
         new_page_();
     }

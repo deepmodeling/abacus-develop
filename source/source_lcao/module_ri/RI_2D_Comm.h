@@ -67,8 +67,8 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
         const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
         const Parallel_Orbitals& pv,
         TK* hk);
-	
-		
+
+
 	template <typename Tdata, typename TK>
 	extern void  add_Hexx_td(
 		const UnitCell& ucell,
@@ -94,7 +94,7 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
 	template<typename Tdata>
 	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(
 			const K_Vectors &kv,
-			const Parallel_Orbitals &pv, 
+			const Parallel_Orbitals &pv,
 			const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
 			const int ik);
 	template<typename Tdata>
