@@ -7,6 +7,7 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  issues: write
 
 jobs:
   governance:
@@ -53,3 +54,40 @@ jobs:
         if: always()
         run: |
           cat agent_governance_summary.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Comment governance warnings
+        if: >-
+          always() &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          if ! grep -qi '^| warning |' agent_governance_summary.md; then
+            exit 0
+          fi
+
+          marker='<!-- agent-governance-warning -->'
+          body_file="$(mktemp)"
+          json_file="$(mktemp)"
+          {
+            echo "$marker"
+            echo
+            cat agent_governance_summary.md
+          } > "$body_file"
+          jq -Rs '{body: .}' < "$body_file" > "$json_file"
+
+          existing_comment_id="$(gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+            --jq ".[] | select(.body | contains(\"${marker}\")) | .id" \
+            | head -n 1)"
+
+          if [ -n "$existing_comment_id" ]; then
+            gh api --method PATCH \
+              "repos/${GITHUB_REPOSITORY}/issues/comments/${existing_comment_id}" \
+              --input "$json_file"
+          else
+            gh api --method POST \
+              "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
+              --input "$json_file"
+          fi
