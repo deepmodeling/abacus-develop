@@ -559,7 +559,6 @@ def _read_kline(raw: List[str]) -> Dict[str, Any]:
     assert all(m for m in mymatch), \
              'Invalid KPT file, expected the k-points to be in the format ' \
              '"x y z n # comment"'
-    print(raw)
     return {
         'mode': 'line',
         'coordinate': 'Cartesian' if raw[2].lower().endswith('cartesian') else 'Direct', 

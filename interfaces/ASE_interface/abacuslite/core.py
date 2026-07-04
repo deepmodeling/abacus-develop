@@ -36,7 +36,7 @@ import shutil
 import tempfile
 import unittest
 from pathlib import Path
-from typing import Dict, Optional, List, Tuple, Set
+from typing import Dict, Optional, List
 
 import numpy as np
 from ase.calculators.genericfileio import (
@@ -191,7 +191,7 @@ class AbacusTemplate(CalculatorTemplate):
                               properties: List[str]) -> Dict[str, str]:
         '''Connect the relationship between the properties calculation and
         the ABACUS keywords. May be more complicated in the future, therefore
-        it is better to have a seperate mapping function instead of 
+        it is better to have a separate mapping function instead of
         implementing in some other functions.
         
         Parameters
@@ -201,15 +201,15 @@ class AbacusTemplate(CalculatorTemplate):
         properties : list of str
             The list of properties to calculate
         '''
-        def normalize_keyword_value(value):
+        def keyword_compare_value(value):
             if isinstance(value, bool):
                 return '1' if value else '0'
             if isinstance(value, (list, tuple, set)):
-                return ' '.join(normalize_keyword_value(i) for i in value)
+                return ' '.join(str(i) for i in value)
             return str(value)
 
         param_cache_ = {
-            key: normalize_keyword_value(value)
+            key: keyword_compare_value(value)
             for key, value in parameters.items()
             if value is not None
         }
@@ -220,7 +220,7 @@ class AbacusTemplate(CalculatorTemplate):
             for k, v in param_new.items():
                 if v is None:
                     continue
-                normalized_value = normalize_keyword_value(v)
+                normalized_value = keyword_compare_value(v)
                 if k in param_cache_ and param_cache_[k] != normalized_value:
                     raise ValueError(f'{info}: {k}={v} (now), {param_cache_[k]} (before)')
                 staged[k] = normalized_value
@@ -307,7 +307,7 @@ class AbacusTemplate(CalculatorTemplate):
         # array, convert to the string spaced by whitespace
         for k, v in parameters.items():
             # if the v is iterable, convert to the string spaced by whitespace
-            if isinstance(v, (List, Tuple, Set)):
+            if isinstance(v, (list, tuple, set)):
                 parameters[k] = ' '.join(str(i) for i in v)
         dst = directory / self.inputname
         _ = file_safe_backup(dst)
@@ -700,6 +700,29 @@ class TestAbacusCalculator(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             template.get_property_keywords({'cal_stress': False}, ['stress'])
+
+    def test_property_keywords_treat_string_values_as_scalars(self):
+        template = AbacusTemplate()
+        template.implemented_properties = ['probe']
+        template.get_probe_keywords = lambda parameters: {'custom_switch': 'true'}
+
+        parameters = template.get_property_keywords(
+            {'custom_switch': 'true'}, ['probe']
+        )
+
+        self.assertEqual(parameters['custom_switch'], 'true')
+
+    def test_property_keywords_compare_iterables_like_input_writer(self):
+        template = AbacusTemplate()
+        template.implemented_properties = ['probe']
+        template.get_probe_keywords = lambda parameters: {
+            'custom_vector': [1, 'true']
+        }
+
+        with self.assertRaises(ValueError):
+            template.get_property_keywords(
+                {'custom_vector': [True, 'true']}, ['probe']
+            )
 
     def test_property_keywords_reject_conflicting_properties(self):
         template = AbacusTemplate()
