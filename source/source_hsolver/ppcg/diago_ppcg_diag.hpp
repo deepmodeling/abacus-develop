@@ -87,6 +87,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         record_residual(0, "initial_rr");
 
         std::vector<T> w_active;
+        std::vector<T> sw_active;
         std::vector<T> hw_active;
         std::vector<int> cols;
         SmallSubspace subspace;
@@ -98,17 +99,22 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
             // Precondition the residual.
             divide_by_preconditioner(active_cols, prec, w_);
-            apply_s_current(w_.data(), sw_.data(), ncol);
+            copy_cols(w_.data(), active_cols, w_active);
+            sw_active.assign(ld_psi_ * nact, T(0));
+            apply_s_current(w_active.data(), sw_active.data(), nact);
+            scatter_cols(sw_.data(), active_cols, sw_active);
             project_against(psi_in, spsi_.data(), all_cols, w_, sw_, active_cols);
 
             // Apply H to the search direction.
             copy_cols(w_.data(), active_cols, w_active);
             force_g0_real(w_active.data(), nact);
             hw_active.assign(ld_psi_ * nact, T(0));
+            sw_active.assign(ld_psi_ * nact, T(0));
             scatter_cols(w_.data(), active_cols, w_active);
             apply_h(hpsi_func, w_active.data(), hw_active.data(), nact);
+            apply_s_current(w_active.data(), sw_active.data(), nact);
             scatter_cols(hw_.data(), active_cols, hw_active);
-            apply_s_current(w_.data(), sw_.data(), ncol);
+            scatter_cols(sw_.data(), active_cols, sw_active);
 
             avg_iter += static_cast<double>(nact) / static_cast<double>(ncol);
 
