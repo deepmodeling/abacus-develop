@@ -186,21 +186,13 @@ private:
                           bool use_p,
                           const SmallSubspace& subspace);
 
-    void right_solve_upper(const std::vector<T>& r, int n,
-                           std::vector<T>& x) const;
-
     bool is_s_orthonormal(const T* psi, const T* spsi, int ncol) const;
 
     void s_gram_schmidt(T* psi, T* hpsi, T* spsi, int ncol) const;
 
-    void chol_qr_active(T* psi, const std::vector<int>& active_cols);
-
     void rayleigh_ritz(T* psi, Real* eigenvalue,
                        std::vector<int>& active_cols,
                        const std::vector<double>& ethr_band);
-
-    Real trace_of_active_projected(const T* psi,
-                                    const std::vector<int>& active_cols) const;
 
     // -------------------------------------------------------------------------
     // Conjugate-gradient strategy helpers (File 2 style)
