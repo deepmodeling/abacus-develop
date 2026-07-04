@@ -30,9 +30,6 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     w_.assign(sz, T(0));
     sw_.assign(sz, T(0));
     hw_.assign(sz, T(0));
-    p_.clear();
-    sp_.clear();
-    hp_.clear();
     rr_psi_.resize(sz);
     rr_spsi_.resize(sz);
     rr_hpsi_.resize(sz);
@@ -118,15 +115,10 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
             avg_iter += static_cast<double>(nact) / static_cast<double>(ncol);
 
-            // Use the stable 2-block [psi, w] projected subspace.
-            // The historical p block is kept in the implementation helpers,
-            // but is not enabled in the production path because it can make
-            // the small generalized eigenproblem indefinite on common test
-            // cases.
-            // w is normalized to unit S-norm before building the
-            // Gram matrix (see build_small_subspace), which keeps M
-            // well-conditioned even when residuals are small.
-            const bool use_p_now = false;
+            // Use the stable 2-block [psi, w] projected subspace.  The
+            // preconditioned residual w is normalized to unit S-norm before
+            // building the Gram matrix (see build_small_subspace), which
+            // keeps M well-conditioned even when residuals are small.
 
             // Block subspace solve.
             for (int isb = 0; isb < nsb; ++isb)
@@ -136,9 +128,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 cols.assign(active_cols.begin() + i0,
                             active_cols.begin() + i0 + l);
 
-                build_small_subspace(psi_in, cols, use_p_now, subspace);
-                solve_small_generalized((use_p_now ? 3 : 2) * l, subspace);
-                update_one_block(psi_in, cols, l, use_p_now, subspace);
+                build_small_subspace(psi_in, cols, subspace);
+                solve_small_generalized(2 * l, subspace);
+                update_one_block(psi_in, cols, l, subspace);
             }
 
             // Rayleigh-Ritz after each block update keeps the global subspace

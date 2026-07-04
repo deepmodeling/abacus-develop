@@ -37,46 +37,36 @@ void DiagoPPCG<T, Device>::lock_epairs(
 }
 
 // ---------------------------------------------------------------------------
-// Build K = V^H H V and M = V^H S V where V = [psi, w, p]
+// Build K = V^H H V and M = V^H S V where V = [psi, w]
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::build_small_subspace(
     const T* psi,
     const std::vector<int>& cols,
-    bool use_p,
     SmallSubspace& subspace) const
 {
     const int l = static_cast<int>(cols.size());
-    const int nblk = use_p ? 3 : 2;
-    const int dim = nblk * l;
+    const int dim = 2 * l;
     subspace.k.resize(dim * dim);
     subspace.m.resize(dim * dim);
     subspace.eval.resize(dim);
     subspace.w_scale.assign(l, static_cast<Real>(1));
-    subspace.p_scale.assign(l, static_cast<Real>(1));
 
     std::vector<T> psi_l, spsi_l, hpsi_l;
     std::vector<T> w_l, sw_l, hw_l;
-    std::vector<T> p_l, sp_l, hp_l;
     copy_cols(psi, cols, psi_l);
     copy_cols(spsi_.data(), cols, spsi_l);
     copy_cols(hpsi_.data(), cols, hpsi_l);
     copy_cols(w_.data(), cols, w_l);
     copy_cols(sw_.data(), cols, sw_l);
     copy_cols(hw_.data(), cols, hw_l);
-    if (use_p)
-    {
-        copy_cols(p_.data(), cols, p_l);
-        copy_cols(sp_.data(), cols, sp_l);
-        copy_cols(hp_.data(), cols, hp_l);
-    }
 
     // ---------------------------------------------------------------------------
-    // Normalize w and p columns to unit S-norm for numerical stability.
+    // Normalize w columns to unit S-norm for numerical stability.
     //
-    // The [w, p] block of the Gram matrix M has entries O(||w||²) which
-    // become tiny when residuals are small, making M nearly singular and
-    // causing sygvd to produce garbage eigenvectors.
+    // The w block of the Gram matrix M has entries O(||w||^2) which become
+    // tiny when residuals are small, making M nearly singular and causing
+    // sygvd to produce garbage eigenvectors.
     //
     // Scaling to unit S-norm keeps M well-conditioned (diagonal ~1) without
     // changing the subspace.  The Ritz values are identical and the Ritz
@@ -117,8 +107,6 @@ void DiagoPPCG<T, Device>::build_small_subspace(
         }
     };
     scale_to_unit_snorm(w_l, sw_l, hw_l, l, subspace.w_scale);
-    if (use_p)
-        scale_to_unit_snorm(p_l, sp_l, hp_l, l, subspace.p_scale);
 
     auto copy_block = [&](const std::vector<T>& src,
                           const int col0,
@@ -157,12 +145,6 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     copy_block(w_l, l, basis);
     copy_block(hw_l, l, hbasis);
     copy_block(sw_l, l, sbasis);
-    if (use_p)
-    {
-        copy_block(p_l, 2 * l, basis);
-        copy_block(hp_l, 2 * l, hbasis);
-        copy_block(sp_l, 2 * l, sbasis);
-    }
 
     gram(basis.data(), hbasis.data(), dim, dim, subspace.k, dim);
     gram(basis.data(), sbasis.data(), dim, dim, subspace.m, dim);
@@ -225,36 +207,25 @@ void DiagoPPCG<T, Device>::update_one_block(
     T* psi,
     const std::vector<int>& cols,
     int l,
-    bool use_p,
     const SmallSubspace& subspace)
 {
-    const int dim = (use_p ? 3 : 2) * l;
+    const int dim = 2 * l;
     const T* eigvec = subspace.k.data();
 
     std::vector<T> psi_l, spsi_l, hpsi_l;
     std::vector<T> w_l, sw_l, hw_l;
-    std::vector<T> p_l, sp_l, hp_l;
     copy_cols(psi, cols, psi_l);
     copy_cols(spsi_.data(), cols, spsi_l);
     copy_cols(hpsi_.data(), cols, hpsi_l);
     copy_cols(w_.data(), cols, w_l);
     copy_cols(sw_.data(), cols, sw_l);
     copy_cols(hw_.data(), cols, hw_l);
-    if (use_p)
-    {
-        copy_cols(p_.data(), cols, p_l);
-        copy_cols(sp_.data(), cols, sp_l);
-        copy_cols(hp_.data(), cols, hp_l);
-    }
 
     std::vector<T> psi_new(ld_psi_ * l, T(0));
     std::vector<T> spsi_new(ld_psi_ * l, T(0));
     std::vector<T> hpsi_new(ld_psi_ * l, T(0));
 
     std::vector<T> coeff_state(dim * l, T(0));
-    std::vector<T> coeff_dir;
-    if (use_p)
-        coeff_dir.assign(dim * l, T(0));
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (l * l > 4096)
 #endif
@@ -265,19 +236,11 @@ void DiagoPPCG<T, Device>::update_one_block(
             coeff_state[i + j * dim] = eigvec[i + j * dim];
             const T cw = eigvec[(l + i) + j * dim] * subspace.w_scale[i];
             coeff_state[(l + i) + j * dim] = cw;
-            if (use_p)
-            {
-                coeff_dir[(l + i) + j * dim] = cw;
-                const T cp = eigvec[(2*l + i) + j * dim] * subspace.p_scale[i];
-                coeff_state[(2*l + i) + j * dim] = cp;
-                coeff_dir[(2*l + i) + j * dim] = cp;
-            }
         }
     }
 
     auto fill_basis = [&](const std::vector<T>& a,
                           const std::vector<T>& b,
-                          const std::vector<T>& c,
                           std::vector<T>& basis)
     {
         basis.resize(ld_psi_ * dim);
@@ -292,12 +255,6 @@ void DiagoPPCG<T, Device>::update_one_block(
             std::copy(b.begin() + j * ld_psi_,
                       b.begin() + (j + 1) * ld_psi_,
                       basis.begin() + (l + j) * ld_psi_);
-            if (use_p)
-            {
-                std::copy(c.begin() + j * ld_psi_,
-                          c.begin() + (j + 1) * ld_psi_,
-                          basis.begin() + (2 * l + j) * ld_psi_);
-            }
         }
     };
 
@@ -325,9 +282,9 @@ void DiagoPPCG<T, Device>::update_one_block(
     std::vector<T> psi_basis;
     std::vector<T> spsi_basis;
     std::vector<T> hpsi_basis;
-    fill_basis(psi_l, w_l, p_l, psi_basis);
-    fill_basis(spsi_l, sw_l, sp_l, spsi_basis);
-    fill_basis(hpsi_l, hw_l, hp_l, hpsi_basis);
+    fill_basis(psi_l, w_l, psi_basis);
+    fill_basis(spsi_l, sw_l, spsi_basis);
+    fill_basis(hpsi_l, hw_l, hpsi_basis);
 
     combine(psi_basis, coeff_state, psi_new);
     combine(spsi_basis, coeff_state, spsi_new);
@@ -336,18 +293,6 @@ void DiagoPPCG<T, Device>::update_one_block(
     scatter_cols(psi, cols, psi_new);
     scatter_cols(spsi_.data(), cols, spsi_new);
     scatter_cols(hpsi_.data(), cols, hpsi_new);
-    if (use_p)
-    {
-        std::vector<T> p_new(ld_psi_ * l, T(0));
-        std::vector<T> sp_new(ld_psi_ * l, T(0));
-        std::vector<T> hp_new(ld_psi_ * l, T(0));
-        combine(psi_basis, coeff_dir, p_new);
-        combine(spsi_basis, coeff_dir, sp_new);
-        combine(hpsi_basis, coeff_dir, hp_new);
-        scatter_cols(p_.data(), cols, p_new);
-        scatter_cols(sp_.data(), cols, sp_new);
-        scatter_cols(hp_.data(), cols, hp_new);
-    }
 }
 
 } // namespace hsolver

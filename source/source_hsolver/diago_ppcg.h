@@ -95,9 +95,6 @@ private:
     std::vector<T> w_;       // residual / preconditioned residual
     std::vector<T> sw_;      // S * w
     std::vector<T> hw_;      // H * w
-    std::vector<T> p_;       // previous search direction (for block subspace)
-    std::vector<T> sp_;      // S * p
-    std::vector<T> hp_;      // H * p
     std::vector<T> rr_psi_;  // Rayleigh-Ritz rotation workspace
     std::vector<T> rr_spsi_;
     std::vector<T> rr_hpsi_;
@@ -165,7 +162,6 @@ private:
         std::vector<T> m;        // M matrix (projected S)
         std::vector<Real> eval;  // eigenvalues
         std::vector<Real> w_scale;
-        std::vector<Real> p_scale;
     };
 
     void lock_epairs(const std::vector<T>& residual,
@@ -174,7 +170,6 @@ private:
 
     void build_small_subspace(const T* psi,
                               const std::vector<int>& cols,
-                              bool use_p,
                               SmallSubspace& subspace) const;
 
     void solve_small_generalized(int dim, SmallSubspace& subspace) const;
@@ -182,7 +177,6 @@ private:
     void update_one_block(T* psi,
                           const std::vector<int>& cols,
                           int l,
-                          bool use_p,
                           const SmallSubspace& subspace);
 
     bool is_s_orthonormal(const T* psi, const T* spsi, int ncol) const;
