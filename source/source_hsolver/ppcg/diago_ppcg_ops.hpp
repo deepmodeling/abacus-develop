@@ -119,7 +119,7 @@ void DiagoPPCG<T, Device>::gram(const T* a, const T* b,
                                  std::vector<T>& out,
                                  int ld_out) const
 {
-    out.assign(ld_out * ncol_b, T(0));
+    out.resize(ld_out * ncol_b);
     const T one = T(1);
     const T zero = T(0);
     ModuleBase::gemm_op<T, Device>()('C',
