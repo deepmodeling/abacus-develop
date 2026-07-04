@@ -120,42 +120,52 @@ def changed_paths(root: Path, args: argparse.Namespace) -> Tuple[Dict[str, str],
     return parse_name_status(output)
 
 
-def parse_added_lines(diff_text: str) -> List[DiffLine]:
-    lines: List[DiffLine] = []
-    path = ""
+def parse_changed_lines(diff_text: str) -> Tuple[List[DiffLine], List[DiffLine]]:
+    added: List[DiffLine] = []
+    removed: List[DiffLine] = []
+    old_path = ""
+    new_path = ""
+    old_line: Optional[int] = None
     new_line: Optional[int] = None
-    hunk_re = re.compile(r"@@ -\d+(?:,\d+)? \+(\d+)(?:,(\d+))? @@")
+    hunk_re = re.compile(r"@@ -(\d+)(?:,\d+)? \+(\d+)(?:,\d+)? @@")
     for raw in diff_text.splitlines():
-        if raw.startswith("+++ b/"):
-            path = raw[6:]
+        if raw.startswith("--- a/"):
+            old_path = raw[6:]
             continue
-        if raw.startswith("+++ "):
-            path = raw[4:]
+        if raw.startswith("+++ b/"):
+            new_path = raw[6:]
+            continue
+        if raw.startswith("--- ") or raw.startswith("+++ "):
             continue
         match = hunk_re.match(raw)
         if match:
-            new_line = int(match.group(1))
+            old_line = int(match.group(1))
+            new_line = int(match.group(2))
             continue
-        if new_line is None:
+        if old_line is None or new_line is None:
+            continue
+        if raw.startswith("\\"):
             continue
         if raw.startswith("+") and not raw.startswith("+++"):
-            lines.append(DiffLine(path, new_line, raw[1:]))
+            added.append(DiffLine(new_path, new_line, raw[1:]))
             new_line += 1
         elif raw.startswith("-") and not raw.startswith("---"):
-            continue
+            removed.append(DiffLine(old_path, old_line, raw[1:]))
+            old_line += 1
         else:
+            old_line += 1
             new_line += 1
-    return lines
+    return added, removed
 
 
-def added_lines(root: Path, args: argparse.Namespace) -> List[DiffLine]:
+def changed_lines(root: Path, args: argparse.Namespace) -> Tuple[List[DiffLine], List[DiffLine]]:
     if args.staged:
         output = git(["diff", "--cached", "--ignore-cr-at-eol", "-U0"], root).stdout
     elif args.base and args.head:
         output = git(["diff", "--ignore-cr-at-eol", "-U0", args.base, args.head], root).stdout
     else:
         output = ""
-    return parse_added_lines(output)
+    return parse_changed_lines(output)
 
 
 def read_changed_file_bytes(root: Path, path: str, args: argparse.Namespace) -> bytes:
@@ -232,22 +242,57 @@ def check_line_endings(
             )
 
 
-def check_global_dependencies(findings: List[Finding], lines: Iterable[DiffLine]) -> None:
-    pattern = re.compile(r"\b(GlobalV::|GlobalC::|PARAM(?:\.|->|::|\b))")
+GLOBAL_DEPENDENCY_RE = re.compile(r"\b(GlobalV::|GlobalC::|PARAM(?:\.|->|::|\b))")
+
+
+def is_global_dependency_check_path(path: str) -> bool:
+    if path.startswith("tools/03_code_analysis/"):
+        return False
+    return Path(path).suffix.lower() in CODE_EXTENSIONS
+
+
+def global_dependency_hits(lines: Iterable[DiffLine]) -> List[Tuple[DiffLine, int]]:
+    hits: List[Tuple[DiffLine, int]] = []
     for line in lines:
-        if line.path.startswith("tools/03_code_analysis/"):
+        if not is_global_dependency_check_path(line.path):
             continue
-        if Path(line.path).suffix.lower() not in CODE_EXTENSIONS:
-            continue
-        if pattern.search(line.content):
-            add_finding(
+        count = len(GLOBAL_DEPENDENCY_RE.findall(line.content))
+        if count:
+            hits.append((line, count))
+    return hits
+
+
+def check_global_dependencies(
+    findings: List[Finding],
+    added_lines: Iterable[DiffLine],
+    removed_lines: Iterable[DiffLine],
+) -> None:
+    added_hits = global_dependency_hits(added_lines)
+    removed_hits = global_dependency_hits(removed_lines)
+    added_count = sum(count for _, count in added_hits)
+    removed_count = sum(count for _, count in removed_hits)
+    delta = added_count - removed_count
+    if added_count == 0:
+        return
+
+    severity = BLOCK if delta > 0 else WARN
+    action = (
+        "Reduce or explicitly pass dependencies so this PR does not increase global dependency usage."
+        if delta > 0
+        else "Confirm this is a migration-neutral move or partial cleanup, and explain the remaining global dependency rationale."
+    )
+    for line, count in added_hits:
+        add_finding(
             findings,
-            "No new cross-layer globals",
-            WARN,
+            "Global dependency budget",
+            severity,
             line.path,
             line.line,
-            "Added line introduces GlobalV, GlobalC, or PARAM as a dependency.",
-            "Prefer explicit parameters or a narrow local interface. Document any required exception in the PR.",
+            (
+                f"Added line introduces {count} GlobalV/GlobalC/PARAM reference(s); "
+                f"PR total added={added_count}, removed={removed_count}, net_delta={delta}."
+            ),
+            action,
         )
 
 
@@ -518,7 +563,7 @@ def check_pr_metadata(findings: List[Finding], body: Optional[str]) -> None:
         add_finding(
             findings,
             "PR metadata completeness",
-            WARN,
+            BLOCK,
             "pull_request.body",
             None,
             "; ".join(reason_parts),
@@ -621,12 +666,12 @@ def check_documentation_warning(findings: List[Finding], changed: Sequence[str],
 def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
     findings: List[Finding] = []
     statuses, changed = changed_paths(root, args)
-    lines = added_lines(root, args)
+    lines, removed_lines = changed_lines(root, args)
     body = read_pr_body(args.event_path)
     body_text = body or ""
 
     check_line_endings(findings, root, changed, statuses, args)
-    check_global_dependencies(findings, lines)
+    check_global_dependencies(findings, lines, removed_lines)
     check_default_parameters(findings, lines)
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)
