@@ -60,6 +60,12 @@ void DiagoPPCG<T, Device>::validate_input(
         throw std::invalid_argument("PPCG: dim must not exceed ld_psi.");
     if (ethr_band.size() < static_cast<size_t>(n_band_))
         throw std::invalid_argument("PPCG: ethr_band size is smaller than nband.");
+    for (int i = 0; i < n_band_; ++i)
+        if (!std::isfinite(ethr_band[i]))
+            throw std::invalid_argument("PPCG: ethr_band contains non-finite value.");
+    for (int i = 0; i < n_dim_; ++i)
+        if (!std::isfinite(prec[i]))
+            throw std::invalid_argument("PPCG: preconditioner contains non-finite value.");
 }
 
 // =============================================================================

@@ -291,6 +291,41 @@ TEST_F(DiagoPPCGDiagonalTest, EmptyHOperatorThrows)
     );
 }
 
+TEST_F(DiagoPPCGDiagonalTest, NonFiniteInputThrows)
+{
+    std::vector<T> psi_run = psi;
+    std::vector<Real> eval(nband, 0.0);
+
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1e-12,
+        /* max_iter = */ 50,
+        /* sbsize   = */ 3,
+        /* rr_step  = */ 3,
+        /* gamma_g0 = */ false,
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
+    );
+
+    auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
+        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+
+    std::vector<double> bad_ethr = ethr;
+    bad_ethr[0] = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_THROW(
+        solver.diag(h_op, nullptr, ld, nband, n_dim,
+                    psi_run.data(), eval.data(), bad_ethr, prec.data()),
+        std::invalid_argument
+    );
+
+    std::vector<Real> bad_prec = prec;
+    bad_prec[0] = std::numeric_limits<Real>::infinity();
+    EXPECT_THROW(
+        solver.diag(h_op, nullptr, ld, nband, n_dim,
+                    psi_run.data(), eval.data(), ethr, bad_prec.data()),
+        std::invalid_argument
+    );
+}
+
 TEST(DiagoPPCGLeadingDimensionTest, BlockSubspaceWithPadding)
 {
     const int n_dim = 5;
