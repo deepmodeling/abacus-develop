@@ -194,7 +194,9 @@ void DiagoPPCG<T, Device>::project_against(
     if (basis_cols.empty() || x_cols.empty())
         return;
 
+    std::vector<T> x_l;
     std::vector<T> sx_l;
+    copy_cols(x.data(), x_cols, x_l);
     copy_cols(sx.data(), x_cols, sx_l);
 
     const int nbasis = static_cast<int>(basis_cols.size());
@@ -210,39 +212,51 @@ void DiagoPPCG<T, Device>::project_against(
     }
 
     std::vector<T> basis_l;
+    std::vector<T> sbasis_l;
     const T* basis_data = basis;
+    const T* sbasis_data = sbasis;
     if (!contiguous_basis)
     {
         copy_cols(basis, basis_cols, basis_l);
+        copy_cols(sbasis, basis_cols, sbasis_l);
         basis_data = basis_l.data();
+        sbasis_data = sbasis_l.data();
     }
 
     std::vector<T> coeff(nbasis * nx, T(0));
     gram(basis_data, sx_l.data(), nbasis, nx, coeff, nbasis);
 
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * nx > 4096)
-#endif
-    for (int jc = 0; jc < nx; ++jc)
-    {
-        const int c = x_cols[jc];
-        T* xc = x.data() + c * ld_psi_;
-        T* sxc = sx.data() + c * ld_psi_;
-        for (int ib = 0; ib < nbasis; ++ib)
-        {
-            const int bc = basis_cols[ib];
-            const T cproj = coeff[ib + jc * nbasis];
-            if (std::abs(cproj) <= std::numeric_limits<Real>::epsilon())
-                continue;
-            const T* bb = basis + bc * ld_psi_;
-            const T* sb = sbasis + bc * ld_psi_;
-            for (int ig = 0; ig < n_dim_; ++ig)
-            {
-                xc[ig] -= bb[ig] * cproj;
-                sxc[ig] -= sb[ig] * cproj;
-            }
-        }
-    }
+    const T minus_one = T(-1);
+    const T one = T(1);
+    ModuleBase::gemm_op<T, Device>()('N',
+                                     'N',
+                                     n_dim_,
+                                     nx,
+                                     nbasis,
+                                     &minus_one,
+                                     basis_data,
+                                     ld_psi_,
+                                     coeff.data(),
+                                     nbasis,
+                                     &one,
+                                     x_l.data(),
+                                     ld_psi_);
+    ModuleBase::gemm_op<T, Device>()('N',
+                                     'N',
+                                     n_dim_,
+                                     nx,
+                                     nbasis,
+                                     &minus_one,
+                                     sbasis_data,
+                                     ld_psi_,
+                                     coeff.data(),
+                                     nbasis,
+                                     &one,
+                                     sx_l.data(),
+                                     ld_psi_);
+
+    scatter_cols(x.data(), x_cols, x_l);
+    scatter_cols(sx.data(), x_cols, sx_l);
 }
 
 // =============================================================================
