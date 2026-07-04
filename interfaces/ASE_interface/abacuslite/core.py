@@ -202,8 +202,10 @@ class AbacusTemplate(CalculatorTemplate):
             The list of properties to calculate
         '''
         def normalize_keyword_value(value):
+            if isinstance(value, bool):
+                return '1' if value else '0'
             if isinstance(value, (list, tuple, set)):
-                return ' '.join(str(i) for i in value)
+                return ' '.join(normalize_keyword_value(i) for i in value)
             return str(value)
 
         param_cache_ = {
@@ -678,6 +680,26 @@ class TestAbacusCalculator(unittest.TestCase):
 
         parameters = template.get_property_keywords({'nspin': 2}, ['magmom'])
         self.assertEqual(str(parameters['nspin']), '2')
+
+    def test_property_keywords_accept_equivalent_boolean_user_parameters(self):
+        template = AbacusTemplate()
+
+        parameters = template.get_property_keywords(
+            {'cal_force': True, 'cal_stress': True},
+            ['forces', 'stress']
+        )
+
+        self.assertEqual(str(parameters['cal_force']), '1')
+        self.assertEqual(str(parameters['cal_stress']), '1')
+
+    def test_property_keywords_reject_conflicting_boolean_user_parameters(self):
+        template = AbacusTemplate()
+
+        with self.assertRaises(ValueError):
+            template.get_property_keywords({'cal_force': False}, ['forces'])
+
+        with self.assertRaises(ValueError):
+            template.get_property_keywords({'cal_stress': False}, ['stress'])
 
     def test_property_keywords_reject_conflicting_properties(self):
         template = AbacusTemplate()
