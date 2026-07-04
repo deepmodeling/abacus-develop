@@ -1,5 +1,22 @@
 #include "source_base/kernels/math_kernel_op.h"
 namespace hsolver {
+namespace {
+
+inline bool ppcg_contiguous_cols(const std::vector<int>& cols, int& first)
+{
+    if (cols.empty())
+        return false;
+
+    first = cols.front();
+    for (int j = 0; j < static_cast<int>(cols.size()); ++j)
+    {
+        if (cols[j] != first + j)
+            return false;
+    }
+    return true;
+}
+
+} // anonymous namespace
 
 // =============================================================================
 // Constructor
@@ -148,6 +165,18 @@ void DiagoPPCG<T, Device>::copy_cols(const T* src,
 {
     const int ncols = static_cast<int>(cols.size());
     dst.resize(ld_psi_ * ncols);
+    if (ncols == 0)
+        return;
+
+    int first = 0;
+    if (ppcg_contiguous_cols(cols, first))
+    {
+        std::copy(src + first * ld_psi_,
+                  src + (first + ncols) * ld_psi_,
+                  dst.begin());
+        return;
+    }
+
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (ld_psi_ * ncols > 4096)
 #endif
@@ -169,6 +198,18 @@ void DiagoPPCG<T, Device>::scatter_cols(
     const std::vector<T>& src) const
 {
     const int ncols = static_cast<int>(cols.size());
+    if (ncols == 0)
+        return;
+
+    int first = 0;
+    if (ppcg_contiguous_cols(cols, first))
+    {
+        std::copy(src.begin(),
+                  src.begin() + ld_psi_ * ncols,
+                  dst + first * ld_psi_);
+        return;
+    }
+
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (ld_psi_ * ncols > 4096)
 #endif
@@ -197,16 +238,8 @@ void DiagoPPCG<T, Device>::project_against(
     const int nbasis = static_cast<int>(basis_cols.size());
     const int nx = static_cast<int>(x_cols.size());
 
-    bool contiguous_x = true;
-    const int x_first = x_cols.front();
-    for (int i = 0; i < nx; ++i)
-    {
-        if (x_cols[i] != x_first + i)
-        {
-            contiguous_x = false;
-            break;
-        }
-    }
+    int x_first = 0;
+    const bool contiguous_x = ppcg_contiguous_cols(x_cols, x_first);
 
     std::vector<T> x_l;
     std::vector<T> sx_l;
@@ -220,16 +253,9 @@ void DiagoPPCG<T, Device>::project_against(
         sx_data = sx_l.data();
     }
 
-    bool contiguous_basis = true;
-    const int basis_first = basis_cols.front();
-    for (int i = 0; i < nbasis; ++i)
-    {
-        if (basis_cols[i] != basis_first + i)
-        {
-            contiguous_basis = false;
-            break;
-        }
-    }
+    int basis_first = 0;
+    const bool contiguous_basis =
+        ppcg_contiguous_cols(basis_cols, basis_first);
 
     std::vector<T> basis_l;
     std::vector<T> sbasis_l;
