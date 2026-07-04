@@ -69,7 +69,7 @@ decisions.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | Basic text format | LF line endings | phase-one mechanical | hook + CI | medium | block | full changed text file | `.bat` and `.cmd` keep CRLF |
 | Language baseline | C++11 compatibility | build/toolchain | CI | high | block | build/static tooling | Actual compiler/toolchain result wins |
-| New global dependency | Added `GlobalV`/`GlobalC`/`PARAM` as cross-layer control | phase-one mechanical + AI review | CI + AI review | high | block | added code lines | Historical untouched usage and documentation mentions are not blocked |
+| Global dependency budget | Net increase of `GlobalV`/`GlobalC`/`PARAM` references in code diff | phase-one mechanical + AI review | CI + AI review | high | block on net increase, warn on non-increasing added usage | added and removed code lines | Historical untouched usage and documentation mentions are not blocked; migration-neutral moves require reviewer rationale |
 | New default parameter | Header declaration adds a default argument | phase-one mechanical + AI review | CI + AI review | high | block | header diff | High misuse risk |
 | `.hpp` propagation | New `.hpp` or header includes `.hpp` | phase-one mechanical warning | CI + AI review | medium | warn | new files and added includes | Exception can be recorded in PR |
 | Header dependency growth | Header diff adds includes | phase-one mechanical warning + AI review | CI + AI review | medium | warn | added header includes | Necessity is semantic and not mechanically decided |
@@ -96,6 +96,13 @@ reviewable rationale or cleanup, but they do not become blockers without an
 explicit governance change. For header include warnings, the rationale should
 state whether the header needs a complete type, for example because it owns a
 value member rather than a pointer or reference.
+
+For global dependencies, the mechanical checker uses a PR-level budget during
+the legacy migration period. A PR blocks only when the number of code references
+to `GlobalV`, `GlobalC`, or `PARAM` increases after accounting for deleted
+references. If a PR adds global references while deleting at least as many
+elsewhere, the checker warns instead of blocking; reviewers should confirm the
+change is a migration-neutral move or part of a cleanup path.
 
 ## Automation Responsibilities
 

@@ -15,6 +15,10 @@ reviews:
         Focus on newly introduced GlobalV/GlobalC/PARAM dependencies, default
         parameters in headers, module placement, CMakeLists.txt linkage, C++11
         compatibility, and focused tests for behavior changes.
+        During the legacy global-state migration period, treat a net increase in
+        GlobalV/GlobalC/PARAM code references as blocking, and treat
+        migration-neutral added usage as reviewer-visible warnings requiring
+        reason, scope, risk, and cleanup rationale.
     - path: "source/source_io/module_parameter/**"
       instructions: |
         Treat INPUT parameter metadata, parsing, defaults, descriptions, and
