@@ -30,9 +30,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     w_.assign(sz, T(0));
     sw_.assign(sz, T(0));
     hw_.assign(sz, T(0));
-    p_.assign(sz, T(0));
-    sp_.assign(sz, T(0));
-    hp_.assign(sz, T(0));
+    p_.clear();
+    sp_.clear();
+    hp_.clear();
     rr_psi_.resize(sz);
     rr_spsi_.resize(sz);
     rr_hpsi_.resize(sz);
