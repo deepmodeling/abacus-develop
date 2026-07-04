@@ -114,7 +114,8 @@ private:
         return row + col * ld;
     }
 
-    void validate_input(const T* psi_in, const Real* eigenvalue_in,
+    void validate_input(const HPsiFunc& hpsi_func,
+                        const T* psi_in, const Real* eigenvalue_in,
                         const std::vector<double>& ethr_band,
                         const Real* prec) const;
 

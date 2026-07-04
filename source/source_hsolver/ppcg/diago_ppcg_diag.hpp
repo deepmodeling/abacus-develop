@@ -18,7 +18,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     n_band_ = nband;
     n_dim_ = dim;
 
-    validate_input(psi_in, eigenvalue_in, ethr_band, prec);
+    validate_input(hpsi_func, psi_in, eigenvalue_in, ethr_band, prec);
     spsi_func_ = spsi_func;
 
     // Allocate working storage.

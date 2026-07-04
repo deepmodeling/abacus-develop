@@ -42,11 +42,14 @@ DiagoPPCG<T, Device>::DiagoPPCG(const Real& diag_thr,
 // =============================================================================
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::validate_input(
+    const HPsiFunc& hpsi_func,
     const T* psi_in,
     const Real* eigenvalue_in,
     const std::vector<double>& ethr_band,
     const Real* prec) const
 {
+    if (!hpsi_func)
+        throw std::invalid_argument("PPCG: H operator is empty.");
     if (psi_in == nullptr || eigenvalue_in == nullptr)
         throw std::invalid_argument("PPCG: psi/eigenvalue pointer is null.");
     if (prec == nullptr)

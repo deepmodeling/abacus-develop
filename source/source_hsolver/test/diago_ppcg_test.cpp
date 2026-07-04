@@ -269,6 +269,28 @@ TEST_F(DiagoPPCGDiagonalTest, ConjugateGradientFallback)
         << "Diagonal CG fallback: too many iterations";
 }
 
+TEST_F(DiagoPPCGDiagonalTest, EmptyHOperatorThrows)
+{
+    std::vector<T>    psi_run = psi;
+    std::vector<Real> eval(nband, 0.0);
+
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1e-12,
+        /* max_iter = */ 50,
+        /* sbsize   = */ 3,
+        /* rr_step  = */ 3,
+        /* gamma_g0 = */ false,
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
+    );
+
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU>::HPsiFunc h_op;
+    EXPECT_THROW(
+        solver.diag(h_op, nullptr, ld, nband, n_dim,
+                    psi_run.data(), eval.data(), ethr, prec.data()),
+        std::invalid_argument
+    );
+}
+
 TEST(DiagoPPCGLeadingDimensionTest, BlockSubspaceWithPadding)
 {
     const int n_dim = 5;
