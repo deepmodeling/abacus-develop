@@ -871,7 +871,7 @@ protected:
     {
         n_dim = 6;
         nband = 3;
-        ld = n_dim;
+        ld = n_dim + 2;  // exercise custom S with padded leading dimension
 
         // Tridiagonal H
         H_mat.assign(n_dim * n_dim, T(0));
@@ -888,11 +888,6 @@ protected:
             S_mat[i + i * n_dim] = T(s_diag[i], 0);
 
         prec.assign(n_dim, 2.0);
-
-        // For non-trivial S, exact eigenvalues are harder analytically.
-        // We skip the absolute eigenvalue comparison and instead verify
-        // the generalized eigenvalue via residual: ||Hψ - εSψ|| < tol.
-        exact = {0.0, 0.0, 0.0};  // placeholder — not checked for WithS
 
         ethr.assign(nband, 1e-8);
 
@@ -928,7 +923,6 @@ protected:
     std::vector<T> S_mat;
     std::vector<Real> s_diag;
     std::vector<Real> prec;
-    std::vector<Real> exact;
     std::vector<double> ethr;
     std::vector<T> psi;
 };
