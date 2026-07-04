@@ -1112,13 +1112,13 @@ Use case: When experimental or high-level theoretical results suggest that the S
     }
     {
         Input_Item item("pw_diag_ndim");
-        item.annotation = "dimension of workspace for Davidson diagonalization";
+        item.annotation = "dimension of workspace for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
+        item.description = "Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the PPCG block size/Rayleigh-Ritz interval for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
         item.default_value = "4";
         item.unit = "";
-        item.availability = "";
+        item.availability = "basis_type==pw, ks_solver==dav/dav_subspace/ppcg";
         read_sync_int(input.pw_diag_ndim);
         this->add_item(item);
     }
