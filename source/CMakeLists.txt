@@ -471,7 +471,7 @@ add_subdirectory(source_relax)
 add_subdirectory(source_lcao/module_ri)
 add_subdirectory(source_io/module_parameter)
 add_subdirectory(source_lcao/module_lr)
-add_subdirectory(source_lcao/module_rdmft)
+add_subdirectory(source_lcao/module_rdmft) # add by jghan
 
 add_library(
   driver

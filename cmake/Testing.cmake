@@ -1,5 +1,5 @@
 # =============================================================================
-# SeSetup unit-test dependencies and the AddTest helper
+# Setup unit-test dependencies and the AddTest helper
 # ==============================================================================
 
 # include_guard(GLOBAL)
