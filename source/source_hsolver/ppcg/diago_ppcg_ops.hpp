@@ -194,13 +194,32 @@ void DiagoPPCG<T, Device>::project_against(
     if (basis_cols.empty() || x_cols.empty())
         return;
 
-    std::vector<T> x_l;
-    std::vector<T> sx_l;
-    copy_cols(x.data(), x_cols, x_l);
-    copy_cols(sx.data(), x_cols, sx_l);
-
     const int nbasis = static_cast<int>(basis_cols.size());
     const int nx = static_cast<int>(x_cols.size());
+
+    bool contiguous_x = true;
+    const int x_first = x_cols.front();
+    for (int i = 0; i < nx; ++i)
+    {
+        if (x_cols[i] != x_first + i)
+        {
+            contiguous_x = false;
+            break;
+        }
+    }
+
+    std::vector<T> x_l;
+    std::vector<T> sx_l;
+    T* x_data = x.data() + x_first * ld_psi_;
+    T* sx_data = sx.data() + x_first * ld_psi_;
+    if (!contiguous_x)
+    {
+        copy_cols(x.data(), x_cols, x_l);
+        copy_cols(sx.data(), x_cols, sx_l);
+        x_data = x_l.data();
+        sx_data = sx_l.data();
+    }
+
     bool contiguous_basis = true;
     for (int i = 0; i < nbasis; ++i)
     {
@@ -224,7 +243,7 @@ void DiagoPPCG<T, Device>::project_against(
     }
 
     std::vector<T> coeff(nbasis * nx, T(0));
-    gram(basis_data, sx_l.data(), nbasis, nx, coeff, nbasis);
+    gram(basis_data, sx_data, nbasis, nx, coeff, nbasis);
 
     const T minus_one = T(-1);
     const T one = T(1);
@@ -239,7 +258,7 @@ void DiagoPPCG<T, Device>::project_against(
                                      coeff.data(),
                                      nbasis,
                                      &one,
-                                     x_l.data(),
+                                     x_data,
                                      ld_psi_);
     ModuleBase::gemm_op<T, Device>()('N',
                                      'N',
@@ -252,11 +271,14 @@ void DiagoPPCG<T, Device>::project_against(
                                      coeff.data(),
                                      nbasis,
                                      &one,
-                                     sx_l.data(),
+                                     sx_data,
                                      ld_psi_);
 
-    scatter_cols(x.data(), x_cols, x_l);
-    scatter_cols(sx.data(), x_cols, sx_l);
+    if (!contiguous_x)
+    {
+        scatter_cols(x.data(), x_cols, x_l);
+        scatter_cols(sx.data(), x_cols, sx_l);
+    }
 }
 
 // =============================================================================
