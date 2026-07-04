@@ -69,7 +69,6 @@ template <typename T, typename Device>
 void DiagoPPCG<T, Device>::update_polak_ribiere(
     const std::vector<T>& grad,
     std::vector<T>& p,
-    std::vector<T>& grad_old,
     std::vector<T>& z_old,
     std::vector<Real>& beta_denom,
     const Real* prec) const
@@ -142,7 +141,6 @@ void DiagoPPCG<T, Device>::update_polak_ribiere(
 
     // Persist state for next iteration.
     z_old.swap(z_new);
-    grad_old = grad;
 }
 
 // ---------------------------------------------------------------------------

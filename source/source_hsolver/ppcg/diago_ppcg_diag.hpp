@@ -175,10 +175,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         orth_gradient(psi_in, spsi_.data(), grad);
 
         std::vector<T> p;
-        grad_old_.clear();
         z_old_.clear();
         beta_denom_.clear();
-        update_polak_ribiere(grad, p, grad_old_, z_old_, beta_denom_, prec);
+        update_polak_ribiere(grad, p, z_old_, beta_denom_, prec);
 
         // CG iteration loop.
         std::vector<T> hp;
@@ -217,7 +216,6 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 // Reset PR state: the rotation changes the basis,
                 // so old gradients / search directions are invalid.
                 p.clear();
-                grad_old_.clear();
                 z_old_.clear();
                 beta_denom_.clear();
                 record_residual(iter, "rayleigh_ritz");
@@ -275,7 +273,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             orth_gradient(psi_in, spsi_.data(), grad);
 
             // Polak-Ribiere update.
-            update_polak_ribiere(grad, p, grad_old_, z_old_, beta_denom_, prec);
+            update_polak_ribiere(grad, p, z_old_, beta_denom_, prec);
 
             // Convergence check.
             bool all_converged = true;

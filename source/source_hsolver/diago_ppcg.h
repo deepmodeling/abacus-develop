@@ -106,7 +106,6 @@ private:
     std::vector<Real> rr_eval_;
 
     // Polak-Ribiere state (CONJUGATE_GRADIENT strategy)
-    std::vector<T> grad_old_;   // previous gradient
     std::vector<T> z_old_;      // previous preconditioned residual
     std::vector<Real> beta_denom_;
 
@@ -209,7 +208,6 @@ private:
 
     void update_polak_ribiere(const std::vector<T>& grad,
                               std::vector<T>& p,
-                              std::vector<T>& grad_old,
                               std::vector<T>& z_old,
                               std::vector<Real>& beta_denom,
                               const Real* prec) const;
