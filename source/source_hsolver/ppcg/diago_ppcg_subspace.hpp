@@ -49,9 +49,9 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     const int l = static_cast<int>(cols.size());
     const int nblk = use_p ? 3 : 2;
     const int dim = nblk * l;
-    subspace.k.assign(dim * dim, T(0));
-    subspace.m.assign(dim * dim, T(0));
-    subspace.eval.assign(dim, static_cast<Real>(0));
+    subspace.k.resize(dim * dim);
+    subspace.m.resize(dim * dim);
+    subspace.eval.resize(dim);
     subspace.w_scale.assign(l, static_cast<Real>(1));
     subspace.p_scale.assign(l, static_cast<Real>(1));
 
@@ -148,9 +148,9 @@ void DiagoPPCG<T, Device>::build_small_subspace(
         }
     };
 
-    std::vector<T> basis(ld_psi_ * dim, T(0));
-    std::vector<T> hbasis(ld_psi_ * dim, T(0));
-    std::vector<T> sbasis(ld_psi_ * dim, T(0));
+    std::vector<T> basis(ld_psi_ * dim);
+    std::vector<T> hbasis(ld_psi_ * dim);
+    std::vector<T> sbasis(ld_psi_ * dim);
     copy_block(psi_l, 0, basis);
     copy_block(hpsi_l, 0, hbasis);
     copy_block(spsi_l, 0, sbasis);
@@ -281,7 +281,7 @@ void DiagoPPCG<T, Device>::update_one_block(
                           const std::vector<T>& c,
                           std::vector<T>& basis)
     {
-        basis.assign(ld_psi_ * dim, T(0));
+        basis.resize(ld_psi_ * dim);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (ld_psi_ * l > 4096)
 #endif
