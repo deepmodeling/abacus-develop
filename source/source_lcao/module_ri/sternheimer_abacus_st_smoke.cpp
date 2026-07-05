@@ -10,6 +10,7 @@
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_lcao/module_ri/exx_abfs-construct_orbs.h"
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
+#include "source_lcao/module_ri/sternheimer_delta.h"
 #include "source_lcao/module_ri/sternheimer_fd_solver.h"
 #include "source_lcao/module_ri/sternheimer_rpa.h"
 
@@ -353,6 +354,48 @@ std::vector<SternheimerABFGridChannel> build_abfs_ccp_grid_channels(const UnitCe
     return sample_sternheimer_abf_grid_channels(radials_by_type, atom_types, atom_positions, grid, max_channels);
 }
 
+std::vector<SternheimerFDHamiltonian::Vector> build_lcao_candidate_grid_orbitals(
+    const UnitCell& ucell,
+    const SternheimerFDHamiltonian::Grid& grid)
+{
+    LCAO_Orbitals orb;
+    read_sternheimer_orbitals(ucell, orb);
+    auto lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, GlobalC::exx_info.info_ri.kmesh_times);
+    Exx_Abfs::Construct_Orbs::filter_empty_orbs(lcaos);
+    const auto radials_by_type = make_sternheimer_radial_perturbations_from_orbitals(lcaos);
+
+    std::vector<int> atom_types;
+    std::vector<ModuleBase::Vector3<double>> atom_positions;
+    atom_types.reserve(ucell.nat);
+    atom_positions.reserve(ucell.nat);
+    for (int it = 0; it != ucell.ntype; ++it)
+    {
+        const Atom& atom = ucell.atoms[it];
+        for (int ia = 0; ia != atom.na; ++ia)
+        {
+            atom_types.push_back(it);
+            atom_positions.push_back(atom.tau[ia] * ucell.lat0);
+        }
+    }
+
+    const std::vector<SternheimerABFGridChannel> channels
+        = sample_sternheimer_abf_grid_channels(radials_by_type, atom_types, atom_positions, grid, -1);
+    std::vector<SternheimerFDHamiltonian::Vector> candidates;
+    candidates.reserve(channels.size());
+    for (const SternheimerABFGridChannel& channel: channels)
+    {
+        SternheimerFDHamiltonian::Vector candidate(
+            channel.potential_r.size(),
+            SternheimerFDHamiltonian::Complex(0.0, 0.0));
+        for (std::size_t ir = 0; ir != channel.potential_r.size(); ++ir)
+        {
+            candidate[ir] = SternheimerFDHamiltonian::Complex(channel.potential_r[ir], 0.0);
+        }
+        candidates.push_back(std::move(candidate));
+    }
+    return candidates;
+}
+
 std::vector<std::vector<double>> collect_channel_potentials(const std::vector<SternheimerABFGridChannel>& channels)
 {
     std::vector<std::vector<double>> potentials;
@@ -679,6 +722,7 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
         const int nfreq = PARAM.inp.sternheimer_nfreq;
         const std::string frequency_grid_file = PARAM.inp.sternheimer_frequency_grid_file;
+        const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
 
         const std::vector<double> eigenvalues_ry = eigenvalues_ry_from_elec_state(elec_state, 0);
         const std::vector<double> occupations = occupations_from_elec_state(elec_state, 0);
@@ -717,6 +761,30 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         const std::vector<std::vector<double>> potentials = collect_channel_potentials(channels);
         const int num_channels = static_cast<int>(channels.size());
 
+        SternheimerDeltaSubspace delta_subspace;
+        if (use_delta_sternheimer)
+        {
+            const std::vector<SternheimerFDHamiltonian::Vector> candidate_orbitals
+                = build_lcao_candidate_grid_orbitals(ucell, grid_data.grid);
+            if (candidate_orbitals.empty())
+            {
+                throw std::runtime_error("Sternheimer delta mode found no sampled LCAO candidate orbitals.");
+            }
+
+            SternheimerDeltaSubspaceOptions delta_options;
+            delta_options.max_virtual_states = PARAM.inp.sternheimer_delta_max_states;
+            delta_options.norm_tolerance = PARAM.inp.sternheimer_delta_norm_tol;
+            delta_subspace = build_delta_sternheimer_subspace(hamiltonian,
+                                                              occupied,
+                                                              candidate_orbitals,
+                                                              grid_data.volume_element,
+                                                              delta_options);
+            if (delta_subspace.virtual_states.empty())
+            {
+                throw std::runtime_error("Sternheimer delta mode produced no fixed virtual states.");
+            }
+        }
+
         SternheimerRPA::SolverOptions solver_options;
         solver_options.max_iter = solver_max_iter;
         solver_options.residual_tol = solver_tolerance;
@@ -752,26 +820,57 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                                                             .potential_r,
                                                                         states.wavefunctions[ib],
                                                                         rhs);
-                    const SternheimerFDLinearResponse response
-                        = solve_sternheimer_fd_linear_response(hamiltonian,
-                                                               occupied,
-                                                               states.eigenvalues[ib],
-                                                               rhs,
-                                                               omega_ry,
-                                                               grid_data.volume_element,
-                                                               solver_options);
+                    SternheimerFDHamiltonian::Vector delta_wavefunction;
+                    SternheimerRPA::SolverResult solver_result;
+                    double equation_residual_norm = 0.0;
+                    if (use_delta_sternheimer)
+                    {
+                        const std::vector<SternheimerFDHamiltonian::Complex> perturbation_matrix_elements
+                            = delta_sternheimer_perturbation_matrix_elements(
+                                delta_subspace.virtual_states,
+                                channels[static_cast<std::size_t>(ichannel)].potential_r,
+                                states.wavefunctions[ib],
+                                grid_data.volume_element);
+                        const SternheimerDeltaLinearResponse response
+                            = solve_delta_sternheimer_linear_response(hamiltonian,
+                                                                      occupied,
+                                                                      states.eigenvalues[ib],
+                                                                      rhs,
+                                                                      delta_subspace.virtual_states,
+                                                                      perturbation_matrix_elements,
+                                                                      omega_ry,
+                                                                      grid_data.volume_element,
+                                                                      solver_options);
+                        delta_wavefunction = response.response.reconstructed_wavefunction;
+                        solver_result = response.solver;
+                        equation_residual_norm = response.residual_norm;
+                    }
+                    else
+                    {
+                        const SternheimerFDLinearResponse response
+                            = solve_sternheimer_fd_linear_response(hamiltonian,
+                                                                   occupied,
+                                                                   states.eigenvalues[ib],
+                                                                   rhs,
+                                                                   omega_ry,
+                                                                   grid_data.volume_element,
+                                                                   solver_options);
+                        delta_wavefunction = response.delta_wavefunction;
+                        solver_result = response.solver;
+                        equation_residual_norm = response.residual_norm;
+                    }
                     SternheimerRPA::accumulate_chi0_branch_column(potentials,
                                                                   states.wavefunctions[ib],
-                                                                  response.delta_wavefunction,
+                                                                  delta_wavefunction,
                                                                   grid_data.volume_element,
                                                                   occupation,
                                                                   ichannel,
                                                                   chi0_branch);
-                    all_converged = all_converged && response.solver.converged;
+                    all_converged = all_converged && solver_result.converged;
                     ++solved_equations;
                     max_solver_relative_residual
-                        = std::max(max_solver_relative_residual, response.solver.relative_residual);
-                    max_equation_residual_norm = std::max(max_equation_residual_norm, response.residual_norm);
+                        = std::max(max_solver_relative_residual, solver_result.relative_residual);
+                    max_equation_residual_norm = std::max(max_equation_residual_norm, equation_residual_norm);
                 }
             }
 
@@ -818,6 +917,15 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         out << "ccp_rmesh_times " << ccp_rmesh_times << '\n';
         out << "occupied_bands " << occupied.size() << '\n';
         out << "abfs_channels " << num_channels << '\n';
+        out << "sternheimer_delta " << (use_delta_sternheimer ? "yes" : "no") << '\n';
+        if (use_delta_sternheimer)
+        {
+            out << "sternheimer_delta_max_states " << PARAM.inp.sternheimer_delta_max_states << '\n';
+            out << "sternheimer_delta_norm_tol " << PARAM.inp.sternheimer_delta_norm_tol << '\n';
+            out << "sternheimer_delta_virtual_states " << delta_subspace.virtual_states.size() << '\n';
+            out << "sternheimer_delta_accepted_candidates " << delta_subspace.accepted_candidates << '\n';
+            out << "sternheimer_delta_discarded_candidates " << delta_subspace.discarded_candidates << '\n';
+        }
         out << "solved_equations " << solved_equations << '\n';
         out << "all_converged " << (all_converged ? "yes" : "no") << '\n';
         out << "max_solver_relative_residual " << max_solver_relative_residual << '\n';

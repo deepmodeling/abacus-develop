@@ -1851,6 +1851,45 @@ TEST_F(InputTest, Item_test2)
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.sternheimer_frequency_grid_file, "fixed_frequency_grid.dat");
     }
+    { // sternheimer_delta
+        auto it = find_label("sternheimer_delta", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_FALSE(param.input.sternheimer_delta);
+
+        it->second.str_values = {"true"};
+        it->second.read_value(it->second, param);
+        EXPECT_TRUE(param.input.sternheimer_delta);
+    }
+    { // sternheimer_delta_max_states
+        auto it = find_label("sternheimer_delta_max_states", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.sternheimer_delta_max_states, 0);
+
+        it->second.str_values = {"12"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.sternheimer_delta_max_states, 12);
+
+        param.input.sternheimer_delta_max_states = -1;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // sternheimer_delta_norm_tol
+        auto it = find_label("sternheimer_delta_norm_tol", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_DOUBLE_EQ(param.input.sternheimer_delta_norm_tol, 1.0e-10);
+
+        it->second.str_values = {"1e-8"};
+        it->second.read_value(it->second, param);
+        EXPECT_DOUBLE_EQ(param.input.sternheimer_delta_norm_tol, 1.0e-8);
+
+        param.input.sternheimer_delta_norm_tol = -1.0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
     { // berry_phase
         auto it = find_label("berry_phase", readinput.input_lists);
         param.input.berry_phase = true;
