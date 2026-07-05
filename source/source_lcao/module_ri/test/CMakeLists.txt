@@ -32,6 +32,11 @@ AddTest(
   SOURCES sternheimer_fd_solver_test.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_rpa.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_delta_test
+  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
+  SOURCES sternheimer_delta_test.cpp ../sternheimer_delta.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_rpa.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_dft_zero_order_test
   LIBS ${math_libs}
   SOURCES sternheimer_dft_zero_order_test.cpp ../sternheimer_dft_zero_order.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_rpa.cpp
