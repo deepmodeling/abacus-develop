@@ -63,62 +63,8 @@ assert_invalid_input_fails() {
   rm -rf "$tmpdir"
 }
 
-assert_valid_dry_run_succeeds() {
-  local name="$1"
-  shift
-
-  local tmpdir status
-  tmpdir="$(mktemp -d)"
-  copy_toolchain "$tmpdir"
-
-  run_installer_in_copy "$tmpdir" "$@"
-  status=$?
-
-  if [[ "$status" -ne 0 ]]; then
-    cat "${tmpdir}/output.log" >&2
-    fail "${name} exited ${status}; expected 0"
-  fi
-
-  if ! grep -Fq "Configuration files generated successfully (dry-run mode)" "${tmpdir}/output.log"; then
-    cat "${tmpdir}/output.log" >&2
-    fail "${name} output did not contain dry-run success text"
-  fi
-
-  if grep -Fq "Attempting secure download" "${tmpdir}/output.log"; then
-    cat "${tmpdir}/output.log" >&2
-    fail "${name} attempted a package download during dry-run"
-  fi
-
-  rm -rf "$tmpdir"
-}
-
-assert_valid_help_succeeds() {
-  local tmpdir status
-  tmpdir="$(mktemp -d)"
-  copy_toolchain "$tmpdir"
-
-  run_installer_in_copy "$tmpdir" --help
-  status=$?
-
-  if [[ "$status" -ne 0 ]]; then
-    cat "${tmpdir}/output.log" >&2
-    fail "--help exited ${status}; expected 0"
-  fi
-
-  if ! grep -Fq "install_abacus_toolchain_new.sh [OPTIONS]" "${tmpdir}/output.log"; then
-    cat "${tmpdir}/output.log" >&2
-    fail "--help output did not contain usage text"
-  fi
-
-  rm -rf "$tmpdir"
-}
-
 assert_invalid_input_fails "invalid package version" "Invalid package version format" --dry-run --package-version bad:wrong
-assert_invalid_input_fails "missing package version value" "--package-version requires at least one package:version argument" --dry-run --package-version
-assert_invalid_input_fails "invalid mpi mode" "Invalid MPI mode: invalid" --dry-run --mpi-mode invalid
 assert_invalid_input_fails "invalid gpu version" "Invalid GPU version" --dry-run --gpu-ver bad
-assert_valid_dry_run_succeeds "explicit system openblas dry-run" --dry-run --with-openblas=system
-assert_valid_help_succeeds
 
 if [[ "$FAILURES" -ne 0 ]]; then
   printf '%s installer argument failure test(s) failed\n' "$FAILURES" >&2

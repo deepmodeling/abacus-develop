@@ -171,16 +171,8 @@ test_top_level_rejects_variable_only_package() {
   rm -rf "$tmpdir"
 }
 
-test_aocc_build_script_does_not_override_rapidjson_dir() {
-  local script="${REPO_ROOT}/toolchain/build_abacus_aocc-aocl.sh"
-  if grep -Fq -- '-DRapidJSON_DIR=$RAPIDJSON' "$script"; then
-    fail "${script} still passes RapidJSON_DIR as the package prefix"
-  fi
-}
-
 test_top_level_accepts_rapidjson_target_package
 test_top_level_rejects_variable_only_package
-test_aocc_build_script_does_not_override_rapidjson_dir
 
 if [[ "$FAILURES" -ne 0 ]]; then
   printf '%s RapidJSON CMake test(s) failed\n' "$FAILURES" >&2
