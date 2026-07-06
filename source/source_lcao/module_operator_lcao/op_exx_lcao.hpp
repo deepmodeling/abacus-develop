@@ -170,7 +170,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
             return true;
         };
 
-        if (PARAM.inp.init_chg == "dm")
+        if (PARAM.inp.init_chg == "dm" || PARAM.inp.init_chg == "dm_no_renormalize")
         {
             // 1. cal Cs, Vs
             if (GlobalC::exx_info.info_ri.real_number)

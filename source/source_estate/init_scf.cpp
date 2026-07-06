@@ -17,7 +17,7 @@ void init_scf(const UnitCell& ucell,
     pelec->charge->set_rho_core(ucell, strucfac, numeric);
 
     //! renormalize the charge density
-    if(PARAM.inp.init_chg != "dm")
+    if(PARAM.inp.init_chg != "dm_no_renormalize")
     {
         pelec->charge->renormalize_rho();
     }
