@@ -256,6 +256,8 @@ void DiagoPPCG<T, Device>::project_against(
     T* sx_data = sx.data() + x_first * ld_psi_;
     if (!contiguous_x)
     {
+        x_l.reserve(ld_psi_ * nx);
+        sx_l.reserve(ld_psi_ * nx);
         copy_cols(x.data(), x_cols, x_l);
         copy_cols(sx.data(), x_cols, sx_l);
         x_data = x_l.data();
@@ -272,6 +274,8 @@ void DiagoPPCG<T, Device>::project_against(
     const T* sbasis_data = sbasis + basis_first * ld_psi_;
     if (!contiguous_basis)
     {
+        basis_l.reserve(ld_psi_ * nbasis);
+        sbasis_l.reserve(ld_psi_ * nbasis);
         copy_cols(basis, basis_cols, basis_l);
         copy_cols(sbasis, basis_cols, sbasis_l);
         basis_data = basis_l.data();
