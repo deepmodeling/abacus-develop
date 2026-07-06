@@ -1,8 +1,5 @@
 #include "source_base/parallel_reduce.h"
 
-#include <cstdlib>
-#include <fstream>
-
 namespace hsolver {
 namespace {
 

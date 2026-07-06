@@ -16,9 +16,12 @@
 
 #include <gtest/gtest.h>
 #include <chrono>
+#include <cstdlib>
 #include <cmath>
 #include <cstdio>
+#include <fstream>
 #include <random>
+#include <string>
 #include <vector>
 #include <complex>
 
@@ -142,6 +145,51 @@ TEST_F(DiagoPPCGTridiagTest, BlockSubspace)
     }
     EXPECT_LE(avg_iter, static_cast<double>(100))
         << "Tridiag BLOCK: too many iterations";
+}
+
+TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
+{
+    const char* env_name = "ABACUS_PPCG_RESIDUAL_TRACE";
+    const char* old_env = std::getenv(env_name);
+    const bool had_old_env = old_env != nullptr;
+    const std::string old_env_value = had_old_env ? old_env : "";
+    const std::string trace_path = "ppcg_residual_trace_test.csv";
+    std::remove(trace_path.c_str());
+    ASSERT_EQ(::setenv(env_name, trace_path.c_str(), 1), 0);
+
+    std::vector<T> psi_run = psi;
+    std::vector<Real> eval(nband, 0.0);
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
+        /* diag_thr = */ 1e-12,
+        /* max_iter = */ 100,
+        /* sbsize   = */ 4,
+        /* rr_step  = */ 4,
+        /* gamma_g0 = */ false,
+        hsolver::PpcgStrategy::BLOCK_SUBSPACE
+    );
+
+    auto h_op = [this](T* in, T* out, int ld_in, int ncol) {
+        dense_h_multiply(H_mat.data(), n_dim, in, out, ld_in, ncol);
+    };
+
+    solver.diag(h_op, nullptr, ld, nband, n_dim,
+                psi_run.data(), eval.data(), ethr, prec.data());
+
+    if (had_old_env)
+        ASSERT_EQ(::setenv(env_name, old_env_value.c_str(), 1), 0);
+    else
+        ASSERT_EQ(::unsetenv(env_name), 0);
+
+    std::ifstream trace(trace_path);
+    ASSERT_TRUE(trace.good());
+    std::string header;
+    std::string first_record;
+    std::getline(trace, header);
+    std::getline(trace, first_record);
+    EXPECT_EQ(header, "iteration,stage,max_residual");
+    EXPECT_NE(first_record.find("initial_rr"), std::string::npos);
+    trace.close();
+    std::remove(trace_path.c_str());
 }
 
 // =============================================================================
