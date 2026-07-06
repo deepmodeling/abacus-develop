@@ -577,6 +577,7 @@ In general, the convergence of the Broyden method is slightly faster than that o
 * 0.4: nspin=2 and nspin=4
 * 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
 * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 < mixing_beta < 0.1.
+A progressive tuning strategy might help, for example, 0.4 -> 0.1 -> 0.025.
 
 Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
 
