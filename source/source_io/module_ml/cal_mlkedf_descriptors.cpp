@@ -4,7 +4,7 @@ namespace ModuleIO
 {
 
 void Cal_MLKEDF_Descriptors::set_para(
-    const int &nx,
+    const int &nrxx,
     const double &nelec, 
     const double &tf_weight, 
     const double &vw_weight,
@@ -23,7 +23,7 @@ void Cal_MLKEDF_Descriptors::set_para(
     std::ostream& ofs_running
 )
 {
-    this->nx = nx;
+    this->nrxx = nrxx;
     this->nkernel = nkernel;
     this->chi_p = chi_p;
     this->chi_q = chi_q;
@@ -235,7 +235,7 @@ void Cal_MLKEDF_Descriptors::divergence(double ** pinput, const ModulePW::PW_Bas
 {
     std::complex<double> *recipContainer = new std::complex<double>[pw_rho->npw];
     std::complex<double> img(0.0, 1.0);
-    ModuleBase::GlobalFunc::ZEROS(routput, this->nx);
+    ModuleBase::GlobalFunc::ZEROS(routput, this->nrxx);
     for (int i = 0; i < 3; ++i)
     {
         pw_rho->real2recip(pinput[i], recipContainer);
@@ -251,7 +251,7 @@ void Cal_MLKEDF_Descriptors::divergence(double ** pinput, const ModulePW::PW_Bas
 
 void Cal_MLKEDF_Descriptors::tanh(std::vector<double> &pinput, std::vector<double> &routput, double chi)
 {
-    for (int i = 0; i < this->nx; ++i)
+    for (int i = 0; i < this->nrxx; ++i)
     {
         routput[i] = std::tanh(pinput[i] * chi);
     }
@@ -264,7 +264,7 @@ double Cal_MLKEDF_Descriptors::dtanh(double tanhx, double chi)
 
 void Cal_MLKEDF_Descriptors::getGamma(const double * const *prho, std::vector<double> &rgamma)
 {
-    for(int ir = 0; ir < this->nx; ++ir)
+    for(int ir = 0; ir < this->nrxx; ++ir)
     {
         rgamma[ir] = std::pow(prho[0][ir]/this->rho0, 1./3.);
     }
@@ -272,7 +272,7 @@ void Cal_MLKEDF_Descriptors::getGamma(const double * const *prho, std::vector<do
 
 void Cal_MLKEDF_Descriptors::getP(const double * const *prho, const ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &pnablaRho, std::vector<double> &rp)
 {
-    for(int ir = 0; ir < this->nx; ++ir)
+    for(int ir = 0; ir < this->nrxx; ++ir)
     {
         rp[ir] = 0.;
         for (int j = 0; j < 3; ++j)
@@ -294,7 +294,7 @@ void Cal_MLKEDF_Descriptors::getQ(const double * const *prho, const ModulePW::PW
     }
     pw_rho->recip2real(recipRho, rq.data());
 
-    for (int ir = 0; ir < this->nx; ++ir)
+    for (int ir = 0; ir < this->nrxx; ++ir)
     {
         rq[ir] *= this->pqcoef / std::pow(prho[0][ir], 5.0/3.0);
     }
@@ -320,7 +320,7 @@ void Cal_MLKEDF_Descriptors::getQnl(const int ikernel, std::vector<double> &pq, 
 // xi = gammanl/gamma
 void Cal_MLKEDF_Descriptors::getXi(std::vector<double> &pgamma, std::vector<double> &pgammanl, std::vector<double> &rxi)
 {
-    for (int ir = 0; ir < this->nx; ++ir)
+    for (int ir = 0; ir < this->nrxx; ++ir)
     {
         if (pgamma[ir] == 0)
         {
@@ -337,7 +337,7 @@ void Cal_MLKEDF_Descriptors::getXi(std::vector<double> &pgamma, std::vector<doub
 // tanhxi = tanh(gammanl/gamma)
 void Cal_MLKEDF_Descriptors::getTanhXi(const int ikernel, std::vector<double> &pgamma, std::vector<double> &pgammanl, std::vector<double> &rtanhxi)
 {
-    for (int ir = 0; ir < this->nx; ++ir)
+    for (int ir = 0; ir < this->nrxx; ++ir)
     {
         if (pgamma[ir] == 0)
         {
@@ -404,14 +404,14 @@ void Cal_MLKEDF_Descriptors::getF_KS(
     std::vector<double> &rpauli
 )
 {
-    double *pauliED = new double[this->nx]; // Pauli Energy Density
-    ModuleBase::GlobalFunc::ZEROS(pauliED, this->nx);
+    double *pauliED = new double[this->nrxx]; // Pauli Energy Density
+    ModuleBase::GlobalFunc::ZEROS(pauliED, this->nrxx);
 
-    double *pauliPot = new double[this->nx];
-    ModuleBase::GlobalFunc::ZEROS(pauliPot, this->nx);
+    double *pauliPot = new double[this->nrxx];
+    ModuleBase::GlobalFunc::ZEROS(pauliPot, this->nrxx);
 
-    std::complex<double> *wfcr = new std::complex<double>[this->nx];
-    ModuleBase::GlobalFunc::ZEROS(wfcr, this->nx);
+    std::complex<double> *wfcr = new std::complex<double>[this->nrxx];
+    ModuleBase::GlobalFunc::ZEROS(wfcr, this->nrxx);
 
     double epsilonM = pelec->ekb(0,0);
     assert(PARAM.inp.nspin == 1);
@@ -438,14 +438,14 @@ void Cal_MLKEDF_Descriptors::getF_KS(
             // output one wf, to check KS equation
             if (ik == 0 && ibnd == 0)
             {
-                std::vector<double> wf_real = std::vector<double>(this->nx);
-                std::vector<double> wf_imag = std::vector<double>(this->nx);
-                for (int ir = 0; ir < this->nx; ++ir)
+                std::vector<double> wf_real = std::vector<double>(this->nrxx);
+                std::vector<double> wf_imag = std::vector<double>(this->nrxx);
+                for (int ir = 0; ir < this->nrxx; ++ir)
                 {
                     wf_real[ir] = wfcr[ir].real();
                     wf_imag[ir] = wfcr[ir].imag();
                 }
-                const long unsigned cshape[] = {(long unsigned) this->nx}; // shape of container and containernl
+                const long unsigned cshape[] = {(long unsigned) this->nrxx}; // shape of container and containernl
             }
 
             if (w1 != 0.0)
@@ -474,7 +474,7 @@ void Cal_MLKEDF_Descriptors::getF_KS(
 
                 pw_psi->recip2real(wfcr, wfcr, ik);
                 
-                for (int ir = 0; ir < this->nx; ++ir)
+                for (int ir = 0; ir < this->nrxx; ++ir)
                 {
                     pauliED[ir] += w1 * norm(wfcr[ir]); // actually, here should be w1/2 * norm(wfcr[ir]), but we multiply 2 to convert Ha to Ry.
                 }
@@ -484,13 +484,13 @@ void Cal_MLKEDF_Descriptors::getF_KS(
 
     for (int j = 0; j < 3; ++j)
     {
-        for (int ir = 0; ir < this->nx; ++ir)
+        for (int ir = 0; ir < this->nrxx; ++ir)
         {
             pauliED[ir] -= nablaRho[j][ir] * nablaRho[j][ir] / (8. * pelec->charge->rho[0][ir]) * 2.; // convert Ha to Ry.
         }
     }
 
-    for (int ir = 0; ir < this->nx; ++ir)
+    for (int ir = 0; ir < this->nrxx; ++ir)
     {
         rF[ir] = pauliED[ir] / (this->cTF * std::pow(pelec->charge->rho[0][ir], 5./3.));
         rpauli[ir] = (pauliED[ir] + pauliPot[ir])/pelec->charge->rho[0][ir] + epsilonM;

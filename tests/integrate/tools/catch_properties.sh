@@ -81,6 +81,9 @@ has_dos=$(get_input_key_value "out_dos" "INPUT")
 has_cond=$(get_input_key_value "cal_cond" "INPUT")
 has_hs=$(get_input_key_value "out_mat_hs" "INPUT")
 has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
+out_hr_npz=$(get_input_key_value "out_hr_npz" "INPUT")
+out_hsr_npz=$(get_input_key_value "out_hsr_npz" "INPUT")
+out_dm_npz=$(get_input_key_value "out_dm_npz" "INPUT")
 has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
 has_xc2=$(get_input_key_value "out_mat_xc2" "INPUT")
 has_eband_separate=$(get_input_key_value "out_eband_terms" "INPUT")
@@ -425,6 +428,24 @@ if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
     fi
     python3 $COMPARE_SCRIPT srs1_nao.csr.ref OUT.autotest/srs1_nao.csr 8
     echo "CompareSR_pass $?" >>$1
+fi
+
+#-----------------------------------
+# H(R), S(R), and DM(R) matrices in NPZ format
+#-----------------------------------
+if ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; then
+    test -f OUT.autotest/output_SR.npz
+    echo "OutputSRNPZ_pass $?" >>$1
+fi
+
+if { ! test -z "$out_hr_npz" && [ "$out_hr_npz" == 1 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
+    test -f OUT.autotest/output_HR0.npz
+    echo "OutputHRNPZ_pass $?" >>$1
+fi
+
+if ! test -z "$out_dm_npz" && [ "$out_dm_npz" == 1 ]; then
+    test -f OUT.autotest/output_DM0.npz
+    echo "OutputDMNPZ_pass $?" >>$1
 fi
 
 #-----------------------------------

@@ -5,7 +5,7 @@ abacus_disable_feature_definitions(__EXX)
 
 AddTest(
   TARGET MODULE_PW_pwdft_soc
-  LIBS parameter  ${math_libs}
+  LIBS parameter
   SOURCES soc_test.cpp ../soc.cpp
   	../../../source_base/global_variable.cpp
   	../../../source_base/global_function.cpp
@@ -24,13 +24,13 @@ AddTest(
 
 AddTest(
 	TARGET MODULE_PW_radial_proj_test
-	LIBS parameter  base device ${math_libs}
+	LIBS parameter  base device
 	SOURCES radial_proj_test.cpp ../radial_proj.cpp
 )
 
 AddTest(
 	TARGET MODULE_PW_structure_factor_test
-	LIBS parameter ${math_libs} base device planewave
+	LIBS parameter base device planewave
 	SOURCES structure_factor_test.cpp ../structure_factor.cpp ../parallel_grid.cpp
 	../../../source_cell/unitcell.cpp
 

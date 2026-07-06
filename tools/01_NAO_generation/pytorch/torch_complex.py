@@ -4,7 +4,7 @@ class ComplexTensor:
 	def __init__(self,real,imag):
 		self.real = real
 		self.imag = imag
-	
+
 	def view(self,*args,**kwargs):
 		return ComplexTensor( self.real.view(*args,**kwargs), self.imag.view(*args,**kwargs) )
 	def t(self,*args,**kwargs):
@@ -21,9 +21,9 @@ class ComplexTensor:
 
 	def conj(self):
 		return ComplexTensor( self.real, -self.imag )
-		
-		
-		
+
+
+
 def dot( x1,x2, *args,**kwargs ):
 	if isinstance(x1,ComplexTensor):
 		if isinstance(x2,ComplexTensor):
@@ -58,19 +58,19 @@ def mm( x1,x2, *args,**kwargs ):
 		else:
 			return torch.mm( x1,x2, *args,**kwargs )
 
-			
+
 def cat( xs, *args,**kwargs ):
 	if isinstance(xs[0],ComplexTensor):
 		xs_real = [];	xs_imag = []
 		for x in xs:
 			xs_real.append(x.real)
 			xs_imag.append(x.imag)
-		return ComplexTensor( torch.cat(xs_real,*args,**kwargs), torch.cat(xs_imag,*args,**kwargs) ) 
+		return ComplexTensor( torch.cat(xs_real,*args,**kwargs), torch.cat(xs_imag,*args,**kwargs) )
 	else:
 		return torch.cat(xs,*args,**kwargs)
-	
-	
-	
+
+
+
 import inverse as inverse_real
 def inverse(M):
 	if isinstance(M,ComplexTensor):

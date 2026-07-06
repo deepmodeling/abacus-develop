@@ -26,7 +26,7 @@ namespace ModuleIO
 		const Charge &chr,
 		const ModulePW::PW_Basis_Big &pw_big,
 		const ModulePW::PW_Basis &pw_rhod);
-	
+
   #ifdef __MPI
 	extern void write_cube_core(
 		std::ofstream &ofs_cube,

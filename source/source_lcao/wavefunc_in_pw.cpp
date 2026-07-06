@@ -5,7 +5,6 @@
 #include "source_base/math_sphbes.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
-#include "source_pw/module_pwdft/soc.h"
 
 void Wavefunc_in_pw::make_table_q(
 	const UnitCell &ucell,

@@ -26,7 +26,7 @@ add_library(
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET MODULE_IO_read_input_serial
-  LIBS parameter ${math_libs} io_input_serial 
+  LIBS parameter io_input_serial
   SOURCES read_input_test.cpp 
           ../../source_base/test/tool_quit_no_exit.cpp 
           ../../source_base/module_device/device.cpp
@@ -35,7 +35,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_read_item_serial
-  LIBS parameter ${math_libs} base device io_input_serial 
+  LIBS parameter base device io_input_serial
   SOURCES read_input_item_test.cpp
 )
 
@@ -46,18 +46,18 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_rho_io
-  LIBS parameter ${math_libs} base device cell_info 
+  LIBS parameter base device cell_info
   SOURCES rho_io_test.cpp ../module_output/read_cube.cpp ../module_output/write_cube.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_write_bands
-  LIBS parameter ${math_libs} base device
+  LIBS parameter base device
   SOURCES write_bands_test.cpp ../module_energy/write_bands.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_system_variable_test
-  LIBS parameter ${math_libs} base device io_input_serial 
+  LIBS parameter base device io_input_serial
   SOURCES io_system_variable_test.cpp
 )

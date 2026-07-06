@@ -63,18 +63,18 @@ void UnitCellLite::set_atoms(int ntype,
                               const std::vector<ModuleBase::Vector3<double>>& tau) {
     assert(ntype >= 0);
     assert(na.size() == static_cast<size_t>(ntype));
-    
+
     ntype_ = ntype;
     na_ = na;
     tau_ = tau;
-    
+
     // compute total number of atoms
     nat_ = 0;
     for (int i = 0; i < ntype_; ++i) {
         nat_ += na_[i];
     }
     assert(tau_.size() == static_cast<size_t>(nat_));
-    
+
     // compute cumulative counts
     compute_naa_();
 }

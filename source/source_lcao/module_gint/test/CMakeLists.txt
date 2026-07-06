@@ -8,7 +8,7 @@ if(ENABLE_LCAO)
 
 AddTest(
   TARGET MODULE_LCAO_gint_common_test
-  LIBS parameter ${math_libs} psi base device
+  LIBS parameter psi base device
   SOURCES test_gint_common.cpp
     tmp_mocks.cpp
     ../gint_common.cpp
@@ -20,7 +20,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_gint_precision_test
-  LIBS parameter ${math_libs} base device
+  LIBS parameter base device
   SOURCES test_gint_precision.cpp
     tmp_mocks.cpp
 )

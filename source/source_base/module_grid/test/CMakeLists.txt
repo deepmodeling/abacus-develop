@@ -25,5 +25,5 @@ AddTest(
   TARGET MODULE_BASE_GRID_test_batch
   SOURCES test_batch.cpp
   ../batch.cpp
-  LIBS ${math_libs}
+  LIBS
 )
