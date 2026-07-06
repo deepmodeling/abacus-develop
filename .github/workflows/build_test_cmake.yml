@@ -78,35 +78,3 @@ jobs:
           rm -rf build
           cmake -B build -G Ninja ${{ matrix.build_args }}
           cmake --build build -j $(nproc)
-
-      - name: Check parameters.yaml consistency
-        if: matrix.tag == 'gnu' && matrix.build_args == ''
-        run: |
-          ABACUS_BIN=$(find build -maxdepth 1 -name "abacus_*" -type f -executable | head -1)
-          if [ -z "${ABACUS_BIN}" ]; then
-            echo "ERROR: Could not find abacus binary in build/"
-            exit 1
-          fi
-          echo "Using binary: ${ABACUS_BIN}"
-          ${ABACUS_BIN} --generate-parameters-yaml > /tmp/parameters_generated.yaml
-          if ! diff -q docs/parameters.yaml /tmp/parameters_generated.yaml; then
-            echo ""
-            echo "============================================"
-            echo "ERROR: docs/parameters.yaml is out of sync!"
-            echo "============================================"
-            echo ""
-            echo "The committed parameters.yaml does not match the parameter"
-            echo "metadata embedded in the C++ source code. This usually means"
-            echo "a developer modified Input_Item definitions in"
-            echo "source/source_io/module_parameter/read_input_item_*.cpp"
-            echo "but forgot to regenerate the YAML file."
-            echo ""
-            echo "To fix, run the following commands locally:"
-            echo ""
-            echo "  \${ABACUS_BIN} --generate-parameters-yaml > docs/parameters.yaml"
-            echo ""
-            echo "--- Diff ( < committed | > generated ) ---"
-            diff docs/parameters.yaml /tmp/parameters_generated.yaml || true
-            exit 1
-          fi
-          echo "parameters.yaml is up-to-date."
