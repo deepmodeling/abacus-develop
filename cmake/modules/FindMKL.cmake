@@ -1,129 +1,254 @@
-# - Find mkl
-# Find the native MKL headers and libraries.
+# Find the oneMKL components used by ABACUS.
 #
-#  MKL_INCLUDE - where to find mkl.h, etc.
-#  MKL_FOUND        - True if mkl found.
-
-# find_package(MKL NO_MODULE) # try using official module first
-if(NOT TARGET MKL::MKL)
-
-find_path(MKL_INCLUDE mkl_service.h HINTS ${MKLROOT}/include)
-
-find_library(MKL_CORE NAMES mkl_core HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-if(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-  find_library(MKL_INTERFACE_LIB NAMES mkl_intel_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-  find_library(MKL_THREAD NAMES mkl_intel_thread HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-  find_library(MKL_IOMP5 NAMES iomp5
-    HINTS ENV CMPLR_ROOT
-    PATH_SUFFIXES lib lib/intel64 linux/compiler/lib/intel64_lin
-  )
-else()
-  find_library(MKL_INTERFACE_LIB NAMES mkl_gf_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-  find_library(MKL_THREAD NAMES mkl_gnu_thread HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-  # With GCC we use system-installed GNU OpenMP
-endif()
-
-if(ENABLE_MPI)
-  execute_process(COMMAND ${MPI_CXX_COMPILER} --showme:version
-                  OUTPUT_VARIABLE MPI_VER_OUT
-                  ERROR_VARIABLE MPI_VER_ERR)
-  if(MPI_VER_OUT MATCHES "Open MPI" OR MPI_VER_ERR MATCHES "Open MPI")
-    set(MKL_BLACS_LIB_NAME "mkl_blacs_openmpi_lp64")
-  else()
-    set(MKL_BLACS_LIB_NAME "mkl_blacs_intelmpi_lp64")
-  endif()
-  find_library(MKL_SCALAPACK NAMES mkl_scalapack_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-  find_library(MKL_BLACS NAMES ${MKL_BLACS_LIB_NAME} HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-endif()
+# ABACUS uses the LP64 BLAS/LAPACK, FFTW3 and, with MPI, BLACS/ScaLAPACK
+# interfaces directly.  This module therefore provides complete link closures:
+#
+#   abacus::mkl              BLAS, LAPACK and FFTW3 compatibility interfaces
+#   abacus::mkl_scalapack    abacus::mkl plus BLACS, ScaLAPACK and MPI
+#                            (available only when ENABLE_MPI is ON)
+#
+# Search roots: MKLROOT, MKL_ROOT, or the MKLROOT environment variable.
+#
+# Optional cache variables:
+#   MKL_LINK       AUTO (default), static, or dynamic
+#   MKL_THREADING  AUTO (default), sequential, gnu_thread, or intel_thread
+#   MKL_MPI        AUTO (default), openmpi, intelmpi, or mpich
+#
 
 include(FindPackageHandleStandardArgs)
-# handle the QUIETLY and REQUIRED arguments and set MKL_FOUND to TRUE
-# if all listed variables are TRUE
+
+# Reuse targets configured by this module.  ABACUS deliberately keeps its
+# adapter targets separate from the provider-owned MKL:: namespace.
+if(TARGET abacus::mkl)
+  set(MKL_LIBRARIES abacus::mkl)
+  if(ENABLE_MPI)
+    if(NOT TARGET abacus::mkl_scalapack)
+      message(FATAL_ERROR
+        "The existing ABACUS MKL configuration lacks abacus::mkl_scalapack "
+        "for an MPI build.")
+    endif()
+    set(MKL_LIBRARIES abacus::mkl_scalapack)
+  endif()
+  set(MKL_FOUND TRUE)
+  return()
+endif()
+
+# ABACUS declares and calls LP64 Fortran-style symbols directly, so ILP64 is not
+# ABI-compatible with its integer arguments.
+if(DEFINED MKL_INTERFACE)
+  string(TOLOWER "${MKL_INTERFACE}" _mkl_integer_interface)
+  if(NOT _mkl_integer_interface STREQUAL "lp64")
+    message(FATAL_ERROR "ABACUS supports only MKL_INTERFACE=lp64.")
+  endif()
+endif()
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+  set(_mkl_interface_name mkl_gf_lp64)
+else()
+  set(_mkl_interface_name mkl_intel_lp64)
+endif()
+
+set(_mkl_root_hints "${MKLROOT}" "${MKL_ROOT}" "$ENV{MKLROOT}")
+list(REMOVE_ITEM _mkl_root_hints "")
+list(REMOVE_DUPLICATES _mkl_root_hints)
+
+set(MKL_LINK AUTO CACHE STRING "oneMKL link mode: AUTO, static, or dynamic")
+set_property(CACHE MKL_LINK PROPERTY STRINGS AUTO static dynamic)
+string(TOLOWER "${MKL_LINK}" _mkl_link)
+if(NOT _mkl_link MATCHES "^(auto|static|dynamic)$")
+  message(FATAL_ERROR "MKL_LINK must be AUTO, static, or dynamic.")
+endif()
+
+if(NOT DEFINED MKL_THREADING)
+  set(MKL_THREADING AUTO CACHE STRING
+      "oneMKL threading layer: AUTO, sequential, gnu_thread, or intel_thread")
+  set_property(CACHE MKL_THREADING PROPERTY STRINGS AUTO sequential gnu_thread intel_thread)
+endif()
+string(TOLOWER "${MKL_THREADING}" _mkl_threading)
+if(_mkl_threading STREQUAL "auto")
+  set(_mkl_threading sequential)
+  if(USE_OPENMP)
+    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+      set(_mkl_threading gnu_thread)
+    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+      set(_mkl_threading intel_thread)
+    endif()
+  endif()
+elseif(NOT _mkl_threading MATCHES "^(sequential|gnu_thread|intel_thread)$")
+  message(FATAL_ERROR "MKL_THREADING must be AUTO, sequential, gnu_thread, or intel_thread.")
+endif()
 
 if(ENABLE_MPI)
-  find_package_handle_standard_args(MKL DEFAULT_MSG MKL_INTERFACE_LIB MKL_THREAD MKL_CORE MKL_SCALAPACK MKL_BLACS MKL_INCLUDE)
-else()
-  find_package_handle_standard_args(MKL MKL_INTERFACE_LIB MKL_THREAD MKL_CORE MKL_INCLUDE)
+  set(MKL_MPI AUTO CACHE STRING "oneMKL MPI interface: AUTO, openmpi, intelmpi, or mpich")
+  set_property(CACHE MKL_MPI PROPERTY STRINGS AUTO openmpi intelmpi mpich)
+
+  string(TOLOWER "${MKL_MPI}" _mkl_mpi)
+  if(_mkl_mpi STREQUAL "auto")
+    if("${MPI_CXX_LIBRARY_VERSION_STRING}" MATCHES "Open MPI")
+      set(_mkl_mpi openmpi)
+    else()
+      set(_mkl_mpi intelmpi)
+    endif()
+  elseif(_mkl_mpi STREQUAL "mpich")
+    # MPICH uses Intel-MPI-compatible BLACS on Unix.
+    set(_mkl_mpi intelmpi)
+  elseif(NOT _mkl_mpi MATCHES "^(openmpi|intelmpi)$")
+    message(FATAL_ERROR "MKL_MPI must be AUTO, openmpi, intelmpi, or mpich.")
+  endif()
+
+  set(_mkl_blacs_name mkl_blacs_${_mkl_mpi}_lp64)
 endif()
+
+# Re-run searches when a configuration axis or the selected MKL root changes.
+# This avoids reusing a library cached for another link mode, threading layer,
+# MPI ABI, or oneMKL installation.
+set(_mkl_search_signature
+    "${_mkl_root_hints};${_mkl_link};${_mkl_interface_name};${_mkl_threading};${_mkl_blacs_name}"
+)
+if(DEFINED _MKL_SEARCH_SIGNATURE
+   AND NOT "${_MKL_SEARCH_SIGNATURE}" STREQUAL "${_mkl_search_signature}")
+  foreach(
+    _mkl_cache_var IN
+    ITEMS MKL_INCLUDE
+          MKL_FFTW_INCLUDE
+          MKL_INTERFACE_LIB
+          MKL_THREAD
+          MKL_CORE
+          MKL_SCALAPACK
+          MKL_BLACS)
+    unset(${_mkl_cache_var} CACHE)
+  endforeach()
+endif()
+set(_MKL_SEARCH_SIGNATURE "${_mkl_search_signature}"
+    CACHE INTERNAL "Configuration used for the current oneMKL search")
+
+set(_mkl_saved_suffixes "${CMAKE_FIND_LIBRARY_SUFFIXES}")
+if(_mkl_link STREQUAL "static")
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".a")
+elseif(_mkl_link STREQUAL "dynamic")
+  set(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
+endif()
+
+find_path(MKL_INCLUDE
+          NAMES mkl.h
+          HINTS ${_mkl_root_hints}
+          PATH_SUFFIXES include)
+find_path(MKL_FFTW_INCLUDE
+          NAMES fftw3.h
+          HINTS ${_mkl_root_hints}
+          PATH_SUFFIXES include/fftw)
+find_library(MKL_INTERFACE_LIB
+             NAMES ${_mkl_interface_name}
+             HINTS ${_mkl_root_hints}
+             PATH_SUFFIXES lib/intel64 lib)
+find_library(MKL_THREAD
+             NAMES mkl_${_mkl_threading}
+             HINTS ${_mkl_root_hints}
+             PATH_SUFFIXES lib/intel64 lib)
+find_library(MKL_CORE
+             NAMES mkl_core
+             HINTS ${_mkl_root_hints}
+             PATH_SUFFIXES lib/intel64 lib)
+if(ENABLE_MPI)
+  find_library(MKL_SCALAPACK
+               NAMES mkl_scalapack_lp64
+               HINTS ${_mkl_root_hints}
+               PATH_SUFFIXES lib/intel64 lib)
+  find_library(MKL_BLACS
+               NAMES ${_mkl_blacs_name}
+               HINTS ${_mkl_root_hints}
+               PATH_SUFFIXES lib/intel64 lib)
+endif()
+set(CMAKE_FIND_LIBRARY_SUFFIXES "${_mkl_saved_suffixes}")
+
+set(_mkl_required_vars MKL_INCLUDE MKL_FFTW_INCLUDE MKL_INTERFACE_LIB MKL_THREAD MKL_CORE)
+if(ENABLE_MPI)
+  list(APPEND _mkl_required_vars MKL_SCALAPACK MKL_BLACS)
+endif()
+find_package_handle_standard_args(MKL REQUIRED_VARS ${_mkl_required_vars})
 
 if(MKL_FOUND)
-  if(NOT TARGET MKL::INTERFACE_LIB)
-    add_library(MKL::INTERFACE_LIB UNKNOWN IMPORTED)
-    set_target_properties(MKL::INTERFACE_LIB PROPERTIES
-      IMPORTED_LOCATION "${MKL_INTERFACE_LIB}"
-      INTERFACE_INCLUDE_DIRECTORIES "${MKL_INCLUDE}")
+  set(_mkl_libraries ${MKL_INTERFACE_LIB} ${MKL_THREAD} ${MKL_CORE})
+  if(ENABLE_MPI)
+    list(APPEND _mkl_libraries ${MKL_SCALAPACK} ${MKL_BLACS})
   endif()
-  if(NOT TARGET MKL::THREAD)
-    add_library(MKL::THREAD UNKNOWN IMPORTED)
-    set_target_properties(MKL::THREAD PROPERTIES
-      IMPORTED_LOCATION "${MKL_THREAD}"
-      INTERFACE_INCLUDE_DIRECTORIES "${MKL_INCLUDE}")
+  set(_mkl_any_static FALSE)
+  set(_mkl_all_static TRUE)
+  foreach(_mkl_library IN LISTS _mkl_libraries)
+    if(_mkl_library MATCHES "\\.a$")
+      set(_mkl_any_static TRUE)
+    else()
+      set(_mkl_all_static FALSE)
+    endif()
+  endforeach()
+  if(_mkl_any_static AND NOT _mkl_all_static)
+    message(
+      FATAL_ERROR "The selected oneMKL libraries mix static and shared files. "
+                  "Choose a consistent MKL_LINK mode or library set.")
   endif()
-  if(NOT TARGET MKL::CORE)
-    add_library(MKL::CORE UNKNOWN IMPORTED)
-    set_target_properties(MKL::CORE PROPERTIES
-      IMPORTED_LOCATION "${MKL_CORE}"
-      INTERFACE_INCLUDE_DIRECTORIES "${MKL_INCLUDE}")
+  if(_mkl_link STREQUAL "static" AND NOT _mkl_all_static)
+    message(FATAL_ERROR "MKL_LINK=static did not select static oneMKL libraries.")
+  elseif(_mkl_link STREQUAL "dynamic" AND _mkl_all_static)
+    message(FATAL_ERROR "MKL_LINK=dynamic did not select shared oneMKL libraries.")
   endif()
-  if(NOT TARGET MKL::MKL_SCALAPACK)
-    add_library(MKL::MKL_SCALAPACK UNKNOWN IMPORTED)
-    set_target_properties(MKL::MKL_SCALAPACK PROPERTIES
-      IMPORTED_LOCATION "${MKL_SCALAPACK}"
-      INTERFACE_INCLUDE_DIRECTORIES "${MKL_INCLUDE}")
+
+  find_package(Threads REQUIRED)
+  set(_mkl_runtime Threads::Threads ${CMAKE_DL_LIBS})
+  list(APPEND _mkl_runtime m)
+  if(NOT _mkl_threading STREQUAL "sequential")
+    find_package(OpenMP REQUIRED COMPONENTS CXX)
+    list(APPEND _mkl_runtime OpenMP::OpenMP_CXX)
   endif()
-  if(ENABLE_MPI AND NOT TARGET MKL::BLACS)
-    add_library(MKL::BLACS UNKNOWN IMPORTED)
-    set_target_properties(MKL::BLACS PROPERTIES
-      IMPORTED_LOCATION "${MKL_BLACS}"
-      INTERFACE_INCLUDE_DIRECTORIES "${MKL_INCLUDE}")
-  endif()
-  if(MKL_IOMP5 AND NOT TARGET MKL::IOMP5)
-    add_library(MKL::IOMP5 UNKNOWN IMPORTED)
-    set_target_properties(MKL::IOMP5 PROPERTIES
-      IMPORTED_LOCATION "${MKL_IOMP5}")
-  endif()
-  add_library(MKL::MKL INTERFACE IMPORTED)
-  if (ENABLE_MPI)
-    set_property(TARGET MKL::MKL PROPERTY
-    INTERFACE_LINK_LIBRARIES
-    "-Wl,--start-group"
-    MKL::INTERFACE_LIB MKL::THREAD MKL::CORE MKL::MKL_SCALAPACK MKL::BLACS
-    "-Wl,--end-group"
-    )
+
+  function(_mkl_link_group output)
+    if(_mkl_all_static AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      list(JOIN ARGN "," _mkl_archives)
+      set(${output} "-Wl,--start-group,${_mkl_archives},--end-group" PARENT_SCOPE)
+    else()
+      set(${output} "${ARGN}" PARENT_SCOPE)
+    endif()
+  endfunction()
+
+  set(_mkl_base_archives ${MKL_INTERFACE_LIB} ${MKL_THREAD} ${MKL_CORE})
+  _mkl_link_group(_mkl_base ${_mkl_base_archives})
+
+  add_library(abacus_mkl INTERFACE)
+  add_library(abacus::mkl ALIAS abacus_mkl)
+  target_include_directories(
+    abacus_mkl
+    INTERFACE
+      "${MKL_INCLUDE}"
+      "${MKL_FFTW_INCLUDE}")
+  target_link_libraries(abacus_mkl INTERFACE ${_mkl_base} ${_mkl_runtime})
+
+  if(ENABLE_MPI)
+    add_library(abacus_mkl_scalapack INTERFACE)
+    add_library(abacus::mkl_scalapack ALIAS abacus_mkl_scalapack)
+    target_include_directories(
+      abacus_mkl_scalapack
+      INTERFACE
+        "${MKL_INCLUDE}"
+        "${MKL_FFTW_INCLUDE}")
+    if(_mkl_all_static AND CMAKE_SYSTEM_NAME STREQUAL "Linux")
+      _mkl_link_group(_mkl_cluster ${MKL_SCALAPACK} ${MKL_BLACS} ${_mkl_base_archives})
+      target_link_libraries(
+        abacus_mkl_scalapack INTERFACE ${_mkl_cluster} MPI::MPI_CXX ${_mkl_runtime})
+    else()
+      target_link_libraries(
+        abacus_mkl_scalapack INTERFACE
+          ${MKL_SCALAPACK} ${MKL_BLACS} abacus::mkl MPI::MPI_CXX)
+    endif()
+    set(MKL_LIBRARIES abacus::mkl_scalapack)
   else()
-    set_property(TARGET MKL::MKL PROPERTY
-    INTERFACE_LINK_LIBRARIES
-    "-Wl,--start-group"
-    MKL::INTERFACE_LIB MKL::THREAD MKL::CORE
-    "-Wl,--end-group"
-    )
-  endif()
-  if(TARGET MKL::IOMP5)
-    set_property(TARGET MKL::MKL APPEND PROPERTY
-      INTERFACE_LINK_LIBRARIES MKL::IOMP5)
+    set(MKL_LIBRARIES abacus::mkl)
   endif()
 endif()
 
-if(ENABLE_MPI)
-  mark_as_advanced(MKL_INCLUDE MKL_INTERFACE_LIB MKL_THREAD MKL_CORE MKL_SCALAPACK MKL_BLACS)
-else()
-  mark_as_advanced(MKL_INCLUDE MKL_INTERFACE_LIB MKL_THREAD MKL_CORE)
-endif()
-
-endif() # MKL::MKL
-
-
-
-# In oneAPI 2022, MKL_SCALAPACK might not be linked properly
-if(NOT TARGET MKL::MKL_SCALAPACK)
-  find_library(MKL_SCALAPACK NAMES mkl_scalapack_lp64 HINTS ${MKLROOT}/lib ${MKLROOT}/lib/intel64)
-  message(STATUS "Found MKL_SCALAPACK: ${MKL_SCALAPACK}")
-  if(MKL_SCALAPACK)
-    # create an IMPORTED target that points to the discovered library file
-    add_library(MKL::MKL_SCALAPACK UNKNOWN IMPORTED)
-    set_target_properties(MKL::MKL_SCALAPACK PROPERTIES
-      IMPORTED_LOCATION "${MKL_SCALAPACK}"
-      INTERFACE_INCLUDE_DIRECTORIES "${MKL_INCLUDE}"
-    )
-  endif()
-endif()
+mark_as_advanced(
+  MKL_INCLUDE
+  MKL_FFTW_INCLUDE
+  MKL_INTERFACE_LIB
+  MKL_THREAD
+  MKL_CORE
+  MKL_SCALAPACK
+  MKL_BLACS)

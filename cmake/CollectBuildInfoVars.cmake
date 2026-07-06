@@ -165,7 +165,7 @@ else()
     set(ABACUS_ELPA_VERSION "no")
 endif()
 
-if(MKLROOT)
+if(MKL_FOUND)
     set(ABACUS_MKL_SUPPORT "yes (version unknown)")
     find_path(MKL_VERSION_HEADER mkl_version.h PATHS ${MKL_INCLUDE} NO_DEFAULT_PATH)
     if(MKL_VERSION_HEADER)

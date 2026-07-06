@@ -335,6 +335,12 @@ if(DEBUG_INFO)
 endif()
 
 if(ENABLE_MPI)
+  if(NOT CMAKE_CROSSCOMPILING)
+    # FindMPI runs a probe executable to determine the MPI library version,
+    # which FindMKL.cmake uses to auto-detect the BLACS interface.
+    # When cross compiling, assume users know what they are doing.
+    set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
+  endif()
   find_package(MPI COMPONENTS CXX REQUIRED)
   abacus_add_feature_definitions(__MPI)
 endif()
@@ -542,9 +548,7 @@ if(USE_KML)
 
   find_package(KML REQUIRED COMPONENTS ${_kml_components})
   abacus_add_feature_definitions(__KML)
-elseif(MKLROOT)
-  set(MKL_INTERFACE lp64)
-  set(ENABLE_SCALAPACK ON)
+elseif(MKLROOT OR MKL_ROOT)
   find_package(MKL REQUIRED)
   abacus_add_feature_definitions(__MKL)
 elseif(NOT USE_SW)

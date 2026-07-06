@@ -104,9 +104,8 @@ if(USE_KML)
   if(ENABLE_FLOAT_FFTW)
     list(APPEND _abacus_linalg_libs KML::FFTW3_FLOAT)
   endif()
-elseif(MKLROOT)
-  list(APPEND _abacus_linalg_libs MKL::MKL)
-  list(APPEND _abacus_linalg_include_dirs ${MKL_INCLUDE} ${MKL_INCLUDE}/fftw)
+elseif(MKL_FOUND)
+  list(APPEND _abacus_linalg_libs ${MKL_LIBRARIES})
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
     list(APPEND _abacus_linalg_libs ifcore)
   endif()
@@ -176,6 +175,10 @@ foreach(_abacus_linalg_target IN ITEMS
     KML::FFTW3_FLOAT)
   abacus_add_target_compile_requirements(${_abacus_linalg_target})
 endforeach()
+
+if(MKL_FOUND)
+  abacus_add_target_compile_requirements("${MKL_LIBRARIES}")
+endif()
 
 # ------------------------------------------------------------------------------
 # Optional external feature libraries
