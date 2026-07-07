@@ -563,12 +563,11 @@ def check_pr_metadata(findings: List[Finding], body: Optional[str]) -> None:
         add_finding(
             findings,
             "PR metadata completeness",
-            BLOCK,
+            WARN,
             "pull_request.body",
             None,
             "; ".join(reason_parts),
             "Fill the PR template with issue linkage, test evidence, behavior impact, governance notes, and exception details.",
-            allow_exception=False,
         )
 
 

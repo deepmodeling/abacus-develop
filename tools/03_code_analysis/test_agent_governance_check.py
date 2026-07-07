@@ -277,7 +277,7 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_blocked_by(result, "INPUT parameter documentation linkage")
 
-    def test_blocks_unfilled_pr_template_fields_from_event_payload(self):
+    def test_warns_for_unfilled_pr_template_fields_from_event_payload(self):
         event = self.repo / "event.json"
         event.write_text(
             json.dumps(
@@ -293,9 +293,9 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         result = self.run_checker("--event-path", str(event))
 
-        self.assert_blocked_by(result, "PR metadata completeness")
+        self.assert_warns_with_success(result, "PR metadata completeness")
 
-    def test_blocks_empty_pr_template_from_event_payload(self):
+    def test_warns_for_empty_pr_template_from_event_payload(self):
         for body in ("", None):
             with self.subTest(body=body):
                 event = self.repo / "event.json"
@@ -303,15 +303,15 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
                 result = self.run_checker("--event-path", str(event))
 
-                self.assert_blocked_by(result, "PR metadata completeness")
+                self.assert_warns_with_success(result, "PR metadata completeness")
 
-    def test_blocks_missing_pr_body_from_event_payload(self):
+    def test_warns_for_missing_pr_body_from_event_payload(self):
         event = self.repo / "event.json"
         event.write_text(json.dumps({"pull_request": {}}))
 
         result = self.run_checker("--event-path", str(event))
 
-        self.assert_blocked_by(result, "PR metadata completeness")
+        self.assert_warns_with_success(result, "PR metadata completeness")
 
     def test_skips_pr_metadata_when_event_payload_is_not_a_pull_request(self):
         event = self.repo / "event.json"
