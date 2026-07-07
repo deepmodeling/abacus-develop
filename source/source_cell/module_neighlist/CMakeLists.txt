@@ -1,13 +1,10 @@
 set(neighbor_search_sources
     bin_manager.cpp
+    domain_decomposition.cpp
     neighbor_search.cpp
     page_allocator.cpp
     unitcell_lite.cpp
 )
-
-if(ENABLE_MPI)
-    list(APPEND neighbor_search_sources domain_decomposition.cpp)
-endif()
 
 add_library(
     neighbor_search
