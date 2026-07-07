@@ -691,6 +691,8 @@ if(ENABLE_LCAO)
     ${ABACUS_BIN_NAME}
     PRIVATE
       hamilt_lcao
+      operator_ks_lcao
+      lcao_extrap
       tddft
       orb
       gint
