@@ -1,5 +1,7 @@
 #include "source_cell/module_neighlist/domain_decomposition.h"
 
+#ifdef __MPI
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
@@ -489,3 +491,5 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
         }
     }
 }
+
+#endif // __MPI

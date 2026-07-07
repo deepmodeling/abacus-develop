@@ -1,6 +1,8 @@
 #ifndef DOMAIN_DECOMPOSITION_H
 #define DOMAIN_DECOMPOSITION_H
 
+#ifdef __MPI
+
 #include "source_cell/module_neighlist/atom_provider.h"
 #include "source_cell/module_neighlist/local_atom.h"
 
@@ -98,5 +100,7 @@ private:
     PackedAtom pack_atom(const LocalAtom& atom, const std::array<int, 3>& image_shift) const;
     LocalAtom unpack_ghost_atom(const PackedAtom& packed) const;
 };
+
+#endif // __MPI
 
 #endif // DOMAIN_DECOMPOSITION_H
