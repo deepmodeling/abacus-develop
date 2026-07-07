@@ -182,6 +182,7 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
                 channel.angular_momentum = radial.angular_momentum;
                 channel.radial_index = radial.radial_index;
                 channel.magnetic_index = m_index;
+                channel.label = radial.label;
                 channel.potential_r.assign(size, 0.0);
 
                 const int ylm_index = radial.angular_momentum * radial.angular_momentum + m_index;

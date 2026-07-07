@@ -3,7 +3,10 @@
 
 #include "source_lcao/module_ri/sternheimer_abacus_fd_adapter.h"
 
+#include <algorithm>
+#include <cctype>
 #include <complex>
+#include <cstdlib>
 #include <iomanip>
 #include <sstream>
 #include <string>
@@ -85,6 +88,20 @@ inline std::string format_sternheimer_abacus_st_report(const SternheimerABACUSST
 }
 
 bool sternheimer_abacus_st_smoke_enabled();
+
+inline bool sternheimer_abfs_diag_only_enabled()
+{
+    const char* raw = std::getenv("ABACUS_STERNHEIMER_FD_ST_ABFS_DIAG_ONLY");
+    if (raw == nullptr)
+    {
+        return false;
+    }
+    std::string value(raw);
+    std::transform(value.begin(), value.end(), value.begin(), [](const unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return !(value.empty() || value == "0" || value == "false" || value == "off" || value == "no");
+}
 
 void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
                                      const ModulePW::PW_Basis& pw_basis,

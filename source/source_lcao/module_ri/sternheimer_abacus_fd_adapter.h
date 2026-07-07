@@ -43,9 +43,16 @@ SternheimerABACUSFDGridData make_sternheimer_fd_grid_from_lattice(int nx,
 SternheimerABACUSFDGridData make_sternheimer_fd_grid(const ModulePW::PW_Basis& pw_basis,
                                                      double orthogonality_tolerance = 1.0e-12);
 
+SternheimerABACUSFDGridData make_sternheimer_fd_full_grid(const ModulePW::PW_Basis& pw_basis,
+                                                          double orthogonality_tolerance = 1.0e-12);
+
 std::vector<double> copy_sternheimer_local_potential(const elecstate::Potential& potential,
                                                      const ModulePW::PW_Basis& pw_basis,
                                                      int spin);
+
+std::vector<double> copy_sternheimer_full_local_potential(const elecstate::Potential& potential,
+                                                          const ModulePW::PW_Basis& pw_basis,
+                                                          int spin);
 
 SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian_from_local_potential(
     const SternheimerABACUSFDGridData& grid_data,
@@ -63,6 +70,12 @@ SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian(const elecstate::Potent
                                                          const UnitCell& ucell,
                                                          int spin,
                                                          double kinetic_prefactor = 1.0);
+
+SternheimerFDHamiltonian make_sternheimer_fd_full_hamiltonian(const elecstate::Potential& potential,
+                                                              const ModulePW::PW_Basis& pw_basis,
+                                                              const UnitCell& ucell,
+                                                              int spin,
+                                                              double kinetic_prefactor = 1.0);
 
 } // namespace ModuleRI
 

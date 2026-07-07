@@ -30,6 +30,7 @@ struct SternheimerABFGridChannel
     int angular_momentum = 0;
     int radial_index = 0;
     int magnetic_index = 0;
+    std::string label;
     std::vector<double> potential_r;
     double max_abs = 0.0;
 };

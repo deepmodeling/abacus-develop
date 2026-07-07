@@ -6,6 +6,10 @@
 #include <stdexcept>
 #include <utility>
 
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
 namespace ModuleRI
 {
 
@@ -16,6 +20,18 @@ SternheimerABACUSFDGridData make_sternheimer_fd_grid(const ModulePW::PW_Basis& p
                                                  pw_basis.ny,
                                                  pw_basis.nz,
                                                  pw_basis.nrxx,
+                                                 pw_basis.lat0,
+                                                 pw_basis.latvec,
+                                                 orthogonality_tolerance);
+}
+
+SternheimerABACUSFDGridData make_sternheimer_fd_full_grid(const ModulePW::PW_Basis& pw_basis,
+                                                          const double orthogonality_tolerance)
+{
+    return make_sternheimer_fd_grid_from_lattice(pw_basis.nx,
+                                                 pw_basis.ny,
+                                                 pw_basis.nz,
+                                                 pw_basis.nxyz,
                                                  pw_basis.lat0,
                                                  pw_basis.latvec,
                                                  orthogonality_tolerance);
@@ -46,6 +62,57 @@ std::vector<double> copy_sternheimer_local_potential(const elecstate::Potential&
     return std::vector<double>(veff_spin, veff_spin + grid_size);
 }
 
+std::vector<double> copy_sternheimer_full_local_potential(const elecstate::Potential& potential,
+                                                          const ModulePW::PW_Basis& pw_basis,
+                                                          const int spin)
+{
+    const ModuleBase::matrix& veff = potential.get_eff_v();
+    if (spin < 0 || spin >= veff.nr)
+    {
+        throw std::invalid_argument("Sternheimer ABACUS FD full-grid potential spin index is out of range.");
+    }
+    if (veff.nc != pw_basis.nrxx)
+    {
+        throw std::invalid_argument("Sternheimer ABACUS FD full-grid potential size does not match local nrxx.");
+    }
+
+    const double* veff_spin = potential.get_eff_v(spin);
+    if (veff_spin == nullptr)
+    {
+        throw std::invalid_argument("Sternheimer ABACUS FD full-grid potential is not allocated.");
+    }
+
+    std::vector<double> full_potential(static_cast<std::size_t>(pw_basis.nxyz), 0.0);
+    const int nxy = pw_basis.nxy;
+    const int nz = pw_basis.nz;
+    const int nplane = pw_basis.nplane;
+    const int startz = pw_basis.startz_current;
+    for (int ixy = 0; ixy != nxy; ++ixy)
+    {
+        for (int iz = 0; iz != nplane; ++iz)
+        {
+            full_potential[static_cast<std::size_t>(ixy) * static_cast<std::size_t>(nz)
+                           + static_cast<std::size_t>(startz + iz)]
+                = veff_spin[static_cast<std::size_t>(ixy) * static_cast<std::size_t>(nplane)
+                            + static_cast<std::size_t>(iz)];
+        }
+    }
+
+#ifdef __MPI
+    if (pw_basis.poolnproc > 1)
+    {
+        MPI_Allreduce(MPI_IN_PLACE,
+                      full_potential.data(),
+                      pw_basis.nxyz,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      pw_basis.pool_world);
+    }
+#endif
+
+    return full_potential;
+}
+
 SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian(const elecstate::Potential& potential,
                                                          const ModulePW::PW_Basis& pw_basis,
                                                          const int spin,
@@ -74,6 +141,22 @@ SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian(const elecstate::Potent
                                                                                                   spin),
                                                                 kinetic_prefactor,
                                                                 std::move(nonlocal_projector));
+}
+
+SternheimerFDHamiltonian make_sternheimer_fd_full_hamiltonian(const elecstate::Potential& potential,
+                                                              const ModulePW::PW_Basis& pw_basis,
+                                                              const UnitCell& ucell,
+                                                              const int spin,
+                                                              const double kinetic_prefactor)
+{
+    const SternheimerABACUSFDGridData grid_data = make_sternheimer_fd_full_grid(pw_basis);
+    auto nonlocal_projector
+        = make_sternheimer_fd_nonlocal_projector_from_unitcell(ucell, grid_data.grid, grid_data.volume_element);
+    return make_sternheimer_fd_hamiltonian_from_local_potential(
+        grid_data,
+        copy_sternheimer_full_local_potential(potential, pw_basis, spin),
+        kinetic_prefactor,
+        std::move(nonlocal_projector));
 }
 
 } // namespace ModuleRI
