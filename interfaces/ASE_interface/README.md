@@ -32,6 +32,7 @@ Please refer to the example scripts in the `examples` folder. Recommended learni
 7. **constraintmd.py** - Constrained molecular dynamics simulation
 8. **metadynamics.py** - Metadynamics simulation
 9. **neb.py** - Nudged Elastic Band (NEB) calculation
+10. **examples/atst_tools/README.md** - optional ATST-Tools workflow examples that use abacuslite for relax, NEB, Sella, CCQN, MD, and ABACUS input helpers
 
 More usage examples will be provided in future versions.
 

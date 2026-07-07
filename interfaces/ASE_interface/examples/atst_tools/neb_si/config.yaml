@@ -1,0 +1,42 @@
+calculation:
+  type: neb
+  init_chain: inputs/init_neb_chain.traj
+  climb: true
+  two_stage: true
+  stage1_steps: 2
+  stage1_fmax: 0.20
+  fmax: 0.10
+  k: 0.1
+  algorism: improvedtangent
+  parallel: false
+  optimizer: FIRE
+  max_steps: 5
+  trajectory: neb_si.traj
+  artifact_manifest: atst_artifacts_neb_si.json
+  endpoint_singlepoint: auto
+
+calculator:
+  name: abacus
+  abacus:
+    command: abacus
+    mpi: 1
+    omp: 1
+    directory: run_neb_si
+    kpts: [1, 1, 1]
+    parameters:
+      calculation: scf
+      basis_type: lcao
+      ks_solver: genelpa
+      ecutwfc: 100
+      dft_functional: pbe
+      symmetry: 0
+      scf_thr: 1e-6
+      scf_nmax: 100
+      cal_force: 1
+      cal_stress: 0
+      pseudo_dir: ../../../../../tests/PP_ORB
+      orbital_dir: ../../../../../tests/PP_ORB
+      pseudopotentials:
+        Si: Si_ONCV_PBE-1.0.upf
+      basissets:
+        Si: Si_gga_8au_100Ry_2s2p1d.orb
