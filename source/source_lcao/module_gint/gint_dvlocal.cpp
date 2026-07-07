@@ -49,9 +49,11 @@ void Gint_dvlocal::cal_hr_gint_()
             dphi_z.resize(phi_len);
             phi_op.set_phi_dphi(phi.data(), dphi_x.data(), dphi_y.data(), dphi_z.data());
             phi_op.phi_mul_vldr3(vr_eff_, dr3_, phi.data(), phi_vldr3.data());
-            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_x.data(), pvdpRx, PhiOperator::TriPart::Upper);
-            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_y.data(), pvdpRy, PhiOperator::TriPart::Upper);
-            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_z.data(), pvdpRz, PhiOperator::TriPart::Upper);
+            const PhiOperator::TriPart tri
+                = full_triangle_ ? PhiOperator::TriPart::Full : PhiOperator::TriPart::Upper;
+            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_x.data(), pvdpRx, tri);
+            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_y.data(), pvdpRy, tri);
+            phi_op.phi_mul_phi(phi_vldr3.data(), dphi_z.data(), pvdpRz, tri);
         }
     }
 }

@@ -22,7 +22,7 @@ Fix #...
 - Example: My changes might affect the performance of the application under certain conditions, and I have tested the impact on various scenarios...
 
 ### Governance Checklist
-- Global dependencies: no new `GlobalV`, `GlobalC`, or `PARAM` cross-layer control, or exception requested below.
+- Global dependencies: no net increase in `GlobalV`, `GlobalC`, or `PARAM` code references, or exception requested below with reason, scope, risk, and cleanup plan.
 - Default parameters: no new default arguments added to existing interfaces, or exception requested below.
 - Headers: no unnecessary header dependencies or `.hpp` propagation, or rationale provided below.
 - Line endings: text files use LF; only `.bat` and `.cmd` use CRLF.

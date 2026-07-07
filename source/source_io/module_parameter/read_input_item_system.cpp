@@ -468,6 +468,7 @@ Available options are:
 * file: the density will be read in from a binary file charge-density.dat first. If it does not exist, the charge density will be read in from cube files.
 * wfc: the density will be calculated by wavefunctions and occupations.
 * dm: the density will be calculated by real space density matrix(DMR) of LCAO base.
+* dm_no_renormalize: same as dm, but the charge density is not renormalized to the number of electrons.
 * hr: the real space Hamiltonian matrix(HR) will be read in from file hrs1_nao.csr in directory read_file_dir.
 * auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.)";
         item.default_value = "atomic";
@@ -482,6 +483,7 @@ Available options are:
                 // dm and hr are valid options for nscf calculation (e.g., band structure, wannier90)
                 if (para.input.init_chg != "file" && 
                     para.input.init_chg != "dm" && 
+                    para.input.init_chg != "dm_no_renormalize" &&
                     para.input.init_chg != "hr")
                 {
                     ModuleBase::GlobalFunc::AUTO_SET("init_chg", para.input.init_chg);
@@ -490,7 +492,7 @@ Available options are:
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> init_chgs = {"atomic", "file", "wfc", "auto", "dm", "hr"};
+            const std::vector<std::string> init_chgs = {"atomic", "file", "wfc", "auto", "dm", "dm_no_renormalize", "hr"};
             if (std::find(init_chgs.begin(), init_chgs.end(), para.input.init_chg) == init_chgs.end())
             {
                 const std::string warningstr = nofound_str(init_chgs, "init_chg");

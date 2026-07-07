@@ -9,8 +9,10 @@ rules. Read the complete governance document before making or reviewing changes:
 ## Required Baseline
 
 - Follow the seven ABACUS coding rules summarized from the project governance:
-  1. Do not introduce new cross-layer control through `GlobalV`, `GlobalC`, or
-     `PARAM`; pass dependencies explicitly.
+  1. Do not increase cross-layer control through `GlobalV`, `GlobalC`, or
+     `PARAM`; pass dependencies explicitly where practical. Migration-neutral
+     moves must keep the PR-level global dependency budget non-increasing and
+     explain the remaining global usage.
   2. Do not hide workflow switches in mutable member variables that can be
      changed from multiple places.
   3. Keep header dependencies minimal.

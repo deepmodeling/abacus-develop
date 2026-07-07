@@ -94,14 +94,43 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_blocks_new_global_dependencies_on_added_lines(self):
+    def test_blocks_when_global_dependency_budget_increases(self):
         self.write("source/source_base/global.cpp", "int n = GlobalV::NPROC + PARAM.inp.nbands;\n")
         self.write("source/source_base/CMakeLists.txt", "add_library(global global.cpp)\n")
         head = self.commit_change()
 
         result = self.run_checker("--base", self.base, "--head", head)
 
-        self.assert_blocked_by(result, "No new cross-layer globals")
+        self.assert_blocked_by(result, "Global dependency budget")
+        self.assertIn("net_delta=2", result.stdout)
+
+    def test_warns_when_global_dependency_usage_is_rebalanced(self):
+        self.write("source/source_base/global.cpp", "int old_n = PARAM.inp.nbands;\n")
+        self.write("source/source_base/CMakeLists.txt", "add_library(global global.cpp)\n")
+        self.git("add", ".")
+        self.git("commit", "-m", "add baseline global usage")
+        base = self.git("rev-parse", "HEAD").stdout.strip()
+        self.write("source/source_base/global.cpp", "int moved_n = GlobalV::NPROC;\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assert_warns_with_success(result, "Global dependency budget")
+        self.assertIn("net_delta=0", result.stdout)
+
+    def test_allows_global_dependency_budget_reduction(self):
+        self.write("source/source_base/global.cpp", "int old_n = PARAM.inp.nbands;\n")
+        self.write("source/source_base/CMakeLists.txt", "add_library(global global.cpp)\n")
+        self.git("add", ".")
+        self.git("commit", "-m", "add baseline global usage")
+        base = self.git("rev-parse", "HEAD").stdout.strip()
+        self.write("source/source_base/global.cpp", "int old_n = 0;\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("Global dependency budget", result.stdout)
 
     def test_allows_global_names_in_documentation(self):
         self.write("docs/governance-notes.md", "Mention GlobalV::NPROC and PARAM.inp in documentation.\n")
@@ -575,14 +604,14 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_warns_with_success(result, "Heterogeneous test evidence review")
 
-    def test_staged_mode_checks_index_content(self):
+    def test_staged_mode_blocks_global_dependency_budget_increase(self):
         self.write("source/source_base/staged.cpp", "int n = GlobalC::ucell.nat;\n")
         self.write("source/source_base/CMakeLists.txt", "add_library(staged staged.cpp)\n")
         self.git("add", ".")
 
         result = self.run_checker("--staged")
 
-        self.assert_blocked_by(result, "No new cross-layer globals")
+        self.assert_blocked_by(result, "Global dependency budget")
 
     def test_rejects_staged_with_base_head(self):
         result = self.run_checker("--staged", "--base", self.base, "--head", self.base)

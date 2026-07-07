@@ -1,6 +1,6 @@
 abacus_disable_feature_definitions(USE_LIBXC)
 AddTest(
   TARGET MODULE_LR_ao_to_mo_test
-  LIBS parameter base ${math_libs} container device psi 
+  LIBS parameter base container device psi
   SOURCES ao_to_mo_test.cpp ../../utils/lr_util.cpp ../ao_to_mo_parallel.cpp ../ao_to_mo_serial.cpp
 )

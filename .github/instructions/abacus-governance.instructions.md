@@ -12,7 +12,9 @@ Apply these instructions when reviewing or changing ABACUS code:
   newly introduced symbols, and changed text files for line-ending checks.
 - Do not treat untouched historical debt as a default blocker. Mention it only
   when it affects the changed area, and label it as advisory.
-- Flag newly introduced `GlobalV`, `GlobalC`, or `PARAM` cross-layer control.
+- Flag PRs that increase `GlobalV`, `GlobalC`, or `PARAM` code references as
+  blocker-level governance issues. Flag migration-neutral added usage as a
+  warning that requires reason, scope, risk, and cleanup/follow-up rationale.
   Prefer explicit dependencies or narrow local interfaces.
 - Flag new default arguments in existing header interfaces. Prefer explicit
   call-site updates, overloads, or a clearer configuration object.

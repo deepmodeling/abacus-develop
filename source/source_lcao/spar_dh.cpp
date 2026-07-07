@@ -16,7 +16,7 @@ void sparse_format::cal_dS(const UnitCell& ucell,
 ModuleBase::TITLE("sparse_format", "cal_dS");
 
 sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
-const int nnr = pv.nnr;
+const int nnr = PARAM.globalv.gamma_only_local ? pv.nloc : pv.nnr;
 
 ForceStressArrays fsr_dh;
 fsr_dh.DHloc_fixedR_x = new double[nnr];
@@ -64,7 +64,7 @@ void sparse_format::cal_dH(const UnitCell& ucell,
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    const int nnr = pv.nnr;
+    const int nnr = PARAM.globalv.gamma_only_local ? pv.nloc : pv.nnr;
 
     ForceStressArrays fsr_dh;
 
