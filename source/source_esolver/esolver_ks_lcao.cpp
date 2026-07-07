@@ -18,7 +18,6 @@
 #include "../source_lcao/module_ri/exx_opt_orb.h"
 #endif
 #include "source_lcao/module_rdmft/rdmft.h"
-#include "source_lcao/module_extrap/wf_history_lcao.h"
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
 #include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
@@ -91,13 +90,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
     LCAO_domain::set_psi_occ_dm_chg<TK>(this->kv, this->psi, this->pv, this->pelec,
       this->dmat, this->chr, inp);
 
-    const auto wfc_extrap_method = ModuleExtrap::wfc_extrap_method_from_string(inp.wfc_extrap);
-    if (wfc_extrap_method != ModuleExtrap::WfcExtrapMethod::None)
-    {
-        this->wf_history_lcao_.reset(new ModuleExtrap::WfHistoryLCAO<TK>(wfc_extrap_method));
-        GlobalV::ofs_running << " WFN extrapolation method: "
-                             << ModuleExtrap::to_string(wfc_extrap_method) << std::endl;
-    }
+    this->wf_history_lcao_.set_method(ModuleExtrap::wfc_extrap_method_from_string(inp.wfc_extrap));
 
     LCAO_domain::set_pot<TK>(ucell, this->kv, this->sf, *this->pw_rho, *this->pw_rhod,
       this->pelec, this->orb_, this->pv, this->locpp, this->dftu,
@@ -192,8 +185,6 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
     this->dmat.dm->init_DMR(*hamilt_lcao->getHR());
 
-    bool initialized_by_wfc_extrap = false;
-
     // 13.1) decide the strategy for initializing DMR and HR
     if(istep == 0)//if the first scf step, readin DMR from file,
     {
@@ -214,21 +205,9 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
     else if(PARAM.inp.esolver_type!="tddft")//initialize DMR from WFN history if required
     {
-        if (this->wf_history_lcao_ != nullptr)
-        {
-            initialized_by_wfc_extrap = ModuleExtrap::initialize_gamma_density_from_history<TK, TR>(
-                *this->wf_history_lcao_,
-                *hamilt_lcao,
-                this->pv,
-                *(this->psi),
-                this->pelec->wg,
-                *(this->dmat.dm),
-                this->chr,
-                PARAM.inp.nspin,
-                PARAM.inp.ks_solver);
-        }
-
-        if (!initialized_by_wfc_extrap)
+        if (!this->wf_history_lcao_.initialize_gamma_density(
+                *hamilt_lcao, this->pv, *(this->psi), this->pelec->wg, *(this->dmat.dm), this->chr,
+                PARAM.inp.nspin, PARAM.inp.ks_solver))
         {
             // 13.1.2) two cases are considered:
             // 1. DMK in DensityMatrix is not empty (istep > 0), then DMR is initialized by DMK
@@ -600,9 +579,9 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             this->rdmft_solver, this->deepks, this->exx_nao,
             this->conv_esolver, this->scf_nmax_flag, istep);
 
-    if (conv_esolver && this->wf_history_lcao_ != nullptr && this->psi != nullptr)
+    if (conv_esolver && this->psi != nullptr)
     {
-        this->wf_history_lcao_->update_after_scf(istep, *(this->psi), this->pelec->wg);
+        this->wf_history_lcao_.update_after_scf(istep, *(this->psi), this->pelec->wg);
     }
 
     //! 3) Clean up RA, which is used to serach for adjacent atoms

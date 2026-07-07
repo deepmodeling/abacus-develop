@@ -41,52 +41,66 @@ std::string wfc_extrapolation_failure_message(const WfExtrapApplyResult& result)
 
 } // namespace
 
-template <typename TK, typename TR>
-bool initialize_gamma_density_from_history(WfHistoryLCAO<TK>&,
-                                           hamilt::HamiltLCAO<TK, TR>&,
-                                           const Parallel_Orbitals&,
-                                           psi::Psi<TK>&,
-                                           const ModuleBase::matrix&,
-                                           elecstate::DensityMatrix<TK, double>&,
-                                           Charge&,
-                                           const int,
-                                           const std::string&)
+template <typename TK>
+bool WfHistoryLCAO<TK>::initialize_gamma_density(hamilt::Hamilt<TK>&,
+                                                  const Parallel_Orbitals&,
+                                                  psi::Psi<TK>&,
+                                                  const ModuleBase::matrix&,
+                                                  elecstate::DensityMatrix<TK, double>&,
+                                                  Charge&,
+                                                  const int,
+                                                  const std::string&)
 {
-    ModuleBase::WARNING_QUIT("initialize_gamma_density_from_history",
+    if (!this->enabled() || this->empty())
+    {
+        return false;
+    }
+    ModuleBase::WARNING_QUIT("WfHistoryLCAO::initialize_gamma_density",
                              "WFN extrapolation is currently supported only for the real Gamma-only NAO path.");
     return false;
 }
 
 template <>
-bool initialize_gamma_density_from_history<double, double>(WfHistoryLCAO<double>& history,
-                                                            hamilt::HamiltLCAO<double, double>& hamiltonian,
-                                                            const Parallel_Orbitals& pv,
-                                                            psi::Psi<double>& psi,
-                                                            const ModuleBase::matrix& wg_now,
-                                                            elecstate::DensityMatrix<double, double>& dmat,
-                                                            Charge& charge,
-                                                            const int nspin,
-                                                            const std::string& ks_solver)
+bool WfHistoryLCAO<double>::initialize_gamma_density(hamilt::Hamilt<double>& hamiltonian,
+                                                       const Parallel_Orbitals& pv,
+                                                       psi::Psi<double>& psi,
+                                                       const ModuleBase::matrix& wg_now,
+                                                       elecstate::DensityMatrix<double, double>& dmat,
+                                                       Charge& charge,
+                                                       const int nspin,
+                                                       const std::string& ks_solver)
 {
-    auto* lcao_op = dynamic_cast<hamilt::OperatorLCAO<double, double>*>(hamiltonian.getOperator());
+    if (!this->enabled() || this->empty())
+    {
+        return false;
+    }
+
+    auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(&hamiltonian);
+    if (hamilt_lcao == nullptr)
+    {
+        ModuleBase::WARNING_QUIT("WfHistoryLCAO::initialize_gamma_density",
+                                 "Failed to access the Gamma-only LCAO Hamiltonian for WFN extrapolation.");
+    }
+
+    auto* lcao_op = dynamic_cast<hamilt::OperatorLCAO<double, double>*>(hamilt_lcao->getOperator());
     if (lcao_op == nullptr)
     {
-        ModuleBase::WARNING_QUIT("initialize_gamma_density_from_history",
+        ModuleBase::WARNING_QUIT("WfHistoryLCAO::initialize_gamma_density",
                                  "Failed to access the LCAO operator chain for WFN extrapolation.");
     }
 
     ModuleBase::timer::start("WFN_Extrap", "prepare_overlap");
     lcao_op->contributeHR();
     const int sk_layout = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver) ? 1 : 0;
-    hamiltonian.updateSk(0, sk_layout);
+    hamilt_lcao->updateSk(0, sk_layout);
     ModuleBase::timer::end("WFN_Extrap", "prepare_overlap");
 
     ModuleBase::timer::start("WFN_Extrap", "apply");
-    const WfExtrapApplyResult result = history.try_use_prev_wf_gamma(hamiltonian.getSk(), pv, psi, wg_now);
+    const WfExtrapApplyResult result = this->try_use_prev_wf_gamma(hamilt_lcao->getSk(), pv, psi, wg_now);
     ModuleBase::timer::end("WFN_Extrap", "apply");
     if (!result.ok())
     {
-        ModuleBase::WARNING_QUIT("initialize_gamma_density_from_history",
+        ModuleBase::WARNING_QUIT("WfHistoryLCAO::initialize_gamma_density",
                                  wfc_extrapolation_failure_message(result));
     }
 
@@ -102,13 +116,9 @@ bool initialize_gamma_density_from_history<double, double>(WfHistoryLCAO<double>
     return true;
 }
 
-template bool initialize_gamma_density_from_history<std::complex<double>, double>(
-    WfHistoryLCAO<std::complex<double>>&, hamilt::HamiltLCAO<std::complex<double>, double>&,
-    const Parallel_Orbitals&, psi::Psi<std::complex<double>>&, const ModuleBase::matrix&,
-    elecstate::DensityMatrix<std::complex<double>, double>&, Charge&, int, const std::string&);
-template bool initialize_gamma_density_from_history<std::complex<double>, std::complex<double>>(
-    WfHistoryLCAO<std::complex<double>>&, hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>&,
-    const Parallel_Orbitals&, psi::Psi<std::complex<double>>&, const ModuleBase::matrix&,
-    elecstate::DensityMatrix<std::complex<double>, double>&, Charge&, int, const std::string&);
+template bool WfHistoryLCAO<std::complex<double>>::initialize_gamma_density(
+    hamilt::Hamilt<std::complex<double>>&, const Parallel_Orbitals&, psi::Psi<std::complex<double>>&,
+    const ModuleBase::matrix&, elecstate::DensityMatrix<std::complex<double>, double>&, Charge&, int,
+    const std::string&);
 
 } // namespace ModuleExtrap
