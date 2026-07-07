@@ -343,6 +343,37 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertNotIn("PR metadata completeness", result.stdout)
 
+    def test_accepts_reminder_style_pr_template_from_event_payload(self):
+        event = self.repo / "event.json"
+        event.write_text(
+            json.dumps(
+                {
+                    "pull_request": {
+                        "body": "### Reminder\n"
+                        "- [ ] I have read `AGENTS.md` and `docs/developers_guide/agent_governance.md`.\n"
+                        "- [ ] I have linked an issue or explained why this PR does not need one.\n"
+                        "- [ ] I have added adequate unit tests and/or case tests, or explained why not.\n"
+                        "- [ ] I have listed the exact verification commands run and their results.\n"
+                        "- [ ] I have described user-visible behavior changes, including INPUT parameter changes.\n"
+                        "- [ ] I have explained core-module impact for ESolver, HSolver, ElecState, Hamilt, Operator, Psi, or other `source/` changes.\n"
+                        "- [ ] I have requested any needed governance exception below.\n\n"
+                        "### Linked Issue\nNo issue; governance bootstrap.\n\n"
+                        "### Unit Tests and/or Case Tests for my changes\n"
+                        "Ran python3 -m unittest tools/03_code_analysis/test_agent_governance_check.py.\n\n"
+                        "### What's changed?\n"
+                        "Adds governance checks only; no runtime behavior change.\n\n"
+                        "### Governance Notes\n"
+                        "No INPUT, core module, or exception notes.\n"
+                    }
+                }
+            )
+        )
+
+        result = self.run_checker("--event-path", str(event))
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("PR metadata completeness", result.stdout)
+
     def test_warns_for_source_change_without_test_evidence(self):
         self.write("source/source_base/new_feature.cpp", "int new_feature() { return 1; }\n")
         self.write("source/source_base/CMakeLists.txt", "add_library(new_feature new_feature.cpp)\n")
