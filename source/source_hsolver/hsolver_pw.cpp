@@ -2,6 +2,7 @@
 
 #include "source_base/parallel_comm.h"
 #include "source_base/global_variable.h"
+#include "source_base/module_device/memory_op.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_estate/elecstate_pw.h"
@@ -65,24 +66,84 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
 }
 
 template <typename T, typename Device, typename Real, typename HPsiFunc, typename SPsiFunc>
-double run_ppcg_pw(const HPsiFunc&,
-                   const SPsiFunc&,
-                   const int,
-                   const int,
-                   const int,
-                   T*,
-                   Real*,
-                   const std::vector<double>&,
-                   const Real*,
-                   const double,
-                   const int,
-                   const int,
-                   const bool,
+double run_ppcg_pw(const HPsiFunc& hpsi_func,
+                   const SPsiFunc& spsi_func,
+                   const int ld_psi,
+                   const int nband,
+                   const int dim,
+                   T* psi,
+                   Real* eigenvalue,
+                   const std::vector<double>& ethr_band,
+                   const Real* pre_condition,
+                   const double diag_thr,
+                   const int diag_iter_max,
+                   const int pw_diag_ndim,
+                   const bool gamma_only,
                    std::false_type)
 {
-    ModuleBase::WARNING_QUIT("HSolverPW::hamiltSolvePsiK",
-                             "PPCG is currently implemented for CPU PW calculations only.");
-    return 0.0;
+    const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
+    const int rr_step = std::max(1, pw_diag_ndim);
+    const int nelem = ld_psi * nband;
+
+    // Transitional GPU path: keep PPCG's control logic and small dense solves
+    // on host, while applying H/S through the device operators.
+    struct DeviceBuffer
+    {
+        T* ptr = nullptr;
+        explicit DeviceBuffer(const int size)
+        {
+            base_device::memory::resize_memory_op<T, Device>()(ptr, size, "PPCG device bridge");
+        }
+        ~DeviceBuffer()
+        {
+            if (ptr != nullptr)
+                base_device::memory::delete_memory_op<T, Device>()(ptr);
+        }
+        DeviceBuffer(const DeviceBuffer&) = delete;
+        DeviceBuffer& operator=(const DeviceBuffer&) = delete;
+    };
+
+    std::vector<T> psi_host(nelem, T(0));
+    base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+        psi_host.data(), psi, nelem);
+
+    DeviceBuffer psi_dev(nelem);
+    DeviceBuffer out_dev(nelem);
+    auto bridge_hpsi = [&](T* psi_in, T* hpsi_out, const int ld, const int nvec) {
+        const int count = ld * nvec;
+        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+            psi_dev.ptr, psi_in, count);
+        hpsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+            hpsi_out, out_dev.ptr, count);
+    };
+    auto bridge_spsi = [&](T* psi_in, T* spsi_out, const int ld, const int nvec) {
+        const int count = ld * nvec;
+        base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+            psi_dev.ptr, psi_in, count);
+        spsi_func(psi_dev.ptr, out_dev.ptr, ld, nvec);
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+            spsi_out, out_dev.ptr, count);
+    };
+
+    DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(static_cast<Real>(diag_thr),
+                                               diag_iter_max,
+                                               sbsize,
+                                               rr_step,
+                                               gamma_only,
+                                               PpcgStrategy::BLOCK_SUBSPACE);
+    const double avg_iter = ppcg.diag(bridge_hpsi,
+                                      bridge_spsi,
+                                      ld_psi,
+                                      nband,
+                                      dim,
+                                      psi_host.data(),
+                                      eigenvalue,
+                                      ethr_band,
+                                      pre_condition);
+    base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+        psi, psi_host.data(), nelem);
+    return avg_iter;
 }
 } // namespace
 
