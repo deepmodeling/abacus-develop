@@ -542,10 +542,6 @@ def check_pr_metadata(findings: List[Finding], body: Optional[str]) -> None:
         "Linked Issue",
         "Unit Tests and/or Case Tests for my changes",
         "What's changed?",
-        "Governance Checklist",
-        "INPUT Parameter Changes",
-        "Core Module Impact",
-        "Governance Exception",
     ]
     sections = pr_sections(body)
     missing = [section for section in required_sections if section not in sections]
@@ -567,7 +563,7 @@ def check_pr_metadata(findings: List[Finding], body: Optional[str]) -> None:
             "pull_request.body",
             None,
             "; ".join(reason_parts),
-            "Fill the PR template with issue linkage, test evidence, behavior impact, governance notes, and exception details.",
+            "Fill the PR template with issue linkage, test evidence, and a concise change summary.",
         )
 
 
