@@ -19,10 +19,8 @@
 #endif
 #include "source_lcao/module_rdmft/rdmft.h"
 #include "source_lcao/module_extrap/wf_history_lcao.h"
-#include "source_lcao/module_operator_lcao/operator_lcao.h" // build overlap SR before WFN reorthonormalization
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
 #include "source_estate/module_dm/init_dm.h" // init dm from electronic wave functions
-#include "source_estate/module_dm/cal_dm_psi.h" // rebuild DMK from extrapolated WFN
 #include "source_io/module_ctrl/ctrl_runner_lcao.h" // use ctrl_runner_lcao() 
 #include "source_io/module_ctrl/ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
@@ -31,10 +29,6 @@
 #include "source_lcao/LCAO_set.h" // mohan add 20251111
 #include "source_psi/setup_psi.h" // use Setup_Psi for deallocate_psi
 
-#include <iomanip>
-#include <sstream>
-#include <string>
-#include <type_traits>
 
 namespace ModuleESolver
 {
@@ -220,86 +214,17 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     }
     else if(PARAM.inp.esolver_type!="tddft")//initialize DMR from WFN history if required
     {
-        if (std::is_same<TK, double>::value)
+        if (this->wf_history_lcao_ != nullptr)
         {
-            if (this->wf_history_lcao_ != nullptr)
-            {
-                // The newly-created HamiltLCAO has allocated S(R), but the actual
-                // overlap values are normally filled later by updateHk() inside the
-                // eigensolver.  WFN extrapolation needs S before entering SCF, so build
-                // only the overlap real-space matrix here and then fold it to S(Gamma).
-                auto* lcao_op = dynamic_cast<hamilt::OperatorLCAO<TK, TR>*>(hamilt_lcao->getOperator());
-                if (lcao_op == nullptr)
-                {
-                    ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf",
-                                             "Failed to access the LCAO operator chain for WFN extrapolation.");
-                }
-                ModuleBase::timer::start("WFN_Extrap", "prepare_overlap");
-                lcao_op->contributeHR();
-                // Refresh the current Gamma-only overlap matrix before reusing the previous WFN.
-                // The layout must follow the active LCAO solver because the WFN orthonormalizer
-                // assembles distributed local blocks using the same column/row-major convention.
-                const int sk_layout =
-                    ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver) ? 1 : 0;
-                hamilt_lcao->updateSk(0, sk_layout);
-                ModuleBase::timer::end("WFN_Extrap", "prepare_overlap");
-
-                ModuleBase::timer::start("WFN_Extrap", "apply");
-                const ModuleExtrap::WfExtrapApplyResult wfc_result
-                    = this->wf_history_lcao_->try_use_prev_wf_gamma(hamilt_lcao->getSk(),
-                                                                     this->pv,
-                                                                     *(this->psi),
-                                                                     this->pelec->wg);
-                ModuleBase::timer::end("WFN_Extrap", "apply");
-                if (wfc_result.ok())
-                {
-                    ModuleBase::timer::start("WFN_Extrap", "rebuild_density");
-                    elecstate::cal_dm_psi(this->dmat.dm->get_paraV_pointer(),
-                                          this->pelec->wg,
-                                          *(this->psi),
-                                          *(this->dmat.dm));
-                    this->dmat.dm->cal_DMR();
-                    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
-                    ModuleBase::timer::end("WFN_Extrap", "rebuild_density");
-                    initialized_by_wfc_extrap = true;
-
-                    GlobalV::ofs_running << " WFN extrapolation: use_prev_wf from ionic step "
-                                         << wfc_result.snapshot_istep
-                                         << ", active bands = " << wfc_result.nactive_bands
-                                         << ", max |C^T S C - I| = "
-                                         << wfc_result.max_orthonormality_deviation << std::endl;
-                }
-                else
-                {
-                    std::ostringstream oss;
-                    oss << std::scientific << std::setprecision(16);
-                    oss << "WFN extrapolation failed with status: "
-                        << ModuleExtrap::to_string(wfc_result.status) << "\n\n"
-                        << " snapshot_istep=" << wfc_result.snapshot_istep << "\n"
-                        << " failed_state=" << wfc_result.failed_state << "\n"
-                        << " failed_pivot_index=" << wfc_result.failed_pivot_index << "\n"
-                        << " failed_pivot=" << wfc_result.failed_pivot << "\n"
-                        << " nstate=" << wfc_result.nstate << "\n"
-                        << " nbands=" << wfc_result.nbands << "\n"
-                        << " nbasis=" << wfc_result.nbasis << "\n"
-                        << " min_metric_diag=" << wfc_result.min_metric_diag << "\n"
-                        << " max_metric_diag=" << wfc_result.max_metric_diag << "\n"
-                        << " max_metric_abs=" << wfc_result.max_metric_abs << "\n"
-                        << " max_metric_asymmetry=" << wfc_result.max_metric_asymmetry << "\n"
-                        << " max_orthonormality_deviation="
-                        << wfc_result.max_orthonormality_deviation << "\n";
-                    const std::string message = oss.str();
-                    ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf", message);
-                }
-            }
-        }
-        else
-        {
-            if (this->wf_history_lcao_ != nullptr)
-            {
-                ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_scf",
-                                         "WFN extrapolation is currently supported only for the real Gamma-only NAO path.");
-            }
+            initialized_by_wfc_extrap = this->wf_history_lcao_->initialize_gamma_density(
+                *hamilt_lcao,
+                this->pv,
+                *(this->psi),
+                this->pelec->wg,
+                *(this->dmat.dm),
+                this->chr,
+                PARAM.inp.nspin,
+                PARAM.inp.ks_solver);
         }
 
         if (!initialized_by_wfc_extrap)
