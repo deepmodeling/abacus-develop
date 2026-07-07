@@ -1116,7 +1116,7 @@
   - bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - dav: The Davidson algorithm.
   - dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. pw_diag_ndim can be set to 2 for this method.
-  - ppcg: The projection preconditioned conjugate-gradient method, currently available for CPU plane-wave calculations.
+  - ppcg: The projection preconditioned conjugate-gradient method. It is optimized and validated for CPU plane-wave calculations; non-CPU devices use a transitional host/device bridge.
 
   For numerical atomic orbitals basis,
 
