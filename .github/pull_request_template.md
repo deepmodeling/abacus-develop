@@ -1,3 +1,9 @@
+### Checklist
+- [ ] I have linked an issue or explained why none is needed.
+- [ ] I have listed verification commands/results, or explained why checks were not run.
+- [ ] I have described user-visible, INPUT/docs, or core-module impact if applicable.
+- [ ] I have noted any governance exception needed for this PR.
+
 ### Linked Issue
 Fix #
 
