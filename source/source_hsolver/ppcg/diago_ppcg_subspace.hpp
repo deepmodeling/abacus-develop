@@ -51,16 +51,13 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     subspace.k.resize(dim * dim);
     subspace.m.resize(dim * dim);
     subspace.eval.resize(dim);
-    subspace.w_scale.assign(l, static_cast<Real>(1));
 
-    std::vector<T> psi_l, spsi_l, hpsi_l;
-    std::vector<T> w_l, sw_l, hw_l;
-    copy_cols(psi, cols, psi_l);
-    copy_cols(spsi_.data(), cols, spsi_l);
-    copy_cols(hpsi_.data(), cols, hpsi_l);
-    copy_cols(w_.data(), cols, w_l);
-    copy_cols(sw_.data(), cols, sw_l);
-    copy_cols(hw_.data(), cols, hw_l);
+    copy_cols(psi, cols, subspace.psi_l);
+    copy_cols(spsi_.data(), cols, subspace.spsi_l);
+    copy_cols(hpsi_.data(), cols, subspace.hpsi_l);
+    copy_cols(w_.data(), cols, subspace.w_l);
+    copy_cols(sw_.data(), cols, subspace.sw_l);
+    copy_cols(hw_.data(), cols, subspace.hw_l);
 
     // ---------------------------------------------------------------------------
     // Normalize w columns to unit S-norm for numerical stability.
@@ -70,12 +67,12 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     // sygvd to produce garbage eigenvectors.
     //
     // Scaling to unit S-norm keeps M well-conditioned (diagonal ~1) without
-    // changing the subspace.  The Ritz values are identical and the Ritz
-    // vector coefficients in update_one_block automatically compensate.
+    // changing the subspace. The same scaled basis is reused in update_one_block.
     // ---------------------------------------------------------------------------
-    auto scale_to_unit_snorm = [this](std::vector<T>& x, std::vector<T>& sx,
-                                       std::vector<T>& hx, int lcols,
-                                       std::vector<Real>& scale) {
+    auto scale_to_unit_snorm = [this](std::vector<T>& x,
+                                      std::vector<T>& sx,
+                                      std::vector<T>& hx,
+                                      int lcols) {
         std::vector<double> sn2_all(lcols, 0.0);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n_dim_ * lcols > 4096)
@@ -95,7 +92,6 @@ void DiagoPPCG<T, Device>::build_small_subspace(
             // column is a converged band whose contribution is harmless.
             if (sn > static_cast<Real>(1e-15)) {
                 Real inv = static_cast<Real>(1) / sn;
-                scale[j] = inv;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n_dim_ > 4096)
 #endif
@@ -107,7 +103,10 @@ void DiagoPPCG<T, Device>::build_small_subspace(
             }
         }
     };
-    scale_to_unit_snorm(w_l, sw_l, hw_l, l, subspace.w_scale);
+    scale_to_unit_snorm(subspace.w_l,
+                        subspace.sw_l,
+                        subspace.hw_l,
+                        l);
 
     auto copy_block = [&](const std::vector<T>& src,
                           const int col0,
@@ -137,18 +136,18 @@ void DiagoPPCG<T, Device>::build_small_subspace(
         }
     };
 
-    std::vector<T> basis(ld_psi_ * dim);
-    std::vector<T> hbasis(ld_psi_ * dim);
-    std::vector<T> sbasis(ld_psi_ * dim);
-    copy_block(psi_l, 0, basis);
-    copy_block(hpsi_l, 0, hbasis);
-    copy_block(spsi_l, 0, sbasis);
-    copy_block(w_l, l, basis);
-    copy_block(hw_l, l, hbasis);
-    copy_block(sw_l, l, sbasis);
+    subspace.basis.resize(ld_psi_ * dim);
+    subspace.hbasis.resize(ld_psi_ * dim);
+    subspace.sbasis.resize(ld_psi_ * dim);
+    copy_block(subspace.psi_l, 0, subspace.basis);
+    copy_block(subspace.hpsi_l, 0, subspace.hbasis);
+    copy_block(subspace.spsi_l, 0, subspace.sbasis);
+    copy_block(subspace.w_l, l, subspace.basis);
+    copy_block(subspace.hw_l, l, subspace.hbasis);
+    copy_block(subspace.sw_l, l, subspace.sbasis);
 
-    gram(basis.data(), hbasis.data(), dim, dim, subspace.k, dim);
-    gram(basis.data(), sbasis.data(), dim, dim, subspace.m, dim);
+    gram(subspace.basis.data(), subspace.hbasis.data(), dim, dim, subspace.k, dim);
+    gram(subspace.basis.data(), subspace.sbasis.data(), dim, dim, subspace.m, dim);
     hermitize(subspace.k);
     hermitize(subspace.m);
 }
@@ -208,25 +207,16 @@ void DiagoPPCG<T, Device>::update_one_block(
     T* psi,
     const std::vector<int>& cols,
     int l,
-    const SmallSubspace& subspace)
+    SmallSubspace& subspace)
 {
     const int dim = 2 * l;
     const T* eigvec = subspace.k.data();
 
-    std::vector<T> psi_l, spsi_l, hpsi_l;
-    std::vector<T> w_l, sw_l, hw_l;
-    copy_cols(psi, cols, psi_l);
-    copy_cols(spsi_.data(), cols, spsi_l);
-    copy_cols(hpsi_.data(), cols, hpsi_l);
-    copy_cols(w_.data(), cols, w_l);
-    copy_cols(sw_.data(), cols, sw_l);
-    copy_cols(hw_.data(), cols, hw_l);
+    subspace.psi_new.assign(ld_psi_ * l, T(0));
+    subspace.spsi_new.assign(ld_psi_ * l, T(0));
+    subspace.hpsi_new.assign(ld_psi_ * l, T(0));
 
-    std::vector<T> psi_new(ld_psi_ * l, T(0));
-    std::vector<T> spsi_new(ld_psi_ * l, T(0));
-    std::vector<T> hpsi_new(ld_psi_ * l, T(0));
-
-    std::vector<T> coeff_state(dim * l, T(0));
+    subspace.coeff_state.resize(dim * l);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (l * l > 4096)
 #endif
@@ -234,9 +224,8 @@ void DiagoPPCG<T, Device>::update_one_block(
     {
         for (int i = 0; i < l; ++i)
         {
-            coeff_state[i + j * dim] = eigvec[i + j * dim];
-            const T cw = eigvec[(l + i) + j * dim] * subspace.w_scale[i];
-            coeff_state[(l + i) + j * dim] = cw;
+            subspace.coeff_state[i + j * dim] = eigvec[i + j * dim];
+            subspace.coeff_state[(l + i) + j * dim] = eigvec[(l + i) + j * dim];
         }
     }
 
@@ -280,20 +269,17 @@ void DiagoPPCG<T, Device>::update_one_block(
                                          ld_psi_);
     };
 
-    std::vector<T> psi_basis;
-    std::vector<T> spsi_basis;
-    std::vector<T> hpsi_basis;
-    fill_basis(psi_l, w_l, psi_basis);
-    fill_basis(spsi_l, sw_l, spsi_basis);
-    fill_basis(hpsi_l, hw_l, hpsi_basis);
+    fill_basis(subspace.psi_l, subspace.w_l, subspace.basis);
+    fill_basis(subspace.spsi_l, subspace.sw_l, subspace.sbasis);
+    fill_basis(subspace.hpsi_l, subspace.hw_l, subspace.hbasis);
 
-    combine(psi_basis, coeff_state, psi_new);
-    combine(spsi_basis, coeff_state, spsi_new);
-    combine(hpsi_basis, coeff_state, hpsi_new);
+    combine(subspace.basis, subspace.coeff_state, subspace.psi_new);
+    combine(subspace.sbasis, subspace.coeff_state, subspace.spsi_new);
+    combine(subspace.hbasis, subspace.coeff_state, subspace.hpsi_new);
 
-    scatter_cols(psi, cols, psi_new);
-    scatter_cols(spsi_.data(), cols, spsi_new);
-    scatter_cols(hpsi_.data(), cols, hpsi_new);
+    scatter_cols(psi, cols, subspace.psi_new);
+    scatter_cols(spsi_.data(), cols, subspace.spsi_new);
+    scatter_cols(hpsi_.data(), cols, subspace.hpsi_new);
 }
 
 } // namespace hsolver

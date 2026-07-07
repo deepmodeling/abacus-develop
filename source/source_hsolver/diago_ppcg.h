@@ -162,7 +162,19 @@ private:
         std::vector<T> k;        // K matrix (projected H)
         std::vector<T> m;        // M matrix (projected S)
         std::vector<Real> eval;  // eigenvalues
-        std::vector<Real> w_scale;
+        std::vector<T> psi_l;
+        std::vector<T> spsi_l;
+        std::vector<T> hpsi_l;
+        std::vector<T> w_l;
+        std::vector<T> sw_l;
+        std::vector<T> hw_l;
+        std::vector<T> basis;
+        std::vector<T> hbasis;
+        std::vector<T> sbasis;
+        std::vector<T> coeff_state;
+        std::vector<T> psi_new;
+        std::vector<T> spsi_new;
+        std::vector<T> hpsi_new;
     };
 
     void lock_epairs(const std::vector<T>& residual,
@@ -178,7 +190,7 @@ private:
     void update_one_block(T* psi,
                           const std::vector<int>& cols,
                           int l,
-                          const SmallSubspace& subspace);
+                          SmallSubspace& subspace);
 
     bool is_s_orthonormal(const T* psi, const T* spsi, int ncol) const;
 
