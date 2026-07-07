@@ -38,6 +38,13 @@ void Driver::driver_run()
 {
     ModuleBase::TITLE("Driver", "driver_run");
 
+    const std::string cal = PARAM.inp.calculation;
+    if (cal == "socket")
+    {
+        this->driver_ipi_run();
+        return;
+    }
+
     //! 1: setup cell and atom information
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
@@ -70,8 +77,6 @@ void Driver::driver_run()
 #ifdef __RAPIDJSON
     Json::gen_stru_wrapper(&ucell);
 #endif
-
-    const std::string cal = PARAM.inp.calculation;
 
     //! 4: different types of calculations
     if (cal == "md")

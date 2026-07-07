@@ -363,6 +363,11 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.chg_extrap, "first-order");
 
         param.input.chg_extrap = "default";
+        param.input.calculation = "socket";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.chg_extrap, "first-order");
+
+        param.input.chg_extrap = "default";
         param.input.calculation = "none";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.chg_extrap, "atomic");

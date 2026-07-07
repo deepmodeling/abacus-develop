@@ -477,7 +477,9 @@ add_library(
   driver
   OBJECT
   source_main/driver.cpp
-  source_main/driver_run.cpp)
+  source_main/driver_run.cpp
+  source_main/driver_ipi.cpp
+  source_main/ipi_socket.cpp)
 
 list(APPEND device_srcs
   source_pw/module_pwdft/kernels/nonlocal_op.cpp
