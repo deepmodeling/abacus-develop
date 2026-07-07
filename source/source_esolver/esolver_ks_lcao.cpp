@@ -216,7 +216,8 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         if (this->wf_history_lcao_ != nullptr)
         {
-            initialized_by_wfc_extrap = this->wf_history_lcao_->initialize_gamma_density(
+            initialized_by_wfc_extrap = ModuleExtrap::initialize_gamma_density_from_history<TK, TR>(
+                *this->wf_history_lcao_,
                 *hamilt_lcao,
                 this->pv,
                 *(this->psi),

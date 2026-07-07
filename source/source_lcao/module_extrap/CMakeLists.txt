@@ -3,6 +3,7 @@ add_library(
     OBJECT
     wf_history_lcao.cpp
     wf_orthonormalize_lcao.cpp
+    wf_density_init_lcao.cpp
 )
 
 if(BUILD_TESTING)

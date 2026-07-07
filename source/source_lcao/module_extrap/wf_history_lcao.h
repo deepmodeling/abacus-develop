@@ -4,11 +4,15 @@
 #include "source_lcao/module_extrap/wf_extrap_method.h"
 #include "source_lcao/module_extrap/wf_snapshot_lcao.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_hamilt/hamilt.h"
-
 #include <cstddef>
 #include <deque>
 #include <string>
+
+namespace hamilt
+{
+template <typename TK, typename TR>
+class HamiltLCAO;
+}
 
 namespace elecstate
 {
@@ -89,23 +93,6 @@ class WfHistoryLCAO
                                               double pivot_threshold = 1.0e-14,
                                               double check_tolerance = 1.0e-8);
 
-    /**
-     * Initialize the Gamma-only charge density from the latest WFN snapshot.
-     *
-     * The real Gamma-only implementation prepares the current overlap, restores
-     * and reorthonormalizes the previous WFN, and rebuilds DMK, DMR, and rho.
-     * Unsupported paths terminate with a clear diagnostic rather than silently
-     * falling back to charge-density extrapolation.
-     */
-    bool initialize_gamma_density(hamilt::Hamilt<TK>& hamiltonian,
-                                  const Parallel_Orbitals& pv,
-                                  psi::Psi<TK>& psi,
-                                  const ModuleBase::matrix& wg_now,
-                                  elecstate::DensityMatrix<TK, double>& dmat,
-                                  Charge& charge,
-                                  int nspin,
-                                  const std::string& ks_solver);
-
   private:
     void prune_history();
 
@@ -113,6 +100,23 @@ class WfHistoryLCAO
     std::size_t max_depth_ = 1;
     std::deque<WfSnapshotLCAO<TK>> snapshots_;
 };
+
+/**
+ * Restore a Gamma-only WFN snapshot and rebuild the corresponding density.
+ *
+ * This runtime integration is kept outside WfHistoryLCAO so the history and
+ * orthonormalization core remains independently unit-testable.
+ */
+template <typename TK, typename TR>
+bool initialize_gamma_density_from_history(WfHistoryLCAO<TK>& history,
+                                           hamilt::HamiltLCAO<TK, TR>& hamiltonian,
+                                           const Parallel_Orbitals& pv,
+                                           psi::Psi<TK>& psi,
+                                           const ModuleBase::matrix& wg_now,
+                                           elecstate::DensityMatrix<TK, double>& dmat,
+                                           Charge& charge,
+                                           int nspin,
+                                           const std::string& ks_solver);
 
 } // namespace ModuleExtrap
 
