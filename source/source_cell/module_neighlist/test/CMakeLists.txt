@@ -45,8 +45,11 @@ if(ENABLE_MPI)
   )
   target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark
     PRIVATE
-    parameter base device Threads::Threads MPI::MPI_CXX abacus::external_deps ${math_libs}
+    parameter base device Threads::Threads MPI::MPI_CXX ${math_libs}
   )
+  if(TARGET abacus::external_deps)
+    target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE abacus::external_deps)
+  endif()
   if(USE_OPENMP)
     target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE OpenMP::OpenMP_CXX)
   endif()
