@@ -334,6 +334,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                      inp.cond_dw,
                      inp.cond_dt,
                      inp.cond_nonlocal,
+                     inp.cond_mgga_vel,
                      pelec->wg);
     }
 

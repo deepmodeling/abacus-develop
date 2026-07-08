@@ -91,6 +91,7 @@ cond_dt                        0.07 #control the t interval
 cond_dtbatch                   2 #control dt batch
 cond_fwhm                      0.3 #FWHM for conductivities
 cond_nonlocal                  1 #Nonlocal effects for conductivities
+cond_mgga_vel                  1 #Meta-GGA velocity correction for conductivities
 
 #Parameters (4.Relaxation)
 ks_solver                      genelpa #cg; dav; lapack; genelpa; scalapack_gvx; cusolver
@@ -391,3 +392,7 @@ nsc                            50 #Maximal number of spin-constrained iteration
 nsc_min                        4 #Minimum number of spin-constrained iteration
 alpha_trial                    0.02 #Initial trial step size for lambda in eV/uB^2
 sccut                          4 #Maximal step size for lambda in eV/uB
+
+#Parameters (23. Time-dependent orbital-free DFT)
+of_cd                    0 #0: no CD potential; 1: add CD potential
+of_mCD_alpha                   1.0 # parameter of modified CD potential

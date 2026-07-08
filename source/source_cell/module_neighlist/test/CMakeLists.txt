@@ -8,7 +8,7 @@ abacus_disable_feature_definitions(__EXX)
 
 AddTest(
   TARGET MODULE_CELL_NEIGHBOR_neighbor_search
-  LIBS parameter ${math_libs} base device
+  LIBS parameter base device
   SOURCES
     neighbor_search_test.cpp
   ../neighbor_search.cpp
@@ -19,7 +19,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_CELL_NEIGHBOR_bin_manager
-  LIBS parameter ${math_libs} base device
+  LIBS parameter base device
   SOURCES
     bin_manager_test.cpp
     ../bin_manager.cpp
@@ -28,7 +28,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_CELL_NEIGHBOR_allocator_and_list
-  LIBS parameter ${math_libs} base device
+  LIBS parameter base device
   SOURCES
   neighbor_list_test.cpp
   ../page_allocator.cpp

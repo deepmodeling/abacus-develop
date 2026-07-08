@@ -6,6 +6,6 @@ abacus_disable_feature_definitions(__MLALGO)
 
 AddTest(
     TARGET Elecstate_Kernels_UTs
-    LIBS parameter ${math_libs} psi base device
+    LIBS parameter psi base device
     SOURCES elecstate_op_test.cpp
 )

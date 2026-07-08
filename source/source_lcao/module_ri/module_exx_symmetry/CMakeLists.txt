@@ -14,7 +14,7 @@ if (ENABLE_LIBRI)
     if(BUILD_TESTING)
         add_subdirectory(test)
     endif()
-    
+
     if(ENABLE_COVERAGE)
         add_coverage(module_exx_symmetry)
     endif()

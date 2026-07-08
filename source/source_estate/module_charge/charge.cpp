@@ -54,7 +54,7 @@ void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
 }
 
 // mohan add 2025-12-02
-bool Charge::kin_density()
+bool Charge::kin_density() const
 {
 	if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
 	{
