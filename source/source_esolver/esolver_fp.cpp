@@ -187,6 +187,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
                                                 && istep > 0;
         if (skip_charge_extrap_for_wfc)
         {
+            this->sf.setup(&ucell, this->Pgrid, this->pw_rhod);
             GlobalV::ofs_running << " charge density extrapolation is skipped because wfc_extrap = "
                                  << PARAM.inp.wfc_extrap << "." << std::endl;
         }
