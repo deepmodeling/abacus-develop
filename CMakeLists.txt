@@ -564,7 +564,7 @@ elseif(NOT USE_SW)
   endif()
 endif()
 
-if(NOT USE_KML AND NOT MKLROOT AND NOT USE_SW)
+if(NOT USE_KML AND NOT MKL_FOUND AND NOT USE_SW)
   find_package(FFTW3 REQUIRED)
 endif()
 
