@@ -42,27 +42,16 @@ if(ENABLE_MPI)
     ../bin_manager.cpp
     ../page_allocator.cpp
     ../unitcell_lite.cpp
+    ../../../source_base/matrix.cpp
+    ../../../source_base/matrix3.cpp
+    ../../../source_base/tool_quit.cpp
   )
+  target_include_directories(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE ${ABACUS_SOURCE_DIR})
+  target_compile_definitions(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE __NORMAL)
   target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark
     PRIVATE
-    parameter base device Threads::Threads MPI::MPI_CXX ${math_libs}
+    Threads::Threads MPI::MPI_CXX
   )
-  foreach(_abacus_neighbor_dep
-      MKL::MKL
-      KML::LAPACK
-      KML::ScaLAPACK
-      KML::FFTW3
-      KML::FFTW3_FLOAT
-      LAPACK::LAPACK
-      BLAS::BLAS
-      ScaLAPACK::ScaLAPACK
-      FFTW3::FFTW3
-      FFTW3::FFTW3_OMP
-      FFTW3::FFTW3_FLOAT)
-    if(TARGET ${_abacus_neighbor_dep})
-      target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE ${_abacus_neighbor_dep})
-    endif()
-  endforeach()
   if(USE_OPENMP)
     target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE OpenMP::OpenMP_CXX)
   endif()
