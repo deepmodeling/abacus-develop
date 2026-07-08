@@ -95,16 +95,19 @@ void DiagoPPCG<T, Device>::build_small_subspace(
                                          static_cast<Real>(1e-30)));
             // Only scale if the norm is non-negligible; a near-zero
             // column is a converged band whose contribution is harmless.
-            if (sn > static_cast<Real>(1e-15)) {
-                Real inv = static_cast<Real>(1) / sn;
+            sn2_all[j] = (sn > static_cast<Real>(1e-15))
+                       ? static_cast<double>(static_cast<Real>(1) / sn)
+                       : 1.0;
+        }
 #ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ > 4096)
+#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * lcols > 4096)
 #endif
-                for (int ig = 0; ig < n_dim_; ++ig) {
-                    x[ idx(ig, j, ld_psi_)]  *= inv;
-                    sx[idx(ig, j, ld_psi_)] *= inv;
-                    hx[idx(ig, j, ld_psi_)] *= inv;
-                }
+        for (int j = 0; j < lcols; ++j) {
+            for (int ig = 0; ig < n_dim_; ++ig) {
+                const Real scale = static_cast<Real>(sn2_all[j]);
+                x[ idx(ig, j, ld_psi_)] *= scale;
+                sx[idx(ig, j, ld_psi_)] *= scale;
+                hx[idx(ig, j, ld_psi_)] *= scale;
             }
         }
     };
