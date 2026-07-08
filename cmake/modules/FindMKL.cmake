@@ -75,6 +75,11 @@ if(ENABLE_MPI)
 
   string(TOLOWER "${MKL_MPI}" _mkl_mpi)
   if(_mkl_mpi STREQUAL "auto")
+    if(CMAKE_CROSSCOMPILING)
+      message(
+        FATAL_ERROR "CMake cannot auto-determine MKL-BLACS interface correctly with cross compiling. "
+                    "Please manually pass -DMKL_MPI=<intelmpi|mpich|openmpi> flag to CMake.")
+    endif()
     if("${MPI_CXX_LIBRARY_VERSION_STRING}" MATCHES "Open MPI")
       set(_mkl_mpi openmpi)
     else()
