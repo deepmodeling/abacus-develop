@@ -1,13 +1,30 @@
-#include "unitcell.h"   
+#include "unitcell.h"
 #include "source_base/parallel_common.h"
 #include "source_io/module_parameter/parameter.h"
-#ifdef __EXX
-#include "source_lcao/module_ri/serialization_cereal.h"
-#endif
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+
+#include <string>
+#include <vector>
 
 namespace unitcell
 {
+#if defined(__MPI) && defined(__EXX)
+    // Broadcast a vector<string> from rank 0 to all ranks.
+    // Replaces the former cereal-based ModuleBase::bcast_data_cereal, which
+    // was only ever used here to broadcast plain lists of ABFS file names and
+    // pulled source_cell into a dependency on source_lcao/module_ri.
+    static void bcast_string_vector(std::vector<std::string>& v)
+    {
+        int size = static_cast<int>(v.size());
+        Parallel_Common::bcast_int(size);
+        v.resize(size);
+        for (int i = 0; i < size; ++i)
+        {
+            Parallel_Common::bcast_string(v[i]);
+        }
+    }
+#endif
+
     void bcast_atoms_tau(Atom* atoms,
                          const int ntype)
     {
@@ -112,15 +129,9 @@ namespace unitcell
         }
 
         #ifdef __EXX
-        ModuleBase::bcast_data_cereal(GlobalC::exx_info.info_ri.files_abfs,
-                                      MPI_COMM_WORLD,
-                                      0);
-        ModuleBase::bcast_data_cereal(GlobalC::exx_info.info_opt_abfs.files_abfs,
-                                      MPI_COMM_WORLD,
-                                      0);
-        ModuleBase::bcast_data_cereal(GlobalC::exx_info.info_opt_abfs.files_jles,
-                                      MPI_COMM_WORLD,
-                                      0);
+        bcast_string_vector(GlobalC::exx_info.info_ri.files_abfs);
+        bcast_string_vector(GlobalC::exx_info.info_opt_abfs.files_abfs);
+        bcast_string_vector(GlobalC::exx_info.info_opt_abfs.files_jles);
         #endif
         return;
     #endif

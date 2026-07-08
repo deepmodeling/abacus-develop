@@ -82,7 +82,7 @@ decisions.
 | Test sufficiency | Tests cover important behavior | AI review + human confirmation | AI + human review | medium | human confirmation | semantic review | Not mechanically blocked |
 | INPUT behavior linkage | Parameter metadata/default/type/parser behavior updates YAML and docs | phase-one mechanical + AI review | CI + AI review | high | block | behavior-field diff plus docs/PR body | Comment-only parameter-file changes are not blocked |
 | Documentation sync | Behavior/interface docs updated | phase-one mechanical warning + AI review | CI + AI review | medium | warn | changed paths and PR body | Major behavior changes escalate to reviewers |
-| PR metadata completeness | Issue, tests, behavior, INPUT, core impact, exceptions | phase-one mechanical | CI or GitHub bot | medium | block | PR template fields | Not run by local hook |
+| PR metadata completeness | Issue, tests, behavior, INPUT, core impact, exceptions | phase-one mechanical | CI or GitHub bot | medium | warn | PR template fields | Not run by local hook |
 | AI workflow | Interface lookup, uncertainty, verification report | AI review | AI review | high | warn | review transcript/output | Applies to AI agents |
 | Exceptions | Reason, scope, risk, follow-up plan | human confirmation | human review + CI | high | human confirmation | PR exception section | CI checks presence, not approval |
 

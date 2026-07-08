@@ -1,4 +1,5 @@
 #include "unitcell_lite.h"
+#include "source_cell/module_neighlist/neighbor_types.h"
 
 #include <cassert>
 
@@ -69,10 +70,12 @@ void UnitCellLite::set_atoms(int ntype,
     tau_ = tau;
 
     // compute total number of atoms
-    nat_ = 0;
+    std::size_t nat = 0;
     for (int i = 0; i < ntype_; ++i) {
-        nat_ += na_[i];
+        assert(na_[i] >= 0);
+        nat += static_cast<std::size_t>(na_[i]);
     }
+    nat_ = ModuleNeighList::checked_int_size(nat, "UnitCellLite atom count");
     assert(tau_.size() == static_cast<size_t>(nat_));
 
     // compute cumulative counts
