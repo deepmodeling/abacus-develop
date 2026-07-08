@@ -11,7 +11,6 @@
 #
 # Optional cache variables:
 #   MKL_LINK       AUTO (default), static, or dynamic
-#   MKL_THREADING  AUTO (default), sequential, gnu_thread, or intel_thread
 #   MKL_MPI        AUTO (default), openmpi, intelmpi, or mpich
 #
 
@@ -59,23 +58,15 @@ if(NOT _mkl_link MATCHES "^(auto|static|dynamic)$")
   message(FATAL_ERROR "MKL_LINK must be AUTO, static, or dynamic.")
 endif()
 
-if(NOT DEFINED MKL_THREADING)
-  set(MKL_THREADING AUTO CACHE STRING
-      "oneMKL threading layer: AUTO, sequential, gnu_thread, or intel_thread")
-  set_property(CACHE MKL_THREADING PROPERTY STRINGS AUTO sequential gnu_thread intel_thread)
-endif()
-string(TOLOWER "${MKL_THREADING}" _mkl_threading)
-if(_mkl_threading STREQUAL "auto")
-  set(_mkl_threading sequential)
-  if(USE_OPENMP)
-    if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-      set(_mkl_threading gnu_thread)
-    elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
-      set(_mkl_threading intel_thread)
-    endif()
+# Keep MKL threading internal: derive it from ABACUS OpenMP support and the
+# known compiler/runtime combinations. Unknown OpenMP runtimes use sequential MKL.
+set(_mkl_threading sequential)
+if(USE_OPENMP)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    set(_mkl_threading gnu_thread)
+  elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
+    set(_mkl_threading intel_thread)
   endif()
-elseif(NOT _mkl_threading MATCHES "^(sequential|gnu_thread|intel_thread)$")
-  message(FATAL_ERROR "MKL_THREADING must be AUTO, sequential, gnu_thread, or intel_thread.")
 endif()
 
 if(ENABLE_MPI)
@@ -198,9 +189,6 @@ if(MKL_FOUND)
   set(_mkl_runtime Threads::Threads ${CMAKE_DL_LIBS})
   list(APPEND _mkl_runtime m)
   if(NOT _mkl_threading STREQUAL "sequential")
-    if(NOT USE_OPENMP)
-      message(FATAL_ERROR "MKL_THREADING=${_mkl_threading} requires USE_OPENMP=ON.")
-    endif()
     find_package(OpenMP REQUIRED COMPONENTS CXX)
     list(APPEND _mkl_runtime OpenMP::OpenMP_CXX)
   endif()
