@@ -14,6 +14,7 @@ namespace module_rt
 /**
  * @brief Compute RT-TDDFT velocity-gauge beta-projector overlaps.
  *
+ * UPF beta projectors are stored as r * beta_l(r) and selected by atom type T0.
  * This overload uses the production quadrature settings.
  */
 void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,

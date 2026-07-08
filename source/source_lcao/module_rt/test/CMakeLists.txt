@@ -36,4 +36,21 @@ AddTest(
   TARGET MODULE_LCAO_tddft_snap_psibeta_half_test
   LIBS parameter base device orb numerical_atomic_orbitals tddft_test_lib
   SOURCES snap_psibeta_half_tddft_test.cpp ../snap_projector_half_tddft.cpp ../snap_psibeta_half_tddft.cpp
+          ../../center2_orb.cpp
+          ../../center2_orb-orb11.cpp
+          ../../center2_orb-orb21.cpp
+          ../../../source_cell/setup_nonlocal.cpp
+          ../../../source_cell/atom_spec.cpp
+          ../../../source_cell/atom_pseudo.cpp
+          ../../../source_cell/pseudo.cpp
+          ../../../source_cell/read_pp.cpp
+          ../../../source_cell/read_pp_complete.cpp
+          ../../../source_cell/read_pp_upf201.cpp
+          ../../../source_cell/read_pp_upf100.cpp
+          ../../../source_cell/read_pp_vwr.cpp
+          ../../../source_cell/read_pp_blps.cpp
+          ../../../source_io/module_hs/cal_r_overlap_R.cpp
+          ../../../source_io/module_hs/single_R_io.cpp
+          ../../../source_io/module_hs/rr_sparse_writer.cpp
+          ../../../source_pw/module_pwdft/soc.cpp
 )

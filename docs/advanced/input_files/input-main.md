@@ -502,6 +502,7 @@
     - [cond\_smear](#cond_smear)
     - [cond\_fwhm](#cond_fwhm)
     - [cond\_nonlocal](#cond_nonlocal)
+    - [cond\_mgga\_vel](#cond_mgga_vel)
   - [Implicit solvation model](#implicit-solvation-model)
     - [imp\_sol](#imp_sol)
     - [eb\_k](#eb_k)
@@ -4469,6 +4470,13 @@
 - **Description**: Whether to consider nonlocal potential correction when calculating velocity matrix .
   - True: .
   - False: .
+- **Default**: True
+
+### cond_mgga_vel
+
+- **Type**: Boolean
+- **Availability**: [basis_type](#basis_type) = `pw`
+- **Description**: Whether to include the meta-GGA velocity correction from the $v_\tau$ term when calculating velocity matrix $\bra{\psi_i}\hat{v}\ket{\psi_j}$.
 - **Default**: True
 
 [back to top](#full-list-of-input-keywords)
