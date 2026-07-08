@@ -201,16 +201,7 @@ if(ENABLE_LCAO)
   endif()
 
   if(ENABLE_PEXSI)
-    # Temporary adapter for the legacy FindPEXSI.cmake result. Replace this with
-    # PEXSI::PEXSI when config-package discovery is adopted.
-    list(APPEND _abacus_feature_libs
-      ${PEXSI_LIBRARY}
-      ${SuperLU_DIST_LIBRARY}
-      ${ParMETIS_LIBRARY}
-      ${METIS_LIBRARY})
-    list(APPEND _abacus_feature_include_dirs
-      ${PEXSI_INCLUDE_DIR}
-      ${ParMETIS_INCLUDE_DIR})
+    list(APPEND _abacus_feature_libs PEXSI::PEXSI)
   endif()
 endif()
 
@@ -337,6 +328,7 @@ foreach(_abacus_feature_target IN ITEMS
     NEP::nep
     TensorFlow::tensorflow_cc
     ZLIB::ZLIB
+    PEXSI::PEXSI
     NCCL::NCCL
     CAL::CAL
     cusolverMp::cusolverMp

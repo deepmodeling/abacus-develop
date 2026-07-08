@@ -145,15 +145,11 @@ cmake -B build -DUSE_ABACUS_LIBM=1
 
 ## Build with PEXSI support
 
-ABACUS supports the PEXSI library for gamma only LCAO calculations. PEXSI version 2.0.0 is tested to work with ABACUS, please always use the latest version of PEXSI. 
+ABACUS supports the PEXSI library for gamma only LCAO calculations. PEXSI version >=2.0.0 is required.
 
-To build ABACUS with PEXSI support, you need to compile PEXSI (and its dependencies) first. Please refer to the [PEXSI Installation Guide](https://pexsi.readthedocs.io/en/latest/install.html) for more details. Note that PEXSI requires ParMETIS and SuperLU_DIST.
+To build ABACUS with PEXSI support, you need to compile PEXSI and its dependencies first. Please refer to the [PEXSI Installation Guide](https://pexsi.readthedocs.io/en/latest/install.html) for more details. You can also use [Spack](https://github.com/spack/spack) to install the required packages more easily. Note that PEXSI requires ParMETIS and SuperLU_DIST.
 
-After compiling PEXSI, you can set `ENABLE_PEXSI` to `ON`. If the libraries are not installed in standard paths, you can set `PEXSI_DIR`, `ParMETIS_DIR` and `SuperLU_DIST_DIR` to the corresponding directories.
-
-```bash
-cmake -B build -DENABLE_PEXSI=ON -DPEXSI_DIR=${path to PEXSI installation directory} -DParMETIS_DIR=${path to ParMETIS installation directory} -DSuperLU_DIST_DIR=${path to SuperLU_DIST installation directory}
-```
+After compiling PEXSI, pass `-DENABLE_PEXSI=ON` to CMake. ABACUS uses the CMake config package provided by PEXSI; if PEXSI or its dependencies are not installed in standard paths, add their installation prefixes to `CMAKE_PREFIX_PATH`.
 
 ## Build ABACUS with make
 
