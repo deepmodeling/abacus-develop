@@ -8,7 +8,7 @@
 #include <string>
 
 #include "module_parameter/read_input.h"
-#include "source_main/version.h"
+#include "source_base/version.h"
 
 #if defined(COMMIT_INFO)
 #include "commit.h"

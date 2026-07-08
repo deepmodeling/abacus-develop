@@ -81,10 +81,13 @@ if(ENABLE_LCAO)
       module_mulliken/output_mulliken.cpp
       module_ml/io_npz.cpp
       module_hs/cal_pLpR.cpp
+      module_dhs/write_dH.cpp
+      module_dhs/write_dH_terms.cpp
   )
   list(APPEND objects_advanced	   
       module_unk/unk_overlap_lcao.cpp
       module_hs/write_HS_R.cpp
+      module_hs/write_H_terms.cpp
       module_hs/write_HS_sparse.cpp
       module_hs/single_R_io.cpp
       module_hs/rr_sparse_writer.cpp

@@ -4,7 +4,7 @@
 
 include_guard(GLOBAL)
 
-function(abacus_setup_cusolvermp target_name)
+function(abacus_setup_cusolvermp)
   abacus_add_feature_definitions(__CUSOLVERMP)
 
   # Find cuSOLVERMp first, then decide communicator backend.
@@ -126,10 +126,4 @@ function(abacus_setup_cusolvermp target_name)
         INTERFACE_INCLUDE_DIRECTORIES "${CUSOLVERMP_INCLUDE_DIR}")
   endif()
 
-  # === Link libraries and propagate include directories ===
-  if(_use_cal)
-    target_link_libraries(abacus_external_deps INTERFACE CAL::CAL cusolverMp::cusolverMp)
-  else()
-    target_link_libraries(abacus_external_deps INTERFACE NCCL::NCCL cusolverMp::cusolverMp)
-  endif()
 endfunction()

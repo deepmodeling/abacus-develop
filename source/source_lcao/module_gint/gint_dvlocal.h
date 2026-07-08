@@ -16,10 +16,12 @@ class Gint_dvlocal : public Gint
     Gint_dvlocal(
         const double* vr_eff,
         const int nspin,
-        const int npol)
-        : vr_eff_(vr_eff), nspin_(nspin), npol_(npol), dr3_(gint_info_->get_mgrid_volume())
+        const int npol,
+        const bool full_triangle = false)
+        : vr_eff_(vr_eff), nspin_(nspin), npol_(npol), full_triangle_(full_triangle),
+          dr3_(gint_info_->get_mgrid_volume())
         {
-            assert(nspin_ == 2); //   currently only npin == 2 is supported
+            assert(nspin_ == 1 || nspin_ == 2); //   currently only nspin == 1 or 2 is supported
         }
     
     void cal_dvlocal();
@@ -33,6 +35,10 @@ class Gint_dvlocal : public Gint
         const UnitCell& ucell,
         const Grid_Driver& gdriver,
         LCAO_HS_Arrays& hs_arrays);
+
+    HContainer<double>* get_pvdpRx() { return &pvdpRx; }
+    HContainer<double>* get_pvdpRy() { return &pvdpRy; }
+    HContainer<double>* get_pvdpRz() { return &pvdpRz; }
     
     private:
     void init_hr_gint_();
@@ -54,6 +60,8 @@ class Gint_dvlocal : public Gint
     const double* vr_eff_ = nullptr;
     int nspin_;
     int npol_;
+    // if true, fill both triangles of pvdpR (all directed atom pairs); default upper-only
+    bool full_triangle_ = false;
 
     // intermediate variables
     double dr3_;

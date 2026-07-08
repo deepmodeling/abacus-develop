@@ -476,16 +476,30 @@ if ! test -z "$has_mat_syns"  && [  $has_mat_syns == 1 ]; then
 fi
 
 #-----------------------------------
-#  <psi_i0 | dH | psi_jR> matrix
+#  <psi_i0 | H | dpsi_jR> matrix
 #-----------------------------------
 #echo $has_mat_dh
-if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
+if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ] && [ $gamma_only != 1 ]; then
     python3 $COMPARE_SCRIPT dhrxs1_nao.csr.ref OUT.autotest/dhrxs1_nao.csr 8
     echo "ComparerdHRx_pass $?" >>$1
     python3 $COMPARE_SCRIPT dhrys1_nao.csr.ref OUT.autotest/dhrys1_nao.csr 8
     echo "ComparerdHRy_pass $?" >>$1
     python3 $COMPARE_SCRIPT dhrzs1_nao.csr.ref OUT.autotest/dhrzs1_nao.csr 8
     echo "ComparerdHRz_pass $?" >>$1
+fi
+
+#-----------------------------------
+#  d <psi_i0 | H | psi_j>(k) matrix
+#-----------------------------------
+#echo $has_mat_dh_terms
+if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
+    shopt -s nullglob
+    for reffile in dhk_ref/*.txt; do
+        fname=$(basename "$reffile")
+        key=$(sanitize_result_key "Compare_${fname%.txt}")
+        record_compare_result "$1" "${key}_pass" "$reffile" "OUT.autotest/$fname" 8
+    done
+    shopt -u nullglob
 fi
 
 #---------------------------------------

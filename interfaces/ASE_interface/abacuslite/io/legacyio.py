@@ -258,19 +258,26 @@ def read_band_from_running_log(src: str | Path | List[str]) \
            f'Unexpected shape of k-points: {k.shape}, expected ({len(iekb)}, 3)'
 
     nframe = len(iekb) // (masknspin(nspin)*nk) # number of frames, for MD or relax tasks
-    ekb_raw = [l for i in iekb for l in raw[i+1:i+1+nbnd]]
-    # each line should in the format of
-    # r'\d+\s+(-?\d(\.\d+)?)\s+(\d(\.\d+)?)
-    # Changelog: there are cases that the band energies and occupations are in scientific
-    #            notation, e.g., 1.0e-01, 1.0e+00, so the regular expression should be
-    #            r'\d+\s+(-?\d+(\.\d+)?(e[+-]\d+)?)\s+(\d+(\.\d+)?(e[+-]\d+)?)' instead
-    ekbpat  = r'\d+\s+'
-    ekbpat += r'(-?\d+(\.\d+)?(e[+-]\d+)?)\s+'
-    ekbpat += r'(\d+(\.\d+)?(e[+-]\d+)?)'
-    assert all(re.match(ekbpat, l) for l in ekb_raw), \
-           'Unexpected format of band energies: \n' + '\n'.join(ekb_raw)
-    # ekb in the second column, occ in the third column
-    ekb_raw = np.array([list(map(float, l.split())) for l in ekb_raw])
+    ekb_raw = []
+    for i in iekb:
+        rows = []
+        j = i + 1
+        while j < len(raw) and len(rows) < nbnd:
+            if re.match(ekb_leading_pat, raw[j]):
+                break
+            parts = raw[j].strip().split()
+            if len(parts) >= 3 and parts[0].isdigit():
+                try:
+                    band_index = int(parts[0])
+                    if band_index == len(rows) + 1:
+                        rows.append([float(parts[0]), float(parts[1]), float(parts[2])])
+                except ValueError:
+                    pass
+            j += 1
+        assert len(rows) == nbnd, \
+               f'Unexpected number of band rows: {len(rows)} vs {nbnd}'
+        ekb_raw.extend(rows)
+    ekb_raw = np.array(ekb_raw)
     assert ekb_raw.shape == (nframe * masknspin(nspin) * nk * nbnd, 3), \
            f'Unexpected shape of band energies: {ekb_raw.shape}. ' \
            f'Expected ({nframe * masknspin(nspin) * nk * nbnd}, 3), in which ' \
@@ -898,7 +905,7 @@ def read_abacus_out(fileobj,
         calc = SinglePointDFTCalculator(atoms=atoms, energy=ener['E_KohnSham'],
                                         free_energy=ener['E_KohnSham'],
                                         forces=frs, stress=strs,
-                                        magmoms=mag, efermi=ener['E_Fermi'],
+                                        magmoms=mag[ind], efermi=ener['E_Fermi'],
                                         ibzkpts=kvecd, dipole=None)
         # import the eigenvalues and occupations kpoint-by-kpoint
         calc.kpts = []
@@ -980,6 +987,70 @@ class TestLegacyIO(unittest.TestCase):
             self.assertTrue(d['k'].shape == (nspin, nk, 3))
             self.assertTrue(d['e'].shape == (nspin, nk, nband))
             self.assertTrue(d['occ'].shape == (nspin, nk, nband))
+
+    def test_read_band_from_running_log_skips_non_band_rows(self):
+        data = read_band_from_running_log([
+            'nspin = 1',
+            'NBANDS = 2',
+            'nkstot = 1',
+            '1/1 kpoint (Cartesian) = 0.0 0.0 0.0 (1 pws)',
+            'BAND ENERGY OCCUPATION',
+            '1 -1.0 1.0',
+            '2 0.5 0.0',
+        ])
+
+        self.assertEqual(len(data), 1)
+        self.assertEqual(data[0]['e'].shape, (1, 1, 2))
+        self.assertTrue(np.allclose(data[0]['e'][0, 0], [-1.0, 0.5]))
+        self.assertTrue(np.allclose(data[0]['occ'][0, 0], [1.0, 0.0]))
+
+    def test_read_band_from_running_log_does_not_cross_kpoint_blocks(self):
+        with self.assertRaises(AssertionError):
+            read_band_from_running_log([
+                'nspin = 1',
+                'NBANDS = 2',
+                'nkstot = 2',
+                '1/2 kpoint (Cartesian) = 0.0 0.0 0.0 (1 pws)',
+                '1 -1.0 1.0',
+                '2/2 kpoint (Cartesian) = 0.5 0.0 0.0 (1 pws)',
+                '1 -0.5 1.0',
+                '2 0.5 0.0',
+            ])
+
+    def test_read_abacus_out_reorders_calculator_magmoms(self):
+        import tempfile
+        from unittest.mock import patch
+
+        frame = {
+            'elem': ['Na', 'Na', 'Cl'],
+            'coords': np.array([[0.0, 0.0, 0.0],
+                                [1.0, 0.0, 0.0],
+                                [2.0, 0.0, 0.0]]),
+            'cell': np.eye(3),
+        }
+        elecstate = [{
+            'k': np.zeros((1, 1, 3)),
+            'e': np.zeros((1, 1, 1)),
+            'occ': np.ones((1, 1, 1)),
+        }]
+        energies = [{'E_KohnSham': -1.0, 'E_Fermi': 0.0}]
+        kpoints = ((np.zeros((1, 3)), np.ones(1), None), None, None, None, None)
+
+        with tempfile.NamedTemporaryFile(mode='w') as f:
+            with patch(__name__ + '.read_esolver_type_from_running_log', return_value='ksdft'), \
+                 patch(__name__ + '.read_traj_from_running_log', return_value=[frame]), \
+                 patch(__name__ + '.read_band_from_running_log', return_value=elecstate), \
+                 patch(__name__ + '.read_forces_from_running_log', return_value=[]), \
+                 patch(__name__ + '.read_stress_from_running_log', return_value=[]), \
+                 patch(__name__ + '.read_kpoints_from_running_log', return_value=kpoints), \
+                 patch(__name__ + '.read_energies_from_running_log', return_value=([], [])), \
+                 patch(__name__ + '.read_iter_header_from_running_log', return_value=[]), \
+                 patch(__name__ + '.find_final_info_with_iter_header', return_value=energies), \
+                 patch(__name__ + '.read_magmom_from_running_log', return_value=[np.array([10.0, 20.0, 30.0])]):
+                atoms = read_abacus_out(f.name, sort_atoms_with=[0, 2, 1])[0]
+
+        self.assertEqual(atoms.get_chemical_symbols(), ['Na', 'Cl', 'Na'])
+        self.assertTrue(np.allclose(atoms.calc.results['magmoms'], [10.0, 30.0, 20.0]))
 
     def test_read_traj_from_running_log(self):
         fn = self.testfiles / 'lcao-symm1-nspin1-multik-scf_'

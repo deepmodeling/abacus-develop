@@ -275,6 +275,12 @@ void ReadInput::item_postprocess()
         read_sync_bool(input.cond_nonlocal);
         this->add_item(item);
     }
+    {
+        Input_Item item("cond_mgga_vel");
+        item.annotation = "Meta-GGA velocity correction for conductivities";
+        read_sync_bool(input.cond_mgga_vel);
+        this->add_item(item);
+    }
 
     // berry_wannier
     {
