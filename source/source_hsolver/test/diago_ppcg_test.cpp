@@ -1,7 +1,7 @@
 /**
  * diago_ppcg_test.cpp — unit test for DiagoPPCG solver
  *
- * Test matrices (all with S = I):
+ * Test matrices include both S = I and non-trivial overlap operators:
  *   1. Tridiagonal Laplacian (1D particle-in-a-box): H[i,i]=2, H[i,i±1]=-1
  *      Exact λ_k = 2 - 2·cos(k·π/(n+1)).  Realistic but sparse.
  *   2. Diagonal matrix: H = diag(1, 2, 3, 4, 5)
@@ -20,6 +20,7 @@
 #include <cmath>
 #include <cstdio>
 #include <fstream>
+#include <limits>
 #include <random>
 #include <string>
 #include <vector>
