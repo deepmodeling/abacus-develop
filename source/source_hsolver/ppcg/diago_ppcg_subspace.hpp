@@ -78,7 +78,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
                                       std::vector<T>& sx,
                                       std::vector<T>& hx,
                                       int lcols) {
-        std::vector<double> sn2_all(lcols, 0.0);
+        std::vector<double> sn_scale_all(lcols, 0.0);
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n_dim_ * lcols > 4096)
 #endif
@@ -87,24 +87,24 @@ void DiagoPPCG<T, Device>::build_small_subspace(
             for (int ig = 0; ig < n_dim_; ++ig)
                 sn2 += static_cast<double>(std::real(std::conj(x[idx(ig, j, ld_psi_)])
                                                      * sx[idx(ig, j, ld_psi_)]));
-            sn2_all[j] = sn2;
+            sn_scale_all[j] = sn2;
         }
-        reduce_pool_if_mpi_ready(sn2_all.data(), lcols);
+        reduce_pool_if_mpi_ready(sn_scale_all.data(), lcols);
         for (int j = 0; j < lcols; ++j) {
-            Real sn = std::sqrt(std::max(static_cast<Real>(sn2_all[j]),
+            Real sn = std::sqrt(std::max(static_cast<Real>(sn_scale_all[j]),
                                          static_cast<Real>(1e-30)));
             // Only scale if the norm is non-negligible; a near-zero
             // column is a converged band whose contribution is harmless.
-            sn2_all[j] = (sn > static_cast<Real>(1e-15))
-                       ? static_cast<double>(static_cast<Real>(1) / sn)
-                       : 1.0;
+            sn_scale_all[j] = (sn > static_cast<Real>(1e-15))
+                            ? static_cast<double>(static_cast<Real>(1) / sn)
+                            : 1.0;
         }
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * lcols > 4096)
 #endif
         for (int j = 0; j < lcols; ++j) {
             for (int ig = 0; ig < n_dim_; ++ig) {
-                const Real scale = static_cast<Real>(sn2_all[j]);
+                const Real scale = static_cast<Real>(sn_scale_all[j]);
                 x[ idx(ig, j, ld_psi_)] *= scale;
                 sx[idx(ig, j, ld_psi_)] *= scale;
                 hx[idx(ig, j, ld_psi_)] *= scale;
