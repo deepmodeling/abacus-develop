@@ -96,28 +96,34 @@ if(ENABLE_MPI)
   message(STATUS "oneMKL BLACS interface: ${_mkl_blacs_name}")
 endif()
 
-# Re-run searches when a configuration axis or the selected MKL root changes.
-# This avoids reusing a library cached for another link mode, threading layer,
-# MPI ABI, or oneMKL installation.
-set(_mkl_search_signature
-    "${_mkl_root_hints};${_mkl_link};${_mkl_interface_name};${_mkl_threading};${_mkl_blacs_name}"
-)
-if(DEFINED _MKL_SEARCH_SIGNATURE
-   AND NOT "${_MKL_SEARCH_SIGNATURE}" STREQUAL "${_mkl_search_signature}")
-  foreach(
-    _mkl_cache_var IN
-    ITEMS MKL_INCLUDE
-          MKL_FFTW_INCLUDE
-          MKL_INTERFACE_LIB
-          MKL_THREAD
-          MKL_CORE
-          MKL_SCALAPACK
-          MKL_BLACS)
-    unset(${_mkl_cache_var} CACHE)
-  endforeach()
-endif()
-set(_MKL_SEARCH_SIGNATURE "${_mkl_search_signature}"
-    CACHE INTERNAL "Configuration used for the current oneMKL search")
+# These are result variables of this finder, not user configuration inputs.
+foreach(_mkl_result_var IN ITEMS
+    MKL_INCLUDE
+    MKL_FFTW_INCLUDE
+    MKL_INTERFACE_LIB
+    MKL_THREAD
+    MKL_CORE
+    MKL_SCALAPACK
+    MKL_BLACS)
+  if(DEFINED CACHE{${_mkl_result_var}})
+    message(WARNING
+      "${_mkl_result_var} is an internal result of FindMKL.cmake and will be ignored.")
+    unset(${_mkl_result_var} CACHE)
+  endif()
+  unset(${_mkl_result_var})
+endforeach()
+
+foreach(_mkl_internal_var IN ITEMS
+    _abacus_mkl_include
+    _abacus_mkl_fftw_include
+    _abacus_mkl_interface_lib
+    _abacus_mkl_thread
+    _abacus_mkl_core
+    _abacus_mkl_scalapack
+    _abacus_mkl_blacs)
+  unset(${_mkl_internal_var})
+  unset(${_mkl_internal_var} CACHE)
+endforeach()
 
 set(_mkl_saved_suffixes "${CMAKE_FIND_LIBRARY_SUFFIXES}")
 if(_mkl_link STREQUAL "static")
@@ -126,37 +132,62 @@ elseif(_mkl_link STREQUAL "dynamic")
   set(CMAKE_FIND_LIBRARY_SUFFIXES ".so")
 endif()
 
-find_path(MKL_INCLUDE
-          NAMES mkl.h
-          HINTS ${_mkl_root_hints}
-          PATH_SUFFIXES include)
-find_path(MKL_FFTW_INCLUDE
-          NAMES fftw3.h
-          HINTS ${_mkl_root_hints}
-          PATH_SUFFIXES include/fftw)
-find_library(MKL_INTERFACE_LIB
-             NAMES ${_mkl_interface_name}
-             HINTS ${_mkl_root_hints}
-             PATH_SUFFIXES lib/intel64 lib)
-find_library(MKL_THREAD
-             NAMES mkl_${_mkl_threading}
-             HINTS ${_mkl_root_hints}
-             PATH_SUFFIXES lib/intel64 lib)
-find_library(MKL_CORE
-             NAMES mkl_core
-             HINTS ${_mkl_root_hints}
-             PATH_SUFFIXES lib/intel64 lib)
+find_path(_abacus_mkl_include
+  NAMES mkl.h
+  PATHS ${_mkl_root_hints}
+  PATH_SUFFIXES include
+  NO_DEFAULT_PATH)
+
+find_path(_abacus_mkl_fftw_include
+  NAMES fftw3.h
+  PATHS ${_mkl_root_hints}
+  PATH_SUFFIXES include/fftw
+  NO_DEFAULT_PATH)
+
+find_library(_abacus_mkl_interface_lib
+  NAMES ${_mkl_interface_name}
+  PATHS ${_mkl_root_hints}
+  PATH_SUFFIXES lib/intel64 lib
+  NO_DEFAULT_PATH)
+
+find_library(_abacus_mkl_thread
+  NAMES mkl_${_mkl_threading}
+  PATHS ${_mkl_root_hints}
+  PATH_SUFFIXES lib/intel64 lib
+  NO_DEFAULT_PATH)
+
+find_library(_abacus_mkl_core
+  NAMES mkl_core
+  PATHS ${_mkl_root_hints}
+  PATH_SUFFIXES lib/intel64 lib
+  NO_DEFAULT_PATH)
+
 if(ENABLE_MPI)
-  find_library(MKL_SCALAPACK
-               NAMES mkl_scalapack_lp64
-               HINTS ${_mkl_root_hints}
-               PATH_SUFFIXES lib/intel64 lib)
-  find_library(MKL_BLACS
-               NAMES ${_mkl_blacs_name}
-               HINTS ${_mkl_root_hints}
-               PATH_SUFFIXES lib/intel64 lib)
+  find_library(_abacus_mkl_scalapack
+    NAMES mkl_scalapack_lp64
+    PATHS ${_mkl_root_hints}
+    PATH_SUFFIXES lib/intel64 lib
+    NO_DEFAULT_PATH)
+
+  find_library(_abacus_mkl_blacs
+    NAMES ${_mkl_blacs_name}
+    PATHS ${_mkl_root_hints}
+    PATH_SUFFIXES lib/intel64 lib
+    NO_DEFAULT_PATH)
 endif()
+
 set(CMAKE_FIND_LIBRARY_SUFFIXES "${_mkl_saved_suffixes}")
+
+set(MKL_INCLUDE "${_abacus_mkl_include}")
+set(MKL_FFTW_INCLUDE "${_abacus_mkl_fftw_include}")
+set(MKL_INTERFACE_LIB "${_abacus_mkl_interface_lib}")
+set(MKL_THREAD "${_abacus_mkl_thread}")
+set(MKL_CORE "${_abacus_mkl_core}")
+
+if(ENABLE_MPI)
+  set(MKL_SCALAPACK "${_abacus_mkl_scalapack}")
+  set(MKL_BLACS "${_abacus_mkl_blacs}")
+endif()
 
 set(_mkl_required_vars MKL_INCLUDE MKL_FFTW_INCLUDE MKL_INTERFACE_LIB MKL_THREAD MKL_CORE)
 if(ENABLE_MPI)
@@ -243,10 +274,10 @@ if(MKL_FOUND)
 endif()
 
 mark_as_advanced(
-  MKL_INCLUDE
-  MKL_FFTW_INCLUDE
-  MKL_INTERFACE_LIB
-  MKL_THREAD
-  MKL_CORE
-  MKL_SCALAPACK
-  MKL_BLACS)
+  _abacus_mkl_include
+  _abacus_mkl_fftw_include
+  _abacus_mkl_interface_lib
+  _abacus_mkl_thread
+  _abacus_mkl_core
+  _abacus_mkl_scalapack
+  _abacus_mkl_blacs)
