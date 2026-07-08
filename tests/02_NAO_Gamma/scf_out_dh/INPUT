@@ -1,0 +1,34 @@
+INPUT_PARAMETERS 
+suffix            autotest
+calculation       scf
+
+nbands            4
+symmetry          0
+pseudo_dir        ../../PP_ORB
+orbital_dir       ../../PP_ORB
+gamma_only        1
+
+ecutwfc           20
+scf_thr           1e-5
+scf_nmax          100
+
+basis_type        lcao
+smearing_method   gauss
+smearing_sigma    0.002
+
+mixing_type       broyden
+mixing_beta       0.7
+mixing_gg0        0
+
+ks_solver         scalapack_gvx
+bx                2
+by                2
+bz                2
+
+out_mat_dh 1 8 2
+out_mat_dh_t 1 8 2
+out_mat_dh_vnl 1 8 2
+out_mat_dh_vl 1 8 2
+out_mat_dh_vh 1 8 2
+out_mat_dh_vxc 1 8 2
+

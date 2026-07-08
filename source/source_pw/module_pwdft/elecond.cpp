@@ -7,6 +7,9 @@
 #include "source_base/parallel_device.h"
 #include "source_base/parallel_reduce.h"
 #include "source_estate/occupy.h"
+#include "source_estate/module_pot/potential_new.h"
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_base/module_device/types.h"
 #include "source_io/module_output/binstream.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -51,6 +54,7 @@ void EleCond<FPTYPE, Device>::KG(const int& smear_type,
                                  const double& dw_in,
                                  const double& dt_in,
                                  const bool& nonlocal,
+                                 const bool& mgga_vel,
                                  ModuleBase::matrix& wg)
 {
     //-----------------------------------------------------------
@@ -86,7 +90,29 @@ void EleCond<FPTYPE, Device>::KG(const int& smear_type,
     std::vector<double> ct12(nt, 0);
     std::vector<double> ct22(nt, 0);
 
-    hamilt::Velocity<FPTYPE, Device> velop(this->p_wfcpw, this->p_kv->isk.data(), this->p_ppcell, this->p_ucell, nonlocal);
+    using Real = typename GetTypeReal<FPTYPE>::type;
+    const Real* vtau_ptr = (mgga_vel && this->p_elec != nullptr && this->p_elec->pot != nullptr)
+                               ? this->p_elec->pot->template get_vofk_smooth_data<Real>()
+                               : nullptr;
+    const int vtau_col = (mgga_vel && this->p_elec != nullptr && this->p_elec->pot != nullptr)
+                             ? this->p_elec->pot->get_vofk_smooth().nc
+                             : 0;
+    const int vtau_row = (mgga_vel && this->p_elec != nullptr && this->p_elec->pot != nullptr)
+                             ? this->p_elec->pot->get_vofk_smooth().nr
+                             : 0;
+    if (mgga_vel && XC_Functional::get_ked_flag() && (vtau_ptr == nullptr || vtau_col <= 0 || vtau_row <= 0))
+    {
+        ModuleBase::WARNING_QUIT("EleCond::KG",
+                                 "meta-GGA velocity correction is requested, but v_tau data is unavailable");
+    }
+    hamilt::Velocity<FPTYPE, Device> velop(this->p_wfcpw,
+                                           this->p_kv->isk.data(),
+                                           this->p_ppcell,
+                                           this->p_ucell,
+                                           nonlocal,
+                                           vtau_ptr,
+                                           vtau_col,
+                                           vtau_row);
     double decut = (wcut + fwhmin) / ModuleBase::Ry_to_eV;
     std::cout << "Recommended dt: " << 0.25 * M_PI / decut << " a.u." << std::endl;
     for (int ik = 0; ik < nk; ++ik)

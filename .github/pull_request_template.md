@@ -8,44 +8,17 @@
 - [ ] I have requested any needed governance exception below.
 
 ### Linked Issue
-Fix #...
+Fix #
 
 ### Unit Tests and/or Case Tests for my changes
-- A unit test is added for each new feature or bug fix.
-
-### Exact Verification Performed
 - Commands run:
 - Result summary:
 - Checks not run, with reason:
 
 ### What's changed?
-- Example: My changes might affect the performance of the application under certain conditions, and I have tested the impact on various scenarios...
+- Example: brief summary of the user-visible or developer-facing change.
 
-### Governance Checklist
-- Global dependencies: no net increase in `GlobalV`, `GlobalC`, or `PARAM` code references, or exception requested below with reason, scope, risk, and cleanup plan.
-- Default parameters: no new default arguments added to existing interfaces, or exception requested below.
-- Headers: no unnecessary header dependencies or `.hpp` propagation, or rationale provided below.
-- Line endings: text files use LF; only `.bat` and `.cmd` use CRLF.
-- Build linkage: new source files are listed in the relevant `CMakeLists.txt`, or rationale provided below.
-- Documentation: behavior/interface changes include documentation updates, or no documentation update is required because ...
-- CodeRabbit: if automatic review has not started and the repository has CodeRabbit installed, request `@coderabbitai review`.
-
-### INPUT Parameter Changes
-- Parameters added/removed/changed:
-- `docs/parameters.yaml` updated: yes/no/not applicable
-- `docs/advanced/input_files/input-main.md` updated: yes/no/not applicable
-- If not updated, explain why no INPUT documentation update is required:
-
-### Core Module Impact
-- Affected core modules:
-- Risk summary:
-- Compatibility or performance impact:
-
-### Governance Exception
-- Rule:
-- Reason:
-- Scope:
-- User or maintenance risk:
-- Why the normal rule cannot be followed now:
-- Follow-up cleanup plan:
-- Requested approver:
+### Governance Notes
+- INPUT/docs changes:
+- Core module impact:
+- Exceptions requested:

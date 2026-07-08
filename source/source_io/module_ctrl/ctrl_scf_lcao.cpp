@@ -12,6 +12,8 @@
 #include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
 #include "source_io/module_ml/io_npz.h"                       // use ModuleIO::output_mat_npz()
+#include "source_io/module_dhs/write_dH.h"                    // use ModuleIO::write_dH_components()
+#include "source_io/module_hs/write_H_terms.h"         // use ModuleIO::write_h_*
 #include "../module_hs/write_HS_R.h"                          // use ModuleIO::write_hsr()
 #include "../module_mulliken/cal_mag.h"                          // use cal_mag()
 #include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
@@ -53,6 +55,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const ModulePW::PW_Basis* pw_rho,     // for berryphase
                              const ModulePW::PW_Basis_Big* pw_big, // for Wannier90
                              const Structure_Factor& sf,           // for Wannier90
+                             const ModulePW::PW_Basis* pw_rhod,    // dense charge grid (for dH veff pots)
+                             const ModuleBase::matrix& vloc,       // local pseudopotential (for dH veff pots)
+                             surchem& solvent,                     // solvent model (for dH veff pots)
                              rdmft::RDMFT<TK, TR>& rdmft_solver,   // for RDMFT
                              Setup_DeePKS<TK>& deepks,
                              Exx_NAO<TK>& exx_nao,
@@ -260,7 +265,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     }
 
     //------------------------------------------------------------------
-    //! 7b) Output dH, dS, T, r matrices (old sparse path, without H/S)
+    //! 7b) Output dH, dS, T, r matrices (old sparse path, without H/S), only for multi-k
     //------------------------------------------------------------------
     hamilt::Hamilt<TK>* p_ham_tk = static_cast<hamilt::Hamilt<TK>*>(p_hamilt);
 
@@ -274,6 +279,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     mat_sparse_options.t_precision = inp.out_mat_t[1];
     mat_sparse_options.r_precision = inp.out_mat_r[1];
 
+    if(!PARAM.globalv.gamma_only_local)
     ModuleIO::output_mat_sparse(mat_sparse_options,
                                 istep,
                                 pelec->pot->get_eff_v(),
@@ -286,6 +292,145 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                 p_ham_tk,
                                 &dftu);
 
+    //------------------------------------------------------------------
+    //! 7c) Output atomic dH components (dT/dτ, dV^NL/dτ, dV^L/dτ, dV^H/dτ, dV^XC/dτ), only for nspin =1, 2 now
+    //------------------------------------------------------------------
+    if( PARAM.inp.nspin < 4 )
+    {
+        WriteDHParams dh_params;
+        dh_params.ucell = &ucell;
+        dh_params.gd = &gd;
+        dh_params.pv = &pv;
+        dh_params.two_center_bundle = &two_center_bundle;
+        dh_params.orb = &orb;
+        dh_params.kv = &kv;
+        dh_params.v_eff = &pelec->pot->get_eff_v();
+        dh_params.pot = pelec->pot;
+        dh_params.chg = pelec->charge;
+        // pelec->pot->get_eff_v() is the SUM V^L + V^H + V^XC; feeding it to cal_dH would
+        // give the wrong potential for the separated V^L / V^H / V^XC outputs. Build one
+        // dedicated Potential per term with exactly one component registered (see write_vxc.hpp).
+        double dh_etxc = 0.0;
+        double dh_vtxc = 0.0;
+        elecstate::Potential* pot_vl = nullptr;
+        elecstate::Potential* pot_vh = nullptr;
+        elecstate::Potential* pot_vxc = nullptr;
+        // out_mat_dh (total dH = sum of all terms) needs every veff potential regardless of the
+        // per-component flags, so allocate all three when it is on; otherwise allocate per flag.
+        if (inp.out_mat_dh_vl[0] || inp.out_mat_dh[0])
+        {
+            pot_vl = new elecstate::Potential(pw_rhod, pw_rho, &ucell, &vloc,
+                const_cast<Structure_Factor*>(&sf), &solvent, &dh_etxc, &dh_vtxc);
+            pot_vl->pot_register({"local"});
+            pot_vl->update_from_charge(pelec->charge, &ucell);
+        }
+        if (inp.out_mat_dh_vh[0] || inp.out_mat_dh[0])
+        {
+            pot_vh = new elecstate::Potential(pw_rhod, pw_rho, &ucell, &vloc,
+                const_cast<Structure_Factor*>(&sf), &solvent, &dh_etxc, &dh_vtxc);
+            pot_vh->pot_register({"hartree"});
+            pot_vh->update_from_charge(pelec->charge, &ucell);
+        }
+        if (inp.out_mat_dh_vxc[0] || inp.out_mat_dh[0])
+        {
+            pot_vxc = new elecstate::Potential(pw_rhod, pw_rho, &ucell, &vloc,
+                const_cast<Structure_Factor*>(&sf), &solvent, &dh_etxc, &dh_vtxc);
+            pot_vxc->pot_register({"xc"});
+            pot_vxc->update_from_charge(pelec->charge, &ucell);
+        }
+        dh_params.pot_vl = pot_vl;
+        dh_params.pot_vh = pot_vh;
+        dh_params.pot_vxc = pot_vxc;
+        dh_params.iat2iwt = ucell.get_iat2iwt();
+        dh_params.nat = ucell.nat;
+        dh_params.nspin = inp.nspin;
+        dh_params.istep = istep;
+        dh_params.gamma_only = gamma_only;
+        dh_params.append = out_app_flag;
+        if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+        {
+            // per-spin DM (1-indexed): nspin=1 -> {spin0}, nspin=2 -> {spin-up, spin-down}.
+            // The Veff Hellmann-Feynman terms need these (V^H sums spins, V^XC is spin-resolved).
+            for (int is = 1; is <= PARAM.inp.nspin; ++is)
+            {
+                dh_params.dmR.push_back(dm->get_DMR_pointer(is));
+            }
+        }
+#ifdef __EXX
+        // dV^EXX/dR output is wired for the gamma (TK==double) exx interfaces. exd/exc are
+        // mutually exclusive (real vs complex Hexx); write_dH_exx picks by info_ri.real_number.
+        if constexpr (std::is_same<TK, double>::value)
+        {
+            if (GlobalC::exx_info.info_global.cal_exx)
+            {
+                if (exx_nao.exd) { dh_params.exd = exx_nao.exd.get(); }
+                if (exx_nao.exc) { dh_params.exc = exx_nao.exc.get(); }
+            }
+        }
+#endif
+        ModuleIO::write_dH_components(dh_params);
+        delete pot_vl;
+        delete pot_vh;
+        delete pot_vxc;
+    }
+
+
+    //------------------------------------------------------------------
+    //! 7d) Output H components (T, Vnl, Vl, Vh, Vxc)
+    //------------------------------------------------------------------
+    {
+        ModuleIO::WriteHParams h_params;
+        h_params.ucell = &ucell;
+        h_params.gd = &gd;
+        h_params.pv = &pv;
+        h_params.two_center_bundle = &two_center_bundle;
+        h_params.orb = &orb;
+        h_params.kv = &kv;
+        h_params.pot = pelec->pot;
+        h_params.chg = pelec->charge;
+        h_params.rho_basis = pw_rho;
+        h_params.nrxx = pw_rho->nrxx;
+        h_params.nspin = nspin;
+        h_params.istep = istep;
+        h_params.append = out_app_flag;
+        h_params.iat2iwt = ucell.get_iat2iwt();
+        h_params.nat = ucell.nat;
+        if (inp.out_mat_h_t[0])
+        {
+            ModuleIO::write_h_t(h_params);
+        }
+        if (inp.out_mat_h_vnl[0])
+        {
+            ModuleIO::write_h_vnl(h_params);
+        }
+        if (inp.out_mat_h_vl[0])
+        {
+            ModuleIO::write_h_vl(h_params);
+        }
+        if (inp.out_mat_h_vh[0])
+        {
+            ModuleIO::write_h_vh(h_params);
+        }
+        if (inp.out_mat_h_vxc[0])
+        {
+            ModuleIO::write_h_vxc(h_params);
+        }
+#ifdef __EXX
+        if (inp.out_mat_h_exx[0] && GlobalC::exx_info.info_global.cal_exx)
+        {
+            // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
+            if constexpr (std::is_same<TK, double>::value)
+            {
+                if (GlobalC::exx_info.info_global.cal_exx)
+                {
+                    if (exx_nao.exd) { h_params.exd = exx_nao.exd.get(); }
+                    if (exx_nao.exc) { h_params.exc = exx_nao.exc.get(); }
+                    ModuleIO::write_h_exx(h_params);
+                }
+            }
+        }
+#endif
+    }
     //------------------------------------------------------------------
     //! 8) Output kinetic matrix
     //------------------------------------------------------------------
@@ -566,6 +711,9 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
     const ModulePW::PW_Basis* pw_rho,           // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,       // for Wannier90
     const Structure_Factor& sf,                 // for Wannier90
+    const ModulePW::PW_Basis* pw_rhod,          // dense charge grid (for dH veff pots)
+    const ModuleBase::matrix& vloc,             // local pseudopotential (for dH veff pots)
+    surchem& solvent,                           // solvent model (for dH veff pots)
     rdmft::RDMFT<double, double>& rdmft_solver, // for RDMFT
     Setup_DeePKS<double>& deepks,
     Exx_NAO<double>& exx_nao,
@@ -591,6 +739,9 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
     const ModulePW::PW_Basis* pw_rho,                         // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,                     // for Wannier90
     const Structure_Factor& sf,                               // for Wannier90
+    const ModulePW::PW_Basis* pw_rhod,                        // dense charge grid (for dH veff pots)
+    const ModuleBase::matrix& vloc,                           // local pseudopotential (for dH veff pots)
+    surchem& solvent,                                         // solvent model (for dH veff pots)
     rdmft::RDMFT<std::complex<double>, double>& rdmft_solver, // for RDMFT
     Setup_DeePKS<std::complex<double>>& deepks,
     Exx_NAO<std::complex<double>>& exx_nao,
@@ -615,6 +766,9 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
     const ModulePW::PW_Basis* pw_rho,                                       // for berryphase
     const ModulePW::PW_Basis_Big* pw_big,                                   // for Wannier90
     const Structure_Factor& sf,                                             // for Wannier90
+    const ModulePW::PW_Basis* pw_rhod,                                      // dense charge grid (for dH veff pots)
+    const ModuleBase::matrix& vloc,                                         // local pseudopotential (for dH veff pots)
+    surchem& solvent,                                                       // solvent model (for dH veff pots)
     rdmft::RDMFT<std::complex<double>, std::complex<double>>& rdmft_solver, // for RDMFT
     Setup_DeePKS<std::complex<double>>& deepks,
     Exx_NAO<std::complex<double>>& exx_nao,

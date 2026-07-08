@@ -13,6 +13,7 @@ list(APPEND objects
     gint_vl_nspin4.cpp
     gint_vl_metagga_nspin4.cpp
     gint_rho.cpp
+    gint_drho.cpp
     gint_tau.cpp
     gint_fvl.cpp
     gint_fvl_meta.cpp

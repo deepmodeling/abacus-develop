@@ -284,6 +284,24 @@ class HContainer
      */
     void add(const HContainer<T>& other);
 
+    /**
+     * @brief value-add over the SHARED sparsity only: for every (atom_i, atom_j, R)
+     * BaseMatrix present in BOTH containers, do
+     *   this(i,j,R) += factor * other(i,j,R).
+     * Atom-pairs/R-cells that exist only in `other` are ignored (the sparsity of `this`
+     * is left unchanged). `factor` defaults to 1 (plain add); pass -1 to subtract.
+     */
+    void add_value_intersection(const HContainer<T>& other, T factor = T(1));
+
+    /**
+     * @brief value-add over the UNION sparsity: for every (atom_i, atom_j, R) BaseMatrix
+     * of `other`, ensure it also exists in `this` (insert a zero-initialized shape if
+     * missing) and then do this(i,j,R) += factor * other(i,j,R). The bare add() only
+     * unions/copies pair structure; this additionally accumulates values with a scaling
+     * factor, so it can sum terms with different sparsity (e.g. dH = dT + dVnl + ...).
+     */
+    void add_value_union(const HContainer<T>& other, T factor = T(1));
+
     // save atom-pair pointers into this->tmp_atom_pairs for selected R index
     /**
      * @brief save atom-pair pointers into this->tmp_atom_pairs for selected R index
