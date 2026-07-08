@@ -4,11 +4,12 @@
 #include <vector>
 #include "source_cell/module_neighlist/neighbor_atom.h"
 #include "source_cell/module_neighlist/neighbor_list.h"
+#include "source_cell/module_neighlist/neighbor_types.h"
 
 /**
  * @brief A single bin in the 3D binning grid for neighbor search.
  *
- * Each bin stores atoms that fall within its spatial region,
+ * Each bin stores indices of atoms that fall within its spatial region,
  * along with its position indices in the 3D grid.
  */
 class Bin
@@ -27,28 +28,10 @@ public:
     // ========== Getter methods ==========
 
     /**
-     * @brief Get the X index of this bin in the grid.
-     * @return X index.
+     * @brief Get the atom indices stored in this bin.
+     * @return Const reference to the atom-index vector.
      */
-    int get_id_x() const;
-
-    /**
-     * @brief Get the Y index of this bin in the grid.
-     * @return Y index.
-     */
-    int get_id_y() const;
-
-    /**
-     * @brief Get the Z index of this bin in the grid.
-     * @return Z index.
-     */
-    int get_id_z() const;
-
-    /**
-     * @brief Get the atoms stored in this bin.
-     * @return Const reference to the atom vector.
-     */
-    const std::vector<NeighborAtom>& get_atoms() const;
+    const std::vector<ModuleNeighList::LocalAtomIndex>& get_atom_indices() const;
 
     // ========== Setter methods (internal use) ==========
 
@@ -66,10 +49,10 @@ public:
     void clear_atoms();
 
     /**
-     * @brief Add an atom to this bin.
-     * @param atom The atom to add.
+     * @brief Add an atom index to this bin.
+     * @param atom_index Index of the atom in the vector passed to BinManager::do_binning().
      */
-    void add_atom(const NeighborAtom& atom);
+    void add_atom_index(ModuleNeighList::LocalAtomIndex atom_index);
 
 private:
     /// X index in the 3D bin grid
@@ -81,8 +64,8 @@ private:
     /// Z index in the 3D bin grid
     int id_z_ = 0;
 
-    /// Atoms contained in this bin
-    std::vector<NeighborAtom> atoms_;
+    /// Indices into the atom vector passed to BinManager::do_binning().
+    std::vector<ModuleNeighList::LocalAtomIndex> atom_indices_;
 };
 
 /**
@@ -113,8 +96,7 @@ public:
      */
     void init_bins(
         double sr,
-        const std::vector<NeighborAtom>& inside_atoms,
-        const std::vector<NeighborAtom>& ghost_atoms
+        const std::vector<NeighborAtom>& all_atoms
     );
 
     /**
@@ -123,13 +105,9 @@ public:
      * Must be called after init_bins(). Each atom is placed into the
      * bin that contains its spatial position.
      *
-     * @param inside_atoms Atoms inside the local MPI domain.
-     * @param ghost_atoms Ghost atoms from neighboring domains.
+     * @param atoms All atoms to assign to bins.
      */
-    void do_binning(
-        const std::vector<NeighborAtom>& inside_atoms,
-        const std::vector<NeighborAtom>& ghost_atoms
-    );
+    void do_binning(const std::vector<NeighborAtom>& atoms);
 
     /**
      * @brief Build neighbor list by searching adjacent bins.
@@ -139,10 +117,12 @@ public:
      *
      * @param neighbor_list Output neighbor list to populate.
      * @param atoms Atoms for which to build neighbors.
+     * @param binned_atoms All atoms assigned to bins by do_binning().
      */
     void build_atom_neighbors(
         NeighborList& neighbor_list,
-        std::vector<NeighborAtom>& atoms
+        const std::vector<NeighborAtom>& atoms,
+        const std::vector<NeighborAtom>& binned_atoms
     );
 
     /**

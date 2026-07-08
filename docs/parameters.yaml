@@ -137,6 +137,20 @@ parameters:
     default_value: none
     unit: ""
     availability: ""
+  - name: assume_isolated
+    category: System variables
+    type: String
+    description: |
+      Used to perform a calculation assuming an isolated system in a 3D supercell.
+
+      Available options are:
+      * none: regular periodic calculation without isolated-system correction.
+      * makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
+
+      Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).
+    default_value: none
+    unit: ""
+    availability: ""
   - name: init_wfc
     category: System variables
     type: String
@@ -702,8 +716,11 @@ parameters:
       * 0.4: nspin=2 and nspin=4
       * 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
       * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 < mixing_beta < 0.1.
+      A progressive tuning strategy might help, for example, 0.4 -> 0.1 -> 0.025.
 
       Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
+
+      For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to converge, try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.
     default_value: "0.8 for nspin=1, 0.4 for nspin=2 and nspin=4."
     unit: ""
     availability: ""
@@ -712,6 +729,8 @@ parameters:
     type: Real
     description: |
       Mixing parameter of magnetic density.
+
+      If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.
     default_value: "4*mixing_beta, but the maximum value is 1.6."
     unit: ""
     availability: ""
@@ -823,7 +842,7 @@ parameters:
     category: Electronic structure
     type: Real
     description: |
-      It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If `scf_ene_thr` is set, the total-energy criterion (`scf_ene_thr`) is evaluated conditionally after the charge-density criterion (`scf_thr`) is satisfied, and not on the first iteration. For local-orbital calculations, 1e-6 is usually accurate enough.
+      It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
     default_value: "1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis)."
     unit: "Ry if scf_thr_type=1, dimensionless if scf_thr_type=2"
     availability: ""
@@ -831,7 +850,7 @@ parameters:
     category: Electronic structure
     type: Real
     description: |
-      It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the `Hpsi` operation in one SCF step. It is not the same as the screen-output `EDIFF`, which is the energy difference before `Hpsi` and after charge mixing (i.e., across both `Hpsi` and charge-mixing operations).
+      It's the energy threshold for electronic iteration. It represents the total energy error between two sequential densities from electronic iterations.
     default_value: "-1.0. If the user does not set this parameter, it will not take effect."
     unit: eV
     availability: ""
@@ -1379,7 +1398,6 @@ parameters:
       * berendsen: Berendsen thermostat, see md_nraise in detail.
       * rescaling: velocity Rescaling method 1, see md_tolerance in detail.
       * rescale_v: velocity Rescaling method 2, see md_nraise in detail.
-      * csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.
     default_value: nhc
     unit: ""
     availability: ""
@@ -2857,7 +2875,18 @@ parameters:
                   - nspin = 1: `tau.cube`;
                   - nspin = 2: `taus1.cube`, and `taus2.cube`;
                   - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
-          - 2: On top of 1, also output the initial charge density files with a suffix name as '_ini', such as `taus1_ini.cube`, etc.
+          - 2: On top of 1, also output the initial charge density files. The files are named as:
+              - out_freq_ion = 0:
+                  - nspin = 1: `chg_ini.cube`;
+                  - nspin = 2: `chgs1_ini.cube` and `chgs2_ini.cube`;
+                  - nspin = 4: `chgs1_ini.cube`, `chgs2_ini.cube`, `chgs3_ini.cube`, and `chgs4_ini.cube`;
+                  - output at every step (overwrite same file)
+              - out_freq_ion > 0:
+                  - nspin = 1: `chgg{geom_step}_ini.cube` (e.g., `chgg1_ini.cube`);
+                  - nspin = 2: `chgs1g{geom_step}_ini.cube` and `chgs2g{geom_step}_ini.cube`;
+                  - nspin = 4: `chgs1g{geom_step}_ini.cube`, `chgs2g{geom_step}_ini.cube`, `chgs3g{geom_step}_ini.cube`, and `chgs4g{geom_step}_ini.cube`.
+                  - output every out_freq_ion steps
+              Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
           - -1: Disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
 
       The second integer controls the precision of the charge density output. If not given, `3` is used as default. For restarting from this file and other high-precision calculations, `10` is recommended.
@@ -2878,9 +2907,17 @@ parameters:
        * nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
       * 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/02_postprocessing/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
       * 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
-       * nspin = 1: pots1_ini.cube;
-       * nspin = 2: pots1_ini.cube and pots2_ini.cube;
-       * nspin = 4: pots1_ini.cube, pots2_ini.cube, pots3_ini.cube, and pots4_ini.cube
+       * out_freq_ion = 0:
+         * nspin = 1: `pot_ini.cube`;
+         * nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`;
+         * nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`;
+         * output at every step (overwrite same file)
+       * out_freq_ion > 0:
+         * nspin = 1: `potg{geom_step}_ini.cube` (e.g., `potg1_ini.cube`);
+         * nspin = 2: `pots1g{geom_step}_ini.cube` and `pots2g{geom_step}_ini.cube`;
+         * nspin = 4: `pots1g{geom_step}_ini.cube`, `pots2g{geom_step}_ini.cube`, `pots3g{geom_step}_ini.cube`, and `pots4g{geom_step}_ini.cube`.
+         * output every out_freq_ion steps
+       Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
 
       The optional second integer controls the output precision. If not provided, the default precision is 8.
 
@@ -2895,17 +2932,18 @@ parameters:
     type: "Boolean \\[Integer\\](optional)"
     description: |
       Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. For current develop versions, out_dmk writes *_nao.txt files and includes a g{istep} index in the file name:
-      * For gamma only case:
-       * nspin = 1 and 4: dmg1_nao.txt;
-       * nspin = 2: dms1g1_nao.txt and dms2g1_nao.txt for the two spin channels.
-      * For multi-k points case:
-       * nspin = 1 and 4: dmk1g1_nao.txt, dmk2g1_nao.txt, ...;
-       * nspin = 2: dmk1s1g1_nao.txt... and dmk1s2g1_nao.txt... for the two spin channels.
-      Here, g{istep} denotes the geometry/step index in the output file name.
+          * For gamma only case:
+           * nspin = 1 and 4: dmg1_nao.txt;
+           * nspin = 2: dms1g1_nao.txt and dms2g1_nao.txt for the two spin channels.
+          * For multi-k points case:
+           * nspin = 1 and 4: dmk1g1_nao.txt, dmk2g1_nao.txt, ...;
+           * nspin = 2: dmk1s1g1_nao.txt... and dmk1s2g1_nao.txt... for the two spin channels.
 
-      [NOTE] Version difference (develop vs 3.10-LTS):
-      * In develop, out_dmk supports both gamma-only and multi-k-point density-matrix output.
-      * In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.
+          Here, g{istep} denotes the geometry/step index in the output file name.
+
+          [NOTE] Version difference (develop vs 3.10-LTS):
+          * In develop, out_dmk supports both gamma-only and multi-k-point density-matrix output.
+          * In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.
     default_value: "False"
     unit: ""
     availability: Numerical atomic orbital basis
@@ -3160,7 +3198,7 @@ parameters:
     category: Output information
     type: Boolean
     description: |
-      Whether to print Hamiltonian matrices H(R) in npz format. The output files are named output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
+      Whether to print Hamiltonian matrices H(R) in npz format. This feature does not work for gamma-only calculations.
     default_value: "False"
     unit: Ry
     availability: Numerical atomic orbital basis (not gamma-only algorithm)
@@ -3168,15 +3206,15 @@ parameters:
     category: Output information
     type: Boolean
     description: |
-      Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. The output files are named output_SR.npz, output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
+      Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. This feature does not work for gamma-only calculations.
     default_value: "False"
-    unit: ""
+    unit: Ry
     availability: Numerical atomic orbital basis (not gamma-only algorithm)
   - name: out_dm_npz
     category: Output information
     type: Boolean
     description: |
-      Whether to print density matrices DM(R) in npz format. The output files are named output_DM0.npz, output_DM1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
+      Whether to print density matrices DM(R) in npz format. This feature does not work for gamma-only calculations.
     default_value: "False"
     unit: ""
     availability: Numerical atomic orbital basis (not gamma-only algorithm)
@@ -3271,12 +3309,14 @@ parameters:
     description: |
       Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as
       * nspin = 1:
-          * elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
+          * elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
       * nspin = 2:
-          * elf1.cube, elf2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
-          * elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
+          * elfs1.cube, elfs2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
+          * elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
       * nspin = 4 (noncollinear):
-          * elf.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
+          * elftot.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
+
+      When `out_freq_ion > 0`, a geometry step suffix `g{#}` is appended to the file names (e.g., `elftotg1.cube`, `elfs1g1.cube`).
 
       The second integer controls the precision of the kinetic energy density output, if not given, will use 3 as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use 10.
 
@@ -3775,8 +3815,6 @@ parameters:
       * none: no vdW correction
 
       [NOTE] ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.
-
-      [NOTE] DFT-D4 support requires ABACUS to be configured with ENABLE_DFTD4=ON and a CMake-installed dftd4 library exporting `dftd4-config.cmake`. DFT-D4 damping parameters are loaded from the external library.
     default_value: none
     unit: ""
     availability: ""
@@ -3784,7 +3822,8 @@ parameters:
     category: vdW correction
     type: String
     description: |
-      Functional name passed to the DFT-D4 library to load its internal damping parameters. If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.
+      Functional name used to load DFT-D4 damping parameters from the DFT-D4 library.
+      If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.
     default_value: default
     unit: ""
     availability: vdw_method is set to d4
@@ -3792,8 +3831,11 @@ parameters:
     category: vdW correction
     type: String
     description: |
-      DFT-D4 dispersion model used by the external DFT-D4 library. Available options are d4 for the standard D4 model and d4s for the smooth D4S model.
-    default_value: d4
+      DFT-D4 dispersion model used by the external DFT-D4 library.
+      Available options are:
+      * d4: standard D4 model
+      * d4s: smooth D4S model
+    default_value: "d4"
     unit: ""
     availability: vdw_method is set to d4
   - name: vdw_s6
@@ -3904,7 +3946,7 @@ parameters:
     category: vdW correction
     type: String
     description: |
-      Defines the cutoff radius when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method. For DFT-D4, this controls the two-body dispersion cutoff, while the three-body cutoff is internally limited to the DFT-D4 default value of 40 Bohr.
+      Defines the radius of the cutoff sphere when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method.
     default_value: ""
     unit: defined by vdw_radius_unit (default Bohr)
     availability: vdw_cutoff_type is set to radius
@@ -3930,10 +3972,10 @@ parameters:
     category: vdW correction
     type: Real
     description: |
-      The cutoff radius when calculating coordination numbers. The default is 40 Bohr for DFT-D3 and 30 Bohr for DFT-D4.
+      The cutoff radius when calculating coordination numbers.
     default_value: "40"
     unit: "defined by vdw_cn_thr_unit (default: Bohr)"
-    availability: vdw_method is set to d3_0, d3_bj, or d4
+    availability: "vdw_method is set to d3_0, d3_bj, or d4"
   - name: vdw_cn_thr_unit
     category: vdW correction
     type: String
@@ -4278,14 +4320,6 @@ parameters:
     default_value: "2"
     unit: ""
     availability: sc_mag_switch is true
-  - name: sc_scf_nmin
-    category: Spin-Constrained DFT
-    type: Integer
-    description: |
-      Minimum number of outer scf loop before initializing lambda loop
-    default_value: "2"
-    unit: ""
-    availability: sc_mag_switch is true
   - name: alpha_trial
     category: Spin-Constrained DFT
     type: Real
@@ -4318,6 +4352,53 @@ parameters:
     default_value: "1.0e-4"
     unit: ""
     availability: sc_mag_switch is true
+  - name: sc_direction_only
+    category: Spin-Constrained DFT
+    type: Boolean
+    description: |
+      When true, only the direction of the magnetic moment is constrained to the target direction, while the magnitude is allowed to vary freely. This is useful for studying magnetic anisotropy or when the magnitude of the moment is determined by the electronic structure rather than an external constraint.
+
+      When false (default), both the direction and magnitude of the magnetic moment are constrained to the target values.
+    default_value: "False"
+    unit: ""
+    availability: sc_mag_switch is true
+  - name: sc_lambda_strategy
+    category: Spin-Constrained DFT
+    type: String
+    description: |
+      Lambda update strategy for spin-constrained DFT:
+      * bfgs: BFGS quasi-Newton method
+      * linear_response: linear response (Scheme B)
+      * augmented_lagrangian: augmented Lagrangian (Scheme C)
+      * hybrid_delayed: hybrid delayed update (Scheme D)
+      * linear_scan: linear sweep of lambda for testing magnetic moment response
+    default_value: bfgs
+    unit: ""
+    availability: sc_mag_switch is true
+  - name: sc_scan_lambda_start
+    category: Spin-Constrained DFT
+    type: Float
+    description: |
+      Starting lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.
+    default_value: "0.0"
+    unit: eV/uB
+    availability: sc_lambda_strategy is linear_scan
+  - name: sc_scan_lambda_end
+    category: Spin-Constrained DFT
+    type: Float
+    description: |
+      Ending lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.
+    default_value: "1.0"
+    unit: eV/uB
+    availability: sc_lambda_strategy is linear_scan
+  - name: sc_scan_steps
+    category: Spin-Constrained DFT
+    type: Integer
+    description: |
+      Number of lambda values to scan. Only used when sc_lambda_strategy=linear_scan.
+    default_value: "20"
+    unit: ""
+    availability: sc_lambda_strategy is linear_scan
   - name: qo_switch
     category: Quasiatomic Orbital (QO) analysis
     type: Boolean

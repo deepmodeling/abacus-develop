@@ -467,6 +467,7 @@ struct Input_para
     int cond_smear = 1;         ///< smearing method for conductivities 1: Gaussian 2: Lorentzian
     double cond_fwhm = 0.4;     ///< FWHM for conductivities
     bool cond_nonlocal = true;  ///< if calculate nonlocal effects
+    bool cond_mgga_vel = true;  ///< if calculate meta-GGA velocity correction
 
     bool berry_phase = false; ///< berry phase calculation: calculate berry phase or not
     int gdir = 3;             ///< berry phase calculation: calculate the polarization in

@@ -37,7 +37,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
     std::vector<ProjectorChannel> channels;
     channels.reserve(infoNL_.nproj[T0]);
 
-    // Convert nonlocal pseudopotential beta projectors to the shared grid integrator input.
+    // UPF nonlocal beta projectors already follow the r * beta_l(r) convention.
     for (int ip = 0; ip < infoNL_.nproj[T0]; ++ip)
     {
         const auto& proj = infoNL_.Beta[T0].Proj[ip];
@@ -46,7 +46,7 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
         channel.mesh = proj.getNr();
         channel.dk = proj.getDk();
         channel.rcut = proj.getRcut();
-        channel.radial_values = proj.getBeta_r();
+        channel.radial_times_r = proj.getBeta_r();
         channel.radial_grid = proj.getRadial();
         channels.push_back(channel);
     }
