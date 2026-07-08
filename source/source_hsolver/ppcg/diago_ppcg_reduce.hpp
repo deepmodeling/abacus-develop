@@ -68,7 +68,12 @@ Real max_generalized_residual(
 template <typename T>
 inline void set_zero(std::vector<T>& x)
 {
-    std::fill(x.begin(), x.end(), T(0));
+    const int n = static_cast<int>(x.size());
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if (n > 4096)
+#endif
+    for (int i = 0; i < n; ++i)
+        x[i] = T(0);
 }
 
 } // anonymous namespace

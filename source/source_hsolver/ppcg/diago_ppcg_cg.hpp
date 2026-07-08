@@ -119,8 +119,6 @@ void DiagoPPCG<T, Device>::update_polak_ribiere(
 
     for (int j = 0; j < n_band_; ++j)
     {
-        T* pj  = p.data() + j * ld_psi_;
-        T* zn  = z_new.data() + j * ld_psi_;
         const Real beta_num_zr = static_cast<Real>(beta_nums[j]);
         const Real beta_num_zo = static_cast<Real>(beta_nums[n_band_ + j]);
         Real beta = 0;
@@ -131,16 +129,23 @@ void DiagoPPCG<T, Device>::update_polak_ribiere(
             if (beta < 0)
                 beta = 0;
         }
-
-        // d_new = z_new + beta * d_old
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ > 4096)
-#endif
-        for (int ig = 0; ig < n_dim_; ++ig)
-            pj[ig] = zn[ig] + beta * pj[ig];
+        beta_nums[j] = static_cast<double>(beta);
 
         // Save <z_new, r_new> as denominator for next iteration.
         beta_denom[j] = beta_num_zr + static_cast<Real>(1.0e-30);
+    }
+
+    // d_new = z_new + beta * d_old
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > 4096)
+#endif
+    for (int j = 0; j < n_band_; ++j)
+    {
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            const int off = idx(ig, j, ld_psi_);
+            p[off] = z_new[off] + static_cast<Real>(beta_nums[j]) * p[off];
+        }
     }
 
     // Persist state for next iteration.
