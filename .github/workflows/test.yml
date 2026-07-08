@@ -86,7 +86,7 @@ jobs:
 
       - name: Check documentation consistency
         run: |
-          ABACUS_BIN=$(find build -maxdepth 1 -name "abacus_*" -type f -executable | head -1)
+          ABACUS_BIN=$(find build -name "abacus_*" -type f -executable | head -1)
           echo "Using binary: ${ABACUS_BIN}"
 
           # Check 1: parameters.yaml matches C++ Input_Item definitions
