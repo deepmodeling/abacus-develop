@@ -27,4 +27,5 @@ abacus.json
 toolchain/install/
 toolchain/abacus_env.sh
 .trae
+.codex
 compile_commands.json

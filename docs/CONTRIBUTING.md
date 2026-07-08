@@ -9,6 +9,7 @@ For more non-technical aspects, please refer to the [ABACUS Contribution Guide](
 - [Got a question?](#got-a-question)
 - [Structure of the package](#structure-of-the-package)
 - [Submitting an Issue](#submitting-an-issue)
+- [Agent governance and automated review](#agent-governance-and-automated-review)
 - [Comment style for documentation](#comment-style-for-documentation)
 - [Documenting INPUT parameters](#documenting-input-parameters)
 - [Code formatting style](#code-formatting-style)
@@ -90,6 +91,19 @@ For those who are interested in the source code, the following figure shows the 
 
 Before you submit an issue, please search the issue tracker, and maybe your problem has been discussed and fixed. You can [submit new issues](https://github.com/deepmodeling/abacus-develop/issues/new/choose) by filling our issue forms.
 To help us reproduce and confirm a bug, please provide a test case and building environment in your issue.
+
+## Agent governance and automated review
+
+Before coding or requesting review, read the repository governance entry point
+[`AGENTS.md`](../AGENTS.md) and the full
+[ABACUS Agent Governance](./developers_guide/agent_governance.md) guide.
+These rules apply to human contributors, AI agents, GitHub CI, and CodeRabbit.
+
+Pull requests must complete the governance checklist in the PR template,
+including issue linkage, test evidence, behavior-change notes, INPUT parameter
+documentation linkage, core-module impact, and any requested exceptions. Local
+pre-commit checks cover deterministic rules such as LF line endings and staged
+diff checks; CI repeats the governance check against the PR diff and PR body.
 
 ## Comment style for documentation
 
@@ -368,13 +382,13 @@ To add a unit test:
 ## Adding an integrate test
 The integrate test is a test suite for testing the whole ABACUS package. The examples are located in the `tests/integrate` directory. Before adding a new test, please firstly read `README.md` in `tests/integrate` to understand the structure of the integrate test. To add an integrate test:
 1. Add a new directory under `tests/integrate` for the new test.
-2. Prepare the input files for the new test. 
+2. Prepare the input files for the new test.
     - The input files should be placed in the new directory. Pseudopotential files and orbital files should be placed in `tests/PP_ORB`. You should define the correct `pseudo_dir` and `orb_dir`(if need orbital files) in INPUT with the relative path to the `tests/PP_ORB` directory, and be sure the new test can be run successfully.
     - The running time of the new test should not exceed 20 seconds. You can try to reduce the time by below methods (on the premise of ensuring the effectiveness of the test):
         - Reduce the number of atoms in the unit cell (1~2 atoms).
         - Reduce the number of k-points (`1 1 1` or `2 2 2`).
         - Reduce ecutwfc (20~50 Ry).
-        - Reduce the number of steps for relax or md job (2~3 steps). 
+        - Reduce the number of steps for relax or md job (2~3 steps).
         - Reduce the basis set for LCAO calculations (DZP orbital and 6 a.u. cutoff).
     - For PW calculations, should set `pw_seed 1` in INPUT file to ensure the reproducibility of the test.
 3. Generate the reference results for the new test.
@@ -385,7 +399,7 @@ The integrate test is a test suite for testing the whole ABACUS package. The exa
          etotref -3439.007931317310
          etotperatomref -3439.0079313173
          totaltimeref 2.78
-        ``` 
+        ```
     - If you want to test the correctness of some output files, you need to do extra below steps:
         1. add the corresponding comparison method in `catch_properties.sh`. For example, to verify whether the output of the BANDS_1.dat file is correct, you need to add the following code in `catch_properties.sh`:
             ```bash

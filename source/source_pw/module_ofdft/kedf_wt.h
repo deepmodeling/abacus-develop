@@ -2,11 +2,16 @@
 #define KEDF_WT_H
 #include <cmath>
 #include <cstdio>
+#include <complex>
 
 #include "source_base/global_function.h"
 #include "source_base/matrix.h"
 #include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis.h"
+
+#ifdef __CUDA
+#include <cufft.h>
+#endif
 
 /**
  * @brief A class which calculates the kinetic energy, potential, and stress with Wang-Teter (WT) KEDF.
@@ -22,6 +27,9 @@ class KEDF_WT
     }
     ~KEDF_WT()
     {
+#ifdef __CUDA
+        this->free_gpu_buffers();
+#endif
         delete[] this->kernel_;
     }
 
@@ -65,5 +73,20 @@ class KEDF_WT
           * 2; // 10/3*(3*pi^2)^{2/3}, multiply by 2 to convert unit from Hartree to Ry, finally in Ry*Bohr^(-2)
     double wt_coef_ = 0.; // coefficient of WT kernel
     double* kernel_ = nullptr;
+
+#ifdef __CUDA
+    void multi_kernel_gpu(const double* const* prho, double** rkernel_rho, int nspin,
+                          double exponent, ModulePW::PW_Basis* pw_rho);
+    void free_gpu_buffers();
+
+    // Persistent GPU buffers (lazily allocated once, reused across SCF iterations)
+    double* d_rho_ = nullptr;                  // real-space input    (nrxx doubles)
+    cufftHandle cufft_plan_fwd_ = 0;             // cuFFT forward plan
+    cufftHandle cufft_plan_bwd_ = 0;             // cuFFT backward plan
+    double* d_result_ = nullptr;               // real-space output   (nrxx doubles)
+    double* d_kernel_ = nullptr;               // WT kernel on device (npw doubles)
+
+    bool gpu_allocated_ = false;
+#endif
 };
 #endif

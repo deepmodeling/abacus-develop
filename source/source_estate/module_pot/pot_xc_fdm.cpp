@@ -63,4 +63,3 @@ void PotXC_FDM::cal_v_eff(
 }
 
 } // namespace elecstate
-

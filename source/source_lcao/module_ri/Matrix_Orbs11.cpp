@@ -11,9 +11,9 @@
 
 void Matrix_Orbs11::init(
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_A,
-    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B, 
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orb_B,
     const UnitCell& ucell,
-    const LCAO_Orbitals& orb, 
+    const LCAO_Orbitals& orb,
     const double kmesh_times)
 {
     ModuleBase::TITLE("Matrix_Orbs11", "init");
