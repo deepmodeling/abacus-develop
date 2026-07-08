@@ -97,6 +97,7 @@ if(ENABLE_MPI)
   endif()
 
   set(_mkl_blacs_name mkl_blacs_${_mkl_mpi}_lp64)
+  message(STATUS "oneMKL BLACS interface: ${_mkl_blacs_name}")
 endif()
 
 # Re-run searches when a configuration axis or the selected MKL root changes.
@@ -192,10 +193,14 @@ if(MKL_FOUND)
     message(FATAL_ERROR "MKL_LINK=dynamic did not select shared oneMKL libraries.")
   endif()
 
+  # oneMKL requires pthread even with mkl_sequential
   find_package(Threads REQUIRED)
   set(_mkl_runtime Threads::Threads ${CMAKE_DL_LIBS})
   list(APPEND _mkl_runtime m)
   if(NOT _mkl_threading STREQUAL "sequential")
+    if(NOT USE_OPENMP)
+      message(FATAL_ERROR "MKL_THREADING=${_mkl_threading} requires USE_OPENMP=ON.")
+    endif()
     find_package(OpenMP REQUIRED COMPONENTS CXX)
     list(APPEND _mkl_runtime OpenMP::OpenMP_CXX)
   endif()
