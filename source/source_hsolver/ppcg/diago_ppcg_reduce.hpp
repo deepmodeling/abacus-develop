@@ -1,5 +1,9 @@
 #include "source_base/parallel_reduce.h"
 
+#include <algorithm>
+#include <cmath>
+#include <vector>
+
 namespace hsolver {
 namespace {
 

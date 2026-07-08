@@ -1,5 +1,10 @@
 #include <ATen/kernels/lapack.h>
 
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
+#include <vector>
+
 namespace hsolver {
 namespace {
 

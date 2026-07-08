@@ -1,3 +1,9 @@
+#include <algorithm>
+#include <cmath>
+#include <limits>
+#include <stdexcept>
+#include <vector>
+
 namespace hsolver {
 
 //==============================================================================

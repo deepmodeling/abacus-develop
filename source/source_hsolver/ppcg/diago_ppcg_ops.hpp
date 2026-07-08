@@ -1,4 +1,10 @@
 #include "source_base/kernels/math_kernel_op.h"
+
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
+#include <vector>
+
 namespace hsolver {
 namespace {
 

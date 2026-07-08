@@ -1,5 +1,8 @@
+#include <algorithm>
 #include <cstdlib>
 #include <fstream>
+#include <numeric>
+#include <vector>
 
 namespace hsolver {
 
