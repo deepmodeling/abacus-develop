@@ -59,17 +59,13 @@ void Driver::driver_run()
     unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
 
     //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
-    const std::string cal = PARAM.inp.calculation;
-    const bool socket_mode = (cal == "socket");
     Input_para socket_esolver_inp = PARAM.inp;
-    Input_para socket_driver_inp = PARAM.inp;
+    const bool socket_mode = (socket_esolver_inp.calculation == "socket");
     if (socket_mode)
     {
         socket_esolver_inp.calculation = "scf";
-        socket_driver_inp.calculation = cal;
     }
     const Input_para& esolver_inp = socket_mode ? socket_esolver_inp : PARAM.inp;
-    const Input_para& driver_inp = socket_mode ? socket_driver_inp : PARAM.inp;
 
     this->init_hardware();
 
@@ -84,6 +80,7 @@ void Driver::driver_run()
 #endif
 
     //! 4: different types of calculations
+    const std::string cal = PARAM.inp.calculation;
     if (cal == "md")
     {
         Run_MD::md_line(ucell, p_esolver, PARAM);
@@ -91,7 +88,7 @@ void Driver::driver_run()
     else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf" || cal == "socket")
     {
         Relax_Driver rl_driver;
-        rl_driver.relax_driver(p_esolver, ucell, driver_inp, GlobalV::ofs_running);
+        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp, GlobalV::ofs_running);
     }
     else if (cal == "get_s")
     {

@@ -1,11 +1,15 @@
 #ifndef ABACUS_SOURCE_RELAX_SOCKET_DRIVER_H
 #define ABACUS_SOURCE_RELAX_SOCKET_DRIVER_H
 
-#include "source_cell/unitcell.h"
-#include "source_esolver/esolver.h"
-#include "source_io/module_parameter/input_parameter.h"
+#include <iosfwd>
 
-#include <fstream>
+class UnitCell;
+struct Input_para;
+
+namespace ModuleESolver
+{
+class ESolver;
+}
 
 class Socket_Driver
 {

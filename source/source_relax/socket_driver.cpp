@@ -2,11 +2,13 @@
 
 #include "source_relax/ipi_socket.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 #include "source_base/mathzone.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
+#include "source_cell/unitcell.h"
 #include "source_cell/update_cell.h"
+#include "source_esolver/esolver.h"
+#include "source_io/module_parameter/input_parameter.h"
 
 #include <algorithm>
 #include <cmath>
@@ -22,7 +24,13 @@ constexpr int IPI_RANK_ROOT = 0;
 
 bool is_root()
 {
-    return GlobalV::MY_RANK == IPI_RANK_ROOT;
+#ifdef __MPI
+    int rank = IPI_RANK_ROOT;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    return rank == IPI_RANK_ROOT;
+#else
+    return true;
+#endif
 }
 
 void bcast_double_vector(std::vector<double>& values)
