@@ -685,6 +685,31 @@ std::int32_t SternheimerRPA::chi0_v1_marker()
     return kChi0V1Marker;
 }
 
+int SternheimerRPA::frequency_owner_rank(const int ifrequency_zero_based,
+                                         const int mpi_ranks,
+                                         const int rank_shift)
+{
+    if (ifrequency_zero_based < 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::frequency_owner_rank requires a non-negative frequency index.");
+    }
+    if (mpi_ranks <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::frequency_owner_rank requires a positive MPI rank count.");
+    }
+    if (mpi_ranks == 1)
+    {
+        return 0;
+    }
+
+    int normalized_shift = rank_shift % mpi_ranks;
+    if (normalized_shift < 0)
+    {
+        normalized_shift += mpi_ranks;
+    }
+    return (ifrequency_zero_based + normalized_shift) % mpi_ranks;
+}
+
 SternheimerRPA::TransitionEnergyWindow SternheimerRPA::transition_energy_window_from_eigenvalues_ry(
     const std::vector<double>& eigenvalues_ry,
     const std::vector<double>& occupations,

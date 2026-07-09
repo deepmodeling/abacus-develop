@@ -278,6 +278,18 @@ TEST(SternheimerRPA, ReadFrequencyGridFileRejectsInvalidRows)
     std::remove(invalid_value.c_str());
 }
 
+TEST(SternheimerRPA, FrequencyOwnerRankSupportsRankShift)
+{
+    EXPECT_EQ(ModuleRI::SternheimerRPA::frequency_owner_rank(0, 6, 0), 0);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::frequency_owner_rank(5, 6, 0), 5);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::frequency_owner_rank(0, 6, 1), 1);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::frequency_owner_rank(5, 6, 1), 0);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::frequency_owner_rank(0, 1, 3), 0);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::frequency_owner_rank(1, 4, -1), 0);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::frequency_owner_rank(-1, 6, 0), std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::frequency_owner_rank(0, 0, 0), std::invalid_argument);
+}
+
 TEST(SternheimerRPA, SolveBiCGStabDiagonalComplexSystem)
 {
     const Vector diagonal = {Complex(2.0, 1.0), Complex(3.0, -0.5), Complex(4.0, 2.0)};

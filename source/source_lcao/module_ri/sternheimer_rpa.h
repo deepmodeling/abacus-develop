@@ -115,6 +115,8 @@ class SternheimerRPA
 
     static FrequencyGrid read_frequency_grid_file(const std::string& filename, int expected_size);
 
+    static int frequency_owner_rank(int ifrequency_zero_based, int mpi_ranks, int rank_shift = 0);
+
     static void write_chi0_v1_file(const std::string& filename,
                                    const Chi0V1Metadata& metadata,
                                    const std::vector<AuxiliaryChannel>& channels,

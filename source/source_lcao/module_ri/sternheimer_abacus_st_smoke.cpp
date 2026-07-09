@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <chrono>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -47,6 +48,8 @@ constexpr const char* kPCAThresholdEnv = "ABACUS_STERNHEIMER_FD_ST_PCA_THRESHOLD
 constexpr const char* kCCPRmeshTimesEnv = "ABACUS_STERNHEIMER_FD_ST_CCP_RMESH_TIMES";
 constexpr const char* kOrbitalDirEnv = "ABACUS_STERNHEIMER_FD_ST_ORBITAL_DIR";
 constexpr const char* kOrbitalFilesEnv = "ABACUS_STERNHEIMER_FD_ST_ORBITAL_FILES";
+constexpr const char* kFrequencyRankShiftEnv = "ABACUS_STERNHEIMER_FD_ST_FREQ_RANK_SHIFT";
+constexpr double kHartreeToRydberg = 2.0;
 
 std::string lower_string(std::string value)
 {
@@ -79,6 +82,22 @@ int positive_int_from_env(const char* name, const int default_value)
     if (raw[parsed] != '\0' || value <= 0)
     {
         throw std::invalid_argument(std::string("Invalid positive integer in ") + name + ".");
+    }
+    return value;
+}
+
+int int_from_env(const char* name, const int default_value)
+{
+    const char* raw = std::getenv(name);
+    if (raw == nullptr)
+    {
+        return default_value;
+    }
+    std::size_t parsed = 0;
+    const int value = std::stoi(raw, &parsed);
+    if (raw[parsed] != '\0')
+    {
+        throw std::invalid_argument(std::string("Invalid integer in ") + name + ".");
     }
     return value;
 }
@@ -156,6 +175,53 @@ std::string chi0_v1_filename(const int iq, const int ifrequency, const int rank 
     std::ostringstream out;
     out << "v1_sternheimer_chi0_iq_" << iq << "_ifreq_" << ifrequency << "_rank" << rank << ".dat";
     return out.str();
+}
+
+std::string chi0_progress_filename(const int rank = GlobalV::MY_RANK)
+{
+    std::ostringstream out;
+    out << "STERNHEIMER_CHI0_PROGRESS_rank" << rank << ".dat";
+    return out.str();
+}
+
+double elapsed_seconds_since(const std::chrono::steady_clock::time_point& start)
+{
+    return std::chrono::duration<double>(std::chrono::steady_clock::now() - start).count();
+}
+
+void reset_chi0_progress_file()
+{
+    std::ofstream out(chi0_progress_filename().c_str());
+    out << std::setprecision(16);
+    out << "event rank ifrequency owner_rank band channel solved_equations converged iterations "
+           "solver_relative_residual equation_residual_norm elapsed_s note\n";
+}
+
+void append_chi0_progress_event(const std::string& event,
+                                const int ifrequency,
+                                const int owner_rank,
+                                const int band,
+                                const int channel,
+                                const int solved_equations,
+                                const SternheimerRPA::SolverResult* solver_result,
+                                const double equation_residual_norm,
+                                const double elapsed_seconds,
+                                const std::string& note)
+{
+    std::ofstream out(chi0_progress_filename().c_str(), std::ios::app);
+    out << std::setprecision(16);
+    out << event << ' ' << GlobalV::MY_RANK << ' ' << ifrequency << ' ' << owner_rank << ' ' << band << ' '
+        << channel << ' ' << solved_equations << ' ';
+    if (solver_result == nullptr)
+    {
+        out << "- -1 -1 ";
+    }
+    else
+    {
+        out << (solver_result->converged ? "yes" : "no") << ' ' << solver_result->iterations << ' '
+            << solver_result->relative_residual << ' ';
+    }
+    out << equation_residual_norm << ' ' << elapsed_seconds << ' ' << note << '\n';
 }
 
 int occupied_band_count(const elecstate::ElecState& elec_state, const int k_index)
@@ -433,6 +499,30 @@ std::vector<std::vector<double>> collect_channel_potentials(const std::vector<St
         potentials.push_back(channel.potential_r);
     }
     return potentials;
+}
+
+std::vector<double> scale_potential(const std::vector<double>& potential, const double factor)
+{
+    std::vector<double> scaled = potential;
+    for (double& value: scaled)
+    {
+        value *= factor;
+    }
+    return scaled;
+}
+
+std::vector<std::vector<double>> scale_potentials(const std::vector<std::vector<double>>& potentials,
+                                                  const double factor)
+{
+    std::vector<std::vector<double>> scaled = potentials;
+    for (std::vector<double>& potential: scaled)
+    {
+        for (double& value: potential)
+        {
+            value *= factor;
+        }
+    }
+    return scaled;
 }
 
 void write_abfs_channel_diagnostic(const std::string& filename,
@@ -744,8 +834,9 @@ void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
 
             for (const SternheimerABFGridChannel& channel: channels)
             {
+                const std::vector<double> perturbation_ry = scale_potential(channel.potential_r, kHartreeToRydberg);
                 SternheimerFDHamiltonian::Vector rhs;
-                SternheimerRPA::build_rhs_from_hartree_perturbation(channel.potential_r,
+                SternheimerRPA::build_rhs_from_hartree_perturbation(perturbation_ry,
                                                                     states.wavefunctions[ib],
                                                                     rhs);
                 SternheimerFDHamiltonian::Vector projected_rhs = rhs;
@@ -835,6 +926,18 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
 
     try
     {
+        reset_chi0_progress_file();
+        const auto chi0_start_time = std::chrono::steady_clock::now();
+        append_chi0_progress_event("enter",
+                                   0,
+                                   -1,
+                                   -1,
+                                   -1,
+                                   0,
+                                   nullptr,
+                                   -1.0,
+                                   elapsed_seconds_since(chi0_start_time),
+                                   use_frequency_mpi ? "frequency_mpi=yes" : "frequency_mpi=no");
         if (PARAM.inp.out_librpa_reader_version != 1)
         {
             throw std::runtime_error("out_sternheimer_librpa requires out_librpa_reader_version=1.");
@@ -875,6 +978,8 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         const double pca_threshold = nonnegative_double_from_env(kPCAThresholdEnv, PARAM.inp.exx_pca_threshold);
         const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
         const int nfreq = PARAM.inp.sternheimer_nfreq;
+        const int default_frequency_rank_shift = use_frequency_mpi && GlobalV::NPROC > 1 ? 1 : 0;
+        const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
         const std::string frequency_grid_file = PARAM.inp.sternheimer_frequency_grid_file;
         const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
 
@@ -890,6 +995,16 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                   : SternheimerRPA::generate_greenx_minimax_frequency_grid(nfreq,
                                                                            transition_window.emin_ha,
                                                                            transition_window.emax_ha);
+        append_chi0_progress_event("frequency_grid",
+                                   0,
+                                   -1,
+                                   -1,
+                                   -1,
+                                   0,
+                                   nullptr,
+                                   -1.0,
+                                   elapsed_seconds_since(chi0_start_time),
+                                   "rank_shift=" + std::to_string(frequency_rank_shift));
 
         const SternheimerABACUSFDGridData grid_data
             = use_frequency_mpi ? make_sternheimer_fd_full_grid(pw_basis) : make_sternheimer_fd_grid(pw_basis);
@@ -901,6 +1016,16 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         }
 
         const int num_channels = static_cast<int>(channels.size());
+        append_chi0_progress_event("channels_ready",
+                                   0,
+                                   -1,
+                                   -1,
+                                   -1,
+                                   0,
+                                   nullptr,
+                                   -1.0,
+                                   elapsed_seconds_since(chi0_start_time),
+                                   "num_channels=" + std::to_string(num_channels));
         if (GlobalV::MY_RANK == 0)
         {
             write_abfs_channel_diagnostic("STERNHEIMER_ABFS_CHANNELS.dat", channels);
@@ -922,7 +1047,27 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         const SternheimerFDHamiltonian hamiltonian
             = use_frequency_mpi ? make_sternheimer_fd_full_hamiltonian(potential, pw_basis, ucell, 0, 1.0)
                                 : make_sternheimer_fd_hamiltonian(potential, pw_basis, ucell, 0, 1.0);
+        append_chi0_progress_event("hamiltonian_ready",
+                                   0,
+                                   -1,
+                                   -1,
+                                   -1,
+                                   0,
+                                   nullptr,
+                                   -1.0,
+                                   elapsed_seconds_since(chi0_start_time),
+                                   "grid_size=" + std::to_string(grid_data.grid.size()));
         SternheimerFDZeroOrderStates states;
+        append_chi0_progress_event("zero_order_start",
+                                   0,
+                                   -1,
+                                   -1,
+                                   -1,
+                                   0,
+                                   nullptr,
+                                   -1.0,
+                                   elapsed_seconds_since(chi0_start_time),
+                                   GlobalV::MY_RANK == 0 ? "solve" : "wait");
         if (!use_frequency_mpi || GlobalV::MY_RANK == 0)
         {
             states = solve_fd_zero_order_auto(hamiltonian,
@@ -932,6 +1077,16 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                               lanczos_max_subspace_size);
         }
         broadcast_zero_order_states(states, grid_data.grid.size(), use_frequency_mpi);
+        append_chi0_progress_event("zero_order_ready",
+                                   0,
+                                   -1,
+                                   -1,
+                                   -1,
+                                   0,
+                                   nullptr,
+                                   -1.0,
+                                   elapsed_seconds_since(chi0_start_time),
+                                   "nstates=" + std::to_string(states.wavefunctions.size()));
         const std::vector<SternheimerFDHamiltonian::Vector> occupied
             = occupied_wavefunctions_from_states(states, elec_state, 0);
         if (occupied.empty())
@@ -940,10 +1095,23 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         }
 
         const std::vector<std::vector<double>> potentials = collect_channel_potentials(channels);
+        // ABFS Coulomb potentials are in Ha units; the FD Hamiltonian and omega are in Ry.
+        // Keep Ha potentials for M=V chi0 V output, but use Ry perturbations in the linear equation.
+        const std::vector<std::vector<double>> perturbations_ry = scale_potentials(potentials, kHartreeToRydberg);
 
         SternheimerDeltaSubspace delta_subspace;
         if (use_delta_sternheimer)
         {
+            append_chi0_progress_event("delta_subspace_start",
+                                       0,
+                                       -1,
+                                       -1,
+                                       -1,
+                                       0,
+                                       nullptr,
+                                       -1.0,
+                                       elapsed_seconds_since(chi0_start_time),
+                                       "candidate_orbitals");
             const std::vector<SternheimerFDHamiltonian::Vector> candidate_orbitals
                 = build_lcao_candidate_grid_orbitals(ucell, grid_data.grid);
             if (candidate_orbitals.empty())
@@ -963,6 +1131,16 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
             {
                 throw std::runtime_error("Sternheimer delta mode produced no fixed virtual states.");
             }
+            append_chi0_progress_event("delta_subspace_ready",
+                                       0,
+                                       -1,
+                                       -1,
+                                       -1,
+                                       0,
+                                       nullptr,
+                                       -1.0,
+                                       elapsed_seconds_since(chi0_start_time),
+                                       "nvirtual=" + std::to_string(delta_subspace.virtual_states.size()));
         }
 
         SternheimerRPA::SolverOptions solver_options;
@@ -977,7 +1155,12 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
 
         for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
         {
-            if (use_frequency_mpi && (ifrequency % GlobalV::NPROC) != GlobalV::MY_RANK)
+            const int owner_rank = use_frequency_mpi
+                                       ? SternheimerRPA::frequency_owner_rank(ifrequency,
+                                                                              GlobalV::NPROC,
+                                                                              frequency_rank_shift)
+                                       : 0;
+            if (use_frequency_mpi && owner_rank != GlobalV::MY_RANK)
             {
                 continue;
             }
@@ -988,6 +1171,17 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
 
             const double omega_ha = frequency_grid.omega_ha[static_cast<std::size_t>(ifrequency)];
             const double omega_ry = 2.0 * omega_ha;
+            const auto frequency_start_time = std::chrono::steady_clock::now();
+            append_chi0_progress_event("frequency_start",
+                                       ifrequency + 1,
+                                       owner_rank,
+                                       -1,
+                                       -1,
+                                       solved_equations,
+                                       nullptr,
+                                       -1.0,
+                                       elapsed_seconds_since(chi0_start_time),
+                                       "omega_Ha=" + std::to_string(omega_ha));
 
             for (int ib = 0; ib != static_cast<int>(states.wavefunctions.size()); ++ib)
             {
@@ -999,9 +1193,9 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
 
                 for (int ichannel = 0; ichannel != num_channels; ++ichannel)
                 {
+                    const std::size_t channel_index = static_cast<std::size_t>(ichannel);
                     SternheimerFDHamiltonian::Vector rhs;
-                    SternheimerRPA::build_rhs_from_hartree_perturbation(channels[static_cast<std::size_t>(ichannel)]
-                                                                            .potential_r,
+                    SternheimerRPA::build_rhs_from_hartree_perturbation(perturbations_ry[channel_index],
                                                                         states.wavefunctions[ib],
                                                                         rhs);
                     SternheimerFDHamiltonian::Vector delta_wavefunction;
@@ -1012,7 +1206,7 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                         const std::vector<SternheimerFDHamiltonian::Complex> perturbation_matrix_elements
                             = delta_sternheimer_perturbation_matrix_elements(
                                 delta_subspace.virtual_states,
-                                channels[static_cast<std::size_t>(ichannel)].potential_r,
+                                perturbations_ry[channel_index],
                                 states.wavefunctions[ib],
                                 grid_data.volume_element);
                         const SternheimerDeltaLinearResponse response
@@ -1055,6 +1249,16 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                     max_solver_relative_residual
                         = std::max(max_solver_relative_residual, solver_result.relative_residual);
                     max_equation_residual_norm = std::max(max_equation_residual_norm, equation_residual_norm);
+                    append_chi0_progress_event("equation",
+                                               ifrequency + 1,
+                                               owner_rank,
+                                               ib,
+                                               ichannel,
+                                               solved_equations,
+                                               &solver_result,
+                                               equation_residual_norm,
+                                               elapsed_seconds_since(chi0_start_time),
+                                               use_delta_sternheimer ? "delta" : "standard");
                 }
             }
 
@@ -1069,6 +1273,17 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
             const std::string data_file = chi0_v1_filename(metadata.iq, metadata.ifrequency);
             SternheimerRPA::write_chi0_v1_file(data_file, metadata, auxiliary_channels, chi0);
             GlobalV::ofs_running << " Sternheimer chi0 v1 output: " << data_file << std::endl;
+            append_chi0_progress_event("frequency_finish",
+                                       ifrequency + 1,
+                                       owner_rank,
+                                       -1,
+                                       -1,
+                                       solved_equations,
+                                       nullptr,
+                                       -1.0,
+                                       elapsed_seconds_since(chi0_start_time),
+                                       "elapsed_freq_s=" + std::to_string(
+                                                               elapsed_seconds_since(frequency_start_time)));
         }
 
         reduce_chi0_output_stats(all_converged,
@@ -1096,7 +1311,11 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                             ifrequency + 1,
                                             frequency_grid.omega_ha[static_cast<std::size_t>(ifrequency)],
                                             frequency_grid.weights_ha[static_cast<std::size_t>(ifrequency)]);
-                const int owner_rank = use_frequency_mpi ? ifrequency % GlobalV::NPROC : 0;
+                const int owner_rank = use_frequency_mpi
+                                           ? SternheimerRPA::frequency_owner_rank(ifrequency,
+                                                                                  GlobalV::NPROC,
+                                                                                  frequency_rank_shift)
+                                           : 0;
                 index_entries.push_back({chi0_v1_filename(metadata.iq, metadata.ifrequency, owner_rank), metadata});
             }
             write_chi0_index_file("v1_sternheimer_chi0_index.dat", index_entries);
@@ -1123,6 +1342,8 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         out << "transition_window_Ha " << transition_window.emin_ha << ' ' << transition_window.emax_ha << '\n';
         out << "sternheimer_frequency_mpi " << (use_frequency_mpi ? "yes" : "no") << '\n';
         out << "mpi_ranks " << GlobalV::NPROC << '\n';
+        out << "frequency_rank_shift " << frequency_rank_shift << '\n';
+        out << "progress_file_pattern STERNHEIMER_CHI0_PROGRESS_rank*.dat\n";
         out << "ifrequency omega_Ha weight_Ha omega_Ry data_file\n";
         for (const auto& entry: index_entries)
         {
