@@ -39,11 +39,7 @@ void Driver::driver_run()
     ModuleBase::TITLE("Driver", "driver_run");
 
     const std::string cal = PARAM.inp.calculation;
-    if (cal == "socket")
-    {
-        this->driver_ipi_run();
-        return;
-    }
+    const bool socket_mode = (cal == "socket");
 
     //! 1: setup cell and atom information
     // this warning should not be here, mohan 2024-05-22
@@ -66,12 +62,20 @@ void Driver::driver_run()
     unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
 
     //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
+    Input_para esolver_inp = PARAM.inp;
+    Input_para driver_inp = PARAM.inp;
+    if (socket_mode)
+    {
+        esolver_inp.calculation = "scf";
+        driver_inp.calculation = cal;
+    }
+
     this->init_hardware();
 
-    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, ucell);
+    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(esolver_inp, ucell);
 
     //! 3: initialize Esolver and fill json-structure
-    p_esolver->before_all_runners(ucell, PARAM.inp);
+    p_esolver->before_all_runners(ucell, esolver_inp);
 
     // this Json part should be moved to before_all_runners, mohan 2024-05-12
 #ifdef __RAPIDJSON
@@ -83,10 +87,10 @@ void Driver::driver_run()
     {
         Run_MD::md_line(ucell, p_esolver, PARAM);
     }
-    else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
+    else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf" || cal == "socket")
     {
         Relax_Driver rl_driver;
-        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp, GlobalV::ofs_running);
+        rl_driver.relax_driver(p_esolver, ucell, driver_inp, GlobalV::ofs_running);
     }
     else if (cal == "get_s")
     {

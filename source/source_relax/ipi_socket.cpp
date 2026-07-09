@@ -1,4 +1,4 @@
-#include "ipi_socket.h"
+#include "source_relax/ipi_socket.h"
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -40,6 +40,10 @@ std::string padded_header(const std::string& header)
     return out;
 }
 } // namespace
+
+IpiSocketClosed::IpiSocketClosed(const std::string& message) : std::runtime_error(message)
+{
+}
 
 IpiSocket::~IpiSocket()
 {
@@ -127,7 +131,28 @@ void IpiSocket::close()
 std::string IpiSocket::read_header()
 {
     char header[IPI_HEADER_LEN];
-    this->read_exact(header, sizeof(header));
+    std::size_t done = 0;
+    while (done < sizeof(header))
+    {
+        const ssize_t nread = ::recv(fd_, header + done, sizeof(header) - done, 0);
+        if (nread == 0)
+        {
+            if (done == 0)
+            {
+                throw IpiSocketClosed("i-PI socket closed before next header");
+            }
+            throw std::runtime_error("i-PI socket closed while reading header");
+        }
+        if (nread < 0)
+        {
+            if (errno == EINTR)
+            {
+                continue;
+            }
+            throw std::runtime_error(errno_message("i-PI socket header read failed"));
+        }
+        done += static_cast<std::size_t>(nread);
+    }
     return trim_header(header);
 }
 
@@ -198,7 +223,7 @@ void IpiSocket::read_exact(void* data, std::size_t nbytes)
         const ssize_t nread = ::recv(fd_, cursor + done, nbytes - done, 0);
         if (nread == 0)
         {
-            throw std::runtime_error("i-PI socket closed while reading");
+            throw IpiSocketClosed("i-PI socket closed while reading");
         }
         if (nread < 0)
         {

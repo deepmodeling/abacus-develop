@@ -2,8 +2,15 @@
 #define ABACUS_IPI_SOCKET_H
 
 #include <cstddef>
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+class IpiSocketClosed : public std::runtime_error
+{
+  public:
+    explicit IpiSocketClosed(const std::string& message);
+};
 
 class IpiSocket
 {
