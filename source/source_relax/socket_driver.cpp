@@ -27,29 +27,52 @@ bool is_root()
 
 void bcast_double_vector(std::vector<double>& values)
 {
+#ifdef __MPI
     if (!values.empty())
     {
         Parallel_Common::bcast_double(values.data(), static_cast<int>(values.size()));
     }
+#else
+    (void)values;
+#endif
+}
+
+void bcast_socket_int(int& value)
+{
+#ifdef __MPI
+    Parallel_Common::bcast_int(value);
+#else
+    (void)value;
+#endif
+}
+
+void bcast_socket_chars(char* value, const int size)
+{
+#ifdef __MPI
+    Parallel_Common::bcast_char(value, size);
+#else
+    (void)value;
+    (void)size;
+#endif
 }
 
 void bcast_socket_string(std::string& value)
 {
     int size = static_cast<int>(value.size());
-    Parallel_Common::bcast_int(size);
+    bcast_socket_int(size);
     if (!is_root())
     {
         value.resize(static_cast<std::size_t>(size));
     }
     if (size > 0)
     {
-        Parallel_Common::bcast_char(&value[0], size);
+        bcast_socket_chars(&value[0], size);
     }
 }
 
 void quit_if_root_io_failed(int root_failed, std::string root_message)
 {
-    Parallel_Common::bcast_int(root_failed);
+    bcast_socket_int(root_failed);
     bcast_socket_string(root_message);
     if (root_failed != 0)
     {
@@ -83,6 +106,58 @@ std::vector<double> ipi_cell_bohr_from_unitcell(const UnitCell& ucell)
         ucell.latvec.e12 * lat0, ucell.latvec.e22 * lat0, ucell.latvec.e32 * lat0,
         ucell.latvec.e13 * lat0, ucell.latvec.e23 * lat0, ucell.latvec.e33 * lat0,
     };
+}
+
+double max_wrapped_direct_delta_from_unitcell(const UnitCell& ucell, const std::vector<double>& positions_bohr)
+{
+    if (positions_bohr.size() != static_cast<std::size_t>(3 * ucell.nat))
+    {
+        return 1.0e99;
+    }
+
+    double out = 0.0;
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        const Atom* atom = &ucell.atoms[it];
+        for (int ia = 0; ia < atom->na; ++ia)
+        {
+            const double tau_x = positions_bohr[3 * iat + 0] / ucell.lat0;
+            const double tau_y = positions_bohr[3 * iat + 1] / ucell.lat0;
+            const double tau_z = positions_bohr[3 * iat + 2] / ucell.lat0;
+
+            double dx = 0.0;
+            double dy = 0.0;
+            double dz = 0.0;
+            ModuleBase::Mathzone::Cartesian_to_Direct(tau_x,
+                                                      tau_y,
+                                                      tau_z,
+                                                      ucell.latvec.e11,
+                                                      ucell.latvec.e12,
+                                                      ucell.latvec.e13,
+                                                      ucell.latvec.e21,
+                                                      ucell.latvec.e22,
+                                                      ucell.latvec.e23,
+                                                      ucell.latvec.e31,
+                                                      ucell.latvec.e32,
+                                                      ucell.latvec.e33,
+                                                      dx,
+                                                      dy,
+                                                      dz);
+
+            double ddx = dx - atom->taud[ia].x;
+            double ddy = dy - atom->taud[ia].y;
+            double ddz = dz - atom->taud[ia].z;
+            ddx -= std::round(ddx);
+            ddy -= std::round(ddy);
+            ddz -= std::round(ddz);
+            out = std::max(out, std::abs(ddx));
+            out = std::max(out, std::abs(ddy));
+            out = std::max(out, std::abs(ddz));
+            ++iat;
+        }
+    }
+    return out;
 }
 
 double max_abs_delta(const std::vector<double>& a, const std::vector<double>& b)
@@ -214,6 +289,7 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
         std::vector<double> virial_hartree(9, 0.0);
 
         const std::vector<double> reference_cell = ipi_cell_bohr_from_unitcell(ucell);
+        bool checked_initial_positions = false;
 
         while (true)
         {
@@ -306,8 +382,8 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
                     }
                 }
                 quit_if_root_io_failed(io_failed, io_message);
-                Parallel_Common::bcast_int(rid);
-                Parallel_Common::bcast_int(nbytes);
+                bcast_socket_int(rid);
+                bcast_socket_int(nbytes);
                 if (nbytes > 0 && is_root())
                 {
                     ofs_running << " ABACUS socket INIT params bytes " << nbytes << std::endl;
@@ -352,7 +428,7 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
                 quit_if_root_io_failed(io_failed, io_message);
                 bcast_double_vector(cell);
                 bcast_double_vector(inv_cell);
-                Parallel_Common::bcast_int(nat_socket);
+                bcast_socket_int(nat_socket);
                 if (!is_root())
                 {
                     positions.assign(static_cast<std::size_t>(3 * nat_socket), 0.0);
@@ -367,6 +443,17 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
                 if (max_cell_delta_bohr > 1.0e-6)
                 {
                     ModuleBase::WARNING_QUIT("ABACUS socket", "variable-cell socket updates are not supported yet.");
+                }
+                if (!checked_initial_positions)
+                {
+                    checked_initial_positions = true;
+                    if (max_wrapped_direct_delta_from_unitcell(ucell, positions) > 1.0e-5 && is_root())
+                    {
+                        ModuleBase::WARNING(
+                            "ABACUS socket",
+                            "first POSDATA positions are not PBC-equivalent to STRU atom order; "
+                            "i-PI POSDATA carries no species, so the client atoms should use the same atom order as STRU.");
+                    }
                 }
 
                 set_positions_from_ipi_bohr(ucell, positions);

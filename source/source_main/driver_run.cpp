@@ -38,9 +38,6 @@ void Driver::driver_run()
 {
     ModuleBase::TITLE("Driver", "driver_run");
 
-    const std::string cal = PARAM.inp.calculation;
-    const bool socket_mode = (cal == "socket");
-
     //! 1: setup cell and atom information
     // this warning should not be here, mohan 2024-05-22
 #ifndef __LCAO
@@ -62,13 +59,17 @@ void Driver::driver_run()
     unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
 
     //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
-    Input_para esolver_inp = PARAM.inp;
-    Input_para driver_inp = PARAM.inp;
+    const std::string cal = PARAM.inp.calculation;
+    const bool socket_mode = (cal == "socket");
+    Input_para socket_esolver_inp = PARAM.inp;
+    Input_para socket_driver_inp = PARAM.inp;
     if (socket_mode)
     {
-        esolver_inp.calculation = "scf";
-        driver_inp.calculation = cal;
+        socket_esolver_inp.calculation = "scf";
+        socket_driver_inp.calculation = cal;
     }
+    const Input_para& esolver_inp = socket_mode ? socket_esolver_inp : PARAM.inp;
+    const Input_para& driver_inp = socket_mode ? socket_driver_inp : PARAM.inp;
 
     this->init_hardware();
 
