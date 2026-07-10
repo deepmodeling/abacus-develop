@@ -93,7 +93,6 @@ if(ENABLE_MPI)
   endif()
 
   set(_mkl_blacs_name mkl_blacs_${_mkl_mpi}_lp64)
-  message(STATUS "oneMKL BLACS interface: ${_mkl_blacs_name}")
 endif()
 
 # These are result variables of this finder, not user configuration inputs.
@@ -198,6 +197,7 @@ find_package_handle_standard_args(MKL REQUIRED_VARS ${_mkl_required_vars})
 if(MKL_FOUND)
   set(_mkl_libraries ${MKL_INTERFACE_LIB} ${MKL_THREAD} ${MKL_CORE})
   if(ENABLE_MPI)
+    message(STATUS "oneMKL BLACS interface: ${_mkl_blacs_name}")
     list(APPEND _mkl_libraries ${MKL_SCALAPACK} ${MKL_BLACS})
   endif()
   set(_mkl_any_static FALSE)
