@@ -93,6 +93,12 @@ endfunction()
 # enable json support
 if(ENABLE_RAPIDJSON)
   find_package(RapidJSON CONFIG REQUIRED)
+  if(NOT TARGET RapidJSON)
+    message(
+      FATAL_ERROR
+      "RapidJSON was found, but target RapidJSON is missing. Check if your RapidJSON installation provides a complete exported CMake configuration."
+    )
+  endif()
   abacus_add_feature_definitions(__RAPIDJSON)
 endif()
 
@@ -238,14 +244,10 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Enable DFT-D4 languages before finding OpenMP.
 if(ENABLE_DFTD4)
-  # DFTD4 requires enabling C and Fortran to work
   enable_language(C)
   enable_language(Fortran)
-  # Avoid custom-lapack fallback when resolving DFT-D4 dependencies
-  find_package(BLAS REQUIRED)
-  find_package(LAPACK REQUIRED)
-  find_package(dftd4 4.2.0 REQUIRED)
 endif()
 
 macro(set_if_higher VARIABLE VALUE)
@@ -335,6 +337,12 @@ if(DEBUG_INFO)
 endif()
 
 if(ENABLE_MPI)
+  if(NOT CMAKE_CROSSCOMPILING)
+    # FindMPI runs a probe executable to determine the MPI library version,
+    # which FindMKL.cmake uses to auto-detect the BLACS interface.
+    # When cross compiling, assume users know what they are doing.
+    set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
+  endif()
   find_package(MPI COMPONENTS CXX REQUIRED)
   abacus_add_feature_definitions(__MPI)
 endif()
@@ -355,6 +363,44 @@ find_package(Threads REQUIRED)
 
 if(USE_OPENMP)
   find_package(OpenMP REQUIRED)
+endif()
+
+if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
+  set(MKLROOT "$ENV{MKLROOT}")
+endif()
+if(USE_KML)
+  set(_kml_components BLAS LAPACK FFTW3)
+  if(ENABLE_MPI)
+    list(APPEND _kml_components ScaLAPACK)
+  endif()
+  if(ENABLE_FLOAT_FFTW)
+    list(APPEND _kml_components FFTW3_FLOAT)
+  endif()
+
+  find_package(KML REQUIRED COMPONENTS ${_kml_components})
+  abacus_add_feature_definitions(__KML)
+elseif(MKLROOT OR MKL_ROOT)
+  find_package(MKL REQUIRED)
+  abacus_add_feature_definitions(__MKL)
+elseif(NOT USE_SW)
+  find_package(Lapack REQUIRED)
+  # ScaLAPACK is a distributed-memory library and is only needed for the
+  # MPI build. A serial build (e.g. the native Windows serial version)
+  # must not require it.
+  if(ENABLE_MPI)
+    find_package(ScaLAPACK REQUIRED)
+  endif()
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Intel|Clang")
+    message(WARNING "Cannot determine the required Fortran runtime.")
+  endif()
+endif()
+
+if(NOT USE_KML AND NOT MKL_FOUND AND NOT USE_SW)
+  find_package(FFTW3 REQUIRED)
+endif()
+
+if(ENABLE_DFTD4)
+  find_package(dftd4 4.2.0 REQUIRED)
 endif()
 
 include(CheckLanguage)
@@ -526,42 +572,6 @@ if(ENABLE_ASAN)
   endif()
   add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
   add_link_options(-fsanitize=address)
-endif()
-
-if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
-  set(MKLROOT "$ENV{MKLROOT}")
-endif()
-if(USE_KML)
-  set(_kml_components BLAS LAPACK FFTW3)
-  if(ENABLE_MPI)
-    list(APPEND _kml_components ScaLAPACK)
-  endif()
-  if(ENABLE_FLOAT_FFTW)
-    list(APPEND _kml_components FFTW3_FLOAT)
-  endif()
-
-  find_package(KML REQUIRED COMPONENTS ${_kml_components})
-  abacus_add_feature_definitions(__KML)
-elseif(MKLROOT)
-  set(MKL_INTERFACE lp64)
-  set(ENABLE_SCALAPACK ON)
-  find_package(MKL REQUIRED)
-  abacus_add_feature_definitions(__MKL)
-elseif(NOT USE_SW)
-  find_package(Lapack REQUIRED)
-  # ScaLAPACK is a distributed-memory library and is only needed for the
-  # MPI build. A serial build (e.g. the native Windows serial version)
-  # must not require it.
-  if(ENABLE_MPI)
-    find_package(ScaLAPACK REQUIRED)
-  endif()
-  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Intel|Clang")
-    message(WARNING "Cannot determine the required Fortran runtime.")
-  endif()
-endif()
-
-if(NOT USE_KML AND NOT MKLROOT AND NOT USE_SW)
-  find_package(FFTW3 REQUIRED)
 endif()
 
 if(ENABLE_FLOAT_FFTW)

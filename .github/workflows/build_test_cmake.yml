@@ -23,11 +23,11 @@ jobs:
 
           - tag: gnu
             external_toolchain_args: ""
-            build_args: "-DENABLE_LIBXC=ON -DENABLE_MLALGO=ON -DENABLE_LIBRI=ON"
+            build_args: "-DENABLE_LIBXC=ON -DENABLE_MLALGO=ON -DENABLE_LIBRI=ON -DENABLE_DFTD4=ON"
             name: "Build extra components with GNU toolchain"
           - tag: intel
             external_toolchain_args: "--with-intel"
-            build_args: "-DENABLE_LIBXC=ON -DENABLE_PEXSI=ON -DENABLE_MLALGO=ON -DENABLE_LIBRI=ON"
+            build_args: "-DENABLE_LIBXC=ON -DENABLE_PEXSI=ON -DENABLE_MLALGO=ON -DENABLE_LIBRI=ON -DENABLE_DFTD4=ON"
             name: "Build extra components with Intel toolchain"
 
           - tag: cuda
