@@ -273,6 +273,20 @@ if(MKL_FOUND)
   endif()
 endif()
 
+# Compatibility with packages that consume the standard CMake math targets.
+if(TARGET abacus::mkl)
+  if(NOT TARGET BLAS::BLAS)
+    add_library(BLAS::BLAS INTERFACE IMPORTED)
+    set_property(TARGET BLAS::BLAS PROPERTY
+                 INTERFACE_LINK_LIBRARIES abacus::mkl)
+  endif()
+  if(NOT TARGET LAPACK::LAPACK)
+    add_library(LAPACK::LAPACK INTERFACE IMPORTED)
+    set_property(TARGET LAPACK::LAPACK PROPERTY
+                 INTERFACE_LINK_LIBRARIES abacus::mkl)
+  endif()
+endif()
+
 mark_as_advanced(
   _abacus_mkl_include
   _abacus_mkl_fftw_include
