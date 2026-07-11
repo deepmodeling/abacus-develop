@@ -2,6 +2,7 @@
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_hs/write_HS.h"
@@ -404,6 +405,15 @@ void write_h_exx(WriteHParams& params)
 {
     ModuleBase::TITLE("ModuleIO", "write_h_exx");
     ModuleBase::timer::start("ModuleIO", "write_h_exx");
+
+    // The EXX interfaces carried by WriteHParams are gamma-only (see write_H_terms.h), so at
+    // multi-k exd/exc are both null. Quit with a clear message instead of writing nothing.
+    if (!PARAM.globalv.gamma_only_local)
+    {
+        ModuleBase::WARNING_QUIT("write_h_exx",
+                                 "out_mat_h_exx is only supported for gamma-only: the V^EXX(R) "
+                                 "output is not available at multi-k. Use gamma_only.");
+    }
 
     const UnitCell& ucell = *params.ucell;
     const Parallel_Orbitals& pv = *params.pv;
