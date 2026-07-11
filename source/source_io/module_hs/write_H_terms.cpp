@@ -345,7 +345,13 @@ void write_h_vxc(WriteHParams& params)
 
     ModuleBase::matrix v_xc;
     double etxc, vtxc;
-    std::tie(etxc, vtxc, v_xc) = XC_Functional::v_xc(nrxx, chg, &ucell, PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z);
+    const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+    const double hse_omega = XC_Functional::get_hse_omega();
+#else
+    const double hse_omega = 0.0;
+#endif
+    std::tie(etxc, vtxc, v_xc) = XC_Functional::v_xc(nrxx, chg, &ucell, PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, hybrid_alpha, hse_omega);
 
     for (int ispin = 0; ispin < nspin_out; ispin++)
     {
