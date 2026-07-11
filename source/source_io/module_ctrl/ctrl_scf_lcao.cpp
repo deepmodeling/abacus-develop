@@ -1,6 +1,7 @@
 #include "ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 
 #include "source_base/formatter.h"
+#include "source_base/tool_quit.h" // use ModuleBase::WARNING_QUIT
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_hamilt/hamilt.h"         // use Hamilt<T>
 #include "source_lcao/hamilt_lcao.h"      // use hamilt::HamiltLCAO<TK, TR>
@@ -55,7 +56,15 @@ void setup_exx_dh_params<double>(ModuleIO::WriteDHParams& dh_params, Exx_NAO<dou
 
 template <typename TK>
 void setup_exx_h_params(ModuleIO::WriteHParams& h_params, Exx_NAO<TK>& exx_nao)
-{}
+{
+    // Only the gamma-only (TK==double) specialization below actually writes V^EXX(R).
+    // This generic body is instantiated for the multi-k (TK==std::complex) path, where the
+    // EXX-H output is unsupported. Reject it explicitly here so the request cannot be silently
+    // dropped (the WARNING_QUIT inside write_h_exx is unreachable at multi-k).
+    ModuleBase::WARNING_QUIT("setup_exx_h_params",
+                             "out_mat_h_exx is only supported for gamma-only: the V^EXX(R) "
+                             "output is not available at multi-k. Use gamma_only.");
+}
 
 template <>
 void setup_exx_h_params<double>(ModuleIO::WriteHParams& h_params, Exx_NAO<double>& exx_nao)
