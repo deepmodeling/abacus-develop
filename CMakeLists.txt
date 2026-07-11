@@ -14,7 +14,7 @@ project(
   LANGUAGES CXX)
 
 option(ENABLE_MPI "Enable MPI" ON)
-option(USE_OPENMP "Enable OpenMP" ON)
+option(ENABLE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
 option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
@@ -23,14 +23,14 @@ option(USE_DSP "Enable DSP" OFF)
 option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
-option(USE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
+option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
 option(ENABLE_MLALGO "Enable the machine learning algorithms" OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
-option(USE_ELPA "Enable ELPA for LCAO" ON)
+option(ENABLE_ELPA "Enable ELPA for LCAO" ON)
 option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
 option(EXX_DEV "Enable LibRI developing features" OFF)
 option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
@@ -39,7 +39,7 @@ option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 option(BUILD_TESTING "Build unittests" OFF)
 option(DEBUG_INFO "Print message to debug" OFF)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
-option(INFO "Enable gathering math library information" OFF)
+option(MATH_INFO "Enable gathering math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build" OFF)
 option(GIT_SUBMODULE "Check submodules during build" ON)
 
@@ -58,6 +58,22 @@ option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_d
 # ==============================================================================
 # Deprecated options (TODO: Remove this section in the future release)
 # ==============================================================================
+function(abacus_rename_option old_name new_name)
+  get_property(_old_defined CACHE "${old_name}" PROPERTY TYPE SET)
+  if(NOT _old_defined)
+    return()
+  endif()
+  message(WARNING "${old_name} has been renamed to ${new_name}.")
+  get_property(_type CACHE "${new_name}" PROPERTY TYPE)
+  get_property(_help CACHE "${new_name}" PROPERTY HELPSTRING)
+  set("${new_name}" "${${old_name}}" CACHE "${_type}" "${_help}" FORCE)
+  unset("${old_name}" CACHE)
+endfunction()
+abacus_rename_option(USE_OPENMP ENABLE_OPENMP)
+abacus_rename_option(USE_ABACUS_LIBM ENABLE_ABACUS_LIBM)
+abacus_rename_option(USE_ELPA ENABLE_ELPA)
+abacus_rename_option(INFO MATH_INFO)
+
 if(DEFINED CACHE{ENABLE_LIBCOMM})
   message(
     WARNING
@@ -156,7 +172,7 @@ endif()
 
 # Serial version of ABACUS will not use ELPA
 if(NOT ENABLE_MPI)
-  set(USE_ELPA OFF)
+  set(ENABLE_ELPA OFF)
   set(ENABLE_MLALGO OFF)
 endif()
 
@@ -220,7 +236,7 @@ endif()
 
 # Use DSP hardware
 if (USE_DSP)
-  set(USE_ELPA OFF)
+  set(ENABLE_ELPA OFF)
   set(ABACUS_BIN_NAME abacus_dsp)
 endif()
 
@@ -305,13 +321,13 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
   # stick to strict floating point model on Intel Compiler
   add_compile_options(-fp-model=strict)
-  set(USE_ABACUS_LIBM OFF) # Force turn off USE_ABACUS_LIBM on Intel Compiler
+  set(ENABLE_ABACUS_LIBM OFF) # Force turn off ENABLE_ABACUS_LIBM on Intel Compiler
   set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -Wno-write-strings "
   )
 endif()
 
-if(USE_ABACUS_LIBM)
+if(ENABLE_ABACUS_LIBM)
   abacus_add_feature_definitions(USE_ABACUS_LIBM)
 endif()
 
@@ -329,7 +345,7 @@ endif()
 
 if(ENABLE_LCAO)
   abacus_add_feature_definitions(__LCAO)
-  if(USE_ELPA)
+  if(ENABLE_ELPA)
     find_package(ELPA REQUIRED)
     abacus_add_feature_definitions(__ELPA)
   endif()
@@ -380,7 +396,7 @@ endif()
 
 find_package(Threads REQUIRED)
 
-if(USE_OPENMP)
+if(ENABLE_OPENMP)
   find_package(OpenMP REQUIRED)
 endif()
 
@@ -500,7 +516,7 @@ if(USE_CUDA)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
       set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G" CACHE STRING "CUDA flags for debug build" FORCE)
     endif()
-    if (USE_OPENMP AND OpenMP_CXX_FOUND)
+    if (ENABLE_OPENMP AND OpenMP_CXX_FOUND)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
     if (ENABLE_NCCL_PARALLEL_DEVICE)
@@ -713,7 +729,7 @@ endif()
 
 abacus_add_feature_definitions(__FFTW3 __SELINV METIS)
 
-if(INFO)
+if(MATH_INFO)
   message(STATUS "Will gather math lib info.")
   abacus_add_feature_definitions(GATHER_INFO)
   # modifications on blas_connector and lapack_connector

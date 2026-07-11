@@ -64,7 +64,7 @@ if [ "$ENABLE_MPI" = "ON" ]; then
 fi
 
 # Notes on the non-default options:
-#  * USE_ELPA/PEXSI/LIBRI/MLALGO/CUDA = OFF -> not available on Windows yet.
+#  * ENABLE_ELPA/PEXSI/LIBRI/MLALGO/CUDA = OFF -> not available on Windows yet.
 #    When ENABLE_MPI=ON the LCAO solver is ScaLAPACK (found automatically);
 #    when serial it is LAPACK (DiagoLapack).
 #  * BLA_VENDOR=OpenBLAS          -> let CMake's FindBLAS/FindLAPACK pick OpenBLAS.
