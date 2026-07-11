@@ -11,19 +11,6 @@ namespace module_rt
 {
 
 /**
- * @brief Radial projector channel integrated against one LCAO orbital.
- */
-struct ProjectorChannel
-{
-    int l = 0;
-    int mesh = 0;
-    double dk = 0.0;
-    double rcut = 0.0;
-    const double* radial_values = nullptr;
-    const double* radial_grid = nullptr;
-};
-
-/**
  * @brief Numerical quadrature settings for projector snapshots.
  *
  * The default values reproduce the production RT-TDDFT path.
@@ -35,7 +22,32 @@ struct SnapIntegrationOptions
 };
 
 /**
- * @brief Compute <phi|exp(-i A r)|projector> with default quadrature settings.
+ * @brief Radial projector channel integrated against one LCAO orbital.
+ *
+ * radial_times_r stores r * p_l(r), where p_l(r) is the radial projector.
+ * The radial part of the volume integral is therefore evaluated as
+ * (r * p_l(r)) * r dr = p_l(r) * r^2 dr.
+ */
+struct ProjectorChannel
+{
+    int l = 0;
+    int mesh = 0;
+    double dk = 0.0;
+    double rcut = 0.0;
+    const double* radial_times_r = nullptr;
+    const double* radial_grid = nullptr;
+};
+
+/**
+ * @brief Compute projector overlaps with default quadrature settings.
+ *
+ * The shared integral is
+ * I_m(A) = <phi_{T1,L1,m1,N1}(r-R1)|exp(-i A.r)|p_{l,m}(r-R0)>.
+ *
+ * The phase A is given in Cartesian coordinates. The returned nlm[0] stores
+ * I_m(A) for all projector magnetic components. If calc_r is true, nlm[1..3]
+ * store
+ * R_a,m(A) = <phi|r_a exp(-i A.r)|p_{l,m}>.
  */
 void snap_projector_half_tddft(const LCAO_Orbitals& orb,
                                const std::vector<ProjectorChannel>& projector_channels,
@@ -51,9 +63,10 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
                                const char* timer_name);
 
 /**
- * @brief Compute <phi|exp(-i A r)|projector> with explicit quadrature settings.
+ * @brief Compute projector overlaps with explicit quadrature settings.
  *
- * If calc_r is true, nlm[1..3] also store the Cartesian position moments.
+ * The ProjectorChannel radial convention is always r * p_l(r). Callers that
+ * own different physical projectors are responsible for passing that form.
  */
 void snap_projector_half_tddft(const LCAO_Orbitals& orb,
                                const std::vector<ProjectorChannel>& projector_channels,

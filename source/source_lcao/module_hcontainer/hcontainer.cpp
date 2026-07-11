@@ -440,6 +440,81 @@ void HContainer<T>::add(const HContainer<T>& other)
     }
 }
 
+// value-add over shared sparsity only: this(i,j,R) += factor * other(i,j,R)
+template <typename T>
+void HContainer<T>::add_value_intersection(const HContainer<T>& other, T factor)
+{
+    for (int iap = 0; iap < this->size_atom_pairs(); ++iap)
+    {
+        AtomPair<T>& ap = this->get_atom_pair(iap);
+        const int i = ap.get_atom_i();
+        const int j = ap.get_atom_j();
+        if (other.find_pair(i, j) == nullptr)
+        {
+            continue;
+        }
+        for (int ir = 0; ir < ap.get_R_size(); ++ir)
+        {
+            const ModuleBase::Vector3<int> R = ap.get_R_index(ir);
+            BaseMatrix<T>* dst = this->find_matrix(i, j, R);
+            const BaseMatrix<T>* src = other.find_matrix(i, j, R);
+            if (dst == nullptr || src == nullptr)
+            {
+                continue;
+            }
+            T* pdst = dst->get_pointer();
+            const T* psrc = src->get_pointer();
+            if (pdst == nullptr || psrc == nullptr)
+            {
+                continue;
+            }
+            const int n = dst->get_row_size() * dst->get_col_size();
+            for (int k = 0; k < n; ++k)
+            {
+                pdst[k] += factor * psrc[k];
+            }
+        }
+    }
+}
+
+// value-add over union sparsity: build a fresh HContainer covering the union sparsity,
+// fill it as result = 1*(*this) + factor*other, then swap it into *this.
+// This is necessary because HContainer uses a single contiguous buffer for all R-blocks;
+// adding new (i,j,R) entries requires reallocating that buffer.
+template <typename T>
+void HContainer<T>::add_value_union(const HContainer<T>& other, T factor)
+{
+    // 1) Start from a zeroed copy of *this's sparsity (fresh contiguous buffer).
+    HContainer<T> result(*this, nullptr);
+    // 2) Extend result's sparsity with any (i,j,R) present in other but not yet in result.
+    for (int iap = 0; iap < other.size_atom_pairs(); ++iap)
+    {
+        AtomPair<T> tmp = other.get_atom_pair(iap);
+        result.insert_pair(tmp);
+    }
+    // 3) Rebuild result's contiguous buffer to cover the full union sparsity (zeroed).
+    result.allocate(nullptr, true);
+    // 4) Fill: result = 1*(*this) + factor*other.
+    result.add_value_intersection(*this, T(1));
+    result.add_value_intersection(other, factor);
+    // 5) Release *this's old buffer and take ownership of result's resources.
+    if (this->allocated)
+    {
+        if (this->allocated_size > 0)
+            ModuleBase::Memory::record("HContainer", -(long long)this->allocated_size, true);
+        delete[] this->wrapper_pointer;
+    }
+    this->wrapper_pointer  = result.wrapper_pointer;
+    this->allocated        = result.allocated;
+    this->allocated_size   = result.allocated_size;
+    this->atom_pairs       = std::move(result.atom_pairs);
+    this->sparse_ap        = std::move(result.sparse_ap);
+    this->sparse_ap_index  = std::move(result.sparse_ap_index);
+    result.wrapper_pointer = nullptr;
+    result.allocated       = false;
+    result.allocated_size  = 0;
+}
+
 template <typename T>
 bool HContainer<T>::fix_R(int rx_in, int ry_in, int rz_in) const
 {

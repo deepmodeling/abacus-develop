@@ -17,7 +17,9 @@ set(NAO_PATH "${ABACUS_SOURCE_DIR}/source_basis/module_nao")
 set(HSOLVER_PATH "${ABACUS_SOURCE_DIR}/source_hsolver")
 set(PSI_PATH "${ABACUS_SOURCE_DIR}/source_psi")
 set(ENABLE_LCAO ON)
-list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/../../cmake")
+list(APPEND CMAKE_MODULE_PATH
+     "${PROJECT_SOURCE_DIR}/../../cmake"
+     "${PROJECT_SOURCE_DIR}/../../cmake/modules")
 
 # add math_libs
 if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)

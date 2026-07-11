@@ -6,7 +6,7 @@ class Projection:
         self.klist = klist
         self.steps = steps
         self.wfc_dir = fdir + wfc_dir
-        self.s_dir = fdir suffix + s_dir
+        self.s_dir = fdir + s_dir
         wfc_ref, Ocp_ref = self.read_wfc(klist[0]+1, stepref+1, dir=self.wfc_dir)
         self.nband = len(Ocp_ref)
         self.nlocal = len(wfc_ref[0])

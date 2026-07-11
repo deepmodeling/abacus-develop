@@ -179,6 +179,11 @@ class Potential : public PotBase
     {
         return this->ucell_;
     }
+    // get the local pseudopotential vloc(it, G) table; used by the dH module (out_mat_dh_vl)
+    const ModuleBase::matrix* get_vloc() const
+    {
+        return this->vloc_;
+    }
     // What about adding a function to get the wfc?
     // This is useful for the calculation of the exx energy
 

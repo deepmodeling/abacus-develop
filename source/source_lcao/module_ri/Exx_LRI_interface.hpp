@@ -1,22 +1,21 @@
 #ifndef EXX_LRI_INTERFACE_HPP
 #define EXX_LRI_INTERFACE_HPP
-#include "source_io/module_parameter/parameter.h"
-
 #include "Exx_LRI_interface.h"
-#include "source_lcao/module_ri/exx_abfs-jle.h"
-#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
-#include "source_base/parallel_common.h"
 #include "source_base/formatter.h"
-
-#include "source_io/module_output/csr_reader.h"
-#include "source_io/module_hs/write_HS_sparse.h"
+#include "source_base/parallel_common.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/xc_functional.h"
+#include "source_io/module_hs/write_HS_sparse.h"
+#include "source_io/module_output/csr_reader.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"
+#include "source_lcao/module_operator_lcao/op_exx_lcao.h"
+#include "source_lcao/module_ri/exx_abfs-jle.h"
 
-#include <sys/time.h>
 #include <stdexcept>
 #include <string>
+#include <sys/time.h>
 
 template<typename T, typename Tdata>
 void Exx_LRI_Interface<T, Tdata>::init(const MPI_Comm &mpi_comm,
@@ -77,6 +76,35 @@ void Exx_LRI_Interface<T, Tdata>::cal_exx_stress(const double& omega, const doub
 
     this->exx_ptr->cal_exx_stress(omega, lat0);
     this->flag_finish.stress = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+    const UnitCell& ucell,
+    const Parallel_Orbitals& pv)
+{
+    ModuleBase::TITLE("Exx_LRI_Interface", "cal_exx_dHs");
+    if (!this->flag_finish.init || !this->flag_finish.ions)
+    {
+        throw std::runtime_error("Exx init unfinished when " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
+    }
+
+    this->exx_ptr->cal_exx_dHs(Ds, ucell, pv);
+
+    this->flag_finish.dHs = true;
+}
+
+template<typename T, typename Tdata>
+void Exx_LRI_Interface<T, Tdata>::cal_exx_dHs(const UnitCell& ucell,
+    const Parallel_Orbitals& pv,
+    const int nspin)
+{
+    // build D(R) from the current mixed D(k) (mirrors the Ds construction in exx_iter_finish)
+    const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds
+        = PARAM.globalv.gamma_only_local
+        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_out(), pv, nspin)
+        : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell, *this->exx_ptr->p_kv, this->mix_DMk_2D.get_DMk_out(), pv, nspin, this->exx_spacegroup_symmetry);
+    this->cal_exx_dHs(Ds, ucell, pv);
 }
 
 template<typename T, typename Tdata>

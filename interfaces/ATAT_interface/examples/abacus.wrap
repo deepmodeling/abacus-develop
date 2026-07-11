@@ -1,0 +1,15 @@
+# ========== ABACUS INPUT parameters ==========
+INPUT_PARAMETERS
+suffix         CaOMgO
+calculation    cell-relax
+ecutwfc        100
+basis_type     lcao
+kspacing       0.5
+scf_nmax       100
+# ... other parameters ...
+pseudo_dir     ../../../../tests/PP_ORB
+orbital_dir    ../../../../tests/PP_ORB
+
+# Ca only has one set of PP&ORB that can be automatically searched, while Mg and O have multiple PP&ORB that need to be specified
+species  Mg  -  Mg_ONCV_PBE-1.0.upf  Mg_gga_8au_100Ry_4s2p1d.orb
+species   O  -   O_ONCV_PBE-1.0.upf   O_gga_8au_100Ry_2s2p1d.orb

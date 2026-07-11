@@ -577,8 +577,11 @@ In general, the convergence of the Broyden method is slightly faster than that o
 * 0.4: nspin=2 and nspin=4
 * 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
 * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 < mixing_beta < 0.1.
+A progressive tuning strategy might help, for example, 0.4 -> 0.1 -> 0.025.
 
-Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.)";
+Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
+
+For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to converge, try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
         item.default_value = "0.8 for nspin=1, 0.4 for nspin=2 and nspin=4.";
         item.unit = "";
         item.availability = "";
@@ -611,7 +614,10 @@ Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_nd
         item.annotation = "mixing parameter for magnetic density";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "Mixing parameter of magnetic density.";
+        item.description = R"(Mixing parameter of magnetic density.
+
+If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
+
         item.default_value = "4*mixing_beta, but the maximum value is 1.6.";
         item.unit = "";
         item.availability = "";

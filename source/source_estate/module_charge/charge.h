@@ -84,7 +84,7 @@ class Charge
                   const void* wfcpw = nullptr);
 
     // mohan add 2025-12-02
-    bool kin_density();
+    bool kin_density() const;
 
     void allocate(const int &nspin_in, const bool kin_den);
 

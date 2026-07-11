@@ -8,7 +8,7 @@
 #include "source_base/parallel_global.h"
 #include "source_io/parse_args.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_main/version.h"
+#include "source_base/version.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif

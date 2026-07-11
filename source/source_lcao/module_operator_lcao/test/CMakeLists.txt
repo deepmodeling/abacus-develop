@@ -3,7 +3,7 @@ abacus_disable_feature_definitions(USE_NEW_TWO_CENTER)
 
 AddTest(
   TARGET MODULE_LCAO_operator_overlap_test
-  LIBS parameter ${math_libs} psi base device container
+  LIBS parameter psi base device container
   SOURCES test_overlap.cpp ../overlap.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
   ../../module_hcontainer/func_transfer.cpp ../../module_hcontainer/output_hcontainer.cpp ../../module_hcontainer/transfer.cpp
@@ -16,7 +16,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_operator_overlap_serial_test
-  LIBS parameter ${math_libs} psi base device container
+  LIBS parameter psi base device container
   SOURCES test_overlap_serial.cpp ../overlap.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
   ../../module_hcontainer/func_transfer.cpp ../../module_hcontainer/output_hcontainer.cpp ../../module_hcontainer/transfer.cpp
@@ -29,7 +29,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_operator_overlap_cd_test
-  LIBS parameter ${math_libs} psi base device container
+  LIBS parameter psi base device container
   SOURCES test_overlap_cd.cpp ../overlap.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
   ../../module_hcontainer/func_transfer.cpp ../../module_hcontainer/output_hcontainer.cpp ../../module_hcontainer/transfer.cpp
@@ -42,7 +42,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_operator_ekinetic_test
-  LIBS parameter ${math_libs} psi base device container
+  LIBS parameter psi base device container
   SOURCES test_ekinetic.cpp ../ekinetic.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
   ../../../source_basis/module_ao/parallel_orbitals.cpp
@@ -52,7 +52,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_operator_ekinetic_serial_test
-  LIBS parameter ${math_libs} psi base device container
+  LIBS parameter psi base device container
   SOURCES test_ekinetic_serial.cpp ../ekinetic.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
   ../../../source_basis/module_ao/parallel_orbitals.cpp
@@ -62,7 +62,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_operator_nonlocal_test
-  LIBS parameter ${math_libs} psi base device container
+  LIBS parameter psi base device container
   SOURCES test_nonlocal.cpp ../nonlocal.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
   ../../../source_basis/module_ao/parallel_orbitals.cpp
@@ -72,7 +72,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_operator_T_NL_cd_test
-  LIBS parameter ${math_libs} psi base device container
+  LIBS parameter psi base device container
   SOURCES test_T_NL_cd.cpp ../nonlocal.cpp ../ekinetic.cpp ../operator_force_stress_utils.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
   ../../../source_basis/module_ao/parallel_orbitals.cpp
@@ -82,7 +82,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_LCAO_operator_dftu_test
-  LIBS parameter ${math_libs} psi base device container
+  LIBS parameter psi base device container
   SOURCES test_dftu.cpp ../dftu_lcao.cpp ../../module_hcontainer/func_folding.cpp
   ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
   ../../../source_basis/module_ao/parallel_orbitals.cpp
