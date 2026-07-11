@@ -38,6 +38,27 @@
 #include "source_lcao/rho_tau_lcao.h"       // mohan add 2025-10-24
 #include "source_lcao/module_operator_lcao/overlap.h" // use hamilt::Overlap for NAMD
 
+#ifdef __EXX
+namespace
+{
+// C++11/14-compatible stand-in for `if constexpr (std::is_same<TK, double>::value)`.
+// WriteDHParams/WriteHParams hold the gamma (TK==double) exx interfaces on purpose (see
+// write_H_terms.h), so the assignment below is only well-formed for TK==double; overload
+// resolution on Exx_NAO<TK> discards the ill-formed case instead of instantiating it.
+// At multi-k the pointers stay null and the writers quit with an explicit message.
+template <typename TParams>
+void set_exx_interfaces(TParams& params, Exx_NAO<double>& exx_nao)
+{
+    if (exx_nao.exd) { params.exd = exx_nao.exd.get(); }
+    if (exx_nao.exc) { params.exc = exx_nao.exc.get(); }
+}
+template <typename TParams>
+void set_exx_interfaces(TParams& /*params*/, Exx_NAO<std::complex<double>>& /*exx_nao*/)
+{
+}
+} // namespace
+#endif
+
 template <typename TK, typename TR>
 void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const Input_para& inp,
@@ -359,13 +380,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #ifdef __EXX
         // dV^EXX/dR output is wired for the gamma (TK==double) exx interfaces. exd/exc are
         // mutually exclusive (real vs complex Hexx); write_dH_exx picks by info_ri.real_number.
-        if constexpr (std::is_same<TK, double>::value)
+        if (GlobalC::exx_info.info_global.cal_exx)
         {
-            if (GlobalC::exx_info.info_global.cal_exx)
-            {
-                if (exx_nao.exd) { dh_params.exd = exx_nao.exd.get(); }
-                if (exx_nao.exc) { dh_params.exc = exx_nao.exc.get(); }
-            }
+            set_exx_interfaces(dh_params, exx_nao);
         }
 #endif
         ModuleIO::write_dH_components(dh_params);
@@ -418,16 +435,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #ifdef __EXX
         if (inp.out_mat_h_exx[0] && GlobalC::exx_info.info_global.cal_exx)
         {
-            // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
-            if constexpr (std::is_same<TK, double>::value)
-            {
-                if (GlobalC::exx_info.info_global.cal_exx)
-                {
-                    if (exx_nao.exd) { h_params.exd = exx_nao.exd.get(); }
-                    if (exx_nao.exc) { h_params.exc = exx_nao.exc.get(); }
-                    ModuleIO::write_h_exx(h_params);
-                }
-            }
+            // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces; at multi-k
+            // this leaves exd/exc null and write_h_exx quits with an explicit message.
+            set_exx_interfaces(h_params, exx_nao);
+            ModuleIO::write_h_exx(h_params);
         }
 #endif
     }
