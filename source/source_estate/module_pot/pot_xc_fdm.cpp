@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 //=======================
 // AUTHOR : Peize Lin
 // DATE :   2025-10-01
@@ -147,4 +146,3 @@ void PotXC_FDM::cal_v_eff(
 }
 
 } // namespace elecstate
->>>>>>> develop
