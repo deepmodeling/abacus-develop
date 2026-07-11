@@ -922,12 +922,20 @@ download_pkg_from_url() {
   local __sha256="$1" # if set to "--no-checksum", do not check checksum
   local __filename="$2"
   local __url="$3"
+
+  # Hide the progress bar in containers to prevent flooding output
+  local DOWNLOADER_FLAGS
+  if [ -f /.dockerenv ] || [ -f /run/.containerenv ]; then
+    DOWNLOADER_FLAGS="--quiet"
+  else
+    DOWNLOADER_FLAGS="--quiet --show-progress"
+  fi
   
   # Smart certificate validation strategy
   case "${DOWNLOAD_CERT_POLICY:-smart}" in
     "strict")
       echo "Downloading with strict certificate validation: $__url"
-      if ! wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
         rm -f "$__filename"
         report_error "failed to download $__url (strict certificate validation)"
         recommend_offline_installation "$__filename" "$__url"
@@ -938,7 +946,7 @@ download_pkg_from_url() {
       ;;
     "skip")
       echo "Downloading with certificate validation disabled: $__url"
-      if ! wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
+      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
         rm -f "$__filename"
         report_error "failed to download $__url"
         recommend_offline_installation "$__filename" "$__url"
@@ -950,7 +958,7 @@ download_pkg_from_url() {
     "smart"|*)
       # Smart fallback: try with certificate validation first, then without
       echo "Attempting secure download: $__url"
-      if wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
         echo "Download successful with certificate validation"
       else
         echo "Certificate validation failed, retrying without certificate check..."
