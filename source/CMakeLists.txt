@@ -193,13 +193,10 @@ if(ENABLE_RAPIDJSON)
 endif()
 
 if(ENABLE_LCAO)
-  list(APPEND _abacus_feature_libs cereal::cereal)
-
   if(USE_ELPA)
     list(APPEND _abacus_feature_libs ELPA::ELPA)
     list(APPEND _abacus_feature_include_dirs ${ELPA_INCLUDE_DIR})
   endif()
-
   if(ENABLE_PEXSI)
     list(APPEND _abacus_feature_libs PEXSI::PEXSI)
   endif()
@@ -230,11 +227,11 @@ if(ENABLE_CNPY)
 endif()
 
 if(ENABLE_LIBRI)
-  list(APPEND _abacus_feature_include_dirs ${LIBRI_DIR}/include)
-endif()
-
-if(ENABLE_LIBCOMM)
-  list(APPEND _abacus_feature_include_dirs ${LIBCOMM_DIR}/include)
+  list(APPEND _abacus_feature_include_dirs
+    ${LIBRI_DIR}/include
+    ${LIBCOMM_DIR}/include
+  )
+  list(APPEND _abacus_feature_libs cereal::cereal)
 endif()
 
 if(ENABLE_LIBXC)

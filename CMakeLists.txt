@@ -36,7 +36,6 @@ option(ENABLE_LCAO "Enable LCAO algorithm" ON)
 option(USE_ELPA "Enable ELPA for LCAO" ON)
 option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
 option(EXX_DEV "Enable LibRI developing features" OFF)
-option(ENABLE_LIBCOMM "Enable LibComm" OFF)
 option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 
@@ -58,6 +57,27 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
 option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
+
+# ==============================================================================
+# Deprecated options (TODO: Remove this section in the future release)
+# ==============================================================================
+if(DEFINED CACHE{ENABLE_LIBCOMM})
+  message(
+    WARNING
+      "Option ENABLE_LIBCOMM is deprecated and will be ignored in a future release. "
+      "LibComm is now treated as an implementation dependency of LibRI; "
+      "please use -DENABLE_LIBRI=ON instead."
+  )
+  if(ENABLE_LIBCOMM AND NOT ENABLE_LIBRI)
+    message(
+      FATAL_ERROR
+        "ENABLE_LIBCOMM was set, but LibComm is not a standalone ABACUS feature. "
+        "Please use -DENABLE_LIBRI=ON instead."
+    )
+  endif()
+  unset(ENABLE_LIBCOMM CACHE)
+endif()
+# ==============================================================================
 
 # CTest defines BUILD_TESTING when it is first included. Include it only after
 # ABACUS has declared its OFF-by-default option above.
@@ -311,7 +331,6 @@ if(WIN32)
 endif()
 
 if(ENABLE_LCAO)
-  find_package(cereal CONFIG REQUIRED)
   abacus_add_feature_definitions(__LCAO)
   if(USE_ELPA)
     find_package(ELPA REQUIRED)
@@ -654,32 +673,17 @@ function(git_submodule_update)
   endif()
 endfunction()
 
-if(DEFINED LIBRI_DIR)
-  set(ENABLE_LIBRI ON)
-endif()
 if(ENABLE_LIBRI)
   set_if_higher(CMAKE_CXX_STANDARD 14)
-  if(LIBRI_DIR)
-  else()
-    find_package(LibRI REQUIRED)
-  endif()
+  find_package(LibRI REQUIRED)
+  find_package(LibComm REQUIRED)
+  find_package(cereal REQUIRED CONFIG)
   abacus_add_feature_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
                                  TEST_EXX_RADIAL=1)
   if(EXX_DEV)
     abacus_add_feature_definitions(__EXX_DEV)
   endif()
 endif()
-
-if(ENABLE_LIBRI OR DEFINED LIBCOMM_DIR)
-  set(ENABLE_LIBCOMM ON)
-endif()
-if(ENABLE_LIBCOMM)
-  if(LIBCOMM_DIR)
-  else()
-    find_package(LibComm REQUIRED)
-  endif()
-endif()
-
 
 if(ENABLE_LIBXC)
   find_package(Libxc CONFIG REQUIRED)
