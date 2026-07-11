@@ -359,7 +359,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #ifdef __EXX
         // dV^EXX/dR output is wired for the gamma (TK==double) exx interfaces. exd/exc are
         // mutually exclusive (real vs complex Hexx); write_dH_exx picks by info_ri.real_number.
-        if constexpr (std::is_same<TK, double>::value)
+        if (std::is_same<TK, double>::value)
         {
             if (GlobalC::exx_info.info_global.cal_exx)
             {
@@ -419,7 +419,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         if (inp.out_mat_h_exx[0] && GlobalC::exx_info.info_global.cal_exx)
         {
             // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
-            if constexpr (std::is_same<TK, double>::value)
+            if (std::is_same<TK, double>::value)
             {
                 if (GlobalC::exx_info.info_global.cal_exx)
                 {
