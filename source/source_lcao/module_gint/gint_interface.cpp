@@ -8,6 +8,7 @@
 #include "gint_fvl.h"
 #include "gint_fvl_meta.h"
 #include "gint_rho.h"
+#include "gint_drho.h"
 #include "gint_tau.h"
 #include "gint_dvlocal.h"
 
@@ -114,6 +115,18 @@ void cal_gint_rho(
         Gint_rho gint_rho(dm_vec, nspin, rho, is_dm_symm);
         gint_rho.cal_gint();
     }
+}
+
+void cal_gint_drho(
+    const std::vector<HContainer<double>*>& dm_vec,
+    const int nspin,
+    double** drho_x,
+    double** drho_y,
+    double** drho_z)
+{
+    // CPU/fp64 only: set_phi_dphi provides double-precision gradients (no GPU/fp32 path).
+    Gint_drho gint_drho(dm_vec, nspin, drho_x, drho_y, drho_z);
+    gint_drho.cal_gint();
 }
 
 void cal_gint_tau(        

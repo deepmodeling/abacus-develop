@@ -10,7 +10,7 @@
 #include "source_io/module_output/print_info.h"
 #include "source_io/module_parameter/read_input.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_main/version.h"
+#include "source_base/version.h"
 #include "source_base/parallel_global.h"
 #ifdef __DSP
 #include "source_base/module_device/memory_op.h"

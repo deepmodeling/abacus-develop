@@ -1,5 +1,5 @@
 # =============================================================================
-# Setup Testing Environment (GTest, CTest, AddTest function)
+# Setup unit-test dependencies and the AddTest helper
 # ==============================================================================
 
 # include_guard(GLOBAL)
@@ -12,8 +12,9 @@ macro(set_if_higher VARIABLE VALUE)
 endmacro()
 
 # Add performance test in abacus
-if(ENABLE_GOOGLEBENCH)
-  set(BUILD_TESTING ON)
+# Benchmarks are test targets; do not make them implicitly enable the full
+# unit-test tree for ordinary builds.
+if(BUILD_TESTING AND ENABLE_GOOGLEBENCH)
   find_package(benchmark HINTS ${BENCHMARK_DIR})
   if(NOT ${benchmark_FOUND})
     set(BENCHMARK_USE_BUNDLED_GTEST OFF)
@@ -38,17 +39,19 @@ endif()
       add_coverage(${UT_TARGET})
     endif()
 
-    # dependencies & link library
-    target_link_libraries(${UT_TARGET} PRIVATE ${UT_LIBS} Threads::Threads
-                          GTest::gtest_main GTest::gmock_main)
-    if(ENABLE_GOOGLEBENCH)
+    # Dependencies & link library
+    # Share the numerical/MPI/OpenMP runtime closure but not
+    # the optional feature closure of the final binary
+    target_link_libraries(${UT_TARGET} PRIVATE
+      ${UT_LIBS}
+      GTest::gtest_main
+      GTest::gmock_main
+      abacus::linalg_libs)
+    if(BUILD_TESTING AND ENABLE_GOOGLEBENCH)
       target_link_libraries(
         ${UT_TARGET} PRIVATE benchmark::benchmark)
     endif()
 
-    if(USE_OPENMP)
-      target_link_libraries(${UT_TARGET} PRIVATE OpenMP::OpenMP_CXX)
-    endif()
 
     # Link to build info if needed
     if("${UT_SOURCES}" MATCHES "parse_args.cpp")
@@ -64,8 +67,6 @@ endif()
 
 if(BUILD_TESTING)
   set_if_higher(CMAKE_CXX_STANDARD 14) # Required in orbital
-  include(CTest)
-  enable_testing()
   find_package(GTest HINTS /usr/local/lib/ ${GTEST_DIR})
   if(NOT ${GTest_FOUND})
     include(FetchContent)
@@ -77,7 +78,6 @@ if(BUILD_TESTING)
       GIT_PROGRESS TRUE)
     FetchContent_MakeAvailable(googletest)
   endif()
-  # TODO: Try the GoogleTest module.
-  # https://cmake.org/cmake/help/latest/module/GoogleTest.html
-  add_subdirectory(tests) # Contains integration tests
+  # Integration tests are registered from source/CMakeLists.txt after the
+  # final executable has been created.
 endif()

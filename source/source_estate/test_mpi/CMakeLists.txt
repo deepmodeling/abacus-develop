@@ -8,7 +8,7 @@ abacus_disable_feature_definitions(_OPENMP)
 
 AddTest(
   TARGET MODULE_ESTATE_charge_mpi_test
-  LIBS parameter ${math_libs} psi base device planewave 
+  LIBS parameter psi base device planewave
   SOURCES charge_mpi_test.cpp ../module_charge/charge_mpi.cpp
 )
 

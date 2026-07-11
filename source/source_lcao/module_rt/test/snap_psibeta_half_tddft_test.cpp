@@ -1,9 +1,10 @@
 #include "source_lcao/module_rt/snap_psibeta_half_tddft.h"
 
 #include "source_base/ylm.h"
-#include "source_basis/module_nao/radial_collection.h"
-#include "source_basis/module_nao/two_center_integrator.h"
+#include "source_cell/read_pp.h"
 #include "source_cell/setup_nonlocal.h"
+#include "source_cell/unitcell.h"
+#include "source_io/module_hs/cal_r_overlap_R.h"
 
 #include <algorithm>
 #include <cmath>
@@ -12,25 +13,50 @@
 #include <gtest/gtest.h>
 #include <vector>
 
-InfoNonlocal::InfoNonlocal()
+SepPot::SepPot() = default;
+
+SepPot::~SepPot()
 {
-    this->Beta = new Numerical_Nonlocal[1];
-    this->nproj = nullptr;
-    this->nprojmax = 0;
-    this->rcutmax_Beta = 0.0;
+    delete[] r;
+    delete[] rv;
 }
 
-InfoNonlocal::~InfoNonlocal()
+Sep_Cell::Sep_Cell() noexcept : ntype(0), omega(0.0), tpiba2(0.0)
 {
-    delete[] this->Beta;
-    delete[] this->nproj;
+}
+
+Sep_Cell::~Sep_Cell() noexcept = default;
+
+Magnetism::Magnetism()
+{
+    tot_mag = 0.0;
+    abs_mag = 0.0;
+}
+
+Magnetism::~Magnetism()
+{
+    delete[] start_mag;
+}
+
+UnitCell::UnitCell()
+{
+    itia2iat.create(1, 1);
+}
+
+UnitCell::~UnitCell()
+{
+    if (set_atom_flag)
+    {
+        delete[] atoms;
+    }
 }
 
 namespace
 {
 struct ComparisonStats
 {
-    double max_real_diff = 0.0;
+    double max_overlap_diff = 0.0;
+    double max_position_diff = 0.0;
     double max_imag_abs = 0.0;
     double max_reference_abs = 0.0;
 };
@@ -43,66 +69,78 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
         ModuleBase::Ylm::set_coefficients();
 
         const std::string root = "../../../../../";
-        const std::string orb_file = "tests/PP_ORB/C_gga_8au_100Ry_2s2p1d.orb";
-        const std::string full_orb_file = root + orb_file;
+        const std::string orb_file = "tests/PP_ORB/Ti_gga_10au_100Ry_4s2p2d1f.orb";
         const std::string orbital_files[1] = {orb_file};
 
         std::ofstream ofs("snap_psibeta_half_tddft_test.log");
-        orb.init(ofs, 1, root, orbital_files, "", 2, 100.0, 0.01, 0.01, 30.0, false, 0, false, false, 0);
+        orb.init(ofs, 1, root, orbital_files, "", 3, 100.0, 0.01, 0.01, 30.0, false, 0, false, false, 0);
 
-        build_fake_beta_projectors();
+        ASSERT_EQ(orb.Phi[0].getLmax(), 3);
+        ASSERT_EQ(orb.Phi[0].getNchi(0), 4);
+        ASSERT_EQ(orb.Phi[0].getNchi(1), 2);
+        ASSERT_EQ(orb.Phi[0].getNchi(2), 2);
+        ASSERT_EQ(orb.Phi[0].getNchi(3), 1);
 
-        orb_radials.build(1, &full_orb_file, 'o');
-        beta_radials.build(1, info_nl.Beta);
-
-        const double rmax = std::max(orb_radials.rcut_max(), beta_radials.rcut_max());
-        const double cutoff = 2.0 * rmax;
-        const int nr = static_cast<int>(rmax / 0.01) + 1;
-
-        orb_radials.set_uniform_grid(true, nr, cutoff, 'i', true);
-        beta_radials.set_uniform_grid(true, nr, cutoff, 'i', true);
-        overlap_orb_beta.tabulate(orb_radials, beta_radials, 'S', nr, cutoff);
+        build_ti_beta_projectors(root);
+        initialize_r_overlap_reference();
     }
 
-    void build_fake_beta_projectors()
+    void build_ti_beta_projectors(const std::string& root)
     {
-        const int nproj = 2;
-        std::vector<Numerical_Nonlocal_Lm> beta_lm(nproj);
+        ucell.ntype = 1;
+        ucell.nat = 1;
+        ucell.atoms = new Atom[1];
+        ucell.set_atom_flag = true;
 
-        for (int iproj = 0; iproj < nproj; ++iproj)
+        Atom& atom = ucell.atoms[0];
+        atom.label = "Ti";
+        atom.type = 0;
+        atom.na = 1;
+        atom.nwl = orb.Phi[0].getLmax();
+        atom.l_nchi.resize(atom.nwl + 1);
+        atom.nw = 0;
+        for (int L = 0; L <= atom.nwl; ++L)
         {
-            const int l = iproj;
-            const auto& phi_ln = orb.Phi[0].PhiLN(l, 0);
-            beta_lm[iproj].set_NL_proj("C",
-                                       0,
-                                       l,
-                                       phi_ln.getNr(),
-                                       phi_ln.getRab(),
-                                       phi_ln.getRadial(),
-                                       phi_ln.getPsi_r(),
-                                       orb.get_kmesh(),
-                                       orb.get_dk(),
-                                       orb.get_dr_uniform());
+            atom.l_nchi[L] = orb.Phi[0].getNchi(L);
+            atom.nw += (2 * L + 1) * atom.l_nchi[L];
         }
+        atom.tau.resize(1);
+        atom.tau[0] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
 
-        info_nl.nproj = new int[1];
-        info_nl.nproj[0] = nproj;
-        info_nl.nprojmax = nproj;
-        info_nl.Beta[0].set_type_info(0, "C", "NC", 1, nproj, beta_lm.data());
-        info_nl.rcutmax_Beta = info_nl.Beta[0].get_rcut_max();
+        Pseudopot_upf pseudo_reader;
+        std::string pseudo_type = "auto";
+        const int pseudo_error = pseudo_reader.init_pseudo_reader(root + "tests/PP_ORB/Ti_ONCV_PBE-1.0.upf", pseudo_type, atom.ncpp);
+        ASSERT_EQ(pseudo_error, 0);
+        ASSERT_EQ(pseudo_type, "upf201");
+        ASSERT_EQ(atom.ncpp.psd, "Ti");
+        ASSERT_EQ(atom.ncpp.pp_type, "NC");
+        ASSERT_EQ(atom.ncpp.nbeta, 6);
+        ASSERT_EQ(atom.ncpp.lll, std::vector<int>({0, 0, 1, 1, 2, 2}));
+        pseudo_reader.complete_default(atom.ncpp);
+        ASSERT_EQ(atom.ncpp.nh, 18);
+        ASSERT_EQ(atom.ncpp.jjj.size(), 6);
+
+        ucell.infoNL.nproj = new int[1];
+        std::ofstream log("snap_psibeta_half_tddft_nonlocal.log");
+        ucell.infoNL.Set_NonLocal(0, &atom, ucell.infoNL.nproj[0], orb.get_kmesh(), orb.get_dk(), orb.get_dr_uniform(), log);
+
+        ASSERT_EQ(ucell.infoNL.nproj[0], 6);
+        ucell.infoNL.nprojmax = ucell.infoNL.nproj[0];
+        ucell.infoNL.rcutmax_Beta = ucell.infoNL.Beta[0].get_rcut_max();
     }
 
-    static int abacus_m_to_m(const int m)
+    void initialize_r_overlap_reference()
     {
-        return (m % 2 == 0) ? -m / 2 : (m + 1) / 2;
+        r_calculator.init_nonlocal(ucell, pv, orb);
     }
 
-    ComparisonStats compare_zero_vector_potential(const int lebedev_grid_points)
+    ComparisonStats compare_zero_vector_potential(const int radial_grid_num, const int lebedev_grid_points)
     {
         const ModuleBase::Vector3<double> R0(0.1, -0.2, 0.3);
         const ModuleBase::Vector3<double> R1(0.4, 0.2, -0.1);
         const ModuleBase::Vector3<double> zero_A(0.0, 0.0, 0.0);
         module_rt::SnapIntegrationOptions options;
+        options.radial_grid_num = radial_grid_num;
         options.lebedev_grid_points = lebedev_grid_points;
 
         ComparisonStats stats;
@@ -114,41 +152,45 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
                 for (int m1 = 0; m1 < 2 * L1 + 1; ++m1)
                 {
                     std::vector<std::vector<std::complex<double>>> grid_nlm;
-                    module_rt::snap_psibeta_half_tddft(orb,
-                                                       info_nl,
-                                                       grid_nlm,
-                                                       R1,
-                                                       0,
-                                                       L1,
-                                                       m1,
-                                                       N1,
-                                                       R0,
-                                                       0,
-                                                       zero_A,
-                                                       false,
-                                                       options);
+                    module_rt::snap_psibeta_half_tddft(orb, ucell.infoNL, grid_nlm, R1, 0, L1, m1, N1, R0, 0, zero_A, true, options);
 
-                    std::vector<std::vector<double>> tci_nlm;
-                    overlap_orb_beta.snap(0, L1, N1, abacus_m_to_m(m1), 0, R0 - R1, false, tci_nlm);
+                    std::vector<std::vector<double>> reference_nlm;
+                    r_calculator.get_psi_r_beta(ucell, reference_nlm, R1, 0, L1, m1, N1, R0, 0);
 
-                    EXPECT_FALSE(grid_nlm.empty());
-                    EXPECT_FALSE(tci_nlm.empty());
-                    if (grid_nlm.empty() || tci_nlm.empty())
-                    {
-                        continue;
-                    }
-                    EXPECT_EQ(grid_nlm[0].size(), tci_nlm[0].size());
-                    if (grid_nlm[0].size() != tci_nlm[0].size())
+                    EXPECT_EQ(grid_nlm.size(), 4);
+                    EXPECT_EQ(reference_nlm.size(), 4);
+                    if (grid_nlm.size() != 4 || reference_nlm.size() != 4)
                     {
                         continue;
                     }
 
-                    for (size_t i = 0; i < grid_nlm[0].size(); ++i)
+                    bool sizes_match = true;
+                    for (size_t dim = 0; dim < grid_nlm.size(); ++dim)
                     {
-                        stats.max_real_diff
-                            = std::max(stats.max_real_diff, std::abs(grid_nlm[0][i].real() - tci_nlm[0][i]));
-                        stats.max_imag_abs = std::max(stats.max_imag_abs, std::abs(grid_nlm[0][i].imag()));
-                        stats.max_reference_abs = std::max(stats.max_reference_abs, std::abs(tci_nlm[0][i]));
+                        EXPECT_EQ(grid_nlm[dim].size(), reference_nlm[dim].size());
+                        sizes_match = sizes_match && (grid_nlm[dim].size() == reference_nlm[dim].size());
+                    }
+                    if (!sizes_match)
+                    {
+                        continue;
+                    }
+
+                    for (size_t dim = 0; dim < grid_nlm.size(); ++dim)
+                    {
+                        for (size_t i = 0; i < grid_nlm[dim].size(); ++i)
+                        {
+                            const double real_diff = std::abs(grid_nlm[dim][i].real() - reference_nlm[dim][i]);
+                            if (dim == 0)
+                            {
+                                stats.max_overlap_diff = std::max(stats.max_overlap_diff, real_diff);
+                            }
+                            else
+                            {
+                                stats.max_position_diff = std::max(stats.max_position_diff, real_diff);
+                            }
+                            stats.max_imag_abs = std::max(stats.max_imag_abs, std::abs(grid_nlm[dim][i].imag()));
+                            stats.max_reference_abs = std::max(stats.max_reference_abs, std::abs(reference_nlm[dim][i]));
+                        }
                     }
                 }
             }
@@ -158,50 +200,44 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
     }
 
     LCAO_Orbitals orb;
-    InfoNonlocal info_nl;
-    RadialCollection orb_radials;
-    RadialCollection beta_radials;
-    TwoCenterIntegrator overlap_orb_beta;
+    UnitCell ucell;
+    Parallel_Orbitals pv;
+    cal_r_overlap_R r_calculator;
 };
 } // namespace
 
 TEST_F(SnapPsibetaHalfTddftTest, ZeroVectorPotentialMatchesTwoCenterIntegral)
 {
-    const double real_tolerance = 5.0e-8;
+    const double overlap_tolerance = 4.0e-7;
+    const double position_tolerance = 6.0e-7;
     const double imag_tolerance = 1.0e-12;
-    const ComparisonStats stats = compare_zero_vector_potential(110);
+    const ComparisonStats stats = compare_zero_vector_potential(140, 110);
 
-    EXPECT_LT(stats.max_real_diff, real_tolerance) << "max reference abs = " << stats.max_reference_abs;
+    EXPECT_LT(stats.max_overlap_diff, overlap_tolerance) << "max reference abs = " << stats.max_reference_abs;
+    EXPECT_LT(stats.max_position_diff, position_tolerance) << "max reference abs = " << stats.max_reference_abs;
+    EXPECT_LT(stats.max_imag_abs, imag_tolerance) << "max reference abs = " << stats.max_reference_abs;
+}
+
+TEST_F(SnapPsibetaHalfTddftTest, ZeroVectorPotentialDenseRadialGridMatchesTwoCenterIntegral)
+{
+    const double overlap_tolerance = 3.0e-7;
+    const double position_tolerance = 5.0e-7;
+    const double imag_tolerance = 1.0e-12;
+    const ComparisonStats stats = compare_zero_vector_potential(280, 110);
+
+    EXPECT_LT(stats.max_overlap_diff, overlap_tolerance) << "max reference abs = " << stats.max_reference_abs;
+    EXPECT_LT(stats.max_position_diff, position_tolerance) << "max reference abs = " << stats.max_reference_abs;
     EXPECT_LT(stats.max_imag_abs, imag_tolerance) << "max reference abs = " << stats.max_reference_abs;
 }
 
 TEST_F(SnapPsibetaHalfTddftTest, ZeroVectorPotentialHighOrderGridMatchesTwoCenterIntegral)
 {
-    const double real_tolerance = 5.0e-8;
+    const double overlap_tolerance = 4.0e-7;
+    const double position_tolerance = 6.0e-7;
     const double imag_tolerance = 1.0e-12;
-    const ComparisonStats stats = compare_zero_vector_potential(590);
+    const ComparisonStats stats = compare_zero_vector_potential(140, 590);
 
-    EXPECT_LT(stats.max_real_diff, real_tolerance) << "max reference abs = " << stats.max_reference_abs;
+    EXPECT_LT(stats.max_overlap_diff, overlap_tolerance) << "max reference abs = " << stats.max_reference_abs;
+    EXPECT_LT(stats.max_position_diff, position_tolerance) << "max reference abs = " << stats.max_reference_abs;
     EXPECT_LT(stats.max_imag_abs, imag_tolerance) << "max reference abs = " << stats.max_reference_abs;
-}
-
-TEST_F(SnapPsibetaHalfTddftTest, ZeroVectorPotentialPositionMomentsAreReal)
-{
-    const ModuleBase::Vector3<double> R0(-0.3, 0.2, 0.1);
-    const ModuleBase::Vector3<double> R1(0.2, -0.1, 0.4);
-    const ModuleBase::Vector3<double> zero_A(0.0, 0.0, 0.0);
-    const double tolerance = 1.0e-12;
-
-    std::vector<std::vector<std::complex<double>>> nlm;
-    module_rt::snap_psibeta_half_tddft(orb, info_nl, nlm, R1, 0, 1, 1, 0, R0, 0, zero_A, true);
-
-    ASSERT_EQ(nlm.size(), 4);
-    for (const auto& dim: nlm)
-    {
-        ASSERT_EQ(dim.size(), 4);
-        for (const std::complex<double>& value: dim)
-        {
-            EXPECT_NEAR(value.imag(), 0.0, tolerance);
-        }
-    }
 }

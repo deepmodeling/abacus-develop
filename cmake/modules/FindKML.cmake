@@ -267,6 +267,18 @@ if(KML_FOUND)
   endif()
 endif()
 
+# Compatibility with packages that consume the standard CMake math targets.
+if(TARGET KML::BLAS AND NOT TARGET BLAS::BLAS)
+  add_library(BLAS::BLAS INTERFACE IMPORTED)
+  set_property(TARGET BLAS::BLAS PROPERTY
+               INTERFACE_LINK_LIBRARIES KML::BLAS)
+endif()
+if(TARGET KML::LAPACK AND NOT TARGET LAPACK::LAPACK)
+  add_library(LAPACK::LAPACK INTERFACE IMPORTED)
+  set_property(TARGET LAPACK::LAPACK PROPERTY
+               INTERFACE_LINK_LIBRARIES KML::LAPACK)
+endif()
+
 mark_as_advanced(
   KML_INCLUDE_DIR
   KML_RUNTIME_LIBRARY

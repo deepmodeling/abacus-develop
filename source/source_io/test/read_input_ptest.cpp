@@ -73,6 +73,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.cond_dtbatch, 2);
     EXPECT_DOUBLE_EQ(param.inp.cond_fwhm, 0.3);
     EXPECT_TRUE(param.inp.cond_nonlocal);
+    EXPECT_TRUE(param.inp.cond_mgga_vel);
     EXPECT_FALSE(param.inp.berry_phase);
     EXPECT_EQ(param.inp.ocp_kb.size(), 2);
     EXPECT_EQ(param.inp.ocp_kb[0], 1);
