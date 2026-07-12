@@ -1,68 +1,67 @@
 #include "stress_func.h"
 #include "source_base/parallel_reduce.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
 //calculate the GGA stress correction in PW and LCAO
 template <typename FPTYPE, typename Device>
 void Stress_Func<FPTYPE, Device>::stress_gga(const UnitCell& ucell,
-											 ModuleBase::matrix& sigma,
+                                             ModuleBase::matrix& sigma,
                                              ModulePW::PW_Basis* rho_basis,
                                              const Charge* const chr)
 {
     ModuleBase::TITLE("Stress","stress_gga");
-	ModuleBase::timer::start("Stress","stress_gga");
-     
-	int func_type = XC_Functional::get_func_type();
-	if (func_type == 0 || func_type == 1)
-	{
-		ModuleBase::timer::end("Stress","stress_gga");
-		return;
-	}
+    ModuleBase::timer::start("Stress","stress_gga");
 
-	FPTYPE sigma_gradcorr[3][3];
-	std::vector<FPTYPE> stress_gga;
-	FPTYPE dum1=0.0;
+    int func_type = XC_Functional::get_func_type();
+    if (func_type == 0 || func_type == 1)
+    {
+        ModuleBase::timer::end("Stress","stress_gga");
+        return;
+    }
+
+    FPTYPE sigma_gradcorr[3][3];
+    std::vector<FPTYPE> stress_gga;
+    FPTYPE dum1=0.0;
     FPTYPE dum2=0.0;
-	ModuleBase::matrix dum3;
-	const bool is_stress = true;
-	// call gradcorr to evaluate gradient correction to stress
-	// the first three terms are etxc, vtxc and v, which
-	// is not used here, so dummy variables are used.
+    ModuleBase::matrix dum3;
+    const bool is_stress = true;
+    const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+    const double hse_omega = XC_Functional::get_hse_omega();
     XC_Functional::gradcorr(
         dum1, dum2, dum3, chr, rho_basis, &ucell,
         stress_gga, is_stress,
-        PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z);
+        PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z,
+        hybrid_alpha, hse_omega);
 
     for(int l = 0;l< 3;l++)
-	{
-		for(int m = 0;m< l+1;m++)
-		{
-			int ind = l*3 + m;
-			sigma_gradcorr[l][m] = stress_gga [ind];
-			sigma_gradcorr[m][l] = sigma_gradcorr[l][m];
-		}
-	}
+    {
+        for(int m = 0;m< l+1;m++)
+        {
+            int ind = l*3 + m;
+            sigma_gradcorr[l][m] = stress_gga [ind];
+            sigma_gradcorr[m][l] = sigma_gradcorr[l][m];
+        }
+    }
 
-	for(int l = 0;l<3;l++)
-	{
-		for(int m = 0;m<3;m++)
-		{
+    for(int l = 0;l<3;l++)
+    {
+        for(int m = 0;m<3;m++)
+        {
             Parallel_Reduce::reduce_pool(sigma_gradcorr[l][m]);
-		}
-	}
-		
-	for(int i=0;i<3;i++)
-	{
-		for(int j=0;j<3;j++)
-		{
+        }
+    }
+
+    for(int i=0;i<3;i++)
+    {
+        for(int j=0;j<3;j++)
+        {
             sigma(i, j) += sigma_gradcorr[i][j] / rho_basis->nxyz;
         }
-	}
+    }
 
-	ModuleBase::timer::end("Stress","stress_gga");
-	return;
+    ModuleBase::timer::end("Stress","stress_gga");
+    return;
 }
 
 template class Stress_Func<double, base_device::DEVICE_CPU>;

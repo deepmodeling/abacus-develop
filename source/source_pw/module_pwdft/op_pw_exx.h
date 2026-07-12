@@ -30,7 +30,10 @@ class OperatorEXXPW : public OperatorPW<T, Device>
                   const ModulePW::PW_Basis_K* wfcpw_in,
                   const ModulePW::PW_Basis* rhopw_in,
                   K_Vectors* kv_in,
-                  const UnitCell* ucell);
+                  const UnitCell* ucell,
+                  const bool separate_loop_in,
+                  const Real hybrid_alpha_in,
+                  const CoulombParam& coulomb_param_in);
 
     template <typename T_in, typename Device_in = Device>
     explicit OperatorEXXPW(const OperatorEXXPW<T_in, Device_in> *op_exx);
@@ -54,6 +57,9 @@ class OperatorEXXPW : public OperatorPW<T, Device>
     void construct_ace() const;
 
     bool first_iter = true;
+    bool separate_loop = false;
+    Real hybrid_alpha = 0.0;
+    CoulombParam coulomb_param;
 
     static std::vector<Real> fock_div, erfc_div;
 
@@ -179,7 +185,8 @@ void get_exx_potential(const K_Vectors* kv,
                        double ucell_omega,
                        int ik,
                        int iq,
-                       bool is_stress = false);
+                       bool is_stress,
+                       const CoulombParam& coulomb_param_in);
 
 template <typename Real, typename Device>
 void get_exx_stress_potential(const K_Vectors* kv,
@@ -190,7 +197,8 @@ void get_exx_stress_potential(const K_Vectors* kv,
                               bool gamma_extrapolation,
                               double ucell_omega,
                               int ik,
-                              int iq);
+                              int iq,
+                              const CoulombParam& coulomb_param_in);
 
 double exx_divergence(Conv_Coulomb_Pot_K::Coulomb_Type coulomb_type,
                       double erfc_omega,

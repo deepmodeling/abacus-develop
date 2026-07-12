@@ -183,6 +183,9 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
     const std::complex<double> zero(0.0, 0.0);
     const std::complex<double> one(1.0, 0.0);
 
+    const int nlocal = PARAM.globalv.nlocal;
+    assert(nlocal>0);
+
     std::vector<std::complex<double>> dm_VU_dSm(pv.nloc);
     std::vector<std::complex<double>> dSm_k(pv.nloc);
 
@@ -193,9 +196,9 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
                 transC,
-                PARAM.globalv.nlocal,
-                PARAM.globalv.nlocal,
-                PARAM.globalv.nlocal,
+                nlocal,
+                nlocal,
+                nlocal,
                 one,
                 &dSm_k[0],
                 one_int,
@@ -231,9 +234,9 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
                 transN,
-                PARAM.globalv.nlocal,
-                PARAM.globalv.nlocal,
-                PARAM.globalv.nlocal,
+                nlocal,
+                nlocal,
+                nlocal,
                 one,
                 &dSm_k[0],
                 one_int,

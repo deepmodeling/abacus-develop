@@ -152,7 +152,8 @@ void write_Vxc(const int nspin,
                const K_Vectors& kv,
                const std::vector<double>& orb_cutoff,
                const ModuleBase::matrix& wg,
-               Grid_Driver& gd
+               Grid_Driver& gd,
+               bool cal_exx
 #ifdef __EXX
                ,
                std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
@@ -224,7 +225,7 @@ void write_Vxc(const int nspin,
         const std::vector<TK>& vlocxc_k_mo = cVc(vxc_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
 
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (cal_exx)
         {
             e_orb_locxc.emplace_back(orbital_energy(ik, nbands, vlocxc_k_mo, p2d));
             ModuleBase::GlobalFunc::ZEROS(vexxonly_k_ao.get_hk(), pv->nloc);
@@ -232,9 +233,6 @@ void write_Vxc(const int nspin,
             vexxonly_op_ao.contributeHk(ik);
             std::vector<TK> vexx_k_mo = cVc(vexxonly_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d);
             e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo, p2d));
-            // ======test=======
-            // exx_energy += all_band_energy(ik, vexx_k_mo, p2d, wg);
-            // ======test=======
         }
 #endif
         if (PARAM.inp.dft_plus_u)
@@ -289,7 +287,7 @@ void write_Vxc(const int nspin,
     {
         write_orb_energy(kv, nspin0, nbands, e_orb_tot, "vxc", "");
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (cal_exx)
         {
             write_orb_energy(kv, nspin0, nbands, e_orb_locxc, "vxc", "local");
             write_orb_energy(kv, nspin0, nbands, e_orb_exx, "vxc", "exx");

@@ -244,8 +244,8 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Enable DFT-D4 languages before finding OpenMP.
-if(ENABLE_DFTD4)
+# Enable languages required by optional dependencies
+if(ENABLE_DFTD4 OR ENABLE_PEXSI)
   enable_language(C)
   enable_language(Fortran)
 endif()
@@ -323,7 +323,10 @@ if(ENABLE_LCAO)
   endif()
 
   if(ENABLE_PEXSI)
-    find_package(PEXSI REQUIRED)
+    find_package(PEXSI REQUIRED CONFIG)
+    if(PEXSI_VERSION VERSION_LESS "2.0.0")
+      message(FATAL_ERROR "PEXSI >= 2.0.0 is required")
+    endif()
     abacus_add_feature_definitions(__PEXSI)
     set(CMAKE_CXX_STANDARD 14)
   endif()

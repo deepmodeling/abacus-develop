@@ -478,35 +478,38 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     // }
 
 #ifdef __EXX
-    // Force and Stress contribution from exx
+    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+    bool real_number = GlobalC::exx_info.info_ri.real_number;
+    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+
     ModuleBase::matrix force_exx;
     ModuleBase::matrix stress_exx;
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (cal_exx)
     {
         if (isforce)
         {
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (real_number)
             {
                 exx_nao.exd->cal_exx_force(ucell.nat);
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exd->get_force();
+                force_exx = hybrid_alpha * exx_nao.exd->get_force();
             }
             else
             {
                 exx_nao.exc->cal_exx_force(ucell.nat);
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exc->get_force();
+                force_exx = hybrid_alpha * exx_nao.exc->get_force();
             }
         }
         if (isstress)
         {
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (real_number)
             {
                 exx_nao.exd->cal_exx_stress(ucell.omega, ucell.lat0);
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exd->get_stress();
+                stress_exx = hybrid_alpha * exx_nao.exd->get_stress();
             }
             else
             {
                 exx_nao.exc->cal_exx_stress(ucell.omega, ucell.lat0);
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exc->get_stress();
+                stress_exx = hybrid_alpha * exx_nao.exc->get_stress();
             }
         }
     }
