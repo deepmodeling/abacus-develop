@@ -108,6 +108,7 @@ template void finish_dftu_lcao<double>(const int iter,
                                         const std::string& global_out_dir,
                                         int nspin,
                                         int npol);
+
 template void finish_dftu_lcao<std::complex<double>>(const int iter,
                                                       const bool conv_esolver,
                                                       int dft_plus_u,

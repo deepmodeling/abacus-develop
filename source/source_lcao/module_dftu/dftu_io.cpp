@@ -60,21 +60,17 @@ void Plus_U::output(const UnitCell& ucell,
     this->write_occup_m(ucell, GlobalV::ofs_running, true, nspin, npol);
 
     // Write onsite.dm
-    std::ofstream ofdftu;
-    if (out_chg)
+    if (out_chg && GlobalV::MY_RANK == 0)
     {
-        if (GlobalV::MY_RANK == 0)
+        std::ofstream ofdftu;
+        ofdftu.open(global_out_dir + "onsite.dm");
+        if (!ofdftu)
         {
-            ofdftu.open(global_out_dir + "onsite.dm");
+            ModuleBase::WARNING_QUIT("Plus_U::output", "Can't create file onsite.dm");
         }
+        this->write_occup_m(ucell, ofdftu, false, nspin, npol);
+        ofdftu.close();
     }
-    if (!ofdftu)
-    {
-        std::cout << " Plus_U::write_occup_m. Can't create file onsite.dm" << std::endl;
-        exit(0);
-    }
-    this->write_occup_m(ucell, ofdftu, false, nspin, npol);
-    ofdftu.close();
 
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     GlobalV::ofs_running << " | # END DFT+U INFO    |" << std::endl;
@@ -161,6 +157,7 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                                 ofs << " sum is " << std::setw(12) << sum0[is] << std::endl;
                             }
                             ofs << " spin=" << is+1 << std::endl;
+                            ofs << std::setprecision(8) << std::fixed;
                             for (int m0 = 0; m0 < 2 * l + 1; m0++)
                             {
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
@@ -260,19 +257,16 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
     {
         if (omc > 0)
         {
-            std::cout
-                << "Plus_U::read_occup_m. Can not find the file initial_onsite.dm . Please check your initial_onsite.dm"
-                << std::endl;
+            ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not find the file initial_onsite.dm. Please check your initial_onsite.dm");
         }
         else
         {
             if (init_chg == "file")
             {
-                std::cout << "Plus_U::read_occup_m. Can not find the file onsite.dm . Please do scf calculation first"
-                          << std::endl;
+                ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not find the file onsite.dm. Please do scf calculation first");
             }
         }
-        exit(0);
+        ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not open onsite.dm file");
     }
 
     ifdftu.clear();
@@ -304,16 +298,14 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
 
             if (strcmp("L=", word) != 0)
             {
-                std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
-                exit(0);
+                ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
             }
             ifdftu >> L;
             ifdftu >> word;
 
             if (strcmp("ORBITAL=", word) != 0)
             {
-                std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
-                exit(0);
+                ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
             }
             ifdftu >> zeta;
             ifdftu.ignore(150, '\n');
@@ -353,9 +345,7 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
                         }
                         else
                         {
-                            std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE"
-                                      << std::endl;
-                            exit(0);
+                            ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
                         }
                     }
                 }
@@ -385,8 +375,7 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
         }
         else
         {
-            std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
-            exit(0);
+            ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
         }
 
         ifdftu.rdstate();

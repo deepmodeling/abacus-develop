@@ -1,6 +1,8 @@
 #ifndef DFTU_LCAO_H
 #define DFTU_LCAO_H
 
+#include <string>
+#include <vector>
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
 
@@ -15,7 +17,7 @@ namespace ModuleESolver
  *
  * @param istep Current ionic step
  * @param iter Current SCF iteration
- * @param inp Input parameters
+ * @param dft_plus_u DFT+U mode (0=disabled, 1=old, 2=new)
  * @param dftu DFT+U object
  * @param dm Density matrix
  * @param ucell Unit cell
@@ -48,6 +50,9 @@ void init_dftu_lcao(const int istep,
  * @param kv K-vectors
  * @param mixing_beta Mixing beta parameter
  * @param hamilt_lcao Hamiltonian LCAO object
+ * @param global_out_dir Output directory for onsite.dm
+ * @param nspin Number of spin channels (1, 2, or 4)
+ * @param npol Number of polarizations
  */
 template <typename TK>
 void finish_dftu_lcao(const int iter,
