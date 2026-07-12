@@ -14,7 +14,6 @@
 #include "source_base/element_elec_config.h"
 #include "source_base/global_file.h"
 #include "source_base/parallel_common.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_cell/sep_cell.h"
 
 #ifdef __MPI

@@ -193,11 +193,13 @@ class UnitCell : public AtomProvider {
     ModuleBase::Matrix3 GGT0;
     ModuleBase::Matrix3 invGGT0;
 
-    // I'm doing a bad thing here! Will change later
+    // TODO(abacus-team): encapsulate ionic_position_updated and
+    // cell_parameter_updated with setters that enforce state invariants;
+    // currently exposed as mutable flags that can be toggled from anywhere.
     bool ionic_position_updated
-        = false; // whether the ionic position has been updated
+        = false; ///< whether the ionic position has been updated
     bool cell_parameter_updated
-        = false; // whether the cell parameters are updated
+        = false; ///< whether the cell parameters are updated
 
     //============================================================
     // meshx : max number of mesh point in pseudopotential file
