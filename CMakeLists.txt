@@ -328,7 +328,7 @@ if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
 endif()
 
 if(ENABLE_ABACUS_LIBM)
-  abacus_add_feature_definitions(USE_ABACUS_LIBM)
+  abacus_add_feature_definitions(__ABACUS_LIBM)
 endif()
 
 if(ENABLE_NATIVE_OPTIMIZATION)
