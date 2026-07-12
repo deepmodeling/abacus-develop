@@ -567,36 +567,72 @@ void ReadInput::item_exx()
     {
         Input_Item item("out_unshrinked_v");
         item.annotation = "whether to output the large Vq matrix in unshrinked auxiliary basis";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Boolean";
+        item.description = "Whether to output the large Vq matrix in the unshrinked auxiliary basis.";
+        item.default_value = "false";
+        item.unit = "";
+        item.availability = "";
         read_sync_bool(input.out_unshrinked_v);
         this->add_item(item);
     }
     {
         Input_Item item("exx_coul_moment");
         item.annotation = "whether to use moment method for Coulomb calculation";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Boolean";
+        item.description = "Whether to use the moment method for Coulomb calculation.";
+        item.default_value = "false";
+        item.unit = "";
+        item.availability = "";
         read_sync_bool(input.exx_coul_moment);
         this->add_item(item);
     }
     {
         Input_Item item("exx_rotate_abfs");
         item.annotation = "whether to rotate auxiliary basis for Coulomb calculation";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Boolean";
+        item.description = "Whether to rotate the auxiliary basis for Coulomb calculation.";
+        item.default_value = "false";
+        item.unit = "";
+        item.availability = "";
         read_sync_bool(input.exx_rotate_abfs);
         this->add_item(item);
     }
     {
         Input_Item item("exx_multip_moments_threshold");
         item.annotation = "threshold to screen multipole moments in Coulomb calculation";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "Threshold to screen multipole moments in Coulomb calculation.";
+        item.default_value = "1e-10";
+        item.unit = "";
+        item.availability = "";
         read_sync_double(input.exx_multip_moments_threshold);
         this->add_item(item);
     }
     {
         Input_Item item("shrink_abfs_pca_thr");
         item.annotation = "threshold to shrink auxiliary basis for GW/RPA";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "Threshold to shrink the auxiliary basis for GW/RPA calculations.";
+        item.default_value = "-1";
+        item.unit = "";
+        item.availability = "";
         read_sync_double(input.shrink_abfs_pca_thr);
         this->add_item(item);
     }
     {
         Input_Item item("shrink_lu_inv_thr");
         item.annotation = "threshold to get inverse of overlap matrix by LU decomposition in auxiliary basis representation";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "Threshold for obtaining the inverse of the overlap matrix by LU decomposition in the auxiliary-basis representation.";
+        item.default_value = "1e-6";
+        item.unit = "";
+        item.availability = "";
         read_sync_double(input.shrink_LU_inv_thr);
         this->add_item(item);
     }

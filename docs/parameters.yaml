@@ -1399,6 +1399,7 @@ parameters:
       * berendsen: Berendsen thermostat, see md_nraise in detail.
       * rescaling: velocity Rescaling method 1, see md_tolerance in detail.
       * rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+      * csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.
     default_value: nhc
     unit: ""
     availability: ""
@@ -3321,7 +3322,7 @@ parameters:
     category: Output information
     type: Boolean
     description: |
-      Whether to print Hamiltonian matrices H(R) in npz format. This feature does not work for gamma-only calculations.
+      Whether to print Hamiltonian matrices H(R) in npz format. The output files are named output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
     default_value: "False"
     unit: Ry
     availability: Numerical atomic orbital basis (not gamma-only algorithm)
@@ -3329,7 +3330,7 @@ parameters:
     category: Output information
     type: Boolean
     description: |
-      Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. This feature does not work for gamma-only calculations.
+      Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. The output files are named output_SR.npz, output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
     default_value: "False"
     unit: Ry
     availability: Numerical atomic orbital basis (not gamma-only algorithm)
@@ -3337,7 +3338,7 @@ parameters:
     category: Output information
     type: Boolean
     description: |
-      Whether to print density matrices DM(R) in npz format. This feature does not work for gamma-only calculations.
+      Whether to print density matrices DM(R) in npz format. The output files are named output_DM0.npz, output_DM1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
     default_value: "False"
     unit: ""
     availability: Numerical atomic orbital basis (not gamma-only algorithm)
@@ -4312,6 +4313,54 @@ parameters:
     description: |
       Whether to output the coefficient tensor C(R) and ABFs-representation Coulomb matrix V(R) for each atom pair and cell in real space.
     default_value: "false"
+    unit: ""
+    availability: ""
+  - name: out_unshrinked_v
+    category: Exact Exchange (LCAO)
+    type: Boolean
+    description: |
+      Whether to output the large Vq matrix in the unshrinked auxiliary basis.
+    default_value: "false"
+    unit: ""
+    availability: ""
+  - name: exx_coul_moment
+    category: Exact Exchange (LCAO)
+    type: Boolean
+    description: |
+      Whether to use the moment method for Coulomb calculation.
+    default_value: "false"
+    unit: ""
+    availability: ""
+  - name: exx_rotate_abfs
+    category: Exact Exchange (LCAO)
+    type: Boolean
+    description: |
+      Whether to rotate the auxiliary basis for Coulomb calculation.
+    default_value: "false"
+    unit: ""
+    availability: ""
+  - name: exx_multip_moments_threshold
+    category: Exact Exchange (LCAO)
+    type: Real
+    description: |
+      Threshold to screen multipole moments in Coulomb calculation.
+    default_value: "1e-10"
+    unit: ""
+    availability: ""
+  - name: shrink_abfs_pca_thr
+    category: Exact Exchange (LCAO)
+    type: Real
+    description: |
+      Threshold to shrink the auxiliary basis for GW/RPA calculations.
+    default_value: "-1"
+    unit: ""
+    availability: ""
+  - name: shrink_lu_inv_thr
+    category: Exact Exchange (LCAO)
+    type: Real
+    description: |
+      Threshold for obtaining the inverse of the overlap matrix by LU decomposition in the auxiliary-basis representation.
+    default_value: "1e-6"
     unit: ""
     availability: ""
   - name: dft_plus_u

@@ -336,6 +336,12 @@
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
+    - [out\_unshrinked\_v](#out_unshrinked_v)
+    - [exx\_coul\_moment](#exx_coul_moment)
+    - [exx\_rotate\_abfs](#exx_rotate_abfs)
+    - [exx\_multip\_moments\_threshold](#exx_multip_moments_threshold)
+    - [shrink\_abfs\_pca\_thr](#shrink_abfs_pca_thr)
+    - [shrink\_lu\_inv\_thr](#shrink_lu_inv_thr)
   - [Exact Exchange (PW)](#exact-exchange-pw)
     - [exxace](#exxace)
     - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
@@ -2247,7 +2253,7 @@
 
 - **Type**: Boolean
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print Hamiltonian matrices H(R) in npz format. This feature does not work for gamma-only calculations.
+- **Description**: Whether to print Hamiltonian matrices H(R) in npz format. The output files are named output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
 - **Default**: False
 - **Unit**: Ry
 
@@ -2255,7 +2261,7 @@
 
 - **Type**: Boolean
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. This feature does not work for gamma-only calculations.
+- **Description**: Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. The output files are named output_SR.npz, output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
 - **Default**: False
 - **Unit**: Ry
 
@@ -2263,7 +2269,7 @@
 
 - **Type**: Boolean
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print density matrices DM(R) in npz format. This feature does not work for gamma-only calculations.
+- **Description**: Whether to print density matrices DM(R) in npz format. The output files are named output_DM0.npz, output_DM1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.
 - **Default**: False
 
 ### out_mul
@@ -3295,6 +3301,42 @@
 - **Description**: Whether to output the coefficient tensor C(R) and ABFs-representation Coulomb matrix V(R) for each atom pair and cell in real space.
 - **Default**: false
 
+### out_unshrinked_v
+
+- **Type**: Boolean
+- **Description**: Whether to output the large Vq matrix in the unshrinked auxiliary basis.
+- **Default**: false
+
+### exx_coul_moment
+
+- **Type**: Boolean
+- **Description**: Whether to use the moment method for Coulomb calculation.
+- **Default**: false
+
+### exx_rotate_abfs
+
+- **Type**: Boolean
+- **Description**: Whether to rotate the auxiliary basis for Coulomb calculation.
+- **Default**: false
+
+### exx_multip_moments_threshold
+
+- **Type**: Real
+- **Description**: Threshold to screen multipole moments in Coulomb calculation.
+- **Default**: 1e-10
+
+### shrink_abfs_pca_thr
+
+- **Type**: Real
+- **Description**: Threshold to shrink the auxiliary basis for GW/RPA calculations.
+- **Default**: -1
+
+### shrink_lu_inv_thr
+
+- **Type**: Real
+- **Description**: Threshold for obtaining the inverse of the overlap matrix by LU decomposition in the auxiliary-basis representation.
+- **Default**: 1e-6
+
 [back to top](#full-list-of-input-keywords)
 
 ## Exact Exchange (PW)
@@ -3377,6 +3419,7 @@
   - berendsen: Berendsen thermostat, see md_nraise in detail.
   - rescaling: velocity Rescaling method 1, see md_tolerance in detail.
   - rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+  - csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.
 - **Default**: nhc
 
 ### md_tfirst
