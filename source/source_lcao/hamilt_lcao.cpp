@@ -225,9 +225,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
             {
                 plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
-															  this->hR, // no explicit call yet
-															  p_dftu, // mohan add 2025-11-07
-															  this->kv->isk);
+															  this->hR,
+															  p_dftu,
+															  this->kv->isk,
+															  PARAM.globalv.npol);
             }
             else
             {
@@ -381,9 +382,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
             {
                 plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
-															  this->hR, // no explicit call yet
-															  p_dftu, // mohan add 2025-11-07
-                                                              this->kv->isk);
+															  this->hR,
+															  p_dftu,
+                                                              this->kv->isk,
+                                                              PARAM.globalv.npol);
             }
             else
             {

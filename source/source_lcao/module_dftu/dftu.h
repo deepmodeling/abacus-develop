@@ -116,18 +116,21 @@ class Plus_U
 	void cal_eff_pot_mat_complex(const int ik, 
 			std::complex<double>* eff_pot, 
 			const std::vector<int>& isk, 
-			const std::complex<double>* sk);
+			const std::complex<double>* sk,
+			const int npol);
 
 	void cal_eff_pot_mat_real(const int ik, 
 			double* eff_pot, 
 			const std::vector<int>& isk, 
-			const double* sk);
+			const double* sk,
+			const int npol);
 
-    void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR);
+    void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR, const int npol);
 
 	void cal_eff_pot_mat_R_complex_double(const int ispin, 
 			std::complex<double>* SR, 
-			std::complex<double>* HR);
+			std::complex<double>* HR,
+			const int npol);
 #endif
 
     //=============================================================
@@ -264,8 +267,8 @@ private:
     // for both Hamiltonian and force/stress
     //=============================================================
 
-    void cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU);
-    void cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU);
+    void cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU, const int npol);
+    void cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU, const int npol);
 
     double get_onebody_eff_pot(const int T,
                                const int iat,
@@ -321,13 +324,14 @@ private:
  public:
    void force_stress(const UnitCell& ucell,
                      const Grid_Driver& gd,
-					 std::vector<std::vector<double>>* dmk_d, // mohan modify 2025-11-02
-					 std::vector<std::vector<std::complex<double>>>* dmk_c, // dmat.get_dm()->get_DMK_vector();
+					 std::vector<std::vector<double>>* dmk_d,
+					 std::vector<std::vector<std::complex<double>>>* dmk_c,
 					 const Parallel_Orbitals& pv,
                      ForceStressArrays& fsr,
                      ModuleBase::matrix& force_dftu,
                      ModuleBase::matrix& stress_dftu,
-                     const K_Vectors& kv);
+                     const K_Vectors& kv,
+                     const int npol);
 
  private:
    void cal_force_k(const UnitCell& ucell,

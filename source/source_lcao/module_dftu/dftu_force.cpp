@@ -24,13 +24,14 @@
 
 void Plus_U::force_stress(const UnitCell& ucell,
                         const Grid_Driver& gd,
-                        std::vector<std::vector<double>>* dmk_d, // mohan modify 2025-11-02
-                        std::vector<std::vector<std::complex<double>>>* dmk_c, // dmat.get_dm()->get_DMK_vector();
+                        std::vector<std::vector<double>>* dmk_d,
+                        std::vector<std::vector<std::complex<double>>>* dmk_c,
                         const Parallel_Orbitals& pv,
-                        ForceStressArrays& fsr, // mohan add 2024-06-16
+                        ForceStressArrays& fsr,
                         ModuleBase::matrix& force_dftu,
                         ModuleBase::matrix& stress_dftu,
-                        const K_Vectors& kv)
+                        const K_Vectors& kv,
+                        const int npol)
 {
     ModuleBase::TITLE("Plus_U", "force_stress");
     ModuleBase::timer::start("Plus_U", "force_stress");
@@ -63,7 +64,7 @@ void Plus_U::force_stress(const UnitCell& ucell,
 
             double* VU = new double[pv.nloc];
 
-            this->cal_VU_pot_mat_real(spin, false, VU);
+            this->cal_VU_pot_mat_real(spin, false, VU, npol);
 
 #ifdef __MPI
             ScalapackConnector::gemm(transT, transN, nlocal, nlocal, nlocal,
@@ -110,7 +111,7 @@ void Plus_U::force_stress(const UnitCell& ucell,
 
             std::complex<double>* VU = new std::complex<double>[pv.nloc];
 
-            this->cal_VU_pot_mat_complex(spin, false, VU);
+            this->cal_VU_pot_mat_complex(spin, false, VU, npol);
 
 
 #ifdef __MPI
@@ -375,9 +376,14 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Plus_U", "cal_force_gamma");
     ModuleBase::timer::start("Plus_U", "cal_force_gamma");
-    const char transN = 'N', transT = 'T';
+    const char transN = 'N';
+    const char transT = 'T';
     const int one_int = 1;
-    const double one = 1.0, zero = 0.0, minus_one = -1.0;
+    const double one = 1.0;
+    const double zero = 0.0;
+    const double minus_one = -1.0;
+    const int nlocal = PARAM.globalv.nlocal;
+    assert(nlocal>0);
 
     std::vector<double> dm_VU_dSm(pv.nloc);
 
@@ -400,9 +406,9 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
                 transT,
-                PARAM.globalv.nlocal,
-                PARAM.globalv.nlocal,
-                PARAM.globalv.nlocal,
+                nlocal,
+                nlocal,
+                nlocal,
                 one,
                 tmp_ptr,
                 1,
@@ -438,9 +444,9 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
                 transT,
-                PARAM.globalv.nlocal,
-                PARAM.globalv.nlocal,
-                PARAM.globalv.nlocal,
+                nlocal,
+                nlocal,
+                nlocal,
                 one,
                 tmp_ptr,
                 1,

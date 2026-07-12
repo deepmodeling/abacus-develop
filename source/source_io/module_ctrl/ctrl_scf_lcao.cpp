@@ -38,6 +38,28 @@
 #include "source_lcao/rho_tau_lcao.h"       // mohan add 2025-10-24
 #include "source_lcao/module_operator_lcao/overlap.h" // use hamilt::Overlap for NAMD
 
+#ifdef __EXX
+template <typename TK>
+void set_exx_interface(ModuleIO::WriteDHParams& params, Exx_NAO<TK>& exx_nao) {}
+
+template <>
+void set_exx_interface<double>(ModuleIO::WriteDHParams& params, Exx_NAO<double>& exx_nao)
+{
+    if (exx_nao.exd) { params.exd = exx_nao.exd.get(); }
+    if (exx_nao.exc) { params.exc = exx_nao.exc.get(); }
+}
+
+template <typename TK>
+void set_exx_interface(ModuleIO::WriteHParams& params, Exx_NAO<TK>& exx_nao) {}
+
+template <>
+void set_exx_interface<double>(ModuleIO::WriteHParams& params, Exx_NAO<double>& exx_nao)
+{
+    if (exx_nao.exd) { params.exd = exx_nao.exd.get(); }
+    if (exx_nao.exc) { params.exc = exx_nao.exc.get(); }
+}
+#endif
+
 template <typename TK, typename TR>
 void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              const Input_para& inp,
@@ -359,13 +381,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #ifdef __EXX
         // dV^EXX/dR output is wired for the gamma (TK==double) exx interfaces. exd/exc are
         // mutually exclusive (real vs complex Hexx); write_dH_exx picks by info_ri.real_number.
-        if constexpr (std::is_same<TK, double>::value)
+        if (GlobalC::exx_info.info_global.cal_exx)
         {
-            if (GlobalC::exx_info.info_global.cal_exx)
-            {
-                if (exx_nao.exd) { dh_params.exd = exx_nao.exd.get(); }
-                if (exx_nao.exc) { dh_params.exc = exx_nao.exc.get(); }
-            }
+            set_exx_interface(dh_params, exx_nao);
         }
 #endif
         ModuleIO::write_dH_components(dh_params);
@@ -419,15 +437,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         if (inp.out_mat_h_exx[0] && GlobalC::exx_info.info_global.cal_exx)
         {
             // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
-            if constexpr (std::is_same<TK, double>::value)
-            {
-                if (GlobalC::exx_info.info_global.cal_exx)
-                {
-                    if (exx_nao.exd) { h_params.exd = exx_nao.exd.get(); }
-                    if (exx_nao.exc) { h_params.exc = exx_nao.exc.get(); }
-                    ModuleIO::write_h_exx(h_params);
-                }
-            }
+            set_exx_interface(h_params, exx_nao);
+            ModuleIO::write_h_exx(h_params);
         }
 #endif
     }
