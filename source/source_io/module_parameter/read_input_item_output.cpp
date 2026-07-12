@@ -1483,9 +1483,10 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output current or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Integer";
-        item.description = R"(* 0: Do not output current.
-* 1: Output current using the two-center integral, faster.
-* 2: Output current using the matrix commutation, more precise.)";
+        item.description = R"(Controls the current-density output method for LCAO RT-TDDFT.
+* 0: Do not output current.
+* 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center integral / spherical grid integral: $$\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right],$$ where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms (e.g., EXX) are not included explicitly.
+* 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis: $$\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S.$$ This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive.)";
         item.default_value = "0";
         item.unit = "";
         item.availability = "";
