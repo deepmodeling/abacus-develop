@@ -286,26 +286,6 @@ void Plus_U::cal_occup_m_k(const int iter,
             one_int,
             one_int,
             &this->paraV->desc[0]);
-        /*pzgemm_(&transN,
-                &transT,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &alpha,
-                s_k_pointer,
-                &one_int,
-                &one_int,
-                this->paraV->desc,
-                dm_k[ik].data(),
-                //dm_k[ik].c,
-                &one_int,
-                &one_int,
-                this->paraV->desc,
-                &beta,
-                &srho[0],
-                &one_int,
-                &one_int,
-                this->paraV->desc);*/
 #endif
 
         const int spin = kv.isk[ik];
