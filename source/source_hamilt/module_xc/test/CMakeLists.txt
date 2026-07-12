@@ -27,7 +27,7 @@ list(APPEND FFT_SRC ../../../source_base/module_fft/fft_rocm.cpp)
 endif()
 AddTest(
   TARGET MODULE_HAMILT_XCTest_GRADCORR
-  LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi device container 
+  LIBS parameter MPI::MPI_CXX Libxc::xc psi device container
   SOURCES test_xc3.cpp ../xc_grad.cpp ../xc_functional.cpp
   ../xc_lda_wrap.cpp ../xc_gga_wrap.cpp
   ../libxc_setup.cpp
@@ -48,7 +48,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_HAMILT_XCTest_SCAN
-  LIBS parameter MPI::MPI_CXX Libxc::xc 
+  LIBS parameter MPI::MPI_CXX Libxc::xc
   SOURCES test_xc4.cpp ../xc_functional.cpp ../xc_lda_wrap.cpp
     ../xc_gga_wrap.cpp
     ../libxc_setup.cpp
@@ -61,7 +61,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_HAMILT_XCTest_VXC
-  LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi device container 
+  LIBS parameter MPI::MPI_CXX Libxc::xc psi device container
   SOURCES test_xc5.cpp ../xc_grad.cpp ../xc_functional.cpp
     ../xc_lda_wrap.cpp ../xc_gga_wrap.cpp
     ../libxc_setup.cpp

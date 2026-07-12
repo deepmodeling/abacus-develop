@@ -179,6 +179,7 @@ parameters:
       * file: the density will be read in from a binary file charge-density.dat first. If it does not exist, the charge density will be read in from cube files.
       * wfc: the density will be calculated by wavefunctions and occupations.
       * dm: the density will be calculated by real space density matrix(DMR) of LCAO base.
+      * dm_no_renormalize: same as dm, but the charge density is not renormalized to the number of electrons.
       * hr: the real space Hamiltonian matrix(HR) will be read in from file hrs1_nao.csr in directory read_file_dir.
       * auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
     default_value: atomic
@@ -716,8 +717,11 @@ parameters:
       * 0.4: nspin=2 and nspin=4
       * 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
       * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 < mixing_beta < 0.1.
+      A progressive tuning strategy might help, for example, 0.4 -> 0.1 -> 0.025.
 
       Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
+
+      For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to converge, try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.
     default_value: "0.8 for nspin=1, 0.4 for nspin=2 and nspin=4."
     unit: ""
     availability: ""
@@ -726,6 +730,8 @@ parameters:
     type: Real
     description: |
       Mixing parameter of magnetic density.
+
+      If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.
     default_value: "4*mixing_beta, but the maximum value is 1.6."
     unit: ""
     availability: ""
@@ -3118,14 +3124,136 @@ parameters:
     availability: Numerical atomic orbital basis (not gamma-only algorithm)
   - name: out_mat_dh
     category: Output information
-    type: "Boolean \\[Integer\\](optional)"
+    type: Integer
     description: |
-      Whether to print files containing the derivatives of the Hamiltonian matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
+      Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
+
+      Format: <enable> [precision] [iat1 iat2 ...]. The first value (0/1) enables/disables output. The second optional value sets the output precision (default: 8). Starting from the third value, 1-based atom indices can be listed to restrict output to derivatives with respect to those specific atoms only; if no atom indices are given, all atoms are written.
 
       [NOTE] In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
     default_value: 0 8
     unit: Ry/Bohr
     availability: Numerical atomic orbital basis (not gamma-only algorithm)
+  - name: out_mat_dh_t
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the derivatives of the kinetic energy matrix dT/dR.
+
+      See out_mat_dh for format details (enable, precision, atom indices).
+    default_value: 0 8
+    unit: Ry/Bohr
+    availability: ""
+  - name: out_mat_dh_vl
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the derivatives of the local pseudopotential matrix dV^L/dR.
+
+      See out_mat_dh for format details.
+    default_value: 0 8
+    unit: Ry/Bohr
+    availability: ""
+  - name: out_mat_dh_vnl
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the derivatives of the nonlocal pseudopotential matrix dV^NL/dR.
+
+      See out_mat_dh for format details.
+    default_value: 0 8
+    unit: Ry/Bohr
+    availability: ""
+  - name: out_mat_dh_vh
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the derivatives of the Hartree matrix dV^H/dR.
+
+      See out_mat_dh for format details.
+    default_value: 0 8
+    unit: Ry/Bohr
+    availability: ""
+  - name: out_mat_dh_vxc
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the derivatives of the XC matrix dV^XC/dR.
+
+      See out_mat_dh for format details.
+    default_value: 0 8
+    unit: Ry/Bohr
+    availability: ""
+  - name: out_mat_dh_exx
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the derivatives of the exact-exchange matrix dV^EXX/dR.
+
+      See out_mat_dh for format details.
+    default_value: 0 8
+    unit: Ry/Bohr
+    availability: ""
+  - name: out_mat_h_t
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the kinetic energy matrix T(R) in CSR format.
+
+      See out_mat_hs2 for format details.
+    default_value: 0 8
+    unit: Ry
+    availability: ""
+  - name: out_mat_h_vnl
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the nonlocal pseudopotential matrix Vnl(R) in CSR format.
+
+      See out_mat_hs2 for format details.
+    default_value: 0 8
+    unit: Ry
+    availability: ""
+  - name: out_mat_h_vl
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the local pseudopotential matrix Vl(R) in CSR format.
+
+      See out_mat_hs2 for format details.
+    default_value: 0 8
+    unit: Ry
+    availability: ""
+  - name: out_mat_h_vh
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the Hartree matrix Vh(R) in CSR format.
+
+      See out_mat_hs2 for format details.
+    default_value: 0 8
+    unit: Ry
+    availability: ""
+  - name: out_mat_h_vxc
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the XC matrix Vxc(R) in CSR format.
+
+      See out_mat_hs2 for format details.
+    default_value: 0 8
+    unit: Ry
+    availability: ""
+  - name: out_mat_h_exx
+    category: Output information
+    type: Integer
+    description: |
+      Whether to print files containing the exact-exchange matrix Vexx(R) in CSR format.
+
+      See out_mat_hs2 for format details.
+    default_value: 0 8
+    unit: Ry
+    availability: ""
   - name: out_mat_ds
     category: Output information
     type: "Boolean \\[Integer\\](optional)"

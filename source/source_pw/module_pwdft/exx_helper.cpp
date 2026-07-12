@@ -1,5 +1,5 @@
 #include "exx_helper.h"
-#include "source_io/module_parameter/parameter.h" // use PARAM
+#include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 #include "source_pw/module_pwdft/hamilt_pw.h" // use HamiltPW
@@ -61,13 +61,13 @@ bool Exx_Helper<T, Device>::iter_finish(void* p_elec, Charge* p_charge, void* ps
                                         bool& conv_esolver, int& iter)
 {
     /// Return if EXX is not enabled
-    if (!GlobalC::exx_info.info_global.cal_exx)
+    if (op_exx == nullptr)
     {
         return false;
     }
 
     /// Handle separate_loop mode
-    if (GlobalC::exx_info.info_global.separate_loop)
+    if (op_exx->separate_loop)
     {
         if (conv_esolver)
         {
@@ -131,7 +131,7 @@ bool Exx_Helper<T, Device>::exx_after_converge(int &iter, bool ene_conv)
     {
         op_exx->first_iter = false;
     }
-    else if (!GlobalC::exx_info.info_global.separate_loop)
+    else if (!op_exx->separate_loop)
     {
         return true;
     }
@@ -162,8 +162,10 @@ void Exx_Helper<T, Device>::set_psi(void* psi_)
     if (psi == nullptr)
         return;
     this->psi = psi;
+    if (op_exx == nullptr)
+        return;
     op_exx->set_psi(*psi);
-    if (PARAM.inp.exxace && GlobalC::exx_info.info_global.separate_loop)
+    if (PARAM.inp.exxace && op_exx->separate_loop)
     {
         op_exx->construct_ace();
     }

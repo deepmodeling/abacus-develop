@@ -13,10 +13,6 @@
 #include <complex>
 #include <vector>
 
-// namespace GlobalC
-// {
-// VSep vsep_cell;
-// }
 namespace
 {
 double sphere_cut(double r, double r_out, double r_power)

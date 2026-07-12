@@ -10,10 +10,6 @@ void PotSep::cal_fixed_v(double* vl_pseudo)
     ModuleBase::TITLE("PotSep", "cal_fixed_v");
     ModuleBase::timer::start("PotSep", "cal_fixed_v");
 
-    // GlobalC::vsep_cell.generate_vsep_r(this->rho_basis_[0], this->sf_[0]);
-
-    // const_cast<VSep*>(this->vsep_)->generate_vsep_r(this->rho_basis_[0], this->sf_[0]);
-
     if (vsep_cell != nullptr)
     {
         for (int ir = 0; ir < this->rho_basis_->nrxx; ++ir)

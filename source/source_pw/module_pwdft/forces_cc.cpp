@@ -55,12 +55,18 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 
     ModuleBase::matrix v(PARAM.inp.nspin, rho_basis->nrxx);
 
+    const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+    const double hse_omega = XC_Functional::get_hse_omega();
+#else
+    const double hse_omega = 0.0;
+#endif
     if (XC_Functional::get_ked_flag())
     {
 #ifdef USE_LIBXC
         const auto etxc_vtxc_v
             = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rho_basis->nrxx, ucell_in.omega, ucell_in.tpiba, chr,
-                                             PARAM.inp.nspin);
+                                             PARAM.inp.nspin, hybrid_alpha, hse_omega);
 
         // etxc = std::get<0>(etxc_vtxc_v);
         // vtxc = std::get<1>(etxc_vtxc_v);
@@ -75,7 +81,9 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell_in,
                                               PARAM.inp.nspin,
                                               PARAM.globalv.domag,
-                                              PARAM.globalv.domag_z);
+                                              PARAM.globalv.domag_z,
+                                              hybrid_alpha,
+                                              hse_omega);
 
         // etxc = std::get<0>(etxc_vtxc_v);
         // vtxc = std::get<1>(etxc_vtxc_v);

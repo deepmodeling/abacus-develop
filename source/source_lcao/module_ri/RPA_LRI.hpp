@@ -152,8 +152,6 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     GlobalC::exx_info.sync_from_global();
     // reserve exx_ccp_rmesh_times to calculate full Coulomb
     this->ccp_rmesh_times_ewald = GlobalC::exx_info.info_ri.ccp_rmesh_times;
-    // rpa=1 set
-    // GlobalC::exx_info.info_ri.ccp_rmesh_times=rpa_ccp_rmesh_times
     // Using this->info.ccp_rmesh_times to calculate cut Coulomb this->Vs_period
     GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
     if (!exx_cut_coulomb)
@@ -1249,12 +1247,9 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
 // 			this->info.kmesh_times, this->info.ccp_rmesh_times );
 // 	}
 
-// //	for( size_t T=0; T!=this->abfs.size(); ++T )
-// //		GlobalC::exx_info.info_ri.abfs_Lmax = std::max(
-// GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1
-// );
-
 // }
+
+
 
 // template<typename Tdata>
 // void RPA_LRI<T, Tdata>::cal_rpa_ions()

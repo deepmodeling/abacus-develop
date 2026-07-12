@@ -1,6 +1,8 @@
 #ifndef NEIGHBOR_ATOM_H
 #define NEIGHBOR_ATOM_H
 
+#include "source_cell/module_neighlist/neighbor_types.h"
+
 #include <vector>
 
 /**
@@ -28,11 +30,14 @@ public:
     /// Index of the atom within its type
     int atom_index;
 
-    /// Unique atom ID across all domains and periodic images
-    int atom_id;
+    /// Rank-local atom ID used by the neighbor list.
+    ModuleNeighList::LocalAtomIndex atom_id;
 
-    /// Whether this atom is inside the local MPI domain
-    bool is_inside;
+    /// Global atom ID in the primary cell. Rank-local images share this ID.
+    ModuleNeighList::GlobalAtomId global_id;
+
+    /// MPI rank that owns the primary atom.
+    int owner_rank;
 
     /**
      * @brief Construct a NeighborAtom.
@@ -44,51 +49,34 @@ public:
      * @param index Index within the atom type.
      * @param id Unique atom ID.
      */
-    NeighborAtom(double x, double y, double z, int type, int index, int id)
+    NeighborAtom(double x,
+                 double y,
+                 double z,
+                 int type,
+                 int index,
+                 ModuleNeighList::LocalAtomIndex id)
         : position_x(x), position_y(y), position_z(z),
-          atom_type(type), atom_index(index), atom_id(id), is_inside(false) {}
-};
+          atom_type(type), atom_index(index), atom_id(id),
+          global_id(id), owner_rank(0) {}
 
-/**
- * @brief Input structure for neighbor search initialization.
- *
- * Contains atom data and spatial bounds computed from input atoms,
- * used to initialize the binning grid.
- */
-class InputAtoms
-{
-public:
-    /// List of input atoms
-    std::vector<NeighborAtom> InputAtom;
-
-    /// Minimum X coordinate of the atom bounding box
-    double x_low;
-
-    /// Maximum X coordinate of the atom bounding box
-    double x_high;
-
-    /// Minimum Y coordinate of the atom bounding box
-    double y_low;
-
-    /// Maximum Y coordinate of the atom bounding box
-    double y_high;
-
-    /// Minimum Z coordinate of the atom bounding box
-    double z_low;
-
-    /// Maximum Z coordinate of the atom bounding box
-    double z_high;
-
-    /// Total number of atoms
-    int n_atoms;
-
-    /**
-     * @brief Default constructor.
-     *
-     * Initializes bounds to zero and atom count to zero.
-     */
-    InputAtoms()
-        : x_low(0), x_high(0), y_low(0), y_high(0), z_low(0), z_high(0), n_atoms(0) {}
+    NeighborAtom(double x,
+                 double y,
+                 double z,
+                 int type,
+                 int index,
+                 ModuleNeighList::LocalAtomIndex id,
+                 ModuleNeighList::GlobalAtomId global_id_in,
+                 int owner_rank_in)
+        : position_x(x),
+          position_y(y),
+          position_z(z),
+          atom_type(type),
+          atom_index(index),
+          atom_id(id),
+          global_id(global_id_in),
+          owner_rank(owner_rank_in)
+    {
+    }
 };
 
 #endif // NEIGHBOR_ATOM_H

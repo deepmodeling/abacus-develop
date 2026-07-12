@@ -26,7 +26,7 @@ add_library(naopack SHARED
 )
 
 # link math_libs
-if(MKLROOT)
+if(MKL_FOUND)
     target_link_libraries(naopack
         MPI::MPI_CXX
         OpenMP::OpenMP_CXX

@@ -36,10 +36,15 @@ void write_Vxc_R(const int nspin,
                  const K_Vectors& kv,
                  const std::vector<double>& orb_cutoff,
                  Grid_Driver& gd,
+                 bool cal_exx,
+                 double hybrid_alpha,
+                 bool real_number
 #ifdef __EXX
+                 ,
                  const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* const Hexxd,
-                 const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* const Hexxc,
+                 const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* const Hexxc
 #endif
+                 ,
                  const double sparse_thr = 1e-10)
 {
     ModuleBase::TITLE("ModuleIO", "write_Vxc_R");
@@ -69,9 +74,9 @@ void write_Vxc_R(const int nspin,
             vxcs_R_ao[is].fix_gamma();
         }
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (cal_exx)
         {
-            GlobalC::exx_info.info_ri.real_number
+            real_number
                 ? hamilt::reallocate_hcontainer(*Hexxd, &vxcs_R_ao[is], &cell_nearest)
                 : hamilt::reallocate_hcontainer(*Hexxc, &vxcs_R_ao[is], &cell_nearest);
         }
@@ -93,22 +98,22 @@ void write_Vxc_R(const int nspin,
         vxcs_op_ao.set_current_spin(is);
         vxcs_op_ao.contributeHR();
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (cal_exx)
         {
-            GlobalC::exx_info.info_ri.real_number ? RI_2D_Comm::add_HexxR(is,
-                                                                          GlobalC::exx_info.info_global.hybrid_alpha,
-                                                                          *Hexxd,
-                                                                          *pv,
-                                                                          ucell.get_npol(),
-                                                                          vxcs_R_ao[is],
-                                                                          &cell_nearest)
-                                                  : RI_2D_Comm::add_HexxR(is,
-                                                                          GlobalC::exx_info.info_global.hybrid_alpha,
-                                                                          *Hexxc,
-                                                                          *pv,
-                                                                          ucell.get_npol(),
-                                                                          vxcs_R_ao[is],
-                                                                          &cell_nearest);
+            real_number ? RI_2D_Comm::add_HexxR(is,
+                                                 hybrid_alpha,
+                                                 *Hexxd,
+                                                 *pv,
+                                                 ucell.get_npol(),
+                                                 vxcs_R_ao[is],
+                                                 &cell_nearest)
+                        : RI_2D_Comm::add_HexxR(is,
+                                                 hybrid_alpha,
+                                                 *Hexxc,
+                                                 *pv,
+                                                 ucell.get_npol(),
+                                                 vxcs_R_ao[is],
+                                                 &cell_nearest);
         }
 #endif
     }

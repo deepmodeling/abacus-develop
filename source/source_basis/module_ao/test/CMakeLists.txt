@@ -50,21 +50,21 @@ AddTest(
     SOURCES ORB_nonlocal_test.cpp
         ../ORB_nonlocal.cpp
         ../ORB_nonlocal_lm.cpp
-    LIBS parameter ${math_libs} device base
+    LIBS parameter device base
 )
 
 AddTest(
     TARGET MODULE_AO_ORB_nonlocal_lm_test
     SOURCES ORB_nonlocal_lm_test.cpp
         ../ORB_nonlocal_lm.cpp
-    LIBS parameter ${math_libs} device base
+    LIBS parameter device base
 )
 
 AddTest(
     TARGET MODULE_AO_ORB_atomic_lm_test
     SOURCES ORB_atomic_lm_test.cpp
         ../ORB_atomic_lm.cpp
-    LIBS parameter ${math_libs} device base
+    LIBS parameter device base
 )
 
 AddTest(
@@ -73,14 +73,14 @@ AddTest(
         ../ORB_read.cpp
         ../ORB_atomic.cpp
         ../ORB_atomic_lm.cpp
-    LIBS parameter ${math_libs} device base 
+    LIBS parameter device base
 )
 
 
 AddTest(
     TARGET MODULE_AO_parallel_orbitals_test 
     SOURCES parallel_orbitals_test.cpp ../parallel_orbitals.cpp
-    LIBS parameter ${math_libs} device base
+    LIBS parameter device base
 )
 
 install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

@@ -105,6 +105,18 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
 		const double mixing_beta,
 		const std::string mixing_mode);
 
+    // DM(R) format conversion: the real-space (DM(R)) counterpart of split_m2D_ktoR,
+    // and the inverse of add_HexxR. dm_container is DensityMatrix::get_DMR_vector():
+    //   nspin==1 : size 1 (container 0  -> spin-block 0)
+    //   nspin==2 : size 2 (container is -> spin-block is)
+    //   nspin==4 : size 1 (container 0 holds the 2x2 npol blocks -> spin-blocks 0,1,2,3)
+    template <typename TR, typename Tdata>
+    extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> dm_container_to_Ds(
+        const std::vector<hamilt::HContainer<TR>*>& dm_container,
+        const UnitCell& ucell,
+        const Parallel_Orbitals& pv,
+        const int nspin);
+
 //private:
 	extern std::vector<int> get_ik_list(const K_Vectors &kv, const int is_k);
 	extern inline std::tuple<int,int,int> get_iat_iw_is_block(const UnitCell& ucell,const int& iwt);

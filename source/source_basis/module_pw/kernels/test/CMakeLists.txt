@@ -2,7 +2,7 @@ abacus_add_local_feature_definitions(__NORMAL)
 
 AddTest(
     TARGET MODULE_PW_PW_Kernels_UTs
-    LIBS parameter ${math_libs} psi device
+    LIBS parameter psi device
     SOURCES pw_op_test.cpp
     ../../../../source_base/tool_quit.cpp ../../../../source_base/global_variable.cpp
     ../../../../source_base/parallel_global.cpp ../../../../source_base/parallel_reduce.cpp

@@ -1,7 +1,7 @@
 if (ENABLE_LIBRI)
 
   add_subdirectory(module_exx_symmetry)
-  
+
   list(APPEND objects
         Matrix_Orbs11.cpp
         Matrix_Orbs21.cpp
@@ -29,7 +29,7 @@ if (ENABLE_LIBRI)
       OBJECT
       ${objects}
   )
-  
+
   if(BUILD_TESTING)
     if(ENABLE_MPI)
       add_subdirectory(test)

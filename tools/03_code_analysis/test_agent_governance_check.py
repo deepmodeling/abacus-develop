@@ -94,14 +94,43 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_blocks_new_global_dependencies_on_added_lines(self):
+    def test_blocks_when_global_dependency_budget_increases(self):
         self.write("source/source_base/global.cpp", "int n = GlobalV::NPROC + PARAM.inp.nbands;\n")
         self.write("source/source_base/CMakeLists.txt", "add_library(global global.cpp)\n")
         head = self.commit_change()
 
         result = self.run_checker("--base", self.base, "--head", head)
 
-        self.assert_blocked_by(result, "No new cross-layer globals")
+        self.assert_blocked_by(result, "Global dependency budget")
+        self.assertIn("net_delta=2", result.stdout)
+
+    def test_warns_when_global_dependency_usage_is_rebalanced(self):
+        self.write("source/source_base/global.cpp", "int old_n = PARAM.inp.nbands;\n")
+        self.write("source/source_base/CMakeLists.txt", "add_library(global global.cpp)\n")
+        self.git("add", ".")
+        self.git("commit", "-m", "add baseline global usage")
+        base = self.git("rev-parse", "HEAD").stdout.strip()
+        self.write("source/source_base/global.cpp", "int moved_n = GlobalV::NPROC;\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assert_warns_with_success(result, "Global dependency budget")
+        self.assertIn("net_delta=0", result.stdout)
+
+    def test_allows_global_dependency_budget_reduction(self):
+        self.write("source/source_base/global.cpp", "int old_n = PARAM.inp.nbands;\n")
+        self.write("source/source_base/CMakeLists.txt", "add_library(global global.cpp)\n")
+        self.git("add", ".")
+        self.git("commit", "-m", "add baseline global usage")
+        base = self.git("rev-parse", "HEAD").stdout.strip()
+        self.write("source/source_base/global.cpp", "int old_n = 0;\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("Global dependency budget", result.stdout)
 
     def test_allows_global_names_in_documentation(self):
         self.write("docs/governance-notes.md", "Mention GlobalV::NPROC and PARAM.inp in documentation.\n")
@@ -248,7 +277,7 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_blocked_by(result, "INPUT parameter documentation linkage")
 
-    def test_blocks_unfilled_pr_template_fields_from_event_payload(self):
+    def test_warns_for_unfilled_pr_template_fields_from_event_payload(self):
         event = self.repo / "event.json"
         event.write_text(
             json.dumps(
@@ -264,9 +293,9 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         result = self.run_checker("--event-path", str(event))
 
-        self.assert_blocked_by(result, "PR metadata completeness")
+        self.assert_warns_with_success(result, "PR metadata completeness")
 
-    def test_blocks_empty_pr_template_from_event_payload(self):
+    def test_warns_for_empty_pr_template_from_event_payload(self):
         for body in ("", None):
             with self.subTest(body=body):
                 event = self.repo / "event.json"
@@ -274,15 +303,15 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
                 result = self.run_checker("--event-path", str(event))
 
-                self.assert_blocked_by(result, "PR metadata completeness")
+                self.assert_warns_with_success(result, "PR metadata completeness")
 
-    def test_blocks_missing_pr_body_from_event_payload(self):
+    def test_warns_for_missing_pr_body_from_event_payload(self):
         event = self.repo / "event.json"
         event.write_text(json.dumps({"pull_request": {}}))
 
         result = self.run_checker("--event-path", str(event))
 
-        self.assert_blocked_by(result, "PR metadata completeness")
+        self.assert_warns_with_success(result, "PR metadata completeness")
 
     def test_skips_pr_metadata_when_event_payload_is_not_a_pull_request(self):
         event = self.repo / "event.json"
@@ -293,7 +322,7 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertNotIn("PR metadata completeness", result.stdout)
 
-    def test_accepts_filled_pr_template_fields_from_event_payload(self):
+    def test_accepts_core_pr_template_fields_from_event_payload(self):
         event = self.repo / "event.json"
         event.write_text(
             json.dumps(
@@ -303,15 +332,7 @@ class AgentGovernanceCheckTest(unittest.TestCase):
                         "### Unit Tests and/or Case Tests for my changes\n"
                         "Ran python3 -m unittest tools/03_code_analysis/test_agent_governance_check.py.\n\n"
                         "### What's changed?\n"
-                        "Adds governance checks only; no runtime behavior change.\n\n"
-                        "### Governance Checklist\n"
-                        "Line endings, CMake linkage, and docs rules reviewed.\n\n"
-                        "### INPUT Parameter Changes\n"
-                        "No INPUT parameter changes.\n\n"
-                        "### Core Module Impact\n"
-                        "No core module impact.\n\n"
-                        "### Governance Exception\n"
-                        "No exceptions requested.\n"
+                        "Adds governance checks only; no runtime behavior change.\n"
                     }
                 }
             )
@@ -320,6 +341,38 @@ class AgentGovernanceCheckTest(unittest.TestCase):
         result = self.run_checker("--event-path", str(event))
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("PR metadata completeness", result.stdout)
+
+    def test_accepts_reminder_style_pr_template_from_event_payload(self):
+        event = self.repo / "event.json"
+        event.write_text(
+            json.dumps(
+                {
+                    "pull_request": {
+                        "body": "### Reminder\n"
+                        "- [ ] I have read `AGENTS.md` and `docs/developers_guide/agent_governance.md`.\n"
+                        "- [ ] I have linked an issue or explained why this PR does not need one.\n"
+                        "- [ ] I have added adequate unit tests and/or case tests, or explained why not.\n"
+                        "- [ ] I have listed the exact verification commands run and their results.\n"
+                        "- [ ] I have described user-visible behavior changes, including INPUT parameter changes.\n"
+                        "- [ ] I have explained core-module impact for ESolver, HSolver, ElecState, Hamilt, Operator, Psi, or other `source/` changes.\n"
+                        "- [ ] I have requested any needed governance exception below.\n\n"
+                        "### Linked Issue\nNo issue; governance bootstrap.\n\n"
+                        "### Unit Tests and/or Case Tests for my changes\n"
+                        "Ran python3 -m unittest tools/03_code_analysis/test_agent_governance_check.py.\n\n"
+                        "### What's changed?\n"
+                        "Adds governance checks only; no runtime behavior change.\n\n"
+                        "### Governance Notes\n"
+                        "No INPUT, core module, or exception notes.\n"
+                    }
+                }
+            )
+        )
+
+        result = self.run_checker("--event-path", str(event))
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("PR metadata completeness", result.stdout)
 
     def test_warns_for_source_change_without_test_evidence(self):
         self.write("source/source_base/new_feature.cpp", "int new_feature() { return 1; }\n")
@@ -575,14 +628,14 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_warns_with_success(result, "Heterogeneous test evidence review")
 
-    def test_staged_mode_checks_index_content(self):
+    def test_staged_mode_blocks_global_dependency_budget_increase(self):
         self.write("source/source_base/staged.cpp", "int n = GlobalC::ucell.nat;\n")
         self.write("source/source_base/CMakeLists.txt", "add_library(staged staged.cpp)\n")
         self.git("add", ".")
 
         result = self.run_checker("--staged")
 
-        self.assert_blocked_by(result, "No new cross-layer globals")
+        self.assert_blocked_by(result, "Global dependency budget")
 
     def test_rejects_staged_with_base_head(self):
         result = self.run_checker("--staged", "--base", self.base, "--head", self.base)

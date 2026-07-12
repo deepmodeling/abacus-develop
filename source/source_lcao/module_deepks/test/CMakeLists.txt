@@ -67,6 +67,7 @@ set(DEEPKS_UNIT_COMMON_SOURCES
 )
 
 add_library(deepks_unit_support OBJECT ${DEEPKS_UNIT_COMMON_SOURCES})
+target_link_libraries(deepks_unit_support PRIVATE GTest::gtest)
 
 if(ENABLE_COVERAGE)
   add_coverage(deepks_unit_support)
@@ -86,7 +87,7 @@ set(DEEPKS_UNIT_LIBS
     gint
     numerical_atomic_orbitals
     symmetry
-    ${math_libs}
+    ${TORCH_LIBRARIES}
 )
 
 set(DEEPKS_UNIT_PHIALPHA_SOURCES

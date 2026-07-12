@@ -104,8 +104,7 @@ AngularGridView angular_grid(const int ngrid)
 {
     if (!is_supported_lebedev_grid(ngrid))
     {
-        ModuleBase::WARNING_QUIT("snap_projector_half_tddft",
-                                 "Unsupported Lebedev-Laikov grid size: " + std::to_string(ngrid));
+        ModuleBase::WARNING_QUIT("snap_projector_half_tddft", "Unsupported Lebedev-Laikov grid size: " + std::to_string(ngrid));
     }
 
     if (ngrid == default_lebedev_grid_points)
@@ -142,9 +141,7 @@ AngularGridView angular_grid(const int ngrid)
 
 double radial_factor(const ProjectorChannel& channel, const double r, const double w_radial)
 {
-    const double projector_val
-        = ModuleBase::PolyInt::Polynomial_Interpolation(channel.radial_values, channel.mesh, channel.dk, r);
-
+    const double projector_val = ModuleBase::PolyInt::Polynomial_Interpolation(channel.radial_times_r, channel.mesh, channel.dk, r);
     return projector_val * r * w_radial;
 }
 } // namespace
@@ -264,7 +261,7 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
         }
 
         assert(channel.mesh > 0);
-        assert(channel.radial_values != nullptr);
+        assert(channel.radial_times_r != nullptr);
         assert(channel.radial_grid != nullptr);
 
         const double r_min = channel.radial_grid[0];

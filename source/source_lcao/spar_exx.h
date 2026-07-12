@@ -46,7 +46,8 @@ void cal_HR_exx(
     const int& current_spin,
     const double& sparse_thr,
     const int (&nmp)[3],
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>& Hexxs);
+    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>& Hexxs,
+    const double hybrid_alpha);
 
 // Explicit instantiations for double and complex<double> types
 extern template void cal_HR_exx<double>(
@@ -56,7 +57,8 @@ extern template void cal_HR_exx<double>(
     const int& current_spin,
     const double& sparse_thr,
     const int (&nmp)[3],
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<double>>>>& Hexxs);
+    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<double>>>>& Hexxs,
+    const double hybrid_alpha);
 
 extern template void cal_HR_exx<std::complex<double>>(
     const UnitCell& ucell,
@@ -65,7 +67,8 @@ extern template void cal_HR_exx<std::complex<double>>(
     const int& current_spin,
     const double& sparse_thr,
     const int (&nmp)[3],
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>& Hexxs);
+    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>& Hexxs,
+    const double hybrid_alpha);
 
 }
 
