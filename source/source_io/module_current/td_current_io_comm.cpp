@@ -15,8 +15,8 @@
 #include "td_current_io.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
 #include "source_lcao/module_ri/Exx_LRI.h"
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
 #endif
 #ifdef __LCAO
 template <typename TR, typename TA>
@@ -163,23 +163,19 @@ void ModuleIO::set_rR_from_hR(const UnitCell& ucell,
                     const int N2 = iw2n2[iw2];
                     const int m2 = iw2m2[iw2];
 
-                    // std::cout<<"L1: "<<L1<<" L2: "<<L2<<" N1: "<<N1<<" N2: "<<N2<<" m1: "<<m1<<" m2:
-                    // "<<m2<<std::endl;
                     ModuleBase::Vector3<double> tmp_r
-                        = r_calculator
-                              .get_psi_r_psi(tau1 * ucell.lat0, T1, L1, m1, N1, tau2 * ucell.lat0, T2, L2, m2, N2);
+                        = r_calculator.get_psi_r_psi(tau1 * ucell.lat0, T1, L1, m1, N1, tau2 * ucell.lat0, T2, L2, m2, N2);
                     for (size_t i_alpha = 0; i_alpha != 3; ++i_alpha)
                     {
                         hamilt::BaseMatrix<double>* HlocR = rR[i_alpha]->find_matrix(iat1, iat2, r_index);
                         if (HlocR != nullptr)
                         {
-                            HlocR->add_element(iw1, iw2, tmp_r[i_alpha]);
+                            // Taoni fix 2026-07-12: HlocR uses local block indices, while row_indexes and col_indexes identify orbitals.
+                            for (int ipol = 0; ipol < npol; ++ipol)
+                            {
+                                HlocR->add_element(iw1l + ipol, iw2l + ipol, tmp_r[i_alpha]);
+                            }
                         }
-                        // if (i_alpha == 2)
-                        // {
-                        //     std::cout << "iw1: " << iw1 << " iw2: " << iw2 << " i_alpha: " << i_alpha
-                        //               << " tmp_r: " << tmp_r[i_alpha] << std::endl;
-                        // }
                     }
                 }
             }
@@ -220,9 +216,8 @@ void ModuleIO::sum_HR(const UnitCell& ucell,
             {
                 atoms_pos[iat] = RI_Util::Vector3_to_array3(ucell.atoms[ucell.iat2it[iat]].tau[ucell.iat2ia[iat]]);
             }
-            const std::array<std::array<double, 3>, 3> latvec = {RI_Util::Vector3_to_array3(ucell.a1),
-                                                                 RI_Util::Vector3_to_array3(ucell.a2),
-                                                                 RI_Util::Vector3_to_array3(ucell.a3)};
+            const std::array<std::array<double, 3>, 3> latvec
+                = {RI_Util::Vector3_to_array3(ucell.a1), RI_Util::Vector3_to_array3(ucell.a2), RI_Util::Vector3_to_array3(ucell.a3)};
             cell_nearest.init(atoms_pos, latvec, Rs_period);
             hamilt::reallocate_hcontainer(ucell.nat, full_hR, Rs_period, &cell_nearest);
         }
@@ -349,20 +344,6 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
     std::complex<double>* r_is_h = new std::complex<double>[pv->nloc];
     std::complex<double>* h_is_ps = new std::complex<double>[pv->nloc];
 
-    // for (size_t i_alpha = 0; i_alpha != 3; ++i_alpha)
-    // {
-    //     for (int i = 0; i < hR.size_atom_pairs(); ++i)
-    //     {
-    //         hamilt::AtomPair<double>& tmp = rR[i_alpha]->get_atom_pair(i);
-    //         std::cout<<"cal_velocity_basis_k: "<<rR[i_alpha]->size_atom_pairs()<<" R_size:
-    //         "<<tmp.get_R_size()<<std::endl; for(int ir = 0;ir < tmp.get_R_size(); ++ir )
-    //         {
-    //             const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
-    //             std::cout<<"r_index: "<<r_index<<std::endl;
-    //         }
-    //     }
-    // }
-
     for (size_t ik = 0; ik != kv.get_nks(); ++ik)
     {
         // set H(k), S(k)
@@ -456,7 +437,6 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                 module_rt::folding_partial_HR(ucell, sR, partial_sk, kv.kvec_d[ik], i_alpha, nrow, 1);
             }
             // 3.3 set r(k)
-            // std::cout << "set r(k): " << "i_alpha: " << i_alpha << std::endl;
             ModuleBase::GlobalFunc::ZEROS(rk, pv->nloc);
             // folding_rR(rR[i_alpha], partial_sk, rk, pv, kv.kvec_d[ik], nrow, 1);
             if (elecstate::H_TDDFT_pw::stype == 2)
@@ -575,50 +555,14 @@ void ModuleIO::cal_velocity_basis_k(const UnitCell& ucell,
                                      1,
                                      pv->desc);
             // 4.4 h_is_r will be changed to partial_Hk + IMAG_UNIT * (Hk * Sk_inv * rk)
-            ScalapackConnector::geadd('N',
-                                      nlocal,
-                                      nlocal,
-                                      one_real,
-                                      partial_hk,
-                                      1,
-                                      1,
-                                      pv->desc,
-                                      one_imag,
-                                      h_is_r,
-                                      1,
-                                      1,
-                                      pv->desc);
+            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, partial_hk, 1, 1, pv->desc, one_imag, h_is_r, 1, 1, pv->desc);
             // 4.5 r_is_h will be changed to h_is_r - IMAG_UNIT * (rk * Sk_inv * Hk)
-            ScalapackConnector::geadd('N',
-                                      nlocal,
-                                      nlocal,
-                                      one_real,
-                                      h_is_r,
-                                      1,
-                                      1,
-                                      pv->desc,
-                                      neg_one_imag,
-                                      r_is_h,
-                                      1,
-                                      1,
-                                      pv->desc);
+            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, h_is_r, 1, 1, pv->desc, neg_one_imag, r_is_h, 1, 1, pv->desc);
             // 4.6 h_is_ps will be changed to r_is_h - Hk * Sk_inv * partial_Sk
-            ScalapackConnector::geadd('N',
-                                      nlocal,
-                                      nlocal,
-                                      one_real,
-                                      r_is_h,
-                                      1,
-                                      1,
-                                      pv->desc,
-                                      neg_one_real,
-                                      h_is_ps,
-                                      1,
-                                      1,
-                                      pv->desc);
+            ScalapackConnector::geadd('N', nlocal, nlocal, one_real, r_is_h, 1, 1, pv->desc, neg_one_real, h_is_ps, 1, 1, pv->desc);
             // 5. copy h_is_ps to velocity_basis_k[ik][i_alpha]
             BlasConnector::copy(pv->nloc, h_is_ps, 1, velocity_basis_k[ik][i_alpha], 1);
-                    }
+        }
     }
 
     delete[] hk;
@@ -648,7 +592,6 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
     const char C_char = 'C';
     const std::complex<double> one_real = ModuleBase::ONE;
     const std::complex<double> zero_complex = ModuleBase::ZERO;
-    const double zero_double = 0.0;
     const int nlocal = PARAM.globalv.nlocal;
     const int nbands = PARAM.inp.nbands;
     std::complex<double>* vk_c = new std::complex<double>[pv->ncol_bands * pv->nrow_bands]; // local one
@@ -708,9 +651,12 @@ void ModuleIO::cal_velocity_matrix(const psi::Psi<std::complex<double>>* psi,
             {
                 for (int ic = 0; ic < PARAM.inp.nbands; ++ic)
                 {
-                    const int irc = ic * pv->nrow + ir;
                     if (pv->in_this_processor(ir, ic))
                     {
+                        // Taoni fix 2026-07-12: vk_c follows the local block-cyclic layout described by desc_Eij.
+                        const int local_row = pv->global2local_row(ir);
+                        const int local_col = pv->global2local_col(ic);
+                        const int irc = local_col * pv->nrow + local_row;
                         velocity_k[ik][i_alpha](ir, ic) = vk_c[irc];
                     }
                 }
@@ -766,6 +712,7 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
 
     // sum n and m for current_k
     for (size_t ik = 0; ik != kv.get_nks(); ++ik)
+    {
         for (size_t i_alpha = 0; i_alpha != 3; ++i_alpha)
         {
             for (size_t ib = 0; ib != PARAM.inp.nbands; ++ib)
@@ -773,6 +720,14 @@ void ModuleIO::cal_current_comm_k(const UnitCell& ucell,
                 current_k[ik][i_alpha] -= pelec->wg(ik, ib) * velocity_k[ik][i_alpha](ib, ib).real() / 2.0; // for unit
             }
         }
+    }
+    // Taoni fix 2026-07-12: Reduce the current_k values across all MPI processes to get the total current for each k-point.
+    for (size_t ik = 0; ik != kv.get_nks(); ++ik)
+    {
+        Parallel_Reduce::reduce_all(current_k[ik].x);
+        Parallel_Reduce::reduce_all(current_k[ik].y);
+        Parallel_Reduce::reduce_all(current_k[ik].z);
+    }
     for (size_t i_alpha = 0; i_alpha < 3; ++i_alpha)
     {
         delete rR[i_alpha];
@@ -824,14 +779,14 @@ void ModuleIO::write_current(const UnitCell& ucell,
             {
                 if (GlobalV::MY_RANK == 0 && TD_info::out_current_k)
                 {
-                    std::string filename = PARAM.globalv.global_out_dir + "currents" + std::to_string(is) + "k"
-                                           + std::to_string(ik) + "comm.txt";
+                    std::string filename
+                        = PARAM.globalv.global_out_dir + "currents" + std::to_string(is) + "k" + std::to_string(ik) + "comm.txt";
                     std::ofstream fout;
                     fout.open(filename, std::ios::app);
                     fout << std::setprecision(16);
                     fout << std::scientific;
-                    fout << istep << " " << current_k[ik][0] / omega << " " << current_k[ik][1] / omega << " "
-                         << current_k[ik][2] / omega << std::endl;
+                    fout << istep << " " << current_k[ik][0] / omega << " " << current_k[ik][1] / omega << " " << current_k[ik][2] / omega
+                         << std::endl;
                     fout.close();
                 }
             }
@@ -853,8 +808,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
         fout.open(filename, std::ios::app);
         fout << std::setprecision(16);
         fout << std::scientific;
-        fout << istep << " " << current_total[0] / omega << " " << current_total[1] / omega << " "
-             << current_total[2] / omega << std::endl;
+        fout << istep << " " << current_total[0] / omega << " " << current_total[1] / omega << " " << current_total[2] / omega << std::endl;
         fout.close();
     }
 
