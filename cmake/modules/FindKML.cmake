@@ -46,7 +46,7 @@ endif()
 
 set(_kml_thread_variants multi locking nolocking)
 if(KML_BLAS_THREADING STREQUAL "auto")
-  if(DEFINED ENABLE_OPENMP AND ENABLE_OPENMP)
+  if(ENABLE_OPENMP)
     set(_kml_blas_threading multi)
   else()
     set(_kml_blas_threading nolocking)
