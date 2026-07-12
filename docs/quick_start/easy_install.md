@@ -163,7 +163,7 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
 
   - `FFTW3_DIR`: Path to FFTW3.
   - `LIBRI_DIR`: (Optional) Path to LibRI.
-  - `LIBCOMM_DIR`: (Optional) Path to LibComm.
+  - `LIBCOMM_DIR`: (Optional) Path to LibComm when `ENABLE_LIBRI=ON`.
 
 ```{important}
 For some dependencies built with CMake, such as Libxc, dftd4, cereal, and RapidJSON, you'll have to add their prefix paths to the environment variable `CMAKE_PREFIX_PATH` so that CMake can correctly find and use their CMake configuration files. A non-general variable such as `PKG_DIR` is discouraged for these packages.
@@ -172,14 +172,14 @@ For some dependencies built with CMake, such as Libxc, dftd4, cereal, and RapidJ
 - Components: The values of these variables should be 'ON', '1' or 'OFF', '0'. The default values are given below.
   - `ENABLE_LCAO=ON`: Enable LCAO calculation. If SCALAPACK, ELPA or CEREAL is absent and only require plane-wave calculations, the feature of calculating LCAO basis can be turned off.
   - `ENABLE_LIBXC=OFF`: [Enable Libxc](../advanced/install.md#add-libxc-support) to suppport variety of functionals.
-  - `ENABLE_LIBRI=OFF`: [Enable LibRI](../advanced/install.md#add-libri-support) to suppport variety of functionals. If `LIBRI_DIR` and `LIBCOMM_DIR` are defined, `ENABLE_LIBRI` will set to 'ON'.
-  - `USE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested yet.
+  - `ENABLE_LIBRI=OFF`: [Enable LibRI](../advanced/install.md#add-libri-support) and its LibComm dependency for hybrid-functional calculations. Set `LIBRI_DIR` and `LIBCOMM_DIR` to use manually installed libraries.
+  - `ENABLE_OPENMP=ON`: Enable OpenMP support. Building ABACUS without OpenMP is not fully tested yet.
   - `BUILD_TESTING=OFF`: [Build unit tests](../advanced/install.md#build-unit-tests).
   - `ENABLE_GOOGLEBENCH=OFF`: [Build performance tests](../advanced/install.md#build-performance-tests)
   - `ENABLE_MPI=ON`: Enable MPI parallel compilation. If set to `OFF`, a serial version of ABACUS will be compiled. It now supports both PW and LCAO.
   - `ENABLE_COVERAGE=OFF`: Build ABACUS executable supporting [coverage analysis](../CONTRIBUTING.md#generating-code-coverage-report). This feature has a drastic impact on performance.
   - `ENABLE_ASAN=OFF`: Build with Address Sanitizer. This feature would help detecting memory problems.
-  - `USE_ELPA=ON`: Use ELPA library in LCAO calculations. If this value is set to OFF, ABACUS can be compiled without ELPA library.
+  - `ENABLE_ELPA=ON`: Use ELPA library in LCAO calculations. If this value is set to OFF, ABACUS can be compiled without ELPA library.
 
 Here is an example:
 
