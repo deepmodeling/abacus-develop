@@ -58,7 +58,7 @@ class UnitCell : public AtomProvider {
     double& tpiba = lat.tpiba;
     double& tpiba2 = lat.tpiba2;
     double& omega = lat.omega;
-    int*& lc = lat.lc;
+    std::vector<int>& lc = lat.lc;
 
     ModuleBase::Matrix3& latvec = lat.latvec;
     ModuleBase::Vector3<double>&a1 = lat.a1, &a2 = lat.a2, &a3 = lat.a3;

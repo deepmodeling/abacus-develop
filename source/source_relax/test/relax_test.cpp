@@ -52,7 +52,6 @@ class Test_SETGRAD : public testing::Test
             ucell.atoms[0].dis.resize(nat);
             ucell.atoms[0].mag.resize(nat);
             ucell.atoms[0].vel.resize(nat);
-            ucell.lc = new int[3];
 
             ucell.iat2it[0] = 0;
             ucell.iat2it[1] = 0;
@@ -290,7 +289,6 @@ class Test_RELAX : public testing::Test
             ucell.atoms[2].taud[1] = {0.5,0  ,0.479348999999274  };
             ucell.atoms[2].taud[2] = {0  ,0  ,0.958854000000429  };
             
-            ucell.lc = new int[3];
             ucell.lc[0] = 1;
             ucell.lc[1] = 1;
             ucell.lc[2] = 1;
