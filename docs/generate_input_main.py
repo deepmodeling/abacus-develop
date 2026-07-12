@@ -173,8 +173,16 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
 
     # Default
     if param.get('default_value', '') != '':
-        default_text = escape_md_text(str(param['default_value']))
-        lines.append(f"- **Default**: {default_text}")
+        default_text = escape_md_text(str(param['default_value'])).strip('\n')
+        if '\n' in default_text:
+            lines.append("- **Default**:")
+            for line in default_text.split('\n'):
+                if line.strip():
+                    lines.append(f"  {line}" if not line.startswith('  ') else line)
+                else:
+                    lines.append("")
+        else:
+            lines.append(f"- **Default**: {default_text}")
 
     # Unit
     if param.get('unit', '') != '':

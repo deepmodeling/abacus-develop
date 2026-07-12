@@ -9,6 +9,40 @@ build:
   os: ubuntu-22.04
   tools:
     python: "3.11"
+  apt_packages:
+    - build-essential
+    - cmake
+    - gfortran
+    - git
+    - libfftw3-dev
+    - liblapack-dev
+    - libopenblas-dev
+    - ninja-build
+    - pkg-config
+  jobs:
+    pre_build:
+      - >
+        cmake -S . -B build-rtd-docs -G Ninja
+        -DCMAKE_BUILD_TYPE=Release
+        -DENABLE_MPI=OFF
+        -DENABLE_LCAO=OFF
+        -DUSE_OPENMP=OFF
+        -DUSE_ELPA=OFF
+        -DUSE_CUDA=OFF
+        -DUSE_ROCM=OFF
+        -DBUILD_TESTING=OFF
+        -DENABLE_LIBXC=OFF
+        -DENABLE_LIBRI=OFF
+        -DENABLE_DFTD4=OFF
+        -DENABLE_RAPIDJSON=OFF
+        -DENABLE_MLALGO=OFF
+        -DENABLE_FLOAT_FFTW=OFF
+        -DENABLE_CNPY=OFF
+        -DCOMMIT_INFO=OFF
+        -DGIT_SUBMODULE=OFF
+        -DMKLROOT=OFF
+      - cmake --build build-rtd-docs --target abacus_pw_ser --parallel 2
+      - ./build-rtd-docs/abacus_pw_ser --generate-parameters-yaml > docs/parameters.yaml
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:
