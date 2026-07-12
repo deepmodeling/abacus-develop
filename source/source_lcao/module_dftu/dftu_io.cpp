@@ -278,7 +278,7 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
     ifdftu.clear();
     ifdftu.seekg(0);
 
-    char word[10];
+    char word[20];
 
     int T = 0;
     int iat = 0;
@@ -296,9 +296,26 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
             break;
         }
 
-        if (strcmp("atoms", word) == 0)
+        if (strcmp("Atom=", word) == 0)
         {
             ifdftu >> iat;
+            iat -= 1;
+            ifdftu >> word;
+
+            if (strcmp("L=", word) != 0)
+            {
+                std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
+                exit(0);
+            }
+            ifdftu >> L;
+            ifdftu >> word;
+
+            if (strcmp("ORBITAL=", word) != 0)
+            {
+                std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
+                exit(0);
+            }
+            ifdftu >> zeta;
             ifdftu.ignore(150, '\n');
 
             T = ucell.iat2it[iat];
@@ -312,78 +329,26 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
                     continue;
                 }
 
-                ifdftu >> word;
-
-                if (strcmp("L", word) == 0)
+                if (nspin == 1 || nspin == 2)
                 {
-                    ifdftu >> L;
-                    ifdftu.ignore(150, '\n');
-
-                    const int N = ucell.atoms[T].l_nchi[L];
-                    for (int n = 0; n < N; n++)
+                    for (int is = 0; is < 2; is++)
                     {
-                        // if(!Yukawa && n!=0) continue;
-                        if (n != 0)
-                        {
-                            continue;
-                        }
-
                         ifdftu >> word;
-                        if (strcmp("zeta", word) == 0)
+                        if (strcmp("spin=", word) == 0)
                         {
-                            ifdftu >> zeta;
+                            ifdftu >> spin;
+                            spin -= 1;
                             ifdftu.ignore(150, '\n');
 
-                            if (nspin == 1 || nspin == 2)
+                            double value = 0.0;
+                            for (int m0 = 0; m0 < 2 * L + 1; m0++)
                             {
-                                for (int is = 0; is < 2; is++)
+                                for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                 {
-                                    ifdftu >> word;
-                                    if (strcmp("spin", word) == 0)
-                                    {
-                                        ifdftu >> spin;
-                                        ifdftu.ignore(150, '\n');
-
-                                        double value = 0.0;
-                                        for (int m0 = 0; m0 < 2 * L + 1; m0++)
-                                        {
-                                            for (int m1 = 0; m1 < 2 * L + 1; m1++)
-                                            {
-                                                ifdftu >> value;
-                                                locale[iat][L][zeta][spin](m0, m1) = value;
-                                            }
-                                            ifdftu.ignore(150, '\n');
-                                        }
-                                    }
-                                    else
-                                    {
-                                        std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE"
-                                                  << std::endl;
-                                        exit(0);
-                                    }
+                                    ifdftu >> value;
+                                    locale[iat][L][zeta][spin](m0, m1) = value;
                                 }
-                            }
-                            else if (nspin == 4) // SOC
-                            {
-                                double value = 0.0;
-                                for (int m0 = 0; m0 < 2 * L + 1; m0++)
-                                {
-                                    for (int ipol0 = 0; ipol0 < npol; ipol0++)
-                                    {
-                                        const int m0_all = m0 + (2 * L + 1) * ipol0;
-
-                                        for (int m1 = 0; m1 < 2 * L + 1; m1++)
-                                        {
-                                            for (int ipol1 = 0; ipol1 < npol; ipol1++)
-                                            {
-                                                int m1_all = m1 + (2 * L + 1) * ipol1;
-                                                ifdftu >> value;
-                                                locale[iat][L][zeta][0](m0_all, m1_all) = value;
-                                            }
-                                        }
-                                        ifdftu.ignore(150, '\n');
-                                    }
-                                }
+                                ifdftu.ignore(150, '\n');
                             }
                         }
                         else
@@ -394,10 +359,27 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
                         }
                     }
                 }
-                else
+                else if (nspin == 4) // SOC
                 {
-                    std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
-                    exit(0);
+                    double value = 0.0;
+                    for (int m0 = 0; m0 < 2 * L + 1; m0++)
+                    {
+                        for (int ipol0 = 0; ipol0 < npol; ipol0++)
+                        {
+                            const int m0_all = m0 + (2 * L + 1) * ipol0;
+
+                            for (int m1 = 0; m1 < 2 * L + 1; m1++)
+                            {
+                                for (int ipol1 = 0; ipol1 < npol; ipol1++)
+                                {
+                                    int m1_all = m1 + (2 * L + 1) * ipol1;
+                                    ifdftu >> value;
+                                    locale[iat][L][zeta][0](m0_all, m1_all) = value;
+                                }
+                            }
+                            ifdftu.ignore(150, '\n');
+                        }
+                    }
                 }
             }
         }
