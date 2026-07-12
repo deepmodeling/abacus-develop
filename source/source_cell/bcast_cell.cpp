@@ -81,7 +81,7 @@ namespace unitcell
             Parallel_Common::bcast_double(lat.a2[i]);
             Parallel_Common::bcast_double(lat.a3[i]);
             Parallel_Common::bcast_double(lat.latcenter[i]);
-            Parallel_Common::bcast_int(lat.lc[i]);
+            Parallel_Common::bcast_int(lat.lat_axis_free[i]);
         }
 
         // distribute superlattice vectors.

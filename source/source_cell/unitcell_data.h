@@ -15,7 +15,7 @@ struct Lattice
     double tpiba = 0.0;                ///< 2*pi / lat0;
     double tpiba2 = 0.0;               ///< tpiba ^ 2
     double omega = 0.0;                ///< the volume of the unit cell
-    std::vector<int> lc{0, 0, 0};      ///< whether each lattice vector (a,b,c) is allowed to change (0=fixed, 1=free)
+    std::vector<int> lat_axis_free{0, 0, 0};      ///< whether each lattice axis (a,b,c) is allowed to relax (0=fixed, 1=free)
 
     ModuleBase::Matrix3 latvec = ModuleBase::Matrix3();           ///< Unitcell lattice vectors
     ModuleBase::Vector3<double> a1, a2, a3;                       ///< Same as latvec, just at another form.

@@ -206,58 +206,58 @@ TEST_F(UcellTest, Setup)
         EXPECT_EQ(ucell->init_vel, init_vel_in);
         if (fixed_axes_in[i] == "None" || fixed_axes_in[i] == "volume" || fixed_axes_in[i] == "shape")
         {
-            EXPECT_EQ(ucell->lc[0], 1);
-            EXPECT_EQ(ucell->lc[1], 1);
-            EXPECT_EQ(ucell->lc[2], 1);
+            EXPECT_EQ(ucell->lat_axis_free[0], 1);
+            EXPECT_EQ(ucell->lat_axis_free[1], 1);
+            EXPECT_EQ(ucell->lat_axis_free[2], 1);
             EXPECT_TRUE(ucell->if_cell_can_change());
         }
         else if (fixed_axes_in[i] == "a")
         {
-            EXPECT_EQ(ucell->lc[0], 0);
-            EXPECT_EQ(ucell->lc[1], 1);
-            EXPECT_EQ(ucell->lc[2], 1);
+            EXPECT_EQ(ucell->lat_axis_free[0], 0);
+            EXPECT_EQ(ucell->lat_axis_free[1], 1);
+            EXPECT_EQ(ucell->lat_axis_free[2], 1);
             EXPECT_TRUE(ucell->if_cell_can_change());
         }
         else if (fixed_axes_in[i] == "b")
         {
-            EXPECT_EQ(ucell->lc[0], 1);
-            EXPECT_EQ(ucell->lc[1], 0);
-            EXPECT_EQ(ucell->lc[2], 1);
+            EXPECT_EQ(ucell->lat_axis_free[0], 1);
+            EXPECT_EQ(ucell->lat_axis_free[1], 0);
+            EXPECT_EQ(ucell->lat_axis_free[2], 1);
             EXPECT_TRUE(ucell->if_cell_can_change());
         }
         else if (fixed_axes_in[i] == "c")
         {
-            EXPECT_EQ(ucell->lc[0], 1);
-            EXPECT_EQ(ucell->lc[1], 1);
-            EXPECT_EQ(ucell->lc[2], 0);
+            EXPECT_EQ(ucell->lat_axis_free[0], 1);
+            EXPECT_EQ(ucell->lat_axis_free[1], 1);
+            EXPECT_EQ(ucell->lat_axis_free[2], 0);
             EXPECT_TRUE(ucell->if_cell_can_change());
         }
         else if (fixed_axes_in[i] == "ab")
         {
-            EXPECT_EQ(ucell->lc[0], 0);
-            EXPECT_EQ(ucell->lc[1], 0);
-            EXPECT_EQ(ucell->lc[2], 1);
+            EXPECT_EQ(ucell->lat_axis_free[0], 0);
+            EXPECT_EQ(ucell->lat_axis_free[1], 0);
+            EXPECT_EQ(ucell->lat_axis_free[2], 1);
             EXPECT_TRUE(ucell->if_cell_can_change());
         }
         else if (fixed_axes_in[i] == "ac")
         {
-            EXPECT_EQ(ucell->lc[0], 0);
-            EXPECT_EQ(ucell->lc[1], 1);
-            EXPECT_EQ(ucell->lc[2], 0);
+            EXPECT_EQ(ucell->lat_axis_free[0], 0);
+            EXPECT_EQ(ucell->lat_axis_free[1], 1);
+            EXPECT_EQ(ucell->lat_axis_free[2], 0);
             EXPECT_TRUE(ucell->if_cell_can_change());
         }
         else if (fixed_axes_in[i] == "bc")
         {
-            EXPECT_EQ(ucell->lc[0], 1);
-            EXPECT_EQ(ucell->lc[1], 0);
-            EXPECT_EQ(ucell->lc[2], 0);
+            EXPECT_EQ(ucell->lat_axis_free[0], 1);
+            EXPECT_EQ(ucell->lat_axis_free[1], 0);
+            EXPECT_EQ(ucell->lat_axis_free[2], 0);
             EXPECT_TRUE(ucell->if_cell_can_change());
         }
         else if (fixed_axes_in[i] == "abc")
         {
-            EXPECT_EQ(ucell->lc[0], 0);
-            EXPECT_EQ(ucell->lc[1], 0);
-            EXPECT_EQ(ucell->lc[2], 0);
+            EXPECT_EQ(ucell->lat_axis_free[0], 0);
+            EXPECT_EQ(ucell->lat_axis_free[1], 0);
+            EXPECT_EQ(ucell->lat_axis_free[2], 0);
             EXPECT_FALSE(ucell->if_cell_can_change());
         }
     }

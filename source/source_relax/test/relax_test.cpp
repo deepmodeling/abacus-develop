@@ -79,9 +79,9 @@ class Test_SETGRAD : public testing::Test
 
             ucell.atoms[0].tau.resize(nat);
 
-            ucell.lc[0] = 1;
-            ucell.lc[1] = 1;
-            ucell.lc[2] = 1;
+            ucell.lat_axis_free[0] = 1;
+            ucell.lat_axis_free[1] = 1;
+            ucell.lat_axis_free[2] = 1;
 
             rl.init_relax(nat);
             rl.relax_step(ucell,force_in,stress_in,0.0, ofs);
@@ -113,9 +113,9 @@ class Test_SETGRAD : public testing::Test
             input.fixed_axes = "a"; //anything other than "None"
             input.fixed_ibrav = true;
             ucell.latName = "sc";
-            ucell.lc[0] = 0;
-            ucell.lc[1] = 0;
-            ucell.lc[2] = 0;
+            ucell.lat_axis_free[0] = 0;
+            ucell.lat_axis_free[1] = 0;
+            ucell.lat_axis_free[2] = 0;
             rl.init_relax(nat);
             rl.relax_step(ucell,force_in,stress_in,0.0, ofs);
             
@@ -289,9 +289,9 @@ class Test_RELAX : public testing::Test
             ucell.atoms[2].taud[1] = {0.5,0  ,0.479348999999274  };
             ucell.atoms[2].taud[2] = {0  ,0  ,0.958854000000429  };
             
-            ucell.lc[0] = 1;
-            ucell.lc[1] = 1;
-            ucell.lc[2] = 1;
+            ucell.lat_axis_free[0] = 1;
+            ucell.lat_axis_free[1] = 1;
+            ucell.lat_axis_free[2] = 1;
 
             ucell.latvec.e11 = 3.96;
             ucell.latvec.e12 = 0;
