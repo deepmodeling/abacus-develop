@@ -215,10 +215,12 @@ setup workflows and should be added only through a later governance change.
 ## INPUT Parameter Changes
 
 Changes to parameter metadata, default values, type, availability, description,
-or parsing behavior must include both:
+or parsing behavior must include:
 
-- `docs/parameters.yaml`
 - `docs/advanced/input_files/input-main.md`
+
+The parameter YAML stream is generated transiently from the ABACUS binary and
+is not stored in the repository.
 
 If the diff touches parameter internals but does not change user-visible INPUT
 behavior, the PR must state why no documentation update is required.

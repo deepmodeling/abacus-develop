@@ -23,8 +23,9 @@ Apply these instructions when reviewing or changing ABACUS code:
 - Require LF line endings for text files. `.bat` and `.cmd` files are the CRLF
   exceptions.
 - For INPUT parameter behavior changes, require synchronized updates to
-  `docs/parameters.yaml` and `docs/advanced/input_files/input-main.md`, or a
-  clear no-update explanation in the PR.
+  `docs/advanced/input_files/input-main.md`, or a clear no-update explanation
+  in the PR. The parameter YAML stream is generated transiently and is not stored
+  in the repository.
 - Check that new source files are linked through the relevant `CMakeLists.txt`
   unless the PR explains generated or indirect inclusion.
 - Keep default C++ changes compatible with the repository C++11 baseline.

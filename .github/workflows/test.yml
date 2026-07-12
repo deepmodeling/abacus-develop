@@ -89,24 +89,17 @@ jobs:
           ABACUS_BIN=$(find build -name "abacus_*" -type f -executable | head -1)
           echo "Using binary: ${ABACUS_BIN}"
 
-          # Check 1: parameters.yaml matches C++ Input_Item definitions
+          # Generate transient parameter metadata from C++ Input_Item definitions
           ${ABACUS_BIN} --generate-parameters-yaml > /tmp/parameters_generated.yaml
-          if ! diff -q docs/parameters.yaml /tmp/parameters_generated.yaml; then
-            echo "error: docs/parameters.yaml is out of sync with C++ source"
-            echo "Fix: ${ABACUS_BIN} --generate-parameters-yaml > docs/parameters.yaml"
-            diff docs/parameters.yaml /tmp/parameters_generated.yaml || true
-            exit 1
-          fi
-          echo "  parameters.yaml: OK"
 
-          # Check 2: input-main.md matches regenerated markdown
+          # Check: input-main.md matches regenerated markdown
           pip install -q pyyaml
           python docs/generate_input_main.py \
             /tmp/parameters_generated.yaml \
             --output /tmp/input-main-generated.md
           if ! diff -q docs/advanced/input_files/input-main.md /tmp/input-main-generated.md; then
             echo "error: input-main.md is out of sync"
-            echo "Fix: python docs/generate_input_main.py docs/parameters.yaml"
+            echo "Fix: ${ABACUS_BIN} --generate-parameters-yaml | python docs/generate_input_main.py - --output docs/advanced/input_files/input-main.md"
             diff docs/advanced/input_files/input-main.md /tmp/input-main-generated.md || true
             exit 1
           fi

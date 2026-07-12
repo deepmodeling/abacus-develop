@@ -465,12 +465,11 @@ def check_input_parameter_docs(
 ) -> None:
     if not input_parameter_changed(changed, lines):
         return
-    has_yaml = "docs/parameters.yaml" in changed and not statuses.get("docs/parameters.yaml", "").startswith("D")
     has_markdown = (
         "docs/advanced/input_files/input-main.md" in changed
         and not statuses.get("docs/advanced/input_files/input-main.md", "").startswith("D")
     )
-    if has_yaml and has_markdown:
+    if has_markdown:
         return
     if pr_body and pr_body_allows_no_input_doc_update(pr_body):
         return
@@ -480,8 +479,8 @@ def check_input_parameter_docs(
         BLOCK,
         "source/source_io/module_parameter",
         None,
-        "INPUT parameter behavior appears to change without both docs/parameters.yaml and input-main.md updates.",
-        "Regenerate docs/parameters.yaml and docs/advanced/input_files/input-main.md, or state why no INPUT documentation update is required in the PR.",
+        "INPUT parameter behavior appears to change without an input-main.md update.",
+        "Regenerate docs/advanced/input_files/input-main.md from the ABACUS parameter metadata, or state why no INPUT documentation update is required in the PR.",
     )
 
 

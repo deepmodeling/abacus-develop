@@ -1187,7 +1187,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.annotation = "output H(R) matrix in npz format";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print Hamiltonian matrices H(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.description = "Whether to print Hamiltonian matrices H(R) in npz format. The output files are named output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.";
         item.default_value = "False";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
@@ -1209,7 +1209,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.annotation = "output H(R) and S(R) matrices in npz format";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.description = "Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. The output files are named output_SR.npz, output_HR0.npz, output_HR1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.";
         item.default_value = "False";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
@@ -1231,7 +1231,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.annotation = "output DM(R) matrix in npz format";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print density matrices DM(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.description = "Whether to print density matrices DM(R) in npz format. The output files are named output_DM0.npz, output_DM1.npz, and so on according to spin channel. This feature requires ABACUS to be built with CNPY.";
         item.default_value = "False";
         item.unit = "";
         item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";

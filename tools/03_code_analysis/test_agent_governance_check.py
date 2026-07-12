@@ -251,7 +251,6 @@ class AgentGovernanceCheckTest(unittest.TestCase):
             "source/source_io/module_parameter/read_input_item_model.cpp",
             'Input_Item item("new_switch");\nitem.default_value = "0";\n',
         )
-        self.write("docs/parameters.yaml", "parameters: []\n")
         self.write("docs/advanced/input_files/input-main.md", "# INPUT\n")
         head = self.commit_change()
 
@@ -259,8 +258,24 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_blocks_input_parameter_change_when_required_docs_are_deleted(self):
+    def test_allows_input_parameter_changes_with_markdown_and_deleted_yaml(self):
         self.write("docs/parameters.yaml", "parameters: []\n")
+        self.git("add", ".")
+        self.git("commit", "-m", "add legacy parameter yaml")
+        base = self.git("rev-parse", "HEAD").stdout.strip()
+        self.write(
+            "source/source_io/module_parameter/read_input_item_model.cpp",
+            'Input_Item item("new_switch");\nitem.default_value = "0";\n',
+        )
+        self.write("docs/advanced/input_files/input-main.md", "# INPUT\n")
+        (self.repo / "docs" / "parameters.yaml").unlink()
+        head = self.commit_change()
+
+        result = self.run_checker("--base", base, "--head", head)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_blocks_input_parameter_change_when_required_docs_are_deleted(self):
         self.write("docs/advanced/input_files/input-main.md", "# INPUT\n")
         self.git("add", ".")
         self.git("commit", "-m", "add input docs")
@@ -269,7 +284,6 @@ class AgentGovernanceCheckTest(unittest.TestCase):
             "source/source_io/module_parameter/read_input_item_model.cpp",
             'Input_Item item("new_switch");\nitem.default_value = "0";\n',
         )
-        (self.repo / "docs" / "parameters.yaml").unlink()
         (self.repo / "docs" / "advanced" / "input_files" / "input-main.md").unlink()
         head = self.commit_change()
 
