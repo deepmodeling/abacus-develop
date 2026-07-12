@@ -101,30 +101,94 @@ latex_elements = {
 }
 
 
-# -- Auto-generate INPUT keyword documentation from YAML parameter dump ------
+# -- Auto-generate INPUT keyword documentation from ABACUS metadata ----------
 
+import shutil
+import subprocess
+import sys
 from pathlib import Path
 
-def generate_input_docs(app):
-    """Auto-generate input-main.md from parameters.yaml before building.
+try:
+    from sphinx.util import logging as sphinx_logging
+    logger = sphinx_logging.getLogger(__name__)
+except Exception:
+    logger = None
 
-    Workflow:
-        abacus --generate-parameters-yaml > docs/parameters.yaml
-        # Then Sphinx calls this hook, which runs generate_input_main.py
-    """
-    docs_dir = Path(__file__).resolve().parent
-    yaml_path = docs_dir / 'parameters.yaml'
-    if not yaml_path.exists():
-        print(f"Warning: {yaml_path} not found. "
-              "Run: abacus --generate-parameters-yaml > docs/parameters.yaml")
-        return
-    import sys
-    sys.path.insert(0, str(docs_dir))
-    from generate_input_main import generate
-    generate(
-        yaml_path=yaml_path,
+
+def warn_input_docs(message):
+    if logger is not None:
+        logger.warning(message)
+    else:
+        print(f"Warning: {message}")
+
+
+def candidate_abacus_binaries(repo_root):
+    """Return candidate ABACUS binaries for local and Read the Docs builds."""
+    env_binary = os.environ.get('ABACUS_BINARY') or os.environ.get('ABACUS_EXECUTABLE')
+    candidates = []
+    if env_binary:
+        candidates.append(Path(env_binary))
+    candidates.extend([
+        repo_root / 'build-rtd-docs' / 'source' / 'abacus_pw_ser',
+        repo_root / 'build-rtd-docs' / 'abacus_pw_ser',
+    ])
+    for binary_name in ['abacus', 'abacus_pw_ser']:
+        path_binary = shutil.which(binary_name)
+        if path_binary:
+            candidates.append(Path(path_binary))
+    return candidates
+
+
+def find_abacus_binary(repo_root):
+    for candidate in candidate_abacus_binaries(repo_root):
+        if candidate.exists() and os.access(candidate, os.X_OK):
+            return candidate
+    return None
+
+
+def refresh_input_docs(docs_dir, abacus_binary=None, warn=warn_input_docs):
+    """Refresh input-main.md from an ABACUS executable, if one is available."""
+    docs_dir = Path(docs_dir)
+    repo_root = docs_dir.parent
+    binary = Path(abacus_binary) if abacus_binary else find_abacus_binary(repo_root)
+    if binary is None or not binary.exists() or not os.access(binary, os.X_OK):
+        warn(
+            "ABACUS executable not found; INPUT parameter documentation may not "
+            "be up to date. Set ABACUS_BINARY=/path/to/abacus or build the "
+            "reduced documentation binary first."
+        )
+        return False
+
+    env = os.environ.copy()
+    env.setdefault('OMP_NUM_THREADS', '1')
+    result = subprocess.run(
+        [str(binary), '--generate-parameters-yaml'],
+        cwd=repo_root,
+        env=env,
+        text=True,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        detail = result.stderr.strip() or result.stdout.strip()
+        warn(
+            "ABACUS could not generate INPUT parameter metadata; documentation "
+            f"may not be up to date. Command: {binary} --generate-parameters-yaml"
+            + (f". Output: {detail}" if detail else "")
+        )
+        return False
+
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+    import yaml
+    from generate_input_main import generate_from_data
+    generate_from_data(
+        data=yaml.safe_load(result.stdout),
         output=docs_dir / 'advanced' / 'input_files' / 'input-main.md',
     )
+    return True
+
+
+def generate_input_docs(app):
+    refresh_input_docs(Path(__file__).resolve().parent)
 
 def setup(app):
     app.connect('builder-inited', generate_input_docs)

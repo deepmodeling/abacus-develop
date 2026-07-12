@@ -42,7 +42,6 @@ build:
         -DGIT_SUBMODULE=OFF
         -DMKLROOT=OFF
       - cmake --build build-rtd-docs --target abacus_pw_ser --parallel 2
-      - ./build-rtd-docs/source/abacus_pw_ser --generate-parameters-yaml > docs/parameters.yaml
 
 # Build documentation in the "docs/" directory with Sphinx
 sphinx:

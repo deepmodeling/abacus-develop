@@ -1,6 +1,6 @@
 # Full List of INPUT Keywords
 
-<!-- This file is auto-generated from parameters.yaml -->
+<!-- This file is auto-generated from ABACUS INPUT parameter metadata -->
 <!-- Do not edit manually - changes will be overwritten -->
 
 <!-- Table of Contents -->

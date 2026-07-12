@@ -174,11 +174,11 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
 
 ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). Parameter metadata is defined inline in the C++ source files (`source/source_io/module_parameter/read_input_item_*.cpp`) using `Input_Item` registrations.
 
-A checked-in file `docs/parameters.yaml` contains a YAML dump of all parameter metadata, generated from the binary itself. This file is used by Sphinx to produce the online documentation page `input-main.md`.
+A checked-in file `docs/advanced/input_files/input-main.md` contains the generated INPUT parameter reference. Sphinx refreshes this file from an ABACUS executable when the executable is available.
 
-### When to Update `docs/parameters.yaml`
+### When to Update `input-main.md`
 
-You **must** regenerate `docs/parameters.yaml` whenever you:
+You **must** regenerate `docs/advanced/input_files/input-main.md` whenever you:
 
 - Add a new INPUT parameter
 - Remove an existing INPUT parameter
@@ -186,25 +186,23 @@ You **must** regenerate `docs/parameters.yaml` whenever you:
 
 ### How to Regenerate
 
-After building and installing ABACUS, run:
+After building ABACUS, run:
 
 ```bash
-abacus --generate-parameters-yaml > docs/parameters.yaml
+abacus --generate-parameters-yaml \
+  | python3 docs/generate_input_main.py - \
+      --output docs/advanced/input_files/input-main.md
 ```
 
-Then verify the YAML is valid:
+You can also let Sphinx refresh the page during a documentation build:
 
 ```bash
-python3 -c "import yaml; d=yaml.safe_load(open('docs/parameters.yaml')); print(len(d['parameters']), 'parameters')"
+ABACUS_BINARY=/path/to/abacus sphinx-build -b html docs build-docs/html
 ```
 
-You can also regenerate the markdown documentation locally:
+If no ABACUS executable is available, Sphinx emits a warning and continues with the checked-in `input-main.md`, which may not be up to date.
 
-```bash
-python3 docs/generate_input_main.py docs/parameters.yaml --output docs/advanced/input_files/input-main.md
-```
-
-**Important:** Include the updated `docs/parameters.yaml` and `input-main.md` in your commit when submitting a PR that modifies INPUT parameters. Reviewers should verify the YAML changes match the C++ source changes and the `input-main.md` is updated.
+**Important:** Include the updated `input-main.md` in your commit when submitting a PR that modifies INPUT parameters. Reviewers should verify the generated documentation matches the C++ source changes.
 
 ### Parameter Documentation Format
 

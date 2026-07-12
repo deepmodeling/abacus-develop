@@ -3,8 +3,8 @@
 These files are the source for the ABACUS manual published on Read the Docs.
 
 Read the Docs builds a minimal serial ABACUS binary, regenerates
-`docs/parameters.yaml` from that binary, and lets Sphinx regenerate
-`docs/advanced/input_files/input-main.md` during the documentation build.
+`docs/advanced/input_files/input-main.md` from that binary during the
+documentation build, and emits a warning if no ABACUS executable is available.
 
 ## Build the Manual Locally
 
@@ -47,43 +47,46 @@ Run the following commands from the repository root.
    cmake --build build-rtd-docs --target abacus_pw_ser --parallel 2
    ```
 
-1. Regenerate the INPUT parameter files:
-
-   ```bash
-   ./build-rtd-docs/source/abacus_pw_ser --generate-parameters-yaml > docs/parameters.yaml
-   .venv/bin/python docs/generate_input_main.py docs/parameters.yaml \
-     --output docs/advanced/input_files/input-main.md
-   ```
-
 1. Build the HTML manual:
 
    ```bash
-   .venv/bin/sphinx-build -b html docs build-docs/html
+   ABACUS_BINARY=./build-rtd-docs/source/abacus_pw_ser \
+     .venv/bin/sphinx-build -b html docs build-docs/html
    ```
 
+   If `ABACUS_BINARY` is not set, `docs/conf.py` looks for the Read the Docs
+   build binary and then for `abacus` or `abacus_pw_ser` on `PATH`.
+
 1. Open `build-docs/html/index.html` in a browser.
+
+If no ABACUS executable is available, the Sphinx build still continues with the
+checked-in `docs/advanced/input_files/input-main.md` and prints a warning that
+the INPUT parameter reference may not be up to date.
+
+## Regenerate Only the INPUT Reference
+
+To refresh only the generated INPUT reference after building ABACUS:
+
+```bash
+./build-rtd-docs/source/abacus_pw_ser --generate-parameters-yaml \
+  | .venv/bin/python docs/generate_input_main.py - \
+      --output docs/advanced/input_files/input-main.md
+```
 
 ## INPUT Parameter Reference
 
 The INPUT parameter reference is generated from metadata registered in
 `source/source_io/module_parameter/read_input_item_*.cpp`.
 
-- `docs/parameters.yaml` is an intermediate YAML dump produced by
-  `abacus --generate-parameters-yaml`.
-- `docs/advanced/input_files/input-main.md` is generated from that YAML file.
-- `docs/conf.py` refreshes `input-main.md` automatically when
-  `docs/parameters.yaml` exists.
+- `abacus --generate-parameters-yaml` produces a transient YAML stream; it is
+  not stored in the repository.
+- `docs/advanced/input_files/input-main.md` is generated from that metadata.
+- `docs/conf.py` refreshes `input-main.md` automatically when it can find an
+  ABACUS executable.
 
-The Read the Docs build no longer depends on a committed `docs/parameters.yaml`
-because `.readthedocs.yaml` regenerates it before Sphinx runs. A local Sphinx
-build also succeeds without `docs/parameters.yaml` when the checked-in
-`input-main.md` is already present, but a fresh INPUT reference still requires
-an ABACUS binary.
-
-For now, keep both generated files in PRs that change INPUT metadata, following
-the repository contribution guide. Dropping `docs/parameters.yaml` from version
-control is technically possible after the project also updates the contributor
-guide and PR template to make the generated-file policy explicit.
+Keep `docs/advanced/input_files/input-main.md` in PRs that change INPUT
+metadata. The YAML dump is intentionally transient so there is only one
+generated reference file to maintain.
 
 ## Optional Read the Docs Container Test
 
@@ -101,6 +104,6 @@ docker run --rm -v "$PWD:/project" -w /project \
     -DENABLE_RAPIDJSON=OFF -DENABLE_MLALGO=OFF -DENABLE_FLOAT_FFTW=OFF \
     -DENABLE_CNPY=OFF -DCOMMIT_INFO=OFF -DGIT_SUBMODULE=OFF -DMKLROOT=OFF &&
   cmake --build build-rtd-docs --target abacus_pw_ser --parallel 2 &&
-  ./build-rtd-docs/source/abacus_pw_ser --generate-parameters-yaml > docs/parameters.yaml &&
+  export ABACUS_BINARY=./build-rtd-docs/source/abacus_pw_ser &&
   sphinx-build -b html docs /tmp/abacus-docs-html'
 ```
