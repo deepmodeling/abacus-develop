@@ -48,6 +48,8 @@ namespace Conv_Coulomb_Pot_K
 		const double rcut);
 }
 
+using CoulombParam = std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string, std::string>>>;
+
 #include "conv_coulomb_pot_k.hpp"
 
 #endif

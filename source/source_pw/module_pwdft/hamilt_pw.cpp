@@ -132,7 +132,10 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     }
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        auto exx = new OperatorEXXPW<T, Device>(isk, wfc_basis, pot_in->get_rho_basis(), pkv, ucell);
+        bool separate_loop = GlobalC::exx_info.info_global.separate_loop;
+        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        auto coulomb_param = GlobalC::exx_info.info_global.coulomb_param;
+        auto exx = new OperatorEXXPW<T, Device>(isk, wfc_basis, pot_in->get_rho_basis(), pkv, ucell, separate_loop, hybrid_alpha, coulomb_param);
         if (this->ops == nullptr)
         {
             this->ops = exx;

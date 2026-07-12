@@ -243,7 +243,9 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, con
             Parallel_Common::bcast_double(this->exx_ptr->Eexx);
             this->exx_ptr->Eexx /= GlobalC::exx_info.info_global.hybrid_alpha;
         }
-        elec.set_exx(this->get_Eexx());
+        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        elec.set_exx(this->get_Eexx(), cal_exx, hybrid_alpha);
     }
     else
     {
