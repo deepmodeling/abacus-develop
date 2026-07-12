@@ -26,15 +26,25 @@ class Plus_U
   public:
     // allocate relevant data strcutures
     void init(UnitCell& cell,
-              const Parallel_Orbitals* pv,
-              const int npol,
-              const int nspin,
-              const std::vector<int>& orbital_corr,
-              const double yukawa_lambda
+                const Parallel_Orbitals* pv,
+                const int npol,
+                const int nspin,
+                const std::vector<int>& orbital_corr,
+                const double yukawa_lambda,
+                const std::string& global_readin_dir,
+                const std::string& global_out_dir,
+                const std::string& init_chg,
+                const int nlocal,
+                const bool gamma_only_local,
+                const std::string& ks_solver,
+                const bool cal_force,
+                const bool cal_stress,
+                const std::string& device,
+                const int kpar
 #ifdef __LCAO
-              , const LCAO_Orbitals* orb = nullptr
+                , const LCAO_Orbitals* orb = nullptr
 #endif
-              );
+                );
     
     // calculate the energy correction
     void cal_energy_correction(const UnitCell& ucell, const int istep);
@@ -93,15 +103,25 @@ class Plus_U
     static double energy_u; //+U energy, mohan update 2025-11-06, change this to private
 
     const Parallel_Orbitals* paraV = nullptr;
-    int cal_type = 3; // 1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2;
+    int cal_type = 3;
 
-    // FIXME: the following variable does not have static lifetime;
-    // while the present class is used via a global variable. This has
-    // potential to cause dangling pointer issues.
 #ifdef __LCAO
     const LCAO_Orbitals* ptr_orb_ = nullptr;
     std::vector<double> orb_cutoff_;
 #endif
+
+    std::string global_readin_dir;
+    std::string global_out_dir;
+    double yukawa_lambda = 0.0;
+    std::string init_chg;
+    int npol = 1;
+    int nlocal = 0;
+    bool gamma_only_local = false;
+    std::string ks_solver;
+    bool cal_force = false;
+    bool cal_stress = false;
+    std::string device;
+    int kpar = 1;
     
     // transform between iwt index and it, ia, L, N and m index
     std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>

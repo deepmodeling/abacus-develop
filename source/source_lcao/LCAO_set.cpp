@@ -78,12 +78,21 @@ void LCAO_domain::set_pot(
           &(pelec->f_en.etxc), &(pelec->f_en.vtxc));
     }
 
-    //! 3) initialize DFT+U
     if (inp.dft_plus_u)
     {
         dftu.init(ucell, &pv,
                   PARAM.globalv.npol,
                   inp.nspin, inp.orbital_corr, inp.yukawa_lambda,
+                  PARAM.globalv.global_readin_dir,
+                  PARAM.globalv.global_out_dir,
+                  inp.init_chg,
+                  pv.nloc,
+                  PARAM.globalv.gamma_only_local,
+                  inp.ks_solver,
+                  inp.cal_force,
+                  inp.cal_stress,
+                  inp.device,
+                  inp.kpar,
                   &orb);
     }
 

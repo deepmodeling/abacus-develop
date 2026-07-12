@@ -37,7 +37,7 @@ void Plus_U::cal_eff_pot_mat_complex(const int ik,
 
 #ifdef __MPI
 	ScalapackConnector::gemm(transN, transN,
-            PARAM.globalv.nlocal, PARAM.globalv.nlocal, PARAM.globalv.nlocal,
+            this->nlocal, this->nlocal, this->nlocal,
             half, 
             ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), one_int, one_int, this->paraV->desc,
             sk, one_int, one_int, this->paraV->desc,
@@ -51,7 +51,7 @@ void Plus_U::cal_eff_pot_mat_complex(const int ik,
 	}
 
 #ifdef __MPI
-   	ScalapackConnector::tranu(PARAM.globalv.nlocal, PARAM.globalv.nlocal, 
+   	ScalapackConnector::tranu(this->nlocal, this->nlocal, 
             one, 
             &VU[0], one_int, one_int, this->paraV->desc, 
             one, 
@@ -87,7 +87,7 @@ void Plus_U::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vect
 
 #ifdef __MPI
 	ScalapackConnector::gemm(transN, transN,
-            PARAM.globalv.nlocal, PARAM.globalv.nlocal, PARAM.globalv.nlocal,
+            this->nlocal, this->nlocal, this->nlocal,
             half, 
             ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), 1, 1, this->paraV->desc, 
             sk, 1, 1, this->paraV->desc,
@@ -99,7 +99,7 @@ void Plus_U::cal_eff_pot_mat_real(const int ik, double* eff_pot, const std::vect
         VU[irc] = eff_pot[irc];
 
 #ifdef __MPI
-	pdtran_(&PARAM.globalv.nlocal, &PARAM.globalv.nlocal, 
+	pdtran_(&this->nlocal, &this->nlocal, 
             &one, 
             &VU[0], &one_int, &one_int, const_cast<int*>(this->paraV->desc), 
             &one, 
@@ -121,7 +121,7 @@ void Plus_U::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR, c
 
 #ifdef __MPI
     ScalapackConnector::gemm(transN, transN,
-            PARAM.globalv.nlocal, PARAM.globalv.nlocal, PARAM.globalv.nlocal,
+            this->nlocal, this->nlocal, this->nlocal,
             half, 
             ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), 1, 1, this->paraV->desc, 
             SR, 1, 1, this->paraV->desc,
@@ -129,7 +129,7 @@ void Plus_U::cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR, c
             HR, 1, 1, this->paraV->desc);
 
     ScalapackConnector::gemm(transN, transN,
-            PARAM.globalv.nlocal, PARAM.globalv.nlocal, PARAM.globalv.nlocal,
+            this->nlocal, this->nlocal, this->nlocal,
             half, 
             SR, 1, 1, this->paraV->desc, 
             ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), 1, 1, this->paraV->desc,
@@ -151,7 +151,7 @@ void Plus_U::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<doub
 
 #ifdef __MPI
     ScalapackConnector::gemm(transN, transN,
-            PARAM.globalv.nlocal, PARAM.globalv.nlocal, PARAM.globalv.nlocal,
+            this->nlocal, this->nlocal, this->nlocal,
             half, 
             ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), one_int, one_int, this->paraV->desc,
             SR, one_int, one_int, this->paraV->desc,
@@ -159,7 +159,7 @@ void Plus_U::cal_eff_pot_mat_R_complex_double(const int ispin, std::complex<doub
             HR, one_int, one_int, this->paraV->desc);
 
     ScalapackConnector::gemm(transN, transN,
-            PARAM.globalv.nlocal, PARAM.globalv.nlocal, PARAM.globalv.nlocal,
+            this->nlocal, this->nlocal, this->nlocal,
             half, 
             SR, one_int, one_int, this->paraV->desc, 
             ModuleBase::GlobalFunc::VECTOR_TO_PTR(VU), one_int, one_int, this->paraV->desc,

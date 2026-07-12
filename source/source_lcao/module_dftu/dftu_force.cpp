@@ -36,18 +36,18 @@ void Plus_U::force_stress(const UnitCell& ucell,
     ModuleBase::TITLE("Plus_U", "force_stress");
     ModuleBase::timer::start("Plus_U", "force_stress");
 
-    const int nlocal = PARAM.globalv.nlocal;
+    const int nlocal = this->nlocal;
 
-    if (PARAM.inp.cal_force)
+    if (this->cal_force)
     {
         force_dftu.zero_out();
     }
-    if (PARAM.inp.cal_stress)
+    if (this->cal_stress)
     {
         stress_dftu.zero_out();
     }
 
-    if (PARAM.globalv.gamma_only_local)
+    if (this->gamma_only_local)
     {
         const char transN = 'N';
         const char transT = 'T';
@@ -76,12 +76,12 @@ void Plus_U::force_stress(const UnitCell& ucell,
 
             delete[] VU;
 
-            if (PARAM.inp.cal_force)
+            if (this->cal_force)
             {
                 this->cal_force_gamma(ucell,&rho_VU[0], pv, fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z, force_dftu);
             }
 
-            if (PARAM.inp.cal_stress)
+            if (this->cal_stress)
             {
                 this->cal_stress_gamma(ucell,
                                        pv,
@@ -123,23 +123,23 @@ void Plus_U::force_stress(const UnitCell& ucell,
 
             delete[] VU;
 
-            if (PARAM.inp.cal_force)
+            if (this->cal_force)
             {
                 cal_force_k(ucell, gd, fsr, pv, ik, &rho_VU[0], force_dftu, kv.kvec_d[ik]);
             }
-            if (PARAM.inp.cal_stress)
+            if (this->cal_stress)
             {
                 cal_stress_k(ucell, gd, fsr, pv, ik, &rho_VU[0], stress_dftu, kv.kvec_d[ik]);
             }
         } // ik
     }
 
-    if (PARAM.inp.cal_force)
+    if (this->cal_force)
     {
         Parallel_Reduce::reduce_pool(force_dftu.c, force_dftu.nr * force_dftu.nc);
     }
 
-    if (PARAM.inp.cal_stress)
+    if (this->cal_stress)
     {
         Parallel_Reduce::reduce_pool(stress_dftu.c, stress_dftu.nr * stress_dftu.nc);
 
@@ -183,7 +183,7 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
     const std::complex<double> zero(0.0, 0.0);
     const std::complex<double> one(1.0, 0.0);
 
-    const int nlocal = PARAM.globalv.nlocal;
+    const int nlocal = this->nlocal;
     assert(nlocal>0);
 
     std::vector<std::complex<double>> dm_VU_dSm(pv.nloc);
@@ -277,7 +277,7 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
 
                         for (int m = 0; m < 2 * l + 1; m++)
                         {
-                            for (int ipol = 0; ipol < PARAM.globalv.npol; ipol++)
+                            for (int ipol = 0; ipol < this->npol; ipol++)
                             {
                                 const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
                                 const int mu = pv.global2local_row(iwt);
@@ -310,7 +310,7 @@ void Plus_U::cal_stress_k(const UnitCell& ucell,
     ModuleBase::TITLE("Plus_U", "cal_stress_k");
     ModuleBase::timer::start("Plus_U", "cal_stress_k");
 
-    const int nlocal = PARAM.globalv.nlocal;
+    const int nlocal = this->nlocal;
 
     const char transN = 'N';
     const int one_int = 1;
@@ -385,7 +385,7 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
     const double one = 1.0;
     const double zero = 0.0;
     const double minus_one = -1.0;
-    const int nlocal = PARAM.globalv.nlocal;
+    const int nlocal = this->nlocal;
     assert(nlocal>0);
 
     std::vector<double> dm_VU_dSm(pv.nloc);
@@ -492,7 +492,7 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
                         // Calculate the local occupation number matrix
                         for (int m = 0; m < 2 * l + 1; m++)
                         {
-                            for (int ipol = 0; ipol < PARAM.globalv.npol; ipol++)
+                            for (int ipol = 0; ipol < this->npol; ipol++)
                             {
                                 const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
                                 const int mu = pv.global2local_row(iwt);
@@ -536,7 +536,7 @@ void Plus_U::cal_stress_gamma(const UnitCell& ucell,
     std::vector<double> dSR_gamma(pv.nloc);
     std::vector<double> dm_VU_sover(pv.nloc);
 
-    const int nlocal = PARAM.globalv.nlocal;
+    const int nlocal = this->nlocal;
 
     for (int dim1 = 0; dim1 < 3; dim1++)
     {
