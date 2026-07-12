@@ -30,7 +30,8 @@ public:
         ModulePW::PW_Basis_K *pw_psi,
         ModulePW::PW_Basis *pw_rho,
         UnitCell& ucell,
-        const double *veff
+        const double *veff,
+        const int nrxx
     );
     void generateTrainData_KS(
         const std::string& out_dir,
@@ -39,7 +40,8 @@ public:
         ModulePW::PW_Basis_K *pw_psi,
         ModulePW::PW_Basis *pw_rho,
         UnitCell& ucell,
-        const double *veff
+        const double *veff,
+        const int nrxx
     );
 
 #if ((defined __CUDA) || (defined __ROCM))
@@ -50,7 +52,8 @@ public:
         ModulePW::PW_Basis_K *pw_psi,
         ModulePW::PW_Basis *pw_rho,
         UnitCell& ucell,
-        const double *veff
+        const double *veff,
+        const int nrxx
     );
     void generateTrainData_KS(
         const std::string& dir,
@@ -59,7 +62,8 @@ public:
         ModulePW::PW_Basis_K *pw_psi,
         ModulePW::PW_Basis *pw_rho,
         UnitCell& ucell,
-        const double *veff
+        const double *veff,
+        const int nrxx
     );
 #endif
 
@@ -67,7 +71,8 @@ public:
         const std::string& out_dir,
         const double * const *prho, 
         ModulePW::PW_Basis *pw_rho,
-        std::vector<std::vector<double>> &nablaRho
+        std::vector<std::vector<double>> &nablaRho,
+        const int nrxx
     );
 
     std::string file_name(

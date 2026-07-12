@@ -7,6 +7,7 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
 
+#include <array>
 #include <unordered_map>
 #include <vector>
 
@@ -59,6 +60,9 @@ class Nonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                           const HContainer<TR>* dmR,
                           ModuleBase::matrix& force,
                           ModuleBase::matrix& stress);
+
+    // per-atom-I derivative d<phi|V^NL|phi>/dtau_I; one HContainer per atom I (size nat each)
+    void cal_dH(std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR);
 
     virtual void set_HR_fixed(void*) override;
 

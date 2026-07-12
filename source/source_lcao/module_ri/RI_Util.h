@@ -69,9 +69,9 @@ namespace RI_Util
 		const UnitCell &ucell,
 		const K_Vectors *p_kv);
 
-	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, 
-        std::pair<bool, 
-            std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
+	std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
+        std::pair<bool,
+            std::map<Conv_Coulomb_Pot_K::Coulomb_Type,
                 std::vector<std::map<std::string,std::string>>>>>
 	update_coulomb_settings(
 		const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param,

@@ -180,7 +180,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     if(istep == 0)//if the first scf step, readin DMR from file,
     {
         //calculate or readin the density matrix DMR
-        if(PARAM.inp.init_chg == "dm")
+        if(PARAM.inp.init_chg == "dm" || PARAM.inp.init_chg == "dm_no_renormalize")
         {
             //! 13.1.1) init charge density from density matrix file
             LCAO_domain::init_chg_dm<TK>(PARAM.globalv.global_readin_dir, PARAM.inp.nspin,
@@ -546,6 +546,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             PARAM.inp, this->kv, this->pelec, this->dmat.dm, this->pv,
             this->gd, this->psi, hamilt_lcao, this->dftu, this->two_center_bundle_,
             this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
+            this->pw_rhod, this->locpp.vloc, this->solvent,
             this->rdmft_solver, this->deepks, this->exx_nao,
             this->conv_esolver, this->scf_nmax_flag, istep);
 

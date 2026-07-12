@@ -20,7 +20,7 @@
 class XCTest_VXC : public XCTest
 {
     protected:
-    
+
         double et1 = 0, vt1 = 0;
         ModuleBase::matrix v1;
 
@@ -34,11 +34,11 @@ class XCTest_VXC : public XCTest
             int nspin2 = 2;
             bool domag = false;
             bool domag_z = false;
-            
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
-            
+
             rhopw.nrxx = 5;
             rhopw.npw = 5;
             rhopw.nmaxgr = 5;
@@ -122,7 +122,7 @@ TEST_F(XCTest_VXC, set_xc_type)
 class XCTest_VXC_Libxc : public XCTest
 {
     protected:
-    
+
         double et1 = 0, vt1 = 0;
         ModuleBase::matrix v1;
 
@@ -136,7 +136,7 @@ class XCTest_VXC_Libxc : public XCTest
             int nspin2 = 2;
             bool domag = false;
             bool domag_z = false;
-            
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -224,7 +224,7 @@ TEST_F(XCTest_VXC_Libxc, set_xc_type)
 class XCTest_VXC_meta : public XCTest
 {
     protected:
-    
+
         double et1 = 0, vt1 = 0;
         ModuleBase::matrix v1,vtau1;
 
@@ -236,7 +236,7 @@ class XCTest_VXC_meta : public XCTest
             // Define variables for parameters
             int nspin1 = 1;
             int nspin2 = 2;
-            
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -343,7 +343,7 @@ TEST_F(XCTest_VXC_meta, set_xc_type)
     EXPECT_NEAR(vtau2(1,1),0.01591158497,1.0e-8);
     EXPECT_NEAR(vtau2(1,2),0.07990709956,1.0e-8);
     EXPECT_NEAR(vtau2(1,3),0.04145463825,1.0e-8);
-    EXPECT_NEAR(vtau2(1,4),0.0311787189,1.0e-8);    
+    EXPECT_NEAR(vtau2(1,4),0.0311787189,1.0e-8);
 }
 
 

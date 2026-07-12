@@ -84,7 +84,7 @@ if(ENABLE_LCAO AND USE_ELPA)
   add_subdirectory(module_genelpa)
 endif()
 
-IF (BUILD_TESTING)
+if(BUILD_TESTING)
   add_subdirectory(test)
   if(ENABLE_MPI)
     add_subdirectory(kernels/test)

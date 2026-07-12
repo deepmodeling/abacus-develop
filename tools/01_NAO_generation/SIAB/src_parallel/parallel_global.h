@@ -1,5 +1,5 @@
 //==========================================================
-// AUTHOR : Fang Wei, Mohan Chen
+// AUTHOR : Fang Wei, @mohanchen
 // DATE : 2008
 // LAST UPDATE : 2009-3-23 mohan add GATHER_MINIMUM_DOUBLE
 //==========================================================

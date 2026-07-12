@@ -3,6 +3,10 @@ name: Pyabacus Build and Test
 on:
   pull_request:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     name: PyTest

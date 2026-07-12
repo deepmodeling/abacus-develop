@@ -7,7 +7,7 @@
 function(setup_build_info)
     message(STATUS "Setting up build information...")
 
-    include(cmake/CollectBuildInfoVars.cmake)
+    include(${PROJECT_SOURCE_DIR}/cmake/CollectBuildInfoVars.cmake)
 
 set(BUILD_INFO_TEMPLATE "${CMAKE_SOURCE_DIR}/source/source_io/build_info.h.in")
 set(BUILD_INFO_OUTPUT   "${CMAKE_BINARY_DIR}/source/source_io/build_info.h")

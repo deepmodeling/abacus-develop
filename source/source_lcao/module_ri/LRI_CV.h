@@ -61,7 +61,7 @@ public:
 		const std::vector<TA> &list_A0,
 		const std::vector<TAC> &list_A1,
 		const std::map<std::string,bool> &flags);						// "cal_dC", "writable_Cws", "writable_dCws", "writable_Vws", "writable_dVws"
-	
+
 	size_t get_index_abfs_size(const size_t &iat){return this->index_abfs[iat].count_size; }
 
 private:

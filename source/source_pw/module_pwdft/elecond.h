@@ -34,6 +34,7 @@ class EleCond
      * @param dw_in \omega step
      * @param dt_in time step
      * @param nonlocal whether to include the nonlocal potential corrections for velocity operator
+     * @param mgga_vel whether to include the meta-GGA velocity correction
      * @param wg wg(ik,ib) occupation for the ib-th band in the ik-th kpoint
      */
     void KG(const int& smear_type,
@@ -42,6 +43,7 @@ class EleCond
             const double& dw_in,
             const double& dt_in,
             const bool& nonlocal,
+            const bool& mgga_vel,
             ModuleBase::matrix& wg);
 
   protected:

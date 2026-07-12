@@ -507,7 +507,7 @@ def read_abacus_out(fileobj,
         calc = SinglePointDFTCalculator(atoms=atoms, energy=ener['E_KohnSham'],
                                         free_energy=ener['E_KohnSham'],
                                         forces=frs, stress=strs,
-                                        magmoms=mag, efermi=ener['E_Fermi'],
+                                        magmoms=mag[ind], efermi=ener['E_Fermi'],
                                         ibzkpts=kvecd, dipole=None)
         # import the eigenvalues and occupations kpoint-by-kpoint
         calc.kpts = []
@@ -530,6 +530,44 @@ class TestLatestIO(unittest.TestCase):
     '''
     here = Path(__file__).parent
     testfiles = here / 'testfiles'
+
+    def test_read_abacus_out_reorders_calculator_magmoms(self):
+        import tempfile
+        from unittest.mock import patch
+
+        frame = {
+            'elem': ['Na', 'Na', 'Cl'],
+            'coords': np.array([[0.0, 0.0, 0.0],
+                                [1.0, 0.0, 0.0],
+                                [2.0, 0.0, 0.0]]),
+            'cell': np.eye(3),
+        }
+        elecstate = [{
+            'k': np.zeros((1, 1, 3)),
+            'e': np.zeros((1, 1, 1)),
+            'occ': np.ones((1, 1, 1)),
+        }]
+        energies = [{'E_KohnSham': -1.0, 'E_Fermi': 0.0}]
+        kpoints = ((np.zeros((1, 3)), np.ones(1), None), None, None, None, None)
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            running_log = Path(tmpdir) / 'running_scf.log'
+            running_log.write_text('')
+            (Path(tmpdir) / 'eig_occ.txt').write_text('')
+            with patch(__name__ + '.read_esolver_type_from_running_log', return_value='ksdft'), \
+                 patch(__name__ + '.read_traj_from_running_log', return_value=[frame]), \
+                 patch(__name__ + '.read_band_from_eig_occ', return_value=elecstate), \
+                 patch(__name__ + '.read_forces_from_running_log', return_value=[]), \
+                 patch(__name__ + '.read_stress_from_running_log', return_value=[]), \
+                 patch(__name__ + '.read_kpoints_from_running_log', return_value=kpoints), \
+                 patch(__name__ + '.read_energies_from_running_log', return_value=([], [])), \
+                 patch(__name__ + '.read_iter_header_from_running_log', return_value=[]), \
+                 patch(__name__ + '.find_final_info_with_iter_header', return_value=energies), \
+                 patch(__name__ + '.read_magmom_from_running_log', return_value=[np.array([10.0, 20.0, 30.0])]):
+                atoms = read_abacus_out(running_log, sort_atoms_with=[0, 2, 1])[0]
+
+        self.assertEqual(atoms.get_chemical_symbols(), ['Na', 'Cl', 'Na'])
+        self.assertTrue(np.allclose(atoms.calc.results['magmoms'], [10.0, 30.0, 20.0]))
 
     def test_read_esolver_type_from_running_log(self):
         self.assertEqual(

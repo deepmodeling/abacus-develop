@@ -9,7 +9,6 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_io/module_ml/io_npz.h"
-#include "source_io/module_output/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
 
 namespace ModuleESolver

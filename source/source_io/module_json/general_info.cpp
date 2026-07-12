@@ -3,7 +3,7 @@
 #include "para_json.h"
 #include "abacusjson.h"
 #include "source_base/parallel_global.h"
-#include "source_main/version.h"
+#include "source_base/version.h"
 
 // Add json objects to gener_info
 namespace Json
