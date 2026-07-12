@@ -43,14 +43,14 @@ void init_dftu_lcao(const int istep,
  * @param iter Current SCF iteration
  * @param conv_esolver Whether ESolver has converged
  * @param dft_plus_u DFT+U mode (0=disabled, 1=old, 2=new)
- * @param out_chg Whether to output onsite.dm
+ * @param out_chg Whether to output dm_onsite.txt
  * @param dftu DFT+U object
  * @param ucell Unit cell
  * @param dm_vec Density matrix vector
  * @param kv K-vectors
  * @param mixing_beta Mixing beta parameter
  * @param hamilt_lcao Hamiltonian LCAO object
- * @param global_out_dir Output directory for onsite.dm
+ * @param global_out_dir Output directory for dm_onsite.txt
  * @param nspin Number of spin channels (1, 2, or 4)
  * @param npol Number of polarizations
  */

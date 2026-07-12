@@ -237,7 +237,7 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     if (omc != 0)
     {
         std::stringstream sst;
-        sst << "initial_onsite.dm";
+        sst << PARAM.globalv.global_readin_dir << "dm_onsite_ini.txt";
         this->read_occup_m(cell, sst.str(), PARAM.inp.init_chg, PARAM.inp.nspin, PARAM.globalv.npol);
 #ifdef __MPI
         this->local_occup_bcast(cell, PARAM.inp.nspin, PARAM.globalv.npol);
@@ -251,7 +251,7 @@ void Plus_U::init(UnitCell& cell, // unitcell class
         if (PARAM.inp.init_chg == "file")
         {
             std::stringstream sst;
-            sst << PARAM.globalv.global_readin_dir << "onsite.dm";
+            sst << PARAM.globalv.global_out_dir << "dm_onsite.txt";
             this->read_occup_m(cell, sst.str(), PARAM.inp.init_chg, PARAM.inp.nspin, PARAM.globalv.npol);
 #ifdef __MPI
             this->local_occup_bcast(cell, PARAM.inp.nspin, PARAM.globalv.npol);

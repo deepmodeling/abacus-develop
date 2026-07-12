@@ -59,14 +59,14 @@ void Plus_U::output(const UnitCell& ucell,
     GlobalV::ofs_running << " Local Occupation Matrices for each atom" << std::endl;
     this->write_occup_m(ucell, GlobalV::ofs_running, true, nspin, npol);
 
-    // Write onsite.dm
+    // Write dm_onsite.txt
     if (out_chg && GlobalV::MY_RANK == 0)
     {
         std::ofstream ofdftu;
-        ofdftu.open(global_out_dir + "onsite.dm");
+        ofdftu.open(global_out_dir + "dm_onsite.txt");
         if (!ofdftu)
         {
-            ModuleBase::WARNING_QUIT("Plus_U::output", "Can't create file onsite.dm");
+            ModuleBase::WARNING_QUIT("Plus_U::output", "Can't create file dm_onsite.txt");
         }
         this->write_occup_m(ucell, ofdftu, false, nspin, npol);
         ofdftu.close();
@@ -257,16 +257,16 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
     {
         if (omc > 0)
         {
-            ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not find the file initial_onsite.dm. Please check your initial_onsite.dm");
+            ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not find the file dm_onsite_ini.txt. Please check your dm_onsite_ini.txt");
         }
         else
         {
             if (init_chg == "file")
             {
-                ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not find the file onsite.dm. Please do scf calculation first");
+                ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not find the file dm_onsite.txt. Please do scf calculation first");
             }
         }
-        ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not open onsite.dm file");
+        ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not open dm_onsite.txt file");
     }
 
     ifdftu.clear();
