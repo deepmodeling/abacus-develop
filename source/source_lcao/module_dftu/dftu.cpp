@@ -43,9 +43,12 @@ Plus_U::Plus_U()
 Plus_U::~Plus_U()
 {}
 
-void Plus_U::init(UnitCell& cell, // unitcell class
+void Plus_U::init(UnitCell& cell,
                 const Parallel_Orbitals* pv,
-                const int nks
+                const int npol,
+                const int nspin,
+                const std::vector<int>& orbital_corr,
+                const double yukawa_lambda
 #ifdef __LCAO
                 , const LCAO_Orbitals* orb
 #endif
@@ -69,12 +72,9 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     ucell = &cell;
 #endif
 
-    // needs reconstructions in future
-    // global parameters, need to be removed in future
-    const int npol = PARAM.globalv.npol;     // number of polarization directions
-    const int nlocal = PARAM.globalv.nlocal; // number of total local orbitals
-    const int nspin = PARAM.inp.nspin;   // number of spins
     Plus_U::nspin = nspin;
+    Plus_U::orbital_corr = orbital_corr;
+    Plus_U::Yukawa = (yukawa_lambda > 0);
 
     // mohan update 2025-11-06
     Plus_U::energy_u = 0.0;

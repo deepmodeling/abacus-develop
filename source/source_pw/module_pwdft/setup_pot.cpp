@@ -121,7 +121,9 @@ void pw::setup_pot(const int istep,
     //----------------------------------------------------------
     if (PARAM.inp.dft_plus_u)
     {
-        dftu.init(ucell, nullptr, kv.get_nks());
+        dftu.init(ucell, nullptr,
+                  PARAM.globalv.npol,
+                  PARAM.inp.nspin, PARAM.inp.orbital_corr, PARAM.inp.yukawa_lambda);
     }
 
     return;

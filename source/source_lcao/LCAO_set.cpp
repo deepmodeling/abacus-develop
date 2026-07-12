@@ -81,7 +81,10 @@ void LCAO_domain::set_pot(
     //! 3) initialize DFT+U
     if (inp.dft_plus_u)
     {
-        dftu.init(ucell, &pv, kv.get_nks(), &orb);
+        dftu.init(ucell, &pv,
+                  PARAM.globalv.npol,
+                  inp.nspin, inp.orbital_corr, inp.yukawa_lambda,
+                  &orb);
     }
 
     //! 4) init exact exchange calculations

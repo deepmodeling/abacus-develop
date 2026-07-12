@@ -25,9 +25,12 @@ class Plus_U
 
   public:
     // allocate relevant data strcutures
-    void init(UnitCell& cell, // unitcell class
+    void init(UnitCell& cell,
               const Parallel_Orbitals* pv,
-              const int nks
+              const int npol,
+              const int nspin,
+              const std::vector<int>& orbital_corr,
+              const double yukawa_lambda
 #ifdef __LCAO
               , const LCAO_Orbitals* orb = nullptr
 #endif
