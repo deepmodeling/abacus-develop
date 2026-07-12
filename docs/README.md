@@ -4,7 +4,8 @@ These files are the source for the ABACUS manual published on Read the Docs.
 
 Read the Docs builds a minimal serial ABACUS binary, regenerates
 `docs/advanced/input_files/input-main.md` from that binary during the
-documentation build, and emits a warning if no ABACUS executable is available.
+documentation build, and fails the build if the INPUT reference cannot be
+refreshed.
 
 ## Build the Manual Locally
 
@@ -59,9 +60,9 @@ Run the following commands from the repository root.
 
 1. Open `build-docs/html/index.html` in a browser.
 
-If no ABACUS executable is available, the Sphinx build still continues with the
-checked-in `docs/advanced/input_files/input-main.md` and prints a warning that
-the INPUT parameter reference may not be up to date.
+For local builds, if no ABACUS executable is available, the Sphinx build still
+continues with the checked-in `docs/advanced/input_files/input-main.md` and
+prints a warning that the INPUT parameter reference may not be up to date.
 
 ## Regenerate Only the INPUT Reference
 

@@ -122,12 +122,23 @@ def warn_input_docs(message):
         print(f"Warning: {message}")
 
 
+def input_docs_refresh_required(env=None):
+    env = os.environ if env is None else env
+    return env.get('READTHEDOCS') == 'True'
+
+
+def handle_input_docs_failure(message, warn, fail_on_error):
+    if fail_on_error:
+        raise RuntimeError(message)
+    warn(message)
+
+
 def candidate_abacus_binaries(repo_root):
     """Return candidate ABACUS binaries for local and Read the Docs builds."""
     env_binary = os.environ.get('ABACUS_BINARY') or os.environ.get('ABACUS_EXECUTABLE')
-    candidates = []
     if env_binary:
-        candidates.append(Path(env_binary))
+        return [Path(env_binary)]
+    candidates = []
     candidates.extend([
         repo_root / 'build-rtd-docs' / 'source' / 'abacus_pw_ser',
         repo_root / 'build-rtd-docs' / 'abacus_pw_ser',
@@ -146,16 +157,18 @@ def find_abacus_binary(repo_root):
     return None
 
 
-def refresh_input_docs(docs_dir, abacus_binary=None, warn=warn_input_docs):
+def refresh_input_docs(docs_dir, abacus_binary=None, warn=warn_input_docs, fail_on_error=False):
     """Refresh input-main.md from an ABACUS executable, if one is available."""
     docs_dir = Path(docs_dir)
     repo_root = docs_dir.parent
     binary = Path(abacus_binary) if abacus_binary else find_abacus_binary(repo_root)
     if binary is None or not binary.exists() or not os.access(binary, os.X_OK):
-        warn(
+        handle_input_docs_failure(
             "ABACUS executable not found; INPUT parameter documentation may not "
             "be up to date. Set ABACUS_BINARY=/path/to/abacus or build the "
-            "reduced documentation binary first."
+            "reduced documentation binary first.",
+            warn,
+            fail_on_error,
         )
         return False
 
@@ -170,10 +183,12 @@ def refresh_input_docs(docs_dir, abacus_binary=None, warn=warn_input_docs):
     )
     if result.returncode != 0:
         detail = result.stderr.strip() or result.stdout.strip()
-        warn(
+        handle_input_docs_failure(
             "ABACUS could not generate INPUT parameter metadata; documentation "
             f"may not be up to date. Command: {binary} --generate-parameters-yaml"
-            + (f". Output: {detail}" if detail else "")
+            + (f". Output: {detail}" if detail else ""),
+            warn,
+            fail_on_error,
         )
         return False
 
@@ -188,7 +203,10 @@ def refresh_input_docs(docs_dir, abacus_binary=None, warn=warn_input_docs):
 
 
 def generate_input_docs(app):
-    refresh_input_docs(Path(__file__).resolve().parent)
+    refresh_input_docs(
+        Path(__file__).resolve().parent,
+        fail_on_error=input_docs_refresh_required(),
+    )
 
 def setup(app):
     app.connect('builder-inited', generate_input_docs)
