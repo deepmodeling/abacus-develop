@@ -124,7 +124,7 @@ else()
   if(ENABLE_MPI)
     list(APPEND _abacus_linalg_libs ScaLAPACK::ScaLAPACK)
   endif()
-  if(USE_OPENMP)
+  if(ENABLE_OPENMP)
     list(APPEND _abacus_linalg_libs FFTW3::FFTW3_OMP)
   endif()
   list(APPEND _abacus_linalg_libs
@@ -146,7 +146,7 @@ endif()
 if(ENABLE_MPI)
   list(APPEND _abacus_linalg_libs MPI::MPI_CXX)
 endif()
-if(USE_OPENMP)
+if(ENABLE_OPENMP)
   list(APPEND _abacus_linalg_libs OpenMP::OpenMP_CXX)
 endif()
 list(APPEND _abacus_linalg_libs Threads::Threads)
@@ -193,13 +193,10 @@ if(ENABLE_RAPIDJSON)
 endif()
 
 if(ENABLE_LCAO)
-  list(APPEND _abacus_feature_libs cereal::cereal)
-
-  if(USE_ELPA)
+  if(ENABLE_ELPA)
     list(APPEND _abacus_feature_libs ELPA::ELPA)
     list(APPEND _abacus_feature_include_dirs ${ELPA_INCLUDE_DIR})
   endif()
-
   if(ENABLE_PEXSI)
     list(APPEND _abacus_feature_libs PEXSI::PEXSI)
   endif()
@@ -230,11 +227,11 @@ if(ENABLE_CNPY)
 endif()
 
 if(ENABLE_LIBRI)
-  list(APPEND _abacus_feature_include_dirs ${LIBRI_DIR}/include)
-endif()
-
-if(ENABLE_LIBCOMM)
-  list(APPEND _abacus_feature_include_dirs ${LIBCOMM_DIR}/include)
+  list(APPEND _abacus_feature_include_dirs
+    ${LIBRI_DIR}/include
+    ${LIBCOMM_DIR}/include
+  )
+  list(APPEND _abacus_feature_libs cereal::cereal)
 endif()
 
 if(ENABLE_LIBXC)
@@ -432,7 +429,11 @@ set(ABACUS_TEST_DIR "${PROJECT_SOURCE_DIR}/tests")
 include(${PROJECT_SOURCE_DIR}/cmake/Testing.cmake)
 
 add_executable(${ABACUS_BIN_NAME} source_main/main.cpp)
-set(ABACUS_BIN_PATH ${CMAKE_CURRENT_BINARY_DIR}/${ABACUS_BIN_NAME})
+set_target_properties(
+  ${ABACUS_BIN_NAME}
+  PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+set(ABACUS_BIN_PATH ${PROJECT_BINARY_DIR}/${ABACUS_BIN_NAME})
 
 if(USE_CUDA)
   set_property(TARGET ${ABACUS_BIN_NAME}
@@ -634,7 +635,7 @@ if(ENABLE_LCAO)
       numerical_atomic_orbitals
       lr
       rdmft)
-  if(USE_ELPA)
+  if(ENABLE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
   endif()
   if(ENABLE_PEXSI)

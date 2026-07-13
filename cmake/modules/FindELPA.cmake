@@ -30,7 +30,7 @@ if(ELPA_INCLUDE_DIRS MATCHES "^/usr/include/elpa/.*")
     unset(ELPA_INCLUDE_DIRS)
   endif()
 endif()
-if(USE_OPENMP)
+if(ENABLE_OPENMP)
     find_library(ELPA_LINK_LIBRARIES
     NAMES elpa_openmp elpa
     HINTS ${ELPA_DIR}
@@ -51,7 +51,7 @@ if(NOT ELPA_INCLUDE_DIRS AND PKG_CONFIG_FOUND)
   if(DEFINED ELPA_DIR)
     string(APPEND CMAKE_PREFIX_PATH ";${ELPA_DIR}")
   endif()
-  if(USE_OPENMP)
+  if(ENABLE_OPENMP)
     pkg_search_module(ELPA REQUIRED IMPORTED_TARGET GLOBAL elpa_openmp)
   else()
     pkg_search_module(ELPA REQUIRED IMPORTED_TARGET GLOBAL elpa)
