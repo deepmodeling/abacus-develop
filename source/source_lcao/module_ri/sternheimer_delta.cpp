@@ -53,6 +53,38 @@ void scale_vector(Vector& vector, const Complex factor)
     }
 }
 
+void validate_grid_function(const SternheimerDeltaGridFunction& function,
+                            const std::size_t grid_size,
+                            const std::string& context)
+{
+    check_vector_size(function.values, grid_size, context + " values");
+    for (const Vector& gradient: function.gradients)
+    {
+        check_vector_size(gradient, grid_size, context + " gradient");
+    }
+}
+
+void axpy_grid_function(const Complex alpha,
+                        const SternheimerDeltaGridFunction& x,
+                        SternheimerDeltaGridFunction& y)
+{
+    axpy(alpha, x.values, y.values);
+    for (int direction = 0; direction != 3; ++direction)
+    {
+        axpy(alpha, x.gradients[static_cast<std::size_t>(direction)],
+             y.gradients[static_cast<std::size_t>(direction)]);
+    }
+}
+
+void scale_grid_function(SternheimerDeltaGridFunction& function, const Complex factor)
+{
+    scale_vector(function.values, factor);
+    for (Vector& gradient: function.gradients)
+    {
+        scale_vector(gradient, factor);
+    }
+}
+
 std::vector<Vector> collect_virtual_orbitals(const std::vector<SternheimerDeltaVirtualState>& virtual_states)
 {
     std::vector<Vector> orbitals;
@@ -101,6 +133,50 @@ std::vector<double> diagonalize_real_symmetric(std::vector<double>& matrix, cons
     return eigenvalues;
 }
 
+std::vector<double> diagonalize_complex_hermitian(std::vector<Complex>& matrix, const int size)
+{
+    char jobz = 'V';
+    char uplo = 'U';
+    const int lda = size;
+    int info = 0;
+    std::vector<double> eigenvalues(static_cast<std::size_t>(size), 0.0);
+    Complex work_query(0.0, 0.0);
+    const int minus_one = -1;
+    std::vector<double> rwork(static_cast<std::size_t>(std::max(1, 3 * size - 2)), 0.0);
+
+    zheev_(&jobz,
+           &uplo,
+           &size,
+           matrix.data(),
+           &lda,
+           eigenvalues.data(),
+           &work_query,
+           &minus_one,
+           rwork.data(),
+           &info);
+    if (info != 0)
+    {
+        throw std::runtime_error("Sternheimer reference delta diagonalization workspace query failed.");
+    }
+    const int lwork = std::max(1, static_cast<int>(std::ceil(work_query.real())));
+    std::vector<Complex> work(static_cast<std::size_t>(lwork), Complex(0.0, 0.0));
+    zheev_(&jobz,
+           &uplo,
+           &size,
+           matrix.data(),
+           &lda,
+           eigenvalues.data(),
+           work.data(),
+           &lwork,
+           rwork.data(),
+           &info);
+    if (info != 0)
+    {
+        throw std::runtime_error("Sternheimer reference delta diagonalization failed.");
+    }
+    return eigenvalues;
+}
+
 void validate_postprocess_input(const Vector& standard_delta_wavefunction,
                                 const SternheimerDeltaPostprocessInput& input)
 {
@@ -140,7 +216,339 @@ void validate_virtual_states(const std::vector<SternheimerDeltaVirtualState>& vi
     }
 }
 
+SternheimerDeltaCoefficientComponents compute_delta_coefficient_components(
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<Complex>& perturbation_matrix_elements,
+    const Vector& out_wavefunction,
+    const double occupied_eigenvalue,
+    const double omega,
+    const double volume_element)
+{
+    SternheimerDeltaCoefficientComponents components;
+    components.sos.assign(virtual_states.size(), Complex(0.0, 0.0));
+    components.pulay.assign(virtual_states.size(), Complex(0.0, 0.0));
+    components.total.assign(virtual_states.size(), Complex(0.0, 0.0));
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        const Complex denominator(occupied_eigenvalue - virtual_states[ia].eigenvalue, -omega);
+        if (std::abs(denominator) < 1.0e-30)
+        {
+            throw std::runtime_error("Sternheimer delta coefficient evaluation found a singular denominator.");
+        }
+        const Complex residual_overlap
+            = sternheimer_fd_grid_dot(virtual_states[ia].residual, out_wavefunction, volume_element);
+        components.sos[ia] = perturbation_matrix_elements[ia] / denominator;
+        components.pulay[ia] = residual_overlap / denominator;
+        components.total[ia] = components.sos[ia] + components.pulay[ia];
+    }
+    return components;
+}
+
+void assemble_delta_wavefunction_components(const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+                                            SternheimerDeltaPostprocessResult& result)
+{
+    result.in_sos_wavefunction.assign(result.out_wavefunction.size(), Complex(0.0, 0.0));
+    result.in_pulay_wavefunction.assign(result.out_wavefunction.size(), Complex(0.0, 0.0));
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        axpy(result.sos_coefficients[ia], virtual_states[ia].orbital, result.in_sos_wavefunction);
+        axpy(result.pulay_coefficients[ia], virtual_states[ia].orbital, result.in_pulay_wavefunction);
+    }
+
+    result.reconstructed_wavefunction = result.out_wavefunction;
+    axpy(Complex(1.0, 0.0), result.in_sos_wavefunction, result.reconstructed_wavefunction);
+    axpy(Complex(1.0, 0.0), result.in_pulay_wavefunction, result.reconstructed_wavefunction);
+}
+
 } // namespace
+
+SternheimerDeltaGridFunction make_delta_sternheimer_grid_function_with_fd_gradients(
+    const SternheimerFDHamiltonian::Vector& values,
+    const SternheimerFDHamiltonian::Grid& grid)
+{
+    if (grid.nx <= 0 || grid.ny <= 0 || grid.nz <= 0 || grid.hx <= 0.0 || grid.hy <= 0.0
+        || grid.hz <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer delta grid gradient requires a valid uniform grid.");
+    }
+    if (static_cast<int>(values.size()) != grid.size())
+    {
+        throw std::invalid_argument("Sternheimer delta grid gradient value size does not match the grid.");
+    }
+
+    SternheimerDeltaGridFunction function;
+    function.values = values;
+    for (Vector& gradient: function.gradients)
+    {
+        gradient.assign(values.size(), Complex(0.0, 0.0));
+    }
+    const auto index = [&grid](const int ix, const int iy, const int iz) {
+        return (ix * grid.ny + iy) * grid.nz + iz;
+    };
+    const auto derivative = [&values, &grid, &index](const int ix,
+                                                     const int iy,
+                                                     const int iz,
+                                                     const int direction) {
+        const int coordinate = direction == 0 ? ix : (direction == 1 ? iy : iz);
+        const int count = direction == 0 ? grid.nx : (direction == 1 ? grid.ny : grid.nz);
+        const double spacing = direction == 0 ? grid.hx : (direction == 1 ? grid.hy : grid.hz);
+        if (count == 1)
+        {
+            return Complex(0.0, 0.0);
+        }
+
+        int lower = coordinate - 1;
+        int upper = coordinate + 1;
+        double denominator = 2.0 * spacing;
+        if (grid.periodic)
+        {
+            lower = (lower + count) % count;
+            upper %= count;
+        }
+        else if (coordinate == 0)
+        {
+            lower = 0;
+            upper = 1;
+            denominator = spacing;
+        }
+        else if (coordinate == count - 1)
+        {
+            lower = count - 2;
+            upper = count - 1;
+            denominator = spacing;
+        }
+
+        const int lower_index = direction == 0 ? index(lower, iy, iz)
+                                : direction == 1 ? index(ix, lower, iz)
+                                                 : index(ix, iy, lower);
+        const int upper_index = direction == 0 ? index(upper, iy, iz)
+                                : direction == 1 ? index(ix, upper, iz)
+                                                 : index(ix, iy, upper);
+        return (values[static_cast<std::size_t>(upper_index)]
+                - values[static_cast<std::size_t>(lower_index)])
+               / denominator;
+    };
+
+    for (int ix = 0; ix != grid.nx; ++ix)
+    {
+        for (int iy = 0; iy != grid.ny; ++iy)
+        {
+            for (int iz = 0; iz != grid.nz; ++iz)
+            {
+                const std::size_t ir = static_cast<std::size_t>(index(ix, iy, iz));
+                for (int direction = 0; direction != 3; ++direction)
+                {
+                    function.gradients[static_cast<std::size_t>(direction)][ir]
+                        = derivative(ix, iy, iz, direction);
+                }
+            }
+        }
+    }
+    return function;
+}
+
+SternheimerDeltaGridFunction linear_combination_delta_sternheimer_grid_functions(
+    const std::vector<SternheimerDeltaGridFunction>& basis_functions,
+    const std::vector<SternheimerFDHamiltonian::Complex>& coefficients)
+{
+    if (basis_functions.size() != coefficients.size())
+    {
+        throw std::invalid_argument("Sternheimer LCAO grid combination requires one coefficient per AO.");
+    }
+
+    SternheimerDeltaGridFunction state;
+    if (basis_functions.empty())
+    {
+        return state;
+    }
+
+    const std::size_t grid_size = basis_functions.front().values.size();
+    state.values.assign(grid_size, Complex(0.0, 0.0));
+    for (Vector& gradient: state.gradients)
+    {
+        gradient.assign(grid_size, Complex(0.0, 0.0));
+    }
+    for (std::size_t ia = 0; ia != basis_functions.size(); ++ia)
+    {
+        validate_grid_function(basis_functions[ia], grid_size, "Sternheimer LCAO AO grid function");
+        axpy_grid_function(coefficients[ia], basis_functions[ia], state);
+    }
+    return state;
+}
+
+std::vector<SternheimerDeltaGridFunction> orthonormalize_delta_sternheimer_grid_functions(
+    const std::vector<SternheimerDeltaGridFunction>& functions,
+    const double volume_element,
+    const double norm_tolerance)
+{
+    if (volume_element <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer grid-function orthonormalization requires a positive volume element.");
+    }
+    if (norm_tolerance < 0.0)
+    {
+        throw std::invalid_argument("Sternheimer grid-function orthonormalization requires a non-negative tolerance.");
+    }
+    if (functions.empty())
+    {
+        return {};
+    }
+
+    const std::size_t grid_size = functions.front().values.size();
+    auto dot = [volume_element](const Vector& lhs, const Vector& rhs) {
+        return sternheimer_fd_grid_dot(lhs, rhs, volume_element);
+    };
+
+    std::vector<SternheimerDeltaGridFunction> orthonormal;
+    orthonormal.reserve(functions.size());
+    for (SternheimerDeltaGridFunction function: functions)
+    {
+        validate_grid_function(function, grid_size, "Sternheimer grid-function orthonormalization");
+        for (int pass = 0; pass != 2; ++pass)
+        {
+            for (const SternheimerDeltaGridFunction& accepted: orthonormal)
+            {
+                axpy_grid_function(-dot(accepted.values, function.values), accepted, function);
+            }
+        }
+        const double norm = sternheimer_fd_grid_norm(function.values, volume_element);
+        if (norm <= norm_tolerance)
+        {
+            throw std::runtime_error(
+                "Sternheimer grid-function orthonormalization found a linearly dependent state.");
+        }
+        scale_grid_function(function, Complex(1.0 / norm, 0.0));
+        orthonormal.push_back(std::move(function));
+    }
+    return orthonormal;
+}
+
+std::vector<std::array<int, 3>> enumerate_delta_sternheimer_periodic_images(
+    const SternheimerFDHamiltonian::Grid& grid,
+    const std::array<double, 3>& atom_position,
+    const double cutoff_radius)
+{
+    if (grid.nx <= 0 || grid.ny <= 0 || grid.nz <= 0 || grid.hx <= 0.0 || grid.hy <= 0.0
+        || grid.hz <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer delta periodic images require a valid orthogonal grid.");
+    }
+    if (!std::isfinite(cutoff_radius) || cutoff_radius < 0.0)
+    {
+        throw std::invalid_argument("Sternheimer delta periodic images require a non-negative finite cutoff.");
+    }
+    for (const double coordinate: atom_position)
+    {
+        if (!std::isfinite(coordinate))
+        {
+            throw std::invalid_argument("Sternheimer delta periodic images require finite atom coordinates.");
+        }
+    }
+    if (!grid.periodic)
+    {
+        return {{0, 0, 0}};
+    }
+
+    const std::array<double, 3> lengths = {
+        grid.nx * grid.hx,
+        grid.ny * grid.hy,
+        grid.nz * grid.hz,
+    };
+    std::array<int, 3> image_min{};
+    std::array<int, 3> image_max{};
+    for (int direction = 0; direction != 3; ++direction)
+    {
+        const double length = lengths[static_cast<std::size_t>(direction)];
+        double position = atom_position[static_cast<std::size_t>(direction)];
+        position -= length * std::floor(position / length);
+        image_min[static_cast<std::size_t>(direction)]
+            = static_cast<int>(std::ceil((-cutoff_radius - position) / length));
+        image_max[static_cast<std::size_t>(direction)]
+            = static_cast<int>(std::floor((length + cutoff_radius - position) / length));
+    }
+
+    std::vector<std::array<int, 3>> images;
+    for (int ix = image_min[0]; ix <= image_max[0]; ++ix)
+    {
+        for (int iy = image_min[1]; iy <= image_max[1]; ++iy)
+        {
+            for (int iz = image_min[2]; iz <= image_max[2]; ++iz)
+            {
+                images.push_back({ix, iy, iz});
+            }
+        }
+    }
+    return images;
+}
+
+SternheimerDeltaCoefficientComponents solve_delta_sternheimer_subspace_coefficients(
+    const std::vector<SternheimerFDHamiltonian::Complex>& hamiltonian_matrix,
+    const std::vector<SternheimerFDHamiltonian::Complex>& overlap_matrix,
+    const std::vector<SternheimerFDHamiltonian::Complex>& rhs,
+    const std::vector<SternheimerFDHamiltonian::Complex>& hamiltonian_out_coupling,
+    const SternheimerFDHamiltonian::Complex shift)
+{
+    const int size = static_cast<int>(rhs.size());
+    if (hamiltonian_out_coupling.size() != rhs.size())
+    {
+        throw std::invalid_argument("Sternheimer delta subspace coupling size does not match the right-hand side.");
+    }
+    const std::size_t matrix_size = static_cast<std::size_t>(size) * static_cast<std::size_t>(size);
+    if (hamiltonian_matrix.size() != matrix_size || overlap_matrix.size() != matrix_size)
+    {
+        throw std::invalid_argument("Sternheimer delta subspace matrices do not match the right-hand side size.");
+    }
+
+    SternheimerDeltaCoefficientComponents result;
+    result.sos.assign(rhs.size(), Complex(0.0, 0.0));
+    result.pulay.assign(rhs.size(), Complex(0.0, 0.0));
+    result.total.assign(rhs.size(), Complex(0.0, 0.0));
+    if (size == 0)
+    {
+        return result;
+    }
+
+    std::vector<Complex> shifted_operator(matrix_size, Complex(0.0, 0.0));
+    for (std::size_t index = 0; index != matrix_size; ++index)
+    {
+        shifted_operator[index] = hamiltonian_matrix[index] - shift * overlap_matrix[index];
+    }
+    constexpr int right_hand_side_count = 2;
+    std::vector<Complex> solutions(static_cast<std::size_t>(right_hand_side_count) * rhs.size(), Complex(0.0, 0.0));
+    for (int index = 0; index != size; ++index)
+    {
+        solutions[static_cast<std::size_t>(index)] = rhs[static_cast<std::size_t>(index)];
+        solutions[static_cast<std::size_t>(size + index)] = -hamiltonian_out_coupling[static_cast<std::size_t>(index)];
+    }
+
+    std::vector<int> pivots(static_cast<std::size_t>(size), 0);
+    int info = 0;
+    zgesv_(&size,
+           &right_hand_side_count,
+           shifted_operator.data(),
+           &size,
+           pivots.data(),
+           solutions.data(),
+           &size,
+           &info);
+    if (info < 0)
+    {
+        throw std::runtime_error("Sternheimer delta subspace solve received an invalid LAPACK argument.");
+    }
+    if (info > 0)
+    {
+        throw std::runtime_error("Sternheimer delta subspace shifted matrix is singular.");
+    }
+
+    for (int index = 0; index != size; ++index)
+    {
+        const std::size_t coefficient_index = static_cast<std::size_t>(index);
+        result.sos[coefficient_index] = solutions[coefficient_index];
+        result.pulay[coefficient_index] = solutions[static_cast<std::size_t>(size + index)];
+        result.total[coefficient_index] = result.sos[coefficient_index] + result.pulay[coefficient_index];
+    }
+    return result;
+}
 
 SternheimerDeltaPostprocessResult postprocess_delta_sternheimer_solution(
     const SternheimerFDHamiltonian::Vector& standard_delta_wavefunction,
@@ -158,30 +566,229 @@ SternheimerDeltaPostprocessResult postprocess_delta_sternheimer_solution(
     const std::vector<Vector> virtual_orbitals = collect_virtual_orbitals(input.virtual_states);
     SternheimerRPA::project_out_subspace(virtual_orbitals, dot, result.out_wavefunction);
 
-    result.coefficients.assign(input.virtual_states.size(), Complex(0.0, 0.0));
-    for (std::size_t ia = 0; ia != input.virtual_states.size(); ++ia)
-    {
-        const SternheimerDeltaVirtualState& state = input.virtual_states[ia];
-        const Complex denominator(input.occupied_eigenvalue - state.eigenvalue, -input.omega);
-        if (std::abs(denominator) < 1.0e-30)
-        {
-            throw std::runtime_error("Sternheimer delta postprocess found a singular virtual-state denominator.");
-        }
-        const Complex residual_overlap = sternheimer_fd_grid_dot(state.residual,
-                                                                 result.out_wavefunction,
-                                                                 input.volume_element);
-        result.coefficients[ia] = (input.perturbation_matrix_elements[ia] + residual_overlap) / denominator;
-    }
-
-    result.reconstructed_wavefunction = result.out_wavefunction;
-    for (std::size_t ia = 0; ia != input.virtual_states.size(); ++ia)
-    {
-        axpy(result.coefficients[ia], input.virtual_states[ia].orbital, result.reconstructed_wavefunction);
-    }
+    const SternheimerDeltaCoefficientComponents components
+        = compute_delta_coefficient_components(input.virtual_states,
+                                               input.perturbation_matrix_elements,
+                                               result.out_wavefunction,
+                                               input.occupied_eigenvalue,
+                                               input.omega,
+                                               input.volume_element);
+    result.sos_coefficients = components.sos;
+    result.pulay_coefficients = components.pulay;
+    result.coefficients = components.total;
+    assemble_delta_wavefunction_components(input.virtual_states, result);
     result.out_norm = sternheimer_fd_grid_norm(result.out_wavefunction, input.volume_element);
     result.reconstruction_error
         = difference_norm(result.reconstructed_wavefunction, standard_delta_wavefunction, input.volume_element);
     return result;
+}
+
+SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& basis_functions,
+    const double volume_element)
+{
+    if (volume_element <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer reference delta matrices require a positive grid volume element.");
+    }
+    const std::size_t grid_size = static_cast<std::size_t>(hamiltonian.grid().size());
+    for (const SternheimerDeltaGridFunction& function: basis_functions)
+    {
+        validate_grid_function(function, grid_size, "Sternheimer reference delta basis");
+    }
+
+    const SternheimerFDNonlocalProjector* nonlocal_projector = hamiltonian.nonlocal_projector();
+    if (nonlocal_projector != nullptr
+        && std::abs(nonlocal_projector->volume_element() - volume_element)
+               > 1.0e-12 * std::max(nonlocal_projector->volume_element(), volume_element))
+    {
+        throw std::invalid_argument(
+            "Sternheimer reference delta nonlocal projector uses a different grid volume element.");
+    }
+
+    const int basis_size = static_cast<int>(basis_functions.size());
+    const std::size_t matrix_size
+        = static_cast<std::size_t>(basis_size) * static_cast<std::size_t>(basis_size);
+    SternheimerDeltaGridMatrices matrices;
+    matrices.overlap.assign(matrix_size, Complex(0.0, 0.0));
+    matrices.hamiltonian.assign(matrix_size, Complex(0.0, 0.0));
+    if (basis_size == 0)
+    {
+        return matrices;
+    }
+
+    std::vector<Vector> nonlocal_basis(static_cast<std::size_t>(basis_size));
+    if (nonlocal_projector != nullptr)
+    {
+        for (int ib = 0; ib != basis_size; ++ib)
+        {
+            nonlocal_projector->apply(basis_functions[static_cast<std::size_t>(ib)].values,
+                                      nonlocal_basis[static_cast<std::size_t>(ib)]);
+        }
+    }
+
+    const std::vector<double>& local_potential = hamiltonian.local_potential();
+    const double kinetic_prefactor = hamiltonian.kinetic_prefactor();
+    for (int ib = 0; ib != basis_size; ++ib)
+    {
+        const SternheimerDeltaGridFunction& ket = basis_functions[static_cast<std::size_t>(ib)];
+        for (int ia = 0; ia != basis_size; ++ia)
+        {
+            const SternheimerDeltaGridFunction& bra = basis_functions[static_cast<std::size_t>(ia)];
+            Complex overlap(0.0, 0.0);
+            Complex hamiltonian_element(0.0, 0.0);
+            for (std::size_t ir = 0; ir != grid_size; ++ir)
+            {
+                overlap += volume_element * std::conj(bra.values[ir]) * ket.values[ir];
+                Complex gradient_dot(0.0, 0.0);
+                for (int direction = 0; direction != 3; ++direction)
+                {
+                    gradient_dot += std::conj(bra.gradients[static_cast<std::size_t>(direction)][ir])
+                                    * ket.gradients[static_cast<std::size_t>(direction)][ir];
+                }
+                hamiltonian_element += volume_element
+                                       * (kinetic_prefactor * gradient_dot
+                                          + std::conj(bra.values[ir]) * local_potential[ir] * ket.values[ir]);
+            }
+            if (nonlocal_projector != nullptr)
+            {
+                hamiltonian_element += sternheimer_fd_grid_dot(
+                    bra.values, nonlocal_basis[static_cast<std::size_t>(ib)], volume_element);
+            }
+            const std::size_t index
+                = static_cast<std::size_t>(ia) + static_cast<std::size_t>(basis_size) * static_cast<std::size_t>(ib);
+            matrices.overlap[index] = overlap;
+            matrices.hamiltonian[index] = hamiltonian_element;
+        }
+    }
+    return matrices;
+}
+
+SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& occupied_functions,
+    const std::vector<SternheimerDeltaGridFunction>& candidate_functions,
+    const double volume_element,
+    const SternheimerDeltaSubspaceOptions& options)
+{
+    if (volume_element <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer reference delta subspace requires a positive grid volume element.");
+    }
+    if (options.max_virtual_states < 0)
+    {
+        throw std::invalid_argument("Sternheimer reference delta max_virtual_states must be non-negative.");
+    }
+    if (options.norm_tolerance < 0.0)
+    {
+        throw std::invalid_argument("Sternheimer reference delta norm_tolerance must be non-negative.");
+    }
+
+    const std::size_t grid_size = static_cast<std::size_t>(hamiltonian.grid().size());
+    for (const SternheimerDeltaGridFunction& occupied: occupied_functions)
+    {
+        validate_grid_function(occupied, grid_size, "Sternheimer reference delta occupied function");
+    }
+    for (const SternheimerDeltaGridFunction& candidate: candidate_functions)
+    {
+        validate_grid_function(candidate, grid_size, "Sternheimer reference delta candidate function");
+    }
+
+    auto dot = [volume_element](const Vector& lhs, const Vector& rhs) {
+        return sternheimer_fd_grid_dot(lhs, rhs, volume_element);
+    };
+    std::vector<SternheimerDeltaGridFunction> orthonormal_candidates;
+    for (SternheimerDeltaGridFunction candidate: candidate_functions)
+    {
+        for (const SternheimerDeltaGridFunction& occupied: occupied_functions)
+        {
+            axpy_grid_function(-dot(occupied.values, candidate.values), occupied, candidate);
+        }
+        for (int pass = 0; pass != 2; ++pass)
+        {
+            for (const SternheimerDeltaGridFunction& accepted: orthonormal_candidates)
+            {
+                axpy_grid_function(-dot(accepted.values, candidate.values), accepted, candidate);
+            }
+        }
+
+        const double norm = sternheimer_fd_grid_norm(candidate.values, volume_element);
+        if (norm <= options.norm_tolerance)
+        {
+            continue;
+        }
+        scale_grid_function(candidate, Complex(1.0 / norm, 0.0));
+        orthonormal_candidates.push_back(std::move(candidate));
+        if (options.max_virtual_states > 0
+            && static_cast<int>(orthonormal_candidates.size()) >= options.max_virtual_states)
+        {
+            break;
+        }
+    }
+
+    SternheimerDeltaSubspace subspace;
+    subspace.accepted_candidates = static_cast<int>(orthonormal_candidates.size());
+    subspace.discarded_candidates
+        = static_cast<int>(candidate_functions.size()) - subspace.accepted_candidates;
+    if (orthonormal_candidates.empty())
+    {
+        return subspace;
+    }
+
+    const SternheimerDeltaGridMatrices matrices
+        = assemble_delta_sternheimer_grid_matrices(hamiltonian, orthonormal_candidates, volume_element);
+    const int basis_size = static_cast<int>(orthonormal_candidates.size());
+    std::vector<Complex> eigenvectors = matrices.hamiltonian;
+    const std::vector<double> eigenvalues = diagonalize_complex_hermitian(eigenvectors, basis_size);
+
+    subspace.grid_functions.reserve(static_cast<std::size_t>(basis_size));
+    subspace.virtual_states.reserve(static_cast<std::size_t>(basis_size));
+    for (int ia = 0; ia != basis_size; ++ia)
+    {
+        SternheimerDeltaGridFunction eigenfunction;
+        eigenfunction.values.assign(grid_size, Complex(0.0, 0.0));
+        for (Vector& gradient: eigenfunction.gradients)
+        {
+            gradient.assign(grid_size, Complex(0.0, 0.0));
+        }
+        for (int ib = 0; ib != basis_size; ++ib)
+        {
+            const Complex coefficient
+                = eigenvectors[static_cast<std::size_t>(ib)
+                               + static_cast<std::size_t>(basis_size) * static_cast<std::size_t>(ia)];
+            axpy_grid_function(coefficient,
+                               orthonormal_candidates[static_cast<std::size_t>(ib)],
+                               eigenfunction);
+        }
+
+        SternheimerDeltaVirtualState state;
+        state.orbital = eigenfunction.values;
+        state.eigenvalue = eigenvalues[static_cast<std::size_t>(ia)];
+        subspace.grid_functions.push_back(std::move(eigenfunction));
+        subspace.virtual_states.push_back(std::move(state));
+    }
+
+    std::vector<Vector> residual_projector;
+    residual_projector.reserve(occupied_functions.size() + subspace.virtual_states.size());
+    for (const SternheimerDeltaGridFunction& occupied: occupied_functions)
+    {
+        residual_projector.push_back(occupied.values);
+    }
+    for (const SternheimerDeltaVirtualState& state: subspace.virtual_states)
+    {
+        residual_projector.push_back(state.orbital);
+    }
+    for (SternheimerDeltaVirtualState& state: subspace.virtual_states)
+    {
+        hamiltonian.apply(state.orbital, state.residual);
+        for (std::size_t ir = 0; ir != state.residual.size(); ++ir)
+        {
+            state.residual[ir] -= state.eigenvalue * state.orbital[ir];
+        }
+        SternheimerRPA::project_out_subspace(residual_projector, dot, state.residual);
+    }
+    return subspace;
 }
 
 SternheimerDeltaSubspace build_delta_sternheimer_subspace(
@@ -413,43 +1020,53 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
 
     SternheimerDeltaLinearResponse result;
     result.response.out_wavefunction.assign(static_cast<std::size_t>(grid_size), Complex(0.0, 0.0));
-    result.solver = SternheimerRPA::solve_gmres(problem,
-                                                projected_rhs,
-                                                result.response.out_wavefunction,
-                                                options);
+    result.solver = SternheimerRPA::solve_gmres(problem, projected_rhs, result.response.out_wavefunction, options);
     SternheimerRPA::project_out_subspace(fixed_subspace, dot, result.response.out_wavefunction);
 
-    result.response.coefficients.assign(virtual_states.size(), Complex(0.0, 0.0));
-    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
-    {
-        const Complex residual_overlap = dot(virtual_states[ia].residual, result.response.out_wavefunction);
-        result.response.coefficients[ia]
-            = (perturbation_matrix_elements[ia] + residual_overlap) / denominators[ia];
-    }
-
-    result.response.reconstructed_wavefunction = result.response.out_wavefunction;
-    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
-    {
-        axpy(result.response.coefficients[ia], virtual_states[ia].orbital, result.response.reconstructed_wavefunction);
-    }
+    const SternheimerDeltaCoefficientComponents components
+        = compute_delta_coefficient_components(virtual_states,
+                                               perturbation_matrix_elements,
+                                               result.response.out_wavefunction,
+                                               reference_eigenvalue,
+                                               omega,
+                                               volume_element);
+    result.response.sos_coefficients = components.sos;
+    result.response.pulay_coefficients = components.pulay;
+    result.response.coefficients = components.total;
+    assemble_delta_wavefunction_components(virtual_states, result.response);
     result.response.out_norm = sternheimer_fd_grid_norm(result.response.out_wavefunction, volume_element);
 
-    Vector applied;
-    hamiltonian.apply(result.response.reconstructed_wavefunction, applied);
+    Vector q_residual;
+    hamiltonian.apply(result.response.out_wavefunction, q_residual);
     const Complex shift(-reference_eigenvalue, omega);
-    for (std::size_t ir = 0; ir != applied.size(); ++ir)
+    for (std::size_t ir = 0; ir != q_residual.size(); ++ir)
     {
-        applied[ir] += shift * result.response.reconstructed_wavefunction[ir];
+        q_residual[ir] += shift * result.response.out_wavefunction[ir];
     }
-    SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, applied);
+    SternheimerRPA::project_out_subspace(fixed_subspace, dot, q_residual);
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        axpy(result.response.coefficients[ia], virtual_states[ia].residual, q_residual);
+    }
 
-    Vector occupied_projected_rhs = rhs;
-    SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, occupied_projected_rhs);
-    for (std::size_t ir = 0; ir != applied.size(); ++ir)
+    Vector q_rhs = rhs;
+    SternheimerRPA::project_out_subspace(fixed_subspace, dot, q_rhs);
+    for (std::size_t ir = 0; ir != q_residual.size(); ++ir)
     {
-        applied[ir] -= occupied_projected_rhs[ir];
+        q_residual[ir] -= q_rhs[ir];
     }
-    result.residual_norm = sternheimer_fd_grid_norm(applied, volume_element);
+    const double q_residual_norm = sternheimer_fd_grid_norm(q_residual, volume_element);
+    double residual_norm_squared = q_residual_norm * q_residual_norm;
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        const Complex delta_block(virtual_states[ia].eigenvalue - reference_eigenvalue, omega);
+        const Complex eta_residual
+            = delta_block * result.response.coefficients[ia]
+              + dot(virtual_states[ia].residual, result.response.out_wavefunction)
+              - dot(virtual_states[ia].orbital, rhs);
+        residual_norm_squared += std::norm(eta_residual);
+    }
+    result.residual_norm = std::sqrt(residual_norm_squared);
     result.response.reconstruction_error = result.residual_norm;
     return result;
 }

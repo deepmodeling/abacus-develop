@@ -33,8 +33,9 @@
 #include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
 #ifdef __EXX
-#include "source_lcao/module_ri/exx_lri_interface.h" // use EXX codes
-#include "source_lcao/module_ri/rpa_lri.h"           // use RPA code
+#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
+#include "source_lcao/module_ri/RPA_LRI.h"           // use RPA code
+#include "source_lcao/module_ri/sternheimer_abacus_st_smoke.h"
 #endif
 #include "../module_qo/to_qo.h"                // use toQO
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes
@@ -42,42 +43,52 @@
 #include "source_lcao/module_operator_lcao/overlap.h" // use hamilt::Overlap for NAMD
 
 #ifdef __EXX
-template <typename TK>
-void setup_exx_dh_params(ModuleIO::WriteDHParams& dh_params, Exx_NAO<TK>& exx_nao, const Exx_Info& exx_info)
-{}
-
-template <>
-void setup_exx_dh_params<double>(ModuleIO::WriteDHParams& dh_params, Exx_NAO<double>& exx_nao, const Exx_Info& exx_info)
+namespace
 {
-    if (exx_info.info_global.cal_exx)
-    {
-        if (exx_nao.exd) { dh_params.exd = exx_nao.exd.get(); }
-        if (exx_nao.exc) { dh_params.exc = exx_nao.exc.get(); }
-    }
-}
 
 template <typename TK>
-void setup_exx_h_params(ModuleIO::WriteHParams& h_params, Exx_NAO<TK>& exx_nao, const Exx_Info& exx_info)
+std::vector<std::vector<std::complex<double>>> gather_sternheimer_lcao_occupied_coefficients(
+    const elecstate::ElecState& elec_state,
+    const Parallel_Orbitals& parallel_orbitals,
+    const psi::Psi<TK>& psi)
 {
-    // Only the gamma-only (TK==double) specialization below actually writes V^EXX(R).
-    // This generic body is instantiated for the multi-k (TK==std::complex) path, where the
-    // EXX-H output is unsupported. Reject it explicitly here so the request cannot be silently
-    // dropped (the WARNING_QUIT inside write_h_exx is unreachable at multi-k).
-    ModuleBase::WARNING_QUIT("setup_exx_h_params",
-                             "out_mat_h_exx is only supported for gamma-only: the V^EXX(R) "
-                             "output is not available at multi-k. Use gamma_only.");
+    int occupied_count = 0;
+    for (int ib = 0; ib != elec_state.wg.nc; ++ib)
+    {
+        if (elec_state.wg(0, ib) > 1.0e-8)
+        {
+            occupied_count = ib + 1;
+        }
+    }
+    std::vector<std::vector<std::complex<double>>> coefficients(
+        static_cast<std::size_t>(occupied_count),
+        std::vector<std::complex<double>>(static_cast<std::size_t>(PARAM.globalv.nlocal),
+                                          std::complex<double>(0.0, 0.0)));
+    for (int ib = 0; ib != occupied_count; ++ib)
+    {
+        const int local_band = parallel_orbitals.global2local_col(ib);
+        if (local_band >= 0)
+        {
+            for (int local_basis = 0; local_basis != psi.get_nbasis(); ++local_basis)
+            {
+                const int global_basis = parallel_orbitals.local2global_row(local_basis);
+                coefficients[static_cast<std::size_t>(ib)][static_cast<std::size_t>(global_basis)]
+                    = std::complex<double>(psi(0, local_band, local_basis));
+            }
+        }
+#ifdef __MPI
+        MPI_Allreduce(MPI_IN_PLACE,
+                      coefficients[static_cast<std::size_t>(ib)].data(),
+                      PARAM.globalv.nlocal,
+                      MPI_DOUBLE_COMPLEX,
+                      MPI_SUM,
+                      MPI_COMM_WORLD);
+#endif
+    }
+    return coefficients;
 }
 
-template <>
-void setup_exx_h_params<double>(ModuleIO::WriteHParams& h_params, Exx_NAO<double>& exx_nao, const Exx_Info& exx_info)
-{
-    if (exx_info.info_global.cal_exx)
-    {
-        if (exx_nao.exd) { h_params.exd = exx_nao.exd.get(); }
-        if (exx_nao.exc) { h_params.exc = exx_nao.exc.get(); }
-        ModuleIO::write_h_exx(h_params, exx_info);
-    }
-}
+} // namespace
 #endif
 
 template <typename TK, typename TR>
@@ -657,6 +668,23 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         rpa_lri_double.postSCF(ucell, MPI_COMM_WORLD, *dm, pelec, kv, orb, pv, *psi);
         if (inp.rpa_out_vel)
             rpa_lri_double.out_velocity(ucell, gd, two_center_bundle, pv, *psi, pelec);
+    }
+
+    if (inp.out_sternheimer_librpa)
+    {
+        if (pelec == nullptr || pelec->pot == nullptr || pw_rho == nullptr || psi == nullptr)
+        {
+            ModuleBase::WARNING_QUIT("ctrl_scf_lcao", "Sternheimer LCAO output requires potential, grid, and KS states.");
+        }
+        const auto occupied_coefficients
+            = gather_sternheimer_lcao_occupied_coefficients(*pelec, pv, *psi);
+        ModuleRI::run_sternheimer_abacus_lcao_chi0_output(*(pelec->pot),
+                                                          *pw_rho,
+                                                          ucell,
+                                                          *pelec,
+                                                          orb,
+                                                          occupied_coefficients,
+                                                          global_out_dir);
     }
 #endif
 

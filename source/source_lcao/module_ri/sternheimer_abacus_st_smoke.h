@@ -13,6 +13,7 @@
 #include <vector>
 
 class UnitCell;
+class LCAO_Orbitals;
 
 namespace ModulePW
 {
@@ -114,6 +115,15 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                         const UnitCell& ucell,
                                         const elecstate::ElecState& elec_state,
                                         const std::string& output_dir);
+
+void run_sternheimer_abacus_lcao_chi0_output(
+    const elecstate::Potential& potential,
+    const ModulePW::PW_Basis& pw_basis,
+    const UnitCell& ucell,
+    const elecstate::ElecState& elec_state,
+    const LCAO_Orbitals& orbitals,
+    const std::vector<std::vector<std::complex<double>>>& occupied_coefficients,
+    const std::string& output_dir);
 
 } // namespace ModuleRI
 

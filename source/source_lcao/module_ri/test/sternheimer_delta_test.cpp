@@ -2,8 +2,11 @@
 
 #include "source_lcao/module_ri/sternheimer_fd_solver.h"
 
+#include <algorithm>
+#include <cmath>
 #include <complex>
 #include <gtest/gtest.h>
+#include <memory>
 #include <vector>
 
 namespace
@@ -27,6 +30,21 @@ void expect_vector_near(const Vector& actual, const Vector& expected, const doub
         EXPECT_NEAR(actual[ir].real(), expected[ir].real(), tolerance);
         EXPECT_NEAR(actual[ir].imag(), expected[ir].imag(), tolerance);
     }
+}
+
+std::vector<Complex> column_major_matrix_vector_product(const std::vector<Complex>& matrix,
+                                                        const std::vector<Complex>& vector)
+{
+    const std::size_t size = vector.size();
+    std::vector<Complex> result(size, Complex(0.0, 0.0));
+    for (std::size_t column = 0; column != size; ++column)
+    {
+        for (std::size_t row = 0; row != size; ++row)
+        {
+            result[row] += matrix[row + size * column] * vector[column];
+        }
+    }
+    return result;
 }
 
 } // namespace
@@ -65,9 +83,26 @@ TEST(SternheimerDelta, PostprocessReconstructsStandardSolutionWithResidualCoupli
     const auto result = ModuleRI::postprocess_delta_sternheimer_solution(standard_delta, input);
 
     ASSERT_EQ(result.coefficients.size(), 1);
+    ASSERT_EQ(result.sos_coefficients.size(), 1);
+    ASSERT_EQ(result.pulay_coefficients.size(), 1);
+    const Complex expected_sos_coefficient = perturbation_matrix_element / denominator;
+    const Complex expected_pulay_coefficient = residual_overlap / denominator;
+    EXPECT_NEAR(result.sos_coefficients[0].real(), expected_sos_coefficient.real(), 1.0e-14);
+    EXPECT_NEAR(result.sos_coefficients[0].imag(), expected_sos_coefficient.imag(), 1.0e-14);
+    EXPECT_NEAR(result.pulay_coefficients[0].real(), expected_pulay_coefficient.real(), 1.0e-14);
+    EXPECT_NEAR(result.pulay_coefficients[0].imag(), expected_pulay_coefficient.imag(), 1.0e-14);
     EXPECT_NEAR(result.coefficients[0].real(), expected_coefficient.real(), 1.0e-14);
     EXPECT_NEAR(result.coefficients[0].imag(), expected_coefficient.imag(), 1.0e-14);
     expect_vector_near(result.out_wavefunction, out, 1.0e-14);
+    Vector expected_in_sos(4, Complex(0.0, 0.0));
+    Vector expected_in_pulay(4, Complex(0.0, 0.0));
+    for (std::size_t ir = 0; ir != eta.size(); ++ir)
+    {
+        expected_in_sos[ir] = expected_sos_coefficient * eta[ir];
+        expected_in_pulay[ir] = expected_pulay_coefficient * eta[ir];
+    }
+    expect_vector_near(result.in_sos_wavefunction, expected_in_sos, 1.0e-14);
+    expect_vector_near(result.in_pulay_wavefunction, expected_in_pulay, 1.0e-14);
     expect_vector_near(result.reconstructed_wavefunction, standard_delta, 1.0e-14);
     EXPECT_NEAR(result.reconstruction_error, 0.0, 1.0e-14);
 
@@ -105,6 +140,249 @@ TEST(SternheimerDelta, AccumulateResponseFromDecomposedWavefunction)
 
     EXPECT_NEAR(decomposed.real(), direct.real(), 1.0e-14);
     EXPECT_NEAR(decomposed.imag(), direct.imag(), 1.0e-14);
+}
+
+TEST(SternheimerDelta, SolvesGeneralMetricSubspaceEquationByComponents)
+{
+    const std::vector<Complex> overlap = {Complex(1.0, 0.0), Complex(0.2, -0.1), Complex(0.2, 0.1), Complex(1.3, 0.0)};
+    const std::vector<Complex> hamiltonian
+        = {Complex(0.8, 0.0), Complex(0.15, -0.05), Complex(0.15, 0.05), Complex(1.4, 0.0)};
+    const Complex shift(-0.25, -0.4);
+
+    std::vector<Complex> shifted_operator(4, Complex(0.0, 0.0));
+    for (std::size_t index = 0; index != shifted_operator.size(); ++index)
+    {
+        shifted_operator[index] = hamiltonian[index] - shift * overlap[index];
+    }
+
+    const std::vector<Complex> expected_sos = {Complex(0.3, -0.2), Complex(-0.1, 0.4)};
+    const std::vector<Complex> expected_pulay = {Complex(-0.05, 0.15), Complex(0.2, -0.1)};
+    const std::vector<Complex> rhs = column_major_matrix_vector_product(shifted_operator, expected_sos);
+    std::vector<Complex> hamiltonian_out = column_major_matrix_vector_product(shifted_operator, expected_pulay);
+    for (Complex& value: hamiltonian_out)
+    {
+        value = -value;
+    }
+
+    const auto result
+        = ModuleRI::solve_delta_sternheimer_subspace_coefficients(hamiltonian, overlap, rhs, hamiltonian_out, shift);
+
+    ASSERT_EQ(result.sos.size(), 2);
+    ASSERT_EQ(result.pulay.size(), 2);
+    ASSERT_EQ(result.total.size(), 2);
+    for (std::size_t index = 0; index != 2; ++index)
+    {
+        EXPECT_NEAR(result.sos[index].real(), expected_sos[index].real(), 1.0e-13);
+        EXPECT_NEAR(result.sos[index].imag(), expected_sos[index].imag(), 1.0e-13);
+        EXPECT_NEAR(result.pulay[index].real(), expected_pulay[index].real(), 1.0e-13);
+        EXPECT_NEAR(result.pulay[index].imag(), expected_pulay[index].imag(), 1.0e-13);
+        EXPECT_NEAR(result.total[index].real(), (expected_sos[index] + expected_pulay[index]).real(), 1.0e-13);
+        EXPECT_NEAR(result.total[index].imag(), (expected_sos[index] + expected_pulay[index]).imag(), 1.0e-13);
+    }
+}
+
+TEST(SternheimerDelta, AssemblesReferenceGridHamiltonianWithAnalyticGradientsAndNonlocalProjector)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid{2, 1, 1, 1.0, 1.0, 1.0, false};
+    constexpr double volume_element = 0.5;
+    using Projector = ModuleRI::SternheimerFDNonlocalProjector;
+    Projector::ProjectorBlock block;
+    block.projectors = {{Complex(1.0, 0.0), Complex(1.0, 0.0)}};
+    block.d_matrix = {{Complex(3.0, 0.0)}};
+    const auto nonlocal = std::make_shared<Projector>(grid.size(), volume_element,
+                                                      std::vector<Projector::ProjectorBlock>{block});
+    ModuleRI::SternheimerFDHamiltonian hamiltonian(grid, {2.0, -1.0}, 0.5, nonlocal);
+
+    ModuleRI::SternheimerDeltaGridFunction basis;
+    basis.values = {Complex(1.0, 0.0), Complex(0.0, 1.0)};
+    basis.gradients[0] = {Complex(2.0, 0.0), Complex(0.0, 0.0)};
+    basis.gradients[1] = {Complex(0.0, 0.0), Complex(1.0, 0.0)};
+    basis.gradients[2] = {Complex(0.0, 0.0), Complex(0.0, 0.0)};
+
+    const auto matrices
+        = ModuleRI::assemble_delta_sternheimer_grid_matrices(hamiltonian, {basis}, volume_element);
+
+    ASSERT_EQ(matrices.overlap.size(), 1);
+    ASSERT_EQ(matrices.hamiltonian.size(), 1);
+    EXPECT_NEAR(matrices.overlap[0].real(), 1.0, 1.0e-14);
+    EXPECT_NEAR(matrices.overlap[0].imag(), 0.0, 1.0e-14);
+    // T=1.25, Vloc=0.5, and Vnl=1.5 in the same grid metric.
+    EXPECT_NEAR(matrices.hamiltonian[0].real(), 3.25, 1.0e-14);
+    EXPECT_NEAR(matrices.hamiltonian[0].imag(), 0.0, 1.0e-14);
+}
+
+TEST(SternheimerDelta, CombinesLCAOCoefficientsWithAOValuesAndAnalyticGradients)
+{
+    ModuleRI::SternheimerDeltaGridFunction first;
+    first.values = {Complex(1.0, 0.0), Complex(0.0, 1.0)};
+    first.gradients[0] = {Complex(2.0, 0.0), Complex(0.0, 0.0)};
+    first.gradients[1] = {Complex(0.0, 1.0), Complex(1.0, 0.0)};
+    first.gradients[2] = {Complex(0.0, 0.0), Complex(0.0, -1.0)};
+
+    ModuleRI::SternheimerDeltaGridFunction second;
+    second.values = {Complex(0.0, -1.0), Complex(3.0, 0.0)};
+    second.gradients[0] = {Complex(1.0, 1.0), Complex(0.0, 2.0)};
+    second.gradients[1] = {Complex(-1.0, 0.0), Complex(0.0, 0.0)};
+    second.gradients[2] = {Complex(2.0, 0.0), Complex(1.0, 1.0)};
+
+    const Complex first_coefficient(1.0, 0.5);
+    const Complex second_coefficient(-0.25, 2.0);
+    const auto state = ModuleRI::linear_combination_delta_sternheimer_grid_functions(
+        {first, second}, {first_coefficient, second_coefficient});
+
+    auto combine = [first_coefficient, second_coefficient](const Vector& first_values,
+                                                            const Vector& second_values) {
+        Vector expected(first_values.size(), Complex(0.0, 0.0));
+        for (std::size_t ir = 0; ir != expected.size(); ++ir)
+        {
+            expected[ir] = first_coefficient * first_values[ir]
+                           + second_coefficient * second_values[ir];
+        }
+        return expected;
+    };
+    expect_vector_near(state.values, combine(first.values, second.values), 1.0e-14);
+    for (int direction = 0; direction != 3; ++direction)
+    {
+        expect_vector_near(state.gradients[static_cast<std::size_t>(direction)],
+                           combine(first.gradients[static_cast<std::size_t>(direction)],
+                                   second.gradients[static_cast<std::size_t>(direction)]),
+                           1.0e-14);
+    }
+
+    EXPECT_THROW(ModuleRI::linear_combination_delta_sternheimer_grid_functions({first, second},
+                                                                                {first_coefficient}),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerDelta, OrthonormalizesOccupiedProjectorValuesAndGradientsTogether)
+{
+    constexpr double volume_element = 1.0;
+
+    ModuleRI::SternheimerDeltaGridFunction first;
+    first.values = {Complex(2.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0)};
+    first.gradients[0] = {Complex(4.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0)};
+    first.gradients[1] = {Complex(0.0, 2.0), Complex(0.0, 0.0), Complex(0.0, 0.0)};
+    first.gradients[2] = {Complex(-2.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0)};
+
+    ModuleRI::SternheimerDeltaGridFunction second;
+    second.values = {Complex(3.0, 0.0), Complex(4.0, 0.0), Complex(0.0, 0.0)};
+    second.gradients[0] = {Complex(11.0, 0.0), Complex(20.0, 0.0), Complex(0.0, 0.0)};
+    second.gradients[1] = {Complex(0.0, 7.0), Complex(0.0, 12.0), Complex(0.0, 0.0)};
+    second.gradients[2] = {Complex(-5.0, 0.0), Complex(8.0, 0.0), Complex(0.0, 0.0)};
+
+    const auto projector = ModuleRI::orthonormalize_delta_sternheimer_grid_functions(
+        {first, second}, volume_element, 1.0e-12);
+
+    ASSERT_EQ(projector.size(), 2);
+    expect_vector_near(projector[0].values,
+                       {Complex(1.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0)},
+                       1.0e-14);
+    expect_vector_near(projector[1].values,
+                       {Complex(0.0, 0.0), Complex(1.0, 0.0), Complex(0.0, 0.0)},
+                       1.0e-14);
+    expect_vector_near(projector[1].gradients[0],
+                       {Complex(1.25, 0.0), Complex(5.0, 0.0), Complex(0.0, 0.0)},
+                       1.0e-14);
+    expect_vector_near(projector[1].gradients[1],
+                       {Complex(0.0, 1.0), Complex(0.0, 3.0), Complex(0.0, 0.0)},
+                       1.0e-14);
+    expect_vector_near(projector[1].gradients[2],
+                       {Complex(-0.5, 0.0), Complex(2.0, 0.0), Complex(0.0, 0.0)},
+                       1.0e-14);
+
+    const Complex overlap00
+        = ModuleRI::sternheimer_fd_grid_dot(projector[0].values, projector[0].values, volume_element);
+    const Complex overlap01
+        = ModuleRI::sternheimer_fd_grid_dot(projector[0].values, projector[1].values, volume_element);
+    const Complex overlap11
+        = ModuleRI::sternheimer_fd_grid_dot(projector[1].values, projector[1].values, volume_element);
+    EXPECT_NEAR(overlap00.real(), 1.0, 1.0e-14);
+    EXPECT_NEAR(std::abs(overlap01), 0.0, 1.0e-14);
+    EXPECT_NEAR(overlap11.real(), 1.0, 1.0e-14);
+}
+
+TEST(SternheimerDelta, ReferenceSubspaceTransformsValuesAndGradientsTogether)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid{2, 1, 1, 1.0, 1.0, 1.0, false};
+    constexpr double volume_element = 1.0;
+    ModuleRI::SternheimerFDHamiltonian hamiltonian(grid, {0.0, 0.0}, 0.5);
+
+    ModuleRI::SternheimerDeltaGridFunction occupied;
+    occupied.values = {Complex(1.0, 0.0), Complex(0.0, 0.0)};
+    occupied.gradients[0] = {Complex(1.0, 0.0), Complex(0.0, 0.0)};
+    occupied.gradients[1] = Vector(2, Complex(0.0, 0.0));
+    occupied.gradients[2] = Vector(2, Complex(0.0, 0.0));
+
+    ModuleRI::SternheimerDeltaGridFunction candidate;
+    candidate.values = {Complex(1.0, 0.0), Complex(1.0, 0.0)};
+    candidate.gradients[0] = {Complex(2.0, 0.0), Complex(3.0, 0.0)};
+    candidate.gradients[1] = Vector(2, Complex(0.0, 0.0));
+    candidate.gradients[2] = Vector(2, Complex(0.0, 0.0));
+
+    ModuleRI::SternheimerDeltaSubspaceOptions options;
+    options.max_virtual_states = 1;
+    const auto subspace = ModuleRI::build_reference_delta_sternheimer_subspace(
+        hamiltonian, {occupied}, {candidate}, volume_element, options);
+
+    ASSERT_EQ(subspace.virtual_states.size(), 1);
+    ASSERT_EQ(subspace.grid_functions.size(), 1);
+    expect_vector_near(subspace.grid_functions[0].values,
+                       {Complex(0.0, 0.0), Complex(1.0, 0.0)},
+                       1.0e-14);
+    expect_vector_near(subspace.grid_functions[0].gradients[0],
+                       {Complex(1.0, 0.0), Complex(3.0, 0.0)},
+                       1.0e-14);
+    EXPECT_NEAR(subspace.virtual_states[0].eigenvalue, 5.0, 1.0e-13);
+}
+
+TEST(SternheimerDelta, BuildsPeriodicCenteredGradientForOccupiedGridState)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid{4, 1, 1, 0.5, 1.0, 1.0, true};
+    Vector values(static_cast<std::size_t>(grid.size()), Complex(0.0, 0.0));
+    for (int ix = 0; ix != grid.nx; ++ix)
+    {
+        const double phase = 0.5 * std::acos(-1.0) * static_cast<double>(ix);
+        values[static_cast<std::size_t>(ix)] = std::exp(Complex(0.0, phase));
+    }
+
+    const auto function = ModuleRI::make_delta_sternheimer_grid_function_with_fd_gradients(values, grid);
+
+    expect_vector_near(function.values, values, 1.0e-14);
+    for (int ix = 0; ix != grid.nx; ++ix)
+    {
+        const Complex expected = Complex(0.0, 2.0) * values[static_cast<std::size_t>(ix)];
+        EXPECT_NEAR(function.gradients[0][static_cast<std::size_t>(ix)].real(), expected.real(), 1.0e-14);
+        EXPECT_NEAR(function.gradients[0][static_cast<std::size_t>(ix)].imag(), expected.imag(), 1.0e-14);
+        EXPECT_NEAR(std::abs(function.gradients[1][static_cast<std::size_t>(ix)]), 0.0, 1.0e-14);
+        EXPECT_NEAR(std::abs(function.gradients[2][static_cast<std::size_t>(ix)]), 0.0, 1.0e-14);
+    }
+}
+
+TEST(SternheimerDelta, EnumeratesEveryPeriodicOrbitalImageInsideTheCutoff)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid{12, 12, 12, 1.0, 1.0, 1.0, true};
+    const auto centered_wide
+        = ModuleRI::enumerate_delta_sternheimer_periodic_images(grid, {6.0, 6.0, 6.0}, 8.0);
+    EXPECT_EQ(centered_wide.size(), 27);
+
+    const auto centered_local
+        = ModuleRI::enumerate_delta_sternheimer_periodic_images(grid, {6.0, 6.0, 6.0}, 5.0);
+    ASSERT_EQ(centered_local.size(), 1);
+    EXPECT_EQ(centered_local[0], (std::array<int, 3>{0, 0, 0}));
+
+    const auto boundary_crossing
+        = ModuleRI::enumerate_delta_sternheimer_periodic_images(grid, {1.0, 6.0, 6.0}, 2.0);
+    ASSERT_EQ(boundary_crossing.size(), 2);
+    EXPECT_NE(std::find(boundary_crossing.begin(), boundary_crossing.end(), std::array<int, 3>{0, 0, 0}),
+              boundary_crossing.end());
+    EXPECT_NE(std::find(boundary_crossing.begin(), boundary_crossing.end(), std::array<int, 3>{1, 0, 0}),
+              boundary_crossing.end());
+
+    grid.periodic = false;
+    const auto nonperiodic
+        = ModuleRI::enumerate_delta_sternheimer_periodic_images(grid, {6.0, 6.0, 6.0}, 8.0);
+    ASSERT_EQ(nonperiodic.size(), 1);
+    EXPECT_EQ(nonperiodic[0], (std::array<int, 3>{0, 0, 0}));
 }
 
 TEST(SternheimerDelta, BuildsOrthogonalVirtualSubspaceWithHamiltonianResiduals)
@@ -213,5 +491,123 @@ TEST(SternheimerDelta, StrictProjectedSolverMatchesStandardSternheimerResponse)
 
     ASSERT_TRUE(delta.solver.converged);
     EXPECT_LT(delta.residual_norm, 1.0e-9);
+    ASSERT_EQ(delta.response.sos_coefficients.size(), subspace.virtual_states.size());
+    ASSERT_EQ(delta.response.pulay_coefficients.size(), subspace.virtual_states.size());
+    ASSERT_EQ(delta.response.coefficients.size(), subspace.virtual_states.size());
+    for (std::size_t ia = 0; ia != subspace.virtual_states.size(); ++ia)
+    {
+        const Complex component_sum = delta.response.sos_coefficients[ia] + delta.response.pulay_coefficients[ia];
+        EXPECT_NEAR(delta.response.coefficients[ia].real(), component_sum.real(), 1.0e-12);
+        EXPECT_NEAR(delta.response.coefficients[ia].imag(), component_sum.imag(), 1.0e-12);
+    }
+    Vector reconstructed_from_components = delta.response.out_wavefunction;
+    for (std::size_t ir = 0; ir != reconstructed_from_components.size(); ++ir)
+    {
+        reconstructed_from_components[ir]
+            += delta.response.in_sos_wavefunction[ir] + delta.response.in_pulay_wavefunction[ir];
+    }
+    expect_vector_near(delta.response.reconstructed_wavefunction, reconstructed_from_components, 1.0e-12);
     expect_vector_near(delta.response.reconstructed_wavefunction, standard.delta_wavefunction, 1.0e-8);
+}
+
+TEST(SternheimerDelta, StrictIndependentDeltaHamiltonianMatchesExplicitHybridBlockEquation)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid{5, 1, 1, 0.6, 1.0, 1.0, true};
+    constexpr double volume_element = 0.6;
+    const std::vector<double> potential = {0.10, -0.05, 0.20, -0.10, 0.05};
+    ModuleRI::SternheimerFDHamiltonian hamiltonian(grid, potential);
+    const auto states = ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 5, volume_element);
+
+    const Vector& occupied = states.wavefunctions[0];
+    constexpr double mixing_angle = 0.41;
+    constexpr double mixing_phase = 0.37;
+    const double cosine = std::cos(mixing_angle);
+    const double sine = std::sin(mixing_angle);
+    const Complex phase = std::exp(Complex(0.0, mixing_phase));
+
+    Vector eta(grid.size(), Complex(0.0, 0.0));
+    Vector out_direction(grid.size(), Complex(0.0, 0.0));
+    for (std::size_t ir = 0; ir != eta.size(); ++ir)
+    {
+        eta[ir] = cosine * states.wavefunctions[2][ir] + sine * phase * states.wavefunctions[3][ir];
+        out_direction[ir]
+            = -sine * std::conj(phase) * states.wavefunctions[2][ir] + cosine * states.wavefunctions[3][ir];
+    }
+
+    auto dot = [volume_element](const Vector& lhs, const Vector& rhs) {
+        return ModuleRI::sternheimer_fd_grid_dot(lhs, rhs, volume_element);
+    };
+    EXPECT_NEAR(std::abs(dot(occupied, eta)), 0.0, 1.0e-12);
+    EXPECT_NEAR(std::abs(dot(occupied, out_direction)), 0.0, 1.0e-12);
+    EXPECT_NEAR(std::abs(dot(eta, out_direction)), 0.0, 1.0e-12);
+
+    Vector h_eta;
+    Vector h_out;
+    hamiltonian.apply(eta, h_eta);
+    hamiltonian.apply(out_direction, h_out);
+    const double fd_eta_diagonal = std::real(dot(eta, h_eta));
+    const double delta_eigenvalue = fd_eta_diagonal + 0.37;
+    EXPECT_GT(std::abs(delta_eigenvalue - fd_eta_diagonal), 0.3);
+
+    Vector residual = h_eta;
+    ModuleRI::SternheimerRPA::project_out_subspace({occupied, eta}, dot, residual);
+    const Complex out_eta_coupling = dot(out_direction, residual);
+    const Complex eta_out_coupling = std::conj(out_eta_coupling);
+
+    const Complex rhs_eta(0.27, -0.19);
+    const Complex rhs_out(-0.31, 0.23);
+    Vector rhs(grid.size(), Complex(0.0, 0.0));
+    for (std::size_t ir = 0; ir != rhs.size(); ++ir)
+    {
+        rhs[ir] = rhs_eta * eta[ir] + rhs_out * out_direction[ir];
+    }
+
+    constexpr double omega = 0.42;
+    const double occupied_eigenvalue = states.eigenvalues[0];
+    const Complex delta_block(delta_eigenvalue - occupied_eigenvalue, omega);
+    const Complex out_block = dot(out_direction, h_out) - occupied_eigenvalue + Complex(0.0, omega);
+    const Complex determinant
+        = delta_block * out_block - eta_out_coupling * out_eta_coupling;
+    const Complex expected_eta_coefficient
+        = (rhs_eta * out_block - eta_out_coupling * rhs_out) / determinant;
+    const Complex expected_out_coefficient
+        = (delta_block * rhs_out - out_eta_coupling * rhs_eta) / determinant;
+
+    ModuleRI::SternheimerRPA::SolverOptions solver_options;
+    solver_options.max_iter = 80;
+    solver_options.residual_tol = 1.0e-12;
+    const ModuleRI::SternheimerDeltaVirtualState virtual_state{eta, residual, delta_eigenvalue};
+    const Complex perturbation_matrix_element = -rhs_eta;
+    const auto result = ModuleRI::solve_delta_sternheimer_linear_response(hamiltonian,
+                                                                           {occupied},
+                                                                           occupied_eigenvalue,
+                                                                           rhs,
+                                                                           {virtual_state},
+                                                                           {perturbation_matrix_element},
+                                                                           omega,
+                                                                           volume_element,
+                                                                           solver_options);
+
+    ASSERT_TRUE(result.solver.converged);
+    EXPECT_LT(result.residual_norm, 1.0e-9);
+    Vector expected_out(grid.size(), Complex(0.0, 0.0));
+    Vector expected_total(grid.size(), Complex(0.0, 0.0));
+    for (std::size_t ir = 0; ir != expected_out.size(); ++ir)
+    {
+        expected_out[ir] = expected_out_coefficient * out_direction[ir];
+        expected_total[ir] = expected_out[ir] + expected_eta_coefficient * eta[ir];
+    }
+    expect_vector_near(result.response.out_wavefunction, expected_out, 1.0e-9);
+    expect_vector_near(result.response.reconstructed_wavefunction, expected_total, 1.0e-9);
+
+    const Complex expected_sos = rhs_eta / delta_block;
+    const Complex expected_pulay = -eta_out_coupling * expected_out_coefficient / delta_block;
+    ASSERT_EQ(result.response.sos_coefficients.size(), 1);
+    ASSERT_EQ(result.response.pulay_coefficients.size(), 1);
+    EXPECT_NEAR(result.response.sos_coefficients[0].real(), expected_sos.real(), 1.0e-10);
+    EXPECT_NEAR(result.response.sos_coefficients[0].imag(), expected_sos.imag(), 1.0e-10);
+    EXPECT_NEAR(result.response.pulay_coefficients[0].real(), expected_pulay.real(), 1.0e-10);
+    EXPECT_NEAR(result.response.pulay_coefficients[0].imag(), expected_pulay.imag(), 1.0e-10);
+    EXPECT_NEAR(result.response.coefficients[0].real(), expected_eta_coefficient.real(), 1.0e-9);
+    EXPECT_NEAR(result.response.coefficients[0].imag(), expected_eta_coefficient.imag(), 1.0e-9);
 }

@@ -7,6 +7,7 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_gint/gint_atom.h"
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_lcao/module_ri/exx_abfs-construct_orbs.h"
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
@@ -17,6 +18,7 @@
 #include <algorithm>
 #include <cctype>
 #include <chrono>
+#include <cmath>
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
@@ -424,68 +426,129 @@ std::vector<SternheimerABFGridChannel> build_abfs_ccp_grid_channels(const UnitCe
     return sample_sternheimer_abf_grid_channels(radials_by_type, atom_types, atom_positions, grid, max_channels);
 }
 
-std::vector<std::vector<SternheimerRadialPerturbation>> make_lcao_candidate_radials(const LCAO_Orbitals& orb)
+std::vector<SternheimerDeltaGridFunction> build_lcao_candidate_grid_functions(
+    const UnitCell& ucell,
+    const SternheimerFDHamiltonian::Grid& grid,
+    const LCAO_Orbitals* provided_orbitals = nullptr)
 {
-    std::vector<std::vector<SternheimerRadialPerturbation>> radials_by_type(
-        static_cast<std::size_t>(orb.get_ntype()));
-    for (int type = 0; type != orb.get_ntype(); ++type)
+    LCAO_Orbitals loaded_orbitals;
+    if (provided_orbitals == nullptr)
     {
+        read_sternheimer_orbitals(ucell, loaded_orbitals);
+        provided_orbitals = &loaded_orbitals;
+    }
+    const LCAO_Orbitals& orb = *provided_orbitals;
+    const int grid_size = grid.size();
+    constexpr int sample_chunk_size = 8192;
+    const double lx = grid.nx * grid.hx;
+    const double ly = grid.ny * grid.hy;
+    const double lz = grid.nz * grid.hz;
+
+    std::vector<SternheimerDeltaGridFunction> candidates;
+    int atom_index = 0;
+    for (int type = 0; type != ucell.ntype; ++type)
+    {
+        const Atom& unitcell_atom = ucell.atoms[type];
         const Numerical_Orbital& atom_orbitals = orb.Phi[type];
-        for (int l = 0; l <= atom_orbitals.getLmax(); ++l)
+        Atom sampling_atom;
+        sampling_atom.nwl = atom_orbitals.getLmax();
+        sampling_atom.l_nchi.resize(static_cast<std::size_t>(sampling_atom.nwl + 1), 0);
+        for (int angular_momentum = 0; angular_momentum <= sampling_atom.nwl; ++angular_momentum)
         {
-            for (int n = 0; n != atom_orbitals.getNchi(l); ++n)
+            sampling_atom.l_nchi[static_cast<std::size_t>(angular_momentum)]
+                = atom_orbitals.getNchi(angular_momentum);
+            sampling_atom.nw += (2 * angular_momentum + 1)
+                                * sampling_atom.l_nchi[static_cast<std::size_t>(angular_momentum)];
+        }
+        sampling_atom.set_index();
+
+        for (int ia = 0; ia != unitcell_atom.na; ++ia, ++atom_index)
+        {
+            const int orbital_count = sampling_atom.nw;
+            const std::size_t candidate_begin = candidates.size();
+            candidates.resize(candidate_begin + static_cast<std::size_t>(orbital_count));
+            for (int iw = 0; iw != orbital_count; ++iw)
             {
-                const Numerical_Orbital_Lm& orbital = atom_orbitals.PhiLN(l, n);
-                SternheimerRadialPerturbation radial;
-                radial.type_index = type;
-                radial.angular_momentum = orbital.getL();
-                radial.radial_index = orbital.getChi();
-                radial.label = orbital.getLabel();
-                radial.radial_grid = orbital.get_r_radial();
-                radial.radial_values = orbital.get_psi();
-                radials_by_type[static_cast<std::size_t>(type)].push_back(std::move(radial));
+                SternheimerDeltaGridFunction& candidate
+                    = candidates[candidate_begin + static_cast<std::size_t>(iw)];
+                candidate.values.assign(static_cast<std::size_t>(grid_size),
+                                        SternheimerFDHamiltonian::Complex(0.0, 0.0));
+                for (SternheimerFDHamiltonian::Vector& gradient: candidate.gradients)
+                {
+                    gradient.assign(static_cast<std::size_t>(grid_size),
+                                    SternheimerFDHamiltonian::Complex(0.0, 0.0));
+                }
+            }
+
+            ModuleGint::GintAtom sampler(&sampling_atom,
+                                         type,
+                                         ia,
+                                         atom_index,
+                                         ModuleGint::Vec3i(0, 0, 0),
+                                         ModuleGint::Vec3i(0, 0, 0),
+                                         ModuleGint::Vec3d(0.0, 0.0, 0.0),
+                                         &orb.Phi[type],
+                                         &ucell);
+            const ModuleBase::Vector3<double> atom_position = unitcell_atom.tau[ia] * ucell.lat0;
+            const std::vector<std::array<int, 3>> periodic_images
+                = enumerate_delta_sternheimer_periodic_images(grid,
+                                                               {atom_position.x,
+                                                                atom_position.y,
+                                                                atom_position.z},
+                                                               atom_orbitals.getRcut());
+            for (int first = 0; first < grid_size; first += sample_chunk_size)
+            {
+                const int chunk_size = std::min(sample_chunk_size, grid_size - first);
+                std::vector<ModuleGint::Vec3d> coordinates(static_cast<std::size_t>(chunk_size));
+                const std::size_t buffer_size
+                    = static_cast<std::size_t>(chunk_size) * static_cast<std::size_t>(orbital_count);
+                std::vector<double> values(buffer_size, 0.0);
+                std::vector<double> gradient_x(buffer_size, 0.0);
+                std::vector<double> gradient_y(buffer_size, 0.0);
+                std::vector<double> gradient_z(buffer_size, 0.0);
+                for (const std::array<int, 3>& image: periodic_images)
+                {
+                    for (int local = 0; local != chunk_size; ++local)
+                    {
+                        const int linear = first + local;
+                        const int ix = linear / (grid.ny * grid.nz);
+                        const int remainder = linear % (grid.ny * grid.nz);
+                        const int iy = remainder / grid.nz;
+                        const int iz = remainder % grid.nz;
+                        coordinates[static_cast<std::size_t>(local)]
+                            = ModuleGint::Vec3d(ix * grid.hx - atom_position.x - image[0] * lx,
+                                               iy * grid.hy - atom_position.y - image[1] * ly,
+                                               iz * grid.hz - atom_position.z - image[2] * lz);
+                    }
+                    sampler.set_phi_dphi(coordinates,
+                                         orbital_count,
+                                         values.data(),
+                                         gradient_x.data(),
+                                         gradient_y.data(),
+                                         gradient_z.data());
+                    for (int local = 0; local != chunk_size; ++local)
+                    {
+                        const std::size_t grid_index = static_cast<std::size_t>(first + local);
+                        for (int iw = 0; iw != orbital_count; ++iw)
+                        {
+                            const std::size_t buffer_index
+                                = static_cast<std::size_t>(local) * static_cast<std::size_t>(orbital_count)
+                                  + static_cast<std::size_t>(iw);
+                            SternheimerDeltaGridFunction& candidate
+                                = candidates[candidate_begin + static_cast<std::size_t>(iw)];
+                            candidate.values[grid_index]
+                                += SternheimerFDHamiltonian::Complex(values[buffer_index], 0.0);
+                            candidate.gradients[0][grid_index]
+                                += SternheimerFDHamiltonian::Complex(gradient_x[buffer_index], 0.0);
+                            candidate.gradients[1][grid_index]
+                                += SternheimerFDHamiltonian::Complex(gradient_y[buffer_index], 0.0);
+                            candidate.gradients[2][grid_index]
+                                += SternheimerFDHamiltonian::Complex(gradient_z[buffer_index], 0.0);
+                        }
+                    }
+                }
             }
         }
-    }
-    return radials_by_type;
-}
-
-std::vector<SternheimerFDHamiltonian::Vector> build_lcao_candidate_grid_orbitals(
-    const UnitCell& ucell,
-    const SternheimerFDHamiltonian::Grid& grid)
-{
-    LCAO_Orbitals orb;
-    read_sternheimer_orbitals(ucell, orb);
-    const auto radials_by_type = make_lcao_candidate_radials(orb);
-
-    std::vector<int> atom_types;
-    std::vector<ModuleBase::Vector3<double>> atom_positions;
-    atom_types.reserve(ucell.nat);
-    atom_positions.reserve(ucell.nat);
-    for (int it = 0; it != ucell.ntype; ++it)
-    {
-        const Atom& atom = ucell.atoms[it];
-        for (int ia = 0; ia != atom.na; ++ia)
-        {
-            atom_types.push_back(it);
-            atom_positions.push_back(atom.tau[ia] * ucell.lat0);
-        }
-    }
-
-    const std::vector<SternheimerABFGridChannel> channels
-        = sample_sternheimer_abf_grid_channels(radials_by_type, atom_types, atom_positions, grid, -1);
-    std::vector<SternheimerFDHamiltonian::Vector> candidates;
-    candidates.reserve(channels.size());
-    for (const SternheimerABFGridChannel& channel: channels)
-    {
-        SternheimerFDHamiltonian::Vector candidate(
-            channel.potential_r.size(),
-            SternheimerFDHamiltonian::Complex(0.0, 0.0));
-        for (std::size_t ir = 0; ir != channel.potential_r.size(); ++ir)
-        {
-            candidate[ir] = SternheimerFDHamiltonian::Complex(channel.potential_r[ir], 0.0);
-        }
-        candidates.push_back(std::move(candidate));
     }
     return candidates;
 }
@@ -887,11 +950,14 @@ void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
     }
 }
 
-void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
-                                        const ModulePW::PW_Basis& pw_basis,
-                                        const UnitCell& ucell,
-                                        const elecstate::ElecState& elec_state,
-                                        const std::string& output_dir)
+void run_sternheimer_abacus_chi0_output_impl(
+    const elecstate::Potential& potential,
+    const ModulePW::PW_Basis& pw_basis,
+    const UnitCell& ucell,
+    const elecstate::ElecState& elec_state,
+    const std::string& output_dir,
+    const LCAO_Orbitals* lcao_orbitals,
+    const std::vector<std::vector<SternheimerFDHamiltonian::Complex>>* lcao_occupied_coefficients)
 {
     if (!PARAM.inp.out_sternheimer_librpa)
     {
@@ -963,8 +1029,14 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
             throw std::runtime_error("No occupied DFT bands are available for Sternheimer chi0 output.");
         }
 
+        const bool use_lcao_zero_order = lcao_occupied_coefficients != nullptr;
+        if ((lcao_orbitals == nullptr) != (lcao_occupied_coefficients == nullptr))
+        {
+            throw std::runtime_error("Sternheimer LCAO zero-order input is incomplete.");
+        }
         const int requested_bands = positive_int_from_env(kBandsEnv, occupied_count);
-        const int num_bands = std::min(requested_bands, elec_state.ekb.nc);
+        const int num_bands = use_lcao_zero_order ? occupied_count
+                                                  : std::min(requested_bands, elec_state.ekb.nc);
         if (num_bands < occupied_count)
         {
             throw std::runtime_error("Sternheimer chi0 output requires all occupied bands; use the smoke test for "
@@ -982,6 +1054,22 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
         const std::string frequency_grid_file = PARAM.inp.sternheimer_frequency_grid_file;
         const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
+        if (use_lcao_zero_order)
+        {
+            if (!use_delta_sternheimer)
+            {
+                throw std::runtime_error("Sternheimer LCAO zero-order input currently requires sternheimer_delta=true.");
+            }
+            if (PARAM.inp.nspin != 1 || elec_state.ekb.nr != 1 || elec_state.wg.nr != 1)
+            {
+                throw std::runtime_error(
+                    "Sternheimer LCAO zero-order input currently supports only Gamma-point nspin=1 calculations.");
+            }
+            if (lcao_occupied_coefficients->size() != static_cast<std::size_t>(occupied_count))
+            {
+                throw std::runtime_error("Sternheimer LCAO occupied coefficient count does not match occupations.");
+            }
+        }
 
         const std::vector<double> eigenvalues_ry = eigenvalues_ry_from_elec_state(elec_state, 0);
         const std::vector<double> occupations = occupations_from_elec_state(elec_state, 0);
@@ -1058,6 +1146,9 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                    elapsed_seconds_since(chi0_start_time),
                                    "grid_size=" + std::to_string(grid_data.grid.size()));
         SternheimerFDZeroOrderStates states;
+        std::vector<SternheimerDeltaGridFunction> sampled_ao_functions;
+        std::vector<SternheimerDeltaGridFunction> lcao_occupied_functions;
+        std::vector<SternheimerDeltaGridFunction> lcao_occupied_projector_functions;
         append_chi0_progress_event("zero_order_start",
                                    0,
                                    -1,
@@ -1067,16 +1158,69 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                    nullptr,
                                    -1.0,
                                    elapsed_seconds_since(chi0_start_time),
-                                   GlobalV::MY_RANK == 0 ? "solve" : "wait");
-        if (!use_frequency_mpi || GlobalV::MY_RANK == 0)
+                                   use_lcao_zero_order ? "lcao_sample"
+                                                       : (GlobalV::MY_RANK == 0 ? "fd_solve" : "wait"));
+        if (use_lcao_zero_order)
         {
-            states = solve_fd_zero_order_auto(hamiltonian,
-                                              num_bands,
-                                              grid_data.volume_element,
-                                              max_dense_size,
-                                              lanczos_max_subspace_size);
+            sampled_ao_functions
+                = build_lcao_candidate_grid_functions(ucell, grid_data.grid, lcao_orbitals);
+            if (sampled_ao_functions.empty())
+            {
+                throw std::runtime_error("Sternheimer LCAO zero-order input found no sampled AO functions.");
+            }
+            lcao_occupied_functions.reserve(static_cast<std::size_t>(occupied_count));
+            states.eigenvalues.reserve(static_cast<std::size_t>(occupied_count));
+            states.wavefunctions.reserve(static_cast<std::size_t>(occupied_count));
+            states.residual_norms.reserve(static_cast<std::size_t>(occupied_count));
+            for (int ib = 0; ib != occupied_count; ++ib)
+            {
+                const auto& coefficients = (*lcao_occupied_coefficients)[static_cast<std::size_t>(ib)];
+                if (coefficients.size() != sampled_ao_functions.size())
+                {
+                    throw std::runtime_error(
+                        "Sternheimer LCAO coefficient basis size does not match sampled AO functions.");
+                }
+                SternheimerDeltaGridFunction occupied_function
+                    = linear_combination_delta_sternheimer_grid_functions(sampled_ao_functions, coefficients);
+                const double norm = sternheimer_fd_grid_norm(occupied_function.values, grid_data.volume_element);
+                if (norm <= PARAM.inp.sternheimer_delta_norm_tol)
+                {
+                    throw std::runtime_error("Sternheimer sampled LCAO occupied function has zero norm.");
+                }
+                const SternheimerFDHamiltonian::Complex inverse_norm(1.0 / norm, 0.0);
+                for (auto& value: occupied_function.values)
+                {
+                    value *= inverse_norm;
+                }
+                for (auto& gradient: occupied_function.gradients)
+                {
+                    for (auto& value: gradient)
+                    {
+                        value *= inverse_norm;
+                    }
+                }
+                states.eigenvalues.push_back(elec_state.ekb(0, ib));
+                states.wavefunctions.push_back(occupied_function.values);
+                states.residual_norms.push_back(0.0);
+                lcao_occupied_functions.push_back(std::move(occupied_function));
+            }
+            lcao_occupied_projector_functions = orthonormalize_delta_sternheimer_grid_functions(
+                lcao_occupied_functions,
+                grid_data.volume_element,
+                PARAM.inp.sternheimer_delta_norm_tol);
         }
-        broadcast_zero_order_states(states, grid_data.grid.size(), use_frequency_mpi);
+        else
+        {
+            if (!use_frequency_mpi || GlobalV::MY_RANK == 0)
+            {
+                states = solve_fd_zero_order_auto(hamiltonian,
+                                                  num_bands,
+                                                  grid_data.volume_element,
+                                                  max_dense_size,
+                                                  lanczos_max_subspace_size);
+            }
+            broadcast_zero_order_states(states, grid_data.grid.size(), use_frequency_mpi);
+        }
         append_chi0_progress_event("zero_order_ready",
                                    0,
                                    -1,
@@ -1086,12 +1230,23 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                    nullptr,
                                    -1.0,
                                    elapsed_seconds_since(chi0_start_time),
-                                   "nstates=" + std::to_string(states.wavefunctions.size()));
+                                   std::string("source=") + (use_lcao_zero_order ? "lcao_ks" : "fd_grid")
+                                       + " nstates=" + std::to_string(states.wavefunctions.size()));
         const std::vector<SternheimerFDHamiltonian::Vector> occupied
             = occupied_wavefunctions_from_states(states, elec_state, 0);
         if (occupied.empty())
         {
-            throw std::runtime_error("No occupied FD zero-order states are available for Sternheimer chi0 output.");
+            throw std::runtime_error("No occupied zero-order states are available for Sternheimer chi0 output.");
+        }
+        std::vector<SternheimerFDHamiltonian::Vector> occupied_projector = occupied;
+        if (use_lcao_zero_order)
+        {
+            occupied_projector.clear();
+            occupied_projector.reserve(lcao_occupied_projector_functions.size());
+            for (const SternheimerDeltaGridFunction& function: lcao_occupied_projector_functions)
+            {
+                occupied_projector.push_back(function.values);
+            }
         }
 
         const std::vector<std::vector<double>> potentials = collect_channel_potentials(channels);
@@ -1112,21 +1267,40 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                        -1.0,
                                        elapsed_seconds_since(chi0_start_time),
                                        "candidate_orbitals");
-            const std::vector<SternheimerFDHamiltonian::Vector> candidate_orbitals
-                = build_lcao_candidate_grid_orbitals(ucell, grid_data.grid);
-            if (candidate_orbitals.empty())
+            std::vector<SternheimerDeltaGridFunction> loaded_candidate_functions;
+            const std::vector<SternheimerDeltaGridFunction>* candidate_functions = &sampled_ao_functions;
+            if (candidate_functions->empty())
+            {
+                loaded_candidate_functions = build_lcao_candidate_grid_functions(ucell, grid_data.grid);
+                candidate_functions = &loaded_candidate_functions;
+            }
+            if (candidate_functions->empty())
             {
                 throw std::runtime_error("Sternheimer delta mode found no sampled LCAO candidate orbitals.");
+            }
+
+            std::vector<SternheimerDeltaGridFunction> fd_occupied_functions;
+            const std::vector<SternheimerDeltaGridFunction>* occupied_functions
+                = &lcao_occupied_projector_functions;
+            if (occupied_functions->empty())
+            {
+                fd_occupied_functions.reserve(occupied.size());
+                for (const SternheimerFDHamiltonian::Vector& occupied_wavefunction: occupied)
+                {
+                    fd_occupied_functions.push_back(
+                        make_delta_sternheimer_grid_function_with_fd_gradients(occupied_wavefunction, grid_data.grid));
+                }
+                occupied_functions = &fd_occupied_functions;
             }
 
             SternheimerDeltaSubspaceOptions delta_options;
             delta_options.max_virtual_states = PARAM.inp.sternheimer_delta_max_states;
             delta_options.norm_tolerance = PARAM.inp.sternheimer_delta_norm_tol;
-            delta_subspace = build_delta_sternheimer_subspace(hamiltonian,
-                                                              occupied,
-                                                              candidate_orbitals,
-                                                              grid_data.volume_element,
-                                                              delta_options);
+            delta_subspace = build_reference_delta_sternheimer_subspace(hamiltonian,
+                                                                        *occupied_functions,
+                                                                        *candidate_functions,
+                                                                        grid_data.volume_element,
+                                                                        delta_options);
             if (delta_subspace.virtual_states.empty())
             {
                 throw std::runtime_error("Sternheimer delta mode produced no fixed virtual states.");
@@ -1211,7 +1385,7 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
                                 grid_data.volume_element);
                         const SternheimerDeltaLinearResponse response
                             = solve_delta_sternheimer_linear_response(hamiltonian,
-                                                                      occupied,
+                                                                      occupied_projector,
                                                                       states.eigenvalues[ib],
                                                                       rhs,
                                                                       delta_subspace.virtual_states,
@@ -1353,11 +1527,14 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         }
         out << "pca_threshold " << pca_threshold << '\n';
         out << "ccp_rmesh_times " << ccp_rmesh_times << '\n';
+        out << "sternheimer_zero_order_source " << (use_lcao_zero_order ? "lcao_ks" : "fd_grid") << '\n';
         out << "occupied_bands " << occupied.size() << '\n';
+        out << "occupied_projector_dimension " << occupied_projector.size() << '\n';
         out << "abfs_channels " << num_channels << '\n';
         out << "sternheimer_delta " << (use_delta_sternheimer ? "yes" : "no") << '\n';
         if (use_delta_sternheimer)
         {
+            out << "sternheimer_delta_backend reference_value_gradient\n";
             out << "sternheimer_delta_max_states " << PARAM.inp.sternheimer_delta_max_states << '\n';
             out << "sternheimer_delta_norm_tol " << PARAM.inp.sternheimer_delta_norm_tol << '\n';
             out << "sternheimer_delta_virtual_states " << delta_subspace.virtual_states.size() << '\n';
@@ -1386,6 +1563,34 @@ void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
         }
 #endif
     }
+}
+
+void run_sternheimer_abacus_chi0_output(const elecstate::Potential& potential,
+                                        const ModulePW::PW_Basis& pw_basis,
+                                        const UnitCell& ucell,
+                                        const elecstate::ElecState& elec_state,
+                                        const std::string& output_dir)
+{
+    run_sternheimer_abacus_chi0_output_impl(
+        potential, pw_basis, ucell, elec_state, output_dir, nullptr, nullptr);
+}
+
+void run_sternheimer_abacus_lcao_chi0_output(
+    const elecstate::Potential& potential,
+    const ModulePW::PW_Basis& pw_basis,
+    const UnitCell& ucell,
+    const elecstate::ElecState& elec_state,
+    const LCAO_Orbitals& orbitals,
+    const std::vector<std::vector<std::complex<double>>>& occupied_coefficients,
+    const std::string& output_dir)
+{
+    run_sternheimer_abacus_chi0_output_impl(potential,
+                                            pw_basis,
+                                            ucell,
+                                            elec_state,
+                                            output_dir,
+                                            &orbitals,
+                                            &occupied_coefficients);
 }
 
 } // namespace ModuleRI

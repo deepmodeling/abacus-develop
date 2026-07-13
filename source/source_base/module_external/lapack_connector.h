@@ -239,6 +239,14 @@ void zgeev_(const char* jobvl, const char* jobvr, const int* n,
             double* rwork,
             int* info);
 
+// === General linear systems ===
+
+void zgesv_(const int* n, const int* nrhs,
+            std::complex<double>* a, const int* lda,
+            int* ipiv,
+            std::complex<double>* b, const int* ldb,
+            int* info);
+
 // === Matrix inversion (LU) ===
 
 void dgetrf_(const int* m, const int* n, double* a, const int* lda,
