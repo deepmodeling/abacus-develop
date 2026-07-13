@@ -31,6 +31,7 @@ jobs:
           python3-pip \
           xz-utils \
           ninja-build \
+          pkg-config \
           lcov \
           perl-modules \
           libcapture-tiny-perl \
