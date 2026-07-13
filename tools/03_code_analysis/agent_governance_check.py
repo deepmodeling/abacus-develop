@@ -296,6 +296,37 @@ def check_global_dependencies(
         )
 
 
+def _has_default_arg_in_parens(stripped: str) -> bool:
+    paren_depth = 0
+    in_string = False
+    string_char = ""
+    i = 0
+    while i < len(stripped):
+        c = stripped[i]
+        if in_string:
+            if c == "\\":
+                i += 2
+                continue
+            if c == string_char:
+                in_string = False
+            i += 1
+            continue
+        if c in ('"', "'"):
+            in_string = True
+            string_char = c
+            i += 1
+            continue
+        if c == "(":
+            paren_depth += 1
+        elif c == ")":
+            if paren_depth > 0:
+                paren_depth -= 1
+        elif c == "=" and paren_depth > 0:
+            return True
+        i += 1
+    return False
+
+
 def check_default_parameters(findings: List[Finding], lines: Iterable[DiffLine]) -> None:
     default_arg = re.compile(r"[(,]\s*[^()=;,{}]+\b\w+\s*=\s*[^,);{}]+")
     control_flow = re.compile(r"^(for|if|while|switch|catch)\s*\(")
@@ -306,6 +337,10 @@ def check_default_parameters(findings: List[Finding], lines: Iterable[DiffLine])
         if not stripped or stripped.startswith("//") or stripped.startswith("*"):
             continue
         if control_flow.match(stripped):
+            continue
+        if "=" not in stripped:
+            continue
+        if not _has_default_arg_in_parens(stripped):
             continue
         if "(" in stripped and ")" in stripped and default_arg.search(stripped):
             add_finding(
