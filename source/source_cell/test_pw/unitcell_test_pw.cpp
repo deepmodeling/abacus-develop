@@ -99,8 +99,6 @@ if(GlobalV::MY_RANK==0)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
-	//mandatory preliminaries
-	ucell->magnet.start_mag.resize(ucell->ntype);
 	//call read_atom_positions
 	EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning));
 	ofs_running.close();

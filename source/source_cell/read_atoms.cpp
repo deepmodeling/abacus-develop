@@ -25,6 +25,11 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
     const int nspin = PARAM.inp.nspin;
     assert (nspin==1 || nspin==2 || nspin==4);
 
+    if (ucell.magnet.start_mag.size() != static_cast<size_t>(ntype))
+    {
+        ucell.magnet.start_mag.resize(ntype, 0.0);
+    }
+
     if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifpos, "ATOMIC_POSITIONS"))
     {
         ModuleBase::GlobalFunc::READ_VALUE(ifpos, Coordinate);

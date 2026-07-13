@@ -187,11 +187,9 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
 {
     ModuleBase::TITLE("UnitCell", "setup_cell");
 
-    // (1) init mag
     assert(ntype > 0);
-    magnet.start_mag.resize(this->ntype);
 
-    // (2) init *Atom class array.
+    // (1) init *Atom class array.
     this->atoms = new Atom[this->ntype]; // atom species.
     this->set_atom_flag = true;
 
@@ -411,6 +409,7 @@ void UnitCell::setup(const std::string& latname_in,
                      const std::string& fixed_axes_in) {
     this->latName = latname_in;
     this->ntype = ntype_in;
+    this->magnet.start_mag.resize(ntype_in, 0.0);
     this->lmaxmax = lmaxmax_in;
     this->init_vel = init_vel_in;
     // pengfei Li add 2018-11-11

@@ -76,7 +76,6 @@ public:
 				this->init_vel,
 				this->fixed_axes);
 		
-		ucell->magnet.start_mag.resize(ucell->ntype); //mag set here
 		ucell->atom_label.resize(ucell->ntype);
 		ucell->atom_mass.resize(ucell->ntype);
 		ucell->pseudo_fn.resize(ucell->ntype);
@@ -92,7 +91,6 @@ public:
 			ucell->pseudo_fn[it] = this->pp_files[it];
 			ucell->pseudo_type[it] = this->pp_types[it];
 			ucell->orbital_fn[it] = this->orb_files[it];
-			ucell->magnet.start_mag[it] = 0.0; //mag set here
 		}
 		//lattice info
 		ucell->lat0 = this->lat0;

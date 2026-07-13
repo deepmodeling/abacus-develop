@@ -146,10 +146,7 @@ TEST_F(UcellTest,SetupCellAfterVC)
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
 	PARAM.input.nspin = 1;
-	
-	ucell->magnet.start_mag.resize(ucell->ntype);
 
-	
 	ucell->setup_cell(fn,ofs_running);
 	ucell->lat0 = 1.0;
 	ucell->latvec.Zero();
