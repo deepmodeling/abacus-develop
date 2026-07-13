@@ -4,6 +4,7 @@
 #include <RI/global/Tensor.h>
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/module_symmetry/symmetry_rotation_spin.h"
 
 namespace ModuleSymmetry
 {
@@ -64,6 +65,15 @@ namespace ModuleSymmetry
         std::vector<std::complex<double>> rot_matrix_ao(const std::vector<std::complex<double>>& DMkibz,
             const int ik_ibz, const int kstar_size, const int isym, const Parallel_2D& pv, const bool TRS_conj = false) const;
 
+        /// (nspin=4) build the 2*nao spin operator Sigma_y = I_nao (x) sigma_y in 2d-block layout.
+        std::vector<std::complex<double>> set_sigma_y_2d(const Parallel_2D& pv) const;
+
+        /// (nspin=4) time-reversal on the spin density matrix: D(k) = sigma_y D^*(-k) sigma_y,
+        /// realized distribution-safely as scale * Sigma_y * conj(X) * Sigma_y (X is the already
+        /// space-group-rotated D(-k) stored in the transposed 2d-block convention).
+        std::vector<std::complex<double>> trs_spin_rotate(const std::vector<std::complex<double>>& X,
+            const std::vector<std::complex<double>>& sigma_y, const Parallel_2D& pv, const double scale) const;
+
         /// calculate Wigner D matrix
         double wigner_d(const double beta, const int l, const int m1, const int m2) const;
         std::complex<double> wigner_D(const TCdouble& euler_angle, const int l, const int m1, const int m2, const bool inv) const;
@@ -87,7 +97,8 @@ namespace ModuleSymmetry
         /// 2d-block parallized rotation matrix in AO-representation, denoted as M.
         /// finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to recover D(k) from D(Rk).
         std::vector<std::complex<double>> contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms, const Statistics& cell_st,
-            const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv) const;
+            const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv,
+            const SpinRotation::Su2& spin_U = SpinRotation::Su2{ 1.0, 0.0, 0.0, 1.0 }) const;
 
         std::vector<std::vector<RI::Tensor<std::complex<double>>>>& get_rotmat_Slm() { return this->rotmat_Slm_; }
 

@@ -173,6 +173,34 @@ public:
             const bool gamma_only_pw);
 
     /**
+     * @brief Symmetrize the nspin=4 (non-collinear/SOC) spin density in reciprocal space.
+     *
+     * The three Pauli spin components (rho^x, rho^y, rho^z) are processed TOGETHER because
+     * each symmetry operation g couples the spatial map with a spin rotation W(g):
+     *     m_sym(G) = (1/|G|) sum_g W(g) * m(g^{-1} G) * phase(g).
+     * The spatial bookkeeping (grouping/phase) is identical to rhog_symmetry; the only
+     * difference is that the per-g spin rotation W(g) is applied to the 3-vector.
+     *
+     * @param rhogtot_x x-component of the spin density in reciprocal space
+     * @param rhogtot_y y-component of the spin density in reciprocal space
+     * @param rhogtot_z z-component of the spin density in reciprocal space
+     * @param wspin precomputed spin-rotation matrices (size nrotk), with
+     *        wspin[s] = SpinRotation::spin_so3(direct_to_cartesian(gmatrix[s], latvec)),
+     *        such that m'^i = sum_j wspin[s]_{ij} m^j under symmetry operation s
+     * @param ixyz2ipw index mapping from real to reciprocal space
+     * @param nx grid dimension in x
+     * @param ny grid dimension in y
+     * @param nz grid dimension in z
+     * @param fftnx FFT grid dimension in x
+     * @param fftny FFT grid dimension in y
+     * @param fftnz FFT grid dimension in z
+     */
+    void rhog_symmetry_soc(std::complex<double>* rhogtot_x, std::complex<double>* rhogtot_y,
+            std::complex<double>* rhogtot_z, const ModuleBase::Matrix3* wspin,
+            int* ixyz2ipw, const int &nx, const int &ny, const int &nz,
+            const int & fftnx, const int &fftny, const int &fftnz);
+
+    /**
      * @brief Symmetrize a vector3 with nat elements.
      *
      * Can be forces or variation of atom positions in relax.
@@ -279,6 +307,14 @@ public:
     /// (because currently the charge density symmetrization does not support it)
     /// Method: treat atoms with different magmom as atoms of different type
     void analyze_magnetic_group(const Atom* atoms, const Statistics& st, int& nrot_out, int& nrotk_out);
+
+    /// (nspin=4 / SOC) Restrict the already-built space group to the unitary magnetic
+    /// subgroup: keep operation g only if it preserves the magnetization as a pseudovector,
+    /// W(g) m_i = m_{g(i)} with W(g)=SpinRotation::spin_so3(gmatc). This prevents operations
+    /// that reverse the moment (which are only symmetries when combined with time reversal)
+    /// from being applied in k-reduction and density symmetrization.
+    /// See ref/2026-07-SOC磁群对称性判据.md. Non-magnetic (m_i=0) keeps all operations.
+    void analyze_magnetic_group_soc(const Atom* atoms, const Statistics& st, const ModuleBase::Matrix3& latvec);
 };
 }
 

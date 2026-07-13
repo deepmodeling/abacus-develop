@@ -114,7 +114,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_before_all_runners");
     // initialize the rotation matrix in AO representation
-    this->exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+    this->exx_spacegroup_symmetry = (ModuleSymmetry::Symmetry::symm_flag == 1);
     if (this->exx_spacegroup_symmetry)
     {
         const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);

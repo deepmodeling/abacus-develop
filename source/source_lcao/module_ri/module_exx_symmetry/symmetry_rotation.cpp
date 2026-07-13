@@ -10,6 +10,16 @@
 
 namespace ModuleSymmetry
 {
+    inline bool vec3_eq(const TCdouble& v1, const TCdouble& v2, const double& prec)
+    {
+        return (std::abs(v1.x - v2.x) < prec) && (std::abs(v1.y - v2.y) < prec) && (std::abs(v1.z - v2.z) < prec);
+    };
+    inline std::vector<std::complex<double>> vec_conj(const std::vector<std::complex<double>>& z, const double scal = 1.0)
+    {
+        std::vector<std::complex<double>> z_conj(z.size());
+        for (int i = 0;i < z.size();++i) { z_conj[i] = std::conj(z[i]) * scal; }
+        return z_conj;
+    };
     void Symmetry_rotation::set_Cs_rotation(const std::vector<std::vector<int>>& abfs_l_nchi)
     {
         this->reduce_Cs_ = true;
@@ -35,6 +45,15 @@ namespace ModuleSymmetry
         for (int i = 0;i < nsym_;++i) { gmatc[i] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec); }
         this->cal_rotmat_Slm(gmatc.data(), std::max(this->abfs_Lmax_, ucell.lmax));
 
+        // 1.5 (nspin=4) the SU(2) spin-1/2 rotation U(isym) for each symmetry operation. The AO
+        // rotation matrix M becomes the spinor operator T(isym) (x) U(isym) so that the same
+        // gemm D(k)=M^dagger D(k_ibz) M rotates both the orbital and the spin part at once.
+        std::vector<SpinRotation::Su2> spin_U(nsym_, SpinRotation::Su2{ 1.0, 0.0, 0.0, 1.0 });
+        if (PARAM.inp.nspin == 4)
+        {
+            for (int i = 0;i < nsym_;++i) { spin_U[i] = SpinRotation::so3_to_su2(gmatc[i]); }
+        }
+
         // 2. calculate the rotation matrix in AO-representation for each ibz_kpoint and symmetry operation: M(k, isym)
         auto restrict_kpt = [](const TCdouble& kvec, const double& symm_prec) -> TCdouble
             {// in (-0.5, 0.5]
@@ -54,7 +73,7 @@ namespace ModuleSymmetry
             // const TCdouble& kvec_d_ibz = restrict_kpt((*kstars[ik_ibz].begin()).second * ucell.symm.kgmatrix[(*kstars[ik_ibz].begin()).first], ucell.symm.epsilon);
             for (auto& isym_kvd : kv.kstars[ik_ibz]) {
                 if (isym_kvd.first < nsym_) {
-                    this->Ms_[ik_ibz][isym_kvd.first] = this->contruct_2d_rot_mat_ao(ucell.symm, ucell.atoms, ucell.st, kv.kvec_d[ik_ibz], isym_kvd.first, pv);
+                    this->Ms_[ik_ibz][isym_kvd.first] = this->contruct_2d_rot_mat_ao(ucell.symm, ucell.atoms, ucell.st, kv.kvec_d[ik_ibz], isym_kvd.first, pv, spin_U[isym_kvd.first]);
 }
 }
         }
@@ -80,23 +99,21 @@ namespace ModuleSymmetry
     {
         ModuleBase::TITLE("Symmetry_rotation", "restore_dm");
         ModuleBase::timer::start("Symmetry_rotation", "restore_dm");
-        auto vec3_eq = [](const TCdouble& v1, const TCdouble& v2, const double& prec) -> bool
-            {
-                return (std::abs(v1.x - v2.x) < prec) && (std::abs(v1.y - v2.y) < prec) && (std::abs(v1.z - v2.z) < prec);
-            };
-        auto  vec_conj = [](const std::vector<std::complex<double>>& z, const double scal = 1.0) -> std::vector<std::complex<double>>
-            {
-                std::vector<std::complex<double>> z_conj(z.size());
-                for (int i = 0;i < z.size();++i) { z_conj[i] = std::conj(z[i]) * scal; }
-                return z_conj;
-            };
         std::vector<std::vector<std::complex<double>>> dm_k_full;
         int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
         dm_k_full.reserve(kv.get_nkstot_full() * nspin0); //nkstot_full didn't doubled by spin
         int nk = kv.get_nkstot() / nspin0;
-        for (int is = 0;is < nspin0;++is) {
-            for (int ik_ibz = 0;ik_ibz < nk;++ik_ibz) {
-                for (auto& isym_kvd : kv.kstars[ik_ibz]) {
+
+        // (nspin=4) Sigma_y = I (x) sigma_y for the time-reversal spin flip; k-independent, build once.
+        std::vector<std::complex<double>> sigma_y;
+        if (PARAM.inp.nspin == 4) { sigma_y = this->set_sigma_y_2d(pv); }
+
+        for (int is = 0;is < nspin0;++is)
+        {
+            for (int ik_ibz = 0;ik_ibz < nk;++ik_ibz) 
+            {
+                for (auto& isym_kvd : kv.kstars[ik_ibz]) 
+                {
                     if (isym_kvd.first == 0)
                     {
                         double factor = 1.0 / static_cast<double>(kv.kstars[ik_ibz].size());
@@ -104,18 +121,42 @@ namespace ModuleSymmetry
                         for (int i = 0;i < pv.get_local_size();++i) { dm_scaled[i] = factor * dm_k_ibz[ik_ibz + is * nk][i]; }
                         dm_k_full.push_back(dm_scaled);
                     }
-                    else if (vec3_eq(isym_kvd.second, -kv.kvec_d[ik_ibz], this->eps_) && this->TRS_first_) {
-                        dm_k_full.push_back(vec_conj(dm_k_ibz[ik_ibz + is * nk], 1.0 / static_cast<double>(kv.kstars[ik_ibz].size())));
-                    } else if (isym_kvd.first < nsym_) { //space group operations
+                    else if (vec3_eq(isym_kvd.second, -kv.kvec_d[ik_ibz], this->eps_) && this->TRS_first_)
+                    {
+                        // -k via pure time reversal: D(-k) = sigma_y D^*(k_ibz) sigma_y.
+                        // nspin<4 reduces to Theta=K, i.e. plain complex conjugation.
+                        if (PARAM.inp.nspin == 4)
+                        {
+                            dm_k_full.push_back(this->trs_spin_rotate(dm_k_ibz[ik_ibz + is * nk], sigma_y, pv, 1.0 / static_cast<double>(kv.kstars[ik_ibz].size())));
+                        }
+                        else
+                        {
+                            dm_k_full.push_back(vec_conj(dm_k_ibz[ik_ibz + is * nk], 1.0 / static_cast<double>(kv.kstars[ik_ibz].size())));
+                        }
+                    }
+                    else if (isym_kvd.first < nsym_)
+                    { //space group operations
                         dm_k_full.push_back(this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_kvd.first, pv));
-                    } else {    // TRS*spacegroup operations
-                        dm_k_full.push_back(this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_kvd.first - nsym_, pv, true));
-}
-}
-}
-}
-
-
+                    }
+                    else
+                    {    // TRS*spacegroup operations
+                        // D(-Rk_ibz) = sigma_y [D(Rk_ibz)]^* sigma_y with D(Rk_ibz) = M^dagger D M.
+                        // For nspin=4, first do the (non-conjugated) space-group rotation, then the spin flip;
+                        // for nspin<4 (Theta=K) the original TRS_conj path already gives the conjugate.
+                        if (PARAM.inp.nspin == 4)
+                        {
+                            dm_k_full.push_back(this->trs_spin_rotate(
+                                this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_kvd.first - nsym_, pv, false),
+                                sigma_y, pv, 1.0));
+                        }
+                        else
+                        {
+                            dm_k_full.push_back(this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_kvd.first - nsym_, pv, true));
+                        }
+                    }
+                }
+            }
+        }
         // test for output
 /*
         std::ofstream ofs("DM.dat");
@@ -366,8 +407,10 @@ namespace ModuleSymmetry
     // 2d-block parallized rotation matrix in AO-representation, denoted as M.
     // finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to   D(k) from D(Rk) in cal_Ms.
     std::vector<std::complex<double>> Symmetry_rotation::contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms, const Statistics& cell_st,
-        const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv) const
+        const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv, const SpinRotation::Su2& spin_U) const
     {
+        const bool soc = (PARAM.inp.nspin == 4);
+        const int npol = soc ? 2 : 1;  // spinor: global AO index is spin-fast interleaved, I = npol*iw_orb + s
         std::vector<std::complex<double>> M_isym(pv.get_local_size(), 0.0);
         for (int iat1 = 0;iat1 < cell_st.nat;++iat1)
         {
@@ -386,8 +429,41 @@ namespace ModuleSymmetry
                 int l = atoms[it].iw2l[iw];
                 int nm = 2 * l + 1;
                 //caution: the order of m in orbitals may be different from increasing
-                set_block_to_mat2d(iw2start + iw, iw1start + iw,
-                    phase_factor * this->rotmat_Slm_[isym][l], M_isym, pv, true);
+                if (!soc)
+                {
+                    set_block_to_mat2d(iw2start + iw, iw1start + iw,
+                        phase_factor * this->rotmat_Slm_[isym][l], M_isym, pv, true);
+                }
+                else
+                {
+                    // M = T(isym) (x) U(isym): scatter phase * T_l(m,m') * U(a,b) to the interleaved
+                    // spinor positions (row = rotated atom/spin, col = original atom/spin). For nspin=4
+                    // stapos_wf already carries the npol factor, so the per-atom offset is ia*nw*npol
+                    // and the within-atom spinor index is (iw_orb)*npol + spin (spin is the fast index).
+                    const int base2 = atoms[it].stapos_wf + ia2 * atoms[it].nw * npol;
+                    const int base1 = atoms[it].stapos_wf + ia1 * atoms[it].nw * npol;
+                    const RI::Tensor<std::complex<double>>& Tl = this->rotmat_Slm_[isym][l];
+                    for (int m = 0;m < nm;++m)
+                    {
+                        for (int mp = 0;mp < nm;++mp)
+                        {
+                            const std::complex<double> t = phase_factor * Tl(m, mp);
+                            for (int a = 0;a < npol;++a)
+                            {
+                                for (int b = 0;b < npol;++b)
+                                {
+                                    const int gi = base2 + (iw + m) * npol + a;
+                                    const int gj = base1 + (iw + mp) * npol + b;
+                                    if (pv.in_this_processor(gi, gj))
+                                    {
+                                        const int index = pv.global2local_col(gj) * pv.get_row_size() + pv.global2local_row(gi);
+                                        M_isym[index] = t * spin_U[a * npol + b];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
                 iw += nm;
             }
         }
@@ -435,6 +511,55 @@ namespace ModuleSymmetry
                 beta, DMk.data(), i1, i1, pv.desc);
         }
         return DMk;
+    }
+
+    std::vector<std::complex<double>> Symmetry_rotation::set_sigma_y_2d(const Parallel_2D& pv) const
+    {
+        std::vector<std::complex<double>> sigma_y(pv.get_local_size(), 0.0);
+        const int nlocal = pv.get_global_row_size();    // = 2*nao for nspin=4
+        // sigma_y = [[0, -i], [i, 0]] on the interleaved spin index (I = 2*iorb + spin)
+        const std::complex<double> sy[2][2] = { {std::complex<double>(0.0, 0.0), std::complex<double>(0.0, -1.0)},
+                                                {std::complex<double>(0.0, 1.0), std::complex<double>(0.0, 0.0)} };
+        for (int iorb = 0; 2 * iorb < nlocal; ++iorb)
+        {
+            for (int a = 0; a < 2; ++a)
+            {
+                const int b = 1 - a;    // only the off-diagonal spin entries are non-zero
+                const int gi = 2 * iorb + a;
+                const int gj = 2 * iorb + b;
+                if (pv.in_this_processor(gi, gj))
+                {
+                    const int index = pv.global2local_col(gj) * pv.get_row_size() + pv.global2local_row(gi);
+                    sigma_y[index] = sy[a][b];
+                }
+            }
+        }
+        return sigma_y;
+    }
+
+    std::vector<std::complex<double>> Symmetry_rotation::trs_spin_rotate(const std::vector<std::complex<double>>& X,
+        const std::vector<std::complex<double>>& sigma_y, const Parallel_2D& pv, const double scale) const
+    {
+        // stored (transposed 2d-block) form of  D_new = sigma_y * conj(D) * sigma_y  is
+        // Sigma_y * conj(X) * Sigma_y  (Sigma_y^T = -Sigma_y, the two minus signs cancel).
+        const char notrans = 'N';
+        const int nbasis = pv.get_global_row_size();
+        const int i1 = 1;
+        const std::complex<double> one(1.0, 0.0);
+        const std::complex<double> beta(0.0, 0.0);
+        std::vector<std::complex<double>> Xc(X.size());
+        for (size_t i = 0; i < X.size(); ++i) { Xc[i] = std::conj(X[i]); }
+        std::vector<std::complex<double>> tmp(pv.get_local_size(), 0.0);
+        std::vector<std::complex<double>> out(pv.get_local_size(), 0.0);
+        // tmp = Sigma_y * conj(X)
+        ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
+            one, sigma_y.data(), i1, i1, pv.desc, Xc.data(), i1, i1, pv.desc,
+            beta, tmp.data(), i1, i1, pv.desc);
+        // out = scale * tmp * Sigma_y
+        ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
+            std::complex<double>(scale, 0.0), tmp.data(), i1, i1, pv.desc, sigma_y.data(), i1, i1, pv.desc,
+            beta, out.data(), i1, i1, pv.desc);
+        return out;
     }
 
     std::vector<TC> Symmetry_rotation::get_Rs_from_adjacent_list(const UnitCell& ucell,

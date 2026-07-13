@@ -15,7 +15,6 @@
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_lcao/module_ri/serialization_cereal.h"
 #include "source_lcao/module_ri/Mix_DMk_2D.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_parameter/parameter.h"
