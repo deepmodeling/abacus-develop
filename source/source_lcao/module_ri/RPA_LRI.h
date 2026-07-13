@@ -83,9 +83,7 @@ template <typename T, typename Tdata> class RPA_LRI
     Tdata Erpa;
 
   private:
-    // WARNING: reference to Exx_Info_RI, which holds references into Exx_Info_Global.
-    // Must not outlive GlobalC::exx_info. See exx_info.h for details.
-    const Exx_Info_RI &info;
+    Exx_Info_RI info;
     const K_Vectors *p_kv=nullptr;
     MPI_Comm mpi_comm;
     std::vector<double> orb_cutoff_;

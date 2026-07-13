@@ -138,11 +138,16 @@ public:
     double etot_last_outer_loop = 0.0;
     elecstate::DensityMatrix<T, double>* dm_last_step;
 
+    size_t hybrid_step() const { return hybrid_step_; }
+    void set_hybrid_step(size_t s) { hybrid_step_ = s; }
+
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
 private:
 
     Mix_DMk_2D<T> mix_DMk_2D;
+
+    size_t hybrid_step_ = 1;
 
     bool exx_spacegroup_symmetry = false;
     ModuleSymmetry::Symmetry_rotation symrot_;
