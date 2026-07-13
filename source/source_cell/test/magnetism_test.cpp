@@ -133,18 +133,20 @@ TEST_F(MagnetismTest, ComputeMagnetizationS4)
 
 #ifdef __MPI
 #include <mpi.h>
+#include "source_base/parallel_comm.h"
 int main(int argc, char **argv)
 {
-
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_dup(MPI_COMM_WORLD, &POOL_WORLD);
 
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
 
+    MPI_Comm_free(&POOL_WORLD);
     MPI_Finalize();
-
     return result;
 }
 #endif
+
