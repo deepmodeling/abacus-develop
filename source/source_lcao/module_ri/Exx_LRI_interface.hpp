@@ -136,7 +136,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_beforescf");
 #ifdef __MPI
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (this->info_global.cal_exx)
     {
         if ((GlobalC::restart.info_load.load_H_finish && !GlobalC::restart.info_load.restart_exx)
             || (istep > 0)
@@ -153,15 +153,15 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
     }
 
     // set initial parameter for mix_DMk_2D
-    if(GlobalC::exx_info.info_global.cal_exx)
+    if(this->info_global.cal_exx)
     {
         if (this->exx_spacegroup_symmetry)
             { this->mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1)); }
         else
             { this->mix_DMk_2D.set_nks(kv.get_nks()); }
 
-        if (GlobalC::exx_info.info_global.separate_loop)
-            { this->mix_DMk_2D.set_mixing_plain(GlobalC::exx_info.info_global.mixing_beta_for_loop1); }
+        if (this->info_global.separate_loop)
+            { this->mix_DMk_2D.set_mixing_plain(this->info_global.mixing_beta_for_loop1); }
         else
             { this->mix_DMk_2D.set_mixing(chgmix.get_mixing()); }
 
@@ -179,13 +179,13 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                                                    const int& iter)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_eachiterinit");
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (this->info_global.cal_exx)
     {
-        if (!GlobalC::exx_info.info_global.separate_loop
+        if (!this->info_global.separate_loop
             && (this->two_level_step
                 || istep > 0
                 || PARAM.inp.init_wfc == "file") // non separate loop case
-            || (GlobalC::exx_info.info_global.separate_loop
+            || (this->info_global.separate_loop
                 && PARAM.inp.init_wfc == "file"
                 && this->two_level_step == 0
                 && iter == 1)
@@ -241,10 +241,10 @@ void Exx_LRI_Interface<T, Tdata>::exx_hamilt2rho(elecstate::ElecState& elec, con
                     { std::cout << "WARNING: Cannot read Eexx from disk, the energy of the 1st loop will be wrong, sbut it does not influence the subsequent loops." << std::endl; }
             }
             Parallel_Common::bcast_double(this->exx_ptr->Eexx);
-            this->exx_ptr->Eexx /= GlobalC::exx_info.info_global.hybrid_alpha;
+            this->exx_ptr->Eexx /= this->info_global.hybrid_alpha;
         }
-        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        bool cal_exx = this->info_global.cal_exx;
+        double hybrid_alpha = this->info_global.hybrid_alpha;
         elec.set_exx(this->get_Eexx(), cal_exx, hybrid_alpha);
     }
     else
@@ -267,7 +267,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_iter_finish");
     if (GlobalC::restart.info_save.save_H && (this->two_level_step > 0 || istep > 0)
-        && (!GlobalC::exx_info.info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
+        && (!this->info_global.separate_loop || iter == 1)) // to avoid saving the same value repeatedly
     {
         ////////// for Add_Hexx_Type::k
         /*
@@ -296,13 +296,13 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
         }
     }
 
-    if (GlobalC::exx_info.info_global.cal_exx && conv_esolver)
+    if (this->info_global.cal_exx && conv_esolver)
     {
         // Kerker mixing does not work for the density matrix.
         // In the separate loop case, it can still work in the subsequent inner loops where Hexx(DM) is fixed.
         // In the non-separate loop case where Hexx(DM) is updated in every iteration of the 2nd loop, it should be
         // closed.
-        if (!GlobalC::exx_info.info_global.separate_loop)
+        if (!this->info_global.separate_loop)
         {
             chgmix.close_kerker_gg0();
         }
@@ -342,9 +342,9 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     };
 
     // no separate_loop case
-    if (!GlobalC::exx_info.info_global.separate_loop)
+    if (!this->info_global.separate_loop)
     {
-        GlobalC::exx_info.info_global.hybrid_step = 1;
+        this->hybrid_step_ = 1;
 
         // in no_separate_loop case, scf loop only did twice
         // in first scf loop, exx updated once in beginning,
@@ -371,7 +371,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
         if (two_level_step)
             { std::cout << FmtCore::format(" deltaE (eV) from outer loop: %.8e \n", ediff); }
         // exx converged or get max exx steps
-        if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
+        if (this->two_level_step == this->hybrid_step_
             || (iter == 1 && this->two_level_step != 0) // density convergence of outer loop
             || (ediff < scf_ene_thr && this->two_level_step != 0))   //energy convergence of outer loop
         {
