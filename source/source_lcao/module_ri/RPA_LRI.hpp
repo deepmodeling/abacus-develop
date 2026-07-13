@@ -146,11 +146,10 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
             PARAM.inp.nspin,
             exx_spacegroup_symmetry);
     
-    // set parameters for bare Coulomb potential
-    GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; // not used now, Hf/Ccp -> singularity_correction, see conv_coulomb_pot_k.cpp
-    GlobalC::exx_info.info_global.hybrid_alpha = 1;
-    GlobalC::exx_info.sync_from_global();
     // reserve exx_ccp_rmesh_times to calculate full Coulomb
+    // Note: ccp_type=Hf and hybrid_alpha=1 were previously set on GlobalC::exx_info.info_global
+    // and sync_from_global() was called, but this->info (value copy) already has the correct
+    // coulomb_param from construction time, so the global writes are redundant and removed.
     this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
     // Using rpa_ccp_rmesh_times to calculate cut Coulomb this->Vs_period
     Exx_Info_RI local_info = this->info;
@@ -802,7 +801,7 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
         // out_pure_ri_tensor("olp_all.dat", olp_all, 0.);
         auto olp_inv = LRI_CV_Tools::cal_I(olp_all,
                                            Inverse_Matrix<std::complex<double>>::Method::syev,
-                                           GlobalC::exx_info.info_ri.shrink_LU_inv_thr);
+                                           this->info.shrink_LU_inv_thr);
         for (int ir = 0; ir < all_mu_s; ir++)
         {
             for (int ic = ir; ic < all_mu_s; ic++)
