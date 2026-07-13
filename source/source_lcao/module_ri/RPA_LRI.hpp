@@ -151,11 +151,12 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     GlobalC::exx_info.info_global.hybrid_alpha = 1;
     GlobalC::exx_info.sync_from_global();
     // reserve exx_ccp_rmesh_times to calculate full Coulomb
-    this->ccp_rmesh_times_ewald = GlobalC::exx_info.info_ri.ccp_rmesh_times;
-    // Using this->info.ccp_rmesh_times to calculate cut Coulomb this->Vs_period
-    GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
+    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
+    // Using rpa_ccp_rmesh_times to calculate cut Coulomb this->Vs_period
+    Exx_Info_RI local_info = this->info;
+    local_info.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
     if (!exx_cut_coulomb)
-        exx_cut_coulomb = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+        exx_cut_coulomb = new Exx_LRI<double>(local_info);
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
@@ -259,9 +260,10 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     ModuleBase::TITLE("RPA_LRI", "output_ewald_coulomb");
     ModuleBase::timer::start("RPA_LRI", "output_ewald_coulomb");
 
-    GlobalC::exx_info.info_ri.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
+    Exx_Info_RI local_info = this->info;
+    local_info.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
     if (!exx_full_coulomb)
-        exx_full_coulomb = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+        exx_full_coulomb = new Exx_LRI<double>(local_info);
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs_shrink);
@@ -316,7 +318,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     ModuleBase::TITLE("RPA_LRI", "cal_large_Cs");
     ModuleBase::timer::start("RPA_LRI", "cal_large_Cs");
     if (!exx_cut_coulomb)
-        exx_cut_coulomb = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+        exx_cut_coulomb = new Exx_LRI<double>(this->info);
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "exx_cut_coulomb->init");
     this->abfs = exx_cut_coulomb->abfs;
