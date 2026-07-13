@@ -3,6 +3,7 @@
 
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"
+#include <vector>
 
 class Magnetism
 {
@@ -12,7 +13,7 @@ public:
     ~Magnetism();
 
     // notice : bcast (MPI operation) is done in unitcell
-    double *start_mag=nullptr;
+    std::vector<double> start_mag;
 
     // tot_mag : majority spin - minority spin (nelup - neldw).
     double tot_mag;
@@ -29,12 +30,6 @@ public:
 			const bool& two_fermi,
 			const double& nelec,
 			double* nelec_spin);
-
-    ModuleBase::Vector3<double> *m_loc_=nullptr; //magnetization for each element along c-axis
-
-	double *angle1_=nullptr;                     //angle between c-axis and real spin std::vector
-
-	double *angle2_=nullptr;                     //angle between a-axis and real spin std::vector projection in ab-plane
 
     double ux_[3]={0.0};
 

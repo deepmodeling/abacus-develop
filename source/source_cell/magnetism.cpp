@@ -11,7 +11,6 @@ Magnetism::Magnetism()
 
 Magnetism::~Magnetism()
 {
-    delete[] start_mag;
 }
 
 void Magnetism::compute_mag(const double& omega,

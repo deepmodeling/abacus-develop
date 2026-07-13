@@ -23,11 +23,9 @@ Magnetism::Magnetism()
 {
 	this->tot_mag = 0.0;
 	this->abs_mag = 0.0;
-	this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-	delete[] this->start_mag;
 }
 
 /************************************************
@@ -149,8 +147,7 @@ TEST_F(UcellTest,SetupCellAfterVC)
 	ofs_running.open("setup_cell.tmp");
 	PARAM.input.nspin = 1;
 	
-	delete[] ucell->magnet.start_mag;
-	ucell->magnet.start_mag = new double[ucell->ntype];
+	ucell->magnet.start_mag.resize(ucell->ntype);
 
 	
 	ucell->setup_cell(fn,ofs_running);

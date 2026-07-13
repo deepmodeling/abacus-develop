@@ -103,7 +103,7 @@ namespace unitcell
     {
     #ifdef __MPI
         MPI_Barrier(MPI_COMM_WORLD);
-        Parallel_Common::bcast_double(magnet.start_mag, ntype);
+        Parallel_Common::bcast_double(magnet.start_mag.data(), ntype);
         if (PARAM.inp.nspin == 4) 
         {
             Parallel_Common::bcast_double(magnet.ux_[0]);

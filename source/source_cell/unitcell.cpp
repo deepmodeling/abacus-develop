@@ -189,8 +189,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
 
     // (1) init mag
     assert(ntype > 0);
-    delete[] magnet.start_mag;
-    magnet.start_mag = new double[this->ntype];
+    magnet.start_mag.resize(this->ntype);
 
     // (2) init *Atom class array.
     this->atoms = new Atom[this->ntype]; // atom species.

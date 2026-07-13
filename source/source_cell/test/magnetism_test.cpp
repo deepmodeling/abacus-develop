@@ -49,7 +49,7 @@ TEST_F(MagnetismTest, Magnetism)
 {
     EXPECT_EQ(0.0, magnetism->tot_mag);
     EXPECT_EQ(0.0, magnetism->abs_mag);
-    EXPECT_EQ(nullptr, magnetism->start_mag);
+    EXPECT_TRUE(magnetism->start_mag.empty());
 }
 
 TEST_F(MagnetismTest, JudgeParallel)
