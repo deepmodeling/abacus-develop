@@ -61,7 +61,7 @@ endif()
 # Keep MKL threading internal: derive it from ABACUS OpenMP support and the
 # known compiler/runtime combinations. Unknown OpenMP runtimes use sequential MKL.
 set(_mkl_threading sequential)
-if(USE_OPENMP)
+if(ENABLE_OPENMP)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(_mkl_threading gnu_thread)
   elseif(CMAKE_CXX_COMPILER_ID MATCHES "Intel")
