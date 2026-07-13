@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
+include(CMakeDependentOption)
 if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
   cmake_policy(SET CMP0135 NEW)
   # Otherwise this policy generates a warning on CMake 3.24
@@ -16,8 +17,6 @@ project(
 option(ENABLE_MPI "Enable MPI" ON)
 option(ENABLE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
-option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
-option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
 option(USE_KML "Enable Kunpeng Math Library" OFF)
@@ -27,13 +26,7 @@ option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
-option(ENABLE_MLALGO "Enable the machine learning algorithms" OFF)
-
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
-option(ENABLE_ELPA "Enable ELPA for LCAO" ON)
-option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
-option(EXX_DEV "Enable LibRI developing features" OFF)
-option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
@@ -52,8 +45,21 @@ option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method" ON)
 option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
-option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
-option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
+
+cmake_dependent_option(ENABLE_ELPA "Enable ELPA for LCAO" ON "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(EXX_DEV "Enable LibRI developing features" OFF "ENABLE_LIBRI" OFF)
+cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
+                       OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+
+cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF "USE_CUDA" OFF)
+cmake_dependent_option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF "USE_CUDA" OFF)
+cmake_dependent_option(ENABLE_CUBLASMP "Enable cublasmp" OFF "USE_CUDA" OFF)
+cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF "USE_CUDA" OFF)
+cmake_dependent_option(ENABLE_NCCL_PARALLEL_DEVICE
+                       "Enable NCCL-backed collectives in parallel_device"
+                       OFF "USE_CUDA;ENABLE_MPI" OFF)
 
 # ==============================================================================
 # Deprecated options (TODO: Remove this section in the future release)
@@ -168,12 +174,6 @@ You can install Git first and reinstall abacus.")
       message(WARNING "Failed to get git commit info")
     endif()
   endif()
-endif()
-
-# Serial version of ABACUS will not use ELPA
-if(NOT ENABLE_MPI)
-  set(ENABLE_ELPA OFF)
-  set(ENABLE_MLALGO OFF)
 endif()
 
 # Different exe files of ABACUS
@@ -349,11 +349,9 @@ if(ENABLE_LCAO)
     find_package(ELPA REQUIRED)
     abacus_add_feature_definitions(__ELPA)
   endif()
-
   if(ENABLE_FFT_TWO_CENTER)
     abacus_add_feature_definitions(USE_NEW_TWO_CENTER)
   endif()
-
   if(ENABLE_PEXSI)
     find_package(PEXSI REQUIRED CONFIG)
     if(PEXSI_VERSION VERSION_LESS "2.0.0")
@@ -362,9 +360,6 @@ if(ENABLE_LCAO)
     abacus_add_feature_definitions(__PEXSI)
     set(CMAKE_CXX_STANDARD 14)
   endif()
-else()
-  set(ENABLE_MLALGO OFF)
-  set(ENABLE_LIBRI OFF)
 endif()
 
 if(DEBUG_INFO)
@@ -520,10 +515,6 @@ if(USE_CUDA)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
     if (ENABLE_NCCL_PARALLEL_DEVICE)
-      if (NOT ENABLE_MPI)
-        message(FATAL_ERROR
-          "ENABLE_NCCL_PARALLEL_DEVICE requires ENABLE_MPI=ON.")
-      endif()
       abacus_add_feature_definitions(__NCCL_PARALLEL_DEVICE)
       include(cmake/modules/SetupNccl.cmake)
       abacus_setup_nccl()
