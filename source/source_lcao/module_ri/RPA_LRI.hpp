@@ -64,7 +64,7 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     exx_cut_coulomb = nullptr;
     RpaLriDetail::trim_malloc_cache();
 
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
         cal_large_Cs(ucell, orb, kv);
         cal_abfs_overlap(ucell, orb, kv);
@@ -86,7 +86,7 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in
     this->p_kv = &kv_in;
     this->MGT = exx_cut_coulomb->MGT;
 
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
         this->abfs_shrink = exx_cut_coulomb->abfs;
     }
@@ -157,7 +157,7 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     if (!exx_cut_coulomb)
         exx_cut_coulomb = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
 
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
         this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
         const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom
@@ -243,7 +243,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
     this->Cs_period = exx_lri_rpa->exx_lri.post_2D.set_tensors_map2(this->Cs_period);
 
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
         this->out_Cs(ucell, this->Cs_period, "Cs_shrinked_data_");
     else
         this->out_Cs(ucell, this->Cs_period, "Cs_data_");
@@ -263,7 +263,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     if (!exx_full_coulomb)
         exx_full_coulomb = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
 
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs_shrink);
     else
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs);
