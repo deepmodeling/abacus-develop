@@ -80,6 +80,7 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
 															this->info.kmesh_times, this->MGT, settings_list.second.first );
+		this->exx_objs[settings_list.first].cv.set_info_ri(&this->info);
 		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 		{
 			this->exx_objs[settings_list.first].evq.init(ucell, orb,
@@ -155,6 +156,7 @@ void Exx_LRI<Tdata>::init_spencer(
 		this->info.kmesh_times,
 		this->MGT,
 		center2_settings->second.first);
+	this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_info_ri(&this->info);
 
 	ModuleBase::timer::end("Exx_LRI", "init_spencer");
 }
