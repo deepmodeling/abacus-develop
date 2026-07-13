@@ -193,3 +193,9 @@ add_test(NAME MODULE_CELL_sep_cell_parallel
       COMMAND ${BASH} bcast_sep_cell_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+
+AddTest(
+  TARGET MODULE_CELL_magnetism
+  LIBS base device
+  SOURCES magnetism_test.cpp ../magnetism.cpp
+)
