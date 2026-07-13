@@ -65,7 +65,10 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
+	{
+		this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size())-1);
+		GlobalC::exx_info.info_ri.abfs_Lmax = this->abfs_Lmax_;
+	}
 
 	this->exx_objs.clear();
 	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
@@ -125,8 +128,8 @@ void Exx_LRI<Tdata>::init_spencer(
 
 	for (size_t T = 0; T != this->abfs.size(); ++T)
 	{
-		GlobalC::exx_info.info_ri.abfs_Lmax
-			= std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size()) - 1);
+		this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size()) - 1);
+		GlobalC::exx_info.info_ri.abfs_Lmax = this->abfs_Lmax_;
 	}
 
 	this->exx_objs.clear();
