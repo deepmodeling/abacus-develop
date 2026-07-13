@@ -40,7 +40,8 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
                            const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param_in,
                            std::shared_ptr<ORB_gaunt_table> MGT_in,
                            const double &ccp_rmesh_times_in,
-                           const double &kmesh_times_in)
+                           const double &kmesh_times_in,
+                           const int abfs_Lmax_in)
 {
     ModuleBase::TITLE("Ewald_Vq", "init");
     ModuleBase::timer::start("Ewald_Vq", "init");
@@ -50,6 +51,7 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
     this->nks0 = this->p_kv->get_nkstot_full();
     this->kvec_c.resize(this->nks0);
     this->ccp_rmesh_times = ccp_rmesh_times_in;
+    this->abfs_Lmax = abfs_Lmax_in;
     this->coulomb_param = coulomb_param_in;
 
     this->g_lcaos = this->init_gauss(lcaos_in);
@@ -123,7 +125,7 @@ void Ewald_Vq<Tdata>::init_ions(const UnitCell& ucell, const std::array<Tcell, N
                    this->kvec_c.end(),
                    neg_kvec.begin(),
                    [](ModuleBase::Vector3<double>& vec) -> ModuleBase::Vector3<double> { return -vec; });
-    this->gaussian_abfs.init(ucell, 2 * GlobalC::exx_info.info_ri.abfs_Lmax + 1, neg_kvec, ucell.G, this->ewald_lambda);
+    this->gaussian_abfs.init(ucell, 2 * this->abfs_Lmax + 1, neg_kvec, ucell.G, this->ewald_lambda);
 
     ModuleBase::timer::end("Ewald_Vq", "init_ions");
 }

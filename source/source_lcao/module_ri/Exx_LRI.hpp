@@ -67,7 +67,6 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	for( size_t T=0; T!=this->abfs.size(); ++T )
 	{
 		this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size())-1);
-		GlobalC::exx_info.info_ri.abfs_Lmax = this->abfs_Lmax_;
 	}
 
 	this->exx_objs.clear();
@@ -85,7 +84,8 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		{
 			this->exx_objs[settings_list.first].evq.init(ucell, orb,
 														this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times);
+														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times,
+														this->abfs_Lmax_);
 		}
 	}
 
@@ -130,7 +130,6 @@ void Exx_LRI<Tdata>::init_spencer(
 	for (size_t T = 0; T != this->abfs.size(); ++T)
 	{
 		this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size()) - 1);
-		GlobalC::exx_info.info_ri.abfs_Lmax = this->abfs_Lmax_;
 	}
 
 	this->exx_objs.clear();

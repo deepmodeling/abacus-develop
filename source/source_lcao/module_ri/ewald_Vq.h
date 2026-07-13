@@ -56,7 +56,8 @@ class Ewald_Vq
               const std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> &coulomb_param_in,
               std::shared_ptr<ORB_gaunt_table> MGT_in,
               const double &ccp_rmesh_times_in,
-              const double &kmesh_times_in);
+              const double &kmesh_times_in,
+              const int abfs_Lmax_in = 0);
 
     void init_ions(const UnitCell& ucell, const std::array<Tcell, Ndim>& period_Vs_NAO);
 
@@ -81,6 +82,7 @@ class Ewald_Vq
 
   private:
     double ccp_rmesh_times;
+    int abfs_Lmax = 0;
     LRI_CV<Tdata> cv;
     Gaussian_Abfs gaussian_abfs;
     const K_Vectors* p_kv = nullptr;
