@@ -15,7 +15,8 @@
 #include "ri_2d_comm.h"
 #include "ri_util.h"
 #include "conv_coulomb_pot_k.h"
-#include "exx_abfs_ctor_orbs.h"
+#include "ewald_mpi_utils.h"
+#include "exx_abfs-construct_orbs.h"
 #include "gaussian_abfs.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_base/element_basis_index.h"
@@ -103,11 +104,13 @@ void Ewald_Vq<Tdata>::init_ions(const UnitCell& ucell, const std::array<Tcell, N
     ModuleBase::TITLE("Ewald_Vq", "init_ions");
     ModuleBase::timer::start("Ewald_Vq", "init_ions");
 
-    const std::array<Tcell, Ndim> period_Vs
-        = LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->ccp_rmesh_times, ucell, this->g_lcaos_rcut);
-
+    // The bare and Gaussian real-space maps are subtracted locally below.
+    // Enumerate both with the bare-Coulomb period so every common key has the
+    // same MPI owner; the Gaussian cutoff is still applied when building it.
     const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
-        = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, this->atoms_vec, period_Vs, 2, false);
+        = EwaldVqDetail::distribute_common_realspace_tasks(this->mpi_comm,
+                                                          this->atoms_vec,
+                                                          period_Vs_NAO);
 
     this->list_A0 = list_As_Vs.first;
     this->list_A1 = list_As_Vs.second[0];
