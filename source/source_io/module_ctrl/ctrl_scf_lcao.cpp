@@ -8,6 +8,7 @@
 #include "source_lcao/hamilt_lcao.h"      // use hamilt::HamiltLCAO<TK, TR>
 
 #include <complex>
+#include <utility>
 
 // functions
 #include "../module_unk/berryphase.h"                          // use berryphase
@@ -47,45 +48,57 @@ namespace
 {
 
 template <typename TK>
-std::vector<std::vector<std::complex<double>>> gather_sternheimer_lcao_occupied_coefficients(
+std::vector<ModuleRI::SternheimerLCAOOccupiedChannel> gather_sternheimer_lcao_occupied_channels(
     const elecstate::ElecState& elec_state,
     const Parallel_Orbitals& parallel_orbitals,
     const psi::Psi<TK>& psi)
 {
-    int occupied_count = 0;
-    for (int ib = 0; ib != elec_state.wg.nc; ++ib)
+    std::vector<ModuleRI::SternheimerLCAOOccupiedChannel> channels;
+    for (int spin_index = 0; spin_index != elec_state.wg.nr; ++spin_index)
     {
-        if (elec_state.wg(0, ib) > 1.0e-8)
+        int occupied_count = 0;
+        for (int ib = 0; ib != elec_state.wg.nc; ++ib)
         {
-            occupied_count = ib + 1;
-        }
-    }
-    std::vector<std::vector<std::complex<double>>> coefficients(
-        static_cast<std::size_t>(occupied_count),
-        std::vector<std::complex<double>>(static_cast<std::size_t>(PARAM.globalv.nlocal),
-                                          std::complex<double>(0.0, 0.0)));
-    for (int ib = 0; ib != occupied_count; ++ib)
-    {
-        const int local_band = parallel_orbitals.global2local_col(ib);
-        if (local_band >= 0)
-        {
-            for (int local_basis = 0; local_basis != psi.get_nbasis(); ++local_basis)
+            if (elec_state.wg(spin_index, ib) > 1.0e-8)
             {
-                const int global_basis = parallel_orbitals.local2global_row(local_basis);
-                coefficients[static_cast<std::size_t>(ib)][static_cast<std::size_t>(global_basis)]
-                    = std::complex<double>(psi(0, local_band, local_basis));
+                occupied_count = ib + 1;
             }
         }
+        if (occupied_count == 0)
+        {
+            continue;
+        }
+
+        ModuleRI::SternheimerLCAOOccupiedChannel channel;
+        channel.spin_index = spin_index;
+        channel.coefficients.assign(
+            static_cast<std::size_t>(occupied_count),
+            std::vector<std::complex<double>>(static_cast<std::size_t>(PARAM.globalv.nlocal),
+                                              std::complex<double>(0.0, 0.0)));
+        for (int ib = 0; ib != occupied_count; ++ib)
+        {
+            const int local_band = parallel_orbitals.global2local_col(ib);
+            if (local_band >= 0)
+            {
+                for (int local_basis = 0; local_basis != psi.get_nbasis(); ++local_basis)
+                {
+                    const int global_basis = parallel_orbitals.local2global_row(local_basis);
+                    channel.coefficients[static_cast<std::size_t>(ib)][static_cast<std::size_t>(global_basis)]
+                        = std::complex<double>(psi(spin_index, local_band, local_basis));
+                }
+            }
 #ifdef __MPI
-        MPI_Allreduce(MPI_IN_PLACE,
-                      coefficients[static_cast<std::size_t>(ib)].data(),
-                      PARAM.globalv.nlocal,
-                      MPI_DOUBLE_COMPLEX,
-                      MPI_SUM,
-                      MPI_COMM_WORLD);
+            MPI_Allreduce(MPI_IN_PLACE,
+                          channel.coefficients[static_cast<std::size_t>(ib)].data(),
+                          PARAM.globalv.nlocal,
+                          MPI_DOUBLE_COMPLEX,
+                          MPI_SUM,
+                          MPI_COMM_WORLD);
 #endif
+        }
+        channels.push_back(std::move(channel));
     }
-    return coefficients;
+    return channels;
 }
 
 } // namespace
@@ -676,14 +689,14 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         {
             ModuleBase::WARNING_QUIT("ctrl_scf_lcao", "Sternheimer LCAO output requires potential, grid, and KS states.");
         }
-        const auto occupied_coefficients
-            = gather_sternheimer_lcao_occupied_coefficients(*pelec, pv, *psi);
+        const auto occupied_channels
+            = gather_sternheimer_lcao_occupied_channels(*pelec, pv, *psi);
         ModuleRI::run_sternheimer_abacus_lcao_chi0_output(*(pelec->pot),
                                                           *pw_rho,
                                                           ucell,
                                                           *pelec,
                                                           orb,
-                                                          occupied_coefficients,
+                                                          occupied_channels,
                                                           global_out_dir);
     }
 #endif

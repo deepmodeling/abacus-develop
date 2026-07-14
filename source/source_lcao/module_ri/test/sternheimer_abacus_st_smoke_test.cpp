@@ -46,3 +46,25 @@ TEST(SternheimerABACUSSTSmoke, FormatsLinearResponseReport)
               std::string::npos);
 }
 
+TEST(SternheimerABACUSSTSmoke, ValidatesSpinResolvedLCAOOccupiedChannels)
+{
+    ModuleRI::SternheimerLCAOOccupiedChannel spin_up;
+    spin_up.spin_index = 0;
+    spin_up.coefficients = {{std::complex<double>(1.0, 0.0),
+                             std::complex<double>(0.0, 0.0),
+                             std::complex<double>(0.0, 0.0)}};
+
+    const std::vector<ModuleRI::SternheimerLCAOOccupiedChannel> channels = {spin_up};
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(channels, 2, 3));
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_total_occupied_bands(channels), 1);
+
+    auto duplicate_channels = channels;
+    duplicate_channels.push_back(spin_up);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(duplicate_channels, 2, 3),
+                 std::invalid_argument);
+
+    auto out_of_range_channels = channels;
+    out_of_range_channels.front().spin_index = 2;
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(out_of_range_channels, 2, 3),
+                 std::invalid_argument);
+}

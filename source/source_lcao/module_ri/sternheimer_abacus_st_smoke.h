@@ -9,6 +9,7 @@
 #include <cstdlib>
 #include <iomanip>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -28,6 +29,58 @@ class Potential;
 
 namespace ModuleRI
 {
+
+struct SternheimerLCAOOccupiedChannel
+{
+    int spin_index = -1;
+    std::vector<std::vector<std::complex<double>>> coefficients;
+};
+
+inline void validate_sternheimer_lcao_occupied_channels(
+    const std::vector<SternheimerLCAOOccupiedChannel>& channels,
+    const int spin_channel_count,
+    const int basis_size)
+{
+    if (spin_channel_count <= 0 || basis_size <= 0)
+    {
+        throw std::invalid_argument("Sternheimer LCAO spin-channel dimensions must be positive.");
+    }
+    std::vector<bool> seen(static_cast<std::size_t>(spin_channel_count), false);
+    for (const SternheimerLCAOOccupiedChannel& channel: channels)
+    {
+        if (channel.spin_index < 0 || channel.spin_index >= spin_channel_count)
+        {
+            throw std::invalid_argument("Sternheimer LCAO occupied spin index is out of range.");
+        }
+        if (seen[static_cast<std::size_t>(channel.spin_index)])
+        {
+            throw std::invalid_argument("Sternheimer LCAO occupied spin index is duplicated.");
+        }
+        seen[static_cast<std::size_t>(channel.spin_index)] = true;
+        if (channel.coefficients.empty())
+        {
+            throw std::invalid_argument("Sternheimer LCAO occupied spin channel is empty.");
+        }
+        for (const auto& band_coefficients: channel.coefficients)
+        {
+            if (band_coefficients.size() != static_cast<std::size_t>(basis_size))
+            {
+                throw std::invalid_argument("Sternheimer LCAO coefficient basis size is inconsistent.");
+            }
+        }
+    }
+}
+
+inline int sternheimer_lcao_total_occupied_bands(
+    const std::vector<SternheimerLCAOOccupiedChannel>& channels)
+{
+    int count = 0;
+    for (const SternheimerLCAOOccupiedChannel& channel: channels)
+    {
+        count += static_cast<int>(channel.coefficients.size());
+    }
+    return count;
+}
 
 struct SternheimerABACUSSTChannelResult
 {
@@ -122,7 +175,7 @@ void run_sternheimer_abacus_lcao_chi0_output(
     const UnitCell& ucell,
     const elecstate::ElecState& elec_state,
     const LCAO_Orbitals& orbitals,
-    const std::vector<std::vector<std::complex<double>>>& occupied_coefficients,
+    const std::vector<SternheimerLCAOOccupiedChannel>& occupied_channels,
     const std::string& output_dir);
 
 } // namespace ModuleRI
