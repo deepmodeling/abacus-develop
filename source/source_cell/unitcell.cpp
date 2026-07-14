@@ -20,10 +20,6 @@
 #include "mpi.h"
 #endif
 
-#ifdef __LCAO
-#include "../source_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
-#endif
-
 #include "update_cell.h"
 UnitCell::UnitCell()
 {
