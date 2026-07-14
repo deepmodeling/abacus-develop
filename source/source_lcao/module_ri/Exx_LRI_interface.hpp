@@ -4,7 +4,6 @@
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_hs/write_HS_sparse.h"
 #include "source_io/module_output/csr_reader.h"
@@ -333,7 +332,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
     const int& istep,
     const double& etot,
     const double& scf_ene_thr)
-{   // only called if (GlobalC::exx_info.info_global.cal_exx)
+{   // only called if (this->info_global.cal_exx)
     ModuleBase::TITLE("Exx_LRI_Interface","exx_after_converge");
     auto restart_reset = [this]()
     { // avoid calling restart related procedure in the subsequent ion steps
@@ -418,7 +417,7 @@ bool Exx_LRI_Interface<T, Tdata>::exx_after_converge(
                 << std::defaultfloat << " (s)" << std::endl;
             return false;
         }
-    }   // if(GlobalC::exx_info.info_global.separate_loop)
+    }   // if(this->info_global.separate_loop)
     restart_reset();
     return true;
 }

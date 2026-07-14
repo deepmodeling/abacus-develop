@@ -23,7 +23,7 @@
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info_lip.h"
 
 #include <limits>
 #include <sys/stat.h>

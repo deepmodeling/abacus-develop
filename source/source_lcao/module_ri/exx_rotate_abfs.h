@@ -68,8 +68,8 @@ class Moment_abfs
 
   private:
     // std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> VR;
-    // WARNING: reference to Exx_Info_RI, which holds references into Exx_Info_Global.
-    // Must not outlive GlobalC::exx_info. See exx_info.h for details.
+    // WARNING: reference to Exx_Info_RI.
+    // Must not outlive the Exx_Info_RI passed to the constructor.
     Exx_Info_RI& info;
 };
 #include "exx_rotate_abfs.hpp"
