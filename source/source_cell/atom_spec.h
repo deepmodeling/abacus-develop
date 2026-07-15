@@ -31,7 +31,7 @@ class Atom
     std::vector<int> l_nchi; // number of chi for each L
     int stapos_wf = 0;       // start position of wave functions
 
-    std::string label = "\0";                     // atomic symbol
+    std::string label;                            ///< atomic symbol
     std::vector<ModuleBase::Vector3<double>> tau; // Cartesian coordinates of each atom in this type.
     std::vector<ModuleBase::Vector3<double>> dis; // direct displacements of each atom in this type in current step  liuyu modift 2023-03-22
     std::vector<ModuleBase::Vector3<double>> taud;  // Direct coordinates of each atom in this type.
@@ -40,7 +40,7 @@ class Atom
     std::vector<ModuleBase::Vector3<double>> force; // force acting on each atom in this type.
     std::vector<ModuleBase::Vector3<double>> lambda; // Lagrange multiplier for each atom in this type. used in deltaspin
     std::vector<ModuleBase::Vector3<int>> constrain; // constrain for each atom in this type. used in deltaspin
-    std::string label_orb = "\0";                    // atomic Element symbol in the orbital file of lcao
+    std::string label_orb;                           ///< atomic element symbol in the orbital file of lcao
 
     std::vector<double> mag;
     std::vector<double> angle1; // spin angle, added by zhengdy-soc
