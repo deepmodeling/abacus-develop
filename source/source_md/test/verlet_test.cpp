@@ -5,8 +5,9 @@
 #undef private
 #define private public
 #define protected public
+#include "source_esolver/esolver_lj.h"
 #include "source_md/verlet.h"
-#include "md_test_fixture.h"
+#include "setcell.h"
 #include <fstream>
 #define doublethreshold 1e-12
 
@@ -36,8 +37,34 @@
  *     - output MD information such as energy, temperature, and pressure
  */
 
-class Verlet_test : public MdIntegratorFixture<Verlet>
+class Verlet_test : public testing::Test
 {
+  protected:
+    MD_base* mdrun;
+    UnitCell ucell;
+    MdCell* mdcell;
+    Parameter param_in;
+    ModuleESolver::ESolver* p_esolver;
+
+    void SetUp()
+    {
+        Setcell::setupcell(ucell);
+        Setcell::parameters(param_in.input);
+
+        p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver->before_all_runners(ucell, param_in.inp);
+
+        mdcell = new MdCell(ucell, param_in);
+        mdrun = new Verlet(param_in, *mdcell);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
+    }
+
+    void TearDown()
+    {
+        delete mdrun;
+        delete mdcell;
+        delete p_esolver;
+    }
 };
 
 TEST_F(Verlet_test, setup)
@@ -261,7 +288,8 @@ TEST_F(Verlet_test, rescale_v)
 
 TEST_F(Verlet_test, CSVR)
 {
-    mdrun->first_half(GlobalV::ofs_running);
+    std::ofstream ofs;
+    mdrun->first_half(ofs);
     param_in.input.mdp.md_type = "nvt";
     param_in.input.mdp.md_thermostat = "csvr";
     param_in.input.mdp.md_csvr_tau = 100.0;
@@ -309,38 +337,32 @@ TEST_F(Verlet_test, print_md)
     std::ifstream ifs("running_verlet.log");
     std::string output_str;
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.838539188441"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
     getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(
-        output_str,
-        testing::HasSubstr(
-            " ----------------------------------------"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " Energy (Ry)             Potential (Ry)          Kinetic (Ry)            "));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("-0.0153652356062"));
-    EXPECT_THAT(output_str, testing::HasSubstr("-0.0239156372471"));
-    EXPECT_THAT(output_str, testing::HasSubstr("0.00855040164087"));
+            " ------------------------------------------------------------------------------------------------"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " Temperature (K)         Pressure (kbar)         "));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("1.08464"));
+            " Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " ----------------------------------------"));
+            " -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " ------------------------------------------------------------------------------------------------"));
     ifs.close();
 //    remove("running_verlet.log");
 }

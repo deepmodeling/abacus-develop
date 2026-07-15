@@ -12,7 +12,7 @@
 class Nose_Hoover : public MD_base
 {
   public:
-    Nose_Hoover(const Parameter& param_in, UnitCell& unit_in);
+    Nose_Hoover(const Parameter& param_in, MdCell& mdcell_in);
     ~Nose_Hoover();
 
   private:

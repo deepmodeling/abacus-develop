@@ -1,13 +1,10 @@
+#include "source_cell/md_cell.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
-#include "source_cell/module_neighlist/domain_decomposition.h"
 #include "source_cell/module_neighlist/neighbor_types.h"
-#include "source_cell/module_neighlist/unitcell_lite.h"
 
 #include <mpi.h>
 
-#include <algorithm>
 #include <cmath>
-#include <cstdint>
 #include <cstdlib>
 #include <iostream>
 #include <limits>
@@ -60,12 +57,10 @@ ModuleBase::Vector3<double> direct_to_cartesian(const ModuleBase::Matrix3& latve
                                        fx * latvec.e13 + fy * latvec.e23 + fz * latvec.e33);
 }
 
-UnitCellLite make_simple_lattice_ucell(int nx, int ny, int nz, double spacing, double skew)
+std::vector<ModuleBase::Vector3<double> > make_positions(int nx, int ny, int nz, const ModuleBase::Matrix3& latvec)
 {
-    const ModuleBase::Matrix3 latvec = make_simple_lattice_latvec(nx, ny, nz, spacing, skew);
-
-    std::vector<ModuleBase::Vector3<double>> tau;
-    tau.reserve(static_cast<size_t>(nx) * ny * nz);
+    std::vector<ModuleBase::Vector3<double> > tau;
+    tau.reserve(static_cast<std::size_t>(nx) * ny * nz);
     for (int ix = 0; ix < nx; ++ix)
     {
         for (int iy = 0; iy < ny; ++iy)
@@ -79,12 +74,7 @@ UnitCellLite make_simple_lattice_ucell(int nx, int ny, int nz, double spacing, d
             }
         }
     }
-
-    UnitCellLite ucell;
-    const double omega = cell_volume(latvec);
-    ucell.set_lattice(1.0, omega, latvec);
-    ucell.set_atoms(1, {static_cast<int>(tau.size())}, tau);
-    return ucell;
+    return tau;
 }
 
 long long checked_lattice_atom_count(int nx, int ny, int nz)
@@ -98,70 +88,6 @@ long long checked_lattice_atom_count(int nx, int ny, int nz)
         throw std::overflow_error("benchmark lattice atom count overflows.");
     }
     return lx * ly * lz;
-}
-
-long long owner_begin_index(long long n, int coord, int dims)
-{
-    return (static_cast<long long>(coord) * n + dims - 1) / dims;
-}
-
-long long owner_end_index(long long n, int coord, int dims)
-{
-    return (static_cast<long long>(coord + 1) * n + dims - 1) / dims;
-}
-
-void generate_owned_atoms_from_lattice(const DomainDecomposition& decomp,
-                                       const ModuleBase::Matrix3& latvec,
-                                       int nx,
-                                       int ny,
-                                       int nz,
-                                       std::vector<LocalAtom>& owned_atoms)
-{
-    owned_atoms.clear();
-
-    const auto& coords = decomp.coords();
-    const auto& dims = decomp.dims();
-
-    const long long ix_begin = owner_begin_index(nx, coords[0], dims[0]);
-    const long long ix_end = owner_end_index(nx, coords[0], dims[0]);
-    const long long iy_begin = owner_begin_index(ny, coords[1], dims[1]);
-    const long long iy_end = owner_end_index(ny, coords[1], dims[1]);
-    const long long iz_begin = owner_begin_index(nz, coords[2], dims[2]);
-    const long long iz_end = owner_end_index(nz, coords[2], dims[2]);
-
-    const std::size_t local_count
-        = ModuleNeighList::checked_size_product(
-            static_cast<std::size_t>(ix_end - ix_begin),
-            ModuleNeighList::checked_size_product(static_cast<std::size_t>(iy_end - iy_begin),
-                                                  static_cast<std::size_t>(iz_end - iz_begin),
-                                                  "benchmark local atom count"),
-            "benchmark local atom count");
-    owned_atoms.reserve(local_count);
-
-    for (long long ix = ix_begin; ix < ix_end; ++ix)
-    {
-        for (long long iy = iy_begin; iy < iy_end; ++iy)
-        {
-            for (long long iz = iz_begin; iz < iz_end; ++iz)
-            {
-                const double fx = static_cast<double>(ix) / nx;
-                const double fy = static_cast<double>(iy) / ny;
-                const double fz = static_cast<double>(iz) / nz;
-                const ModuleBase::Vector3<double> frac(fx, fy, fz);
-                const ModuleBase::Vector3<double> cart = direct_to_cartesian(latvec, fx, fy, fz);
-                const ModuleNeighList::GlobalAtomId global_id
-                    = static_cast<ModuleNeighList::GlobalAtomId>((ix * ny + iy) * nz + iz);
-
-                owned_atoms.push_back(LocalAtom(cart,
-                                                frac,
-                                                0,
-                                                0,
-                                                global_id,
-                                                decomp.rank(),
-                                                false));
-            }
-        }
-    }
 }
 
 long long count_neighbor_pairs(const NeighborList& list)
@@ -226,6 +152,8 @@ int main(int argc, char** argv)
 
     const ModuleBase::Matrix3 latvec = make_simple_lattice_latvec(nx, ny, nz, spacing, skew);
     const double lat0 = 1.0;
+    const double omega = cell_volume(latvec);
+    const std::vector<ModuleBase::Vector3<double> > positions = make_positions(nx, ny, nz, latvec);
     const long long nat = checked_lattice_atom_count(nx, ny, nz);
 
     long long serial_all_atoms = -1;
@@ -234,10 +162,10 @@ int main(int argc, char** argv)
     double serial_build_time = 0.0;
     if (mpi_rank == 0 && check_serial)
     {
-        UnitCellLite ucell = make_simple_lattice_ucell(nx, ny, nz, spacing, skew);
+        MdCell self_ref(latvec, latvec.Inverse(), lat0, omega, positions, MPI_COMM_SELF, cutoff, 0.0);
         NeighborSearch serial;
         const double t0 = MPI_Wtime();
-        serial.init(ucell, cutoff);
+        serial.init(self_ref, cutoff);
         const double t1 = MPI_Wtime();
         serial.build_neighbors();
         const double t2 = MPI_Wtime();
@@ -264,14 +192,9 @@ int main(int argc, char** argv)
     {
         MPI_Barrier(MPI_COMM_WORLD);
         const double t0 = MPI_Wtime();
-        DomainDecomposition decomp;
-        std::vector<LocalAtom> owned_atoms;
-        std::vector<LocalAtom> ghost_atoms;
+        MdCell mdcell(latvec, latvec.Inverse(), lat0, omega, positions, MPI_COMM_WORLD, cutoff, 0.0);
         NeighborSearch ns;
-        decomp.init(MPI_COMM_WORLD, latvec, lat0, cutoff, 0.0);
-        generate_owned_atoms_from_lattice(decomp, latvec, nx, ny, nz, owned_atoms);
-        decomp.exchange_ghost_atoms(owned_atoms, ghost_atoms);
-        ns.init_distributed(owned_atoms, ghost_atoms, cutoff, lat0);
+        ns.init(mdcell, cutoff);
         const double t1 = MPI_Wtime();
         ns.build_neighbors();
         const double t2 = MPI_Wtime();
@@ -282,10 +205,10 @@ int main(int argc, char** argv)
 
         if (i == repeat - 1)
         {
-            const auto& inside_atoms = ns.get_inside_atoms();
-            const auto& ghost_atoms = ns.get_ghost_atoms();
-            const auto& all_atoms = ns.get_all_atoms();
-            const auto& list = ns.get_neighbor_list();
+            const std::vector<NeighborAtom>& inside_atoms = ns.get_inside_atoms();
+            const std::vector<NeighborAtom>& ghost_atoms = ns.get_ghost_atoms();
+            const std::vector<NeighborAtom>& all_atoms = ns.get_all_atoms();
+            const NeighborList& list = ns.get_neighbor_list();
 
             last_inside = static_cast<long long>(inside_atoms.size());
             last_ghost = static_cast<long long>(ghost_atoms.size());
@@ -294,7 +217,7 @@ int main(int argc, char** argv)
             inside_index_sum = 0;
             inside_index_square_sum = 0;
 
-            for (size_t atom_id = 0; atom_id < all_atoms.size(); ++atom_id)
+            for (std::size_t atom_id = 0; atom_id < all_atoms.size(); ++atom_id)
             {
                 if (all_atoms[atom_id].atom_id !=
                     ModuleNeighList::checked_local_atom_index(atom_id, "benchmark atom id"))
@@ -303,10 +226,11 @@ int main(int argc, char** argv)
                 }
             }
 
-            for (const NeighborAtom& atom : inside_atoms)
+            for (std::size_t iatom = 0; iatom < inside_atoms.size(); ++iatom)
             {
-                inside_index_sum += atom.global_id;
-                inside_index_square_sum += static_cast<long long>(atom.global_id) * atom.global_id;
+                inside_index_sum += inside_atoms[iatom].global_id;
+                inside_index_square_sum += static_cast<long long>(inside_atoms[iatom].global_id)
+                                           * inside_atoms[iatom].global_id;
             }
 
             for (int local_i = 0; local_i < list.get_nlocal(); ++local_i)
@@ -315,7 +239,7 @@ int main(int argc, char** argv)
                 for (int ad = 0; ad < list.get_numneigh(local_i); ++ad)
                 {
                     const int neighbor_id = list.get_firstneigh(local_i)[ad];
-                    if (neighbor_id < 0 || static_cast<size_t>(neighbor_id) >= all_atoms.size())
+                    if (neighbor_id < 0 || static_cast<std::size_t>(neighbor_id) >= all_atoms.size())
                     {
                         local_failure = 1;
                     }
@@ -371,7 +295,7 @@ int main(int argc, char** argv)
     if (mpi_rank == 0)
     {
         std::cout << "NeighborSearch MPI halo benchmark\n"
-                  << "algorithm fractional_halo_bins\n"
+                  << "algorithm basecell_mdcell_unified_init\n"
                   << "np " << mpi_size << "\n"
                   << "atoms " << nat << "\n"
                   << "grid " << nx << " " << ny << " " << nz << "\n"

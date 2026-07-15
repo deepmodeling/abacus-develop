@@ -5,6 +5,7 @@ add_library(
     langevin.cpp
     md_base.cpp
     md_func.cpp
+    md_state_view.cpp
     msst.cpp
     nhchain.cpp
     run_md.cpp

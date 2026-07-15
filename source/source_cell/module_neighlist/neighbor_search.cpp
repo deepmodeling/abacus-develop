@@ -1,4 +1,7 @@
 #include "source_cell/module_neighlist/neighbor_search.h"
+#include "source_cell/md_cell.h"
+#include "source_cell/unitcell.h"
+
 #include <cmath>
 #include <algorithm>
 #include <limits>
@@ -36,20 +39,17 @@ const NeighborList& NeighborSearch::get_neighbor_list() const {
 
 // ========== Main public interface ==========
 
-void NeighborSearch::init_distributed(const std::vector<LocalAtom>& owned_atoms,
-                                      const std::vector<LocalAtom>& ghost_atoms,
-                                      double sr,
-                                      double lat0)
+void NeighborSearch::init_from_mdcell_(const MdCell& cell, double sr)
 {
     inside_atoms_.clear();
     ghost_atoms_.clear();
     all_atoms_.clear();
     bin_manager_.clear();
 
-    search_radius_ = sr / lat0;
+    search_radius_ = sr / cell.lat0();
 
-    const std::size_t total_atoms = ModuleNeighList::checked_size_sum(owned_atoms.size(),
-                                                                       ghost_atoms.size(),
+    const std::size_t total_atoms = ModuleNeighList::checked_size_sum(cell.owned_atoms().size(),
+                                                                       cell.ghost_atoms().size(),
                                                                        "NeighborSearch distributed atom count");
     if (total_atoms > static_cast<std::size_t>(std::numeric_limits<ModuleNeighList::LocalAtomIndex>::max()))
     {
@@ -57,12 +57,12 @@ void NeighborSearch::init_distributed(const std::vector<LocalAtom>& owned_atoms,
     }
 
     all_atoms_.reserve(total_atoms);
-    inside_atoms_.reserve(owned_atoms.size());
-    ghost_atoms_.reserve(ghost_atoms.size());
+    inside_atoms_.reserve(cell.owned_atoms().size());
+    ghost_atoms_.reserve(cell.ghost_atoms().size());
 
-    for (size_t iat = 0; iat < owned_atoms.size(); ++iat)
+    for (size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
     {
-        const LocalAtom& local = owned_atoms[iat];
+        const LocalAtom& local = cell.owned_atoms()[iat];
         NeighborAtom atom(local.cart.x,
                           local.cart.y,
                           local.cart.z,
@@ -76,9 +76,9 @@ void NeighborSearch::init_distributed(const std::vector<LocalAtom>& owned_atoms,
         inside_atoms_.push_back(atom);
     }
 
-    for (size_t iat = 0; iat < ghost_atoms.size(); ++iat)
+    for (size_t iat = 0; iat < cell.ghost_atoms().size(); ++iat)
     {
-        const LocalAtom& local = ghost_atoms[iat];
+        const LocalAtom& local = cell.ghost_atoms()[iat];
         NeighborAtom atom(local.cart.x,
                           local.cart.y,
                           local.cart.z,
@@ -98,9 +98,9 @@ void NeighborSearch::init_distributed(const std::vector<LocalAtom>& owned_atoms,
     neighbor_list_.initialize(inside_atoms_.size(), page_size);
 }
 
-void NeighborSearch::init(const AtomProvider& ucell, double sr)
+void NeighborSearch::init_from_unitcell_(const UnitCell& ucell, double sr)
 {
-    search_radius_ = sr / ucell.get_lat0();
+    search_radius_ = sr / ucell.lat0;
 
     // clear possible residual data from previous runs
     inside_atoms_.clear();
@@ -108,17 +108,17 @@ void NeighborSearch::init(const AtomProvider& ucell, double sr)
     all_atoms_.clear();
     bin_manager_.clear();
 
-    for (int i = 0; i < ucell.get_ntype(); i++)
+    for (int i = 0; i < ucell.ntype; i++)
     {
-        for (int j = 0; j < ucell.get_na(i); j++)
+        for (int j = 0; j < ucell.atoms[i].na; j++)
         {
             const ModuleNeighList::LocalAtomIndex atom_count
                 = ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
                                                             "NeighborSearch atom id");
             NeighborAtom atom(
-                ucell.get_tau(i,j).x,
-                ucell.get_tau(i,j).y,
-                ucell.get_tau(i,j).z,
+                ucell.atoms[i].tau[j].x,
+                ucell.atoms[i].tau[j].y,
+                ucell.atoms[i].tau[j].z,
                 i,
                 j,
                 atom_count
@@ -144,6 +144,20 @@ void NeighborSearch::init(const AtomProvider& ucell, double sr)
     neighbor_list_.initialize(inside_atoms_.size(), page_size);
 }
 
+void NeighborSearch::init(BaseCell& cell, double sr)
+{
+    if (cell.kind() == BaseCell::Kind::md_cell)
+    {
+        MdCell& md_cell = static_cast<MdCell&>(cell);
+        init_from_mdcell_(md_cell, sr);
+        return;
+    }
+
+    assert(cell.kind() == BaseCell::Kind::unit_cell);
+    UnitCell& ucell = static_cast<UnitCell&>(cell);
+    init_from_unitcell_(ucell, sr);
+}
+
 void NeighborSearch::build_neighbors()
 {
     bin_manager_.init_bins(search_radius_, all_atoms_);
@@ -163,11 +177,11 @@ double NeighborSearch::cross_product_norm(double a1, double a2, double a3,
     return sqrt(c1 * c1 + c2 * c2 + c3 * c3);
 }
 
-void NeighborSearch::check_expand_condition(const AtomProvider& ucell, int& glayerX_minus, int& glayerX, int& glayerY_minus, int& glayerY, int& glayerZ_minus, int& glayerZ)
+void NeighborSearch::check_expand_condition(const UnitCell& ucell, int& glayerX_minus, int& glayerX, int& glayerY_minus, int& glayerY, int& glayerZ_minus, int& glayerZ)
 {
-    const auto& lat = ucell.get_latvec();
-    const double omega = ucell.get_omega();
-    const double lat0 = ucell.get_lat0();
+    const auto& lat = ucell.latvec;
+    const double omega = ucell.omega;
+    const double lat0 = ucell.lat0;
     const double lat0_cubed = lat0 * lat0 * lat0;
 
     double a23_norm = cross_product_norm(lat.e21, lat.e22, lat.e23, lat.e31, lat.e32, lat.e33);
@@ -187,11 +201,11 @@ void NeighborSearch::check_expand_condition(const AtomProvider& ucell, int& glay
     glayerZ_minus = extend_d33;
 }
 
-void NeighborSearch::set_member_variables(const AtomProvider& ucell, int glayerX_minus, int glayerX, int glayerY_minus, int glayerY, int glayerZ_minus, int glayerZ)
+void NeighborSearch::set_member_variables(const UnitCell& ucell, int glayerX_minus, int glayerX, int glayerY_minus, int glayerY, int glayerZ_minus, int glayerZ)
 {
-    ModuleBase::Vector3<double> vec1(ucell.get_latvec().e11, ucell.get_latvec().e12, ucell.get_latvec().e13);
-    ModuleBase::Vector3<double> vec2(ucell.get_latvec().e21, ucell.get_latvec().e22, ucell.get_latvec().e23);
-    ModuleBase::Vector3<double> vec3(ucell.get_latvec().e31, ucell.get_latvec().e32, ucell.get_latvec().e33);
+    ModuleBase::Vector3<double> vec1(ucell.latvec.e11, ucell.latvec.e12, ucell.latvec.e13);
+    ModuleBase::Vector3<double> vec2(ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23);
+    ModuleBase::Vector3<double> vec3(ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33);
 
     for (int ix = -glayerX_minus; ix < glayerX; ix++)
     {
@@ -203,13 +217,13 @@ void NeighborSearch::set_member_variables(const AtomProvider& ucell, int glayerX
                 {
                     continue;
                 }
-                for (int i = 0; i < ucell.get_ntype(); i++)
+                for (int i = 0; i < ucell.ntype; i++)
                 {
-                    for (int j = 0; j < ucell.get_na(i); j++)
+                    for (int j = 0; j < ucell.atoms[i].na; j++)
                     {
-                        double atom_x = ucell.get_tau(i,j).x + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz;
-                        double atom_y = ucell.get_tau(i,j).y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
-                        double atom_z = ucell.get_tau(i,j).z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
+                        double atom_x = ucell.atoms[i].tau[j].x + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz;
+                        double atom_y = ucell.atoms[i].tau[j].y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
+                        double atom_z = ucell.atoms[i].tau[j].z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
 
                         const ModuleNeighList::LocalAtomIndex atom_count
                             = ModuleNeighList::checked_local_atom_index(all_atoms_.size(),

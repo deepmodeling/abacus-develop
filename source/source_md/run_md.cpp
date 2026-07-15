@@ -1,5 +1,7 @@
 #include "run_md.h"
 
+#include "source_cell/distributed_mdcell_reader.h"
+#include "source_cell/md_cell.h"
 #include "source_io/module_parameter/parameter.h"
 #include "fire.h"
 #include "langevin.h"
@@ -12,47 +14,43 @@
 #include "verlet.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h"
-#include <memory>
-
-namespace
-{
-std::unique_ptr<MD_base> create_md_runner(const Parameter& param_in, UnitCell& unit_in)
-{
-    if (param_in.mdp.md_type == "fire")
-    {
-        return std::unique_ptr<MD_base>(new FIRE(param_in, unit_in));
-    }
-    if ((param_in.mdp.md_type == "nvt" && param_in.mdp.md_thermostat == "nhc") || param_in.mdp.md_type == "npt")
-    {
-        return std::unique_ptr<MD_base>(new Nose_Hoover(param_in, unit_in));
-    }
-    if (param_in.mdp.md_type == "nve" || param_in.mdp.md_type == "nvt")
-    {
-        return std::unique_ptr<MD_base>(new Verlet(param_in, unit_in));
-    }
-    if (param_in.mdp.md_type == "langevin")
-    {
-        return std::unique_ptr<MD_base>(new Langevin(param_in, unit_in));
-    }
-    if (param_in.mdp.md_type == "msst")
-    {
-        return std::unique_ptr<MD_base>(new MSST(param_in, unit_in));
-    }
-
-    ModuleBase::WARNING_QUIT("md_line", "no such md_type!");
-    return nullptr;
-}
-} // namespace
-
 namespace Run_MD
 {
+namespace
+{
+}
 
-void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Parameter& param_in)
+void md_line(MdCell& mdcell, ModuleESolver::ESolver* p_esolver, const Parameter& param_in)
 {
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::start("Run_MD", "md_line");
 
-    std::unique_ptr<MD_base> mdrun = create_md_runner(param_in, unit_in);
+    /// determine the md_type
+    MD_base* mdrun = nullptr;
+    if (param_in.mdp.md_type == "fire")
+    {
+        mdrun = new FIRE(param_in, mdcell);
+    }
+    else if ((param_in.mdp.md_type == "nvt" && param_in.mdp.md_thermostat == "nhc") || param_in.mdp.md_type == "npt")
+    {
+        mdrun = new Nose_Hoover(param_in, mdcell);
+    }
+    else if (param_in.mdp.md_type == "nve" || param_in.mdp.md_type == "nvt")
+    {
+        mdrun = new Verlet(param_in, mdcell);
+    }
+    else if (param_in.mdp.md_type == "langevin")
+    {
+        mdrun = new Langevin(param_in, mdcell);
+    }
+    else if (param_in.mdp.md_type == "msst")
+    {
+        mdrun = new MSST(param_in, mdcell);
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("md_line", "no such md_type!");
+    }
 
     /// md cycle, mohan update 2026-01-04, change '<=' to '<'
     while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
@@ -73,7 +71,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
             /// update force and virial due to the update of atom positions
             MD_func::force_virial(p_esolver,
                                   mdrun->step_,
-                                  unit_in,
+                                  mdcell,
                                   mdrun->potential,
                                   mdrun->force,
                                   param_in.inp.cal_stress,
@@ -81,14 +79,14 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
 
             mdrun->second_half();
 
-            MD_func::compute_stress(unit_in,
+            MD_func::compute_stress(mdcell,
                                     mdrun->vel,
                                     mdrun->allmass,
                                     param_in.inp.cal_stress,
                                     mdrun->virial,
                                     mdrun->stress);
             mdrun->t_current = MD_func::current_temp(mdrun->kinetic,
-                                                     unit_in.nat,
+                                                     mdcell,
                                                      mdrun->frozen_freedom_,
                                                      mdrun->allmass,
                                                      mdrun->vel);
@@ -100,7 +98,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
 
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
                                PARAM.globalv.global_out_dir,
-                               unit_in,
+                               mdcell,
                                param_in,
                                mdrun->virial,
                                mdrun->force,
@@ -109,34 +107,46 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
 
         if ((mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)
         {
-            unitcell::update_vel(mdrun->vel,unit_in.ntype,unit_in.nat,unit_in.atoms);
-            std::stringstream file;
-            file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
-            // changelog 20240509
-            // because I move out the dependence on GlobalV from UnitCell::print_stru_file
-            // so its parameter is calculated here
-            bool need_orb = PARAM.inp.basis_type=="pw";
-            need_orb = need_orb && PARAM.inp.init_wfc.substr(0, 3)=="nao";
-            need_orb = need_orb || PARAM.inp.basis_type=="lcao";
-            need_orb = need_orb || PARAM.inp.basis_type=="lcao_in_pw";
-            unitcell::print_stru_file(unit_in,
-                                    unit_in.atoms,
-                                    unit_in.latvec,
-                                    file.str(),
-                                    "",
-                                    PARAM.inp.nspin,
-                                    false, // Cartesian coordinates
-                                    PARAM.inp.calculation == "md",
-                                    PARAM.inp.out_mul,
-                                    need_orb,
-                                    PARAM.globalv.deepks_setorb,
-                                    GlobalV::MY_RANK);
+            if (mdcell.has_backing_unitcell())
+            {
+                UnitCell& unit_in = mdcell.backing_unitcell();
+                int iat = 0;
+                for (int it = 0; it < unit_in.ntype; ++it)
+                {
+                    for (int ia = 0; ia < unit_in.atoms[it].na; ++ia)
+                    {
+                        unit_in.atoms[it].tau[ia] = mdcell.owned_atoms()[static_cast<std::size_t>(iat)].cart;
+                        unit_in.atoms[it].taud[ia] = mdcell.owned_atoms()[static_cast<std::size_t>(iat)].frac;
+                        unit_in.atoms[it].vel[ia] = mdrun->vel[iat];
+                        ++iat;
+                    }
+                }
+                unitcell::update_vel(mdrun->vel, unit_in.ntype, unit_in.nat, unit_in.atoms);
+                std::stringstream file;
+                file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
+                bool need_orb = PARAM.inp.basis_type=="pw";
+                need_orb = need_orb && PARAM.inp.init_wfc.substr(0, 3)=="nao";
+                need_orb = need_orb || PARAM.inp.basis_type=="lcao";
+                need_orb = need_orb || PARAM.inp.basis_type=="lcao_in_pw";
+                unitcell::print_stru_file(unit_in,
+                                        unit_in.atoms,
+                                        unit_in.latvec,
+                                        file.str(),
+                                        PARAM.inp.nspin,
+                                        false,
+                                        PARAM.inp.calculation == "md",
+                                        PARAM.inp.out_mul,
+                                        need_orb,
+                                        PARAM.globalv.deepks_setorb,
+                                        GlobalV::MY_RANK);
+            }
             mdrun->write_restart(PARAM.globalv.global_out_dir);
         }
 
         mdrun->step_++;
     }
 
+    delete mdrun;
     ModuleBase::timer::end("Run_MD", "md_line");
     return;
 }

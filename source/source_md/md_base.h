@@ -1,6 +1,8 @@
 #ifndef MD_BASE_H
 #define MD_BASE_H
 
+#include "source_cell/md_cell.h"
+#include "source_md/md_state_view.h"
 #include "source_esolver/esolver.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -15,7 +17,7 @@
 class MD_base
 {
   public:
-    MD_base(const Parameter& param_in, UnitCell& unit_in);
+    MD_base(const Parameter& param_in, MdCell& mdcell_in);
     virtual ~MD_base();
 
     /**
@@ -52,6 +54,9 @@ class MD_base
     virtual void write_restart(const std::string& global_out_dir);
 
   protected:
+    void refresh_runtime_storage_from_mdcell();
+    void sync_velocity_buffer_to_state();
+
     /**
      * @brief restart MD when md_restart is true
      * @param global_readin_dir directory of files for reading
@@ -84,10 +89,11 @@ class MD_base
     ModuleBase::matrix stress;          ///< stress for this lattice
     double potential=0.0;               ///< potential energy
     double kinetic;                     ///< kinetic energy
+    MdStateView state_;                 ///< flattened owned-atom runtime state view
 
   protected:
     const MD_para& mdp; ///< input parameters used in md
-    UnitCell& ucell;    ///< unitcell information
+    MdCell& mdcell;     ///< mdcell information
     double energy_=0.0; ///< total energy of the system
 
     bool cal_stress;  ///< whether calculate stress

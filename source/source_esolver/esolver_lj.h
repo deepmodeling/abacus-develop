@@ -2,7 +2,13 @@
 #define ESOLVER_LJ_H
 
 #include "esolver.h"
-#include "source_cell/module_neighlist/unitcell_lite.h"
+
+namespace ModuleESolver
+{
+    class ESolver_LJ;
+}
+
+class MdCell;
 
 namespace ModuleESolver
 {
@@ -15,21 +21,30 @@ namespace ModuleESolver
             classname = "ESolver_LJ";
         }
 
-        UnitCellLite change_from_ucell_to_ucell_lite(const UnitCell& ucell);
-
         void before_all_runners(BaseCell& cell, const Input_para& inp) override;
+        void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
         void runner(BaseCell& cell, const int istep) override;
+        void runner(UnitCell& cell, const int istep) override;
 
         double cal_energy() override;
 
         void cal_force(BaseCell& cell, ModuleBase::matrix& force) override;
+        void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
 
         void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) override;
+        void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
 
         void after_all_runners(BaseCell& cell) override;
+        void after_all_runners(UnitCell& ucell) override;
 
       private:
+        void before_all_runners_mdcell_(MdCell& mdcell, const Input_para& inp);
+        void runner_mdcell_(MdCell& mdcell, const int istep);
+        void cal_force_mdcell_(MdCell& mdcell, ModuleBase::matrix& force);
+        void cal_stress_mdcell_(MdCell& mdcell, ModuleBase::matrix& stress);
+        void after_all_runners_mdcell_(MdCell& mdcell);
+
         double LJ_energy(const double& d, const int& i, const int& j) const;
 
         ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const;

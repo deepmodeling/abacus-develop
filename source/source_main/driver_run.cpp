@@ -1,5 +1,7 @@
 #include "source_main/driver.h"
 #include "source_cell/check_atomic_stru.h"
+#include "source_cell/distributed_mdcell_reader.h"
+#include "source_cell/md_cell.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_relax/relax_driver.h"
 #include "source_io/module_parameter/parameter.h"
@@ -11,6 +13,7 @@
 #include "source_base/module_device/memory_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_hsolver/kernels/hegvd_op.h"
+#include "source_base/constants.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
@@ -80,7 +83,29 @@ void Driver::driver_run()
     //! 4: different types of calculations
     if (cal == "md")
     {
-        Run_MD::md_line(ucell, p_esolver, PARAM);
+#ifdef __MPI
+        if (PARAM.inp.esolver_type == "lj")
+        {
+            double cutoff_bohr = 0.0;
+            for (std::size_t i = 0; i < PARAM.inp.mdp.lj_rcut.size(); ++i)
+            {
+                cutoff_bohr = std::max(cutoff_bohr, PARAM.inp.mdp.lj_rcut[i] * ModuleBase::ANGSTROM_AU);
+            }
+            MdCell mdcell = DistributedMdCellReader::read_lj_stru(PARAM.globalv.global_in_stru,
+                                                                  MPI_COMM_WORLD,
+                                                                  cutoff_bohr,
+                                                                  0.0);
+            Run_MD::md_line(mdcell, p_esolver, PARAM);
+        }
+        else
+        {
+            MdCell mdcell(ucell, PARAM);
+            Run_MD::md_line(mdcell, p_esolver, PARAM);
+        }
+#else
+        MdCell mdcell(ucell, PARAM);
+        Run_MD::md_line(mdcell, p_esolver, PARAM);
+#endif
     }
     else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
     {

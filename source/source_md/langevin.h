@@ -14,7 +14,7 @@
 class Langevin : public MD_base
 {
   public:
-    Langevin(const Parameter& param_in, UnitCell& unit_in);
+    Langevin(const Parameter& param_in, MdCell& mdcell_in);
 
     ~Langevin();
 

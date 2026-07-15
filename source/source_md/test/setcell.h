@@ -6,6 +6,7 @@
 
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/md_cell.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -128,6 +129,11 @@ class Setcell
         input.mdp.md_nraise = 2;
         input.mdp.md_tolerance = 0;
     };
+
+    static MdCell setup_mdcell(UnitCell& ucell, const Parameter& param)
+    {
+        return MdCell(ucell, param);
+    }
 };
 
 #endif

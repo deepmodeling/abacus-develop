@@ -5,8 +5,9 @@
 #undef private
 #define private public
 #define protected public
+#include "source_esolver/esolver_lj.h"
 #include "source_md/nhchain.h"
-#include "md_test_fixture.h"
+#include "setcell.h"
 #define doublethreshold 1e-12
 /************************************************
  *  unit test of functions in nhchain.h
@@ -32,20 +33,37 @@
  *   - Nose_Hoover::print_md
  *     - output MD information such as energy, temperature, and pressure
  */
-class NHC_test : public MdTestBase
+class NHC_test : public testing::Test
 {
   protected:
-    std::unique_ptr<MD_base> mdrun;
+    MD_base* mdrun;
+    UnitCell ucell;
+    MdCell* mdcell;
+    Parameter param_in;
+    ModuleESolver::ESolver* p_esolver;
 
-    void SetUp() override
+    void SetUp()
     {
-        MdTestBase::SetUp();
+        Setcell::setupcell(ucell);
+        Setcell::parameters(param_in.input);
+
+        p_esolver = new ModuleESolver::ESolver_LJ();
+        p_esolver->before_all_runners(ucell, param_in.inp);
+
         param_in.input.mdp.md_type = "npt";
         param_in.input.mdp.md_pmode = "tri";
         param_in.input.mdp.md_pfirst = 1;
         param_in.input.mdp.md_plast = 1;
-        mdrun.reset(new Nose_Hoover(param_in, ucell));
-        mdrun->setup(p_esolver.get(), PARAM.sys.global_readin_dir);
+        mdcell = new MdCell(ucell, param_in);
+        mdrun = new Nose_Hoover(param_in, *mdcell);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
+    }
+
+    void TearDown()
+    {
+        delete mdrun;
+        delete mdcell;
+        delete p_esolver;
     }
 };
 
@@ -164,7 +182,7 @@ TEST_F(NHC_test, restart)
     mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.txt");
 
-    Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun.get());
+    Nose_Hoover* nhc = dynamic_cast<Nose_Hoover*>(mdrun);
     EXPECT_EQ(mdrun->step_rst_, 3);
     EXPECT_EQ(mdrun->mdp.md_tchain, 4);
     EXPECT_EQ(mdrun->mdp.md_pchain, 4);
@@ -201,38 +219,32 @@ TEST_F(NHC_test, print_md)
     std::ifstream ifs("running_nhchain.log");
     std::string output_str;
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.838539188441"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
     getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(
-        output_str,
-        testing::HasSubstr(
-            " ----------------------------------------"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " Energy (Ry)             Potential (Ry)          Kinetic (Ry)            "));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("-0.0153652356062"));
-    EXPECT_THAT(output_str, testing::HasSubstr("-0.0239156372471"));
-    EXPECT_THAT(output_str, testing::HasSubstr("0.00855040164087"));
+            " ------------------------------------------------------------------------------------------------"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " Temperature (K)         Pressure (kbar)         "));
-    getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("1.08464"));
+            " Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " ----------------------------------------"));
+            " -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " ------------------------------------------------------------------------------------------------"));
     ifs.close();
     //remove("running_nhchain.log");
 }

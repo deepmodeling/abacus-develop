@@ -11,10 +11,31 @@ AddTest(
   LIBS parameter base device
   SOURCES
     neighbor_search_test.cpp
+    ../../../source_md/md_state_view.cpp
   ../neighbor_search.cpp
+  ../../md_cell.cpp
+  ../domain_decomposition.cpp
   ../bin_manager.cpp
   ../page_allocator.cpp
-  ../unitcell_lite.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_NEIGHBOR_md_state_view_mdcell
+  LIBS parameter base device
+  SOURCES
+    md_state_view_mdcell_test.cpp
+    ../../../source_md/md_state_view.cpp
+    ../../md_cell.cpp
+    ../domain_decomposition.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
+  LIBS parameter base device
+  SOURCES
+    md_cell_migrate_mpi_test.cpp
+    ../../md_cell.cpp
+    ../domain_decomposition.cpp
 )
 
 AddTest(
@@ -35,13 +56,36 @@ AddTest(
 )
 
 if(ENABLE_MPI)
+  add_executable(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader
+    distributed_mdcell_reader_test.cpp
+    ../../distributed_mdcell_reader.cpp
+    ../../md_cell.cpp
+    ../domain_decomposition.cpp
+    ../../../source_base/global_variable.cpp
+    ../../../source_base/matrix.cpp
+    ../../../source_base/matrix3.cpp
+    ../../../source_base/tool_quit.cpp
+  )
+  target_include_directories(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader PRIVATE ${ABACUS_SOURCE_DIR})
+  target_compile_definitions(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader PRIVATE __NORMAL)
+  target_link_libraries(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader
+    PRIVATE
+    Threads::Threads MPI::MPI_CXX GTest::gtest GTest::gmock
+  )
+  install(TARGETS MODULE_CELL_NEIGHBOR_distributed_mdcell_reader DESTINATION ${CMAKE_BINARY_DIR}/tests)
+  add_test(NAME MODULE_CELL_NEIGHBOR_distributed_mdcell_reader_np4
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
+            $<TARGET_FILE:MODULE_CELL_NEIGHBOR_distributed_mdcell_reader>
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
   add_executable(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark
     neighbor_search_mpi_benchmark.cpp
+    ../../md_cell.cpp
     ../domain_decomposition.cpp
     ../neighbor_search.cpp
     ../bin_manager.cpp
     ../page_allocator.cpp
-    ../unitcell_lite.cpp
     ../../../source_base/matrix.cpp
     ../../../source_base/matrix3.cpp
     ../../../source_base/tool_quit.cpp

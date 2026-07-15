@@ -4,16 +4,16 @@
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
 
-Langevin::Langevin(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
+Langevin::Langevin(const Parameter& param_in, MdCell& mdcell_in) : MD_base(param_in, mdcell_in)
 {
     /// convert to a.u. unit
     assert(ModuleBase::AU_to_FS!=0.0);
 
     md_damp = mdp.md_damp / ModuleBase::AU_to_FS;
 
-    assert(ucell.nat>0);
+    assert(mdcell.nlocal() > 0);
 
-    total_force = new ModuleBase::Vector3<double>[ucell.nat];
+    total_force = new ModuleBase::Vector3<double>[mdcell.nlocal()];
 }
 
 Langevin::~Langevin()
@@ -85,23 +85,16 @@ void Langevin::restart(const std::string& global_readin_dir)
 
 void Langevin::post_force()
 {
-    if (my_rank == 0)
+    double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
+    ModuleBase::Vector3<double> fictitious_force;
+    for (int i = 0; i < mdcell.nlocal(); ++i)
     {
-        double t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
-        ModuleBase::Vector3<double> fictitious_force;
-        for (int i = 0; i < ucell.nat; ++i)
+        fictitious_force = -allmass[i] * vel[i] / md_damp;
+        for (int j = 0; j < 3; ++j)
         {
-            fictitious_force = -allmass[i] * vel[i] / md_damp;
-            for (int j = 0; j < 3; ++j)
-            {
-                fictitious_force[j] += sqrt(24.0 * t_target * allmass[i] / md_damp / md_dt)
-                                       * (static_cast<double>(std::rand()) / RAND_MAX - 0.5);
-            }
-            total_force[i] = force[i] + fictitious_force;
+            fictitious_force[j] += sqrt(24.0 * t_target * allmass[i] / md_damp / md_dt)
+                                   * (static_cast<double>(std::rand()) / RAND_MAX - 0.5);
         }
+        total_force[i] = force[i] + fictitious_force;
     }
-
-#ifdef __MPI
-    MPI_Bcast(total_force, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif
 }

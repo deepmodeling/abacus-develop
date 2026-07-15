@@ -4,9 +4,42 @@
 #include "mpi.h"
 #endif
 #include "source_io/module_output/print_info.h"
-#include "source_cell/update_cell.h"
-MD_base::MD_base(const Parameter& param_in, UnitCell& unit_in) 
-: mdp(param_in.mdp), ucell(unit_in)
+#include <algorithm>
+
+void MD_base::refresh_runtime_storage_from_mdcell()
+{
+    delete[] allmass;
+    delete[] pos;
+    delete[] vel;
+    delete[] ionmbl;
+    delete[] force;
+
+    allmass = new double[mdcell.nlocal()];
+    pos = new ModuleBase::Vector3<double>[mdcell.nlocal()];
+    vel = new ModuleBase::Vector3<double>[mdcell.nlocal()];
+    ionmbl = new ModuleBase::Vector3<int>[mdcell.nlocal()];
+    force = new ModuleBase::Vector3<double>[mdcell.nlocal()];
+    state_ = MdStateView::from_mdcell(mdcell);
+    for (int i = 0; i < mdcell.nlocal(); ++i)
+    {
+        allmass[i] = state_.mass(i);
+        vel[i] = state_.vel(i);
+        ionmbl[i] = state_.mbl(i);
+        force[i] = state_.force(i);
+        pos[i].set(0.0, 0.0, 0.0);
+    }
+}
+
+void MD_base::sync_velocity_buffer_to_state()
+{
+    for (int i = 0; i < state_.size(); ++i)
+    {
+        state_.vel(i) = vel[i];
+    }
+}
+
+MD_base::MD_base(const Parameter& param_in, MdCell& mdcell_in)
+: mdp(param_in.mdp), mdcell(mdcell_in)
 {
     my_rank = param_in.globalv.myrank;
     cal_stress = param_in.inp.cal_stress;
@@ -17,13 +50,13 @@ MD_base::MD_base(const Parameter& param_in, UnitCell& unit_in)
 
     stop = false;
 
-    assert(ucell.nat>0);
+    assert(mdcell.nlocal() > 0);
 
-    allmass = new double[ucell.nat];
-    pos = new ModuleBase::Vector3<double>[ucell.nat];
-    vel = new ModuleBase::Vector3<double>[ucell.nat];
-    ionmbl = new ModuleBase::Vector3<int>[ucell.nat];
-    force = new ModuleBase::Vector3<double>[ucell.nat];
+    allmass = nullptr;
+    pos = nullptr;
+    vel = nullptr;
+    ionmbl = nullptr;
+    force = nullptr;
     virial.create(3, 3);
     stress.create(3, 3);
 
@@ -38,8 +71,14 @@ MD_base::MD_base(const Parameter& param_in, UnitCell& unit_in)
     step_ = 0;
     step_rst_ = 0;
 
-    MD_func::init_vel(ucell, my_rank, mdp.md_restart, md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+    refresh_runtime_storage_from_mdcell();
+    MD_func::init_vel(mdcell, my_rank, mdp.md_restart, md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
+    for (int i = 0; i < mdcell.nlocal(); ++i)
+    {
+        state_.vel(i) = vel[i];
+        state_.mbl(i) = ionmbl[i];
+    }
+    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_, allmass, vel);
 }
 
 
@@ -58,6 +97,7 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
     if (mdp.md_restart)
     {
         restart(global_readin_dir);
+        refresh_runtime_storage_from_mdcell();
     }
 
     // mohan add 2026-01-04
@@ -67,9 +107,8 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
 	ModuleIO::print_screen(stress_step, force_step, istep_print);
 
-    MD_func::force_virial(p_esolver, step_, ucell, potential, force, cal_stress, virial);
-    MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);
-    ucell.ionic_position_updated = true;
+    MD_func::force_virial(p_esolver, step_, mdcell, potential, force, cal_stress, virial);
+    MD_func::compute_stress(mdcell, vel, allmass, cal_stress, virial, stress);
 
     return;
 }
@@ -94,32 +133,31 @@ void MD_base::second_half()
 
 void MD_base::update_pos()
 {
-    if (my_rank == 0)
+    for (int i = 0; i < state_.size(); ++i)
     {
-        const int natom = ucell.nat;
-#pragma omp parallel for schedule(static) if (natom >= 256)
-        for (int i = 0; i < natom; ++i)
+        for (int k = 0; k < 3; ++k)
         {
-            for (int k = 0; k < 3; ++k)
+            if (state_.mbl(i)[k])
             {
-                if (ionmbl[i][k])
-                {
-                    pos[i][k] = vel[i][k] * md_dt / ucell.lat0;
-                }
-                else
-                {
-                    pos[i][k] = 0;
-                }
+                pos[i][k] = state_.vel(i)[k] * md_dt / mdcell.lat0();
             }
-            pos[i] = pos[i] * ucell.GT;
+            else
+            {
+                pos[i][k] = 0;
+            }
         }
+        pos[i] = pos[i] * mdcell.GT();
+        state_.frac(i) += pos[i];
+        state_.frac(i).x -= std::floor(state_.frac(i).x);
+        state_.frac(i).y -= std::floor(state_.frac(i).y);
+        state_.frac(i).z -= std::floor(state_.frac(i).z);
+        state_.cart(i) = state_.frac(i) * mdcell.latvec();
     }
 
 #ifdef __MPI
-    MPI_Bcast(pos, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    mdcell.migrate_owned_atoms();
+    refresh_runtime_storage_from_mdcell();
 #endif
-
-    unitcell::update_pos_taud(ucell.lat,pos,ucell.ntype,ucell.nat,ucell.atoms);
 
     return;
 }
@@ -127,37 +165,32 @@ void MD_base::update_pos()
 
 void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
 {
-    if (my_rank == 0)
+    for (int i = 0; i < state_.size(); ++i)
     {
-        const int natom = ucell.nat;
-#pragma omp parallel for schedule(static) if (natom >= 256)
-        for (int i = 0; i < natom; ++i)
+        for (int k = 0; k < 3; ++k)
         {
-            for (int k = 0; k < 3; ++k)
+            if (state_.mbl(i)[k])
             {
-                if (ionmbl[i][k])
-                {
-                    vel[i][k] += 0.5 * force[i][k] * md_dt / allmass[i];
-                }
+                state_.vel(i)[k] += 0.5 * force[i][k] * md_dt / state_.mass(i);
             }
         }
     }
-
-#ifdef __MPI
-    MPI_Bcast(vel, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif
+    for (int i = 0; i < state_.size(); ++i)
+    {
+        vel[i] = state_.vel(i);
+    }
     return;
 }
 
 
 void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
+    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_, allmass, vel);
+
     if (my_rank!=0)
     {
         return;
     }
-
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
 
     assert(ModuleBase::BOHR_RADIUS_SI>0.0);
 
@@ -169,36 +202,34 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     }
 
     // screen output
-    std::cout << " -------------------------------------------------------------------------"
+    std::cout << std::setprecision(8);
+    std::cout << " ------------------------------------------------------------------------------------------------"
               << std::endl;
-    std::cout << " " << std::left << std::setw(24) << "Energy (Ry)" << std::left << std::setw(24) << "Potential (Ry)"
-              << std::left << std::setw(24) << "Kinetic (Ry)" << std::endl;
-    std::cout << std::setprecision(12);
-    std::cout << " " << std::left << std::setw(24) << 2 * (potential + kinetic) << std::left << std::setw(24)
-              << 2 * potential << std::left << std::setw(24) << 2 * kinetic << std::endl;
-    std::cout << " " << std::left << std::setw(24) << "Temperature (K)";
+    std::cout << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
+              << std::left << std::setw(20) << "Kinetic (Ry)" << std::left << std::setw(20) << "Temperature (K)";
 
     if (cal_stress)
     {
-        std::cout << std::left << std::setw(24) << "Pressure (kbar)";
+        std::cout << std::left << std::setw(20) << "Pressure (kbar)";
     }
 
     std::cout << std::endl;
-    std::cout << std::setprecision(6);
-    std::cout << " " << std::left << std::setw(24) << t_current * ModuleBase::Hartree_to_K;
+    std::cout << " " << std::left << std::setw(20) << 2 * (potential + kinetic) << std::left << std::setw(20)
+              << 2 * potential << std::left << std::setw(20) << 2 * kinetic << std::left << std::setw(20)
+              << t_current * ModuleBase::Hartree_to_K;
 
     if (cal_stress)
     {
-        std::cout << std::left << std::setw(24) << press * unit_transform;
+        std::cout << std::left << std::setw(20) << press * unit_transform;
     }
 
     std::cout << std::endl;
-    std::cout << " -------------------------------------------------------------------------"
+    std::cout << " ------------------------------------------------------------------------------------------------"
               << std::endl;
 
     // running_log output
     ofs.unsetf(std::ios::fixed);
-    ofs << std::setprecision(12);
+    ofs << std::setprecision(8);
 
     if (cal_stress)
     {
@@ -206,30 +237,28 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
 	    ofs << std::endl;
     }
 
-    ofs << " -------------------------------------------------------------------------"
+    ofs << " ------------------------------------------------------------------------------------------------"
         << std::endl;
-    ofs << " " << std::left << std::setw(24) << "Energy (Ry)" << std::left << std::setw(24) << "Potential (Ry)"
-        << std::left << std::setw(24) << "Kinetic (Ry)" << std::endl;
-    ofs << " " << std::left << std::setw(24) << 2 * (potential + kinetic) << std::left << std::setw(24) << 2 * potential
-        << std::left << std::setw(24) << 2 * kinetic << std::endl;
-    ofs << " " << std::left << std::setw(24) << "Temperature (K)";
+    ofs << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
+        << std::left << std::setw(20) << "Kinetic (Ry)" << std::left << std::setw(20) << "Temperature (K)";
 
     if (cal_stress)
     {
-        ofs << std::left << std::setw(24) << "Pressure (kbar)";
+        ofs << std::left << std::setw(20) << "Pressure (kbar)";
     }
 
     ofs << std::endl;
-    ofs << std::setprecision(6);
-    ofs << " " << std::left << std::setw(24) << t_current * ModuleBase::Hartree_to_K;
+    ofs << " " << std::left << std::setw(20) << 2 * (potential + kinetic) << std::left << std::setw(20) << 2 * potential
+        << std::left << std::setw(20) << 2 * kinetic << std::left << std::setw(20)
+        << t_current * ModuleBase::Hartree_to_K;
 
     if (cal_stress)
     {
-        ofs << std::left << std::setw(24) << press * unit_transform;
+        ofs << std::left << std::setw(20) << press * unit_transform;
     }
 
     ofs << std::endl;
-    ofs << " -------------------------------------------------------------------------"
+    ofs << " ------------------------------------------------------------------------------------------------"
         << std::endl;
     ofs << std::endl;
     return;

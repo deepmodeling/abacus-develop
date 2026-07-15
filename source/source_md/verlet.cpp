@@ -3,7 +3,7 @@
 #include "md_func.h"
 #include "source_base/timer.h"
 
-Verlet::Verlet(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
+Verlet::Verlet(const Parameter& param_in, MdCell& mdcell_in) : MD_base(param_in, mdcell_in)
 {
 }
 
@@ -50,7 +50,7 @@ void Verlet::second_half()
 void Verlet::apply_thermostat(void)
 {
     double t_target = 0.0;
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_, allmass, vel);
 
     if (mdp.md_type == "nve")
     {
@@ -73,27 +73,49 @@ void Verlet::apply_thermostat(void)
     }
     else if (mdp.md_thermostat == "anderson")
     {
-        if (my_rank == 0)
+#ifdef __MPI
+        const bool distributed_md = mdcell.mpi_size() > 1;
+#else
+        const bool distributed_md = false;
+#endif
+        if (distributed_md || my_rank == 0)
         {
             double deviation = 0.0;
-            for (int i = 0; i < ucell.nat; ++i)
+            for (int i = 0; i < state_.size(); ++i)
             {
                 if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
                 {
-                    deviation = sqrt(md_tlast / allmass[i]);
+                    deviation = sqrt(md_tlast / state_.mass(i));
                     for (int k = 0; k < 3; ++k)
                     {
-                        if (ionmbl[i][k])
+                        if (state_.mbl(i)[k])
                         {
-                            vel[i][k] = deviation * MD_func::gaussrand();
+                            state_.vel(i)[k] = deviation * MD_func::gaussrand();
                         }
                     }
                 }
             }
         }
 #ifdef __MPI
-        MPI_Bcast(vel, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        if (!distributed_md)
+        {
+            MPI_Bcast(vel, mdcell.nlocal() * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        }
 #endif
+        if (!distributed_md)
+        {
+            for (int i = 0; i < state_.size(); ++i)
+            {
+                state_.vel(i) = vel[i];
+            }
+        }
+        else
+        {
+            for (int i = 0; i < state_.size(); ++i)
+            {
+                vel[i] = state_.vel(i);
+            }
+        }
     }
     else if (mdp.md_thermostat == "berendsen")
     {
@@ -124,11 +146,9 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
         fac = sqrt(target_temp / current_temp);
     }
 
-    const int nat = ucell.nat;
-#pragma omp parallel for schedule(static) if (nat >= 256)
-    for (int i = 0; i < nat; ++i)
+    for (int i = 0; i < state_.size(); ++i)
     {
-        vel[i] *= fac;
+        state_.vel(i) *= fac;
     }
 }
 
@@ -144,7 +164,7 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
     }
 
     // Get degrees of freedom (3N - frozen)
-    int ndeg = 3 * ucell.nat - frozen_freedom_;
+    int ndeg = MD_func::global_dof(mdcell, frozen_freedom_);
 
     // Calculate kinetic energies
     double kin_energy = current_temp * ndeg * 0.5;  // in Hartree
@@ -182,11 +202,9 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
     double scale = sqrt(resample);
 
     // Apply velocity scaling
-    const int nat = ucell.nat;
-#pragma omp parallel for schedule(static) if (nat >= 256)
-    for (int i = 0; i < nat; ++i)
+    for (int i = 0; i < state_.size(); ++i)
     {
-        vel[i] *= scale;
+        state_.vel(i) *= scale;
     }
 }
 
