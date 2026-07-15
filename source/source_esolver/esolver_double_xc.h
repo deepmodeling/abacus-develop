@@ -21,7 +21,11 @@ class ESolver_DoubleXC : public ESolver_KS_LCAO<TK, TR>
 
     void before_scf(UnitCell& ucell, const int istep) override;
 
-    void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    void iter_finish(UnitCell& ucell,
+                     const int istep,
+                     int& iter,
+                     bool& conv_esolver,
+                     const ModuleContext::ParallelTopology& parallel) override;
 
     //! Hamiltonian
     hamilt::Hamilt<TK>* p_hamilt_base = nullptr;

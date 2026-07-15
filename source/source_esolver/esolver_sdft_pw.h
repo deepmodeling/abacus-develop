@@ -37,7 +37,11 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
 
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    virtual void iter_finish(UnitCell& ucell,
+                             const int istep,
+                             int& iter,
+                             bool& conv_esolver,
+                             const ModuleContext::ParallelTopology& parallel) override;
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context) override;
 

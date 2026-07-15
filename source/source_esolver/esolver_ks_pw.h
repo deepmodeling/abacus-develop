@@ -39,7 +39,11 @@ class ESolver_KS_PW : public ESolver_KS
 
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter) override;
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    virtual void iter_finish(UnitCell& ucell,
+                             const int istep,
+                             int& iter,
+                             bool& conv_esolver,
+                             const ModuleContext::ParallelTopology& parallel) override;
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context) override;
 

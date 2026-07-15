@@ -11,6 +11,11 @@
 #include "source_lcao/setup_exx.h" // mohan add 20251008
 #include "source_lcao/setup_deepks.h" // mohan add 20251010
 
+namespace ModuleContext
+{
+struct ParallelTopology;
+}
+
 namespace ModuleIO
 {
 
@@ -32,7 +37,8 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         int &iter,
         const int istep,
         bool &conv_esolver,
-		const double &scf_ene_thr);
+		const double &scf_ene_thr,
+        const ModuleContext::ParallelTopology& parallel);
 
 }
 #endif

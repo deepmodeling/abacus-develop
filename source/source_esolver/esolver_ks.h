@@ -36,7 +36,11 @@ class ESolver_KS : public ESolver_FP
     virtual void iter_init(UnitCell& ucell, const int istep, const int iter);
 
     //! Something to do after hamilt2rho function in each iter loop.
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
+    virtual void iter_finish(UnitCell& ucell,
+                             const int istep,
+                             int& iter,
+                             bool& conv_esolver,
+                             const ModuleContext::ParallelTopology& parallel) override;
 
     // calculate electron density from a specific Hamiltonian with ethr
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr);

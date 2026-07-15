@@ -71,7 +71,11 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep, const ModuleCont
 
             this->iter_++;
 
-            ESolver_FP::iter_finish(ucell, istep, this->iter_, conv_esolver);
+            ESolver_FP::iter_finish(ucell,
+                                    istep,
+                                    this->iter_,
+                                    conv_esolver,
+                                    context.parallel);
         }
 
 #ifdef _OPENMP

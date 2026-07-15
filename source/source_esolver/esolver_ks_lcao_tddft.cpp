@@ -208,7 +208,13 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep,
             this->hamilt2rho(ucell, totstep, iter, this->diag_ethr); // From ESolver_KS
 
             // 5) Finish SCF iterations
-            this->iter_finish(ucell, totstep, estep, estep_max, iter, conv_esolver);
+            this->iter_finish(ucell,
+                              totstep,
+                              estep,
+                              estep_max,
+                              iter,
+                              conv_esolver,
+                              context.parallel);
 
             // 6) Check convergence
             if (conv_esolver || this->oscillate_esolver)
@@ -365,7 +371,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
                                                     const int estep,
                                                     const int estep_max,
                                                     int& iter,
-                                                    bool& conv_esolver)
+                                                    bool& conv_esolver,
+                                                    const ModuleContext::ParallelTopology& parallel)
 {
     // Print occupation of each band
     if (iter == 1 && istep <= 2)
@@ -385,7 +392,11 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
         GlobalV::ofs_running << std::endl;
     }
 
-    ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell, istep, iter, conv_esolver);
+    ESolver_KS_LCAO<std::complex<double>, TR>::iter_finish(ucell,
+                                                          istep,
+                                                          iter,
+                                                          conv_esolver,
+                                                          parallel);
 
     // Store wave function, Hamiltonian and Overlap matrix, to be used in next time step
     // Store when converged or reach max iteration

@@ -11,6 +11,10 @@
 
 class LCAO_Matrix;
 class Charge_Mixing;
+namespace ModuleContext
+{
+struct ParallelTopology;
+}
 namespace elecstate
 {
     class ElecState;
@@ -118,7 +122,8 @@ public:
                          const double& scf_ene_thr,
                          int& iter,
                          const int istep,
-                         bool& conv_esolver);
+                         bool& conv_esolver,
+                         const ModuleContext::ParallelTopology& parallel);
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(const UnitCell& ucell,
                             hamilt::Hamilt<T>& hamilt,

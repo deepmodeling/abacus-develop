@@ -654,11 +654,17 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             const std::string file_name_exx = global_out_dir + "HexxR" + std::to_string(GlobalV::MY_RANK);
             if (real_number)
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exd->get_Hexxs());
+                ModuleIO::write_Hexxs_csr(file_name_exx,
+                                          ucell,
+                                          exx_nao.exd->get_Hexxs(),
+                                          context.parallel);
             }
             else
             {
-                ModuleIO::write_Hexxs_csr(file_name_exx, ucell, exx_nao.exc->get_Hexxs());
+                ModuleIO::write_Hexxs_csr(file_name_exx,
+                                          ucell,
+                                          exx_nao.exc->get_Hexxs(),
+                                          context.parallel);
             }
         }
     }

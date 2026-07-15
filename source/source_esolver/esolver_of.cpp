@@ -162,7 +162,11 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep, const ModuleContext::S
 
         this->iter_++;
 
-        ESolver_FP::iter_finish(ucell, istep, this->iter_, conv_esolver);
+        ESolver_FP::iter_finish(ucell,
+                                istep,
+                                this->iter_,
+                                conv_esolver,
+                                context.parallel);
     }
 
     this->after_opt(istep, ucell, conv_esolver, context);

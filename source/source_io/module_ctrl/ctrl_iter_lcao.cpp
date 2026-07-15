@@ -31,7 +31,8 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         int &iter,
         const int istep,
         bool &conv_esolver,
-		const double &scf_ene_thr)
+		const double &scf_ene_thr,
+        const ModuleContext::ParallelTopology& parallel)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_iter_lcao");
@@ -56,9 +57,9 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         {
             real_number ?
               exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm, 
-                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
+                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver, parallel) :
               exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
-                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver);
+                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver, parallel);
         }
     }
 #endif
@@ -101,7 +102,8 @@ template void ctrl_iter_lcao<double, double>(UnitCell& ucell, // unit cell *
         int &iter,
         const int istep,
         bool &conv_esolver,
-		const double &scf_ene_thr);
+		const double &scf_ene_thr,
+        const ModuleContext::ParallelTopology& parallel);
 
 // TK: complex<double>  TR: double 
 template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // unit cell *
@@ -121,7 +123,8 @@ template void ctrl_iter_lcao<std::complex<double>, double>(UnitCell& ucell, // u
         int &iter,
         const int istep,
         bool &conv_esolver,
-		const double &scf_ene_thr);
+		const double &scf_ene_thr,
+        const ModuleContext::ParallelTopology& parallel);
 
 // TK: complex<double>  TR: complex<double> 
 template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell, // unit cell *
@@ -141,6 +144,7 @@ template void ctrl_iter_lcao<std::complex<double>, std::complex<double>>(UnitCel
         int &iter,
         const int istep,
         bool &conv_esolver,
-		const double &scf_ene_thr);
+		const double &scf_ene_thr,
+        const ModuleContext::ParallelTopology& parallel);
 
 } // end ModuleIO

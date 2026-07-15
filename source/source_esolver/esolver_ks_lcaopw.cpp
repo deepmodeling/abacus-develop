@@ -158,9 +158,13 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
+    void ESolver_KS_LIP<T>::iter_finish(UnitCell& ucell,
+                                        const int istep,
+                                        int& iter,
+                                        bool& conv_esolver,
+                                        const ModuleContext::ParallelTopology& parallel)
     {
-        ESolver_KS_PW<T>::iter_finish(ucell, istep, iter, conv_esolver);
+        ESolver_KS_PW<T>::iter_finish(ucell, istep, iter, conv_esolver, parallel);
 
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx && conv_esolver)

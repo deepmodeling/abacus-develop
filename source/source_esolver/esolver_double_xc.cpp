@@ -174,7 +174,11 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 }
 
 template <typename TK, typename TR>
-void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
+void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell,
+                                           const int istep,
+                                           int& iter,
+                                           bool& conv_esolver,
+                                           const ModuleContext::ParallelTopology& parallel)
 {
     ModuleBase::TITLE("ESolver_DoubleXC", "iter_finish");
     ModuleBase::timer::start("ESolver_DoubleXC", "iter_finish");
@@ -195,7 +199,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         }        
     }
 
-    ESolver_KS_LCAO<TK, TR>::iter_finish(ucell, istep, iter, conv_esolver);
+    ESolver_KS_LCAO<TK, TR>::iter_finish(ucell, istep, iter, conv_esolver, parallel);
 
     // for deepks, output labels during electronic steps (after conv_esolver is renewed)
     if ( output_iter)

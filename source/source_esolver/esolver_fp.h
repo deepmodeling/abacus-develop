@@ -43,7 +43,11 @@ class ESolver_FP: public ESolver
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context);
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver);
+    virtual void iter_finish(UnitCell& ucell,
+                             const int istep,
+                             int& iter,
+                             bool& conv_esolver,
+                             const ModuleContext::ParallelTopology& parallel);
 
     //! These pointers will be deleted in the free_pointers() function every ion step.
     elecstate::ElecState* pelec = nullptr; ///< Electronic states

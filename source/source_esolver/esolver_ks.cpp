@@ -144,7 +144,7 @@ void ESolver_KS::runner(UnitCell& ucell, const int istep, const ModuleContext::S
         this->hamilt2rho(ucell, istep, iter, diag_ethr);
 
         // 5) finish scf iterations
-        this->iter_finish(ucell, istep, iter, conv_esolver);
+        this->iter_finish(ucell, istep, iter, conv_esolver, context.parallel);
 
         // 6) check convergence
         if (conv_esolver || this->oscillate_esolver)
@@ -197,7 +197,11 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
     this->chr.save_rho_before_sum_band();
 }
 
-void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver)
+void ESolver_KS::iter_finish(UnitCell& ucell,
+                             const int istep,
+                             int& iter,
+                             bool& conv_esolver,
+                             const ModuleContext::ParallelTopology& parallel)
 {
 
     // 1.1) print out band gap 
@@ -261,7 +265,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     }
 
     // Iter finish 
-    ESolver_FP::iter_finish(ucell, istep, iter, conv_esolver);
+    ESolver_FP::iter_finish(ucell, istep, iter, conv_esolver, parallel);
 
 
     // the end, print time

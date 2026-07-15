@@ -467,7 +467,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
 
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
+void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell,
+                                          const int istep,
+                                          int& iter,
+                                          bool& conv_esolver,
+                                          const ModuleContext::ParallelTopology& parallel)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "iter_finish");
 
@@ -493,7 +497,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     // eig and occ are printed, magnetization is calculated,
     // charge mixing is performed, potential is updated, 
     // HF and kS energies are computed, meta-GGA, Jason and restart
-    ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
+    ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver, parallel);
     const bool precision_switched = this->gint_precision_controller_.update_after_iteration(this->drho, this->scf_thr);
     this->gint_info_->set_exec_precision(this->gint_precision_controller_.current_precision());
     if (precision_switched)
@@ -517,7 +521,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, this->pelec, *this->dmat.dm,
       this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
       hamilt_lcao, this->orb_, this->deepks, 
-      this->exx_nao, iter, istep, conv_esolver, this->scf_ene_thr);
+      this->exx_nao, iter, istep, conv_esolver, this->scf_ene_thr, parallel);
 }
 
 template <typename TK, typename TR>

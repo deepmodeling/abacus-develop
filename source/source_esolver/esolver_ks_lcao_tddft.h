@@ -33,7 +33,8 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
                      const int estep,
                      const int estep_max,
                      int& iter,
-                     bool& conv_esolver);
+                     bool& conv_esolver,
+                     const ModuleContext::ParallelTopology& parallel);
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context) override;
 

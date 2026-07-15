@@ -180,7 +180,11 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     return;
 }
 
-void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
+void ESolver_FP::iter_finish(UnitCell& ucell,
+                             const int istep,
+                             int& iter,
+                             bool& conv_esolver,
+                             const ModuleContext::ParallelTopology&)
 {
     //! output charge density in G-space, or if available, kinetic energy density in G-space
     if (PARAM.inp.out_chg[0] != -1)

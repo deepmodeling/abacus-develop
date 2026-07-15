@@ -236,7 +236,11 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
 
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
+void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell,
+                                           const int istep,
+                                           int& iter,
+                                           bool& conv_esolver,
+                                           const ModuleContext::ParallelTopology& parallel)
 {
     // Related to EXX
     bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
@@ -250,7 +254,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);
 
     // Call iter_finish() of ESolver_KS
-    ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver);
+    ESolver_KS::iter_finish(ucell, istep, iter, conv_esolver, parallel);
 
     // D in USPP needs vloc, thus needs update when veff updated
     // calculate the effective coefficient matrix for non-local
