@@ -44,6 +44,7 @@ class Verlet_test : public testing::Test
     UnitCell ucell;
     Parameter param_in;
     ModuleESolver::ESolver* p_esolver;
+    ModuleContext::SimulationContext context;
 
     void SetUp()
     {
@@ -54,7 +55,7 @@ class Verlet_test : public testing::Test
         p_esolver->before_all_runners(ucell, param_in.inp);
 
         mdrun = new Verlet(param_in, ucell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir, context);
     }
 
     void TearDown()

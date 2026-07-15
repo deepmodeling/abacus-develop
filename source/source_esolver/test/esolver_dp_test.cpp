@@ -59,6 +59,7 @@ class ESolverDPTest : public ::testing::Test
     ModuleESolver::ESolver_DP* esolver;
     Input_para inp;
     UnitCell ucell;
+    ModuleContext::SimulationContext context;
 };
 
 // Test the Init() funciton case 1
@@ -91,7 +92,7 @@ TEST_F(ESolverDPTest, RunWarningQuit)
 
     testing::internal::CaptureStdout();
 
-    EXPECT_EXIT(esolver->runner(ucell, istep), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(esolver->runner(ucell, istep, context), ::testing::ExitedWithCode(1), "");
 
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Please recompile with -D__DPMD"));
@@ -163,7 +164,7 @@ TEST_F(ESolverDPTest, Postprocess)
 
     // Check the results
     GlobalV::ofs_running.open("log");
-    esolver->after_all_runners(ucell);
+    esolver->after_all_runners(ucell, context);
     GlobalV::ofs_running.close();
 
     std::string expected_output

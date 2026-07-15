@@ -26,6 +26,7 @@ class LJ_pot_test : public testing::Test
     int natom;
     UnitCell ucell;
     Input_para input;
+    ModuleContext::SimulationContext context;
 
     void SetUp()
     {
@@ -48,7 +49,7 @@ TEST_F(LJ_pot_test, potential)
 {
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
     p_esolver->before_all_runners(ucell, input);
-    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
+    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress, context);
     EXPECT_NEAR(potential, -0.011957818623534381, doublethreshold);
 }
 
@@ -56,7 +57,7 @@ TEST_F(LJ_pot_test, force)
 {
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
     p_esolver->before_all_runners(ucell, input);
-    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
+    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress, context);
     EXPECT_NEAR(force[0].x, 0.00049817733089377704, doublethreshold);
     EXPECT_NEAR(force[0].y, 0.00082237246837022328, doublethreshold);
     EXPECT_NEAR(force[0].z, -3.0493186101154812e-20, doublethreshold);
@@ -75,7 +76,7 @@ TEST_F(LJ_pot_test, stress)
 {
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
     p_esolver->before_all_runners(ucell, input);
-    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
+    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress, context);
     EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 1), 1.7207745586539077e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 2), 0, doublethreshold);

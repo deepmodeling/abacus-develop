@@ -42,6 +42,7 @@ class Langevin_test : public testing::Test
     UnitCell ucell;
     Parameter param_in;
     ModuleESolver::ESolver* p_esolver;
+    ModuleContext::SimulationContext context;
 
     void SetUp()
     {
@@ -52,7 +53,7 @@ class Langevin_test : public testing::Test
         p_esolver->before_all_runners(ucell, param_in.inp);
 
         mdrun = new Langevin(param_in, ucell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
+        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir, context);
     }
 
     void TearDown()
