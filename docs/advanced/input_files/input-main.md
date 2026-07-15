@@ -1172,7 +1172,7 @@
   ``text genelpa can not be used with plane wave basis. ``
 
   Then the user has to correct the input file and restart the calculation.
-- **Default**:
+- **Default**: 
     - PW basis: cg.
     - LCAO basis:
         - genelpa (if compiling option `ENABLE_ELPA` has been set)
