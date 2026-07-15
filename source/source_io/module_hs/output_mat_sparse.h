@@ -7,6 +7,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
+#include "source_context/context_types.h"
 
 namespace ModuleIO
 {
@@ -36,24 +37,14 @@ void output_mat_sparse(const MatSparseOutputOptions& options,
                        const Grid_Driver& grid,
                        const K_Vectors& kv,
                        hamilt::Hamilt<T>* p_ham,
-                       Plus_U* p_dftu);
-
-/// @brief legacy bool-only interface kept for source compatibility
-template <typename T>
-void output_mat_sparse(const bool& out_mat_dh,
-                       const bool& out_mat_ds,
-                       const bool& out_mat_t,
-                       const bool& out_mat_r,
-                       const int& istep,
-                       const ModuleBase::matrix& v_eff,
-                       const Parallel_Orbitals& pv,
-                       const TwoCenterBundle& two_center_bundle,
-                       const LCAO_Orbitals& orb,
-                       UnitCell& ucell,
-                       const Grid_Driver& grid,
-                       const K_Vectors& kv,
-					   hamilt::Hamilt<T>* p_ham,
-					   Plus_U* p_dftu);
+                       Plus_U* p_dftu,
+                       const ModuleContext::RunControl& run,
+                       const ModuleContext::FileSystemLayout& files,
+                       const ModuleContext::ParallelTopology& parallel,
+                       const ModuleContext::LogStreams& logs,
+                       const ModuleContext::BasisInfo& basis,
+                       const ModuleContext::SpinConfig& spin,
+                       const ModuleContext::MatrixOutputConfig& output);
 } // namespace ModuleIO
 
 #endif // OUTPUT_MAT_SPARSE_H

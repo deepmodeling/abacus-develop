@@ -9,6 +9,7 @@
 #include "source_basis/module_nao/two_center_bundle.h" // use TwoCenterBundle
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251018
 #include "source_lcao/setup_dm.h" // for density matrix, mohan add 20251103
+#include "source_context/simulation_context.h"
 
 namespace ModuleIO
 {
@@ -32,7 +33,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 		Structure_Factor &sf,         // structure factor
 		ModuleBase::matrix &vloc,     // local pseudopotential 
 		Exx_NAO<TK> &exx_nao,
-		surchem &solvent);             // solvent model
+		surchem &solvent,
+        const ModuleContext::SimulationContext& context); // solvent model
 
 }
 

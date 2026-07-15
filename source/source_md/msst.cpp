@@ -36,12 +36,14 @@ MSST::~MSST()
     delete[] old_v;
 }
 
-void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void MSST::setup(ModuleESolver::ESolver* p_esolver,
+                 const std::string& global_readin_dir,
+                 const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("MSST", "setup");
     ModuleBase::timer::start("MSST", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, context);
     ucell.cell_parameter_updated = true;
 
     int sd = mdp.msst_direction;

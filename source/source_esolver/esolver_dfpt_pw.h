@@ -20,15 +20,15 @@ public:
     ~ESolver_DFPT_PW();
     
     void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
-    void runner(UnitCell& ucell, const int istep) override;
-    void after_all_runners(UnitCell& ucell) override;
+    void runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context) override;
+    void after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) override;
     
 protected:
     ModuleDFPT::DFPT_PW* dfpt_ = nullptr;
     
     bool gs_done_ = false;
     
-    void run_gs(UnitCell& ucell);
+    void run_gs(UnitCell& ucell, const ModuleContext::SimulationContext& context);
     
     void init_dfpt(UnitCell& ucell);
     

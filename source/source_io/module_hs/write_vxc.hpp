@@ -1,6 +1,5 @@
 #ifndef __WRITE_VXC_H_
 #define __WRITE_VXC_H_
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_base/module_external/scalapack_connector.h"
@@ -113,12 +112,13 @@ std::vector<double> orbital_energy(const int ik, const int nbands, const std::ve
 inline void write_orb_energy(const K_Vectors& kv,
     const int nspin0, const int nbands,
     const std::vector<std::vector<double>>& e_orb,
+    const ModuleContext::FileSystemLayout& files,
     const std::string& term, const std::string& label, const bool app = false)
 {
     assert(e_orb.size() == kv.get_nks());
     const int nk = kv.get_nks() / nspin0;
     std::ofstream ofs;
-    ofs.open(PARAM.globalv.global_out_dir + term + "_" + (label == "" ? "out.dat" : label + "_out.dat"),
+    ofs.open(files.output_directory + term + "_" + (label == "" ? "out.dat" : label + "_out.dat"),
         app ? std::ios::app : std::ios::out);
     ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
     ofs << std::scientific << std::setprecision(16);
@@ -139,7 +139,6 @@ inline void write_orb_energy(const K_Vectors& kv,
 template <typename TK, typename TR>
 void write_Vxc(const int nspin,
                const int nbasis,
-               const int drank,
                const Parallel_Orbitals* pv,
                const psi::Psi<TK>& psi,
                const UnitCell& ucell,
@@ -153,6 +152,12 @@ void write_Vxc(const int nspin,
                const std::vector<double>& orb_cutoff,
                const ModuleBase::matrix& wg,
                Grid_Driver& gd,
+               const ModuleContext::FileSystemLayout& files,
+               const ModuleContext::ParallelTopology& parallel,
+               const ModuleContext::BasisInfo& basis,
+               const ModuleContext::SolverConfig& solver,
+               const ModuleContext::MatrixOutputConfig& output,
+               const ModuleContext::DftUConfig& dftu,
                bool cal_exx
 #ifdef __EXX
                ,
@@ -235,7 +240,7 @@ void write_Vxc(const int nspin,
             e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo, p2d));
         }
 #endif
-        if (PARAM.inp.dft_plus_u)
+        if (dftu.enabled)
         {
             vdftu_op_ao.contributeHk(ik);
         }
@@ -248,10 +253,10 @@ void write_Vxc(const int nspin,
 		const int istep = -1;
 		const int out_label = 1; // 1 means .txt while 2 means .dat
 		const bool out_app_flag = 0;
-        const bool gamma_only = PARAM.globalv.gamma_only_local;
+        const bool gamma_only = basis.gamma_only_local;
 
 		std::string vxc_file = ModuleIO::filename_output(
-				PARAM.globalv.global_out_dir,
+				files.output_directory,
 				"vxc","nao",ik,kv.ik2iktot,nspin,kv.get_nkstot(),
 				out_label,out_app_flag,gamma_only,istep);
 
@@ -259,12 +264,13 @@ void write_Vxc(const int nspin,
                            vxc_tot_k_mo.data(),
                            nbands,
                            false /*binary*/,
-                           PARAM.inp.out_ndigits,
+                           output.digits,
                            true /*triangle*/,
                            out_app_flag /*append*/,
                            vxc_file, 
                            p2d,
-                           drank);
+                           parallel.diagonalization_rank,
+                           solver);
         // ======test=======
         // total_energy += all_band_energy(ik, vxc_tot_k_mo, p2d, wg);
         // ======test=======
@@ -283,14 +289,14 @@ void write_Vxc(const int nspin,
         delete vxcs_op_ao[is];
     }
 
-    if (GlobalV::MY_RANK == 0)
+    if (parallel.world_rank == 0)
     {
-        write_orb_energy(kv, nspin0, nbands, e_orb_tot, "vxc", "");
+        write_orb_energy(kv, nspin0, nbands, e_orb_tot, files, "vxc", "");
 #ifdef __EXX
         if (cal_exx)
         {
-            write_orb_energy(kv, nspin0, nbands, e_orb_locxc, "vxc", "local");
-            write_orb_energy(kv, nspin0, nbands, e_orb_exx, "vxc", "exx");
+            write_orb_energy(kv, nspin0, nbands, e_orb_locxc, files, "vxc", "local");
+            write_orb_energy(kv, nspin0, nbands, e_orb_exx, files, "vxc", "exx");
         }
 #endif
     }

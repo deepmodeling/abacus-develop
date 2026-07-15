@@ -15,6 +15,7 @@
 #include "source_lcao/setup_exx.h"                     // for exx, mohan add 20251008
 #include "source_psi/psi.h"                            // use Psi<TK>
 #include "source_pw/module_pwdft/structure_factor.h"   // use Structure_Factor
+#include "source_context/simulation_context.h"
 
 #include <complex>
 
@@ -46,6 +47,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
                    Exx_NAO<TK>& exx_nao,
                    const bool conv_esolver,
                    const bool scf_nmax_flag,
-                   const int istep);
+                   const int istep,
+                   const ModuleContext::SimulationContext& context);
 } // namespace ModuleIO
 #endif

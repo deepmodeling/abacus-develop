@@ -73,7 +73,7 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleBase::timer::end("ESolver_GetS", "before_all_runners");
 }
 
-void ESolver_GetS::runner(UnitCell& ucell, const int istep)
+void ESolver_GetS::runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_GetS", "runner");
     ModuleBase::timer::start("ESolver_GetS", "runner");
@@ -127,16 +127,34 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
         }
     }
 
-    const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
+    const std::string fn = context.files.output_directory + "sr_nao.csr";
 
     auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
-    ModuleIO::output_SR(pv, gd, hamilt_ptr, fn);
+    ModuleIO::output_SR(pv,
+                        gd,
+                        hamilt_ptr,
+                        fn,
+                        context.matrix_output.binary,
+                        context.matrix_output.sparse_threshold,
+                        context.matrix_output.hs_r.precision,
+                        context.files,
+                        context.parallel,
+                        context.logs,
+                        context.spin);
 
     if (PARAM.inp.out_mat_r[0])
     {
         cal_r_overlap_R r_matrix;
-        r_matrix.init(ucell, pv, orb_);
-        r_matrix.out_rR(ucell, gd, istep, PARAM.inp.out_mat_r[1]);
+        r_matrix.init(ucell, pv, orb_, context.run, context.basis);
+        r_matrix.out_rR(ucell,
+                        gd,
+                        istep,
+                        PARAM.inp.out_mat_r[1],
+                        context.run,
+                        context.files,
+                        context.parallel,
+                        context.basis,
+                        context.matrix_output);
     }
 
     if (PARAM.inp.out_mat_ds[0])
@@ -153,13 +171,20 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                              kv,
                              false,
                              1e-10,
-                             PARAM.inp.out_mat_ds[1]);
+                             PARAM.inp.out_mat_ds[1],
+                             context.run,
+                             context.files,
+                             context.parallel,
+                             context.logs,
+                             context.basis,
+                             context.spin,
+                             context.matrix_output);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");
 }
 
-void ESolver_GetS::after_all_runners(UnitCell& ucell) {};
+void ESolver_GetS::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) {};
 double ESolver_GetS::cal_energy()
 {
     return 0.0;

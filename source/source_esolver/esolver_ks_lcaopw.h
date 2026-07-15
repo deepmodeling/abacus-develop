@@ -21,7 +21,7 @@ namespace ModuleESolver
         ~ESolver_KS_LIP();
 
         void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
-        void after_all_runners(UnitCell& ucell) override;
+        void after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) override;
 
         virtual void before_scf(UnitCell& ucell, const int istep) override;
 

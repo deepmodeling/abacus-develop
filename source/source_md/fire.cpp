@@ -30,12 +30,14 @@ FIRE::~FIRE()
 {
 }
 
-void FIRE::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void FIRE::setup(ModuleESolver::ESolver* p_esolver,
+                 const std::string& global_readin_dir,
+                 const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("FIRE", "setup");
     ModuleBase::timer::start("FIRE", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, context);
 
     check_force();
 

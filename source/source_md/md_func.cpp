@@ -251,12 +251,13 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
                   double& potential,
                   ModuleBase::Vector3<double>* force,
                   const bool& cal_stress,
-                  ModuleBase::matrix& virial)
+                  ModuleBase::matrix& virial,
+                  const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::start("MD_func", "force_virial");
 
-    p_esolver->runner(unit_in, istep);
+    p_esolver->runner(unit_in, istep, context);
 
     potential = p_esolver->cal_energy();
 

@@ -2,8 +2,6 @@
 
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
-#include "source_hamilt/module_xc/exx_info.h"
-
 #include "../module_energy/write_proj_band_lcao.h" // projcted band structure
 #include "../module_dos/cal_ldos.h" // cal LDOS
 #include "../module_energy/write_eband_terms.hpp"
@@ -35,7 +33,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
 		Exx_NAO<TK> &exx_nao,
-        surchem &solvent)             // solvent model
+        surchem &solvent,
+        const ModuleContext::SimulationContext& context) // solvent model
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_runner_lcao");
@@ -56,10 +55,11 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
     // 3) print out exchange-correlation potential
     if (inp.out_mat_xc)
     {
-        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+        const ModuleContext::ExactExchangeState exx_state
+            = context.exact_exchange_state ? context.exact_exchange_state->snapshot()
+                                           : ModuleContext::ExactExchangeState();
         ModuleIO::write_Vxc<TK, TR>(inp.nspin,
-                                    PARAM.globalv.nlocal,
-                                    GlobalV::DRANK,
+                                    context.basis.nlocal,
                                     &pv,
                                     *psi,
                                     ucell,
@@ -73,7 +73,13 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     orb.cutoffs(),
                                     pelec->wg,
                                     gd,
-                                    cal_exx
+                                    context.files,
+                                    context.parallel,
+                                    context.basis,
+                                    context.solver,
+                                    context.matrix_output,
+                                    context.dftu,
+                                    exx_state.enabled
 #ifdef __EXX
                                     ,
                                     exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
@@ -84,9 +90,9 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 
     if (inp.out_mat_xc2[0])
     {
-        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-        bool real_number = GlobalC::exx_info.info_ri.real_number;
+        const ModuleContext::ExactExchangeState exx_state
+            = context.exact_exchange_state ? context.exact_exchange_state->snapshot()
+                                           : ModuleContext::ExactExchangeState();
         ModuleIO::write_Vxc_R<TK, TR>(inp.nspin,
                                       &pv,
                                       ucell,
@@ -99,9 +105,11 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       kv,
                                       orb.cutoffs(),
                                       gd,
-                                      cal_exx,
-                                      hybrid_alpha,
-                                      real_number
+                                      context.files,
+                                      context.parallel,
+                                      exx_state.enabled,
+                                      exx_state.hybrid_alpha,
+                                      exx_state.real_number
 #ifdef __EXX
                                       ,
                                       exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
@@ -116,7 +124,6 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
     {
         ModuleIO::write_eband_terms<TK, TR>(inp.nspin,
                                             PARAM.globalv.nlocal,
-                                            GlobalV::DRANK,
                                             &pv,
                                             *psi,
                                             ucell,
@@ -130,7 +137,16 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                             pelec->wg,
                                             gd,
                                             orb.cutoffs(),
-                                            two_center_bundle
+                                            two_center_bundle,
+                                            context.files,
+                                            context.parallel,
+                                            context.basis,
+                                            context.solver,
+                                            context.matrix_output,
+                                            context.dftu,
+                                            context.exact_exchange_state
+                                                ? context.exact_exchange_state->snapshot()
+                                                : ModuleContext::ExactExchangeState()
 #ifdef __EXX
                                             ,
                                             exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
@@ -164,7 +180,8 @@ template void ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<double> &exx_nao,
-        surchem &solvent);             // solvent model
+        surchem &solvent,
+        const ModuleContext::SimulationContext& context); // solvent model
 
 // TK: complex<double>  TR: double 
 template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,      // unitcell
@@ -185,7 +202,8 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<std::complex<double>> &exx_nao,
-        surchem &solvent);             // solvent model
+        surchem &solvent,
+        const ModuleContext::SimulationContext& context); // solvent model
 
 // TK: complex<double>  TR: complex<double>
 template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitCell& ucell,      // unitcell
@@ -206,6 +224,7 @@ template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitC
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<std::complex<double>> &exx_nao,
-        surchem &solvent);             // solvent model
+        surchem &solvent,
+        const ModuleContext::SimulationContext& context); // solvent model
 
 } // end namespace

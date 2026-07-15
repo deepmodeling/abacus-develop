@@ -460,6 +460,7 @@ add_subdirectory(source_basis/module_ao)
 add_subdirectory(source_basis/module_nao)
 add_subdirectory(source_md)
 add_subdirectory(source_basis/module_pw)
+add_subdirectory(source_context)
 add_subdirectory(source_esolver)
 add_subdirectory(source_lcao/module_gint)
 add_subdirectory(source_io)
@@ -592,6 +593,7 @@ target_link_libraries(
   PRIVATE
     # Internal ABACUS targets: consumers before providers.
     driver
+    context
     esolver
     hsolver
     hamilt_general

@@ -2,7 +2,6 @@
 
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_lcao/spar_dh.h"
 #include "source_lcao/spar_hsr.h"
@@ -24,7 +23,14 @@ void ModuleIO::output_dSR(const int& istep,
                           const K_Vectors& kv,
                           const bool& binary,
                           const double& sparse_thr,
-                          const int precision)
+                          const int precision,
+                          const ModuleContext::RunControl& run,
+                          const ModuleContext::FileSystemLayout& files,
+                          const ModuleContext::ParallelTopology& parallel,
+                          const ModuleContext::LogStreams& logs,
+                          const ModuleContext::BasisInfo& basis,
+                          const ModuleContext::SpinConfig& spin,
+                          const ModuleContext::MatrixOutputConfig& output)
 {
     ModuleBase::TITLE("ModuleIO", "output_dSR");
     ModuleBase::timer::start("ModuleIO", "output_dSR");
@@ -32,7 +38,20 @@ void ModuleIO::output_dSR(const int& istep,
     sparse_format::cal_dS(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr);
 
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "s", precision);
+    ModuleIO::save_dH_sparse(istep,
+                             pv,
+                             HS_Arrays,
+                             sparse_thr,
+                             binary,
+                             "s",
+                             precision,
+                             run,
+                             files,
+                             parallel,
+                             logs,
+                             basis,
+                             spin,
+                             output);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
@@ -51,18 +70,25 @@ void ModuleIO::output_dHR(const int& istep,
                           const K_Vectors& kv,
                           const bool& binary,
                           const double& sparse_thr,
-                          const int precision)
+                          const int precision,
+                          const ModuleContext::RunControl& run,
+                          const ModuleContext::FileSystemLayout& files,
+                          const ModuleContext::ParallelTopology& parallel,
+                          const ModuleContext::LogStreams& logs,
+                          const ModuleContext::BasisInfo& basis,
+                          const ModuleContext::SpinConfig& spin,
+                          const ModuleContext::MatrixOutputConfig& output)
 {
     ModuleBase::TITLE("ModuleIO", "output_dHR");
     ModuleBase::timer::start("ModuleIO", "output_dHR");
 
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " |                         #Print out dH/dR#                          |" << std::endl;
-    GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    *logs.running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    *logs.running << " |                                                                    |" << std::endl;
+    *logs.running << " |                         #Print out dH/dR#                          |" << std::endl;
+    *logs.running << " |                                                                    |" << std::endl;
+    *logs.running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
-    const int nspin = PARAM.inp.nspin;
+    const int nspin = spin.nspin;
 
     if (nspin == 1 || nspin == 4)
     {
@@ -79,7 +105,20 @@ void ModuleIO::output_dHR(const int& istep,
         }
     }
     // mohan update 2024-04-01
-    ModuleIO::save_dH_sparse(istep, pv, HS_Arrays, sparse_thr, binary, "h", precision);
+    ModuleIO::save_dH_sparse(istep,
+                             pv,
+                             HS_Arrays,
+                             sparse_thr,
+                             binary,
+                             "h",
+                             precision,
+                             run,
+                             files,
+                             parallel,
+                             logs,
+                             basis,
+                             spin,
+                             output);
 
     sparse_format::destroy_dH_R_sparse(HS_Arrays);
 
@@ -94,19 +133,23 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
                          const std::string& SR_filename,
                          const bool& binary,
                          const double& sparse_thr,
-                         const int precision)
+                         const int precision,
+                         const ModuleContext::FileSystemLayout& files,
+                         const ModuleContext::ParallelTopology& parallel,
+                         const ModuleContext::LogStreams& logs,
+                         const ModuleContext::SpinConfig& spin)
 {
     ModuleBase::TITLE("ModuleIO", "output_SR");
     ModuleBase::timer::start("ModuleIO", "output_SR");
 
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " |                 #Print out overlap matrix S(R)#                    |" << std::endl;
-    GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    *logs.running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    *logs.running << " |                                                                    |" << std::endl;
+    *logs.running << " |                 #Print out overlap matrix S(R)#                    |" << std::endl;
+    *logs.running << " |                                                                    |" << std::endl;
+    *logs.running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     std::cout << " Overlap matrix file is in " << SR_filename << std::endl;
-    GlobalV::ofs_running << " Overlap matrix file is in " << SR_filename << std::endl;
+    *logs.running << " Overlap matrix file is in " << SR_filename << std::endl;
 
     LCAO_HS_Arrays HS_Arrays;
 
@@ -127,21 +170,23 @@ void ModuleIO::output_SR(Parallel_Orbitals& pv,
     options.precision = precision;
     options.istep = istep;
     options.reduce = true;
-    options.temp_dir = PARAM.globalv.global_out_dir;
+    options.temp_dir = files.output_directory;
 
-    if (PARAM.inp.nspin == 4)
+    if (spin.nspin == 4)
     {
         ModuleIO::save_sparse(HS_Arrays.SR_soc_sparse,
                               HS_Arrays.all_R_coor,
                               pv,
-                              options);
+                              options,
+                              parallel);
     }
     else
     {
         ModuleIO::save_sparse(HS_Arrays.SR_sparse,
                               HS_Arrays.all_R_coor,
                               pv,
-                              options);
+                              options,
+                              parallel);
     }
 
     sparse_format::destroy_HS_R_sparse(HS_Arrays);
@@ -160,27 +205,32 @@ void ModuleIO::output_TR(const int istep,
                          const std::string& TR_filename,
                          const bool& binary,
                          const double& sparse_thr,
-                         const int precision)
+                         const int precision,
+                         const ModuleContext::RunControl& run,
+                         const ModuleContext::FileSystemLayout& files,
+                         const ModuleContext::ParallelTopology& parallel,
+                         const ModuleContext::LogStreams& logs,
+                         const ModuleContext::MatrixOutputConfig& output)
 {
     ModuleBase::TITLE("ModuleIO", "output_TR");
     ModuleBase::timer::start("ModuleIO", "output_TR");
 
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " |           #Print out kinetic energy term matrix T(R)#              |" << std::endl;
-    GlobalV::ofs_running << " |                                                                    |" << std::endl;
-    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    *logs.running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    *logs.running << " |                                                                    |" << std::endl;
+    *logs.running << " |           #Print out kinetic energy term matrix T(R)#              |" << std::endl;
+    *logs.running << " |                                                                    |" << std::endl;
+    *logs.running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     std::stringstream sst;
-    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
+    if (run.calculation == "md" && !output.append)
     {
-        sst << PARAM.globalv.global_matrix_dir << TR_filename << "g" << istep;
-        GlobalV::ofs_running << " T(R) data are in file: " << sst.str() << std::endl;
+        sst << files.matrix_directory << TR_filename << "g" << istep;
+        *logs.running << " T(R) data are in file: " << sst.str() << std::endl;
     }
     else
     {
-        sst << PARAM.globalv.global_out_dir << TR_filename;
-        GlobalV::ofs_running << " T(R) data are in file: " << sst.str() << std::endl;
+        sst << files.output_directory << TR_filename;
+        *logs.running << " T(R) data are in file: " << sst.str() << std::endl;
     }
 
     sparse_format::cal_TR(ucell, pv, HS_Arrays, grid, two_center_bundle, orb, sparse_thr);
@@ -192,12 +242,14 @@ void ModuleIO::output_TR(const int istep,
     options.precision = precision;
     options.istep = istep;
     options.reduce = true;
-    options.temp_dir = PARAM.globalv.global_out_dir;
+    options.append = run.calculation == "md" && output.append;
+    options.temp_dir = files.output_directory;
 
     ModuleIO::save_sparse(HS_Arrays.TR_sparse,
                           HS_Arrays.all_R_coor,
                           pv,
-                          options);
+                          options,
+                          parallel);
 
     sparse_format::destroy_T_R_sparse(HS_Arrays);
 
@@ -211,14 +263,22 @@ template void ModuleIO::output_SR<double>(Parallel_Orbitals& pv,
                                           const std::string& SR_filename,
                                           const bool& binary,
                                           const double& sparse_thr,
-                                          const int precision);
+                                          const int precision,
+                                          const ModuleContext::FileSystemLayout& files,
+                                          const ModuleContext::ParallelTopology& parallel,
+                                          const ModuleContext::LogStreams& logs,
+                                          const ModuleContext::SpinConfig& spin);
 template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
                                                         const Grid_Driver& grid,
                                                         hamilt::Hamilt<std::complex<double>>* p_ham,
                                                         const std::string& SR_filename,
                                                         const bool& binary,
                                                         const double& sparse_thr,
-                                                        const int precision);
+                                                        const int precision,
+                                                        const ModuleContext::FileSystemLayout& files,
+                                                        const ModuleContext::ParallelTopology& parallel,
+                                                        const ModuleContext::LogStreams& logs,
+                                                        const ModuleContext::SpinConfig& spin);
 
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
@@ -304,7 +364,9 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                           const bool append,
                           const int* iat2iwt,
                           const int nat,
-                          const int istep)
+                          const int istep,
+                          const ModuleContext::FileSystemLayout& files,
+                          const ModuleContext::ParallelTopology& parallel)
 {
     const int nspin = hr_vec.size();
     assert(nspin > 0);
@@ -325,10 +387,9 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
         hamilt::HContainer<TR> hr_serial(*hr_vec[ispin]);
 #endif
 
-        if (GlobalV::MY_RANK == 0)
+        if (parallel.world_rank == 0)
         {
-            std::string fname = PARAM.globalv.global_out_dir
-                                + hsr_gen_fname("hrs", ispin, append, istep);
+            std::string fname = files.output_directory + hsr_gen_fname("hrs", ispin, append, istep);
             write_hcontainer_csr(fname, ucell, precision, &hr_serial, istep, ispin, nspin, "H");
         }
     }
@@ -348,10 +409,9 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
         hamilt::HContainer<TR> sr_serial(*sr);
 #endif
 
-        if (GlobalV::MY_RANK == 0)
+        if (parallel.world_rank == 0)
         {
-            std::string fname = PARAM.globalv.global_out_dir
-                                + hsr_gen_fname("srs", 0, append, istep);
+            std::string fname = files.output_directory + hsr_gen_fname("srs", 0, append, istep);
             write_hcontainer_csr(fname, ucell, precision, &sr_serial, istep, 0, 1, "S");
         }
     }
@@ -369,12 +429,14 @@ template void ModuleIO::write_hsr<double>(
     const std::vector<hamilt::HContainer<double>*>&,
     const hamilt::HContainer<double>*,
     const UnitCell*, const int, const Parallel_2D&,
-    const bool, const int*, const int, const int);
+    const bool, const int*, const int, const int,
+    const ModuleContext::FileSystemLayout&, const ModuleContext::ParallelTopology&);
 template void ModuleIO::write_hsr<std::complex<double>>(
     const std::vector<hamilt::HContainer<std::complex<double>>*>&,
     const hamilt::HContainer<std::complex<double>>*,
     const UnitCell*, const int, const Parallel_2D&,
-    const bool, const int*, const int, const int);
+    const bool, const int*, const int, const int,
+    const ModuleContext::FileSystemLayout&, const ModuleContext::ParallelTopology&);
 
 
 template <typename TR>
@@ -387,7 +449,10 @@ void ModuleIO::write_matrix_r(const std::string& matrix_label,
                                const bool append,
                                const int* iat2iwt,
                                const int nat,
-                               const int istep)
+                               const int istep,
+                               const ModuleContext::RunControl& run,
+                               const ModuleContext::FileSystemLayout& files,
+                               const ModuleContext::ParallelTopology& parallel)
 {
     const int nspin = matrices.size();
     assert(nspin > 0);
@@ -398,13 +463,13 @@ void ModuleIO::write_matrix_r(const std::string& matrix_label,
         
         // Generate filename
         std::string fname = dhr_gen_fname(matrix_label, ispin, append, istep);
-        if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
+        if (run.calculation == "md" && !append)
         {
-            fname = PARAM.globalv.global_matrix_dir + fname;
+            fname = files.matrix_directory + fname;
         }
         else
         {
-            fname = PARAM.globalv.global_out_dir + fname;
+            fname = files.output_directory + fname;
         }
         
         // Gather parallel matrix to serial
@@ -417,7 +482,7 @@ void ModuleIO::write_matrix_r(const std::string& matrix_label,
         hamilt::HContainer<TR> matrix_serial(&serialV);
         hamilt::gatherParallels(*matrices[ispin], &matrix_serial, 0);
         
-        if (GlobalV::MY_RANK == 0)
+        if (parallel.world_rank == 0)
         {
             write_hcontainer_csr(fname, ucell, precision, &matrix_serial, istep, ispin, nspin, description);
         }
@@ -438,7 +503,10 @@ template void ModuleIO::write_matrix_r<double>(
     const bool,
     const int*,
     const int,
-    const int);
+    const int,
+    const ModuleContext::RunControl&,
+    const ModuleContext::FileSystemLayout&,
+    const ModuleContext::ParallelTopology&);
 
 template void ModuleIO::write_matrix_r<std::complex<double>>(
     const std::string&,
@@ -450,4 +518,7 @@ template void ModuleIO::write_matrix_r<std::complex<double>>(
     const bool,
     const int*,
     const int,
-    const int);
+    const int,
+    const ModuleContext::RunControl&,
+    const ModuleContext::FileSystemLayout&,
+    const ModuleContext::ParallelTopology&);

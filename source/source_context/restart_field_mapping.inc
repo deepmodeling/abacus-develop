@@ -1,0 +1,8 @@
+MODULE_CONTEXT_RESTART_FIELD(info_save.save_charge)
+MODULE_CONTEXT_RESTART_FIELD(info_save.save_H)
+MODULE_CONTEXT_RESTART_FIELD(info_load.load_charge)
+MODULE_CONTEXT_RESTART_FIELD(info_load.load_charge_finish)
+MODULE_CONTEXT_RESTART_FIELD(info_load.load_H)
+MODULE_CONTEXT_RESTART_FIELD(info_load.load_H_finish)
+MODULE_CONTEXT_RESTART_FIELD(info_load.restart_exx)
+MODULE_CONTEXT_RESTART_FIELD(folder)

@@ -24,9 +24,9 @@ class ESolver_KS : public ESolver_FP
 
     virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
-    virtual void runner(UnitCell& ucell, const int istep) override;
+    virtual void runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context) override;
 
-    virtual void after_all_runners(UnitCell& ucell) override;
+    virtual void after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) override;
 
   protected:
     //! Something to do before SCF iterations.
@@ -45,7 +45,7 @@ class ESolver_KS : public ESolver_FP
     void hamilt2rho(UnitCell& ucell, const int istep, const int iter, const double ethr);
 
     //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
+    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context) override;
 
     //! Hamiltonian (base class pointer, actual type determined at runtime)
     hamilt::HamiltBase* p_hamilt = nullptr;

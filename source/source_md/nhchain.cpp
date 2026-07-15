@@ -153,12 +153,14 @@ Nose_Hoover::~Nose_Hoover()
     }
 }
 
-void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver,
+                        const std::string& global_readin_dir,
+                        const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("Nose_Hoover", "setup");
     ModuleBase::timer::start("Nose_Hoover", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, context);
     if (mdp.md_type == "npt")
     {
         ucell.cell_parameter_updated = true;

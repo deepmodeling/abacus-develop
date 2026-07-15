@@ -18,9 +18,9 @@ class ESolver_GetS : public ESolver_KS
 
     void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
-    void after_all_runners(UnitCell& ucell) override;
+    void after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) override;
 
-    void runner(UnitCell& ucell, const int istep) override;
+    void runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context) override;
 
     //! calculate total energy of a given system
     double cal_energy() override;

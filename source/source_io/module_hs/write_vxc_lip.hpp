@@ -1,6 +1,5 @@
 #ifndef __WRITE_VXC_LIP_H_
 #define __WRITE_VXC_LIP_H_
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_pw/module_pwdft/op_pw_veff.h"
@@ -103,7 +102,6 @@ namespace ModuleIO
     template <typename FPTYPE>
     void write_Vxc(int nspin,
                    int naos,
-                   int drank,
                    const psi::Psi<std::complex<FPTYPE>>& psi_pw,
                    const UnitCell& ucell,
                    Structure_Factor& sf,
@@ -115,6 +113,11 @@ namespace ModuleIO
                    const Charge& chg,
                    const K_Vectors& kv,
                    const ModuleBase::matrix& wg,
+                   const ModuleContext::FileSystemLayout& files,
+                   const ModuleContext::ParallelTopology& parallel,
+                   const ModuleContext::BasisInfo& basis,
+                   const ModuleContext::SolverConfig& solver,
+                   const ModuleContext::MatrixOutputConfig& output,
                    bool cal_exx,
                    double hybrid_alpha
 #ifdef __EXX
@@ -209,17 +212,17 @@ namespace ModuleIO
             const int istep = -1;
             const int out_label = 1; // 1 means .txt while 2 means .dat
             const bool out_app_flag = 0;
-            const bool gamma_only = PARAM.globalv.gamma_only_local;
+            const bool gamma_only = basis.gamma_only_local;
 
             std::string vxc_file = ModuleIO::filename_output(
-                PARAM.globalv.global_out_dir,
+                files.output_directory,
                 "vxc","nao",ik,kv.ik2iktot,nspin,kv.get_nkstot(),
                 out_label,out_app_flag,gamma_only,istep);
              
             ModuleIO::save_mat(istep, vxc_tot_k_mo.data(), nbands, 
-		    false, PARAM.inp.out_ndigits, true, 
+            false, output.digits, true,
 		    out_app_flag, vxc_file, 
-		    p2d_serial, drank, false);
+		    p2d_serial, parallel.diagonalization_rank, solver, false);
 
             e_orb_tot.emplace_back(orbital_energy(ik, nbands, vxc_tot_k_mo));
         }
@@ -235,20 +238,20 @@ namespace ModuleIO
         // for (int ir = 0;ir < potxc->get_veff_smooth().nc;++ir)
         //     exc_by_rho += potxc->get_veff_smooth()(0, ir) * chg.rho[0][ir];
         // Parallel_Reduce::reduce_all(exc_by_rho);
-        // exc_by_rho *= ((FPTYPE)ucell.omega * (FPTYPE)GlobalV::NPROC / (FPTYPE)potxc->get_veff_smooth().nc);
+        // The grid integral is normalized by the process count in its caller.
         // std::cout << "xc all-bands energy by rho =" << exc_by_rho << std::endl;
         //===== test total xc energy =======
         //===== test total exx energy =======
         //===== test total exx energy =======
         // write the orbital energy for xc and exx in LibRPA format
         const int nspin0 = (nspin == 2) ? 2 : 1;
-        auto write_orb_energy = [&kv, &nspin0, &nbands](const std::vector<std::vector<FPTYPE>>& e_orb,
+        auto write_orb_energy = [&kv, &nspin0, &nbands, &files](const std::vector<std::vector<FPTYPE>>& e_orb,
             const std::string& label,
             const bool app = false) {
                 assert(e_orb.size() == kv.get_nks());
                 const int nk = kv.get_nks() / nspin0;
                 std::ofstream ofs;
-                ofs.open(PARAM.globalv.global_out_dir + "vxc_" + (label == "" ? "out.dat" : label + "_out.dat"),
+                ofs.open(files.output_directory + "vxc_" + (label == "" ? "out.dat" : label + "_out.dat"),
                     app ? std::ios::app : std::ios::out);
                 ofs << nk << "\n" << nspin0 << "\n" << nbands << "\n";
                 ofs << std::scientific << std::setprecision(16);
@@ -264,7 +267,7 @@ namespace ModuleIO
                 }
             };
 
-        if (GlobalV::MY_RANK == 0)
+        if (parallel.world_rank == 0)
         {
             write_orb_energy(e_orb_tot, "");
 #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))

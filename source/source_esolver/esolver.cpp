@@ -25,6 +25,84 @@
 namespace ModuleESolver
 {
 
+#ifdef __LCAO
+template <typename TK, typename TR>
+class ESolver_KS_LR_LCAO : public ESolver
+{
+  public:
+    ESolver_KS_LR_LCAO(const Input_para& input, UnitCell& ucell)
+        : input_(input), ucell_(ucell), ks_(new ESolver_KS_LCAO<TK, TR>())
+    {
+        this->classname = "ESolver_KS_LR_LCAO";
+    }
+
+    void before_all_runners(UnitCell& ucell, const Input_para& input) override
+    {
+        ks_->before_all_runners(ucell, input);
+    }
+
+    void runner(UnitCell& ucell,
+                const int istep,
+                const ModuleContext::SimulationContext& context) override
+    {
+        if (!lr_)
+        {
+            ks_->runner(ucell, istep, context);
+            std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
+            lr_.reset(new LR::ESolver_LR<TK, TR>(std::move(*ks_), input_, ucell_));
+            ks_.reset();
+            lr_->before_all_runners(ucell, input_);
+        }
+        lr_->runner(ucell, istep, context);
+        this->conv_esolver = lr_->conv_esolver;
+    }
+
+    void after_all_runners(UnitCell& ucell,
+                           const ModuleContext::SimulationContext& context) override
+    {
+        if (lr_)
+        {
+            lr_->after_all_runners(ucell, context);
+        }
+    }
+
+    double cal_energy() override
+    {
+        return lr_ ? lr_->cal_energy() : ks_->cal_energy();
+    }
+
+    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override
+    {
+        if (lr_)
+        {
+            lr_->cal_force(ucell, force);
+        }
+        else
+        {
+            ks_->cal_force(ucell, force);
+        }
+    }
+
+    void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override
+    {
+        if (lr_)
+        {
+            lr_->cal_stress(ucell, stress);
+        }
+        else
+        {
+            ks_->cal_stress(ucell, stress);
+        }
+    }
+
+  private:
+    Input_para input_;
+    UnitCell& ucell_;
+    std::unique_ptr<ESolver_KS_LCAO<TK, TR>> ks_;
+    std::unique_ptr<LR::ESolver_LR<TK, TR>> lr_;
+};
+#endif
+
 std::string determine_type()
 {
     std::string esolver_type = "none";
@@ -285,46 +363,19 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {
-        // initialize the 1st ESolver_KS
-        ModuleESolver::ESolver* p_esolver = nullptr;
         if (PARAM.globalv.gamma_only_local)
         {
-            p_esolver = new ESolver_KS_LCAO<double, double>();
+            return new ESolver_KS_LR_LCAO<double, double>(inp, ucell);
         }
         else if (PARAM.inp.nspin < 4)
         {
-            p_esolver = new ESolver_KS_LCAO<std::complex<double>, double>();
+            return new ESolver_KS_LR_LCAO<std::complex<double>, double>(inp, ucell);
         }
         else
         {
-            p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+            ModuleBase::WARNING_QUIT("init_esolver", "ksdft_lr_lcao supports only nspin=1 or nspin=2");
+            return nullptr;
         }
-        p_esolver->before_all_runners(ucell, inp);
-        p_esolver->runner(ucell, 0); // scf-only
-
-        // force and stress is not needed currently,
-        // they will be supported after the analytical gradient
-        // of LR-TDDFT is implemented.
-        std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
-        // initialize the 2nd ESolver_LR at the temporary pointer
-	ModuleESolver::ESolver* p_esolver_lr = nullptr;
-	if (PARAM.globalv.gamma_only_local)
-	{
-		p_esolver_lr = new LR::ESolver_LR<double, double>(
-				std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
-				inp,
-				ucell);
-	}
-	else
-	{
-		p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
-				std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
-				inp,
-				ucell);
-	}
-	// clean the 1st ESolver_KS and swap the pointer
-	delete p_esolver;
-        return p_esolver_lr;
     }
 #endif
     else if (esolver_type == "ofdft")

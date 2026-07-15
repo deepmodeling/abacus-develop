@@ -12,7 +12,7 @@ class ESolver_OF_TDDFT : public ESolver_OF
     ESolver_OF_TDDFT();
     ~ESolver_OF_TDDFT();
 
-    virtual void runner(UnitCell& ucell, const int istep) override;
+    virtual void runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context) override;
 
   protected:
     std::vector<std::complex<double>> phi_td;                     // time dependent wavefunction

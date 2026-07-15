@@ -12,12 +12,14 @@ Verlet::~Verlet()
 }
 
 
-void Verlet::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void Verlet::setup(ModuleESolver::ESolver* p_esolver,
+                   const std::string& global_readin_dir,
+                   const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("Verlet", "setup");
     ModuleBase::timer::start("Verlet", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, context);
 
     ModuleBase::timer::end("Verlet", "setup");
 }

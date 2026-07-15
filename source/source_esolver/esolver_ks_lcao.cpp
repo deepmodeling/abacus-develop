@@ -277,12 +277,12 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& st
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
     ModuleBase::timer::start("ESolver_KS_LCAO", "after_all_runners");
 
-    ESolver_KS::after_all_runners(ucell);
+    ESolver_KS::after_all_runners(ucell, context);
 
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
     if(!hamilt_lcao)
@@ -295,7 +295,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
 		    this->gd, this->psi, this->chr, hamilt_lcao,
 		    this->two_center_bundle_,
 		    this->orb_, this->pw_rho, this->pw_rhod,
-		    this->sf, this->locpp.vloc, this->exx_nao, this->solvent);
+		    this->sf, this->locpp.vloc, this->exx_nao, this->solvent, context);
 
 
 #ifdef __MPI
@@ -521,7 +521,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
+void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_scf");
     ModuleBase::timer::start("ESolver_KS_LCAO", "after_scf");
@@ -539,7 +539,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
 	}
 
     //! 1) call after_scf() of ESolver_KS
-    ESolver_KS::after_scf(ucell, istep, conv_esolver);
+    ESolver_KS::after_scf(ucell, istep, conv_esolver, context);
 
     //! 2) output of lcao every few ionic steps
     ModuleIO::ctrl_scf_lcao<TK, TR>(ucell,
@@ -548,7 +548,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
             this->pw_rhod, this->locpp.vloc, this->solvent,
             this->rdmft_solver, this->deepks, this->exx_nao,
-            this->conv_esolver, this->scf_nmax_flag, istep);
+            this->conv_esolver, this->scf_nmax_flag, istep, context);
 
     //! 3) Clean up RA, which is used to serach for adjacent atoms
     if (!PARAM.inp.cal_force && !PARAM.inp.cal_stress)

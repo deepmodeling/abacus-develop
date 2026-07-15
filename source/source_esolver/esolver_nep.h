@@ -42,7 +42,7 @@ class ESolver_NEP : public ESolver
      * @param istep the current ion/md step
      * @param cell unitcell information
      */
-    void runner(UnitCell& ucell, const int istep) override;
+    void runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context) override;
 
     /**
      * @brief get the total energy without ion kinetic energy
@@ -71,7 +71,7 @@ class ESolver_NEP : public ESolver
      *
      * This function prints the final total energy of the NEP model in eV to the output file along with some formatting.
      */
-    void after_all_runners(UnitCell& ucell) override;
+    void after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) override;
 
   private:
     /**

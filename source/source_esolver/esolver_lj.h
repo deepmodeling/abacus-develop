@@ -19,7 +19,7 @@ namespace ModuleESolver
 
         void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
-        void runner(UnitCell& cell, const int istep) override;
+        void runner(UnitCell& cell, const int istep, const ModuleContext::SimulationContext& context) override;
 
         double cal_energy() override;
 
@@ -27,7 +27,7 @@ namespace ModuleESolver
 
         void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
 
-        void after_all_runners(UnitCell& ucell) override;
+        void after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) override;
 
       private:
         double LJ_energy(const double& d, const int& i, const int& j) const;

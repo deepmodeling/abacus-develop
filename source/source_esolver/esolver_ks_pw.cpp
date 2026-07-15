@@ -273,7 +273,7 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
+void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "after_scf");
     ModuleBase::timer::start("ESolver_KS_PW", "after_scf");
@@ -286,7 +286,7 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
         elec_pw->cal_tau(psi);
     }
 
-    ESolver_KS::after_scf(ucell, istep, conv_esolver);
+    ESolver_KS::after_scf(ucell, istep, conv_esolver, context);
 
     // Output quantities
     ModuleIO::ctrl_scf_pw<T, Device>(istep, ucell, this->pelec, this->chr, this->kv, this->pw_wfc,
@@ -338,9 +338,9 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context)
 {
-    ESolver_KS::after_all_runners(ucell);
+    ESolver_KS::after_all_runners(ucell, context);
 
     ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
             this->pw_rho, this->pw_rhod, this->chr, this->kv, this->stp, 

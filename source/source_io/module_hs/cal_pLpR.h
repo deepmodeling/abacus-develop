@@ -94,6 +94,7 @@
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_context/context_types.h"
 
 namespace ModuleIO
 {
@@ -208,8 +209,10 @@ namespace ModuleIO
                 const int tgrid,
                 const int tatom,
                 const bool searchpbc,
-                std::ofstream* ptr_log = nullptr,
-                const int rank = 0);
+                std::ofstream* ptr_log,
+                const int rank,
+                const ModuleContext::RunControl& run,
+                const ModuleContext::BasisInfo& basis);
             ~AngularMomentumCalculator() = default;
 
             void calculate(const std::string& prefix,

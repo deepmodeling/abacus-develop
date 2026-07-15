@@ -40,13 +40,17 @@
 
 #ifdef __EXX
 template <typename TK>
-void setup_exx_dh_params(ModuleIO::WriteDHParams& dh_params, Exx_NAO<TK>& exx_nao)
+void setup_exx_dh_params(ModuleIO::WriteDHParams& dh_params,
+                         Exx_NAO<TK>& exx_nao,
+                         const ModuleContext::ExactExchangeState& exact_exchange_state)
 {}
 
 template <>
-void setup_exx_dh_params<double>(ModuleIO::WriteDHParams& dh_params, Exx_NAO<double>& exx_nao)
+void setup_exx_dh_params<double>(ModuleIO::WriteDHParams& dh_params,
+                                 Exx_NAO<double>& exx_nao,
+                                 const ModuleContext::ExactExchangeState& exact_exchange_state)
 {
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (exact_exchange_state.enabled)
     {
         if (exx_nao.exd) { dh_params.exd = exx_nao.exd.get(); }
         if (exx_nao.exc) { dh_params.exc = exx_nao.exc.get(); }
@@ -54,17 +58,20 @@ void setup_exx_dh_params<double>(ModuleIO::WriteDHParams& dh_params, Exx_NAO<dou
 }
 
 template <typename TK>
-void setup_exx_h_params(ModuleIO::WriteHParams& h_params, Exx_NAO<TK>& exx_nao)
+void setup_exx_h_params(ModuleIO::WriteHParams& h_params,
+                        Exx_NAO<TK>& exx_nao,
+                        const ModuleContext::ExactExchangeState& exact_exchange_state)
 {}
 
 template <>
-void setup_exx_h_params<double>(ModuleIO::WriteHParams& h_params, Exx_NAO<double>& exx_nao)
+void setup_exx_h_params<double>(ModuleIO::WriteHParams& h_params,
+                                Exx_NAO<double>& exx_nao,
+                                const ModuleContext::ExactExchangeState& exact_exchange_state)
 {
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (exact_exchange_state.enabled)
     {
         if (exx_nao.exd) { h_params.exd = exx_nao.exd.get(); }
         if (exx_nao.exc) { h_params.exc = exx_nao.exc.get(); }
-        ModuleIO::write_h_exx(h_params);
     }
 }
 #endif
@@ -94,10 +101,15 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              Exx_NAO<TK>& exx_nao,
                              const bool conv_esolver,
                              const bool scf_nmax_flag,
-                             const int istep)
+                             const int istep,
+                             const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_lcao");
+
+    const ModuleContext::ExactExchangeState exact_exchange_state
+        = context.exact_exchange_state ? context.exact_exchange_state->snapshot()
+                                       : ModuleContext::ExactExchangeState();
 
     //*****
     // if istep_in = -1, istep will not appear in file name
@@ -192,18 +204,20 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.out_mat_hs[0])
     {
-        ModuleIO::write_hsk(global_out_dir,
-                            nspin,
+        ModuleIO::write_hsk(nspin,
                             kv.get_nks(),
                             kv.get_nkstot(),
                             kv.ik2iktot,
                             kv.isk,
                             p_hamilt,
                             pv,
-                            gamma_only,
-                            out_app_flag,
                             istep,
-                            GlobalV::ofs_running);
+                            context.files,
+                            context.parallel,
+                            context.logs,
+                            context.basis,
+                            context.solver,
+                            context.matrix_output);
     }
 
     //------------------------------------------------------------------
@@ -260,8 +274,17 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
 
-        ModuleIO::write_hsr(hr_vec, sr, &ucell, precision, pv,
-                            out_app_flag, ucell.get_iat2iwt(), ucell.nat, istep);
+        ModuleIO::write_hsr(hr_vec,
+                            sr,
+                            &ucell,
+                            precision,
+                            pv,
+                            out_app_flag,
+                            ucell.get_iat2iwt(),
+                            ucell.nat,
+                            istep,
+                            context.files,
+                            context.parallel);
     }
 
     //------------------------------------------------------------------
@@ -321,7 +344,14 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                 gd,
                                 kv,
                                 p_ham_tk,
-                                &dftu);
+                                &dftu,
+                                context.run,
+                                context.files,
+                                context.parallel,
+                                context.logs,
+                                context.basis,
+                                context.spin,
+                                context.matrix_output);
 
     //------------------------------------------------------------------
     //! 7c) Output atomic dH components (dT/dτ, dV^NL/dτ, dV^L/dτ, dV^H/dτ, dV^XC/dτ), only for nspin =1, 2 now
@@ -338,6 +368,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         dh_params.v_eff = &pelec->pot->get_eff_v();
         dh_params.pot = pelec->pot;
         dh_params.chg = pelec->charge;
+        dh_params.solver = &context.solver;
         // pelec->pot->get_eff_v() is the SUM V^L + V^H + V^XC; feeding it to cal_dH would
         // give the wrong potential for the separated V^L / V^H / V^XC outputs. Build one
         // dedicated Potential per term with exactly one component registered (see write_vxc.hpp).
@@ -390,7 +421,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #ifdef __EXX
         // dV^EXX/dR output is wired for the gamma (TK==double) exx interfaces. exd/exc are
         // mutually exclusive (real vs complex Hexx); write_dH_exx picks by info_ri.real_number.
-        setup_exx_dh_params(dh_params, exx_nao);
+        setup_exx_dh_params(dh_params, exx_nao, exact_exchange_state);
 #endif
         ModuleIO::write_dH_components(dh_params);
         delete pot_vl;
@@ -421,29 +452,37 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         h_params.nat = ucell.nat;
         if (inp.out_mat_h_t[0])
         {
-            ModuleIO::write_h_t(h_params);
+            ModuleIO::write_h_t(h_params, context.run, context.files, context.parallel, context.basis, context.solver, context.matrix_output);
         }
         if (inp.out_mat_h_vnl[0])
         {
-            ModuleIO::write_h_vnl(h_params);
+            ModuleIO::write_h_vnl(h_params, context.run, context.files, context.parallel, context.basis, context.solver, context.matrix_output);
         }
         if (inp.out_mat_h_vl[0])
         {
-            ModuleIO::write_h_vl(h_params);
+            ModuleIO::write_h_vl(h_params, context.run, context.files, context.parallel, context.basis, context.solver, context.matrix_output);
         }
         if (inp.out_mat_h_vh[0])
         {
-            ModuleIO::write_h_vh(h_params);
+            ModuleIO::write_h_vh(h_params, context.run, context.files, context.parallel, context.basis, context.solver, context.matrix_output);
         }
         if (inp.out_mat_h_vxc[0])
         {
-            ModuleIO::write_h_vxc(h_params);
+            ModuleIO::write_h_vxc(h_params, context.run, context.files, context.parallel, context.basis, context.spin, context.solver, context.matrix_output);
         }
 #ifdef __EXX
-        if (inp.out_mat_h_exx[0] && GlobalC::exx_info.info_global.cal_exx)
+        if (inp.out_mat_h_exx[0] && exact_exchange_state.enabled)
         {
             // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
-            setup_exx_h_params(h_params, exx_nao);
+            setup_exx_h_params(h_params, exx_nao, exact_exchange_state);
+            ModuleIO::write_h_exx(h_params,
+                                  context.run,
+                                  context.files,
+                                  context.parallel,
+                                  context.basis,
+                                  context.solver,
+                                  context.matrix_output,
+                                  exact_exchange_state);
         }
 #endif
     }
@@ -491,7 +530,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                inp.out_app_flag,
                                t_fn,
                                pv,
-                               GlobalV::DRANK);
+                               context.parallel.diagonalization_rank,
+                               context.solver);
         }
 
         delete ekinetic;
@@ -510,7 +550,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           inp.test_atom_input,
                                                           PARAM.globalv.search_pbc,
                                                           &GlobalV::ofs_running,
-                                                          GlobalV::MY_RANK);
+                                                          GlobalV::MY_RANK,
+                                                          context.run,
+                                                          context.basis);
         mylcalculator.calculate(inp.suffix, global_out_dir, ucell, inp.out_mat_l[1], GlobalV::MY_RANK);
     }
 
@@ -738,7 +780,8 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
     Exx_NAO<double>& exx_nao,
     const bool conv_esolver,
     const bool scf_nmax_flag,
-    const int istep);
+    const int istep,
+    const ModuleContext::SimulationContext& context);
 
 // For multiple k-points
 template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
@@ -766,7 +809,8 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
     Exx_NAO<std::complex<double>>& exx_nao,
     const bool conv_esolver,
     const bool scf_nmax_flag,
-    const int istep);
+    const int istep,
+    const ModuleContext::SimulationContext& context);
 
 template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>>(
     UnitCell& ucell,
@@ -793,4 +837,5 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
     Exx_NAO<std::complex<double>>& exx_nao,
     const bool conv_esolver,
     const bool scf_nmax_flag,
-    const int istep);
+    const int istep,
+    const ModuleContext::SimulationContext& context);

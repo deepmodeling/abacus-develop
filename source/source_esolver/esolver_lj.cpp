@@ -64,7 +64,7 @@ void ESolver_LJ::before_all_runners(UnitCell& ucell, const Input_para& inp)
     cal_en_shift(ucell.ntype, inp.mdp.lj_eshift);
 }
 
-void ESolver_LJ::runner(UnitCell& ucell, const int istep)
+void ESolver_LJ::runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context)
 {
     UnitCellLite ucell_lite = change_from_ucell_to_ucell_lite(ucell);
     NeighborSearch neighbor_search;
@@ -265,7 +265,7 @@ void ESolver_LJ::runner(UnitCell& ucell, const int istep)
         }
     }
 
-    void ESolver_LJ::after_all_runners(UnitCell& ucell)
+    void ESolver_LJ::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context)
     {
         GlobalV::ofs_running << "\n --------------------------------------------" << std::endl;
         GlobalV::ofs_running << std::setprecision(16);

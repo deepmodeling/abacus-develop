@@ -17,9 +17,9 @@ class ESolver_OF : public ESolver_FP
 
     virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
-    virtual void runner(UnitCell& ucell, const int istep) override;
+    virtual void runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context) override;
 
-    virtual void after_all_runners(UnitCell& ucell) override;
+    virtual void after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) override;
 
     virtual double cal_energy() override;
 
@@ -79,7 +79,10 @@ class ESolver_OF : public ESolver_FP
     void optimize(UnitCell& ucell);
     void update_rho();
     bool check_exit(bool& conv_esolver);
-    void after_opt(const int istep, UnitCell& ucell, const bool conv_esolver);
+    void after_opt(const int istep,
+                   UnitCell& ucell,
+                   const bool conv_esolver,
+                   const ModuleContext::SimulationContext& context);
 
     // ============================ tools ===============================
     // --------------------- initialize ---------------------------------

@@ -14,7 +14,9 @@ class Verlet : public MD_base
     ~Verlet();
 
   private:
-    void setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir);
+    void setup(ModuleESolver::ESolver* p_esolver,
+               const std::string& global_readin_dir,
+               const ModuleContext::SimulationContext& context);
     void first_half(std::ofstream& ofs);
     void second_half();
     void restart(const std::string& global_readin_dir);

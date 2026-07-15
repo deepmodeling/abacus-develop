@@ -53,7 +53,9 @@ MD_base::~MD_base()
 }
 
 
-void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void MD_base::setup(ModuleESolver::ESolver* p_esolver,
+                    const std::string& global_readin_dir,
+                    const ModuleContext::SimulationContext& context)
 {
     if (mdp.md_restart)
     {
@@ -67,7 +69,7 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
 	ModuleIO::print_screen(stress_step, force_step, istep_print);
 
-    MD_func::force_virial(p_esolver, step_, ucell, potential, force, cal_stress, virial);
+    MD_func::force_virial(p_esolver, step_, ucell, potential, force, cal_stress, virial, context);
     MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);
     ucell.ionic_position_updated = true;
 

@@ -33,11 +33,11 @@ void ESolver_DFPT_PW::before_all_runners(UnitCell& ucell, const Input_para& inp)
     init_dfpt(ucell);
 }
 
-void ESolver_DFPT_PW::runner(UnitCell& ucell, const int istep) {
+void ESolver_DFPT_PW::runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context) {
     ModuleBase::TITLE("ESolver_DFPT_PW", "runner");
     
     if (!gs_done_) {
-        run_gs(ucell);
+        run_gs(ucell, context);
         gs_done_ = true;
     }
     
@@ -48,16 +48,16 @@ void ESolver_DFPT_PW::runner(UnitCell& ucell, const int istep) {
     run_post_process(ucell);
 }
 
-void ESolver_DFPT_PW::after_all_runners(UnitCell& ucell) {
+void ESolver_DFPT_PW::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) {
     ModuleBase::TITLE("ESolver_DFPT_PW", "after_all_runners");
     
-    ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>::after_all_runners(ucell);
+    ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>::after_all_runners(ucell, context);
 }
 
-void ESolver_DFPT_PW::run_gs(UnitCell& ucell) {
+void ESolver_DFPT_PW::run_gs(UnitCell& ucell, const ModuleContext::SimulationContext& context) {
     ModuleBase::TITLE("ESolver_DFPT_PW", "run_gs");
     
-    ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>::runner(ucell, 0);
+    ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>::runner(ucell, 0, context);
 }
 
 void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell) {

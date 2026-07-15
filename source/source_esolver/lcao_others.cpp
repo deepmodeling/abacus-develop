@@ -29,7 +29,7 @@ namespace ModuleESolver
 {
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
+void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
     ModuleBase::timer::start("ESolver_KS_LCAO", "others");

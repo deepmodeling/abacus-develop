@@ -38,7 +38,7 @@ void ESolver_DM2rho<TK, TR>::before_all_runners(UnitCell& ucell, const Input_par
 }
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
+void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_DM2rho", "runner");
     ModuleBase::timer::start("ESolver_DM2rho", "runner");
@@ -87,12 +87,12 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
 }
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::after_all_runners(UnitCell& ucell)
+void ESolver_DM2rho<TK, TR>::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_DM2rho", "after_all_runners");
     ModuleBase::timer::start("ESolver_DM2rho", "after_all_runners");
 
-    ESolver_KS_LCAO<TK, TR>::after_all_runners(ucell);
+    ESolver_KS_LCAO<TK, TR>::after_all_runners(ucell, context);
 
     ModuleBase::timer::end("ESolver_DM2rho", "after_all_runners");
 };

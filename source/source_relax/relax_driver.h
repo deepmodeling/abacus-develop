@@ -38,7 +38,8 @@ class Relax_Driver
     void relax_driver(ModuleESolver::ESolver* p_esolver,
             UnitCell& ucell,
             const Input_para& inp,
-            std::ofstream& ofs_running);
+            std::ofstream& ofs_running,
+            const ModuleContext::SimulationContext& context);
 
   private:
     /// New relaxation optimizer (Relax class)
@@ -74,7 +75,8 @@ class Relax_Driver
      * @param etot Output total energy.
      */
     void esolve(const int istep, ModuleESolver::ESolver* p_esolver, UnitCell& ucell,
-            const Input_para& inp, ModuleBase::matrix& force, ModuleBase::matrix& stress, double& etot);
+            const Input_para& inp, ModuleBase::matrix& force, ModuleBase::matrix& stress, double& etot,
+            const ModuleContext::SimulationContext& context);
 
     /**
      * @brief Perform one relaxation step.

@@ -123,13 +123,13 @@ void ESolver_SDFT_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, i
 }
 
 template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
+void ESolver_SDFT_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_SDFT_PW", "after_scf");
     ModuleBase::timer::start("ESolver_SDFT_PW", "after_scf");
 
     // 1) call after_scf() of ESolver_KS_PW
-    ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver);
+    ESolver_KS_PW<T, Device>::after_scf(ucell, istep, conv_esolver, context);
 
     ModuleBase::timer::end("ESolver_SDFT_PW", "after_scf");
 }
@@ -244,10 +244,10 @@ void ESolver_SDFT_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix&
 }
 
 template <typename T, typename Device>
-void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell)
+void ESolver_SDFT_PW<T, Device>::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context)
 {
     // 1) write down etot and eigenvalues (for MDFT) information
-    ESolver_FP::after_all_runners(ucell);
+    ESolver_FP::after_all_runners(ucell, context);
 
     // 2) release memory
     if (this->method_sto == 2)

@@ -15,6 +15,8 @@
 #include "source_lcao/center2_orb.h"
 #include "source_lcao/module_ri/abfs-vector3_order.h"
 
+#include "source_context/context_types.h"
+
 #include <map>
 #include <set>
 #include <vector>
@@ -31,8 +33,16 @@ class cal_r_overlap_R
     double sparse_threshold = 1e-10;
     bool binary = false;
 
-    void init(const UnitCell& ucell, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
-    void init_nonlocal(const UnitCell& ucell, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb);
+    void init(const UnitCell& ucell,
+              const Parallel_Orbitals& pv,
+              const LCAO_Orbitals& orb,
+              const ModuleContext::RunControl& run,
+              const ModuleContext::BasisInfo& basis);
+    void init_nonlocal(const UnitCell& ucell,
+                       const Parallel_Orbitals& pv,
+                       const LCAO_Orbitals& orb,
+                       const ModuleContext::RunControl& run,
+                       const ModuleContext::BasisInfo& basis);
     ModuleBase::Vector3<double> get_psi_r_psi(const ModuleBase::Vector3<double>& R1,
                                               const int& T1,
                                               const int& L1,
@@ -64,16 +74,35 @@ class cal_r_overlap_R
                         const int& N1,
                         const ModuleBase::Vector3<double>& R2,
                         const int& T2);
-    void out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep, const int precision = 16);
+    void out_rR(const UnitCell& ucell,
+                const Grid_Driver& gd,
+                const int& istep,
+                const int precision,
+                const ModuleContext::RunControl& run,
+                const ModuleContext::FileSystemLayout& files,
+                const ModuleContext::ParallelTopology& parallel,
+                const ModuleContext::BasisInfo& basis,
+                const ModuleContext::MatrixOutputConfig& output);
     void out_rR_other(const UnitCell& ucell,
                       const int& istep,
                       const std::set<Abfs::Vector3_Order<int>>& output_R_coor,
-                      const int precision = 16);
+                      const int precision,
+                      const ModuleContext::RunControl& run,
+                      const ModuleContext::FileSystemLayout& files,
+                      const ModuleContext::ParallelTopology& parallel,
+                      const ModuleContext::BasisInfo& basis,
+                      const ModuleContext::MatrixOutputConfig& output);
 
   private:
     void initialize_orb_table(const UnitCell& ucell, const LCAO_Orbitals& orb);
-    void construct_orbs_and_orb_r(const UnitCell& ucell, const LCAO_Orbitals& orb);
-    void construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell, const LCAO_Orbitals& orb);
+    void construct_orbs_and_orb_r(const UnitCell& ucell,
+                                  const LCAO_Orbitals& orb,
+                                  const ModuleContext::RunControl& run,
+                                  const ModuleContext::BasisInfo& basis);
+    void construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell,
+                                               const LCAO_Orbitals& orb,
+                                               const ModuleContext::RunControl& run,
+                                               const ModuleContext::BasisInfo& basis);
 
     std::vector<int> iw2ia;
     std::vector<int> iw2iL;

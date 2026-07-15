@@ -94,7 +94,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(UnitCell& ucell, cons
 }
 
 template <typename TR, typename Device>
-void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
+void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_KS_LCAO_TDDFT", "runner");
     ModuleBase::timer::start(this->classname, "runner");
@@ -103,6 +103,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     // 1) before_scf (electronic iteration loops)
     //----------------------------------------------------------------
     this->before_scf(ucell, istep); // From ESolver_KS_LCAO
+    td_p->initialize_r_calculator(ucell, this->pv, this->orb_, context.run, context.basis);
     td_p->initialize_phase_hybrid(ucell, dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt)->getHR());
     td_p->calculate_grad_overlap(this->pv, ucell, this->gd, this->orb_.cutoffs(), this->two_center_bundle_.overlap_orb.get());
     // Initialize the moving spatial gauge
@@ -132,7 +133,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
                                            &(this->gd),
                                            &this->pv,
                                            this->orb_,
-                                           this->two_center_bundle_.overlap_orb.get());
+                                           this->two_center_bundle_.overlap_orb.get(),
+                                           context.run,
+                                           context.basis);
         // calculate velocity operator
         velocity_mat->calculate_grad_term();
         velocity_mat->calculate_vcomm_r();
@@ -222,7 +225,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
         //----------------------------------------------------------------
         // 7) after_scf
         //----------------------------------------------------------------
-        this->after_scf(ucell, totstep, conv_esolver);
+        this->after_scf(ucell, totstep, conv_esolver, context);
         if (!restart_done && PARAM.inp.mdp.md_restart)
         {
             restart_done = true;
@@ -546,12 +549,12 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::store_h_s_psi(UnitCell& ucell,
 }
 
 template <typename TR, typename Device>
-void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
+void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_LCAO_TDDFT", "after_scf");
     ModuleBase::timer::start(this->classname, "after_scf");
 
-    ESolver_KS_LCAO<std::complex<double>, TR>::after_scf(ucell, istep, conv_esolver);
+    ESolver_KS_LCAO<std::complex<double>, TR>::after_scf(ucell, istep, conv_esolver, context);
 
     // Output energy for sub-loop (electronic step)
     std::cout << " Potential (Ry): " << std::setprecision(15) << this->pelec->f_en.etot << std::endl;

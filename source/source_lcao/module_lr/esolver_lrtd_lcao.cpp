@@ -418,7 +418,9 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
+void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell,
+                                   const int istep,
+                                   const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_LR", "runner");
     ModuleBase::timer::start("ESolver_LR", "runner");
@@ -529,7 +531,8 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
+void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell,
+                                              const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_LR", "after_all_runners");
     if (input.ri_hartree_benchmark != "none") { return; } //no need to calculate the spectrum in the benchmark routine

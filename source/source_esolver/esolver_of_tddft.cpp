@@ -28,7 +28,7 @@ ESolver_OF_TDDFT::~ESolver_OF_TDDFT()
 }
 
 
-void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
+void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::timer::start("ESolver_OF_TDDFT", "runner");
     // get Ewald energy, initial rho and phi if necessary
@@ -115,7 +115,7 @@ void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
         conv_esolver=true;
     }
 
-    this->after_opt(istep, ucell, conv_esolver);
+    this->after_opt(istep, ucell, conv_esolver, context);
 
     ModuleBase::timer::end("ESolver_OF_TDDFT", "runner");
 }

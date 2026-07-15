@@ -10,7 +10,7 @@
 namespace ModuleESolver {
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
+void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_KS_PW", "others");
 

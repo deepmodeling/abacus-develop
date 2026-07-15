@@ -11,6 +11,8 @@
 #include "source_base/module_device/memory_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_hsolver/kernels/hegvd_op.h"
+#include "source_context/simulation_context.h"
+#include "source_context/simulation_context_builder.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
@@ -66,6 +68,11 @@ void Driver::driver_run()
     //! 3: initialize Esolver and fill json-structure
     p_esolver->before_all_runners(ucell, PARAM.inp);
 
+    // CalAtomsInfo is reached from before_all_runners while reading the
+    // pseudopotentials, so derived values such as nlocal are now final.
+    this->context_builder_->capture_runtime(PARAM.globalv);
+    ModuleContext::SimulationContext context = this->context_builder_->finalize(PARAM.inp, PARAM.globalv);
+
     // this Json part should be moved to before_all_runners, mohan 2024-05-12
 #ifdef __RAPIDJSON
     Json::gen_stru_wrapper(&ucell);
@@ -76,22 +83,22 @@ void Driver::driver_run()
     //! 4: different types of calculations
     if (cal == "md")
     {
-        Run_MD::md_line(ucell, p_esolver, PARAM);
+        Run_MD::md_line(ucell, p_esolver, PARAM, context);
     }
     else if (cal == "scf" || cal == "relax" || cal == "cell-relax" || cal == "nscf")
     {
         Relax_Driver rl_driver;
-        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp, GlobalV::ofs_running);
+        rl_driver.relax_driver(p_esolver, ucell, PARAM.inp, GlobalV::ofs_running, context);
     }
     else if (cal == "get_s")
     {
-        p_esolver->runner(ucell, 0);
+        p_esolver->runner(ucell, 0, context);
     }
     else if (cal == "get_pchg" || cal == "get_wf" || cal == "gen_bessel" || cal == "gen_opt_abfs" ||
              cal == "test_memory" || cal == "test_neighbour")
     {
         const int istep = 0;
-        p_esolver->others(ucell, istep);
+        p_esolver->others(ucell, istep, context);
     }
     else
     {
@@ -99,7 +106,7 @@ void Driver::driver_run()
     }
 
     //! 5: clean up esolver
-    p_esolver->after_all_runners(ucell);
+    p_esolver->after_all_runners(ucell, context);
 
     delete p_esolver;
 

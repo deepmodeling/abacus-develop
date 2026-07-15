@@ -39,9 +39,9 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
 
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver) override;
 
-    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
+    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context) override;
 
-    virtual void after_all_runners(UnitCell& ucell) override;
+    virtual void after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) override;
 
   private:
     int nche_sto;   ///< norder of Chebyshev

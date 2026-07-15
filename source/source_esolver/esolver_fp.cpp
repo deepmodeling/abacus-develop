@@ -93,7 +93,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     return;
 }
 
-void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
+void ESolver_FP::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_FP", "after_scf");
 
@@ -224,7 +224,7 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
     }
 }
 
-void ESolver_FP::after_all_runners(UnitCell& ucell)
+void ESolver_FP::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context)
 {
     // print out the final total energy
     GlobalV::ofs_running << "\n --------------------------------------------" << std::endl;

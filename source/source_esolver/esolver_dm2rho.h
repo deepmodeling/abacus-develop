@@ -17,9 +17,9 @@ class ESolver_DM2rho : public ESolver_KS_LCAO<TK, TR>
 
     void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
-    void after_all_runners(UnitCell& ucell) override;
+    void after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) override;
 
-    void runner(UnitCell& ucell, const int istep) override;
+    void runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context) override;
 };
 } // namespace ModuleESolver
 #endif

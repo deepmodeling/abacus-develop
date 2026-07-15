@@ -22,12 +22,14 @@ Langevin::~Langevin()
 }
 
 
-void Langevin::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
+void Langevin::setup(ModuleESolver::ESolver* p_esolver,
+                     const std::string& global_readin_dir,
+                     const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("Langevin", "setup");
     ModuleBase::timer::start("Langevin", "setup");
 
-    MD_base::setup(p_esolver, global_readin_dir);
+    MD_base::setup(p_esolver, global_readin_dir, context);
 
     post_force();
 

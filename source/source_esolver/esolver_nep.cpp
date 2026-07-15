@@ -49,7 +49,7 @@ void ESolver_NEP::before_all_runners(UnitCell& ucell, const Input_para& inp)
 #endif
 }
 
-void ESolver_NEP::runner(UnitCell& ucell, const int istep)
+void ESolver_NEP::runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_NEP", "runner");
     ModuleBase::timer::start("ESolver_NEP", "runner");
@@ -159,7 +159,7 @@ void ESolver_NEP::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
     }
 }
 
-void ESolver_NEP::after_all_runners(UnitCell& ucell)
+void ESolver_NEP::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context)
 {
     GlobalV::ofs_running << "\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);

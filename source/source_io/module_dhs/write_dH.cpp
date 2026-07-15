@@ -118,7 +118,8 @@ void write_dh_perI(WriteDHParams& params,
                                    out_app_flag,
                                    fk,
                                    pv,
-                                   GlobalV::DRANK);
+                                   GlobalV::DRANK,
+                                   *params.solver);
             }
         }
     }

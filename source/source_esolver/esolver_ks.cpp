@@ -116,7 +116,7 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
     }
 }
 
-void ESolver_KS::runner(UnitCell& ucell, const int istep)
+void ESolver_KS::runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_KS", "runner");
     ModuleBase::timer::start(this->classname, "runner");
@@ -159,7 +159,7 @@ void ESolver_KS::runner(UnitCell& ucell, const int istep)
     } // end scf iterations
 
     // 7) after scf
-    this->after_scf(ucell, istep, conv_esolver);
+    this->after_scf(ucell, istep, conv_esolver, context);
 
     ModuleBase::timer::end(this->classname, "runner");
     return;
@@ -283,7 +283,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 }
 
 //! Something to do after SCF iterations when SCF is converged or comes to the max iter step.
-void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver)
+void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_KS", "after_scf");
     
@@ -297,7 +297,7 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 */
     
     // 2) call after_scf() of ESolver_FP
-    ESolver_FP::after_scf(ucell, istep, conv_esolver);
+    ESolver_FP::after_scf(ucell, istep, conv_esolver, context);
 
     // 3) write eigenvalues and occupations to eig_occ.txt
     ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv, istep);
@@ -307,10 +307,10 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 
 }
 
-void ESolver_KS::after_all_runners(UnitCell& ucell)
+void ESolver_KS::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context)
 {
     // 1) write Etot information
-    ESolver_FP::after_all_runners(ucell);
+    ESolver_FP::after_all_runners(ucell, context);
 }
 
 } // namespace ModuleESolver

@@ -1,7 +1,6 @@
 #include "single_R_io.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/global_function.h"
-#include "source_base/global_variable.h"
 
 #include <complex>
 #include <cstdio>
@@ -24,7 +23,8 @@ template<typename T>
 void ModuleIO::output_single_R(std::ofstream& ofs,
     const SparseRBlock<T>& XR,
     const Parallel_Orbitals& pv,
-    const SparseWriteOptions& options)
+    const SparseWriteOptions& options,
+    const ModuleContext::ParallelTopology& parallel)
 {
     const int nlocal = pv.get_global_row_size();
     if (nlocal <= 0)
@@ -38,12 +38,12 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
     indptr.push_back(0);
 
     std::stringstream tem1;
-    tem1 << options.temp_dir << std::to_string(GlobalV::DRANK)
+    tem1 << options.temp_dir << std::to_string(parallel.diagonalization_rank)
          << "temp_sparse_indices.dat";
     std::ofstream ofs_tem1;
     std::ifstream ifs_tem1;
 
-    if (!options.reduce || GlobalV::DRANK == 0)
+    if (!options.reduce || parallel.diagonalization_rank == 0)
     {
         if (options.binary)
         {
@@ -88,7 +88,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
             Parallel_Reduce::reduce_all(line.data(), nlocal);
         }
 
-        if (!options.reduce || GlobalV::DRANK == 0)
+        if (!options.reduce || parallel.diagonalization_rank == 0)
         {
             long long nonzeros_count = 0;
             for (int col = 0; col < nlocal; ++col)
@@ -116,7 +116,7 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
         }
     }
 
-    if (!options.reduce || GlobalV::DRANK == 0)
+    if (!options.reduce || parallel.diagonalization_rank == 0)
     {
         if (options.binary)
         {
@@ -161,9 +161,11 @@ void ModuleIO::output_single_R(std::ofstream& ofs,
 template void ModuleIO::output_single_R<double>(std::ofstream& ofs,
     const SparseRBlock<double>& XR,
     const Parallel_Orbitals& pv,
-    const SparseWriteOptions& options);
+    const SparseWriteOptions& options,
+    const ModuleContext::ParallelTopology& parallel);
 
 template void ModuleIO::output_single_R<std::complex<double>>(std::ofstream& ofs,
     const SparseRBlock<std::complex<double>>& XR,
     const Parallel_Orbitals& pv,
-    const SparseWriteOptions& options);
+    const SparseWriteOptions& options,
+    const ModuleContext::ParallelTopology& parallel);

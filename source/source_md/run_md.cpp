@@ -15,7 +15,10 @@
 namespace Run_MD
 {
 
-void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Parameter& param_in)
+void md_line(UnitCell& unit_in,
+             ModuleESolver::ESolver* p_esolver,
+             const Parameter& param_in,
+             const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::start("Run_MD", "md_line");
@@ -52,7 +55,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
     {
         if (mdrun->step_ == 0)
         {
-            mdrun->setup(p_esolver, PARAM.globalv.global_readin_dir);
+        mdrun->setup(p_esolver, PARAM.globalv.global_readin_dir, context);
         }
         else
         {
@@ -70,7 +73,8 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
                                   mdrun->potential,
                                   mdrun->force,
                                   param_in.inp.cal_stress,
-                                  mdrun->virial);
+                                  mdrun->virial,
+                                  context);
 
             mdrun->second_half();
 

@@ -127,7 +127,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->allocate_array();
 }
 
-void ESolver_OF::runner(UnitCell& ucell, const int istep)
+void ESolver_OF::runner(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context)
 {
     ModuleBase::timer::start("ESolver_OF", "runner");
     // get Ewald energy, initial rho and phi if necessary
@@ -165,7 +165,7 @@ void ESolver_OF::runner(UnitCell& ucell, const int istep)
         ESolver_FP::iter_finish(ucell, istep, this->iter_, conv_esolver);
     }
 
-    this->after_opt(istep, ucell, conv_esolver);
+    this->after_opt(istep, ucell, conv_esolver, context);
 
     ModuleBase::timer::end("ESolver_OF", "runner");
 }
@@ -450,7 +450,10 @@ bool ESolver_OF::check_exit(bool& conv_esolver)
  * @param istep
  * @param ucell
  */
-void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_esolver)
+void ESolver_OF::after_opt(const int istep,
+                           UnitCell& ucell,
+                           const bool conv_esolver,
+                           const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("ESolver_OF", "after_opt");
     ModuleBase::timer::start("ESolver_OF", "after_opt");
@@ -472,7 +475,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     //------------------------------------------------------------------
     // 2) call after_scf() of ESolver_FP
     //------------------------------------------------------------------
-    ESolver_FP::after_scf(ucell, istep, conv_esolver);
+    ESolver_FP::after_scf(ucell, istep, conv_esolver, context);
 
 #ifdef __MLALGO
     //------------------------------------------------------------------
@@ -505,9 +508,9 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
 /**
  * @brief Output the FINAL_ETOT
  */
-void ESolver_OF::after_all_runners(UnitCell& ucell)
+void ESolver_OF::after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context)
 {
-    ESolver_FP::after_all_runners(ucell);
+    ESolver_FP::after_all_runners(ucell, context);
 }
 
 /**

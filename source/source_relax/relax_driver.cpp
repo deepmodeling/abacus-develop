@@ -12,7 +12,8 @@ void Relax_Driver::relax_driver(
         ModuleESolver::ESolver* p_esolver,
         UnitCell& ucell,
         const Input_para& inp,
-        std::ofstream& ofs_running)
+        std::ofstream& ofs_running,
+        const ModuleContext::SimulationContext& context)
 {
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
     ModuleBase::timer::start("Relax_Driver", "relax_driver");
@@ -34,7 +35,7 @@ void Relax_Driver::relax_driver(
         double etot = 0.0;
 
         this->iter_info(steps, inp);
-        this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
+        this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot, context);
         bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
         this->json_out(p_esolver, ucell, inp, force, stress);
 
@@ -97,9 +98,10 @@ void Relax_Driver::esolve(const int istep,
 		const Input_para& inp,
 		ModuleBase::matrix& force,
 		ModuleBase::matrix& stress,
-		double& etot)
+		double& etot,
+        const ModuleContext::SimulationContext& context)
 {
-    p_esolver->runner(ucell, istep);
+    p_esolver->runner(ucell, istep, context);
 
     etot = p_esolver->cal_energy();
 

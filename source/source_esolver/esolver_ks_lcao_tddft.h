@@ -22,7 +22,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
     void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
 
   protected:
-    virtual void runner(UnitCell& cell, const int istep) override;
+    virtual void runner(UnitCell& cell, const int istep, const ModuleContext::SimulationContext& context) override;
 
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
@@ -35,7 +35,7 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
                      int& iter,
                      bool& conv_esolver);
 
-    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
+    virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver, const ModuleContext::SimulationContext& context) override;
 
     void print_step();
 

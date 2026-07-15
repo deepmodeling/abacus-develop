@@ -3,6 +3,7 @@
 
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
+#include "source_context/simulation_context.h"
 
 struct Input_para;
 
@@ -27,14 +28,14 @@ class ESolver
     virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) = 0;
 
     //! run energy solver
-    virtual void runner(UnitCell& cell, const int istep) = 0;
+    virtual void runner(UnitCell& cell, const int istep, const ModuleContext::SimulationContext& context) = 0;
 
     //! perform post processing calculations
-    virtual void after_all_runners(UnitCell& ucell) = 0;
+    virtual void after_all_runners(UnitCell& ucell, const ModuleContext::SimulationContext& context) = 0;
 
     //! deal with exx and other calculation than scf/md/relax/cell-relax:
     //! such as nscf, get_wf and get_pchg
-    virtual void others(UnitCell& ucell, const int istep) {};
+    virtual void others(UnitCell& ucell, const int istep, const ModuleContext::SimulationContext& context) {};
 
     //! calculate total energy of a given system
     virtual double cal_energy() = 0;
