@@ -2,6 +2,7 @@
 
 #include "gtest/gtest.h"
 #include <chrono>
+#include "../../LCAO_nonlocal_info.h"
 
 //---------------------------------------
 // Unit test of Nonlocal class
@@ -32,7 +33,9 @@ class NonlocalTest : public ::testing::Test
 
         // set up a unitcell, with one element and test_size atoms, each atom has test_nw orbitals
         ucell.ntype = 1;
-        ucell.infoNL.Beta = new Numerical_Nonlocal[ucell.ntype];
+        auto* lcao_nl = new LCAONonlocalInfo();
+        lcao_nl->get_nonlocal().Beta = new Numerical_Nonlocal[ucell.ntype];
+        ucell.infoNL = lcao_nl;
         ucell.nat = test_size;
         ucell.atoms = new Atom[ucell.ntype];
         ucell.iat2it = new int[ucell.nat];
@@ -90,7 +93,7 @@ class NonlocalTest : public ::testing::Test
         delete HR;
         delete paraV;
         delete[] ucell.atoms;
-        delete[] ucell.infoNL.Beta;
+        delete ucell.infoNL;
     }
 
 #ifdef __MPI
@@ -127,7 +130,7 @@ TEST_F(NonlocalTest, constructHRd2d)
     hsk.set_zero_hk();
     Grid_Driver gd(0, 0);
     // check some input values
-    EXPECT_EQ(ucell.infoNL.Beta[0].get_rcut_max(), 1.0);
+    EXPECT_EQ(ucell.infoNL->get_rcut_max(0), 1.0);
     std::chrono::high_resolution_clock::time_point start_time = std::chrono::high_resolution_clock::now();
     hamilt::Nonlocal<hamilt::OperatorLCAO<double, double>>
         op(&hsk, kvec_d_in, HR, &ucell, {1.0}, &gd, &intor_);

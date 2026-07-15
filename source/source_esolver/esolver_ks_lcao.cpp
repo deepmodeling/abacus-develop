@@ -114,7 +114,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
     //! 2) find search radius
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-      PARAM.inp.out_level, orb_.get_rcutmax_Phi(), ucell.infoNL.get_rcutmax_Beta(),
+      PARAM.inp.out_level, orb_.get_rcutmax_Phi(), ucell.infoNL->get_rcutmax_Beta(),
       PARAM.globalv.gamma_only_local);
 
     //! 3) use search_radius to search adj atoms

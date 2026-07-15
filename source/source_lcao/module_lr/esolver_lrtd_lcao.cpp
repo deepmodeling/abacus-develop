@@ -3,6 +3,7 @@
 #include "hamilt_casida.h"
 #include "hamilt_ulr.hpp"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
+#include "../LCAO_nonlocal_info.h"
 #include "source_lcao/module_lr/hsolver_lrtd.hpp"
 #include "source_lcao/module_lr/lr_spectrum.h"
 #include "source_lcao/module_gint/gint.h"
@@ -73,8 +74,10 @@ inline void setup_2center_table(TwoCenterBundle& two_center_bundle, LCAO_Orbital
 #endif
     if (PARAM.inp.vnl_in_h)
     {
-        ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
-        two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+        auto* lcao_nl = new LCAONonlocalInfo();
+        lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
+        ucell.infoNL = lcao_nl;
+        two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().Beta);
     }
 }
 
@@ -375,7 +378,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
         PARAM.inp.out_level,
         orb.get_rcutmax_Phi(),
-        ucell.infoNL.get_rcutmax_Beta(),
+        ucell.infoNL->get_rcutmax_Beta(),
         PARAM.globalv.gamma_only_local);
     atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,

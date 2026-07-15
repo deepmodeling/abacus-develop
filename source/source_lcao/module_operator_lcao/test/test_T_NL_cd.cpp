@@ -3,6 +3,7 @@
 
 #include "gtest/gtest.h"
 #include <chrono>
+#include "../../LCAO_nonlocal_info.h"
 
 //---------------------------------------
 // Unit test of EKinetic + Nonlocal class
@@ -58,7 +59,9 @@ class TNLTest : public ::testing::Test
         }
         ucell.set_iat2iwt(2);
         // for Nonlocal
-        ucell.infoNL.Beta = new Numerical_Nonlocal[ucell.ntype];
+        auto* lcao_nl = new LCAONonlocalInfo();
+        lcao_nl->get_nonlocal().Beta = new Numerical_Nonlocal[ucell.ntype];
+        ucell.infoNL = lcao_nl;
         ucell.atoms[0].ncpp.d_real.create(5, 5);
         ucell.atoms[0].ncpp.d_real.zero_out();
         ucell.atoms[0].ncpp.d_so.create(4, 5, 5);
@@ -92,7 +95,7 @@ class TNLTest : public ::testing::Test
         delete HR;
         delete paraV;
         delete[] ucell.atoms;
-        delete[] ucell.infoNL.Beta;
+        delete ucell.infoNL;
     }
 
 #ifdef __MPI

@@ -3,6 +3,7 @@
 #include "source_estate/read_pseudo.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "source_io/module_parameter/parameter.h"
+#include "../../LCAO_nonlocal_info.h"
 
 #include <gtest/gtest.h>
 
@@ -203,7 +204,7 @@ void test_deepks<T>::prep_neighbour()
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                    this->out_level,
                                                    ORB.get_rcutmax_Phi(),
-                                                   ucell.infoNL.get_rcutmax_Beta(),
+                                                   ucell.infoNL->get_rcutmax_Beta(),
                                                    this->gamma_only_local);
 
     atom_arrange::search(this->search_pbc,
@@ -233,7 +234,9 @@ void test_deepks<T>::set_orbs()
              this->cal_force,
              my_rank);
 
-    ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);
+    auto* lcao_nl = new LCAONonlocalInfo();
+    lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);
+    ucell.infoNL = lcao_nl;
 
     orb_.build(ntype, ucell.orbital_fn.data());
 

@@ -2,9 +2,9 @@
 
 #include "source_base/ylm.h"
 #include "source_cell/read_pp.h"
-#include "source_cell/setup_nonlocal.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_hs/cal_r_overlap_R.h"
+#include "../../LCAO_nonlocal_info.h"
 
 #include <algorithm>
 #include <cmath>
@@ -119,13 +119,15 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
         ASSERT_EQ(atom.ncpp.nh, 18);
         ASSERT_EQ(atom.ncpp.jjj.size(), 6);
 
-        ucell.infoNL.nproj = new int[1];
+        auto* lcao_nl = new LCAONonlocalInfo();
+        lcao_nl->get_nonlocal().nproj = new int[1];
         std::ofstream log("snap_psibeta_half_tddft_nonlocal.log");
-        ucell.infoNL.Set_NonLocal(0, &atom, ucell.infoNL.nproj[0], orb.get_kmesh(), orb.get_dk(), orb.get_dr_uniform(), log);
+        lcao_nl->get_nonlocal().Set_NonLocal(0, &atom, lcao_nl->get_nonlocal().nproj[0], orb.get_kmesh(), orb.get_dk(), orb.get_dr_uniform(), log);
 
-        ASSERT_EQ(ucell.infoNL.nproj[0], 6);
-        ucell.infoNL.nprojmax = ucell.infoNL.nproj[0];
-        ucell.infoNL.rcutmax_Beta = ucell.infoNL.Beta[0].get_rcut_max();
+        ASSERT_EQ(lcao_nl->get_nonlocal().nproj[0], 6);
+        lcao_nl->get_nonlocal().nprojmax = lcao_nl->get_nonlocal().nproj[0];
+        lcao_nl->get_nonlocal().rcutmax_Beta = lcao_nl->get_nonlocal().Beta[0].get_rcut_max();
+        ucell.infoNL = lcao_nl;
     }
 
     void initialize_r_overlap_reference()
