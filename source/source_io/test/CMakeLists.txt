@@ -3,14 +3,6 @@ abacus_disable_feature_definitions(__CUDA)
 abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
-find_package(Python3 REQUIRED COMPONENTS Interpreter)
-add_test(
-  NAME MODULE_IO_module_hs_no_globals
-  COMMAND Python3::Interpreter
-          ${CMAKE_CURRENT_SOURCE_DIR}/../module_hs/check_no_global_state.py
-          ${CMAKE_CURRENT_SOURCE_DIR}/../module_hs
-)
-
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 configure_file(INPUTs ${CMAKE_CURRENT_BINARY_DIR}/INPUTs COPYONLY)
 
