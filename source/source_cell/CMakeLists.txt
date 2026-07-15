@@ -17,7 +17,7 @@ add_library(
     unitcell.cpp
     read_atoms.cpp
     read_atoms_helper.cpp
-    setup_nonlocal.cpp
+
     klist.cpp
     parallel_kpoints.cpp
     cell_index.cpp

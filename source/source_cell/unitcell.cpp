@@ -32,6 +32,7 @@ UnitCell::~UnitCell()
     {
         delete[] atoms;
     }
+    delete infoNL;
 }
 
 
