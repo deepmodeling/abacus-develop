@@ -45,15 +45,6 @@ void Exx_NAO<TK>::before_runner(
     {
         if (GlobalC::exx_info.info_global.cal_exx)
         {
-            if (GlobalC::exx_info.info_ri.real_number)
-            {
-                this->exd->update_info_global(GlobalC::exx_info.info_global);
-            }
-            else
-            {
-                this->exc->update_info_global(GlobalC::exx_info.info_global);
-            }
-
             if (inp.init_wfc != "file")
             { // if init_wfc==file, directly enter the EXX loop
                 XC_Functional::set_xc_first_loop(ucell);

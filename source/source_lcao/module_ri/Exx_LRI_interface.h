@@ -44,6 +44,7 @@ public:
     {
         this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info_ri);
         this->info_global = info_global;
+        this->hybrid_step_ = info_global.hybrid_step;
     }
     Exx_LRI_Interface() = delete;
 
@@ -142,11 +143,6 @@ public:
 
     size_t hybrid_step() const { return hybrid_step_; }
     void set_hybrid_step(size_t s) { hybrid_step_ = s; }
-
-    void update_info_global(const Exx_Info_Global& info_global_in)
-    {
-        this->info_global = info_global_in;
-    }
 
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
