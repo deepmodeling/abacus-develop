@@ -415,6 +415,7 @@ OBJS_NEIGHBOR=sltk_atom.o\
 
 OBJS_NEIGHBOR_SEARCH=neighbor_search.o\
     bin_manager.o\
+    domain_decomposition.o\
     page_allocator.o\
     unitcell_lite.o\
 

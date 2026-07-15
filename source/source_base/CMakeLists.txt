@@ -1,4 +1,4 @@
-if (USE_ABACUS_LIBM)
+if (ENABLE_ABACUS_LIBM)
 list (APPEND LIBM_SRC
   libm/branred.cpp
   libm/cexp.cpp
@@ -86,7 +86,7 @@ if(BUILD_TESTING)
     add_subdirectory(module_mixing/test)
     add_subdirectory(module_device/test)
     add_subdirectory(module_grid/test)
-    if (USE_ABACUS_LIBM)
+    if (ENABLE_ABACUS_LIBM)
       add_subdirectory(libm/test)
     endif()
   endif()

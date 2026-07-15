@@ -66,7 +66,7 @@ def switch_io_backend_version(version: str) -> bool:
     for detailed discussion, see issue #7260
     '''
     global __LEGACYIO__
-    m = re.match(r'^v(\d+)\.(\d+)\.(\d+)(\.\d+|\-(alpha|beta|rc)\.\d+)?$', version)
+    m = re.match(r'^v(\d+)\.(\d+)\.(\d+)(\.\d+|\-(alpha|beta|rc)\.\d+|\-(alpha|beta|rc)\d+)?$', version)
     assert m, f'Invalid format of version number, please check file version.h'
     assert int(m.group(1)) >= 3, f'ABACUS v2.x is not supported'
     if int(m.group(2)) >= 11:

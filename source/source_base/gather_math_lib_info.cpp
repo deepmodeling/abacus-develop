@@ -1,7 +1,7 @@
 // This file defines the math lib wrapper for output information before executing computations.
 
 /*
-When INFO is defined in cmake configure, a macro of GATHER_INFO will be defined.
+When MATH_INFO is enabled in CMake, the GATHER_INFO macro will be defined.
 This macro will be used to output information before executing computations.
 Results will output to OUT/math_info.log, see ModuleBase::Global_File::make_dir_out .
 */

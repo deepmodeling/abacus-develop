@@ -70,9 +70,9 @@ TEST_F(LatticeChangeCGTest, TestStartConverged)
 {
     // setup data
     UnitCell ucell;
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ModuleBase::matrix stress(3, 3);
     double etot = 0.0;
 
@@ -98,9 +98,9 @@ TEST_F(LatticeChangeCGTest, TestStartSd)
 {
     // setup data
     UnitCell ucell;
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ModuleBase::matrix stress(3, 3);
     stress(0, 0) = 0.01;
     double etot = 0.0;
@@ -126,9 +126,9 @@ TEST_F(LatticeChangeCGTest, TestStartTrialGoto)
 {
     // setup data
     UnitCell ucell;
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ModuleBase::matrix stress(3, 3);
     stress(0, 1) = 0.01;
     double etot = 0.0;
@@ -161,9 +161,9 @@ TEST_F(LatticeChangeCGTest, TestStartTrial)
 {
     // setup data
     UnitCell ucell;
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ModuleBase::matrix stress(3, 3);
     stress(0, 1) = 0.01;
     double etot = 0.0;
@@ -194,9 +194,9 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase1)
 {
     // setup data
     UnitCell ucell;
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ModuleBase::matrix stress(3, 3);
     stress(0, 1) = 0.01;
     double etot = 0.0;
@@ -231,9 +231,9 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrialGotoCase2)
 {
     // setup data
     UnitCell ucell;
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ModuleBase::matrix stress(3, 3);
     stress(0, 1) = 0.01;
     double etot = 0.0;
@@ -271,9 +271,9 @@ TEST_F(LatticeChangeCGTest, TestStartNoTrial)
 {
     // setup data
     UnitCell ucell;
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ModuleBase::matrix stress(3, 3);
     stress(0, 1) = 0.01;
     double etot = 0.0;

@@ -65,9 +65,9 @@ add_test(NAME MODULE_BASE_parallel_2d_test_para
 )
 
 
-  # figure out the lib that provides BLACS
-  if(MKLROOT)
-    list(APPEND BLACS_LIB MKL::MKL)
+  # Select the same ScaLAPACK/BLACS provider as the main build.
+  if(MKL_FOUND)
+    set(BLACS_LIB ${MKL_LIBRARIES})
   else()
     set(BLACS_LIB ScaLAPACK::ScaLAPACK)
   endif()

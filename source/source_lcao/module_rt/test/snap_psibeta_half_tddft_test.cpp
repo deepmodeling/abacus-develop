@@ -35,7 +35,6 @@ Magnetism::Magnetism()
 
 Magnetism::~Magnetism()
 {
-    delete[] start_mag;
 }
 
 UnitCell::UnitCell()

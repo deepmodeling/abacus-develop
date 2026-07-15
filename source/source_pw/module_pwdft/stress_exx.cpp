@@ -1,4 +1,4 @@
-#include "source_hamilt/module_xc/exx_info.h"
+
 #include "op_pw_exx.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
@@ -10,7 +10,9 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
                                            ModulePW::PW_Basis* rhopw,
                                            ModulePW::PW_Basis_K* wfcpw,
                                            const K_Vectors *p_kv,
-                                           const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in, const UnitCell& ucell)
+                                           const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in, const UnitCell& ucell,
+                                           const double hybrid_alpha,
+                                           const CoulombParam& coulomb_param)
 {
     bool gamma_extrapolation = PARAM.inp.exx_gamma_extrapolation;
     bool is_mp = p_kv->get_is_mp();
@@ -73,8 +75,8 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
 
             for (int iq = 0; iq < nqs; iq++)
             {
-                hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega, ik, iq, true);
-                hamilt::get_exx_stress_potential<Real, Device>(p_kv, wfcpw, rhopw, pot_stress, tpiba, gamma_extrapolation, omega, ik, iq);
+                hamilt::get_exx_potential<Real, Device>(p_kv, wfcpw, rhopw, pot, tpiba, gamma_extrapolation, omega, ik, iq, true, coulomb_param);
+                hamilt::get_exx_stress_potential<Real, Device>(p_kv, wfcpw, rhopw, pot_stress, tpiba, gamma_extrapolation, omega, ik, iq, coulomb_param);
                 for (int mband = 0; mband < d_psi_in->get_nbands(); mband++)
                 {
                     // psi_mq in real space
@@ -118,8 +120,7 @@ void Stress_PW<FPTYPE, Device>::stress_exx(ModuleBase::matrix& sigma,
 
                             }
 
-                            // 0.5 in the following line is caused by 2x in the pot
-                            sigma(alpha, beta) -= GlobalC::exx_info.info_global.hybrid_alpha
+                            sigma(alpha, beta) -= hybrid_alpha
                                                   * 0.25 * sigma_ab_loc
                                                   * wg(ik, nband) * wg(iq, mband) / nqs / p_kv->wk[ik];
                         }

@@ -47,12 +47,14 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
     }
 
 #ifdef __EXX
-    // save exx matrix
+    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+    bool real_number = GlobalC::exx_info.info_ri.real_number;
+
     if (inp.calculation != "nscf")
     {
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (cal_exx)
         {
-            GlobalC::exx_info.info_ri.real_number ?
+            real_number ?
               exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm, 
                 *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
               exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,

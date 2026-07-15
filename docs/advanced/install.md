@@ -73,7 +73,9 @@ The new EXX implementation depends on two external libraries:
 
 These two libraries are added as submodules in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder. Set `-DENABLE_LIBRI=ON` to build with these two libraries.
 
-If you prefer using manually downloaded libraries, provide `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`.
+```{note}
+`ENABLE_LIBCOMM` is deprecated because LibComm is not a standalone ABACUS feature. CMake locates it automatically as a dependency of LibRI. If you prefer using manually downloaded libraries, enable LibRI and provide their locations via `-DLIBRI_DIR=/path/to/LibRI` and `-DLIBCOMM_DIR=/path/to/LibComm`.
+```
 
 
 ## Build with DFT-D4 support
@@ -134,26 +136,22 @@ If you are confident that your MPI supports CUDA Aware, you can add `-DUSE_CUDA_
 
 > Note: We recommend using the latest available compiler sets, since they offer faster implementations of math functions.
 
-This flag is disabled by default. To build math functions from source code, define `USE_ABACUS_LIBM` flag. It is expected to get a better performance on legacy versions of `gcc` and `clang`.
+This flag is disabled by default. To build math functions from source code, define `ENABLE_ABACUS_LIBM` flag. It is expected to get a better performance on legacy versions of `gcc` and `clang`.
 
 Currently supported math functions:
  `sin`, `cos`, `sincos`, `exp`, `cexp`
 
 ```bash
-cmake -B build -DUSE_ABACUS_LIBM=1
+cmake -B build -DENABLE_ABACUS_LIBM=1
 ```
 
 ## Build with PEXSI support
 
-ABACUS supports the PEXSI library for gamma only LCAO calculations. PEXSI version 2.0.0 is tested to work with ABACUS, please always use the latest version of PEXSI. 
+ABACUS supports the PEXSI library for gamma only LCAO calculations. PEXSI version >=2.0.0 is required.
 
-To build ABACUS with PEXSI support, you need to compile PEXSI (and its dependencies) first. Please refer to the [PEXSI Installation Guide](https://pexsi.readthedocs.io/en/latest/install.html) for more details. Note that PEXSI requires ParMETIS and SuperLU_DIST.
+To build ABACUS with PEXSI support, you need to compile PEXSI and its dependencies first. Please refer to the [PEXSI Installation Guide](https://pexsi.readthedocs.io/en/latest/install.html) for more details. You can also use [Spack](https://github.com/spack/spack) to install the required packages more easily. Note that PEXSI requires ParMETIS and SuperLU_DIST.
 
-After compiling PEXSI, you can set `ENABLE_PEXSI` to `ON`. If the libraries are not installed in standard paths, you can set `PEXSI_DIR`, `ParMETIS_DIR` and `SuperLU_DIST_DIR` to the corresponding directories.
-
-```bash
-cmake -B build -DENABLE_PEXSI=ON -DPEXSI_DIR=${path to PEXSI installation directory} -DParMETIS_DIR=${path to ParMETIS installation directory} -DSuperLU_DIST_DIR=${path to SuperLU_DIST installation directory}
-```
+After compiling PEXSI, pass `-DENABLE_PEXSI=ON` to CMake. ABACUS uses the CMake config package provided by PEXSI; if PEXSI or its dependencies are not installed in standard paths, add their installation prefixes to `CMAKE_PREFIX_PATH`.
 
 ## Build ABACUS with make
 

@@ -65,7 +65,8 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
     //! 7) setup k points in the Brillouin zone according to symmetry.
-    this->kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    const bool use_ibz = !inp.berry_phase && ModuleSymmetry::Symmetry::symm_flag != -1;
+    this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     //! 8) print information

@@ -456,13 +456,13 @@ config_validate() {
     if [[ -n "${CONFIG_CACHE[NPROCS_OVERWRITE]}" ]]; then
         if ! [[ "${CONFIG_CACHE[NPROCS_OVERWRITE]}" =~ ^[0-9]+$ ]]; then
             report_error ${LINENO} "Invalid number of processes: ${CONFIG_CACHE[NPROCS_OVERWRITE]}"
-            exit 1
+            return 1
         fi
     fi
     
     if ! [[ "${CONFIG_CACHE[LOG_LINES]}" =~ ^[0-9]+$ ]]; then
         report_error ${LINENO} "Invalid log lines value: ${CONFIG_CACHE[LOG_LINES]}"
-        exit 1
+        return 1
     fi
     
     # Validate GPU version - support only numeric formats
@@ -476,7 +476,7 @@ config_validate() {
             CONFIG_CACHE["ARCH_NUM"]="$arch_num"
         else
             report_error ${LINENO} "Invalid GPU version: $gpu_ver. Supported formats: numeric with decimal (6.0, 7.0, 8.0, 8.9, etc.) or numeric without decimal (60, 70, 80, 89, etc.)"
-            exit 1
+            return 1
         fi
     else
         CONFIG_CACHE["ARCH_NUM"]="no"
@@ -1166,27 +1166,37 @@ config_parse_arguments() {
 config_init() {
     # Set defaults first
     config_set_defaults
-    
+
     # Initialize version helper to ensure VERSION_STRATEGY defaults are set
     if command -v version_helper_init > /dev/null 2>&1; then
         version_helper_init
     fi
-    
+
     # Load configuration from file (if available) - this will override defaults
-    config_load_from_file
-    
+    if ! config_load_from_file; then
+        return 1
+    fi
+
     # Apply mode-based configurations from file - this will override defaults
-    config_apply_modes_from_file
-    
+    if ! config_apply_modes_from_file; then
+        return 1
+    fi
+
     # Parse command line arguments - this will override file settings
-    config_parse_arguments "$@"
-    
+    if ! config_parse_arguments "$@"; then
+        return 1
+    fi
+
     # Apply mode-based configurations from command line
-    config_apply_modes
-    
+    if ! config_apply_modes; then
+        return 1
+    fi
+
     # Validate configuration
-    config_validate
-    
+    if ! config_validate; then
+        return 1
+    fi
+
     return 0
 }
 
@@ -1262,4 +1272,6 @@ config_apply_modes() {
                 ;;
         esac
     fi
+
+    return 0
 }

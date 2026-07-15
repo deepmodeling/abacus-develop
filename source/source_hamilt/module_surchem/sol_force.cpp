@@ -17,7 +17,6 @@ void surchem::force_cor_one(const UnitCell& cell,
     //ModuleBase::GlobalFunc::ZEROS(delta_phi_g, rho_basis->npw);
 
     rho_basis->real2recip(this->delta_phi, delta_phi_g);
-    // GlobalC::UFFT.ToReciSpace(this->delta_phi, delta_phi_g,rho_basis);
     // double Ael = 0;
     // double Ael1 = 0;
     // ModuleBase::GlobalFunc::ZEROS(vg, ngmc);

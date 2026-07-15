@@ -83,7 +83,6 @@ __global__ void cal_force_nl(
             {
                 ps_qq = - ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip * deeq_4 + ip];
             }
-            // FPTYPE ps = GlobalC::ppcell.deeq[spin, iat, ip, ip];
             FPTYPE ps = deeq[((spin * deeq_2 + iat) * deeq_3 + ip) * deeq_4 + ip] + ps_qq;
             const int inkb = sum + ip;
             //out<<"\n ps = "<<ps;

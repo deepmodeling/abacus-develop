@@ -64,7 +64,7 @@ if [ "$ENABLE_MPI" = "ON" ]; then
 fi
 
 # Notes on the non-default options:
-#  * USE_ELPA/PEXSI/LIBRI/MLALGO/CUDA = OFF -> not available on Windows yet.
+#  * ENABLE_ELPA/PEXSI/LIBRI/MLALGO/CUDA = OFF -> not available on Windows yet.
 #    When ENABLE_MPI=ON the LCAO solver is ScaLAPACK (found automatically);
 #    when serial it is LAPACK (DiagoLapack).
 #  * BLA_VENDOR=OpenBLAS          -> let CMake's FindBLAS/FindLAPACK pick OpenBLAS.
@@ -79,8 +79,8 @@ cmake -B $BUILD_DIR -G Ninja -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DCMAKE_CXX_COMPILER=g++ \
         -DENABLE_MPI=$ENABLE_MPI \
         -DENABLE_LCAO=$ENABLE_LCAO \
-        -DUSE_OPENMP=OFF \
-        -DUSE_ELPA=OFF \
+        -DENABLE_OPENMP=ON \
+        -DENABLE_ELPA=ON \
         -DENABLE_PEXSI=OFF \
         -DENABLE_LIBRI=OFF \
         -DENABLE_MLALGO=OFF \

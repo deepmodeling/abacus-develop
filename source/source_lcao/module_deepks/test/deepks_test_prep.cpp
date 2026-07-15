@@ -23,11 +23,9 @@ Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
-    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
 namespace GlobalC
 {
@@ -258,13 +256,15 @@ template <typename T>
 void test_deepks<T>::setup_kpt()
 {
     ModuleSymmetry::Symmetry::symm_flag = -1;
+    const bool use_ibz = false;
     this->kv.set(ucell,
                  ucell.symm,
                  PARAM.inp.kpoint_file,
                  this->nspin,
                  ucell.G,
                  ucell.latvec,
-                 GlobalV::ofs_running);
+                 GlobalV::ofs_running,
+                 use_ibz);
 }
 
 template class test_deepks<double>;

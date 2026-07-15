@@ -25,11 +25,9 @@ Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
-    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
 
 #include "source_cell/klist.h"
