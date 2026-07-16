@@ -230,7 +230,23 @@ ModuleRI::SternheimerLCAOOccupiedKPoint make_occupied_kpoint(const int local_k_i
     return record;
 }
 
-} // namespace
+    spin_up.coefficients.resize(4, spin_up.coefficients.front());
+    ModuleRI::SternheimerLCAOOccupiedChannel spin_down;
+    spin_down.spin_index = 1;
+    spin_down.coefficients = {{std::complex<double>(0.0, 0.0),
+                               std::complex<double>(1.0, 0.0),
+                               std::complex<double>(0.0, 0.0)}};
+    const std::vector<ModuleRI::SternheimerLCAOOccupiedChannel> quartet = {spin_up, spin_down};
+
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(quartet, 2, 3));
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_spin_indices(quartet), (std::vector<int>{0, 1}));
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_occupied_bands_per_spin(quartet), (std::vector<int>{4, 1}));
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_total_occupied_bands(quartet), 5);
+
+    auto duplicate_channels = channels;
+    duplicate_channels.push_back(spin_up);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(duplicate_channels, 2, 3),
+                 std::invalid_argument);
 
 TEST(SternheimerABACUSSTSmoke, LimitsDiagnosticChannelsPerAtomWithoutEmptyBlocks)
 {
