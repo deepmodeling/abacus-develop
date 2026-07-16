@@ -29,6 +29,7 @@ option(ENABLE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
+option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
@@ -64,7 +65,6 @@ cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
 
 cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF "USE_CUDA" OFF)
-cmake_dependent_option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF "USE_CUDA" OFF)
 cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF "USE_CUDA" OFF)
 cmake_dependent_option(ENABLE_CUBLASMP "Enable cublasmp" OFF "ENABLE_CUSOLVERMP" OFF)
 cmake_dependent_option(ENABLE_NCCL_PARALLEL_DEVICE
