@@ -113,6 +113,15 @@ namespace ModuleSymmetry
         void restore_HR(
             const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
             const hamilt::HContainer<TR>& HR_irreduceble, hamilt::HContainer<TR>& HR_rotated)const;
+        /// (nspin=4) spinor overload: rotate all 4 spin channels of H(R) together. On top of the
+        /// orbital rotation T1^dagger(.)T2 (mode 'H') / T1^T(.)T2^* (mode 'D') applied to every
+        /// channel, the SU(2) spin part U(isym) mixes them:  H'^{ab}=sum_{cd} conj(U_{ca}) U_{db} [T1^dagger H^{cd} T2].
+        /// The 4 channels are ordered is=a*2+b (a=row spin, b=col spin), matching RI_2D_Comm::split_is_block.
+        /// Real-space (atom-pair) reduction uses space-group operations only, so no time-reversal branch is needed.
+        template<typename Tdata>    // RI::Tensor type
+        std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4> restore_HR_soc(
+            const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
+            const std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4>& HR_irreducible_soc)const;
 
         //--------------------------------------------------------------------------------
         /// test functions
@@ -178,9 +187,14 @@ namespace ModuleSymmetry
         // [natom][nsym], phase factor corresponding to a certain kvec_d_ibz
         // std::vector<std::vector<std::complex<double>>> phase_factor_;
 
-        /// The unitary matrix associate D(Rk) with D(k) for each ibz-kpoint Rk and each symmetry operation. 
+        /// The unitary matrix associate D(Rk) with D(k) for each ibz-kpoint Rk and each symmetry operation.
         /// size: [nks_ibz][nsym][nbasis*nbasis], only need to calculate once.
         std::vector<std::map<int, std::vector<std::complex<double>>>> Ms_;
+
+        /// (nspin=4) the SU(2) spin-1/2 rotation U(isym) for each symmetry operation, size [nsym].
+        /// The spinor AO rotation is T(isym) (x) U(isym); restore_HR_soc uses it to mix the 4 spin
+        /// channels of the real-space EXX H(R). Filled in cal_Ms (identity for nspin<4).
+        std::vector<SpinRotation::Su2> spin_U_;
 
         /// irreducible sector
         Irreducible_Sector irs_;
