@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 
+#include <complex>
 #include <cstdlib>
 
 TEST(SternheimerABFSPerturbation, SamplesSChannelOnFDGrid)
@@ -56,4 +57,47 @@ TEST(SternheimerABFSPerturbation, ReadsABFSDiagnosticOnlyEnvironmentFlag)
     EXPECT_FALSE(ModuleRI::sternheimer_abfs_diag_only_enabled());
 
     unsetenv("ABACUS_STERNHEIMER_FD_ST_ABFS_DIAG_ONLY");
+}
+
+TEST(SternheimerABFSPerturbation, BlochPotentialUsesQPhaseAndGammaMatchesRealSampler)
+{
+    ModuleRI::SternheimerRadialPerturbation radial;
+    radial.angular_momentum = 0;
+    radial.radial_index = 0;
+    radial.label = "toy_s";
+    radial.radial_grid = {0.0, 0.5, 1.0};
+    radial.radial_values = {0.0, 1.0, 2.0};
+
+    ModuleRI::SternheimerFDHamiltonian::Grid grid;
+    grid.nx = 3;
+    grid.ny = 1;
+    grid.nz = 1;
+    grid.hx = 1.0;
+    grid.hy = 10.0;
+    grid.hz = 10.0;
+    grid.periodic = true;
+
+    const std::vector<std::vector<ModuleRI::SternheimerRadialPerturbation>> radials_by_type = {{radial}};
+    const std::vector<int> atom_types = {0};
+    const std::vector<ModuleBase::Vector3<double>> atom_positions
+        = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0)};
+    const auto bloch = ModuleRI::sample_sternheimer_abf_bloch_grid_channels(
+        radials_by_type, atom_types, atom_positions, grid, {0.25, 0.0, 0.0}, 1);
+
+    constexpr double y00 = 0.28209479177387814347;
+    ASSERT_EQ(bloch.size(), 1);
+    ASSERT_EQ(bloch[0].potential_r.size(), 3);
+    EXPECT_NEAR(bloch[0].potential_r[2].real(), 0.0, 1.0e-14);
+    EXPECT_NEAR(bloch[0].potential_r[2].imag(), 2.0 * y00, 1.0e-14);
+
+    const auto gamma_complex = ModuleRI::sample_sternheimer_abf_bloch_grid_channels(
+        radials_by_type, atom_types, atom_positions, grid, {0.0, 0.0, 0.0}, 1);
+    const auto gamma_real
+        = ModuleRI::sample_sternheimer_abf_grid_channels(radials_by_type, atom_types, atom_positions, grid, 1);
+    ASSERT_EQ(gamma_complex.size(), gamma_real.size());
+    for (std::size_t ir = 0; ir != gamma_real[0].potential_r.size(); ++ir)
+    {
+        EXPECT_NEAR(gamma_complex[0].potential_r[ir].real(), gamma_real[0].potential_r[ir], 1.0e-14);
+        EXPECT_NEAR(gamma_complex[0].potential_r[ir].imag(), 0.0, 1.0e-14);
+    }
 }

@@ -88,12 +88,29 @@ class SternheimerRPA
                                                     const Vector& psi_r,
                                                     Vector& rhs_r);
 
+    static void build_rhs_from_hartree_perturbation(const Vector& hartree_potential_r,
+                                                    const Vector& psi_r,
+                                                    Vector& rhs_r);
+
     static Complex accumulate_polarizability_grid_element(const std::vector<double>& hartree_potential_r,
                                                           const Vector& psi_r,
                                                           const Vector& delta_psi_r,
                                                           double grid_weight);
 
+    static Complex accumulate_polarizability_grid_element(const Vector& hartree_potential_r,
+                                                          const Vector& psi_r,
+                                                          const Vector& delta_psi_r,
+                                                          double grid_weight);
+
     static void accumulate_chi0_branch_column(const std::vector<std::vector<double>>& hartree_potentials_r,
+                                              const Vector& psi_r,
+                                              const Vector& delta_psi_r,
+                                              double grid_weight,
+                                              double occupation,
+                                              int column_index,
+                                              std::vector<Complex>& branch_matrix);
+
+    static void accumulate_chi0_branch_column(const std::vector<Vector>& hartree_potentials_r,
                                               const Vector& psi_r,
                                               const Vector& delta_psi_r,
                                               double grid_weight,

@@ -78,7 +78,7 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_sternheimer_abfs_perturbation_test
   LIBS parameter base ${math_libs} device container
-  SOURCES sternheimer_abfs_perturbation_test.cpp ../sternheimer_abfs_perturbation.cpp
+  SOURCES sternheimer_abfs_perturbation_test.cpp ../sternheimer_abfs_perturbation.cpp ../sternheimer_kq.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_abacus_st_smoke_test

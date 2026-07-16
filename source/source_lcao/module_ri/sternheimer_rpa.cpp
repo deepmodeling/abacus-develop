@@ -593,6 +593,21 @@ void SternheimerRPA::build_rhs_from_hartree_perturbation(const std::vector<doubl
     }
 }
 
+void SternheimerRPA::build_rhs_from_hartree_perturbation(const Vector& hartree_potential_r,
+                                                         const Vector& psi_r,
+                                                         Vector& rhs_r)
+{
+    if (hartree_potential_r.size() != psi_r.size())
+    {
+        throw std::invalid_argument("SternheimerRPA::build_rhs_from_hartree_perturbation size mismatch.");
+    }
+    rhs_r.resize(psi_r.size());
+    for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
+    {
+        rhs_r[ir] = -hartree_potential_r[ir] * psi_r[ir];
+    }
+}
+
 SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
     const std::vector<double>& hartree_potential_r,
     const Vector& psi_r,
@@ -611,7 +626,61 @@ SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
     return grid_weight * value;
 }
 
+SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
+    const Vector& hartree_potential_r,
+    const Vector& psi_r,
+    const Vector& delta_psi_r,
+    const double grid_weight)
+{
+    if (hartree_potential_r.size() != psi_r.size() || psi_r.size() != delta_psi_r.size())
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_polarizability_grid_element size mismatch.");
+    }
+    Complex value(0.0, 0.0);
+    for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
+    {
+        value += std::conj(psi_r[ir]) * std::conj(hartree_potential_r[ir]) * delta_psi_r[ir];
+    }
+    return grid_weight * value;
+}
+
 void SternheimerRPA::accumulate_chi0_branch_column(const std::vector<std::vector<double>>& hartree_potentials_r,
+                                                   const Vector& psi_r,
+                                                   const Vector& delta_psi_r,
+                                                   const double grid_weight,
+                                                   const double occupation,
+                                                   const int column_index,
+                                                   std::vector<Complex>& branch_matrix)
+{
+    const int num_channels = static_cast<int>(hartree_potentials_r.size());
+    if (num_channels <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column requires at least one channel.");
+    }
+    if (column_index < 0 || column_index >= num_channels)
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column column index is out of range.");
+    }
+    if (branch_matrix.size()
+        != checked_mul_size(static_cast<std::size_t>(num_channels),
+                            static_cast<std::size_t>(num_channels),
+                            "Sternheimer chi0 branch matrix size"))
+    {
+        throw std::invalid_argument("SternheimerRPA::accumulate_chi0_branch_column matrix size mismatch.");
+    }
+
+    for (int row = 0; row != num_channels; ++row)
+    {
+        branch_matrix[static_cast<std::size_t>(row) * static_cast<std::size_t>(num_channels)
+                      + static_cast<std::size_t>(column_index)]
+            += occupation * accumulate_polarizability_grid_element(hartree_potentials_r[static_cast<std::size_t>(row)],
+                                                                   psi_r,
+                                                                   delta_psi_r,
+                                                                   grid_weight);
+    }
+}
+
+void SternheimerRPA::accumulate_chi0_branch_column(const std::vector<Vector>& hartree_potentials_r,
                                                    const Vector& psi_r,
                                                    const Vector& delta_psi_r,
                                                    const double grid_weight,

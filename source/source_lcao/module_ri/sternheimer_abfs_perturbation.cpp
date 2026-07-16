@@ -3,7 +3,9 @@
 #include "source_base/math_ylmreal.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <complex>
 #include <stdexcept>
 
 namespace
@@ -31,13 +33,40 @@ void validate_grid(const ModuleRI::SternheimerFDHamiltonian::Grid& grid)
     }
 }
 
-double minimum_image_displacement(double displacement, const double length)
+struct PeriodicImageRange
 {
-    if (length > 0.0)
+    int first = 0;
+    int last = 0;
+};
+
+PeriodicImageRange periodic_image_range(const double displacement,
+                                        const double length,
+                                        const double cutoff,
+                                        const bool periodic)
+{
+    if (!periodic)
     {
-        displacement -= length * std::round(displacement / length);
+        return {0, 0};
     }
-    return displacement;
+    return {static_cast<int>(std::ceil((displacement - cutoff) / length)),
+            static_cast<int>(std::floor((displacement + cutoff) / length))};
+}
+
+void validate_qpoint(const ModuleRI::SternheimerReducedKPoint& qpoint, const bool periodic)
+{
+    bool has_nonzero_qpoint = false;
+    for (const double coordinate: qpoint)
+    {
+        if (!std::isfinite(coordinate))
+        {
+            throw std::invalid_argument("Sternheimer ABFS perturbation requires a finite reduced q point.");
+        }
+        has_nonzero_qpoint = has_nonzero_qpoint || coordinate != 0.0;
+    }
+    if (!periodic && has_nonzero_qpoint)
+    {
+        throw std::invalid_argument("Sternheimer ABFS nonperiodic grids cannot use a Bloch q point.");
+    }
 }
 
 double interpolate_radial(const std::vector<double>& radial_grid, const std::vector<double>& values, const double radius)
@@ -134,20 +163,22 @@ std::vector<std::vector<SternheimerRadialPerturbation>> make_sternheimer_radial_
     return radials_by_type;
 }
 
-std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
+std::vector<SternheimerABFBlochGridChannel> sample_sternheimer_abf_bloch_grid_channels(
     const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
     const std::vector<int>& atom_types,
     const std::vector<ModuleBase::Vector3<double>>& atom_positions,
     const SternheimerFDHamiltonian::Grid& grid,
+    const SternheimerReducedKPoint& qpoint,
     const int max_channels)
 {
     validate_grid(grid);
+    validate_qpoint(qpoint, grid.periodic);
     if (atom_types.size() != atom_positions.size())
     {
         throw std::invalid_argument("Sternheimer ABFS perturbation atom type/position count mismatch.");
     }
 
-    std::vector<SternheimerABFGridChannel> channels;
+    std::vector<SternheimerABFBlochGridChannel> channels;
     const int size = grid_size(grid);
     const double lx = grid.nx * grid.hx;
     const double ly = grid.ny * grid.hy;
@@ -174,7 +205,7 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
                     return channels;
                 }
 
-                SternheimerABFGridChannel channel;
+                SternheimerABFBlochGridChannel channel;
                 channel.channel_index = channel_index++;
                 channel.atom_index = static_cast<int>(iat);
                 channel.atom_local_index = atom_local_index++;
@@ -183,37 +214,100 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
                 channel.radial_index = radial.radial_index;
                 channel.magnetic_index = m_index;
                 channel.label = radial.label;
-                channel.potential_r.assign(size, 0.0);
+                channel.potential_r.assign(size, std::complex<double>(0.0, 0.0));
 
                 const int ylm_index = radial.angular_momentum * radial.angular_momentum + m_index;
+                const double cutoff = radial.radial_grid.back();
                 for (int iz = 0; iz != grid.nz; ++iz)
                 {
                     for (int iy = 0; iy != grid.ny; ++iy)
                     {
                         for (int ix = 0; ix != grid.nx; ++ix)
                         {
-                            double dx = ix * grid.hx - atom_positions[iat].x;
-                            double dy = iy * grid.hy - atom_positions[iat].y;
-                            double dz = iz * grid.hz - atom_positions[iat].z;
-                            if (grid.periodic)
-                            {
-                                dx = minimum_image_displacement(dx, lx);
-                                dy = minimum_image_displacement(dy, ly);
-                                dz = minimum_image_displacement(dz, lz);
-                            }
-                            const double radius = std::sqrt(dx * dx + dy * dy + dz * dz);
-                            evaluate_real_spherical_harmonics(radial.angular_momentum, dx, dy, dz, ylm);
-                            const double value
-                                = interpolate_radial(radial.radial_grid, radial.radial_values, radius) * ylm[ylm_index];
+                            const double displacement_x = ix * grid.hx - atom_positions[iat].x;
+                            const double displacement_y = iy * grid.hy - atom_positions[iat].y;
+                            const double displacement_z = iz * grid.hz - atom_positions[iat].z;
+                            const PeriodicImageRange image_x
+                                = periodic_image_range(displacement_x, lx, cutoff, grid.periodic);
+                            const PeriodicImageRange image_y
+                                = periodic_image_range(displacement_y, ly, cutoff, grid.periodic);
+                            const PeriodicImageRange image_z
+                                = periodic_image_range(displacement_z, lz, cutoff, grid.periodic);
                             const int ir = grid_index(grid, ix, iy, iz);
-                            channel.potential_r[ir] = value;
-                            channel.max_abs = std::max(channel.max_abs, std::abs(value));
+
+                            for (int rz = image_z.first; rz <= image_z.last; ++rz)
+                            {
+                                for (int ry = image_y.first; ry <= image_y.last; ++ry)
+                                {
+                                    for (int rx = image_x.first; rx <= image_x.last; ++rx)
+                                    {
+                                        const double dx = displacement_x - rx * lx;
+                                        const double dy = displacement_y - ry * ly;
+                                        const double dz = displacement_z - rz * lz;
+                                        const double radius = std::sqrt(dx * dx + dy * dy + dz * dz);
+                                        if (radius > cutoff)
+                                        {
+                                            continue;
+                                        }
+                                        evaluate_real_spherical_harmonics(
+                                            radial.angular_momentum, dx, dy, dz, ylm);
+                                        const double radial_angular_value
+                                            = interpolate_radial(
+                                                  radial.radial_grid, radial.radial_values, radius)
+                                              * ylm[ylm_index];
+                                        const std::complex<double> phase
+                                            = sternheimer_bloch_phase(
+                                                qpoint, std::array<int, 3>{rx, ry, rz});
+                                        channel.potential_r[ir] += phase * radial_angular_value;
+                                    }
+                                }
+                            }
+                            channel.max_abs = std::max(channel.max_abs, std::abs(channel.potential_r[ir]));
                         }
                     }
                 }
                 channels.push_back(std::move(channel));
             }
         }
+    }
+    return channels;
+}
+
+std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
+    const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
+    const std::vector<int>& atom_types,
+    const std::vector<ModuleBase::Vector3<double>>& atom_positions,
+    const SternheimerFDHamiltonian::Grid& grid,
+    const int max_channels)
+{
+    const std::vector<SternheimerABFBlochGridChannel> bloch_channels
+        = sample_sternheimer_abf_bloch_grid_channels(
+            radials_by_type, atom_types, atom_positions, grid, {0.0, 0.0, 0.0}, max_channels);
+
+    std::vector<SternheimerABFGridChannel> channels;
+    channels.reserve(bloch_channels.size());
+    for (const SternheimerABFBlochGridChannel& bloch: bloch_channels)
+    {
+        SternheimerABFGridChannel channel;
+        channel.channel_index = bloch.channel_index;
+        channel.atom_index = bloch.atom_index;
+        channel.atom_local_index = bloch.atom_local_index;
+        channel.type_index = bloch.type_index;
+        channel.angular_momentum = bloch.angular_momentum;
+        channel.radial_index = bloch.radial_index;
+        channel.magnetic_index = bloch.magnetic_index;
+        channel.label = bloch.label;
+        channel.max_abs = bloch.max_abs;
+        channel.potential_r.reserve(bloch.potential_r.size());
+        for (const std::complex<double>& value: bloch.potential_r)
+        {
+            if (std::abs(value.imag()) > 1.0e-13 * std::max(1.0, channel.max_abs))
+            {
+                throw std::runtime_error("Sternheimer ABFS Gamma potential acquired an unexpected imaginary part.");
+            }
+            channel.potential_r.push_back(value.real());
+        }
+        channels.push_back(std::move(channel));
     }
     return channels;
 }
