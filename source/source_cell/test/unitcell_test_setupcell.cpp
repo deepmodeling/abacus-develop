@@ -66,9 +66,9 @@ TEST_F(UcellTest,SetupCellS1)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 1;
+	const int nspin = 1;
 	
-	ucell->setup_cell(fn,ofs_running);
+	ucell->setup_cell(fn, ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, nspin);
 	ofs_running.close();
 	remove("setup_cell.tmp");
 }
@@ -78,9 +78,9 @@ TEST_F(UcellTest,SetupCellS2)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 2;
+	const int nspin = 2;
 	
-	ucell->setup_cell(fn,ofs_running);
+	ucell->setup_cell(fn, ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, nspin);
 	ofs_running.close();
 	remove("setup_cell.tmp");
 }
@@ -90,9 +90,9 @@ TEST_F(UcellTest,SetupCellS4)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 4;
+	const int nspin = 4;
 	
-	ucell->setup_cell(fn,ofs_running);
+	ucell->setup_cell(fn, ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, nspin);
 	ofs_running.close();
 	remove("setup_cell.tmp");
 }
@@ -104,7 +104,7 @@ TEST_F(UcellDeathTest,SetupCellWarning1)
 	ofs_running.open("setup_cell.tmp");
 	
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running),::testing::ExitedWithCode(1),"");
+	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, 1),::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Can not find the file containing atom positions.!"));
 	ofs_running.close();
@@ -118,7 +118,7 @@ TEST_F(UcellDeathTest,SetupCellWarning2)
 	ofs_running.open("setup_cell.tmp");
 	
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running),::testing::ExitedWithCode(1),"");
+	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, 1),::testing::ExitedWithCode(1),"");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Something wrong during read_atom_positions"));
 	ofs_running.close();
@@ -130,9 +130,9 @@ TEST_F(UcellTest,SetupCellAfterVC)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 1;
+	const int nspin = 1;
 
-	ucell->setup_cell(fn,ofs_running);
+	ucell->setup_cell(fn, ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, nspin);
 	ucell->lat0 = 1.0;
 	ucell->latvec.Zero();
 	ucell->latvec.e11 = 10.0;
@@ -148,7 +148,7 @@ TEST_F(UcellTest,SetupCellAfterVC)
 		ucell->atoms[i].taud[0].z = 0.1;
 	}
 	
-	unitcell::setup_cell_after_vc(*ucell,ofs_running);
+	unitcell::setup_cell_after_vc(*ucell,ofs_running, nspin);
 	EXPECT_EQ(ucell->lat0_angstrom,0.529177);
 	EXPECT_EQ(ucell->tpiba,ModuleBase::TWO_PI);
 	EXPECT_EQ(ucell->tpiba2,ModuleBase::TWO_PI*ModuleBase::TWO_PI);

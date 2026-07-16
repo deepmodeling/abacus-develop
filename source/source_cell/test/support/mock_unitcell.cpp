@@ -26,7 +26,7 @@ void UnitCell::print_cell(std::ofstream& ofs) const {}
 
 void UnitCell::set_iat2itia() {}
 
-void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {}
+void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin) {}
 
 bool UnitCell::if_atoms_can_move() const { return true; }
 

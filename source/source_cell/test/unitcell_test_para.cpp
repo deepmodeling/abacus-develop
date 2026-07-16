@@ -83,8 +83,8 @@ class UcellTest : public ::testing::Test
 
 TEST_F(UcellTest, BcastUnitcell)
 {
-    PARAM.input.nspin = 4;
-    unitcell::bcast_unitcell(*ucell);
+    const int nspin = 4;
+    unitcell::bcast_unitcell(*ucell, nspin);
     if (GlobalV::MY_RANK != 0)
     {
         EXPECT_EQ(ucell->Coordinate, "Direct");
@@ -119,8 +119,8 @@ TEST_F(UcellTest, BcastLattice)
 
 TEST_F(UcellTest, BcastMagnitism)
 {
-    unitcell::bcast_magnetism(ucell->magnet, ucell->ntype);
-    PARAM.input.nspin = 4;
+    const int nspin = 4;
+    unitcell::bcast_magnetism(ucell->magnet, ucell->ntype, nspin);
     if (GlobalV::MY_RANK != 0)
     {
         EXPECT_DOUBLE_EQ(ucell->magnet.start_mag[0], 0.0);

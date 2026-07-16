@@ -93,6 +93,7 @@ if(GlobalV::MY_RANK==0)
 	ucell->set_atom_flag = true;
 	PARAM.input.test_pseudo_cell = 2;
 	PARAM.input.basis_type = "pw";
+	const int nspin = 1;
 	//call read_atom_species
 	EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
 	EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
@@ -100,7 +101,7 @@ if(GlobalV::MY_RANK==0)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//call read_atom_positions
-	EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning));
+	EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin));
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
@@ -116,8 +117,8 @@ TEST_F(UcellTest,SetupCell)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 1;
-	ucell->setup_cell(fn,ofs_running);
+	const int nspin = 1;
+	ucell->setup_cell(fn, ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, nspin);
 	ofs_running.close();
 	remove("setup_cell.tmp");
 }

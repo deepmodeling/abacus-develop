@@ -55,7 +55,7 @@ void Driver::driver_run()
                 PARAM.inp.init_vel,
                 PARAM.inp.fixed_axes);
 
-    ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running);
+    ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running, PARAM.inp.symmetry_prec, PARAM.inp.dfthalf_type, PARAM.inp.pseudo_dir, PARAM.inp.nspin);
     unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
 
     //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)

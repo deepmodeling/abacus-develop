@@ -19,7 +19,7 @@ namespace unitcell
      * @param atoms Atom list 
      * @param latvec lattice const parmater vector 
      * @param fn STRU file name
-     * @param nspin PARAM.inp.nspin feed in
+     * @param nspin number of spin channels 
      * @param direct true for direct coords, false for cartesian coords
      * @param vol true for printing velocities
      * @param magmom true for printing Mulliken population analysis produced

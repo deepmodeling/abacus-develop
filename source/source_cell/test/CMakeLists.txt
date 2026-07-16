@@ -107,6 +107,7 @@ AddTest(
   TARGET MODULE_CELL_read_atoms_helper_test
   LIBS parameter base device
   SOURCES read_atoms_helper_test.cpp
+    ../read_atoms.cpp
     ../read_atoms_helper.cpp
     ../read_stru.cpp
     ../print_cell.cpp

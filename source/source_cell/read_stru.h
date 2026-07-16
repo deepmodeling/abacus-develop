@@ -28,6 +28,7 @@ namespace unitcell
     bool read_atom_positions(UnitCell& ucell,
                             std::ifstream &ifpos, 
                             std::ofstream &ofs_running, 
-                            std::ofstream &ofs_warning);
+                            std::ofstream &ofs_warning,
+                            const int nspin);
 }
 #endif // READ_STRU_H

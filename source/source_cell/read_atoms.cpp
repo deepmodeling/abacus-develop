@@ -5,7 +5,7 @@
 
 #include "unitcell.h"
 #include "read_atoms_helper.h"
-#include "source_io/module_parameter/parameter.h"
+
 #include "print_cell.h"
 #include "read_stru.h"
 #include "source_base/timer.h"
@@ -16,13 +16,13 @@
 bool unitcell::read_atom_positions(UnitCell& ucell,
                          std::ifstream &ifpos,
                          std::ofstream &ofs_running,
-                         std::ofstream &ofs_warning)
+                         std::ofstream &ofs_warning,
+                         const int nspin)
 {
     ModuleBase::TITLE("UnitCell","read_atom_positions");
 
     std::string& Coordinate  = ucell.Coordinate;
     const int ntype = ucell.ntype;
-    const int nspin = PARAM.inp.nspin;
     assert (nspin==1 || nspin==2 || nspin==4);
 
     if (ucell.magnet.start_mag.size() != static_cast<size_t>(ntype))

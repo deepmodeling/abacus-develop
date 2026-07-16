@@ -235,7 +235,7 @@ class UnitCell : public AtomProvider {
 
     void set_iat2itia();
 
-    void setup_cell(const std::string& fn, std::ofstream& log);
+    void setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin);
 
     /**
      * @brief Pointer to non-local pseudopotential information.
