@@ -71,17 +71,18 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
     std::vector<double> coord(3 * ucell.nat, 0.0);
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int iat = 0; iat < ucell.nat; ++iat)
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
     {
-        int it = ucell.iat2it[iat];
-        int ia = ucell.iat2ia[iat];
-        coord[3 * iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
-        coord[3 * iat + 1] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
-        coord[3 * iat + 2] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            coord[3 * iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
+            coord[3 * iat + 1] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
+            coord[3 * iat + 2] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
+            iat++;
+        }
     }
+    assert(ucell.nat == iat);
 
 #ifdef __DPMD
     std::vector<double> f, v;
@@ -100,9 +101,6 @@ void ESolver_DP::runner(UnitCell& ucell, const int istep)
     GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << dp_potential * ModuleBase::Ry_to_eV << " eV"
                          << std::endl;
 
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
     for (int i = 0; i < ucell.nat; ++i)
     {
         dp_force(i, 0) = f[3 * i] * fact_f;
@@ -188,24 +186,20 @@ void ESolver_DP::type_map(const UnitCell& ucell)
     }
     std::cout << "\n -----------------------------------------------------------------" << std::endl;
 
-    // validate labels exist in DP model type map
+    int iat = 0;
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        if (label.find(ucell.atoms[it].label) == label.end())
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
         {
-            ModuleBase::WARNING_QUIT("ESolver_DP",
-                                     "The label " + ucell.atoms[it].label + " is not found in the type map.");
+            if (label.find(ucell.atoms[it].label) == label.end())
+            {
+                ModuleBase::WARNING_QUIT("ESolver_DP",
+                                         "The label " + ucell.atoms[it].label + " is not found in the type map.");
+            }
+            atype[iat] = label[ucell.atoms[it].label];
+            iat++;
         }
     }
-
-    // assign atype for each atom
-#ifdef _OPENMP
-#pragma omp parallel for
-#endif
-    for (int iat = 0; iat < ucell.nat; ++iat)
-    {
-        int it = ucell.iat2it[iat];
-        atype[iat] = label[ucell.atoms[it].label];
-    }
+    assert(ucell.nat == iat);
 }
 #endif
