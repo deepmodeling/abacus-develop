@@ -429,7 +429,8 @@ std::vector<SternheimerABFGridChannel> build_abfs_ccp_grid_channels(const UnitCe
 std::vector<SternheimerDeltaGridFunction> build_lcao_candidate_grid_functions(
     const UnitCell& ucell,
     const SternheimerFDHamiltonian::Grid& grid,
-    const LCAO_Orbitals* provided_orbitals = nullptr)
+    const LCAO_Orbitals* provided_orbitals = nullptr,
+    const SternheimerReducedKPoint kpoint = {0.0, 0.0, 0.0})
 {
     LCAO_Orbitals loaded_orbitals;
     if (provided_orbitals == nullptr)
@@ -503,9 +504,11 @@ std::vector<SternheimerDeltaGridFunction> build_lcao_candidate_grid_functions(
                 const std::size_t buffer_size
                     = static_cast<std::size_t>(chunk_size) * static_cast<std::size_t>(orbital_count);
                 std::vector<double> values(buffer_size, 0.0);
-                std::vector<double> gradient_x(buffer_size, 0.0);
-                std::vector<double> gradient_y(buffer_size, 0.0);
-                std::vector<double> gradient_z(buffer_size, 0.0);
+                std::array<std::vector<double>, 3> gradients{{
+                    std::vector<double>(buffer_size, 0.0),
+                    std::vector<double>(buffer_size, 0.0),
+                    std::vector<double>(buffer_size, 0.0),
+                }};
                 for (const std::array<int, 3>& image: periodic_images)
                 {
                     for (int local = 0; local != chunk_size; ++local)
@@ -523,29 +526,18 @@ std::vector<SternheimerDeltaGridFunction> build_lcao_candidate_grid_functions(
                     sampler.set_phi_dphi(coordinates,
                                          orbital_count,
                                          values.data(),
-                                         gradient_x.data(),
-                                         gradient_y.data(),
-                                         gradient_z.data());
-                    for (int local = 0; local != chunk_size; ++local)
-                    {
-                        const std::size_t grid_index = static_cast<std::size_t>(first + local);
-                        for (int iw = 0; iw != orbital_count; ++iw)
-                        {
-                            const std::size_t buffer_index
-                                = static_cast<std::size_t>(local) * static_cast<std::size_t>(orbital_count)
-                                  + static_cast<std::size_t>(iw);
-                            SternheimerDeltaGridFunction& candidate
-                                = candidates[candidate_begin + static_cast<std::size_t>(iw)];
-                            candidate.values[grid_index]
-                                += SternheimerFDHamiltonian::Complex(values[buffer_index], 0.0);
-                            candidate.gradients[0][grid_index]
-                                += SternheimerFDHamiltonian::Complex(gradient_x[buffer_index], 0.0);
-                            candidate.gradients[1][grid_index]
-                                += SternheimerFDHamiltonian::Complex(gradient_y[buffer_index], 0.0);
-                            candidate.gradients[2][grid_index]
-                                += SternheimerFDHamiltonian::Complex(gradient_z[buffer_index], 0.0);
-                        }
-                    }
+                                         gradients[0].data(),
+                                         gradients[1].data(),
+                                         gradients[2].data());
+                    accumulate_delta_sternheimer_bloch_samples(values,
+                                                                gradients,
+                                                                chunk_size,
+                                                                orbital_count,
+                                                                static_cast<std::size_t>(first),
+                                                                candidate_begin,
+                                                                kpoint,
+                                                                image,
+                                                                candidates);
                 }
             }
         }

@@ -2,9 +2,11 @@
 #define STERNHEIMER_DELTA_H
 
 #include "source_lcao/module_ri/sternheimer_fd_hamiltonian.h"
+#include "source_lcao/module_ri/sternheimer_kq.h"
 #include "source_lcao/module_ri/sternheimer_rpa.h"
 
 #include <array>
+#include <cstddef>
 #include <complex>
 #include <vector>
 
@@ -66,6 +68,19 @@ struct SternheimerDeltaGridMatrices
     std::vector<SternheimerFDHamiltonian::Complex> overlap;
     std::vector<SternheimerFDHamiltonian::Complex> hamiltonian;
 };
+
+// Add one interleaved AO image sample to grid functions. Function values and
+// all analytic gradients receive the same ABACUS Bloch phase.
+void accumulate_delta_sternheimer_bloch_samples(
+    const std::vector<double>& sampled_values,
+    const std::array<std::vector<double>, 3>& sampled_gradients,
+    int sample_count,
+    int orbital_count,
+    std::size_t grid_begin,
+    std::size_t function_begin,
+    const SternheimerReducedKPoint& kpoint,
+    const std::array<int, 3>& lattice_translation,
+    std::vector<SternheimerDeltaGridFunction>& functions);
 
 SternheimerDeltaGridFunction make_delta_sternheimer_grid_function_with_fd_gradients(
     const SternheimerFDHamiltonian::Vector& values,

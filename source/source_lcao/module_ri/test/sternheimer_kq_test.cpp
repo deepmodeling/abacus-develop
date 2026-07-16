@@ -1,6 +1,8 @@
 #include "source_lcao/module_ri/sternheimer_kq.h"
 
 #include <array>
+#include <cmath>
+#include <complex>
 #include <gtest/gtest.h>
 #include <stdexcept>
 #include <vector>
@@ -78,4 +80,34 @@ TEST(SternheimerKQ, RejectsDuplicatePeriodicTargetPoints)
     };
 
     EXPECT_THROW(ModuleRI::build_sternheimer_kq_map(kpoints, {0.0, 0.0, 0.0}, 1.0e-12), std::invalid_argument);
+}
+
+TEST(SternheimerKQ, UsesPositiveABACUSBlochPhaseConvention)
+{
+    const std::complex<double> phase = ModuleRI::sternheimer_bloch_phase({0.25, 0.125, 0.0}, {1, 1, 0});
+    const double inverse_sqrt_two = 1.0 / std::sqrt(2.0);
+
+    EXPECT_NEAR(phase.real(), -inverse_sqrt_two, 1.0e-14);
+    EXPECT_NEAR(phase.imag(), inverse_sqrt_two, 1.0e-14);
+}
+
+TEST(SternheimerKQ, BlochPhasePreservesGammaAndComposesTranslations)
+{
+    const KPoint gamma{0.0, 0.0, 0.0};
+    EXPECT_EQ(ModuleRI::sternheimer_bloch_phase(gamma, {7, -4, 3}), std::complex<double>(1.0, 0.0));
+
+    const KPoint kpoint{0.125, -0.25, 0.375};
+    const std::array<int, 3> first{1, -2, 0};
+    const std::array<int, 3> second{-3, 1, 2};
+    const std::array<int, 3> sum{
+        first[0] + second[0],
+        first[1] + second[1],
+        first[2] + second[2],
+    };
+    const std::complex<double> composed
+        = ModuleRI::sternheimer_bloch_phase(kpoint, first) * ModuleRI::sternheimer_bloch_phase(kpoint, second);
+    const std::complex<double> direct = ModuleRI::sternheimer_bloch_phase(kpoint, sum);
+
+    EXPECT_NEAR(composed.real(), direct.real(), 1.0e-14);
+    EXPECT_NEAR(composed.imag(), direct.imag(), 1.0e-14);
 }

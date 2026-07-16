@@ -347,6 +347,67 @@ SternheimerDeltaGridFunction make_delta_sternheimer_grid_function_with_fd_gradie
     return function;
 }
 
+void accumulate_delta_sternheimer_bloch_samples(
+    const std::vector<double>& sampled_values,
+    const std::array<std::vector<double>, 3>& sampled_gradients,
+    const int sample_count,
+    const int orbital_count,
+    const std::size_t grid_begin,
+    const std::size_t function_begin,
+    const SternheimerReducedKPoint& kpoint,
+    const std::array<int, 3>& lattice_translation,
+    std::vector<SternheimerDeltaGridFunction>& functions)
+{
+    if (sample_count < 0 || orbital_count <= 0)
+    {
+        throw std::invalid_argument("Sternheimer Bloch samples require non-negative samples and positive orbitals.");
+    }
+    const std::size_t sample_size = static_cast<std::size_t>(sample_count);
+    const std::size_t orbital_size = static_cast<std::size_t>(orbital_count);
+    const std::size_t buffer_size = sample_size * orbital_size;
+    if (sampled_values.size() != buffer_size)
+    {
+        throw std::invalid_argument("Sternheimer Bloch value buffer size is inconsistent.");
+    }
+    for (const std::vector<double>& gradient: sampled_gradients)
+    {
+        if (gradient.size() != buffer_size)
+        {
+            throw std::invalid_argument("Sternheimer Bloch gradient buffer size is inconsistent.");
+        }
+    }
+    if (function_begin > functions.size() || orbital_size > functions.size() - function_begin)
+    {
+        throw std::invalid_argument("Sternheimer Bloch sample function range is out of bounds.");
+    }
+    for (std::size_t orbital = 0; orbital != orbital_size; ++orbital)
+    {
+        const SternheimerDeltaGridFunction& function = functions[function_begin + orbital];
+        if (grid_begin > function.values.size() || sample_size > function.values.size() - grid_begin)
+        {
+            throw std::invalid_argument("Sternheimer Bloch sample grid range is out of bounds.");
+        }
+        validate_grid_function(function, function.values.size(), "Sternheimer Bloch sample");
+    }
+
+    const Complex phase = sternheimer_bloch_phase(kpoint, lattice_translation);
+    for (std::size_t sample = 0; sample != sample_size; ++sample)
+    {
+        const std::size_t grid_index = grid_begin + sample;
+        for (std::size_t orbital = 0; orbital != orbital_size; ++orbital)
+        {
+            const std::size_t buffer_index = sample * orbital_size + orbital;
+            SternheimerDeltaGridFunction& function = functions[function_begin + orbital];
+            function.values[grid_index] += phase * sampled_values[buffer_index];
+            for (std::size_t direction = 0; direction != function.gradients.size(); ++direction)
+            {
+                function.gradients[direction][grid_index]
+                    += phase * sampled_gradients[direction][buffer_index];
+            }
+        }
+    }
+}
+
 SternheimerDeltaGridFunction linear_combination_delta_sternheimer_grid_functions(
     const std::vector<SternheimerDeltaGridFunction>& basis_functions,
     const std::vector<SternheimerFDHamiltonian::Complex>& coefficients)

@@ -254,6 +254,98 @@ TEST(SternheimerDelta, CombinesLCAOCoefficientsWithAOValuesAndAnalyticGradients)
                  std::invalid_argument);
 }
 
+TEST(SternheimerDelta, AccumulatesBlochImagePhaseIntoValuesAndEveryGradient)
+{
+    std::vector<ModuleRI::SternheimerDeltaGridFunction> functions(1);
+    functions[0].values.assign(2, Complex(0.0, 0.0));
+    for (Vector& gradient : functions[0].gradients)
+    {
+        gradient.assign(2, Complex(0.0, 0.0));
+    }
+
+    const std::vector<double> first_values{2.0, -1.0};
+    const std::array<std::vector<double>, 3> first_gradients{{
+        {3.0, 4.0},
+        {-2.0, 1.0},
+        {0.5, -0.25},
+    }};
+    ModuleRI::accumulate_delta_sternheimer_bloch_samples(first_values,
+                                                          first_gradients,
+                                                          2,
+                                                          1,
+                                                          0,
+                                                          0,
+                                                          {0.25, 0.0, 0.0},
+                                                          {0, 0, 0},
+                                                          functions);
+
+    const std::vector<double> second_values{5.0, 7.0};
+    const std::array<std::vector<double>, 3> second_gradients{{
+        {1.0, -3.0},
+        {2.5, 6.0},
+        {-4.0, 8.0},
+    }};
+    ModuleRI::accumulate_delta_sternheimer_bloch_samples(second_values,
+                                                          second_gradients,
+                                                          2,
+                                                          1,
+                                                          0,
+                                                          0,
+                                                          {0.25, 0.0, 0.0},
+                                                          {1, 0, 0},
+                                                          functions);
+
+    const Complex imaginary_phase(0.0, 1.0);
+    expect_vector_near(functions[0].values,
+                       {Complex(2.0, 0.0) + imaginary_phase * 5.0,
+                        Complex(-1.0, 0.0) + imaginary_phase * 7.0},
+                       1.0e-14);
+    for (std::size_t direction = 0; direction != functions[0].gradients.size(); ++direction)
+    {
+        const Vector expected{
+            Complex(first_gradients[direction][0], 0.0)
+                + imaginary_phase * second_gradients[direction][0],
+            Complex(first_gradients[direction][1], 0.0)
+                + imaginary_phase * second_gradients[direction][1],
+        };
+        expect_vector_near(functions[0].gradients[direction], expected, 1.0e-14);
+    }
+
+    std::vector<ModuleRI::SternheimerDeltaGridFunction> gamma_functions(1);
+    gamma_functions[0].values.assign(2, Complex(0.0, 0.0));
+    for (Vector& gradient : gamma_functions[0].gradients)
+    {
+        gradient.assign(2, Complex(0.0, 0.0));
+    }
+    ModuleRI::accumulate_delta_sternheimer_bloch_samples(first_values,
+                                                          first_gradients,
+                                                          2,
+                                                          1,
+                                                          0,
+                                                          0,
+                                                          {0.0, 0.0, 0.0},
+                                                          {2, -1, 4},
+                                                          gamma_functions);
+    ModuleRI::accumulate_delta_sternheimer_bloch_samples(second_values,
+                                                          second_gradients,
+                                                          2,
+                                                          1,
+                                                          0,
+                                                          0,
+                                                          {0.0, 0.0, 0.0},
+                                                          {-3, 5, 1},
+                                                          gamma_functions);
+    expect_vector_near(gamma_functions[0].values, {Complex(7.0, 0.0), Complex(6.0, 0.0)}, 1.0e-14);
+    for (std::size_t direction = 0; direction != gamma_functions[0].gradients.size(); ++direction)
+    {
+        const Vector expected{
+            Complex(first_gradients[direction][0] + second_gradients[direction][0], 0.0),
+            Complex(first_gradients[direction][1] + second_gradients[direction][1], 0.0),
+        };
+        expect_vector_near(gamma_functions[0].gradients[direction], expected, 1.0e-14);
+    }
+}
+
 TEST(SternheimerDelta, OrthonormalizesOccupiedProjectorValuesAndGradientsTogether)
 {
     constexpr double volume_element = 1.0;

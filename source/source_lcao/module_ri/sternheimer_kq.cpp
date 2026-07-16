@@ -57,6 +57,20 @@ double periodic_sternheimer_kpoint_distance(const SternheimerReducedKPoint& lhs,
     return distance;
 }
 
+std::complex<double> sternheimer_bloch_phase(const SternheimerReducedKPoint& kpoint,
+                                             const std::array<int, 3>& lattice_translation)
+{
+    validate_finite_kpoint(kpoint, "Bloch k-point");
+
+    double reduced_phase = 0.0;
+    for (std::size_t direction = 0; direction != kpoint.size(); ++direction)
+    {
+        reduced_phase += kpoint[direction] * lattice_translation[direction];
+    }
+    const double argument = 2.0 * std::acos(-1.0) * reduced_phase;
+    return {std::cos(argument), std::sin(argument)};
+}
+
 std::vector<SternheimerKQPair> build_sternheimer_kq_map(const std::vector<SternheimerReducedKPoint>& kpoints,
                                                         const SternheimerReducedKPoint& qpoint,
                                                         const double tolerance)
