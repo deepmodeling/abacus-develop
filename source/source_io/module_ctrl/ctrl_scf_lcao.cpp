@@ -7,7 +7,9 @@
 #include "source_hamilt/hamilt.h"         // use Hamilt<T>
 #include "source_lcao/hamilt_lcao.h"      // use hamilt::HamiltLCAO<TK, TR>
 
+#include <cmath>
 #include <complex>
+#include <stdexcept>
 #include <utility>
 
 // functions
@@ -48,18 +50,40 @@ namespace
 {
 
 template <typename TK>
-std::vector<ModuleRI::SternheimerLCAOOccupiedChannel> gather_sternheimer_lcao_occupied_channels(
+std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occupied_kpoints(
     const elecstate::ElecState& elec_state,
+    const K_Vectors& kv,
     const Parallel_Orbitals& parallel_orbitals,
     const psi::Psi<TK>& psi)
 {
-    std::vector<ModuleRI::SternheimerLCAOOccupiedChannel> channels;
-    for (int spin_index = 0; spin_index != elec_state.wg.nr; ++spin_index)
+    if (kv.get_nks() != kv.get_nkstot())
     {
+        throw std::runtime_error(
+            "Sternheimer solid LCAO coefficient gathering currently requires KPAR=1.");
+    }
+    if (elec_state.wg.nr != kv.get_nks()
+        || elec_state.ekb.nr != kv.get_nks()
+        || psi.get_nk() != kv.get_nks()
+        || kv.ik2iktot.size() != static_cast<std::size_t>(kv.get_nks())
+        || kv.kvec_d.size() != static_cast<std::size_t>(kv.get_nks())
+        || kv.wk.size() != static_cast<std::size_t>(kv.get_nks())
+        || kv.isk.size() != static_cast<std::size_t>(kv.get_nks()))
+    {
+        throw std::runtime_error("Sternheimer solid LCAO k-point metadata are incomplete.");
+    }
+
+    std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> records;
+    records.reserve(static_cast<std::size_t>(kv.get_nks()));
+    for (int local_k_index = 0; local_k_index != kv.get_nks(); ++local_k_index)
+    {
+        if (!std::isfinite(kv.wk[local_k_index]) || kv.wk[local_k_index] <= 0.0)
+        {
+            throw std::runtime_error("Sternheimer solid LCAO requires positive k-point weights.");
+        }
         int occupied_count = 0;
         for (int ib = 0; ib != elec_state.wg.nc; ++ib)
         {
-            if (elec_state.wg(spin_index, ib) > 1.0e-8)
+            if (elec_state.wg(local_k_index, ib) / kv.wk[local_k_index] > 1.0e-8)
             {
                 occupied_count = ib + 1;
             }
@@ -69,36 +93,52 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedChannel> gather_sternheimer_lcao_oc
             continue;
         }
 
-        ModuleRI::SternheimerLCAOOccupiedChannel channel;
-        channel.spin_index = spin_index;
-        channel.coefficients.assign(
+        ModuleRI::SternheimerLCAOOccupiedKPoint record;
+        record.local_k_index = local_k_index;
+        record.global_k_index = kv.ik2iktot[static_cast<std::size_t>(local_k_index)];
+        record.spin_index = kv.isk[static_cast<std::size_t>(local_k_index)];
+        record.kpoint = {kv.kvec_d[static_cast<std::size_t>(local_k_index)].x,
+                         kv.kvec_d[static_cast<std::size_t>(local_k_index)].y,
+                         kv.kvec_d[static_cast<std::size_t>(local_k_index)].z};
+        record.kweight = kv.wk[static_cast<std::size_t>(local_k_index)];
+        record.eigenvalues.reserve(static_cast<std::size_t>(occupied_count));
+        record.occupations.reserve(static_cast<std::size_t>(occupied_count));
+        record.coefficients.assign(
             static_cast<std::size_t>(occupied_count),
             std::vector<std::complex<double>>(static_cast<std::size_t>(PARAM.globalv.nlocal),
                                               std::complex<double>(0.0, 0.0)));
         for (int ib = 0; ib != occupied_count; ++ib)
         {
+            record.eigenvalues.push_back(elec_state.ekb(local_k_index, ib));
+            record.occupations.push_back(elec_state.wg(local_k_index, ib) / record.kweight);
             const int local_band = parallel_orbitals.global2local_col(ib);
             if (local_band >= 0)
             {
                 for (int local_basis = 0; local_basis != psi.get_nbasis(); ++local_basis)
                 {
                     const int global_basis = parallel_orbitals.local2global_row(local_basis);
-                    channel.coefficients[static_cast<std::size_t>(ib)][static_cast<std::size_t>(global_basis)]
-                        = std::complex<double>(psi(spin_index, local_band, local_basis));
+                    if (global_basis < 0 || global_basis >= PARAM.globalv.nlocal)
+                    {
+                        throw std::runtime_error("Sternheimer solid LCAO global basis index is out of range.");
+                    }
+                    record.coefficients[static_cast<std::size_t>(ib)][static_cast<std::size_t>(global_basis)]
+                        = std::complex<double>(psi(local_k_index, local_band, local_basis));
                 }
             }
 #ifdef __MPI
             MPI_Allreduce(MPI_IN_PLACE,
-                          channel.coefficients[static_cast<std::size_t>(ib)].data(),
+                          record.coefficients[static_cast<std::size_t>(ib)].data(),
                           PARAM.globalv.nlocal,
                           MPI_DOUBLE_COMPLEX,
                           MPI_SUM,
                           MPI_COMM_WORLD);
 #endif
         }
-        channels.push_back(std::move(channel));
+        records.push_back(std::move(record));
     }
-    return channels;
+    ModuleRI::validate_sternheimer_lcao_occupied_kpoints(
+        records, kv.get_nks(), kv.get_nkstot(), kv.get_nspin(), PARAM.globalv.nlocal);
+    return records;
 }
 
 } // namespace
@@ -689,14 +729,14 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         {
             ModuleBase::WARNING_QUIT("ctrl_scf_lcao", "Sternheimer LCAO output requires potential, grid, and KS states.");
         }
-        const auto occupied_channels
-            = gather_sternheimer_lcao_occupied_channels(*pelec, pv, *psi);
+        const auto occupied_kpoints
+            = gather_sternheimer_lcao_occupied_kpoints(*pelec, kv, pv, *psi);
         ModuleRI::run_sternheimer_abacus_lcao_chi0_output(*(pelec->pot),
                                                           *pw_rho,
                                                           ucell,
                                                           *pelec,
                                                           orb,
-                                                          occupied_channels,
+                                                          occupied_kpoints,
                                                           global_out_dir);
     }
 #endif

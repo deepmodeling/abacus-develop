@@ -949,7 +949,7 @@ void run_sternheimer_abacus_chi0_output_impl(
     const elecstate::ElecState& elec_state,
     const std::string& output_dir,
     const LCAO_Orbitals* lcao_orbitals,
-    const std::vector<SternheimerLCAOOccupiedChannel>* lcao_occupied_channels)
+    const std::vector<SternheimerLCAOOccupiedKPoint>* lcao_occupied_kpoints)
 {
     if (!PARAM.inp.out_sternheimer_librpa)
     {
@@ -1015,28 +1015,45 @@ void run_sternheimer_abacus_chi0_output_impl(
             throw std::runtime_error("ABACUS DFT eigenvalues or occupations are not available.");
         }
 
-        const bool use_lcao_zero_order = lcao_occupied_channels != nullptr;
-        if ((lcao_orbitals == nullptr) != (lcao_occupied_channels == nullptr))
+        const bool use_lcao_zero_order = lcao_occupied_kpoints != nullptr;
+        if ((lcao_orbitals == nullptr) != (lcao_occupied_kpoints == nullptr))
         {
             throw std::runtime_error("Sternheimer LCAO zero-order input is incomplete.");
         }
 
+        const SternheimerLCAOOccupiedKPoint* response_kpoint = nullptr;
+        int response_k_index = 0;
         int response_spin_index = 0;
         if (use_lcao_zero_order)
         {
-            validate_sternheimer_lcao_occupied_channels(
-                *lcao_occupied_channels,
+            validate_sternheimer_lcao_occupied_kpoints(
+                *lcao_occupied_kpoints,
                 elec_state.wg.nr,
+                elec_state.wg.nr,
+                PARAM.inp.nspin,
                 PARAM.globalv.nlocal);
-            if (lcao_occupied_channels->size() != 1)
+            if (lcao_occupied_kpoints->size() != 1)
             {
                 throw std::runtime_error(
-                    "Sternheimer LCAO output currently requires exactly one occupied spin channel.");
+                    "Sternheimer solid LCAO records are available, but the response driver currently requires "
+                    "exactly one Gamma k point.");
             }
-            response_spin_index = lcao_occupied_channels->front().spin_index;
+            response_kpoint = &lcao_occupied_kpoints->front();
+            response_k_index = response_kpoint->local_k_index;
+            response_spin_index = response_kpoint->spin_index;
+            if (std::any_of(response_kpoint->kpoint.begin(),
+                            response_kpoint->kpoint.end(),
+                            [](const double coordinate) { return std::abs(coordinate) > 1.0e-12; }))
+            {
+                throw std::runtime_error(
+                    "Sternheimer k-resolved LCAO records are available, but non-Gamma response is not implemented.");
+            }
         }
 
-        const int occupied_count = occupied_band_count(elec_state, response_spin_index);
+        const int occupied_count
+            = use_lcao_zero_order
+                  ? static_cast<int>(response_kpoint->coefficients.size())
+                  : occupied_band_count(elec_state, response_k_index);
         if (occupied_count <= 0)
         {
             throw std::runtime_error("No occupied DFT bands are available for Sternheimer chi0 output.");
@@ -1073,17 +1090,16 @@ void run_sternheimer_abacus_chi0_output_impl(
                 throw std::runtime_error(
                     "Sternheimer LCAO zero-order input currently supports Gamma-point nspin=1 or nspin=2 calculations.");
             }
-            if (lcao_occupied_channels->front().coefficients.size()
-                != static_cast<std::size_t>(occupied_count))
+            if (response_kpoint->coefficients.size() != static_cast<std::size_t>(occupied_count))
             {
                 throw std::runtime_error("Sternheimer LCAO occupied coefficient count does not match occupations.");
             }
         }
 
         const std::vector<double> eigenvalues_ry
-            = eigenvalues_ry_from_elec_state(elec_state, response_spin_index);
+            = eigenvalues_ry_from_elec_state(elec_state, response_k_index);
         const std::vector<double> occupations
-            = occupations_from_elec_state(elec_state, response_spin_index);
+            = occupations_from_elec_state(elec_state, response_k_index);
         const SternheimerRPA::TransitionEnergyWindow transition_window
             = SternheimerRPA::transition_energy_window_from_eigenvalues_ry(eigenvalues_ry, occupations);
         const bool use_frequency_grid_file = !frequency_grid_file.empty();
@@ -1189,7 +1205,7 @@ void run_sternheimer_abacus_chi0_output_impl(
             for (int ib = 0; ib != occupied_count; ++ib)
             {
                 const auto& coefficients
-                    = lcao_occupied_channels->front().coefficients[static_cast<std::size_t>(ib)];
+                    = response_kpoint->coefficients[static_cast<std::size_t>(ib)];
                 if (coefficients.size() != sampled_ao_functions.size())
                 {
                     throw std::runtime_error(
@@ -1214,7 +1230,7 @@ void run_sternheimer_abacus_chi0_output_impl(
                         value *= inverse_norm;
                     }
                 }
-                states.eigenvalues.push_back(elec_state.ekb(response_spin_index, ib));
+                states.eigenvalues.push_back(response_kpoint->eigenvalues[static_cast<std::size_t>(ib)]);
                 states.wavefunctions.push_back(occupied_function.values);
                 states.residual_norms.push_back(0.0);
                 lcao_occupied_functions.push_back(std::move(occupied_function));
@@ -1248,7 +1264,7 @@ void run_sternheimer_abacus_chi0_output_impl(
                                    std::string("source=") + (use_lcao_zero_order ? "lcao_ks" : "fd_grid")
                                        + " nstates=" + std::to_string(states.wavefunctions.size()));
         const std::vector<SternheimerFDHamiltonian::Vector> occupied
-            = occupied_wavefunctions_from_states(states, elec_state, response_spin_index);
+            = occupied_wavefunctions_from_states(states, elec_state, response_k_index);
         if (occupied.empty())
         {
             throw std::runtime_error("No occupied zero-order states are available for Sternheimer chi0 output.");
@@ -1374,7 +1390,10 @@ void run_sternheimer_abacus_chi0_output_impl(
 
             for (int ib = 0; ib != static_cast<int>(states.wavefunctions.size()); ++ib)
             {
-                const double occupation = elec_state.wg(response_spin_index, ib);
+                const double occupation
+                    = use_lcao_zero_order
+                          ? sternheimer_lcao_weighted_occupation(*response_kpoint, ib)
+                          : elec_state.wg(response_k_index, ib);
                 if (occupation <= 1.0e-8)
                 {
                     continue;
@@ -1544,6 +1563,14 @@ void run_sternheimer_abacus_chi0_output_impl(
         out << "ccp_rmesh_times " << ccp_rmesh_times << '\n';
         out << "sternheimer_zero_order_source " << (use_lcao_zero_order ? "lcao_ks" : "fd_grid") << '\n';
         out << "sternheimer_response_spin_channel " << response_spin_index + 1 << '\n';
+        out << "sternheimer_response_local_k_index " << response_k_index + 1 << '\n';
+        if (response_kpoint != nullptr)
+        {
+            out << "sternheimer_response_global_k_index " << response_kpoint->global_k_index + 1 << '\n';
+            out << "sternheimer_response_kpoint " << response_kpoint->kpoint[0] << ' '
+                << response_kpoint->kpoint[1] << ' ' << response_kpoint->kpoint[2] << '\n';
+            out << "sternheimer_response_kweight " << response_kpoint->kweight << '\n';
+        }
         out << "occupied_bands " << occupied.size() << '\n';
         out << "occupied_projector_dimension " << occupied_projector.size() << '\n';
         out << "abfs_channels " << num_channels << '\n';
@@ -1597,7 +1624,7 @@ void run_sternheimer_abacus_lcao_chi0_output(
     const UnitCell& ucell,
     const elecstate::ElecState& elec_state,
     const LCAO_Orbitals& orbitals,
-    const std::vector<SternheimerLCAOOccupiedChannel>& occupied_channels,
+    const std::vector<SternheimerLCAOOccupiedKPoint>& occupied_kpoints,
     const std::string& output_dir)
 {
     run_sternheimer_abacus_chi0_output_impl(potential,
@@ -1606,7 +1633,7 @@ void run_sternheimer_abacus_lcao_chi0_output(
                                             elec_state,
                                             output_dir,
                                             &orbitals,
-                                            &occupied_channels);
+                                            &occupied_kpoints);
 }
 
 } // namespace ModuleRI

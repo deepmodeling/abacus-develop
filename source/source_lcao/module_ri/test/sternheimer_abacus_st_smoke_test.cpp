@@ -2,6 +2,8 @@
 
 #include <complex>
 #include <gtest/gtest.h>
+#include <stdexcept>
+#include <vector>
 
 TEST(SternheimerABACUSSTSmoke, FormatsLinearResponseReport)
 {
@@ -46,25 +48,63 @@ TEST(SternheimerABACUSSTSmoke, FormatsLinearResponseReport)
               std::string::npos);
 }
 
-TEST(SternheimerABACUSSTSmoke, ValidatesSpinResolvedLCAOOccupiedChannels)
+namespace
 {
-    ModuleRI::SternheimerLCAOOccupiedChannel spin_up;
-    spin_up.spin_index = 0;
-    spin_up.coefficients = {{std::complex<double>(1.0, 0.0),
-                             std::complex<double>(0.0, 0.0),
-                             std::complex<double>(0.0, 0.0)}};
 
-    const std::vector<ModuleRI::SternheimerLCAOOccupiedChannel> channels = {spin_up};
-    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(channels, 2, 3));
-    EXPECT_EQ(ModuleRI::sternheimer_lcao_total_occupied_bands(channels), 1);
+ModuleRI::SternheimerLCAOOccupiedKPoint make_occupied_kpoint(const int local_k_index,
+                                                             const int global_k_index,
+                                                             const int spin_index,
+                                                             const ModuleRI::SternheimerReducedKPoint& kpoint,
+                                                             const double kweight)
+{
+    ModuleRI::SternheimerLCAOOccupiedKPoint record;
+    record.local_k_index = local_k_index;
+    record.global_k_index = global_k_index;
+    record.spin_index = spin_index;
+    record.kpoint = kpoint;
+    record.kweight = kweight;
+    record.eigenvalues = {-1.0};
+    record.occupations = {1.0};
+    record.coefficients = {{std::complex<double>(1.0, 0.0),
+                            std::complex<double>(0.0, 0.0),
+                            std::complex<double>(0.0, 0.0)}};
+    return record;
+}
 
-    auto duplicate_channels = channels;
-    duplicate_channels.push_back(spin_up);
-    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(duplicate_channels, 2, 3),
+} // namespace
+
+TEST(SternheimerABACUSSTSmoke, DistinguishesTwoKPointsFromTwoSpinChannels)
+{
+    const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.5);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 0.5);
+    const std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> two_kpoints = {k0, k1};
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints(two_kpoints, 2, 2, 1, 3));
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_total_occupied_bands(two_kpoints), 2);
+
+    auto spin_down = k0;
+    spin_down.local_k_index = 1;
+    spin_down.global_k_index = 1;
+    spin_down.spin_index = 1;
+    const std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> two_spins = {k0, spin_down};
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints(two_spins, 2, 2, 2, 3));
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsDuplicateOrIncompleteGlobalKRecords)
+{
+    const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.5);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 0.5);
+
+    auto duplicate = k1;
+    duplicate.global_k_index = 0;
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({k0, duplicate}, 2, 2, 1, 3),
                  std::invalid_argument);
-
-    auto out_of_range_channels = channels;
-    out_of_range_channels.front().spin_index = 2;
-    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(out_of_range_channels, 2, 3),
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({k0}, 2, 2, 1, 3),
                  std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, GammaRecordPreservesLegacyWeightedOccupation)
+{
+    const auto gamma = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({gamma}, 1, 1, 1, 3));
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_lcao_weighted_occupation(gamma, 0), 2.0);
 }

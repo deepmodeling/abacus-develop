@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <complex>
 #include <cstdlib>
 #include <iomanip>
@@ -30,56 +31,124 @@ class Potential;
 namespace ModuleRI
 {
 
-struct SternheimerLCAOOccupiedChannel
+struct SternheimerLCAOOccupiedKPoint
 {
+    int local_k_index = -1;
+    int global_k_index = -1;
     int spin_index = -1;
+    SternheimerReducedKPoint kpoint{0.0, 0.0, 0.0};
+    double kweight = 0.0;
+    std::vector<double> eigenvalues;
+    std::vector<double> occupations;
     std::vector<std::vector<std::complex<double>>> coefficients;
 };
 
-inline void validate_sternheimer_lcao_occupied_channels(
-    const std::vector<SternheimerLCAOOccupiedChannel>& channels,
+inline void validate_sternheimer_lcao_occupied_kpoints(
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const int local_kpoint_count,
+    const int global_kpoint_count,
     const int spin_channel_count,
     const int basis_size)
 {
-    if (spin_channel_count <= 0 || basis_size <= 0)
+    if (local_kpoint_count <= 0 || global_kpoint_count <= 0 || spin_channel_count <= 0 || basis_size <= 0)
     {
-        throw std::invalid_argument("Sternheimer LCAO spin-channel dimensions must be positive.");
+        throw std::invalid_argument("Sternheimer LCAO k-point dimensions must be positive.");
     }
-    std::vector<bool> seen(static_cast<std::size_t>(spin_channel_count), false);
-    for (const SternheimerLCAOOccupiedChannel& channel: channels)
+    if (records.size() != static_cast<std::size_t>(global_kpoint_count)
+        || local_kpoint_count != global_kpoint_count)
     {
-        if (channel.spin_index < 0 || channel.spin_index >= spin_channel_count)
+        throw std::invalid_argument(
+            "Sternheimer LCAO occupied k-point records are incomplete; the first solid implementation requires "
+            "KPAR=1.");
+    }
+
+    std::vector<bool> seen_local(static_cast<std::size_t>(local_kpoint_count), false);
+    std::vector<bool> seen_global(static_cast<std::size_t>(global_kpoint_count), false);
+    for (const SternheimerLCAOOccupiedKPoint& record: records)
+    {
+        if (record.local_k_index < 0 || record.local_k_index >= local_kpoint_count)
+        {
+            throw std::invalid_argument("Sternheimer LCAO local k-point index is out of range.");
+        }
+        if (record.global_k_index < 0 || record.global_k_index >= global_kpoint_count)
+        {
+            throw std::invalid_argument("Sternheimer LCAO global k-point index is out of range.");
+        }
+        if (seen_local[static_cast<std::size_t>(record.local_k_index)])
+        {
+            throw std::invalid_argument("Sternheimer LCAO local k-point index is duplicated.");
+        }
+        if (seen_global[static_cast<std::size_t>(record.global_k_index)])
+        {
+            throw std::invalid_argument("Sternheimer LCAO global k-point index is duplicated.");
+        }
+        seen_local[static_cast<std::size_t>(record.local_k_index)] = true;
+        seen_global[static_cast<std::size_t>(record.global_k_index)] = true;
+
+        if (record.spin_index < 0 || record.spin_index >= spin_channel_count)
         {
             throw std::invalid_argument("Sternheimer LCAO occupied spin index is out of range.");
         }
-        if (seen[static_cast<std::size_t>(channel.spin_index)])
+        for (const double coordinate: record.kpoint)
         {
-            throw std::invalid_argument("Sternheimer LCAO occupied spin index is duplicated.");
+            if (!std::isfinite(coordinate))
+            {
+                throw std::invalid_argument("Sternheimer LCAO reduced k-point coordinate is not finite.");
+            }
         }
-        seen[static_cast<std::size_t>(channel.spin_index)] = true;
-        if (channel.coefficients.empty())
+        if (!std::isfinite(record.kweight) || record.kweight <= 0.0)
         {
-            throw std::invalid_argument("Sternheimer LCAO occupied spin channel is empty.");
+            throw std::invalid_argument("Sternheimer LCAO k-point weight must be finite and positive.");
         }
-        for (const auto& band_coefficients: channel.coefficients)
+        if (record.coefficients.empty()
+            || record.eigenvalues.size() != record.coefficients.size()
+            || record.occupations.size() != record.coefficients.size())
         {
+            throw std::invalid_argument("Sternheimer LCAO occupied k-point band data are inconsistent.");
+        }
+        for (std::size_t ib = 0; ib != record.coefficients.size(); ++ib)
+        {
+            if (!std::isfinite(record.eigenvalues[ib])
+                || !std::isfinite(record.occupations[ib])
+                || record.occupations[ib] <= 0.0)
+            {
+                throw std::invalid_argument("Sternheimer LCAO occupied eigenvalue or occupation is invalid.");
+            }
+            const auto& band_coefficients = record.coefficients[ib];
             if (band_coefficients.size() != static_cast<std::size_t>(basis_size))
             {
                 throw std::invalid_argument("Sternheimer LCAO coefficient basis size is inconsistent.");
+            }
+            for (const std::complex<double>& coefficient: band_coefficients)
+            {
+                if (!std::isfinite(coefficient.real()) || !std::isfinite(coefficient.imag()))
+                {
+                    throw std::invalid_argument("Sternheimer LCAO coefficient is not finite.");
+                }
             }
         }
     }
 }
 
 inline int sternheimer_lcao_total_occupied_bands(
-    const std::vector<SternheimerLCAOOccupiedChannel>& channels)
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records)
 {
     int count = 0;
-    for (const SternheimerLCAOOccupiedChannel& channel: channels)
+    for (const SternheimerLCAOOccupiedKPoint& record: records)
     {
-        count += static_cast<int>(channel.coefficients.size());
+        count += static_cast<int>(record.coefficients.size());
     }
     return count;
+}
+
+inline double sternheimer_lcao_weighted_occupation(const SternheimerLCAOOccupiedKPoint& record,
+                                                   const int band_index)
+{
+    if (band_index < 0 || band_index >= static_cast<int>(record.occupations.size()))
+    {
+        throw std::out_of_range("Sternheimer LCAO occupied band index is out of range.");
+    }
+    return record.kweight * record.occupations[static_cast<std::size_t>(band_index)];
 }
 
 struct SternheimerABACUSSTChannelResult
@@ -175,7 +244,7 @@ void run_sternheimer_abacus_lcao_chi0_output(
     const UnitCell& ucell,
     const elecstate::ElecState& elec_state,
     const LCAO_Orbitals& orbitals,
-    const std::vector<SternheimerLCAOOccupiedChannel>& occupied_channels,
+    const std::vector<SternheimerLCAOOccupiedKPoint>& occupied_kpoints,
     const std::string& output_dir);
 
 } // namespace ModuleRI
