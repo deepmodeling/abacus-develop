@@ -1,9 +1,104 @@
 #include "source_lcao/module_ri/sternheimer_abacus_st_smoke.h"
 
+#include "source_lcao/module_ri/sternheimer_channel_parallel.h"
+
+#include <atomic>
+#include <chrono>
 #include <complex>
 #include <gtest/gtest.h>
 #include <stdexcept>
+#include <string>
+#include <thread>
 #include <vector>
+
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+TEST(SternheimerChannelParallel, ExecutesConcurrentlyAndReturnsChannelOrder)
+{
+#ifdef _OPENMP
+    const int previous_threads = omp_get_max_threads();
+    const int previous_dynamic = omp_get_dynamic();
+    omp_set_dynamic(0);
+    omp_set_num_threads(4);
+#endif
+
+    std::atomic<int> active_workers{0};
+    std::atomic<int> peak_workers{0};
+    const std::vector<int> results
+        = ModuleRI::run_sternheimer_channel_tasks<int>(32, [&active_workers, &peak_workers](const int channel_index) {
+              const int active = active_workers.fetch_add(1) + 1;
+              int observed_peak = peak_workers.load();
+              while (active > observed_peak && !peak_workers.compare_exchange_weak(observed_peak, active))
+              {
+              }
+              std::this_thread::sleep_for(std::chrono::milliseconds(2));
+              active_workers.fetch_sub(1);
+              return channel_index * channel_index;
+          });
+
+    ASSERT_EQ(results.size(), 32U);
+    for (int channel_index = 0; channel_index != 32; ++channel_index)
+    {
+        EXPECT_EQ(results[static_cast<std::size_t>(channel_index)], channel_index * channel_index);
+    }
+#ifdef _OPENMP
+    EXPECT_GT(peak_workers.load(), 1);
+    omp_set_num_threads(previous_threads);
+    omp_set_dynamic(previous_dynamic);
+#else
+    EXPECT_EQ(peak_workers.load(), 1);
+#endif
+}
+
+TEST(SternheimerChannelParallel, WritesIndependentColumnsLikeSerialExecution)
+{
+    constexpr int num_channels = 17;
+    std::vector<double> serial(num_channels * num_channels, 0.0);
+    std::vector<double> parallel(num_channels * num_channels, 0.0);
+    for (int column = 0; column != num_channels; ++column)
+    {
+        for (int row = 0; row != num_channels; ++row)
+        {
+            serial[static_cast<std::size_t>(row) * num_channels + column] = 1000.0 * row + column;
+        }
+    }
+
+    static_cast<void>(ModuleRI::run_sternheimer_channel_tasks<int>(
+        num_channels,
+        [&parallel](const int column) {
+            for (int row = 0; row != num_channels; ++row)
+            {
+                parallel[static_cast<std::size_t>(row) * num_channels + column] = 1000.0 * row + column;
+            }
+            return column;
+        }));
+    EXPECT_EQ(parallel, serial);
+}
+
+TEST(SternheimerChannelParallel, RethrowsFirstIndexedExceptionAfterAllTasksFinish)
+{
+    std::atomic<int> completed_tasks{0};
+    try
+    {
+        static_cast<void>(ModuleRI::run_sternheimer_channel_tasks<int>(16, [&completed_tasks](const int channel_index) {
+            completed_tasks.fetch_add(1);
+            if (channel_index == 3 || channel_index == 9)
+            {
+                throw std::runtime_error("channel " + std::to_string(channel_index));
+            }
+            return channel_index;
+        }));
+        FAIL() << "Expected a channel task exception.";
+    }
+    catch (const std::runtime_error& error)
+    {
+        EXPECT_STREQ(error.what(), "channel 3");
+    }
+    EXPECT_EQ(completed_tasks.load(), 16);
+    EXPECT_THROW(ModuleRI::run_sternheimer_channel_tasks<int>(-1, [](const int) { return 0; }), std::invalid_argument);
+}
 
 TEST(SternheimerABACUSSTSmoke, FormatsLinearResponseReport)
 {
