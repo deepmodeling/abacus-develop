@@ -262,6 +262,22 @@ void assemble_delta_wavefunction_components(const std::vector<SternheimerDeltaVi
 
 } // namespace
 
+int sternheimer_delta_virtual_state_limit(const int requested_states,
+                                          const int candidate_states,
+                                          const int occupied_states)
+{
+    if (requested_states < 0 || candidate_states < 0 || occupied_states < 0)
+    {
+        throw std::invalid_argument("Sternheimer delta subspace dimensions must be non-negative.");
+    }
+    if (occupied_states > candidate_states)
+    {
+        throw std::invalid_argument("Sternheimer delta occupied dimension exceeds the candidate dimension.");
+    }
+    const int available_states = candidate_states - occupied_states;
+    return requested_states == 0 ? available_states : std::min(requested_states, available_states);
+}
+
 SternheimerDeltaGridFunction make_delta_sternheimer_grid_function_with_fd_gradients(
     const SternheimerFDHamiltonian::Vector& values,
     const SternheimerFDHamiltonian::Grid& grid)
@@ -759,32 +775,67 @@ SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
     auto dot = [volume_element](const Vector& lhs, const Vector& rhs) {
         return sternheimer_fd_grid_dot(lhs, rhs, volume_element);
     };
-    std::vector<SternheimerDeltaGridFunction> orthonormal_candidates;
+    std::vector<SternheimerDeltaGridFunction> residual_candidates;
+    residual_candidates.reserve(candidate_functions.size());
     for (SternheimerDeltaGridFunction candidate: candidate_functions)
     {
-        for (const SternheimerDeltaGridFunction& occupied: occupied_functions)
-        {
-            axpy_grid_function(-dot(occupied.values, candidate.values), occupied, candidate);
-        }
         for (int pass = 0; pass != 2; ++pass)
         {
-            for (const SternheimerDeltaGridFunction& accepted: orthonormal_candidates)
+            for (const SternheimerDeltaGridFunction& occupied: occupied_functions)
             {
-                axpy_grid_function(-dot(accepted.values, candidate.values), accepted, candidate);
+                axpy_grid_function(-dot(occupied.values, candidate.values), occupied, candidate);
             }
         }
+        residual_candidates.push_back(std::move(candidate));
+    }
 
-        const double norm = sternheimer_fd_grid_norm(candidate.values, volume_element);
-        if (norm <= options.norm_tolerance)
+    const int candidate_limit = options.max_virtual_states > 0
+                                    ? std::min(options.max_virtual_states,
+                                               static_cast<int>(residual_candidates.size()))
+                                    : static_cast<int>(residual_candidates.size());
+    std::vector<bool> selected(residual_candidates.size(), false);
+    std::vector<SternheimerDeltaGridFunction> orthonormal_candidates;
+    orthonormal_candidates.reserve(static_cast<std::size_t>(candidate_limit));
+    while (static_cast<int>(orthonormal_candidates.size()) < candidate_limit)
+    {
+        int pivot = -1;
+        double pivot_norm = options.norm_tolerance;
+        for (std::size_t candidate_index = 0; candidate_index != residual_candidates.size(); ++candidate_index)
         {
-            continue;
+            if (selected[candidate_index])
+            {
+                continue;
+            }
+            const double norm
+                = sternheimer_fd_grid_norm(residual_candidates[candidate_index].values, volume_element);
+            if (norm > pivot_norm)
+            {
+                pivot = static_cast<int>(candidate_index);
+                pivot_norm = norm;
+            }
         }
-        scale_grid_function(candidate, Complex(1.0 / norm, 0.0));
-        orthonormal_candidates.push_back(std::move(candidate));
-        if (options.max_virtual_states > 0
-            && static_cast<int>(orthonormal_candidates.size()) >= options.max_virtual_states)
+        if (pivot < 0)
         {
             break;
+        }
+
+        const std::size_t pivot_index = static_cast<std::size_t>(pivot);
+        selected[pivot_index] = true;
+        SternheimerDeltaGridFunction accepted = std::move(residual_candidates[pivot_index]);
+        scale_grid_function(accepted, Complex(1.0 / pivot_norm, 0.0));
+        orthonormal_candidates.push_back(std::move(accepted));
+        const SternheimerDeltaGridFunction& newest = orthonormal_candidates.back();
+        for (std::size_t candidate_index = 0; candidate_index != residual_candidates.size(); ++candidate_index)
+        {
+            if (selected[candidate_index])
+            {
+                continue;
+            }
+            for (int pass = 0; pass != 2; ++pass)
+            {
+                SternheimerDeltaGridFunction& candidate = residual_candidates[candidate_index];
+                axpy_grid_function(-dot(newest.values, candidate.values), newest, candidate);
+            }
         }
     }
 

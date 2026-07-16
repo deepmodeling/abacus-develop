@@ -427,6 +427,54 @@ TEST(SternheimerDelta, ReferenceSubspaceTransformsValuesAndGradientsTogether)
     EXPECT_NEAR(subspace.virtual_states[0].eigenvalue, 5.0, 1.0e-13);
 }
 
+TEST(SternheimerDelta, ReferenceSubspacePivotsPastNearDependentCandidates)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid{4, 1, 1, 1.0, 1.0, 1.0, false};
+    constexpr double volume_element = 1.0;
+    ModuleRI::SternheimerFDHamiltonian hamiltonian(grid, {0.0, 1.0, 2.0, 3.0}, 0.0);
+
+    auto grid_function = [](const Vector& values) {
+        ModuleRI::SternheimerDeltaGridFunction function;
+        function.values = values;
+        for (Vector& gradient: function.gradients)
+        {
+            gradient.assign(values.size(), Complex(0.0, 0.0));
+        }
+        return function;
+    };
+
+    const auto occupied = grid_function(unit_vector(4, 0));
+    Vector nearly_occupied = unit_vector(4, 0);
+    nearly_occupied[1] = Complex(1.0e-8, 0.0);
+    const std::vector<ModuleRI::SternheimerDeltaGridFunction> candidates{
+        grid_function(nearly_occupied),
+        grid_function(unit_vector(4, 2)),
+        grid_function(unit_vector(4, 3)),
+    };
+
+    ModuleRI::SternheimerDeltaSubspaceOptions options;
+    options.max_virtual_states = 2;
+    options.norm_tolerance = 1.0e-10;
+    const auto subspace = ModuleRI::build_reference_delta_sternheimer_subspace(
+        hamiltonian, {occupied}, candidates, volume_element, options);
+
+    ASSERT_EQ(subspace.virtual_states.size(), 2);
+    EXPECT_EQ(subspace.accepted_candidates, 2);
+    EXPECT_EQ(subspace.discarded_candidates, 1);
+    EXPECT_NEAR(subspace.virtual_states[0].eigenvalue, 2.0, 1.0e-13);
+    EXPECT_NEAR(subspace.virtual_states[1].eigenvalue, 3.0, 1.0e-13);
+}
+
+TEST(SternheimerDelta, CapsRequestedVirtualStatesAtTheLCAOComplementDimension)
+{
+    EXPECT_EQ(ModuleRI::sternheimer_delta_virtual_state_limit(0, 176, 16), 160);
+    EXPECT_EQ(ModuleRI::sternheimer_delta_virtual_state_limit(40, 176, 16), 40);
+    EXPECT_EQ(ModuleRI::sternheimer_delta_virtual_state_limit(200, 176, 16), 160);
+    EXPECT_EQ(ModuleRI::sternheimer_delta_virtual_state_limit(0, 16, 16), 0);
+    EXPECT_THROW(ModuleRI::sternheimer_delta_virtual_state_limit(-1, 176, 16), std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_delta_virtual_state_limit(0, 15, 16), std::invalid_argument);
+}
+
 TEST(SternheimerDelta, BuildsPeriodicCenteredGradientForOccupiedGridState)
 {
     ModuleRI::SternheimerFDHamiltonian::Grid grid{4, 1, 1, 0.5, 1.0, 1.0, true};

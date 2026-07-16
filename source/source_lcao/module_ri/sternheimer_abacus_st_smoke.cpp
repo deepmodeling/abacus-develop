@@ -1093,12 +1093,17 @@ void run_sternheimer_periodic_lcao_chi0_output(
         {
             target_occupied_projector.push_back(function.values);
         }
+        SternheimerDeltaSubspaceOptions pair_delta_options = delta_options;
+        pair_delta_options.max_virtual_states = sternheimer_delta_virtual_state_limit(
+            delta_options.max_virtual_states,
+            static_cast<int>(target.sampled_ao_functions.size()),
+            static_cast<int>(target_occupied_projector.size()));
         const SternheimerDeltaSubspace delta_subspace
             = build_reference_delta_sternheimer_subspace(hamiltonian,
                                                          target.occupied_projector_functions,
                                                          target.sampled_ao_functions,
                                                          grid_data.volume_element,
-                                                         delta_options);
+                                                         pair_delta_options);
         if (delta_subspace.virtual_states.empty())
         {
             throw std::runtime_error("Periodic Sternheimer produced no target-sector Delta virtual states.");
@@ -1863,7 +1868,10 @@ void run_sternheimer_abacus_chi0_output_impl(
             }
 
             SternheimerDeltaSubspaceOptions delta_options;
-            delta_options.max_virtual_states = PARAM.inp.sternheimer_delta_max_states;
+            delta_options.max_virtual_states = sternheimer_delta_virtual_state_limit(
+                PARAM.inp.sternheimer_delta_max_states,
+                static_cast<int>(candidate_functions->size()),
+                static_cast<int>(occupied_functions->size()));
             delta_options.norm_tolerance = PARAM.inp.sternheimer_delta_norm_tol;
             delta_subspace = build_reference_delta_sternheimer_subspace(hamiltonian,
                                                                         *occupied_functions,

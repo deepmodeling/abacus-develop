@@ -56,6 +56,10 @@ struct SternheimerDeltaSubspaceOptions
     double norm_tolerance = 1.0e-10;
 };
 
+int sternheimer_delta_virtual_state_limit(int requested_states,
+                                          int candidate_states,
+                                          int occupied_states);
+
 struct SternheimerDeltaGridFunction
 {
     SternheimerFDHamiltonian::Vector values;
