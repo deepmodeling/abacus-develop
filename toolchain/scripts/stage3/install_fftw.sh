@@ -49,12 +49,8 @@ case "$with_fftw" in
         if verify_checksums "${install_lock_file}"; then
             echo "fftw-${fftw_ver} is already installed, skipping it."
         else
-            if [ -f ${fftw_pkg} ]; then
-                echo "${fftw_pkg} is found"
-            else
-                url="http://www.fftw.org/${fftw_pkg}"
-                download_pkg_from_url "${fftw_sha256}" "${fftw_pkg}" "${url}"
-            fi
+            url="http://www.fftw.org/${fftw_pkg}"
+            retrieve_package "${fftw_sha256}" "${fftw_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -131,7 +127,6 @@ if [ "$with_fftw" != "__DONTUSE__" ]; then
 prepend_path LD_LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path LD_RUN_PATH "${pkg_install_dir}/lib"
 prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
-prepend_path CPATH "${pkg_install_dir}/include"
 prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
@@ -143,14 +138,11 @@ export FFTW3_LIBS="${FFTW_LIBS}"
 export FFTW_CFLAGS="${FFTW_CFLAGS}"
 export FFTW_LDFLAGS="${FFTW_LDFLAGS}"
 export FFTW_LIBS="${FFTW_LIBS}"
-export CP_DFLAGS="\${CP_DFLAGS} -D__FFTW3 IF_COVERAGE(IF_MPI(|-U__FFTW3)|)"
-export CP_CFLAGS="\${CP_CFLAGS} ${FFTW_CFLAGS}"
-export CP_LDFLAGS="\${CP_LDFLAGS} ${FFTW_LDFLAGS}"
 export CP_LIBS="${FFTW_LIBS} \${CP_LIBS}"
 export FFTW_ROOT=${FFTW_ROOT:-${pkg_install_dir}}
 export FFTW3_ROOT=${pkg_install_dir}
 EOF
-    cat "${BUILDDIR}/setup_fftw" >> $SETUPFILE
+    filter_setup "${BUILDDIR}/setup_fftw" $SETUPFILE
 fi
 cd "${ROOTDIR}"
 

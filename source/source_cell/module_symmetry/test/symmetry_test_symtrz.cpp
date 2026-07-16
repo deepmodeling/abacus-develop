@@ -1,5 +1,5 @@
 #include "symmetry_test_cases.h"
-#include "source_io/module_output/output.h"
+#include "source_base/output.h"
 #include "mpi.h"
 
 /************************************************
@@ -9,7 +9,6 @@
  *
 ***********************************************/
 // mock the useless functions
-void output::printM3(std::ofstream& ofs, const std::string& description, const ModuleBase::Matrix3& m) {}
 pseudo::pseudo() {}
 pseudo::~pseudo() {}
 Atom::Atom() {}

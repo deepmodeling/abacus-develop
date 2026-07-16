@@ -6,7 +6,6 @@
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_io/module_parameter/parameter.h"
 #include "occupy.h"
 namespace elecstate
@@ -59,7 +58,8 @@ void print_scf_iterinfo(const std::string& ks_solver,
            {"cusolver", "CU"},
            {"bpcg", "BP"},
            {"pexsi", "PE"},
-           {"cusolvermp", "CM"}}; // I change the key of "cg_in_lcao" to "CG" because all the other are only two letters
+           {"cusolvermp", "CM"},
+           {"sdft", "CT"}}; // CT = Chebyshev Trace, for pure SDFT (nbands=0) where no H diagonalization is performed
     // ITER column
     std::vector<std::string> th_fmt = {" %-" + std::to_string(witer) + "s"}; // table header: th: ITER
     std::vector<std::string> td_fmt
@@ -249,6 +249,11 @@ void print_etot(const Magnetism& magnet,
             titles.push_back("E_vdwD3");
             energies_Ry.push_back(elec.f_en.evdw);
         }
+        else if (vdw_method == "d4")
+        {
+            titles.push_back("E_vdwD4");
+            energies_Ry.push_back(elec.f_en.evdw);
+        }
 
         // mohan add 20251108
 		if (PARAM.inp.dft_plus_u)
@@ -374,7 +379,12 @@ void print_etot(const Magnetism& magnet,
         {
             drho.push_back(scf_thr_kin);
         }
-        elecstate::print_scf_iterinfo(PARAM.inp.ks_solver,
+        // Pure SDFT (nbands=0) uses Chebyshev trace (CT) since no H diagonalization is performed.
+        // Mixed SDFT (nbands>0) still diagonalizes KS orbitals, so use the actual ks_solver label.
+        const std::string iter_label = (PARAM.inp.esolver_type == "sdft" && PARAM.inp.nbands == 0)
+                                           ? "sdft"
+                                           : PARAM.inp.ks_solver;
+        elecstate::print_scf_iterinfo(iter_label,
                                       iter,
                                       6,
                                       mag,

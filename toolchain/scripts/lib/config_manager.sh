@@ -19,7 +19,7 @@ CONFIG_FILE_LOADED=false
 tool_list="gcc intel amd cmake"
 mpi_list="mpich openmpi intelmpi"
 math_list="mkl aocl openblas"
-lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm nep"
+lib_list="fftw libxc scalapack elpa cereal rapidjson libtorch libnpy libri libcomm nep dftd4"
 package_list="${tool_list} ${mpi_list} ${math_list} ${lib_list}"
 
 # Configuration file paths for loading in advance
@@ -371,6 +371,7 @@ config_set_defaults() {
     CONFIG_CACHE["with_libri"]="__INSTALL__"
     CONFIG_CACHE["with_libcomm"]="__INSTALL__"
     CONFIG_CACHE["with_nep"]="__DONTUSE__"
+    CONFIG_CACHE["with_dftd4"]="__DONTUSE__"
     
     # Default enable options (following original script logic)
     CONFIG_CACHE["dry_run"]="__FALSE__"
@@ -455,13 +456,13 @@ config_validate() {
     if [[ -n "${CONFIG_CACHE[NPROCS_OVERWRITE]}" ]]; then
         if ! [[ "${CONFIG_CACHE[NPROCS_OVERWRITE]}" =~ ^[0-9]+$ ]]; then
             report_error ${LINENO} "Invalid number of processes: ${CONFIG_CACHE[NPROCS_OVERWRITE]}"
-            exit 1
+            return 1
         fi
     fi
     
     if ! [[ "${CONFIG_CACHE[LOG_LINES]}" =~ ^[0-9]+$ ]]; then
         report_error ${LINENO} "Invalid log lines value: ${CONFIG_CACHE[LOG_LINES]}"
-        exit 1
+        return 1
     fi
     
     # Validate GPU version - support only numeric formats
@@ -475,7 +476,7 @@ config_validate() {
             CONFIG_CACHE["ARCH_NUM"]="$arch_num"
         else
             report_error ${LINENO} "Invalid GPU version: $gpu_ver. Supported formats: numeric with decimal (6.0, 7.0, 8.0, 8.9, etc.) or numeric without decimal (60, 70, 80, 89, etc.)"
-            exit 1
+            return 1
         fi
     else
         CONFIG_CACHE["ARCH_NUM"]="no"
@@ -565,6 +566,11 @@ config_apply_env_logic() {
         if [ "${CONFIG_CACHE[with_fftw]}" != "__DONTUSE__" ]; then
             echo "Using MKL, so fftw is disabled."
             CONFIG_CACHE["with_fftw"]="__DONTUSE__"
+        fi
+        if [ "${CONFIG_CACHE[with_libtorch]}" = "__INSTALL__" ]; then
+            report_error ${LINENO} \
+                "Installing the current prebuilt libtorch package is disabled for oneMKL builds due to known conflicts between bundled and externally linked oneMKL libraries. Please provide a compatible libtorch installation via --with-libtorch=system or --with-libtorch=<path>."
+            exit 1
         fi
     fi
 
@@ -706,6 +712,16 @@ config_parse_arguments() {
                 if [[ -n "$2" && "$2" =~ ^[0-9]+$ ]]; then
                     CONFIG_CACHE["NPROCS_OVERWRITE"]="$2"
                     shift 2
+                else
+                    report_error $LINENO "-j requires a number argument"
+                    return 1
+                fi
+                ;;
+            -j[0-9]*)
+                local nprocs_overwrite="${1#-j}"
+                if [[ -n "$nprocs_overwrite" && "$nprocs_overwrite" =~ ^[0-9]+$ ]]; then
+                    CONFIG_CACHE["NPROCS_OVERWRITE"]="$nprocs_overwrite"
+                    shift
                 else
                     report_error $LINENO "-j requires a number argument"
                     return 1
@@ -1150,27 +1166,37 @@ config_parse_arguments() {
 config_init() {
     # Set defaults first
     config_set_defaults
-    
+
     # Initialize version helper to ensure VERSION_STRATEGY defaults are set
     if command -v version_helper_init > /dev/null 2>&1; then
         version_helper_init
     fi
-    
+
     # Load configuration from file (if available) - this will override defaults
-    config_load_from_file
-    
+    if ! config_load_from_file; then
+        return 1
+    fi
+
     # Apply mode-based configurations from file - this will override defaults
-    config_apply_modes_from_file
-    
+    if ! config_apply_modes_from_file; then
+        return 1
+    fi
+
     # Parse command line arguments - this will override file settings
-    config_parse_arguments "$@"
-    
+    if ! config_parse_arguments "$@"; then
+        return 1
+    fi
+
     # Apply mode-based configurations from command line
-    config_apply_modes
-    
+    if ! config_apply_modes; then
+        return 1
+    fi
+
     # Validate configuration
-    config_validate
-    
+    if ! config_validate; then
+        return 1
+    fi
+
     return 0
 }
 
@@ -1246,4 +1272,6 @@ config_apply_modes() {
                 ;;
         esac
     fi
+
+    return 0
 }

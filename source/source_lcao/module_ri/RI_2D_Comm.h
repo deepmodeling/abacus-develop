@@ -32,10 +32,26 @@ using TAC = std::pair<TA, TC>;
 template <typename Tdata, typename Tmatrix>
 extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_ktoR(
     const UnitCell& ucell,
-	const K_Vectors& kv, 
-    const std::vector<const Tmatrix*>& mks_2D, 
-    const Parallel_2D& pv, 
-    const int nspin, 
+    const K_Vectors& kv,
+    const std::vector<const Tmatrix*>& mks_2D,
+    const Parallel_2D& pv,
+    const int nspin,
+    const bool spgsym = false);
+
+template <typename Tdata, typename Tmatrix>
+extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_ktoR_gamma(
+    const UnitCell& ucell,
+    const std::vector<const Tmatrix*>& mks_2D,
+    const Parallel_2D& pv,
+    const int nspin);
+
+template <typename Tdata, typename Tmatrix>
+extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_ktoR_k(
+    const UnitCell& ucell,
+    const K_Vectors& kv,
+    const std::vector<const Tmatrix*>& mks_2D,
+    const Parallel_2D& pv,
+    const int nspin,
     const bool spgsym = false);
 
 	// judge[is] = {s0, s1}
@@ -51,8 +67,8 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
         const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
         const Parallel_Orbitals& pv,
         TK* hk);
-	
-		
+
+
 	template <typename Tdata, typename TK>
 	extern void  add_Hexx_td(
 		const UnitCell& ucell,
@@ -62,6 +78,7 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
 		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Hs,
 		const Parallel_Orbitals& pv,
 		const ModuleBase::Vector3<double>& At,
+        const std::map<ModuleBase::Vector3<int>, std::complex<double>>& phase_hybrid,
 		TK* hk);
 
     template<typename Tdata, typename TR>
@@ -77,7 +94,7 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
 	template<typename Tdata>
 	extern std::vector<std::vector<Tdata>> Hexxs_to_Hk(
 			const K_Vectors &kv,
-			const Parallel_Orbitals &pv, 
+			const Parallel_Orbitals &pv,
 			const std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> &Hexxs,
 			const int ik);
 	template<typename Tdata>
@@ -87,6 +104,18 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
 		const std::vector<std::vector<Tdata>> &Hk_new,
 		const double mixing_beta,
 		const std::string mixing_mode);
+
+    // DM(R) format conversion: the real-space (DM(R)) counterpart of split_m2D_ktoR,
+    // and the inverse of add_HexxR. dm_container is DensityMatrix::get_DMR_vector():
+    //   nspin==1 : size 1 (container 0  -> spin-block 0)
+    //   nspin==2 : size 2 (container is -> spin-block is)
+    //   nspin==4 : size 1 (container 0 holds the 2x2 npol blocks -> spin-blocks 0,1,2,3)
+    template <typename TR, typename Tdata>
+    extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> dm_container_to_Ds(
+        const std::vector<hamilt::HContainer<TR>*>& dm_container,
+        const UnitCell& ucell,
+        const Parallel_Orbitals& pv,
+        const int nspin);
 
 //private:
 	extern std::vector<int> get_ik_list(const K_Vectors &kv, const int is_k);

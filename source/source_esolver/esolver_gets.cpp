@@ -40,7 +40,8 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     }
 
     // 1.3) Setup k-points according to symmetry.
-    this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    const bool use_ibz = !inp.berry_phase && ModuleSymmetry::Symmetry::symm_flag != -1;
+    this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     ModuleIO::print_parameters(ucell, this->kv, inp);
@@ -135,7 +136,7 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(ucell, pv, orb_);
-        r_matrix.out_rR(ucell, gd, istep);
+        r_matrix.out_rR(ucell, gd, istep, PARAM.inp.out_mat_r[1]);
     }
 
     if (PARAM.inp.out_mat_ds[0])
@@ -149,7 +150,10 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                              gd, // mohan add 2024-04-06
                              two_center_bundle_,
                              orb_,
-                             kv);
+                             kv,
+                             false,
+                             1e-10,
+                             PARAM.inp.out_mat_ds[1]);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");

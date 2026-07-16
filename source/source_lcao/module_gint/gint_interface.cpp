@@ -8,7 +8,9 @@
 #include "gint_fvl.h"
 #include "gint_fvl_meta.h"
 #include "gint_rho.h"
+#include "gint_drho.h"
 #include "gint_tau.h"
+#include "gint_dvlocal.h"
 
 #ifdef __CUDA
 #include "gint_vl_gpu.h"
@@ -115,6 +117,18 @@ void cal_gint_rho(
     }
 }
 
+void cal_gint_drho(
+    const std::vector<HContainer<double>*>& dm_vec,
+    const int nspin,
+    double** drho_x,
+    double** drho_y,
+    double** drho_z)
+{
+    // CPU/fp64 only: set_phi_dphi provides double-precision gradients (no GPU/fp32 path).
+    Gint_drho gint_drho(dm_vec, nspin, drho_x, drho_y, drho_z);
+    gint_drho.cal_gint();
+}
+
 void cal_gint_tau(        
     const std::vector<HContainer<double>*>& dm_vec,
     const int nspin,
@@ -178,7 +192,7 @@ void cal_gint_fvl_meta(
     }
 }
 
-void cal_dvlocal_R_sparseMatrix(
+void cal_dvlocal_R_sparse(
     const int nspin,
     const int npol,
     const int current_spin,
@@ -192,7 +206,7 @@ void cal_dvlocal_R_sparseMatrix(
 {
     Gint_dvlocal gint_dvlocal(vr_eff, nspin, npol);
     gint_dvlocal.cal_dvlocal();
-    gint_dvlocal.cal_dvlocal_R_sparseMatrix(
+    gint_dvlocal.cal_dvlocal_R_sparse(
         nspin, current_spin, nlocal, sparse_thr,
         pv, ucell, gdriver, hs_arrays);
 }

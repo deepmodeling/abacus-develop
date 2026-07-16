@@ -113,14 +113,14 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     this->p_kv = &kv;
     this->orb_cutoff_ = orb.cutoffs();
 
-    Mix_DMk_2D mix_DMk_2D;
+    Mix_DMk_2D<T> mix_DMk_2D;
     bool exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
     if (exx_spacegroup_symmetry)
-        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1), PARAM.globalv.gamma_only_local);}
+        {mix_DMk_2D.set_nks(kv.get_nkstot_full() * (PARAM.inp.nspin == 2 ? 2 : 1));}
     else
-        {mix_DMk_2D.set_nks(kv.get_nks(), PARAM.globalv.gamma_only_local);}
+        {mix_DMk_2D.set_nks(kv.get_nks());}
         
-    mix_DMk_2D.set_mixing(nullptr);
+    mix_DMk_2D.set_mixing_plain(1.0);
     ModuleSymmetry::Symmetry_rotation symrot;
     if (exx_spacegroup_symmetry)
     {
@@ -138,17 +138,20 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
     else { mix_DMk_2D.mix(dm.get_DMK_vector(), true); }
     
     const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
-		Ds = PARAM.globalv.gamma_only_local
-        ? RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,kv, mix_DMk_2D.get_DMk_gamma_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin)
-        : RI_2D_Comm::split_m2D_ktoR<Tdata>(ucell,kv, mix_DMk_2D.get_DMk_k_out(), *dm.get_paraV_pointer(), PARAM.inp.nspin, exx_spacegroup_symmetry);
+        Ds = RI_2D_Comm::split_m2D_ktoR<Tdata>(
+            ucell,
+            kv,
+            mix_DMk_2D.get_DMk_out(),
+            *dm.get_paraV_pointer(),
+            PARAM.inp.nspin,
+            exx_spacegroup_symmetry);
     
     // set parameters for bare Coulomb potential
     GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; // not used now, Hf/Ccp -> singularity_correction, see conv_coulomb_pot_k.cpp
     GlobalC::exx_info.info_global.hybrid_alpha = 1;
+    GlobalC::exx_info.sync_from_global();
     // reserve exx_ccp_rmesh_times to calculate full Coulomb
     this->ccp_rmesh_times_ewald = GlobalC::exx_info.info_ri.ccp_rmesh_times;
-    // rpa=1 set
-    // GlobalC::exx_info.info_ri.ccp_rmesh_times=rpa_ccp_rmesh_times
     // Using this->info.ccp_rmesh_times to calculate cut Coulomb this->Vs_period
     GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
     if (!exx_cut_coulomb)
@@ -1244,12 +1247,9 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
 // 			this->info.kmesh_times, this->info.ccp_rmesh_times );
 // 	}
 
-// //	for( size_t T=0; T!=this->abfs.size(); ++T )
-// //		GlobalC::exx_info.info_ri.abfs_Lmax = std::max(
-// GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1
-// );
-
 // }
+
+
 
 // template<typename Tdata>
 // void RPA_LRI<T, Tdata>::cal_rpa_ions()

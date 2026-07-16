@@ -2,12 +2,10 @@
 
 #include "k_vector_utils.h"
 #include "source_base/formatter.h"
-#include "source_base/memory.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_io/module_unk/berryphase.h"
 #include "source_io/module_parameter/parameter.h"
 
 void K_Vectors::cal_ik_global()
@@ -45,7 +43,8 @@ void K_Vectors::set(const UnitCell& ucell,
                     const int& nspin_in,
                     const ModuleBase::Matrix3& reciprocal_vec,
                     const ModuleBase::Matrix3& latvec,
-                    std::ofstream& ofs)
+                    std::ofstream& ofs,
+                    const bool use_ibz)
 {
     ModuleBase::TITLE("K_Vectors", "set");
 
@@ -100,9 +99,8 @@ void K_Vectors::set(const UnitCell& ucell,
 
 
     // (2)
-    // only berry phase need all kpoints including time-reversal symmetry!
-    // if symm_flag is not set, only time-reversal symmetry would be considered.
-    if (!berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != -1)
+    // reduce kpoints to IBZ according to symmetry operations
+    if (use_ibz)
     {
         bool match = true;
         // calculate kpoints in IBZ and reduce kpoints according to symmetry

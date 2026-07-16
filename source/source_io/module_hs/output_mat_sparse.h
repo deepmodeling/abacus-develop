@@ -10,7 +10,35 @@
 
 namespace ModuleIO
 {
+struct MatSparseOutputOptions
+{
+    bool out_mat_dh = false;
+    bool out_mat_ds = false;
+    bool out_mat_t = false;
+    bool out_mat_r = false;
+    int dh_precision = 16;
+    int ds_precision = 16;
+    int t_precision = 16;
+    int r_precision = 16;
+    double sparse_threshold = 1e-10;
+    bool binary = false;
+};
+
 /// @brief the output interface to write the sparse matrix of dH, dS, T, and r
+template <typename T>
+void output_mat_sparse(const MatSparseOutputOptions& options,
+                       const int& istep,
+                       const ModuleBase::matrix& v_eff,
+                       const Parallel_Orbitals& pv,
+                       const TwoCenterBundle& two_center_bundle,
+                       const LCAO_Orbitals& orb,
+                       UnitCell& ucell,
+                       const Grid_Driver& grid,
+                       const K_Vectors& kv,
+                       hamilt::Hamilt<T>* p_ham,
+                       Plus_U* p_dftu);
+
+/// @brief legacy bool-only interface kept for source compatibility
 template <typename T>
 void output_mat_sparse(const bool& out_mat_dh,
                        const bool& out_mat_ds,

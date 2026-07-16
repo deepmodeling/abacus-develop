@@ -20,7 +20,7 @@ smearing_method      gauss
 
 #Parameters (5.MD Parameters)
 md_type              nve
-md_nstep             1000
+md_nstep             5
 md_dt                0.005
 md_tfirst            0
 

@@ -1,5 +1,13 @@
+# Text files use LF by default. Windows command scripts keep CRLF because
+# cmd.exe and installer tooling may depend on it.
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.sh text eol=lf
+CASES_*.txt text eol=lf
+
 .gitattributes export-ignore
 .gitignore export-ignore
 .gitmodules export-ignore
 .pre-commit-config.yaml export-ignore
-.github/ export-ignore
+.github export-ignore

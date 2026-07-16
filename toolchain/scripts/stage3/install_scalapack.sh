@@ -49,13 +49,8 @@ case "${with_scalapack}" in
             echo "scalapack-${scalapack_ver} is already installed, skipping it."
         else
             require_env MATH_LIBS
-            if [ -f ${scalapack_pkg} ]; then
-                echo "${scalapack_pkg} is found"
-            else
-                url="https://codeload.github.com/Reference-ScaLAPACK/scalapack/tar.gz/v${scalapack_ver}"
-                download_pkg_from_url "${scalapack_sha256}" "${scalapack_pkg}" "${url}"
-                #download_pkg_from_ABACUS_org "${scalapack_sha256}" "${scalapack_pkg}"
-            fi
+            url="https://codeload.github.com/Reference-ScaLAPACK/scalapack/tar.gz/v${scalapack_ver}"
+            retrieve_package "${scalapack_sha256}" "${scalapack_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -120,7 +115,6 @@ prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path PKG_CONFIG_PATH "${pkg_install_dir}/lib/pkgconfig"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
-        cat "${BUILDDIR}/setup_scalapack" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_scalapack"
 export SCALAPACK_ROOT="${pkg_install_dir}"
@@ -130,6 +124,7 @@ export CP_DFLAGS="\${CP_DFLAGS} IF_MPI(-D__SCALAPACK|)"
 export CP_LDFLAGS="\${CP_LDFLAGS} IF_MPI(${SCALAPACK_LDFLAGS}|)"
 export CP_LIBS="IF_MPI(-lscalapack|) \${CP_LIBS}"
 EOF
+    filter_setup "${BUILDDIR}/setup_scalapack" $SETUPFILE
 fi
 cd "${ROOTDIR}"
 

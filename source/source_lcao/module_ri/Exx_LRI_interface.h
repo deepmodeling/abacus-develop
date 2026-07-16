@@ -39,7 +39,7 @@ public:
     using TAC = std::pair<TA, TC>;
 
     /// @brief  Constructor for Exx_LRI_Interface
-    Exx_LRI_Interface(const Exx_Info::Exx_Info_RI& info)
+    Exx_LRI_Interface(const Exx_Info_RI& info)
     {
         this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info);
     }
@@ -53,6 +53,11 @@ public:
     double &get_Eexx() const { return this->exx_ptr->Eexx; }
     ModuleBase::matrix &get_force() const { return this->exx_ptr->force_exx; }
     ModuleBase::matrix &get_stress() const { return this->exx_ptr->stress_exx; }
+    auto& get_dHexxs() const { return this->exx_ptr->dHexxs; }
+    int get_two_level_step() const
+    {
+        return this->two_level_step;
+    }
 
     // Processes in ESolver_KS_LCAO
     /// @brief in init: Exx_LRI::init()
@@ -75,6 +80,14 @@ public:
 
     /// @brief: in cal_exx_stress: Exx_LRI::cal_exx_stress()
     void cal_exx_stress(const double& omega, const double& lat0);
+
+    /// @brief: in cal_exx_dHs: Exx_LRI::cal_exx_dHs()
+    void cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+        const UnitCell& ucell,
+        const Parallel_Orbitals& pv);
+
+    /// @brief build the exx-form dH (dHexxs) from the current mixed DM (for dH/dR output)
+    void cal_exx_dHs(const UnitCell& ucell, const Parallel_Orbitals& pv, const int nspin);
 
     // Processes in ESolver_KS_LCAO
     /// @brief in before_all_runners: set symmetry according to irreducible k-points
@@ -117,6 +130,10 @@ public:
                             const double& etot,
                             const double& scf_ene_thr);
 
+    /// @brief  the step of the outer loop.
+    /// nullptr: no dependence on the number of two_level_step, contributeHk will do enerything normally.
+    /// 0: the first outer loop. If restart, contributeHk will directly add Hexx to Hloc. else, do nothing.
+    /// >0: not the first outer loop. contributeHk will do enerything normally.
     int two_level_step = 0;
     double etot_last_outer_loop = 0.0;
     elecstate::DensityMatrix<T, double>* dm_last_step;
@@ -124,7 +141,8 @@ public:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
 private:
-    Mix_DMk_2D mix_DMk_2D;
+
+    Mix_DMk_2D<T> mix_DMk_2D;
 
     bool exx_spacegroup_symmetry = false;
     ModuleSymmetry::Symmetry_rotation symrot_;
@@ -136,6 +154,7 @@ private:
         bool elec = false;
         bool force = false;
         bool stress = false;
+        bool dHs = false;
     };
     Flag_Finish flag_finish;
 };

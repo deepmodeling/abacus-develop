@@ -5,6 +5,7 @@
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/hsolver_lrtd.hpp"
 #include "source_lcao/module_lr/lr_spectrum.h"
+#include "source_lcao/module_gint/gint.h"
 #include <memory>
 #include "source_lcao/hamilt_lcao.h"
 #include "source_io/module_wf/read_wfc_nao.h"
@@ -16,6 +17,9 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h" // for precondition
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#endif
 
 #ifdef __EXX
 template<>
@@ -264,6 +268,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
             // set ccp_type according to the xc_kernel
             if (xc_kernel == "hf") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; }
             else if (xc_kernel == "hse") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; }
+            exx_info.sync_from_global();
             this->exx_lri = std::make_shared<Exx_LRI<T>>(exx_info.info_ri);
             this->exx_lri->init(MPI_COMM_WORLD, ucell,this->kv, ks_sol.orb_);
             this->exx_lri->cal_exx_ions(ucell,input.out_ri_cv);
@@ -298,17 +303,19 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
-    this->kv.set(ucell,ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    const bool use_ibz = false;
+    this->kv.set(ucell, ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
     this->parameter_check();
 
     /// read orbitals and build the interpolation table
-    two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn.data());
+    two_center_bundle_.build_orb(ucell.ntype, ucell.orbital_fn.data(), inp.orbital_dir);
 
     LCAO_Orbitals orb;
-    two_center_bundle_.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
+    two_center_bundle_.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
+                                        inp.out_element_info, inp.cal_force);
     orb_cutoff_ = orb.cutoffs();
     if (LR_Util::tolower(input.abs_gauge) == "velocity")
     {

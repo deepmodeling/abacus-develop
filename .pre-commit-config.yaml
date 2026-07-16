@@ -1,5 +1,11 @@
 fail_fast: false
 repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: mixed-line-ending
+        args: [--fix=lf]
+        exclude: '(\.bat|\.cmd)$'
   - repo: https://github.com/pocc/pre-commit-hooks
     rev: v1.3.5
     hooks:
@@ -12,3 +18,10 @@ repos:
       # - id: cppcheck
       # - id: cpplint
       # - id: include-what-you-use
+  - repo: local
+    hooks:
+      - id: abacus-agent-governance
+        name: ABACUS agent governance checks
+        entry: python3 tools/03_code_analysis/agent_governance_check.py --staged
+        language: system
+        pass_filenames: false

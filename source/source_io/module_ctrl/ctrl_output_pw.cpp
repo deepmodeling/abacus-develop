@@ -334,6 +334,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                      inp.cond_dw,
                      inp.cond_dt,
                      inp.cond_nonlocal,
+                     inp.cond_mgga_vel,
                      pelec->wg);
     }
 
@@ -361,7 +362,8 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                                              inp.of_ml_yukawa_alpha,
                                              inp.of_ml_kernel_file,
                                              ucell.omega,
-                                             pw_rho);
+                                             pw_rho,
+                                             GlobalV::ofs_running);
 
         write_mlkedf_desc.generateTrainData_KS(PARAM.globalv.global_mlkedf_descriptor_dir,
                                                stp.template get_psi_t<T, Device>(),
@@ -369,7 +371,8 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                                                pw_wfc,
                                                pw_rho,
                                                ucell,
-                                               pelec->pot->get_eff_v(0));
+                                               pelec->pot->get_eff_v(0),
+                                               chr.nrxx);
     }
 #endif
 

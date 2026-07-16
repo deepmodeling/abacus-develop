@@ -26,10 +26,19 @@ namespace Global_File
 		const bool &out_wfc_dir,
 		const int rank,
         const bool &restart,
-		const bool out_alllog = false); 
-	
-	void make_dir_atom(const std::string &label);
-	void open_log ( std::ofstream &ofs, const std::string &fn, const std::string &calculation, const bool &restart);
+		const bool out_alllog,
+		const std::string &global_out_dir,
+		const std::string &global_stru_dir,
+		const std::string &global_matrix_dir,
+		const std::string &global_wfc_dir,
+		const std::string &global_mlkedf_descriptor_dir,
+		const std::string &global_deepks_label_elec_dir,
+		const std::string &log_file,
+		const bool of_ml_gene_data,
+		const bool deepks_out_freq_elec);
+
+	void make_dir_atom(const std::string &label, const std::string &global_out_dir);
+	void open_log ( std::ofstream &ofs, const std::string &fn, const std::string &calculation, const bool &restart, const std::string &global_out_dir);
 	void close_log( std::ofstream &ofs, const std::string &fn);
     void close_all_log(const int rank, const bool out_alllog = false, const std::string& calculation = "md");
 }

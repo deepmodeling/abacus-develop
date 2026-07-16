@@ -54,12 +54,7 @@ case "$with_libnpy" in
         if verify_checksums "${install_lock_file}"; then
             echo "$dirname is already installed, skipping it."
         else
-            if [ -f $filename ]; then
-                echo "$filename is found"
-            else
-                # download from github.com and checksum
-                download_pkg_from_url "${libnpy_sha256}" "${filename}" "${url}"
-            fi
+            retrieve_package "${libnpy_sha256}" "${filename}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -107,12 +102,11 @@ if [ "$with_libnpy" != "__DONTUSE__" ]; then
         cat << EOF > "${BUILDDIR}/setup_libnpy"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
-        cat "${BUILDDIR}/setup_libnpy" >> $SETUPFILE
     fi
     cat << EOF >> "${BUILDDIR}/setup_libnpy"
-export LIBNPY_CFLAGS="${LIBNPY_CFLAGS}"
 export LIBNPY_ROOT="${pkg_install_dir}"
 EOF
+    filter_setup "${BUILDDIR}/setup_libnpy" $SETUPFILE
 fi
 
 load "${BUILDDIR}/setup_libnpy"

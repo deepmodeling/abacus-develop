@@ -2,12 +2,16 @@
 
 #include "source_estate/elecstate_lcao.h" // use elecstate::ElecState
 #include "source_lcao/hamilt_lcao.h" // use hamilt::HamiltLCAO<TK, TR>
+#include "source_hamilt/module_xc/exx_info.h"
 
 #include "../module_energy/write_proj_band_lcao.h" // projcted band structure
 #include "../module_dos/cal_ldos.h" // cal LDOS
 #include "../module_energy/write_eband_terms.hpp"
 #include "../module_hs/write_vxc.hpp"
 #include "../module_hs/write_vxc_r.hpp"
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#endif
 
 namespace ModuleIO
 {
@@ -52,6 +56,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
     // 3) print out exchange-correlation potential
     if (inp.out_mat_xc)
     {
+        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
         ModuleIO::write_Vxc<TK, TR>(inp.nspin,
                                     PARAM.globalv.nlocal,
                                     GlobalV::DRANK,
@@ -67,7 +72,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     kv,
                                     orb.cutoffs(),
                                     pelec->wg,
-                                    gd
+                                    gd,
+                                    cal_exx
 #ifdef __EXX
                                     ,
                                     exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
@@ -78,6 +84,9 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 
     if (inp.out_mat_xc2[0])
     {
+        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        bool real_number = GlobalC::exx_info.info_ri.real_number;
         ModuleIO::write_Vxc_R<TK, TR>(inp.nspin,
                                       &pv,
                                       ucell,
@@ -89,7 +98,10 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                       chr,
                                       kv,
                                       orb.cutoffs(),
-                                      gd
+                                      gd,
+                                      cal_exx,
+                                      hybrid_alpha,
+                                      real_number
 #ifdef __EXX
                                       ,
                                       exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,

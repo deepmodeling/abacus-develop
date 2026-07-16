@@ -119,6 +119,20 @@ class BaseMatrix
         }
     }
 
+    // Cross-type variant: cast each element of `array` to T before accumulating.
+    // Selected by overload resolution only when TSrc != T (the non-template
+    // overload is preferred when types match).
+    template <typename TSrc>
+    void add_array_ts(const TSrc* array)
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        const int size = nrow_local * ncol_local;
+        for (int i = 0; i < size; ++i)
+        {
+            value_begin[i] += static_cast<T>(array[i]);
+        }
+    }
+
   private:
     bool allocated = false;
 

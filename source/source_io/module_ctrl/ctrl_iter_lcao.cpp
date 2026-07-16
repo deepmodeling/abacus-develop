@@ -1,10 +1,14 @@
 #include "ctrl_iter_lcao.h" // use ctrl_iter_lcao() 
 
+#include "source_base/global_variable.h" // use GlobalC
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
 #include "source_io/module_restart/restart.h"
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#endif
 
 namespace ModuleIO
 {
@@ -43,12 +47,14 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
     }
 
 #ifdef __EXX
-    // save exx matrix
+    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+    bool real_number = GlobalC::exx_info.info_ri.real_number;
+
     if (inp.calculation != "nscf")
     {
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (cal_exx)
         {
-            GlobalC::exx_info.info_ri.real_number ?
+            real_number ?
               exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm, 
                 *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
               exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
@@ -64,8 +70,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
     {
         if (iter % inp.deepks_out_freq_elec == 0 )
         {
-            std::shared_ptr<LCAO_Deepks<TK>> ld_shared_ptr(&deepks.ld, [](LCAO_Deepks<TK>*) {});
-            LCAO_Deepks_Interface<TK, TR> deepks_interface(ld_shared_ptr);
+            LCAO_Deepks_Interface<TK, TR> deepks_interface(&deepks.ld);
 
             deepks_interface.out_deepks_labels(pelec->f_en.etot, kv.get_nks(),
               ucell.nat, PARAM.globalv.nlocal, pelec->ekb, kv.kvec_d,

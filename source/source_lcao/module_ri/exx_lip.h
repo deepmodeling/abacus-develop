@@ -30,12 +30,12 @@ class Exx_Lip
 {
     using Treal = typename GetTypeReal<T>::type;
 public:
-    Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in);
+    Exx_Lip(const Exx_Info_Lip& info_in);
     ~Exx_Lip();
 
-    const Exx_Info::Exx_Info_Lip& info;
+    const Exx_Info_Lip& info;
 
-    Exx_Lip(const Exx_Info::Exx_Info_Lip& info_in,
+    Exx_Lip(const Exx_Info_Lip& info_in,
             const ModuleSymmetry::Symmetry& symm,
             K_Vectors* kv_ptr_in,
             psi::Psi<T, Device>* psi_local_in,
@@ -110,9 +110,6 @@ private:
     void b_sum(const int iq, const int ib);
     void sum_all(const int ik);
     void exx_energy_cal();
-    // void read_q_pack(const ModuleSymmetry::Symmetry& symm,
-    //                  const ModulePW::PW_Basis_K* wfc_basis,
-    //                  const Structure_Factor& sf);
 
     //2*pi*i
     const T two_pi_i = Treal(ModuleBase::TWO_PI) * T(0.0, 1.0);

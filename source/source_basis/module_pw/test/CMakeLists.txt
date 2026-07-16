@@ -1,9 +1,9 @@
-add_definitions(-D__NORMAL)
+abacus_add_local_feature_definitions(__NORMAL)
 AddTest(
   TARGET MODULE_PW_pw_test
-  LIBS parameter ${math_libs} planewave device 
+  LIBS parameter planewave device
   SOURCES ../../../source_base/matrix.cpp ../../../source_base/complexmatrix.cpp ../../../source_base/matrix3.cpp ../../../source_base/tool_quit.cpp
-          ../../../source_base/mymath.cpp ../../../source_base/timer.cpp ../../../source_base/memory.cpp
+          ../../../source_base/mymath.cpp ../../../source_base/timer.cpp ../../../source_base/memory_recorder.cpp
           ../../../source_base/module_external/blas_connector_base.cpp ../../../source_base/module_external/blas_connector_vector.cpp ../../../source_base/module_external/blas_connector_matrix.cpp   
           ../../../source_base/libm/branred.cpp ../../../source_base/libm/sincos.cpp 
           ../../../source_base/module_device/memory_op.cpp

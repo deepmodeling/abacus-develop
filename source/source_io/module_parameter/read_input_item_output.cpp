@@ -80,7 +80,18 @@ void ReadInput::item_output()
             - nspin = 1: `tau.cube`;
             - nspin = 2: `taus1.cube`, and `taus2.cube`;
             - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
-    - 2: On top of 1, also output the initial charge density files with a suffix name as '_ini', such as `taus1_ini.cube`, etc.
+    - 2: On top of 1, also output the initial charge density files. The files are named as:
+        - out_freq_ion = 0:
+            - nspin = 1: `chg_ini.cube`;
+            - nspin = 2: `chgs1_ini.cube` and `chgs2_ini.cube`;
+            - nspin = 4: `chgs1_ini.cube`, `chgs2_ini.cube`, `chgs3_ini.cube`, and `chgs4_ini.cube`;
+            - output at every step (overwrite same file)
+        - out_freq_ion > 0:
+            - nspin = 1: `chgg{geom_step}_ini.cube` (e.g., `chgg1_ini.cube`);
+            - nspin = 2: `chgs1g{geom_step}_ini.cube` and `chgs2g{geom_step}_ini.cube`;
+            - nspin = 4: `chgs1g{geom_step}_ini.cube`, `chgs2g{geom_step}_ini.cube`, `chgs3g{geom_step}_ini.cube`, and `chgs4g{geom_step}_ini.cube`.
+            - output every out_freq_ion steps
+        Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
     - -1: Disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
 
 The second integer controls the precision of the charge density output. If not given, `3` is used as default. For restarting from this file and other high-precision calculations, `10` is recommended.
@@ -118,11 +129,19 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
  * nspin = 1: pots1.cube;
  * nspin = 2: pots1.cube and pots2.cube;
  * nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
-* 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+* 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/02_postprocessing/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
 * 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
- * nspin = 1: pots1_ini.cube;
- * nspin = 2: pots1_ini.cube and pots2_ini.cube;
- * nspin = 4: pots1_ini.cube, pots2_ini.cube, pots3_ini.cube, and pots4_ini.cube
+ * out_freq_ion = 0:
+   * nspin = 1: `pot_ini.cube`;
+   * nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`;
+   * nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`;
+   * output at every step (overwrite same file)
+ * out_freq_ion > 0:
+   * nspin = 1: `potg{geom_step}_ini.cube` (e.g., `potg1_ini.cube`);
+   * nspin = 2: `pots1g{geom_step}_ini.cube` and `pots2g{geom_step}_ini.cube`;
+   * nspin = 4: `pots1g{geom_step}_ini.cube`, `pots2g{geom_step}_ini.cube`, `pots3g{geom_step}_ini.cube`, and `pots4g{geom_step}_ini.cube`.
+   * output every out_freq_ion steps
+ Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
 
 The optional second integer controls the output precision. If not provided, the default precision is 8.
 
@@ -553,7 +572,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output r(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md."
+        item.description = "Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. The optional second parameter controls text output precision. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-rR-sparse.csr.";
         item.default_value = "False 8";
         item.unit = "Bohr";
@@ -574,8 +593,8 @@ Also controled by out_freq_ion and out_app_flag.
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.inp.out_mat_r[0] || para.inp.out_mat_hs2[0] || para.inp.out_mat_t[0] || para.inp.out_mat_dh[0]
-                 || para.inp.dm_to_rho)
+            if ((para.inp.out_mat_r[0] || para.inp.out_mat_hs2[0] || para.inp.out_mat_t[0]
+                 || para.inp.out_hr_npz || para.inp.out_hsr_npz || para.inp.out_dm_npz || para.inp.dm_to_rho)
                 && para.sys.gamma_only_local)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
@@ -591,7 +610,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output T(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+        item.description = "Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.";
         item.default_value = "False 8";
         item.unit = "Ry";
@@ -620,6 +639,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.category = "Output information";
         item.type = "Integer";
         item.description = "Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+                          "\n\nFormat: <enable> [precision] [iat1 iat2 ...]. The first value (0/1) enables/disables output. The second optional value sets the output precision (default: 8). Starting from the third value, 1-based atom indices can be listed to restrict output to derivatives with respect to those specific atoms only; if no atom indices are given, all atoms are written."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.";
         item.default_value = "0 8";
         item.unit = "Ry/Bohr";
@@ -634,6 +654,11 @@ Also controled by out_freq_ion and out_app_flag.
                 catch (const std::invalid_argument& e) {
                     ModuleBase::WARNING("Input", "out_mat_dh precision must be an integer, using default 8");
                 }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh atom index must be an integer, skipping");
+                    }
             }
             catch (const std::invalid_argument& e) {
                 ModuleBase::WARNING("Input", "out_mat_dh enable flag must be 0/1, using default 0");
@@ -645,7 +670,367 @@ Also controled by out_freq_ion and out_app_flag.
                 ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh is not available for nspin = 4");
             }
         };
-        sync_intvec(input.out_mat_dh, 2, 0);
+        sync_intvec(input.out_mat_dh, para.input.out_mat_dh.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_t");
+        item.annotation = "output kinetic energy dH/dR (dT/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the kinetic energy matrix dT/dR."
+                          "\n\nSee out_mat_dh for format details (enable, precision, atom indices).";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_t[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_t[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_t[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_t precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_t.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_t atom index must be an integer, skipping");
+                    }
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_t enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_t[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_t is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_t, para.input.out_mat_dh_t.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_vl");
+        item.annotation = "output local pseudopotential dH/dR (dV^L/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the local pseudopotential matrix dV^L/dR."
+                          "\n\nSee out_mat_dh for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_vl[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_vl[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_vl[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_vl precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_vl.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_vl atom index must be an integer, skipping");
+                    }
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_vl enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_vl[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vl is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_vl, para.input.out_mat_dh_vl.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_vnl");
+        item.annotation = "output nonlocal pseudopotential dH/dR (dV^NL/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the nonlocal pseudopotential matrix dV^NL/dR."
+                          "\n\nSee out_mat_dh for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_vnl[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_vnl[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_vnl[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_vnl precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_vnl.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_vnl atom index must be an integer, skipping");
+                    }
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_vnl enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_vnl[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vnl is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_vnl, para.input.out_mat_dh_vnl.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_vh");
+        item.annotation = "output Hartree dH/dR (dV^H/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the Hartree matrix dV^H/dR."
+                          "\n\nSee out_mat_dh for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_vh[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_vh[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_vh[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_vh precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_vh.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_vh atom index must be an integer, skipping");
+                    }
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_vh enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_vh[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vh is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_vh, para.input.out_mat_dh_vh.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_vxc");
+        item.annotation = "output exchange-correlation dH/dR (dV^XC/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the XC matrix dV^XC/dR."
+                          "\n\nSee out_mat_dh for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_vxc[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_vxc[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_vxc[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_vxc precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_vxc.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_vxc atom index must be an integer, skipping");
+                    }
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_vxc enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_vxc[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_vxc is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_vxc, para.input.out_mat_dh_vxc.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_dh_exx");
+        item.annotation = "output exact-exchange dH/dR (dV^EXX/dR) matrices";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the derivatives of the exact-exchange matrix dV^EXX/dR."
+                          "\n\nSee out_mat_dh for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry/Bohr";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_dh_exx[0] = assume_as_boolean(item.str_values[0]);
+                para.input.out_mat_dh_exx[1] = 8;
+                if (count >= 2) try { para.input.out_mat_dh_exx[1] = std::stoi(item.str_values[1]); }
+                catch (const std::invalid_argument&) {
+                    ModuleBase::WARNING("Input", "out_mat_dh_exx precision must be an integer, using default 8");
+                }
+                for (size_t i = 2; i < count; ++i)
+                    try { para.input.out_mat_dh_exx.push_back(std::stoi(item.str_values[i]) - 1); }
+                    catch (const std::invalid_argument&) {
+                        ModuleBase::WARNING("Input", "out_mat_dh_exx atom index must be an integer, skipping");
+                    }
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_dh_exx enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_dh_exx[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh_exx is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_dh_exx, para.input.out_mat_dh_exx.size(), 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_t");
+        item.annotation = "output kinetic energy T(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the kinetic energy matrix T(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_t[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_t enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_t[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_t is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_t, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vnl");
+        item.annotation = "output nonlocal pseudopotential Vnl(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the nonlocal pseudopotential matrix Vnl(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_vnl[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_vnl enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_vnl[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vnl is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_vnl, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vl");
+        item.annotation = "output local pseudopotential Vl(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the local pseudopotential matrix Vl(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_vl[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_vl enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_vl[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vl is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_vl, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vh");
+        item.annotation = "output Hartree Vh(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the Hartree matrix Vh(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_vh[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_vh enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_vh[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vh is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_vh, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_vxc");
+        item.annotation = "output exchange-correlation Vxc(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the XC matrix Vxc(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_vxc[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_vxc enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_vxc[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_vxc is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_vxc, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_h_exx");
+        item.annotation = "output exact-exchange Vexx(R) matrix";
+        item.category = "Output information";
+        item.type = "Integer";
+        item.description = "Whether to print files containing the exact-exchange matrix Vexx(R) in CSR format."
+                          "\n\nSee out_mat_hs2 for format details.";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            try {
+                para.input.out_mat_h_exx[0] = assume_as_boolean(item.str_values[0]);
+            }
+            catch (const std::invalid_argument& e) {
+                ModuleBase::WARNING("Input", "out_mat_h_exx enable flag must be 0/1, using default 0");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_mat_h_exx[0] && para.input.nspin == 4)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_h_exx is not available for nspin = 4");
+        };
+        sync_intvec(input.out_mat_h_exx, 2, 0);
         this->add_item(item);
     }
     {
@@ -653,7 +1038,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output of derivative of S(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s."
+        item.description = "Whether to print files containing the derivatives of the overlap matrix. The optional second parameter controls text output precision. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.";
         item.default_value = "False 8";
         item.unit = "Ry/Bohr";
@@ -795,6 +1180,72 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.unit = "";
         item.availability = "Numerical atomic orbital basis";
         read_sync_bool(input.out_eband_terms);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_hr_npz");
+        item.annotation = "output H(R) matrix in npz format";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to print Hamiltonian matrices H(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.default_value = "False";
+        item.unit = "Ry";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_hr_npz);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_hr_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_hsr_npz");
+        item.annotation = "output H(R) and S(R) matrices in npz format";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.default_value = "False";
+        item.unit = "Ry";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_hsr_npz);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_hsr_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_dm_npz");
+        item.annotation = "output DM(R) matrix in npz format";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = "Whether to print density matrices DM(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.default_value = "False";
+        item.unit = "";
+        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        read_sync_bool(input.out_dm_npz);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_dm_npz)
+            {
+#ifndef __USECNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
         this->add_item(item);
     }
     {
@@ -966,12 +1417,14 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.type = R"(Integer \[Integer\](optional))";
         item.description = R"(Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as
 * nspin = 1:
-    * elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
+    * elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
 * nspin = 2:
-    * elf1.cube, elf2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
-    * elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
+    * elfs1.cube, elfs2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
+    * elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
 * nspin = 4 (noncollinear):
-    * elf.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
+    * elftot.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
+
+When `out_freq_ion > 0`, a geometry step suffix `g{#}` is appended to the file names (e.g., `elftotg1.cube`, `elfs1g1.cube`).
 
 The second integer controls the precision of the kinetic energy density output, if not given, will use 3 as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use 10.
 
@@ -991,9 +1444,9 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft")
+            if (para.input.out_elf[0] > 0 && para.input.esolver_type != "ksdft" && para.input.esolver_type != "ofdft" && para.input.esolver_type != "tddft")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "ELF is only aviailable for ksdft and ofdft");
+                ModuleBase::WARNING_QUIT("ReadInput", "ELF is only available for ksdft, ofdft and tddft");
             }
         };
         sync_intvec(input.out_elf, 2, 0);
@@ -1030,9 +1483,10 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output current or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Integer";
-        item.description = R"(* 0: Do not output current.
-* 1: Output current using the two-center integral, faster.
-* 2: Output current using the matrix commutation, more precise.)";
+        item.description = R"(Controls the current-density output method for LCAO RT-TDDFT.
+* 0: Do not output current.
+* 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center integral / spherical grid integral: $$\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right],$$ where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms (e.g., EXX) are not included explicitly.
+* 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis: $$\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S.$$ This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive.)";
         item.default_value = "0";
         item.unit = "";
         item.availability = "";

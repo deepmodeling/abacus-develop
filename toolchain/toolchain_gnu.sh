@@ -4,6 +4,10 @@
 #SBATCH -n 16
 #SBATCH -o compile.log
 #SBATCH -e compile.err
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)"
+source "${SCRIPT_DIR}/scripts/lib/wrapper_runner.sh"
+
 # Users can easily modify these parameters to customize the build
 
 # Before running this script, ensure you have loaded your system packages
@@ -44,6 +48,9 @@ WITH_LIBTORCH="no"
 WITH_LIBNPY="no"
 WITH_NEP="no"
 
+# Optional Features (DFT-D4 dispersion correction)
+WITH_DFTD4="install"
+
 # ELPA-GPU Support (uncomment and modify as needed)
 # ENABLE_CUDA="yes"
 # GPU_VERSION="75"  # Check your GPU compute capability
@@ -81,7 +88,7 @@ LIBTORCH_VERSION="main"     # main=2.1.2, alt=1.12.1 (use alt for older GLIBC)
 # ============================================================================
 
 # Call the main installation script with configured parameters
-exec ./install_abacus_toolchain_new.sh \
+run_toolchain_with_log compile.log ./install_abacus_toolchain_new.sh \
   --with-gcc="$WITH_GCC" \
   --with-intel="$WITH_INTEL" \
   --with-amd="$WITH_AMD" \
@@ -95,6 +102,7 @@ exec ./install_abacus_toolchain_new.sh \
   --with-libxc="$WITH_LIBXC" \
   --with-fftw="$WITH_FFTW" \
   --with-elpa="$WITH_ELPA" \
+  --with-dftd4="$WITH_DFTD4" \
   --with-cereal="$WITH_CEREAL" \
   --with-rapidjson="$WITH_RAPIDJSON" \
   --with-libtorch="$WITH_LIBTORCH" \
@@ -115,5 +123,4 @@ exec ./install_abacus_toolchain_new.sh \
   ${PACK_RUN_MODE:+$([ "$PACK_RUN_MODE" = "yes" ] && echo "--pack-run")} \
   ${ENABLE_CUDA:+--enable-cuda} \
   ${GPU_VERSION:+--gpu-ver="$GPU_VERSION"} \
-  "$@" \
-  | tee compile.log
+  "$@"

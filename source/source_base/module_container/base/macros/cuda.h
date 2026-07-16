@@ -67,11 +67,13 @@ struct GetTypeCuda<double>
 {
     static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_64F;
 };
+#if CUDA_VERSION >= 11000
 template <>
 struct GetTypeCuda<int64_t>
 {
     static constexpr cudaDataType cuda_data_type = cudaDataType::CUDA_R_64I;
 };
+#endif
 template <>
 struct GetTypeCuda<std::complex<float>>
 {

@@ -36,12 +36,13 @@ void cal_HR_exx(
     const int& current_spin,
     const double& sparse_threshold,
     const int (&nmp)[3],
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>& Hexxs)
+    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>>& Hexxs,
+    const double hybrid_alpha)
 {
     ModuleBase::TITLE("sparse_format", "cal_HR_exx");
     ModuleBase::timer::start("sparse_format", "cal_HR_exx");
 
-    const Tdata frac = GlobalC::exx_info.info_global.hybrid_alpha;
+    const Tdata frac = hybrid_alpha;
 
     std::map<int, std::array<double, 3>> atoms_pos;
     for (int iat = 0; iat < ucell.nat; ++iat)
@@ -157,7 +158,8 @@ template void cal_HR_exx<double>(
     const int& current_spin,
     const double& sparse_thr,
     const int (&nmp)[3],
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<double>>>>& Hexxs);
+    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<double>>>>& Hexxs,
+    const double hybrid_alpha);
 
 template void cal_HR_exx<std::complex<double>>(
     const UnitCell& ucell,
@@ -166,7 +168,8 @@ template void cal_HR_exx<std::complex<double>>(
     const int& current_spin,
     const double& sparse_thr,
     const int (&nmp)[3],
-    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>& Hexxs);
+    const std::vector<std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<std::complex<double>>>>>& Hexxs,
+    const double hybrid_alpha);
 
 } // namespace sparse_format
 

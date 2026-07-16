@@ -64,7 +64,7 @@ For numerical atomic orbitals basis,
 * scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
 * cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
 * cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
-* elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
+* elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DENABLE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
 If you set ks_solver=`genelpa` for basis_type=`pw`, the program will stop with an error message:
 
@@ -74,9 +74,9 @@ Then the user has to correct the input file and restart the calculation.)";
         item.default_value = R"(
     - PW basis: cg.
     - LCAO basis:
-        - genelpa (if compiling option `USE_ELPA` has been set)
+        - genelpa (if compiling option `ENABLE_ELPA` has been set)
         - lapack (if compiling option `ENABLE_MPI` has not been set)
-        - scalapack_gvx (if compiling option `USE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
+        - scalapack_gvx (if compiling option `ENABLE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
         - cusolver (if compiling option `USE_CUDA` has been set))";
         item.unit = "";
         item.availability = "";
@@ -297,7 +297,7 @@ Then the user has to correct the input file and restart the calculation.)";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nupdown = doublevalue;
-            para.sys.two_fermi = true;
+            para.sys.two_fermi = (doublevalue != 0.0);
         };
         item.reset_value = [](const Input_Item&, Parameter& para) {
             if (para.input.nspin == 1)
@@ -577,8 +577,11 @@ In general, the convergence of the Broyden method is slightly faster than that o
 * 0.4: nspin=2 and nspin=4
 * 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
 * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 < mixing_beta < 0.1.
+A progressive tuning strategy might help, for example, 0.4 -> 0.1 -> 0.025.
 
-Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.)";
+Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
+
+For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to converge, try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
         item.default_value = "0.8 for nspin=1, 0.4 for nspin=2 and nspin=4.";
         item.unit = "";
         item.availability = "";
@@ -611,7 +614,10 @@ Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_nd
         item.annotation = "mixing parameter for magnetic density";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "Mixing parameter of magnetic density.";
+        item.description = R"(Mixing parameter of magnetic density.
+
+If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
+
         item.default_value = "4*mixing_beta, but the maximum value is 1.6.";
         item.unit = "";
         item.availability = "";
@@ -831,7 +837,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.annotation = "charge density error";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If scf_ene_thr is set, the total-energy criterion (scf_ene_thr) is additionally checked only after the first SCF iteration and only when the charge-density criterion (scf_thr) has already been satisfied. For local-orbital calculations, 1e-6 is usually accurate enough.";
+        item.description = "It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.";
         item.default_value = "1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).";
         item.unit = "Ry if scf_thr_type=1, dimensionless if scf_thr_type=2";
         item.availability = "";
@@ -865,7 +871,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.annotation = "total energy error threshold";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the Hpsi operation in one SCF step. It is not the same as the screen-output EDIFF, which is the energy difference before Hpsi and after charge mixing (i.e., across both Hpsi and charge-mixing operations).";
+        item.description = "It's the energy threshold for electronic iteration. It represents the total energy error between two sequential densities from electronic iterations.";
         item.default_value = "-1.0. If the user does not set this parameter, it will not take effect.";
         item.unit = "eV";
         item.availability = "";
@@ -1084,6 +1090,9 @@ Use case: When experimental or high-level theoretical results suggest that the S
             }
             if (para.input.use_k_continuity && para.input.calculation == "nscf") {
                 ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for NSCF calculation");
+            }
+            if (para.input.use_k_continuity && para.input.kpar > 1) {
+                ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for k-point parallel calculation");
             }
             if (para.input.use_k_continuity && para.input.nspin == 2) {
                 ModuleBase::WARNING_QUIT("ReadInput", "use_k_continuity cannot work for spin-polarized calculation");

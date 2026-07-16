@@ -17,6 +17,7 @@
     - [kpar](#kpar)
     - [bndpar](#bndpar)
     - [latname](#latname)
+    - [assume\_isolated](#assume_isolated)
     - [init\_wfc](#init_wfc)
     - [init\_chg](#init_chg)
     - [init\_vel](#init_vel)
@@ -25,6 +26,8 @@
     - [diago\_proc](#diago_proc)
     - [nbspline](#nbspline)
     - [kspacing](#kspacing)
+    - [koffset](#koffset)
+    - [kmesh\_type](#kmesh_type)
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
     - [precision](#precision)
@@ -171,12 +174,27 @@
     - [out\_mat\_r](#out_mat_r)
     - [out\_mat\_t](#out_mat_t)
     - [out\_mat\_dh](#out_mat_dh)
+    - [out\_mat\_dh\_t](#out_mat_dh_t)
+    - [out\_mat\_dh\_vl](#out_mat_dh_vl)
+    - [out\_mat\_dh\_vnl](#out_mat_dh_vnl)
+    - [out\_mat\_dh\_vh](#out_mat_dh_vh)
+    - [out\_mat\_dh\_vxc](#out_mat_dh_vxc)
+    - [out\_mat\_dh\_exx](#out_mat_dh_exx)
+    - [out\_mat\_h\_t](#out_mat_h_t)
+    - [out\_mat\_h\_vnl](#out_mat_h_vnl)
+    - [out\_mat\_h\_vl](#out_mat_h_vl)
+    - [out\_mat\_h\_vh](#out_mat_h_vh)
+    - [out\_mat\_h\_vxc](#out_mat_h_vxc)
+    - [out\_mat\_h\_exx](#out_mat_h_exx)
     - [out\_mat\_ds](#out_mat_ds)
     - [out\_mat\_xc](#out_mat_xc)
     - [out\_mat\_xc2](#out_mat_xc2)
     - [out\_mat\_l](#out_mat_l)
     - [out\_xc\_r](#out_xc_r)
     - [out\_eband\_terms](#out_eband_terms)
+    - [out\_hr\_npz](#out_hr_npz)
+    - [out\_hsr\_npz](#out_hsr_npz)
+    - [out\_dm\_npz](#out_dm_npz)
     - [out\_mul](#out_mul)
     - [out\_app\_flag](#out_app_flag)
     - [out\_ndigits](#out_ndigits)
@@ -303,8 +321,6 @@
     - [exx\_pca\_threshold](#exx_pca_threshold)
     - [exx\_c\_threshold](#exx_c_threshold)
     - [exx\_cs\_inv\_thr](#exx_cs_inv_thr)
-    - [shrink\_abfs\_pca\_thr](#shrink_abfs_pca_thr)
-    - [shrink\_lu\_inv\_thr](#shrink_lu_inv_thr)
     - [exx\_v\_threshold](#exx_v_threshold)
     - [exx\_dm\_threshold](#exx_dm_threshold)
     - [exx\_c\_grad\_threshold](#exx_c_grad_threshold)
@@ -320,10 +336,6 @@
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
-    - [out\_unshrinked\_v](#out_unshrinked_v)
-    - [exx\_coul\_moment](#exx_coul_moment)
-    - [exx\_rotate\_abfs](#exx_rotate_abfs)
-    - [exx\_multip\_moments\_threshold](#exx_multip_moments_threshold)
   - [Exact Exchange (PW)](#exact-exchange-pw)
     - [exxace](#exxace)
     - [exx\_gamma\_extrapolation](#exx_gamma_extrapolation)
@@ -369,6 +381,7 @@
     - [msst\_tscale](#msst_tscale)
     - [msst\_qmass](#msst_qmass)
     - [md\_damp](#md_damp)
+    - [md\_csvr\_tau](#md_csvr_tau)
     - [md\_tolerance](#md_tolerance)
     - [md\_nraise](#md_nraise)
     - [cal\_syns](#cal_syns)
@@ -389,13 +402,19 @@
     - [sc\_thr](#sc_thr)
     - [nsc](#nsc)
     - [nsc\_min](#nsc_min)
-    - [sc\_scf\_nmin](#sc_scf_nmin)
     - [alpha\_trial](#alpha_trial)
     - [sccut](#sccut)
     - [sc\_drop\_thr](#sc_drop_thr)
     - [sc\_scf\_thr](#sc_scf_thr)
+    - [sc\_direction\_only](#sc_direction_only)
+    - [sc\_lambda\_strategy](#sc_lambda_strategy)
+    - [sc\_scan\_lambda\_start](#sc_scan_lambda_start)
+    - [sc\_scan\_lambda\_end](#sc_scan_lambda_end)
+    - [sc\_scan\_steps](#sc_scan_steps)
   - [vdW correction](#vdw-correction)
     - [vdw\_method](#vdw_method)
+    - [vdw\_d4\_xc](#vdw_d4_xc)
+    - [vdw\_d4\_model](#vdw_d4_model)
     - [vdw\_s6](#vdw_s6)
     - [vdw\_s8](#vdw_s8)
     - [vdw\_a1](#vdw_a1)
@@ -659,6 +678,19 @@
   - triclinic: triclinic
 - **Default**: none
 
+### assume_isolated
+
+- **Type**: String
+- **Description**: Used to perform a calculation assuming an isolated system in a 3D supercell.
+
+  Available options are:
+
+  - none: regular periodic calculation without isolated-system correction.
+  - makov-payne, m-p, mp: compute the Makov-Payne correction to the total energy and estimate a corrected vacuum level for eigenvalue alignment. This option is available only for cubic lattices (latname = sc, fcc, or bcc).
+
+  Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).
+- **Default**: none
+
 ### init_wfc
 
 - **Type**: String
@@ -685,6 +717,7 @@
   - file: the density will be read in from a binary file charge-density.dat first. If it does not exist, the charge density will be read in from cube files.
   - wfc: the density will be calculated by wavefunctions and occupations.
   - dm: the density will be calculated by real space density matrix(DMR) of LCAO base.
+  - dm_no_renormalize: same as dm, but the charge density is not renormalized to the number of electrons.
   - hr: the real space Hamiltonian matrix(HR) will be read in from file hrs1_nao.csr in directory read_file_dir.
   - auto: Abacus first attempts to read the density from a file; if not found, it defaults to using atomic density.
 - **Default**: atomic
@@ -733,6 +766,18 @@
   > Note: If gamma_only is set to be true, kspacing is invalid.
 - **Default**: 0.0
 
+### koffset
+
+- **Type**: Vector of Real (3 values)
+- **Description**: Set offsets for automatic k-point mesh generated by kspacing, in each reciprocal direction. This parameter is only effective when kspacing &gt; 0.0 and gamma_only is false.
+- **Default**: 0.0 0.0 0.0
+
+### kmesh_type
+
+- **Type**: String
+- **Description**: Set mesh type used for automatic k-point mesh generated by kspacing. Available options are gamma and mp. This parameter is only effective when kspacing &gt; 0.0 and gamma_only is false.
+- **Default**: gamma
+
 ### min_dist_coef
 
 - **Type**: Real
@@ -764,7 +809,7 @@
 ### gint_precision
 
 - **Type**: String
-- **Availability**: *Used only for LCAO basis set on CPU.*
+- **Availability**: *Used only for LCAO basis set.*
 - **Description**: Specifies the precision when performing grid integral in LCAO calculations.
   - single: single precision
   - double: double precision
@@ -1109,7 +1154,7 @@
   - cg: The conjugate-gradient (CG) method.
   - bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
   - dav: The Davidson algorithm.
-  - dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. pw_diag_ndim can be set to 2 for this method.
+  - dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
 
   For numerical atomic orbitals basis,
 
@@ -1118,13 +1163,20 @@
   - scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
   - cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
   - cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
-  - elpa: The ELPA solver supports both CPU and GPU. By setting the device to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
+  - elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DENABLE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
-  If you set ks_solver=genelpa for basis_type=pw, the program will stop with an error message:
+  If you set ks_solver=`genelpa` for basis_type=`pw`, the program will stop with an error message:
 
   ``text genelpa can not be used with plane wave basis. ``
 
   Then the user has to correct the input file and restart the calculation.
+- **Default**: 
+    - PW basis: cg.
+    - LCAO basis:
+        - genelpa (if compiling option `ENABLE_ELPA` has been set)
+        - lapack (if compiling option `ENABLE_MPI` has not been set)
+        - scalapack_gvx (if compiling option `ENABLE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
+        - cusolver (if compiling option `USE_CUDA` has been set)
 
 ### nbands
 
@@ -1261,14 +1313,19 @@
   - 0.4: nspin=2 and nspin=4
   - 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
   - 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 &lt; mixing_beta &lt; 0.1.
+  A progressive tuning strategy might help, for example, 0.4 -&gt; 0.1 -&gt; 0.025.
 
   Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
+
+  For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to converge, try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.
 - **Default**: 0.8 for nspin=1, 0.4 for nspin=2 and nspin=4.
 
 ### mixing_beta_mag
 
 - **Type**: Real
 - **Description**: Mixing parameter of magnetic density.
+
+  If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.
 - **Default**: 4*mixing_beta, but the maximum value is 1.6.
 
 ### mixing_ndim
@@ -1361,14 +1418,14 @@
 ### scf_thr
 
 - **Type**: Real
-- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. This criterion is always enabled. If `scf_ene_thr` is set, its total-energy criterion is applied as an additional convergence check only after the charge-density criterion (`scf_thr`) has been satisfied, and only from the second SCF iteration onward (`iter > 1`). For local-orbital calculations, 1e-6 is usually accurate enough.
+- **Description**: It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.
 - **Default**: 1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).
 - **Unit**: Ry if scf_thr_type=1, dimensionless if scf_thr_type=2
 
 ### scf_ene_thr
 
 - **Type**: Real
-- **Description**: It's the energy threshold for electronic iteration. The compared quantity is the total-energy difference evaluated from the charge densities before and after the `Hpsi` operation in one SCF step. It is not the same as the screen-output `EDIFF`, which is the energy difference before `Hpsi` and after charge mixing (i.e., across both `Hpsi` and charge-mixing operations).
+- **Description**: It's the energy threshold for electronic iteration. It represents the total energy error between two sequential densities from electronic iterations.
 - **Default**: -1.0. If the user does not set this parameter, it will not take effect.
 - **Unit**: eV
 
@@ -1772,7 +1829,29 @@
 
 - **Type**: Integer \[Integer\](optional)
 - **Description**: The first integer controls whether to output the charge density on real space grids:
-  - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder OUT.{suffix} too, which can be read in NSCF calculation.
+    - 1: Output the charge density (in Bohr^-3) on real space grids into the density files in the folder `OUT.${suffix}`. The files are named as:
+        - nspin = 1: `chg.cube`;
+        - nspin = 2: `chgs1.cube`, and `chgs2.cube`;
+        - nspin = 4: `chgs1.cube`, `chgs2.cube`, `chgs3.cube`, and `chgs4.cube`;
+        - When using the Meta-GGA functional, additional files containing the kinetic energy density are also output:
+            - nspin = 1: `tau.cube`;
+            - nspin = 2: `taus1.cube`, and `taus2.cube`;
+            - nspin = 4: `taus1.cube`, `taus2.cube`, `taus3.cube`, and `taus4.cube`;
+    - 2: On top of 1, also output the initial charge density files. The files are named as:
+        - out_freq_ion = 0:
+            - nspin = 1: `chg_ini.cube`;
+            - nspin = 2: `chgs1_ini.cube` and `chgs2_ini.cube`;
+            - nspin = 4: `chgs1_ini.cube`, `chgs2_ini.cube`, `chgs3_ini.cube`, and `chgs4_ini.cube`;
+            - output at every step (overwrite same file)
+        - out_freq_ion &gt; 0:
+            - nspin = 1: `chgg{geom_step}_ini.cube` (e.g., `chgg1_ini.cube`);
+            - nspin = 2: `chgs1g{geom_step}_ini.cube` and `chgs2g{geom_step}_ini.cube`;
+            - nspin = 4: `chgs1g{geom_step}_ini.cube`, `chgs2g{geom_step}_ini.cube`, `chgs3g{geom_step}_ini.cube`, and `chgs4g{geom_step}_ini.cube`.
+            - output every out_freq_ion steps
+        Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
+    - -1: Disable the charge density auto-back-up file `{suffix}-CHARGE-DENSITY.restart`, useful for large systems.
+
+  The second integer controls the precision of the charge density output. If not given, `3` is used as default. For restarting from this file and other high-precision calculations, `10` is recommended.
 
   In molecular dynamics simulations, the output frequency is controlled by out_freq_ion.
 
@@ -1786,11 +1865,19 @@
    - nspin = 1: pots1.cube;
    - nspin = 2: pots1.cube and pots2.cube;
    - nspin = 4: pots1.cube, pots2.cube, pots3.cube, and pots4.cube
-  - 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
+  - 2: Output the electrostatic potential on real space grids into OUT.{suffix}/pot_es.cube. The Python script named tools/02_postprocessing/average_pot/aveElecStatPot.py can be used to calculate the average electrostatic potential along the z-axis and outputs it into ElecStaticPot_AVE. Please note that the total local potential refers to the local component of the self-consistent potential, excluding the non-local pseudopotential. The distinction between the local potential and the electrostatic potential is as follows: local potential = electrostatic potential + XC potential.
   - 3: Apart from 1, also output the total local potential of the initial charge density. The files are named as:
-   - nspin = 1: pots1_ini.cube;
-   - nspin = 2: pots1_ini.cube and pots2_ini.cube;
-   - nspin = 4: pots1_ini.cube, pots2_ini.cube, pots3_ini.cube, and pots4_ini.cube
+   - out_freq_ion = 0:
+   - nspin = 1: `pot_ini.cube`;
+   - nspin = 2: `pots1_ini.cube` and `pots2_ini.cube`;
+   - nspin = 4: `pots1_ini.cube`, `pots2_ini.cube`, `pots3_ini.cube`, and `pots4_ini.cube`;
+   - output at every step (overwrite same file)
+   - out_freq_ion &gt; 0:
+   - nspin = 1: `potg{geom_step}_ini.cube` (e.g., `potg1_ini.cube`);
+   - nspin = 2: `pots1g{geom_step}_ini.cube` and `pots2g{geom_step}_ini.cube`;
+   - nspin = 4: `pots1g{geom_step}_ini.cube`, `pots2g{geom_step}_ini.cube`, `pots3g{geom_step}_ini.cube`, and `pots4g{geom_step}_ini.cube`.
+   - output every out_freq_ion steps
+   Here, {geom_step} denotes the geometry step index, starting from 1 (geom_step = istep + 1).
 
   The optional second integer controls the output precision. If not provided, the default precision is 8.
 
@@ -1804,19 +1891,18 @@
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis*
 - **Description**: Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. For current develop versions, out_dmk writes *_nao.txt files and includes a g{istep} index in the file name:
-  - For gamma only case:
-   - nspin = 1 and 4: dmg1_nao.txt;
-   - nspin = 2: dms1g1_nao.txt and dms2g1_nao.txt for the two spin channels.
-  - For multi-k points case:
-   - nspin = 1 and 4: dmk1g1_nao.txt, dmk2g1_nao.txt, ...;
-   - nspin = 2: dmk1s1g1_nao.txt... and dmk1s2g1_nao.txt... for the two spin channels.
+    - For gamma only case:
+     - nspin = 1 and 4: dmg1_nao.txt;
+     - nspin = 2: dms1g1_nao.txt and dms2g1_nao.txt for the two spin channels.
+    - For multi-k points case:
+     - nspin = 1 and 4: dmk1g1_nao.txt, dmk2g1_nao.txt, ...;
+     - nspin = 2: dmk1s1g1_nao.txt... and dmk1s2g1_nao.txt... for the two spin channels.
 
-  Here, g{istep} denotes the geometry/step index in the output file name.
+    Here, g{istep} denotes the geometry/step index in the output file name.
 
-  > Note: Version difference (develop vs 3.10-LTS):
-  >
-  > - In develop, out_dmk supports both gamma-only and multi-k-point density-matrix output.
-  > - In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.
+    > Note: Version difference (develop vs 3.10-LTS):
+    - In develop, out_dmk supports both gamma-only and multi-k-point density-matrix output.
+    - In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.
 - **Default**: False
 
 ### out_dmr
@@ -1962,7 +2048,7 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
+- **Description**: Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. The optional second parameter controls text output precision. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
 
   > Note: In the 3.10-LTS version, the file name is data-rR-sparse.csr.
 - **Default**: False 8
@@ -1972,7 +2058,7 @@
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Generate files containing the kinetic energy matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
+- **Description**: Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.
 - **Default**: False 8
@@ -1984,15 +2070,125 @@
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
 - **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
+  Format: &lt;enable&gt; [precision] [iat1 iat2 ...]. The first value (0/1) enables/disables output. The second optional value sets the output precision (default: 8). Starting from the third value, 1-based atom indices can be listed to restrict output to derivatives with respect to those specific atoms only; if no atom indices are given, all atoms are written.
+
   > Note: In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.
 - **Default**: 0 8
 - **Unit**: Ry/Bohr
+
+### out_mat_dh_t
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the derivatives of the kinetic energy matrix dT/dR.
+
+  See out_mat_dh for format details (enable, precision, atom indices).
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_vl
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the derivatives of the local pseudopotential matrix dV^L/dR.
+
+  See out_mat_dh for format details.
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_vnl
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the derivatives of the nonlocal pseudopotential matrix dV^NL/dR.
+
+  See out_mat_dh for format details.
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_vh
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the derivatives of the Hartree matrix dV^H/dR.
+
+  See out_mat_dh for format details.
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_vxc
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the derivatives of the XC matrix dV^XC/dR.
+
+  See out_mat_dh for format details.
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_dh_exx
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the derivatives of the exact-exchange matrix dV^EXX/dR.
+
+  See out_mat_dh for format details.
+- **Default**: 0 8
+- **Unit**: Ry/Bohr
+
+### out_mat_h_t
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the kinetic energy matrix T(R) in CSR format.
+
+  See out_mat_hs2 for format details.
+- **Default**: 0 8
+- **Unit**: Ry
+
+### out_mat_h_vnl
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the nonlocal pseudopotential matrix Vnl(R) in CSR format.
+
+  See out_mat_hs2 for format details.
+- **Default**: 0 8
+- **Unit**: Ry
+
+### out_mat_h_vl
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the local pseudopotential matrix Vl(R) in CSR format.
+
+  See out_mat_hs2 for format details.
+- **Default**: 0 8
+- **Unit**: Ry
+
+### out_mat_h_vh
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the Hartree matrix Vh(R) in CSR format.
+
+  See out_mat_hs2 for format details.
+- **Default**: 0 8
+- **Unit**: Ry
+
+### out_mat_h_vxc
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the XC matrix Vxc(R) in CSR format.
+
+  See out_mat_hs2 for format details.
+- **Default**: 0 8
+- **Unit**: Ry
+
+### out_mat_h_exx
+
+- **Type**: Integer
+- **Description**: Whether to print files containing the exact-exchange matrix Vexx(R) in CSR format.
+
+  See out_mat_hs2 for format details.
+- **Default**: 0 8
+- **Unit**: Ry
 
 ### out_mat_ds
 
 - **Type**: Boolean \[Integer\](optional)
 - **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
-- **Description**: Whether to print files containing the derivatives of the overlap matrix. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
+- **Description**: Whether to print files containing the derivatives of the overlap matrix. The optional second parameter controls text output precision. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
 
   > Note: In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.
 - **Default**: False 8
@@ -2045,6 +2241,29 @@
 - **Type**: Boolean
 - **Availability**: *Numerical atomic orbital basis*
 - **Description**: Whether to print the band energy terms separately in the file OUT.{term}_out.dat. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).
+- **Default**: False
+
+### out_hr_npz
+
+- **Type**: Boolean
+- **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
+- **Description**: Whether to print Hamiltonian matrices H(R) in npz format. This feature does not work for gamma-only calculations.
+- **Default**: False
+- **Unit**: Ry
+
+### out_hsr_npz
+
+- **Type**: Boolean
+- **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
+- **Description**: Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. This feature does not work for gamma-only calculations.
+- **Default**: False
+- **Unit**: Ry
+
+### out_dm_npz
+
+- **Type**: Boolean
+- **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
+- **Description**: Whether to print density matrices DM(R) in npz format. This feature does not work for gamma-only calculations.
 - **Default**: False
 
 ### out_mul
@@ -2126,12 +2345,14 @@
 - **Availability**: *Only for Kohn-Sham DFT and Orbital Free DFT.*
 - **Description**: Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as
   - nspin = 1:
-    - elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
+    - elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
   - nspin = 2:
-    - elf1.cube, elf2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
-    - elf.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
+    - elfs1.cube, elfs2.cube: ${\rm{ELF}}_\sigma = \frac{1}{1+\chi_\sigma^2}$, $\chi_\sigma = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i,\sigma}|^2} - \frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}$;
+    - elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i,\sigma}{f_i |\nabla\psi_{i,\sigma}|^2} - \sum_{\sigma}{\frac{|\nabla\rho_\sigma|^2}{8\rho_\sigma}}}{\sum_{\sigma}{\frac{3}{10}(6\pi^2)^{2/3}\rho_\sigma^{5/3}}}$;
   - nspin = 4 (noncollinear):
-    - elf.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
+    - elftot.cube: ELF for total charge density, ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$
+
+  When `out_freq_ion &gt; 0`, a geometry step suffix `g{#}` is appended to the file names (e.g., `elftotg1.cube`, `elfs1g1.cube`).
 
   The second integer controls the precision of the kinetic energy density output, if not given, will use 3 as default. For purpose restarting from this file and other high-precision involved calculation, recommend to use 10.
 
@@ -2402,8 +2623,8 @@
   - vw: von Weizsacker (vW) functional
   - tf+: TF + vW functional
   - wt: Wang-Teter (WT) functional
-  - ext-wt: Extended Wang-Teter (ext-WT) functional
-  - xwm: Xu-Wang-Ma (XWM) functional
+  - ext-wt: Extended Wang-Teter functional
+  - xwm: XWM functional
   - lkt: Luo-Karasiev-Trickey (LKT) functional
   - ml: Machine learning KEDF
   - mpn: MPN KEDF (automatically sets ml parameters)
@@ -2477,7 +2698,7 @@
 - **Type**: Real
 - **Availability**: *OFDFT with of_kinetic=ext-wt*
 - **Description**: Parameter kappa for EXT-WT KEDF.
-- **Default**: $\dfrac{1}{2(4/3)^{1/3}-1} \approx 0.832$
+- **Default**: 1.0 / (2.0 * std::pow(4./3., 1./3.) - 1.0)
 
 ### of_wt_rho0
 
@@ -2977,18 +3198,6 @@
 - **Description**: By default, the Coulomb matrix inversion required for obtaining LRI coefficients is performed using LU decomposition. However, this approach may suffer from numerical instabilities when a large set of auxiliary basis functions (ABFs) is employed. When exx_cs_inv_thr &gt; 0, the inversion is instead carried out via matrix diagonalization. Eigenvalues smaller than exx_cs_inv_thr are discarded to improve numerical stability. A relatively safe and commonly recommended value is 1e-5.
 - **Default**: -1
 
-### shrink_abfs_pca_thr
-
-- **Type**: Real
-- **Description**: Threshold to shrink the auxiliary basis for GW/RPA calculations.
-- **Default**: -1
-
-### shrink_lu_inv_thr
-
-- **Type**: Real
-- **Description**: Threshold for obtaining the inverse of the overlap matrix by LU decomposition in the auxiliary-basis representation.
-- **Default**: 1e-6
-
 ### exx_v_threshold
 
 - **Type**: Real
@@ -3085,30 +3294,6 @@
 - **Type**: Boolean
 - **Description**: Whether to output the coefficient tensor C(R) and ABFs-representation Coulomb matrix V(R) for each atom pair and cell in real space.
 - **Default**: false
-
-### out_unshrinked_v
-
-- **Type**: Boolean
-- **Description**: Whether to output the large Vq matrix in the unshrinked auxiliary basis.
-- **Default**: false
-
-### exx_coul_moment
-
-- **Type**: Boolean
-- **Description**: Whether to use the moment method for Coulomb calculation.
-- **Default**: false
-
-### exx_rotate_abfs
-
-- **Type**: Boolean
-- **Description**: Whether to rotate the auxiliary basis for Coulomb calculation.
-- **Default**: false
-
-### exx_multip_moments_threshold
-
-- **Type**: Real
-- **Description**: Threshold to screen multipole moments in Coulomb calculation.
-- **Default**: 1e-10
 
 [back to top](#full-list-of-input-keywords)
 
@@ -3443,6 +3628,14 @@
 - **Default**: 1.0
 - **Unit**: fs
 
+### md_csvr_tau
+
+- **Type**: Real
+- **Availability**: *md_thermostat = csvr*
+- **Description**: The characteristic time scale for the CSVR (Canonical Sampling through Velocity Rescaling) thermostat. Larger values give weaker coupling, smaller values give stronger coupling. Recommended value: 100 * md_dt.
+- **Default**: 100.0
+- **Unit**: fs
+
 ### md_tolerance
 
 - **Type**: Real
@@ -3460,8 +3653,12 @@
 
 ### cal_syns
 
-- **Type**: Boolean
+- **Type**: Boolean [Integer](optional)
 - **Description**: Whether to calculate and output asynchronous overlap matrix for Hefei-NAMD interface. When enabled, calculates &lt;phi(t-1)|phi(t)&gt; by computing overlap between basis functions at atomic positions from previous time step and current time step. The overlap is calculated by shifting atom positions backward by velocity x md_dt. Output file: OUT.*/syns_nao.csr in CSR format.
+
+  - 0 or false: disable
+  - 1 or true: enable with default precision (8 digits)
+  - 1 5: enable with custom precision (5 digits)
 
   > Note: Only works with LCAO basis and molecular dynamics calculations. Requires atomic velocities. Output starts from the second MD step (istep &gt; 0).
 - **Default**: False
@@ -3592,13 +3789,6 @@
 - **Description**: Minimum number of spin-constrained iteration
 - **Default**: 2
 
-### sc_scf_nmin
-
-- **Type**: Integer
-- **Availability**: *sc_mag_switch is true*
-- **Description**: Minimum number of outer scf loop before initializing lambda loop
-- **Default**: 2
-
 ### alpha_trial
 
 - **Type**: Real
@@ -3629,6 +3819,50 @@
 - **Description**: Density error threshold for inner loop of spin-constrained SCF
 - **Default**: 1.0e-4
 
+### sc_direction_only
+
+- **Type**: Boolean
+- **Availability**: *sc_mag_switch is true*
+- **Description**: When true, only the direction of the magnetic moment is constrained to the target direction, while the magnitude is allowed to vary freely. This is useful for studying magnetic anisotropy or when the magnitude of the moment is determined by the electronic structure rather than an external constraint.
+
+  When false (default), both the direction and magnitude of the magnetic moment are constrained to the target values.
+- **Default**: False
+
+### sc_lambda_strategy
+
+- **Type**: String
+- **Availability**: *sc_mag_switch is true*
+- **Description**: Lambda update strategy for spin-constrained DFT:
+  - bfgs: BFGS quasi-Newton method
+  - linear_response: linear response (Scheme B)
+  - augmented_lagrangian: augmented Lagrangian (Scheme C)
+  - hybrid_delayed: hybrid delayed update (Scheme D)
+  - linear_scan: linear sweep of lambda for testing magnetic moment response
+- **Default**: bfgs
+
+### sc_scan_lambda_start
+
+- **Type**: Float
+- **Availability**: *sc_lambda_strategy is linear_scan*
+- **Description**: Starting lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.
+- **Default**: 0.0
+- **Unit**: eV/uB
+
+### sc_scan_lambda_end
+
+- **Type**: Float
+- **Availability**: *sc_lambda_strategy is linear_scan*
+- **Description**: Ending lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.
+- **Default**: 1.0
+- **Unit**: eV/uB
+
+### sc_scan_steps
+
+- **Type**: Integer
+- **Availability**: *sc_lambda_strategy is linear_scan*
+- **Description**: Number of lambda values to scan. Only used when sc_lambda_strategy=linear_scan.
+- **Default**: 20
+
 [back to top](#full-list-of-input-keywords)
 
 ## vdW correction
@@ -3640,10 +3874,30 @@
   - d2: Grimme's D2 dispersion correction method
   - d3_0: Grimme's DFT-D3(0) dispersion correction method (zero-damping)
   - d3_bj: Grimme's DFTD3(BJ) dispersion correction method (BJ-damping)
+  - d4: Grimme's DFT-D4 dispersion correction method using the external DFT-D4 library
   - none: no vdW correction
 
   > Note: ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.
 - **Default**: none
+
+### vdw_d4_xc
+
+- **Type**: String
+- **Availability**: *vdw_method is set to d4*
+- **Description**: Functional name used to load DFT-D4 damping parameters from the DFT-D4 library.
+  If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.
+- **Default**: default
+
+### vdw_d4_model
+
+- **Type**: String
+- **Availability**: *vdw_method is set to d4*
+- **Description**: DFT-D4 dispersion model used by the external DFT-D4 library.
+  Available options are:
+
+  - d4: standard D4 model
+  - d4s: smooth D4S model
+- **Default**: d4
 
 ### vdw_s6
 
@@ -3759,7 +4013,7 @@
 ### vdw_cn_thr
 
 - **Type**: Real
-- **Availability**: *vdw_method is set to d3_0 or d3_bj*
+- **Availability**: *vdw_method is set to d3_0, d3_bj, or d4*
 - **Description**: The cutoff radius when calculating coordination numbers.
 - **Default**: 40
 - **Unit**: defined by vdw_cn_thr_unit (default: Bohr)
@@ -4118,9 +4372,10 @@
 ### out_current
 
 - **Type**: Integer
-- **Description**: - 0: Do not output current.
-  - 1: Output current using the two-center integral, faster.
-  - 2: Output current using the matrix commutation, more precise.
+- **Description**: Controls the current-density output method for LCAO RT-TDDFT.
+  - 0: Do not output current.
+  - 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center integral / spherical grid integral: $$\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right],$$ where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms (e.g., EXX) are not included explicitly.
+  - 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis: $$\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S.$$ This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive.
 - **Default**: 0
 
 ### out_current_k

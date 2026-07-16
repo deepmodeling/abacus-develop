@@ -11,17 +11,15 @@
 #include "source_cell/pseudo.h"
 #include "source_cell/setup_nonlocal.h"
 #include "source_cell/unitcell.h"
-#include "source_estate/magnetism.h"
+#include "source_cell/magnetism.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
-#include "source_io/module_unk/berryphase.h"
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_base/mathzone.h"
 #include "source_base/parallel_global.h"
 #include "source_cell/parallel_kpoints.h"
-bool berryphase::berry_phase_flag = false;
 
 pseudo::pseudo()
 {

@@ -33,13 +33,9 @@
  *       Tests gather_int_all() and reduce_min()
  *   5. GatherDoubleAll:
  *       Tests reduce_min_double() and reduce_max_double()
- *   6. ReduceIntDiag:
- *       Tests reduce_int_diag()
- *   7. ReduceDoubleDiag:
+ *   6. ReduceDoubleDiag:
  *       Tests reduce_double_diag()
- *   8. ReduceIntGrid:
- *       Tests reduce_int_grid()
- *   9. ReduceDoubleGrid:
+ *   8. ReduceDoubleGrid:
  *       Tests reduce_double_grid()
  *   10.ReduceDoublePool:
  *       Tests two variations of reduce_pool()
@@ -270,49 +266,6 @@ TEST_F(ParaReduce, GatherDoubleAll)
     delete[] array;
 }
 
-TEST_F(ParaReduce, ReduceIntDiag)
-{
-    /// num_per_process = 2;
-    // NPROC is set to 4 in parallel_global_test.sh
-    if (nproc == 4)
-    {
-        Parallel_Global::split_diag_world(2, nproc, my_rank, mpiContext.drank, mpiContext.dsize, mpiContext.dcolor);
-        // generate a random array
-        int* rand_array = NULL;
-        rand_array = get_rand_array<int>(num_per_process, my_rank);
-
-        // calculate local sum
-        int local_sum = 0;
-        for (int i = 0; i < num_per_process; i++)
-        {
-            local_sum += rand_array[i];
-            /// printf(" pre world_rank %d, drank %d rand_array[%d] = %d\n",
-            ///	my_rank,mpiContext.dsize,i, rand_array[i]);
-        }
-
-        // first way of calculating diag sum
-        int diag_sum_first = local_sum;
-        Parallel_Reduce::reduce_int_diag(diag_sum_first);
-        // second way of calculating global sum
-        int* swap = new int[num_per_process]();
-        MPI_Allreduce(rand_array, swap, num_per_process, MPI_INT, MPI_SUM, DIAG_WORLD);
-        int diag_sum_second = 0;
-        for (int i = 0; i < num_per_process; i++)
-        {
-            diag_sum_second += swap[i];
-            /// printf(" post world_rank %d, drank %d swap[%d] = %d\n",
-            ///	my_rank,mpiContext.dsize,i, swap[i]);
-        }
-        // compare two sums
-        /// printf("world_rank %d, drank %d sum1 = %d, sum2 = %d\n",
-        ///	my_rank,mpiContext.dsize,diag_sum_first, diag_sum_second);
-        EXPECT_EQ(diag_sum_first, diag_sum_second);
-        delete[] rand_array;
-        delete[] swap;
-        MPI_Comm_free(&DIAG_WORLD);
-    }
-}
-
 TEST_F(ParaReduce, ReduceDoubleDiag)
 {
     /// num_per_process = 1;
@@ -352,48 +305,6 @@ TEST_F(ParaReduce, ReduceDoubleDiag)
         EXPECT_NEAR(diag_sum_first, diag_sum_second, 1e-13);
         delete[] rand_array;
         MPI_Comm_free(&DIAG_WORLD);
-    }
-}
-
-TEST_F(ParaReduce, ReduceIntGrid)
-{
-    /// num_per_process = 2;
-    // NPROC is set to 4 in parallel_global_test.sh
-    if (nproc == 4)
-    {
-        Parallel_Global::split_grid_world(2, nproc, my_rank, mpiContext.grank, mpiContext.gsize);
-        // generate a random array
-        int* rand_array = NULL;
-        rand_array = get_rand_array<int>(num_per_process, my_rank);
-
-        // calculate local sum
-        int local_sum = 0;
-        for (int i = 0; i < num_per_process; i++)
-        {
-            local_sum += rand_array[i];
-            /// printf(" pre world_rank %d, drank %d rand_array[%d] = %d\n",
-            ///	my_rank,mpiContext.dsize,i, rand_array[i]);
-        }
-
-        // first way of calculating diag sum
-        int grid_sum_first = 0;
-        MPI_Allreduce(&local_sum, &grid_sum_first, 1, MPI_INT, MPI_SUM, GRID_WORLD);
-
-        // second way of calculating global sum
-        Parallel_Reduce::reduce_int_grid(rand_array, num_per_process);
-        int grid_sum_second = 0;
-        for (int i = 0; i < num_per_process; i++)
-        {
-            grid_sum_second += rand_array[i];
-            /// printf(" post world_rank %d, drank %d rand_array[%d] = %d\n",
-            ///	my_rank,mpiContext.dsize,i, rand_array[i]);
-        }
-        // compare two sums
-        /// printf("world_rank %d, drank %d sum1 = %d, sum2 = %d\n",
-        ///	my_rank,mpiContext.dsize,grid_sum_first, grid_sum_second);
-        EXPECT_EQ(grid_sum_first, grid_sum_second);
-        delete[] rand_array;
-        MPI_Comm_free(&GRID_WORLD);
     }
 }
 

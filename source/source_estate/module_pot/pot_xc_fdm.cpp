@@ -5,6 +5,7 @@
 
 #include "pot_xc_fdm.h"
 #include "source_hamilt/module_xc/xc_functional.h"
+#include "source_io/module_parameter/parameter.h"
 
 namespace elecstate
 {
@@ -19,8 +20,19 @@ PotXC_FDM::PotXC_FDM(
 	this->dynamic_mode = true;
 	this->fixed_mode = false;
 
+	const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+	const double hse_omega = XC_Functional::get_hse_omega();
+#else
+	const double hse_omega = 0.0;
+#endif
 	const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v_0
-		= XC_Functional::v_xc(this->chg_0->nrxx, this->chg_0, ucell);
+		= XC_Functional::v_xc(this->chg_0->nrxx, this->chg_0, ucell,
+							  PARAM.inp.nspin,
+							  PARAM.globalv.domag,
+							  PARAM.globalv.domag_z,
+							  hybrid_alpha,
+							  hse_omega);
 	this->v_xc_0 = std::get<2>(etxc_vtxc_v_0);
 }
 
@@ -46,8 +58,19 @@ void PotXC_FDM::cal_v_eff(
 		chg_01.rho_core[ir] = chg_0->rho_core[ir] + chg_1->rho_core[ir];
 	}
 
+	const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+	const double hse_omega = XC_Functional::get_hse_omega();
+#else
+	const double hse_omega = 0.0;
+#endif
 	const std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v_01
-		= XC_Functional::v_xc(chg_01.nrxx, &chg_01, ucell);
+		= XC_Functional::v_xc(chg_01.nrxx, &chg_01, ucell,
+							  PARAM.inp.nspin,
+							  PARAM.globalv.domag,
+							  PARAM.globalv.domag_z,
+							  hybrid_alpha,
+							  hse_omega);
 	const ModuleBase::matrix &v_xc_01 = std::get<2>(etxc_vtxc_v_01);
 
 	v_eff += v_xc_01 - this->v_xc_0;
@@ -56,4 +79,3 @@ void PotXC_FDM::cal_v_eff(
 }
 
 } // namespace elecstate
-

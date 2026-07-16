@@ -19,11 +19,9 @@ InfoNonlocal::~InfoNonlocal()
 #endif
 Magnetism::Magnetism()
 {
-    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
 Parallel_Grid::~Parallel_Grid(){};
 

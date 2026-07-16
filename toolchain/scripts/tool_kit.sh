@@ -871,13 +871,7 @@ checksum() {
   # sha256sum, but has an equivalent with shasum -a 256
   command -v "$__shasum_command" > /dev/null 2>&1 ||
     __shasum_command="shasum -a 256"
-  if echo "$__sha256  $__filename" | ${__shasum_command} --check; then
-    echo "Checksum of $__filename Ok"
-  else
-    rm -v ${__filename}
-    report_error "Checksum of $__filename could not be verified, abort."
-    return 1
-  fi
+  echo "$__sha256  $__filename" | ${__shasum_command} --check
 }
 
 # Enhanced checksum verification with multiple hash algorithms
@@ -923,29 +917,6 @@ verify_file_integrity() {
   fi
 }
 
-# downloader for the package tars, includes checksum
-# backup and deprecated
-download_pkg_from_org() {
-  # usage: download_pkg_from_org sha256 filename
-  echo "use cp2k mirror to download $__filename"
-  local __sha256="$1"
-  local __filename="$2"
-  local __url="https://www.cp2k.org/static/downloads/$__filename"
-  # download
-  #echo "wget ${DOWNLOADER_FLAGS} --quiet $__url"
-  #if ! wget ${DOWNLOADER_FLAGS} --quiet $__url; then
-  echo "wget ${DOWNLOADER_FLAGS} $__url"
-  if ! wget ${DOWNLOADER_FLAGS} $__url; then
-    report_error "failed to download $__url"
-    recommend_offline_installation $__filename $__url
-    if [ "${PACK_RUN}" != "__TRUE__" ]; then
-        return 1
-    fi
-  fi
-  # checksum
-  checksum "$__filename" "$__sha256"
-}
-
 download_pkg_from_url() {
   # usage: download_pkg_from_url sha256 filename url
   local __sha256="$1" # if set to "--no-checksum", do not check checksum
@@ -956,7 +927,7 @@ download_pkg_from_url() {
   case "${DOWNLOAD_CERT_POLICY:-smart}" in
     "strict")
       echo "Downloading with strict certificate validation: $__url"
-      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      if ! wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
         rm -f "$__filename"
         report_error "failed to download $__url (strict certificate validation)"
         recommend_offline_installation "$__filename" "$__url"
@@ -967,7 +938,7 @@ download_pkg_from_url() {
       ;;
     "skip")
       echo "Downloading with certificate validation disabled: $__url"
-      if ! wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
+      if ! wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename" --no-check-certificate; then
         rm -f "$__filename"
         report_error "failed to download $__url"
         recommend_offline_installation "$__filename" "$__url"
@@ -979,7 +950,7 @@ download_pkg_from_url() {
     "smart"|*)
       # Smart fallback: try with certificate validation first, then without
       echo "Attempting secure download: $__url"
-      if wget ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
+      if wget --quiet --show-progress ${DOWNLOADER_FLAGS} "$__url" -O "$__filename"; then
         echo "Download successful with certificate validation"
       else
         echo "Certificate validation failed, retrying without certificate check..."
@@ -997,9 +968,34 @@ download_pkg_from_url() {
       ;;
   esac
   
-  # checksum validation (unchanged)
-  if [ "$__sha256" != "--no-checksum" ]; then
-    checksum "$__filename" "$__sha256"
+  # checksum
+  if checksum "$__filename" "$__sha256"; then
+    echo "Checksum of $__filename OK"
+  else
+    rm -vf "${__filename}"
+    report_error "Checksum of $__filename could not be verified, abort."
+    return 1
+  fi
+}
+
+# retrieve package under current directory with filename and checksum verification
+# if file exists and checksum is correct, print the success message
+# if file exists but checksum is incorrect, delete and re-download
+# if file does not exist, download from corresponding websites
+retrieve_package() {
+  local __sha256="$1"
+  local __filename="$2"
+  local __url="$3"
+  if ! [ -f "${__filename}" ]; then
+    download_pkg_from_url "${__sha256}" "${__filename}" "${__url}"
+  else
+    if ! checksum "$__filename" "$__sha256"; then
+      echo "$__filename is found but checksum is wrong; delete and re-download"
+      rm -vf "${__filename}"
+      download_pkg_from_url "${__sha256}" "${__filename}" "${__url}"
+    else
+      echo "$__filename is found and checksum is right"
+    fi
   fi
 }
 
@@ -1052,4 +1048,20 @@ write_toolchain_env() {
 
     export -p
   ) > "${__installdir}/toolchain.env"
+}
+
+# Write a setup file without containing flags unnecessay for building and running ABACUS
+filter_setup() {
+  local source_file="$1"
+  local target_file="$2"
+
+  # Check if setup_xxx file exists
+  if [[ ! -f "$source_file" ]]; then
+    report_error "File '$source_file' does not exist."
+    return 1
+  fi
+
+  local filename=$(basename "$source_file")
+  echo "# ==================== Setup for ${filename#*_} ==================== #" >> "$target_file"
+  sed '/if[[:space:]]/,/^[[:space:]]*fi$/d' "$source_file" | grep -v -E '# For|# Other|with_|FLAGS|LIBS|INCLUDES' >> "$target_file"
 }

@@ -1,8 +1,5 @@
 #include "elecstate.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
-#include "source_base/memory.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_title.h"
 #include "occupy.h"
@@ -25,23 +22,6 @@ void ElecState::init_nelec_spin()
         this->nelec_spin[0] = (PARAM.inp.nelec + PARAM.inp.nupdown) / 2.0;
         this->nelec_spin[1] = (PARAM.inp.nelec - PARAM.inp.nupdown) / 2.0;
     }
-}
-
-void ElecState::init_scf(const UnitCell& ucell,
-                         const Parallel_Grid& pgrid,
-                         const ModuleBase::ComplexMatrix& strucfac, 
-                         const bool* numeric,
-                         ModuleSymmetry::Symmetry& symm, 
-                         const void* wfcpw)
-{
-    //! core correction potential.
-    this->charge->set_rho_core(ucell,strucfac, numeric);
-
-    //! renormalize the charge density
-    this->charge->renormalize_rho();
-
-    //! initialize the potential
-    this->pot->init_pot(this->charge);
 }
 
 

@@ -3,16 +3,45 @@
 
 #include "source_base/global_function.h"
 #include "source_cell/sep_cell.h"
-#include "source_estate/magnetism.h"
+#include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
+#include "source_cell/module_neighlist/atom_provider.h"
 
 #ifdef __LCAO
 #include "setup_nonlocal.h"
 #endif
 
 // provide the basic information about unitcell.
-class UnitCell {
+class UnitCell : public AtomProvider {
   public:
+    double get_lat0() const override {
+        return lat0;
+    }
+
+    double get_omega() const override {
+        return omega;
+    }
+
+    const ModuleBase::Matrix3& get_latvec() const override {
+        return latvec;
+    }
+
+    int get_natom() const override {
+        return nat;
+    }
+
+    int get_na(int i) const override {
+        return atoms[i].na;
+    }
+
+    int get_ntype() const override {
+        return ntype;
+    }
+
+    ModuleBase::Vector3<double> get_tau(int i, int j) const override {
+        return atoms[i].tau[j];
+    }
+
     Atom* atoms = nullptr;
     Sep_Cell sep_cell;
 
@@ -29,7 +58,7 @@ class UnitCell {
     double& tpiba = lat.tpiba;
     double& tpiba2 = lat.tpiba2;
     double& omega = lat.omega;
-    int*& lc = lat.lc;
+    std::vector<int>& lat_axis_free = lat.lat_axis_free;
 
     ModuleBase::Matrix3& latvec = lat.latvec;
     ModuleBase::Vector3<double>&a1 = lat.a1, &a2 = lat.a2, &a3 = lat.a3;
@@ -164,11 +193,13 @@ class UnitCell {
     ModuleBase::Matrix3 GGT0;
     ModuleBase::Matrix3 invGGT0;
 
-    // I'm doing a bad thing here! Will change later
+    // TODO(abacus-team): encapsulate ionic_position_updated and
+    // cell_parameter_updated with setters that enforce state invariants;
+    // currently exposed as mutable flags that can be toggled from anywhere.
     bool ionic_position_updated
-        = false; // whether the ionic position has been updated
+        = false; ///< whether the ionic position has been updated
     bool cell_parameter_updated
-        = false; // whether the cell parameters are updated
+        = false; ///< whether the cell parameters are updated
 
     //============================================================
     // meshx : max number of mesh point in pseudopotential file

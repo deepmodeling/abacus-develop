@@ -44,21 +44,23 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
 
 #ifdef __EXX
         auto& exx_lip = dynamic_cast<hamilt::HamiltLIP<T>*>(pHamilt)->exx_lip;
-        auto add_exx_to_subspace_hamilt = [&ik, &exx_lip](T* hcc, const int naos) -> void {
-            if (GlobalC::exx_info.info_global.cal_exx)
+        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        auto add_exx_to_subspace_hamilt = [&ik, &exx_lip, cal_exx, hybrid_alpha](T* hcc, const int naos) -> void {
+            if (cal_exx)
             {
                 for (int n = 0; n < naos; ++n)
                 {
                     for (int m = 0; m < naos; ++m)
                     {
                         hcc[n * naos + m]
-                            += (T)GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_matrix()[ik][m][n];
+                            += (T)hybrid_alpha * exx_lip.get_exx_matrix()[ik][m][n];
                     }
                 }
             }
         };
-        auto set_exxlip_lcaowfc = [&ik, &exx_lip](const T* const vcc, const int naos, const int nbands) -> void {
-            if (GlobalC::exx_info.info_global.cal_exx)
+        auto set_exxlip_lcaowfc = [&ik, &exx_lip, cal_exx](const T* const vcc, const int naos, const int nbands) -> void {
+            if (cal_exx)
             {
                 exx_lip.set_hvec(ik, vcc, naos, nbands);
             }

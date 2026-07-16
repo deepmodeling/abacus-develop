@@ -1,5 +1,5 @@
-remove_definitions(-D__MPI -D__LCAO )
-add_definitions(-D__NORMAL)
+abacus_disable_feature_definitions(__MPI __LCAO)
+abacus_add_local_feature_definitions(__NORMAL)
 
 list(APPEND depend_files
   ../md_func.cpp
@@ -26,7 +26,7 @@ list(APPEND depend_files
   ../../source_base/module_external/blas_connector_base.cpp
   ../../source_base/module_external/blas_connector_matrix.cpp
   ../../source_base/module_external/blas_connector_vector.cpp
-  ../../source_base/memory.cpp
+  ../../source_base/memory_recorder.cpp
   ../../source_base/global_variable.cpp
   ../../source_base/global_function.cpp
   ../../source_base/global_file.cpp
@@ -45,7 +45,11 @@ list(APPEND depend_files
   ../../source_cell/module_neighbor/sltk_atom.cpp
   ../../source_cell/module_neighbor/sltk_grid.cpp
   ../../source_cell/module_neighbor/sltk_grid_driver.cpp
-  ../../source_io/module_output/output.cpp
+  ../../source_cell/module_neighlist/neighbor_search.cpp
+  ../../source_cell/module_neighlist/bin_manager.cpp
+  ../../source_cell/module_neighlist/page_allocator.cpp
+  ../../source_cell/module_neighlist/unitcell_lite.cpp
+  ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp
   ../../source_io/module_output/cif_io.cpp
@@ -63,21 +67,21 @@ list(APPEND depend_files
 
 AddTest(
   TARGET MODULE_MD_LJ_pot
-  LIBS parameter ${math_libs} psi device
+  LIBS parameter psi device
   SOURCES lj_pot_test.cpp
   ${depend_files}
 )
 
 AddTest(
   TARGET MODULE_MD_func
-  LIBS parameter ${math_libs} psi device
+  LIBS parameter psi device
   SOURCES md_func_test.cpp
   ${depend_files}
 )
 
 AddTest(
   TARGET MODULE_MD_fire
-  LIBS parameter ${math_libs} psi device
+  LIBS parameter psi device
   SOURCES fire_test.cpp
   ../md_base.cpp
   ../fire.cpp
@@ -86,7 +90,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_MD_verlet
-  LIBS parameter ${math_libs} psi device
+  LIBS parameter psi device
   SOURCES verlet_test.cpp
   ../md_base.cpp
   ../verlet.cpp
@@ -95,28 +99,28 @@ AddTest(
 
 AddTest(
   TARGET MODULE_MD_nhc
-  LIBS parameter ${math_libs} psi device
+  LIBS parameter psi device
   SOURCES nhchain_test.cpp
   ../md_base.cpp
   ../nhchain.cpp
-  ../../source_io/module_output/output.cpp
+  ../../source_base/output.cpp
   ${depend_files}
 )
 
 AddTest(
   TARGET MODULE_MD_msst
-  LIBS parameter ${math_libs} psi device
+  LIBS parameter psi device
   SOURCES msst_test.cpp
   ../md_base.cpp
   ../msst.cpp
   ../../source_cell/update_cell.cpp
-  ../../source_io/module_output/output.cpp
+  ../../source_base/output.cpp
   ${depend_files}
 )
 
 AddTest(
   TARGET MODULE_MD_lgv
-  LIBS parameter ${math_libs} psi device
+  LIBS parameter psi device
   SOURCES langevin_test.cpp
   ../md_base.cpp
   ../langevin.cpp

@@ -8,12 +8,10 @@ ABACUS use exchange-correlation functionals by default. However, for some functi
 
 Dependency: [Libxc](https://tddft.org/programs/libxc/) >= 5.1.7 .
 
-> Note: Building Libxc from source with Makefile does NOT support using it in CMake here. Please compile Libxc with CMake instead.
-
-If Libxc is not installed in standard path (i.e. installed with a custom prefix path), you can set `Libxc_DIR` to the corresponding directory.
+> Note: Building Libxc from source with Autotools is NOT supported when building ABACUS with CMake. Please compile Libxc with CMake instead and pass its installation prefix path to `CMAKE_PREFIX_PATH` environment variable.
 
 ```bash
-cmake -B build -DLibxc_DIR=~/libxc
+cmake -B build -DENABLE_LIBXC=ON
 ```
 
 ## Build with ML-ALGO
@@ -75,7 +73,28 @@ The new EXX implementation depends on two external libraries:
 
 These two libraries are added as submodules in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder. Set `-DENABLE_LIBRI=ON` to build with these two libraries.
 
-If you prefer using manually downloaded libraries, provide `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`.
+```{note}
+`ENABLE_LIBCOMM` is deprecated because LibComm is not a standalone ABACUS feature. CMake locates it automatically as a dependency of LibRI. If you prefer using manually downloaded libraries, enable LibRI and provide their locations via `-DLIBRI_DIR=/path/to/LibRI` and `-DLIBCOMM_DIR=/path/to/LibComm`.
+```
+
+
+## Build with DFT-D4 support
+
+ABACUS can use the external [DFT-D4](https://github.com/dftd4/dftd4) library for Grimme's DFT-D4 dispersion correction. DFT-D4 support is optional and disabled by default.
+
+DFT-D4 must be built and installed with CMake, so that ABACUS can locate it through the exported `dftd4-config.cmake` package. Meson-built installations, including the Conda package of `dftd4`, are not supported unless they provide a compatible CMake package file.
+
+To build ABACUS with DFT-D4 support, pass `-DENABLE_DFTD4=ON` to CMake and provide `CMAKE_PREFIX_PATH` environment variable.
+
+In the input file, enable DFT-D4 with:
+
+```text
+vdw_method d4
+vdw_d4_xc pbe
+vdw_d4_model d4    # or d4s for the smooth D4S model
+```
+
+If `vdw_d4_xc` is set to `default`, ABACUS will infer the functional name from `dft_functional` or pseudopotential metadata and pass it to the DFT-D4 library. The `vdw_d4_model` keyword selects the dispersion model inside the DFT-D4 library; the default is `d4`, while `d4s` enables the smooth D4S model.
 
 ## Build Unit Tests
 
@@ -117,26 +136,22 @@ If you are confident that your MPI supports CUDA Aware, you can add `-DUSE_CUDA_
 
 > Note: We recommend using the latest available compiler sets, since they offer faster implementations of math functions.
 
-This flag is disabled by default. To build math functions from source code, define `USE_ABACUS_LIBM` flag. It is expected to get a better performance on legacy versions of `gcc` and `clang`.
+This flag is disabled by default. To build math functions from source code, define `ENABLE_ABACUS_LIBM` flag. It is expected to get a better performance on legacy versions of `gcc` and `clang`.
 
 Currently supported math functions:
  `sin`, `cos`, `sincos`, `exp`, `cexp`
 
 ```bash
-cmake -B build -DUSE_ABACUS_LIBM=1
+cmake -B build -DENABLE_ABACUS_LIBM=1
 ```
 
 ## Build with PEXSI support
 
-ABACUS supports the PEXSI library for gamma only LCAO calculations. PEXSI version 2.0.0 is tested to work with ABACUS, please always use the latest version of PEXSI. 
+ABACUS supports the PEXSI library for gamma only LCAO calculations. PEXSI version >=2.0.0 is required.
 
-To build ABACUS with PEXSI support, you need to compile PEXSI (and its dependencies) first. Please refer to the [PEXSI Installation Guide](https://pexsi.readthedocs.io/en/latest/install.html) for more details. Note that PEXSI requires ParMETIS and SuperLU_DIST.
+To build ABACUS with PEXSI support, you need to compile PEXSI and its dependencies first. Please refer to the [PEXSI Installation Guide](https://pexsi.readthedocs.io/en/latest/install.html) for more details. You can also use [Spack](https://github.com/spack/spack) to install the required packages more easily. Note that PEXSI requires ParMETIS and SuperLU_DIST.
 
-After compiling PEXSI, you can set `ENABLE_PEXSI` to `ON`. If the libraries are not installed in standard paths, you can set `PEXSI_DIR`, `ParMETIS_DIR` and `SuperLU_DIST_DIR` to the corresponding directories.
-
-```bash
-cmake -B build -DENABLE_PEXSI=ON -DPEXSI_DIR=${path to PEXSI installation directory} -DParMETIS_DIR=${path to ParMETIS installation directory} -DSuperLU_DIST_DIR=${path to SuperLU_DIST installation directory}
-```
+After compiling PEXSI, pass `-DENABLE_PEXSI=ON` to CMake. ABACUS uses the CMake config package provided by PEXSI; if PEXSI or its dependencies are not installed in standard paths, add their installation prefixes to `CMAKE_PREFIX_PATH`.
 
 ## Build ABACUS with make
 

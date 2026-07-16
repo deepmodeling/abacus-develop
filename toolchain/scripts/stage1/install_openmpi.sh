@@ -52,11 +52,7 @@ case "${with_openmpi}" in
         if verify_checksums "${install_lock_file}"; then
             echo "openmpi-${openmpi_ver} is already installed, skipping it."
         else
-            if [ -f ${openmpi_pkg} ]; then
-                echo "${openmpi_pkg} is found"
-            else
-                download_pkg_from_url "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
-            fi
+            retrieve_package "${openmpi_sha256}" "${openmpi_pkg}" "${url}"
             if [ "${PACK_RUN}" = "__TRUE__" ]; then
                 echo "--pack-run mode specified, skip installation"
                 exit 0
@@ -171,6 +167,10 @@ else
             grep "(Open MPI)" | awk '{print $4}')
         major_version=$(echo ${raw_version} | cut -d '.' -f 1)
         minor_version=$(echo ${raw_version} | cut -d '.' -f 2)
+        OPENMPI_BINDING_POLICY_ENV="export OMPI_MCA_hwloc_base_binding_policy=none"
+        if [[ "${major_version}" =~ ^[0-9]+$ && "${major_version}" -ge 5 ]]; then
+            OPENMPI_BINDING_POLICY_ENV="export PRTE_MCA_hwloc_default_binding_policy=none"
+        fi
         OPENMPI_LIBS=""
         # grab additional runtime libs (for C/C++) from the mpicxx wrapper,
         # and remove them from the LDFLAGS if present
@@ -186,6 +186,7 @@ export MPICXX="${MPICXX}"
 export MPIFC="${MPIFC}"
 export MPIFORT="${MPIFORT}"
 export MPIF77="${MPIF77}"
+${OPENMPI_BINDING_POLICY_ENV}
 export OPENMPI_CFLAGS="${OPENMPI_CFLAGS}"
 export OPENMPI_LDFLAGS="${OPENMPI_LDFLAGS}"
 export OPENMPI_LIBS="${OPENMPI_LIBS}"
@@ -211,7 +212,7 @@ prepend_path LIBRARY_PATH "${pkg_install_dir}/lib"
 prepend_path CPATH "${pkg_install_dir}/include"
 EOF
         fi
-        cat "${BUILDDIR}/setup_openmpi" >> ${SETUPFILE}
+        filter_setup "${BUILDDIR}/setup_openmpi" ${SETUPFILE}
     fi
 
     # ----------------------------------------------------------------------

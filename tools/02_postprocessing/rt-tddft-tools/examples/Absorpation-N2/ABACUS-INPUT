@@ -1,0 +1,32 @@
+INPUT_PARAMETERS
+suffix          tddft
+basis_type      lcao
+
+ecutwfc         60
+scf_nmax        100
+scf_thr         1e-6
+
+calculation     md
+esolver_type    tddft
+md_type         nve
+md_nstep        10000
+md_dt           0.0024
+md_tfirst       0
+
+td_vext         1
+td_vext_dire    3 3
+td_stype        0
+td_ttype        0 0
+td_tstart 		1
+td_tend			2000
+td_lcut1		0.01
+td_lcut2		0.99
+td_gauss_freq		3.66 1.22
+td_gauss_phase		0.0 0.0
+td_gauss_sigma		0.2 0.2
+td_gauss_t0		800 800
+td_gauss_amp		0.6 0.6
+
+out_chg         1
+out_efield      1
+out_dipole      1

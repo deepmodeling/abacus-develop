@@ -1,22 +1,17 @@
 #include "esolver_ks_lcaopw.h"
-
 #include "source_pw/module_pwdft/elecond.h"
 #include "source_io/module_parameter/input_conv.h"
-#include "source_io/module_output/output_log.h"
-
 #include <iostream>
 
 //--------------temporary----------------------------
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_io/module_output/print_info.h"
 //-----force-------------------
 #include "source_pw/module_pwdft/forces.h"
 //-----stress------------------
 #include "source_pw/module_pwdft/stress_pw.h"
 //---------------------------------------------------
-#include "source_base/memory.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_pw/module_pwdft/hamilt_lcaopw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
@@ -24,11 +19,6 @@
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_io/module_unk/berryphase.h"
-#include "source_io/module_bessel/numerical_basis.h"
-#include "source_io/module_bessel/numerical_descriptor.h"
-#include "source_io/module_wannier/to_wannier90_pw.h"
-#include "source_io/module_chgpot/write_elecstat_pot.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
@@ -149,9 +139,11 @@ namespace ModuleESolver
 
         // add exx
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
+        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        if (cal_exx)
         {
-            this->pelec->set_exx(this->exx_lip->get_exx_energy()); // Peize Lin add 2019-03-09
+            this->pelec->set_exx(this->exx_lip->get_exx_energy(), cal_exx, hybrid_alpha); // Peize Lin add 2019-03-09
         }
 #endif
 
@@ -235,6 +227,13 @@ namespace ModuleESolver
 #ifdef __LCAO
         if (PARAM.inp.out_mat_xc)
         {
+#ifdef __EXX
+            bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+            double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+#else
+            bool cal_exx = false;
+            double hybrid_alpha = 0.0;
+#endif
             ModuleIO::write_Vxc(PARAM.inp.nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
@@ -248,7 +247,9 @@ namespace ModuleESolver
                                 this->locpp.vloc,
                                 this->chr,
                                 this->kv,
-                                this->pelec->wg
+                                this->pelec->wg,
+                                cal_exx,
+                                hybrid_alpha
 #ifdef __EXX
                                 ,
                                 *this->exx_lip

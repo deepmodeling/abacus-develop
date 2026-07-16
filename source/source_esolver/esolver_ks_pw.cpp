@@ -165,7 +165,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
               this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
               this->stp.template get_psi_t<T, Device>(), 
 	      this->p_hamilt, 
-	      this->pw_wfc, this->pw_rhod, PARAM.inp);
+	      this->pw_wfc, this->pw_rhod, PARAM.globalv.global_out_dir, PARAM.inp);
 
     // setup psi (electronic wave functions)
     this->stp.init(this->p_hamilt);
@@ -189,7 +189,7 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.template get_psi_t<T, Device>(), this->pelec->wg, ucell, PARAM.inp);
+    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.template get_psi_t<T, Device>(), this->pelec->wg, ucell, this->p_chgmix, this->kv.isk.data());
 }
 
 // Temporary, it should be replaced by hsolver later.
@@ -239,9 +239,11 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     // Related to EXX
-    if (GlobalC::exx_info.info_global.cal_exx && !exx_helper->get_op_first_iter())
+    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    if (cal_exx && !exx_helper->get_op_first_iter())
     {
-        this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()));
+        this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()), cal_exx, hybrid_alpha);
     }
 
     // deband is calculated from "output" charge density
@@ -279,7 +281,9 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     // Calculate kinetic energy density tau for ELF if needed
     if (PARAM.inp.out_elf[0] > 0)
     {
-        this->pelec->cal_tau(*(this->stp.psi_cpu));
+        auto* elec_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(this->pelec);
+        auto& psi = *this->stp.template get_psi_t<T, Device>();
+        elec_pw->cal_tau(psi);
     }
 
     ESolver_KS::after_scf(ucell, istep, conv_esolver);

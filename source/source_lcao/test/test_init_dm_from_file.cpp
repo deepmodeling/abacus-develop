@@ -100,9 +100,10 @@ class InitDMFileTest : public testing::Test
             if (ap)
             {
                 int nw = ucell.atoms[0].nw;
+                const int r_index = 0;  // R=(0,0,0)
                 for (int k = 0; k < nw; k++)
                 {
-                    ap->get_pointer()[k * nw + k] = scale * (k + 1) * 0.1;
+                    ap->get_pointer(r_index)[k * nw + k] = scale * (k + 1) * 0.1;
                 }
             }
         }
@@ -157,9 +158,10 @@ TEST_F(InitDMFileTest, Nspin1_ReadSingleFile)
     auto* ap = dmr0->find_pair(0, 0);
     ASSERT_NE(ap, nullptr);
     bool has_nonzero = false;
+    const int r_index = 0;  // R=(0,0,0)
     for (int i = 0; i < ap->get_size(); i++)
     {
-        if (std::abs(ap->get_pointer()[i]) > 1e-15)
+        if (std::abs(ap->get_pointer(r_index)[i]) > 1e-15)
         {
             has_nonzero = true;
             break;
@@ -200,10 +202,11 @@ TEST_F(InitDMFileTest, Nspin2_ReadTwoFiles)
 
     bool values_differ = false;
     int check_size = std::min(ap0->get_size(), ap1->get_size());
+    const int r_index = 0;  // R=(0,0,0)
     for (int i = 0; i < check_size; i++)
     {
-        double v0 = ap0->get_pointer()[i];
-        double v1 = ap1->get_pointer()[i];
+        double v0 = ap0->get_pointer(r_index)[i];
+        double v1 = ap1->get_pointer(r_index)[i];
         if (std::abs(v0) > 1e-15 && std::abs(v0 - v1) > 1e-15)
         {
             values_differ = true;
@@ -271,10 +274,11 @@ TEST_F(InitDMFileTest, HR_Nspin1_ReadSingleFile)
 
     // Check diagonal has expected values (scale=2.0, value = 2.0*(k+1)*0.1)
     int nw = ucell.atoms[0].nw;
+    const int r_index = 0;  // R=(0,0,0)
     for (int k = 0; k < nw; k++)
     {
         double expected = 2.0 * (k + 1) * 0.1;
-        EXPECT_NEAR(ap->get_pointer()[k * nw + k], expected, 1e-6);
+        EXPECT_NEAR(ap->get_pointer(r_index)[k * nw + k], expected, 1e-6);
     }
 }
 
@@ -321,10 +325,11 @@ TEST_F(InitDMFileTest, HR_Nspin2_ReadTwoFiles)
     auto* ap_up = hR_up->find_pair(0, 0);
     ASSERT_NE(ap_up, nullptr);
     int nw = ucell.atoms[0].nw;
+    const int r_index = 0;  // R=(0,0,0)
     for (int k = 0; k < nw; k++)
     {
         double expected_up = 1.0 * (k + 1) * 0.1;
-        EXPECT_NEAR(ap_up->get_pointer()[k * nw + k], expected_up, 1e-6);
+        EXPECT_NEAR(ap_up->get_pointer(r_index)[k * nw + k], expected_up, 1e-6);
     }
 
     // Verify spin-down values (scale=3.0)
@@ -333,12 +338,12 @@ TEST_F(InitDMFileTest, HR_Nspin2_ReadTwoFiles)
     for (int k = 0; k < nw; k++)
     {
         double expected_down = 3.0 * (k + 1) * 0.1;
-        EXPECT_NEAR(ap_down->get_pointer()[k * nw + k], expected_down, 1e-6);
+        EXPECT_NEAR(ap_down->get_pointer(r_index)[k * nw + k], expected_down, 1e-6);
     }
 
     // Verify the two are independent (different values)
-    double val_up = ap_up->get_pointer()[0];
-    double val_down = ap_down->get_pointer()[0];
+    double val_up = ap_up->get_pointer(r_index)[0];
+    double val_down = ap_down->get_pointer(r_index)[0];
     EXPECT_GT(std::abs(val_up), 1e-15);
     EXPECT_NEAR(val_down / val_up, 3.0, 1e-6);
 

@@ -1,18 +1,17 @@
 add_library(
     relax
     OBJECT
-
+    relax_data.cpp
+    cg_base.cpp
     relax_driver.cpp
-
     relax_sync.cpp
     line_search.cpp
-    
-    bfgs.cpp
-    lbfgs.cpp
+    ions_move_lbfgs.cpp
     relax_nsync.cpp
     bfgs_basic.cpp
     ions_move_basic.cpp
     ions_move_bfgs.cpp
+    ions_move_bfgs2.cpp
     ions_move_cg.cpp
     ions_move_sd.cpp
     ions_move_methods.cpp
@@ -30,5 +29,5 @@ if(BUILD_TESTING)
   if(ENABLE_MPI)
     add_subdirectory(test)
   endif()
-   
+
 endif()

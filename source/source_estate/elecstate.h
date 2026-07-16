@@ -94,20 +94,8 @@ class ElecState
         return;
     }
 
-    /**
-     * @brief Init rho_core, init rho, renormalize rho, init pot
-     *
-     * @param ucell unit cell
-     * @param strucfac structure factor
-     * @param symm symmetry
-     * @param wfcpw PW basis for wave function if needed
-     */
-    void init_scf(const UnitCell& ucell,
-                  const Parallel_Grid& pgrid,
-                  const ModuleBase::ComplexMatrix& strucfac,
-                  const bool* numeric,
-                  ModuleSymmetry::Symmetry& symm,
-                  const void* wfcpw = nullptr);
+
+
     std::string classname = "elecstate";
 
     int iter = 0;                                  ///< scf iteration
@@ -127,8 +115,8 @@ class ElecState
     bool vnew_exist = false;
     void cal_converged();
     void cal_energies(const int type);
-    void set_exx(const double& Eexx);
-    void set_exx(const std::complex<double>& Eexx);
+    void set_exx(const double& Eexx, const bool cal_exx, const double hybrid_alpha);
+    void set_exx(const std::complex<double>& Eexx, const bool cal_exx, const double hybrid_alpha);
 
     double get_hartree_energy();
     double get_etot_efield();
@@ -161,6 +149,27 @@ class ElecState
 
     bool skip_weights = false;
 };
+
+/**
+ * @brief Init rho_core, init rho, renormalize rho, init pot
+ *
+ * @param ucell unit cell
+ * @param pgrid parallel grid
+ * @param strucfac structure factor
+ * @param numeric numeric flag
+ * @param istep ionic step index
+ * @param out_dir output directory
+ * @param inp input parameters
+ * @param pelec pointer to ElecState
+ */
+void init_scf(const UnitCell& ucell,
+              const Parallel_Grid& pgrid,
+              const ModuleBase::ComplexMatrix& strucfac,
+              const bool* numeric,
+              const int istep,
+              const std::string& out_dir,
+              const Input_para& inp,
+              ElecState* pelec);
 
 } // namespace elecstate
 #endif

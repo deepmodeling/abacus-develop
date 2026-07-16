@@ -321,7 +321,8 @@ void read_mat_npz(const Parallel_Orbitals* paraV,
 #endif
 }
 
-void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::HContainer<double>& hR)
+template <typename T>
+void output_mat_npz_impl(const UnitCell& ucell, std::string& zipname, const hamilt::HContainer<T>& hR)
 {
     ModuleBase::TITLE("ModuleIO", "output_mat_npz");
 
@@ -412,13 +413,13 @@ void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::H
 
 //fourth block: hr(i0,jR)
 #ifdef __MPI
-    hamilt::HContainer<double>* HR_serial;
+    hamilt::HContainer<T>* HR_serial;
     Parallel_Orbitals serialV;
     serialV.set_serial(PARAM.globalv.nlocal, PARAM.globalv.nlocal);
     serialV.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, PARAM.globalv.nlocal);
     if(GlobalV::MY_RANK == 0)
     {
-        HR_serial = new hamilt::HContainer<double>(&serialV);
+        HR_serial = new hamilt::HContainer<T>(&serialV);
     }
     hamilt::gatherParallels(hR, HR_serial, 0);
 
@@ -431,8 +432,8 @@ void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::H
             if(atom_i > atom_j) continue;
             int start_i = serialV.atom_begin_row[atom_i];
             int start_j = serialV.atom_begin_col[atom_j];
-            int row_size = serialV.get_row_size(atom_i);
-            int col_size = serialV.get_col_size(atom_j);
+            int row_size = serialV.get_nrow_atom(atom_i);
+            int col_size = serialV.get_ncol_atom(atom_j);
             for(int iR=0;iR<HR_serial[0].get_atom_pair(iap).get_R_size();++iR)
             {
                 auto& matrix = HR_serial[0].get_atom_pair(iap).get_HR_values(iR);
@@ -454,8 +455,8 @@ void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::H
         int atom_j = hR.get_atom_pair(iap).get_atom_j();
         int start_i = paraV.atom_begin_row[atom_i];
         int start_j = paraV.atom_begin_col[atom_j];
-        int row_size = paraV.get_row_size(atom_i);
-        int col_size = paraV.get_col_size(atom_j);
+        int row_size = paraV.get_nrow_atom(atom_i);
+        int col_size = paraV.get_ncol_atom(atom_j);
         for(int iR=0;iR<hR.get_atom_pair(iap).get_R_size();++iR)
         {
             auto& matrix = hR.get_atom_pair(iap).get_HR_values(iR);
@@ -469,6 +470,18 @@ void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::H
     }
 #endif
 #endif
+}
+
+void output_mat_npz(const UnitCell& ucell, std::string& zipname, const hamilt::HContainer<double>& hR)
+{
+    output_mat_npz_impl(ucell, zipname, hR);
+}
+
+void output_mat_npz(const UnitCell& ucell,
+                    std::string& zipname,
+                    const hamilt::HContainer<std::complex<double>>& hR)
+{
+    output_mat_npz_impl(ucell, zipname, hR);
 }
 
 } // namespace ModuleIO

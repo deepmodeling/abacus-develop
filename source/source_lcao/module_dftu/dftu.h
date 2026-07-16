@@ -4,6 +4,7 @@
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_estate/module_charge/charge_mixing.h"
 #ifdef __LCAO
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
@@ -61,6 +62,27 @@ class Plus_U
     static double uramping; // increase U by uramping, default is -1.0
     static int omc; // occupation matrix control
     static int mixing_dftu; //whether to mix locale
+    static int nspin;       // spin channel count (1, 2, or 4), set during init
+
+    // --- Accessors for static data (prefer these over direct member access) ---
+
+    /// get Hubbard U for atom type it
+    static double get_hubbard_u(int it) { return U[it]; }
+
+    /// get target Hubbard U0 for atom type it
+    static double get_hubbard_u0(int it) { return U0[it]; }
+
+    /// number of atom types with Hubbard U parameters
+    static int get_num_u_types() { return static_cast<int>(U.size()); }
+
+    /// get correlated orbital angular momentum for atom type it (-1 = none)
+    static int get_orbital_corr(int it) { return orbital_corr[it]; }
+
+    /// whether atom type it has a correlated orbital
+    static bool has_correlated_orbital(int it) { return orbital_corr[it] != -1; }
+
+    /// raw data pointer to orbital_corr (for kernel interfaces)
+    static const int* get_orbital_corr_data() { return orbital_corr.data(); }
 
   private:
 
@@ -113,25 +135,51 @@ class Plus_U
   public:
     /// interface for PW base
 	/// calculate the local occupation number matrix for PW based wave functions
-	void cal_occ_pw(const int iter, 
-			const void* psi_in, 
-			const ModuleBase::matrix& wg_in, 
-			const UnitCell& cell, 
-			const double& mixing_beta);
+	void cal_occ_pw(const int iter,
+			const void* psi_in,
+			const ModuleBase::matrix& wg_in,
+			const UnitCell& cell,
+			Charge_Mixing* p_chgmix,
+			const int* isk);
 
-    /// calculate the local DFT+U effective potential matrix for PW base.
-    void cal_VU_pot_pw(const int spin);
+    /// get effective potential pointer for the given spin channel (PW basis)
+    ///
+    /// nspin=1: isk is ignored, returns &eff_pot_pw[0]
+    /// nspin=2: isk selects spin-up (0) or spin-down (1) half of the
+    ///          split layout [all_up | all_dn]
+    /// nspin=4: isk is ignored, returns &eff_pot_pw[0] (all Pauli blocks)
+    const std::complex<double>* get_eff_pot_pw_spin(const int isk) const
+    {
+        if (nspin == 2 && isk == 1)
+        {
+            return eff_pot_pw.data() + eff_pot_pw.size() / 2;
+        }
+        return eff_pot_pw.data();
+    }
 
-    /// get effective potential matrix for PW base
-	const std::complex<double>* get_eff_pot_pw(const int iat) const 
-	{ 
-		return &(eff_pot_pw[this->eff_pot_pw_index[iat]]); 
-	}
+    /// get size of effective potential for a single spin channel (PW basis)
+    ///
+    /// nspin=1: full array size
+    /// nspin=2: half of the total (one spin channel in split layout)
+    /// nspin=4: full array size (all Pauli blocks are packed together)
+    int get_size_eff_pot_pw_spin() const
+    {
+        return (nspin == 2) ? static_cast<int>(eff_pot_pw.size() / 2)
+                            : static_cast<int>(eff_pot_pw.size());
+    }
 
-	int get_size_eff_pot_pw() const 
-	{ 
-		return eff_pot_pw.size(); 
-	}
+    /// get effective potential matrix for PW base (per-atom, raw index)
+    /// @deprecated Use get_eff_pot_pw_spin() for nspin-aware access.
+    [[deprecated("Use get_eff_pot_pw_spin() for nspin-aware access")]]
+    const std::complex<double>* get_eff_pot_pw(const int iat) const
+    {
+        return &(eff_pot_pw[this->eff_pot_pw_index[iat]]);
+    }
+
+    int get_size_eff_pot_pw() const
+    {
+        return eff_pot_pw.size();
+    }
 
 #ifdef __LCAO
     // calculate the local occupation number matrix
@@ -152,6 +200,15 @@ class Plus_U
     // dftu can be calculated only after locale has been initialed
     bool initialed_locale = false;
 
+    // --- Accessors for initialed_locale ---
+    bool is_locale_initialized() const { return initialed_locale; }
+    void mark_locale_initialized() { initialed_locale = true; }
+    void mark_locale_dirty() { initialed_locale = false; }
+
+    // --- Accessors for mixing_dftu ---
+    static bool is_mixing_enabled() { return mixing_dftu != 0; }
+    static void enable_mixing() { mixing_dftu = 1; }
+
   private:
 
     void copy_locale(const UnitCell& ucell);
@@ -160,8 +217,36 @@ class Plus_U
 
     std::vector<std::complex<double>> eff_pot_pw;
     std::vector<int> eff_pot_pw_index;
+    std::vector<double> uom_array;
+    std::vector<double> uom_save;
+
+    void set_locale(const UnitCell& ucell);
 
   public:
+    /// get occupation matrix element locale[iat][l][n][spin](m1,m2)
+    double get_locale(const int iat, const int l, const int n, const int spin,
+                     const int m1, const int m2) const
+    {
+        return locale[iat][l][n][spin](m1, m2);
+    }
+
+    /// set occupation matrix element locale[iat][l][n][spin](m1,m2)
+    void set_locale(const int iat, const int l, const int n, const int spin,
+                   const int m1, const int m2, const double val)
+    {
+        locale[iat][l][n][spin](m1, m2) = val;
+    }
+
+    /// get flat occupation matrix for an atom's correlated orbital.
+    /// nspin=1: fills occ with locale[iat][l][0][0] data
+    /// nspin=2: fills occ with interleaved locale[iat][l][0][0] and [1] data
+    /// nspin=4: fills occ with locale[iat][l][0][0] data (all 4 Pauli blocks)
+    void get_locale_flat(const int iat, const int l, std::vector<double>& occ) const;
+
+    /// set flat occupation matrix for an atom's correlated orbital (write-back)
+    void set_locale_flat(const int iat, const int l, const int spin,
+                        const std::vector<double>& occ);
+
 	// local occupancy matrix of the correlated subspace
     // locale: the out put local occupation number matrix of correlated electrons in the current electronic step
     // locale_save: the input local occupation number matrix of correlated electrons in the current electronic step

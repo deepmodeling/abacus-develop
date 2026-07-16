@@ -20,45 +20,119 @@ public:
     ~ML_Base();
 
     // Common Interface
-    void set_device(std::string device_inpt);
-    
+    void set_device(
+        const std::string& device_inpt,
+        std::ostream& ofs_running);
+
     // Tools
-    void loadVector(std::string filename, std::vector<double> &data);
-    void dumpVector(std::string filename, const std::vector<double> &data);
-    void dumpTensor(std::string filename, const torch::Tensor &data);
-    void dumpMatrix(std::string filename, const ModuleBase::matrix &data);
+    void load_vector(
+        std::string filename,
+        std::vector<double> &data);
+
+    void dump_vector(
+        std::string filename,
+        const std::vector<double> &data);
+
+    void dump_tensor(
+        std::string filename,
+        const torch::Tensor &data);
+
+    void dump_matrix(
+        std::string filename,
+        const ModuleBase::matrix &data);
 
     int nx_tot = 0; // equal to nx (called by NN)
-    torch::Tensor get_data(std::string parameter, const int ikernel) const;
+    torch::Tensor get_data(
+        std::string parameter,
+        const int ikernel) const;
 
 protected:
-    void updateInput(const double * const * prho, const ModulePW::PW_Basis *pw_rho);
-    void NN_forward(const double * const * prho, const ModulePW::PW_Basis *pw_rho, bool cal_grad);
-    void get_potential_(const double * const * prho, const ModulePW::PW_Basis *pw_rho, ModuleBase::matrix &rpotential);
+    void update_input(
+        const double * const * prho,
+        const ModulePW::PW_Basis *pw_rho);
+
+    void nn_forward(
+        const double * const * prho,
+        const ModulePW::PW_Basis *pw_rho,
+        bool cal_grad);
+
+    void get_potential_(
+        const double * const * prho,
+        const ModulePW::PW_Basis *pw_rho,
+        ModuleBase::matrix &rpotential);
 
     // Potential Terms - these appear identical in both classes or are intended to be shared
-    double potGammaTerm(int ir);
-    double potPTerm1(int ir);
-    double potQTerm1(int ir);
-    double potXiTerm1(int ir);
-    double potTanhxiTerm1(int ir);
-    double potTanhpTerm1(int ir);
-    double potTanhqTerm1(int ir);
+    double pot_gamma_term(int ir);
+    double pot_p_term_1(int ir);
+    double pot_q_term_1(int ir);
+    double pot_xi_term_1(int ir);
+    double pot_tanhxi_term_1(int ir);
+    double pot_tanhp_term_1(int ir);
+    double pot_tanhq_term_1(int ir);
 
     // Derived classes should ensure they can work with these signatures.
     // Note: ML_EXX originally passed tau_lda for some of these. 
     // If tau_lda is needed, derived classes can override or we can add it to member variables.
     // For now, keeping signatures compatible with member access.
-    void potGammanlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rGammanlTerm);
-    void potXinlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rXinlTerm);
-    void potTanhxinlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhxinlTerm);
-    void potTanhxi_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhxi_nlTerm); 
-    void potPPnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rPPnlTerm);
-    void potQQnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rQQnlTerm);
-    void potTanhpTanh_pnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanh_pnlTerm);
-    void potTanhqTanh_qnlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanh_qnlTerm);
-    void potTanhpTanhp_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhpTanhp_nlTerm);
-    void potTanhqTanhq_nlTerm(const double * const *prho, const std::vector<double> &tau_lda, const ModulePW::PW_Basis *pw_rho, std::vector<double> &rTanhqTanhq_nlTerm);
+    void pot_gammanl_term(
+        const double * const *prho,
+        const std::vector<double> &tau_lda,
+        const ModulePW::PW_Basis *pw_rho,
+        std::vector<double> &rGammanlTerm);
+
+    void pot_xi_nl_term(
+        const double * const *prho,
+        const std::vector<double> &tau_lda,
+        const ModulePW::PW_Basis *pw_rho,
+        std::vector<double> &rXinlTerm);
+
+    void pot_tanhxi_nl_term(
+        const double * const *prho,
+        const std::vector<double> &tau_lda,
+        const ModulePW::PW_Basis *pw_rho,
+        std::vector<double> &rTanhxinlTerm);
+
+    void pot_tanhxi_nl_nl_term(
+        const double * const *prho,
+        const std::vector<double> &tau_lda,
+        const ModulePW::PW_Basis *pw_rho,
+        std::vector<double> &rTanhxi_nlTerm);
+
+    void pot_p_pnl_term(
+        const double * const *prho,
+        const std::vector<double> &tau_lda,
+        const ModulePW::PW_Basis *pw_rho,
+        std::vector<double> &rPPnlTerm);
+
+    void pot_q_qnl_term(
+        const double * const *prho,
+        const std::vector<double> &tau_lda,
+        const ModulePW::PW_Basis *pw_rho,
+        std::vector<double> &rQQnlTerm);
+
+    void pot_tanhp_tanh_pnl_term(
+        const double * const *prho,
+        const std::vector<double> &tau_lda,
+        const ModulePW::PW_Basis *pw_rho,
+        std::vector<double> &rTanhpTanh_pnlTerm);
+
+    void pot_tanhq_tanh_qnl_term(
+        const double * const *prho,
+        const std::vector<double> &tau_lda,
+        const ModulePW::PW_Basis *pw_rho,
+        std::vector<double> &rTanhqTanh_qnlTerm);
+
+    void pot_tanhp_tanhp_nl_term(
+        const double * const *prho,
+        const std::vector<double> &tau_lda,
+        const ModulePW::PW_Basis *pw_rho,
+        std::vector<double> &rTanhpTanhp_nlTerm);
+
+    void pot_tanhq_tanhq_nl_term(
+        const double * const *prho,
+        const std::vector<double> &tau_lda,
+        const ModulePW::PW_Basis *pw_rho,
+        std::vector<double> &rTanhqTanhq_nlTerm);
 
 protected: 
     // --- Member Variables (Common) ---
@@ -132,12 +206,17 @@ protected:
     bool ml_tanhp_nl = false;
     bool ml_tanhq_nl = false;
 
-    // Maps
-    std::vector<std::string> descriptor_type;                  
-    std::vector<int> kernel_index;                             
-    std::map<std::string, std::vector<int>> descriptor2kernel; 
-    std::map<std::string, std::vector<int>> descriptor2index;  
-    std::map<std::string, std::vector<bool>> gene_data_label;  
+    // Maps for descriptor management
+    std::vector<std::string> descriptor_type;                  // List of enabled descriptors (e.g., "gamma", "pnl", "tanhxi")
+    std::vector<int> kernel_index;                             // Kernel index for each descriptor (-1 = no kernel for semi-local)
+    std::map<std::string, std::vector<int>> descriptor2kernel; // Maps descriptor name to its kernel index(s)
+                                                               //   - []: descriptor not enabled
+                                                               //   - [-1]: semi-local descriptor (no kernel needed)
+                                                               //   - [N]: non-local descriptor using kernel N
+    std::map<std::string, std::vector<int>> descriptor2index;  // Maps descriptor name to its position(s) in NN input vector
+                                                               //   - []: descriptor not enabled
+                                                               //   - [0, 1, ...]: indices in input vector
+    std::map<std::string, std::vector<bool>> gene_data_label;  // Flags indicating whether to compute each descriptor
 };
 
 #endif // __MLALGO

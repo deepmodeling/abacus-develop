@@ -38,7 +38,8 @@ public:
         const std::vector<double> &yukawa_alpha,
         const std::vector<std::string> &kernel_file,
         const double &omega,
-        const ModulePW::PW_Basis *pw_rho);
+        const ModulePW::PW_Basis *pw_rho,
+        std::ostream& ofs_running);
     // get input parameters
     void getGamma(const double * const *prho, std::vector<double> &rgamma);
     void getP(const double * const *prho, const ModulePW::PW_Basis *pw_rho, std::vector<std::vector<double>> &pnablaRho, std::vector<double> &rp);
@@ -89,7 +90,7 @@ public:
     std::vector<double> chi_pnl = {1.0};
     std::vector<double> chi_qnl = {1.0};
 
-    int nx = 0;
+    int nrxx = 0;
     double dV = 0.;
     double rho0 = 0.; // average rho
     double kF = 0.; // Fermi vector kF = (3 pi^2 rho0)^(1/3)

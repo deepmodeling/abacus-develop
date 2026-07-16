@@ -1,14 +1,13 @@
 if (ENABLE_LIBRI)
 
   add_subdirectory(module_exx_symmetry)
-  
+
   list(APPEND objects
         Matrix_Orbs11.cpp
         Matrix_Orbs21.cpp
         Matrix_Orbs22.cpp
         RI_2D_Comm.cpp
         Mix_DMk_2D.cpp
-        Mix_Matrix.cpp
   )
 
   if(ENABLE_LCAO)
@@ -22,6 +21,7 @@ if (ENABLE_LIBRI)
         exx_opt_orb.cpp
         gaussian_abfs.cpp
         singular_value.cpp
+        ExxLriDetail.cpp
     )
   endif()
   add_library(
@@ -29,7 +29,7 @@ if (ENABLE_LIBRI)
       OBJECT
       ${objects}
   )
-  
+
   if(BUILD_TESTING)
     if(ENABLE_MPI)
       add_subdirectory(test)

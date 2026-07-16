@@ -1,14 +1,10 @@
 #include "esolver_of.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_output/cube_io.h"
-#include "source_io/module_output/output_log.h"
-#include "source_io/module_chgpot/write_elecstat_pot.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_io/module_output/print_info.h"
 #include "source_estate/cal_ux.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_ofdft/of_stress_pw.h"
@@ -94,7 +90,9 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->init_elecstate(ucell);
 
     // calculate the total local pseudopotential in real space
-    this->pelec->init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm); // atomic_rho, v_of_rho, set_vrs
+    const int istep=0;
+    elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, 
+		    PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
@@ -117,7 +115,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
         this->nelec_[0] = this->pelec->nelec_spin[0];
         this->nelec_[1] = this->pelec->nelec_spin[1];
     }
-    delete[] this->kedf_manager_;
+    delete this->kedf_manager_;
     this->kedf_manager_ = new KEDF_Manager();
     this->kedf_manager_->init(inp, this->pw_rho, this->dV_, this->nelec_[0]);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
@@ -188,8 +186,6 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
     //! 1) call before_scf() of ESolver_FP
     ESolver_FP::before_scf(ucell, istep);
 
-
-
     if (ucell.cell_parameter_updated)
     {
         this->dV_ = ucell.omega / this->pw_rho->nxyz;
@@ -232,7 +228,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         }
     }
 
-    this->pelec->init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, ucell.symm);
+    elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
 
     Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
 

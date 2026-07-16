@@ -9,6 +9,8 @@ nt=$OMP_NUM_THREADS # number of OpenMP threads, default is $OMP_NUM_THREADS
 threshold=0.0000001
 force_threshold=0.0001
 stress_threshold=0.001
+# descriptor mean threshold
+descriptor_threshold=0.00001
 # check accuracy
 ca=8
 # specify the test cases file
@@ -44,7 +46,12 @@ done
 
 # number of OpenMP threads
 if [[ -z "$nt" ]]; then
-    nt=$(expr `nproc` / ${np})
+    if [ "$np" -le 0 ] 2>/dev/null; then
+        # serial build (no MPI launcher): use all cores for OpenMP
+        nt=$(nproc)
+    else
+        nt=$(expr `nproc` / ${np})
+    fi
 fi
 export OMP_NUM_THREADS=${nt}
 
@@ -55,6 +62,7 @@ echo "Number of threads: $nt"
 echo "Test accuracy totenergy: $threshold eV"
 echo "Test accuracy force: $force_threshold"
 echo "Test accuracy stress: $stress_threshold"
+echo "Test accuracy descriptor mean: $descriptor_threshold"
 echo "Check accuaracy: $ca"
 echo "Test cases file: $cases_file"
 echo "Test cases regex: $case"
@@ -84,6 +92,7 @@ check_out(){
     force_thr=$3
     stress_thr=$4
     fatal_thr=$5
+    descriptor_thr=$6
 
     #------------------------------------------------------
     # outfile = result.out
@@ -137,9 +146,14 @@ check_out(){
             echo -e "\e[0;31m[ERROR     ] Fatal Error: key $key not found in output.\e[0m"
             let fatal++
             fatal_case_list+=$dir'\n'
+            fatal_detail_list+="$dir: key $key not found in output\n"
             break
         else
-            if [ $(check_deviation_pass $deviation $thr) = 0 ]; then
+            compare_thr=$thr
+            if [[ $key == ml_desc_mean_* ]]; then
+                compare_thr=$descriptor_thr
+            fi
+            if [ $(check_deviation_pass $deviation $compare_thr) = 0 ]; then
                 if [ $key == "totalforceref" ]; then
                     if [ $(check_deviation_pass $deviation $force_thr) = 0 ]; then
                         echo -e "[WARNING   ] "\
@@ -166,6 +180,7 @@ check_out(){
 
                 if [ $(check_deviation_pass $deviation $fatal_thr) = 0 ]; then
                     ifatal=1
+                    fatal_detail_list+="$dir: $key cal=$cal ref=$ref deviation=$deviation\n"
                 fi
             else
                 echo -e "\e[0;32m[      OK  ] \e[0m $key"
@@ -203,7 +218,7 @@ get_threshold()
     default_value=$3
     if [ -e $threshold_f ]; then 
         threshold_value=$(awk -v tn="$threshold_name" '$1==tn {print $2}' "$threshold_f")
-         if [ -n "$threshold_value" ]; then
+        if [ -n "$threshold_value" ]; then
             echo $threshold_value
         else
             echo $default_value
@@ -222,11 +237,12 @@ which $abacus > /dev/null || (echo "No ABACUS executable was found." && exit 1)
 
 testdir=`cat $cases_file | grep -E $case`
 failed=0
-failed_case_list=()
+failed_case_list=""
 ok=0
 fatal=0
-fatal_case_list=()
-case_status=() # record if the test case passed or not
+fatal_case_list=""
+fatal_detail_list=""
+case_status="" # record if the test case passed or not
 fatal_threshold=1
 report=""
 repo="$(realpath ..)/"
@@ -251,7 +267,15 @@ for dir in $testdir; do
     TIMEFORMAT='[----------] Time elapsed: %R seconds'
     #parallel test
     time {
-        if [ "$case" = "282_NO_RPA" ]; then
+        if [ "$np" -le 0 ] 2>/dev/null; then
+            # serial build: run the binary directly, no MPI launcher.
+            # This lets a serial ABACUS (ENABLE_MPI=OFF, e.g. the native
+            # Windows build) reuse this harness unchanged.
+            $abacus > log.txt
+        elif [ "$case" = "282_NO_RPA" ]; then
+            mpirun -np 1 $abacus > log.txt
+        elif grep -qE '^[[:space:]]*of_ml_gene_data[[:space:]]+1([[:space:]]|$)' INPUT; then
+            # of_ml_gene_data supports single-rank only.
             mpirun -np 1 $abacus > log.txt
         else
             mpirun -np $np $abacus > log.txt
@@ -279,7 +303,8 @@ for dir in $testdir; do
                     my_force_threshold=$(get_threshold $threshold_file "force_threshold" $force_threshold)
                     my_stress_threshold=$(get_threshold $threshold_file "stress_threshold" $stress_threshold)
                     my_fatal_threshold=$(get_threshold $threshold_file "fatal_threshold" $fatal_threshold)
-                    check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold
+                    my_descriptor_threshold=$(get_threshold $threshold_file "descriptor_threshold" $descriptor_threshold)
+                    check_out result.out $my_threshold $my_force_threshold $my_stress_threshold $my_fatal_threshold $my_descriptor_threshold
                 fi
             else
                 bash -e ../../integrate/tools/catch_properties.sh result.ref
@@ -310,17 +335,19 @@ fi
 
 if [ -z $g ]
 then
-echo -e $case_status > test.sum
+printf "%b" "$case_status" > test.sum
 if [[ "$failed" -eq 0 && "$fatal" -eq 0 ]]
 then
     echo -e "\e[0;32m[ PASSED   ] \e[0m $ok test cases passed."
 else
     echo -e "[WARNING]\e[0m    $failed test cases out of $[ $failed + $ok ] failed."
-    echo -e $failed_case_list
+    printf "%b" "$failed_case_list"
     if [ $fatal -gt 0 ]
     then
         echo -e "\e[0;31m[ERROR     ]\e[0m $fatal test cases out of $[ $failed + $ok ] produced fatal error."
-        echo -e $fatal_case_list
+        printf "%b" "$fatal_case_list"
+        echo -e "\e[0;31m[ERROR     ]\e[0m Fatal deviation details:"
+        printf "%b" "$fatal_detail_list"
     fi
     exit 1
 fi

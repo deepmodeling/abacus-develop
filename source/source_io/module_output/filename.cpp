@@ -23,7 +23,7 @@ std::string filename_output(
     // {k(optional)}{k-point index}{g(optional)}{geometry index1}{_basis(nao|pw)} 
     // + {".txt"/".dat"}"
 
-	std::set<std::string> valid_properties = {"wf", "chg", "hk", "sk", "tk", "vxc"};
+    std::set<std::string> valid_properties = { "wf", "chg", "hk", "sk", "tk", "vxc", "vxck", "vlk", "vnlk", "vhk", "vexxk" };
 	if (valid_properties.find(property) == valid_properties.end()) 
 	{
 		ModuleBase::WARNING_QUIT("ModuleIO::filename_output", "unknown property in filename function");

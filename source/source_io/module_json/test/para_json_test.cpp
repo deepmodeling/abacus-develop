@@ -1,14 +1,13 @@
 #include "gtest/gtest.h"
 
 #define private public
-#define __RAPIDJSON 1
 #include "source_io/module_json/abacusjson.h"
 #include "source_io/module_json/general_info.h"
 #include "source_io/module_json/init_info.h"
 #include "source_io/module_json/readin_info.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_json/para_json.h"
-#include "source_main/version.h"
+#include "source_base/version.h"
 #undef private
 /************************************************
  *  unit test of json output module
@@ -258,11 +257,9 @@ Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
-    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
 TEST(AbacusJsonTest, InitInfo)
 {

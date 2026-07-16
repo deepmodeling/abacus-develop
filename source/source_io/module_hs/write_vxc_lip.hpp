@@ -105,7 +105,6 @@ namespace ModuleIO
                    int naos,
                    int drank,
                    const psi::Psi<std::complex<FPTYPE>>& psi_pw,
-                   // const psi::Psi<T>& psi_lcao,
                    const UnitCell& ucell,
                    Structure_Factor& sf,
                    surchem& solvent,
@@ -115,7 +114,9 @@ namespace ModuleIO
                    const ModuleBase::matrix& vloc,
                    const Charge& chg,
                    const K_Vectors& kv,
-                   const ModuleBase::matrix& wg
+                   const ModuleBase::matrix& wg,
+                   bool cal_exx,
+                   double hybrid_alpha
 #ifdef __EXX
                    ,
                    const Exx_Lip<std::complex<FPTYPE>>& exx_lip
@@ -186,24 +187,19 @@ namespace ModuleIO
             std::vector<T> vxc_tot_k_mo(std::move(vxc_local_k_mo));
             std::vector<T> vexx_k_ao(naos * naos);
 #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))
-            if (GlobalC::exx_info.info_global.cal_exx)
+            if (cal_exx)
             {
 				for (int n = 0; n < naos; ++n) 
 				{
 					for (int m = 0; m < naos; ++m) 
 					{
-						vexx_k_ao[n * naos + m] += (T)GlobalC::exx_info.info_global.hybrid_alpha 
+						vexx_k_ao[n * naos + m] += (T)hybrid_alpha 
 							* exx_lip.get_exx_matrix()[ik][m][n];
 					}
 				}
                 std::vector<T> vexx_k_mo = cVc(vexx_k_ao.data(), &(exx_lip.get_hvec()(ik, 0, 0)), naos, nbands);
                 Parallel_Reduce::reduce_pool(vexx_k_mo.data(), nbands * nbands);
                 e_orb_exx.emplace_back(orbital_energy(ik, nbands, vexx_k_mo));
-                // ======test=======    
-                // std::cout << "exx_energy from matrix:" << all_band_energy(ik, nbands, vexx_k_mo, wg) << std::endl;
-                // std::cout << "exx_energy from orbitals: " << all_band_energy(ik, e_orb_exx.at(ik), wg) << std::endl;
-                // std::cout << "exx_energy from exx_lip: " << GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_energy() << std::endl;
-                // ======test=======
                 container::BlasConnector::axpy(nbands * nbands, 1.0, vexx_k_mo.data(), 1, vxc_tot_k_mo.data(), 1);
             }
 #endif
@@ -243,18 +239,6 @@ namespace ModuleIO
         // std::cout << "xc all-bands energy by rho =" << exc_by_rho << std::endl;
         //===== test total xc energy =======
         //===== test total exx energy =======
-// #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))
-//         if (GlobalC::exx_info.info_global.cal_exx)
-//         {
-//             FPTYPE exx_by_orb = 0.0;
-//             for (int ik = 0;ik < e_orb_exx.size();++ik)
-//                 exx_by_orb += all_band_energy(ik, e_orb_exx[ik], wg);
-//             exx_by_orb /= 2;
-//             std::cout << "exx all-bands energy by orbital =" << exx_by_orb << std::endl;
-//             FPTYPE exx_from_lip = GlobalC::exx_info.info_global.hybrid_alpha * exx_lip.get_exx_energy();
-//             std::cout << "exx all-bands energy from exx_lip =" << exx_from_lip << std::endl;
-//         }
-// #endif
         //===== test total exx energy =======
         // write the orbital energy for xc and exx in LibRPA format
         const int nspin0 = (nspin == 2) ? 2 : 1;
@@ -284,7 +268,7 @@ namespace ModuleIO
         {
             write_orb_energy(e_orb_tot, "");
 #if((defined __LCAO)&&(defined __EXX) && !(defined __CUDA)&& !(defined __ROCM))
-            if (GlobalC::exx_info.info_global.cal_exx)
+            if (cal_exx)
             {
                 write_orb_energy(e_orb_locxc, "local");
                 write_orb_energy(e_orb_exx, "exx");

@@ -188,6 +188,7 @@ void KEDF_WT::tau_wt(const double* const* prho, ModulePW::PW_Basis* pw_rho, doub
  */
 void KEDF_WT::wt_potential(const double* const* prho, ModulePW::PW_Basis* pw_rho, ModuleBase::matrix& rpotential)
 {
+    ModuleBase::TITLE("KEDF_WT", "wt_potential");
     ModuleBase::timer::start("KEDF_WT", "wt_potential");
 
     double** kernelRhoBeta = new double*[PARAM.inp.nspin];
@@ -456,6 +457,13 @@ double KEDF_WT::diff_linhard(double eta, double vw_weight)
  */
 void KEDF_WT::multi_kernel(const double* const* prho, double** rkernel_rho, double exponent, ModulePW::PW_Basis* pw_rho)
 {
+#ifdef __CUDA
+    if (pw_rho->get_device() == "gpu") {
+        this->multi_kernel_gpu(prho, rkernel_rho, PARAM.inp.nspin, exponent, pw_rho);
+        return;
+    }
+#endif
+
     std::complex<double>** recipkernelRho = new std::complex<double>*[PARAM.inp.nspin];
     for (int is = 0; is < PARAM.inp.nspin; ++is)
     {

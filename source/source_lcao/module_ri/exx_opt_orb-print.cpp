@@ -4,7 +4,7 @@
 #include <iomanip>
 
 void Exx_Opt_Orb::print_matrix(
-	const Exx_Info::Exx_Info_Opt_ABFs &info,
+	const Exx_Info_Opt_ABFs &info,
 	const UnitCell& ucell,
 	const K_Vectors &kv,
 	const int Lmax,

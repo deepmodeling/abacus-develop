@@ -25,7 +25,6 @@
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_lcao/FORCE_STRESS.h"
-#include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/module_rt/td_info.h"
 #endif
 #ifdef __PEXSI
@@ -43,7 +42,6 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "source_md/md_func.h"
 #include "source_relax/bfgs_basic.h"
 #include "source_relax/ions_move_cg.h"
 
@@ -191,8 +189,6 @@ void Input_Conv::Convert()
     Ions_Move_Basic::relax_bfgs_rmax = PARAM.inp.relax_bfgs_rmax;
     Ions_Move_Basic::relax_bfgs_rmin = PARAM.inp.relax_bfgs_rmin;
     Ions_Move_Basic::relax_bfgs_init = PARAM.inp.relax_bfgs_init;
-    Ions_Move_Basic::out_stru = PARAM.inp.out_stru; // mohan add 2012-03-23
-    Ions_Move_Basic::relax_method = PARAM.inp.relax_method;
     Lattice_Change_Basic::fixed_axes = PARAM.inp.fixed_axes;
 
 
@@ -483,6 +479,7 @@ void Input_Conv::Convert()
         XC_Functional::set_hybrid_alpha(GlobalC::exx_info.info_global.hybrid_alpha);
         if(!PARAM.inp.exx_erfc_omega.empty())
             { GlobalC::exx_info.info_global.hse_omega = std::stod(PARAM.inp.exx_erfc_omega[0]); }
+        XC_Functional::set_hse_omega(GlobalC::exx_info.info_global.hse_omega);
         if(!PARAM.inp.exx_fock_lambda.empty())
             { GlobalC::exx_info.info_lip.lambda = std::stod(PARAM.inp.exx_fock_lambda[0]); }
         GlobalC::exx_info.info_global.separate_loop = PARAM.inp.exx_separate_loop;
@@ -516,6 +513,8 @@ void Input_Conv::Convert()
         {
             ModuleSymmetry::Symmetry::symm_flag = -1;
         }
+
+        GlobalC::exx_info.sync_from_global();
     }
 
     if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")

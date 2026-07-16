@@ -6,9 +6,6 @@
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/cif_io.h"
-#include "source_io/module_output/cube_io.h" // use write_vdata_palgrid
-#include "source_io/module_json/init_info.h"
-#include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
 #include "source_io/module_chgpot/rhog_io.h"
@@ -68,7 +65,8 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SETUP UNITCELL");
 
     //! 7) setup k points in the Brillouin zone according to symmetry.
-    this->kv.set(ucell,ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    const bool use_ibz = !inp.berry_phase && ModuleSymmetry::Symmetry::symm_flag != -1;
+    this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     //! 8) print information
@@ -175,9 +173,9 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     //! set direction of magnetism, used in non-collinear case 
     elecstate::cal_ux(ucell);
 
-    //! output the initial charge density and potential
-    ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep, PARAM.inp);
-//    ModuleIO::write_pot_init(ucell, this->Pgrid, this->pelec, istep, PARAM.inp); 
+    //! output the initial charge density
+    ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep,
+                             PARAM.globalv.global_out_dir, PARAM.inp, PARAM.globalv.two_fermi);
 
     return;
 }

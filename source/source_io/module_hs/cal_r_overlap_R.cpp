@@ -1,11 +1,13 @@
 #include "cal_r_overlap_R.h"
 
+#include "rr_sparse_writer.h"
 #include "single_R_io.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_base/mathzone_add1.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_base/mathzone_add1.h"
+#include "source_io/module_parameter/parameter.h"
 
 cal_r_overlap_R::cal_r_overlap_R()
 {
@@ -15,8 +17,7 @@ cal_r_overlap_R::~cal_r_overlap_R()
 {
 }
 
-void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
-                                           const LCAO_Orbitals& orb)
+void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell, const LCAO_Orbitals& orb)
 {
     const int ntype = orb.get_ntype();
     int lmax_orb = -1;
@@ -32,19 +33,13 @@ void cal_r_overlap_R::initialize_orb_table(const UnitCell& ucell,
 
     const int Lmax = lmax_orb + 1;
     const int Lmax_used = 2 * lmax_orb + 1;
-    Center2_Orb::init_Table_Spherical_Bessel(Lmax_used,
-                                             dr,
-                                             dk,
-                                             kmesh,
-                                             Rmesh,
-                                             psb_);
+    Center2_Orb::init_Table_Spherical_Bessel(Lmax_used, dr, dk, kmesh, Rmesh, psb_);
     ModuleBase::Ylm::set_coefficients();
     MGT.init_Gaunt_CH(Lmax);
     MGT.init_Gaunt(Lmax);
 }
 
-void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell,
-                                               const LCAO_Orbitals& orb)
+void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell, const LCAO_Orbitals& orb)
 {
     int orb_r_ntype = 0;
     int mat_Nr = orb.Phi[0].PhiLN(0, 0).getNr();
@@ -135,9 +130,8 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell,
                     {
                         for (int NB = 0; NB < orb.Phi[TB].getNchi(LB); ++NB)
                         {
-                            center2_orb21_r[TA][TB][LA][NA][LB].insert(std::make_pair(
-                                NB,
-                                Center2_Orb::Orb21(orbs[TA][LA][NA], orb_r, orbs[TB][LB][NB], psb_, MGT)));
+                            center2_orb21_r[TA][TB][LA][NA][LB].insert(
+                                std::make_pair(NB, Center2_Orb::Orb21(orbs[TA][LA][NA], orb_r, orbs[TB][LB][NB], psb_, MGT)));
                         }
                     }
                 }
@@ -185,11 +179,19 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell,
         }
     }
 
-    iw2it.resize(PARAM.globalv.nlocal);
-    iw2ia.resize(PARAM.globalv.nlocal);
-    iw2iL.resize(PARAM.globalv.nlocal);
-    iw2iN.resize(PARAM.globalv.nlocal);
-    iw2im.resize(PARAM.globalv.nlocal);
+    int map_size = PARAM.globalv.nlocal;
+    int required_orbitals = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        required_orbitals += ucell.atoms[it].nw * ucell.atoms[it].na;
+    }
+    map_size = std::max(map_size, required_orbitals);
+
+    iw2it.resize(map_size);
+    iw2ia.resize(map_size);
+    iw2iL.resize(map_size);
+    iw2iN.resize(map_size);
+    iw2im.resize(map_size);
 
     int iw = 0;
     for (int it = 0; it < ucell.ntype; it++)
@@ -215,7 +217,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell,
     }
 }
 
-void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell,const LCAO_Orbitals& orb)
+void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell, const LCAO_Orbitals& orb)
 {
     const InfoNonlocal& infoNL_ = ucell.infoNL;
 
@@ -284,37 +286,42 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
         {
             int nr = infoNL_.Beta[T].Proj[ip].getNr();
             double dr_uniform = 0.01;
-	        int nr_uniform = static_cast<int>((infoNL_.Beta[T].Proj[ip].getRadial(nr-1) - infoNL_.Beta[T].Proj[ip].getRadial(0))/dr_uniform) + 1;
+            int nr_uniform
+                = static_cast<int>((infoNL_.Beta[T].Proj[ip].getRadial(nr - 1) - infoNL_.Beta[T].Proj[ip].getRadial(0)) / dr_uniform) + 1;
             double* rad = new double[nr_uniform];
             double* rab = new double[nr_uniform];
             for (int ir = 0; ir < nr_uniform; ir++)
             {
-                rad[ir] = ir*dr_uniform;
+                rad[ir] = ir * dr_uniform;
                 rab[ir] = dr_uniform;
             }
             double* y2 = new double[nr];
             double* Beta_r_uniform = new double[nr_uniform];
             double* dbeta_uniform = new double[nr_uniform];
-            ModuleBase::Mathzone_Add1::SplineD2(infoNL_.Beta[T].Proj[ip].getRadial(), infoNL_.Beta[T].Proj[ip].getBeta_r(), nr, 0.0, 0.0, y2);
-            ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(
-                infoNL_.Beta[T].Proj[ip].getRadial(), 
-                infoNL_.Beta[T].Proj[ip].getBeta_r(), 
-                y2, 
-                nr, 
-                rad, 
-                nr_uniform, 
-                Beta_r_uniform, 
-                dbeta_uniform
-            );
+            ModuleBase::Mathzone_Add1::SplineD2(infoNL_.Beta[T].Proj[ip].getRadial(),
+                                                infoNL_.Beta[T].Proj[ip].getBeta_r(),
+                                                nr,
+                                                0.0,
+                                                0.0,
+                                                y2);
+            ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(infoNL_.Beta[T].Proj[ip].getRadial(),
+                                                                  infoNL_.Beta[T].Proj[ip].getBeta_r(),
+                                                                  y2,
+                                                                  nr,
+                                                                  rad,
+                                                                  nr_uniform,
+                                                                  Beta_r_uniform,
+                                                                  dbeta_uniform);
 
             // linear extrapolation at the zero point
             if (infoNL_.Beta[T].Proj[ip].getRadial(0) > 1e-10)
             {
-                double slope = (infoNL_.Beta[T].Proj[ip].getBeta_r(1) - infoNL_.Beta[T].Proj[ip].getBeta_r(0)) / (infoNL_.Beta[T].Proj[ip].getRadial(1) - infoNL_.Beta[T].Proj[ip].getRadial(0));
+                double slope = (infoNL_.Beta[T].Proj[ip].getBeta_r(1) - infoNL_.Beta[T].Proj[ip].getBeta_r(0))
+                               / (infoNL_.Beta[T].Proj[ip].getRadial(1) - infoNL_.Beta[T].Proj[ip].getRadial(0));
                 Beta_r_uniform[0] = infoNL_.Beta[T].Proj[ip].getBeta_r(0) - slope * infoNL_.Beta[T].Proj[ip].getRadial(0);
             }
 
-            // Here, the operation beta_r / r is performed. To avoid divergence at r=0, beta_r(0) is set to beta_r(1). 
+            // Here, the operation beta_r / r is performed. To avoid divergence at r=0, beta_r(0) is set to beta_r(1).
             // However, this may introduce issues, so caution is needed.
             for (int ir = 1; ir < nr_uniform; ir++)
             {
@@ -338,11 +345,11 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
                                                   true,
                                                   PARAM.inp.cal_force);
 
-            delete [] rad;
-            delete [] rab;
-            delete [] y2;
-            delete [] Beta_r_uniform;
-            delete [] dbeta_uniform;
+            delete[] rad;
+            delete[] rab;
+            delete[] y2;
+            delete[] Beta_r_uniform;
+            delete[] dbeta_uniform;
         }
     }
 
@@ -374,9 +381,8 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
                 {
                     for (int ip = 0; ip < infoNL_.nproj[TB]; ip++)
                     {
-                        center2_orb21_r_nonlocal[TA][TB][LA][NA].insert(std::make_pair(
-                            ip,
-                            Center2_Orb::Orb21(orbs[TA][LA][NA], orb_r, orbs_nonlocal[TB][ip], psb_, MGT)));
+                        center2_orb21_r_nonlocal[TA][TB][LA][NA].insert(
+                            std::make_pair(ip, Center2_Orb::Orb21(orbs[TA][LA][NA], orb_r, orbs_nonlocal[TB][ip], psb_, MGT)));
                     }
                 }
             }
@@ -417,11 +423,19 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
         }
     }
 
-    iw2it.resize(PARAM.globalv.nlocal);
-    iw2ia.resize(PARAM.globalv.nlocal);
-    iw2iL.resize(PARAM.globalv.nlocal);
-    iw2iN.resize(PARAM.globalv.nlocal);
-    iw2im.resize(PARAM.globalv.nlocal);
+    int map_size = PARAM.globalv.nlocal;
+    int required_orbitals = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        required_orbitals += ucell.atoms[it].nw * ucell.atoms[it].na;
+    }
+    map_size = std::max(map_size, required_orbitals);
+
+    iw2it.resize(map_size);
+    iw2ia.resize(map_size);
+    iw2iL.resize(map_size);
+    iw2iN.resize(map_size);
+    iw2im.resize(map_size);
 
     int iw = 0;
     for (int it = 0; it < ucell.ntype; it++)
@@ -447,27 +461,27 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
     }
 }
 
-void cal_r_overlap_R::init(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
+void cal_r_overlap_R::init(const UnitCell& ucell, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "init");
     ModuleBase::timer::start("cal_r_overlap_R", "init");
     this->ParaV = &pv;
 
-    initialize_orb_table(ucell,orb);
-    construct_orbs_and_orb_r(ucell,orb);
+    initialize_orb_table(ucell, orb);
+    construct_orbs_and_orb_r(ucell, orb);
 
     ModuleBase::timer::end("cal_r_overlap_R", "init");
     return;
 }
 
-void cal_r_overlap_R::init_nonlocal(const UnitCell& ucell,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
+void cal_r_overlap_R::init_nonlocal(const UnitCell& ucell, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "init_nonlocal");
     ModuleBase::timer::start("cal_r_overlap_R", "init_nonlocal");
     this->ParaV = &pv;
 
-    initialize_orb_table(ucell,orb);
-    construct_orbs_and_nonlocal_and_orb_r(ucell,orb);
+    initialize_orb_table(ucell, orb);
+    construct_orbs_and_nonlocal_and_orb_r(ucell, orb);
 
     ModuleBase::timer::end("cal_r_overlap_R", "init_nonlocal");
     return;
@@ -490,33 +504,63 @@ ModuleBase::Vector3<double> cal_r_overlap_R::get_psi_r_psi(const ModuleBase::Vec
 
     double overlap_o = center2_orb11[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point, distance, m1, m2);
 
-    double overlap_x = -1 * factor
-                       * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point,
-                                                                                distance,
-                                                                                m1,
-                                                                                1,
-                                                                                m2); // m =  1
+    double overlap_x = -1 * factor * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point, distance, m1, 1,
+                                                                                            m2); // m =  1
 
-    double overlap_y = -1 * factor
-                       * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point,
-                                                                                distance,
-                                                                                m1,
-                                                                                2,
-                                                                                m2); // m = -1
+    double overlap_y = -1 * factor * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point, distance, m1, 2,
+                                                                                            m2); // m = -1
 
-    double overlap_z = factor
-                       * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point,
-                                                                                distance,
-                                                                                m1,
-                                                                                0,
-                                                                                m2); // m =  0
+    double overlap_z = factor * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_overlap(origin_point, distance, m1, 0,
+                                                                                       m2); // m =  0
 
-    ModuleBase::Vector3<double> temp_prp
-        = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z) + R1 * overlap_o;
+    ModuleBase::Vector3<double> temp_prp = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z) + R1 * overlap_o;
 
     return temp_prp;
 }
+ModuleBase::Vector3<double> cal_r_overlap_R::get_psi_r_gradpsi(const ModuleBase::Vector3<double>& R1,
+                                                               const int& T1,
+                                                               const int& L1,
+                                                               const int& m1,
+                                                               const int& N1,
+                                                               const ModuleBase::Vector3<double>& R2,
+                                                               const int& T2,
+                                                               const int& L2,
+                                                               const int& m2,
+                                                               const int& N2,
+                                                               const ModuleBase::Vector3<double>& Efield,
+                                                               const ModuleBase::Vector3<double>& dR)
+{
+    ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
+    double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
+    const ModuleBase::Vector3<double>& distance = R2 - R1;
 
+    ModuleBase::Vector3<double> grad_o = center2_orb11[T1][T2][L1][N1][L2].at(N2).cal_grad_overlap(origin_point, distance, m1, m2);
+
+    ModuleBase::Vector3<double> grad_rx = -1 * factor
+                                          * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_grad_overlap(origin_point,
+                                                                                                        distance,
+                                                                                                        m1,
+                                                                                                        1,
+                                                                                                        m2); // m =  1
+
+    ModuleBase::Vector3<double> grad_ry = -1 * factor
+                                          * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_grad_overlap(origin_point,
+                                                                                                        distance,
+                                                                                                        m1,
+                                                                                                        2,
+                                                                                                        m2); // m = -1
+
+    ModuleBase::Vector3<double> grad_rz = factor
+                                          * center2_orb21_r[T1][T2][L1][N1][L2].at(N2).cal_grad_overlap(origin_point,
+                                                                                                        distance,
+                                                                                                        m1,
+                                                                                                        0,
+                                                                                                        m2); // m =  0
+
+    ModuleBase::Vector3<double> temp_prp = Efield[0] * grad_rx + Efield[1] * grad_ry + Efield[2] * grad_rz + (Efield * (R1 - dR)) * grad_o;
+
+    return temp_prp;
+}
 void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
                                      std::vector<std::vector<double>>& nlm,
                                      const ModuleBase::Vector3<double>& R1,
@@ -535,7 +579,7 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
     nlm.resize(4);
     if (nproj == 0)
     {
-        for(int i = 0;i < 4;i++)
+        for (int i = 0; i < 4; i++)
         {
             nlm[i].resize(1);
         }
@@ -548,7 +592,7 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
         const int L2 = infoNL_.Beta[T2].Proj[ip].getL(); // mohan add 2021-05-07
         natomwfc += 2 * L2 + 1;
     }
-    for(int i = 0;i < 4;i++)
+    for (int i = 0; i < 4; i++)
     {
         nlm[i].resize(natomwfc);
     }
@@ -558,8 +602,7 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
         const int L2 = infoNL_.Beta[T2].Proj[ip].getL();
         for (int m2 = 0; m2 < 2 * L2 + 1; m2++)
         {
-            double overlap_o
-                = center2_orb11_nonlocal[T1][T2][L1][N1].at(ip).cal_overlap(origin_point, distance, m1, m2);
+            double overlap_o = center2_orb11_nonlocal[T1][T2][L1][N1].at(ip).cal_overlap(origin_point, distance, m1, m2);
 
             double overlap_x = -1 * factor
                                * center2_orb21_r_nonlocal[T1][T2][L1][N1].at(ip).cal_overlap(origin_point,
@@ -582,9 +625,9 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
                                                                                              0,
                                                                                              m2); // m =  0
 
-            //nlm[index] = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z) + R1 * overlap_o;
+            // nlm[index] = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z) + R1 * overlap_o;
 
-            //nlm[index] = ModuleBase::Vector3<double>(overlap_o, overlap_y, overlap_z);// + R1 * overlap_o;
+            // nlm[index] = ModuleBase::Vector3<double>(overlap_o, overlap_y, overlap_z);// + R1 * overlap_o;
             nlm[0][index] = overlap_o;
             nlm[1][index] = overlap_x + (R1 * overlap_o).x;
             nlm[2][index] = overlap_y + (R1 * overlap_o).y;
@@ -594,8 +637,7 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
     }
 }
 
-
-void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep)
+void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const int& istep, const int precision)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR");
     ModuleBase::timer::start("cal_r_overlap_R", "out_rR");
@@ -628,11 +670,16 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
     ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
     double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
     int output_R_number = 0;
+    ModuleIO::SparseWriteOptions single_R_options;
+    single_R_options.threshold = sparse_threshold;
+    single_R_options.binary = binary;
+    single_R_options.precision = precision;
+    single_R_options.reduce = true;
+    single_R_options.temp_dir = PARAM.globalv.global_out_dir;
 
     std::stringstream tem1;
     tem1 << PARAM.globalv.global_out_dir << "tmp-rr.csr";
     std::ofstream ofs_tem1;
-    std::ifstream ifs_tem1;
 
     if (GlobalV::DRANK == 0)
     {
@@ -643,6 +690,10 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
         else
         {
             ofs_tem1.open(tem1.str().c_str());
+        }
+        if (!ofs_tem1.is_open())
+        {
+            ModuleBase::WARNING_QUIT("cal_r_overlap_R::out_rR", "Cannot open temporary sparse matrix file: " + tem1.str());
         }
     }
 
@@ -671,8 +722,8 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
                         int orb_index_col = iw2 / PARAM.globalv.npol;
 
                         // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
-                        int new_index = iw1 - PARAM.globalv.npol * orb_index_row
-                                        + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
+                        int new_index
+                            = iw1 - PARAM.globalv.npol * orb_index_row + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
 
                         if (new_index == 0 || new_index == 3)
                         {
@@ -689,41 +740,34 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
                             int im2 = iw2im[orb_index_col];
 
                             ModuleBase::Vector3<double> r_distance
-                                = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car)
-                                  * ucell.lat0;
+                                = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
 
-                            double overlap_o = center2_orb11[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                          r_distance,
-                                                                                                          im1,
-                                                                                                          im2);
+                            double overlap_o
+                                = center2_orb11[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point, r_distance, im1, im2);
 
-                            double overlap_x
-                                = -1 * factor
-                                  * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                 r_distance,
-                                                                                                 im1,
-                                                                                                 1,
-                                                                                                 im2); // m =  1
+                            double overlap_x = -1 * factor
+                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                              r_distance,
+                                                                                                              im1,
+                                                                                                              1,
+                                                                                                              im2); // m =  1
 
-                            double overlap_y
-                                = -1 * factor
-                                  * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                 r_distance,
-                                                                                                 im1,
-                                                                                                 2,
-                                                                                                 im2); // m = -1
+                            double overlap_y = -1 * factor
+                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                              r_distance,
+                                                                                                              im1,
+                                                                                                              2,
+                                                                                                              im2); // m = -1
 
-                            double overlap_z
-                                = factor
-                                  * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                 r_distance,
-                                                                                                 im1,
-                                                                                                 0,
-                                                                                                 im2); // m =  0
+                            double overlap_z = factor
+                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                              r_distance,
+                                                                                                              im1,
+                                                                                                              0,
+                                                                                                              im2); // m =  0
 
-                            ModuleBase::Vector3<double> temp_prp
-                                = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z)
-                                  + ucell.atoms[it1].tau[ia1] * ucell.lat0 * overlap_o;
+                            ModuleBase::Vector3<double> temp_prp = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z)
+                                                                   + ucell.atoms[it1].tau[ia1] * ucell.lat0 * overlap_o;
 
                             if (std::abs(temp_prp.x) > sparse_threshold)
                             {
@@ -756,19 +800,22 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
 
         Parallel_Reduce::reduce_all(rR_nonzero_num, 3);
 
-        if (rR_nonzero_num[0] || rR_nonzero_num[1] || rR_nonzero_num[2])
+        if (ModuleIO::detail::rr_sparse_has_payload(rR_nonzero_num))
         {
             output_R_number++;
 
-            if (binary)
+            if (GlobalV::DRANK == 0)
             {
-                ofs_tem1.write(reinterpret_cast<char*>(&dRx), sizeof(int));
-                ofs_tem1.write(reinterpret_cast<char*>(&dRy), sizeof(int));
-                ofs_tem1.write(reinterpret_cast<char*>(&dRz), sizeof(int));
-            }
-            else
-            {
-                ofs_tem1 << dRx << " " << dRy << " " << dRz << std::endl;
+                if (binary)
+                {
+                    ofs_tem1.write(reinterpret_cast<char*>(&dRx), sizeof(int));
+                    ofs_tem1.write(reinterpret_cast<char*>(&dRy), sizeof(int));
+                    ofs_tem1.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+                }
+                else
+                {
+                    ofs_tem1 << dRx << " " << dRy << " " << dRz << std::endl;
+                }
             }
 
             for (int direction = 0; direction < 3; ++direction)
@@ -787,11 +834,7 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
 
                 if (rR_nonzero_num[direction])
                 {
-                    ModuleIO::output_single_R(ofs_tem1,
-                                              psi_r_psi_sparse[direction],
-                                              sparse_threshold,
-                                              binary,
-                                              *(this->ParaV));
+                    ModuleIO::output_single_R(ofs_tem1, psi_r_psi_sparse[direction], *(this->ParaV), single_R_options);
                 }
                 else
                 {
@@ -803,59 +846,25 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
 
     if (GlobalV::DRANK == 0)
     {
-        std::ofstream out_r;
         std::stringstream ssr;
         if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
         {
-            ssr << PARAM.globalv.global_matrix_dir
-                << "rrg" << step << ".csr";
+            ssr << PARAM.globalv.global_matrix_dir << "rrg" << step << ".csr";
         }
         else
         {
             ssr << PARAM.globalv.global_out_dir << "rr.csr";
         }
 
-        if (binary) // .dat
-        {
-            ofs_tem1.close();
-            int nlocal = PARAM.globalv.nlocal;
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
-            {
-                out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
-            }
-            else
-            {
-                out_r.open(ssr.str().c_str(), std::ios::binary);
-            }
-            out_r.write(reinterpret_cast<char*>(&step), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
-
-            ifs_tem1.open(tem1.str().c_str(), std::ios::binary);
-            out_r << ifs_tem1.rdbuf();
-            ifs_tem1.close();
-            out_r.close();
-        }
-        else // .txt
-        {
-            ofs_tem1.close();
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
-            {
-                out_r.open(ssr.str().c_str(), std::ios::app);
-            }
-            else
-            {
-                out_r.open(ssr.str().c_str());
-            }
-            out_r << "STEP: " << step << std::endl;
-            out_r << "Matrix Dimension of r(R): " << PARAM.globalv.nlocal << std::endl;
-            out_r << "Matrix number of r(R): " << output_R_number << std::endl;
-
-            ifs_tem1.open(tem1.str().c_str());
-            out_r << ifs_tem1.rdbuf();
-            ifs_tem1.close();
-            out_r.close();
-        }
+        ofs_tem1.close();
+        ModuleIO::detail::finalize_rr_sparse_file(ssr.str(),
+                                                  tem1.str(),
+                                                  step,
+                                                  PARAM.globalv.nlocal,
+                                                  output_R_number,
+                                                  binary,
+                                                  PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step,
+                                                  "cal_r_overlap_R::out_rR");
 
         std::remove(tem1.str().c_str());
     }
@@ -864,7 +873,10 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
     return;
 }
 
-void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, const std::set<Abfs::Vector3_Order<int>>& output_R_coor)
+void cal_r_overlap_R::out_rR_other(const UnitCell& ucell,
+                                   const int& istep,
+                                   const std::set<Abfs::Vector3_Order<int>>& output_R_coor,
+                                   const int precision)
 {
     ModuleBase::TITLE("cal_r_overlap_R", "out_rR_other");
     ModuleBase::timer::start("cal_r_overlap_R", "out_rR_other");
@@ -873,52 +885,42 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
     ModuleBase::Vector3<double> tau1, tau2, dtau;
     ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
     double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
-    int output_R_number = output_R_coor.size();
+    int output_R_number = 0;
     int step = istep;
+    ModuleIO::SparseWriteOptions single_R_options;
+    single_R_options.threshold = sparse_threshold;
+    single_R_options.binary = binary;
+    single_R_options.precision = precision;
+    single_R_options.reduce = true;
+    single_R_options.temp_dir = PARAM.globalv.global_out_dir;
 
-    std::ofstream out_r;
-    std::stringstream ssr;
-    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
-    {
-        ssr << PARAM.globalv.global_matrix_dir
-            << "rrg" << step << ".csr";
-    }
-    else
-    {
-        ssr << PARAM.globalv.global_out_dir << "rr.csr";
-    }
-
+    std::stringstream tem1;
+    tem1 << PARAM.globalv.global_out_dir << "tmp-rr-other.csr";
+    std::ofstream ofs_tem1;
     if (GlobalV::DRANK == 0)
     {
         if (binary)
         {
-            int nlocal = PARAM.globalv.nlocal;
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
-            {
-                out_r.open(ssr.str().c_str(), std::ios::binary | std::ios::app);
-            }
-            else
-            {
-                out_r.open(ssr.str().c_str(), std::ios::binary);
-            }
-            out_r.write(reinterpret_cast<char*>(&step), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&nlocal), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&output_R_number), sizeof(int));
+            ofs_tem1.open(tem1.str().c_str(), std::ios::binary);
         }
         else
         {
-            if (PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step)
-            {
-                out_r.open(ssr.str().c_str(), std::ios::app);
-            }
-            else
-            {
-                out_r.open(ssr.str().c_str());
-            }
-            out_r << "STEP: " << step << std::endl;
-            out_r << "Matrix Dimension of r(R): " << PARAM.globalv.nlocal << std::endl;
-            out_r << "Matrix number of r(R): " << output_R_number << std::endl;
+            ofs_tem1.open(tem1.str().c_str());
         }
+        if (!ofs_tem1.is_open())
+        {
+            ModuleBase::WARNING_QUIT("cal_r_overlap_R::out_rR_other", "Cannot open temporary sparse matrix file: " + tem1.str());
+        }
+    }
+
+    std::stringstream ssr;
+    if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
+    {
+        ssr << PARAM.globalv.global_matrix_dir << "rrg" << step << ".csr";
+    }
+    else
+    {
+        ssr << PARAM.globalv.global_out_dir << "rr.csr";
     }
 
     for (auto& R_coor: output_R_coor)
@@ -947,8 +949,8 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
                         int orb_index_col = iw2 / PARAM.globalv.npol;
 
                         // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
-                        int new_index = iw1 - PARAM.globalv.npol * orb_index_row
-                                        + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
+                        int new_index
+                            = iw1 - PARAM.globalv.npol * orb_index_row + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
 
                         if (new_index == 0 || new_index == 3)
                         {
@@ -965,41 +967,34 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
                             int im2 = iw2im[orb_index_col];
 
                             ModuleBase::Vector3<double> r_distance
-                                = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car)
-                                  * ucell.lat0;
+                                = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
 
-                            double overlap_o = center2_orb11[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                          r_distance,
-                                                                                                          im1,
-                                                                                                          im2);
+                            double overlap_o
+                                = center2_orb11[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point, r_distance, im1, im2);
 
-                            double overlap_x
-                                = -1 * factor
-                                  * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                 r_distance,
-                                                                                                 im1,
-                                                                                                 1,
-                                                                                                 im2); // m =  1
+                            double overlap_x = -1 * factor
+                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                              r_distance,
+                                                                                                              im1,
+                                                                                                              1,
+                                                                                                              im2); // m =  1
 
-                            double overlap_y
-                                = -1 * factor
-                                  * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                 r_distance,
-                                                                                                 im1,
-                                                                                                 2,
-                                                                                                 im2); // m = -1
+                            double overlap_y = -1 * factor
+                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                              r_distance,
+                                                                                                              im1,
+                                                                                                              2,
+                                                                                                              im2); // m = -1
 
-                            double overlap_z
-                                = factor
-                                  * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                 r_distance,
-                                                                                                 im1,
-                                                                                                 0,
-                                                                                                 im2); // m =  0
+                            double overlap_z = factor
+                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                              r_distance,
+                                                                                                              im1,
+                                                                                                              0,
+                                                                                                              im2); // m =  0
 
-                            ModuleBase::Vector3<double> temp_prp
-                                = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z)
-                                  + ucell.atoms[it1].tau[ia1] * ucell.lat0 * overlap_o;
+                            ModuleBase::Vector3<double> temp_prp = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z)
+                                                                   + ucell.atoms[it1].tau[ia1] * ucell.lat0 * overlap_o;
 
                             if (std::abs(temp_prp.x) > sparse_threshold)
                             {
@@ -1032,15 +1027,24 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
 
         Parallel_Reduce::reduce_all(rR_nonzero_num, 3);
 
-        if (binary) // .dat
+        if (!ModuleIO::detail::rr_sparse_has_payload(rR_nonzero_num))
         {
-            out_r.write(reinterpret_cast<char*>(&dRx), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&dRy), sizeof(int));
-            out_r.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+            continue;
         }
-        else // .txt
+        output_R_number++;
+
+        if (GlobalV::DRANK == 0)
         {
-            out_r << dRx << " " << dRy << " " << dRz << std::endl;
+            if (binary) // .dat
+            {
+                ofs_tem1.write(reinterpret_cast<char*>(&dRx), sizeof(int));
+                ofs_tem1.write(reinterpret_cast<char*>(&dRy), sizeof(int));
+                ofs_tem1.write(reinterpret_cast<char*>(&dRz), sizeof(int));
+            }
+            else // .txt
+            {
+                ofs_tem1 << dRx << " " << dRy << " " << dRz << std::endl;
+            }
         }
 
         for (int direction = 0; direction < 3; ++direction)
@@ -1049,17 +1053,17 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
             {
                 if (binary)
                 {
-                    out_r.write(reinterpret_cast<char*>(&rR_nonzero_num[direction]), sizeof(int));
+                    ofs_tem1.write(reinterpret_cast<char*>(&rR_nonzero_num[direction]), sizeof(int));
                 }
                 else
                 {
-                    out_r << rR_nonzero_num[direction] << std::endl;
+                    ofs_tem1 << rR_nonzero_num[direction] << std::endl;
                 }
             }
 
             if (rR_nonzero_num[direction])
             {
-                ModuleIO::output_single_R(out_r, psi_r_psi_sparse[direction], sparse_threshold, binary, *(this->ParaV));
+                ModuleIO::output_single_R(ofs_tem1, psi_r_psi_sparse[direction], *(this->ParaV), single_R_options);
             }
             else
             {
@@ -1070,7 +1074,16 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell, const int& istep, cons
 
     if (GlobalV::DRANK == 0)
     {
-        out_r.close();
+        ofs_tem1.close();
+        ModuleIO::detail::finalize_rr_sparse_file(ssr.str(),
+                                                  tem1.str(),
+                                                  step,
+                                                  PARAM.globalv.nlocal,
+                                                  output_R_number,
+                                                  binary,
+                                                  PARAM.inp.calculation == "md" && PARAM.inp.out_app_flag && step,
+                                                  "cal_r_overlap_R::out_rR_other");
+        std::remove(tem1.str().c_str());
     }
 
     ModuleBase::timer::end("cal_r_overlap_R", "out_rR_other");

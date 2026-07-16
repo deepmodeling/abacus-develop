@@ -2,9 +2,8 @@
 #include "source_lcao/module_rt/boundary_fix.h"
 
 //----------------IO-----------------
+#include "source_base/global_variable.h"
 #include "source_io/module_ctrl/ctrl_output_td.h"
-#include "source_io/module_current/td_current_io.h"
-#include "source_io/module_dipole/dipole_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_wf/read_wfc_nao.h"
 //------LCAO HSolver ElecState-------
@@ -16,6 +15,9 @@
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/rho_tau_lcao.h"
+#ifdef __EXX
+#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#endif
 
 namespace ModuleESolver
 {
@@ -101,7 +103,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     // 1) before_scf (electronic iteration loops)
     //----------------------------------------------------------------
     this->before_scf(ucell, istep); // From ESolver_KS_LCAO
-
+    td_p->initialize_phase_hybrid(ucell, dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt)->getHR());
+    td_p->calculate_grad_overlap(this->pv, ucell, this->gd, this->orb_.cutoffs(), this->two_center_bundle_.overlap_orb.get());
     // Initialize the moving spatial gauge
     if (use_td_moving_gauge && this->td_mg_ == nullptr)
     {
@@ -113,7 +116,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
 
     if (PARAM.inp.td_stype == 2)
     {
-        this->dmat.dm->cal_DMR_td(ucell, TD_info::cart_At);
+        this->dmat.dm->cal_DMR_td(td_p->get_phase_hybrid(),TD_info::cart_At);
     }
     else
     {
@@ -177,7 +180,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
                                         GlobalV::ofs_running,
                                         GlobalV::ofs_warning);
             this->exx_nao.before_scf(ucell, this->kv, this->orb_, this->p_chgmix, totstep, PARAM.inp);
-            this->pelec->init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, ucell.symm);
+            elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, istep, 
+			    PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
 
             if (totstep <= PARAM.inp.td_tend + 1)
             {
@@ -249,7 +253,7 @@ template <typename TR, typename Device>
 void ESolver_KS_LCAO_TDDFT<TR, Device>::print_step()
 {
     std::cout << " -------------------------------------------" << std::endl;
-    std::cout << " STEP OF ELECTRON EVOLVE : " << unsigned(totstep) << std::endl;
+    std::cout << " STEP OF ELECTRON EVOLVE : " << unsigned(totstep)+1 << std::endl;
     std::cout << " -------------------------------------------" << std::endl;
 }
 
@@ -387,7 +391,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::iter_finish(UnitCell& ucell,
 
     // Calculate energy-density matrix for RT-TDDFT
     if (conv_esolver && estep == estep_max - 1 && istep >= (PARAM.inp.init_wfc == "file" ? 0 : 1)
-        && PARAM.inp.td_edm == 0)
+        && PARAM.inp.td_edm == 0 && PARAM.inp.td_stype != 2)
     {
         if (use_tensor && use_lapack)
         {
@@ -593,7 +597,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::weight_dm_rho(const UnitCell& ucell)
     elecstate::cal_dm_psi(this->dmat.dm->get_paraV_pointer(), this->pelec->wg, this->psi[0], *this->dmat.dm);
     if (PARAM.inp.td_stype == 2)
     {
-        this->dmat.dm->cal_DMR_td(ucell, TD_info::cart_At);
+        this->dmat.dm->cal_DMR_td(td_p->get_phase_hybrid(), TD_info::cart_At);
     }
     else
     {

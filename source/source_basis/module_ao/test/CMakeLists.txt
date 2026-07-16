@@ -1,4 +1,4 @@
-remove_definitions(-D__EXX)
+abacus_disable_feature_definitions(__EXX)
 
 list(APPEND depend_files
  ../../../source_base/math_integral.cpp
@@ -6,7 +6,7 @@ list(APPEND depend_files
   ../../../source_base/math_polyint.cpp
   ../../../source_base/math_ylmreal.cpp
   ../../../source_base/ylm.cpp
-  ../../../source_base/memory.cpp
+  ../../../source_base/memory_recorder.cpp
   ../../../source_base/module_external/blas_connector_base.cpp
   ../../../source_base/module_external/blas_connector_vector.cpp
   ../../../source_base/module_external/blas_connector_matrix.cpp
@@ -50,21 +50,21 @@ AddTest(
     SOURCES ORB_nonlocal_test.cpp
         ../ORB_nonlocal.cpp
         ../ORB_nonlocal_lm.cpp
-    LIBS parameter ${math_libs} device base
+    LIBS parameter device base
 )
 
 AddTest(
     TARGET MODULE_AO_ORB_nonlocal_lm_test
     SOURCES ORB_nonlocal_lm_test.cpp
         ../ORB_nonlocal_lm.cpp
-    LIBS parameter ${math_libs} device base
+    LIBS parameter device base
 )
 
 AddTest(
     TARGET MODULE_AO_ORB_atomic_lm_test
     SOURCES ORB_atomic_lm_test.cpp
         ../ORB_atomic_lm.cpp
-    LIBS parameter ${math_libs} device base
+    LIBS parameter device base
 )
 
 AddTest(
@@ -73,14 +73,14 @@ AddTest(
         ../ORB_read.cpp
         ../ORB_atomic.cpp
         ../ORB_atomic_lm.cpp
-    LIBS parameter ${math_libs} device base 
+    LIBS parameter device base
 )
 
 
 AddTest(
     TARGET MODULE_AO_parallel_orbitals_test 
     SOURCES parallel_orbitals_test.cpp ../parallel_orbitals.cpp
-    LIBS parameter ${math_libs} device base
+    LIBS parameter device base
 )
 
 install(FILES parallel_orbitals_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

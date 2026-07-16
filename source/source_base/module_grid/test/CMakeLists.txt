@@ -1,4 +1,4 @@
-remove_definitions(-D__MPI)
+abacus_disable_feature_definitions(__MPI)
 
 AddTest(
   TARGET MODULE_BASE_GRID_test_delley
@@ -25,5 +25,5 @@ AddTest(
   TARGET MODULE_BASE_GRID_test_batch
   SOURCES test_batch.cpp
   ../batch.cpp
-  LIBS ${math_libs}
+  LIBS
 )

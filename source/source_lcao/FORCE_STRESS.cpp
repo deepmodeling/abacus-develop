@@ -24,7 +24,9 @@
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/overlap.h"
+#include "source_lcao/module_operator_lcao/td_pot_hybrid.h"
 #include "source_lcao/pulay_fs.h"
+#include "source_lcao/module_rt/force_rt_overlap.h"
 
 
 // mohan add 2025-11-04
@@ -81,11 +83,13 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           const Structure_Factor& sf,
                                           const K_Vectors& kv,
                                           ModulePW::PW_Basis* rhopw,
-										  surchem& solvent,
-										  Plus_U &dftu, // mohan add 2025-11-07
+                                          surchem& solvent,
+                                          Plus_U &dftu, // mohan add 2025-11-07
                                           Setup_DeePKS<T>& deepks,
-										  Exx_NAO<T> &exx_nao,
-                                          ModuleSymmetry::Symmetry* symm)
+                                          Exx_NAO<T> &exx_nao,
+                                          ModuleSymmetry::Symmetry* symm,
+                                          const int td_stype,
+                                          hamilt::Hamilt<T>* p_hamilt)
 {
     ModuleBase::TITLE("Force_Stress_LCAO", "getForceStress");
     ModuleBase::timer::start("Force_Stress_LCAO", "getForceStress");
@@ -113,6 +117,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     ModuleBase::matrix fcc;
     ModuleBase::matrix fscc;
     ModuleBase::matrix fvnl_dalpha; // deepks
+    ModuleBase::matrix fpothybrid;
 
     fvl_dphi.create(nat, 3); // must do it now, update it later, noted by zhengdy
 
@@ -127,6 +132,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         fcc.create(nat, 3); // force due to core correction
         fscc.create(nat, 3); // force due to self-consistent field
         fvnl_dalpha.create(nat, 3); // deepks
+        fpothybrid.create(nat, 3); // pulay force for hybrid gauge rt-tddft
 
         // calculate basic terms in Force, same method with PW base
         this->calForcePwPart(ucell, fvl_dvl, fewalds, fcc, fscc, pelec->f_en.etxc,
@@ -199,7 +205,10 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         hamilt::Overlap<hamilt::OperatorLCAO<T, double>> tmp_overlap(
             nullptr, kv.kvec_d, nullptr, nullptr, &ucell, orb.cutoffs(), &gd,
             two_center_bundle.overlap_orb.get());
-        tmp_overlap.cal_force_stress(isforce, isstress, edmR, foverlap, soverlap);
+        if(td_stype != 2)
+        {
+            tmp_overlap.cal_force_stress(isforce, isstress, edmR, foverlap, soverlap);
+        }
 
         // Calculate nonlocal force/stress (uses DM)
         hamilt::Nonlocal<hamilt::OperatorLCAO<T, double>> tmp_nonlocal(
@@ -207,6 +216,15 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             two_center_bundle.overlap_orb_beta.get());
         tmp_nonlocal.cal_force_stress(isforce, isstress, dmR, fvnl_dbeta, svnl_dbeta);
         
+        if(td_stype == 2)
+        {
+            hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<T, double>> tmp_hybrid(
+                nullptr, &kv, nullptr, nullptr, orb, &ucell, orb.cutoffs(), &gd, nullptr);
+            tmp_hybrid.cal_force_stress(isforce, dmR, fpothybrid);
+
+            cal_foverlap_rt(foverlap, dmat, p_hamilt, kv, pv, ucell);
+        }
+
         // Switch back to spin channel 0
         if (PARAM.inp.nspin == 2)
         {
@@ -276,17 +294,41 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         const int nks = (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2) ? 1 : kv.get_nks();
         if (PARAM.globalv.gamma_only_local)
         {
-            DeePKS_domain::cal_f_delta<double>(deepks.ld.dm_r, ucell, orb, gd,
-                                               *flk.ParaV, nks, deepks.ld.deepks_param,
-                                               kv.kvec_d, deepks.ld.phialpha, deepks.ld.gedm,
-                                               fvnl_dalpha, isstress, svnl_dalpha);
+            DeePKS_domain::cal_f_delta<double>(
+                ucell,
+                orb,
+                gd,
+                *flk.ParaV,
+                nks,
+                deepks.ld.deepks_param,
+                kv.kvec_d,
+                deepks.ld.phialpha,
+                fvnl_dalpha,
+                isstress,
+                svnl_dalpha,
+                deepks.ld.dm_r,
+                deepks.ld.gedm,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.dm_r_mag : nullptr,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.gedm_mag : nullptr);
         }
         else
         {
-            DeePKS_domain::cal_f_delta<std::complex<double>>(deepks.ld.dm_r, ucell, orb, gd,
-                                                              *flk.ParaV, nks, deepks.ld.deepks_param,
-                                                              kv.kvec_d, deepks.ld.phialpha, deepks.ld.gedm,
-                                                              fvnl_dalpha, isstress, svnl_dalpha);
+            DeePKS_domain::cal_f_delta<std::complex<double>>(
+                ucell,
+                orb,
+                gd,
+                *flk.ParaV,
+                nks,
+                deepks.ld.deepks_param,
+                kv.kvec_d,
+                deepks.ld.phialpha,
+                fvnl_dalpha,
+                isstress,
+                svnl_dalpha,
+                deepks.ld.dm_r,
+                deepks.ld.gedm,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.dm_r_mag : nullptr,
+                (PARAM.inp.nspin == 2 && !PARAM.inp.deepks_equiv) ? deepks.ld.gedm_mag : nullptr);
         }
 
         if (isforce)
@@ -436,35 +478,38 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     // }
 
 #ifdef __EXX
-    // Force and Stress contribution from exx
+    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+    bool real_number = GlobalC::exx_info.info_ri.real_number;
+    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+
     ModuleBase::matrix force_exx;
     ModuleBase::matrix stress_exx;
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (cal_exx)
     {
         if (isforce)
         {
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (real_number)
             {
                 exx_nao.exd->cal_exx_force(ucell.nat);
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exd->get_force();
+                force_exx = hybrid_alpha * exx_nao.exd->get_force();
             }
             else
             {
                 exx_nao.exc->cal_exx_force(ucell.nat);
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exc->get_force();
+                force_exx = hybrid_alpha * exx_nao.exc->get_force();
             }
         }
         if (isstress)
         {
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (real_number)
             {
                 exx_nao.exd->cal_exx_stress(ucell.omega, ucell.lat0);
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exd->get_stress();
+                stress_exx = hybrid_alpha * exx_nao.exd->get_stress();
             }
             else
             {
                 exx_nao.exc->cal_exx_stress(ucell.omega, ucell.lat0);
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exc->get_stress();
+                stress_exx = hybrid_alpha * exx_nao.exc->get_stress();
             }
         }
     }
@@ -477,6 +522,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         //---------------------------------
         // sum all parts of force!
         //---------------------------------
+        ModuleBase::Vector3<double> net_force = {0.0, 0.0, 0.0};
         for (int i = 0; i < 3; i++)
         {
             double sum = 0.0;
@@ -487,7 +533,8 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                + fvl_dvl(iat, i) // derivative of local potential force (pw)
                                + fewalds(iat, i) // ewald force (pw)
                                + fcc(iat, i)     // nonlinear core correction force (pw)
-                               + fscc(iat, i);   // self consistent corretion force (pw)
+                               + fscc(iat, i)    // self consistent corretion force (pw)
+                               + fpothybrid(iat, i); // pulay force for hybrid gauge rt-tddft
 
                 // Force contribution from DFT+U, Quxin add on 20201029
                 if (PARAM.inp.dft_plus_u)
@@ -540,7 +587,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 // sum total force for correction
                 sum += fcs(iat, i);
             }
-
+            net_force[i]=sum;
             if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
             {
                 for (int iat = 0; iat < nat; ++iat)
@@ -645,7 +692,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             // caoyu add 2021-06-03
             if (PARAM.inp.deepks_scf)
             {
-                ModuleIO::print_force(GlobalV::ofs_running, ucell, "DeePKS 	FORCE", fvnl_dalpha, true);
+                ModuleIO::print_force(GlobalV::ofs_running, ucell, "DeePKS     FORCE", fvnl_dalpha, true);
             }
 #endif
         }
@@ -654,6 +701,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
 
         // this->printforce_total(ry, istestf, fcs);
         ModuleIO::print_force(GlobalV::ofs_running, ucell, "TOTAL-FORCE (eV/Angstrom)", fcs, false);
+        net_force*= ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Net force vector (eV/Ang)", net_force.x, net_force.y, net_force.z);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Total drift (ev/Ang)", net_force.norm());
         if (istestf)
         {
             GlobalV::ofs_running << "\n FORCE INVALID TABLE." << std::endl;
@@ -768,7 +818,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             ModuleIO::print_stress("XC       STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
             if (vdw_solver != nullptr)
             {
-                ModuleIO::print_stress("VDW      STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
+                ModuleIO::print_stress("VDW      STRESS", stress_vdw, screen, ry, GlobalV::ofs_running);
             }
             if (PARAM.inp.dft_plus_u)
             {
@@ -825,8 +875,8 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
         f_pw.cal_force_ew(ucell, fewalds, rhopw, &sf);
         f_pw.cal_force_cc(fcc, rhopw, chr, locpp.numeric, ucell);
         f_pw.cal_force_scc(fscc, rhopw, vnew, vnew_exist, locpp.numeric, ucell);
-	}
-	else
+    }
+    else
 #endif
     {
         Forces<double, base_device::DEVICE_CPU> f_pw(nat);
@@ -842,29 +892,29 @@ void Force_Stress_LCAO<T>::calForcePwPart(UnitCell& ucell,
 // overlap, kinetic, nonlocal pseudopotential, Local potential terms in force and stress
 template <>
 void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
-		const bool isforce,
-		const bool isstress,
-		const UnitCell& ucell,
-		const Grid_Driver& gd,
-		ForceStressArrays& fsr, // mohan add 2024-06-15
-		const elecstate::ElecState* pelec,
-		const elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
-		const psi::Psi<double>* psi,
-		ModuleBase::matrix& foverlap,
-		ModuleBase::matrix& ftvnl_dphi,
-		ModuleBase::matrix& fvnl_dbeta,
-		ModuleBase::matrix& fvl_dphi,
-		ModuleBase::matrix& soverlap,
-		ModuleBase::matrix& stvnl_dphi,
-		ModuleBase::matrix& svnl_dbeta,
-		ModuleBase::matrix& svl_dphi,
-		ModuleBase::matrix& fvnl_dalpha,
-		ModuleBase::matrix& svnl_dalpha,
-		Setup_DeePKS<double>& deepks,
-		const TwoCenterBundle& two_center_bundle,
-		const LCAO_Orbitals& orb,
-		const Parallel_Orbitals& pv,
-		const K_Vectors& kv)
+        const bool isforce,
+        const bool isstress,
+        const UnitCell& ucell,
+        const Grid_Driver& gd,
+        ForceStressArrays& fsr, // mohan add 2024-06-15
+        const elecstate::ElecState* pelec,
+        const elecstate::DensityMatrix<double, double>* dm, // mohan add 2025-11-04
+        const psi::Psi<double>* psi,
+        ModuleBase::matrix& foverlap,
+        ModuleBase::matrix& ftvnl_dphi,
+        ModuleBase::matrix& fvnl_dbeta,
+        ModuleBase::matrix& fvl_dphi,
+        ModuleBase::matrix& soverlap,
+        ModuleBase::matrix& stvnl_dphi,
+        ModuleBase::matrix& svnl_dbeta,
+        ModuleBase::matrix& svl_dphi,
+        ModuleBase::matrix& fvnl_dalpha,
+        ModuleBase::matrix& svnl_dalpha,
+        Setup_DeePKS<double>& deepks,
+        const TwoCenterBundle& two_center_bundle,
+        const LCAO_Orbitals& orb,
+        const Parallel_Orbitals& pv,
+        const K_Vectors& kv)
 {
 
     flk.ftable(isforce, isstress, fsr, ucell, gd, psi, pelec, dm,
@@ -876,29 +926,29 @@ void Force_Stress_LCAO<double>::integral_part(const bool isGammaOnly,
 
 template <>
 void Force_Stress_LCAO<std::complex<double>>::integral_part(const bool isGammaOnly,
-		const bool isforce,
-		const bool isstress,
-		const UnitCell& ucell,
-		const Grid_Driver& gd,
-		ForceStressArrays& fsr, // mohan add 2024-06-15
-		const elecstate::ElecState* pelec,
-		const elecstate::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
-		const psi::Psi<std::complex<double>>* psi,
-		ModuleBase::matrix& foverlap,
-		ModuleBase::matrix& ftvnl_dphi,
-		ModuleBase::matrix& fvnl_dbeta,
-		ModuleBase::matrix& fvl_dphi,
-		ModuleBase::matrix& soverlap,
-		ModuleBase::matrix& stvnl_dphi,
-		ModuleBase::matrix& svnl_dbeta,
-		ModuleBase::matrix& svl_dphi,
-		ModuleBase::matrix& fvnl_dalpha,
-		ModuleBase::matrix& svnl_dalpha,
-		Setup_DeePKS<std::complex<double>>& deepks,
-		const TwoCenterBundle& two_center_bundle,
-		const LCAO_Orbitals& orb,
-		const Parallel_Orbitals& pv,
-		const K_Vectors& kv)
+        const bool isforce,
+        const bool isstress,
+        const UnitCell& ucell,
+        const Grid_Driver& gd,
+        ForceStressArrays& fsr, // mohan add 2024-06-15
+        const elecstate::ElecState* pelec,
+        const elecstate::DensityMatrix<std::complex<double>, double>* dm, // mohan add 2025-11-04
+        const psi::Psi<std::complex<double>>* psi,
+        ModuleBase::matrix& foverlap,
+        ModuleBase::matrix& ftvnl_dphi,
+        ModuleBase::matrix& fvnl_dbeta,
+        ModuleBase::matrix& fvl_dphi,
+        ModuleBase::matrix& soverlap,
+        ModuleBase::matrix& stvnl_dphi,
+        ModuleBase::matrix& svnl_dbeta,
+        ModuleBase::matrix& svl_dphi,
+        ModuleBase::matrix& fvnl_dalpha,
+        ModuleBase::matrix& svnl_dalpha,
+        Setup_DeePKS<std::complex<double>>& deepks,
+        const TwoCenterBundle& two_center_bundle,
+        const LCAO_Orbitals& orb,
+        const Parallel_Orbitals& pv,
+        const K_Vectors& kv)
 {
     flk.ftable(isforce, isstress, fsr, ucell, gd, psi, pelec, dm,
                foverlap, ftvnl_dphi, fvnl_dbeta, fvl_dphi,

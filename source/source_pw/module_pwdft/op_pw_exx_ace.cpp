@@ -1,5 +1,6 @@
 #include "op_pw_exx.h"
 #include "source_base/parallel_comm.h"
+#include "source_base/parallel_device.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/exx_info.h"
@@ -46,7 +47,9 @@ void OperatorEXXPW<T, Device>::act_op_ace(const int nbands,
                       nbands_tot
     );
 
-    Parallel_Reduce::reduce_pool(Xi_psi, nbands_tot * nbands);
+#ifdef __MPI
+    Parallel_Common::reduce_dev<T, Device>(Xi_psi, nbands_tot * nbands, POOL_WORLD);
+#endif
 
     // Xi^\dagger * (Xi * psi)
     gemm_complex_op()(trans_C,
@@ -156,7 +159,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                     iq = iq0 + ispin * nk; // iq in the same spin channel
 
                     // for \psi_nk, get the pw of iq and band m
-                    get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq);
+                    get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq, false, this->coulomb_param);
 
                     // decide which pool does the iq belong to
                     int iq_pool = kv->para_k.whichpool[iq0];
@@ -179,32 +182,9 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                         {
                             const T* psi_mq = get_pw(m_iband, iq_loc);
                             wfcpw->recip_to_real(ctx, psi_mq, psi_mq_real, iq_loc);
-                            // send
                         }
-                        // if (iq == 0)
-                        //     std::cout << "Bcast psi_mq_real" << std::endl;
 #ifdef __MPI
-#ifdef __CUDA_MPI
-                        MPI_Bcast(psi_mq_real, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
-#else
-                        if (PARAM.inp.device == "cpu")
-                        {
-                            MPI_Bcast(psi_mq_real, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
-                        }
-                        else if (PARAM.inp.device == "gpu")
-                        {
-                            // need to copy to cpu first
-                            T* psi_mq_real_cpu = new T[wfcpw->nrxx];
-                            syncmem_complex_d2c_op()(psi_mq_real_cpu, psi_mq_real, wfcpw->nrxx);
-                            MPI_Bcast(psi_mq_real_cpu, wfcpw->nrxx, MPI_DOUBLE_COMPLEX, iq_pool, KP_WORLD);
-                            syncmem_complex_c2d_op()(psi_mq_real, psi_mq_real_cpu, wfcpw->nrxx);
-                            delete[] psi_mq_real_cpu;
-                        }
-                        else
-                        {
-                            ModuleBase::WARNING_QUIT("OperatorEXXPW", "construct_ace: unknown device");
-                        }
-#endif
+                        Parallel_Common::bcast_dev<T, Device>(psi_mq_real, wfcpw->nrxx, KP_WORLD, iq_pool);
 #endif
 
                     } // end of iq
@@ -232,7 +212,9 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                                   nbands);
 
                 // reduction of psi_h_psi_ace, due to distributed memory
-                Parallel_Reduce::reduce_pool(psi_h_psi_ace, nbands * nbands);
+#ifdef __MPI
+                Parallel_Common::reduce_dev<T, Device>(psi_h_psi_ace, nbands * nbands, POOL_WORLD);
+#endif
 
                 T intermediate_minus_one = -1.0;
                 axpy_complex_op()(nbands * nbands,
@@ -313,7 +295,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device>* ppsi_) 
     psi::Psi<T, Device> psi_ = *ppsi_;
     int* ik_ = const_cast<int*>(&this->ik);
     int ik_save = this->ik;
-    Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    Real hybrid_alpha = this->hybrid_alpha;
     for (int i = 0; i < wfcpw->nks; i++)
     {
         setmem_complex_op()(h_psi_ace, 0, psi_.get_nbands() * psi_.get_nbasis());
