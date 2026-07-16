@@ -22,6 +22,7 @@ class HamiltPW : public Hamilt<T, Device>
     // return T if T is real type(float, double), 
     // otherwise return the real type of T(complex<float>, std::complex<double>)
     using Real = typename GetTypeReal<T>::type;
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<T,Device, base_device::DEVICE_CPU>;
 
   public:
 

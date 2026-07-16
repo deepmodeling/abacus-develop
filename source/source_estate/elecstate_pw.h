@@ -99,6 +99,17 @@ class ElecStatePW : public ElecState
     using resmem_complex_op = base_device::memory::resize_memory_op<T, Device>;
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
 
+    using resmem_complex_h_op = base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>;
+    using delmem_complex_h_op = base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
+    using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+
+    using resmem_var_h_op = base_device::memory::resize_memory_op<Real, base_device::DEVICE_CPU>;
+    using delmem_var_h_op = base_device::memory::delete_memory_op<Real, base_device::DEVICE_CPU>;
+    using setmem_var_h_op = base_device::memory::set_memory_op<Real, base_device::DEVICE_CPU>;
+    using syncmem_var_h2d_op = base_device::memory::synchronize_memory_op<Real, Device, base_device::DEVICE_CPU>;
+    using syncmem_var_d2h_op = base_device::memory::synchronize_memory_op<Real, base_device::DEVICE_CPU, Device>;
+
     using gemv_op = ModuleBase::gemv_op<T, Device>;
     using gemm_op = ModuleBase::gemm_op<T, Device>;
 };
