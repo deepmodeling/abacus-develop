@@ -1009,6 +1009,27 @@ SternheimerRPA::TransitionEnergyWindow SternheimerRPA::transition_energy_window_
     return window;
 }
 
+SternheimerRPA::TransitionEnergyWindow SternheimerRPA::merge_transition_energy_windows(
+    const std::vector<TransitionEnergyWindow>& windows)
+{
+    if (windows.empty())
+    {
+        throw std::invalid_argument("Sternheimer minimax window merge requires at least one spin channel.");
+    }
+
+    TransitionEnergyWindow merged = windows.front();
+    for (const TransitionEnergyWindow& window: windows)
+    {
+        if (window.emin_ha <= 0.0 || window.emax_ha < window.emin_ha)
+        {
+            throw std::invalid_argument("Sternheimer minimax spin window is invalid.");
+        }
+        merged.emin_ha = std::min(merged.emin_ha, window.emin_ha);
+        merged.emax_ha = std::max(merged.emax_ha, window.emax_ha);
+    }
+    return merged;
+}
+
 SternheimerRPA::FrequencyGrid SternheimerRPA::generate_greenx_minimax_frequency_grid(const int nfreq,
                                                                                      const double emin_ha,
                                                                                      const double emax_ha)

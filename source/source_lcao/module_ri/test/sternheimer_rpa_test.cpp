@@ -299,6 +299,19 @@ TEST(SternheimerRPA, TransitionEnergyWindowUsesOccupiedToEmptyPairsAndReturnsHar
     EXPECT_DOUBLE_EQ(window.emax_ha, 1.25);
 }
 
+TEST(SternheimerRPA, MergeTransitionEnergyWindowsCoversAllSpinChannels)
+{
+    using Window = ModuleRI::SternheimerRPA::TransitionEnergyWindow;
+    const auto merged
+        = ModuleRI::SternheimerRPA::merge_transition_energy_windows({Window{0.4, 2.0}, Window{0.2, 3.5}});
+
+    EXPECT_DOUBLE_EQ(merged.emin_ha, 0.2);
+    EXPECT_DOUBLE_EQ(merged.emax_ha, 3.5);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::merge_transition_energy_windows({}), std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::merge_transition_energy_windows({Window{0.0, 1.0}}),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerRPA, GreenXMinimaxFrequencyGridMatchesReference)
 {
     const auto grid = ModuleRI::SternheimerRPA::generate_greenx_minimax_frequency_grid(10, 2.0, 30.0);

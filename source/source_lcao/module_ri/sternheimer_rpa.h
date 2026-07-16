@@ -135,6 +135,9 @@ class SternheimerRPA
         const std::vector<double>& occupations,
         double occupation_tolerance = 1.0e-8);
 
+    static TransitionEnergyWindow merge_transition_energy_windows(
+        const std::vector<TransitionEnergyWindow>& windows);
+
     static FrequencyGrid generate_greenx_minimax_frequency_grid(int nfreq, double emin_ha, double emax_ha);
 
     static FrequencyGrid read_frequency_grid_file(const std::string& filename, int expected_size);
