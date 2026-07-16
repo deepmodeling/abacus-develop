@@ -3,7 +3,9 @@
 #include "source_base/math_ylmreal.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
+#include <complex>
 #include <stdexcept>
 
 namespace
@@ -36,6 +38,19 @@ void validate_grid(const ModuleRI::SternheimerFDHamiltonian::Grid& grid)
     if (grid.hx <= 0.0 || grid.hy <= 0.0 || grid.hz <= 0.0)
     {
         throw std::invalid_argument("Sternheimer projector sampler requires positive grid spacings.");
+    }
+    bool has_nonzero_kpoint = false;
+    for (const double coordinate : grid.kpoint)
+    {
+        if (!std::isfinite(coordinate))
+        {
+            throw std::invalid_argument("Sternheimer projector sampler requires finite reduced k-point coordinates.");
+        }
+        has_nonzero_kpoint = has_nonzero_kpoint || coordinate != 0.0;
+    }
+    if (!grid.periodic && has_nonzero_kpoint)
+    {
+        throw std::invalid_argument("Sternheimer projector sampler nonperiodic grids cannot use a Bloch k-point.");
     }
 }
 
@@ -106,13 +121,23 @@ std::vector<ProjectorChannel> build_channels(const std::vector<int>& angular_mom
     return channels;
 }
 
-double minimum_image_displacement(double displacement, const double length)
+struct PeriodicImageRange
 {
-    if (length > 0.0)
+    int first = 0;
+    int last = 0;
+};
+
+PeriodicImageRange periodic_image_range(const double displacement,
+                                        const double length,
+                                        const double cutoff,
+                                        const bool periodic)
+{
+    if (!periodic)
     {
-        displacement -= length * std::round(displacement / length);
+        return {0, 0};
     }
-    return displacement;
+    return {static_cast<int>(std::ceil((displacement - cutoff) / length)),
+            static_cast<int>(std::floor((displacement + cutoff) / length))};
 }
 
 double interpolate_radial(const std::vector<double>& radial_grid, const std::vector<double>& values, const double radius)
@@ -256,32 +281,50 @@ sample_sternheimer_fd_projector_block(const SternheimerFDRadialProjectorSet& rad
     const double lx = grid.nx * grid.hx;
     const double ly = grid.ny * grid.hy;
     const double lz = grid.nz * grid.hz;
+    const double cutoff = radial_set.radial_grid.back();
     for (int iz = 0; iz != grid.nz; ++iz)
     {
         for (int iy = 0; iy != grid.ny; ++iy)
         {
             for (int ix = 0; ix != grid.nx; ++ix)
             {
-                double dx = ix * grid.hx - atom_position.x;
-                double dy = iy * grid.hy - atom_position.y;
-                double dz = iz * grid.hz - atom_position.z;
-                if (grid.periodic)
-                {
-                    dx = minimum_image_displacement(dx, lx);
-                    dy = minimum_image_displacement(dy, ly);
-                    dz = minimum_image_displacement(dz, lz);
-                }
-
-                const double radius = std::sqrt(dx * dx + dy * dy + dz * dz);
-                evaluate_real_spherical_harmonics(lmax, dx, dy, dz, ylm);
+                const double displacement_x = ix * grid.hx - atom_position.x;
+                const double displacement_y = iy * grid.hy - atom_position.y;
+                const double displacement_z = iz * grid.hz - atom_position.z;
+                const PeriodicImageRange image_x = periodic_image_range(displacement_x, lx, cutoff, grid.periodic);
+                const PeriodicImageRange image_y = periodic_image_range(displacement_y, ly, cutoff, grid.periodic);
+                const PeriodicImageRange image_z = periodic_image_range(displacement_z, lz, cutoff, grid.periodic);
                 const int ir = grid_index(grid, ix, iy, iz);
-                for (int ich = 0; ich != nchannel; ++ich)
+
+                for (int rz = image_z.first; rz <= image_z.last; ++rz)
                 {
-                    const ProjectorChannel& channel = channels[ich];
-                    const double radial_value = interpolate_radial(radial_set.radial_grid,
-                                                                   radial_set.beta_radials[channel.radial_index],
-                                                                   radius);
-                    block.projectors[ich][ir] = radial_value * ylm[channel.ylm_index];
+                    for (int ry = image_y.first; ry <= image_y.last; ++ry)
+                    {
+                        for (int rx = image_x.first; rx <= image_x.last; ++rx)
+                        {
+                            const double dx = displacement_x - rx * lx;
+                            const double dy = displacement_y - ry * ly;
+                            const double dz = displacement_z - rz * lz;
+                            const double radius = std::sqrt(dx * dx + dy * dy + dz * dz);
+                            if (radius > cutoff)
+                            {
+                                continue;
+                            }
+
+                            evaluate_real_spherical_harmonics(lmax, dx, dy, dz, ylm);
+                            const std::complex<double> phase
+                                = sternheimer_bloch_phase(grid.kpoint, std::array<int, 3>{rx, ry, rz});
+                            for (int ich = 0; ich != nchannel; ++ich)
+                            {
+                                const ProjectorChannel& channel = channels[ich];
+                                const double radial_value
+                                    = interpolate_radial(radial_set.radial_grid,
+                                                         radial_set.beta_radials[channel.radial_index],
+                                                         radius);
+                                block.projectors[ich][ir] += phase * radial_value * ylm[channel.ylm_index];
+                            }
+                        }
+                    }
                 }
             }
         }
