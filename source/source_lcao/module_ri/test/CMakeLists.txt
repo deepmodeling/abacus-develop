@@ -24,12 +24,12 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_sternheimer_fd_hamiltonian_test
   LIBS ${math_libs}
-  SOURCES sternheimer_fd_hamiltonian_test.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp
+  SOURCES sternheimer_fd_hamiltonian_test.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_fd_solver_test
-  LIBS ${math_libs}
-  SOURCES sternheimer_fd_solver_test.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_rpa.cpp
+  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
+  SOURCES sternheimer_fd_solver_test.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp ../sternheimer_rpa.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_delta_test
@@ -38,8 +38,8 @@ AddTest(
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_dft_zero_order_test
-  LIBS ${math_libs}
-  SOURCES sternheimer_dft_zero_order_test.cpp ../sternheimer_dft_zero_order.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_rpa.cpp
+  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
+  SOURCES sternheimer_dft_zero_order_test.cpp ../sternheimer_dft_zero_order.cpp ../sternheimer_fd_solver.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp ../sternheimer_rpa.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_fd_nonlocal_projector_test
@@ -54,7 +54,7 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_sternheimer_abacus_fd_adapter_test
   LIBS parameter base ${math_libs} device container
-  SOURCES sternheimer_abacus_fd_adapter_test.cpp ../sternheimer_abacus_fd_adapter.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp
+  SOURCES sternheimer_abacus_fd_adapter_test.cpp ../sternheimer_abacus_fd_adapter.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_abacus_fd_nonlocal_test

@@ -2,7 +2,9 @@
 #define STERNHEIMER_FD_HAMILTONIAN_H
 
 #include "source_lcao/module_ri/sternheimer_fd_nonlocal_projector.h"
+#include "source_lcao/module_ri/sternheimer_kq.h"
 
+#include <array>
 #include <complex>
 #include <memory>
 #include <vector>
@@ -32,6 +34,7 @@ class SternheimerFDHamiltonian
         double hy = 0.0;
         double hz = 0.0;
         bool periodic = true;
+        SternheimerReducedKPoint kpoint{0.0, 0.0, 0.0};
 
         int size() const;
     };
@@ -46,6 +49,7 @@ class SternheimerFDHamiltonian
     const Grid& grid() const;
     const std::vector<double>& local_potential() const;
     double kinetic_prefactor() const;
+    const SternheimerReducedKPoint& kpoint() const;
     const SternheimerFDNonlocalProjector* nonlocal_projector() const;
 
     void apply(const Vector& psi, Vector& hpsi) const;
@@ -60,7 +64,13 @@ class SternheimerFDHamiltonian
     int index(int ix, int iy, int iz) const;
 
   private:
-    int shifted_index(int ix, int iy, int iz) const;
+    struct ShiftedGridPoint
+    {
+        int index = -1;
+        Complex phase{1.0, 0.0};
+    };
+
+    ShiftedGridPoint shifted_grid_point(int ix, int iy, int iz) const;
 
     Grid grid_;
     std::vector<double> local_potential_;

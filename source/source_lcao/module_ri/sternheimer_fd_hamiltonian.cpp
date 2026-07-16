@@ -42,6 +42,19 @@ SternheimerFDHamiltonian::SternheimerFDHamiltonian(Grid grid,
     {
         throw std::invalid_argument("SternheimerFDHamiltonian requires a non-negative kinetic prefactor.");
     }
+    bool has_nonzero_twist = false;
+    for (const double coordinate: grid_.kpoint)
+    {
+        if (!std::isfinite(coordinate))
+        {
+            throw std::invalid_argument("SternheimerFDHamiltonian requires finite reduced k-point coordinates.");
+        }
+        has_nonzero_twist = has_nonzero_twist || coordinate != 0.0;
+    }
+    if (!grid_.periodic && has_nonzero_twist)
+    {
+        throw std::invalid_argument("SternheimerFDHamiltonian nonperiodic grids cannot use a Bloch twist.");
+    }
     if (nonlocal_projector_ != nullptr && nonlocal_projector_->grid_size() != grid_.size())
     {
         throw std::invalid_argument("SternheimerFDHamiltonian nonlocal projector size does not match the grid.");
@@ -63,6 +76,11 @@ double SternheimerFDHamiltonian::kinetic_prefactor() const
     return kinetic_prefactor_;
 }
 
+const SternheimerReducedKPoint& SternheimerFDHamiltonian::kpoint() const
+{
+    return grid_.kpoint;
+}
+
 const SternheimerFDNonlocalProjector* SternheimerFDHamiltonian::nonlocal_projector() const
 {
     return nonlocal_projector_.get();
@@ -73,21 +91,31 @@ int SternheimerFDHamiltonian::index(const int ix, const int iy, const int iz) co
     return (ix * grid_.ny + iy) * grid_.nz + iz;
 }
 
-int SternheimerFDHamiltonian::shifted_index(int ix, int iy, int iz) const
+SternheimerFDHamiltonian::ShiftedGridPoint SternheimerFDHamiltonian::shifted_grid_point(int ix,
+                                                                                        int iy,
+                                                                                        int iz) const
 {
     if (grid_.periodic)
     {
-        ix = (ix % grid_.nx + grid_.nx) % grid_.nx;
-        iy = (iy % grid_.ny + grid_.ny) % grid_.ny;
-        iz = (iz % grid_.nz + grid_.nz) % grid_.nz;
-        return index(ix, iy, iz);
+        const std::array<int, 3> dimensions{grid_.nx, grid_.ny, grid_.nz};
+        std::array<int, 3> coordinates{ix, iy, iz};
+        std::array<int, 3> lattice_translation{};
+        for (std::size_t direction = 0; direction != coordinates.size(); ++direction)
+        {
+            const int dimension = dimensions[direction];
+            const int wrapped = (coordinates[direction] % dimension + dimension) % dimension;
+            lattice_translation[direction] = (coordinates[direction] - wrapped) / dimension;
+            coordinates[direction] = wrapped;
+        }
+        return {index(coordinates[0], coordinates[1], coordinates[2]),
+                sternheimer_bloch_phase(grid_.kpoint, lattice_translation)};
     }
 
     if (ix < 0 || ix >= grid_.nx || iy < 0 || iy >= grid_.ny || iz < 0 || iz >= grid_.nz)
     {
-        return -1;
+        return {-1, Complex(1.0, 0.0)};
     }
-    return index(ix, iy, iz);
+    return {index(ix, iy, iz), Complex(1.0, 0.0)};
 }
 
 void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi) const
@@ -112,36 +140,36 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi) const
                 const Complex psi_center = psi[center];
 
                 Complex laplacian = -2.0 * (hx2_inv + hy2_inv + hz2_inv) * psi_center;
-                const int xp = shifted_index(ix + 1, iy, iz);
-                const int xm = shifted_index(ix - 1, iy, iz);
-                const int yp = shifted_index(ix, iy + 1, iz);
-                const int ym = shifted_index(ix, iy - 1, iz);
-                const int zp = shifted_index(ix, iy, iz + 1);
-                const int zm = shifted_index(ix, iy, iz - 1);
+                const ShiftedGridPoint xp = shifted_grid_point(ix + 1, iy, iz);
+                const ShiftedGridPoint xm = shifted_grid_point(ix - 1, iy, iz);
+                const ShiftedGridPoint yp = shifted_grid_point(ix, iy + 1, iz);
+                const ShiftedGridPoint ym = shifted_grid_point(ix, iy - 1, iz);
+                const ShiftedGridPoint zp = shifted_grid_point(ix, iy, iz + 1);
+                const ShiftedGridPoint zm = shifted_grid_point(ix, iy, iz - 1);
 
-                if (xp >= 0)
+                if (xp.index >= 0)
                 {
-                    laplacian += hx2_inv * psi[xp];
+                    laplacian += hx2_inv * xp.phase * psi[xp.index];
                 }
-                if (xm >= 0)
+                if (xm.index >= 0)
                 {
-                    laplacian += hx2_inv * psi[xm];
+                    laplacian += hx2_inv * xm.phase * psi[xm.index];
                 }
-                if (yp >= 0)
+                if (yp.index >= 0)
                 {
-                    laplacian += hy2_inv * psi[yp];
+                    laplacian += hy2_inv * yp.phase * psi[yp.index];
                 }
-                if (ym >= 0)
+                if (ym.index >= 0)
                 {
-                    laplacian += hy2_inv * psi[ym];
+                    laplacian += hy2_inv * ym.phase * psi[ym.index];
                 }
-                if (zp >= 0)
+                if (zp.index >= 0)
                 {
-                    laplacian += hz2_inv * psi[zp];
+                    laplacian += hz2_inv * zp.phase * psi[zp.index];
                 }
-                if (zm >= 0)
+                if (zm.index >= 0)
                 {
-                    laplacian += hz2_inv * psi[zm];
+                    laplacian += hz2_inv * zm.phase * psi[zm.index];
                 }
 
                 hpsi[center] = -kinetic_prefactor_ * laplacian + local_potential_[center] * psi_center;

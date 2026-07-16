@@ -3,7 +3,9 @@
 #include <cmath>
 #include <complex>
 #include <gtest/gtest.h>
+#include <limits>
 #include <memory>
+#include <stdexcept>
 #include <vector>
 
 namespace
@@ -96,6 +98,71 @@ TEST(SternheimerFDHamiltonian, PlaneWaveHasSecondOrderFiniteDifferenceKineticEne
         EXPECT_NEAR(hpsi[ix].real(), (expected_kinetic * psi[ix]).real(), 1.0e-12);
         EXPECT_NEAR(hpsi[ix].imag(), (expected_kinetic * psi[ix]).imag(), 1.0e-12);
     }
+}
+
+TEST(SternheimerFDHamiltonian, TwistedBoundaryHasBlochPlaneWaveKineticEnergy)
+{
+    constexpr int nx = 10;
+    constexpr int mode = 1;
+    constexpr double reduced_k = 0.25;
+    constexpr double length = 4.0;
+    constexpr double pi = 3.141592653589793238462643383279502884;
+    const double hx = length / nx;
+    Hamiltonian::Grid grid{nx, 1, 1, hx, 1.0, 1.0, true};
+    grid.kpoint = {reduced_k, 0.0, 0.0};
+    Hamiltonian hamiltonian(grid, std::vector<double>(grid.size(), 0.0));
+
+    Vector psi(grid.size());
+    const double phase_step = 2.0 * pi * (mode + reduced_k) / nx;
+    for (int ix = 0; ix != nx; ++ix)
+    {
+        const double phase = phase_step * ix;
+        psi[ix] = Complex(std::cos(phase), std::sin(phase));
+    }
+
+    Vector hpsi;
+    hamiltonian.apply(psi, hpsi);
+    const double expected_kinetic = (1.0 - std::cos(phase_step)) / (hx * hx);
+    for (int ix = 0; ix != nx; ++ix)
+    {
+        EXPECT_NEAR(hpsi[ix].real(), (expected_kinetic * psi[ix]).real(), 1.0e-12);
+        EXPECT_NEAR(hpsi[ix].imag(), (expected_kinetic * psi[ix]).imag(), 1.0e-12);
+    }
+    EXPECT_EQ(hamiltonian.kpoint(), grid.kpoint);
+}
+
+TEST(SternheimerFDHamiltonian, TwistedBoundaryDenseMatrixIsHermitian)
+{
+    Hamiltonian::Grid grid{3, 2, 2, 0.4, 0.7, 0.9, true};
+    grid.kpoint = {0.25, -0.125, 0.375};
+    std::vector<double> potential(grid.size(), 0.0);
+    for (std::size_t ir = 0; ir != potential.size(); ++ir)
+    {
+        potential[ir] = 0.1 * static_cast<double>(ir);
+    }
+    Hamiltonian hamiltonian(grid, potential);
+
+    const auto matrix = hamiltonian.dense_matrix();
+    for (std::size_t row = 0; row != matrix.size(); ++row)
+    {
+        for (std::size_t col = 0; col != matrix.size(); ++col)
+        {
+            const Complex difference = matrix[row][col] - std::conj(matrix[col][row]);
+            EXPECT_NEAR(difference.real(), 0.0, 1.0e-12);
+            EXPECT_NEAR(difference.imag(), 0.0, 1.0e-12);
+        }
+    }
+}
+
+TEST(SternheimerFDHamiltonian, RejectsInvalidTwistedBoundary)
+{
+    Hamiltonian::Grid grid{3, 1, 1, 1.0, 1.0, 1.0, false};
+    grid.kpoint = {0.25, 0.0, 0.0};
+    EXPECT_THROW(Hamiltonian(grid, std::vector<double>(grid.size(), 0.0)), std::invalid_argument);
+
+    grid.periodic = true;
+    grid.kpoint = {std::numeric_limits<double>::quiet_NaN(), 0.0, 0.0};
+    EXPECT_THROW(Hamiltonian(grid, std::vector<double>(grid.size(), 0.0)), std::invalid_argument);
 }
 
 TEST(SternheimerFDHamiltonian, DenseMatrixMatchesApply)
