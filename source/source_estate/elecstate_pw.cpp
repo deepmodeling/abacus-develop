@@ -496,7 +496,6 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
     const std::complex<double> ci_tpi = ModuleBase::NEG_IMAG_UNIT * ModuleBase::TWO_PI;
 
     // ---------- all on CPU ----------
-    // Use double for CPU computations (radial_fft_q non-template version takes double)
     std::vector<double> qmod_host(npw);
     std::vector<std::complex<double>> qgm_host(npw);
     for (int ig = 0; ig < npw; ig++)
@@ -514,8 +513,8 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
     delmem_var_op()(g_gpu);
     std::vector<Real> ylmk0_host(npw * lmaxq * lmaxq);
     syncmem_var_d2h_op()(ylmk0_host.data(), ylmk0_gpu, npw * lmaxq * lmaxq);
-    ModuleBase::matrix ylm_mat(lmaxq * lmaxq, npw);
-    for (int i = 0; i < npw * lmaxq * lmaxq; i++) ylm_mat.c[i] = static_cast<double>(ylmk0_host[i]);
+    std::vector<double> ylmk0_double(npw * lmaxq * lmaxq);
+    for (int i = 0; i < npw * lmaxq * lmaxq; i++) ylmk0_double[i] = static_cast<double>(ylmk0_host[i]);
 
     for (int it = 0; it < ucell->ntype; it++)
     {
@@ -566,8 +565,9 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
                 {
                     for (int jh = ih; jh < atom->ncpp.nh; jh++)
                     {
-                        // CPU radial_fft_q (non-template version, double)
-                        this->ppcell->radial_fft_q(npw, ih, jh, it, qmod_host.data(), ylm_mat, qgm_host.data());
+                        // CPU radial_fft_q (template version, DEVICE_CPU)
+                        this->ppcell->template radial_fft_q<double, base_device::DEVICE_CPU>(
+                            nullptr, npw, ih, jh, it, qmod_host.data(), ylmk0_double.data(), qgm_host.data());
                         for (int ig = 0; ig < npw; ig++)
                         {
                             rhog_host[ig] += static_cast<T>(qgm_host[ig] * aux2_host[ijh * npw + ig]);
