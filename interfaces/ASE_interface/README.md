@@ -32,7 +32,10 @@ Please refer to the example scripts in the `examples` folder. Recommended learni
 7. **constraintmd.py** - Constrained molecular dynamics simulation
 8. **metadynamics.py** - Metadynamics simulation
 9. **neb.py** - Nudged Elastic Band (NEB) calculation
-10. **examples/atst_tools/README.md** - optional ATST-Tools workflow examples that use abacuslite for relax, NEB, Sella, CCQN, MD, and ABACUS input helpers
+
+### Advanced optional workflows
+
+For advanced ASE transition-state workflows, see [ATST-Tools](https://github.com/QuantumMisaka/atst-tools), an independent optional project that can use `abacuslite` as its ABACUS ASE calculator backend. ATST-Tools is not an ABACUS or abacuslite dependency; its installation, commands, configurations, runnable cases, and validation are maintained in its own repository. See the [ABACUSLite Wrapper Guide](https://github.com/QuantumMisaka/atst-tools/blob/main/docs/user/ABACUSLITE_WRAPPER_GUIDE.md) and the [ABACUS-backed NEB example](https://github.com/QuantumMisaka/atst-tools/tree/main/examples/01_neb_Li-Si).
 
 More usage examples will be provided in future versions.
 
