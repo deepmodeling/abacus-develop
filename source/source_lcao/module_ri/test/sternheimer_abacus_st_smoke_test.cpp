@@ -73,6 +73,29 @@ ModuleRI::SternheimerLCAOOccupiedKPoint make_occupied_kpoint(const int local_k_i
 
 } // namespace
 
+TEST(SternheimerABACUSSTSmoke, LimitsDiagnosticChannelsPerAtomWithoutEmptyBlocks)
+{
+    std::vector<ModuleRI::SternheimerABFBlochGridChannel> channels(4);
+    channels[0].atom_index = 0;
+    channels[0].atom_local_index = 0;
+    channels[1].atom_index = 0;
+    channels[1].atom_local_index = 1;
+    channels[2].atom_index = 1;
+    channels[2].atom_local_index = 0;
+    channels[3].atom_index = 1;
+    channels[3].atom_local_index = 1;
+
+    const auto limited = ModuleRI::limit_sternheimer_abf_channels_per_atom(channels, 1);
+
+    ASSERT_EQ(limited.size(), 2);
+    EXPECT_EQ(limited[0].atom_index, 0);
+    EXPECT_EQ(limited[0].atom_local_index, 0);
+    EXPECT_EQ(limited[0].channel_index, 0);
+    EXPECT_EQ(limited[1].atom_index, 1);
+    EXPECT_EQ(limited[1].atom_local_index, 0);
+    EXPECT_EQ(limited[1].channel_index, 1);
+}
+
 TEST(SternheimerABACUSSTSmoke, DistinguishesTwoKPointsFromTwoSpinChannels)
 {
     const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.5);
@@ -107,4 +130,45 @@ TEST(SternheimerABACUSSTSmoke, GammaRecordPreservesLegacyWeightedOccupation)
     const auto gamma = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
     EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({gamma}, 1, 1, 1, 3));
     EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_lcao_weighted_occupation(gamma, 0), 2.0);
+}
+
+TEST(SternheimerABACUSSTSmoke, BuildsTwoKPointNonzeroQResponsePlan)
+{
+    const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 1.0);
+
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan({k1, k0}, 2);
+
+    EXPECT_EQ(plan.iq, 2);
+    EXPECT_EQ(plan.qpoint, (ModuleRI::SternheimerReducedKPoint{0.5, 0.0, 0.0}));
+    EXPECT_EQ(plan.record_index_by_global_k, (std::vector<int>{1, 0}));
+    ASSERT_EQ(plan.kq_pairs.size(), 2);
+    EXPECT_EQ(plan.kq_pairs[0].source_index, 0);
+    EXPECT_EQ(plan.kq_pairs[0].target_index, 1);
+    EXPECT_EQ(plan.kq_pairs[1].source_index, 1);
+    EXPECT_EQ(plan.kq_pairs[1].target_index, 0);
+    EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsGammaOrFractionalOccupationForSolidQ)
+{
+    auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 1.0);
+
+    EXPECT_THROW(ModuleRI::build_sternheimer_periodic_response_plan({k0, k1}, 1), std::invalid_argument);
+    k0.occupations[0] = 0.5;
+    EXPECT_THROW(ModuleRI::build_sternheimer_periodic_response_plan({k0, k1}, 2), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, ZeroQIndexPreservesSingleGammaPlan)
+{
+    const auto gamma = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan({gamma}, 0);
+
+    EXPECT_EQ(plan.iq, 1);
+    EXPECT_EQ(plan.qpoint, (ModuleRI::SternheimerReducedKPoint{0.0, 0.0, 0.0}));
+    ASSERT_EQ(plan.kq_pairs.size(), 1);
+    EXPECT_EQ(plan.kq_pairs[0].source_index, 0);
+    EXPECT_EQ(plan.kq_pairs[0].target_index, 0);
+    EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
 }

@@ -703,3 +703,25 @@ TEST(SternheimerDelta, StrictIndependentDeltaHamiltonianMatchesExplicitHybridBlo
     EXPECT_NEAR(result.response.coefficients[0].real(), expected_eta_coefficient.real(), 1.0e-9);
     EXPECT_NEAR(result.response.coefficients[0].imag(), expected_eta_coefficient.imag(), 1.0e-9);
 }
+
+TEST(SternheimerDelta, ComplexQPerturbationMatrixElementsMatchGridIntegral)
+{
+    ModuleRI::SternheimerDeltaVirtualState eta0;
+    eta0.orbital = {Complex(1.0, 1.0), Complex(0.5, -0.25)};
+    eta0.residual = {Complex(0.0, 0.0), Complex(0.0, 0.0)};
+    eta0.eigenvalue = 1.0;
+    const std::vector<ModuleRI::SternheimerDeltaVirtualState> virtual_states = {eta0};
+    const Vector perturbation = {Complex(2.0, -0.5), Complex(-1.0, 0.75)};
+    const Vector occupied = {Complex(0.25, 0.5), Complex(-0.75, 1.0)};
+    constexpr double volume_element = 0.2;
+
+    const auto elements = ModuleRI::delta_sternheimer_perturbation_matrix_elements(
+        virtual_states, perturbation, occupied, volume_element);
+    const Complex expected = volume_element
+        * (std::conj(eta0.orbital[0]) * perturbation[0] * occupied[0]
+           + std::conj(eta0.orbital[1]) * perturbation[1] * occupied[1]);
+
+    ASSERT_EQ(elements.size(), 1);
+    EXPECT_NEAR(elements[0].real(), expected.real(), 1.0e-14);
+    EXPECT_NEAR(elements[0].imag(), expected.imag(), 1.0e-14);
+}

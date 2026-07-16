@@ -62,6 +62,24 @@ TEST(SternheimerKQ, MapsEverySourcePointToUniqueFoldedKPlusQ)
     EXPECT_EQ(mapping[1].reciprocal_shift, (std::array<int, 3>{1, 0, 0}));
 }
 
+TEST(SternheimerKQ, RecordsShiftRelativeToTheSelectedABACUSBoundaryRepresentative)
+{
+    const std::vector<KPoint> kpoints = {
+        {0.0, 0.0, 0.0},
+        {0.5, 0.0, 0.0},
+    };
+
+    const auto mapping = ModuleRI::build_sternheimer_kq_map(kpoints, {0.5, 0.0, 0.0}, 1.0e-12);
+
+    ASSERT_EQ(mapping.size(), 2);
+    EXPECT_EQ(mapping[0].target_index, 1);
+    expect_kpoint_near(mapping[0].folded_k_plus_q, kpoints[1]);
+    EXPECT_EQ(mapping[0].reciprocal_shift, (std::array<int, 3>{0, 0, 0}));
+    EXPECT_EQ(mapping[1].target_index, 0);
+    expect_kpoint_near(mapping[1].folded_k_plus_q, kpoints[0]);
+    EXPECT_EQ(mapping[1].reciprocal_shift, (std::array<int, 3>{1, 0, 0}));
+}
+
 TEST(SternheimerKQ, RejectsQThatIsNotCommensurateWithKMesh)
 {
     const std::vector<KPoint> kpoints = {

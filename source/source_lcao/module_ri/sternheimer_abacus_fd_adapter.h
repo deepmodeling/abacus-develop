@@ -69,13 +69,15 @@ SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian(const elecstate::Potent
                                                          const ModulePW::PW_Basis& pw_basis,
                                                          const UnitCell& ucell,
                                                          int spin,
-                                                         double kinetic_prefactor = 1.0);
+                                                         double kinetic_prefactor = 1.0,
+                                                         const SternheimerReducedKPoint& kpoint = {0.0, 0.0, 0.0});
 
 SternheimerFDHamiltonian make_sternheimer_fd_full_hamiltonian(const elecstate::Potential& potential,
                                                               const ModulePW::PW_Basis& pw_basis,
                                                               const UnitCell& ucell,
                                                               int spin,
-                                                              double kinetic_prefactor = 1.0);
+                                                              double kinetic_prefactor = 1.0,
+                                                              const SternheimerReducedKPoint& kpoint = {0.0, 0.0, 0.0});
 
 } // namespace ModuleRI
 

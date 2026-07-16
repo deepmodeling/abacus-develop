@@ -1007,6 +1007,36 @@ std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_ma
     return elements;
 }
 
+std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_matrix_elements(
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const SternheimerFDHamiltonian::Vector& perturbation_potential,
+    const SternheimerFDHamiltonian::Vector& occupied_wavefunction,
+    const double volume_element)
+{
+    if (volume_element <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer delta perturbation elements require a positive grid volume element.");
+    }
+    if (perturbation_potential.size() != occupied_wavefunction.size())
+    {
+        throw std::invalid_argument("Sternheimer delta perturbation potential size does not match wavefunction.");
+    }
+    validate_virtual_states(virtual_states, occupied_wavefunction.size());
+
+    std::vector<Complex> elements(virtual_states.size(), Complex(0.0, 0.0));
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        Complex value(0.0, 0.0);
+        for (std::size_t ir = 0; ir != occupied_wavefunction.size(); ++ir)
+        {
+            value += std::conj(virtual_states[ia].orbital[ir]) * perturbation_potential[ir]
+                * occupied_wavefunction[ir];
+        }
+        elements[ia] = volume_element * value;
+    }
+    return elements;
+}
+
 SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,

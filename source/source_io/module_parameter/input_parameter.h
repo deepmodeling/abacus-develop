@@ -659,6 +659,7 @@ struct Input_para
     int out_librpa_reader_version = 0; ///< 0: legacy ABACUS LibRPA text files; 1: LibRPA reader-v1 binary files
     bool out_sternheimer_librpa = false; ///< whether to output Sternheimer chi0 files for LibRPA
     int sternheimer_nfreq = 6; ///< number of minimax imaginary-frequency points for Sternheimer chi0 output
+    int sternheimer_q_index = 0; ///< 1-based nonzero q index on the full k mesh; 0 keeps the Gamma molecular path
     std::string sternheimer_frequency_grid_file = ""; ///< optional fixed omega/weight grid for Sternheimer chi0 output
     bool sternheimer_frequency_mpi = false; ///< whether to split Sternheimer chi0 frequencies over MPI ranks
     bool sternheimer_delta = false; ///< whether to use Delta-Sternheimer projected solver for Sternheimer chi0 output

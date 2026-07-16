@@ -100,6 +100,7 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
         record.kpoint = {kv.kvec_d[static_cast<std::size_t>(local_k_index)].x,
                          kv.kvec_d[static_cast<std::size_t>(local_k_index)].y,
                          kv.kvec_d[static_cast<std::size_t>(local_k_index)].z};
+        // ABACUS normalizes sum(wk) to the spin degeneracy, so wg/wk is the band filling, not another spin factor.
         record.kweight = kv.wk[static_cast<std::size_t>(local_k_index)];
         record.eigenvalues.reserve(static_cast<std::size_t>(occupied_count));
         record.occupations.reserve(static_cast<std::size_t>(occupied_count));

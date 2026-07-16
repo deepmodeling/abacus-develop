@@ -1,6 +1,7 @@
 #ifndef STERNHEIMER_ABACUS_ST_SMOKE_H
 #define STERNHEIMER_ABACUS_ST_SMOKE_H
 
+#include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
 #include "source_lcao/module_ri/sternheimer_abacus_fd_adapter.h"
 
 #include <algorithm>
@@ -12,6 +13,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 class UnitCell;
@@ -42,6 +44,134 @@ struct SternheimerLCAOOccupiedKPoint
     std::vector<double> occupations;
     std::vector<std::vector<std::complex<double>>> coefficients;
 };
+
+struct SternheimerPeriodicResponsePlan
+{
+    int iq = 1;
+    SternheimerReducedKPoint qpoint{0.0, 0.0, 0.0};
+    std::vector<int> record_index_by_global_k;
+    std::vector<SternheimerKQPair> kq_pairs;
+    double kweight_sum = 0.0;
+};
+
+inline std::vector<SternheimerABFBlochGridChannel> limit_sternheimer_abf_channels_per_atom(
+    const std::vector<SternheimerABFBlochGridChannel>& channels,
+    const int max_channels_per_atom)
+{
+    if (max_channels_per_atom <= 0)
+    {
+        return channels;
+    }
+
+    int max_atom_index = -1;
+    for (const SternheimerABFBlochGridChannel& channel: channels)
+    {
+        if (channel.atom_index < 0)
+        {
+            throw std::invalid_argument("A Sternheimer ABFS channel has an invalid atom index.");
+        }
+        max_atom_index = std::max(max_atom_index, channel.atom_index);
+    }
+
+    std::vector<int> selected_per_atom(static_cast<std::size_t>(max_atom_index + 1), 0);
+    std::vector<SternheimerABFBlochGridChannel> limited;
+    limited.reserve(channels.size());
+    for (const SternheimerABFBlochGridChannel& channel: channels)
+    {
+        int& atom_count = selected_per_atom[static_cast<std::size_t>(channel.atom_index)];
+        if (atom_count >= max_channels_per_atom)
+        {
+            continue;
+        }
+        SternheimerABFBlochGridChannel selected = channel;
+        selected.channel_index = static_cast<int>(limited.size());
+        selected.atom_local_index = atom_count;
+        ++atom_count;
+        limited.push_back(std::move(selected));
+    }
+    return limited;
+}
+
+inline SternheimerPeriodicResponsePlan build_sternheimer_periodic_response_plan(
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const int q_index)
+{
+    if (records.empty())
+    {
+        throw std::invalid_argument("Sternheimer response plan requires occupied k-point records.");
+    }
+    if (q_index < 0 || q_index > static_cast<int>(records.size()))
+    {
+        throw std::invalid_argument("sternheimer_q_index is outside the full k-point mesh.");
+    }
+
+    SternheimerPeriodicResponsePlan plan;
+    plan.record_index_by_global_k.assign(records.size(), -1);
+    std::vector<SternheimerReducedKPoint> kpoints(records.size());
+    for (std::size_t record_index = 0; record_index != records.size(); ++record_index)
+    {
+        const SternheimerLCAOOccupiedKPoint& record = records[record_index];
+        if (record.global_k_index < 0 || record.global_k_index >= static_cast<int>(records.size()))
+        {
+            throw std::invalid_argument("Sternheimer response plan found an invalid global k-point index.");
+        }
+        int& mapped_record = plan.record_index_by_global_k[static_cast<std::size_t>(record.global_k_index)];
+        if (mapped_record >= 0)
+        {
+            throw std::invalid_argument("Sternheimer response plan found a duplicate global k-point index.");
+        }
+        mapped_record = static_cast<int>(record_index);
+        kpoints[static_cast<std::size_t>(record.global_k_index)] = record.kpoint;
+        plan.kweight_sum += record.kweight;
+    }
+
+    constexpr double tolerance = 1.0e-10;
+    if (q_index == 0)
+    {
+        if (records.size() != 1
+            || std::any_of(records.front().kpoint.begin(),
+                           records.front().kpoint.end(),
+                           [](const double coordinate) { return std::abs(coordinate) > tolerance; }))
+        {
+            throw std::invalid_argument(
+                "sternheimer_q_index=0 is reserved for the single-k Gamma compatibility path.");
+        }
+    }
+    else
+    {
+        if (records.size() <= 1)
+        {
+            throw std::invalid_argument("A nonzero Sternheimer q point requires more than one k point.");
+        }
+        for (const SternheimerLCAOOccupiedKPoint& record: records)
+        {
+            if (record.spin_index != 0)
+            {
+                throw std::invalid_argument("The first solid Sternheimer driver supports only nspin=1.");
+            }
+            for (const double occupation: record.occupations)
+            {
+                if (std::abs(occupation - 1.0) > tolerance)
+                {
+                    throw std::invalid_argument(
+                        "The first nspin=1 solid Sternheimer driver requires fully occupied insulating bands.");
+                }
+            }
+        }
+        plan.iq = q_index;
+        const int q_record_index
+            = plan.record_index_by_global_k[static_cast<std::size_t>(q_index - 1)];
+        plan.qpoint = records[static_cast<std::size_t>(q_record_index)].kpoint;
+        if (std::all_of(plan.qpoint.begin(),
+                        plan.qpoint.end(),
+                        [](const double coordinate) { return std::abs(coordinate) <= tolerance; }))
+        {
+            throw std::invalid_argument("sternheimer_q_index must select a nonzero q point for the solid path.");
+        }
+    }
+    plan.kq_pairs = build_sternheimer_kq_map(kpoints, plan.qpoint, tolerance);
+    return plan;
+}
 
 inline void validate_sternheimer_lcao_occupied_kpoints(
     const std::vector<SternheimerLCAOOccupiedKPoint>& records,

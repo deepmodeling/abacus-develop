@@ -130,9 +130,11 @@ SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian(const elecstate::Potent
                                                          const ModulePW::PW_Basis& pw_basis,
                                                          const UnitCell& ucell,
                                                          const int spin,
-                                                         const double kinetic_prefactor)
+                                                         const double kinetic_prefactor,
+                                                         const SternheimerReducedKPoint& kpoint)
 {
-    const SternheimerABACUSFDGridData grid_data = make_sternheimer_fd_grid(pw_basis);
+    SternheimerABACUSFDGridData grid_data = make_sternheimer_fd_grid(pw_basis);
+    grid_data.grid.kpoint = kpoint;
     auto nonlocal_projector
         = make_sternheimer_fd_nonlocal_projector_from_unitcell(ucell, grid_data.grid, grid_data.volume_element);
     return make_sternheimer_fd_hamiltonian_from_local_potential(grid_data,
@@ -147,9 +149,11 @@ SternheimerFDHamiltonian make_sternheimer_fd_full_hamiltonian(const elecstate::P
                                                               const ModulePW::PW_Basis& pw_basis,
                                                               const UnitCell& ucell,
                                                               const int spin,
-                                                              const double kinetic_prefactor)
+                                                              const double kinetic_prefactor,
+                                                              const SternheimerReducedKPoint& kpoint)
 {
-    const SternheimerABACUSFDGridData grid_data = make_sternheimer_fd_full_grid(pw_basis);
+    SternheimerABACUSFDGridData grid_data = make_sternheimer_fd_full_grid(pw_basis);
+    grid_data.grid.kpoint = kpoint;
     auto nonlocal_projector
         = make_sternheimer_fd_nonlocal_projector_from_unitcell(ucell, grid_data.grid, grid_data.volume_element);
     return make_sternheimer_fd_hamiltonian_from_local_potential(

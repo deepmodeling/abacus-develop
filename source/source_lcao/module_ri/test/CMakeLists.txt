@@ -83,7 +83,7 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_sternheimer_abacus_st_smoke_test
   LIBS ${math_libs}
-  SOURCES sternheimer_abacus_st_smoke_test.cpp
+  SOURCES sternheimer_abacus_st_smoke_test.cpp ../sternheimer_kq.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_kq_test

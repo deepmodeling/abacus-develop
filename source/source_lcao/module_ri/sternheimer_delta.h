@@ -164,6 +164,12 @@ std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_ma
     const SternheimerFDHamiltonian::Vector& occupied_wavefunction,
     double volume_element);
 
+std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_matrix_elements(
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const SternheimerFDHamiltonian::Vector& perturbation_potential,
+    const SternheimerFDHamiltonian::Vector& occupied_wavefunction,
+    double volume_element);
+
 SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,

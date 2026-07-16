@@ -117,7 +117,22 @@ std::vector<SternheimerKQPair> build_sternheimer_kq_map(const std::vector<Sternh
             throw std::invalid_argument("Sternheimer q-point is not commensurate with the supplied k-point mesh.");
         }
 
-        mapping.push_back({static_cast<int>(source_index), target_index, folded.kpoint, folded.reciprocal_shift});
+        const SternheimerReducedKPoint& selected_target = kpoints[static_cast<std::size_t>(target_index)];
+        std::array<int, 3> reciprocal_shift{};
+        for (std::size_t direction = 0; direction != k_plus_q.size(); ++direction)
+        {
+            const double shift = k_plus_q[direction] - selected_target[direction];
+            const double rounded_shift = std::round(shift);
+            if (std::abs(shift - rounded_shift) > tolerance
+                || rounded_shift < static_cast<double>(std::numeric_limits<int>::min())
+                || rounded_shift > static_cast<double>(std::numeric_limits<int>::max()))
+            {
+                throw std::runtime_error(
+                    "Sternheimer k+q mapping could not express the selected target by a reciprocal-lattice shift.");
+            }
+            reciprocal_shift[direction] = static_cast<int>(rounded_shift);
+        }
+        mapping.push_back({static_cast<int>(source_index), target_index, selected_target, reciprocal_shift});
     }
     return mapping;
 }
