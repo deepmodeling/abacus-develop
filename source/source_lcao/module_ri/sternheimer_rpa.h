@@ -135,6 +135,12 @@ class SternheimerRPA
         const std::vector<double>& occupations,
         double occupation_tolerance = 1.0e-8);
 
+    static bool try_transition_energy_window_from_eigenvalues_ry(
+        const std::vector<double>& eigenvalues_ry,
+        const std::vector<double>& occupations,
+        TransitionEnergyWindow& window,
+        double occupation_tolerance = 1.0e-8);
+
     static TransitionEnergyWindow merge_transition_energy_windows(
         const std::vector<TransitionEnergyWindow>& windows);
 

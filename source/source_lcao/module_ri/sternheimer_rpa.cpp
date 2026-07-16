@@ -959,6 +959,23 @@ SternheimerRPA::TransitionEnergyWindow SternheimerRPA::transition_energy_window_
     const std::vector<double>& occupations,
     const double occupation_tolerance)
 {
+    TransitionEnergyWindow window;
+    if (!try_transition_energy_window_from_eigenvalues_ry(eigenvalues_ry,
+                                                           occupations,
+                                                           window,
+                                                           occupation_tolerance))
+    {
+        throw std::runtime_error("Sternheimer minimax window found no positive occupied-to-empty transition.");
+    }
+    return window;
+}
+
+bool SternheimerRPA::try_transition_energy_window_from_eigenvalues_ry(
+    const std::vector<double>& eigenvalues_ry,
+    const std::vector<double>& occupations,
+    TransitionEnergyWindow& window,
+    const double occupation_tolerance)
+{
     if (eigenvalues_ry.size() != occupations.size())
     {
         throw std::invalid_argument("Sternheimer minimax window requires matching eigenvalue and occupation sizes.");
@@ -1000,13 +1017,12 @@ SternheimerRPA::TransitionEnergyWindow SternheimerRPA::transition_energy_window_
 
     if (!found_transition)
     {
-        throw std::runtime_error("Sternheimer minimax window found no positive occupied-to-empty transition.");
+        return false;
     }
 
-    TransitionEnergyWindow window;
     window.emin_ha = 0.5 * emin_ry;
     window.emax_ha = 0.5 * emax_ry;
-    return window;
+    return true;
 }
 
 SternheimerRPA::TransitionEnergyWindow SternheimerRPA::merge_transition_energy_windows(

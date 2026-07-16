@@ -108,15 +108,15 @@ TEST(SternheimerRPA, AccumulateChi0BranchColumnIncludesOccupation)
                                                             branch);
 
     const Complex expected0 = occupation
-        * ModuleRI::SternheimerRPA::accumulate_polarizability_grid_element(potentials[0],
-                                                                          psi_r,
-                                                                          delta_psi_r,
-                                                                          grid_weight);
+                              * ModuleRI::SternheimerRPA::accumulate_polarizability_grid_element(potentials[0],
+                                                                                                 psi_r,
+                                                                                                 delta_psi_r,
+                                                                                                 grid_weight);
     const Complex expected1 = occupation
-        * ModuleRI::SternheimerRPA::accumulate_polarizability_grid_element(potentials[1],
-                                                                          psi_r,
-                                                                          delta_psi_r,
-                                                                          grid_weight);
+                              * ModuleRI::SternheimerRPA::accumulate_polarizability_grid_element(potentials[1],
+                                                                                                 psi_r,
+                                                                                                 delta_psi_r,
+                                                                                                 grid_weight);
     EXPECT_EQ(branch[0], Complex(0.0, 0.0));
     EXPECT_EQ(branch[2], Complex(0.0, 0.0));
     EXPECT_NEAR(branch[1].real(), expected0.real(), 1.0e-14);
@@ -125,42 +125,64 @@ TEST(SternheimerRPA, AccumulateChi0BranchColumnIncludesOccupation)
     EXPECT_NEAR(branch[3].imag(), expected1.imag(), 1.0e-14);
 }
 
-TEST(SternheimerRPA, AccumulateComplexQChi0BranchColumnUsesMinusQProbe)
+TEST(SternheimerRPA, CollinearSpinBranchesAddBeforeConjugateSymmetrization)
 {
-    const std::vector<Vector> potentials = {
-        {Complex(2.0, 1.0), Complex(-1.0, 0.5)},
-        {Complex(0.5, -0.25), Complex(3.0, 2.0)}};
-    const Vector psi_k = {Complex(1.0, 1.0), Complex(2.0, -0.5)};
-    const Vector delta_psi_kq = {Complex(0.5, -0.25), Complex(-0.75, 1.0)};
-    constexpr double grid_weight = 0.25;
-    constexpr double occupation = 1.5;
+    const std::vector<std::vector<double>> potentials = {{2.0, -1.0}, {0.5, 3.0}};
+    const Vector psi_up = {Complex(1.0, 0.5), Complex(0.5, -0.25)};
+    const Vector delta_up = {Complex(-0.2, 0.3), Complex(0.4, 0.1)};
+    const Vector psi_down = {Complex(0.3, -0.4), Complex(-0.8, 0.2)};
+    const Vector delta_down = {Complex(0.6, 0.2), Complex(-0.1, 0.5)};
+    constexpr double grid_weight = 0.125;
 
-    std::vector<Complex> branch(4, Complex(0.0, 0.0));
+    std::vector<Complex> spin_up(4, Complex(0.0, 0.0));
+    std::vector<Complex> spin_down(4, Complex(0.0, 0.0));
+    std::vector<Complex> combined(4, Complex(0.0, 0.0));
+    ModuleRI::SternheimerRPA::accumulate_chi0_branch_column(potentials, psi_up, delta_up, grid_weight, 1.0, 0, spin_up);
     ModuleRI::SternheimerRPA::accumulate_chi0_branch_column(potentials,
-                                                            psi_k,
-                                                            delta_psi_kq,
+                                                            psi_down,
+                                                            delta_down,
                                                             grid_weight,
-                                                            occupation,
+                                                            1.0,
                                                             0,
-                                                            branch);
+                                                            spin_down);
+    ModuleRI::SternheimerRPA::accumulate_chi0_branch_column(potentials,
+                                                            psi_up,
+                                                            delta_up,
+                                                            grid_weight,
+                                                            1.0,
+                                                            0,
+                                                            combined);
+    ModuleRI::SternheimerRPA::accumulate_chi0_branch_column(potentials,
+                                                            psi_down,
+                                                            delta_down,
+                                                            grid_weight,
+                                                            1.0,
+                                                            0,
+                                                            combined);
 
-    for (std::size_t row = 0; row != potentials.size(); ++row)
+    for (std::size_t index = 0; index != combined.size(); ++index)
     {
-        const Complex expected = occupation
-            * ModuleRI::SternheimerRPA::accumulate_polarizability_grid_element(
-                potentials[row], psi_k, delta_psi_kq, grid_weight);
-        EXPECT_NEAR(branch[2 * row].real(), expected.real(), 1.0e-14);
-        EXPECT_NEAR(branch[2 * row].imag(), expected.imag(), 1.0e-14);
-        EXPECT_EQ(branch[2 * row + 1], Complex(0.0, 0.0));
+        EXPECT_NEAR(combined[index].real(), (spin_up[index] + spin_down[index]).real(), 1.0e-14);
+        EXPECT_NEAR(combined[index].imag(), (spin_up[index] + spin_down[index]).imag(), 1.0e-14);
+    }
+
+    const auto symmetrized_combined = ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(combined, 2);
+    const auto symmetrized_up = ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(spin_up, 2);
+    const auto symmetrized_down = ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(spin_down, 2);
+    for (std::size_t index = 0; index != symmetrized_combined.size(); ++index)
+    {
+        EXPECT_NEAR(symmetrized_combined[index].real(),
+                    (symmetrized_up[index] + symmetrized_down[index]).real(),
+                    1.0e-14);
+        EXPECT_NEAR(symmetrized_combined[index].imag(),
+                    (symmetrized_up[index] + symmetrized_down[index]).imag(),
+                    1.0e-14);
     }
 }
 
 TEST(SternheimerRPA, SymmetrizeImaginaryFrequencyChi0AddsAdjointBranch)
 {
-    const std::vector<Complex> branch = {Complex(1.0, 2.0),
-                                         Complex(3.0, -4.0),
-                                         Complex(5.0, 6.0),
-                                         Complex(-7.0, 8.0)};
+    const std::vector<Complex> branch = {Complex(1.0, 2.0), Complex(3.0, -4.0), Complex(5.0, 6.0), Complex(-7.0, 8.0)};
 
     const std::vector<Complex> chi0 = ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(branch, 2);
 
@@ -181,12 +203,8 @@ TEST(SternheimerRPA, WriteChi0V1FileUsesAtomPairBlocks)
     metadata.weight = 0.125;
     metadata.atom_naux = {1, 1};
 
-    const std::vector<ModuleRI::SternheimerRPA::AuxiliaryChannel> channels
-        = {{0, 0, 0}, {1, 1, 0}};
-    const std::vector<Complex> chi0 = {Complex(1.0, 0.0),
-                                       Complex(2.0, -0.5),
-                                       Complex(2.0, 0.5),
-                                       Complex(3.0, 0.0)};
+    const std::vector<ModuleRI::SternheimerRPA::AuxiliaryChannel> channels = {{0, 0, 0}, {1, 1, 0}};
+    const std::vector<Complex> chi0 = {Complex(1.0, 0.0), Complex(2.0, -0.5), Complex(2.0, 0.5), Complex(3.0, 0.0)};
 
     const std::string filename = ::testing::TempDir() + "/sternheimer_chi0_v1_test.dat";
     ModuleRI::SternheimerRPA::write_chi0_v1_file(filename, metadata, channels, chi0);
@@ -299,17 +317,32 @@ TEST(SternheimerRPA, TransitionEnergyWindowUsesOccupiedToEmptyPairsAndReturnsHar
     EXPECT_DOUBLE_EQ(window.emax_ha, 1.25);
 }
 
+TEST(SternheimerRPA, OptionalTransitionEnergyWindowDoesNotBlockExternalFrequencyGrid)
+{
+    using Window = ModuleRI::SternheimerRPA::TransitionEnergyWindow;
+    Window window;
+
+    EXPECT_FALSE(ModuleRI::SternheimerRPA::try_transition_energy_window_from_eigenvalues_ry(
+        {-1.0, -0.5}, {2.0, 2.0}, window));
+    EXPECT_THROW(ModuleRI::SternheimerRPA::try_transition_energy_window_from_eigenvalues_ry(
+                     {-1.0}, {2.0, 0.0}, window),
+                 std::invalid_argument);
+
+    EXPECT_TRUE(ModuleRI::SternheimerRPA::try_transition_energy_window_from_eigenvalues_ry(
+        {-1.0, 0.5}, {2.0, 0.0}, window));
+    EXPECT_DOUBLE_EQ(window.emin_ha, 0.75);
+    EXPECT_DOUBLE_EQ(window.emax_ha, 0.75);
+}
+
 TEST(SternheimerRPA, MergeTransitionEnergyWindowsCoversAllSpinChannels)
 {
     using Window = ModuleRI::SternheimerRPA::TransitionEnergyWindow;
-    const auto merged
-        = ModuleRI::SternheimerRPA::merge_transition_energy_windows({Window{0.4, 2.0}, Window{0.2, 3.5}});
+    const auto merged = ModuleRI::SternheimerRPA::merge_transition_energy_windows({Window{0.4, 2.0}, Window{0.2, 3.5}});
 
     EXPECT_DOUBLE_EQ(merged.emin_ha, 0.2);
     EXPECT_DOUBLE_EQ(merged.emax_ha, 3.5);
     EXPECT_THROW(ModuleRI::SternheimerRPA::merge_transition_energy_windows({}), std::invalid_argument);
-    EXPECT_THROW(ModuleRI::SternheimerRPA::merge_transition_energy_windows({Window{0.0, 1.0}}),
-                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::merge_transition_energy_windows({Window{0.0, 1.0}}), std::invalid_argument);
 }
 
 TEST(SternheimerRPA, GreenXMinimaxFrequencyGridMatchesReference)

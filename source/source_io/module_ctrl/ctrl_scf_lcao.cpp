@@ -7,7 +7,7 @@
 #include "source_hamilt/hamilt.h"         // use Hamilt<T>
 #include "source_lcao/hamilt_lcao.h"      // use hamilt::HamiltLCAO<TK, TR>
 
-#include <cmath>
+#include <array>
 #include <complex>
 #include <iomanip>
 #include <sstream>
@@ -61,7 +61,9 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
     const Parallel_Orbitals& parallel_orbitals,
     const psi::Psi<TK>& psi)
 {
-    if (kv.get_nks() != kv.get_nkstot())
+    std::vector<ModuleRI::SternheimerLCAOOccupiedChannel> channels;
+    const int spin_channel_count = ModuleRI::sternheimer_lcao_physical_spin_channel_count(PARAM.inp.nspin);
+    for (int spin_index = 0; spin_index != spin_channel_count; ++spin_index)
     {
         throw std::runtime_error(
             "Sternheimer solid LCAO coefficient gathering currently requires KPAR=1.");
@@ -927,8 +929,18 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         {
             ModuleBase::WARNING_QUIT("ctrl_scf_lcao", "Sternheimer LCAO output requires potential, grid, and KS states.");
         }
-        const auto occupied_kpoints
-            = gather_sternheimer_lcao_occupied_kpoints(*pelec, kv, ucell, pv, *psi);
+        std::vector<std::array<double, 3>> reduced_kpoints;
+        reduced_kpoints.reserve(kv.kvec_d.size());
+        for (const auto& kpoint: kv.kvec_d)
+        {
+            reduced_kpoints.push_back({kpoint.x, kpoint.y, kpoint.z});
+        }
+        ModuleRI::validate_sternheimer_lcao_gamma_layout(PARAM.inp.nspin,
+                                                         kv.get_nks(),
+                                                         kv.get_nkstot(),
+                                                         reduced_kpoints);
+        const auto occupied_channels
+            = gather_sternheimer_lcao_occupied_channels(*pelec, pv, *psi);
         ModuleRI::run_sternheimer_abacus_lcao_chi0_output(*(pelec->pot),
                                                           *pw_rho,
                                                           ucell,

@@ -55,8 +55,53 @@ struct SternheimerLCAOOccupiedKPoint
     std::vector<std::vector<std::complex<double>>> unoccupied_coefficients;
 };
 
-inline const SternheimerReducedKPoint& sternheimer_lcao_grid_kpoint(
-    const SternheimerLCAOOccupiedKPoint& record)
+inline int sternheimer_lcao_physical_spin_channel_count(const int nspin)
+{
+    if (nspin == 1)
+    {
+        return 1;
+    }
+    if (nspin == 2)
+    {
+        return 2;
+    }
+    throw std::invalid_argument("Sternheimer LCAO response supports only collinear nspin=1 or nspin=2.");
+}
+
+inline void validate_sternheimer_lcao_gamma_layout(const int nspin,
+                                                   const int local_k_rows,
+                                                   const int total_k_rows,
+                                                   const std::vector<std::array<double, 3>>& reduced_kpoints,
+                                                   const double tolerance = 1.0e-10)
+{
+    if (tolerance < 0.0)
+    {
+        throw std::invalid_argument("Sternheimer LCAO Gamma-point tolerance must be non-negative.");
+    }
+    const int expected_rows = sternheimer_lcao_physical_spin_channel_count(nspin);
+    if (local_k_rows != expected_rows || total_k_rows != expected_rows
+        || reduced_kpoints.size() != static_cast<std::size_t>(expected_rows))
+    {
+        throw std::invalid_argument(
+            "Sternheimer LCAO response currently requires exactly one Gamma point per physical spin channel.");
+    }
+    for (const auto& kpoint: reduced_kpoints)
+    {
+        for (const double component: kpoint)
+        {
+            if (!std::isfinite(component) || std::abs(component - std::round(component)) > tolerance)
+            {
+                throw std::invalid_argument(
+                    "Sternheimer LCAO response currently supports only Gamma-point calculations.");
+            }
+        }
+    }
+}
+
+inline void validate_sternheimer_lcao_occupied_channels(
+    const std::vector<SternheimerLCAOOccupiedChannel>& channels,
+    const int spin_channel_count,
+    const int basis_size)
 {
     return record.has_grid_kpoint_override ? record.grid_kpoint : record.kpoint;
 }
