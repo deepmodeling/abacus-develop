@@ -9,14 +9,7 @@
 #undef private
 #undef protected
 // mock functions for UnitCell
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
 }

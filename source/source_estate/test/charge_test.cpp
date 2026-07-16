@@ -9,14 +9,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "prepare_unitcell.h"
 // mock functions for UnitCell
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;

@@ -9,18 +9,6 @@
 #include "source_io/module_output/print_info.h"
 #include "prepare_unitcell.h"
 #undef private
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
-LCAO_Orbitals::LCAO_Orbitals(){}
-LCAO_Orbitals::~LCAO_Orbitals(){}
-void LCAO_Orbitals::bcast_files(
-	const int &ntype_in,
-	const int &my_rank)
-{
-	return;
-}
-#endif
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 

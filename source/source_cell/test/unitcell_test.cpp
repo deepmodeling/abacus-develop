@@ -19,21 +19,7 @@
 #include <valarray>
 #include <vector>
 
-#ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h"
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
@@ -149,14 +135,6 @@ Magnetism::~Magnetism()
  *   - ReadAtomPositionsWarning5
  *     - read_atom_positions(): no atoms can move in MD simulations!
  */
-
-// mock function
-#ifdef __LCAO
-void LCAO_Orbitals::bcast_files(const int& ntype_in, const int& my_rank)
-{
-    return;
-}
-#endif
 
 class UcellTest : public ::testing::Test
 {

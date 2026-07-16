@@ -15,9 +15,7 @@ namespace elecstate {
     }
 }
 
-// Mock InfoNonlocal class
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
+
 
 // Mock Magnetism class
 Magnetism::Magnetism() {}

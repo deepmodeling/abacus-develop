@@ -14,12 +14,6 @@
 #include "mpi.h"
 #endif
 
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
-LCAO_Orbitals::LCAO_Orbitals() {}
-LCAO_Orbitals::~LCAO_Orbitals() {}
-#endif
 Magnetism::Magnetism() {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;

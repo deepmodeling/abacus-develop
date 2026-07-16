@@ -18,10 +18,7 @@
 #endif
 #include "prepare_unitcell.h"
 
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
-#endif
+
 Magnetism::Magnetism() {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
@@ -94,13 +91,6 @@ Magnetism::~Magnetism() { }
  *   - CalNbands: elecstate::cal_nbands()
  *     - calculate the number of bands
  */
-
-// mock function
-#ifdef __LCAO
-void LCAO_Orbitals::bcast_files(const int& ntype_in, const int& my_rank) {
-    return;
-}
-#endif
 
 class UcellTest : public ::testing::Test {
   protected:

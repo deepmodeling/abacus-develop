@@ -206,11 +206,7 @@ namespace elecstate
     };
 }
 
-#ifdef __LCAO
-#include "source_lcao/setup_nonlocal.h"
-InfoNonlocal::InfoNonlocal(){};
-InfoNonlocal::~InfoNonlocal(){};
-#endif
+
 
 namespace Parallel_Reduce
 {

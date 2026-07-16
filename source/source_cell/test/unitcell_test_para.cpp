@@ -19,14 +19,7 @@
 #include "prepare_unitcell.h"
 #include "../update_cell.h"
 #include "../bcast_cell.h"
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
@@ -57,14 +50,6 @@ Magnetism::~Magnetism()
  *   - ReadPseudo
  *     - read_pseudo()
  */
-
-// mock function
-#ifdef __LCAO
-void LCAO_Orbitals::bcast_files(const int& ntype_in, const int& my_rank)
-{
-    return;
-}
-#endif
 
 class UcellTest : public ::testing::Test
 {
