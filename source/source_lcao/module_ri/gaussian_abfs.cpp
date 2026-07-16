@@ -472,10 +472,7 @@ auto Gaussian_Abfs::get_lattice_sum_2d(const double& tpiba,
     {
         for (int i1 = -n_super1; i1 <= n_super1; ++i1)
         {
-            if (exclude_Gamma && i0 == 0 && i1 == 0)
-            {
-                continue;
-            }
+            const bool excluded_gamma_term = exclude_Gamma && i0 == 0 && i1 == 0;
 
             const ModuleBase::Vector3<double> qg_direct
                 = -(this->kvec_c[ik] + this->gvecs_direct[0] * static_cast<double>(i0)
@@ -488,6 +485,12 @@ auto Gaussian_Abfs::get_lattice_sum_2d(const double& tpiba,
 
             for (int L = 0; L != lmax + 1; ++L)
             {
+                // Only L=0 is singular and L=1 has a direction-dependent q->0
+                // limit. The L>=2 Coulomb channels have finite Gamma limits.
+                if (excluded_gamma_term && (std::abs(power + 2.0) >= 1e-12 || L < 2))
+                {
+                    continue;
+                }
                 for (int m = 0; m != 2 * L + 1; ++m)
                 {
                     const int lm = L * L + m;
