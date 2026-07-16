@@ -84,4 +84,9 @@ AddTest(
   LIBS ${math_libs}
   SOURCES sternheimer_abacus_st_smoke_test.cpp
 )
+AddTest(
+  TARGET MODULE_RI_sternheimer_kq_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_kq_test.cpp ../sternheimer_kq.cpp
+)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
