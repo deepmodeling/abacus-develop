@@ -121,6 +121,34 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         {mix_DMk_2D.set_nks(kv.get_nks());}
         
     mix_DMk_2D.set_mixing_plain(1.0);
+
+    // --------------------------------------------------------------------------------------
+    // NOTE: ABFs are constructed here BEFORE symmetry processing to calculate the correct
+    // abfs_Lmax for symrot.set_abfs_Lmax(). Previously, abfs_Lmax was obtained either from
+    // exx_cut_coulomb->abfs_Lmax() (which was nullptr at that point) or from this->info.abfs_Lmax
+    // (which defaults to 0). This caused abfs_Lmax to degrade to 0 in RPA + symmetry path,
+    // leading to incorrect rotation matrices for ABFs with higher angular momentum.
+    // --------------------------------------------------------------------------------------
+    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_for_lmax;
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
+    {
+        this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
+        abfs_for_lmax = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.shrink_abfs_pca_thr);
+        if (!this->info.files_shrink_abfs.empty())
+        {
+            abfs_for_lmax = Exx_Abfs::IO::construct_abfs(abfs_for_lmax, orb, this->info.files_shrink_abfs, this->info.kmesh_times);
+        }
+    }
+    else
+    {
+        this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
+        abfs_for_lmax = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold);
+        if (!this->info.files_abfs.empty())
+        {
+            abfs_for_lmax = Exx_Abfs::IO::construct_abfs(abfs_for_lmax, orb, this->info.files_abfs, this->info.kmesh_times);
+        }
+    }
+
     ModuleSymmetry::Symmetry_rotation symrot;
     if (exx_spacegroup_symmetry)
     {
@@ -128,7 +156,10 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         const auto& Rs = RI_Util::get_Born_von_Karmen_cells(period);
         symrot.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, Rs, period, ucell.lat);
         // set Lmax of the rotation matrices to max(l_ao, l_abf), to support rotation under ABF
-        symrot.set_abfs_Lmax(exx_cut_coulomb ? exx_cut_coulomb->abfs_Lmax() : this->info.abfs_Lmax);
+        // NOTE: Using Exx_Abfs::Construct_Orbs::get_Lmax() to compute Lmax from the actual ABFs
+        // instead of relying on exx_cut_coulomb->abfs_Lmax() (not yet initialized) or
+        // this->info.abfs_Lmax (defaults to 0). This ensures correct Lmax for symmetry rotation.
+        symrot.set_abfs_Lmax(Exx_Abfs::Construct_Orbs::get_Lmax(abfs_for_lmax));
         symrot.cal_Ms(kv, ucell, *dm.get_paraV_pointer());
         // output Ts (symrot_R.txt) and Ms (symrot_k.txt)
         ModuleSymmetry::print_symrot_info_R(symrot, ucell.symm, ucell.lmax, Rs);
@@ -159,29 +190,16 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
 
     if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
-        this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom
-            = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell,
-                                                       orb,
-                                                       this->lcaos,
-                                                       this->info.kmesh_times,
-                                                       this->info.shrink_abfs_pca_thr);
-        if (this->info.files_shrink_abfs.empty())
-        {
-            this->abfs_shrink = abfs_same_atom;
-        }
-        else
-        {
-            this->abfs_shrink = Exx_Abfs::IO::construct_abfs(abfs_same_atom,
-                                                        orb,
-                                                        this->info.files_shrink_abfs,
-                                                        this->info.kmesh_times);
-        }
+        // NOTE: Reuse abfs_for_lmax constructed earlier to avoid redundant ABFs construction.
+        // This ensures consistency between the ABFs used for Lmax calculation and the ABFs
+        // used for actual EXX computation.
+        this->abfs_shrink = abfs_for_lmax;
         Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, abfs_shrink, GlobalV::ofs_running);
         exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, abfs_shrink);
     }
     else
-        exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb);
+        // NOTE: Reuse abfs_for_lmax constructed earlier to avoid redundant ABFs construction.
+        exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, abfs_for_lmax);
     // cal C and V for exx
     this->output_cut_coulomb_cs(ucell, exx_cut_coulomb);
     // cal CVCD
