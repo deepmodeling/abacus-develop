@@ -1,5 +1,7 @@
 #include "ions_move_methods.h"
 
+#include <algorithm>
+
 #include "ions_move_basic.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -92,4 +94,35 @@ void Ions_Move_Methods::cal_movement(const int &istep,
         converged_ = false;
     }
     return;
+}
+
+void Ions_Move_Methods::reset_after_cell_change(const std::vector<std::string>& relax_method, std::ofstream& ofs)
+{
+    ModuleBase::TITLE("Ions_Move_Methods", "reset_after_cell_change");
+
+    if (relax_method.empty())
+    {
+        return;
+    }
+
+    const std::string method = relax_method[0];
+    const std::string method_arg = relax_method.size() > 1 ? relax_method[1] : "";
+    const auto reset_common_state = [this]() {
+        this->converged_ = false;
+        this->update_iter_ = 0;
+        std::fill(this->etot_info_.begin(), this->etot_info_.end(), 0.0);
+    };
+
+    if (method == "bfgs" && method_arg != "1")
+    {
+        reset_common_state();
+        this->bfgs.reset();
+        ofs << " Reset ionic BFGS history after cell change." << std::endl;
+    }
+    else if (method == "bfgs" && method_arg == "1")
+    {
+        reset_common_state();
+        this->bfgs_trad.reset();
+        ofs << " Reset traditional ionic BFGS history after cell change." << std::endl;
+    }
 }

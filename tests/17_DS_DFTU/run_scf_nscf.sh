@@ -31,6 +31,10 @@ MPI_NP="${2:-4}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEST_DIR="$(pwd)"
 
+# Allow OpenMPI run as root
+export OMPI_ALLOW_RUN_AS_ROOT=1
+export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
 echo "========================================"
 echo " SCF + NSCF Workflow"
 echo "========================================"
@@ -94,7 +98,7 @@ echo "-----------------"
 echo ""
 echo "[1/4] Running SCF calculation..."
 cd "${SCF_DIR}"
-mpirun -np ${MPI_NP} --allow-run-as-root "${ABACUS}" > scf.log 2>&1 || {
+mpirun -np ${MPI_NP} "${ABACUS}" > scf.log 2>&1 || {
     echo "ERROR: SCF calculation failed!"
     echo "Check ${SCF_DIR}/scf.log for details"
     cd "${TEST_DIR}"
@@ -146,7 +150,7 @@ fi
 # Step 4: Run NSCF calculation
 # -------------------------------------------------------
 echo "[3/4] Running NSCF calculation..."
-mpirun -np ${MPI_NP} --allow-run-as-root "${ABACUS}" > nscf.log 2>&1 || {
+mpirun -np ${MPI_NP} "${ABACUS}" > nscf.log 2>&1 || {
     echo "ERROR: NSCF calculation failed!"
     echo "Check ${TEST_DIR}/nscf.log for details"
     exit 1

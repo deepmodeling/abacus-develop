@@ -1,20 +1,20 @@
 AddTest(
   TARGET MODULE_HAMILT_XCTest_PBE
-  LIBS parameter MPI::MPI_CXX Libxc::xc  # required by global.h; for details, `remove_definitions(-D__MPI)`.
+  LIBS parameter MPI::MPI_CXX Libxc::xc
   SOURCES test_xc.cpp ../xc_functional.cpp ../xc_lda_wrap.cpp ../xc_gga_wrap.cpp ../xc_gga_corr.cpp ../xc_lda_corr.cpp ../xc_gga_exch.cpp ../xc_lda_exch.cpp ../xc_hcth.cpp
   ../libxc_gga_wrap.cpp ../libxc_setup.cpp
 )
 
 AddTest(
   TARGET MODULE_HAMILT_XCTest_HSE
-  LIBS parameter MPI::MPI_CXX Libxc::xc  # required by global.h; for details, `remove_definitions(-D__MPI)`.
+  LIBS parameter MPI::MPI_CXX Libxc::xc
   SOURCES test_xc1.cpp ../xc_functional.cpp ../libxc_setup.cpp
 )
 
 
 AddTest(
   TARGET MODULE_HAMILT_XCTest_PZ_SPN
-  LIBS parameter MPI::MPI_CXX Libxc::xc  # required by global.h; for details, `remove_definitions(-D__MPI)`.
+  LIBS parameter MPI::MPI_CXX Libxc::xc
   SOURCES test_xc2.cpp ../xc_functional.cpp ../xc_lda_wrap.cpp ../xc_gga_wrap.cpp ../xc_gga_corr.cpp ../xc_lda_corr.cpp ../xc_gga_exch.cpp ../xc_lda_exch.cpp ../xc_hcth.cpp
   ../libxc_gga_wrap.cpp ../libxc_lda_wrap.cpp ../libxc_setup.cpp
 )
@@ -27,7 +27,7 @@ list(APPEND FFT_SRC ../../../source_base/module_fft/fft_rocm.cpp)
 endif()
 AddTest(
   TARGET MODULE_HAMILT_XCTest_GRADCORR
-  LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi device container 
+  LIBS parameter MPI::MPI_CXX Libxc::xc psi device container
   SOURCES test_xc3.cpp ../xc_grad.cpp ../xc_functional.cpp
   ../xc_lda_wrap.cpp ../xc_gga_wrap.cpp
   ../libxc_setup.cpp
@@ -48,7 +48,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_HAMILT_XCTest_SCAN
-  LIBS parameter MPI::MPI_CXX Libxc::xc 
+  LIBS parameter MPI::MPI_CXX Libxc::xc
   SOURCES test_xc4.cpp ../xc_functional.cpp ../xc_lda_wrap.cpp
     ../xc_gga_wrap.cpp
     ../libxc_setup.cpp
@@ -61,7 +61,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_HAMILT_XCTest_VXC
-  LIBS parameter MPI::MPI_CXX Libxc::xc ${math_libs} psi device container 
+  LIBS parameter MPI::MPI_CXX Libxc::xc psi device container
   SOURCES test_xc5.cpp ../xc_grad.cpp ../xc_functional.cpp
     ../xc_lda_wrap.cpp ../xc_gga_wrap.cpp
     ../libxc_setup.cpp

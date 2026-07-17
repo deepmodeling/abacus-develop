@@ -27,7 +27,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_cell/unitcell.h"
-#include "source_estate/magnetism.h"
+#include "source_cell/magnetism.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -54,7 +54,7 @@ void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
 }
 
 // mohan add 2025-12-02
-bool Charge::kin_density()
+bool Charge::kin_density() const
 {
 	if (XC_Functional::get_ked_flag() || PARAM.inp.out_elf[0] > 0)
 	{

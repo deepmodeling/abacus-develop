@@ -8,6 +8,7 @@
 #include "source_esolver/esolver_lj.h"
 #include "source_md/verlet.h"
 #include "setcell.h"
+#include <fstream>
 #define doublethreshold 1e-12
 
 
@@ -283,7 +284,8 @@ TEST_F(Verlet_test, rescale_v)
 
 TEST_F(Verlet_test, CSVR)
 {
-    mdrun->first_half(GlobalV::ofs_running);
+    std::ofstream ofs;
+    mdrun->first_half(ofs);
     param_in.input.mdp.md_type = "nvt";
     param_in.input.mdp.md_thermostat = "csvr";
     param_in.input.mdp.md_csvr_tau = 100.0;

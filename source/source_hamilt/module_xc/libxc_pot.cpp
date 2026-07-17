@@ -8,6 +8,9 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h"
+#endif
 
 #include <xc.h>
 
@@ -22,7 +25,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         const int nspin_in,
         const bool domag,
         const bool domag_z,
-        const std::map<int, double>* scaling_factor)
+        const std::map<int, double>* scaling_factor,
+        const double hybrid_alpha,
+        const double hse_omega)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_libxc");
     ModuleBase::timer::start("XC_Functional_Libxc","v_xc_libxc");
@@ -40,7 +45,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
-        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED);
+        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED,
+        /* hybrid_alpha = */ hybrid_alpha,
+        /* hse_omega = */ hse_omega);
 
     const bool is_gga = [&funcs]()
     {
@@ -211,7 +218,9 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     const double &omega, // volume of cell
     const double tpiba,
     const Charge* const chr,
-    const int nspin)
+    const int nspin,
+    const double hybrid_alpha,
+    const double hse_omega)
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_meta");
     ModuleBase::timer::start("XC_Functional_Libxc","v_xc_meta");
@@ -232,7 +241,9 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     //----------------------------------------------------------
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id, 
-        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED);
+        /* xc_polarized = */ (1==nspin) ? XC_UNPOLARIZED:XC_POLARIZED,
+        /* hybrid_alpha = */ hybrid_alpha,
+        /* hse_omega = */ hse_omega);
 
     const std::vector<double> rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
     const std::vector<std::vector<ModuleBase::Vector3<double>>> gdr

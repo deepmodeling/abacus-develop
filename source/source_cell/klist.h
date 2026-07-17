@@ -49,6 +49,7 @@ public:
      * @param nspin_in The number of spins.
      * @param reciprocal_vec The reciprocal vector of the system.
      * @param latvec The lattice vector of the system.
+     * @param use_ibz Whether to reduce k-points to the irreducible Brillouin zone.
      *
      * @return void
      *
@@ -63,7 +64,8 @@ public:
         const int& nspin,
         const ModuleBase::Matrix3& reciprocal_vec,
         const ModuleBase::Matrix3& latvec,
-        std::ofstream& ofs);
+        std::ofstream& ofs,
+        const bool use_ibz);
 
     int get_nks() const
     {

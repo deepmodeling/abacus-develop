@@ -4,7 +4,6 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/macros.h"
 #include "source_cell/klist.h"
-#include "source_esolver/esolver_ks_pw.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06

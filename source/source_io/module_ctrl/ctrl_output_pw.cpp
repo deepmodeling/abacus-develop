@@ -334,6 +334,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                      inp.cond_dw,
                      inp.cond_dt,
                      inp.cond_nonlocal,
+                     inp.cond_mgga_vel,
                      pelec->wg);
     }
 
@@ -370,7 +371,8 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
                                                pw_wfc,
                                                pw_rho,
                                                ucell,
-                                               pelec->pot->get_eff_v(0));
+                                               pelec->pot->get_eff_v(0),
+                                               chr.nrxx);
     }
 #endif
 

@@ -8,15 +8,10 @@
 #include "source_io/module_parameter/parameter.h"
 #include "print_cell.h"
 #include "read_stru.h"
-#include "source_estate/read_orb.h"
 #include "source_base/timer.h"
 #include "source_base/constants.h"
 #include "source_base/formatter.h"
 #include "source_base/mathzone.h"
-
-#ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
-#endif
 
 bool unitcell::read_atom_positions(UnitCell& ucell,
                          std::ifstream &ifpos,
@@ -29,6 +24,11 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
     const int ntype = ucell.ntype;
     const int nspin = PARAM.inp.nspin;
     assert (nspin==1 || nspin==2 || nspin==4);
+
+    if (ucell.magnet.start_mag.size() != static_cast<size_t>(ntype))
+    {
+        ucell.magnet.start_mag.resize(ntype, 0.0);
+    }
 
     if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifpos, "ATOMIC_POSITIONS"))
     {

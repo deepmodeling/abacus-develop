@@ -3,6 +3,10 @@ name: interface
 on:
   workflow_dispatch:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   wannier-interface:
     name: "wannier interface — ${{ matrix.name }}"

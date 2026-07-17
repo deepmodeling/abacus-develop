@@ -5,16 +5,21 @@
 #undef private
 
 #include "source_base/global_variable.h"
+#include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_global.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hsolver/module_pexsi/pexsi_solver.h"
 #include "source_hsolver/test/diago_elpa_utils.h"
 
+#include <algorithm>
+#include <cmath>
 #include <fstream>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <iostream>
+#include <memory>
 #include <mpi.h>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -75,7 +80,7 @@ class PexsiPrepare
     std::vector<T> h_local;
     std::vector<T> s_local;
     psi::Psi<T> psi;
-    hsolver::DiagoPexsi<T>* dh = nullptr;
+    std::unique_ptr<hsolver::DiagoPexsi<T>> dh;
     Parallel_Orbitals po;
     std::vector<double> abc;
     int icontxt;
@@ -155,7 +160,7 @@ class PexsiPrepare
             std::cout << "nrow: " << hmtest.nrow << ", ncol: " << hmtest.ncol << ", nb: " << nb2d << std::endl;
         }
 
-        dh = new hsolver::DiagoPexsi<T>(&po);
+        dh = std::make_unique<hsolver::DiagoPexsi<T>>(&po);
     }
 
     void distribute_data()
@@ -315,12 +320,7 @@ class PexsiPrepare
     bool compare_ref(std::stringstream& out_info)
     {
         double maxerror = 0.0;
-        int iindex = 0;
         bool pass = true;
-
-        auto ofs = std::ofstream("dm_local" + std::to_string(myprow) + std::to_string(mypcol) + ".dat");
-
-        int SENDPROW = 0, SENDPCOL = 0, tag = 0;
 
         // do iteration for matrix, distribute old_matrix to each process, pass a block each time
         for (int row = 0; row < nlocal; row++)
@@ -373,19 +373,29 @@ class PexsiPrepare
                 out_info.clear();
             }
         }
-        delete dh;
         return pass_all;
     }
 };
 
-class PexsiGammaOnlyTest : public ::testing::TestWithParam<PexsiPrepare<double>>
+struct PexsiTestCase
+{
+    int nb2d;
+    const char* hfname;
+    const char* sfname;
+    const char* dmname;
+};
+
+class PexsiGammaOnlyTest : public ::testing::TestWithParam<PexsiTestCase>
 {
 };
 
 TEST_P(PexsiGammaOnlyTest, LCAO)
 {
+    const auto& test_case = GetParam();
+    PexsiPrepare<double> dp(
+        0, 0, test_case.nb2d, 0, test_case.hfname, test_case.sfname, test_case.dmname);
+
     std::stringstream out_info;
-    PexsiPrepare<double> dp = GetParam();
     if (DETAILINFO && dp.myrank == 0)
     {
         std::cout << "nlocal: " << dp.nlocal << ", nbands: " << dp.nbands << ", nb2d: " << dp.nb2d
@@ -407,7 +417,7 @@ TEST_P(PexsiGammaOnlyTest, LCAO)
         std::cout << "Time for hsolver: " << dp.hsolver_time << "s" << std::endl;
     }
 
-    bool pass = dp.compare_ref(out_info);
+    const bool pass = dp.compare_ref(out_info);
     EXPECT_TRUE(pass) << out_info.str();
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -416,40 +426,38 @@ TEST_P(PexsiGammaOnlyTest, LCAO)
 INSTANTIATE_TEST_SUITE_P(
     DiagoTest,
     PexsiGammaOnlyTest,
-    ::testing::Values( // int nlocal, int nbands, int nb2d, int sparsity, std::string ks_solver_in, std::string hfname,
-                       // std::string sfname
-        PexsiPrepare<
-            double>(0, 0, 2, 0, "PEXSI-H-GammaOnly-Si2.dat", "PEXSI-S-GammaOnly-Si2.dat", "PEXSI-DM-GammaOnly-Si2.dat"),
-        PexsiPrepare<
-            double>(0, 0, 1, 0, "PEXSI-H-GammaOnly-Si2.dat", "PEXSI-S-GammaOnly-Si2.dat", "PEXSI-DM-GammaOnly-Si2.dat")
-
-            ));
+    ::testing::Values(
+        PexsiTestCase{2,
+                      "PEXSI-H-GammaOnly-Si2.dat",
+                      "PEXSI-S-GammaOnly-Si2.dat",
+                      "PEXSI-DM-GammaOnly-Si2.dat"},
+        PexsiTestCase{1,
+                      "PEXSI-H-GammaOnly-Si2.dat",
+                      "PEXSI-S-GammaOnly-Si2.dat",
+                      "PEXSI-DM-GammaOnly-Si2.dat"}));
 
 int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);
-    int mypnum, dsize;
-    MPI_Comm_size(MPI_COMM_WORLD, &dsize);
-    MPI_Comm_rank(MPI_COMM_WORLD, &mypnum);
+
+    int myrank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &myrank);
 
     testing::InitGoogleTest(&argc, argv);
     ::testing::TestEventListeners& listeners = ::testing::UnitTest::GetInstance()->listeners();
-    if (mypnum != 0)
+    if (myrank != 0)
     {
         delete listeners.Release(listeners.default_result_printer());
     }
-    int result = RUN_ALL_TESTS();
 
-    if (mypnum == 0 && result != 0)
+    const int result = RUN_ALL_TESTS();
+    if (myrank == 0 && result != 0)
     {
-        std::cout << "ERROR:some tests are not passed" << std::endl;
-        return result;
+        std::cout << "ERROR: some tests are not passed" << std::endl;
     }
-    else
-    {
-        MPI_Finalize();
-        return 0;
-    }
+
+    MPI_Finalize();
+    return myrank == 0 ? result : 0;
 }
 
 #endif // __PEXSI

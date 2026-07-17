@@ -16,12 +16,17 @@
 
 class pseudopot_cell_vnl;
 
+// forward declaration so that the dH module (out_mat_dh_vl) can reuse cal_force_loc
+namespace hamilt { template <class T> class Veff; }
+
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Forces
 {
   public:
     template <typename T>
     friend class Force_Stress_LCAO;
+    template <class T>
+    friend class hamilt::Veff;
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves
      * is computed from 4 main parts

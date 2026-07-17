@@ -23,10 +23,4 @@ class VSep
   private:
     int nrxx = 0;
 };
-//
-// namespace GlobalC
-// {
-// extern VSep vsep_cell;
-// }
-
 #endif /* ifndef VSEP_IN_PW */

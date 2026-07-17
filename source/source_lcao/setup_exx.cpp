@@ -63,6 +63,22 @@ void Exx_NAO<TK>::before_runner(
             }
         }
     }
+    else if (inp.calculation == "nscf" && (inp.init_chg == "dm" || inp.init_chg == "dm_no_renormalize"))
+    {
+        // init exx integration tables for Cs/Vs, but not use symmetry for nscf
+        if (GlobalC::exx_info.info_global.cal_exx)
+        {
+            if (GlobalC::exx_info.info_ri.real_number)
+            {
+                this->exd->init(MPI_COMM_WORLD, ucell, kv, orb);
+            }
+            else
+            {
+                this->exc->init(MPI_COMM_WORLD, ucell, kv, orb);
+            }
+        }
+    }
+
 #endif
 }
 

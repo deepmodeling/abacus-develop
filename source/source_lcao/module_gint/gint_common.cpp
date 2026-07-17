@@ -168,8 +168,15 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
     std::vector<int> row_set = {0, 0, 1, 1};
     std::vector<int> col_set = {0, 1, 0, 1};
     //construct complex matrix
+    // Pauli-to-spinor conversion: H = V_0*I + B_x*sigma_x + B_y*sigma_y + B_z*sigma_z
+    // sigma_y = [[0,-i],[i,0]], so H_{up,down} = B_x - i*B_y, H_{down,up} = B_x + i*B_y
+    // coefficient = clx_i + i*clx_j for each Pauli channel:
+    //   is=0 (up,up):   V_0 + B_z   => coeff on B_z = +1  => clx_i=1,  clx_j=0
+    //   is=1 (up,down): B_x - i*B_y => coeff on B_y = -i  => clx_i=0,  clx_j=-1
+    //   is=2 (down,up): B_x + i*B_y => coeff on B_y = +i  => clx_i=0,  clx_j=+1
+    //   is=3 (down,down): -(V_0 - B_z) => coeff on V_0 = -1 => clx_i=-1, clx_j=0
     std::vector<int> clx_i = {1, 0, 0, -1};
-    std::vector<int> clx_j = {0, 1, -1, 0};
+    std::vector<int> clx_j = {0, -1, 1, 0};
     for (int is = 0; is < 4; is++){
         if(!PARAM.globalv.domag && (is==1 || is==2)) continue;
         hR_tmp->set_zero();
@@ -203,9 +210,10 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
                             + std::complex<double>(clx_i[is], clx_j[is]) * mat_nspin2->get_value(irow, icol);
                         }
                     }
-                    //fill the lower triangle matrix
-                    //When is=0 or 3, the real part does not need conjugation; 
-                    //when is=1 or 2, the small matrix is not Hermitian, so conjugation is not needed
+                    //fill the lower triangle matrix at -R by conjugate transpose of upper at R
+                    // This ensures H(-R) = H(R)^dagger, required for Hermiticity of H(k).
+                    // For real matrices (is=0,3), conj has no effect.
+                    // For complex matrices (is=1,2), conj is essential.
                     if (iat1 < iat2)
                     {
                         auto lower_mat = lower_ap->find_matrix(-R_index);
@@ -213,7 +221,7 @@ void merge_hr_part_to_hR(const std::vector<hamilt::HContainer<double>>& hr_gint_
                         {
                             for (int icol = 0; icol < upper_mat->get_col_size(); ++icol)
                             {
-                                lower_mat->get_value(icol, irow) = upper_mat->get_value(irow, icol);
+                                lower_mat->get_value(icol, irow) = std::conj(upper_mat->get_value(irow, icol));
                             }
                         }
                     }

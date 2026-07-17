@@ -1,6 +1,9 @@
 #ifdef USE_LIBXC
 
 #include "libxc_abacus.h"
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h"
+#endif
 
 #include <xc.h>
 #include <array>
@@ -11,7 +14,9 @@ void XC_Functional_Libxc::gcxc_libxc(
     const double& grho,
     double& sxc,
     double& v1xc,
-    double& v2xc)
+    double& v2xc,
+    const double hybrid_alpha,
+    const double hse_omega)
 {
     sxc = 0.0;
     v1xc = 0.0;
@@ -26,7 +31,9 @@ void XC_Functional_Libxc::gcxc_libxc(
 
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id,
-        /* xc_polarized = */ XC_UNPOLARIZED);
+        /* xc_polarized = */ XC_UNPOLARIZED,
+        /* hybrid_alpha = */ hybrid_alpha,
+        /* hse_omega = */ hse_omega);
 
     for (xc_func_type& func : funcs)
     {
@@ -55,7 +62,9 @@ void XC_Functional_Libxc::gcxc_spin_libxc(
     double& v1xcdw,
     double& v2xcup,
     double& v2xcdw,
-    double& v2xcud)
+    double& v2xcud,
+    const double hybrid_alpha,
+    const double hse_omega)
 {
     sxc = 0.0;
     v1xcup = 0.0;
@@ -68,7 +77,9 @@ void XC_Functional_Libxc::gcxc_spin_libxc(
 
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id,
-        /* xc_polarized = */ XC_POLARIZED);
+        /* xc_polarized = */ XC_POLARIZED,
+        /* hybrid_alpha = */ hybrid_alpha,
+        /* hse_omega = */ hse_omega);
 
     for (xc_func_type& func : funcs)
     {

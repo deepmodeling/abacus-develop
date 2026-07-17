@@ -19,7 +19,7 @@ namespace Inverse_Matrix_Test
 			t.ptr()[i] = i;
 		return t;
 	}
-	
+
 	template<typename Tdata>
 	Tensor<Tdata> init_Tensor2(const std::vector<size_t> &shape)
 	{
@@ -38,9 +38,9 @@ namespace Inverse_Matrix_Test
 		const size_t n_all = 5;
 		const std::vector<size_t> n0 = {2,3};
 		const std::vector<size_t> n1 = {1,2,2};
-		
+
 		Tensor<Tdata> m = init_Tensor<Tdata>({n_all,n_all});
-		
+
 		std::vector<std::vector<Tensor<Tdata>>> ms(n0.size(), std::vector<Tensor<Tdata>>(n1.size()));
 		for(size_t Im0=0; Im0<n0.size(); ++Im0)
 			for(size_t Im1=0; Im1<n1.size(); ++Im1)
@@ -48,10 +48,10 @@ namespace Inverse_Matrix_Test
 
 		inv.input(m);
 		std::cout<<inv.output()<<std::endl;
-		
+
 		inv.input(m);
 		std::cout<<inv.output(n0, n1)<<std::endl;
-		
+
 		inv.input(ms);
 		std::cout<<inv.output()<<std::endl;
 

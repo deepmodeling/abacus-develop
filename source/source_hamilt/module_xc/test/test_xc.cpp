@@ -881,13 +881,15 @@ class XCTest_PBE_LibXC : public XCTest
             std::vector<double> rho  = {0.17E+01, 0.17E+01, 0.15E+01, 0.88E-01, 0.18E+04};
             std::vector<double> grho = {0.81E-11, 0.17E+01, 0.36E+02, 0.87E-01, 0.55E+00};
 
+            const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+            const double hse_omega = XC_Functional::get_hse_omega();
             for(int i=0;i<5;i++)
             {
                 double e,v,v1,v2;
                 XC_Functional::xc(rho[i],e,v);
                 e_lda.push_back(e);
                 v_lda.push_back(v);
-                XC_Functional_Libxc::gcxc_libxc(XC_Functional::get_func_id(), rho[i],grho[i],e,v1,v2);
+                XC_Functional_Libxc::gcxc_libxc(XC_Functional::get_func_id(), rho[i],grho[i],e,v1,v2, hybrid_alpha, hse_omega);
                 e_gga.push_back(e);
                 v1_gga.push_back(v1);
                 v2_gga.push_back(v2);

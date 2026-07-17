@@ -14,7 +14,7 @@
 
 #include "../module_bessel/bessel_basis.h"
 #include "../../source_cell/unitcell.h"
-#include "../../source_estate/magnetism.h"
+#include "../../source_cell/magnetism.h"
 
 #ifdef __LCAO
 #include "../../source_cell/setup_nonlocal.h"

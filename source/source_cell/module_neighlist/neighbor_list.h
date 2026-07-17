@@ -1,6 +1,8 @@
 #ifndef NEIGHBOR_LIST_H
 #define NEIGHBOR_LIST_H
 
+#include "source_cell/module_neighlist/neighbor_types.h"
+
 #include <vector>
 #include "page_allocator.h"
 
@@ -10,10 +12,10 @@ public:
     NeighborList() = default;
     ~NeighborList() = default;
 
-    void initialize(int nlocal, int pgsize)
+    void initialize(std::size_t nlocal, std::size_t pgsize)
     {
-        nlocal_ = nlocal;
-        allocator_ = PageAllocator(pgsize);
+        nlocal_ = ModuleNeighList::checked_int_size(nlocal, "NeighborList local atom count");
+        allocator_ = PageAllocator(ModuleNeighList::checked_int_size(pgsize, "NeighborList page size"));
         numneigh_.assign(nlocal, 0);
         firstneigh_.assign(nlocal, nullptr);
     }

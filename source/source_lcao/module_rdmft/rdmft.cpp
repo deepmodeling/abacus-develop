@@ -346,24 +346,10 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
         this->pelec->cal_energies(2);
         Etotal = this->pelec->f_en.etot;
 
-        // if( GlobalC::exx_info.info_global.cal_exx )
-        // {
-        //     ModuleBase::matrix Exc_n_k(wg.nr, wg.nc, true);
-        //     // because we have got wk_fun_occNum, we can use symbol=1 realize it
-        //     occNum_Mul_wfcHwfc(wk_fun_occNum, wfcHwfc_XC, Exc_n_k, 1);
-        //     E_RDMFT[2] = getEnergy(Exc_n_k);
-        //     Parallel_Reduce::reduce_all(E_RDMFT[2]);
-
-        //     // test
-        //     Etotal -= E_RDMFT[2];
-        // }
-    }
+            }
 
 //     // print results
 //     std::cout << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
-// #ifdef __EXX
-//     if( GlobalC::exx_info.info_global.cal_exx ) std::cout << "alpha_power: " << alpha_power << std::endl;
-// #endif
 //     std::cout << std::fixed << std::setprecision(10) 
 //                 << "******\nE(TV + Hartree + XC) by RDMFT:   " << E_RDMFT[3] 
 //                 << "\n\nE_TV_RDMFT:      " << E_RDMFT[0] 

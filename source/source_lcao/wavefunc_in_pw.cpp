@@ -5,7 +5,6 @@
 #include "source_base/math_sphbes.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_ylmreal.h"
-#include "source_pw/module_pwdft/soc.h"
 
 void Wavefunc_in_pw::make_table_q(
 	const UnitCell &ucell,
@@ -361,8 +360,6 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const UnitCell& ucell,
 										}
 									}
 									//and construct the starting wavefunctions as in the noncollinear case.
-									//alpha = ucell.magnet.angle1_[it];
-									//gamma = -1 * ucell.magnet.angle2_[it] + 0.5 * ModuleBase::PI;
 									alpha = ucell.atoms[it].angle1[ia];
 									gamma = -1 * ucell.atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
 									for(int m = 0;m<2*L+1;m++)
@@ -404,8 +401,6 @@ void Wavefunc_in_pw::produce_local_basis_in_pw(const UnitCell& ucell,
 							{//atomic_wfc_nc
 								double alpha = 0.0, gamman = 0.0;
 								std::complex<double> fup = 0.0, fdown = 0.0;
-								//alpha = ucell.magnet.angle1_[it];
-								//gamman = -ucell.magnet.angle2_[it] + 0.5*ModuleBase::PI;
 								alpha = ucell.atoms[it].angle1[ia];
 								gamman = -ucell.atoms[it].angle2[ia] + 0.5*ModuleBase::PI;
 								for(int m = 0;m<2*L+1;m++)

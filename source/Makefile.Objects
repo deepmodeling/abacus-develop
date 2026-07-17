@@ -416,6 +416,9 @@ OBJS_NEIGHBOR=sltk_atom.o\
 
 OBJS_NEIGHBOR_SEARCH=neighbor_search.o\
     bin_manager.o\
+    domain_decomposition.o\
+    page_allocator.o\
+    unitcell_lite.o\
 
 
 OBJS_ORBITAL=ORB_atomic.o\
@@ -634,6 +637,7 @@ OBJS_LCAO=evolve_elec.o\
       td_folding.o\
       td_info.o\
       velocity_op.o\
+      snap_projector_half_tddft.o\
       snap_psibeta_half_tddft.o\
       solve_propagation.o\
       boundary_fix.o\

@@ -8,7 +8,7 @@
 #include "source_base/parallel_global.h"
 #include "source_io/parse_args.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_main/version.h"
+#include "source_base/version.h"
 #ifdef _OPENMP
 #include <omp.h>
 #endif
@@ -31,9 +31,14 @@ void print_welcome_banner()
 #else
     const char* commit = "unknown";
 #endif
+    std::cout << std::endl
+              << "                     ▄████▄ █████▄ ▄████▄ ▄█████ ██  ██ ▄█████ " << std::endl
+              << "                     ██▄▄██ ██▄▄██ ██▄▄██ ██     ██  ██ ▀▀▀▄▄▄ " << std::endl
+              << "                     ██  ██ ██▄▄█▀ ██  ██ ▀█████ ▀████▀ █████▀ " << std::endl
+              << std::endl;
     std::cout << "                                                                                     "
               << std::endl
-              << "                              ABACUS " << version << std::endl
+              << "                                " << version << std::endl
               << std::endl
               << "               Atomic-orbital Based Ab-initio Computation at UStc                    "
               << std::endl

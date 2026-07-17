@@ -207,19 +207,6 @@ void ESolver_OF::get_step_length(double* dEdtheta, double** ptemp_phi, UnitCell&
         //         while(true)
         //         {
         //             this->pelec->f_en.calculate_etot(this->pw_rho->nrxx,
-        //             this->pw_rho->nxyz); temp_energy =
-        //             this->pelec->f_en.etot; kinetic_energy =
-        //             this->kinetic_energy(); pseudopot_energy = 0.; for (int
-        //             is = 0; is < PARAM.inp.nspin; ++is) {
-        //                 pseudopot_energy +=
-        //                 this->inner_product(GlobalC::pot.vltot,
-        //                 ptemp_rho_[is], this->pw_rho->nrxx, this->dV_);
-        //             }
-        //             Parallel_Reduce::reduce_all(pseudopot_energy);
-        //             temp_energy += kinetic_energy + pseudopot_energy;
-        //             this->opt_dcsrch_->dcSrch(temp_energy, dEdalpha,
-        //             thetaAlpha, this->task_); numDC++;
-
         //             if (strncmp(this->task_, "FG", 2) == 0)
         //             {
         //                 for (int is = 0; is < PARAM.inp.nspin; ++is)
