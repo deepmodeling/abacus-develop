@@ -248,30 +248,10 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix,ModuleBase::matri
         /* hse_omega = */ hse_omega);
 
     const std::vector<double> rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
-    const std::vector<std::vector<ModuleBase::Vector3<double>>> gdr
-        = XC_Functional_Libxc::cal_gdr(nspin, nrxx, rho, tpiba, chr);
+    std::vector<std::vector<ModuleBase::Vector3<double>>> gdr;
+    std::vector<double> lapl;
+    XC_Functional_Libxc::cal_gdr_and_lapl(nspin, nrxx, rho, tpiba, chr, gdr, lapl);
     const std::vector<double> sigma = XC_Functional_Libxc::convert_sigma(gdr);
-
-    // compute laplacian for mGGA functionals
-    std::vector<double> lapl(nrxx * nspin, 0.0);
-    {
-        std::vector<std::complex<double>> rhog_tmp(chr->rhopw->npw);
-        std::vector<double> rhor(nrxx);
-        for( int is=0; is<nspin; ++is )
-        {
-            for( int ir=0; ir<nrxx; ++ir )
-            {
-                rhor[ir] = rho[ir*nspin+is];
-            }
-            chr->rhopw->real2recip(rhor.data(), rhog_tmp.data());
-            std::vector<double> lapl_spin(nrxx);
-            XC_Functional::laplacian_rho(rhog_tmp.data(), lapl_spin.data(), chr->rhopw, tpiba);
-            for( int ir=0; ir<nrxx; ++ir )
-            {
-                lapl[ir*nspin+is] = lapl_spin[ir];
-            }
-        }
-    }
 
     //converting kin_r
     std::vector<double> kin_r;

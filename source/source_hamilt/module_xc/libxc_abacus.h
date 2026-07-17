@@ -105,6 +105,15 @@ namespace XC_Functional_Libxc
         const double tpiba,
         const Charge* const chr);
 
+    extern void cal_gdr_and_lapl(
+        const int nspin,
+        const std::size_t nrxx,
+        const std::vector<double> &rho,
+        const double tpiba,
+        const Charge* const chr,
+        std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
+        std::vector<double> &lapl);
+
     // converting grho (abacus=>libxc)
     extern std::vector<double> convert_sigma(
         const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr);
