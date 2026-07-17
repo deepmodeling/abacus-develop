@@ -158,9 +158,6 @@ Here, 'build' is the path for building ABACUS; and '-D' is used for setting up s
   - `MKLROOT`: If environment variable `MKLROOT` exists, `cmake` will take MKL as a preference, i.e. not using `LAPACK`, `ScaLAPACK` and `FFTW`. To disable MKL, unset environment variable `MKLROOT`, or pass `-DMKLROOT=OFF` to `cmake`.
   - `LAPACK_DIR`: Path to OpenBLAS library `libopenblas.so`(including BLAS and LAPACK)
   - `SCALAPACK_DIR`: Path to ScaLAPACK library `libscalapack.so`
-  - `ELPA_DIR`: Path to ELPA install directory; should be the folder containing 'include' and 'lib'.
-  > Note: In ABACUS v3.5.1 or earlier, if you install ELPA from source , please add a symlink to avoid the additional include file folder with version name: `ln -s elpa/include/elpa-2021.05.002/elpa elpa/include/elpa` to help the build system find ELPA headers.
-
   - `FFTW3_DIR`: Path to FFTW3.
   - `LIBRI_DIR`: (Optional) Path to LibRI.
   - `LIBCOMM_DIR`: (Optional) Path to LibComm when `ENABLE_LIBRI=ON`.
@@ -184,7 +181,12 @@ For some dependencies built with CMake, such as Libxc, dftd4, cereal, and RapidJ
 Here is an example:
 
 ```bash
-CXX=mpiicpx cmake -B build -DCMAKE_INSTALL_PREFIX=~/abacus -DELPA_DIR=~/elpa-2025.01.001/build
+CXX=mpiicpx cmake -B build \
+  -DCMAKE_INSTALL_PREFIX=~/abacus \
+  -DENABLE_MPI=ON \
+  -DENABLE_LCAO=ON \
+  -DENABLE_ELPA=ON \
+  -DENABLE_LIBXC=ON
 ```
 
 ### Build and Install
