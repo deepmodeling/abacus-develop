@@ -1,0 +1,22 @@
+INPUT_PARAMETERS
+suffix                         Fe
+stru_file                      STRU
+pseudo_dir                     ./
+orbital_dir                    ./
+calculation                    scf
+scf_nmax                       100
+ntype                          1
+ecutwfc                        100
+scf_thr                        1e-06
+ks_solver                      genelpa
+basis_type                     lcao
+gamma_only                     0
+smearing_method                gauss
+smearing_sigma                 0.001
+symmetry                       0
+mixing_type                    broyden
+
+nspin                          2
+kspacing                       0.10
+out_mul                        1
+out_mat_hs2                    1
