@@ -176,7 +176,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 #ifdef __CUDA
             // GPU path: Atom-level GPU batch processing
             module_rt::gpu::snap_psibeta_atom_batch_gpu(orb_,
-                                                        this->ucell->infoNL,
+                                                        static_cast<const LCAONonlocalInfo*>(this->ucell->infoNL)->get_nonlocal(),
                                                         T0,
                                                         tau0 * this->ucell->lat0,
                                                         cart_At,
