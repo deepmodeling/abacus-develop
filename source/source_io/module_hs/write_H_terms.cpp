@@ -411,6 +411,8 @@ void write_h_exx(WriteHParams& params)
     ModuleBase::TITLE("ModuleIO", "write_h_exx");
     ModuleBase::timer::start("ModuleIO", "write_h_exx");
 
+    // Multi-k out_mat_h_exx is rejected upstream at the call site (setup_exx_h_params in
+    // ctrl_scf_lcao.cpp); this function is only reached on the gamma-only path.
     const UnitCell& ucell = *params.ucell;
     const Parallel_Orbitals& pv = *params.pv;
     const K_Vectors& kv = *params.kv;

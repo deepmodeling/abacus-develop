@@ -8,6 +8,9 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h"
+#endif
 
 #include <algorithm>
 #include <complex>
@@ -137,6 +140,20 @@ void write_dH_components(WriteDHParams& params)
                                  "dH/dR component output (out_mat_dh_*) is not supported for "
                                  "nspin=4 (noncollinear) yet; only nspin=1 and nspin=2.");
     }
+
+#ifdef __EXX
+    // The EXX interfaces carried by WriteDHParams are gamma-only (see write_dH.h): at multi-k
+    // dH^EXX would be the derivative with respect to every mirror atom, which this output is
+    // not meant for. Quit instead of writing a dH sum that silently omits the EXX term.
+    if (GlobalC::exx_info.info_global.cal_exx && !PARAM.globalv.gamma_only_local
+        && (PARAM.inp.out_mat_dh[0] || PARAM.inp.out_mat_dh_exx[0]))
+    {
+        ModuleBase::WARNING_QUIT("write_dH_components",
+                                 "out_mat_dh (the dH sum) and out_mat_dh_exx are only supported for gamma-only when EXX is on. "
+                                 "Use gamma_only, or request the individual non-EXX terms (out_mat_dh_t, "
+                                 "out_mat_dh_vnl, out_mat_dh_vl, out_mat_dh_vh, out_mat_dh_vxc).");
+    }
+#endif
 
     GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     GlobalV::ofs_running << " |                                                                    |" << std::endl;
