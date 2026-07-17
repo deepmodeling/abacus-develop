@@ -2404,6 +2404,13 @@ parameters:
     default_value: "0"
     unit: ""
     availability: Numerical atomic orbital basis
+  - name: deepks_grad
+    category: DeePKS
+    type: Boolean
+    description: ""
+    default_value: "False"
+    unit: ""
+    availability: "NAO basis; requires deepks_out_labels >= 1 and deepks_v_delta < 0"
   - name: deepks_out_unittest
     category: DeePKS
     type: Boolean
