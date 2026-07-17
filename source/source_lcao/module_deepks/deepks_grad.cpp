@@ -9,6 +9,20 @@
 #include "deepks_vdrpre.h"
 #include "source_base/parallel_reduce.h"
 
+namespace
+{
+torch::Tensor flatten_operator(const torch::Tensor& op, const int nrow_dims)
+{
+    int64_t nrows = 1;
+    for (int i = 0; i < nrow_dims; ++i)
+    {
+        nrows *= op.size(i);
+    }
+    return op.reshape({nrows, op.numel() / nrows});
+}
+
+} // namespace
+
 // ---------------------------------------------------------------------------
 // Step 1: dot_phialpha_hamilt[inl, m1, m2]
 //         = <phialpha^I_{nl,m1} | H | phialpha^I_{nl,m2}>
@@ -130,9 +144,43 @@ void DeePKS_domain::cal_phialpha_hamilt_proj(const int nlocal,
     }
 #endif
 
-    dot_phialpha_hamilt = dot_ph;
+    // H(R) is stored internally in Ry, while all DeePKS labels and model
+    // energies use Hartree. Keep this projected Hamiltonian in Hartree so
+    // B^T H and B^T B are directly compatible. The direct H(R) writer applies
+    // the same conversion at its output boundary.
+    dot_phialpha_hamilt = 0.5 * dot_ph;
 
     ModuleBase::timer::end("DeePKS_domain", "cal_phialpha_hamilt_proj");
+}
+
+// ---------------------------------------------------------------------------
+void DeePKS_domain::cal_gvx_square(const torch::Tensor& gvx, torch::Tensor& gvx_square)
+{
+    ModuleBase::TITLE("DeePKS_domain", "cal_gvx_square");
+    ModuleBase::timer::start("DeePKS_domain", "cal_gvx_square");
+
+    if (gvx.defined())
+    {
+        const torch::Tensor flat = flatten_operator(gvx.to(torch::kFloat64), 2);
+        gvx_square = flat.t().mm(flat);
+    }
+
+    ModuleBase::timer::end("DeePKS_domain", "cal_gvx_square");
+}
+
+// ---------------------------------------------------------------------------
+void DeePKS_domain::cal_gvepsl_square(const torch::Tensor& gvepsl, torch::Tensor& gvepsl_square)
+{
+    ModuleBase::TITLE("DeePKS_domain", "cal_gvepsl_square");
+    ModuleBase::timer::start("DeePKS_domain", "cal_gvepsl_square");
+
+    if (gvepsl.defined())
+    {
+        const torch::Tensor flat = flatten_operator(gvepsl.to(torch::kFloat64), 1);
+        gvepsl_square = flat.t().mm(flat);
+    }
+
+    ModuleBase::timer::end("DeePKS_domain", "cal_gvepsl_square");
 }
 
 // ---------------------------------------------------------------------------

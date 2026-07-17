@@ -218,7 +218,7 @@ void DeePKS_domain::cal_vdr_precalc(const int nlocal,
 
                     // gdata[v, m1*nm+m2] = gevdm[nl][iat, v, m1, m2]
                     // gevdm[nl] shape: (nat, nm, nm, nm), contiguous.
-                    const double* gdata = gevdm[nl].data_ptr<double>() + static_cast<ptrdiff_t>(iat) * nm * nm2;
+                    const double* gdata = gevdm[nl].data_ptr<double>() + iat * nm * nm2;
 
                     // result[k, v] = sum_m T_flat[k, m] * gdata[v, m]
                     std::vector<double> result(npairs * nm, 0.0);

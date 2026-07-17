@@ -158,4 +158,12 @@ TEST_F(OutputHContainerTest, Write)
     EXPECT_THAT(output, testing::HasSubstr(" 5.00e+00 6.00e+00 1.00e+01"));
     EXPECT_THAT(output, testing::HasSubstr(" 2 3 3"));
     EXPECT_THAT(output, testing::HasSubstr(" 0 0 0 2 3"));
+
+    // Output-only scaling converts units without modifying the HContainer.
+    hamilt::Output_HContainer<double> scaled_output_HR(&HR, std::cout, sparse_threshold, 2, 0.5);
+    testing::internal::CaptureStdout();
+    scaled_output_HR.write(0, 0, 0);
+    output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr(" 2.50e+00 3.00e+00 5.00e+00"));
+    EXPECT_DOUBLE_EQ(HR.find_matrix(1, 1, 0, 0, 0)->get_pointer()[0], 5.0);
 }

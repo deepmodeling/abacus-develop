@@ -108,8 +108,9 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
     const bool output_base
         = PARAM.inp.deepks_out_labels == 1
           && is_after_scf; // not output when deepks_out_labels=2 and in electronic step (output true base elsewhere)
-    const bool output_precalc
-        = (PARAM.inp.deepks_out_labels == 1) && (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_freq_elec);
+    const bool output_precalc = (PARAM.inp.deepks_out_labels == 1)
+                                && (PARAM.inp.deepks_scf || PARAM.inp.deepks_out_freq_elec
+                                    || PARAM.inp.deepks_grad);
 
     //================================================================================
     // 1. Update real-space density matrix (DMR) for deepks, projected density matrix (PDM)
@@ -269,6 +270,15 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     }
                     const std::string file_gradvx = get_filename("gradvx", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gradvx, gvx, rank);
+                    if (PARAM.inp.deepks_grad)
+                    {
+                        torch::Tensor gvx_square;
+                        DeePKS_domain::cal_gvx_square(gvx, gvx_square);
+                        LCAO_deepks_io::save_tensor2npy<double>(PARAM.globalv.global_out_dir
+                                                                    + "deepks_gradvx_square.npy",
+                                                                gvx_square,
+                                                                rank);
+                    }
 
                     if (PARAM.inp.deepks_out_unittest)
                     {
@@ -313,6 +323,15 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     }
                     const std::string file_gvepsl = get_filename("gvepsl", PARAM.inp.deepks_out_labels, iter);
                     LCAO_deepks_io::save_tensor2npy<double>(file_gvepsl, gvepsl, rank);
+                    if (PARAM.inp.deepks_grad)
+                    {
+                        torch::Tensor gvepsl_square;
+                        DeePKS_domain::cal_gvepsl_square(gvepsl, gvepsl_square);
+                        LCAO_deepks_io::save_tensor2npy<double>(PARAM.globalv.global_out_dir
+                                                                    + "deepks_gvepsl_square.npy",
+                                                                gvepsl_square,
+                                                                rank);
+                    }
 
                     if (PARAM.inp.deepks_out_unittest)
                     {
@@ -548,7 +567,11 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                     std::ofstream ofs_hr(file_hrtot, std::ios::out);
                     ofs_hr << "Matrix Dimension of H(R): " << nbasis << std::endl;
                     ofs_hr << "Matrix number of H(R): " << hR_tot->size_R_loop() << std::endl;
-                    hamilt::Output_HContainer<TR> out_hr(&hR_serial, ofs_hr, sparse_threshold, precision);
+                    hamilt::Output_HContainer<TR> out_hr(&hR_serial,
+                                                         ofs_hr,
+                                                         sparse_threshold,
+                                                         precision,
+                                                         LCAO_deepks_io::Ry2Hartree);
                     out_hr.write(true); // write all the matrices, including empty ones
                     ofs_hr.close();
                 }
@@ -571,7 +594,11 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                             std::ofstream ofs_hr(file_vdeltar, std::ios::out);
                             ofs_hr << "Matrix Dimension of H_delta(R): " << h_deltaR->get_nbasis() << std::endl;
                             ofs_hr << "Matrix number of H_delta(R): " << h_deltaR->size_R_loop() << std::endl;
-                            hamilt::Output_HContainer<TR> out_hr(&h_deltaR_serial, ofs_hr, sparse_threshold, precision);
+                            hamilt::Output_HContainer<TR> out_hr(&h_deltaR_serial,
+                                                                 ofs_hr,
+                                                                 sparse_threshold,
+                                                                 precision,
+                                                                 LCAO_deepks_io::Ry2Hartree);
                             out_hr.write(true); // write all the matrices, including empty ones
                             ofs_hr.close();
                         }
@@ -662,7 +689,7 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
         if (PARAM.inp.deepks_grad && is_after_scf)
         {
             {
-                torch::Tensor dot_phialpha_hamilt;
+                torch::Tensor dot_phialpha_hamilt; // Energy part of unit is Hartree here
                 DeePKS_domain::cal_phialpha_hamilt_proj<TR>(nlocal,
                                                             nat,
                                                             deepks_param,
@@ -673,44 +700,66 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                                                             *ParaV,
                                                             GridD,
                                                             dot_phialpha_hamilt);
+
+                // The model is trained to predict the absolute correction
+                // H_target - H_base.  getHR() already contains the active
+                // DeePKS correction, so remove its projection before saving
+                // the current-functional (base) quantity.  Target runs have
+                // deepks_scf=0 and need no subtraction.
+                if (PARAM.inp.deepks_scf)
+                {
+                    torch::Tensor dot_phialpha_delta;
+                    DeePKS_domain::cal_phialpha_hamilt_proj<TR>(nlocal,
+                                                                nat,
+                                                                deepks_param,
+                                                                phialpha,
+                                                                *p_ham->get_V_delta_R(),
+                                                                ucell,
+                                                                orb,
+                                                                *ParaV,
+                                                                GridD,
+                                                                dot_phialpha_delta);
+                    dot_phialpha_hamilt -= dot_phialpha_delta;
+                }
                 LCAO_deepks_io::save_tensor2npy<TR>(PARAM.globalv.global_out_dir + "deepks_dot_phialpha_hamilt.npy",
                                                     dot_phialpha_hamilt,
                                                     rank);
 
-                if (PARAM.inp.deepks_scf)
+                if (gevdm.empty())
                 {
-                    // B^T B square matrix: (nat*des_per_atom, nat*des_per_atom)
-                    // R_size: conservatively 2x the phialpha R extent to cover
-                    // all dR2-dR1 differences produced by iterate_ad2.
-                    const int btb_R_size = 2 * DeePKS_domain::get_R_size(*phialpha[0]);
-                    torch::Tensor vdrpre_square;
-                    DeePKS_domain::cal_vdrpre_square(nlocal,
-                                                     nat,
-                                                     btb_R_size,
-                                                     deepks_param,
-                                                     phialpha,
-                                                     gevdm,
-                                                     ucell,
-                                                     orb,
-                                                     *ParaV,
-                                                     GridD,
-                                                     vdrpre_square);
-                    LCAO_deepks_io::save_tensor2npy<double>(PARAM.globalv.global_out_dir + "deepks_vdrpre_square.npy",
-                                                            vdrpre_square,
-                                                            rank);
+                    DeePKS_domain::cal_gevdm(nat, deepks_param, pdm, gevdm);
+                }
+                // B^T B square matrix: (nat*des_per_atom, nat*des_per_atom)
+                // R_size: conservatively 2x the phialpha R extent to cover
+                // all dR2-dR1 differences produced by iterate_ad2.
+                const int btb_R_size = 2 * DeePKS_domain::get_R_size(*phialpha[0]);
+                torch::Tensor vdrpre_square;
+                DeePKS_domain::cal_vdrpre_square(nlocal,
+                                                 nat,
+                                                 btb_R_size,
+                                                 deepks_param,
+                                                 phialpha,
+                                                 gevdm,
+                                                 ucell,
+                                                 orb,
+                                                 *ParaV,
+                                                 GridD,
+                                                 vdrpre_square);
+                LCAO_deepks_io::save_tensor2npy<double>(PARAM.globalv.global_out_dir + "deepks_vdrpre_square.npy",
+                                                        vdrpre_square,
+                                                        rank);
 
-                    // Avoid double-writing: the deepks_v_delta==-2 path already
-                    // outputs deepks_gevdm.npy when deepks_out_labels==1.
-                    const bool gevdm_already_output
-                        = (PARAM.inp.deepks_v_delta == -2 && PARAM.inp.deepks_out_labels == 1);
-                    if (!gevdm_already_output)
-                    {
-                        torch::Tensor gevdm_out;
-                        DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm, gevdm_out);
-                        LCAO_deepks_io::save_tensor2npy<double>(PARAM.globalv.global_out_dir + "deepks_gevdm.npy",
-                                                                gevdm_out,
-                                                                rank);
-                    }
+                // Avoid double-writing: the deepks_v_delta==-2 path already
+                // outputs deepks_gevdm.npy when deepks_out_labels==1.
+                const bool gevdm_already_output
+                    = (PARAM.inp.deepks_v_delta == -2 && PARAM.inp.deepks_out_labels == 1);
+                if (!gevdm_already_output)
+                {
+                    torch::Tensor gevdm_out;
+                    DeePKS_domain::prepare_gevdm(nat, deepks_param, orb, gevdm, gevdm_out);
+                    LCAO_deepks_io::save_tensor2npy<double>(PARAM.globalv.global_out_dir + "deepks_gevdm.npy",
+                                                            gevdm_out,
+                                                            rank);
                 }
             }
         }

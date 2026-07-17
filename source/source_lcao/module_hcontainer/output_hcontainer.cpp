@@ -15,8 +15,13 @@ template <typename T>
 Output_HContainer<T>::Output_HContainer(hamilt::HContainer<T>* hcontainer,
                                         std::ostream& ofs,
                                         double sparse_threshold,
-                                        int precision)
-    : _hcontainer(hcontainer), _ofs(ofs), _sparse_threshold(sparse_threshold), _precision(precision)
+                                        int precision,
+                                        double value_scale)
+    : _hcontainer(hcontainer),
+      _ofs(ofs),
+      _sparse_threshold(sparse_threshold),
+      _precision(precision),
+      _value_scale(value_scale)
 {
     if (this->_sparse_threshold == -1)
     {
@@ -133,7 +138,7 @@ void Output_HContainer<T>::write_single_R(int rx, int ry, int rz)
         {
             for (int icol = tmp_index[2]; icol < tmp_index[2] + tmp_index[3]; ++icol)
             {
-                sparse_matrix.insert(irow, icol, *tmp_data);
+                sparse_matrix.insert(irow, icol, *tmp_data * this->_value_scale);
                 tmp_data++;
                 // to do: consider 2D block-cyclic distribution
             }
