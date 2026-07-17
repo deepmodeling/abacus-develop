@@ -70,7 +70,7 @@ namespace XC_Functional_Libxc
         const double hse_omega);
 
     // for mGGA functional
-    extern std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> v_xc_meta(
+    extern std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix, ModuleBase::matrix> v_xc_meta(
         const std::vector<int> &func_id,
         const int &nrxx, // number of real-space grid
         const double &omega, // volume of cell
@@ -214,11 +214,13 @@ namespace XC_Functional_Libxc
         const std::vector<int> &func_id,
         const double &rho,
         const double &grho,
+        const double &lapl_rho,
         const double &atau,
         double &sxc,
         double &v1xc,
         double &v2xc,
         double &v3xc,
+        double &vlaplxc,
         const double &hybrid_alpha,
         const double &hse_omega);
 
@@ -228,6 +230,8 @@ namespace XC_Functional_Libxc
         double rhodw,
         ModuleBase::Vector3<double> gdr1,
         ModuleBase::Vector3<double> gdr2,
+        double laplup,
+        double lapldw,
         double tauup,
         double taudw,
         double &sxc,
@@ -238,6 +242,8 @@ namespace XC_Functional_Libxc
         double &v2xcud,
         double &v3xcup,
         double &v3xcdw,
+        double &vlaplxcup,
+        double &vlaplxcdw,
         const double &hybrid_alpha,
         const double &hse_omega);
 
