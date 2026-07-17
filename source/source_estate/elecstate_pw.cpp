@@ -282,13 +282,13 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
     resmem_var_h_op()(becsum, nh_tot * ucell->nat * PARAM.inp.nspin, "ElecState<PW>::becsum");
     setmem_var_h_op()(becsum, 0, nh_tot * ucell->nat * PARAM.inp.nspin);
 
-    // becp: GPU for first gemm, then D2H for CPU loops
-    T* becp_gpu = nullptr;
-    std::vector<T> becp;
+    // becp: device buffer for gemm, then D2H for host loops
+    T* becp = nullptr;
+    std::vector<T> becp_host;
     if (nkb > 0)
     {
-        resmem_complex_op()(becp_gpu, nbands * nkb, "ElecState<PW>::becp");
-        becp.resize(nbands * nkb);
+        resmem_complex_op()(becp, nbands * nkb, "ElecState<PW>::becp");
+        becp_host.resize(nbands * nkb);
     }
 
     for (int ik = 0; ik < psi.get_nk(); ++ik)
@@ -304,7 +304,7 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
             this->ppcell->getvnl(this->ctx, *ucell,ik, this->vkb);
         }
 
-        // becp = <beta|psi> (GPU gemm)
+        // becp = <beta|psi> (device gemm)
         char transa = 'C';
         char transb = 'N';
         if (this->ppcell->nkb > 0)
@@ -321,7 +321,7 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
                           psi_now,
                           inc,
                           &zero,
-                          becp_gpu,
+                          becp,
                           inc);
             }
             else
@@ -337,13 +337,13 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
                           psi_now,
                           npwx,
                           &zero,
-                          becp_gpu,
+                          becp,
                           this->ppcell->nkb);
             }
-            // D2H: GPU becp → CPU becp
-            syncmem_complex_d2h_op()(becp.data(), becp_gpu, nbands * nkb);
+            // D2H: device becp → host becp_host
+            syncmem_complex_d2h_op()(becp_host.data(), becp, nbands * nkb);
         }
-        Parallel_Reduce::reduce_pool(becp.data(), this->ppcell->nkb * nbands);
+        Parallel_Reduce::reduce_pool(becp_host.data(), this->ppcell->nkb * nbands);
 
         // sum over bands: \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
         for (int it = 0; it < ucell->ntype; it++)
@@ -352,9 +352,14 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
             if (atom->ncpp.tvanp)
             {
                 const int nh_atom = atom->ncpp.nh;
-                // auxk1, auxk2 on CPU for filling loops
-                std::vector<T> auxk1(nbands * nh_atom);
-                std::vector<T> auxk2(nbands * nh_atom);
+                // auxk1, auxk2: host buffers for filling loops
+                std::vector<T> auxk1_host(nbands * nh_atom);
+                std::vector<T> auxk2_host(nbands * nh_atom);
+                // device buffers allocated once per atom type
+                T *aux_gk = nullptr, *auxk1 = nullptr, *auxk2 = nullptr;
+                resmem_complex_op()(auxk1, nbands * nh_atom, "ElecState<PW>::auxk1");
+                resmem_complex_op()(auxk2, nbands * nh_atom, "ElecState<PW>::auxk2");
+                resmem_complex_op()(aux_gk, nh_atom * nh_atom * npol * npol, "ElecState<PW>::aux_gk");
                 for (int ia = 0; ia < atom->na; ia++)
                 {
                     const int iat = ucell->itia2iat(it, ia);
@@ -369,19 +374,15 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
                             const int ikb = this->ppcell->indv_ijkb0[iat] + ih;
                             for (int ib = 0; ib < nbands; ib++)
                             {
-                                auxk1[ih * nbands + ib] = becp[ib * this->ppcell->nkb + ikb];
-                                auxk2[ih * nbands + ib]
-                                    = becp[ib * this->ppcell->nkb + ikb] * static_cast<Real>(this->wg(ik, ib));
+                                auxk1_host[ih * nbands + ib] = becp_host[ib * this->ppcell->nkb + ikb];
+                                auxk2_host[ih * nbands + ib]
+                                    = becp_host[ib * this->ppcell->nkb + ikb] * static_cast<Real>(this->wg(ik, ib));
                             }
                         }
 
-                        // GPU gemm: aux_gk = auxk1^H * auxk2
-                        T *aux_gk_gpu = nullptr, *auxk1_gpu = nullptr, *auxk2_gpu = nullptr;
-                        resmem_complex_op()(auxk1_gpu, nbands * nh_atom, "ElecState<PW>::auxk1");
-                        resmem_complex_op()(auxk2_gpu, nbands * nh_atom, "ElecState<PW>::auxk2");
-                        resmem_complex_op()(aux_gk_gpu, nh_atom * nh_atom * npol * npol, "ElecState<PW>::aux_gk");
-                        syncmem_complex_h2d_op()(auxk1_gpu, auxk1.data(), nbands * nh_atom);
-                        syncmem_complex_h2d_op()(auxk2_gpu, auxk2.data(), nbands * nh_atom);
+                        // device gemm: aux_gk = auxk1^H * auxk2
+                        syncmem_complex_h2d_op()(auxk1, auxk1_host.data(), nbands * nh_atom);
+                        syncmem_complex_h2d_op()(auxk2, auxk2_host.data(), nbands * nh_atom);
 
                         char transa2 = 'C';
                         char transb2 = 'N';
@@ -391,21 +392,17 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
                                   nh_atom,
                                   nbands,
                                   &one,
-                                  auxk1_gpu,
+                                  auxk1,
                                   nbands,
-                                  auxk2_gpu,
+                                  auxk2,
                                   nbands,
                                   &zero,
-                                  aux_gk_gpu,
+                                  aux_gk,
                                   nh_atom);
 
-                        // D2H: GPU aux_gk → CPU
-                        std::vector<T> aux_gk(nh_atom * nh_atom);
-                        syncmem_complex_d2h_op()(aux_gk.data(), aux_gk_gpu, nh_atom * nh_atom);
-
-                        delmem_complex_op()(auxk1_gpu);
-                        delmem_complex_op()(auxk2_gpu);
-                        delmem_complex_op()(aux_gk_gpu);
+                        // D2H: device aux_gk → host
+                        std::vector<T> aux_gk_host(nh_atom * nh_atom);
+                        syncmem_complex_d2h_op()(aux_gk_host.data(), aux_gk, nh_atom * nh_atom);
 
                         // copy output from GEMM into desired format
                         int ijh = 0;
@@ -416,21 +413,24 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
                             {
                                 if (ih == jh)
                                 {
-                                    becsum[index + ijh] += std::real(aux_gk[ih * nh_atom + jh]);
+                                    becsum[index + ijh] += std::real(aux_gk_host[ih * nh_atom + jh]);
                                 }
                                 else
                                 {
-                                    becsum[index + ijh] += 2.0 * std::real(aux_gk[ih * nh_atom + jh]);
+                                    becsum[index + ijh] += 2.0 * std::real(aux_gk_host[ih * nh_atom + jh]);
                                 }
                                 ijh++;
                             }
                         }
                     }
                 }
+                delmem_complex_op()(auxk1);
+                delmem_complex_op()(auxk2);
+                delmem_complex_op()(aux_gk);
             }
         }
     }
-    if (becp_gpu != nullptr) delmem_complex_op()(becp_gpu);
+    delmem_complex_op()(becp);
 }
 
 template <typename T, typename Device>
@@ -454,7 +454,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
             syncmem_complex_d2h_op()(rhog_host.data(), this->rhog[is], this->rhopw_smooth->npw);
             // CPU real2recip
             this->rhopw_smooth->real2recip(rho_host.data(), rhog_host.data());
-            // H2D rhog back to GPU
+            // H2D rhog back to device
             syncmem_complex_h2d_op()(this->rhog[is], rhog_host.data(), this->rhopw_smooth->npw);
         }
     }
@@ -503,16 +503,16 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
         qmod_host[ig] = static_cast<double>(this->charge->rhopw->gcar[ig].norm() * ucell->tpiba);
     }
 
-    // ylmk0: compute on GPU then D2H
-    Real* ylmk0_gpu = nullptr;
-    resmem_var_op()(ylmk0_gpu, npw * lmaxq * lmaxq, "ElecState<PW>::ylmk0");
-    Real* g_gpu = nullptr;
-    resmem_var_op()(g_gpu, npw * 3, "ElecState<PW>::g_gpu");
-    syncmem_var_h2d_op()(g_gpu, reinterpret_cast<Real*>(this->charge->rhopw->gcar), npw * 3);
-    ModuleBase::YlmReal::Ylm_Real(this->ctx, lmaxq * lmaxq, npw, g_gpu, ylmk0_gpu);
-    delmem_var_op()(g_gpu);
+    // ylmk0: compute on device then D2H
+    Real* ylmk0 = nullptr;
+    resmem_var_op()(ylmk0, npw * lmaxq * lmaxq, "ElecState<PW>::ylmk0");
+    Real* g = nullptr;
+    resmem_var_op()(g, npw * 3, "ElecState<PW>::g");
+    syncmem_var_h2d_op()(g, reinterpret_cast<Real*>(this->charge->rhopw->gcar), npw * 3);
+    ModuleBase::YlmReal::Ylm_Real(this->ctx, lmaxq * lmaxq, npw, g, ylmk0);
+    delmem_var_op()(g);
     std::vector<Real> ylmk0_host(npw * lmaxq * lmaxq);
-    syncmem_var_d2h_op()(ylmk0_host.data(), ylmk0_gpu, npw * lmaxq * lmaxq);
+    syncmem_var_d2h_op()(ylmk0_host.data(), ylmk0, npw * lmaxq * lmaxq);
     std::vector<double> ylmk0_double(npw * lmaxq * lmaxq);
     for (int i = 0; i < npw * lmaxq * lmaxq; i++) ylmk0_double[i] = static_cast<double>(ylmk0_host[i]);
 
@@ -581,7 +581,7 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
         }
     }
 
-    delmem_var_op()(ylmk0_gpu);
+    delmem_var_op()(ylmk0);
 }
 
 template class ElecStatePW<std::complex<float>, base_device::DEVICE_CPU>;

@@ -252,7 +252,6 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                     const int nh = atoms->ncpp.nh;
                     T* qqc = nullptr;
                     resmem_complex_op()(qqc, nh * nh, "Hamilt<PW>::qqc");
-		    
 		    std::vector<T> qqc_host(nh*nh);
 		    const double* qq_now_host = &this->ppcell->qq_nt.ptr[it * this->ppcell->nhm * this->ppcell->nhm];
               
@@ -260,13 +259,13 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                     {
                         for (int j = 0; j < nh; j++)
                         {
-			    const int source_index = i * this->ppcell->nhm + j;
-			    const int target_index = i * nh + j;
+				const int source_index = i * this->ppcell->nhm + j;
+				const int target_index = i * nh + j;
 
-			    qqc_host[target_index] = static_cast<Real>(qq_now_host[source_index]) * one;
+				qqc_host[target_index] = static_cast<Real>(qq_now_host[source_index]) * one;
                         }
                     }
-
+		    
 		    syncmem_complex_h2d_op()(qqc, qqc_host.data(), qqc_host.size());
 
                     for (int ia = 0; ia < atoms->na; ia++)
