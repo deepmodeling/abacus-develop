@@ -20,7 +20,7 @@ jobs:
         uses: actions/checkout@v7
       - name: Install external tools from toolchain
         run: |
-          sudo apt update && sudo apt install -y xz-utils ninja-build
+          sudo apt update && sudo apt install -y xz-utils ninja-build pkg-config
           cd toolchain
           ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
           ./scripts/stage4/install_stage4.sh

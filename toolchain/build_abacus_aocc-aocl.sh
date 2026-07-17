@@ -22,7 +22,6 @@ BUILD_DIR=build_abacus_aocc_aocl
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-ELPA=${ELPA_ROOT}
 CEREAL=${CEREAL_ROOT}/include
 LAPACK=$AOCLhome/lib
 SCALAPACK=$AOCLhome/lib
@@ -67,7 +66,6 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DLAPACK_DIR=$LAPACK \
         -DSCALAPACK_DIR=$SCALAPACK \
         -DFFTW3_DIR=$FFTW3 \
-        -DELPA_DIR=$ELPA \
         -DCEREAL_INCLUDE_DIR=$CEREAL \
         -DENABLE_LCAO=ON \
         -DENABLE_LIBXC=ON \
