@@ -55,6 +55,11 @@ struct SternheimerLCAOOccupiedKPoint
     std::vector<std::vector<std::complex<double>>> unoccupied_coefficients;
 };
 
+inline bool sternheimer_uses_lcao_zero_order(const bool use_delta_sternheimer)
+{
+    return use_delta_sternheimer;
+}
+
 inline int sternheimer_lcao_physical_spin_channel_count(const int nspin)
 {
     if (nspin == 1)

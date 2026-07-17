@@ -287,3 +287,9 @@ TEST(SternheimerABACUSSTSmoke, AcceptsOnlyPhysicalGammaSpinRows)
     const std::vector<std::array<double, 3>> non_gamma = {{{0.25, 0.0, 0.0}}};
     EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_gamma_layout(1, 1, 1, non_gamma), std::invalid_argument);
 }
+
+TEST(SternheimerABACUSSTSmoke, SelectsZeroOrderSourceByResponseMode)
+{
+    EXPECT_FALSE(ModuleRI::sternheimer_uses_lcao_zero_order(false));
+    EXPECT_TRUE(ModuleRI::sternheimer_uses_lcao_zero_order(true));
+}

@@ -939,16 +939,26 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                          kv.get_nks(),
                                                          kv.get_nkstot(),
                                                          reduced_kpoints);
-        const auto occupied_channels
-            = gather_sternheimer_lcao_occupied_channels(*pelec, pv, *psi);
-        ModuleRI::run_sternheimer_abacus_lcao_chi0_output(*(pelec->pot),
-                                                          *pw_rho,
-                                                          ucell,
-                                                          *pelec,
-                                                          orb,
-                                                          occupied_kpoints,
-                                                          {kv.nmp[0], kv.nmp[1], kv.nmp[2]},
-                                                          global_out_dir);
+        if (ModuleRI::sternheimer_uses_lcao_zero_order(inp.sternheimer_delta))
+        {
+            const auto occupied_channels
+                = gather_sternheimer_lcao_occupied_channels(*pelec, pv, *psi);
+            ModuleRI::run_sternheimer_abacus_lcao_chi0_output(*(pelec->pot),
+                                                              *pw_rho,
+                                                              ucell,
+                                                              *pelec,
+                                                              orb,
+                                                              occupied_channels,
+                                                              global_out_dir);
+        }
+        else
+        {
+            ModuleRI::run_sternheimer_abacus_chi0_output(*(pelec->pot),
+                                                         *pw_rho,
+                                                         ucell,
+                                                         *pelec,
+                                                         global_out_dir);
+        }
     }
 #endif
 
