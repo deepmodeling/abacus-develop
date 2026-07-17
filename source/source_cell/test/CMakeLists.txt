@@ -108,6 +108,7 @@ AddTest(
   LIBS parameter base device
   SOURCES read_atoms_helper_test.cpp
     ../read_atoms_helper.cpp
+    ../read_orb.cpp
     ../read_stru.cpp
     ../print_cell.cpp
     ../atom_spec.cpp
