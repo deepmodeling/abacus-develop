@@ -57,6 +57,7 @@ option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 
+# Options requiring MPI and LCAO
 cmake_dependent_option(ENABLE_ELPA "Enable ELPA for LCAO" ON "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
@@ -65,11 +66,12 @@ cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF "ENABLE_LCAO;ENA
 cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
 
+# Options requiring CUDA
 cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF "USE_CUDA;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF "USE_CUDA" OFF)
 cmake_dependent_option(ENABLE_CUBLASMP "Enable cublasmp" OFF "ENABLE_CUSOLVERMP" OFF)
 cmake_dependent_option(ENABLE_NCCL_PARALLEL_DEVICE
-                       "Enable NCCL-backed collectives in parallel_device"
+                       "Enable NCCL-backed collectives in parallel_device; requires MPI"
                        OFF "USE_CUDA;ENABLE_MPI" OFF)
 
 # ==============================================================================
