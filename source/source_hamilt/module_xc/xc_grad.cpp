@@ -968,22 +968,19 @@ void XC_Functional::laplacian_rho(
 {
     std::vector<std::complex<double>> lapl_tmp(rho_basis->nmaxgr);
 
+    for(int ig=0; ig<rho_basis->npw; ig++)
+    {
+        double g2 = 0.0;
+        for(int i=0; i<3; i++)
+        {
+            g2 += rho_basis->gcar[ig][i] * rho_basis->gcar[ig][i];
+        }
+        lapl_tmp[ig] = -rhog[ig] * g2;
+    }
+    rho_basis->recip2real(lapl_tmp.data(), lapl_tmp.data());
     for(int ir=0; ir<rho_basis->nrxx; ir++)
     {
-        lapl[ir] = 0.0;
-    }
-
-    for(int i=0; i<3; i++)
-    {
-        for(int ig=0; ig<rho_basis->npw; ig++)
-        {
-            lapl_tmp[ig] = -rhog[ig] * rho_basis->gcar[ig][i] * rho_basis->gcar[ig][i];
-        }
-        rho_basis->recip2real(lapl_tmp.data(), lapl_tmp.data());
-        for(int ir=0; ir<rho_basis->nrxx; ir++)
-        {
-            lapl[ir] += lapl_tmp[ir].real() * tpiba * tpiba;
-        }
+        lapl[ir] = lapl_tmp[ir].real() * tpiba * tpiba;
     }
 }
 
