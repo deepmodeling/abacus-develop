@@ -19,6 +19,7 @@
 #include "source_cell/unitcell.h"
 
 #include <map> // added by jghan, 2024-10-10
+#include <vector>
 
 class XC_Functional
 {
@@ -249,6 +250,15 @@ class XC_Functional
         double* dh,
         const ModulePW::PW_Basis* rho_basis,
         const double tpiba);
+
+    static void laplacian_rho(
+        const std::complex<double>* rhog,
+        double* lapl,
+        const ModulePW::PW_Basis* rho_basis,
+        const double tpiba);
+
+    static std::vector<double> compute_fd_gg(
+        const ModulePW::PW_Basis* rho_basis);
 
     static void noncolin_rho(
         double* rhoout1,

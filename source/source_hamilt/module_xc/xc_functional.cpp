@@ -2,6 +2,8 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_title.h"
+#include "source_base/constants.h"
+#include <cmath>
 
 #ifdef USE_LIBXC
 #include "libxc_abacus.h"
@@ -168,6 +170,18 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_id.push_back(XC_MGGA_C_SCAN);
         func_type = 5;
         use_libxc = true;
+    }
+    else if ( xc_func == "SCANL")
+    {
+        func_id.push_back(XC_MGGA_X_SCANL);
+        func_id.push_back(XC_MGGA_C_SCANL);
+        func_type = 3;
+        use_libxc = true;
+        std::cout << "\n WARNING: SCANL (SCAN-L) functional uses Laplacian of density (nabla^2 rho)."
+                  << "\n This may require a higher energy cutoff (ecutwfc) for numerical stability."
+                  << "\n For semiconductors: standard settings work well."
+                  << "\n For metals: k-grid >= 6x6x6, smearing_sigma <= 0.01 Ry, mixing_beta = 0.1-0.15"
+                  << std::endl;
     }
     else if( xc_func == "LC_PBE")
     {
@@ -379,4 +393,34 @@ std::string XC_Functional::output_info()
     }
     return s;
 #endif
+}
+
+std::vector<double> XC_Functional::compute_fd_gg(
+    const ModulePW::PW_Basis* rho_basis)
+{
+    const int ng = rho_basis->npw;
+    const double twopi = 2.0 * ModuleBase::PI;
+    const int nx = rho_basis->nx;
+    const int ny = rho_basis->ny;
+    const int nz = rho_basis->nz;
+
+    std::vector<double> gg_fd(ng);
+    for(int ig = 0; ig < ng; ig++)
+    {
+        const int m0 = rho_basis->gdirect[ig].x;
+        const int m1 = rho_basis->gdirect[ig].y;
+        const int m2 = rho_basis->gdirect[ig].z;
+
+        const double fd00 = 2.0 * nx * nx * (1.0 - std::cos(twopi * m0 / nx));
+        const double fd11 = 2.0 * ny * ny * (1.0 - std::cos(twopi * m1 / ny));
+        const double fd22 = 2.0 * nz * nz * (1.0 - std::cos(twopi * m2 / nz));
+        const double fd01 = nx * ny * std::sin(twopi * m0 / nx) * std::sin(twopi * m1 / ny);
+        const double fd02 = nx * nz * std::sin(twopi * m0 / nx) * std::sin(twopi * m2 / nz);
+        const double fd12 = ny * nz * std::sin(twopi * m1 / ny) * std::sin(twopi * m2 / nz);
+
+        gg_fd[ig] = (rho_basis->GGT.e11 * fd00 + rho_basis->GGT.e22 * fd11 + rho_basis->GGT.e33 * fd22
+                   + 2.0 * rho_basis->GGT.e12 * fd01 + 2.0 * rho_basis->GGT.e13 * fd02
+                   + 2.0 * rho_basis->GGT.e23 * fd12) / (twopi * twopi);
+    }
+    return gg_fd;
 }
