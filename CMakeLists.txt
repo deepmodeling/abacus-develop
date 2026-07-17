@@ -58,13 +58,14 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 
 cmake_dependent_option(ENABLE_ELPA "Enable ELPA for LCAO" ON "ENABLE_LCAO;ENABLE_MPI" OFF)
-cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional"
+                       OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(EXX_DEV "Enable LibRI developing features" OFF "ENABLE_LIBRI" OFF)
 cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
 
-cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF "USE_CUDA" OFF)
+cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF "USE_CUDA;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF "USE_CUDA" OFF)
 cmake_dependent_option(ENABLE_CUBLASMP "Enable cublasmp" OFF "ENABLE_CUSOLVERMP" OFF)
 cmake_dependent_option(ENABLE_NCCL_PARALLEL_DEVICE
@@ -145,7 +146,8 @@ if(ENABLE_RAPIDJSON)
   if(NOT TARGET RapidJSON)
     message(
       FATAL_ERROR
-      "RapidJSON was found, but target RapidJSON is missing. Check if your RapidJSON installation provides a complete exported CMake configuration."
+      "RapidJSON was found, but target RapidJSON is missing. "
+      "Check if your RapidJSON installation provides a complete exported CMake configuration."
     )
   endif()
   abacus_add_feature_definitions(__RAPIDJSON)
@@ -157,8 +159,8 @@ if(COMMIT_INFO)
   if(NOT Git_FOUND)
     message(
       WARNING
-        "Git is not found, and abacus will not output the git commit information in log. \n\
-You can install Git first and reinstall abacus.")
+        "Git is not found, and abacus will not output the git commit information in log.\n"
+        "You can install Git first and reinstall abacus.")
   else()
     message(STATUS "Found git: attempting to get commit info...")
     execute_process(
