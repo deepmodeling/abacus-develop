@@ -81,7 +81,7 @@ namespace unitcell
             Parallel_Common::bcast_double(lat.a2[i]);
             Parallel_Common::bcast_double(lat.a3[i]);
             Parallel_Common::bcast_double(lat.latcenter[i]);
-            Parallel_Common::bcast_int(lat.lc[i]);
+            Parallel_Common::bcast_int(lat.lat_axis_free[i]);
         }
 
         // distribute superlattice vectors.
@@ -103,7 +103,11 @@ namespace unitcell
     {
     #ifdef __MPI
         MPI_Barrier(MPI_COMM_WORLD);
-        Parallel_Common::bcast_double(magnet.start_mag, ntype);
+        if (GlobalV::MY_RANK != 0)
+        {
+            magnet.start_mag.resize(ntype, 0.0);
+        }
+        Parallel_Common::bcast_double(magnet.start_mag.data(), ntype);
         if (PARAM.inp.nspin == 4) 
         {
             Parallel_Common::bcast_double(magnet.ux_[0]);

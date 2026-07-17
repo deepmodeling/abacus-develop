@@ -1,5 +1,4 @@
 #include "atom_spec.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/output.h"
 #include <cstdlib>
 

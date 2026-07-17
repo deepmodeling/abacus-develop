@@ -14,15 +14,10 @@
 #include "source_base/element_elec_config.h"
 #include "source_base/global_file.h"
 #include "source_base/parallel_common.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_cell/sep_cell.h"
 
 #ifdef __MPI
 #include "mpi.h"
-#endif
-
-#ifdef __LCAO
-#include "../source_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
 
 #include "update_cell.h"
@@ -188,12 +183,9 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
 {
     ModuleBase::TITLE("UnitCell", "setup_cell");
 
-    // (1) init mag
     assert(ntype > 0);
-    delete[] magnet.start_mag;
-    magnet.start_mag = new double[this->ntype];
 
-    // (2) init *Atom class array.
+    // (1) init *Atom class array.
     this->atoms = new Atom[this->ntype]; // atom species.
     this->set_atom_flag = true;
 
@@ -399,7 +391,7 @@ bool UnitCell::if_atoms_can_move() const
 bool UnitCell::if_cell_can_change() const
 {
 	// need to be fixed next
-	if (this->lc[0] || this->lc[1] || this->lc[2])
+	if (this->lat_axis_free[0] || this->lat_axis_free[1] || this->lat_axis_free[2])
 	{
 		return true;
 	}
@@ -413,49 +405,50 @@ void UnitCell::setup(const std::string& latname_in,
                      const std::string& fixed_axes_in) {
     this->latName = latname_in;
     this->ntype = ntype_in;
+    this->magnet.start_mag.resize(ntype_in, 0.0);
     this->lmaxmax = lmaxmax_in;
     this->init_vel = init_vel_in;
     // pengfei Li add 2018-11-11
     if (fixed_axes_in == "None") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "volume") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "shape") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "a") {
-        this->lc[0] = 0;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 0;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "b") {
-        this->lc[0] = 1;
-        this->lc[1] = 0;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 0;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "c") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 0;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 0;
     } else if (fixed_axes_in == "ab") {
-        this->lc[0] = 0;
-        this->lc[1] = 0;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 0;
+        this->lat_axis_free[1] = 0;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "ac") {
-        this->lc[0] = 0;
-        this->lc[1] = 1;
-        this->lc[2] = 0;
+        this->lat_axis_free[0] = 0;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 0;
     } else if (fixed_axes_in == "bc") {
-        this->lc[0] = 1;
-        this->lc[1] = 0;
-        this->lc[2] = 0;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 0;
+        this->lat_axis_free[2] = 0;
     } else if (fixed_axes_in == "abc") {
-        this->lc[0] = 0;
-        this->lc[1] = 0;
-        this->lc[2] = 0;
+        this->lat_axis_free[0] = 0;
+        this->lat_axis_free[1] = 0;
+        this->lat_axis_free[2] = 0;
     } else {
         ModuleBase::WARNING_QUIT(
             "Input",
