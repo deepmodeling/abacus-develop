@@ -7,6 +7,7 @@
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
 #include "source_hamilt/hamilt.h"
+#include "source_hamilt/module_xc/exx_info_global.h"
 #include <memory>
 
 class LCAO_Matrix;
@@ -39,9 +40,11 @@ public:
     using TAC = std::pair<TA, TC>;
 
     /// @brief  Constructor for Exx_LRI_Interface
-    Exx_LRI_Interface(const Exx_Info_RI& info)
+    Exx_LRI_Interface(const Exx_Info_RI& info_ri, const Exx_Info_Global& info_global)
     {
-        this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info);
+        this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info_ri);
+        this->info_global = info_global;
+        this->hybrid_step_ = info_global.hybrid_step;
     }
     Exx_LRI_Interface() = delete;
 
@@ -138,11 +141,17 @@ public:
     double etot_last_outer_loop = 0.0;
     elecstate::DensityMatrix<T, double>* dm_last_step;
 
+    size_t hybrid_step() const { return hybrid_step_; }
+    void set_hybrid_step(size_t s) { hybrid_step_ = s; }
+
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
 private:
 
     Mix_DMk_2D<T> mix_DMk_2D;
+
+    Exx_Info_Global info_global;
+    size_t hybrid_step_ = 1;
 
     bool exx_spacegroup_symmetry = false;
     ModuleSymmetry::Symmetry_rotation symrot_;

@@ -64,7 +64,7 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
     exx_cut_coulomb = nullptr;
     RpaLriDetail::trim_malloc_cache();
 
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
         cal_large_Cs(ucell, orb, kv);
         cal_abfs_overlap(ucell, orb, kv);
@@ -86,7 +86,7 @@ void RPA_LRI<T, Tdata>::init(const MPI_Comm& mpi_comm_in, const K_Vectors& kv_in
     this->p_kv = &kv_in;
     this->MGT = exx_cut_coulomb->MGT;
 
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
         this->abfs_shrink = exx_cut_coulomb->abfs;
     }
@@ -121,6 +121,34 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         {mix_DMk_2D.set_nks(kv.get_nks());}
         
     mix_DMk_2D.set_mixing_plain(1.0);
+
+    // --------------------------------------------------------------------------------------
+    // NOTE: ABFs are constructed here BEFORE symmetry processing to calculate the correct
+    // abfs_Lmax for symrot.set_abfs_Lmax(). Previously, abfs_Lmax was obtained either from
+    // exx_cut_coulomb->abfs_Lmax() (which was nullptr at that point) or from this->info.abfs_Lmax
+    // (which defaults to 0). This caused abfs_Lmax to degrade to 0 in RPA + symmetry path,
+    // leading to incorrect rotation matrices for ABFs with higher angular momentum.
+    // --------------------------------------------------------------------------------------
+    std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_for_lmax;
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
+    {
+        this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
+        abfs_for_lmax = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.shrink_abfs_pca_thr);
+        if (!this->info.files_shrink_abfs.empty())
+        {
+            abfs_for_lmax = Exx_Abfs::IO::construct_abfs(abfs_for_lmax, orb, this->info.files_shrink_abfs, this->info.kmesh_times);
+        }
+    }
+    else
+    {
+        this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
+        abfs_for_lmax = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell, orb, this->lcaos, this->info.kmesh_times, this->info.pca_threshold);
+        if (!this->info.files_abfs.empty())
+        {
+            abfs_for_lmax = Exx_Abfs::IO::construct_abfs(abfs_for_lmax, orb, this->info.files_abfs, this->info.kmesh_times);
+        }
+    }
+
     ModuleSymmetry::Symmetry_rotation symrot;
     if (exx_spacegroup_symmetry)
     {
@@ -128,7 +156,10 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         const auto& Rs = RI_Util::get_Born_von_Karmen_cells(period);
         symrot.find_irreducible_sector(ucell.symm, ucell.atoms, ucell.st, Rs, period, ucell.lat);
         // set Lmax of the rotation matrices to max(l_ao, l_abf), to support rotation under ABF
-        symrot.set_abfs_Lmax(GlobalC::exx_info.info_ri.abfs_Lmax);
+        // NOTE: Using Exx_Abfs::Construct_Orbs::get_Lmax() to compute Lmax from the actual ABFs
+        // instead of relying on exx_cut_coulomb->abfs_Lmax() (not yet initialized) or
+        // this->info.abfs_Lmax (defaults to 0). This ensures correct Lmax for symmetry rotation.
+        symrot.set_abfs_Lmax(Exx_Abfs::Construct_Orbs::get_Lmax(abfs_for_lmax));
         symrot.cal_Ms(kv, ucell, *dm.get_paraV_pointer());
         // output Ts (symrot_R.txt) and Ms (symrot_k.txt)
         ModuleSymmetry::print_symrot_info_R(symrot, ucell.symm, ucell.lmax, Rs);
@@ -146,42 +177,29 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
             PARAM.inp.nspin,
             exx_spacegroup_symmetry);
     
-    // set parameters for bare Coulomb potential
-    GlobalC::exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; // not used now, Hf/Ccp -> singularity_correction, see conv_coulomb_pot_k.cpp
-    GlobalC::exx_info.info_global.hybrid_alpha = 1;
-    GlobalC::exx_info.sync_from_global();
     // reserve exx_ccp_rmesh_times to calculate full Coulomb
-    this->ccp_rmesh_times_ewald = GlobalC::exx_info.info_ri.ccp_rmesh_times;
-    // Using this->info.ccp_rmesh_times to calculate cut Coulomb this->Vs_period
-    GlobalC::exx_info.info_ri.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
+    // Note: ccp_type=Hf and hybrid_alpha=1 were previously set on GlobalC::exx_info.info_global
+    // and sync_from_global() was called, but this->info (value copy) already has the correct
+    // coulomb_param from construction time, so the global writes are redundant and removed.
+    this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
+    // Using rpa_ccp_rmesh_times to calculate cut Coulomb this->Vs_period
+    Exx_Info_RI local_info = this->info;
+    local_info.ccp_rmesh_times = PARAM.inp.rpa_ccp_rmesh_times;
     if (!exx_cut_coulomb)
-        exx_cut_coulomb = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+        exx_cut_coulomb = new Exx_LRI<double>(local_info);
 
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
     {
-        this->lcaos = Exx_Abfs::Construct_Orbs::change_orbs(orb, this->info.kmesh_times);
-        const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>> abfs_same_atom
-            = Exx_Abfs::Construct_Orbs::abfs_same_atom(ucell,
-                                                       orb,
-                                                       this->lcaos,
-                                                       this->info.kmesh_times,
-                                                       this->info.shrink_abfs_pca_thr);
-        if (this->info.files_shrink_abfs.empty())
-        {
-            this->abfs_shrink = abfs_same_atom;
-        }
-        else
-        {
-            this->abfs_shrink = Exx_Abfs::IO::construct_abfs(abfs_same_atom,
-                                                        orb,
-                                                        this->info.files_shrink_abfs,
-                                                        this->info.kmesh_times);
-        }
+        // NOTE: Reuse abfs_for_lmax constructed earlier to avoid redundant ABFs construction.
+        // This ensures consistency between the ABFs used for Lmax calculation and the ABFs
+        // used for actual EXX computation.
+        this->abfs_shrink = abfs_for_lmax;
         Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, abfs_shrink, GlobalV::ofs_running);
         exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, abfs_shrink);
     }
     else
-        exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb);
+        // NOTE: Reuse abfs_for_lmax constructed earlier to avoid redundant ABFs construction.
+        exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, abfs_for_lmax);
     // cal C and V for exx
     this->output_cut_coulomb_cs(ucell, exx_cut_coulomb);
     // cal CVCD
@@ -243,7 +261,7 @@ void RPA_LRI<T, Tdata>::output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<dou
     this->Cs_period = RI::RI_Tools::cal_period(Cs, period);
     this->Cs_period = exx_lri_rpa->exx_lri.post_2D.set_tensors_map2(this->Cs_period);
 
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
         this->out_Cs(ucell, this->Cs_period, "Cs_shrinked_data_");
     else
         this->out_Cs(ucell, this->Cs_period, "Cs_data_");
@@ -259,11 +277,12 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     ModuleBase::TITLE("RPA_LRI", "output_ewald_coulomb");
     ModuleBase::timer::start("RPA_LRI", "output_ewald_coulomb");
 
-    GlobalC::exx_info.info_ri.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
+    Exx_Info_RI local_info = this->info;
+    local_info.ccp_rmesh_times = this->ccp_rmesh_times_ewald;
     if (!exx_full_coulomb)
-        exx_full_coulomb = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+        exx_full_coulomb = new Exx_LRI<double>(local_info);
 
-    if (GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0)
+    if (this->info.shrink_abfs_pca_thr >= 0.0)
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs_shrink);
     else
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs);
@@ -316,7 +335,7 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     ModuleBase::TITLE("RPA_LRI", "cal_large_Cs");
     ModuleBase::timer::start("RPA_LRI", "cal_large_Cs");
     if (!exx_cut_coulomb)
-        exx_cut_coulomb = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+        exx_cut_coulomb = new Exx_LRI<double>(this->info);
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "exx_cut_coulomb->init");
     this->abfs = exx_cut_coulomb->abfs;
@@ -800,7 +819,7 @@ void RPA_LRI<T, Tdata>::inverse_olp(const UnitCell& ucell,
         // out_pure_ri_tensor("olp_all.dat", olp_all, 0.);
         auto olp_inv = LRI_CV_Tools::cal_I(olp_all,
                                            Inverse_Matrix<std::complex<double>>::Method::syev,
-                                           GlobalC::exx_info.info_ri.shrink_LU_inv_thr);
+                                           this->info.shrink_LU_inv_thr);
         for (int ir = 0; ir < all_mu_s; ir++)
         {
             for (int ic = ir; ic < all_mu_s; ic++)
