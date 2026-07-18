@@ -41,7 +41,6 @@ list(APPEND cell_simple_srcs
     ../read_pp_blps.cpp
     ../check_atomic_stru.cpp
     ../../source_estate/read_pseudo.cpp
-    ../../source_estate/param_update.cpp
     ../../source_estate/cal_wfc.cpp
     ../../source_estate/cal_nelec_nband.cpp
     ../read_orb.cpp
