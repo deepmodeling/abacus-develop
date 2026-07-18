@@ -119,9 +119,12 @@ namespace ModuleSymmetry
         /// orbital rotation T1^dagger(.)T2 (mode 'H') / T1^T(.)T2^* (mode 'D') applied to every
         /// channel, the SU(2) spin part U(isym) mixes them:  H'^{ab}=sum_{cd} conj(U_{ca}) U_{db} [T1^dagger H^{cd} T2].
         /// The 4 channels are ordered is=a*2+b (a=row spin, b=col spin), matching RI_2D_Comm::split_is_block.
-        /// Real-space (atom-pair) reduction uses space-group operations only, so no time-reversal branch is needed.
+        /// (nspin=4 magnetic) The atom-pair reduction may also use the ANTIUNITARY elements of the
+        /// Shubnikov group, flagged by isym >= nsym_. In real space time reversal acts as
+        /// H(R) -> sigma_y H^*(R) sigma_y (R and the orbital indices untouched), which becomes a
+        /// remap of the 4 channels applied after the SU(2) mixing; see symmetry_rotation_R.hpp.
         template<typename Tdata>    // RI::Tensor type
-        std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4> restore_HR_soc(
+        std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4> restore_HR_nspin4(
             const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
             const std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4>& HR_irreducible_soc)const;
 
@@ -207,7 +210,7 @@ namespace ModuleSymmetry
         std::vector<std::map<int, std::vector<std::complex<double>>>> Ms_;
 
         /// (nspin=4) the SU(2) spin-1/2 rotation U(isym) for each symmetry operation, size [nsym].
-        /// The spinor AO rotation is T(isym) (x) U(isym); restore_HR_soc uses it to mix the 4 spin
+        /// The spinor AO rotation is T(isym) (x) U(isym); restore_HR_nspin4 uses it to mix the 4 spin
         /// channels of the real-space EXX H(R). Filled in cal_Ms (identity for nspin<4).
         std::vector<SpinRotation::Su2> spin_U_;
 

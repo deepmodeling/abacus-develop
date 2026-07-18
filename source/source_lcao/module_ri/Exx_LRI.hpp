@@ -864,7 +864,7 @@ void Exx_LRI<Tdata>::cal_exx_elec_soc(
 
 	// pass 2: spinor-coupled rotation of the 4 channels from the irreducible sector to the full BZ
 	std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_full =
-		p_symrot->restore_HR_soc(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_irr);
+		p_symrot->restore_HR_nspin4(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_irr);
 
 	// pass 3: per-channel energy (full Hs, no repeat), then gather the repeated full Hs for abacus
 	for (int is = 0; is < 4; ++is)

@@ -508,7 +508,7 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_opt_abfs.tolerence = PARAM.inp.exx_opt_orb_tolerence;
 
         // Space-group symmetry is supported for LCAO EXX (nspin=1,2 via restore_dm/restore_HR;
-        // nspin=4/SOC via restore_dm + restore_HR_soc), so symmetry=1 is honored here.
+        // nspin=4/SOC via restore_dm + restore_HR_nspin4), so symmetry=1 is honored here.
 
         GlobalC::exx_info.sync_from_global();
     }

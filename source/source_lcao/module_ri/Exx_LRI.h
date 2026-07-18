@@ -93,7 +93,7 @@ public:
 		const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
 	// (nspin=4) real-space symmetry EXX: the spinor H(R) rotation couples the 4 spin channels via
 	// the SU(2) part U(isym), so the 4 channels must be rotated together (not one-per-outer-loop).
-	// Gathers the irreducible Hs of all 4 channels, calls Symmetry_rotation::restore_HR_soc, then
+	// Gathers the irreducible Hs of all 4 channels, calls Symmetry_rotation::restore_HR_nspin4, then
 	// finishes energy/gather per channel. Called from cal_exx_elec when p_symrot && nspin==4.
 	void cal_exx_elec_soc(
 		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,

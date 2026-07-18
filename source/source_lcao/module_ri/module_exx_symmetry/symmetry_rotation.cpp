@@ -50,7 +50,7 @@ namespace ModuleSymmetry
         {
             for (int i = 0;i < nop_tot;++i) { spin_U[i] = SpinRotation::so3_to_su2(gmatc[i]); }
         }
-        this->spin_U_ = spin_U;  // keep for restore_HR_soc (real-space EXX H(R) spin mixing)
+        this->spin_U_ = spin_U;  // keep for restore_HR_nspin4 (real-space EXX H(R) spin mixing)
 
         // 2. calculate the rotation matrix in AO-representation for each ibz_kpoint and symmetry operation: M(k, isym)
         auto restrict_kpt = [](const TCdouble& kvec, const double& symm_prec) -> TCdouble

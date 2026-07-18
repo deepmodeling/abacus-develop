@@ -6,6 +6,13 @@
 #include <RI/physics/symmetry/Symmetry_Rotation.h>
 namespace ModuleSymmetry
 {
+    /// Elementwise complex conjugation used by the time-reversal branch of restore_HR_nspin4.
+    /// Overloaded (not specialized) so a real Tdata compiles to the identity.
+    inline float conj_elem(const float v) { return v; }
+    inline double conj_elem(const double v) { return v; }
+    inline std::complex<float> conj_elem(const std::complex<float>& v) { return std::conj(v); }
+    inline std::complex<double> conj_elem(const std::complex<double>& v) { return std::conj(v); }
+
     template<typename Tdata>
     inline void print_tensor(const RI::Tensor<Tdata>& t, const std::string& name, const double& threshold = 0.0)
     {
@@ -119,14 +126,24 @@ namespace ModuleSymmetry
     // which factorizes into the per-channel orbital rotation G^{cd}=T1^dagger H^{cd} T2 followed by the SU(2) spin mixing
     //     H'^{ab} = sum_{cd} conj(U_{ca}) U_{db} G^{cd}    (mode 'H')
     //     H'^{ab} = sum_{cd}      U_{ca} conj(U_{db}) G^{cd}    (mode 'D')
-    // Only space-group operations enter the atom-pair reduction, so no time-reversal branch is needed.
+    //
+    // (nspin=4 magnetic) The atom-pair reduction may also use the ANTIUNITARY elements Theta*g of
+    // the Shubnikov group, flagged by isym >= nsym_. In real space time reversal acts as
+    //     H(R) -> sigma_y H^*(R) sigma_y
+    // with R and the orbital indices untouched (in a real AO basis Theta = -i sigma_y K, and
+    // H(R) = sum_k H(k) e^{-ikR} turns H(k) -> sigma_y H^*(-k) sigma_y into exactly this).
+    // So the antiunitary case is the unitary result Y followed by one channel remap:
+    //     H'^{00} =  conj(Y^{11}),  H'^{01} = -conj(Y^{10})
+    //     H'^{10} = -conj(Y^{01}),  H'^{11} =  conj(Y^{00})
+    // The map is an involution (sigma_y^* = -sigma_y, sigma_y^2 = I), so no extra sign is needed
+    // when it is applied in either direction.
     template<typename Tdata>
-    std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4> Symmetry_rotation::restore_HR_soc(
+    std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4> Symmetry_rotation::restore_HR_nspin4(
         const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
         const std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4>& HR_irreducible_soc)const
     {
-        ModuleBase::TITLE("Symmetry_rotation", "restore_HR_soc");
-        ModuleBase::timer::start("Symmetry_rotation", "restore_HR_soc");
+        ModuleBase::TITLE("Symmetry_rotation", "restore_HR_nspin4");
+        ModuleBase::timer::start("Symmetry_rotation", "restore_HR_nspin4");
         assert(mode == 'H' || mode == 'D');
         std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4> HR_full;
 
@@ -181,6 +198,7 @@ namespace ModuleSymmetry
                     for (int is = 0;is < 4;++is) { G[is] = this->rotate_atompair_serial(Hir[is], isym, a1, a2, mode); }
                     // step 2: SU(2) spin mixing of the 4 rotated channels into the output channels
                     const SpinRotation::Su2& U = this->spin_U_[isym];
+                    std::array<RI::Tensor<Tdata>, 4> Hout_ch;
                     for (int a = 0;a < 2;++a) {
                         for (int b = 0;b < 2;++b)
                         {
@@ -194,13 +212,39 @@ namespace ModuleSymmetry
                                     Hout += RI::Global_Func::convert<Tdata>(coeff) * G[c * 2 + d];
                                 }
                             }
-                            HR_full[a * 2 + b][ap1][{ap2, R}] = Hout;
+                            Hout_ch[a * 2 + b] = Hout;
                         }
                     }
+                    // step 3 (antiunitary elements of the Shubnikov group): apply time reversal
+                    // sigma_y (.)^* sigma_y, i.e. the channel remap documented above.
+                    if (isym >= this->nsym_)
+                    {
+                        // NOTE: antiunitary elements only ever exist for nspin=4 (nrotk_anti is 0 otherwise), where Tdata is complex. 
+                        // conj_elem() is the identity for a
+                        // real Tdata, so this branch must not be reached with one -- it would
+                        // silently degrade into a bare channel swap.
+                        static const int src[4] = { 3, 2, 1, 0 };   // 00<-11, 01<-10, 10<-01, 11<-00
+                        static const bool neg[4] = { false, true, true, false };
+                        std::array<RI::Tensor<Tdata>, 4> Y = Hout_ch;
+                        for (int is = 0;is < 4;++is)
+                        {
+                            const RI::Tensor<Tdata>& s = Y[src[is]];
+                            RI::Tensor<Tdata> t({ static_cast<size_t>(a1.nw), static_cast<size_t>(a2.nw) });
+                            for (size_t i = 0;i < t.shape[0];++i) {
+                                for (size_t j = 0;j < t.shape[1];++j)
+                                {
+                                    const Tdata v = ModuleSymmetry::conj_elem(s(i, j));
+                                    t(i, j) = neg[is] ? -v : v;
+                                }
+                            }
+                            Hout_ch[is] = t;
+                        }
+                    }
+                    for (int is = 0;is < 4;++is) { HR_full[is][ap1][{ap2, R}] = Hout_ch[is]; }
                 }
             }
         }
-        ModuleBase::timer::end("Symmetry_rotation", "restore_HR_soc");
+        ModuleBase::timer::end("Symmetry_rotation", "restore_HR_nspin4");
         return HR_full;
     }
 
