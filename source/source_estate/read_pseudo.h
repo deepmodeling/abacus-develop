@@ -2,6 +2,7 @@
 #define READ_PSEUDO_H
 
 #include "source_cell/unitcell.h"
+#include "source_cell/cal_atoms_info.h"
 
 namespace elecstate {
 
@@ -58,6 +59,12 @@ namespace elecstate {
     // 			atoms[].na
     //=========================
     void cal_natomwfc(std::ofstream& log,int& natomwfc,const int ntype,const Atom* atoms,const int nspin);
+
+class ParamUpdater {
+public:
+    static void update_from_atoms_info(const AtomsInfoResult& atoms_info);
+};
+
 }
 
 #endif

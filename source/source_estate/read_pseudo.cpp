@@ -159,6 +159,9 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
                                                     basis_type, smearing_method,
                                                     ks_solver, bndpar);
 
+    // Set PARAM values from the calculated atoms_info
+    ParamUpdater::update_from_atoms_info(atoms_info);
+
     // setup nlocal
     // nlocal is calculated by CalAtomsInfo::cal_atoms_info() above
     cal_nwfc(ofs, ucell, ucell.atoms, nspin, atoms_info.nlocal, npol,
@@ -385,6 +388,16 @@ void print_unitcell_pseudo(const std::string& fn, UnitCell& ucell)
 
     ofs.close();
     return;
+}
+
+void ParamUpdater::update_from_atoms_info(const AtomsInfoResult& atoms_info)
+{
+    PARAM.input.nelec = atoms_info.nelec;
+    PARAM.input.nbands = atoms_info.nbands;
+    PARAM.input.nupdown = atoms_info.nupdown;
+    PARAM.sys.use_uspp = atoms_info.use_uspp;
+    PARAM.sys.nbands_l = atoms_info.nbands_l;
+    PARAM.sys.ks_run = atoms_info.ks_run;
 }
 
 }
