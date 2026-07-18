@@ -10,7 +10,6 @@
 #include "source_base/output.h"
 
 #include "source_cell/read_stru.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/atom_in.h"
 #include "source_base/element_elec_config.h"
 #include "source_base/global_file.h"
@@ -181,7 +180,10 @@ std::vector<ModuleBase::Vector3<int>> UnitCell::get_constrain() const
 //==============================================================
 // Calculate various lattice related quantities for given latvec
 //==============================================================
-void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin)
+void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
+    const std::string& basis_type, const std::string& orbital_dir, const std::string& init_wfc,
+    const double onsite_radius, const bool deepks_setorb, const bool rpa,
+    const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type)
 {
     ModuleBase::TITLE("UnitCell", "setup_cell");
 
@@ -239,8 +241,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
             // call read_atom_species
             //========================
             const bool read_atom_species = unitcell::read_atom_species(ifa, log, *this,
-                PARAM.inp.basis_type, PARAM.inp.orbital_dir, PARAM.inp.init_wfc,
-                PARAM.inp.onsite_radius, PARAM.globalv.deepks_setorb, PARAM.inp.rpa);
+                basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa);
             //========================
             // call read_lattice_constant
             //========================
@@ -256,9 +257,8 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
             // call read_atom_positions
             //==========================
             ok2 = unitcell::read_atom_positions(*this, ifa, log, GlobalV::ofs_warning, nspin,
-                PARAM.inp.basis_type, PARAM.inp.orbital_dir, PARAM.inp.init_wfc,
-                PARAM.inp.onsite_radius, PARAM.inp.fixed_atoms, PARAM.inp.noncolin,
-                PARAM.inp.calculation, PARAM.inp.esolver_type);
+                basis_type, orbital_dir, init_wfc, onsite_radius, fixed_atoms, noncolin,
+                calculation, esolver_type);
         }
     }
 #ifdef __MPI

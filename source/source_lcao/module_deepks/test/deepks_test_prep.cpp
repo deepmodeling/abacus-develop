@@ -189,7 +189,10 @@ void test_deepks<T>::set_ekcut()
 template <typename T>
 void test_deepks<T>::setup_cell()
 {
-    ucell.setup_cell("STRU", GlobalV::ofs_running, PARAM.inp.symmetry_prec, PARAM.inp.dfthalf_type, PARAM.inp.pseudo_dir, PARAM.inp.nspin);
+    ucell.setup_cell("STRU", GlobalV::ofs_running, PARAM.inp.symmetry_prec, PARAM.inp.dfthalf_type, PARAM.inp.pseudo_dir, PARAM.inp.nspin,
+        PARAM.inp.basis_type, PARAM.inp.orbital_dir, PARAM.inp.init_wfc,
+        PARAM.inp.onsite_radius, PARAM.globalv.deepks_setorb, PARAM.inp.rpa,
+        PARAM.inp.fixed_atoms, PARAM.inp.noncolin, PARAM.inp.calculation, PARAM.inp.esolver_type);
     elecstate::read_pseudo(GlobalV::ofs_running, ucell);
     this->nlocal = PARAM.globalv.nlocal;
     this->nbands = PARAM.inp.nbands;

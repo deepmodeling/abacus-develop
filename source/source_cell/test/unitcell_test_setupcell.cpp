@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #define private public
-#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "memory"
 #include "source_base/mathzone.h"
@@ -47,6 +46,21 @@ class UcellTest : public ::testing::Test
 protected:
 	std::unique_ptr<UnitCell> ucell{new UnitCell};
 	std::string output;
+
+	const double symmetry_prec = 1e-5;
+	const int dfthalf_type = 0;
+	const std::string pseudo_dir = "./support";
+	const std::string basis_type = "pw";
+	const std::string orbital_dir = "./";
+	const std::string init_wfc = "atomic";
+	const double onsite_radius = 0.0;
+	const bool deepks_setorb = false;
+	const bool rpa = false;
+	const bool fixed_atoms = false;
+	const bool noncolin = false;
+	const std::string calculation = "scf";
+	const std::string esolver_type = "cg";
+
 	void SetUp()
     {
     	ucell->lmaxmax = 2;
@@ -68,7 +82,9 @@ TEST_F(UcellTest,SetupCellS1)
 	ofs_running.open("setup_cell.tmp");
 	const int nspin = 1;
 	
-	ucell->setup_cell(fn, ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, nspin);
+	ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type);
 	ofs_running.close();
 	remove("setup_cell.tmp");
 }
@@ -80,7 +96,9 @@ TEST_F(UcellTest,SetupCellS2)
 	ofs_running.open("setup_cell.tmp");
 	const int nspin = 2;
 	
-	ucell->setup_cell(fn, ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, nspin);
+	ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type);
 	ofs_running.close();
 	remove("setup_cell.tmp");
 }
@@ -92,7 +110,9 @@ TEST_F(UcellTest,SetupCellS4)
 	ofs_running.open("setup_cell.tmp");
 	const int nspin = 4;
 	
-	ucell->setup_cell(fn, ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, nspin);
+	ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type);
 	ofs_running.close();
 	remove("setup_cell.tmp");
 }
@@ -104,7 +124,10 @@ TEST_F(UcellDeathTest,SetupCellWarning1)
 	ofs_running.open("setup_cell.tmp");
 	
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, 1),::testing::ExitedWithCode(1),"");
+	const int nspin = 1;
+	EXPECT_EXIT(ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type), ::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Can not find the file containing atom positions.!"));
 	ofs_running.close();
@@ -118,7 +141,10 @@ TEST_F(UcellDeathTest,SetupCellWarning2)
 	ofs_running.open("setup_cell.tmp");
 	
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, 1),::testing::ExitedWithCode(1),"");
+	const int nspin = 1;
+	EXPECT_EXIT(ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type), ::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Something wrong during read_atom_positions"));
 	ofs_running.close();
@@ -132,7 +158,9 @@ TEST_F(UcellTest,SetupCellAfterVC)
 	ofs_running.open("setup_cell.tmp");
 	const int nspin = 1;
 
-	ucell->setup_cell(fn, ofs_running, PARAM.input.symmetry_prec, PARAM.input.dfthalf_type, PARAM.input.pseudo_dir, nspin);
+	ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type);
 	ucell->lat0 = 1.0;
 	ucell->latvec.Zero();
 	ucell->latvec.e11 = 10.0;

@@ -26,7 +26,10 @@ void UnitCell::print_cell(std::ofstream& ofs) const {}
 
 void UnitCell::set_iat2itia() {}
 
-void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin) {}
+void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
+    const std::string& basis_type, const std::string& orbital_dir, const std::string& init_wfc,
+    const double onsite_radius, const bool deepks_setorb, const bool rpa,
+    const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type) {}
 
 bool UnitCell::if_atoms_can_move() const { return true; }
 
