@@ -41,9 +41,10 @@ TEST(OrbInfo,WriteOrbInfo)
     PARAM.input.lspinorb = false;
 	PARAM.input.nspin = 1;
     PARAM.input.basis_type = "pw";
-    PARAM.input.dft_functional = "default";
     PARAM.sys.nlocal = 18;
-    elecstate::read_cell_pseudopots(pp_dir,ofs,*ucell);
+    const std::string global_out_dir = "./";
+    const std::string dft_functional = "default";
+    elecstate::read_cell_pseudopots(pp_dir,ofs,*ucell, global_out_dir, dft_functional);
     elecstate::cal_nwfc(ofs,*ucell,ucell->atoms);
     ModuleIO::write_orb_info(ucell);
     ofs.close();

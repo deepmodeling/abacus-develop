@@ -24,7 +24,9 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     ofs << "\n";
 
-    read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs, ucell);
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    const std::string dft_functional = PARAM.inp.dft_functional;
+    read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs, ucell, global_out_dir, dft_functional);
 
 	if (GlobalV::MY_RANK == 0) 
 	{
@@ -218,12 +220,16 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
 //==========================================================
 // Read pseudopotential according to the dir
 //==========================================================
-void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCell& ucell)
+void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCell& ucell,
+                          const std::string& global_out_dir,
+                          const std::string& dft_functional)
 {
     ModuleBase::TITLE("Elecstate", "read_cell_pseudopots");
     // setup reading log for pseudopot_upf
+    const std::string global_out_dir_ = global_out_dir;
+    const std::string dft_functional_ = dft_functional;
     std::stringstream ss;
-    ss << PARAM.globalv.global_out_dir << "atom_pseudo.log";
+    ss << global_out_dir_ << "atom_pseudo.log";
 
     // Read in the atomic pseudo potentials
     std::string pp_address;
@@ -310,9 +316,9 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
                 ModuleBase::GlobalFunc::OUT(log, "L of projector", ucell.atoms[i].ncpp.lll[ib]);
             }
             //			ModuleBase::GlobalFunc::OUT(log,"Grid Mesh Number", atoms[i].mesh);
-            if (PARAM.inp.dft_functional != "default")
+            if (dft_functional_ != "default")
             {
-                std::string xc_func1 = PARAM.inp.dft_functional;
+                std::string xc_func1 = dft_functional_;
                 transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
                 if (xc_func1 != ucell.atoms[i].ncpp.xc_func)
                 {

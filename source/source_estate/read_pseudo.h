@@ -8,7 +8,9 @@ namespace elecstate {
     void read_pseudo(std::ofstream& ofs, UnitCell& ucell);
 
     // read in pseudopotential from files for each type of atom
-    void read_cell_pseudopots(const std::string& fn, std::ofstream& log, UnitCell& ucell);
+    void read_cell_pseudopots(const std::string& fn, std::ofstream& log, UnitCell& ucell,
+                              const std::string& global_out_dir,
+                              const std::string& dft_functional);
 
     void print_unitcell_pseudo(const std::string& fn, UnitCell& ucell);
     
