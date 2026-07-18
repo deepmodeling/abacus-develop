@@ -117,4 +117,9 @@ AddTest(
   LIBS ${math_libs}
   SOURCES sternheimer_kq_test.cpp ../sternheimer_kq.cpp
 )
+AddTest(
+  TARGET MODULE_RI_sternheimer_channel_resources_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_channel_resources_test.cpp ../sternheimer_channel_resources.cpp
+)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
