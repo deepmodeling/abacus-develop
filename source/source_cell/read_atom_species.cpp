@@ -2,7 +2,6 @@
 
 #include <sstream>
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/tool_title.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 

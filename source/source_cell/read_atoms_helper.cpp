@@ -1,5 +1,4 @@
 #include "read_atoms_helper.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/constants.h"
 #include "source_base/mathzone.h"

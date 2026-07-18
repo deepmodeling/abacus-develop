@@ -5,7 +5,6 @@
 
 #include "unitcell.h"
 #include "read_atoms_helper.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include "print_cell.h"
 #include "read_stru.h"
