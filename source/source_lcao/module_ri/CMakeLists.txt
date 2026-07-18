@@ -29,9 +29,7 @@ if (ENABLE_LIBRI)
         sternheimer_kq.cpp
         sternheimer_periodic_solver.cpp
         sternheimer_rpa.cpp
-        sternheimer_supercell_perturbation.cpp
-        sternheimer_supercell_sector.cpp
-        sternheimer_wavefunction_diagnostic.cpp
+        sternheimer_siab_overlap.cpp
   )
 
   if(ENABLE_LCAO)
