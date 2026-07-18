@@ -29,6 +29,20 @@ struct ReferenceRow
     double frequency_weight;
     double norm;
     std::vector<std::complex<double>> q;
+    int frequency_index;
+};
+
+// The eight fields below are required-core v1; Task 4 may append deterministic optional provenance fields.
+struct Provenance
+{
+    std::string abacus_commit;
+    std::string auxiliary_basis_sha256;
+    std::vector<double> cell_bohr; ///< complete 3x3 row-major lattice vectors in Bohr
+    double ecut_ry;
+    std::string kernel;
+    std::string orbital_sha256;
+    std::string pseudopotential_sha256;
+    std::string spin_convention;
 };
 
 } // namespace sternheimer_siab

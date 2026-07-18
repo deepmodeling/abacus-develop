@@ -30,6 +30,7 @@ if (ENABLE_LIBRI)
         sternheimer_periodic_solver.cpp
         sternheimer_rpa.cpp
         sternheimer_siab_overlap.cpp
+        sternheimer_siab_writer.cpp
   )
 
   if(ENABLE_LCAO)

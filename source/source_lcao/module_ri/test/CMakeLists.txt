@@ -128,6 +128,11 @@ AddTest(
   SOURCES test_sternheimer_siab_overlap.cpp ../sternheimer_siab_overlap.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_siab_writer_test
+  LIBS parameter ${math_libs} base device io_input
+  SOURCES test_sternheimer_siab_writer.cpp ../sternheimer_siab_writer.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_siab_primitives_test
   LIBS parameter base ${math_libs} device planewave container psi
   SOURCES test_sternheimer_siab_primitives.cpp

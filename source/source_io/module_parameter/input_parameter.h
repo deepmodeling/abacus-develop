@@ -658,6 +658,7 @@ struct Input_para
     bool out_unshrinked_v = false; ///< whether to output the large Vq matrix in unshrinked auxiliary basis
     int out_librpa_reader_version = 0; ///< 0: legacy ABACUS LibRPA text files; 1: LibRPA reader-v1 binary files
     bool out_sternheimer_librpa = false; ///< whether to output Sternheimer chi0 files for LibRPA
+    bool out_sternheimer_siab = false; ///< whether to output Sternheimer first-order-wavefunction targets for SIAB
     int sternheimer_nfreq = 6; ///< number of minimax imaginary-frequency points for Sternheimer chi0 output
     int sternheimer_q_index = 0; ///< 1-based nonzero q index on the full k mesh; 0 keeps the Gamma molecular path
     std::string sternheimer_frequency_grid_file = ""; ///< optional fixed omega/weight grid for Sternheimer chi0 output
