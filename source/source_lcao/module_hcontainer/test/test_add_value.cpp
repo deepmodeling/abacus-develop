@@ -41,8 +41,11 @@ class AddValueTest : public ::testing::Test
     {
         auto* hc = new hamilt::HContainer<double>(&paraV);
         insert_all_pairs(hc);
-        for (auto& [i, j, vals] : fill)
+        for (auto& item : fill)
         {
+            int i = std::get<0>(item);
+            int j = std::get<1>(item);
+            const std::vector<double>& vals = std::get<2>(item);
             double* ptr = hc->find_matrix(i, j, 0, 0, 0)->get_pointer();
             for (int k = 0; k < (int)vals.size(); k++)
                 ptr[k] = vals[k];
