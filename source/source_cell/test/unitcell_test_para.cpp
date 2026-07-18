@@ -221,9 +221,11 @@ TEST_F(UcellTest, UpdatePosTaud_Vector3)
 }
 TEST_F(UcellTest, ReadPseudo)
 {
-    PARAM.input.pseudo_dir = pp_dir;
-    PARAM.input.out_element_info = true;
-    elecstate::read_pseudo(ofs, *ucell);
+    const std::string pseudo_dir = pp_dir;
+    const std::string global_out_dir = "./";
+    const bool out_element_info = true;
+    const std::string dft_functional = "default";
+    elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional);
     // check_structure will print some warning info
     // output nonlocal file
     if (GlobalV::MY_RANK == 0)

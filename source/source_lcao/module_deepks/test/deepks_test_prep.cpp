@@ -193,7 +193,11 @@ void test_deepks<T>::setup_cell()
         PARAM.inp.basis_type, PARAM.inp.orbital_dir, PARAM.inp.init_wfc,
         PARAM.inp.onsite_radius, PARAM.globalv.deepks_setorb, PARAM.inp.rpa,
         PARAM.inp.fixed_atoms, PARAM.inp.noncolin, PARAM.inp.calculation, PARAM.inp.esolver_type);
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
+    const std::string pseudo_dir = PARAM.inp.pseudo_dir;
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    const bool out_element_info = PARAM.inp.out_element_info;
+    const std::string dft_functional = PARAM.inp.dft_functional;
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional);
     this->nlocal = PARAM.globalv.nlocal;
     this->nbands = PARAM.inp.nbands;
     this->npol = PARAM.globalv.npol;

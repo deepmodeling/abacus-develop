@@ -30,7 +30,11 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleBase::timer::start("ESolver_GetS", "before_all_runners");
 
     // 1.1) read pseudopotentials
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
+    const std::string pseudo_dir = PARAM.inp.pseudo_dir;
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    const bool out_element_info = PARAM.inp.out_element_info;
+    const std::string dft_functional = PARAM.inp.dft_functional;
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional);
 
     // 1.2) symmetrize things
     if (ModuleSymmetry::Symmetry::symm_flag == 1)

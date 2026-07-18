@@ -39,7 +39,11 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
     //! 1) read pseudopotentials
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
+    const std::string pseudo_dir = PARAM.inp.pseudo_dir;
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    const bool out_element_info = PARAM.inp.out_element_info;
+    const std::string dft_functional = PARAM.inp.dft_functional;
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional);
 
     //! 2) setup pw_rho, pw_rhod, pw_big, sf, and read_pseudopotentials
     pw::setup_pwrho(ucell, PARAM.globalv.double_grid, this->pw_rho_flag, 

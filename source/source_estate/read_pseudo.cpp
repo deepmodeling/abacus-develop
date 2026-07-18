@@ -10,23 +10,29 @@
 #include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 
 namespace elecstate {
-void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
+void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
+                   const std::string& pseudo_dir,
+                   const std::string& global_out_dir,
+                   const bool out_element_info,
+                   const std::string& dft_functional) {
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " |                 #Read Pseudopotentials Files#                      |" << std::endl;
     ofs << " | ABACUS supports norm-conserving (NC) pseudopotentials for both     |" << std::endl;
-    ofs << " | plane wave basis and numerical atomic orbital basis sets.          |" << std::endl;
+    ofs << " | plane wave basis set and numerical atomic orbital basis set.       |" << std::endl;
     ofs << " | In addition, ABACUS supports ultrasoft pseudopotentials (USPP)     |" << std::endl;
     ofs << " | for plane wave basis set.                                          |" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     ofs << "\n";
 
-    const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    const std::string dft_functional = PARAM.inp.dft_functional;
-    read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs, ucell, global_out_dir, dft_functional);
+    const std::string pseudo_dir_ = pseudo_dir;
+    const std::string global_out_dir_ = global_out_dir;
+    const bool out_element_info_ = out_element_info;
+    const std::string dft_functional_ = dft_functional;
+    read_cell_pseudopots(pseudo_dir_, ofs, ucell, global_out_dir_, dft_functional_);
 
 	if (GlobalV::MY_RANK == 0) 
 	{
@@ -39,17 +45,17 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
             }
         }
 
-		if (PARAM.inp.out_element_info) 
+		if (out_element_info_) 
 		{
 			for (int i = 0; i < ucell.ntype; i++) 
 			{
-				ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label, PARAM.globalv.global_out_dir);
+				ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label, global_out_dir_);
             }
 			for (int it = 0; it < ucell.ntype; it++) 
 			{
 				Atom* atom = &ucell.atoms[it];
                 std::stringstream ss;
-                ss << PARAM.globalv.global_out_dir << atom->label << "/"
+                ss << global_out_dir_ << atom->label << "/"
                    << atom->label << ".NONLOCAL";
                 std::ofstream ofs(ss.str().c_str());
 

@@ -394,22 +394,26 @@ TEST_F(UcellDeathTest, CheckStructure) {
 }
 
 TEST_F(UcellDeathTest, ReadPseudoWarning1) {
-    PARAM.input.pseudo_dir = pp_dir;
-    PARAM.input.out_element_info = true;
+    const std::string pseudo_dir = pp_dir;
+    const std::string global_out_dir = "./";
+    const bool out_element_info = true;
+    const std::string dft_functional = "default";
     ucell->pseudo_fn[1] = "H_sr_lda.upf";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::read_pseudo(ofs, *ucell), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
                 testing::HasSubstr("All DFT functional must consistent."));
 }
 
 TEST_F(UcellDeathTest, ReadPseudoWarning2) {
-    PARAM.input.pseudo_dir = pp_dir;
-    PARAM.input.out_element_info = true;
+    const std::string pseudo_dir = pp_dir;
+    const std::string global_out_dir = "./";
+    const bool out_element_info = true;
+    const std::string dft_functional = "default";
     ucell->pseudo_fn[0] = "Al_ONCV_PBE-1.0.upf";
     testing::internal::CaptureStdout();
-    EXPECT_NO_THROW(elecstate::read_pseudo(ofs, *ucell));
+    EXPECT_NO_THROW(elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional));
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
         output,
