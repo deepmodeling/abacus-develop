@@ -1,9 +1,18 @@
 #include "source_lcao/module_ri/sternheimer_channel_resources.h"
 
 #include <algorithm>
+#include <cctype>
 #include <complex>
+#include <cstdlib>
+#include <fstream>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
+#include <string>
+
+#ifdef __MPI
+#include <mpi.h>
+#endif
 
 namespace ModuleRI
 {
@@ -35,6 +44,167 @@ std::uint64_t checked_remaining(const std::uint64_t target, const std::uint64_t 
     }
     return target - current;
 }
+
+std::string trim_copy(const std::string& text)
+{
+    std::size_t first = 0;
+    while (first < text.size() && std::isspace(static_cast<unsigned char>(text[first])))
+    {
+        ++first;
+    }
+    std::size_t last = text.size();
+    while (last > first && std::isspace(static_cast<unsigned char>(text[last - 1])))
+    {
+        --last;
+    }
+    return text.substr(first, last - first);
+}
+
+detail::SternheimerOptionalValue<std::uint64_t> parse_unsigned_decimal(const std::string& text)
+{
+    if (text.empty())
+    {
+        return {};
+    }
+    std::uint64_t value = 0;
+    for (const char character : text)
+    {
+        if (!std::isdigit(static_cast<unsigned char>(character)))
+        {
+            return {};
+        }
+        const std::uint64_t digit = static_cast<std::uint64_t>(character - '0');
+        if (value > (std::numeric_limits<std::uint64_t>::max() - digit) / 10)
+        {
+            return {};
+        }
+        value = value * 10 + digit;
+    }
+    return value;
+}
+
+detail::SternheimerOptionalValue<std::string> read_text_file(const std::string& path)
+{
+    std::ifstream input(path);
+    if (!input)
+    {
+        return {};
+    }
+    std::ostringstream contents;
+    contents << input.rdbuf();
+    return contents.str();
+}
+
+std::string cgroup_file_path(const std::string& mount, const std::string& relative, const std::string& filename)
+{
+    std::string path = mount;
+    if (!relative.empty() && relative != "/")
+    {
+        if (relative.front() != '/')
+        {
+            path += '/';
+        }
+        path += relative;
+    }
+    path += '/';
+    path += filename;
+    return path;
+}
+
+void read_live_memory_candidates(detail::SternheimerMemoryCandidates& candidates)
+{
+    const detail::SternheimerOptionalValue<std::string> proc_cgroup = read_text_file("/proc/self/cgroup");
+    if (proc_cgroup)
+    {
+        const detail::SternheimerOptionalValue<std::string> v2_path
+            = detail::parse_sternheimer_cgroup_v2_path(*proc_cgroup);
+        if (v2_path)
+        {
+            const detail::SternheimerOptionalValue<std::string> limit
+                = read_text_file(cgroup_file_path("/sys/fs/cgroup", *v2_path, "memory.max"));
+            const detail::SternheimerOptionalValue<std::string> current
+                = read_text_file(cgroup_file_path("/sys/fs/cgroup", *v2_path, "memory.current"));
+            if (limit)
+            {
+                candidates.cgroup_limit_bytes = detail::parse_sternheimer_memory_bytes(*limit);
+            }
+            if (current)
+            {
+                candidates.cgroup_current_bytes = detail::parse_sternheimer_memory_bytes(*current);
+            }
+            candidates.cgroup_source = "cgroup_v2";
+        }
+        else
+        {
+            const detail::SternheimerOptionalValue<std::string> v1_path
+                = detail::parse_sternheimer_cgroup_v1_memory_path(*proc_cgroup);
+            if (v1_path)
+            {
+                const std::string mount = "/sys/fs/cgroup/memory";
+                const detail::SternheimerOptionalValue<std::string> limit
+                    = read_text_file(cgroup_file_path(mount, *v1_path, "memory.limit_in_bytes"));
+                const detail::SternheimerOptionalValue<std::string> current
+                    = read_text_file(cgroup_file_path(mount, *v1_path, "memory.usage_in_bytes"));
+                if (limit)
+                {
+                    candidates.cgroup_limit_bytes = detail::parse_sternheimer_memory_bytes(*limit);
+                }
+                if (current)
+                {
+                    candidates.cgroup_current_bytes = detail::parse_sternheimer_memory_bytes(*current);
+                }
+                candidates.cgroup_source = "cgroup_v1";
+            }
+        }
+    }
+
+    if (const char* const slurm_memory = std::getenv("SLURM_MEM_PER_NODE"))
+    {
+        candidates.slurm_limit_bytes = detail::parse_sternheimer_slurm_mem_per_node(slurm_memory);
+    }
+    const detail::SternheimerOptionalValue<std::string> meminfo = read_text_file("/proc/meminfo");
+    if (meminfo)
+    {
+        candidates.mem_available_bytes = detail::parse_sternheimer_kib_field(*meminfo, "MemAvailable");
+        candidates.physical_memory_bytes = detail::parse_sternheimer_kib_field(*meminfo, "MemTotal");
+    }
+    const detail::SternheimerOptionalValue<std::string> status = read_text_file("/proc/self/status");
+    if (status)
+    {
+        candidates.process_rss_bytes = detail::parse_sternheimer_kib_field(*status, "VmRSS");
+    }
+}
+
+#ifdef __MPI
+detail::SternheimerOptionalValue<std::uint64_t> allreduce_optional_min(
+    const detail::SternheimerOptionalValue<std::uint64_t>& value,
+    MPI_Comm communicator)
+{
+    const unsigned long long local
+        = value ? static_cast<unsigned long long>(*value) : std::numeric_limits<unsigned long long>::max();
+    unsigned long long reduced = 0;
+    MPI_Allreduce(&local, &reduced, 1, MPI_UNSIGNED_LONG_LONG, MPI_MIN, communicator);
+    if (reduced == std::numeric_limits<unsigned long long>::max())
+    {
+        return {};
+    }
+    return static_cast<std::uint64_t>(reduced);
+}
+
+detail::SternheimerOptionalValue<std::uint64_t> allreduce_optional_max(
+    const detail::SternheimerOptionalValue<std::uint64_t>& value,
+    MPI_Comm communicator)
+{
+    const unsigned long long local = value ? static_cast<unsigned long long>(*value) : 0ULL;
+    unsigned long long reduced = 0;
+    MPI_Allreduce(&local, &reduced, 1, MPI_UNSIGNED_LONG_LONG, MPI_MAX, communicator);
+    if (reduced == 0)
+    {
+        return {};
+    }
+    return static_cast<std::uint64_t>(reduced);
+}
+#endif
 
 } // namespace
 
@@ -120,5 +290,298 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
     plan.effective_workers = user_cap > 0 ? std::min(plan.automatic_workers, user_cap) : plan.automatic_workers;
     return plan;
 }
+
+std::string sternheimer_memory_accounting_mode_name(const SternheimerMemoryAccountingMode mode)
+{
+    switch (mode)
+    {
+        case SternheimerMemoryAccountingMode::node_aggregate:
+            return "node_aggregate";
+        case SternheimerMemoryAccountingMode::per_rank:
+            return "per_rank";
+        case SternheimerMemoryAccountingMode::available:
+            return "available";
+        case SternheimerMemoryAccountingMode::fallback_one:
+            return "fallback_one";
+    }
+    throw std::invalid_argument("Unknown Sternheimer memory accounting mode.");
+}
+
+SternheimerMemorySnapshot detect_sternheimer_memory_snapshot()
+{
+    detail::SternheimerMemoryCandidates candidates;
+    int local_mpi_ranks = 1;
+#ifdef __MPI
+    MPI_Comm local_communicator = MPI_COMM_NULL;
+    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &local_communicator);
+    MPI_Comm_size(local_communicator, &local_mpi_ranks);
+    MPI_Barrier(local_communicator);
+    read_live_memory_candidates(candidates);
+    candidates.cgroup_limit_bytes = allreduce_optional_min(candidates.cgroup_limit_bytes, local_communicator);
+    candidates.cgroup_current_bytes = allreduce_optional_max(candidates.cgroup_current_bytes, local_communicator);
+    candidates.slurm_limit_bytes = allreduce_optional_min(candidates.slurm_limit_bytes, local_communicator);
+    candidates.mem_available_bytes = allreduce_optional_min(candidates.mem_available_bytes, local_communicator);
+    candidates.process_rss_bytes = allreduce_optional_max(candidates.process_rss_bytes, local_communicator);
+    candidates.physical_memory_bytes = allreduce_optional_min(candidates.physical_memory_bytes, local_communicator);
+    MPI_Comm_free(&local_communicator);
+#else
+    read_live_memory_candidates(candidates);
+#endif
+    return detail::select_sternheimer_memory_snapshot(candidates, local_mpi_ranks);
+}
+
+namespace detail
+{
+
+SternheimerOptionalValue<std::uint64_t> parse_sternheimer_memory_bytes(const std::string& input)
+{
+    std::string text = trim_copy(input);
+    if (text.empty() || text == "max")
+    {
+        return {};
+    }
+
+    std::uint64_t multiplier = 1;
+    const char suffix = text.back();
+    if (!std::isdigit(static_cast<unsigned char>(suffix)))
+    {
+        switch (static_cast<char>(std::toupper(static_cast<unsigned char>(suffix))))
+        {
+            case 'K':
+                multiplier = 1024ULL;
+                break;
+            case 'M':
+                multiplier = 1024ULL * 1024ULL;
+                break;
+            case 'G':
+                multiplier = 1024ULL * 1024ULL * 1024ULL;
+                break;
+            default:
+                return {};
+        }
+        text.pop_back();
+    }
+    const SternheimerOptionalValue<std::uint64_t> value = parse_unsigned_decimal(text);
+    if (!value)
+    {
+        return {};
+    }
+    try
+    {
+        return checked_multiply(*value, multiplier);
+    }
+    catch (const std::overflow_error&)
+    {
+        return {};
+    }
+}
+
+SternheimerOptionalValue<std::uint64_t> parse_sternheimer_slurm_mem_per_node(const std::string& input)
+{
+    const SternheimerOptionalValue<std::uint64_t> mebibytes = parse_unsigned_decimal(trim_copy(input));
+    if (!mebibytes)
+    {
+        return {};
+    }
+    try
+    {
+        return checked_multiply(*mebibytes, 1024ULL * 1024ULL);
+    }
+    catch (const std::overflow_error&)
+    {
+        return {};
+    }
+}
+
+SternheimerOptionalValue<std::uint64_t> parse_sternheimer_kib_field(const std::string& text,
+                                                                    const std::string& key)
+{
+    std::size_t first = 0;
+    while (first <= text.size())
+    {
+        const std::size_t end = text.find('\n', first);
+        const std::string line
+            = text.substr(first, end == std::string::npos ? text.size() - first : end - first);
+        const std::size_t colon = line.find(':');
+        if (colon != std::string::npos && trim_copy(line.substr(0, colon)) == key)
+        {
+            std::string value = trim_copy(line.substr(colon + 1));
+            const std::size_t space = value.find_first_of(" \t");
+            const std::string number = value.substr(0, space);
+            value = space == std::string::npos ? std::string{} : trim_copy(value.substr(space));
+            if (value != "kB")
+            {
+                return {};
+            }
+            const SternheimerOptionalValue<std::uint64_t> kibibytes = parse_unsigned_decimal(number);
+            if (!kibibytes)
+            {
+                return {};
+            }
+            try
+            {
+                return checked_multiply(*kibibytes, 1024ULL);
+            }
+            catch (const std::overflow_error&)
+            {
+                return {};
+            }
+        }
+        if (end == std::string::npos)
+        {
+            break;
+        }
+        first = end + 1;
+    }
+    return {};
+}
+
+SternheimerOptionalValue<std::string> parse_sternheimer_cgroup_v2_path(const std::string& text)
+{
+    std::size_t first = 0;
+    while (first <= text.size())
+    {
+        const std::size_t end = text.find('\n', first);
+        const std::string line
+            = text.substr(first, end == std::string::npos ? text.size() - first : end - first);
+        if (line.compare(0, 3, "0::") == 0 && line.size() > 3)
+        {
+            return std::string(line.substr(3));
+        }
+        if (end == std::string::npos)
+        {
+            break;
+        }
+        first = end + 1;
+    }
+    return {};
+}
+
+SternheimerOptionalValue<std::string> parse_sternheimer_cgroup_v1_memory_path(const std::string& text)
+{
+    std::size_t first = 0;
+    while (first <= text.size())
+    {
+        const std::size_t end = text.find('\n', first);
+        const std::string line
+            = text.substr(first, end == std::string::npos ? text.size() - first : end - first);
+        const std::size_t first_colon = line.find(':');
+        const std::size_t second_colon
+            = first_colon == std::string::npos ? std::string::npos : line.find(':', first_colon + 1);
+        if (second_colon != std::string::npos)
+        {
+            const std::string controllers = line.substr(first_colon + 1, second_colon - first_colon - 1);
+            std::size_t controller_first = 0;
+            while (controller_first <= controllers.size())
+            {
+                const std::size_t comma = controllers.find(',', controller_first);
+                const std::string controller
+                    = controllers.substr(controller_first,
+                                         comma == std::string::npos ? controllers.size() - controller_first
+                                                                    : comma - controller_first);
+                if (controller == "memory" && second_colon + 1 < line.size())
+                {
+                    return std::string(line.substr(second_colon + 1));
+                }
+                if (comma == std::string::npos)
+                {
+                    break;
+                }
+                controller_first = comma + 1;
+            }
+        }
+        if (end == std::string::npos)
+        {
+            break;
+        }
+        first = end + 1;
+    }
+    return {};
+}
+
+SternheimerMemorySnapshot select_sternheimer_memory_snapshot(const SternheimerMemoryCandidates& candidates,
+                                                              const int local_mpi_ranks)
+{
+    if (local_mpi_ranks <= 0)
+    {
+        throw std::invalid_argument("Sternheimer memory detection requires a positive local MPI rank count.");
+    }
+
+    SternheimerOptionalValue<std::uint64_t> cgroup_limit = candidates.cgroup_limit_bytes;
+    if (cgroup_limit)
+    {
+        const bool huge_without_physical = !candidates.physical_memory_bytes && *cgroup_limit >= (1ULL << 60);
+        const bool huge_relative_to_physical
+            = candidates.physical_memory_bytes && *candidates.physical_memory_bytes > 0
+              && *cgroup_limit / *candidates.physical_memory_bytes >= 16;
+        if (huge_without_physical || huge_relative_to_physical)
+        {
+            cgroup_limit.reset();
+        }
+    }
+
+    SternheimerOptionalValue<std::uint64_t> enforced_limit;
+    if (cgroup_limit)
+    {
+        enforced_limit = cgroup_limit;
+    }
+    if (candidates.slurm_limit_bytes)
+    {
+        enforced_limit = enforced_limit ? std::min(*enforced_limit, *candidates.slurm_limit_bytes)
+                                        : *candidates.slurm_limit_bytes;
+    }
+
+    SternheimerMemorySnapshot snapshot;
+    snapshot.local_mpi_ranks = local_mpi_ranks;
+    if (enforced_limit && candidates.cgroup_current_bytes)
+    {
+        snapshot.mode = SternheimerMemoryAccountingMode::node_aggregate;
+        snapshot.limit_bytes = *enforced_limit;
+        snapshot.current_bytes = *candidates.cgroup_current_bytes;
+        if (cgroup_limit && candidates.slurm_limit_bytes)
+        {
+            snapshot.source = candidates.cgroup_source + "+slurm";
+        }
+        else if (!candidates.cgroup_source.empty())
+        {
+            snapshot.source = candidates.cgroup_source;
+        }
+        else
+        {
+            snapshot.source = "cgroup_current+slurm";
+        }
+        return snapshot;
+    }
+    if (enforced_limit && candidates.process_rss_bytes)
+    {
+        snapshot.mode = SternheimerMemoryAccountingMode::per_rank;
+        snapshot.limit_bytes = *enforced_limit;
+        snapshot.current_bytes = *candidates.process_rss_bytes;
+        if (cgroup_limit && candidates.slurm_limit_bytes)
+        {
+            snapshot.source = candidates.cgroup_source + "+slurm+proc_status";
+        }
+        else if (cgroup_limit)
+        {
+            snapshot.source = candidates.cgroup_source + "+proc_status";
+        }
+        else
+        {
+            snapshot.source = "slurm+proc_status";
+        }
+        return snapshot;
+    }
+    if (candidates.mem_available_bytes)
+    {
+        snapshot.mode = SternheimerMemoryAccountingMode::available;
+        snapshot.limit_bytes = *candidates.mem_available_bytes;
+        snapshot.current_bytes = 0;
+        snapshot.source = "proc_meminfo";
+        return snapshot;
+    }
+    return snapshot;
+}
+
+} // namespace detail
 
 } // namespace ModuleRI

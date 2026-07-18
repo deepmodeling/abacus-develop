@@ -113,3 +113,92 @@ TEST(SternheimerChannelResources, RejectsInvalidInputsAndOverflow)
     EXPECT_THROW(ModuleRI::estimate_sternheimer_channel_worker_bytes(std::numeric_limits<std::size_t>::max()),
                  std::overflow_error);
 }
+
+TEST(SternheimerChannelResources, ParsesCgroupSlurmAndProcMemoryUnits)
+{
+    using ModuleRI::detail::parse_sternheimer_kib_field;
+    using ModuleRI::detail::parse_sternheimer_memory_bytes;
+    using ModuleRI::detail::parse_sternheimer_slurm_mem_per_node;
+
+    EXPECT_EQ(parse_sternheimer_memory_bytes("4096"), 4096U);
+    EXPECT_EQ(parse_sternheimer_memory_bytes("110610M"), 110610ULL * 1024ULL * 1024ULL);
+    EXPECT_EQ(parse_sternheimer_slurm_mem_per_node("110610"), 110610ULL * 1024ULL * 1024ULL);
+    EXPECT_FALSE(parse_sternheimer_memory_bytes("max").has_value());
+    EXPECT_FALSE(parse_sternheimer_memory_bytes("12MB").has_value());
+    EXPECT_EQ(parse_sternheimer_kib_field("MemTotal: 4096 kB\nMemAvailable: 2048 kB\n",
+                                         "MemAvailable"),
+              2048ULL * 1024ULL);
+    EXPECT_EQ(parse_sternheimer_kib_field("VmPeak:\t2048 kB\nVmRSS:\t1024 kB\n", "VmRSS"),
+              1024ULL * 1024ULL);
+    EXPECT_FALSE(parse_sternheimer_kib_field("VmRSS: invalid kB\n", "VmRSS").has_value());
+}
+
+TEST(SternheimerChannelResources, ParsesCgroupMembershipPaths)
+{
+    EXPECT_EQ(ModuleRI::detail::parse_sternheimer_cgroup_v2_path("0::/slurm/job_7/step_0\n"),
+              "/slurm/job_7/step_0");
+    EXPECT_EQ(ModuleRI::detail::parse_sternheimer_cgroup_v1_memory_path(
+                  "4:cpu:/slurm/job_7\n5:memory:/slurm/job_7/step_0\n"),
+              "/slurm/job_7/step_0");
+    EXPECT_FALSE(ModuleRI::detail::parse_sternheimer_cgroup_v2_path("5:memory:/job\n").has_value());
+}
+
+TEST(SternheimerChannelResources, SelectsSmallestEnforcedLimitWithCgroupUsage)
+{
+    ModuleRI::detail::SternheimerMemoryCandidates values;
+    values.cgroup_limit_bytes = 100000;
+    values.cgroup_current_bytes = 20000;
+    values.slurm_limit_bytes = 90000;
+    values.cgroup_source = "cgroup_v2";
+    const auto result = ModuleRI::detail::select_sternheimer_memory_snapshot(values, 2);
+    EXPECT_EQ(result.mode, ModuleRI::SternheimerMemoryAccountingMode::node_aggregate);
+    EXPECT_EQ(result.limit_bytes, 90000U);
+    EXPECT_EQ(result.current_bytes, 20000U);
+    EXPECT_EQ(result.local_mpi_ranks, 2);
+    EXPECT_EQ(result.source, "cgroup_v2+slurm");
+}
+
+TEST(SternheimerChannelResources, UsesPerRankRssWithSlurmLimit)
+{
+    ModuleRI::detail::SternheimerMemoryCandidates values;
+    values.slurm_limit_bytes = 100000;
+    values.process_rss_bytes = 10000;
+    const auto result = ModuleRI::detail::select_sternheimer_memory_snapshot(values, 2);
+    EXPECT_EQ(result.mode, ModuleRI::SternheimerMemoryAccountingMode::per_rank);
+    EXPECT_EQ(result.limit_bytes, 100000U);
+    EXPECT_EQ(result.current_bytes, 10000U);
+    EXPECT_EQ(result.source, "slurm+proc_status");
+}
+
+TEST(SternheimerChannelResources, UsesAvailableMemoryWithoutSubtractingRssAgain)
+{
+    ModuleRI::detail::SternheimerMemoryCandidates values;
+    values.mem_available_bytes = 80000;
+    values.process_rss_bytes = 10000;
+    const auto result = ModuleRI::detail::select_sternheimer_memory_snapshot(values, 1);
+    EXPECT_EQ(result.mode, ModuleRI::SternheimerMemoryAccountingMode::available);
+    EXPECT_EQ(result.limit_bytes, 80000U);
+    EXPECT_EQ(result.current_bytes, 0U);
+    EXPECT_EQ(result.source, "proc_meminfo");
+}
+
+TEST(SternheimerChannelResources, TreatsV1PhysicalMemorySentinelAsUnlimited)
+{
+    ModuleRI::detail::SternheimerMemoryCandidates values;
+    values.cgroup_limit_bytes = 0x7ffffffffffff000ULL;
+    values.physical_memory_bytes = 128ULL << 30;
+    values.mem_available_bytes = 64ULL << 30;
+    values.cgroup_source = "cgroup_v1";
+    const auto result = ModuleRI::detail::select_sternheimer_memory_snapshot(values, 1);
+    EXPECT_EQ(result.mode, ModuleRI::SternheimerMemoryAccountingMode::available);
+    EXPECT_EQ(result.limit_bytes, 64ULL << 30);
+}
+
+TEST(SternheimerChannelResources, FallsBackWhenNoMemorySourceIsTrustworthy)
+{
+    const ModuleRI::detail::SternheimerMemoryCandidates values{};
+    const auto result = ModuleRI::detail::select_sternheimer_memory_snapshot(values, 3);
+    EXPECT_EQ(result.mode, ModuleRI::SternheimerMemoryAccountingMode::fallback_one);
+    EXPECT_EQ(result.local_mpi_ranks, 3);
+    EXPECT_EQ(result.source, "unavailable");
+}

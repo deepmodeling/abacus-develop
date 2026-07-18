@@ -6,7 +6,7 @@
 
 **Architecture:** Add a focused resource module with a pure worker planner and a Linux runtime detector. The detector reports one of four explicit accounting modes; the planner performs checked byte arithmetic and applies the 75 percent memory target. The production Sternheimer path measures resources after each spin's fixed subspace is ready, logs the complete decision, and passes only the positive effective count to the existing OpenMP scheduler.
 
-**Tech Stack:** C++17, OpenMP, MPI-3 shared-memory communicators, Linux cgroup v1/v2 and `/proc`, GoogleTest, ABACUS Delta-ST, Slurm on `df_dcu`.
+**Tech Stack:** C++14, OpenMP, MPI-3 shared-memory communicators, Linux cgroup v1/v2 and `/proc`, GoogleTest, ABACUS Delta-ST, Slurm on `df_dcu`.
 
 ---
 
@@ -225,20 +225,21 @@ Add these parser declarations under `ModuleRI::detail`:
 ```cpp
 struct SternheimerMemoryCandidates
 {
-    std::optional<std::uint64_t> cgroup_limit_bytes;
-    std::optional<std::uint64_t> cgroup_current_bytes;
-    std::optional<std::uint64_t> slurm_limit_bytes;
-    std::optional<std::uint64_t> mem_available_bytes;
-    std::optional<std::uint64_t> process_rss_bytes;
-    std::optional<std::uint64_t> physical_memory_bytes;
+    SternheimerOptionalValue<std::uint64_t> cgroup_limit_bytes;
+    SternheimerOptionalValue<std::uint64_t> cgroup_current_bytes;
+    SternheimerOptionalValue<std::uint64_t> slurm_limit_bytes;
+    SternheimerOptionalValue<std::uint64_t> mem_available_bytes;
+    SternheimerOptionalValue<std::uint64_t> process_rss_bytes;
+    SternheimerOptionalValue<std::uint64_t> physical_memory_bytes;
     std::string cgroup_source;
 };
 
-std::optional<std::uint64_t> parse_sternheimer_memory_bytes(std::string_view text);
-std::optional<std::uint64_t> parse_sternheimer_slurm_mem_per_node(std::string_view text);
-std::optional<std::uint64_t> parse_sternheimer_kib_field(std::string_view text, std::string_view key);
-std::optional<std::string> parse_sternheimer_cgroup_v2_path(std::string_view text);
-std::optional<std::string> parse_sternheimer_cgroup_v1_memory_path(std::string_view text);
+SternheimerOptionalValue<std::uint64_t> parse_sternheimer_memory_bytes(const std::string& text);
+SternheimerOptionalValue<std::uint64_t> parse_sternheimer_slurm_mem_per_node(const std::string& text);
+SternheimerOptionalValue<std::uint64_t> parse_sternheimer_kib_field(const std::string& text,
+                                                                    const std::string& key);
+SternheimerOptionalValue<std::string> parse_sternheimer_cgroup_v2_path(const std::string& text);
+SternheimerOptionalValue<std::string> parse_sternheimer_cgroup_v1_memory_path(const std::string& text);
 SternheimerMemorySnapshot select_sternheimer_memory_snapshot(
     const SternheimerMemoryCandidates& candidates,
     int local_mpi_ranks);

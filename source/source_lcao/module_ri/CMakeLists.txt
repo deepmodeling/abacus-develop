@@ -19,6 +19,7 @@ if (ENABLE_LIBRI)
         sternheimer_abacus_fd_adapter.cpp
         sternheimer_abacus_fd_nonlocal.cpp
         sternheimer_abacus_fd_smoke.cpp
+        sternheimer_channel_resources.cpp
         sternheimer_dft_zero_order.cpp
         sternheimer_delta.cpp
         sternheimer_fd_hamiltonian.cpp
