@@ -1,7 +1,7 @@
 #include "read_orb.h"
 #include "source_base/formatter.h"
 
-namespace elecstate {
+namespace unitcell {
     bool read_orb_file(int it, std::string &orb_file, std::ofstream &ofs_running, Atom* atom)
     {
     // the maximum L is 9 like cc-pV9Z, according to the 
@@ -14,7 +14,7 @@ namespace elecstate {
     {
         std::cout << " Element index " << it+1 << std::endl;
         std::cout << " orbital file: " << orb_file << std::endl;
-        ModuleBase::WARNING("elecstate::read_orb_file", 
+        ModuleBase::WARNING("unitcell::read_orb_file", 
                                 "cannot open the ORBITAL file (NAO basis sets)");
         return false;
     }
@@ -55,7 +55,7 @@ namespace elecstate {
             }
             if (!valid)
             {
-                ModuleBase::WARNING("elecstate::read_orb_file", 
+                ModuleBase::WARNING("unitcell::read_orb_file", 
                                          "ABACUS does not support NAO with L > 9, "
                                          "or an invalid orbital label is found in the ORBITAL file.");
                 return false;
@@ -65,7 +65,7 @@ namespace elecstate {
     ifs.close();
     if(!atom->nw)
     {
-		ModuleBase::WARNING("elecstate::read_orb_file","get nw = 0, check the ORBITAL file");
+		ModuleBase::WARNING("unitcell::read_orb_file","get nw = 0, check the ORBITAL file");
 		return false;
     }
     return true;

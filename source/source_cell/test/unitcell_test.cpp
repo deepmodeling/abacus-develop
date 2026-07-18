@@ -4,7 +4,7 @@
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_estate/cal_ux.h"
-#include "source_estate/read_orb.h"
+#include "source_cell/read_orb.h"
 #include "source_estate/read_pseudo.h"
 #include "source_cell/read_stru.h"
 #include "source_cell/print_cell.h"
@@ -1066,7 +1066,7 @@ TEST_F(UcellTest, ReadOrbFile)
     std::string orb_file = "./support/C.orb";
     std::ofstream ofs_running;
     ofs_running.open("tmp_readorbfile");
-    bool result = elecstate::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
+    bool result = unitcell::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
     ofs_running << " result=" << result << std::endl;
     EXPECT_TRUE(result);
     ofs_running.close();
@@ -1809,7 +1809,7 @@ TEST_F(UcellTest, ReadOrbFileWarning)
     std::ofstream ofs_running;
     ofs_running.open("tmp_readorbfilewarning");
     testing::internal::CaptureStdout();
-    bool result = elecstate::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
+    bool result = unitcell::read_orb_file(0, orb_file, ofs_running, &(ucell->atoms[0]));
     output = testing::internal::GetCapturedStdout();
     ofs_running << output << std::endl;
     EXPECT_FALSE(result);
