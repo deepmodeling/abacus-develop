@@ -55,6 +55,48 @@ TEST(SternheimerChannelParallel, ExecutesConcurrentlyAndReturnsChannelOrder)
 #endif
 }
 
+TEST(SternheimerChannelParallel, HonorsExplicitMaximumWorkerCount)
+{
+#ifdef _OPENMP
+    const int previous_threads = omp_get_max_threads();
+    const int previous_dynamic = omp_get_dynamic();
+    omp_set_dynamic(0);
+    omp_set_num_threads(4);
+#endif
+
+    std::atomic<int> active_workers{0};
+    std::atomic<int> peak_workers{0};
+    const std::vector<int> results
+        = ModuleRI::run_sternheimer_channel_tasks<int>(
+            32,
+            [&active_workers, &peak_workers](const int channel_index) {
+                const int active = active_workers.fetch_add(1) + 1;
+                int observed_peak = peak_workers.load();
+                while (active > observed_peak && !peak_workers.compare_exchange_weak(observed_peak, active))
+                {
+                }
+                std::this_thread::sleep_for(std::chrono::milliseconds(2));
+                active_workers.fetch_sub(1);
+                return channel_index;
+            },
+            2);
+
+#ifdef _OPENMP
+    omp_set_num_threads(previous_threads);
+    omp_set_dynamic(previous_dynamic);
+#endif
+    ASSERT_EQ(results.size(), 32U);
+    for (int channel_index = 0; channel_index != 32; ++channel_index)
+    {
+        EXPECT_EQ(results[static_cast<std::size_t>(channel_index)], channel_index);
+    }
+#ifdef _OPENMP
+    EXPECT_EQ(peak_workers.load(), 2);
+#else
+    EXPECT_EQ(peak_workers.load(), 1);
+#endif
+}
+
 TEST(SternheimerChannelParallel, RethrowsFirstIndexedExceptionAfterAllTasksFinish)
 {
     std::atomic<int> completed_tasks{0};
@@ -77,6 +119,8 @@ TEST(SternheimerChannelParallel, RethrowsFirstIndexedExceptionAfterAllTasksFinis
     EXPECT_EQ(completed_tasks.load(), 16);
 
     EXPECT_THROW(ModuleRI::run_sternheimer_channel_tasks<int>(-1, [](const int) { return 0; }), std::invalid_argument);
+    EXPECT_THROW(ModuleRI::run_sternheimer_channel_tasks<int>(1, [](const int) { return 0; }, -1),
+                 std::invalid_argument);
 }
 
 TEST(SternheimerABACUSSTSmoke, FormatsLinearResponseReport)

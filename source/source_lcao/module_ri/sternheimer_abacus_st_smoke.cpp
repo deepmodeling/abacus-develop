@@ -61,14 +61,7 @@ constexpr const char* kCCPRmeshTimesEnv = "ABACUS_STERNHEIMER_FD_ST_CCP_RMESH_TI
 constexpr const char* kOrbitalDirEnv = "ABACUS_STERNHEIMER_FD_ST_ORBITAL_DIR";
 constexpr const char* kOrbitalFilesEnv = "ABACUS_STERNHEIMER_FD_ST_ORBITAL_FILES";
 constexpr const char* kFrequencyRankShiftEnv = "ABACUS_STERNHEIMER_FD_ST_FREQ_RANK_SHIFT";
-constexpr const char* kDeltaComponentDiagnosticEnv = "ABACUS_STERNHEIMER_DELTA_COMPONENT_DIAG";
-constexpr const char* kLCAOSOSDiagnosticEnv = "ABACUS_STERNHEIMER_LCAO_SOS_DIAG";
-constexpr const char* kKResolvedDiagnosticEnv = "ABACUS_STERNHEIMER_KRESOLVED_DIAG";
-constexpr const char* kWavefunctionDiagnosticEnv = "ABACUS_STERNHEIMER_WAVEFUNCTION_DIAGNOSTIC";
-constexpr const char* kSupercellTranslationSumEnv = "ABACUS_STERNHEIMER_SUPERCELL_TRANSLATION_SUM";
-constexpr const char* kSupercellFullResponseEnv = "ABACUS_STERNHEIMER_SUPERCELL_FULL_RESPONSE";
-constexpr const char* kSupercellKPointGroupsEnv = "ABACUS_STERNHEIMER_SUPERCELL_KPOINT_GROUPS";
-constexpr const char* kDeltaABlockModeEnv = "ABACUS_STERNHEIMER_DELTA_A_BLOCK";
+constexpr const char* kChannelMaxWorkersEnv = "ABACUS_STERNHEIMER_CHANNEL_MAX_WORKERS";
 constexpr double kHartreeToRydberg = 2.0;
 
 std::string lower_string(std::string value)
@@ -3722,6 +3715,11 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
         const int channel_threads = positive_int_from_env(kChannelThreadsEnv, 0);
         const int nfreq = PARAM.inp.sternheimer_nfreq;
+        const int channel_max_workers = int_from_env(kChannelMaxWorkersEnv, 0);
+        if (channel_max_workers < 0)
+        {
+            throw std::invalid_argument(std::string("Invalid non-negative integer in ") + kChannelMaxWorkersEnv + ".");
+        }
         const int default_frequency_rank_shift = use_frequency_mpi && GlobalV::NPROC > 1 ? 1 : 0;
         const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
         const std::string frequency_grid_file = PARAM.inp.sternheimer_frequency_grid_file;
@@ -3816,7 +3814,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                    nullptr,
                                    -1.0,
                                    elapsed_seconds_since(chi0_start_time),
-                                   "num_channels=" + std::to_string(num_channels));
+                                   "num_channels=" + std::to_string(num_channels)
+                                       + " max_workers=" + std::to_string(channel_max_workers));
         if (GlobalV::MY_RANK == 0)
         {
             write_abfs_channel_diagnostic("STERNHEIMER_ABFS_CHANNELS.dat", channels);
@@ -4026,6 +4025,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             }
 
             SternheimerDeltaSubspace delta_subspace;
+            SternheimerDeltaFixedSubspace delta_fixed_subspace;
             if (use_delta_sternheimer)
             {
                 append_chi0_progress_event("delta_subspace_start",
@@ -4077,6 +4077,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                 {
                     throw std::runtime_error("Sternheimer delta mode produced no fixed virtual states.");
                 }
+                delta_fixed_subspace
+                    = build_delta_sternheimer_fixed_subspace(occupied_projector, delta_subspace.virtual_states);
                 append_chi0_progress_event("delta_subspace_ready",
                                            0,
                                            -1,
@@ -4118,7 +4120,9 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                         double equation_residual_norm = 0.0;
                     };
                     const std::vector<ChannelEquationResult> channel_results
-                        = run_sternheimer_channel_tasks<ChannelEquationResult>(num_channels, [&](const int ichannel) {
+                        = run_sternheimer_channel_tasks<ChannelEquationResult>(
+                            num_channels,
+                            [&](const int ichannel) {
                               const std::size_t channel_index = static_cast<std::size_t>(ichannel);
                               SternheimerFDHamiltonian::Vector rhs;
                               SternheimerRPA::build_rhs_from_hartree_perturbation(perturbations_ry[channel_index],
@@ -4135,7 +4139,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                                                                        grid_data.volume_element);
                                   const SternheimerDeltaLinearResponse response
                                       = solve_delta_sternheimer_linear_response(hamiltonian,
-                                                                                occupied_projector,
+                                                                                delta_fixed_subspace,
                                                                                 states.eigenvalues[ib],
                                                                                 rhs,
                                                                                 delta_subspace.virtual_states,
@@ -4169,7 +4173,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                                                             ichannel,
                                                                             chi0_branch);
                               return result;
-                          });
+                            },
+                            channel_max_workers);
 
                     for (int ichannel = 0; ichannel != num_channels; ++ichannel)
                     {
