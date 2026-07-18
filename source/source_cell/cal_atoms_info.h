@@ -1,8 +1,19 @@
 #ifndef CAL_ATOMS_INFO_H
 #define CAL_ATOMS_INFO_H
-#include "source_io/module_parameter/parameter.h"
 #include "source_estate/cal_nelec_nband.h"
 #include "source_base/global_function.h"
+
+struct AtomsInfoResult
+{
+    int nlocal = 0;
+    double nelec = 0.0;
+    int nbands = 0;
+    double nupdown = 0.0;
+    bool use_uspp = false;
+    int nbands_l = 0;
+    bool ks_run = false;
+};
+
 class CalAtomsInfo
 {
   public:
@@ -10,35 +21,53 @@ class CalAtomsInfo
     ~CalAtomsInfo(){};
 
     /**
-     * @brief Calculate the atom information from pseudopotential to set Parameter
+     * @brief Calculate the atom information from pseudopotential
      *
      * @param atoms [in] Atom pointer
      * @param ntype [in] number of atom types
-     * @param para [out] Parameter object
+     * @param nspin [in] number of spin components
+     * @param two_fermi [in] two fermi level flag
+     * @param nelec_delta [in] electron number delta
+     * @param esolver_type [in] solver type
+     * @param lspinorb [in] spin-orbit coupling flag
+     * @param basis_type [in] basis type
+     * @param smearing_method [in] smearing method
+     * @param ks_solver [in] KS solver type
+     * @param bndpar [in] band parallel parameter
+     * @return AtomsInfoResult containing calculated atom information
      */
-    void cal_atoms_info(const Atom* atoms, const int& ntype, Parameter& para)
+    AtomsInfoResult cal_atoms_info(const Atom* atoms, const int& ntype,
+                                   const int nspin, const bool two_fermi,
+                                   const double nelec_delta,
+                                   const std::string& esolver_type,
+                                   const bool lspinorb,
+                                   const std::string& basis_type,
+                                   const std::string& smearing_method,
+                                   const std::string& ks_solver,
+                                   const int bndpar)
     {
+        AtomsInfoResult result;
+
         // calculate initial total magnetization when NSPIN=2
-        if (para.inp.nspin == 2 && !para.globalv.two_fermi)
+        if (nspin == 2 && !two_fermi)
         {
             for (int it = 0; it < ntype; ++it)
             {
                 for (int ia = 0; ia < atoms[it].na; ++ia)
                 {
-                    para.input.nupdown  += atoms[it].mag[ia];
+                    result.nupdown += atoms[it].mag[ia];
                 }
             }
             GlobalV::ofs_running << std::endl;
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "The readin total magnetization", para.inp.nupdown);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "The readin total magnetization", result.nupdown);
         }
-
 
         // decide whether to be USPP
         for (int it = 0; it < ntype; ++it)
         {
             if (atoms[it].ncpp.tvanp)
             {
-                para.sys.use_uspp = true;
+                result.use_uspp = true;
             }
         }
 
@@ -47,50 +76,49 @@ class CalAtomsInfo
         // For nspin == 4 (non-collinear), each basis function has 2 polarizations,
         // so nlocal is doubled. This value is used by cal_nwfc() to initialize
         // index arrays (iwt2iat, iwt2iw, itia2iat).
-        para.sys.nlocal = 0;
+        result.nlocal = 0;
         for (int it = 0; it < ntype; ++it)
         {
             const int nlocal_it = atoms[it].nw * atoms[it].na;
-            if (para.inp.nspin != 4)
+            if (nspin != 4)
             {
-                para.sys.nlocal += nlocal_it;
+                result.nlocal += nlocal_it;
             }
             else
             {
-                para.sys.nlocal += nlocal_it * 2; // zhengdy-soc
+                result.nlocal += nlocal_it * 2; // zhengdy-soc
             }
         }
 
         // calculate the total number of electrons
-        elecstate::cal_nelec(atoms, ntype, para.input.nelec, para.inp.nelec_delta);
+        elecstate::cal_nelec(atoms, ntype, result.nelec, nelec_delta);
 
         // autoset and check GlobalV::NBANDS
         std::vector<double> nelec_spin(2, 0.0);
-        if (para.inp.nspin == 2)
+        if (nspin == 2)
         {
-            nelec_spin[0] = (para.inp.nelec + para.inp.nupdown ) / 2.0;
-            nelec_spin[1] = (para.inp.nelec - para.inp.nupdown ) / 2.0;
+            nelec_spin[0] = (result.nelec + result.nupdown) / 2.0;
+            nelec_spin[1] = (result.nelec - result.nupdown) / 2.0;
         }
-        elecstate::cal_nbands(para.inp.nelec, para.sys.nlocal, nelec_spin, para.input.nbands,
-                                  para.inp.esolver_type, para.inp.lspinorb, para.inp.nspin,
-                                  para.inp.basis_type, para.inp.smearing_method);
+        elecstate::cal_nbands(static_cast<int>(result.nelec), result.nlocal, nelec_spin, result.nbands,
+                              esolver_type, lspinorb, nspin, basis_type, smearing_method);
 
         // calculate the number of nbands_local
-        para.sys.nbands_l = para.inp.nbands;
-        if (para.inp.ks_solver == "bpcg") // only bpcg support band parallel
+        result.nbands_l = result.nbands;
+        if (ks_solver == "bpcg")
         {
-            para.sys.nbands_l = para.inp.nbands / para.inp.bndpar;
-            if (GlobalV::MY_BNDGROUP < para.inp.nbands % para.inp.bndpar)
+            result.nbands_l = result.nbands / bndpar;
+            if (GlobalV::MY_BNDGROUP < result.nbands % bndpar)
             {
-                para.sys.nbands_l++;
+                result.nbands_l++;
             }
         }
         // temporary code
-        if (GlobalV::MY_BNDGROUP == 0 || para.inp.ks_solver == "bpcg")
+        if (GlobalV::MY_BNDGROUP == 0 || ks_solver == "bpcg")
         {
-            para.sys.ks_run = true;
+            result.ks_run = true;
         }
-        return;
+        return result;
     }
 };
 #endif

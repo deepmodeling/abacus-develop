@@ -23,7 +23,12 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
                    const std::string& basis_type,
                    const std::string& esolver_type,
                    const std::string& init_wfc,
-                   const int nbands) {
+                   const int nbands,
+                   const bool two_fermi,
+                   const double nelec_delta,
+                   const std::string& smearing_method,
+                   const std::string& ks_solver,
+                   const int bndpar) {
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -146,13 +151,17 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
     // setup the total number of PAOs
     cal_natomwfc(ofs,ucell.natomwfc,ucell.ntype,ucell.atoms,nspin);
 
-    // Calculate the information of atoms from the pseudopotential to set PARAM
+    // Calculate the information of atoms from the pseudopotential
     CalAtomsInfo ca;
-    ca.cal_atoms_info(ucell.atoms, ucell.ntype, PARAM);
+    AtomsInfoResult atoms_info = ca.cal_atoms_info(ucell.atoms, ucell.ntype,
+                                                    nspin, two_fermi, nelec_delta,
+                                                    esolver_type, lspinorb,
+                                                    basis_type, smearing_method,
+                                                    ks_solver, bndpar);
 
     // setup nlocal
-    // nlocal is calculated by CalAtomsInfo::cal_atoms_info() above, stored in PARAM.globalv.nlocal
-    cal_nwfc(ofs,ucell,ucell.atoms, nspin, PARAM.globalv.nlocal, npol,
+    // nlocal is calculated by CalAtomsInfo::cal_atoms_info() above
+    cal_nwfc(ofs, ucell, ucell.atoms, nspin, atoms_info.nlocal, npol,
               basis_type, esolver_type, init_wfc, nbands);
 
     // Check whether the number of valence is minimum

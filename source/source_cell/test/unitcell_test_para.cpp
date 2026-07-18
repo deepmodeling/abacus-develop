@@ -62,16 +62,8 @@ class UcellTest : public ::testing::Test
     void SetUp()
     {
         ofs.open("running.log");
-        PARAM.input.relax_new = utp.relax_new;
-        PARAM.sys.global_out_dir = "./";
         ucell = utp.SetUcellInfo();
-        PARAM.input.lspinorb = false;
         pp_dir = "./support/";
-        PARAM.input.pseudo_rcut = 15.0;
-        PARAM.input.dft_functional = "default";
-        PARAM.input.test_pseudo_cell = 1;
-        PARAM.input.nspin = 1;
-        PARAM.input.basis_type = "pw";
     }
     void TearDown()
     {
@@ -234,8 +226,13 @@ TEST_F(UcellTest, ReadPseudo)
     const std::string esolver_type = "ksdft";
     const std::string init_wfc = "";
     const int nbands = 6;
+    const bool two_fermi = false;
+    const double nelec_delta = 0.0;
+    const std::string smearing_method = "none";
+    const std::string ks_solver = "genelpa";
+    const int bndpar = 1;
     // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
-    elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands);
+    elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar);
     // check_structure will print some warning info
     // output nonlocal file
     if (GlobalV::MY_RANK == 0)

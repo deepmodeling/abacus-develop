@@ -213,14 +213,14 @@ TEST_F(KlistParaTest, Set)
     std::string k_file = "./support/KPT1";
     // set klist
     kv->nspin = 1;
-    PARAM.input.nspin = 1;
     if (GlobalV::NPROC == 4)
     {
         GlobalV::KPAR = 2;
     }
+    const int bndpar = 1;
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
-                                PARAM.input.bndpar,
+                                bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_BNDGROUP,
                                 GlobalV::RANK_IN_BPGROUP,
@@ -230,11 +230,11 @@ TEST_F(KlistParaTest, Set)
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
     const bool use_ibz = true;
-    const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
-    const double kspacing[3] = {PARAM.inp.kspacing[0], PARAM.inp.kspacing[1], PARAM.inp.kspacing[2]};
-    const std::string kmesh_type = PARAM.inp.kmesh_type;
-    const double koffset[3] = {PARAM.inp.koffset[0], PARAM.inp.koffset[1], PARAM.inp.koffset[2]};
+    const std::string global_out_dir = "./";
+    const bool gamma_only_local = false;
+    const double kspacing[3] = {0.0, 0.0, 0.0};
+    const std::string kmesh_type = "gamma";
+    const double koffset[3] = {0.0, 0.0, 0.0};
     kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_EQ(kv->get_nkstot_full(), 512);
@@ -336,14 +336,14 @@ TEST_F(KlistParaTest, SetAfterVC)
     std::string k_file = "./support/KPT1";
     // set klist
     kv->nspin = 1;
-    PARAM.input.nspin = 1;
     if (GlobalV::NPROC == 4)
     {
         GlobalV::KPAR = 1;
     }
+    const int bndpar = 1;
     Parallel_Global::init_pools(GlobalV::NPROC,
                                 GlobalV::MY_RANK,
-                                PARAM.input.bndpar,
+                                bndpar,
                                 GlobalV::KPAR,
                                 GlobalV::NPROC_IN_BNDGROUP,
                                 GlobalV::RANK_IN_BPGROUP,
@@ -353,11 +353,11 @@ TEST_F(KlistParaTest, SetAfterVC)
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
     const bool use_ibz = true;
-    const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
-    const double kspacing[3] = {PARAM.inp.kspacing[0], PARAM.inp.kspacing[1], PARAM.inp.kspacing[2]};
-    const std::string kmesh_type = PARAM.inp.kmesh_type;
-    const double koffset[3] = {PARAM.inp.koffset[0], PARAM.inp.koffset[1], PARAM.inp.koffset[2]};
+    const std::string global_out_dir = "./";
+    const bool gamma_only_local = false;
+    const double kspacing[3] = {0.0, 0.0, 0.0};
+    const std::string kmesh_type = "gamma";
+    const double koffset[3] = {0.0, 0.0, 0.0};
     kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);

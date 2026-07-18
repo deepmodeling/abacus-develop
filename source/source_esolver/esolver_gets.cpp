@@ -43,8 +43,13 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     const std::string esolver_type = PARAM.inp.esolver_type;
     const std::string init_wfc = PARAM.inp.init_wfc;
     const int nbands = PARAM.inp.nbands;
+    const bool two_fermi = PARAM.globalv.two_fermi;
+    const double nelec_delta = PARAM.inp.nelec_delta;
+    const std::string smearing_method = PARAM.inp.smearing_method;
+    const std::string ks_solver = PARAM.inp.ks_solver;
+    const int bndpar = PARAM.inp.bndpar;
     // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands);
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar);
 
     // 1.2) symmetrize things
     if (ModuleSymmetry::Symmetry::symm_flag == 1)

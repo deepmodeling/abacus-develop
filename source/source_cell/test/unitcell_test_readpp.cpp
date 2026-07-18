@@ -436,15 +436,19 @@ TEST_F(UcellDeathTest, ReadPseudoWarning1) {
     const double pseudo_rcut = 15.0;
     const double soc_lambda = 0.0;
     const int nspin = 1;
-    const int nlocal = 6;
     const int npol = 1;
     const std::string basis_type = "pw";
     const std::string esolver_type = "ksdft";
     const std::string init_wfc = "";
     const int nbands = 6;
+    const bool two_fermi = false;
+    const double nelec_delta = 0.0;
+    const std::string smearing_method = "none";
+    const std::string ks_solver = "genelpa";
+    const int bndpar = 1;
     ucell->pseudo_fn[1] = "H_sr_lda.upf";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, nlocal, npol, basis_type, esolver_type, init_wfc, nbands), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
                 testing::HasSubstr("All DFT functional must consistent."));
@@ -459,15 +463,19 @@ TEST_F(UcellDeathTest, ReadPseudoWarning2) {
     const double pseudo_rcut = 15.0;
     const double soc_lambda = 0.0;
     const int nspin = 1;
-    const int nlocal = 6;
     const int npol = 1;
     const std::string basis_type = "pw";
     const std::string esolver_type = "ksdft";
     const std::string init_wfc = "";
     const int nbands = 6;
+    const bool two_fermi = false;
+    const double nelec_delta = 0.0;
+    const std::string smearing_method = "none";
+    const std::string ks_solver = "genelpa";
+    const int bndpar = 1;
     ucell->pseudo_fn[0] = "Al_ONCV_PBE-1.0.upf";
     testing::internal::CaptureStdout();
-    EXPECT_NO_THROW(elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, nlocal, npol, basis_type, esolver_type, init_wfc, nbands));
+    EXPECT_NO_THROW(elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar));
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(
         output,

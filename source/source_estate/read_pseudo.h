@@ -18,7 +18,12 @@ namespace elecstate {
                    const std::string& basis_type,
                    const std::string& esolver_type,
                    const std::string& init_wfc,
-                   const int nbands);
+                   const int nbands,
+                   const bool two_fermi,
+                   const double nelec_delta,
+                   const std::string& smearing_method,
+                   const std::string& ks_solver,
+                   const int bndpar);
 
     // read in pseudopotential from files for each type of atom
     void read_cell_pseudopots(const std::string& fn, std::ofstream& log, UnitCell& ucell,

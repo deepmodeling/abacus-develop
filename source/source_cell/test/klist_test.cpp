@@ -681,7 +681,7 @@ TEST_F(KlistTest, SetAfterVC)
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
 //    kv->set_after_vc(PARAM.input.nspin, ucell.G, ucell.latvec);
-    KVectorUtils::set_after_vc(*kv, PARAM.input.nspin, ucell.G);
+    KVectorUtils::set_after_vc(*kv, kv->nspin, ucell.G);
 
     EXPECT_TRUE(kv->kd_done);
     EXPECT_TRUE(kv->kc_done);
@@ -703,7 +703,7 @@ TEST_F(KlistTest, PrintKlists)
     kv->kvec_c[0].y = 0;
     kv->kvec_c[0].z = 0;
 //    kv->set_after_vc(PARAM.input.nspin, ucell.G, ucell.latvec);
-    KVectorUtils::set_after_vc(*kv, PARAM.input.nspin, ucell.G);
+    KVectorUtils::set_after_vc(*kv, kv->nspin, ucell.G);
     EXPECT_TRUE(kv->kd_done);
     KVectorUtils::print_klists(*kv, GlobalV::ofs_running);
     GlobalV::ofs_running.close();
