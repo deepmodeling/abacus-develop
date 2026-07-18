@@ -33,6 +33,7 @@ add_library(
     sep_cell.cpp
     qlist.cpp
     qlist.h
+    cal_nelec_nband.cpp
 )
 
 if(ENABLE_COVERAGE)

@@ -5,7 +5,7 @@
 #include "source_base/mathzone.h"
 #include "source_cell/check_atomic_stru.h"
 #include "source_cell/unitcell.h"
-#include "source_estate/cal_nelec_nband.h"
+#include "source_cell/cal_nelec_nband.h"
 #include "source_estate/read_pseudo.h"
 #include <valarray>
 #include <vector>
@@ -81,7 +81,7 @@ Magnetism::~Magnetism() { }
  * possible of an element
  *   - CalNelec: UnitCell::cal_nelec
  *     - calculate the total number of valence electrons from psp files
- *   - CalNbands: elecstate::cal_nbands()
+ *   - CalNbands: unitcell::cal_nbands()
  *     - calculate the number of bands
  */
 
@@ -489,7 +489,7 @@ TEST_F(UcellTest, CalNelec) {
     EXPECT_EQ(2, ucell->atoms[1].na);
     double nelec = 0;
     const double nelec_delta = 0.0;
-    elecstate::cal_nelec(ucell->atoms, ucell->ntype, nelec, nelec_delta);
+    unitcell::cal_nelec(ucell->atoms, ucell->ntype, nelec, nelec_delta);
     EXPECT_DOUBLE_EQ(6, nelec);
 }
 
@@ -505,7 +505,7 @@ TEST_F(UcellTest, CalNbands)
     const std::string basis_type = "pw";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
+    unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
     EXPECT_EQ(nbands, 6);
 }
 
@@ -521,7 +521,7 @@ TEST_F(UcellTest, CalNbandsFractionElec)
     const std::string basis_type = "pw";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
+    unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
     EXPECT_EQ(nbands, 6);
 }
 
@@ -536,7 +536,7 @@ TEST_F(UcellTest, CalNbandsSOC)
     const std::string basis_type = "pw";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
+    unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
     EXPECT_EQ(nbands, 20);
 }
 
@@ -552,7 +552,7 @@ TEST_F(UcellTest, CalNbandsSDFT)
     const std::string basis_type = "pw";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    EXPECT_NO_THROW(elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method));
+    EXPECT_NO_THROW(unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method));
 }
 
 TEST_F(UcellTest, CalNbandsLCAO)
@@ -567,7 +567,7 @@ TEST_F(UcellTest, CalNbandsLCAO)
     const std::string basis_type = "lcao";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    EXPECT_NO_THROW(elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method));
+    EXPECT_NO_THROW(unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method));
 }
 
 TEST_F(UcellTest, CalNbandsLCAOINPW)
@@ -583,7 +583,7 @@ TEST_F(UcellTest, CalNbandsLCAOINPW)
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Number of basis (NLOCAL) < Number of electronic states (NBANDS)"));
 }
@@ -600,7 +600,7 @@ TEST_F(UcellTest, CalNbandsWarning1)
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Too few bands!"));
 }
@@ -620,7 +620,7 @@ TEST_F(UcellTest, CalNbandsWarning2)
     nelec_spin[0] = 7.0;
     nelec_spin[1] = 3.0;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Too few spin up bands!"));
 }
@@ -640,7 +640,7 @@ TEST_F(UcellTest, CalNbandsWarning3)
     nelec_spin[0] = 3.0;
     nelec_spin[1] = 7.0;
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("Too few spin down bands!"));
 }
@@ -656,7 +656,7 @@ TEST_F(UcellTest, CalNbandsSpin1)
     const std::string basis_type = "pw";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
+    unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
     EXPECT_EQ(nbands, 15);
 }
 
@@ -671,7 +671,7 @@ TEST_F(UcellTest, CalNbandsSpin1LCAO)
     const std::string basis_type = "lcao";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
+    unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
     EXPECT_EQ(nbands, 6);
 }
 
@@ -686,7 +686,7 @@ TEST_F(UcellTest, CalNbandsSpin4)
     const std::string basis_type = "pw";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
+    unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
     EXPECT_EQ(nbands, 30);
 }
 
@@ -701,7 +701,7 @@ TEST_F(UcellTest, CalNbandsSpin4LCAO)
     const std::string basis_type = "lcao";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
+    unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
     EXPECT_EQ(nbands, 6);
 }
 
@@ -716,7 +716,7 @@ TEST_F(UcellTest, CalNbandsSpin2)
     const std::string basis_type = "pw";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
+    unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
     EXPECT_EQ(nbands, 16);
 }
 
@@ -731,7 +731,7 @@ TEST_F(UcellTest, CalNbandsSpin2LCAO)
     const std::string basis_type = "lcao";
     const std::string smearing_method = "fixed";
     std::vector<double> nelec_spin(2, 5.0);
-    elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
+    unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method);
     EXPECT_EQ(nbands, 6);
 }
 
@@ -747,7 +747,7 @@ TEST_F(UcellTest, CalNbandsGaussWarning)
     const std::string smearing_method = "gaussian";
     std::vector<double> nelec_spin(2, 5.0);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(elecstate::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::cal_nbands(nelec, nlocal, nelec_spin, nbands, esolver_type, lspinorb, nspin, basis_type, smearing_method), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("for smearing, num. of bands > num. of occupied bands"));
 }

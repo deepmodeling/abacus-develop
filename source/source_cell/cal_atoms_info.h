@@ -1,6 +1,6 @@
 #ifndef CAL_ATOMS_INFO_H
 #define CAL_ATOMS_INFO_H
-#include "source_estate/cal_nelec_nband.h"
+#include "source_cell/cal_nelec_nband.h"
 #include "source_base/global_function.h"
 
 struct AtomsInfoResult
@@ -91,7 +91,7 @@ class CalAtomsInfo
         }
 
         // calculate the total number of electrons
-        elecstate::cal_nelec(atoms, ntype, result.nelec, nelec_delta);
+        unitcell::cal_nelec(atoms, ntype, result.nelec, nelec_delta);
 
         // autoset and check GlobalV::NBANDS
         std::vector<double> nelec_spin(2, 0.0);
@@ -100,7 +100,7 @@ class CalAtomsInfo
             nelec_spin[0] = (result.nelec + result.nupdown) / 2.0;
             nelec_spin[1] = (result.nelec - result.nupdown) / 2.0;
         }
-        elecstate::cal_nbands(static_cast<int>(result.nelec), result.nlocal, nelec_spin, result.nbands,
+        unitcell::cal_nbands(static_cast<int>(result.nelec), result.nlocal, nelec_spin, result.nbands,
                               esolver_type, lspinorb, nspin, basis_type, smearing_method);
 
         // calculate the number of nbands_local

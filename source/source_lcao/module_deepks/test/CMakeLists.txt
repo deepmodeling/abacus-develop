@@ -43,7 +43,7 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_estate/param_update.cpp
     ../../../source_estate/cal_wfc.cpp
     ../../../source_cell/read_orb.cpp
-    ../../../source_estate/cal_nelec_nband.cpp
+    ../../../source_cell/cal_nelec_nband.cpp
     ../../../source_estate/module_dm/density_matrix.cpp
     ../../../source_estate/module_dm/density_matrix_io.cpp
     ../../center2_orb.cpp

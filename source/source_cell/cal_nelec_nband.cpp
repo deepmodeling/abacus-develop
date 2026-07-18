@@ -1,7 +1,8 @@
 #include "cal_nelec_nband.h"
 #include "source_base/constants.h"
+#include "source_base/global_variable.h"
 
-namespace elecstate {
+namespace unitcell {
 
 void cal_nelec(const Atom* atoms, const int& ntype, double& nelec, const double nelec_delta)
 {

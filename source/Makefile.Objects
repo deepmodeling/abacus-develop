@@ -205,6 +205,7 @@ OBJS_CELL=atom_pseudo.o\
     read_atom_species.o\
     sep.o\
     sep_cell.o\
+    cal_nelec_nband.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\
@@ -247,7 +248,6 @@ OBJS_ELECSTAT=elecstate.o\
     pot_xc.o\
     cal_ux.o\
     read_orb.o\
-    cal_nelec_nband.o\
     read_pseudo.o\
     cal_wfc.o\
     setup_estate_pw.o\

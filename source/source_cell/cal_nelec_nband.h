@@ -3,7 +3,7 @@
 
 #include "source_cell/atom_spec.h"
 
-namespace elecstate {
+namespace unitcell {
 
     /**
      * @brief calculate the total number of electrons in system
