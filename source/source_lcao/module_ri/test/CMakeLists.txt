@@ -86,6 +86,18 @@ AddTest(
   SOURCES sternheimer_abacus_st_smoke_test.cpp ../sternheimer_kq.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_periodic_solver_test
+  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
+  SOURCES sternheimer_periodic_solver_test.cpp
+          ../sternheimer_periodic_solver.cpp
+          ../sternheimer_fd_solver.cpp
+          ../sternheimer_fd_hamiltonian.cpp
+          ../sternheimer_fd_nonlocal_projector.cpp
+          ../sternheimer_delta.cpp
+          ../sternheimer_kq.cpp
+          ../sternheimer_rpa.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_kq_test
   LIBS ${math_libs}
   SOURCES sternheimer_kq_test.cpp ../sternheimer_kq.cpp

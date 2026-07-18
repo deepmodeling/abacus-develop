@@ -128,6 +128,56 @@ double sternheimer_fd_grid_norm(const SternheimerFDHamiltonian::Vector& wavefunc
     return std::sqrt(std::real(sternheimer_fd_grid_dot(wavefunction, wavefunction, volume_element)));
 }
 
+double sternheimer_fd_linear_response_residual_norm(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
+    const double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Vector& rhs,
+    const SternheimerFDHamiltonian::Vector& delta_wavefunction,
+    const double omega,
+    const double volume_element)
+{
+    const std::size_t grid_size = static_cast<std::size_t>(hamiltonian.grid().size());
+    if (rhs.size() != grid_size || delta_wavefunction.size() != grid_size)
+    {
+        throw std::invalid_argument("Sternheimer FD residual vectors do not match the grid.");
+    }
+    if (volume_element <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer FD residual requires a positive volume element.");
+    }
+    for (const Vector& occupied: occupied_wavefunctions)
+    {
+        if (occupied.size() != grid_size)
+        {
+            throw std::invalid_argument("Sternheimer FD residual occupied state does not match the grid.");
+        }
+    }
+
+    auto dot = [volume_element](const Vector& lhs, const Vector& rhs_vec) {
+        return sternheimer_fd_grid_dot(lhs, rhs_vec, volume_element);
+    };
+    Vector projected_wavefunction = delta_wavefunction;
+    SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, projected_wavefunction);
+
+    Vector residual;
+    hamiltonian.apply(projected_wavefunction, residual);
+    const Complex shift(-reference_eigenvalue, omega);
+    for (std::size_t ir = 0; ir != residual.size(); ++ir)
+    {
+        residual[ir] += shift * projected_wavefunction[ir];
+    }
+    SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, residual);
+
+    Vector projected_rhs = rhs;
+    SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, projected_rhs);
+    for (std::size_t ir = 0; ir != residual.size(); ++ir)
+    {
+        residual[ir] -= projected_rhs[ir];
+    }
+    return sternheimer_fd_grid_norm(residual, volume_element);
+}
+
 SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_dense(const SternheimerFDHamiltonian& hamiltonian,
                                                                    const int num_states,
                                                                    const double volume_element,
@@ -354,13 +404,13 @@ SternheimerFDLinearResponse solve_sternheimer_fd_linear_response(
     response.solver = SternheimerRPA::solve_gmres(problem, projected_rhs, response.delta_wavefunction, options);
     SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, response.delta_wavefunction);
 
-    SternheimerFDHamiltonian::Vector applied;
-    problem.apply(response.delta_wavefunction, applied);
-    for (int ir = 0; ir != grid_size; ++ir)
-    {
-        applied[ir] -= projected_rhs[ir];
-    }
-    response.residual_norm = sternheimer_fd_grid_norm(applied, volume_element);
+    response.residual_norm = sternheimer_fd_linear_response_residual_norm(hamiltonian,
+                                                                           occupied_wavefunctions,
+                                                                           reference_eigenvalue,
+                                                                           rhs,
+                                                                           response.delta_wavefunction,
+                                                                           omega,
+                                                                           volume_element);
     return response;
 }
 

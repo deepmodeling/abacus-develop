@@ -1,11 +1,15 @@
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
 
+#include "source_base/constants.h"
 #include "source_base/math_ylmreal.h"
+
+#include <fftw3.h>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <complex>
+#include <new>
 #include <stdexcept>
 
 namespace
@@ -39,17 +43,31 @@ struct PeriodicImageRange
     int last = 0;
 };
 
-PeriodicImageRange periodic_image_range(const double displacement,
-                                        const double length,
-                                        const double cutoff,
-                                        const bool periodic)
+std::array<PeriodicImageRange, 3> periodic_image_ranges(
+    const std::array<double, 3>& displacement,
+    const ModuleRI::SternheimerFDHamiltonian::Grid& grid,
+    const double cutoff)
 {
-    if (!periodic)
+    std::array<PeriodicImageRange, 3> ranges{};
+    if (!grid.periodic)
     {
-        return {0, 0};
+        return ranges;
     }
-    return {static_cast<int>(std::ceil((displacement - cutoff) / length)),
-            static_cast<int>(std::floor((displacement + cutoff) / length))};
+    const ModuleRI::SternheimerFDLatticeVectors dual = ModuleRI::sternheimer_fd_grid_dual_vectors(grid);
+    for (int direction = 0; direction != 3; ++direction)
+    {
+        double reduced_displacement = 0.0;
+        double dual_norm_squared = 0.0;
+        for (int component = 0; component != 3; ++component)
+        {
+            reduced_displacement += dual[direction][component] * displacement[component];
+            dual_norm_squared += dual[direction][component] * dual[direction][component];
+        }
+        const double reduced_cutoff = std::sqrt(dual_norm_squared) * cutoff;
+        ranges[direction].first = static_cast<int>(std::ceil(reduced_displacement - reduced_cutoff));
+        ranges[direction].last = static_cast<int>(std::floor(reduced_displacement + reduced_cutoff));
+    }
+    return ranges;
 }
 
 void validate_qpoint(const ModuleRI::SternheimerReducedKPoint& qpoint, const bool periodic)
@@ -94,6 +112,19 @@ double interpolate_radial(const std::vector<double>& radial_grid, const std::vec
     const double width = radial_grid[hi] - radial_grid[lo];
     const double t = (radius - radial_grid[lo]) / width;
     return (1.0 - t) * values[lo] + t * values[hi];
+}
+
+int signed_fft_index(const int index, const int count)
+{
+    return index < (count + 1) / 2 ? index : index - count;
+}
+
+bool is_gamma_qpoint(const ModuleRI::SternheimerReducedKPoint& qpoint)
+{
+    constexpr double tolerance = 1.0e-14;
+    return std::all_of(qpoint.begin(), qpoint.end(), [](const double value) {
+        return std::abs(value) <= tolerance;
+    });
 }
 
 void evaluate_real_spherical_harmonics(const int lmax,
@@ -180,9 +211,6 @@ std::vector<SternheimerABFBlochGridChannel> sample_sternheimer_abf_bloch_grid_ch
 
     std::vector<SternheimerABFBlochGridChannel> channels;
     const int size = grid_size(grid);
-    const double lx = grid.nx * grid.hx;
-    const double ly = grid.ny * grid.hy;
-    const double lz = grid.nz * grid.hz;
     int channel_index = 0;
 
     for (std::size_t iat = 0; iat != atom_types.size(); ++iat)
@@ -224,26 +252,28 @@ std::vector<SternheimerABFBlochGridChannel> sample_sternheimer_abf_bloch_grid_ch
                     {
                         for (int ix = 0; ix != grid.nx; ++ix)
                         {
-                            const double displacement_x = ix * grid.hx - atom_positions[iat].x;
-                            const double displacement_y = iy * grid.hy - atom_positions[iat].y;
-                            const double displacement_z = iz * grid.hz - atom_positions[iat].z;
-                            const PeriodicImageRange image_x
-                                = periodic_image_range(displacement_x, lx, cutoff, grid.periodic);
-                            const PeriodicImageRange image_y
-                                = periodic_image_range(displacement_y, ly, cutoff, grid.periodic);
-                            const PeriodicImageRange image_z
-                                = periodic_image_range(displacement_z, lz, cutoff, grid.periodic);
+                            const std::array<double, 3> position
+                                = sternheimer_fd_grid_cartesian_position(grid, ix, iy, iz);
+                            const std::array<double, 3> displacement{
+                                position[0] - atom_positions[iat].x,
+                                position[1] - atom_positions[iat].y,
+                                position[2] - atom_positions[iat].z};
+                            const std::array<PeriodicImageRange, 3> image_ranges
+                                = periodic_image_ranges(displacement, grid, cutoff);
                             const int ir = grid_index(grid, ix, iy, iz);
 
-                            for (int rz = image_z.first; rz <= image_z.last; ++rz)
+                            for (int rz = image_ranges[2].first; rz <= image_ranges[2].last; ++rz)
                             {
-                                for (int ry = image_y.first; ry <= image_y.last; ++ry)
+                                for (int ry = image_ranges[1].first; ry <= image_ranges[1].last; ++ry)
                                 {
-                                    for (int rx = image_x.first; rx <= image_x.last; ++rx)
+                                    for (int rx = image_ranges[0].first; rx <= image_ranges[0].last; ++rx)
                                     {
-                                        const double dx = displacement_x - rx * lx;
-                                        const double dy = displacement_y - ry * ly;
-                                        const double dz = displacement_z - rz * lz;
+                                        const std::array<int, 3> image{rx, ry, rz};
+                                        const std::array<double, 3> translation
+                                            = sternheimer_fd_grid_lattice_translation(grid, image);
+                                        const double dx = displacement[0] - translation[0];
+                                        const double dy = displacement[1] - translation[1];
+                                        const double dz = displacement[2] - translation[2];
                                         const double radius = std::sqrt(dx * dx + dy * dy + dz * dz);
                                         if (radius > cutoff)
                                         {
@@ -256,8 +286,7 @@ std::vector<SternheimerABFBlochGridChannel> sample_sternheimer_abf_bloch_grid_ch
                                                   radial.radial_grid, radial.radial_values, radius)
                                               * ylm[ylm_index];
                                         const std::complex<double> phase
-                                            = sternheimer_bloch_phase(
-                                                qpoint, std::array<int, 3>{rx, ry, rz});
+                                            = sternheimer_bloch_phase(qpoint, image);
                                         channel.potential_r[ir] += phase * radial_angular_value;
                                     }
                                 }
@@ -310,6 +339,164 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
         channels.push_back(std::move(channel));
     }
     return channels;
+}
+
+std::vector<SternheimerABFBlochGridChannel> solve_sternheimer_abf_periodic_full_coulomb(
+    const std::vector<SternheimerABFBlochGridChannel>& density_channels,
+    const SternheimerFDHamiltonian::Grid& grid,
+    const SternheimerReducedKPoint& qpoint)
+{
+    validate_grid(grid);
+    validate_qpoint(qpoint, grid.periodic);
+    if (!grid.periodic)
+    {
+        throw std::invalid_argument("Sternheimer periodic Poisson solve requires a periodic grid.");
+    }
+    if (is_gamma_qpoint(qpoint))
+    {
+        throw std::invalid_argument(
+            "Sternheimer periodic full-Coulomb body solve requires a nonzero q point.");
+    }
+
+    const int size = grid_size(grid);
+    for (const SternheimerABFBlochGridChannel& density: density_channels)
+    {
+        if (density.potential_r.size() != static_cast<std::size_t>(size))
+        {
+            throw std::invalid_argument(
+                "Sternheimer periodic Poisson density size does not match the grid.");
+        }
+    }
+    if (density_channels.empty())
+    {
+        return {};
+    }
+
+    fftw_complex* buffer = fftw_alloc_complex(static_cast<std::size_t>(size));
+    if (buffer == nullptr)
+    {
+        throw std::bad_alloc();
+    }
+    fftw_plan forward = fftw_plan_dft_3d(
+        grid.nx, grid.ny, grid.nz, buffer, buffer, FFTW_FORWARD, FFTW_ESTIMATE);
+    fftw_plan backward = fftw_plan_dft_3d(
+        grid.nx, grid.ny, grid.nz, buffer, buffer, FFTW_BACKWARD, FFTW_ESTIMATE);
+    if (forward == nullptr || backward == nullptr)
+    {
+        if (forward != nullptr)
+        {
+            fftw_destroy_plan(forward);
+        }
+        if (backward != nullptr)
+        {
+            fftw_destroy_plan(backward);
+        }
+        fftw_free(buffer);
+        throw std::runtime_error("Failed to initialize the Sternheimer periodic Poisson FFT.");
+    }
+
+    const SternheimerFDLatticeVectors dual = sternheimer_fd_grid_dual_vectors(grid);
+    std::vector<SternheimerABFBlochGridChannel> potentials;
+    potentials.reserve(density_channels.size());
+    try
+    {
+        for (const SternheimerABFBlochGridChannel& density: density_channels)
+        {
+            for (int ix = 0; ix != grid.nx; ++ix)
+            {
+                for (int iy = 0; iy != grid.ny; ++iy)
+                {
+                    for (int iz = 0; iz != grid.nz; ++iz)
+                    {
+                        const int ir = grid_index(grid, ix, iy, iz);
+                        const double phase_angle = -ModuleBase::TWO_PI
+                                                   * (qpoint[0] * static_cast<double>(ix) / grid.nx
+                                                      + qpoint[1] * static_cast<double>(iy) / grid.ny
+                                                      + qpoint[2] * static_cast<double>(iz) / grid.nz);
+                        const std::complex<double> periodic_value
+                            = std::exp(std::complex<double>(0.0, phase_angle))
+                              * density.potential_r[static_cast<std::size_t>(ir)];
+                        buffer[ir][0] = periodic_value.real();
+                        buffer[ir][1] = periodic_value.imag();
+                    }
+                }
+            }
+            fftw_execute(forward);
+
+            for (int ix = 0; ix != grid.nx; ++ix)
+            {
+                for (int iy = 0; iy != grid.ny; ++iy)
+                {
+                    for (int iz = 0; iz != grid.nz; ++iz)
+                    {
+                        const std::array<double, 3> reduced_wavevector{
+                            static_cast<double>(signed_fft_index(ix, grid.nx)) + qpoint[0],
+                            static_cast<double>(signed_fft_index(iy, grid.ny)) + qpoint[1],
+                            static_cast<double>(signed_fft_index(iz, grid.nz)) + qpoint[2]};
+                        std::array<double, 3> wavevector{};
+                        for (int direction = 0; direction != 3; ++direction)
+                        {
+                            for (int component = 0; component != 3; ++component)
+                            {
+                                wavevector[component]
+                                    += ModuleBase::TWO_PI * reduced_wavevector[direction] * dual[direction][component];
+                            }
+                        }
+                        const double wavevector_squared
+                            = wavevector[0] * wavevector[0]
+                              + wavevector[1] * wavevector[1]
+                              + wavevector[2] * wavevector[2];
+                        if (wavevector_squared <= 1.0e-28)
+                        {
+                            throw std::runtime_error(
+                                "Sternheimer periodic Poisson solve encountered a zero G+q vector.");
+                        }
+                        const double factor
+                            = ModuleBase::FOUR_PI / (wavevector_squared * static_cast<double>(size));
+                        const int ig = grid_index(grid, ix, iy, iz);
+                        buffer[ig][0] *= factor;
+                        buffer[ig][1] *= factor;
+                    }
+                }
+            }
+            fftw_execute(backward);
+
+            SternheimerABFBlochGridChannel potential = density;
+            potential.max_abs = 0.0;
+            for (int ix = 0; ix != grid.nx; ++ix)
+            {
+                for (int iy = 0; iy != grid.ny; ++iy)
+                {
+                    for (int iz = 0; iz != grid.nz; ++iz)
+                    {
+                        const int ir = grid_index(grid, ix, iy, iz);
+                        const double phase_angle = ModuleBase::TWO_PI
+                                                   * (qpoint[0] * static_cast<double>(ix) / grid.nx
+                                                      + qpoint[1] * static_cast<double>(iy) / grid.ny
+                                                      + qpoint[2] * static_cast<double>(iz) / grid.nz);
+                        const std::complex<double> periodic_potential(buffer[ir][0], buffer[ir][1]);
+                        potential.potential_r[static_cast<std::size_t>(ir)]
+                            = std::exp(std::complex<double>(0.0, phase_angle)) * periodic_potential;
+                        potential.max_abs = std::max(
+                            potential.max_abs,
+                            std::abs(potential.potential_r[static_cast<std::size_t>(ir)]));
+                    }
+                }
+            }
+            potentials.push_back(std::move(potential));
+        }
+    }
+    catch (...)
+    {
+        fftw_destroy_plan(forward);
+        fftw_destroy_plan(backward);
+        fftw_free(buffer);
+        throw;
+    }
+    fftw_destroy_plan(forward);
+    fftw_destroy_plan(backward);
+    fftw_free(buffer);
+    return potentials;
 }
 
 } // namespace ModuleRI

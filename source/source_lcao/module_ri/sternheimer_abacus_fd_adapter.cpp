@@ -20,11 +20,6 @@ double vector_norm(const double x, const double y, const double z)
     return std::sqrt(dot_product(x, y, z, x, y, z));
 }
 
-bool is_orthogonal_pair(const double dot, const double norm_a, const double norm_b, const double tolerance)
-{
-    return std::abs(dot) <= tolerance * std::max(1.0, norm_a * norm_b);
-}
-
 } // namespace
 
 namespace ModuleRI
@@ -38,6 +33,7 @@ SternheimerABACUSFDGridData make_sternheimer_fd_grid_from_lattice(const int nx,
                                                                   const ModuleBase::Matrix3& latvec,
                                                                   const double orthogonality_tolerance)
 {
+    (void)orthogonality_tolerance;
     if (nx <= 0 || ny <= 0 || nz <= 0)
     {
         throw std::invalid_argument("Sternheimer ABACUS FD grid requires positive grid dimensions.");
@@ -62,15 +58,13 @@ SternheimerABACUSFDGridData make_sternheimer_fd_grid_from_lattice(const int nx,
         throw std::invalid_argument("Sternheimer ABACUS FD grid requires nonzero lattice vectors.");
     }
 
-    const double a12 = dot_product(latvec.e11, latvec.e12, latvec.e13, latvec.e21, latvec.e22, latvec.e23);
-    const double a13 = dot_product(latvec.e11, latvec.e12, latvec.e13, latvec.e31, latvec.e32, latvec.e33);
-    const double a23 = dot_product(latvec.e21, latvec.e22, latvec.e23, latvec.e31, latvec.e32, latvec.e33);
-    if (!is_orthogonal_pair(a12, a1_norm, a2_norm, orthogonality_tolerance)
-        || !is_orthogonal_pair(a13, a1_norm, a3_norm, orthogonality_tolerance)
-        || !is_orthogonal_pair(a23, a2_norm, a3_norm, orthogonality_tolerance))
+    const double determinant
+        = latvec.e11 * (latvec.e22 * latvec.e33 - latvec.e23 * latvec.e32)
+          - latvec.e12 * (latvec.e21 * latvec.e33 - latvec.e23 * latvec.e31)
+          + latvec.e13 * (latvec.e21 * latvec.e32 - latvec.e22 * latvec.e31);
+    if (std::abs(determinant) <= 1.0e-14 * a1_norm * a2_norm * a3_norm)
     {
-        throw std::invalid_argument(
-            "Sternheimer ABACUS FD stencil currently supports only orthogonal real-space lattices.");
+        throw std::invalid_argument("Sternheimer ABACUS FD grid requires a nonsingular lattice.");
     }
 
     SternheimerABACUSFDGridData grid_data;
@@ -81,7 +75,10 @@ SternheimerABACUSFDGridData make_sternheimer_fd_grid_from_lattice(const int nx,
     grid_data.grid.hy = lat0 * a2_norm / ny;
     grid_data.grid.hz = lat0 * a3_norm / nz;
     grid_data.grid.periodic = true;
-    grid_data.volume_element = grid_data.grid.hx * grid_data.grid.hy * grid_data.grid.hz;
+    grid_data.grid.lattice_vectors = {{{lat0 * latvec.e11, lat0 * latvec.e12, lat0 * latvec.e13},
+                                       {lat0 * latvec.e21, lat0 * latvec.e22, lat0 * latvec.e23},
+                                       {lat0 * latvec.e31, lat0 * latvec.e32, lat0 * latvec.e33}}};
+    grid_data.volume_element = std::abs(determinant) * lat0 * lat0 * lat0 / static_cast<double>(nxyz);
     return grid_data;
 }
 

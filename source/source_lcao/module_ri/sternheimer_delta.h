@@ -116,6 +116,8 @@ struct SternheimerDeltaSubspace
     std::vector<SternheimerDeltaGridFunction> grid_functions;
     int accepted_candidates = 0;
     int discarded_candidates = 0;
+    double full_grid_hamiltonian_relative_difference = 0.0;
+    double full_grid_hamiltonian_max_abs_difference = 0.0;
 };
 
 struct SternheimerDeltaLinearResponse
@@ -173,6 +175,14 @@ std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_ma
     const SternheimerFDHamiltonian::Vector& perturbation_potential,
     const SternheimerFDHamiltonian::Vector& occupied_wavefunction,
     double volume_element);
+
+// Assemble the positive-frequency SOS branch from explicit orthonormal
+// virtual states. Energies and omega must use the same units.
+SternheimerFDHamiltonian::Vector build_delta_sternheimer_sos_wavefunction(
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<SternheimerFDHamiltonian::Complex>& perturbation_matrix_elements,
+    double occupied_eigenvalue,
+    double omega);
 
 SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     const SternheimerFDHamiltonian& hamiltonian,

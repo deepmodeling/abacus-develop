@@ -37,6 +37,15 @@ SternheimerFDHamiltonian::Complex sternheimer_fd_grid_dot(const SternheimerFDHam
 
 double sternheimer_fd_grid_norm(const SternheimerFDHamiltonian::Vector& wavefunction, double volume_element);
 
+double sternheimer_fd_linear_response_residual_norm(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
+    double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Vector& rhs,
+    const SternheimerFDHamiltonian::Vector& delta_wavefunction,
+    double omega,
+    double volume_element);
+
 SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_dense(const SternheimerFDHamiltonian& hamiltonian,
                                                                    int num_states,
                                                                    double volume_element,

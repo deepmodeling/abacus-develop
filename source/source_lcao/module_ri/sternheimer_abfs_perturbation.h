@@ -68,6 +68,13 @@ std::vector<SternheimerABFBlochGridChannel> sample_sternheimer_abf_bloch_grid_ch
     const SternheimerReducedKPoint& qpoint,
     int max_channels = -1);
 
+// Solve the periodic Poisson equation for nonzero-q Bloch auxiliary densities.
+// Input channel values are densities; output channel values are Hartree potentials in Ha.
+std::vector<SternheimerABFBlochGridChannel> solve_sternheimer_abf_periodic_full_coulomb(
+    const std::vector<SternheimerABFBlochGridChannel>& density_channels,
+    const SternheimerFDHamiltonian::Grid& grid,
+    const SternheimerReducedKPoint& qpoint);
+
 } // namespace ModuleRI
 
 #endif

@@ -126,9 +126,21 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi) const
     }
 
     hpsi.assign(psi.size(), Complex(0.0, 0.0));
-    const double hx2_inv = 1.0 / (grid_.hx * grid_.hx);
-    const double hy2_inv = 1.0 / (grid_.hy * grid_.hy);
-    const double hz2_inv = 1.0 / (grid_.hz * grid_.hz);
+    const SternheimerFDLatticeVectors dual = sternheimer_fd_grid_dual_vectors(grid_);
+    const std::array<double, 3> dimensions{
+        static_cast<double>(grid_.nx), static_cast<double>(grid_.ny), static_cast<double>(grid_.nz)};
+    std::array<std::array<double, 3>, 3> laplacian_coefficients{};
+    for (int left = 0; left != 3; ++left)
+    {
+        for (int right = 0; right != 3; ++right)
+        {
+            for (int component = 0; component != 3; ++component)
+            {
+                laplacian_coefficients[left][right]
+                    += dual[left][component] * dual[right][component] * dimensions[left] * dimensions[right];
+            }
+        }
+    }
 
     for (int iz = 0; iz != grid_.nz; ++iz)
     {
@@ -139,38 +151,39 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi) const
                 const int center = index(ix, iy, iz);
                 const Complex psi_center = psi[center];
 
-                Complex laplacian = -2.0 * (hx2_inv + hy2_inv + hz2_inv) * psi_center;
-                const ShiftedGridPoint xp = shifted_grid_point(ix + 1, iy, iz);
-                const ShiftedGridPoint xm = shifted_grid_point(ix - 1, iy, iz);
-                const ShiftedGridPoint yp = shifted_grid_point(ix, iy + 1, iz);
-                const ShiftedGridPoint ym = shifted_grid_point(ix, iy - 1, iz);
-                const ShiftedGridPoint zp = shifted_grid_point(ix, iy, iz + 1);
-                const ShiftedGridPoint zm = shifted_grid_point(ix, iy, iz - 1);
+                Complex laplacian = -2.0 * (laplacian_coefficients[0][0]
+                                             + laplacian_coefficients[1][1]
+                                             + laplacian_coefficients[2][2])
+                                    * psi_center;
+                const auto add_shift = [&](const int dx, const int dy, const int dz, const double coefficient) {
+                    const ShiftedGridPoint shifted = shifted_grid_point(ix + dx, iy + dy, iz + dz);
+                    if (shifted.index >= 0)
+                    {
+                        laplacian += coefficient * shifted.phase * psi[shifted.index];
+                    }
+                };
+                add_shift(1, 0, 0, laplacian_coefficients[0][0]);
+                add_shift(-1, 0, 0, laplacian_coefficients[0][0]);
+                add_shift(0, 1, 0, laplacian_coefficients[1][1]);
+                add_shift(0, -1, 0, laplacian_coefficients[1][1]);
+                add_shift(0, 0, 1, laplacian_coefficients[2][2]);
+                add_shift(0, 0, -1, laplacian_coefficients[2][2]);
 
-                if (xp.index >= 0)
-                {
-                    laplacian += hx2_inv * xp.phase * psi[xp.index];
-                }
-                if (xm.index >= 0)
-                {
-                    laplacian += hx2_inv * xm.phase * psi[xm.index];
-                }
-                if (yp.index >= 0)
-                {
-                    laplacian += hy2_inv * yp.phase * psi[yp.index];
-                }
-                if (ym.index >= 0)
-                {
-                    laplacian += hy2_inv * ym.phase * psi[ym.index];
-                }
-                if (zp.index >= 0)
-                {
-                    laplacian += hz2_inv * zp.phase * psi[zp.index];
-                }
-                if (zm.index >= 0)
-                {
-                    laplacian += hz2_inv * zm.phase * psi[zm.index];
-                }
+                const auto add_mixed = [&](const int dx1,
+                                           const int dy1,
+                                           const int dz1,
+                                           const int dx2,
+                                           const int dy2,
+                                           const int dz2,
+                                           const double coefficient) {
+                    add_shift(dx1 + dx2, dy1 + dy2, dz1 + dz2, 0.5 * coefficient);
+                    add_shift(dx1 - dx2, dy1 - dy2, dz1 - dz2, -0.5 * coefficient);
+                    add_shift(-dx1 + dx2, -dy1 + dy2, -dz1 + dz2, -0.5 * coefficient);
+                    add_shift(-dx1 - dx2, -dy1 - dy2, -dz1 - dz2, 0.5 * coefficient);
+                };
+                add_mixed(1, 0, 0, 0, 1, 0, laplacian_coefficients[0][1]);
+                add_mixed(1, 0, 0, 0, 0, 1, laplacian_coefficients[0][2]);
+                add_mixed(0, 1, 0, 0, 0, 1, laplacian_coefficients[1][2]);
 
                 hpsi[center] = -kinetic_prefactor_ * laplacian + local_potential_[center] * psi_center;
             }

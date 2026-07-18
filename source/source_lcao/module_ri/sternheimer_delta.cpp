@@ -260,6 +260,40 @@ void assemble_delta_wavefunction_components(const std::vector<SternheimerDeltaVi
     axpy(Complex(1.0, 0.0), result.in_pulay_wavefunction, result.reconstructed_wavefunction);
 }
 
+void evaluate_full_grid_delta_hamiltonian_difference(const SternheimerFDHamiltonian& hamiltonian,
+                                                     const double volume_element,
+                                                     SternheimerDeltaSubspace& subspace)
+{
+    double reference_norm_squared = 0.0;
+    double difference_norm_squared = 0.0;
+    double max_abs_difference = 0.0;
+    std::vector<Vector> h_virtual(subspace.virtual_states.size());
+    for (std::size_t ket = 0; ket != subspace.virtual_states.size(); ++ket)
+    {
+        hamiltonian.apply(subspace.virtual_states[ket].orbital, h_virtual[ket]);
+    }
+    for (std::size_t ket = 0; ket != subspace.virtual_states.size(); ++ket)
+    {
+        for (std::size_t bra = 0; bra != subspace.virtual_states.size(); ++bra)
+        {
+            const Complex reference = bra == ket ? Complex(subspace.virtual_states[ket].eigenvalue, 0.0)
+                                                 : Complex(0.0, 0.0);
+            const Complex full_grid = sternheimer_fd_grid_dot(subspace.virtual_states[bra].orbital,
+                                                               h_virtual[ket],
+                                                               volume_element);
+            const double difference = std::abs(full_grid - reference);
+            reference_norm_squared += std::norm(reference);
+            difference_norm_squared += difference * difference;
+            max_abs_difference = std::max(max_abs_difference, difference);
+        }
+    }
+    const double reference_norm = std::sqrt(reference_norm_squared);
+    const double difference_norm = std::sqrt(difference_norm_squared);
+    subspace.full_grid_hamiltonian_relative_difference
+        = reference_norm > 0.0 ? difference_norm / reference_norm : difference_norm;
+    subspace.full_grid_hamiltonian_max_abs_difference = max_abs_difference;
+}
+
 } // namespace
 
 int sternheimer_delta_virtual_state_limit(const int requested_states,
@@ -508,7 +542,7 @@ std::vector<std::array<int, 3>> enumerate_delta_sternheimer_periodic_images(
     if (grid.nx <= 0 || grid.ny <= 0 || grid.nz <= 0 || grid.hx <= 0.0 || grid.hy <= 0.0
         || grid.hz <= 0.0)
     {
-        throw std::invalid_argument("Sternheimer delta periodic images require a valid orthogonal grid.");
+        throw std::invalid_argument("Sternheimer delta periodic images require a valid uniform grid.");
     }
     if (!std::isfinite(cutoff_radius) || cutoff_radius < 0.0)
     {
@@ -526,22 +560,24 @@ std::vector<std::array<int, 3>> enumerate_delta_sternheimer_periodic_images(
         return {{0, 0, 0}};
     }
 
-    const std::array<double, 3> lengths = {
-        grid.nx * grid.hx,
-        grid.ny * grid.hy,
-        grid.nz * grid.hz,
-    };
+    const SternheimerFDLatticeVectors dual = sternheimer_fd_grid_dual_vectors(grid);
     std::array<int, 3> image_min{};
     std::array<int, 3> image_max{};
     for (int direction = 0; direction != 3; ++direction)
     {
-        const double length = lengths[static_cast<std::size_t>(direction)];
-        double position = atom_position[static_cast<std::size_t>(direction)];
-        position -= length * std::floor(position / length);
+        double reduced_position = 0.0;
+        double dual_norm_squared = 0.0;
+        for (int component = 0; component != 3; ++component)
+        {
+            reduced_position += dual[direction][component] * atom_position[component];
+            dual_norm_squared += dual[direction][component] * dual[direction][component];
+        }
+        reduced_position -= std::floor(reduced_position);
+        const double reduced_cutoff = std::sqrt(dual_norm_squared) * cutoff_radius;
         image_min[static_cast<std::size_t>(direction)]
-            = static_cast<int>(std::ceil((-cutoff_radius - position) / length));
+            = static_cast<int>(std::ceil(-reduced_position - reduced_cutoff));
         image_max[static_cast<std::size_t>(direction)]
-            = static_cast<int>(std::floor((length + cutoff_radius - position) / length));
+            = static_cast<int>(std::floor(1.0 - reduced_position + reduced_cutoff));
     }
 
     std::vector<std::array<int, 3>> images;
@@ -881,6 +917,8 @@ SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
         subspace.virtual_states.push_back(std::move(state));
     }
 
+    evaluate_full_grid_delta_hamiltonian_difference(hamiltonian, volume_element, subspace);
+
     std::vector<Vector> residual_projector;
     residual_projector.reserve(occupied_functions.size() + subspace.virtual_states.size());
     for (const SternheimerDeltaGridFunction& occupied: occupied_functions)
@@ -1013,6 +1051,8 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace(
         subspace.virtual_states.push_back(std::move(state));
     }
 
+    evaluate_full_grid_delta_hamiltonian_difference(hamiltonian, volume_element, subspace);
+
     const std::vector<Vector> virtual_orbitals = collect_virtual_orbitals(subspace.virtual_states);
     std::vector<Vector> residual_projector = occupied_wavefunctions;
     residual_projector.insert(residual_projector.end(), virtual_orbitals.begin(), virtual_orbitals.end());
@@ -1086,6 +1126,41 @@ std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_ma
         elements[ia] = volume_element * value;
     }
     return elements;
+}
+
+SternheimerFDHamiltonian::Vector build_delta_sternheimer_sos_wavefunction(
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<SternheimerFDHamiltonian::Complex>& perturbation_matrix_elements,
+    const double occupied_eigenvalue,
+    const double omega)
+{
+    if (virtual_states.empty())
+    {
+        throw std::invalid_argument("Sternheimer direct SOS requires at least one virtual state.");
+    }
+    if (virtual_states.size() != perturbation_matrix_elements.size())
+    {
+        throw std::invalid_argument(
+            "Sternheimer direct SOS requires one perturbation matrix element per virtual state.");
+    }
+
+    const std::size_t grid_size = virtual_states.front().orbital.size();
+    if (grid_size == 0)
+    {
+        throw std::invalid_argument("Sternheimer direct SOS virtual states must be non-empty.");
+    }
+    Vector response(grid_size, Complex(0.0, 0.0));
+    for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
+    {
+        check_vector_size(virtual_states[ia].orbital, grid_size, "Sternheimer direct SOS virtual state");
+        const Complex denominator(occupied_eigenvalue - virtual_states[ia].eigenvalue, -omega);
+        if (std::abs(denominator) < 1.0e-30)
+        {
+            throw std::runtime_error("Sternheimer direct SOS found a singular virtual-state denominator.");
+        }
+        axpy(perturbation_matrix_elements[ia] / denominator, virtual_states[ia].orbital, response);
+    }
+    return response;
 }
 
 SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(

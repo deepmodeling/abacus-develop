@@ -127,17 +127,31 @@ struct PeriodicImageRange
     int last = 0;
 };
 
-PeriodicImageRange periodic_image_range(const double displacement,
-                                        const double length,
-                                        const double cutoff,
-                                        const bool periodic)
+std::array<PeriodicImageRange, 3> periodic_image_ranges(
+    const std::array<double, 3>& displacement,
+    const ModuleRI::SternheimerFDHamiltonian::Grid& grid,
+    const double cutoff)
 {
-    if (!periodic)
+    std::array<PeriodicImageRange, 3> ranges{};
+    if (!grid.periodic)
     {
-        return {0, 0};
+        return ranges;
     }
-    return {static_cast<int>(std::ceil((displacement - cutoff) / length)),
-            static_cast<int>(std::floor((displacement + cutoff) / length))};
+    const ModuleRI::SternheimerFDLatticeVectors dual = ModuleRI::sternheimer_fd_grid_dual_vectors(grid);
+    for (int direction = 0; direction != 3; ++direction)
+    {
+        double reduced_displacement = 0.0;
+        double dual_norm_squared = 0.0;
+        for (int component = 0; component != 3; ++component)
+        {
+            reduced_displacement += dual[direction][component] * displacement[component];
+            dual_norm_squared += dual[direction][component] * dual[direction][component];
+        }
+        const double reduced_cutoff = std::sqrt(dual_norm_squared) * cutoff;
+        ranges[direction].first = static_cast<int>(std::ceil(reduced_displacement - reduced_cutoff));
+        ranges[direction].last = static_cast<int>(std::floor(reduced_displacement + reduced_cutoff));
+    }
+    return ranges;
 }
 
 double interpolate_radial(const std::vector<double>& radial_grid, const std::vector<double>& values, const double radius)
@@ -278,9 +292,6 @@ sample_sternheimer_fd_projector_block(const SternheimerFDRadialProjectorSet& rad
     }
 
     std::vector<double> ylm;
-    const double lx = grid.nx * grid.hx;
-    const double ly = grid.ny * grid.hy;
-    const double lz = grid.nz * grid.hz;
     const double cutoff = radial_set.radial_grid.back();
     for (int iz = 0; iz != grid.nz; ++iz)
     {
@@ -288,23 +299,28 @@ sample_sternheimer_fd_projector_block(const SternheimerFDRadialProjectorSet& rad
         {
             for (int ix = 0; ix != grid.nx; ++ix)
             {
-                const double displacement_x = ix * grid.hx - atom_position.x;
-                const double displacement_y = iy * grid.hy - atom_position.y;
-                const double displacement_z = iz * grid.hz - atom_position.z;
-                const PeriodicImageRange image_x = periodic_image_range(displacement_x, lx, cutoff, grid.periodic);
-                const PeriodicImageRange image_y = periodic_image_range(displacement_y, ly, cutoff, grid.periodic);
-                const PeriodicImageRange image_z = periodic_image_range(displacement_z, lz, cutoff, grid.periodic);
+                const std::array<double, 3> position
+                    = sternheimer_fd_grid_cartesian_position(grid, ix, iy, iz);
+                const std::array<double, 3> displacement{
+                    position[0] - atom_position.x,
+                    position[1] - atom_position.y,
+                    position[2] - atom_position.z};
+                const std::array<PeriodicImageRange, 3> image_ranges
+                    = periodic_image_ranges(displacement, grid, cutoff);
                 const int ir = grid_index(grid, ix, iy, iz);
 
-                for (int rz = image_z.first; rz <= image_z.last; ++rz)
+                for (int rz = image_ranges[2].first; rz <= image_ranges[2].last; ++rz)
                 {
-                    for (int ry = image_y.first; ry <= image_y.last; ++ry)
+                    for (int ry = image_ranges[1].first; ry <= image_ranges[1].last; ++ry)
                     {
-                        for (int rx = image_x.first; rx <= image_x.last; ++rx)
+                        for (int rx = image_ranges[0].first; rx <= image_ranges[0].last; ++rx)
                         {
-                            const double dx = displacement_x - rx * lx;
-                            const double dy = displacement_y - ry * ly;
-                            const double dz = displacement_z - rz * lz;
+                            const std::array<int, 3> image{rx, ry, rz};
+                            const std::array<double, 3> translation
+                                = sternheimer_fd_grid_lattice_translation(grid, image);
+                            const double dx = displacement[0] - translation[0];
+                            const double dy = displacement[1] - translation[1];
+                            const double dz = displacement[2] - translation[2];
                             const double radius = std::sqrt(dx * dx + dy * dy + dz * dz);
                             if (radius > cutoff)
                             {
@@ -312,8 +328,7 @@ sample_sternheimer_fd_projector_block(const SternheimerFDRadialProjectorSet& rad
                             }
 
                             evaluate_real_spherical_harmonics(lmax, dx, dy, dz, ylm);
-                            const std::complex<double> phase
-                                = sternheimer_bloch_phase(grid.kpoint, std::array<int, 3>{rx, ry, rz});
+                            const std::complex<double> phase = sternheimer_bloch_phase(grid.kpoint, image);
                             for (int ich = 0; ich != nchannel; ++ich)
                             {
                                 const ProjectorChannel& channel = channels[ich];

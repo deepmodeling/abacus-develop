@@ -114,6 +114,30 @@ TEST(SternheimerDelta, PostprocessReconstructsStandardSolutionWithResidualCoupli
                 1.0e-14);
 }
 
+TEST(SternheimerDelta, BuildsDirectSOSWavefunctionFromExplicitVirtualStates)
+{
+    constexpr double eps_i = -0.5;
+    constexpr double omega = 0.25;
+    const Vector first = unit_vector(3, 1);
+    const Vector second = unit_vector(3, 2);
+    const std::vector<ModuleRI::SternheimerDeltaVirtualState> virtual_states
+        = {{first, {}, 0.5}, {second, {}, 1.5}};
+    const std::vector<Complex> matrix_elements
+        = {Complex(0.4, -0.2), Complex(-0.3, 0.5)};
+
+    const Vector response = ModuleRI::build_delta_sternheimer_sos_wavefunction(
+        virtual_states, matrix_elements, eps_i, omega);
+
+    const Complex first_coefficient = matrix_elements[0] / Complex(eps_i - 0.5, -omega);
+    const Complex second_coefficient = matrix_elements[1] / Complex(eps_i - 1.5, -omega);
+    const Vector expected = {Complex(0.0, 0.0), first_coefficient, second_coefficient};
+    expect_vector_near(response, expected, 1.0e-14);
+
+    EXPECT_THROW(ModuleRI::build_delta_sternheimer_sos_wavefunction(
+                     virtual_states, {matrix_elements[0]}, eps_i, omega),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerDelta, AccumulateResponseFromDecomposedWavefunction)
 {
     constexpr double volume_element = 1.0;
@@ -425,6 +449,15 @@ TEST(SternheimerDelta, ReferenceSubspaceTransformsValuesAndGradientsTogether)
                        {Complex(1.0, 0.0), Complex(3.0, 0.0)},
                        1.0e-14);
     EXPECT_NEAR(subspace.virtual_states[0].eigenvalue, 5.0, 1.0e-13);
+    Vector h_virtual;
+    hamiltonian.apply(subspace.virtual_states[0].orbital, h_virtual);
+    const double grid_diagonal = std::real(ModuleRI::sternheimer_fd_grid_dot(
+        subspace.virtual_states[0].orbital, h_virtual, volume_element));
+    const double expected_difference = std::abs(grid_diagonal - subspace.virtual_states[0].eigenvalue);
+    EXPECT_NEAR(subspace.full_grid_hamiltonian_max_abs_difference, expected_difference, 1.0e-13);
+    EXPECT_NEAR(subspace.full_grid_hamiltonian_relative_difference,
+                expected_difference / std::abs(subspace.virtual_states[0].eigenvalue),
+                1.0e-13);
 }
 
 TEST(SternheimerDelta, ReferenceSubspacePivotsPastNearDependentCandidates)
@@ -523,6 +556,27 @@ TEST(SternheimerDelta, EnumeratesEveryPeriodicOrbitalImageInsideTheCutoff)
         = ModuleRI::enumerate_delta_sternheimer_periodic_images(grid, {6.0, 6.0, 6.0}, 8.0);
     ASSERT_EQ(nonperiodic.size(), 1);
     EXPECT_EQ(nonperiodic[0], (std::array<int, 3>{0, 0, 0}));
+}
+
+TEST(SternheimerDelta, EnumeratesPeriodicImagesUsingNonorthogonalDualVectors)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid;
+    grid.nx = 4;
+    grid.ny = 4;
+    grid.nz = 4;
+    grid.hx = std::sqrt(2.0) / 4.0;
+    grid.hy = std::sqrt(2.0) / 4.0;
+    grid.hz = std::sqrt(2.0) / 4.0;
+    grid.periodic = true;
+    grid.lattice_vectors = {{{0.0, 1.0, 1.0},
+                             {1.0, 0.0, 1.0},
+                             {1.0, 1.0, 0.0}}};
+
+    const auto images
+        = ModuleRI::enumerate_delta_sternheimer_periodic_images(grid, {0.5, 0.5, 0.5}, 0.9);
+
+    EXPECT_EQ(images.size(), 27);
+    EXPECT_NE(std::find(images.begin(), images.end(), std::array<int, 3>{-1, 0, 0}), images.end());
 }
 
 TEST(SternheimerDelta, BuildsOrthogonalVirtualSubspaceWithHamiltonianResiduals)

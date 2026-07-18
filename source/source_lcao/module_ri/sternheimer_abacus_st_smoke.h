@@ -43,7 +43,23 @@ struct SternheimerLCAOOccupiedKPoint
     std::vector<double> eigenvalues;
     std::vector<double> occupations;
     std::vector<std::vector<std::complex<double>>> coefficients;
+    std::vector<double> unoccupied_eigenvalues;
+    std::vector<std::vector<std::complex<double>>> unoccupied_coefficients;
 };
+
+inline bool sternheimer_lcao_sos_diagnostic_enabled()
+{
+    const char* raw = std::getenv("ABACUS_STERNHEIMER_LCAO_SOS_DIAG");
+    if (raw == nullptr)
+    {
+        return false;
+    }
+    std::string value(raw);
+    std::transform(value.begin(), value.end(), value.begin(), [](const unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return !(value.empty() || value == "0" || value == "false" || value == "off" || value == "no");
+}
 
 struct SternheimerPeriodicResponsePlan
 {
@@ -257,6 +273,29 @@ inline void validate_sternheimer_lcao_occupied_kpoints(
                 }
             }
         }
+        if (record.unoccupied_eigenvalues.size() != record.unoccupied_coefficients.size())
+        {
+            throw std::invalid_argument("Sternheimer LCAO unoccupied k-point band data are inconsistent.");
+        }
+        for (std::size_t ib = 0; ib != record.unoccupied_coefficients.size(); ++ib)
+        {
+            if (!std::isfinite(record.unoccupied_eigenvalues[ib]))
+            {
+                throw std::invalid_argument("Sternheimer LCAO unoccupied eigenvalue is invalid.");
+            }
+            const auto& band_coefficients = record.unoccupied_coefficients[ib];
+            if (band_coefficients.size() != static_cast<std::size_t>(basis_size))
+            {
+                throw std::invalid_argument("Sternheimer LCAO unoccupied coefficient basis size is inconsistent.");
+            }
+            for (const std::complex<double>& coefficient: band_coefficients)
+            {
+                if (!std::isfinite(coefficient.real()) || !std::isfinite(coefficient.imag()))
+                {
+                    throw std::invalid_argument("Sternheimer LCAO unoccupied coefficient is not finite.");
+                }
+            }
+        }
     }
 }
 
@@ -345,6 +384,24 @@ bool sternheimer_abacus_st_smoke_enabled();
 inline bool sternheimer_abfs_diag_only_enabled()
 {
     const char* raw = std::getenv("ABACUS_STERNHEIMER_FD_ST_ABFS_DIAG_ONLY");
+    if (raw == nullptr)
+    {
+        return false;
+    }
+    std::string value(raw);
+    std::transform(value.begin(), value.end(), value.begin(), [](const unsigned char ch) {
+        return static_cast<char>(std::tolower(ch));
+    });
+    return !(value.empty() || value == "0" || value == "false" || value == "off" || value == "no");
+}
+
+inline bool sternheimer_grid_coulomb_diagnostic_enabled(const int num_channels)
+{
+    if (num_channels <= 32)
+    {
+        return true;
+    }
+    const char* raw = std::getenv("ABACUS_STERNHEIMER_GRID_COULOMB_DIAG");
     if (raw == nullptr)
     {
         return false;

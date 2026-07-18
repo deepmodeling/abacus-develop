@@ -79,6 +79,35 @@ TEST(SternheimerFDProjectorSampler, WritesProjectorsInABACUSRealSpaceIndexOrder)
     EXPECT_NEAR(block.projectors[0][6].real(), std::sqrt(2.0) * y00(), 1.0e-14); // (1, 1, 0)
 }
 
+TEST(SternheimerFDProjectorSampler, SamplesProjectorsAtNonorthogonalCartesianGridPoints)
+{
+    ModuleRI::SternheimerFDRadialProjectorSet radial_set;
+    radial_set.radial_grid = {0.0, 1.0};
+    radial_set.beta_radials = {{0.0, 1.0}};
+    radial_set.angular_momenta = {0};
+    radial_set.d_radial = {{{1.0, 0.0}}};
+
+    ModuleRI::SternheimerFDHamiltonian::Grid grid;
+    grid.nx = 4;
+    grid.ny = 4;
+    grid.nz = 4;
+    grid.hx = std::sqrt(2.0) / 4.0;
+    grid.hy = std::sqrt(2.0) / 4.0;
+    grid.hz = std::sqrt(2.0) / 4.0;
+    grid.periodic = false;
+    grid.lattice_vectors = {{{0.0, 1.0, 1.0},
+                             {1.0, 0.0, 1.0},
+                             {1.0, 1.0, 0.0}}};
+
+    const auto block = ModuleRI::sample_sternheimer_fd_projector_block(
+        radial_set, grid, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+
+    const int index = (1 * grid.ny + 1) * grid.nz;
+    ASSERT_EQ(block.projectors.size(), 1);
+    ASSERT_EQ(block.projectors[0].size(), 64);
+    EXPECT_NEAR(block.projectors[0][index].real(), std::sqrt(0.375) * y00(), 1.0e-14);
+}
+
 TEST(SternheimerFDProjectorSampler, BuildsRadialSetFromABACUSMatrices)
 {
     ModuleBase::matrix betar(2, 3);

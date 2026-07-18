@@ -227,6 +227,20 @@ TEST(SternheimerABACUSSTSmoke, GammaRecordPreservesLegacyWeightedOccupation)
     EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_lcao_weighted_occupation(gamma, 0), 2.0);
 }
 
+TEST(SternheimerABACUSSTSmoke, ValidatesOptionalUnoccupiedLCAOStates)
+{
+    auto record = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+    record.unoccupied_eigenvalues = {0.5};
+    record.unoccupied_coefficients = {{std::complex<double>(0.0, 0.0),
+                                       std::complex<double>(1.0, 0.0),
+                                       std::complex<double>(0.0, 0.0)}};
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({record}, 1, 1, 1, 3));
+
+    record.unoccupied_coefficients[0].pop_back();
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({record}, 1, 1, 1, 3),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, BuildsTwoKPointNonzeroQResponsePlan)
 {
     const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
