@@ -307,6 +307,26 @@ std::string sternheimer_memory_accounting_mode_name(const SternheimerMemoryAccou
     throw std::invalid_argument("Unknown Sternheimer memory accounting mode.");
 }
 
+std::string format_sternheimer_channel_worker_diagnostic(const SternheimerMemorySnapshot& memory,
+                                                         const SternheimerChannelWorkerPlan& plan,
+                                                         const std::size_t grid_size,
+                                                         const int user_cap)
+{
+    std::ostringstream diagnostic;
+    diagnostic << "resource_source=" << memory.source
+               << " accounting_mode=" << sternheimer_memory_accounting_mode_name(memory.mode)
+               << " node_memory_limit_bytes=" << memory.limit_bytes
+               << " memory_current_bytes=" << memory.current_bytes
+               << " memory_target_bytes=" << plan.target_bytes
+               << " local_mpi_ranks=" << memory.local_mpi_ranks
+               << " grid_size=" << grid_size
+               << " memory_per_worker_bytes=" << plan.memory_per_worker_bytes
+               << " automatic_workers=" << plan.automatic_workers
+               << " user_cap=" << user_cap
+               << " effective_workers=" << plan.effective_workers;
+    return diagnostic.str();
+}
+
 SternheimerMemorySnapshot detect_sternheimer_memory_snapshot()
 {
     detail::SternheimerMemoryCandidates candidates;

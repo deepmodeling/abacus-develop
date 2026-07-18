@@ -46,6 +46,11 @@ SternheimerMemorySnapshot detect_sternheimer_memory_snapshot();
 
 std::string sternheimer_memory_accounting_mode_name(SternheimerMemoryAccountingMode mode);
 
+std::string format_sternheimer_channel_worker_diagnostic(const SternheimerMemorySnapshot& memory,
+                                                         const SternheimerChannelWorkerPlan& plan,
+                                                         std::size_t grid_size,
+                                                         int user_cap);
+
 namespace detail
 {
 

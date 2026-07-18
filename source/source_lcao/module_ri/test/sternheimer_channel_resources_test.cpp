@@ -85,6 +85,22 @@ TEST(SternheimerChannelResources, ZeroCapUsesAutomaticCount)
     EXPECT_EQ(plan.effective_workers, plan.automatic_workers);
 }
 
+TEST(SternheimerChannelResources, FormatsWorkerDecisionDiagnostic)
+{
+    const ModuleRI::SternheimerMemorySnapshot memory{
+        ModuleRI::SternheimerMemoryAccountingMode::node_aggregate,
+        100000,
+        32000,
+        2,
+        "cgroup_v2"};
+    const auto plan = ModuleRI::plan_sternheimer_channel_workers(40, 30, 1, 4, memory);
+    EXPECT_EQ(ModuleRI::format_sternheimer_channel_worker_diagnostic(memory, plan, 1, 4),
+              "resource_source=cgroup_v2 accounting_mode=node_aggregate "
+              "node_memory_limit_bytes=100000 memory_current_bytes=32000 "
+              "memory_target_bytes=75000 local_mpi_ranks=2 grid_size=1 "
+              "memory_per_worker_bytes=1920 automatic_workers=11 user_cap=4 effective_workers=4");
+}
+
 TEST(SternheimerChannelResources, RejectsDetectedBudgetBelowOneWorker)
 {
     const ModuleRI::SternheimerMemorySnapshot memory{

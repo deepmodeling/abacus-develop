@@ -13,6 +13,7 @@
 #include "source_lcao/module_ri/exx_abfs-construct_orbs.h"
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
 #include "source_lcao/module_ri/sternheimer_channel_parallel.h"
+#include "source_lcao/module_ri/sternheimer_channel_resources.h"
 #include "source_lcao/module_ri/sternheimer_delta.h"
 #include "source_lcao/module_ri/sternheimer_abacus_fd_nonlocal.h"
 #include "source_lcao/module_ri/sternheimer_fd_solver.h"
@@ -39,6 +40,10 @@
 
 #ifdef __MPI
 #include <mpi.h>
+#endif
+
+#ifdef _OPENMP
+#include <omp.h>
 #endif
 
 namespace ModuleRI
@@ -123,6 +128,15 @@ int int_from_env(const char* name, const int default_value)
         throw std::invalid_argument(std::string("Invalid integer in ") + name + ".");
     }
     return value;
+}
+
+int sternheimer_channel_openmp_threads()
+{
+#ifdef _OPENMP
+    return omp_get_max_threads();
+#else
+    return 1;
+#endif
 }
 
 double positive_double_from_env(const char* name, const double default_value)
@@ -3715,8 +3729,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
         const int channel_threads = positive_int_from_env(kChannelThreadsEnv, 0);
         const int nfreq = PARAM.inp.sternheimer_nfreq;
-        const int channel_max_workers = int_from_env(kChannelMaxWorkersEnv, 0);
-        if (channel_max_workers < 0)
+        const int channel_worker_user_cap = int_from_env(kChannelMaxWorkersEnv, 0);
+        if (channel_worker_user_cap < 0)
         {
             throw std::invalid_argument(std::string("Invalid non-negative integer in ") + kChannelMaxWorkersEnv + ".");
         }
@@ -3815,7 +3829,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                    -1.0,
                                    elapsed_seconds_since(chi0_start_time),
                                    "num_channels=" + std::to_string(num_channels)
-                                       + " max_workers=" + std::to_string(channel_max_workers));
+                                       + " user_cap=" + std::to_string(channel_worker_user_cap));
         if (GlobalV::MY_RANK == 0)
         {
             write_abfs_channel_diagnostic("STERNHEIMER_ABFS_CHANNELS.dat", channels);
@@ -4092,6 +4106,29 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                                + " nvirtual=" + std::to_string(delta_subspace.virtual_states.size()));
             }
 
+            const SternheimerMemorySnapshot channel_memory = detect_sternheimer_memory_snapshot();
+            const SternheimerChannelWorkerPlan channel_worker_plan
+                = plan_sternheimer_channel_workers(num_channels,
+                                                   sternheimer_channel_openmp_threads(),
+                                                   grid_data.grid.size(),
+                                                   channel_worker_user_cap,
+                                                   channel_memory);
+            append_chi0_progress_event(
+                "channel_workers_ready",
+                0,
+                -1,
+                -1,
+                -1,
+                solved_equations,
+                nullptr,
+                -1.0,
+                elapsed_seconds_since(chi0_start_time),
+                "spin=" + std::to_string(spin_index + 1) + " "
+                    + format_sternheimer_channel_worker_diagnostic(channel_memory,
+                                                                   channel_worker_plan,
+                                                                   grid_data.grid.size(),
+                                                                   channel_worker_user_cap));
+
             for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
             {
                 const int owner_rank
@@ -4174,7 +4211,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                                                             chi0_branch);
                               return result;
                             },
-                            channel_max_workers);
+                            channel_worker_plan.effective_workers);
 
                     for (int ichannel = 0; ichannel != num_channels; ++ichannel)
                     {
