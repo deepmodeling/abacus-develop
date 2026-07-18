@@ -115,7 +115,8 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
         ASSERT_EQ(atom.ncpp.pp_type, "NC");
         ASSERT_EQ(atom.ncpp.nbeta, 6);
         ASSERT_EQ(atom.ncpp.lll, std::vector<int>({0, 0, 1, 1, 2, 2}));
-        pseudo_reader.complete_default(atom.ncpp);
+        const double pseudo_rcut = 15.0;
+        pseudo_reader.complete_default(atom.ncpp, pseudo_rcut);
         ASSERT_EQ(atom.ncpp.nh, 18);
         ASSERT_EQ(atom.ncpp.jjj.size(), 6);
 

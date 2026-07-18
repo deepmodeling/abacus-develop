@@ -292,7 +292,8 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
 
         if (GlobalV::MY_RANK == 0)
         {
-		    upf.complete_default(ucell.atoms[i].ncpp);
+		    const double pseudo_rcut = PARAM.inp.pseudo_rcut;
+		    upf.complete_default(ucell.atoms[i].ncpp, pseudo_rcut);
 
             log << std::endl;
             ModuleBase::GlobalFunc::OUT(log, "Pseudopotential file", ucell.pseudo_fn[i]);

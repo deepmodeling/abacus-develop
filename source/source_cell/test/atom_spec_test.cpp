@@ -183,9 +183,9 @@ TEST_F(AtomSpecTest, BcastAtom2)
 	if(GlobalV::MY_RANK==0)
 	{
 		ifs.open("./support/C.upf");
-		PARAM.input.pseudo_rcut = 15.0;
+		const double pseudo_rcut = 15.0;
 		upf.read_pseudo_upf201(ifs, atom.ncpp);
-		upf.complete_default(atom.ncpp);
+		upf.complete_default(atom.ncpp, pseudo_rcut);
 		ifs.close();
 		EXPECT_TRUE(atom.ncpp.has_so);
 	}

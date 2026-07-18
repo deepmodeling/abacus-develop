@@ -64,12 +64,12 @@ TEST_F(NCPPTest, SetPseudoAtom)
 	std::ifstream ifs;
 	//set
 	ifs.open("./support/C.upf");
-	PARAM.input.pseudo_rcut = 15.0;
+	const double pseudo_rcut = 15.0;
 	upf->read_pseudo_upf201(ifs, *ncpp);
 	//set_pseudo_atom
 	upf->complete_default_h(*ncpp);
-	upf->complete_default_atom(*ncpp);
-	EXPECT_EQ(ncpp->rcut,PARAM.input.pseudo_rcut);
+	upf->complete_default_atom(*ncpp, pseudo_rcut);
+	EXPECT_EQ(ncpp->rcut,pseudo_rcut);
 
 	if(!ncpp->nlcc)
 	{
@@ -87,15 +87,15 @@ TEST_F(NCPPTest, SetPseudoNC)
 	std::ifstream ifs;
 	//set
 	ifs.open("./support/C.upf");
-	PARAM.input.pseudo_rcut = 15.0;
+	const double pseudo_rcut = 15.0;
 	// set pseudo nbeta = 0
 	upf->read_pseudo_upf201(ifs, *ncpp);
 	ncpp->nbeta = 0;
-	upf->complete_default(*ncpp);
+	upf->complete_default(*ncpp, pseudo_rcut);
 	EXPECT_EQ(ncpp->nh,0);
     // set pseudo nbeta > 0
 	upf->read_pseudo_upf201(ifs, *ncpp);
-    upf->complete_default(*ncpp);
+    upf->complete_default(*ncpp, pseudo_rcut);
 	EXPECT_EQ(ncpp->nh,14);
 	EXPECT_EQ(ncpp->kkbeta,132);
 	ifs.close();
@@ -107,9 +107,9 @@ TEST_F(NCPPTest, PrintNC)
 	std::ifstream ifs;
 	//set
 	ifs.open("./support/C.upf");
-	PARAM.input.pseudo_rcut = 15.0;
+	const double pseudo_rcut = 15.0;
 	upf->read_pseudo_upf201(ifs, *ncpp);
-    upf->complete_default(*ncpp);
+    upf->complete_default(*ncpp, pseudo_rcut);
     ifs.close();
 	//print
 	std::ofstream ofs;
