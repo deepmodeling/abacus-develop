@@ -18,6 +18,7 @@
 #undef private
 #include "source_base/mathzone.h"
 #include "source_base/parallel_global.h"
+#include "source_base/global_variable.h"
 #include "source_cell/parallel_kpoints.h"
 
 pseudo::pseudo()

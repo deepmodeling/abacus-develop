@@ -1,7 +1,7 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include <memory>
-
+#include "source_base/global_variable.h"
 
 #ifdef __MPI
 #include <mpi.h>
