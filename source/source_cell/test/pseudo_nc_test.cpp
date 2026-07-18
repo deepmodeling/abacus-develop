@@ -1,8 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
+
 #include<streambuf>
 
 /************************************************
@@ -39,7 +37,6 @@ TEST_F(NCPPTest, SetPseudoH)
 	std::ifstream ifs;
 	//set
 	ifs.open("./support/C.upf");
-	PARAM.input.pseudo_rcut = 15.0;
 	upf->read_pseudo_upf201(ifs, *ncpp);
 	//set_pseudo_h
 	upf->complete_default_h(*ncpp);

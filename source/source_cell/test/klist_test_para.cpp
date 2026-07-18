@@ -1,9 +1,7 @@
 #include "source_base/mathzone.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
+
 #include "source_cell/parallel_kpoints.h"
 
 #include "gmock/gmock.h"

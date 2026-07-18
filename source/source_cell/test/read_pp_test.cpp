@@ -1,8 +1,5 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include<memory>
 /************************************************
  *  unit test of read_pp
@@ -592,7 +589,6 @@ TEST_F(ReadPPTest, BLPS)
 	std::ifstream ifs;
 	// this pp file is a vwr type of pp
 	ifs.open("./support/si.lda.lps");
-	PARAM.input.dft_functional="default";
 	read_pp->read_pseudo_blps(ifs, *upf);
 	EXPECT_FALSE(upf->nlcc);
 	EXPECT_FALSE(upf->tvanp);

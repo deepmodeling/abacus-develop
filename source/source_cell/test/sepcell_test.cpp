@@ -3,9 +3,7 @@
 // #include <sstream>
 #include <vector>
 
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
+
 
 #ifdef __MPI
 #include <mpi.h>

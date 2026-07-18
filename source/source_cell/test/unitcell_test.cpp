@@ -1,8 +1,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
+
 #include "source_estate/cal_ux.h"
 #include "source_cell/read_orb.h"
 #include "source_estate/read_pseudo.h"

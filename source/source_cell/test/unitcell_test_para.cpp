@@ -3,9 +3,6 @@
 #include <unistd.h>
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "memory"
 #include "source_base/global_variable.h"
 #include "source_base/mathzone.h"
@@ -28,10 +25,6 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
-
 /************************************************
  *  unit test of class UnitCell
  ***********************************************/

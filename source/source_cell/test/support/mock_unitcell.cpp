@@ -1,7 +1,5 @@
 #include "source_cell/unitcell.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
+
 /*
     README:
     This file supports idea like "I dont need any functions of UnitCell, I want
