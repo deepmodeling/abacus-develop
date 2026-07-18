@@ -40,6 +40,7 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_pw/module_pwdft/soc.cpp
     ../../../source_io/module_output/sparse_matrix.cpp
     ../../../source_estate/read_pseudo.cpp
+    ../../../source_estate/param_update.cpp
     ../../../source_estate/cal_wfc.cpp
     ../../../source_cell/read_orb.cpp
     ../../../source_estate/cal_nelec_nband.cpp

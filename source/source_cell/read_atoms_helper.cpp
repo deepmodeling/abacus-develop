@@ -202,7 +202,7 @@ void transform_atom_coordinates(Atom& atom, int ia,
     if(Coordinate=="Direct")
     {
         // change v from direct to cartesian,
-        // the unit is GlobalC::sf.ucell.lat0
+        // the unit is ucell.lat0
         atom.taud[ia] = v;
         atom.tau[ia] = v * latvec;
     }
