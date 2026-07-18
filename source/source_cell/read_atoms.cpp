@@ -5,6 +5,7 @@
 
 #include "unitcell.h"
 #include "read_atoms_helper.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include "print_cell.h"
 #include "read_stru.h"
@@ -24,6 +25,15 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
     std::string& Coordinate  = ucell.Coordinate;
     const int ntype = ucell.ntype;
     assert (nspin==1 || nspin==2 || nspin==4);
+
+    const std::string basis_type = PARAM.inp.basis_type;
+    const std::string orbital_dir = PARAM.inp.orbital_dir;
+    const std::string init_wfc = PARAM.inp.init_wfc;
+    const double onsite_radius = PARAM.inp.onsite_radius;
+    const bool fixed_atoms = PARAM.inp.fixed_atoms;
+    const bool noncolin = PARAM.inp.noncolin;
+    const std::string calculation = PARAM.inp.calculation;
+    const std::string esolver_type = PARAM.inp.esolver_type;
 
     if (ucell.magnet.start_mag.size() != static_cast<size_t>(ntype))
     {
@@ -51,7 +61,9 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
 
             bool set_element_mag_zero = false;
             if (!unitcell::read_atom_type_header(it, ucell, ifpos, ofs_running,
-                                       ofs_warning, set_element_mag_zero))
+                                       ofs_warning, set_element_mag_zero,
+                                       basis_type, orbital_dir,
+                                       init_wfc, onsite_radius))
             {
                 return false;
             }
@@ -93,14 +105,16 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
 
                     // Process magnetization
                     unitcell::process_magnetization(ucell.atoms[it], it, ia, nspin,
-                                        input_vec_mag, input_angle_mag, ofs_running);
+                                        input_vec_mag, input_angle_mag, ofs_running,
+                                        noncolin);
 
                     // Transform coordinates
                     unitcell::transform_atom_coordinates(ucell.atoms[it], ia, Coordinate,
                                              v, ucell.latvec, ucell.lat0, ucell.latcenter);
 
                     // Set movement flags
-                    unitcell::set_atom_movement_flags(ucell.atoms[it], ia, mv);
+                    unitcell::set_atom_movement_flags(ucell.atoms[it], ia, mv,
+                                        fixed_atoms);
                     ucell.atoms[it].dis[ia].set(0, 0, 0);
                 }//endj
             }    // end na
@@ -116,6 +130,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
     }   // end scan_begin
 
     // Final validation and output
-    return unitcell::finalize_atom_positions(ucell, ofs_running, ofs_warning);
+    return unitcell::finalize_atom_positions(ucell, ofs_running, ofs_warning,
+                                        calculation, esolver_type);
 
 }//end read_atom_positions

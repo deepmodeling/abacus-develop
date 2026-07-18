@@ -66,9 +66,10 @@ void allocate_atom_properties(Atom& atom, int na, double mass)
 }
 
 void set_atom_movement_flags(Atom& atom, int ia,
-                             const ModuleBase::Vector3<int>& mv)
+                             const ModuleBase::Vector3<int>& mv,
+                             const bool fixed_atoms)
 {
-    if(!PARAM.inp.fixed_atoms)
+    if(!fixed_atoms)
     {
         atom.mbl[ia] = mv;
     }
@@ -133,10 +134,12 @@ void autoset_magnetization(UnitCell& ucell, int nspin,
 
 bool finalize_atom_positions(UnitCell& ucell,
                              std::ofstream& ofs_running,
-                             std::ofstream& ofs_warning)
+                             std::ofstream& ofs_warning,
+                             const std::string& calculation,
+                             const std::string& esolver_type)
 {
     // Check if any atom can move in MD
-    if(!ucell.if_atoms_can_move() && PARAM.inp.calculation=="md" && PARAM.inp.esolver_type!="tddft")
+    if(!ucell.if_atoms_can_move() && calculation=="md" && esolver_type!="tddft")
     {
         ModuleBase::WARNING("read_atoms", "no atoms can move in MD simulations!");
         return false;
@@ -266,7 +269,8 @@ void transform_atom_coordinates(Atom& atom, int ia,
 void process_magnetization(Atom& atom, int it, int ia,
                           int nspin, bool input_vec_mag,
                           bool input_angle_mag,
-                          std::ofstream& ofs_running)
+                          std::ofstream& ofs_running,
+                          const bool noncolin)
 {
     // Recalculate mag and m_loc_ from read in angle1, angle2 and mag or mx, my, mz
     if(input_angle_mag)
@@ -301,7 +305,7 @@ void process_magnetization(Atom& atom, int it, int ia,
 
     if(nspin==4)
     {
-        if(!PARAM.inp.noncolin)
+        if(!noncolin)
         {
             // collinear case with nspin = 4, only z component is used
             atom.m_loc_[ia].x = 0;
@@ -489,7 +493,11 @@ bool read_atom_type_header(int it, UnitCell& ucell,
                           std::ifstream& ifpos,
                           std::ofstream& ofs_running,
                           std::ofstream& ofs_warning,
-                          bool& set_element_mag_zero)
+                          bool& set_element_mag_zero,
+                          const std::string& basis_type,
+                          const std::string& orbital_dir,
+                          const std::string& init_wfc,
+                          const double onsite_radius)
 {
     //=======================================
     // (1) read in atom label
@@ -516,20 +524,20 @@ bool read_atom_type_header(int it, UnitCell& ucell,
     // int* ucell.atoms[it].l_nchi;
     //===========================================
 
-    if ((PARAM.inp.basis_type == "lcao")||(PARAM.inp.basis_type == "lcao_in_pw"))
+    if ((basis_type == "lcao")||(basis_type == "lcao_in_pw"))
     {
-        std::string orbital_file = PARAM.inp.orbital_dir + ucell.orbital_fn[it];
+        std::string orbital_file = orbital_dir + ucell.orbital_fn[it];
         bool normal = unitcell::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
         if(!normal)
         {
             return false;
         }
     }
-    else if(PARAM.inp.basis_type == "pw")
+    else if(basis_type == "pw")
     {
-        if ((PARAM.inp.init_wfc.substr(0, 3) == "nao") || PARAM.inp.onsite_radius > 0.0)
+        if ((init_wfc.substr(0, 3) == "nao") || onsite_radius > 0.0)
         {
-            std::string orbital_file = PARAM.inp.orbital_dir + ucell.orbital_fn[it];
+            std::string orbital_file = orbital_dir + ucell.orbital_fn[it];
             bool normal = unitcell::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
             if(!normal)
             {
