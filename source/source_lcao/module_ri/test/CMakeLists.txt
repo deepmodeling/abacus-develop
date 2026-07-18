@@ -127,4 +127,18 @@ AddTest(
   LIBS ${math_libs}
   SOURCES test_sternheimer_siab_overlap.cpp ../sternheimer_siab_overlap.cpp
 )
+AddTest(
+  TARGET MODULE_RI_sternheimer_siab_primitives_test
+  LIBS parameter base ${math_libs} device planewave container psi
+  SOURCES test_sternheimer_siab_primitives.cpp
+          ../../../source_io/module_bessel/numerical_basis.cpp
+          ../../../source_io/module_bessel/bessel_basis.cpp
+          ../../../source_cell/parallel_kpoints.cpp
+)
+target_compile_options(MODULE_RI_sternheimer_siab_primitives_test PRIVATE -U__LCAO)
+add_test(
+  NAME MODULE_RI_sternheimer_siab_primitives_test_mpi2
+  COMMAND mpirun -np 2 ./MODULE_RI_sternheimer_siab_primitives_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

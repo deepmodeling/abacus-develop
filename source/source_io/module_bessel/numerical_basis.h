@@ -5,6 +5,8 @@
 //==========================================================
 #ifndef NUMERICAL_BASIS_H
 #define NUMERICAL_BASIS_H
+#include <complex>
+#include <string>
 #include <vector>
 
 #include "bessel_basis.h"
@@ -32,6 +34,42 @@ class Numerical_Basis
     Numerical_Basis();
     ~Numerical_Basis();
 
+    struct SIABPrimitiveParameters
+    {
+        double ecut_ry;
+        double rcut_bohr;
+        bool smooth;
+        double sigma;
+        double tolerance;
+    };
+
+    struct SIABPrimitiveGridBlock
+    {
+        int type_index;
+        std::string element;
+        int atom_index;
+        int l;
+        int m;
+        int n_primitive;
+        int offset;
+        /// Rank-local values ordered by primitive index: values[ie][local_grid_index].
+        std::vector<std::vector<std::complex<double>>> values;
+    };
+
+    /// Return the ABACUS real-spherical-harmonic index for a conventional m.
+    static int siab_abacus_m(const int conventional_m);
+
+    /// Read the numerical-Bessel settings used by the existing spillage path.
+    static SIABPrimitiveParameters siab_parameters_from_input(const int rcut_index);
+
+    /// Build rank-local, physically normalized SIAB primitives on the PW FFT grid.
+    std::vector<SIABPrimitiveGridBlock> siab_primitive_grid_values(
+        const int ik,
+        const ModulePW::PW_Basis_K* wfcpw,
+        const Structure_Factor& sf,
+        const UnitCell& ucell,
+        const SIABPrimitiveParameters& parameters);
+
     // void start_from_file_k(const int& ik, ModuleBase::ComplexMatrix& psi, const Structure_Factor& sf, const ModulePW::PW_Basis_K* wfcpw, const UnitCell& ucell);
     void output_overlap(const psi::Psi<std::complex<double>>& psi,
                         const Structure_Factor& sf,
@@ -42,11 +80,30 @@ class Numerical_Basis
 
   private:
     bool init_label = false;
+    SIABPrimitiveParameters initialized_siab_parameters = {0.0, 0.0, false, 0.0, 0.0};
+    int initialized_siab_ntype = 0;
+    int initialized_siab_lmax = 0;
+    int initialized_siab_nmax = 0;
+    std::vector<int> initialized_siab_basis_shape;
 
     Bessel_Basis bessel_basis;
 
     std::vector<ModuleBase::IntArray> mu_index;
     static std::vector<ModuleBase::IntArray> init_mu_index(const UnitCell& ucell);
+    static std::vector<int> siab_basis_shape_signature(const UnitCell& ucell);
+
+    void initialize_siab_basis(const UnitCell& ucell, const SIABPrimitiveParameters& parameters);
+
+    static void fill_reciprocal_primitive(
+        const int l,
+        const int abacus_m,
+        const int primitive_index,
+        const std::complex<double>* structure_factor,
+        const ModuleBase::realArray& flq,
+        const ModuleBase::matrix& ylm,
+        const std::vector<double>& gpow,
+        const double normalization,
+        std::vector<std::complex<double>>& values);
 
     void numerical_atomic_wfc(const int& ik,
                               const ModulePW::PW_Basis_K* wfcpw,
