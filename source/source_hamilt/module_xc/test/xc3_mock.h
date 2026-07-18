@@ -194,7 +194,7 @@ Sep_Cell::~Sep_Cell() noexcept {}
 
 namespace elecstate
 {
-    void cal_ux(UnitCell& ucell)
+    void cal_ux(UnitCell& ucell, const int nspin)
     {
         ucell.magnet.lsign_ = false;
 

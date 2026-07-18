@@ -140,7 +140,7 @@ void ESolver_OF::cal_potential(double* ptemp_phi, double* rdLdphi, UnitCell& uce
         }
     }
 
-    elecstate::cal_ux(ucell);
+    elecstate::cal_ux(ucell, PARAM.inp.nspin);
     this->pelec->pot->update_from_charge(this->ptemp_rho_, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_eff_v();
 
@@ -180,7 +180,7 @@ void ESolver_OF::cal_dEdtheta(double** ptemp_phi, Charge* temp_rho, UnitCell& uc
 {
     double* dphi_dtheta = new double[this->pw_rho->nrxx];
 
-    elecstate::cal_ux(ucell);
+    elecstate::cal_ux(ucell, PARAM.inp.nspin);
     this->pelec->pot->update_from_charge(temp_rho, &ucell);
     ModuleBase::matrix& vr_eff = this->pelec->pot->get_eff_v();
 
