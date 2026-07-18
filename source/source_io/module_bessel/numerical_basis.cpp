@@ -40,8 +40,11 @@ Numerical_Basis::SIABPrimitiveParameters Numerical_Basis::siab_parameters_from_i
     {
         throw std::out_of_range("SIAB primitive rcut index is out of range");
     }
+    const double primitive_ecut_ry = PARAM.inp.bessel_nao_ecut == "default"
+                                         ? PARAM.inp.ecutwfc
+                                         : std::stod(PARAM.inp.bessel_nao_ecut);
     return SIABPrimitiveParameters{
-        std::stod(PARAM.inp.bessel_nao_ecut),
+        primitive_ecut_ry,
         PARAM.inp.bessel_nao_rcuts[rcut_index],
         PARAM.inp.bessel_nao_smooth,
         PARAM.inp.bessel_nao_sigma,

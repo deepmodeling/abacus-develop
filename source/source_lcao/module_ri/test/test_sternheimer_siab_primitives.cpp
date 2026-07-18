@@ -6,6 +6,7 @@
 #include "source_cell/unitcell.h"
 #include "source_io/module_bessel/bessel_basis.h"
 #include "source_io/module_bessel/numerical_basis.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 
 #include <algorithm>
@@ -28,6 +29,25 @@ constexpr double rcut_bohr = 2.0;
 constexpr double tolerance = 1.0e-12;
 constexpr int ik = 0;
 const ModuleBase::Vector3<double> atom_tau(0.137, 0.211, 0.173);
+
+TEST(SternheimerSIABPrimitives, DefaultPrimitiveEcutInheritsWavefunctionCutoff)
+{
+    Input_para& input = const_cast<Input_para&>(PARAM.inp);
+    const std::string old_bessel_ecut = input.bessel_nao_ecut;
+    const double old_ecutwfc = input.ecutwfc;
+    const std::vector<double> old_rcuts = input.bessel_nao_rcuts;
+    input.bessel_nao_ecut = "default";
+    input.ecutwfc = 37.5;
+    input.bessel_nao_rcuts = {8.0};
+
+    const auto parameters = Numerical_Basis::siab_parameters_from_input(0);
+    EXPECT_DOUBLE_EQ(parameters.ecut_ry, 37.5);
+    EXPECT_DOUBLE_EQ(parameters.rcut_bohr, 8.0);
+
+    input.bessel_nao_ecut = old_bessel_ecut;
+    input.ecutwfc = old_ecutwfc;
+    input.bessel_nao_rcuts = old_rcuts;
+}
 
 void expect_complex_near(const Complex& actual, const Complex& expected)
 {

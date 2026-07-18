@@ -171,6 +171,7 @@ void validate_provenance(const Provenance& provenance)
     validate_utf8_field(provenance.orbital_sha256, "orbital_sha256");
     validate_utf8_field(provenance.pseudopotential_sha256, "pseudopotential_sha256");
     validate_utf8_field(provenance.spin_convention, "spin_convention");
+    validate_utf8_field(provenance.executable_sha256, "executable_sha256");
     if (!valid_commit(provenance.abacus_commit))
     {
         throw std::invalid_argument("Sternheimer SIAB provenance requires a 40- or 64-digit hexadecimal ABACUS commit");
@@ -213,6 +214,41 @@ void validate_provenance(const Provenance& provenance)
     if (provenance.kernel.empty() || provenance.spin_convention.empty())
     {
         throw std::invalid_argument("Sternheimer SIAB provenance kernel and spin convention must not be empty");
+    }
+
+    const bool has_task4 = !provenance.executable_sha256.empty() || provenance.exx_pca_thr != -1.0
+                           || provenance.sternheimer_nfreq != 0 || !provenance.frequency_ha.empty()
+                           || !provenance.frequency_weights_ha.empty() || provenance.mpi_ranks != 0
+                           || provenance.omp_threads != 0;
+    if (has_task4)
+    {
+        if (!valid_hex(provenance.executable_sha256, 64))
+        {
+            throw std::invalid_argument(
+                "Sternheimer SIAB production provenance requires a 64-digit executable SHA256 value");
+        }
+        if (!std::isfinite(provenance.exx_pca_thr) || provenance.exx_pca_thr < 0.0
+            || provenance.sternheimer_nfreq <= 0 || provenance.mpi_ranks <= 0 || provenance.omp_threads <= 0
+            || provenance.frequency_ha.size() != static_cast<std::size_t>(provenance.sternheimer_nfreq)
+            || provenance.frequency_weights_ha.size() != static_cast<std::size_t>(provenance.sternheimer_nfreq))
+        {
+            throw std::invalid_argument("Sternheimer SIAB production provenance fields are incomplete or invalid");
+        }
+        for (std::size_t index = 0; index != provenance.frequency_ha.size(); ++index)
+        {
+            if (!std::isfinite(provenance.frequency_ha[index]) || provenance.frequency_ha[index] < 0.0
+                || !std::isfinite(provenance.frequency_weights_ha[index])
+                || provenance.frequency_weights_ha[index] < 0.0)
+            {
+                throw std::invalid_argument(
+                    "Sternheimer SIAB production frequencies and weights must be finite and non-negative");
+            }
+            if (index != 0 && provenance.frequency_ha[index] <= provenance.frequency_ha[index - 1])
+            {
+                throw std::invalid_argument(
+                    "Sternheimer SIAB production frequencies must be strictly increasing in frequency-index order");
+            }
+        }
     }
 }
 
@@ -569,7 +605,32 @@ std::string provenance_json(const Provenance& provenance)
     output << "],\"ecut_ry\":" << format_double(provenance.ecut_ry) << ",\"kernel\":" << json_string(provenance.kernel)
            << ",\"orbital_sha256\":" << json_string(provenance.orbital_sha256)
            << ",\"pseudopotential_sha256\":" << json_string(provenance.pseudopotential_sha256)
-           << ",\"spin_convention\":" << json_string(provenance.spin_convention) << '}';
+           << ",\"spin_convention\":" << json_string(provenance.spin_convention);
+    if (!provenance.executable_sha256.empty())
+    {
+        output << ",\"executable_sha256\":" << json_string(provenance.executable_sha256)
+               << ",\"exx_pca_thr\":" << format_double(provenance.exx_pca_thr) << ",\"frequency_ha\":[";
+        for (std::size_t index = 0; index != provenance.frequency_ha.size(); ++index)
+        {
+            if (index != 0)
+            {
+                output << ',';
+            }
+            output << format_double(provenance.frequency_ha[index]);
+        }
+        output << "],\"frequency_weights_ha\":[";
+        for (std::size_t index = 0; index != provenance.frequency_weights_ha.size(); ++index)
+        {
+            if (index != 0)
+            {
+                output << ',';
+            }
+            output << format_double(provenance.frequency_weights_ha[index]);
+        }
+        output << "],\"mpi_ranks\":" << provenance.mpi_ranks << ",\"omp_threads\":" << provenance.omp_threads
+               << ",\"sternheimer_nfreq\":" << provenance.sternheimer_nfreq;
+    }
+    output << '}';
     if (!output.good())
     {
         throw std::runtime_error("Failed to format Sternheimer SIAB provenance JSON");

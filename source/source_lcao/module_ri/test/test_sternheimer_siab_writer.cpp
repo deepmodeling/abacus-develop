@@ -513,6 +513,54 @@ TEST(SternheimerSIABWriter, AtomicallyReplacesExistingPathAndRemovesTmp)
     std::remove(path.c_str());
 }
 
+TEST(SternheimerSIABWriter, AppendsCompleteTask4ProvenanceDeterministically)
+{
+    const std::string path = test_path("task4_provenance");
+    siab::Provenance provenance = canonical_provenance();
+    provenance.executable_sha256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
+    provenance.exx_pca_thr = 1.0e-6;
+    provenance.sternheimer_nfreq = 2;
+    provenance.frequency_ha = {0.2, 0.8};
+    provenance.frequency_weights_ha = {0.3, 0.7};
+    provenance.mpi_ranks = 2;
+    provenance.omp_threads = 32;
+
+    write_canonical(path, canonical_rows_reversed(), canonical_overlap_s(), provenance);
+    const std::string json = section_body(read_text(path), "PROVENANCE_JSON");
+    EXPECT_NE(json.find(
+                  "\"spin_convention\":\"occupation_in_metadata\","
+                  "\"executable_sha256\":\"cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc\","
+                  "\"exx_pca_thr\":1e-6,\"frequency_ha\":[0.2,0.8],"
+                  "\"frequency_weights_ha\":[0.3,0.7],\"mpi_ranks\":2,\"omp_threads\":32,"
+                  "\"sternheimer_nfreq\":2}"),
+              std::string::npos);
+    std::remove(path.c_str());
+}
+
+TEST(SternheimerSIABWriter, RejectsPartialTask4ProvenanceBeforeTouchingTmp)
+{
+    const std::string path = test_path("partial_task4_provenance");
+    const std::string tmp = path + ".tmp";
+    write_text(tmp, "sentinel");
+
+    siab::Provenance provenance = canonical_provenance();
+    provenance.executable_sha256 = "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc";
+    EXPECT_THROW(write_canonical(path, canonical_rows_reversed(), canonical_overlap_s(), provenance),
+                 std::invalid_argument);
+    EXPECT_EQ(read_text(tmp), "sentinel");
+
+    provenance.exx_pca_thr = 1.0e-6;
+    provenance.sternheimer_nfreq = 1;
+    provenance.frequency_ha = {0.2};
+    provenance.frequency_weights_ha = {};
+    provenance.mpi_ranks = 1;
+    provenance.omp_threads = 1;
+    EXPECT_THROW(write_canonical(path, canonical_rows_reversed(), canonical_overlap_s(), provenance),
+                 std::invalid_argument);
+    EXPECT_EQ(read_text(tmp), "sentinel");
+    std::remove(tmp.c_str());
+}
+
 TEST(SternheimerSIABInput, RegisteredCheckEnforcesLcaoDeltaCombination)
 {
     ModuleIO::ReadInput read_input(0);
@@ -535,7 +583,14 @@ TEST(SternheimerSIABInput, RegisteredCheckEnforcesLcaoDeltaCombination)
     input.basis_type = "lcao";
     input.out_sternheimer_librpa = true;
     input.sternheimer_delta = true;
+    input.bessel_nao_rcuts = {8.0};
     item.check_value(item, parameter);
+
+    input.bessel_nao_rcuts.clear();
+    EXPECT_EXIT(item.check_value(item, parameter), ::testing::ExitedWithCode(1), "");
+    input.bessel_nao_rcuts = {8.0, 10.0};
+    EXPECT_EXIT(item.check_value(item, parameter), ::testing::ExitedWithCode(1), "");
+    input.bessel_nao_rcuts = {8.0};
 
     input.basis_type = "pw";
     EXPECT_EXIT(item.check_value(item, parameter), ::testing::ExitedWithCode(1), "");

@@ -166,7 +166,7 @@ if(COMMIT_INFO)
   else()
     message(STATUS "Found git: attempting to get commit info...")
     execute_process(
-      COMMAND ${GIT_EXECUTABLE} log -1 --pretty=format:%h
+      COMMAND ${GIT_EXECUTABLE} log -1 --pretty=format:%H
       OUTPUT_VARIABLE GIT_COMMIT_HASH
       OUTPUT_STRIP_TRAILING_WHITESPACE
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}

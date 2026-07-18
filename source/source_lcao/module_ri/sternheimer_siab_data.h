@@ -43,6 +43,15 @@ struct Provenance
     std::string orbital_sha256;
     std::string pseudopotential_sha256;
     std::string spin_convention;
+
+    // Task 4 production fields.  Keeping these unset preserves the exact Task 3 canonical fixture.
+    std::string executable_sha256;
+    double exx_pca_thr = -1.0;
+    int sternheimer_nfreq = 0;
+    std::vector<double> frequency_ha;
+    std::vector<double> frequency_weights_ha;
+    int mpi_ranks = 0;
+    int omp_threads = 0;
 };
 
 } // namespace sternheimer_siab

@@ -21,10 +21,12 @@
 
 class UnitCell;
 class LCAO_Orbitals;
+class Structure_Factor;
 
 namespace ModulePW
 {
 class PW_Basis;
+class PW_Basis_K;
 }
 
 namespace elecstate
@@ -1156,8 +1158,9 @@ void run_sternheimer_abacus_lcao_chi0_output(
     const UnitCell& ucell,
     const elecstate::ElecState& elec_state,
     const LCAO_Orbitals& orbitals,
-    const std::vector<SternheimerLCAOOccupiedKPoint>& occupied_kpoints,
-    const std::array<int, 3>& kmesh,
+    const std::vector<SternheimerLCAOOccupiedChannel>& occupied_channels,
+    const ModulePW::PW_Basis_K* pw_wfc,
+    const Structure_Factor* structure_factor,
     const std::string& output_dir);
 
 } // namespace ModuleRI

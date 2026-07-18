@@ -941,6 +941,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                          reduced_kpoints);
         if (ModuleRI::sternheimer_uses_lcao_zero_order(inp.sternheimer_delta))
         {
+            if (inp.out_sternheimer_siab && pw_wfc == nullptr)
+            {
+                ModuleBase::WARNING_QUIT("ctrl_scf_lcao", "Sternheimer SIAB output requires the PW FFT basis.");
+            }
             const auto occupied_channels
                 = gather_sternheimer_lcao_occupied_channels(*pelec, pv, *psi);
             ModuleRI::run_sternheimer_abacus_lcao_chi0_output(*(pelec->pot),
@@ -949,6 +953,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                               *pelec,
                                                               orb,
                                                               occupied_channels,
+                                                              pw_wfc,
+                                                              &sf,
                                                               global_out_dir);
         }
         else
