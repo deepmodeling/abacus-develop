@@ -767,10 +767,10 @@ TEST_F(ReadPPTest, AverageErrReturns)
 	ierr = read_pp->average_p(lambda, *upf, lspinorb_0);
 	EXPECT_EQ(upf->nbeta,2);
 	EXPECT_EQ(ierr,0);
-	// LSPINORB = 1
+	// LSPINORB = 1, should return error because has_so was set to false after average_p with lspinorb=false
 	const bool lspinorb_1 = true;
 	ierr = read_pp->average_p(lambda, *upf, lspinorb_1);
-	EXPECT_EQ(ierr,0);
+	EXPECT_EQ(ierr,1);
 	ifs.close();
 }
 
