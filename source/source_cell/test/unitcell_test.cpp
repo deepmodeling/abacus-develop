@@ -1965,7 +1965,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning5)
     const bool deepks_setorb = true;
     const bool rpa = false;
     const int nspin = 1;
-    const bool fixed_atoms = false;
+    const bool fixed_atoms = true;
     const bool noncolin = false;
     const std::string calculation = "md";
     const std::string esolver_type = "ksdft";
