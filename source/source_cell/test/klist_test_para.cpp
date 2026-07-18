@@ -230,7 +230,8 @@ TEST_F(KlistParaTest, Set)
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
     const bool use_ibz = true;
-    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz);
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_EQ(kv->get_nkstot_full(), 512);
     EXPECT_GT(kv->get_nkstot_full(), kv->get_nkstot());
@@ -348,7 +349,8 @@ TEST_F(KlistParaTest, SetAfterVC)
                                 GlobalV::MY_POOL);
     ModuleSymmetry::Symmetry::symm_flag = 1;
     const bool use_ibz = true;
-    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz);
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);

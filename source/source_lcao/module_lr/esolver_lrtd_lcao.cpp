@@ -307,7 +307,8 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
     const bool use_ibz = false;
-    this->kv.set(ucell, ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz);
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    this->kv.set(ucell, ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     ModuleIO::print_parameters(ucell, this->kv, inp);
 

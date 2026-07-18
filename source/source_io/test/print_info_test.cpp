@@ -49,7 +49,11 @@ TEST_F(PrintInfoTest, SetupParameters)
 	ucell = utp.SetUcellInfo();
 	std::string k_file = "./support/KPT";
 	kv->nspin = 1;
-	kv->read_kpoints(*ucell,k_file);
+	const bool gamma_only_local = false;
+	const double kspacing[3] = {0.0, 0.0, 0.0};
+	const std::string kmesh_type = "gamma";
+	const double koffset[3] = {0.0, 0.0, 0.0};
+	kv->read_kpoints(*ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset);
 	EXPECT_EQ(kv->get_nkstot(),512);
 	std::vector<std::string> cal_type = {"scf","relax","cell-relax","md"};
 	std::vector<std::string> md_types = {"fire","nve","nvt","npt","langevin","msst"};

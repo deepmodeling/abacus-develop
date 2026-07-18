@@ -267,6 +267,7 @@ void test_deepks<T>::setup_kpt()
 {
     ModuleSymmetry::Symmetry::symm_flag = -1;
     const bool use_ibz = false;
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
     this->kv.set(ucell,
                  ucell.symm,
                  PARAM.inp.kpoint_file,
@@ -274,7 +275,8 @@ void test_deepks<T>::setup_kpt()
                  ucell.G,
                  ucell.latvec,
                  GlobalV::ofs_running,
-                 use_ibz);
+                 use_ibz,
+                 global_out_dir);
 }
 
 template class test_deepks<double>;
