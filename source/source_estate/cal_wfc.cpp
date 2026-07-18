@@ -1,7 +1,5 @@
 #include "read_pseudo.h"
 
-#include "source_io/module_parameter/parameter.h"
-
 namespace elecstate
 {
     void cal_nwfc(std::ofstream& log,UnitCell& ucell,Atom* atoms, const int nspin, const int nlocal, const int npol,
