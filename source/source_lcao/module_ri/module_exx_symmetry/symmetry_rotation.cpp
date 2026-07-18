@@ -10,16 +10,6 @@
 
 namespace ModuleSymmetry
 {
-    inline bool vec3_eq(const TCdouble& v1, const TCdouble& v2, const double& prec)
-    {
-        return (std::abs(v1.x - v2.x) < prec) && (std::abs(v1.y - v2.y) < prec) && (std::abs(v1.z - v2.z) < prec);
-    };
-    inline std::vector<std::complex<double>> vec_conj(const std::vector<std::complex<double>>& z, const double scal = 1.0)
-    {
-        std::vector<std::complex<double>> z_conj(z.size());
-        for (int i = 0;i < z.size();++i) { z_conj[i] = std::conj(z[i]) * scal; }
-        return z_conj;
-    };
     void Symmetry_rotation::set_Cs_rotation(const std::vector<std::vector<int>>& abfs_l_nchi)
     {
         this->reduce_Cs_ = true;
@@ -128,25 +118,6 @@ namespace ModuleSymmetry
                         std::vector<std::complex<double>> dm_scaled(pv.get_local_size());
                         for (int i = 0;i < pv.get_local_size();++i) { dm_scaled[i] = factor * dm_k_ibz[ik_ibz + is * nk][i]; }
                         dm_k_full.push_back(dm_scaled);
-                    }
-                    else if (vec3_eq(isym_kvd.second, -kv.kvec_d[ik_ibz], this->eps_) && this->TRS_first_
-                             && !this->magnetic_nspin4_)
-                    {
-                        // NOTE: this shortcut replaces whatever operation produced the star member by pure time reversal. 
-                        // That is legitimate only when Theta itself is a symmetry, i.e. for a nspin<4, 
-                        // where the antiunitary operation is plain conjugation K and does not touch the spin.
-                        // For nspin=4 with a non-zero moment, Theta reverses m, and K is not a symmetry when m_y is non-zero,
-                        // so the genuine space-group / Shubnikov branches below must be used instead.
-                        // -k via pure time reversal: D(-k) = sigma_y D^*(k_ibz) sigma_y.
-                        // nspin<4 reduces to Theta=K, i.e. plain complex conjugation.
-                        if (PARAM.inp.nspin == 4)
-                        {
-                            dm_k_full.push_back(this->trs_spin_rotate(dm_k_ibz[ik_ibz + is * nk], sigma_y, pv, 1.0 / static_cast<double>(kv.kstars[ik_ibz].size())));
-                        }
-                        else
-                        {
-                            dm_k_full.push_back(vec_conj(dm_k_ibz[ik_ibz + is * nk], 1.0 / static_cast<double>(kv.kstars[ik_ibz].size())));
-                        }
                     }
                     else if (isym_kvd.first < nsym_)
                     { //space group operations

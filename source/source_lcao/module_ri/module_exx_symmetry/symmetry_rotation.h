@@ -185,7 +185,12 @@ namespace ModuleSymmetry
 
         double eps_ = 1e-6;
 
-        bool TRS_first_ = true; //if R(k)=-k, firstly use TRS to restore D(k) from D(R(k)), i.e conjugate D(R(k)).
+        // (removed, not needed) TRS_first_: 
+        // it used to short-circuit any star member equal to -k to pure time reversal, 
+        // which silently pre-empted the genuine space-group operation that produced it.
+        // The operation is now decided by the index alone: isym<nsym_ unitary / isym>=nsym_ antiunitary. 
+        // A -k member reached through the TRS doubling lands on the antiunitary branch with M=I, 
+        // which reduces exactly to the direct conjugation.
 
         bool reduce_Cs_ = false;
         int abfs_Lmax_ = 0;
