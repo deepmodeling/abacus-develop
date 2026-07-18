@@ -9,7 +9,17 @@ namespace elecstate {
                    const std::string& pseudo_dir,
                    const std::string& global_out_dir,
                    const bool out_element_info,
-                   const std::string& dft_functional);
+                   const std::string& dft_functional,
+                   const bool lspinorb,
+                   const double pseudo_rcut,
+                   const double soc_lambda,
+                   const int nspin,
+                   const int nlocal,
+                   const int npol,
+                   const std::string& basis_type,
+                   const std::string& esolver_type,
+                   const std::string& init_wfc,
+                   const int nbands);
 
     // read in pseudopotential from files for each type of atom
     void read_cell_pseudopots(const std::string& fn, std::ofstream& log, UnitCell& ucell,
@@ -27,7 +37,8 @@ namespace elecstate {
     // 			atoms[].stapos_wf
     // 			PARAM.inp.nbands
     //===========================================
-    void cal_nwfc(std::ofstream& log, UnitCell& ucell,Atom* atoms);
+    void cal_nwfc(std::ofstream& log, UnitCell& ucell,Atom* atoms, const int nspin, const int nlocal, const int npol,
+               const std::string& basis_type, const std::string& esolver_type, const std::string& init_wfc, const int nbands);
 
     //======================
     // Target : meshx
@@ -42,7 +53,7 @@ namespace elecstate {
     // 			atoms[].oc
     // 			atoms[].na
     //=========================
-    void cal_natomwfc(std::ofstream& log,int& natomwfc,const int ntype,const Atom* atoms);
+    void cal_natomwfc(std::ofstream& log,int& natomwfc,const int ntype,const Atom* atoms,const int nspin);
 }
 
 #endif

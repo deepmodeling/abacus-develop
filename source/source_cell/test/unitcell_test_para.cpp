@@ -225,7 +225,17 @@ TEST_F(UcellTest, ReadPseudo)
     const std::string global_out_dir = "./";
     const bool out_element_info = true;
     const std::string dft_functional = "default";
-    elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional);
+    const bool lspinorb = false;
+    const double pseudo_rcut = 15.0;
+    const double soc_lambda = 0.0;
+    const int nspin = 1;
+    const int nlocal = 6;
+    const int npol = 1;
+    const std::string basis_type = "pw";
+    const std::string esolver_type = "ksdft";
+    const std::string init_wfc = "";
+    const int nbands = 6;
+    elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, nlocal, npol, basis_type, esolver_type, init_wfc, nbands);
     // check_structure will print some warning info
     // output nonlocal file
     if (GlobalV::MY_RANK == 0)

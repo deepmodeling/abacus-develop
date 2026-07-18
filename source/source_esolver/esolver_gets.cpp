@@ -34,7 +34,17 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
     const bool out_element_info = PARAM.inp.out_element_info;
     const std::string dft_functional = PARAM.inp.dft_functional;
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional);
+    const bool lspinorb = PARAM.inp.lspinorb;
+    const double pseudo_rcut = PARAM.inp.pseudo_rcut;
+    const double soc_lambda = PARAM.inp.soc_lambda;
+    const int nspin = PARAM.inp.nspin;
+    const int nlocal = PARAM.globalv.nlocal;
+    const int npol = PARAM.globalv.npol;
+    const std::string basis_type = PARAM.inp.basis_type;
+    const std::string esolver_type = PARAM.inp.esolver_type;
+    const std::string init_wfc = PARAM.inp.init_wfc;
+    const int nbands = PARAM.inp.nbands;
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, nlocal, npol, basis_type, esolver_type, init_wfc, nbands);
 
     // 1.2) symmetrize things
     if (ModuleSymmetry::Symmetry::symm_flag == 1)

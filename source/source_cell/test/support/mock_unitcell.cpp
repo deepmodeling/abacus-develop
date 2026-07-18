@@ -41,6 +41,6 @@ void UnitCell::setup(const std::string& latname_in,
                      const bool& init_vel_in,
                      const std::string& fixed_axes_in) {}
 
-void cal_nelec(const Atom* atoms, const int& ntype, double& nelec) {}
+void cal_nelec(const Atom* atoms, const int& ntype, double& nelec, const double nelec_delta) {}
 
 void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2) const {}

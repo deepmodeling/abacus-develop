@@ -58,7 +58,7 @@ class CalAtomsInfo
         }
 
         // calculate the total number of electrons
-        elecstate::cal_nelec(atoms, ntype, para.input.nelec);
+        elecstate::cal_nelec(atoms, ntype, para.input.nelec, para.inp.nelec_delta);
 
         // autoset and check GlobalV::NBANDS
         std::vector<double> nelec_spin(2, 0.0);
@@ -67,7 +67,9 @@ class CalAtomsInfo
             nelec_spin[0] = (para.inp.nelec + para.inp.nupdown ) / 2.0;
             nelec_spin[1] = (para.inp.nelec - para.inp.nupdown ) / 2.0;
         }
-        elecstate::cal_nbands(para.inp.nelec, para.sys.nlocal, nelec_spin, para.input.nbands);
+        elecstate::cal_nbands(para.inp.nelec, para.sys.nlocal, nelec_spin, para.input.nbands,
+                                  para.inp.esolver_type, para.inp.lspinorb, para.inp.nspin,
+                                  para.inp.basis_type, para.inp.smearing_method);
 
         // calculate the number of nbands_local
         para.sys.nbands_l = para.inp.nbands;

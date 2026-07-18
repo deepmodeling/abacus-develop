@@ -14,7 +14,17 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
                    const std::string& pseudo_dir,
                    const std::string& global_out_dir,
                    const bool out_element_info,
-                   const std::string& dft_functional) {
+                   const std::string& dft_functional,
+                   const bool lspinorb,
+                   const double pseudo_rcut,
+                   const double soc_lambda,
+                   const int nspin,
+                   const int nlocal,
+                   const int npol,
+                   const std::string& basis_type,
+                   const std::string& esolver_type,
+                   const std::string& init_wfc,
+                   const int nbands) {
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -32,9 +42,6 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
     const std::string global_out_dir_ = global_out_dir;
     const bool out_element_info_ = out_element_info;
     const std::string dft_functional_ = dft_functional;
-    const bool lspinorb = PARAM.inp.lspinorb;
-    const double pseudo_rcut = PARAM.inp.pseudo_rcut;
-    const double soc_lambda = PARAM.inp.soc_lambda;
     read_cell_pseudopots(pseudo_dir_, ofs, ucell, global_out_dir_, dft_functional_, lspinorb, pseudo_rcut, soc_lambda);
 
 	if (GlobalV::MY_RANK == 0) 
@@ -138,14 +145,15 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
     }
 
     // setup the total number of PAOs
-    cal_natomwfc(ofs,ucell.natomwfc,ucell.ntype,ucell.atoms);
+    cal_natomwfc(ofs,ucell.natomwfc,ucell.ntype,ucell.atoms,nspin);
 
     // Calculate the information of atoms from the pseudopotential to set PARAM
     CalAtomsInfo ca;
     ca.cal_atoms_info(ucell.atoms, ucell.ntype, PARAM);
 
-    // setup PARAM.globalv.nlocal
-    cal_nwfc(ofs,ucell,ucell.atoms);
+    // setup nlocal
+    cal_nwfc(ofs,ucell,ucell.atoms, nspin, nlocal, npol,
+              basis_type, esolver_type, init_wfc, nbands);
 
     // Check whether the number of valence is minimum
 	if (GlobalV::MY_RANK == 0) 
