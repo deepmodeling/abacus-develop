@@ -128,7 +128,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning1) {
     testing::internal::CaptureStdout();
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional),
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -141,7 +141,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning2) {
     testing::internal::CaptureStdout();
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional),
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -154,7 +154,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning3) {
     testing::internal::CaptureStdout();
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional),
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -166,7 +166,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning4) {
     const std::string dft_functional = "LDA";
     testing::internal::CaptureStdout();
     const std::string global_out_dir = "./";
-    EXPECT_NO_THROW(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional));
+    EXPECT_NO_THROW(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda));
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("DFT FUNC. (PSEUDO)   : PBE"));
     EXPECT_THAT(output, testing::HasSubstr("DFT FUNC. (SET TO)   : LDA"));
@@ -177,7 +177,7 @@ TEST_F(UcellDeathTest, ReadCellPPWarning5) {
     testing::internal::CaptureStdout();
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional),
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda),
                 ::testing::ExitedWithCode(1),
                 "");
     output = testing::internal::GetCapturedStdout();
@@ -188,7 +188,7 @@ TEST_F(UcellTest, ReadCellPP) {
     ucell->atoms[1].flag_empty_element = true;
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda);
     EXPECT_EQ(ucell->atoms[0].ncpp.pp_type, "NC");
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so); // becomes false in average_p
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
@@ -213,7 +213,7 @@ TEST_F(UcellTest, ReadCellPP) {
 TEST_F(UcellTest, CalMeshx) {
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda);
     elecstate::cal_meshx(ucell->meshx,ucell->atoms,ucell->ntype);
     EXPECT_EQ(ucell->atoms[0].ncpp.msh, 1247);
     EXPECT_EQ(ucell->atoms[1].ncpp.msh, 1165);
@@ -223,7 +223,7 @@ TEST_F(UcellTest, CalMeshx) {
 TEST_F(UcellTest, CalNatomwfc1) {
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     elecstate::cal_natomwfc(ofs,ucell->natomwfc,ucell->ntype,ucell->atoms);
@@ -239,7 +239,7 @@ TEST_F(UcellTest, CalNatomwfc2) {
     PARAM.input.nspin = 4;
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     elecstate::cal_natomwfc(ofs,ucell->natomwfc,ucell->ntype,ucell->atoms);
@@ -255,7 +255,7 @@ TEST_F(UcellTest, CalNatomwfc3) {
     PARAM.input.nspin = 4;
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda);
     EXPECT_TRUE(ucell->atoms[0].ncpp.has_so);
     EXPECT_TRUE(ucell->atoms[1].ncpp.has_so);
     elecstate::cal_natomwfc(ofs,ucell->natomwfc,ucell->ntype,ucell->atoms);
@@ -270,7 +270,7 @@ TEST_F(UcellTest, CalNatomwfc3) {
 TEST_F(UcellTest, CalNwfc1) {
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     PARAM.sys.nlocal = 3 * 9;
@@ -338,7 +338,7 @@ TEST_F(UcellTest, CalNwfc2) {
     PARAM.input.basis_type = "lcao";
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     PARAM.sys.nlocal = 3 * 9 * 2;
@@ -348,7 +348,7 @@ TEST_F(UcellTest, CalNwfc2) {
 TEST_F(UcellDeathTest, CheckStructure) {
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda);
     EXPECT_FALSE(ucell->atoms[0].ncpp.has_so);
     EXPECT_FALSE(ucell->atoms[1].ncpp.has_so);
     // trial 1
@@ -424,7 +424,7 @@ TEST_F(UcellDeathTest, ReadPseudoWarning2) {
 TEST_F(UcellTest, CalNelec) {
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional);
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, PARAM.input.lspinorb, PARAM.input.pseudo_rcut, PARAM.input.soc_lambda);
     EXPECT_EQ(4, ucell->atoms[0].ncpp.zv);
     EXPECT_EQ(1, ucell->atoms[1].ncpp.zv);
     EXPECT_EQ(1, ucell->atoms[0].na);

@@ -44,7 +44,10 @@ TEST(OrbInfo,WriteOrbInfo)
     PARAM.sys.nlocal = 18;
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    elecstate::read_cell_pseudopots(pp_dir,ofs,*ucell, global_out_dir, dft_functional);
+    const bool lspinorb = PARAM.input.lspinorb;
+    const double pseudo_rcut = PARAM.input.pseudo_rcut;
+    const double soc_lambda = PARAM.input.soc_lambda;
+    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda);
     elecstate::cal_nwfc(ofs,*ucell,ucell->atoms);
     ModuleIO::write_orb_info(ucell);
     ofs.close();

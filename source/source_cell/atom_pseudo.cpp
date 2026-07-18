@@ -1,7 +1,6 @@
 #include "atom_pseudo.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include "source_io/module_parameter/parameter.h"
 Atom_pseudo::Atom_pseudo()
 {
 }
@@ -14,8 +13,12 @@ Atom_pseudo::~Atom_pseudo()
 void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                            const int& nproj_in,
                            const int& nproj_in_so,
-                           const bool has_so)
+                           const bool has_so,
+                           const bool lspinorb,
+                           const int nspin)
 {
+    const bool lspinorb_ = lspinorb;
+    const int nspin_ = nspin;
     if (this->lmax < -1 || this->lmax > 20)
     {
         ModuleBase::WARNING_QUIT("Numerical_Nonlocal", "bad input of lmax : should be between -1 and 20");
@@ -69,7 +72,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
 
         if (this->lmax > -1)
         {
-            if (PARAM.inp.lspinorb)
+            if (lspinorb_)
             {
                 int is = 0;
                 for (int is1 = 0; is1 < 2; is1++)
@@ -107,7 +110,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                 {
                     for (int is2 = 0; is2 < 2; is2++)
                     {
-                        if (is >= PARAM.inp.nspin) {
+                        if (is >= nspin_) {
                             break;
 }
                         for (int L1 = 0; L1 < nproj_soc; L1++)

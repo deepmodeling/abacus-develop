@@ -231,7 +231,11 @@ TEST_F(KlistParaTest, Set)
     ModuleSymmetry::Symmetry::symm_flag = 1;
     const bool use_ibz = true;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir);
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
+    const double kspacing[3] = {PARAM.inp.kspacing[0], PARAM.inp.kspacing[1], PARAM.inp.kspacing[2]};
+    const std::string kmesh_type = PARAM.inp.kmesh_type;
+    const double koffset[3] = {PARAM.inp.koffset[0], PARAM.inp.koffset[1], PARAM.inp.koffset[2]};
+    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_EQ(kv->get_nkstot_full(), 512);
     EXPECT_GT(kv->get_nkstot_full(), kv->get_nkstot());
@@ -350,7 +354,11 @@ TEST_F(KlistParaTest, SetAfterVC)
     ModuleSymmetry::Symmetry::symm_flag = 1;
     const bool use_ibz = true;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir);
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
+    const double kspacing[3] = {PARAM.inp.kspacing[0], PARAM.inp.kspacing[1], PARAM.inp.kspacing[2]};
+    const std::string kmesh_type = PARAM.inp.kmesh_type;
+    const double koffset[3] = {PARAM.inp.koffset[0], PARAM.inp.koffset[1], PARAM.inp.koffset[2]};
+    kv->set(ucell, symm, k_file, kv->nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     EXPECT_EQ(kv->get_nkstot(), 35);
     EXPECT_TRUE(kv->kc_done);
     EXPECT_TRUE(kv->kd_done);

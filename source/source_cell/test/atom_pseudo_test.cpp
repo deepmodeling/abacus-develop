@@ -54,12 +54,14 @@ TEST_F(AtomPseudoTest, SetDSo)
 	int nproj = 6;
 	int nproj_soc = 4;
 	bool has_so = true;
-	PARAM.input.nspin = 4;
-	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
+	const bool lspinorb = false;
+	const int nspin = 4;
+	atom_pseudo->set_d_so(d_so_in, nproj, nproj_soc, has_so, lspinorb, nspin);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);
-	PARAM.input.lspinorb = true;
-	atom_pseudo->set_d_so(d_so_in,nproj,nproj_soc,has_so);
+	const bool lspinorb_true = true;
+	const int nspin_4 = 4;
+	atom_pseudo->set_d_so(d_so_in, nproj, nproj_soc, has_so, lspinorb_true, nspin_4);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).real(),1e-8,1e-7);
 	EXPECT_NEAR(atom_pseudo->d_so(0,0,0).imag(),1e-8,1e-7);
 #ifdef __MPI

@@ -157,7 +157,9 @@ void InfoNonlocal::Set_NonLocal(const int& it,
                                  tmpBeta_lm); // zhengdy-soc 2018-09-10
 
     // mohan add 2021-05-07
-    atom->ncpp.set_d_so(coefficient_D_nc_in, n_projectors, nh, atom->ncpp.has_so);
+    const bool lspinorb = PARAM.inp.lspinorb;
+    const int nspin = PARAM.inp.nspin;
+    atom->ncpp.set_d_so(coefficient_D_nc_in, n_projectors, nh, atom->ncpp.has_so, lspinorb, nspin);
 
     delete[] tmpBeta_lm;
 

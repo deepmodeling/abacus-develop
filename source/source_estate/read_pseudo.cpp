@@ -32,7 +32,10 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
     const std::string global_out_dir_ = global_out_dir;
     const bool out_element_info_ = out_element_info;
     const std::string dft_functional_ = dft_functional;
-    read_cell_pseudopots(pseudo_dir_, ofs, ucell, global_out_dir_, dft_functional_);
+    const bool lspinorb = PARAM.inp.lspinorb;
+    const double pseudo_rcut = PARAM.inp.pseudo_rcut;
+    const double soc_lambda = PARAM.inp.soc_lambda;
+    read_cell_pseudopots(pseudo_dir_, ofs, ucell, global_out_dir_, dft_functional_, lspinorb, pseudo_rcut, soc_lambda);
 
 	if (GlobalV::MY_RANK == 0) 
 	{
@@ -228,12 +231,18 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
 //==========================================================
 void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCell& ucell,
                           const std::string& global_out_dir,
-                          const std::string& dft_functional)
+                          const std::string& dft_functional,
+                          const bool lspinorb,
+                          const double pseudo_rcut,
+                          const double soc_lambda)
 {
     ModuleBase::TITLE("Elecstate", "read_cell_pseudopots");
     // setup reading log for pseudopot_upf
     const std::string global_out_dir_ = global_out_dir;
     const std::string dft_functional_ = dft_functional;
+    const bool lspinorb_ = lspinorb;
+    const double pseudo_rcut_ = pseudo_rcut;
+    const double soc_lambda_ = soc_lambda;
     std::stringstream ss;
     ss << global_out_dir_ << "atom_pseudo.log";
 
@@ -261,8 +270,7 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
                 }
                 upf.set_upf_q(ucell.atoms[i].ncpp); // liuyu add 2023-09-21
                 // average pseudopotential if needed
-                const bool lspinorb = PARAM.inp.lspinorb;
-                error_ap = upf.average_p(PARAM.inp.soc_lambda, ucell.atoms[i].ncpp, lspinorb);
+                error_ap = upf.average_p(soc_lambda_, ucell.atoms[i].ncpp, lspinorb_);
             }
             ucell.atoms[i].coulomb_potential = upf.coulomb_potential;
         }
@@ -304,8 +312,7 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
 
         if (GlobalV::MY_RANK == 0)
         {
-		    const double pseudo_rcut = PARAM.inp.pseudo_rcut;
-		    upf.complete_default(ucell.atoms[i].ncpp, pseudo_rcut);
+		    upf.complete_default(ucell.atoms[i].ncpp, pseudo_rcut_);
 
             log << std::endl;
             ModuleBase::GlobalFunc::OUT(log, "Pseudopotential file", ucell.pseudo_fn[i]);

@@ -45,7 +45,11 @@ void K_Vectors::set(const UnitCell& ucell,
                     const ModuleBase::Matrix3& latvec,
                     std::ofstream& ofs,
                     const bool use_ibz,
-                    const std::string& global_out_dir)
+                    const std::string& global_out_dir,
+                    const bool gamma_only_local,
+                    const double kspacing[3],
+                    const std::string& kmesh_type,
+                    const double koffset[3])
 {
     ModuleBase::TITLE("K_Vectors", "set");
 
@@ -63,6 +67,8 @@ void K_Vectors::set(const UnitCell& ucell,
     ofs << "\n SETUP K-POINTS" << std::endl;
 
     const std::string global_out_dir_ = global_out_dir;
+    const bool gamma_only_local_ = gamma_only_local;
+    const std::string kmesh_type_ = kmesh_type;
 
     // (1) set nspin, read kpoints.
     this->nspin = nspin_in;
@@ -75,12 +81,7 @@ void K_Vectors::set(const UnitCell& ucell,
 
     this->nspin = (this->nspin == 4) ? 1 : this->nspin;
 
-    // read KPT file and generate K-point grid
-    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
-    const double kspacing[3] = {PARAM.inp.kspacing[0], PARAM.inp.kspacing[1], PARAM.inp.kspacing[2]};
-    const std::string kmesh_type = PARAM.inp.kmesh_type;
-    const double koffset[3] = {PARAM.inp.koffset[0], PARAM.inp.koffset[1], PARAM.inp.koffset[2]};
-    bool read_succesfully = this->read_kpoints(ucell, k_file_name, gamma_only_local, kspacing, kmesh_type, koffset);
+    bool read_succesfully = this->read_kpoints(ucell, k_file_name, gamma_only_local_, kspacing, kmesh_type_, koffset);
 #ifdef __MPI
     Parallel_Common::bcast_bool(read_succesfully);
 #endif
