@@ -64,7 +64,9 @@ if(GlobalV::MY_RANK==0)
 	ucell->atoms = new Atom[ucell->ntype];
 	ucell->set_atom_flag = true;
 	PARAM.input.test_pseudo_cell = 2;
-	EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+	EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running, *ucell,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.globalv.deepks_setorb, PARAM.input.rpa));
 	EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
@@ -95,7 +97,9 @@ if(GlobalV::MY_RANK==0)
 	PARAM.input.basis_type = "pw";
 	const int nspin = 1;
 	//call read_atom_species
-	EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+	EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running, *ucell,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.globalv.deepks_setorb, PARAM.input.rpa));
 	EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
 	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);

@@ -13,10 +13,15 @@ namespace unitcell
                     const double& lat0,
                     ModuleBase::Matrix3& latvec);
     
-    // read in the atom information for each type of atom
     bool read_atom_species(std::ifstream& ifa,
                           std::ofstream& ofs_running,
-                          UnitCell& ucell); 
+                          UnitCell& ucell,
+                          const std::string& basis_type,
+                          const std::string& orbital_dir,
+                          const std::string& init_wfc,
+                          const double onsite_radius,
+                          const bool deepks_setorb,
+                          const bool rpa); 
     
     bool read_lattice_constant(std::ifstream& ifa,
                                std::ofstream& ofs_running,

@@ -10,6 +10,7 @@
 #include "source_base/output.h"
 
 #include "source_cell/read_stru.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_base/atom_in.h"
 #include "source_base/element_elec_config.h"
 #include "source_base/global_file.h"
@@ -237,7 +238,9 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
             //========================
             // call read_atom_species
             //========================
-            const bool read_atom_species = unitcell::read_atom_species(ifa, log ,*this);
+            const bool read_atom_species = unitcell::read_atom_species(ifa, log, *this,
+                PARAM.inp.basis_type, PARAM.inp.orbital_dir, PARAM.inp.init_wfc,
+                PARAM.inp.onsite_radius, PARAM.globalv.deepks_setorb, PARAM.inp.rpa);
             //========================
             // call read_lattice_constant
             //========================
