@@ -206,3 +206,32 @@ bool Symmetry::magmom_same_check(const Atom* atoms)const
     return pricell_loop;
 }
 
+int Symmetry::density_sym_ops(std::vector<ModuleBase::Matrix3>& kgmat,
+                              std::vector<ModuleBase::Vector3<double>>& gtr,
+                              std::vector<double>& trs_inv) const
+{
+    // The density must be symmetrized with the SAME group that was used to fold the k-points
+    // (see KVectorUtils::ibz_kpoint): otherwise the density accumulated over the IBZ is not
+    // restored to the full BZ result. For nspin=4 with a non-zero moment that group is the
+    // Shubnikov group H + Theta*A, so the antiunitary elements' spatial parts are appended here.
+    // Theta leaves the charge invariant and reverses the magnetization, which is what `trs_inv`
+    // encodes; the spatial bookkeeping (orbit grouping, phases) is identical for both kinds.
+    const int nu = this->nrotk;
+    const int na = (this->magnetic_nspin4 ? this->nrotk_anti : 0);
+    kgmat.resize(nu + na);
+    gtr.resize(nu + na);
+    trs_inv.assign(nu + na, 1.0);
+    for (int i = 0; i < nu; ++i)
+    {
+        kgmat[i] = this->kgmatrix[i];
+        gtr[i] = this->gtrans[i];
+    }
+    for (int j = 0; j < na; ++j)
+    {
+        kgmat[nu + j] = this->kgmatrix_anti[j];
+        gtr[nu + j] = this->gtrans_anti[j];
+        trs_inv[nu + j] = -1.0;
+    }
+    return nu + na;
+}
+

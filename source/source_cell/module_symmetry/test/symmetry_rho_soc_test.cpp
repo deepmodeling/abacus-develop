@@ -8,7 +8,7 @@
 #include "source_cell/unitcell.h"
 
 /************************************************
- *  unit test of Symmetry::rhog_symmetry_soc
+ *  unit test of Symmetry::rhog_symmetry_nspin4
  *  (nspin=4 / SOC reciprocal-space spin-density symmetrization)
  *
  *  The operator is driven with a MANUALLY built symmetry group (no analy_sys),
@@ -121,9 +121,9 @@ TEST(RhogSymmetrySoc, Idempotence)
     std::vector<std::complex<double>> x(NXYZ), y(NXYZ), z(NXYZ);
     fill_density(x, y, z);
 
-    symm.rhog_symmetry_soc(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N);
+    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N);
     std::vector<std::complex<double>> x1 = x, y1 = y, z1 = z;
-    symm.rhog_symmetry_soc(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N);
+    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N);
 
     for (int i = 0; i < NXYZ; ++i)
     {
@@ -144,7 +144,7 @@ TEST(RhogSymmetrySoc, GroupInvariance)
 
     std::vector<std::complex<double>> x(NXYZ), y(NXYZ), z(NXYZ);
     fill_density(x, y, z);
-    symm.rhog_symmetry_soc(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N);
+    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N);
 
     // non-triviality guard: the symmetrized density must not be all-zero, otherwise
     // invariance would hold trivially and the test would be meaningless.

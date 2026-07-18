@@ -44,16 +44,23 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 		//init ixyz2ipw
 		int* ixyz2ipw = new int[rho_basis->fftnxyz];
 		for(int i=0;i<rho_basis->fftnxyz;++i) ixyz2ipw[i]=-1;
+		// The density must be symmetrized with the same group used to fold the k-points. For
+		// nspin=4 magnetic that is the Shubnikov group; Theta leaves the charge invariant, so the
+		// antiunitary elements act on rho exactly like unitary ones (their trs_inv is not used here).
+		std::vector<ModuleBase::Matrix3> kgmat;
+		std::vector<ModuleBase::Vector3<double>> gtr;
+		std::vector<double> trs_inv;
+		const int nop = symm.density_sym_ops(kgmat, gtr, trs_inv);
 #ifdef __MPI
 		this->get_ixyz2ipw(rho_basis, ig2isztot, fftixy2is, ixyz2ipw);	
 		symm.rhog_symmetry(rhogtot, ixyz2ipw, rho_basis->nx, rho_basis->ny, rho_basis->nz, 
 			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz,
-			rho_basis->gamma_only);
+			rho_basis->gamma_only, kgmat.data(), gtr.data(), nop);
 #else
-		this->get_ixyz2ipw(rho_basis, rho_basis->ig2isz, fftixy2is, ixyz2ipw);	
-		symm.rhog_symmetry(rhog_part, ixyz2ipw, rho_basis->nx, rho_basis->ny, rho_basis->nz, 
+		this->get_ixyz2ipw(rho_basis, rho_basis->ig2isz, fftixy2is, ixyz2ipw);
+		symm.rhog_symmetry(rhog_part, ixyz2ipw, rho_basis->nx, rho_basis->ny, rho_basis->nz,
 			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz,
-			rho_basis->gamma_only);
+			rho_basis->gamma_only, kgmat.data(), gtr.data(), nop);
 #endif
 		delete[] ixyz2ipw;
 #ifdef __MPI
@@ -80,11 +87,19 @@ void Symmetry_rho::psymmg_soc(std::complex<double>* rhog_x, std::complex<double>
 	auto build_wspin = [&rho_basis, &symm]() {
 		const ModuleBase::Matrix3 latvec = rho_basis->latvec;
 		const ModuleBase::Matrix3 ilatvec = latvec.Inverse();
-		std::vector<ModuleBase::Matrix3> wspin(symm.nrotk);
+		// index [0,nrotk) unitary, [nrotk, nrotk+nrotk_anti) the spatial parts of the
+		// antiunitary elements Theta*g -- same layout as density_sym_ops().
+		const int na = symm.magnetic_nspin4 ? symm.nrotk_anti : 0;
+		std::vector<ModuleBase::Matrix3> wspin(symm.nrotk + na);
 		for (int i = 0; i < symm.nrotk; ++i)
 		{
 			const ModuleBase::Matrix3 gmatc = ilatvec * symm.gmatrix[i] * latvec;
 			wspin[i] = ModuleSymmetry::SpinRotation::spin_so3(gmatc);
+		}
+		for (int j = 0; j < na; ++j)
+		{
+			const ModuleBase::Matrix3 gmatc = ilatvec * symm.gmatrix_anti[j] * latvec;
+			wspin[symm.nrotk + j] = ModuleSymmetry::SpinRotation::spin_so3(gmatc);
 		}
 		return wspin;
 	};
@@ -127,7 +142,7 @@ void Symmetry_rho::psymmg_soc(std::complex<double>* rhog_x, std::complex<double>
 	this->reduce_to_fullrhog(rho_basis, rhogtot_y, rhog_y, ig2isztot, rho_basis->ig2isz, max_npw);
 	this->reduce_to_fullrhog(rho_basis, rhogtot_z, rhog_z, ig2isztot, rho_basis->ig2isz, max_npw);
 
-	// (3) get ixy2ipw and do rhog_symmetry_soc on proc 0 of each pool
+	// (3) get ixy2ipw and do rhog_symmetry_nspin4 on proc 0 of each pool
 	if(GlobalV::RANK_IN_POOL==0)
 	{
 #endif
@@ -135,16 +150,22 @@ void Symmetry_rho::psymmg_soc(std::complex<double>* rhog_x, std::complex<double>
 		int* ixyz2ipw = new int[rho_basis->fftnxyz];
 		for(int i=0;i<rho_basis->fftnxyz;++i) ixyz2ipw[i]=-1;
 		std::vector<ModuleBase::Matrix3> wspin = build_wspin();
+		std::vector<ModuleBase::Matrix3> kgmat;
+		std::vector<ModuleBase::Vector3<double>> gtr;
+		std::vector<double> trs_inv;
+		const int nop = symm.density_sym_ops(kgmat, gtr, trs_inv);
 #ifdef __MPI
 		this->get_ixyz2ipw(rho_basis, ig2isztot, fftixy2is, ixyz2ipw);
-		symm.rhog_symmetry_soc(rhogtot_x, rhogtot_y, rhogtot_z, wspin.data(), ixyz2ipw,
+		symm.rhog_symmetry_nspin4(rhogtot_x, rhogtot_y, rhogtot_z, wspin.data(), ixyz2ipw,
 			rho_basis->nx, rho_basis->ny, rho_basis->nz,
-			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz);
+			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz,
+			trs_inv.data(), kgmat.data(), gtr.data(), nop);
 #else
 		this->get_ixyz2ipw(rho_basis, rho_basis->ig2isz, fftixy2is, ixyz2ipw);
-		symm.rhog_symmetry_soc(rhog_x, rhog_y, rhog_z, wspin.data(), ixyz2ipw,
+		symm.rhog_symmetry_nspin4(rhog_x, rhog_y, rhog_z, wspin.data(), ixyz2ipw,
 			rho_basis->nx, rho_basis->ny, rho_basis->nz,
-			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz);
+			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz,
+			trs_inv.data(), kgmat.data(), gtr.data(), nop);
 #endif
 		delete[] ixyz2ipw;
 #ifdef __MPI
