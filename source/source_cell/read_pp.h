@@ -66,7 +66,7 @@ public:
     int init_pseudo_reader(const std::string& fn, std::string& type, Atom_pseudo& pp);
     void print_pseudo_upf(std::ofstream& ofs, Atom_pseudo& pp);
 
-    int average_p(const double& lambda, Atom_pseudo& pp); // zhengdy add 2020-10-20
+    int average_p(const double& lambda, Atom_pseudo& pp, const bool lspinorb);
     void set_empty_element(Atom_pseudo& pp);            // Peize Lin add for bsse 2022.04.07
     void set_upf_q(Atom_pseudo& pp);                    // liuyu add 2023-09-21
     void complete_default(Atom_pseudo& pp);

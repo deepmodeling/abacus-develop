@@ -744,17 +744,17 @@ TEST_F(ReadPPTest, AverageSimpleReturns)
 	int ierr;
 	double lambda = 1.0;
 	// first return
-	PARAM.input.lspinorb = 1;
+	const bool lspinorb_1 = true;
 	upf->has_so = 0;
-	ierr = read_pp->average_p(lambda, *upf);
+	ierr = read_pp->average_p(lambda, *upf, lspinorb_1);
 	EXPECT_EQ(ierr,1);
 	// second return
 	upf->has_so = 1;
-	ierr = read_pp->average_p(lambda, *upf);
+	ierr = read_pp->average_p(lambda, *upf, lspinorb_1);
 	EXPECT_EQ(ierr,0);
     upf->has_so = 1;
     upf->tvanp = 1;
-    ierr = read_pp->average_p(lambda, *upf);
+    ierr = read_pp->average_p(lambda, *upf, lspinorb_1);
     EXPECT_EQ(ierr, 1);
 }
 
@@ -767,12 +767,13 @@ TEST_F(ReadPPTest, AverageErrReturns)
 	ifs.open("./support/Si.rel-pbe-rrkj.UPF");
 	read_pp->read_pseudo_upf(ifs, *upf);
 	EXPECT_TRUE(upf->has_so); // has soc info
-	PARAM.input.lspinorb = 0;
-	ierr = read_pp->average_p(lambda, *upf);
+	const bool lspinorb_0 = false;
+	ierr = read_pp->average_p(lambda, *upf, lspinorb_0);
 	EXPECT_EQ(upf->nbeta,2);
 	EXPECT_EQ(ierr,0);
 	// LSPINORB = 1
-	ierr = read_pp->average_p(lambda, *upf);
+	const bool lspinorb_1 = true;
+	ierr = read_pp->average_p(lambda, *upf, lspinorb_1);
 	EXPECT_EQ(ierr,0);
 	ifs.close();
 }
@@ -787,8 +788,8 @@ TEST_F(ReadPPTest, AverageLSPINORB0)
 	int ierr;
 	double lambda = 1.0;
 	// LSPINORB = 0
-	PARAM.input.lspinorb = 0;
-	ierr = read_pp->average_p(lambda, *upf);
+	const bool lspinorb_0 = false;
+	ierr = read_pp->average_p(lambda, *upf, lspinorb_0);
 	EXPECT_EQ(ierr,0);
 	EXPECT_EQ(upf->nbeta,4);
 	EXPECT_FALSE(upf->has_so); // has not soc info,why?
@@ -803,9 +804,9 @@ TEST_F(ReadPPTest, AverageLSPINORB1)
 	EXPECT_TRUE(upf->has_so); // has soc info
 	int ierr;
 	double lambda = 1.1;
-	// LSPINORB = 0
-	PARAM.input.lspinorb = 1;
-	ierr = read_pp->average_p(lambda, *upf);
+	// LSPINORB = 1
+	const bool lspinorb_1 = true;
+	ierr = read_pp->average_p(lambda, *upf, lspinorb_1);
 	EXPECT_EQ(ierr,0);
 	EXPECT_EQ(upf->nbeta,6);
 	EXPECT_TRUE(upf->has_so); // has soc info

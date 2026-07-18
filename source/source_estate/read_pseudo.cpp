@@ -249,7 +249,8 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
                 }
                 upf.set_upf_q(ucell.atoms[i].ncpp); // liuyu add 2023-09-21
                 // average pseudopotential if needed
-                error_ap = upf.average_p(PARAM.inp.soc_lambda, ucell.atoms[i].ncpp); // added by zhengdy 2020-10-20
+                const bool lspinorb = PARAM.inp.lspinorb;
+                error_ap = upf.average_p(PARAM.inp.soc_lambda, ucell.atoms[i].ncpp, lspinorb);
             }
             ucell.atoms[i].coulomb_potential = upf.coulomb_potential;
         }
