@@ -207,7 +207,8 @@ TEST_F(KlistParaTest, Set)
     if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.open("tmp_klist_5");
 }
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+    const int cal_symm_repr[2] = {0, 6};
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     // read KPT
     std::string k_file = "./support/KPT1";
     // set klist
@@ -330,7 +331,8 @@ TEST_F(KlistParaTest, SetAfterVC)
     if (GlobalV::MY_RANK == 0) {
         GlobalV::ofs_running.open("tmp_klist_6");
 }
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+    const int cal_symm_repr[2] = {0, 6};
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     // read KPT
     std::string k_file = "./support/KPT1";
     // set klist

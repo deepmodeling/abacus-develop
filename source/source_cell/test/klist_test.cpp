@@ -858,7 +858,8 @@ TEST_F(KlistTest, IbzKpoint)
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
     GlobalV::ofs_running.open("tmp_klist_3");
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+    const int cal_symm_repr[2] = {0, 6};
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     std::string k_file = "./support/KPT1";
     kv->nspin = 1;
     kv->read_kpoints(ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset);
@@ -884,7 +885,8 @@ TEST_F(KlistTest, IbzKpointIsMP)
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
     GlobalV::ofs_running.open("tmp_klist_4");
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+    const int cal_symm_repr[2] = {0, 6};
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
     std::string k_file = "./support/KPT1";
     kv->nspin = 1;
     kv->read_kpoints(ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset);
@@ -911,7 +913,8 @@ TEST_F(KlistTest, IbzKpointCustomWeights)
     ModuleSymmetry::Symmetry symm;
     construct_ucell(stru_lib[0]);
     GlobalV::ofs_running.open("tmp_klist_custom_weights");
-    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+    const int cal_symm_repr[2] = {0, 6};
+    symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
     // Test 1: Non-MP k-points with uniform weights (KPT4)
     {

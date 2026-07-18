@@ -80,13 +80,13 @@ AddTest(
 
 AddTest(
   TARGET MODULE_CELL_klist_test
-  LIBS parameter  base device symmetry
+  LIBS base device symmetry
   SOURCES klist_test.cpp ../klist.cpp ../parallel_kpoints.cpp ../k_vector_utils.cpp
 )
 
 AddTest(
   TARGET MODULE_CELL_klist_test_para1
-  LIBS parameter  base device symmetry
+  LIBS base device symmetry
   SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../k_vector_utils.cpp
 )
 
@@ -148,7 +148,7 @@ add_test(NAME MODULE_CELL_parallel_kpoints_test
 
 AddTest(
   TARGET MODULE_CELL_unitcell_test
-  LIBS parameter  base device cell_info  symmetry
+  LIBS base device cell_info symmetry
   SOURCES unitcell_test.cpp ../../source_estate/cal_ux.cpp
 
 )

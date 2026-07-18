@@ -54,7 +54,9 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     // 1.2) symmetrize things
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+        const int cal_symm_repr[2] = {PARAM.inp.cal_symm_repr[0], PARAM.inp.cal_symm_repr[1]};
+        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
+                             PARAM.inp.symmetry_prec, inp.nspin, PARAM.inp.calculation, cal_symm_repr);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 

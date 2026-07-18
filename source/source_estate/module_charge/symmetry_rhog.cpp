@@ -46,11 +46,13 @@ void Symmetry_rho::psymmg(std::complex<double>* rhog_part, const ModulePW::PW_Ba
 #ifdef __MPI
 		this->get_ixyz2ipw(rho_basis, ig2isztot, fftixy2is, ixyz2ipw);	
 		symm.rhog_symmetry(rhogtot, ixyz2ipw, rho_basis->nx, rho_basis->ny, rho_basis->nz, 
-			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz);
+			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz,
+			rho_basis->gamma_only);
 #else
 		this->get_ixyz2ipw(rho_basis, rho_basis->ig2isz, fftixy2is, ixyz2ipw);	
 		symm.rhog_symmetry(rhog_part, ixyz2ipw, rho_basis->nx, rho_basis->ny, rho_basis->nz, 
-			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz);
+			rho_basis->fftnx, rho_basis->fftny, rho_basis->fftnz,
+			rho_basis->gamma_only);
 #endif
 		delete[] ixyz2ipw;
 #ifdef __MPI
