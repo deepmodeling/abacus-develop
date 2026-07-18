@@ -10,6 +10,14 @@ if(EXISTS "${LOC_PATH}")
 endif()
 
 include(CMakeDependentOption)
+message(WARNING
+  "The build system now uses cmake_dependent_option extensively.\n"
+  "Many advanced options are now conditionally enabled based on their dependencies; "
+  "when dependency conditions are not met, the corresponding options will be"
+  "automatically turned OFF and hidden in cmake-gui/ccmake.\n"
+  "Please review your configuration if you previously set these options manually."
+)
+
 if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
   cmake_policy(SET CMP0135 NEW)
   # Otherwise this policy generates a warning on CMake 3.24
@@ -82,7 +90,7 @@ function(abacus_rename_option old_name new_name)
   if(NOT _old_defined)
     return()
   endif()
-  message(WARNING "${old_name} has been renamed to ${new_name}.")
+  message(DEPRECATION "${old_name} has been renamed to ${new_name}.")
   get_property(_type CACHE "${new_name}" PROPERTY TYPE)
   get_property(_help CACHE "${new_name}" PROPERTY HELPSTRING)
   set("${new_name}" "${${old_name}}" CACHE "${_type}" "${_help}" FORCE)
@@ -95,7 +103,7 @@ abacus_rename_option(INFO MATH_INFO)
 
 if(DEFINED CACHE{ENABLE_LIBCOMM})
   message(
-    WARNING
+    DEPRECATION
       "Option ENABLE_LIBCOMM is deprecated and will be ignored in a future release. "
       "LibComm is now treated as an implementation dependency of LibRI; "
       "please use -DENABLE_LIBRI=ON instead."
