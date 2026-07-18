@@ -1967,7 +1967,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning5)
     const int nspin = 1;
     const bool fixed_atoms = false;
     const bool noncolin = false;
-    const std::string calculation = "scf";
+    const std::string calculation = "md";
     const std::string esolver_type = "ksdft";
     EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running, *ucell,
         basis_type, orbital_dir, init_wfc,
