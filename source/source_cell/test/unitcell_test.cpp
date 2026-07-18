@@ -1276,7 +1276,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS1)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1307,7 +1310,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS2)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1338,7 +1344,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS4Noncolin)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1369,7 +1378,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS4Colin)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1400,7 +1412,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsC)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1431,7 +1446,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCA)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1462,7 +1480,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACXY)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1493,7 +1514,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACXZ)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1524,7 +1548,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACYZ)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1555,7 +1582,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACXYZ)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1587,7 +1617,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCAU)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1618,7 +1651,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsAutosetMag)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     for (int it = 0; it < ucell->ntype; it++)
     {
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
@@ -1629,7 +1665,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsAutosetMag)
     }
     // for nspin == 4
     nspin = 4;
-    unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin);
+    unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type);
     for (int it = 0; it < ucell->ntype; it++)
     {
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
@@ -1670,7 +1709,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning1)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin));
+    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type));
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1714,7 +1756,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning2)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin));
+    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type));
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1751,7 +1796,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning3)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, GlobalV::ofs_warning, nspin));
+    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, GlobalV::ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type));
     ofs_running.close();
     GlobalV::ofs_warning.close();
     ifa.close();
@@ -1790,7 +1838,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning4)
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("read_atom_positions, mismatch in atom number for atom type: Mg"));
     ofs_running.close();
@@ -1824,7 +1875,10 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning5)
     EXPECT_DOUBLE_EQ(ucell->latvec.e11, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e22, 4.27957);
     EXPECT_DOUBLE_EQ(ucell->latvec.e33, 4.27957);
-    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, GlobalV::ofs_warning, nspin));
+    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, GlobalV::ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type));
     ofs_running.close();
     GlobalV::ofs_warning.close();
     ifa.close();

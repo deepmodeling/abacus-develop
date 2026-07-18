@@ -18,22 +18,21 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                          std::ifstream &ifpos,
                          std::ofstream &ofs_running,
                          std::ofstream &ofs_warning,
-                         const int nspin)
+                         const int nspin,
+                         const std::string& basis_type,
+                         const std::string& orbital_dir,
+                         const std::string& init_wfc,
+                         const double onsite_radius,
+                         const bool fixed_atoms,
+                         const bool noncolin,
+                         const std::string& calculation,
+                         const std::string& esolver_type)
 {
     ModuleBase::TITLE("UnitCell","read_atom_positions");
 
     std::string& Coordinate  = ucell.Coordinate;
     const int ntype = ucell.ntype;
     assert (nspin==1 || nspin==2 || nspin==4);
-
-    const std::string basis_type = PARAM.inp.basis_type;
-    const std::string orbital_dir = PARAM.inp.orbital_dir;
-    const std::string init_wfc = PARAM.inp.init_wfc;
-    const double onsite_radius = PARAM.inp.onsite_radius;
-    const bool fixed_atoms = PARAM.inp.fixed_atoms;
-    const bool noncolin = PARAM.inp.noncolin;
-    const std::string calculation = PARAM.inp.calculation;
-    const std::string esolver_type = PARAM.inp.esolver_type;
 
     if (ucell.magnet.start_mag.size() != static_cast<size_t>(ntype))
     {

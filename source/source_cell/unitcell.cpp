@@ -255,7 +255,10 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
             //==========================
             // call read_atom_positions
             //==========================
-            ok2 = unitcell::read_atom_positions(*this, ifa, log, GlobalV::ofs_warning, nspin);
+            ok2 = unitcell::read_atom_positions(*this, ifa, log, GlobalV::ofs_warning, nspin,
+                PARAM.inp.basis_type, PARAM.inp.orbital_dir, PARAM.inp.init_wfc,
+                PARAM.inp.onsite_radius, PARAM.inp.fixed_atoms, PARAM.inp.noncolin,
+                PARAM.inp.calculation, PARAM.inp.esolver_type);
         }
     }
 #ifdef __MPI

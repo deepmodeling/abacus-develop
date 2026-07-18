@@ -105,7 +105,10 @@ if(GlobalV::MY_RANK==0)
 	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
 	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
 	//call read_atom_positions
-	EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, nspin));
+	EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
+        PARAM.input.basis_type, PARAM.input.orbital_dir, PARAM.input.init_wfc,
+        PARAM.input.onsite_radius, PARAM.input.fixed_atoms, PARAM.input.noncolin,
+        PARAM.input.calculation, PARAM.input.esolver_type));
 	ofs_running.close();
 	ofs_warning.close();
 	ifa.close();
