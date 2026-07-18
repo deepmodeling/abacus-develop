@@ -85,7 +85,9 @@ namespace ModuleSymmetry
         TCdouble get_euler_angle(const ModuleBase::Matrix3& gmatc) const;
 
         /// T_mm' = [c^\dagger D c]_mm', the rotation matrix in the representation of real sphere harmonics
-        void cal_rotmat_Slm(const ModuleBase::Matrix3* gmatc, const int lmax);
+        /// @param nop  number of operations in gmatc; <0 means nsym_ (the unitary ones only).
+        ///             Pass nsym_+nanti_ to also build the antiunitary operations' T_l.
+        void cal_rotmat_Slm(const ModuleBase::Matrix3* gmatc, const int lmax, const int nop = -1);
 
         /// set a block matrix onto a 2d-parallelized matrix(col-maj), at the position (starti, startj) 
         /// if trans=true, the block matrix is transposed before setting
@@ -172,6 +174,14 @@ namespace ModuleSymmetry
         //--------------------------------------------------------------------------------
 
         int nsym_ = 1;
+        /// (nspin=4, magnetic) number of ANTIUNITARY elements Theta*g of the Shubnikov group.
+        /// Their orbital rotations / return lattices / Ms are appended after the nsym_ unitary
+        /// ones, so the raw index isym in [nsym_, nsym_+nanti_) addresses gmatrix_anti[isym-nsym_].
+        int nanti_ = 0;
+        /// (nspin=4) true when the configuration carries a non-zero local moment. Then pure time
+        /// reversal is NOT a symmetry (it reverses m) and the k-star must be restored with the
+        /// Shubnikov elements Theta*gmatrix_anti[] instead of the generic -k shortcut.
+        bool magnetic_nspin4_ = false;
 
         double eps_ = 1e-6;
 

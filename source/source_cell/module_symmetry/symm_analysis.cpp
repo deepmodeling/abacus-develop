@@ -293,9 +293,9 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     // (nspin=4 / SOC) restrict to the unitary magnetic subgroup: drop operations that reverse
     // the magnetization (pseudovector), so they are not applied in k-reduction / density
     // symmetrization. See ref/2026-07-SOC磁群对称性判据.md.
-    if (PARAM.inp.nspin == 4)
+    if (nspin == 4)
     {
-        this->analyze_magnetic_group_soc(atoms, st, latvec1);
+        this->analyze_magnetic_group_nspin4(atoms, st, latvec1);
     }
 
     // Do this here for debug

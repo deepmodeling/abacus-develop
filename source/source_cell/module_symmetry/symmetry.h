@@ -87,6 +87,25 @@ public:
     ModuleBase::Matrix3 kgmatrix[48];    ///< the rotation matrices in reciprocal space
     ModuleBase::Vector3<double> gtrans[48];
     
+    /// (nspin=4, magnetic) Spatial parts of the ANTIUNITARY elements of the Shubnikov (magnetic) group:
+    /// operations g that REVERSE the magnetization, so that g alone is not a symmetry but Theta*g is (Theta = time reversal).
+    /// Since an operation either preserves or reverses a non-zero moment,
+    /// this set is a coset of the unitary subgroup and is DISJOINT from
+    /// gmatrix[0..nrotk); when non-empty it has exactly nrotk elements.
+    /// Index convention used downstream (k-stars, restore_dm): isym < nrotk  -> unitary gmatrix[isym],
+    /// isym >= nrotk -> antiunitary Theta*gmatrix_anti[isym-nrotk].
+    ModuleBase::Matrix3 gmatrix_anti[48];
+    ModuleBase::Matrix3 kgmatrix_anti[48];
+    ModuleBase::Vector3<double> gtrans_anti[48];
+    int nrotk_anti = 0;         ///< number of antiunitary elements; 0 = none (or non-magnetic)
+    /// nspin=4 with at least one non-zero local moment. Deliberately independent of lspinorb:
+    /// without SOC the spinor Hamiltonian is still complex whenever the moment has a y-component
+    /// (H^{up,dn} = B_x - i B_y), so plain conjugation K is not a symmetry there either and the
+    /// antiunitary operation must be the full Theta = -i*sigma_y*K.
+    /// Treating the noncollinear no-SOC case with the Shubnikov group is therefore correct (though conservative:
+    /// the exact symmetry there is the larger spin space group, where spin and space rotations decouple).
+    bool magnetic_nspin4 = false;
+
     ModuleBase::Matrix3 symop[48];    ///< the rotation matrices for the pure bravais lattice
     int nop=0;    ///< the number of point group operations of the pure bravais lattice without basis
     int nrot=0;    ///< the number of pure point group rotations
@@ -279,10 +298,21 @@ public:
         else { return -1; }
     }
 
+    /// atom map for the j-th ANTIUNITARY operation (spatial part gmatrix_anti[j]).
+    int get_rotated_atom_anti(int j, int iat)const
+    {
+        if (!this->isym_rotiat_anti_.empty()) { return this->isym_rotiat_anti_[j][iat]; }
+        else { return -1; }
+    }
+
     private:
 
     /// atom-map for each symmetry operation: isym_rotiat[isym][iat]=rotiat
     std::vector<std::vector<int>> isym_rotiat_;
+
+    /// atom-map for each ANTIUNITARY operation: isym_rotiat_anti_[j][iat]=rotiat.
+    /// Captured in analyze_magnetic_group_nspin4 before the unitary arrays are compacted.
+    std::vector<std::vector<int>> isym_rotiat_anti_;
 
     /// @brief  set atom map for each symmetry operation
     void set_atom_map(const Atom* atoms);
@@ -314,7 +344,7 @@ public:
     /// that reverse the moment (which are only symmetries when combined with time reversal)
     /// from being applied in k-reduction and density symmetrization.
     /// See ref/2026-07-SOC磁群对称性判据.md. Non-magnetic (m_i=0) keeps all operations.
-    void analyze_magnetic_group_soc(const Atom* atoms, const Statistics& st, const ModuleBase::Matrix3& latvec);
+    void analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics& st, const ModuleBase::Matrix3& latvec);
 };
 }
 

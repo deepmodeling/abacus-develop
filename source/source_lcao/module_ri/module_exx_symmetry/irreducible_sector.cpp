@@ -89,7 +89,10 @@ namespace ModuleSymmetry
     void Irreducible_Sector::cal_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st)
     {
         ModuleBase::TITLE("Symmetry_rotation", "cal_return_lattice_all");
-        this->return_lattice_.resize(st.nat, std::vector<TCdouble>(symm.nrotk));
+        // Columns [0, nrotk) are the unitary operations; columns [nrotk, nrotk+nrotk_anti) are the
+        // spatial parts of the antiunitary elements Theta*g of the Shubnikov group (nspin=4 magnetic),
+        // so that Symmetry_rotation can address both with one raw index. 
+        this->return_lattice_.resize(st.nat, std::vector<TCdouble>(symm.nrotk + symm.nrotk_anti));
         for (int iat1 = 0;iat1 < st.nat;++iat1)
         {
             int it = st.iat2it[iat1];
@@ -99,6 +102,12 @@ namespace ModuleSymmetry
                 int iat2 = symm.get_rotated_atom(isym, iat1);
                 int ia2 = st.iat2ia[iat2];
                 this->return_lattice_[iat1][isym] = get_return_lattice(symm, symm.gmatrix[isym], symm.gtrans[isym], atoms[it].taud[ia1], atoms[it].taud[ia2]);
+            }
+            for (int j = 0;j < symm.nrotk_anti;++j)
+            {
+                int iat2 = symm.get_rotated_atom_anti(j, iat1);
+                int ia2 = st.iat2ia[iat2];
+                this->return_lattice_[iat1][symm.nrotk + j] = get_return_lattice(symm, symm.gmatrix_anti[j], symm.gtrans_anti[j], atoms[it].taud[ia1], atoms[it].taud[ia2]);
             }
         }
         // test: output return_lattice

@@ -34,6 +34,8 @@ namespace ModuleSymmetry
         ModuleBase::timer::start("Symmetry_rotation", "cal_Ms");
 
         this->nsym_ = ucell.symm.nrotk;
+        this->nanti_ = ucell.symm.nrotk_anti;
+        this->magnetic_nspin4_ = ucell.symm.magnetic_nspin4;
         this->eps_ = ucell.symm.epsilon;
         if (this->irs_.invmap_.empty())
         {
@@ -41,17 +43,22 @@ namespace ModuleSymmetry
             ucell.symm.gmatrix_invmap(ucell.symm.gmatrix, ucell.symm.nrotk, this->irs_.invmap_.data());
         }
         // 1. calculate the rotation matrix in real spherical harmonics representation for each symmetry operation: [T_l (isym)]_mm'
-        std::vector<ModuleBase::Matrix3> gmatc(nsym_);
+        const int nop_tot = this->nsym_ + this->nanti_;
+        std::vector<ModuleBase::Matrix3> gmatc(nop_tot);
         for (int i = 0;i < nsym_;++i) { gmatc[i] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix[i], ucell.latvec); }
-        this->cal_rotmat_Slm(gmatc.data(), std::max(this->abfs_Lmax_, ucell.lmax));
+        for (int j = 0;j < this->nanti_;++j)
+        { gmatc[nsym_ + j] = this->irs_.direct_to_cartesian(ucell.symm.gmatrix_anti[j], ucell.latvec); }
+        this->cal_rotmat_Slm(gmatc.data(), std::max(this->abfs_Lmax_, ucell.lmax), nop_tot);
 
         // 1.5 (nspin=4) the SU(2) spin-1/2 rotation U(isym) for each symmetry operation. The AO
         // rotation matrix M becomes the spinor operator T(isym) (x) U(isym) so that the same
         // gemm D(k)=M^dagger D(k_ibz) M rotates both the orbital and the spin part at once.
-        std::vector<SpinRotation::Su2> spin_U(nsym_, SpinRotation::Su2{ 1.0, 0.0, 0.0, 1.0 });
+        // For an antiunitary element Theta*g only the spatial part g enters M here; the Theta
+        // (sigma_y (.)^* sigma_y) is applied afterwards in restore_dm.
+        std::vector<SpinRotation::Su2> spin_U(nop_tot, SpinRotation::Su2{ 1.0, 0.0, 0.0, 1.0 });
         if (PARAM.inp.nspin == 4)
         {
-            for (int i = 0;i < nsym_;++i) { spin_U[i] = SpinRotation::so3_to_su2(gmatc[i]); }
+            for (int i = 0;i < nop_tot;++i) { spin_U[i] = SpinRotation::so3_to_su2(gmatc[i]); }
         }
         this->spin_U_ = spin_U;  // keep for restore_HR_soc (real-space EXX H(R) spin mixing)
 
@@ -73,7 +80,7 @@ namespace ModuleSymmetry
         {
             // const TCdouble& kvec_d_ibz = restrict_kpt((*kstars[ik_ibz].begin()).second * ucell.symm.kgmatrix[(*kstars[ik_ibz].begin()).first], ucell.symm.epsilon);
             for (auto& isym_kvd : kv.kstars[ik_ibz]) {
-                if (isym_kvd.first < nsym_) {
+                if (isym_kvd.first < nop_tot) {
                     this->Ms_[ik_ibz][isym_kvd.first] = this->contruct_2d_rot_mat_ao(ucell.symm, ucell.atoms, ucell.st, kv.kvec_d[ik_ibz], isym_kvd.first, pv, spin_U[isym_kvd.first]);
 }
 }
@@ -122,8 +129,14 @@ namespace ModuleSymmetry
                         for (int i = 0;i < pv.get_local_size();++i) { dm_scaled[i] = factor * dm_k_ibz[ik_ibz + is * nk][i]; }
                         dm_k_full.push_back(dm_scaled);
                     }
-                    else if (vec3_eq(isym_kvd.second, -kv.kvec_d[ik_ibz], this->eps_) && this->TRS_first_)
+                    else if (vec3_eq(isym_kvd.second, -kv.kvec_d[ik_ibz], this->eps_) && this->TRS_first_
+                             && !this->magnetic_nspin4_)
                     {
+                        // NOTE: this shortcut replaces whatever operation produced the star member by pure time reversal. 
+                        // That is legitimate only when Theta itself is a symmetry, i.e. for a nspin<4, 
+                        // where the antiunitary operation is plain conjugation K and does not touch the spin.
+                        // For nspin=4 with a non-zero moment, Theta reverses m, and K is not a symmetry when m_y is non-zero,
+                        // so the genuine space-group / Shubnikov branches below must be used instead.
                         // -k via pure time reversal: D(-k) = sigma_y D^*(k_ibz) sigma_y.
                         // nspin<4 reduces to Theta=K, i.e. plain complex conjugation.
                         if (PARAM.inp.nspin == 4)
@@ -140,19 +153,29 @@ namespace ModuleSymmetry
                         dm_k_full.push_back(this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_kvd.first, pv));
                     }
                     else
-                    {    // TRS*spacegroup operations
-                        // D(-Rk_ibz) = sigma_y [D(Rk_ibz)]^* sigma_y with D(Rk_ibz) = M^dagger D M.
-                        // For nspin=4, first do the (non-conjugated) space-group rotation, then the spin flip;
+                    {    // antiunitary elements: Theta * (spatial operation)
+                        // D(Theta*g k_ibz) = sigma_y [D(g k_ibz)]^* sigma_y with D(g k_ibz) = M^dagger D M.
+                        // For nspin=4, first do the (non-conjugated) spatial rotation, then the spin flip;
                         // for nspin<4 (Theta=K) the original TRS_conj path already gives the conjugate.
-                        if (PARAM.inp.nspin == 4)
+                        //
+                        // Which spatial operation the index denotes depends on the regime, matching
+                        // how the k-reduction filled kgmatrix[] (see KVectorUtils::ibz_kpoint):
+                        //  - nspin=4 magnetic (Shubnikov): index j+nsym_ is the antiunitary element
+                        //    Theta*gmatrix_anti[j]; its Ms is stored under the RAW key j+nsym_.
+                        //  - otherwise (grey group / nspin<4): index i+nsym_ is Theta*gmatrix[i],
+                        //    i.e. the unitary operation i, whose Ms is stored under key i.
+                        const int isym_M = this->magnetic_nspin4_ ? isym_kvd.first : (isym_kvd.first - nsym_);
+                        if (PARAM.inp.nspin == 4)   
                         {
+                            // m=0: gray group: the space-group part of anti-unitary elements are the same of the unitary elements, isym_M < nsym_
+                            // m!=0: Shubnikov group: using different space-group part of anti-unitary elements stored in gmatrix_anti with isym_M >= nsym_
                             dm_k_full.push_back(this->trs_spin_rotate(
-                                this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_kvd.first - nsym_, pv, false),
+                                this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_M, pv, false),
                                 sigma_y, pv, 1.0));
                         }
                         else
                         {
-                            dm_k_full.push_back(this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_kvd.first - nsym_, pv, true));
+                            dm_k_full.push_back(this->rot_matrix_ao(dm_k_ibz[ik_ibz + is * nk], ik_ibz, kv.kstars[ik_ibz].size(), isym_M, pv, true));
                         }
                     }
                 }
@@ -291,8 +314,9 @@ namespace ModuleSymmetry
     }
 
     /// T_mm' = [c^\dagger D c]_mm'
-    void Symmetry_rotation::cal_rotmat_Slm(const ModuleBase::Matrix3* gmatc, const int lmax)
+    void Symmetry_rotation::cal_rotmat_Slm(const ModuleBase::Matrix3* gmatc, const int lmax, const int nop)
     {
+        const int nop_tot = (nop < 0) ? this->nsym_ : nop;
         auto set_integer = [](RI::Tensor<std::complex<double>>& mat) -> void
             {
                 double zero_thres = 1e-10;
@@ -306,7 +330,7 @@ namespace ModuleSymmetry
                     }
 }
             };
-        this->rotmat_Slm_.resize(nsym_);
+        this->rotmat_Slm_.resize(nop_tot);
         // c matrix is independent on isym
         std::vector<RI::Tensor<std::complex<double>>> c_mm(lmax + 1);
         for (int l = 0;l <= lmax;++l) {
@@ -320,7 +344,7 @@ namespace ModuleSymmetry
 }
 }
 
-        for (int isym = 0;isym < nsym_;++isym)
+        for (int isym = 0;isym < nop_tot;++isym)
         {
             // if R is a reflection operation, calculate D^l(R)=(-1)^l*D^l(IR), so the euler angle of (IR) is needed.
             TCdouble euler_angle = get_euler_angle(gmatc[isym].Det() > 0 ?
@@ -413,11 +437,19 @@ namespace ModuleSymmetry
         const bool soc = (PARAM.inp.nspin == 4);
         const int npol = soc ? 2 : 1;  // spinor: global AO index is spin-fast interleaved, I = npol*iw_orb + s
         std::vector<std::complex<double>> M_isym(pv.get_local_size(), 0.0);
+        // isym >= symm.nrotk addresses the antiunitary coset (spatial part gmatrix_anti[isym-nrotk]),
+        // whose atom map lives in a separate table.
+        const int nrotk_u = symm.nrotk;
+        auto rotated_atom = [&symm, nrotk_u](const int is, const int iat) -> int
+            {
+                return (is < nrotk_u) ? symm.get_rotated_atom(is, iat)
+                                      : symm.get_rotated_atom_anti(is - nrotk_u, iat);
+            };
         for (int iat1 = 0;iat1 < cell_st.nat;++iat1)
         {
             int it = cell_st.iat2it[iat1];  // it1=it2
             int ia1 = cell_st.iat2ia[iat1];
-            int iat2 = symm.get_rotated_atom(isym, iat1); //iat2=rot(iat1)
+            int iat2 = rotated_atom(isym, iat1); //iat2=rot(iat1)
             int ia2 = cell_st.iat2ia[iat2];
             // cal phase factor from return lattice:     exp(-ik_ibz*O)
             double arg = 2 * ModuleBase::PI * kvec_d_ibz * this->irs_.return_lattice_[iat1][isym];

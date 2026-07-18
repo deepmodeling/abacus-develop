@@ -78,7 +78,7 @@ void Symmetry::analyze_magnetic_group(const Atom* atoms, const Statistics& st, i
 
 }
 
-void Symmetry::analyze_magnetic_group_soc(const Atom* atoms, const Statistics& st, const ModuleBase::Matrix3& latvec)
+void Symmetry::analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics& st, const ModuleBase::Matrix3& latvec)
 {
     // Restrict the space group to the unitary magnetic subgroup (nspin=4 / SOC):
     // operation g survives if it preserves the magnetic configuration as a pseudovector,
@@ -90,6 +90,18 @@ void Symmetry::analyze_magnetic_group_soc(const Atom* atoms, const Statistics& s
     std::vector<int> keep;
     keep.reserve(this->nrotk);
     int nrot_new = 0;
+
+    // Is the configuration actually magnetic? For m_i = 0 every operation both "preserves" and
+    // "reverses" the moment, so the antiunitary coset is meaningless there: 
+    // Theta (TRS) itself is a symmetry and the grey group is handled by the usual -k shortcut in the k-reduction).
+    bool has_moment = false;
+    for (int iat = 0; iat < this->nat && !has_moment; ++iat)
+    {
+        const ModuleBase::Vector3<double>& m = atoms[st.iat2it[iat]].m_loc_[st.iat2ia[iat]];
+        if (!this->equal(m.x, 0.0) || !this->equal(m.y, 0.0) || !this->equal(m.z, 0.0)) { has_moment = true; }
+    }
+    std::vector<int> anti;   // operations that REVERSE the moment: Theta*g is a symmetry
+    anti.reserve(this->nrotk);
     for (int isym = 0; isym < this->nrotk; ++isym)
     {
         const ModuleBase::Matrix3 gmatc = ilatvec * this->gmatrix[isym] * latvec;
@@ -99,18 +111,51 @@ void Symmetry::analyze_magnetic_group_soc(const Atom* atoms, const Statistics& s
         {
             const ModuleBase::Vector3<double>& m = atoms[st.iat2it[iat]].m_loc_[st.iat2ia[iat]];
             // pseudovector-rotated moment W*m (column-vector convention: m'^i = W_ij m^j)
-            const double mx = W.e11 * m.x + W.e12 * m.y + W.e13 * m.z;
-            const double my = W.e21 * m.x + W.e22 * m.y + W.e23 * m.z;
-            const double mz = W.e31 * m.x + W.e32 * m.y + W.e33 * m.z;
+            const ModuleBase::Vector3<double>& mrot = W * m;
             const int jat = this->get_rotated_atom(isym, iat);
             const ModuleBase::Vector3<double>& mj = atoms[st.iat2it[jat]].m_loc_[st.iat2ia[jat]];
-            if (!this->equal(mx, mj.x) || !this->equal(my, mj.y) || !this->equal(mz, mj.z)) { ok = false; }
+            if (!this->equal(mrot.x, mj.x) || !this->equal(mrot.y, mj.y) || !this->equal(mrot.z, mj.z)) { ok = false; }
         }
         if (ok)
         {
             keep.push_back(isym);
             if (isym < this->nrot) { ++nrot_new; }   // pure point-group rotations are the first nrot ops
         }
+        else if (has_moment)
+        {
+            // g does not preserve m; check whether it exactly REVERSES it, i.e.
+            // W(g) m_i = -m_{g(i)} for every atom. Then g alone is not a symmetry but the
+            // antiunitary element Theta*g is, and it belongs to the Shubnikov group.
+            bool anti_ok = true;
+            for (int iat = 0; iat < this->nat && anti_ok; ++iat)
+            {
+                const ModuleBase::Vector3<double>& m = atoms[st.iat2it[iat]].m_loc_[st.iat2ia[iat]];
+                const ModuleBase::Vector3<double>& mrot = W * m;
+                const int jat = this->get_rotated_atom(isym, iat);
+                const ModuleBase::Vector3<double>& mj = atoms[st.iat2it[jat]].m_loc_[st.iat2ia[jat]];
+                if (!this->equal(mrot.x, -mj.x) || !this->equal(mrot.y, -mj.y) || !this->equal(mrot.z, -mj.z)) { anti_ok = false; }
+            }
+            if (anti_ok) { anti.push_back(isym); }
+        }
+    }
+
+    // Capture the antiunitary coset BEFORE the unitary arrays are compacted in place below
+    // (the compaction overwrites gmatrix/kgmatrix/gtrans/isym_rotiat_ and would lose them).
+    this->magnetic_nspin4 = has_moment;
+    this->nrotk_anti = static_cast<int>(anti.size());
+    if (this->nrotk_anti > 0)
+    {
+        this->isym_rotiat_anti_.resize(this->nrotk_anti);
+        for (int j = 0; j < this->nrotk_anti; ++j)
+        {
+            const int isym = anti[j];
+            this->gmatrix_anti[j] = this->gmatrix[isym];
+            this->kgmatrix_anti[j] = this->kgmatrix[isym];
+            this->gtrans_anti[j] = this->gtrans[isym];
+            this->isym_rotiat_anti_[j] = this->isym_rotiat_[isym];
+        }
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,
+            "MAGNETIC ANTIUNITARY OPERATIONS (Theta*g)", this->nrotk_anti);
     }
 
     const int nrotk_new = static_cast<int>(keep.size());
