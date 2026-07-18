@@ -201,13 +201,14 @@ void test_deepks<T>::setup_cell()
     const double pseudo_rcut = PARAM.inp.pseudo_rcut;
     const double soc_lambda = PARAM.inp.soc_lambda;
     const int nspin = PARAM.inp.nspin;
-    const int nlocal = PARAM.globalv.nlocal;
     const int npol = PARAM.globalv.npol;
     const std::string basis_type = PARAM.inp.basis_type;
     const std::string esolver_type = PARAM.inp.esolver_type;
     const std::string init_wfc = PARAM.inp.init_wfc;
     const int nbands = PARAM.inp.nbands;
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, nlocal, npol, basis_type, esolver_type, init_wfc, nbands);
+    // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
+    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands);
+    // Read nlocal after read_pseudo() completes, as it's calculated inside
     this->nlocal = PARAM.globalv.nlocal;
     this->nbands = PARAM.inp.nbands;
     this->npol = PARAM.globalv.npol;

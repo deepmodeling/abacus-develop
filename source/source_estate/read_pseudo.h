@@ -14,7 +14,6 @@ namespace elecstate {
                    const double pseudo_rcut,
                    const double soc_lambda,
                    const int nspin,
-                   const int nlocal,
                    const int npol,
                    const std::string& basis_type,
                    const std::string& esolver_type,

@@ -19,7 +19,6 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
                    const double pseudo_rcut,
                    const double soc_lambda,
                    const int nspin,
-                   const int nlocal,
                    const int npol,
                    const std::string& basis_type,
                    const std::string& esolver_type,
@@ -152,7 +151,8 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
     ca.cal_atoms_info(ucell.atoms, ucell.ntype, PARAM);
 
     // setup nlocal
-    cal_nwfc(ofs,ucell,ucell.atoms, nspin, nlocal, npol,
+    // nlocal is calculated by CalAtomsInfo::cal_atoms_info() above, stored in PARAM.globalv.nlocal
+    cal_nwfc(ofs,ucell,ucell.atoms, nspin, PARAM.globalv.nlocal, npol,
               basis_type, esolver_type, init_wfc, nbands);
 
     // Check whether the number of valence is minimum

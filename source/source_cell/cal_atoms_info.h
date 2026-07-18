@@ -43,6 +43,10 @@ class CalAtomsInfo
         }
 
         // calculate the total number of local basis
+        // nlocal = sum over all atom types of (atoms[it].nw * atoms[it].na)
+        // For nspin == 4 (non-collinear), each basis function has 2 polarizations,
+        // so nlocal is doubled. This value is used by cal_nwfc() to initialize
+        // index arrays (iwt2iat, iwt2iw, itia2iat).
         para.sys.nlocal = 0;
         for (int it = 0; it < ntype; ++it)
         {

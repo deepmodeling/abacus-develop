@@ -50,7 +50,9 @@ namespace elecstate
         // (4) set index for itia2iat, itiaiw2iwt
         //========================================================
 
-        // mohan add 2010-09-26
+        // nlocal is calculated by CalAtomsInfo::cal_atoms_info() inside read_pseudo(),
+        // and passed here to validate against the local calculation (nlocal_tmp).
+        // This assertion ensures consistency between the two calculation paths.
         assert(nlocal_tmp > 0);
         assert(nlocal_tmp == nlocal);
         delete[] ucell.iwt2iat;
