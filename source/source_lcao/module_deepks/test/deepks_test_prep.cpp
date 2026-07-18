@@ -1,6 +1,7 @@
 #include "deepks_test.h"
 #include "source_base/global_variable.h"
 #include "source_estate/read_pseudo.h"
+#include "source_estate/param_update.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "source_io/module_parameter/parameter.h"
 #include "../../LCAO_nonlocal_info.h"
@@ -212,7 +213,8 @@ void test_deepks<T>::setup_cell()
     const std::string ks_solver = PARAM.inp.ks_solver;
     const int bndpar = PARAM.inp.bndpar;
     // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar);
+    auto atoms_info = elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar);
+    elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
     // Read nlocal after read_pseudo() completes, as it's calculated inside
     this->nlocal = PARAM.globalv.nlocal;
     this->nbands = PARAM.inp.nbands;

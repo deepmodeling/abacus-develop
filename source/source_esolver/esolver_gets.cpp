@@ -4,6 +4,7 @@
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/read_pseudo.h"
+#include "source_estate/param_update.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
@@ -49,7 +50,8 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     const std::string ks_solver = PARAM.inp.ks_solver;
     const int bndpar = PARAM.inp.bndpar;
     // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar);
+    auto atoms_info = elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar);
+    elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
 
     // 1.2) symmetrize things
     if (ModuleSymmetry::Symmetry::symm_flag == 1)

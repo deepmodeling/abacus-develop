@@ -6,7 +6,7 @@
 
 namespace elecstate {
 
-    void read_pseudo(std::ofstream& ofs, UnitCell& ucell,
+    AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
                    const std::string& pseudo_dir,
                    const std::string& global_out_dir,
                    const bool out_element_info,
@@ -59,11 +59,6 @@ namespace elecstate {
     // 			atoms[].na
     //=========================
     void cal_natomwfc(std::ofstream& log,int& natomwfc,const int ntype,const Atom* atoms,const int nspin);
-
-class ParamUpdater {
-public:
-    static void update_from_atoms_info(const AtomsInfoResult& atoms_info);
-};
 
 }
 

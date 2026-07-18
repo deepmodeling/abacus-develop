@@ -41,6 +41,7 @@ list(APPEND objects
     cal_ux.cpp
     cal_nelec_nband.cpp
     read_pseudo.cpp
+    param_update.cpp
     cal_wfc.cpp
     setup_estate_pw.cpp
     update_pot.cpp
