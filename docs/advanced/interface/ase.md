@@ -119,7 +119,11 @@ cmake -S . -B build-lcao -DENABLE_MPI=ON -DENABLE_LCAO=ON
 cmake --build build-lcao --target abacus_basic_para -j
 ```
 
-With the ABACUS toolchain workflow, build the normal ABACUS executable with LCAO support when `basis_type=lcao` is needed, then pass that executable to `AbacusProfile(command=...)`. The command can include an MPI launcher, for example `mpirun -np 4 /path/to/abacus`; ABACUS rank 0 opens the socket connection and broadcasts the i-PI data to the other ranks internally. The ASE interface can be installed from this repository with:
+With the ABACUS toolchain workflow, build the normal ABACUS executable with LCAO support when `basis_type=lcao` is needed, then pass that executable to `AbacusProfile(command=...)`. The command can include an MPI launcher, for example `mpirun -np 4 /path/to/abacus`; ABACUS rank 0 opens the socket connection and broadcasts the i-PI data to the other ranks internally. On managed clusters, keep scheduler-specific launch options outside the calculator when possible and test the exact launcher command on a compute node.
+
+For PW calculations on CUDA/ROCm with multiple MPI ranks, use a k-point layout compatible with ABACUS' GPU parallelization. In practice, make sure each k-point pool contains one MPI rank; for example, a 4-rank PW GPU socket calculation should use at least four k-points so the default GPU `kpar` adjustment can assign one rank per pool. A one-k-point PW GPU job with several MPI ranks can fail in the PW GPU transform path; reduce the rank count or use a denser k-point mesh such as a smaller `kspacing`.
+
+The ASE interface can be installed from this repository with:
 
 ```bash
 cd interfaces/ASE_interface

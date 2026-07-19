@@ -125,11 +125,14 @@ class AbacusProfile(BaseProfile):
 
     @staticmethod
     def parse_version(stdout) -> str:
-        # up to the ABACUS version v3.9.0.17, the run of command
-        # `abacus --version` would returns the information organized
-        # in the following way:
-        # ABACUS version v3.9.0.17
-        return re.match(r'ABACUS version (\S+)', stdout).group(1)
+        # MPI launchers may add informational lines before ABACUS output.
+        match = re.search(r'ABACUS version (\S+)', stdout or '')
+        if match is None:
+            raise RuntimeError(
+                'Could not parse ABACUS version from command output. '
+                'Expected a line like "ABACUS version vX.Y.Z".'
+            )
+        return match.group(1)
 
     def get_calculator_command(self, inputfile) -> List[str]:
         # because ABACUS run in the folder where there are INPUT files, so the
@@ -777,6 +780,14 @@ class TestAbacusCalculator(unittest.TestCase):
         changed.cell[0, 0] = 5.1
         with self.assertRaisesRegex(PropertyNotImplementedError, 'fixed-cell'):
             calc._check_fixed_cell(changed)
+
+    def test_parse_version_allows_launcher_noise(self):
+        stdout = 'launcher info\nABACUS version v3.11.0-beta6\n'
+        self.assertEqual(AbacusProfile.parse_version(stdout), 'v3.11.0-beta6')
+
+    def test_parse_version_rejects_missing_version(self):
+        with self.assertRaisesRegex(RuntimeError, 'ABACUS version'):
+            AbacusProfile.parse_version('launcher failed before abacus started')
 
     def test_calculator_results(self):
         from ase.build.bulk import bulk
