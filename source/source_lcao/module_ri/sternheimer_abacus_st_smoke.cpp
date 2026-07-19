@@ -46,6 +46,7 @@ constexpr const char* kSmokeEnv = "ABACUS_STERNHEIMER_FD_ST_SMOKE";
 constexpr const char* kOutputEnv = "ABACUS_STERNHEIMER_FD_ST_OUT";
 constexpr const char* kBandsEnv = "ABACUS_STERNHEIMER_FD_ST_BANDS";
 constexpr const char* kChannelsEnv = "ABACUS_STERNHEIMER_FD_ST_CHANNELS";
+constexpr const char* kChannelThreadsEnv = "ABACUS_STERNHEIMER_CHANNEL_THREADS";
 constexpr const char* kMaxDenseEnv = "ABACUS_STERNHEIMER_FD_ST_MAX_DENSE";
 constexpr const char* kLanczosSubspaceEnv = "ABACUS_STERNHEIMER_FD_ST_LANCZOS_SUBSPACE";
 constexpr const char* kOmegaEnv = "ABACUS_STERNHEIMER_FD_ST_OMEGA";
@@ -1224,6 +1225,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
     const double pca_threshold = nonnegative_double_from_env(kPCAThresholdEnv, PARAM.inp.exx_pca_threshold);
     const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
     const int max_channels = positive_int_from_env(kChannelsEnv, -1);
+    const int channel_threads = positive_int_from_env(kChannelThreadsEnv, 0);
     const int nfreq = PARAM.inp.sternheimer_nfreq;
     const int default_frequency_rank_shift = use_frequency_mpi && GlobalV::NPROC > 1 ? 1 : 0;
     const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
@@ -1699,7 +1701,8 @@ void run_sternheimer_periodic_lcao_chi0_output(
                             result.full_grid_equation_residual_norm
                                 = response.full_grid_equation_residual_norm;
                             return result;
-                        });
+                        },
+                        channel_threads);
 
                 for (int ichannel = 0; ichannel != num_channels; ++ichannel)
                 {
@@ -1923,6 +1926,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
     out << "periodic_gamma_limit "
         << (gamma_qpoint ? "constant_mode_only_no_headwing" : "not_applicable") << '\n';
     out << "perturbation_ccp_rmesh_times_used no\n";
+    out << "sternheimer_channel_threads " << channel_threads << '\n';
     out << "sternheimer_mode " << (use_delta_sternheimer ? "delta" : "standard") << '\n';
     if (use_delta_sternheimer)
     {
@@ -2267,6 +2271,7 @@ void run_sternheimer_abacus_chi0_output_impl(
         const int solver_max_iter = positive_int_from_env(kSolverMaxIterEnv, 300);
         const double pca_threshold = nonnegative_double_from_env(kPCAThresholdEnv, PARAM.inp.exx_pca_threshold);
         const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
+        const int channel_threads = positive_int_from_env(kChannelThreadsEnv, 0);
         const int nfreq = PARAM.inp.sternheimer_nfreq;
         const int default_frequency_rank_shift = use_frequency_mpi && GlobalV::NPROC > 1 ? 1 : 0;
         const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
@@ -2656,72 +2661,91 @@ void run_sternheimer_abacus_chi0_output_impl(
                         continue;
                     }
 
-                    for (int ichannel = 0; ichannel != num_channels; ++ichannel)
+                    struct MolecularChannelEquationResult
                     {
-                        const std::size_t channel_index = static_cast<std::size_t>(ichannel);
-                        SternheimerFDHamiltonian::Vector rhs;
-                        SternheimerRPA::build_rhs_from_hartree_perturbation(perturbations_ry[channel_index],
-                                                                            states.wavefunctions[ib],
-                                                                            rhs);
-                        SternheimerFDHamiltonian::Vector delta_wavefunction;
-                        SternheimerRPA::SolverResult solver_result;
+                        SternheimerRPA::SolverResult solver;
                         double equation_residual_norm = 0.0;
-                        if (use_delta_sternheimer)
-                        {
-                            const std::vector<SternheimerFDHamiltonian::Complex> perturbation_matrix_elements
-                                = delta_sternheimer_perturbation_matrix_elements(
-                                    delta_subspace.virtual_states,
+                    };
+                    const std::vector<MolecularChannelEquationResult> channel_results
+                        = run_sternheimer_channel_tasks<MolecularChannelEquationResult>(
+                            num_channels,
+                            [&](const int ichannel) {
+                                const std::size_t channel_index = static_cast<std::size_t>(ichannel);
+                                SternheimerFDHamiltonian::Vector rhs;
+                                SternheimerRPA::build_rhs_from_hartree_perturbation(
                                     perturbations_ry[channel_index],
                                     states.wavefunctions[ib],
-                                    grid_data.volume_element);
-                            const SternheimerDeltaLinearResponse response
-                                = solve_delta_sternheimer_linear_response(hamiltonian,
-                                                                          occupied_projector,
-                                                                          states.eigenvalues[ib],
-                                                                          rhs,
-                                                                          delta_subspace.virtual_states,
-                                                                          perturbation_matrix_elements,
-                                                                          omega_ry,
-                                                                          grid_data.volume_element,
-                                                                          solver_options);
-                            delta_wavefunction = response.response.reconstructed_wavefunction;
-                            solver_result = response.solver;
-                            equation_residual_norm = response.residual_norm;
-                        }
-                        else
-                        {
-                            const SternheimerFDLinearResponse response
-                                = solve_sternheimer_fd_linear_response(hamiltonian,
-                                                                       occupied,
-                                                                       states.eigenvalues[ib],
-                                                                       rhs,
-                                                                       omega_ry,
-                                                                       grid_data.volume_element,
-                                                                       solver_options);
-                            delta_wavefunction = response.delta_wavefunction;
-                            solver_result = response.solver;
-                            equation_residual_norm = response.residual_norm;
-                        }
-                        SternheimerRPA::accumulate_chi0_branch_column(potentials,
-                                                                      states.wavefunctions[ib],
-                                                                      delta_wavefunction,
-                                                                      grid_data.volume_element,
-                                                                      occupation,
-                                                                      ichannel,
-                                                                      chi0_branch);
-                        all_converged = all_converged && solver_result.converged;
+                                    rhs);
+                                SternheimerFDHamiltonian::Vector delta_wavefunction;
+                                MolecularChannelEquationResult result;
+                                if (use_delta_sternheimer)
+                                {
+                                    const std::vector<SternheimerFDHamiltonian::Complex>
+                                        perturbation_matrix_elements
+                                        = delta_sternheimer_perturbation_matrix_elements(
+                                            delta_subspace.virtual_states,
+                                            perturbations_ry[channel_index],
+                                            states.wavefunctions[ib],
+                                            grid_data.volume_element);
+                                    const SternheimerDeltaLinearResponse response
+                                        = solve_delta_sternheimer_linear_response(
+                                            hamiltonian,
+                                            occupied_projector,
+                                            states.eigenvalues[ib],
+                                            rhs,
+                                            delta_subspace.virtual_states,
+                                            perturbation_matrix_elements,
+                                            omega_ry,
+                                            grid_data.volume_element,
+                                            solver_options);
+                                    delta_wavefunction = response.response.reconstructed_wavefunction;
+                                    result.solver = response.solver;
+                                    result.equation_residual_norm = response.residual_norm;
+                                }
+                                else
+                                {
+                                    const SternheimerFDLinearResponse response
+                                        = solve_sternheimer_fd_linear_response(hamiltonian,
+                                                                               occupied,
+                                                                               states.eigenvalues[ib],
+                                                                               rhs,
+                                                                               omega_ry,
+                                                                               grid_data.volume_element,
+                                                                               solver_options);
+                                    delta_wavefunction = response.delta_wavefunction;
+                                    result.solver = response.solver;
+                                    result.equation_residual_norm = response.residual_norm;
+                                }
+                                SternheimerRPA::accumulate_chi0_branch_column(
+                                    potentials,
+                                    states.wavefunctions[ib],
+                                    delta_wavefunction,
+                                    grid_data.volume_element,
+                                    occupation,
+                                    ichannel,
+                                    chi0_branch);
+                                return result;
+                            },
+                            channel_threads);
+
+                    for (int ichannel = 0; ichannel != num_channels; ++ichannel)
+                    {
+                        const MolecularChannelEquationResult& result
+                            = channel_results[static_cast<std::size_t>(ichannel)];
+                        all_converged = all_converged && result.solver.converged;
                         ++solved_equations;
                         max_solver_relative_residual
-                            = std::max(max_solver_relative_residual, solver_result.relative_residual);
-                        max_equation_residual_norm = std::max(max_equation_residual_norm, equation_residual_norm);
+                            = std::max(max_solver_relative_residual, result.solver.relative_residual);
+                        max_equation_residual_norm
+                            = std::max(max_equation_residual_norm, result.equation_residual_norm);
                         append_chi0_progress_event("equation",
                                                    ifrequency + 1,
                                                    owner_rank,
                                                    ib,
                                                    ichannel,
                                                    solved_equations,
-                                                   &solver_result,
-                                                   equation_residual_norm,
+                                                   &result.solver,
+                                                   result.equation_residual_norm,
                                                    elapsed_seconds_since(chi0_start_time),
                                                    "spin=" + std::to_string(response_spin_index + 1) + " "
                                                        + (use_delta_sternheimer ? "delta" : "standard"));
@@ -2810,6 +2834,7 @@ void run_sternheimer_abacus_chi0_output_impl(
         }
         out << "transition_window_Ha " << transition_window.emin_ha << ' ' << transition_window.emax_ha << '\n';
         out << "sternheimer_frequency_mpi " << (use_frequency_mpi ? "yes" : "no") << '\n';
+        out << "sternheimer_channel_threads " << channel_threads << '\n';
         out << "mpi_ranks " << GlobalV::NPROC << '\n';
         out << "frequency_rank_shift " << frequency_rank_shift << '\n';
         out << "progress_file_pattern STERNHEIMER_CHI0_PROGRESS_rank*.dat\n";
