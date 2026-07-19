@@ -106,9 +106,7 @@ function(abacus_rename_option old_name new_name)
 endfunction()
 abacus_rename_option(USE_OPENMP ENABLE_OPENMP)
 abacus_rename_option(USE_ABACUS_LIBM ENABLE_ABACUS_LIBM)
-abacus_rename_option(USE_ELPA ENABLE_ELPA)
 abacus_rename_option(INFO MATH_INFO)
-abacus_rename_option(EXX_DEV ENABLE_EXX_DEV)
 
 if(DEFINED CACHE{ENABLE_LIBCOMM})
   message(
