@@ -155,7 +155,7 @@ TEST(SternheimerABFSPerturbation, PeriodicPoissonAppliesShiftedFullCoulombKernel
     }
 
     const auto potentials
-        = ModuleRI::solve_sternheimer_abf_periodic_full_coulomb({density}, grid, qpoint);
+        = ModuleRI::solve_sternheimer_abf_periodic_full_coulomb({density}, grid, qpoint, 0.0);
     ASSERT_EQ(potentials.size(), 1);
     ASSERT_EQ(potentials[0].potential_r.size(), density.potential_r.size());
     const double expected_factor = 4.0 * M_PI / (1.5 * 1.5);
@@ -244,7 +244,7 @@ TEST(SternheimerABFSPerturbation, NonOrthogonalPeriodicPoissonUsesReciprocalMetr
     }
 
     const auto potentials
-        = ModuleRI::solve_sternheimer_abf_periodic_full_coulomb({density}, grid, qpoint);
+        = ModuleRI::solve_sternheimer_abf_periodic_full_coulomb({density}, grid, qpoint, 0.0);
     ASSERT_EQ(potentials.size(), 1);
     const double wavevector_squared = 4.0 * M_PI * M_PI * 1.296875;
     const double expected_factor = 4.0 * M_PI / wavevector_squared;
@@ -259,7 +259,44 @@ TEST(SternheimerABFSPerturbation, NonOrthogonalPeriodicPoissonUsesReciprocalMetr
     }
 }
 
-TEST(SternheimerABFSPerturbation, PeriodicPoissonRejectsGammaBodyKernel)
+TEST(SternheimerABFSPerturbation, PeriodicPoissonAtGammaPreservesNonzeroFourierModes)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid;
+    grid.nx = 4;
+    grid.ny = 1;
+    grid.nz = 1;
+    grid.hx = 1.0;
+    grid.hy = 1.0;
+    grid.hz = 1.0;
+    grid.periodic = true;
+
+    ModuleRI::SternheimerABFBlochGridChannel density;
+    const std::size_t grid_size
+        = static_cast<std::size_t>(grid.nx) * static_cast<std::size_t>(grid.ny)
+          * static_cast<std::size_t>(grid.nz);
+    density.potential_r.resize(grid_size);
+    for (int ix = 0; ix != grid.nx; ++ix)
+    {
+        density.potential_r[static_cast<std::size_t>(ix)]
+            = {std::cos(2.0 * M_PI * static_cast<double>(ix) / grid.nx), 0.0};
+    }
+
+    const auto potentials = ModuleRI::solve_sternheimer_abf_periodic_full_coulomb(
+        {density}, grid, {0.0, 0.0, 0.0}, 0.0);
+
+    ASSERT_EQ(potentials.size(), 1);
+    const double wavevector_squared = M_PI * M_PI / 4.0;
+    const double expected_factor = 4.0 * M_PI / wavevector_squared;
+    for (std::size_t ir = 0; ir != density.potential_r.size(); ++ir)
+    {
+        EXPECT_NEAR(potentials[0].potential_r[ir].real(),
+                    expected_factor * density.potential_r[ir].real(),
+                    1.0e-12);
+        EXPECT_NEAR(potentials[0].potential_r[ir].imag(), 0.0, 1.0e-12);
+    }
+}
+
+TEST(SternheimerABFSPerturbation, PeriodicPoissonAtGammaUsesSuppliedMassiddaZeroMode)
 {
     ModuleRI::SternheimerFDHamiltonian::Grid grid;
     grid.nx = 2;
@@ -275,7 +312,59 @@ TEST(SternheimerABFSPerturbation, PeriodicPoissonRejectsGammaBodyKernel)
         = static_cast<std::size_t>(grid.nx) * static_cast<std::size_t>(grid.ny)
           * static_cast<std::size_t>(grid.nz);
     density.potential_r.assign(grid_size, {1.0, 0.0});
+
+    constexpr double gamma_inverse_k2 = 0.75;
+    const auto potentials = ModuleRI::solve_sternheimer_abf_periodic_full_coulomb(
+        {density}, grid, {0.0, 0.0, 0.0}, gamma_inverse_k2);
+
+    ASSERT_EQ(potentials.size(), 1);
+    const double expected = 4.0 * M_PI * gamma_inverse_k2;
+    for (const std::complex<double>& value: potentials[0].potential_r)
+    {
+        EXPECT_NEAR(value.real(), expected, 1.0e-12);
+        EXPECT_NEAR(value.imag(), 0.0, 1.0e-12);
+    }
+}
+
+TEST(SternheimerABFSPerturbation, PeriodicPoissonRejectsInvalidGammaFactors)
+{
+    ModuleRI::SternheimerFDHamiltonian::Grid grid;
+    grid.nx = 2;
+    grid.ny = 2;
+    grid.nz = 2;
+    grid.hx = 1.0;
+    grid.hy = 1.0;
+    grid.hz = 1.0;
+    grid.periodic = true;
+
+    ModuleRI::SternheimerABFBlochGridChannel density;
+    density.potential_r.assign(8, {1.0, 0.0});
+
     EXPECT_THROW(ModuleRI::solve_sternheimer_abf_periodic_full_coulomb(
-                     {density}, grid, {0.0, 0.0, 0.0}),
+                     {density}, grid, {0.0, 0.0, 0.0}, -1.0),
                  std::invalid_argument);
+    EXPECT_THROW(ModuleRI::solve_sternheimer_abf_periodic_full_coulomb(
+                     {density}, grid, {0.5, 0.0, 0.0}, 0.75),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABFSPerturbation, CoulombProjectionMismatchIsDiagnosticOnly)
+{
+    ModuleRI::SternheimerABFBlochGridChannel density0;
+    density0.potential_r = {{1.0, 0.0}, {0.0, 0.0}};
+    ModuleRI::SternheimerABFBlochGridChannel density1;
+    density1.potential_r = {{1.0, 0.0}, {1.0, 0.0}};
+    ModuleRI::SternheimerABFBlochGridChannel potential0 = density0;
+    ModuleRI::SternheimerABFBlochGridChannel potential1 = density1;
+    potential0.potential_r.assign(2, {0.0, 0.0});
+    potential1.potential_r.assign(2, {0.0, 0.0});
+    const std::vector<std::complex<double>> target{
+        {2.0, 0.0}, {0.5, 0.0}, {0.5, 0.0}, {1.0, 0.0}};
+
+    const auto result = ModuleRI::compare_sternheimer_periodic_coulomb_projection(
+        {density0, density1}, {potential0, potential1}, target, 1.0);
+
+    EXPECT_NEAR(result.relative_error, 1.0, 1.0e-14);
+    EXPECT_DOUBLE_EQ(potential0.potential_r[0].real(), 0.0);
+    EXPECT_DOUBLE_EQ(potential1.potential_r[1].real(), 0.0);
 }

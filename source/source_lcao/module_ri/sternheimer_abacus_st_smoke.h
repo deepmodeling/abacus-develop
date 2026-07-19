@@ -5,6 +5,7 @@
 #include "source_lcao/module_ri/sternheimer_abacus_fd_adapter.h"
 
 #include <algorithm>
+#include <array>
 #include <cctype>
 #include <cmath>
 #include <complex>
@@ -178,15 +179,48 @@ inline SternheimerPeriodicResponsePlan build_sternheimer_periodic_response_plan(
         const int q_record_index
             = plan.record_index_by_global_k[static_cast<std::size_t>(q_index - 1)];
         plan.qpoint = records[static_cast<std::size_t>(q_record_index)].kpoint;
-        if (std::all_of(plan.qpoint.begin(),
-                        plan.qpoint.end(),
-                        [](const double coordinate) { return std::abs(coordinate) <= tolerance; }))
-        {
-            throw std::invalid_argument("sternheimer_q_index must select a nonzero q point for the solid path.");
-        }
     }
     plan.kq_pairs = build_sternheimer_kq_map(kpoints, plan.qpoint, tolerance);
     return plan;
+}
+
+inline void validate_sternheimer_periodic_kmesh(const std::array<int, 3>& kmesh,
+                                                const int global_kpoint_count)
+{
+    if (global_kpoint_count <= 0
+        || std::any_of(kmesh.begin(), kmesh.end(), [](const int dimension) { return dimension <= 0; }))
+    {
+        throw std::invalid_argument("Periodic Sternheimer requires positive Monkhorst-Pack dimensions.");
+    }
+    const long long mesh_size = static_cast<long long>(kmesh[0]) * kmesh[1] * kmesh[2];
+    if (mesh_size != global_kpoint_count)
+    {
+        throw std::invalid_argument(
+            "Periodic Sternheimer Monkhorst-Pack dimensions do not match the full k-point count.");
+    }
+}
+
+inline double sternheimer_periodic_gamma_inverse_k2(const SternheimerReducedKPoint& qpoint,
+                                                     const std::string& singularity_correction,
+                                                     const double massidda_chi)
+{
+    constexpr double tolerance = 1.0e-10;
+    const bool gamma = std::all_of(qpoint.begin(), qpoint.end(), [](const double coordinate) {
+        return std::abs(coordinate) <= tolerance;
+    });
+    if (!gamma)
+    {
+        return 0.0;
+    }
+    if (singularity_correction != "massidda")
+    {
+        throw std::invalid_argument("Periodic Sternheimer q=0 requires Massidda singularity correction.");
+    }
+    if (!std::isfinite(massidda_chi) || massidda_chi <= 0.0)
+    {
+        throw std::invalid_argument("Periodic Sternheimer q=0 requires a positive finite Massidda value.");
+    }
+    return massidda_chi;
 }
 
 inline int sternheimer_kpoint_owner_group(const int global_kpoint_index,
@@ -363,6 +397,44 @@ inline double sternheimer_lcao_weighted_occupation(const SternheimerLCAOOccupied
     return record.kweight * record.occupations[static_cast<std::size_t>(band_index)];
 }
 
+inline std::vector<const SternheimerLCAOOccupiedKPoint*> select_sternheimer_gamma_spin_records(
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const int spin_channel_count,
+    const double tolerance = 1.0e-12)
+{
+    if (spin_channel_count <= 0 || records.size() != static_cast<std::size_t>(spin_channel_count))
+    {
+        throw std::invalid_argument(
+            "Gamma Sternheimer response requires exactly one LCAO record per spin channel.");
+    }
+    std::vector<const SternheimerLCAOOccupiedKPoint*> selected(
+        static_cast<std::size_t>(spin_channel_count), nullptr);
+    for (const SternheimerLCAOOccupiedKPoint& record: records)
+    {
+        if (record.spin_index < 0 || record.spin_index >= spin_channel_count)
+        {
+            throw std::invalid_argument("Gamma Sternheimer response spin index is out of range.");
+        }
+        if (std::any_of(record.kpoint.begin(), record.kpoint.end(), [tolerance](const double coordinate) {
+                return std::abs(coordinate) > tolerance;
+            }))
+        {
+            throw std::invalid_argument("Gamma Sternheimer response received a non-Gamma LCAO record.");
+        }
+        const std::size_t spin_index = static_cast<std::size_t>(record.spin_index);
+        if (selected[spin_index] != nullptr)
+        {
+            throw std::invalid_argument("Gamma Sternheimer response has duplicate spin records.");
+        }
+        selected[spin_index] = &record;
+    }
+    if (std::any_of(selected.begin(), selected.end(), [](const auto* record) { return record == nullptr; }))
+    {
+        throw std::invalid_argument("Gamma Sternheimer response is missing a spin record.");
+    }
+    return selected;
+}
+
 struct SternheimerABACUSSTChannelResult
 {
     int band_index = -1;
@@ -475,6 +547,7 @@ void run_sternheimer_abacus_lcao_chi0_output(
     const elecstate::ElecState& elec_state,
     const LCAO_Orbitals& orbitals,
     const std::vector<SternheimerLCAOOccupiedKPoint>& occupied_kpoints,
+    const std::array<int, 3>& kmesh,
     const std::string& output_dir);
 
 } // namespace ModuleRI

@@ -47,6 +47,13 @@ class SternheimerRPA
         std::vector<int> atom_naux;
     };
 
+    struct CoulombV1Matrix
+    {
+        int iq = 0;
+        std::vector<int> atom_naux;
+        std::vector<Complex> values;
+    };
+
     struct TransitionEnergyWindow
     {
         double emin_ha = 0.0;
@@ -138,6 +145,8 @@ class SternheimerRPA
                                    const Chi0V1Metadata& metadata,
                                    const std::vector<AuxiliaryChannel>& channels,
                                    const std::vector<Complex>& chi0_matrix);
+
+    static CoulombV1Matrix read_coulomb_v1_files(const std::vector<std::string>& filenames);
 
     static Complex local_grid_dot(const Vector& lhs, const Vector& rhs, double grid_weight);
 

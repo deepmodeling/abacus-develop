@@ -30,6 +30,7 @@ namespace
 
 constexpr std::int32_t kChi0V1Marker = -41073291;
 constexpr std::int32_t kChi0V1ComplexFlag = 1;
+constexpr std::int32_t kCoulombV1Marker = -20129433;
 
 void assert_same_size(const SternheimerRPA::Vector& lhs, const SternheimerRPA::Vector& rhs, const char* context)
 {
@@ -212,6 +213,23 @@ void write_scalar(std::ofstream& ofs, const Value& value, const std::string& fil
     checked_write(ofs, &value, sizeof(Value), filename);
 }
 
+void checked_read(std::ifstream& in, void* data, const std::size_t bytes, const std::string& filename)
+{
+    in.read(reinterpret_cast<char*>(data), static_cast<std::streamsize>(bytes));
+    if (!in.good())
+    {
+        throw std::runtime_error("Failed to read " + filename);
+    }
+}
+
+template <typename Value>
+Value read_scalar(std::ifstream& in, const std::string& filename)
+{
+    Value value{};
+    checked_read(in, &value, sizeof(Value), filename);
+    return value;
+}
+
 std::int32_t checked_i32_from_size(const std::size_t value, const std::string& context)
 {
     if (value > static_cast<std::size_t>(std::numeric_limits<std::int32_t>::max()))
@@ -264,6 +282,23 @@ std::size_t upper_triangular_pair_index(const std::size_t iatom, const std::size
         throw std::invalid_argument("Sternheimer chi0 v1 writer expects upper-triangular atom pairs.");
     }
     return iatom * natom - iatom * (iatom - 1) / 2 + (jatom - iatom);
+}
+
+std::pair<int, int> upper_triangular_pair_from_index(const int pair_index, const int natom)
+{
+    int index = 0;
+    for (int iatom = 0; iatom != natom; ++iatom)
+    {
+        for (int jatom = iatom; jatom != natom; ++jatom)
+        {
+            if (index == pair_index)
+            {
+                return {iatom, jatom};
+            }
+            ++index;
+        }
+    }
+    throw std::runtime_error("Coulomb v1 atom-pair index is out of range.");
 }
 
 std::vector<std::vector<int>> map_atom_local_to_global(
@@ -322,7 +357,128 @@ struct Chi0Block
     std::vector<SternheimerRPA::Complex> payload;
 };
 
+struct CoulombFileBlock
+{
+    int pair_index = 0;
+    std::int64_t offset = 0;
+};
+
 } // namespace
+
+SternheimerRPA::CoulombV1Matrix SternheimerRPA::read_coulomb_v1_files(
+    const std::vector<std::string>& filenames)
+{
+    if (filenames.empty())
+    {
+        throw std::invalid_argument("Coulomb v1 reader requires at least one rank file.");
+    }
+
+    CoulombV1Matrix result;
+    int value_flag_reference = -1;
+    std::vector<bool> pair_seen;
+    for (const std::string& filename: filenames)
+    {
+        std::ifstream in(filename.c_str(), std::ios::binary);
+        if (!in.good())
+        {
+            throw std::runtime_error("Failed to open " + filename);
+        }
+        const std::int32_t marker = read_scalar<std::int32_t>(in, filename);
+        const std::int32_t iq = read_scalar<std::int32_t>(in, filename);
+        const std::int32_t naux = read_scalar<std::int32_t>(in, filename);
+        const std::int32_t value_flag = read_scalar<std::int32_t>(in, filename);
+        const std::int32_t natom = read_scalar<std::int32_t>(in, filename);
+        const std::int32_t nblocks = read_scalar<std::int32_t>(in, filename);
+        if (marker != kCoulombV1Marker || iq <= 0 || naux <= 0 || natom <= 0 || nblocks < 0)
+        {
+            throw std::runtime_error("Invalid Coulomb v1 header in " + filename);
+        }
+        std::vector<int> atom_naux(static_cast<std::size_t>(natom));
+        for (int& count: atom_naux)
+        {
+            count = read_scalar<std::int32_t>(in, filename);
+        }
+        if (sum_positive_sizes(atom_naux, "Coulomb v1 atom sizes") != naux)
+        {
+            throw std::runtime_error("Coulomb v1 atom sizes do not sum to naux.");
+        }
+        if (result.iq == 0)
+        {
+            result.iq = iq;
+            result.atom_naux = atom_naux;
+            result.values.assign(static_cast<std::size_t>(naux) * static_cast<std::size_t>(naux), Complex(0.0, 0.0));
+            value_flag_reference = value_flag;
+            pair_seen.assign(static_cast<std::size_t>(natom * (natom + 1) / 2), false);
+        }
+        else if (result.iq != iq || result.atom_naux != atom_naux || value_flag_reference != value_flag)
+        {
+            throw std::runtime_error("Coulomb v1 rank-file metadata are inconsistent.");
+        }
+
+        std::vector<CoulombFileBlock> blocks(static_cast<std::size_t>(nblocks));
+        for (CoulombFileBlock& block: blocks)
+        {
+            block.pair_index = read_scalar<std::int32_t>(in, filename);
+            block.offset = read_scalar<std::int64_t>(in, filename);
+        }
+        std::vector<int> starts(static_cast<std::size_t>(natom), 0);
+        for (int iatom = 1; iatom != natom; ++iatom)
+        {
+            starts[static_cast<std::size_t>(iatom)]
+                = starts[static_cast<std::size_t>(iatom - 1)] + atom_naux[static_cast<std::size_t>(iatom - 1)];
+        }
+        for (const CoulombFileBlock& block: blocks)
+        {
+            if (block.pair_index < 0 || block.pair_index >= static_cast<int>(pair_seen.size())
+                || pair_seen[static_cast<std::size_t>(block.pair_index)])
+            {
+                throw std::runtime_error("Coulomb v1 atom-pair blocks are invalid or duplicated.");
+            }
+            pair_seen[static_cast<std::size_t>(block.pair_index)] = true;
+            const auto pair = upper_triangular_pair_from_index(block.pair_index, natom);
+            const int nrow = atom_naux[static_cast<std::size_t>(pair.first)];
+            const int ncol = atom_naux[static_cast<std::size_t>(pair.second)];
+            in.seekg(block.offset, std::ios::beg);
+            if (!in.good())
+            {
+                throw std::runtime_error("Invalid Coulomb v1 block offset in " + filename);
+            }
+            for (int irow = 0; irow != nrow; ++irow)
+            {
+                for (int icol = 0; icol != ncol; ++icol)
+                {
+                    Complex value;
+                    if (value_flag == 1)
+                    {
+                        value = read_scalar<Complex>(in, filename);
+                    }
+                    else if (value_flag == 0)
+                    {
+                        value = Complex(read_scalar<double>(in, filename), 0.0);
+                    }
+                    else
+                    {
+                        throw std::runtime_error("Unsupported Coulomb v1 value flag.");
+                    }
+                    const int row = starts[static_cast<std::size_t>(pair.first)] + irow;
+                    const int col = starts[static_cast<std::size_t>(pair.second)] + icol;
+                    result.values[static_cast<std::size_t>(row) * static_cast<std::size_t>(naux)
+                                  + static_cast<std::size_t>(col)] = value;
+                    if (pair.first != pair.second)
+                    {
+                        result.values[static_cast<std::size_t>(col) * static_cast<std::size_t>(naux)
+                                      + static_cast<std::size_t>(row)] = std::conj(value);
+                    }
+                }
+            }
+        }
+    }
+    if (std::find(pair_seen.begin(), pair_seen.end(), false) != pair_seen.end())
+    {
+        throw std::runtime_error("Coulomb v1 rank files do not contain every atom-pair block.");
+    }
+    return result;
+}
 
 SternheimerRPA::SolverResult SternheimerRPA::solve_bicgstab(const LinearProblem& problem,
                                                             const Vector& rhs,

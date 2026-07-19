@@ -775,6 +775,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                                                           *pelec,
                                                           orb,
                                                           occupied_kpoints,
+                                                          {kv.nmp[0], kv.nmp[1], kv.nmp[2]},
                                                           global_out_dir);
     }
 #endif

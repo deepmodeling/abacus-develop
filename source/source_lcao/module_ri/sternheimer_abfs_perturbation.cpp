@@ -2,7 +2,6 @@
 
 #include "source_base/constants.h"
 #include "source_base/math_ylmreal.h"
-
 #include <fftw3.h>
 
 #include <algorithm>
@@ -344,7 +343,8 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
 std::vector<SternheimerABFBlochGridChannel> solve_sternheimer_abf_periodic_full_coulomb(
     const std::vector<SternheimerABFBlochGridChannel>& density_channels,
     const SternheimerFDHamiltonian::Grid& grid,
-    const SternheimerReducedKPoint& qpoint)
+    const SternheimerReducedKPoint& qpoint,
+    const double gamma_inverse_k2)
 {
     validate_grid(grid);
     validate_qpoint(qpoint, grid.periodic);
@@ -352,12 +352,15 @@ std::vector<SternheimerABFBlochGridChannel> solve_sternheimer_abf_periodic_full_
     {
         throw std::invalid_argument("Sternheimer periodic Poisson solve requires a periodic grid.");
     }
-    if (is_gamma_qpoint(qpoint))
+    if (!std::isfinite(gamma_inverse_k2) || gamma_inverse_k2 < 0.0)
     {
-        throw std::invalid_argument(
-            "Sternheimer periodic full-Coulomb body solve requires a nonzero q point.");
+        throw std::invalid_argument("Sternheimer periodic Poisson Gamma factor must be finite and nonnegative.");
     }
-
+    const bool gamma_qpoint = is_gamma_qpoint(qpoint);
+    if (!gamma_qpoint && gamma_inverse_k2 != 0.0)
+    {
+        throw std::invalid_argument("A non-Gamma periodic Poisson solve cannot use a Gamma zero-mode factor.");
+    }
     const int size = grid_size(grid);
     for (const SternheimerABFBlochGridChannel& density: density_channels)
     {
@@ -446,13 +449,22 @@ std::vector<SternheimerABFBlochGridChannel> solve_sternheimer_abf_periodic_full_
                             = wavevector[0] * wavevector[0]
                               + wavevector[1] * wavevector[1]
                               + wavevector[2] * wavevector[2];
+                        double factor = 0.0;
                         if (wavevector_squared <= 1.0e-28)
                         {
-                            throw std::runtime_error(
-                                "Sternheimer periodic Poisson solve encountered a zero G+q vector.");
+                            if (!gamma_qpoint)
+                            {
+                                throw std::runtime_error(
+                                    "Sternheimer periodic Poisson solve encountered an unexpected zero G+q vector.");
+                            }
+                            factor = ModuleBase::FOUR_PI * gamma_inverse_k2
+                                     / static_cast<double>(size);
                         }
-                        const double factor
-                            = ModuleBase::FOUR_PI / (wavevector_squared * static_cast<double>(size));
+                        else
+                        {
+                            factor = ModuleBase::FOUR_PI
+                                     / (wavevector_squared * static_cast<double>(size));
+                        }
                         const int ig = grid_index(grid, ix, iy, iz);
                         buffer[ig][0] *= factor;
                         buffer[ig][1] *= factor;
@@ -497,6 +509,70 @@ std::vector<SternheimerABFBlochGridChannel> solve_sternheimer_abf_periodic_full_
     fftw_destroy_plan(backward);
     fftw_free(buffer);
     return potentials;
+}
+
+std::vector<std::complex<double>> sternheimer_grid_projected_matrix(
+    const std::vector<SternheimerABFBlochGridChannel>& densities,
+    const std::vector<SternheimerABFBlochGridChannel>& potentials,
+    const double volume_element)
+{
+    if (!(volume_element > 0.0) || !std::isfinite(volume_element))
+    {
+        throw std::invalid_argument("Sternheimer grid projection requires a positive finite volume element.");
+    }
+    if (densities.size() != potentials.size())
+    {
+        throw std::invalid_argument("Sternheimer grid projection channel counts differ.");
+    }
+    const std::size_t size = densities.size();
+    std::vector<std::complex<double>> matrix(size * size, std::complex<double>(0.0, 0.0));
+    for (std::size_t row = 0; row != size; ++row)
+    {
+        for (std::size_t col = 0; col != size; ++col)
+        {
+            if (densities[row].potential_r.size() != potentials[col].potential_r.size())
+            {
+                throw std::invalid_argument("Sternheimer grid projection vector sizes differ.");
+            }
+            std::complex<double> value(0.0, 0.0);
+            for (std::size_t ir = 0; ir != densities[row].potential_r.size(); ++ir)
+            {
+                value += std::conj(densities[row].potential_r[ir]) * potentials[col].potential_r[ir];
+            }
+            matrix[row * size + col] = volume_element * value;
+        }
+    }
+    return matrix;
+}
+
+SternheimerCoulombProjectionDiagnostic compare_sternheimer_periodic_coulomb_projection(
+    const std::vector<SternheimerABFBlochGridChannel>& densities,
+    const std::vector<SternheimerABFBlochGridChannel>& potentials,
+    const std::vector<std::complex<double>>& target_coulomb,
+    const double volume_element)
+{
+    const std::size_t size = densities.size();
+    const std::size_t matrix_size = size * size;
+    if (size == 0 || potentials.size() != size || target_coulomb.size() != matrix_size)
+    {
+        throw std::invalid_argument("Sternheimer Coulomb projection comparison received inconsistent dimensions.");
+    }
+
+    const std::vector<std::complex<double>> current
+        = sternheimer_grid_projected_matrix(densities, potentials, volume_element);
+    double target_norm_squared = 0.0;
+    double difference_norm_squared = 0.0;
+    for (std::size_t index = 0; index != matrix_size; ++index)
+    {
+        target_norm_squared += std::norm(target_coulomb[index]);
+        difference_norm_squared += std::norm(target_coulomb[index] - current[index]);
+    }
+    if (!(target_norm_squared > 0.0))
+    {
+        throw std::invalid_argument("Sternheimer target Coulomb matrix has zero norm.");
+    }
+
+    return {std::sqrt(difference_norm_squared / target_norm_squared)};
 }
 
 } // namespace ModuleRI

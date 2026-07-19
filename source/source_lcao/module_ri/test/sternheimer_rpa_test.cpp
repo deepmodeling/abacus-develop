@@ -19,6 +19,18 @@ Complex dot(const Vector& lhs, const Vector& rhs)
     return ModuleRI::SternheimerRPA::local_grid_dot(lhs, rhs, 1.0);
 }
 
+void write_coulomb_v1_block(const std::string& filename,
+                            const int pair_index,
+                            const Complex value)
+{
+    std::ofstream out(filename.c_str(), std::ios::binary | std::ios::trunc);
+    const std::int32_t header[] = {-20129433, 1, 2, 1, 2, 1, 1, 1, pair_index};
+    out.write(reinterpret_cast<const char*>(header), sizeof(header));
+    const std::int64_t offset = static_cast<std::int64_t>(sizeof(header) + sizeof(std::int64_t));
+    out.write(reinterpret_cast<const char*>(&offset), sizeof(offset));
+    out.write(reinterpret_cast<const char*>(&value), sizeof(value));
+}
+
 } // namespace
 
 TEST(SternheimerRPA, BuildRhsFromHartreePerturbation)
@@ -219,6 +231,33 @@ TEST(SternheimerRPA, WriteChi0V1FileUsesAtomPairBlocks)
     EXPECT_LT(second_offset, third_offset);
 
     std::remove(filename.c_str());
+}
+
+TEST(SternheimerRPA, ReadsCoulombV1BlocksAcrossRankFiles)
+{
+    const std::string prefix = ::testing::TempDir() + "/sternheimer_coulomb_v1_rank";
+    const std::vector<Complex> blocks{Complex(1.0, 0.0), Complex(2.0, 3.0), Complex(4.0, 0.0)};
+    std::vector<std::string> filenames;
+    for (int pair_index = 0; pair_index != 3; ++pair_index)
+    {
+        const std::string filename = prefix + std::to_string(pair_index) + ".dat";
+        write_coulomb_v1_block(filename, pair_index, blocks[static_cast<std::size_t>(pair_index)]);
+        filenames.push_back(filename);
+    }
+
+    const auto matrix = ModuleRI::SternheimerRPA::read_coulomb_v1_files(filenames);
+
+    EXPECT_EQ(matrix.iq, 1);
+    EXPECT_EQ(matrix.atom_naux, std::vector<int>({1, 1}));
+    EXPECT_EQ(matrix.values,
+              std::vector<Complex>({Complex(1.0, 0.0),
+                                    Complex(2.0, 3.0),
+                                    Complex(2.0, -3.0),
+                                    Complex(4.0, 0.0)}));
+    for (const std::string& filename: filenames)
+    {
+        std::remove(filename.c_str());
+    }
 }
 
 TEST(SternheimerRPA, ProjectOutSubspace)

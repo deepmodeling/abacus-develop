@@ -207,6 +207,25 @@ TEST(SternheimerABACUSSTSmoke, DistinguishesTwoKPointsFromTwoSpinChannels)
     EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints(two_spins, 2, 2, 2, 3));
 }
 
+TEST(SternheimerABACUSSTSmoke, SelectsEveryGammaSpinRecordForMolecularResponse)
+{
+    const auto spin_up = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
+    auto spin_down = make_occupied_kpoint(1, 1, 1, {0.0, 0.0, 0.0}, 1.0);
+
+    const std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> records = {spin_down, spin_up};
+    const auto selected = ModuleRI::select_sternheimer_gamma_spin_records(records, 2);
+
+    ASSERT_EQ(selected.size(), 2U);
+    EXPECT_EQ(selected[0]->spin_index, 0);
+    EXPECT_EQ(selected[0]->local_k_index, 0);
+    EXPECT_EQ(selected[1]->spin_index, 1);
+    EXPECT_EQ(selected[1]->local_k_index, 1);
+
+    spin_down.spin_index = 0;
+    EXPECT_THROW(ModuleRI::select_sternheimer_gamma_spin_records({spin_up, spin_down}, 2),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, RejectsDuplicateOrIncompleteGlobalKRecords)
 {
     const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.5);
@@ -259,12 +278,27 @@ TEST(SternheimerABACUSSTSmoke, BuildsTwoKPointNonzeroQResponsePlan)
     EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
 }
 
-TEST(SternheimerABACUSSTSmoke, RejectsGammaOrFractionalOccupationForSolidQ)
+TEST(SternheimerABACUSSTSmoke, BuildsPeriodicGammaResponsePlanBySelfMappingKPoints)
 {
     auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
     const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 1.0);
 
-    EXPECT_THROW(ModuleRI::build_sternheimer_periodic_response_plan({k0, k1}, 1), std::invalid_argument);
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan({k0, k1}, 1);
+
+    EXPECT_EQ(plan.iq, 1);
+    EXPECT_EQ(plan.qpoint, (ModuleRI::SternheimerReducedKPoint{0.0, 0.0, 0.0}));
+    ASSERT_EQ(plan.kq_pairs.size(), 2);
+    EXPECT_EQ(plan.kq_pairs[0].source_index, 0);
+    EXPECT_EQ(plan.kq_pairs[0].target_index, 0);
+    EXPECT_EQ(plan.kq_pairs[1].source_index, 1);
+    EXPECT_EQ(plan.kq_pairs[1].target_index, 1);
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsFractionalOccupationForPeriodicResponse)
+{
+    auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 1.0);
+
     k0.occupations[0] = 0.5;
     EXPECT_THROW(ModuleRI::build_sternheimer_periodic_response_plan({k0, k1}, 2), std::invalid_argument);
 }
@@ -280,6 +314,32 @@ TEST(SternheimerABACUSSTSmoke, ZeroQIndexPreservesSingleGammaPlan)
     EXPECT_EQ(plan.kq_pairs[0].source_index, 0);
     EXPECT_EQ(plan.kq_pairs[0].target_index, 0);
     EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
+}
+
+TEST(SternheimerABACUSSTSmoke, SelectsMassiddaFactorOnlyForPeriodicGamma)
+{
+    constexpr double massidda_chi = 1.25;
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_periodic_gamma_inverse_k2(
+                         {0.0, 0.0, 0.0}, "massidda", massidda_chi),
+                     massidda_chi);
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_periodic_gamma_inverse_k2(
+                         {0.25, 0.0, 0.0}, "massidda", massidda_chi),
+                     0.0);
+    EXPECT_THROW(ModuleRI::sternheimer_periodic_gamma_inverse_k2(
+                     {0.0, 0.0, 0.0}, "limits", massidda_chi),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_periodic_gamma_inverse_k2(
+                     {0.0, 0.0, 0.0}, "massidda", 0.0),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, ValidatesPeriodicMonkhorstPackDimensions)
+{
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_kmesh({4, 4, 4}, 64));
+    EXPECT_THROW(ModuleRI::validate_sternheimer_periodic_kmesh({4, 4, 4}, 63),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_periodic_kmesh({4, 0, 4}, 64),
+                 std::invalid_argument);
 }
 
 TEST(SternheimerABACUSSTSmoke, AssignsContiguousKPointOwners)
