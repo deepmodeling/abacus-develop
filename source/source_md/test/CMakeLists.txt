@@ -60,7 +60,7 @@ list(APPEND depend_files
   ../../source_estate/read_pseudo.cpp
   ../../source_estate/cal_wfc.cpp
   ../../source_estate/cal_nelec_nband.cpp
-  ../../source_estate/read_orb.cpp
+  ../../source_cell/read_orb.cpp
   ../../source_cell/sep.cpp
   ../../source_cell/sep_cell.cpp
 )

@@ -102,10 +102,10 @@ if (ENABLE_MPI)
       )
     endif()
 
-    if (ENABLE_PEXSI)
+    if (TARGET PEXSI::PEXSI)
     AddTest(
       TARGET MODULE_HSOLVER_LCAO_PEXSI
-      LIBS parameter  ${PEXSI_LIBRARY} ${SuperLU_DIST_LIBRARY} ${ParMETIS_LIBRARY} ${METIS_LIBRARY} MPI::MPI_CXX base psi device pexsi
+      LIBS parameter  PEXSI::PEXSI base psi device pexsi
       SOURCES diago_pexsi_test.cpp ../diago_pexsi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
     )
     endif()

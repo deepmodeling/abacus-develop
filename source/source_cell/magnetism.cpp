@@ -1,8 +1,5 @@
 #include "magnetism.h"
-
 #include "source_base/parallel_reduce.h"
-#include "source_io/module_parameter/parameter.h"
-//#include "source_estate/module_charge/charge.h"
 
 Magnetism::Magnetism()
 {
@@ -14,13 +11,15 @@ Magnetism::Magnetism()
 
 Magnetism::~Magnetism()
 {
-    delete[] start_mag;
 }
 
 void Magnetism::compute_mag(const double& omega,
-		const int& nrxx, 
-		const int& nxyz, 
-		const double* const * rho, 
+		const int& nrxx,
+		const int& nxyz,
+		const double* const * rho,
+		const int& nspin,
+		const bool& two_fermi,
+		const double& nelec,
 		double* nelec_spin)
 {
     assert(omega>0.0);
@@ -28,7 +27,7 @@ void Magnetism::compute_mag(const double& omega,
 
     const double fac = omega / nxyz;
 
-    if (PARAM.inp.nspin==2)
+    if (nspin==2)
     {
         this->tot_mag = 0.00;
         this->abs_mag = 0.00;
@@ -51,17 +50,17 @@ void Magnetism::compute_mag(const double& omega,
 		
 		//update number of electrons for each spin
 		//if TWO_EFERMI, no need to update
-		if(!PARAM.globalv.two_fermi)
+		if(!two_fermi)
 		{
-			nelec_spin[0] = (PARAM.inp.nelec + this->tot_mag) / 2;
-			nelec_spin[1] = (PARAM.inp.nelec - this->tot_mag) / 2;
+			nelec_spin[0] = (nelec + this->tot_mag) / 2;
+			nelec_spin[1] = (nelec - this->tot_mag) / 2;
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Electron number for spin up", nelec_spin[0]);
 			ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"Electron number for spin down", nelec_spin[1]);
 		}
     }
 
 	// noncolliear :
-	else if(PARAM.inp.nspin==4)
+	else if(nspin==4)
 	{
 		for(int i=0;i<3;i++) 
 		{

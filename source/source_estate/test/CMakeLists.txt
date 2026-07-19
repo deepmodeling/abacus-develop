@@ -24,12 +24,6 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_ESTATE_elecstate_magnetism
-  LIBS parameter  base device
-  SOURCES elecstate_magnetism_test.cpp ../../source_cell/magnetism.cpp
-)
-
-AddTest(
   TARGET MODULE_ESTATE_elecstate_fp_energy
   LIBS parameter  base device
   SOURCES elecstate_fp_energy_test.cpp ../fp_energy.cpp

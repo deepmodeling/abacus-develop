@@ -65,7 +65,9 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
+	{
+		this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size())-1);
+	}
 
 	this->exx_objs.clear();
 	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
@@ -77,11 +79,14 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
 															this->info.kmesh_times, this->MGT, settings_list.second.first );
+		this->exx_objs[settings_list.first].cv.set_info_ri(&this->info);
 		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 		{
+			const int evq_abfs_Lmax = this->abfs_Lmax_;
 			this->exx_objs[settings_list.first].evq.init(ucell, orb,
 														this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times);
+														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times,
+														evq_abfs_Lmax);
 		}
 	}
 
@@ -125,8 +130,7 @@ void Exx_LRI<Tdata>::init_spencer(
 
 	for (size_t T = 0; T != this->abfs.size(); ++T)
 	{
-		GlobalC::exx_info.info_ri.abfs_Lmax
-			= std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size()) - 1);
+		this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size()) - 1);
 	}
 
 	this->exx_objs.clear();
@@ -152,6 +156,7 @@ void Exx_LRI<Tdata>::init_spencer(
 		this->info.kmesh_times,
 		this->MGT,
 		center2_settings->second.first);
+	this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_info_ri(&this->info);
 
 	ModuleBase::timer::end("Exx_LRI", "init_spencer");
 }

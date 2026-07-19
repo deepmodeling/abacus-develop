@@ -221,6 +221,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // 2.1) compute magnetization, only for spin==2
     ucell.magnet.compute_mag(ucell.omega, this->chr.nrxx, this->chr.nxyz, this->chr.rho,
+                                       PARAM.inp.nspin, PARAM.globalv.two_fermi, PARAM.inp.nelec,
                                        this->pelec->nelec_spin.data());
 
     // 2.2) charge mixing

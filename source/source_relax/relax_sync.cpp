@@ -196,19 +196,19 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
             // So we need to first convert to Cartesian and then apply the constraint
             ModuleBase::matrix stress_cart = ucell.latvec.to_matrix() * stress_ev;
 
-            if (ucell.lc[0] == 0)
+            if (ucell.lat_axis_free[0] == 0)
             {
                 stress_cart(0, 0) = 0;
                 stress_cart(0, 1) = 0;
                 stress_cart(0, 2) = 0;
             }
-            if (ucell.lc[1] == 0)
+            if (ucell.lat_axis_free[1] == 0)
             {
                 stress_cart(1, 0) = 0;
                 stress_cart(1, 1) = 0;
                 stress_cart(1, 2) = 0;
             }
-            if (ucell.lc[2] == 0)
+            if (ucell.lat_axis_free[2] == 0)
             {
                 stress_cart(2, 0) = 0;
                 stress_cart(2, 1) = 0;
@@ -539,19 +539,19 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream
         ModuleBase::Matrix3 move_cell = latvec_save * sr_dr_cell;
 
         // should be close to 0, but set again to avoid numerical issues
-        if (ucell.lc[0] == 0)
+        if (ucell.lat_axis_free[0] == 0)
         {
             move_cell.e11 = 0;
             move_cell.e12 = 0;
             move_cell.e13 = 0;
         }
-        if (ucell.lc[1] == 0)
+        if (ucell.lat_axis_free[1] == 0)
         {
             move_cell.e21 = 0;
             move_cell.e22 = 0;
             move_cell.e23 = 0;
         }
-        if (ucell.lc[2] == 0)
+        if (ucell.lat_axis_free[2] == 0)
         {
             move_cell.e31 = 0;
             move_cell.e32 = 0;

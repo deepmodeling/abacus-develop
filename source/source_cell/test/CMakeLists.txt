@@ -4,6 +4,14 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
 find_program(BASH bash)
+file(COPY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+configure_file(bcast_atom_pseudo_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_atom_pseudo_test.sh COPYONLY)
+configure_file(bcast_atom_spec_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_atom_spec_test.sh COPYONLY)
+configure_file(parallel_kpoints_test.sh ${CMAKE_CURRENT_BINARY_DIR}/parallel_kpoints_test.sh COPYONLY)
+configure_file(klist_test_para.sh ${CMAKE_CURRENT_BINARY_DIR}/klist_test_para.sh COPYONLY)
+configure_file(unitcell_test_parallel.sh ${CMAKE_CURRENT_BINARY_DIR}/unitcell_test_parallel.sh COPYONLY)
+configure_file(bcast_read_sep_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_read_sep_test.sh COPYONLY)
+configure_file(bcast_sep_cell_test.sh ${CMAKE_CURRENT_BINARY_DIR}/bcast_sep_cell_test.sh COPYONLY)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES bcast_atom_pseudo_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES bcast_atom_spec_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -35,7 +43,7 @@ list(APPEND cell_simple_srcs
     ../../source_estate/read_pseudo.cpp
     ../../source_estate/cal_wfc.cpp
     ../../source_estate/cal_nelec_nband.cpp
-    ../../source_estate/read_orb.cpp
+    ../read_orb.cpp
     ../sep.cpp
     ../sep_cell.cpp
 )
@@ -100,6 +108,7 @@ AddTest(
   LIBS parameter base device
   SOURCES read_atoms_helper_test.cpp
     ../read_atoms_helper.cpp
+    ../read_orb.cpp
     ../read_stru.cpp
     ../print_cell.cpp
     ../atom_spec.cpp
@@ -192,4 +201,10 @@ AddTest(
 add_test(NAME MODULE_CELL_sep_cell_parallel
       COMMAND ${BASH} bcast_sep_cell_test.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
+  TARGET MODULE_CELL_magnetism
+  LIBS base device
+  SOURCES magnetism_test.cpp ../magnetism.cpp
 )
