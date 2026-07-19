@@ -158,8 +158,12 @@ public:
         const int& ntype_in,
         Atom* atoms_in,
         std::ofstream& log,
-        LCAO_Orbitals& orb) {
-        nonlocal.setupNonlocal(ntype_in, atoms_in, log, orb);
+        LCAO_Orbitals& orb,
+        const std::string& basis_type,
+        const bool& out_element_info,
+        const bool& lspinorb,
+        const int& nspin) {
+        nonlocal.setupNonlocal(ntype_in, atoms_in, log, orb, basis_type, out_element_info, lspinorb, nspin);
     }
 
     /**

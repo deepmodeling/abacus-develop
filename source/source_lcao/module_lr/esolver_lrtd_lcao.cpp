@@ -75,7 +75,9 @@ inline void setup_2center_table(TwoCenterBundle& two_center_bundle, LCAO_Orbital
     if (PARAM.inp.vnl_in_h)
     {
         auto* lcao_nl = new LCAONonlocalInfo();
-        lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
+        lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb,
+                               PARAM.inp.basis_type, PARAM.inp.out_element_info,
+                               PARAM.inp.lspinorb, PARAM.inp.nspin);
         ucell.infoNL = lcao_nl;
         two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().Beta);
     }

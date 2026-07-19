@@ -25,7 +25,10 @@ class InfoNonlocal
 			const int& kmesh,
 			const double& dk,
 			const double& dr_uniform,
-			std::ofstream &log);
+			std::ofstream &log,
+			const bool& out_element_info,
+			const bool& lspinorb,
+			const int& nspin);
 		/// read in the NONLOCAL projector from file.
 		void Read_NonLocal(
 			const int &it, 
@@ -41,7 +44,11 @@ class InfoNonlocal
 			const int& ntype,
 			Atom* atoms,
 			std::ofstream &log,
-			LCAO_Orbitals &orb
+			LCAO_Orbitals &orb,
+			const std::string& basis_type,
+			const bool& out_element_info,
+			const bool& lspinorb,
+			const int& nspin
 		);
 };
 
