@@ -56,6 +56,7 @@ constexpr const char* kOrbitalFilesEnv = "ABACUS_STERNHEIMER_FD_ST_ORBITAL_FILES
 constexpr const char* kFrequencyRankShiftEnv = "ABACUS_STERNHEIMER_FD_ST_FREQ_RANK_SHIFT";
 constexpr const char* kDeltaComponentDiagnosticEnv = "ABACUS_STERNHEIMER_DELTA_COMPONENT_DIAG";
 constexpr const char* kLCAOSOSDiagnosticEnv = "ABACUS_STERNHEIMER_LCAO_SOS_DIAG";
+constexpr const char* kDeltaABlockModeEnv = "ABACUS_STERNHEIMER_DELTA_A_BLOCK";
 constexpr double kHartreeToRydberg = 2.0;
 
 std::string lower_string(std::string value)
@@ -75,6 +76,16 @@ bool env_is_true(const char* name)
     }
     const std::string value = lower_string(raw);
     return !(value.empty() || value == "0" || value == "false" || value == "off" || value == "no");
+}
+
+SternheimerDeltaABlockMode delta_a_block_mode_from_env()
+{
+    const char* raw = std::getenv(kDeltaABlockModeEnv);
+    if (raw == nullptr || raw[0] == '\0')
+    {
+        return SternheimerDeltaABlockMode::ReferenceValueGradient;
+    }
+    return parse_sternheimer_delta_a_block_mode(lower_string(raw));
 }
 
 int positive_int_from_env(const char* name, const int default_value)
@@ -1079,6 +1090,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
     const int default_frequency_rank_shift = use_frequency_mpi && GlobalV::NPROC > 1 ? 1 : 0;
     const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
     const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
+    const SternheimerDeltaABlockMode delta_a_block_mode = delta_a_block_mode_from_env();
     const bool write_delta_components = use_delta_sternheimer && env_is_true(kDeltaComponentDiagnosticEnv);
     const bool write_lcao_sos = env_is_true(kLCAOSOSDiagnosticEnv);
     if (write_lcao_sos)
@@ -1271,11 +1283,12 @@ void run_sternheimer_periodic_lcao_chi0_output(
                 delta_options.max_virtual_states,
                 static_cast<int>(target.sampled_ao_functions.size()),
                 static_cast<int>(target_occupied_projector.size()));
-            delta_subspace = build_reference_delta_sternheimer_subspace(hamiltonian,
-                                                                        target.occupied_projector_functions,
-                                                                        target.sampled_ao_functions,
-                                                                        grid_data.volume_element,
-                                                                        pair_delta_options);
+            delta_subspace = build_delta_sternheimer_subspace_by_mode(hamiltonian,
+                                                                      target.occupied_projector_functions,
+                                                                      target.sampled_ao_functions,
+                                                                      grid_data.volume_element,
+                                                                      pair_delta_options,
+                                                                      delta_a_block_mode);
             if (delta_subspace.virtual_states.empty())
             {
                 throw std::runtime_error("Periodic Sternheimer produced no target-sector Delta virtual states.");
@@ -1637,6 +1650,10 @@ void run_sternheimer_periodic_lcao_chi0_output(
     out << "perturbation_coulomb_kernel full_periodic_poisson\n";
     out << "perturbation_ccp_rmesh_times_used no\n";
     out << "sternheimer_mode " << (use_delta_sternheimer ? "delta" : "standard") << '\n';
+    if (use_delta_sternheimer)
+    {
+        out << "sternheimer_delta_a_block " << sternheimer_delta_a_block_mode_name(delta_a_block_mode) << '\n';
+    }
     out << "delta_component_diagnostic " << (write_delta_components ? "yes" : "no") << '\n';
     out << "lcao_sos_diagnostic " << (write_lcao_sos ? "yes" : "no") << '\n';
     out << "abfs_channels " << num_channels << '\n';
@@ -1971,6 +1988,7 @@ void run_sternheimer_abacus_chi0_output_impl(
         const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
         const std::string frequency_grid_file = PARAM.inp.sternheimer_frequency_grid_file;
         const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
+        const SternheimerDeltaABlockMode delta_a_block_mode = delta_a_block_mode_from_env();
         if (use_lcao_zero_order)
         {
             if (!use_delta_sternheimer)
@@ -2223,11 +2241,12 @@ void run_sternheimer_abacus_chi0_output_impl(
                 static_cast<int>(candidate_functions->size()),
                 static_cast<int>(occupied_functions->size()));
             delta_options.norm_tolerance = PARAM.inp.sternheimer_delta_norm_tol;
-            delta_subspace = build_reference_delta_sternheimer_subspace(hamiltonian,
-                                                                        *occupied_functions,
-                                                                        *candidate_functions,
-                                                                        grid_data.volume_element,
-                                                                        delta_options);
+            delta_subspace = build_delta_sternheimer_subspace_by_mode(hamiltonian,
+                                                                      *occupied_functions,
+                                                                      *candidate_functions,
+                                                                      grid_data.volume_element,
+                                                                      delta_options,
+                                                                      delta_a_block_mode);
             if (delta_subspace.virtual_states.empty())
             {
                 throw std::runtime_error("Sternheimer delta mode produced no fixed virtual states.");
@@ -2475,7 +2494,7 @@ void run_sternheimer_abacus_chi0_output_impl(
         out << "sternheimer_delta " << (use_delta_sternheimer ? "yes" : "no") << '\n';
         if (use_delta_sternheimer)
         {
-            out << "sternheimer_delta_backend reference_value_gradient\n";
+            out << "sternheimer_delta_backend " << sternheimer_delta_a_block_mode_name(delta_a_block_mode) << '\n';
             out << "sternheimer_delta_max_states " << PARAM.inp.sternheimer_delta_max_states << '\n';
             out << "sternheimer_delta_norm_tol " << PARAM.inp.sternheimer_delta_norm_tol << '\n';
             out << "sternheimer_delta_virtual_states " << delta_subspace.virtual_states.size() << '\n';

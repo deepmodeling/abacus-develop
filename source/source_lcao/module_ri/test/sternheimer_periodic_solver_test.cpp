@@ -45,6 +45,91 @@ TEST(SternheimerPeriodicSolver, StandardModeSolvesInFullGridComplement)
     }
 }
 
+TEST(SternheimerPeriodicSolver, StandardModeMatchesCompleteSameGridSOSWavefunctionAndResponse)
+{
+    using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+    using Complex = Hamiltonian::Complex;
+    using Vector = Hamiltonian::Vector;
+
+    Hamiltonian::Grid grid{6, 1, 1, 0.45, 1.0, 1.0, true};
+    grid.kpoint = {0.17, 0.0, 0.0};
+    constexpr double volume_element = 0.45;
+    Hamiltonian hamiltonian(grid, {0.10, -0.07, 0.16, -0.11, 0.04, 0.13});
+    const auto states = ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 6, volume_element);
+    constexpr int occupied_count = 2;
+    constexpr int occupied_index = 1;
+    const std::vector<Vector> occupied(states.wavefunctions.begin(),
+                                       states.wavefunctions.begin() + occupied_count);
+    const std::vector<Vector> perturbations = {
+        {Complex(0.70, 0.11), Complex(-0.30, 0.05), Complex(0.21, -0.08),
+         Complex(0.48, 0.03), Complex(-0.37, 0.09), Complex(0.14, -0.06)},
+        {Complex(-0.22, 0.07), Complex(0.51, -0.04), Complex(0.33, 0.12),
+         Complex(-0.41, 0.02), Complex(0.19, -0.10), Complex(0.62, 0.08)}};
+    constexpr double omega = 0.63;
+
+    ModuleRI::SternheimerRPA::SolverOptions options;
+    options.max_iter = 80;
+    options.residual_tol = 1.0e-12;
+    std::vector<Complex> standard_branch(perturbations.size() * perturbations.size(), Complex(0.0, 0.0));
+    std::vector<Complex> sos_branch = standard_branch;
+    for (int column = 0; column != static_cast<int>(perturbations.size()); ++column)
+    {
+        Vector rhs;
+        ModuleRI::SternheimerRPA::build_rhs_from_hartree_perturbation(
+            perturbations[static_cast<std::size_t>(column)], states.wavefunctions[occupied_index], rhs);
+        const auto standard = ModuleRI::solve_sternheimer_periodic_linear_response(
+            false,
+            hamiltonian,
+            occupied,
+            states.eigenvalues[occupied_index],
+            rhs,
+            {},
+            {},
+            omega,
+            volume_element,
+            options);
+        ASSERT_TRUE(standard.solver.converged);
+        const Vector sos = ModuleRI::build_sternheimer_fd_complete_sos_response(states,
+                                                                                occupied_count,
+                                                                                occupied_index,
+                                                                                rhs,
+                                                                                omega,
+                                                                                volume_element);
+        ASSERT_EQ(standard.wavefunction.size(), sos.size());
+        for (std::size_t ir = 0; ir != sos.size(); ++ir)
+        {
+            EXPECT_NEAR(standard.wavefunction[ir].real(), sos[ir].real(), 1.0e-10);
+            EXPECT_NEAR(standard.wavefunction[ir].imag(), sos[ir].imag(), 1.0e-10);
+        }
+        ModuleRI::SternheimerRPA::accumulate_chi0_branch_column(perturbations,
+                                                                states.wavefunctions[occupied_index],
+                                                                standard.wavefunction,
+                                                                volume_element,
+                                                                1.0,
+                                                                column,
+                                                                standard_branch);
+        ModuleRI::SternheimerRPA::accumulate_chi0_branch_column(perturbations,
+                                                                states.wavefunctions[occupied_index],
+                                                                sos,
+                                                                volume_element,
+                                                                1.0,
+                                                                column,
+                                                                sos_branch);
+    }
+
+    const auto standard_m
+        = ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(standard_branch, perturbations.size());
+    const auto sos_m
+        = ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(sos_branch, perturbations.size());
+    for (std::size_t index = 0; index != standard_branch.size(); ++index)
+    {
+        EXPECT_NEAR(standard_branch[index].real(), sos_branch[index].real(), 1.0e-10);
+        EXPECT_NEAR(standard_branch[index].imag(), sos_branch[index].imag(), 1.0e-10);
+        EXPECT_NEAR(standard_m[index].real(), sos_m[index].real(), 1.0e-10);
+        EXPECT_NEAR(standard_m[index].imag(), sos_m[index].imag(), 1.0e-10);
+    }
+}
+
 TEST(SternheimerPeriodicSolver, DeltaModeReportsHybridAndFullGridResidualsSeparately)
 {
     using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;

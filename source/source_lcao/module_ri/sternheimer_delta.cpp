@@ -108,31 +108,6 @@ std::vector<Vector> collect_fixed_subspace(const std::vector<Vector>& occupied_w
     return subspace;
 }
 
-std::vector<double> diagonalize_real_symmetric(std::vector<double>& matrix, const int size)
-{
-    char jobz = 'V';
-    char uplo = 'U';
-    const int lda = size;
-    int info = 0;
-    std::vector<double> eigenvalues(size, 0.0);
-    double work_query = 0.0;
-    const int minus_one = -1;
-
-    dsyev_(&jobz, &uplo, &size, matrix.data(), &lda, eigenvalues.data(), &work_query, &minus_one, &info);
-    if (info != 0)
-    {
-        throw std::runtime_error("Sternheimer delta virtual-subspace diagonalization workspace query failed.");
-    }
-    const int lwork = std::max(1, static_cast<int>(std::ceil(work_query)));
-    std::vector<double> work(lwork, 0.0);
-    dsyev_(&jobz, &uplo, &size, matrix.data(), &lda, eigenvalues.data(), work.data(), &lwork, &info);
-    if (info != 0)
-    {
-        throw std::runtime_error("Sternheimer delta virtual-subspace diagonalization failed.");
-    }
-    return eigenvalues;
-}
-
 std::vector<double> diagonalize_complex_hermitian(std::vector<Complex>& matrix, const int size)
 {
     char jobz = 'V';
@@ -156,7 +131,7 @@ std::vector<double> diagonalize_complex_hermitian(std::vector<Complex>& matrix, 
            &info);
     if (info != 0)
     {
-        throw std::runtime_error("Sternheimer reference delta diagonalization workspace query failed.");
+        throw std::runtime_error("Sternheimer complex virtual-subspace diagonalization workspace query failed.");
     }
     const int lwork = std::max(1, static_cast<int>(std::ceil(work_query.real())));
     std::vector<Complex> work(static_cast<std::size_t>(lwork), Complex(0.0, 0.0));
@@ -172,7 +147,7 @@ std::vector<double> diagonalize_complex_hermitian(std::vector<Complex>& matrix, 
            &info);
     if (info != 0)
     {
-        throw std::runtime_error("Sternheimer reference delta diagonalization failed.");
+        throw std::runtime_error("Sternheimer complex virtual-subspace diagonalization failed.");
     }
     return eigenvalues;
 }
@@ -295,6 +270,31 @@ void evaluate_full_grid_delta_hamiltonian_difference(const SternheimerFDHamilton
 }
 
 } // namespace
+
+SternheimerDeltaABlockMode parse_sternheimer_delta_a_block_mode(const std::string& name)
+{
+    if (name == "reference_value_gradient")
+    {
+        return SternheimerDeltaABlockMode::ReferenceValueGradient;
+    }
+    if (name == "grid")
+    {
+        return SternheimerDeltaABlockMode::FullGrid;
+    }
+    throw std::invalid_argument("Unknown Sternheimer Delta A-block mode: " + name);
+}
+
+const char* sternheimer_delta_a_block_mode_name(const SternheimerDeltaABlockMode mode)
+{
+    switch (mode)
+    {
+        case SternheimerDeltaABlockMode::ReferenceValueGradient:
+            return "reference_value_gradient";
+        case SternheimerDeltaABlockMode::FullGrid:
+            return "grid";
+    }
+    throw std::invalid_argument("Invalid Sternheimer Delta A-block mode.");
+}
 
 int sternheimer_delta_virtual_state_limit(const int requested_states,
                                           const int candidate_states,
@@ -1007,16 +1007,17 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace(
         hamiltonian.apply(orthonormal_candidates[j], h_candidates[j]);
     }
 
-    std::vector<double> h_matrix(static_cast<std::size_t>(nvirtual) * static_cast<std::size_t>(nvirtual), 0.0);
+    std::vector<Complex> h_matrix(static_cast<std::size_t>(nvirtual) * static_cast<std::size_t>(nvirtual),
+                                  Complex(0.0, 0.0));
     for (int j = 0; j != nvirtual; ++j)
     {
         for (int i = 0; i != nvirtual; ++i)
         {
             h_matrix[static_cast<std::size_t>(i) + static_cast<std::size_t>(nvirtual) * static_cast<std::size_t>(j)]
-                = std::real(dot(orthonormal_candidates[i], h_candidates[j]));
+                = dot(orthonormal_candidates[i], h_candidates[j]);
         }
     }
-    const std::vector<double> eigenvalues = diagonalize_real_symmetric(h_matrix, nvirtual);
+    const std::vector<double> eigenvalues = diagonalize_complex_hermitian(h_matrix, nvirtual);
 
     subspace.virtual_states.reserve(static_cast<std::size_t>(nvirtual));
     for (int ia = 0; ia != nvirtual; ++ia)
@@ -1024,9 +1025,9 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace(
         Vector eta(static_cast<std::size_t>(grid_size), Complex(0.0, 0.0));
         for (int j = 0; j != nvirtual; ++j)
         {
-            const double coefficient
+            const Complex coefficient
                 = h_matrix[static_cast<std::size_t>(j) + static_cast<std::size_t>(nvirtual) * static_cast<std::size_t>(ia)];
-            axpy(Complex(coefficient, 0.0), orthonormal_candidates[j], eta);
+            axpy(coefficient, orthonormal_candidates[j], eta);
         }
 
         SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, eta);
@@ -1066,6 +1067,39 @@ SternheimerDeltaSubspace build_delta_sternheimer_subspace(
         SternheimerRPA::project_out_subspace(residual_projector, dot, state.residual);
     }
     return subspace;
+}
+
+SternheimerDeltaSubspace build_delta_sternheimer_subspace_by_mode(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& occupied_functions,
+    const std::vector<SternheimerDeltaGridFunction>& candidate_functions,
+    const double volume_element,
+    const SternheimerDeltaSubspaceOptions& options,
+    const SternheimerDeltaABlockMode mode)
+{
+    if (mode == SternheimerDeltaABlockMode::ReferenceValueGradient)
+    {
+        return build_reference_delta_sternheimer_subspace(
+            hamiltonian, occupied_functions, candidate_functions, volume_element, options);
+    }
+    if (mode == SternheimerDeltaABlockMode::FullGrid)
+    {
+        std::vector<Vector> occupied_values;
+        occupied_values.reserve(occupied_functions.size());
+        for (const SternheimerDeltaGridFunction& function: occupied_functions)
+        {
+            occupied_values.push_back(function.values);
+        }
+        std::vector<Vector> candidate_values;
+        candidate_values.reserve(candidate_functions.size());
+        for (const SternheimerDeltaGridFunction& function: candidate_functions)
+        {
+            candidate_values.push_back(function.values);
+        }
+        return build_delta_sternheimer_subspace(
+            hamiltonian, occupied_values, candidate_values, volume_element, options);
+    }
+    throw std::invalid_argument("Invalid Sternheimer Delta A-block mode.");
 }
 
 std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_matrix_elements(
@@ -1237,7 +1271,26 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
 
     SternheimerDeltaLinearResponse result;
     result.response.out_wavefunction.assign(static_cast<std::size_t>(grid_size), Complex(0.0, 0.0));
-    result.solver = SternheimerRPA::solve_gmres(problem, projected_rhs, result.response.out_wavefunction, options);
+    if (fixed_subspace.size() >= static_cast<std::size_t>(grid_size))
+    {
+        const double projected_rhs_norm = sternheimer_fd_grid_norm(projected_rhs, volume_element);
+        const double rhs_norm = sternheimer_fd_grid_norm(rhs, volume_element);
+        const double zero_tolerance
+            = std::max(options.breakdown_tol, options.residual_tol) * std::max(1.0, rhs_norm);
+        if (projected_rhs_norm > zero_tolerance)
+        {
+            throw std::runtime_error(
+                "Sternheimer delta fixed subspace fills the grid but leaves a nonzero Q-space rhs.");
+        }
+        result.solver.converged = true;
+        result.solver.absolute_residual = projected_rhs_norm;
+        result.solver.relative_residual = projected_rhs_norm / std::max(1.0, rhs_norm);
+    }
+    else
+    {
+        result.solver
+            = SternheimerRPA::solve_gmres(problem, projected_rhs, result.response.out_wavefunction, options);
+    }
     SternheimerRPA::project_out_subspace(fixed_subspace, dot, result.response.out_wavefunction);
 
     const SternheimerDeltaCoefficientComponents components

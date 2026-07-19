@@ -57,6 +57,17 @@ SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_lanczos(
     double volume_element,
     const SternheimerFDLanczosOptions& options = SternheimerFDLanczosOptions());
 
+// Build the exact positive-frequency response in a finite grid from its
+// complete eigenspectrum. This is a small-grid validation reference, not a
+// production replacement for the iterative Sternheimer solve.
+SternheimerFDHamiltonian::Vector build_sternheimer_fd_complete_sos_response(
+    const SternheimerFDZeroOrderStates& complete_states,
+    int occupied_state_count,
+    int occupied_state_index,
+    const SternheimerFDHamiltonian::Vector& rhs,
+    double omega,
+    double volume_element);
+
 SternheimerFDLinearResponse solve_sternheimer_fd_linear_response(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,

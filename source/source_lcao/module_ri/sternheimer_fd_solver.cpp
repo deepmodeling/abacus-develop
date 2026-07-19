@@ -348,6 +348,59 @@ SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_lanczos(
     return build_zero_order_states_from_wavefunctions(hamiltonian, eigenvalues, std::move(wavefunctions), volume_element);
 }
 
+SternheimerFDHamiltonian::Vector build_sternheimer_fd_complete_sos_response(
+    const SternheimerFDZeroOrderStates& complete_states,
+    const int occupied_state_count,
+    const int occupied_state_index,
+    const SternheimerFDHamiltonian::Vector& rhs,
+    const double omega,
+    const double volume_element)
+{
+    const std::size_t grid_size = rhs.size();
+    if (grid_size == 0 || complete_states.wavefunctions.size() != grid_size
+        || complete_states.eigenvalues.size() != grid_size)
+    {
+        throw std::invalid_argument(
+            "Sternheimer complete SOS reference requires one eigenpair per finite-grid degree of freedom.");
+    }
+    if (occupied_state_count <= 0 || occupied_state_count >= static_cast<int>(grid_size)
+        || occupied_state_index < 0 || occupied_state_index >= occupied_state_count)
+    {
+        throw std::invalid_argument("Sternheimer complete SOS reference has invalid occupied-state indices.");
+    }
+    if (omega < 0.0 || volume_element <= 0.0)
+    {
+        throw std::invalid_argument(
+            "Sternheimer complete SOS reference requires non-negative omega and a positive volume element.");
+    }
+    for (const auto& wavefunction: complete_states.wavefunctions)
+    {
+        if (wavefunction.size() != grid_size)
+        {
+            throw std::invalid_argument("Sternheimer complete SOS eigenvector size does not match the rhs.");
+        }
+    }
+
+    SternheimerFDHamiltonian::Vector response(grid_size, SternheimerFDHamiltonian::Complex(0.0, 0.0));
+    const double occupied_eigenvalue
+        = complete_states.eigenvalues[static_cast<std::size_t>(occupied_state_index)];
+    for (int state_index = occupied_state_count; state_index != static_cast<int>(grid_size); ++state_index)
+    {
+        const auto& virtual_state = complete_states.wavefunctions[static_cast<std::size_t>(state_index)];
+        const SternheimerFDHamiltonian::Complex denominator(
+            complete_states.eigenvalues[static_cast<std::size_t>(state_index)] - occupied_eigenvalue,
+            omega);
+        if (std::abs(denominator) < 1.0e-30)
+        {
+            throw std::runtime_error("Sternheimer complete SOS reference found a singular denominator.");
+        }
+        const SternheimerFDHamiltonian::Complex coefficient
+            = sternheimer_fd_grid_dot(virtual_state, rhs, volume_element) / denominator;
+        axpy(coefficient, virtual_state, response);
+    }
+    return response;
+}
+
 SternheimerFDLinearResponse solve_sternheimer_fd_linear_response(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,

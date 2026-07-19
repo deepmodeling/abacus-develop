@@ -8,6 +8,7 @@
 #include <array>
 #include <cstddef>
 #include <complex>
+#include <string>
 #include <vector>
 
 namespace ModuleRI
@@ -55,6 +56,15 @@ struct SternheimerDeltaSubspaceOptions
     int max_virtual_states = 0;
     double norm_tolerance = 1.0e-10;
 };
+
+enum class SternheimerDeltaABlockMode
+{
+    ReferenceValueGradient,
+    FullGrid
+};
+
+SternheimerDeltaABlockMode parse_sternheimer_delta_a_block_mode(const std::string& name);
+const char* sternheimer_delta_a_block_mode_name(SternheimerDeltaABlockMode mode);
 
 int sternheimer_delta_virtual_state_limit(int requested_states,
                                           int candidate_states,
@@ -163,6 +173,14 @@ SternheimerDeltaSubspace build_reference_delta_sternheimer_subspace(
     const std::vector<SternheimerDeltaGridFunction>& candidate_functions,
     double volume_element,
     const SternheimerDeltaSubspaceOptions& options = SternheimerDeltaSubspaceOptions());
+
+SternheimerDeltaSubspace build_delta_sternheimer_subspace_by_mode(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerDeltaGridFunction>& occupied_functions,
+    const std::vector<SternheimerDeltaGridFunction>& candidate_functions,
+    double volume_element,
+    const SternheimerDeltaSubspaceOptions& options,
+    SternheimerDeltaABlockMode mode);
 
 std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_matrix_elements(
     const std::vector<SternheimerDeltaVirtualState>& virtual_states,
