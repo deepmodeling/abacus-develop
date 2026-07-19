@@ -84,8 +84,9 @@ cmake_dependent_option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage"
 
 # Options requiring CUDA
 cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF "USE_CUDA;ENABLE_MPI" OFF)
-cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF "USE_CUDA" OFF)
-cmake_dependent_option(ENABLE_CUBLASMP "Enable cublasmp" OFF "ENABLE_CUSOLVERMP" OFF)
+cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cuSOLVERMp"
+                       OFF "USE_CUDA;ENABLE_MPI;ENABLE_LCAO" OFF)
+cmake_dependent_option(ENABLE_CUBLASMP "Enable cuBLASMp" OFF "ENABLE_CUSOLVERMP" OFF)
 cmake_dependent_option(ENABLE_NCCL_PARALLEL_DEVICE
                        "Enable NCCL-backed collectives in parallel_device; requires MPI"
                        OFF "USE_CUDA;ENABLE_MPI" OFF)
