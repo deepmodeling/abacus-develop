@@ -304,27 +304,18 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
             const xc_func_info_type* info = xc_func_get_info(&funcs.back());
             const int nref = xc_func_info_get_n_ext_params(info);
 
-            // xc_func_set_ext_params() reads exactly nref entries. Never pass a
-            // shorter buffer: Libxc may append new parameters in a newer release
-            // (GGA_C_PBE gained _tscale in Libxc 7.1).
-            if (requested_ext_params.size() > static_cast<std::size_t>(nref))
+            // xc_func_set_ext_params() reads exactly nref entries
+            if (requested_ext_params.size() != static_cast<std::size_t>(nref))
             {
                 ModuleBase::WARNING_QUIT(
                     "XC_Functional_Libxc::init_func",
-                    "Too many external parameters for Libxc functional id "
+                    "Invalid number of external parameters for Libxc functional id "
                         + std::to_string(id) + ": got "
                         + std::to_string(requested_ext_params.size())
-                        + ", expected at most " + std::to_string(nref) + ".");
+                        + ", expected " + std::to_string(nref) + ".");
             }
 
-            // Missing trailing parameters retain Libxc's own defaults. This is
-            // backward- and forward-compatible when Libxc appends parameters.
-            std::vector<double> complete_ext_params(
-                nref, static_cast<double>(XC_EXT_PARAMS_DEFAULT));
-            std::copy(requested_ext_params.begin(),
-                      requested_ext_params.end(),
-                      complete_ext_params.begin());
-            xc_func_set_ext_params(&funcs.back(), complete_ext_params.data());
+            xc_func_set_ext_params(&funcs.back(), requested_ext_params.data());
         }
     }
     return funcs;
