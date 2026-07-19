@@ -47,7 +47,7 @@ parameters:
       [NOTE] Use calculation = scf with socket_driver = True. Set ABACUS_SOCKET_ADDRESS to host:port or path:UNIX to choose the socket endpoint; if unset, localhost:31415 is used.
     default_value: "False"
     unit: ""
-    availability: calculation==scf
+    availability: ""
   - name: esolver_type
     category: System variables
     type: String
