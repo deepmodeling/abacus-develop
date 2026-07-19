@@ -119,7 +119,7 @@ cmake -S . -B build-lcao -DENABLE_MPI=ON -DENABLE_LCAO=ON
 cmake --build build-lcao --target abacus_basic_para -j
 ```
 
-With the ABACUS toolchain workflow, build the normal ABACUS executable with LCAO support when `basis_type=lcao` is needed, then pass that executable to `AbacusProfile(command=...)`. The ASE interface can be installed from this repository with:
+With the ABACUS toolchain workflow, build the normal ABACUS executable with LCAO support when `basis_type=lcao` is needed, then pass that executable to `AbacusProfile(command=...)`. The command can include an MPI launcher, for example `mpirun -np 4 /path/to/abacus`; ABACUS rank 0 opens the socket connection and broadcasts the i-PI data to the other ranks internally. The ASE interface can be installed from this repository with:
 
 ```bash
 cd interfaces/ASE_interface
@@ -153,7 +153,14 @@ with abacus as calc:
     BFGS(atoms).run(fmax=0.05)
 ```
 
-`AbacusSocketIO` sets `socket_driver=1` and `cal_force=1` automatically. The socket endpoint is selected by the calculator arguments and passed to ABACUS through `ABACUS_SOCKET_ADDRESS`. `unixsocket="abacus_si"` means that ASE listens on the local Unix-domain socket `/tmp/ipi_abacus_si`; abacuslite launches ABACUS with `ABACUS_SOCKET_ADDRESS=/tmp/ipi_abacus_si:UNIX`. For TCP sockets, use the `port` argument instead, which maps to an address such as `localhost:31415`. Calling `atoms.get_potential_energy()` is supported, but the ABACUS client still computes forces because the i-PI `GETFORCE` exchange returns energy, forces, and virial as one response.
+`AbacusSocketIO` sets `socket_driver=1` and `cal_force=1` automatically. It also selects the socket endpoint and passes it to ABACUS through `ABACUS_SOCKET_ADDRESS`, so users normally do not set this environment variable by hand when using abacuslite.
+
+There are two endpoint styles:
+
+- `unixsocket="abacus_si"` uses a local Unix-domain socket. ASE creates and listens on `/tmp/ipi_abacus_si`; abacuslite launches ABACUS with `ABACUS_SOCKET_ADDRESS=/tmp/ipi_abacus_si:UNIX`. The `:UNIX` suffix is part of ABACUS' address syntax and means that `/tmp/ipi_abacus_si` is a filesystem socket path, not a TCP host. This is usually the best choice when ASE and ABACUS run on the same node because it avoids TCP port conflicts.
+- `port=31415` uses a TCP socket. abacuslite launches ABACUS with `ABACUS_SOCKET_ADDRESS=localhost:31415`, meaning host `localhost` and TCP port `31415`. Use this style when the socket server should listen on a TCP port. If ABACUS is launched manually instead of through `AbacusSocketIO`, set `ABACUS_SOCKET_ADDRESS` yourself to the same `host:port` or `path:UNIX` endpoint.
+
+Calling `atoms.get_potential_energy()` is supported, but the ABACUS client still computes forces because the i-PI `GETFORCE` exchange returns energy, forces, and virial as one response.
 
 A socket calculator owns one ABACUS process initialized from one fixed `INPUT`/`STRU` setup. Reuse the same `AbacusSocketIO` instance only for position updates under the same electronic-structure settings and the same cell. Do not change `kpts`, `kspacing`, `nspin`, `basis_type`, `basissets`, pseudopotentials, species, atom count, cell, or other core `INPUT`/`STRU` parameters through an existing socket calculator; create a new `AbacusSocketIO` instance and a new ABACUS client process for those changes. `AbacusSocketIO` rejects cell changes before sending them to ABACUS, and the ABACUS socket driver also checks incoming POSDATA cells against the initial `STRU` cell and exits if they differ.
 

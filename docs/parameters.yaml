@@ -44,7 +44,10 @@ parameters:
     description: |
       If set to True, ABACUS keeps the calculation type as scf and receives atomic positions from an external driver through the i-PI socket protocol.
 
-      [NOTE] Use calculation = scf with socket_driver = True. Set ABACUS_SOCKET_ADDRESS to host:port or path:UNIX to choose the socket endpoint; if unset, localhost:31415 is used.
+      [NOTE] Use calculation = scf with socket_driver = True. ABACUS connects to the external i-PI server selected by ABACUS_SOCKET_ADDRESS. If ABACUS_SOCKET_ADDRESS is unset, ABACUS uses localhost:31415. The value can use one of two forms:
+      * host:port, for example localhost:31415 or 127.0.0.1:31415, opens a TCP connection to that host and port. Use this when the i-PI server listens on a TCP port.
+      * path:UNIX, for example /tmp/ipi_abacus_si:UNIX, opens a Unix-domain socket at the given filesystem path. The :UNIX suffix tells ABACUS that the preceding value is a local socket path rather than a TCP host name. This form only works on the same machine.
+      When using the ASE AbacusSocketIO interface, this environment variable is set automatically from the port or unixsocket calculator argument.
     default_value: "False"
     unit: ""
     availability: ""
