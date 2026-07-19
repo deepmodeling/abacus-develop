@@ -290,33 +290,41 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
         funcs.push_back({}); // create placeholder
         xc_func_init(&funcs.back(), id, xc_polarized); // instantiate the XC term
 
-        // search for external parameters
-        const std::vector<double> in_built_ext_params = in_built_xc_func_ext_params(id, hybrid_alpha, hse_omega);
-        const std::vector<double> external_ext_params = external_xc_func_ext_params(id);
-        // for temporary use, I name their size as n1 and n2
-        const int n1 = in_built_ext_params.size();
-        const int n2 = external_ext_params.size();
+        // Search for external parameters. User-supplied parameters take precedence
+        // over ABACUS built-in overrides.
+        const std::vector<double> in_built_ext_params
+            = in_built_xc_func_ext_params(id, hybrid_alpha, hse_omega);
+        const std::vector<double> external_ext_params
+            = external_xc_func_ext_params(id);
+        const std::vector<double>& requested_ext_params
+            = external_ext_params.empty() ? in_built_ext_params : external_ext_params;
 
-// #ifdef __DEBUG // will the following assertion cause performance issue?
-        // assert the number of parameters should be either zero or the value from
-        // libxc function xc_func_info_get_n_ext_params, this is to avoid the undefined
-        // behavior of illegal memory access
-        const xc_func_info_type* info = xc_func_get_info(&funcs.back());
-        const int nref = xc_func_info_get_n_ext_params(info);
-        assert ((n1 == 0) || (n1 == nref) || (n2 == 0) || (n2 == nref));
-// #endif
-
-        // external overwrites in-built if the same functional id is found in both maps
-        const double* xc_func_ext_params = 
-            (n2 > 0) ? external_ext_params.data() : 
-            (n1 > 0) ? in_built_ext_params.data() :
-            nullptr; // nullptr if no external parameters are found
-
-        // if there are no external parameters, do nothing, otherwise we set
-        if(xc_func_ext_params != nullptr)
+        if (!requested_ext_params.empty())
         {
-            // set the external parameters
-            xc_func_set_ext_params(&funcs.back(), const_cast<double*>(xc_func_ext_params));
+            const xc_func_info_type* info = xc_func_get_info(&funcs.back());
+            const int nref = xc_func_info_get_n_ext_params(info);
+
+            // xc_func_set_ext_params() reads exactly nref entries. Never pass a
+            // shorter buffer: Libxc may append new parameters in a newer release
+            // (GGA_C_PBE gained _tscale in Libxc 7.1).
+            if (requested_ext_params.size() > static_cast<std::size_t>(nref))
+            {
+                ModuleBase::WARNING_QUIT(
+                    "XC_Functional_Libxc::init_func",
+                    "Too many external parameters for Libxc functional id "
+                        + std::to_string(id) + ": got "
+                        + std::to_string(requested_ext_params.size())
+                        + ", expected at most " + std::to_string(nref) + ".");
+            }
+
+            // Missing trailing parameters retain Libxc's own defaults. This is
+            // backward- and forward-compatible when Libxc appends parameters.
+            std::vector<double> complete_ext_params(
+                nref, static_cast<double>(XC_EXT_PARAMS_DEFAULT));
+            std::copy(requested_ext_params.begin(),
+                      requested_ext_params.end(),
+                      complete_ext_params.begin());
+            xc_func_set_ext_params(&funcs.back(), complete_ext_params.data());
         }
     }
     return funcs;
