@@ -123,7 +123,8 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
         auto* lcao_nl = new LCAONonlocalInfo();
         lcao_nl->get_nonlocal().nproj = new int[1];
         std::ofstream log("snap_psibeta_half_tddft_nonlocal.log");
-        lcao_nl->get_nonlocal().Set_NonLocal(0, &atom, lcao_nl->get_nonlocal().nproj[0], orb.get_kmesh(), orb.get_dk(), orb.get_dr_uniform(), log);
+        lcao_nl->get_nonlocal().Set_NonLocal(0, &atom, lcao_nl->get_nonlocal().nproj[0], orb.get_kmesh(), orb.get_dk(), orb.get_dr_uniform(), log,
+                                               false, false, 1);
 
         ASSERT_EQ(lcao_nl->get_nonlocal().nproj[0], 6);
         lcao_nl->get_nonlocal().nprojmax = lcao_nl->get_nonlocal().nproj[0];
