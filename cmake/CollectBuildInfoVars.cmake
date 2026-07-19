@@ -4,10 +4,13 @@
 # ==============================================================================
 
 # --- 1. Collect Basic Build Information ---
-if(NOT CMAKE_BUILD_TYPE)
-    set(ABACUS_BUILD_TYPE "Custom (no CMAKE_BUILD_TYPE)")
+get_property(_multi_config GLOBAL PROPERTY GENERATOR_IS_MULTI_CONFIG)
+if(_multi_config)
+  set(ABACUS_BUILD_TYPE "Multi-config (${CMAKE_CONFIGURATION_TYPES})")
+elseif(CMAKE_BUILD_TYPE)
+  set(ABACUS_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 else()
-    set(ABACUS_BUILD_TYPE ${CMAKE_BUILD_TYPE})
+  set(ABACUS_BUILD_TYPE "Default")
 endif()
 if(DEFINED ENV{USER})
     set(ABACUS_BUILD_USER "$ENV{USER}")
