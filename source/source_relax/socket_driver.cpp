@@ -1,6 +1,6 @@
 #include "socket_driver.h"
 
-#include "source_relax/ipi_socket.h"
+#include "source_relax/socket_ipi.h"
 #include "source_base/global_function.h"
 #include "source_base/mathzone.h"
 #include "source_base/parallel_common.h"
@@ -94,9 +94,9 @@ std::string bcast_header(std::string header)
     return header;
 }
 
-std::string ipi_address()
+std::string socket_address()
 {
-    const char* env = std::getenv("ABACUS_IPI_ADDRESS");
+    const char* env = std::getenv("ABACUS_SOCKET_ADDRESS");
     if (env == nullptr || std::string(env).empty())
     {
         return "localhost:31415";
@@ -263,7 +263,7 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
     }
     if (!inp.cal_force)
     {
-        ModuleBase::WARNING_QUIT("ABACUS socket", "socket calculation requires cal_force=1 for i-PI GETFORCE.");
+        ModuleBase::WARNING_QUIT("ABACUS socket", "socket_driver requires cal_force=1 for i-PI GETFORCE.");
     }
 
     IpiSocket socket;
@@ -276,7 +276,7 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
         {
             try
             {
-                const std::string address = ipi_address();
+                const std::string address = socket_address();
                 ofs_running << " ABACUS socket driver connecting to i-PI endpoint " << address << std::endl;
                 socket.connect(address);
             }

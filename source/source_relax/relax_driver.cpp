@@ -18,7 +18,7 @@ void Relax_Driver::relax_driver(
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
     ModuleBase::timer::start("Relax_Driver", "relax_driver");
 
-    if (inp.calculation == "socket")
+    if (inp.socket_driver)
     {
         Socket_Driver socket_driver;
         socket_driver.socket_driver(p_esolver, ucell, inp, ofs_running);

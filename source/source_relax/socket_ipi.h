@@ -1,5 +1,5 @@
-#ifndef ABACUS_IPI_SOCKET_H
-#define ABACUS_IPI_SOCKET_H
+#ifndef ABACUS_SOCKET_IPI_H
+#define ABACUS_SOCKET_IPI_H
 
 #include <cstddef>
 #include <stdexcept>

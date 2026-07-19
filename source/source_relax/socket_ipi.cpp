@@ -1,4 +1,4 @@
-#include "source_relax/ipi_socket.h"
+#include "source_relax/socket_ipi.h"
 
 #include <arpa/inet.h>
 #include <cerrno>
@@ -148,6 +148,10 @@ std::string IpiSocket::read_header()
             if (errno == EINTR)
             {
                 continue;
+            }
+            if (errno == ECONNRESET && done == 0)
+            {
+                throw IpiSocketClosed("i-PI socket peer reset before next header");
             }
             throw std::runtime_error(errno_message("i-PI socket header read failed"));
         }

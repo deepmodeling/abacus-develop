@@ -1,4 +1,4 @@
-#include "../ipi_socket.h"
+#include "../socket_ipi.h"
 
 #include "gtest/gtest.h"
 
@@ -80,7 +80,7 @@ class UnixSocketServer
   public:
     UnixSocketServer()
     {
-        char dir_template[] = "/tmp/abacus_ipi_socket_test_XXXXXX";
+        char dir_template[] = "/tmp/abacus_socket_ipi_test_XXXXXX";
         char* made_dir = ::mkdtemp(dir_template);
         if (made_dir == nullptr)
         {
