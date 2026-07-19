@@ -1232,18 +1232,16 @@
 ### xc_exch_ext
 
 - **Type**: Integer followed by Real values
-- **Description**: Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_x_pbe.c.
+- **Description**: Customized parameterization of the exchange part of an XC functional. The first value should be the Libxc ID of the original functional, followed by the complete list of external parameters required by the linked Libxc version. If unset, Libxc's own default parameters are used. For functional IDs and parameter definitions, refer to the Libxc documentation and source code.
 
   > Note: Solely setting this keyword will take no effect on XC functionals. One should also set dft_functional to the corresponding functional to apply the customized parameterization. Presently this feature can only support parameterization on one exchange functional.
-- **Default**: 101 0.8040 0.2195149727645171
 
 ### xc_corr_ext
 
 - **Type**: Integer followed by Real values
-- **Description**: Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_c_pbe.c.
+- **Description**: Customized parameterization of the correlation part of an XC functional. The first value should be the Libxc ID of the original functional, followed by the complete list of external parameters required by the linked Libxc version. If unset, Libxc's own default parameters are used. For functional IDs and parameter definitions, refer to the Libxc documentation and source code.
 
   > Note: Solely setting this keyword will take no effect on XC functionals. One should also set dft_functional to the corresponding functional to apply the customized parameterization. Presently this feature can only support parameterization on one correlation functional.
-- **Default**: 130 0.06672455060314922 0.031090690869654895034 1.0
 
 ### pseudo_rcut
 

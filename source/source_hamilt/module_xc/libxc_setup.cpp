@@ -14,7 +14,6 @@
 #include <regex>
 #include <map>
 #include <algorithm>
-#include <cassert>
 
 bool not_supported_xc_with_laplacian(const std::string& xc_func_in)
 {
@@ -200,7 +199,7 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
 #ifdef __EXX
         // hybrid functionals
         case XC_HYB_GGA_XC_PBEH:
-            return {hybrid_alpha, hse_omega, hse_omega};
+            return {hybrid_alpha};
         case XC_HYB_GGA_XC_HSE06:
             return {hybrid_alpha, hse_omega, hse_omega};
         // short-range of B88_X
@@ -262,20 +261,19 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
 
 const std::vector<double> external_xc_func_ext_params(const int id)
 {
-    const std::map<int, std::vector<double>> mymap = {
-        {
-            PARAM.inp.xc_exch_ext[0],
-            std::vector<double>(PARAM.inp.xc_exch_ext.begin()+1,
-                                PARAM.inp.xc_exch_ext.end())
-        },
-        {
-            PARAM.inp.xc_corr_ext[0],
-            std::vector<double>(PARAM.inp.xc_corr_ext.begin()+1,
-                                PARAM.inp.xc_corr_ext.end())
-        }
-     };
-    auto it = mymap.find(id);
-    return (it != mymap.end()) ? it->second : std::vector<double>{};
+    const auto& exch_ext = PARAM.inp.xc_exch_ext;
+    if (!exch_ext.empty() && static_cast<int>(exch_ext.front()) == id)
+    {
+        return {exch_ext.begin() + 1, exch_ext.end()};
+    }
+
+    const auto& corr_ext = PARAM.inp.xc_corr_ext;
+    if (!corr_ext.empty() && static_cast<int>(corr_ext.front()) == id)
+    {
+        return {corr_ext.begin() + 1, corr_ext.end()};
+    }
+
+    return {};
 }
 
 std::vector<xc_func_type> 
