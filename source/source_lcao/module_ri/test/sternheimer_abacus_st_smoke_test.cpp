@@ -281,3 +281,50 @@ TEST(SternheimerABACUSSTSmoke, ZeroQIndexPreservesSingleGammaPlan)
     EXPECT_EQ(plan.kq_pairs[0].target_index, 0);
     EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
 }
+
+TEST(SternheimerABACUSSTSmoke, AssignsContiguousKPointOwners)
+{
+    const int global_kpoint_count = 10;
+    const int kpoint_groups = 4;
+    const std::vector<int> expected_owners = {0, 0, 0, 1, 1, 1, 2, 2, 3, 3};
+
+    for (int ik = 0; ik != global_kpoint_count; ++ik)
+    {
+        EXPECT_EQ(ModuleRI::sternheimer_kpoint_owner_group(ik, global_kpoint_count, kpoint_groups),
+                  expected_owners[static_cast<std::size_t>(ik)]);
+    }
+    EXPECT_THROW(ModuleRI::sternheimer_kpoint_owner_group(-1, global_kpoint_count, kpoint_groups),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_kpoint_owner_group(0, global_kpoint_count, 0),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_kpoint_owner_group(0, 3, 4), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, PartitionsResponsePairsBySourceKWithoutOverlap)
+{
+    std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> records;
+    for (int ik = 0; ik != 8; ++ik)
+    {
+        records.push_back(make_occupied_kpoint(ik,
+                                               ik,
+                                               0,
+                                               {static_cast<double>(ik) / 8.0, 0.0, 0.0},
+                                               0.25));
+    }
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan(records, 2);
+
+    std::vector<int> seen(plan.kq_pairs.size(), 0);
+    for (int group = 0; group != 4; ++group)
+    {
+        const auto owned = ModuleRI::sternheimer_owned_kq_pair_indices(plan, group, 4);
+        ASSERT_EQ(owned.size(), 2);
+        for (const std::size_t pair_index: owned)
+        {
+            ASSERT_LT(pair_index, plan.kq_pairs.size());
+            ++seen[pair_index];
+            EXPECT_EQ(ModuleRI::sternheimer_kpoint_owner_group(plan.kq_pairs[pair_index].source_index, 8, 4),
+                      group);
+        }
+    }
+    EXPECT_EQ(seen, std::vector<int>(plan.kq_pairs.size(), 1));
+}

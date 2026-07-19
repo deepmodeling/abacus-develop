@@ -31,6 +31,17 @@ TEST(SternheimerABACUSFDAdapter, RejectsDistributedRealSpaceGridForDensePrototyp
     EXPECT_THROW(ModuleRI::make_sternheimer_fd_grid_from_lattice(4, 4, 4, 32, 8.0, latvec), std::invalid_argument);
 }
 
+TEST(SternheimerABACUSFDAdapter, EmbedsLocalZSlabAndAcceptsEmptyRank)
+{
+    const auto slab = ModuleRI::embed_sternheimer_local_z_slab({1.0, 2.0}, 2, 3, 1, 1);
+    EXPECT_EQ(slab, (std::vector<double>{0.0, 1.0, 0.0, 0.0, 2.0, 0.0}));
+
+    const auto empty = ModuleRI::embed_sternheimer_local_z_slab({}, 2, 3, 0, 3);
+    EXPECT_EQ(empty, std::vector<double>(6, 0.0));
+
+    EXPECT_THROW(ModuleRI::embed_sternheimer_local_z_slab({1.0}, 2, 3, 1, 1), std::invalid_argument);
+}
+
 TEST(SternheimerABACUSFDAdapter, BuildsNonOrthogonalPrimitiveGridWithDeterminantVolume)
 {
     const ModuleBase::Matrix3 latvec(0.0, 0.5, 0.5,

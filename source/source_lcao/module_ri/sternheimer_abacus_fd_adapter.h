@@ -46,6 +46,12 @@ SternheimerABACUSFDGridData make_sternheimer_fd_grid(const ModulePW::PW_Basis& p
 SternheimerABACUSFDGridData make_sternheimer_fd_full_grid(const ModulePW::PW_Basis& pw_basis,
                                                           double orthogonality_tolerance = 1.0e-12);
 
+std::vector<double> embed_sternheimer_local_z_slab(const std::vector<double>& local_values,
+                                                   int nxy,
+                                                   int nz,
+                                                   int nplane,
+                                                   int startz);
+
 std::vector<double> copy_sternheimer_local_potential(const elecstate::Potential& potential,
                                                      const ModulePW::PW_Basis& pw_basis,
                                                      int spin);

@@ -82,6 +82,32 @@ SternheimerABACUSFDGridData make_sternheimer_fd_grid_from_lattice(const int nx,
     return grid_data;
 }
 
+std::vector<double> embed_sternheimer_local_z_slab(const std::vector<double>& local_values,
+                                                   const int nxy,
+                                                   const int nz,
+                                                   const int nplane,
+                                                   const int startz)
+{
+    if (nxy <= 0 || nz <= 0 || nplane < 0 || startz < 0 || startz + nplane > nz
+        || local_values.size() != static_cast<std::size_t>(nxy) * static_cast<std::size_t>(nplane))
+    {
+        throw std::invalid_argument("Invalid Sternheimer local z-slab dimensions.");
+    }
+
+    std::vector<double> full_values(static_cast<std::size_t>(nxy) * static_cast<std::size_t>(nz), 0.0);
+    for (int ixy = 0; ixy != nxy; ++ixy)
+    {
+        for (int iz = 0; iz != nplane; ++iz)
+        {
+            full_values[static_cast<std::size_t>(ixy) * static_cast<std::size_t>(nz)
+                        + static_cast<std::size_t>(startz + iz)]
+                = local_values[static_cast<std::size_t>(ixy) * static_cast<std::size_t>(nplane)
+                               + static_cast<std::size_t>(iz)];
+        }
+    }
+    return full_values;
+}
+
 SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian_from_local_potential(
     const SternheimerABACUSFDGridData& grid_data,
     std::vector<double> local_potential,

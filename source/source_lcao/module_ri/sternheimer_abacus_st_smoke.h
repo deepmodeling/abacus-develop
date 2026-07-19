@@ -189,6 +189,49 @@ inline SternheimerPeriodicResponsePlan build_sternheimer_periodic_response_plan(
     return plan;
 }
 
+inline int sternheimer_kpoint_owner_group(const int global_kpoint_index,
+                                          const int global_kpoint_count,
+                                          const int kpoint_groups)
+{
+    if (global_kpoint_count <= 0 || kpoint_groups <= 0 || kpoint_groups > global_kpoint_count
+        || global_kpoint_index < 0 || global_kpoint_index >= global_kpoint_count)
+    {
+        throw std::invalid_argument("Invalid Sternheimer k-point partition dimensions.");
+    }
+
+    const int base_count = global_kpoint_count / kpoint_groups;
+    const int extra_groups = global_kpoint_count % kpoint_groups;
+    const int enlarged_span = extra_groups * (base_count + 1);
+    if (global_kpoint_index < enlarged_span)
+    {
+        return global_kpoint_index / (base_count + 1);
+    }
+    return extra_groups + (global_kpoint_index - enlarged_span) / base_count;
+}
+
+inline std::vector<std::size_t> sternheimer_owned_kq_pair_indices(const SternheimerPeriodicResponsePlan& plan,
+                                                                  const int kpoint_group,
+                                                                  const int kpoint_groups)
+{
+    if (kpoint_group < 0 || kpoint_group >= kpoint_groups)
+    {
+        throw std::invalid_argument("Invalid Sternheimer k-point group index.");
+    }
+    const int global_kpoint_count = static_cast<int>(plan.record_index_by_global_k.size());
+    std::vector<std::size_t> owned;
+    for (std::size_t pair_index = 0; pair_index != plan.kq_pairs.size(); ++pair_index)
+    {
+        if (sternheimer_kpoint_owner_group(plan.kq_pairs[pair_index].source_index,
+                                           global_kpoint_count,
+                                           kpoint_groups)
+            == kpoint_group)
+        {
+            owned.push_back(pair_index);
+        }
+    }
+    return owned;
+}
+
 inline void validate_sternheimer_lcao_occupied_kpoints(
     const std::vector<SternheimerLCAOOccupiedKPoint>& records,
     const int local_kpoint_count,

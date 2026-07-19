@@ -67,36 +67,30 @@ std::vector<double> copy_sternheimer_full_local_potential(const elecstate::Poten
                                                           const int spin)
 {
     const ModuleBase::matrix& veff = potential.get_eff_v();
-    if (spin < 0 || spin >= veff.nr)
+    std::vector<double> local_potential;
+    if (pw_basis.nrxx > 0)
     {
-        throw std::invalid_argument("Sternheimer ABACUS FD full-grid potential spin index is out of range.");
-    }
-    if (veff.nc != pw_basis.nrxx)
-    {
-        throw std::invalid_argument("Sternheimer ABACUS FD full-grid potential size does not match local nrxx.");
-    }
-
-    const double* veff_spin = potential.get_eff_v(spin);
-    if (veff_spin == nullptr)
-    {
-        throw std::invalid_argument("Sternheimer ABACUS FD full-grid potential is not allocated.");
-    }
-
-    std::vector<double> full_potential(static_cast<std::size_t>(pw_basis.nxyz), 0.0);
-    const int nxy = pw_basis.nxy;
-    const int nz = pw_basis.nz;
-    const int nplane = pw_basis.nplane;
-    const int startz = pw_basis.startz_current;
-    for (int ixy = 0; ixy != nxy; ++ixy)
-    {
-        for (int iz = 0; iz != nplane; ++iz)
+        if (spin < 0 || spin >= veff.nr)
         {
-            full_potential[static_cast<std::size_t>(ixy) * static_cast<std::size_t>(nz)
-                           + static_cast<std::size_t>(startz + iz)]
-                = veff_spin[static_cast<std::size_t>(ixy) * static_cast<std::size_t>(nplane)
-                            + static_cast<std::size_t>(iz)];
+            throw std::invalid_argument("Sternheimer ABACUS FD full-grid potential spin index is out of range.");
         }
+        if (veff.nc != pw_basis.nrxx)
+        {
+            throw std::invalid_argument("Sternheimer ABACUS FD full-grid potential size does not match local nrxx.");
+        }
+
+        const double* veff_spin = potential.get_eff_v(spin);
+        if (veff_spin == nullptr)
+        {
+            throw std::invalid_argument("Sternheimer ABACUS FD full-grid potential is not allocated.");
+        }
+        local_potential.assign(veff_spin, veff_spin + pw_basis.nrxx);
     }
+    std::vector<double> full_potential = embed_sternheimer_local_z_slab(local_potential,
+                                                                        pw_basis.nxy,
+                                                                        pw_basis.nz,
+                                                                        pw_basis.nplane,
+                                                                        pw_basis.startz_current);
 
 #ifdef __MPI
     if (pw_basis.poolnproc > 1)
