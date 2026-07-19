@@ -69,10 +69,18 @@ option(ENABLE_CNPY "Enable cnpy usage" OFF)
 cmake_dependent_option(ENABLE_ELPA "Enable ELPA for LCAO" ON "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
-cmake_dependent_option(EXX_DEV "Enable LibRI developing features" OFF "ENABLE_LIBRI" OFF)
+cmake_dependent_option(ENABLE_EXX_DEV "Enable LibRI developing features" OFF "ENABLE_LIBRI" OFF)
 cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+
+# Two-center FFT is only used in LCAO
+cmake_dependent_option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method"
+                       ON "ENABLE_LCAO" OFF)
+
+# Benchmark requires BUILD_TESTING
+cmake_dependent_option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage"
+                       OFF "BUILD_TESTING" OFF)
 
 # Options requiring CUDA
 cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF "USE_CUDA;ENABLE_MPI" OFF)
@@ -100,6 +108,7 @@ abacus_rename_option(USE_OPENMP ENABLE_OPENMP)
 abacus_rename_option(USE_ABACUS_LIBM ENABLE_ABACUS_LIBM)
 abacus_rename_option(USE_ELPA ENABLE_ELPA)
 abacus_rename_option(INFO MATH_INFO)
+abacus_rename_option(EXX_DEV ENABLE_EXX_DEV)
 
 if(DEFINED CACHE{ENABLE_LIBCOMM})
   message(
@@ -258,7 +267,10 @@ endif()
 
 # Use DSP hardware
 if (USE_DSP)
-  set(ENABLE_ELPA OFF)
+  if(ENABLE_ELPA)
+    message(WARNING USE_DSP is incompatible with ELPA; switching off ENABLE_ELPA)
+    set(ENABLE_ELPA OFF)
+  endif()
   set(ABACUS_BIN_NAME abacus_dsp)
 endif()
 
@@ -706,7 +718,7 @@ if(ENABLE_LIBRI)
   find_package(cereal REQUIRED CONFIG)
   abacus_add_feature_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
                                  TEST_EXX_RADIAL=1)
-  if(EXX_DEV)
+  if(ENABLE_EXX_DEV)
     abacus_add_feature_definitions(__EXX_DEV)
   endif()
 endif()
