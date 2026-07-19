@@ -136,9 +136,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         psi.fix_k(ik);
         this->updateRhoK(psi);
     }
-
-    this->add_usrho(psi);
-
+    
     if (PARAM.inp.device == "gpu" || PARAM.inp.precision == "single")
     {
         for (int ii = 0; ii < PARAM.inp.nspin; ii++)
@@ -150,6 +148,8 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
             }
         }
     }
+
+    this->add_usrho(psi);
     this->parallelK();
     ModuleBase::timer::end("ElecStatePW", "psiToRho");
 }
@@ -449,17 +449,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            // D2H rho → CPU buffer (real2recip reads rho via CPU loops)
-            std::vector<Real> rho_host(this->rhopw_smooth->nrxx);
-            syncmem_var_d2h_op()(rho_host.data(), this->rho[is], this->rhopw_smooth->nrxx);
-            // D2H rhog → CPU temp
-            std::vector<T> rhog_host(this->rhopw_smooth->npw);
-            syncmem_complex_d2h_op()(rhog_host.data(), this->rhog[is], this->rhopw_smooth->npw);
-            // CPU real2recip
-            // TODO: replace with cufft to keep rho/rhog on device
-            this->rhopw_smooth->real2recip(rho_host.data(), rhog_host.data());
-            // H2D rhog back to device
-            syncmem_complex_h2d_op()(this->rhog[is], rhog_host.data(), this->rhopw_smooth->npw);
+            this->rhopw_smooth->real2recip(this->charge->rho[is], this->charge->rhog[is]);
         }
     }
 
@@ -474,16 +464,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
     {
         for (int is = 0; is < PARAM.inp.nspin; is++)
         {
-            // D2H rhog → CPU temp (recip2real reads rhog via CPU loops)
-            std::vector<T> rhog_host(this->charge->rhopw->npw);
-            syncmem_complex_d2h_op()(rhog_host.data(), this->rhog[is], this->charge->rhopw->npw);
-            // D2H rho → CPU buffer
-            std::vector<Real> rho_host(this->charge->rhopw->nrxx);
-            syncmem_var_d2h_op()(rho_host.data(), this->rho[is], this->charge->rhopw->nrxx);
-            // CPU recip2real
-            this->charge->rhopw->recip2real(rhog_host.data(), rho_host.data());
-            // H2D rho back to GPU
-            syncmem_var_h2d_op()(this->rho[is], rho_host.data(), this->charge->rhopw->nrxx);
+            this->charge->rhopw->recip2real(this->charge->rhog[is], this->charge->rho[is]);
         }
     }
 }
