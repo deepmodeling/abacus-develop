@@ -1184,7 +1184,7 @@ SIABPrimitiveExportData build_siab_primitive_export_data(const ModulePW::PW_Basi
     }
 
     const Numerical_Basis::SIABPrimitiveParameters parameters
-        = Numerical_Basis::siab_parameters_from_input(0);
+        = Numerical_Basis::siab_parameters_from_input(0, PARAM.inp.sternheimer_siab_lmax);
     Numerical_Basis numerical_basis;
     const auto local_blocks
         = numerical_basis.siab_primitive_grid_values(0, &primitive_pw_basis, structure_factor, ucell, parameters);

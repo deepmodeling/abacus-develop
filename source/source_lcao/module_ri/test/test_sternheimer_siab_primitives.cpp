@@ -36,17 +36,21 @@ TEST(SternheimerSIABPrimitives, DefaultPrimitiveEcutInheritsWavefunctionCutoff)
     const std::string old_bessel_ecut = input.bessel_nao_ecut;
     const double old_ecutwfc = input.ecutwfc;
     const std::vector<double> old_rcuts = input.bessel_nao_rcuts;
+    const int old_siab_lmax = input.sternheimer_siab_lmax;
     input.bessel_nao_ecut = "default";
     input.ecutwfc = 37.5;
     input.bessel_nao_rcuts = {8.0};
+    input.sternheimer_siab_lmax = 2;
 
-    const auto parameters = Numerical_Basis::siab_parameters_from_input(0);
+    const auto parameters = Numerical_Basis::siab_parameters_from_input(0, input.sternheimer_siab_lmax);
     EXPECT_DOUBLE_EQ(parameters.ecut_ry, 37.5);
     EXPECT_DOUBLE_EQ(parameters.rcut_bohr, 8.0);
+    EXPECT_EQ(parameters.lmax, 2);
 
     input.bessel_nao_ecut = old_bessel_ecut;
     input.ecutwfc = old_ecutwfc;
     input.bessel_nao_rcuts = old_rcuts;
+    input.sternheimer_siab_lmax = old_siab_lmax;
 }
 
 void expect_complex_near(const Complex& actual, const Complex& expected)
@@ -111,15 +115,15 @@ std::vector<Complex> reciprocal_primitive(const Bessel_Basis& bessel,
         gk[ig] = pw.getgpluskcar(ik, ig) * ucell.tpiba;
     }
 
-    const int total_lm = (ucell.lmax + 1) * (ucell.lmax + 1);
+    const int target_lmax = std::max(ucell.lmax, l);
+    const int total_lm = (target_lmax + 1) * (target_lmax + 1);
     ModuleBase::matrix ylm(total_lm, npw);
     ModuleBase::YlmReal::Ylm_Real(total_lm, npw, gk.data(), ylm);
 
     const int abacus_m = Numerical_Basis::siab_abacus_m(conventional_m);
     const int lm = l * l + abacus_m;
-    EXPECT_TRUE(l == 0 || l == 1);
-    const Complex angular_phase = l == 0 ? Complex(1.0, 0.0) : Complex(0.0, -1.0);
-    const Complex lphase = (4.0 * ModuleBase::PI / std::sqrt(ucell.omega)) * angular_phase;
+    const Complex lphase = (4.0 * ModuleBase::PI / std::sqrt(ucell.omega))
+                           * std::pow(ModuleBase::IMAG_UNIT, -l);
 
     std::vector<Complex> values(npw);
     for (int ig = 0; ig < npw; ++ig)
@@ -165,10 +169,11 @@ void initialize_reference_bessel(Bessel_Basis& bessel,
                                  const UnitCell& ucell,
                                  const Numerical_Basis::SIABPrimitiveParameters& parameters)
 {
+    const int target_lmax = parameters.lmax < 0 ? ucell.lmax : parameters.lmax;
     bessel.init(false,
                 parameters.ecut_ry,
                 ucell.ntype,
-                ucell.lmax,
+                target_lmax,
                 parameters.smooth,
                 parameters.sigma,
                 parameters.rcut_bohr,
@@ -297,6 +302,46 @@ TEST_F(SternheimerSIABPrimitivesTest, OrdersBlocksAndPreservesFullComplexPWInner
                 expect_complex_near(grid_overlap, reciprocal_overlap);
             }
         }
+    }
+}
+
+TEST_F(SternheimerSIABPrimitivesTest, ExplicitLmaxExtendsPrimitivesBeyondInputOrbitalChannels)
+{
+    const Numerical_Basis::SIABPrimitiveParameters parameters{
+        ecut_ry,
+        rcut_bohr,
+        false,
+        0.1,
+        tolerance,
+        2,
+    };
+    ASSERT_EQ(ucell.atoms[0].nwl, 1);
+
+    Numerical_Basis numerical_basis;
+    const auto blocks
+        = numerical_basis.siab_primitive_grid_values(ik, &full_pw, structure_factor, ucell, parameters);
+
+    const int nprimitive = static_cast<int>(std::sqrt(ecut_ry) * rcut_bohr / ModuleBase::PI);
+    ASSERT_EQ(blocks.size(), 9);
+    for (int magnetic_offset = 0; magnetic_offset != 5; ++magnetic_offset)
+    {
+        const auto& block = blocks[static_cast<std::size_t>(4 + magnetic_offset)];
+        EXPECT_EQ(block.l, 2);
+        EXPECT_EQ(block.m, magnetic_offset - 2);
+        EXPECT_EQ(block.n_primitive, nprimitive);
+        EXPECT_EQ(block.offset, (4 + magnetic_offset) * nprimitive);
+    }
+
+    Bessel_Basis bessel;
+    initialize_reference_bessel(bessel, ucell, parameters);
+    const auto& d_block = blocks.back();
+    const auto reciprocal_reference
+        = reciprocal_primitive(bessel, full_pw, ucell, d_block.l, d_block.m, 0);
+    const auto grid_reference = physical_complex_grid(full_pw, ucell, reciprocal_reference);
+    ASSERT_EQ(d_block.values[0].size(), grid_reference.size());
+    for (std::size_t ir = 0; ir != grid_reference.size(); ++ir)
+    {
+        expect_complex_near(d_block.values[0][ir], grid_reference[ir]);
     }
 }
 

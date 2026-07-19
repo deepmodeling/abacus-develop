@@ -1842,16 +1842,16 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // sternheimer_q_index
-        auto it = find_label("sternheimer_q_index", readinput.input_lists);
+    { // sternheimer_siab_lmax
+        auto it = find_label("sternheimer_siab_lmax", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());
-        EXPECT_EQ(param.input.sternheimer_q_index, 0);
+        EXPECT_EQ(param.input.sternheimer_siab_lmax, -1);
 
         it->second.str_values = {"2"};
         it->second.read_value(it->second, param);
-        EXPECT_EQ(param.input.sternheimer_q_index, 2);
+        EXPECT_EQ(param.input.sternheimer_siab_lmax, 2);
 
-        param.input.sternheimer_q_index = -1;
+        param.input.sternheimer_siab_lmax = -2;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
