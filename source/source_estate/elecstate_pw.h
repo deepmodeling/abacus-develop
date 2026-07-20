@@ -72,7 +72,7 @@ class ElecStatePW : public ElecState
 
     //! Non-local pseudopotentials
     //! \sum_lm Q_lm(r) \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
-    void addusdens_g(const Real* becsum, T** rhog);
+    void addusdens_g(const Real* becsum, std::complex<double>** rhog);
 
     Device * ctx = {};
 

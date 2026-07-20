@@ -128,6 +128,9 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
         if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
         {
             setmem_complex_op()(this->rhog[is], 0, this->charge->rhopw->npw);
+            std::fill(this->charge->rhog[is],
+                      this->charge->rhog[is] + this->charge->rhopw->npw,
+                      std::complex<double>(0, 0));
         }
     }
 
@@ -457,7 +460,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
     // add to the charge density in reciprocal space the part which is due to the US augmentation.
     if (PARAM.globalv.use_uspp)
     {
-        this->addusdens_g(becsum, rhog);
+        this->addusdens_g(becsum, this->charge->rhog);
     }
     // transform back to real space using dense grids
     if (PARAM.globalv.double_grid || PARAM.globalv.use_uspp)
@@ -470,7 +473,7 @@ void ElecStatePW<T, Device>::add_usrho(const psi::Psi<T, Device>& psi)
 }
 
 template <typename T, typename Device>
-void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
+void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, std::complex<double>** rhog)
 {
     const T one{1, 0};
     const T zero{0, 0};
@@ -542,10 +545,6 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
                        &tbecsum_host[is * atom->na * nij], &nij,
                        &zero_d, aux2_host.data(), &npw);
 
-                // D2H rhog
-                std::vector<T> rhog_host(npw);
-                syncmem_complex_d2h_op()(rhog_host.data(), rhog[is], npw);
-
                 int ijh = 0;
                 for (int ih = 0; ih < atom->ncpp.nh; ih++)
                 {
@@ -556,13 +555,11 @@ void ElecStatePW<T, Device>::addusdens_g(const Real* becsum, T** rhog)
                             nullptr, npw, ih, jh, it, qmod_host.data(), ylmk0_double.data(), qgm_host.data());
                         for (int ig = 0; ig < npw; ig++)
                         {
-                            rhog_host[ig] += static_cast<T>(qgm_host[ig] * aux2_host[ijh * npw + ig]);
+                            rhog[is][ig] += qgm_host[ig] * aux2_host[ijh * npw + ig];
                         }
                         ijh++;
                     }
                 }
-                // H2D rhog back
-                syncmem_complex_h2d_op()(rhog[is], rhog_host.data(), npw);
             }
         }
     }
