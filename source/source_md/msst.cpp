@@ -209,13 +209,16 @@ void MSST::restart(const std::string& global_readin_dir)
 
         if (ok)
         {
-            file >> step_rst_ >> md_tfirst >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos;
+            if(!(file >> step_rst_ >> md_tfirst >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos))
+            {
+                ok = false;
+            }
             file.close();
         }
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 #endif
 
     if (!ok)
