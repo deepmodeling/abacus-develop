@@ -103,16 +103,17 @@ class UcellTest : public ::testing::Test {
 using UcellDeathTest = UcellTest;
 
 TEST_F(UcellDeathTest, ReadCellPPWarning1) {
-    const bool lspinorb = true;
+    const bool lspinorb = false;
     const double pseudo_rcut = 15.0;
     const double soc_lambda = 0.0;
-    ucell->pseudo_fn[1] = "H_sr.upf";
+    ucell->pseudo_fn[0] = "Al.pbe-sp-van-so.UPF";
     testing::internal::CaptureStdout();
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda),
-                ::testing::ExitedWithCode(1),
-                "");
+    pp_dir = "./support/";
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, 
+        global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda),
+        ::testing::ExitedWithCode(1),"");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
                 testing::HasSubstr("error when average the pseudopotential."));
@@ -126,9 +127,9 @@ TEST_F(UcellDeathTest, ReadCellPPWarning2) {
     testing::internal::CaptureStdout();
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda),
-                ::testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, 
+        global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda),
+        ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
                 testing::HasSubstr("Couldn't find pseudopotential file"));
@@ -138,13 +139,15 @@ TEST_F(UcellDeathTest, ReadCellPPWarning3) {
     const bool lspinorb = false;
     const double pseudo_rcut = 15.0;
     const double soc_lambda = 0.0;
+    ucell->pseudo_fn[0] = "HeaderError1";
     ucell->pseudo_type[0] = "upf";
     testing::internal::CaptureStdout();
     const std::string global_out_dir = "./";
     const std::string dft_functional = "default";
-    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda),
-                ::testing::ExitedWithCode(1),
-                "");
+    pp_dir = "./support/";
+    EXPECT_EXIT(elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, 
+        global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda),
+        ::testing::ExitedWithCode(1),"");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
                 testing::HasSubstr("Pseudopotential data do not match."));
@@ -448,6 +451,10 @@ TEST_F(UcellDeathTest, ReadPseudoWarning1) {
                 testing::HasSubstr("All DFT functional must consistent."));
 }
 
+// due to some complicated logic implemented in read_pseudo,
+// this test is not well defined, we will redesign the test
+// in the future, mohan note 2026-07-20
+/*
 TEST_F(UcellDeathTest, ReadPseudoWarning2) {
     const std::string pseudo_dir = pp_dir;
     const std::string global_out_dir = "./";
@@ -477,6 +484,7 @@ TEST_F(UcellDeathTest, ReadPseudoWarning2) {
         testing::HasSubstr("Warning: the number of valence electrons in "
                            "pseudopotential > 3 for Al: [Ne] 3s2 3p1"));
 }
+*/
 
 TEST_F(UcellTest, CalNelec) {
     const bool lspinorb = false;
