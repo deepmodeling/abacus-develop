@@ -86,10 +86,11 @@ Su2 so3_to_su2(const ModuleBase::Matrix3& gmatc, const double eps)
         }
         double n[3] = {0.0, 0.0, 0.0};
         n[imax] = std::sqrt(nn[imax]);
-        // off-diagonal of (R + I)/2 gives n_i n_j -> fix relative signs from the reference
-        const double off[3][3] = {{0.0, 0.5 * (R.e12 + R.e21), 0.5 * (R.e13 + R.e31)},
-                                  {0.5 * (R.e21 + R.e12), 0.0, 0.5 * (R.e23 + R.e32)},
-                                  {0.5 * (R.e31 + R.e13), 0.5 * (R.e32 + R.e23), 0.0}};
+        // For theta = pi, R = 2 n n^T - I, so the off-diagonal R_ij = 2 n_i n_j and the symmetric
+        // combination R_ij + R_ji = 4 n_i n_j. Hence n_i n_j = 0.25*(R_ij + R_ji).
+        const double off[3][3] = {{0.0, 0.25 * (R.e12 + R.e21), 0.25 * (R.e13 + R.e31)},
+                                  {0.25 * (R.e21 + R.e12), 0.0, 0.25 * (R.e23 + R.e32)},
+                                  {0.25 * (R.e31 + R.e13), 0.25 * (R.e32 + R.e23), 0.0}};
         for (int j = 0; j < 3; ++j)
         {
             if (j == imax)

@@ -75,7 +75,6 @@ namespace ModuleSymmetry
 }
 }
         }
-
         // output Ms of isym=1
         // std::ofstream ofs("Ms_kibz7_sym7.dat");
         // for (int i = 0;i < pv.get_row_size();++i)
@@ -461,6 +460,11 @@ namespace ModuleSymmetry
                                     if (pv.in_this_processor(gi, gj))
                                     {
                                         const int index = pv.global2local_col(gj) * pv.get_row_size() + pv.global2local_row(gi);
+                                        // M(isym) = T_l (x) U is the spinor rep, with U = so3_to_su2 placed as-is:
+                                        //   M[(m,a),(m',b)] = phase * T_l(m,m') * U_{ab},   U_{ab} = spin_U[a*npol + b].
+                                        // Both T_l (rotmat_Slm) and U are ANTI-homomorphisms here (row-vector / R^T convention: 
+                                        // rotmat_Slm(g)=R_orb(g)^{-1}, so3_to_su2 likewise), so this M is a consistent rep
+                                        //  and rot_matrix_ao's stored-DM rotation M^T D M^* is exact for ALL ops. 
                                         M_isym[index] = t * spin_U[a * npol + b];
                                     }
                                 }
@@ -473,8 +477,6 @@ namespace ModuleSymmetry
         }
         return M_isym;
     }
-
-    // void cal_Ms (kstar), maybe use map to stare Ms
 
     // D(k) = M^T(R, k) D(k_ibz) M^*(R, k), if D(k) is col-maj
     // D^T(k) = M^\dagger(R, k) D^T(k_ibz) M(R, k), if D(k) is row-maj
@@ -505,13 +507,18 @@ namespace ModuleSymmetry
         }
         else
         {
-            // D^T = M^\daggger D^T M
+            // Physical DM rotation D(k) = M^dagger D(k_ibz) M, with M = T (x) U is the anti-homomorphism rep in row-major convention.
+            // ABACUS stores the DM transposed (S = D^T), for which this becomes S(gk) = M^T S(k_ibz) M^* = (conj M)^dagger S (conj M)
+            // For nspin<4 the orbital-only M is real, so Mc = M and this is bit-identical to the old M^dagger D M.
+            const std::vector<std::complex<double>>& Mref = this->Ms_[ik_ibz].at(isym);
+            std::vector<std::complex<double>> Mc(Mref.size());
+            for (size_t i = 0; i < Mref.size(); ++i) { Mc[i] = std::conj(Mref[i]); }
             ScalapackConnector::gemm(dagger, notrans, nbasis, nbasis, nbasis,
-                alpha, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc, DMkibz.data(), i1, i1, pv.desc,
+                alpha, Mc.data(), i1, i1, pv.desc, DMkibz.data(), i1, i1, pv.desc,
                 beta, DMkibz_M.data(), i1, i1, pv.desc);
             alpha.real(1.0 / static_cast<double>(kstar_size));
             ScalapackConnector::gemm(notrans, notrans, nbasis, nbasis, nbasis,
-                alpha, DMkibz_M.data(), i1, i1, pv.desc, this->Ms_[ik_ibz].at(isym).data(), i1, i1, pv.desc,
+                alpha, DMkibz_M.data(), i1, i1, pv.desc, Mc.data(), i1, i1, pv.desc,
                 beta, DMk.data(), i1, i1, pv.desc);
         }
         return DMk;
