@@ -43,7 +43,7 @@ list(APPEND cell_simple_srcs
     ../../source_estate/read_pseudo.cpp
     ../../source_estate/cal_wfc.cpp
     ../../source_estate/cal_nelec_nband.cpp
-    ../../source_estate/read_orb.cpp
+    ../read_orb.cpp
     ../sep.cpp
     ../sep_cell.cpp
 )
@@ -108,6 +108,7 @@ AddTest(
   LIBS parameter base device
   SOURCES read_atoms_helper_test.cpp
     ../read_atoms_helper.cpp
+    ../read_orb.cpp
     ../read_stru.cpp
     ../print_cell.cpp
     ../atom_spec.cpp

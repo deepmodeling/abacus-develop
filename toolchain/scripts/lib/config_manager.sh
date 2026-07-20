@@ -390,7 +390,6 @@ config_set_defaults() {
     CONFIG_CACHE["TARGET_CPU"]="native"
     CONFIG_CACHE["LOG_LINES"]="200"
     CONFIG_CACHE["show_help"]="false"
-    CONFIG_CACHE["DOWNLOADER_FLAGS"]=""
     
     # Version strategy defaults (NEW)
     CONFIG_CACHE["VERSION_STRATEGY"]="main"

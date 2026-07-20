@@ -5,7 +5,7 @@
 #include "source_base/mathzone.h"
 #include "read_stru.h"
 #include "print_cell.h"
-#include "source_estate/read_orb.h"
+#include "read_orb.h"
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -519,7 +519,7 @@ bool read_atom_type_header(int it, UnitCell& ucell,
     if ((PARAM.inp.basis_type == "lcao")||(PARAM.inp.basis_type == "lcao_in_pw"))
     {
         std::string orbital_file = PARAM.inp.orbital_dir + ucell.orbital_fn[it];
-        bool normal = elecstate::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
+        bool normal = unitcell::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
         if(!normal)
         {
             return false;
@@ -530,7 +530,7 @@ bool read_atom_type_header(int it, UnitCell& ucell,
         if ((PARAM.inp.init_wfc.substr(0, 3) == "nao") || PARAM.inp.onsite_radius > 0.0)
         {
             std::string orbital_file = PARAM.inp.orbital_dir + ucell.orbital_fn[it];
-            bool normal = elecstate::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
+            bool normal = unitcell::read_orb_file(it, orbital_file, ofs_running, &(ucell.atoms[it]));
             if(!normal)
             {
                 return false;
