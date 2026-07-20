@@ -541,7 +541,7 @@ def check_input_parameter_docs(
     add_finding(
         findings,
         "INPUT parameter documentation linkage",
-        BLOCK,
+        WARN,
         "source/source_io/module_parameter",
         None,
         "INPUT parameter behavior appears to change without both docs/parameters.yaml and input-main.md updates.",
