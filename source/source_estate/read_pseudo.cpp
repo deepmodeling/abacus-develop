@@ -151,15 +151,21 @@ AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
     cal_natomwfc(ofs,ucell.natomwfc,ucell.ntype,ucell.atoms,nspin);
 
     // Calculate the information of atoms from the pseudopotential
+    // CRITICAL: Must pass the user-specified nbands parameter to cal_atoms_info().
+    // Previously, nbands was not passed, causing cal_atoms_info() to use default 0,
+    // which triggered cal_nbands() to auto-calculate regardless of user input.
+    // This led to incorrect energy calculations (deviation ~139 eV in test 006_PW_UPF201_Eu).
     CalAtomsInfo ca;
     AtomsInfoResult atoms_info = ca.cal_atoms_info(ucell.atoms, ucell.ntype,
                                                     nspin, two_fermi, nelec_delta,
                                                     esolver_type, lspinorb,
                                                     basis_type, smearing_method,
-                                                    ks_solver, bndpar);
+                                                    ks_solver, bndpar,
+                                                    nbands);
 
     // setup nlocal
     // nlocal is calculated by CalAtomsInfo::cal_atoms_info() above
+    // Use the input nbands parameter (from user specification) instead of atoms_info.nbands
     cal_nwfc(ofs, ucell, ucell.atoms, nspin, atoms_info.nlocal, npol,
               basis_type, esolver_type, init_wfc, nbands);
 

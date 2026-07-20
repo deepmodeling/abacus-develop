@@ -23,6 +23,14 @@ class CalAtomsInfo
     /**
      * @brief Calculate the atom information from pseudopotential
      *
+     * IMPORTANT: The nbands parameter must be the user-specified value from INPUT file.
+     * This function passes nbands to cal_nbands(), which uses it to determine the
+     * number of bands. If nbands is 0, cal_nbands() will auto-calculate a default.
+     * 
+     * BUG FIX NOTE: Previously, this function did not accept nbands parameter,
+     * causing result.nbands to always be 0. cal_nbands() then auto-calculated
+     * regardless of user input, leading to incorrect energy calculations.
+     *
      * @param atoms [in] Atom pointer
      * @param ntype [in] number of atom types
      * @param nspin [in] number of spin components
@@ -34,9 +42,10 @@ class CalAtomsInfo
      * @param smearing_method [in] smearing method
      * @param ks_solver [in] KS solver type
      * @param bndpar [in] band parallel parameter
+     * @param nbands [in] user-specified number of bands from INPUT file
      * @return AtomsInfoResult containing calculated atom information
      */
-    AtomsInfoResult cal_atoms_info(const Atom* atoms, const int& ntype,
+    AtomsInfoResult cal_atoms_info(Atom* atoms, const int& ntype,
                                    const int nspin, const bool two_fermi,
                                    const double nelec_delta,
                                    const std::string& esolver_type,
@@ -44,7 +53,8 @@ class CalAtomsInfo
                                    const std::string& basis_type,
                                    const std::string& smearing_method,
                                    const std::string& ks_solver,
-                                   const int bndpar)
+                                   const int bndpar,
+                                   const int nbands)
     {
         AtomsInfoResult result;
 
@@ -69,6 +79,13 @@ class CalAtomsInfo
             {
                 result.use_uspp = true;
             }
+        }
+
+        // set index for atoms before calculating nlocal
+        // this ensures consistency with cal_nwfc() which also calls set_index() first
+        for (int it = 0; it < ntype; ++it)
+        {
+            atoms[it].set_index();
         }
 
         // calculate the total number of local basis
@@ -100,6 +117,14 @@ class CalAtomsInfo
             nelec_spin[0] = (result.nelec + result.nupdown) / 2.0;
             nelec_spin[1] = (result.nelec - result.nupdown) / 2.0;
         }
+        // CRITICAL: Set result.nbands to the user-specified value before calling cal_nbands().
+        // cal_nbands() uses nbands==0 as a signal to auto-calculate, so we must pass the
+        // user-specified value (even if it's 0, meaning user wants auto-calculation).
+        // 
+        // BUG FIX: Previously, result.nbands was not set here, defaulting to 0 from struct
+        // initialization. This caused cal_nbands() to always auto-calculate, ignoring user input.
+        // The fix ensures user-specified nbands (e.g., 10 from INPUT) is properly propagated.
+        result.nbands = nbands;
         unitcell::cal_nbands(static_cast<int>(result.nelec), result.nlocal, nelec_spin, result.nbands,
                               esolver_type, lspinorb, nspin, basis_type, smearing_method);
 
