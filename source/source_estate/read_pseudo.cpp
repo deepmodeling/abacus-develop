@@ -27,7 +27,8 @@ AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
                    const double nelec_delta,
                    const std::string& smearing_method,
                    const std::string& ks_solver,
-                   const int bndpar) {
+                   const int bndpar,
+                   const double nelec) {
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -151,17 +152,19 @@ AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
     cal_natomwfc(ofs,ucell.natomwfc,ucell.ntype,ucell.atoms,nspin);
 
     // Calculate the information of atoms from the pseudopotential
-    // CRITICAL: Must pass the user-specified nbands parameter to cal_atoms_info().
-    // Previously, nbands was not passed, causing cal_atoms_info() to use default 0,
-    // which triggered cal_nbands() to auto-calculate regardless of user input.
-    // This led to incorrect energy calculations (deviation ~139 eV in test 006_PW_UPF201_Eu).
+    // CRITICAL: Must pass the user-specified nbands and nelec parameters to cal_atoms_info().
+    // Previously, nbands and nelec were not passed, causing cal_atoms_info() to use default 0,
+    // which triggered cal_nbands() and cal_nelec() to auto-calculate regardless of user input.
+    // This led to incorrect energy calculations (deviation ~139 eV in test 006_PW_UPF201_Eu,
+    // and ~7-8 eV in tests 076_PW_elec_add, 078_PW_S2_elec_add, 082_PW_gatefield).
     CalAtomsInfo ca;
     AtomsInfoResult atoms_info = ca.cal_atoms_info(ucell.atoms, ucell.ntype,
                                                     nspin, two_fermi, nelec_delta,
                                                     esolver_type, lspinorb,
                                                     basis_type, smearing_method,
                                                     ks_solver, bndpar,
-                                                    nbands);
+                                                    nbands,
+                                                    nelec);
 
     // setup nlocal
     // nlocal is calculated by CalAtomsInfo::cal_atoms_info() above

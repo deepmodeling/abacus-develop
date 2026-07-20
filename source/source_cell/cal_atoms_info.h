@@ -23,13 +23,14 @@ class CalAtomsInfo
     /**
      * @brief Calculate the atom information from pseudopotential
      *
-     * IMPORTANT: The nbands parameter must be the user-specified value from INPUT file.
-     * This function passes nbands to cal_nbands(), which uses it to determine the
-     * number of bands. If nbands is 0, cal_nbands() will auto-calculate a default.
+     * IMPORTANT: The nbands and nelec parameters must be the user-specified values from INPUT file.
+     * This function passes nbands to cal_nbands() and nelec to cal_nelec().
+     * If nbands is 0, cal_nbands() will auto-calculate a default.
+     * If nelec is 0, cal_nelec() will auto-calculate based on atomic valence.
      * 
-     * BUG FIX NOTE: Previously, this function did not accept nbands parameter,
-     * causing result.nbands to always be 0. cal_nbands() then auto-calculated
-     * regardless of user input, leading to incorrect energy calculations.
+     * BUG FIX NOTE: Previously, this function did not accept nbands and nelec parameters,
+     * causing result.nbands and result.nelec to always be 0. cal_nbands() and cal_nelec()
+     * then auto-calculated regardless of user input, leading to incorrect energy calculations.
      *
      * @param atoms [in] Atom pointer
      * @param ntype [in] number of atom types
@@ -43,6 +44,7 @@ class CalAtomsInfo
      * @param ks_solver [in] KS solver type
      * @param bndpar [in] band parallel parameter
      * @param nbands [in] user-specified number of bands from INPUT file
+     * @param nelec [in] user-specified number of electrons from INPUT file
      * @return AtomsInfoResult containing calculated atom information
      */
     AtomsInfoResult cal_atoms_info(Atom* atoms, const int& ntype,
@@ -54,7 +56,8 @@ class CalAtomsInfo
                                    const std::string& smearing_method,
                                    const std::string& ks_solver,
                                    const int bndpar,
-                                   const int nbands)
+                                   const int nbands,
+                                   const double nelec)
     {
         AtomsInfoResult result;
 
@@ -107,7 +110,14 @@ class CalAtomsInfo
             }
         }
 
-        // calculate the total number of electrons
+        // CRITICAL: Set result.nelec to the user-specified value before calling cal_nelec().
+        // cal_nelec() uses nelec==0 as a signal to auto-calculate, so we must pass the
+        // user-specified value (even if it's 0, meaning user wants auto-calculation).
+        // 
+        // BUG FIX: Previously, result.nelec was not set here, defaulting to 0 from struct
+        // initialization. This caused cal_nelec() to always auto-calculate, ignoring user input.
+        // The fix ensures user-specified nelec (e.g., 9 from INPUT) is properly propagated.
+        result.nelec = nelec;
         unitcell::cal_nelec(atoms, ntype, result.nelec, nelec_delta);
 
         // autoset and check GlobalV::NBANDS
