@@ -636,6 +636,12 @@ struct Input_para
     std::string exx_ccp_rmesh_times = "default"; ///< how many times larger the radial mesh required for
                                                  ///< calculating Columb potential is to that of atomic orbitals
     double exx_ewald_lambda = 1.0;               ///< Gaussian decay coefficient for Ewald full Coulomb in RI-EXX
+    std::string exx_ewald_tail_check = "warn";   ///< off, warn, enlarge, or strict short-range tail handling
+    double exx_ewald_tail_abs_tol = 1e-12;        ///< absolute Frobenius-norm tolerance for one guard-shell block
+    double exx_ewald_tail_rel_tol = 1e-10;        ///< relative Frobenius-norm tolerance for one guard-shell block
+    double exx_ewald_tail_sum_rel_tol = 1e-8;     ///< relative sum-of-block-norm tolerance for the guard shell
+    int exx_ewald_tail_guard_cells = 1;           ///< lattice-cell layers added in every periodic direction
+    int exx_ewald_tail_max_expansions = 3;        ///< maximum adaptive real-space range expansions
     int exx_opt_orb_lmax = 0;                    ///< the maximum l of the spherical Bessel functions for opt ABFs
     double exx_opt_orb_ecut = 0.0;               ///< the cut-off of plane wave expansion for opt ABFs
     double exx_opt_orb_tolerence = 0.0;          ///< the threshold when solving for the zeros of spherical Bessel

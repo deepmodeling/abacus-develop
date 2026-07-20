@@ -308,6 +308,12 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.exx_v_threshold_long, 0.123);
     EXPECT_EQ(param.inp.exx_ccp_rmesh_times, "1.5");
     EXPECT_DOUBLE_EQ(param.inp.exx_ewald_lambda, 0.25);
+    EXPECT_EQ(param.inp.exx_ewald_tail_check, "enlarge");
+    EXPECT_DOUBLE_EQ(param.inp.exx_ewald_tail_abs_tol, 2e-12);
+    EXPECT_DOUBLE_EQ(param.inp.exx_ewald_tail_rel_tol, 3e-10);
+    EXPECT_DOUBLE_EQ(param.inp.exx_ewald_tail_sum_rel_tol, 4e-8);
+    EXPECT_EQ(param.inp.exx_ewald_tail_guard_cells, 2);
+    EXPECT_EQ(param.inp.exx_ewald_tail_max_expansions, 4);
     EXPECT_DOUBLE_EQ(param.inp.rpa_ccp_rmesh_times, 10.0);
     EXPECT_EQ(param.inp.out_librpa_reader_version, 1);
     EXPECT_EQ(param.inp.exx_opt_orb_lmax, 0);

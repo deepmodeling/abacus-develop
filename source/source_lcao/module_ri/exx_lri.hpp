@@ -739,9 +739,12 @@ build_ewald_bare_coulomb_with_moment(
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
     const ModuleBase::Element_Basis_Index::IndexPermutation& abfs_old_to_new,
     const std::pair<std::vector<int>, std::vector<std::vector<std::pair<int, std::array<int, 3>>>>>& list_As_Vs,
-    LRI_CV<Tdata>& cv)
+    LRI_CV<Tdata>& cv,
+    const bool ignore_upper_coulomb_cutoff = false,
+    const bool force_moment_far_field = false,
+    const bool diagnostic_only = false)
 {
-    if (!info.coul_moment)
+    if (!info.coul_moment && !force_moment_far_field)
     {
         auto Vs_full = cv.cal_Vs(ucell,
                                  list_As_Vs.first,
@@ -750,7 +753,8 @@ build_ewald_bare_coulomb_with_moment(
         cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_full);
         return Vs_full;
     }
-    if ((PARAM.inp.cal_force || PARAM.inp.cal_stress)
+    if (!diagnostic_only
+        && (PARAM.inp.cal_force || PARAM.inp.cal_stress)
         && !ExxLriDetail::allow_rt_tddft_ewald_force_stress_bypass())
     {
         throw std::invalid_argument("exx_coul_moment for Ewald currently supports energy/SCF only.");
@@ -801,9 +805,233 @@ build_ewald_bare_coulomb_with_moment(
                        false,
                        false,
                        true,
-                       moment_value_scale);
+                       moment_value_scale,
+                       ignore_upper_coulomb_cutoff);
     cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_direct);
     return Vs_direct;
+}
+
+template<typename Tdata>
+inline std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>
+build_explicit_ewald_bare_coulomb(
+    const UnitCell& ucell,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
+    const std::vector<EwaldVqDetail::TailKey>& keys,
+    LRI_CV<Tdata>& cv)
+{
+    std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>> result;
+    const std::vector<double> abfs_cutoff = Exx_Abfs::Construct_Orbs::get_Rcut(abfs);
+    const auto grouped = EwaldVqDetail::group_tail_keys_by_atom(keys);
+    for (typename std::map<int, std::vector<std::pair<int, std::array<int, 3>>>>::const_iterator grouped_it
+             = grouped.begin();
+         grouped_it != grouped.end();
+         ++grouped_it)
+    {
+        const int iat0 = grouped_it->first;
+        const auto list_A1 = filter_ewald_exact_near_pairs_for_atom<Tdata>(
+            ucell,
+            iat0,
+            grouped_it->second,
+            abfs_cutoff);
+        if (list_A1.empty()) continue;
+        const auto part = cv.cal_Vs(ucell,
+                                    std::vector<int>{iat0},
+                                    list_A1,
+                                    {{"writable_Vws", false}});
+        for (typename std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>::const_iterator
+                 part_it = part.begin();
+             part_it != part.end();
+             ++part_it)
+        {
+            result[part_it->first].insert(part_it->second.begin(), part_it->second.end());
+        }
+    }
+    return result;
+}
+
+template<typename Tdata>
+struct EwaldRealspaceRange
+{
+    using TailDistribution
+        = std::pair<std::vector<int>, std::vector<std::vector<std::pair<int, std::array<int, 3>>>>>;
+    using TensorMap
+        = std::map<int, std::map<std::pair<int, std::array<int, 3>>, RI::Tensor<Tdata>>>;
+
+    std::array<int, 3> period{};
+    TailDistribution distribution;
+    TensorMap bare_coulomb;
+};
+
+inline void print_ewald_tail_report(const Exx_Info::Exx_Info_RI& info,
+                                    const EwaldVqDetail::TailMode mode,
+                                    const std::array<int, 3>& production_period,
+                                    const std::array<int, 3>& probe_period,
+                                    const EwaldVqDetail::TailStats& stats,
+                                    const EwaldVqDetail::TailDecision decision,
+                                    const int expansion,
+                                    const double exact_ccp_rmesh_times)
+{
+    const std::ios::fmtflags saved_flags = std::cout.flags();
+    const std::streamsize saved_precision = std::cout.precision();
+    std::cout << std::scientific << std::setprecision(12)
+              << "Ewald short-range tail:\n"
+              << "  mode: " << EwaldVqDetail::tail_mode_name(mode) << '\n'
+              << "  lambda: " << info.ewald_lambda << '\n'
+              << "  full-range source: exx_ccp_rmesh_times=" << info.ccp_rmesh_times << '\n'
+              << "  exact radial mesh factor: " << exact_ccp_rmesh_times << '\n'
+              << "  production period: " << production_period[0] << ' ' << production_period[1] << ' '
+              << production_period[2] << '\n'
+              << "  probe period: " << probe_period[0] << ' ' << probe_period[1] << ' '
+              << probe_period[2] << '\n'
+              << "  production blocks: " << stats.production_blocks << '\n'
+              << "  shell blocks: " << stats.shell_blocks << '\n'
+              << "  max |Vbare-Vgauss|_F: " << stats.max_norm << '\n'
+              << "  sum |Vbare-Vgauss|_F: " << stats.sum_norm << '\n'
+              << "  relative max: " << EwaldVqDetail::relative_tail_max(stats) << '\n'
+              << "  relative sum: " << EwaldVqDetail::relative_tail_sum(stats) << '\n'
+              << "  max Hermitian residual: " << stats.hermitian_residual << '\n'
+              << "  worst I,J,R: " << stats.worst_key.atom_i << ' ' << stats.worst_key.atom_j << ' '
+              << stats.worst_key.cell[0] << ' ' << stats.worst_key.cell[1] << ' '
+              << stats.worst_key.cell[2] << '\n'
+              << "  worst distance/bare/Gaussian: " << stats.worst_distance << ' '
+              << stats.worst_bare_norm << ' ' << stats.worst_gaussian_norm << '\n'
+              << "  coverage complete: " << (stats.coverage_complete ? "true" : "false") << '\n'
+              << "  expansion: " << expansion << '\n'
+              << "  decision: " << EwaldVqDetail::tail_decision_name(decision) << std::endl;
+    std::cout.flags(saved_flags);
+    std::cout.precision(saved_precision);
+}
+
+template<typename Tdata>
+inline EwaldRealspaceRange<Tdata> select_ewald_realspace_range(
+    const Exx_Info::Exx_Info_RI& info,
+    const CoulombParam& ewald_coulomb_param,
+    const UnitCell& ucell,
+    const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& abfs,
+    const ModuleBase::Element_Basis_Index::IndexPermutation& abfs_old_to_new,
+    const std::vector<int>& atoms,
+    const std::array<int, 3>& requested_period,
+    const MPI_Comm mpi_comm,
+    LRI_CV<Tdata>& cv,
+    Ewald_Vq<Tdata>& evq)
+{
+    EwaldRealspaceRange<Tdata> selected;
+    selected.period = requested_period;
+    const auto tail_mode = EwaldVqDetail::parse_tail_mode(info.ewald_tail_check);
+    if (EwaldVqDetail::uses_adaptive_realspace_range(tail_mode)
+        && (PARAM.inp.cal_force || PARAM.inp.cal_stress))
+    {
+        throw std::invalid_argument(
+            "Adaptive Ewald tail enlargement currently supports energy/SCF only; "
+            "use exx_ewald_tail_check=warn for force or stress calculations.");
+    }
+    const EwaldVqDetail::TailTolerances tolerances{info.ewald_tail_abs_tol,
+                                                   info.ewald_tail_rel_tol,
+                                                   info.ewald_tail_sum_rel_tol};
+    const std::array<bool, 3> periodic
+        = info.ewald_dimension == 2 ? std::array<bool, 3>{true, true, false}
+                                    : std::array<bool, 3>{true, true, true};
+    int mpi_rank = 0;
+    int mpi_size = 1;
+    MPI_Comm_rank(mpi_comm, &mpi_rank);
+    MPI_Comm_size(mpi_comm, &mpi_size);
+
+    int expansions = 0;
+    while (true)
+    {
+        selected.distribution = RI::Distribute_Equally::distribute_atoms_periods(
+            mpi_comm,
+            atoms,
+            selected.period,
+            2,
+            false);
+        selected.bare_coulomb = build_ewald_bare_coulomb_with_moment(
+            info,
+            ewald_coulomb_param,
+            ucell,
+            abfs,
+            abfs_old_to_new,
+            selected.distribution,
+            cv);
+        evq.init_ions(ucell, selected.period);
+
+        if (tail_mode == EwaldVqDetail::TailMode::Off)
+        {
+            break;
+        }
+
+        const bool truncate_analytic_tail = tail_mode == EwaldVqDetail::TailMode::Enlarge
+                                            || tail_mode == EwaldVqDetail::TailMode::Strict;
+        const auto production_difference = evq.cal_realspace_difference(
+            ucell,
+            selected.distribution.first,
+            selected.distribution.second[0],
+            selected.bare_coulomb,
+            truncate_analytic_tail);
+        std::size_t local_production_blocks = 0;
+        double local_reference_norm = 0.0;
+        for (const auto& blocks_i : production_difference)
+        {
+            local_production_blocks += blocks_i.second.size();
+            for (const auto& block : blocks_i.second)
+            {
+                local_reference_norm = std::max(local_reference_norm, block.second.norm(2.0));
+            }
+        }
+
+        const auto probe_period = EwaldVqDetail::expand_odd_period(
+            selected.period,
+            periodic,
+            info.ewald_tail_guard_cells);
+        const auto local_shell_keys = EwaldVqDetail::distribute_tail_shell_keys(
+            atoms,
+            selected.period,
+            probe_period,
+            mpi_rank,
+            mpi_size);
+        auto shell_bare = build_explicit_ewald_bare_coulomb(
+            ucell,
+            abfs,
+            local_shell_keys,
+            cv);
+        const auto stats = evq.cal_short_range_tail_stats(
+            ucell,
+            local_shell_keys,
+            shell_bare,
+            local_production_blocks,
+            local_reference_norm);
+        const auto decision = EwaldVqDetail::decide_tail(
+            stats,
+            tolerances,
+            tail_mode,
+            expansions,
+            info.ewald_tail_max_expansions);
+        if (mpi_rank == 0)
+        {
+            print_ewald_tail_report(info,
+                                    tail_mode,
+                                    selected.period,
+                                    probe_period,
+                                    stats,
+                                    decision,
+                                    expansions,
+                                    evq.get_exact_ccp_rmesh_times());
+        }
+
+        if (decision == EwaldVqDetail::TailDecision::Expand)
+        {
+            selected.period = probe_period;
+            ++expansions;
+            continue;
+        }
+        if (decision == EwaldVqDetail::TailDecision::Fail)
+        {
+            throw std::runtime_error(
+                "Ewald short-range tail did not converge within the configured expansion limit");
+        }
+        break;
+    }
+    return selected;
 }
 
 template<typename Tdata>
@@ -883,7 +1111,19 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->MGT = std::make_shared<ORB_gaunt_table>();
 		for(const auto &settings_list : this->coulomb_settings)
 		{
-		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
+		const auto tail_mode = EwaldVqDetail::parse_tail_mode(this->info.ewald_tail_check);
+		const double exact_ccp_rmesh_times
+			= settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald
+				  && EwaldVqDetail::uses_adaptive_realspace_range(tail_mode)
+			? EwaldVqDetail::adaptive_exact_rmesh_times(
+				this->info.ccp_rmesh_times,
+				Exx_Abfs::Construct_Orbs::get_Rcut(this->lcaos),
+				Exx_Abfs::Construct_Orbs::get_Rcut(this->abfs))
+			: this->info.ccp_rmesh_times;
+		this->exx_objs[settings_list.first].abfs_ccp
+			= Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs,
+			                                         settings_list.second.second,
+			                                         exact_ccp_rmesh_times);
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
 															this->info.kmesh_times, this->MGT, settings_list.second.first,
@@ -892,8 +1132,9 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 				{
 						this->exx_objs[settings_list.first].evq.init(ucell, orb,
 																			this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-																			settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
-																			this->info.ewald_lambda, this->info.kmesh_times,
+													settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
+													exact_ccp_rmesh_times,
+													this->info.ewald_lambda, this->info.kmesh_times,
 																			this->info.ewald_dimension,
 																			this->abfs_old_to_new_per_type);
 				}
@@ -967,7 +1208,19 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->MGT = std::make_shared<ORB_gaunt_table>();
 		for(const auto &settings_list : this->coulomb_settings)
 		{
-		this->exx_objs[settings_list.first].abfs_ccp = Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs, settings_list.second.second, this->info.ccp_rmesh_times);
+		const auto tail_mode = EwaldVqDetail::parse_tail_mode(this->info.ewald_tail_check);
+		const double exact_ccp_rmesh_times
+			= settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald
+				  && EwaldVqDetail::uses_adaptive_realspace_range(tail_mode)
+			? EwaldVqDetail::adaptive_exact_rmesh_times(
+				this->info.ccp_rmesh_times,
+				Exx_Abfs::Construct_Orbs::get_Rcut(this->lcaos),
+				Exx_Abfs::Construct_Orbs::get_Rcut(this->abfs))
+			: this->info.ccp_rmesh_times;
+		this->exx_objs[settings_list.first].abfs_ccp
+			= Conv_Coulomb_Pot_K::cal_orbs_ccp(this->abfs,
+			                                         settings_list.second.second,
+			                                         exact_ccp_rmesh_times);
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
 															this->info.kmesh_times, this->MGT, settings_list.second.first,
@@ -976,8 +1229,9 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 				{
 						this->exx_objs[settings_list.first].evq.init(ucell, orb,
 																			this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-																			settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
-																			this->info.ewald_lambda, this->info.kmesh_times,
+													settings_list.second.second, this->MGT, this->info.ccp_rmesh_times,
+													exact_ccp_rmesh_times,
+													this->info.ewald_lambda, this->info.kmesh_times,
 																			this->info.ewald_dimension,
 																			this->abfs_old_to_new_per_type);
 				}
@@ -1141,9 +1395,29 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
 	// std::max(3) for gamma_only, list_A2 should contain cell {-1,0,1}. In the future distribute will be neighbour.
-	const std::array<Tcell,Ndim> period_Vs = LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times, ucell, orb_cutoff_);
-	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
+	std::array<Tcell,Ndim> period_Vs
+		= LRI_CV_Tools::cal_latvec_range<Tcell>(1+this->info.ccp_rmesh_times, ucell, orb_cutoff_);
+	std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA,std::array<Tcell,Ndim>>>>>
 		list_As_Vs = RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
+	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> selected_ewald_bare;
+	const auto ewald_settings = this->coulomb_settings.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald);
+	if (ewald_settings != this->coulomb_settings.end())
+	{
+		auto selected_range = ExxLriDetail::select_ewald_realspace_range(
+			this->info,
+			ewald_settings->second.second,
+			ucell,
+			this->abfs,
+			this->abfs_old_to_new_per_type,
+			atoms,
+			period_Vs,
+			this->mpi_comm,
+			this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald].cv,
+			this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Ewald].evq);
+		period_Vs = selected_range.period;
+		list_As_Vs = std::move(selected_range.distribution);
+		selected_ewald_bare = std::move(selected_range.bare_coulomb);
+	}
 
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs_long;
@@ -1151,14 +1425,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 	for (const auto& settings_list : this->coulomb_settings)
 	{
 		auto Vs_temp = (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
-			? ExxLriDetail::build_ewald_bare_coulomb_with_moment(
-				this->info,
-				settings_list.second.second,
-				ucell,
-				this->abfs,
-				this->abfs_old_to_new_per_type,
-				list_As_Vs,
-				this->exx_objs[settings_list.first].cv)
+			? selected_ewald_bare
 			: this->exx_objs[settings_list.first].cv.cal_Vs(
 				ucell,
 				list_As_Vs.first,
@@ -1177,8 +1444,6 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 						  << " near-field exact + far-field moment."
 						  << std::endl;
 			}
-
-			this->exx_objs[settings_list.first].evq.init_ions(ucell, period_Vs);
 
 			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald;
 			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long;
@@ -1839,28 +2104,40 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
 
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
 
-	const std::array<Tcell, Ndim> period_Vs
+	const std::array<Tcell, Ndim> period_Vs_requested
 		= LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
-	const std::pair<std::vector<TA>, std::vector<std::vector<std::pair<TA, std::array<Tcell, Ndim>>>>> list_As_Vs
-		= RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
 
 	for (const auto& settings_list : this->coulomb_settings)
 	{
-		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_temp
-			= (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
-			? ExxLriDetail::build_ewald_bare_coulomb_with_moment(
+		std::array<Tcell, Ndim> period_Vs = period_Vs_requested;
+		auto list_As_Vs
+			= RI::Distribute_Equally::distribute_atoms_periods(this->mpi_comm, atoms, period_Vs, 2, false);
+		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_temp;
+		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
+		{
+			auto selected_range = ExxLriDetail::select_ewald_realspace_range(
 				this->info,
 				settings_list.second.second,
 				ucell,
 				this->abfs,
 				this->abfs_old_to_new_per_type,
-				list_As_Vs,
-				this->exx_objs[settings_list.first].cv)
-			: this->exx_objs[settings_list.first].cv.cal_Vs(
+				atoms,
+				period_Vs_requested,
+				this->mpi_comm,
+				this->exx_objs[settings_list.first].cv,
+				this->exx_objs[settings_list.first].evq);
+			period_Vs = selected_range.period;
+			list_As_Vs = std::move(selected_range.distribution);
+			Vs_temp = std::move(selected_range.bare_coulomb);
+		}
+		else
+		{
+			Vs_temp = this->exx_objs[settings_list.first].cv.cal_Vs(
 				ucell,
 				list_As_Vs.first,
 				list_As_Vs.second[0],
 				{{"writable_Vws", true}});
+		}
 		if (settings_list.first != Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 		{
 			this->exx_objs[settings_list.first].cv.Vws = LRI_CV_Tools::get_CVws(ucell, Vs_temp);
@@ -1868,7 +2145,6 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
 
 		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 		{
-			this->exx_objs[settings_list.first].evq.init_ions(ucell, period_Vs);
 			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald;
 			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_short;
 			std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_ewald_long;

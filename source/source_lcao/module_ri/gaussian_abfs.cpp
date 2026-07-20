@@ -65,7 +65,6 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
     const ModuleBase::Vector3<double> a2_bohr = ucell.a2 * this->lat0;
     this->area_parallel_bohr2 = (a1_bohr ^ a2_bohr).norm();
     this->lz_bohr = this->omega / this->area_parallel_bohr2;
-    const double eta = 35;
     std::vector<ModuleBase::Vector3<double>> Gvec;
     Gvec.resize(3);
     Gvec[0].x = G.e11;
@@ -92,7 +91,7 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
     for (size_t ik = 0; ik != nks0; ++ik)
     {
         ModuleBase::Vector3<double> qvec = this->kvec_c[ik];
-        const double Gmax = std::sqrt(eta * this->lambda) + qvec.norm() * this->tpiba;
+        const double Gmax = std::sqrt(radial_decay_cutoff_exponent * this->lambda) + qvec.norm() * this->tpiba;
         std::vector<int> n_supercells = get_n_supercells(this->lat0, G, Gmax);
         int total_cells = std::accumulate(n_supercells.begin(), n_supercells.end(), 1, [](int a, int b) {
             return a * (2 * b + 1);
@@ -376,8 +375,7 @@ Numerical_Orbital_Lm Gaussian_Abfs::Gauss(const Numerical_Orbital_Lm& orb, const
 {
     Numerical_Orbital_Lm gaussian;
     const int angular_momentum_l = orb.getL();
-    const double eta = 35;
-    const double rcut = std::sqrt(eta / lambda);
+    const double rcut = radial_cutoff(lambda);
     const double dr = orb.get_rab().back();
     int Nr = std::ceil(rcut / dr);
     if (Nr % 2 == 0)

@@ -35,6 +35,12 @@ struct Exx_Info
         double V_grad_R_threshold = 0;
         double ccp_rmesh_times = 10;
         double ewald_lambda = 1.0;
+        std::string ewald_tail_check = "warn";
+        double ewald_tail_abs_tol = 1e-12;
+        double ewald_tail_rel_tol = 1e-10;
+        double ewald_tail_sum_rel_tol = 1e-8;
+        int ewald_tail_guard_cells = 1;
+        int ewald_tail_max_expansions = 3;
         int ewald_dimension = 3;
         bool exx_symmetry_realspace = true;
         double kmesh_times = 4;

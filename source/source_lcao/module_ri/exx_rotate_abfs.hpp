@@ -152,7 +152,8 @@ void Moment_abfs<Tdata>::cal_VR(
     const bool apply_cutoff,
     const bool write_vws,
     const bool allow_insert,
-    const double value_scale)
+    const double value_scale,
+    const bool ignore_upper_coulomb_cutoff)
 {
     ModuleBase::TITLE("Rotate_abfs", "cal_VR");
     ModuleBase::timer::start("Rotate_abfs", "cal_VR");
@@ -204,7 +205,7 @@ void Moment_abfs<Tdata>::cal_VR(
             double Rcut_lcao = orb_cutoff[T1] + orb_cutoff[T2];
             // Rcut_coul: bohr
             double Rcut_coul = std::min(cv.get_V_Rcut(T1, T2), cv.get_V_Rcut(T2, T1));
-            if (distance < Rcut_lcao || distance >= Rcut_coul)
+            if (distance < Rcut_lcao || (!ignore_upper_coulomb_cutoff && distance >= Rcut_coul))
                 continue;
             const auto JR = std::make_pair(iat1, R);
             auto tmp_tensor = RI::Tensor<Tdata>({sizeA, sizeB});

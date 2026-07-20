@@ -230,6 +230,12 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_ri.V_grad_R_threshold = PARAM.inp.exx_v_grad_r_threshold;
         GlobalC::exx_info.info_ri.ccp_rmesh_times = std::stod(PARAM.inp.exx_ccp_rmesh_times);
         GlobalC::exx_info.info_ri.ewald_lambda = PARAM.inp.exx_ewald_lambda;
+        GlobalC::exx_info.info_ri.ewald_tail_check = PARAM.inp.exx_ewald_tail_check;
+        GlobalC::exx_info.info_ri.ewald_tail_abs_tol = PARAM.inp.exx_ewald_tail_abs_tol;
+        GlobalC::exx_info.info_ri.ewald_tail_rel_tol = PARAM.inp.exx_ewald_tail_rel_tol;
+        GlobalC::exx_info.info_ri.ewald_tail_sum_rel_tol = PARAM.inp.exx_ewald_tail_sum_rel_tol;
+        GlobalC::exx_info.info_ri.ewald_tail_guard_cells = PARAM.inp.exx_ewald_tail_guard_cells;
+        GlobalC::exx_info.info_ri.ewald_tail_max_expansions = PARAM.inp.exx_ewald_tail_max_expansions;
         GlobalC::exx_info.info_ri.ewald_dimension = PARAM.inp.exx_ewald_dimension;
         GlobalC::exx_info.info_ri.exx_symmetry_realspace = PARAM.inp.exx_symmetry_realspace;
         GlobalC::exx_info.info_ri.Cs_inv_thr = PARAM.inp.exx_cs_inv_thr;

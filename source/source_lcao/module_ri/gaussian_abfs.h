@@ -12,8 +12,10 @@
 
 #include <RI/global/Tensor.h>
 #include <array>
+#include <cmath>
 #include <functional>
 #include <map>
+#include <stdexcept>
 #include <vector>
 
 class Gaussian_Abfs
@@ -37,6 +39,13 @@ class Gaussian_Abfs
   C^{LM}_{lm,l'm'}： Gaunt coefficient
 */
   public:
+    static constexpr double radial_decay_cutoff_exponent = 35.0;
+    static double radial_cutoff(const double lambda)
+    {
+        if (lambda <= 0.0) throw std::invalid_argument("Ewald Gaussian lambda must be positive");
+        return std::sqrt(radial_decay_cutoff_exponent / lambda);
+    }
+
     void init(const UnitCell& ucell,
               const int& Lmax,
               const std::vector<ModuleBase::Vector3<double>>& kvec_c,

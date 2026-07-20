@@ -474,6 +474,98 @@ void ReadInput::item_exx()
         this->add_item(item);
     }
     {
+        Input_Item item("exx_ewald_tail_check");
+        item.annotation = "Ewald short-range Gaussian-tail handling mode";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "Check the outer real-space shell of Vbare-Vgauss. off disables the probe, warn reports without changing the production range, enlarge expands until converged, and strict also aborts on incomplete or unconverged coverage.";
+        item.default_value = "warn";
+        read_sync_string(input.exx_ewald_tail_check);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& mode = para.input.exx_ewald_tail_check;
+            if (mode != "off" && mode != "warn" && mode != "enlarge" && mode != "strict")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_check must be off, warn, enlarge, or strict");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_abs_tol");
+        item.annotation = "absolute Ewald short-range guard-shell tolerance";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.default_value = "1e-12";
+        read_sync_double(input.exx_ewald_tail_abs_tol);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_tail_abs_tol < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_abs_tol must be non-negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_rel_tol");
+        item.annotation = "relative Ewald short-range guard-shell maximum tolerance";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.default_value = "1e-10";
+        read_sync_double(input.exx_ewald_tail_rel_tol);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_tail_rel_tol < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_rel_tol must be non-negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_sum_rel_tol");
+        item.annotation = "relative Ewald short-range guard-shell summed tolerance";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.default_value = "1e-8";
+        read_sync_double(input.exx_ewald_tail_sum_rel_tol);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_tail_sum_rel_tol < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_sum_rel_tol must be non-negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_guard_cells");
+        item.annotation = "number of lattice-cell layers in the Ewald tail probe";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Integer";
+        item.default_value = "1";
+        read_sync_int(input.exx_ewald_tail_guard_cells);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_tail_guard_cells < 1)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_guard_cells must be at least one");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exx_ewald_tail_max_expansions");
+        item.annotation = "maximum adaptive Ewald real-space range expansions";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Integer";
+        item.default_value = "3";
+        read_sync_int(input.exx_ewald_tail_max_expansions);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.exx_ewald_tail_max_expansions < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exx_ewald_tail_max_expansions must be non-negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("exx_opt_orb_lmax");
         item.annotation = "the maximum l of the spherical Bessel functions for opt ABFs";
         item.category = "Exact Exchange (LCAO)";
