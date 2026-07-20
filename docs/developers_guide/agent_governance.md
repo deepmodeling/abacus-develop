@@ -215,13 +215,15 @@ setup workflows and should be added only through a later governance change.
 ## INPUT Parameter Changes
 
 Changes to parameter metadata, default values, type, availability, description,
-or parsing behavior must include both:
+or parsing behavior should include both:
 
 - `docs/parameters.yaml`
 - `docs/advanced/input_files/input-main.md`
 
 If the diff touches parameter internals but does not change user-visible INPUT
-behavior, the PR must state why no documentation update is required.
+behavior, the PR should state why no documentation update is required. Missing
+documentation updates trigger a governance warning (not a block), but maintainers
+may still request documentation updates before merging.
 
 ## PR Self-Consistency
 
