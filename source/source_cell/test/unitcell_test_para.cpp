@@ -224,8 +224,8 @@ TEST_F(UcellTest, ReadPseudo)
     const std::string smearing_method = "none";
     const std::string ks_solver = "genelpa";
     const int bndpar = 1;
-    // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
-    auto atoms_info = elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar);
+    const double nelec = 0.0;
+    auto atoms_info = elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec);
     // check_structure will print some warning info
     // output nonlocal file
     if (GlobalV::MY_RANK == 0)

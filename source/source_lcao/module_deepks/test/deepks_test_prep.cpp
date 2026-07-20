@@ -187,8 +187,9 @@ void test_deepks<T>::setup_cell()
     const std::string smearing_method = "gaussian";
     const std::string ks_solver = "cg";
     const int bndpar = 1;
+    const double nelec = 0.0;
 
-    auto atoms_info = elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar);
+    auto atoms_info = elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec);
 
     this->nlocal = atoms_info.nlocal;
     this->nbands = atoms_info.nbands;
