@@ -60,7 +60,6 @@ option(ENABLE_NATIVE_OPTIMIZATION
        "Enable compilation optimization for the native machine's CPU type" OFF)
 
 option(COMMIT_INFO "Print commit information in log" ON)
-option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method" ON)
 option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
