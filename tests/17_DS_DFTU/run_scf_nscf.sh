@@ -136,15 +136,12 @@ cp "${CHG_FILE}" "${TEST_DIR}/${NSCF_CHG_FILE}"
 echo "  Copied to: ${TEST_DIR}/${NSCF_CHG_FILE}"
 
 # For DFT+U tests, also copy dm_onsite.txt if it exists.
-# dm_onsite.txt is read from OUT.prefix (global_out_dir), so we need to copy it
-# to the NSCF's OUT directory (TEST_DIR/OUT.suffix/)
+# dm_onsite.txt is read from read_file_dir (global_readin_dir), same as charge density
 if [ "${IS_DFTU}" = true ]; then
     ONSITE_FILE=$(find "${SCF_OUT}" -name "dm_onsite.txt" 2>/dev/null | head -1)
     if [ -n "${ONSITE_FILE}" ]; then
-        NSCF_OUT_DIR="${TEST_DIR}/${NSCF_SUFFIX}"
-        mkdir -p "${NSCF_OUT_DIR}"
-        cp "${ONSITE_FILE}" "${NSCF_OUT_DIR}/dm_onsite.txt"
-        echo "  Copied dm_onsite.txt to: ${NSCF_OUT_DIR}/dm_onsite.txt"
+        cp "${ONSITE_FILE}" "${TEST_DIR}/dm_onsite.txt"
+        echo "  Copied dm_onsite.txt to: ${TEST_DIR}/dm_onsite.txt"
     else
         echo "  WARNING: dm_onsite.txt not found in SCF output"
     fi

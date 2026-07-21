@@ -291,7 +291,7 @@ void Plus_U::init(UnitCell& cell,
         if (this->init_chg == "file")
         {
             std::stringstream sst;
-            sst << this->global_out_dir << "dm_onsite.txt";
+            sst << this->global_readin_dir << "dm_onsite.txt";
             this->read_occup_m(cell, sst.str(), this->init_chg, nspin, npol);
 #ifdef __MPI
             this->local_occup_bcast(cell, nspin, npol);
