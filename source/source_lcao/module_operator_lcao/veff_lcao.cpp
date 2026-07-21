@@ -1,4 +1,5 @@
 #include "veff_lcao.h"
+#include "veff_dh.hpp"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/tool_title.h"
@@ -33,7 +34,7 @@ void Veff<OperatorLCAO<TK, TR>>::initialize_HR(const UnitCell* ucell_in, const G
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell_in->itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }

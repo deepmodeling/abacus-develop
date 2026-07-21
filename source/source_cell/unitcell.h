@@ -1,18 +1,16 @@
 #ifndef UNITCELL_H
 #define UNITCELL_H
 
+#include <memory>
 #include "source_base/global_function.h"
 #include "source_cell/sep_cell.h"
-#include "source_estate/magnetism.h"
+#include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
-#include "source_cell/module_neighlist/unitcell_interface.h"
-
-#ifdef __LCAO
-#include "setup_nonlocal.h"
-#endif
+#include "source_cell/module_neighlist/atom_provider.h"
+#include "source_cell/nonlocal_info_base.h"
 
 // provide the basic information about unitcell.
-class UnitCell : public IAtomProvider {
+class UnitCell : public AtomProvider {
   public:
     double get_lat0() const override {
         return lat0;
@@ -38,7 +36,7 @@ class UnitCell : public IAtomProvider {
         return ntype;
     }
 
-    ModuleBase::Vector3<double> get_tauu(int i, int j) const override {
+    ModuleBase::Vector3<double> get_tau(int i, int j) const override {
         return atoms[i].tau[j];
     }
 
@@ -58,7 +56,7 @@ class UnitCell : public IAtomProvider {
     double& tpiba = lat.tpiba;
     double& tpiba2 = lat.tpiba2;
     double& omega = lat.omega;
-    int*& lc = lat.lc;
+    std::vector<int>& lat_axis_free = lat.lat_axis_free;
 
     ModuleBase::Matrix3& latvec = lat.latvec;
     ModuleBase::Vector3<double>&a1 = lat.a1, &a2 = lat.a2, &a3 = lat.a3;
@@ -193,11 +191,13 @@ class UnitCell : public IAtomProvider {
     ModuleBase::Matrix3 GGT0;
     ModuleBase::Matrix3 invGGT0;
 
-    // I'm doing a bad thing here! Will change later
+    // TODO(abacus-team): encapsulate ionic_position_updated and
+    // cell_parameter_updated with setters that enforce state invariants;
+    // currently exposed as mutable flags that can be toggled from anywhere.
     bool ionic_position_updated
-        = false; // whether the ionic position has been updated
+        = false; ///< whether the ionic position has been updated
     bool cell_parameter_updated
-        = false; // whether the cell parameters are updated
+        = false; ///< whether the cell parameters are updated
 
     //============================================================
     // meshx : max number of mesh point in pseudopotential file
@@ -236,12 +236,18 @@ class UnitCell : public IAtomProvider {
 
     void set_iat2itia();
 
-    void setup_cell(const std::string& fn, std::ofstream& log);
+    void setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
+        const std::string& basis_type, const std::string& orbital_dir, const std::string& init_wfc,
+        const double onsite_radius, const bool deepks_setorb, const bool rpa,
+        const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type);
 
-#ifdef __LCAO
-    InfoNonlocal infoNL; // store nonlocal information of lcao, added by zhengdy
-                         // 2021-09-07
-#endif
+    /**
+     * @brief Pointer to non-local pseudopotential information.
+     *
+     * This pointer is set during LCAO initialization and provides access
+     * to non-local projector data. It is null for non-LCAO calculations.
+     */
+    std::unique_ptr<NonlocalInfoBase> infoNL;
 
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors

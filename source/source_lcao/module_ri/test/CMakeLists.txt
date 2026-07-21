@@ -1,14 +1,14 @@
-remove_definitions(-D__MLALGO)
-remove_definitions(-D__CUDA)
-remove_definitions(-D__ROCM)
+abacus_disable_feature_definitions(__MLALGO)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
 AddTest(
   TARGET MODULE_RI_dm_mixing_test
-  LIBS parameter base ${math_libs} device
+  LIBS parameter base device
   SOURCES dm_mixing_test.cpp ../Mix_DMk_2D.cpp
 )
 AddTest(
   TARGET MODULE_RI_ri_cv_io_test
-  LIBS base ${math_libs} device parameter
+  LIBS base device parameter
   SOURCES ri_cv_io_test.cpp
 )
 AddTest(

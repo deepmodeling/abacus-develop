@@ -64,7 +64,7 @@ For numerical atomic orbitals basis,
 * scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
 * cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
 * cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
-* elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
+* elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DENABLE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
 If you set ks_solver=`genelpa` for basis_type=`pw`, the program will stop with an error message:
 
@@ -74,9 +74,9 @@ Then the user has to correct the input file and restart the calculation.)";
         item.default_value = R"(
     - PW basis: cg.
     - LCAO basis:
-        - genelpa (if compiling option `USE_ELPA` has been set)
+        - genelpa (if compiling option `ENABLE_ELPA` has been set)
         - lapack (if compiling option `ENABLE_MPI` has not been set)
-        - scalapack_gvx (if compiling option `USE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
+        - scalapack_gvx (if compiling option `ENABLE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
         - cusolver (if compiling option `USE_CUDA` has been set))";
         item.unit = "";
         item.availability = "";
@@ -577,8 +577,11 @@ In general, the convergence of the Broyden method is slightly faster than that o
 * 0.4: nspin=2 and nspin=4
 * 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
 * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 < mixing_beta < 0.1.
+A progressive tuning strategy might help, for example, 0.4 -> 0.1 -> 0.025.
 
-Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.)";
+Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
+
+For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to converge, try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
         item.default_value = "0.8 for nspin=1, 0.4 for nspin=2 and nspin=4.";
         item.unit = "";
         item.availability = "";
@@ -611,7 +614,10 @@ Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_nd
         item.annotation = "mixing parameter for magnetic density";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "Mixing parameter of magnetic density.";
+        item.description = R"(Mixing parameter of magnetic density.
+
+If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
+
         item.default_value = "4*mixing_beta, but the maximum value is 1.6.";
         item.unit = "";
         item.availability = "";

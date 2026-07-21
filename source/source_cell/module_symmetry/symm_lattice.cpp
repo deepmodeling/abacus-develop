@@ -1,8 +1,6 @@
 #include "symmetry.h"
 using namespace ModuleSymmetry;
 
-#include "source_io/module_parameter/parameter.h"
-
 //---------------------------------------------------
 // The lattice will be transformed to a 'standard
 // cystallographic setting', the relation between
@@ -13,7 +11,8 @@ int Symmetry::standard_lat(
     ModuleBase::Vector3<double> &a,
     ModuleBase::Vector3<double> &b,
     ModuleBase::Vector3<double> &c,
-    double *cel_const) const
+    double *cel_const,
+    const double symmetry_prec) const
 {
     static bool first = true;
     // there are only 14 types of Bravais lattice.
@@ -61,7 +60,7 @@ int Symmetry::standard_lat(
 
     Symm_Other::right_hand_sense(a, b, c);
 	ModuleBase::GlobalFunc::ZEROS(cel_const, 6);
-	const double small = PARAM.inp.symmetry_prec;
+	const double small = symmetry_prec;
 
 	//---------------------------	
 	// 1. alpha == beta == gamma 
@@ -294,7 +293,8 @@ void Symmetry::lattice_type(
     std::string& bravname,
     const Atom* atoms,
     bool convert_atoms,
-    double* newpos)const
+    double* newpos,
+    const double symmetry_prec)const
 {
     ModuleBase::TITLE("Symmetry","lattice_type");
 
@@ -319,7 +319,7 @@ void Symmetry::lattice_type(
 	//--------------------------------------------
 	ModuleBase::GlobalFunc::ZEROS(pre_const, 6);
 
-    int pre_brav = standard_lat(v1, v2, v3, cel_const);
+    int pre_brav = standard_lat(v1, v2, v3, cel_const, symmetry_prec);
 
     for ( int i = 0; i < 6; ++i)
     {
@@ -339,7 +339,7 @@ void Symmetry::lattice_type(
 
     ModuleBase::Vector3<double> w1, w2, w3;
     ModuleBase::Vector3<double> q1, q2, q3;
-    this->get_optlat(v1, v2, v3, w1, w2, w3, real_brav, cel_const, temp_const);
+    this->get_optlat(v1, v2, v3, w1, w2, w3, real_brav, cel_const, temp_const, symmetry_prec);
 
     //now, the highest symmetry of the combination of the shortest vectors has been found
     //then we compare it with the original symmetry

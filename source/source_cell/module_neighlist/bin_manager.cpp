@@ -1,144 +1,214 @@
 #include <limits>
 #include <cmath>
 #include <algorithm>
+#include <cassert>
+#include <stdexcept>
 #include "bin_manager.h"
 
+// ========== Bin class implementation ==========
 
+const std::vector<ModuleNeighList::LocalAtomIndex>& Bin::get_atom_indices() const {
+    return atom_indices_;
+}
+
+void Bin::set_id(int ix, int iy, int iz) {
+    id_x_ = ix;
+    id_y_ = iy;
+    id_z_ = iz;
+}
+
+void Bin::clear_atoms() {
+    atom_indices_.clear();
+}
+
+void Bin::add_atom_index(ModuleNeighList::LocalAtomIndex atom_index) {
+    atom_indices_.push_back(atom_index);
+}
+
+// ========== BinManager getter methods ==========
+
+int BinManager::get_nbinx() const {
+    return nbinx_;
+}
+
+int BinManager::get_nbiny() const {
+    return nbiny_;
+}
+
+int BinManager::get_nbinz() const {
+    return nbinz_;
+}
+
+int BinManager::get_total_bins() const {
+    return ModuleNeighList::checked_int_size(bins_.size(), "BinManager total bin count");
+}
+
+int BinManager::get_bin_atom_count(int bin_index) const {
+    if (bin_index < 0 || static_cast<std::size_t>(bin_index) >= bins_.size()) {
+        return 0;
+    }
+    return ModuleNeighList::checked_int_size(bins_[bin_index].get_atom_indices().size(),
+                                             "Bin atom count");
+}
+
+// ========== BinManager main methods ==========
 
 void BinManager::init_bins(
     double sr,
-    const std::vector<NeighborAtom>& inside_atoms,
-    const std::vector<NeighborAtom>& ghost_atoms
+    const std::vector<NeighborAtom>& all_atoms
 )
 {
-    sradius = sr;
-    if(inside_atoms.empty() && ghost_atoms.empty())
+    sradius_ = sr;
+    if (!std::isfinite(sradius_) || sradius_ <= 0.0)
     {
-        x_min=y_min=z_min=0;
-        x_max=y_max=z_max=0;
-        nbinx=nbiny=nbinz=1;
-        bins.clear();
-        bins.resize(1);
+        throw std::invalid_argument("BinManager search radius must be finite and positive.");
+    }
+    if(all_atoms.empty())
+    {
+        x_min_ = y_min_ = z_min_ = 0;
+        x_max_ = y_max_ = z_max_ = 0;
+        nbinx_ = nbiny_ = nbinz_ = 1;
+        bins_.clear();
+        bins_.resize(1);
         return;
     }
 
-    x_min = y_min = z_min = std::numeric_limits<double>::max();
-
-    x_max = y_max = z_max = std::numeric_limits<double>::lowest();
-    
+    x_min_ = y_min_ = z_min_ = std::numeric_limits<double>::max();
+    x_max_ = y_max_ = z_max_ = std::numeric_limits<double>::lowest();
 
     auto update_bounds = [&](const std::vector<NeighborAtom>& atoms)
     {
         for (const auto& atom : atoms)
         {
-            x_min = std::min(x_min, atom.position_x);
-            x_max = std::max(x_max, atom.position_x);
+            x_min_ = std::min(x_min_, atom.position_x);
+            x_max_ = std::max(x_max_, atom.position_x);
 
-            y_min = std::min(y_min, atom.position_y);
-            y_max = std::max(y_max, atom.position_y);
+            y_min_ = std::min(y_min_, atom.position_y);
+            y_max_ = std::max(y_max_, atom.position_y);
 
-            z_min = std::min(z_min, atom.position_z);
-            z_max = std::max(z_max, atom.position_z);
+            z_min_ = std::min(z_min_, atom.position_z);
+            z_max_ = std::max(z_max_, atom.position_z);
         }
     };
 
-    update_bounds(inside_atoms);
-    update_bounds(ghost_atoms);
+    update_bounds(all_atoms);
 
-    bin_sizex = bin_sizey = bin_sizez = sradius;
+    bin_sizex_ = bin_sizey_ = bin_sizez_ = sradius_;
 
-    nbinx = std::ceil((x_max - x_min) / bin_sizex);
-    nbiny = std::ceil((y_max - y_min) / bin_sizey);
-    nbinz = std::ceil((z_max - z_min) / bin_sizez);
-
-    nbinx = std::max(1, nbinx);
-    nbiny = std::max(1, nbiny);
-    nbinz = std::max(1, nbinz);
-
-    int nbins = nbinx * nbiny * nbinz;
-
-    bins.clear();
-
-    bins.resize(nbins);
-
-    for (int ix = 0; ix < nbinx; ++ix)
-    {
-        for (int iy = 0; iy < nbiny; ++iy)
+    const auto checked_bin_dimension = [](const double span, const double bin_size, const char* context) {
+        const double count = std::ceil(span / bin_size);
+        if (!std::isfinite(count) || count > static_cast<double>(std::numeric_limits<int>::max()))
         {
-            for (int iz = 0; iz < nbinz; ++iz)
+            throw std::overflow_error(std::string(context) + " exceeds int range.");
+        }
+        return static_cast<int>(count);
+    };
+
+    nbinx_ = checked_bin_dimension(x_max_ - x_min_, bin_sizex_, "BinManager X bin count");
+    nbiny_ = checked_bin_dimension(y_max_ - y_min_, bin_sizey_, "BinManager Y bin count");
+    nbinz_ = checked_bin_dimension(z_max_ - z_min_, bin_sizez_, "BinManager Z bin count");
+
+    nbinx_ = std::max(1, nbinx_);
+    nbiny_ = std::max(1, nbiny_);
+    nbinz_ = std::max(1, nbinz_);
+
+    const std::size_t nbins_xy = ModuleNeighList::checked_size_product(static_cast<std::size_t>(nbinx_),
+                                                                        static_cast<std::size_t>(nbiny_),
+                                                                        "BinManager bin count");
+    const std::size_t nbins_size = ModuleNeighList::checked_size_product(nbins_xy,
+                                                                         static_cast<std::size_t>(nbinz_),
+                                                                         "BinManager bin count");
+    const int nbins = ModuleNeighList::checked_int_size(nbins_size, "BinManager bin count");
+
+    bins_.clear();
+    bins_.resize(nbins);
+
+    for (int ix = 0; ix < nbinx_; ++ix)
+    {
+        for (int iy = 0; iy < nbiny_; ++iy)
+        {
+            for (int iz = 0; iz < nbinz_; ++iz)
             {
-                int idx = ix * nbiny * nbinz + iy * nbinz + iz;
+                int idx = bin_index(ix, iy, iz);
 
-                bins[idx].id_x = ix;
-                bins[idx].id_y = iy;
-                bins[idx].id_z = iz;
-
-                bins[idx].atoms.clear();
+                bins_[idx].set_id(ix, iy, iz);
+                bins_[idx].clear_atoms();
             }
         }
     }
 }
 
 void BinManager::do_binning(
-    const std::vector<NeighborAtom>& inside_atoms,
-    const std::vector<NeighborAtom>& ghost_atoms
+    const std::vector<NeighborAtom>& atoms
 )
 {
-    auto bin_atom = [&](const NeighborAtom& atom)
+    if (atoms.size() > static_cast<std::size_t>(std::numeric_limits<ModuleNeighList::LocalAtomIndex>::max()))
     {
+        throw std::overflow_error("BinManager binned atom count exceeds local atom index range.");
+    }
+
+    for (std::size_t iatom = 0; iatom < atoms.size(); ++iatom)
+    {
+        const NeighborAtom& atom = atoms[iatom];
         int ix = std::min(
-            std::max(int((atom.position_x - x_min) / bin_sizex), 0),
-            nbinx - 1
+            std::max(int((atom.position_x - x_min_) / bin_sizex_), 0),
+            nbinx_ - 1
         );
 
         int iy = std::min(
-            std::max(int((atom.position_y - y_min) / bin_sizey), 0),
-            nbiny - 1
+            std::max(int((atom.position_y - y_min_) / bin_sizey_), 0),
+            nbiny_ - 1
         );
 
         int iz = std::min(
-            std::max(int((atom.position_z - z_min) / bin_sizez), 0),
-            nbinz - 1
+            std::max(int((atom.position_z - z_min_) / bin_sizez_), 0),
+            nbinz_ - 1
         );
 
-        int idx = ix * nbiny * nbinz + iy * nbinz + iz;
+        int idx = bin_index(ix, iy, iz);
 
-        bins[idx].atoms.push_back(atom);
-    };
+        const ModuleNeighList::LocalAtomIndex atom_index = static_cast<ModuleNeighList::LocalAtomIndex>(iatom);
+        bins_[idx].add_atom_index(atom_index);
+    }
+}
 
-    for (const auto& atom : inside_atoms) bin_atom(atom);
-
-    for (const auto& atom : ghost_atoms) bin_atom(atom);
+int BinManager::bin_index(int ix, int iy, int iz) const {
+    return ix * nbiny_ * nbinz_ + iy * nbinz_ + iz;
 }
 
 void BinManager::build_atom_neighbors(
     NeighborList& neighbor_list,
-    std::vector<NeighborAtom>& atoms
+    const std::vector<NeighborAtom>& atoms,
+    const std::vector<NeighborAtom>& binned_atoms
 )
 {
-    assert(atoms.size() == neighbor_list.numneigh.size());
+    assert(atoms.size() == static_cast<size_t>(neighbor_list.get_nlocal()));
 
-    double sradius2 = sradius * sradius;
+    double sradius2 = sradius_ * sradius_;
 
     neighbor_list.reset();
 
-    for (int i = 0; i < atoms.size(); i++)
+    std::vector<int> neigh_tmp;
+
+    const int nlocal = neighbor_list.get_nlocal();
+    for (int i = 0; i < nlocal; i++)
     {
-        std::vector<int> neigh_tmp;
+        neigh_tmp.clear();
+        const NeighborAtom& atom = atoms[i];
 
         int ix = std::min(
-            std::max(int((atoms[i].position_x - x_min) / bin_sizex), 0),
-            nbinx - 1
+            std::max(int((atom.position_x - x_min_) / bin_sizex_), 0),
+            nbinx_ - 1
         );
 
         int iy = std::min(
-            std::max(int((atoms[i].position_y - y_min) / bin_sizey), 0),
-            nbiny - 1
+            std::max(int((atom.position_y - y_min_) / bin_sizey_), 0),
+            nbiny_ - 1
         );
 
         int iz = std::min(
-            std::max(int((atoms[i].position_z - z_min) / bin_sizez), 0),
-            nbinz - 1
+            std::max(int((atom.position_z - z_min_) / bin_sizez_), 0),
+            nbinz_ - 1
         );
 
         for (int dx = -1; dx <= 1; dx++)
@@ -151,52 +221,56 @@ void BinManager::build_atom_neighbors(
                     int jy = iy + dy;
                     int jz = iz + dz;
 
-                    if (jx < 0 || jx >= nbinx ||
-                        jy < 0 || jy >= nbiny ||
-                        jz < 0 || jz >= nbinz)
+                    if (jx < 0 || jx >= nbinx_ ||
+                        jy < 0 || jy >= nbiny_ ||
+                        jz < 0 || jz >= nbinz_)
                         continue;
 
-                    int nidx = jx * nbiny * nbinz + jy * nbinz + jz;
+                    int nidx = bin_index(jx, jy, jz);
 
-                    for (const NeighborAtom& natom : bins[nidx].atoms)
+                    for (const ModuleNeighList::LocalAtomIndex binned_atom_index : bins_[nidx].get_atom_indices())
                     {
-                        double dx = atoms[i].position_x - natom.position_x;
-                        double dy = atoms[i].position_y - natom.position_y;
-                        double dz = atoms[i].position_z - natom.position_z;
+                        const NeighborAtom& natom = binned_atoms[static_cast<std::size_t>(binned_atom_index)];
+                        double dx = atom.position_x - natom.position_x;
+                        double dy = atom.position_y - natom.position_y;
+                        double dz = atom.position_z - natom.position_z;
 
                         double dist2 = dx * dx + dy * dy + dz * dz;
 
-                        if (dist2 <= sradius2 && dist2 != 0)
+                        if (natom.atom_id == atom.atom_id)
+                        {
+                            continue;
+                        }
+                        if (dist2 <= sradius2)
                         {
                             neigh_tmp.push_back(natom.atom_id);
                         }
                     }
                 }
             }
-        } 
-        int n = neigh_tmp.size();
+        }
 
-        //std::cout<<n<<std::endl;
+        const int n = ModuleNeighList::checked_int_size(neigh_tmp.size(), "BinManager neighbor count");
 
-        int* ptr = neighbor_list.allocator.allocate(n);
-    
+        int* ptr = neighbor_list.allocator_.allocate(n);
+
         for (int k = 0; k < n; k++)
         {
             assert(ptr != nullptr);
             ptr[k] = neigh_tmp[k];
         }
 
-        neighbor_list.firstneigh[i] = ptr;
-        neighbor_list.numneigh[i] = n;
+        neighbor_list.firstneigh_[i] = ptr;
+        neighbor_list.numneigh_[i] = n;
     }
 }
 
 void BinManager::clear()
 {
-    for (auto& bin : bins)
+    for (auto& bin : bins_)
     {
-        bin.atoms.clear();
+        bin.clear_atoms();
     }
 
-    bins.clear();
+    bins_.clear();
 }

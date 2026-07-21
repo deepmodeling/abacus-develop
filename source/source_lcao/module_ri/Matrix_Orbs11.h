@@ -60,7 +60,7 @@ class Matrix_Orbs11
         const UnitCell &ucell,
         const ModuleBase::Element_Basis_Index::IndexLNM& index_r,
         const ModuleBase::Element_Basis_Index::IndexLNM& index_c) const;
-    
+
     std::shared_ptr<ORB_gaunt_table> MGT;
 
   private:

@@ -20,7 +20,7 @@ void Parallel_Global::myProd(complex<double> *in, std::complex<double> *inout,in
 		(*inout).imag()=(*inout).imag()+(*in).imag();
 		in++;
 		inout++;
-	}	
+	}
 	return;
 }
 #endif

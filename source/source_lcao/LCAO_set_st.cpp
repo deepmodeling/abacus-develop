@@ -356,7 +356,11 @@ void build_ST_new(ForceStressArrays& fsr,
             AdjacentAtomInfo adjs;
             GridD->Find_atom(ucell, tau1, T1, I1, &adjs);
             // Record_adj.for_2d() may not called in some case
-            int nnr = pv.nlocstart ? pv.nlocstart[iat1] : 0;
+            int nnr = 0;
+            if (!pv.nlocstart.empty())
+            {
+                nnr = pv.nlocstart[iat1];
+            }
 
             if (cal_syns)
             {
@@ -499,10 +503,10 @@ void build_ST_new(ForceStressArrays& fsr,
                         tau0 = adjs.adjacent_tau[ad0];
                         dtau1 = tau0 - tau1;
                         double distance1 = dtau1.norm() * ucell.lat0;
-                        double rcut1 = orb.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb.Phi[T1].getRcut() + ucell.infoNL->get_rcut_max(T0);
                         dtau2 = tau0 - tau2;
                         double distance2 = dtau2.norm() * ucell.lat0;
-                        double rcut2 = orb.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = orb.Phi[T2].getRcut() + ucell.infoNL->get_rcut_max(T0);
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
                             is_adj = true;
@@ -515,15 +519,17 @@ void build_ST_new(ForceStressArrays& fsr,
                         for (int jj = 0; jj < atom1->nw * npol; ++jj)
                         {
                             const int mu = pv.global2local_row(start1 + jj);
-                            if (mu < 0) {
+                            if (mu < 0)
+                            {
                                 continue;
-}
+                            }
                             for (int kk = 0; kk < atom2->nw * npol; ++kk)
                             {
                                 const int nu = pv.global2local_col(start2 + kk);
-                                if (nu < 0) {
+                                if (nu < 0)
+                                {
                                     continue;
-}
+                                }
                                 ++total_nnr;
                                 ++nnr;
                             } // kk

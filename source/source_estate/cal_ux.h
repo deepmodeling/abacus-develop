@@ -5,8 +5,8 @@
 
 namespace elecstate {
 
-    // Only for npsin = 4
-    void cal_ux(UnitCell& ucell);
+    // Only for nspin = 4
+    void cal_ux(UnitCell& ucell, const int nspin);
     
     bool judge_parallel(double a[3], ModuleBase::Vector3<double> b);
 

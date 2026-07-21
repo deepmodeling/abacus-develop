@@ -44,9 +44,9 @@ class LatticeChangeBasicTest : public ::testing::Test
 TEST_F(LatticeChangeBasicTest, SetupGradientVolume)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     stress(0, 0) = 1.0;
     stress(0, 1) = 2.0;
     stress(0, 2) = 3.0;
@@ -94,9 +94,9 @@ TEST_F(LatticeChangeBasicTest, SetupGradientVolume)
 TEST_F(LatticeChangeBasicTest, SetupGradientNone)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     stress(0, 0) = 1.0;
     stress(0, 1) = 2.0;
     stress(0, 2) = 3.0;
@@ -127,9 +127,9 @@ TEST_F(LatticeChangeBasicTest, SetupGradientNone)
 TEST_F(LatticeChangeBasicTest, ChangeLattice)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     lat[0] = 1.0;
     lat[1] = 0.0;
     lat[2] = 0.0;
@@ -217,16 +217,16 @@ TEST_F(LatticeChangeBasicTest, ChangeLattice)
     EXPECT_DOUBLE_EQ(ucell.invGGT.e33, 0.36);
 }
 
-// Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1, but not converged
+// Test for check_converged when ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] == 1, but not converged
 TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case1.log");
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     stress(0, 0) = 1.0;
     stress(0, 1) = 2.0;
     stress(0, 2) = 3.0;
@@ -254,16 +254,16 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase1)
     std::remove("test_check_converged_case1.log");
 }
 
-// Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1 && largest_grad == 0
+// Test for check_converged when ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] == 1 && largest_grad == 0
 TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case2.log");
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     stress(0, 0) = 0.0;
     stress(0, 1) = 0.0;
     stress(0, 2) = 0.0;
@@ -291,16 +291,16 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase2)
     std::remove("test_check_converged_case2.log");
 }
 
-// Test for check_converged when ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1, and converged
+// Test for check_converged when ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] == 1, and converged
 TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case3.log");
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     stress(0, 0) = 0.000001;
     stress(0, 1) = 0.0;
     stress(0, 2) = 0.0;
@@ -328,16 +328,16 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase3)
     std::remove("test_check_converged_case3.log");
 }
 
-// Test for check_converged when ucell.lc != 1, but not converged
+// Test for check_converged when ucell.lat_axis_free != 1, but not converged
 TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case4.log");
-    ucell.lc[0] = 0;
-    ucell.lc[1] = 0;
-    ucell.lc[2] = 0;
+    ucell.lat_axis_free[0] = 0;
+    ucell.lat_axis_free[1] = 0;
+    ucell.lat_axis_free[2] = 0;
     grad[0] = 1.0;
     grad[1] = 1.0;
     grad[2] = 1.0;
@@ -365,16 +365,16 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase4)
     std::remove("test_check_converged_case4.log");
 }
 
-// Test for check_converged when ucell.lc != 1, and largest_grad == 0
+// Test for check_converged when ucell.lat_axis_free != 1, and largest_grad == 0
 TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case5.log");
-    ucell.lc[0] = 0;
-    ucell.lc[1] = 0;
-    ucell.lc[2] = 0;
+    ucell.lat_axis_free[0] = 0;
+    ucell.lat_axis_free[1] = 0;
+    ucell.lat_axis_free[2] = 0;
     grad[0] = 0.0;
     grad[1] = 0.0;
     grad[2] = 0.0;
@@ -402,16 +402,16 @@ TEST_F(LatticeChangeBasicTest, CheckConvergedCase5)
     std::remove("test_check_converged_case5.log");
 }
 
-// Test for check_converged when ucell.lc != 1, and converged
+// Test for check_converged when ucell.lat_axis_free != 1, and converged
 TEST_F(LatticeChangeBasicTest, CheckConvergedCase6)
 {
     // Set up test data
     Lattice_Change_Basic::update_iter = 0;
     PARAM.input.stress_thr = 10.0;
     std::ofstream ofs("test_check_converged_case6.log");
-    ucell.lc[0] = 0;
-    ucell.lc[1] = 0;
-    ucell.lc[2] = 0;
+    ucell.lat_axis_free[0] = 0;
+    ucell.lat_axis_free[1] = 0;
+    ucell.lat_axis_free[2] = 0;
     grad[0] = 0.000001;
     grad[1] = 0.0;
     grad[2] = 0.0;
@@ -497,9 +497,9 @@ TEST_F(LatticeChangeBasicTest, SetupEtot)
 TEST_F(LatticeChangeBasicTest, SetupGradientShape)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
 
     // Non-isotropic stress tensor
     stress(0, 0) = 1.0;
@@ -536,9 +536,9 @@ TEST_F(LatticeChangeBasicTest, SetupGradientShape)
 TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescaling)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ucell.lat0 = 10.0;
 
     // Set initial lattice (cubic, volume = 1000)
@@ -594,9 +594,9 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescaling)
 TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescalingNonCubic)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ucell.lat0 = 10.0;
 
     // Set initial lattice (non-cubic, volume = 1200)
@@ -646,9 +646,9 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeRescalingNonCubic)
 TEST_F(LatticeChangeBasicTest, ChangeLatticeNoVolumeConstraint)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ucell.lat0 = 10.0;
 
     // Set initial lattice
@@ -703,9 +703,9 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeNoVolumeConstraint)
 TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravSimpleCubic)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ucell.lat0 = 10.0;
     ucell.latName = "sc";
 
@@ -772,9 +772,9 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravSimpleCubic)
 TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ucell.lat0 = 10.0;
     ucell.latName = "fcc";
 
@@ -844,9 +844,9 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedIbravFCC)
 TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeAndIbrav)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ucell.lat0 = 10.0;
     ucell.latName = "sc";
 
@@ -917,9 +917,9 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeVolumeAndIbrav)
 TEST_F(LatticeChangeBasicTest, SetupGradientAxisA)
 {
     // Initialize variables
-    ucell.lc[0] = 0; // First axis fixed
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 0; // First axis fixed
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
 
     stress(0, 0) = 1.0;
     stress(0, 1) = 2.0;
@@ -954,9 +954,9 @@ TEST_F(LatticeChangeBasicTest, SetupGradientAxisA)
 TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedAxisA)
 {
     // Initialize variables
-    ucell.lc[0] = 0; // First axis fixed
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 0; // First axis fixed
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ucell.lat0 = 10.0;
 
     // Set initial lattice
@@ -1016,9 +1016,9 @@ TEST_F(LatticeChangeBasicTest, ChangeLatticeFixedAxisA)
 TEST_F(LatticeChangeBasicTest, ChangeLatticeNoFixedIbrav)
 {
     // Initialize variables
-    ucell.lc[0] = 1;
-    ucell.lc[1] = 1;
-    ucell.lc[2] = 1;
+    ucell.lat_axis_free[0] = 1;
+    ucell.lat_axis_free[1] = 1;
+    ucell.lat_axis_free[2] = 1;
     ucell.lat0 = 10.0;
     ucell.latName = "sc";
 

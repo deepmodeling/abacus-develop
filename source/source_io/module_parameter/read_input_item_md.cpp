@@ -83,7 +83,8 @@ void ReadInput::item_md()
 * anderson: Anderson thermostat, see md_nraise in detail.
 * berendsen: Berendsen thermostat, see md_nraise in detail.
 * rescaling: velocity Rescaling method 1, see md_tolerance in detail.
-* rescale_v: velocity Rescaling method 2, see md_nraise in detail.)";
+* rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+* csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.)";
         item.default_value = "nhc";
         item.unit = "";
         item.availability = "";
@@ -659,6 +660,20 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.unit = "fs";
         item.availability = "";
         read_sync_double(input.mdp.md_damp);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_csvr_tau");
+        item.annotation = "CSVR thermostat characteristic time scale";
+        item.category = "Molecular dynamics";
+        item.type = "Real";
+        item.description = "The characteristic time scale for the CSVR (Canonical Sampling through Velocity "
+                          "Rescaling) thermostat. Larger values give weaker coupling, smaller values give "
+                          "stronger coupling. Recommended value: 100 * md_dt.";
+        item.default_value = "100.0";
+        item.unit = "fs";
+        item.availability = "md_thermostat = csvr";
+        read_sync_double(input.mdp.md_csvr_tau);
         this->add_item(item);
     }
     {

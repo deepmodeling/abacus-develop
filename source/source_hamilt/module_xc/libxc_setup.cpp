@@ -184,7 +184,9 @@ XC_Functional_Libxc::set_xc_type_libxc(const std::string& xc_func_in)
     return std::make_pair(func_type, func_id);
 }
 
-const std::vector<double> in_built_xc_func_ext_params(const int id)
+const std::vector<double> in_built_xc_func_ext_params(const int id,
+                                                       const double hybrid_alpha,
+                                                       const double hse_omega)
 {
     switch(id)
     {
@@ -198,27 +200,23 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
 #ifdef __EXX
         // hybrid functionals
         case XC_HYB_GGA_XC_PBEH:
-            return {GlobalC::exx_info.info_global.hybrid_alpha,
-                    GlobalC::exx_info.info_global.hse_omega, 
-                    GlobalC::exx_info.info_global.hse_omega};
+            return {hybrid_alpha, hse_omega, hse_omega};
         case XC_HYB_GGA_XC_HSE06:
-            return {GlobalC::exx_info.info_global.hybrid_alpha,
-                    GlobalC::exx_info.info_global.hse_omega, 
-                    GlobalC::exx_info.info_global.hse_omega};
+            return {hybrid_alpha, hse_omega, hse_omega};
         // short-range of B88_X
         case XC_GGA_X_ITYH:
-            return {GlobalC::exx_info.info_global.hse_omega};
+            return {hse_omega};
         // short-range of LYP_C
         case XC_GGA_C_LYPR:
             return {0.04918, 0.132, 0.2533, 0.349, 
-                    0.35/2.29, 2.0/2.29, GlobalC::exx_info.info_global.hse_omega};
+                    0.35/2.29, 2.0/2.29, hse_omega};
         // Long-range corrected functionals:
         case XC_HYB_GGA_XC_LC_PBEOP:  // LC version of PBE
         {
             // This is a range-separated hybrid functional with range-separation constant  0.330,
             // and  0.0% short-range and 100.0% long-range exact exchange,
             // using the error function kernel.
-            return { GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.33
+            return { hse_omega }; //Range separation constant: 0.33
         }
         case XC_HYB_GGA_XC_LC_WPBE:  // Long-range corrected PBE (LC-wPBE) by Vydrov and Scuseria
         {
@@ -227,7 +225,7 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
             // using the error function kernel.
             return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
                 std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
-                GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.4
+                hse_omega }; //Range separation constant: 0.4
         }
         case XC_HYB_GGA_XC_LRC_WPBE:  // Long-range corrected PBE (LRC-wPBE) by by Rohrdanz, Martins and Herbert
         {
@@ -236,7 +234,7 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
             // using the error function kernel.
             return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
                 std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -1.0
-                GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.3
+                hse_omega }; //Range separation constant: 0.3
         }
         case XC_HYB_GGA_XC_LRC_WPBEH:  // Long-range corrected short-range hybrid PBE (LRC-wPBEh) by Rohrdanz, Martins and Herbert
         {
@@ -245,7 +243,7 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
             // using the error function kernel.    
             return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 1.0
                 std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: -0.8
-                GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.2
+                hse_omega }; //Range separation constant: 0.2
         }
         case XC_HYB_GGA_XC_CAM_PBEH:  // CAM hybrid screened exchange PBE version
         {
@@ -254,7 +252,7 @@ const std::vector<double> in_built_xc_func_ext_params(const int id)
             // using the error function kernel.
             return { std::stod(PARAM.inp.exx_fock_alpha[0]),  //Fraction of Hartree-Fock exchange: 0.2
                 std::stod(PARAM.inp.exx_erfc_alpha[0]),  //Fraction of short-range exact exchange: 0.8
-                GlobalC::exx_info.info_global.hse_omega }; //Range separation constant: 0.7
+                hse_omega }; //Range separation constant: 0.7
         }
 #endif
         default:
@@ -282,7 +280,9 @@ const std::vector<double> external_xc_func_ext_params(const int id)
 
 std::vector<xc_func_type> 
 XC_Functional_Libxc::init_func(const std::vector<int> &func_id, 
-                               const int xc_polarized)
+                               const int xc_polarized,
+                               const double hybrid_alpha,
+                               const double hse_omega)
 {
     std::vector<xc_func_type> funcs;
     for (int id : func_id)
@@ -291,7 +291,7 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
         xc_func_init(&funcs.back(), id, xc_polarized); // instantiate the XC term
 
         // search for external parameters
-        const std::vector<double> in_built_ext_params = in_built_xc_func_ext_params(id);
+        const std::vector<double> in_built_ext_params = in_built_xc_func_ext_params(id, hybrid_alpha, hse_omega);
         const std::vector<double> external_ext_params = external_xc_func_ext_params(id);
         // for temporary use, I name their size as n1 and n2
         const int n1 = in_built_ext_params.size();

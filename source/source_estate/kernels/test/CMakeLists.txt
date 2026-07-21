@@ -1,11 +1,11 @@
-remove_definitions(-D__MPI)
-remove_definitions(-D__EXX)
-remove_definitions(-D__CUDA)
-remove_definitions(-D__ROCM)
-remove_definitions(-D__MLALGO)
+abacus_disable_feature_definitions(__MPI)
+abacus_disable_feature_definitions(__EXX)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
+abacus_disable_feature_definitions(__MLALGO)
 
 AddTest(
     TARGET Elecstate_Kernels_UTs
-    LIBS parameter ${math_libs} psi base device
+    LIBS parameter psi base device
     SOURCES elecstate_op_test.cpp
 )

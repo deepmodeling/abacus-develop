@@ -259,7 +259,7 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     ucell.latvec.e22 *= dilation[1];
     ucell.latvec.e33 *= dilation[2];
 
-    unitcell::setup_cell_after_vc(ucell,ofs);
+    unitcell::setup_cell_after_vc(ucell,ofs, PARAM.inp.nspin);
 
     /// rescale velocity
     for (int i = 0; i < ucell.nat; ++i)

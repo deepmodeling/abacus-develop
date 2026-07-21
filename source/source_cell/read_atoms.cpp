@@ -5,30 +5,38 @@
 
 #include "unitcell.h"
 #include "read_atoms_helper.h"
-#include "source_io/module_parameter/parameter.h"
+
 #include "print_cell.h"
 #include "read_stru.h"
-#include "source_estate/read_orb.h"
 #include "source_base/timer.h"
 #include "source_base/constants.h"
 #include "source_base/formatter.h"
 #include "source_base/mathzone.h"
 
-#ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
-#endif
-
 bool unitcell::read_atom_positions(UnitCell& ucell,
                          std::ifstream &ifpos,
                          std::ofstream &ofs_running,
-                         std::ofstream &ofs_warning)
+                         std::ofstream &ofs_warning,
+                         const int nspin,
+                         const std::string& basis_type,
+                         const std::string& orbital_dir,
+                         const std::string& init_wfc,
+                         const double onsite_radius,
+                         const bool fixed_atoms,
+                         const bool noncolin,
+                         const std::string& calculation,
+                         const std::string& esolver_type)
 {
     ModuleBase::TITLE("UnitCell","read_atom_positions");
 
     std::string& Coordinate  = ucell.Coordinate;
     const int ntype = ucell.ntype;
-    const int nspin = PARAM.inp.nspin;
     assert (nspin==1 || nspin==2 || nspin==4);
+
+    if (ucell.magnet.start_mag.size() != static_cast<size_t>(ntype))
+    {
+        ucell.magnet.start_mag.resize(ntype, 0.0);
+    }
 
     if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifpos, "ATOMIC_POSITIONS"))
     {
@@ -51,7 +59,9 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
 
             bool set_element_mag_zero = false;
             if (!unitcell::read_atom_type_header(it, ucell, ifpos, ofs_running,
-                                       ofs_warning, set_element_mag_zero))
+                                       ofs_warning, set_element_mag_zero,
+                                       basis_type, orbital_dir,
+                                       init_wfc, onsite_radius))
             {
                 return false;
             }
@@ -93,14 +103,16 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
 
                     // Process magnetization
                     unitcell::process_magnetization(ucell.atoms[it], it, ia, nspin,
-                                        input_vec_mag, input_angle_mag, ofs_running);
+                                        input_vec_mag, input_angle_mag, ofs_running,
+                                        noncolin);
 
                     // Transform coordinates
                     unitcell::transform_atom_coordinates(ucell.atoms[it], ia, Coordinate,
                                              v, ucell.latvec, ucell.lat0, ucell.latcenter);
 
                     // Set movement flags
-                    unitcell::set_atom_movement_flags(ucell.atoms[it], ia, mv);
+                    unitcell::set_atom_movement_flags(ucell.atoms[it], ia, mv,
+                                        fixed_atoms);
                     ucell.atoms[it].dis[ia].set(0, 0, 0);
                 }//endj
             }    // end na
@@ -116,6 +128,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
     }   // end scan_begin
 
     // Final validation and output
-    return unitcell::finalize_atom_positions(ucell, ofs_running, ofs_warning);
+    return unitcell::finalize_atom_positions(ucell, ofs_running, ofs_warning,
+                                        calculation, esolver_type);
 
 }//end read_atom_positions

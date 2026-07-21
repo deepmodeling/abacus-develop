@@ -5,6 +5,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/LCAO_nonlocal_info.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_rt/td_info.h"
@@ -86,7 +87,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb_.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < orb_.Phi[T1].getRcut() + this->ucell->infoNL->get_rcut_max(T0))
             {
                 is_adj[ad1] = true;
             }
@@ -175,7 +176,7 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
 #ifdef __CUDA
             // GPU path: Atom-level GPU batch processing
             module_rt::gpu::snap_psibeta_atom_batch_gpu(orb_,
-                                                        this->ucell->infoNL,
+                                                        static_cast<const LCAONonlocalInfo*>(this->ucell->infoNL.get())->get_nonlocal(),
                                                         T0,
                                                         tau0 * this->ucell->lat0,
                                                         cart_At,
@@ -211,8 +212,9 @@ void hamilt::TDNonlocal<hamilt::OperatorLCAO<TK, TR>>::calculate_HR()
                 {
                     const int iw1 = all_indexes[iw1l] / npol;
                     std::vector<std::vector<std::complex<double>>> nlm;
+                    auto* lcao_nl = static_cast<LCAONonlocalInfo*>(this->ucell->infoNL.get());
                     module_rt::snap_psibeta_half_tddft(orb_,
-                                                       this->ucell->infoNL,
+                                                       lcao_nl->get_nonlocal(),
                                                        nlm,
                                                        tau1 * this->ucell->lat0,
                                                        T1,

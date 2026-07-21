@@ -14,11 +14,8 @@
 
 #include "../module_bessel/bessel_basis.h"
 #include "../../source_cell/unitcell.h"
-#include "../../source_estate/magnetism.h"
+#include "../../source_cell/magnetism.h"
 
-#ifdef __LCAO
-#include "../../source_cell/setup_nonlocal.h"
-#endif
 #include "gtest/gtest.h"
 
 
@@ -364,14 +361,6 @@ SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-#endif
 /* OVERLOAD printM3 function? */
 /*
 void output::printM3(std::ofstream &ofs, const std::string &description, const ModuleBase::Matrix3 &m)

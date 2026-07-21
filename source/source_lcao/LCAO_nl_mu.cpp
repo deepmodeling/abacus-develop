@@ -60,7 +60,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
         const int it = ucell.iat2it[iat];
         const int ia = ucell.iat2ia[iat];
 
-        const double Rcut_Beta = ucell.infoNL.Beta[it].get_rcut_max();
+        const double Rcut_Beta = ucell.infoNL->get_rcut_max(it);
         const ModuleBase::Vector3<double> tau = ucell.atoms[it].tau[ia];
         AdjacentAtomInfo adjs;
         GridD->Find_atom(ucell, tau, it, ia, &adjs);
@@ -191,7 +191,11 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                 GridD->Find_atom(ucell, atom1->tau[I1], T1, I1, &adjs);
                 const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
                 // Record_adj.for_2d() may not called in some case
-                int nnr = pv.nlocstart ? pv.nlocstart[iat1] : 0;
+                int nnr = 0;
+                if (!pv.nlocstart.empty())
+                {
+                    nnr = pv.nlocstart[iat1];
+                }
                 tau1 = atom1->tau[I1];
 
                 // psi2
@@ -231,8 +235,8 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                             const double distance1 = dtau1.norm2() * pow(ucell.lat0, 2);
                             const double distance2 = dtau2.norm2() * pow(ucell.lat0, 2);
 
-                            rcut1 = pow(orb.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(), 2);
-                            rcut2 = pow(orb.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(), 2);
+                            rcut1 = pow(orb.Phi[T1].getRcut() + ucell.infoNL->get_rcut_max(T0), 2);
+                            rcut2 = pow(orb.Phi[T2].getRcut() + ucell.infoNL->get_rcut_max(T0), 2);
 
                             if (distance1 < rcut1 && distance2 < rcut2)
                             {
@@ -253,7 +257,7 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                             const int iat = ucell.itia2iat(T0, I0);
 
                             // mohan add 2010-12-19
-                            if (ucell.infoNL.nproj[T0] == 0)
+                            if (ucell.infoNL->get_nproj(T0) == 0)
                             {
                                 continue;
                             }
@@ -266,8 +270,8 @@ void build_Nonlocal_mu_new(const Parallel_Orbitals& pv,
                             const double distance2 = dtau2.norm2() * pow(ucell.lat0, 2);
 
                             // seems a bug here!! mohan 2011-06-17
-                            rcut1 = pow(orb.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(), 2);
-                            rcut2 = pow(orb.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max(), 2);
+                            rcut1 = pow(orb.Phi[T1].getRcut() + ucell.infoNL->get_rcut_max(T0), 2);
+                            rcut2 = pow(orb.Phi[T2].getRcut() + ucell.infoNL->get_rcut_max(T0), 2);
 
                             if (distance1 >= rcut1 || distance2 >= rcut2)
                             {

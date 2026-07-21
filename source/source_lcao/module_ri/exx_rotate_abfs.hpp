@@ -269,8 +269,8 @@ void Moment_abfs<Tdata>::cal_VR(
                             // Determine N1 and N2 loop ranges based on rotate_abfs
                             // When rotate_abfs=true: only N=0 has non-zero moment, calculate only N1=0 and N2=0
                             // When rotate_abfs=false: all moments are non-zero, calculate all N1, N2
-                            const int N1_max = GlobalC::exx_info.info_ri.rotate_abfs ? 1 : orb_in[T1][L1].size();
-                            const int N2_max = GlobalC::exx_info.info_ri.rotate_abfs ? 1 : orb_in[T2][L2].size();
+                            const int N1_max = this->info.rotate_abfs ? 1 : orb_in[T1][L1].size();
+                            const int N2_max = this->info.rotate_abfs ? 1 : orb_in[T2][L2].size();
 
                             for (int N1 = 0; N1 != N1_max; ++N1)
                             {

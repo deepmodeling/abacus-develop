@@ -28,8 +28,7 @@ void folding_HR_td(const hamilt::HContainer<TR>& hR,
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
             kphase *= phase_hybrid.at(r_index);
 
-            tmp.find_R(r_index);
-            tmp.add_to_matrix(hk, ncol, kphase, hk_type);
+            tmp.add_to_matrix(ir, hk, ncol, kphase, hk_type);
         }
     }
 }
@@ -59,8 +58,7 @@ void folding_partial_HR(const UnitCell& ucell,
             std::complex<double> kphase = std::complex<double>(cosp, sinp);
             const ModuleBase::Vector3<double> dR_car = dR * ucell.latvec * ucell.lat0;
 
-            tmp.find_R(r_index);
-            tmp.add_to_matrix(hk, ncol, kphase * ModuleBase::IMAG_UNIT * std::complex<double>(dR_car[ix]), hk_type);
+            tmp.add_to_matrix(ir, hk, ncol, kphase * ModuleBase::IMAG_UNIT * std::complex<double>(dR_car[ix]), hk_type);
         }
     }
 }
@@ -97,8 +95,7 @@ void folding_partial_HR_td(const UnitCell& ucell,
             kphase *= phase_hybrid.at(r_index);
             const ModuleBase::Vector3<double> dR_car = dR * ucell.latvec * ucell.lat0;
 
-            tmp.find_R(r_index);
-            tmp.add_to_matrix(hk, ncol, kphase * ModuleBase::IMAG_UNIT * std::complex<double>(dR_car[ix]), hk_type);
+            tmp.add_to_matrix(ir, hk, ncol, kphase * ModuleBase::IMAG_UNIT * std::complex<double>(dR_car[ix]), hk_type);
         }
     }
 }
@@ -133,8 +130,7 @@ void folding_partial_dot(const hamilt::HContainer<double>& dR,
             kphase *= phase_hybrid.at(r_index);
             ModuleBase::Vector3<double> dtau = ucell->cal_dtau(iat1, iat1, r_index);
             kphase *= Et * dtau * ucell->lat0;
-            tmp.find_R(r_index);
-            tmp.add_to_matrix(dk, ncol, kphase, hk_type);
+            tmp.add_to_matrix(ir, dk, ncol, kphase, hk_type);
         }
     }
 }

@@ -81,6 +81,9 @@ has_dos=$(get_input_key_value "out_dos" "INPUT")
 has_cond=$(get_input_key_value "cal_cond" "INPUT")
 has_hs=$(get_input_key_value "out_mat_hs" "INPUT")
 has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
+out_hr_npz=$(get_input_key_value "out_hr_npz" "INPUT")
+out_hsr_npz=$(get_input_key_value "out_hsr_npz" "INPUT")
+out_dm_npz=$(get_input_key_value "out_dm_npz" "INPUT")
 has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
 has_xc2=$(get_input_key_value "out_mat_xc2" "INPUT")
 has_eband_separate=$(get_input_key_value "out_eband_terms" "INPUT")
@@ -419,8 +422,30 @@ fi
 if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
     python3 $COMPARE_SCRIPT hrs1_nao.csr.ref OUT.autotest/hrs1_nao.csr 8
     echo "CompareHR_pass $?" >>$1
+    if ! test -z "$nspin" && [ "$nspin" -eq 2 ]; then
+        python3 $COMPARE_SCRIPT hrs2_nao.csr.ref OUT.autotest/hrs2_nao.csr 8
+        echo "CompareHR2_pass $?" >>$1
+    fi
     python3 $COMPARE_SCRIPT srs1_nao.csr.ref OUT.autotest/srs1_nao.csr 8
     echo "CompareSR_pass $?" >>$1
+fi
+
+#-----------------------------------
+# H(R), S(R), and DM(R) matrices in NPZ format
+#-----------------------------------
+if ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; then
+    test -f OUT.autotest/output_SR.npz
+    echo "OutputSRNPZ_pass $?" >>$1
+fi
+
+if { ! test -z "$out_hr_npz" && [ "$out_hr_npz" == 1 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
+    test -f OUT.autotest/output_HR0.npz
+    echo "OutputHRNPZ_pass $?" >>$1
+fi
+
+if ! test -z "$out_dm_npz" && [ "$out_dm_npz" == 1 ]; then
+    test -f OUT.autotest/output_DM0.npz
+    echo "OutputDMNPZ_pass $?" >>$1
 fi
 
 #-----------------------------------
@@ -451,16 +476,30 @@ if ! test -z "$has_mat_syns"  && [  $has_mat_syns == 1 ]; then
 fi
 
 #-----------------------------------
-#  <psi_i0 | dH | psi_jR> matrix
+#  <psi_i0 | H | dpsi_jR> matrix
 #-----------------------------------
 #echo $has_mat_dh
-if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
+if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ] && [ $gamma_only != 1 ]; then
     python3 $COMPARE_SCRIPT dhrxs1_nao.csr.ref OUT.autotest/dhrxs1_nao.csr 8
     echo "ComparerdHRx_pass $?" >>$1
     python3 $COMPARE_SCRIPT dhrys1_nao.csr.ref OUT.autotest/dhrys1_nao.csr 8
     echo "ComparerdHRy_pass $?" >>$1
     python3 $COMPARE_SCRIPT dhrzs1_nao.csr.ref OUT.autotest/dhrzs1_nao.csr 8
     echo "ComparerdHRz_pass $?" >>$1
+fi
+
+#-----------------------------------
+#  d <psi_i0 | H | psi_j>(k) matrix
+#-----------------------------------
+#echo $has_mat_dh_terms
+if ! test -z "$has_mat_dh"  && [  $has_mat_dh == 1 ]; then
+    shopt -s nullglob
+    for reffile in dhk_ref/*.txt; do
+        fname=$(basename "$reffile")
+        key=$(sanitize_result_key "Compare_${fname%.txt}")
+        record_compare_result "$1" "${key}_pass" "$reffile" "OUT.autotest/$fname" 8
+    done
+    shopt -u nullglob
 fi
 
 #---------------------------------------

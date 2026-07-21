@@ -66,7 +66,7 @@ namespace LR_Util
                 const int T2 = adjs.ntype[ad];
                 const int I2 = adjs.natom[ad];
                 int iat2 = ucell.itia2iat(T2, I2);
-                if (pmat.get_row_size(iat1) <= 0 || pmat.get_col_size(iat2) <= 0) { continue; }
+                if (pmat.is_invalid_atom_pair(iat1, iat2)) { continue; }
                 const ModuleBase::Vector3<int>& R_index = adjs.box[ad];
                 if (ucell.cal_dtau(iat1, iat2, R_index).norm() * ucell.lat0 >= orb_cutoff[T1] + orb_cutoff[T2]) { continue; }
                 hamilt::AtomPair<TR> tmp(iat1, iat2, R_index.x, R_index.y, R_index.z, &pmat);

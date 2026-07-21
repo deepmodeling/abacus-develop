@@ -66,10 +66,21 @@ case "$with_cereal" in
             echo "Installing from scratch into ${pkg_install_dir}"
             [ -d $dirname ] && rm -rf $dirname
             tar -xzf $filename
-            cd "${BUILDDIR}"
+            cd "${dirname}"
             # 
-            mkdir -p "${pkg_install_dir}"
-            cp -r $dirname/* "${pkg_install_dir}/"
+            mkdir build && cd build
+            cmake \
+              -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
+              -DCMAKE_INSTALL_LIBDIR="lib" \
+              -DCMAKE_VERBOSE_MAKEFILE=ON \
+              -DBUILD_DOC=OFF \
+              -DBUILD_SANDBOX=OFF \
+              -DBUILD_TESTS=OFF \
+              -DTHREAD_SAFE=ON \
+              -DSKIP_PORTABILITY_TEST=ON \
+              -DSKIP_PERFORMANCE_COMPARISON=ON \
+              .. > cmake.log 2>&1 || tail -n ${LOG_LINES} cmake.log
+            make install -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
         fi
         CEREAL_CFLAGS="-I'${pkg_install_dir}/include'"
@@ -106,7 +117,6 @@ esac
 if [ "$with_cereal" != "__DONTUSE__" ]; then
     if [ "$with_cereal" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_cereal"
-prepend_path CPATH "${pkg_install_dir}/include"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
     fi

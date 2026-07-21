@@ -17,12 +17,13 @@ add_library(
     unitcell.cpp
     read_atoms.cpp
     read_atoms_helper.cpp
-    setup_nonlocal.cpp
+    read_orb.cpp
     klist.cpp
     parallel_kpoints.cpp
     cell_index.cpp
     check_atomic_stru.cpp
     update_cell.cpp
+    magnetism.cpp
     bcast_cell.cpp
     read_stru.cpp
     print_cell.cpp
@@ -32,6 +33,7 @@ add_library(
     sep_cell.cpp
     qlist.cpp
     qlist.h
+    cal_nelec_nband.cpp
 )
 
 if(ENABLE_COVERAGE)

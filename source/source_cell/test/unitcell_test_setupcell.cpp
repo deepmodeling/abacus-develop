@@ -1,7 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
 #define private public
-#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "memory"
 #include "source_base/mathzone.h"
@@ -12,22 +11,14 @@
 #include <streambuf>
 #include "prepare_unitcell.h"
 #include "source_cell/update_cell.h"
-#ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h"
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
-LCAO_Orbitals::LCAO_Orbitals(){}
-LCAO_Orbitals::~LCAO_Orbitals(){}
-#endif
+
 Magnetism::Magnetism()
 {
 	this->tot_mag = 0.0;
 	this->abs_mag = 0.0;
-	this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-	delete[] this->start_mag;
 }
 
 /************************************************
@@ -50,20 +41,26 @@ Magnetism::~Magnetism()
  *     - setup_cell_after_vc
  */
 
-//mock function
-#ifdef __LCAO
-void LCAO_Orbitals::bcast_files(
-	const int &ntype_in,
-	const int &my_rank)
-{
-	return;
-}
-
 class UcellTest : public ::testing::Test
 {
 protected:
 	std::unique_ptr<UnitCell> ucell{new UnitCell};
 	std::string output;
+
+	const double symmetry_prec = 1e-5;
+	const int dfthalf_type = 0;
+	const std::string pseudo_dir = "./support";
+	const std::string basis_type = "pw";
+	const std::string orbital_dir = "./";
+	const std::string init_wfc = "atomic";
+	const double onsite_radius = 0.0;
+	const bool deepks_setorb = false;
+	const bool rpa = false;
+	const bool fixed_atoms = false;
+	const bool noncolin = false;
+	const std::string calculation = "scf";
+	const std::string esolver_type = "cg";
+
 	void SetUp()
     {
     	ucell->lmaxmax = 2;
@@ -83,9 +80,11 @@ TEST_F(UcellTest,SetupCellS1)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 1;
+	const int nspin = 1;
 	
-	ucell->setup_cell(fn,ofs_running);
+	ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type);
 	ofs_running.close();
 	remove("setup_cell.tmp");
 }
@@ -95,9 +94,11 @@ TEST_F(UcellTest,SetupCellS2)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 2;
+	const int nspin = 2;
 	
-	ucell->setup_cell(fn,ofs_running);
+	ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type);
 	ofs_running.close();
 	remove("setup_cell.tmp");
 }
@@ -107,9 +108,11 @@ TEST_F(UcellTest,SetupCellS4)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 4;
+	const int nspin = 4;
 	
-	ucell->setup_cell(fn,ofs_running);
+	ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type);
 	ofs_running.close();
 	remove("setup_cell.tmp");
 }
@@ -121,7 +124,10 @@ TEST_F(UcellDeathTest,SetupCellWarning1)
 	ofs_running.open("setup_cell.tmp");
 	
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running),::testing::ExitedWithCode(1),"");
+	const int nspin = 1;
+	EXPECT_EXIT(ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type), ::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Can not find the file containing atom positions.!"));
 	ofs_running.close();
@@ -135,7 +141,10 @@ TEST_F(UcellDeathTest,SetupCellWarning2)
 	ofs_running.open("setup_cell.tmp");
 	
 	testing::internal::CaptureStdout();
-	EXPECT_EXIT(ucell->setup_cell(fn,ofs_running),::testing::ExitedWithCode(1),"");
+	const int nspin = 1;
+	EXPECT_EXIT(ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type), ::testing::ExitedWithCode(1), "");
 	output = testing::internal::GetCapturedStdout();
 	EXPECT_THAT(output,testing::HasSubstr("Something wrong during read_atom_positions"));
 	ofs_running.close();
@@ -147,13 +156,11 @@ TEST_F(UcellTest,SetupCellAfterVC)
 	std::string fn = "./support/STRU_MgO";
 	std::ofstream ofs_running;
 	ofs_running.open("setup_cell.tmp");
-	PARAM.input.nspin = 1;
-	
-	delete[] ucell->magnet.start_mag;
-	ucell->magnet.start_mag = new double[ucell->ntype];
+	const int nspin = 1;
 
-	
-	ucell->setup_cell(fn,ofs_running);
+	ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type);
 	ucell->lat0 = 1.0;
 	ucell->latvec.Zero();
 	ucell->latvec.e11 = 10.0;
@@ -169,7 +176,7 @@ TEST_F(UcellTest,SetupCellAfterVC)
 		ucell->atoms[i].taud[0].z = 0.1;
 	}
 	
-	unitcell::setup_cell_after_vc(*ucell,ofs_running);
+	unitcell::setup_cell_after_vc(*ucell,ofs_running, nspin);
 	EXPECT_EQ(ucell->lat0_angstrom,0.529177);
 	EXPECT_EQ(ucell->tpiba,ModuleBase::TWO_PI);
 	EXPECT_EQ(ucell->tpiba2,ModuleBase::TWO_PI*ModuleBase::TWO_PI);
@@ -211,5 +218,4 @@ int main(int argc, char **argv)
 	MPI_Finalize();
 	return result;
 }
-#endif
 #endif

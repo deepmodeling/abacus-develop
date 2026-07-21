@@ -417,7 +417,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_HR_IJR(const int& iat1
     {
         for (int is2 = 0; is2 < npol; is2++)
         {
-            step_trace[is * npol + is2] = this->paraV->get_col_size(iat2) * is + is2;
+            step_trace[is * npol + is2] = this->paraV->get_ncol_atom(iat2) * is + is2;
         }
     }
     // calculate the local matrix

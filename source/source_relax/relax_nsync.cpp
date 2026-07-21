@@ -128,10 +128,11 @@ bool IonCellOptimizer::relax_step(const int& istep,
             // Reset force_step counter after cell change for fresh atomic relaxation
             force_step = 1;
             stress_step++;
+            IMM.reset_after_cell_change(PARAM.inp.relax_method, ofs_running);
             ucell.cell_parameter_updated = true;
             
             // Update cell-related parameters after volume change
-            unitcell::setup_cell_after_vc(ucell, ofs_running);
+            unitcell::setup_cell_after_vc(ucell, ofs_running, PARAM.inp.nspin);
             ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
         }
         
@@ -145,4 +146,3 @@ bool IonCellOptimizer::relax_step(const int& istep,
 
     return true;
 }
-

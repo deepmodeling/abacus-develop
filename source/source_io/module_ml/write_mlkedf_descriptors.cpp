@@ -14,57 +14,50 @@ void Write_MLKEDF_Descriptors::generateTrainData_KS(
     ModulePW::PW_Basis_K *pw_psi,
     ModulePW::PW_Basis *pw_rho,
     UnitCell& ucell,
-    const double* veff
+    const double* veff,
+    const int nrxx
 )
 {
-    std::vector<std::vector<double>> nablaRho(3, std::vector<double>(this->cal_tool->nx, 0.));
+    if (nrxx <= 0)
+    {
+        ModuleBase::WARNING_QUIT("Write_MLKEDF_Descriptors::generateTrainData_KS", "nrxx must be greater than 0");
+    }
 
-    this->generate_descriptor(out_dir, pelec->charge->rho, pw_rho, nablaRho);
+    std::vector<std::vector<double>> drho(3, std::vector<double>(nrxx, 0.));
 
-    std::vector<double> container(this->cal_tool->nx);
-    std::vector<double> containernl(this->cal_tool->nx);
+    this->generate_descriptor(out_dir, pelec->charge->rho, pw_rho, drho, nrxx);
 
-    const long unsigned cshape[] = {(long unsigned) this->cal_tool->nx}; // shape of container and containernl
-    // enhancement factor of Pauli energy, and Pauli potential
-    this->cal_tool->getF_KS(psi, pelec, pw_psi, pw_rho, ucell, nablaRho, container, containernl);
+    std::vector<double> enhancement(nrxx);
+    std::vector<double> pauli(nrxx);
+
+    this->cal_tool->getF_KS(psi, pelec, pw_psi, pw_rho, ucell, drho, enhancement, pauli);
 
     Symmetry_rho srho;
 
-    Charge* ptempRho = new Charge();
-    ptempRho->nspin = PARAM.inp.nspin;
-    ptempRho->nrxx = this->cal_tool->nx;
-    ptempRho->rho_core = pelec->charge->rho_core;
-    ptempRho->rho = new double*[1];
-    ptempRho->rho[0] = new double[this->cal_tool->nx];
-    ptempRho->rhog = new std::complex<double>*[1];
-    ptempRho->rhog[0] = new std::complex<double>[pw_rho->npw];
+    std::vector<double> rho_vec(nrxx);
+    std::vector<std::complex<double>> rhog_vec(pw_rho->npw);
+    double* rho_ptr = rho_vec.data();
+    std::complex<double>* rhog_ptr = rhog_vec.data();
 
-    for (int ir = 0; ir < this->cal_tool->nx; ++ir){
-        ptempRho->rho[0][ir] = container[ir];
-    }
-    srho.begin(0, *ptempRho, pw_rho, ucell.symm);
-    for (int ir = 0; ir < this->cal_tool->nx; ++ir){
-        container[ir] = ptempRho->rho[0][ir];
-    }
+    std::copy(enhancement.begin(), enhancement.end(), rho_vec.begin());
+    srho.begin(0, &rho_ptr, &rhog_ptr, pw_rho->npw, nullptr, pw_rho, ucell.symm);
+    std::copy(rho_vec.begin(), rho_vec.end(), enhancement.begin());
 
-    for (int ir = 0; ir < this->cal_tool->nx; ++ir){
-        ptempRho->rho[0][ir] = containernl[ir];
-    }
-    srho.begin(0, *ptempRho, pw_rho, ucell.symm);
-    for (int ir = 0; ir < this->cal_tool->nx; ++ir){
-        containernl[ir] = ptempRho->rho[0][ir];
-    }
+    std::copy(pauli.begin(), pauli.end(), rho_vec.begin());
+    srho.begin(0, &rho_ptr, &rhog_ptr, pw_rho->npw, nullptr, pw_rho, ucell.symm);
+    std::copy(rho_vec.begin(), rho_vec.end(), pauli.begin());
 
-    npy::SaveArrayAsNumpy(out_dir + "/enhancement.npy", false, 1, cshape, container);
-    npy::SaveArrayAsNumpy(out_dir + "/pauli.npy", false, 1, cshape, containernl);
 
-    for (int ir = 0; ir < this->cal_tool->nx; ++ir)
+    // output data in .npy format
+    const long unsigned cshape[] = {(long unsigned) nrxx};
+    npy::SaveArrayAsNumpy(out_dir + "/enhancement.npy", false, 1, cshape, enhancement);
+    npy::SaveArrayAsNumpy(out_dir + "/pauli.npy", false, 1, cshape, pauli);
+
+    for (int ir = 0; ir < nrxx; ++ir)
     {
-        container[ir] = veff[ir];
+        enhancement[ir] = veff[ir];
     }
-    npy::SaveArrayAsNumpy(out_dir + "/veff.npy", false, 1, cshape, container);
-
-    delete ptempRho;
+    npy::SaveArrayAsNumpy(out_dir + "/veff.npy", false, 1, cshape, enhancement);
 }
 
 void Write_MLKEDF_Descriptors::generateTrainData_KS(
@@ -74,12 +67,13 @@ void Write_MLKEDF_Descriptors::generateTrainData_KS(
     ModulePW::PW_Basis_K *pw_psi,
     ModulePW::PW_Basis *pw_rho,
     UnitCell& ucell,
-    const double* veff
+    const double* veff,
+    const int nrxx
 )
 {
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU> psi_double(*psi);
 
-    this->generateTrainData_KS(out_dir, &psi_double, pelec, pw_psi, pw_rho, ucell, veff);
+    this->generateTrainData_KS(out_dir, &psi_double, pelec, pw_psi, pw_rho, ucell, veff, nrxx);
 }
 
 #if ((defined __CUDA) || (defined __ROCM))
@@ -90,12 +84,13 @@ void Write_MLKEDF_Descriptors::generateTrainData_KS(
     ModulePW::PW_Basis_K *pw_psi,
     ModulePW::PW_Basis *pw_rho,
     UnitCell& ucell,
-    const double* veff
+    const double* veff,
+    const int nrxx
 )
 {
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU> psi_cpu(*psi);
 
-    this->generateTrainData_KS(out_dir, &psi_cpu, pelec, pw_psi, pw_rho, ucell, veff);
+    this->generateTrainData_KS(out_dir, &psi_cpu, pelec, pw_psi, pw_rho, ucell, veff, nrxx);
 }
 
 void Write_MLKEDF_Descriptors::generateTrainData_KS(
@@ -105,12 +100,13 @@ void Write_MLKEDF_Descriptors::generateTrainData_KS(
     ModulePW::PW_Basis_K *pw_psi,
     ModulePW::PW_Basis *pw_rho,
     UnitCell& ucell,
-    const double *veff
+    const double *veff,
+    const int nrxx
 )
 {
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU> psi_cpu_double(*psi);
 
-    this->generateTrainData_KS(dir, &psi_cpu_double, pelec, pw_psi, pw_rho, ucell, veff);
+    this->generateTrainData_KS(dir, &psi_cpu_double, pelec, pw_psi, pw_rho, ucell, veff, nrxx);
 }
 #endif
 
@@ -118,21 +114,22 @@ void Write_MLKEDF_Descriptors::generate_descriptor(
     const std::string& out_dir,
     const double * const *prho, 
     ModulePW::PW_Basis *pw_rho,
-    std::vector<std::vector<double>> &nablaRho
+    std::vector<std::vector<double>> &nablaRho,
+    const int nrxx
 )
 {
     // container which will contain gamma, p, q in turn
-    std::vector<double> container(this->cal_tool->nx);
-    std::vector<double> new_container(this->cal_tool->nx);
+    std::vector<double> container(nrxx);
+    std::vector<double> new_container(nrxx);
     // container contains gammanl, pnl, qnl in turn
-    std::vector<double> containernl(this->cal_tool->nx);
-    std::vector<double> new_containernl(this->cal_tool->nx);
+    std::vector<double> containernl(nrxx);
+    std::vector<double> new_containernl(nrxx);
 
-    const long unsigned cshape[] = {(long unsigned) this->cal_tool->nx}; // shape of container and containernl
+    const long unsigned cshape[] = {(long unsigned) nrxx};
 
     // rho
-    std::vector<double> rho(this->cal_tool->nx);
-    for (int ir = 0; ir < this->cal_tool->nx; ++ir){
+    std::vector<double> rho(nrxx);
+    for (int ir = 0; ir < nrxx; ++ir){
         rho[ir] = prho[0][ir];
     }
     npy::SaveArrayAsNumpy(out_dir + "/rho.npy", false, 1, cshape, rho);

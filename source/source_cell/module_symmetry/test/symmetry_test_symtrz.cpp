@@ -1,5 +1,5 @@
 #include "symmetry_test_cases.h"
-#include "source_io/module_output/output.h"
+#include "source_base/output.h"
 #include "mpi.h"
 
 /************************************************
@@ -9,7 +9,6 @@
  *
 ***********************************************/
 // mock the useless functions
-void output::printM3(std::ofstream& ofs, const std::string& description, const ModuleBase::Matrix3& m) {}
 pseudo::pseudo() {}
 pseudo::~pseudo() {}
 Atom::Atom() {}
@@ -71,7 +70,8 @@ TEST_F(SymmetryTest, ForceSymmetry)
     {
         ModuleSymmetry::Symmetry symm;
         construct_ucell(supercell_lib[stru]);
-        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running);
+        const int cal_symm_repr[2] = {0, 6};
+        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
         ModuleBase::matrix force(ucell.nat, 3, true);
         //generate random number for force and restrict to [-100,100)
@@ -102,7 +102,8 @@ TEST_F(SymmetryTest, StressSymmetry)
     {
         ModuleSymmetry::Symmetry symm;
         construct_ucell(supercell_lib[stru]);
-        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running);
+        const int cal_symm_repr[2] = {0, 6};
+        symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, ofs_running, 1e-6, 1, "scf", cal_symm_repr);
 
         ModuleBase::matrix stress(3, 3, true);
         //generate random number for stress and restrict to [-1e5,1e5)

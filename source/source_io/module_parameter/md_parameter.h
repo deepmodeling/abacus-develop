@@ -14,7 +14,7 @@ struct MD_para
     bool md_restart = false;           ///< 1: restart MD, 0: no restart MD
     std::string md_type = "nvt";       ///< fire, nve, nvt, npt, langevin, msst
     std::string md_thermostat = "nhc"; ///< specify the thermostat: nhc, anderson, berendsen,
-                                       ///< rescaling, rescale_v
+                                       ///< rescaling, rescale_v, csvr
     double md_dt = 1.0;                ///< Time increment (hbar/E_hartree)
     double md_tfirst = -1.0;           ///< Temperature (in Hartree, 1 Hartree ~ 3E5 K)
     double md_tlast = -1.0;            ///< Target temperature
@@ -57,6 +57,8 @@ struct MD_para
     int md_pchain = 1;               ///< num of thermostats coupled with barostat
 
     double md_damp = 1.0; ///< Langevin damping parameter (time units)
+
+    double md_csvr_tau = 100.0; ///< CSVR thermostat characteristic time scale (in MD time units)
 
     double md_tolerance = 100.0; ///< tolerance for velocity rescaling (K)
     int md_nraise = 1;           ///< parameters used when md_type=nvt

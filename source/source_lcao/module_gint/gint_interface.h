@@ -35,7 +35,17 @@ void cal_gint_rho(
     double **rho,
     bool is_dm_symm = true);
 
-void cal_gint_tau(        
+// gradient density on the grid:
+//   [grad rho]_{x,y,z}[is](ir) += sum_{Kk,Ll} D[Kk,Ll] (grad phi_Kk) phi_Ll
+// outputs are accumulated, so zero-initialize drho_{x,y,z}[is] (length nrxx) first.
+void cal_gint_drho(
+    const std::vector<HContainer<double>*>& dm_vec,
+    const int nspin,
+    double** drho_x,
+    double** drho_y,
+    double** drho_z);
+
+void cal_gint_tau(
     const std::vector<HContainer<double>*>& dm_vec,
     const int nspin,
     double**tau);

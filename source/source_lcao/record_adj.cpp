@@ -54,12 +54,8 @@ void Record_adj::for_2d(const UnitCell& ucell,
     if (!gamma_only)
     {
         // Record_adj should not modify members of pv, need refactor! mohan add 2025-03-10
-        delete[] pv.nlocdim;
-        delete[] pv.nlocstart;
-        pv.nlocdim = new int[ucell.nat];
-        pv.nlocstart = new int[ucell.nat];
-        ModuleBase::GlobalFunc::ZEROS(pv.nlocdim, ucell.nat);
-        ModuleBase::GlobalFunc::ZEROS(pv.nlocstart, ucell.nat);
+        pv.nlocdim.assign(ucell.nat, 0);
+        pv.nlocstart.assign(ucell.nat, 0);
         pv.nnr = 0;
     }
     {
@@ -120,11 +116,11 @@ void Record_adj::for_2d(const UnitCell& ucell,
                             tau0 = grid_d.getAdjacentTau(ad0);
                             dtau1 = tau0 - tau1;
                             double distance1 = dtau1.norm() * ucell.lat0;
-                            double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
+                            double rcut1 = orb_cutoff[T1] + ucell.infoNL->get_rcut_max(T0);
 
                             dtau2 = tau0 - tau2;
                             double distance2 = dtau2.norm() * ucell.lat0;
-                            double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
+                            double rcut2 = orb_cutoff[T2] + ucell.infoNL->get_rcut_max(T0);
 
                             if (distance1 < rcut1 && distance2 < rcut2)
                             {
@@ -247,11 +243,11 @@ void Record_adj::for_2d(const UnitCell& ucell,
                             tau0 = adjs.adjacent_tau[ad0];
                             dtau1 = tau0 - tau1;
                             double distance1 = dtau1.norm() * ucell.lat0;
-                            double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
+                            double rcut1 = orb_cutoff[T1] + ucell.infoNL->get_rcut_max(T0);
 
                             dtau2 = tau0 - tau2;
                             double distance2 = dtau2.norm() * ucell.lat0;
-                            double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
+                            double rcut2 = orb_cutoff[T2] + ucell.infoNL->get_rcut_max(T0);
 
                             if (distance1 < rcut1 && distance2 < rcut2)
                             {

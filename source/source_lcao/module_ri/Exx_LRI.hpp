@@ -65,7 +65,9 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
+	{
+		this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size())-1);
+	}
 
 	this->exx_objs.clear();
 	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
@@ -77,11 +79,14 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
 															this->info.kmesh_times, this->MGT, settings_list.second.first );
+		this->exx_objs[settings_list.first].cv.set_info_ri(&this->info);
 		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 		{
+			const int evq_abfs_Lmax = this->abfs_Lmax_;
 			this->exx_objs[settings_list.first].evq.init(ucell, orb,
 														this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times);
+														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times,
+														evq_abfs_Lmax);
 		}
 	}
 
@@ -125,8 +130,7 @@ void Exx_LRI<Tdata>::init_spencer(
 
 	for (size_t T = 0; T != this->abfs.size(); ++T)
 	{
-		GlobalC::exx_info.info_ri.abfs_Lmax
-			= std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size()) - 1);
+		this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size()) - 1);
 	}
 
 	this->exx_objs.clear();
@@ -152,6 +156,7 @@ void Exx_LRI<Tdata>::init_spencer(
 		this->info.kmesh_times,
 		this->MGT,
 		center2_settings->second.first);
+	this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_info_ri(&this->info);
 
 	ModuleBase::timer::end("Exx_LRI", "init_spencer");
 }
@@ -190,6 +195,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 
 	std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Vs;
 	std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>> dVs;
+    const bool cal_dCV = PARAM.inp.cal_force || PARAM.inp.cal_stress || PARAM.inp.out_mat_dh_exx[0];
 	for(const auto &settings_list : this->coulomb_settings)
 	{
 		std::map<TA,std::map<TAC,RI::Tensor<Tdata>>>
@@ -225,7 +231,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		}
 		Vs = Vs.empty() ? Vs_temp : LRI_CV_Tools::add(Vs, Vs_temp);
 
-		if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
+        if (cal_dCV)
 		{
 			std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, Ndim>>>
 				dVs_temp = this->exx_objs[settings_list.first].cv.cal_dVs(ucell,
@@ -239,7 +245,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		{ LRI_CV_Tools::write_Vs_abf(Vs, PARAM.globalv.global_out_dir + "Vs"); }
 	this->exx_lri.set_Vs(std::move(Vs), this->info.V_threshold);
 
-	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
+    if (cal_dCV)
 	{
 		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
 			dVs_order = LRI_CV_Tools::change_order(std::move(dVs));
@@ -266,13 +272,13 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 					Cs_dCs = this->exx_objs[settings_list.first].cv.cal_Cs_dCs(
 						ucell,
 						list_As_Cs.first, list_As_Cs.second[0],
-						{{"cal_dC",PARAM.inp.cal_force||PARAM.inp.cal_stress},
+                        { {"cal_dC",cal_dCV},
 						{"writable_Cws",true}, {"writable_dCws",true}, {"writable_Vws",false}, {"writable_dVws",false}});
 			std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> &Cs_temp = std::get<0>(Cs_dCs);
 			this->exx_objs[settings_list.first].cv.Cws = LRI_CV_Tools::get_CVws(ucell,Cs_temp);
 			Cs = Cs.empty() ? Cs_temp : LRI_CV_Tools::add(Cs, Cs_temp);
 
-			if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
+            if (cal_dCV)
 			{
 				std::map<TA, std::map<TAC, std::array<RI::Tensor<Tdata>, 3>>> &dCs_temp = std::get<1>(Cs_dCs);
 				this->exx_objs[settings_list.first].cv.dCws = LRI_CV_Tools::get_dCVws(ucell,dCs_temp);
@@ -284,7 +290,7 @@ void Exx_LRI<Tdata>::cal_exx_ions(const UnitCell& ucell,
 		{ LRI_CV_Tools::write_Cs_ao(Cs, PARAM.globalv.global_out_dir + "Cs"); }
 	this->exx_lri.set_Cs(std::move(Cs), this->info.C_threshold);
 
-	if(PARAM.inp.cal_force || PARAM.inp.cal_stress)
+    if (cal_dCV)
 	{
 		std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, Ndim>
 			dCs_order = LRI_CV_Tools::change_order(std::move(dCs));
@@ -906,6 +912,82 @@ void Exx_LRI<Tdata>::cal_exx_stress(const double& omega, const double& lat0)
 
 	ModuleBase::timer::end("Exx_LRI", "cal_exx_stress");
 }
+
+template<typename Tdata>
+void Exx_LRI<Tdata>::cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+    const UnitCell& ucell,
+    const Parallel_Orbitals& pv)
+{
+    ModuleBase::TITLE("Exx_LRI", "cal_exx_dHs");
+    ModuleBase::timer::start("Exx_LRI", "cal_exx_dHs");
+#ifdef __EXX_DEV
+
+    const std::vector<std::tuple<std::set<TA>, std::set<TA>>> judge = RI_2D_Comm::get_2D_judge(ucell, pv);
+
+    const int nspin = PARAM.inp.nspin;
+    // dHexxs is indexed [direction(3)][atom][spin]; std::array has no resize(), so size the
+    // atom/spin dimensions explicitly before filling them below.
+    for (int ipos = 0; ipos < 3; ++ipos)
+    {
+        this->dHexxs[ipos].resize(ucell.nat);
+        for (int iat = 0; iat < ucell.nat; ++iat)
+        {
+            this->dHexxs[ipos][iat].resize(nspin);
+        }
+    }
+    for (int is = 0; is < nspin; ++is)
+    {
+        using namespace RI::Map_Operator;
+
+        const std::string suffix = std::to_string(is);  // the same as cal_force/cal_stress case
+
+        this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, suffix);
+        this->exx_lri.cal_dHs({ "","",suffix,"","" });    // get lri-distributed exx_lri.dHs (all 3 directions)
+        // postprocess exx_lri.dHs[x/y/z]
+        for (int ipos = 0; ipos < 3; ++ipos)
+        {
+            // 1. Pulay terms: regroup by the differentiated atom: relative row/col [0]/[1] to absolute [0, nat-1]
+            std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> dHs_ipos_ispin(ucell.nat);
+            // dHs[ipos][0]: derivative w.r.t. the first (row) atom -> group by the row atom
+            for (const auto& item : this->exx_lri.dHs[ipos][0])
+            {
+                const TA iat = item.first;
+                dHs_ipos_ispin[iat] = dHs_ipos_ispin[iat]
+                    + std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>{ item };
+            }
+            // dHs[ipos][1]: derivative w.r.t. the second (col) atom -> group each (col,R) entry by its col atom
+            for (const auto& row_item : this->exx_lri.dHs[ipos][1])
+            {
+                const TA iat_row = row_item.first;
+                for (const auto& col_item : row_item.second)
+                {
+                    const TA iat_col = col_item.first.first; // col atom (TA) of the TAC key
+                    // Accumulate, do NOT drop on key collision:
+                    // when iat_col==iat_row==I, directly insert would make col_item lost.
+                    const auto ins = dHs_ipos_ispin[iat_col][iat_row].insert(col_item);
+                    if (!ins.second)
+                        ins.first->second = ins.first->second + col_item.second;
+                }
+            }
+            // 2. add Hellmann-Feynman terms and convert to 2D-distribution for abacus
+            for (int iat = 0; iat < ucell.nat; ++iat)
+            {
+                dHs_ipos_ispin[iat] = dHs_ipos_ispin[iat] + this->exx_lri.dHs_HF[ipos][iat];
+                dHs_ipos_ispin[iat] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+                    this->mpi_comm, std::move(dHs_ipos_ispin[iat]), std::get<0>(judge[is]), std::get<1>(judge[is]));
+                this->dHexxs[ipos][iat][is] = dHs_ipos_ispin[iat];
+                // Reuse the same post-processing as the Hexx writer (general nspin=1,2,4 factor)
+                // -1 factor compared to cal_force (F=-dE/dτ) is already included in LibRI's cal_dHs function.
+                this->post_process_Hexx(this->dHexxs[ipos][iat][is]);
+            }
+        }
+    }
+    ModuleBase::timer::end("Exx_LRI", "cal_exx_dHs");
+#else
+	ModuleBase::WARNING_QUIT("cal_exx_dHs","Compile with the developing version of LibRI and -DEXX_DEV flag to calculate dHexx.");
+#endif
+}
+
 
 /*
 template<typename Tdata>

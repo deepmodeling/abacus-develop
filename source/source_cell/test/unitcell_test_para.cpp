@@ -3,9 +3,6 @@
 #include <unistd.h>
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "memory"
 #include "source_base/global_variable.h"
 #include "source_base/mathzone.h"
@@ -17,30 +14,17 @@
 #include "mpi.h"
 #endif
 #include "prepare_unitcell.h"
-#include "../update_cell.h"
-#include "../bcast_cell.h"
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-#endif
+#include "source_cell/update_cell.h"
+#include "source_cell/bcast_cell.h"
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
-    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
-
 /************************************************
  *  unit test of class UnitCell
  ***********************************************/
@@ -60,14 +44,6 @@ Magnetism::~Magnetism()
  *     - read_pseudo()
  */
 
-// mock function
-#ifdef __LCAO
-void LCAO_Orbitals::bcast_files(const int& ntype_in, const int& my_rank)
-{
-    return;
-}
-#endif
-
 class UcellTest : public ::testing::Test
 {
   protected:
@@ -79,16 +55,8 @@ class UcellTest : public ::testing::Test
     void SetUp()
     {
         ofs.open("running.log");
-        PARAM.input.relax_new = utp.relax_new;
-        PARAM.sys.global_out_dir = "./";
         ucell = utp.SetUcellInfo();
-        PARAM.input.lspinorb = false;
         pp_dir = "./support/";
-        PARAM.input.pseudo_rcut = 15.0;
-        PARAM.input.dft_functional = "default";
-        PARAM.input.test_pseudo_cell = 1;
-        PARAM.input.nspin = 1;
-        PARAM.input.basis_type = "pw";
     }
     void TearDown()
     {
@@ -100,8 +68,8 @@ class UcellTest : public ::testing::Test
 
 TEST_F(UcellTest, BcastUnitcell)
 {
-    PARAM.input.nspin = 4;
-    unitcell::bcast_unitcell(*ucell);
+    const int nspin = 4;
+    unitcell::bcast_unitcell(*ucell, nspin);
     if (GlobalV::MY_RANK != 0)
     {
         EXPECT_EQ(ucell->Coordinate, "Direct");
@@ -136,8 +104,8 @@ TEST_F(UcellTest, BcastLattice)
 
 TEST_F(UcellTest, BcastMagnitism)
 {
-    unitcell::bcast_magnetism(ucell->magnet, ucell->ntype);
-    PARAM.input.nspin = 4;
+    const int nspin = 4;
+    unitcell::bcast_magnetism(ucell->magnet, ucell->ntype, nspin);
     if (GlobalV::MY_RANK != 0)
     {
         EXPECT_DOUBLE_EQ(ucell->magnet.start_mag[0], 0.0);
@@ -238,9 +206,27 @@ TEST_F(UcellTest, UpdatePosTaud_Vector3)
 }
 TEST_F(UcellTest, ReadPseudo)
 {
-    PARAM.input.pseudo_dir = pp_dir;
-    PARAM.input.out_element_info = true;
-    elecstate::read_pseudo(ofs, *ucell);
+    const std::string pseudo_dir = pp_dir;
+    const std::string global_out_dir = "./";
+    const bool out_element_info = true;
+    const std::string dft_functional = "default";
+    const bool lspinorb = false;
+    const double pseudo_rcut = 15.0;
+    const double soc_lambda = 0.0;
+    const int nspin = 1;
+    const int npol = 1;
+    const std::string basis_type = "pw";
+    const std::string esolver_type = "ksdft";
+    const std::string init_wfc = "";
+    const int nbands = 6;
+    const bool two_fermi = false;
+    const double nelec_delta = 0.0;
+    const std::string smearing_method = "none";
+    const std::string ks_solver = "genelpa";
+    const int bndpar = 1;
+    const double nelec = 0.0;
+    const double nupdown = 0.0;
+    auto atoms_info = elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec, nupdown);
     // check_structure will print some warning info
     // output nonlocal file
     if (GlobalV::MY_RANK == 0)

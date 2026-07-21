@@ -71,7 +71,7 @@ void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Paralle
             // When equal, the theoretical value of matrix element is zero, 
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb_.Phi[T1].getRcut() + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < orb_.Phi[T1].getRcut() + this->ucell->infoNL->get_rcut_max(T0))
             {
                 is_adj[ad1] = true;
             }
@@ -90,7 +90,7 @@ void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Paralle
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = ucell->itia2iat(T2, I2);
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                if (paraV->get_col_size(iat2) <= 0 || paraV->get_row_size(iat1) <= 0)
+                if (paraV->is_invalid_atom_pair(iat1, iat2))
                 {
                     continue;
                 }
@@ -139,7 +139,7 @@ void Velocity_op<TR>::initialize_grad_term(const Grid_Driver* GridD, const Paral
             const int T2 = adjs.ntype[ad1];
             const int I2 = adjs.natom[ad1];
             const int iat2 = ucell->itia2iat(T2, I2);
-            if (paraV->get_row_size(iat1) <= 0 || paraV->get_col_size(iat2) <= 0)
+            if (paraV->is_invalid_atom_pair(iat1, iat2))
             {
                 continue;
             }

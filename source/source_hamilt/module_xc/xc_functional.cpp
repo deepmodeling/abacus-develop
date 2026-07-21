@@ -16,11 +16,17 @@ int XC_Functional::func_type = 0;
 bool XC_Functional::ked_flag = false;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
+double XC_Functional::hse_omega = 0.0;
 std::map<int, double> XC_Functional::scaling_factor_xc = { {1, 1.0} }; // added by jghan, 2024-10-10
 
 void XC_Functional::set_hybrid_alpha(const double alpha_in)
 {
     hybrid_alpha = alpha_in;
+}
+
+void XC_Functional::set_hse_omega(const double omega_in)
+{
+    hse_omega = omega_in;
 }
 
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
@@ -301,21 +307,18 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         std::cerr << "\n OPTX untested please test,";
     }
 
-    // if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "pw")
+    // if((func_type == 4 || func_type == 5) && basis_type == "pw")
     // {
     //     ModuleBase::WARNING_QUIT("set_xc_type","hybrid functional not realized for planewave yet");
     // }
-    if((func_type == 3 || func_type == 5) && PARAM.inp.nspin==4)
-    {
-        ModuleBase::WARNING_QUIT("set_xc_type","meta-GGA has not been implemented for nspin = 4 yet");
-    }
 
-#ifndef __EXX
-    if((func_type == 4 || func_type == 5) && PARAM.inp.basis_type == "lcao")
-    {
-        ModuleBase::WARNING_QUIT("set_xc_type","compile with libri to use hybrid functional in lcao basis");
-    }
-#endif
+    // Hybrid functional is now supported for both PW and LCAO basis
+    // #ifndef __EXX
+    // if((func_type == 4 || func_type == 5) && basis_type == "lcao")
+    // {
+    //     ModuleBase::WARNING_QUIT("set_xc_type","compile with libri to use hybrid functional in lcao basis");
+    // }
+    // #endif
 
 #ifndef USE_LIBXC
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
@@ -340,7 +343,9 @@ std::string XC_Functional::output_info()
         ss<<" Libxc v"<<xc_version_string()<<std::endl;
         ss<<"\t"<<xc_reference()<<std::endl;
 
-        std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED);
+        double hybrid_alpha = 0.0;
+        double hse_omega = 0.0;
+        std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, hybrid_alpha, hse_omega);
         for(const auto &func : funcs)
         {
             const xc_func_info_type *info = xc_func_get_info(&func);

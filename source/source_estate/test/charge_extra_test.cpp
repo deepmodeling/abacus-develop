@@ -9,21 +9,12 @@
 #undef private
 #undef protected
 // mock functions for UnitCell
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
-    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
 Parallel_Grid::~Parallel_Grid(){};
 

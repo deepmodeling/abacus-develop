@@ -14,6 +14,7 @@ class Ions_Move_BFGS : public BFGS_Basic
     ~Ions_Move_BFGS();
 
     void allocate(void);
+    void reset(void);
     bool start(UnitCell& ucell, const ModuleBase::matrix& force, const double& energy_in, const int istep, int& update_iter, std::ofstream& ofs, std::vector<double>& etot_info);
 
   private:

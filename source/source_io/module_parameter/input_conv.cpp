@@ -42,7 +42,6 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "source_md/md_func.h"
 #include "source_relax/bfgs_basic.h"
 #include "source_relax/ions_move_cg.h"
 
@@ -480,6 +479,7 @@ void Input_Conv::Convert()
         XC_Functional::set_hybrid_alpha(GlobalC::exx_info.info_global.hybrid_alpha);
         if(!PARAM.inp.exx_erfc_omega.empty())
             { GlobalC::exx_info.info_global.hse_omega = std::stod(PARAM.inp.exx_erfc_omega[0]); }
+        XC_Functional::set_hse_omega(GlobalC::exx_info.info_global.hse_omega);
         if(!PARAM.inp.exx_fock_lambda.empty())
             { GlobalC::exx_info.info_lip.lambda = std::stod(PARAM.inp.exx_fock_lambda[0]); }
         GlobalC::exx_info.info_global.separate_loop = PARAM.inp.exx_separate_loop;

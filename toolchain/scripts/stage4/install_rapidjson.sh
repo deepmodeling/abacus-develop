@@ -69,14 +69,16 @@ case "$with_rapidjson" in
             [ -d $dirname ] && rm -rf $dirname
             tar -xzf $filename
             #unzip -q $filename
-            mkdir -p "${pkg_install_dir}"
-            cp -r $dirname/* "${pkg_install_dir}/"
-            # for rapidjson found in cmake
-            cat << EOF > "${pkg_install_dir}/RapidJSONConfig.cmake"
-get_filename_component(RAPIDJSON_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
-set(RAPIDJSON_INCLUDE_DIRS "@INCLUDE_INSTALL_DIR@")
-message(STATUS "RapidJSON found. Headers: ${RAPIDJSON_INCLUDE_DIRS}")
-EOF
+            cd "${dirname}"
+            mkdir build && cd build
+            cmake \
+              -DCMAKE_INSTALL_PREFIX="${pkg_install_dir}" \
+              -DCMAKE_INSTALL_LIBDIR="lib" \
+              -DRAPIDJSON_BUILD_DOC=OFF \
+              -DRAPIDJSON_BUILD_EXAMPLES=OFF \
+              -DRAPIDJSON_BUILD_TESTS=OFF \
+              .. > cmake.log 2>&1 || tail -n ${LOG_LINES} cmake.log
+            make install -j $(get_nprocs) > make.log 2>&1 || tail -n ${LOG_LINES} make.log
             write_checksums "${install_lock_file}" "${SCRIPT_DIR}/stage4/$(basename ${SCRIPT_NAME})"
         fi
         RAPIDJSON_CFLAGS="-I'${pkg_install_dir}/include'"
@@ -113,7 +115,6 @@ esac
 if [ "$with_rapidjson" != "__DONTUSE__" ]; then
     if [ "$with_rapidjson" != "__SYSTEM__" ]; then
         cat << EOF > "${BUILDDIR}/setup_rapidjson"
-prepend_path CPATH "${pkg_install_dir}/include"
 prepend_path CMAKE_PREFIX_PATH "${pkg_install_dir}"
 EOF
     fi

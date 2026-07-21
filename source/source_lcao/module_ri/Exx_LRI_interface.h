@@ -7,6 +7,7 @@
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
 #include "source_hamilt/hamilt.h"
+#include "source_hamilt/module_xc/exx_info_global.h"
 #include <memory>
 
 class LCAO_Matrix;
@@ -39,9 +40,11 @@ public:
     using TAC = std::pair<TA, TC>;
 
     /// @brief  Constructor for Exx_LRI_Interface
-    Exx_LRI_Interface(const Exx_Info_RI& info)
+    Exx_LRI_Interface(const Exx_Info_RI& info_ri, const Exx_Info_Global& info_global)
     {
-        this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info);
+        this->exx_ptr = std::make_shared<Exx_LRI<Tdata>>(info_ri);
+        this->info_global = info_global;
+        this->hybrid_step_ = info_global.hybrid_step;
     }
     Exx_LRI_Interface() = delete;
 
@@ -53,6 +56,11 @@ public:
     double &get_Eexx() const { return this->exx_ptr->Eexx; }
     ModuleBase::matrix &get_force() const { return this->exx_ptr->force_exx; }
     ModuleBase::matrix &get_stress() const { return this->exx_ptr->stress_exx; }
+    auto& get_dHexxs() const { return this->exx_ptr->dHexxs; }
+    int get_two_level_step() const
+    {
+        return this->two_level_step;
+    }
 
     // Processes in ESolver_KS_LCAO
     /// @brief in init: Exx_LRI::init()
@@ -75,6 +83,14 @@ public:
 
     /// @brief: in cal_exx_stress: Exx_LRI::cal_exx_stress()
     void cal_exx_stress(const double& omega, const double& lat0);
+
+    /// @brief: in cal_exx_dHs: Exx_LRI::cal_exx_dHs()
+    void cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+        const UnitCell& ucell,
+        const Parallel_Orbitals& pv);
+
+    /// @brief build the exx-form dH (dHexxs) from the current mixed DM (for dH/dR output)
+    void cal_exx_dHs(const UnitCell& ucell, const Parallel_Orbitals& pv, const int nspin);
 
     // Processes in ESolver_KS_LCAO
     /// @brief in before_all_runners: set symmetry according to irreducible k-points
@@ -117,15 +133,25 @@ public:
                             const double& etot,
                             const double& scf_ene_thr);
 
+    /// @brief  the step of the outer loop.
+    /// nullptr: no dependence on the number of two_level_step, contributeHk will do enerything normally.
+    /// 0: the first outer loop. If restart, contributeHk will directly add Hexx to Hloc. else, do nothing.
+    /// >0: not the first outer loop. contributeHk will do enerything normally.
     int two_level_step = 0;
     double etot_last_outer_loop = 0.0;
     elecstate::DensityMatrix<T, double>* dm_last_step;
+
+    size_t hybrid_step() const { return hybrid_step_; }
+    void set_hybrid_step(size_t s) { hybrid_step_ = s; }
 
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
 private:
 
     Mix_DMk_2D<T> mix_DMk_2D;
+
+    Exx_Info_Global info_global;
+    size_t hybrid_step_ = 1;
 
     bool exx_spacegroup_symmetry = false;
     ModuleSymmetry::Symmetry_rotation symrot_;
@@ -137,6 +163,7 @@ private:
         bool elec = false;
         bool force = false;
         bool stress = false;
+        bool dHs = false;
     };
     Flag_Finish flag_finish;
 };

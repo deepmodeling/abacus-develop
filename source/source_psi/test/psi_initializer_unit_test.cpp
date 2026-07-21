@@ -10,7 +10,7 @@
 #include "../psi_init_random.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_cell/klist.h"
-#include "source_io/module_output/output.h"
+#include "source_base/output.h"
 
 /*
 =========================
@@ -72,13 +72,13 @@ pseudopot_cell_vl::pseudopot_cell_vl() {}
 pseudopot_cell_vl::~pseudopot_cell_vl() {}
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
-void output::printM3(std::ofstream &ofs, const std::string &description, const ModuleBase::Matrix3 &m) {}
+
 #ifdef __LCAO
+#include "source_basis/module_ao/ORB_gaunt_table.h"
 ORB_gaunt_table::ORB_gaunt_table() {}
 ORB_gaunt_table::~ORB_gaunt_table() {}
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
 #endif
+
 Structure_Factor::Structure_Factor() {}
 Structure_Factor::~Structure_Factor() {}
 void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid&, const ModulePW::PW_Basis* rho_basis) {}

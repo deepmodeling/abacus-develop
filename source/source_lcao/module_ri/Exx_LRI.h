@@ -93,21 +93,26 @@ public:
 		const ModuleSymmetry::Symmetry_rotation* p_symrot = nullptr);
 	void cal_exx_force(const int& nat);
 	void cal_exx_stress(const double& omega, const double& lat0);
+	void cal_exx_dHs(const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+		const UnitCell& ucell,
+		const Parallel_Orbitals& pv);
 
 	void reset_Cs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in) { this->exx_lri.set_Cs(Cs_in, this->info.C_threshold); }
 	void reset_Vs(const std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in) { this->exx_lri.set_Vs(Vs_in, this->info.V_threshold); }
 	//std::vector<std::vector<int>> get_abfs_nchis() const;
 
 	std::vector< std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Hexxs;
+	std::array<std::vector<std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>>, 3> dHexxs; // direction, atom, spin, (i,j,R)
 	double Eexx;
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
 
+	int abfs_Lmax() const { return abfs_Lmax_; }
+	const Exx_Info_RI& get_info_ri() const { return info; }
 
 private:
-	// WARNING: reference to Exx_Info_RI, which holds references into Exx_Info_Global.
-	// Must not outlive GlobalC::exx_info. See exx_info.h for details.
-	const Exx_Info_RI &info;
+	Exx_Info_RI info;
+	int abfs_Lmax_ = 0;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;
 	std::shared_ptr<ORB_gaunt_table> MGT;
@@ -119,9 +124,9 @@ private:
 	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, Exx_Obj<Tdata>> exx_objs;
 	//LRI_CV<Tdata> cv;
 	RI::Exx<TA,Tcell,Ndim,Tdata> exx_lri;
-	std::map<Conv_Coulomb_Pot_K::Coulomb_Method, 
-        std::pair<bool, 
-            std::map<Conv_Coulomb_Pot_K::Coulomb_Type, 
+	std::map<Conv_Coulomb_Pot_K::Coulomb_Method,
+        std::pair<bool,
+            std::map<Conv_Coulomb_Pot_K::Coulomb_Type,
                 std::vector<std::map<std::string,std::string>>>>> coulomb_settings;
 
 	void post_process_Hexx( std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> &Hexxs_io ) const;

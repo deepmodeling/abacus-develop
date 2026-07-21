@@ -47,7 +47,8 @@ class XCTest_SCAN : public XCTest
             {
                 double e,v,v1,v2,v3;
                 double hybrid_alpha = 0.0;
-                XC_Functional_Libxc::tau_xc(XC_Functional::get_func_id(), rho[i],grho[i],tau[i],e,v1,v2,v3,hybrid_alpha);
+                double hse_omega = 0.0;
+                XC_Functional_Libxc::tau_xc(XC_Functional::get_func_id(), rho[i],grho[i],tau[i],e,v1,v2,v3,hybrid_alpha, hse_omega);
                 e_.push_back(e);
                 v1_.push_back(v1);
                 v2_.push_back(v2);

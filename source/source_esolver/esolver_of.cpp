@@ -1,14 +1,10 @@
 #include "esolver_of.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_output/cube_io.h"
-#include "source_io/module_output/output_log.h"
-#include "source_io/module_chgpot/write_elecstat_pot.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_io/module_output/print_info.h"
 #include "source_estate/cal_ux.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_ofdft/of_stress_pw.h"
@@ -119,7 +115,7 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
         this->nelec_[0] = this->pelec->nelec_spin[0];
         this->nelec_[1] = this->pelec->nelec_spin[1];
     }
-    delete[] this->kedf_manager_;
+    delete this->kedf_manager_;
     this->kedf_manager_ = new KEDF_Manager();
     this->kedf_manager_->init(inp, this->pw_rho, this->dV_, this->nelec_[0]);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT KEDF");
@@ -282,7 +278,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 void ESolver_OF::update_potential(UnitCell& ucell)
 {
     // (1) get dL/dphi
-    elecstate::cal_ux(ucell);
+    elecstate::cal_ux(ucell, PARAM.inp.nspin);
 
     this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
     this->kedf_manager_->get_potential(this->chr.rho,

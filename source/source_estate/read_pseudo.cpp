@@ -1,5 +1,4 @@
 #include "read_pseudo.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/global_file.h"
 #include "source_cell/cal_atoms_info.h"
 #include "source_cell/read_pp.h"
@@ -10,21 +9,45 @@
 #include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
 
 namespace elecstate {
-void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
+AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
+                   const std::string& pseudo_dir,
+                   const std::string& global_out_dir,
+                   const bool out_element_info,
+                   const std::string& dft_functional,
+                   const bool lspinorb,
+                   const double pseudo_rcut,
+                   const double soc_lambda,
+                   const int nspin,
+                   const int npol,
+                   const std::string& basis_type,
+                   const std::string& esolver_type,
+                   const std::string& init_wfc,
+                   const int nbands,
+                   const bool two_fermi,
+                   const double nelec_delta,
+                   const std::string& smearing_method,
+                   const std::string& ks_solver,
+                   const int bndpar,
+                   const double nelec,
+                   const double nupdown) {
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " |                 #Read Pseudopotentials Files#                      |" << std::endl;
     ofs << " | ABACUS supports norm-conserving (NC) pseudopotentials for both     |" << std::endl;
-    ofs << " | plane wave basis and numerical atomic orbital basis sets.          |" << std::endl;
+    ofs << " | plane wave basis set and numerical atomic orbital basis set.       |" << std::endl;
     ofs << " | In addition, ABACUS supports ultrasoft pseudopotentials (USPP)     |" << std::endl;
     ofs << " | for plane wave basis set.                                          |" << std::endl;
     ofs << " |                                                                    |" << std::endl;
     ofs << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
     ofs << "\n";
 
-    read_cell_pseudopots(PARAM.inp.pseudo_dir, ofs, ucell);
+    const std::string pseudo_dir_ = pseudo_dir;
+    const std::string global_out_dir_ = global_out_dir;
+    const bool out_element_info_ = out_element_info;
+    const std::string dft_functional_ = dft_functional;
+    read_cell_pseudopots(pseudo_dir_, ofs, ucell, global_out_dir_, dft_functional_, lspinorb, pseudo_rcut, soc_lambda);
 
 	if (GlobalV::MY_RANK == 0) 
 	{
@@ -37,17 +60,17 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
             }
         }
 
-		if (PARAM.inp.out_element_info) 
+		if (out_element_info_) 
 		{
 			for (int i = 0; i < ucell.ntype; i++) 
 			{
-				ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label, PARAM.globalv.global_out_dir);
+				ModuleBase::Global_File::make_dir_atom(ucell.atoms[i].label, global_out_dir_);
             }
 			for (int it = 0; it < ucell.ntype; it++) 
 			{
 				Atom* atom = &ucell.atoms[it];
                 std::stringstream ss;
-                ss << PARAM.globalv.global_out_dir << atom->label << "/"
+                ss << global_out_dir_ << atom->label << "/"
                    << atom->label << ".NONLOCAL";
                 std::ofstream ofs(ss.str().c_str());
 
@@ -127,14 +150,29 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     }
 
     // setup the total number of PAOs
-    cal_natomwfc(ofs,ucell.natomwfc,ucell.ntype,ucell.atoms);
+    cal_natomwfc(ofs,ucell.natomwfc,ucell.ntype,ucell.atoms,nspin);
 
-    // Calculate the information of atoms from the pseudopotential to set PARAM
+    // Calculate the information of atoms from the pseudopotential
+    // CRITICAL: Must pass the user-specified nbands and nelec parameters to cal_atoms_info().
+    // Previously, nbands and nelec were not passed, causing cal_atoms_info() to use default 0,
+    // which triggered cal_nbands() and cal_nelec() to auto-calculate regardless of user input.
+    // This led to incorrect energy calculations (deviation ~139 eV in test 006_PW_UPF201_Eu,
+    // and ~7-8 eV in tests 076_PW_elec_add, 078_PW_S2_elec_add, 082_PW_gatefield).
     CalAtomsInfo ca;
-    ca.cal_atoms_info(ucell.atoms, ucell.ntype, PARAM);
+    AtomsInfoResult atoms_info = ca.cal_atoms_info(ucell.atoms, ucell.ntype,
+                                                    nspin, two_fermi, nelec_delta,
+                                                    esolver_type, lspinorb,
+                                                    basis_type, smearing_method,
+                                                    ks_solver, bndpar,
+                                                    nbands,
+                                                    nelec,
+                                                    nupdown);
 
-    // setup PARAM.globalv.nlocal
-    cal_nwfc(ofs,ucell,ucell.atoms);
+    // setup nlocal
+    // nlocal is calculated by CalAtomsInfo::cal_atoms_info() above
+    // Use the input nbands parameter (from user specification) instead of atoms_info.nbands
+    cal_nwfc(ofs, ucell, ucell.atoms, nspin, atoms_info.nlocal, npol,
+              basis_type, esolver_type, init_wfc, nbands);
 
     // Check whether the number of valence is minimum
 	if (GlobalV::MY_RANK == 0) 
@@ -213,17 +251,29 @@ void read_pseudo(std::ofstream& ofs, UnitCell& ucell) {
     Parallel_Common::bcast_int(ucell.lmax);
     Parallel_Common::bcast_int(ucell.lmax_ppwf);
 #endif
+
+    return atoms_info;
 }
 
 //==========================================================
 // Read pseudopotential according to the dir
 //==========================================================
-void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCell& ucell)
+void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCell& ucell,
+                          const std::string& global_out_dir,
+                          const std::string& dft_functional,
+                          const bool lspinorb,
+                          const double pseudo_rcut,
+                          const double soc_lambda)
 {
     ModuleBase::TITLE("Elecstate", "read_cell_pseudopots");
     // setup reading log for pseudopot_upf
+    const std::string global_out_dir_ = global_out_dir;
+    const std::string dft_functional_ = dft_functional;
+    const bool lspinorb_ = lspinorb;
+    const double pseudo_rcut_ = pseudo_rcut;
+    const double soc_lambda_ = soc_lambda;
     std::stringstream ss;
-    ss << PARAM.globalv.global_out_dir << "atom_pseudo.log";
+    ss << global_out_dir_ << "atom_pseudo.log";
 
     // Read in the atomic pseudo potentials
     std::string pp_address;
@@ -249,7 +299,7 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
                 }
                 upf.set_upf_q(ucell.atoms[i].ncpp); // liuyu add 2023-09-21
                 // average pseudopotential if needed
-                error_ap = upf.average_p(PARAM.inp.soc_lambda, ucell.atoms[i].ncpp); // added by zhengdy 2020-10-20
+                error_ap = upf.average_p(soc_lambda_, ucell.atoms[i].ncpp, lspinorb_);
             }
             ucell.atoms[i].coulomb_potential = upf.coulomb_potential;
         }
@@ -291,7 +341,7 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
 
         if (GlobalV::MY_RANK == 0)
         {
-		    upf.complete_default(ucell.atoms[i].ncpp);
+		    upf.complete_default(ucell.atoms[i].ncpp, pseudo_rcut_);
 
             log << std::endl;
             ModuleBase::GlobalFunc::OUT(log, "Pseudopotential file", ucell.pseudo_fn[i]);
@@ -308,9 +358,9 @@ void read_cell_pseudopots(const std::string& pp_dir, std::ofstream& log, UnitCel
                 ModuleBase::GlobalFunc::OUT(log, "L of projector", ucell.atoms[i].ncpp.lll[ib]);
             }
             //			ModuleBase::GlobalFunc::OUT(log,"Grid Mesh Number", atoms[i].mesh);
-            if (PARAM.inp.dft_functional != "default")
+            if (dft_functional_ != "default")
             {
-                std::string xc_func1 = PARAM.inp.dft_functional;
+                std::string xc_func1 = dft_functional_;
                 transform(xc_func1.begin(), xc_func1.end(), xc_func1.begin(), (::toupper));
                 if (xc_func1 != ucell.atoms[i].ncpp.xc_func)
                 {

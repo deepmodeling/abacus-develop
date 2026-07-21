@@ -167,6 +167,10 @@ else
             grep "(Open MPI)" | awk '{print $4}')
         major_version=$(echo ${raw_version} | cut -d '.' -f 1)
         minor_version=$(echo ${raw_version} | cut -d '.' -f 2)
+        OPENMPI_BINDING_POLICY_ENV="export OMPI_MCA_hwloc_base_binding_policy=none"
+        if [[ "${major_version}" =~ ^[0-9]+$ && "${major_version}" -ge 5 ]]; then
+            OPENMPI_BINDING_POLICY_ENV="export PRTE_MCA_hwloc_default_binding_policy=none"
+        fi
         OPENMPI_LIBS=""
         # grab additional runtime libs (for C/C++) from the mpicxx wrapper,
         # and remove them from the LDFLAGS if present
@@ -182,6 +186,7 @@ export MPICXX="${MPICXX}"
 export MPIFC="${MPIFC}"
 export MPIFORT="${MPIFORT}"
 export MPIF77="${MPIF77}"
+${OPENMPI_BINDING_POLICY_ENV}
 export OPENMPI_CFLAGS="${OPENMPI_CFLAGS}"
 export OPENMPI_LDFLAGS="${OPENMPI_LDFLAGS}"
 export OPENMPI_LIBS="${OPENMPI_LIBS}"

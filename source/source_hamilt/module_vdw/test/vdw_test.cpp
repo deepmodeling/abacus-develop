@@ -1,5 +1,5 @@
 #include "source_cell/unitcell.h"
-#include "source_cell/setup_nonlocal.h"
+
 #include "source_base/mathzone.h"
 #include "source_base/vector3.h"
 #include"gtest/gtest.h"
@@ -61,8 +61,7 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
+
 SepPot::SepPot(){}
 SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
@@ -623,7 +622,9 @@ class vdwd4Test: public testing::Test
                                                              {0.3, 0.25, 0.25}
                                                          }}}};
         construct_ucell(structure,ucell);
+        ucell.atoms[0].ncpp.zv = 4.0;
 
+        input.nelec = 8.0;
         input.vdw_method = "d4";
         input.vdw_d4_xc = "pbe";
         input.vdw_d4_model = "d4";
@@ -644,6 +645,15 @@ TEST_F(vdwd4Test, D4GetEnergy)
     auto vdw_solver = vdw::make_vdw(ucell, input);
     double ene = vdw_solver->get_energy();
     EXPECT_NEAR(ene, -0.04998837990336073, 1E-10);
+}
+
+TEST_F(vdwd4Test, D4GetEnergyForChargedSystem)
+{
+    input.nelec = 7.0;
+
+    auto vdw_solver = vdw::make_vdw(ucell, input);
+    const double ene = vdw_solver->get_energy();
+    EXPECT_NEAR(ene, -0.04359451765256733, 1E-10);
 }
 
 TEST_F(vdwd4Test, D4GetForce)

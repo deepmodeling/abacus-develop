@@ -75,7 +75,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb_cutoff_[T1] + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < orb_cutoff_[T1] + this->ucell->infoNL->get_rcut_max(T0))
             {
                 is_adj[ad1] = true;
             }
@@ -94,7 +94,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = ucell->itia2iat(T2, I2);
                 ModuleBase::Vector3<int>& R_index2 = adjs.box[ad2];
-                if (paraV->get_col_size(iat2) <= 0 || paraV->get_row_size(iat1) <= 0)
+                if (paraV->is_invalid_atom_pair(iat1, iat2))
                 {
                     continue;
                 }
@@ -324,6 +324,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
 }
 
 #include "nonlocal_force_stress.hpp"
+#include "nonlocal_dh.hpp"
 
 template class hamilt::Nonlocal<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::Nonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>;

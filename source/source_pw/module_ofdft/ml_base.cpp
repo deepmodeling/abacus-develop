@@ -285,7 +285,7 @@ void ML_Base::dump_vector(std::string filename, const std::vector<double> &data)
 {
     npy::npy_data_ptr<double> d;
     d.data_ptr = data.data();
-    d.shape = {(long unsigned) this->cal_tool->nx};
+    d.shape = {(long unsigned) this->cal_tool->nrxx};
     d.fortran_order = false;
     npy::write_npy(filename, d);
 }
