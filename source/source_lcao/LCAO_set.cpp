@@ -86,7 +86,7 @@ void LCAO_domain::set_pot(
                   PARAM.globalv.global_readin_dir,
                   PARAM.globalv.global_out_dir,
                   inp.init_chg,
-                  pv.nloc,
+                  pv.get_global_row_size(),
                   PARAM.globalv.gamma_only_local,
                   inp.ks_solver,
                   inp.cal_force,

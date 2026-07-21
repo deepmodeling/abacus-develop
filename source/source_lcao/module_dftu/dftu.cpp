@@ -9,6 +9,7 @@
 #include "source_cell/magnetism.h"
 #include "source_estate/module_charge/charge.h"
 
+#include <cstdint>
 #include <cmath>
 #include <complex>
 #include <cstdio>
@@ -91,7 +92,22 @@ void Plus_U::init(UnitCell& cell,
     this->global_out_dir = global_out_dir;
     this->init_chg = init_chg;
     this->npol = npol;
+
+    if (pv != nullptr)
+    {
+        const int global_rows = pv->get_global_row_size();
+        const int global_cols = pv->get_global_col_size();
+        if (global_rows != global_cols)
+        {
+            ModuleBase::WARNING_QUIT("Plus_U::init", "Global row and column dimensions do not match");
+        }
+        if (nlocal != global_rows)
+        {
+            ModuleBase::WARNING_QUIT("Plus_U::init", "nlocal does not match global matrix dimension");
+        }
+    }
     this->nlocal = nlocal;
+
     this->gamma_only_local = gamma_only_local;
     this->ks_solver = ks_solver;
     this->cal_force = cal_force;
