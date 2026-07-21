@@ -27,10 +27,6 @@ class CalAtomsInfo
      * This function passes nbands to cal_nbands() and nelec to cal_nelec().
      * If nbands is 0, cal_nbands() will auto-calculate a default.
      * If nelec is 0, cal_nelec() will auto-calculate based on atomic valence.
-     * 
-     * BUG FIX NOTE: Previously, this function did not accept nbands and nelec parameters,
-     * causing result.nbands and result.nelec to always be 0. cal_nbands() and cal_nelec()
-     * then auto-calculated regardless of user input, leading to incorrect energy calculations.
      *
      * @param atoms [in] Atom pointer
      * @param ntype [in] number of atom types
@@ -117,13 +113,6 @@ class CalAtomsInfo
             }
         }
 
-        // CRITICAL: Set result.nelec to the user-specified value before calling cal_nelec().
-        // cal_nelec() uses nelec==0 as a signal to auto-calculate, so we must pass the
-        // user-specified value (even if it's 0, meaning user wants auto-calculation).
-        // 
-        // BUG FIX: Previously, result.nelec was not set here, defaulting to 0 from struct
-        // initialization. This caused cal_nelec() to always auto-calculate, ignoring user input.
-        // The fix ensures user-specified nelec (e.g., 9 from INPUT) is properly propagated.
         result.nelec = nelec;
         unitcell::cal_nelec(atoms, ntype, result.nelec, nelec_delta);
 
@@ -134,13 +123,6 @@ class CalAtomsInfo
             nelec_spin[0] = (result.nelec + result.nupdown) / 2.0;
             nelec_spin[1] = (result.nelec - result.nupdown) / 2.0;
         }
-        // CRITICAL: Set result.nbands to the user-specified value before calling cal_nbands().
-        // cal_nbands() uses nbands==0 as a signal to auto-calculate, so we must pass the
-        // user-specified value (even if it's 0, meaning user wants auto-calculation).
-        // 
-        // BUG FIX: Previously, result.nbands was not set here, defaulting to 0 from struct
-        // initialization. This caused cal_nbands() to always auto-calculate, ignoring user input.
-        // The fix ensures user-specified nbands (e.g., 10 from INPUT) is properly propagated.
         result.nbands = nbands;
         unitcell::cal_nbands(static_cast<int>(result.nelec), result.nlocal, nelec_spin, result.nbands,
                               esolver_type, lspinorb, nspin, basis_type, smearing_method);
