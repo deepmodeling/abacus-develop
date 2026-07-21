@@ -18,6 +18,105 @@
 #include <complex>
 #include <cmath>
 
+namespace {
+void process_vlapl_potential(
+    const int nspin,
+    const int nrxx,
+    const double tpiba,
+    const std::vector<double>& vlapl,
+    const std::vector<double>& sgn,
+    const std::vector<double>& rho,
+    ModuleBase::matrix& v,
+    double& vtxc,
+    const Charge* chr,
+    const int func_type,
+    const double hybrid_alpha)
+{
+    double vlapl_max = 0.0;
+    for (int i = 0; i < nrxx * nspin; ++i)
+        vlapl_max = std::max(vlapl_max, std::abs(vlapl[i]));
+    if (vlapl_max <= 1e-20)
+        return;
+
+    const int nx = chr->rhopw->nx;
+    const int ny = chr->rhopw->ny;
+    const int nz = chr->rhopw->nz;
+    const double tpiba2 = tpiba * tpiba;
+    const double twopi = 2.0 * M_PI;
+
+    std::vector<double> gg_fd(chr->rhopw->npw);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+    for (int ig = 0; ig < chr->rhopw->npw; ig++)
+    {
+        int m0 = chr->rhopw->gdirect[ig].x;
+        int m1 = chr->rhopw->gdirect[ig].y;
+        int m2 = chr->rhopw->gdirect[ig].z;
+
+        double fd00 = 2.0 * nx * nx * (1.0 - std::cos(twopi * m0 / nx));
+        double fd11 = 2.0 * ny * ny * (1.0 - std::cos(twopi * m1 / ny));
+        double fd22 = 2.0 * nz * nz * (1.0 - std::cos(twopi * m2 / nz));
+        double fd01 = nx * ny * std::sin(twopi * m0 / nx) * std::sin(twopi * m1 / ny);
+        double fd02 = nx * nz * std::sin(twopi * m0 / nx) * std::sin(twopi * m2 / nz);
+        double fd12 = ny * nz * std::sin(twopi * m1 / ny) * std::sin(twopi * m2 / nz);
+
+        double ggt00 = chr->rhopw->GGT.e11;
+        double ggt01 = chr->rhopw->GGT.e12;
+        double ggt02 = chr->rhopw->GGT.e13;
+        double ggt11 = chr->rhopw->GGT.e22;
+        double ggt12 = chr->rhopw->GGT.e23;
+        double ggt22 = chr->rhopw->GGT.e33;
+
+        gg_fd[ig] = (ggt00 * fd00 + ggt11 * fd11 + ggt22 * fd22
+                   + 2.0 * ggt01 * fd01 + 2.0 * ggt02 * fd02 + 2.0 * ggt12 * fd12)
+                  / (twopi * twopi);
+    }
+
+    for (int is = 0; is < nspin; ++is)
+    {
+        std::vector<double> vlapl_sgn(nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            vlapl_sgn[ir] = vlapl[ir * nspin + is] * sgn[ir * nspin + is];
+        }
+
+        std::vector<std::complex<double>> vlapl_g(chr->rhopw->npw);
+        chr->rhopw->real2recip(vlapl_sgn.data(), vlapl_g.data());
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+        for (int ig = 0; ig < chr->rhopw->npw; ig++)
+        {
+            vlapl_g[ig] *= -gg_fd[ig] * tpiba2;
+        }
+
+        std::vector<std::complex<double>> vlapl_lapl(chr->rhopw->nmaxgr);
+        chr->rhopw->recip2real(vlapl_g.data(), vlapl_lapl.data());
+
+        double rvtxc = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:rvtxc) schedule(static, 256)
+#endif
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            double vlapl_val = ModuleBase::e2 * vlapl_lapl[ir].real();
+            if (func_type == 5)
+            {
+                vlapl_val *= (1.0 - hybrid_alpha);
+            }
+            v(is, ir) += vlapl_val;
+            rvtxc += vlapl_val * rho[ir * nspin + is] * sgn[ir * nspin + is];
+        }
+        vtxc += rvtxc;
+    }
+}
+} // anonymous namespace
+
 std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		// Peize Lin update for nspin==4 at 2023.01.14
         const std::vector<int> &func_id,
         const int &nrxx, // number of real-space grid
@@ -467,100 +566,10 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
         //process vlapl: compute ∇²(vlapl·sgn) using FD Laplacian kernel
         //The FD kernel matches the spectral kernel at low G but is bounded at high G,
         //preventing |G|² amplification that causes SCF divergence.
-        //V_xc contribution: V_lapl(r) = e2 * ∇²_FD(vlapl(r)·sgn(r))
-        //vtxc contribution: vtxc += e2 * Σ_r ∇²_FD(vlapl·sgn) * ρ * sgn
-        {
-            double vlapl_max = 0.0;
-            for (int i = 0; i < nrxx * nspin; ++i)
-                vlapl_max = std::max(vlapl_max, std::abs(vlapl[i]));
-            if (vlapl_max > 1e-20)
-            {
-            const int nx = chr->rhopw->nx;
-            const int ny = chr->rhopw->ny;
-            const int nz = chr->rhopw->nz;
-            const double tpiba2 = tpiba * tpiba;
-            const double twopi = 2.0 * M_PI;
-
-            // Pre-compute FD gg for all G vectors
-            std::vector<double> gg_fd(chr->rhopw->npw);
-            #ifdef _OPENMP
-            #pragma omp parallel for schedule(static, 1024)
-            #endif
-            for (int ig = 0; ig < chr->rhopw->npw; ig++)
-            {
-                int m0 = chr->rhopw->gdirect[ig].x;
-                int m1 = chr->rhopw->gdirect[ig].y;
-                int m2 = chr->rhopw->gdirect[ig].z;
-
-                double fd00 = 2.0 * nx * nx * (1.0 - std::cos(twopi * m0 / nx));
-                double fd11 = 2.0 * ny * ny * (1.0 - std::cos(twopi * m1 / ny));
-                double fd22 = 2.0 * nz * nz * (1.0 - std::cos(twopi * m2 / nz));
-                double fd01 = nx * ny * std::sin(twopi * m0 / nx) * std::sin(twopi * m1 / ny);
-                double fd02 = nx * nz * std::sin(twopi * m0 / nx) * std::sin(twopi * m2 / nz);
-                double fd12 = ny * nz * std::sin(twopi * m1 / ny) * std::sin(twopi * m2 / nz);
-
-                double ggt00 = chr->rhopw->GGT.e11;
-                double ggt01 = chr->rhopw->GGT.e12;
-                double ggt02 = chr->rhopw->GGT.e13;
-                double ggt11 = chr->rhopw->GGT.e22;
-                double ggt12 = chr->rhopw->GGT.e23;
-                double ggt22 = chr->rhopw->GGT.e33;
-
-                gg_fd[ig] = (ggt00 * fd00 + ggt11 * fd11 + ggt22 * fd22
-                           + 2.0 * ggt01 * fd01 + 2.0 * ggt02 * fd02 + 2.0 * ggt12 * fd12)
-                          / (twopi * twopi);
-            }
-
-            for (int is = 0; is < nspin; ++is)
-            {
-                // construct vlapl·sgn in real space
-                std::vector<double> vlapl_sgn(nrxx);
-                #ifdef _OPENMP
-                #pragma omp parallel for schedule(static, 1024)
-                #endif
-                for (int ir = 0; ir < nrxx; ++ir)
-                {
-                    vlapl_sgn[ir] = vlapl[ir * nspin + is] * sgn[ir * nspin + is];
-                }
-
-                // FFT to G-space
-                std::vector<std::complex<double>> vlapl_g(chr->rhopw->npw);
-                chr->rhopw->real2recip(vlapl_sgn.data(), vlapl_g.data());
-
-                // Apply FD Laplacian kernel
-                #ifdef _OPENMP
-                #pragma omp parallel for schedule(static, 1024)
-                #endif
-                for (int ig = 0; ig < chr->rhopw->npw; ig++)
-                {
-                    vlapl_g[ig] *= -gg_fd[ig] * tpiba2;
-                }
-
-                // IFFT back to real space
-                std::vector<std::complex<double>> vlapl_lapl(chr->rhopw->nmaxgr);
-                chr->rhopw->recip2real(vlapl_g.data(), vlapl_lapl.data());
-
-                // Add to V_xc and vtxc
-                double rvtxc = 0.0;
-                #ifdef _OPENMP
-                #pragma omp parallel for reduction(+:rvtxc) schedule(static, 256)
-                #endif
-                for (int ir = 0; ir < nrxx; ++ir)
-                {
-                    double vlapl_val = ModuleBase::e2 * vlapl_lapl[ir].real();
-#ifdef __EXX
-                    if (func.info->number == XC_MGGA_X_SCAN && XC_Functional::get_func_type() == 5)
-                    {
-                        vlapl_val *= (1.0 - XC_Functional::get_hybrid_alpha());
-                    }
-#endif
-                    v(is, ir) += vlapl_val;
-                    rvtxc += vlapl_val * rho[ir * nspin + is] * sgn[ir * nspin + is];
-                }
-                vtxc += rvtxc;
-            }
-            } // end if (vlapl_max > 1e-20)
-        }
+        process_vlapl_potential(
+            nspin, nrxx, tpiba, vlapl, sgn, rho, v, vtxc, chr,
+            XC_Functional::get_func_type(),
+            XC_Functional::get_hybrid_alpha());
     }
 
     //-------------------------------------------------

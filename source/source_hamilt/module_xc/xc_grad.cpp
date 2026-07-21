@@ -22,6 +22,133 @@
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
 #endif
+
+namespace {
+void add_vlapl_stress_contribution(
+    std::vector<double>& stress_gga,
+    const int nspin0,
+    const double* rhotmp1,
+    const double* rhotmp2,
+    const ModuleBase::Vector3<double>* gdr1,
+    const ModuleBase::Vector3<double>* gdr2,
+    const std::vector<double>& lapl1,
+    const std::vector<double>& lapl2,
+    const Charge* chr,
+    const ModulePW::PW_Basis* rhopw,
+    const UnitCell* ucell,
+    const double epsr)
+{
+    const std::size_t nrxx_s = rhopw->nrxx;
+    std::vector<double> rho_interleaved(nrxx_s * nspin0);
+    if (nspin0 == 1)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+        for (std::size_t ir = 0; ir < nrxx_s; ++ir)
+        {
+            rho_interleaved[ir] = std::abs(rhotmp1[ir]);
+        }
+    }
+    else
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+        for (std::size_t ir = 0; ir < nrxx_s; ++ir)
+        {
+            rho_interleaved[ir * 2] = std::abs(rhotmp1[ir]);
+            rho_interleaved[ir * 2 + 1] = std::abs(rhotmp2[ir]);
+        }
+    }
+    auto hessian = XC_Functional_Libxc::cal_rho_hessian(nspin0, nrxx_s, rho_interleaved, chr);
+
+    std::vector<double> vlapl_vals(nrxx_s * nspin0, 0.0);
+    if (nspin0 == 1)
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 256)
+#endif
+        for (std::size_t ir = 0; ir < nrxx_s; ++ir)
+        {
+            double arho = std::abs(rhotmp1[ir]);
+            double grho2 = gdr1[ir].norm2();
+            double atau = chr->kin_r[0][ir] / 2.0;
+            double lapl_val = lapl1.empty() ? 0.0 : lapl1[ir];
+            double sxc_l = 0.0, v1xc_l = 0.0, v2xc_l = 0.0, v3xc_l = 0.0, vlapl_l = 0.0;
+            double ha = 0.0;
+            double hse_om = 0.0;
+#ifdef __EXX
+            ha = GlobalC::exx_info.info_global.hybrid_alpha;
+            hse_om = GlobalC::exx_info.info_global.hse_omega;
+#endif
+            if (arho > epsr)
+                XC_Functional_Libxc::tau_xc(XC_Functional::get_func_id(), arho, grho2, lapl_val, atau,
+                                             sxc_l, v1xc_l, v2xc_l, v3xc_l, vlapl_l, ha, hse_om);
+            vlapl_vals[ir] = vlapl_l;
+        }
+    }
+    else
+    {
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 128)
+#endif
+        for (std::size_t ir = 0; ir < nrxx_s; ++ir)
+        {
+            double arho1 = std::abs(rhotmp1[ir]);
+            double arho2 = std::abs(rhotmp2[ir]);
+            double atau1 = chr->kin_r[0][ir] / 2.0;
+            double atau2 = chr->kin_r[1][ir] / 2.0;
+            double laplup_val = lapl1.empty() ? 0.0 : lapl1[ir];
+            double lapldw_val = lapl2.empty() ? 0.0 : lapl2[ir];
+            double sxc_l = 0.0;
+            double v1xcup = 0.0, v1xcdw = 0.0;
+            double v2xcup = 0.0, v2xcdw = 0.0, v2xcud = 0.0;
+            double v3xcup = 0.0, v3xcdw = 0.0;
+            double vlaplup = 0.0, vlapldw = 0.0;
+            double ha = 0.0;
+            double hse_om = 0.0;
+#ifdef __EXX
+            ha = GlobalC::exx_info.info_global.hybrid_alpha;
+            hse_om = GlobalC::exx_info.info_global.hse_omega;
+#endif
+            XC_Functional_Libxc::tau_xc_spin(XC_Functional::get_func_id(), arho1, arho2, gdr1[ir], gdr2[ir],
+                                               laplup_val, lapldw_val, atau1, atau2,
+                                               sxc_l, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud,
+                                               v3xcup, v3xcdw, vlaplup, vlapldw, ha, hse_om);
+            vlapl_vals[ir * 2] = vlaplup;
+            vlapl_vals[ir * 2 + 1] = vlapldw;
+        }
+    }
+
+    double vlapl_stress[6] = {0.0};
+    int ab_map[6][2] = {{0,0}, {1,1}, {2,2}, {0,1}, {1,2}, {0,2}};
+    for (int is = 0; is < nspin0; ++is)
+    {
+        for (int ab = 0; ab < 6; ++ab)
+        {
+            double sum = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+:sum) schedule(static, 256)
+#endif
+            for (std::size_t ir = 0; ir < nrxx_s; ++ir)
+            {
+                sum += vlapl_vals[ir * nspin0 + is] * hessian[is][ab * nrxx_s + ir];
+            }
+            vlapl_stress[ab] += sum;
+        }
+    }
+
+    double inv_omega = 1.0 / ucell->omega;
+    for (int ab = 0; ab < 6; ++ab)
+    {
+        int l = ab_map[ab][0];
+        int m = ab_map[ab][1];
+        int ind = l * 3 + m;
+        stress_gga[ind] += 2.0 * vlapl_stress[ab] * ModuleBase::e2 * inv_omega;
+    }
+}
+} // anonymous namespace
 #endif
 
 void XC_Functional::gradcorr(
@@ -547,117 +674,13 @@ void XC_Functional::gradcorr(
             }
 
             // Add vlapl stress contribution for mGGA functionals
-            // sigma_ab^{vlapl} = -2/Omega * sum_r vlapl(r) * H_ab(r) * e2
             if ((func_type == 3 || func_type == 5) && use_libxc)
             {
 #ifdef USE_LIBXC
-                const std::size_t nrxx_s = rhopw->nrxx;
-                std::vector<double> rho_interleaved(nrxx_s * nspin0);
-                if (nspin0 == 1)
-                {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
+                add_vlapl_stress_contribution(
+                    stress_gga, nspin0, rhotmp1, rhotmp2, gdr1, gdr2,
+                    lapl1, lapl2, chr, rhopw, ucell, epsr);
 #endif
-                    for (std::size_t ir = 0; ir < nrxx_s; ++ir)
-                    {
-                        rho_interleaved[ir] = std::abs(rhotmp1[ir]);
-                    }
-                }
-                else
-                {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-                    for (std::size_t ir = 0; ir < nrxx_s; ++ir)
-                    {
-                        rho_interleaved[ir * 2] = std::abs(rhotmp1[ir]);
-                        rho_interleaved[ir * 2 + 1] = std::abs(rhotmp2[ir]);
-                    }
-                }
-                auto hessian = XC_Functional_Libxc::cal_rho_hessian(nspin0, nrxx_s, rho_interleaved, chr);
-
-                // Compute vlapl values point-wise for the stress integral
-                std::vector<double> vlapl_vals(nrxx_s * nspin0, 0.0);
-                if (nspin0 == 1)
-                {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 256)
-#endif
-                    for (std::size_t ir = 0; ir < nrxx_s; ++ir)
-                    {
-                        double arho = std::abs(rhotmp1[ir]);
-                        double grho2 = gdr1[ir].norm2();
-                        double atau = chr->kin_r[0][ir] / 2.0;
-                        double lapl_val = lapl1.empty() ? 0.0 : lapl1[ir];
-                        double sxc_l = 0.0, v1xc_l = 0.0, v2xc_l = 0.0, v3xc_l = 0.0, vlapl_l = 0.0;
-                        double ha = 0.0;
-#ifdef __EXX
-                        ha = GlobalC::exx_info.info_global.hybrid_alpha;
-#endif
-                        if (arho > epsr)
-                            XC_Functional_Libxc::tau_xc(func_id, arho, grho2, lapl_val, atau,
-                                                         sxc_l, v1xc_l, v2xc_l, v3xc_l, vlapl_l, ha);
-                        vlapl_vals[ir] = vlapl_l;
-                    }
-                }
-                else
-                {
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 128)
-#endif
-                    for (std::size_t ir = 0; ir < nrxx_s; ++ir)
-                    {
-                        double arho1 = std::abs(rhotmp1[ir]);
-                        double arho2 = std::abs(rhotmp2[ir]);
-                        double atau1 = chr->kin_r[0][ir] / 2.0;
-                        double atau2 = chr->kin_r[1][ir] / 2.0;
-                        double laplup_val = lapl1.empty() ? 0.0 : lapl1[ir];
-                        double lapldw_val = lapl2.empty() ? 0.0 : lapl2[ir];
-                        double sxc_l = 0.0;
-                        double v1xcup = 0.0, v1xcdw = 0.0;
-                        double v2xcup = 0.0, v2xcdw = 0.0, v2xcud = 0.0;
-                        double v3xcup = 0.0, v3xcdw = 0.0;
-                        double vlaplup = 0.0, vlapldw = 0.0;
-                        double ha = 0.0;
-#ifdef __EXX
-                        ha = GlobalC::exx_info.info_global.hybrid_alpha;
-#endif
-                        XC_Functional_Libxc::tau_xc_spin(func_id, arho1, arho2, gdr1[ir], gdr2[ir],
-                                                           laplup_val, lapldw_val, atau1, atau2,
-                                                           sxc_l, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud,
-                                                           v3xcup, v3xcdw, vlaplup, vlapldw, ha);
-                        vlapl_vals[ir * 2] = vlaplup;
-                        vlapl_vals[ir * 2 + 1] = vlapldw;
-                    }
-                }
-
-                double vlapl_stress[6] = {0.0};
-                int ab_map[6][2] = {{0,0}, {1,1}, {2,2}, {0,1}, {1,2}, {0,2}};
-                for (int is = 0; is < nspin0; ++is)
-                {
-                    for (int ab = 0; ab < 6; ++ab)
-                    {
-                        double sum = 0.0;
-#ifdef _OPENMP
-#pragma omp parallel for reduction(+:sum) schedule(static, 256)
-#endif
-                        for (std::size_t ir = 0; ir < nrxx_s; ++ir)
-                        {
-                            sum += vlapl_vals[ir * nspin0 + is] * hessian[is][ab * nrxx_s + ir];
-                        }
-                        vlapl_stress[ab] += sum;
-                    }
-                }
-
-                double inv_omega = 1.0 / ucell->omega;
-                for (int ab = 0; ab < 6; ++ab)
-                {
-                    int l = ab_map[ab][0];
-                    int m = ab_map[ab][1];
-                    int ind = l * 3 + m;
-                    stress_gga[ind] += 2.0 * vlapl_stress[ab] * ModuleBase::e2 * inv_omega;
-                }
-#endif // USE_LIBXC
             }
         }
         else
