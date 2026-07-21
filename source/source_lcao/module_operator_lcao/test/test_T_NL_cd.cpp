@@ -61,7 +61,7 @@ class TNLTest : public ::testing::Test
         // for Nonlocal
         auto* lcao_nl = new LCAONonlocalInfo();
         lcao_nl->get_nonlocal().Beta = new Numerical_Nonlocal[ucell.ntype];
-        ucell.infoNL = lcao_nl;
+        ucell.infoNL.reset(lcao_nl);
         ucell.atoms[0].ncpp.d_real.create(5, 5);
         ucell.atoms[0].ncpp.d_real.zero_out();
         ucell.atoms[0].ncpp.d_so.create(4, 5, 5);
@@ -95,7 +95,6 @@ class TNLTest : public ::testing::Test
         delete HR;
         delete paraV;
         delete[] ucell.atoms;
-        delete ucell.infoNL;
     }
 
 #ifdef __MPI

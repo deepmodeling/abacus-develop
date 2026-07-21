@@ -129,7 +129,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
         ASSERT_EQ(lcao_nl->get_nonlocal().nproj[0], 6);
         lcao_nl->get_nonlocal().nprojmax = lcao_nl->get_nonlocal().nproj[0];
         lcao_nl->get_nonlocal().rcutmax_Beta = lcao_nl->get_nonlocal().Beta[0].get_rcut_max();
-        ucell.infoNL = lcao_nl;
+        ucell.infoNL.reset(lcao_nl);
     }
 
     void initialize_r_overlap_reference()
@@ -155,7 +155,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
                 for (int m1 = 0; m1 < 2 * L1 + 1; ++m1)
                 {
                     std::vector<std::vector<std::complex<double>>> grid_nlm;
-                    module_rt::snap_psibeta_half_tddft(orb, dynamic_cast<LCAONonlocalInfo*>(ucell.infoNL)->get_nonlocal(), grid_nlm, R1, 0, L1, m1, N1, R0, 0, zero_A, true, options);
+                    module_rt::snap_psibeta_half_tddft(orb, dynamic_cast<LCAONonlocalInfo*>(ucell.infoNL.get())->get_nonlocal(), grid_nlm, R1, 0, L1, m1, N1, R0, 0, zero_A, true, options);
 
                     std::vector<std::vector<double>> reference_nlm;
                     r_calculator.get_psi_r_beta(ucell, reference_nlm, R1, 0, L1, m1, N1, R0, 0);

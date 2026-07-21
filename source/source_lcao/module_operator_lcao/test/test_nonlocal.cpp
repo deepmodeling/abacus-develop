@@ -35,7 +35,7 @@ class NonlocalTest : public ::testing::Test
         ucell.ntype = 1;
         auto* lcao_nl = new LCAONonlocalInfo();
         lcao_nl->get_nonlocal().Beta = new Numerical_Nonlocal[ucell.ntype];
-        ucell.infoNL = lcao_nl;
+        ucell.infoNL.reset(lcao_nl);
         ucell.nat = test_size;
         ucell.atoms = new Atom[ucell.ntype];
         ucell.iat2it = new int[ucell.nat];
@@ -93,7 +93,6 @@ class NonlocalTest : public ::testing::Test
         delete HR;
         delete paraV;
         delete[] ucell.atoms;
-        delete ucell.infoNL;
     }
 
 #ifdef __MPI

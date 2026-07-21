@@ -1,6 +1,7 @@
 #ifndef UNITCELL_H
 #define UNITCELL_H
 
+#include <memory>
 #include "source_base/global_function.h"
 #include "source_cell/sep_cell.h"
 #include "source_cell/magnetism.h"
@@ -246,7 +247,7 @@ class UnitCell : public AtomProvider {
      * This pointer is set during LCAO initialization and provides access
      * to non-local projector data. It is null for non-LCAO calculations.
      */
-    NonlocalInfoBase* infoNL = nullptr;
+    std::unique_ptr<NonlocalInfoBase> infoNL;
 
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors

@@ -263,7 +263,7 @@ void test_deepks<T>::set_orbs()
     auto* lcao_nl = new LCAONonlocalInfo();
     lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB,
                            basis_type, out_element_info, lspinorb, nspin);
-    ucell.infoNL = lcao_nl;
+    ucell.infoNL.reset(lcao_nl);
 
     orb_.build(ntype, ucell.orbital_fn.data());
 
