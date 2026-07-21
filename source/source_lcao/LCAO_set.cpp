@@ -82,7 +82,7 @@ void LCAO_domain::set_pot(
     {
         dftu.init(ucell, &pv,
                   PARAM.globalv.npol,
-                  inp.nspin, inp.orbital_corr, inp.yukawa_lambda,
+                  inp.nspin, inp.orbital_corr, inp.yukawa_potential, inp.yukawa_lambda,
                   PARAM.globalv.global_readin_dir,
                   PARAM.globalv.global_out_dir,
                   inp.init_chg,

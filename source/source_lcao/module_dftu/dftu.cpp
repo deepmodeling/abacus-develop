@@ -49,6 +49,7 @@ void Plus_U::init(UnitCell& cell,
                 const int npol,
                 const int nspin,
                 const std::vector<int>& orbital_corr,
+                const bool yukawa_potential,
                 const double yukawa_lambda,
                 const std::string& global_readin_dir,
                 const std::string& global_out_dir,
@@ -85,7 +86,7 @@ void Plus_U::init(UnitCell& cell,
 
     Plus_U::nspin = nspin;
     Plus_U::orbital_corr = orbital_corr;
-    Plus_U::Yukawa = (yukawa_lambda > 0);
+    Plus_U::Yukawa = yukawa_potential;
     this->yukawa_lambda = yukawa_lambda;
 
     this->global_readin_dir = global_readin_dir;

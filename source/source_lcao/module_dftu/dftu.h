@@ -30,6 +30,7 @@ class Plus_U
                 const int npol,
                 const int nspin,
                 const std::vector<int>& orbital_corr,
+                const bool yukawa_potential,
                 const double yukawa_lambda,
                 const std::string& global_readin_dir,
                 const std::string& global_out_dir,
