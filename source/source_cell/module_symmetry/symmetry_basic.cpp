@@ -1,6 +1,5 @@
 #include "symmetry.h"
 #include "source_base/mymath.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/formatter.h"
 
 bool ModuleSymmetry::test_brav = 0;
@@ -325,9 +324,10 @@ void Symmetry_Basic::matrigen(ModuleBase::Matrix3 *symgen, const int ngen, Modul
 // given in crystal coordinates)
 // of a lattice with some arbitrary basis (atomic arrangement).
 //--------------------------------------------------------------
-void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav) const
+void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &ibrav,
+                               const int* cal_symm_repr) const
 {
-	if(PARAM.inp.cal_symm_repr[0] > 1) {
+	if(cal_symm_repr != nullptr && cal_symm_repr[0] > 1) {
 		ModuleBase::TITLE("Symmetry_Basic", "setgroup");
 	}
 	ModuleBase::Matrix3 symgen[3]; // the number of generators is up to 3
@@ -433,7 +433,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 	}
 
 	// print the symmetry operations
-	if (PARAM.inp.cal_symm_repr[0] > 0)
+	if (cal_symm_repr != nullptr && cal_symm_repr[0] > 0)
 	{
 		GlobalV::ofs_running << std::endl
 							 << " ======================================================================\n"
@@ -445,7 +445,7 @@ void Symmetry_Basic::setgroup(ModuleBase::Matrix3* symop, int &nop, const int &i
 							 << std::endl;
 
 		// control the digits
-		const int precision = PARAM.inp.cal_symm_repr[1];
+		const int precision = cal_symm_repr[1];
 		const int width = precision + 4;
 		std::string fmtstr = " %" + std::to_string(width) + "." + std::to_string(precision) + "f";
 		fmtstr += fmtstr + fmtstr + "\n";
@@ -547,7 +547,8 @@ int Symmetry_Basic::subgroup(const int& nrot, const int& ninv,
 
 
 bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber,
-  std::string& pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream& ofs_running)const
+  std::string& pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream& ofs_running,
+  const int* cal_symm_repr)const
 {
 	//-------------------------------------------------------------------------
 	//return the name of the point group
@@ -564,7 +565,7 @@ bool Symmetry_Basic::pointgroup(const int& nrot, int& pgnumber,
 
 	//there are four trivial cases which could be easily determined
 	//because the number of their elements are exclusive
-    if (PARAM.inp.cal_symm_repr[0] > 1) {
+    if (cal_symm_repr != nullptr && cal_symm_repr[0] > 1) {
 		ModuleBase::TITLE("Symmetry_Basic", "pointgroup");
 	}
 

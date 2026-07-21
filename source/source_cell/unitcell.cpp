@@ -8,21 +8,16 @@
 #include "bcast_cell.h"
 #include "source_base/tool_quit.h"
 #include "source_base/output.h"
-#include "source_io/module_parameter/parameter.h"
+
 #include "source_cell/read_stru.h"
 #include "source_base/atom_in.h"
 #include "source_base/element_elec_config.h"
 #include "source_base/global_file.h"
 #include "source_base/parallel_common.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_cell/sep_cell.h"
 
 #ifdef __MPI
 #include "mpi.h"
-#endif
-
-#ifdef __LCAO
-#include "../source_basis/module_ao/ORB_read.h" // to use 'ORB' -- mohan 2021-01-30
 #endif
 
 #include "update_cell.h"
@@ -184,21 +179,21 @@ std::vector<ModuleBase::Vector3<int>> UnitCell::get_constrain() const
 //==============================================================
 // Calculate various lattice related quantities for given latvec
 //==============================================================
-void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
+void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
+    const std::string& basis_type, const std::string& orbital_dir, const std::string& init_wfc,
+    const double onsite_radius, const bool deepks_setorb, const bool rpa,
+    const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type)
 {
     ModuleBase::TITLE("UnitCell", "setup_cell");
 
-    // (1) init mag
     assert(ntype > 0);
-    delete[] magnet.start_mag;
-    magnet.start_mag = new double[this->ntype];
 
-    // (2) init *Atom class array.
+    // (1) init *Atom class array.
     this->atoms = new Atom[this->ntype]; // atom species.
     this->set_atom_flag = true;
 
-    this->symm.epsilon = PARAM.inp.symmetry_prec;
-    this->symm.epsilon_input = PARAM.inp.symmetry_prec;
+    this->symm.epsilon = symmetry_prec;
+    this->symm.epsilon_input = symmetry_prec;
 
     bool ok = true;
     bool ok2 = true;
@@ -244,7 +239,8 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
             //========================
             // call read_atom_species
             //========================
-            const bool read_atom_species = unitcell::read_atom_species(ifa, log ,*this);
+            const bool read_atom_species = unitcell::read_atom_species(ifa, log, *this,
+                basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa);
             //========================
             // call read_lattice_constant
             //========================
@@ -252,17 +248,16 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
             //==========================
             // readl sep potential, currently using the pseudopotential folder (pseudo_dir in INPUT)
             //==========================
-            if (PARAM.inp.dfthalf_type > 0) {
-                // GlobalC::sep_cell.init(this->ntype);
-                // ok3 = GlobalC::sep_cell.read_sep_potentials(ifa, PARAM.inp.pseudo_dir, GlobalV::ofs_warning, this->atom_label);
-
+            if (dfthalf_type > 0) {
                 sep_cell.init(this->ntype);
-                ok3 = sep_cell.read_sep_potentials(ifa, PARAM.inp.pseudo_dir, GlobalV::ofs_warning, this->atom_label);
+                ok3 = sep_cell.read_sep_potentials(ifa, pseudo_dir, GlobalV::ofs_warning, this->atom_label);
             }
             //==========================
             // call read_atom_positions
             //==========================
-            ok2 = unitcell::read_atom_positions(*this, ifa, log, GlobalV::ofs_warning);
+            ok2 = unitcell::read_atom_positions(*this, ifa, log, GlobalV::ofs_warning, nspin,
+                basis_type, orbital_dir, init_wfc, onsite_radius, fixed_atoms, noncolin,
+                calculation, esolver_type);
         }
     }
 #ifdef __MPI
@@ -284,8 +279,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     }
 
 #ifdef __MPI
-    unitcell::bcast_unitcell(*this);
-    // GlobalC::sep_cell.bcast_sep_cell();
+    unitcell::bcast_unitcell(*this, nspin);
     sep_cell.bcast_sep_cell();
 #endif
 
@@ -350,7 +344,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log)
     //===================================
     this->set_iat2itia();
 
-    // GlobalC::sep_cell.set_omega(this->omega, this->tpiba2);
     sep_cell.set_omega(this->omega, this->tpiba2);
 
     return;
@@ -404,7 +397,7 @@ bool UnitCell::if_atoms_can_move() const
 bool UnitCell::if_cell_can_change() const
 {
 	// need to be fixed next
-	if (this->lc[0] || this->lc[1] || this->lc[2])
+	if (this->lat_axis_free[0] || this->lat_axis_free[1] || this->lat_axis_free[2])
 	{
 		return true;
 	}
@@ -418,49 +411,50 @@ void UnitCell::setup(const std::string& latname_in,
                      const std::string& fixed_axes_in) {
     this->latName = latname_in;
     this->ntype = ntype_in;
+    this->magnet.start_mag.resize(ntype_in, 0.0);
     this->lmaxmax = lmaxmax_in;
     this->init_vel = init_vel_in;
     // pengfei Li add 2018-11-11
     if (fixed_axes_in == "None") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "volume") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "shape") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "a") {
-        this->lc[0] = 0;
-        this->lc[1] = 1;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 0;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "b") {
-        this->lc[0] = 1;
-        this->lc[1] = 0;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 0;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "c") {
-        this->lc[0] = 1;
-        this->lc[1] = 1;
-        this->lc[2] = 0;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 0;
     } else if (fixed_axes_in == "ab") {
-        this->lc[0] = 0;
-        this->lc[1] = 0;
-        this->lc[2] = 1;
+        this->lat_axis_free[0] = 0;
+        this->lat_axis_free[1] = 0;
+        this->lat_axis_free[2] = 1;
     } else if (fixed_axes_in == "ac") {
-        this->lc[0] = 0;
-        this->lc[1] = 1;
-        this->lc[2] = 0;
+        this->lat_axis_free[0] = 0;
+        this->lat_axis_free[1] = 1;
+        this->lat_axis_free[2] = 0;
     } else if (fixed_axes_in == "bc") {
-        this->lc[0] = 1;
-        this->lc[1] = 0;
-        this->lc[2] = 0;
+        this->lat_axis_free[0] = 1;
+        this->lat_axis_free[1] = 0;
+        this->lat_axis_free[2] = 0;
     } else if (fixed_axes_in == "abc") {
-        this->lc[0] = 0;
-        this->lc[1] = 0;
-        this->lc[2] = 0;
+        this->lat_axis_free[0] = 0;
+        this->lat_axis_free[1] = 0;
+        this->lat_axis_free[2] = 0;
     } else {
         ModuleBase::WARNING_QUIT(
             "Input",

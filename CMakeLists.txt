@@ -14,7 +14,7 @@ project(
   LANGUAGES CXX)
 
 option(ENABLE_MPI "Enable MPI" ON)
-option(USE_OPENMP "Enable OpenMP" ON)
+option(ENABLE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
 option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
 option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
@@ -23,27 +23,23 @@ option(USE_DSP "Enable DSP" OFF)
 option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
-option(USE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
+option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
-
-# option(ENABLE_DEEPKS "Enable the DeePKS algorithm" OFF)
-# option(ENABLE_MLKEDF "Enable the Machine-Learning-based KEDF for OFDFT" OFF)
 
 option(ENABLE_MLALGO "Enable the machine learning algorithms" OFF)
 
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
-option(USE_ELPA "Enable ELPA for LCAO" ON)
+option(ENABLE_ELPA "Enable ELPA for LCAO" ON)
 option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
 option(EXX_DEV "Enable LibRI developing features" OFF)
-option(ENABLE_LIBCOMM "Enable LibComm" OFF)
 option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
 option(DEBUG_INFO "Print message to debug" OFF)
 option(ENABLE_ASAN "Enable AddressSanitizer" OFF)
-option(INFO "Enable gathering math library information" OFF)
+option(MATH_INFO "Enable gathering math library information" OFF)
 option(ENABLE_COVERAGE "Enable coverage build" OFF)
 option(GIT_SUBMODULE "Check submodules during build" ON)
 
@@ -58,6 +54,43 @@ option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
 option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
 option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
+
+# ==============================================================================
+# Deprecated options (TODO: Remove this section in the future release)
+# ==============================================================================
+function(abacus_rename_option old_name new_name)
+  get_property(_old_defined CACHE "${old_name}" PROPERTY TYPE SET)
+  if(NOT _old_defined)
+    return()
+  endif()
+  message(WARNING "${old_name} has been renamed to ${new_name}.")
+  get_property(_type CACHE "${new_name}" PROPERTY TYPE)
+  get_property(_help CACHE "${new_name}" PROPERTY HELPSTRING)
+  set("${new_name}" "${${old_name}}" CACHE "${_type}" "${_help}" FORCE)
+  unset("${old_name}" CACHE)
+endfunction()
+abacus_rename_option(USE_OPENMP ENABLE_OPENMP)
+abacus_rename_option(USE_ABACUS_LIBM ENABLE_ABACUS_LIBM)
+abacus_rename_option(USE_ELPA ENABLE_ELPA)
+abacus_rename_option(INFO MATH_INFO)
+
+if(DEFINED CACHE{ENABLE_LIBCOMM})
+  message(
+    WARNING
+      "Option ENABLE_LIBCOMM is deprecated and will be ignored in a future release. "
+      "LibComm is now treated as an implementation dependency of LibRI; "
+      "please use -DENABLE_LIBRI=ON instead."
+  )
+  if(ENABLE_LIBCOMM AND NOT ENABLE_LIBRI)
+    message(
+      FATAL_ERROR
+        "ENABLE_LIBCOMM was set, but LibComm is not a standalone ABACUS feature. "
+        "Please use -DENABLE_LIBRI=ON instead."
+    )
+  endif()
+  unset(ENABLE_LIBCOMM CACHE)
+endif()
+# ==============================================================================
 
 # CTest defines BUILD_TESTING when it is first included. Include it only after
 # ABACUS has declared its OFF-by-default option above.
@@ -93,6 +126,12 @@ endfunction()
 # enable json support
 if(ENABLE_RAPIDJSON)
   find_package(RapidJSON CONFIG REQUIRED)
+  if(NOT TARGET RapidJSON)
+    message(
+      FATAL_ERROR
+      "RapidJSON was found, but target RapidJSON is missing. Check if your RapidJSON installation provides a complete exported CMake configuration."
+    )
+  endif()
   abacus_add_feature_definitions(__RAPIDJSON)
 endif()
 
@@ -133,7 +172,7 @@ endif()
 
 # Serial version of ABACUS will not use ELPA
 if(NOT ENABLE_MPI)
-  set(USE_ELPA OFF)
+  set(ENABLE_ELPA OFF)
   set(ENABLE_MLALGO OFF)
 endif()
 
@@ -197,7 +236,7 @@ endif()
 
 # Use DSP hardware
 if (USE_DSP)
-  set(USE_ELPA OFF)
+  set(ENABLE_ELPA OFF)
   set(ABACUS_BIN_NAME abacus_dsp)
 endif()
 
@@ -238,14 +277,10 @@ if(NOT DEFINED CMAKE_CXX_STANDARD)
 endif()
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-if(ENABLE_DFTD4)
-  # DFTD4 requires enabling C and Fortran to work
+# Enable languages required by optional dependencies
+if(ENABLE_DFTD4 OR ENABLE_PEXSI)
   enable_language(C)
   enable_language(Fortran)
-  # Avoid custom-lapack fallback when resolving DFT-D4 dependencies
-  find_package(BLAS REQUIRED)
-  find_package(LAPACK REQUIRED)
-  find_package(dftd4 4.2.0 REQUIRED)
 endif()
 
 macro(set_if_higher VARIABLE VALUE)
@@ -286,14 +321,14 @@ endif()
 if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
   # stick to strict floating point model on Intel Compiler
   add_compile_options(-fp-model=strict)
-  set(USE_ABACUS_LIBM OFF) # Force turn off USE_ABACUS_LIBM on Intel Compiler
+  set(ENABLE_ABACUS_LIBM OFF) # Force turn off ENABLE_ABACUS_LIBM on Intel Compiler
   set(CMAKE_CXX_FLAGS
       "${CMAKE_CXX_FLAGS} -Wno-write-strings "
   )
 endif()
 
-if(USE_ABACUS_LIBM)
-  abacus_add_feature_definitions(USE_ABACUS_LIBM)
+if(ENABLE_ABACUS_LIBM)
+  abacus_add_feature_definitions(__ABACUS_LIBM)
 endif()
 
 if(ENABLE_NATIVE_OPTIMIZATION)
@@ -309,9 +344,8 @@ if(WIN32)
 endif()
 
 if(ENABLE_LCAO)
-  find_package(cereal CONFIG REQUIRED)
   abacus_add_feature_definitions(__LCAO)
-  if(USE_ELPA)
+  if(ENABLE_ELPA)
     find_package(ELPA REQUIRED)
     abacus_add_feature_definitions(__ELPA)
   endif()
@@ -321,7 +355,10 @@ if(ENABLE_LCAO)
   endif()
 
   if(ENABLE_PEXSI)
-    find_package(PEXSI REQUIRED)
+    find_package(PEXSI REQUIRED CONFIG)
+    if(PEXSI_VERSION VERSION_LESS "2.0.0")
+      message(FATAL_ERROR "PEXSI >= 2.0.0 is required")
+    endif()
     abacus_add_feature_definitions(__PEXSI)
     set(CMAKE_CXX_STANDARD 14)
   endif()
@@ -335,6 +372,12 @@ if(DEBUG_INFO)
 endif()
 
 if(ENABLE_MPI)
+  if(NOT CMAKE_CROSSCOMPILING)
+    # FindMPI runs a probe executable to determine the MPI library version,
+    # which FindMKL.cmake uses to auto-detect the BLACS interface.
+    # When cross compiling, assume users know what they are doing.
+    set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
+  endif()
   find_package(MPI COMPONENTS CXX REQUIRED)
   abacus_add_feature_definitions(__MPI)
 endif()
@@ -353,8 +396,46 @@ endif()
 
 find_package(Threads REQUIRED)
 
-if(USE_OPENMP)
+if(ENABLE_OPENMP)
   find_package(OpenMP REQUIRED)
+endif()
+
+if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
+  set(MKLROOT "$ENV{MKLROOT}")
+endif()
+if(USE_KML)
+  set(_kml_components BLAS LAPACK FFTW3)
+  if(ENABLE_MPI)
+    list(APPEND _kml_components ScaLAPACK)
+  endif()
+  if(ENABLE_FLOAT_FFTW)
+    list(APPEND _kml_components FFTW3_FLOAT)
+  endif()
+
+  find_package(KML REQUIRED COMPONENTS ${_kml_components})
+  abacus_add_feature_definitions(__KML)
+elseif(MKLROOT OR MKL_ROOT)
+  find_package(MKL REQUIRED)
+  abacus_add_feature_definitions(__MKL)
+elseif(NOT USE_SW)
+  find_package(Lapack REQUIRED)
+  # ScaLAPACK is a distributed-memory library and is only needed for the
+  # MPI build. A serial build (e.g. the native Windows serial version)
+  # must not require it.
+  if(ENABLE_MPI)
+    find_package(ScaLAPACK REQUIRED)
+  endif()
+  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Intel|Clang")
+    message(WARNING "Cannot determine the required Fortran runtime.")
+  endif()
+endif()
+
+if(NOT USE_KML AND NOT MKL_FOUND AND NOT USE_SW)
+  find_package(FFTW3 REQUIRED)
+endif()
+
+if(ENABLE_DFTD4)
+  find_package(dftd4 4.2.0 REQUIRED)
 endif()
 
 include(CheckLanguage)
@@ -435,7 +516,7 @@ if(USE_CUDA)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
       set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G" CACHE STRING "CUDA flags for debug build" FORCE)
     endif()
-    if (USE_OPENMP AND OpenMP_CXX_FOUND)
+    if (ENABLE_OPENMP AND OpenMP_CXX_FOUND)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
     if (ENABLE_NCCL_PARALLEL_DEVICE)
@@ -528,42 +609,6 @@ if(ENABLE_ASAN)
   add_link_options(-fsanitize=address)
 endif()
 
-if(DEFINED ENV{MKLROOT} AND NOT DEFINED MKLROOT)
-  set(MKLROOT "$ENV{MKLROOT}")
-endif()
-if(USE_KML)
-  set(_kml_components BLAS LAPACK FFTW3)
-  if(ENABLE_MPI)
-    list(APPEND _kml_components ScaLAPACK)
-  endif()
-  if(ENABLE_FLOAT_FFTW)
-    list(APPEND _kml_components FFTW3_FLOAT)
-  endif()
-
-  find_package(KML REQUIRED COMPONENTS ${_kml_components})
-  abacus_add_feature_definitions(__KML)
-elseif(MKLROOT)
-  set(MKL_INTERFACE lp64)
-  set(ENABLE_SCALAPACK ON)
-  find_package(MKL REQUIRED)
-  abacus_add_feature_definitions(__MKL)
-elseif(NOT USE_SW)
-  find_package(Lapack REQUIRED)
-  # ScaLAPACK is a distributed-memory library and is only needed for the
-  # MPI build. A serial build (e.g. the native Windows serial version)
-  # must not require it.
-  if(ENABLE_MPI)
-    find_package(ScaLAPACK REQUIRED)
-  endif()
-  if(NOT CMAKE_CXX_COMPILER_ID MATCHES "GNU|Intel|Clang")
-    message(WARNING "Cannot determine the required Fortran runtime.")
-  endif()
-endif()
-
-if(NOT USE_KML AND NOT MKLROOT AND NOT USE_SW)
-  find_package(FFTW3 REQUIRED)
-endif()
-
 if(ENABLE_FLOAT_FFTW)
   abacus_add_feature_definitions(__ENABLE_FLOAT_FFTW)
 endif()
@@ -641,32 +686,17 @@ function(git_submodule_update)
   endif()
 endfunction()
 
-if(DEFINED LIBRI_DIR)
-  set(ENABLE_LIBRI ON)
-endif()
 if(ENABLE_LIBRI)
   set_if_higher(CMAKE_CXX_STANDARD 14)
-  if(LIBRI_DIR)
-  else()
-    find_package(LibRI REQUIRED)
-  endif()
+  find_package(LibRI REQUIRED)
+  find_package(LibComm REQUIRED)
+  find_package(cereal REQUIRED CONFIG)
   abacus_add_feature_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
                                  TEST_EXX_RADIAL=1)
   if(EXX_DEV)
     abacus_add_feature_definitions(__EXX_DEV)
   endif()
 endif()
-
-if(ENABLE_LIBRI OR DEFINED LIBCOMM_DIR)
-  set(ENABLE_LIBCOMM ON)
-endif()
-if(ENABLE_LIBCOMM)
-  if(LIBCOMM_DIR)
-  else()
-    find_package(LibComm REQUIRED)
-  endif()
-endif()
-
 
 if(ENABLE_LIBXC)
   find_package(Libxc CONFIG REQUIRED)
@@ -699,7 +729,7 @@ endif()
 
 abacus_add_feature_definitions(__FFTW3 __SELINV METIS)
 
-if(INFO)
+if(MATH_INFO)
   message(STATUS "Will gather math lib info.")
   abacus_add_feature_definitions(GATHER_INFO)
   # modifications on blas_connector and lapack_connector

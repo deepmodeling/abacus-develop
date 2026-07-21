@@ -239,9 +239,11 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     // Related to EXX
-    if (GlobalC::exx_info.info_global.cal_exx && !exx_helper->get_op_first_iter())
+    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    if (cal_exx && !exx_helper->get_op_first_iter())
     {
-        this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()));
+        this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()), cal_exx, hybrid_alpha);
     }
 
     // deband is calculated from "output" charge density

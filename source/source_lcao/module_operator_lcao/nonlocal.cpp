@@ -75,7 +75,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb_cutoff_[T1] + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < orb_cutoff_[T1] + this->ucell->infoNL->get_rcut_max(T0))
             {
                 is_adj[ad1] = true;
             }

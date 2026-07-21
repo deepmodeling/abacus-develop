@@ -2,6 +2,7 @@
 #define WRITE_EBAND_TERMS_HPP
  
 #include "source_io/module_hs/write_vxc.hpp"
+#include "source_hamilt/module_xc/exx_info.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_basis/module_nao/two_center_bundle.h"
@@ -181,6 +182,7 @@ void write_eband_terms(const int nspin,
         // 5. xc (including exx)
         if (!PARAM.inp.out_mat_xc)  // avoid duplicate output
         {
+            bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
             write_Vxc<TK, TR>(nspin,
                               nbasis,
                               drank,
@@ -196,7 +198,8 @@ void write_eband_terms(const int nspin,
                               kv,
                               orb_cutoff,
                               wg,
-                              gd
+                              gd,
+                              cal_exx
 #ifdef __EXX
                               ,
                               Hexxd,

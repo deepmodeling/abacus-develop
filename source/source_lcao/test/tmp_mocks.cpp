@@ -12,12 +12,7 @@ Atom_pseudo::~Atom_pseudo() {}
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
 
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
-LCAO_Orbitals::LCAO_Orbitals() {}
-LCAO_Orbitals::~LCAO_Orbitals() {}
-#endif
+
 
 pseudo::pseudo() {}
 pseudo::~pseudo() {}

@@ -2,7 +2,6 @@
 
 #include <sstream>
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/tool_title.h"
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
@@ -10,7 +9,13 @@ namespace unitcell
 {
 bool read_atom_species(std::ifstream& ifa,
                       std::ofstream& ofs_running,
-                      UnitCell& ucell)
+                      UnitCell& ucell,
+                      const std::string& basis_type,
+                      const std::string& orbital_dir,
+                      const std::string& init_wfc,
+                      const double onsite_radius,
+                      const bool deepks_setorb,
+                      const bool rpa)
 {
     ModuleBase::TITLE("UnitCell","read_atom_species");
 
@@ -75,10 +80,10 @@ bool read_atom_species(std::ifstream& ifa,
         }
     }
 
-    if((PARAM.inp.basis_type == "lcao")
-      ||(PARAM.inp.basis_type == "lcao_in_pw")
-      ||((PARAM.inp.basis_type == "pw")&&(PARAM.inp.init_wfc.substr(0, 3) == "nao"))
-      || PARAM.inp.onsite_radius > 0.0)
+    if((basis_type == "lcao")
+      ||(basis_type == "lcao_in_pw")
+      ||((basis_type == "pw")&&(init_wfc.substr(0, 3) == "nao"))
+      || onsite_radius > 0.0)
     {
         if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "NUMERICAL_ORBITAL") )
         {
@@ -88,7 +93,7 @@ bool read_atom_species(std::ifstream& ifa,
             }
         }    
         // caoyu add 2021-03-16
-        if(PARAM.globalv.deepks_setorb)
+        if(deepks_setorb)
         {
             if (ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "NUMERICAL_DESCRIPTOR")) {
                 ifa >> ucell.descriptor_file;
@@ -96,14 +101,14 @@ bool read_atom_species(std::ifstream& ifa,
         }
         else
         {
-            ucell.descriptor_file = PARAM.inp.orbital_dir + ucell.orbital_fn[0];
+            ucell.descriptor_file = orbital_dir + ucell.orbital_fn[0];
         }
     }
 #ifdef __LCAO
     // Peize Lin add 2016-09-23
 #ifdef __MPI 
 #ifdef __EXX
-    if( GlobalC::exx_info.info_global.cal_exx || PARAM.inp.rpa )
+    if( GlobalC::exx_info.info_global.cal_exx || rpa )
     {
         if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_ORBITAL") )
         {

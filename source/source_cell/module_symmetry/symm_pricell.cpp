@@ -243,7 +243,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     for (int i = 0; i < 6; ++i) {
         pcel_pre_const[i] = pcel_const[i];
     }
-    this->lattice_type(p1, p2, p3, p01, p02, p03, pcel_const, pcel_pre_const, pbrav, pbravname, atoms, false, nullptr);
+    this->lattice_type(p1, p2, p3, p01, p02, p03, pcel_const, pcel_pre_const, pbrav, pbravname, atoms, false, nullptr, 1e-6);
 
     this->plat.e11=p1.x;
     this->plat.e12=p1.y;

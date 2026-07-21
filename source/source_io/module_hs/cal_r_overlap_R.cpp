@@ -8,6 +8,7 @@
 #include "source_base/tool_quit.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_cell/nonlocal_info_base.h"
 
 cal_r_overlap_R::cal_r_overlap_R()
 {
@@ -219,7 +220,7 @@ void cal_r_overlap_R::construct_orbs_and_orb_r(const UnitCell& ucell, const LCAO
 
 void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucell, const LCAO_Orbitals& orb)
 {
-    const InfoNonlocal& infoNL_ = ucell.infoNL;
+    const NonlocalInfoBase& infoNL_ = *ucell.infoNL;
 
     int orb_r_ntype = 0;
     int mat_Nr = orb.Phi[0].PhiLN(0, 0).getNr();
@@ -280,14 +281,14 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
     orbs_nonlocal.resize(orb.get_ntype());
     for (int T = 0; T < orb.get_ntype(); ++T)
     {
-        const int nproj = infoNL_.nproj[T];
+        const int nproj = infoNL_.get_nproj(T);
         orbs_nonlocal[T].resize(nproj);
         for (int ip = 0; ip < nproj; ip++)
         {
-            int nr = infoNL_.Beta[T].Proj[ip].getNr();
+            int nr = infoNL_.get_proj_Nr(T, ip);
             double dr_uniform = 0.01;
             int nr_uniform
-                = static_cast<int>((infoNL_.Beta[T].Proj[ip].getRadial(nr - 1) - infoNL_.Beta[T].Proj[ip].getRadial(0)) / dr_uniform) + 1;
+                = static_cast<int>((infoNL_.get_proj_radial(T, ip)[nr - 1] - infoNL_.get_proj_radial(T, ip)[0]) / dr_uniform) + 1;
             double* rad = new double[nr_uniform];
             double* rab = new double[nr_uniform];
             for (int ir = 0; ir < nr_uniform; ir++)
@@ -298,14 +299,14 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
             double* y2 = new double[nr];
             double* Beta_r_uniform = new double[nr_uniform];
             double* dbeta_uniform = new double[nr_uniform];
-            ModuleBase::Mathzone_Add1::SplineD2(infoNL_.Beta[T].Proj[ip].getRadial(),
-                                                infoNL_.Beta[T].Proj[ip].getBeta_r(),
+            ModuleBase::Mathzone_Add1::SplineD2(infoNL_.get_proj_radial(T, ip),
+                                                infoNL_.get_proj_beta_r(T, ip),
                                                 nr,
                                                 0.0,
                                                 0.0,
                                                 y2);
-            ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(infoNL_.Beta[T].Proj[ip].getRadial(),
-                                                                  infoNL_.Beta[T].Proj[ip].getBeta_r(),
+            ModuleBase::Mathzone_Add1::Cubic_Spline_Interpolation(infoNL_.get_proj_radial(T, ip),
+                                                                  infoNL_.get_proj_beta_r(T, ip),
                                                                   y2,
                                                                   nr,
                                                                   rad,
@@ -314,11 +315,11 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
                                                                   dbeta_uniform);
 
             // linear extrapolation at the zero point
-            if (infoNL_.Beta[T].Proj[ip].getRadial(0) > 1e-10)
+            if (infoNL_.get_proj_radial(T, ip)[0] > 1e-10)
             {
-                double slope = (infoNL_.Beta[T].Proj[ip].getBeta_r(1) - infoNL_.Beta[T].Proj[ip].getBeta_r(0))
-                               / (infoNL_.Beta[T].Proj[ip].getRadial(1) - infoNL_.Beta[T].Proj[ip].getRadial(0));
-                Beta_r_uniform[0] = infoNL_.Beta[T].Proj[ip].getBeta_r(0) - slope * infoNL_.Beta[T].Proj[ip].getRadial(0);
+                double slope = (infoNL_.get_proj_beta_r(T, ip)[1] - infoNL_.get_proj_beta_r(T, ip)[0])
+                               / (infoNL_.get_proj_radial(T, ip)[1] - infoNL_.get_proj_radial(T, ip)[0]);
+                Beta_r_uniform[0] = infoNL_.get_proj_beta_r(T, ip)[0] - slope * infoNL_.get_proj_radial(T, ip)[0];
             }
 
             // Here, the operation beta_r / r is performed. To avoid divergence at r=0, beta_r(0) is set to beta_r(1).
@@ -329,18 +330,18 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
             }
             Beta_r_uniform[0] = Beta_r_uniform[1];
 
-            orbs_nonlocal[T][ip].set_orbital_info(infoNL_.Beta[T].getLabel(),
-                                                  infoNL_.Beta[T].getType(),
-                                                  infoNL_.Beta[T].Proj[ip].getL(),
+            orbs_nonlocal[T][ip].set_orbital_info(infoNL_.get_label(T),
+                                                  infoNL_.get_type(T),
+                                                  infoNL_.get_proj_L(T, ip),
                                                   1,
                                                   nr_uniform,
                                                   rab,
                                                   rad,
                                                   Numerical_Orbital_Lm::Psi_Type::Psi,
                                                   Beta_r_uniform,
-                                                  static_cast<int>(infoNL_.Beta[T].Proj[ip].getNk() * kmesh_times) | 1,
-                                                  infoNL_.Beta[T].Proj[ip].getDk(),
-                                                  infoNL_.Beta[T].Proj[ip].getDruniform(),
+                                                  static_cast<int>(infoNL_.get_proj_Nk(T, ip) * kmesh_times) | 1,
+                                                  infoNL_.get_proj_dk(T, ip),
+                                                  infoNL_.get_proj_dr_uniform(T, ip),
                                                   false,
                                                   true,
                                                   PARAM.inp.cal_force);
@@ -361,7 +362,7 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
             {
                 for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
                 {
-                    for (int ip = 0; ip < infoNL_.nproj[TB]; ip++)
+                    for (int ip = 0; ip < infoNL_.get_nproj(TB); ip++)
                     {
                         center2_orb11_nonlocal[TA][TB][LA][NA].insert(
                             std::make_pair(ip, Center2_Orb::Orb11(orbs[TA][LA][NA], orbs_nonlocal[TB][ip], psb_, MGT)));
@@ -379,7 +380,7 @@ void cal_r_overlap_R::construct_orbs_and_nonlocal_and_orb_r(const UnitCell& ucel
             {
                 for (int NA = 0; NA < orb.Phi[TA].getNchi(LA); ++NA)
                 {
-                    for (int ip = 0; ip < infoNL_.nproj[TB]; ip++)
+                    for (int ip = 0; ip < infoNL_.get_nproj(TB); ip++)
                     {
                         center2_orb21_r_nonlocal[TA][TB][LA][NA].insert(
                             std::make_pair(ip, Center2_Orb::Orb21(orbs[TA][LA][NA], orb_r, orbs_nonlocal[TB][ip], psb_, MGT)));
@@ -574,8 +575,8 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
     ModuleBase::Vector3<double> origin_point(0.0, 0.0, 0.0);
     double factor = sqrt(ModuleBase::FOUR_PI / 3.0);
     const ModuleBase::Vector3<double>& distance = R2 - R1;
-    const InfoNonlocal& infoNL_ = ucell.infoNL;
-    const int nproj = infoNL_.nproj[T2];
+    const NonlocalInfoBase& infoNL_ = *ucell.infoNL;
+    const int nproj = infoNL_.get_nproj(T2);
     nlm.resize(4);
     if (nproj == 0)
     {
@@ -589,7 +590,7 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
     int natomwfc = 0;
     for (int ip = 0; ip < nproj; ip++)
     {
-        const int L2 = infoNL_.Beta[T2].Proj[ip].getL(); // mohan add 2021-05-07
+        const int L2 = infoNL_.get_proj_L(T2, ip); // mohan add 2021-05-07
         natomwfc += 2 * L2 + 1;
     }
     for (int i = 0; i < 4; i++)
@@ -599,7 +600,7 @@ void cal_r_overlap_R::get_psi_r_beta(const UnitCell& ucell,
     int index = 0;
     for (int ip = 0; ip < nproj; ip++)
     {
-        const int L2 = infoNL_.Beta[T2].Proj[ip].getL();
+        const int L2 = infoNL_.get_proj_L(T2, ip);
         for (int m2 = 0; m2 < 2 * L2 + 1; m2++)
         {
             double overlap_o = center2_orb11_nonlocal[T1][T2][L1][N1].at(ip).cal_overlap(origin_point, distance, m1, m2);

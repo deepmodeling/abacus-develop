@@ -50,10 +50,14 @@ void ModuleIO::write_libxc_r(
 	// https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
 	//----------------------------------------------------------
 
+	double hybrid_alpha = 0.0;
+	double hse_omega = 0.0;
 	std::vector<xc_func_type> funcs =
 		XC_Functional_Libxc::init_func(
 			func_id, 
-			(1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED
+			(1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED,
+			hybrid_alpha,
+			hse_omega
 		);
 
 	const bool is_gga = [&funcs]()

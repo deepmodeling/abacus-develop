@@ -10,7 +10,6 @@
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
-#include "source_io/module_parameter/parameter.h"
 
 namespace KVectorUtils
 {
@@ -428,7 +427,8 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                           recip_brav_name,
                           ucell.atoms,
                           false,
-                          nullptr);
+                          nullptr,
+                          1e-6);
         GlobalV::ofs_running << "\n For reciprocal-space lattice" << std::endl;
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice type", recip_brav_type);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice name", recip_brav_name);
@@ -472,7 +472,8 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                               k_brav_name,
                               ucell.atoms,
                               false,
-                              nullptr);
+                              nullptr,
+                              1e-6);
             GlobalV::ofs_running << "\n For k-vectors" << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice type", k_brav_type);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice name", k_brav_name);
@@ -493,12 +494,14 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                           recip_brav_name,
                           ucell.atoms,
                           false,
-                          nullptr);
+                          nullptr,
+                          1e-6);
         ModuleBase::Matrix3 b_optlat_new(recip_vec1.x, recip_vec1.y, recip_vec1.z,
                                          recip_vec2.x, recip_vec2.y, recip_vec2.z,
                                          recip_vec3.x, recip_vec3.y, recip_vec3.z);
         // set the crystal point-group symmetry operation
-        symm.setgroup(bsymop, bnop, recip_brav_type);
+        const int cal_symm_repr[2] = {0, 6};
+        symm.setgroup(bsymop, bnop, recip_brav_type, cal_symm_repr);
         // transform the above symmetric operation matrices between different coordinate
         symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);
 

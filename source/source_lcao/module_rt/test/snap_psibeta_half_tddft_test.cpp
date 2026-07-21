@@ -2,9 +2,9 @@
 
 #include "source_base/ylm.h"
 #include "source_cell/read_pp.h"
-#include "source_cell/setup_nonlocal.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_hs/cal_r_overlap_R.h"
+#include "../../LCAO_nonlocal_info.h"
 
 #include <algorithm>
 #include <cmath>
@@ -35,7 +35,6 @@ Magnetism::Magnetism()
 
 Magnetism::~Magnetism()
 {
-    delete[] start_mag;
 }
 
 UnitCell::UnitCell()
@@ -116,17 +115,21 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
         ASSERT_EQ(atom.ncpp.pp_type, "NC");
         ASSERT_EQ(atom.ncpp.nbeta, 6);
         ASSERT_EQ(atom.ncpp.lll, std::vector<int>({0, 0, 1, 1, 2, 2}));
-        pseudo_reader.complete_default(atom.ncpp);
+        const double pseudo_rcut = 15.0;
+        pseudo_reader.complete_default(atom.ncpp, pseudo_rcut);
         ASSERT_EQ(atom.ncpp.nh, 18);
         ASSERT_EQ(atom.ncpp.jjj.size(), 6);
 
-        ucell.infoNL.nproj = new int[1];
+        auto* lcao_nl = new LCAONonlocalInfo();
+        lcao_nl->get_nonlocal().nproj = new int[1];
         std::ofstream log("snap_psibeta_half_tddft_nonlocal.log");
-        ucell.infoNL.Set_NonLocal(0, &atom, ucell.infoNL.nproj[0], orb.get_kmesh(), orb.get_dk(), orb.get_dr_uniform(), log);
+        lcao_nl->get_nonlocal().Set_NonLocal(0, &atom, lcao_nl->get_nonlocal().nproj[0], orb.get_kmesh(), orb.get_dk(), orb.get_dr_uniform(), log,
+                                               false, false, 1);
 
-        ASSERT_EQ(ucell.infoNL.nproj[0], 6);
-        ucell.infoNL.nprojmax = ucell.infoNL.nproj[0];
-        ucell.infoNL.rcutmax_Beta = ucell.infoNL.Beta[0].get_rcut_max();
+        ASSERT_EQ(lcao_nl->get_nonlocal().nproj[0], 6);
+        lcao_nl->get_nonlocal().nprojmax = lcao_nl->get_nonlocal().nproj[0];
+        lcao_nl->get_nonlocal().rcutmax_Beta = lcao_nl->get_nonlocal().Beta[0].get_rcut_max();
+        ucell.infoNL.reset(lcao_nl);
     }
 
     void initialize_r_overlap_reference()
@@ -152,7 +155,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
                 for (int m1 = 0; m1 < 2 * L1 + 1; ++m1)
                 {
                     std::vector<std::vector<std::complex<double>>> grid_nlm;
-                    module_rt::snap_psibeta_half_tddft(orb, ucell.infoNL, grid_nlm, R1, 0, L1, m1, N1, R0, 0, zero_A, true, options);
+                    module_rt::snap_psibeta_half_tddft(orb, dynamic_cast<LCAONonlocalInfo*>(ucell.infoNL.get())->get_nonlocal(), grid_nlm, R1, 0, L1, m1, N1, R0, 0, zero_A, true, options);
 
                     std::vector<std::vector<double>> reference_nlm;
                     r_calculator.get_psi_r_beta(ucell, reference_nlm, R1, 0, L1, m1, N1, R0, 0);

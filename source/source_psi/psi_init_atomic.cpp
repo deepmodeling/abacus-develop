@@ -418,8 +418,6 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                             double alpha=0.0;
                             double gamman=0.0;
                             std::complex<double> fup, fdown;
-                            //alpha = this->p_ucell_->magnet.angle1_[it];
-                            //gamman = -this->p_ucell_->magnet.angle2_[it] + 0.5*ModuleBase::PI;
                             alpha = this->p_ucell_->atoms[it].angle1[ia];
                             gamman = -1 * this->p_ucell_->atoms[it].angle2[ia] + 0.5 * ModuleBase::PI;
                             for(int m = 0; m < 2*l+1; m++)

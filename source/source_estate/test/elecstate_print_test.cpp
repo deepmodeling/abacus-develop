@@ -29,8 +29,7 @@ UnitCell::UnitCell(){}
 UnitCell::~UnitCell(){}
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
+
 Charge::Charge()
 {
 }

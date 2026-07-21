@@ -29,10 +29,10 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install Ccache
+      - name: Install CI tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache xz-utils ninja-build
+          sudo apt-get install -y ccache xz-utils ninja-build pkg-config
 
       - name: Install external tools from toolchain
         run: |

@@ -305,7 +305,7 @@ void remake_cell(Lattice& lat)
 
 // LiuXh add a new function here,
 // 20180515
-void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log) 
+void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log, const int nspin) 
 {
     ModuleBase::TITLE("unitcell", "setup_cell_after_vc");
     assert(ucell.lat0 > 0.0);
@@ -356,7 +356,7 @@ void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log)
     }
 
 #ifdef __MPI
-    bcast_unitcell(ucell);
+    bcast_unitcell(ucell, nspin);
 #endif
 
     log << std::endl;
