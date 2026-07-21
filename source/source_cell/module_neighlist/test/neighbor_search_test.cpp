@@ -1,8 +1,8 @@
 #include <gtest/gtest.h>
 
-#include "../local_atom.h"
-#include "../neighbor_search.h"
-#include "../unitcell_lite.h"
+#include "source_cell/module_neighlist/local_atom.h"
+#include "source_cell/module_neighlist/neighbor_search.h"
+#include "source_cell/module_neighlist/unitcell_lite.h"
 
 #include <cstddef>
 #include <vector>

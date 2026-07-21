@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "../read_atoms_helper.h"
+#include "source_cell/read_atoms_helper.h"
 #include "source_base/vector3.h"
 #include "source_base/matrix3.h"
 #include "source_base/output.h"

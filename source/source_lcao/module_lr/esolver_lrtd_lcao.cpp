@@ -3,7 +3,7 @@
 #include "hamilt_casida.h"
 #include "hamilt_ulr.hpp"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
-#include "../LCAO_nonlocal_info.h"
+#include "source_lcao/LCAO_nonlocal_info.h"
 #include "source_lcao/module_lr/hsolver_lrtd.hpp"
 #include "source_lcao/module_lr/lr_spectrum.h"
 #include "source_lcao/module_gint/gint.h"

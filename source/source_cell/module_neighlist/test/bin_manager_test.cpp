@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
-#include "../bin_manager.h"
-#include "../neighbor_list.h"
+#include "source_cell/module_neighlist/bin_manager.h"
+#include "source_cell/module_neighlist/neighbor_list.h"
 
 TEST(BinManagerUnit, InitAndBinning)
 {

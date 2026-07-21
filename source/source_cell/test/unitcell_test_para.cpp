@@ -14,8 +14,8 @@
 #include "mpi.h"
 #endif
 #include "prepare_unitcell.h"
-#include "../update_cell.h"
-#include "../bcast_cell.h"
+#include "source_cell/update_cell.h"
+#include "source_cell/bcast_cell.h"
 
 Magnetism::Magnetism()
 {
