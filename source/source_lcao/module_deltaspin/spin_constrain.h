@@ -63,11 +63,11 @@ namespace spinconstrain
  * @brief Convert spinor occupation matrix to magnetic moment vector using Pauli matrices.
  *
  * @details For a two-component spinor wavefunction, the spin density matrix is:
- *   rho = |a|^2    a*b  |   = | (1+Mz)/2    (Mx+iMy)/2 |
- *         |b*a    |b|^2  |     | (Mx-iMy)/2   (1-Mz)/2  |
+ *   rho = |a|^2    a*b  |   = | (1+Mz)/2    (Mx-iMy)/2 |
+ *         |b*a    |b|^2  |     | (Mx+iMy)/2   (1-Mz)/2  |
  * The magnetic moment components are extracted via Pauli matrix traces:
  *   Mx = Tr(rho * sigma_x) = occ[1] + occ[2]           (real part)
- *   My = Tr(rho * sigma_y) = Im(occ[1] - occ[2])        (imaginary part)
+ *   My = Tr(rho * sigma_y) = -Im(occ[1] - occ[2])      (from sigma_y = [[0,-i],[i,0]])
  *   Mz = Tr(rho * sigma_z) = occ[0] - occ[3]            (real part)
  * where occ = {|a|^2, a*b, b*a, |b|^2} from becp coefficients.
  *
@@ -79,7 +79,7 @@ inline ModuleBase::Vector3<double> pauli_to_moment(const std::complex<double> oc
 {
     return ModuleBase::Vector3<double>(
         weight * (occ[1] + occ[2]).real(),
-        weight * (occ[1] - occ[2]).imag(),
+        -weight * (occ[1] - occ[2]).imag(),
         weight * (occ[0] - occ[3]).real()
     );
 }
