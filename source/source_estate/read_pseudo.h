@@ -25,7 +25,8 @@ namespace elecstate {
                    const std::string& smearing_method,
                    const std::string& ks_solver,
                    const int bndpar,
-                   const double nelec);
+                   const double nelec,
+                   const double nupdown);
 
     // read in pseudopotential from files for each type of atom
     void read_cell_pseudopots(const std::string& fn, std::ofstream& log, UnitCell& ucell,

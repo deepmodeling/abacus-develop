@@ -28,7 +28,8 @@ AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
                    const std::string& smearing_method,
                    const std::string& ks_solver,
                    const int bndpar,
-                   const double nelec) {
+                   const double nelec,
+                   const double nupdown) {
     // read in non-local pseudopotential and ouput the projectors.
     ofs << "\n\n";
     ofs << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
@@ -164,7 +165,8 @@ AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
                                                     basis_type, smearing_method,
                                                     ks_solver, bndpar,
                                                     nbands,
-                                                    nelec);
+                                                    nelec,
+                                                    nupdown);
 
     // setup nlocal
     // nlocal is calculated by CalAtomsInfo::cal_atoms_info() above

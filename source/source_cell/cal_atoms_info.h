@@ -45,6 +45,7 @@ class CalAtomsInfo
      * @param bndpar [in] band parallel parameter
      * @param nbands [in] user-specified number of bands from INPUT file
      * @param nelec [in] user-specified number of electrons from INPUT file
+     * @param nupdown [in] user-specified spin polarization from INPUT file
      * @return AtomsInfoResult containing calculated atom information
      */
     AtomsInfoResult cal_atoms_info(Atom* atoms, const int& ntype,
@@ -57,7 +58,8 @@ class CalAtomsInfo
                                    const std::string& ks_solver,
                                    const int bndpar,
                                    const int nbands,
-                                   const double nelec)
+                                   const double nelec,
+                                   const double nupdown)
     {
         AtomsInfoResult result;
 
@@ -73,6 +75,11 @@ class CalAtomsInfo
             }
             GlobalV::ofs_running << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "The readin total magnetization", result.nupdown);
+        }
+        else if (nspin == 2 && two_fermi)
+        {
+            result.nupdown = nupdown;
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "The user-specified total magnetization", result.nupdown);
         }
 
         // decide whether to be USPP
