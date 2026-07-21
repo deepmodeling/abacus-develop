@@ -130,7 +130,8 @@ void FIRE::restart(const std::string& global_readin_dir)
 
         if (ok)
         {
-            if(!(file >> step_rst_ >> md_tfirst >> alpha >> negative_count >> dt_max >> md_dt))
+            file >> step_rst_ >> md_tfirst >> alpha >> negative_count >> dt_max >> md_dt;
+            if(!file)
             {
                 ok = false;
             }    
