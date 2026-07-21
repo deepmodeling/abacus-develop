@@ -27,7 +27,9 @@ public:
 		ModuleBase::ComplexMatrix &d_so_in,
 		const int &nproj_in,
 		const int &nproj_in_so,
-		const bool has_so);
+		const bool has_so,
+		const bool lspinorb,
+		const int nspin);
 
 
 	inline void get_d(const int& is, const int& p1, const int& p2, const std::complex<double>*& tmp_d)

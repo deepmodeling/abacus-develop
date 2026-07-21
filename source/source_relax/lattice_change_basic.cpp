@@ -36,7 +36,7 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
         stress(1, 1) = stress(1, 1) - stress_aver;
         stress(2, 2) = stress(2, 2) - stress_aver;
     }
-    // Note: Axis constraints ("a", "b", "c", etc.) are handled via ucell.lc[] flags below
+    // Note: Axis constraints ("a", "b", "c", etc.) are handled via ucell.lat_axis_free[] flags below
 
     lat[0] = ucell.latvec.e11 * ucell.lat0;
     lat[1] = ucell.latvec.e12 * ucell.lat0;
@@ -49,7 +49,7 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
     lat[8] = ucell.latvec.e33 * ucell.lat0;
 
     // Calculate gradients for each lattice vector, or zero them if fixed
-    if (ucell.lc[0] == 1)
+    if (ucell.lat_axis_free[0] == 1)
     {
         grad[0] = -(lat[0] * stress(0, 0) + lat[1] * stress(1, 0) + lat[2] * stress(2, 0));
         grad[1] = -(lat[0] * stress(0, 1) + lat[1] * stress(1, 1) + lat[2] * stress(2, 1));
@@ -63,7 +63,7 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
         grad[2] = 0.0;
     }
 
-    if (ucell.lc[1] == 1)
+    if (ucell.lat_axis_free[1] == 1)
     {
         grad[3] = -(lat[3] * stress(0, 0) + lat[4] * stress(1, 0) + lat[5] * stress(2, 0));
         grad[4] = -(lat[3] * stress(0, 1) + lat[4] * stress(1, 1) + lat[5] * stress(2, 1));
@@ -77,7 +77,7 @@ void Lattice_Change_Basic::setup_gradient(const UnitCell &ucell, double *lat, do
         grad[5] = 0.0;
     }
 
-    if (ucell.lc[2] == 1)
+    if (ucell.lat_axis_free[2] == 1)
     {
         grad[6] = -(lat[6] * stress(0, 0) + lat[7] * stress(1, 0) + lat[8] * stress(2, 0));
         grad[7] = -(lat[6] * stress(0, 1) + lat[7] * stress(1, 1) + lat[8] * stress(2, 1));
@@ -128,19 +128,19 @@ void Lattice_Change_Basic::change_lattice(UnitCell &ucell, double *move, double 
         }
     }
 
-    if (ucell.lc[0] != 0)
+    if (ucell.lat_axis_free[0] != 0)
     {
         ucell.latvec.e11 = (move[0] + lat[0]) / ucell.lat0;
         ucell.latvec.e12 = (move[1] + lat[1]) / ucell.lat0;
         ucell.latvec.e13 = (move[2] + lat[2]) / ucell.lat0;
     }
-    if (ucell.lc[1] != 0)
+    if (ucell.lat_axis_free[1] != 0)
     {
         ucell.latvec.e21 = (move[3] + lat[3]) / ucell.lat0;
         ucell.latvec.e22 = (move[4] + lat[4]) / ucell.lat0;
         ucell.latvec.e23 = (move[5] + lat[5]) / ucell.lat0;
     }
-    if (ucell.lc[2] != 0)
+    if (ucell.lat_axis_free[2] != 0)
     {
         ucell.latvec.e31 = (move[6] + lat[6]) / ucell.lat0;
         ucell.latvec.e32 = (move[7] + lat[7]) / ucell.lat0;
@@ -238,7 +238,7 @@ bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
     Lattice_Change_Basic::largest_grad = 0.0;
     double stress_ii_max = 0.0;
 
-    if (ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1)
+    if (ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] == 1)
     {
         for (int i = 0; i < 3; i++)
         {
@@ -276,7 +276,7 @@ bool Lattice_Change_Basic::check_converged(const UnitCell &ucell, ModuleBase::ma
         ofs << " Largest stress is 0, movement is impossible." << std::endl;
         return true;
     }
-    else if (ucell.lc[0] == 1 && ucell.lc[1] == 1 && ucell.lc[2] == 1)
+    else if (ucell.lat_axis_free[0] == 1 && ucell.lat_axis_free[1] == 1 && ucell.lat_axis_free[2] == 1)
     {
         if (Lattice_Change_Basic::largest_grad < PARAM.inp.stress_thr && stress_ii_max < PARAM.inp.stress_thr)
         {

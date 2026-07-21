@@ -49,6 +49,7 @@ public:
      * @param nspin_in The number of spins.
      * @param reciprocal_vec The reciprocal vector of the system.
      * @param latvec The lattice vector of the system.
+     * @param use_ibz Whether to reduce k-points to the irreducible Brillouin zone.
      *
      * @return void
      *
@@ -63,7 +64,13 @@ public:
         const int& nspin,
         const ModuleBase::Matrix3& reciprocal_vec,
         const ModuleBase::Matrix3& latvec,
-        std::ofstream& ofs);
+        std::ofstream& ofs,
+        const bool use_ibz,
+        const std::string& global_out_dir,
+        const bool gamma_only_local,
+        const double kspacing[3],
+        const std::string& kmesh_type,
+        const double koffset[3]);
 
     int get_nks() const
     {
@@ -198,7 +205,11 @@ public:
      * @note If the number of k-points is greater than 100000, it will quit with a warning.
      */
     bool read_kpoints(const UnitCell& ucell,
-                      const std::string& fn); // return 0: something wrong.
+                      const std::string& fn,
+                      const bool gamma_only_local,
+                      const double kspacing[3],
+                      const std::string& kmesh_type,
+                      const double koffset[3]); // return 0: something wrong.
 
     /**
      * @brief Adds k-points linearly between special points.

@@ -28,7 +28,10 @@ void InfoNonlocal::Set_NonLocal(const int& it,
                                 const int& kmesh,
                                 const double& dk,
                                 const double& dr_uniform,
-                                std::ofstream& log)
+                                std::ofstream& log,
+                                const bool& out_element_info,
+                                const bool& lspinorb,
+                                const int& nspin)
 {
     ModuleBase::TITLE("InfoNonlocal", "Set_NonLocal");
 
@@ -140,7 +143,7 @@ void InfoNonlocal::Set_NonLocal(const int& it,
                                    dk,
                                    dr_uniform); // delta k mesh in reciprocal space
 
-        if (PARAM.inp.out_element_info) {
+        if (out_element_info) {
             tmpBeta_lm[p1].plot(GlobalV::MY_RANK);
         }
 
@@ -157,7 +160,7 @@ void InfoNonlocal::Set_NonLocal(const int& it,
                                  tmpBeta_lm); // zhengdy-soc 2018-09-10
 
     // mohan add 2021-05-07
-    atom->ncpp.set_d_so(coefficient_D_nc_in, n_projectors, nh, atom->ncpp.has_so);
+    atom->ncpp.set_d_so(coefficient_D_nc_in, n_projectors, nh, atom->ncpp.has_so, lspinorb, nspin);
 
     delete[] tmpBeta_lm;
 
@@ -402,7 +405,11 @@ void InfoNonlocal::Read_NonLocal(const int& it,
     return;
 }
 
-void InfoNonlocal::setupNonlocal(const int& ntype, Atom* atoms, std::ofstream& log, LCAO_Orbitals& orb)
+void InfoNonlocal::setupNonlocal(const int& ntype, Atom* atoms, std::ofstream& log, LCAO_Orbitals& orb,
+                                 const std::string& basis_type,
+                                 const bool& out_element_info,
+                                 const bool& lspinorb,
+                                 const int& nspin)
 {
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
     //~~~~~~~~~~~~~~~~~~~~~~   2    ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -412,7 +419,7 @@ void InfoNonlocal::setupNonlocal(const int& ntype, Atom* atoms, std::ofstream& l
     // from .UPF file directly.
     // mohan note 2011-03-04
     //>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-    if (PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw")
+    if (basis_type == "lcao" || basis_type == "lcao_in_pw")
     {
         delete[] this->Beta;
         this->Beta = new Numerical_Nonlocal[ntype];
@@ -443,7 +450,8 @@ void InfoNonlocal::setupNonlocal(const int& ntype, Atom* atoms, std::ofstream& l
             }
             else
             {
-                this->Set_NonLocal(it, atom, this->nproj[it], orb.get_kmesh(), orb.get_dk(), orb.get_dr_uniform(), log);
+                this->Set_NonLocal(it, atom, this->nproj[it], orb.get_kmesh(), orb.get_dk(), orb.get_dr_uniform(), log,
+                                   out_element_info, lspinorb, nspin);
             }
             this->nprojmax = std::max(this->nprojmax, this->nproj[it]);
             // caoyu add 2021-05-24 to reconstruct atom_arrange::set_sr_NL

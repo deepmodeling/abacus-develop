@@ -248,7 +248,7 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
 void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
         ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
         ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
-        int& real_brav, double* cel_const, double* tmp_const) const
+        int& real_brav, double* cel_const, double* tmp_const, const double symmetry_prec) const
 {
     ModuleBase::Vector3<double> r1, r2, r3;
     double cos1 = 1;
@@ -290,7 +290,7 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
                                             r3.y = n31 * v1.y + n32 * v2.y + n33 * v3.y;
                                             r3.z = n31 * v1.z + n32 * v2.z + n33 * v3.z;
 											
-                                            ibrav = standard_lat(r1, r2, r3, cel_const);
+                                            ibrav = standard_lat(r1, r2, r3, cel_const, symmetry_prec);
 
                                             if ( ibrav < real_brav || ( ibrav == real_brav
                                                     && ( fabs(cel_const[3]) < (cos1-1.0e-9) )

@@ -1,13 +1,12 @@
 #include "read_pp.h"
-#include "source_io/module_parameter/parameter.h"
 
-void Pseudopot_upf::complete_default(Atom_pseudo& pp)
+void Pseudopot_upf::complete_default(Atom_pseudo& pp, const double pseudo_rcut)
 {
     ModuleBase::TITLE("Pseudopot_upf", "complete_default");
 
     // call subroutines
     this->complete_default_h(pp);
-	this->complete_default_atom(pp);
+	this->complete_default_atom(pp, pseudo_rcut);
 	this->complete_default_vl(pp);
 
 	if (pp.nbeta == 0) {
@@ -86,14 +85,15 @@ void Pseudopot_upf::complete_default_h(Atom_pseudo& pp)
     return;
 }
 
-void Pseudopot_upf::complete_default_atom(Atom_pseudo& pp)
+void Pseudopot_upf::complete_default_atom(Atom_pseudo& pp, const double pseudo_rcut)
 {
 	ModuleBase::TITLE("Pseudopot_upf","complete_default_atom");
 
 	// mohan 2009-12-15
 	// mohan update again 2011-05-23, 
 	// in order to calculate more accurate Vna.
-	pp.rcut = PARAM.inp.pseudo_rcut;//(a.u.);
+	const double pseudo_rcut_ = pseudo_rcut;
+	pp.rcut = pseudo_rcut_;//(a.u.);
 	
 	// remember to update here if you need it.
 	//	rcut = 25.0; 

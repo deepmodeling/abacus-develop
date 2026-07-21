@@ -238,30 +238,14 @@ TEST(AbacusJsonTest, GeneralInfo)
     ASSERT_NE(content.find(start_time_str), std::string::npos);
 }
 
-#ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h"
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
-    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
 TEST(AbacusJsonTest, InitInfo)
 {

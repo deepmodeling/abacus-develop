@@ -2,7 +2,6 @@
 using namespace ModuleSymmetry;
 
 #include "source_base/libm/libm.h"
-#include "source_io/module_parameter/parameter.h"
 
 void Symmetry::rho_symmetry( double *rho,
                              const int &nr1, const int &nr2, const int &nr3)
@@ -65,7 +64,8 @@ void Symmetry::rho_symmetry( double *rho,
 
 void Symmetry::rhog_symmetry(std::complex<double> *rhogtot, 
     int* ixyz2ipw, const int &nx, const int &ny, const int &nz, 
-    const int &fftnx, const int &fftny, const int &fftnz)
+    const int &fftnx, const int &fftny, const int &fftnz,
+    const bool gamma_only_pw)
 {
 	ModuleBase::timer::start("Symmetry","rhog_symmetry");
 	// ----------------------------------------------------------------------
@@ -173,7 +173,7 @@ void Symmetry::rhog_symmetry(std::complex<double> *rhogtot,
                         rotate_recip(kgmatrix[invmap[isym]], tmp_gdirect0, ii, jj, kk);
                         if(ii>=fftnx || jj>=fftny || kk>= fftnz)
                         {
-                            if(!PARAM.globalv.gamma_only_pw)
+                            if(!gamma_only_pw)
                             {
                                 std::cout << " ROTATE OUT OF FFT-GRID IN RHOG_SYMMETRY !" << std::endl;
 		                        ModuleBase::QUIT();

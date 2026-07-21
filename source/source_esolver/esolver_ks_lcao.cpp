@@ -35,15 +35,14 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
-    this->exx_nao.init(); // mohan add 20251008
 }
 
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
-	//****************************************************
-	// do not add any codes in this deconstructor funcion
-	//****************************************************
+    //****************************************************
+    // do not add any codes in this deconstructor funcion
+    //****************************************************
     Setup_Psi<TK>::deallocate_psi(this->psi);
 }
 
@@ -52,6 +51,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_all_runners");
+
+    // 0) init EXX - moved from constructor to ensure GlobalC::exx_info.info_global is already set
+    this->exx_nao.init();
 
     // 1) before_all_runners in ESolver_KS
     ESolver_KS::before_all_runners(ucell, inp);
@@ -114,7 +116,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
     //! 2) find search radius
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-      PARAM.inp.out_level, orb_.get_rcutmax_Phi(), ucell.infoNL.get_rcutmax_Beta(),
+      PARAM.inp.out_level, orb_.get_rcutmax_Phi(), ucell.infoNL->get_rcutmax_Beta(),
       PARAM.globalv.gamma_only_local);
 
     //! 3) use search_radius to search adj atoms

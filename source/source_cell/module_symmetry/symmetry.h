@@ -35,8 +35,14 @@ public:
     /// @param st 
     /// @param atoms all atoms
     /// @param ofs_running 
+    /// @param symmetry_prec precision for symmetry analysis
+    /// @param nspin number of spin components
+    /// @param calculation calculation type (scf, relax, cell-relax, etc.)
+    /// @param cal_symm_repr control for symmetry representation output [0]=flag, [1]=precision
 	/// get the symmetry information of the system, gmatries (rotation 3*3 matrixs), gtrans (transfer a collections vector3), etc.
-    void analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, std::ofstream& ofs_running);
+    void analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, std::ofstream& ofs_running,
+                   const double symmetry_prec, const int nspin, const std::string& calculation,
+                   const int* cal_symm_repr);
 
 	ModuleBase::Vector3<double> s1, s2, s3;
 	ModuleBase::Vector3<double> a1, a2, a3;	//primitive cell vectors(might be changed during the process of the program)
@@ -92,7 +98,8 @@ public:
     int standard_lat(ModuleBase::Vector3<double>& a, 
                      ModuleBase::Vector3<double>& b, 
                      ModuleBase::Vector3<double>& c, 
-                     double* celconst)const;
+                     double* celconst,
+                     const double symmetry_prec)const;
 
 	void lattice_type(ModuleBase::Vector3<double> &v1,
                       ModuleBase::Vector3<double> &v2,
@@ -106,7 +113,8 @@ public:
                       std::string& bravname, 
                       const Atom* atoms,
 					  bool convert_atoms, 
-                      double* newpos = nullptr)const;
+                      double* newpos,
+                      const double symmetry_prec)const;
 
 	void getgroup(int& nrot, 
 			int& nrotk, 
@@ -134,7 +142,8 @@ public:
 	void rho_symmetry(double *rho, const int &nr1, const int &nr2, const int &nr3);
 
 	void rhog_symmetry(std::complex<double> *rhogtot, int* ixyz2ipw, const int &nx, 
-			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz);
+			const int &ny, const int &nz, const int & fftnx, const int &fftny, const int &fftnz,
+			const bool gamma_only_pw);
 
     /// symmetrize a vector3 with nat elements, which can be forces or variation of atom positions in relax
     void symmetrize_vec3_nat(double* v)const;   // force
@@ -181,7 +190,7 @@ public:
 	void get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
 			ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
 			ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
-        int& real_brav, double* cel_const, double* tmp_const)const;
+        int& real_brav, double* cel_const, double* tmp_const, const double symmetry_prec)const;
 
     /// Loop the magmom of each atoms in its type when NSPIN>1. 
     /// If not all the same, primitive cells should not be looped in rhog_symmetry.

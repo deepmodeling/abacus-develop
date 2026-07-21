@@ -76,8 +76,8 @@ void Plus_U::fold_dSR_gamma(const UnitCell& ucell,
                         dtau2 = tau0 - tau2;
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
-                        double rcut1 = orb_cutoff_[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = orb_cutoff_[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff_[T1] + ucell.infoNL->get_rcut_max(T0);
+                        double rcut2 = orb_cutoff_[T2] + ucell.infoNL->get_rcut_max(T0);
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
                             adj = true;
@@ -200,8 +200,8 @@ void Plus_U::folding_matrix_k(const UnitCell& ucell,
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = orb_cutoff_[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = orb_cutoff_[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff_[T1] + ucell.infoNL->get_rcut_max(T0);
+                        double rcut2 = orb_cutoff_[T2] + ucell.infoNL->get_rcut_max(T0);
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {

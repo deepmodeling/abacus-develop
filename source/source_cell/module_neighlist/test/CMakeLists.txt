@@ -52,7 +52,7 @@ if(ENABLE_MPI)
     PRIVATE
     Threads::Threads MPI::MPI_CXX
   )
-  if(USE_OPENMP)
+  if(ENABLE_OPENMP)
     target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE OpenMP::OpenMP_CXX)
   endif()
   install(TARGETS MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark DESTINATION ${CMAKE_BINARY_DIR}/tests)

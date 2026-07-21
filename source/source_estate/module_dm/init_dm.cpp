@@ -35,7 +35,7 @@ void elecstate::init_dm(UnitCell& ucell,
         // mohan add 2025-11-12, use density matrix to calculate the charge density
         LCAO_domain::dm2rho(dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &chr);
 
-		elecstate::cal_ux(ucell);
+		elecstate::cal_ux(ucell, PARAM.inp.nspin);
 
 		//! update the potentials by using new electron charge density
 		pelec->pot->update_from_charge(&chr, &ucell);

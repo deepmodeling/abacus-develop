@@ -1163,7 +1163,7 @@
   - scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
   - cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
   - cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
-  - elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
+  - elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DENABLE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
   If you set ks_solver=`genelpa` for basis_type=`pw`, the program will stop with an error message:
 
@@ -1173,9 +1173,9 @@
 - **Default**: 
     - PW basis: cg.
     - LCAO basis:
-        - genelpa (if compiling option `USE_ELPA` has been set)
+        - genelpa (if compiling option `ENABLE_ELPA` has been set)
         - lapack (if compiling option `ENABLE_MPI` has not been set)
-        - scalapack_gvx (if compiling option `USE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
+        - scalapack_gvx (if compiling option `ENABLE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
         - cusolver (if compiling option `USE_CUDA` has been set)
 
 ### nbands
@@ -3377,6 +3377,7 @@
   - berendsen: Berendsen thermostat, see md_nraise in detail.
   - rescaling: velocity Rescaling method 1, see md_tolerance in detail.
   - rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+  - csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.
 - **Default**: nhc
 
 ### md_tfirst
@@ -4372,9 +4373,10 @@
 ### out_current
 
 - **Type**: Integer
-- **Description**: - 0: Do not output current.
-  - 1: Output current using the two-center integral, faster.
-  - 2: Output current using the matrix commutation, more precise.
+- **Description**: Controls the current-density output method for LCAO RT-TDDFT.
+  - 0: Do not output current.
+  - 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center integral / spherical grid integral: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms (e.g., EXX) are not included explicitly.
+  - 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis: $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive.
 - **Default**: 0
 
 ### out_current_k

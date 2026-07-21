@@ -148,13 +148,13 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_blocks_default_parameters_added_to_headers(self):
+    def test_warns_for_default_parameters_added_to_headers(self):
         self.write("source/source_base/defaults.h", "void update_solver(int step = 0);\n")
         head = self.commit_change()
 
         result = self.run_checker("--base", self.base, "--head", head)
 
-        self.assert_blocked_by(result, "No new default parameters")
+        self.assert_warns_with_success(result, "No new default parameters")
 
     def test_ignores_crlf_to_lf_only_changes_for_semantic_added_lines(self):
         self.write("source/source_base/defaults.h", b"void update_solver(int step = 0);\r\n", mode="wb")
@@ -216,7 +216,7 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assert_blocked_by(result, "CMake linkage for new sources")
 
-    def test_blocks_input_parameter_changes_without_docs_linkage(self):
+    def test_warns_input_parameter_changes_without_docs_linkage(self):
         self.write(
             "source/source_io/module_parameter/read_input_item_model.cpp",
             'Input_Item item("new_switch");\nitem.default_value = "0";\n',
@@ -225,7 +225,7 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         result = self.run_checker("--base", self.base, "--head", head)
 
-        self.assert_blocked_by(result, "INPUT parameter documentation linkage")
+        self.assert_warns_with_success(result, "INPUT parameter documentation linkage")
 
     def test_allows_parameter_file_comment_only_change_without_docs(self):
         self.write(
@@ -259,7 +259,7 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
-    def test_blocks_input_parameter_change_when_required_docs_are_deleted(self):
+    def test_warns_input_parameter_change_when_required_docs_are_deleted(self):
         self.write("docs/parameters.yaml", "parameters: []\n")
         self.write("docs/advanced/input_files/input-main.md", "# INPUT\n")
         self.git("add", ".")
@@ -275,7 +275,7 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         result = self.run_checker("--base", base, "--head", head)
 
-        self.assert_blocked_by(result, "INPUT parameter documentation linkage")
+        self.assert_warns_with_success(result, "INPUT parameter documentation linkage")
 
     def test_warns_for_unfilled_pr_template_fields_from_event_payload(self):
         event = self.repo / "event.json"

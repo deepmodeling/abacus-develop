@@ -20,7 +20,18 @@ struct System_para
     // ------------ parameters not defined in INPUT file -------------
     // ------------ but decided by INPUT parameters      -------------
     // ---------------------------------------------------------------
-    int nlocal = 0; ///< total number of local basis.
+    /**
+     * @brief Total number of local basis functions.
+     * 
+     * Calculated by CalAtomsInfo::cal_atoms_info() during pseudopotential reading,
+     * based on atoms[it].nw * atoms[it].na for each atom type.
+     * For nspin == 4 (non-collinear), each basis function has 2 polarizations,
+     * so nlocal is doubled.
+     * 
+     * Must only be accessed AFTER elecstate::read_pseudo() completes,
+     * as it is initialized to 0 and calculated inside read_pseudo().
+     */
+    int nlocal = 0;
     bool two_fermi = false; ///< true if "nupdown" is set
     bool use_uspp = false;   ///< true if "uspp" is set
     bool dos_setemin = false; ///< true: "dos_emin_ev" is set

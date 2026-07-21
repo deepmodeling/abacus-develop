@@ -6,10 +6,6 @@
 // mohan add 2025-04-12
 #include "source_estate/module_charge/charge.h"
 
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
-
 /************************************************
  *  unit test of magnetism.cpp
  ***********************************************/
@@ -20,8 +16,8 @@
  *   - Magnetism::~Magnetism()
  *   - Magnetism::judge_parallel()
  *   - Magnetism::compute_mag()
- *      - compute mag for spin-polarized system when PARAM.input.nspin = 2
- *      - and non-collinear case with PARAM.input.nspin = 4 
+ *      - compute mag for spin-polarized system when nspin = 2
+ *      - and non-collinear case with nspin = 4
 */
 
 #define private public
@@ -53,7 +49,7 @@ TEST_F(MagnetismTest, Magnetism)
 {
     EXPECT_EQ(0.0, magnetism->tot_mag);
     EXPECT_EQ(0.0, magnetism->abs_mag);
-    EXPECT_EQ(nullptr, magnetism->start_mag);
+    EXPECT_TRUE(magnetism->start_mag.empty());
 }
 
 TEST_F(MagnetismTest, JudgeParallel)
@@ -67,15 +63,15 @@ TEST_F(MagnetismTest, JudgeParallel)
 
 TEST_F(MagnetismTest, ComputeMagnetizationS2)
 {
-	PARAM.input.nspin = 2;
-	PARAM.sys.two_fermi = false;
-	PARAM.input.nelec = 10.0;
+	const int nspin = 2;
+	const bool two_fermi = false;
+	const double nelec = 10.0;
 
 	Charge* chr = new Charge;
 	chr->nrxx = 100;
 	chr->nxyz = 1000;
-	chr->rho = new double*[PARAM.input.nspin];
-	for (int i=0; i< PARAM.input.nspin; i++)
+	chr->rho = new double*[nspin];
+	for (int i=0; i< nspin; i++)
 	{
 		chr->rho[i] = new double[chr->nrxx];
 	}
@@ -85,13 +81,14 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
 		chr->rho[1][ir] = 1.01;
 	}
 	double* nelec_spin = new double[2];
-	magnetism->compute_mag(500.0,chr->nrxx, chr->nxyz, chr->rho, nelec_spin);
+	magnetism->compute_mag(500.0,chr->nrxx, chr->nxyz, chr->rho,
+	                       nspin, two_fermi, nelec, nelec_spin);
 	EXPECT_DOUBLE_EQ(-0.5, magnetism->tot_mag);
 	EXPECT_DOUBLE_EQ(0.5, magnetism->abs_mag);
 	EXPECT_DOUBLE_EQ(4.75, nelec_spin[0]);
 	EXPECT_DOUBLE_EQ(5.25, nelec_spin[1]);
 	delete[] nelec_spin;
-	for (int i=0; i< PARAM.input.nspin; i++)
+	for (int i=0; i< nspin; i++)
 	{
 		delete[] chr->rho[i];
 	}
@@ -101,13 +98,13 @@ TEST_F(MagnetismTest, ComputeMagnetizationS2)
 
 TEST_F(MagnetismTest, ComputeMagnetizationS4)
 {
-	PARAM.input.nspin = 4;
+	const int nspin = 4;
 
 	Charge* chr = new Charge;
-	chr->rho = new double*[PARAM.input.nspin];
+	chr->rho = new double*[nspin];
 	chr->nrxx = 100;
 	chr->nxyz = 1000;
-	for (int i=0; i< PARAM.input.nspin; i++)
+	for (int i=0; i< nspin; i++)
 	{
 		chr->rho[i] = new double[chr->nrxx];
 	}
@@ -119,13 +116,14 @@ TEST_F(MagnetismTest, ComputeMagnetizationS4)
 		chr->rho[3][ir] = 1.00;
 	}
 	double* nelec_spin = new double[4];
-	magnetism->compute_mag(500.0,chr->nrxx, chr->nxyz, chr->rho, nelec_spin);
+	magnetism->compute_mag(500.0,chr->nrxx, chr->nxyz, chr->rho,
+	                       nspin, false, 0.0, nelec_spin);
 	EXPECT_DOUBLE_EQ(100.0, magnetism->abs_mag);
 	EXPECT_DOUBLE_EQ(50.0*std::sqrt(2.0), magnetism->tot_mag_nc[0]);
 	EXPECT_DOUBLE_EQ(50.0, magnetism->tot_mag_nc[1]);
 	EXPECT_DOUBLE_EQ(50.0, magnetism->tot_mag_nc[2]);
 	delete[] nelec_spin;
-	for (int i=0; i< PARAM.input.nspin; i++)
+	for (int i=0; i< nspin; i++)
 	{
 		delete[] chr->rho[i];
 	}
@@ -135,18 +133,20 @@ TEST_F(MagnetismTest, ComputeMagnetizationS4)
 
 #ifdef __MPI
 #include <mpi.h>
+#include "source_base/parallel_comm.h"
 int main(int argc, char **argv)
 {
-
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
+    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
+    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
+    MPI_Comm_dup(MPI_COMM_WORLD, &POOL_WORLD);
 
     testing::InitGoogleTest(&argc, argv);
     int result = RUN_ALL_TESTS();
 
+    MPI_Comm_free(&POOL_WORLD);
     MPI_Finalize();
-
     return result;
 }
 #endif
+

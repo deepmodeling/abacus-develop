@@ -3,6 +3,7 @@
 #include "hamilt_casida.h"
 #include "hamilt_ulr.hpp"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
+#include "source_lcao/LCAO_nonlocal_info.h"
 #include "source_lcao/module_lr/hsolver_lrtd.hpp"
 #include "source_lcao/module_lr/lr_spectrum.h"
 #include "source_lcao/module_gint/gint.h"
@@ -73,8 +74,12 @@ inline void setup_2center_table(TwoCenterBundle& two_center_bundle, LCAO_Orbital
 #endif
     if (PARAM.inp.vnl_in_h)
     {
-        ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
-        two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+        auto* lcao_nl = new LCAONonlocalInfo();
+        lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb,
+                               PARAM.inp.basis_type, PARAM.inp.out_element_info,
+                               PARAM.inp.lspinorb, PARAM.inp.nspin);
+        ucell.infoNL.reset(lcao_nl);
+        two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().Beta);
     }
 }
 
@@ -300,10 +305,18 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     // necessary steps in ESolver_KS::before_all_runners : symmetry and k-points
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+        const int cal_symm_repr[2] = {PARAM.inp.cal_symm_repr[0], PARAM.inp.cal_symm_repr[1]};
+        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
+                             PARAM.inp.symmetry_prec, PARAM.inp.nspin, PARAM.inp.calculation, cal_symm_repr);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
-    this->kv.set(ucell,ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running);
+    const bool use_ibz = false;
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
+    const double kspacing[3] = {PARAM.inp.kspacing[0], PARAM.inp.kspacing[1], PARAM.inp.kspacing[2]};
+    const std::string kmesh_type = PARAM.inp.kmesh_type;
+    const double koffset[3] = {PARAM.inp.koffset[0], PARAM.inp.koffset[1], PARAM.inp.koffset[2]};
+    this->kv.set(ucell, ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
@@ -374,7 +387,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
         PARAM.inp.out_level,
         orb.get_rcutmax_Phi(),
-        ucell.infoNL.get_rcutmax_Beta(),
+        ucell.infoNL->get_rcutmax_Beta(),
         PARAM.globalv.gamma_only_local);
     atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,

@@ -73,7 +73,9 @@ The new EXX implementation depends on two external libraries:
 
 These two libraries are added as submodules in the [deps](https://github.com/deepmodeling/abacus-develop/tree/develop/deps) folder. Set `-DENABLE_LIBRI=ON` to build with these two libraries.
 
-If you prefer using manually downloaded libraries, provide `-DLIBRI_DIR=${path to your LibRI folder} -DLIBCOMM_DIR=${path to your LibComm folder}`.
+```{note}
+`ENABLE_LIBCOMM` is deprecated because LibComm is not a standalone ABACUS feature. CMake locates it automatically as a dependency of LibRI. If you prefer using manually downloaded libraries, enable LibRI and provide their locations via `-DLIBRI_DIR=/path/to/LibRI` and `-DLIBCOMM_DIR=/path/to/LibComm`.
+```
 
 
 ## Build with DFT-D4 support
@@ -134,13 +136,13 @@ If you are confident that your MPI supports CUDA Aware, you can add `-DUSE_CUDA_
 
 > Note: We recommend using the latest available compiler sets, since they offer faster implementations of math functions.
 
-This flag is disabled by default. To build math functions from source code, define `USE_ABACUS_LIBM` flag. It is expected to get a better performance on legacy versions of `gcc` and `clang`.
+This flag is disabled by default. To build math functions from source code, define `ENABLE_ABACUS_LIBM` flag. It is expected to get a better performance on legacy versions of `gcc` and `clang`.
 
 Currently supported math functions:
  `sin`, `cos`, `sincos`, `exp`, `cexp`
 
 ```bash
-cmake -B build -DUSE_ABACUS_LIBM=1
+cmake -B build -DENABLE_ABACUS_LIBM=1
 ```
 
 ## Build with PEXSI support

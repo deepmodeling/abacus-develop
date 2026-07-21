@@ -39,7 +39,8 @@ class Symmetry_Basic
 			const ModuleBase::Vector3<double> &bb3
 			);
 	void matrigen(ModuleBase::Matrix3 *symgen, const int ngen, ModuleBase::Matrix3* symop, int &nop) const;
-	void setgroup(ModuleBase::Matrix3 *symop, int &nop, const int &ibrav) const;
+	void setgroup(ModuleBase::Matrix3 *symop, int &nop, const int &ibrav, 
+                  const int* cal_symm_repr) const;
 	void rotate(
 			ModuleBase::Matrix3 &gmatrix, ModuleBase::Vector3<double> &gtrans, 
 			int i, int j, int k, const int, const int, const int, int&, int&, int&);
@@ -49,7 +50,8 @@ class Symmetry_Basic
     /// used to deal with incomplete group due to a subtle`symmetry_prec`
     int subgroup(const int& nrot, const int& ninv, const int& nc2, const int& nc3, const int& nc4, const int& nc6,
         const int& ns1, const int& ns3, const int& ns4, const int& ns6)const;
-    bool pointgroup(const int& nrot, int& pgnumber, std::string& pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream& ofs_running)const;
+    bool pointgroup(const int& nrot, int& pgnumber, std::string& pgname, const ModuleBase::Matrix3* gmatrix, std::ofstream& ofs_running,
+                    const int* cal_symm_repr)const;
 
 protected:
     std::string get_brav_name(const int ibrav) const;

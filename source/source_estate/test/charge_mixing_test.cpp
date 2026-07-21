@@ -32,14 +32,7 @@ void Charge::set_rhopw(ModulePW::PW_Basis* rhopw_in)
 {
     this->rhopw = rhopw_in;
 }
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-#endif
+
 // mock class cell
 /************************************************
  *  unit test of charge_mixing.cpp

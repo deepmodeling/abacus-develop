@@ -2,37 +2,40 @@
 #include "source_base/global_variable.h"
 #include "source_estate/read_pseudo.h"
 #include "source_hamilt/module_xc/exx_info.h"
+#include "../../LCAO_nonlocal_info.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_estate/param_update.h"
 
 #include <gtest/gtest.h>
-
-namespace
-{
-Input_para& mutable_input_for_deepks_unit()
-{
-    return const_cast<Input_para&>(PARAM.inp);
-}
-
-System_para& mutable_system_for_deepks_unit()
-{
-    return const_cast<System_para&>(PARAM.globalv);
-}
-} // namespace
 
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
-    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
 namespace GlobalC
 {
 Exx_Info exx_info;
 }
+
+class TestParameters
+{
+public:
+    static void init(int npol, bool gamma_only_local, int nlocal, int nspin)
+    {
+        PARAM.sys.npol = npol;
+        PARAM.sys.gamma_only_local = gamma_only_local;
+        PARAM.sys.nlocal = nlocal;
+        PARAM.sys.global_out_dir = "";
+        PARAM.sys.global_readin_dir = "";
+        PARAM.input.ks_solver = "cg";
+        PARAM.input.nspin = nspin;
+        PARAM.input.deepks_equiv = false;
+    }
+};
 
 template <typename T>
 void test_deepks<T>::preparation()
@@ -55,7 +58,6 @@ void test_deepks<T>::preparation()
     this->ParaO.set_serial(this->nlocal, this->nlocal);
     this->ParaO.nrow_bands = this->nlocal;
     this->ParaO.ncol_bands = this->nbands;
-    // Zhang Xiaoyang enable the serial version of LCAO and recovered this function usage. 2024-07-06
 
     this->ParaO.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, this->nlocal);
 }
@@ -63,22 +65,6 @@ void test_deepks<T>::preparation()
 template <typename T>
 void test_deepks<T>::set_parameters()
 {
-    Input_para& input = mutable_input_for_deepks_unit();
-    System_para& system = mutable_system_for_deepks_unit();
-
-    input.basis_type = "lcao";
-    input.kpoint_file = "KPT";
-    input.pseudo_rcut = 15.0;
-    input.cal_force = this->cal_force;
-    input.gamma_only = this->gamma_only_local;
-    input.nspin = this->nspin;
-    input.orbital_dir = this->orbital_dir;
-    input.out_element_info = this->out_element_info;
-    system.global_out_dir = "./";
-    GlobalV::ofs_warning.open("warning.log");
-    GlobalV::ofs_running.open("running.log");
-    system.deepks_setorb = this->deepks_setorb;
-
     std::ifstream ifs("INPUT");
     ASSERT_TRUE(ifs.is_open()) << "Cannot open DeePKS unit-test INPUT";
     char word[80];
@@ -87,9 +73,8 @@ void test_deepks<T>::set_parameters()
     ASSERT_TRUE(ifs >> this->gamma_only_local);
     ifs.close();
 
-    input.gamma_only = this->gamma_only_local;
-    system.gamma_only_local = this->gamma_only_local;
-    system.npol = this->npol;
+    GlobalV::ofs_warning.open("warning.log");
+    GlobalV::ofs_running.open("running.log");
     GlobalV::KPAR = 1;
     GlobalV::MY_POOL = 0;
     GlobalV::RANK_IN_POOL = 0;
@@ -97,6 +82,7 @@ void test_deepks<T>::set_parameters()
 
     ucell.latName = "user_defined_lattice";
     ucell.ntype = ntype;
+
     return;
 }
 
@@ -120,10 +106,8 @@ void test_deepks<T>::count_ntype()
     ifs.rdstate();
     while (ifs.good())
     {
-        // read a line
         std::getline(ifs, x);
 
-        // trim white space
         const char* typeOfWhitespaces = " \t\n\r\f\v";
         x.erase(x.find_last_not_of(typeOfWhitespaces) + 1);
         x.erase(0, x.find_first_not_of(typeOfWhitespaces));
@@ -151,7 +135,6 @@ template <typename T>
 void test_deepks<T>::set_ekcut()
 {
     GlobalV::ofs_running << "set lcao_ecut from LCAO files" << std::endl;
-    // set as max of ekcut from every element
 
     lcao_ecut = 0.0;
     std::ifstream in_ao;
@@ -190,11 +173,48 @@ void test_deepks<T>::set_ekcut()
 template <typename T>
 void test_deepks<T>::setup_cell()
 {
-    ucell.setup_cell("STRU", GlobalV::ofs_running);
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
-    this->nlocal = PARAM.globalv.nlocal;
-    this->nbands = PARAM.inp.nbands;
-    this->npol = PARAM.globalv.npol;
+    const std::string basis_type = "lcao";
+    const std::string orbital_dir = this->orbital_dir;
+    const std::string init_wfc = "atomic";
+    const double onsite_radius = 0.0;
+    const bool deepks_setorb = this->deepks_setorb;
+    const bool rpa = false;
+    const bool fixed_atoms = false;
+    const bool noncolin = false;
+    const std::string calculation = "scf";
+    const std::string esolver_type = "cg";
+    const double symmetry_prec = 1e-5;
+    const int dfthalf_type = 0;
+    const std::string pseudo_dir = "";
+    const int nspin = this->nspin;
+
+    ucell.setup_cell("STRU", GlobalV::ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
+        basis_type, orbital_dir, init_wfc,
+        onsite_radius, deepks_setorb, rpa,
+        fixed_atoms, noncolin, calculation, esolver_type);
+
+    const std::string global_out_dir = "./";
+    const bool out_element_info = this->out_element_info;
+    const std::string dft_functional = "default";
+    const bool lspinorb = false;
+    const double pseudo_rcut = 15.0;
+    const double soc_lambda = 0.0;
+    const int npol = this->npol;
+    const int nbands = this->nbands;
+    const bool two_fermi = false;
+    const double nelec_delta = 0.0;
+    const std::string smearing_method = "gaussian";
+    const std::string ks_solver = "cg";
+    const int bndpar = 1;
+    const double nelec = 0.0;
+    const double nupdown = 0.0;
+
+    auto atoms_info = elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec, nupdown);
+
+    this->nlocal = atoms_info.nlocal;
+    this->nbands = atoms_info.nbands;
+
+    TestParameters::init(this->npol, this->gamma_only_local, this->nlocal, this->nspin);
 
     return;
 }
@@ -205,7 +225,7 @@ void test_deepks<T>::prep_neighbour()
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                    this->out_level,
                                                    ORB.get_rcutmax_Phi(),
-                                                   ucell.infoNL.get_rcutmax_Beta(),
+                                                   ucell.infoNL->get_rcutmax_Beta(),
                                                    this->gamma_only_local);
 
     atom_arrange::search(this->search_pbc,
@@ -235,7 +255,15 @@ void test_deepks<T>::set_orbs()
              this->cal_force,
              my_rank);
 
-    ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB);
+    const std::string basis_type = "lcao";
+    const bool out_element_info = this->out_element_info;
+    const bool lspinorb = false;
+    const int nspin = this->nspin;
+
+    auto* lcao_nl = new LCAONonlocalInfo();
+    lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, ORB,
+                           basis_type, out_element_info, lspinorb, nspin);
+    ucell.infoNL.reset(lcao_nl);
 
     orb_.build(ntype, ucell.orbital_fn.data());
 
@@ -258,13 +286,27 @@ template <typename T>
 void test_deepks<T>::setup_kpt()
 {
     ModuleSymmetry::Symmetry::symm_flag = -1;
+    const bool use_ibz = false;
+    const std::string global_out_dir = "./";
+    const bool gamma_only_local = this->gamma_only_local;
+    const double kspacing[3] = {0.0, 0.0, 0.0};
+    const std::string kmesh_type = "gamma";
+    const double koffset[3] = {0.0, 0.0, 0.0};
+    const std::string kpoint_file = "KPT";
+
     this->kv.set(ucell,
                  ucell.symm,
-                 PARAM.inp.kpoint_file,
+                 kpoint_file,
                  this->nspin,
                  ucell.G,
                  ucell.latvec,
-                 GlobalV::ofs_running);
+                 GlobalV::ofs_running,
+                 use_ibz,
+                 global_out_dir,
+                 gamma_only_local,
+                 kspacing,
+                 kmesh_type,
+                 koffset);
 }
 
 template class test_deepks<double>;

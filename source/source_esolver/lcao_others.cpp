@@ -74,7 +74,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                    PARAM.inp.out_level,
                                                    orb_.get_rcutmax_Phi(),
-                                                   ucell.infoNL.get_rcutmax_Beta(),
+                                                   ucell.infoNL->get_rcutmax_Beta(),
                                                    PARAM.globalv.gamma_only_local);
 
     atom_arrange::search(PARAM.globalv.search_pbc,
@@ -167,7 +167,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    elecstate::cal_ux(ucell);
+    elecstate::cal_ux(ucell, PARAM.inp.nspin);
 
     // pelec should be initialized before these calculations
     elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, 

@@ -107,11 +107,12 @@ public:
 	ModuleBase::matrix force_exx;
 	ModuleBase::matrix stress_exx;
 
+	int abfs_Lmax() const { return abfs_Lmax_; }
+	const Exx_Info_RI& get_info_ri() const { return info; }
 
 private:
-	// WARNING: reference to Exx_Info_RI, which holds references into Exx_Info_Global.
-	// Must not outlive GlobalC::exx_info. See exx_info.h for details.
-	const Exx_Info_RI &info;
+	Exx_Info_RI info;
+	int abfs_Lmax_ = 0;
 	MPI_Comm mpi_comm;
 	const K_Vectors *p_kv = nullptr;
 	std::shared_ptr<ORB_gaunt_table> MGT;
