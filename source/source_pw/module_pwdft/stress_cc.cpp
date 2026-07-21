@@ -73,7 +73,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 	}
 	else
 	{
-		elecstate::cal_ux(ucell);
+		elecstate::cal_ux(ucell, PARAM.inp.nspin);
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell,
                                               PARAM.inp.nspin,
                                               PARAM.globalv.domag,

@@ -7,22 +7,6 @@
 #include "prepare_unitcell.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
-#endif
-
-
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;

@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "../sltk_atom.h"
+#include "source_cell/module_neighbor/sltk_atom.h"
 
 /************************************************
  *  unit test of sltk_atom

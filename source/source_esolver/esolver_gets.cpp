@@ -4,6 +4,7 @@
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/read_pseudo.h"
+#include "source_estate/param_update.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
@@ -30,18 +31,46 @@ void ESolver_GetS::before_all_runners(UnitCell& ucell, const Input_para& inp)
     ModuleBase::timer::start("ESolver_GetS", "before_all_runners");
 
     // 1.1) read pseudopotentials
-    elecstate::read_pseudo(GlobalV::ofs_running, ucell);
+    const std::string pseudo_dir = PARAM.inp.pseudo_dir;
+    const std::string global_out_dir = PARAM.globalv.global_out_dir;
+    const bool out_element_info = PARAM.inp.out_element_info;
+    const std::string dft_functional = PARAM.inp.dft_functional;
+    const bool lspinorb = PARAM.inp.lspinorb;
+    const double pseudo_rcut = PARAM.inp.pseudo_rcut;
+    const double soc_lambda = PARAM.inp.soc_lambda;
+    const int nspin = PARAM.inp.nspin;
+    const int npol = PARAM.globalv.npol;
+    const std::string basis_type = PARAM.inp.basis_type;
+    const std::string esolver_type = PARAM.inp.esolver_type;
+    const std::string init_wfc = PARAM.inp.init_wfc;
+    const int nbands = PARAM.inp.nbands;
+    const bool two_fermi = PARAM.globalv.two_fermi;
+    const double nelec_delta = PARAM.inp.nelec_delta;
+    const std::string smearing_method = PARAM.inp.smearing_method;
+    const std::string ks_solver = PARAM.inp.ks_solver;
+    const int bndpar = PARAM.inp.bndpar;
+    const double nelec = PARAM.inp.nelec;
+    const double nupdown = PARAM.inp.nupdown;
+    // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
+    auto atoms_info = elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec, nupdown);
+    elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
 
     // 1.2) symmetrize things
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running);
+        const int cal_symm_repr[2] = {PARAM.inp.cal_symm_repr[0], PARAM.inp.cal_symm_repr[1]};
+        ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
+                             PARAM.inp.symmetry_prec, inp.nspin, PARAM.inp.calculation, cal_symm_repr);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
     // 1.3) Setup k-points according to symmetry.
     const bool use_ibz = !inp.berry_phase && ModuleSymmetry::Symmetry::symm_flag != -1;
-    this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz);
+    const bool gamma_only_local = PARAM.globalv.gamma_only_local;
+    const double kspacing[3] = {PARAM.inp.kspacing[0], PARAM.inp.kspacing[1], PARAM.inp.kspacing[2]};
+    const std::string kmesh_type = PARAM.inp.kmesh_type;
+    const double koffset[3] = {PARAM.inp.koffset[0], PARAM.inp.koffset[1], PARAM.inp.koffset[2]};
+    this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
     ModuleIO::print_parameters(ucell, this->kv, inp);
@@ -83,7 +112,7 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
     search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                             PARAM.inp.out_level,
                                             orb_.get_rcutmax_Phi(),
-                                            ucell.infoNL.get_rcutmax_Beta(),
+                                            ucell.infoNL->get_rcutmax_Beta(),
                                             PARAM.globalv.gamma_only_local);
 
     Grid_Driver gd;

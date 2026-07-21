@@ -1,11 +1,10 @@
 #include "cal_ux.h"
-#include "source_io/module_parameter/parameter.h"
 
 namespace elecstate {
 
-void cal_ux(UnitCell& ucell) {
+void cal_ux(UnitCell& ucell, const int nspin) {
 
-    if (PARAM.inp.nspin != 4)
+    if (nspin != 4)
     {
         return;
     }

@@ -9,7 +9,7 @@ void elecstate::update_pot(UnitCell& ucell, // unitcell
 {
     if (!conv_esolver)
     {
-        elecstate::cal_ux(ucell);
+        elecstate::cal_ux(ucell, PARAM.inp.nspin);
         pelec->pot->update_from_charge(&chr, &ucell);
         pelec->f_en.descf = pelec->cal_delta_escf();
     }

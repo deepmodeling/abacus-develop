@@ -1,15 +1,13 @@
 #ifndef UNITCELL_H
 #define UNITCELL_H
 
+#include <memory>
 #include "source_base/global_function.h"
 #include "source_cell/sep_cell.h"
 #include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
 #include "source_cell/module_neighlist/atom_provider.h"
-
-#ifdef __LCAO
-#include "setup_nonlocal.h"
-#endif
+#include "source_cell/nonlocal_info_base.h"
 
 // provide the basic information about unitcell.
 class UnitCell : public AtomProvider {
@@ -238,12 +236,18 @@ class UnitCell : public AtomProvider {
 
     void set_iat2itia();
 
-    void setup_cell(const std::string& fn, std::ofstream& log);
+    void setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
+        const std::string& basis_type, const std::string& orbital_dir, const std::string& init_wfc,
+        const double onsite_radius, const bool deepks_setorb, const bool rpa,
+        const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type);
 
-#ifdef __LCAO
-    InfoNonlocal infoNL; // store nonlocal information of lcao, added by zhengdy
-                         // 2021-09-07
-#endif
+    /**
+     * @brief Pointer to non-local pseudopotential information.
+     *
+     * This pointer is set during LCAO initialization and provides access
+     * to non-local projector data. It is null for non-LCAO calculations.
+     */
+    std::unique_ptr<NonlocalInfoBase> infoNL;
 
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors

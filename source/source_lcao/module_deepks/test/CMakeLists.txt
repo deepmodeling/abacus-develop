@@ -27,7 +27,7 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_cell/klist.cpp
     ../../../source_cell/parallel_kpoints.cpp
     ../../../source_cell/k_vector_utils.cpp
-    ../../../source_cell/setup_nonlocal.cpp
+    ../../setup_nonlocal.cpp
     ../../../source_cell/pseudo.cpp
     ../../../source_cell/read_pp.cpp
     ../../../source_cell/read_pp_complete.cpp
@@ -40,9 +40,10 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_pw/module_pwdft/soc.cpp
     ../../../source_io/module_output/sparse_matrix.cpp
     ../../../source_estate/read_pseudo.cpp
+    ../../../source_estate/param_update.cpp
     ../../../source_estate/cal_wfc.cpp
     ../../../source_cell/read_orb.cpp
-    ../../../source_estate/cal_nelec_nband.cpp
+    ../../../source_cell/cal_nelec_nband.cpp
     ../../../source_estate/module_dm/density_matrix.cpp
     ../../../source_estate/module_dm/density_matrix_io.cpp
     ../../center2_orb.cpp

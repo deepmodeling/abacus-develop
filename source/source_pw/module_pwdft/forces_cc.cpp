@@ -77,7 +77,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     else
     {
-        elecstate::cal_ux(ucell_in);
+        elecstate::cal_ux(ucell_in, PARAM.inp.nspin);
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell_in,
                                               PARAM.inp.nspin,
                                               PARAM.globalv.domag,

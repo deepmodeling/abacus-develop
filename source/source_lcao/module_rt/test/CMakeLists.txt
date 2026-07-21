@@ -39,7 +39,7 @@ AddTest(
           ../../center2_orb.cpp
           ../../center2_orb-orb11.cpp
           ../../center2_orb-orb21.cpp
-          ../../../source_cell/setup_nonlocal.cpp
+          ../../setup_nonlocal.cpp
           ../../../source_cell/atom_spec.cpp
           ../../../source_cell/atom_pseudo.cpp
           ../../../source_cell/pseudo.cpp

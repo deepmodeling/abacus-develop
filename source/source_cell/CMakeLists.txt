@@ -18,7 +18,6 @@ add_library(
     read_atoms.cpp
     read_atoms_helper.cpp
     read_orb.cpp
-    setup_nonlocal.cpp
     klist.cpp
     parallel_kpoints.cpp
     cell_index.cpp
@@ -34,6 +33,7 @@ add_library(
     sep_cell.cpp
     qlist.cpp
     qlist.h
+    cal_nelec_nband.cpp
 )
 
 if(ENABLE_COVERAGE)
