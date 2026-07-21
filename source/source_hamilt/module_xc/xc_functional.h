@@ -250,6 +250,17 @@ class XC_Functional
         const ModulePW::PW_Basis* rho_basis,
         const double tpiba);
 
+    /// Compute the Laplacian of the electron density in real space.
+    /// Uses the spectral (reciprocal-space) Laplacian: ∇²ρ(r) = IFFT(-|G|² · FFT(ρ))
+    ///
+    /// @param rhog      Density in reciprocal space (input)
+    /// @param lapl      [out] ∇²ρ in real space
+    /// @param rho_basis PW basis for the density
+    /// @param tpiba     2π/a (reciprocal lattice scaling factor)
+    ///
+    /// @note This computes the exact spectral Laplacian, which is accurate for smooth densities
+    ///       but amplifies high-G noise. For the vlapl potential processing, use the FD Laplacian
+    ///       kernel (see process_vlapl_potential() in libxc_pot.cpp) instead.
     static void laplacian_rho(
         const std::complex<double>* rhog,
         double* lapl,

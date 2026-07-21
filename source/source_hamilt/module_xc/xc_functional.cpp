@@ -169,6 +169,19 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 5;
         use_libxc = true;
     }
+    // SCANL: SCAN + Laplacian (meta-GGA functional that depends on ∇²ρ)
+    // Unlike SCAN, SCANL depends on the density Laplacian, which introduces:
+    //   1. Additional potential term: vlapl = ∂ε_xc/∂(∇²ρ)
+    //   2. Additional stress contribution: σ_ab^{vlapl} = (2/Ω) Σ vlapl·H_ab·e²
+    //
+    // The vlapl potential is processed using a finite-difference (FD) Laplacian kernel
+    // in reciprocal space to avoid |G|² amplification that causes SCF divergence.
+    // See process_vlapl_potential() in libxc_pot.cpp for details.
+    //
+    // @warning SCANL is known to have convergence difficulties for metallic systems
+    //          at high ecutwfc due to the Laplacian-dependent potential.
+    //          Recommended settings: ecutwfc <= 80 Ry, mixing_tau = 1, Pulay mixing (beta 0.1-0.2).
+    //          Consider using r2SCAN or SCAN for better numerical stability.
     else if ( xc_func == "SCANL")
     {
         func_id.push_back(XC_MGGA_X_SCANL);

@@ -124,7 +124,18 @@ std::vector<double> XC_Functional_Libxc::convert_sigma(
 	return sigma;
 }
 
-// calculating laplacian of rho
+/// Calculate the Laplacian of the electron density for each spin channel.
+/// Uses the spectral (reciprocal-space) Laplacian: ∇²ρ(r) = IFFT(-|G|² · FFT(ρ))
+///
+/// @param nspin  Number of spin channels
+/// @param nrxx   Number of real-space grid points
+/// @param rho    Electron density (interleaved: [ρ_up(r0), ρ_dn(r0), ρ_up(r1), ...])
+/// @param tpiba  2π/a (reciprocal lattice scaling factor)
+/// @param chr    Charge density object (provides PW basis and FFT infrastructure)
+/// @return       Laplacian of density (same layout as rho)
+///
+/// @note This computes the exact spectral Laplacian, which is used for the energy evaluation.
+///       For the vlapl potential, use cal_lapl_fd() instead to avoid SCF divergence.
 std::vector<double> XC_Functional_Libxc::cal_lapl(
 	const int nspin,
 	const std::size_t nrxx,
@@ -160,7 +171,24 @@ std::vector<double> XC_Functional_Libxc::cal_lapl(
 	return lapl;
 }
 
-// calculating laplacian of rho using FD kernel (consistent with vlapl potential)
+/// Calculate the Laplacian of the electron density using a finite-difference (FD) kernel.
+/// This is consistent with the FD Laplacian kernel used for vlapl potential processing.
+///
+/// The FD Laplacian in reciprocal space is:
+///   ∇²_FD ρ(G) = -gg_FD(G) · tpiba² · ρ(G)
+///
+/// where gg_FD(G) is the FD kernel:
+///   gg_FD(G) = (1/(2π)²) Σ_{αβ} GGT[α][β] · FD_{αβ}(G)
+///
+/// with:
+///   FD_{αα} = 2·N_α²·(1 - cos(2π·m_α/N_α))  (diagonal)
+///   FD_{αβ} = N_α·N_β·sin(2π·m_α/N_α)·sin(2π·m_β/N_β)  (off-diagonal)
+///
+/// @note The FD kernel matches the spectral kernel at low G but remains bounded at high G,
+///       preventing |G|² amplification that causes SCF divergence.
+/// @note This function is currently not used in the main code path (the vlapl potential
+///       is computed inline in process_vlapl_potential()). It is provided for consistency
+///       and potential future use.
 std::vector<double> XC_Functional_Libxc::cal_lapl_fd(
 	const int nspin,
 	const std::size_t nrxx,
@@ -244,8 +272,27 @@ std::vector<double> XC_Functional_Libxc::cal_lapl_fd(
 	return lapl;
 }
 
-// calculating Hessian of rho: d²rho / dr_alpha dr_beta
-// returns 6 independent components per spin: xx, yy, zz, xy, yz, zx
+/// Calculate the Hessian of the electron density: H_ab(r) = ∂²ρ/∂r_a∂r_b
+/// Returns 6 independent components per spin channel: xx, yy, zz, xy, yz, zx
+///
+/// The Hessian is computed in reciprocal space and transformed to real space:
+///   H_ab(G) = -G_a · G_b · ρ(G)
+///   H_ab(r) = IFFT(H_ab(G)) · tpiba²
+///
+/// where G_a, G_b are Cartesian components of the reciprocal lattice vector G.
+///
+/// @param nspin  Number of spin channels
+/// @param nrxx   Number of real-space grid points
+/// @param rho    Electron density (interleaved: [ρ_up(r0), ρ_dn(r0), ...])
+/// @param chr    Charge density object (provides PW basis and FFT infrastructure)
+/// @return       Hessian components: hessian[is][ab * nrxx + ir]
+///               where ab = 0:xx, 1:yy, 2:zz, 3:xy, 4:yz, 5:zx
+///
+/// @note This is used by add_vlapl_stress_contribution() to compute the vlapl stress:
+///       σ_ab^{vlapl} = (2/Ω) Σ_{s,ir} vlapl_s(r) · H_ab,s(r) · e²
+/// @note The Hessian is computed using the spectral (exact) Laplacian, not the FD kernel.
+///       This is appropriate for the stress calculation because the density is smooth
+///       and well-resolved, and the spectral method is more accurate.
 std::vector<std::vector<double>> XC_Functional_Libxc::cal_rho_hessian(
 	const int nspin,
 	const std::size_t nrxx,

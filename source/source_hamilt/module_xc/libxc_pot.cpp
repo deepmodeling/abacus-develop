@@ -19,6 +19,43 @@
 #include <cmath>
 
 namespace {
+/// Process the vlapl (Laplacian potential) contribution to the XC potential and energy
+/// for meta-GGA functionals that depend on the density Laplacian (e.g., SCANL).
+///
+/// The vlapl potential contribution to the XC potential is computed using a finite-difference
+/// (FD) Laplacian kernel in reciprocal space:
+///
+///   V_lapl(r) = e² · ∇²_FD(vlapl(r) · sgn(r))
+///
+/// where:
+///   - e² = ModuleBase::e2 is the electron charge squared (conversion factor)
+///   - vlapl(r) is the Laplacian potential from the XC functional
+///   - sgn(r) is the spin sign (+1 for spin-up, -1 for spin-down, 0 if below threshold)
+///   - ∇²_FD is the FD Laplacian operator (not the spectral -|G|²)
+///
+/// The FD Laplacian kernel is used instead of the spectral Laplacian (-|G|²) to avoid
+/// amplification of high-G noise that causes SCF divergence. The FD kernel matches the
+/// spectral kernel at low G but remains bounded at high G.
+///
+/// The FD Laplacian kernel in reciprocal space is:
+///   gg_FD(G) = (1/(2π)²) Σ_{αβ} GGT[α][β] · FD_{αβ}(G)
+///
+/// where:
+///   - GGT is the metric tensor G·G^T
+///   - FD_{αα} = 2·N_α²·(1 - cos(2π·m_α/N_α))  (diagonal terms)
+///   - FD_{αβ} = N_α·N_β·sin(2π·m_α/N_α)·sin(2π·m_β/N_β)  (off-diagonal terms)
+///   - m_α are the Miller indices, N_α are the grid dimensions
+///
+/// The contribution to vtxc (XC energy density integral) is:
+///   vtxc += Σ_r V_lapl(r) · ρ(r) · sgn(r)
+///
+/// @note This function is only called for meta-GGA functionals (func_type == 3 or 5).
+/// @note If vlapl_max <= 1e-20, the function returns early (SCAN functional returns vlapl=0).
+/// @note For hybrid meta-GGA (SCAN, func_type==5), the vlapl contribution is scaled by
+///       (1 - hybrid_alpha) to account for the exact exchange mixing.
+/// @warning The FD kernel is an approximation. For very high ecutwfc (>80 Ry), the FD kernel
+///          may not accurately represent the Laplacian at high G, but it remains stable.
+///          Consider using r2SCAN instead of SCANL for better numerical stability.
 void process_vlapl_potential(
     const int nspin,
     const int nrxx,
@@ -566,6 +603,15 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
         //process vlapl: compute ∇²(vlapl·sgn) using FD Laplacian kernel
         //The FD kernel matches the spectral kernel at low G but is bounded at high G,
         //preventing |G|² amplification that causes SCF divergence.
+        //
+        // For SCANL and other Laplacian-dependent meta-GGAs, the vlapl potential
+        // (∂ε_xc/∂(∇²ρ)) contributes to the XC potential via:
+        //   V_xc += e² · ∇²_FD(vlapl · sgn)
+        //   vtxc += Σ_r V_lapl(r) · ρ(r) · sgn(r)
+        //
+        // The FD Laplacian kernel is used instead of the spectral Laplacian (-|G|²)
+        // to avoid amplification of high-G noise that causes SCF divergence.
+        // See process_vlapl_potential() for full documentation of the FD kernel.
         process_vlapl_potential(
             nspin, nrxx, tpiba, vlapl, sgn, rho, v, vtxc, chr,
             XC_Functional::get_func_type(),

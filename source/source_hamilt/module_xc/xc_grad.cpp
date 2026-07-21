@@ -24,6 +24,31 @@
 #endif
 
 namespace {
+/// Compute and add the vlapl (Laplacian potential) contribution to the GGA stress tensor
+/// for meta-GGA functionals that depend on the density Laplacian (e.g., SCANL).
+///
+/// The vlapl stress contribution arises from the strain derivative of the Laplacian-dependent
+/// exchange-correlation energy. When the XC functional depends on ∇²ρ, the stress tensor
+/// acquires an additional term:
+///
+///   σ_ab^{vlapl} = (2/Ω) Σ_{s,ir} vlapl_s(r) · H_ab,s(r) · e²
+///
+/// where:
+///   - Ω is the cell volume
+///   - vlapl_s(r) is the Laplacian potential for spin s at grid point r
+///   - H_ab,s(r) = ∂²ρ_s/∂r_a∂r_b is the density Hessian (second spatial derivatives)
+///   - e² = ModuleBase::e2 is the electron charge squared (conversion factor)
+///   - The sum runs over spin channels s and real-space grid points r
+///
+/// The density Hessian H_ab is computed in G-space as:
+///   H_ab(G) = -G_a · G_b · ρ(G)
+/// and transformed to real space via inverse FFT.
+///
+/// @note This function is only called for meta-GGA functionals (func_type == 3 for pure meta-GGA,
+///       or func_type == 5 for hybrid meta-GGA) that depend on the Laplacian.
+/// @note The vlapl values are recomputed here by calling tau_xc/tau_xc_spin at each grid point.
+///       This is necessary because the main gradcorr() loop does not store vlapl values.
+///       If performance becomes an issue, consider caching vlapl values during the main loop.
 void add_vlapl_stress_contribution(
     std::vector<double>& stress_gga,
     const int nspin0,
@@ -256,6 +281,10 @@ void XC_Functional::gradcorr(
 
     XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 
+    // For meta-GGA functionals (func_type 3 = pure meta-GGA, 5 = hybrid meta-GGA),
+    // compute the density Laplacian ∇²ρ using the spectral method.
+    // The Laplacian is needed by SCANL and other Laplacian-dependent meta-GGAs.
+    // Uses: ∇²ρ(r) = IFFT(-|G|² · FFT(ρ))
     if(func_type == 3 || func_type == 5)
     {
         lapl1.resize(rhopw->nrxx);
@@ -291,6 +320,8 @@ void XC_Functional::gradcorr(
 
         XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 
+        // For meta-GGA functionals, compute density Laplacian for spin-down channel.
+        // See comment above for func_type == 3 || func_type == 5.
         if(func_type == 3 || func_type == 5)
         {
             lapl2.resize(rhopw->nrxx);

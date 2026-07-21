@@ -109,6 +109,8 @@ namespace XC_Functional_Libxc
     extern std::vector<double> convert_sigma(
         const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr);
 
+    /// Calculate Laplacian of density using spectral method: ∇²ρ = IFFT(-|G|²·FFT(ρ))
+    /// @see cal_lapl() implementation in libxc_tools.cpp for full documentation
     extern std::vector<double> cal_lapl(
         const int nspin,
         const std::size_t nrxx,
@@ -116,12 +118,16 @@ namespace XC_Functional_Libxc
         const double tpiba,
         const Charge* const chr);
 
+    /// Calculate Laplacian of density using finite-difference kernel (bounded at high G)
+    /// @see cal_lapl_fd() implementation in libxc_tools.cpp for full documentation
     extern std::vector<double> cal_lapl_fd(
         const int nspin,
         const std::size_t nrxx,
         const std::vector<double> &rho,
         const Charge* const chr);
 
+    /// Calculate density Hessian: H_ab = ∂²ρ/∂r_a∂r_b (6 independent components per spin)
+    /// @see cal_rho_hessian() implementation in libxc_tools.cpp for full documentation
     extern std::vector<std::vector<double>> cal_rho_hessian(
         const int nspin,
         const std::size_t nrxx,
@@ -227,7 +233,26 @@ namespace XC_Functional_Libxc
 //  libxc_mgga_wrap.cpp
 //-------------------
 
-    // wrapper for the mGGA functionals
+    /// Wrapper for meta-GGA functionals (single spin channel).
+    /// Computes XC energy density and potentials including Laplacian-dependent terms.
+    ///
+    /// @param func_id  LibXC functional IDs (exchange + correlation)
+    /// @param rho      Electron density at grid point
+    /// @param grho     |∇ρ|² at grid point
+    /// @param lapl_rho ∇²ρ at grid point (density Laplacian; pass 0.0 for SCAN)
+    /// @param atau     Kinetic energy density τ at grid point
+    /// @param sxc      [out] XC energy density
+    /// @param v1xc     [out] ∂ε_xc/∂ρ
+    /// @param v2xc     [out] 2·∂ε_xc/∂(|∇ρ|²)
+    /// @param v3xc     [out] ∂ε_xc/∂τ
+    /// @param vlapl    [out] ∂ε_xc/∂(∇²ρ) (Laplacian potential; 0.0 for SCAN)
+    /// @param hybrid_alpha  Exact exchange mixing fraction (0.0 for pure GGA/meta-GGA)
+    /// @param hse_omega     Range-separation parameter for HSE-type functionals
+    ///
+    /// @note For SCAN (non-Laplacian meta-GGA), pass lapl_rho=0.0 and vlapl=0.0.
+    ///       For SCANL, pass the actual ∇²ρ value and vlapl will be populated.
+    /// @note The vlapl output is used by process_vlapl_potential() to compute the
+    ///       FD Laplacian kernel contribution to the XC potential.
     extern void tau_xc(
         const std::vector<int> &func_id,
         const double &rho,
@@ -242,6 +267,13 @@ namespace XC_Functional_Libxc
          const double &hybrid_alpha,
          const double &hse_omega);
 
+    /// Wrapper for meta-GGA functionals (spin-polarized, two channels).
+    /// Same as tau_xc but handles spin-up/spin-down channels separately.
+    ///
+    /// @param laplup, lapldw  [in]  ∇²ρ_up, ∇²ρ_dn (Laplacian for each spin channel)
+    /// @param vlaplup, vlapldw [out] ∂ε_xc/∂(∇²ρ_up), ∂ε_xc/∂(∇²ρ_dn)
+    ///
+    /// @note See tau_xc() for other parameter descriptions.
     extern void tau_xc_spin(
         const std::vector<int> &func_id,
         double rhoup,
