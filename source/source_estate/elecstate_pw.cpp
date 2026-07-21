@@ -360,8 +360,8 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
                 std::vector<T> auxk2_host(nbands * nh_atom);
                 // device buffers allocated once per atom type
                 T *aux_gk = nullptr;
-		T *auxk1 = nullptr;
-	  	T *auxk2 = nullptr;
+                T *auxk1 = nullptr;
+                T *auxk2 = nullptr;
                 resmem_complex_op()(auxk1, nbands * nh_atom, "ElecState<PW>::auxk1");
                 resmem_complex_op()(auxk2, nbands * nh_atom, "ElecState<PW>::auxk2");
                 resmem_complex_op()(aux_gk, nh_atom * nh_atom * npol * npol, "ElecState<PW>::aux_gk");
