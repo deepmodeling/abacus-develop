@@ -38,10 +38,9 @@ class Parameter
     // Set the start time
     void set_start_time(const std::time_t& start_time);
   private:
-    // Only ReadInput and ParamUpdater can modify the value of Parameter.
-    // Do not add extra friend class here!!!
     friend class ModuleIO::ReadInput; // ReadInput read INPUT file and give the value to Parameter
     friend class elecstate::ParamUpdater; // ParamUpdater updates Parameter values from atoms_info
+    friend class TestParameters; // TestParameters modifies Parameter values for unit tests
 
     // INPUT parameters
     Input_para input;

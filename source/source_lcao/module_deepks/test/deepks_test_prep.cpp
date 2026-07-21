@@ -3,6 +3,8 @@
 #include "source_estate/read_pseudo.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "../../LCAO_nonlocal_info.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_estate/param_update.h"
 
 #include <gtest/gtest.h>
 
@@ -18,6 +20,22 @@ namespace GlobalC
 {
 Exx_Info exx_info;
 }
+
+class TestParameters
+{
+public:
+    static void init(int npol, bool gamma_only_local, int nlocal, int nspin)
+    {
+        PARAM.sys.npol = npol;
+        PARAM.sys.gamma_only_local = gamma_only_local;
+        PARAM.sys.nlocal = nlocal;
+        PARAM.sys.global_out_dir = "";
+        PARAM.sys.global_readin_dir = "";
+        PARAM.input.ks_solver = "cg";
+        PARAM.input.nspin = nspin;
+        PARAM.input.deepks_equiv = false;
+    }
+};
 
 template <typename T>
 void test_deepks<T>::preparation()
@@ -64,6 +82,7 @@ void test_deepks<T>::set_parameters()
 
     ucell.latName = "user_defined_lattice";
     ucell.ntype = ntype;
+
     return;
 }
 
@@ -193,6 +212,8 @@ void test_deepks<T>::setup_cell()
 
     this->nlocal = atoms_info.nlocal;
     this->nbands = atoms_info.nbands;
+
+    TestParameters::init(this->npol, this->gamma_only_local, this->nlocal, this->nspin);
 
     return;
 }
