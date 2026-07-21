@@ -47,5 +47,18 @@ class Exx_NAO
 
 };
 
+#ifdef __EXX
+/**
+ * @brief Broadcast the ABFS/JLE orbital-file lists held in the global Exx_Info instance.
+ *
+ * The lists are read from STRU on rank 0 during setup_cell and must be
+ * distributed to all ranks before the LCAO EXX/RI module consumes them.
+ * This logic lives here (rather than in source_cell or the generic XC module)
+ * because the ABFS/JLE orbital files are an LCAO-only concept. It is invoked at
+ * the start of Exx_NAO::init(), before Exx_LRI copies info_ri.
+ */
+void bcast_exx_file_lists();
+#endif
+
 
 #endif
