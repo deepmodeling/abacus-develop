@@ -209,7 +209,8 @@ void MSST::restart(const std::string& global_readin_dir)
 
         if (ok)
         {
-            if(!(file >> step_rst_ >> md_tfirst >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos))
+            file >> step_rst_ >> md_tfirst >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos;
+            if(!file)
             {
                 ok = false;
             }
