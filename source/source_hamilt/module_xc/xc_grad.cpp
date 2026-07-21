@@ -61,7 +61,9 @@ void add_vlapl_stress_contribution(
     const Charge* chr,
     const ModulePW::PW_Basis* rhopw,
     const UnitCell* ucell,
-    const double epsr)
+    const double epsr,
+    const double hybrid_alpha,
+    const double hse_omega)
 {
     const std::size_t nrxx_s = rhopw->nrxx;
     std::vector<double> rho_interleaved(nrxx_s * nspin0);
@@ -101,12 +103,8 @@ void add_vlapl_stress_contribution(
             double atau = chr->kin_r[0][ir] / 2.0;
             double lapl_val = lapl1.empty() ? 0.0 : lapl1[ir];
             double sxc_l = 0.0, v1xc_l = 0.0, v2xc_l = 0.0, v3xc_l = 0.0, vlapl_l = 0.0;
-            double ha = 0.0;
-            double hse_om = 0.0;
-#ifdef __EXX
-            ha = GlobalC::exx_info.info_global.hybrid_alpha;
-            hse_om = GlobalC::exx_info.info_global.hse_omega;
-#endif
+            double ha = hybrid_alpha;
+            double hse_om = hse_omega;
             if (arho > epsr)
                 XC_Functional_Libxc::tau_xc(XC_Functional::get_func_id(), arho, grho2, lapl_val, atau,
                                              sxc_l, v1xc_l, v2xc_l, v3xc_l, vlapl_l, ha, hse_om);
@@ -131,12 +129,8 @@ void add_vlapl_stress_contribution(
             double v2xcup = 0.0, v2xcdw = 0.0, v2xcud = 0.0;
             double v3xcup = 0.0, v3xcdw = 0.0;
             double vlaplup = 0.0, vlapldw = 0.0;
-            double ha = 0.0;
-            double hse_om = 0.0;
-#ifdef __EXX
-            ha = GlobalC::exx_info.info_global.hybrid_alpha;
-            hse_om = GlobalC::exx_info.info_global.hse_omega;
-#endif
+            double ha = hybrid_alpha;
+            double hse_om = hse_omega;
             XC_Functional_Libxc::tau_xc_spin(XC_Functional::get_func_id(), arho1, arho2, gdr1[ir], gdr2[ir],
                                                laplup_val, lapldw_val, atau1, atau2,
                                                sxc_l, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud,
@@ -710,7 +704,8 @@ void XC_Functional::gradcorr(
 #ifdef USE_LIBXC
                 add_vlapl_stress_contribution(
                     stress_gga, nspin0, rhotmp1, rhotmp2, gdr1, gdr2,
-                    lapl1, lapl2, chr, rhopw, ucell, epsr);
+                    lapl1, lapl2, chr, rhopw, ucell, epsr,
+                    hybrid_alpha_in, hse_omega_in);
 #endif
             }
         }
