@@ -134,7 +134,12 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
 
     void initialize_r_overlap_reference()
     {
-        r_calculator.init_nonlocal(ucell, pv, orb);
+        ModuleContext::RunControl run;
+        run.cal_force = true;
+        ModuleContext::BasisInfo basis;
+        basis.nlocal = pv.get_global_row_size();
+        basis.npol = ucell.get_npol();
+        r_calculator.init_nonlocal(ucell, pv, orb, run, basis);
     }
 
     ComparisonStats compare_zero_vector_potential(const int radial_grid_num, const int lebedev_grid_points)

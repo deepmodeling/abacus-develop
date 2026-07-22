@@ -18,7 +18,9 @@ class Velocity_op
                const Grid_Driver* GridD_in,
                const Parallel_Orbitals* paraV,
                const LCAO_Orbitals& orb,
-               const TwoCenterIntegrator* intor);
+               const TwoCenterIntegrator* intor,
+               const ModuleContext::RunControl& run,
+               const ModuleContext::BasisInfo& basis);
     ~Velocity_op();
 
     hamilt::HContainer<std::complex<double>>* get_current_term_pointer(const int& i)const 
@@ -46,7 +48,10 @@ class Velocity_op
      * HContainer is used to store the non-local pseudopotential matrix with specific <I,J,R> atom-pairs
      * the size of HR will be fixed after initialization
      */
-    void initialize_vcomm_r(const Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
+    void initialize_vcomm_r(const Grid_Driver* GridD_in,
+                            const Parallel_Orbitals* paraV,
+                            const ModuleContext::RunControl& run,
+                            const ModuleContext::BasisInfo& basis);
     void initialize_grad_term(const Grid_Driver* GridD_in, const Parallel_Orbitals* paraV);
 
     /**

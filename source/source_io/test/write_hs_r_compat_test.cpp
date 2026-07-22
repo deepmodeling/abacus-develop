@@ -1,11 +1,6 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
-
-#include "source_base/global_variable.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_dm/write_dmr.h"
 #include "source_io/module_hs/output_mat_sparse.h"
@@ -190,15 +185,32 @@ void fill_matrix(hamilt::HContainer<double>& matrix, Parallel_Orbitals& pv, doub
     matrix.insert_pair(pair);
 }
 
-void init_sparse_output_globals(const int nspin = 1)
+struct HsContextSlices
 {
-    GlobalV::DRANK = 0;
-    PARAM.input.nspin = nspin;
-    PARAM.input.calculation = "scf";
-    PARAM.input.out_app_flag = false;
-    PARAM.sys.global_out_dir = "./";
-    PARAM.sys.global_matrix_dir = "./";
-    PARAM.sys.nlocal = 2;
+    ModuleContext::RunControl run;
+    ModuleContext::FileSystemLayout files;
+    ModuleContext::ParallelTopology parallel;
+    ModuleContext::LogStreams logs;
+    ModuleContext::BasisInfo basis;
+    ModuleContext::SpinConfig spin;
+    ModuleContext::MatrixOutputConfig output;
+};
+
+std::ostringstream sparse_log;
+
+HsContextSlices make_hs_context(const int nspin = 1)
+{
+    HsContextSlices context;
+    context.run.calculation = "scf";
+    context.files.output_directory = "./";
+    context.files.matrix_directory = "./";
+    context.parallel.diagonalization_rank = 0;
+    context.logs.running = &sparse_log;
+    context.basis.nlocal = 2;
+    context.basis.npol = 1;
+    context.spin.nspin = nspin;
+    context.output.append = false;
+    return context;
 }
 
 void remove_derivative_files(const std::string& fileflag)
@@ -330,10 +342,6 @@ TEST(WriteHsRCompatibility, LegacySparseHeaderKeepsStepStyle)
     const std::string filename = "write_hs_r_legacy_s.csr";
     std::remove(filename.c_str());
 
-    GlobalV::DRANK = 0;
-    PARAM.sys.global_out_dir = "./";
-    PARAM.sys.nlocal = 99;
-
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
     const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
@@ -351,7 +359,8 @@ TEST(WriteHsRCompatibility, LegacySparseHeaderKeepsStepStyle)
     options.istep = 0;
     options.reduce = false;
     options.temp_dir = "./";
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+    const ModuleContext::ParallelTopology parallel;
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options, parallel);
 
     const std::string output = read_file(filename);
     EXPECT_TRUE(starts_with(output, "STEP: 0\n"));
@@ -366,9 +375,6 @@ TEST(WriteHsRCompatibility, LegacySparseTextCountsOnlyValuesAboveThreshold)
 {
     const std::string filename = "write_hs_r_threshold_s.csr";
     std::remove(filename.c_str());
-
-    GlobalV::DRANK = 0;
-    PARAM.sys.global_out_dir = "./";
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -389,7 +395,8 @@ TEST(WriteHsRCompatibility, LegacySparseTextCountsOnlyValuesAboveThreshold)
     options.istep = 2;
     options.reduce = false;
     options.temp_dir = "./";
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+    const ModuleContext::ParallelTopology parallel;
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options, parallel);
 
     const std::vector<std::string> lines = read_lines(filename);
     ASSERT_GE(lines.size(), 6);
@@ -434,10 +441,6 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryHeaderWritesConcreteStep)
     const std::string filename = "write_hs_r_legacy_binary_s.csr";
     std::remove(filename.c_str());
 
-    GlobalV::DRANK = 0;
-    PARAM.sys.global_out_dir = "./";
-    PARAM.sys.nlocal = 99;
-
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
     const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
@@ -455,7 +458,8 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryHeaderWritesConcreteStep)
     options.istep = 3;
     options.reduce = false;
     options.temp_dir = "./";
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+    const ModuleContext::ParallelTopology parallel;
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options, parallel);
 
     const std::vector<int> header_and_r = read_binary_ints(filename, 7);
     EXPECT_THAT(header_and_r, testing::ElementsAre(3, 2, 1, 0, 0, 0, 2));
@@ -467,9 +471,6 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryCountsOnlyValuesAboveThreshold)
 {
     const std::string filename = "write_hs_r_threshold_binary_s.csr";
     std::remove(filename.c_str());
-
-    GlobalV::DRANK = 0;
-    PARAM.sys.global_out_dir = "./";
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -490,7 +491,8 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryCountsOnlyValuesAboveThreshold)
     options.istep = 4;
     options.reduce = false;
     options.temp_dir = "./";
-    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options);
+    const ModuleContext::ParallelTopology parallel;
+    ModuleIO::save_sparse(sparse_matrix, all_R_coor, pv, options, parallel);
 
     std::ifstream ifs(filename.c_str(), std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
@@ -515,7 +517,7 @@ TEST(WriteHsRCompatibility, LegacySparseBinaryCountsOnlyValuesAboveThreshold)
 TEST(WriteHsRCompatibility, SaveDHSparseTextCountsOnlyValuesAboveThreshold)
 {
     remove_derivative_files("h");
-    init_sparse_output_globals();
+    const HsContextSlices context = make_hs_context();
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -527,7 +529,9 @@ TEST(WriteHsRCompatibility, SaveDHSparseTextCountsOnlyValuesAboveThreshold)
     arrays.dHRx_sparse[0][r_vector][1][0] = 0.0;
     arrays.dHRx_sparse[0][r_vector][1][1] = -2.0;
 
-    ModuleIO::save_dH_sparse(5, pv, arrays, 1e-10, false, "h", 8);
+    ModuleIO::save_dH_sparse(5, pv, arrays, 1e-10, false, "h", 8,
+                             context.run, context.files, context.parallel, context.logs,
+                             context.basis, context.spin, context.output);
 
     const std::vector<std::string> lines = read_lines("dhrxs1_nao.csr");
     ASSERT_GE(lines.size(), 7);
@@ -566,7 +570,7 @@ TEST(WriteHsRCompatibility, SaveDHSparseTextCountsOnlyValuesAboveThreshold)
 TEST(WriteHsRCompatibility, SaveDHSparseBinaryCountsOnlyValuesAboveThreshold)
 {
     remove_derivative_files("h");
-    init_sparse_output_globals();
+    const HsContextSlices context = make_hs_context();
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -578,7 +582,9 @@ TEST(WriteHsRCompatibility, SaveDHSparseBinaryCountsOnlyValuesAboveThreshold)
     arrays.dHRx_sparse[0][r_vector][1][0] = 0.0;
     arrays.dHRx_sparse[0][r_vector][1][1] = -2.0;
 
-    ModuleIO::save_dH_sparse(6, pv, arrays, 1e-10, true, "h", 8);
+    ModuleIO::save_dH_sparse(6, pv, arrays, 1e-10, true, "h", 8,
+                             context.run, context.files, context.parallel, context.logs,
+                             context.basis, context.spin, context.output);
 
     std::ifstream ifs("dhrxs1_nao.csr", std::ios::binary);
     ASSERT_TRUE(ifs.is_open());
@@ -600,10 +606,64 @@ TEST(WriteHsRCompatibility, SaveDHSparseBinaryCountsOnlyValuesAboveThreshold)
     remove_derivative_files("h");
 }
 
+TEST(WriteHsRCompatibility, SaveDHSparseSpinTwoWritesBothSpinChannels)
+{
+    remove_derivative_files("h");
+    const HsContextSlices context = make_hs_context(2);
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    LCAO_HS_Arrays arrays;
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    arrays.all_R_coor.insert(r_vector);
+    arrays.dHRx_sparse[0][r_vector][0][0] = 1.25;
+    arrays.dHRx_sparse[1][r_vector][1][1] = -2.5;
+
+    ModuleIO::save_dH_sparse(8, pv, arrays, 1e-10, false, "h", 8,
+                             context.run, context.files, context.parallel, context.logs,
+                             context.basis, context.spin, context.output);
+
+    const std::string spin1 = read_file("dhrxs1_nao.csr");
+    const std::string spin2 = read_file("dhrxs2_nao.csr");
+    EXPECT_THAT(spin1, testing::HasSubstr("Matrix number of dHx(R): 1\n0 0 0 1\n"));
+    EXPECT_THAT(spin2, testing::HasSubstr("Matrix number of dHx(R): 1\n0 0 0 1\n"));
+    EXPECT_THAT(spin1, testing::HasSubstr("1.25000000e+00"));
+    EXPECT_THAT(spin2, testing::HasSubstr("-2.50000000e+00"));
+
+    remove_derivative_files("h");
+}
+
+TEST(WriteHsRCompatibility, SaveDHSparseMdNonAppendUsesStepFileName)
+{
+    const std::string filename = "dhrxs1g9_nao.csr";
+    std::remove(filename.c_str());
+    HsContextSlices context = make_hs_context(1);
+    context.run.calculation = "md";
+    context.output.append = false;
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    LCAO_HS_Arrays arrays;
+    const Abfs::Vector3_Order<int> r_vector(0, 0, 0);
+    arrays.all_R_coor.insert(r_vector);
+    arrays.dHRx_sparse[0][r_vector][0][0] = 3.0;
+
+    ModuleIO::save_dH_sparse(9, pv, arrays, 1e-10, false, "h", 8,
+                             context.run, context.files, context.parallel, context.logs,
+                             context.basis, context.spin, context.output);
+
+    const std::string output = read_file(filename);
+    EXPECT_THAT(output, testing::HasSubstr("STEP: 9"));
+    EXPECT_THAT(output, testing::HasSubstr("3.00000000e+00"));
+    std::remove(filename.c_str());
+    std::remove("dhrys1g9_nao.csr");
+    std::remove("dhrzs1g9_nao.csr");
+}
+
 TEST(WriteHsRCompatibility, SaveDSSparseSocWritesAllDirections)
 {
     remove_derivative_files("s");
-    init_sparse_output_globals(4);
+    const HsContextSlices context = make_hs_context(4);
 
     Parallel_Orbitals pv;
     init_serial_orbitals(pv);
@@ -614,7 +674,9 @@ TEST(WriteHsRCompatibility, SaveDSSparseSocWritesAllDirections)
     arrays.dHRy_soc_sparse[r_vector][0][1] = std::complex<double>(2.0, -1.0);
     arrays.dHRz_soc_sparse[r_vector][1][1] = std::complex<double>(-3.0, 0.5);
 
-    ModuleIO::save_dH_sparse(7, pv, arrays, 1e-10, false, "s", 8);
+    ModuleIO::save_dH_sparse(7, pv, arrays, 1e-10, false, "s", 8,
+                             context.run, context.files, context.parallel, context.logs,
+                             context.basis, context.spin, context.output);
 
     const std::string x_output = read_file("dsrxs1_nao.csr");
     const std::string y_output = read_file("dsrys1_nao.csr");
@@ -796,8 +858,6 @@ int main(int argc, char** argv)
 {
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD, &GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD, &GlobalV::MY_RANK);
 #endif
 
     ::testing::InitGoogleTest(&argc, argv);

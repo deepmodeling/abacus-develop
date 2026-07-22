@@ -121,7 +121,8 @@ void write_dh_perI(WriteDHParams& params,
                                    out_app_flag,
                                    fk,
                                    pv,
-                                   GlobalV::DRANK);
+                                   params.parallel->diagonalization_rank,
+                                   *params.solver);
             }
         }
     }

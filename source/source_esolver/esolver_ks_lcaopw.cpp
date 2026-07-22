@@ -27,6 +27,7 @@
 #include <sys/time.h>
 #ifdef __LCAO
 #include "source_io/module_hs/write_vxc_lip.hpp"
+#include "source_context/orchestration_context.h"
 #endif
 
 namespace ModuleESolver
@@ -227,16 +228,12 @@ namespace ModuleESolver
 #ifdef __LCAO
         if (PARAM.inp.out_mat_xc)
         {
-#ifdef __EXX
-            bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-            double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-#else
-            bool cal_exx = false;
-            double hybrid_alpha = 0.0;
-#endif
+            const ModuleContext::SimulationContext& context = ModuleContext::current_simulation_context();
+            const ModuleContext::ExactExchangeState exx_state
+                = context.exact_exchange_state ? context.exact_exchange_state->snapshot()
+                                               : ModuleContext::ExactExchangeState();
             ModuleIO::write_Vxc(PARAM.inp.nspin,
                                 PARAM.globalv.nlocal,
-                                GlobalV::DRANK,
                                 *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
                                 ucell,
                                 this->sf,
@@ -248,8 +245,13 @@ namespace ModuleESolver
                                 this->chr,
                                 this->kv,
                                 this->pelec->wg,
-                                cal_exx,
-                                hybrid_alpha
+                                context.files,
+                                context.parallel,
+                                context.basis,
+                                context.solver,
+                                context.matrix_output,
+                                exx_state.enabled,
+                                exx_state.hybrid_alpha
 #ifdef __EXX
                                 ,
                                 *this->exx_lip

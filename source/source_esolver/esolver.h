@@ -70,6 +70,15 @@ std::string determine_type();
  */
 ESolver* init_esolver(const Input_para& inp, UnitCell& ucell);
 
+/**
+ * @brief Replace the completed ground-state KS-LCAO solver with the LR solver.
+ *
+ * The caller must have run the KS solver once. Keeping this transition outside
+ * init_esolver() lets Driver bind the finalized SimulationContext before that
+ * first runner executes.
+ */
+ESolver* transition_ksdft_to_lr(ESolver* p_esolver, const Input_para& inp, UnitCell& ucell);
+
 
 
 } // namespace ModuleESolver

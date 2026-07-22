@@ -26,4 +26,12 @@ add_library(
     ${objects}
 )
 
+# The LR ESolver is an L1 orchestration exception inside this mixed directory.
+# Limit root Context access to that translation unit; LR algorithms only see
+# explicitly forwarded small context structures.
+set_source_files_properties(
+    esolver_lrtd_lcao.cpp
+    PROPERTIES COMPILE_DEFINITIONS ABACUS_CAN_READ_SIMULATION_CONTEXT
+)
+
 endif()

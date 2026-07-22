@@ -7,6 +7,7 @@
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/LCAO_HS_arrays.hpp"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
+#include "source_context/context_types.h"
 
 #ifdef __EXX
 #include "RI/global/Tensor.h" // for RI::Tensor
@@ -23,9 +24,16 @@ void output_dHR(const int& istep,
                 const TwoCenterBundle& two_center_bundle,
                 const LCAO_Orbitals& orb,
                 const K_Vectors& kv,
-                const bool& binary = false,
-                const double& sparse_threshold = 1e-10,
-                const int precision = 16);
+                const bool& binary,
+                const double& sparse_threshold,
+                const int precision,
+                const ModuleContext::RunControl& run,
+                const ModuleContext::FileSystemLayout& files,
+                const ModuleContext::ParallelTopology& parallel,
+                const ModuleContext::LogStreams& logs,
+                const ModuleContext::BasisInfo& basis,
+                const ModuleContext::SpinConfig& spin,
+                const ModuleContext::MatrixOutputConfig& output);
 
 void output_dSR(const int& istep,
                 const UnitCell& ucell,
@@ -35,9 +43,16 @@ void output_dSR(const int& istep,
                 const TwoCenterBundle& two_center_bundle,
                 const LCAO_Orbitals& orb,
                 const K_Vectors& kv,
-                const bool& binary = false,
-                const double& sparse_thr = 1e-10,
-                const int precision = 16);
+                const bool& binary,
+                const double& sparse_thr,
+                const int precision,
+                const ModuleContext::RunControl& run,
+                const ModuleContext::FileSystemLayout& files,
+                const ModuleContext::ParallelTopology& parallel,
+                const ModuleContext::LogStreams& logs,
+                const ModuleContext::BasisInfo& basis,
+                const ModuleContext::SpinConfig& spin,
+                const ModuleContext::MatrixOutputConfig& output);
 
 void output_TR(const int istep,
                const UnitCell& ucell,
@@ -46,19 +61,28 @@ void output_TR(const int istep,
                const Grid_Driver& grid,
                const TwoCenterBundle& two_center_bundle,
                const LCAO_Orbitals& orb,
-               const std::string& TR_filename = "trs1_nao.csr",
-               const bool& binary = false,
-               const double& sparse_threshold = 1e-10,
-               const int precision = 16);
+               const std::string& TR_filename,
+               const bool& binary,
+               const double& sparse_threshold,
+               const int precision,
+               const ModuleContext::RunControl& run,
+               const ModuleContext::FileSystemLayout& files,
+               const ModuleContext::ParallelTopology& parallel,
+               const ModuleContext::LogStreams& logs,
+               const ModuleContext::MatrixOutputConfig& output);
 
 template <typename TK>
 void output_SR(Parallel_Orbitals& pv,
                const Grid_Driver& grid,
                hamilt::Hamilt<TK>* p_ham,
-               const std::string& SR_filename = "srs1_nao.csr",
-               const bool& binary = false,
-               const double& sparse_threshold = 1e-10,
-               const int precision = 16);
+               const std::string& SR_filename,
+               const bool& binary,
+               const double& sparse_threshold,
+               const int precision,
+               const ModuleContext::FileSystemLayout& files,
+               const ModuleContext::ParallelTopology& parallel,
+               const ModuleContext::LogStreams& logs,
+               const ModuleContext::SpinConfig& spin);
 
 /// Generate filename for HR/SR CSR output.
 std::string hsr_gen_fname(const std::string& prefix,
@@ -93,7 +117,9 @@ void write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                const bool append,
                const int* iat2iwt,
                const int nat,
-               const int istep);
+               const int istep,
+               const ModuleContext::FileSystemLayout& files,
+               const ModuleContext::ParallelTopology& parallel);
 
 /// Write real-space matrix in CSR format (generic interface).
 template <typename TR>
@@ -106,7 +132,10 @@ void write_matrix_r(const std::string& matrix_label,
                     const bool append,
                     const int* iat2iwt,
                     const int nat,
-                    const int istep);
+                    const int istep,
+                    const ModuleContext::RunControl& run,
+                    const ModuleContext::FileSystemLayout& files,
+                    const ModuleContext::ParallelTopology& parallel);
 
 } // namespace ModuleIO
 

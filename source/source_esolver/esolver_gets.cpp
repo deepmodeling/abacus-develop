@@ -11,6 +11,7 @@
 #include "source_io/module_hs/cal_r_overlap_R.h"
 #include "source_io/module_output/print_info.h"
 #include "source_io/module_hs/write_HS_R.h"
+#include "source_context/orchestration_context.h"
 
 namespace ModuleESolver
 {
@@ -156,16 +157,35 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
         }
     }
 
-    const std::string fn = PARAM.globalv.global_out_dir + "sr_nao.csr";
+    const ModuleContext::SimulationContext& context = ModuleContext::current_simulation_context();
+    const std::string fn = context.files.output_directory + "sr_nao.csr";
 
     auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
-    ModuleIO::output_SR(pv, gd, hamilt_ptr, fn);
+    ModuleIO::output_SR(pv,
+                        gd,
+                        hamilt_ptr,
+                        fn,
+                        false,
+                        1.0e-10,
+                        16,
+                        context.files,
+                        context.parallel,
+                        context.logs,
+                        context.spin);
 
     if (PARAM.inp.out_mat_r[0])
     {
         cal_r_overlap_R r_matrix;
-        r_matrix.init(ucell, pv, orb_);
-        r_matrix.out_rR(ucell, gd, istep, PARAM.inp.out_mat_r[1]);
+        r_matrix.init(ucell, pv, orb_, context.run, context.basis);
+        r_matrix.out_rR(ucell,
+                        gd,
+                        istep,
+                        PARAM.inp.out_mat_r[1],
+                        context.run,
+                        context.files,
+                        context.parallel,
+                        context.basis,
+                        context.matrix_output);
     }
 
     if (PARAM.inp.out_mat_ds[0])
@@ -182,7 +202,14 @@ void ESolver_GetS::runner(UnitCell& ucell, const int istep)
                              kv,
                              false,
                              1e-10,
-                             PARAM.inp.out_mat_ds[1]);
+                             PARAM.inp.out_mat_ds[1],
+                             context.run,
+                             context.files,
+                             context.parallel,
+                             context.logs,
+                             context.basis,
+                             context.spin,
+                             context.matrix_output);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");

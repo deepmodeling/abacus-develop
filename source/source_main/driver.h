@@ -1,6 +1,12 @@
 #ifndef DRIVER_H
 #define DRIVER_H
 
+#include <memory>
+
+namespace ModuleContext
+{
+class SimulationContextBuilder;
+}
 
 class Driver
 {
@@ -40,6 +46,8 @@ class Driver
     // Init harewares according to Input parameters
     void init_hardware();
     void finalize_hardware();
+
+    std::unique_ptr<ModuleContext::SimulationContextBuilder> context_builder_;
 };
 
 #endif

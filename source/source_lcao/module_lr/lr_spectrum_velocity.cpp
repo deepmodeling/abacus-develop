@@ -10,7 +10,9 @@ namespace LR
     inline Velocity_op<std::complex<double>> get_velocity_matrix_R(const UnitCell& ucell,
         const Grid_Driver& gd,
         const Parallel_Orbitals& pmat,
-        const TwoCenterBundle& two_center_bundle)
+        const TwoCenterBundle& two_center_bundle,
+        const ModuleContext::RunControl& run,
+        const ModuleContext::BasisInfo& basis)
     {
         // convert the orbital object to the old class for Velocity_op
         LCAO_Orbitals orb;
@@ -18,7 +20,13 @@ namespace LR
         two_center_bundle.to_LCAO_Orbitals(orb, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
                                            inp.out_element_info, inp.cal_force);
         // actually this class calculates the velocity matrix v(R) at A=0
-        Velocity_op<std::complex<double>> vR(&ucell, &gd, &pmat, orb, two_center_bundle.overlap_orb.get());
+        Velocity_op<std::complex<double>> vR(&ucell,
+                                             &gd,
+                                             &pmat,
+                                             orb,
+                                             two_center_bundle.overlap_orb.get(),
+                                             run,
+                                             basis);
         vR.calculate_vcomm_r(); // $<\mu, 0|[Vnl, r]|\nu, R>$
         vR.calculate_grad_term();   // $<\mu, 0|\nabla|\nu, R>$
         return vR;
@@ -98,7 +106,8 @@ namespace LR
     template<typename T>
     void LR::LR_Spectrum<T>::cal_transition_dipoles_velocity()
     {
-        const Velocity_op<std::complex<double>>& vR = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_);     // velocity matrix v(R)
+        const Velocity_op<std::complex<double>>& vR
+            = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_, run_, basis_); // velocity matrix v(R)
         transition_dipole_.resize(nstate);
         this->mean_squared_transition_dipole_.resize(nstate);
         for (int istate = 0;istate < nstate;++istate)
@@ -149,7 +158,8 @@ namespace LR
     void LR::LR_Spectrum<T>::test_transition_dipoles_velocity_ks(const double* const ks_eig)
     {
         // velocity matrix v(R)
-        const Velocity_op<std::complex<double>>& vR = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_);
+        const Velocity_op<std::complex<double>>& vR
+            = get_velocity_matrix_R(ucell, gd_, pmat, two_center_bundle_, run_, basis_);
         //  (e_c-e_v) of KS eigenvalues
         std::vector<double> eig_ks_diff(this->ldim);
         for (int is = 0;is < this->nspin_x;++is)

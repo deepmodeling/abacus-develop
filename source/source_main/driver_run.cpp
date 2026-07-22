@@ -11,6 +11,9 @@
 #include "source_base/module_device/memory_op.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_hsolver/kernels/hegvd_op.h"
+#include "source_context/simulation_context.h"
+#include "source_context/simulation_context_binding.h"
+#include "source_context/simulation_context_builder.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>
@@ -68,6 +71,19 @@ void Driver::driver_run()
 
     //! 3: initialize Esolver and fill json-structure
     p_esolver->before_all_runners(ucell, PARAM.inp);
+
+    // Runtime-derived fields such as nlocal are final after pseudopotential
+    // and basis initialization in before_all_runners().
+    this->context_builder_->capture_runtime(PARAM.globalv);
+    ModuleContext::SimulationContext context = this->context_builder_->finalize(PARAM.globalv);
+    ModuleContext::ScopedSimulationContextBinding context_binding(context);
+
+    if (PARAM.inp.basis_type == "lcao" && PARAM.inp.esolver_type == "ks-lr")
+    {
+        p_esolver->runner(ucell, 0); // ground-state SCF, now inside the Context lifetime
+        p_esolver = ModuleESolver::transition_ksdft_to_lr(p_esolver, PARAM.inp, ucell);
+        p_esolver->before_all_runners(ucell, PARAM.inp);
+    }
 
     // this Json part should be moved to before_all_runners, mohan 2024-05-12
 #ifdef __RAPIDJSON

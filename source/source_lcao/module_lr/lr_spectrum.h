@@ -5,6 +5,7 @@
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_lcao/module_rt/velocity_op.h"
+#include "source_context/context_types.h"
 namespace LR
 {
     template<typename T>
@@ -17,11 +18,14 @@ namespace LR
             const TwoCenterBundle& two_center_bundle_,
             const std::vector<Parallel_2D>& pX_in, const Parallel_2D& pc_in, const Parallel_Orbitals& pmat_in,
             const double* eig, const T* X, const int& nstate, const bool& openshell,
+            const ModuleContext::RunControl& run,
+            const ModuleContext::BasisInfo& basis,
             const std::string& gauge = "length") :
             nspin_x(openshell ? 2 : 1), naos(naos), nocc(nocc), nvirt(nvirt), nk(kv_in.get_nks() / nspin_global),
             rho_basis(rho_basis), ucell(ucell), kv(kv_in), gd_(gd),
             orb_cutoff_(orb_cutoff), two_center_bundle_(two_center_bundle_),
             pX(pX_in), pc(pc_in), pmat(pmat_in),
+            run_(run), basis_(basis),
             eig(eig), X(X), nstate(nstate),
             ldim(nk* (nspin_x == 2 ? pX_in[0].get_local_size() + pX_in[1].get_local_size() : pX_in[0].get_local_size())),
             gdim(nk* std::inner_product(nocc.begin(), nocc.end(), nvirt.begin(), 0))
@@ -79,6 +83,8 @@ namespace LR
         const UnitCell& ucell;
         const std::vector<double>& orb_cutoff_;
         const TwoCenterBundle& two_center_bundle_;
+        const ModuleContext::RunControl& run_;
+        const ModuleContext::BasisInfo& basis_;
 
         void cal_gint_rho(double** rho, const int& nrxx);
         std::map<std::string, int> get_pair_info(const int i); ///< given the index in X, return its ispin, ik, iocc, ivirt

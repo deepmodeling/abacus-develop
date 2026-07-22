@@ -7,6 +7,7 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_context/context_types.h"
 
 #include <array>
 #include <complex>
@@ -53,6 +54,8 @@ struct WriteDHParams
     // terms: V^H needs the total density (sum over spins), V^XC the spin-resolved densities.
     std::vector<const hamilt::HContainer<double>*> dmR;
     const Charge* chg = nullptr; // ground-state charge for XC Hellmann-Feynman (FDM)
+    const ModuleContext::ParallelTopology* parallel = nullptr;
+    const ModuleContext::SolverConfig* solver = nullptr;
 #ifdef __EXX
     // The gamma-only (TK==double) exx interfaces used by write_dH_exx. 
     // Deliberately NOT templated on TK, for two reasons:

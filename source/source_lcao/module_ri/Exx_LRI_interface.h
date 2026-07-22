@@ -8,6 +8,7 @@
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
 #include "source_hamilt/hamilt.h"
 #include "source_hamilt/module_xc/exx_info_global.h"
+#include "source_context/context_types.h"
 #include <memory>
 
 class LCAO_Matrix;
@@ -121,7 +122,8 @@ public:
                          const double& scf_ene_thr,
                          int& iter,
                          const int istep,
-                         bool& conv_esolver);
+                         bool& conv_esolver,
+                         const ModuleContext::ParallelTopology& parallel);
     /// @brief: in do_after_converge: add exx operators; do DM mixing if seperate loop
     bool exx_after_converge(const UnitCell& ucell,
                             hamilt::Hamilt<T>& hamilt,

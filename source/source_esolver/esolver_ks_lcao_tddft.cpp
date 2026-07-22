@@ -15,6 +15,7 @@
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/rho_tau_lcao.h"
+#include "source_context/orchestration_context.h"
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI_interface.h"
 #endif
@@ -102,7 +103,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
     //----------------------------------------------------------------
     // 1) before_scf (electronic iteration loops)
     //----------------------------------------------------------------
+    const ModuleContext::SimulationContext& context = ModuleContext::current_simulation_context();
     this->before_scf(ucell, istep); // From ESolver_KS_LCAO
+    td_p->initialize_r_calculator(ucell, this->pv, this->orb_, context.run, context.basis);
     td_p->initialize_phase_hybrid(ucell, dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, TR>*>(this->p_hamilt)->getHR());
     td_p->calculate_grad_overlap(this->pv, ucell, this->gd, this->orb_.cutoffs(), this->two_center_bundle_.overlap_orb.get());
     // Initialize the moving spatial gauge
@@ -132,7 +135,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(UnitCell& ucell, const int istep)
                                            &(this->gd),
                                            &this->pv,
                                            this->orb_,
-                                           this->two_center_bundle_.overlap_orb.get());
+                                           this->two_center_bundle_.overlap_orb.get(),
+                                           context.run,
+                                           context.basis);
         // calculate velocity operator
         velocity_mat->calculate_grad_term();
         velocity_mat->calculate_vcomm_r();

@@ -1,10 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "source_io/module_hs/single_R_io.h"
-#include "source_base/global_variable.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include <complex>
 #include <cstdio>
@@ -49,15 +45,15 @@ TEST(ModuleIOTest, OutputSingleR)
 {
     // Create temporary output file
     std::stringstream ofs_filename;
-    GlobalV::DRANK=0;
-    ofs_filename << "test_output_single_R_" << GlobalV::DRANK << ".dat";
+    ModuleContext::ParallelTopology parallel;
+    parallel.diagonalization_rank = 0;
+    ofs_filename << "test_output_single_R_0.dat";
     std::ofstream ofs(ofs_filename.str());
 
     // Define input parameters
     const double sparse_threshold = 1e-8;
     const bool binary = false;
     Parallel_Orbitals pv;
-    PARAM.sys.nlocal = 99;
     pv.set_serial(5, 5);
     std::map<size_t, std::map<size_t, double>> XR = {
         {0, {{1, 0.5}, {3, 0.3}}},
@@ -71,7 +67,7 @@ TEST(ModuleIOTest, OutputSingleR)
     options.temp_dir = "./";
 
     // Call function under test
-    ModuleIO::output_single_R(ofs, XR, pv, options);
+    ModuleIO::output_single_R(ofs, XR, pv, options, parallel);
 
     // Close output file and open it for reading
     ofs.close();
@@ -125,7 +121,8 @@ TEST(ModuleIOTest, OutputSingleRComplexKeepsHighPrecision)
 {
     const std::string filename = "test_output_single_R_complex.dat";
     std::remove(filename.c_str());
-    GlobalV::DRANK = 0;
+    ModuleContext::ParallelTopology parallel;
+    parallel.diagonalization_rank = 0;
     std::ofstream ofs(filename);
 
     Parallel_Orbitals pv;
@@ -139,7 +136,7 @@ TEST(ModuleIOTest, OutputSingleRComplexKeepsHighPrecision)
     options.reduce = false;
     options.temp_dir = "./";
 
-    ModuleIO::output_single_R(ofs, XR, pv, options);
+    ModuleIO::output_single_R(ofs, XR, pv, options, parallel);
     ofs.close();
 
     std::ifstream ifs(filename);
@@ -154,7 +151,8 @@ TEST(ModuleIOTest, OutputSingleRUsesConfiguredPrecision)
 {
     const std::string filename = "test_output_single_R_precision.dat";
     std::remove(filename.c_str());
-    GlobalV::DRANK = 0;
+    ModuleContext::ParallelTopology parallel;
+    parallel.diagonalization_rank = 0;
     std::ofstream ofs(filename);
 
     Parallel_Orbitals pv;
@@ -169,7 +167,7 @@ TEST(ModuleIOTest, OutputSingleRUsesConfiguredPrecision)
     options.reduce = false;
     options.temp_dir = "./";
 
-    ModuleIO::output_single_R(ofs, XR, pv, options);
+    ModuleIO::output_single_R(ofs, XR, pv, options, parallel);
     ofs.close();
 
     std::ifstream ifs(filename);
@@ -180,9 +178,36 @@ TEST(ModuleIOTest, OutputSingleRUsesConfiguredPrecision)
     std::remove(filename.c_str());
 }
 
+TEST(ModuleIOTest, OutputSingleRDoesNotWriteOnNonRootDuringReduction)
+{
+    const std::string filename = "test_output_single_R_nonroot.dat";
+    std::remove(filename.c_str());
+    ModuleContext::ParallelTopology parallel;
+    parallel.diagonalization_rank = 1;
+    std::ofstream ofs(filename);
+
+    Parallel_Orbitals pv;
+    pv.set_serial(5, 5);
+    ModuleIO::SparseRBlock<double> XR = {{0, {{1, 2.0}}}};
+    ModuleIO::SparseWriteOptions options;
+    options.threshold = 1e-12;
+    options.binary = false;
+    options.reduce = true;
+    options.temp_dir = "./";
+
+    ModuleIO::output_single_R(ofs, XR, pv, options, parallel);
+    ofs.close();
+
+    std::ifstream ifs(filename, std::ios::binary | std::ios::ate);
+    ASSERT_TRUE(ifs.is_open());
+    EXPECT_EQ(0, ifs.tellg());
+    std::remove(filename.c_str());
+}
+
 void write_out_of_range_sparse_column(const char* filename)
 {
-    GlobalV::DRANK = 0;
+    ModuleContext::ParallelTopology parallel;
+    parallel.diagonalization_rank = 0;
     std::ofstream ofs(filename);
     Parallel_Orbitals pv;
     pv.set_serial(5, 5);
@@ -193,7 +218,7 @@ void write_out_of_range_sparse_column(const char* filename)
     options.binary = false;
     options.reduce = false;
     options.temp_dir = "/tmp/";
-    ModuleIO::output_single_R(ofs, XR, pv, options);
+    ModuleIO::output_single_R(ofs, XR, pv, options, parallel);
 }
 
 TEST(ModuleIOTest, OutputSingleRRejectsOutOfRangeColumn)
@@ -212,8 +237,6 @@ int main(int argc, char **argv)
 
 #ifdef __MPI
     MPI_Init(&argc, &argv);
-    MPI_Comm_size(MPI_COMM_WORLD,&GlobalV::NPROC);
-    MPI_Comm_rank(MPI_COMM_WORLD,&GlobalV::MY_RANK);
 #endif
 
     testing::InitGoogleTest(&argc, argv);

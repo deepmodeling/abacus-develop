@@ -460,6 +460,7 @@ add_subdirectory(source_basis/module_ao)
 add_subdirectory(source_basis/module_nao)
 add_subdirectory(source_md)
 add_subdirectory(source_basis/module_pw)
+add_subdirectory(source_context)
 add_subdirectory(source_esolver)
 add_subdirectory(source_lcao/module_gint)
 add_subdirectory(source_io)
@@ -474,6 +475,11 @@ add_library(
   OBJECT
   source_main/driver.cpp
   source_main/driver_run.cpp)
+
+target_compile_definitions(
+  driver
+  PRIVATE
+  ABACUS_CAN_BIND_SIMULATION_CONTEXT)
 
 list(APPEND device_srcs
   source_pw/module_pwdft/kernels/nonlocal_op.cpp
@@ -592,6 +598,7 @@ target_link_libraries(
   PRIVATE
     # Internal ABACUS targets: consumers before providers.
     driver
+    context
     esolver
     hsolver
     hamilt_general
@@ -603,6 +610,7 @@ target_link_libraries(
     xc_
     vdw
     relax
+    io_orchestration
     io_advanced
     io_basic
     io_input

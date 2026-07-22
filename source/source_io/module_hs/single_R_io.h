@@ -2,6 +2,7 @@
 #define SINGLE_R_IO_H
 
 #include "write_HS_sparse.h"
+#include "source_context/context_types.h"
 
 #include <fstream>
 
@@ -11,7 +12,8 @@ namespace ModuleIO
     void output_single_R(std::ofstream& ofs,
         const SparseRBlock<T>& XR,
         const Parallel_Orbitals& pv,
-        const SparseWriteOptions& options);
+        const SparseWriteOptions& options,
+        const ModuleContext::ParallelTopology& parallel);
 }
 
 #endif

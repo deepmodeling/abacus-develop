@@ -2,7 +2,6 @@
 #define WRITE_EBAND_TERMS_HPP
  
 #include "source_io/module_hs/write_vxc.hpp"
-#include "source_hamilt/module_xc/exx_info.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_basis/module_nao/two_center_bundle.h"
@@ -12,7 +11,6 @@ namespace ModuleIO
 template <typename TK, typename TR>
 void write_eband_terms(const int nspin,
                        const int nbasis,
-                       const int drank,
                        const Parallel_Orbitals* pv,
                        const psi::Psi<TK>& psi,
                        const UnitCell& ucell,
@@ -26,7 +24,14 @@ void write_eband_terms(const int nspin,
                        const ModuleBase::matrix& wg,
                        Grid_Driver& gd,
                        const std::vector<double>& orb_cutoff,
-                       const TwoCenterBundle& two_center_bundle
+                       const TwoCenterBundle& two_center_bundle,
+                       const ModuleContext::FileSystemLayout& files,
+                       const ModuleContext::ParallelTopology& parallel,
+                       const ModuleContext::BasisInfo& basis,
+                       const ModuleContext::SolverConfig& solver,
+                       const ModuleContext::MatrixOutputConfig& output,
+                       const ModuleContext::DftUConfig& dftu,
+                       const ModuleContext::ExactExchangeState& exact_exchange_state
 #ifdef __EXX
                        ,
                        std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
@@ -91,7 +96,7 @@ void write_eband_terms(const int nspin,
                     cVc(kinetic_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
 
-            write_orb_energy(kv, nspin0, nbands, e_orb_kinetic, "kinetic", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_kinetic, files, "kinetic", "");
         }
 
         // 2. pp: local
@@ -123,7 +128,7 @@ void write_eband_terms(const int nspin,
                 e_orb_pp_local.emplace_back(orbital_energy(ik, nbands,
                     cVc(v_pp_local_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
-            write_orb_energy(kv, nspin0, nbands, e_orb_pp_local, "vpp_local", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_pp_local, files, "vpp_local", "");
         }
 
         // 3. pp: nonlocal
@@ -143,7 +148,7 @@ void write_eband_terms(const int nspin,
                 e_orb_pp_nonlocal.emplace_back(orbital_energy(ik, nbands,
                     cVc(v_pp_nonlocal_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
-            write_orb_energy(kv, nspin0, nbands, e_orb_pp_nonlocal, "vpp_nonlocal", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_pp_nonlocal, files, "vpp_nonlocal", "");
         }
 
         // 4. hartree
@@ -176,16 +181,14 @@ void write_eband_terms(const int nspin,
                     cVc(v_hartree_k_ao.get_hk(), &psi(ik, 0, 0), nbasis, nbands, *pv, p2d), p2d));
             }
             for (auto& op : v_hartree_op) { delete op; }
-            write_orb_energy(kv, nspin0, nbands, e_orb_hartree, "vhartree", "");
+            write_orb_energy(kv, nspin0, nbands, e_orb_hartree, files, "vhartree", "");
         }
 
         // 5. xc (including exx)
         if (!PARAM.inp.out_mat_xc)  // avoid duplicate output
         {
-            bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
             write_Vxc<TK, TR>(nspin,
                               nbasis,
-                              drank,
                               pv,
                               psi,
                               ucell,
@@ -199,7 +202,13 @@ void write_eband_terms(const int nspin,
                               orb_cutoff,
                               wg,
                               gd,
-                              cal_exx
+                              files,
+                              parallel,
+                              basis,
+                              solver,
+                              output,
+                              dftu,
+                              exact_exchange_state.enabled
 #ifdef __EXX
                               ,
                               Hexxd,

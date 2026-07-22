@@ -262,7 +262,8 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
 		const double& scf_ene_thr,
 		int& iter,
 		const int istep,
-		bool& conv_esolver)
+		bool& conv_esolver,
+        const ModuleContext::ParallelTopology& parallel)
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_iter_finish");
     if (GlobalC::restart.info_save.save_H && (this->two_level_step > 0 || istep > 0)
@@ -287,7 +288,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
         }*/
         ////////// for Add_Hexx_Type:R
         const std::string& restart_HR_path = GlobalC::restart.folder + "HexxR" + std::to_string(GlobalV::MY_RANK);
-        ModuleIO::write_Hexxs_csr(restart_HR_path, ucell, this->get_Hexxs());
+        ModuleIO::write_Hexxs_csr(restart_HR_path, ucell, this->get_Hexxs(), parallel);
 
         if (GlobalV::MY_RANK == 0)
         {

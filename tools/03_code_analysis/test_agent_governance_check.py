@@ -148,6 +148,58 @@ class AgentGovernanceCheckTest(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
 
+    def test_blocks_legacy_global_access_anywhere_in_module_hs(self):
+        self.write("source/source_io/module_hs/forbidden.h", "inline int rank() { return GlobalV::MY_RANK; }\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_blocked_by(result, "module_hs Context boundary")
+        self.assertIn("legacy GlobalV access", result.stdout)
+
+    def test_blocks_root_context_dependency_in_module_hs(self):
+        self.write("source/source_io/module_hs/forbidden.h", "const SimulationContext& context();\n")
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_blocked_by(result, "module_hs Context boundary")
+        self.assertIn("root SimulationContext dependency", result.stdout)
+
+    def test_blocks_context_accessor_below_orchestration_layers(self):
+        self.write(
+            "source/source_lcao/module_operator_lcao/forbidden.h",
+            "inline void f() { current_simulation_context(); }\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_blocked_by(result, "SimulationContext layer capability")
+
+    def test_allows_context_accessor_in_esolver(self):
+        self.write(
+            "source/source_esolver/allowed.h",
+            "inline void f() { current_simulation_context(); }\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertNotIn("SimulationContext layer capability", result.stdout)
+
+    def test_blocks_source_defined_context_capability(self):
+        self.write(
+            "source/source_esolver/forbidden.h",
+            "#define ABACUS_CAN_READ_SIMULATION_CONTEXT\n",
+        )
+        head = self.commit_change()
+
+        result = self.run_checker("--base", self.base, "--head", head)
+
+        self.assert_blocked_by(result, "SimulationContext capability ownership")
+
     def test_warns_for_default_parameters_added_to_headers(self):
         self.write("source/source_base/defaults.h", "void update_solver(int step = 0);\n")
         head = self.commit_change()

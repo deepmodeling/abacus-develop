@@ -16,13 +16,15 @@ Velocity_op<TR>::Velocity_op(const UnitCell* ucell_in,
                       const Grid_Driver* GridD_in,
                       const Parallel_Orbitals* paraV,
                       const LCAO_Orbitals& orb,
-                      const TwoCenterIntegrator* intor)
+                      const TwoCenterIntegrator* intor,
+                      const ModuleContext::RunControl& run,
+                      const ModuleContext::BasisInfo& basis)
     : ucell(ucell_in), paraV(paraV) , orb_(orb), intor_(intor)
 {   
     // for length gauge, the A(t) = 0 for all the time.
     this->cart_At = ModuleBase::Vector3<double>(0,0,0);
     this->initialize_grad_term(GridD_in, paraV);
-    this->initialize_vcomm_r(GridD_in, paraV);
+    this->initialize_vcomm_r(GridD_in, paraV, run, basis);
 }
 template <typename TR>
 Velocity_op<TR>::~Velocity_op()
@@ -34,13 +36,16 @@ Velocity_op<TR>::~Velocity_op()
 }
 //allocate space for current_term
 template <typename TR>
-void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD, const Parallel_Orbitals* paraV)
+void Velocity_op<TR>::initialize_vcomm_r(const Grid_Driver* GridD,
+                                         const Parallel_Orbitals* paraV,
+                                         const ModuleContext::RunControl& run,
+                                         const ModuleContext::BasisInfo& basis)
 {
     ModuleBase::TITLE("Velocity_op", "initialize_vcomm_r");
     ModuleBase::timer::start("Velocity_op", "initialize_vcomm_r");
     if(!init_done)
     {
-        r_calculator.init_nonlocal(*ucell, *paraV, orb_);
+        r_calculator.init_nonlocal(*ucell, *paraV, orb_, run, basis);
         init_done = true;
     }
 

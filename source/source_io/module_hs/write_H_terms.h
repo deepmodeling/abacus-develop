@@ -9,6 +9,7 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_context/context_types.h"
 
 #include <complex>
 #include <vector>
@@ -38,31 +39,64 @@ struct WriteHParams
     int nat = 0;
     bool also_hR = false; // H(k) is always written; H(R) (CSR) only when this is true
 #ifdef __EXX
-    // The gamma-only (TK==double) exx interfaces used by write_h_exx. 
-    // Deliberately NOT templated on TK, because it would force WriteHParams, WriteDHParams and
-    //      every free function taking them to become templates as well -- a large, purely
-    //      mechanical change for a case nobody needs.
-    // Multi-k + EXX is therefore rejected up front (see write_h_exx)
-    // instead of silently producing output with the EXX term missing.
+    // Gamma EXX interfaces; the explicit ExactExchangeState selects the active representation.
     Exx_LRI_Interface<double, double>* exd = nullptr;
     Exx_LRI_Interface<double, std::complex<double>>* exc = nullptr;
 #endif
 };
 
-void write_h_t(WriteHParams& params);
+void write_h_t(WriteHParams& params,
+               const ModuleContext::RunControl& run,
+               const ModuleContext::FileSystemLayout& files,
+               const ModuleContext::ParallelTopology& parallel,
+               const ModuleContext::BasisInfo& basis,
+               const ModuleContext::SolverConfig& solver,
+               const ModuleContext::MatrixOutputConfig& output);
 
-void write_h_vnl(WriteHParams& params);
+void write_h_vnl(WriteHParams& params,
+                 const ModuleContext::RunControl& run,
+                 const ModuleContext::FileSystemLayout& files,
+                 const ModuleContext::ParallelTopology& parallel,
+                 const ModuleContext::BasisInfo& basis,
+                 const ModuleContext::SolverConfig& solver,
+                 const ModuleContext::MatrixOutputConfig& output);
 
-void write_h_vl(WriteHParams& params);
+void write_h_vl(WriteHParams& params,
+                const ModuleContext::RunControl& run,
+                const ModuleContext::FileSystemLayout& files,
+                const ModuleContext::ParallelTopology& parallel,
+                const ModuleContext::BasisInfo& basis,
+                const ModuleContext::SolverConfig& solver,
+                const ModuleContext::MatrixOutputConfig& output);
 
-void write_h_vh(WriteHParams& params);
+void write_h_vh(WriteHParams& params,
+                const ModuleContext::RunControl& run,
+                const ModuleContext::FileSystemLayout& files,
+                const ModuleContext::ParallelTopology& parallel,
+                const ModuleContext::BasisInfo& basis,
+                const ModuleContext::SolverConfig& solver,
+                const ModuleContext::MatrixOutputConfig& output);
 
-void write_h_vxc(WriteHParams& params);
+void write_h_vxc(WriteHParams& params,
+                 const ModuleContext::RunControl& run,
+                 const ModuleContext::FileSystemLayout& files,
+                 const ModuleContext::ParallelTopology& parallel,
+                 const ModuleContext::BasisInfo& basis,
+                 const ModuleContext::SpinConfig& spin,
+                 const ModuleContext::SolverConfig& solver,
+                 const ModuleContext::MatrixOutputConfig& output);
 
 #ifdef __EXX
 // Build V^EXX(R) into a real HContainer via add_HexxR (from exd/exc->get_Hexxs()) and write it.
 // exd (real Hexx) and exc (complex Hexx) are mutually exclusive; picked by info_ri.real_number.
-void write_h_exx(WriteHParams& params);
+void write_h_exx(WriteHParams& params,
+                 const ModuleContext::RunControl& run,
+                 const ModuleContext::FileSystemLayout& files,
+                 const ModuleContext::ParallelTopology& parallel,
+                 const ModuleContext::BasisInfo& basis,
+                 const ModuleContext::SolverConfig& solver,
+                 const ModuleContext::MatrixOutputConfig& output,
+                 const ModuleContext::ExactExchangeState& exact_exchange_state);
 #endif
 
 } // namespace ModuleIO

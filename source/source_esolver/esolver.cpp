@@ -285,46 +285,20 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {
-        // initialize the 1st ESolver_KS
-        ModuleESolver::ESolver* p_esolver = nullptr;
+        // Driver runs this ground-state solver after the new read-only Context
+        // has been finalized and bound, then transitions it to LR below.
         if (PARAM.globalv.gamma_only_local)
         {
-            p_esolver = new ESolver_KS_LCAO<double, double>();
+            return new ESolver_KS_LCAO<double, double>();
         }
         else if (PARAM.inp.nspin < 4)
         {
-            p_esolver = new ESolver_KS_LCAO<std::complex<double>, double>();
+            return new ESolver_KS_LCAO<std::complex<double>, double>();
         }
         else
         {
-            p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+            return new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
         }
-        p_esolver->before_all_runners(ucell, inp);
-        p_esolver->runner(ucell, 0); // scf-only
-
-        // force and stress is not needed currently,
-        // they will be supported after the analytical gradient
-        // of LR-TDDFT is implemented.
-        std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
-        // initialize the 2nd ESolver_LR at the temporary pointer
-	ModuleESolver::ESolver* p_esolver_lr = nullptr;
-	if (PARAM.globalv.gamma_only_local)
-	{
-		p_esolver_lr = new LR::ESolver_LR<double, double>(
-				std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
-				inp,
-				ucell);
-	}
-	else
-	{
-		p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
-				std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
-				inp,
-				ucell);
-	}
-	// clean the 1st ESolver_KS and swap the pointer
-	delete p_esolver;
-        return p_esolver_lr;
     }
 #endif
     else if (esolver_type == "ofdft")
@@ -349,6 +323,32 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));
+}
+
+ESolver* transition_ksdft_to_lr(ESolver* p_esolver, const Input_para& inp, UnitCell& ucell)
+{
+#ifdef __LCAO
+    std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
+    ESolver* p_esolver_lr = nullptr;
+    if (PARAM.globalv.gamma_only_local)
+    {
+        p_esolver_lr = new LR::ESolver_LR<double, double>(
+            std::move(*dynamic_cast<ESolver_KS_LCAO<double, double>*>(p_esolver)), inp, ucell);
+    }
+    else
+    {
+        p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
+            std::move(*dynamic_cast<ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)), inp, ucell);
+    }
+    delete p_esolver;
+    return p_esolver_lr;
+#else
+    static_cast<void>(p_esolver);
+    static_cast<void>(inp);
+    static_cast<void>(ucell);
+    ModuleBase::WARNING_QUIT("ESolver", "LR-LCAO requires an LCAO build");
+    return nullptr;
+#endif
 }
 
 

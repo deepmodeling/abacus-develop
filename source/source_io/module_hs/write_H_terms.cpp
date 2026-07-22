@@ -8,7 +8,6 @@
 #include "source_io/module_hs/write_HS_R.h"
 #include "source_io/module_output/filename.h"
 #include "source_io/module_output/ucell_io.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_gint/gint_interface.h"
 #include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_hcontainer/output_hcontainer.h"
@@ -73,7 +72,10 @@ static void gather_and_write(const std::string& prefix,
                              const int istep,
                              const bool append,
                              const int* iat2iwt,
-                             const int nat)
+                             const int nat,
+                             const ModuleContext::RunControl& run,
+                             const ModuleContext::FileSystemLayout& files,
+                             const ModuleContext::ParallelTopology& parallel)
 {
     const int nbasis = hR.get_nbasis();
 #ifdef __MPI
@@ -83,17 +85,17 @@ static void gather_and_write(const std::string& prefix,
     serialV.set_atomic_trace(iat2iwt, nat, nbasis);
     hamilt::HContainer<double> hr_serial(&serialV);
     hamilt::gatherParallels(hR, &hr_serial, 0);
-    if (GlobalV::MY_RANK == 0)
+    if (parallel.world_rank == 0)
 #endif
     {
         std::string fname;
-        if (PARAM.inp.calculation == "md" && !PARAM.inp.out_app_flag)
+        if (run.calculation == "md" && !append)
         {
-            fname = PARAM.globalv.global_matrix_dir + hsr_gen_fname(prefix, ispin, append, istep);
+            fname = files.matrix_directory + hsr_gen_fname(prefix, ispin, append, istep);
         }
         else
         {
-            fname = PARAM.globalv.global_out_dir + hsr_gen_fname(prefix, ispin, append, istep);
+            fname = files.output_directory + hsr_gen_fname(prefix, ispin, append, istep);
         }
 #ifdef __MPI
         write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, ispin, nspin, label);
@@ -112,14 +114,15 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                             const int istep,
                             const bool append,
                             const int* iat2iwt,
-                            const int nat)
+                            const int nat,
+                            const ModuleContext::FileSystemLayout& files,
+                            const ModuleContext::ParallelTopology& parallel,
+                            const ModuleContext::BasisInfo& basis,
+                            const ModuleContext::SolverConfig& solver)
 {
     const int nspin_k = (nspin == 2 ? 2 : 1);
     const int nks = kv.get_nks() / nspin_k;
-    const int nlocal = PARAM.globalv.nlocal;
-    const bool gamma_only = PARAM.globalv.gamma_only_local;
-    const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    const bool out_app_flag = PARAM.inp.out_app_flag;
+    const int nlocal = basis.nlocal;
 
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -129,7 +132,7 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
         hamilt::folding_HR(hR, hk_global.data(), kvec_d, nlocal, 0);
 
         const int out_label = 1;
-        std::string fname = ModuleIO::filename_output(global_out_dir,
+        std::string fname = ModuleIO::filename_output(files.output_directory,
                                                       prefix,
                                                       "nao",
                                                       ik,
@@ -137,8 +140,8 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                                                       nspin,
                                                       kv.get_nkstot(),
                                                       out_label,
-                                                      out_app_flag,
-                                                      gamma_only,
+                                                      append,
+                                                      basis.gamma_only_local,
                                                       istep);
         ModuleIO::save_mat(istep,
                            hk_global.data(),
@@ -146,14 +149,21 @@ static void write_hk_common(hamilt::HContainer<double>& hR,
                            false,
                            8,
                            false,
-                           out_app_flag,
+                           append,
                            fname,
                            pv,
-                           GlobalV::DRANK);
+                           parallel.diagonalization_rank,
+                           solver);
     }
 }
 
-void write_h_t(WriteHParams& params)
+void write_h_t(WriteHParams& params,
+               const ModuleContext::RunControl& run,
+               const ModuleContext::FileSystemLayout& files,
+               const ModuleContext::ParallelTopology& parallel,
+               const ModuleContext::BasisInfo& basis,
+               const ModuleContext::SolverConfig& solver,
+               const ModuleContext::MatrixOutputConfig& output)
 {
     ModuleBase::TITLE("ModuleIO", "write_h_t");
     ModuleBase::timer::start("ModuleIO", "write_h_t");
@@ -166,7 +176,7 @@ void write_h_t(WriteHParams& params)
     const K_Vectors& kv = *params.kv;
     const int nspin = params.nspin;
     const int istep = params.istep;
-    const bool append = params.append;
+    const bool append = output.append;
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
@@ -182,18 +192,24 @@ void write_h_t(WriteHParams& params)
             tmp_ekinetic(nullptr, kv.kvec_d, &hR_tmp, &ucell, orb_cutoff, &gd, two_center_bundle.kinetic_orb.get());
         tmp_ekinetic.contributeHR();
 
-        write_hk_common(hR_tmp, "tk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "tk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat, files, parallel, basis, solver);
 
         if (also_hR)
         {
-            gather_and_write("t", "T", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("t", "T", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat, run, files, parallel);
         }
     }
 
     ModuleBase::timer::end("ModuleIO", "write_h_t");
 }
 
-void write_h_vnl(WriteHParams& params)
+void write_h_vnl(WriteHParams& params,
+                 const ModuleContext::RunControl& run,
+                 const ModuleContext::FileSystemLayout& files,
+                 const ModuleContext::ParallelTopology& parallel,
+                 const ModuleContext::BasisInfo& basis,
+                 const ModuleContext::SolverConfig& solver,
+                 const ModuleContext::MatrixOutputConfig& output)
 {
     ModuleBase::TITLE("ModuleIO", "write_h_vnl");
     ModuleBase::timer::start("ModuleIO", "write_h_vnl");
@@ -206,7 +222,7 @@ void write_h_vnl(WriteHParams& params)
     const K_Vectors& kv = *params.kv;
     const int nspin = params.nspin;
     const int istep = params.istep;
-    const bool append = params.append;
+    const bool append = output.append;
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
@@ -227,18 +243,24 @@ void write_h_vnl(WriteHParams& params)
                                                                             two_center_bundle.overlap_orb_beta.get());
         tmp_nonlocal.contributeHR();
 
-        write_hk_common(hR_tmp, "vnlk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "vnlk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat, files, parallel, basis, solver);
 
         if (also_hR)
         {
-            gather_and_write("vnl", "V^NL", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("vnl", "V^NL", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat, run, files, parallel);
         }
     }
 
     ModuleBase::timer::end("ModuleIO", "write_h_vnl");
 }
 
-void write_h_vl(WriteHParams& params)
+void write_h_vl(WriteHParams& params,
+                const ModuleContext::RunControl& run,
+                const ModuleContext::FileSystemLayout& files,
+                const ModuleContext::ParallelTopology& parallel,
+                const ModuleContext::BasisInfo& basis,
+                const ModuleContext::SolverConfig& solver,
+                const ModuleContext::MatrixOutputConfig& output)
 {
     ModuleBase::TITLE("ModuleIO", "write_h_vl");
     ModuleBase::timer::start("ModuleIO", "write_h_vl");
@@ -251,7 +273,7 @@ void write_h_vl(WriteHParams& params)
     const K_Vectors& kv = *params.kv;
     const int nspin = params.nspin;
     const int istep = params.istep;
-    const bool append = params.append;
+    const bool append = output.append;
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
@@ -267,18 +289,24 @@ void write_h_vl(WriteHParams& params)
         const double* v_local = pot->get_fixed_v(); // local pp, no Hxc
         ModuleGint::cal_gint_vl(v_local, &hR_tmp);
 
-        write_hk_common(hR_tmp, "vlk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "vlk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat, files, parallel, basis, solver);
 
         if (also_hR)
         {
-            gather_and_write("vl", "V^L", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("vl", "V^L", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat, run, files, parallel);
         }
     }
 
     ModuleBase::timer::end("ModuleIO", "write_h_vl");
 }
 
-void write_h_vh(WriteHParams& params)
+void write_h_vh(WriteHParams& params,
+                const ModuleContext::RunControl& run,
+                const ModuleContext::FileSystemLayout& files,
+                const ModuleContext::ParallelTopology& parallel,
+                const ModuleContext::BasisInfo& basis,
+                const ModuleContext::SolverConfig& solver,
+                const ModuleContext::MatrixOutputConfig& output)
 {
     ModuleBase::TITLE("ModuleIO", "write_h_vh");
     ModuleBase::timer::start("ModuleIO", "write_h_vh");
@@ -292,7 +320,7 @@ void write_h_vh(WriteHParams& params)
     const K_Vectors& kv = *params.kv;
     const int nspin = params.nspin;
     const int istep = params.istep;
-    const bool append = params.append;
+    const bool append = output.append;
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
@@ -310,18 +338,25 @@ void write_h_vh(WriteHParams& params)
 
         ModuleGint::cal_gint_vl(&v_h(ispin, 0), &hR_tmp);
 
-        write_hk_common(hR_tmp, "vhk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "vhk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat, files, parallel, basis, solver);
 
         if (also_hR)
         {
-            gather_and_write("vh", "V^H", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("vh", "V^H", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat, run, files, parallel);
         }
     }
 
     ModuleBase::timer::end("ModuleIO", "write_h_vh");
 }
 
-void write_h_vxc(WriteHParams& params)
+void write_h_vxc(WriteHParams& params,
+                 const ModuleContext::RunControl& run,
+                 const ModuleContext::FileSystemLayout& files,
+                 const ModuleContext::ParallelTopology& parallel,
+                 const ModuleContext::BasisInfo& basis,
+                 const ModuleContext::SpinConfig& spin,
+                 const ModuleContext::SolverConfig& solver,
+                 const ModuleContext::MatrixOutputConfig& output)
 {
     ModuleBase::TITLE("ModuleIO", "write_h_vxc");
     ModuleBase::timer::start("ModuleIO", "write_h_vxc");
@@ -335,7 +370,7 @@ void write_h_vxc(WriteHParams& params)
     const K_Vectors& kv = *params.kv;
     const int nspin = params.nspin;
     const int istep = params.istep;
-    const bool append = params.append;
+    const bool append = output.append;
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
@@ -351,7 +386,8 @@ void write_h_vxc(WriteHParams& params)
 #else
     const double hse_omega = 0.0;
 #endif
-    std::tie(etxc, vtxc, v_xc) = XC_Functional::v_xc(nrxx, chg, &ucell, PARAM.inp.nspin, PARAM.globalv.domag, PARAM.globalv.domag_z, hybrid_alpha, hse_omega);
+    std::tie(etxc, vtxc, v_xc)
+        = XC_Functional::v_xc(nrxx, chg, &ucell, spin.nspin, spin.domag, spin.domag_z, hybrid_alpha, hse_omega);
 
     for (int ispin = 0; ispin < nspin_out; ispin++)
     {
@@ -360,11 +396,11 @@ void write_h_vxc(WriteHParams& params)
 
         ModuleGint::cal_gint_vl(&v_xc(ispin, 0), &hR_tmp);
 
-        write_hk_common(hR_tmp, "vxck", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "vxck", ucell, pv, kv, nspin, istep, append, iat2iwt, nat, files, parallel, basis, solver);
 
         if (also_hR)
         {
-            gather_and_write("vxc", "V^XC", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("vxc", "V^XC", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat, run, files, parallel);
         }
     }
 
@@ -383,11 +419,17 @@ static void write_h_exx_impl(const UnitCell& ucell,
                              const bool append,
                              const int* iat2iwt,
                              const int nat,
-                             const bool also_hR)
+                             const bool also_hR,
+                             const ModuleContext::RunControl& run,
+                             const ModuleContext::FileSystemLayout& files,
+                             const ModuleContext::ParallelTopology& parallel,
+                             const ModuleContext::BasisInfo& basis,
+                             const ModuleContext::SolverConfig& solver,
+                             const ModuleContext::ExactExchangeState& exact_exchange_state)
 {
     const auto& Hexxs = ex->get_Hexxs(); // vector over spin of map<iat, map<(jat,R), Tensor>>
     const int nspin_out = (nspin == 2 ? 2 : 1);
-    const double alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    const double alpha = exact_exchange_state.hybrid_alpha;
 
     for (int ispin = 0; ispin < nspin_out; ispin++)
     {
@@ -395,47 +437,84 @@ static void write_h_exx_impl(const UnitCell& ucell,
         // add_HexxR only fills existing matrices, so first allocate the atom-pair structure
         // from the exx-form data (native cells, consistent with the nullptr cell_nearest below).
         hamilt::reallocate_hcontainer(Hexxs, &hR_tmp);
-        RI_2D_Comm::add_HexxR(ispin, alpha, Hexxs, pv, PARAM.globalv.npol, hR_tmp, nullptr);
+        RI_2D_Comm::add_HexxR(ispin, alpha, Hexxs, pv, basis.npol, hR_tmp, nullptr);
 
-        write_hk_common(hR_tmp, "vexxk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat);
+        write_hk_common(hR_tmp, "vexxk", ucell, pv, kv, nspin, istep, append, iat2iwt, nat, files, parallel, basis, solver);
 
         if (also_hR)
         {
-            gather_and_write("vexx", "V^EXX", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat);
+            gather_and_write("vexx", "V^EXX", hR_tmp, ucell, pv, nspin, ispin, istep, append, iat2iwt, nat, run, files, parallel);
         }
     }
 }
 
-void write_h_exx(WriteHParams& params)
+void write_h_exx(WriteHParams& params,
+                 const ModuleContext::RunControl& run,
+                 const ModuleContext::FileSystemLayout& files,
+                 const ModuleContext::ParallelTopology& parallel,
+                 const ModuleContext::BasisInfo& basis,
+                 const ModuleContext::SolverConfig& solver,
+                 const ModuleContext::MatrixOutputConfig& output,
+                 const ModuleContext::ExactExchangeState& exact_exchange_state)
 {
     ModuleBase::TITLE("ModuleIO", "write_h_exx");
     ModuleBase::timer::start("ModuleIO", "write_h_exx");
 
-    // Multi-k out_mat_h_exx is rejected upstream at the call site (setup_exx_h_params in
-    // ctrl_scf_lcao.cpp); this function is only reached on the gamma-only path.
+    // Multi-k out_mat_h_exx is rejected upstream at the call site; this
+    // function is only reached on the gamma-only path.
     const UnitCell& ucell = *params.ucell;
     const Parallel_Orbitals& pv = *params.pv;
     const K_Vectors& kv = *params.kv;
     const int nspin = params.nspin;
     const int istep = params.istep;
-    const bool append = params.append;
+    const bool append = output.append;
     const int* iat2iwt = params.iat2iwt;
     const int nat = params.nat;
     const bool also_hR = params.also_hR;
 
     // exd (real Hexx) and exc (complex Hexx) are mutually exclusive; pick by real_number.
-    if (GlobalC::exx_info.info_ri.real_number)
+    if (exact_exchange_state.real_number)
     {
         if (params.exd != nullptr)
         {
-            write_h_exx_impl(ucell, pv, params.exd, kv, nspin, istep, append, iat2iwt, nat, also_hR);
+            write_h_exx_impl(ucell,
+                             pv,
+                             params.exd,
+                             kv,
+                             nspin,
+                             istep,
+                             append,
+                             iat2iwt,
+                             nat,
+                             also_hR,
+                             run,
+                             files,
+                             parallel,
+                             basis,
+                             solver,
+                             exact_exchange_state);
         }
     }
     else
     {
         if (params.exc != nullptr)
         {
-            write_h_exx_impl(ucell, pv, params.exc, kv, nspin, istep, append, iat2iwt, nat, also_hR);
+            write_h_exx_impl(ucell,
+                             pv,
+                             params.exc,
+                             kv,
+                             nspin,
+                             istep,
+                             append,
+                             iat2iwt,
+                             nat,
+                             also_hR,
+                             run,
+                             files,
+                             parallel,
+                             basis,
+                             solver,
+                             exact_exchange_state);
         }
     }
 

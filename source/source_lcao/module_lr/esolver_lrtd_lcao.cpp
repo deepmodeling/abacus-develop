@@ -18,6 +18,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h" // for precondition
+#include "source_context/orchestration_context.h"
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI_interface.h"
 #endif
@@ -545,6 +546,7 @@ void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_LR", "after_all_runners");
     if (input.ri_hartree_benchmark != "none") { return; } //no need to calculate the spectrum in the benchmark routine
+    const ModuleContext::SimulationContext& context = ModuleContext::current_simulation_context();
     //cal spectrum
     std::vector<double> freq(100);
     std::vector<double> abs_wavelen_range({ 20, 200 });//default range
@@ -562,6 +564,7 @@ void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
             this->ucell, this->kv, this->gd, this->orb_cutoff_, this->two_center_bundle_,
             this->paraX_, this->paraC_, this->paraMat_,
             &this->pelec->ekb.c[is * nstates], this->X[is].template data<T>(), nstates, openshell,
+            context.run, context.basis,
             LR_Util::tolower(input.abs_gauge));
         spectrum.transition_analysis(spin_types[is]);
         if (spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum

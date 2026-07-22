@@ -70,6 +70,11 @@ class TD_info
                                 const Grid_Driver& GridD,
                                 const std::vector<double>& orb_cutoff,
                                 const TwoCenterIntegrator* intor);
+    void initialize_r_calculator(const UnitCell& ucell,
+                                 const Parallel_Orbitals& pv,
+                                 const LCAO_Orbitals& orb,
+                                 const ModuleContext::RunControl& run,
+                                 const ModuleContext::BasisInfo& basis);
     std::vector<hamilt::HContainer<double>*> get_grad_overlap() const
     {
       return this->grad_overlap;
@@ -128,6 +133,7 @@ class TD_info
 
     /// @brief store kinetic hamilton
     hamilt::HContainer<std::complex<double>>* velocity_HR = nullptr;
+    bool r_calculator_initialized_ = false;
 };
 
 #endif

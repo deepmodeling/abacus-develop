@@ -1,6 +1,5 @@
 #include "write_HS.h"
 
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -10,31 +9,33 @@
 
 template <typename T>
 void ModuleIO::write_hsk(
-        const std::string &global_out_dir,
-        const int nspin,
+		const int nspin,
         const int nks, 
         const int nkstot,
         const std::vector<int> &ik2iktot,
         const std::vector<int> &isk,
-        hamilt::Hamilt<T>* p_hamilt,
-        const Parallel_Orbitals &pv,
-        const bool gamma_only,
-        const bool out_app_flag,
-        const int istep,
-        std::ofstream &ofs_running)    
+		hamilt::Hamilt<T>* p_hamilt,
+		const Parallel_Orbitals &pv,
+		const int istep,
+		const ModuleContext::FileSystemLayout& files,
+		const ModuleContext::ParallelTopology& parallel,
+		const ModuleContext::LogStreams& logs,
+		const ModuleContext::BasisInfo& basis,
+		const ModuleContext::SolverConfig& solver,
+		const ModuleContext::MatrixOutputConfig& output)
 {
 
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    *logs.running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
         ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    ofs_running << " |                                            "
+    *logs.running << " |                                            "
         "                        |" << std::endl;
-    ofs_running << " | Write Hamiltonian matrix H(k) or overlap matrix S(k) in numerical  |" << std::endl; 
-    ofs_running << " | atomic orbitals at each k-point.                                   |" << std::endl; 
-    ofs_running << " |                                            "
+    *logs.running << " | Write Hamiltonian matrix H(k) or overlap matrix S(k) in numerical  |" << std::endl;
+    *logs.running << " | atomic orbitals at each k-point.                                   |" << std::endl;
+    *logs.running << " |                                            "
         "                        |" << std::endl;
-    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
+    *logs.running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>"
         ">>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-    ofs_running << "\n WRITE H(k) OR S(k)" << std::endl;
+    *logs.running << "\n WRITE H(k) OR S(k)" << std::endl;
 
     for (int ik = 0; ik < nks; ++ik)
     {
@@ -50,20 +51,21 @@ void ModuleIO::write_hsk(
 
         const int out_label=1; // 1: .txt, 2: .dat
 
-        std::string h_fn = ModuleIO::filename_output(global_out_dir,
+        std::string h_fn = ModuleIO::filename_output(files.output_directory,
                 "hk","nao",ik,ik2iktot,nspin,nkstot,
-                out_label,out_app_flag,gamma_only,istep);
+                out_label,output.append,basis.gamma_only_local,istep);
 
         ModuleIO::save_mat(istep,
                 h_mat.p,
-                PARAM.globalv.nlocal,
+                basis.nlocal,
                 bit,
-                PARAM.inp.out_mat_hs[1],
+                output.hs_k.precision,
                 1,
-                out_app_flag,
+                output.append,
                 h_fn,
                 pv,
-                GlobalV::DRANK);
+                parallel.diagonalization_rank,
+                solver);
 
         // mohan note 2025-06-02
         // for overlap matrix, the two spin channels yield the same matrix
@@ -74,22 +76,23 @@ void ModuleIO::write_hsk(
             continue;
         }
 
-        std::string s_fn = ModuleIO::filename_output(global_out_dir,
+        std::string s_fn = ModuleIO::filename_output(files.output_directory,
                 "sk","nao",ik,ik2iktot,nspin,nkstot,
-                out_label,out_app_flag,gamma_only,istep);
+                out_label,output.append,basis.gamma_only_local,istep);
 
-        ofs_running << " The output filename is " << s_fn << std::endl;
+        *logs.running << " The output filename is " << s_fn << std::endl;
 
         ModuleIO::save_mat(istep,
                 s_mat.p,
-                PARAM.globalv.nlocal,
+                basis.nlocal,
                 bit,
-                PARAM.inp.out_mat_hs[1],
+                output.hs_k.precision,
                 1,
-                out_app_flag,
+                output.append,
                 s_fn,    
                 pv,
-                GlobalV::DRANK);
+                parallel.diagonalization_rank,
+                solver);
     } // end ik
 }
 
@@ -106,6 +109,7 @@ void ModuleIO::save_mat(const int istep,
     const std::string& filename,
     const Parallel_2D& pv,
     const int drank,
+    const ModuleContext::SolverConfig& solver,
     const bool reduce)
 {
     ModuleBase::TITLE("ModuleIO", "save_mat");
@@ -147,7 +151,7 @@ void ModuleIO::save_mat(const int istep,
                     if (ic >= 0)
                     {
                         int iic;
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(solver.ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
                         }
@@ -247,7 +251,7 @@ void ModuleIO::save_mat(const int istep,
                     if (ic >= 0)
                     {
                         int iic=0;
-                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
+                        if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(solver.ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
                         }

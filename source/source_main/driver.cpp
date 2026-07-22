@@ -12,6 +12,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/version.h"
 #include "source_base/parallel_global.h"
+#include "source_context/simulation_context_builder.h"
 #ifdef __DSP
 #include "source_base/module_device/memory_op.h"
 #include "source_base/module_external/blas_connector.h"
@@ -183,6 +184,7 @@ void Driver::reading()
                                 GlobalV::RANK_IN_POOL,
                                 GlobalV::MY_POOL);
 #endif
+    this->context_builder_.reset(new ModuleContext::SimulationContextBuilder(PARAM.inp, PARAM.globalv));
     ModuleBase::timer::end("Driver", "reading");
 }
 

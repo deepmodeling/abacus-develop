@@ -34,6 +34,8 @@ add_library(
         ../source_pw/module_pwdft/exx_helper.h
 )
 
+target_compile_definitions(esolver PRIVATE ABACUS_CAN_READ_SIMULATION_CONTEXT)
+
 if(ENABLE_COVERAGE)
   add_coverage(esolver)
 endif()
@@ -43,4 +45,3 @@ if(BUILD_TESTING)
     add_subdirectory(test)
   endif()
 endif()
-

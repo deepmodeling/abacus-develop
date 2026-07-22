@@ -3,9 +3,6 @@
 
 list(APPEND objects
     module_parameter/input_conv.cpp
-    module_ctrl/ctrl_output_fp.cpp
-    module_ctrl/ctrl_output_pw.cpp
-    module_ctrl/ctrl_output_td.cpp
     module_bessel/bessel_basis.cpp
     module_output/cal_test.cpp
     module_dos/cal_dos.cpp
@@ -45,6 +42,12 @@ list(APPEND objects
     module_output/orb_io.cpp
     module_output/filename.cpp
     module_output/ucell_io.cpp
+)
+
+list(APPEND orchestration_objects
+    module_ctrl/ctrl_output_fp.cpp
+    module_ctrl/ctrl_output_pw.cpp
+    module_ctrl/ctrl_output_td.cpp
 )
 
 list(APPEND objects_advanced
@@ -93,6 +96,8 @@ if(ENABLE_LCAO)
       module_hs/rr_sparse_writer.cpp
       module_hs/cal_r_overlap_R.cpp
       module_hs/output_mat_sparse.cpp
+  )
+  list(APPEND orchestration_objects
       module_ctrl/ctrl_scf_lcao.cpp
       module_ctrl/ctrl_runner_lcao.cpp
       module_ctrl/ctrl_iter_lcao.cpp
@@ -137,6 +142,14 @@ add_library(
     OBJECT
     ${objects_advanced}
 )
+
+add_library(
+    io_orchestration
+    OBJECT
+    ${orchestration_objects}
+)
+
+target_compile_definitions(io_orchestration PRIVATE ABACUS_CAN_READ_SIMULATION_CONTEXT)
 
 if(ENABLE_COVERAGE)
   add_coverage(io_basic)

@@ -112,7 +112,8 @@ namespace ModuleIO
 
     template<typename Tdata>
     void write_Hexxs_csr(const std::string& file_name, const UnitCell& ucell,
-        const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs)
+        const std::vector<std::map<int, std::map<TAC, RI::Tensor<Tdata>>>>& Hexxs,
+        const ModuleContext::ParallelTopology& parallel)
     {
         ModuleBase::TITLE("ModuleIO", "write_Hexxs_csr");
         std::set<Abfs::Vector3_Order<int>> all_R_coor;
@@ -157,7 +158,8 @@ namespace ModuleIO
                 calculate_RI_Tensor_sparse(sparse_threshold, Hexxs[is], ucell),
                 all_R_coor,
                 pv,
-                options);
+                options,
+                parallel);
         }
     }
 }

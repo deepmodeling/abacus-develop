@@ -244,6 +244,97 @@ def check_line_endings(
 
 GLOBAL_DEPENDENCY_RE = re.compile(r"\b(GlobalV::|GlobalC::|PARAM(?:\.|->|::|\b))")
 
+MODULE_HS_PREFIX = "source/source_io/module_hs/"
+MODULE_HS_FORBIDDEN = (
+    (re.compile(r"\bPARAM\s*\."), "legacy PARAM access"),
+    (re.compile(r"\bGlobalV::"), "legacy GlobalV access"),
+    (re.compile(r"\bGlobalC::"), "legacy GlobalC access"),
+    (re.compile(r"\bSimulationContext\b"), "root SimulationContext dependency"),
+    (re.compile(r"\bcurrent_simulation_context\s*\("), "root Context accessor"),
+    (re.compile(r"(?:^|/)module_parameter/parameter\.h[\"\>]"), "parameter.h dependency"),
+    (re.compile(r"(?:^|/)global_variable\.h[\"\>]"), "global_variable.h dependency"),
+    (re.compile(r"(?:^|/)module_xc/exx_info\.h[\"\>]"), "global EXX definition dependency"),
+)
+CONTEXT_ACCESSOR_RE = re.compile(r"\bcurrent_simulation_context\s*\(")
+CAPABILITY_DEFINE_RE = re.compile(
+    r"^\s*#\s*define\s+ABACUS_CAN_(?:READ|BIND)_SIMULATION_CONTEXT\b", re.MULTILINE
+)
+CONTEXT_ACCESS_ALLOWED = (
+    "source/source_main/",
+    "source/source_esolver/",
+    "source/source_io/module_ctrl/",
+    "source/source_context/",
+)
+CONTEXT_ACCESS_ALLOWED_FILES = {
+    "source/source_lcao/module_lr/esolver_lrtd_lcao.cpp",
+}
+
+
+def repository_paths(root: Path, args: argparse.Namespace) -> List[str]:
+    if args.staged:
+        return git(["ls-files"], root).stdout.splitlines()
+    if args.head:
+        return git(["ls-tree", "-r", "--name-only", args.head], root).stdout.splitlines()
+    return [str(path.relative_to(root)) for path in root.rglob("*") if path.is_file()]
+
+
+def read_repository_text(root: Path, path: str, args: argparse.Namespace) -> str:
+    return read_changed_file_bytes(root, path, args).decode("utf-8", errors="replace")
+
+
+def check_context_access_boundaries(
+    findings: List[Finding], root: Path, args: argparse.Namespace
+) -> None:
+    for path in repository_paths(root, args):
+        if Path(path).suffix.lower() not in SOURCE_REVIEW_EXTENSIONS:
+            continue
+        try:
+            content = read_repository_text(root, path, args)
+        except OSError:
+            continue
+
+        if path.startswith(MODULE_HS_PREFIX):
+            for pattern, dependency in MODULE_HS_FORBIDDEN:
+                match = pattern.search(content)
+                if match:
+                    add_finding(
+                        findings,
+                        "module_hs Context boundary",
+                        BLOCK,
+                        path,
+                        content.count("\n", 0, match.start()) + 1,
+                        f"module_hs contains forbidden {dependency}.",
+                        "Pass the required ModuleContext small structure by const reference.",
+                        allow_exception=False,
+                    )
+
+        accessor = CONTEXT_ACCESSOR_RE.search(content)
+        allowed_accessor = path in CONTEXT_ACCESS_ALLOWED_FILES or path.startswith(CONTEXT_ACCESS_ALLOWED)
+        if accessor and not allowed_accessor:
+            add_finding(
+                findings,
+                "SimulationContext layer capability",
+                BLOCK,
+                path,
+                content.count("\n", 0, accessor.start()) + 1,
+                "Root Context accessor is used outside an L0/L1 orchestration file.",
+                "Move the read to L0/L1 and forward only the required small structures.",
+                allow_exception=False,
+            )
+
+        capability = CAPABILITY_DEFINE_RE.search(content)
+        if capability:
+            add_finding(
+                findings,
+                "SimulationContext capability ownership",
+                BLOCK,
+                path,
+                content.count("\n", 0, capability.start()) + 1,
+                "Source code defines a Context capability macro directly.",
+                "Grant capabilities from the owning CMake target or source property.",
+                allow_exception=False,
+            )
+
 
 def is_global_dependency_check_path(path: str) -> bool:
     if path.startswith("tools/03_code_analysis/"):
@@ -731,6 +822,7 @@ def collect_findings(root: Path, args: argparse.Namespace) -> List[Finding]:
 
     check_line_endings(findings, root, changed, statuses, args)
     check_global_dependencies(findings, lines, removed_lines)
+    check_context_access_boundaries(findings, root, args)
     check_default_parameters(findings, lines)
     check_hpp_warnings(findings, statuses, lines)
     check_header_include_warnings(findings, lines)

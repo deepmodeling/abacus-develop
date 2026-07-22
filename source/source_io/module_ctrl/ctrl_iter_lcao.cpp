@@ -6,6 +6,7 @@
 #include "source_lcao/module_deepks/LCAO_deepks_interface.h"
 #endif
 #include "source_io/module_restart/restart.h"
+#include "source_context/orchestration_context.h"
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI_interface.h"
 #endif
@@ -35,6 +36,7 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_lcao");
     ModuleBase::timer::start("ModuleIO", "ctrl_iter_lcao");
+    const ModuleContext::SimulationContext& context = ModuleContext::current_simulation_context();
 
     // save charge density
     // Peize Lin add 2020.04.04
@@ -56,9 +58,9 @@ void ctrl_iter_lcao(UnitCell& ucell, // unit cell *
         {
             real_number ?
               exx_nao.exd->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm, 
-                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver) :
+                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver, context.parallel) :
               exx_nao.exc->exx_iter_finish(kv, ucell, *p_hamilt, *pelec, &dm,
-                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver);
+                *p_chgmix, scf_ene_thr, iter, istep, conv_esolver, context.parallel);
         }
     }
 #endif
