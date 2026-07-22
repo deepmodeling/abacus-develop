@@ -422,7 +422,7 @@ namespace ModuleSymmetry
             int iat2 = rotated_atom(isym, iat1); //iat2=rot(iat1)
             int ia2 = cell_st.iat2ia[iat2];
             // cal phase factor from return lattice:     exp(-ik_ibz*O)
-            double arg = 2 * ModuleBase::PI * kvec_d_ibz * this->irs_.return_lattice_[iat1][isym];
+            double arg = -2 * ModuleBase::PI * kvec_d_ibz * this->irs_.return_lattice_[iat1][isym];
             std::complex<double>phase_factor = std::complex<double>(std::cos(arg), std::sin(arg));
             int iw1start = atoms[it].stapos_wf + ia1 * atoms[it].nw;
             int iw2start = atoms[it].stapos_wf + ia2 * atoms[it].nw;
