@@ -5,6 +5,9 @@
 #include "source_base/math_sphbes.h"
 #include "source_base/parallel_common.h"
 #include "source_base/timer.h"
+
+#include <algorithm>
+#include <cmath>
 #include <vector>
 
 Bessel_Basis::Bessel_Basis()
@@ -210,6 +213,15 @@ void Bessel_Basis::init_TableOne(
     std::vector<double> function(rmesh);
     std::vector<double> en(ecut_number);
 
+    const int cutoff_intervals = static_cast<int>(std::round(rcut / dr));
+    const double cutoff_tolerance = 1.0e-10 * std::max(1.0, std::abs(rcut));
+    const bool cutoff_is_on_grid = std::abs(cutoff_intervals * dr - rcut) <= cutoff_tolerance;
+
+    // Preserve the requested radial spacing. When the cutoff is on the grid,
+    // omit the auxiliary integration points from the orbital file. Otherwise,
+    // retain the original mesh and write zeros beyond the cutoff.
+    const int output_rmesh = cutoff_is_on_grid ? cutoff_intervals + 1 : rmesh;
+
 	for(int ir=0; ir<rmesh; ir++)
 	{
 		r[ir] = static_cast<double>(ir) * dr;
@@ -251,8 +263,8 @@ void Bessel_Basis::init_TableOne(
 	}
 	ofs << "---------------------------------------------------------------------------"<< std::endl;
 	ofs << "SUMMARY END" << std::endl << std::endl;
-	ofs << std::setiosflags(std::ios::left) << std::setw(28) << "Mesh" << rmesh << std::endl;
-	ofs << std::setiosflags(std::ios::left) << std::setw(28) << "dr" << dr << std::endl ;
+	ofs << std::setiosflags(std::ios::left) << std::setw(28) << "Mesh" << output_rmesh << std::endl;
+	ofs << std::setiosflags(std::ios::left) << std::setw(28) << "dr" << dr << std::endl;
 	//=========output	 .orb format=============
 
 	// init eigenvalue of Jl
@@ -279,10 +291,14 @@ void Bessel_Basis::init_TableOne(
 			//=========output .orb format=============
 			ofs << std::setiosflags(std::ios::right) << std::setw(20) << "Type"<< std::setw(20) << "L" << std::setw(20) << "N" << std::endl;
 			ofs << std::setiosflags(std::ios::right) << std::setw(20) << "0"<< std::setw(20) << l << std::setw(20) << ie << std::endl;
-			for (int ir = 0; ir < rmesh; ir++)
+			for (int ir = 0; ir < output_rmesh; ir++)
 			{
-				ofs << std::setiosflags(std::ios::scientific)
-				<< std::setprecision(12) << jle[ir]<< " "; if ((ir+1) % 4 == 0) ofs << std::endl;
+				const double output_value = r[ir] > rcut + cutoff_tolerance ? 0.0 : jle[ir];
+				ofs << std::setiosflags(std::ios::scientific) << std::setprecision(12) << output_value << " ";
+				if ((ir + 1) % 4 == 0)
+				{
+					ofs << std::endl;
+				}
 			}
 			ofs << std::endl;
 			//=========output .orb format=============
