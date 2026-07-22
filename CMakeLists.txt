@@ -136,27 +136,6 @@ if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
       CACHE PATH "Path to NVIDIA HPC SDK root directory.")
 endif()
 
-# Feature definitions are collected while options and dependencies are resolved
-# below. They are applied to targets in source/CMakeLists.txt.
-set_property(GLOBAL PROPERTY ABACUS_FEATURE_DEFINITIONS "")
-
-function(abacus_normalize_definitions out_var)
-  set(_defs)
-  foreach(_def IN LISTS ARGN)
-    if(_def MATCHES "^-D(.+)")
-      list(APPEND _defs "${CMAKE_MATCH_1}")
-    else()
-      list(APPEND _defs "${_def}")
-    endif()
-  endforeach()
-  set(${out_var} ${_defs} PARENT_SCOPE)
-endfunction()
-
-function(abacus_add_feature_definitions)
-  abacus_normalize_definitions(_defs ${ARGN})
-  set_property(GLOBAL APPEND PROPERTY ABACUS_FEATURE_DEFINITIONS ${_defs})
-endfunction()
-
 # enable json support
 if(ENABLE_RAPIDJSON)
   find_package(RapidJSON CONFIG REQUIRED)
@@ -167,7 +146,6 @@ if(ENABLE_RAPIDJSON)
       "Check if your RapidJSON installation provides a complete exported CMake configuration."
     )
   endif()
-  abacus_add_feature_definitions(__RAPIDJSON)
 endif()
 
 # get commit info
@@ -193,7 +171,6 @@ if(COMMIT_INFO)
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
       RESULT_VARIABLE GIT_COMMIT_DATE_RESULT)
     if(GIT_COMMIT_HASH_RESULT EQUAL 0 AND GIT_COMMIT_DATE_RESULT EQUAL 0)
-      abacus_add_feature_definitions(COMMIT_INFO)
       file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/commit.h"
            "#define COMMIT \"${GIT_COMMIT_HASH} (${GIT_COMMIT_DATE})\"\n")
       set(ABACUS_COMMIT_INFO_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
@@ -270,14 +247,6 @@ if (USE_DSP)
     set(ENABLE_ELPA OFF)
   endif()
   set(ABACUS_BIN_NAME abacus_dsp)
-endif()
-
-if (USE_CUDA_ON_DCU)
-  abacus_add_feature_definitions(__CUDA_ON_DCU)
-endif()
-
-if (USE_CUDA_MPI)
-  abacus_add_feature_definitions(__CUDA_MPI)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH
@@ -359,43 +328,21 @@ if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
   )
 endif()
 
-if(ENABLE_ABACUS_LIBM)
-  abacus_add_feature_definitions(__ABACUS_LIBM)
-endif()
-
 if(ENABLE_NATIVE_OPTIMIZATION)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
 endif()
 
-# Windows (native build, e.g. MinGW-w64 or MSVC) portability defines:
-#   _USE_MATH_DEFINES     - expose M_PI and friends from <cmath>
-#   NOMINMAX              - stop <windows.h> defining min()/max() macros
-#   _CRT_SECURE_NO_WARNINGS - silence CRT "use _s function" deprecations
-if(WIN32)
-  abacus_add_feature_definitions(_USE_MATH_DEFINES NOMINMAX _CRT_SECURE_NO_WARNINGS)
-endif()
-
 if(ENABLE_LCAO)
-  abacus_add_feature_definitions(__LCAO)
   if(ENABLE_ELPA)
     find_package(ELPA REQUIRED)
-    abacus_add_feature_definitions(__ELPA)
-  endif()
-  if(ENABLE_FFT_TWO_CENTER)
-    abacus_add_feature_definitions(USE_NEW_TWO_CENTER)
   endif()
   if(ENABLE_PEXSI)
     find_package(PEXSI REQUIRED CONFIG)
     if(PEXSI_VERSION VERSION_LESS "2.0.0")
       message(FATAL_ERROR "PEXSI >= 2.0.0 is required")
     endif()
-    abacus_add_feature_definitions(__PEXSI)
     set(CMAKE_CXX_STANDARD 14)
   endif()
-endif()
-
-if(DEBUG_INFO)
-  abacus_add_feature_definitions(__DEBUG)
 endif()
 
 if(ENABLE_MPI)
@@ -406,18 +353,9 @@ if(ENABLE_MPI)
     set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
   endif()
   find_package(MPI COMPONENTS CXX REQUIRED)
-  abacus_add_feature_definitions(__MPI)
 endif()
 
-
-if (USE_DSP)
-  abacus_add_feature_definitions(__DSP)
-endif()
-
-
-
-if (USE_SW)
-  abacus_add_feature_definitions(__SW)
+if(USE_SW)
   set(SW ON)
 endif()
 
@@ -440,10 +378,8 @@ if(USE_KML)
   endif()
 
   find_package(KML REQUIRED COMPONENTS ${_kml_components})
-  abacus_add_feature_definitions(__KML)
 elseif(MKLROOT OR MKL_ROOT)
   find_package(MKL REQUIRED)
-  abacus_add_feature_definitions(__MKL)
 elseif(NOT USE_SW)
   find_package(Lapack REQUIRED)
   # ScaLAPACK is a distributed-memory library and is only needed for the
@@ -538,8 +474,6 @@ if(USE_CUDA)
   endif()
   enable_language(CUDA)
   if(USE_CUDA)
-    abacus_add_feature_definitions(__CUDA)
-    abacus_add_feature_definitions(__UT_USE_CUDA)
     if (CMAKE_BUILD_TYPE STREQUAL "Debug")
       set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G" CACHE STRING "CUDA flags for debug build" FORCE)
     endif()
@@ -547,7 +481,6 @@ if(USE_CUDA)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
     if (ENABLE_NCCL_PARALLEL_DEVICE)
-      abacus_add_feature_definitions(__NCCL_PARALLEL_DEVICE)
       include(cmake/modules/SetupNccl.cmake)
       abacus_setup_nccl()
     endif()
@@ -616,9 +549,6 @@ if(USE_ROCM)
     )
   endif()
 
-  abacus_add_feature_definitions(__ROCM)
-  abacus_add_feature_definitions(__UT_USE_ROCM)
-  abacus_add_feature_definitions(__HIP_PLATFORM_HCC__)
 endif()
 
 if(ENABLE_ASAN)
@@ -630,10 +560,6 @@ if(ENABLE_ASAN)
   endif()
   add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
   add_link_options(-fsanitize=address)
-endif()
-
-if(ENABLE_FLOAT_FFTW)
-  abacus_add_feature_definitions(__ENABLE_FLOAT_FFTW)
 endif()
 
 if(ENABLE_MLALGO)
@@ -648,8 +574,6 @@ if(ENABLE_MLALGO)
     FetchContent_MakeAvailable(libnpy)
   else()
   endif()
-
-  abacus_add_feature_definitions(__MLALGO)
 endif()
 
 # Torch uses outdated components to detect CUDA arch, causing failure on
@@ -683,7 +607,6 @@ if (ENABLE_CNPY)
 
   # find ZLIB and link
   find_package(ZLIB REQUIRED)
-  abacus_add_feature_definitions(__USECNPY)
 endif()
 
 function(git_submodule_update)
@@ -714,11 +637,6 @@ if(ENABLE_LIBRI)
   find_package(LibRI REQUIRED)
   find_package(LibComm REQUIRED)
   find_package(cereal REQUIRED CONFIG)
-  abacus_add_feature_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
-                                 TEST_EXX_RADIAL=1)
-  if(ENABLE_EXX_DEV)
-    abacus_add_feature_definitions(__EXX_DEV)
-  endif()
 endif()
 
 if(ENABLE_LIBXC)
@@ -726,35 +644,22 @@ if(ENABLE_LIBXC)
   if(Libxc_VERSION VERSION_LESS "5.1.7")
     message(FATAL_ERROR "Libxc >= 5.1.7 is required")
   endif()
-  abacus_add_feature_definitions(USE_LIBXC)
 endif()
 
 if(DEFINED DeePMD_DIR)
-  abacus_add_feature_definitions(__DPMD HIGH_PREC)
-  add_compile_options(-Wl,--no-as-needed)
   find_package(DeePMD REQUIRED)
-  if(DeePMDC_FOUND)
-    abacus_add_feature_definitions(__DPMDC)
-  endif()
 endif()
 
 if(DEFINED NEP_DIR)
   find_package(NEP REQUIRED)
-
-  if(NEP_FOUND)
-    abacus_add_feature_definitions(__NEP)
-  endif()
 endif()
 
 if(DEFINED TensorFlow_DIR)
   find_package(TensorFlow REQUIRED)
 endif()
 
-abacus_add_feature_definitions(__FFTW3 __SELINV METIS)
-
 if(MATH_INFO)
   message(STATUS "Will gather math lib info.")
-  abacus_add_feature_definitions(GATHER_INFO)
   # modifications on blas_connector and lapack_connector
 endif()
 

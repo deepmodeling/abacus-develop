@@ -28,6 +28,56 @@
 add_library(abacus_compile_requirements INTERFACE)
 add_library(abacus::compile_requirements ALIAS abacus_compile_requirements)
 
+set(_abacus_feature_definitions
+  __FFTW3
+  $<$<BOOL:${ENABLE_RAPIDJSON}>:__RAPIDJSON>
+  $<$<BOOL:${USE_CUDA_ON_DCU}>:__CUDA_ON_DCU>
+  $<$<BOOL:${USE_CUDA_MPI}>:__CUDA_MPI>
+  $<$<BOOL:${ENABLE_ABACUS_LIBM}>:__ABACUS_LIBM>
+  $<$<BOOL:${WIN32}>:_USE_MATH_DEFINES>
+  $<$<BOOL:${WIN32}>:NOMINMAX>
+  $<$<BOOL:${WIN32}>:_CRT_SECURE_NO_WARNINGS>
+  $<$<BOOL:${ENABLE_LCAO}>:__LCAO>
+  $<$<BOOL:${ENABLE_ELPA}>:__ELPA>
+  $<$<BOOL:${ENABLE_FFT_TWO_CENTER}>:USE_NEW_TWO_CENTER>
+  $<$<BOOL:${ENABLE_PEXSI}>:__PEXSI>
+  $<$<BOOL:${DEBUG_INFO}>:__DEBUG>
+  $<$<BOOL:${ENABLE_MPI}>:__MPI>
+  $<$<BOOL:${USE_DSP}>:__DSP>
+  $<$<BOOL:${USE_SW}>:__SW>
+  $<$<BOOL:${USE_KML}>:__KML>
+  $<$<AND:$<NOT:$<BOOL:${USE_KML}>>,$<BOOL:${MKL_FOUND}>>:__MKL>
+  $<$<BOOL:${USE_CUDA}>:__CUDA>
+  $<$<BOOL:${USE_CUDA}>:__UT_USE_CUDA>
+  $<$<BOOL:${ENABLE_NCCL_PARALLEL_DEVICE}>:__NCCL_PARALLEL_DEVICE>
+  $<$<BOOL:${USE_ROCM}>:__ROCM>
+  $<$<BOOL:${USE_ROCM}>:__UT_USE_ROCM>
+  $<$<BOOL:${USE_ROCM}>:__HIP_PLATFORM_HCC__>
+  $<$<BOOL:${ENABLE_FLOAT_FFTW}>:__ENABLE_FLOAT_FFTW>
+  $<$<BOOL:${ENABLE_MLALGO}>:__MLALGO>
+  $<$<BOOL:${ENABLE_CNPY}>:__USECNPY>
+  $<$<BOOL:${ENABLE_LIBRI}>:__EXX>
+  $<$<BOOL:${ENABLE_LIBRI}>:EXX_DM=3>
+  $<$<BOOL:${ENABLE_LIBRI}>:EXX_H_COMM=2>
+  $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_LCAO=0>
+  $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
+  $<$<BOOL:${ENABLE_EXX_DEV}>:__EXX_DEV>
+  $<$<BOOL:${ENABLE_LIBXC}>:USE_LIBXC>
+  $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
+
+if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
+  list(APPEND _abacus_feature_definitions COMMIT_INFO)
+endif()
+if(DEFINED DeePMD_DIR)
+  list(APPEND _abacus_feature_definitions __DPMD HIGH_PREC)
+  if(DeePMDC_FOUND)
+    list(APPEND _abacus_feature_definitions __DPMDC)
+  endif()
+endif()
+if(DEFINED NEP_DIR AND NEP_FOUND)
+  list(APPEND _abacus_feature_definitions __NEP)
+endif()
+
 target_include_directories(abacus_compile_requirements INTERFACE
   ${ABACUS_SOURCE_DIR}
   ${ABACUS_SOURCE_DIR}/source_base/module_container)
@@ -184,22 +234,19 @@ endif()
 # Optional external feature libraries
 # ------------------------------------------------------------------------------
 
-set(_abacus_feature_libs)
+set(_abacus_feature_libs
+  $<$<BOOL:${ENABLE_RAPIDJSON}>:RapidJSON>
+  $<$<BOOL:${ENABLE_ELPA}>:ELPA::ELPA>
+  $<$<BOOL:${ENABLE_PEXSI}>:PEXSI::PEXSI>
+  $<$<BOOL:${ENABLE_CNPY}>:cnpy>
+  $<$<BOOL:${ENABLE_CNPY}>:ZLIB::ZLIB>
+  $<$<BOOL:${ENABLE_LIBRI}>:cereal::cereal>
+  $<$<BOOL:${ENABLE_LIBXC}>:Libxc::xc>)
 set(_abacus_feature_include_dirs)
 set(_abacus_feature_compile_options)
 
-if(ENABLE_RAPIDJSON)
-  list(APPEND _abacus_feature_libs RapidJSON)
-endif()
-
-if(ENABLE_LCAO)
-  if(ENABLE_ELPA)
-    list(APPEND _abacus_feature_libs ELPA::ELPA)
-    list(APPEND _abacus_feature_include_dirs ${ELPA_INCLUDE_DIR})
-  endif()
-  if(ENABLE_PEXSI)
-    list(APPEND _abacus_feature_libs PEXSI::PEXSI)
-  endif()
+if(ENABLE_ELPA)
+  list(APPEND _abacus_feature_include_dirs ${ELPA_INCLUDE_DIR})
 endif()
 
 if(ENABLE_MLALGO)
@@ -217,7 +264,6 @@ if(ENABLE_MLALGO OR DEFINED Torch_DIR)
 endif()
 
 if(ENABLE_CNPY)
-  list(APPEND _abacus_feature_libs cnpy ZLIB::ZLIB)
   if(cnpy_INCLUDE_DIR)
     list(APPEND _abacus_feature_include_dirs ${cnpy_INCLUDE_DIR})
   endif()
@@ -229,13 +275,7 @@ endif()
 if(ENABLE_LIBRI)
   list(APPEND _abacus_feature_include_dirs
     ${LIBRI_DIR}/include
-    ${LIBCOMM_DIR}/include
-  )
-  list(APPEND _abacus_feature_libs cereal::cereal)
-endif()
-
-if(ENABLE_LIBXC)
-  list(APPEND _abacus_feature_libs Libxc::xc)
+    ${LIBCOMM_DIR}/include)
 endif()
 
 if(DEFINED DeePMD_DIR)
@@ -309,6 +349,10 @@ endif()
 
 target_link_libraries(abacus_feature_libs INTERFACE ${_abacus_feature_libs})
 
+if(DEFINED DeePMD_DIR AND UNIX AND NOT APPLE)
+  target_link_options(abacus_feature_libs INTERFACE "LINKER:--no-as-needed")
+endif()
+
 target_include_directories(abacus_compile_requirements INTERFACE
   ${_abacus_feature_include_dirs})
 target_compile_options(abacus_compile_requirements INTERFACE
@@ -342,6 +386,18 @@ endforeach()
 # Per-target feature definitions and common compile usage requirements
 # ------------------------------------------------------------------------------
 
+function(abacus_normalize_definitions out_var)
+  set(_defs)
+  foreach(_def IN LISTS ARGN)
+    if(_def MATCHES "^-D(.+)")
+      list(APPEND _defs "${CMAKE_MATCH_1}")
+    else()
+      list(APPEND _defs "${_def}")
+    endif()
+  endforeach()
+  set(${out_var} ${_defs} PARENT_SCOPE)
+endfunction()
+
 define_property(
   DIRECTORY
   PROPERTY ABACUS_DISABLED_FEATURE_DEFINITIONS
@@ -358,12 +414,14 @@ define_property(
 
 function(abacus_disable_feature_definitions)
   abacus_normalize_definitions(_defs ${ARGN})
-  set_property(DIRECTORY APPEND PROPERTY ABACUS_DISABLED_FEATURE_DEFINITIONS ${_defs})
+  set_property(DIRECTORY APPEND PROPERTY
+    ABACUS_DISABLED_FEATURE_DEFINITIONS ${_defs})
 endfunction()
 
 function(abacus_add_local_feature_definitions)
   abacus_normalize_definitions(_defs ${ARGN})
-  set_property(DIRECTORY APPEND PROPERTY ABACUS_LOCAL_FEATURE_DEFINITIONS ${_defs})
+  set_property(DIRECTORY APPEND PROPERTY
+    ABACUS_LOCAL_FEATURE_DEFINITIONS ${_defs})
 endfunction()
 
 function(abacus_apply_build_options target)
@@ -382,19 +440,21 @@ function(abacus_apply_build_options target)
   endif()
 
   get_target_property(_source_dir "${target}" SOURCE_DIR)
-  get_property(_defs GLOBAL PROPERTY ABACUS_FEATURE_DEFINITIONS)
+  set(_defs "${_abacus_feature_definitions}")
   get_property(_disabled DIRECTORY "${_source_dir}" PROPERTY ABACUS_DISABLED_FEATURE_DEFINITIONS)
   get_property(_local DIRECTORY "${_source_dir}" PROPERTY ABACUS_LOCAL_FEATURE_DEFINITIONS)
 
   if(_disabled)
-    list(REMOVE_ITEM _defs ${_disabled})
+    # Filter after conditional definitions have been evaluated.
+    string(JOIN "|" _disabled_regex ${_disabled})
+    set(_defs "$<FILTER:${_defs},EXCLUDE,^(${_disabled_regex})$>")
   endif()
   if(_local)
     list(APPEND _defs ${_local})
   endif()
   if(_defs)
-    list(REMOVE_DUPLICATES _defs)
-    target_compile_definitions("${target}" PRIVATE ${_defs})
+    target_compile_definitions("${target}" PRIVATE
+      "$<REMOVE_DUPLICATES:${_defs}>")
   endif()
 
   target_link_libraries("${target}" PRIVATE abacus::compile_requirements)
@@ -681,7 +741,15 @@ install(PROGRAMS ${ABACUS_BIN_PATH} TYPE BIN)
 # Windows because symlink creation needs elevated/developer-mode privileges and
 # the executable carries an .exe suffix anyway.
 if(NOT WIN32)
-  install(CODE "execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${ABACUS_BIN_NAME} ${CMAKE_INSTALL_PREFIX}/bin/abacus WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin)")
+  install(
+    CODE "
+    execute_process(
+      COMMAND ${CMAKE_COMMAND} -E create_symlink
+        ${ABACUS_BIN_NAME}
+        ${CMAKE_INSTALL_PREFIX}/bin/abacus
+        WORKING_DIRECTORY ${CMAKE_INSTALL_PREFIX}/bin
+      COMMAND_ERROR_IS_FATAL ANY)
+  ")
 endif()
 
 if(ENABLE_COVERAGE)
