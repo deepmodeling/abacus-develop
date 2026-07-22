@@ -52,6 +52,16 @@ struct Provenance
     std::vector<double> frequency_weights_ha;
     int mpi_ranks = 0;
     int omp_threads = 0;
+
+    // Global full-Coulomb whitening fields for SIAB-only production targets.
+    std::string auxiliary_whitening;
+    int raw_auxiliary_dimension = 0;
+    int whitened_auxiliary_rank = 0;
+    int discarded_auxiliary_rank = 0;
+    double coulomb_relative_threshold = -1.0;
+    std::vector<double> coulomb_eigenvalues;
+    double coulomb_max_orthonormality_error = -1.0;
+    std::string coulomb_transform_sha256;
 };
 
 } // namespace sternheimer_siab

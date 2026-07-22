@@ -561,6 +561,58 @@ TEST(SternheimerSIABWriter, RejectsPartialTask4ProvenanceBeforeTouchingTmp)
     std::remove(tmp.c_str());
 }
 
+TEST(SternheimerSIABWriter, AppendsCompleteCoulombWhiteningProvenance)
+{
+    const std::string path = test_path("coulomb_whitening_provenance");
+    siab::Provenance provenance = canonical_provenance();
+    provenance.auxiliary_whitening = "global_full_coulomb_v1";
+    provenance.raw_auxiliary_dimension = 2;
+    provenance.whitened_auxiliary_rank = 1;
+    provenance.discarded_auxiliary_rank = 1;
+    provenance.coulomb_relative_threshold = 1.0e-10;
+    provenance.coulomb_eigenvalues = {1.0e-12, 4.0};
+    provenance.coulomb_max_orthonormality_error = 2.0e-14;
+    provenance.coulomb_transform_sha256
+        = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+
+    write_canonical(path, canonical_rows_reversed(), canonical_overlap_s(), provenance);
+    const std::string json = section_body(read_text(path), "PROVENANCE_JSON");
+    EXPECT_NE(json.find(
+                  "\"auxiliary_whitening\":\"global_full_coulomb_v1\","
+                  "\"coulomb_eigenvalues\":[1e-12,4.0],"
+                  "\"coulomb_max_orthonormality_error\":2e-14,"
+                  "\"coulomb_relative_threshold\":1e-10,"
+                  "\"coulomb_transform_sha256\":\"dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd\","
+                  "\"discarded_auxiliary_rank\":1,\"raw_auxiliary_dimension\":2,"
+                  "\"whitened_auxiliary_rank\":1}"),
+              std::string::npos);
+    std::remove(path.c_str());
+}
+
+TEST(SternheimerSIABWriter, RejectsPartialCoulombWhiteningProvenance)
+{
+    const std::string path = test_path("partial_coulomb_whitening_provenance");
+    siab::Provenance provenance = canonical_provenance();
+    provenance.auxiliary_whitening = "global_full_coulomb_v1";
+    EXPECT_THROW(write_canonical(path, canonical_rows_reversed(), canonical_overlap_s(), provenance),
+                 std::invalid_argument);
+
+    provenance.raw_auxiliary_dimension = 2;
+    provenance.whitened_auxiliary_rank = 2;
+    provenance.discarded_auxiliary_rank = 0;
+    provenance.coulomb_relative_threshold = 1.0e-10;
+    provenance.coulomb_eigenvalues = {1.0, 2.0};
+    provenance.coulomb_max_orthonormality_error = 1.0e-14;
+    provenance.coulomb_transform_sha256
+        = "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd";
+    write_canonical(path, canonical_rows_reversed(), canonical_overlap_s(), provenance);
+
+    provenance.whitened_auxiliary_rank = 1;
+    EXPECT_THROW(write_canonical(path, canonical_rows_reversed(), canonical_overlap_s(), provenance),
+                 std::invalid_argument);
+    std::remove(path.c_str());
+}
+
 TEST(SternheimerSIABInput, RegisteredCheckEnforcesLcaoDeltaCombination)
 {
     ModuleIO::ReadInput read_input(0);
@@ -581,7 +633,7 @@ TEST(SternheimerSIABInput, RegisteredCheckEnforcesLcaoDeltaCombination)
 
     input.out_sternheimer_siab = true;
     input.basis_type = "lcao";
-    input.out_sternheimer_librpa = true;
+    input.out_sternheimer_librpa = false;
     input.sternheimer_delta = true;
     input.bessel_nao_rcuts = {8.0};
     item.check_value(item, parameter);
@@ -596,10 +648,34 @@ TEST(SternheimerSIABInput, RegisteredCheckEnforcesLcaoDeltaCombination)
     EXPECT_EXIT(item.check_value(item, parameter), ::testing::ExitedWithCode(1), "");
 
     input.basis_type = "lcao";
-    input.out_sternheimer_librpa = false;
+    input.out_sternheimer_librpa = true;
     EXPECT_EXIT(item.check_value(item, parameter), ::testing::ExitedWithCode(1), "");
 
-    input.out_sternheimer_librpa = true;
+    input.out_sternheimer_librpa = false;
     input.sternheimer_delta = false;
+    EXPECT_EXIT(item.check_value(item, parameter), ::testing::ExitedWithCode(1), "");
+}
+
+TEST(SternheimerSIABInput, CoulombWhiteningThresholdIsExplicitAndPositive)
+{
+    ModuleIO::ReadInput read_input(0);
+    const std::vector<std::pair<std::string, ModuleIO::Input_Item>>& items = read_input.get_input_lists();
+    const auto found = std::find_if(items.begin(), items.end(), [](const auto& item) {
+        return item.first == "sternheimer_siab_coulomb_threshold";
+    });
+    ASSERT_NE(found, items.end());
+    const ModuleIO::Input_Item& item = found->second;
+    ASSERT_TRUE(static_cast<bool>(item.check_value));
+
+    Parameter parameter;
+    Input_para& input = const_cast<Input_para&>(parameter.inp);
+    EXPECT_DOUBLE_EQ(input.sternheimer_siab_coulomb_threshold, 1.0e-10);
+    item.check_value(item, parameter);
+
+    input.sternheimer_siab_coulomb_threshold = 1.0e-8;
+    item.check_value(item, parameter);
+    input.sternheimer_siab_coulomb_threshold = 0.0;
+    EXPECT_EXIT(item.check_value(item, parameter), ::testing::ExitedWithCode(1), "");
+    input.sternheimer_siab_coulomb_threshold = 1.0;
     EXPECT_EXIT(item.check_value(item, parameter), ::testing::ExitedWithCode(1), "");
 }

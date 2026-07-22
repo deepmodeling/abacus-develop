@@ -121,6 +121,60 @@ TEST(SternheimerSIABOverlap, ProducesComplexHermitianPrimitiveOverlap)
     EXPECT_NEAR(s[3].imag(), 0.0, 1.0e-14);
 }
 
+TEST(SternheimerSIABOverlap, ContractsPhysicallyNormalizedReciprocalCoefficients)
+{
+    const std::vector<Complex> response = {{1.0, 1.0}, {2.0, -1.0}, {-0.5, 0.25}};
+    const PrimitiveGrid reciprocal_primitives = {
+        {{1.0, 0.0}, {0.5, 0.5}, {0.0, -1.0}},
+        {{0.0, 1.0}, {1.0, 0.0}, {0.25, 0.0}},
+    };
+
+    const auto q = siab::overlap_q_reciprocal(response, reciprocal_primitives);
+    ASSERT_EQ(q.size(), 2);
+    Complex expected_q0(0.0, 0.0);
+    Complex expected_q1(0.0, 0.0);
+    for (std::size_t ig = 0; ig != response.size(); ++ig)
+    {
+        expected_q0 += std::conj(response[ig]) * reciprocal_primitives[0][ig];
+        expected_q1 += std::conj(response[ig]) * reciprocal_primitives[1][ig];
+    }
+    EXPECT_NEAR(q[0].real(), expected_q0.real(), 1.0e-14);
+    EXPECT_NEAR(q[0].imag(), expected_q0.imag(), 1.0e-14);
+    EXPECT_NEAR(q[1].real(), expected_q1.real(), 1.0e-14);
+    EXPECT_NEAR(q[1].imag(), expected_q1.imag(), 1.0e-14);
+
+    const auto s = siab::overlap_s_reciprocal(reciprocal_primitives);
+    ASSERT_EQ(s.size(), 4);
+    EXPECT_NEAR(s[1].real(), std::conj(s[2]).real(), 1.0e-14);
+    EXPECT_NEAR(s[1].imag(), std::conj(s[2]).imag(), 1.0e-14);
+}
+
+TEST(SternheimerSIABOverlap, ContiguousReciprocalContractionPreservesBraConjugation)
+{
+    const std::vector<Complex> response = {{1.0, 1.0}, {2.0, -1.0}, {-0.5, 0.25}};
+    const PrimitiveGrid primitives = {
+        {{1.0, 0.0}, {0.5, 0.5}, {0.0, -1.0}},
+        {{0.0, 1.0}, {1.0, 0.0}, {0.25, 0.0}},
+    };
+    std::vector<Complex> contiguous;
+    for (const auto& primitive: primitives)
+    {
+        contiguous.insert(contiguous.end(), primitive.begin(), primitive.end());
+    }
+
+    const auto expected = siab::overlap_q_reciprocal(response, primitives);
+    const auto actual = siab::overlap_q_reciprocal_contiguous(response, contiguous, 2, 3);
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t index = 0; index != actual.size(); ++index)
+    {
+        EXPECT_NEAR(actual[index].real(), expected[index].real(), 1.0e-14);
+        EXPECT_NEAR(actual[index].imag(), expected[index].imag(), 1.0e-14);
+    }
+
+    EXPECT_THROW(siab::overlap_q_reciprocal_contiguous(response, contiguous, 3, 2),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerSIABOverlap, RejectsInvalidGridVolume)
 {
     EXPECT_THROW(siab::norm(reference_wavefunction, 0.0), std::invalid_argument);

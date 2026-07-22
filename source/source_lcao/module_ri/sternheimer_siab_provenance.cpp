@@ -291,6 +291,29 @@ std::string sha256_file_manifest(const std::vector<std::string>& paths)
     return digest.finish();
 }
 
+std::string sha256_unique_file_manifest(const std::vector<std::string>& paths)
+{
+    if (paths.empty())
+    {
+        throw std::invalid_argument("Sternheimer SIAB provenance file manifest must not be empty.");
+    }
+
+    std::vector<std::string> unique_paths;
+    std::vector<std::string> unique_hashes;
+    unique_paths.reserve(paths.size());
+    unique_hashes.reserve(paths.size());
+    for (const std::string& path: paths)
+    {
+        const std::string hash = sha256_file(path);
+        if (std::find(unique_hashes.begin(), unique_hashes.end(), hash) == unique_hashes.end())
+        {
+            unique_paths.push_back(path);
+            unique_hashes.push_back(hash);
+        }
+    }
+    return sha256_file_manifest(unique_paths);
+}
+
 std::vector<std::string> resolve_required_input_files(const std::string& directory,
                                                       const std::vector<std::string>& filenames,
                                                       const std::string& label)

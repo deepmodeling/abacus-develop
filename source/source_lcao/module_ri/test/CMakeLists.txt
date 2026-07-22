@@ -98,34 +98,19 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_sternheimer_abacus_st_smoke_test
   LIBS ${math_libs}
-  SOURCES sternheimer_abacus_st_smoke_test.cpp ../sternheimer_kq.cpp
+  SOURCES sternheimer_abacus_st_smoke_test.cpp ../sternheimer_siab_memory.cpp
 )
 AddTest(
-  TARGET MODULE_RI_sternheimer_periodic_solver_test
-  LIBS ${STERNHEIMER_RPA_TEST_LIBS}
-  SOURCES sternheimer_periodic_solver_test.cpp
-          ../sternheimer_periodic_solver.cpp
-          ../sternheimer_fd_solver.cpp
-          ../sternheimer_fd_hamiltonian.cpp
-          ../sternheimer_fd_nonlocal_projector.cpp
-          ../sternheimer_delta.cpp
-          ../sternheimer_kq.cpp
-          ../sternheimer_rpa.cpp
-)
-AddTest(
-  TARGET MODULE_RI_sternheimer_kq_test
+  TARGET MODULE_RI_sternheimer_coulomb_whitening_test
   LIBS ${math_libs}
-  SOURCES sternheimer_kq_test.cpp ../sternheimer_kq.cpp
-)
-AddTest(
-  TARGET MODULE_RI_sternheimer_channel_resources_test
-  LIBS ${math_libs}
-  SOURCES sternheimer_channel_resources_test.cpp ../sternheimer_channel_resources.cpp
+  SOURCES sternheimer_coulomb_whitening_test.cpp ../sternheimer_coulomb_whitening.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_siab_overlap_test
   LIBS ${math_libs}
-  SOURCES test_sternheimer_siab_overlap.cpp ../sternheimer_siab_overlap.cpp
+  SOURCES test_sternheimer_siab_overlap.cpp
+          ../sternheimer_siab_overlap.cpp
+          ../../../source_base/module_external/blas_connector_matrix.cpp
 )
 AddTest(
   TARGET MODULE_RI_sternheimer_siab_writer_test
@@ -147,6 +132,7 @@ if(ENABLE_MPI)
   )
   target_link_libraries(
     MODULE_RI_sternheimer_siab_mpi_test
+    base
     ${math_libs}
     Threads::Threads
     GTest::gtest

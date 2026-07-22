@@ -57,6 +57,19 @@ class Numerical_Basis
         std::vector<std::vector<std::complex<double>>> values;
     };
 
+    struct SIABPrimitiveReciprocalBlock
+    {
+        int type_index;
+        std::string element;
+        int atom_index;
+        int l;
+        int m;
+        int n_primitive;
+        int offset;
+        /// Physically normalized PW coefficients ordered by primitive index.
+        std::vector<std::vector<std::complex<double>>> values;
+    };
+
     /// Return the ABACUS real-spherical-harmonic index for a conventional m.
     static int siab_abacus_m(const int conventional_m);
 
@@ -66,6 +79,13 @@ class Numerical_Basis
     /// Build rank-local, physically normalized SIAB primitives on the PW FFT grid.
     std::vector<SIABPrimitiveGridBlock> siab_primitive_grid_values(
         const int ik,
+        const ModulePW::PW_Basis_K* wfcpw,
+        const Structure_Factor& sf,
+        const UnitCell& ucell,
+        const SIABPrimitiveParameters& parameters);
+
+    std::vector<SIABPrimitiveReciprocalBlock> siab_primitive_reciprocal_values(
+        int ik,
         const ModulePW::PW_Basis_K* wfcpw,
         const Structure_Factor& sf,
         const UnitCell& ucell,

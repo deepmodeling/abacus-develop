@@ -12,6 +12,8 @@
 namespace ModuleRI
 {
 
+constexpr int sternheimer_abfs_transform_grid_chunk = 1024;
+
 struct SternheimerRadialPerturbation
 {
     int type_index = -1;
@@ -58,6 +60,12 @@ struct SternheimerCoulombProjectionDiagnostic
 std::vector<std::vector<SternheimerRadialPerturbation>> make_sternheimer_radial_perturbations_from_orbitals(
     const std::vector<std::vector<std::vector<Numerical_Orbital_Lm>>>& orbitals);
 
+std::vector<SternheimerABFGridChannel> describe_sternheimer_abf_grid_channels(
+    const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
+    const std::vector<int>& atom_types,
+    const std::vector<ModuleBase::Vector3<double>>& atom_positions,
+    int max_channels = -1);
+
 std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
     const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
     const std::vector<int>& atom_types,
@@ -65,34 +73,14 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
     const SternheimerFDHamiltonian::Grid& grid,
     int max_channels = -1);
 
-std::vector<SternheimerABFBlochGridChannel> sample_sternheimer_abf_bloch_grid_channels(
+std::vector<std::vector<double>> sample_sternheimer_abf_grid_channel_transform(
     const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
     const std::vector<int>& atom_types,
     const std::vector<ModuleBase::Vector3<double>>& atom_positions,
     const SternheimerFDHamiltonian::Grid& grid,
-    const SternheimerReducedKPoint& qpoint,
-    int max_channels = -1);
-
-// Solve the periodic Poisson equation for Bloch auxiliary densities.
-// Input channel values are densities; output channel values are Hartree potentials in Ha.
-// gamma_inverse_k2 replaces 1/|G+q|^2 only for the Gamma zero mode and must be
-// zero for non-Gamma q points.
-std::vector<SternheimerABFBlochGridChannel> solve_sternheimer_abf_periodic_full_coulomb(
-    const std::vector<SternheimerABFBlochGridChannel>& density_channels,
-    const SternheimerFDHamiltonian::Grid& grid,
-    const SternheimerReducedKPoint& qpoint,
-    double gamma_inverse_k2);
-
-std::vector<std::complex<double>> sternheimer_grid_projected_matrix(
-    const std::vector<SternheimerABFBlochGridChannel>& densities,
-    const std::vector<SternheimerABFBlochGridChannel>& potentials,
-    double volume_element);
-
-SternheimerCoulombProjectionDiagnostic compare_sternheimer_periodic_coulomb_projection(
-    const std::vector<SternheimerABFBlochGridChannel>& densities,
-    const std::vector<SternheimerABFBlochGridChannel>& potentials,
-    const std::vector<std::complex<double>>& target_coulomb,
-    double volume_element);
+    std::vector<SternheimerABFGridChannel>& raw_channels,
+    const std::vector<double>& raw_to_output,
+    int output_channels);
 
 } // namespace ModuleRI
 

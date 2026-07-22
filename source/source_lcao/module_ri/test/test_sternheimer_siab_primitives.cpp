@@ -305,6 +305,106 @@ TEST_F(SternheimerSIABPrimitivesTest, OrdersBlocksAndPreservesFullComplexPWInner
     }
 }
 
+TEST_F(SternheimerSIABPrimitivesTest, ExposesTheSamePhysicallyNormalizedReciprocalPrimitives)
+{
+    const Numerical_Basis::SIABPrimitiveParameters parameters{
+        ecut_ry,
+        rcut_bohr,
+        false,
+        0.1,
+        tolerance,
+        1,
+    };
+    Numerical_Basis numerical_basis;
+    const auto blocks
+        = numerical_basis.siab_primitive_reciprocal_values(ik, &full_pw, structure_factor, ucell, parameters);
+    Bessel_Basis bessel;
+    initialize_reference_bessel(bessel, ucell, parameters);
+    const int nprimitive = static_cast<int>(std::sqrt(ecut_ry) * rcut_bohr / ModuleBase::PI);
+    ASSERT_EQ(blocks.size(), 4);
+    for (const auto& block: blocks)
+    {
+        ASSERT_EQ(block.values.size(), static_cast<std::size_t>(nprimitive));
+        for (int ie = 0; ie != nprimitive; ++ie)
+        {
+            const auto expected = reciprocal_primitive(bessel,
+                                                       full_pw,
+                                                       ucell,
+                                                       block.l,
+                                                       block.m,
+                                                       ie);
+            ASSERT_EQ(block.values[static_cast<std::size_t>(ie)].size(), expected.size());
+            for (std::size_t ig = 0; ig != expected.size(); ++ig)
+            {
+                expect_complex_near(block.values[static_cast<std::size_t>(ie)][ig], expected[ig]);
+            }
+        }
+    }
+}
+
+TEST_F(SternheimerSIABPrimitivesTest, RecoversNormalizedCoefficientsFromPhysicalGridValues)
+{
+    const Numerical_Basis::SIABPrimitiveParameters parameters{
+        ecut_ry,
+        rcut_bohr,
+        false,
+        0.1,
+        tolerance,
+        1,
+    };
+    Bessel_Basis bessel;
+    initialize_reference_bessel(bessel, ucell, parameters);
+    const auto expected = reciprocal_primitive(bessel, full_pw, ucell, 1, -1, 0);
+    const auto physical_grid = physical_complex_grid(full_pw, ucell, expected);
+    std::vector<Complex> recovered(static_cast<std::size_t>(full_pw.npwk[ik]), Complex(0.0, 0.0));
+    full_pw.real2recip(physical_grid.data(), recovered.data(), ik);
+    for (Complex& value: recovered)
+    {
+        value *= std::sqrt(ucell.omega);
+    }
+    ASSERT_EQ(recovered.size(), expected.size());
+    for (std::size_t ig = 0; ig != expected.size(); ++ig)
+    {
+        expect_complex_near(recovered[ig], expected[ig]);
+    }
+}
+
+TEST_F(SternheimerSIABPrimitivesTest, UsesGlobalAtomIndicesAcrossSpecies)
+{
+    delete[] ucell.atoms;
+    ucell.ntype = 2;
+    ucell.nat = 2;
+    ucell.lmax = 0;
+    ucell.lmaxmax = 0;
+    ucell.nmax = 1;
+    ucell.atoms = new Atom[2];
+    for (int type = 0; type != 2; ++type)
+    {
+        ucell.atoms[type].type = type;
+        ucell.atoms[type].label = type == 0 ? "H" : "H_empty";
+        ucell.atoms[type].na = 1;
+        ucell.atoms[type].nwl = 0;
+        ucell.atoms[type].l_nchi = {1};
+        ucell.atoms[type].tau = {atom_tau};
+    }
+    const Numerical_Basis::SIABPrimitiveParameters parameters{
+        ecut_ry,
+        rcut_bohr,
+        false,
+        0.1,
+        tolerance,
+        0,
+    };
+    Numerical_Basis numerical_basis;
+    const auto blocks
+        = numerical_basis.siab_primitive_reciprocal_values(ik, &full_pw, structure_factor, ucell, parameters);
+    ASSERT_EQ(blocks.size(), 2);
+    EXPECT_EQ(blocks[0].element, "H");
+    EXPECT_EQ(blocks[0].atom_index, 0);
+    EXPECT_EQ(blocks[1].element, "H_empty");
+    EXPECT_EQ(blocks[1].atom_index, 1);
+}
+
 TEST_F(SternheimerSIABPrimitivesTest, ExplicitLmaxExtendsPrimitivesBeyondInputOrbitalChannels)
 {
     const Numerical_Basis::SIABPrimitiveParameters parameters{
@@ -535,14 +635,16 @@ std::complex<double>* Structure_Factor::get_sk(const int ik_in,
                                                const int ia,
                                                const ModulePW::PW_Basis_K* wfc_basis) const
 {
-    EXPECT_EQ(it, 0);
-    EXPECT_EQ(ia, 0);
+    EXPECT_GE(it, 0);
+    EXPECT_GE(ia, 0);
     const int npw = wfc_basis->npwk[ik_in];
     std::complex<double>* sk = new std::complex<double>[npw];
     for (int ig = 0; ig < npw; ++ig)
     {
         const ModuleBase::Vector3<double> gdirect = wfc_basis->getgdirect(ik_in, ig);
-        sk[ig] = std::exp(Complex(0.0, -ModuleBase::TWO_PI * (gdirect * atom_tau)));
+        const ModuleBase::Vector3<double> shifted_tau
+            = atom_tau + ModuleBase::Vector3<double>(0.013 * it, 0.017 * ia, 0.0);
+        sk[ig] = std::exp(Complex(0.0, -ModuleBase::TWO_PI * (gdirect * shifted_tau)));
     }
     return sk;
 }

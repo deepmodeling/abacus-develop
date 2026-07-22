@@ -63,6 +63,20 @@ TEST(SternheimerSIABProvenance, FileManifestIsOrderedAndRejectsMissingInput)
     EXPECT_THROW(siab::sha256_file("sternheimer_siab_missing_file.tmp"), std::runtime_error);
 }
 
+TEST(SternheimerSIABProvenance, UniqueFileManifestIgnoresRepeatedAuxiliaryBasisContents)
+{
+    const TemporaryFile first("sternheimer_siab_sha256_unique_first.tmp", "same auxiliary basis");
+    const TemporaryFile duplicate("sternheimer_siab_sha256_unique_duplicate.tmp", "same auxiliary basis");
+    const TemporaryFile second("sternheimer_siab_sha256_unique_second.tmp", "different auxiliary basis");
+
+    const std::string single_hash = siab::sha256_file(first.path());
+    EXPECT_EQ(siab::sha256_unique_file_manifest({first.path(), first.path()}), single_hash);
+    EXPECT_EQ(siab::sha256_unique_file_manifest({first.path(), duplicate.path()}), single_hash);
+    EXPECT_EQ(siab::sha256_unique_file_manifest({first.path(), duplicate.path(), second.path()}),
+              siab::sha256_file_manifest({first.path(), second.path()}));
+    EXPECT_THROW(siab::sha256_unique_file_manifest({}), std::invalid_argument);
+}
+
 TEST(SternheimerSIABProvenance, ResolvesExplicitFilesWithoutPlaceholders)
 {
     const TemporaryFile file("sternheimer_siab_resolve.tmp", "x");

@@ -923,7 +923,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             rpa_lri_double.out_velocity(ucell, gd, two_center_bundle, pv, *psi, pelec);
     }
 
-    if (inp.out_sternheimer_librpa)
+    if (inp.out_sternheimer_librpa || inp.out_sternheimer_siab)
     {
         if (pelec == nullptr || pelec->pot == nullptr || pw_rho == nullptr || psi == nullptr)
         {

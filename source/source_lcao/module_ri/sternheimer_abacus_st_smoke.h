@@ -3,7 +3,7 @@
 
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
 #include "source_lcao/module_ri/sternheimer_abacus_fd_adapter.h"
-#include "source_lcao/module_ri/sternheimer_supercell_sector.h"
+#include "source_lcao/module_ri/sternheimer_siab_memory.h"
 
 #include <algorithm>
 #include <array>
@@ -60,6 +60,19 @@ struct SternheimerLCAOOccupiedKPoint
 inline bool sternheimer_uses_lcao_zero_order(const bool use_delta_sternheimer)
 {
     return use_delta_sternheimer;
+}
+
+inline bool sternheimer_builds_product_pca_auxiliary_basis(
+    const std::vector<std::string>& explicit_abfs_files)
+{
+    return explicit_abfs_files.empty();
+}
+
+inline std::string sternheimer_abfs_perturbation_source(
+    const std::vector<std::string>& explicit_abfs_files)
+{
+    return sternheimer_builds_product_pca_auxiliary_basis(explicit_abfs_files) ? "product_pca"
+                                                                               : "explicit_abfs";
 }
 
 inline int sternheimer_lcao_physical_spin_channel_count(const int nspin)

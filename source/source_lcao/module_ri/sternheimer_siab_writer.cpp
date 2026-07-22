@@ -172,6 +172,8 @@ void validate_provenance(const Provenance& provenance)
     validate_utf8_field(provenance.pseudopotential_sha256, "pseudopotential_sha256");
     validate_utf8_field(provenance.spin_convention, "spin_convention");
     validate_utf8_field(provenance.executable_sha256, "executable_sha256");
+    validate_utf8_field(provenance.auxiliary_whitening, "auxiliary_whitening");
+    validate_utf8_field(provenance.coulomb_transform_sha256, "coulomb_transform_sha256");
     if (!valid_commit(provenance.abacus_commit))
     {
         throw std::invalid_argument("Sternheimer SIAB provenance requires a 40- or 64-digit hexadecimal ABACUS commit");
@@ -248,6 +250,59 @@ void validate_provenance(const Provenance& provenance)
                 throw std::invalid_argument(
                     "Sternheimer SIAB production frequencies must be strictly increasing in frequency-index order");
             }
+        }
+    }
+
+    const bool has_whitening = !provenance.auxiliary_whitening.empty()
+                               || provenance.raw_auxiliary_dimension != 0
+                               || provenance.whitened_auxiliary_rank != 0
+                               || provenance.discarded_auxiliary_rank != 0
+                               || provenance.coulomb_relative_threshold != -1.0
+                               || !provenance.coulomb_eigenvalues.empty()
+                               || provenance.coulomb_max_orthonormality_error != -1.0
+                               || !provenance.coulomb_transform_sha256.empty();
+    if (has_whitening)
+    {
+        if (provenance.auxiliary_whitening != "global_full_coulomb_v1"
+            || provenance.raw_auxiliary_dimension <= 0 || provenance.whitened_auxiliary_rank <= 0
+            || provenance.discarded_auxiliary_rank < 0
+            || provenance.whitened_auxiliary_rank + provenance.discarded_auxiliary_rank
+                   != provenance.raw_auxiliary_dimension
+            || provenance.coulomb_eigenvalues.size()
+                   != static_cast<std::size_t>(provenance.raw_auxiliary_dimension)
+            || !std::isfinite(provenance.coulomb_relative_threshold)
+            || provenance.coulomb_relative_threshold <= 0.0 || provenance.coulomb_relative_threshold >= 1.0
+            || !std::isfinite(provenance.coulomb_max_orthonormality_error)
+            || provenance.coulomb_max_orthonormality_error < 0.0
+            || provenance.coulomb_max_orthonormality_error > 1.0e-8
+            || !valid_hex(provenance.coulomb_transform_sha256, 64))
+        {
+            throw std::invalid_argument(
+                "Sternheimer SIAB Coulomb-whitening provenance fields are incomplete or inconsistent");
+        }
+        for (std::size_t index = 0; index != provenance.coulomb_eigenvalues.size(); ++index)
+        {
+            if (!std::isfinite(provenance.coulomb_eigenvalues[index])
+                || (index != 0
+                    && provenance.coulomb_eigenvalues[index] < provenance.coulomb_eigenvalues[index - 1]))
+            {
+                throw std::invalid_argument(
+                    "Sternheimer SIAB Coulomb eigenvalues must be finite and sorted in ascending order");
+            }
+        }
+        const double largest = provenance.coulomb_eigenvalues.back();
+        if (largest <= 0.0)
+        {
+            throw std::invalid_argument("Sternheimer SIAB Coulomb spectrum must contain a positive eigenvalue");
+        }
+        const double cutoff = provenance.coulomb_relative_threshold * largest;
+        const int retained = static_cast<int>(std::count_if(provenance.coulomb_eigenvalues.begin(),
+                                                            provenance.coulomb_eigenvalues.end(),
+                                                            [cutoff](const double value) { return value > cutoff; }));
+        if (retained != provenance.whitened_auxiliary_rank)
+        {
+            throw std::invalid_argument(
+                "Sternheimer SIAB Coulomb spectrum does not reproduce the recorded retained rank");
         }
     }
 }
@@ -630,6 +685,26 @@ std::string provenance_json(const Provenance& provenance)
         output << "],\"mpi_ranks\":" << provenance.mpi_ranks << ",\"omp_threads\":" << provenance.omp_threads
                << ",\"sternheimer_nfreq\":" << provenance.sternheimer_nfreq;
     }
+    if (!provenance.auxiliary_whitening.empty())
+    {
+        output << ",\"auxiliary_whitening\":" << json_string(provenance.auxiliary_whitening)
+               << ",\"coulomb_eigenvalues\":[";
+        for (std::size_t index = 0; index != provenance.coulomb_eigenvalues.size(); ++index)
+        {
+            if (index != 0)
+            {
+                output << ',';
+            }
+            output << format_double(provenance.coulomb_eigenvalues[index]);
+        }
+        output << "],\"coulomb_max_orthonormality_error\":"
+               << format_double(provenance.coulomb_max_orthonormality_error)
+               << ",\"coulomb_relative_threshold\":" << format_double(provenance.coulomb_relative_threshold)
+               << ",\"coulomb_transform_sha256\":" << json_string(provenance.coulomb_transform_sha256)
+               << ",\"discarded_auxiliary_rank\":" << provenance.discarded_auxiliary_rank
+               << ",\"raw_auxiliary_dimension\":" << provenance.raw_auxiliary_dimension
+               << ",\"whitened_auxiliary_rank\":" << provenance.whitened_auxiliary_rank;
+    }
     output << '}';
     if (!output.good())
     {
@@ -685,6 +760,17 @@ void write_v1(const std::string& path,
     const std::vector<const ReferenceRow*> sorted_rows = validate_and_sort_rows(rows, n_primitive);
     validate_overlap_s(overlap_s, n_primitive);
     validate_provenance(provenance);
+    if (!provenance.auxiliary_whitening.empty())
+    {
+        for (const ReferenceRow* row: sorted_rows)
+        {
+            if (row->auxiliary_channel >= provenance.whitened_auxiliary_rank)
+            {
+                throw std::invalid_argument(
+                    "Sternheimer SIAB reference row exceeds the retained Coulomb-whitened auxiliary rank");
+            }
+        }
+    }
     const std::string json = provenance_json(provenance);
 
     const std::string temporary_path = path + ".tmp";

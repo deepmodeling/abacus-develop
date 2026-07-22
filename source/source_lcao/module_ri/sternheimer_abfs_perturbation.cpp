@@ -2,7 +2,7 @@
 
 #include "source_base/constants.h"
 #include "source_base/math_ylmreal.h"
-#include <fftw3.h>
+#include "source_base/module_external/blas_connector.h"
 
 #include <algorithm>
 #include <array>
@@ -193,7 +193,53 @@ std::vector<std::vector<SternheimerRadialPerturbation>> make_sternheimer_radial_
     return radials_by_type;
 }
 
-std::vector<SternheimerABFBlochGridChannel> sample_sternheimer_abf_bloch_grid_channels(
+std::vector<SternheimerABFGridChannel> describe_sternheimer_abf_grid_channels(
+    const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
+    const std::vector<int>& atom_types,
+    const std::vector<ModuleBase::Vector3<double>>& atom_positions,
+    const int max_channels)
+{
+    if (atom_types.size() != atom_positions.size())
+    {
+        throw std::invalid_argument("Sternheimer ABFS perturbation atom type/position count mismatch.");
+    }
+
+    std::vector<SternheimerABFGridChannel> channels;
+    int channel_index = 0;
+    for (std::size_t iat = 0; iat != atom_types.size(); ++iat)
+    {
+        const int type = atom_types[iat];
+        if (type < 0 || type >= static_cast<int>(radials_by_type.size()))
+        {
+            throw std::invalid_argument("Sternheimer ABFS perturbation atom type is out of range.");
+        }
+        int atom_local_index = 0;
+        for (const SternheimerRadialPerturbation& radial: radials_by_type[static_cast<std::size_t>(type)])
+        {
+            validate_radial(radial);
+            for (int m_index = 0; m_index != 2 * radial.angular_momentum + 1; ++m_index)
+            {
+                if (max_channels > 0 && static_cast<int>(channels.size()) >= max_channels)
+                {
+                    return channels;
+                }
+                SternheimerABFGridChannel channel;
+                channel.channel_index = channel_index++;
+                channel.atom_index = static_cast<int>(iat);
+                channel.atom_local_index = atom_local_index++;
+                channel.type_index = type;
+                channel.angular_momentum = radial.angular_momentum;
+                channel.radial_index = radial.radial_index;
+                channel.magnetic_index = m_index;
+                channel.label = radial.label;
+                channels.push_back(std::move(channel));
+            }
+        }
+    }
+    return channels;
+}
+
+std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
     const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
     const std::vector<int>& atom_types,
     const std::vector<ModuleBase::Vector3<double>>& atom_positions,
@@ -301,278 +347,186 @@ std::vector<SternheimerABFBlochGridChannel> sample_sternheimer_abf_bloch_grid_ch
     return channels;
 }
 
-std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
+std::vector<std::vector<double>> sample_sternheimer_abf_grid_channel_transform(
     const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
     const std::vector<int>& atom_types,
     const std::vector<ModuleBase::Vector3<double>>& atom_positions,
     const SternheimerFDHamiltonian::Grid& grid,
-    const int max_channels)
-{
-    const std::vector<SternheimerABFBlochGridChannel> bloch_channels
-        = sample_sternheimer_abf_bloch_grid_channels(
-            radials_by_type, atom_types, atom_positions, grid, {0.0, 0.0, 0.0}, max_channels);
-
-    std::vector<SternheimerABFGridChannel> channels;
-    channels.reserve(bloch_channels.size());
-    for (const SternheimerABFBlochGridChannel& bloch: bloch_channels)
-    {
-        SternheimerABFGridChannel channel;
-        channel.channel_index = bloch.channel_index;
-        channel.atom_index = bloch.atom_index;
-        channel.atom_local_index = bloch.atom_local_index;
-        channel.type_index = bloch.type_index;
-        channel.angular_momentum = bloch.angular_momentum;
-        channel.radial_index = bloch.radial_index;
-        channel.magnetic_index = bloch.magnetic_index;
-        channel.label = bloch.label;
-        channel.max_abs = bloch.max_abs;
-        channel.potential_r.reserve(bloch.potential_r.size());
-        for (const std::complex<double>& value: bloch.potential_r)
-        {
-            if (std::abs(value.imag()) > 1.0e-13 * std::max(1.0, channel.max_abs))
-            {
-                throw std::runtime_error("Sternheimer ABFS Gamma potential acquired an unexpected imaginary part.");
-            }
-            channel.potential_r.push_back(value.real());
-        }
-        channels.push_back(std::move(channel));
-    }
-    return channels;
-}
-
-std::vector<SternheimerABFBlochGridChannel> solve_sternheimer_abf_periodic_full_coulomb(
-    const std::vector<SternheimerABFBlochGridChannel>& density_channels,
-    const SternheimerFDHamiltonian::Grid& grid,
-    const SternheimerReducedKPoint& qpoint,
-    const double gamma_inverse_k2)
+    std::vector<SternheimerABFGridChannel>& raw_channels,
+    const std::vector<double>& raw_to_output,
+    const int output_channels)
 {
     validate_grid(grid);
-    validate_qpoint(qpoint, grid.periodic);
-    if (!grid.periodic)
+    if (atom_types.size() != atom_positions.size())
     {
-        throw std::invalid_argument("Sternheimer periodic Poisson solve requires a periodic grid.");
+        throw std::invalid_argument("Sternheimer ABFS perturbation atom type/position count mismatch.");
     }
-    if (!std::isfinite(gamma_inverse_k2) || gamma_inverse_k2 < 0.0)
+    if (raw_channels.empty() || output_channels <= 0
+        || raw_to_output.size()
+               != raw_channels.size() * static_cast<std::size_t>(output_channels))
     {
-        throw std::invalid_argument("Sternheimer periodic Poisson Gamma factor must be finite and nonnegative.");
+        throw std::invalid_argument("Sternheimer ABFS channel transform has inconsistent dimensions.");
     }
-    const bool gamma_qpoint = is_gamma_qpoint(qpoint);
-    if (!gamma_qpoint && gamma_inverse_k2 != 0.0)
-    {
-        throw std::invalid_argument("A non-Gamma periodic Poisson solve cannot use a Gamma zero-mode factor.");
-    }
+
     const int size = grid_size(grid);
-    for (const SternheimerABFBlochGridChannel& density: density_channels)
-    {
-        if (density.potential_r.size() != static_cast<std::size_t>(size))
-        {
-            throw std::invalid_argument(
-                "Sternheimer periodic Poisson density size does not match the grid.");
-        }
-    }
-    if (density_channels.empty())
-    {
-        return {};
-    }
+    const double lx = grid.nx * grid.hx;
+    const double ly = grid.ny * grid.hy;
+    const double lz = grid.nz * grid.hz;
+    const int raw_count = static_cast<int>(raw_channels.size());
+    std::vector<std::vector<double>> transformed(static_cast<std::size_t>(output_channels),
+                                                  std::vector<double>(static_cast<std::size_t>(size), 0.0));
 
-    fftw_complex* buffer = fftw_alloc_complex(static_cast<std::size_t>(size));
-    if (buffer == nullptr)
+    std::vector<int> max_l_by_type(radials_by_type.size(), 0);
+    std::size_t expected_raw = 0;
+    for (std::size_t atom_index = 0; atom_index != atom_types.size() && expected_raw != raw_channels.size();
+         ++atom_index)
     {
-        throw std::bad_alloc();
-    }
-    fftw_plan forward = fftw_plan_dft_3d(
-        grid.nx, grid.ny, grid.nz, buffer, buffer, FFTW_FORWARD, FFTW_ESTIMATE);
-    fftw_plan backward = fftw_plan_dft_3d(
-        grid.nx, grid.ny, grid.nz, buffer, buffer, FFTW_BACKWARD, FFTW_ESTIMATE);
-    if (forward == nullptr || backward == nullptr)
-    {
-        if (forward != nullptr)
+        const int type = atom_types[atom_index];
+        if (type < 0 || type >= static_cast<int>(radials_by_type.size()))
         {
-            fftw_destroy_plan(forward);
+            throw std::invalid_argument("Sternheimer ABFS raw channel atom type is inconsistent.");
         }
-        if (backward != nullptr)
+        int atom_local_index = 0;
+        for (const SternheimerRadialPerturbation& radial: radials_by_type[static_cast<std::size_t>(type)])
         {
-            fftw_destroy_plan(backward);
-        }
-        fftw_free(buffer);
-        throw std::runtime_error("Failed to initialize the Sternheimer periodic Poisson FFT.");
-    }
-
-    const SternheimerFDLatticeVectors dual = sternheimer_fd_grid_dual_vectors(grid);
-    std::vector<SternheimerABFBlochGridChannel> potentials;
-    potentials.reserve(density_channels.size());
-    try
-    {
-        for (const SternheimerABFBlochGridChannel& density: density_channels)
-        {
-            for (int ix = 0; ix != grid.nx; ++ix)
+            validate_radial(radial);
+            max_l_by_type[static_cast<std::size_t>(type)]
+                = std::max(max_l_by_type[static_cast<std::size_t>(type)], radial.angular_momentum);
+            for (int magnetic = 0; magnetic != 2 * radial.angular_momentum + 1; ++magnetic)
             {
-                for (int iy = 0; iy != grid.ny; ++iy)
+                if (expected_raw == raw_channels.size())
                 {
-                    for (int iz = 0; iz != grid.nz; ++iz)
+                    break;
+                }
+                const SternheimerABFGridChannel& channel = raw_channels[expected_raw];
+                if (channel.channel_index != static_cast<int>(expected_raw)
+                    || channel.atom_index != static_cast<int>(atom_index)
+                    || channel.atom_local_index != atom_local_index || channel.type_index != type
+                    || channel.angular_momentum != radial.angular_momentum
+                    || channel.radial_index != radial.radial_index || channel.magnetic_index != magnetic
+                    || channel.label != radial.label)
+                {
+                    throw std::invalid_argument("Sternheimer ABFS raw channel metadata is not in canonical order.");
+                }
+                ++expected_raw;
+                ++atom_local_index;
+            }
+        }
+    }
+    if (expected_raw != raw_channels.size())
+    {
+        throw std::invalid_argument("Sternheimer ABFS raw channel metadata exceeds the available radial basis.");
+    }
+
+    constexpr int chunk_capacity = sternheimer_abfs_transform_grid_chunk;
+    std::vector<double> raw_chunk(static_cast<std::size_t>(chunk_capacity)
+                                      * static_cast<std::size_t>(raw_count),
+                                  0.0);
+    std::vector<double> output_chunk(static_cast<std::size_t>(chunk_capacity)
+                                         * static_cast<std::size_t>(output_channels),
+                                     0.0);
+    std::vector<std::size_t> filled_counts(static_cast<std::size_t>(chunk_capacity), 0);
+    for (int first = 0; first < size; first += chunk_capacity)
+    {
+        const int chunk_size = std::min(chunk_capacity, size - first);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int local = 0; local != chunk_size; ++local)
+        {
+            std::vector<double> ylm;
+            const int linear = first + local;
+            const int ix = linear / (grid.ny * grid.nz);
+            const int remainder = linear % (grid.ny * grid.nz);
+            const int iy = remainder / grid.nz;
+            const int iz = remainder % grid.nz;
+            std::size_t raw_index = 0;
+            for (std::size_t atom_index = 0; atom_index != atom_types.size() && raw_index != raw_channels.size();
+                 ++atom_index)
+            {
+                const int type = atom_types[atom_index];
+                double dx = ix * grid.hx - atom_positions[atom_index].x;
+                double dy = iy * grid.hy - atom_positions[atom_index].y;
+                double dz = iz * grid.hz - atom_positions[atom_index].z;
+                if (grid.periodic)
+                {
+                    dx = minimum_image_displacement(dx, lx);
+                    dy = minimum_image_displacement(dy, ly);
+                    dz = minimum_image_displacement(dz, lz);
+                }
+                const double radius = std::sqrt(dx * dx + dy * dy + dz * dz);
+                evaluate_real_spherical_harmonics(max_l_by_type[static_cast<std::size_t>(type)], dx, dy, dz, ylm);
+                for (const SternheimerRadialPerturbation& radial:
+                     radials_by_type[static_cast<std::size_t>(type)])
+                {
+                    const double radial_value
+                        = interpolate_radial(radial.radial_grid, radial.radial_values, radius);
+                    for (int magnetic = 0; magnetic != 2 * radial.angular_momentum + 1; ++magnetic)
                     {
-                        const int ir = grid_index(grid, ix, iy, iz);
-                        const double phase_angle = -ModuleBase::TWO_PI
-                                                   * (qpoint[0] * static_cast<double>(ix) / grid.nx
-                                                      + qpoint[1] * static_cast<double>(iy) / grid.ny
-                                                      + qpoint[2] * static_cast<double>(iz) / grid.nz);
-                        const std::complex<double> periodic_value
-                            = std::exp(std::complex<double>(0.0, phase_angle))
-                              * density.potential_r[static_cast<std::size_t>(ir)];
-                        buffer[ir][0] = periodic_value.real();
-                        buffer[ir][1] = periodic_value.imag();
+                        if (raw_index == raw_channels.size())
+                        {
+                            break;
+                        }
+                        const int ylm_index = radial.angular_momentum * radial.angular_momentum + magnetic;
+                        const double value = radial_value * ylm[static_cast<std::size_t>(ylm_index)];
+                        raw_chunk[static_cast<std::size_t>(local) * static_cast<std::size_t>(raw_count)
+                                  + raw_index] = value;
+                        ++raw_index;
                     }
                 }
             }
-            fftw_execute(forward);
-
-            for (int ix = 0; ix != grid.nx; ++ix)
-            {
-                for (int iy = 0; iy != grid.ny; ++iy)
-                {
-                    for (int iz = 0; iz != grid.nz; ++iz)
-                    {
-                        const std::array<double, 3> reduced_wavevector{
-                            static_cast<double>(signed_fft_index(ix, grid.nx)) + qpoint[0],
-                            static_cast<double>(signed_fft_index(iy, grid.ny)) + qpoint[1],
-                            static_cast<double>(signed_fft_index(iz, grid.nz)) + qpoint[2]};
-                        std::array<double, 3> wavevector{};
-                        for (int direction = 0; direction != 3; ++direction)
-                        {
-                            for (int component = 0; component != 3; ++component)
-                            {
-                                wavevector[component]
-                                    += ModuleBase::TWO_PI * reduced_wavevector[direction] * dual[direction][component];
-                            }
-                        }
-                        const double wavevector_squared
-                            = wavevector[0] * wavevector[0]
-                              + wavevector[1] * wavevector[1]
-                              + wavevector[2] * wavevector[2];
-                        double factor = 0.0;
-                        if (wavevector_squared <= 1.0e-28)
-                        {
-                            if (!gamma_qpoint)
-                            {
-                                throw std::runtime_error(
-                                    "Sternheimer periodic Poisson solve encountered an unexpected zero G+q vector.");
-                            }
-                            factor = ModuleBase::FOUR_PI * gamma_inverse_k2
-                                     / static_cast<double>(size);
-                        }
-                        else
-                        {
-                            factor = ModuleBase::FOUR_PI
-                                     / (wavevector_squared * static_cast<double>(size));
-                        }
-                        const int ig = grid_index(grid, ix, iy, iz);
-                        buffer[ig][0] *= factor;
-                        buffer[ig][1] *= factor;
-                    }
-                }
-            }
-            fftw_execute(backward);
-
-            SternheimerABFBlochGridChannel potential = density;
-            potential.max_abs = 0.0;
-            for (int ix = 0; ix != grid.nx; ++ix)
-            {
-                for (int iy = 0; iy != grid.ny; ++iy)
-                {
-                    for (int iz = 0; iz != grid.nz; ++iz)
-                    {
-                        const int ir = grid_index(grid, ix, iy, iz);
-                        const double phase_angle = ModuleBase::TWO_PI
-                                                   * (qpoint[0] * static_cast<double>(ix) / grid.nx
-                                                      + qpoint[1] * static_cast<double>(iy) / grid.ny
-                                                      + qpoint[2] * static_cast<double>(iz) / grid.nz);
-                        const std::complex<double> periodic_potential(buffer[ir][0], buffer[ir][1]);
-                        potential.potential_r[static_cast<std::size_t>(ir)]
-                            = std::exp(std::complex<double>(0.0, phase_angle)) * periodic_potential;
-                        potential.max_abs = std::max(
-                            potential.max_abs,
-                            std::abs(potential.potential_r[static_cast<std::size_t>(ir)]));
-                    }
-                }
-            }
-            potentials.push_back(std::move(potential));
+            filled_counts[static_cast<std::size_t>(local)] = raw_index;
         }
-    }
-    catch (...)
-    {
-        fftw_destroy_plan(forward);
-        fftw_destroy_plan(backward);
-        fftw_free(buffer);
-        throw;
-    }
-    fftw_destroy_plan(forward);
-    fftw_destroy_plan(backward);
-    fftw_free(buffer);
-    return potentials;
-}
-
-std::vector<std::complex<double>> sternheimer_grid_projected_matrix(
-    const std::vector<SternheimerABFBlochGridChannel>& densities,
-    const std::vector<SternheimerABFBlochGridChannel>& potentials,
-    const double volume_element)
-{
-    if (!(volume_element > 0.0) || !std::isfinite(volume_element))
-    {
-        throw std::invalid_argument("Sternheimer grid projection requires a positive finite volume element.");
-    }
-    if (densities.size() != potentials.size())
-    {
-        throw std::invalid_argument("Sternheimer grid projection channel counts differ.");
-    }
-    const std::size_t size = densities.size();
-    std::vector<std::complex<double>> matrix(size * size, std::complex<double>(0.0, 0.0));
-    for (std::size_t row = 0; row != size; ++row)
-    {
-        for (std::size_t col = 0; col != size; ++col)
+        for (int local = 0; local != chunk_size; ++local)
         {
-            if (densities[row].potential_r.size() != potentials[col].potential_r.size())
+            if (filled_counts[static_cast<std::size_t>(local)] != raw_channels.size())
             {
-                throw std::invalid_argument("Sternheimer grid projection vector sizes differ.");
+                throw std::runtime_error("Sternheimer ABFS grid sampling did not fill every raw channel.");
             }
-            std::complex<double> value(0.0, 0.0);
-            for (std::size_t ir = 0; ir != densities[row].potential_r.size(); ++ir)
+        }
+
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static)
+#endif
+        for (int raw = 0; raw != raw_count; ++raw)
+        {
+            double chunk_max = 0.0;
+            for (int local = 0; local != chunk_size; ++local)
             {
-                value += std::conj(densities[row].potential_r[ir]) * potentials[col].potential_r[ir];
+                chunk_max = std::max(
+                    chunk_max,
+                    std::abs(raw_chunk[static_cast<std::size_t>(local) * static_cast<std::size_t>(raw_count)
+                                       + static_cast<std::size_t>(raw)]));
             }
-            matrix[row * size + col] = volume_element * value;
+            raw_channels[static_cast<std::size_t>(raw)].max_abs
+                = std::max(raw_channels[static_cast<std::size_t>(raw)].max_abs, chunk_max);
+        }
+
+        BlasConnector::gemm('N',
+                            'N',
+                            chunk_size,
+                            output_channels,
+                            raw_count,
+                            1.0,
+                            raw_chunk.data(),
+                            raw_count,
+                            raw_to_output.data(),
+                            output_channels,
+                            0.0,
+                            output_chunk.data(),
+                            output_channels);
+        for (int local = 0; local != chunk_size; ++local)
+        {
+            const std::size_t grid_point = static_cast<std::size_t>(first + local);
+            for (int output = 0; output != output_channels; ++output)
+            {
+                transformed[static_cast<std::size_t>(output)][grid_point]
+                    = output_chunk[static_cast<std::size_t>(local) * static_cast<std::size_t>(output_channels)
+                                   + static_cast<std::size_t>(output)];
+            }
         }
     }
-    return matrix;
-}
-
-SternheimerCoulombProjectionDiagnostic compare_sternheimer_periodic_coulomb_projection(
-    const std::vector<SternheimerABFBlochGridChannel>& densities,
-    const std::vector<SternheimerABFBlochGridChannel>& potentials,
-    const std::vector<std::complex<double>>& target_coulomb,
-    const double volume_element)
-{
-    const std::size_t size = densities.size();
-    const std::size_t matrix_size = size * size;
-    if (size == 0 || potentials.size() != size || target_coulomb.size() != matrix_size)
-    {
-        throw std::invalid_argument("Sternheimer Coulomb projection comparison received inconsistent dimensions.");
-    }
-
-    const std::vector<std::complex<double>> current
-        = sternheimer_grid_projected_matrix(densities, potentials, volume_element);
-    double target_norm_squared = 0.0;
-    double difference_norm_squared = 0.0;
-    for (std::size_t index = 0; index != matrix_size; ++index)
-    {
-        target_norm_squared += std::norm(target_coulomb[index]);
-        difference_norm_squared += std::norm(target_coulomb[index] - current[index]);
-    }
-    if (!(target_norm_squared > 0.0))
-    {
-        throw std::invalid_argument("Sternheimer target Coulomb matrix has zero norm.");
-    }
-
-    return {std::sqrt(difference_norm_squared / target_norm_squared)};
+    return transformed;
 }
 
 } // namespace ModuleRI
