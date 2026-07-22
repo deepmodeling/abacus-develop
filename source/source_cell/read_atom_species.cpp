@@ -3,7 +3,6 @@
 #include <sstream>
 
 #include "source_base/tool_title.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 
 namespace unitcell
 {
@@ -106,33 +105,27 @@ bool read_atom_species(std::ifstream& ifa,
     }
 #ifdef __LCAO
     // Peize Lin add 2016-09-23
-#ifdef __MPI 
-#ifdef __EXX
-    if( GlobalC::exx_info.info_global.cal_exx || rpa )
+    // Read the ABFS/JLE orbital filenames (used by LCAO EXX) into the UnitCell.
+    // The EXX layer copies these into the global Exx_Info during its own setup, so
+    // source_cell does not depend on the XC module. Absent sections are no-ops.
+    if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_ORBITAL") )
     {
-        if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_ORBITAL") )
+        for(int i=0; i<ntype; i++)
         {
-            for(int i=0; i<ntype; i++)
-            {
-                std::string ofile;
-                ifa >> ofile;
-                GlobalC::exx_info.info_ri.files_abfs.push_back(ofile);
-                GlobalC::exx_info.info_opt_abfs.files_abfs.push_back(ofile);
-            }
-        }
-        if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_JLES_ORBITAL") )
-        {
-            for(int i=0; i<ntype; i++)
-            {
-                std::string ofile;
-                ifa >> ofile;
-                GlobalC::exx_info.info_opt_abfs.files_jles.push_back(ofile);
-            }
+            std::string ofile;
+            ifa >> ofile;
+            ucell.abfs_orbital_files.push_back(ofile);
         }
     }
-
-#endif // __EXX
-#endif // __MPI
+    if( ModuleBase::GlobalFunc::SCAN_LINE_BEGIN(ifa, "ABFS_JLES_ORBITAL") )
+    {
+        for(int i=0; i<ntype; i++)
+        {
+            std::string ofile;
+            ifa >> ofile;
+            ucell.jle_orbital_files.push_back(ofile);
+        }
+    }
 #endif // __LCAO
     return true;
 }

@@ -78,10 +78,22 @@ void LCAO_domain::set_pot(
           &(pelec->f_en.etxc), &(pelec->f_en.vtxc));
     }
 
-    //! 3) initialize DFT+U
     if (inp.dft_plus_u)
     {
-        dftu.init(ucell, &pv, kv.get_nks(), &orb);
+        dftu.init(ucell, &pv,
+                  PARAM.globalv.npol,
+                  inp.nspin, inp.orbital_corr, inp.yukawa_potential, inp.yukawa_lambda,
+                  PARAM.globalv.global_readin_dir,
+                  PARAM.globalv.global_out_dir,
+                  inp.init_chg,
+                  pv.get_global_row_size(),
+                  PARAM.globalv.gamma_only_local,
+                  inp.ks_solver,
+                  inp.cal_force,
+                  inp.cal_stress,
+                  inp.device,
+                  inp.kpar,
+                  &orb);
     }
 
     //! 4) init exact exchange calculations

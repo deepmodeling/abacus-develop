@@ -53,7 +53,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_all_runners");
 
     // 0) init EXX - moved from constructor to ensure GlobalC::exx_info.info_global is already set
-    this->exx_nao.init();
+    this->exx_nao.init(ucell);
 
     // 1) before_all_runners in ESolver_KS
     ESolver_KS::before_all_runners(ucell, inp);
@@ -372,7 +372,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     }
 #endif
 
-    init_dftu_lcao<TK>(istep, iter, PARAM.inp, &(this->dftu), this->dmat.dm, ucell, this->chr.rho, this->pw_rho->nrxx);
+    init_dftu_lcao<TK>(istep, iter, PARAM.inp.dft_plus_u, &(this->dftu), this->dmat.dm, ucell, this->chr.rho, this->pw_rho->nrxx);
 
 #ifdef __MLALGO
     // the density matrixes of DeePKS have been updated in each iter
@@ -483,7 +483,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 	const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_DMK_vector();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
-    finish_dftu_lcao<TK>(iter, conv_esolver, PARAM.inp, &(this->dftu), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao);
+    finish_dftu_lcao<TK>(iter, conv_esolver, PARAM.inp.dft_plus_u, PARAM.inp.out_chg[0], &(this->dftu), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, PARAM.globalv.global_out_dir, PARAM.inp.nspin, PARAM.globalv.npol);
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
     this->deepks.delta_e(ucell, this->kv, this->orb_, this->pv, this->gd, dm_vec, this->pelec->f_en, PARAM.inp);

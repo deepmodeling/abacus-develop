@@ -233,6 +233,8 @@ class UnitCell : public AtomProvider {
 
     std::vector<std::string> orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
     std::string  descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
+    std::vector<std::string> abfs_orbital_files; // ABFS orbital filenames read from STRU "ABFS_ORBITAL" (used by LCAO EXX)
+    std::vector<std::string> jle_orbital_files;  // JLE orbital filenames read from STRU "ABFS_JLES_ORBITAL" (used by LCAO EXX)
 
     void set_iat2itia();
 

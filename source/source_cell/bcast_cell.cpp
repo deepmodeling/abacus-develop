@@ -1,18 +1,13 @@
 #include "unitcell.h"
 #include "source_base/parallel_common.h"
 
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
-
 #include <string>
 #include <vector>
 
 namespace unitcell
 {
-#if defined(__MPI) && defined(__EXX)
-    // Broadcast a vector<string> from rank 0 to all ranks.
-    // Replaces the former cereal-based ModuleBase::bcast_data_cereal, which
-    // was only ever used here to broadcast plain lists of ABFS file names and
-    // pulled source_cell into a dependency on source_lcao/module_ri.
+#ifdef __MPI
+    // Broadcast a vector<string> (size then elements) from rank 0 to all ranks.
     static void bcast_string_vector(std::vector<std::string>& v)
     {
         int size = static_cast<int>(v.size());
@@ -132,11 +127,9 @@ namespace unitcell
             Parallel_Common::bcast_string(ucell.orbital_fn[i]);
         }
 
-        #ifdef __EXX
-        bcast_string_vector(GlobalC::exx_info.info_ri.files_abfs);
-        bcast_string_vector(GlobalC::exx_info.info_opt_abfs.files_abfs);
-        bcast_string_vector(GlobalC::exx_info.info_opt_abfs.files_jles);
-        #endif
+        // ABFS/JLE orbital-file lists (read from STRU on rank 0, used by LCAO EXX)
+        bcast_string_vector(ucell.abfs_orbital_files);
+        bcast_string_vector(ucell.jle_orbital_files);
         return;
     #endif
     }

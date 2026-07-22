@@ -73,7 +73,7 @@ void sparse_format::cal_HR_dftu(
                 }
             }
 
-            dftu.cal_eff_pot_mat_R_double(current_spin, SR_tmp, HR_tmp);
+            dftu.cal_eff_pot_mat_R_double(current_spin, SR_tmp, HR_tmp, PARAM.globalv.npol);
 
             for (int i = 0; i < PARAM.globalv.nlocal; ++i)
             {
@@ -192,7 +192,7 @@ void sparse_format::cal_HR_dftu_soc(
                 }
             }
 
-            dftu.cal_eff_pot_mat_R_complex_double(current_spin, SR_soc_tmp, HR_soc_tmp);
+            dftu.cal_eff_pot_mat_R_complex_double(current_spin, SR_soc_tmp, HR_soc_tmp, PARAM.globalv.npol);
 
             for (int i = 0; i < PARAM.globalv.nlocal; ++i)
             {

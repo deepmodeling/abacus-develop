@@ -26,13 +26,27 @@ class Plus_U
 
   public:
     // allocate relevant data strcutures
-    void init(UnitCell& cell, // unitcell class
-              const Parallel_Orbitals* pv,
-              const int nks
+    void init(UnitCell& cell,
+                const Parallel_Orbitals* pv,
+                const int npol,
+                const int nspin,
+                const std::vector<int>& orbital_corr,
+                const bool yukawa_potential,
+                const double yukawa_lambda,
+                const std::string& global_readin_dir,
+                const std::string& global_out_dir,
+                const std::string& init_chg,
+                const int nlocal,
+                const bool gamma_only_local,
+                const std::string& ks_solver,
+                const bool cal_force,
+                const bool cal_stress,
+                const std::string& device,
+                const int kpar
 #ifdef __LCAO
-              , const LCAO_Orbitals* orb = nullptr
+                , const LCAO_Orbitals* orb = nullptr
 #endif
-              );
+                );
     
     // calculate the energy correction
     void cal_energy_correction(const UnitCell& ucell, const int istep);
@@ -91,15 +105,25 @@ class Plus_U
     static double energy_u; //+U energy, mohan update 2025-11-06, change this to private
 
     const Parallel_Orbitals* paraV = nullptr;
-    int cal_type = 3; // 1:dftu_tpye=1, dc=1; 2:dftu_type=1, dc=2; 3:dftu_tpye=2, dc=1; 4:dftu_tpye=2, dc=2;
+    int cal_type = 3;
 
-    // FIXME: the following variable does not have static lifetime;
-    // while the present class is used via a global variable. This has
-    // potential to cause dangling pointer issues.
 #ifdef __LCAO
     const LCAO_Orbitals* ptr_orb_ = nullptr;
     std::vector<double> orb_cutoff_;
 #endif
+
+    std::string global_readin_dir;
+    std::string global_out_dir;
+    double yukawa_lambda = 0.0;
+    std::string init_chg;
+    int npol = 1;
+    int nlocal = 0;
+    bool gamma_only_local = false;
+    std::string ks_solver;
+    bool cal_force = false;
+    bool cal_stress = false;
+    std::string device;
+    int kpar = 1;
     
     // transform between iwt index and it, ia, L, N and m index
     std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>
@@ -114,18 +138,21 @@ class Plus_U
 	void cal_eff_pot_mat_complex(const int ik, 
 			std::complex<double>* eff_pot, 
 			const std::vector<int>& isk, 
-			const std::complex<double>* sk);
+			const std::complex<double>* sk,
+			const int npol);
 
 	void cal_eff_pot_mat_real(const int ik, 
 			double* eff_pot, 
 			const std::vector<int>& isk, 
-			const double* sk);
+			const double* sk,
+			const int npol);
 
-    void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR);
+    void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR, const int npol);
 
 	void cal_eff_pot_mat_R_complex_double(const int ispin, 
 			std::complex<double>* SR, 
-			std::complex<double>* HR);
+			std::complex<double>* HR,
+			const int npol);
 #endif
 
     //=============================================================
@@ -262,8 +289,8 @@ private:
     // for both Hamiltonian and force/stress
     //=============================================================
 
-    void cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU);
-    void cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU);
+    void cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU, const int npol);
+    void cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU, const int npol);
 
     double get_onebody_eff_pot(const int T,
                                const int iat,
@@ -319,13 +346,14 @@ private:
  public:
    void force_stress(const UnitCell& ucell,
                      const Grid_Driver& gd,
-					 std::vector<std::vector<double>>* dmk_d, // mohan modify 2025-11-02
-					 std::vector<std::vector<std::complex<double>>>* dmk_c, // dmat.get_dm()->get_DMK_vector();
+					 std::vector<std::vector<double>>* dmk_d,
+					 std::vector<std::vector<std::complex<double>>>* dmk_c,
 					 const Parallel_Orbitals& pv,
                      ForceStressArrays& fsr,
                      ModuleBase::matrix& force_dftu,
                      ModuleBase::matrix& stress_dftu,
-                     const K_Vectors& kv);
+                     const K_Vectors& kv,
+                     const int npol);
 
  private:
    void cal_force_k(const UnitCell& ucell,
@@ -370,15 +398,26 @@ private:
     // For reading/writing/broadcasting/copying relevant data structures
     //=============================================================
   public:
-    void output(const UnitCell& ucell);
+    void output(const UnitCell& ucell,
+                bool out_chg,
+                const std::string& global_out_dir,
+                int nspin,
+                int npol);
 
   private:
     void write_occup_m(const UnitCell& ucell,
-                       std::ofstream& ofs, 
-                       bool diag=false);
+                       std::ofstream& ofs,
+                       bool diag,
+                       int nspin,
+                       int npol);
     void read_occup_m(const UnitCell& ucell,
-                      const std::string& fn);
-    void local_occup_bcast(const UnitCell& ucell);
+                      const std::string& fn,
+                      const std::string& init_chg,
+                      int nspin,
+                      int npol);
+    void local_occup_bcast(const UnitCell& ucell,
+                           int nspin,
+                           int npol);
 
     //=============================================================
     // In dftu_yukawa.cpp
