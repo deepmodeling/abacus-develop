@@ -53,7 +53,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_all_runners");
 
     // 0) init EXX - moved from constructor to ensure GlobalC::exx_info.info_global is already set
-    this->exx_nao.init();
+    this->exx_nao.init(ucell);
 
     // 1) before_all_runners in ESolver_KS
     ESolver_KS::before_all_runners(ucell, inp);

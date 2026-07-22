@@ -6,6 +6,20 @@
 
 namespace unitcell
 {
+#ifdef __MPI
+    // Broadcast a vector<string> (size then elements) from rank 0 to all ranks.
+    static void bcast_string_vector(std::vector<std::string>& v)
+    {
+        int size = static_cast<int>(v.size());
+        Parallel_Common::bcast_int(size);
+        v.resize(size);
+        for (int i = 0; i < size; ++i)
+        {
+            Parallel_Common::bcast_string(v[i]);
+        }
+    }
+#endif
+
     void bcast_atoms_tau(Atom* atoms,
                          const int ntype)
     {
@@ -112,6 +126,10 @@ namespace unitcell
         {
             Parallel_Common::bcast_string(ucell.orbital_fn[i]);
         }
+
+        // ABFS/JLE orbital-file lists (read from STRU on rank 0, used by LCAO EXX)
+        bcast_string_vector(ucell.abfs_orbital_files);
+        bcast_string_vector(ucell.jle_orbital_files);
         return;
     #endif
     }
