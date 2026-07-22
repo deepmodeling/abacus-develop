@@ -10,14 +10,11 @@
 
 namespace unitcell
 {
-    /**
-     * @brief Check atom positions (tau).
-     *
-     * @param atoms atom pointer [in]
-     * @param ntype number of atom types [in]
-     * @param lat0 lattice constant [in]
-     * @return true if check passes
-     */
+    bool should_read_abfs_orbitals(bool cal_exx,
+                                   bool rpa,
+                                   bool out_sternheimer_librpa,
+                                   bool out_sternheimer_siab);
+
     bool check_tau(const Atom* atoms,
                    const int& ntype,
                    const double& lat0);
@@ -106,5 +103,4 @@ namespace unitcell
                             const std::string& esolver_type,
                             const int symmetry);
 }
-
 #endif // READ_STRU_H
