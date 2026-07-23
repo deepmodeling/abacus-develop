@@ -78,7 +78,6 @@ static void gather_and_write(const std::string& prefix,
     const int nbasis = hR.get_nbasis();
 #ifdef __MPI
     Parallel_Orbitals serialV;
-    serialV.init(nbasis, nbasis, nbasis, pv.comm());
     serialV.set_serial(nbasis, nbasis);
     serialV.set_atomic_trace(iat2iwt, nat, nbasis);
     hamilt::HContainer<double> hr_serial(&serialV);

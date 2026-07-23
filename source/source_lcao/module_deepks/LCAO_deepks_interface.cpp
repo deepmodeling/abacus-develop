@@ -528,7 +528,6 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 const int nbasis = hR_tot->get_nbasis();
 #ifdef __MPI
                 Parallel_Orbitals serialV;
-                serialV.init(nbasis, nbasis, nbasis, ParaV->comm());
                 serialV.set_serial(nbasis, nbasis);
                 serialV.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, nbasis);
                 hamilt::HContainer<TR> hR_serial(&serialV);
