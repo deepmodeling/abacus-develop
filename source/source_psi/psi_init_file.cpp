@@ -2,11 +2,12 @@
 
 #include <vector>
 #include <cassert>
+#include <string>
+#include <complex>
 
 #include "source_base/timer.h"
 #include "source_io/module_wf/read_wfc_pw.h"
 #include "source_io/module_output/filename.h"
-#include "source_io/module_parameter/parameter.h"
 
 template <typename T>
 void psi_init_file<T>::initialize(const Structure_Factor* sf,
@@ -26,6 +27,18 @@ void psi_init_file<T>::initialize(const Structure_Factor* sf,
 }
 
 template <typename T>
+void psi_init_file<T>::prepare_params(const int& nspin,
+                                      const std::string& global_readin_dir,
+                                      const int& rank_in_pool,
+                                      const int& nproc_in_pool)
+{
+    this->nspin_ = nspin;
+    this->global_readin_dir_ = global_readin_dir;
+    this->rank_in_pool_ = rank_in_pool;
+    this->nproc_in_pool_ = nproc_in_pool;
+}
+
+template <typename T>
 void psi_init_file<T>::init_psig(T* psig, const int& ik)
 {
     ModuleBase::timer::start("psi_init_file", "init_psig");
@@ -41,13 +54,13 @@ void psi_init_file<T>::init_psig(T* psig, const int& ik)
     const bool gamma_only = false;
     const int istep = -1;
 
-    std::string fn = ModuleIO::filename_output(PARAM.globalv.global_readin_dir,"wf","pw",
-			ik,this->ik2iktot_,PARAM.inp.nspin,nkstot,
+    std::string fn = ModuleIO::filename_output(this->global_readin_dir_,"wf","pw",
+			ik,this->ik2iktot_,this->nspin_,nkstot,
 			out_type,out_app_flag,gamma_only,istep);
 
     ModuleIO::read_wfc_pw(fn, this->pw_wfc_, 
-			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-			PARAM.inp.nbands, this->npol_,
+			this->rank_in_pool_, this->nproc_in_pool_,
+			this->nbands_start_, this->npol_,
 			ik, ik_tot, nkstot, wfcatom);
 
     assert(this->nbands_start_ <= wfcatom.nr);

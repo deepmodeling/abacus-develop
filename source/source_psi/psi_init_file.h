@@ -2,6 +2,7 @@
 #define PSI_INIT_FILE_H
 
 #include <vector>
+#include <string>
 #include "psi_base.h"
 
 /*
@@ -12,6 +13,10 @@ class psi_init_file : public psi_base<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+    int nspin_ = 1;
+    std::string global_readin_dir_;
+    int rank_in_pool_ = 0;
+    int nproc_in_pool_ = 1;
 
   public:
     psi_init_file()
@@ -36,5 +41,10 @@ class psi_init_file : public psi_base<T>
     /// @param ik kpoint index
     /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
     virtual void init_psig(T* psig, const int& ik) override;
+
+    void prepare_params(const int& nspin,
+                        const std::string& global_readin_dir,
+                        const int& rank_in_pool,
+                        const int& nproc_in_pool);
 };
 #endif

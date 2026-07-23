@@ -51,7 +51,14 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
     }
     else if (this->init_wfc == "file")
     {
-        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_file<T>());
+        psi_init_file<T>* file_initer = new psi_init_file<T>();
+        file_initer->prepare_params(
+            PARAM.inp.nspin,
+            PARAM.globalv.global_readin_dir,
+            GlobalV::RANK_IN_POOL,
+            GlobalV::NPROC_IN_POOL
+        );
+        this->psi_initer = std::unique_ptr<psi_base<T>>(file_initer);
         GlobalV::ofs_running << "\n Using FILE starting wave functions\n";
     }
     else if ((this->init_wfc.substr(0, 6) == "atomic") && (this->ucell.natomwfc == 0))
