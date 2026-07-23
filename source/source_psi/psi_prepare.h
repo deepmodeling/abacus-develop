@@ -18,7 +18,8 @@ class PSIPrepare : public PSIPrepareBase
             const int& rank,
             const UnitCell& ucell,
             const Structure_Factor& sf,
-            const K_Vectors& kv_in,
+            const std::vector<int>& ik2iktot,
+            const int& nkstot,
             const pseudopot_cell_vnl& nlpp,
             const ModulePW::PW_Basis_K& pw_wfc);
     ~PSIPrepare(){};
@@ -65,8 +66,9 @@ class PSIPrepare : public PSIPrepareBase
     // pw basis
     const ModulePW::PW_Basis_K& pw_wfc;
 
-    // parallel kpoints
-    const K_Vectors& kv;
+    // k-point mapping and total count
+    const std::vector<int>& ik2iktot_;
+    const int nkstot_;
 
     // unit cell
     const UnitCell& ucell;

@@ -24,10 +24,11 @@ PSIPrepare<T, Device>::PSIPrepare(const std::string& init_wfc_in,
                             const int& rank_in,
                             const UnitCell& ucell_in,
                             const Structure_Factor& sf_in,
-                            const K_Vectors& kv_in,
+                            const std::vector<int>& ik2iktot_in,
+                            const int& nkstot_in,
                             const pseudopot_cell_vnl& nlpp_in,
                             const ModulePW::PW_Basis_K& pw_wfc_in)
-    : ucell(ucell_in), sf(sf_in), nlpp(nlpp_in), kv(kv_in), pw_wfc(pw_wfc_in), rank(rank_in)
+    : ucell(ucell_in), sf(sf_in), nlpp(nlpp_in), pw_wfc(pw_wfc_in), rank(rank_in), ik2iktot_(ik2iktot_in), nkstot_(nkstot_in)
 {
     this->init_wfc = init_wfc_in;
     this->ks_solver = ks_solver_in;
@@ -105,7 +106,7 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
         ModuleBase::WARNING_QUIT("PSIInit::prepare_init", "for new psi initializer, init_wfc type not supported");
     }
 
-    this->psi_initer->initialize(&sf, &pw_wfc, &ucell, &kv, random_seed, &nlpp, rank,
+    this->psi_initer->initialize(&sf, &pw_wfc, &ucell, ik2iktot_, nkstot_, random_seed, &nlpp, rank,
                                      PARAM.globalv.npol, PARAM.inp.nbands);
     this->psi_initer->tabulate();
 

@@ -1,5 +1,7 @@
 #ifndef PSI_INIT_ATOMIC_H
 #define PSI_INIT_ATOMIC_H
+#include <vector>
+#include <string>
 #include "source_base/realarray.h"
 #include "psi_initializer.h"
 
@@ -23,7 +25,8 @@ class psi_init_atomic : public psi_initializer<T>
     virtual void initialize(const Structure_Factor*,             //< structure factor
                             const ModulePW::PW_Basis_K*,         //< planewave basis
                             const UnitCell*,                     //< unit cell
-                            const K_Vectors*,                    //< kpoints
+                            const std::vector<int>& = {},        //< ik2iktot: local->global k-point mapping
+                            const int& = 0,                      //< nkstot: total number of k-points
                             const int& = 1,                      //< random seed
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
                             const int& = 0,                      //< MPI rank

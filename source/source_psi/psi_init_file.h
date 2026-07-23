@@ -1,6 +1,7 @@
 #ifndef PSI_INIT_FILE_H
 #define PSI_INIT_FILE_H
 
+#include <vector>
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "psi_initializer.h"
 
@@ -24,7 +25,8 @@ class psi_init_file : public psi_initializer<T>
     virtual void initialize(const Structure_Factor*,             //< structure factor
                             const ModulePW::PW_Basis_K*,         //< planewave basis
                             const UnitCell*,                     //< unit cell
-                            const K_Vectors*,                    //< kpoints
+                            const std::vector<int>& = {},        //< ik2iktot: local->global k-point mapping
+                            const int& = 0,                      //< nkstot: total number of k-points
                             const int& = 1,                      //< random seed
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
                             const int& = 0,                      //< MPI rank

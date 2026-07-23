@@ -1,5 +1,13 @@
 #include "psi_initializer.h"
 
+#include <vector>
+#include <cassert>
+#include <cstdlib>
+
+#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
+#include "source_cell/unitcell.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 #include "source_base/parallel_global.h"
 // basic functions support
 #include "source_base/timer.h"
@@ -16,7 +24,8 @@ template <typename T>
 void psi_initializer<T>::initialize(const Structure_Factor* sf,
                                     const ModulePW::PW_Basis_K* pw_wfc,
                                     const UnitCell* p_ucell,
-                                    const K_Vectors* p_kv_in,
+                                    const std::vector<int>& ik2iktot,
+                                    const int& nkstot,
                                     const int& random_seed,
                                     const pseudopot_cell_vnl* p_pspot_nl,
                                     const int& rank,
@@ -26,7 +35,8 @@ void psi_initializer<T>::initialize(const Structure_Factor* sf,
     this->sf_ = sf;
     this->pw_wfc_ = pw_wfc;
     this->p_ucell_ = p_ucell;
-    this->p_kv = p_kv_in;
+    this->ik2iktot_ = ik2iktot;
+    this->nkstot_ = nkstot;
     this->random_seed_ = random_seed;
     this->p_pspot_nl_ = p_pspot_nl;
     this->npol_ = npol;
@@ -48,7 +58,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
     if (this->random_seed_ > 0) // qianrui add 2021-8-13
     {
 #ifdef __MPI
-        srand(unsigned(this->random_seed_ + this->p_kv->ik2iktot[ik]));
+        srand(unsigned(this->random_seed_ + this->ik2iktot_[ik]));
 #else
         srand(unsigned(this->random_seed_ + ik));
 #endif

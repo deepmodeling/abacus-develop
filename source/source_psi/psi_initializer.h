@@ -12,9 +12,11 @@
 #include <mpi.h>
 #endif
 #include "source_base/macros.h"
-#include "source_cell/klist.h"
+#include "source_cell/unitcell.h"
 
 #include <type_traits>
+#include <vector>
+using namespace std;
 /*
 Psi (planewave based wavefunction) initializer
 Auther: Kirk0830
@@ -59,7 +61,8 @@ class psi_initializer
     virtual void initialize(const Structure_Factor*,             //< structure factor
                             const ModulePW::PW_Basis_K*,         //< planewave basis
                             const UnitCell*,                     //< unit cell
-                            const K_Vectors* = nullptr,          //< parallel kpoints
+                            const std::vector<int>& = {},        //< ik2iktot: local->global k-point mapping
+                            const int& = 0,                      //< nkstot: total number of k-points
                             const int& = 1,                      //< random seed
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
                             const int& = 0,                      //< rank
@@ -128,8 +131,9 @@ class psi_initializer
     const Structure_Factor* sf_ = nullptr;           ///< Structure_Factor
     const ModulePW::PW_Basis_K* pw_wfc_ = nullptr;   ///< use |k+G>, |G>, getgpluskcar and so on in PW_Basis_K
     const UnitCell* p_ucell_ = nullptr;              ///< UnitCell
-    const K_Vectors* p_kv = nullptr;                 ///< Parallel_Kpoints
     const pseudopot_cell_vnl* p_pspot_nl_ = nullptr; ///< pseudopot_cell_vnl
+    std::vector<int> ik2iktot_;                      ///< local->global k-point mapping
+    int nkstot_ = 0;                                 ///< total number of k-points
     int random_seed_ = 1;                            ///< random seed, shared by random, atomic+random, nao+random
     std::vector<int> ixy2is_;                        ///< used by stick_to_pool function
     int mem_saver_ = 0;                              ///< if save memory, only for nscf

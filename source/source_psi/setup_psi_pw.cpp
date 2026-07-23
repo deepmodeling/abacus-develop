@@ -16,7 +16,7 @@ void Setup_Psi_pw::before_runner_impl(
 {
     this->p_psi_init = new psi::PSIPrepare<T, Device>(inp.init_wfc,
       inp.ks_solver, inp.basis_type, GlobalV::MY_RANK, ucell,
-      sf, kv, ppcell, pw_wfc);
+      sf, kv.ik2iktot, kv.get_nkstot(), ppcell, pw_wfc);
 
     allocate_psi(this->psi_cpu, kv.get_nks(), kv.ngk, PARAM.globalv.nbands_l, pw_wfc.npwk_max);
 

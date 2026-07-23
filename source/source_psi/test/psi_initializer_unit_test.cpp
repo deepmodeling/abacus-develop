@@ -9,7 +9,6 @@
 #include "../psi_init_nao_random.h"
 #include "../psi_init_random.h"
 #include "source_pw/module_pwdft/vl_pw.h"
-#include "source_cell/klist.h"
 #include "source_base/output.h"
 
 /*
@@ -97,7 +96,8 @@ class PsiIntializerUnitTest : public ::testing::Test {
         ModulePW::PW_Basis_K* p_pw_wfc = nullptr;
         UnitCell* p_ucell = nullptr;
         pseudopot_cell_vnl* p_pspot_vnl = nullptr;
-        K_Vectors* p_kv = nullptr;
+        std::vector<int> ik2iktot_;
+        int nkstot_ = 0;
         int random_seed = 1;
 
         psi_initializer<std::complex<double>>* psi_init;
@@ -111,7 +111,6 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_pw_wfc = new ModulePW::PW_Basis_K();
             this->p_ucell = new UnitCell();
             this->p_pspot_vnl = new pseudopot_cell_vnl();
-            this->p_kv = new K_Vectors();
             // mock
             PARAM.input.nbands = 1;
             PARAM.input.nspin = 1;
@@ -257,8 +256,9 @@ class PsiIntializerUnitTest : public ::testing::Test {
 
             this->p_pspot_vnl->lmaxkb = 1;
 
-            this->p_kv->ik2iktot.resize(1);
-            this->p_kv->ik2iktot[0] = 0;
+            this->ik2iktot_.resize(1);
+            this->ik2iktot_[0] = 0;
+            this->nkstot_ = 1;
 
         }
         void TearDown() override
@@ -268,7 +268,6 @@ class PsiIntializerUnitTest : public ::testing::Test {
             delete this->p_pw_wfc;
             delete this->p_ucell;
             delete this->p_pspot_vnl;
-            delete this->p_kv;
          }
 };
 
@@ -315,7 +314,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigRandom) {
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
-                               this->p_kv, 
+                               this->ik2iktot_, 
+                               this->nkstot_, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
@@ -334,7 +334,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomic) {
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
-                               this->p_kv, 
+                               this->ik2iktot_, 
+                               this->nkstot_, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
@@ -357,7 +358,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSoc) {
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
-                               this->p_kv, 
+                               this->ik2iktot_, 
+                               this->nkstot_, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
@@ -384,7 +386,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo) {
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
-                               this->p_kv, 
+                               this->ik2iktot_, 
+                               this->nkstot_, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
@@ -407,7 +410,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicRandom) {
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
-                               this->p_kv, 
+                               this->ik2iktot_, 
+                               this->nkstot_, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
@@ -426,7 +430,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigNao) {
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
-                               this->p_kv, 
+                               this->ik2iktot_, 
+                               this->nkstot_, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
@@ -445,7 +450,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoRandom) {
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
-                               this->p_kv, 
+                               this->ik2iktot_, 
+                               this->nkstot_, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
@@ -469,7 +475,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc) {
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
-                               this->p_kv, 
+                               this->ik2iktot_, 
+                               this->nkstot_, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
@@ -493,7 +500,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSo) {
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
-                               this->p_kv, 
+                               this->ik2iktot_, 
+                               this->nkstot_, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
@@ -517,7 +525,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSoDOMAG) {
     this->psi_init->initialize(this->p_sf, 
                                this->p_pw_wfc, 
                                this->p_ucell, 
-                               this->p_kv, 
+                               this->ik2iktot_, 
+                               this->nkstot_, 
                                this->random_seed,
                                this->p_pspot_vnl,
                                GlobalV::MY_RANK);
