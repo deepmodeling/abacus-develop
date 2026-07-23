@@ -217,10 +217,13 @@ void Bessel_Basis::init_TableOne(
     const double cutoff_tolerance = 1.0e-10 * std::max(1.0, std::abs(rcut));
     const bool cutoff_is_on_grid = std::abs(cutoff_intervals * dr - rcut) <= cutoff_tolerance;
 
-    // Preserve the requested radial spacing. When the cutoff is on the grid,
-    // omit the auxiliary integration points from the orbital file. Otherwise,
-    // retain the original mesh and write zeros beyond the cutoff.
-    const int output_rmesh = cutoff_is_on_grid ? cutoff_intervals + 1 : rmesh;
+    // Preserve the requested radial spacing and keep an odd number of output
+    // points for Simpson integration. If an exact cutoff would produce an even
+    // mesh, retain one additional zero-valued point beyond the cutoff.
+    const int cutoff_rmesh = cutoff_intervals + 1;
+    const int output_rmesh = cutoff_is_on_grid
+                                 ? cutoff_rmesh + (cutoff_rmesh % 2 == 0 ? 1 : 0)
+                                 : rmesh;
 
 	for(int ir=0; ir<rmesh; ir++)
 	{
