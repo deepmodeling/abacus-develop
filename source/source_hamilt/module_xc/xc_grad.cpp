@@ -475,7 +475,7 @@ void XC_Functional::gradcorr(
                     if (use_libxc && is_stress)
                     {
 #ifdef USE_LIBXC
-                        if(need_laplacian)
+                        if(func_type == 3 || func_type == 5)
                         {
                             double v3xc = 0.0;
                             double vlapl = 0.0;
@@ -540,7 +540,7 @@ void XC_Functional::gradcorr(
                     double v2xcup = 0.0;
                     double v2xcdw = 0.0;
                     double v2xcud = 0.0;
-                    if(need_laplacian)
+                    if(func_type == 3 || func_type == 5)
                     {
                         double v3xcup = 0.0;
                         double v3xcdw = 0.0;
