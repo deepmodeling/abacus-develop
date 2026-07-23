@@ -2,7 +2,6 @@
 #define PSI_INIT_FILE_H
 
 #include <vector>
-#include "source_pw/module_pwdft/vnl_pw.h"
 #include "psi_base.h"
 
 /*
@@ -28,7 +27,7 @@ class psi_init_file : public psi_base<T>
                             const std::vector<int>& = {},        //< ik2iktot: local->global k-point mapping
                             const int& = 0,                      //< nkstot: total number of k-points
                             const int& = 1,                      //< random seed
-                            const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
+                            const int& = 0,                      //< lmaxkb: max angular momentum for non-local projectors
                             const int& = 0,                      //< MPI rank
                             const int& = 1,                      //< npol
                             const int& = 1) override;            //< nbands

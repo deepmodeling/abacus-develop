@@ -53,20 +53,14 @@ void psi_init_atomic<T>::initialize(const Structure_Factor* sf,         //< stru
                                            const std::vector<int>& ik2iktot,
                                            const int& nkstot,
                                            const int& random_seed,       //< random seed
-                                           const pseudopot_cell_vnl* p_pspot_nl,
+                                           const int& lmaxkb,
                                            const int& rank,
                                            const int& npol,
                                            const int& nbands)
 {
     ModuleBase::timer::start("psi_init_atomic", "initialize");
 
-    if(p_pspot_nl == nullptr)
-    {
-        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::initialize", 
-                                 "pseudopot_cell_vnl object cannot be nullptr for atomic, quit.");
-    }
-    // import
-    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, p_pspot_nl, rank, npol, nbands);
+    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, lmaxkb, rank, npol, nbands);
     this->nbands_start_ = std::max(this->p_ucell_->natomwfc, nbands);
     this->nbands_complem_ = this->nbands_start_ - this->p_ucell_->natomwfc;
     // allocate
@@ -300,7 +294,7 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                                             if(fabs(cg_coeffs[is]) > 1e-8)
                                             {
         /* GET COMPLEX SPHERICAL HARMONIC FUNCTION */
-                                                const int ind = this->p_pspot_nl_->lmaxkb + soc.sph_ind(l,j,m,is); // ind can be l+m, l+m+1, l+m-1
+                                                const int ind = this->lmaxkb_ + soc.sph_ind(l,j,m,is); // ind can be l+m, l+m+1, l+m-1
                                                 std::fill(aux.begin(), aux.end(), std::complex<double>(0.0, 0.0));
                                                 for(int n1 = 0; n1 < 2*l+1; n1++)
                                                 {

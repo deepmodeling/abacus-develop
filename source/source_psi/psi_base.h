@@ -2,7 +2,6 @@
 #define PSI_BASE_H
 // data structure support
 #include "source_basis/module_pw/pw_basis_k.h" // for kpoint related data structure
-#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_psi/psi.h" // for psi data structure
 // smart pointer for auto-memory management
@@ -64,7 +63,7 @@ class psi_base
                             const std::vector<int>& = {},        //< ik2iktot: local->global k-point mapping
                             const int& = 0,                      //< nkstot: total number of k-points
                             const int& = 1,                      //< random seed
-                            const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
+                            const int& = 0,                      //< lmaxkb: max angular momentum for non-local projectors
                             const int& = 0,                      //< rank
                             const int& = 1,                      //< npol
                             const int& = 1);                     //< nbands
@@ -131,7 +130,7 @@ class psi_base
     const Structure_Factor* sf_ = nullptr;           ///< Structure_Factor
     const ModulePW::PW_Basis_K* pw_wfc_ = nullptr;   ///< use |k+G>, |G>, getgpluskcar and so on in PW_Basis_K
     const UnitCell* p_ucell_ = nullptr;              ///< UnitCell
-    const pseudopot_cell_vnl* p_pspot_nl_ = nullptr; ///< pseudopot_cell_vnl
+    int lmaxkb_ = 0;                                 ///< max angular momentum for non-local projectors
     std::vector<int> ik2iktot_;                      ///< local->global k-point mapping
     int nkstot_ = 0;                                 ///< total number of k-points
     int random_seed_ = 1;                            ///< random seed, shared by random, atomic+random, nao+random

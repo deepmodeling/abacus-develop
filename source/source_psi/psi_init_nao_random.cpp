@@ -9,12 +9,12 @@ void psi_init_nao_random<T>::initialize(const Structure_Factor* sf,
                                                const std::vector<int>& ik2iktot,
                                                const int& nkstot,
                                                const int& random_seed,
-                                               const pseudopot_cell_vnl* p_pspot_nl,
+                                               const int& lmaxkb,
                                                const int& rank,
                                                const int& npol,
                                                const int& nbands)
 {
-    psi_init_nao<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, p_pspot_nl, rank, npol, nbands);
+    psi_init_nao<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, lmaxkb, rank, npol, nbands);
 }
 
 template <typename T>

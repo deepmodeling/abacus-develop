@@ -93,7 +93,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_p
       this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
       this->pw_rhod, this->pw_big, this->solvent, inp);
 
-    this->stp.before_runner(ucell, this->kv, this->sf, *this->pw_wfc, this->ppcell, PARAM.inp);
+    this->stp.before_runner(ucell, this->kv, this->sf, *this->pw_wfc, this->ppcell.lmaxkb, PARAM.inp);
 
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT BASIS");
 

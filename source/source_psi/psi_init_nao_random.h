@@ -1,6 +1,5 @@
 #ifndef PSI_INIT_NAO_RANDOM_H
 #define PSI_INIT_NAO_RANDOM_H
-#include "source_pw/module_pwdft/vnl_pw.h"
 #include "psi_init_nao.h"
 
 /*
@@ -27,7 +26,7 @@ class psi_init_nao_random : public psi_init_nao<T>
                             const std::vector<int>& = {},        //< ik2iktot: local->global k-point mapping
                             const int& = 0,                      //< nkstot: total number of k-points
                             const int& = 1,                      //< random seed
-                            const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
+                            const int& = 0,                      //< lmaxkb: max angular momentum for non-local projectors
                             const int& = 0,                      //< MPI rank
                             const int& = 1,                      //< npol
                             const int& = 1) override;            //< nbands

@@ -63,10 +63,6 @@ void Atom_pseudo::bcast_atom_pseudo() {}
 pseudo::pseudo() {}
 pseudo::~pseudo() {}
 
-pseudopot_cell_vnl::pseudopot_cell_vnl() {}
-pseudopot_cell_vnl::~pseudopot_cell_vnl()
-{
-}
 pseudopot_cell_vl::pseudopot_cell_vl() {}
 pseudopot_cell_vl::~pseudopot_cell_vl() {}
 Magnetism::Magnetism() {}
@@ -95,7 +91,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
         Structure_Factor* p_sf = nullptr;
         ModulePW::PW_Basis_K* p_pw_wfc = nullptr;
         UnitCell* p_ucell = nullptr;
-        pseudopot_cell_vnl* p_pspot_vnl = nullptr;
+        int lmaxkb = 0;
         std::vector<int> ik2iktot_;
         int nkstot_ = 0;
         int random_seed = 1;
@@ -110,7 +106,6 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_sf = new Structure_Factor();
             this->p_pw_wfc = new ModulePW::PW_Basis_K();
             this->p_ucell = new UnitCell();
-            this->p_pspot_vnl = new pseudopot_cell_vnl();
             // mock
             PARAM.input.nbands = 1;
             PARAM.input.nspin = 1;
@@ -254,7 +249,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_pw_wfc->kvec_d = new ModuleBase::Vector3<double>[1];
             this->p_pw_wfc->kvec_d[0] = {0.0, 0.0, 0.0};
 
-            this->p_pspot_vnl->lmaxkb = 1;
+            this->lmaxkb = 1;
 
             this->ik2iktot_.resize(1);
             this->ik2iktot_[0] = 0;
@@ -267,7 +262,6 @@ class PsiIntializerUnitTest : public ::testing::Test {
             delete this->p_sf;
             delete this->p_pw_wfc;
             delete this->p_ucell;
-            delete this->p_pspot_vnl;
          }
 };
 
@@ -317,7 +311,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigRandom) {
                                this->ik2iktot_, 
                                this->nkstot_, 
                                this->random_seed,
-                               this->p_pspot_vnl,
+                               this->lmaxkb,
                                GlobalV::MY_RANK);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
@@ -337,7 +331,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomic) {
                                this->ik2iktot_, 
                                this->nkstot_, 
                                this->random_seed,
-                               this->p_pspot_vnl,
+                               this->lmaxkb,
                                GlobalV::MY_RANK);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
@@ -361,7 +355,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSoc) {
                                this->ik2iktot_, 
                                this->nkstot_, 
                                this->random_seed,
-                               this->p_pspot_vnl,
+                               this->lmaxkb,
                                GlobalV::MY_RANK);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
@@ -389,7 +383,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo) {
                                this->ik2iktot_, 
                                this->nkstot_, 
                                this->random_seed,
-                               this->p_pspot_vnl,
+                               this->lmaxkb,
                                GlobalV::MY_RANK);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
@@ -413,7 +407,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicRandom) {
                                this->ik2iktot_, 
                                this->nkstot_, 
                                this->random_seed,
-                               this->p_pspot_vnl,
+                               this->lmaxkb,
                                GlobalV::MY_RANK);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
@@ -433,7 +427,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNao) {
                                this->ik2iktot_, 
                                this->nkstot_, 
                                this->random_seed,
-                               this->p_pspot_vnl,
+                               this->lmaxkb,
                                GlobalV::MY_RANK);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
@@ -453,7 +447,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoRandom) {
                                this->ik2iktot_, 
                                this->nkstot_, 
                                this->random_seed,
-                               this->p_pspot_vnl,
+                               this->lmaxkb,
                                GlobalV::MY_RANK);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
@@ -478,7 +472,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc) {
                                this->ik2iktot_, 
                                this->nkstot_, 
                                this->random_seed,
-                               this->p_pspot_vnl,
+                               this->lmaxkb,
                                GlobalV::MY_RANK);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
@@ -503,7 +497,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSo) {
                                this->ik2iktot_, 
                                this->nkstot_, 
                                this->random_seed,
-                               this->p_pspot_vnl,
+                               this->lmaxkb,
                                GlobalV::MY_RANK);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
@@ -528,7 +522,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSoDOMAG) {
                                this->ik2iktot_, 
                                this->nkstot_, 
                                this->random_seed,
-                               this->p_pspot_vnl,
+                               this->lmaxkb,
                                GlobalV::MY_RANK);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();

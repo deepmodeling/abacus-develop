@@ -5,7 +5,6 @@
 #include <cstdlib>
 
 #include "source_pw/module_pwdft/structure_factor.h"
-#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_base/parallel_global.h"
@@ -27,7 +26,7 @@ void psi_base<T>::initialize(const Structure_Factor* sf,
                                     const std::vector<int>& ik2iktot,
                                     const int& nkstot,
                                     const int& random_seed,
-                                    const pseudopot_cell_vnl* p_pspot_nl,
+                                    const int& lmaxkb,
                                     const int& rank,
                                     const int& npol,
                                     const int& nbands)
@@ -38,7 +37,7 @@ void psi_base<T>::initialize(const Structure_Factor* sf,
     this->ik2iktot_ = ik2iktot;
     this->nkstot_ = nkstot;
     this->random_seed_ = random_seed;
-    this->p_pspot_nl_ = p_pspot_nl;
+    this->lmaxkb_ = lmaxkb;
     this->npol_ = npol;
     this->nbands_ = nbands;
 }
