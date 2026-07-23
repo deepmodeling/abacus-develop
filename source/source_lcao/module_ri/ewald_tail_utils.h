@@ -321,9 +321,17 @@ inline TailDecision decide_tail(const TailStats& stats,
     if (mode == TailMode::Off) return TailDecision::Accept;
     const double hermitian_limit
         = tolerances.abs_tol + tolerances.rel_tol * tail_reference_scale(stats);
-    if (!stats.coverage_complete || stats.hermitian_residual > hermitian_limit)
+    if (stats.hermitian_residual > hermitian_limit)
     {
         return TailDecision::Fail;
+    }
+    if (!stats.coverage_complete)
+    {
+        if (mode == TailMode::Warn || expansions >= max_expansions)
+        {
+            return TailDecision::Fail;
+        }
+        return TailDecision::Expand;
     }
     if (tail_passes(stats, tolerances)) return TailDecision::Accept;
     if (mode == TailMode::Warn) return TailDecision::Warn;

@@ -99,9 +99,15 @@ void test_tail_decisions()
     require(EwaldVqDetail::decide_tail(stats, tolerances, TailMode::Warn, 0, 3)
                 == TailDecision::Fail,
             "warn mode must still fail incomplete physical coverage");
+    require(EwaldVqDetail::decide_tail(stats, tolerances, TailMode::Enlarge, 0, 3)
+                == TailDecision::Expand,
+            "enlarge mode must expand incomplete physical coverage");
     require(EwaldVqDetail::decide_tail(stats, tolerances, TailMode::Strict, 0, 3)
+                == TailDecision::Expand,
+            "strict mode must expand incomplete physical coverage before the limit");
+    require(EwaldVqDetail::decide_tail(stats, tolerances, TailMode::Strict, 3, 3)
                 == TailDecision::Fail,
-            "strict mode must reject incomplete physical coverage");
+            "strict mode must reject incomplete physical coverage at the limit");
 }
 
 void test_adaptive_exact_rmesh_times()
