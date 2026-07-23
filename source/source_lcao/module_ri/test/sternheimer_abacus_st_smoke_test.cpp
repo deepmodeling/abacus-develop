@@ -274,6 +274,35 @@ TEST(SternheimerABACUSSTSmoke, RejectsSymmetryReducedSpinPolarizedKGrid)
                  std::invalid_argument);
 }
 
+TEST(SternheimerABACUSSTSmoke, SelectsExplicitKSVirtualBandsFromOccupations)
+{
+    ModuleRI::SternheimerLCAOOccupiedChannel spin_up;
+    spin_up.spin_index = 0;
+    spin_up.coefficients = {{std::complex<double>(1.0, 0.0),
+                             std::complex<double>(0.0, 0.0),
+                             std::complex<double>(0.0, 0.0)}};
+    spin_up.unoccupied_coefficients = {
+        {std::complex<double>(0.0, 0.0), std::complex<double>(1.0, 0.0), std::complex<double>(0.0, 0.0)},
+        {std::complex<double>(0.0, 0.0), std::complex<double>(0.0, 0.0), std::complex<double>(1.0, 0.0)}};
+
+    const std::vector<ModuleRI::SternheimerLCAOOccupiedChannel> channels = {spin_up};
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(channels, 1, 3));
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_unoccupied_bands_per_spin(channels), (std::vector<int>{2}));
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_total_unoccupied_bands(channels), 2);
+
+    EXPECT_EQ(ModuleRI::parse_sternheimer_lcao_virtual_source("projected_ao"),
+              ModuleRI::SternheimerLCAOVirtualSource::ProjectedAO);
+    EXPECT_EQ(ModuleRI::parse_sternheimer_lcao_virtual_source("ks_bands"),
+              ModuleRI::SternheimerLCAOVirtualSource::KSBands);
+    EXPECT_EQ(ModuleRI::sternheimer_lcao_virtual_source_name(ModuleRI::SternheimerLCAOVirtualSource::KSBands),
+              "ks_bands");
+    EXPECT_THROW(ModuleRI::parse_sternheimer_lcao_virtual_source("svd_guess"), std::invalid_argument);
+
+    auto invalid = channels;
+    invalid.front().unoccupied_coefficients.front().pop_back();
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(invalid, 1, 3), std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, AcceptsOnlyPhysicalGammaSpinRows)
 {
     const std::vector<std::array<double, 3>> one_gamma = {{{0.0, 0.0, 0.0}}};

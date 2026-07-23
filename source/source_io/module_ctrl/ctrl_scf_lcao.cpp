@@ -65,122 +65,39 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
     const int spin_channel_count = ModuleRI::sternheimer_lcao_physical_spin_channel_count(PARAM.inp.nspin);
     for (int spin_index = 0; spin_index != spin_channel_count; ++spin_index)
     {
-        throw std::runtime_error(
-            "Sternheimer solid LCAO coefficient gathering currently requires KPAR=1.");
-    }
-    if (elec_state.wg.nr != kv.get_nks()
-        || elec_state.ekb.nr != kv.get_nks()
-        || psi.get_nk() != kv.get_nks()
-        || kv.ik2iktot.size() != static_cast<std::size_t>(kv.get_nks())
-        || kv.kvec_d.size() != static_cast<std::size_t>(kv.get_nks())
-        || kv.wk.size() != static_cast<std::size_t>(kv.get_nks())
-        || kv.isk.size() != static_cast<std::size_t>(kv.get_nks()))
-    {
-        throw std::runtime_error("Sternheimer solid LCAO k-point metadata are incomplete.");
-    }
-
-    std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> records;
-    records.reserve(static_cast<std::size_t>(kv.get_nks()));
-    for (int local_k_index = 0; local_k_index != kv.get_nks(); ++local_k_index)
-    {
-        if (!std::isfinite(kv.wk[local_k_index]) || kv.wk[local_k_index] <= 0.0)
-        {
-            throw std::runtime_error("Sternheimer solid LCAO requires positive k-point weights.");
-        }
-        int occupied_count = 0;
+        ModuleRI::SternheimerLCAOOccupiedChannel channel;
+        channel.spin_index = spin_index;
         for (int ib = 0; ib != elec_state.wg.nc; ++ib)
         {
-            if (elec_state.wg(local_k_index, ib) / kv.wk[local_k_index] > 1.0e-8)
-            {
-                occupied_count = ib + 1;
-            }
-        }
-        if (occupied_count == 0)
-        {
-            continue;
-        }
-
-        ModuleRI::SternheimerLCAOOccupiedKPoint record;
-        record.local_k_index = local_k_index;
-        record.global_k_index = kv.ik2iktot[static_cast<std::size_t>(local_k_index)];
-        record.zero_order_k_index = local_k_index;
-        record.spin_index = kv.isk[static_cast<std::size_t>(local_k_index)];
-        record.kpoint = {kv.kvec_d[static_cast<std::size_t>(local_k_index)].x,
-                         kv.kvec_d[static_cast<std::size_t>(local_k_index)].y,
-                         kv.kvec_d[static_cast<std::size_t>(local_k_index)].z};
-        // ABACUS normalizes sum(wk) to the spin degeneracy, so wg/wk is the band filling, not another spin factor.
-        record.kweight = kv.wk[static_cast<std::size_t>(local_k_index)];
-        record.eigenvalues.reserve(static_cast<std::size_t>(occupied_count));
-        record.occupations.reserve(static_cast<std::size_t>(occupied_count));
-        record.coefficients.assign(
-            static_cast<std::size_t>(occupied_count),
-            std::vector<std::complex<double>>(static_cast<std::size_t>(PARAM.globalv.nlocal),
-                                              std::complex<double>(0.0, 0.0)));
-        for (int ib = 0; ib != occupied_count; ++ib)
-        {
-            record.eigenvalues.push_back(elec_state.ekb(local_k_index, ib));
-            record.occupations.push_back(elec_state.wg(local_k_index, ib) / record.kweight);
+            auto& target = elec_state.wg(spin_index, ib) > 1.0e-8 ? channel.coefficients
+                                                                  : channel.unoccupied_coefficients;
+            target.emplace_back(static_cast<std::size_t>(PARAM.globalv.nlocal),
+                                std::complex<double>(0.0, 0.0));
+            auto& band_coefficients = target.back();
             const int local_band = parallel_orbitals.global2local_col(ib);
             if (local_band >= 0)
             {
                 for (int local_basis = 0; local_basis != psi.get_nbasis(); ++local_basis)
                 {
                     const int global_basis = parallel_orbitals.local2global_row(local_basis);
-                    if (global_basis < 0 || global_basis >= PARAM.globalv.nlocal)
-                    {
-                        throw std::runtime_error("Sternheimer solid LCAO global basis index is out of range.");
-                    }
-                    record.coefficients[static_cast<std::size_t>(ib)][static_cast<std::size_t>(global_basis)]
-                        = std::complex<double>(psi(local_k_index, local_band, local_basis));
+                    band_coefficients[static_cast<std::size_t>(global_basis)]
+                        = std::complex<double>(psi(spin_index, local_band, local_basis));
                 }
             }
 #ifdef __MPI
             MPI_Allreduce(MPI_IN_PLACE,
-                          record.coefficients[static_cast<std::size_t>(ib)].data(),
+                          band_coefficients.data(),
                           PARAM.globalv.nlocal,
                           MPI_DOUBLE_COMPLEX,
                           MPI_SUM,
                           MPI_COMM_WORLD);
 #endif
         }
-        if (ModuleRI::sternheimer_lcao_virtual_state_gathering_enabled())
+        if (channel.coefficients.empty())
         {
-            const int unoccupied_count = elec_state.ekb.nc - occupied_count;
-            record.unoccupied_eigenvalues.reserve(static_cast<std::size_t>(unoccupied_count));
-            record.unoccupied_coefficients.assign(
-                static_cast<std::size_t>(unoccupied_count),
-                std::vector<std::complex<double>>(static_cast<std::size_t>(PARAM.globalv.nlocal),
-                                                  std::complex<double>(0.0, 0.0)));
-            for (int ib = occupied_count; ib != elec_state.ekb.nc; ++ib)
-            {
-                const std::size_t virtual_index = static_cast<std::size_t>(ib - occupied_count);
-                record.unoccupied_eigenvalues.push_back(elec_state.ekb(local_k_index, ib));
-                const int local_band = parallel_orbitals.global2local_col(ib);
-                if (local_band >= 0)
-                {
-                    for (int local_basis = 0; local_basis != psi.get_nbasis(); ++local_basis)
-                    {
-                        const int global_basis = parallel_orbitals.local2global_row(local_basis);
-                        if (global_basis < 0 || global_basis >= PARAM.globalv.nlocal)
-                        {
-                            throw std::runtime_error(
-                                "Sternheimer solid LCAO global unoccupied basis index is out of range.");
-                        }
-                        record.unoccupied_coefficients[virtual_index][static_cast<std::size_t>(global_basis)]
-                            = std::complex<double>(psi(local_k_index, local_band, local_basis));
-                    }
-                }
-#ifdef __MPI
-                MPI_Allreduce(MPI_IN_PLACE,
-                              record.unoccupied_coefficients[virtual_index].data(),
-                              PARAM.globalv.nlocal,
-                              MPI_DOUBLE_COMPLEX,
-                              MPI_SUM,
-                              MPI_COMM_WORLD);
-#endif
-            }
+            continue;
         }
-        records.push_back(std::move(record));
+        channels.push_back(std::move(channel));
     }
     ModuleRI::validate_sternheimer_lcao_occupied_kpoints(
         records, kv.get_nks(), kv.get_nkstot(), kv.get_nspin(), PARAM.globalv.nlocal);

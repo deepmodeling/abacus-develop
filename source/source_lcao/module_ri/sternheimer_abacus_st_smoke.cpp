@@ -82,7 +82,7 @@ constexpr const char* kCCPRmeshTimesEnv = "ABACUS_STERNHEIMER_FD_ST_CCP_RMESH_TI
 constexpr const char* kOrbitalDirEnv = "ABACUS_STERNHEIMER_FD_ST_ORBITAL_DIR";
 constexpr const char* kOrbitalFilesEnv = "ABACUS_STERNHEIMER_FD_ST_ORBITAL_FILES";
 constexpr const char* kFrequencyRankShiftEnv = "ABACUS_STERNHEIMER_FD_ST_FREQ_RANK_SHIFT";
-constexpr const char* kChannelMaxWorkersEnv = "ABACUS_STERNHEIMER_CHANNEL_MAX_WORKERS";
+constexpr const char* kLCAOVirtualSourceEnv = "ABACUS_STERNHEIMER_DELTA_VIRTUAL_SOURCE";
 constexpr double kHartreeToRydberg = 2.0;
 
 void hash_u64(siab::Sha256& digest, const std::uint64_t value)
@@ -3903,7 +3903,9 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         const std::string frequency_grid_file = PARAM.inp.sternheimer_frequency_grid_file;
         const bool use_frequency_grid_file = !frequency_grid_file.empty();
         const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
-        const SternheimerDeltaABlockMode delta_a_block_mode = delta_a_block_mode_from_env();
+        const char* lcao_virtual_source_raw = std::getenv(kLCAOVirtualSourceEnv);
+        const SternheimerLCAOVirtualSource lcao_virtual_source = parse_sternheimer_lcao_virtual_source(
+            lcao_virtual_source_raw == nullptr ? "projected_ao" : lcao_virtual_source_raw);
         if (use_lcao_zero_order)
         {
             if (!use_delta_sternheimer)
@@ -3922,6 +3924,22 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                     != static_cast<std::size_t>(occupied_band_counts[ispin]))
                 {
                     throw std::runtime_error("Sternheimer LCAO occupied coefficient count does not match occupations.");
+                }
+                if (lcao_virtual_source == SternheimerLCAOVirtualSource::KSBands)
+                {
+                    const auto& channel = (*lcao_occupied_channels)[ispin];
+                    const std::size_t available_bands
+                        = channel.coefficients.size() + channel.unoccupied_coefficients.size();
+                    if (available_bands != static_cast<std::size_t>(PARAM.globalv.nlocal))
+                    {
+                        throw std::runtime_error(
+                            "Sternheimer ks_bands virtual source requires nbands=nlocal so the LCAO virtual space is "
+                            "complete.");
+                    }
+                    if (channel.unoccupied_coefficients.empty())
+                    {
+                        throw std::runtime_error("Sternheimer ks_bands virtual source found no unoccupied KS bands.");
+                    }
                 }
             }
         }
@@ -4344,7 +4362,17 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                            "spin=" + std::to_string(spin_index + 1));
                 std::vector<SternheimerDeltaGridFunction> loaded_candidate_functions;
                 const std::vector<SternheimerDeltaGridFunction>* candidate_functions = &sampled_ao_functions;
-                if (candidate_functions->empty())
+                if (use_lcao_zero_order && lcao_virtual_source == SternheimerLCAOVirtualSource::KSBands)
+                {
+                    loaded_candidate_functions.reserve(lcao_channel->unoccupied_coefficients.size());
+                    for (const auto& coefficients: lcao_channel->unoccupied_coefficients)
+                    {
+                        loaded_candidate_functions.push_back(
+                            linear_combination_delta_sternheimer_grid_functions(sampled_ao_functions, coefficients));
+                    }
+                    candidate_functions = &loaded_candidate_functions;
+                }
+                else if (candidate_functions->empty())
                 {
                     loaded_candidate_functions = build_lcao_candidate_grid_functions(ucell, grid_data.grid);
                     candidate_functions = &loaded_candidate_functions;
@@ -4775,6 +4803,17 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         out << "pca_threshold " << pca_threshold << '\n';
         out << "ccp_rmesh_times " << ccp_rmesh_times << '\n';
         out << "sternheimer_zero_order_source " << (use_lcao_zero_order ? "lcao_ks" : "fd_grid") << '\n';
+        if (use_lcao_zero_order)
+        {
+            out << "sternheimer_lcao_virtual_source "
+                << sternheimer_lcao_virtual_source_name(lcao_virtual_source) << '\n';
+            out << "sternheimer_lcao_unoccupied_bands_per_spin";
+            for (const int count: sternheimer_lcao_unoccupied_bands_per_spin(*lcao_occupied_channels))
+            {
+                out << ' ' << count;
+            }
+            out << '\n';
+        }
         out << "sternheimer_response_spin_channels " << spin_diagnostics.size() << '\n';
         out << "sternheimer_response_spin_indices";
         for (const SpinResponseDiagnostics& diagnostics: spin_diagnostics)
