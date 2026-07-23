@@ -1,12 +1,9 @@
 #ifndef PSI_BASE_H
 #define PSI_BASE_H
-// data structure support
-#include "source_basis/module_pw/pw_basis_k.h" // for kpoint related data structure
+#include "source_basis/module_pw/pw_basis_k.h"
 #include "source_pw/module_pwdft/structure_factor.h"
-#include "source_psi/psi.h" // for psi data structure
-// smart pointer for auto-memory management
+#include "source_psi/psi.h" 
 #include <memory>
-// numerical algorithm support
 #ifdef __MPI
 #include <mpi.h>
 #endif
@@ -15,7 +12,9 @@
 
 #include <type_traits>
 #include <vector>
+
 using namespace std;
+
 /*
 Psi (planewave based wavefunction) base class
 Auther: Kirk0830
@@ -116,6 +115,7 @@ class psi_base
     }
 
   protected:
+
 #ifdef __MPI // MPI additional implementation
     /// @brief mapping from (ix, iy) to is
     void stick_to_pool(Real* stick,      //< stick
@@ -127,20 +127,35 @@ class psi_base
                   const int iw_end,                  ///< iw_end, ending band index
                   const int ik,                      ///< ik, kpoint index
                   const int mode = 1);               ///< mode, 0 for rr*exp(i*arg), 1 for rr/(1+gk2)*exp(i*arg)
+
     const Structure_Factor* sf_ = nullptr;           ///< Structure_Factor
+
     const ModulePW::PW_Basis_K* pw_wfc_ = nullptr;   ///< use |k+G>, |G>, getgpluskcar and so on in PW_Basis_K
+
     const UnitCell* p_ucell_ = nullptr;              ///< UnitCell
+
     int lmaxkb_ = 0;                                 ///< max angular momentum for non-local projectors
+
     std::vector<int> ik2iktot_;                      ///< local->global k-point mapping
+
     int nkstot_ = 0;                                 ///< total number of k-points
+
     int random_seed_ = 1;                            ///< random seed, shared by random, atomic+random, nao+random
+
     std::vector<int> ixy2is_;                        ///< used by stick_to_pool function
+
     int mem_saver_ = 0;                              ///< if save memory, only for nscf
+
     std::string method_ = "none";                    ///< method name
+
     int nbands_complem_ = 0; ///< complement number of bands, which is nbands_start_ - ucell.natomwfc
+
     double mixing_coef_ = 0; ///< mixing coefficient for atomic+random and nao+random
+
     int nbands_start_ = 0;   ///< starting nbands, which is no less than PARAM.inp.nbands
+
     int npol_ = 1;           ///< number of polarizations
+
     int nbands_ = 1;         ///< number of bands
 };
 #endif

@@ -36,9 +36,12 @@ class psi_init_atomic : public psi_base<T>
     virtual void init_psig(T* psig, const int& ik) override;
 
   protected:
+
     // allocate memory for overlap table
     void allocate_ps_table();
+
     std::vector<std::string> pseudopot_files_;
+
     ModuleBase::realArray ovlp_pswfcjlq_;
 };
 #endif

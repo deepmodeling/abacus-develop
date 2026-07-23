@@ -37,51 +37,64 @@ class psi_init_nao : public psi_base<T>
                             const int& = 1) override;            //< nbands
 
     void read_external_orbs(const std::string* orbital_files, const int& rank);
+
     virtual void tabulate() override;
+
     std::vector<std::string> external_orbs() const
     {
         return orbital_files_;
     }
+
     std::vector<std::vector<int>> nr() const
     {
         return nr_;
     }
+
     std::vector<int> nr(const int& itype) const
     {
         return nr_[itype];
     }
+
     int nr(const int& itype, const int& ichi) const
     {
         return nr_[itype][ichi];
     }
+
     std::vector<std::vector<std::vector<double>>> chi() const
     {
         return chi_;
     }
+
     std::vector<std::vector<double>> chi(const int& itype) const
     {
         return chi_[itype];
     }
+
     std::vector<double> chi(const int& itype, const int& ichi) const
     {
         return chi_[itype][ichi];
     }
+
     double chi(const int& itype, const int& ichi, const int& ir) const
     {
         return chi_[itype][ichi][ir];
     }
+
     std::vector<std::vector<std::vector<double>>> rgrid() const
     {
         return rgrid_;
     }
+
     std::vector<std::vector<double>> rgrid(const int& itype) const
     {
         return rgrid_[itype];
     }
+
     std::vector<double> rgrid(const int& itype, const int& ichi) const
     {
         return rgrid_[itype][ichi];
     }
+
     double rgrid(const int& itype, const int& ichi, const int& ir) const
     {
         return rgrid_[itype][ichi][ir];

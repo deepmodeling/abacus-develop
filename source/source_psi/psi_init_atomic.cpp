@@ -1,30 +1,14 @@
 #include "psi_init_atomic.h"
 #include "source_pw/module_pwdft/soc.h"
-// numerical algorithm support
 #include "source_base/math_integral.h" // for numerical integration
 #include "source_base/math_polyint.h" // for polynomial interpolation
 #include "source_base/math_ylmreal.h" // for real spherical harmonics
 #include "source_base/math_sphbes.h" // for spherical bessel functions
-// basic functions support
 #include "source_base/tool_quit.h"
 #include "source_base/timer.h"
-// global variables definition
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"
-// io support
 #include "source_io/module_output/write_pao.h"
-
-// free function, compared with common radial function normalization, it does not multiply r to function
-// due to pswfc is already multiplied by r
-// template <typename T>
-// void normalize(int n_rgrid, std::vector<T>& pswfcr, double* rab)
-// {
-//     std::vector<T> pswfc2r2(pswfcr.size());
-//     std::transform(pswfcr.begin(), pswfcr.end(), pswfc2r2.begin(), [](T pswfc) { return pswfc * pswfc; });
-//     T norm = ModuleBase::Integral::simpson(n_rgrid, pswfc2r2.data(), rab);
-//     norm = sqrt(norm);
-//     std::transform(pswfcr.begin(), pswfcr.end(), pswfcr.begin(), [norm](T pswfc) { return pswfc / norm; });
-// }
 
 template <typename T>
 void psi_init_atomic<T>::allocate_ps_table()
@@ -38,7 +22,8 @@ void psi_init_atomic<T>::allocate_ps_table()
     }
     if (dim2 == 0)
     {
-        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_table", "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
+        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_table", 
+			"there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
     }
     int dim3 = PARAM.globalv.nqx;
     // allocate memory for ovlp_flzjlq
@@ -48,23 +33,26 @@ void psi_init_atomic<T>::allocate_ps_table()
 
 template <typename T>
 void psi_init_atomic<T>::initialize(const Structure_Factor* sf,         //< structure factor
-                                           const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
-                                           const UnitCell* p_ucell,            //< unit cell
-                                           const std::vector<int>& ik2iktot,
-                                           const int& nkstot,
-                                           const int& random_seed,       //< random seed
-                                           const int& lmaxkb,
-                                           const int& rank,
-                                           const int& npol,
-                                           const int& nbands)
+    const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
+    const UnitCell* p_ucell,            //< unit cell
+    const std::vector<int>& ik2iktot,
+    const int& nkstot,
+    const int& random_seed,       //< random seed
+    const int& lmaxkb,
+    const int& rank,
+    const int& npol,
+    const int& nbands)
 {
     ModuleBase::timer::start("psi_init_atomic", "initialize");
 
     psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, lmaxkb, rank, npol, nbands);
+
     this->nbands_start_ = std::max(this->p_ucell_->natomwfc, nbands);
     this->nbands_complem_ = this->nbands_start_ - this->p_ucell_->natomwfc;
+
     // allocate
     this->allocate_ps_table();
+
     // then for generate random number to fill in the wavefunction
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
@@ -87,7 +75,7 @@ void psi_init_atomic<T>::tabulate()
     {
         max_msh = (this->p_ucell_->atoms[it].ncpp.msh > max_msh) ? this->p_ucell_->atoms[it].ncpp.msh : max_msh;
     }
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",max_msh);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max mesh points in Pseudopotential",max_msh);
     
     this->ovlp_pswfcjlq_.zero_out();
     const int startq = 0;
@@ -95,14 +83,14 @@ void psi_init_atomic<T>::tabulate()
     std::vector<double> aux(max_msh);
     std::vector<double> vchi(max_msh);
 
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
-	ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",PARAM.globalv.nqx);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",PARAM.globalv.nqx);
 
     for (int it=0; it<this->p_ucell_->ntype; it++)
     {
-		Atom* atom = &this->p_ucell_->atoms[it];
+	Atom* atom = &this->p_ucell_->atoms[it];
 
-		GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
+	GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
 
         // QE uses atom->ncpp.mesh
         const int n_rgrid = (PARAM.inp.pseudo_mesh) ? atom->ncpp.mesh : atom->ncpp.msh;
@@ -229,6 +217,7 @@ template <typename T>
 void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
 {
     ModuleBase::timer::start("psi_init_atomic", "init_psig");
+
     const int npw = this->pw_wfc_->npwk[ik];
     const int npwk_max = this->pw_wfc_->npwk_max;
     int lmax = this->p_ucell_->lmax_ppwf;
