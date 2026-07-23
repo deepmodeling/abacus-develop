@@ -33,7 +33,8 @@ struct SternheimerFDLinearResponse
 
 SternheimerFDHamiltonian::Complex sternheimer_fd_grid_dot(const SternheimerFDHamiltonian::Vector& lhs,
                                                           const SternheimerFDHamiltonian::Vector& rhs,
-                                                          double volume_element);
+                                                          double volume_element,
+                                                          int* threads_used = nullptr);
 
 double sternheimer_fd_grid_norm(const SternheimerFDHamiltonian::Vector& wavefunction, double volume_element);
 

@@ -54,6 +54,7 @@ class SternheimerFDHamiltonian
     const SternheimerFDNonlocalProjector* nonlocal_projector() const;
 
     void apply(const Vector& psi, Vector& hpsi) const;
+    void apply(const Vector& psi, Vector& hpsi, int* threads_used) const;
 
     Matrix dense_matrix(int max_size = 4096) const;
 

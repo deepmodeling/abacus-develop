@@ -63,6 +63,7 @@ void apply_preconditioner(const SternheimerRPA::LinearProblem& problem,
 void axpy(const SternheimerRPA::Complex alpha, const SternheimerRPA::Vector& x, SternheimerRPA::Vector& y)
 {
     assert_same_size(x, y, "SternheimerRPA::axpy");
+#pragma omp parallel for schedule(static)
     for (std::size_t i = 0; i != y.size(); ++i)
     {
         y[i] += alpha * x[i];
@@ -71,9 +72,10 @@ void axpy(const SternheimerRPA::Complex alpha, const SternheimerRPA::Vector& x, 
 
 void scale(const SternheimerRPA::Complex alpha, SternheimerRPA::Vector& x)
 {
-    for (SternheimerRPA::Complex& value: x)
+#pragma omp parallel for schedule(static)
+    for (std::size_t i = 0; i != x.size(); ++i)
     {
-        value *= alpha;
+        x[i] *= alpha;
     }
 }
 
@@ -509,6 +511,7 @@ SternheimerRPA::SolverResult SternheimerRPA::solve_bicgstab(const LinearProblem&
     Vector residual(rhs.size());
     Vector ax(rhs.size());
     problem.apply(solution, ax);
+#pragma omp parallel for schedule(static)
     for (std::size_t i = 0; i != rhs.size(); ++i)
     {
         residual[i] = rhs[i] - ax[i];
@@ -554,6 +557,7 @@ SternheimerRPA::SolverResult SternheimerRPA::solve_bicgstab(const LinearProblem&
         else
         {
             const Complex beta = (rho_new / rho_old) * (alpha / omega_old);
+#pragma omp parallel for schedule(static)
             for (std::size_t i = 0; i != p.size(); ++i)
             {
                 p[i] = residual[i] + beta * (p[i] - omega_old * v[i]);
@@ -570,6 +574,7 @@ SternheimerRPA::SolverResult SternheimerRPA::solve_bicgstab(const LinearProblem&
         }
         alpha = rho_new / rv;
 
+#pragma omp parallel for schedule(static)
         for (std::size_t i = 0; i != s.size(); ++i)
         {
             s[i] = residual[i] - alpha * v[i];
@@ -603,6 +608,7 @@ SternheimerRPA::SolverResult SternheimerRPA::solve_bicgstab(const LinearProblem&
         axpy(alpha, p_hat, solution);
         axpy(omega_new, s_hat, solution);
 
+#pragma omp parallel for schedule(static)
         for (std::size_t i = 0; i != residual.size(); ++i)
         {
             residual[i] = s[i] - omega_new * t[i];
@@ -652,6 +658,7 @@ SternheimerRPA::SolverResult SternheimerRPA::solve_gmres(const LinearProblem& pr
     Vector residual(rhs.size());
     Vector ax(rhs.size());
     problem.apply(solution, ax);
+#pragma omp parallel for schedule(static)
     for (std::size_t i = 0; i != rhs.size(); ++i)
     {
         residual[i] = rhs[i] - ax[i];
@@ -717,6 +724,7 @@ SternheimerRPA::SolverResult SternheimerRPA::solve_gmres(const LinearProblem& pr
 
         add_krylov_update(preconditioned_basis, least_squares.coefficients, solution);
         problem.apply(solution, ax);
+#pragma omp parallel for schedule(static)
         for (std::size_t i = 0; i != rhs.size(); ++i)
         {
             residual[i] = rhs[i] - ax[i];
@@ -743,6 +751,7 @@ void SternheimerRPA::build_rhs_from_hartree_perturbation(const std::vector<doubl
         throw std::invalid_argument("SternheimerRPA::build_rhs_from_hartree_perturbation size mismatch.");
     }
     rhs_r.resize(psi_r.size());
+#pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
     {
         rhs_r[ir] = -hartree_potential_r[ir] * psi_r[ir];
@@ -758,6 +767,7 @@ void SternheimerRPA::build_rhs_from_hartree_perturbation(const Vector& hartree_p
         throw std::invalid_argument("SternheimerRPA::build_rhs_from_hartree_perturbation size mismatch.");
     }
     rhs_r.resize(psi_r.size());
+#pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
     {
         rhs_r[ir] = -hartree_potential_r[ir] * psi_r[ir];
@@ -774,12 +784,16 @@ SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
     {
         throw std::invalid_argument("SternheimerRPA::accumulate_polarizability_grid_element size mismatch.");
     }
-    Complex value(0.0, 0.0);
+    double value_real = 0.0;
+    double value_imag = 0.0;
+#pragma omp parallel for reduction(+:value_real, value_imag) schedule(static)
     for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
     {
-        value += std::conj(psi_r[ir]) * hartree_potential_r[ir] * delta_psi_r[ir];
+        const Complex contribution = std::conj(psi_r[ir]) * hartree_potential_r[ir] * delta_psi_r[ir];
+        value_real += contribution.real();
+        value_imag += contribution.imag();
     }
-    return grid_weight * value;
+    return grid_weight * Complex(value_real, value_imag);
 }
 
 SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
@@ -792,12 +806,17 @@ SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
     {
         throw std::invalid_argument("SternheimerRPA::accumulate_polarizability_grid_element size mismatch.");
     }
-    Complex value(0.0, 0.0);
+    double value_real = 0.0;
+    double value_imag = 0.0;
+#pragma omp parallel for reduction(+:value_real, value_imag) schedule(static)
     for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
     {
-        value += std::conj(psi_r[ir]) * std::conj(hartree_potential_r[ir]) * delta_psi_r[ir];
+        const Complex contribution
+            = std::conj(psi_r[ir]) * std::conj(hartree_potential_r[ir]) * delta_psi_r[ir];
+        value_real += contribution.real();
+        value_imag += contribution.imag();
     }
-    return grid_weight * value;
+    return grid_weight * Complex(value_real, value_imag);
 }
 
 void SternheimerRPA::accumulate_chi0_branch_column(const std::vector<std::vector<double>>& hartree_potentials_r,
@@ -1226,12 +1245,16 @@ void SternheimerRPA::write_chi0_v1_file(const std::string& filename,
 SternheimerRPA::Complex SternheimerRPA::local_grid_dot(const Vector& lhs, const Vector& rhs, const double grid_weight)
 {
     assert_same_size(lhs, rhs, "SternheimerRPA::local_grid_dot");
-    Complex value(0.0, 0.0);
+    double value_real = 0.0;
+    double value_imag = 0.0;
+#pragma omp parallel for reduction(+:value_real, value_imag) schedule(static)
     for (std::size_t ir = 0; ir != lhs.size(); ++ir)
     {
-        value += std::conj(lhs[ir]) * rhs[ir];
+        const Complex contribution = std::conj(lhs[ir]) * rhs[ir];
+        value_real += contribution.real();
+        value_imag += contribution.imag();
     }
-    return grid_weight * value;
+    return grid_weight * Complex(value_real, value_imag);
 }
 
 void SternheimerRPA::project_out_subspace(const std::vector<Vector>& subspace,
@@ -1251,6 +1274,7 @@ void SternheimerRPA::project_out_subspace(const std::vector<Vector>& subspace,
             continue;
         }
         const Complex coeff = dot(basis_vec, vec) / norm;
+#pragma omp parallel for schedule(static)
         for (std::size_t i = 0; i != vec.size(); ++i)
         {
             vec[i] -= coeff * basis_vec[i];
@@ -1270,6 +1294,7 @@ void SternheimerRPA::apply_kinetic_preconditioner(const std::vector<double>& kin
         throw std::invalid_argument("SternheimerRPA::apply_kinetic_preconditioner size mismatch.");
     }
     output.resize(input.size());
+#pragma omp parallel for schedule(static)
     for (std::size_t ig = 0; ig != input.size(); ++ig)
     {
         const Complex denominator(kinetic_energy[ig] - eigenvalue + eta, omega);

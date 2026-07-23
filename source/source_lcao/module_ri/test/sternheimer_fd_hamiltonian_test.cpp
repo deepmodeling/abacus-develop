@@ -8,6 +8,10 @@
 #include <stdexcept>
 #include <vector>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace
 {
 
@@ -69,6 +73,45 @@ TEST(SternheimerFDHamiltonian, UsesABACUSRealSpaceIndexOrder)
             }
         }
     }
+}
+
+TEST(SternheimerFDHamiltonian, ApplyUsesRequestedOpenMPThreadsAndMatchesSerial)
+{
+#ifndef _OPENMP
+    GTEST_SKIP() << "OpenMP is not enabled in this build.";
+#else
+    Hamiltonian::Grid grid{24, 12, 8, 0.2, 0.3, 0.4, true};
+    std::vector<double> potential(static_cast<std::size_t>(grid.size()), 0.0);
+    Vector psi(static_cast<std::size_t>(grid.size()));
+    for (int ir = 0; ir != grid.size(); ++ir)
+    {
+        potential[static_cast<std::size_t>(ir)] = 0.01 * (ir % 17);
+        psi[static_cast<std::size_t>(ir)] = Complex(0.03 * (ir % 11), -0.02 * (ir % 7));
+    }
+    Hamiltonian hamiltonian(grid, potential);
+
+    const int previous_threads = omp_get_max_threads();
+    omp_set_dynamic(0);
+    omp_set_num_threads(1);
+    int serial_threads = 0;
+    Vector serial;
+    hamiltonian.apply(psi, serial, &serial_threads);
+
+    omp_set_num_threads(4);
+    int parallel_threads = 0;
+    Vector parallel;
+    hamiltonian.apply(psi, parallel, &parallel_threads);
+    omp_set_num_threads(previous_threads);
+
+    EXPECT_EQ(serial_threads, 1);
+    EXPECT_EQ(parallel_threads, 4);
+    ASSERT_EQ(parallel.size(), serial.size());
+    for (std::size_t ir = 0; ir != serial.size(); ++ir)
+    {
+        EXPECT_NEAR(parallel[ir].real(), serial[ir].real(), 1.0e-13);
+        EXPECT_NEAR(parallel[ir].imag(), serial[ir].imag(), 1.0e-13);
+    }
+#endif
 }
 
 TEST(SternheimerFDHamiltonian, PlaneWaveHasSecondOrderFiniteDifferenceKineticEnergy)

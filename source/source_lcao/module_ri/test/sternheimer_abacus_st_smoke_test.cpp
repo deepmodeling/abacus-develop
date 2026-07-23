@@ -108,6 +108,36 @@ TEST(SternheimerChannelParallel, HonorsExplicitSingleWorkerLimit)
 #endif
 }
 
+TEST(SternheimerChannelParallel, SingleOuterWorkerLeavesGridParallelismAvailable)
+{
+#ifdef _OPENMP
+    const int previous_threads = omp_get_max_threads();
+    const int previous_dynamic = omp_get_dynamic();
+    const int previous_active_levels = omp_get_max_active_levels();
+    omp_set_dynamic(0);
+    omp_set_num_threads(4);
+    omp_set_max_active_levels(1);
+
+    int inner_threads = 0;
+    static_cast<void>(ModuleRI::run_sternheimer_channel_tasks<int>(
+        1,
+        [&inner_threads](const int channel_index) {
+#pragma omp parallel num_threads(4)
+            {
+#pragma omp single
+                inner_threads = omp_get_num_threads();
+            }
+            return channel_index;
+        },
+        1));
+    EXPECT_EQ(inner_threads, 4);
+
+    omp_set_max_active_levels(previous_active_levels);
+    omp_set_num_threads(previous_threads);
+    omp_set_dynamic(previous_dynamic);
+#endif
+}
+
 TEST(SternheimerChannelParallel, RethrowsFirstIndexedExceptionAfterAllTasksFinish)
 {
     std::atomic<int> completed_tasks{0};

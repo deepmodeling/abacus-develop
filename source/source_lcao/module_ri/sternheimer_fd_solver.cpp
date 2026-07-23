@@ -9,6 +9,10 @@
 #include <string>
 #include <utility>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace ModuleRI
 {
 namespace
@@ -19,9 +23,10 @@ using Vector = SternheimerFDHamiltonian::Vector;
 
 void scale_vector(Vector& vector, const Complex factor)
 {
-    for (Complex& value: vector)
+#pragma omp parallel for schedule(static)
+    for (std::size_t ir = 0; ir != vector.size(); ++ir)
     {
-        value *= factor;
+        vector[ir] *= factor;
     }
 }
 
@@ -31,6 +36,7 @@ void axpy(const Complex alpha, const Vector& x, Vector& y)
     {
         throw std::invalid_argument("Sternheimer FD vector axpy sizes do not match.");
     }
+#pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != x.size(); ++ir)
     {
         y[ir] += alpha * x[ir];
@@ -91,6 +97,7 @@ SternheimerFDZeroOrderStates build_zero_order_states_from_wavefunctions(
         Vector hpsi;
         hamiltonian.apply(states.wavefunctions[ib], hpsi);
         Vector residual(hpsi.size());
+#pragma omp parallel for schedule(static)
         for (std::size_t ir = 0; ir != hpsi.size(); ++ir)
         {
             residual[ir] = hpsi[ir] - states.eigenvalues[ib] * states.wavefunctions[ib][ir];
@@ -104,7 +111,8 @@ SternheimerFDZeroOrderStates build_zero_order_states_from_wavefunctions(
 
 SternheimerFDHamiltonian::Complex sternheimer_fd_grid_dot(const SternheimerFDHamiltonian::Vector& lhs,
                                                           const SternheimerFDHamiltonian::Vector& rhs,
-                                                          const double volume_element)
+                                                          const double volume_element,
+                                                          int* threads_used)
 {
     if (volume_element <= 0.0)
     {
@@ -115,12 +123,39 @@ SternheimerFDHamiltonian::Complex sternheimer_fd_grid_dot(const SternheimerFDHam
         throw std::invalid_argument("Sternheimer FD grid dot vector sizes do not match.");
     }
 
-    SternheimerFDHamiltonian::Complex value(0.0, 0.0);
-    for (std::size_t ir = 0; ir != lhs.size(); ++ir)
+    double real_part = 0.0;
+    double imag_part = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel
     {
-        value += std::conj(lhs[ir]) * rhs[ir];
+#pragma omp single
+        {
+            if (threads_used != nullptr)
+            {
+                *threads_used = omp_get_num_threads();
+            }
+        }
+
+#pragma omp for reduction(+ : real_part, imag_part) schedule(static)
+#endif
+        for (std::size_t ir = 0; ir != lhs.size(); ++ir)
+        {
+            const double lhs_real = lhs[ir].real();
+            const double lhs_imag = lhs[ir].imag();
+            const double rhs_real = rhs[ir].real();
+            const double rhs_imag = rhs[ir].imag();
+            real_part += lhs_real * rhs_real + lhs_imag * rhs_imag;
+            imag_part += lhs_real * rhs_imag - lhs_imag * rhs_real;
+        }
+#ifdef _OPENMP
     }
-    return volume_element * value;
+#else
+    if (threads_used != nullptr)
+    {
+        *threads_used = 1;
+    }
+#endif
+    return volume_element * SternheimerFDHamiltonian::Complex(real_part, imag_part);
 }
 
 double sternheimer_fd_grid_norm(const SternheimerFDHamiltonian::Vector& wavefunction, const double volume_element)
@@ -163,6 +198,7 @@ double sternheimer_fd_linear_response_residual_norm(
     Vector residual;
     hamiltonian.apply(projected_wavefunction, residual);
     const Complex shift(-reference_eigenvalue, omega);
+#pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != residual.size(); ++ir)
     {
         residual[ir] += shift * projected_wavefunction[ir];
@@ -171,6 +207,7 @@ double sternheimer_fd_linear_response_residual_norm(
 
     Vector projected_rhs = rhs;
     SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, projected_rhs);
+#pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != residual.size(); ++ir)
     {
         residual[ir] -= projected_rhs[ir];
@@ -207,6 +244,7 @@ SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_dense(const Sternhe
 
     for (int ib = 0; ib != num_states; ++ib)
     {
+#pragma omp parallel for schedule(static)
         for (int ir = 0; ir != grid_size; ++ir)
         {
             states.wavefunctions[ib][ir] = inv_sqrt_volume * eigenpairs.eigenvectors[ib][ir];
@@ -215,6 +253,7 @@ SternheimerFDZeroOrderStates solve_sternheimer_fd_zero_order_dense(const Sternhe
         SternheimerFDHamiltonian::Vector hpsi;
         hamiltonian.apply(states.wavefunctions[ib], hpsi);
         SternheimerFDHamiltonian::Vector residual(grid_size);
+#pragma omp parallel for schedule(static)
         for (int ir = 0; ir != grid_size; ++ir)
         {
             residual[ir] = hpsi[ir] - states.eigenvalues[ib] * states.wavefunctions[ib][ir];
@@ -445,6 +484,7 @@ SternheimerFDLinearResponse solve_sternheimer_fd_linear_response(
 
         hamiltonian.apply(pc_input, output);
         const SternheimerFDHamiltonian::Complex shift(-reference_eigenvalue, omega);
+#pragma omp parallel for schedule(static)
         for (std::size_t ir = 0; ir != output.size(); ++ir)
         {
             output[ir] += shift * pc_input[ir];

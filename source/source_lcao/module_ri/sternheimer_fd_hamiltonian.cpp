@@ -8,6 +8,10 @@
 #include <string>
 #include <utility>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace ModuleRI
 {
 
@@ -120,6 +124,11 @@ SternheimerFDHamiltonian::ShiftedGridPoint SternheimerFDHamiltonian::shifted_gri
 
 void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi) const
 {
+    apply(psi, hpsi, nullptr);
+}
+
+void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threads_used) const
+{
     if (static_cast<int>(psi.size()) != grid_.size())
     {
         throw std::invalid_argument("SternheimerFDHamiltonian::apply input size does not match the grid.");
@@ -142,53 +151,74 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi) const
         }
     }
 
-    for (int iz = 0; iz != grid_.nz; ++iz)
+#ifdef _OPENMP
+#pragma omp parallel
     {
-        for (int iy = 0; iy != grid_.ny; ++iy)
+#pragma omp single
         {
-            for (int ix = 0; ix != grid_.nx; ++ix)
+            if (threads_used != nullptr)
             {
-                const int center = index(ix, iy, iz);
-                const Complex psi_center = psi[center];
-
-                Complex laplacian = -2.0 * (laplacian_coefficients[0][0]
-                                             + laplacian_coefficients[1][1]
-                                             + laplacian_coefficients[2][2])
-                                    * psi_center;
-                const auto add_shift = [&](const int dx, const int dy, const int dz, const double coefficient) {
-                    const ShiftedGridPoint shifted = shifted_grid_point(ix + dx, iy + dy, iz + dz);
-                    if (shifted.index >= 0)
-                    {
-                        laplacian += coefficient * shifted.phase * psi[shifted.index];
-                    }
-                };
-                add_shift(1, 0, 0, laplacian_coefficients[0][0]);
-                add_shift(-1, 0, 0, laplacian_coefficients[0][0]);
-                add_shift(0, 1, 0, laplacian_coefficients[1][1]);
-                add_shift(0, -1, 0, laplacian_coefficients[1][1]);
-                add_shift(0, 0, 1, laplacian_coefficients[2][2]);
-                add_shift(0, 0, -1, laplacian_coefficients[2][2]);
-
-                const auto add_mixed = [&](const int dx1,
-                                           const int dy1,
-                                           const int dz1,
-                                           const int dx2,
-                                           const int dy2,
-                                           const int dz2,
-                                           const double coefficient) {
-                    add_shift(dx1 + dx2, dy1 + dy2, dz1 + dz2, 0.5 * coefficient);
-                    add_shift(dx1 - dx2, dy1 - dy2, dz1 - dz2, -0.5 * coefficient);
-                    add_shift(-dx1 + dx2, -dy1 + dy2, -dz1 + dz2, -0.5 * coefficient);
-                    add_shift(-dx1 - dx2, -dy1 - dy2, -dz1 - dz2, 0.5 * coefficient);
-                };
-                add_mixed(1, 0, 0, 0, 1, 0, laplacian_coefficients[0][1]);
-                add_mixed(1, 0, 0, 0, 0, 1, laplacian_coefficients[0][2]);
-                add_mixed(0, 1, 0, 0, 0, 1, laplacian_coefficients[1][2]);
-
-                hpsi[center] = -kinetic_prefactor_ * laplacian + local_potential_[center] * psi_center;
+                *threads_used = omp_get_num_threads();
             }
         }
+
+#pragma omp for collapse(2) schedule(static)
+#endif
+        for (int ix = 0; ix != grid_.nx; ++ix)
+        {
+            for (int iy = 0; iy != grid_.ny; ++iy)
+            {
+                for (int iz = 0; iz != grid_.nz; ++iz)
+                {
+                    const int center = index(ix, iy, iz);
+                    const Complex psi_center = psi[center];
+
+                    Complex laplacian = -2.0 * (laplacian_coefficients[0][0]
+                                                 + laplacian_coefficients[1][1]
+                                                 + laplacian_coefficients[2][2])
+                                        * psi_center;
+                    const auto add_shift = [&](const int dx, const int dy, const int dz, const double coefficient) {
+                        const ShiftedGridPoint shifted = shifted_grid_point(ix + dx, iy + dy, iz + dz);
+                        if (shifted.index >= 0)
+                        {
+                            laplacian += coefficient * shifted.phase * psi[shifted.index];
+                        }
+                    };
+                    add_shift(1, 0, 0, laplacian_coefficients[0][0]);
+                    add_shift(-1, 0, 0, laplacian_coefficients[0][0]);
+                    add_shift(0, 1, 0, laplacian_coefficients[1][1]);
+                    add_shift(0, -1, 0, laplacian_coefficients[1][1]);
+                    add_shift(0, 0, 1, laplacian_coefficients[2][2]);
+                    add_shift(0, 0, -1, laplacian_coefficients[2][2]);
+
+                    const auto add_mixed = [&](const int dx1,
+                                               const int dy1,
+                                               const int dz1,
+                                               const int dx2,
+                                               const int dy2,
+                                               const int dz2,
+                                               const double coefficient) {
+                        add_shift(dx1 + dx2, dy1 + dy2, dz1 + dz2, 0.5 * coefficient);
+                        add_shift(dx1 - dx2, dy1 - dy2, dz1 - dz2, -0.5 * coefficient);
+                        add_shift(-dx1 + dx2, -dy1 + dy2, -dz1 + dz2, -0.5 * coefficient);
+                        add_shift(-dx1 - dx2, -dy1 - dy2, -dz1 - dz2, 0.5 * coefficient);
+                    };
+                    add_mixed(1, 0, 0, 0, 1, 0, laplacian_coefficients[0][1]);
+                    add_mixed(1, 0, 0, 0, 0, 1, laplacian_coefficients[0][2]);
+                    add_mixed(0, 1, 0, 0, 0, 1, laplacian_coefficients[1][2]);
+
+                    hpsi[center] = -kinetic_prefactor_ * laplacian + local_potential_[center] * psi_center;
+                }
+            }
+        }
+#ifdef _OPENMP
     }
+#else
+    if (threads_used != nullptr)
+    {
+        *threads_used = 1;
+    }
+#endif
 
     if (nonlocal_projector_ != nullptr)
     {

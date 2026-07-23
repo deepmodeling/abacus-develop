@@ -91,6 +91,7 @@ void SternheimerFDNonlocalProjector::add_to(const Vector& psi, Vector& hpsi) con
     {
         const int num_projectors = static_cast<int>(block.projectors.size());
         Vector coefficients(num_projectors, Complex(0.0, 0.0));
+#pragma omp parallel for schedule(static)
         for (int ip = 0; ip != num_projectors; ++ip)
         {
             const Vector& beta = block.projectors[ip];
@@ -109,13 +110,15 @@ void SternheimerFDNonlocalProjector::add_to(const Vector& psi, Vector& hpsi) con
             }
         }
 
-        for (int ip = 0; ip != num_projectors; ++ip)
+#pragma omp parallel for schedule(static)
+        for (int ir = 0; ir != grid_size_; ++ir)
         {
-            const Vector& beta = block.projectors[ip];
-            for (int ir = 0; ir != grid_size_; ++ir)
+            Complex contribution(0.0, 0.0);
+            for (int ip = 0; ip != num_projectors; ++ip)
             {
-                hpsi[ir] += beta[ir] * weighted_coefficients[ip];
+                contribution += block.projectors[ip][ir] * weighted_coefficients[ip];
             }
+            hpsi[ir] += contribution;
         }
     }
 }

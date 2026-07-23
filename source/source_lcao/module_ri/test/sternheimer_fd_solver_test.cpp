@@ -6,6 +6,10 @@
 #include <stdexcept>
 #include <vector>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace
 {
 
@@ -56,6 +60,38 @@ TEST(SternheimerFDSolver, DenseZeroOrderRejectsInvalidArguments)
     EXPECT_THROW(ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 0, 1.0), std::invalid_argument);
     EXPECT_THROW(ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 3, 1.0), std::invalid_argument);
     EXPECT_THROW(ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 1, 0.0), std::invalid_argument);
+}
+
+TEST(SternheimerFDSolver, GridDotUsesRequestedOpenMPThreadsAndMatchesSerial)
+{
+#ifndef _OPENMP
+    GTEST_SKIP() << "OpenMP is not enabled in this build.";
+#else
+    constexpr std::size_t size = 16384;
+    Vector lhs(size);
+    Vector rhs(size);
+    for (std::size_t ir = 0; ir != size; ++ir)
+    {
+        lhs[ir] = Complex(0.01 * static_cast<double>(ir % 23), -0.02 * static_cast<double>(ir % 19));
+        rhs[ir] = Complex(-0.03 * static_cast<double>(ir % 13), 0.04 * static_cast<double>(ir % 17));
+    }
+
+    const int previous_threads = omp_get_max_threads();
+    omp_set_dynamic(0);
+    omp_set_num_threads(1);
+    int serial_threads = 0;
+    const Complex serial = ModuleRI::sternheimer_fd_grid_dot(lhs, rhs, 0.125, &serial_threads);
+
+    omp_set_num_threads(4);
+    int parallel_threads = 0;
+    const Complex parallel = ModuleRI::sternheimer_fd_grid_dot(lhs, rhs, 0.125, &parallel_threads);
+    omp_set_num_threads(previous_threads);
+
+    EXPECT_EQ(serial_threads, 1);
+    EXPECT_EQ(parallel_threads, 4);
+    EXPECT_NEAR(parallel.real(), serial.real(), 1.0e-11);
+    EXPECT_NEAR(parallel.imag(), serial.imag(), 1.0e-11);
+#endif
 }
 
 TEST(SternheimerFDSolver, LanczosZeroOrderMatchesDenseLowStates)

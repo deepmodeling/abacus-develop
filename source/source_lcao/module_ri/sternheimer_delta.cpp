@@ -28,6 +28,7 @@ void check_vector_size(const Vector& vector, const std::size_t expected_size, co
 void axpy(const Complex alpha, const Vector& x, Vector& y)
 {
     check_vector_size(x, y.size(), "Sternheimer delta axpy");
+#pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != y.size(); ++ir)
     {
         y[ir] += alpha * x[ir];
@@ -38,6 +39,7 @@ double difference_norm(const Vector& lhs, const Vector& rhs, const double volume
 {
     check_vector_size(lhs, rhs.size(), "Sternheimer delta difference_norm");
     Vector difference(lhs.size(), Complex(0.0, 0.0));
+#pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != lhs.size(); ++ir)
     {
         difference[ir] = lhs[ir] - rhs[ir];
@@ -47,9 +49,10 @@ double difference_norm(const Vector& lhs, const Vector& rhs, const double volume
 
 void scale_vector(Vector& vector, const Complex factor)
 {
-    for (Complex& value: vector)
+#pragma omp parallel for schedule(static)
+    for (std::size_t ir = 0; ir != vector.size(); ++ir)
     {
-        value *= factor;
+        vector[ir] *= factor;
     }
 }
 
@@ -203,6 +206,7 @@ SternheimerDeltaCoefficientComponents compute_delta_coefficient_components(
     components.sos.assign(virtual_states.size(), Complex(0.0, 0.0));
     components.pulay.assign(virtual_states.size(), Complex(0.0, 0.0));
     components.total.assign(virtual_states.size(), Complex(0.0, 0.0));
+#pragma omp parallel for schedule(static)
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
     {
         const Complex denominator(occupied_eigenvalue - virtual_states[ia].eigenvalue, -omega);
@@ -1119,6 +1123,7 @@ std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_ma
     validate_virtual_states(virtual_states, occupied_wavefunction.size());
 
     std::vector<Complex> elements(virtual_states.size(), Complex(0.0, 0.0));
+#pragma omp parallel for schedule(static)
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
     {
         Complex value(0.0, 0.0);
@@ -1149,6 +1154,7 @@ std::vector<SternheimerFDHamiltonian::Complex> delta_sternheimer_perturbation_ma
     validate_virtual_states(virtual_states, occupied_wavefunction.size());
 
     std::vector<Complex> elements(virtual_states.size(), Complex(0.0, 0.0));
+#pragma omp parallel for schedule(static)
     for (std::size_t ia = 0; ia != virtual_states.size(); ++ia)
     {
         Complex value(0.0, 0.0);
@@ -1257,6 +1263,7 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
 
         hamiltonian.apply(q_input, output);
         const Complex shift(-reference_eigenvalue, omega);
+#pragma omp parallel for schedule(static)
         for (std::size_t ir = 0; ir != output.size(); ++ir)
         {
             output[ir] += shift * q_input[ir];
@@ -1309,6 +1316,7 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     Vector q_residual;
     hamiltonian.apply(result.response.out_wavefunction, q_residual);
     const Complex shift(-reference_eigenvalue, omega);
+#pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != q_residual.size(); ++ir)
     {
         q_residual[ir] += shift * result.response.out_wavefunction[ir];
@@ -1321,6 +1329,7 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
 
     Vector q_rhs = rhs;
     SternheimerRPA::project_out_subspace(fixed_subspace, dot, q_rhs);
+#pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != q_residual.size(); ++ir)
     {
         q_residual[ir] -= q_rhs[ir];
