@@ -31,7 +31,9 @@ class psi_init_nao : public psi_initializer<T>
                             const K_Vectors*,                    //< kpoints
                             const int& = 1,                      //< random seed
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0) override;            //< MPI rank
+                            const int& = 0,                      //< MPI rank
+                            const int& = 1,                      //< npol
+                            const int& = 1) override;            //< nbands
 
     void read_external_orbs(const std::string* orbital_files, const int& rank);
     virtual void tabulate() override;

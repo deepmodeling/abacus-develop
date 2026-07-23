@@ -19,7 +19,9 @@ void psi_initializer<T>::initialize(const Structure_Factor* sf,
                                     const K_Vectors* p_kv_in,
                                     const int& random_seed,
                                     const pseudopot_cell_vnl* p_pspot_nl,
-                                    const int& rank)
+                                    const int& rank,
+                                    const int& npol,
+                                    const int& nbands)
 {
     this->sf_ = sf;
     this->pw_wfc_ = pw_wfc;
@@ -27,6 +29,8 @@ void psi_initializer<T>::initialize(const Structure_Factor* sf,
     this->p_kv = p_kv_in;
     this->random_seed_ = random_seed;
     this->p_pspot_nl_ = p_pspot_nl;
+    this->npol_ = npol;
+    this->nbands_ = nbands;
 }
 
 template <typename T>

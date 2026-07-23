@@ -105,7 +105,8 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
         ModuleBase::WARNING_QUIT("PSIInit::prepare_init", "for new psi initializer, init_wfc type not supported");
     }
 
-    this->psi_initer->initialize(&sf, &pw_wfc, &ucell, &kv, random_seed, &nlpp, rank);
+    this->psi_initer->initialize(&sf, &pw_wfc, &ucell, &kv, random_seed, &nlpp, rank,
+                                     PARAM.globalv.npol, PARAM.inp.nbands);
     this->psi_initer->tabulate();
 
     ModuleBase::timer::end("PSIPrepare", "prepare_init");

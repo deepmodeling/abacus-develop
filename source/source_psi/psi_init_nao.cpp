@@ -153,12 +153,14 @@ void psi_init_nao<T>::initialize(const Structure_Factor* sf,
                                         const K_Vectors* p_kv_in,
                                         const int& random_seed,
                                         const pseudopot_cell_vnl* p_pspot_nl,
-                                        const int& rank)
+                                        const int& rank,
+                                        const int& npol,
+                                        const int& nbands)
 {
     ModuleBase::timer::start("psi_init_nao", "initialize");
 
     // import
-    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
+    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank, npol, nbands);
 
     // allocate
     this->allocate_ao_table();
@@ -177,18 +179,10 @@ void psi_init_nao<T>::initialize(const Structure_Factor* sf,
             /* EVERY ZETA FOR (2l+1) ORBS */
             const int nchi = this->p_ucell_->atoms[it].l_nchi[l];
             const int degen_l = (l == 0) ? 1 : 2 * l + 1;
-            nbands_local += nchi * degen_l * PARAM.globalv.npol * this->p_ucell_->atoms[it].na;
-            /*
-                non-rotate basis, nbands_local*=2 for PARAM.globalv.npol = 2 is enough
-            */
-            // nbands_local += this->p_ucell_->atoms[it].l_nchi[l]*(2*l+1) * PARAM.globalv.npol;
-            /*
-                rotate basis, nbands_local*=4 for p, d, f,... orbitals, and nbands_local*=2 for s orbitals
-                risky when NSPIN = 4, problematic psi value, needed to be checked
-            */
+            nbands_local += nchi * degen_l * npol * this->p_ucell_->atoms[it].na;
         }
     }
-    this->nbands_start_ = std::max(nbands_local, PARAM.inp.nbands);
+    this->nbands_start_ = std::max(nbands_local, nbands);
     this->nbands_complem_ = this->nbands_start_ - nbands_local;
 
     ModuleBase::timer::end("psi_init_nao", "initialize");

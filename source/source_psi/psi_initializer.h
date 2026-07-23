@@ -62,7 +62,9 @@ class psi_initializer
                             const K_Vectors* = nullptr,          //< parallel kpoints
                             const int& = 1,                      //< random seed
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0);                     //< rank
+                            const int& = 0,                      //< rank
+                            const int& = 1,                      //< npol
+                            const int& = 1);                     //< nbands
 
     /// @brief CENTRAL FUNCTION: calculate the interpolate table if needed
     virtual void tabulate()
@@ -135,5 +137,7 @@ class psi_initializer
     int nbands_complem_ = 0; ///< complement number of bands, which is nbands_start_ - ucell.natomwfc
     double mixing_coef_ = 0; ///< mixing coefficient for atomic+random and nao+random
     int nbands_start_ = 0;   ///< starting nbands, which is no less than PARAM.inp.nbands
+    int npol_ = 1;           ///< number of polarizations
+    int nbands_ = 1;         ///< number of bands
 };
 #endif

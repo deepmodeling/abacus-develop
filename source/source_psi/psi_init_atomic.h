@@ -26,7 +26,9 @@ class psi_init_atomic : public psi_initializer<T>
                             const K_Vectors*,                    //< kpoints
                             const int& = 1,                      //< random seed
                             const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0) override;            //< MPI rank
+                            const int& = 0,                      //< MPI rank
+                            const int& = 1,                      //< npol
+                            const int& = 1) override;            //< nbands
     virtual void tabulate() override;
     virtual void init_psig(T* psig, const int& ik) override;
 

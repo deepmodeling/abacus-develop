@@ -8,13 +8,15 @@ void psi_init_random<T>::initialize(const Structure_Factor* sf,
                                                const K_Vectors* p_kv_in,
                                                const int& random_seed,
                                                const pseudopot_cell_vnl* p_pspot_nl,
-                                               const int& rank)
+                                               const int& rank,
+                                               const int& npol,
+                                               const int& nbands)
 {
-    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
+    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank, npol, nbands);
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
     this->pw_wfc_->getfftixy2is(this->ixy2is_.data());
-    this->nbands_start_ = PARAM.inp.nbands;
+    this->nbands_start_ = nbands;
     this->nbands_complem_ = 0;
 }
 

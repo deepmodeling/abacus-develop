@@ -53,7 +53,9 @@ void psi_init_atomic<T>::initialize(const Structure_Factor* sf,         //< stru
                                            const K_Vectors* p_kv_in,
                                            const int& random_seed,       //< random seed
                                            const pseudopot_cell_vnl* p_pspot_nl,
-                                           const int& rank)
+                                           const int& rank,
+                                           const int& npol,
+                                           const int& nbands)
 {
     ModuleBase::timer::start("psi_init_atomic", "initialize");
 
@@ -63,8 +65,8 @@ void psi_init_atomic<T>::initialize(const Structure_Factor* sf,         //< stru
                                  "pseudopot_cell_vnl object cannot be nullptr for atomic, quit.");
     }
     // import
-    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
-    this->nbands_start_ = std::max(this->p_ucell_->natomwfc, PARAM.inp.nbands);
+    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank, npol, nbands);
+    this->nbands_start_ = std::max(this->p_ucell_->natomwfc, nbands);
     this->nbands_complem_ = this->nbands_start_ - this->p_ucell_->natomwfc;
     // allocate
     this->allocate_ps_table();

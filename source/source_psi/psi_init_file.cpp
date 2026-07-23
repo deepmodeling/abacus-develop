@@ -13,10 +13,12 @@ void psi_init_file<T>::initialize(const Structure_Factor* sf,
                                                const K_Vectors* p_kv_in,
                                                const int& random_seed,
                                                const pseudopot_cell_vnl* p_pspot_nl,
-                                               const int& rank)
+                                               const int& rank,
+                                               const int& npol,
+                                               const int& nbands)
 {
-    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
-    this->nbands_start_ = PARAM.inp.nbands;
+    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank, npol, nbands);
+    this->nbands_start_ = nbands;
     this->nbands_complem_ = 0;
 }
 
