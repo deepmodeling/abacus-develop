@@ -114,7 +114,7 @@ AddTest(
 )
 
 add_test(NAME MODULE_CELL_klist_test_para4
-      COMMAND ${BASH} klist_test_para.sh
+      COMMAND ${BASH} ${CMAKE_CURRENT_SOURCE_DIR}/klist_test_para.sh
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
