@@ -188,6 +188,7 @@ ModuleRI::SternheimerLCAOOccupiedKPoint make_occupied_kpoint(const int local_k_i
     ModuleRI::SternheimerLCAOOccupiedKPoint record;
     record.local_k_index = local_k_index;
     record.global_k_index = global_k_index;
+    record.zero_order_k_index = local_k_index;
     record.spin_index = spin_index;
     record.kpoint = kpoint;
     record.kweight = kweight;
@@ -235,9 +236,58 @@ TEST(SternheimerABACUSSTSmoke, DistinguishesTwoKPointsFromTwoSpinChannels)
     auto spin_down = k0;
     spin_down.local_k_index = 1;
     spin_down.global_k_index = 1;
+    spin_down.zero_order_k_index = 1;
     spin_down.spin_index = 1;
     const std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> two_spins = {k0, spin_down};
     EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints(two_spins, 2, 2, 2, 3));
+}
+
+TEST(SternheimerABACUSSTSmoke, AllowsFullKRecordsToShareAnIBZZeroOrderState)
+{
+    auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.5);
+    auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 0.5);
+    k0.zero_order_k_index = 0;
+    k1.zero_order_k_index = 0;
+
+    EXPECT_NO_THROW(
+        ModuleRI::validate_sternheimer_lcao_occupied_kpoints({k0, k1}, 2, 2, 1, 3, 1));
+    k1.zero_order_k_index = 1;
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({k0, k1}, 2, 2, 1, 3, 1),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, FullKRecordKeepsNormalizedCoefficientsAndUsesUniformWeight)
+{
+    auto ibz = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.5);
+    ibz.zero_order_k_index = 0;
+    const std::vector<std::vector<std::complex<double>>> rotated = {
+        {{0.0, 1.0}, {1.0, 0.0}, {0.0, 0.0}}};
+
+    const auto full = ModuleRI::make_sternheimer_full_kpoint_record(
+        ibz, 3, {0.25, 0.25, 0.0}, 0.25, rotated);
+
+    EXPECT_EQ(full.local_k_index, 3);
+    EXPECT_EQ(full.global_k_index, 3);
+    EXPECT_EQ(full.zero_order_k_index, 0);
+    EXPECT_EQ(full.kpoint, (ModuleRI::SternheimerReducedKPoint{0.25, 0.25, 0.0}));
+    EXPECT_DOUBLE_EQ(full.kweight, 0.25);
+    EXPECT_EQ(full.coefficients, rotated);
+}
+
+TEST(SternheimerABACUSSTSmoke, ListsOneCanonicalFullQPointPerZeroOrderStar)
+{
+    auto q0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
+    auto q1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 1.0);
+    auto q1_partner = make_occupied_kpoint(2, 2, 0, {-0.5, 0.0, 0.0}, 1.0);
+    q1_partner.zero_order_k_index = 1;
+    q1_partner.symmetry_spatial_isym = 3;
+
+    EXPECT_EQ(ModuleRI::sternheimer_canonical_q_indices_one_based({q0, q1, q1_partner}),
+              (std::vector<int>{1, 2}));
+
+    q1.symmetry_spatial_isym = 2;
+    EXPECT_THROW(ModuleRI::sternheimer_canonical_q_indices_one_based({q0, q1, q1_partner}),
+                 std::invalid_argument);
 }
 
 TEST(SternheimerABACUSSTSmoke, SelectsEveryGammaSpinRecordForMolecularResponse)
@@ -325,6 +375,97 @@ TEST(SternheimerABACUSSTSmoke, BuildsPeriodicGammaResponsePlanBySelfMappingKPoin
     EXPECT_EQ(plan.kq_pairs[0].target_index, 0);
     EXPECT_EQ(plan.kq_pairs[1].source_index, 1);
     EXPECT_EQ(plan.kq_pairs[1].target_index, 1);
+}
+
+TEST(SternheimerABACUSSTSmoke, BuildsDisjointFixedQKOrbitsFromLittleGroupPermutations)
+{
+    const std::vector<int> identity = {0, 1, 2, 3, 4, 5, 6, 7};
+    const std::vector<int> inversion = {0, 7, 6, 5, 4, 3, 2, 1};
+
+    const auto orbits
+        = ModuleRI::build_sternheimer_fixed_q_k_orbits_from_permutations(8, {identity, inversion});
+
+    ASSERT_EQ(orbits.size(), 5U);
+    EXPECT_EQ(orbits[0].representative_ik_full, 0);
+    EXPECT_EQ(orbits[0].members, (std::vector<int>{0}));
+    EXPECT_EQ(orbits[1].representative_ik_full, 1);
+    EXPECT_EQ(orbits[1].members, (std::vector<int>{1, 7}));
+    EXPECT_EQ(orbits[2].members, (std::vector<int>{2, 6}));
+    EXPECT_EQ(orbits[3].members, (std::vector<int>{3, 5}));
+    EXPECT_EQ(orbits[4].members, (std::vector<int>{4}));
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsNonBijectiveFixedQOperation)
+{
+    EXPECT_THROW(ModuleRI::build_sternheimer_fixed_q_k_orbits_from_permutations(
+                     4, {{0, 1, 2, 3}, {0, 0, 2, 3}}),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, HermitianizesEachPartialResponseBeforeOutput)
+{
+    using Complex = std::complex<double>;
+    const std::vector<Complex> branch{{-1.0, 0.2}, {2.0, 3.0}, {4.0, -5.0}, {-6.0, 0.5}};
+
+    const auto record = ModuleRI::make_sternheimer_partial_response_record(2, 3, 4, branch, 2);
+
+    EXPECT_EQ(record.iq, 2);
+    EXPECT_EQ(record.ik_full, 3);
+    EXPECT_EQ(record.ifrequency, 4);
+    EXPECT_EQ(record.filename, "v1_sternheimer_chi0_iq_2_ik_3_ifreq_4.dat");
+    EXPECT_EQ(record.matrix,
+              (std::vector<Complex>{{-2.0, 0.0}, {6.0, 8.0}, {6.0, -8.0}, {-12.0, 0.0}}));
+}
+
+TEST(SternheimerABACUSSTSmoke, SumOfPartialResponsesEqualsLegacyAggregateResponse)
+{
+    using Complex = std::complex<double>;
+    const std::vector<Complex> branch_a{{-1.0, 0.2}, {2.0, 3.0}, {4.0, -5.0}, {-6.0, 0.5}};
+    const std::vector<Complex> branch_b{{0.5, -0.2}, {-1.0, 1.0}, {2.0, 0.5}, {3.0, -0.5}};
+    const auto partial_a
+        = ModuleRI::make_sternheimer_partial_response_record(1, 0, 1, branch_a, 2);
+    const auto partial_b
+        = ModuleRI::make_sternheimer_partial_response_record(1, 1, 1, branch_b, 2);
+
+    std::vector<Complex> partial_sum(partial_a.matrix.size(), Complex(0.0, 0.0));
+    std::vector<Complex> aggregate_branch(branch_a.size(), Complex(0.0, 0.0));
+    for (std::size_t index = 0; index != branch_a.size(); ++index)
+    {
+        partial_sum[index] = partial_a.matrix[index] + partial_b.matrix[index];
+        aggregate_branch[index] = branch_a[index] + branch_b[index];
+    }
+    std::vector<Complex> expected(aggregate_branch.size(), Complex(0.0, 0.0));
+    for (int row = 0; row != 2; ++row)
+    {
+        for (int column = 0; column != 2; ++column)
+        {
+            const std::size_t index = static_cast<std::size_t>(row * 2 + column);
+            const std::size_t transpose = static_cast<std::size_t>(column * 2 + row);
+            expected[index] = aggregate_branch[index] + std::conj(aggregate_branch[transpose]);
+        }
+    }
+    EXPECT_EQ(partial_sum, expected);
+}
+
+TEST(SternheimerABACUSSTSmoke, FormatsPartialManifestInDeterministicKeyOrder)
+{
+    ModuleRI::SternheimerPartialResponseRecord later;
+    later.iq = 2;
+    later.ik_full = 7;
+    later.ifrequency = 3;
+    later.filename = "later.dat";
+    ModuleRI::SternheimerPartialResponseRecord earlier;
+    earlier.iq = 1;
+    earlier.ik_full = 0;
+    earlier.ifrequency = 1;
+    earlier.filename = "earlier.dat";
+
+    EXPECT_EQ(ModuleRI::format_sternheimer_partial_manifest({later, earlier}),
+              "# iq ik_full ifreq response_file\n"
+              "1 0 1 earlier.dat\n"
+              "2 7 3 later.dat\n");
+    EXPECT_THROW(ModuleRI::format_sternheimer_partial_manifest({earlier, earlier}),
+                 std::invalid_argument);
 }
 
 TEST(SternheimerABACUSSTSmoke, RejectsFractionalOccupationForPeriodicResponse)

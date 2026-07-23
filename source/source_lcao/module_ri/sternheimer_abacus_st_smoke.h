@@ -14,6 +14,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -38,6 +39,9 @@ struct SternheimerLCAOOccupiedKPoint
 {
     int local_k_index = -1;
     int global_k_index = -1;
+    int zero_order_k_index = -1;
+    int symmetry_spatial_isym = 0;
+    bool symmetry_time_reversal = false;
     int spin_index = -1;
     SternheimerReducedKPoint kpoint{0.0, 0.0, 0.0};
     double kweight = 0.0;
@@ -47,6 +51,68 @@ struct SternheimerLCAOOccupiedKPoint
     std::vector<double> unoccupied_eigenvalues;
     std::vector<std::vector<std::complex<double>>> unoccupied_coefficients;
 };
+
+inline SternheimerLCAOOccupiedKPoint make_sternheimer_full_kpoint_record(
+    const SternheimerLCAOOccupiedKPoint& ibz_record,
+    const int full_k_index,
+    const SternheimerReducedKPoint& kpoint,
+    const double full_kweight,
+    std::vector<std::vector<std::complex<double>>> occupied_coefficients,
+    std::vector<std::vector<std::complex<double>>> unoccupied_coefficients = {})
+{
+    if (full_k_index < 0 || !std::isfinite(full_kweight) || full_kweight <= 0.0
+        || occupied_coefficients.size() != ibz_record.coefficients.size()
+        || (!ibz_record.unoccupied_coefficients.empty()
+            && unoccupied_coefficients.size() != ibz_record.unoccupied_coefficients.size()))
+    {
+        throw std::invalid_argument("Invalid full-grid Sternheimer LCAO record data.");
+    }
+    SternheimerLCAOOccupiedKPoint record = ibz_record;
+    record.local_k_index = full_k_index;
+    record.global_k_index = full_k_index;
+    record.kpoint = kpoint;
+    record.kweight = full_kweight;
+    record.coefficients = std::move(occupied_coefficients);
+    record.unoccupied_coefficients = std::move(unoccupied_coefficients);
+    return record;
+}
+
+inline std::vector<int> sternheimer_canonical_q_indices_one_based(
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records)
+{
+    if (records.empty())
+    {
+        throw std::invalid_argument("Cannot identify canonical Sternheimer q points on an empty grid.");
+    }
+    int zero_order_count = 0;
+    for (const auto& record: records)
+    {
+        if (record.global_k_index < 0 || record.zero_order_k_index < 0)
+        {
+            throw std::invalid_argument("Sternheimer q-point metadata contain a negative index.");
+        }
+        zero_order_count = std::max(zero_order_count, record.zero_order_k_index + 1);
+    }
+    std::vector<int> representatives(static_cast<std::size_t>(zero_order_count), -1);
+    for (const auto& record: records)
+    {
+        if (record.symmetry_spatial_isym != 0 || record.symmetry_time_reversal)
+        {
+            continue;
+        }
+        int& representative = representatives[static_cast<std::size_t>(record.zero_order_k_index)];
+        if (representative >= 0)
+        {
+            throw std::invalid_argument("A Sternheimer q star has multiple canonical full-q points.");
+        }
+        representative = record.global_k_index + 1;
+    }
+    if (std::any_of(representatives.begin(), representatives.end(), [](const int index) { return index <= 0; }))
+    {
+        throw std::invalid_argument("A Sternheimer q star has no canonical full-q point.");
+    }
+    return representatives;
+}
 
 inline bool sternheimer_lcao_sos_diagnostic_enabled()
 {
@@ -70,6 +136,180 @@ struct SternheimerPeriodicResponsePlan
     std::vector<SternheimerKQPair> kq_pairs;
     double kweight_sum = 0.0;
 };
+
+struct SternheimerFixedQKOrbit
+{
+    int representative_ik_full = -1;
+    std::vector<int> members;
+};
+
+inline std::vector<SternheimerFixedQKOrbit> build_sternheimer_fixed_q_k_orbits_from_permutations(
+    const int full_kpoint_count,
+    const std::vector<std::vector<int>>& little_group_permutations)
+{
+    if (full_kpoint_count <= 0 || little_group_permutations.empty())
+    {
+        throw std::invalid_argument("Fixed-q Sternheimer k orbits require a nonempty full k grid and little group.");
+    }
+    for (const auto& permutation: little_group_permutations)
+    {
+        if (permutation.size() != static_cast<std::size_t>(full_kpoint_count))
+        {
+            throw std::invalid_argument("Fixed-q Sternheimer little-group permutation has an invalid size.");
+        }
+        std::vector<bool> seen(static_cast<std::size_t>(full_kpoint_count), false);
+        for (const int mapped_index: permutation)
+        {
+            if (mapped_index < 0 || mapped_index >= full_kpoint_count
+                || seen[static_cast<std::size_t>(mapped_index)])
+            {
+                throw std::invalid_argument("Fixed-q Sternheimer little-group operation is not a permutation.");
+            }
+            seen[static_cast<std::size_t>(mapped_index)] = true;
+        }
+    }
+
+    std::vector<bool> assigned(static_cast<std::size_t>(full_kpoint_count), false);
+    std::vector<SternheimerFixedQKOrbit> orbits;
+    for (int seed = 0; seed != full_kpoint_count; ++seed)
+    {
+        if (assigned[static_cast<std::size_t>(seed)])
+        {
+            continue;
+        }
+        std::vector<bool> in_orbit(static_cast<std::size_t>(full_kpoint_count), false);
+        std::vector<int> pending = {seed};
+        in_orbit[static_cast<std::size_t>(seed)] = true;
+        for (std::size_t pending_index = 0; pending_index != pending.size(); ++pending_index)
+        {
+            const int member = pending[pending_index];
+            for (const auto& permutation: little_group_permutations)
+            {
+                const int mapped = permutation[static_cast<std::size_t>(member)];
+                if (!in_orbit[static_cast<std::size_t>(mapped)])
+                {
+                    in_orbit[static_cast<std::size_t>(mapped)] = true;
+                    pending.push_back(mapped);
+                }
+            }
+        }
+        std::sort(pending.begin(), pending.end());
+        SternheimerFixedQKOrbit orbit;
+        orbit.representative_ik_full = pending.front();
+        orbit.members = std::move(pending);
+        for (const int member: orbit.members)
+        {
+            if (assigned[static_cast<std::size_t>(member)])
+            {
+                throw std::invalid_argument("Fixed-q Sternheimer k orbits overlap.");
+            }
+            assigned[static_cast<std::size_t>(member)] = true;
+        }
+        orbits.push_back(std::move(orbit));
+    }
+    if (std::any_of(assigned.begin(), assigned.end(), [](const bool value) { return !value; }))
+    {
+        throw std::invalid_argument("Fixed-q Sternheimer k orbits do not cover the full k grid.");
+    }
+    return orbits;
+}
+
+struct SternheimerPartialResponseRecord
+{
+    int iq = 0;
+    int ik_full = -1;
+    int ifrequency = 0;
+    std::string filename;
+    std::vector<std::complex<double>> matrix;
+};
+
+inline std::string sternheimer_partial_response_filename(const int iq,
+                                                         const int ik_full,
+                                                         const int ifrequency)
+{
+    if (iq <= 0 || ik_full < 0 || ifrequency <= 0)
+    {
+        throw std::invalid_argument("Invalid Sternheimer partial-response index.");
+    }
+    std::ostringstream filename;
+    filename << "v1_sternheimer_chi0_iq_" << iq << "_ik_" << ik_full << "_ifreq_"
+             << ifrequency << ".dat";
+    return filename.str();
+}
+
+inline SternheimerPartialResponseRecord make_sternheimer_partial_response_record(
+    const int iq,
+    const int ik_full,
+    const int ifrequency,
+    const std::vector<std::complex<double>>& branch_matrix,
+    const int num_channels)
+{
+    if (num_channels <= 0
+        || branch_matrix.size()
+               != static_cast<std::size_t>(num_channels) * static_cast<std::size_t>(num_channels))
+    {
+        throw std::invalid_argument("Invalid Sternheimer partial-response matrix dimensions.");
+    }
+
+    SternheimerPartialResponseRecord record;
+    record.iq = iq;
+    record.ik_full = ik_full;
+    record.ifrequency = ifrequency;
+    record.filename = sternheimer_partial_response_filename(iq, ik_full, ifrequency);
+    record.matrix.assign(branch_matrix.size(), std::complex<double>(0.0, 0.0));
+    for (int row = 0; row != num_channels; ++row)
+    {
+        for (int column = 0; column != num_channels; ++column)
+        {
+            const std::size_t index
+                = static_cast<std::size_t>(row) * static_cast<std::size_t>(num_channels)
+                  + static_cast<std::size_t>(column);
+            const std::size_t transpose
+                = static_cast<std::size_t>(column) * static_cast<std::size_t>(num_channels)
+                  + static_cast<std::size_t>(row);
+            record.matrix[index] = branch_matrix[index] + std::conj(branch_matrix[transpose]);
+        }
+    }
+    return record;
+}
+
+inline std::string format_sternheimer_partial_manifest(
+    const std::vector<SternheimerPartialResponseRecord>& records)
+{
+    if (records.empty())
+    {
+        throw std::invalid_argument("Sternheimer partial-response manifest cannot be empty.");
+    }
+    std::vector<SternheimerPartialResponseRecord> ordered = records;
+    std::sort(ordered.begin(), ordered.end(), [](const auto& lhs, const auto& rhs) {
+        return std::tie(lhs.iq, lhs.ik_full, lhs.ifrequency)
+               < std::tie(rhs.iq, rhs.ik_full, rhs.ifrequency);
+    });
+
+    std::ostringstream manifest;
+    manifest << "# iq ik_full ifreq response_file\n";
+    for (std::size_t index = 0; index != ordered.size(); ++index)
+    {
+        const auto& record = ordered[index];
+        if (record.iq <= 0 || record.ik_full < 0 || record.ifrequency <= 0
+            || record.filename.empty()
+            || record.filename.find_first_of(" \t\r\n") != std::string::npos)
+        {
+            throw std::invalid_argument("Invalid Sternheimer partial-response manifest record.");
+        }
+        if (index > 0
+            && std::tie(record.iq, record.ik_full, record.ifrequency)
+                   == std::tie(ordered[index - 1].iq,
+                               ordered[index - 1].ik_full,
+                               ordered[index - 1].ifrequency))
+        {
+            throw std::invalid_argument("Duplicate Sternheimer partial-response manifest key.");
+        }
+        manifest << record.iq << ' ' << record.ik_full << ' ' << record.ifrequency << ' '
+                 << record.filename << '\n';
+    }
+    return manifest.str();
+}
 
 inline std::vector<SternheimerABFBlochGridChannel> limit_sternheimer_abf_channels_per_atom(
     const std::vector<SternheimerABFBlochGridChannel>& channels,
@@ -271,7 +511,8 @@ inline void validate_sternheimer_lcao_occupied_kpoints(
     const int local_kpoint_count,
     const int global_kpoint_count,
     const int spin_channel_count,
-    const int basis_size)
+    const int basis_size,
+    const int zero_order_kpoint_count = -1)
 {
     if (local_kpoint_count <= 0 || global_kpoint_count <= 0 || spin_channel_count <= 0 || basis_size <= 0)
     {
@@ -287,6 +528,8 @@ inline void validate_sternheimer_lcao_occupied_kpoints(
 
     std::vector<bool> seen_local(static_cast<std::size_t>(local_kpoint_count), false);
     std::vector<bool> seen_global(static_cast<std::size_t>(global_kpoint_count), false);
+    const int zero_order_count
+        = zero_order_kpoint_count > 0 ? zero_order_kpoint_count : local_kpoint_count;
     for (const SternheimerLCAOOccupiedKPoint& record: records)
     {
         if (record.local_k_index < 0 || record.local_k_index >= local_kpoint_count)
@@ -296,6 +539,10 @@ inline void validate_sternheimer_lcao_occupied_kpoints(
         if (record.global_k_index < 0 || record.global_k_index >= global_kpoint_count)
         {
             throw std::invalid_argument("Sternheimer LCAO global k-point index is out of range.");
+        }
+        if (record.zero_order_k_index < 0 || record.zero_order_k_index >= zero_order_count)
+        {
+            throw std::invalid_argument("Sternheimer LCAO zero-order k-point index is out of range.");
         }
         if (seen_local[static_cast<std::size_t>(record.local_k_index)])
         {
