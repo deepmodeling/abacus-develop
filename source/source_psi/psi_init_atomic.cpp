@@ -7,7 +7,6 @@
 #include "source_base/tool_quit.h"
 #include "source_base/timer.h"
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_output/write_pao.h"
 
 template <typename T>
