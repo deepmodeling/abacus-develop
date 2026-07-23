@@ -91,11 +91,29 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
             GlobalV::ofs_running << "\n Using ATOMIC starting wave functions for all " << this->ucell.natomwfc << " atomic orbitals"
                 << " (covers " << PARAM.inp.nbands << " bands)\n";
         }
-        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_atomic<T>());
+        psi_init_atomic<T>* atomic_initer = new psi_init_atomic<T>();
+        atomic_initer->prepare_params(
+            PARAM.globalv.nqx,
+            PARAM.globalv.dq,
+            PARAM.inp.nspin,
+            PARAM.globalv.domag,
+            PARAM.globalv.domag_z,
+            PARAM.inp.pseudo_mesh
+        );
+        this->psi_initer = std::unique_ptr<psi_base<T>>(atomic_initer);
     }
     else if (this->init_wfc == "atomic+random")
     {
-        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_atomic_random<T>());
+        psi_init_atomic_random<T>* atomic_rand_initer = new psi_init_atomic_random<T>();
+        atomic_rand_initer->prepare_params(
+            PARAM.globalv.nqx,
+            PARAM.globalv.dq,
+            PARAM.inp.nspin,
+            PARAM.globalv.domag,
+            PARAM.globalv.domag_z,
+            PARAM.inp.pseudo_mesh
+        );
+        this->psi_initer = std::unique_ptr<psi_base<T>>(atomic_rand_initer);
         GlobalV::ofs_running << "\n Using ATOMIC+RANDOM starting wave functions with "
                              << this->ucell.natomwfc << " atomic orbitals\n";
     }

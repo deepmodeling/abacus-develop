@@ -13,6 +13,12 @@ class psi_init_atomic : public psi_base<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+    int nqx_ = 0;
+    double dq_ = 0.0;
+    int nspin_ = 1;
+    bool domag_ = false;
+    bool domag_z_ = false;
+    bool pseudo_mesh_ = false;
 
   public:
     psi_init_atomic()
@@ -34,6 +40,13 @@ class psi_init_atomic : public psi_base<T>
                             const int& nbands) override;                //< nbands
     virtual void tabulate() override;
     virtual void init_psig(T* psig, const int& ik) override;
+
+    void prepare_params(const int& nqx,
+                        const double& dq,
+                        const int& nspin,
+                        const bool& domag,
+                        const bool& domag_z,
+                        const bool& pseudo_mesh);
 
   protected:
 

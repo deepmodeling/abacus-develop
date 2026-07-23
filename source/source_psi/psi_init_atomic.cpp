@@ -25,10 +25,26 @@ void psi_init_atomic<T>::allocate_ps_table()
         ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_table", 
 			"there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
     }
-    int dim3 = PARAM.globalv.nqx;
+    int dim3 = this->nqx_;
     // allocate memory for ovlp_flzjlq
     this->ovlp_pswfcjlq_.create(dim1, dim2, dim3);
     this->ovlp_pswfcjlq_.zero_out();
+}
+
+template <typename T>
+void psi_init_atomic<T>::prepare_params(const int& nqx,
+                                        const double& dq,
+                                        const int& nspin,
+                                        const bool& domag,
+                                        const bool& domag_z,
+                                        const bool& pseudo_mesh)
+{
+    this->nqx_ = nqx;
+    this->dq_ = dq;
+    this->nspin_ = nspin;
+    this->domag_ = domag;
+    this->domag_z_ = domag_z;
+    this->pseudo_mesh_ = pseudo_mesh;
 }
 
 template <typename T>
@@ -83,8 +99,8 @@ void psi_init_atomic<T>::tabulate()
     std::vector<double> aux(max_msh);
     std::vector<double> vchi(max_msh);
 
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",PARAM.globalv.dq);
-    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",PARAM.globalv.nqx);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"dq(describe PAO in reciprocal space)",this->dq_);
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running,"max q",this->nqx_);
 
     for (int it=0; it<this->p_ucell_->ntype; it++)
     {
@@ -93,7 +109,7 @@ void psi_init_atomic<T>::tabulate()
 	GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
 
         // QE uses atom->ncpp.mesh
-        const int n_rgrid = (PARAM.inp.pseudo_mesh) ? atom->ncpp.mesh : atom->ncpp.msh;
+        const int n_rgrid = (this->pseudo_mesh_) ? atom->ncpp.mesh : atom->ncpp.msh;
         std::vector<double> chi2(n_rgrid);
 
         for (int ic = 0; ic < atom->ncpp.nchi ;ic++)
@@ -186,9 +202,9 @@ void psi_init_atomic<T>::tabulate()
             }
 
             const int l = atom->ncpp.lchi[ic];
-            for (int iq = startq; iq < PARAM.globalv.nqx; iq++)
+            for (int iq = startq; iq < this->nqx_; iq++)
             {
-                const double q = PARAM.globalv.dq * iq;
+                const double q = this->dq_ * iq;
                 ModuleBase::Sphbes::Spherical_Bessel(atom->ncpp.msh, atom->ncpp.r.data(), q, l, aux.data());
                 for (int ir = 0; ir < atom->ncpp.msh; ir++)
                 {
@@ -259,17 +275,17 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                     {
                         ovlp_pswfcjlg[ig] = ModuleBase::PolyInt::Polynomial_Interpolation(
                             this->ovlp_pswfcjlq_, it, ipswfc, 
-                            PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba );
+                            this->nqx_, this->dq_, gk[ig].norm() * this->p_ucell_->tpiba );
                     }
 /* NSPIN == 4 */
-                    if(PARAM.inp.nspin == 4)
+                    if(this->nspin_ == 4)
                     {
                         if(this->p_ucell_->atoms[it].ncpp.has_so)
                         {
                             Soc soc; soc.rot_ylm(l + 1);
                             const double j = this->p_ucell_->atoms[it].ncpp.jchi[ipswfc];
     /* NOT NONCOLINEAR CASE, rotation matrix become identity */
-                            if (!(PARAM.globalv.domag||PARAM.globalv.domag_z))
+                            if (!(this->domag_||this->domag_z_))
                             {
                                 double cg_coeffs[2];
                                 for(int m = -l-1; m < l+1; m++)
@@ -352,7 +368,7 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                                         chiaux[ig] =  l *
                                             ModuleBase::PolyInt::Polynomial_Interpolation(
                                                 this->ovlp_pswfcjlq_, it, ipswfc_noncolin_soc, 
-                                                PARAM.globalv.nqx, PARAM.globalv.dq, gk[ig].norm() * this->p_ucell_->tpiba);
+                                                this->nqx_, this->dq_, gk[ig].norm() * this->p_ucell_->tpiba);
                                         chiaux[ig] += ovlp_pswfcjlg[ig] * (l + 1.0) ;
                                         chiaux[ig] *= 1/(2.0*l+1.0);
                                     }
