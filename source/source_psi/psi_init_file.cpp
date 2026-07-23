@@ -36,16 +36,16 @@ void psi_init_file<T>::init_psig(T* psig, const int& ik)
     int ik_tot = this->ik2iktot_[ik];
 
     // mohan update, this is for plane wave, 2025-05-17
-	const int out_type = 2;
-	const bool out_app_flag = false;
-	const bool gamma_only = false;
-	const int istep = -1;
+    const int out_type = 2;
+    const bool out_app_flag = false;
+    const bool gamma_only = false;
+    const int istep = -1;
 
-	std::string fn = ModuleIO::filename_output(PARAM.globalv.global_readin_dir,"wf","pw",
+    std::string fn = ModuleIO::filename_output(PARAM.globalv.global_readin_dir,"wf","pw",
 			ik,this->ik2iktot_,PARAM.inp.nspin,nkstot,
 			out_type,out_app_flag,gamma_only,istep);
 
-	ModuleIO::read_wfc_pw(fn, this->pw_wfc_, 
+    ModuleIO::read_wfc_pw(fn, this->pw_wfc_, 
 			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
 			PARAM.inp.nbands, PARAM.globalv.npol,
 			ik, ik_tot, nkstot, wfcatom);

@@ -1,6 +1,5 @@
 #include "psi_init_random.h"
 #include <vector>
-#include "source_io/module_parameter/parameter.h"
 
 template <typename T>
 void psi_init_random<T>::initialize(const Structure_Factor* sf,
