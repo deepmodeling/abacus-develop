@@ -20,16 +20,16 @@ class psi_init_atomic_random : public psi_init_atomic<T>
     ~psi_init_atomic_random(){};
 
     /// @brief initialize the psi_base with external data and methods
-    virtual void initialize(const Structure_Factor*,             //< structure factor
-                            const ModulePW::PW_Basis_K*,         //< planewave basis
-                            const UnitCell*,                     //< unit cell
-                            const std::vector<int>& = {},        //< ik2iktot: local->global k-point mapping
-                            const int& = 0,                      //< nkstot: total number of k-points
-                            const int& = 1,                      //< random seed
-                            const int& = 0,                      //< lmaxkb: max angular momentum for non-local projectors
-                            const int& = 0,                      //< MPI rank
-                            const int& = 1,                      //< npol
-                            const int& = 1) override;            //< nbands
+    virtual void initialize(const Structure_Factor* sf,             //< structure factor
+                            const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
+                            const UnitCell* p_ucell,                     //< unit cell
+                            const std::vector<int>& ik2iktot,             //< ik2iktot: local->global k-point mapping
+                            const int& nkstot,                          //< nkstot: total number of k-points
+                            const int& random_seed,                      //< random seed
+                            const int& lmaxkb,                          //< lmaxkb: max angular momentum for non-local projectors
+                            const int& rank,                            //< MPI rank
+                            const int& npol,                            //< npol
+                            const int& nbands) override;                //< nbands
 
     virtual void init_psig(T* psig, const int& ik) override;
 

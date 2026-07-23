@@ -50,7 +50,7 @@ void psi_base<T>::random_t(T* psi, const int iw_start, const int iw_end, const i
     assert(iw_start >= 0);
     const int ng = this->pw_wfc_->npwk[ik];
     const int npwk_max = this->pw_wfc_->npwk_max;
-    const int npol = PARAM.globalv.npol;
+    const int npol = this->npol_;
 
     // If random seed is specified, then generate random wavefunction satisfying that
     // it can generate the same results using different number of processors.

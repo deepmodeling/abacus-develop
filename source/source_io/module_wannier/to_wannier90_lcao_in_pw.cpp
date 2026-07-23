@@ -45,7 +45,7 @@ void toWannier90_LCAO_IN_PW::calculate(
     ModulePW::PW_Basis_K* wfcpw_ptr = const_cast<ModulePW::PW_Basis_K*>(wfcpw);
     delete this->psi_initer_;
     this->psi_initer_ = new psi_init_nao<std::complex<double>>();
-    this->psi_initer_->initialize(sf_ptr, wfcpw_ptr, &ucell, kv.ik2iktot, kv.get_nkstot(), 1, 0, GlobalV::MY_RANK);
+    this->psi_initer_->initialize(sf_ptr, wfcpw_ptr, &ucell, kv.ik2iktot, kv.get_nkstot(), 1, 0, GlobalV::MY_RANK, PARAM.globalv.npol, PARAM.inp.nbands);
     this->psi_initer_->tabulate();
     delete this->psi;
     const int nks_psi = (PARAM.inp.calculation == "nscf" && PARAM.inp.mem_saver == 1)? 1 : wfcpw->nks;

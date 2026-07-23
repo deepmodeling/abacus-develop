@@ -312,7 +312,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigRandom) {
                                this->nkstot_, 
                                this->random_seed,
                                this->lmaxkb,
-                               GlobalV::MY_RANK);
+                               GlobalV::MY_RANK,
+                               PARAM.sys.npol,
+                               PARAM.input.nbands);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
@@ -332,7 +334,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomic) {
                                this->nkstot_, 
                                this->random_seed,
                                this->lmaxkb,
-                               GlobalV::MY_RANK);
+                               GlobalV::MY_RANK,
+                               PARAM.sys.npol,
+                               PARAM.input.nbands);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
@@ -357,7 +361,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSoc) {
                                this->random_seed,
                                this->lmaxkb,
                                GlobalV::MY_RANK,
-                               PARAM.sys.npol);
+                               PARAM.sys.npol,
+                               PARAM.input.nbands);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
@@ -386,7 +391,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo) {
                                this->random_seed,
                                this->lmaxkb,
                                GlobalV::MY_RANK,
-                               PARAM.sys.npol);
+                               PARAM.sys.npol,
+                               PARAM.input.nbands);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
@@ -410,7 +416,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicRandom) {
                                this->nkstot_, 
                                this->random_seed,
                                this->lmaxkb,
-                               GlobalV::MY_RANK);
+                               GlobalV::MY_RANK,
+                               PARAM.sys.npol,
+                               PARAM.input.nbands);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
@@ -430,7 +438,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigNao) {
                                this->nkstot_, 
                                this->random_seed,
                                this->lmaxkb,
-                               GlobalV::MY_RANK);
+                               GlobalV::MY_RANK,
+                               PARAM.sys.npol,
+                               PARAM.input.nbands);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
@@ -450,7 +460,9 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoRandom) {
                                this->nkstot_, 
                                this->random_seed,
                                this->lmaxkb,
-                               GlobalV::MY_RANK);
+                               GlobalV::MY_RANK,
+                               PARAM.sys.npol,
+                               PARAM.input.nbands);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
@@ -476,7 +488,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc) {
                                this->random_seed,
                                this->lmaxkb,
                                GlobalV::MY_RANK,
-                               PARAM.sys.npol);
+                               PARAM.sys.npol,
+                               PARAM.input.nbands);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
@@ -502,7 +515,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSo) {
                                this->random_seed,
                                this->lmaxkb,
                                GlobalV::MY_RANK,
-                               PARAM.sys.npol);
+                               PARAM.sys.npol,
+                               PARAM.input.nbands);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
@@ -528,7 +542,8 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSoDOMAG) {
                                this->random_seed,
                                this->lmaxkb,
                                GlobalV::MY_RANK,
-                               PARAM.sys.npol);
+                               PARAM.sys.npol,
+                               PARAM.input.nbands);
     this->psi_init->tabulate(); // always: new, initialize, tabulate, allocate, proj_ao_onkG
     const int nbands_start = this->psi_init->nbands_start();
     const int nbasis = this->p_pw_wfc->npwk_max * PARAM.globalv.npol;
