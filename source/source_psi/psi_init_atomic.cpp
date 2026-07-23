@@ -223,7 +223,7 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
     int lmax = this->p_ucell_->lmax_ppwf;
     const int total_lm = (lmax + 1) * (lmax + 1);
     ModuleBase::matrix ylm(total_lm, npw);
-    ModuleBase::GlobalFunc::ZEROS(psig, PARAM.globalv.npol * this->nbands_start_ * npwk_max);
+    ModuleBase::GlobalFunc::ZEROS(psig, this->npol_ * this->nbands_start_ * npwk_max);
 
     std::vector<std::complex<double>> aux(npw);
     std::vector<double> chiaux(npw);

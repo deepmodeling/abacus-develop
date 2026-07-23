@@ -22,7 +22,7 @@ void psi_init_atomic_random<T>::init_psig(T* psig, const int& ik)
 {
     double rm = this->mixing_coef_;
     psi_init_atomic<T>::init_psig(psig, ik);
-    const int npol = PARAM.globalv.npol;
+    const int npol = this->npol_;
     const int nbasis = this->pw_wfc_->npwk_max * npol;
     psi::Psi<T> psi_random(1, this->nbands_start_, nbasis, nbasis, true);
     psi_random.fix_k(0);

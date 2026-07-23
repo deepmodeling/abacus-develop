@@ -29,7 +29,7 @@ template <typename T>
 void psi_init_file<T>::init_psig(T* psig, const int& ik)
 {
     ModuleBase::timer::start("psi_init_file", "init_psig");
-    const int npol = PARAM.globalv.npol;
+    const int npol = this->npol_;
     const int nbasis = this->pw_wfc_->npwk_max * npol;
     const int nkstot = this->nkstot_;
     ModuleBase::ComplexMatrix wfcatom(this->nbands_start_, nbasis);
@@ -47,7 +47,7 @@ void psi_init_file<T>::init_psig(T* psig, const int& ik)
 
     ModuleIO::read_wfc_pw(fn, this->pw_wfc_, 
 			GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL,
-			PARAM.inp.nbands, PARAM.globalv.npol,
+			PARAM.inp.nbands, this->npol_,
 			ik, ik_tot, nkstot, wfcatom);
 
     assert(this->nbands_start_ <= wfcatom.nr);
