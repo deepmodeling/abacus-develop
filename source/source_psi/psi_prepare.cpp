@@ -45,12 +45,12 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
     this->psi_initer.reset();
     if (this->init_wfc == "random")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_random<T>());
+        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_random<T>());
         GlobalV::ofs_running << "\n Using RANDOM starting wave functions for all " << PARAM.inp.nbands << " bands\n";
     }
     else if (this->init_wfc == "file")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_file<T>());
+        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_file<T>());
         GlobalV::ofs_running << "\n Using FILE starting wave functions\n";
     }
     else if ((this->init_wfc.substr(0, 6) == "atomic") && (this->ucell.natomwfc == 0))
@@ -66,7 +66,7 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
             "      1) A pseudopotential file that includes atomic wavefunctions (with PP_PSWFC), or\n"
             "      2) Numerical atomic orbitals with 'init_wfc = nao' or 'nao+random' if available.\n"
             << std::endl;
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_random<T>());
+        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_random<T>());
     }
     else if (this->init_wfc == "atomic"
              || (this->init_wfc == "atomic+random" && this->ucell.natomwfc < PARAM.inp.nbands))
@@ -83,22 +83,22 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
             GlobalV::ofs_running << "\n Using ATOMIC starting wave functions for all " << this->ucell.natomwfc << " atomic orbitals"
                 << " (covers " << PARAM.inp.nbands << " bands)\n";
         }
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_atomic<T>());
+        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_atomic<T>());
     }
     else if (this->init_wfc == "atomic+random")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_atomic_random<T>());
+        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_atomic_random<T>());
         GlobalV::ofs_running << "\n Using ATOMIC+RANDOM starting wave functions with "
                              << this->ucell.natomwfc << " atomic orbitals\n";
     }
     else if (this->init_wfc == "nao")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_nao<T>());
+        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_nao<T>());
         GlobalV::ofs_running << "\n Using NAO starting wave functions\n";
     }
     else if (this->init_wfc == "nao+random")
     {
-        this->psi_initer = std::unique_ptr<psi_initializer<T>>(new psi_init_nao_random<T>());
+        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_nao_random<T>());
         GlobalV::ofs_running << "\n Using NAO+RANDOM starting wave functions\n";
     }
     else

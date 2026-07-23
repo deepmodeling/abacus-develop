@@ -20,7 +20,7 @@ void psi_init_file<T>::initialize(const Structure_Factor* sf,
                                                const int& npol,
                                                const int& nbands)
 {
-    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, p_pspot_nl, rank, npol, nbands);
+    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, p_pspot_nl, rank, npol, nbands);
     this->nbands_start_ = nbands;
     this->nbands_complem_ = 0;
 }

@@ -161,7 +161,7 @@ void psi_init_nao<T>::initialize(const Structure_Factor* sf,
     ModuleBase::timer::start("psi_init_nao", "initialize");
 
     // import
-    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, p_pspot_nl, rank, npol, nbands);
+    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, p_pspot_nl, rank, npol, nbands);
 
     // allocate
     this->allocate_ao_table();

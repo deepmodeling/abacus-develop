@@ -2,7 +2,7 @@
 #define private public
 #include "source_io/module_parameter/parameter.h"
 #undef private
-#include "../psi_initializer.h"
+#include "../psi_base.h"
 #include "../psi_init_atomic.h"
 #include "../psi_init_atomic_random.h"
 #include "../psi_init_nao.h"
@@ -13,42 +13,42 @@
 
 /*
 =========================
-psi initializer unit test
+psi base unit test
 =========================
 - Tested functions:
-    - psi_initializer_random::psi_initializer_random
-      - constructor of psi_initializer_random
-    - psi_initializer_atomic::psi_initializer_atomic
-      - constructor of psi_initializer_atomic
-    - psi_initializer_atomic_random::psi_initializer_atomic_random
-      - constructor of psi_initializer_atomic_random
-    - psi_initializer_nao::psi_initializer_nao
-      - constructor of psi_initializer_nao
-    - psi_initializer_nao_random::psi_initializer_nao_random
-      - constructor of psi_initializer_nao_random
-    - psi_initializer::cast_to_T (psi_initializer specialized as random)
+    - psi_init_random::psi_init_random
+      - constructor of psi_init_random
+    - psi_init_atomic::psi_init_atomic
+      - constructor of psi_init_atomic
+    - psi_init_atomic_random::psi_init_atomic_random
+      - constructor of psi_init_atomic_random
+    - psi_init_nao::psi_init_nao
+      - constructor of psi_init_nao
+    - psi_init_nao_random::psi_init_nao_random
+      - constructor of psi_init_nao_random
+    - psi_base::cast_to_T (psi_base specialized as random)
       - function cast std::complex<double> to float, double, std::complex<float>, std::complex<double>
-    - psi_initializer_random::allocate
+    - psi_init_random::allocate
       - allocate wavefunctions with random-specific method
-    - psi_initializer_atomic::allocate
+    - psi_init_atomic::allocate
       - allocate wavefunctions with atomic-specific method
-    - psi_initializer_atomic_random::allocate
+    - psi_init_atomic_random::allocate
       - allocate wavefunctions with atomic-specific method
-    - psi_initializer_nao::allocate
+    - psi_init_nao::allocate
       - allocate wavefunctions with nao-specific method
-    - psi_initializer_nao_random::allocate
+    - psi_init_nao_random::allocate
       - allocate wavefunctions with nao-specific method
-    - psi_initializer_random::proj_ao_onkG
+    - psi_init_random::proj_ao_onkG
       - calculate wavefunction initial guess (before diagonalization) by randomly generating numbers
-    - psi_initializer_atomic::proj_ao_onkG
+    - psi_init_atomic::proj_ao_onkG
       - calculate wavefunction initial guess (before diagonalization) with atomic pseudo wavefunctions
       - nspin = 4 case
       - nspin = 4 with has_so case
-    - psi_initializer_atomic_random::proj_ao_onkG
+    - psi_init_atomic_random::proj_ao_onkG
       - calculate wavefunction initial guess (before diagonalization) with atomic pseudo wavefunctions and random numbers
-    - psi_initializer_nao::proj_ao_onkG
+    - psi_init_nao::proj_ao_onkG
       - calculate wavefunction initial guess (before diagonalization) with numerical atomic orbital wavefunctions
-    - psi_initializer_nao_random::proj_ao_onkG
+    - psi_init_nao_random::proj_ao_onkG
       - calculate wavefunction initial guess (before diagonalization) with numerical atomic orbital wavefunctions and random numbers
 */
 
@@ -100,7 +100,7 @@ class PsiIntializerUnitTest : public ::testing::Test {
         int nkstot_ = 0;
         int random_seed = 1;
 
-        psi_initializer<std::complex<double>>* psi_init;
+        psi_base<std::complex<double>>* psi_init;
 
       private:
       protected:

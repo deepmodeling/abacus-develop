@@ -20,7 +20,7 @@ class psi_init_atomic_random : public psi_init_atomic<T>
     }
     ~psi_init_atomic_random(){};
 
-    /// @brief initialize the psi_initializer with external data and methods
+    /// @brief initialize the psi_base with external data and methods
     virtual void initialize(const Structure_Factor*,             //< structure factor
                             const ModulePW::PW_Basis_K*,         //< planewave basis
                             const UnitCell*,                     //< unit cell

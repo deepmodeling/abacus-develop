@@ -3,14 +3,14 @@
 #include "source_base/cubic_spline.h"
 #include "source_base/realarray.h"
 #include "source_base/spherical_bessel_transformer.h"
-#include "psi_initializer.h"
+#include "psi_base.h"
 
 #include <memory>
 /*
 Psi (planewave based wavefunction) initializer: numerical atomic orbital method
 */
 template <typename T>
-class psi_init_nao : public psi_initializer<T>
+class psi_init_nao : public psi_base<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
@@ -24,7 +24,7 @@ class psi_init_nao : public psi_initializer<T>
 
     virtual void init_psig(T* psig, const int& ik) override;
 
-    /// @brief initialize the psi_initializer with external data and methods
+    /// @brief initialize the psi_base with external data and methods
     virtual void initialize(const Structure_Factor*,             //< structure factor
                             const ModulePW::PW_Basis_K*,         //< planewave basis
                             const UnitCell*,                     //< unit cell

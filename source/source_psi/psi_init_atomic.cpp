@@ -66,7 +66,7 @@ void psi_init_atomic<T>::initialize(const Structure_Factor* sf,         //< stru
                                  "pseudopot_cell_vnl object cannot be nullptr for atomic, quit.");
     }
     // import
-    psi_initializer<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, p_pspot_nl, rank, npol, nbands);
+    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, p_pspot_nl, rank, npol, nbands);
     this->nbands_start_ = std::max(this->p_ucell_->natomwfc, nbands);
     this->nbands_complem_ = this->nbands_start_ - this->p_ucell_->natomwfc;
     // allocate

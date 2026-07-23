@@ -1,4 +1,4 @@
-#include "psi_initializer.h"
+#include "psi_base.h"
 
 #include <vector>
 #include <cassert>
@@ -21,7 +21,7 @@
 #endif
 
 template <typename T>
-void psi_initializer<T>::initialize(const Structure_Factor* sf,
+void psi_base<T>::initialize(const Structure_Factor* sf,
                                     const ModulePW::PW_Basis_K* pw_wfc,
                                     const UnitCell* p_ucell,
                                     const std::vector<int>& ik2iktot,
@@ -44,7 +44,7 @@ void psi_initializer<T>::initialize(const Structure_Factor* sf,
 }
 
 template <typename T>
-void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, const int ik, const int mode)
+void psi_base<T>::random_t(T* psi, const int iw_start, const int iw_end, const int ik, const int mode)
 {
     ModuleBase::timer::start("psi_init", "random_t");
     assert(mode <= 1);
@@ -198,7 +198,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
 
 #ifdef __MPI
 template <typename T>
-void psi_initializer<T>::stick_to_pool(Real* stick, const int& ir, Real* out) const
+void psi_base<T>::stick_to_pool(Real* stick, const int& ir, Real* out) const
 {
     ModuleBase::timer::start("psi_init", "stick_to_pool");
     MPI_Status ierror;
@@ -225,7 +225,7 @@ void psi_initializer<T>::stick_to_pool(Real* stick, const int& ir, Real* out) co
         }
         else
         {
-            ModuleBase::WARNING_QUIT("psi_initializer", "stick_to_pool: Real type not supported");
+            ModuleBase::WARNING_QUIT("psi_base", "stick_to_pool: Real type not supported");
         }
         for (int iz = 0; iz < nz; iz++)
         {
@@ -244,7 +244,7 @@ void psi_initializer<T>::stick_to_pool(Real* stick, const int& ir, Real* out) co
         }
         else
         {
-            ModuleBase::WARNING_QUIT("psi_initializer", "stick_to_pool: Real type not supported");
+            ModuleBase::WARNING_QUIT("psi_base", "stick_to_pool: Real type not supported");
         }
     }
 
@@ -254,8 +254,8 @@ void psi_initializer<T>::stick_to_pool(Real* stick, const int& ir, Real* out) co
 #endif
 
 // explicit instantiation
-template class psi_initializer<std::complex<double>>;
-template class psi_initializer<std::complex<float>>;
+template class psi_base<std::complex<double>>;
+template class psi_base<std::complex<float>>;
 // gamma point calculation
-template class psi_initializer<double>;
-template class psi_initializer<float>;
+template class psi_base<double>;
+template class psi_base<float>;

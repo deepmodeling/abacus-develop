@@ -39,7 +39,7 @@ class Setup_Psi_pw
     // for PW, we have psi_cpu
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi_cpu = nullptr;
 
-    // psi_initializer controller
+    // psi_base controller
     psi::PSIPrepareBase* p_psi_init = nullptr;
 
     //------------

@@ -1,5 +1,5 @@
-#ifndef PSI_INITIALIZER_H
-#define PSI_INITIALIZER_H
+#ifndef PSI_BASE_H
+#define PSI_BASE_H
 // data structure support
 #include "source_basis/module_pw/pw_basis_k.h" // for kpoint related data structure
 #include "source_pw/module_pwdft/vnl_pw.h"
@@ -18,7 +18,7 @@
 #include <vector>
 using namespace std;
 /*
-Psi (planewave based wavefunction) initializer
+Psi (planewave based wavefunction) base class
 Auther: Kirk0830
 Institute: AI for Science Institute, BEIJING
 
@@ -26,14 +26,14 @@ This class is used to allocate memory and give initial guess for psi
 therefore only double datatype is needed to be supported.
 Following methods are available:
     1. file: use wavefunction file to initialize psi
-             implemented in psi_initializer_file.h
+             implemented in psi_init_file.h
     2. random: use random number to initialize psi
-               implemented in psi_initializer_random.h
+               implemented in psi_init_random.h
     3. atomic: use pseudo-wavefunction in pseudopotential file to initialize psi
-               implemented in psi_initializer_atomic.h
+               implemented in psi_init_atomic.h
     4. atomic+random: mix 'atomic' with some random numbers to initialize psi
     5. nao: use numerical orbitals to initialize psi
-            implemented in psi_initializer_nao.h
+            implemented in psi_init_nao.h
     6. nao+random: mix 'nao' with some random numbers to initialize psi
 
 To use:
@@ -41,23 +41,23 @@ To use:
 A practical example would be in ESolver_KS_PW, because polymorphism is achieved by
 pointer, while a raw pointer is risky, therefore std::unique_ptr is a better
 choice.
-1. new a std::unique_ptr<psi_initializer<T> with specific derived class
-2. initialize() to link psi_initializer with external data and methods
+1. new a std::unique_ptr<psi_base<T> with specific derived class
+2. initialize() to link psi_base with external data and methods
 3. tabulate() to calculate the interpolate table
 4. init_psig() to calculate projection of atomic radial function onto planewave basis
 In summary:
 new->initialize->tabulate->init_psig
 */
 template <typename T>
-class psi_initializer
+class psi_base
 {
   private:
     using Real = typename GetTypeReal<T>::type;
 
   public:
-    psi_initializer(){};
-    virtual ~psi_initializer(){};
-    /// @brief initialize the psi_initializer with external data and methods
+    psi_base(){};
+    virtual ~psi_base(){};
+    /// @brief initialize the psi_base with external data and methods
     virtual void initialize(const Structure_Factor*,             //< structure factor
                             const ModulePW::PW_Basis_K*,         //< planewave basis
                             const UnitCell*,                     //< unit cell

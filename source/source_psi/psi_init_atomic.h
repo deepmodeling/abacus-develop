@@ -3,13 +3,13 @@
 #include <vector>
 #include <string>
 #include "source_base/realarray.h"
-#include "psi_initializer.h"
+#include "psi_base.h"
 
 /*
 Psi (planewave based wavefunction) initializer: atomic
 */
 template <typename T>
-class psi_init_atomic : public psi_initializer<T>
+class psi_init_atomic : public psi_base<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;

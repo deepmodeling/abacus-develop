@@ -443,7 +443,7 @@ OBJS_ORBITAL=ORB_atomic.o\
 
 OBJS_PSI=psi.o\
 
-OBJS_PSI_INITIALIZER=psi_initializer.o\
+OBJS_PSI_INITIALIZER=psi_base.o\
                      psi_init_random.o\
                      psi_init_file.o\
                      psi_init_atomic.o\

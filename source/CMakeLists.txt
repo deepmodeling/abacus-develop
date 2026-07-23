@@ -615,7 +615,7 @@ target_link_libraries(
     cell
     parameter
     psi_overall_init
-    psi_initializer
+    psi_init
     psi
     dftu
     deltaspin

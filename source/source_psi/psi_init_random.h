@@ -3,13 +3,13 @@
 
 #include <vector>
 #include "source_pw/module_pwdft/vnl_pw.h"
-#include "psi_initializer.h"
+#include "psi_base.h"
 
 /*
 Psi (planewave based wavefunction) initializer: random method
 */
 template <typename T>
-class psi_init_random : public psi_initializer<T>
+class psi_init_random : public psi_base<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;

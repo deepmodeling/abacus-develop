@@ -1,7 +1,7 @@
 #ifndef PSI_PREPARE_H
 #define PSI_PREPARE_H
 #include "source_hamilt/hamilt.h"
-#include "source_psi/psi_initializer.h"
+#include "source_psi/psi_base.h"
 #include "source_psi/psi_prepare_base.h"
 
 namespace psi
@@ -27,7 +27,7 @@ class PSIPrepare : public PSIPrepareBase
     ///@brief prepare the wavefunction initialization
     void prepare_init(const int& random_seed);
 
-    //------------------------ only for psi_initializer --------------------
+    //------------------------ only for psi_base --------------------
     /**
      * @brief initialize the wavefunction
      *
@@ -47,11 +47,11 @@ class PSIPrepare : public PSIPrepareBase
      */
     void initialize_lcao_in_pw(Psi<T>* psi_local, std::ofstream& ofs_running);
 
-    // psi_initializer<T, Device>* psi_initer = nullptr;
+    // psi_base<T, Device>* psi_initer = nullptr;
     // change to use smart pointer to manage the memory, and avoid memory leak
     // while the std::make_unique() is not supported till C++14,
     // so use the new and std::unique_ptr to manage the memory, but this makes new-delete not symmetric
-    std::unique_ptr<psi_initializer<T>> psi_initer;
+    std::unique_ptr<psi_base<T>> psi_initer;
 
   private:
     // wavefunction initialization type
