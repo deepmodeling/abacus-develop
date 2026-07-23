@@ -43,6 +43,18 @@ void normalize(const std::vector<double>& r, std::vector<double>& flz)
 }
 
 template <typename T>
+void psi_init_nao<T>::prepare_params(const int& nqx,
+                                     const double& dq,
+                                     const int& nspin,
+                                     const std::string& orbital_dir)
+{
+    this->nqx_ = nqx;
+    this->dq_ = dq;
+    this->nspin_ = nspin;
+    this->orbital_dir_ = orbital_dir;
+}
+
+template <typename T>
 void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const int& rank)
 {
     ModuleBase::timer::start("psi_init_nao", "read_external_orbs");
@@ -67,7 +79,7 @@ void psi_init_nao<T>::read_external_orbs(const std::string* orbital_files, const
         bool is_open = false;
         if (rank == 0)
         {
-            ifs_it.open(PARAM.inp.orbital_dir + this->orbital_files_[it]);
+            ifs_it.open(this->orbital_dir_ + this->orbital_files_[it]);
             is_open = ifs_it.is_open();
         }
 #ifdef __MPI
@@ -195,9 +207,9 @@ void psi_init_nao<T>::tabulate()
     ModuleBase::timer::start("psi_init_nao", "tabulate");
 
     // a uniformed qgrid
-    std::vector<double> qgrid(PARAM.globalv.nqx);
+    std::vector<double> qgrid(this->nqx_);
     std::iota(qgrid.begin(), qgrid.end(), 0);
-    std::for_each(qgrid.begin(), qgrid.end(), [this](double& q) { q = q * PARAM.globalv.dq; });
+    std::for_each(qgrid.begin(), qgrid.end(), [this](double& q) { q = q * this->dq_; });
 
     // only when needed, allocate memory for cubspl_
     if (this->cubspl_.get())
@@ -219,7 +231,7 @@ void psi_init_nao<T>::tabulate()
     ModuleBase::SphericalBesselTransformer sbt_(true); // bool: enable cache
 
     // tabulate the spherical bessel transform of numerical orbital function
-    std::vector<double> Jlfq(PARAM.globalv.nqx, 0.0);
+    std::vector<double> Jlfq(this->nqx_, 0.0);
     int i = 0;
     for (int it = 0; it < this->p_ucell_->ntype; it++)
     {
@@ -232,7 +244,7 @@ void psi_init_nao<T>::tabulate()
                             this->nr_[it][ic],
                             this->rgrid_[it][ic].data(),
                             this->chi_[it][ic].data(),
-                            PARAM.globalv.nqx,
+                            this->nqx_,
                             qgrid.data(),
                             Jlfq.data());
                 this->cubspl_->add(Jlfq.data());
@@ -294,7 +306,7 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
                     this->cubspl_->eval(npw, qnorm.data(), Jlfq.data(), nullptr, nullptr, this->projmap_(it, L, N));
 
                     /* FOR EVERY NAO IN EACH ATOM */
-                    if (PARAM.inp.nspin == 4)
+                    if (this->nspin_ == 4)
                     {
                         /* FOR EACH SPIN CHANNEL */
                         for (int is_N = 0; is_N < 2; is_N++) // rotate base

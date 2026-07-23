@@ -119,12 +119,26 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
     }
     else if (this->init_wfc == "nao")
     {
-        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_nao<T>());
+        psi_init_nao<T>* nao_initer = new psi_init_nao<T>();
+        nao_initer->prepare_params(
+            PARAM.globalv.nqx,
+            PARAM.globalv.dq,
+            PARAM.inp.nspin,
+            PARAM.inp.orbital_dir
+        );
+        this->psi_initer = std::unique_ptr<psi_base<T>>(nao_initer);
         GlobalV::ofs_running << "\n Using NAO starting wave functions\n";
     }
     else if (this->init_wfc == "nao+random")
     {
-        this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_nao_random<T>());
+        psi_init_nao_random<T>* nao_rand_initer = new psi_init_nao_random<T>();
+        nao_rand_initer->prepare_params(
+            PARAM.globalv.nqx,
+            PARAM.globalv.dq,
+            PARAM.inp.nspin,
+            PARAM.inp.orbital_dir
+        );
+        this->psi_initer = std::unique_ptr<psi_base<T>>(nao_rand_initer);
         GlobalV::ofs_running << "\n Using NAO+RANDOM starting wave functions\n";
     }
     else

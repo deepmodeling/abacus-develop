@@ -6,6 +6,7 @@
 #include "psi_base.h"
 
 #include <memory>
+#include <string>
 /*
 Psi (planewave based wavefunction) initializer: numerical atomic orbital method
 */
@@ -14,6 +15,10 @@ class psi_init_nao : public psi_base<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+    int nqx_ = 0;
+    double dq_ = 0.0;
+    int nspin_ = 1;
+    std::string orbital_dir_;
 
   public:
     psi_init_nao()
@@ -39,6 +44,11 @@ class psi_init_nao : public psi_base<T>
     void read_external_orbs(const std::string* orbital_files, const int& rank);
 
     virtual void tabulate() override;
+
+    void prepare_params(const int& nqx,
+                        const double& dq,
+                        const int& nspin,
+                        const std::string& orbital_dir);
 
     std::vector<std::string> external_orbs() const
     {
