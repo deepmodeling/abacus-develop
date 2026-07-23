@@ -25,6 +25,13 @@ add_test(
   COMMAND ./MODULE_RI_gaussian_abfs_cutoff_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+add_executable(MODULE_RI_librpa_stru_units_test librpa_stru_units_test.cpp)
+install(TARGETS MODULE_RI_librpa_stru_units_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
+add_test(
+  NAME MODULE_RI_librpa_stru_units_test
+  COMMAND ./MODULE_RI_librpa_stru_units_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 if(ENABLE_MPI)
   add_executable(MODULE_RI_ewald_mpi_distribution_test ewald_mpi_distribution_test.cpp)
   target_link_libraries(MODULE_RI_ewald_mpi_distribution_test MPI::MPI_CXX)

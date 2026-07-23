@@ -21,9 +21,9 @@
 #include <vector>
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
-#include "rpa_lri.h"
-#include "source_basis/module_ao/elem_basis_idx_orb.h"
-#include "source_base/global_function.h"
+#include "RPA_LRI.h"
+#include "librpa_stru_units.h"
+#include "source_basis/module_ao/element_basis_index-ORB.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart_exx_csr.h"
@@ -2015,9 +2015,9 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
         return;
     }
     ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
-    double TWOPI_Bohr2A = ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
-    ModuleBase::Matrix3 lat = ucell.latvec / ModuleBase::BOHR_TO_A;
-    ModuleBase::Matrix3 G_RPA = ucell.G * TWOPI_Bohr2A;
+    const auto unit_scales = RpaLriDetail::librpa_stru_unit_scales(ucell.lat0);
+    const ModuleBase::Matrix3 lat = ucell.latvec * unit_scales.real_space_bohr;
+    const ModuleBase::Matrix3 G_RPA = ucell.G * unit_scales.reciprocal_space_bohr_inv;
     std::stringstream ss;
     ss << "stru_out";
     std::ofstream ofs;
@@ -2040,15 +2040,10 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            const double& x = direct ? ucell.atoms[it].tau[ia].x * ucell.lat0
-                                     : ucell.atoms[it].tau[ia].x;
-            const double& y = direct ? ucell.atoms[it].tau[ia].y * ucell.lat0
-                                     : ucell.atoms[it].tau[ia].y;
-            const double& z = direct ? ucell.atoms[it].tau[ia].z * ucell.lat0
-                                     : ucell.atoms[it].tau[ia].z;
-            ofs << std::setw(24) << std::scientific << std::setprecision(15) << x
-                << std::setw(24) << std::scientific << std::setprecision(15) << y
-                << std::setw(24) << std::scientific << std::setprecision(15) << z
+            const auto position_bohr = ucell.atoms[it].tau[ia] * unit_scales.real_space_bohr;
+            ofs << std::setw(24) << std::scientific << std::setprecision(15) << position_bohr.x
+                << std::setw(24) << std::scientific << std::setprecision(15) << position_bohr.y
+                << std::setw(24) << std::scientific << std::setprecision(15) << position_bohr.z
                 << std::setw(15) << (it + 1) << std::endl;
         }
     }
