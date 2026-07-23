@@ -1418,7 +1418,8 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     }
 
     Vector q_rhs = rhs;
-    SternheimerRPA::project_out_subspace(fixed_functions, dot, q_rhs);
+    SternheimerRPA::project_out_subspace(fixed_subspace, dot, q_rhs);
+#pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != q_residual.size(); ++ir)
     {
         q_residual[ir] -= q_rhs[ir];

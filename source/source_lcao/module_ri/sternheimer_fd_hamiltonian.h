@@ -60,10 +60,6 @@ class SternheimerFDHamiltonian
 
     void apply(const Vector& psi, Vector& hpsi) const;
     void apply(const Vector& psi, Vector& hpsi, int* threads_used) const;
-    void apply_kinetic(const Vector& psi, Vector& kinetic_psi) const;
-    void apply_kinetic(const Vector& psi, Vector& kinetic_psi, int* threads_used) const;
-    void apply_local_potential(const Vector& psi, Vector& local_psi) const;
-    void apply_nonlocal(const Vector& psi, Vector& nonlocal_psi) const;
 
     Matrix dense_matrix(int max_size = 4096) const;
 

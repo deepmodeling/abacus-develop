@@ -497,13 +497,14 @@ SternheimerFDLinearResponse solve_sternheimer_fd_linear_response(
     response.solver = SternheimerRPA::solve_gmres(problem, projected_rhs, response.delta_wavefunction, options);
     SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, response.delta_wavefunction);
 
-    response.residual_norm = sternheimer_fd_linear_response_residual_norm(hamiltonian,
-                                                                           occupied_wavefunctions,
-                                                                           reference_eigenvalue,
-                                                                           rhs,
-                                                                           response.delta_wavefunction,
-                                                                           omega,
-                                                                           volume_element);
+    SternheimerFDHamiltonian::Vector applied;
+    problem.apply(response.delta_wavefunction, applied);
+#pragma omp parallel for schedule(static)
+    for (int ir = 0; ir != grid_size; ++ir)
+    {
+        applied[ir] -= projected_rhs[ir];
+    }
+    response.residual_norm = sternheimer_fd_grid_norm(applied, volume_element);
     return response;
 }
 

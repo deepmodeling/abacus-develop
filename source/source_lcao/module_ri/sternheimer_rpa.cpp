@@ -758,22 +758,6 @@ void SternheimerRPA::build_rhs_from_hartree_perturbation(const std::vector<doubl
     }
 }
 
-void SternheimerRPA::build_rhs_from_hartree_perturbation(const Vector& hartree_potential_r,
-                                                         const Vector& psi_r,
-                                                         Vector& rhs_r)
-{
-    if (hartree_potential_r.size() != psi_r.size())
-    {
-        throw std::invalid_argument("SternheimerRPA::build_rhs_from_hartree_perturbation size mismatch.");
-    }
-    rhs_r.resize(psi_r.size());
-#pragma omp parallel for schedule(static)
-    for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
-    {
-        rhs_r[ir] = -hartree_potential_r[ir] * psi_r[ir];
-    }
-}
-
 SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
     const std::vector<double>& hartree_potential_r,
     const Vector& psi_r,
@@ -784,39 +768,16 @@ SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
     {
         throw std::invalid_argument("SternheimerRPA::accumulate_polarizability_grid_element size mismatch.");
     }
-    double value_real = 0.0;
-    double value_imag = 0.0;
-#pragma omp parallel for reduction(+:value_real, value_imag) schedule(static)
+    double real_part = 0.0;
+    double imag_part = 0.0;
+#pragma omp parallel for reduction(+ : real_part, imag_part) schedule(static)
     for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
     {
-        const Complex contribution = std::conj(psi_r[ir]) * hartree_potential_r[ir] * delta_psi_r[ir];
-        value_real += contribution.real();
-        value_imag += contribution.imag();
+        const Complex term = std::conj(psi_r[ir]) * hartree_potential_r[ir] * delta_psi_r[ir];
+        real_part += term.real();
+        imag_part += term.imag();
     }
-    return grid_weight * Complex(value_real, value_imag);
-}
-
-SternheimerRPA::Complex SternheimerRPA::accumulate_polarizability_grid_element(
-    const Vector& hartree_potential_r,
-    const Vector& psi_r,
-    const Vector& delta_psi_r,
-    const double grid_weight)
-{
-    if (hartree_potential_r.size() != psi_r.size() || psi_r.size() != delta_psi_r.size())
-    {
-        throw std::invalid_argument("SternheimerRPA::accumulate_polarizability_grid_element size mismatch.");
-    }
-    double value_real = 0.0;
-    double value_imag = 0.0;
-#pragma omp parallel for reduction(+:value_real, value_imag) schedule(static)
-    for (std::size_t ir = 0; ir != psi_r.size(); ++ir)
-    {
-        const Complex contribution
-            = std::conj(psi_r[ir]) * std::conj(hartree_potential_r[ir]) * delta_psi_r[ir];
-        value_real += contribution.real();
-        value_imag += contribution.imag();
-    }
-    return grid_weight * Complex(value_real, value_imag);
+    return grid_weight * Complex(real_part, imag_part);
 }
 
 void SternheimerRPA::accumulate_chi0_branch_column(const std::vector<std::vector<double>>& hartree_potentials_r,
@@ -1282,16 +1243,16 @@ void SternheimerRPA::write_chi0_v1_file(const std::string& filename,
 SternheimerRPA::Complex SternheimerRPA::local_grid_dot(const Vector& lhs, const Vector& rhs, const double grid_weight)
 {
     assert_same_size(lhs, rhs, "SternheimerRPA::local_grid_dot");
-    double value_real = 0.0;
-    double value_imag = 0.0;
-#pragma omp parallel for reduction(+:value_real, value_imag) schedule(static)
+    double real_part = 0.0;
+    double imag_part = 0.0;
+#pragma omp parallel for reduction(+ : real_part, imag_part) schedule(static)
     for (std::size_t ir = 0; ir != lhs.size(); ++ir)
     {
-        const Complex contribution = std::conj(lhs[ir]) * rhs[ir];
-        value_real += contribution.real();
-        value_imag += contribution.imag();
+        const Complex term = std::conj(lhs[ir]) * rhs[ir];
+        real_part += term.real();
+        imag_part += term.imag();
     }
-    return grid_weight * Complex(value_real, value_imag);
+    return grid_weight * Complex(real_part, imag_part);
 }
 
 void SternheimerRPA::project_out_subspace(const std::vector<Vector>& subspace,
