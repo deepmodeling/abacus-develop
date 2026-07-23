@@ -9,6 +9,8 @@
 
 #include <cmath>
 #include <complex>
+#include <iomanip>
+#include <sstream>
 #include <stdexcept>
 #include <utility>
 
@@ -284,7 +286,22 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
         }
         if (combined_isym < 0)
         {
-            throw std::runtime_error("Sternheimer full-k point is absent from its IBZ k-star.");
+            std::ostringstream message;
+            message << std::setprecision(17)
+                    << "Sternheimer full-k point is absent from its IBZ k-star: full_index="
+                    << full_k_index << " ibz_index=" << ibz_index << " full_direct=("
+                    << full_kpoint.x << "," << full_kpoint.y << "," << full_kpoint.z
+                    << ") full_cartesian=("
+                    << kv.kvec_c_full[static_cast<std::size_t>(full_k_index)].x << ","
+                    << kv.kvec_c_full[static_cast<std::size_t>(full_k_index)].y << ","
+                    << kv.kvec_c_full[static_cast<std::size_t>(full_k_index)].z << ") star=";
+            for (const auto& star_member: kv.kstars[static_cast<std::size_t>(ibz_index)])
+            {
+                const auto member = restrict_kpoint(star_member.second);
+                message << " [isym=" << star_member.first << " k=(" << member.x << ","
+                        << member.y << "," << member.z << ")]";
+            }
+            throw std::runtime_error(message.str());
         }
 
         const auto& ibz_record

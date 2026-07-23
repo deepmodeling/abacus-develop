@@ -215,6 +215,12 @@ TEST_F(KlistParaTest, Set)
     // pool redistribution, because EXX/RPA Ewald kernels index it with
     // `nkstot_full`, not the rank-local `nks`.
     EXPECT_EQ(static_cast<int>(kv->kvec_c_full.size()), kv->get_nkstot_full());
+    ASSERT_EQ(static_cast<int>(kv->ibz_index.size()), kv->get_nkstot_full());
+    for (int ik = 0; ik < kv->get_nkstot_full(); ++ik)
+    {
+        EXPECT_GE(kv->ibz_index[static_cast<std::size_t>(ik)], 0);
+        EXPECT_LT(kv->ibz_index[static_cast<std::size_t>(ik)], kv->get_nkstot());
+    }
     if (GlobalV::NPROC == 4)
     {
         if (GlobalV::MY_RANK == 0) {
