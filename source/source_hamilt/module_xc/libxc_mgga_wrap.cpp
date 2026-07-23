@@ -54,6 +54,7 @@ void XC_Functional_Libxc::tau_xc(
             v1 *= (1.0 - hybrid_alpha);
             v2 *= (1.0 - hybrid_alpha);
             v3 *= (1.0 - hybrid_alpha);
+            vlapl_rho *= (1.0 - hybrid_alpha);
         }
 #endif
         sxc += s * rho;
@@ -151,6 +152,8 @@ void XC_Functional_Libxc::tau_xc_spin(
                 v2xc[2] *= (1.0 - hybrid_alpha);
                 v3xc[0] *= (1.0 - hybrid_alpha);
                 v3xc[1] *= (1.0 - hybrid_alpha);
+                vlapl[0] *= (1.0 - hybrid_alpha);
+                vlapl[1] *= (1.0 - hybrid_alpha);
             }
 #endif
 

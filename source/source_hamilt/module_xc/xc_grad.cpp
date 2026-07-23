@@ -216,6 +216,23 @@ void XC_Functional::gradcorr(
     assert(nspin0>0);
     const double fac = 1.0/ nspin0;
 
+    bool need_laplacian = false;
+#ifdef USE_LIBXC
+    if (use_libxc && (func_type == 3 || func_type == 5))
+    {
+        std::vector<xc_func_type> check_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
+        for (auto& f : check_funcs)
+        {
+            if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
+            {
+                need_laplacian = true;
+                break;
+            }
+        }
+        XC_Functional_Libxc::finish_func(check_funcs);
+    }
+#endif
+
     if(is_stress)
     {
         stress_gga.resize(9);
@@ -275,11 +292,7 @@ void XC_Functional::gradcorr(
 
     XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 
-    // For meta-GGA functionals (func_type 3 = pure meta-GGA, 5 = hybrid meta-GGA),
-    // compute the density Laplacian ∇²ρ using the spectral method.
-    // The Laplacian is needed by SCANL and other Laplacian-dependent meta-GGAs.
-    // Uses: ∇²ρ(r) = IFFT(-|G|² · FFT(ρ))
-    if(func_type == 3 || func_type == 5)
+    if(need_laplacian)
     {
         lapl1.resize(rhopw->nrxx);
         XC_Functional::laplacian_rho(rhogsum1, lapl1.data(), rhopw, ucell->tpiba);
@@ -314,9 +327,7 @@ void XC_Functional::gradcorr(
 
         XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 
-        // For meta-GGA functionals, compute density Laplacian for spin-down channel.
-        // See comment above for func_type == 3 || func_type == 5.
-        if(func_type == 3 || func_type == 5)
+        if(need_laplacian)
         {
             lapl2.resize(rhopw->nrxx);
             XC_Functional::laplacian_rho(rhogsum2, lapl2.data(), rhopw, ucell->tpiba);
@@ -464,7 +475,7 @@ void XC_Functional::gradcorr(
                     if (use_libxc && is_stress)
                     {
 #ifdef USE_LIBXC
-                        if(func_type == 3 || func_type == 5)
+                        if(need_laplacian)
                         {
                             double v3xc = 0.0;
                             double vlapl = 0.0;
@@ -529,7 +540,7 @@ void XC_Functional::gradcorr(
                     double v2xcup = 0.0;
                     double v2xcdw = 0.0;
                     double v2xcud = 0.0;
-                    if(func_type == 3 || func_type == 5)
+                    if(need_laplacian)
                     {
                         double v3xcup = 0.0;
                         double v3xcdw = 0.0;
@@ -699,7 +710,7 @@ void XC_Functional::gradcorr(
             }
 
             // Add vlapl stress contribution for mGGA functionals
-            if ((func_type == 3 || func_type == 5) && use_libxc)
+            if (need_laplacian && use_libxc)
             {
 #ifdef USE_LIBXC
                 add_vlapl_stress_contribution(

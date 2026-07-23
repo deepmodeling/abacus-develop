@@ -384,12 +384,10 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
         /* hse_omega = */ hse_omega);
 
     const std::vector<double> rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
-    const std::vector<std::vector<ModuleBase::Vector3<double>>> gdr
-        = XC_Functional_Libxc::cal_gdr(nspin, nrxx, rho, tpiba, chr);
+    std::vector<std::vector<ModuleBase::Vector3<double>>> gdr;
+    std::vector<double> lapl;
+    XC_Functional_Libxc::cal_gdr_and_lapl(nspin, nrxx, rho, tpiba, chr, gdr, lapl);
     const std::vector<double> sigma = XC_Functional_Libxc::convert_sigma(gdr);
-
-    // compute laplacian for mGGA functionals
-    const std::vector<double> lapl = XC_Functional_Libxc::cal_lapl(nspin, nrxx, rho, tpiba, chr);
 
     //converting kin_r
     std::vector<double> kin_r;

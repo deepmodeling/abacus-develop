@@ -180,6 +180,22 @@ XC_Functional_Libxc::set_xc_type_libxc(const std::string& xc_func_in)
         ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc", message);
     }
 
+    {
+        std::vector<xc_func_type> tmp_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
+        for (auto& f : tmp_funcs)
+        {
+            if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
+            {
+                std::cout << " WARNING: XC functional \"" << f.info->name
+                          << "\" requires Laplacian of density (nabla^2 rho)."
+                          << " This may require a higher energy cutoff for numerical stability."
+                          << std::endl;
+                break;
+            }
+        }
+        XC_Functional_Libxc::finish_func(tmp_funcs);
+    }
+
     // return
     return std::make_pair(func_type, func_id);
 }
