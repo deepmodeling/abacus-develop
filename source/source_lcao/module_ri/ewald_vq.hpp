@@ -1574,6 +1574,27 @@ auto Ewald_Vq<Tdata>::cal_short_range_Vs(const UnitCell& ucell,
 }
 
 template <typename Tdata>
+auto Ewald_Vq<Tdata>::cal_bare_periodic_Vs(const UnitCell& ucell,
+                                           const std::vector<TA>& list_A0,
+                                           const std::vector<TAC>& list_A1,
+                                           std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in)
+    -> std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>
+{
+    ModuleBase::TITLE("Ewald_Vq", "cal_bare_periodic_Vs");
+    ModuleBase::timer::tick("Ewald_Vq", "cal_bare_periodic_Vs");
+
+    // This helper performs the distributed R-to-q transform; the input map selects the physical term.
+    auto Vq_bare = this->cal_Vq_minus_gauss(ucell, list_A0, list_A1, Vs_in);
+    auto Vs_bare = this->set_Vs_dVs<RI::Tensor<Tdata>>(ucell,
+                                                       this->list_A0_pair_R_period,
+                                                       this->list_A1_pair_R_period,
+                                                       Vq_bare);
+
+    ModuleBase::timer::tick("Ewald_Vq", "cal_bare_periodic_Vs");
+    return Vs_bare;
+}
+
+template <typename Tdata>
 auto Ewald_Vq<Tdata>::cal_short_range_Vs_serial_full(
     const UnitCell& ucell,
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Vs_in_full,

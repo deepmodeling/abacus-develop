@@ -60,6 +60,15 @@ private:
 	using TatomR = std::array<double,Ndim>;		// tmp
 
 public:
+	using CoulombMap = std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>;
+	struct EwaldCoulombComponents
+	{
+		CoulombMap bare_periodic;
+		CoulombMap gaussian_real;
+		CoulombMap short_range;
+		CoulombMap long_range;
+	};
+
 	Exx_LRI(const Exx_Info::Exx_Info_RI& info_in) :info(info_in) {}
 	Exx_LRI operator=(const Exx_LRI&) = delete;
 	Exx_LRI operator=(Exx_LRI&&);
@@ -95,8 +104,7 @@ public:
 		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
 		const UnitCell& ucell,
 		const bool write_cv = false,
-		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_short_IJR = nullptr,
-		std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_long_IJR = nullptr);
+		EwaldCoulombComponents* components = nullptr);
 	void cal_exx_elec(
 		const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
 		const UnitCell& ucell,

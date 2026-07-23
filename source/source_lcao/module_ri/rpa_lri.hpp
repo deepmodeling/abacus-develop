@@ -64,6 +64,18 @@ inline bool debug_dump_exx_ao_enabled()
              || value == "false" || value == "FALSE");
 }
 
+inline bool ewald_component_output_enabled()
+{
+    const char* env = std::getenv("ABACUS_RPA_EWALD_COMPONENTS");
+    if (env == nullptr)
+    {
+        return false;
+    }
+    const std::string value(env);
+    return !(value.empty() || value == "0" || value == "f" || value == "F"
+             || value == "false" || value == "FALSE");
+}
+
 inline std::size_t coulomb_atom_pair_index(const std::size_t I, const std::size_t J, const std::size_t natoms)
 {
     if (I > J)
@@ -713,17 +725,15 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     else
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs);
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_full_IJR;
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_short_IJR;
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_long_IJR;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
-    const bool dump_split = RpaLriDetail::debug_dump_ewald_split_enabled();
+    const bool output_ewald_components = RpaLriDetail::ewald_component_output_enabled();
+    typename Exx_LRI<double>::EwaldCoulombComponents ewald_components;
     exx_full_coulomb->cal_ewald_coulomb(Vs_full_IJR,
-                                         Cs,
-                                         ucell,
-                                         PARAM.inp.out_ri_cv,
-                                         dump_split ? &Vs_short_IJR : nullptr,
-                                         dump_split ? &Vs_long_IJR : nullptr);
+                                        Cs,
+                                        ucell,
+                                        PARAM.inp.out_ri_cv,
+                                        output_ewald_components ? &ewald_components : nullptr);
     // MPI: {ia0, {ia1, R}} to {ia0, ia1}
     std::vector<TA> atoms(ucell.nat);
     for (int iat = 0; iat < ucell.nat; ++iat)
@@ -744,12 +754,13 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
     {
         atoms01.insert(JR.first);
     }
-    std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_full_IJ
-        = RI_2D_Comm::comm_map2_first(mpi_comm, Vs_full_IJR, atoms00, atoms01);
-    Vs_full_IJR.clear();
-
     const std::array<Tcell, Ndim> period = {p_kv->nmp[0], p_kv->nmp[1], p_kv->nmp[2]};
-    this->Vs_period = RI::RI_Tools::cal_period(Vs_full_IJ, period);
+    const auto gather_periodic = [&](auto& distributed_blocks) {
+        auto atom_pair_blocks = RI_2D_Comm::comm_map2_first(mpi_comm, distributed_blocks, atoms00, atoms01);
+        distributed_blocks.clear();
+        return RI::RI_Tools::cal_period(atom_pair_blocks, period);
+    };
+    this->Vs_period = gather_periodic(Vs_full_IJR);
     if (this->use_spacegroup_symmetry_)
     {
         // Rebuild the full periodic bare Coulomb from the irreducible real-space sector so that
@@ -791,12 +802,25 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
                                   use_shrink ? "basis_aux_shrink_out" : "basis_aux_out",
                                   use_shrink ? "basis_out_shrink" : "basis_out");
         this->out_coulomb_k_v1(ucell, this->Vs_period, "v1_coulomb_full_iq_", exx_full_coulomb.get());
+        if (output_ewald_components)
+        {
+            auto bare_periodic = gather_periodic(ewald_components.bare_periodic);
+            auto gaussian_real = gather_periodic(ewald_components.gaussian_real);
+            auto short_range = gather_periodic(ewald_components.short_range);
+            auto long_range = gather_periodic(ewald_components.long_range);
+            this->out_coulomb_k_v1(
+                ucell, bare_periodic, "v1_coulomb_ewald_bare_iq_", exx_full_coulomb.get());
+            this->out_coulomb_k_v1(
+                ucell, gaussian_real, "v1_coulomb_ewald_gaussian_real_iq_", exx_full_coulomb.get());
+            this->out_coulomb_k_v1(
+                ucell, short_range, "v1_coulomb_ewald_short_iq_", exx_full_coulomb.get());
+            this->out_coulomb_k_v1(
+                ucell, long_range, "v1_coulomb_ewald_long_iq_", exx_full_coulomb.get());
+        }
         if (GlobalC::exx_info.info_ri.ewald_dimension == 2 && GlobalV::MY_RANK == 0)
         {
-            const auto multipoles =
-                Exx_Abfs::Construct_Orbs::get_multipole(exx_full_coulomb->abfs);
-            std::vector<std::vector<double>> s_multipoles_by_type(
-                static_cast<std::size_t>(ucell.ntype));
+            const auto multipoles = Exx_Abfs::Construct_Orbs::get_multipole(exx_full_coulomb->abfs);
+            std::vector<std::vector<double>> s_multipoles_by_type(static_cast<std::size_t>(ucell.ntype));
             std::vector<int> atoms_per_type(static_cast<std::size_t>(ucell.ntype), 0);
             for (int it = 0; it != ucell.ntype; ++it)
             {
@@ -812,7 +836,6 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
             const ModuleBase::Vector3<double> a2_bohr = ucell.a2 * ucell.lat0;
             const auto normalization = RpaLriDetail::strict_2d_coulomb_head_normalization(
                 (a1_bohr ^ a2_bohr).norm(), s_multipoles_by_type, atoms_per_type);
-
             const std::string filename = "librpa_2d_coulomb_head.dat";
             std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
             if (!ofs.good())
@@ -824,37 +847,18 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
             {
                 throw std::runtime_error("Failed to write " + filename);
             }
-            std::cout << "Wrote strict 2D Coulomb head normalization to " << filename
-                      << ": A_lambda=" << std::setprecision(17)
-                      << normalization.raw_head_coefficient
-                      << ", sheet_to_raw_scale=" << normalization.sheet_to_raw_scale
-                      << std::endl;
         }
     }
     else
     {
+        if (output_ewald_components)
+        {
+            throw std::runtime_error("ABACUS_RPA_EWALD_COMPONENTS requires out_librpa_reader_version=1.");
+        }
         this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_", exx_full_coulomb.get());
     }
     Vs_period.clear();
     Vs_period.swap(tmp);
-    if (dump_split)
-    {
-        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_short_IJ
-            = RI_2D_Comm::comm_map2_first(mpi_comm, Vs_short_IJR, atoms00, atoms01);
-        Vs_short_IJR.clear();
-        this->Vs_period = RI::RI_Tools::cal_period(Vs_short_IJ, period);
-        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_short_", exx_full_coulomb);
-        Vs_period.clear();
-        Vs_period.swap(tmp);
-
-        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_long_IJ
-            = RI_2D_Comm::comm_map2_first(mpi_comm, Vs_long_IJR, atoms00, atoms01);
-        Vs_long_IJR.clear();
-        this->Vs_period = RI::RI_Tools::cal_period(Vs_long_IJ, period);
-        this->out_coulomb_k(ucell, this->Vs_period, "coulomb_mat_long_", exx_full_coulomb);
-        Vs_period.clear();
-        Vs_period.swap(tmp);
-    }
     Cs.clear();
     Cs.swap(tmp);
 

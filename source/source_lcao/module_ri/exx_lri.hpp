@@ -2080,8 +2080,7 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
                                        std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs,
                                        const UnitCell& ucell,
                                        const bool write_cv,
-                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_short_IJR,
-                                       std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>* Vs_long_IJR)
+                                       EwaldCoulombComponents* components)
 {
 	ModuleBase::TITLE("Exx_LRI", "cal_ewald_coulomb");
 	ModuleBase::timer::start("Exx_LRI", "cal_ewald_coulomb");
@@ -2103,6 +2102,13 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
 	const std::array<Tcell, Ndim> period = {this->p_kv->nmp[0], this->p_kv->nmp[1], this->p_kv->nmp[2]};
 
 	this->exx_lri.set_parallel(this->mpi_comm, atoms_pos, latvec, period);
+	if (components != nullptr)
+	{
+		components->bare_periodic.clear();
+		components->gaussian_real.clear();
+		components->short_range.clear();
+		components->long_range.clear();
+	}
 
 	const std::array<Tcell, Ndim> period_Vs_requested
 		= LRI_CV_Tools::cal_latvec_range<Tcell>(1 + this->info.ccp_rmesh_times, ucell, orb_cutoff_);
@@ -2157,15 +2163,33 @@ void Exx_LRI<Tdata>::cal_ewald_coulomb(std::map<TA, std::map<TAC, RI::Tensor<Tda
 				{
 					double chi = this->exx_objs[settings_list.first].evq.get_singular_chi(ucell, param_list.second, 2.0);
 					Vs_ewald_temp = this->exx_objs[settings_list.first].evq.cal_Vs(ucell, chi, Vs_temp);
-					if (Vs_short_IJR != nullptr || Vs_long_IJR != nullptr)
+					if (components != nullptr)
 					{
-						auto Vs_split = this->exx_objs[settings_list.first].evq.cal_Vs_split(ucell, chi, Vs_temp);
-						auto& Vs_short_temp = Vs_split.first;
-						auto& Vs_long_temp = Vs_split.second;
-						Vs_ewald_short = Vs_ewald_short.empty() ? Vs_short_temp
-						                                        : LRI_CV_Tools::add(Vs_ewald_short, Vs_short_temp);
-						Vs_ewald_long = Vs_ewald_long.empty() ? Vs_long_temp
-						                                      : LRI_CV_Tools::add(Vs_ewald_long, Vs_long_temp);
+						auto bare_periodic = this->exx_objs[settings_list.first].evq.cal_bare_periodic_Vs(
+							ucell,
+							list_As_Vs.first,
+							list_As_Vs.second[0],
+							Vs_temp);
+						auto short_range = this->exx_objs[settings_list.first].evq.cal_short_range_Vs(
+							ucell,
+							list_As_Vs.first,
+							list_As_Vs.second[0],
+							Vs_temp);
+						auto long_range
+							= this->exx_objs[settings_list.first].evq.cal_long_range_Vs_gauss(ucell, chi);
+						auto gaussian_real = LRI_CV_Tools::minus(bare_periodic, short_range);
+						components->bare_periodic = components->bare_periodic.empty()
+							? std::move(bare_periodic)
+							: LRI_CV_Tools::add(components->bare_periodic, bare_periodic);
+						components->gaussian_real = components->gaussian_real.empty()
+							? std::move(gaussian_real)
+							: LRI_CV_Tools::add(components->gaussian_real, gaussian_real);
+						components->short_range = components->short_range.empty()
+							? std::move(short_range)
+							: LRI_CV_Tools::add(components->short_range, short_range);
+						components->long_range = components->long_range.empty()
+							? std::move(long_range)
+							: LRI_CV_Tools::add(components->long_range, long_range);
 					}
 					break;
 				}
