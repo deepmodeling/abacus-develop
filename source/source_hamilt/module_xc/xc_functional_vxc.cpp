@@ -13,12 +13,23 @@
 #include "xc_functional_libxc.h"
 #endif
 
+#include "xc_functional_gga_noncol_sf_builtin.h"
+
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
 std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nrxx, // number of real-space grid
                                                                    const Charge* const chr,
                                                                    const UnitCell* ucell) // core charge density
 {
     ModuleBase::TITLE("XC_Functional", "v_xc");
+
+    if (PARAM.inp.nspin == 4 && (PARAM.globalv.domag || PARAM.globalv.domag_z) && PARAM.inp.gga_grad == 3)
+    {
+        const int ft = XC_Functional::get_func_type();
+        if (ft == 2 || ft == 4)
+        {
+            return ModuleXC::NCGGA_SF_Builtin::v_xc_ncgga_sf_builtin(nrxx, ucell->omega, ucell->tpiba, chr);
+        }
+    }
 
     if (use_libxc)
     {

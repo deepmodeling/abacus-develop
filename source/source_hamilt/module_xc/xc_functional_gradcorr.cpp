@@ -21,14 +21,15 @@
 #include "xc_functional_libxc.h"
 #endif
 
-// from gradcorr.f90
+#include "xc_functional_gga_noncol_sf_builtin.h"
+
 void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	const Charge* const chr, ModulePW::PW_Basis* rhopw, const UnitCell *ucell,
 	std::vector<double> &stress_gga, const bool is_stress)
 {
 	ModuleBase::TITLE("XC_Functional","gradcorr");
 	
-	if(func_type == 0 || func_type == 1) { return; } // none or LDA functional
+	if(func_type == 0 || func_type == 1) { return; }
 
 	bool igcc_is_lyp = false;
 	if( func_id[1] == XC_GGA_C_LYP) { igcc_is_lyp = true; }
@@ -39,9 +40,15 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 
 	assert(nspin0>0);
 	const double fac = 1.0/ nspin0;
+	const int gga_grad = PARAM.inp.gga_grad;
 
 	if(is_stress)
 	{
+		if (PARAM.inp.nspin == 4 && (PARAM.globalv.domag || PARAM.globalv.domag_z) && gga_grad == 3)
+		{
+			ModuleXC::NCGGA_SF_Builtin::gradcorr_ncgga_sf_builtin(chr, rhopw, ucell, stress_gga);
+			return;
+		}
 		stress_gga.resize(9);
 		for(int i=0;i<9;i++)
 		{
@@ -49,16 +56,13 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		}
 	}
 
-	// doing FFT to get rho in G space: rhog1 
     rhopw->real2recip(chr->rho[0], chr->rhog[0]);
-	if(PARAM.inp.nspin==2)//mohan fix bug 2012-05-28
+	if(PARAM.inp.nspin==2)
 	{
 		rhopw->real2recip(chr->rho[1], chr->rhog[1]);
 	}
     rhopw->real2recip(chr->rho_core, chr->rhog_core);
 		
-	// sum up (rho_core+rho) for each spin in real space
-	// and reciprocal space.
 	double* rhotmp1 = nullptr;
 	double* rhotmp2 = nullptr;
 	std::complex<double>* rhogsum1 = nullptr;
@@ -67,12 +71,9 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	ModuleBase::Vector3<double>* gdr2 = nullptr;
 	ModuleBase::Vector3<double>* h1 = nullptr;
 	ModuleBase::Vector3<double>* h2 = nullptr;
-	double* neg = nullptr;
 	double** vsave = nullptr;
 	double** vgg = nullptr;
 	
-	// for spin unpolarized case, 
-	// calculate the gradient of (rho_core+rho) in reciprocal space.
 	rhotmp1 = new double[rhopw->nrxx];
 	rhogsum1 = new std::complex<double>[rhopw->npw];
 #ifdef _OPENMP
@@ -95,8 +96,6 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	
 	XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
 
-	// for spin polarized case;
-	// calculate the gradient of (rho_core+rho) in reciprocal space.
 	if(PARAM.inp.nspin==2)
 	{
 		rhotmp2 = new double[rhopw->nrxx];
@@ -122,11 +121,14 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
 	}
 
+	std::vector<double> mag_part;
+	std::complex<double>* tmp_recip = nullptr;
+	ModuleBase::Vector3<double>* gdr_mag = nullptr;
 	if(PARAM.inp.nspin == 4&&(PARAM.globalv.domag||PARAM.globalv.domag_z))
 	{
+		mag_part.resize(rhopw->nrxx * 3, 0.0);
 		rhotmp2 = new double[rhopw->nrxx];
 		rhogsum2 = new std::complex<double>[rhopw->npw];
- 		neg = new double [rhopw->nrxx];
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
@@ -134,7 +136,6 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		{
 			rhotmp1[ir] = 0.0;
 			rhotmp2[ir] = 0.0;
-			neg[ir] = 0.0;
 		}
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
@@ -163,7 +164,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 			for(int is = 0;is<nspin0;is++) {vgg[is] = new double[rhopw->nrxx];
 }
 		}
-		noncolin_rho(rhotmp1,rhotmp2,neg,chr->rho,rhopw->nrxx,ucell->magnet.ux_,ucell->magnet.lsign_);
+		noncolin_rho(rhotmp1,rhotmp2,chr->rho,rhopw->nrxx,mag_part.data());
 		rhopw->real2recip(rhotmp1, rhogsum1);
 		rhopw->real2recip(rhotmp2, rhogsum2);
 #ifdef _OPENMP
@@ -186,9 +187,36 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		gdr2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 		if(!is_stress) h2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 
-		XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
-		XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
-
+		if (gga_grad == 2)
+		{
+			tmp_recip = new std::complex<double>[rhopw->npw];
+			gdr_mag = new ModuleBase::Vector3<double>[rhopw->nrxx];
+			for (int ir = 0; ir < rhopw->nrxx; ir++)
+			{
+				gdr_mag[ir] = gdr1[ir];
+				gdr1[ir] = 0.5 * gdr_mag[ir];
+				gdr2[ir] = 0.5 * gdr_mag[ir];
+			}
+			for (int is = 1; is < 4; is++)
+			{
+				rhopw->real2recip(chr->rho[is], tmp_recip);
+				XC_Functional::grad_rho(tmp_recip, gdr_mag, rhopw, ucell->tpiba);
+				const double* mag_part_is = mag_part.data() + (is-1) * rhopw->nrxx;
+				for (int ir = 0; ir < rhopw->nrxx; ir++)
+				{
+					const ModuleBase::Vector3<double> grad_is = 0.5 * gdr_mag[ir] * mag_part_is[ir];
+					gdr1[ir] += grad_is;
+					gdr2[ir] -= grad_is;
+				}
+			}
+			delete[] tmp_recip;
+			delete[] gdr_mag;
+		}
+		else
+		{
+			XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
+			XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
+		}
 	}
 	
 	const double epsr = 1.0e-6;
@@ -240,14 +268,13 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 			{
 				grho2a = gdr1[ir].norm2();
 				
-				//normally values in rhotmp can either be >= 0 or < 0.
 				if( rhotmp1[ir] >= 0.0 ) { segno = 1.0;
 				} else { segno = -1.0;
 }
 				if (use_libxc && is_stress)
 				{
 #ifdef USE_LIBXC
-					if(func_type == 3 || func_type == 5) //the gradcorr part to stress of mGGA
+					if(func_type == 3 || func_type == 5)
 					{
 						double v3xc = 0.0;
 						double atau = chr->kin_r[0][ir]/2.0;
@@ -258,7 +285,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 						XC_Functional_Libxc::gcxc_libxc( func_id, arho, grho2a, sxc, v1xc, v2xc);
 					}
 #endif 
-				} // end use_libxc
+				}
 				else
 				{
 					XC_Functional::gcxc( arho, grho2a, sxc, v1xc, v2xc);
@@ -280,22 +307,15 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 				}
 				else
 				{
-					// first term of the gradient correction:
-					// D(rho*Exc)/D(rho)
 					v(0, ir) += ModuleBase::e2 * v1xc;
-					// cout << "v    " << v(0, ir) << endl;
-					
-					// h contains
-					// D(rho*Exc) / D(|grad rho|) * (grad rho) / |grad rho|
 					h1[ir] = ModuleBase::e2 * v2xc * gdr1[ir];
-					
 					local_vtxcgc += ModuleBase::e2* v1xc * ( rhotmp1[ir] - chr->rho_core[ir] );
 					local_etxcgc += ModuleBase::e2* sxc  * segno;
 				}
-			} // end arho > epsr
+			}
 		}
-	}// end nspin0 == 1
-	else // spin polarized case
+	}
+	else
 	{
 #ifdef _OPENMP
 #pragma omp for
@@ -306,7 +326,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 			{
 #ifdef USE_LIBXC
 				double sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud;
-				if(func_type == 3 || func_type == 5) //the gradcorr part to stress of mGGA
+				if(func_type == 3 || func_type == 5)
 				{
 					double v3xcup, v3xcdw;
 					double atau1 = chr->kin_r[0][ir]/2.0;
@@ -348,11 +368,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 				}
 				else
 				{
-					// first term of the gradient correction : D(rho*Exc)/D(rho)
 					v(0,ir) += ModuleBase::e2 * v1xcup;
 					v(1,ir) += ModuleBase::e2 * v1xcdw;
-				
-					// h contains D(rho*Exc)/D(|grad rho|) * (grad rho) / |grad rho|
 					h1[ir] += ModuleBase::e2 * ( v2xcup * gdr1[ir] + v2xcud * gdr2[ir] );
 					h2[ir] += ModuleBase::e2 * ( v2xcdw * gdr2[ir] + v2xcud * gdr1[ir] );
 
@@ -391,7 +408,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					else
 					{
 						double zeta = ( rhotmp1[ir] - rhotmp2[ir] ) / rh;
-						if(PARAM.inp.nspin==4&&(PARAM.globalv.domag||PARAM.globalv.domag_z)) { zeta = fabs(zeta) * neg[ir];
+						if(PARAM.inp.nspin==4&&(PARAM.globalv.domag||PARAM.globalv.domag_z)) { zeta = fabs(zeta);
 }
 						const double grh2 = (gdr1[ir]+gdr2[ir]).norm2();
 						XC_Functional::gcc_spin(rh, zeta, grh2, sc, v1cup, v1cdw, v2c);
@@ -427,10 +444,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 						for(int m = 0;m< l+1;m++)
 						{
 							int ind = l*3 + m;
-							//    exchange
 							local_stress_gga [ind] += tt1[l] * tt1[m] * ModuleBase::e2 * v2xup + 
 									tt2[l] * tt2[m] * ModuleBase::e2 * v2xdw;
-							//    correlation
 							local_stress_gga [ind] += ( tt1[l] * tt1[m] * v2cup + 
 									tt2[l] * tt2[m] * v2cdw + 
 									(tt1[l] * tt2[m] +
@@ -440,11 +455,8 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 				}
 				else
 				{
-					// first term of the gradient correction : D(rho*Exc)/D(rho)
 					v(0,ir) = v(0,ir) + ModuleBase::e2 * ( v1xup + v1cup );
 					v(1,ir) = v(1,ir) + ModuleBase::e2 * ( v1xdw + v1cdw );
-				
-					// h contains D(rho*Exc)/D(|grad rho|) * (grad rho) / |grad rho|
 					h1[ir] = ModuleBase::e2 * ( ( v2xup + v2cup ) * gdr1[ir] + v2cud * gdr2[ir] );
 					h2[ir] = ModuleBase::e2 * ( ( v2xdw + v2cdw ) * gdr2[ir] + v2cud * gdr1[ir] );
 
@@ -453,7 +465,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					local_etxcgc = local_etxcgc + ModuleBase::e2 * ( sx + sc );
 				}
 			}
-		}// end ir
+		}
 
 	}
 #ifdef _OPENMP
@@ -479,10 +491,87 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 }
 #endif
 
-	//std::cout << "\n vtxcgc=" << vtxcgc;
-	//std::cout << "\n etxcgc=" << etxcgc << std::endl;
+	if(!is_stress && PARAM.inp.nspin==4 && gga_grad==2)
+	{
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for (int ir = 0; ir < rhopw->nrxx; ir++)
+		{
+			double vgg_loc[2] = {v(0, ir), v(1, ir)};
+			v(0, ir) = 0.5 * (vgg_loc[0] + vgg_loc[1]) + vsave[0][ir];
+			const double vgg_diff = 0.5 * (vgg_loc[0] - vgg_loc[1]);
+			for (int i = 1; i < 4; i++)
+			{
+				v(i, ir) = vgg_diff * mag_part[ir + (i - 1) * rhopw->nrxx] + vsave[i][ir];
+			}
+		}
 
-	if(!is_stress)
+		double* dh = new double[rhopw->nrxx];
+		double* dh1 = new double[rhopw->nrxx];
+		ModuleBase::Vector3<double>* tmp_h = new ModuleBase::Vector3<double>[rhopw->nrxx];
+		for (int ir = 0; ir < rhopw->nrxx; ir++)
+		{
+			tmp_h[ir] = 0.5 * (h1[ir] + h2[ir]);
+			dh1[ir] = 0.0;
+		}
+		XC_Functional::grad_dot(tmp_h, dh, rhopw, ucell->tpiba);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 1024)
+#endif
+		for (int ir = 0; ir < rhopw->nrxx; ir++)
+		{
+			v(0, ir) -= dh[ir];
+		}
+		double sum = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum) schedule(static, 256)
+#endif
+		for (int ir = 0; ir < rhopw->nrxx; ir++)
+		{
+			sum += dh[ir] * chr->rho[0][ir];
+		}
+		vtxcgc -= sum;
+
+		for(int is=1;is<4;is++)
+		{
+			const double* mag_part_is = &mag_part[(is - 1) * rhopw->nrxx];
+			for (int ir = 0; ir < rhopw->nrxx; ir++)
+			{
+				tmp_h[ir] = 0.5 * (h1[ir] - h2[ir]) * mag_part_is[ir];
+			}
+			XC_Functional::grad_dot(tmp_h, dh, rhopw, ucell->tpiba);
+			for(int ir=0;ir<rhopw->nrxx;ir++)
+			{
+				dh1[ir] += dh[ir] * mag_part_is[ir];
+			}
+		}
+		for(int is=1;is<4;is++)
+		{
+			const double* mag_part_is = &mag_part[(is - 1) * rhopw->nrxx];
+			for(int ir=0;ir<rhopw->nrxx;ir++)
+			{
+				v(is,ir) -= dh1[ir] * mag_part_is[ir];
+			}
+		}
+		sum = 0.0;
+#ifdef _OPENMP
+#pragma omp parallel for reduction(+ : sum) schedule(static, 256)
+#endif
+		for (int ir = 0; ir < rhopw->nrxx; ir++)
+		{
+			sum += dh1[ir] * (rhotmp1[ir] - rhotmp2[ir]);
+		}
+		vtxcgc -= sum;
+
+		delete[] dh;
+		delete[] dh1;
+		delete[] tmp_h;
+
+		vtxc += vtxcgc;
+		etxc += etxcgc;
+	}
+	else if (!is_stress)
 	{
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
@@ -502,10 +591,6 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 			}
 		}
 		
-		// second term of the gradient correction :
-		// \sum_alpha (D / D r_alpha) ( D(rho*Exc)/D(grad_alpha rho) )
-
-		// dh is in real sapce.
 		double* dh = new double[rhopw->nrxx];
 
 		for(int is=0; is<nspin0; is++)
@@ -562,23 +647,21 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 					v(is,ir) = vsave[is][ir];
 				}
 			}
+			const double* mag_part_p[3] = {mag_part.data(), mag_part.data() + rhopw->nrxx, mag_part.data() + 2 * rhopw->nrxx};
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
 #endif
 			for(int ir=0;ir<rhopw->nrxx;ir++)
 			{
 				v(0,ir) += 0.5 * (vgg[0][ir] + vgg[1][ir]);
-				double amag = sqrt(pow(chr->rho[1][ir],2)+pow(chr->rho[2][ir],2)+pow(chr->rho[3][ir],2));
-				if(amag>1e-12)
+				for(int i=1;i<4;i++) 
 				{
-					for(int i=1;i<4;i++) {
-						v(i,ir)+= neg[ir] * 0.5 *(vgg[0][ir]-vgg[1][ir])*chr->rho[i][ir]/amag;
-}
+					v(i,ir) += 0.5 *(vgg[0][ir]-vgg[1][ir]) * mag_part_p[i-1][ir];
 				}
 			}
 		}
 	}
-	// deacllocate
+
 	delete[] rhotmp1;
 	delete[] rhogsum1;
 	delete[] gdr1;
@@ -595,7 +678,6 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	}
 	if(PARAM.inp.nspin == 4 && (PARAM.globalv.domag||PARAM.globalv.domag_z))
 	{
-		delete[] neg;
 		if(!is_stress) 
 		{
 			for(int i=0; i<nspin0; i++) { delete[] vgg[i];
@@ -740,40 +822,29 @@ void XC_Functional::grad_dot(const ModuleBase::Vector3<double>* h, double* dh, c
 	return;
 }
 
-void XC_Functional::noncolin_rho(double *rhoout1, double *rhoout2, double *neg,
-	const double*const*const rho, const int nrxx, const double* ux_, const bool lsign_)
+void XC_Functional::noncolin_rho(double *rhoout1, double *rhoout2,
+	const double*const*const rho, const int nrxx, double* mag_part)
 {
-	//this function diagonalizes the spin density matrix and gives as output the
-	//spin up and spin down components of the charge.
-	//If lsign is true up and dw are with respect to the fixed quantization axis 
-	//ux, otherwise rho + |m| is always rhoup and rho-|m| is always rhodw.
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
-#endif
-	for(int ir = 0;ir<nrxx;ir++)
-	{
-		neg[ir] = 1.0;
-	}
-	if(lsign_)
-	{
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 1024)
-#endif
-		for(int ir = 0;ir<nrxx;ir++)
-		{
-			if(rho[1][ir]*ux_[0] + rho[2][ir]*ux_[1] + rho[3][ir]*ux_[2]>0) { neg[ir] = 1.0;
-			} else { neg[ir] = -1.0;
-}
-		}
-	}
-#ifdef _OPENMP
-#pragma omp parallel for
 #endif
 	for(int ir = 0;ir<nrxx;ir++)
 	{
 		double amag = sqrt(pow(rho[1][ir],2)+pow(rho[2][ir],2)+pow(rho[3][ir],2));
-		rhoout1[ir] = 0.5 * (rho[0][ir] + neg[ir] * amag);
-		rhoout2[ir] = 0.5 * (rho[0][ir] - neg[ir] * amag);
+		rhoout1[ir] = 0.5 * (rho[0][ir] + amag);
+		rhoout2[ir] = 0.5 * (rho[0][ir] - amag);
+		if(amag > 1e-12)
+		{
+			mag_part[ir] = rho[1][ir] / amag;
+			mag_part[ir + nrxx] = rho[2][ir] / amag;
+			mag_part[ir + 2 * nrxx] = rho[3][ir] / amag;
+		}
+		else
+		{
+			mag_part[ir] = 0.0;
+			mag_part[ir + nrxx] = 0.0;
+			mag_part[ir + 2 * nrxx] = 0.0;
+		}
 	}
 	return;
 }

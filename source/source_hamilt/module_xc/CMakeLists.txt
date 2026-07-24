@@ -4,6 +4,7 @@ add_library(
     xc_functional.cpp
     xc_functional_vxc.cpp
     xc_functional_gradcorr.cpp
+    xc_functional_gga_noncol_sf_builtin.cpp
     xc_functional_wrapper_xc.cpp
     xc_functional_wrapper_gcxc.cpp
     xc_funct_exch_lda.cpp

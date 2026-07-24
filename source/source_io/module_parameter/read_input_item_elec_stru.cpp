@@ -341,6 +341,28 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         this->add_item(item);
     }
     {
+        Input_Item item("gga_grad");
+        item.annotation = "1: collinear approximation (grad|m|); 2: projected div(h); 3: Scalmani-Frisch transform (default, most accurate)";
+        item.category = "Electronic structure";
+        item.type = "Integer";
+        item.description = R"(Method for computing GGA gradients in noncollinear spin (nspin=4) calculations.
+* 1: Collinear approximation. Treats nspin=4 as nspin=2 with |m|, computes grad(rho +/- |m|). Fastest but least accurate.
+* 2: Improved gradient. Computes grad(m_mu)*m_hat_mu and projects div(h) via m_hat. Intermediate accuracy.
+* 3: Scalmani-Frisch transform. Applies SF rotation to decompose gradients per spin channel and retains all cross-terms in div(h). Most accurate.
+Only relevant when nspin=4 and a GGA or hybrid functional is used.)";
+        item.default_value = "3";
+        item.unit = "";
+        item.availability = "Only relevant for nspin=4 with GGA/hybrid functionals";
+        read_sync_int(input.gga_grad);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.gga_grad < 1 || para.input.gga_grad > 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "gga_grad must be 1, 2, or 3.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("xc_temperature");
         item.annotation = "temperature for finite temperature functionals";
         item.category = "Electronic structure";

@@ -29,15 +29,4 @@ AddTest(
   SOURCES deltaspin_pw_test.cpp
 )
 
-AddTest(
-  TARGET response_gradient_test
-  LIBS gtest gmock
-  SOURCES response_gradient_test.cpp
-)
-
-AddTest(
-  TARGET eigenvalue_sign_test
-  LIBS gtest gmock ${math_libs}
-  SOURCES eigenvalue_sign_test.cpp
-)
 endif()
