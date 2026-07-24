@@ -50,6 +50,7 @@ void psi_init_nao<T>::prepare_params(const int& nqx,
     this->dq_ = dq;
     this->nspin_ = nspin;
     this->orbital_dir_ = orbital_dir;
+    this->params_prepared_ = true;
 }
 
 template <typename T>
@@ -170,6 +171,12 @@ void psi_init_nao<T>::initialize(const Structure_Factor* sf,
 {
     ModuleBase::timer::start("psi_init_nao", "initialize");
 
+    if (!this->params_prepared_)
+    {
+        ModuleBase::WARNING_QUIT("psi_init_nao<T>::initialize",
+            "prepare_params() must be called before initialize()");
+    }
+
     // import
     psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, lmaxkb, rank, npol, nbands);
 
@@ -203,6 +210,12 @@ template <typename T>
 void psi_init_nao<T>::tabulate()
 {
     ModuleBase::timer::start("psi_init_nao", "tabulate");
+
+    if (this->nqx_ <= 0)
+    {
+        ModuleBase::WARNING_QUIT("psi_init_nao<T>::tabulate",
+            "nqx_ must be greater than 0. Did you forget to call prepare_params() with valid nqx?");
+    }
 
     // a uniformed qgrid
     std::vector<double> qgrid(this->nqx_);

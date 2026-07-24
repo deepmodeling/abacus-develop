@@ -19,7 +19,26 @@ class psi_init_nao_random : public psi_init_nao<T>
     };
     ~psi_init_nao_random(){};
 
-    /// @brief initialize the psi_init with external data and methods
+    /**
+     * @brief Initialize the psi_init with external data and methods.
+     * 
+     * This method must be called after prepare_params(). It initializes the
+     * psi initializer with the provided structure factor, planewave basis,
+     * and unit cell information.
+     * 
+     * @param sf Structure factor
+     * @param pw_wfc Planewave basis
+     * @param p_ucell Unit cell
+     * @param ik2iktot Local->global k-point mapping
+     * @param nkstot Total number of k-points
+     * @param random_seed Random seed
+     * @param lmaxkb Max angular momentum for non-local projectors
+     * @param rank MPI rank
+     * @param npol Number of polarization components
+     * @param nbands Number of bands
+     * 
+     * @see prepare_params()
+     */
     virtual void initialize(const Structure_Factor* sf,             //< structure factor
                             const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
                             const UnitCell* p_ucell,                     //< unit cell

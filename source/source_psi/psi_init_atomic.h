@@ -19,6 +19,7 @@ class psi_init_atomic : public psi_base<T>
     bool domag_ = false;
     bool domag_z_ = false;
     bool pseudo_mesh_ = false;
+    bool params_prepared_ = false;
 
   public:
     psi_init_atomic()
@@ -27,7 +28,48 @@ class psi_init_atomic : public psi_base<T>
     }
     ~psi_init_atomic(){};
 
-    /// @brief initialize the psi_init with external data and methods
+    /**
+     * @brief Prepare parameters before initialization.
+     * 
+     * This method must be called before initialize(). It sets up the necessary
+     * parameters for the psi initialization process.
+     * 
+     * @param nqx Number of q-points for interpolation
+     * @param dq Spacing between q-points
+     * @param nspin Number of spin components
+     * @param domag Whether to use non-collinear magnetism
+     * @param domag_z Whether to use z-axis only non-collinear magnetism
+     * @param pseudo_mesh Whether to use pseudo mesh for radial grid
+     * 
+     * @see initialize()
+     */
+    void prepare_params(const int& nqx,
+                        const double& dq,
+                        const int& nspin,
+                        const bool& domag,
+                        const bool& domag_z,
+                        const bool& pseudo_mesh);
+
+    /**
+     * @brief Initialize the psi_init with external data and methods.
+     * 
+     * This method must be called after prepare_params(). It initializes the
+     * psi initializer with the provided structure factor, planewave basis,
+     * and unit cell information.
+     * 
+     * @param sf Structure factor
+     * @param pw_wfc Planewave basis
+     * @param p_ucell Unit cell
+     * @param ik2iktot Local->global k-point mapping
+     * @param nkstot Total number of k-points
+     * @param random_seed Random seed
+     * @param lmaxkb Max angular momentum for non-local projectors
+     * @param rank MPI rank
+     * @param npol Number of polarization components
+     * @param nbands Number of bands
+     * 
+     * @see prepare_params()
+     */
     virtual void initialize(const Structure_Factor* sf,             //< structure factor
                             const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
                             const UnitCell* p_ucell,                     //< unit cell
@@ -40,13 +82,6 @@ class psi_init_atomic : public psi_base<T>
                             const int& nbands) override;                //< nbands
     virtual void tabulate() override;
     virtual void init_psig(T* psig, const int& ik) override;
-
-    void prepare_params(const int& nqx,
-                        const double& dq,
-                        const int& nspin,
-                        const bool& domag,
-                        const bool& domag_z,
-                        const bool& pseudo_mesh);
 
   protected:
 

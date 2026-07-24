@@ -12,7 +12,7 @@
 template <typename T>
 void psi_init_atomic<T>::allocate_ps_table()
 {
-   // find correct dimension for ovlp_flzjlq
+    // find correct dimension for ovlp_flzjlq
     int dim1 = this->p_ucell_->ntype;
     int dim2 = 0; // dim2 should be the maximum number of pseudo atomic orbitals
     for (int it = 0; it < this->p_ucell_->ntype; it++)
@@ -22,7 +22,12 @@ void psi_init_atomic<T>::allocate_ps_table()
     if (dim2 == 0)
     {
         ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_table", 
-			"there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
+            "there is not ANY pseudo atomic orbital read in present system, recommand other methods, quit.");
+    }
+    if (this->nqx_ <= 0)
+    {
+        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::allocate_ps_table",
+            "nqx_ must be greater than 0. Did you forget to call prepare_params() before initialize()?");
     }
     int dim3 = this->nqx_;
     // allocate memory for ovlp_flzjlq
@@ -44,21 +49,28 @@ void psi_init_atomic<T>::prepare_params(const int& nqx,
     this->domag_ = domag;
     this->domag_z_ = domag_z;
     this->pseudo_mesh_ = pseudo_mesh;
+    this->params_prepared_ = true;
 }
 
 template <typename T>
-void psi_init_atomic<T>::initialize(const Structure_Factor* sf,         //< structure factor
-    const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
-    const UnitCell* p_ucell,            //< unit cell
+void psi_init_atomic<T>::initialize(const Structure_Factor* sf,
+    const ModulePW::PW_Basis_K* pw_wfc,
+    const UnitCell* p_ucell,
     const std::vector<int>& ik2iktot,
     const int& nkstot,
-    const int& random_seed,       //< random seed
+    const int& random_seed,
     const int& lmaxkb,
     const int& rank,
     const int& npol,
     const int& nbands)
 {
     ModuleBase::timer::start("psi_init_atomic", "initialize");
+
+    if (!this->params_prepared_)
+    {
+        ModuleBase::WARNING_QUIT("psi_init_atomic<T>::initialize",
+            "prepare_params() must be called before initialize()");
+    }
 
     psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, lmaxkb, rank, npol, nbands);
 
