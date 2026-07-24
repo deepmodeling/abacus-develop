@@ -212,12 +212,14 @@ void DeltaSpin<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
     if (cal_force)
     {
 #ifdef __MPI
-        // sum up the occupation matrix
         Parallel_Reduce::reduce_all(force.c, force.nr * force.nc);
 #endif
-        for (int i = 0; i < force.nr * force.nc; i++)
+        if (this->nspin != 4)
         {
-            force.c[i] *= 2.0;
+            for (int i = 0; i < force.nr * force.nc; i++)
+            {
+                force.c[i] *= 2.0;
+            }
         }
     }
 

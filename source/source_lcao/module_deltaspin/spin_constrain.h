@@ -368,8 +368,7 @@ public:
         // =================================================================
         // Evaluate acceleration switch directly (no separate method)
         // =================================================================
-        const bool can_accelerate = (this->nspin_ == 2) &&
-                                    (sc_acceleration_mode_ != "off") &&
+        const bool can_accelerate = (sc_acceleration_mode_ != "off") &&
                                     (sc_acceleration_rms_thr_ > 0.0);
 
         int switch_decision = 0;
@@ -555,6 +554,14 @@ public:
      */
     void calculate_PI_sub_from_hr(
         const hamilt::HContainer<double>* pre_hr_iat,
+        psi::Psi<std::complex<double>>& psi,
+        const Parallel_Orbitals* ParaV,
+        const ModuleBase::Vector3<double>& kvec_d,
+        std::complex<double>* PI_sub_local,
+        int nbands, int nlocal);
+
+    void calculate_PI_sub_from_hr(
+        const hamilt::HContainer<std::complex<double>>* pre_hr_iat,
         psi::Psi<std::complex<double>>& psi,
         const Parallel_Orbitals* ParaV,
         const ModuleBase::Vector3<double>& kvec_d,

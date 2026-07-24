@@ -2,9 +2,48 @@
 #include "source_base/tool_quit.h"
 
 #include <cstring>
+#include <type_traits>
 
 namespace psi
 {
+
+namespace detail
+{
+template <typename T, typename Device>
+struct PagingTransfer
+{
+    static void load(T* dst, const T* src, size_t size);
+    static void store(T* dst, const T* src, size_t size);
+};
+
+template <typename T>
+struct PagingTransfer<T, base_device::DEVICE_CPU>
+{
+    static void load(T* dst, const T* src, size_t size)
+    {
+        std::memcpy(dst, src, sizeof(T) * size);
+    }
+    static void store(T* dst, const T* src, size_t size)
+    {
+        std::memcpy(dst, src, sizeof(T) * size);
+    }
+};
+
+#if defined(__CUDA) || defined(__ROCM)
+template <typename T>
+struct PagingTransfer<T, base_device::DEVICE_GPU>
+{
+    static void load(T* dst, const T* src, size_t size)
+    {
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_GPU, base_device::DEVICE_CPU>()(dst, src, size);
+    }
+    static void store(T* dst, const T* src, size_t size)
+    {
+        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(dst, src, size);
+    }
+};
+#endif
+}
 
 template <typename T, typename Device>
 void Psi<T, Device>::set_storage_mode(PsiStorageMode mode)
@@ -96,7 +135,7 @@ void Psi<T, Device>::load_k_to_gpu(int ik)
     const size_t k_size = static_cast<size_t>(this->nbands) * this->nbasis;
     const T* src = psi_cpu_ + static_cast<size_t>(ik) * this->nbands * this->nbasis;
 
-    std::memcpy(this->psi, src, sizeof(T) * k_size);
+    detail::PagingTransfer<T, Device>::load(this->psi, src, k_size);
 
     current_k_gpu_ = ik;
     this->psi_current = this->psi;
@@ -123,7 +162,7 @@ void Psi<T, Device>::store_k_from_gpu(int ik)
     const size_t k_size = static_cast<size_t>(this->nbands) * this->nbasis;
     T* dst = psi_cpu_ + static_cast<size_t>(ik) * this->nbands * this->nbasis;
 
-    std::memcpy(dst, this->psi, sizeof(T) * k_size);
+    detail::PagingTransfer<T, Device>::store(dst, this->psi, k_size);
 }
 
 template <typename T, typename Device>

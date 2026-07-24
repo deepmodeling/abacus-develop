@@ -466,6 +466,99 @@ void SpinConstrain<std::complex<double>>::calculate_PI_sub_from_hr(
 }
 
 template <>
+void SpinConstrain<std::complex<double>>::calculate_PI_sub_from_hr(
+    const hamilt::HContainer<std::complex<double>>* pre_hr_iat,
+    psi::Psi<std::complex<double>>& psi,
+    const Parallel_Orbitals* ParaV,
+    const ModuleBase::Vector3<double>& kvec_d,
+    std::complex<double>* PI_sub_local_out,
+    int nbands, int nlocal)
+{
+    ModuleBase::TITLE("SpinConstrain", "calculate_PI_sub_from_hr");
+    ModuleBase::timer::start("SpinConstrain", "calculate_PI_sub_from_hr");
+
+    std::complex<double>* psi_ptr = psi.get_pointer();
+
+    const bool use_fp32 = (subspace_exec_precision_ == ModuleGint::GintPrecision::fp32);
+
+#ifdef __MPI
+    int nloc = ParaV->nloc;
+    std::vector<std::complex<double>> PI_k_local(nloc, {0.0, 0.0});
+    hamilt::folding_HR(*pre_hr_iat, PI_k_local.data(), kvec_d, ParaV->nrow, 1);
+
+    if (use_fp32)
+    {
+        ModuleBase::timer::start("SpinConstrain", "calc_PI_sub_fp32");
+        const std::complex<float> one_f = {1.0f, 0.0f};
+        const std::complex<float> zero_f = {0.0f, 0.0f};
+        int nloc_wfc = ParaV->nloc_wfc;
+        int lld_Eij = ParaV->nrow;
+        int ncol_bands = ParaV->ncol_bands;
+        int nloc_eij_local = lld_Eij * ncol_bands;
+
+        std::vector<std::complex<float>> PI_k_f(nloc, zero_f);
+        cast_down_to_float(PI_k_local.data(), PI_k_f.data(), nloc);
+        std::vector<std::complex<float>> psi_f(nloc_wfc, zero_f);
+        cast_down_to_float(psi_ptr, psi_f.data(), nloc_wfc);
+
+        std::vector<std::complex<float>> temp_f(nloc_wfc, zero_f);
+        ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
+            one_f, PI_k_f.data(), 1, 1, ParaV->desc,
+            psi_f.data(), 1, 1, ParaV->desc_wfc,
+            zero_f, temp_f.data(), 1, 1, ParaV->desc_wfc);
+
+        std::vector<std::complex<float>> PI_sub_local_f(nloc_eij_local, zero_f);
+        ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
+            one_f, psi_f.data(), 1, 1, ParaV->desc_wfc,
+            temp_f.data(), 1, 1, ParaV->desc_wfc,
+            zero_f, PI_sub_local_f.data(), 1, 1, ParaV->desc_Eij);
+
+        cast_up_to_double(PI_sub_local_f.data(), PI_sub_local_out, nloc_eij_local);
+        ModuleBase::timer::end("SpinConstrain", "calc_PI_sub_fp32");
+    }
+    else
+#endif
+    {
+        const std::complex<double> one = {1.0, 0.0};
+        const std::complex<double> zero = {0.0, 0.0};
+
+#ifdef __MPI
+        int nloc_wfc = ParaV->nloc_wfc;
+        std::vector<std::complex<double>> temp(nloc_wfc, zero);
+
+        ScalapackConnector::gemm('N', 'N', nlocal, nbands, nlocal,
+            one, PI_k_local.data(), 1, 1, ParaV->desc,
+            psi_ptr, 1, 1, ParaV->desc_wfc,
+            zero, temp.data(), 1, 1, ParaV->desc_wfc);
+
+        int lld_Eij = ParaV->nrow;
+        int ncol_bands = ParaV->ncol_bands;
+        int nloc_eij_local = lld_Eij * ncol_bands;
+        std::vector<std::complex<double>> PI_sub_local(nloc_eij_local, zero);
+
+        ScalapackConnector::gemm('C', 'N', nbands, nbands, nlocal,
+            one, psi_ptr, 1, 1, ParaV->desc_wfc,
+            temp.data(), 1, 1, ParaV->desc_wfc,
+            zero, PI_sub_local.data(), 1, 1, ParaV->desc_Eij);
+
+        std::memcpy(PI_sub_local_out, PI_sub_local.data(), sizeof(std::complex<double>) * nloc_eij_local);
+#else
+        std::vector<std::complex<double>> PI_k(nlocal * nlocal, {0.0, 0.0});
+        hamilt::folding_HR(*pre_hr_iat, PI_k.data(), kvec_d, nlocal, 1);
+
+        std::vector<std::complex<double>> temp(nlocal * nbands, zero);
+        zgemm_("N", "N", &nlocal, &nbands, &nlocal,
+            &one, PI_k.data(), &nlocal, psi_ptr, &nlocal, &zero, temp.data(), &nlocal);
+
+        zgemm_("C", "N", &nbands, &nbands, &nlocal,
+            &one, psi_ptr, &nlocal, temp.data(), &nlocal, &zero, PI_sub_local_out, &nbands);
+#endif
+    }
+
+    ModuleBase::timer::end("SpinConstrain", "calculate_PI_sub_from_hr");
+}
+
+template <>
 void SpinConstrain<std::complex<double>>::calculate_delta_hcc_lcao(
     std::complex<double>* h_sub_local,
     const std::map<int, std::vector<std::complex<double>>>& PI_sub_local,
@@ -494,13 +587,51 @@ void SpinConstrain<std::complex<double>>::calculate_delta_hcc_lcao(
 
     if (this->npol_ == 2)
     {
+        const int nrow = ParaV->nrow;
+        const int ncol_bands = ParaV->ncol_bands;
+        const int N_orb = this->ParaV->get_global_row_size() / 2;
+
         for (const auto& [iat, pi_local] : PI_sub_local)
         {
             const std::complex<double> coeff0(effective_lambda[iat][2], 0.0);
+            const std::complex<double> coeff1(effective_lambda[iat][0], -effective_lambda[iat][1]);
+            const std::complex<double> coeff2(effective_lambda[iat][0], effective_lambda[iat][1]);
+            const std::complex<double> coeff3(-effective_lambda[iat][2], 0.0);
+
             const std::complex<double>* pi_ptr = pi_local.data();
-            for (int ij = 0; ij < nloc_eij; ij++)
+            for (int j_local = 0; j_local < ncol_bands; j_local++)
             {
-                h_sub_local[ij] += coeff0 * pi_ptr[ij];
+                for (int i_local = 0; i_local < nrow; i_local++)
+                {
+                    const int g_row = ParaV->local2global_row(i_local);
+                    const int idx = i_local + j_local * nrow;
+                    if (g_row < N_orb)
+                    {
+                        const int g_row_dn = g_row + N_orb;
+                        const int i_local_dn = ParaV->global2local_row(g_row_dn);
+                        if (i_local_dn >= 0)
+                        {
+                            h_sub_local[idx] += coeff0 * pi_ptr[idx] + coeff2 * pi_ptr[i_local_dn + j_local * nrow];
+                        }
+                        else
+                        {
+                            h_sub_local[idx] += coeff0 * pi_ptr[idx];
+                        }
+                    }
+                    else
+                    {
+                        const int g_row_up = g_row - N_orb;
+                        const int i_local_up = ParaV->global2local_row(g_row_up);
+                        if (i_local_up >= 0)
+                        {
+                            h_sub_local[idx] += coeff1 * pi_ptr[i_local_up + j_local * nrow] + coeff3 * pi_ptr[idx];
+                        }
+                        else
+                        {
+                            h_sub_local[idx] += coeff3 * pi_ptr[idx];
+                        }
+                    }
+                }
             }
         }
     }

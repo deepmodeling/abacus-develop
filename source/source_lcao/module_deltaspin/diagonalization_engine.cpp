@@ -398,13 +398,26 @@ bool SubspaceDiagonalizer::build_subspace(
             ik, nbands, nlocal);
 
         // P_I_sub = C^dag D_I C for each constrained atom
-        auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double> > *>(
-            sc_.p_operator);
-        dspin_op->cal_PI_sub(
-            sc_.kv_.kvec_d[ik],
-            psi_t->get_pointer(),
-            nbands,
-            P_I_sub_all[ik]);
+        if (sc_.get_nspin() == 2)
+        {
+            auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double> > *>(
+                sc_.p_operator);
+            dspin_op->cal_PI_sub(
+                sc_.kv_.kvec_d[ik],
+                psi_t->get_pointer(),
+                nbands,
+                P_I_sub_all[ik]);
+        }
+        else if (sc_.get_nspin() == 4)
+        {
+            auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>> > *>(
+                sc_.p_operator);
+            dspin_op->cal_PI_sub(
+                sc_.kv_.kvec_d[ik],
+                psi_t->get_pointer(),
+                nbands,
+                P_I_sub_all[ik]);
+        }
     }
 
     // Collect eigenvalues
@@ -609,13 +622,26 @@ bool FirstOrderResponseEngine::build_subspace(
             S_sub_raw.data() + ik * nn,
             ik, nbands, nlocal);
 
-        auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double> > *>(
-            sc_.p_operator);
-        dspin_op->cal_PI_sub(
-            sc_.kv_.kvec_d[ik],
-            psi_t->get_pointer(),
-            nbands,
-            P_I_sub_all[ik]);
+        if (sc_.get_nspin() == 2)
+        {
+            auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double> > *>(
+                sc_.p_operator);
+            dspin_op->cal_PI_sub(
+                sc_.kv_.kvec_d[ik],
+                psi_t->get_pointer(),
+                nbands,
+                P_I_sub_all[ik]);
+        }
+        else if (sc_.get_nspin() == 4)
+        {
+            auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>> > *>(
+                sc_.p_operator);
+            dspin_op->cal_PI_sub(
+                sc_.kv_.kvec_d[ik],
+                psi_t->get_pointer(),
+                nbands,
+                P_I_sub_all[ik]);
+        }
     }
 
     std::vector<double> ekb_ref_all(nk * nbands);

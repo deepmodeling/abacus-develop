@@ -94,6 +94,7 @@ ELPA_Solver::ELPA_Solver(const bool isReal,
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "mpi_comm_parent", MPI_Comm_c2f(comm), &error);
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "process_row", myprow, &error);
     elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "process_col", mypcol, &error);
+    elpa_set_integer(NEW_ELPA_HANDLE_POOL[handle_id], "blacs_context", cblacs_ctxt, &error);
 
     error = elpa_setup(NEW_ELPA_HANDLE_POOL[handle_id]);
     // cout<<"elpa handle is setup\n";

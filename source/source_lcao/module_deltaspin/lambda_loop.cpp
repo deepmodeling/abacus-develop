@@ -734,10 +734,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         //   iteration should build a fresh subspace at its own converged lambda.
         // =============================================================
         const bool accel_enabled = (PARAM.inp.basis_type == "lcao") &&
-                                   (this->nspin_ == 2) &&
-                                   (this->sc_acceleration_mode_ != "off") &&
-                                   (this->sc_acceleration_rms_thr_ > 0.0) &&
-                                   (rms_error < this->sc_acceleration_rms_thr_);
+                                    (this->sc_acceleration_mode_ != "off") &&
+                                    (this->sc_acceleration_rms_thr_ > 0.0) &&
+                                    (rms_error < this->sc_acceleration_rms_thr_);
 
         if (accel_enabled && !this->acceleration_active_)
         {

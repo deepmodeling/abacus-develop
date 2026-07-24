@@ -600,16 +600,21 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         // solver for large lambda steps because they don't correctly update
         // the wavefunction and density matrix. Subspace is only valid for
         // small perturbations near convergence.
-        //
-        // CONSTRAINT: Currently only supported for nspin=2 (collinear) because
-        // cal_PI_sub is only implemented for the double-type DeltaSpin operator.
-        // nspin=4 (non-collinear) requires complex-type operator support.
         // =================================================================
-        if (i_step == -2 && accel_enabled && this->nspin_ == 2)
+        if (i_step == -2 && accel_enabled)
         {
             // Step 1: Update DeltaSpin operator with current lambda
-            dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)
-                ->update_lambda();
+            if (this->nspin_ == 2)
+            {
+                dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)
+                    ->update_lambda();
+            }
+            else if (this->nspin_ == 4)
+            {
+                dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>* >(
+                    this->p_operator)
+                    ->update_lambda();
+            }
 
             // Step 2: Full diagonalization (same as default path)
             // Must use full solver to get correct wavefunctions at this lambda
@@ -625,9 +630,6 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
 
             // Step 3: Cache subspace data for subsequent accelerated steps
-            // This captures H₀_sub(k), S_sub(k), and projector matrices P_I_sub(k)
-            // at the reference lambda. These are used to approximate H_sub(k)
-            // for nearby lambda values without full diagonalization.
             this->free_lcao_subspace_cache();
             const int nk = psi_t->get_nk();
             const int nbands = PARAM.inp.nbands;
@@ -644,6 +646,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             this->lcao_ekb_save_.resize(nk * nbands);
 
             const int nloc_eij = this->ParaV->nrow * this->ParaV->ncol_bands;
+            const int nat = this->get_nat();
 
             for (int ik = 0; ik < nk; ik++)
             {
@@ -655,29 +658,57 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                     this->lcao_sub_s_save + ik * nn,
                     ik, nbands, nlocal);
 
-                auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(
-                    this->p_operator);
-                const int nat = this->get_nat();
-                for (int iat = 0; iat < nat; iat++)
+                if (this->nspin_ == 2)
                 {
-                    if (!dspin_op->get_constraint_atom_list()[iat])
+                    auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(
+                        this->p_operator);
+                    for (int iat = 0; iat < nat; iat++)
                     {
-                        continue;
-                    }
-                    this->lcao_PI_sub_save_[ik][iat].resize(nloc_eij, {0.0, 0.0});
-                    this->calculate_PI_sub_from_hr(
-                        dspin_op->get_pre_hr(iat),
-                        psi_t[0], this->ParaV,
-                        this->kv_.kvec_d[ik],
-                        this->lcao_PI_sub_save_[ik][iat].data(),
-                        nbands, nlocal);
+                        if (!dspin_op->get_constraint_atom_list()[iat])
+                        {
+                            continue;
+                        }
+                        this->lcao_PI_sub_save_[ik][iat].resize(nloc_eij, {0.0, 0.0});
+                        this->calculate_PI_sub_from_hr(
+                            dspin_op->get_pre_hr(iat),
+                            psi_t[0], this->ParaV,
+                            this->kv_.kvec_d[ik],
+                            this->lcao_PI_sub_save_[ik][iat].data(),
+                            nbands, nlocal);
 
-                    this->lcao_PI_sub_diag_[ik][iat].resize(nbands, 0.0);
-                    extract_diagonal_from_local_block(
-                        this->lcao_PI_sub_save_[ik][iat].data(),
-                        this->ParaV,
-                        this->lcao_PI_sub_diag_[ik][iat].data(),
-                        nbands);
+                        this->lcao_PI_sub_diag_[ik][iat].resize(nbands, 0.0);
+                        extract_diagonal_from_local_block(
+                            this->lcao_PI_sub_save_[ik][iat].data(),
+                            this->ParaV,
+                            this->lcao_PI_sub_diag_[ik][iat].data(),
+                            nbands);
+                    }
+                }
+                else if (this->nspin_ == 4)
+                {
+                    auto* dspin_op = dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>* >(
+                        this->p_operator);
+                    for (int iat = 0; iat < nat; iat++)
+                    {
+                        if (!dspin_op->get_constraint_atom_list()[iat])
+                        {
+                            continue;
+                        }
+                        this->lcao_PI_sub_save_[ik][iat].resize(nloc_eij, {0.0, 0.0});
+                        this->calculate_PI_sub_from_hr(
+                            dspin_op->get_pre_hr(iat),
+                            psi_t[0], this->ParaV,
+                            this->kv_.kvec_d[ik],
+                            this->lcao_PI_sub_save_[ik][iat].data(),
+                            nbands, nlocal);
+
+                        this->lcao_PI_sub_diag_[ik][iat].resize(nbands, 0.0);
+                        extract_diagonal_from_local_block(
+                            this->lcao_PI_sub_save_[ik][iat].data(),
+                            this->ParaV,
+                            this->lcao_PI_sub_diag_[ik][iat].data(),
+                            nbands);
+                    }
                 }
 
                 // Save eigenvalues for Fermi weight calculation
@@ -741,7 +772,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             const int nloc_wfc = this->ParaV->nloc_wfc;
             const int nn = nbands * nbands;
 
-            if (this->sc_acceleration_mode_ == "first_order")
+            if (this->sc_acceleration_mode_ == "first_order" && this->nspin_ == 2)
             {
                 // ---------------------------------------------------------
                 // First-order response mode

@@ -14,6 +14,31 @@
 namespace psi
 {
 
+namespace detail
+{
+// Helper for type-aware memory copy
+template <typename T, typename T_in, bool SameType>
+struct TypeCopy
+{
+    static void copy(T* dst, const T_in* src, size_t size)
+    {
+        for (size_t i = 0; i < size; ++i)
+        {
+            dst[i] = static_cast<T>(src[i]);
+        }
+    }
+};
+
+template <typename T, typename T_in>
+struct TypeCopy<T, T_in, true>
+{
+    static void copy(T* dst, const T_in* src, size_t size)
+    {
+        std::memcpy(dst, src, sizeof(T) * size);
+    }
+};
+}
+
 Range::Range(const size_t range_in)
 {
     k_first = true;
@@ -179,7 +204,21 @@ Psi<T, Device>::Psi(const Psi& psi_in)
     if (this->storage_mode_ == PsiStorageMode::PAGED_GPU && psi_cpu_ != nullptr)
     {
         const size_t total_size = static_cast<size_t>(this->nk) * this->nbands * this->nbasis;
-        std::memcpy(this->psi_cpu_, psi_in.get_pointer() - psi_in.get_psi_bias(), sizeof(T) * total_size);
+        const T* src_ptr = psi_in.get_pointer() - psi_in.get_psi_bias();
+        
+        if (psi_in.get_storage_mode() == PsiStorageMode::PAGED_GPU)
+        {
+            std::memcpy(this->psi_cpu_, psi_in.get_cpu_pointer(), sizeof(T) * total_size);
+        }
+        else if (std::is_same<Device, base_device::DEVICE_CPU>::value)
+        {
+            std::memcpy(this->psi_cpu_, src_ptr, sizeof(T) * total_size);
+        }
+        else
+        {
+            base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+                this->psi_cpu_, src_ptr, total_size);
+        }
     }
     else
     {
@@ -212,7 +251,20 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     if (this->storage_mode_ == PsiStorageMode::PAGED_GPU && psi_cpu_ != nullptr)
     {
         const size_t total_size = static_cast<size_t>(this->nk) * this->nbands * this->nbasis;
-        std::memcpy(this->psi_cpu_, psi_in.get_pointer() - psi_in.get_psi_bias(), sizeof(T) * total_size);
+        
+        if (psi_in.get_storage_mode() == PsiStorageMode::PAGED_GPU)
+        {
+            const T_in* src_ptr = psi_in.get_cpu_pointer();
+            detail::TypeCopy<T, T_in, std::is_same<T, T_in>::value>::copy(this->psi_cpu_, src_ptr, total_size);
+        }
+        else
+        {
+            auto* arr = (T*)malloc(sizeof(T) * total_size);
+            base_device::memory::cast_memory_op<T, T_in, Device_in, Device_in>()(
+                arr, psi_in.get_pointer() - psi_in.get_psi_bias(), total_size);
+            std::memcpy(this->psi_cpu_, arr, sizeof(T) * total_size);
+            free(arr);
+        }
     }
     else if (std::is_same<Device, base_device::DEVICE_GPU>::value && std::is_same<Device_in, base_device::DEVICE_CPU>::value)
     {

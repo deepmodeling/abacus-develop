@@ -65,8 +65,13 @@ hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::~DeltaSpin()
 //   Positive lambda_z increases M_z (more spin-up, less spin-down)
 //
 // nspin=4 (non-collinear, TR=complex<double>):
-//   H_DS = | +lambda_z       +lambda_x + i*lambda_y |
-//          | +lambda_x - i*lambda_y    -lambda_z     |
+//   H_DS = | +lambda_z       +lambda_x - i*lambda_y |
+//          | +lambda_x + i*lambda_y    -lambda_z     |
+// Note: sigma_y = [[0,-i],[i,0]], so the off-diagonal terms get:
+//   H_{up,down}  = lambda_x*sigma_x_{up,dn} + lambda_y*sigma_y_{up,dn}
+//                = lambda_x + lambda_y*(-i) = lambda_x - i*lambda_y
+//   H_{down,up}  = lambda_x*sigma_x_{dn,up} + lambda_y*sigma_y_{dn,up}
+//                = lambda_x + lambda_y*(+i) = lambda_x + i*lambda_y
 // ============================================================================
 
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<double>& coefficients)
@@ -78,8 +83,8 @@ inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vec
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<std::complex<double>>& coefficients)
 {
     coefficients[0] = std::complex<double>(current_lambda[2], 0.0);
-    coefficients[1] = std::complex<double>(current_lambda[0], current_lambda[1]);
-    coefficients[2] = std::complex<double>(current_lambda[0], -current_lambda[1]);
+    coefficients[1] = std::complex<double>(current_lambda[0], -current_lambda[1]);
+    coefficients[2] = std::complex<double>(current_lambda[0], current_lambda[1]);
     coefficients[3] = std::complex<double>(-current_lambda[2], 0.0);
 }
 
