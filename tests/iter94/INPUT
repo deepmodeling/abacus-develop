@@ -1,0 +1,24 @@
+INPUT_PARAMETERS
+calculation	scf
+#device	gpu
+basis_type	pw
+symmetry	0
+ecutwfc	150
+scf_thr	1e-08
+cal_force	1
+cal_stress	1
+kspacing	0.2
+#pseudo_rcut	10
+#pseudo_mesh	1
+ks_solver	dav_subspace
+pw_diag_ndim	2
+pw_diag_nmax	20
+pw_seed	0
+relax_nmax	100
+force_thr	0.001
+stress_thr	0.5
+smearing_method	gaussian
+smearing_sigma	0.01
+mixing_beta	0.2
+scf_nmax	120
+#ecutrho         2000              

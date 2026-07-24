@@ -1,0 +1,247 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 0a08fe05e (Thu Jun 12 12:13:50 2025 +0800)
+
+ Tue Oct 14 15:24:44 2025
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8163 CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 64 * 64 * 64
+ UNIFORM GRID DIM(BIG)   : 64 * 64 * 64
+ DONE(0.0685974  SEC) : SETUP UNITCELL
+ DONE(0.0689775  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 4       8               16          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0715423  SEC) : INIT PLANEWAVE
+ DONE(0.0923758  SEC) : LOCAL POTENTIAL
+ DONE(0.145146   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 2.99805
+ DONE(0.427326   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.584492   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0 0 1
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.274991 0 1
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1      3.59e+00   3.59e+00   3.59e+00   6.59e+00  -6.80860244e+03   0.00000000e+00   1.8447e-01   2.41
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.184468 0 2
+ DS2      4.04e+00   4.04e+00   4.04e+00   7.45e+00  -6.80934658e+03  -7.44142317e-01   5.4575e-02   1.02
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.0545755 0 3
+ DS3      4.04e+00   4.04e+00   4.04e+00   7.51e+00  -6.81086788e+03  -1.52129165e+00   2.6356e-02   1.04
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.0263561 0 4
+ DS4      4.18e+00   4.18e+00   4.18e+00   7.65e+00  -6.81079711e+03   7.07664513e-02   1.2356e-02   0.99
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.012356 0 5
+ DS5      4.18e+00   4.18e+00   4.18e+00   7.39e+00  -6.81133873e+03  -5.41620092e-01   3.8416e-02   1.63
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.0384162 0 6
+ DS6      4.18e+00   4.18e+00   4.18e+00   7.37e+00  -6.81158684e+03  -2.48115453e-01   2.5778e-02   1.03
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.0257783 0 7
+ DS7      4.18e+00   4.18e+00   4.18e+00   7.37e+00  -6.81152150e+03   6.53462950e-02   2.0428e-02   0.99
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.0204284 0 8
+ DS8      4.19e+00   4.19e+00   4.19e+00   7.35e+00  -6.81120603e+03   3.15471854e-01   7.9688e-03   1.25
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.00796881 0 9
+ DS9      4.18e+00   4.18e+00   4.18e+00   7.36e+00  -6.81145465e+03  -2.48624008e-01   3.9277e-03   1.04
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.0039277 0 10
+ DS10     4.19e+00   4.19e+00   4.19e+00   7.38e+00  -6.81153390e+03  -7.92470829e-02   2.0387e-03   1.29
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.00203867 0 11
+ DS11     4.18e+00   4.18e+00   4.18e+00   7.39e+00  -6.81143792e+03   9.59728779e-02   4.6109e-04   1.29
+ SCF restart after this step!
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.000461091 0 12
+ DS12     4.18e+00   4.18e+00   4.18e+00   7.40e+00  -6.81246671e+03  -1.02878097e+00   3.3510e-03   1.32
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.00335097 0 13
+ DS13     4.18e+00   4.18e+00   4.18e+00   7.40e+00  -6.81142693e+03   1.03977649e+00   7.9199e-04   1.76
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.000791991 0 14
+ DS14     4.18e+00   4.18e+00   4.18e+00   7.40e+00  -6.81142163e+03   5.30021940e-03   4.1191e-04   1.47
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.000411912 0 15
+ DS15     4.18e+00   4.18e+00   4.18e+00   7.40e+00  -6.81144563e+03  -2.39968378e-02   2.5321e-04   1.18
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.000253207 0 16
+ DS16     4.18e+00   4.19e+00   4.18e+00   7.40e+00  -6.81140356e+03   4.20637316e-02   2.3225e-04   1.18
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.00023225 0 17
+ DS17     4.18e+00   4.19e+00   4.18e+00   7.41e+00  -6.81140380e+03  -2.35072669e-04   2.4061e-04   0.91
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.000240615 0 18
+ DS18     4.18e+00   4.19e+00   4.18e+00   7.41e+00  -6.81139757e+03   6.22273264e-03   2.4354e-04   1.02
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.000243541 0 19
+ DS19     4.18e+00   4.18e+00   4.19e+00   7.40e+00  -6.81141517e+03  -1.75929764e-02   2.4688e-04   1.27
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.000246875 0 20
+ DS20     4.18e+00   4.19e+00   4.18e+00   7.41e+00  -6.81137212e+03   4.30431715e-02   9.8338e-05   1.21
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 9.83383e-05 0 21
+ DS21     4.19e+00   4.18e+00   4.19e+00   7.41e+00  -6.81131101e+03   6.11115025e-02   6.8621e-05   1.50
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 6.86213e-05 0 22
+ DS22     4.18e+00   4.19e+00   4.18e+00   7.40e+00  -6.81137803e+03  -6.70221225e-02   2.2660e-05   1.45
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 2.26597e-05 0 23
+ DS23     4.18e+00   4.19e+00   4.19e+00   7.41e+00  -6.81141629e+03  -3.82584920e-02   1.1773e-04   1.43
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.000117731 0 24
+ DS24     4.18e+00   4.19e+00   4.18e+00   7.40e+00  -6.81146026e+03  -4.39620524e-02   2.6618e-04   1.47
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.000266181 0 25
+ DS25     4.18e+00   4.19e+00   4.18e+00   7.39e+00  -6.81146820e+03  -7.94093652e-03   3.3849e-04   1.22
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 0.000338487 0 26
+ DS26     4.18e+00   4.18e+00   4.18e+00   7.40e+00  -6.81138259e+03   8.56012727e-02   1.0334e-05   1.61
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.0334e-05 0 27
+ DS27     4.19e+00   4.18e+00   4.18e+00   7.41e+00  -6.81138717e+03  -4.57606523e-03   1.0546e-05   1.50
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.0546e-05 0 28
+ DS28     4.18e+00   4.19e+00   4.18e+00   7.40e+00  -6.81139545e+03  -8.27796859e-03   1.2541e-05   1.73
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.2541e-05 0 29
+ DS29     4.19e+00   4.18e+00   4.18e+00   7.40e+00  -6.81138865e+03   6.79517726e-03   8.5558e-06   1.44
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 8.55583e-06 0 30
+ DS30     4.19e+00   4.18e+00   4.19e+00   7.40e+00  -6.81139726e+03  -8.60986559e-03   6.6940e-06   1.26
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 6.69404e-06 0 31
+ DS31     4.18e+00   4.19e+00   4.18e+00   7.40e+00  -6.81138933e+03   7.93612369e-03   3.6041e-06   1.31
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 3.60406e-06 0 32
+ DS32     4.18e+00   4.19e+00   4.18e+00   7.40e+00  -6.81137111e+03   1.82156016e-02   1.6924e-05   1.42
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.69244e-05 0 33
+ DS33     4.18e+00   4.18e+00   4.18e+00   7.41e+00  -6.81137407e+03  -2.96127221e-03   1.6801e-05   1.60
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.68013e-05 0 34
+ DS34     4.18e+00   4.19e+00   4.18e+00   7.41e+00  -6.81137036e+03   3.71183460e-03   2.1591e-05   1.52
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 2.15911e-05 0 35
+ DS35     4.18e+00   4.19e+00   4.18e+00   7.40e+00  -6.81137265e+03  -2.28407364e-03   1.7534e-05   1.67
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.75343e-05 0 36
+ DS36     4.19e+00   4.18e+00   4.19e+00   7.41e+00  -6.81137032e+03   2.33019794e-03   2.5406e-05   1.70
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 2.54057e-05 0 37
+ DS37     4.18e+00   4.19e+00   4.18e+00   7.40e+00  -6.81137385e+03  -3.53208238e-03   1.4926e-05   1.48
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.49258e-05 0 38
+ DS38     4.19e+00   4.18e+00   4.18e+00   7.40e+00  -6.81136572e+03   8.12831434e-03   2.7173e-05   1.48
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 2.71726e-05 0 39
+ DS39     4.18e+00   4.19e+00   4.18e+00   7.41e+00  -6.81136076e+03   4.95566295e-03   4.0370e-05   1.70
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 4.03703e-05 0 40
+ DS40     4.19e+00   4.18e+00   4.18e+00   7.41e+00  -6.81136038e+03   3.87596601e-04   3.9203e-05   1.61
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 3.92026e-05 0 41
+ DS41     4.19e+00   4.18e+00   4.18e+00   7.42e+00  -6.81136343e+03  -3.05909476e-03   4.4172e-05   1.89
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 4.41724e-05 0 42
+ DS42     4.18e+00   4.19e+00   4.18e+00   7.42e+00  -6.81136071e+03   2.72819267e-03   3.7800e-05   1.78
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 3.77996e-05 0 43
+ DS43     4.19e+00   4.18e+00   4.18e+00   7.41e+00  -6.81136785e+03  -7.14561678e-03   2.7430e-05   1.67
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 2.74302e-05 0 44
+ DS44     4.19e+00   4.18e+00   4.18e+00   7.41e+00  -6.81136785e+03   6.23797564e-06   1.8001e-05   1.56
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.8001e-05 0 45
+ DS45     4.18e+00   4.19e+00   4.18e+00   7.41e+00  -6.81136332e+03   4.52491044e-03   2.8549e-05   1.70
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 2.85489e-05 0 46
+ DS46     4.18e+00   4.19e+00   4.18e+00   7.40e+00  -6.81135962e+03   3.70353622e-03   1.3604e-05   1.57
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.36039e-05 0 47
+ DS47     4.19e+00   4.19e+00   4.18e+00   7.41e+00  -6.81136739e+03  -7.77210968e-03   1.8675e-05   1.92
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.86748e-05 0 48
+ DS48     4.18e+00   4.19e+00   4.19e+00   7.41e+00  -6.81136386e+03   3.52636888e-03   1.0021e-05   1.75
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 1.00213e-05 0 49
+ DS49     4.19e+00   4.18e+00   4.18e+00   7.41e+00  -6.81136246e+03   1.40142966e-03   9.9040e-06   1.59
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp:680 9.90402e-06 0 50
+ DS50     4.18e+00   4.19e+00   4.18e+00   7.41e+00  -6.81136333e+03  -8.66515221e-04   1.2111e-05   1.65
+ >> Leave SCF iteration.
+ * * * * * *
+ !! CONVERGENCE HAS NOT BEEN ACHIEVED !!
+TIME STATISTICS
+-----------------------------------------------------------------------------
+    CLASS_NAME                NAME             TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------------------
+                   total                       73.09  15       4.87   100.00 
+ Driver            reading                     0.01   1        0.01   0.02   
+ Input_Conv        Convert                     0.00   1        0.00   0.00   
+ Driver            driver_line                 73.07  1        73.07  99.98  
+ UnitCell          check_tau                   0.00   1        0.00   0.00   
+ PW_Basis_Sup      setuptransform              0.00   1        0.00   0.01   
+ PW_Basis_Sup      distributeg                 0.00   1        0.00   0.00   
+ mymath            heapsort                    0.00   3        0.00   0.00   
+ PW_Basis_K        setuptransform              0.00   1        0.00   0.00   
+ PW_Basis_K        distributeg                 0.00   1        0.00   0.00   
+ PW_Basis          setup_struc_factor          0.00   1        0.00   0.00   
+ ppcell_vnl        init                        0.00   1        0.00   0.01   
+ ppcell_vl         init_vloc                   0.01   1        0.01   0.02   
+ ppcell_vnl        init_vnl                    0.05   1        0.05   0.07   
+ WF_atomic         init_at_1                   0.28   1        0.28   0.39   
+ wavefunc          wfcinit                     0.00   1        0.00   0.00   
+ Ions              opt_ions                    72.66  1        72.66  99.41  
+ ESolver_KS_PW     runner                      72.66  1        72.66  99.41  
+ H_Ewald_pw        compute_ewald               0.02   1        0.02   0.02   
+ Charge            set_rho_core                0.02   1        0.02   0.02   
+ PW_Basis_Sup      recip2real                  0.19   818      0.00   0.26   
+ PW_Basis_Sup      gathers_scatterp            0.09   818      0.00   0.12   
+ Charge            atomic_rho                  0.02   1        0.02   0.02   
+ Potential         init_pot                    0.03   1        0.03   0.04   
+ Potential         update_from_charge          1.23   51       0.02   1.69   
+ Potential         cal_fixed_v                 0.00   1        0.00   0.00   
+ PotLocal          cal_fixed_v                 0.00   1        0.00   0.00   
+ Potential         cal_v_eff                   1.22   51       0.02   1.68   
+ H_Hartree_pw      v_hartree                   0.04   51       0.00   0.05   
+ PW_Basis_Sup      real2recip                  0.25   969      0.00   0.34   
+ PW_Basis_Sup      gatherp_scatters            0.13   969      0.00   0.18   
+ PotXC             cal_v_eff                   1.18   51       0.02   1.61   
+ XC_Functional     v_xc                        1.17   51       0.02   1.60   
+ Potential         interpolate_vrs             0.01   51       0.00   0.01   
+ OnsiteProj        cubspl_tabulate             0.00   2        0.00   0.00   
+ DFTU              zero_locale                 0.00   52       0.00   0.00   
+ Charge_Mixing     init_mixing                 0.00   2        0.00   0.00   
+ Charge_Mixing     allocate_mixing_uom         0.00   1        0.00   0.00   
+ ESolver_KS_PW     hamilt2density              71.04  51       1.39   97.19  
+ DFTU              cal_occ_pw                  0.19   51       0.00   0.26   
+ DFTU              copy_locale                 0.00   51       0.00   0.00   
+ OnsiteProj        tabulate_atomic             0.00   824      0.00   0.00   
+ OnsiteProj        overlap                     1.20   2568     0.00   1.65   
+ FS_Nonlocal_tools cal_becp                    1.20   2568     0.00   1.64   
+ Structure_Factor  get_sk                      0.05   1248     0.00   0.07   
+ HSolverPW         solve                       70.82  51       1.39   96.90  
+ pp_cell_vnl       getvnl                      0.27   408      0.00   0.37   
+ OnsiteProj        getvnl                      0.00   408      0.00   0.00   
+ wavefunc          diago_PAO_in_pw_k2          0.01   8        0.00   0.01   
+ WF_atomic         atomic_wfc                  0.00   8        0.00   0.01   
+ Diago_DavSubspace diag_once                   63.54  408      0.16   86.94  
+ Diago_DavSubspace first                       17.53  408      0.04   23.99  
+ DavSubspace       hpsi_func                   51.84  2152     0.02   70.93  
+ Operator          hPsi                        51.71  2152     0.02   70.75  
+ Operator          EkineticPW                  0.07   2152     0.00   0.10   
+ Operator          VeffPW                      45.05  2152     0.02   61.63  
+ PW_Basis_K        recip2real                  17.09  132044   0.00   23.39  
+ PW_Basis_K        gathers_scatterp            7.91   132044   0.00   10.82  
+ PW_Basis_K        real2recip                  15.13  99404    0.00   20.71  
+ PW_Basis_K        gatherp_scatters            8.34   99404    0.00   11.42  
+ Operator          NonlocalPW                  5.24   2152     0.00   7.17   
+ Nonlocal          add_nonlocal_pp             4.47   2152     0.00   6.11   
+ Operator          OnsiteProjPW                1.33   2152     0.00   1.82   
+ OnsiteProj        add_onsite_proj             0.17   2152     0.00   0.23   
+ Diago_DavSubspace cal_elem                    1.54   2152     0.00   2.11   
+ Diago_DavSubspace diag_zhegvx                 8.24   2152     0.00   11.27  
+ Diago_DavSubspace cal_grad                    36.48  1744     0.02   49.91  
+ Diago_DavSubspace check_update                0.00   1744     0.00   0.00   
+ Diago_DavSubspace last                        0.29   414      0.00   0.40   
+ ElecStatePW       psiToRho                    6.55   51       0.13   8.97   
+ Charge_Mixing     get_drho                    0.09   51       0.00   0.12   
+ Charge_Mixing     inner_product_recip_rho     0.00   51       0.00   0.00   
+ Charge_Mixing     mix_uom                     0.00   49       0.00   0.00   
+ DFTU              set_locale                  0.00   49       0.00   0.00   
+ Charge            mix_rho                     0.12   50       0.00   0.17   
+ Charge            Broyden_mixing              0.03   50       0.00   0.04   
+ Charge_Mixing     inner_product_recip_hartree 0.03   656      0.00   0.04   
+ Diago_DavSubspace refresh                     0.01   6        0.00   0.01   
+ OnsiteProj        cal_occupation              0.00   1        0.00   0.00   
+ ModuleIO          write_istate_info           0.00   1        0.00   0.00   
+-----------------------------------------------------------------------------
+
+
+ START  Time  : Tue Oct 14 15:24:44 2025
+ FINISH Time  : Tue Oct 14 15:25:57 2025
+ TOTAL  Time  : 73
+ SEE INFORMATION IN : OUT.autotest/

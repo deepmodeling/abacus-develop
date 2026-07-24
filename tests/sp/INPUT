@@ -1,0 +1,32 @@
+INPUT_PARAMETERS
+symmetry_prec 	1e-06
+scf_nmax 	100
+nspin 	2
+cal_force 	1
+cal_stress 	1
+relax_method 	cg
+calculation   scf
+force_thr_ev 	0.05
+smearing_method 	gauss
+smearing_sigma 	0.007349861764895055
+dft_plus_u 	1
+orbital_corr 	-1 -1 2 2
+hubbard_u 	0 0 4 3
+onsite_radius 	3.0
+basis_type 	pw
+mixing_type 	broyden
+mixing_beta    0.2
+ks_solver 	dav_subspace
+pw_diag_ndim 	2
+pw_diag_nmax 	20
+pw_seed 	0
+out_bandgap 	1
+mixing_restart 	0.001
+mixing_dmr 	1
+uramping 	4
+ecutwfc 	90.0
+scf_thr 	1e-08
+symmetry   0
+relax_nmax 100
+stress_thr 1
+nupdown    10

@@ -1,0 +1,465 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 687bc7819 (Fri Dec 20 16:44:03 2024 +0800)
+
+ Tue Jan  7 20:07:06 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG)   : 36 * 36 * 36
+ DONE(0.058843   SEC) : SETUP UNITCELL
+ DONE(0.0638437  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 4       365             12          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0711675  SEC) : INIT PLANEWAVE
+ DONE(0.0801842  SEC) : LOCAL POTENTIAL
+ DONE(0.104977   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 130.812
+ DONE(0.249533   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.372982   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+initial spin (uB): 
+ATOM      1        -0.0000003751        -0.0000023802         2.0584677608
+ATOM      2         0.0000009803        -0.0000020047         2.0584672817
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  0 -- 1           RMS = 0.186532     TIME(s) = 3.75248    
+Step (Outer -- Inner) =  0 -- 2           RMS = 0.116703     TIME(s) = 0.124077   
+Step (Outer -- Inner) =  0 -- 3           RMS = 0.004752     TIME(s) = 0.124036   
+Step (Outer -- Inner) =  0 -- 4           RMS = 1.17434e-05     TIME(s) = 0.123657   
+Meet convergence criterion ( < 0.000186532 ), exit.       Total TIME(s) = 4.12425
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000003590         0.0000038384         2.2450110176
+ATOM      2        -0.0000017750         0.0000037874         2.2450110486
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000003007        -0.0000037068        -0.2650732352
+ATOM      2         0.0000013517        -0.0000034526        -0.2650738420
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.00567705
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -1.68e-06   1.17e-05   4.65e+00   4.71e+00  -6.81988675e+03   0.00000000e+00   5.3575e-02  30.71
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000003007        -0.0000037068        -0.2650732352
+ATOM      2         0.0000013517        -0.0000034526        -0.2650738420
+initial spin (uB): 
+ATOM      1         0.0000023818         0.0000105257         2.4393270996
+ATOM      2        -0.0000033892         0.0000084663         2.4393287580
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  1 -- 1           RMS = 0.194328     TIME(s) = 3.75749    
+Step (Outer -- Inner) =  1 -- 2           RMS = 0.0039381     TIME(s) = 0.12335    
+Step (Outer -- Inner) =  1 -- 3           RMS = 1.64546e-05     TIME(s) = 0.123337   
+Meet convergence criterion ( < 0.000194328 ), exit.       Total TIME(s) = 4.00418
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000014912         0.0000077177         2.2450145784
+ATOM      2        -0.0000023582         0.0000067515         2.2450146985
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000002611        -0.0000013663        -0.0424105599
+ATOM      2         0.0000007210        -0.0000021099        -0.0424096213
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.00550589
+ DS2     -5.42e-06   1.35e-05   4.53e+00   4.70e+00  -6.81995438e+03  -6.76286559e-02   9.1785e-03  13.95
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000002611        -0.0000013663        -0.0424105599
+ATOM      2         0.0000007210        -0.0000021099        -0.0424096213
+initial spin (uB): 
+ATOM      1        -0.0000069368        -0.0000071088         2.3072426781
+ATOM      2         0.0000064638         0.0000305655         2.3072389509
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  2 -- 1           RMS = 0.0622408     TIME(s) = 3.7671     
+Step (Outer -- Inner) =  2 -- 2           RMS = 0.00306448     TIME(s) = 0.1257     
+Step (Outer -- Inner) =  2 -- 3           RMS = 2.37347e-05     TIME(s) = 0.124201   
+Meet convergence criterion ( < 6.22408e-05 ), exit.       Total TIME(s) = 4.01701
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000064225        -0.0000027330         2.2450146644
+ATOM      2         0.0000051656         0.0000252929         2.2450140178
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000005665        -0.0000046322         0.0371247121
+ATOM      2         0.0000014265         0.0000022753         0.0371228285
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.00371346
+ DS3      4.39e-05   3.85e-05   4.45e+00   4.70e+00  -6.81998203e+03  -2.76442358e-02   8.2000e-04  16.08
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000005665        -0.0000046322         0.0371247121
+ATOM      2         0.0000014265         0.0000022753         0.0371228285
+initial spin (uB): 
+ATOM      1         0.0000451803         0.0001008902         2.2382410474
+ATOM      2        -0.0001024700        -0.0000939735         2.2382644700
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  3 -- 1           RMS = 0.00674842     TIME(s) = 3.7659     
+Step (Outer -- Inner) =  3 -- 2           RMS = 0.000182637     TIME(s) = 0.125579   
+Step (Outer -- Inner) =  3 -- 3           RMS = 5.29483e-05     TIME(s) = 0.125818   
+Step (Outer -- Inner) =  3 -- 4           RMS = 9.33749e-06     TIME(s) = 0.12612    
+Step (Outer -- Inner) =  3 -- 5           RMS = 1.46668e-06     TIME(s) = 0.128293   
+Meet convergence criterion ( < 6.74842e-06 ), exit.       Total TIME(s) = 4.27171
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000001149        -0.0000000021         2.2449982057
+ATOM      2         0.0000000993        -0.0000000225         2.2449989708
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000332029         0.0000635462         0.0272794568
+ATOM      2        -0.0000673879        -0.0000612903         0.0272975384
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.00108931
+ DS4     -3.53e-04  -1.34e-04   4.43e+00   4.69e+00  -6.81998438e+03  -2.35930216e-03   3.7675e-04  14.37
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000332029         0.0000635462         0.0272794568
+ATOM      2        -0.0000673879        -0.0000612903         0.0272975384
+initial spin (uB): 
+ATOM      1        -0.0006640947        -0.0008933067         2.2374494528
+ATOM      2         0.0015925362         0.0012208164         2.2374580405
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  4 -- 1           RMS = 0.00771873     TIME(s) = 3.74448    
+Step (Outer -- Inner) =  4 -- 2           RMS = 0.0016771     TIME(s) = 0.123307   
+Step (Outer -- Inner) =  4 -- 3           RMS = 0.000317559     TIME(s) = 0.12365    
+Step (Outer -- Inner) =  4 -- 4           RMS = 6.16311e-05     TIME(s) = 0.123832   
+Step (Outer -- Inner) =  4 -- 5           RMS = 3.44103e-06     TIME(s) = 0.123951   
+Meet convergence criterion ( < 7.71873e-06 ), exit.       Total TIME(s) = 4.23922
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000007867        -0.0000004472         2.2450033230
+ATOM      2        -0.0000002356         0.0000000870         2.2450034289
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0004464406        -0.0005486022         0.0163441025
+ATOM      2         0.0010047786         0.0007600339         0.0163695235
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.000395514
+ DS5      3.63e-03   1.44e-03   4.43e+00   4.69e+00  -6.81997968e+03   4.70165368e-03   3.1177e-05  16.84
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0004464406        -0.0005486022         0.0163441025
+ATOM      2         0.0010047786         0.0007600339         0.0163695235
+initial spin (uB): 
+ATOM      1         0.0015477175         0.0014085266         2.2474898655
+ATOM      2        -0.0035890457        -0.0024201900         2.2474729471
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  5 -- 1           RMS = 0.00420909     TIME(s) = 3.73705    
+Step (Outer -- Inner) =  5 -- 2           RMS = 0.00123602     TIME(s) = 0.128031   
+Step (Outer -- Inner) =  5 -- 3           RMS = 0.000371998     TIME(s) = 0.124059   
+Step (Outer -- Inner) =  5 -- 4           RMS = 4.34068e-05     TIME(s) = 0.124195   
+Step (Outer -- Inner) =  5 -- 5           RMS = 1.16472e-05     TIME(s) = 0.124166   
+Step (Outer -- Inner) =  5 -- 6           RMS = 1.93051e-06     TIME(s) = 0.124236   
+Meet convergence criterion ( < 4.20909e-06 ), exit.       Total TIME(s) = 4.36174
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000014689         0.0000008398         2.2450014606
+ATOM      2         0.0000005889         0.0000001803         2.2450014415
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0006432848         0.0004322215         0.0199097659
+ATOM      2        -0.0014049499        -0.0008747712         0.0199195744
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.00067947
+ DS6     -3.95e-03  -2.16e-03   4.43e+00   4.69e+00  -6.81998011e+03  -4.30560442e-04   1.1925e-05  19.49
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0006432848         0.0004322215         0.0199097659
+ATOM      2        -0.0014049499        -0.0008747712         0.0199195744
+initial spin (uB): 
+ATOM      1        -0.0018591954        -0.0004227936         2.2474345898
+ATOM      2         0.0042533841         0.0020483234         2.2475318362
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  6 -- 1           RMS = 0.00437377     TIME(s) = 3.85083    
+Step (Outer -- Inner) =  6 -- 2           RMS = 0.00123904     TIME(s) = 0.131732   
+Step (Outer -- Inner) =  6 -- 3           RMS = 0.000363384     TIME(s) = 0.126311   
+Step (Outer -- Inner) =  6 -- 4           RMS = 4.30977e-05     TIME(s) = 0.125987   
+Step (Outer -- Inner) =  6 -- 5           RMS = 1.14369e-05     TIME(s) = 0.125882   
+Step (Outer -- Inner) =  6 -- 6           RMS = 1.85606e-06     TIME(s) = 0.129127   
+Meet convergence criterion ( < 4.37377e-06 ), exit.       Total TIME(s) = 4.48987
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000013908        -0.0000007921         2.2450013749
+ATOM      2        -0.0000002746        -0.0000003388         2.2450014992
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0006645280         0.0001136009         0.0233977179
+ATOM      2         0.0014480656         0.0004929719         0.0234932475
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.000660827
+ DS7      3.31e-03   3.18e-03   4.43e+00   4.69e+00  -6.81998254e+03  -2.42954083e-03   5.2595e-06  19.86
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0006645280         0.0001136009         0.0233977179
+ATOM      2         0.0014480656         0.0004929719         0.0234932475
+initial spin (uB): 
+ATOM      1         0.0015758463        -0.0012873254         2.2446348567
+ATOM      2        -0.0035737466        -0.0007634452         2.2444527808
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  7 -- 1           RMS = 0.00299398     TIME(s) = 3.8507     
+Step (Outer -- Inner) =  7 -- 2           RMS = 0.000255021     TIME(s) = 0.125808   
+Step (Outer -- Inner) =  7 -- 3           RMS = 7.623e-05     TIME(s) = 0.125447   
+Step (Outer -- Inner) =  7 -- 4           RMS = 9.83089e-06     TIME(s) = 0.125764   
+Step (Outer -- Inner) =  7 -- 5           RMS = 2.17232e-06     TIME(s) = 0.12739    
+Meet convergence criterion ( < 2.99398e-06 ), exit.       Total TIME(s) = 4.35511
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000006454        -0.0000010461         2.2449989773
+ATOM      2        -0.0000013243        -0.0000009769         2.2449979572
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0004492908        -0.0007239545         0.0228237215
+ATOM      2        -0.0009499400         0.0000125215         0.0227595752
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.000567007
+ DS8     -1.93e-03  -4.02e-03   4.43e+00   4.69e+00  -6.81998368e+03  -1.13331969e-03   2.3236e-06  19.67
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0004492908        -0.0007239545         0.0228237215
+ATOM      2        -0.0009499400         0.0000125215         0.0227595752
+initial spin (uB): 
+ATOM      1        -0.0005563612         0.0016328577         2.2447209576
+ATOM      2         0.0016407827         0.0002335955         2.2448456522
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  8 -- 1           RMS = 0.00170649     TIME(s) = 3.75944    
+Step (Outer -- Inner) =  8 -- 2           RMS = 0.00012628     TIME(s) = 0.127019   
+Step (Outer -- Inner) =  8 -- 3           RMS = 4.26146e-05     TIME(s) = 0.124579   
+Step (Outer -- Inner) =  8 -- 4           RMS = 5.01005e-06     TIME(s) = 0.124563   
+Step (Outer -- Inner) =  8 -- 5           RMS = 1.23252e-06     TIME(s) = 0.125524   
+Meet convergence criterion ( < 1.70649e-06 ), exit.       Total TIME(s) = 4.26112
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000002174         0.0000006811         2.2449989779
+ATOM      2         0.0000004777         0.0000005160         2.2449990060
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000490721         0.0003532378         0.0224599865
+ATOM      2         0.0001478424         0.0001358292         0.0225063517
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.00038588
+ DS9     -8.92e-05   1.20e-03   4.43e+00   4.69e+00  -6.81998427e+03  -5.91423186e-04   5.0253e-07  18.22
+ SCF restart after this step!
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000490721         0.0003532378         0.0224599865
+ATOM      2         0.0001478424         0.0001358292         0.0225063517
+initial spin (uB): 
+ATOM      1        -0.0002183330        -0.0005425957         2.2448132632
+ATOM      2        -0.0002592445        -0.0009939613         2.2448639127
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  9 -- 1           RMS = 0.000851656     TIME(s) = 3.85934    
+Step (Outer -- Inner) =  9 -- 2           RMS = 8.91725e-05     TIME(s) = 0.125183   
+Step (Outer -- Inner) =  9 -- 3           RMS = 1.63309e-05     TIME(s) = 0.126537   
+Step (Outer -- Inner) =  9 -- 4           RMS = 1.84568e-06     TIME(s) = 0.126822   
+Step (Outer -- Inner) =  9 -- 5           RMS = 4.67435e-07     TIME(s) = 0.126614   
+Meet convergence criterion ( < 8.51656e-07 ), exit.       Total TIME(s) = 4.36449
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000000387         0.0000000039         2.2449994777
+ATOM      2        -0.0000000718        -0.0000003593         2.2449998315
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000906055         0.0000126454         0.0222073662
+ATOM      2        -0.0000197963        -0.0005122803         0.0222982289
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.000240754
+ DS10    -3.62e-04  -2.42e-03   4.43e+00   4.69e+00  -6.81998390e+03   3.67093638e-04   4.9876e-07  18.84
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000906055         0.0000126454         0.0222073662
+ATOM      2        -0.0000197963        -0.0005122803         0.0222982289
+initial spin (uB): 
+ATOM      1         0.0003257894        -0.0001439082         2.2453737819
+ATOM      2         0.0001899582         0.0025893734         2.2453536139
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  10 -- 1           RMS = 0.00188846     TIME(s) = 3.87295    
+Step (Outer -- Inner) =  10 -- 2           RMS = 0.000202844     TIME(s) = 0.124356   
+Step (Outer -- Inner) =  10 -- 3           RMS = 5.74957e-05     TIME(s) = 0.124811   
+Step (Outer -- Inner) =  10 -- 4           RMS = 7.14478e-06     TIME(s) = 0.125049   
+Step (Outer -- Inner) =  10 -- 5           RMS = 1.62472e-06     TIME(s) = 0.126056   
+Meet convergence criterion ( < 1.88846e-06 ), exit.       Total TIME(s) = 4.37322
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000002656         0.0000007315         2.2450011215
+ATOM      2         0.0000002213         0.0000015769         2.2450009384
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0001218033        -0.0001323709         0.0227389496
+ATOM      2         0.0000994906         0.0012056812         0.0228115026
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.000647227
+ DS11     1.99e-03   8.32e-03   4.43e+00   4.69e+00  -6.81998370e+03   1.98339738e-04   2.7548e-06  20.43
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0001218033        -0.0001323709         0.0227389496
+ATOM      2         0.0000994906         0.0012056812         0.0228115026
+initial spin (uB): 
+ATOM      1        -0.0004443876        -0.0006274444         2.2448933823
+ATOM      2        -0.0004093459        -0.0022511125         2.2448761870
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  11 -- 1           RMS = 0.00171069     TIME(s) = 3.79185    
+Step (Outer -- Inner) =  11 -- 2           RMS = 7.49459e-05     TIME(s) = 0.125487   
+Step (Outer -- Inner) =  11 -- 3           RMS = 2.7241e-05     TIME(s) = 0.125069   
+Step (Outer -- Inner) =  11 -- 4           RMS = 1.34346e-06     TIME(s) = 0.125186   
+Meet convergence criterion ( < 1.71069e-06 ), exit.       Total TIME(s) = 4.16759
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000003485         0.0000007410         2.2449993483
+ATOM      2         0.0000003312         0.0000015507         2.2449999869
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0001650596        -0.0005053839         0.0225816790
+ATOM      2        -0.0001634747        -0.0002752448         0.0226385870
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.000622751
+ DS12    -1.09e-03  -1.01e-03   4.43e+00   4.69e+00  -6.81998437e+03  -6.71912192e-04   1.9608e-07  19.29
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0001650596        -0.0005053839         0.0225816790
+ATOM      2        -0.0001634747        -0.0002752448         0.0226385870
+initial spin (uB): 
+ATOM      1         0.0005310813         0.0013480482         2.2450030551
+ATOM      2         0.0004963882         0.0007746346         2.2450152946
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  12 -- 1           RMS = 0.00121367     TIME(s) = 3.85512    
+Step (Outer -- Inner) =  12 -- 2           RMS = 1.67381e-05     TIME(s) = 0.125498   
+Step (Outer -- Inner) =  12 -- 3           RMS = 2.83824e-06     TIME(s) = 0.125493   
+Step (Outer -- Inner) =  12 -- 4           RMS = 5.49428e-07     TIME(s) = 0.124514   
+Meet convergence criterion ( < 1.21367e-06 ), exit.       Total TIME(s) = 4.23062
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000000808        -0.0000005753         2.2450003323
+ATOM      2        -0.0000000245         0.0000003580         2.2449998355
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0001774487         0.0003735813         0.0225895693
+ATOM      2         0.0001553414         0.0002120362         0.0226578180
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.000338276
+ DS13     1.53e-03   2.30e-03   4.43e+00   4.69e+00  -6.81998441e+03  -3.54271723e-05   1.5583e-07  18.54
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0001774487         0.0003735813         0.0225895693
+ATOM      2         0.0001553414         0.0002120362         0.0226578180
+initial spin (uB): 
+ATOM      1        -0.0005852219        -0.0003426201         2.2451608716
+ATOM      2        -0.0005702019        -0.0011239761         2.2449791817
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  13 -- 1           RMS = 0.00101849     TIME(s) = 3.75878    
+Step (Outer -- Inner) =  13 -- 2           RMS = 5.00669e-05     TIME(s) = 0.125007   
+Step (Outer -- Inner) =  13 -- 3           RMS = 1.581e-05     TIME(s) = 0.125174   
+Step (Outer -- Inner) =  13 -- 4           RMS = 3.11579e-06     TIME(s) = 0.177817   
+Step (Outer -- Inner) =  13 -- 5           RMS = 2.58e-07     TIME(s) = 0.141304   
+Meet convergence criterion ( < 1.01849e-06 ), exit.       Total TIME(s) = 4.32808
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000001320        -0.0000001081         2.2450000845
+ATOM      2        -0.0000001296        -0.0000002241         2.2450001728
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0001993967         0.0001681611         0.0227711968
+ATOM      2        -0.0002112739        -0.0005262184         0.0226785226
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.000470521
+ DS14    -2.91e-03  -3.32e-03   4.43e+00   4.69e+00  -6.81998433e+03   8.34140150e-05   2.5044e-07  19.08
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0001993967         0.0001681611         0.0227711968
+ATOM      2        -0.0002112739        -0.0005262184         0.0226785226
+initial spin (uB): 
+ATOM      1         0.0005428212        -0.0001836150         2.2447980398
+ATOM      2         0.0008085093         0.0017071773         2.2450091295
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         0.0000000000         2.2450000000
+Step (Outer -- Inner) =  14 -- 1           RMS = 0.0014031     TIME(s) = 3.76792    
+Step (Outer -- Inner) =  14 -- 2           RMS = 7.09035e-05     TIME(s) = 0.125175   
+Step (Outer -- Inner) =  14 -- 3           RMS = 2.41869e-05     TIME(s) = 0.125278   
+Step (Outer -- Inner) =  14 -- 4           RMS = 4.14103e-06     TIME(s) = 0.125219   
+Step (Outer -- Inner) =  14 -- 5           RMS = 4.50521e-07     TIME(s) = 0.12599    
+Meet convergence criterion ( < 1.4031e-06 ), exit.       Total TIME(s) = 4.26958
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000000254        -0.0000003672         2.2450002398
+ATOM      2         0.0000000882         0.0000004379         2.2449998840
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0001448897         0.0000139266         0.0225391372
+ATOM      2         0.0003140935         0.0006085457         0.0226334660
+Inner optimization for lambda ends.
+===============================================================================

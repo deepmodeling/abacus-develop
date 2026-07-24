@@ -1,0 +1,37 @@
+INPUT_PARAMETERS
+
+# System variables
+suffix              autotest
+calculation         scf
+symmetry            0
+
+# Plane wave related variables
+ecutwfc             100
+
+# Electronic structure
+basis_type          lcao #pw
+ks_solver           genelpa
+nspin               2
+smearing_method     gaussian
+smearing_sigma      0.01
+mixing_type         broyden
+mixing_beta         0.2
+gamma_only          0
+scf_nmax            50
+scf_thr             1e-06
+
+# Geometry relaxation
+cal_force           1
+
+# Variables related to output information
+out_chg             0
+
+# Other Parameters
+sc_mag_switch       1
+sc_thr              1e-05
+sc_scf_thr          10
+nsc                 5
+nsc_min             2
+alpha_trial         0.01
+sccut               3.0
+sc_strategy         fast

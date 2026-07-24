@@ -1,0 +1,1426 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 361e3b40b (Mon Feb 10 14:33:43 2025 +0800)
+
+ Thu Feb 13 15:52:57 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG)   : 36 * 36 * 36
+ DONE(0.0568056  SEC) : SETUP UNITCELL
+ DONE(0.0584423  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 4       112             12          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0611912  SEC) : INIT PLANEWAVE
+ DONE(0.0706922  SEC) : LOCAL POTENTIAL
+ DONE(0.0957753  SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 39.2349
+ DONE(0.244392   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+hello from set_target_mag for nspin_ = 4
+0 0 2.245
+0 2.245 0
+
+      will perform magnetic-moment optimization
+
+ DONE(0.365785   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+initial spin (uB): 
+ATOM      1         0.0000006419         0.3990371543         2.1150737537
+ATOM      2         0.0000011970         2.1150740686         0.3990362220
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.129926
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.129926
+Step (Outer -- Inner) =  0 -- 1           RMS = 0.399037     TIME(s) = 1.14514    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.142569
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.142569
+Step (Outer -- Inner) =  0 -- 2           RMS = 0.0465028     TIME(s) = 0.038744   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.137871
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.137871
+Step (Outer -- Inner) =  0 -- 3           RMS = 0.0116591     TIME(s) = 0.0383049  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.137958
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.137957
+Step (Outer -- Inner) =  0 -- 4           RMS = 0.0105265     TIME(s) = 0.0386544  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.137955
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.137955
+Step (Outer -- Inner) =  0 -- 5           RMS = 0.0105642     TIME(s) = 0.0384723  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.137955
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.137955
+Step (Outer -- Inner) =  0 -- 6           RMS = 0.0105632     TIME(s) = 0.0382919  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.137955
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.137955
+Step (Outer -- Inner) =  0 -- 7           RMS = 0.0105605     TIME(s) = 0.0386712  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.137955
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.137955
+Step (Outer -- Inner) =  0 -- 8           RMS = 0.0105574     TIME(s) = 0.0383408  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.137956
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.137955
+Step (Outer -- Inner) =  0 -- 9           RMS = 0.0105546     TIME(s) = 0.0385748  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.137956
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.137955
+Step (Outer -- Inner) =  0 -- 10          RMS = 0.0105523     TIME(s) = 0.0382792  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.49147
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000002053         0.0105522885         2.1070442033
+ATOM      2         0.0000002342         2.1070445336         0.0105522401
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000001556         0.1978911304         0.0000000000
+ATOM      2         0.0000003644         0.0000000000         0.1978907119
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.13815
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -1.32e-06   2.09e+00   2.09e+00   4.24e+00  -6.81942113e+03   0.00000000e+00   6.1289e-02   9.91
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000001556         0.1978911304         0.0000000000
+ATOM      2         0.0000003644         0.0000000000         0.1978907119
+initial spin (uB): 
+ATOM      1        -0.0000011849         0.0339501568         2.2257104300
+ATOM      2        -0.0000019650         2.2257114454         0.0339516489
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.0192896
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.0192886
+Step (Outer -- Inner) =  1 -- 1           RMS = 0.0339509     TIME(s) = 1.14155    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.0216469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.0216456
+Step (Outer -- Inner) =  1 -- 2           RMS = 0.00127351     TIME(s) = 0.0441677  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.0216154
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.0216141
+Step (Outer -- Inner) =  1 -- 3           RMS = 0.00167928     TIME(s) = 0.0391165  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.0216155
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.0216143
+Step (Outer -- Inner) =  1 -- 4           RMS = 0.00167703     TIME(s) = 0.03976    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.0216155
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.0216143
+Step (Outer -- Inner) =  1 -- 5           RMS = 0.00167697     TIME(s) = 0.0382428  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.0216156
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.0216143
+Step (Outer -- Inner) =  1 -- 6           RMS = 0.00167684     TIME(s) = 0.038461   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.0216156
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.0216143
+Step (Outer -- Inner) =  1 -- 7           RMS = 0.00167673     TIME(s) = 0.0384731  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.0216156
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.0216143
+Step (Outer -- Inner) =  1 -- 8           RMS = 0.00167663     TIME(s) = 0.0382968  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.0216156
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.0216143
+Step (Outer -- Inner) =  1 -- 9           RMS = 0.00167656     TIME(s) = 0.0390275  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 -0.0216156
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 -0.0216143
+Step (Outer -- Inner) =  1 -- 10          RMS = 0.00167651     TIME(s) = 0.0384654  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.49556
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000004220         0.0016765270         2.2233844222
+ATOM      2         0.0000002716         2.2233856857         0.0016764998
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000004896         0.2147097474         0.0000000000
+ATOM      2        -0.0000006527         0.0000000000         0.2147100807
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.020338
+ DS2      1.32e-06   2.15e+00   2.15e+00   4.49e+00  -6.81949601e+03  -7.48768812e-02   9.4738e-03   4.65
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000004896         0.2147097474         0.0000000000
+ATOM      2        -0.0000006527         0.0000000000         0.2147100807
+initial spin (uB): 
+ATOM      1         0.0000016230         0.0212661692         2.3232880967
+ATOM      2         0.0000022307         2.3232879348         0.0212654777
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.0782881
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.0782879
+Step (Outer -- Inner) =  2 -- 1           RMS = 0.0212658     TIME(s) = 1.14596    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.0775846
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.0775844
+Step (Outer -- Inner) =  2 -- 2           RMS = 0.00202849     TIME(s) = 0.0381427  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.0775567
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.0775564
+Step (Outer -- Inner) =  2 -- 3           RMS = 0.00279886     TIME(s) = 0.0384097  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.0775558
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.0775555
+Step (Outer -- Inner) =  2 -- 4           RMS = 0.00282379     TIME(s) = 0.0380014  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.0775557
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.0775554
+Step (Outer -- Inner) =  2 -- 5           RMS = 0.00282541     TIME(s) = 0.0384666  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.0775557
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.0775554
+Step (Outer -- Inner) =  2 -- 6           RMS = 0.00282651     TIME(s) = 0.038042   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.0775556
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.0775554
+Step (Outer -- Inner) =  2 -- 7           RMS = 0.00282755     TIME(s) = 0.0380893  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.0775556
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.0775553
+Step (Outer -- Inner) =  2 -- 8           RMS = 0.00282845     TIME(s) = 0.0379478  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.0775556
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.0775553
+Step (Outer -- Inner) =  2 -- 9           RMS = 0.00282913     TIME(s) = 0.0381182  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.0775556
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.0775553
+Step (Outer -- Inner) =  2 -- 10          RMS = 0.00282964     TIME(s) = 0.038055   
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.48923
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000011244        -0.0028297653         2.3225555697
+ATOM      2        -0.0000011597         2.3225552777        -0.0028295063
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000007295         0.2288848625         0.0000000000
+ATOM      2         0.0000009639         0.0000000000         0.2288847086
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.0776575
+ DS3     -2.30e-06   2.25e+00   2.25e+00   4.69e+00  -6.81953084e+03  -3.48308429e-02   1.0366e-03   5.23
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000007295         0.2288848625         0.0000000000
+ATOM      2         0.0000009639         0.0000000000         0.2288847086
+initial spin (uB): 
+ATOM      1        -0.0000032577        -0.0084542898         2.3691918516
+ATOM      2        -0.0000037451         2.3691968964        -0.0084538653
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.124192
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.124197
+Step (Outer -- Inner) =  3 -- 1           RMS = 0.00845408     TIME(s) = 1.14663    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.124255
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.12426
+Step (Outer -- Inner) =  3 -- 2           RMS = 0.00134422     TIME(s) = 0.0385542  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.124258
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.124263
+Step (Outer -- Inner) =  3 -- 3           RMS = 0.00087602     TIME(s) = 0.0382486  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.124259
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.124264
+Step (Outer -- Inner) =  3 -- 4           RMS = 0.000844885     TIME(s) = 0.038136   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.124259
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.124264
+Step (Outer -- Inner) =  3 -- 5           RMS = 0.000842304     TIME(s) = 0.0381045  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.124259
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.124264
+Step (Outer -- Inner) =  3 -- 6           RMS = 0.000842558     TIME(s) = 0.0423092  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.124259
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.124264
+Step (Outer -- Inner) =  3 -- 7           RMS = 0.000842962     TIME(s) = 0.0382046  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.124259
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.124264
+Step (Outer -- Inner) =  3 -- 8           RMS = 0.000843521     TIME(s) = 0.0381226  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.124259
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.124264
+Step (Outer -- Inner) =  3 -- 9           RMS = 0.000843815     TIME(s) = 0.0378679  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.124259
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.124264
+Step (Outer -- Inner) =  3 -- 10          RMS = 0.000844098     TIME(s) = 0.0385032  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.49468
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000001946        -0.0008441102         2.3692586077
+ATOM      2         0.0000001397         2.3692637043        -0.0008440866
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000008783         0.2241863488         0.0000000000
+ATOM      2        -0.0000009168         0.0000000000         0.2241864242
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.124424
+ DS4      1.11e-06   2.29e+00   2.29e+00   4.79e+00  -6.81953557e+03  -4.73007582e-03   3.6849e-04   5.09
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000008783         0.2241863488         0.0000000000
+ATOM      2        -0.0000009168         0.0000000000         0.2241864242
+initial spin (uB): 
+ATOM      1         0.0000024197         0.0029586652         2.4054809847
+ATOM      2         0.0000024189         2.4054520105         0.0029628800
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.160481
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.160452
+Step (Outer -- Inner) =  4 -- 1           RMS = 0.00296077     TIME(s) = 1.14323    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.160487
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.160458
+Step (Outer -- Inner) =  4 -- 2           RMS = 0.00259692     TIME(s) = 0.0384677  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.160487
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.160458
+Step (Outer -- Inner) =  4 -- 3           RMS = 0.0025674     TIME(s) = 0.0388355  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.160487
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.160458
+Step (Outer -- Inner) =  4 -- 4           RMS = 0.00256379     TIME(s) = 0.038317   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.160487
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.160458
+Step (Outer -- Inner) =  4 -- 5           RMS = 0.00256377     TIME(s) = 0.0383081  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.160487
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.160458
+Step (Outer -- Inner) =  4 -- 6           RMS = 0.00256441     TIME(s) = 0.039245   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.160487
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.160458
+Step (Outer -- Inner) =  4 -- 7           RMS = 0.00256508     TIME(s) = 0.0381754  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.160487
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.160458
+Step (Outer -- Inner) =  4 -- 8           RMS = 0.00256569     TIME(s) = 0.0385856  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.160487
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.160458
+Step (Outer -- Inner) =  4 -- 9           RMS = 0.00256635     TIME(s) = 0.0379857  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.160487
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.160458
+Step (Outer -- Inner) =  4 -- 10          RMS = 0.00256665     TIME(s) = 0.040477   
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.49163
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000019936         0.0025648676         2.4054872854
+ATOM      2         0.0000019929         2.4054583983         0.0025684346
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000006702         0.2244416222         0.0000000000
+ATOM      2        -0.0000007088         0.0000000000         0.2244420607
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.160493
+ DS5      3.67e-06   2.34e+00   2.34e+00   4.87e+00  -6.81953888e+03  -3.30477553e-03   8.5530e-05   5.19
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000006702         0.2244416222         0.0000000000
+ATOM      2        -0.0000007088         0.0000000000         0.2244420607
+initial spin (uB): 
+ATOM      1         0.0000045596         0.0049816512         2.4060774660
+ATOM      2         0.0000046567         2.4061664173         0.0049686501
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.161077
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.161166
+Step (Outer -- Inner) =  5 -- 1           RMS = 0.00497516     TIME(s) = 1.1854     
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.161115
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.161203
+Step (Outer -- Inner) =  5 -- 2           RMS = 0.00265316     TIME(s) = 0.0386544  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.161118
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.161206
+Step (Outer -- Inner) =  5 -- 3           RMS = 0.00246849     TIME(s) = 0.0382205  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.161118
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.161206
+Step (Outer -- Inner) =  5 -- 4           RMS = 0.0024485     TIME(s) = 0.038179   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.161118
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.161206
+Step (Outer -- Inner) =  5 -- 5           RMS = 0.00244749     TIME(s) = 0.0381915  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.161118
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.161206
+Step (Outer -- Inner) =  5 -- 6           RMS = 0.00244868     TIME(s) = 0.038694   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.161118
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.161206
+Step (Outer -- Inner) =  5 -- 7           RMS = 0.00245012     TIME(s) = 0.0381745  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.161118
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.161206
+Step (Outer -- Inner) =  5 -- 8           RMS = 0.00245141     TIME(s) = 0.0383405  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.161118
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.161206
+Step (Outer -- Inner) =  5 -- 9           RMS = 0.00245253     TIME(s) = 0.0383637  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.161118
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.161206
+Step (Outer -- Inner) =  5 -- 10          RMS = 0.00245332     TIME(s) = 0.0383884  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.53061
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000015623         0.0024560826         2.4061179644
+ATOM      2         0.0000016097         2.4062059221         0.0024505444
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000007879         0.2260716759         0.0000000000
+ATOM      2         0.0000007811         0.0000000000         0.2260679028
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.161284
+ DS6      2.99e-06   2.33e+00   2.33e+00   4.87e+00  -6.81953926e+03  -3.83741489e-04   2.4005e-05   5.31
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000007879         0.2260716759         0.0000000000
+ATOM      2         0.0000007811         0.0000000000         0.2260679028
+initial spin (uB): 
+ATOM      1         0.0000007279         0.0029020031         2.4030500517
+ATOM      2         0.0000008120         2.4026679830         0.0029683624
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15805
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.157668
+Step (Outer -- Inner) =  6 -- 1           RMS = 0.00293537     TIME(s) = 1.13768    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.158059
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15768
+Step (Outer -- Inner) =  6 -- 2           RMS = 0.00212737     TIME(s) = 0.0384993  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15806
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.157681
+Step (Outer -- Inner) =  6 -- 3           RMS = 0.0020627     TIME(s) = 0.042231   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15806
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.157681
+Step (Outer -- Inner) =  6 -- 4           RMS = 0.0020535     TIME(s) = 0.0387158  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15806
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.157681
+Step (Outer -- Inner) =  6 -- 5           RMS = 0.00205324     TIME(s) = 0.0423243  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15806
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.157681
+Step (Outer -- Inner) =  6 -- 6           RMS = 0.00205425     TIME(s) = 0.0384555  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15806
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.157681
+Step (Outer -- Inner) =  6 -- 7           RMS = 0.00205537     TIME(s) = 0.0381673  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15806
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.157681
+Step (Outer -- Inner) =  6 -- 8           RMS = 0.0020564     TIME(s) = 0.0424037  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15806
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.157681
+Step (Outer -- Inner) =  6 -- 9           RMS = 0.00205728     TIME(s) = 0.0381749  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15806
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.157681
+Step (Outer -- Inner) =  6 -- 10          RMS = 0.00205793     TIME(s) = 0.0401811  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.49683
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000004393         0.0020360210         2.4030601307
+ATOM      2         0.0000004982         2.4026811882         0.0020795998
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000009263         0.2266291808         0.0000000000
+ATOM      2         0.0000009356         0.0000000000         0.2266380963
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.157868
+ DS7      1.55e-06   2.33e+00   2.33e+00   4.86e+00  -6.81953901e+03   2.50510281e-04   3.6755e-06   7.12
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000009263         0.2266291808         0.0000000000
+ATOM      2         0.0000009356         0.0000000000         0.2266380963
+initial spin (uB): 
+ATOM      1        -0.0000013073         0.0009241081         2.4007238022
+ATOM      2        -0.0000012526         2.4015319733         0.0007952538
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155724
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.156532
+Step (Outer -- Inner) =  7 -- 1           RMS = 0.000862093     TIME(s) = 1.79779    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155701
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.156532
+Step (Outer -- Inner) =  7 -- 2           RMS = 0.00181486     TIME(s) = 0.0600363  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155699
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.156532
+Step (Outer -- Inner) =  7 -- 3           RMS = 0.00188704     TIME(s) = 0.0598348  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155699
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.156532
+Step (Outer -- Inner) =  7 -- 4           RMS = 0.0018882     TIME(s) = 0.0597741  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155699
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.156532
+Step (Outer -- Inner) =  7 -- 5           RMS = 0.00188878     TIME(s) = 0.0481031  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155699
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.156532
+Step (Outer -- Inner) =  7 -- 6           RMS = 0.00188986     TIME(s) = 0.0497415  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155699
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.156532
+Step (Outer -- Inner) =  7 -- 7           RMS = 0.00189101     TIME(s) = 0.0535406  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155699
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.156532
+Step (Outer -- Inner) =  7 -- 8           RMS = 0.00189203     TIME(s) = 0.054439   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155699
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.156532
+Step (Outer -- Inner) =  7 -- 9           RMS = 0.00189289     TIME(s) = 0.0542501  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155699
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.156532
+Step (Outer -- Inner) =  7 -- 10          RMS = 0.00189342     TIME(s) = 0.0542393  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 2.29174
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000033849         0.0020415085         2.4006989745
+ATOM      2        -0.0000032656         2.4015322135         0.0017327088
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000019413         0.2259202626         0.0000000000
+ATOM      2         0.0000019088         0.0000000000         0.2260286212
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.156125
+ DS8     -6.71e-06   2.33e+00   2.33e+00   4.86e+00  -6.81953912e+03  -1.07889205e-04   1.3074e-06   6.13
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000019413         0.2259202626         0.0000000000
+ATOM      2         0.0000019088         0.0000000000         0.2260286212
+initial spin (uB): 
+ATOM      1        -0.0000067741         0.0014798021         2.4003402152
+ATOM      2        -0.0000066340         2.3992448031         0.0013008368
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15534
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154245
+Step (Outer -- Inner) =  8 -- 1           RMS = 0.00139321     TIME(s) = 1.28933    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155332
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154245
+Step (Outer -- Inner) =  8 -- 2           RMS = 0.00175767     TIME(s) = 0.0411333  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155332
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154245
+Step (Outer -- Inner) =  8 -- 3           RMS = 0.00178514     TIME(s) = 0.0388564  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155332
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154245
+Step (Outer -- Inner) =  8 -- 4           RMS = 0.0017856     TIME(s) = 0.0385429  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155332
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154245
+Step (Outer -- Inner) =  8 -- 5           RMS = 0.00178587     TIME(s) = 0.0385893  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155332
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154245
+Step (Outer -- Inner) =  8 -- 6           RMS = 0.00178649     TIME(s) = 0.0385803  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155332
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154245
+Step (Outer -- Inner) =  8 -- 7           RMS = 0.00178705     TIME(s) = 0.0388016  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155332
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154245
+Step (Outer -- Inner) =  8 -- 8           RMS = 0.00178761     TIME(s) = 0.039554   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155331
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154245
+Step (Outer -- Inner) =  8 -- 9           RMS = 0.00178803     TIME(s) = 0.0385506  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.155331
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154245
+Step (Outer -- Inner) =  8 -- 10          RMS = 0.00178837     TIME(s) = 0.0386849  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.64063
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000093152         0.0019036197         2.4003314905
+ATOM      2        -0.0000091335         2.3992445000         0.0016651067
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000031784         0.2256513609         0.0000000000
+ATOM      2         0.0000031203         0.0000000000         0.2257923246
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.154794
+ DS9     -1.77e-05   2.33e+00   2.33e+00   4.86e+00  -6.81953909e+03   3.08938785e-05   1.2231e-06   5.30
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000031784         0.2256513609         0.0000000000
+ATOM      2         0.0000031203         0.0000000000         0.2257923246
+initial spin (uB): 
+ATOM      1        -0.0000138856         0.0019050732         2.3988844811
+ATOM      2        -0.0000136715         2.3991427750         0.0013322170
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153884
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154143
+Step (Outer -- Inner) =  9 -- 1           RMS = 0.00164385     TIME(s) = 1.2886     
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153883
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154143
+Step (Outer -- Inner) =  9 -- 2           RMS = 0.00168215     TIME(s) = 0.041139   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153883
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154143
+Step (Outer -- Inner) =  9 -- 3           RMS = 0.00168429     TIME(s) = 0.0383811  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153883
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154143
+Step (Outer -- Inner) =  9 -- 4           RMS = 0.00168414     TIME(s) = 0.0391093  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153883
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154143
+Step (Outer -- Inner) =  9 -- 5           RMS = 0.00168424     TIME(s) = 0.0384233  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153883
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154143
+Step (Outer -- Inner) =  9 -- 6           RMS = 0.00168454     TIME(s) = 0.0386917  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153883
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154143
+Step (Outer -- Inner) =  9 -- 7           RMS = 0.00168493     TIME(s) = 0.0384092  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153883
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154143
+Step (Outer -- Inner) =  9 -- 8           RMS = 0.00168544     TIME(s) = 0.0387189  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153883
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154143
+Step (Outer -- Inner) =  9 -- 9           RMS = 0.00168562     TIME(s) = 0.0384944  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153883
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.154143
+Step (Outer -- Inner) =  9 -- 10          RMS = 0.00168564     TIME(s) = 0.0389512  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.63892
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000143485         0.0019544498         2.3988828416
+ATOM      2        -0.0000141289         2.3991434982         0.0013647246
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000034036         0.2256204810         0.0000000000
+ATOM      2         0.0000033421         0.0000000000         0.2257707327
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.154018
+ DS10    -2.72e-05   2.33e+00   2.33e+00   4.85e+00  -6.81953903e+03   5.53211683e-05   1.2331e-07   5.20
+ SCF restart after this step!
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000034036         0.2256204810         0.0000000000
+ATOM      2         0.0000033421         0.0000000000         0.2257707327
+initial spin (uB): 
+ATOM      1        -0.0000252126         0.0020627298         2.3983759090
+ATOM      2        -0.0000249168         2.3985201886         0.0011680499
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153376
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15352
+Step (Outer -- Inner) =  10 -- 1           RMS = 0.00167637     TIME(s) = 1.40623    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153379
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153518
+Step (Outer -- Inner) =  10 -- 2           RMS = 0.00161208     TIME(s) = 0.0388227  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15338
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153518
+Step (Outer -- Inner) =  10 -- 3           RMS = 0.00160756     TIME(s) = 0.0386234  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15338
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153518
+Step (Outer -- Inner) =  10 -- 4           RMS = 0.00160695     TIME(s) = 0.0387615  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15338
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153518
+Step (Outer -- Inner) =  10 -- 5           RMS = 0.00160711     TIME(s) = 0.0417151  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15338
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153518
+Step (Outer -- Inner) =  10 -- 6           RMS = 0.0016073     TIME(s) = 0.0384465  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15338
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153518
+Step (Outer -- Inner) =  10 -- 7           RMS = 0.00160776     TIME(s) = 0.0385182  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15338
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153518
+Step (Outer -- Inner) =  10 -- 8           RMS = 0.00160794     TIME(s) = 0.038479   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15338
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153518
+Step (Outer -- Inner) =  10 -- 9           RMS = 0.00160827     TIME(s) = 0.0383135  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15338
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153518
+Step (Outer -- Inner) =  10 -- 10          RMS = 0.00160862     TIME(s) = 0.0384133  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.75633
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000238863         0.0019773963         2.3983795350
+ATOM      2        -0.0000236023         2.3985179874         0.0011243120
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000027587         0.2256732718         0.0000000000
+ATOM      2         0.0000027047         0.0000000000         0.2258006321
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153454
+ DS11    -4.58e-05   2.33e+00   2.33e+00   4.85e+00  -6.81953899e+03   4.68187179e-05   3.3809e-08   5.60
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000027587         0.2256732718         0.0000000000
+ATOM      2         0.0000027047         0.0000000000         0.2258006321
+initial spin (uB): 
+ATOM      1        -0.0000316810         0.0019996426         2.3983889286
+ATOM      2        -0.0000313623         2.3985884081         0.0009470996
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153389
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153588
+Step (Outer -- Inner) =  11 -- 1           RMS = 0.00156486     TIME(s) = 1.2528     
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15339
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153588
+Step (Outer -- Inner) =  11 -- 2           RMS = 0.001554     TIME(s) = 0.0383141  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15339
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153588
+Step (Outer -- Inner) =  11 -- 3           RMS = 0.00155375     TIME(s) = 0.0383492  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15339
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153588
+Step (Outer -- Inner) =  11 -- 4           RMS = 0.00155363     TIME(s) = 0.038313   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15339
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153588
+Step (Outer -- Inner) =  11 -- 5           RMS = 0.00155357     TIME(s) = 0.0382883  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15339
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153588
+Step (Outer -- Inner) =  11 -- 6           RMS = 0.00155377     TIME(s) = 0.0380705  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15339
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153588
+Step (Outer -- Inner) =  11 -- 7           RMS = 0.00155393     TIME(s) = 0.0380804  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15339
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153588
+Step (Outer -- Inner) =  11 -- 8           RMS = 0.00155374     TIME(s) = 0.0410565  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15339
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153588
+Step (Outer -- Inner) =  11 -- 9           RMS = 0.00155405     TIME(s) = 0.038227   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15339
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153588
+Step (Outer -- Inner) =  11 -- 10          RMS = 0.00155372     TIME(s) = 0.0382236  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.59972
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000313893         0.0019850696         2.3983896414
+ATOM      2        -0.0000310729         2.3985879216         0.0009410860
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000026169         0.2256822211         0.0000000000
+ATOM      2         0.0000025644         0.0000000000         0.2258048709
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153497
+ DS12    -6.02e-05   2.33e+00   2.33e+00   4.85e+00  -6.81953895e+03   3.86903119e-05   2.1655e-08   5.52
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000026169         0.2256822211         0.0000000000
+ATOM      2         0.0000025644         0.0000000000         0.2258048709
+initial spin (uB): 
+ATOM      1        -0.0000381864         0.0020016008         2.3983805326
+ATOM      2        -0.0000378476         2.3986025681         0.0008051682
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153381
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153603
+Step (Outer -- Inner) =  12 -- 1           RMS = 0.00152604     TIME(s) = 1.15309    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153382
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153602
+Step (Outer -- Inner) =  12 -- 2           RMS = 0.00150876     TIME(s) = 0.0383237  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153382
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153602
+Step (Outer -- Inner) =  12 -- 3           RMS = 0.00150811     TIME(s) = 0.0382673  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153382
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153602
+Step (Outer -- Inner) =  12 -- 4           RMS = 0.00150783     TIME(s) = 0.0383179  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153382
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153602
+Step (Outer -- Inner) =  12 -- 5           RMS = 0.00150786     TIME(s) = 0.0382828  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153382
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153602
+Step (Outer -- Inner) =  12 -- 6           RMS = 0.00150805     TIME(s) = 0.0382264  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153382
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153602
+Step (Outer -- Inner) =  12 -- 7           RMS = 0.00150822     TIME(s) = 0.0381538  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153382
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153602
+Step (Outer -- Inner) =  12 -- 8           RMS = 0.00150861     TIME(s) = 0.0381492  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153382
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153602
+Step (Outer -- Inner) =  12 -- 9           RMS = 0.00150877     TIME(s) = 0.0380781  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153382
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153602
+Step (Outer -- Inner) =  12 -- 10          RMS = 0.00150852     TIME(s) = 0.0383356  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.49722
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000376230         0.0019780942         2.3983817979
+ATOM      2        -0.0000372880         2.3986016489         0.0007972531
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000023430         0.2256965763         0.0000000000
+ATOM      2         0.0000022930         0.0000000000         0.2258106456
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153499
+ DS13    -7.23e-05   2.33e+00   2.33e+00   4.85e+00  -6.81953891e+03   3.27182393e-05   1.3333e-08   5.47
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000023430         0.2256965763         0.0000000000
+ATOM      2         0.0000022930         0.0000000000         0.2258106456
+initial spin (uB): 
+ATOM      1        -0.0000677886         0.0020243479         2.3983014755
+ATOM      2        -0.0000673695         2.3987610388         0.0001918088
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153301
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153761
+Step (Outer -- Inner) =  13 -- 1           RMS = 0.00143943     TIME(s) = 1.13964    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153326
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  13 -- 2           RMS = 0.00120413     TIME(s) = 0.0385753  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153326
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  13 -- 3           RMS = 0.001206     TIME(s) = 0.0383511  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153326
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  13 -- 4           RMS = 0.00120582     TIME(s) = 0.0384361  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153326
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  13 -- 5           RMS = 0.00120577     TIME(s) = 0.0382696  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153326
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  13 -- 6           RMS = 0.00120606     TIME(s) = 0.0384546  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153326
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  13 -- 7           RMS = 0.00120639     TIME(s) = 0.0385734  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153326
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  13 -- 8           RMS = 0.0012065     TIME(s) = 0.0400709  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153326
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  13 -- 9           RMS = 0.0012065     TIME(s) = 0.038524   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153326
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  13 -- 10          RMS = 0.00120667     TIME(s) = 0.0385836  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.48748
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000542315         0.0016946498         2.3983259857
+ATOM      2        -0.0000538769         2.3987402193         0.0001855633
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000042438         0.2258931793         0.0000000000
+ATOM      2        -0.0000042531         0.0000000000         0.2258292420
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153537
+ DS14    -1.05e-04   2.33e+00   2.33e+00   4.85e+00  -6.81953871e+03   2.02451701e-04   7.2323e-09   5.22
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000042438         0.2258931793         0.0000000000
+ATOM      2        -0.0000042531         0.0000000000         0.2258292420
+initial spin (uB): 
+ATOM      1        -0.0000564309         0.0016125402         2.3983428403
+ATOM      2        -0.0000560800         2.3987226043         0.0000900061
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153723
+Step (Outer -- Inner) =  14 -- 1           RMS = 0.0011434     TIME(s) = 1.13885    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153722
+Step (Outer -- Inner) =  14 -- 2           RMS = 0.00114092     TIME(s) = 0.0385173  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153722
+Step (Outer -- Inner) =  14 -- 3           RMS = 0.0011411     TIME(s) = 0.0382272  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153722
+Step (Outer -- Inner) =  14 -- 4           RMS = 0.00114087     TIME(s) = 0.0382879  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153722
+Step (Outer -- Inner) =  14 -- 5           RMS = 0.00114069     TIME(s) = 0.0384373  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153722
+Step (Outer -- Inner) =  14 -- 6           RMS = 0.00114116     TIME(s) = 0.0383091  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153722
+Step (Outer -- Inner) =  14 -- 7           RMS = 0.00114125     TIME(s) = 0.0383168  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153722
+Step (Outer -- Inner) =  14 -- 8           RMS = 0.00114167     TIME(s) = 0.0382248  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153722
+Step (Outer -- Inner) =  14 -- 9           RMS = 0.00114158     TIME(s) = 0.0385981  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153722
+Step (Outer -- Inner) =  14 -- 10          RMS = 0.00114065     TIME(s) = 0.0383436  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.48411
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000562645         0.0016086552         2.3983431388
+ATOM      2        -0.0000559144         2.3987223473         0.0000900838
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000043246         0.2258954889         0.0000000000
+ATOM      2        -0.0000043334         0.0000000000         0.2258293709
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153537
+ DS15    -1.09e-04   2.33e+00   2.33e+00   4.85e+00  -6.81953867e+03   4.05265629e-05   4.5047e-09   5.21
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000043246         0.2258954889         0.0000000000
+ATOM      2        -0.0000043334         0.0000000000         0.2258293709
+initial spin (uB): 
+ATOM      1        -0.0000566668         0.0015253880         2.3983215049
+ATOM      2        -0.0000563296         2.3987391216         0.0000255084
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153322
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153739
+Step (Outer -- Inner) =  15 -- 1           RMS = 0.00108024     TIME(s) = 1.13907    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153321
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  15 -- 2           RMS = 0.001087     TIME(s) = 0.0385342  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153321
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  15 -- 3           RMS = 0.00108716     TIME(s) = 0.038401   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153321
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  15 -- 4           RMS = 0.00108714     TIME(s) = 0.0385378  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153321
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  15 -- 5           RMS = 0.00108718     TIME(s) = 0.0382569  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153321
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  15 -- 6           RMS = 0.00108725     TIME(s) = 0.0401348  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153321
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  15 -- 7           RMS = 0.00108711     TIME(s) = 0.0383027  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153321
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  15 -- 8           RMS = 0.0010873     TIME(s) = 0.0382975  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153321
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  15 -- 9           RMS = 0.00108734     TIME(s) = 0.0383521  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153321
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15374
+Step (Outer -- Inner) =  15 -- 10          RMS = 0.00108676     TIME(s) = 0.0385593  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.48645
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000570839         0.0015345919         2.3983207745
+ATOM      2        -0.0000567448         2.3987397578         0.0000249647
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000041219         0.2258900334         0.0000000000
+ATOM      2        -0.0000041320         0.0000000000         0.2258292796
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153534
+ DS16    -1.10e-04   2.33e+00   2.33e+00   4.85e+00  -6.81953864e+03   3.13462717e-05   4.5960e-09   4.65
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000041219         0.2258900334         0.0000000000
+ATOM      2        -0.0000041320         0.0000000000         0.2258292796
+initial spin (uB): 
+ATOM      1        -0.0000631838         0.0010095858         2.3983165620
+ATOM      2        -0.0000629150         2.3987267705        -0.0003979427
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153317
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153727
+Step (Outer -- Inner) =  16 -- 1           RMS = 0.000769926     TIME(s) = 1.21728    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153345
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.1537
+Step (Outer -- Inner) =  16 -- 2           RMS = 0.00056045     TIME(s) = 0.0383783  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153702
+Step (Outer -- Inner) =  16 -- 3           RMS = 0.000577277     TIME(s) = 0.0383094  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153702
+Step (Outer -- Inner) =  16 -- 4           RMS = 0.000576389     TIME(s) = 0.0383918  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153702
+Step (Outer -- Inner) =  16 -- 5           RMS = 0.000576097     TIME(s) = 0.0391603  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153702
+Step (Outer -- Inner) =  16 -- 6           RMS = 0.000576018     TIME(s) = 0.0386469  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153702
+Step (Outer -- Inner) =  16 -- 7           RMS = 0.000576145     TIME(s) = 0.0382281  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153702
+Step (Outer -- Inner) =  16 -- 8           RMS = 0.000576294     TIME(s) = 0.0384982  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153702
+Step (Outer -- Inner) =  16 -- 9           RMS = 0.000576368     TIME(s) = 0.0381029  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153343
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153702
+Step (Outer -- Inner) =  16 -- 10          RMS = 0.000576319     TIME(s) = 0.0381549  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.56315
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000446923         0.0007612673         2.3983426828
+ATOM      2        -0.0000444848         2.3987021062        -0.0002842231
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000131022         0.2260327363         0.0000000000
+ATOM      2        -0.0000130743         0.0000000000         0.2257727644
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153523
+ DS17    -8.68e-05   2.33e+00   2.33e+00   4.85e+00  -6.81953839e+03   2.45068126e-04   6.5563e-09   5.41
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000131022         0.2260327363         0.0000000000
+ATOM      2        -0.0000130743         0.0000000000         0.2257727644
+initial spin (uB): 
+ATOM      1        -0.0000368517         0.0005474879         2.3983626334
+ATOM      2        -0.0000366832         2.3986828867        -0.0002987467
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153363
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153683
+Step (Outer -- Inner) =  17 -- 1           RMS = 0.000442547     TIME(s) = 1.14179    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153371
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153675
+Step (Outer -- Inner) =  17 -- 2           RMS = 0.000383119     TIME(s) = 0.0388373  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15337
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153676
+Step (Outer -- Inner) =  17 -- 3           RMS = 0.000387898     TIME(s) = 0.0382245  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15337
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153676
+Step (Outer -- Inner) =  17 -- 4           RMS = 0.000387839     TIME(s) = 0.0384573  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15337
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153676
+Step (Outer -- Inner) =  17 -- 5           RMS = 0.000388013     TIME(s) = 0.0383512  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15337
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153676
+Step (Outer -- Inner) =  17 -- 6           RMS = 0.00038805     TIME(s) = 0.0381949  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15337
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153676
+Step (Outer -- Inner) =  17 -- 7           RMS = 0.000387812     TIME(s) = 0.0384504  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15337
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153676
+Step (Outer -- Inner) =  17 -- 8           RMS = 0.000387451     TIME(s) = 0.0386626  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15337
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153676
+Step (Outer -- Inner) =  17 -- 9           RMS = 0.00038751     TIME(s) = 0.0381876  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.15337
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153676
+Step (Outer -- Inner) =  17 -- 10          RMS = 0.000387809     TIME(s) = 0.0387467  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.48791
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000316234         0.0004812671         2.3983701962
+ATOM      2        -0.0000314735         2.3986756102        -0.0002591956
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000156413         0.2260703752         0.0000000000
+ATOM      2        -0.0000156019         0.0000000000         0.2257522011
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153523
+ DS18    -6.18e-05   2.33e+00   2.33e+00   4.85e+00  -6.81953834e+03   5.70667844e-05   8.4430e-09   5.09
+ SCF restart after this step!
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000156413         0.2260703752         0.0000000000
+ATOM      2        -0.0000156019         0.0000000000         0.2257522011
+initial spin (uB): 
+ATOM      1        -0.0000409741         0.0005752555         2.3983468825
+ATOM      2        -0.0000408018         2.3986950105        -0.0003317082
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153347
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153695
+Step (Outer -- Inner) =  18 -- 1           RMS = 0.000471324     TIME(s) = 1.14138    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153364
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153679
+Step (Outer -- Inner) =  18 -- 2           RMS = 0.000351249     TIME(s) = 0.0386706  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 3           RMS = 0.000362727     TIME(s) = 0.0382677  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 4           RMS = 0.00036206     TIME(s) = 0.0382176  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 5           RMS = 0.000361873     TIME(s) = 0.0381989  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 6           RMS = 0.000361923     TIME(s) = 0.0381996  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 7           RMS = 0.000361962     TIME(s) = 0.0382626  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 8           RMS = 0.000361715     TIME(s) = 0.0381902  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 9           RMS = 0.000361784     TIME(s) = 0.038366   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 10          RMS = 0.000361798     TIME(s) = 0.0381759  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.48593
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000300408         0.0004445144         2.3983620622
+ATOM      2        -0.0000299044         2.3986803576        -0.0002498111
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000209508         0.2261445145         0.0000000000
+ATOM      2        -0.0000208892         0.0000000000         0.2257093342
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153522
+Error: RMS error is too large, rerun the loop
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000209508         0.2261445145         0.0000000000
+ATOM      2        -0.0000208892         0.0000000000         0.2257093342
+initial spin (uB): 
+ATOM      1        -0.0000300446         0.0004444987         2.3983619622
+ATOM      2        -0.0000299083         2.3986803804        -0.0002498906
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 1           RMS = 0.000361816     TIME(s) = 1.13982    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 2           RMS = 0.000361912     TIME(s) = 0.0383253  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 3           RMS = 0.000361904     TIME(s) = 0.0384974  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 4           RMS = 0.000361903     TIME(s) = 0.0382706  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 5           RMS = 0.000361801     TIME(s) = 0.0386734  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153681
+Step (Outer -- Inner) =  18 -- 6           RMS = 0.000362719     TIME(s) = 0.0383756  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 7           RMS = 0.000361797     TIME(s) = 0.0383399  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 8           RMS = 0.000362422     TIME(s) = 0.0381597  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 9           RMS = 0.000361216     TIME(s) = 0.0388525  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153362
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15368
+Step (Outer -- Inner) =  18 -- 10          RMS = 0.000360143     TIME(s) = 0.0381653  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.48548
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000298857         0.0004424878         2.3983621937
+ATOM      2        -0.0000297499         2.3986801573        -0.0002486604
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000210280         0.2261456561         0.0000000000
+ATOM      2        -0.0000209661         0.0000000000         0.2257086923
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153522
+ DS19    -5.91e-05   2.33e+00   2.33e+00   4.85e+00  -6.81953833e+03   6.03311816e-06   1.3128e-08   7.14
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000210280         0.2261456561         0.0000000000
+ATOM      2        -0.0000209661         0.0000000000         0.2257086923
+initial spin (uB): 
+ATOM      1        -0.0000013140        -0.0000137635         2.3983614132
+ATOM      2        -0.0000012695         2.3986873533        -0.0001563848
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153361
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153687
+Step (Outer -- Inner) =  19 -- 1           RMS = 0.000111016     TIME(s) = 1.14765    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153473
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153557
+Step (Outer -- Inner) =  19 -- 2           RMS = 0.00112346     TIME(s) = 0.0386536  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 3           RMS = 0.00110001     TIME(s) = 0.0382229  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 4           RMS = 0.00109876     TIME(s) = 0.0388386  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 5           RMS = 0.00109914     TIME(s) = 0.0381743  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 6           RMS = 0.00109971     TIME(s) = 0.0384594  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 7           RMS = 0.00110014     TIME(s) = 0.0382954  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 8           RMS = 0.00110033     TIME(s) = 0.0383237  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 9           RMS = 0.00110063     TIME(s) = 0.0385325  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 10          RMS = 0.00110074     TIME(s) = 0.0433422  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.49849
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000162035         0.0000102103         2.3984707099
+ATOM      2         0.0000157913         2.3985598114         0.0015564816
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000295659         0.2260542325         0.0000000000
+ATOM      2        -0.0000292133         0.0000000000         0.2246878828
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153519
+Error: RMS error is too large, rerun the loop
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000295659         0.2260542325         0.0000000000
+ATOM      2        -0.0000292133         0.0000000000         0.2246878828
+initial spin (uB): 
+ATOM      1         0.0000163141         0.0000092129         2.3984713392
+ATOM      2         0.0000159011         2.3985594679         0.0015601179
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153559
+Step (Outer -- Inner) =  19 -- 1           RMS = 0.00110331     TIME(s) = 1.14484    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 2           RMS = 0.00109984     TIME(s) = 0.0414647  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 3           RMS = 0.00110004     TIME(s) = 0.0423634  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 4           RMS = 0.0011001     TIME(s) = 0.0382932  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 5           RMS = 0.00109988     TIME(s) = 0.0447975  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 6           RMS = 0.0011     TIME(s) = 0.038634   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 7           RMS = 0.00110009     TIME(s) = 0.0386769  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 8           RMS = 0.00110047     TIME(s) = 0.0382352  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 9           RMS = 0.00110045     TIME(s) = 0.0382192  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153471
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.15356
+Step (Outer -- Inner) =  19 -- 10          RMS = 0.0011011     TIME(s) = 0.0381168  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.50364
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000162743         0.0000094319         2.3984711204
+ATOM      2         0.0000158621         2.3985597182         0.0015569899
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000295465         0.2260542432         0.0000000000
+ATOM      2        -0.0000291944         0.0000000000         0.2246897355
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153519
+ DS20     2.91e-05   2.33e+00   2.33e+00   4.85e+00  -6.81953864e+03  -3.08518298e-04   1.0145e-07   7.28
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000295465         0.2260542432         0.0000000000
+ATOM      2        -0.0000291944         0.0000000000         0.2246897355
+initial spin (uB): 
+ATOM      1         0.0000142593         0.0000312325         2.3984639638
+ATOM      2         0.0000138631         2.3985673326         0.0015001547
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153464
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153567
+Step (Outer -- Inner) =  20 -- 1           RMS = 0.00106109     TIME(s) = 1.27859    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 2           RMS = 0.00111556     TIME(s) = 0.0385626  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 3           RMS = 0.00111399     TIME(s) = 0.0383164  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 4           RMS = 0.0011138     TIME(s) = 0.038996   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 5           RMS = 0.00111381     TIME(s) = 0.0383591  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 6           RMS = 0.00111403     TIME(s) = 0.038435   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 7           RMS = 0.00111434     TIME(s) = 0.0383382  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 8           RMS = 0.00111451     TIME(s) = 0.0385972  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 9           RMS = 0.00111447     TIME(s) = 0.038684   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 10          RMS = 0.00111438     TIME(s) = 0.0383591  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.62523
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000151321         0.0000270883         2.3984691544
+ATOM      2         0.0000147173         2.3985613695         0.0015755965
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000299716         0.2260533082         0.0000000000
+ATOM      2        -0.0000296077         0.0000000000         0.2246450015
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153519
+Error: RMS error is too large, rerun the loop
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000299716         0.2260533082         0.0000000000
+ATOM      2        -0.0000296077         0.0000000000         0.2246450015
+initial spin (uB): 
+ATOM      1         0.0000151317         0.0000270935         2.3984691403
+ATOM      2         0.0000147164         2.3985613694         0.0015756503
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         2.2450000000
+ATOM      2         0.0000000000         2.2450000000         0.0000000000
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 1           RMS = 0.00111442     TIME(s) = 1.16478    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 2           RMS = 0.00111405     TIME(s) = 0.0413078  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 3           RMS = 0.00111426     TIME(s) = 0.0383147  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 4           RMS = 0.00111403     TIME(s) = 0.0568522  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 5           RMS = 0.00111438     TIME(s) = 0.059283   
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 6           RMS = 0.00111416     TIME(s) = 0.0594044  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 7           RMS = 0.00111427     TIME(s) = 0.0591839  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 8           RMS = 0.00111438     TIME(s) = 0.0593068  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 9           RMS = 0.00111461     TIME(s) = 0.0505672  
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 0 0.153469
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp211 1 0.153561
+Step (Outer -- Inner) =  20 -- 10          RMS = 0.00111493     TIME(s) = 0.0386112  
+Reach maximum number of steps ( 10 ), exit.              Total TIME(s) = 1.62761
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000151402         0.0000270509         2.3984691904
+ATOM      2         0.0000147247         2.3985613118         0.0015763761
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000299758         0.2260533008         0.0000000000
+ATOM      2        -0.0000296117         0.0000000000         0.2246445713
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.153519
+ DS21     2.68e-05   2.33e+00   2.33e+00   4.85e+00  -6.81953865e+03  -9.44396066e-06   1.0957e-07   6.79
+ >> Leave SCF iteration.
+ * * * * * *
+TIME STATISTICS
+-----------------------------------------------------------------------------
+    CLASS_NAME                NAME             TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------------------
+                   total                       122.96 15       8.20   100.00 
+ Driver            reading                     0.01   1        0.01   0.01   
+ Input_Conv        Convert                     0.00   1        0.00   0.00   
+ Driver            driver_line                 122.95 1        122.95 99.99  
+ UnitCell          check_tau                   0.00   1        0.00   0.00   
+ PW_Basis_Sup      setuptransform              0.00   1        0.00   0.00   
+ PW_Basis_Sup      distributeg                 0.00   1        0.00   0.00   
+ mymath            heapsort                    0.00   3        0.00   0.00   
+ PW_Basis_K        setuptransform              0.00   1        0.00   0.00   
+ PW_Basis_K        distributeg                 0.00   1        0.00   0.00   
+ PW_Basis          setup_struc_factor          0.00   1        0.00   0.00   
+ ppcell_vnl        init                        0.00   1        0.00   0.00   
+ ppcell_vl         init_vloc                   0.01   1        0.01   0.00   
+ ppcell_vnl        init_vnl                    0.03   1        0.03   0.02   
+ WF_atomic         init_at_1                   0.15   1        0.15   0.12   
+ wavefunc          wfcinit                     0.00   1        0.00   0.00   
+ Ions              opt_ions                    122.70 1        122.70 99.79  
+ ESolver_KS_PW     runner                      122.70 1        122.70 99.79  
+ H_Ewald_pw        compute_ewald               0.00   1        0.00   0.00   
+ Charge            set_rho_core                0.01   1        0.01   0.00   
+ PW_Basis_Sup      recip2real                  0.14   602      0.00   0.11   
+ PW_Basis_Sup      gathers_scatterp            0.05   602      0.00   0.04   
+ Charge            atomic_rho                  0.01   1        0.01   0.01   
+ Potential         init_pot                    0.02   1        0.02   0.02   
+ Potential         update_from_charge          0.88   43       0.02   0.71   
+ Potential         cal_fixed_v                 0.00   1        0.00   0.00   
+ PotLocal          cal_fixed_v                 0.00   1        0.00   0.00   
+ Potential         cal_v_eff                   0.87   43       0.02   0.71   
+ H_Hartree_pw      v_hartree                   0.03   43       0.00   0.02   
+ PW_Basis_Sup      real2recip                  0.15   649      0.00   0.12   
+ PW_Basis_Sup      gatherp_scatters            0.07   649      0.00   0.06   
+ PotXC             cal_v_eff                   0.84   43       0.02   0.69   
+ XC_Functional     v_xc                        0.84   43       0.02   0.68   
+ Potential         interpolate_vrs             0.00   43       0.00   0.00   
+ OnsiteProj        cubspl_tabulate             0.08   1        0.08   0.07   
+ Charge_Mixing     init_mixing                 0.00   3        0.00   0.00   
+ ESolver_KS_PW     hamilt2density              121.53 22       5.52   98.84  
+ HSolverPW         solve                       80.84  22       3.67   65.74  
+ pp_cell_vnl       getvnl                      1.09   1288     0.00   0.88   
+ Structure_Factor  get_sk                      0.32   3360     0.00   0.26   
+ OnsiteProj        getvnl                      0.00   1288     0.00   0.00   
+ OnsiteProj        tabulate_atomic             0.00   2016     0.00   0.00   
+ wavefunc          diago_PAO_in_pw_k2          0.36   28       0.01   0.29   
+ WF_atomic         atomic_wfc                  0.03   28       0.00   0.03   
+ Diago_DavSubspace diag_once                   66.93  616      0.11   54.43  
+ Diago_DavSubspace first                       24.96  616      0.04   20.30  
+ DavSubspace       hpsi_func                   53.30  1884     0.03   43.34  
+ Operator          hPsi                        78.55  2556     0.03   63.88  
+ Operator          EkineticPW                  0.42   2556     0.00   0.34   
+ Operator          VeffPW                      70.31  2556     0.03   57.18  
+ PW_Basis_K        recip2real                  25.20  289840   0.00   20.49  
+ PW_Basis_K        gathers_scatterp            9.19   289840   0.00   7.47   
+ PW_Basis_K        real2recip                  18.45  217040   0.00   15.01  
+ PW_Basis_K        gatherp_scatters            6.69   217040   0.00   5.44   
+ Operator          NonlocalPW                  5.33   2556     0.00   4.34   
+ Nonlocal          add_nonlocal_pp             3.78   2556     0.00   3.07   
+ Operator          OnsiteProjPW                2.47   2556     0.00   2.01   
+ OnsiteProj        overlap                     2.29   3284     0.00   1.86   
+ FS_Nonlocal_tools cal_becp                    2.28   3284     0.00   1.85   
+ OnsiteProj        add_onsite_proj             0.76   2556     0.00   0.62   
+ Diago_DavSubspace cal_elem                    3.24   1884     0.00   2.64   
+ Diago_DavSubspace diag_zhegvx                 4.78   1884     0.00   3.89   
+ Diago_DavSubspace cal_grad                    32.48  1268     0.03   26.41  
+ Diago_DavSubspace check_update                0.00   1268     0.00   0.00   
+ Diago_DavSubspace last                        2.95   1151     0.00   2.40   
+ Diago_DavSubspace refresh                     1.06   535      0.00   0.86   
+ ElecStatePW       psiToRho                    13.65  25       0.55   11.10  
+ Charge            rho_mpi                     0.90   25       0.04   0.73   
+ Charge            reduce_diff_pools           0.90   100      0.01   0.73   
+ Charge_Mixing     get_drho                    0.04   22       0.00   0.03   
+ Charge_Mixing     inner_product_recip_rho     0.00   22       0.00   0.00   
+ SpinConstrain     cal_mw_from_lambda          37.64  456      0.08   30.61  
+ DiagoIterAssist   diag_responce               7.54   12768    0.00   6.14   
+ DiagoIterAssist   diagH_LAPACK                7.70   13440    0.00   6.26   
+ SpinConstrain     update_psi_charge           78.41  24       3.27   63.77  
+ DiagoIterAssist   diag_subspace_psi           1.23   672      0.00   1.00   
+ Charge            mix_rho                     0.07   20       0.00   0.05   
+ Charge            Broyden_mixing              0.02   20       0.00   0.02   
+ Charge_Mixing     if_scf_oscillate            46.87  9        5.21   38.11  
+ Charge_Mixing     inner_product_recip_hartree 0.01   148      0.00   0.01   
+ OnsiteProj        cal_occupation              0.02   1        0.02   0.02   
+ ModuleIO          write_istate_info           0.01   1        0.01   0.01   
+-----------------------------------------------------------------------------
+
+
+ START  Time  : Thu Feb 13 15:52:57 2025
+ FINISH Time  : Thu Feb 13 15:54:59 2025
+ TOTAL  Time  : 122
+ SEE INFORMATION IN : OUT.ABACUS/

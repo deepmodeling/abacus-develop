@@ -1,0 +1,1399 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 0a08fe05e (Thu Jun 12 12:13:50 2025 +0800)
+
+ Thu Jan  8 22:09:44 2026
+ MAKE THE DIR         : OUT.test1/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 64 * 64 * 64
+ UNIFORM GRID DIM(BIG)   : 64 * 64 * 64
+ DONE(0.0729035  SEC) : SETUP UNITCELL
+ DONE(0.0740736  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 2       72              16          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ O       2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0790934  SEC) : INIT PLANEWAVE
+ DONE(0.103981   SEC) : LOCAL POTENTIAL
+ DONE(0.151156   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 10.9127
+ DONE(0.323542   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.543004   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 1
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1      3.59e-01   3.99e+00  -7.68657980e+03   0.00000000e+00   3.8785e-01   9.39
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 2
+Ensemble DFTU Inner Iter 0 diff_wg: 23.4823
+Ensemble DFTU Inner Iter 1 diff_wg: 11.41
+Ensemble DFTU Inner Iter 2 diff_wg: 27.5661
+Ensemble DFTU Inner Iter 3 diff_wg: 17.6542
+Ensemble DFTU Inner Iter 4 diff_wg: 3.58372
+Ensemble DFTU Inner Iter 5 diff_wg: 2.05556
+Ensemble DFTU Inner Iter 6 diff_wg: 0.946067
+Ensemble DFTU Inner Iter 7 diff_wg: 0.42761
+Ensemble DFTU Inner Iter 8 diff_wg: 0.207393
+Ensemble DFTU Inner Iter 9 diff_wg: 0.106159
+Ensemble DFTU Inner Iter 10 diff_wg: 0.0590156
+Ensemble DFTU Inner Iter 11 diff_wg: 0.035064
+Ensemble DFTU Inner Iter 12 diff_wg: 0.0212295
+Ensemble DFTU Inner Iter 13 diff_wg: 0.0131754
+Ensemble DFTU Inner Iter 14 diff_wg: 0.0083441
+Ensemble DFTU Inner Iter 15 diff_wg: 0.00532506
+Ensemble DFTU Inner Iter 16 diff_wg: 0.00338745
+Ensemble DFTU Inner Iter 17 diff_wg: 0.00215023
+Ensemble DFTU Inner Iter 18 diff_wg: 0.0013629
+Ensemble DFTU Inner Iter 19 diff_wg: 0.000863007
+Ensemble DFTU Inner Iter 20 diff_wg: 0.000546103
+Ensemble DFTU Inner Iter 21 diff_wg: 0.00034541
+Ensemble DFTU Inner Iter 22 diff_wg: 0.000218405
+Ensemble DFTU Inner Iter 23 diff_wg: 0.00013807
+Ensemble DFTU Inner Iter 24 diff_wg: 8.74518e-05
+Ensemble DFTU Inner Iter 25 diff_wg: 5.54299e-05
+Ensemble DFTU Inner Iter 26 diff_wg: 3.51679e-05
+Ensemble DFTU Inner Iter 27 diff_wg: 2.23439e-05
+Ensemble DFTU Inner Iter 28 diff_wg: 1.42247e-05
+Ensemble DFTU Inner Iter 29 diff_wg: 9.08051e-06
+ DS2      4.00e+00   5.71e+00  -7.68185778e+03   4.72201315e+00   1.6176e+00   2.18
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 3
+Ensemble DFTU Inner Iter 0 diff_wg: 0.0198548
+Ensemble DFTU Inner Iter 1 diff_wg: 2.10942e-15
+ DS3      4.00e+00   5.83e+00  -7.68400712e+03  -2.14933665e+00   1.5110e+00   1.80
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 4
+Ensemble DFTU Inner Iter 0 diff_wg: 6.39197e-13
+ DS4      4.00e+00   5.76e+00  -7.67872177e+03   5.28534706e+00   2.7453e+00   2.12
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 5
+Ensemble DFTU Inner Iter 0 diff_wg: 0.000264276
+Ensemble DFTU Inner Iter 1 diff_wg: 4.30341e-07
+ DS5      4.00e+00   5.72e+00  -7.68120826e+03  -2.48648839e+00   2.8381e-01   2.88
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 6
+Ensemble DFTU Inner Iter 0 diff_wg: 2.09047
+Ensemble DFTU Inner Iter 1 diff_wg: 9.09153
+Ensemble DFTU Inner Iter 2 diff_wg: 38.7714
+Ensemble DFTU Inner Iter 3 diff_wg: 46.0383
+Ensemble DFTU Inner Iter 4 diff_wg: 1.10843
+Ensemble DFTU Inner Iter 5 diff_wg: 0.597375
+Ensemble DFTU Inner Iter 6 diff_wg: 0.478784
+Ensemble DFTU Inner Iter 7 diff_wg: 0.386915
+Ensemble DFTU Inner Iter 8 diff_wg: 0.282474
+Ensemble DFTU Inner Iter 9 diff_wg: 0.18501
+Ensemble DFTU Inner Iter 10 diff_wg: 0.116247
+Ensemble DFTU Inner Iter 11 diff_wg: 0.0714402
+Ensemble DFTU Inner Iter 12 diff_wg: 0.0423661
+Ensemble DFTU Inner Iter 13 diff_wg: 0.024221
+Ensemble DFTU Inner Iter 14 diff_wg: 0.0134717
+Ensemble DFTU Inner Iter 15 diff_wg: 0.00736078
+Ensemble DFTU Inner Iter 16 diff_wg: 0.00397906
+Ensemble DFTU Inner Iter 17 diff_wg: 0.00213774
+Ensemble DFTU Inner Iter 18 diff_wg: 0.0011445
+Ensemble DFTU Inner Iter 19 diff_wg: 0.00061156
+Ensemble DFTU Inner Iter 20 diff_wg: 0.00032644
+Ensemble DFTU Inner Iter 21 diff_wg: 0.000174145
+Ensemble DFTU Inner Iter 22 diff_wg: 9.28731e-05
+Ensemble DFTU Inner Iter 23 diff_wg: 4.9522e-05
+Ensemble DFTU Inner Iter 24 diff_wg: 2.64037e-05
+Ensemble DFTU Inner Iter 25 diff_wg: 1.40754e-05
+Ensemble DFTU Inner Iter 26 diff_wg: 7.50492e-06
+ DS6     -2.00e+00   5.39e+00  -7.69246063e+03  -1.12523655e+01   8.5324e+00   2.34
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 7
+Ensemble DFTU Inner Iter 0 diff_wg: 14.2198
+Ensemble DFTU Inner Iter 1 diff_wg: 10.1295
+Ensemble DFTU Inner Iter 2 diff_wg: 12.3694
+Ensemble DFTU Inner Iter 3 diff_wg: 19.5102
+Ensemble DFTU Inner Iter 4 diff_wg: 9.34984
+Ensemble DFTU Inner Iter 5 diff_wg: 3.68182
+Ensemble DFTU Inner Iter 6 diff_wg: 2.29482
+Ensemble DFTU Inner Iter 7 diff_wg: 2.02495
+Ensemble DFTU Inner Iter 8 diff_wg: 2.19986
+Ensemble DFTU Inner Iter 9 diff_wg: 2.54536
+Ensemble DFTU Inner Iter 10 diff_wg: 3.82417
+Ensemble DFTU Inner Iter 11 diff_wg: 5.24052
+Ensemble DFTU Inner Iter 12 diff_wg: 1.43249
+Ensemble DFTU Inner Iter 13 diff_wg: 0.54094
+Ensemble DFTU Inner Iter 14 diff_wg: 0.219464
+Ensemble DFTU Inner Iter 15 diff_wg: 0.132337
+Ensemble DFTU Inner Iter 16 diff_wg: 0.119796
+Ensemble DFTU Inner Iter 17 diff_wg: 0.129076
+Ensemble DFTU Inner Iter 18 diff_wg: 0.149456
+Ensemble DFTU Inner Iter 19 diff_wg: 0.173178
+Ensemble DFTU Inner Iter 20 diff_wg: 0.195618
+Ensemble DFTU Inner Iter 21 diff_wg: 0.214956
+Ensemble DFTU Inner Iter 22 diff_wg: 0.227891
+Ensemble DFTU Inner Iter 23 diff_wg: 0.233442
+Ensemble DFTU Inner Iter 24 diff_wg: 0.233245
+Ensemble DFTU Inner Iter 25 diff_wg: 0.230133
+Ensemble DFTU Inner Iter 26 diff_wg: 0.227286
+Ensemble DFTU Inner Iter 27 diff_wg: 0.226979
+Ensemble DFTU Inner Iter 28 diff_wg: 0.230287
+Ensemble DFTU Inner Iter 29 diff_wg: 0.237475
+Ensemble DFTU Inner Iter 30 diff_wg: 0.249216
+Ensemble DFTU Inner Iter 31 diff_wg: 0.265537
+Ensemble DFTU Inner Iter 32 diff_wg: 0.287752
+Ensemble DFTU Inner Iter 33 diff_wg: 0.316338
+Ensemble DFTU Inner Iter 34 diff_wg: 0.346357
+Ensemble DFTU Inner Iter 35 diff_wg: 0.362666
+Ensemble DFTU Inner Iter 36 diff_wg: 0.347485
+Ensemble DFTU Inner Iter 37 diff_wg: 0.300198
+Ensemble DFTU Inner Iter 38 diff_wg: 0.240537
+Ensemble DFTU Inner Iter 39 diff_wg: 0.191469
+Ensemble DFTU Inner Iter 40 diff_wg: 0.164555
+Ensemble DFTU Inner Iter 41 diff_wg: 0.161907
+Ensemble DFTU Inner Iter 42 diff_wg: 0.187747
+Ensemble DFTU Inner Iter 43 diff_wg: 0.260868
+Ensemble DFTU Inner Iter 44 diff_wg: 0.438056
+Ensemble DFTU Inner Iter 45 diff_wg: 0.891898
+Ensemble DFTU Inner Iter 46 diff_wg: 1.70097
+Ensemble DFTU Inner Iter 47 diff_wg: 1.09511
+Ensemble DFTU Inner Iter 48 diff_wg: 0.828147
+Ensemble DFTU Inner Iter 49 diff_wg: 0.444027
+ DS7     -1.96e+00   2.37e+00  -7.69734395e+03  -4.88332127e+00   2.1626e+01   2.37
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 8
+Ensemble DFTU Inner Iter 0 diff_wg: 0.556299
+Ensemble DFTU Inner Iter 1 diff_wg: 0.0621279
+Ensemble DFTU Inner Iter 2 diff_wg: 0.00591289
+Ensemble DFTU Inner Iter 3 diff_wg: 0.000585016
+Ensemble DFTU Inner Iter 4 diff_wg: 6.13513e-05
+Ensemble DFTU Inner Iter 5 diff_wg: 8.11924e-06
+ DS8     -1.97e+00   2.36e+00  -7.69882578e+03  -1.48182764e+00   2.1719e+01   1.83
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 9
+Ensemble DFTU Inner Iter 0 diff_wg: 0.0303408
+Ensemble DFTU Inner Iter 1 diff_wg: 0.00114104
+Ensemble DFTU Inner Iter 2 diff_wg: 5.71285e-05
+Ensemble DFTU Inner Iter 3 diff_wg: 3.0019e-06
+ DS9     -1.97e+00   2.36e+00  -7.69920842e+03  -3.82640874e-01   2.1936e+01   2.00
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 10
+Ensemble DFTU Inner Iter 0 diff_wg: 0.0267001
+Ensemble DFTU Inner Iter 1 diff_wg: 0.000967247
+Ensemble DFTU Inner Iter 2 diff_wg: 4.7972e-05
+Ensemble DFTU Inner Iter 3 diff_wg: 2.39193e-06
+ DS10    -1.97e+00   2.39e+00  -7.69386374e+03   5.34467955e+00   2.2047e+01   2.01
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 11
+Ensemble DFTU Inner Iter 0 diff_wg: 0.0535615
+Ensemble DFTU Inner Iter 1 diff_wg: 0.00184777
+Ensemble DFTU Inner Iter 2 diff_wg: 8.98346e-05
+Ensemble DFTU Inner Iter 3 diff_wg: 4.88552e-06
+ DS11    -1.97e+00   2.47e+00  -7.69543109e+03  -1.56734892e+00   2.0853e+01   1.91
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 12
+Ensemble DFTU Inner Iter 0 diff_wg: 0.0908424
+Ensemble DFTU Inner Iter 1 diff_wg: 0.00178314
+Ensemble DFTU Inner Iter 2 diff_wg: 4.05867e-05
+Ensemble DFTU Inner Iter 3 diff_wg: 9.46169e-07
+ DS12    -1.97e+00   2.47e+00  -7.68948398e+03   5.94711002e+00   2.1240e+01   2.02
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 13
+Ensemble DFTU Inner Iter 0 diff_wg: 0.108761
+Ensemble DFTU Inner Iter 1 diff_wg: 0.00220434
+Ensemble DFTU Inner Iter 2 diff_wg: 5.57693e-05
+Ensemble DFTU Inner Iter 3 diff_wg: 1.47733e-06
+ DS13    -1.97e+00   2.58e+00  -7.68746050e+03   2.02347281e+00   1.9739e+01   1.84
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 14
+Ensemble DFTU Inner Iter 0 diff_wg: 0.112987
+Ensemble DFTU Inner Iter 1 diff_wg: 0.00142906
+Ensemble DFTU Inner Iter 2 diff_wg: 3.04644e-05
+Ensemble DFTU Inner Iter 3 diff_wg: 8.64976e-07
+ DS14    -1.97e+00   2.63e+00  -7.63908145e+03   4.83790552e+01   1.8937e+01   1.85
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 15
+Ensemble DFTU Inner Iter 0 diff_wg: 0.180753
+Ensemble DFTU Inner Iter 1 diff_wg: 0.00165239
+Ensemble DFTU Inner Iter 2 diff_wg: 2.22907e-05
+Ensemble DFTU Inner Iter 3 diff_wg: 7.24974e-07
+ DS15     1.60e+00   6.35e+00  -7.67268966e+03  -3.36082125e+01   6.2243e+00   3.51
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 16
+Ensemble DFTU Inner Iter 0 diff_wg: 40.7268
+Ensemble DFTU Inner Iter 1 diff_wg: 25.8811
+Ensemble DFTU Inner Iter 2 diff_wg: 23.2471
+Ensemble DFTU Inner Iter 3 diff_wg: 5.3704
+Ensemble DFTU Inner Iter 4 diff_wg: 1.43486
+Ensemble DFTU Inner Iter 5 diff_wg: 0.531822
+Ensemble DFTU Inner Iter 6 diff_wg: 0.217025
+Ensemble DFTU Inner Iter 7 diff_wg: 0.121535
+Ensemble DFTU Inner Iter 8 diff_wg: 0.0781994
+Ensemble DFTU Inner Iter 9 diff_wg: 0.050905
+Ensemble DFTU Inner Iter 10 diff_wg: 0.0330741
+Ensemble DFTU Inner Iter 11 diff_wg: 0.0214092
+Ensemble DFTU Inner Iter 12 diff_wg: 0.0138182
+Ensemble DFTU Inner Iter 13 diff_wg: 0.00890007
+Ensemble DFTU Inner Iter 14 diff_wg: 0.00572385
+Ensemble DFTU Inner Iter 15 diff_wg: 0.00367746
+Ensemble DFTU Inner Iter 16 diff_wg: 0.00236113
+Ensemble DFTU Inner Iter 17 diff_wg: 0.00151532
+Ensemble DFTU Inner Iter 18 diff_wg: 0.000972215
+Ensemble DFTU Inner Iter 19 diff_wg: 0.000623651
+Ensemble DFTU Inner Iter 20 diff_wg: 0.000400007
+Ensemble DFTU Inner Iter 21 diff_wg: 0.000256544
+Ensemble DFTU Inner Iter 22 diff_wg: 0.000164525
+Ensemble DFTU Inner Iter 23 diff_wg: 0.000105509
+Ensemble DFTU Inner Iter 24 diff_wg: 6.76609e-05
+Ensemble DFTU Inner Iter 25 diff_wg: 4.33891e-05
+Ensemble DFTU Inner Iter 26 diff_wg: 2.78243e-05
+Ensemble DFTU Inner Iter 27 diff_wg: 1.78421e-05
+Ensemble DFTU Inner Iter 28 diff_wg: 1.14423e-05
+Ensemble DFTU Inner Iter 29 diff_wg: 7.33666e-06
+ DS16     1.97e+00   2.28e+00  -7.67343855e+03  -7.48888815e-01   2.2882e+01   2.75
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 17
+Ensemble DFTU Inner Iter 0 diff_wg: 6.34529
+Ensemble DFTU Inner Iter 1 diff_wg: 2.4579
+Ensemble DFTU Inner Iter 2 diff_wg: 0.554553
+Ensemble DFTU Inner Iter 3 diff_wg: 0.124986
+Ensemble DFTU Inner Iter 4 diff_wg: 0.0479931
+Ensemble DFTU Inner Iter 5 diff_wg: 0.0182878
+Ensemble DFTU Inner Iter 6 diff_wg: 0.00691872
+Ensemble DFTU Inner Iter 7 diff_wg: 0.00260967
+Ensemble DFTU Inner Iter 8 diff_wg: 0.000983181
+Ensemble DFTU Inner Iter 9 diff_wg: 0.000370244
+Ensemble DFTU Inner Iter 10 diff_wg: 0.000139402
+Ensemble DFTU Inner Iter 11 diff_wg: 5.24827e-05
+Ensemble DFTU Inner Iter 12 diff_wg: 1.97582e-05
+Ensemble DFTU Inner Iter 13 diff_wg: 7.43854e-06
+ DS17     2.00e+00   3.02e+00  -7.66153176e+03   1.19067865e+01   1.2686e+01   2.89
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 18
+Ensemble DFTU Inner Iter 0 diff_wg: 28.7782
+Ensemble DFTU Inner Iter 1 diff_wg: 25.5288
+Ensemble DFTU Inner Iter 2 diff_wg: 15.8302
+Ensemble DFTU Inner Iter 3 diff_wg: 7.52822
+Ensemble DFTU Inner Iter 4 diff_wg: 4.73921
+Ensemble DFTU Inner Iter 5 diff_wg: 5.95431
+Ensemble DFTU Inner Iter 6 diff_wg: 6.6406
+Ensemble DFTU Inner Iter 7 diff_wg: 5.23694
+Ensemble DFTU Inner Iter 8 diff_wg: 5.17535
+Ensemble DFTU Inner Iter 9 diff_wg: 4.7061
+Ensemble DFTU Inner Iter 10 diff_wg: 3.69475
+Ensemble DFTU Inner Iter 11 diff_wg: 1.76277
+Ensemble DFTU Inner Iter 12 diff_wg: 0.914648
+Ensemble DFTU Inner Iter 13 diff_wg: 1.00481
+Ensemble DFTU Inner Iter 14 diff_wg: 1.38132
+Ensemble DFTU Inner Iter 15 diff_wg: 1.64866
+Ensemble DFTU Inner Iter 16 diff_wg: 1.33388
+Ensemble DFTU Inner Iter 17 diff_wg: 0.791596
+Ensemble DFTU Inner Iter 18 diff_wg: 0.427776
+Ensemble DFTU Inner Iter 19 diff_wg: 0.253956
+Ensemble DFTU Inner Iter 20 diff_wg: 0.161531
+Ensemble DFTU Inner Iter 21 diff_wg: 0.105798
+Ensemble DFTU Inner Iter 22 diff_wg: 0.0702613
+Ensemble DFTU Inner Iter 23 diff_wg: 0.0469045
+Ensemble DFTU Inner Iter 24 diff_wg: 0.0313777
+Ensemble DFTU Inner Iter 25 diff_wg: 0.0210088
+Ensemble DFTU Inner Iter 26 diff_wg: 0.0140713
+Ensemble DFTU Inner Iter 27 diff_wg: 0.00942614
+Ensemble DFTU Inner Iter 28 diff_wg: 0.00631485
+Ensemble DFTU Inner Iter 29 diff_wg: 0.00423065
+Ensemble DFTU Inner Iter 30 diff_wg: 0.0028344
+Ensemble DFTU Inner Iter 31 diff_wg: 0.00189898
+Ensemble DFTU Inner Iter 32 diff_wg: 0.00127228
+Ensemble DFTU Inner Iter 33 diff_wg: 0.000852417
+Ensemble DFTU Inner Iter 34 diff_wg: 0.000571114
+Ensemble DFTU Inner Iter 35 diff_wg: 0.000382646
+Ensemble DFTU Inner Iter 36 diff_wg: 0.000256373
+Ensemble DFTU Inner Iter 37 diff_wg: 0.000171771
+Ensemble DFTU Inner Iter 38 diff_wg: 0.000115088
+Ensemble DFTU Inner Iter 39 diff_wg: 7.71088e-05
+Ensemble DFTU Inner Iter 40 diff_wg: 5.16641e-05
+Ensemble DFTU Inner Iter 41 diff_wg: 3.46154e-05
+Ensemble DFTU Inner Iter 42 diff_wg: 2.31923e-05
+Ensemble DFTU Inner Iter 43 diff_wg: 1.55393e-05
+Ensemble DFTU Inner Iter 44 diff_wg: 1.04115e-05
+Ensemble DFTU Inner Iter 45 diff_wg: 6.97547e-06
+ DS18    -2.00e+00   6.59e+00  -7.67768996e+03  -1.61581941e+01   3.7910e+00   3.17
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 19
+Ensemble DFTU Inner Iter 0 diff_wg: 25.2267
+Ensemble DFTU Inner Iter 1 diff_wg: 23.5866
+Ensemble DFTU Inner Iter 2 diff_wg: 22.0816
+Ensemble DFTU Inner Iter 3 diff_wg: 15.6306
+Ensemble DFTU Inner Iter 4 diff_wg: 14.8778
+Ensemble DFTU Inner Iter 5 diff_wg: 7.59735
+Ensemble DFTU Inner Iter 6 diff_wg: 1.33832
+Ensemble DFTU Inner Iter 7 diff_wg: 0.268988
+Ensemble DFTU Inner Iter 8 diff_wg: 0.0470022
+Ensemble DFTU Inner Iter 9 diff_wg: 0.00966709
+Ensemble DFTU Inner Iter 10 diff_wg: 0.00247102
+Ensemble DFTU Inner Iter 11 diff_wg: 0.000705716
+Ensemble DFTU Inner Iter 12 diff_wg: 0.000213807
+Ensemble DFTU Inner Iter 13 diff_wg: 6.66743e-05
+Ensemble DFTU Inner Iter 14 diff_wg: 2.11093e-05
+Ensemble DFTU Inner Iter 15 diff_wg: 6.74797e-06
+ DS19    -2.00e+00   3.28e+00  -7.68077091e+03  -3.08095125e+00   1.3640e+01   2.26
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 20
+Ensemble DFTU Inner Iter 0 diff_wg: 16.7165
+Ensemble DFTU Inner Iter 1 diff_wg: 11.7739
+Ensemble DFTU Inner Iter 2 diff_wg: 5.41441
+Ensemble DFTU Inner Iter 3 diff_wg: 5.01546
+Ensemble DFTU Inner Iter 4 diff_wg: 6.42768
+Ensemble DFTU Inner Iter 5 diff_wg: 7.36106
+Ensemble DFTU Inner Iter 6 diff_wg: 9.28535
+Ensemble DFTU Inner Iter 7 diff_wg: 13.6873
+Ensemble DFTU Inner Iter 8 diff_wg: 8.35853
+Ensemble DFTU Inner Iter 9 diff_wg: 3.04431
+Ensemble DFTU Inner Iter 10 diff_wg: 1.31011
+Ensemble DFTU Inner Iter 11 diff_wg: 0.962898
+Ensemble DFTU Inner Iter 12 diff_wg: 1.3913
+Ensemble DFTU Inner Iter 13 diff_wg: 2.32691
+Ensemble DFTU Inner Iter 14 diff_wg: 2.88166
+Ensemble DFTU Inner Iter 15 diff_wg: 2.44336
+Ensemble DFTU Inner Iter 16 diff_wg: 2.33611
+Ensemble DFTU Inner Iter 17 diff_wg: 2.67059
+Ensemble DFTU Inner Iter 18 diff_wg: 2.41537
+Ensemble DFTU Inner Iter 19 diff_wg: 1.55339
+Ensemble DFTU Inner Iter 20 diff_wg: 1.02596
+Ensemble DFTU Inner Iter 21 diff_wg: 0.80224
+Ensemble DFTU Inner Iter 22 diff_wg: 0.610271
+Ensemble DFTU Inner Iter 23 diff_wg: 0.420019
+Ensemble DFTU Inner Iter 24 diff_wg: 0.279026
+Ensemble DFTU Inner Iter 25 diff_wg: 0.188521
+Ensemble DFTU Inner Iter 26 diff_wg: 0.131575
+Ensemble DFTU Inner Iter 27 diff_wg: 0.0923459
+Ensemble DFTU Inner Iter 28 diff_wg: 0.0649782
+Ensemble DFTU Inner Iter 29 diff_wg: 0.0457776
+Ensemble DFTU Inner Iter 30 diff_wg: 0.0322495
+Ensemble DFTU Inner Iter 31 diff_wg: 0.0227129
+Ensemble DFTU Inner Iter 32 diff_wg: 0.015992
+Ensemble DFTU Inner Iter 33 diff_wg: 0.0112574
+Ensemble DFTU Inner Iter 34 diff_wg: 0.00792338
+Ensemble DFTU Inner Iter 35 diff_wg: 0.0055763
+Ensemble DFTU Inner Iter 36 diff_wg: 0.00392434
+Ensemble DFTU Inner Iter 37 diff_wg: 0.00276181
+Ensemble DFTU Inner Iter 38 diff_wg: 0.00194369
+Ensemble DFTU Inner Iter 39 diff_wg: 0.00136795
+Ensemble DFTU Inner Iter 40 diff_wg: 0.000962783
+Ensemble DFTU Inner Iter 41 diff_wg: 0.000677645
+Ensemble DFTU Inner Iter 42 diff_wg: 0.000476971
+Ensemble DFTU Inner Iter 43 diff_wg: 0.000335774
+Ensemble DFTU Inner Iter 44 diff_wg: 0.000236381
+Ensemble DFTU Inner Iter 45 diff_wg: 0.000166413
+Ensemble DFTU Inner Iter 46 diff_wg: 0.000117157
+Ensemble DFTU Inner Iter 47 diff_wg: 8.24975e-05
+Ensemble DFTU Inner Iter 48 diff_wg: 5.80976e-05
+Ensemble DFTU Inner Iter 49 diff_wg: 4.09135e-05
+ DS20    -2.00e+00   6.84e+00  -7.68339012e+03  -2.61921555e+00   2.5992e+00   2.30
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 21
+Ensemble DFTU Inner Iter 0 diff_wg: 4.63728
+Ensemble DFTU Inner Iter 1 diff_wg: 0.00594985
+Ensemble DFTU Inner Iter 2 diff_wg: 2.86562e-05
+Ensemble DFTU Inner Iter 3 diff_wg: 1.4005e-07
+ DS21    -2.00e+00   7.41e+00  -7.68542337e+03  -2.03324659e+00   1.3746e+00   1.88
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 22
+Ensemble DFTU Inner Iter 0 diff_wg: 2.498e-16
+ DS22    -2.00e+00   7.45e+00  -7.68574469e+03  -3.21314694e-01   1.3363e+00   1.82
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 23
+Ensemble DFTU Inner Iter 0 diff_wg: 0
+ DS23    -2.00e+00   7.44e+00  -7.68441823e+03   1.32645388e+00   1.3330e+00   2.22
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 24
+Ensemble DFTU Inner Iter 0 diff_wg: 7.60503e-15
+ DS24    -2.00e+00   7.45e+00  -7.68360517e+03   8.13058206e-01   8.9066e-01   1.99
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 25
+Ensemble DFTU Inner Iter 0 diff_wg: 0
+ DS25    -2.00e+00   7.45e+00  -7.68255009e+03   1.05508189e+00   5.8226e-01   2.18
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 26
+Ensemble DFTU Inner Iter 0 diff_wg: 2.5073e-13
+ DS26    -1.89e+00   7.36e+00  -7.68222603e+03   3.24060392e-01   1.2937e-01   2.16
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 27
+Ensemble DFTU Inner Iter 0 diff_wg: 15.2619
+Ensemble DFTU Inner Iter 1 diff_wg: 45.4014
+Ensemble DFTU Inner Iter 2 diff_wg: 25.1979
+Ensemble DFTU Inner Iter 3 diff_wg: 17.2544
+Ensemble DFTU Inner Iter 4 diff_wg: 8.60618
+Ensemble DFTU Inner Iter 5 diff_wg: 9.37309
+Ensemble DFTU Inner Iter 6 diff_wg: 11.8948
+Ensemble DFTU Inner Iter 7 diff_wg: 14.2561
+Ensemble DFTU Inner Iter 8 diff_wg: 19.2548
+Ensemble DFTU Inner Iter 9 diff_wg: 12.6833
+Ensemble DFTU Inner Iter 10 diff_wg: 4.00664
+Ensemble DFTU Inner Iter 11 diff_wg: 1.01451
+Ensemble DFTU Inner Iter 12 diff_wg: 0.415434
+Ensemble DFTU Inner Iter 13 diff_wg: 0.278449
+Ensemble DFTU Inner Iter 14 diff_wg: 0.199973
+Ensemble DFTU Inner Iter 15 diff_wg: 0.144578
+Ensemble DFTU Inner Iter 16 diff_wg: 0.104638
+Ensemble DFTU Inner Iter 17 diff_wg: 0.0755105
+Ensemble DFTU Inner Iter 18 diff_wg: 0.0537583
+Ensemble DFTU Inner Iter 19 diff_wg: 0.0379105
+Ensemble DFTU Inner Iter 20 diff_wg: 0.0265587
+Ensemble DFTU Inner Iter 21 diff_wg: 0.0185132
+Ensemble DFTU Inner Iter 22 diff_wg: 0.01286
+Ensemble DFTU Inner Iter 23 diff_wg: 0.00891152
+Ensemble DFTU Inner Iter 24 diff_wg: 0.00616502
+Ensemble DFTU Inner Iter 25 diff_wg: 0.00426008
+Ensemble DFTU Inner Iter 26 diff_wg: 0.00294143
+Ensemble DFTU Inner Iter 27 diff_wg: 0.00202987
+Ensemble DFTU Inner Iter 28 diff_wg: 0.00140029
+Ensemble DFTU Inner Iter 29 diff_wg: 0.00096574
+Ensemble DFTU Inner Iter 30 diff_wg: 0.000665935
+Ensemble DFTU Inner Iter 31 diff_wg: 0.000459152
+Ensemble DFTU Inner Iter 32 diff_wg: 0.000316556
+Ensemble DFTU Inner Iter 33 diff_wg: 0.000218235
+Ensemble DFTU Inner Iter 34 diff_wg: 0.000150447
+Ensemble DFTU Inner Iter 35 diff_wg: 0.000103714
+Ensemble DFTU Inner Iter 36 diff_wg: 7.14964e-05
+Ensemble DFTU Inner Iter 37 diff_wg: 4.92868e-05
+Ensemble DFTU Inner Iter 38 diff_wg: 3.39764e-05
+Ensemble DFTU Inner Iter 39 diff_wg: 2.34217e-05
+Ensemble DFTU Inner Iter 40 diff_wg: 1.61461e-05
+Ensemble DFTU Inner Iter 41 diff_wg: 1.11303e-05
+Ensemble DFTU Inner Iter 42 diff_wg: 7.67283e-06
+ DS27     1.91e+00   2.69e+00  -7.69208781e+03  -9.86177686e+00   2.2817e+01   3.24
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 28
+Ensemble DFTU Inner Iter 0 diff_wg: 6.64859
+Ensemble DFTU Inner Iter 1 diff_wg: 1.00685
+Ensemble DFTU Inner Iter 2 diff_wg: 0.180372
+Ensemble DFTU Inner Iter 3 diff_wg: 0.0369762
+Ensemble DFTU Inner Iter 4 diff_wg: 0.00761991
+Ensemble DFTU Inner Iter 5 diff_wg: 0.00157067
+Ensemble DFTU Inner Iter 6 diff_wg: 0.000323733
+Ensemble DFTU Inner Iter 7 diff_wg: 6.67222e-05
+Ensemble DFTU Inner Iter 8 diff_wg: 1.37516e-05
+Ensemble DFTU Inner Iter 9 diff_wg: 2.83447e-06
+ DS28     1.97e+00   2.51e+00  -7.67495514e+03   1.71326725e+01   2.0156e+01   2.34
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 29
+Ensemble DFTU Inner Iter 0 diff_wg: 0.474624
+Ensemble DFTU Inner Iter 1 diff_wg: 0.0138261
+Ensemble DFTU Inner Iter 2 diff_wg: 0.000383694
+Ensemble DFTU Inner Iter 3 diff_wg: 1.06331e-05
+Ensemble DFTU Inner Iter 4 diff_wg: 2.94689e-07
+ DS29     2.00e+00   3.22e+00  -7.66906106e+03   5.89407514e+00   1.2086e+01   3.07
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 30
+Ensemble DFTU Inner Iter 0 diff_wg: 37.467
+Ensemble DFTU Inner Iter 1 diff_wg: 31.4029
+Ensemble DFTU Inner Iter 2 diff_wg: 18.9011
+Ensemble DFTU Inner Iter 3 diff_wg: 12.7847
+Ensemble DFTU Inner Iter 4 diff_wg: 13.3753
+Ensemble DFTU Inner Iter 5 diff_wg: 8.7228
+Ensemble DFTU Inner Iter 6 diff_wg: 9.10332
+Ensemble DFTU Inner Iter 7 diff_wg: 10.8585
+Ensemble DFTU Inner Iter 8 diff_wg: 14.9361
+Ensemble DFTU Inner Iter 9 diff_wg: 14.7332
+Ensemble DFTU Inner Iter 10 diff_wg: 13.8271
+Ensemble DFTU Inner Iter 11 diff_wg: 6.14981
+Ensemble DFTU Inner Iter 12 diff_wg: 3.61049
+Ensemble DFTU Inner Iter 13 diff_wg: 3.13746
+Ensemble DFTU Inner Iter 14 diff_wg: 2.24276
+Ensemble DFTU Inner Iter 15 diff_wg: 0.34039
+Ensemble DFTU Inner Iter 16 diff_wg: 0.0806103
+Ensemble DFTU Inner Iter 17 diff_wg: 0.0207192
+Ensemble DFTU Inner Iter 18 diff_wg: 0.00557081
+Ensemble DFTU Inner Iter 19 diff_wg: 0.00158969
+Ensemble DFTU Inner Iter 20 diff_wg: 0.000466523
+Ensemble DFTU Inner Iter 21 diff_wg: 0.000136592
+Ensemble DFTU Inner Iter 22 diff_wg: 3.98963e-05
+Ensemble DFTU Inner Iter 23 diff_wg: 1.16395e-05
+Ensemble DFTU Inner Iter 24 diff_wg: 3.39389e-06
+ DS30    -2.00e+00   7.36e+00  -7.68650244e+03  -1.74413823e+01   1.6181e+00   2.69
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 31
+Ensemble DFTU Inner Iter 0 diff_wg: 1.77138e-06
+ DS31    -2.00e+00   7.46e+00  -7.68626117e+03   2.41275115e-01   1.6648e+00   2.15
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 32
+Ensemble DFTU Inner Iter 0 diff_wg: 3.01498e-12
+ DS32    -2.00e+00   7.49e+00  -7.68562176e+03   6.39411079e-01   1.2225e+00   2.03
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 33
+Ensemble DFTU Inner Iter 0 diff_wg: 2.00451e-13
+ DS33    -2.00e+00   7.50e+00  -7.68522716e+03   3.94600999e-01   9.8751e-01   1.96
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 34
+Ensemble DFTU Inner Iter 0 diff_wg: 9.81187e-13
+ DS34    -2.00e+00   7.51e+00  -7.68486493e+03   3.62228974e-01   8.4920e-01   2.06
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 35
+Ensemble DFTU Inner Iter 0 diff_wg: 1.38778e-17
+ DS35    -2.00e+00   7.52e+00  -7.68410472e+03   7.60205866e-01   7.3125e-01   1.90
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 36
+Ensemble DFTU Inner Iter 0 diff_wg: 2.77556e-17
+ DS36    -2.00e+00   7.53e+00  -7.68427609e+03  -1.71368496e-01   5.0547e-01   2.27
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 37
+Ensemble DFTU Inner Iter 0 diff_wg: 6.79506e-10
+ DS37    -2.00e+00   7.53e+00  -7.68411129e+03   1.64796058e-01   5.3445e-01   1.82
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 38
+Ensemble DFTU Inner Iter 0 diff_wg: 3.20717e-10
+ DS38    -2.00e+00   7.54e+00  -7.68146315e+03   2.64814213e+00   4.8071e-01   1.82
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 39
+Ensemble DFTU Inner Iter 0 diff_wg: 2.5486e-09
+ DS39     1.67e+00   6.80e+00  -7.68137381e+03   8.93440883e-02   5.1260e+00   2.97
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 40
+Ensemble DFTU Inner Iter 0 diff_wg: 63.5876
+Ensemble DFTU Inner Iter 1 diff_wg: 13.3104
+Ensemble DFTU Inner Iter 2 diff_wg: 4.31067
+Ensemble DFTU Inner Iter 3 diff_wg: 2.71919
+Ensemble DFTU Inner Iter 4 diff_wg: 1.80687
+Ensemble DFTU Inner Iter 5 diff_wg: 1.16565
+Ensemble DFTU Inner Iter 6 diff_wg: 0.757747
+Ensemble DFTU Inner Iter 7 diff_wg: 0.552248
+Ensemble DFTU Inner Iter 8 diff_wg: 0.428226
+Ensemble DFTU Inner Iter 9 diff_wg: 0.326399
+Ensemble DFTU Inner Iter 10 diff_wg: 0.243726
+Ensemble DFTU Inner Iter 11 diff_wg: 0.180868
+Ensemble DFTU Inner Iter 12 diff_wg: 0.133888
+Ensemble DFTU Inner Iter 13 diff_wg: 0.0988709
+Ensemble DFTU Inner Iter 14 diff_wg: 0.0729437
+Ensemble DFTU Inner Iter 15 diff_wg: 0.0536905
+Ensemble DFTU Inner Iter 16 diff_wg: 0.0394424
+Ensemble DFTU Inner Iter 17 diff_wg: 0.0289295
+Ensemble DFTU Inner Iter 18 diff_wg: 0.0211918
+Ensemble DFTU Inner Iter 19 diff_wg: 0.0155084
+Ensemble DFTU Inner Iter 20 diff_wg: 0.0113405
+Ensemble DFTU Inner Iter 21 diff_wg: 0.00828797
+Ensemble DFTU Inner Iter 22 diff_wg: 0.00605441
+Ensemble DFTU Inner Iter 23 diff_wg: 0.00442133
+Ensemble DFTU Inner Iter 24 diff_wg: 0.00322795
+Ensemble DFTU Inner Iter 25 diff_wg: 0.00235625
+Ensemble DFTU Inner Iter 26 diff_wg: 0.00171972
+Ensemble DFTU Inner Iter 27 diff_wg: 0.00125502
+Ensemble DFTU Inner Iter 28 diff_wg: 0.000915821
+Ensemble DFTU Inner Iter 29 diff_wg: 0.000668263
+Ensemble DFTU Inner Iter 30 diff_wg: 0.000487604
+Ensemble DFTU Inner Iter 31 diff_wg: 0.000355774
+Ensemble DFTU Inner Iter 32 diff_wg: 0.00025958
+Ensemble DFTU Inner Iter 33 diff_wg: 0.000189392
+Ensemble DFTU Inner Iter 34 diff_wg: 0.000138181
+Ensemble DFTU Inner Iter 35 diff_wg: 0.000100816
+Ensemble DFTU Inner Iter 36 diff_wg: 7.35541e-05
+Ensemble DFTU Inner Iter 37 diff_wg: 5.36644e-05
+Ensemble DFTU Inner Iter 38 diff_wg: 3.91527e-05
+Ensemble DFTU Inner Iter 39 diff_wg: 2.85655e-05
+Ensemble DFTU Inner Iter 40 diff_wg: 2.08403e-05
+Ensemble DFTU Inner Iter 41 diff_wg: 1.52048e-05
+Ensemble DFTU Inner Iter 42 diff_wg: 1.10932e-05
+Ensemble DFTU Inner Iter 43 diff_wg: 8.09358e-06
+ DS40     2.00e+00   3.77e+00  -7.68870148e+03  -7.32766859e+00   1.6158e+01   2.39
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 41
+Ensemble DFTU Inner Iter 0 diff_wg: 3.85047
+Ensemble DFTU Inner Iter 1 diff_wg: 0.358567
+Ensemble DFTU Inner Iter 2 diff_wg: 0.143661
+Ensemble DFTU Inner Iter 3 diff_wg: 0.0701184
+Ensemble DFTU Inner Iter 4 diff_wg: 0.0374216
+Ensemble DFTU Inner Iter 5 diff_wg: 0.0209279
+Ensemble DFTU Inner Iter 6 diff_wg: 0.0121145
+Ensemble DFTU Inner Iter 7 diff_wg: 0.00710062
+Ensemble DFTU Inner Iter 8 diff_wg: 0.00416296
+Ensemble DFTU Inner Iter 9 diff_wg: 0.0024408
+Ensemble DFTU Inner Iter 10 diff_wg: 0.00143106
+Ensemble DFTU Inner Iter 11 diff_wg: 0.000839027
+Ensemble DFTU Inner Iter 12 diff_wg: 0.000491909
+Ensemble DFTU Inner Iter 13 diff_wg: 0.000288391
+Ensemble DFTU Inner Iter 14 diff_wg: 0.000169075
+Ensemble DFTU Inner Iter 15 diff_wg: 9.91213e-05
+Ensemble DFTU Inner Iter 16 diff_wg: 5.81111e-05
+Ensemble DFTU Inner Iter 17 diff_wg: 3.40672e-05
+Ensemble DFTU Inner Iter 18 diff_wg: 1.99724e-05
+Ensemble DFTU Inner Iter 19 diff_wg: 1.17079e-05
+Ensemble DFTU Inner Iter 20 diff_wg: 6.86499e-06
+ DS41     2.00e+00   3.20e+00  -7.69007385e+03  -1.37237595e+00   1.7656e+01   2.20
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 42
+Ensemble DFTU Inner Iter 0 diff_wg: 0.400833
+Ensemble DFTU Inner Iter 1 diff_wg: 1.84669e-06
+ DS42     2.00e+00   2.95e+00  -7.68864766e+03   1.42619352e+00   1.8679e+01   1.83
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 43
+Ensemble DFTU Inner Iter 0 diff_wg: 0.000152292
+Ensemble DFTU Inner Iter 1 diff_wg: 3.41225e-11
+ DS43     2.00e+00   2.87e+00  -7.68490213e+03   3.74552360e+00   1.8497e+01   2.04
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 44
+Ensemble DFTU Inner Iter 0 diff_wg: 1.37192e-06
+ DS44     2.00e+00   3.02e+00  -7.68613570e+03  -1.23356365e+00   1.6971e+01   2.00
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 45
+Ensemble DFTU Inner Iter 0 diff_wg: 0.506871
+Ensemble DFTU Inner Iter 1 diff_wg: 0.296729
+Ensemble DFTU Inner Iter 2 diff_wg: 0.21374
+Ensemble DFTU Inner Iter 3 diff_wg: 0.169671
+Ensemble DFTU Inner Iter 4 diff_wg: 0.142997
+Ensemble DFTU Inner Iter 5 diff_wg: 0.125876
+Ensemble DFTU Inner Iter 6 diff_wg: 0.114827
+Ensemble DFTU Inner Iter 7 diff_wg: 0.108176
+Ensemble DFTU Inner Iter 8 diff_wg: 0.105184
+Ensemble DFTU Inner Iter 9 diff_wg: 0.105721
+Ensemble DFTU Inner Iter 10 diff_wg: 0.110228
+Ensemble DFTU Inner Iter 11 diff_wg: 0.119885
+Ensemble DFTU Inner Iter 12 diff_wg: 0.137139
+Ensemble DFTU Inner Iter 13 diff_wg: 0.16696
+Ensemble DFTU Inner Iter 14 diff_wg: 0.219997
+Ensemble DFTU Inner Iter 15 diff_wg: 0.320965
+Ensemble DFTU Inner Iter 16 diff_wg: 0.531077
+Ensemble DFTU Inner Iter 17 diff_wg: 0.985491
+Ensemble DFTU Inner Iter 18 diff_wg: 1.91087
+Ensemble DFTU Inner Iter 19 diff_wg: 6.35293
+Ensemble DFTU Inner Iter 20 diff_wg: 10.9872
+Ensemble DFTU Inner Iter 21 diff_wg: 6.7896
+Ensemble DFTU Inner Iter 22 diff_wg: 2.39772
+Ensemble DFTU Inner Iter 23 diff_wg: 1.77441
+Ensemble DFTU Inner Iter 24 diff_wg: 1.33912
+Ensemble DFTU Inner Iter 25 diff_wg: 0.927465
+Ensemble DFTU Inner Iter 26 diff_wg: 0.527349
+Ensemble DFTU Inner Iter 27 diff_wg: 0.278645
+Ensemble DFTU Inner Iter 28 diff_wg: 0.151768
+Ensemble DFTU Inner Iter 29 diff_wg: 0.0871989
+Ensemble DFTU Inner Iter 30 diff_wg: 0.0536766
+Ensemble DFTU Inner Iter 31 diff_wg: 0.0339963
+Ensemble DFTU Inner Iter 32 diff_wg: 0.0217368
+Ensemble DFTU Inner Iter 33 diff_wg: 0.0139889
+Ensemble DFTU Inner Iter 34 diff_wg: 0.00904248
+Ensemble DFTU Inner Iter 35 diff_wg: 0.00586237
+Ensemble DFTU Inner Iter 36 diff_wg: 0.00380811
+Ensemble DFTU Inner Iter 37 diff_wg: 0.0024769
+Ensemble DFTU Inner Iter 38 diff_wg: 0.00161241
+Ensemble DFTU Inner Iter 39 diff_wg: 0.00105022
+Ensemble DFTU Inner Iter 40 diff_wg: 0.000684297
+Ensemble DFTU Inner Iter 41 diff_wg: 0.000445975
+Ensemble DFTU Inner Iter 42 diff_wg: 0.000290698
+Ensemble DFTU Inner Iter 43 diff_wg: 0.000189504
+Ensemble DFTU Inner Iter 44 diff_wg: 0.000123544
+Ensemble DFTU Inner Iter 45 diff_wg: 8.05453e-05
+Ensemble DFTU Inner Iter 46 diff_wg: 5.25142e-05
+Ensemble DFTU Inner Iter 47 diff_wg: 3.4238e-05
+Ensemble DFTU Inner Iter 48 diff_wg: 2.23231e-05
+Ensemble DFTU Inner Iter 49 diff_wg: 1.45549e-05
+ DS45     2.00e+00   4.31e+00  -7.68681799e+03  -6.82291547e-01   1.1496e+01   2.14
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 46
+Ensemble DFTU Inner Iter 0 diff_wg: 1.96649
+Ensemble DFTU Inner Iter 1 diff_wg: 1.88601e-05
+Ensemble DFTU Inner Iter 2 diff_wg: 1.30747e-09
+ DS46     2.00e+00   4.26e+00  -7.68480298e+03   2.01501402e+00   1.1457e+01   2.08
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 47
+Ensemble DFTU Inner Iter 0 diff_wg: 0.000272753
+Ensemble DFTU Inner Iter 1 diff_wg: 3.5732e-10
+ DS47     2.00e+00   4.29e+00  -7.65456247e+03   3.02405097e+01   1.0564e+01   1.89
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 48
+Ensemble DFTU Inner Iter 0 diff_wg: 0.00574934
+Ensemble DFTU Inner Iter 1 diff_wg: 0.000110491
+Ensemble DFTU Inner Iter 2 diff_wg: 2.15047e-06
+ DS48    -2.00e+00   5.17e+00  -7.67982308e+03  -2.52606100e+01   1.0596e+01   3.65
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 49
+Ensemble DFTU Inner Iter 0 diff_wg: 25.0388
+Ensemble DFTU Inner Iter 1 diff_wg: 15.2145
+Ensemble DFTU Inner Iter 2 diff_wg: 7.3642
+Ensemble DFTU Inner Iter 3 diff_wg: 2.89797
+Ensemble DFTU Inner Iter 4 diff_wg: 0.953745
+Ensemble DFTU Inner Iter 5 diff_wg: 0.381419
+Ensemble DFTU Inner Iter 6 diff_wg: 0.170119
+Ensemble DFTU Inner Iter 7 diff_wg: 0.0769428
+Ensemble DFTU Inner Iter 8 diff_wg: 0.03472
+Ensemble DFTU Inner Iter 9 diff_wg: 0.015628
+Ensemble DFTU Inner Iter 10 diff_wg: 0.00702235
+Ensemble DFTU Inner Iter 11 diff_wg: 0.00315211
+Ensemble DFTU Inner Iter 12 diff_wg: 0.00141385
+Ensemble DFTU Inner Iter 13 diff_wg: 0.000633855
+Ensemble DFTU Inner Iter 14 diff_wg: 0.000284072
+Ensemble DFTU Inner Iter 15 diff_wg: 0.00012728
+Ensemble DFTU Inner Iter 16 diff_wg: 5.70197e-05
+Ensemble DFTU Inner Iter 17 diff_wg: 2.55406e-05
+Ensemble DFTU Inner Iter 18 diff_wg: 1.14397e-05
+Ensemble DFTU Inner Iter 19 diff_wg: 5.12322e-06
+ DS49    -1.97e+00   2.42e+00  -7.71367678e+03  -3.38537070e+01   2.2797e+01   2.34
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 50
+Ensemble DFTU Inner Iter 0 diff_wg: 1.76877
+Ensemble DFTU Inner Iter 1 diff_wg: 0.0213086
+Ensemble DFTU Inner Iter 2 diff_wg: 0.00182386
+Ensemble DFTU Inner Iter 3 diff_wg: 0.000181807
+Ensemble DFTU Inner Iter 4 diff_wg: 1.81784e-05
+Ensemble DFTU Inner Iter 5 diff_wg: 1.81859e-06
+ DS50    -1.91e+00   2.27e+00  -7.71671034e+03  -3.03356134e+00   2.5485e+01   2.33
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 51
+Ensemble DFTU Inner Iter 0 diff_wg: 0.149648
+Ensemble DFTU Inner Iter 1 diff_wg: 0.0103239
+Ensemble DFTU Inner Iter 2 diff_wg: 0.00116395
+Ensemble DFTU Inner Iter 3 diff_wg: 0.000127614
+Ensemble DFTU Inner Iter 4 diff_wg: 1.391e-05
+Ensemble DFTU Inner Iter 5 diff_wg: 1.51469e-06
+ DS51    -1.91e+00   2.26e+00  -7.70569349e+03   1.10168567e+01   2.5760e+01   1.87
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 52
+Ensemble DFTU Inner Iter 0 diff_wg: 0.237759
+Ensemble DFTU Inner Iter 1 diff_wg: 0.0139304
+Ensemble DFTU Inner Iter 2 diff_wg: 0.00117266
+Ensemble DFTU Inner Iter 3 diff_wg: 9.91247e-05
+Ensemble DFTU Inner Iter 4 diff_wg: 8.35642e-06
+ DS52    -1.97e+00   2.29e+00  -7.70699983e+03  -1.30634248e+00   2.2970e+01   2.19
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 53
+Ensemble DFTU Inner Iter 0 diff_wg: 0.218368
+Ensemble DFTU Inner Iter 1 diff_wg: 0.0079071
+Ensemble DFTU Inner Iter 2 diff_wg: 0.000877014
+Ensemble DFTU Inner Iter 3 diff_wg: 9.91274e-05
+Ensemble DFTU Inner Iter 4 diff_wg: 1.12474e-05
+Ensemble DFTU Inner Iter 5 diff_wg: 1.27569e-06
+ DS53    -1.97e+00   2.27e+00  -7.70778470e+03  -7.84871273e-01   2.3102e+01   1.86
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 54
+Ensemble DFTU Inner Iter 0 diff_wg: 0.12302
+Ensemble DFTU Inner Iter 1 diff_wg: 0.0014958
+Ensemble DFTU Inner Iter 2 diff_wg: 4.32228e-05
+Ensemble DFTU Inner Iter 3 diff_wg: 2.1108e-06
+ DS54    -1.97e+00   2.26e+00  -7.70555275e+03   2.23194910e+00   2.3400e+01   1.93
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 55
+Ensemble DFTU Inner Iter 0 diff_wg: 0.0544612
+Ensemble DFTU Inner Iter 1 diff_wg: 0.000882599
+Ensemble DFTU Inner Iter 2 diff_wg: 4.34502e-05
+Ensemble DFTU Inner Iter 3 diff_wg: 2.50018e-06
+ DS55    -1.98e+00   2.27e+00  -7.69125054e+03   1.43022110e+01   2.2868e+01   1.94
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 56
+Ensemble DFTU Inner Iter 0 diff_wg: 0.104811
+Ensemble DFTU Inner Iter 1 diff_wg: 0.00827596
+Ensemble DFTU Inner Iter 2 diff_wg: 0.000646786
+Ensemble DFTU Inner Iter 3 diff_wg: 5.05158e-05
+Ensemble DFTU Inner Iter 4 diff_wg: 3.94509e-06
+ DS56    -2.00e+00   2.33e+00  -7.62777918e+03   6.34713646e+01   1.9504e+01   2.53
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 57
+Ensemble DFTU Inner Iter 0 diff_wg: 0.00232848
+Ensemble DFTU Inner Iter 1 diff_wg: 5.53381e-07
+ DS57     1.79e+00   2.37e+00  -7.65687406e+03  -2.90948858e+01   2.6667e+01   3.79
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 58
+Ensemble DFTU Inner Iter 0 diff_wg: 7.56147
+Ensemble DFTU Inner Iter 1 diff_wg: 0.918804
+Ensemble DFTU Inner Iter 2 diff_wg: 1.52406
+Ensemble DFTU Inner Iter 3 diff_wg: 2.5294
+Ensemble DFTU Inner Iter 4 diff_wg: 2.18048
+Ensemble DFTU Inner Iter 5 diff_wg: 0.553943
+Ensemble DFTU Inner Iter 6 diff_wg: 0.233354
+Ensemble DFTU Inner Iter 7 diff_wg: 0.1384
+Ensemble DFTU Inner Iter 8 diff_wg: 0.0920157
+Ensemble DFTU Inner Iter 9 diff_wg: 0.0652565
+Ensemble DFTU Inner Iter 10 diff_wg: 0.0482838
+Ensemble DFTU Inner Iter 11 diff_wg: 0.0368086
+Ensemble DFTU Inner Iter 12 diff_wg: 0.0286837
+Ensemble DFTU Inner Iter 13 diff_wg: 0.0227273
+Ensemble DFTU Inner Iter 14 diff_wg: 0.0182416
+Ensemble DFTU Inner Iter 15 diff_wg: 0.014791
+Ensemble DFTU Inner Iter 16 diff_wg: 0.012091
+Ensemble DFTU Inner Iter 17 diff_wg: 0.00994898
+Ensemble DFTU Inner Iter 18 diff_wg: 0.00823041
+Ensemble DFTU Inner Iter 19 diff_wg: 0.00683869
+Ensemble DFTU Inner Iter 20 diff_wg: 0.00570294
+Ensemble DFTU Inner Iter 21 diff_wg: 0.00477013
+Ensemble DFTU Inner Iter 22 diff_wg: 0.00399991
+Ensemble DFTU Inner Iter 23 diff_wg: 0.00336107
+Ensemble DFTU Inner Iter 24 diff_wg: 0.00282922
+Ensemble DFTU Inner Iter 25 diff_wg: 0.00238503
+Ensemble DFTU Inner Iter 26 diff_wg: 0.00201306
+Ensemble DFTU Inner Iter 27 diff_wg: 0.00170088
+Ensemble DFTU Inner Iter 28 diff_wg: 0.00143837
+Ensemble DFTU Inner Iter 29 diff_wg: 0.00121728
+Ensemble DFTU Inner Iter 30 diff_wg: 0.00103082
+Ensemble DFTU Inner Iter 31 diff_wg: 0.000873389
+Ensemble DFTU Inner Iter 32 diff_wg: 0.000740331
+Ensemble DFTU Inner Iter 33 diff_wg: 0.000627782
+Ensemble DFTU Inner Iter 34 diff_wg: 0.000532516
+Ensemble DFTU Inner Iter 35 diff_wg: 0.000451829
+Ensemble DFTU Inner Iter 36 diff_wg: 0.000383459
+Ensemble DFTU Inner Iter 37 diff_wg: 0.000325497
+Ensemble DFTU Inner Iter 38 diff_wg: 0.000276342
+Ensemble DFTU Inner Iter 39 diff_wg: 0.000234645
+Ensemble DFTU Inner Iter 40 diff_wg: 0.000199262
+Ensemble DFTU Inner Iter 41 diff_wg: 0.000169232
+Ensemble DFTU Inner Iter 42 diff_wg: 0.000143739
+Ensemble DFTU Inner Iter 43 diff_wg: 0.000122098
+Ensemble DFTU Inner Iter 44 diff_wg: 0.000103721
+Ensemble DFTU Inner Iter 45 diff_wg: 8.81132e-05
+Ensemble DFTU Inner Iter 46 diff_wg: 7.48589e-05
+Ensemble DFTU Inner Iter 47 diff_wg: 6.35991e-05
+Ensemble DFTU Inner Iter 48 diff_wg: 5.40368e-05
+Ensemble DFTU Inner Iter 49 diff_wg: 4.59116e-05
+ DS58     1.97e+00   2.15e+00  -7.64468917e+03   1.21848900e+01   1.9512e+01   3.58
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 59
+Ensemble DFTU Inner Iter 0 diff_wg: 0.935784
+Ensemble DFTU Inner Iter 1 diff_wg: 3.76481e-06
+ DS59    -7.55e-01   1.17e+00  -7.67052615e+03  -2.58369723e+01   1.9808e+01   3.49
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 60
+Ensemble DFTU Inner Iter 0 diff_wg: 21.9126
+Ensemble DFTU Inner Iter 1 diff_wg: 4.41055
+Ensemble DFTU Inner Iter 2 diff_wg: 1.22042
+Ensemble DFTU Inner Iter 3 diff_wg: 0.41423
+Ensemble DFTU Inner Iter 4 diff_wg: 0.195567
+Ensemble DFTU Inner Iter 5 diff_wg: 0.103899
+Ensemble DFTU Inner Iter 6 diff_wg: 0.0567185
+Ensemble DFTU Inner Iter 7 diff_wg: 0.0310195
+Ensemble DFTU Inner Iter 8 diff_wg: 0.0169827
+Ensemble DFTU Inner Iter 9 diff_wg: 0.00931468
+Ensemble DFTU Inner Iter 10 diff_wg: 0.00512138
+Ensemble DFTU Inner Iter 11 diff_wg: 0.00282814
+Ensemble DFTU Inner Iter 12 diff_wg: 0.00156725
+Ensemble DFTU Inner Iter 13 diff_wg: 0.000871979
+Ensemble DFTU Inner Iter 14 diff_wg: 0.000487316
+Ensemble DFTU Inner Iter 15 diff_wg: 0.000273689
+Ensemble DFTU Inner Iter 16 diff_wg: 0.000156793
+Ensemble DFTU Inner Iter 17 diff_wg: 9.61951e-05
+Ensemble DFTU Inner Iter 18 diff_wg: 5.9587e-05
+Ensemble DFTU Inner Iter 19 diff_wg: 3.71474e-05
+Ensemble DFTU Inner Iter 20 diff_wg: 2.3295e-05
+Ensemble DFTU Inner Iter 21 diff_wg: 1.46851e-05
+Ensemble DFTU Inner Iter 22 diff_wg: 9.30148e-06
+ DS60    -1.91e+00   2.03e+00  -7.69278572e+03  -2.22595773e+01   2.2125e+01   2.24
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 61
+Ensemble DFTU Inner Iter 0 diff_wg: 2.80227
+Ensemble DFTU Inner Iter 1 diff_wg: 0.625483
+Ensemble DFTU Inner Iter 2 diff_wg: 0.132116
+Ensemble DFTU Inner Iter 3 diff_wg: 0.0209784
+Ensemble DFTU Inner Iter 4 diff_wg: 0.00324033
+Ensemble DFTU Inner Iter 5 diff_wg: 0.000504569
+Ensemble DFTU Inner Iter 6 diff_wg: 7.89775e-05
+Ensemble DFTU Inner Iter 7 diff_wg: 1.23904e-05
+Ensemble DFTU Inner Iter 8 diff_wg: 1.9447e-06
+ DS61    -2.00e+00   2.11e+00  -7.69964875e+03  -6.86302719e+00   1.9575e+01   2.22
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 62
+Ensemble DFTU Inner Iter 0 diff_wg: 0.000172016
+Ensemble DFTU Inner Iter 1 diff_wg: 0
+ DS62    -2.00e+00   2.10e+00  -7.69279144e+03   6.85731031e+00   2.0991e+01   2.07
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 63
+Ensemble DFTU Inner Iter 0 diff_wg: 4.40632e-06
+ DS63    -2.00e+00   2.11e+00  -7.67169798e+03   2.10934639e+01   1.9258e+01   2.01
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 64
+Ensemble DFTU Inner Iter 0 diff_wg: 4.64642e-13
+ DS64    -2.00e+00   2.78e+00  -7.67064143e+03   1.05654912e+00   1.0068e+01   2.97
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 65
+Ensemble DFTU Inner Iter 0 diff_wg: 35.5984
+Ensemble DFTU Inner Iter 1 diff_wg: 21.7945
+Ensemble DFTU Inner Iter 2 diff_wg: 15.6823
+Ensemble DFTU Inner Iter 3 diff_wg: 16.6689
+Ensemble DFTU Inner Iter 4 diff_wg: 13.8752
+Ensemble DFTU Inner Iter 5 diff_wg: 10.0534
+Ensemble DFTU Inner Iter 6 diff_wg: 7.05286
+Ensemble DFTU Inner Iter 7 diff_wg: 5.87677
+Ensemble DFTU Inner Iter 8 diff_wg: 4.99896
+Ensemble DFTU Inner Iter 9 diff_wg: 3.75658
+Ensemble DFTU Inner Iter 10 diff_wg: 2.87561
+Ensemble DFTU Inner Iter 11 diff_wg: 1.91492
+Ensemble DFTU Inner Iter 12 diff_wg: 1.12535
+Ensemble DFTU Inner Iter 13 diff_wg: 0.731691
+Ensemble DFTU Inner Iter 14 diff_wg: 0.463596
+Ensemble DFTU Inner Iter 15 diff_wg: 0.271074
+Ensemble DFTU Inner Iter 16 diff_wg: 0.149818
+Ensemble DFTU Inner Iter 17 diff_wg: 0.0809641
+Ensemble DFTU Inner Iter 18 diff_wg: 0.0433851
+Ensemble DFTU Inner Iter 19 diff_wg: 0.0231588
+Ensemble DFTU Inner Iter 20 diff_wg: 0.0123381
+Ensemble DFTU Inner Iter 21 diff_wg: 0.006567
+Ensemble DFTU Inner Iter 22 diff_wg: 0.00349397
+Ensemble DFTU Inner Iter 23 diff_wg: 0.00185906
+Ensemble DFTU Inner Iter 24 diff_wg: 0.000990426
+Ensemble DFTU Inner Iter 25 diff_wg: 0.00054366
+Ensemble DFTU Inner Iter 26 diff_wg: 0.000300006
+Ensemble DFTU Inner Iter 27 diff_wg: 0.000170313
+Ensemble DFTU Inner Iter 28 diff_wg: 9.96544e-05
+Ensemble DFTU Inner Iter 29 diff_wg: 5.8799e-05
+Ensemble DFTU Inner Iter 30 diff_wg: 3.4976e-05
+Ensemble DFTU Inner Iter 31 diff_wg: 2.09669e-05
+Ensemble DFTU Inner Iter 32 diff_wg: 1.26976e-05
+Ensemble DFTU Inner Iter 33 diff_wg: 7.75975e-06
+ DS65    -3.45e+00   4.77e+00  -7.67772608e+03  -7.08465304e+00   3.8523e-01   2.26
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 66
+Ensemble DFTU Inner Iter 0 diff_wg: 29.8311
+Ensemble DFTU Inner Iter 1 diff_wg: 9.21785
+Ensemble DFTU Inner Iter 2 diff_wg: 25.6685
+Ensemble DFTU Inner Iter 3 diff_wg: 30.4556
+Ensemble DFTU Inner Iter 4 diff_wg: 16.9472
+Ensemble DFTU Inner Iter 5 diff_wg: 15.8304
+Ensemble DFTU Inner Iter 6 diff_wg: 13.6106
+Ensemble DFTU Inner Iter 7 diff_wg: 10.4815
+Ensemble DFTU Inner Iter 8 diff_wg: 5.23263
+Ensemble DFTU Inner Iter 9 diff_wg: 2.24111
+Ensemble DFTU Inner Iter 10 diff_wg: 0.945512
+Ensemble DFTU Inner Iter 11 diff_wg: 0.376893
+Ensemble DFTU Inner Iter 12 diff_wg: 0.14583
+Ensemble DFTU Inner Iter 13 diff_wg: 0.0560978
+Ensemble DFTU Inner Iter 14 diff_wg: 0.0215754
+Ensemble DFTU Inner Iter 15 diff_wg: 0.00830146
+Ensemble DFTU Inner Iter 16 diff_wg: 0.003195
+Ensemble DFTU Inner Iter 17 diff_wg: 0.00122985
+Ensemble DFTU Inner Iter 18 diff_wg: 0.000473442
+Ensemble DFTU Inner Iter 19 diff_wg: 0.000182264
+Ensemble DFTU Inner Iter 20 diff_wg: 7.01697e-05
+Ensemble DFTU Inner Iter 21 diff_wg: 2.70149e-05
+Ensemble DFTU Inner Iter 22 diff_wg: 1.04006e-05
+Ensemble DFTU Inner Iter 23 diff_wg: 4.0043e-06
+ DS66     3.13e+00   4.79e+00  -7.67774195e+03  -1.58682654e-02   4.5211e+00   2.56
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 67
+Ensemble DFTU Inner Iter 0 diff_wg: 17.5775
+Ensemble DFTU Inner Iter 1 diff_wg: 2.9309
+Ensemble DFTU Inner Iter 2 diff_wg: 0.926943
+Ensemble DFTU Inner Iter 3 diff_wg: 0.553802
+Ensemble DFTU Inner Iter 4 diff_wg: 0.336461
+Ensemble DFTU Inner Iter 5 diff_wg: 0.205228
+Ensemble DFTU Inner Iter 6 diff_wg: 0.12517
+Ensemble DFTU Inner Iter 7 diff_wg: 0.0765891
+Ensemble DFTU Inner Iter 8 diff_wg: 0.0468461
+Ensemble DFTU Inner Iter 9 diff_wg: 0.0286476
+Ensemble DFTU Inner Iter 10 diff_wg: 0.0175163
+Ensemble DFTU Inner Iter 11 diff_wg: 0.0107092
+Ensemble DFTU Inner Iter 12 diff_wg: 0.00654708
+Ensemble DFTU Inner Iter 13 diff_wg: 0.00400241
+Ensemble DFTU Inner Iter 14 diff_wg: 0.00244672
+Ensemble DFTU Inner Iter 15 diff_wg: 0.00149569
+Ensemble DFTU Inner Iter 16 diff_wg: 0.00091431
+Ensemble DFTU Inner Iter 17 diff_wg: 0.000558912
+Ensemble DFTU Inner Iter 18 diff_wg: 0.000341657
+Ensemble DFTU Inner Iter 19 diff_wg: 0.000208851
+Ensemble DFTU Inner Iter 20 diff_wg: 0.000127668
+Ensemble DFTU Inner Iter 21 diff_wg: 7.80421e-05
+Ensemble DFTU Inner Iter 22 diff_wg: 4.77061e-05
+Ensemble DFTU Inner Iter 23 diff_wg: 2.91621e-05
+Ensemble DFTU Inner Iter 24 diff_wg: 1.78264e-05
+Ensemble DFTU Inner Iter 25 diff_wg: 1.0897e-05
+Ensemble DFTU Inner Iter 26 diff_wg: 6.66122e-06
+ DS67     2.06e+00   5.54e+00  -7.67844584e+03  -7.03893365e-01   3.2720e+00   2.28
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 68
+Ensemble DFTU Inner Iter 0 diff_wg: 6.1619
+Ensemble DFTU Inner Iter 1 diff_wg: 0.761545
+Ensemble DFTU Inner Iter 2 diff_wg: 0.175963
+Ensemble DFTU Inner Iter 3 diff_wg: 0.0448534
+Ensemble DFTU Inner Iter 4 diff_wg: 0.0110667
+Ensemble DFTU Inner Iter 5 diff_wg: 0.00268509
+Ensemble DFTU Inner Iter 6 diff_wg: 0.000648474
+Ensemble DFTU Inner Iter 7 diff_wg: 0.000156389
+Ensemble DFTU Inner Iter 8 diff_wg: 3.76967e-05
+Ensemble DFTU Inner Iter 9 diff_wg: 9.08503e-06
+ DS68     2.08e+00   6.22e+00  -7.68039464e+03  -1.94879482e+00   1.6458e+00   2.00
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 69
+Ensemble DFTU Inner Iter 0 diff_wg: 18.0383
+Ensemble DFTU Inner Iter 1 diff_wg: 4.37068
+Ensemble DFTU Inner Iter 2 diff_wg: 2.0574
+Ensemble DFTU Inner Iter 3 diff_wg: 1.25763
+Ensemble DFTU Inner Iter 4 diff_wg: 0.697753
+Ensemble DFTU Inner Iter 5 diff_wg: 0.394193
+Ensemble DFTU Inner Iter 6 diff_wg: 0.22308
+Ensemble DFTU Inner Iter 7 diff_wg: 0.12451
+Ensemble DFTU Inner Iter 8 diff_wg: 0.0686889
+Ensemble DFTU Inner Iter 9 diff_wg: 0.037681
+Ensemble DFTU Inner Iter 10 diff_wg: 0.020629
+Ensemble DFTU Inner Iter 11 diff_wg: 0.0112887
+Ensemble DFTU Inner Iter 12 diff_wg: 0.00617821
+Ensemble DFTU Inner Iter 13 diff_wg: 0.00338214
+Ensemble DFTU Inner Iter 14 diff_wg: 0.00185192
+Ensemble DFTU Inner Iter 15 diff_wg: 0.00101421
+Ensemble DFTU Inner Iter 16 diff_wg: 0.000555503
+Ensemble DFTU Inner Iter 17 diff_wg: 0.000304284
+Ensemble DFTU Inner Iter 18 diff_wg: 0.000166684
+Ensemble DFTU Inner Iter 19 diff_wg: 9.13108e-05
+Ensemble DFTU Inner Iter 20 diff_wg: 5.00216e-05
+Ensemble DFTU Inner Iter 21 diff_wg: 2.74032e-05
+Ensemble DFTU Inner Iter 22 diff_wg: 1.50119e-05
+Ensemble DFTU Inner Iter 23 diff_wg: 8.22398e-06
+ DS69     1.99e+00   7.38e+00  -7.68287804e+03  -2.48340070e+00   8.5247e-01   2.02
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 70
+Ensemble DFTU Inner Iter 0 diff_wg: 0.428089
+Ensemble DFTU Inner Iter 1 diff_wg: 2.85709e-05
+Ensemble DFTU Inner Iter 2 diff_wg: 2.43291e-09
+ DS70     2.00e+00   7.42e+00  -7.68651482e+03  -3.63678059e+00   1.1020e+00   2.00
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 71
+Ensemble DFTU Inner Iter 0 diff_wg: 1.81537e-09
+ DS71     2.00e+00   7.31e+00  -7.69252548e+03  -6.01065902e+00   2.2583e+00   2.81
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 72
+Ensemble DFTU Inner Iter 0 diff_wg: 1.54986e-05
+Ensemble DFTU Inner Iter 1 diff_wg: 8.73076e-10
+ DS72     2.00e+00   4.42e+00  -7.68963796e+03   2.88751138e+00   1.3633e+01   2.79
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 73
+Ensemble DFTU Inner Iter 0 diff_wg: 26.6155
+Ensemble DFTU Inner Iter 1 diff_wg: 9.1122
+Ensemble DFTU Inner Iter 2 diff_wg: 4.70849
+Ensemble DFTU Inner Iter 3 diff_wg: 2.16128
+Ensemble DFTU Inner Iter 4 diff_wg: 0.626319
+Ensemble DFTU Inner Iter 5 diff_wg: 0.202185
+Ensemble DFTU Inner Iter 6 diff_wg: 0.0766095
+Ensemble DFTU Inner Iter 7 diff_wg: 0.0302248
+Ensemble DFTU Inner Iter 8 diff_wg: 0.0120545
+Ensemble DFTU Inner Iter 9 diff_wg: 0.00482618
+Ensemble DFTU Inner Iter 10 diff_wg: 0.00193511
+Ensemble DFTU Inner Iter 11 diff_wg: 0.000776364
+Ensemble DFTU Inner Iter 12 diff_wg: 0.00031155
+Ensemble DFTU Inner Iter 13 diff_wg: 0.000125034
+Ensemble DFTU Inner Iter 14 diff_wg: 5.01817e-05
+Ensemble DFTU Inner Iter 15 diff_wg: 2.01402e-05
+Ensemble DFTU Inner Iter 16 diff_wg: 8.08422e-06
+ DS73     2.00e+00   2.41e+00  -7.66883215e+03   2.08058126e+01   2.0146e+01   2.18
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 74
+Ensemble DFTU Inner Iter 0 diff_wg: 0.0428064
+Ensemble DFTU Inner Iter 1 diff_wg: 6.93889e-17
+ DS74     2.00e+00   5.05e+00  -7.65489062e+03   1.39415360e+01   4.7203e+00   3.25
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 75
+Ensemble DFTU Inner Iter 0 diff_wg: 29.6453
+Ensemble DFTU Inner Iter 1 diff_wg: 12.5725
+Ensemble DFTU Inner Iter 2 diff_wg: 6.46968
+Ensemble DFTU Inner Iter 3 diff_wg: 4.11011
+Ensemble DFTU Inner Iter 4 diff_wg: 2.15167
+Ensemble DFTU Inner Iter 5 diff_wg: 1.12497
+Ensemble DFTU Inner Iter 6 diff_wg: 0.737632
+Ensemble DFTU Inner Iter 7 diff_wg: 0.582681
+Ensemble DFTU Inner Iter 8 diff_wg: 0.505716
+Ensemble DFTU Inner Iter 9 diff_wg: 0.442059
+Ensemble DFTU Inner Iter 10 diff_wg: 0.379301
+Ensemble DFTU Inner Iter 11 diff_wg: 0.332165
+Ensemble DFTU Inner Iter 12 diff_wg: 0.306038
+Ensemble DFTU Inner Iter 13 diff_wg: 0.29442
+Ensemble DFTU Inner Iter 14 diff_wg: 0.288162
+Ensemble DFTU Inner Iter 15 diff_wg: 0.280268
+Ensemble DFTU Inner Iter 16 diff_wg: 0.277833
+Ensemble DFTU Inner Iter 17 diff_wg: 0.303484
+Ensemble DFTU Inner Iter 18 diff_wg: 0.393401
+Ensemble DFTU Inner Iter 19 diff_wg: 0.65308
+Ensemble DFTU Inner Iter 20 diff_wg: 1.36371
+Ensemble DFTU Inner Iter 21 diff_wg: 2.32562
+Ensemble DFTU Inner Iter 22 diff_wg: 5.23727
+Ensemble DFTU Inner Iter 23 diff_wg: 11.4404
+Ensemble DFTU Inner Iter 24 diff_wg: 15.9547
+Ensemble DFTU Inner Iter 25 diff_wg: 14.294
+Ensemble DFTU Inner Iter 26 diff_wg: 15.0763
+Ensemble DFTU Inner Iter 27 diff_wg: 13.3677
+Ensemble DFTU Inner Iter 28 diff_wg: 12.3191
+Ensemble DFTU Inner Iter 29 diff_wg: 9.35207
+Ensemble DFTU Inner Iter 30 diff_wg: 5.61951
+Ensemble DFTU Inner Iter 31 diff_wg: 3.2856
+Ensemble DFTU Inner Iter 32 diff_wg: 6.34585
+Ensemble DFTU Inner Iter 33 diff_wg: 13.363
+Ensemble DFTU Inner Iter 34 diff_wg: 4.53995
+Ensemble DFTU Inner Iter 35 diff_wg: 7.13853
+Ensemble DFTU Inner Iter 36 diff_wg: 12.0791
+Ensemble DFTU Inner Iter 37 diff_wg: 5.96373
+Ensemble DFTU Inner Iter 38 diff_wg: 0.314412
+Ensemble DFTU Inner Iter 39 diff_wg: 0.00534509
+Ensemble DFTU Inner Iter 40 diff_wg: 0.000737703
+Ensemble DFTU Inner Iter 41 diff_wg: 0.000102928
+Ensemble DFTU Inner Iter 42 diff_wg: 1.43684e-05
+Ensemble DFTU Inner Iter 43 diff_wg: 2.00713e-06
+ DS75    -1.87e+00   2.26e+00  -7.67294341e+03  -1.80527974e+01   2.7895e+01   3.60
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 76
+Ensemble DFTU Inner Iter 0 diff_wg: 36.7803
+Ensemble DFTU Inner Iter 1 diff_wg: 15.9345
+Ensemble DFTU Inner Iter 2 diff_wg: 7.77084
+Ensemble DFTU Inner Iter 3 diff_wg: 0.83315
+Ensemble DFTU Inner Iter 4 diff_wg: 0.171395
+Ensemble DFTU Inner Iter 5 diff_wg: 0.0381715
+Ensemble DFTU Inner Iter 6 diff_wg: 0.00856235
+Ensemble DFTU Inner Iter 7 diff_wg: 0.00192226
+Ensemble DFTU Inner Iter 8 diff_wg: 0.000431644
+Ensemble DFTU Inner Iter 9 diff_wg: 9.69476e-05
+Ensemble DFTU Inner Iter 10 diff_wg: 2.17809e-05
+Ensemble DFTU Inner Iter 11 diff_wg: 4.89496e-06
+ DS76    -1.70e+00   1.95e+00  -7.67864390e+03  -5.70048965e+00   1.9448e+01   3.21
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 77
+Ensemble DFTU Inner Iter 0 diff_wg: 10.0423
+Ensemble DFTU Inner Iter 1 diff_wg: 4.11974
+Ensemble DFTU Inner Iter 2 diff_wg: 1.76548
+Ensemble DFTU Inner Iter 3 diff_wg: 0.958416
+Ensemble DFTU Inner Iter 4 diff_wg: 0.931932
+Ensemble DFTU Inner Iter 5 diff_wg: 1.07532
+Ensemble DFTU Inner Iter 6 diff_wg: 1.34605
+Ensemble DFTU Inner Iter 7 diff_wg: 1.49008
+Ensemble DFTU Inner Iter 8 diff_wg: 1.22652
+Ensemble DFTU Inner Iter 9 diff_wg: 0.882618
+Ensemble DFTU Inner Iter 10 diff_wg: 0.565611
+Ensemble DFTU Inner Iter 11 diff_wg: 0.331022
+Ensemble DFTU Inner Iter 12 diff_wg: 0.155559
+Ensemble DFTU Inner Iter 13 diff_wg: 0.058619
+Ensemble DFTU Inner Iter 14 diff_wg: 0.0200044
+Ensemble DFTU Inner Iter 15 diff_wg: 0.00640547
+Ensemble DFTU Inner Iter 16 diff_wg: 0.00199091
+Ensemble DFTU Inner Iter 17 diff_wg: 0.000611795
+Ensemble DFTU Inner Iter 18 diff_wg: 0.000187211
+Ensemble DFTU Inner Iter 19 diff_wg: 5.71998e-05
+Ensemble DFTU Inner Iter 20 diff_wg: 1.74686e-05
+Ensemble DFTU Inner Iter 21 diff_wg: 5.33476e-06
+ DS77    -2.00e+00   2.48e+00  -7.68216823e+03  -3.52432234e+00   1.5819e+01   2.31
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 78
+Ensemble DFTU Inner Iter 0 diff_wg: 2.11264e-06
+ DS78    -2.00e+00   2.44e+00  -7.67915820e+03   3.01002497e+00   1.6019e+01   1.90
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 79
+Ensemble DFTU Inner Iter 0 diff_wg: 1.80855e-09
+ DS79    -2.00e+00   2.53e+00  -7.67804605e+03   1.11215502e+00   1.4551e+01   1.96
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 80
+Ensemble DFTU Inner Iter 0 diff_wg: 0.00895384
+Ensemble DFTU Inner Iter 1 diff_wg: 0.000161177
+Ensemble DFTU Inner Iter 2 diff_wg: 3.18831e-06
+ DS80    -2.00e+00   2.72e+00  -7.68113889e+03  -3.09284396e+00   1.3392e+01   1.85
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 81
+Ensemble DFTU Inner Iter 0 diff_wg: 2.48013
+Ensemble DFTU Inner Iter 1 diff_wg: 4.37133
+Ensemble DFTU Inner Iter 2 diff_wg: 11.2868
+Ensemble DFTU Inner Iter 3 diff_wg: 23.4221
+Ensemble DFTU Inner Iter 4 diff_wg: 21.633
+Ensemble DFTU Inner Iter 5 diff_wg: 8.38447
+Ensemble DFTU Inner Iter 6 diff_wg: 8.87359
+Ensemble DFTU Inner Iter 7 diff_wg: 12.4607
+Ensemble DFTU Inner Iter 8 diff_wg: 10.3123
+Ensemble DFTU Inner Iter 9 diff_wg: 6.43411
+Ensemble DFTU Inner Iter 10 diff_wg: 7.86734
+Ensemble DFTU Inner Iter 11 diff_wg: 10.5763
+Ensemble DFTU Inner Iter 12 diff_wg: 12.7317
+Ensemble DFTU Inner Iter 13 diff_wg: 12.9568
+Ensemble DFTU Inner Iter 14 diff_wg: 5.19833
+Ensemble DFTU Inner Iter 15 diff_wg: 1.78434
+Ensemble DFTU Inner Iter 16 diff_wg: 0.163919
+Ensemble DFTU Inner Iter 17 diff_wg: 0.00541458
+Ensemble DFTU Inner Iter 18 diff_wg: 0.000187503
+Ensemble DFTU Inner Iter 19 diff_wg: 7.09117e-06
+ DS81    -1.99e+00   7.52e+00  -7.68379798e+03  -2.65909002e+00   1.5971e+00   2.04
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 82
+Ensemble DFTU Inner Iter 0 diff_wg: 0.171909
+Ensemble DFTU Inner Iter 1 diff_wg: 0.000335915
+Ensemble DFTU Inner Iter 2 diff_wg: 8.85356e-07
+ DS82    -2.00e+00   7.57e+00  -7.68510520e+03  -1.30722548e+00   1.7462e+00   2.04
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 83
+Ensemble DFTU Inner Iter 0 diff_wg: 0.00304554
+Ensemble DFTU Inner Iter 1 diff_wg: 4.71944e-06
+ DS83    -2.00e+00   7.58e+00  -7.68109315e+03   4.01205671e+00   1.8590e+00   2.00
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 84
+Ensemble DFTU Inner Iter 0 diff_wg: 0.00278343
+Ensemble DFTU Inner Iter 1 diff_wg: 2.06921e-06
+ DS84    -1.97e+00   7.81e+00  -7.68096082e+03   1.32326804e-01   6.2393e-01   2.90
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 85
+Ensemble DFTU Inner Iter 0 diff_wg: 1.09602
+Ensemble DFTU Inner Iter 1 diff_wg: 0.368384
+Ensemble DFTU Inner Iter 2 diff_wg: 0.402338
+Ensemble DFTU Inner Iter 3 diff_wg: 0.544929
+Ensemble DFTU Inner Iter 4 diff_wg: 0.872693
+Ensemble DFTU Inner Iter 5 diff_wg: 1.76517
+Ensemble DFTU Inner Iter 6 diff_wg: 3.87126
+Ensemble DFTU Inner Iter 7 diff_wg: 10.4737
+Ensemble DFTU Inner Iter 8 diff_wg: 23.0554
+Ensemble DFTU Inner Iter 9 diff_wg: 21.1208
+Ensemble DFTU Inner Iter 10 diff_wg: 3.62083
+Ensemble DFTU Inner Iter 11 diff_wg: 2.64525
+Ensemble DFTU Inner Iter 12 diff_wg: 1.88496
+Ensemble DFTU Inner Iter 13 diff_wg: 1.54208
+Ensemble DFTU Inner Iter 14 diff_wg: 1.17961
+Ensemble DFTU Inner Iter 15 diff_wg: 0.43512
+Ensemble DFTU Inner Iter 16 diff_wg: 0.133083
+Ensemble DFTU Inner Iter 17 diff_wg: 0.0373232
+Ensemble DFTU Inner Iter 18 diff_wg: 0.0100999
+Ensemble DFTU Inner Iter 19 diff_wg: 0.0027179
+Ensemble DFTU Inner Iter 20 diff_wg: 0.000732532
+Ensemble DFTU Inner Iter 21 diff_wg: 0.000197808
+Ensemble DFTU Inner Iter 22 diff_wg: 5.34789e-05
+Ensemble DFTU Inner Iter 23 diff_wg: 1.44688e-05
+Ensemble DFTU Inner Iter 24 diff_wg: 3.91549e-06
+ DS85     1.99e+00   7.53e+00  -7.68794562e+03  -6.98480085e+00   2.8142e+00   2.56
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 86
+Ensemble DFTU Inner Iter 0 diff_wg: 0.126956
+Ensemble DFTU Inner Iter 1 diff_wg: 0.00889775
+Ensemble DFTU Inner Iter 2 diff_wg: 0.00101349
+Ensemble DFTU Inner Iter 3 diff_wg: 0.000121619
+Ensemble DFTU Inner Iter 4 diff_wg: 1.4723e-05
+Ensemble DFTU Inner Iter 5 diff_wg: 1.77936e-06
+ DS86     2.00e+00   7.53e+00  -7.68850861e+03  -5.62988383e-01   2.0899e+00   2.13
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 87
+Ensemble DFTU Inner Iter 0 diff_wg: 5.21846e-10
+ DS87     2.00e+00   7.54e+00  -7.68780969e+03   6.98915995e-01   1.9528e+00   2.01
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 88
+Ensemble DFTU Inner Iter 0 diff_wg: 1.53534e-09
+ DS88     2.00e+00   7.55e+00  -7.68537549e+03   2.43420883e+00   1.6674e+00   1.96
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 89
+Ensemble DFTU Inner Iter 0 diff_wg: 0
+ DS89     2.00e+00   7.49e+00  -7.68645300e+03  -1.07750951e+00   1.0980e+00   2.39
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 90
+Ensemble DFTU Inner Iter 0 diff_wg: 1.27586e-11
+ DS90     2.00e+00   7.57e+00  -7.68299489e+03   3.45810372e+00   1.4004e+00   2.12
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 91
+Ensemble DFTU Inner Iter 0 diff_wg: 0
+ DS91     2.00e+00   7.59e+00  -7.68259114e+03   4.03755675e-01   4.4675e-01   2.91
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 92
+Ensemble DFTU Inner Iter 0 diff_wg: 0.0401878
+Ensemble DFTU Inner Iter 1 diff_wg: 0.0045832
+Ensemble DFTU Inner Iter 2 diff_wg: 0.000544244
+Ensemble DFTU Inner Iter 3 diff_wg: 6.49189e-05
+Ensemble DFTU Inner Iter 4 diff_wg: 7.74793e-06
+ DS92     9.34e-01   7.50e+00  -7.68280950e+03  -2.18365509e-01   7.5985e-02   2.32
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 93
+Ensemble DFTU Inner Iter 0 diff_wg: 47.1445
+Ensemble DFTU Inner Iter 1 diff_wg: 27.2561
+Ensemble DFTU Inner Iter 2 diff_wg: 23.6083
+Ensemble DFTU Inner Iter 3 diff_wg: 18.6152
+Ensemble DFTU Inner Iter 4 diff_wg: 23.6706
+Ensemble DFTU Inner Iter 5 diff_wg: 12.438
+Ensemble DFTU Inner Iter 6 diff_wg: 7.2992
+Ensemble DFTU Inner Iter 7 diff_wg: 3.00366
+Ensemble DFTU Inner Iter 8 diff_wg: 1.6553
+Ensemble DFTU Inner Iter 9 diff_wg: 1.26877
+Ensemble DFTU Inner Iter 10 diff_wg: 0.881864
+Ensemble DFTU Inner Iter 11 diff_wg: 0.55981
+Ensemble DFTU Inner Iter 12 diff_wg: 0.341362
+Ensemble DFTU Inner Iter 13 diff_wg: 0.202036
+Ensemble DFTU Inner Iter 14 diff_wg: 0.117638
+Ensemble DFTU Inner Iter 15 diff_wg: 0.0677183
+Ensemble DFTU Inner Iter 16 diff_wg: 0.0387474
+Ensemble DFTU Inner Iter 17 diff_wg: 0.0221169
+Ensemble DFTU Inner Iter 18 diff_wg: 0.0126751
+Ensemble DFTU Inner Iter 19 diff_wg: 0.00725973
+Ensemble DFTU Inner Iter 20 diff_wg: 0.00415595
+Ensemble DFTU Inner Iter 21 diff_wg: 0.00237964
+Ensemble DFTU Inner Iter 22 diff_wg: 0.00136218
+Ensemble DFTU Inner Iter 23 diff_wg: 0.00077957
+Ensemble DFTU Inner Iter 24 diff_wg: 0.000446067
+Ensemble DFTU Inner Iter 25 diff_wg: 0.000255203
+Ensemble DFTU Inner Iter 26 diff_wg: 0.000145991
+Ensemble DFTU Inner Iter 27 diff_wg: 8.35089e-05
+Ensemble DFTU Inner Iter 28 diff_wg: 4.7765e-05
+Ensemble DFTU Inner Iter 29 diff_wg: 2.73196e-05
+Ensemble DFTU Inner Iter 30 diff_wg: 1.56239e-05
+Ensemble DFTU Inner Iter 31 diff_wg: 8.93654e-06
+ DS93    -2.00e+00   3.54e+00  -7.68124891e+03   1.56059320e+00   1.4990e+01   2.50
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 94
+Ensemble DFTU Inner Iter 0 diff_wg: 2.25906
+Ensemble DFTU Inner Iter 1 diff_wg: 0.117749
+Ensemble DFTU Inner Iter 2 diff_wg: 0.018706
+Ensemble DFTU Inner Iter 3 diff_wg: 0.00445205
+Ensemble DFTU Inner Iter 4 diff_wg: 0.00112286
+Ensemble DFTU Inner Iter 5 diff_wg: 0.000284136
+Ensemble DFTU Inner Iter 6 diff_wg: 7.19645e-05
+Ensemble DFTU Inner Iter 7 diff_wg: 1.82332e-05
+Ensemble DFTU Inner Iter 8 diff_wg: 4.62017e-06
+ DS94    -2.00e+00   3.97e+00  -7.68167684e+03  -4.27933056e-01   1.1690e+01   2.17
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 95
+Ensemble DFTU Inner Iter 0 diff_wg: 9.27301
+Ensemble DFTU Inner Iter 1 diff_wg: 15.9054
+Ensemble DFTU Inner Iter 2 diff_wg: 11.3118
+Ensemble DFTU Inner Iter 3 diff_wg: 0.864138
+Ensemble DFTU Inner Iter 4 diff_wg: 0.0555528
+Ensemble DFTU Inner Iter 5 diff_wg: 0.0108433
+Ensemble DFTU Inner Iter 6 diff_wg: 0.00222436
+Ensemble DFTU Inner Iter 7 diff_wg: 0.000457963
+Ensemble DFTU Inner Iter 8 diff_wg: 9.43351e-05
+Ensemble DFTU Inner Iter 9 diff_wg: 1.94337e-05
+Ensemble DFTU Inner Iter 10 diff_wg: 4.00342e-06
+ DS95    -2.00e+00   5.79e+00  -7.68445282e+03  -2.77597523e+00   5.3542e+00   2.01
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 96
+Ensemble DFTU Inner Iter 0 diff_wg: 7.72428e-08
+ DS96    -2.00e+00   5.82e+00  -7.68291679e+03   1.53602833e+00   5.2601e+00   2.07
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 97
+Ensemble DFTU Inner Iter 0 diff_wg: 7.3458e-12
+ DS97    -2.00e+00   5.89e+00  -7.68277481e+03   1.41978003e-01   4.5195e+00   2.15
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 98
+Ensemble DFTU Inner Iter 0 diff_wg: 1.67432e-05
+Ensemble DFTU Inner Iter 1 diff_wg: 2.01179e-09
+ DS98    -2.00e+00   5.92e+00  -7.68431458e+03  -1.53976799e+00   4.3803e+00   1.81
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 99
+Ensemble DFTU Inner Iter 0 diff_wg: 0.000264437
+Ensemble DFTU Inner Iter 1 diff_wg: 4.31546e-07
+ DS99    -2.00e+00   5.90e+00  -7.68628314e+03  -1.96856318e+00   4.8995e+00   2.18
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 100
+Ensemble DFTU Inner Iter 0 diff_wg: 4.04513e-11
+ DS100   -2.00e+00   5.85e+00  -7.68931764e+03  -3.03449956e+00   5.5993e+00   2.26
+ >> Leave SCF iteration.
+ * * * * * *
+ !! CONVERGENCE HAS NOT BEEN ACHIEVED !!
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+      -470.3243388787       690.1987511319       -95.9730089667 
+       690.1987511319      1233.9536537779       376.9843396964 
+       -95.9730089667       376.9843396964      -180.0736233613 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 194.518564 KBAR
+
+TIME STATISTICS
+-----------------------------------------------------------------------------
+    CLASS_NAME                NAME             TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------------------
+                   total                       240.52 15       16.03  100.00 
+ Driver            reading                     0.01   1        0.01   0.01   
+ Input_Conv        Convert                     0.00   1        0.00   0.00   
+ Driver            driver_line                 240.51 1        240.51 99.99  
+ UnitCell          check_tau                   0.00   1        0.00   0.00   
+ PW_Basis_Sup      setuptransform              0.00   1        0.00   0.00   
+ PW_Basis_Sup      distributeg                 0.00   1        0.00   0.00   
+ mymath            heapsort                    0.00   3        0.00   0.00   
+ PW_Basis_K        setuptransform              0.00   1        0.00   0.00   
+ PW_Basis_K        distributeg                 0.00   1        0.00   0.00   
+ PW_Basis          setup_struc_factor          0.00   1        0.00   0.00   
+ ppcell_vnl        init                        0.00   1        0.00   0.00   
+ ppcell_vl         init_vloc                   0.02   1        0.02   0.01   
+ ppcell_vnl        init_vnl                    0.05   1        0.05   0.02   
+ WF_atomic         init_at_1                   0.17   1        0.17   0.07   
+ wavefunc          wfcinit                     0.00   1        0.00   0.00   
+ Ions              opt_ions                    240.19 1        240.19 99.86  
+ ESolver_KS_PW     runner                      239.37 1        239.37 99.52  
+ H_Ewald_pw        compute_ewald               0.00   1        0.00   0.00   
+ Charge            set_rho_core                0.02   1        0.02   0.01   
+ PW_Basis_Sup      recip2real                  0.26   1135     0.00   0.11   
+ PW_Basis_Sup      gathers_scatterp            0.13   1135     0.00   0.05   
+ Charge            atomic_rho                  0.02   1        0.02   0.01   
+ Potential         init_pot                    0.03   1        0.03   0.01   
+ Potential         update_from_charge          2.20   101      0.02   0.92   
+ Potential         cal_fixed_v                 0.00   1        0.00   0.00   
+ PotLocal          cal_fixed_v                 0.00   1        0.00   0.00   
+ Potential         cal_v_eff                   2.19   101      0.02   0.91   
+ H_Hartree_pw      v_hartree                   0.06   101      0.00   0.03   
+ PW_Basis_Sup      real2recip                  0.48   1436     0.00   0.20   
+ PW_Basis_Sup      gatherp_scatters            0.32   1436     0.00   0.13   
+ PotXC             cal_v_eff                   2.12   101      0.02   0.88   
+ XC_Functional     v_xc                        2.16   103      0.02   0.90   
+ Potential         interpolate_vrs             0.01   101      0.00   0.00   
+ OnsiteProj        cubspl_tabulate             0.00   2        0.00   0.00   
+ DFTU              zero_locale                 0.00   1032     0.00   0.00   
+ Charge_Mixing     init_mixing                 0.00   1        0.00   0.00   
+ ESolver_KS_PW     hamilt2density              236.65 100      2.37   98.39  
+ HSolverPW         solve                       229.11 100      2.29   95.26  
+ pp_cell_vnl       getvnl                      3.51   7200     0.00   1.46   
+ Structure_Factor  get_sk                      1.54   22176    0.00   0.64   
+ OnsiteProj        getvnl                      0.01   7200     0.00   0.00   
+ OnsiteProj        tabulate_atomic             0.00   14400    0.00   0.00   
+ wavefunc          diago_PAO_in_pw_k2          1.61   72       0.02   0.67   
+ WF_atomic         atomic_wfc                  0.02   72       0.00   0.01   
+ Diago_DavSubspace diag_once                   193.13 7200     0.03   80.30  
+ Diago_DavSubspace first                       68.82  7200     0.01   28.61  
+ DavSubspace       hpsi_func                   146.93 25904    0.01   61.09  
+ Operator          hPsi                        146.53 25904    0.01   60.92  
+ Operator          EkineticPW                  0.40   25904    0.00   0.17   
+ Operator          VeffPW                      135.55 25904    0.01   56.36  
+ PW_Basis_K        recip2real                  89.69  795793   0.00   37.29  
+ PW_Basis_K        gathers_scatterp            41.12  795793   0.00   17.10  
+ PW_Basis_K        real2recip                  63.73  558193   0.00   26.50  
+ PW_Basis_K        gatherp_scatters            30.81  558193   0.00   12.81  
+ Operator          NonlocalPW                  5.41   25904    0.00   2.25   
+ Nonlocal          add_nonlocal_pp             2.31   25904    0.00   0.96   
+ Operator          OnsiteProjPW                5.10   25904    0.00   2.12   
+ OnsiteProj        overlap                     6.12   33104    0.00   2.54   
+ FS_Nonlocal_tools cal_becp                    6.22   33392    0.00   2.59   
+ OnsiteProj        add_onsite_proj             0.77   25904    0.00   0.32   
+ Diago_DavSubspace cal_elem                    4.89   25904    0.00   2.03   
+ Diago_DavSubspace diag_zhegvx                 33.72  25904    0.00   14.02  
+ Diago_DavSubspace cal_grad                    87.30  18704    0.00   36.29  
+ Diago_DavSubspace check_update                0.01   18704    0.00   0.01   
+ Diago_DavSubspace last                        2.92   12734    0.00   1.21   
+ Diago_DavSubspace refresh                     1.17   5534     0.00   0.49   
+ ElecStatePW       psiToRho                    30.28  100      0.30   12.59  
+ Charge_Mixing     get_drho                    0.09   100      0.00   0.04   
+ Charge_Mixing     inner_product_recip_rho     0.00   100      0.00   0.00   
+ Charge            mix_rho                     0.13   100      0.00   0.05   
+ Charge            Broyden_mixing              0.04   100      0.00   0.02   
+ DFTU              cal_occup_ensemble_pw       7.48   99       0.08   3.11   
+ Charge_Mixing     inner_product_recip_hartree 0.03   1528     0.00   0.01   
+ OnsiteProj        cal_occupation              0.03   1        0.03   0.01   
+ Forces            cal_force_loc               0.00   1        0.00   0.00   
+ Forces            cal_force_ew                0.00   1        0.00   0.00   
+ Forces            cal_force_nl                0.07   1        0.07   0.03   
+ FS_Nonlocal_tools cal_dbecp_f                 0.04   432      0.00   0.02   
+ Forces            cal_force_onsite            0.04   1        0.04   0.02   
+ Forces            cal_force_cc                0.04   1        0.04   0.02   
+ Forces            cal_force_scc               0.00   1        0.00   0.00   
+ Stress_PW         cal_stress                  0.67   1        0.67   0.28   
+ Stress_Func       stress_kin                  0.02   1        0.02   0.01   
+ Stress_Func       stress_har                  0.00   1        0.00   0.00   
+ Stress_Func       stress_ewa                  0.00   1        0.00   0.00   
+ Stress_Func       stress_gga                  0.01   1        0.01   0.00   
+ Stress_Func       stress_loc                  0.03   1        0.03   0.01   
+ Stress_Func       stress_cc                   0.06   1        0.06   0.02   
+ Stress_Func       stress_nl                   0.37   1        0.37   0.15   
+ FS_Nonlocal_tools cal_dbecp_s                 0.45   864      0.00   0.19   
+ Stress_Func       stress_onsite               0.18   1        0.18   0.08   
+ ModuleIO          write_istate_info           0.00   1        0.00   0.00   
+-----------------------------------------------------------------------------
+
+
+ START  Time  : Thu Jan  8 22:09:44 2026
+ FINISH Time  : Thu Jan  8 22:13:44 2026
+ TOTAL  Time  : 240
+ SEE INFORMATION IN : OUT.test1/

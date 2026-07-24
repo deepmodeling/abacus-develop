@@ -1,0 +1,59 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 687bc7819 (Fri Dec 20 16:44:03 2024 +0800)
+
+ Sat Dec 28 20:36:44 2024
+ MAKE THE DIR         : OUT.SiCCH2/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+ UNIFORM GRID DIM        : 135 * 135 * 135
+ UNIFORM GRID DIM(BIG)   : 45 * 45 * 45
+ DONE(0.0606576  SEC) : SETUP UNITCELL
+ DONE(0.0612108  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  NBASE       
+ 2       Gamma           12          868         
+ ---------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ---------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Si      2s2p1d-7au      13          62          
+ C       2s2p1d-7au      13          4           
+ H       2s1p-6au        5           2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0771864  SEC) : INIT PLANEWAVE
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(1.36943    SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1      1.39e-02   4.60e-01  -7.26486970e+03   0.00000000e+00   1.6681e-01   3.80
+ GE2      3.23e-03   2.29e-01  -7.27014371e+03  -5.27400909e+00   9.7897e-02   3.32
+ GE3      1.46e-02   5.13e-02  -7.27120160e+03  -1.05789494e+00   6.5373e-02   3.29
+ GE4      2.26e-02   8.41e-02  -7.27166390e+03  -4.62302395e-01   1.8227e-02   3.32
+ GE5      2.94e-02   6.13e-02  -7.27177265e+03  -1.08745107e-01   5.3322e-03   3.35
+ GE6      4.71e-02   7.28e-02  -7.27179809e+03  -2.54442523e-02   3.5718e-03   3.29
+ GE7      7.49e-02   1.13e-01  -7.27180976e+03  -1.16688392e-02   2.0409e-03   3.34
+ GE8      1.54e-01   2.26e-01  -7.27181212e+03  -2.35344737e-03   8.2050e-04   3.33
+ GE9      1.62e-01   2.38e-01  -7.27180480e+03   7.31650577e-03   8.1115e-04   3.32
+ GE10     9.75e-03   3.26e-02  -7.27181032e+03  -5.52360281e-03   4.9009e-04   3.33
+ GE11    -1.50e-02   2.13e-02  -7.27181046e+03  -1.34822019e-04   2.0766e-04   3.34
+ GE12    -2.56e-02   3.73e-02  -7.27181045e+03   8.40878155e-06   1.1659e-04   3.32
+ GE13    -1.69e-02   2.82e-02  -7.27181039e+03   5.94569211e-05   1.2180e-04   3.33
+ GE14    -3.55e-03   6.73e-03  -7.27181044e+03  -5.16608041e-05   7.2197e-05   3.33
+ GE15    -1.03e-03   1.22e-03  -7.27181045e+03  -4.82639089e-06   4.5270e-05   3.32
+ GE16    -5.39e-04   6.37e-04  -7.27181045e+03  -3.29916126e-07   1.4867e-05   3.34
+ GE17     7.26e-05   2.37e-04  -7.27181045e+03  -1.50780970e-07   6.9472e-06   3.35

@@ -1,0 +1,60 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 0a08fe05e (Thu Jun 12 12:13:50 2025 +0800)
+
+ Mon Sep 15 17:14:29 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8163 CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 96 * 54 * 150
+ UNIFORM GRID DIM(BIG)   : 96 * 54 * 150
+ DONE(0.162568   SEC) : SETUP UNITCELL
+ DONE(0.171061   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 4       6               16          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ O       7           
+ Fe      5           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.180158   SEC) : INIT PLANEWAVE
+ DONE(3.49238    SEC) : LOCAL POTENTIAL
+ DONE(3.58544    SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 95.2665
+ DONE(3.95809    SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(11.7677    SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -1.92e-01   9.02e-02   2.53e+01   2.55e+01  -2.00510546e+04   0.00000000e+00   2.8597e-01  39.36
+ DS2      6.25e-01   1.22e-01   2.15e+01   2.23e+01  -2.01236107e+04  -7.25560214e+01   1.9649e-01  46.00
+ DS3     -4.85e-01  -2.59e-02   1.89e+01   2.02e+01  -2.01337087e+04  -1.00980127e+01   1.8417e-01  31.18
+ DS4      6.20e-01   7.68e-02   2.03e+01   2.11e+01  -2.01223906e+04   1.13180917e+01   1.5964e-01  30.88
+ DS5      1.39e-01   6.48e-02   1.47e+01   1.53e+01  -2.01477589e+04  -2.53682961e+01   2.2600e-01  28.82
+ DS6      1.41e+00   5.12e-02   1.33e+01   1.43e+01  -2.01856668e+04  -3.79079559e+01   2.7023e-01  24.05
+ SCF restart after this step!
+ DS7      1.70e+00   5.27e-02   1.28e+01   1.42e+01  -2.00519274e+04   1.33739415e+02   2.8328e-01  17.93

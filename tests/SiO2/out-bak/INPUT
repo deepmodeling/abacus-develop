@@ -1,0 +1,27 @@
+#relax
+INPUT_PARAMETERS 
+pseudo_dir                              ./PP_ORB       
+orbital_dir                             ./PP_ORB
+calculation                             cell-relax
+basis_type                              lcao
+ecutwfc                                 100
+scf_thr                                 1e-7
+scf_nmax                                1
+gamma_only                              1
+#kspacing                                0.1
+smearing_method                         gauss
+smearing_sigma                          0.003
+mixing_type                             broyden
+mixing_beta                             0.4
+dft_functional                          PBE
+cal_force                               1
+cal_stress                              1        
+Symmetry                                0
+#relax_method                            bfgs_trad
+relax_new    1
+relax_nmax         1
+out_stru                                1
+out_level                               ie        
+force_thr_ev        0.01
+#######D3###########
+vdw_method                              d3_bj

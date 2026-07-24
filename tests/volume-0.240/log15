@@ -1,0 +1,463 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: f59fadd89 (Wed Dec 18 11:26:59 2024 +0000)
+
+ Thu Dec 19 15:02:22 2024
+ MAKE THE DIR         : OUT.ABACUS-4/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 32 * 32 * 32
+ UNIFORM GRID DIM(BIG)   : 32 * 32 * 32
+ DONE(0.0815882  SEC) : SETUP UNITCELL
+ DONE(0.0824318  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 4       27              12          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0833447  SEC) : INIT PLANEWAVE
+ DONE(0.0946028  SEC) : LOCAL POTENTIAL
+ DONE(0.12532    SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 7.66479
+ DONE(0.320356   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.432463   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -7.43e-07  -3.17e-07   6.86e-02   6.87e-02  -6.81815160e+03   0.00000000e+00   8.6979e-02   1.50
+ DS2     -1.60e-06  -5.87e-06   1.68e-01   1.68e-01  -6.81805693e+03   9.46683459e-02   2.4083e-02   0.55
+ DS3     -2.40e-06  -2.27e-05   6.39e-01   6.40e-01  -6.81810711e+03  -5.01760692e-02   4.0525e-03   0.65
+ SCF restart after this step!
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+initial spin (uB): 
+ATOM      1         0.0000013849        -0.0000025400         0.1112333991
+ATOM      2        -0.0000014000        -0.0000050593         0.1112371319
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  3 -- 1           RMS = 0.0912353     TIME(s) = 0.209005   
+Step (Outer -- Inner) =  3 -- 2           RMS = 0.00181018     TIME(s) = 0.010028   
+Step (Outer -- Inner) =  3 -- 3           RMS = 1.01623e-06     TIME(s) = 0.00969508 
+Meet convergence criterion ( < 9.12353e-05 ), exit.       Total TIME(s) = 0.228728
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000003250         0.0000002927         0.0200006826
+ATOM      2        -0.0000003251        -0.0000002929         0.0199988969
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000005568        -0.0000005121         0.0244878443
+ATOM      2        -0.0000005600        -0.0000015210         0.0244878317
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.000280984
+ DS4     -4.06e-08  -7.18e-08   4.01e-02   4.07e-02  -6.81811755e+03  -1.04420517e-02   1.2615e-03   0.99
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000005568        -0.0000005121         0.0244878443
+ATOM      2        -0.0000005600        -0.0000015210         0.0244878317
+initial spin (uB): 
+ATOM      1         0.0000020482         0.0000011869        -0.0148444573
+ATOM      2        -0.0000024274         0.0000026680        -0.0148384252
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  4 -- 1           RMS = 0.0348414     TIME(s) = 0.319548   
+Step (Outer -- Inner) =  4 -- 2           RMS = 1.77862e-05     TIME(s) = 0.0102263  
+Meet convergence criterion ( < 3.48414e-05 ), exit.       Total TIME(s) = 0.329774
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000010900        -0.0000003616         0.0199841996
+ATOM      2        -0.0000010903         0.0000003612         0.0199804960
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000010981        -0.0000001984         0.0152791855
+ATOM      2        -0.0000012015        -0.0000008159         0.0152807670
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 6.30884e-06
+ DS5     -1.35e-07  -4.56e-07   4.05e-02   4.07e-02  -6.81811612e+03   1.42609227e-03   7.1371e-04   0.90
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000010981        -0.0000001984         0.0152791855
+ATOM      2        -0.0000012015        -0.0000008159         0.0152807670
+initial spin (uB): 
+ATOM      1        -0.0000015750         0.0000011297        -0.0052554232
+ATOM      2         0.0000058203         0.0000088318        -0.0053009174
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  5 -- 1           RMS = 0.0252782     TIME(s) = 0.204616   
+Step (Outer -- Inner) =  5 -- 2           RMS = 3.24605e-05     TIME(s) = 0.00987653 
+Step (Outer -- Inner) =  5 -- 3           RMS = 8.5129e-06     TIME(s) = 0.00970864 
+Meet convergence criterion ( < 2.52782e-05 ), exit.       Total TIME(s) = 0.224201
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000007803        -0.0000008120         0.0199948981
+ATOM      2         0.0000007765         0.0000008098         0.0200107881
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000001521        -0.0000004541         0.0085918367
+ATOM      2         0.0000008639         0.0000020650         0.0085921369
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 1.36428e-05
+ DS6      6.02e-07   7.81e-07   4.03e-02   5.86e-02  -6.81811708e+03  -9.58773209e-04   1.0681e-04   0.81
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1         0.0000001521        -0.0000004541         0.0085918367
+ATOM      2         0.0000008639         0.0000020650         0.0085921369
+initial spin (uB): 
+ATOM      1        -0.0000055074        -0.0000003281         0.0381433395
+ATOM      2        -0.0000061515        -0.0000068927         0.0377178565
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  6 -- 1           RMS = 0.0179319     TIME(s) = 0.205672   
+Step (Outer -- Inner) =  6 -- 2           RMS = 4.93742e-05     TIME(s) = 0.0123081  
+Step (Outer -- Inner) =  6 -- 3           RMS = 9.94486e-06     TIME(s) = 0.0139652  
+Meet convergence criterion ( < 1.79319e-05 ), exit.       Total TIME(s) = 0.231945
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000000830         0.0000007237         0.0199928934
+ATOM      2        -0.0000000916        -0.0000007510         0.0200120910
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000012574        -0.0000000816         0.0134382247
+ATOM      2        -0.0000008260        -0.0000002288         0.0133366220
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 9.87196e-06
+ DS7     -4.75e-07  -3.28e-07   4.05e-02   1.09e-01  -6.81811791e+03  -8.29368452e-04   1.7901e-04   0.81
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000012574        -0.0000000816         0.0134382247
+ATOM      2        -0.0000008260        -0.0000002288         0.0133366220
+initial spin (uB): 
+ATOM      1        -0.0000003185         0.0000009044         0.0213021719
+ATOM      2         0.0000049332         0.0000005973         0.0215451354
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  7 -- 1           RMS = 0.00142883     TIME(s) = 0.206932   
+Step (Outer -- Inner) =  7 -- 2           RMS = 5.75999e-05     TIME(s) = 0.0100546  
+Step (Outer -- Inner) =  7 -- 3           RMS = 2.55367e-06     TIME(s) = 0.00969757 
+Step (Outer -- Inner) =  7 -- 4           RMS = 5.43516e-08     TIME(s) = 0.00976667 
+Meet convergence criterion ( < 1.42883e-06 ), exit.       Total TIME(s) = 0.23645
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000000013        -0.0000000000         0.0199999419
+ATOM      2         0.0000000007        -0.0000000001         0.0200000503
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000020054         0.0000001983         0.0137575484
+ATOM      2         0.0000011453        -0.0000001089         0.0137808129
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 1.89932e-06
+ DS8     -7.31e-07  -3.03e-07   4.05e-02   1.30e-01  -6.81811802e+03  -1.08064325e-04   7.8577e-05   0.83
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000020054         0.0000001983         0.0137575484
+ATOM      2         0.0000011453        -0.0000001089         0.0137808129
+initial spin (uB): 
+ATOM      1         0.0000045512        -0.0000017565         0.0200678787
+ATOM      2         0.0000042375        -0.0000015487         0.0200722540
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  8 -- 1           RMS = 7.02578e-05     TIME(s) = 0.215534   
+Step (Outer -- Inner) =  8 -- 2           RMS = 1.00323e-06     TIME(s) = 0.00998041 
+Step (Outer -- Inner) =  8 -- 3           RMS = 4.3847e-08     TIME(s) = 0.00987174 
+Meet convergence criterion ( < 1e-07 ), exit.       Total TIME(s) = 0.235386
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000000395        -0.0000000150         0.0200000081
+ATOM      2         0.0000000391        -0.0000000147         0.0200000159
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000007661        -0.0000002910         0.0137752168
+ATOM      2         0.0000022185        -0.0000004892         0.0138006840
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 6.48228e-07
+ DS9     -6.33e-07  -2.52e-07   4.05e-02   1.27e-01  -6.81811384e+03   4.17814613e-03   7.6273e-05   0.80
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000007661        -0.0000002910         0.0137752168
+ATOM      2         0.0000022185        -0.0000004892         0.0138006840
+initial spin (uB): 
+ATOM      1        -0.0000267278         0.0000106675         0.0158282645
+ATOM      2         0.0000684656         0.0000324245         0.0158122171
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  9 -- 1           RMS = 0.00418016     TIME(s) = 0.20617    
+Step (Outer -- Inner) =  9 -- 2           RMS = 2.39425e-05     TIME(s) = 0.010003   
+Step (Outer -- Inner) =  9 -- 3           RMS = 6.76344e-07     TIME(s) = 0.00976185 
+Meet convergence criterion ( < 4.18016e-06 ), exit.       Total TIME(s) = 0.225935
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000000286         0.0000000056         0.0200006769
+ATOM      2         0.0000000474         0.0000000229         0.0200006731
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000198295        -0.0000002274         0.0126760866
+ATOM      2         0.0000322455         0.0000107837         0.0126956847
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 4.41689e-06
+ DS10    -2.18e-06   2.74e-06   4.03e-02   4.04e-02  -6.81811686e+03  -3.02016451e-03   5.4269e-06   0.89
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000198295        -0.0000002274         0.0126760866
+ATOM      2         0.0000322455         0.0000107837         0.0126956847
+initial spin (uB): 
+ATOM      1         0.0000098388        -0.0000007752         0.0185171314
+ATOM      2        -0.0001008585        -0.0000108446         0.0185051319
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  10 -- 1           RMS = 0.00149062     TIME(s) = 0.206217   
+Step (Outer -- Inner) =  10 -- 2           RMS = 2.73541e-05     TIME(s) = 0.00998735 
+Step (Outer -- Inner) =  10 -- 3           RMS = 3.79342e-07     TIME(s) = 0.00984519 
+Meet convergence criterion ( < 1.49062e-06 ), exit.       Total TIME(s) = 0.226049
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000000472        -0.0000000048         0.0199996266
+ATOM      2        -0.0000000684        -0.0000000067         0.0199996239
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000032353         0.0000008417         0.0122866244
+ATOM      2        -0.0000083066         0.0000066545         0.0122998913
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 1.7533e-06
+ DS11    -2.05e-07  -1.78e-07   4.03e-02   4.04e-02  -6.81811689e+03  -3.02843989e-05   2.2674e-06   0.82
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000032353         0.0000008417         0.0122866244
+ATOM      2        -0.0000083066         0.0000066545         0.0122998913
+initial spin (uB): 
+ATOM      1        -0.0000257051         0.0000186622         0.0194219354
+ATOM      2        -0.0000245234         0.0000006286         0.0193999121
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  11 -- 1           RMS = 0.000589862     TIME(s) = 0.205748   
+Step (Outer -- Inner) =  11 -- 2           RMS = 7.00937e-06     TIME(s) = 0.00984919 
+Step (Outer -- Inner) =  11 -- 3           RMS = 7.15504e-08     TIME(s) = 0.00976853 
+Meet convergence criterion ( < 5.89862e-07 ), exit.       Total TIME(s) = 0.225366
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000000324         0.0000000138         0.0199999388
+ATOM      2        -0.0000000323         0.0000000123         0.0199999362
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000101499         0.0000080352         0.0121369024
+ATOM      2        -0.0000146136         0.0000045374         0.0121387371
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 6.01698e-07
+ DS12    -1.60e-06   8.82e-07   4.03e-02   4.05e-02  -6.81811686e+03   2.86462575e-05   2.5807e-06   0.84
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000101499         0.0000080352         0.0121369024
+ATOM      2        -0.0000146136         0.0000045374         0.0121387371
+initial spin (uB): 
+ATOM      1         0.0000278192        -0.0000206270         0.0196507941
+ATOM      2         0.0000259446        -0.0000365370         0.0196538667
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  12 -- 1           RMS = 0.000349972     TIME(s) = 0.20637    
+Step (Outer -- Inner) =  12 -- 2           RMS = 3.98155e-06     TIME(s) = 0.0106277  
+Step (Outer -- Inner) =  12 -- 3           RMS = 5.2019e-08     TIME(s) = 0.0117518  
+Meet convergence criterion ( < 3.49972e-07 ), exit.       Total TIME(s) = 0.228749
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000000268        -0.0000000274         0.0199999655
+ATOM      2         0.0000000264        -0.0000000300         0.0199999661
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000025904         0.0000046182         0.0120444306
+ATOM      2        -0.0000080165        -0.0000070988         0.0120477834
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 6.62997e-07
+ DS13    -2.10e-06   1.30e-06   4.04e-02   4.04e-02  -6.81811686e+03   3.20005695e-06   1.0723e-06   0.80
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+initial lambda (eV/uB): 
+ATOM      1        -0.0000025904         0.0000046182         0.0120444306
+ATOM      2        -0.0000080165        -0.0000070988         0.0120477834
+initial spin (uB): 
+ATOM      1         0.0000262542        -0.0000081842         0.0202311988
+ATOM      2         0.0000027823         0.0000283394         0.0202161000
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  13 -- 1           RMS = 0.000225521     TIME(s) = 0.206151   
+Step (Outer -- Inner) =  13 -- 2           RMS = 1.12266e-05     TIME(s) = 0.00985936 
+Step (Outer -- Inner) =  13 -- 3           RMS = 5.61812e-07     TIME(s) = 0.00974315 
+Step (Outer -- Inner) =  13 -- 4           RMS = 1.36536e-08     TIME(s) = 0.00973763 
+Meet convergence criterion ( < 2.25521e-07 ), exit.       Total TIME(s) = 0.235491
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000000068        -0.0000000109         0.0200000035
+ATOM      2        -0.0000000071         0.0000000107         0.0199999944
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000072930        -0.0000021503         0.0121073266
+ATOM      2        -0.0000102467         0.0000049823         0.0121028875
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 1.09415e-06
+ DS14     3.86e-06  -4.06e-06   4.03e-02   4.04e-02  -6.81811689e+03  -2.53001017e-05   8.2743e-08   0.88
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+       851.1854840338        -0.3945655383         0.5404886170 
+        -0.3945655383       849.1509109481         3.5777217463 
+         0.5404886170         3.5777217463       842.5066416706 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 847.614346 KBAR
+
+TIME STATISTICS
+-----------------------------------------------------------------------------
+    CLASS_NAME                NAME             TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------------------
+                   total                       12.74  15       0.85   100.00 
+ Driver            reading                     0.02   1        0.02   0.12   
+ Input_Conv        Convert                     0.00   1        0.00   0.00   
+ Driver            driver_line                 12.72  1        12.72  99.88  
+ UnitCell          check_tau                   0.00   1        0.00   0.00   
+ PW_Basis_Sup      setuptransform              0.02   1        0.02   0.17   
+ PW_Basis_Sup      distributeg                 0.00   1        0.00   0.00   
+ mymath            heapsort                    0.00   3        0.00   0.00   
+ PW_Basis_K        setuptransform              0.00   1        0.00   0.00   
+ PW_Basis_K        distributeg                 0.00   1        0.00   0.00   
+ PW_Basis          setup_struc_factor          0.00   1        0.00   0.00   
+ ppcell_vnl        init                        0.00   1        0.00   0.01   
+ ppcell_vl         init_vloc                   0.01   1        0.01   0.06   
+ ppcell_vnl        init_vnl                    0.03   1        0.03   0.24   
+ WF_atomic         init_at_1                   0.19   1        0.19   1.53   
+ wavefunc          wfcinit                     0.00   1        0.00   0.00   
+ Ions              opt_ions                    12.41  1        12.41  97.45  
+ ESolver_KS_PW     runner                      12.19  1        12.19  95.68  
+ H_Ewald_pw        compute_ewald               0.00   1        0.00   0.00   
+ Charge            set_rho_core                0.01   1        0.01   0.07   
+ PW_Basis_Sup      recip2real                  0.05   339      0.00   0.36   
+ PW_Basis_Sup      gathers_scatterp            0.02   339      0.00   0.14   
+ Charge            atomic_rho                  0.01   1        0.01   0.05   
+ Potential         init_pot                    0.02   1        0.02   0.14   
+ Potential         update_from_charge          0.24   15       0.02   1.92   
+ Potential         cal_fixed_v                 0.00   1        0.00   0.00   
+ PotLocal          cal_fixed_v                 0.00   1        0.00   0.00   
+ Potential         cal_v_eff                   0.24   15       0.02   1.91   
+ H_Hartree_pw      v_hartree                   0.01   15       0.00   0.05   
+ PW_Basis_Sup      real2recip                  0.05   441      0.00   0.42   
+ PW_Basis_Sup      gatherp_scatters            0.02   441      0.00   0.17   
+ PotXC             cal_v_eff                   0.24   15       0.02   1.86   
+ XC_Functional     v_xc                        0.26   17       0.02   2.05   
+ Potential         interpolate_vrs             0.00   15       0.00   0.01   
+ OnsiteProj        cubspl_tabulate             0.07   1        0.07   0.55   
+ Charge_Mixing     init_mixing                 0.00   2        0.00   0.00   
+ ESolver_KS_PW     hamilt2density              11.78  15       0.79   92.47  
+ HSolverPW         solve                       8.97   15       0.60   70.40  
+ pp_cell_vnl       getvnl                      0.12   182      0.00   0.96   
+ Structure_Factor  get_sk                      0.04   497      0.00   0.28   
+ OnsiteProj        getvnl                      0.00   182      0.00   0.00   
+ OnsiteProj        tabulate_atomic             0.00   273      0.00   0.00   
+ wavefunc          diago_PAO_in_pw_k2          0.07   7        0.01   0.55   
+ WF_atomic         atomic_wfc                  0.01   7        0.00   0.05   
+ Diago_DavSubspace diag_once                   7.73   105      0.07   60.67  
+ Diago_DavSubspace first                       3.09   105      0.03   24.27  
+ DavSubspace       hpsi_func                   5.96   310      0.02   46.74  
+ Operator          hPsi                        7.97   387      0.02   62.55  
+ Operator          EkineticPW                  0.05   387      0.00   0.36   
+ Operator          VeffPW                      6.97   387      0.02   54.72  
+ PW_Basis_K        recip2real                  2.42   42132    0.00   18.97  
+ PW_Basis_K        gathers_scatterp            1.05   42132    0.00   8.22   
+ PW_Basis_K        real2recip                  1.71   31212    0.00   13.45  
+ PW_Basis_K        gatherp_scatters            0.69   31212    0.00   5.44   
+ Operator          NonlocalPW                  0.68   387      0.00   5.34   
+ Nonlocal          add_nonlocal_pp             0.49   387      0.00   3.84   
+ Operator          OnsiteProjPW                0.27   387      0.00   2.11   
+ OnsiteProj        overlap                     0.24   478      0.00   1.88   
+ FS_Nonlocal_tools cal_becp                    0.26   506      0.00   2.04   
+ OnsiteProj        add_onsite_proj             0.08   387      0.00   0.65   
+ Diago_DavSubspace cal_elem                    0.39   310      0.00   3.10   
+ Diago_DavSubspace diag_zhegvx                 0.80   310      0.00   6.30   
+ Diago_DavSubspace cal_grad                    3.42   205      0.02   26.81  
+ Diago_DavSubspace check_update                0.00   205      0.00   0.00   
+ Diago_DavSubspace last                        0.27   157      0.00   2.16   
+ Diago_DavSubspace refresh                     0.08   52       0.00   0.64   
+ ElecStatePW       psiToRho                    1.04   15       0.07   8.13   
+ Charge            rho_mpi                     0.04   15       0.00   0.29   
+ Charge            reduce_diff_pools           0.04   60       0.00   0.29   
+ Charge_Mixing     get_drho                    0.02   15       0.00   0.14   
+ Charge_Mixing     inner_product_recip_rho     0.00   15       0.00   0.01   
+ Charge_Mixing     if_scf_oscillate            0.26   14       0.02   2.06   
+ Charge            mix_rho                     0.03   13       0.00   0.26   
+ Charge            Broyden_mixing              0.01   13       0.00   0.10   
+ Charge_Mixing     inner_product_recip_hartree 0.01   96       0.00   0.05   
+ SpinConstrain     cal_mw_from_lambda          2.63   57       0.05   20.62  
+ DiagoIterAssist   diag_responce               0.25   399      0.00   1.94   
+ DiagoIterAssist   diagH_LAPACK                0.28   476      0.00   2.23   
+ SpinConstrain     update_psi_charge           6.45   11       0.59   50.66  
+ DiagoIterAssist   diag_subspace_psi           0.12   77       0.00   0.92   
+ OnsiteProj        cal_occupation              0.00   1        0.00   0.04   
+ Forces            cal_force_loc               0.00   1        0.00   0.00   
+ Forces            cal_force_ew                0.00   1        0.00   0.00   
+ Forces            cal_force_nl                0.02   1        0.02   0.16   
+ FS_Nonlocal_tools cal_dbecp_f                 0.01   42       0.00   0.11   
+ Forces            cal_force_onsite            0.01   1        0.01   0.08   
+ Forces            cal_force_cc                0.02   1        0.02   0.16   
+ Forces            cal_force_scc               0.01   1        0.01   0.04   
+ Stress_PW         cal_stress                  0.17   1        0.17   1.33   
+ Stress_Func       stress_kin                  0.01   1        0.01   0.06   
+ Stress_Func       stress_har                  0.00   1        0.00   0.00   
+ Stress_Func       stress_ewa                  0.00   1        0.00   0.01   
+ Stress_Func       stress_gga                  0.01   1        0.01   0.06   
+ Stress_Func       stress_loc                  0.01   1        0.01   0.06   
+ Stress_Func       stress_cc                   0.03   1        0.03   0.21   
+ Stress_Func       stress_nl                   0.08   1        0.08   0.63   
+ FS_Nonlocal_tools cal_dbecp_s                 0.10   84       0.00   0.82   
+ Stress_Func       stress_onsite               0.04   1        0.04   0.28   
+ ModuleIO          write_istate_info           0.00   1        0.00   0.03   
+-----------------------------------------------------------------------------
+
+
+ START  Time  : Thu Dec 19 15:02:22 2024
+ FINISH Time  : Thu Dec 19 15:02:34 2024
+ TOTAL  Time  : 12
+ SEE INFORMATION IN : OUT.ABACUS-4/

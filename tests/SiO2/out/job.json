@@ -1,0 +1,11 @@
+{
+    "job_name": "ABACUS test",
+    "command": "OMP_NUM_THREADS=1 mpirun -np 32 abacus > log",
+    "log_file": "log",
+    "backward_files": [],
+    "project_id": 34946,
+    "platform": "ali",
+    "job_type": "container",
+    "machine_type": "c64_m128_cpu",
+    "image_address": "registry.dp.tech/dptech/abacus:3.9.0"
+}

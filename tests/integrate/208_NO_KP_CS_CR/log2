@@ -1,0 +1,589 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 687bc7819 (Fri Dec 20 16:44:03 2024 +0800)
+
+ Tue Jan  7 16:37:58 2025
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+ UNIFORM GRID DIM        : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG)   : 12 * 12 * 12
+ DONE(0.0171322  SEC) : SETUP UNITCELL
+ DONE(0.0471982  SEC) : SYMMETRY
+ DONE(0.135527   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Cell relaxation calculations
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  NBASE       
+ 1       3               4           26          
+ ---------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ---------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Si      2s2p1d-8au      13          2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.136304   SEC) : INIT PLANEWAVE
+ -------------------------------------------
+ STEP OF RELAXATION : 1
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.247602   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11447744e+02   0.00000000e+00   2.1681e-01   0.25
+ GV2     -2.11447375e+02   3.68843076e-04   7.0174e-02   0.20
+ GV3     -2.11454663e+02  -7.28812444e-03   5.5076e-03   0.20
+ GV4     -2.11454723e+02  -6.03696516e-05   5.0311e-04   0.20
+ GV5     -2.11454723e+02  -3.19468389e-07   7.6959e-05   0.22
+ GV6     -2.11454723e+02  -6.64046091e-09   8.4607e-06   0.20
+ GV7     -2.11454723e+02   1.38582607e-10   1.1351e-07   0.20
+ GV8     -2.11454723e+02  -2.29021414e-10   4.8167e-08   0.20
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+       112.0368680762         0.0000000000        -0.0000000000 
+         0.0000000000       112.0368680762        -0.0000000000 
+         0.0000000000         0.0000000000       112.0368680762 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 112.036868 KBAR
+
+ ETOT DIFF (eV)       : 0.000000
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(2.253198   SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 2
+ -------------------------------------------
+ DONE(2.255578   SEC) : LOCAL POTENTIAL
+ DONE(2.285286   SEC) : SYMMETRY
+ DONE(2.285328   SEC) : INIT K-POINTS
+ DONE(2.326980   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11531043e+02   0.00000000e+00   2.5358e-02   0.18
+ GV2     -2.11532857e+02  -1.81420647e-03   9.2741e-03   0.15
+ GV3     -2.11533043e+02  -1.86640260e-04   1.0999e-03   0.15
+ GV4     -2.11533045e+02  -1.99455781e-06   9.4576e-05   0.15
+ GV5     -2.11533045e+02  -1.51332014e-08   1.2018e-05   0.15
+ GV6     -2.11533045e+02   4.22490854e-10   2.1278e-07   0.15
+ GV7     -2.11533045e+02  -4.92193024e-10   5.9836e-08   0.21
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+       -55.2799477690         0.0000000000         0.0000000000 
+         0.0000000000       -55.2799477690        -0.0000000000 
+        -0.0000000000        -0.0000000000       -55.2799477690 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: -55.279948 KBAR
+
+ ETOT DIFF (eV)       : -0.078322
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(3.768181   SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 3
+ -------------------------------------------
+ DONE(3.770457   SEC) : LOCAL POTENTIAL
+ DONE(3.800285   SEC) : SYMMETRY
+ DONE(3.800327   SEC) : INIT K-POINTS
+ DONE(3.858226   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11610845e+02   0.00000000e+00   3.6066e-02   0.22
+ GV2     -2.11614627e+02  -3.78164749e-03   1.3133e-02   0.17
+ GV3     -2.11615027e+02  -3.99743435e-04   1.5256e-03   0.17
+ GV4     -2.11615030e+02  -3.71045249e-06   8.5046e-05   0.17
+ GV5     -2.11615030e+02  -7.23121338e-09   1.5993e-05   0.17
+ GV6     -2.11615030e+02  -8.86527488e-10   2.2387e-07   0.17
+ GV7     -2.11615030e+02   1.24951531e-11   1.0159e-08   0.17
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+        -1.9414921157        -0.0000000000         0.0000000000 
+        -0.0000000000        -1.9414921157         0.0000000000 
+         0.0000000000         0.0000000000        -1.9414921157 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: -1.941492 KBAR
+
+ ETOT DIFF (eV)       : -0.081985
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(5.373242   SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 4
+ -------------------------------------------
+ DONE(5.375537   SEC) : LOCAL POTENTIAL
+ DONE(5.405296   SEC) : SYMMETRY
+ DONE(5.405346   SEC) : INIT K-POINTS
+ DONE(5.462767   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11614597e+02   0.00000000e+00   1.0759e-02   0.22
+ GV2     -2.11614996e+02  -3.98788099e-04   4.0163e-03   0.17
+ GV3     -2.11615030e+02  -3.42335298e-05   4.2919e-04   0.17
+ GV4     -2.11615030e+02  -3.07766981e-07   1.3720e-05   0.17
+ GV5     -2.11615030e+02  -1.15235764e-10   1.5387e-06   0.17
+ GV6     -2.11615030e+02   1.76430595e-11   7.9892e-08   0.17
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+        -1.9414896166        -0.0000000000         0.0000000000 
+        -0.0000000000        -1.9414896166         0.0000000000 
+        -0.0000000000         0.0000000000        -1.9414896166 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: -1.941490 KBAR
+
+ ETOT DIFF (eV)       : -0.000000
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(6.807567   SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 5
+ -------------------------------------------
+ DONE(6.809836   SEC) : LOCAL POTENTIAL
+ DONE(6.839551   SEC) : SYMMETRY
+ DONE(6.839604   SEC) : INIT K-POINTS
+ DONE(6.896742   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11614917e+02   0.00000000e+00   6.9916e-04   0.22
+ GV2     -2.11614920e+02  -2.19706715e-06   2.6684e-04   0.17
+ GV3     -2.11614920e+02  -1.48142100e-07   2.7022e-05   0.17
+ GV4     -2.11614920e+02  -2.21301971e-09   8.6319e-07   0.17
+ GV5     -2.11614920e+02   8.87421726e-10   2.2260e-08   0.17
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         3.4634423066         0.0000000000         0.0000000000 
+         0.0000000000         3.4634423066         0.0000000000 
+         0.0000000000         0.0000000000         3.4634423066 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 3.463442 KBAR
+
+ ETOT DIFF (eV)       : 0.000111
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(8.078310   SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 6
+ -------------------------------------------
+ DONE(8.080580   SEC) : LOCAL POTENTIAL
+ DONE(8.110209   SEC) : SYMMETRY
+ DONE(8.110251   SEC) : INIT K-POINTS
+ DONE(8.167052   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615078e+02   0.00000000e+00   1.1779e-03   0.22
+ GV2     -2.11615084e+02  -6.30965560e-06   4.5091e-04   0.17
+ GV3     -2.11615085e+02  -4.43757702e-07   4.5344e-05   0.17
+ GV4     -2.11615085e+02  -2.31585700e-09   1.4412e-06   0.17
+ GV5     -2.11615085e+02   1.01773868e-10   5.1795e-08   0.17
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+        -0.2819517887        -0.0000000000        -0.0000000000 
+        -0.0000000000        -0.2819517887         0.0000000000 
+         0.0000000000         0.0000000000        -0.2819517887 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: -0.281952 KBAR
+
+ ETOT DIFF (eV)       : -0.000165
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(9.336404   SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 7
+ -------------------------------------------
+ DONE(9.338676   SEC) : LOCAL POTENTIAL
+ DONE(9.368399   SEC) : SYMMETRY
+ DONE(9.368441   SEC) : INIT K-POINTS
+ DONE(9.425356   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615079e+02   0.00000000e+00   5.9386e-04   0.22
+ GV2     -2.11615081e+02  -1.58204292e-06   2.2691e-04   0.17
+ GV3     -2.11615081e+02  -1.02627913e-07   2.2932e-05   0.17
+ GV4     -2.11615081e+02  -1.29560478e-09   7.2852e-07   0.17
+ GV5     -2.11615081e+02  -2.32646700e-10   1.6758e-08   0.17
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         0.5928168080         0.0000000000         0.0000000000 
+        -0.0000000000         0.5928168080         0.0000000000 
+        -0.0000000000         0.0000000000         0.5928168080 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 0.592817 KBAR
+
+ ETOT DIFF (eV)       : 0.000004
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(10.598852  SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 8
+ -------------------------------------------
+ DONE(10.601129  SEC) : LOCAL POTENTIAL
+ DONE(10.630899  SEC) : SYMMETRY
+ DONE(10.630941  SEC) : INIT K-POINTS
+ DONE(10.687927  SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615072e+02   0.00000000e+00   6.0970e-05   0.22
+ GV2     -2.11615072e+02  -1.77864759e-08   2.3296e-05   0.17
+ GV3     -2.11615072e+02  -1.29190699e-09   2.3531e-06   0.17
+ GV4     -2.11615072e+02  -5.02222982e-10   7.5112e-08   0.17
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         1.0027631522         0.0000000000         0.0000000000 
+         0.0000000000         1.0027631522         0.0000000000 
+         0.0000000000        -0.0000000000         1.0027631522 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 1.002763 KBAR
+
+ ETOT DIFF (eV)       : 0.000009
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(11.698599  SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 9
+ -------------------------------------------
+ DONE(11.700897  SEC) : LOCAL POTENTIAL
+ DONE(11.730663  SEC) : SYMMETRY
+ DONE(11.730704  SEC) : INIT K-POINTS
+ DONE(11.787770  SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615072e+02   0.00000000e+00   5.3638e-05   0.22
+ GV2     -2.11615072e+02  -1.41600779e-08   2.0504e-05   0.17
+ GV3     -2.11615072e+02  -1.80169474e-09   2.0687e-06   0.17
+ GV4     -2.11615072e+02   5.60928450e-10   6.5829e-08   0.17
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         0.9979848249        -0.0000000000         0.0000000000 
+        -0.0000000000         0.9979848249         0.0000000000 
+         0.0000000000         0.0000000000         0.9979848249 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 0.997985 KBAR
+
+ ETOT DIFF (eV)       : -0.000000
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(12.789840  SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 10
+ -------------------------------------------
+ DONE(12.792127  SEC) : LOCAL POTENTIAL
+ DONE(12.821905  SEC) : SYMMETRY
+ DONE(12.821958  SEC) : INIT K-POINTS
+ DONE(12.878800  SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615072e+02   0.00000000e+00   8.7784e-07   0.22
+ GV2     -2.11615072e+02  -1.16009159e-11   3.3535e-07   0.17
+ GV3     -2.11615072e+02  -5.18367590e-10   3.3926e-08   0.17
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         1.0000095796         0.0000000000        -0.0000000000 
+         0.0000000000         1.0000095796        -0.0000000000 
+         0.0000000000        -0.0000000000         1.0000095796 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 1.000010 KBAR
+
+ ETOT DIFF (eV)       : 0.000000
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(13.712846  SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 11
+ -------------------------------------------
+ DONE(13.715140  SEC) : LOCAL POTENTIAL
+ DONE(13.744866  SEC) : SYMMETRY
+ DONE(13.744909  SEC) : INIT K-POINTS
+ DONE(13.801930  SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615072e+02   0.00000000e+00   2.6046e-07   0.22
+ GV2     -2.11615072e+02  -2.70204665e-11   9.9067e-08   0.17
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         0.9999888056         0.0000000000        -0.0000000000 
+         0.0000000000         0.9999888056         0.0000000000 
+        -0.0000000000         0.0000000000         0.9999888056 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 0.999989 KBAR
+
+ ETOT DIFF (eV)       : 0.000000
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(14.462275  SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 12
+ -------------------------------------------
+ DONE(14.464563  SEC) : LOCAL POTENTIAL
+ DONE(14.494308  SEC) : SYMMETRY
+ DONE(14.494351  SEC) : INIT K-POINTS
+ DONE(14.551453  SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615072e+02   0.00000000e+00   2.3040e-08   0.22
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         1.0000086006         0.0000000000        -0.0000000000 
+        -0.0000000000         1.0000086006        -0.0000000000 
+         0.0000000000         0.0000000000         1.0000086006 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 1.000009 KBAR
+
+ ETOT DIFF (eV)       : 0.000000
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(15.043010  SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 13
+ -------------------------------------------
+ DONE(15.045295  SEC) : LOCAL POTENTIAL
+ DONE(15.075055  SEC) : SYMMETRY
+ DONE(15.075097  SEC) : INIT K-POINTS
+ DONE(15.131936  SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615072e+02   0.00000000e+00   1.9227e-08   0.22
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         0.9999918064         0.0000000000         0.0000000000 
+         0.0000000000         0.9999918064         0.0000000000 
+        -0.0000000000        -0.0000000000         0.9999918064 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 0.999992 KBAR
+
+ ETOT DIFF (eV)       : -0.000000
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(15.622009  SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 14
+ -------------------------------------------
+ DONE(15.624278  SEC) : LOCAL POTENTIAL
+ DONE(15.653996  SEC) : SYMMETRY
+ DONE(15.654046  SEC) : INIT K-POINTS
+ DONE(15.710859  SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615072e+02   0.00000000e+00   1.1400e-08   0.22
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         1.0000017917        -0.0000000000         0.0000000000 
+         0.0000000000         1.0000017917        -0.0000000000 
+         0.0000000000         0.0000000000         1.0000017917 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 1.000002 KBAR
+
+ ETOT DIFF (eV)       : 0.000000
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(16.200777  SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 15
+ -------------------------------------------
+ DONE(16.203056  SEC) : LOCAL POTENTIAL
+ DONE(16.232774  SEC) : SYMMETRY
+ DONE(16.232816  SEC) : INIT K-POINTS
+ DONE(16.289669  SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615072e+02   0.00000000e+00   7.0646e-09   0.22
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         0.9999985507         0.0000000000        -0.0000000000 
+         0.0000000000         0.9999985507         0.0000000000 
+        -0.0000000000        -0.0000000000         0.9999985507 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 0.999999 KBAR
+
+ ETOT DIFF (eV)       : -0.000000
+ LARGEST GRAD (eV/A)  : 0.000000
+ DONE(16.779872  SEC) : SETUP UNITCELL
+ -------------------------------------------
+ STEP OF RELAXATION : 16
+ -------------------------------------------
+ DONE(16.782142  SEC) : LOCAL POTENTIAL
+ DONE(16.811877  SEC) : SYMMETRY
+ DONE(16.811920  SEC) : INIT K-POINTS
+ DONE(16.868851  SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GV1     -2.11615072e+02   0.00000000e+00   3.9400e-09   0.22
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+         1.0000003657         0.0000000000        -0.0000000000 
+         0.0000000000         1.0000003657         0.0000000000 
+         0.0000000000        -0.0000000000         1.0000003657 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 1.000000 KBAR
+
+ ETOT DIFF (eV)       : 0.000000
+ LARGEST GRAD (eV/A)  : 0.000000
+TIME STATISTICS
+----------------------------------------------------------------------------
+    CLASS_NAME                NAME            TIME/s  CALLS   AVG/s  PER/%  
+----------------------------------------------------------------------------
+                   total                      17.36  161      0.11   100.00 
+ Driver            reading                    0.01   1        0.01   0.05   
+ Input_Conv        Convert                    0.00   1        0.00   0.00   
+ Driver            driver_line                17.35  1        17.35  99.95  
+ UnitCell          check_tau                  0.00   1        0.00   0.00   
+ ESolver_KS_LCAO   before_all_runners         0.21   1        0.21   1.20   
+ PW_Basis_Sup      setuptransform             0.00   1        0.00   0.02   
+ PW_Basis_Sup      distributeg                0.00   1        0.00   0.00   
+ mymath            heapsort                   0.00   2754     0.00   0.03   
+ Symmetry          analy_sys                  0.48   16       0.03   2.74   
+ PW_Basis_K        setuptransform             0.00   1        0.00   0.00   
+ PW_Basis_K        distributeg                0.00   1        0.00   0.00   
+ PW_Basis          setup_struc_factor         0.00   16       0.00   0.02   
+ NOrbital_Lm       extra_uniform              0.02   5        0.00   0.09   
+ Mathzone_Add1     SplineD2                   0.00   5        0.00   0.00   
+ Mathzone_Add1     Cubic_Spline_Interpolation 0.00   5        0.00   0.02   
+ Mathzone_Add1     Uni_Deriv_Phi              0.01   5        0.00   0.07   
+ ppcell_vl         init_vloc                  0.02   16       0.00   0.14   
+ Ions              opt_ions                   17.14  1        17.14  98.74  
+ ESolver_KS_LCAO   runner                     13.04  16       0.82   75.13  
+ ESolver_KS_LCAO   before_scf                 1.35   16       0.08   7.77   
+ ESolver_KS_LCAO   beforesolver               0.22   16       0.01   1.26   
+ ESolver_KS_LCAO   set_matrix_grid            0.20   16       0.01   1.14   
+ atom_arrange      search                     0.01   16       0.00   0.04   
+ Grid_Technique    init                       0.16   16       0.01   0.94   
+ Grid_BigCell      grid_expansion_index       0.04   32       0.00   0.25   
+ Record_adj        for_2d                     0.02   16       0.00   0.10   
+ Grid_Driver       Find_atom                  0.00   538      0.00   0.03   
+ LCAO_domain       grid_prepare               0.00   16       0.00   0.00   
+ Veff              initialize_HR              0.00   16       0.00   0.01   
+ OverlapNew        initialize_SR              0.00   16       0.00   0.01   
+ EkineticNew       initialize_HR              0.00   16       0.00   0.01   
+ NonlocalNew       initialize_HR              0.01   16       0.00   0.07   
+ Charge            set_rho_core               0.00   16       0.00   0.00   
+ Charge            atomic_rho                 0.07   32       0.00   0.38   
+ PW_Basis_Sup      recip2real                 0.09   603      0.00   0.54   
+ PW_Basis_Sup      gathers_scatterp           0.04   603      0.00   0.21   
+ Potential         init_pot                   0.09   16       0.01   0.53   
+ Potential         update_from_charge         0.44   77       0.01   2.52   
+ Potential         cal_fixed_v                0.00   16       0.00   0.02   
+ PotLocal          cal_fixed_v                0.00   16       0.00   0.02   
+ Potential         cal_v_eff                  0.43   77       0.01   2.49   
+ H_Hartree_pw      v_hartree                  0.03   77       0.00   0.15   
+ PW_Basis_Sup      real2recip                 0.11   680      0.00   0.61   
+ PW_Basis_Sup      gatherp_scatters           0.05   680      0.00   0.26   
+ PotXC             cal_v_eff                  0.40   77       0.01   2.32   
+ XC_Functional     v_xc                       0.40   77       0.01   2.32   
+ Potential         interpolate_vrs            0.00   77       0.00   0.01   
+ Symmetry          rhog_symmetry              0.17   77       0.00   0.98   
+ Symmetry          group fft grids            0.04   77       0.00   0.25   
+ H_Ewald_pw        compute_ewald              0.00   16       0.00   0.01   
+ Charge_Mixing     init_mixing                0.00   16       0.00   0.00   
+ HSolverLCAO       solve                      10.78  61       0.18   62.11  
+ HamiltLCAO        updateHk                   6.08   183      0.03   35.03  
+ OperatorLCAO      init                       5.84   549      0.01   33.63  
+ Veff              contributeHR               5.37   61       0.09   30.96  
+ Gint_interface    cal_gint                   11.70  138      0.08   67.42  
+ Gint_interface    cal_gint_vlocal            5.30   61       0.09   30.55  
+ Gint_Tools        cal_psir_ylm               1.63   52704    0.00   9.39   
+ Gint_k            transfer_pvpR              0.07   61       0.00   0.40   
+ OverlapNew        calculate_SR               0.22   16       0.01   1.30   
+ OverlapNew        contributeHk               0.02   183      0.00   0.09   
+ EkineticNew       contributeHR               0.22   61       0.00   1.28   
+ EkineticNew       calculate_HR               0.22   16       0.01   1.27   
+ NonlocalNew       contributeHR               0.20   61       0.00   1.18   
+ NonlocalNew       calculate_HR               0.20   16       0.01   1.15   
+ OperatorLCAO      contributeHk               0.04   183      0.00   0.21   
+ HSolverLCAO       hamiltSolvePsiK            0.71   183      0.00   4.07   
+ ElecStateLCAO     psiToRho                   3.99   61       0.07   23.01  
+ elecstate         cal_dm                     0.03   77       0.00   0.18   
+ psiMulPsiMpi      pdgemm                     0.03   231      0.00   0.17   
+ DensityMatrix     cal_DMR                    0.06   92       0.00   0.32   
+ Gint              transfer_DMR               0.03   61       0.00   0.20   
+ Gint_interface    cal_gint_rho               3.85   61       0.06   22.17  
+ Charge_Mixing     get_drho                   0.00   61       0.00   0.01   
+ Charge            mix_rho                    0.02   45       0.00   0.14   
+ Charge            Broyden_mixing             0.01   45       0.00   0.03   
+ ESolver_KS_LCAO   cal_force                  4.09   16       0.26   23.57  
+ Force_Stress_LCAO getForceStress             4.09   16       0.26   23.56  
+ Forces            cal_force_loc              0.01   16       0.00   0.04   
+ Forces            cal_force_ew               0.00   16       0.00   0.02   
+ Forces            cal_force_cc               0.00   16       0.00   0.00   
+ Forces            cal_force_scc              0.04   16       0.00   0.21   
+ Stress_Func       stress_loc                 0.05   16       0.00   0.31   
+ Stress_Func       stress_har                 0.00   16       0.00   0.02   
+ Stress_Func       stress_ewa                 0.01   16       0.00   0.03   
+ Stress_Func       stress_cc                  0.00   16       0.00   0.00   
+ Stress_Func       stress_gga                 0.05   16       0.00   0.30   
+ Force_LCAO        ftable                     3.17   16       0.20   18.28  
+ Force_LCAO        allocate                   7.97   8        1.00   45.94  
+ LCAO_domain       build_ST_new               0.51   32       0.02   2.93   
+ Force_LCAO_k      allocate_k                 7.97   8        1.00   45.91  
+ Force_LCAO        cal_fedm                   0.04   16       0.00   0.24   
+ Force_LCAO_k      cal_edm_2d                 7.99   8        1.00   46.02  
+ Force_LCAO        cal_ftvnl_dphi             0.01   16       0.00   0.05   
+ Force_LCAO        cal_fvl_dphi               2.55   16       0.16   14.70  
+ Gint_interface    cal_gint_force             2.55   16       0.16   14.69  
+ Gint_Tools        cal_dpsir_ylm              0.70   6912     0.00   4.04   
+ Gint_Tools        cal_dpsirr_ylm             0.16   6912     0.00   0.89   
+ NonlocalNew       cal_force_stress           0.75   16       0.05   4.31   
+ ESolver_KS_LCAO   cal_stress                 0.00   16       0.00   0.00   
+ ESolver_KS_LCAO   init_after_vc              0.48   15       0.03   2.76   
+ ESolver_KS_LCAO   after_all_runners          0.00   1        0.00   0.00   
+----------------------------------------------------------------------------
+
+
+ START  Time  : Tue Jan  7 16:37:58 2025
+ FINISH Time  : Tue Jan  7 16:38:15 2025
+ TOTAL  Time  : 17
+ SEE INFORMATION IN : OUT.autotest/

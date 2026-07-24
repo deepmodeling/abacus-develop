@@ -1,0 +1,76 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: f59fadd89 (Wed Dec 18 11:26:59 2024 +0000)
+
+ Fri Dec 20 10:41:42 2024
+ MAKE THE DIR         : OUT.ABACUS-grad1/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 32 * 32 * 32
+ UNIFORM GRID DIM(BIG)   : 32 * 32 * 32
+ DONE(0.0580721  SEC) : SETUP UNITCELL
+ DONE(0.0593921  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 4       343             12          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0655717  SEC) : INIT PLANEWAVE
+ DONE(0.0758679  SEC) : LOCAL POTENTIAL
+ DONE(0.119713   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 95.9417
+ DONE(0.357906   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.465589   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -1.34e-06   4.01e-06   1.64e-03   3.65e+00  -6.81966726e+03   0.00000000e+00   7.0786e-02  19.37
+ DS2     -1.68e-04   8.64e-05   2.37e-03   3.85e+00  -6.81967151e+03  -4.25862978e-03   1.3923e-02   6.70
+ DS3      1.05e-03  -5.55e-04   2.43e-03   3.99e+00  -6.81969257e+03  -2.10592194e-02   1.5328e-03   7.70
+ DS4     -2.28e-03   1.31e-03   6.11e-03   4.05e+00  -6.81969470e+03  -2.12487525e-03   3.1423e-04   9.33
+ DS5      3.12e-03  -3.04e-03   2.82e-04   4.06e+00  -6.81969805e+03  -3.34680574e-03   1.4586e-04   9.12
+ DS6      2.65e-03  -1.42e-03   7.81e-03   4.07e+00  -6.81969596e+03   2.08479353e-03   3.3471e-05   8.05
+ DS7     -4.47e-04  -1.10e-03   3.52e-03   4.07e+00  -6.81969696e+03  -9.97559615e-04   1.9130e-05   9.68
+ DS8      1.87e-03  -1.38e-03   8.41e-03   4.07e+00  -6.81969697e+03  -1.37743614e-05   5.7568e-06   9.22
+ DS9      7.49e-04  -2.48e-03   7.07e-03   4.07e+00  -6.81969636e+03   6.09730885e-04   4.9123e-06  10.53
+ DS10     5.21e-03  -3.38e-03   5.97e-03   4.06e+00  -6.81969662e+03  -2.61548556e-04   3.3625e-06  10.69
+ DS11     1.34e-03  -1.83e-03   9.82e-03   4.06e+00  -6.81969735e+03  -7.27371924e-04   3.4928e-06  10.91
+ DS12     5.03e-03  -6.01e-03   9.34e-03   4.06e+00  -6.81969731e+03   4.25172406e-05   1.3830e-06  10.01
+ DS13     6.09e-03  -4.13e-03   9.19e-03   4.06e+00  -6.81969761e+03  -3.00645842e-04   1.1218e-06  10.52
+ DS14     5.31e-03  -5.29e-03   7.59e-03   4.06e+00  -6.81969761e+03  -2.71694609e-06   1.0676e-06  10.30
+ DS15     7.41e-03  -7.77e-03   9.34e-03   4.06e+00  -6.81969763e+03  -2.03411766e-05   5.9333e-07  10.26
+ DS16     6.09e-03  -4.08e-03   8.56e-03   4.06e+00  -6.81969801e+03  -3.75515533e-04   7.0080e-07  10.56
+ DS17     9.16e-03  -7.64e-03   8.99e-03   4.06e+00  -6.81969785e+03   1.53097682e-04   4.4878e-07   9.96
+ DS18     5.30e-03  -5.00e-03   9.27e-03   4.06e+00  -6.81969846e+03  -6.05521885e-04   1.0369e-06  10.84
+ DS19     4.93e-03  -5.17e-03   9.53e-03   4.06e+00  -6.81969839e+03   6.82415174e-05   1.1192e-06   8.10
+ SCF restart after this step!
+ DS20     5.86e-03  -3.40e-03   8.78e-03   4.06e+00  -6.81969684e+03   1.55008084e-03   1.0895e-06   9.58
+ DS21     1.63e-02  -2.08e-02   9.37e-03   4.06e+00  -6.81969747e+03  -6.23088725e-04   5.0422e-06  12.27
+ DS22     1.37e-02  -1.17e-02   1.03e-02   4.06e+00  -6.81969839e+03  -9.20388324e-04   1.2903e-06  10.64
+ DS23     1.38e-02  -1.27e-02   1.02e-02   4.06e+00  -6.81969837e+03   1.95223955e-05   1.0422e-06   8.83
+ DS24     1.34e-02  -1.34e-02   9.82e-03   4.06e+00  -6.81969835e+03   2.00052241e-05   9.9172e-07   9.41

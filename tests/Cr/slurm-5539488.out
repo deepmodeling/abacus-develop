@@ -1,0 +1,68 @@
+Info: Local MPI proc number: 1,OpenMP thread number: 64,Total thread number: 64,Local thread limit: 128                                                                                     
+                              ABACUS v3.8.3
+
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: d95ee1a (Sat Mar 29 10:03:26 2025 +0800)
+
+ Tue Apr  1 15:46:39 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / AMD EPYC 7452 32-Core Processor
+ dft_functional readin is: GGA_X_PBE+GGA_C_PBE
+ dft_functional in pseudopot file is: PBE
+ Please make sure this is what you need
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 6 for Cr: [Ar] 3d5 4s1
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 64 * 64 * 375
+ UNIFORM GRID DIM(BIG)   : 16 * 16 * 125
+func,idGGA_X_PBE 101
+func,idGGA_C_PBE 130
+ DONE(0.261108   SEC) : SETUP UNITCELL
+ DONE(0.319848   SEC) : SYMMETRY
+ DONE(0.420057   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  THREADS     NBASE       
+ 4       61              1           64          264         
+ ---------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ---------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Cr      6s3p3d2f-10au   44          3           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.6189     SEC) : INIT PLANEWAVE
+ DONE(0.915877   SEC) : LOCAL POTENTIAL
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(2624.45    SEC) : INIT SCF
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1      1.00e-05   1.73e-05  -3.96e-02   2.38e+00   5.46460499e+09   0.00000000e+00   1.6909e-01 2595.36
+ GE2      2.62e-04  -7.81e-01  -4.68e-02   3.88e+00  -3.89049115e+10  -4.43695165e+10   1.2526e+00 2597.33
+ GE3     -1.73e-05   1.09e+00  -3.22e-02   3.85e+00  -4.59911097e+10  -7.08619823e+09   1.2587e+00 2600.44
+ GE4     -3.23e-03   5.14e-01  -3.26e-02   3.74e+00  -4.44842513e+10   1.50685837e+09   1.2554e+00 2568.26
+srun: Job step aborted: Waiting up to 62 seconds for job step to finish.
+srun: got SIGCONT
+slurmstepd: error: *** STEP 5539488.0 ON gc0407 CANCELLED AT 2025-04-01T19:43:33 ***
+slurmstepd: error: *** JOB 5539488 ON gc0407 CANCELLED AT 2025-04-01T19:43:33 ***
+srun: forcing job termination
+
+===================================================================================
+=   BAD TERMINATION OF ONE OF YOUR APPLICATION PROCESSES
+=   RANK 0 PID 111383 RUNNING AT gc0407
+=   KILLED BY SIGNAL: 15 (Terminated)
+===================================================================================

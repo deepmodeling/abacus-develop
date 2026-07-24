@@ -1,0 +1,21 @@
+{
+        "batch_type": "Bohrium",
+        "context_type": "BohriumContext",
+        "local_root" : "./",
+        "remote_profile":{
+          "email": "15201523802@163.com",
+          "password": "7@10E243d",
+          "program_id": 29206,
+            "keep_backup":false,
+            "input_data":{
+              "job_type": "container",
+              "log_file": "tmp_log",
+              "grouped":true,
+              "job_name": "qe-phonon",
+              "disk_size": 100,
+              "scass_type":"c32_m128_cpu",
+              "image_name":"registry.dp.tech/dptech/prod-11461/qe:7",
+              "on_demand":0
+            }
+        }
+}

@@ -1,0 +1,148 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 0a08fe05e (Thu Jun 12 12:13:50 2025 +0800)
+
+ Wed Jun 18 20:16:09 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG)   : 36 * 36 * 36
+ DONE(0.0575074  SEC) : SETUP UNITCELL
+ DONE(0.0592033  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 4       112             12          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.061966   SEC) : INIT PLANEWAVE
+ DONE(0.0713592  SEC) : LOCAL POTENTIAL
+ DONE(0.096734   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 39.2349
+ DONE(0.24331    SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.421996   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -3.14e-08  -1.73e-07   4.23e+00   4.26e+00  -6.81983547e+03   0.00000000e+00   5.7829e-02   7.93
+ DS2     -1.14e-06  -3.72e-07   4.26e+00   4.43e+00  -6.81994543e+03  -1.09955357e-01   8.1471e-03   3.06
+ DS3     -1.10e-06  -1.78e-06   4.33e+00   4.62e+00  -6.81998091e+03  -3.54795981e-02   1.3366e-03   3.66
+ DS4     -9.93e-07   1.14e-05   4.44e+00   4.75e+00  -6.81998333e+03  -2.42757644e-03   4.4672e-04   3.15
+ DS5      2.14e-05  -3.42e-04   4.53e+00   4.86e+00  -6.81998758e+03  -4.24190466e-03   3.4592e-05   3.48
+ DS6     -4.69e-04   1.83e-03   4.53e+00   4.86e+00  -6.81998678e+03   7.99038309e-04   1.3938e-05   3.59
+ DS7      3.98e-03  -7.04e-03   4.52e+00   4.85e+00  -6.81998627e+03   5.01585798e-04   2.0511e-05   4.78
+ DS8     -4.60e-03   5.94e-04   4.52e+00   4.84e+00  -6.81998690e+03  -6.22023444e-04   1.4797e-06   4.15
+ DS9      1.07e-02  -2.82e-03   4.51e+00   4.84e+00  -6.81998736e+03  -4.66698515e-04   2.4825e-06   4.81
+ DS10    -5.69e-03   2.29e-03   4.51e+00   4.84e+00  -6.81998779e+03  -4.24175149e-04   6.8729e-07   4.45
+ DS11     4.75e-03  -8.68e-04   4.51e+00   4.83e+00  -6.81998748e+03   3.03758021e-04   3.9851e-07   4.44
+ >> Leave SCF iteration.
+ * * * * * *
+TIME STATISTICS
+-----------------------------------------------------------------------------
+    CLASS_NAME                NAME             TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------------------
+                   total                       47.96  15       3.20   100.00 
+ Driver            reading                     0.01   1        0.01   0.02   
+ Input_Conv        Convert                     0.00   1        0.00   0.00   
+ Driver            driver_line                 47.95  1        47.95  99.98  
+ UnitCell          check_tau                   0.00   1        0.00   0.00   
+ PW_Basis_Sup      setuptransform              0.00   1        0.00   0.01   
+ PW_Basis_Sup      distributeg                 0.00   1        0.00   0.00   
+ mymath            heapsort                    0.00   3        0.00   0.00   
+ PW_Basis_K        setuptransform              0.00   1        0.00   0.00   
+ PW_Basis_K        distributeg                 0.00   1        0.00   0.00   
+ PW_Basis          setup_struc_factor          0.00   1        0.00   0.00   
+ ppcell_vnl        init                        0.00   1        0.00   0.00   
+ ppcell_vl         init_vloc                   0.01   1        0.01   0.01   
+ ppcell_vnl        init_vnl                    0.03   1        0.03   0.05   
+ WF_atomic         init_at_1                   0.15   1        0.15   0.31   
+ wavefunc          wfcinit                     0.00   1        0.00   0.00   
+ Ions              opt_ions                    47.70  1        47.70  99.45  
+ ESolver_KS_PW     runner                      47.70  1        47.70  99.45  
+ H_Ewald_pw        compute_ewald               0.00   1        0.00   0.00   
+ Charge            set_rho_core                0.01   1        0.01   0.01   
+ PW_Basis_Sup      recip2real                  0.04   190      0.00   0.09   
+ PW_Basis_Sup      gathers_scatterp            0.01   190      0.00   0.03   
+ Charge            atomic_rho                  0.01   1        0.01   0.02   
+ Potential         init_pot                    0.02   1        0.02   0.05   
+ Potential         update_from_charge          0.24   12       0.02   0.50   
+ Potential         cal_fixed_v                 0.00   1        0.00   0.00   
+ PotLocal          cal_fixed_v                 0.00   1        0.00   0.00   
+ Potential         cal_v_eff                   0.24   12       0.02   0.49   
+ H_Hartree_pw      v_hartree                   0.01   12       0.00   0.02   
+ PW_Basis_Sup      real2recip                  0.04   228      0.00   0.09   
+ PW_Basis_Sup      gatherp_scatters            0.01   228      0.00   0.03   
+ PotXC             cal_v_eff                   0.23   12       0.02   0.47   
+ XC_Functional     v_xc                        0.23   12       0.02   0.47   
+ Potential         interpolate_vrs             0.00   12       0.00   0.00   
+ OnsiteProj        cubspl_tabulate             0.14   1        0.14   0.28   
+ Charge_Mixing     init_mixing                 0.00   1        0.00   0.00   
+ ESolver_KS_PW     hamilt2density              47.21  12       3.93   98.44  
+ HSolverPW         solve                       47.21  12       3.93   98.43  
+ pp_cell_vnl       getvnl                      0.28   336      0.00   0.59   
+ Structure_Factor  get_sk                      0.04   420      0.00   0.08   
+ wavefunc          diago_PAO_in_pw_k2          0.35   28       0.01   0.74   
+ WF_atomic         atomic_wfc                  0.03   28       0.00   0.06   
+ Diago_DavSubspace diag_once                   40.68  336      0.12   84.82  
+ Diago_DavSubspace first                       13.15  336      0.04   27.43  
+ DavSubspace       hpsi_func                   31.52  1226     0.03   65.72  
+ Operator          hPsi                        31.36  1226     0.03   65.38  
+ Operator          EkineticPW                  0.16   1226     0.00   0.34   
+ Operator          VeffPW                      28.96  1226     0.02   60.38  
+ PW_Basis_K        recip2real                  10.89  124678   0.00   22.70  
+ PW_Basis_K        gathers_scatterp            3.87   124678   0.00   8.07   
+ PW_Basis_K        real2recip                  7.49   89734    0.00   15.61  
+ PW_Basis_K        gatherp_scatters            2.60   89734    0.00   5.42   
+ Operator          NonlocalPW                  2.24   1226     0.00   4.66   
+ Nonlocal          add_nonlocal_pp             1.58   1226     0.00   3.29   
+ Diago_DavSubspace cal_elem                    2.15   1226     0.00   4.49   
+ Diago_DavSubspace diag_zhegvx                 3.27   1226     0.00   6.82   
+ Diago_DavSubspace cal_grad                    20.95  890      0.02   43.68  
+ Diago_DavSubspace check_update                0.00   890      0.00   0.00   
+ Diago_DavSubspace last                        1.97   708      0.00   4.10   
+ Diago_DavSubspace refresh                     0.75   372      0.00   1.57   
+ ElecStatePW       psiToRho                    5.63   12       0.47   11.74  
+ Charge            rho_mpi                     0.15   12       0.01   0.30   
+ Charge            reduce_diff_pools           0.15   48       0.00   0.30   
+ Charge_Mixing     get_drho                    0.02   12       0.00   0.04   
+ Charge_Mixing     inner_product_recip_rho     0.00   12       0.00   0.00   
+ Charge            mix_rho                     0.03   10       0.00   0.07   
+ Charge            Broyden_mixing              0.01   10       0.00   0.02   
+ Charge_Mixing     inner_product_recip_hartree 0.01   90       0.00   0.02   
+ OnsiteProj        cal_occupation              0.03   1        0.03   0.05   
+ OnsiteProj        tabulate_atomic             0.00   28       0.00   0.00   
+ OnsiteProj        overlap                     0.02   28       0.00   0.05   
+ FS_Nonlocal_tools cal_becp                    0.02   28       0.00   0.05   
+ ModuleIO          write_istate_info           0.01   1        0.01   0.02   
+-----------------------------------------------------------------------------
+
+
+ START  Time  : Wed Jun 18 20:16:09 2025
+ FINISH Time  : Wed Jun 18 20:16:57 2025
+ TOTAL  Time  : 48
+ SEE INFORMATION IN : OUT.ABACUS/

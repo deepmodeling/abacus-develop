@@ -1,0 +1,323 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 0a08fe05e (Thu Jun 12 12:13:50 2025 +0800)
+
+ Fri Jul 18 17:08:56 2025
+ MAKE THE DIR         : OUT.test1/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 64 * 64 * 64
+ UNIFORM GRID DIM(BIG)   : 64 * 64 * 64
+ DONE(0.100475   SEC) : SETUP UNITCELL
+ DONE(0.103553   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Ion relaxation calculations
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 2       2               12          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ O       2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.106259   SEC) : INIT PLANEWAVE
+ DONE(0.128845   SEC) : LOCAL POTENTIAL
+ DONE(0.193025   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 0.422974
+ DONE(0.367293   SEC) : INIT BASIS
+ -------------------------------------------
+ STEP OF RELAXATION : 1
+ -------------------------------------------
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp396
+ START CHARGE INIT : 
+ START CHARGE      : atomic
+ Use atomic initialization for charge density.
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[0] = -25.3908 -25.3904
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[1] = -25.2514 -25.247
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[2] = -23.4784 -23.4192
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[3] = -20.3515 -20.1914
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[4] = -16.3623 -16.1012
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[5] = -12.1225 -11.8275
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[6] = -25.2514 -25.2471
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[7] = -23.7442 -23.6937
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[8] = -20.8269 -20.6818
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[9] = -16.961 -16.7108
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[10] = -12.739 -12.4441
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[11] = -8.81831 -8.54414
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[12] = -23.4775 -23.4184
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[13] = -20.8272 -20.6821
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[14] = -17.165 -16.9188
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[15] = -13.0584 -12.7642
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[16] = -9.15455 -8.87697
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[17] = -6.00608 -5.77183
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[18] = -20.3521 -20.1919
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[19] = -16.9617 -16.7115
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[20] = -13.0582 -12.7641
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[21] = -9.26943 -8.99075
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[22] = -6.14903 -5.91221
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[23] = -3.96531 -3.77516
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[24] = -16.3626 -16.1015
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[25] = -12.7388 -12.444
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[26] = -9.15437 -8.87669
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[27] = -6.14926 -5.91241
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[28] = -4.00686 -3.81558
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[29] = -2.59247 -2.4466
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[30] = -12.1227 -11.8277
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[31] = -8.81843 -8.54421
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[32] = -6.00643 -5.77214
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[33] = -3.96564 -3.77557
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[34] = -2.59237 -2.44651
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[35] = -1.64938 -1.53734
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[36] = -8.28705 -8.01912
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[37] = -5.73189 -5.50265
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[38] = -3.84489 -3.65818
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[39] = -2.54427 -2.40023
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[40] = -1.63469 -1.52309
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[41] = -0.994234 -0.90245
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[42] = -5.34888 -5.12696
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[43] = -3.65453 -3.47319
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[44] = -2.45195 -2.31139
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[45] = -1.59185 -1.48168
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[46] = -0.975992 -0.884801
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[47] = -0.521552 -0.445091
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[48] = -3.40879 -3.23497
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[49] = -2.32098 -2.1854
+ DONE(0.71842    SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1      6.34e+00   6.35e+00  -7.68212257e+03   0.00000000e+00   9.0946e-01   0.56
+ DS2      5.76e+00   5.84e+00  -7.68195959e+03   1.62986097e-01   6.2472e-01   0.19
+ DS3      4.27e+00   4.64e+00  -7.68194872e+03   1.08659594e-02   2.5563e+00   0.18
+ DS4      4.07e+00   4.59e+00  -7.68293953e+03  -9.90811125e-01   1.0206e-01   0.18
+ DS5      4.00e+00   4.39e+00  -7.68311684e+03  -1.77303382e-01   6.9235e-02   0.18
+ DS6      4.00e+00   4.36e+00  -7.68317653e+03  -5.96952820e-02   2.4014e-02   0.18
+ DS7      4.00e+00   4.35e+00  -7.68319651e+03  -1.99771506e-02   1.4774e-02   0.19
+ DS8      4.00e+00   4.37e+00  -7.68322220e+03  -2.56947660e-02   3.1026e-03   0.20
+ DS9      4.00e+00   4.37e+00  -7.68322119e+03   1.01655382e-03   1.6818e-03   0.20
+ DS10     4.00e+00   4.37e+00  -7.68322349e+03  -2.30759828e-03   5.3471e-04   0.18
+ DS11     4.00e+00   4.38e+00  -7.68322491e+03  -1.41886165e-03   1.1368e-04   0.18
+ DS12     4.00e+00   4.38e+00  -7.68322522e+03  -3.08420382e-04   3.8387e-05   0.18
+ DS13     4.00e+00   4.38e+00  -7.68322522e+03  -9.61271996e-07   2.0352e-05   0.18
+ DS14     4.00e+00   4.38e+00  -7.68322530e+03  -7.91895237e-05   6.4494e-06   0.19
+ DS15     4.00e+00   4.37e+00  -7.68322532e+03  -1.64511103e-05   1.0608e-06   0.18
+ DS16     4.00e+00   4.37e+00  -7.68322532e+03  -3.50258564e-06   3.2278e-07   0.18
+ DS17     4.00e+00   4.37e+00  -7.68322532e+03  -1.45041147e-06   1.8582e-07   0.18
+ DS18     4.00e+00   4.37e+00  -7.68322532e+03  -2.62060049e-07   8.2637e-08   0.18
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+      -152.6489051465       -46.8535882152       -41.1406101936 
+       -46.8535882152      -152.6511494506       -41.1404984989 
+       -41.1406101936       -41.1404984989      -225.4861983672 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: -176.928751 KBAR
+
+ ETOT DIFF (eV)       : 0.000000
+ LARGEST GRAD (eV/A)  : 0.930753
+ -------------------------------------------
+ STEP OF RELAXATION : 2
+ -------------------------------------------
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp396
+ START CHARGE INIT : 
+ START CHARGE      : atomic
+ Use atomic initialization for charge density.
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[0] = -25.498330 -25.498041
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[1] = -25.359219 -25.354862
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[2] = -23.586402 -23.527356
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[3] = -20.457801 -20.297654
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[4] = -16.465246 -16.204027
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[5] = -12.221119 -11.926096
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[6] = -25.358589 -25.354329
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[7] = -23.851820 -23.801293
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[8] = -20.931910 -20.786853
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[9] = -17.062659 -16.812418
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[10] = -12.836854 -12.542012
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[11] = -8.912421 -8.638247
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[12] = -23.583914 -23.524780
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[13] = -20.931122 -20.786021
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[14] = -17.266050 -17.019852
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[15] = -13.155750 -12.861623
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[16] = -9.247657 -8.970074
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[17] = -6.093515 -5.859257
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[18] = -20.455550 -20.295350
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[19] = -17.062546 -16.812352
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[20] = -13.155023 -12.860921
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[21] = -9.361782 -9.083095
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[22] = -6.235743 -5.998924
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[23] = -4.046007 -3.855822
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[24] = -16.463360 -16.202143
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[25] = -12.834839 -12.540034
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[26] = -9.246252 -8.968592
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[27] = -6.235899 -5.999025
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[28] = -4.087131 -3.895808
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[29] = -2.665243 -2.519344
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[30] = -12.218261 -11.923231
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[31] = -8.910042 -8.635857
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[32] = -6.092925 -5.858593
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[33] = -4.045176 -3.855066
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[34] = -2.664403 -2.518550
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[35] = -1.713777 -1.601736
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[36] = -8.378625 -8.110720
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[37] = -5.817981 -5.588700
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[38] = -3.923786 -3.737045
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[39] = -2.616022 -2.472012
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[40] = -1.698829 -1.587209
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[41] = -1.049306 -0.957463
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[42] = -5.434682 -5.212729
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[43] = -3.733471 -3.552112
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[44] = -2.523987 -2.383436
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[45] = -1.655937 -1.545737
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[46] = -1.030720 -0.939496
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[47] = -0.566544 -0.490184
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[48] = -3.488311 -3.314456
+/abacus-develop/source/module_elecstate/potentials/potential_new.cpp290 v_effective[49] = -2.393311 -2.257705
+ DONE(5.383907   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1      4.00e+00   4.16e+00  -7.65989006e+03   0.00000000e+00   9.8260e+00   0.47
+ DS2      2.05e-08   4.13e-01  -7.67350074e+03  -1.36106832e+01   3.3506e+01   0.20
+ DS3      4.00e+00   4.14e+00  -7.68313043e+03  -9.62969102e+00   1.4091e+00   0.20
+ DS4      4.00e+00   4.21e+00  -7.68288095e+03   2.49485010e-01   1.9899e-01   0.18
+ DS5      4.00e+00   4.36e+00  -7.68307909e+03  -1.98137970e-01   4.8841e-02   0.18
+ DS6      4.00e+00   4.38e+00  -7.68316798e+03  -8.88918303e-02   1.6965e-02   0.19
+ DS7      4.00e+00   4.37e+00  -7.68319314e+03  -2.51606887e-02   9.6416e-03   0.19
+ DS8      4.00e+00   4.37e+00  -7.68321442e+03  -2.12836070e-02   4.1552e-03   0.19
+ DS9      4.00e+00   4.38e+00  -7.68322238e+03  -7.96166757e-03   1.2770e-03   0.19
+ DS10     4.00e+00   4.38e+00  -7.68322429e+03  -1.90856561e-03   4.5625e-04   0.18
+ DS11     4.00e+00   4.38e+00  -7.68322476e+03  -4.67062849e-04   1.8267e-04   0.18
+ DS12     4.00e+00   4.37e+00  -7.68322514e+03  -3.78593513e-04   7.0407e-05   0.18
+ DS13     4.00e+00   4.37e+00  -7.68322525e+03  -1.13291659e-04   3.0492e-05   0.17
+ DS14     4.00e+00   4.37e+00  -7.68322528e+03  -3.05945401e-05   1.0016e-05   0.17
+ DS15     4.00e+00   4.37e+00  -7.68322531e+03  -3.02057300e-05   3.3229e-06   0.17
+ DS16     4.00e+00   4.37e+00  -7.68322531e+03   2.36635482e-07   1.8889e-06   0.17
+ DS17     4.00e+00   4.37e+00  -7.68322532e+03  -7.47871138e-06   1.6454e-06   0.17
+ DS18     4.00e+00   4.37e+00  -7.68322532e+03  -2.29279728e-06   2.4969e-07   0.17
+ DS19     4.00e+00   4.37e+00  -7.68322532e+03  -1.11313417e-06   1.6309e-07   0.18
+ DS20     4.00e+00   4.37e+00  -7.68322532e+03  -7.78826713e-07   8.2602e-08   0.17
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+      -178.7049015025       596.3535599051       906.9251851670 
+       596.3535599051      -178.7123104575       906.9317793030 
+       906.9251851670       906.9317793030      -992.0879048660 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: -449.835039 KBAR
+
+ ETOT DIFF (eV)       : 0.000001
+ LARGEST GRAD (eV/A)  : 99.417426
+TIME STATISTICS
+-----------------------------------------------------------------------------
+    CLASS_NAME                NAME             TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------------------
+                   total                       10.07  17       0.59   100.00 
+ Driver            reading                     0.04   1        0.04   0.39   
+ Input_Conv        Convert                     0.00   1        0.00   0.00   
+ Driver            driver_line                 10.03  1        10.03  99.61  
+ UnitCell          check_tau                   0.00   1        0.00   0.00   
+ PW_Basis_Sup      setuptransform              0.00   1        0.00   0.04   
+ PW_Basis_Sup      distributeg                 0.00   1        0.00   0.01   
+ mymath            heapsort                    0.00   3        0.00   0.00   
+ PW_Basis_K        setuptransform              0.00   1        0.00   0.01   
+ PW_Basis_K        distributeg                 0.00   1        0.00   0.01   
+ PW_Basis          setup_struc_factor          0.00   1        0.00   0.01   
+ ppcell_vnl        init                        0.00   1        0.00   0.03   
+ ppcell_vl         init_vloc                   0.02   1        0.02   0.17   
+ ppcell_vnl        init_vnl                    0.06   1        0.06   0.64   
+ WF_atomic         init_at_1                   0.17   1        0.17   1.73   
+ wavefunc          wfcinit                     0.00   1        0.00   0.00   
+ Ions              opt_ions                    9.70   1        9.70   96.32  
+ ESolver_KS_PW     runner                      8.91   2        4.46   88.56  
+ H_Ewald_pw        compute_ewald               0.22   2        0.11   2.18   
+ Charge            set_rho_core                0.06   2        0.03   0.62   
+ PW_Basis_Sup      recip2real                  0.40   488      0.00   3.98   
+ PW_Basis_Sup      gathers_scatterp            0.31   488      0.00   3.04   
+ Charge            atomic_rho                  0.17   4        0.04   1.72   
+ Potential         init_pot                    0.11   2        0.06   1.12   
+ Potential         update_from_charge          2.15   40       0.05   21.31  
+ Potential         cal_fixed_v                 0.00   2        0.00   0.01   
+ PotLocal          cal_fixed_v                 0.00   2        0.00   0.01   
+ Potential         cal_v_eff                   2.14   40       0.05   21.28  
+ H_Hartree_pw      v_hartree                   0.06   40       0.00   0.57   
+ PW_Basis_Sup      real2recip                  1.16   606      0.00   11.53  
+ PW_Basis_Sup      gatherp_scatters            1.05   606      0.00   10.41  
+ PotXC             cal_v_eff                   2.08   40       0.05   20.65  
+ XC_Functional     v_xc                        2.28   44       0.05   22.66  
+ Potential         interpolate_vrs             0.00   40       0.00   0.03   
+ Charge_Mixing     init_mixing                 0.00   2        0.00   0.00   
+ ESolver_KS_PW     hamilt2density              5.33   38       0.14   52.99  
+ HSolverPW         solve                       5.31   38       0.14   52.71  
+ pp_cell_vnl       getvnl                      0.05   76       0.00   0.47   
+ Structure_Factor  get_sk                      0.01   92       0.00   0.08   
+ wavefunc          diago_PAO_in_pw_k2          0.04   2        0.02   0.40   
+ WF_atomic         atomic_wfc                  0.00   2        0.00   0.01   
+ Diago_DavSubspace diag_once                   4.39   76       0.06   43.56  
+ Diago_DavSubspace first                       1.69   76       0.02   16.81  
+ DavSubspace       hpsi_func                   3.71   247      0.02   36.84  
+ Operator          hPsi                        3.70   247      0.01   36.80  
+ Operator          EkineticPW                  0.01   247      0.00   0.06   
+ Operator          VeffPW                      3.58   247      0.01   35.61  
+ PW_Basis_K        recip2real                  1.97   9196     0.00   19.60  
+ PW_Basis_K        gathers_scatterp            1.03   9196     0.00   10.27  
+ PW_Basis_K        real2recip                  2.18   6460     0.00   21.68  
+ PW_Basis_K        gatherp_scatters            1.55   6460     0.00   15.41  
+ Operator          NonlocalPW                  0.11   247      0.00   1.12   
+ Nonlocal          add_nonlocal_pp             0.04   247      0.00   0.38   
+ Diago_DavSubspace cal_elem                    0.15   247      0.00   1.46   
+ Diago_DavSubspace diag_zhegvx                 0.36   247      0.00   3.56   
+ Diago_DavSubspace cal_grad                    2.22   171      0.01   22.06  
+ Diago_DavSubspace check_update                0.00   171      0.00   0.00   
+ Diago_DavSubspace last                        0.05   136      0.00   0.48   
+ Diago_DavSubspace refresh                     0.02   60       0.00   0.18   
+ ElecStatePW       psiToRho                    0.82   38       0.02   8.14   
+ Charge_Mixing     get_drho                    0.08   38       0.00   0.78   
+ Charge_Mixing     inner_product_recip_rho     0.01   38       0.00   0.05   
+ Charge            mix_rho                     0.08   36       0.00   0.83   
+ Charge            Broyden_mixing              0.03   36       0.00   0.30   
+ Charge_Mixing     inner_product_recip_hartree 0.03   432      0.00   0.28   
+ Forces            cal_force_loc               0.00   2        0.00   0.03   
+ Forces            cal_force_ew                0.00   2        0.00   0.02   
+ Forces            cal_force_nl                0.01   2        0.00   0.08   
+ FS_Nonlocal_tools cal_becp                    0.02   8        0.00   0.17   
+ FS_Nonlocal_tools cal_dbecp_f                 0.00   12       0.00   0.03   
+ Forces            cal_force_cc                0.17   2        0.09   1.74   
+ Forces            cal_force_scc               0.09   2        0.04   0.86   
+ Stress_PW         cal_stress                  0.50   2        0.25   5.00   
+ Stress_Func       stress_kin                  0.00   2        0.00   0.02   
+ Stress_Func       stress_har                  0.00   2        0.00   0.01   
+ Stress_Func       stress_ewa                  0.00   2        0.00   0.03   
+ Stress_Func       stress_gga                  0.06   2        0.03   0.61   
+ Stress_Func       stress_loc                  0.13   2        0.07   1.33   
+ Stress_Func       stress_cc                   0.25   2        0.13   2.52   
+ Stress_Func       stress_nl                   0.05   2        0.02   0.48   
+ FS_Nonlocal_tools cal_dbecp_s                 0.03   24       0.00   0.28   
+ ModuleIO          write_istate_info           0.00   1        0.00   0.00   
+-----------------------------------------------------------------------------
+
+
+ START  Time  : Fri Jul 18 17:08:56 2025
+ FINISH Time  : Fri Jul 18 17:09:06 2025
+ TOTAL  Time  : 10
+ SEE INFORMATION IN : OUT.test1/

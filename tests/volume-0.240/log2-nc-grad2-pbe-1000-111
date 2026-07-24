@@ -1,0 +1,336 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: f59fadd89 (Wed Dec 18 11:26:59 2024 +0000)
+
+ Fri Dec 20 15:55:32 2024
+ MAKE THE DIR         : OUT.ABACUS-grad1/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 100 * 100 * 100
+ UNIFORM GRID DIM(BIG)   : 100 * 100 * 100
+ DONE(0.104548   SEC) : SETUP UNITCELL
+ DONE(0.105138   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 4       27              12          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.123711   SEC) : INIT PLANEWAVE
+ DONE(0.231197   SEC) : LOCAL POTENTIAL
+ DONE(0.31304    SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 233.31
+ DONE(0.779455   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DONE(2.07183    SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1      2.61e-08  -2.32e-08  -3.11e-08   2.14e+00  -6.81809617e+03   0.00000000e+00   1.0656e-01  66.14
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS2     -2.30e-08   2.60e-07  -2.38e-07   1.80e+00  -6.81808510e+03   1.10670271e-02   2.5636e-02  28.18
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS3     -2.41e-07   5.63e-07  -7.90e-07   1.49e+00  -6.81814721e+03  -6.21095846e-02   2.3620e-03  30.46
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS4     -1.14e-08   1.79e-06  -1.35e-06   1.38e+00  -6.81815206e+03  -4.84836759e-03   6.6978e-04  32.67
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS5     -4.17e-06   3.99e-06  -1.02e-05   1.33e+00  -6.81815336e+03  -1.30005914e-03   2.3616e-05  28.34
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS6      4.01e-06   2.12e-05  -8.67e-06   1.34e+00  -6.81815338e+03  -2.37634351e-05   9.8021e-06  28.08
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS7     -4.21e-05   8.88e-06  -7.97e-05   1.36e+00  -6.81815343e+03  -5.04676800e-05   2.2377e-06  28.19
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS8      9.65e-05   2.38e-04  -7.90e-06   1.37e+00  -6.81815346e+03  -2.77653636e-05   1.4643e-06  29.58
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS9     -6.80e-05   1.42e-04  -2.23e-04   1.37e+00  -6.81815345e+03   9.78705543e-06   4.0425e-07  28.30
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS10    -1.50e-04   6.40e-04  -7.31e-04   1.38e+00  -6.81815347e+03  -2.09322409e-05   9.9943e-08  35.29
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS11    -4.05e-04   1.72e-03  -1.97e-03   1.38e+00  -6.81815348e+03  -4.83801733e-06   7.1169e-08  33.82
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS12    -5.66e-04   2.42e-03  -2.77e-03   1.38e+00  -6.81815348e+03   2.14323827e-06   9.3135e-08  28.32
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS13    -5.40e-05   1.62e-04  -2.13e-04   1.38e+00  -6.81815348e+03  -1.88056878e-06   1.1057e-08  30.56
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS14    -4.18e-05  -2.59e-05  -5.34e-05   1.39e+00  -6.81815348e+03  -1.78911026e-06   3.3513e-09  35.16
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS15    -1.15e-04  -1.31e-04  -1.03e-04   1.39e+00  -6.81815348e+03  -1.04321623e-07   8.2855e-10  34.23
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS16    -2.89e-04  -3.43e-04  -2.48e-04   1.39e+00  -6.81815348e+03   6.70424661e-08   1.3429e-09  29.85
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS17    -1.13e-04  -1.35e-04  -9.64e-05   1.39e+00  -6.81815348e+03   3.05660931e-08   3.8210e-10  28.20
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+ DS18    -9.71e-06  -1.55e-05  -5.45e-06   1.39e+00  -6.81815348e+03  -1.04370346e-07   3.6459e-11  30.62
+ >> Leave SCF iteration.
+ * * * * * *
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+/abacus-develop/source/module_hamilt_general/module_xc/xc_functional_gradcorr.cpp902 340000 167492 340000
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+       933.0191618689         7.1118028306        11.9689378130 
+         7.1118028306       896.1453191897        25.3495828022 
+        11.9689378130        25.3495828022       853.8334079218 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 894.332630 KBAR
+
+TIME STATISTICS
+-----------------------------------------------------------------------------
+    CLASS_NAME                NAME             TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------------------
+                   total                       593.17 15       39.54  100.00 
+ Driver            reading                     0.01   1        0.01   0.00   
+ Input_Conv        Convert                     0.00   1        0.00   0.00   
+ Driver            driver_line                 593.16 1        593.16 100.00 
+ UnitCell          check_tau                   0.00   1        0.00   0.00   
+ PW_Basis_Sup      setuptransform              0.01   1        0.01   0.00   
+ PW_Basis_Sup      distributeg                 0.01   1        0.01   0.00   
+ mymath            heapsort                    0.02   3        0.01   0.00   
+ PW_Basis_K        setuptransform              0.01   1        0.01   0.00   
+ PW_Basis_K        distributeg                 0.00   1        0.00   0.00   
+ PW_Basis          setup_struc_factor          0.01   1        0.01   0.00   
+ ppcell_vnl        init                        0.01   1        0.01   0.00   
+ ppcell_vl         init_vloc                   0.04   1        0.04   0.01   
+ ppcell_vnl        init_vnl                    0.08   1        0.08   0.01   
+ WF_atomic         init_at_1                   0.47   1        0.47   0.08   
+ wavefunc          wfcinit                     0.00   1        0.00   0.00   
+ Ions              opt_ions                    592.29 1        592.29 99.85  
+ ESolver_KS_PW     runner                      587.42 1        587.42 99.03  
+ H_Ewald_pw        compute_ewald               0.00   1        0.00   0.00   
+ Charge            set_rho_core                0.06   1        0.06   0.01   
+ PW_Basis_Sup      recip2real                  8.99   747      0.01   1.51   
+ PW_Basis_Sup      gathers_scatterp            3.54   747      0.00   0.60   
+ Charge            atomic_rho                  0.11   1        0.11   0.02   
+ Potential         init_pot                    0.88   1        0.88   0.15   
+ Potential         update_from_charge          32.06  37       0.87   5.40   
+ Potential         cal_fixed_v                 0.01   1        0.01   0.00   
+ PotLocal          cal_fixed_v                 0.01   1        0.01   0.00   
+ Potential         cal_v_eff                   31.96  37       0.86   5.39   
+ H_Hartree_pw      v_hartree                   1.14   37       0.03   0.19   
+ PW_Basis_Sup      real2recip                  10.06  943      0.01   1.70   
+ PW_Basis_Sup      gatherp_scatters            3.86   943      0.00   0.65   
+ PotXC             cal_v_eff                   30.60  37       0.83   5.16   
+ XC_Functional     v_xc                        32.16  39       0.82   5.42   
+ Potential         interpolate_vrs             0.08   37       0.00   0.01   
+ OnsiteProj        cubspl_tabulate             0.23   1        0.23   0.04   
+ Charge_Mixing     init_mixing                 0.00   1        0.00   0.00   
+ ESolver_KS_PW     hamilt2density              550.09 19       28.95  92.74  
+ HSolverPW         solve                       550.00 19       28.95  92.72  
+ pp_cell_vnl       getvnl                      2.04   133      0.02   0.34   
+ Structure_Factor  get_sk                      0.27   168      0.00   0.05   
+ wavefunc          diago_PAO_in_pw_k2          2.01   7        0.29   0.34   
+ WF_atomic         atomic_wfc                  0.20   7        0.03   0.03   
+ Diago_DavSubspace diag_once                   435.93 133      3.28   73.49  
+ Diago_DavSubspace first                       182.55 133      1.37   30.78  
+ DavSubspace       hpsi_func                   388.00 386      1.01   65.41  
+ Operator          hPsi                        386.47 386      1.00   65.15  
+ Operator          EkineticPW                  2.63   386      0.01   0.44   
+ Operator          VeffPW                      373.69 386      0.97   63.00  
+ PW_Basis_K        recip2real                  234.28 44562    0.01   39.50  
+ PW_Basis_K        gathers_scatterp            67.11  44562    0.00   11.31  
+ PW_Basis_K        real2recip                  137.29 30730    0.00   23.14  
+ PW_Basis_K        gatherp_scatters            22.78  30730    0.00   3.84   
+ Operator          NonlocalPW                  10.14  386      0.03   1.71   
+ Nonlocal          add_nonlocal_pp             5.73   386      0.01   0.97   
+ Diago_DavSubspace cal_elem                    16.80  386      0.04   2.83   
+ Diago_DavSubspace diag_zhegvx                 0.95   386      0.00   0.16   
+ Diago_DavSubspace cal_grad                    226.07 253      0.89   38.11  
+ Diago_DavSubspace check_update                0.00   253      0.00   0.00   
+ Diago_DavSubspace last                        14.80  216      0.07   2.50   
+ Diago_DavSubspace refresh                     4.35   83       0.05   0.73   
+ ElecStatePW       psiToRho                    99.45  19       5.23   16.77  
+ Charge            rho_mpi                     0.18   19       0.01   0.03   
+ Charge            reduce_diff_pools           0.18   76       0.00   0.03   
+ Charge_Mixing     get_drho                    1.81   19       0.10   0.31   
+ Charge_Mixing     inner_product_recip_rho     0.03   19       0.00   0.01   
+ Charge_Mixing     if_scf_oscillate            278.02 9        30.89  46.87  
+ Charge            mix_rho                     2.63   17       0.15   0.44   
+ Charge            Broyden_mixing              0.79   17       0.05   0.13   
+ Charge_Mixing     inner_product_recip_hartree 0.69   270      0.00   0.12   
+ OnsiteProj        cal_occupation              0.13   1        0.13   0.02   
+ OnsiteProj        tabulate_atomic             0.00   7        0.00   0.00   
+ OnsiteProj        overlap                     0.13   7        0.02   0.02   
+ FS_Nonlocal_tools cal_becp                    0.40   21       0.02   0.07   
+ Forces            cal_force_loc               0.02   1        0.02   0.00   
+ Forces            cal_force_ew                0.01   1        0.01   0.00   
+ Forces            cal_force_nl                0.42   1        0.42   0.07   
+ FS_Nonlocal_tools cal_dbecp_f                 0.28   21       0.01   0.05   
+ Forces            cal_force_cc                0.91   1        0.91   0.15   
+ Forces            cal_force_scc               0.07   1        0.07   0.01   
+ Stress_PW         cal_stress                  3.44   1        3.44   0.58   
+ Stress_Func       stress_kin                  0.24   1        0.24   0.04   
+ Stress_Func       stress_har                  0.02   1        0.02   0.00   
+ Stress_Func       stress_ewa                  0.02   1        0.02   0.00   
+ Stress_Func       stress_gga                  0.47   1        0.47   0.08   
+ Stress_Func       stress_loc                  0.10   1        0.10   0.02   
+ Stress_Func       stress_cc                   0.97   1        0.97   0.16   
+ Stress_Func       stress_nl                   1.63   1        1.63   0.27   
+ FS_Nonlocal_tools cal_dbecp_s                 1.49   42       0.04   0.25   
+ ModuleIO          write_istate_info           0.00   1        0.00   0.00   
+-----------------------------------------------------------------------------
+
+
+ START  Time  : Fri Dec 20 15:55:32 2024
+ FINISH Time  : Fri Dec 20 16:05:25 2024
+ TOTAL  Time  : 593
+ SEE INFORMATION IN : OUT.ABACUS-grad1/

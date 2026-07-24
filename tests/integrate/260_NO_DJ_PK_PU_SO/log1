@@ -1,0 +1,281 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 0a08fe05e (Thu Jun 12 12:13:50 2025 +0800)
+
+ Sat Oct 11 21:35:10 2025
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8163 CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 64 * 64 * 64
+ UNIFORM GRID DIM(BIG)   : 64 * 64 * 64
+ DONE(0.077922   SEC) : SETUP UNITCELL
+ DONE(0.0784029  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 4       8               16          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0809818  SEC) : INIT PLANEWAVE
+ DONE(0.122988   SEC) : LOCAL POTENTIAL
+ DONE(0.178209   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 2.99805
+ DONE(0.461098   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.621808   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ Allocate memory for DFT+U mixing  200
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 0
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 0
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1      3.43e+00   3.43e+00   3.43e+00   5.99e+00  -6.78630658e+03   0.00000000e+00   3.1524e-01   2.37
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS2      4.01e+00   4.01e+00   4.01e+00   7.16e+00  -6.78733268e+03  -1.02609227e+00   7.5266e-02   1.05
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS3      4.30e+00   4.30e+00   4.30e+00   7.70e+00  -6.78748546e+03  -1.52778267e-01   1.8127e-02   1.07
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS4      4.42e+00   4.42e+00   4.42e+00   7.85e+00  -6.78761684e+03  -1.31388495e-01   1.1296e-02   1.09
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS5      4.38e+00   4.38e+00   4.38e+00   7.75e+00  -6.78765170e+03  -3.48564756e-02   4.9727e-03   1.36
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS6      4.28e+00   4.28e+00   4.28e+00   7.62e+00  -6.78764735e+03   4.34541027e-03   2.8298e-03   1.02
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS7      4.26e+00   4.26e+00   4.26e+00   7.59e+00  -6.78765700e+03  -9.64451824e-03   1.0183e-03   1.40
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS8      4.27e+00   4.27e+00   4.27e+00   7.63e+00  -6.78765414e+03   2.86423824e-03   5.6374e-04   1.37
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS9      4.28e+00   4.28e+00   4.28e+00   7.65e+00  -6.78765495e+03  -8.11482907e-04   5.1393e-05   1.55
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS10     4.28e+00   4.28e+00   4.28e+00   7.64e+00  -6.78765811e+03  -3.16694796e-03   1.1600e-04   1.77
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS11     4.28e+00   4.28e+00   4.28e+00   7.64e+00  -6.78765728e+03   8.30532274e-04   3.1050e-05   1.50
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS12     4.28e+00   4.28e+00   4.28e+00   7.64e+00  -6.78766154e+03  -4.25220375e-03   8.0316e-06   1.85
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS13     4.27e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766179e+03  -2.51225571e-04   5.2391e-06   1.79
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS14     4.27e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766228e+03  -4.88739165e-04   5.1072e-06   1.76
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS15     4.27e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766271e+03  -4.30225083e-04   2.7269e-06   1.79
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS16     4.26e+00   4.26e+00   4.26e+00   7.62e+00  -6.78766283e+03  -1.28162598e-04   4.6352e-06   1.58
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS17     4.27e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766421e+03  -1.38109804e-03   8.2814e-06   1.59
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS18     4.27e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766262e+03   1.59654011e-03   9.2220e-06   1.19
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS19     4.28e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766235e+03   2.70062426e-04   1.1024e-05   1.73
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS20     4.27e+00   4.28e+00   4.28e+00   7.64e+00  -6.78766268e+03  -3.35231088e-04   2.0515e-06   1.87
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS21     4.28e+00   4.26e+00   4.27e+00   7.63e+00  -6.78766288e+03  -2.01211223e-04   3.6969e-06   1.69
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS22     4.26e+00   4.28e+00   4.27e+00   7.63e+00  -6.78766313e+03  -2.45799197e-04   2.7647e-06   1.67
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS23     4.27e+00   4.26e+00   4.27e+00   7.63e+00  -6.78766365e+03  -5.16881977e-04   9.9287e-06   1.53
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS24     4.28e+00   4.26e+00   4.27e+00   7.63e+00  -6.78766281e+03   8.38577489e-04   4.9572e-06   1.25
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS25     4.27e+00   4.26e+00   4.27e+00   7.63e+00  -6.78766247e+03   3.36702176e-04   4.7666e-06   1.83
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS26     4.27e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766297e+03  -4.97933393e-04   4.5484e-06   1.89
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS27     4.27e+00   4.26e+00   4.26e+00   7.63e+00  -6.78766337e+03  -4.01281665e-04   3.7734e-06   1.46
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS28     4.27e+00   4.26e+00   4.26e+00   7.63e+00  -6.78766340e+03  -2.38764621e-05   4.1515e-06   1.43
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS29     4.28e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766220e+03   1.19649641e-03   3.0767e-06   1.63
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS30     4.27e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766206e+03   1.34678530e-04   2.8061e-05   1.75
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS31     4.28e+00   4.26e+00   4.26e+00   7.63e+00  -6.78766192e+03   1.42132269e-04   8.7415e-06   1.95
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS32     4.24e+00   4.30e+00   4.28e+00   7.65e+00  -6.78765805e+03   3.87369580e-03   1.1800e-05   2.07
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS33     4.30e+00   4.26e+00   4.27e+00   7.64e+00  -6.78766145e+03  -3.39922918e-03   8.8438e-06   1.86
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS34     4.26e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766282e+03  -1.36960170e-03   3.3216e-06   1.92
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS35     4.26e+00   4.27e+00   4.27e+00   7.63e+00  -6.78766273e+03   8.27707489e-05   4.1111e-06   1.63
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS36     4.26e+00   4.27e+00   4.26e+00   7.63e+00  -6.78766268e+03   5.48984603e-05   7.2362e-06   1.57
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS37     4.27e+00   4.26e+00   4.26e+00   7.63e+00  -6.78766294e+03  -2.58194300e-04   5.8055e-06   2.09
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS38     4.26e+00   4.26e+00   4.27e+00   7.62e+00  -6.78766318e+03  -2.40463549e-04   5.3855e-06   1.51
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS39     4.27e+00   4.26e+00   4.26e+00   7.63e+00  -6.78766336e+03  -1.80750129e-04   4.8397e-06   1.59
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS40     4.28e+00   4.25e+00   4.26e+00   7.63e+00  -6.78766167e+03   1.68984694e-03   8.2794e-06   1.94
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS41     4.26e+00   4.26e+00   4.27e+00   7.63e+00  -6.78766167e+03  -5.53594622e-06   4.9523e-06   1.80
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS42     4.25e+00   4.28e+00   4.28e+00   7.64e+00  -6.78765937e+03   2.30582754e-03   4.7852e-06   1.82
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS43     4.31e+00   4.24e+00   4.26e+00   7.64e+00  -6.78765968e+03  -3.10079924e-04   1.3011e-05   2.14
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS44     4.25e+00   4.28e+00   4.26e+00   7.63e+00  -6.78766344e+03  -3.75965890e-03   9.5079e-06   1.80
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1
+ DS45     4.26e+00   4.26e+00   4.26e+00   7.62e+00  -6.78766428e+03  -8.44254217e-04   1.3133e-05   1.71
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp19 1
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 0 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_occup.cpp51 200 100 100
+/abacus-develop/source/module_hamilt_lcao/module_dftu/dftu_pw.cpp193 1

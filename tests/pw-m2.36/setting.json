@@ -1,0 +1,15 @@
+{
+    "save_path": "results",
+    "run_dft": {
+        "example": [
+            "*/*"
+        ],
+        "command": "OMP_NUM_THREADS=1 mpirun -np 16 abacus | tee out.log",
+        "image": "registry.dp.tech/dptech/dp/native/prod-385/abacus-dpgen:1218-all",
+        "bohrium": {
+            "scass_type": "c32_m64_cpu",
+            "job_type": "container",
+            "platform": "ali"
+        }
+    }
+}
