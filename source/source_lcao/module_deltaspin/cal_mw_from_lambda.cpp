@@ -772,7 +772,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
             const int nloc_wfc = this->ParaV->nloc_wfc;
             const int nn = nbands * nbands;
 
-            if (this->sc_acceleration_mode_ == "first_order" && this->nspin_ == 2)
+            if (this->sc_acceleration_mode_ == "first_order")
             {
                 // ---------------------------------------------------------
                 // First-order response mode
@@ -780,10 +780,12 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 // Δε_ib = Σ_I Δλ_I · ⟨ψ_ib | D_I | ψ_ib⟩
                 // Only eigenvalues shift; wavefunctions are frozen at reference.
                 // Valid when Δλ is small enough that wavefunction mixing is negligible.
+                //
+                // nspin=2: Uses σ_z sign (±1) for up/down spin channels.
+                // nspin=4: Uses Δλ_z only (z-component dominates in collinear-like states).
                 // ---------------------------------------------------------
                 for (int ik = 0; ik < nk; ik++)
                 {
-                    int spin_sign = this->get_spin_sign(ik);
                     for (int ib = 0; ib < nbands; ib++)
                     {
                         double delta_epsilon = 0.0;
@@ -793,7 +795,17 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                             double dl = this->lambda_[iat].z - this->lcao_lambda_in_sub_[iat].z;
                             delta_epsilon += dl * p_diag;
                         }
-                        this->pelec->ekb(ik, ib) = this->lcao_ekb_save_[ik * nbands + ib] - spin_sign * delta_epsilon;
+                        if (this->nspin_ == 2)
+                        {
+                            int spin_sign = this->get_spin_sign(ik);
+                            this->pelec->ekb(ik, ib) = this->lcao_ekb_save_[ik * nbands + ib]
+                                                       - spin_sign * delta_epsilon;
+                        }
+                        else
+                        {
+                            this->pelec->ekb(ik, ib) = this->lcao_ekb_save_[ik * nbands + ib]
+                                                       - delta_epsilon;
+                        }
                     }
                 }
 
