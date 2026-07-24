@@ -98,9 +98,15 @@ class Nonlocal<OperatorPW<T, Device>> : public OperatorPW<T, Device>
     using delmem_complex_op = base_device::memory::delete_memory_op<T, Device>;
 #endif
     using syncmem_complex_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
+    using syncmem_complex_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
+    using resmem_complex_h_op = base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>;
+    using delmem_complex_h_op = base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>;
 
     T one{1, 0};
     T zero{0, 0};
+
+    mutable T *becp_h = nullptr;
+    mutable size_t nkb_m_h = 0;
 };
 
 } // namespace hamilt

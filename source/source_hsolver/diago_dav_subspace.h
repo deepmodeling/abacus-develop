@@ -190,12 +190,18 @@ class Diago_DavSubspace
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;
     using syncmem_d2h_op = base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>;
 
+    using resmem_complex_h_op = base_device::memory::resize_memory_op<T, base_device::DEVICE_CPU>;
+    using delmem_complex_h_op = base_device::memory::delete_memory_op<T, base_device::DEVICE_CPU>;
+
     // Note that ct_Device is different from base_device!
     using ct_Device = typename ct::PsiToContainer<Device>::type;
     // using hegvd_op = container::kernels::lapack_hegvd<T, ct_Device>;
 
     const T *one = nullptr, *zero = nullptr, *neg_one = nullptr;
     const T one_ = static_cast<T>(1.0), zero_ = static_cast<T>(0.0), neg_one_ = static_cast<T>(-1.0);
+
+    T* hcc_h = nullptr;
+    T* scc_h = nullptr;
 };
 
 } // namespace hsolver
