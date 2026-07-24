@@ -68,10 +68,12 @@ option(ENABLE_CNPY "Enable cnpy usage" OFF)
 cmake_dependent_option(ENABLE_ELPA "Enable ELPA for LCAO" ON "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
-cmake_dependent_option(ENABLE_EXX_DEV "Enable LibRI developing features" OFF "ENABLE_LIBRI" OFF)
 cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
 cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
                        OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+
+# EXX_DEV works with libRI PR#10 which is not merged into main branch; disabling it
+# cmake_dependent_option(ENABLE_EXX_DEV "Enable LibRI developing features" OFF "ENABLE_LIBRI" OFF)
 
 # Two-center FFT is only used in LCAO
 cmake_dependent_option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method"
