@@ -181,6 +181,10 @@ void Symmetry::analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics
     this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, GlobalV::ofs_running, nullptr);
     this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, GlobalV::ofs_running, nullptr);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "MAGNETIC POINT GROUP (unitary, nspin=4)", this->pgname);
+    // space-group-consistent name of the unitary magnetic group (from nrotk, matching "POINT GROUP IN
+    // SPACE GROUP"); pgname above is the pure-point-group-block name, which under-detects for hexagonal
+    // (e.g. Co prints S_6 there but is C_6h here).
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "MAGNETIC POINT GROUP IN SPACE GROUP", this->spgname);
     ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "MAGNETIC SPACE GROUP OPERATIONS", this->nrotk);
 }
 
