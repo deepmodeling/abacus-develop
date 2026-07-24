@@ -135,13 +135,8 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
             {
                 double zeta = (rhotmp1[ir] - rhotmp2[ir]) / rh;
                 zeta = std::fabs(zeta);
-                if (zeta > 1.0 - epsr)
-                    zeta = 1.0 - epsr;
                 const double grh2 = (gdr1[ir] + gdr2[ir]) * (gdr1[ir] + gdr2[ir]);
-                if (std::sqrt(std::abs(grh2)) > 1e-10)
-                {
-                    XC_Functional::gcc_spin(rh, zeta, grh2, sc, v1cup, v1cdw, v2c);
-                }
+                XC_Functional::gcc_spin(rh, zeta, grh2, sc, v1cup, v1cdw, v2c);
             }
 
             vup_gga[ir] = e2 * (v1xup + v1cup);
@@ -287,13 +282,8 @@ void gradcorr_ncgga_sf_builtin(const Charge* const chr, ModulePW::PW_Basis* rhop
         {
             double zeta = (rhotmp1[ir] - rhotmp2[ir]) / rh;
             zeta = std::fabs(zeta);
-            if (zeta > 1.0 - epsr)
-                zeta = 1.0 - epsr;
             const double grh2 = (gdr1[ir] + gdr2[ir]) * (gdr1[ir] + gdr2[ir]);
-            if (std::sqrt(std::abs(grh2)) > small)
-            {
-                XC_Functional::gcc_spin(rh, zeta, grh2, sc, v1cup, v1cdw, v2c);
-            }
+            XC_Functional::gcc_spin(rh, zeta, grh2, sc, v1cup, v1cdw, v2c);
             v2cup = v2c;
             v2cdw = v2c;
             v2cud = v2c;

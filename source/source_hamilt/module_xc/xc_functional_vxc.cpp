@@ -22,15 +22,6 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(const int& nr
 {
     ModuleBase::TITLE("XC_Functional", "v_xc");
 
-    if (PARAM.inp.nspin == 4 && (PARAM.globalv.domag || PARAM.globalv.domag_z) && PARAM.inp.gga_grad == 3)
-    {
-        const int ft = XC_Functional::get_func_type();
-        if (ft == 2 || ft == 4)
-        {
-            return ModuleXC::NCGGA_SF_Builtin::v_xc_ncgga_sf_builtin(nrxx, ucell->omega, ucell->tpiba, chr);
-        }
-    }
-
     if (use_libxc)
     {
 #ifdef USE_LIBXC
