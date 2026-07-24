@@ -3,8 +3,28 @@
 #include "kernels/math_kernel_op.h"
 #include "parallel_device.h"
 #include "source_base/timer.h"
+
+#if defined(__CUDA_MPI) && defined(__CUDA)
+#include "source_base/module_device/device_check.h"
+
+#include <cuda_runtime.h>
+#endif
+
 namespace ModuleBase
 {
+#if defined(__CUDA_MPI) && defined(__CUDA)
+template <typename Device>
+void synchronize_before_mpi_send()
+{
+}
+
+template <>
+void synchronize_before_mpi_send<base_device::DEVICE_GPU>()
+{
+    CHECK_CUDA(cudaStreamSynchronize(nullptr));
+}
+#endif
+
 template <typename T, typename Device>
 PGemmCN<T, Device>::PGemmCN()
 {
@@ -192,6 +212,10 @@ void PGemmCN<T, Device>::multiply_col(const T alpha, const T* A, const T* B, con
 {
     const Device* ctx = {};
 
+#if defined(__CUDA_MPI) && defined(__CUDA)
+    synchronize_before_mpi_send<Device>();
+#endif
+
     // send A to other procs
     T* isend_tmp = isend_tmp_.data();
     for (int ip = 0; ip < col_nproc; ip++)
@@ -312,6 +336,10 @@ template <typename T, typename Device>
 void PGemmCN<T, Device>::multiply_row(const T alpha, const T* A, const T* B, const T beta, T* C)
 {
     const Device* ctx = {};
+
+#if defined(__CUDA_MPI) && defined(__CUDA)
+    synchronize_before_mpi_send<Device>();
+#endif
 
     // Send B to other procs
     for (int ip = 0; ip < col_nproc; ip++)
