@@ -35,8 +35,6 @@
 #include "source_hsolver/parallel_k2d.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
-
 namespace hsolver
 {
 
@@ -103,7 +101,9 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
         if (!skip_charge)
         {
             // compute charge density from density matrix, mohan update 20251024
-            LCAO_domain::dm2rho(dm.get_DMR_vector(), nspin, &chr);
+            // delegate to ElecStateLCAO to keep the source_lcao dependency out of
+            // source_hsolver (mirrors the pexsi branch below and the PW psiToRho path)
+            dynamic_cast<elecstate::ElecStateLCAO<TK>*>(pes)->dmToRho(dm.get_DMR_vector(), nspin, &chr);
         }
         else
         {
