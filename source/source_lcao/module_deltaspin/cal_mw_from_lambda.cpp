@@ -1103,13 +1103,20 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge(const
         // If subspace acceleration was active, psi is still at the reference lambda,
         // not at the converged lambda. Must do a final full diag to get correct psi
         // for charge density construction.
-        if (this->acceleration_active_ && this->acceleration_subspace_built_
-            && this->nspin_ == 2)
+        if (this->acceleration_active_ && this->acceleration_subspace_built_)
         {
             hamilt::Hamilt<std::complex<double>>* hamilt_t
                 = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
-            dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(
-                this->p_operator)->update_lambda();
+            if (this->nspin_ == 2)
+            {
+                dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(
+                    this->p_operator)->update_lambda();
+            }
+            else if (this->nspin_ == 4)
+            {
+                dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>* >(
+                    this->p_operator)->update_lambda();
+            }
             hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, PARAM.inp.ks_solver);
             hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_,
                             *this->pelec->charge, this->nspin_, true);
