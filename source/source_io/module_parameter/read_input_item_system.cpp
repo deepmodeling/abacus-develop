@@ -766,7 +766,7 @@ Available options are:
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
             {
-#ifndef __ENABLE_FLOAT_FFTW
+#ifndef __FLOAT_FFTW
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
                     "Single precision with cpu is not supported while float_fftw lib is not available; \
@@ -859,7 +859,7 @@ Available options are:
             }
             if (para.input.dm_to_rho)
             {
-#ifndef __USECNPY
+#ifndef __CNPY
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "to write in npz format, please "
                                          "recompile with -DENABLE_CNPY=1");

@@ -67,7 +67,7 @@ inline int cal_nupdown_form_occ(const ModuleBase::matrix& wg)
 inline void setup_2center_table(TwoCenterBundle& two_center_bundle, LCAO_Orbitals& orb, UnitCell& ucell)
 {
     // set up 2-center table
-#ifdef USE_NEW_TWO_CENTER
+#ifdef __FFT_TWO_CENTER
     two_center_bundle.tabulate();
 #else
     two_center_bundle.tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);

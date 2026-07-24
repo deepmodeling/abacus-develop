@@ -1162,7 +1162,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_xc_r[0] >= 0)
             {
-#ifndef USE_LIBXC
+#ifndef __LIBXC
                 ModuleBase::WARNING_QUIT("ReadInput", "INPUT out_xc_r is only aviailable with Libxc");
 #endif
             }
@@ -1195,7 +1195,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_hr_npz)
             {
-#ifndef __USECNPY
+#ifndef __CNPY
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "to write in npz format, please "
                                          "recompile with -DENABLE_CNPY=1");
@@ -1217,7 +1217,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_hsr_npz)
             {
-#ifndef __USECNPY
+#ifndef __CNPY
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "to write in npz format, please "
                                          "recompile with -DENABLE_CNPY=1");
@@ -1239,7 +1239,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_dm_npz)
             {
-#ifndef __USECNPY
+#ifndef __CNPY
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "to write in npz format, please "
                                          "recompile with -DENABLE_CNPY=1");

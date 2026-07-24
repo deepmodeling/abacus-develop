@@ -1,5 +1,5 @@
 if(ENABLE_LCAO)
-abacus_disable_feature_definitions(USE_NEW_TWO_CENTER)
+abacus_disable_feature_definitions(__FFT_TWO_CENTER)
 
 AddTest(
   TARGET MODULE_LCAO_operator_overlap_test

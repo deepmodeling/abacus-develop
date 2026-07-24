@@ -6,7 +6,7 @@
 #include "source_io/module_chgpot/write_elecstat_pot.h" // use write_elecstat_pot
 #include "source_io/module_elf/write_elf.h"
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "source_io/module_chgpot/write_libxc_r.h"
 #endif
 
@@ -186,7 +186,7 @@ void ctrl_output_fp(UnitCell& ucell,
             PARAM.globalv.two_fermi);
     }
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     // 7) write xc(r)
     if (PARAM.inp.out_xc_r[0] >= 0 && should_output)
     {
