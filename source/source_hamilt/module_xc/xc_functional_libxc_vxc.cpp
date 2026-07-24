@@ -66,7 +66,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         std::tuple<std::vector<double>,std::vector<double>> rho_amag = XC_Functional_Libxc::convert_rho_amag_nspin4(nspin, nrxx, chr);
         rho = std::get<0>(std::move(rho_amag));
         amag = std::get<1>(std::move(rho_amag));
-        if(PARAM.inp.gga_grad >= 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+        if(PARAM.inp.gga_grad == 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
         {
             mag_part = XC_Functional_Libxc::compute_mag_part_nspin4(nrxx, chr);
         }
@@ -76,7 +76,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     std::vector<double> sigma;
     if(is_gga)
     {
-        if(PARAM.inp.nspin==4 && PARAM.inp.gga_grad >= 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+        if(PARAM.inp.nspin==4 && PARAM.inp.gga_grad == 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
         {
             gdr = XC_Functional_Libxc::cal_gdr_sf(nspin, nrxx, rho, mag_part, tpiba, chr);
         }
@@ -181,7 +181,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
     if(4==PARAM.inp.nspin)
     {
-        if(PARAM.inp.gga_grad >= 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+        if(PARAM.inp.gga_grad == 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
         {
             v = XC_Functional_Libxc::convert_v_nspin4_sf(nrxx, chr, mag_part, v);
         }

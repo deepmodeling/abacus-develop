@@ -235,7 +235,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 
 	if(func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA)
 	{
-		if(PARAM.inp.nspin==4 && PARAM.inp.gga_grad >= 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+		if(PARAM.inp.nspin==4 && PARAM.inp.gga_grad == 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
 		{
 			std::vector<double> mag_part_tmp = XC_Functional_Libxc::compute_mag_part_nspin4(nrxx, chr);
 			const std::vector<std::vector<double>> dh = XC_Functional_Libxc::cal_dh_sf(nspin, nrxx, sgn, gdr, vsigma, mag_part_tmp, tpiba, chr);

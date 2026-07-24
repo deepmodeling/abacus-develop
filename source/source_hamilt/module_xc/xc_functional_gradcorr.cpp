@@ -12,6 +12,9 @@
 #include "source_base/timer.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_io/module_parameter/parameter.h"
+
+#include "xc_functional_gga_noncol_sf_builtin.h"
+
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>
 #include <ATen/core/tensor_types.h>
@@ -21,7 +24,7 @@
 #include "xc_functional_libxc.h"
 #endif
 
-#include "xc_functional_gga_noncol_sf_builtin.h"
+
 
 void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 	const Charge* const chr, ModulePW::PW_Basis* rhopw, const UnitCell *ucell,
@@ -187,7 +190,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 		gdr2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 		if(!is_stress) h2 = new ModuleBase::Vector3<double>[rhopw->nrxx];
 
-		if (gga_grad == 2)
+		if (gga_grad == 2 || gga_grad == 3)
 		{
 			tmp_recip = new std::complex<double>[rhopw->npw];
 			gdr_mag = new ModuleBase::Vector3<double>[rhopw->nrxx];
@@ -491,7 +494,7 @@ void XC_Functional::gradcorr(double &etxc, double &vtxc, ModuleBase::matrix &v,
 }
 #endif
 
-	if(!is_stress && PARAM.inp.nspin==4 && gga_grad==2)
+	if(!is_stress && PARAM.inp.nspin==4 && (PARAM.globalv.domag||PARAM.globalv.domag_z) && (gga_grad==2 || gga_grad==3))
 	{
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 1024)
