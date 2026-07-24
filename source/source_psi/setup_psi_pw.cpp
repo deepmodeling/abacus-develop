@@ -41,18 +41,27 @@ void Setup_Psi_pw::before_runner_impl(
 
     if (inp.device == "gpu" || inp.precision == "single") {
         const int nks = kv.get_nks();
+        psi::PsiStorageMode target_mode = psi::PsiStorageMode::ALL_GPU;
         if (inp.device_memory_mode == "paged")
         {
-            this->psi_cpu->set_storage_mode(psi::PsiStorageMode::PAGED_GPU);
+            target_mode = psi::PsiStorageMode::PAGED_GPU;
         }
         else if (inp.device_memory_mode == "full_gpu")
         {
-            this->psi_cpu->set_storage_mode(psi::PsiStorageMode::ALL_GPU);
+            target_mode = psi::PsiStorageMode::ALL_GPU;
         }
         else if (nks > 10)
         {
-            this->psi_cpu->set_storage_mode(psi::PsiStorageMode::PAGED_GPU);
+            target_mode = psi::PsiStorageMode::PAGED_GPU;
         }
+        if (target_mode != psi::PsiStorageMode::ALL_GPU)
+        {
+            this->psi_cpu->set_storage_mode(target_mode);
+        }
+        const char* mode_str = (target_mode == psi::PsiStorageMode::PAGED_GPU) ? "PAGED_GPU" : "ALL_GPU";
+        GlobalV::ofs_running << " GPU memory mode for Psi: " << mode_str
+                             << " (nks=" << nks << ", device_memory_mode=\""
+                             << inp.device_memory_mode << "\")" << std::endl;
         this->psi_t = static_cast<void*>(new psi::Psi<T, Device>(this->psi_cpu[0]));
     } else {
         this->psi_t = static_cast<void*>(reinterpret_cast<psi::Psi<T, Device>*>(this->psi_cpu));
