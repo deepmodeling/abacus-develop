@@ -702,6 +702,30 @@ Available options are:
         this->add_item(item);
     }
     {
+        Input_Item item("device_memory_mode");
+        item.annotation = "GPU memory strategy for wavefunction storage";
+        item.category = "System variables";
+        item.type = "String";
+        item.description = R"(Controls GPU memory strategy for wavefunction storage.
+* "" (empty/auto): Automatic selection based on system size.
+* "full_gpu": All wavefunction data resides on GPU (default behavior).
+* "paged": CPU storage with single k-point paging to GPU, reduces GPU memory at the cost of transfer overhead.
+
+Only relevant when device=gpu and basis_type=pw.)";
+        item.default_value = "";
+        item.unit = "";
+        item.availability = "Only relevant when device=gpu with PW basis";
+        read_sync_string(input.device_memory_mode);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> avail_list = {"", "full_gpu", "paged"};
+            if (std::find(avail_list.begin(), avail_list.end(), para.input.device_memory_mode) == avail_list.end())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "device_memory_mode must be empty, full_gpu, or paged.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("precision");
         item.annotation = "the computing precision for ABACUS";
         item.category = "System variables";

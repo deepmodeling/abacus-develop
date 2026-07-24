@@ -1,12 +1,14 @@
 #include "psi.h"
 
 #include "source_base/global_variable.h"
+#include "source_base/memory.h"
 #include "source_base/module_device/device.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <cassert>
 #include <complex>
+#include <cstring>
 #include <type_traits>
 
 namespace psi
@@ -41,6 +43,16 @@ Psi<T, Device>::~Psi()
     {
         delete_memory_op()(this->psi);
     }
+
+    if (psi_cpu_ != nullptr && psi_cpu_owned_)
+    {
+        delete[] psi_cpu_;
+    }
+    psi_cpu_ = nullptr;
+
+    psi_gpu_buffer_ = nullptr;
+
+    current_k_gpu_ = -1;
 }
 
 // Constructor 1:
@@ -160,12 +172,21 @@ Psi<T, Device>::Psi(const Psi& psi_in)
     this->current_k = psi_in.get_current_k();
     this->current_b = psi_in.get_current_b();
     this->k_first = psi_in.get_k_first();
-    // this function will copy psi_in.psi to this->psi no matter the device types of each other.
+    this->storage_mode_ = psi_in.get_storage_mode();
 
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-    base_device::memory::synchronize_memory_op<T, Device, Device>()(this->psi,
-                                                                    psi_in.get_pointer() - psi_in.get_psi_bias(),
-                                                                    psi_in.size());
+
+    if (this->storage_mode_ == PsiStorageMode::PAGED_GPU && psi_cpu_ != nullptr)
+    {
+        const size_t total_size = static_cast<size_t>(this->nk) * this->nbands * this->nbasis;
+        std::memcpy(this->psi_cpu_, psi_in.get_pointer() - psi_in.get_psi_bias(), sizeof(T) * total_size);
+    }
+    else
+    {
+        base_device::memory::synchronize_memory_op<T, Device, Device>()(this->psi,
+                                                                        psi_in.get_pointer() - psi_in.get_psi_bias(),
+                                                                        psi_in.size());
+    }
     this->psi_bias = psi_in.get_psi_bias();
     this->current_nbasis = psi_in.get_current_nbas();
     this->psi_current = this->psi + psi_in.get_psi_bias();
@@ -184,16 +205,16 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     this->current_k = psi_in.get_current_k();
     this->current_b = psi_in.get_current_b();
     this->k_first = psi_in.get_k_first();
-    // this function will copy psi_in.psi to this->psi no matter the device types of each other.
+    this->storage_mode_ = psi_in.get_storage_mode();
 
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
 
-    // Specifically, if the Device_in type is CPU and the Device type is GPU.
-    // Which means we need to initialize a GPU psi from a given CPU psi.
-    // We first malloc a memory in CPU, then cast the memory from T_in to T in CPU.
-    // Finally, synchronize the memory from CPU to GPU.
-    // This could help to reduce the peak memory usage of device.
-    if (std::is_same<Device, base_device::DEVICE_GPU>::value && std::is_same<Device_in, base_device::DEVICE_CPU>::value)
+    if (this->storage_mode_ == PsiStorageMode::PAGED_GPU && psi_cpu_ != nullptr)
+    {
+        const size_t total_size = static_cast<size_t>(this->nk) * this->nbands * this->nbasis;
+        std::memcpy(this->psi_cpu_, psi_in.get_pointer() - psi_in.get_psi_bias(), sizeof(T) * total_size);
+    }
+    else if (std::is_same<Device, base_device::DEVICE_GPU>::value && std::is_same<Device_in, base_device::DEVICE_CPU>::value)
     {
         auto* arr = (T*)malloc(sizeof(T) * psi_in.size());
         // cast the memory from T_in to T in CPU
@@ -250,21 +271,46 @@ Psi<T, Device>& Psi<T, Device>::operator=(const Psi<T, Device>& psi_in)
 }
 
 template <typename T, typename Device>
-void Psi<T, Device>::resize(const int nks_in, const int nbands_in, const int nbasis_in)
+void Psi<T, Device>::resize(const int nks_in, const int nbands_in, const int nbasis_in, const bool skip_psi_cpu_alloc)
 {
     assert(nks_in > 0 && nbands_in >= 0 && nbasis_in > 0);
 
-    // This function will delete the psi array first(if psi exist), then malloc a new memory for it.
-    resize_memory_op()(this->psi, nks_in * static_cast<std::size_t>(nbands_in) * nbasis_in, "no_record");
+    if (storage_mode_ == PsiStorageMode::PAGED_GPU)
+    {
+        const size_t total_size = static_cast<size_t>(nks_in) * nbands_in * nbasis_in;
+        if (!skip_psi_cpu_alloc)
+        {
+            if (psi_cpu_ != nullptr)
+            {
+                delete[] psi_cpu_;
+            }
+            psi_cpu_ = new T[total_size]();
+            ModuleBase::Memory::record("Psi::psi_cpu", sizeof(T) * total_size);
+            psi_cpu_owned_ = true;
+        }
 
-    // this->zero_out();
+        const size_t k_size = static_cast<size_t>(nbands_in) * nbasis_in;
+        resize_memory_op()(this->psi, k_size, "no_record");
+#if defined(__CUDA) || defined(__ROCM)
+        ModuleBase::Memory::record_gpu("Psi::psi_gpu_k", sizeof(T) * k_size);
+#endif
+
+        psi_gpu_buffer_ = this->psi;
+        current_k_gpu_ = -1;
+    }
+    else
+    {
+        resize_memory_op()(this->psi, nks_in * static_cast<std::size_t>(nbands_in) * nbasis_in, "no_record");
+#if defined(__CUDA) || defined(__ROCM)
+        ModuleBase::Memory::record_gpu("Psi_PW", sizeof(T) * nks_in * static_cast<std::size_t>(nbands_in) * nbasis_in);
+#endif
+    }
 
     this->nk = nks_in;
     this->nbands = nbands_in;
     this->nbasis = nbasis_in;
     this->current_nbasis = nbasis_in;
     this->psi_current = this->psi;
-    // GlobalV::ofs_device << "allocated xxx MB memory for psi" << std::endl;
 }
 
 template <typename T, typename Device>

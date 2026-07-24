@@ -87,6 +87,7 @@ struct Input_para
                                             ///< use mesh, which is used in QE.
     int nspin = 1;                          ///< LDA ; LSDA ; non-linear spin
     int gga_grad = 3;                       ///< GGA gradient method for noncollinear spin (nspin=4): 1=collinear approx, 2=projected div(h), 3=Scalmani-Frisch transform (default, most accurate)
+    std::string device_memory_mode = "";    ///< GPU memory mode: "" (auto), "full_gpu" (all on GPU), "paged" (CPU storage + k-point paging)
     int pw_diag_nmax = 50;
     double pw_diag_thr = 0.01;      ///< used in cg method
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods

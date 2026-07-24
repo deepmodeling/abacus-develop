@@ -10,6 +10,13 @@
 namespace psi
 {
 
+enum class PsiStorageMode
+{
+    ALL_GPU,
+    ALL_CPU,
+    PAGED_GPU
+};
+
 // structure for getting range of Psi
 // two display method: k index first or bands index first
 struct Range
@@ -78,7 +85,7 @@ class Psi
     Psi& operator=(const Psi& psi_in);
 
     // allocate psi for three dimensions
-    void resize(const int nks_in, const int nbands_in, const int nbasis_in);
+    void resize(const int nks_in, const int nbands_in, const int nbasis_in, const bool skip_psi_cpu_alloc = false);
 
     // get the pointer for the 1st index
     T* get_pointer() const;
@@ -139,6 +146,19 @@ class Psi
 
     int get_npol() const;
 
+    void set_storage_mode(PsiStorageMode mode);
+    PsiStorageMode get_storage_mode() const { return storage_mode_; }
+
+    void load_k_to_gpu(int ik);
+    void store_k_from_gpu(int ik);
+    void ensure_k_on_gpu(int ik);
+
+    void set_psi_cpu_external(T* ext_cpu_buf);
+
+    int get_current_k_gpu() const { return current_k_gpu_; }
+    T* get_cpu_pointer(int ik = 0);
+    const T* get_cpu_pointer(int ik = 0) const;
+
   private:
     T* psi = nullptr; // avoid using C++ STL
 
@@ -163,6 +183,18 @@ class Psi
     bool k_first = true;
 
     bool allocate_inside = true; ///< whether allocate psi inside Psi class
+
+    PsiStorageMode storage_mode_ = PsiStorageMode::ALL_GPU;
+    T* psi_cpu_ = nullptr;
+    bool psi_cpu_owned_ = true;
+    T* psi_gpu_buffer_ = nullptr;
+    T* psi_gpu_transfer_buffer_ = nullptr;
+    int current_k_gpu_ = -1;
+
+#if defined(__CUDA) || defined(__ROCM)
+    void* compute_stream_ = nullptr;
+    void* transfer_stream_ = nullptr;
+#endif
 
 #ifdef __DSP
     using delete_memory_op = base_device::memory::delete_memory_op_mt<T, Device>;
