@@ -33,7 +33,8 @@ void allocate_atom_properties(Atom& atom, int na, double mass);
  * @param mv Movement vector (1=movable, 0=fixed)
  */
 void set_atom_movement_flags(Atom& atom, int ia,
-                            const ModuleBase::Vector3<int>& mv);
+                            const ModuleBase::Vector3<int>& mv,
+                            const bool fixed_atoms);
 
 /**
  * @brief Set default magnetization if not explicitly specified
@@ -53,7 +54,9 @@ void autoset_magnetization(UnitCell& ucell, int nspin,
  */
 bool finalize_atom_positions(UnitCell& ucell,
                             std::ofstream& ofs_running,
-                            std::ofstream& ofs_warning);
+                            std::ofstream& ofs_warning,
+                            const std::string& calculation,
+                            const std::string& esolver_type);
 
 /**
  * @brief Calculate lattice center for different centering modes
@@ -95,7 +98,8 @@ void transform_atom_coordinates(Atom& atom, int ia,
 void process_magnetization(Atom& atom, int it, int ia,
                           int nspin, bool input_vec_mag,
                           bool input_angle_mag,
-                          std::ofstream& ofs_running);
+                          std::ofstream& ofs_running,
+                          const bool noncolin);
 
 /**
  * @brief Parse optional atom properties (mag, angle1, angle2, lambda, sc, m, v)
@@ -129,7 +133,11 @@ bool read_atom_type_header(int it, UnitCell& ucell,
                           std::ifstream& ifpos,
                           std::ofstream& ofs_running,
                           std::ofstream& ofs_warning,
-                          bool& set_element_mag_zero);
+                          bool& set_element_mag_zero,
+                          const std::string& basis_type,
+                          const std::string& orbital_dir,
+                          const std::string& init_wfc,
+                          const double onsite_radius);
 
 } // namespace unitcell
 

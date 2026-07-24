@@ -48,7 +48,6 @@ void write_dh_perI(WriteDHParams& params,
 
 #ifdef __MPI
     Parallel_Orbitals serialV;
-    serialV.init(nbasis, nbasis, nbasis, pv.comm());
     serialV.set_serial(nbasis, nbasis);
     serialV.set_atomic_trace(params.iat2iwt, nat, nbasis);
 #endif

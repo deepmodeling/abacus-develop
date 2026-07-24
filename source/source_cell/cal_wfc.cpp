@@ -1,10 +1,9 @@
 #include "read_pseudo.h"
 
-#include "source_io/module_parameter/parameter.h"
-
-namespace elecstate
+namespace unitcell
 {
-    void cal_nwfc(std::ofstream& log,UnitCell& ucell,Atom* atoms) 
+    void cal_nwfc(std::ofstream& log,UnitCell& ucell,Atom* atoms, const int nspin, const int nlocal, const int npol,
+               const std::string& basis_type, const std::string& esolver_type, const std::string& init_wfc, const int nbands) 
     {
         ModuleBase::TITLE("UnitCell", "cal_nwfc");
         const int ntype = ucell.ntype;
@@ -36,10 +35,10 @@ namespace elecstate
         for (int it = 0; it < ntype; it++) {
             atoms[it].stapos_wf = nlocal_tmp;
             const int nlocal_it = atoms[it].nw * atoms[it].na;
-            if (PARAM.inp.nspin != 4) {
+            if (nspin != 4) {
                 nlocal_tmp += nlocal_it;
             } else {
-                nlocal_tmp += nlocal_it * 2; // zhengdy-soc
+                nlocal_tmp += nlocal_it * 2;
             }
         }
 
@@ -49,22 +48,24 @@ namespace elecstate
         // (4) set index for itia2iat, itiaiw2iwt
         //========================================================
 
-        // mohan add 2010-09-26
+        // nlocal is calculated by CalAtomsInfo::cal_atoms_info() inside read_pseudo(),
+        // and passed here to validate against the local calculation (nlocal_tmp).
+        // This assertion ensures consistency between the two calculation paths.
         assert(nlocal_tmp > 0);
-        assert(nlocal_tmp == PARAM.globalv.nlocal);
+        assert(nlocal_tmp == nlocal);
         delete[] ucell.iwt2iat;
         delete[] ucell.iwt2iw;
         ucell.iwt2iat = new int[nlocal_tmp];
         ucell.iwt2iw = new int[nlocal_tmp];
 
         ucell.itia2iat.create(ntype, ucell.namax);
-        ucell.set_iat2iwt(PARAM.globalv.npol);
+        ucell.set_iat2iwt(npol);
         int iat = 0;
         int iwt = 0;
         for (int it = 0; it < ntype; it++) {
             for (int ia = 0; ia < atoms[it].na; ia++) {
                 ucell.itia2iat(it, ia) = iat;
-                for (int iw = 0; iw < atoms[it].nw * PARAM.globalv.npol; iw++) {
+                for (int iw = 0; iw < atoms[it].nw * npol; iw++) {
                     ucell.iwt2iat[iwt] = iat;
                     ucell.iwt2iw[iwt] = iw;
                     ++iwt;
@@ -106,21 +107,11 @@ namespace elecstate
         //=====================
         // Use localized basis
         //=====================
-        if ((PARAM.inp.basis_type == "lcao") || (PARAM.inp.basis_type == "lcao_in_pw")
-            || ((PARAM.inp.basis_type == "pw") && (PARAM.inp.init_wfc.substr(0, 3) == "nao")
-                && (PARAM.inp.esolver_type == "ksdft"))) // xiaohui add 2013-09-02
+        if ((basis_type == "lcao") || (basis_type == "lcao_in_pw")
+            || ((basis_type == "pw") && (init_wfc.substr(0, 3) == "nao")
+                && (esolver_type == "ksdft")))
         {
-            ModuleBase::GlobalFunc::AUTO_SET("NBANDS", PARAM.inp.nbands);
-        } else // plane wave basis
-        {
-            // if(winput::after_iter && winput::sph_proj)
-            //{
-            //	if(PARAM.inp.nbands < PARAM.globalv.nlocal)
-            //	{
-            //		ModuleBase::WARNING_QUIT("cal_nwfc","NBANDS must > PARAM.globalv.nlocal
-            //!");
-            //	}
-            // }
+            ModuleBase::GlobalFunc::AUTO_SET("NBANDS", nbands);
         }
 
         return;
@@ -139,41 +130,41 @@ namespace elecstate
     }
 
 
-    void cal_natomwfc(std::ofstream& log,int& natomwfc,const int ntype,const Atom* atoms) 
-    {
-        natomwfc = 0;
-		for (int it = 0; it < ntype; it++) 
+    void cal_natomwfc(std::ofstream& log,int& natomwfc,const int ntype,const Atom* atoms,const int nspin) 
+{
+    natomwfc = 0;
+	for (int it = 0; it < ntype; it++) 
+	{
+		//============================
+		// Use pseudo-atomic orbitals
+		//============================
+		int tmp = 0;
+		for (int l = 0; l < atoms[it].ncpp.nchi; l++) 
 		{
-			//============================
-			// Use pseudo-atomic orbitals
-			//============================
-			int tmp = 0;
-			for (int l = 0; l < atoms[it].ncpp.nchi; l++) 
+			if (atoms[it].ncpp.oc[l] >= 0) 
 			{
-				if (atoms[it].ncpp.oc[l] >= 0) 
+				if (nspin == 4) 
 				{
-					if (PARAM.inp.nspin == 4) 
+					if (atoms[it].ncpp.has_so) 
 					{
-						if (atoms[it].ncpp.has_so) 
+						tmp += 2 * atoms[it].ncpp.lchi[l];
+						if (fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l] - 0.5)< 1e-6) 
 						{
-							tmp += 2 * atoms[it].ncpp.lchi[l];
-							if (fabs(atoms[it].ncpp.jchi[l] - atoms[it].ncpp.lchi[l] - 0.5)< 1e-6) 
-							{
-								tmp += 2;
-							}
-						} else 
-						{
-							tmp += 2 * (2 * atoms[it].ncpp.lchi[l] + 1);
+							tmp += 2;
 						}
 					} else 
 					{
-						tmp += 2 * atoms[it].ncpp.lchi[l] + 1;
+						tmp += 2 * (2 * atoms[it].ncpp.lchi[l] + 1);
 					}
+				} else 
+				{
+					tmp += 2 * atoms[it].ncpp.lchi[l] + 1;
 				}
 			}
-			natomwfc += tmp * atoms[it].na;
 		}
-		ModuleBase::GlobalFunc::OUT(log, "Number of pseudo atomic orbitals", natomwfc);
-		return;
-    }
+		natomwfc += tmp * atoms[it].na;
+	}
+	ModuleBase::GlobalFunc::OUT(log, "Number of pseudo atomic orbitals", natomwfc);
+	return;
+}
 }

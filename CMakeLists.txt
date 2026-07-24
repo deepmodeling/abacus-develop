@@ -1,4 +1,23 @@
 cmake_minimum_required(VERSION 3.16)
+
+# Require out-of-source builds
+file(TO_CMAKE_PATH "${CMAKE_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
+if(EXISTS "${LOC_PATH}")
+  message(
+    FATAL_ERROR
+      "You cannot build in a source directory (or any directory with a CMakeLists.txt file). "
+      "Please make a build subdirectory.")
+endif()
+
+include(CMakeDependentOption)
+message(WARNING
+  "The build system now uses cmake_dependent_option extensively.\n"
+  "Many advanced options are now conditionally enabled based on their dependencies; "
+  "when dependency conditions are not met, the corresponding options will be"
+  "automatically turned OFF and hidden in cmake-gui/ccmake.\n"
+  "Please review your configuration if you previously set these options manually."
+)
+
 if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
   cmake_policy(SET CMP0135 NEW)
   # Otherwise this policy generates a warning on CMake 3.24
@@ -16,10 +35,9 @@ project(
 option(ENABLE_MPI "Enable MPI" ON)
 option(ENABLE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
-option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
-option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
+option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
@@ -27,13 +45,7 @@ option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
-option(ENABLE_MLALGO "Enable the machine learning algorithms" OFF)
-
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
-option(ENABLE_ELPA "Enable ELPA for LCAO" ON)
-option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
-option(EXX_DEV "Enable LibRI developing features" OFF)
-option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
@@ -48,12 +60,35 @@ option(ENABLE_NATIVE_OPTIMIZATION
        "Enable compilation optimization for the native machine's CPU type" OFF)
 
 option(COMMIT_INFO "Print commit information in log" ON)
-option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method" ON)
 option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
-option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
-option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
+
+# Options requiring MPI and LCAO
+cmake_dependent_option(ENABLE_ELPA "Enable ELPA for LCAO" ON "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional"
+                       OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_EXX_DEV "Enable LibRI developing features" OFF "ENABLE_LIBRI" OFF)
+cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
+                       OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+
+# Two-center FFT is only used in LCAO
+cmake_dependent_option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method"
+                       ON "ENABLE_LCAO" OFF)
+
+# Benchmark requires BUILD_TESTING
+cmake_dependent_option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage"
+                       OFF "BUILD_TESTING" OFF)
+
+# Options requiring CUDA
+cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF "USE_CUDA;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cuSOLVERMp"
+                       OFF "USE_CUDA;ENABLE_MPI;ENABLE_LCAO" OFF)
+cmake_dependent_option(ENABLE_CUBLASMP "Enable cuBLASMp" OFF "ENABLE_CUSOLVERMP" OFF)
+cmake_dependent_option(ENABLE_NCCL_PARALLEL_DEVICE
+                       "Enable NCCL-backed collectives in parallel_device; requires MPI"
+                       OFF "USE_CUDA;ENABLE_MPI" OFF)
 
 # ==============================================================================
 # Deprecated options (TODO: Remove this section in the future release)
@@ -63,7 +98,7 @@ function(abacus_rename_option old_name new_name)
   if(NOT _old_defined)
     return()
   endif()
-  message(WARNING "${old_name} has been renamed to ${new_name}.")
+  message(DEPRECATION "${old_name} has been renamed to ${new_name}.")
   get_property(_type CACHE "${new_name}" PROPERTY TYPE)
   get_property(_help CACHE "${new_name}" PROPERTY HELPSTRING)
   set("${new_name}" "${${old_name}}" CACHE "${_type}" "${_help}" FORCE)
@@ -71,12 +106,11 @@ function(abacus_rename_option old_name new_name)
 endfunction()
 abacus_rename_option(USE_OPENMP ENABLE_OPENMP)
 abacus_rename_option(USE_ABACUS_LIBM ENABLE_ABACUS_LIBM)
-abacus_rename_option(USE_ELPA ENABLE_ELPA)
 abacus_rename_option(INFO MATH_INFO)
 
 if(DEFINED CACHE{ENABLE_LIBCOMM})
   message(
-    WARNING
+    DEPRECATION
       "Option ENABLE_LIBCOMM is deprecated and will be ignored in a future release. "
       "LibComm is now treated as an implementation dependency of LibRI; "
       "please use -DENABLE_LIBRI=ON instead."
@@ -129,7 +163,8 @@ if(ENABLE_RAPIDJSON)
   if(NOT TARGET RapidJSON)
     message(
       FATAL_ERROR
-      "RapidJSON was found, but target RapidJSON is missing. Check if your RapidJSON installation provides a complete exported CMake configuration."
+      "RapidJSON was found, but target RapidJSON is missing. "
+      "Check if your RapidJSON installation provides a complete exported CMake configuration."
     )
   endif()
   abacus_add_feature_definitions(__RAPIDJSON)
@@ -141,8 +176,8 @@ if(COMMIT_INFO)
   if(NOT Git_FOUND)
     message(
       WARNING
-        "Git is not found, and abacus will not output the git commit information in log. \n\
-You can install Git first and reinstall abacus.")
+        "Git is not found, and abacus will not output the git commit information in log.\n"
+        "You can install Git first and reinstall abacus.")
   else()
     message(STATUS "Found git: attempting to get commit info...")
     execute_process(
@@ -168,12 +203,6 @@ You can install Git first and reinstall abacus.")
       message(WARNING "Failed to get git commit info")
     endif()
   endif()
-endif()
-
-# Serial version of ABACUS will not use ELPA
-if(NOT ENABLE_MPI)
-  set(ENABLE_ELPA OFF)
-  set(ENABLE_MLALGO OFF)
 endif()
 
 # Different exe files of ABACUS
@@ -236,7 +265,10 @@ endif()
 
 # Use DSP hardware
 if (USE_DSP)
-  set(ENABLE_ELPA OFF)
+  if(ENABLE_ELPA)
+    message(WARNING USE_DSP is incompatible with ELPA; switching off ENABLE_ELPA)
+    set(ENABLE_ELPA OFF)
+  endif()
   set(ABACUS_BIN_NAME abacus_dsp)
 endif()
 
@@ -349,11 +381,9 @@ if(ENABLE_LCAO)
     find_package(ELPA REQUIRED)
     abacus_add_feature_definitions(__ELPA)
   endif()
-
   if(ENABLE_FFT_TWO_CENTER)
     abacus_add_feature_definitions(USE_NEW_TWO_CENTER)
   endif()
-
   if(ENABLE_PEXSI)
     find_package(PEXSI REQUIRED CONFIG)
     if(PEXSI_VERSION VERSION_LESS "2.0.0")
@@ -362,9 +392,6 @@ if(ENABLE_LCAO)
     abacus_add_feature_definitions(__PEXSI)
     set(CMAKE_CXX_STANDARD 14)
   endif()
-else()
-  set(ENABLE_MLALGO OFF)
-  set(ENABLE_LIBRI OFF)
 endif()
 
 if(DEBUG_INFO)
@@ -520,10 +547,6 @@ if(USE_CUDA)
       set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
     endif()
     if (ENABLE_NCCL_PARALLEL_DEVICE)
-      if (NOT ENABLE_MPI)
-        message(FATAL_ERROR
-          "ENABLE_NCCL_PARALLEL_DEVICE requires ENABLE_MPI=ON.")
-      endif()
       abacus_add_feature_definitions(__NCCL_PARALLEL_DEVICE)
       include(cmake/modules/SetupNccl.cmake)
       abacus_setup_nccl()
@@ -693,7 +716,7 @@ if(ENABLE_LIBRI)
   find_package(cereal REQUIRED CONFIG)
   abacus_add_feature_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
                                  TEST_EXX_RADIAL=1)
-  if(EXX_DEV)
+  if(ENABLE_EXX_DEV)
     abacus_add_feature_definitions(__EXX_DEV)
   endif()
 endif()

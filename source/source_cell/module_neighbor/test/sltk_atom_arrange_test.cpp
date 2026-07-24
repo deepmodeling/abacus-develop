@@ -1,4 +1,4 @@
-#include "../sltk_atom_arrange.h"
+#include "source_cell/module_neighbor/sltk_atom_arrange.h"
 
 #define private public
 #include "source_io/module_parameter/parameter.h"
@@ -10,20 +10,7 @@
 #include "gtest/gtest.h"
 #include "prepare_unitcell.h"
 #include "source_cell/read_stru.h"
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
@@ -42,7 +29,7 @@ Magnetism::~Magnetism()
  *   - atom_arrange::delete_vector(void)
  *     - delete vector
  *   - atom_arrange::set_sr_NL
- * 	   - set the sr: search radius including nonlocal beta
+ *        - set the sr: search radius including nonlocal beta
  *   - filter_adjs function
  *     - filter AdjacentAtomInfo to the minimized adjacent atoms
  */

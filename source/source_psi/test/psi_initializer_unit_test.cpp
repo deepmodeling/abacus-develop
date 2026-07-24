@@ -72,12 +72,13 @@ pseudopot_cell_vl::pseudopot_cell_vl() {}
 pseudopot_cell_vl::~pseudopot_cell_vl() {}
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
+
 #ifdef __LCAO
+#include "source_basis/module_ao/ORB_gaunt_table.h"
 ORB_gaunt_table::ORB_gaunt_table() {}
 ORB_gaunt_table::~ORB_gaunt_table() {}
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
 #endif
+
 Structure_Factor::Structure_Factor() {}
 Structure_Factor::~Structure_Factor() {}
 void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid&, const ModulePW::PW_Basis* rho_basis) {}

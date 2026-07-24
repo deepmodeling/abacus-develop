@@ -8,7 +8,6 @@
 #include "source_cell/klist.h"
 #include "source_cell/parallel_kpoints.h"
 #include "source_cell/pseudo.h"
-#include "source_cell/setup_nonlocal.h"
 #include "source_cell/unitcell.h"
 #include "source_cell/magnetism.h"
 #include "source_pw/module_pwdft/vl_pw.h"
@@ -21,8 +20,6 @@ Atom::Atom(){}
 Atom::~Atom(){}
 Atom_pseudo::Atom_pseudo(){}
 Atom_pseudo::~Atom_pseudo(){}
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
 UnitCell::UnitCell(){}
 UnitCell::~UnitCell(){}
 Magnetism::Magnetism(){}

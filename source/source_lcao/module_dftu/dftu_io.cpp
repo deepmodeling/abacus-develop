@@ -2,13 +2,20 @@
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 #include <cstring>
+#include <iomanip>
 
 
-void Plus_U::output(const UnitCell &ucell)
+void Plus_U::output(const UnitCell& ucell,
+                    bool out_chg,
+                    const std::string& global_out_dir,
+                    int nspin,
+                    int npol)
 {
     ModuleBase::TITLE("Plus_U", "output");
 
-    GlobalV::ofs_running << "//=========================L(S)DA+U===========================//" << std::endl;
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    GlobalV::ofs_running << " | #DFT+U INFORMATION# |" << std::endl;
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
 
     for (int T = 0; T < ucell.ntype; T++)
     {
@@ -20,28 +27,28 @@ void Plus_U::output(const UnitCell &ucell)
 
             if (L >= get_orbital_corr(T) && has_correlated_orbital(T))
             {
-				if (L != get_orbital_corr(T)) 
-				{
-					continue;
-				}
+                if (L != get_orbital_corr(T))
+                {
+                    continue;
+                }
 
                 if (!Yukawa)
                 {
-                    GlobalV::ofs_running << "atom_type=" << T << "  L=" << L << "  chi=" << 0
-                                         << "    U=" << this->U[T] * ModuleBase::Ry_to_eV << "eV" << std::endl;
+                    GlobalV::ofs_running << " Type=" << T+1 << " L=" << L << " ORBITAL=" << 0
+                                         << " U=" << this->U[T] * ModuleBase::Ry_to_eV << " eV" << std::endl;
                 }
                 else
                 {
                     for (int n = 0; n < N; n++)
                     {
-						if (n != 0) 
-						{
-							continue;
-						}
-						double Ueff = (this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n]) * ModuleBase::Ry_to_eV;
-                        GlobalV::ofs_running << "atom_type=" << T << "  L=" << L << "  chi=" << n
-                                             << "    U=" << this->U_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "eV    "
-                                             << "J=" << this->J_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << "eV"
+                        if (n != 0)
+                        {
+                            continue;
+                        }
+                        double Ueff = (this->U_Yukawa[T][L][n] - this->J_Yukawa[T][L][n]) * ModuleBase::Ry_to_eV;
+                        GlobalV::ofs_running << " Type=" << T+1 << " L=" << L << "  ORBITAL=" << n
+                                             << " U=" << this->U_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << " eV"
+                                             << " J=" << this->J_Yukawa[T][L][n] * ModuleBase::Ry_to_eV << " eV"
                                              << std::endl;
                     }
                 }
@@ -49,23 +56,25 @@ void Plus_U::output(const UnitCell &ucell)
         }
     }
 
-    GlobalV::ofs_running << "Local occupation matrices" << std::endl;
-    this->write_occup_m(ucell,GlobalV::ofs_running, true);
-    GlobalV::ofs_running << "//=======================================================//" << std::endl;
-    
-    //Write onsite.dm
-    std::ofstream ofdftu;
-    if(PARAM.inp.out_chg[0]){
-      if(GlobalV::MY_RANK == 0){
-        ofdftu.open(PARAM.globalv.global_out_dir + "onsite.dm");
-      }
+    GlobalV::ofs_running << " Local Occupation Matrices for each atom" << std::endl;
+    this->write_occup_m(ucell, GlobalV::ofs_running, true, nspin, npol);
+
+    // Write dm_onsite.txt
+    if (out_chg && GlobalV::MY_RANK == 0)
+    {
+        std::ofstream ofdftu;
+        ofdftu.open(global_out_dir + "dm_onsite.txt");
+        if (!ofdftu)
+        {
+            ModuleBase::WARNING_QUIT("Plus_U::output", "Can't create file dm_onsite.txt");
+        }
+        this->write_occup_m(ucell, ofdftu, false, nspin, npol);
+        ofdftu.close();
     }
-    if(!ofdftu){
-      std::cout << "Plus_U::write_occup_m. Can't create file onsite.dm!" << std::endl;
-      exit(0);
-    } 
-    this->write_occup_m(ucell,ofdftu);
-    ofdftu.close();
+
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    GlobalV::ofs_running << " | # END DFT+U INFO    |" << std::endl;
+    GlobalV::ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>" << std::endl << std::endl;
 
     return;
 }
@@ -74,59 +83,58 @@ void Plus_U::output(const UnitCell &ucell)
 std::vector<double> CalculateEigenvalues(std::vector<std::vector<double>>& A, int n);
 
 void Plus_U::write_occup_m(const UnitCell& ucell,
-                         std::ofstream &ofs, 
-                         bool diag)
+                           std::ofstream& ofs,
+                           bool diag,
+                           int nspin,
+                           int npol)
 {
     ModuleBase::TITLE("Plus_U", "write_occup_m");
 
-	if(GlobalV::MY_RANK != 0) 
-	{ 
-		return;
-	}
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-		if (!has_correlated_orbital(T)) 
-		{
-			continue;
-		}
-		const int NL = ucell.atoms[T].nwl + 1;
+        if (!has_correlated_orbital(T))
+        {
+            continue;
+        }
+        const int NL = ucell.atoms[T].nwl + 1;
         const int LC = get_orbital_corr(T);
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
-            ofs << "atoms"
-                << "  " << iat << std::endl;
 
             for (int l = 0; l < NL; l++)
             {
-				if (l != get_orbital_corr(T)) 
-				{
-					continue;
-				}
+                if (l != get_orbital_corr(T))
+                {
+                    continue;
+                }
 
                 const int N = ucell.atoms[T].l_nchi[l];
-                ofs << "L"
-                    << "  " << l << std::endl;
 
                 for (int n = 0; n < N; n++)
                 {
                     // if(!Yukawa && n!=0) continue;
-					if (n != 0) 
-					{
-						continue;
-					}
+                    if (n != 0)
+                    {
+                        continue;
+                    }
 
-                    ofs << "zeta"
-                        << "  " << n << std::endl;
+                    ofs << "\n Atom=" << iat+1;
+                    ofs << " L=" << l;
+                    ofs << " ORBITAL=" << n << std::endl;
 
-                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                    if (nspin == 1 || nspin == 2)
                     {
                         double sum0[2];
                         for (int is = 0; is < 2; is++)
                         {
-                            if(diag)// diagonalization for local occupation matrix and print the eigenvalues
+                            if (diag) // diagonalization for local occupation matrix and print the eigenvalues
                             {
                                 std::vector<std::vector<double>> A(2 * l + 1, std::vector<double>(2 * l + 1));
                                 for (int m0 = 0; m0 < 2 * l + 1; m0++)
@@ -138,43 +146,43 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                                 }
                                 std::vector<double> eigenvalues = CalculateEigenvalues(A, 2 * l + 1);
                                 sum0[is] = 0.0;
-                                ofs<< "eigenvalues"
-                                    << "  " << is << std::endl;
+                                ofs << " Eigenvalues for spin=" << is+1 << std::endl;
+                                ofs << std::setprecision(8) << std::fixed;
                                 for (int i = 0; i < 2 * l + 1; i++)
                                 {
-                                    ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                        << eigenvalues[i];
+                                    ofs << std::setw(12) << eigenvalues[i];
                                     sum0[is] += eigenvalues[i];
                                 }
-                                ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                    << sum0[is] << std::endl;
+                                ofs << std::endl;
+                                ofs << " sum is " << std::setw(12) << sum0[is] << std::endl;
                             }
-                            ofs << "spin"
-                                << "  " << is << std::endl;
+                            ofs << " spin=" << is+1 << std::endl;
+                            ofs << std::setprecision(8) << std::fixed;
                             for (int m0 = 0; m0 < 2 * l + 1; m0++)
                             {
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    ofs << std::setw(12) << std::setprecision(8) << std::fixed
+                                    ofs << std::setw(12)
                                         << locale[iat][l][n][is](m0, m1);
                                 }
                                 ofs << std::endl;
                             }
                         }
-                        if(diag)
+                        if (diag)
                         {
-                            ofs << std::setw(12) << std::setprecision(8) 
-                                << std::fixed<< "atomic mag: "<<iat<<" " << sum0[0] - sum0[1] << std::endl;
+                            ofs << std::setw(12) << std::setprecision(8)
+                                << std::fixed << " Magnetism for atom " << iat+1 << ": " << sum0[0] - sum0[1]
+                                << std::endl;
                         }
                     }
-                    else if (PARAM.inp.nspin == 4) // SOC
+                    else if (nspin == 4) // SOC
                     {
-                        if(diag)// diagonalization for local occupation matrix and print the eigenvalues
-                        {//output the eigenvalues for rho , mag_x, mag_y, mag_z
+                        if (diag) // diagonalization for local occupation matrix and print the eigenvalues
+                        {         // output the eigenvalues for rho , mag_x, mag_y, mag_z
                             double sum0[4];
                             std::vector<std::vector<double>> A(2 * l + 1, std::vector<double>(2 * l + 1));
                             int index = 0;
-                            for(int is=0;is<4;is++)
+                            for (int is = 0; is < 4; is++)
                             {
                                 for (int m0 = 0; m0 < 2 * l + 1; m0++)
                                 {
@@ -186,60 +194,62 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                                 }
                                 std::vector<double> eigenvalues = CalculateEigenvalues(A, 2 * l + 1);
                                 sum0[is] = 0.0;
-                                ofs<< "eigenvalues"
-                                    << "  " << is << std::endl;
+                                ofs << " Eigenvalues for is=" << is << std::endl;
+                                ofs << std::setprecision(8) << std::fixed;
                                 for (int i = 0; i < 2 * l + 1; i++)
                                 {
-                                    ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                        << eigenvalues[i];
+                                    ofs << std::setw(12) << eigenvalues[i];
                                     sum0[is] += eigenvalues[i];
                                 }
-                                ofs << std::setw(12) << std::setprecision(8) << std::fixed
-                                    << sum0[is] << std::endl;
+                                ofs << std::endl;
+                                ofs << " sum is " << std::setw(12) << sum0[is] << std::endl;
                             }
-                            ofs << std::setw(12) << std::setprecision(8) 
-                                << std::fixed<< "atomic mag: "<<iat<<" " 
-                                << sum0[1] <<" "<< sum0[2] << " " << sum0[3] << std::endl;
+                            ofs << std::setw(12) << std::setprecision(8)
+                                << std::fixed << " Magnetism for atom " << iat + 1 << ": "
+                                << sum0[1] << " " << sum0[2] << " " << sum0[3] << std::endl;
                         }
-						else 
-						{
-							for (int m0 = 0; m0 < 2 * l + 1; m0++)
-							{
-								for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
-								{
-									const int m0_all = m0 + (2 * l + 1) * ipol0;
+                        else
+                        {
+                            for (int m0 = 0; m0 < 2 * l + 1; m0++)
+                            {
+                                for (int ipol0 = 0; ipol0 < npol; ipol0++)
+                                {
+                                    const int m0_all = m0 + (2 * l + 1) * ipol0;
 
-									for (int m1 = 0; m1 < 2 * l + 1; m1++)
-									{
-										for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
-										{
-											int m1_all = m1 + (2 * l + 1) * ipol1;
-											ofs << std::setw(12) << std::setprecision(8) << std::fixed
-												<< locale[iat][l][n][0](m0_all, m1_all);
-										}
-									}
-									ofs << std::endl;
-								}
-							}
-						}
-					}
+                                    for (int m1 = 0; m1 < 2 * l + 1; m1++)
+                                    {
+                                        for (int ipol1 = 0; ipol1 < npol; ipol1++)
+                                        {
+                                            int m1_all = m1 + (2 * l + 1) * ipol1;
+                                            ofs << std::setw(12) << std::setprecision(8) << std::fixed
+                                                << locale[iat][l][n][0](m0_all, m1_all);
+                                        }
+                                    }
+                                    ofs << std::endl;
+                                }
+                            }
+                        }
+                    }
                 } // n
-            } // l
-        } // I
-    } // T
+            }     // l
+        }         // I
+    }             // T
 
     return;
 }
 
 void Plus_U::read_occup_m(const UnitCell& ucell,
-                        const std::string &fn)
+                          const std::string& fn,
+                          const std::string& init_chg,
+                          int nspin,
+                          int npol)
 {
     ModuleBase::TITLE("Plus_U", "read_occup_m");
 
-	if (GlobalV::MY_RANK != 0) 
-	{
-		return;
-	}
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
 
     std::ifstream ifdftu(fn.c_str(), std::ios::in);
 
@@ -247,45 +257,57 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
     {
         if (omc > 0)
         {
-            std::cout
-                << "Plus_U::read_occup_m. Can not find the file initial_onsite.dm . Please check your initial_onsite.dm"
-                << std::endl;
+            ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not find the file dm_onsite_ini.txt. Please check your dm_onsite_ini.txt");
         }
         else
         {
-            if (PARAM.inp.init_chg == "file")
+            if (init_chg == "file")
             {
-                std::cout << "Plus_U::read_occup_m. Can not find the file onsite.dm . Please do scf calculation first"
-                          << std::endl;
+                ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not find the file dm_onsite.txt. Please do scf calculation first");
             }
         }
-        exit(0);
+        ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "Can not open dm_onsite.txt file");
     }
 
     ifdftu.clear();
     ifdftu.seekg(0);
 
-    char word[10];
+    char word[20];
 
-    int T=0;
-    int iat=0;
-    int spin=0;
-    int L=0;
-    int zeta=0;
+    int T = 0;
+    int iat = 0;
+    int spin = 0;
+    int L = 0;
+    int zeta = 0;
 
     ifdftu.rdstate();
 
     while (ifdftu.good())
     {
         ifdftu >> word;
-		if (ifdftu.eof()) 
-		{
-			break;
-		}
+        if (ifdftu.eof())
+        {
+            break;
+        }
 
-        if (strcmp("atoms", word) == 0)
+        if (strcmp("Atom=", word) == 0)
         {
             ifdftu >> iat;
+            iat -= 1;
+            ifdftu >> word;
+
+            if (strcmp("L=", word) != 0)
+            {
+                ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
+            }
+            ifdftu >> L;
+            ifdftu >> word;
+
+            if (strcmp("ORBITAL=", word) != 0)
+            {
+                ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
+            }
+            ifdftu >> zeta;
             ifdftu.ignore(150, '\n');
 
             T = ucell.iat2it[iat];
@@ -294,103 +316,66 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
 
             for (int l = 0; l < NL; l++)
             {
-				if (l != get_orbital_corr(T)) 
-				{
-					continue;
-				}
-
-                ifdftu >> word;
-
-                if (strcmp("L", word) == 0)
+                if (l != get_orbital_corr(T))
                 {
-                    ifdftu >> L;
-                    ifdftu.ignore(150, '\n');
+                    continue;
+                }
 
-                    const int N = ucell.atoms[T].l_nchi[L];
-                    for (int n = 0; n < N; n++)
+                if (nspin == 1 || nspin == 2)
+                {
+                    for (int is = 0; is < 2; is++)
                     {
-                        // if(!Yukawa && n!=0) continue;
-						if (n != 0) 
-						{
-							continue;
-						}
-
                         ifdftu >> word;
-                        if (strcmp("zeta", word) == 0)
+                        if (strcmp("spin=", word) == 0)
                         {
-                            ifdftu >> zeta;
+                            ifdftu >> spin;
+                            spin -= 1;
                             ifdftu.ignore(150, '\n');
 
-                            if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                            double value = 0.0;
+                            for (int m0 = 0; m0 < 2 * L + 1; m0++)
                             {
-                                for (int is = 0; is < 2; is++)
+                                for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                 {
-                                    ifdftu >> word;
-                                    if (strcmp("spin", word) == 0)
-                                    {
-                                        ifdftu >> spin;
-                                        ifdftu.ignore(150, '\n');
-
-                                        double value = 0.0;
-                                        for (int m0 = 0; m0 < 2 * L + 1; m0++)
-                                        {
-                                            for (int m1 = 0; m1 < 2 * L + 1; m1++)
-                                            {
-                                                ifdftu >> value;
-                                                locale[iat][L][zeta][spin](m0, m1) = value;
-                                            }
-                                            ifdftu.ignore(150, '\n');
-                                        }
-                                    }
-                                    else
-                                    {
-                                        std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE"
-                                                  << std::endl;
-                                        exit(0);
-                                    }
+                                    ifdftu >> value;
+                                    locale[iat][L][zeta][spin](m0, m1) = value;
                                 }
-                            }
-                            else if (PARAM.inp.nspin == 4) // SOC
-                            {
-                                double value = 0.0;
-                                for (int m0 = 0; m0 < 2 * L + 1; m0++)
-                                {
-                                    for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
-                                    {
-                                        const int m0_all = m0 + (2 * L + 1) * ipol0;
-
-                                        for (int m1 = 0; m1 < 2 * L + 1; m1++)
-                                        {
-                                            for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
-                                            {
-                                                int m1_all = m1 + (2 * L + 1) * ipol1;
-                                                ifdftu >> value;
-                                                locale[iat][L][zeta][0](m0_all, m1_all) = value;
-                                            }
-                                        }
-                                        ifdftu.ignore(150, '\n');
-                                    }
-                                }
+                                ifdftu.ignore(150, '\n');
                             }
                         }
                         else
                         {
-                            std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
-                            exit(0);
+                            ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
                         }
                     }
                 }
-                else
+                else if (nspin == 4) // SOC
                 {
-                    std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
-                    exit(0);
+                    double value = 0.0;
+                    for (int m0 = 0; m0 < 2 * L + 1; m0++)
+                    {
+                        for (int ipol0 = 0; ipol0 < npol; ipol0++)
+                        {
+                            const int m0_all = m0 + (2 * L + 1) * ipol0;
+
+                            for (int m1 = 0; m1 < 2 * L + 1; m1++)
+                            {
+                                for (int ipol1 = 0; ipol1 < npol; ipol1++)
+                                {
+                                    int m1_all = m1 + (2 * L + 1) * ipol1;
+                                    ifdftu >> value;
+                                    locale[iat][L][zeta][0](m0_all, m1_all) = value;
+                                }
+                            }
+                            ifdftu.ignore(150, '\n');
+                        }
+                    }
                 }
             }
         }
         else
         {
-            std::cout << "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE" << std::endl;
-            exit(0);
+            ModuleBase::WARNING_QUIT("Plus_U::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
         }
 
         ifdftu.rdstate();
@@ -404,16 +389,18 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
     return;
 }
 
-void Plus_U::local_occup_bcast(const UnitCell& ucell)
+void Plus_U::local_occup_bcast(const UnitCell& ucell,
+                               int nspin,
+                               int npol)
 {
     ModuleBase::TITLE("Plus_U", "local_occup_bcast");
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-		if (!has_correlated_orbital(T)) 
-		{
-			continue;
-		}
+        if (!has_correlated_orbital(T))
+        {
+            continue;
+        }
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
@@ -422,20 +409,20 @@ void Plus_U::local_occup_bcast(const UnitCell& ucell)
 
             for (int l = 0; l <= ucell.atoms[T].nwl; l++)
             {
-				if (l != get_orbital_corr(T)) 
-				{
-					continue;
-				}
+                if (l != get_orbital_corr(T))
+                {
+                    continue;
+                }
 
                 for (int n = 0; n < ucell.atoms[T].l_nchi[l]; n++)
                 {
                     // if(!Yukawa && n!=0) continue;
-					if (n != 0) 
-					{
-						continue;
-					}
+                    if (n != 0)
+                    {
+                        continue;
+                    }
 
-                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                    if (nspin == 1 || nspin == 2)
                     {
                         for (int spin = 0; spin < 2; spin++)
                         {
@@ -450,17 +437,17 @@ void Plus_U::local_occup_bcast(const UnitCell& ucell)
                             }
                         }
                     }
-                    else if (PARAM.inp.nspin == 4) // SOC
+                    else if (nspin == 4) // SOC
                     {
                         for (int m0 = 0; m0 < 2 * L + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
+                            for (int ipol0 = 0; ipol0 < npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * L + 1) * ipol0;
 
                                 for (int m1 = 0; m1 < 2 * L + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * L + 1) * ipol1;
 #ifdef __MPI
@@ -482,15 +469,18 @@ void Plus_U::local_occup_bcast(const UnitCell& ucell)
     return;
 }
 
-inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int n) 
+inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int n)
 {
-	if (std::abs(A[p][q]) > 1e-10) 
-	{
-		double r = (A[q][q] - A[p][p]) / (2.0 * A[p][q]);
+    if (std::abs(A[p][q]) > 1e-10)
+    {
+        double r = (A[q][q] - A[p][p]) / (2.0 * A[p][q]);
         double t = 0.0;
-        if (r >= 0) {
+        if (r >= 0)
+        {
             t = 1.0 / (r + sqrt(1.0 + r * r));
-        } else {
+        }
+        else
+        {
             t = -1.0 / (-r + sqrt(1.0 + r * r));
         }
         double c = 1.0 / sqrt(1.0 + t * t);
@@ -500,8 +490,10 @@ inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int 
         A[q][q] += t * A[p][q];
         A[p][q] = A[q][p] = 0.0;
 
-        for (int k = 0; k < n; k++) {
-            if (k != p && k != q) {
+        for (int k = 0; k < n; k++)
+        {
+            if (k != p && k != q)
+            {
                 double Akp = c * A[k][p] - s * A[k][q];
                 double Akq = s * A[k][p] + c * A[k][q];
                 A[k][p] = A[p][k] = Akp;
@@ -511,22 +503,28 @@ inline void JacobiRotate(std::vector<std::vector<double>>& A, int p, int q, int 
     }
 }
 
-inline std::vector<double> CalculateEigenvalues(std::vector<std::vector<double>>& A, int n) 
+inline std::vector<double> CalculateEigenvalues(std::vector<std::vector<double>>& A, int n)
 {
     std::vector<double> eigenvalues(n);
-    while (true) {
+    while (true)
+    {
         int p = 0, q = 1;
-        for (int i = 0; i < n; i++) {
-            for (int j = i + 1; j < n; j++) {
-                if (std::abs(A[i][j]) > std::abs(A[p][q])) {
+        for (int i = 0; i < n; i++)
+        {
+            for (int j = i + 1; j < n; j++)
+            {
+                if (std::abs(A[i][j]) > std::abs(A[p][q]))
+                {
                     p = i;
                     q = j;
                 }
             }
         }
 
-        if (std::abs(A[p][q]) < 1e-10) {
-            for (int i = 0; i < n; i++) {
+        if (std::abs(A[p][q]) < 1e-10)
+        {
+            for (int i = 0; i < n; i++)
+            {
                 eigenvalues[i] = A[i][i];
             }
             break;

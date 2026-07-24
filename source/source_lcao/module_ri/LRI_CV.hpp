@@ -10,9 +10,9 @@
 #include "LRI_CV_Tools.h"
 #include "exx_abfs-construct_orbs.h"
 #include "RI_Util.h"
-#include "../../source_basis/module_ao/element_basis_index-ORB.h"
-#include "../../source_base/tool_title.h"
-#include "../../source_base/timer.h"
+#include "source_basis/module_ao/element_basis_index-ORB.h"
+#include "source_base/tool_title.h"
+#include "source_base/timer.h"
 #include "source_hamilt/module_xc/exx_info_ri.h"
 #include <RI/global/Global_Func-1.h>
 #include <omp.h>

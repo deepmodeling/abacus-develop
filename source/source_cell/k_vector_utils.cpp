@@ -69,10 +69,10 @@ void kvec_c2d(K_Vectors& kv, const ModuleBase::Matrix3& latvec)
     ModuleBase::Matrix3 RT = latvec.Transpose();
     for (int i = 0; i < nks; i++)
     {
-        //			std::cout << " ik=" << i
-        //				<< " kvec.x=" << kvec_c[i].x
-        //				<< " kvec.y=" << kvec_c[i].y
-        //				<< " kvec.z=" << kvec_c[i].z << std::endl;
+        //            std::cout << " ik=" << i
+        //                << " kvec.x=" << kvec_c[i].x
+        //                << " kvec.y=" << kvec_c[i].y
+        //                << " kvec.z=" << kvec_c[i].z << std::endl;
         // wrong!            kvec_d[i] = RT * kvec_c[i];
         // mohan fixed bug 2011-03-07
         kv.kvec_d[i] = kv.kvec_c[i] * RT;
@@ -427,7 +427,8 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                           recip_brav_name,
                           ucell.atoms,
                           false,
-                          nullptr);
+                          nullptr,
+                          1e-6);
         GlobalV::ofs_running << "\n For reciprocal-space lattice" << std::endl;
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice type", recip_brav_type);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice name", recip_brav_name);
@@ -471,7 +472,8 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                               k_brav_name,
                               ucell.atoms,
                               false,
-                              nullptr);
+                              nullptr,
+                              1e-6);
             GlobalV::ofs_running << "\n For k-vectors" << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice type", k_brav_type);
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice name", k_brav_name);
@@ -492,12 +494,14 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                           recip_brav_name,
                           ucell.atoms,
                           false,
-                          nullptr);
+                          nullptr,
+                          1e-6);
         ModuleBase::Matrix3 b_optlat_new(recip_vec1.x, recip_vec1.y, recip_vec1.z,
                                          recip_vec2.x, recip_vec2.y, recip_vec2.z,
                                          recip_vec3.x, recip_vec3.y, recip_vec3.z);
         // set the crystal point-group symmetry operation
-        symm.setgroup(bsymop, bnop, recip_brav_type);
+        const int cal_symm_repr[2] = {0, 6};
+        symm.setgroup(bsymop, bnop, recip_brav_type, cal_symm_repr);
         // transform the above symmetric operation matrices between different coordinate
         symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);
 
@@ -584,10 +588,10 @@ void kvec_ibz_kpoint(K_Vectors& kv,
     ModuleBase::Vector3<double> kvec_rot;
     ModuleBase::Vector3<double> kvec_rot_k;
 
-    //	for(int i=0; i<nrotkm; i++)
-    //	{
-    //		out.printM3("rot matrix",kgmatrix[i]);
-    //	}
+    //    for(int i=0; i<nrotkm; i++)
+    //    {
+    //        out.printM3("rot matrix",kgmatrix[i]);
+    //    }
     auto restrict_kpt = [&symm](ModuleBase::Vector3<double>& kvec) {
         // in (-0.5, 0.5]
         kvec.x = fmod(kvec.x + 100.5 - 0.5 * symm.epsilon, 1) - 0.5 + 0.5 * symm.epsilon;
@@ -687,20 +691,20 @@ void kvec_ibz_kpoint(K_Vectors& kv,
         }
         else // mohan fix bug 2010-1-30
         {
-            //			std::cout << "\n\n already exist ! ";
+            //            std::cout << "\n\n already exist ! ";
 
-            //			std::cout << "\n kvec_rot = " << kvec_rot.x << " " << kvec_rot.y << " " << kvec_rot.z;
-            //			std::cout << "\n kvec_d_ibz = " << kvec_d_ibz[exist_number].x
-            //			<< " " << kvec_d_ibz[exist_number].y
-            //			<< " " << kvec_d_ibz[exist_number].z;
+            //            std::cout << "\n kvec_rot = " << kvec_rot.x << " " << kvec_rot.y << " " << kvec_rot.z;
+            //            std::cout << "\n kvec_d_ibz = " << kvec_d_ibz[exist_number].x
+            //            << " " << kvec_d_ibz[exist_number].y
+            //            << " " << kvec_d_ibz[exist_number].z;
 
             double kmol_new = kv.kvec_d[i].norm2();
             double kmol_old = kvec_d_ibz[exist_number].norm2();
 
             kv.ibz_index[i] = exist_number;
 
-            //			std::cout << "\n kmol_new = " << kmol_new;
-            //			std::cout << "\n kmol_old = " << kmol_old;
+            //            std::cout << "\n kmol_new = " << kmol_new;
+            //            std::cout << "\n kmol_old = " << kmol_old;
 
             // why we need this step?
             // because in pw_basis.cpp, while calculate ggwfc2,
@@ -714,7 +718,7 @@ void kvec_ibz_kpoint(K_Vectors& kv,
                 kvec_d_ibz[exist_number] = kv.kvec_d[i];
             }
         }
-        //		BLOCK_HERE("check k point");
+        //        BLOCK_HERE("check k point");
     }
 
     delete[] kkmatrix;

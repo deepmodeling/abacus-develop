@@ -2,25 +2,12 @@
 #include "gtest/gtest.h"
 
 #define private public
-#include "../sltk_grid.h"
+#include "source_cell/module_neighbor/sltk_grid.h"
 #include "prepare_unitcell.h"
 #include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_cell/read_stru.h"
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;

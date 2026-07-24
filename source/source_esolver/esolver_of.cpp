@@ -278,7 +278,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 void ESolver_OF::update_potential(UnitCell& ucell)
 {
     // (1) get dL/dphi
-    elecstate::cal_ux(ucell);
+    elecstate::cal_ux(ucell, PARAM.inp.nspin);
 
     this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
     this->kedf_manager_->get_potential(this->chr.rho,

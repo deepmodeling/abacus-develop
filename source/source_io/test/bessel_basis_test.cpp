@@ -16,9 +16,6 @@
 #include "../../source_cell/unitcell.h"
 #include "../../source_cell/magnetism.h"
 
-#ifdef __LCAO
-#include "../../source_cell/setup_nonlocal.h"
-#endif
 #include "gtest/gtest.h"
 
 
@@ -364,14 +361,6 @@ SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-#endif
 /* OVERLOAD printM3 function? */
 /*
 void output::printM3(std::ofstream &ofs, const std::string &description, const ModuleBase::Matrix3 &m)
@@ -447,6 +436,48 @@ protected:
      EXPECT_EQ(besselBasis.get_tolerence(), d_Tolerance);
      EXPECT_EQ(besselBasis.get_smooth(), b_Smooth);
      EXPECT_EQ(besselBasis.get_sigma(), d_SmoothSigma);
+
+     std::ifstream orbital("jle.orb");
+     ASSERT_TRUE(orbital.is_open());
+
+     std::string token;
+     int mesh = 0;
+     while (orbital >> token && token != "Mesh")
+     {
+     }
+     ASSERT_EQ(token, "Mesh");
+     orbital >> mesh;
+     ASSERT_FALSE(orbital.fail());
+     ASSERT_EQ(mesh, 3);
+     EXPECT_EQ(mesh % 2, 1);
+
+     double output_dr = 0.0;
+     orbital >> token >> output_dr;
+     ASSERT_FALSE(orbital.fail());
+     EXPECT_EQ(token, "dr");
+     EXPECT_DOUBLE_EQ(output_dr, d_dr);
+
+     while (orbital >> token && token != "N")
+     {
+     }
+     ASSERT_EQ(token, "N");
+
+     int type = 0;
+     int l = 0;
+     int n = 0;
+     orbital >> type >> l >> n;
+     ASSERT_FALSE(orbital.fail());
+     EXPECT_EQ(type, 0);
+     EXPECT_EQ(l, 0);
+     EXPECT_EQ(n, 0);
+
+     std::vector<double> radial(mesh);
+     for (double& value : radial)
+     {
+         orbital >> value;
+     }
+     ASSERT_TRUE(orbital.good());
+     EXPECT_DOUBLE_EQ(radial.back(), 0.0);
 }
 
 TEST_F(TestBesselBasis, PolynomialInterpolation2Test) {

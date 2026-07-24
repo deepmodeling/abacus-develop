@@ -1,15 +1,13 @@
 #ifndef UNITCELL_H
 #define UNITCELL_H
 
+#include <memory>
 #include "source_base/global_function.h"
 #include "source_cell/sep_cell.h"
 #include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
 #include "source_cell/module_neighlist/atom_provider.h"
-
-#ifdef __LCAO
-#include "setup_nonlocal.h"
-#endif
+#include "source_cell/nonlocal_info_base.h"
 
 // provide the basic information about unitcell.
 class UnitCell : public AtomProvider {
@@ -235,15 +233,23 @@ class UnitCell : public AtomProvider {
 
     std::vector<std::string> orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
     std::string  descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
+    std::vector<std::string> abfs_orbital_files; // ABFS orbital filenames read from STRU "ABFS_ORBITAL" (used by LCAO EXX)
+    std::vector<std::string> jle_orbital_files;  // JLE orbital filenames read from STRU "ABFS_JLES_ORBITAL" (used by LCAO EXX)
 
     void set_iat2itia();
 
-    void setup_cell(const std::string& fn, std::ofstream& log);
+    void setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
+        const std::string& basis_type, const std::string& orbital_dir, const std::string& init_wfc,
+        const double onsite_radius, const bool deepks_setorb, const bool rpa,
+        const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type);
 
-#ifdef __LCAO
-    InfoNonlocal infoNL; // store nonlocal information of lcao, added by zhengdy
-                         // 2021-09-07
-#endif
+    /**
+     * @brief Pointer to non-local pseudopotential information.
+     *
+     * This pointer is set during LCAO initialization and provides access
+     * to non-local projector data. It is null for non-LCAO calculations.
+     */
+    std::unique_ptr<NonlocalInfoBase> infoNL;
 
     // for constrained vc-relaxation where type of lattice
     // is fixed, adjust the lattice vectors
@@ -251,7 +257,7 @@ class UnitCell : public AtomProvider {
     //================================================================
     // cal_natomwfc : calculate total number of atomic wavefunctions
     // cal_nwfc     : calculate total number of local basis and lmax
-    // cal_meshx	: calculate max number of mesh points in pp file
+    // cal_meshx    : calculate max number of mesh points in pp file
     //================================================================
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;

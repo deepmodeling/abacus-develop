@@ -18,17 +18,17 @@ void Plus_U::cal_yukawa_lambda(double** rho, const int& nrxx)
 {
     ModuleBase::TITLE("Plus_U", "cal_yukawa_lambda");
 
-    if (PARAM.inp.yukawa_lambda > 0)
+    if (this->yukawa_lambda > 0)
     {
-        this->lambda = PARAM.inp.yukawa_lambda;
+        this->lambda = this->yukawa_lambda;
         return;
     }
 
     double sum_rho = 0.0;
     double sum_rho_lambda = 0.0;
-    for (int is = 0; is < PARAM.inp.nspin; is++)
+    for (int is = 0; is < Plus_U::nspin; is++)
     {
-        if(PARAM.inp.nspin == 4 && is > 0) 
+        if(Plus_U::nspin == 4 && is > 0) 
 		{ 
 			continue;// for non-collinear spin case, first spin contains the charge density
 		}
@@ -140,9 +140,9 @@ void Plus_U::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
         {
             const int N = ucell.atoms[T].l_nchi[L];
 
-            if (L >= PARAM.inp.orbital_corr[T] && PARAM.inp.orbital_corr[T] != -1)
+            if (L >= Plus_U::get_orbital_corr(T) && Plus_U::get_orbital_corr(T) != -1)
             {
-                if (L != PARAM.inp.orbital_corr[T]) 
+                if (L != Plus_U::get_orbital_corr(T)) 
 				{
 					continue;
 				}

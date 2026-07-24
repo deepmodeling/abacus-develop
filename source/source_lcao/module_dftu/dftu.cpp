@@ -9,6 +9,7 @@
 #include "source_cell/magnetism.h"
 #include "source_estate/module_charge/charge.h"
 
+#include <cstdint>
 #include <cmath>
 #include <complex>
 #include <cstdio>
@@ -43,9 +44,23 @@ Plus_U::Plus_U()
 Plus_U::~Plus_U()
 {}
 
-void Plus_U::init(UnitCell& cell, // unitcell class
+void Plus_U::init(UnitCell& cell,
                 const Parallel_Orbitals* pv,
-                const int nks
+                const int npol,
+                const int nspin,
+                const std::vector<int>& orbital_corr,
+                const bool yukawa_potential,
+                const double yukawa_lambda,
+                const std::string& global_readin_dir,
+                const std::string& global_out_dir,
+                const std::string& init_chg,
+                const int nlocal,
+                const bool gamma_only_local,
+                const std::string& ks_solver,
+                const bool cal_force,
+                const bool cal_stress,
+                const std::string& device,
+                const int kpar
 #ifdef __LCAO
                 , const LCAO_Orbitals* orb
 #endif
@@ -69,12 +84,37 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     ucell = &cell;
 #endif
 
-    // needs reconstructions in future
-    // global parameters, need to be removed in future
-    const int npol = PARAM.globalv.npol;     // number of polarization directions
-    const int nlocal = PARAM.globalv.nlocal; // number of total local orbitals
-    const int nspin = PARAM.inp.nspin;   // number of spins
     Plus_U::nspin = nspin;
+    Plus_U::orbital_corr = orbital_corr;
+    Plus_U::Yukawa = yukawa_potential;
+    this->yukawa_lambda = yukawa_lambda;
+
+    this->global_readin_dir = global_readin_dir;
+    this->global_out_dir = global_out_dir;
+    this->init_chg = init_chg;
+    this->npol = npol;
+
+    if (pv != nullptr)
+    {
+        const int global_rows = pv->get_global_row_size();
+        const int global_cols = pv->get_global_col_size();
+        if (global_rows != global_cols)
+        {
+            ModuleBase::WARNING_QUIT("Plus_U::init", "Global row and column dimensions do not match");
+        }
+        if (nlocal != global_rows)
+        {
+            ModuleBase::WARNING_QUIT("Plus_U::init", "nlocal does not match global matrix dimension");
+        }
+    }
+    this->nlocal = nlocal;
+
+    this->gamma_only_local = gamma_only_local;
+    this->ks_solver = ks_solver;
+    this->cal_force = cal_force;
+    this->cal_stress = cal_stress;
+    this->device = device;
+    this->kpar = kpar;
 
     // mohan update 2025-11-06
     Plus_U::energy_u = 0.0;
@@ -237,10 +277,10 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     if (omc != 0)
     {
         std::stringstream sst;
-        sst << "initial_onsite.dm";
-        this->read_occup_m(cell,sst.str());
+        sst << this->global_readin_dir << "dm_onsite_ini.txt";
+        this->read_occup_m(cell, sst.str(), this->init_chg, nspin, npol);
 #ifdef __MPI
-        this->local_occup_bcast(cell);
+        this->local_occup_bcast(cell, nspin, npol);
 #endif
 
         mark_locale_initialized();
@@ -248,13 +288,13 @@ void Plus_U::init(UnitCell& cell, // unitcell class
     }
     else
     {
-        if (PARAM.inp.init_chg == "file")
+        if (this->init_chg == "file")
         {
             std::stringstream sst;
-            sst << PARAM.globalv.global_readin_dir << "onsite.dm";
-            this->read_occup_m(cell,sst.str());
+            sst << this->global_readin_dir << "dm_onsite.txt";
+            this->read_occup_m(cell, sst.str(), this->init_chg, nspin, npol);
 #ifdef __MPI
-            this->local_occup_bcast(cell);
+            this->local_occup_bcast(cell, nspin, npol);
 #endif
             mark_locale_initialized();
         }
@@ -319,7 +359,7 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                         continue;
                     }
 
-                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                    if (Plus_U::nspin == 1 || Plus_U::nspin == 2)
                     {
                         for (int spin = 0; spin < 2; spin++)
                         {
@@ -346,21 +386,21 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                             }
                         }
                     }
-                    else if (PARAM.inp.nspin == 4) // SOC
+                    else if (Plus_U::nspin == 4)
                     {
                         double nm_trace = 0.0;
                         double nm2_trace = 0.0;
 
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
+                            for (int ipol0 = 0; ipol0 < this->npol; ipol0++)
                             {
                                 const int m0_all = m0 + (2 * l + 1) * ipol0;
                                 nm_trace += this->locale[iat][l][n][0](m0_all, m0_all);
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < this->npol; ipol1++)
                                     {
                                         int m1_all = m1 + (2 * l + 1) * ipol1;
 
@@ -381,19 +421,18 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                         }
                     }
 
-                    // calculate the double counting term included in eband
                     for (int m1 = 0; m1 < 2 * l + 1; m1++)
                     {
-                        for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
+                        for (int ipol1 = 0; ipol1 < this->npol; ipol1++)
                         {
                             const int m1_all = m1 + ipol1 * (2 * l + 1);
                             for (int m2 = 0; m2 < 2 * l + 1; m2++)
                             {
-                                for (int ipol2 = 0; ipol2 < PARAM.globalv.npol; ipol2++)
+                                for (int ipol2 = 0; ipol2 < this->npol; ipol2++)
                                 {
                                     const int m2_all = m2 + ipol2 * (2 * l + 1);
 
-                                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                                    if (Plus_U::nspin == 1 || Plus_U::nspin == 2)
                                     {
                                         for (int is = 0; is < 2; is++)
                                         {
@@ -402,7 +441,7 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                                             energy_dc += VU * this->locale[iat][l][n][is](m1_all, m2_all);
                                         }
                                     }
-                                    else if (PARAM.inp.nspin == 4) // SOC
+                                    else if (Plus_U::nspin == 4)
                                     {
                                         double VU = 0.0;
                                         VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, false);

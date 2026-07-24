@@ -10,7 +10,7 @@ out_chg              1
 ```
 
 this will produce the converged charge density, which is contained in the file SPIN1_CHG.cube.
-Then, use the same `STRU` file, pseudopotential file and atomic orbital file (and the local density matrix file onsite.dm if DFT+U is used) to do a non-self-consistent calculation. In this example, the potential is constructed from the ground-state charge density from the proceeding calculation. Now the INPUT file is like:
+Then, use the same `STRU` file, pseudopotential file and atomic orbital file (and the local density matrix file dm_onsite.txt if DFT+U is used) to do a non-self-consistent calculation. In this example, the potential is constructed from the ground-state charge density from the proceeding calculation. Now the INPUT file is like:
 
 ```
 INPUT_PARAMETERS

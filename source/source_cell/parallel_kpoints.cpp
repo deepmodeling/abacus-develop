@@ -211,10 +211,10 @@ void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim,
     T* p = &w.ptr[begin];
     // temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
     int pool = 0;
-	if (this->nspin != 2) 
-	{
-		pool = this->whichpool[ik];
-	}
+    if (this->nspin != 2) 
+    {
+        pool = this->whichpool[ik];
+    }
 
     if (this->rank_in_pool == 0)
     {

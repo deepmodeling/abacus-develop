@@ -11,39 +11,41 @@ class Atom_pseudo : public pseudo
 {
 public:
 
-	Atom_pseudo();
-	~Atom_pseudo();
+    Atom_pseudo();
+    ~Atom_pseudo();
 
-	// mohan add 2021-05-07
-	ModuleBase::ComplexArray d_so; //(:,:,:), spin-orbit case
-	ModuleBase::matrix d_real; //(:,:), non-spin-orbit case
-	int nproj;
-	int nproj_soc; // dimension of D_ij^so
-	std::vector<int> non_zero_count_soc = {0, 0, 0, 0};
-	std::vector<std::vector<int>> index1_soc = {{}, {}, {}, {}};
-	std::vector<std::vector<int>> index2_soc = {{}, {}, {}, {}};
+    // mohan add 2021-05-07
+    ModuleBase::ComplexArray d_so; //(:,:,:), spin-orbit case
+    ModuleBase::matrix d_real; //(:,:), non-spin-orbit case
+    int nproj;
+    int nproj_soc; // dimension of D_ij^so
+    std::vector<int> non_zero_count_soc = {0, 0, 0, 0};
+    std::vector<std::vector<int>> index1_soc = {{}, {}, {}, {}};
+    std::vector<std::vector<int>> index2_soc = {{}, {}, {}, {}};
 
-	void set_d_so( // mohan add 2021-05-07
-		ModuleBase::ComplexMatrix &d_so_in,
-		const int &nproj_in,
-		const int &nproj_in_so,
-		const bool has_so);
+    void set_d_so( // mohan add 2021-05-07
+        ModuleBase::ComplexMatrix &d_so_in,
+        const int &nproj_in,
+        const int &nproj_in_so,
+        const bool has_so,
+        const bool lspinorb,
+        const int nspin);
 
 
-	inline void get_d(const int& is, const int& p1, const int& p2, const std::complex<double>*& tmp_d)
-	{
-		tmp_d = &this->d_so(is, p1, p2);
-		return;
-	}
-	inline void get_d(const int& is, const int& p1, const int& p2, const double*& tmp_d)
-	{
-		tmp_d = &this->d_real(p1, p2);
-		return;
-	}
-	
+    inline void get_d(const int& is, const int& p1, const int& p2, const std::complex<double>*& tmp_d)
+    {
+        tmp_d = &this->d_so(is, p1, p2);
+        return;
+    }
+    inline void get_d(const int& is, const int& p1, const int& p2, const double*& tmp_d)
+    {
+        tmp_d = &this->d_real(p1, p2);
+        return;
+    }
+    
 
 #ifdef __MPI
-	void bcast_atom_pseudo(void); // for upf201
+    void bcast_atom_pseudo(void); // for upf201
 #endif
 
 };

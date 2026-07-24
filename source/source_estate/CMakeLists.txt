@@ -39,9 +39,7 @@ list(APPEND objects
     fp_energy.cpp
     occupy.cpp
     cal_ux.cpp
-    cal_nelec_nband.cpp
-    read_pseudo.cpp
-    cal_wfc.cpp
+    param_update.cpp
     setup_estate_pw.cpp
     update_pot.cpp
 )

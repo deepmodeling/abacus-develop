@@ -24,6 +24,14 @@ To compile and use ABACUS in CUDA mode, you currently need to have an NVIDIA GPU
 
 - Install a driver and toolkit appropriate for your system (SDK is not necessary)
 
+NVIDIA reports that cuSOLVERMp 0.4.2 through 0.8.0 contain an STEDC defect
+affecting non-power-of-two block sizes and certain 2D process grids. Because
+`Syevd` and `Sygvd` use STEDC internally, affected versions may fail or hang
+during distributed diagonalization. ABACUS therefore requires cuSOLVERMp 0.9.0
+or newer when `ENABLE_CUSOLVERMP=ON`. The recommended stack is cuSOLVERMp 0.9.0
+with cuBLASMp 0.9.1. See the
+[cuSOLVERMp 0.9.0 release notes](https://docs.nvidia.com/cuda/cusolvermp/release_notes/index.html#cusolvermp-v0-9-0)
+for the upstream fix details.
 
 ## Building ABACUS with the GPU support:
 

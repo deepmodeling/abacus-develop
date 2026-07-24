@@ -316,7 +316,6 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         hamilt::HContainer<TR> hr_serial(&serialV);
@@ -339,7 +338,6 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         hamilt::HContainer<TR> sr_serial(&serialV);
@@ -410,7 +408,6 @@ void ModuleIO::write_matrix_r(const std::string& matrix_label,
         // Gather parallel matrix to serial
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         

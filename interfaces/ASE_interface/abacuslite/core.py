@@ -559,7 +559,8 @@ class Abacus(GenericFileIOCalculator):
                                              'symmetry': 0,
                                              'out_band': 1,
                                              'kspacing': 0.0,       # overwrite
-                                             'gamma_only': False})  # overwrite
+                                             'gamma_only': False,
+                                             'read_file_dir': 'OUT.ABACUS'})  # overwrite
 
         profile = self.profile if profile is None else profile
 

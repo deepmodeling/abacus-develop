@@ -21,7 +21,7 @@ namespace unitcell
     // is fixed, adjust the lattice vectors
     void remake_cell(Lattice& lat);
 
-    void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log);
+    void setup_cell_after_vc(UnitCell& ucell, std::ofstream& log, const int nspin);
     
     /**
      * @brief check the boundary of the cell, for each atom,the taud 

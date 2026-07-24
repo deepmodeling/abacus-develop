@@ -24,13 +24,7 @@ Magnetism::~Magnetism()
 {
 }
 
-InfoNonlocal::InfoNonlocal()
-{
-}
 
-InfoNonlocal::~InfoNonlocal()
-{
-}
 
 pseudo::pseudo()
 {

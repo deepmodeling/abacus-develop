@@ -22,18 +22,18 @@ public:
 
     double abs_mag;
 
-	void compute_mag(const double& omega,
-			const int& nrxx,
-			const int& nxyz,
-			const double* const * rho,
-			const int& nspin,
-			const bool& two_fermi,
-			const double& nelec,
-			double* nelec_spin);
+    void compute_mag(const double& omega,
+            const int& nrxx,
+            const int& nxyz,
+            const double* const * rho,
+            const int& nspin,
+            const bool& two_fermi,
+            const double& nelec,
+            double* nelec_spin);
 
     double ux_[3]={0.0};
 
-	bool lsign_=false;
+    bool lsign_=false;
 
 private:
 

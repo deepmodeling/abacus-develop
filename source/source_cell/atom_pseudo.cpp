@@ -1,7 +1,5 @@
 #include "atom_pseudo.h"
-#include "source_io/module_parameter/parameter.h"
 
-#include "source_io/module_parameter/parameter.h"
 Atom_pseudo::Atom_pseudo()
 {
 }
@@ -14,8 +12,12 @@ Atom_pseudo::~Atom_pseudo()
 void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                            const int& nproj_in,
                            const int& nproj_in_so,
-                           const bool has_so)
+                           const bool has_so,
+                           const bool lspinorb,
+                           const int nspin)
 {
+    const bool lspinorb_ = lspinorb;
+    const int nspin_ = nspin;
     if (this->lmax < -1 || this->lmax > 20)
     {
         ModuleBase::WARNING_QUIT("Numerical_Nonlocal", "bad input of lmax : should be between -1 and 20");
@@ -65,11 +67,11 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
     else // zhengdy-soc
     {
         this->d_so.create(spin_dimension, nproj_soc + 1, nproj_soc + 1);
-        //		std::cout << "lmax=" << lmax << std::endl;
+        //        std::cout << "lmax=" << lmax << std::endl;
 
         if (this->lmax > -1)
         {
-            if (PARAM.inp.lspinorb)
+            if (lspinorb_)
             {
                 int is = 0;
                 for (int is1 = 0; is1 < 2; is1++)
@@ -85,10 +87,10 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                                 if (fabs(this->d_so(is, L1, L2).real()) > 1.0e-8
                                     || fabs(this->d_so(is, L1, L2).imag()) > 1.0e-8)
                                 {
-                                    //									std::cout << "tt in atom is=" << is << " L1=" <<
+                                    //                                    std::cout << "tt in atom is=" << is << " L1=" <<
                                     //L1
                                     //<< " L2="
-                                    //									<< L2 << " " << d_so(is, L1, L2) << std::endl;
+                                    //                                    << L2 << " " << d_so(is, L1, L2) << std::endl;
 
                                     this->index1_soc[is][non_zero_count_soc[is]] = L1;
                                     this->index2_soc[is][non_zero_count_soc[is]] = L2;
@@ -107,7 +109,7 @@ void Atom_pseudo::set_d_so(ModuleBase::ComplexMatrix& d_so_in,
                 {
                     for (int is2 = 0; is2 < 2; is2++)
                     {
-                        if (is >= PARAM.inp.nspin) {
+                        if (is >= nspin_) {
                             break;
 }
                         for (int L1 = 0; L1 < nproj_soc; L1++)

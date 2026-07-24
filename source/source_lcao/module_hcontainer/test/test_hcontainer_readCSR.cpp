@@ -1,5 +1,5 @@
-#include "../hcontainer.h"
-#include "../output_hcontainer.h"
+#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_lcao/module_hcontainer/output_hcontainer.h"
 #include "source_io/module_output/csr_reader.h"
 #include "prepare_unitcell.h"
 
@@ -8,20 +8,7 @@
 #include <fstream>
 
 // mock functions
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;

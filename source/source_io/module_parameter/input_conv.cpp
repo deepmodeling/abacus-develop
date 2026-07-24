@@ -212,7 +212,6 @@ void Input_Conv::Convert()
 
     if (PARAM.inp.dft_plus_u)
     {
-        Plus_U::Yukawa = PARAM.inp.yukawa_potential;
         Plus_U::omc = PARAM.inp.omc;
         Plus_U::orbital_corr = PARAM.inp.orbital_corr;
         Plus_U::uramping = PARAM.globalv.uramping;

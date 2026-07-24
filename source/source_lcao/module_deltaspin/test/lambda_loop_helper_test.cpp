@@ -1,4 +1,4 @@
-#include "../spin_constrain.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

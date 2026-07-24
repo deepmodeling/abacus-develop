@@ -7,7 +7,9 @@
 
 #include <algorithm>
 #include <cassert>
+#include <cmath>
 #include <cstring> // Peize Lin fix bug about strcmp 2016-08-02
+#include <iostream>
 
 //==============================
 // Define an object here!
@@ -378,6 +380,7 @@ void LCAO_Orbitals::read_orb_file(std::ofstream& ofs_in, // GlobalV::ofs_running
     ModuleBase::TITLE("LCAO_Orbitals", "read_orb_file");
     char word[80];
     std::string orb_label;
+    double declared_rcut = -1.0;
     if (my_rank == 0)
     {
         while (ifs.good())
@@ -386,6 +389,15 @@ void LCAO_Orbitals::read_orb_file(std::ofstream& ofs_in, // GlobalV::ofs_running
             if (std::strcmp(word, "Element") == 0)
             {
                 ifs >> orb_label;
+                continue;
+            }
+            if (std::strcmp(word, "Radius") == 0)
+            {
+                ifs >> word;
+                if (std::strcmp(word, "Cutoff(a.u.)") == 0)
+                {
+                    ifs >> declared_rcut;
+                }
                 continue;
             }
             if (std::strcmp(word, "Lmax") == 0)
@@ -448,6 +460,18 @@ void LCAO_Orbitals::read_orb_file(std::ofstream& ofs_in, // GlobalV::ofs_running
         }
         ModuleBase::CHECK_NAME(ifs, "dr");
         ifs >> dr;
+
+        if (declared_rcut >= 0.0 && meshr_read > 0)
+        {
+            const double mesh_rcut = (meshr_read - 1) * dr;
+            const double tolerance = 1.0e-10 * std::max(1.0, std::abs(declared_rcut));
+            if (std::abs(mesh_rcut - declared_rcut) > tolerance)
+            {
+                std::cout << " WARNING: The orbital file declares a cutoff radius of " << declared_rcut
+                          << " Bohr, but (Mesh - 1) * dr is " << mesh_rcut
+                          << " Bohr. The file will be read without modification." << std::endl;
+            }
+        }
     }
 
 #ifdef __MPI

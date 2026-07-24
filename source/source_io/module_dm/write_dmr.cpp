@@ -95,7 +95,6 @@ void write_dmr(const std::vector<hamilt::HContainer<double>*> dmr,
         // gather the parallel matrix to serial matrix
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         hamilt::HContainer<double> dm_serial(&serialV);

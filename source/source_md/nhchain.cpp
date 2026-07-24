@@ -809,7 +809,7 @@ void Nose_Hoover::update_volume(std::ofstream& ofs)
     }
 
     /// reset ucell and pos due to change of lattice
-    unitcell::setup_cell_after_vc(ucell,ofs);
+    unitcell::setup_cell_after_vc(ucell,ofs, PARAM.inp.nspin);
 }
 
 void Nose_Hoover::target_stress()

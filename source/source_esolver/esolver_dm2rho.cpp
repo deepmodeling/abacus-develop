@@ -3,7 +3,7 @@
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/read_pseudo.h"
+#include "source_cell/read_pseudo.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"

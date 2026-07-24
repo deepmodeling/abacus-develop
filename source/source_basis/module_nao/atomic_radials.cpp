@@ -9,6 +9,7 @@
 
 #include "source_base/projgen.h"
 
+#include <cmath>
 #include <fstream>
 #include <iostream>
 #include <string>
@@ -119,6 +120,7 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
      *                                                                                  */
     int ngrid = 0; // number of grid points
     double dr = 0; // grid spacing
+    double declared_rcut = -1.0;
     std::string tmp;
 
     if (rank == 0)
@@ -143,6 +145,14 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
             {
                 ifs >> orb_ecut_;
             }
+            else if (tmp == "Radius")
+            {
+                ifs >> tmp;
+                if (tmp == "Cutoff(a.u.)")
+                {
+                    ifs >> declared_rcut;
+                }
+            }
             else if (tmp == "Lmax")
             {
                 ifs >> lmax_;
@@ -164,6 +174,18 @@ void AtomicRadials::read_abacus_orb(std::ifstream& ifs, std::ofstream* ptr_log, 
             {
                 ifs >> dr;
                 break;
+            }
+        }
+
+        if (declared_rcut >= 0.0 && ngrid > 0)
+        {
+            const double mesh_rcut = (ngrid - 1) * dr;
+            const double tolerance = 1.0e-10 * std::max(1.0, std::abs(declared_rcut));
+            if (std::abs(mesh_rcut - declared_rcut) > tolerance)
+            {
+                std::cout << " WARNING: The orbital file declares a cutoff radius of " << declared_rcut
+                          << " Bohr, but (Mesh - 1) * dr is " << mesh_rcut
+                          << " Bohr. The file will be read without modification." << std::endl;
             }
         }
 

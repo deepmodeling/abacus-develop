@@ -1,10 +1,10 @@
 #include "gtest/gtest.h"
-#include "../transfer.h"
-#include "../hcontainer.h"
+#include "source_lcao/module_hcontainer/transfer.h"
+#include "source_lcao/module_hcontainer/hcontainer.h"
 #include <chrono>
 #ifdef __MPI
 #include <mpi.h>
-#include "../hcontainer_funcs.h"
+#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #endif
 
 // test_size is the number of atoms in the unitcell

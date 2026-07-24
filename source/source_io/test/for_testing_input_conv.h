@@ -142,12 +142,6 @@ UnitCell::UnitCell()
     itia2iat.create(1, 1);
 }
 UnitCell::~UnitCell() {}
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
-LCAO_Orbitals::LCAO_Orbitals() {}
-LCAO_Orbitals::~LCAO_Orbitals() {}
-#endif
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
 void Occupy::decision(const std::string& name,

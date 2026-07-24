@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "gmock/gmock.h"
-#include "../read_atoms_helper.h"
+#include "source_cell/read_atoms_helper.h"
 #include "source_base/vector3.h"
 #include "source_base/matrix3.h"
 #include "source_base/output.h"
@@ -15,9 +15,7 @@ namespace elecstate {
     }
 }
 
-// Mock InfoNonlocal class
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
+
 
 // Mock Magnetism class
 Magnetism::Magnetism() {}
@@ -236,7 +234,11 @@ TEST_F(ReadAtomsHelperTest, ProcessMagnetizationNspin2)
     atom.mag[0] = 2.0;
     atom.m_loc_[0].set(0, 0, 0);
 
-    unitcell::process_magnetization(atom, 0, 0, 2, false, false, ofs_running);
+    const int nspin = 2;
+    const bool input_vec_mag = false;
+    const bool input_angle_mag = false;
+    const bool noncolin = false;
+    unitcell::process_magnetization(atom, 0, 0, nspin, input_vec_mag, input_angle_mag, ofs_running, noncolin);
 
     // For nspin=2, only z component should be set
     EXPECT_DOUBLE_EQ(atom.m_loc_[0].x, 0.0);
@@ -257,10 +259,11 @@ TEST_F(ReadAtomsHelperTest, ProcessMagnetizationNspin4VectorInput)
     atom.m_loc_[0].set(1.0, 1.0, 1.0);
     atom.mag[0] = sqrt(3.0);
 
-    // Set noncolin to true to allow non-collinear magnetization
-    // Note: This requires PARAM to be properly initialized
-
-    unitcell::process_magnetization(atom, 0, 0, 4, true, false, ofs_running);
+    const int nspin = 4;
+    const bool input_vec_mag = true;
+    const bool input_angle_mag = false;
+    const bool noncolin = true;
+    unitcell::process_magnetization(atom, 0, 0, nspin, input_vec_mag, input_angle_mag, ofs_running, noncolin);
 
     // Angles should be calculated from vector components
     EXPECT_GT(atom.angle1[0], 0.0);
@@ -281,9 +284,11 @@ TEST_F(ReadAtomsHelperTest, ProcessMagnetizationAngleInput)
     atom.angle2[0] = 0.0;
     atom.m_loc_[0].set(0, 0, 0);
 
-    // Note: For nspin=4, if noncolin is false (default), x and y components are zeroed
-    // So we test with nspin=2 instead to verify the angle calculation works
-    unitcell::process_magnetization(atom, 0, 0, 2, false, true, ofs_running);
+    const int nspin = 2;
+    const bool input_vec_mag = false;
+    const bool input_angle_mag = true;
+    const bool noncolin = false;
+    unitcell::process_magnetization(atom, 0, 0, nspin, input_vec_mag, input_angle_mag, ofs_running, noncolin);
 
     // For nspin=2, only z component is used, which should be mag[0] * cos(angle1)
     // With angle1 = PI/2, cos(PI/2) = 0

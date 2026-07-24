@@ -675,7 +675,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream
     // I do not want to change it
     if (if_cell_moves)
     {
-        unitcell::setup_cell_after_vc(ucell, ofs_running);
+        unitcell::setup_cell_after_vc(ucell, ofs_running, PARAM.inp.nspin);
         ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
     }
 }

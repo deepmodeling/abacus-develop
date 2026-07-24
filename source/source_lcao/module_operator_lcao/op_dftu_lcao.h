@@ -25,12 +25,13 @@ class OperatorDFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
     OperatorDFTU<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
                                   const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
 								  hamilt::HContainer<TR>* hR_in,
-								  Plus_U* dftu_in, // mohan add 2025-11-05
-								  const std::vector<int>& isk_in)
-        : isk(isk_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
+								  Plus_U* dftu_in,
+								  const std::vector<int>& isk_in,
+								  const int npol_in)
+        : isk(isk_in), npol(npol_in), OperatorLCAO<TK, TR>(hsk_in, kvec_d_in, hR_in)
     {
         this->cal_type = calculation_type::lcao_dftu;
-        this->dftu = dftu_in; // mohan add 2025-11-07
+        this->dftu = dftu_in;
     }
 
     virtual void contributeHR() override;
@@ -39,11 +40,13 @@ class OperatorDFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
   private:
 
-    Plus_U *dftu; // mohan add 20251107
+    Plus_U *dftu;
 
     bool HR_fixed_done = false;
 
     const std::vector<int>& isk;
+
+    const int npol;
 };
 } // namespace hamilt
 #endif

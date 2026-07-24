@@ -43,8 +43,8 @@ class Grid_Driver : public Grid
     // THE INTERFACE WITH USER :
     // MEMBRE FUNCTIONS :
     // NAME : Find_atom (input cartesian position,find the
-    //		adjacent of this atom,and store the information
-    //		in 'adj_num','ntype','natom'
+    //        adjacent of this atom,and store the information
+    //        in 'adj_num','ntype','natom'
     //==========================================================
     Grid_Driver(){ test_deconstructor = false; };
     Grid_Driver(const int& test_d_in, const int& test_grid_in);

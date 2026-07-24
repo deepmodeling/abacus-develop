@@ -23,12 +23,7 @@
 */
 
 //compare two complex by using EXPECT_DOUBLE_EQ()
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+
 
 Magnetism::Magnetism()
 {

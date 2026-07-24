@@ -210,12 +210,16 @@ void MSST::restart(const std::string& global_readin_dir)
         if (ok)
         {
             file >> step_rst_ >> md_tfirst >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos;
+            if(!file)
+            {
+                ok = false;
+            }
             file.close();
         }
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 #endif
 
     if (!ok)
@@ -259,7 +263,7 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     ucell.latvec.e22 *= dilation[1];
     ucell.latvec.e33 *= dilation[2];
 
-    unitcell::setup_cell_after_vc(ucell,ofs);
+    unitcell::setup_cell_after_vc(ucell,ofs, PARAM.inp.nspin);
 
     /// rescale velocity
     for (int i = 0; i < ucell.nat; ++i)
