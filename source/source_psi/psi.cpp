@@ -219,16 +219,19 @@ Psi<T, Device>::Psi(const Psi& psi_in)
             base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
                 this->psi_cpu_, src_ptr, total_size);
         }
+        this->current_k_gpu_ = -1;
+        this->psi_bias = 0;
+        this->psi_current = this->psi;
     }
     else
     {
         base_device::memory::synchronize_memory_op<T, Device, Device>()(this->psi,
                                                                         psi_in.get_pointer() - psi_in.get_psi_bias(),
                                                                         psi_in.size());
+        this->psi_bias = psi_in.get_psi_bias();
+        this->psi_current = this->psi + psi_in.get_psi_bias();
     }
-    this->psi_bias = psi_in.get_psi_bias();
     this->current_nbasis = psi_in.get_current_nbas();
-    this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
 // Constructor 2-2:
@@ -265,30 +268,33 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
             std::memcpy(this->psi_cpu_, arr, sizeof(T) * total_size);
             free(arr);
         }
+        this->current_k_gpu_ = -1;
+        this->psi_bias = 0;
+        this->psi_current = this->psi;
     }
     else if (std::is_same<Device, base_device::DEVICE_GPU>::value && std::is_same<Device_in, base_device::DEVICE_CPU>::value)
     {
         auto* arr = (T*)malloc(sizeof(T) * psi_in.size());
-        // cast the memory from T_in to T in CPU
         base_device::memory::cast_memory_op<T, T_in, Device_in, Device_in>()(arr,
                                                                              psi_in.get_pointer()
                                                                                  - psi_in.get_psi_bias(),
                                                                              psi_in.size());
-        // synchronize the memory from CPU to GPU
         base_device::memory::synchronize_memory_op<T, Device, Device_in>()(this->psi,
                                                                            arr,
                                                                            psi_in.size());
         free(arr);
+        this->psi_bias = psi_in.get_psi_bias();
+        this->psi_current = this->psi + psi_in.get_psi_bias();
     }
     else
     {
         base_device::memory::cast_memory_op<T, T_in, Device, Device_in>()(this->psi,
                                                                           psi_in.get_pointer() - psi_in.get_psi_bias(),
                                                                           psi_in.size());
+        this->psi_bias = psi_in.get_psi_bias();
+        this->psi_current = this->psi + psi_in.get_psi_bias();
     }
-    this->psi_bias = psi_in.get_psi_bias();
     this->current_nbasis = psi_in.get_current_nbas();
-    this->psi_current = this->psi + psi_in.get_psi_bias();
 }
 
 template <typename T, typename Device>
@@ -475,6 +481,14 @@ void Psi<T, Device>::fix_k(const int ik) const
     {
         this->current_b = 0;
     }
+
+    if (storage_mode_ == PsiStorageMode::PAGED_GPU)
+    {
+        this->psi_bias = 0;
+        this->psi_current = const_cast<T*>(this->psi);
+        return;
+    }
+
     int base = this->current_b * this->nk * this->nbasis;
     if (ik >= this->nk)
     {
@@ -612,9 +626,23 @@ std::tuple<const T*, int> Psi<T, Device>::to_range(const Range& range) const
     }
     else // [r1, r2] is the range of index2 with length m
     {
-        const T* p = &this->psi[(i1 * (k_first ? this->nbands : this->nk) + r1) * this->nbasis];
-        int m = (r2 - r1 + 1) * this->get_npol();
-        return std::tuple<const T*, int>(p, m);
+        if (storage_mode_ == PsiStorageMode::PAGED_GPU)
+        {
+            if (k_first && i1 != current_k)
+            {
+                ModuleBase::WARNING_QUIT("Psi::to_range",
+                    "In PAGED_GPU mode, requested k-point must match current_k");
+            }
+            const T* p = &this->psi[r1 * this->nbasis];
+            int m = (r2 - r1 + 1) * this->get_npol();
+            return std::tuple<const T*, int>(p, m);
+        }
+        else
+        {
+            const T* p = &this->psi[(i1 * (k_first ? this->nbands : this->nk) + r1) * this->nbasis];
+            int m = (r2 - r1 + 1) * this->get_npol();
+            return std::tuple<const T*, int>(p, m);
+        }
     }
 }
 
