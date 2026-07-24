@@ -359,9 +359,9 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 if (npol == 2)
                 {
                     const std::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
-                    const std::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
-                    const std::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
-                    const std::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
+                    const std::complex<FPTYPE> coefficients1(lambda[iat*3] , -lambda[iat*3+1]);
+                    const std::complex<FPTYPE> coefficients2(lambda[iat*3] , lambda[iat*3+1]);
+                    const std::complex<FPTYPE> coefficients3(-lambda[iat*3+2], 0.0);
                     for (int ib = 0; ib < nbands_occ; ib++)
                     {
                         const int ib2 = ib * 2;
