@@ -40,6 +40,19 @@ void Setup_Psi_pw::before_runner_impl(
     }
 
     if (inp.device == "gpu" || inp.precision == "single") {
+        const int nks = kv.get_nks();
+        if (inp.device_memory_mode == "paged")
+        {
+            this->psi_cpu->set_storage_mode(psi::PsiStorageMode::PAGED_GPU);
+        }
+        else if (inp.device_memory_mode == "full_gpu")
+        {
+            this->psi_cpu->set_storage_mode(psi::PsiStorageMode::ALL_GPU);
+        }
+        else if (nks > 10)
+        {
+            this->psi_cpu->set_storage_mode(psi::PsiStorageMode::PAGED_GPU);
+        }
         this->psi_t = static_cast<void*>(new psi::Psi<T, Device>(this->psi_cpu[0]));
     } else {
         this->psi_t = static_cast<void*>(reinterpret_cast<psi::Psi<T, Device>*>(this->psi_cpu));
