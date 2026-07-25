@@ -74,3 +74,15 @@ jobs:
         run: |
           cd tests/16_SDFT_GPU
           bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+
+      - name: Test 01_PW on GPU
+        run: |
+          cd tests/01_PW
+          find . -name INPUT | while read f; do
+              if grep -q "^device" "$f"; then
+                  sed -i 's/^device.*/device    gpu/' "$f"
+              else
+                  echo "device    gpu" >> "$f"
+              fi
+          done
+          bash ../integrate/Autotest.sh -n 1 -a abacus -f CASES_GPU.txt
