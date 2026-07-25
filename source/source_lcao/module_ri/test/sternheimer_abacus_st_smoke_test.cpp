@@ -286,6 +286,28 @@ TEST(SternheimerABACUSSTSmoke, AllowsFullKRecordsToShareAnIBZZeroOrderState)
                  std::invalid_argument);
 }
 
+TEST(SternheimerABACUSSTSmoke, ValidatesFullKMeshAgainstSeparateIBZZeroOrderMesh)
+{
+    constexpr int full_kpoint_count = 8;
+    constexpr int ibz_kpoint_count = 3;
+    const std::array<int, full_kpoint_count> ibz_index_by_full_k = {0, 1, 1, 2, 1, 2, 2, 1};
+    std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> full_records;
+    full_records.reserve(full_kpoint_count);
+    for (int full_k_index = 0; full_k_index != full_kpoint_count; ++full_k_index)
+    {
+        auto record = make_occupied_kpoint(full_k_index,
+                                           full_k_index,
+                                           0,
+                                           {0.0, 0.0, 0.0},
+                                           2.0 / static_cast<double>(full_kpoint_count));
+        record.zero_order_k_index = ibz_index_by_full_k[static_cast<std::size_t>(full_k_index)];
+        full_records.push_back(std::move(record));
+    }
+
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_full_lcao_occupied_kpoints(
+        full_records, ibz_kpoint_count, 1, 3));
+}
+
 TEST(SternheimerABACUSSTSmoke, FullKRecordKeepsNormalizedCoefficientsAndUsesUniformWeight)
 {
     auto ibz = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.5);

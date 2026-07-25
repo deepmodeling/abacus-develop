@@ -2538,11 +2538,10 @@ void run_sternheimer_abacus_chi0_output_impl(
             {
                 throw std::runtime_error("Periodic Sternheimer requires Monkhorst-Pack dimensions.");
             }
-            validate_sternheimer_lcao_occupied_kpoints(*lcao_occupied_kpoints,
-                                                       elec_state.wg.nr,
-                                                       elec_state.wg.nr,
-                                                       PARAM.inp.nspin,
-                                                       PARAM.globalv.nlocal);
+            validate_sternheimer_full_lcao_occupied_kpoints(*lcao_occupied_kpoints,
+                                                            elec_state.wg.nr,
+                                                            PARAM.inp.nspin,
+                                                            PARAM.globalv.nlocal);
             run_sternheimer_periodic_lcao_chi0_output(potential,
                                                       pw_basis,
                                                       ucell,

@@ -623,6 +623,25 @@ inline void validate_sternheimer_lcao_occupied_kpoints(
     }
 }
 
+inline void validate_sternheimer_full_lcao_occupied_kpoints(
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const int zero_order_kpoint_count,
+    const int spin_channel_count,
+    const int basis_size)
+{
+    if (zero_order_kpoint_count <= 0)
+    {
+        throw std::invalid_argument("Sternheimer LCAO zero-order k-point count must be positive.");
+    }
+    const int full_kpoint_count = static_cast<int>(records.size());
+    validate_sternheimer_lcao_occupied_kpoints(records,
+                                               full_kpoint_count,
+                                               full_kpoint_count,
+                                               spin_channel_count,
+                                               basis_size,
+                                               zero_order_kpoint_count);
+}
+
 inline int sternheimer_lcao_total_occupied_bands(
     const std::vector<SternheimerLCAOOccupiedKPoint>& records)
 {
