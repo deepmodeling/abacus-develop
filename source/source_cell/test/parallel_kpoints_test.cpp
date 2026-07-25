@@ -268,6 +268,14 @@ INSTANTIATE_TEST_SUITE_P(TESTPK,
                              ParaPrepare(5, 97),
                              ParaPrepare(97, 97)));
 
+TEST(ParaKpointsValidation, KparMustFitAvailableKpoints)
+{
+    EXPECT_TRUE(Parallel_Kpoints::is_valid_kpar(1, 1));
+    EXPECT_TRUE(Parallel_Kpoints::is_valid_kpar(2, 2));
+    EXPECT_FALSE(Parallel_Kpoints::is_valid_kpar(0, 1));
+    EXPECT_FALSE(Parallel_Kpoints::is_valid_kpar(2, 1));
+}
+
 int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);

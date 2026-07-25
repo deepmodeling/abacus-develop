@@ -270,11 +270,12 @@ parameters:
       Specifies the computing device for ABACUS.
 
       Available options are:
+      * auto: use a GPU when one is available, otherwise fall back to CPU.
       * cpu: for CPUs via Intel, AMD, or Other supported CPU devices
       * gpu: for GPUs via CUDA or ROCm.
 
       [NOTE] ks_solver must also be set to the algorithms supported. lcao_in_pw currently does not support gpu.
-    default_value: cpu
+    default_value: auto
     unit: ""
     availability: ""
   - name: precision

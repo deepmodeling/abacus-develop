@@ -35,6 +35,7 @@ class Input_Item
         read_value = item.read_value;
         check_value = item.check_value;
         reset_value = item.reset_value;
+        reset_after = item.reset_after;
         get_final_value = item.get_final_value;
     }
 
@@ -71,6 +72,8 @@ class Input_Item
     /// reset this value when some conditions are met
     /// e.g. should only reset the value of this item
     std::function<void(const Input_Item&, Parameter&)> reset_value = nullptr;
+    /// labels whose reset functions must run before this item's reset function
+    std::vector<std::string> reset_after;
     /// get final_value function for output INPUT file
     std::function<void(Input_Item&, const Parameter&)> get_final_value = nullptr;
     // ====== !!! Do not add any more functions here.  ======

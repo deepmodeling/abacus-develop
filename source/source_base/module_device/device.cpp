@@ -62,6 +62,15 @@ bool probe_gpu_availability() {
 
 std::string get_device_flag(const std::string &device,
                             const std::string &basis_type) {
+    if (device == "gpu" || device == "auto")
+    {
+        return resolve_device_flag(device, basis_type, probe_gpu_availability());
+    }
+    return resolve_device_flag(device, basis_type, false);
+}
+
+std::string resolve_device_flag(const std::string& device, const std::string& basis_type, const bool gpu_available)
+{
     // 1. Validate input string
     if (device != "cpu" && device != "gpu" && device != "auto") {
         ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\", \"gpu\", or \"auto\"!");
@@ -74,17 +83,23 @@ std::string get_device_flag(const std::string &device,
     std::string result = "cpu";
     
     if (device == "gpu") {
-        if (probe_gpu_availability()) {
+        if (gpu_available)
+        {
             result = "gpu";
             // std::cout << " INFO: 'device=gpu' specified. GPU will be used." << std::endl;
-        } else {
+        }
+        else
+        {
             ModuleBase::WARNING_QUIT("device", "Device is set to 'gpu', but no available GPU was found. Please check your hardware/drivers or set 'device=cpu'.");
         }
     } else if (device == "auto") {
-        if (probe_gpu_availability()) {
+        if (gpu_available)
+        {
             result = "gpu";
             // std::cout << " INFO: 'device=auto' specified. GPU detected and will be used." << std::endl;
-        } else {
+        }
+        else
+        {
             result = "cpu";
             // std::cout << " WARNING: 'device=auto' specified, but no GPU was found. Falling back to CPU." << std::endl;
             // std::cout << "          To suppress this warning, please explicitly set 'device=cpu' in your input." << std::endl;

@@ -1,5 +1,7 @@
+#include <algorithm>
 #include <cstdio>
 #include <fstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -34,6 +36,55 @@ class InputTest : public testing::Test
         return it;
     }
 };
+
+TEST_F(InputTest, RejectsDuplicateRegisteredLabels)
+{
+    ModuleIO::ReadInput readinput(0);
+    ModuleIO::Input_Item exact_duplicate("device");
+    ModuleIO::Input_Item case_duplicate("DeViCe");
+
+    EXPECT_THROW(readinput.add_item(exact_duplicate), std::invalid_argument);
+    EXPECT_THROW(readinput.add_item(case_duplicate), std::invalid_argument);
+}
+
+TEST_F(InputTest, RejectsInvalidResetDependencies)
+{
+    ModuleIO::ReadInput missing_dependency_input(0);
+    ModuleIO::Input_Item orphan("orphan_dependency_test");
+    orphan.reset_after = {"not_a_registered_parameter"};
+    missing_dependency_input.add_item(orphan);
+    EXPECT_THROW(missing_dependency_input.build_reset_order(), std::invalid_argument);
+
+    ModuleIO::ReadInput cyclic_input(0);
+    ModuleIO::Input_Item first("reset_cycle_first");
+    ModuleIO::Input_Item second("reset_cycle_second");
+    first.reset_after = {"reset_cycle_second"};
+    second.reset_after = {"reset_cycle_first"};
+    cyclic_input.add_item(first);
+    cyclic_input.add_item(second);
+    EXPECT_THROW(cyclic_input.build_reset_order(), std::logic_error);
+}
+
+TEST_F(InputTest, ResetOrderIsIndependentFromDocumentationOrder)
+{
+    ModuleIO::ReadInput readinput(0);
+    const auto registered_index = [&readinput](const std::string& label) { return readinput.input_index.at(label); };
+    const auto reset_position = [&readinput](const std::string& label) {
+        const std::size_t index = readinput.input_index.at(label);
+        return std::find(readinput.reset_order.begin(), readinput.reset_order.end(), index);
+    };
+
+    EXPECT_LT(registered_index("kpar"), registered_index("device"));
+    EXPECT_LT(reset_position("basis_type"), reset_position("kpar"));
+    EXPECT_LT(reset_position("device"), reset_position("kpar"));
+    EXPECT_LT(reset_position("basis_type"), reset_position("device"));
+    EXPECT_LT(reset_position("device"), reset_position("ks_solver"));
+    EXPECT_LT(reset_position("nbands_sto"), reset_position("bndpar"));
+    EXPECT_LT(reset_position("bndpar"), reset_position("kpar"));
+    EXPECT_LT(reset_position("ecutwfc"), reset_position("ecutrho"));
+    EXPECT_LT(reset_position("ecutwfc"), reset_position("lcao_ecut"));
+    EXPECT_LT(reset_position("mixing_beta"), reset_position("mixing_beta_mag"));
+}
 
 TEST_F(InputTest, Item_test)
 {

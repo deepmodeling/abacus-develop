@@ -43,6 +43,11 @@ void output_device_info(std::ostream& output, const std::string& device);
 bool probe_gpu_availability();
 
 /**
+ * @brief Resolve a requested device using an already determined GPU availability.
+ */
+std::string resolve_device_flag(const std::string& device, const std::string& basis_type, bool gpu_available);
+
+/**
  * @brief Get the device flag object
  * for source_io PARAM.inp.device
  */

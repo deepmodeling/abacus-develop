@@ -298,6 +298,7 @@ void ReadInput::item_system()
                           "The value taken should be less than or equal to the number of k points as well as the number of MPI processes.";
         item.default_value = "1";
         read_sync_int(input.kpar);
+        item.reset_after = {"basis_type", "device", "bndpar"};
         item.reset_value = [](const Input_Item& item, Parameter& para) {
 #ifdef __LCAO
             if (para.inp.basis_type == "lcao")
@@ -339,6 +340,7 @@ void ReadInput::item_system()
                           "will be distributed among each group. It should be larger than 0.";
         item.default_value = "1";
         read_sync_int(input.bndpar);
+        item.reset_after = {"ks_solver", "nbands_sto"};
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.esolver_type != "sdft" && para.input.ks_solver != "bpcg")
             {
@@ -719,12 +721,14 @@ Available options are:
         item.description = R"(Specifies the computing device for ABACUS.
 
 Available options are:
+* auto: use a GPU when one is available, otherwise fall back to CPU.
 * cpu: for CPUs via Intel, AMD, or Other supported CPU devices
 * gpu: for GPUs via CUDA or ROCm.
 
 [NOTE] ks_solver must also be set to the algorithms supported. lcao_in_pw currently does not support gpu.)";
-        item.default_value = "cpu";
+        item.default_value = "auto";
         read_sync_string(input.device);
+        item.reset_after = {"basis_type"};
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.device=base_device::information::get_device_flag(
                                 para.inp.device, para.inp.basis_type);
@@ -910,6 +914,7 @@ Available options are:
         item.default_value = "50 for PW basis, 100 for LCAO basis";
         item.unit = "Ry";
         read_sync_double(input.ecutwfc);
+        item.reset_after = {"basis_type"};
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ecutwfc == 0)
             { // 0 means no input value
@@ -946,6 +951,7 @@ Available options are:
         item.default_value = "4*ecutwfc";
         item.unit = "Ry";
         read_sync_double(input.ecutrho);
+        item.reset_after = {"ecutwfc"};
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             Input_para& input = para.input;
             if (input.ecutrho <= 0.0)

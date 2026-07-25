@@ -7,6 +7,7 @@
 #include <string>
 #include <fstream>
 #include <sstream>
+#include <unordered_map>
 
 
 namespace ModuleIO
@@ -95,6 +96,8 @@ class ReadInput
      * @param item input_item
      */
     void add_item(const Input_Item& item);
+    /// @brief resolve reset dependencies without changing registration order
+    void build_reset_order();
     /// @brief set System_para according to input parameters
     /// INPUT and STRU need to refer to each other in ABACUS, 
     /// so it is necessary to obtain the file paths related to all inputs
@@ -143,6 +146,8 @@ class ReadInput
     // std::map<std::string, Input_Item> input_lists;
     // use vector instead of map to keep the order of input items
     std::vector<std::pair<std::string, Input_Item>> input_lists;
+    std::unordered_map<std::string, std::size_t> input_index;
+    std::vector<std::size_t> reset_order;
 
     // read value if INPUT file has this item
     // This function will be done only when INPUT file has them.

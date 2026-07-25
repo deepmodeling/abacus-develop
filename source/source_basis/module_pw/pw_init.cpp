@@ -1,5 +1,6 @@
 #include "pw_basis.h"
 #include "source_base/constants.h"
+#include "source_base/tool_quit.h"
 
 namespace ModulePW
 {
@@ -10,6 +11,10 @@ void PW_Basis:: initmpi(
     MPI_Comm pool_world_in
 )
 {
+    if (this->device == "gpu" && poolnproc_in > 1)
+    {
+        ModuleBase::WARNING_QUIT("PW_Basis::initmpi", "GPU plane-wave FFT requires one MPI process per k-point pool");
+    }
         this->poolnproc = poolnproc_in;
         this->poolrank = poolrank_in;
         this->pool_world = pool_world_in;

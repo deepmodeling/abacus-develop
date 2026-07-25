@@ -11,7 +11,7 @@
 // mock
 namespace GlobalV
 {
-int NPROC = 1;
+int NPROC = 4;
 int MY_RANK = 0;
 std::ofstream ofs_running;
 std::ofstream ofs_warning;
@@ -67,6 +67,11 @@ void make_dir_out(const std::string& suffix,
 class InputTest : public testing::Test
 {
   protected:
+    void TearDown() override
+    {
+        ModuleIO::ReadInput::check_mode = false;
+    }
+
     bool compare_two_files(const std::string& filename1, const std::string& filename2)
     {
         std::ifstream file1(filename1.c_str());
@@ -175,4 +180,85 @@ TEST_F(InputTest, Check)
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("INPUT parameters have been successfully checked!"));
     EXPECT_TRUE(std::remove("./INPUT.ref") == 0);
+}
+
+TEST_F(InputTest, BasisIsFinalizedBeforeDependentDefaults)
+{
+    ModuleIO::ReadInput::check_mode = false;
+
+    std::ofstream input("dependency_basis_INPUT");
+    input << "INPUT_PARAMETERS\n"
+          << "calculation nscf\n"
+          << "basis_type lcao_in_pw\n"
+          << "towannier90 true\n"
+          << "device cpu\n";
+    input.close();
+
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    ASSERT_NO_THROW(readinput.read_parameters(param, "dependency_basis_INPUT"));
+    EXPECT_EQ(param.inp.basis_type, "lcao");
+    EXPECT_DOUBLE_EQ(param.inp.ecutwfc, 100.0);
+    EXPECT_TRUE(std::remove("dependency_basis_INPUT") == 0);
+}
+
+TEST_F(InputTest, SpinIsFinalizedBeforeNupdown)
+{
+    ModuleIO::ReadInput::check_mode = false;
+
+    std::ofstream input("dependency_spin_INPUT");
+    input << "INPUT_PARAMETERS\n"
+          << "noncolin true\n"
+          << "nupdown 1\n";
+    input.close();
+
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    ASSERT_NO_THROW(readinput.read_parameters(param, "dependency_spin_INPUT"));
+    EXPECT_EQ(param.inp.nspin, 4);
+    EXPECT_TRUE(param.globalv.two_fermi);
+    EXPECT_TRUE(std::remove("dependency_spin_INPUT") == 0);
+}
+
+TEST_F(InputTest, ScfThresholdIsFinalizedBeforeMixingRestart)
+{
+    ModuleIO::ReadInput::check_mode = false;
+
+    std::ofstream input("dependency_mixing_INPUT");
+    input << "INPUT_PARAMETERS\n"
+          << "nspin 2\n"
+          << "sc_mag_switch true\n"
+          << "sc_scf_thr 10\n";
+    input.close();
+
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    ASSERT_NO_THROW(readinput.read_parameters(param, "dependency_mixing_INPUT"));
+    EXPECT_DOUBLE_EQ(param.inp.scf_thr, 1.0e-9);
+    EXPECT_DOUBLE_EQ(param.inp.mixing_restart, 1.0e-10);
+    EXPECT_TRUE(std::remove("dependency_mixing_INPUT") == 0);
+}
+
+TEST_F(InputTest, SdftModeIsFinalizedBeforeBndpar)
+{
+    ModuleIO::ReadInput::check_mode = false;
+
+    std::ofstream input("dependency_sdft_INPUT");
+    input << "INPUT_PARAMETERS\n"
+          << "esolver_type sdft\n"
+          << "ks_solver cg\n"
+          << "bndpar 2\n"
+          << "nbands_sto 0\n";
+    input.close();
+
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    ASSERT_NO_THROW(readinput.read_parameters(param, "dependency_sdft_INPUT"));
+    EXPECT_EQ(param.inp.esolver_type, "ksdft");
+    EXPECT_EQ(param.inp.bndpar, 1);
+    EXPECT_TRUE(std::remove("dependency_sdft_INPUT") == 0);
 }

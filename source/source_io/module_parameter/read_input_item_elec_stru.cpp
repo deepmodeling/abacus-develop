@@ -81,6 +81,7 @@ Then the user has to correct the input file and restart the calculation.)";
         item.unit = "";
         item.availability = "";
         read_sync_string(input.ks_solver);
+        item.reset_after = {"basis_type", "device"};
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ks_solver == "default")
             {
@@ -313,6 +314,7 @@ Then the user has to correct the input file and restart the calculation.)";
         };
         sync_double(input.nupdown);
         add_bool_bcast(sys.two_fermi);
+        item.reset_after = {"nspin"};
         this->add_item(item);
     }
     {
@@ -586,6 +588,7 @@ For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to conve
         item.unit = "";
         item.availability = "";
         read_sync_double(input.mixing_beta);
+        item.reset_after = {"nspin"};
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mixing_beta < 0.0)
             {
@@ -622,6 +625,7 @@ If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try
         item.unit = "";
         item.availability = "";
         read_sync_double(input.mixing_beta_mag);
+        item.reset_after = {"mixing_beta"};
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mixing_beta_mag < 0.0)
             {
@@ -664,6 +668,7 @@ For systems that are difficult to converge, one could try increasing the value o
         item.unit = "";
         item.availability = "";
         read_sync_double(input.mixing_restart);
+        item.reset_after = {"scf_thr"};
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.sc_mag_switch == 1)
             {// for DeltaSpin calculation, the mixing_restart should be same as sc_scf_thr
@@ -1188,6 +1193,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
             }
         };
         read_sync_double(input.lcao_ecut);
+        item.reset_after = {"ecutwfc"};
         this->add_item(item);
     }
     {

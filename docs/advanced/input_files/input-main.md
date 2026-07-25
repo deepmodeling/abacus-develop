@@ -791,11 +791,12 @@
 
   Available options are:
 
+  - auto: use a GPU when one is available, otherwise fall back to CPU.
   - cpu: for CPUs via Intel, AMD, or Other supported CPU devices
   - gpu: for GPUs via CUDA or ROCm.
 
   > Note: ks_solver must also be set to the algorithms supported. lcao_in_pw currently does not support gpu.
-- **Default**: cpu
+- **Default**: auto
 
 ### precision
 

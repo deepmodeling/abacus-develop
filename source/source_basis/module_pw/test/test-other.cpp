@@ -14,6 +14,14 @@
 #include "gmock/gmock.h"
 
 using namespace std;
+TEST_F(PWTEST, rejects_distributed_gpu_fft_pool)
+{
+#ifdef __MPI
+    ModulePW::PW_Basis pwtest("gpu", "double");
+    EXPECT_EXIT(pwtest.initmpi(2, 0, MPI_COMM_SELF), ::testing::ExitedWithCode(1), "");
+#endif
+}
+
 TEST_F(PWTEST,test_other)
 {
     cout<<"Test other codes"<<endl;

@@ -11,6 +11,7 @@
 #include <cassert>
 #include <cctype>
 #include <limits>
+#include <stdexcept>
 #include "source_base/formatter.h"
 #include "source_base/global_file.h"
 #include "source_base/global_function.h"
@@ -179,6 +180,7 @@ ReadInput::ReadInput(const int& rank)
     this->item_exx();
     this->item_dftu();
     this->item_others();
+    this->build_reset_order();
 }
 
 void ReadInput::read_parameters(Parameter& param, const std::string& filename_in)
@@ -351,11 +353,10 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
         ascii_stream >> word;
         if (ascii_stream.eof()) { break; }
         word = FmtCore::lower(word); // the lowercase of the keyword
-        auto it = std::find_if(input_lists.begin(), input_lists.end(),
-            [&word](const std::pair<std::string, Input_Item>& item) { return item.first == word; });
-        if (it != this->input_lists.end()) // find the keyword
+        const auto index_it = this->input_index.find(word);
+        if (index_it != this->input_index.end()) // find the keyword
         {
-            Input_Item* p_item = &(it->second);
+            Input_Item* p_item = &(this->input_lists[index_it->second].second);
             this->readvalue_items.push_back(p_item);
             if(p_item->is_read())
             {
@@ -405,9 +406,9 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 
     // 2) reset this value when some conditions are met
     //    e.g. if (calulation_type == "nscf") then set "init_chg" to "file".
-    for (auto& input_item: this->input_lists)
+    for (const std::size_t index: this->reset_order)
     {
-        Input_Item* resetvalue_item = &(input_item.second);
+        Input_Item* resetvalue_item = &(this->input_lists[index].second);
         if (resetvalue_item->reset_value != nullptr) 
 		{
 			resetvalue_item->reset_value(*resetvalue_item, param);
@@ -586,7 +587,62 @@ void ReadInput::add_item(const Input_Item& item)
     // But rank -1 is used for help system mode where items should also be added
     if (this->rank == 0 || this->rank == -1)
     {
-        this->input_lists.push_back(make_pair(item.label, item));
+        const std::string label = FmtCore::lower(item.label);
+        if (this->input_index.find(label) != this->input_index.end())
+        {
+            throw std::invalid_argument("Duplicate input parameter label: " + item.label);
+        }
+        this->input_index.emplace(label, this->input_lists.size());
+        this->input_lists.push_back(make_pair(label, item));
+    }
+}
+
+void ReadInput::build_reset_order()
+{
+    const std::size_t item_count = this->input_lists.size();
+    std::vector<std::size_t> indegree(item_count, 0);
+    std::vector<std::vector<std::size_t>> dependents(item_count);
+
+    for (std::size_t index = 0; index < item_count; ++index)
+    {
+        for (const std::string& dependency: this->input_lists[index].second.reset_after)
+        {
+            const std::string label = FmtCore::lower(dependency);
+            const auto dependency_it = this->input_index.find(label);
+            if (dependency_it == this->input_index.end())
+            {
+                throw std::invalid_argument("Unknown reset dependency '" + dependency + "' for input parameter '"
+                                            + this->input_lists[index].first + "'");
+            }
+            dependents[dependency_it->second].push_back(index);
+            ++indegree[index];
+        }
+    }
+
+    this->reset_order.clear();
+    this->reset_order.reserve(item_count);
+    std::vector<bool> emitted(item_count, false);
+    while (this->reset_order.size() < item_count)
+    {
+        bool made_progress = false;
+        for (std::size_t index = 0; index < item_count; ++index)
+        {
+            if (!emitted[index] && indegree[index] == 0)
+            {
+                emitted[index] = true;
+                made_progress = true;
+                this->reset_order.push_back(index);
+                for (const std::size_t dependent: dependents[index])
+                {
+                    --indegree[dependent];
+                }
+                break;
+            }
+        }
+        if (!made_progress)
+        {
+            throw std::logic_error("Cycle detected in input parameter reset dependencies");
+        }
     }
 }
 
