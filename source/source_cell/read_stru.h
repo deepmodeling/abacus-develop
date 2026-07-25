@@ -103,7 +103,8 @@ namespace unitcell
                             const bool fixed_atoms,
                             const bool noncolin,
                             const std::string& calculation,
-                            const std::string& esolver_type);
+                            const std::string& esolver_type,
+                            const int symmetry);
 }
 
 #endif // READ_STRU_H

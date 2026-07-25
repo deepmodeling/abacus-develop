@@ -1271,7 +1271,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS1)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1312,7 +1312,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS2)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1353,7 +1353,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS4Noncolin)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1394,7 +1394,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS4Colin)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1435,7 +1435,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsC)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1476,7 +1476,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCA)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1517,7 +1517,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACXY)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1558,7 +1558,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACXZ)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1599,7 +1599,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACYZ)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1640,7 +1640,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACXYZ)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1681,7 +1681,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCAU)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1722,7 +1722,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsAutosetMag)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     for (int it = 0; it < ucell->ntype; it++)
     {
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
@@ -1736,7 +1736,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsAutosetMag)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     for (int it = 0; it < ucell->ntype; it++)
     {
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
@@ -1787,7 +1787,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning1)
     EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type));
+        calculation, esolver_type, 0));
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1841,7 +1841,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning2)
     EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type));
+        calculation, esolver_type, 0));
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1888,7 +1888,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning3)
     EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, GlobalV::ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type));
+        calculation, esolver_type, 0));
     ofs_running.close();
     GlobalV::ofs_warning.close();
     ifa.close();
@@ -1937,7 +1937,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning4)
     EXPECT_EXIT(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type), ::testing::ExitedWithCode(1), "");
+        calculation, esolver_type, 0), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("read_atom_positions, mismatch in atom number for atom type: Mg"));
     ofs_running.close();
@@ -1979,7 +1979,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning5)
     EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, GlobalV::ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type));
+        calculation, esolver_type, 0));
     ofs_running.close();
     GlobalV::ofs_warning.close();
     ifa.close();

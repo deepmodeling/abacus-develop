@@ -5,7 +5,6 @@
 #include "read_stru.h"
 #include "print_cell.h"
 #include "read_orb.h"
-#include "module_symmetry/symmetry.h"  // for Symmetry::symm_flag (avoids depending on module_parameter)
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -101,17 +100,6 @@ void autoset_magnetization(UnitCell& ucell, int nspin,
 
     if (autoset_mag)
     {
-        // symmetry=1 means "analyze and preserve the symmetry of the initial magnetic
-        // moment"; an all-zero moment is a legitimate nonmagnetic choice under the full
-        // point group, so do not override it with an autoset seed. Warn instead.
-        if (ModuleSymmetry::Symmetry::symm_flag == 1)
-        {
-            ofs_running << "\n WARNING: initial magmom is all zero and symmetry=1; "
-                        << "autoset magnetism is SKIPPED to preserve the symmetric (nonmagnetic) state.\n"
-                        << "          If spontaneous magnetism is expected, set magmom explicitly "
-                        << "in STRU, or use symmetry=-1." << std::endl;
-            return;
-        }
         if(nspin==4)
         {
             for (int it = 0; it < ntype; it++)
