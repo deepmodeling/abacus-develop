@@ -31,7 +31,6 @@ scf_out_elf
 035_PW_15_SO
 036_PW_AF
 037_PW_FM
-038_PW_NC
 039_PW_FD_smear
 040_PW_FX_smear
 041_PW_GA_smear
@@ -53,14 +52,7 @@ scf_out_elf
 060_PW_RE_MG
 061_PW_RE_NEW
 062_PW_RE_PINT_RKS
-064_PW_CR_fix_a
-065_PW_CR_fix_ab
 066_PW_CR_fix_abc
-067_PW_CR_fix_ac
-068_PW_CR_fix_b
-069_PW_CR_fix_bc
-070_PW_CR_fix_c
-071_PW_CR_move
 073_PW_SY
 074_PW_SY_LiRH
 075_PW_CHG_BINARY
@@ -82,7 +74,6 @@ scf_out_elf
 094_PW_NPT
 095_PW_NVT
 098_PW_15_SO_avg
-099_PW_DJ_SO
 101_PW_MD_1O
 102_PW_MD_2O
 209_PW_DFTHALF
