@@ -158,6 +158,7 @@ class Psi
     int get_current_k_gpu() const { return current_k_gpu_; }
     T* get_cpu_pointer(int ik = 0);
     const T* get_cpu_pointer(int ik = 0) const;
+    const T* get_cpu_pointer_safe(int ik = 0) const;
 
   private:
     T* psi = nullptr; // avoid using C++ STL

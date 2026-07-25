@@ -692,48 +692,20 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
         rms_error = std::sqrt(mean_error);
 
         // =============================================================
+        // =============================================================
         // ACCELERATION ACTIVATION CHECK (LCAO nspin=2 only)
         // =============================================================
         //
-        // PURPOSE: When the BFGS optimizer is near convergence (RMS error
-        // drops below sc_acceleration_rms_thr), lambda changes become small.
-        // At this point, subspace methods can approximate the response much
-        // faster than full diagonalization while maintaining accuracy.
-        //
-        // ACTIVATION CONDITIONS (all must be true):
-        //   1. PARAM.inp.basis_type == "lcao" (only LCAO basis supported)
-        //   2. this->nspin_ == 2 (only collinear spin supported;
-        //      nspin=4 requires complex-type operator template instantiation)
-        //   3. sc_acceleration_mode != "off" (user must explicitly enable;
-        //      valid values: "first_order", "subspace")
-        //   4. sc_acceleration_rms_thr > 0 (threshold must be set)
-        //   5. rms_error < sc_acceleration_rms_thr (current error is small enough)
-        //
-        // ONCE-ONLY ACTIVATION:
-        //   The check uses `!this->acceleration_active_` to ensure subspace
-        //   is built only ONCE per SCF iteration. After activation, all
-        //   subsequent cal_mw_from_lambda calls use the accelerated path
-        //   until the next SCF iteration resets the flag.
-        //
-        // WHY build subspace at current lambda?
-        //   The subspace approximation is only valid for small perturbations
-        //   around the reference lambda. Building it at the current (near-converged)
-        //   lambda ensures the reference point is close to the optimal solution.
-        //   If we built it at lambda=0, the approximation would be poor for
-        //   large lambda values.
-        //
-        // WHY use i_step=-2?
-        //   The main BFGS loop uses i_step = -1, 0, 1, ..., nsc-1.
-        //   Using -2 ensures this call is handled by a special branch in
-        //   cal_mw_from_lambda that does full diagonalization + cache build
-        //   WITHOUT affecting the main loop state (psi, delta_lambda, etc.).
-        //   This is a clean separation of concerns.
-        //
-        // WHY free_lcao_subspace_cache() first?
-        //   To prevent memory leaks from previous SCF iterations. Each SCF
-        //   iteration should build a fresh subspace at its own converged lambda.
+        // nspin=4: subspace acceleration is disabled. The pre_hr matrix
+        // stores I_spin structure (same value in all 4 spin blocks),
+        // causing pre-computed P_I_sub to lose spin-channel separation.
+        // Full diagonalization is always used for nspin=4.
         // =============================================================
+
+        const bool nspin_ok = (this->nspin_ == 2);
+
         const bool accel_enabled = (PARAM.inp.basis_type == "lcao") &&
+                                    nspin_ok &&
                                     (this->sc_acceleration_mode_ != "off") &&
                                     (this->sc_acceleration_rms_thr_ > 0.0) &&
                                     (rms_error < this->sc_acceleration_rms_thr_);

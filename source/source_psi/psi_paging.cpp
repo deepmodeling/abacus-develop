@@ -115,6 +115,17 @@ const T* Psi<T, Device>::get_cpu_pointer(int ik) const
 }
 
 template <typename T, typename Device>
+const T* Psi<T, Device>::get_cpu_pointer_safe(int ik) const
+{
+    if (storage_mode_ == PsiStorageMode::PAGED_GPU && psi_cpu_ != nullptr)
+    {
+        if (ik < 0 || ik >= this->nk) return nullptr;
+        return psi_cpu_ + static_cast<size_t>(ik) * this->nbands * this->nbasis;
+    }
+    return nullptr;
+}
+
+template <typename T, typename Device>
 void Psi<T, Device>::load_k_to_gpu(int ik)
 {
     if (storage_mode_ != PsiStorageMode::PAGED_GPU)
@@ -199,6 +210,7 @@ void Psi<T, Device>::set_psi_cpu_external(T* ext_cpu_buf)
     template void Psi<T, Device>::set_storage_mode(PsiStorageMode);                                                    \
     template T* Psi<T, Device>::get_cpu_pointer(int);                                                                  \
     template const T* Psi<T, Device>::get_cpu_pointer(int) const;                                                      \
+    template const T* Psi<T, Device>::get_cpu_pointer_safe(int) const;                                                 \
     template void Psi<T, Device>::load_k_to_gpu(int);                                                                  \
     template void Psi<T, Device>::store_k_from_gpu(int);                                                               \
     template void Psi<T, Device>::ensure_k_on_gpu(int);                                                                \

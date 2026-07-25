@@ -200,9 +200,18 @@ template <typename T, typename Device>
 void Setup_Psi_pw::copy_d2h_impl()
 {
     auto* psi_t = this->get_psi_t<T, Device>();
-    this->castmem_d2h_impl<T, Device>(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
-                                      psi_t->get_pointer() - psi_t->get_psi_bias(),
-                                      this->psi_cpu[0].size());
+    if (psi_t->get_storage_mode() == psi::PsiStorageMode::PAGED_GPU)
+    {
+        // PAGED_GPU: full data is on CPU in psi_cpu_, just memcpy
+        const size_t total_size = sizeof(T) * psi_t->get_nk() * psi_t->get_nbands() * psi_t->get_nbasis();
+        std::memcpy(this->psi_cpu[0].get_pointer(), psi_t->get_cpu_pointer(), total_size);
+    }
+    else
+    {
+        this->castmem_d2h_impl<T, Device>(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
+                                          psi_t->get_pointer() - psi_t->get_psi_bias(),
+                                          this->psi_cpu[0].size());
+    }
 }
 
 void Setup_Psi_pw::copy_d2h()

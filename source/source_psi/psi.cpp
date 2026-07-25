@@ -206,9 +206,21 @@ Psi<T, Device>::Psi(const Psi& psi_in)
         const size_t total_size = static_cast<size_t>(this->nk) * this->nbands * this->nbasis;
         const T* src_ptr = psi_in.get_pointer() - psi_in.get_psi_bias();
         
-        if (psi_in.get_storage_mode() == PsiStorageMode::PAGED_GPU)
+         if (psi_in.get_storage_mode() == PsiStorageMode::PAGED_GPU)
         {
-            std::memcpy(this->psi_cpu_, psi_in.get_cpu_pointer(), sizeof(T) * total_size);
+            // Source may have PAGED_GPU flag set but psi_cpu_ not yet allocated
+            // (e.g. after set_storage_mode() in setup_psi_pw). In that case,
+            // copy from the source's main buffer (psi) into our psi_cpu_.
+            const T* cp_ptr = psi_in.get_cpu_pointer_safe();
+            if (cp_ptr != nullptr)
+            {
+                std::memcpy(this->psi_cpu_, cp_ptr, sizeof(T) * total_size);
+            }
+            else
+            {
+                // Fallback: source data is in psi buffer (ALL_GPU layout)
+                std::memcpy(this->psi_cpu_, src_ptr, sizeof(T) * total_size);
+            }
         }
         else if (std::is_same<Device, base_device::DEVICE_CPU>::value)
         {
@@ -255,10 +267,23 @@ Psi<T, Device>::Psi(const Psi<T_in, Device_in>& psi_in)
     {
         const size_t total_size = static_cast<size_t>(this->nk) * this->nbands * this->nbasis;
         
-        if (psi_in.get_storage_mode() == PsiStorageMode::PAGED_GPU)
+         if (psi_in.get_storage_mode() == PsiStorageMode::PAGED_GPU)
         {
-            const T_in* src_ptr = psi_in.get_cpu_pointer();
-            detail::TypeCopy<T, T_in, std::is_same<T, T_in>::value>::copy(this->psi_cpu_, src_ptr, total_size);
+            // Source may have PAGED_GPU flag set but psi_cpu_ not yet allocated.
+            const T_in* cp_ptr = psi_in.get_cpu_pointer_safe();
+            if (cp_ptr != nullptr)
+            {
+                detail::TypeCopy<T, T_in, std::is_same<T, T_in>::value>::copy(this->psi_cpu_, cp_ptr, total_size);
+            }
+            else
+            {
+                // Fallback: source data is in main psi buffer (ALL_GPU layout)
+                auto* arr = (T*)malloc(sizeof(T) * total_size);
+                base_device::memory::cast_memory_op<T, T_in, Device_in, Device_in>()(
+                    arr, psi_in.get_pointer() - psi_in.get_psi_bias(), total_size);
+                std::memcpy(this->psi_cpu_, arr, sizeof(T) * total_size);
+                free(arr);
+            }
         }
         else
         {
@@ -317,13 +342,30 @@ Psi<T, Device>& Psi<T, Device>::operator=(const Psi<T, Device>& psi_in)
     this->k_first = psi_in.get_k_first();
     // this function will copy psi_in.psi to this->psi no matter the device types of each other.
 
+    this->storage_mode_ = psi_in.get_storage_mode();
     this->resize(psi_in.get_nk(), psi_in.get_nbands(), psi_in.get_nbasis());
-    base_device::memory::synchronize_memory_op<T, Device, Device>()(this->psi,
-                                                                    psi_in.psi,
-                                                                    psi_in.size());
-    this->psi_bias = psi_in.get_psi_bias();
+
+    if (this->storage_mode_ == PsiStorageMode::PAGED_GPU)
+    {
+        // PAGED_GPU: copy the full CPU buffer, GPU buffer stays single-k
+        if (psi_cpu_ != nullptr && psi_in.psi_cpu_ != nullptr)
+        {
+            const size_t total_size = static_cast<size_t>(this->nk) * this->nbands * this->nbasis;
+            std::memcpy(this->psi_cpu_, psi_in.psi_cpu_, sizeof(T) * total_size);
+        }
+        this->current_k_gpu_ = -1;
+        this->psi_bias = 0;
+        this->psi_current = this->psi;
+    }
+    else
+    {
+        base_device::memory::synchronize_memory_op<T, Device, Device>()(this->psi,
+                                                                        psi_in.psi,
+                                                                        psi_in.size());
+        this->psi_bias = psi_in.get_psi_bias();
+        this->psi_current = this->psi + psi_in.get_psi_bias();
+    }
     this->current_nbasis = psi_in.get_current_nbas();
-    this->psi_current = this->psi + psi_in.get_psi_bias();
 
     return *this;
 }
@@ -485,7 +527,17 @@ void Psi<T, Device>::fix_k(const int ik) const
     if (storage_mode_ == PsiStorageMode::PAGED_GPU)
     {
         this->psi_bias = 0;
-        this->psi_current = const_cast<T*>(this->psi);
+        if (this->current_k_gpu_ == ik)
+        {
+            // This k-point is loaded on GPU by load_k_to_gpu
+            this->psi_current = const_cast<T*>(this->psi);
+        }
+        else
+        {
+            // Read from CPU full buffer (psi_cpu_ has all k-points)
+            this->psi_current = const_cast<T*>(psi_cpu_
+                + static_cast<size_t>(ik) * this->nbands * this->nbasis);
+        }
         return;
     }
 
@@ -507,6 +559,13 @@ void Psi<T, Device>::fix_b(const int ib) const
 {
     assert(ib >= 0);
     this->current_b = ib;
+
+    if (storage_mode_ == PsiStorageMode::PAGED_GPU)
+    {
+        this->psi_bias = 0;
+        this->psi_current = const_cast<T*>(this->psi);
+        return;
+    }
 
     if (!this->k_first)
     {
@@ -532,6 +591,14 @@ void Psi<T, Device>::fix_kb(const int ik, const int ib) const
     assert(ik >= 0 && ib >= 0);
     this->current_k = ik;
     this->current_b = ib;
+
+    if (storage_mode_ == PsiStorageMode::PAGED_GPU)
+    {
+        this->psi_bias = 0;
+        this->psi_current = const_cast<T*>(this->psi);
+        return;
+    }
+
     if (ik >= this->nk || ib >= this->nbands)
     { // fix to 0
         this->psi_bias = 0;
@@ -549,6 +616,14 @@ T& Psi<T, Device>::operator()(const int ikb1, const int ikb2, const int ibasis) 
 {
     assert(ikb1 >= 0 && ikb2 >= 0 && ibasis >= 0);
     assert(this->k_first ? ikb1 < this->nk && ikb2 < this->nbands : ikb1 < this->nbands && ikb2 < this->nk);
+
+    if (storage_mode_ == PsiStorageMode::PAGED_GPU)
+    {
+        // PAGED_GPU: GPU buffer is single-k, read from CPU full buffer (k_first layout)
+        assert(psi_cpu_ != nullptr);
+        return const_cast<T*>(psi_cpu_)[(ikb1 * this->nbands + ikb2) * this->nbasis + ibasis];
+    }
+
     return this->k_first ? this->psi[(ikb1 * this->nbands + ikb2) * this->nbasis + ibasis]
                          : this->psi[(ikb1 * this->nk + ikb2) * this->nbasis + ibasis];
 }
@@ -597,8 +672,21 @@ const int& Psi<T, Device>::get_ngk(const int ik_in) const
 template <typename T, typename Device>
 void Psi<T, Device>::zero_out()
 {
-    // this->psi.assign(this->psi.size(), T(0));
-    set_memory_op()(this->psi, 0, this->size());
+    if (storage_mode_ == PsiStorageMode::PAGED_GPU)
+    {
+        // Zero full CPU buffer and single-k GPU buffer
+        if (psi_cpu_ != nullptr)
+        {
+            const size_t total_size = static_cast<size_t>(this->nk) * this->nbands * this->nbasis;
+            std::memset(psi_cpu_, 0, sizeof(T) * total_size);
+        }
+        const size_t k_size = static_cast<size_t>(this->nbands) * this->nbasis;
+        set_memory_op()(this->psi, 0, k_size);
+    }
+    else
+    {
+        set_memory_op()(this->psi, 0, this->size());
+    }
 }
 
 template <typename T, typename Device>
