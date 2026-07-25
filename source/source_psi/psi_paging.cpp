@@ -55,7 +55,8 @@ void Psi<T, Device>::set_storage_mode(PsiStorageMode mode)
 
     if (this->psi != nullptr)
     {
-        if (storage_mode_ == PsiStorageMode::ALL_GPU && mode == PsiStorageMode::PAGED_GPU)
+        if ((storage_mode_ == PsiStorageMode::ALL_GPU && mode == PsiStorageMode::PAGED_GPU)
+            || (storage_mode_ == PsiStorageMode::PAGED_GPU && mode == PsiStorageMode::ALL_GPU))
         {
             ModuleBase::WARNING("Psi::set_storage_mode",
                                 "Setting storage mode flag on already-allocated Psi for copy construction propagation.");
@@ -63,7 +64,7 @@ void Psi<T, Device>::set_storage_mode(PsiStorageMode mode)
         else
         {
             ModuleBase::WARNING_QUIT("Psi::set_storage_mode",
-                                     "Cannot change storage mode after allocation");
+                                      "Cannot change storage mode after allocation");
         }
     }
 

@@ -542,6 +542,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
     const int nbands = psi_in->get_nbands();
     for(int ik = 0; ik < psi_in->get_nk(); ik++)
     {
+        const_cast<psi::Psi<std::complex<T>, Device>*>(psi_in)->ensure_k_on_gpu(ik);
         psi_in->fix_k(ik);
         if(ik != 0)
         {

@@ -456,6 +456,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_gp
         std::complex<double>* s_k = this->sub_s_save + ik * nbands * nbands;
         std::complex<double>* becp_k = this->becp_save + ik * size_becp;
 
+        psi_t->load_k_to_gpu(ik);
         psi_t->fix_k(ik);
 
         base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_GPU, base_device::DEVICE_GPU>()(h_tmp, h_k, nbands * nbands);
@@ -468,6 +469,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_gp
                                                                                 nbands,
                                                                                 psi_t[0],
                                                                                 &this->pelec->ekb(ik, 0));
+
+        psi_t->store_k_from_gpu(ik);
     }
 
     // Free GPU memory for saved subspace data
@@ -1040,6 +1043,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                 base_device::memory::resize_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(becp_pointer, size_becp);
                 for (int ik = 0; ik < nk; ++ik)
                 {
+                    psi_t->load_k_to_gpu(ik);
                     psi_t->fix_k(ik);
 
                     std::complex<double>* h_k = this->sub_h_save + ik * nbands * nbands;
@@ -1063,6 +1067,8 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                                                                                   nkb * npol,
                                                                                   &this->pelec->ekb(ik, 0));
                     base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, base_device::DEVICE_GPU>()(&becp_tmp[ik * size_becp], becp_pointer, size_becp);
+
+                    psi_t->store_k_from_gpu(ik);
                 }
 
                 base_device::memory::delete_memory_op<std::complex<double>, base_device::DEVICE_GPU>()(becp_pointer);

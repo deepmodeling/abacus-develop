@@ -63,6 +63,10 @@ void Setup_Psi_pw::before_runner_impl(
                              << " (nks=" << nks << ", device_memory_mode=\""
                              << inp.device_memory_mode << "\")" << std::endl;
         this->psi_t = static_cast<void*>(new psi::Psi<T, Device>(this->psi_cpu[0]));
+        if (target_mode != psi::PsiStorageMode::ALL_GPU)
+        {
+            this->psi_cpu->set_storage_mode(psi::PsiStorageMode::ALL_GPU);
+        }
     } else {
         this->psi_t = static_cast<void*>(reinterpret_cast<psi::Psi<T, Device>*>(this->psi_cpu));
     }
@@ -204,7 +208,8 @@ void Setup_Psi_pw::copy_d2h_impl()
     {
         // PAGED_GPU: full data is on CPU in psi_cpu_, just memcpy
         const size_t total_size = sizeof(T) * psi_t->get_nk() * psi_t->get_nbands() * psi_t->get_nbasis();
-        std::memcpy(this->psi_cpu[0].get_pointer(), psi_t->get_cpu_pointer(), total_size);
+        std::memcpy(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
+                    psi_t->get_cpu_pointer(), total_size);
     }
     else
     {

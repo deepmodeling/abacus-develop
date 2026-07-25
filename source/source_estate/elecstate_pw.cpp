@@ -148,6 +148,7 @@ void ElecStatePW<T, Device>::psiToRho(const psi::Psi<T, Device>& psi)
 
     for (int ik = 0; ik < psi.get_nk(); ++ik)
     {
+        const_cast<psi::Psi<T, Device>&>(psi).ensure_k_on_gpu(ik);
         psi.fix_k(ik);
         this->updateRhoK(psi);
     }

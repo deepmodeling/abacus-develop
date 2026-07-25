@@ -179,6 +179,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mi_pw()
         const int npol = psi_t->get_npol();
         for(int ik = 0; ik < nks; ik++)
         {
+            psi_t->load_k_to_gpu(ik);
             psi_t->fix_k(ik);
             psi_pointer = psi_t->get_pointer();
             onsite_p->tabulate_atomic(ik);

@@ -118,6 +118,7 @@ void Plus_U::cal_occ_pw(const int iter,
         for(int ik = 0; ik < psi_p->get_nk(); ik++)
         {
             int is = (PARAM.inp.nspin == 2) ? isk[ik] : 0;
+            const_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(psi_p)->load_k_to_gpu(ik);
             psi_p->fix_k(ik);
             onsite_p->tabulate_atomic(ik);
 
