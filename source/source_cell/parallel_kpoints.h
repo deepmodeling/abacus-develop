@@ -19,8 +19,6 @@ class Parallel_Kpoints
                const int& nproc_in,
                const int& nspin_in);
 
-    static bool is_valid_kpar(const int kpar, const int nkstot);
-
     // collect value from each pool to wk.
     void pool_collection(double& value, const double* wk, const int& ik);
 

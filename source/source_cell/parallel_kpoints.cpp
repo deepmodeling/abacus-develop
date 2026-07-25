@@ -2,12 +2,6 @@
 
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
-#include "source_base/tool_quit.h"
-
-bool Parallel_Kpoints::is_valid_kpar(const int kpar, const int nkstot)
-{
-    return kpar > 0 && kpar <= nkstot;
-}
 
 // the kpoints here are reduced after symmetry applied.
 void Parallel_Kpoints::kinfo(int& nkstot_in,
@@ -26,12 +20,6 @@ void Parallel_Kpoints::kinfo(int& nkstot_in,
     this->nspin = nspin_in;
 
     Parallel_Common::bcast_int(nkstot_in);
-    if (!is_valid_kpar(this->kpar, nkstot_in))
-    {
-        const std::string message
-            = this->kpar <= 0 ? "kpar must be positive" : "kpar cannot exceed the number of k-points";
-        ModuleBase::WARNING_QUIT("Parallel_Kpoints::kinfo", message);
-    }
     this->get_nks_pool(nkstot_in);    // assign k-points to each pool
     this->get_startk_pool(nkstot_in); // get the start k-point index for each pool
     this->get_whichpool(nkstot_in);   // get the pool index for each k-point
