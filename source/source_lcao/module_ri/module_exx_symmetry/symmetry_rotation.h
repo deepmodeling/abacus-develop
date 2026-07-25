@@ -87,7 +87,7 @@ namespace ModuleSymmetry
         /// T_mm' = [c^\dagger D c]_mm', the rotation matrix in the representation of real sphere harmonics
         /// @param nop  number of operations in gmatc; <0 means nsym_ (the unitary ones only).
         ///             Pass nsym_+nanti_ to also build the antiunitary operations' T_l.
-        void cal_rotmat_Slm(const ModuleBase::Matrix3* gmatc, const int lmax, const int nop = -1);
+        void cal_rotmat_Slm(const ModuleBase::Matrix3* gmatc, const int lmax, const int nop);
 
         /// set a block matrix onto a 2d-parallelized matrix(col-maj), at the position (starti, startj) 
         /// if trans=true, the block matrix is transposed before setting
@@ -100,7 +100,7 @@ namespace ModuleSymmetry
         /// finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to recover D(k) from D(Rk).
         std::vector<std::complex<double>> contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms, const Statistics& cell_st,
             const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv,
-            const SpinRotation::Su2& spin_U = SpinRotation::Su2{ 1.0, 0.0, 0.0, 1.0 }) const;
+            const SpinRotation::Su2& spin_U /*= SpinRotation::Su2{ 1.0, 0.0, 0.0, 1.0 }*/) const;
 
         std::vector<std::vector<RI::Tensor<std::complex<double>>>>& get_rotmat_Slm() { return this->rotmat_Slm_; }
 

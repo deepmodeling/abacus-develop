@@ -121,9 +121,9 @@ TEST(RhogSymmetrySoc, Idempotence)
     std::vector<std::complex<double>> x(NXYZ), y(NXYZ), z(NXYZ);
     fill_density(x, y, z);
 
-    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N);
+    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N, nullptr, nullptr, nullptr, -1);
     std::vector<std::complex<double>> x1 = x, y1 = y, z1 = z;
-    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N);
+    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N, nullptr, nullptr, nullptr, -1);
 
     for (int i = 0; i < NXYZ; ++i)
     {
@@ -144,7 +144,7 @@ TEST(RhogSymmetrySoc, GroupInvariance)
 
     std::vector<std::complex<double>> x(NXYZ), y(NXYZ), z(NXYZ);
     fill_density(x, y, z);
-    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N);
+    symm.rhog_symmetry_nspin4(x.data(), y.data(), z.data(), wspin.data(), ixyz2ipw.data(), N, N, N, N, N, N, nullptr, nullptr, nullptr, -1);
 
     // non-triviality guard: the symmetrized density must not be all-zero, otherwise
     // invariance would hold trivially and the test would be meaningless.

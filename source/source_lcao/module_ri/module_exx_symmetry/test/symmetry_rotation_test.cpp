@@ -115,7 +115,7 @@ TEST_F(SymmetryRotationTest, OvlpYS)
 
 TEST_F(SymmetryRotationTest, RotMat)
 {
-    symrot.cal_rotmat_Slm(&C41, 1);
+    symrot.cal_rotmat_Slm(&C41, 1, -1);
     RI::Tensor<std::complex<double>>& rotmat = symrot.get_rotmat_Slm()[0][1];
     int l = 1;
     for (int m1 = -l;m1 <= l;++m1)
