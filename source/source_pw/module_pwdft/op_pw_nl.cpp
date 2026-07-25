@@ -1,5 +1,7 @@
 #include "op_pw_nl.h"
 
+#include <type_traits>
+
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_base/parallel_reduce.h"
@@ -34,6 +36,7 @@ template<typename T, typename Device>
 Nonlocal<OperatorPW<T, Device>>::~Nonlocal() {
     delmem_complex_op()(this->ps);
     delmem_complex_op()(this->becp);
+    delmem_complex_h_op()(this->becp_h);
 }
 
 template<typename T, typename Device>
@@ -285,7 +288,25 @@ void Nonlocal<OperatorPW<T, Device>>::act(
             );
         }
 
-        Parallel_Reduce::reduce_pool(becp, nkb * nbands);
+        // Copy becp from GPU to CPU for MPI reduction (only needed for GPU)
+        if constexpr (std::is_same<Device, base_device::DEVICE_GPU>::value)
+        {
+            if (this->nkb_m_h < nkb * nbands)
+            {
+                resmem_complex_h_op()(this->becp_h, nkb * nbands, "Nonlocal<PW>::becp_h");
+                this->nkb_m_h = nkb * nbands;
+            }
+            syncmem_complex_d2h_op()(this->becp_h, this->becp, nkb * nbands);
+
+            Parallel_Reduce::reduce_pool(becp_h, nkb * nbands);
+
+            // Copy back to GPU
+            syncmem_complex_h2d_op()(this->becp, this->becp_h, nkb * nbands);
+        }
+        else
+        {
+            Parallel_Reduce::reduce_pool(becp, nkb * nbands);
+        }
 
         this->add_nonlocal_pp(tmhpsi, becp, nbands);
     }

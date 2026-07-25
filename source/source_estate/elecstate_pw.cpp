@@ -1,5 +1,7 @@
 #include "elecstate_pw.h"
 
+#include <type_traits>
+
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"
 #include "source_base/math_ylmreal.h"
@@ -55,6 +57,10 @@ ElecStatePW<T, Device>::~ElecStatePW()
     }
     delmem_complex_op()(this->wfcr);
     delmem_complex_op()(this->wfcr_another_spin);
+    if (this->becp_h != nullptr)
+    {
+        delmem_complex_h_op()(this->becp_h);
+    }
 }
 
 template<typename T, typename Device>
@@ -339,7 +345,26 @@ void ElecStatePW<T, Device>::cal_becsum(const psi::Psi<T, Device>& psi)
                       becp,
                       this->ppcell->nkb);
         }
-        Parallel_Reduce::reduce_pool(becp, this->ppcell->nkb * nbands);
+        // Copy becp from GPU to CPU for MPI reduction (only needed for GPU)
+        if constexpr (std::is_same<Device, base_device::DEVICE_GPU>::value)
+        {
+            if (this->becp_h_size < this->ppcell->nkb * nbands)
+            {
+                if (this->becp_h != nullptr)
+                {
+                    delmem_complex_h_op()(this->becp_h);
+                }
+                resmem_complex_h_op()(this->becp_h, this->ppcell->nkb * nbands, "ElecStatePW::becp_h");
+                this->becp_h_size = this->ppcell->nkb * nbands;
+            }
+            syncmem_complex_d2h_op()(this->becp_h, becp, this->ppcell->nkb * nbands);
+            Parallel_Reduce::reduce_pool(this->becp_h, this->ppcell->nkb * nbands);
+            syncmem_complex_h2d_op()(becp, this->becp_h, this->ppcell->nkb * nbands);
+        }
+        else
+        {
+            Parallel_Reduce::reduce_pool(becp, this->ppcell->nkb * nbands);
+        }
 
         // sum over bands: \sum_i <psi_i|beta_l><beta_m|psi_i> w_i
         for (int it = 0; it < ucell->ntype; it++)

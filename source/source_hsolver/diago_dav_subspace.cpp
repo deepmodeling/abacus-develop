@@ -1,5 +1,7 @@
 #include "diago_dav_subspace.h"
 
+#include <type_traits>
+
 #include "diago_iter_assist.h"
 
 #include "source_base/module_device/device.h"
@@ -103,6 +105,8 @@ Diago_DavSubspace<T, Device>::~Diago_DavSubspace()
         delmem_real_op()(this->d_precondition);
         delmem_complex_op()(this->d_scc);
         delmem_real_op()(this->d_eigenvalue);
+        delmem_complex_h_op()(this->hcc_h);
+        delmem_complex_h_op()(this->scc_h);
     }
 #endif
 }
@@ -585,8 +589,30 @@ void Diago_DavSubspace<T, Device>::cal_elem(const int& dim,
         mtfunc::dsp_dav_subspace_reduce(hcc, scc, nbase, this->nbase_x, this->notconv, this->diag_comm.comm);
 #else
         assert(this->diag_comm.comm == POOL_WORLD);
-        Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
-        Parallel_Reduce::reduce_pool(scc + nbase * this->nbase_x, notconv * this->nbase_x);
+        // For GPU, need to copy to CPU before MPI reduction
+        if constexpr (std::is_same<Device, base_device::DEVICE_GPU>::value)
+        {
+            // Allocate CPU buffers if needed
+            if (this->hcc_h == nullptr)
+            {
+                resmem_complex_h_op()(this->hcc_h, this->nbase_x * this->nbase_x, "DAV::hcc_h");
+                resmem_complex_h_op()(this->scc_h, this->nbase_x * this->nbase_x, "DAV::scc_h");
+            }
+            // Copy from GPU to CPU
+            syncmem_d2h_op()(this->hcc_h, hcc + nbase * this->nbase_x, notconv * this->nbase_x);
+            syncmem_d2h_op()(this->scc_h, scc + nbase * this->nbase_x, notconv * this->nbase_x);
+            // Reduce on CPU
+            Parallel_Reduce::reduce_pool(this->hcc_h, notconv * this->nbase_x);
+            Parallel_Reduce::reduce_pool(this->scc_h, notconv * this->nbase_x);
+            // Copy back to GPU
+            syncmem_h2d_op()(hcc + nbase * this->nbase_x, this->hcc_h, notconv * this->nbase_x);
+            syncmem_h2d_op()(scc + nbase * this->nbase_x, this->scc_h, notconv * this->nbase_x);
+        }
+        else
+        {
+            Parallel_Reduce::reduce_pool(hcc + nbase * this->nbase_x, notconv * this->nbase_x);
+            Parallel_Reduce::reduce_pool(scc + nbase * this->nbase_x, notconv * this->nbase_x);
+        }
 #endif
     }
 #endif
@@ -615,9 +641,24 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
 #if defined(__CUDA) || defined(__ROCM)
         if (this->diag_comm.rank == 0)
         {
-            syncmem_complex_op()(this->d_scc, scc, nbase * this->nbase_x);
-            ct::kernels::lapack_hegvd<T, ct_Device>()(nbase, this->nbase_x, this->hcc, this->d_scc, this->d_eigenvalue, this->vcc);
-            syncmem_var_d2h_op()((*eigenvalue_iter).data(), this->d_eigenvalue, this->nbase_x);
+            // Copy hcc and scc from GPU to CPU for robust eigensolving
+            std::vector<T> hcc_h(nbase * this->nbase_x, *this->zero);
+            std::vector<T> scc_h(nbase * this->nbase_x, *this->zero);
+            syncmem_d2h_op()(hcc_h.data(), this->hcc, nbase * this->nbase_x);
+            syncmem_d2h_op()(scc_h.data(), scc, nbase * this->nbase_x);
+
+            // Solve on CPU using hegvx (more robust than hegvd for ill-conditioned overlap)
+            std::vector<T> vcc_h(nbase * this->nbase_x, *this->zero);
+            hegvx_op<T, base_device::DEVICE_CPU>()(this->cpu_ctx,
+                                                    nbase,
+                                                    this->nbase_x,
+                                                    hcc_h.data(),
+                                                    scc_h.data(),
+                                                    nband,
+                                                    (*eigenvalue_iter).data(),
+                                                    vcc_h.data());
+            // Copy eigenvectors back to GPU
+            syncmem_h2d_op()(this->vcc, vcc_h.data(), nbase * this->nbase_x);
         }
 #endif
     }
@@ -715,9 +756,25 @@ void Diago_DavSubspace<T, Device>::diag_zhegvx(const int& nbase,
     if (this->diag_comm.nproc > 1)
     {
         // vcc: nbase * nband
-        for (int i = 0; i < nband; i++)
+        if constexpr (std::is_same<Device, base_device::DEVICE_GPU>::value)
         {
-            MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, this->diag_comm.comm);
+            // Copy vcc from GPU to CPU for MPI broadcast
+            T* vcc_h = nullptr;
+            resmem_complex_h_op()(vcc_h, nband * this->nbase_x, "DAV::vcc_h");
+            syncmem_d2h_op()(vcc_h, vcc, nband * this->nbase_x);
+            for (int i = 0; i < nband; i++)
+            {
+                MPI_Bcast(&vcc_h[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, this->diag_comm.comm);
+            }
+            syncmem_h2d_op()(vcc, vcc_h, nband * this->nbase_x);
+            delmem_complex_h_op()(vcc_h);
+        }
+        else
+        {
+            for (int i = 0; i < nband; i++)
+            {
+                MPI_Bcast(&vcc[i * this->nbase_x], nbase, MPI_DOUBLE_COMPLEX, 0, this->diag_comm.comm);
+            }
         }
         MPI_Bcast((*eigenvalue_iter).data(), nband, MPI_DOUBLE, 0, this->diag_comm.comm);
     }
