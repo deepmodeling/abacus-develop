@@ -1,8 +1,0 @@
-Input Parameters:
-ExampleSource_local=['inputs/ExampleSource_local/input.zip']
-predft_command=
-rundft_image=
-rundft_command=
-rundft_machine=
-postdft_command=
-

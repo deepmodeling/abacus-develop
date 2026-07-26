@@ -1,1 +1,0 @@
-OMP_NUM_THREADS=1 mpirun -np 32 abacus > log

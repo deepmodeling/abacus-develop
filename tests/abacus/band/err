@@ -1,5 +1,0 @@
-Info: Local MPI proc number: 2,OpenMP thread number: 4,Total thread number: 8,Local thread limit: 128
-srun: Job step aborted: Waiting up to 32 seconds for job step to finish.
-slurmstepd: error: *** STEP 1141069.0 ON gpu-worker-73 CANCELLED AT 2026-01-05T17:51:45 ***
-Info: Local MPI proc number: 1,OpenMP thread number: 1,Total thread number: 1,Local thread limit: 128
-Info: Local MPI proc number: 2,OpenMP thread number: 4,Total thread number: 8,Local thread limit: 128
