@@ -193,7 +193,11 @@ void ReadInput::item_system()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry == "default")
             {
-                if (para.input.gamma_only || para.input.calculation == "nscf" || para.input.calculation == "get_s"
+                if (para.input.lspinorb == 1)
+                {
+                    para.input.symmetry = "-1";
+                }
+                else if (para.input.gamma_only || para.input.calculation == "nscf" || para.input.calculation == "get_s"
                     || para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
                 {
                     para.input.symmetry = "0"; // if md or exx, symmetry will be
