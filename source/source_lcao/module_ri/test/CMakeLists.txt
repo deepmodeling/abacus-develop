@@ -132,7 +132,10 @@ if(ENABLE_MPI)
   )
   target_link_libraries(
     MODULE_RI_sternheimer_siab_mpi_test
+    parameter
     base
+    device
+    io_input
     ${math_libs}
     Threads::Threads
     GTest::gtest
