@@ -1,7 +1,6 @@
 #include "psi.h"
 
 #include "source_base/global_variable.h"
-#include "source_base/memory.h"
 #include "source_base/module_device/device.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
@@ -385,15 +384,11 @@ void Psi<T, Device>::resize(const int nks_in, const int nbands_in, const int nba
                 delete[] psi_cpu_;
             }
             psi_cpu_ = new T[total_size]();
-            ModuleBase::Memory::record("Psi::psi_cpu", sizeof(T) * total_size);
             psi_cpu_owned_ = true;
         }
 
         const size_t k_size = static_cast<size_t>(nbands_in) * nbasis_in;
         resize_memory_op()(this->psi, k_size, "no_record");
-#if defined(__CUDA) || defined(__ROCM)
-        ModuleBase::Memory::record_gpu("Psi::psi_gpu_k", sizeof(T) * k_size);
-#endif
 
         psi_gpu_buffer_ = this->psi;
         current_k_gpu_ = -1;
@@ -401,9 +396,6 @@ void Psi<T, Device>::resize(const int nks_in, const int nbands_in, const int nba
     else
     {
         resize_memory_op()(this->psi, nks_in * static_cast<std::size_t>(nbands_in) * nbasis_in, "no_record");
-#if defined(__CUDA) || defined(__ROCM)
-        ModuleBase::Memory::record_gpu("Psi_PW", sizeof(T) * nks_in * static_cast<std::size_t>(nbands_in) * nbasis_in);
-#endif
     }
 
     this->nk = nks_in;
