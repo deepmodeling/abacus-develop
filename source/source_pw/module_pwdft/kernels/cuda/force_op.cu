@@ -545,6 +545,7 @@ void cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>::operator()(const base_dev
                                                                   const FPTYPE& tpiba,
                                                                   const FPTYPE* d_wg,
                                                                   const FPTYPE* lambda,
+                                                                  const int* isk,
                                                                   const std::complex<FPTYPE>* becp,
                                                                   const std::complex<FPTYPE>* dbecp,
                                                                   FPTYPE* force)
