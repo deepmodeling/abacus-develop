@@ -125,15 +125,15 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
         } // end for ntype
 
         // Auto-set magnetization if needed.
-        // symmetry=1 means "analyze and preserve the symmetry of the initial magnetic
-        // moment"; an all-zero moment is a legitimate nonmagnetic choice under the full
-        // point group, so do not override it with an autoset seed. Warn instead.
+        // symmetry=1 means "analyze and preserve the symmetry of the initial magnetic moment"; 
+        // an all-zero moment is a legitimate nonmagnetic choice under the full point group, 
+        // so do not override it with an autoset seed. Warn instead.
         if (symmetry == 1)
         {
             ofs_running << "\n WARNING: initial magmom is all zero and symmetry=1; "
-                        << "autoset magnetism is SKIPPED to preserve the symmetric (nonmagnetic) state.\n"
+                        << "autoset magnetism is SKIPPED to preserve the symmetry of the initial (nonmagnetic) structure.\n"
                         << "          If spontaneous magnetism is expected, set magmom explicitly "
-                        << "in STRU, or use symmetry=-1." << std::endl;
+                        << "in STRU, or use symmetry = 0 or -1." << std::endl;
         }
         else
         {
