@@ -422,3 +422,10 @@ void psiMulPsiMixed(const psi::Psi<std::complex<double>>& psi1,
 }
 
 } // namespace elecstate
+
+// Explicit template instantiations
+namespace elecstate
+{
+template void cal_dm_psi<double>(const Parallel_Orbitals*, const ModuleBase::matrix&, const psi::Psi<std::complex<double>>&, DensityMatrix<std::complex<double>, double>&);
+template void cal_dm_psi<std::complex<double>>(const Parallel_Orbitals*, const ModuleBase::matrix&, const psi::Psi<std::complex<double>>&, DensityMatrix<std::complex<double>, std::complex<double>>&);
+}

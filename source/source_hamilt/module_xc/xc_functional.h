@@ -251,9 +251,11 @@ class XC_Functional
         const double tpiba);
     static void noncolin_rho(double* rhoout1,
                              double* rhoout2,
+                             double* neg,
                              const double* const* const rho,
                              const int nrxx,
-                             double* mag_part);
+                             const double* ux_,
+                             const bool lsign_);
 
     //-------------------
     //  xc_lda_exch.cpp

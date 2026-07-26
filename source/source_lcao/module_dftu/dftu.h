@@ -185,21 +185,6 @@ class Plus_U
         return eff_pot_pw.data();
     }
 
-    /// get effective potential pointer for the given spin channel (PW basis)
-    ///
-    /// nspin=1: isk is ignored, returns &eff_pot_pw[0]
-    /// nspin=2: isk selects spin-up (0) or spin-down (1) half of the
-    ///          split layout [all_up | all_dn]
-    /// nspin=4: isk is ignored, returns &eff_pot_pw[0] (all Pauli blocks)
-    const std::complex<double>* get_eff_pot_pw_spin(const int isk) const
-    {
-        if (nspin == 2 && isk == 1)
-        {
-            return eff_pot_pw.data() + eff_pot_pw.size() / 2;
-        }
-        return eff_pot_pw.data();
-    }
-
     /// get size of effective potential for a single spin channel (PW basis)
     ///
     /// nspin=1: full array size

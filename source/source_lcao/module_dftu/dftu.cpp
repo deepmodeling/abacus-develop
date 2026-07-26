@@ -84,11 +84,6 @@ void Plus_U::init(UnitCell& cell,
     ucell = &cell;
 #endif
 
-    // needs reconstructions in future
-    // global parameters, need to be removed in future
-    const int npol = PARAM.globalv.npol;     // number of polarization directions
-    const int nlocal = PARAM.globalv.nlocal; // number of total local orbitals
-    const int nspin = PARAM.inp.nspin;   // number of spins
     Plus_U::nspin = nspin;
 
     // mohan update 2025-11-06
@@ -263,7 +258,7 @@ void Plus_U::init(UnitCell& cell,
         {
             std::stringstream sst;
             sst << PARAM.globalv.global_readin_dir << "onsite.dm";
-            this->read_occup_m(cell,sst.str());
+            this->read_occup_m(cell, sst.str(), this->init_chg, nspin, npol);
 #ifdef __MPI
             this->local_occup_bcast(cell, nspin, npol);
 #endif

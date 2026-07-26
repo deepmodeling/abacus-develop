@@ -343,6 +343,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int* atom_na,
                     const FPTYPE* d_wg,
                     const FPTYPE* lambda,
+                    const int* isk,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* stress)
@@ -359,8 +360,8 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 {
                     const std::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
                     const std::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
-                    const std::complex<FPTYPE> coefficients2(lambda[iat*3] , -lambda[iat*3+1]);
-                    const std::complex<FPTYPE> coefficients3(-lambda[iat*3+2], 0.0);
+                    const std::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
+                    const std::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
                     for (int ib = 0; ib < nbands_occ; ib++)
                     {
                         const int ib2 = ib * 2;
@@ -379,7 +380,11 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 }
                 else if (npol == 1)
                 {
-                    const FPTYPE coefficients0(lambda[iat*3+2]);
+                    int spin_sign = 1;
+                    if (isk != nullptr && isk[ik] == 1) {
+                        spin_sign = -1;
+                    }
+                    const FPTYPE coefficients0(lambda[iat*3+2] * spin_sign);
                     for (int ib = 0; ib < nbands_occ; ib++)
                     {
                         FPTYPE fac = d_wg[ik * wg_nc + ib];

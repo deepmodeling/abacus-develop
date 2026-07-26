@@ -56,9 +56,19 @@ class ElecStateLCAO : public ElecState
      * @param pexsi_EDM: pointers of energy-weighed density matrix (EDMK) calculated by pexsi, needed by MD, will be
      * stored in DensityMatrix::pexsi_EDM
      */
-	void dm2rho(std::vector<TK*> pexsi_DM,
-			std::vector<TK*> pexsi_EDM,
-			DensityMatrix<TK, double>* dm);
+ 	void dm2rho(std::vector<TK*> pexsi_DM,
+ 			std::vector<TK*> pexsi_EDM,
+ 			DensityMatrix<TK, double>* dm);
+
+    /**
+     * @brief Convert density matrix to charge density, used by the LCAO
+     * plane-wave path (ElecStatePW::psiToRho) and the pexsi branch above. This
+     * keeps the source_lcao dependency out of source_hsolver.
+     */
+    void dmToRho(std::vector<hamilt::HContainer<double>*>& dmr,
+                 int nspin,
+                 Charge* chr,
+                 bool skip_charge = false);
 
   private:
     DensityMatrix<TK, double>* DM = nullptr;

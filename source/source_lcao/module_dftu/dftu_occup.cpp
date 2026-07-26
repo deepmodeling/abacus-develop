@@ -117,6 +117,7 @@ void Plus_U::mix_locale(const UnitCell& ucell,
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
+            int target_l = get_orbital_corr(T);
 
             if (Plus_U::nspin == 4)
             {
