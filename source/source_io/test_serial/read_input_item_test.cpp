@@ -1875,6 +1875,15 @@ TEST_F(InputTest, Item_test2)
         it->second.read_value(it->second, param);
         EXPECT_TRUE(param.input.sternheimer_frequency_mpi);
     }
+    { // sternheimer_channel_mpi
+        auto it = find_label("sternheimer_channel_mpi", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_FALSE(param.input.sternheimer_channel_mpi);
+
+        it->second.str_values = {"true"};
+        it->second.read_value(it->second, param);
+        EXPECT_TRUE(param.input.sternheimer_channel_mpi);
+    }
     { // sternheimer_delta
         auto it = find_label("sternheimer_delta", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());

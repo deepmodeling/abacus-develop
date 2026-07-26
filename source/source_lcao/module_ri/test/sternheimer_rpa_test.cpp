@@ -432,6 +432,39 @@ TEST(SternheimerRPA, FrequencyOwnerRankSupportsRankShift)
     EXPECT_THROW(ModuleRI::SternheimerRPA::frequency_owner_rank(0, 0, 0), std::invalid_argument);
 }
 
+TEST(SternheimerRPA, AssignsChannelMPIWithinFrequencyGroups)
+{
+    const auto leader = ModuleRI::SternheimerRPA::frequency_mpi_assignment(0, 16, 32, 2, 1, true);
+    EXPECT_TRUE(leader.owns_frequency);
+    EXPECT_EQ(leader.frequency_leader_rank, 2);
+    EXPECT_EQ(leader.frequency_group_size, 2);
+    EXPECT_EQ(leader.frequency_group_local_rank, 0);
+
+    const auto partner = ModuleRI::SternheimerRPA::frequency_mpi_assignment(0, 16, 32, 3, 1, true);
+    EXPECT_TRUE(partner.owns_frequency);
+    EXPECT_EQ(partner.frequency_leader_rank, 2);
+    EXPECT_EQ(partner.frequency_group_size, 2);
+    EXPECT_EQ(partner.frequency_group_local_rank, 1);
+
+    const auto other = ModuleRI::SternheimerRPA::frequency_mpi_assignment(0, 16, 32, 4, 1, true);
+    EXPECT_FALSE(other.owns_frequency);
+    EXPECT_EQ(other.frequency_group_local_rank, -1);
+
+    const auto wrapped = ModuleRI::SternheimerRPA::frequency_mpi_assignment(15, 16, 32, 1, 1, true);
+    EXPECT_TRUE(wrapped.owns_frequency);
+    EXPECT_EQ(wrapped.frequency_leader_rank, 0);
+    EXPECT_EQ(wrapped.frequency_group_local_rank, 1);
+
+    EXPECT_EQ(ModuleRI::SternheimerRPA::channel_group_owner(0, 0, 428, 2), 0);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::channel_group_owner(0, 1, 428, 2), 1);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::channel_group_owner(1, 0, 428, 2), 0);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::channel_group_owner(1, 1, 428, 2), 1);
+
+    EXPECT_THROW(ModuleRI::SternheimerRPA::frequency_mpi_assignment(0, 16, 30, 0, 0, true),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::channel_group_owner(0, 0, 428, 0), std::invalid_argument);
+}
+
 TEST(SternheimerRPA, SolveBiCGStabDiagonalComplexSystem)
 {
     const Vector diagonal = {Complex(2.0, 1.0), Complex(3.0, -0.5), Complex(4.0, 2.0)};

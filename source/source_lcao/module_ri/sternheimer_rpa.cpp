@@ -915,6 +915,67 @@ int SternheimerRPA::frequency_owner_rank(const int ifrequency_zero_based,
     return (ifrequency_zero_based + normalized_shift) % mpi_ranks;
 }
 
+SternheimerRPA::FrequencyMPIAssignment SternheimerRPA::frequency_mpi_assignment(
+    const int ifrequency_zero_based,
+    const int frequency_count,
+    const int mpi_ranks,
+    const int mpi_rank,
+    const int rank_shift,
+    const bool use_channel_mpi)
+{
+    if (frequency_count <= 0 || ifrequency_zero_based < 0 || ifrequency_zero_based >= frequency_count)
+    {
+        throw std::invalid_argument(
+            "SternheimerRPA::frequency_mpi_assignment requires a valid frequency index and count.");
+    }
+    if (mpi_ranks <= 0 || mpi_rank < 0 || mpi_rank >= mpi_ranks)
+    {
+        throw std::invalid_argument(
+            "SternheimerRPA::frequency_mpi_assignment requires a valid MPI rank and rank count.");
+    }
+
+    FrequencyMPIAssignment assignment;
+    if (!use_channel_mpi)
+    {
+        assignment.frequency_leader_rank = frequency_owner_rank(ifrequency_zero_based, mpi_ranks, rank_shift);
+        assignment.frequency_group_size = 1;
+        assignment.owns_frequency = mpi_rank == assignment.frequency_leader_rank;
+        assignment.frequency_group_local_rank = assignment.owns_frequency ? 0 : -1;
+        return assignment;
+    }
+
+    if (mpi_ranks < frequency_count || mpi_ranks % frequency_count != 0)
+    {
+        throw std::invalid_argument(
+            "Sternheimer channel MPI requires MPI ranks to be an integer multiple of the frequency count.");
+    }
+
+    assignment.frequency_group_size = mpi_ranks / frequency_count;
+    const int frequency_slot = frequency_owner_rank(ifrequency_zero_based, frequency_count, rank_shift);
+    assignment.frequency_leader_rank = frequency_slot * assignment.frequency_group_size;
+    const int frequency_group_end = assignment.frequency_leader_rank + assignment.frequency_group_size;
+    assignment.owns_frequency
+        = mpi_rank >= assignment.frequency_leader_rank && mpi_rank < frequency_group_end;
+    assignment.frequency_group_local_rank
+        = assignment.owns_frequency ? mpi_rank - assignment.frequency_leader_rank : -1;
+    return assignment;
+}
+
+int SternheimerRPA::channel_group_owner(const int occupied_state,
+                                        const int auxiliary_channel,
+                                        const int auxiliary_channel_count,
+                                        const int frequency_group_size)
+{
+    if (occupied_state < 0 || auxiliary_channel < 0 || auxiliary_channel_count <= 0
+        || auxiliary_channel >= auxiliary_channel_count || frequency_group_size <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::channel_group_owner received invalid dimensions or indices.");
+    }
+    const std::int64_t equation_index = static_cast<std::int64_t>(occupied_state) * auxiliary_channel_count
+                                        + auxiliary_channel;
+    return static_cast<int>(equation_index % frequency_group_size);
+}
+
 SternheimerRPA::TransitionEnergyWindow SternheimerRPA::transition_energy_window_from_eigenvalues_ry(
     const std::vector<double>& eigenvalues_ry,
     const std::vector<double>& occupations,

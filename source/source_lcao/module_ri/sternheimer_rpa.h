@@ -66,6 +66,14 @@ class SternheimerRPA
         std::vector<double> weights_ha;
     };
 
+    struct FrequencyMPIAssignment
+    {
+        bool owns_frequency = false;
+        int frequency_leader_rank = -1;
+        int frequency_group_size = 0;
+        int frequency_group_local_rank = -1;
+    };
+
     struct LinearProblem
     {
         // Applies Pc (H - eps_i + i omega) Pc to a band-limited grid/PW vector.
@@ -149,6 +157,18 @@ class SternheimerRPA
     static FrequencyGrid read_frequency_grid_file(const std::string& filename, int expected_size);
 
     static int frequency_owner_rank(int ifrequency_zero_based, int mpi_ranks, int rank_shift = 0);
+
+    static FrequencyMPIAssignment frequency_mpi_assignment(int ifrequency_zero_based,
+                                                            int frequency_count,
+                                                            int mpi_ranks,
+                                                            int mpi_rank,
+                                                            int rank_shift,
+                                                            bool use_channel_mpi);
+
+    static int channel_group_owner(int occupied_state,
+                                   int auxiliary_channel,
+                                   int auxiliary_channel_count,
+                                   int frequency_group_size);
 
     static void write_chi0_v1_file(const std::string& filename,
                                    const Chi0V1Metadata& metadata,

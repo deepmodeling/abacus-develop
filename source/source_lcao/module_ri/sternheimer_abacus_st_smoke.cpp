@@ -3757,7 +3757,10 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
     }
 
     const bool use_frequency_mpi = PARAM.inp.sternheimer_frequency_mpi;
-    if (!use_frequency_mpi && GlobalV::MY_RANK != 0)
+    const bool use_channel_mpi = PARAM.inp.sternheimer_channel_mpi;
+    const bool use_distributed_mpi = use_frequency_mpi || use_channel_mpi;
+    const int nfreq = PARAM.inp.sternheimer_nfreq;
+    if (!use_distributed_mpi && GlobalV::MY_RANK != 0)
     {
         return;
     }
@@ -3771,7 +3774,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         {
             GlobalV::ofs_running << " Sternheimer chi0 output: failed to open " << status_path << std::endl;
 #ifdef __MPI
-            if (use_parallel_response_mpi && GlobalV::NPROC > 1)
+            if (use_distributed_mpi && GlobalV::NPROC > 1)
             {
                 MPI_Abort(MPI_COMM_WORLD, 1);
             }
@@ -3796,12 +3799,26 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                    nullptr,
                                    -1.0,
                                    elapsed_seconds_since(chi0_start_time),
-                                   use_frequency_mpi ? "frequency_mpi=yes" : "frequency_mpi=no");
+                                   std::string("frequency_mpi=") + (use_frequency_mpi ? "yes" : "no")
+                                       + " channel_mpi=" + (use_channel_mpi ? "yes" : "no"));
         if (write_librpa && PARAM.inp.out_librpa_reader_version != 1)
         {
             throw std::runtime_error("out_sternheimer_librpa requires out_librpa_reader_version=1.");
         }
-        if (GlobalV::NPROC != 1 && !use_parallel_response_mpi)
+        if (use_channel_mpi && !use_frequency_mpi)
+        {
+            throw std::runtime_error("sternheimer_channel_mpi requires sternheimer_frequency_mpi=true.");
+        }
+        if (use_channel_mpi && !write_siab)
+        {
+            throw std::runtime_error("sternheimer_channel_mpi currently requires out_sternheimer_siab=true.");
+        }
+        if (use_channel_mpi && write_librpa)
+        {
+            throw std::runtime_error(
+                "sternheimer_channel_mpi does not yet support out_sternheimer_librpa chi0 accumulation.");
+        }
+        if (GlobalV::NPROC != 1 && !use_frequency_mpi)
         {
             throw std::runtime_error(
                 "Sternheimer chi0 output with multiple MPI ranks requires sternheimer_frequency_mpi=true.");
@@ -3891,15 +3908,21 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         const int solver_max_iter = positive_int_from_env(kSolverMaxIterEnv, 300);
         const double pca_threshold = nonnegative_double_from_env(kPCAThresholdEnv, PARAM.inp.exx_pca_threshold);
         const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
-        const int channel_threads = positive_int_from_env(kChannelThreadsEnv, 0);
-        const int nfreq = PARAM.inp.sternheimer_nfreq;
-        const int channel_worker_user_cap = int_from_env(kChannelMaxWorkersEnv, 0);
-        if (channel_worker_user_cap < 0)
-        {
-            throw std::invalid_argument(std::string("Invalid non-negative integer in ") + kChannelMaxWorkersEnv + ".");
-        }
         const int default_frequency_rank_shift = use_frequency_mpi && GlobalV::NPROC > 1 ? 1 : 0;
         const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
+        const auto frequency_assignment = [&](const int ifrequency) {
+            if (!use_frequency_mpi)
+            {
+                return SternheimerRPA::frequency_mpi_assignment(ifrequency, nfreq, 1, 0, 0, false);
+            }
+            return SternheimerRPA::frequency_mpi_assignment(ifrequency,
+                                                             nfreq,
+                                                             GlobalV::NPROC,
+                                                             GlobalV::MY_RANK,
+                                                             frequency_rank_shift,
+                                                             use_channel_mpi);
+        };
+        const int frequency_group_size = frequency_assignment(0).frequency_group_size;
         const std::string frequency_grid_file = PARAM.inp.sternheimer_frequency_grid_file;
         const bool use_frequency_grid_file = !frequency_grid_file.empty();
         const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
@@ -4182,11 +4205,9 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         std::vector<std::chrono::steady_clock::time_point> frequency_start_times(static_cast<std::size_t>(nfreq));
         for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
         {
-            const int owner_rank
-                = use_frequency_mpi
-                      ? SternheimerRPA::frequency_owner_rank(ifrequency, GlobalV::NPROC, frequency_rank_shift)
-                      : 0;
-            if (use_frequency_mpi && owner_rank != GlobalV::MY_RANK)
+            const SternheimerRPA::FrequencyMPIAssignment assignment = frequency_assignment(ifrequency);
+            const int owner_rank = assignment.frequency_leader_rank;
+            if (!assignment.owns_frequency)
             {
                 continue;
             }
@@ -4206,7 +4227,10 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                        nullptr,
                                        -1.0,
                                        elapsed_seconds_since(chi0_start_time),
-                                       "omega_Ha=" + std::to_string(omega_ha));
+                                       "omega_Ha=" + std::to_string(omega_ha)
+                                           + " group_size=" + std::to_string(assignment.frequency_group_size)
+                                           + " group_local_rank="
+                                           + std::to_string(assignment.frequency_group_local_rank));
         }
 
         struct SpinResponseDiagnostics
@@ -4449,11 +4473,9 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
 
             for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
             {
-                const int owner_rank
-                    = use_frequency_mpi
-                          ? SternheimerRPA::frequency_owner_rank(ifrequency, GlobalV::NPROC, frequency_rank_shift)
-                          : 0;
-                if (use_frequency_mpi && owner_rank != GlobalV::MY_RANK)
+                const SternheimerRPA::FrequencyMPIAssignment assignment = frequency_assignment(ifrequency);
+                const int owner_rank = assignment.frequency_leader_rank;
+                if (!assignment.owns_frequency)
                 {
                     continue;
                 }
@@ -4534,6 +4556,15 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
 
                     for (int ichannel = 0; ichannel != num_channels; ++ichannel)
                     {
+                        if (use_channel_mpi
+                            && SternheimerRPA::channel_group_owner(occupied_state_offset + ib,
+                                                                  ichannel,
+                                                                  num_channels,
+                                                                  assignment.frequency_group_size)
+                                   != assignment.frequency_group_local_rank)
+                        {
+                            continue;
+                        }
                         const std::size_t channel_index = static_cast<std::size_t>(ichannel);
                         SternheimerFDHamiltonian::Vector rhs;
                         SternheimerRPA::build_rhs_from_hartree_perturbation(perturbations_ry[channel_index],
@@ -4685,11 +4716,9 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
 
         for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
         {
-            const int owner_rank
-                = use_frequency_mpi
-                      ? SternheimerRPA::frequency_owner_rank(ifrequency, GlobalV::NPROC, frequency_rank_shift)
-                      : 0;
-            if (use_frequency_mpi && owner_rank != GlobalV::MY_RANK)
+            const SternheimerRPA::FrequencyMPIAssignment assignment = frequency_assignment(ifrequency);
+            const int owner_rank = assignment.frequency_leader_rank;
+            if (!assignment.owns_frequency)
             {
                 continue;
             }
@@ -4750,10 +4779,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                             ifrequency + 1,
                                             frequency_grid.omega_ha[static_cast<std::size_t>(ifrequency)],
                                             frequency_grid.weights_ha[static_cast<std::size_t>(ifrequency)]);
-                const int owner_rank
-                    = use_frequency_mpi
-                          ? SternheimerRPA::frequency_owner_rank(ifrequency, GlobalV::NPROC, frequency_rank_shift)
-                          : 0;
+                const int owner_rank = frequency_assignment(ifrequency).frequency_leader_rank;
                 index_entries.push_back({chi0_v1_filename(metadata.iq, metadata.ifrequency, owner_rank), metadata});
             }
             write_chi0_index_file("v1_sternheimer_chi0_index.dat", index_entries);
@@ -4786,7 +4812,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             out << "transition_window_Ha unavailable_external_grid\n";
         }
         out << "sternheimer_frequency_mpi " << (use_frequency_mpi ? "yes" : "no") << '\n';
-        out << "sternheimer_channel_threads " << channel_threads << '\n';
+        out << "sternheimer_channel_mpi " << (use_channel_mpi ? "yes" : "no") << '\n';
+        out << "frequency_group_size " << frequency_group_size << '\n';
         out << "mpi_ranks " << GlobalV::NPROC << '\n';
         out << "frequency_rank_shift " << frequency_rank_shift << '\n';
         out << "progress_file_pattern "
@@ -4920,7 +4947,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         GlobalV::ofs_running << " Sternheimer chi0 status: " << status_path << std::endl;
         GlobalV::ofs_running.flush();
 #ifdef __MPI
-        if (use_parallel_response_mpi && GlobalV::NPROC > 1)
+        if (use_distributed_mpi && GlobalV::NPROC > 1)
         {
             MPI_Abort(MPI_COMM_WORLD, 1);
         }
