@@ -378,24 +378,23 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
         } // end it
     };
 
-     void operator()(const base_device::DEVICE_CPU* ctx,
-                     const int& nbands_occ,
-                     const int& wg_nc,
-                     const int& ntype,
-                     const int& forcenl_nc,
-                     const int& nbands,
-                     const int& ik,
-                     const int& nkb,
-                     const int& npol,
-                     const int* atom_nh,
-                     const int* atom_na,
-                     const FPTYPE& tpiba,
-                     const FPTYPE* d_wg,
-                     const FPTYPE* lambda,
-                     const int* isk,
-                     const std::complex<FPTYPE>* becp,
-                     const std::complex<FPTYPE>* dbecp,
-                     FPTYPE* force)
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const int& nbands_occ,
+                    const int& wg_nc,
+                    const int& ntype,
+                    const int& forcenl_nc,
+                    const int& nbands,
+                    const int& ik,
+                    const int& nkb,
+                    const int& npol,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE& tpiba,
+                    const FPTYPE* d_wg,
+                    const FPTYPE* lambda,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* force)
     {
         int iat0 = 0;
         int sum0 = 0;
@@ -408,8 +407,8 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                 int sum = sum0 + ia * nproj;
                 const std::complex<FPTYPE> coefficients0(lambda[iat*3+2], 0.0);
                 const std::complex<FPTYPE> coefficients1(lambda[iat*3] , lambda[iat*3+1]);
-                const std::complex<FPTYPE> coefficients2(lambda[iat*3] , -1 * lambda[iat*3+1]);
-                const std::complex<FPTYPE> coefficients3(-1 * lambda[iat*3+2], 0.0);
+                const std::complex<FPTYPE> coefficients2(lambda[iat*3] , -lambda[iat*3+1]);
+                const std::complex<FPTYPE> coefficients3(-lambda[iat*3+2], 0.0);
                 for (int ib = 0; ib < nbands_occ; ib++)
                 {
                     FPTYPE local_force[3] = {0, 0, 0};
@@ -434,13 +433,8 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                             }
                         } // ip
                     }
-                     else if (npol == 1)
-                     {
-                         int spin_sign = 1;
-                         if (isk != nullptr && isk[ik] == 1) {
-                             spin_sign = -1;
-                         }
-                         for (int ip = 0; ip < nproj; ip++)
+                    else if (npol == 1)
+                    {
                         for (int ip = 0; ip < nproj; ip++)
                         {
                             const int inkb = sum + ip;
@@ -450,7 +444,7 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 const int index0 = ipol * nbands * nkb + ib * nkb + inkb;
                                 const int index1 = ib * nkb + inkb;
                                 const FPTYPE dbb = (conj(dbecp[index0]) * becp[index1]).real();
-                                local_force[ipol] -= fac * lambda[iat*3+2] * spin_sign * dbb;
+                                local_force[ipol] -= fac * lambda[iat*3+2] * dbb;
                             }
                         } // ip
                     }

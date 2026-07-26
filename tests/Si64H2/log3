@@ -1,0 +1,41 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 687bc7819 (Fri Dec 20 16:44:03 2024 +0800)
+
+ Sat Dec 28 21:27:01 2024
+ MAKE THE DIR         : OUT.SiCCH2/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+ UNIFORM GRID DIM        : 135 * 135 * 135
+ UNIFORM GRID DIM(BIG)   : 135 * 135 * 135
+ DONE(0.0528739  SEC) : SETUP UNITCELL
+ DONE(0.0828187  SEC) : SYMMETRY
+ DONE(0.172108   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 2       2               12          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ H       2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.187494   SEC) : INIT PLANEWAVE
+ DONE(0.24138    SEC) : LOCAL POTENTIAL
+ DONE(0.249863   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 4.43079
+ DONE(0.249967   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic

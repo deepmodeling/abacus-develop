@@ -84,37 +84,12 @@ void Plus_U::init(UnitCell& cell,
     ucell = &cell;
 #endif
 
+    // needs reconstructions in future
+    // global parameters, need to be removed in future
+    const int npol = PARAM.globalv.npol;     // number of polarization directions
+    const int nlocal = PARAM.globalv.nlocal; // number of total local orbitals
+    const int nspin = PARAM.inp.nspin;   // number of spins
     Plus_U::nspin = nspin;
-    Plus_U::orbital_corr = orbital_corr;
-    Plus_U::Yukawa = yukawa_potential;
-    this->yukawa_lambda = yukawa_lambda;
-
-    this->global_readin_dir = global_readin_dir;
-    this->global_out_dir = global_out_dir;
-    this->init_chg = init_chg;
-    this->npol = npol;
-
-    if (pv != nullptr)
-    {
-        const int global_rows = pv->get_global_row_size();
-        const int global_cols = pv->get_global_col_size();
-        if (global_rows != global_cols)
-        {
-            ModuleBase::WARNING_QUIT("Plus_U::init", "Global row and column dimensions do not match");
-        }
-        if (nlocal != global_rows)
-        {
-            ModuleBase::WARNING_QUIT("Plus_U::init", "nlocal does not match global matrix dimension");
-        }
-    }
-    this->nlocal = nlocal;
-
-    this->gamma_only_local = gamma_only_local;
-    this->ks_solver = ks_solver;
-    this->cal_force = cal_force;
-    this->cal_stress = cal_stress;
-    this->device = device;
-    this->kpar = kpar;
 
     // mohan update 2025-11-06
     Plus_U::energy_u = 0.0;
@@ -131,6 +106,10 @@ void Plus_U::init(UnitCell& cell,
     // it:index of type of atom
     for (int it = 0; it < cell.ntype; ++it)
     {
+        if(!has_correlated_orbital(it))
+        {
+            continue;
+        }
         for (int ia = 0; ia < cell.atoms[it].na; ia++)
         {
             // ia:index of atoms of this type
@@ -139,14 +118,6 @@ void Plus_U::init(UnitCell& cell,
 
             locale[iat].resize(cell.atoms[it].nwl + 1);
             locale_save[iat].resize(cell.atoms[it].nwl + 1);
-
-            // initialize the arrry iatlnm2iwt[iat][l][n][m]
-            this->iatlnmipol2iwt[iat].resize(cell.atoms[it].nwl + 1);
-
-            if(!has_correlated_orbital(it))
-            {
-                continue;
-            }
 
             const int tlp1_npol = (get_orbital_corr(it)*2+1)*npol;
             const int tlp1 = 2 * get_orbital_corr(it) + 1;
@@ -160,16 +131,16 @@ void Plus_U::init(UnitCell& cell,
     //          spin-down at eff_pot_pw[size/2 + eff_pot_pw_index[iat] + mm]
     // nspin=4: offset = sum(tlp1_npol^2) where tlp1_npol = (2l+1)*npol = 2*(2l+1)
     //          each atom occupies (2*tlp1)^2 = 4*tlp1^2 entries for 4 Pauli blocks
-            if(nspin == 4)
-            {
-                this->eff_pot_pw_index[iat] = pot_index;
-                pot_index += tlp1_npol * tlp1_npol;
-            }
-            else // nspin=1 or nspin=2: one tlp1^2 block per atom per spin channel
-            {
-                this->eff_pot_pw_index[iat] = pot_index;
-                pot_index += elem_size;
-            }
+    if(nspin == 4)
+    {
+        this->eff_pot_pw_index[iat] = pot_index;
+        pot_index += tlp1_npol * tlp1_npol;
+    }
+    else // nspin=1 or nspin=2: one tlp1^2 block per atom per spin channel
+    {
+        this->eff_pot_pw_index[iat] = pot_index;
+        pot_index += elem_size;
+    }
 
             for (int l = 0; l <= cell.atoms[it].nwl; l++)
             {
@@ -291,8 +262,8 @@ void Plus_U::init(UnitCell& cell,
         if (this->init_chg == "file")
         {
             std::stringstream sst;
-            sst << this->global_readin_dir << "dm_onsite.txt";
-            this->read_occup_m(cell, sst.str(), this->init_chg, nspin, npol);
+            sst << PARAM.globalv.global_readin_dir << "onsite.dm";
+            this->read_occup_m(cell,sst.str());
 #ifdef __MPI
             this->local_occup_bcast(cell, nspin, npol);
 #endif

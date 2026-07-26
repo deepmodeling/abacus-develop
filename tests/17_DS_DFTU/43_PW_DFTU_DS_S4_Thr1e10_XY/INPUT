@@ -23,14 +23,14 @@ orbital_corr    2
 hubbard_u    5.0
 onsite_radius   3.0
 
-# DeltaSpin -- strict convergence threshold
+# DeltaSpin -- lambda loop disabled (constant lambda from STRU)
 sc_mag_switch    1
 sc_thr    1e-4
 nsc    100
 nsc_min    2
 alpha_trial    0.01
 sccut    3.0
-sc_scf_thr    1e-10
+sc_scf_thr_mode    off
 
 pseudo_dir    ../../PP_ORB
 orbital_dir    ../../PP_ORB

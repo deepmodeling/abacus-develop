@@ -1,106 +1,245 @@
-# ABACUS Agent Instructions
+# AGENTS.md
 
-This file is the entry point for AI agents, automated review tools, and human
-contributors who want the short operational version of the ABACUS development
-rules. Read the complete governance document before making or reviewing changes:
+This file provides guidance to agentic coding agents working with the ABACUS codebase.
 
-- `docs/developers_guide/agent_governance.md`
+## Build System
 
-## Required Baseline
+ABACUS uses CMake as its build system. The main build configuration is in `CMakeLists.txt` at the root.
 
-- Follow the seven ABACUS coding rules summarized from the project governance:
-  1. Do not increase cross-layer control through `GlobalV`, `GlobalC`, or
-     `PARAM`; pass dependencies explicitly where practical. Migration-neutral
-     moves must keep the PR-level global dependency budget non-increasing and
-     explain the remaining global usage.
-  2. Do not hide workflow switches in mutable member variables that can be
-     changed from multiple places.
-  3. Keep header dependencies minimal.
-  4. Avoid adding `.hpp` implementation headers or propagating them through
-     other headers unless there is a narrow reason.
-  5. Do not add default arguments to existing interfaces; update call sites or
-     design a clearer extension.
-  6. Add focused tests for key features, bug fixes, INPUT behavior changes,
-     heterogeneous kernels, and core-module refactors.
-  7. Keep code compatible with the repository C++11 baseline.
-- Use LF line endings for text files. Only `.bat` and `.cmd` files may use CRLF.
-- Keep source file additions deterministic: update the relevant `CMakeLists.txt`
-  or explain why the file is generated or included indirectly.
-- INPUT parameter behavior changes must update `docs/parameters.yaml` and
-  `docs/advanced/input_files/input-main.md`, or the PR must state why no update
-  is required.
-- Report the exact verification performed. Do not claim completion without
-  fresh test or check output.
-
-## Repository Map
-
-- Core C++ implementation lives under `source/`; source additions must be wired
-  through the relevant `CMakeLists.txt`.
-- INPUT parsing and help metadata live under `source/source_io/`; user-facing
-  INPUT docs live in `docs/parameters.yaml` and
-  `docs/advanced/input_files/input-main.md`.
-- Unit tests are colocated under module `test/` directories such as
-  `source/source_md/test/`; integration and workflow tests are selected through
-  CTest labels and patterns.
-- Developer and user build/install references live in `docs/quick_start/`,
-  `docs/advanced/`, `toolchain/`, `Dockerfile.gnu`, `Dockerfile.intel`, and
-  `Dockerfile.cuda`.
-
-## Build And Test Entry Points
-
-- Prefer the repository CMake/CTest flow already used by CI. For focused local
-  checks, use commands such as `ctest --test-dir build -V -R MODULE_MD` after a
-  usable build exists.
-- For INPUT-related changes, verify both documentation and CLI behavior when an
-  executable is available: `./build/abacus -h <parameter>` and
-  `./build/abacus --check-input` from a valid case directory.
-- For executable identity, record `./build/abacus --version` or the equivalent
-  installed `abacus --version` command used during verification.
-- Reuse existing Docker and toolchain assets. Do not add a new container,
-  compiler setup, or calculation-task skill unless the PR explicitly requires
-  and justifies it.
-
-## Local Runtime Testing
-
-- Set `OMP_NUM_THREADS=1` for ABACUS runtime, integration, and MPI tests unless
-  a test explicitly requires another value.
-- Run MPI/runtime tests outside restricted sandboxes when process visibility,
-  sockets, or MPI launch behavior matters.
-- Treat OpenMPI `opal_ifinit: socket() failed errno=1` warnings from sandboxed
-  MPI-linked builds or runs as expected sandbox artifacts; rerun outside the
-  sandbox before treating them as ABACUS failures.
-- Do not relax existing tests or references merely to make a failure pass.
-  Update references only when the intended behavior changed and the PR explains
-  why.
-
-## Review And Exception Flow
-
-- Mechanical blockers are enforced by hook and CI only for new files, changed
-  files, or diff-added lines. Historical untouched code is not a default blocker.
-- Warnings from CI or AI review require reviewer attention but do not block by
-  themselves.
-- Semantic questions such as module ownership, member-variable workflow state,
-  test sufficiency, and exception approval require human review.
-- Exceptions must be recorded in the PR with reason, scope, risk, and a follow-up
-  cleanup plan.
-
-## Local Commands
+### Basic Build Commands
 
 ```bash
-python3 tools/03_code_analysis/agent_governance_check.py --staged
-python3 tools/03_code_analysis/agent_governance_check.py --base upstream/develop --head HEAD --format text
-pre-commit run abacus-agent-governance --all-files
+# Configure with default options (LCAO enabled, MPI enabled)
+cmake -B build
+
+# Build with specific number of processors
+cmake --build build -j${number_of_processors}
+
+# Install (required before running tests)
+cmake --install build
 ```
 
-The repository text files have been normalized to LF once. Day-to-day line
-ending enforcement should rely on staged/changed-file hooks and CI; rerun the
-full mixed-line-ending hook only for intentional repository-wide normalization.
+### Common Build Options
 
-## PR Self-Check
+- `-DBUILD_TESTING=ON` - Enable unit tests (required for testing)
+- `-DENABLE_LCAO=ON/OFF` - Enable/disable LCAO calculations (default: ON)
+- `-DUSE_CUDA=ON` - Enable CUDA support
+- `-DUSE_ROCM=ON` - Enable ROCm/HIP support
+- `-DUSE_OPENMP=ON/OFF` - Enable OpenMP (default: ON)
+- `-DENABLE_COVERAGE=ON` - Enable code coverage (sets Debug build)
+- `-DENABLE_ASAN=ON` - Enable AddressSanitizer (sets RelWithDebInfo build)
+- `-DCMAKE_BUILD_TYPE=Debug/Release/RelWithDebInfo` - Build type
+- `-DENABLE_DEEPKS=ON` - Enable DeePKS functionality
+- `-DENABLE_LIBXC=ON` - Enable LibXC functionality
+- `-DUSE_ELPA=ON/OFF` - Enable ELPA diagonalization (default: ON)
+- `-DENABLE_LIBRI=ON` - Enable EXX with LibRI
+- `-DENABLE_PAW=ON` - Enable PAW calculations
+- `-DMKLROOT=$MKLROOT` - Use Intel MKL for math libraries
 
-- Confirm the PR body states exact commands run, whether they passed or failed,
-  and why any expected check could not be run.
-- Keep warning rationales concrete. For example, a header include warning can be
-  acceptable when the header owns a value member that requires the complete type.
-- Keep historical-debt notes separate from new deterministic errors introduced
-  by the PR.
+### Build Variants
+
+The executable name depends on build configuration:
+- `abacus` - LCAO enabled, MPI enabled (default)
+- `abacus_pw` - LCAO disabled, MPI enabled
+- `abacus_serial` - LCAO enabled, MPI disabled
+- `abacus_pw_serial` - LCAO disabled, MPI disabled
+
+## Testing
+
+### Unit Tests
+
+Unit tests use GoogleTest framework and are located in `source/*/test` directories.
+
+```bash
+# Build with unit tests enabled
+cmake -B build -DBUILD_TESTING=ON
+cmake --build build -j${nproc}
+cmake --install build  # REQUIRED before running tests
+
+# Run all tests
+cd build
+ctest -V
+
+# Run specific test by name
+ctest -R <test-name>
+
+# Run tests matching pattern
+ctest -R <pattern>
+
+# Build specific unit test
+cmake --build build -j${nproc} --target ${unit_test_name}
+```
+
+Unit test executables are located in `build/source/${module_name}/test` (or `test_parallel`, `test_pw` for specialized tests).
+
+### Integration Tests
+
+Integration tests are in `tests/integrate/` directory. Each test case is a subdirectory with input files (INPUT, STRU, KPT) and reference results (result.ref).
+
+```bash
+# Run all integration tests
+cd tests/integrate
+bash Autotest.sh
+
+# Run specific test case
+cd tests/integrate/<test_case_name>
+bash ../Single_job.sh
+
+# Run with custom parameters
+bash Autotest.sh -a /path/to/abacus -n 4 -t 0.0000001
+
+# Generate reference results for new test
+bash Autotest.sh -g -r <test_case_name>
+```
+
+Key Autotest.sh options:
+- `-a <path>` - ABACUS executable path (default: abacus)
+- `-n <num>` - Number of MPI processes (default: 4)
+- `-t <threshold>` - Energy threshold in eV (default: 0.0000001)
+- `-c <accuracy>` - Check accuracy (default: 8)
+- `-g` - Generate reference results
+- `-r <regex>` - Test case name regex filter
+- `-f <file>` - Test cases file (default: CASES_CPU.txt)
+
+## Code Style and Formatting
+
+### Formatting
+
+- Use `clang-format` with the `.clang-format` file in root directory
+- Based on Microsoft style with customizations
+- 4-space indentation, no tabs
+- Left-aligned pointers (`int* ptr` not `int *ptr`)
+- Sort includes and using declarations
+
+### Documentation
+
+- Doxygen comments for documentation (Javadoc style preferred)
+- Comment only in `.h` files for Doxygen visibility
+- Use `@param` for parameters, `\f$...\f$` for inline formulas
+
+### Code Conventions
+
+**Naming:**
+- Classes: PascalCase (e.g., `HSolver`, `Matrix`)
+- Functions: snake_case (e.g., `solve_hamiltonian`, `calculate_energy`)
+- Variables: snake_case (e.g., `num_bands`, `ecutwfc`)
+- Constants: UPPER_SNAKE_CASE (e.g., `MAX_ITERATIONS`)
+- Private members: trailing underscore (e.g., `num_bands_`)
+
+**Imports and Includes:**
+- System headers first, then project headers
+- Use angle brackets for system headers, quotes for project headers
+- Group includes: C standard library, C++ standard library, external libraries, internal headers
+- Sort includes alphabetically within groups
+
+**Types:**
+- Use `double` for floating-point by default, `float` only when memory is critical
+- Use `std::complex<double>` for complex numbers
+- Prefer `std::vector` over C-style arrays
+- Use `size_t` for sizes and indices
+- Use `const` and references where appropriate
+
+**Error Handling:**
+- Use assertions (`assert()`) for internal invariants
+- Return error codes or use exceptions for recoverable errors
+- Log errors using the existing logging infrastructure
+- Validate input parameters at function boundaries
+
+**Templates:**
+- Use templates for generic algorithms and data structures
+- Provide explicit instantiations for common types
+- Use `template <>` for specializations
+
+**Memory Management:**
+- Use RAII principles with smart pointers (`std::unique_ptr`, `std::shared_ptr`)
+- Avoid raw `new`/`delete` when possible
+- Follow the Rule of Three/Five for classes managing resources
+
+**Parallelization:**
+- Use MPI for distributed memory parallelization
+- Use OpenMP for shared memory parallelization
+- Follow existing patterns for communicator splitting
+- Be careful with global variables in parallel contexts
+
+### Module Structure
+
+The source code is organized into modules under `source/`:
+
+**Core Infrastructure:**
+- `module_base/` - Mathematical library interfaces, data structures, parallelization, utilities
+- `module_container/` - Container module for data storage and operations
+- `module_parameter/` - Input parameters and global variables
+
+**Basis Sets:**
+- `module_basis/module_pw/` - Plane wave basis
+- `module_basis/module_nao/` - Numerical atomic orbital basis
+- `module_basis/module_ao/` - Legacy atomic orbital basis
+
+**Cell and Structure:**
+- `module_cell/` - Unit cell definition and operations
+- `module_cell/module_neighbor/` - Neighbor finding
+- `module_cell/module_symmetry/` - Symmetry operations
+
+**Electronic Structure:**
+- `module_elecstate/` - Electronic state definition and operations
+- `module_elecstate/module_charge/` - Charge density calculation and mixing
+- `module_elecstate/potentials/` - Potential calculations
+- `module_psi/` - Wave function definition and operations
+
+**Hamiltonians:**
+- `module_hamilt_general/` - General Hamiltonian components
+- `module_hamilt_pw/` - PW-specific Hamiltonians
+- `module_hamilt_lcao/` - LCAO-specific Hamiltonians
+
+**Solvers and Drivers:**
+- `module_hsolver/` - Hamiltonian diagonalization methods
+- `module_esolver/` - Task-specific workflow drivers
+- `module_md/` - Molecular dynamics
+- `module_relax/` - Structural optimization
+
+**I/O:**
+- `module_io/` - INPUT file reading and property output
+
+## Development Workflow
+
+### Adding New Features
+
+1. Read relevant source files first before proposing changes
+2. Follow existing code patterns in the module
+3. Add unit tests in `source/${module}/test/` using GoogleTest
+4. Add integration tests in `tests/integrate/` if needed
+5. Update CMakeLists.txt if adding new source files or tests
+6. Ensure code follows clang-format style
+
+### Important Notes
+
+- Always run `cmake --install build` after building and before running tests
+- For PW calculations, set `pw_seed 1` in INPUT file for reproducible tests
+- Integration tests should run in < 20 seconds (reduce atoms, k-points, ecutwfc, steps)
+- Pseudopotential and orbital files go in `tests/PP_ORB/`
+- Use relative paths in INPUT for `pseudo_dir` and `orb_dir`
+- The main development branch is `develop`, not `main` or `master`
+
+### Commit Message Format
+
+Follow Conventional Commits specification:
+
+```
+<type>[optional scope]: <description>
+
+[optional body]
+
+[optional footer]
+```
+
+Types: `Feature`, `Fix`, `Docs`, `Style`, `Refactor`, `Perf`, `Test`, `Build`, `CI`, `Revert`
+
+Example:
+```
+Fix(lcao): use correct scalapack interface
+
+`pzgemv_` and `pzgemm_` used `double*` for alpha and beta parameters
+but not `complex*`, this would cause error in GNU compiler.
+
+Fix #753.
+```

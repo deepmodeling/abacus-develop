@@ -87,6 +87,8 @@ struct Input_para
     bool pseudo_mesh = false;               ///< 0: use msh to normalize radial wave functions; 1:
                                             ///< use mesh, which is used in QE.
     int nspin = 1;                          ///< LDA ; LSDA ; non-linear spin
+    int gga_grad = 3;                       ///< GGA gradient method for noncollinear spin (nspin=4): 1=collinear approx, 2=projected div(h), 3=Scalmani-Frisch transform (default, most accurate)
+    std::string device_memory_mode = "";    ///< GPU memory mode: "" (auto), "full_gpu" (all on GPU), "paged" (CPU storage + k-point paging)
     int pw_diag_nmax = 50;
     double pw_diag_thr = 0.01;      ///< used in cg method
     bool diago_smooth_ethr = false; ///< smooth ethr for iter methods
@@ -614,18 +616,23 @@ struct Input_para
     bool decay_grad_switch = false; ///< the switch to use the local approximation of gradient
                                     ///< decay, 0: no local approximation; 1: apply the method
     double sc_thr = 1e-06;          ///< threshold for spin-constrained DFT in uB
-    int nsc = 100;                  ///< maximum number of inner lambda loop
+    int nsc = 5;                  ///< maximum number of inner lambda loop
     int nsc_min = 2;                ///< minimum number of inner lambda loop
     double alpha_trial = 0.01;      ///< initial trial step size for lambda in eV/uB^2
     double sccut = 3.0;             ///< restriction of step size in eV/uB
-    double sc_scf_thr = 1e-3;       ///< minimum number of outer scf loop before initial lambda loop
+    double sc_scf_thr = 10;       ///< density error threshold for activating the lambda loop in spin-constrained DFT
+    std::string sc_scf_thr_mode = "immediate"; ///< controls when the lambda loop activates: "threshold" (drho<sc_scf_thr), "immediate" (from iter>=2), or "off" (never activate)
+    int sc_dir_phase1_steps = 5;    ///< number of Phase 1 iterations in direction_only two-phase strategy for collinear (nspin=2)
     double sc_drop_thr = 1e-3;      ///< threshold for lambda-loop threshold cutoff in spin-constrained DFT
-    std::string sc_lambda_strategy = "bfgs";  ///< lambda update strategy: bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, linear_scan
+    std::string sc_lambda_strategy = "bfgs";  ///< lambda update strategy: bfgs or linear_scan
     bool sc_direction_only = false; ///< only optimize the direction of magnetization
     // linear_scan parameters
     double sc_scan_lambda_start = 0.0;  ///< start value for lambda scan (eV/uB)
     double sc_scan_lambda_end = 1.0;    ///< end value for lambda scan (eV/uB)
     int sc_scan_steps = 20;             ///< number of steps in lambda scan
+    std::string sc_strategy = "normal"; ///< DeltaSpin execution strategy: "fast" (subspace), "accuracy" (full), "normal" (threshold-triggered)
+    std::string sc_acceleration_mode = "off"; ///< acceleration mode: "off", "first_order", "subspace"
+    double sc_acceleration_rms_thr = -1.0;    ///< RMS threshold (uB) to activate acceleration, <0 disables
 
     // ==============   #Parameters (18.Quasiatomic Orbital analysis) =========
     ///<==========================================================

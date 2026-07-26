@@ -1,0 +1,372 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: a73815cb4 (Tue Dec 17 17:21:15 2024 +0800)
+
+ Wed Dec 18 12:07:47 2024
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 32 * 32 * 32
+ UNIFORM GRID DIM(BIG)   : 8 * 8 * 8
+ DONE(0.0597137  SEC) : SETUP UNITCELL
+ DONE(0.0660071  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  NBASE       
+ 4       1000            12          108         
+ ---------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ---------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Fe      4s2p2d1f-7au    27          2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0826765  SEC) : INIT PLANEWAVE
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: nks (1000) is not divisible by kpar (12).
+ This may lead to poor load balance. It is strongly suggested to
+ set nks to be divisible by kpar, but if this is really what
+ you want, please ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(0.363737   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp819
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0225831 0.0225831
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp1053
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0225831 0.0225831
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1     -3.80e-14   1.58e-14   4.48e-02   4.49e-02  -6.81665613e+03   0.00000000e+00   2.0174e-02   5.23
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp819
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0318899 0.0318899
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp1053
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0318899 0.0318899
+ GE2     -6.78e-14  -3.88e-14   6.22e-02   6.28e-02  -6.81663486e+03   2.12724921e-02   1.4667e-02   4.17
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp819
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0790287 0.0790287
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp1053
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0790287 0.0790287
+ GE3     -2.53e-13  -1.81e-13   1.53e-01   1.55e-01  -6.82182332e+03  -5.18846307e+00   6.5127e-03   4.27
+ SCF restart after this step!
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.128735 0.128735
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0000000000
+ATOM      2         0.0000000000         0.0000000000         0.0000000000
+initial spin (uB): 
+ATOM      1        -0.0000000000        -0.0000000000         0.1287347070
+ATOM      2        -0.0000000000        -0.0000000000         0.1287347070
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  3 -- 1           RMS = 0.108735     TIME(s) = 3.86308    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp250
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.126019 0.126019
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp154
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0199971 0.0199971
+Step (Outer -- Inner) =  3 -- 2           RMS = 2.9177e-06     TIME(s) = 6.49113    
+Meet convergence criterion ( < 0.000108735 ), exit.       Total TIME(s) = 10.3542
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000000000        -0.0000000000         0.0199970823
+ATOM      2        -0.0000000000        -0.0000000000         0.0199970823
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000000000        -0.0000000000         0.0435351888
+ATOM      2        -0.0000000000        -0.0000000000         0.0435351888
+Inner optimization for lambda ends.
+===============================================================================
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp819
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0199971 0.0199971
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp1053
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0672224 0.0672224
+ GE4     -4.83e-14  -2.31e-13   3.87e-02   4.38e-02  -6.81665362e+03   5.16970466e+00   7.5125e-03  11.95
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 -0.0507522 -0.0507522
+initial lambda (eV/uB): 
+ATOM      1        -0.0000000000        -0.0000000000         0.0435351888
+ATOM      2        -0.0000000000        -0.0000000000         0.0435351888
+initial spin (uB): 
+ATOM      1         0.0000000000         0.0000000000        -0.0507522176
+ATOM      2         0.0000000000         0.0000000000        -0.0507522176
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  4 -- 1           RMS = 0.0707522     TIME(s) = 4.00432    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp250
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 -0.048976 -0.048976
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp154
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0199742 0.0199742
+Step (Outer -- Inner) =  4 -- 2           RMS = 2.58099e-05     TIME(s) = 6.78037    
+Meet convergence criterion ( < 7.07522e-05 ), exit.       Total TIME(s) = 10.7847
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000000000        -0.0000000000         0.0199741901
+ATOM      2         0.0000000000        -0.0000000000         0.0199741901
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000000000         0.0000000000         0.0153526994
+ATOM      2        -0.0000000000         0.0000000000         0.0153526994
+Inner optimization for lambda ends.
+===============================================================================
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp819
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0199742 0.0199742
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp1053
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0536713 0.0536713
+ GE5      1.56e-13   2.24e-13   3.86e-02   4.03e-02  -6.81664964e+03   3.97929984e-03   2.9033e-03  12.41
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 -0.00472705 -0.00472705
+initial lambda (eV/uB): 
+ATOM      1        -0.0000000000         0.0000000000         0.0153526994
+ATOM      2        -0.0000000000         0.0000000000         0.0153526994
+initial spin (uB): 
+ATOM      1         0.0000000000        -0.0000000000        -0.0047270460
+ATOM      2         0.0000000000        -0.0000000000        -0.0047270460
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  5 -- 1           RMS = 0.024727     TIME(s) = 4.00229    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp250
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 -0.00410474 -0.00410474
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp154
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0199982 0.0199982
+Step (Outer -- Inner) =  5 -- 2           RMS = 1.77044e-06     TIME(s) = 6.88123    
+Meet convergence criterion ( < 2.4727e-05 ), exit.       Total TIME(s) = 10.8835
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000000000        -0.0000000000         0.0199982296
+ATOM      2        -0.0000000000        -0.0000000000         0.0199982296
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000000000        -0.0000000000         0.0055274452
+ATOM      2        -0.0000000000        -0.0000000000         0.0055274452
+Inner optimization for lambda ends.
+===============================================================================
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp819
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0199982 0.0199982
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp1053
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0398872 0.0398872
+ GE6     -2.04e-13  -7.36e-13   3.87e-02   3.96e-02  -6.81664894e+03   7.00317941e-04   9.0534e-04  12.48
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0203282 0.0203282
+initial lambda (eV/uB): 
+ATOM      1        -0.0000000000        -0.0000000000         0.0055274452
+ATOM      2        -0.0000000000        -0.0000000000         0.0055274452
+initial spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0203282458
+ATOM      2         0.0000000000         0.0000000000         0.0203282458
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  6 -- 1           RMS = 0.000328246     TIME(s) = 4.02909    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp250
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.02032 0.02032
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp154
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.02 0.02
+Step (Outer -- Inner) =  6 -- 2           RMS = 1.58831e-10     TIME(s) = 6.76381    
+Meet convergence criterion ( < 3.28246e-07 ), exit.       Total TIME(s) = 10.7929
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1        -0.0000000000        -0.0000000000         0.0199999998
+ATOM      2        -0.0000000000        -0.0000000000         0.0199999998
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1         0.0000000000         0.0000000000         0.0056576914
+ATOM      2         0.0000000000         0.0000000000         0.0056576914
+Inner optimization for lambda ends.
+===============================================================================
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp819
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.02 0.02
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp1053
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0322315 0.0322315
+ GE7      1.50e-12   6.63e-12   3.89e-02   3.96e-02  -6.81664897e+03  -2.64403952e-05   1.0243e-04  12.39
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-07
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0199189 0.0199189
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0056576914
+ATOM      2         0.0000000000         0.0000000000         0.0056576914
+initial spin (uB): 
+ATOM      1        -0.0000000000        -0.0000000000         0.0199189173
+ATOM      2        -0.0000000000        -0.0000000000         0.0199189173
+target spin (uB): 
+ATOM      1         0.0000000000         0.0000000000         0.0200000000
+ATOM      2         0.0000000000         0.0000000000         0.0200000000
+Step (Outer -- Inner) =  7 -- 1           RMS = 8.10827e-05     TIME(s) = 3.93667    
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp250
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.019921 0.019921
+/abacus-develop/source/module_hamilt_lcao/module_deltaspin/lambda_loop.cpp154
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.02 0.02
+Step (Outer -- Inner) =  7 -- 2           RMS = 3.39354e-11     TIME(s) = 6.88928    
+Meet convergence criterion ( < 1e-07 ), exit.       Total TIME(s) = 10.826
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         0.0000000000        -0.0000000000         0.0200000000
+ATOM      2         0.0000000000        -0.0000000000         0.0200000000
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0000000000        -0.0000000000         0.0056255171
+ATOM      2        -0.0000000000        -0.0000000000         0.0056255171
+Inner optimization for lambda ends.
+===============================================================================
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp819
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.02 0.02
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp1053
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0322315 0.0322315
+ GE8     -4.32e-12  -1.94e-11   3.88e-02   3.96e-02  -6.81664897e+03   8.81793348e-07   6.2690e-05  12.44
+ >> Leave SCF iteration.
+ * * * * * *
+/abacus-develop/source/module_esolver/esolver_ks_lcao.cpp1253
+/abacus-develop/source/module_hamilt_lcao/hamilt_lcaodft/operator_lcao/dspin_lcao.cpp479 0.0322315 0.0322315
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+       785.5147025586        -0.0000000001         0.0000000001 
+        -0.0000000001       785.5147025589         0.0000000001 
+         0.0000000001         0.0000000001       785.5115488556 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 785.513651 KBAR
+
+TIME STATISTICS
+----------------------------------------------------------------------------
+    CLASS_NAME                NAME            TIME/s  CALLS   AVG/s  PER/%  
+----------------------------------------------------------------------------
+                   total                      82.89  9        9.21   100.00 
+ Driver            reading                    0.01   1        0.01   0.02   
+ Input_Conv        Convert                    0.00   1        0.00   0.00   
+ Driver            driver_line                82.88  1        82.88  99.98  
+ UnitCell          check_tau                  0.00   1        0.00   0.00   
+ ESolver_KS_LCAO   before_all_runners         0.29   1        0.29   0.35   
+ PW_Basis_Sup      setuptransform             0.00   1        0.00   0.00   
+ PW_Basis_Sup      distributeg                0.00   1        0.00   0.00   
+ mymath            heapsort                   0.00   3        0.00   0.00   
+ PW_Basis_K        setuptransform             0.01   1        0.01   0.01   
+ PW_Basis_K        distributeg                0.00   1        0.00   0.00   
+ PW_Basis          setup_struc_factor         0.00   1        0.00   0.00   
+ NOrbital_Lm       extra_uniform              0.06   9        0.01   0.07   
+ Mathzone_Add1     SplineD2                   0.00   9        0.00   0.00   
+ Mathzone_Add1     Cubic_Spline_Interpolation 0.00   9        0.00   0.01   
+ Mathzone_Add1     Uni_Deriv_Phi              0.05   9        0.01   0.06   
+ ppcell_vl         init_vloc                  0.00   1        0.00   0.01   
+ Ions              opt_ions                   82.44  1        82.44  99.46  
+ ESolver_KS_LCAO   runner                     75.53  1        75.53  91.12  
+ ESolver_KS_LCAO   before_scf                 0.06   1        0.06   0.07   
+ ESolver_KS_LCAO   beforesolver               0.04   1        0.04   0.05   
+ ESolver_KS_LCAO   set_matrix_grid            0.01   1        0.01   0.01   
+ atom_arrange      search                     0.00   1        0.00   0.00   
+ Grid_Technique    init                       0.01   1        0.01   0.01   
+ Grid_BigCell      grid_expansion_index       0.00   2        0.00   0.00   
+ Record_adj        for_2d                     0.00   1        0.00   0.00   
+ Grid_Driver       Find_atom                  0.00   46       0.00   0.00   
+ LCAO_domain       grid_prepare               0.00   1        0.00   0.00   
+ Veff              initialize_HR              0.00   1        0.00   0.00   
+ OverlapNew        initialize_SR              0.00   1        0.00   0.00   
+ EkineticNew       initialize_HR              0.00   1        0.00   0.00   
+ NonlocalNew       initialize_HR              0.00   1        0.00   0.00   
+ Charge            set_rho_core               0.00   1        0.00   0.01   
+ PW_Basis_Sup      recip2real                 0.01   169      0.00   0.02   
+ PW_Basis_Sup      gathers_scatterp           0.01   169      0.00   0.01   
+ Charge            atomic_rho                 0.01   1        0.01   0.01   
+ Potential         init_pot                   0.01   1        0.01   0.01   
+ Potential         update_from_charge         0.05   9        0.01   0.06   
+ Potential         cal_fixed_v                0.00   1        0.00   0.00   
+ PotLocal          cal_fixed_v                0.00   1        0.00   0.00   
+ Potential         cal_v_eff                  0.05   9        0.01   0.06   
+ H_Hartree_pw      v_hartree                  0.00   9        0.00   0.00   
+ PW_Basis_Sup      real2recip                 0.01   153      0.00   0.01   
+ PW_Basis_Sup      gatherp_scatters           0.01   153      0.00   0.01   
+ PotXC             cal_v_eff                  0.05   9        0.01   0.06   
+ XC_Functional     v_xc                       0.06   11       0.01   0.07   
+ Potential         interpolate_vrs            0.00   9        0.00   0.00   
+ H_Ewald_pw        compute_ewald              0.00   1        0.00   0.00   
+ Charge_Mixing     init_mixing                0.00   2        0.00   0.00   
+ HSolverLCAO       solve                      48.64  18       2.70   58.68  
+ HSolverLCAO       parakSolve                 43.89  18       2.44   52.95  
+ Parallel_K2D      distribute_hsk             31.63  1512     0.02   38.16  
+ HamiltLCAO        updateHk                   22.15  18000    0.00   26.72  
+ OperatorLCAO      init                       5.60   72000    0.00   6.75   
+ Veff              contributeHR               4.72   8        0.59   5.70   
+ Gint_interface    cal_gint                   7.88   44       0.18   9.51   
+ Gint_interface    cal_gint_vlocal            4.24   32       0.13   5.11   
+ Gint_Tools        cal_psir_ylm               0.56   2560     0.00   0.67   
+ Gint_k            transfer_pvpR              0.48   8        0.06   0.58   
+ OverlapNew        calculate_SR               0.03   1        0.03   0.04   
+ OverlapNew        contributeHk               5.54   18000    0.00   6.68   
+ EkineticNew       contributeHR               0.04   8        0.00   0.04   
+ EkineticNew       calculate_HR               0.03   1        0.03   0.04   
+ NonlocalNew       contributeHR               0.81   8        0.10   0.97   
+ NonlocalNew       calculate_HR               0.80   1        0.80   0.97   
+ DeltaSpin         cal_pre_HR                 0.09   1        0.09   0.11   
+ OperatorLCAO      contributeHk               10.78  18000    0.00   13.01  
+ DiagoElpa         elpa_solve                 7.59   1512     0.01   9.16   
+ HSolverLCAO       collect_psi                3.79   1512     0.00   4.58   
+ ElecStateLCAO     psiToRho                   12.71  8        1.59   15.34  
+ elecstate         cal_dm                     9.09   24       0.38   10.97  
+ psiMulPsiMpi      pdgemm                     9.01   24000    0.00   10.87  
+ DensityMatrix     cal_DMR                    20.28  24       0.85   24.47  
+ Gint              transfer_DMR               0.15   8        0.02   0.18   
+ Gint_interface    cal_gint_rho               2.54   8        0.32   3.07   
+ SpinConstrain     cal_MW                     0.04   32       0.00   0.05   
+ Charge_Mixing     get_drho                   0.00   8        0.00   0.00   
+ Charge_Mixing     if_scf_oscillate           24.83  6        4.14   29.95  
+ Charge            mix_rho                    0.01   6        0.00   0.01   
+ Charge            Broyden_mixing             0.00   6        0.00   0.00   
+ Charge_Mixing     allocate_mixing_dmr        0.00   1        0.00   0.00   
+ DensityMatrix     save_DMR                   0.00   5        0.00   0.00   
+ SpinConstrain     cal_mw_from_lambda         53.64  15       3.58   64.71  
+ SpinConstrain     update_psi_charge          7.96   5        1.59   9.60   
+ Charge_Mixing     mix_dmr                    0.01   5        0.00   0.02   
+ ESolver_KS_LCAO   cal_force                  6.91   1        6.91   8.34   
+ Force_Stress_LCAO getForceStress             6.91   1        6.91   8.34   
+ Forces            cal_force_loc              0.00   1        0.00   0.00   
+ Forces            cal_force_ew               0.00   1        0.00   0.00   
+ Forces            cal_force_cc               0.01   1        0.01   0.01   
+ Forces            cal_force_scc              0.00   1        0.00   0.01   
+ Stress_Func       stress_loc                 0.01   1        0.01   0.01   
+ Stress_Func       stress_har                 0.00   1        0.00   0.00   
+ Stress_Func       stress_ewa                 0.00   1        0.00   0.00   
+ Stress_Func       stress_cc                  0.02   1        0.02   0.02   
+ Stress_Func       stress_gga                 0.00   1        0.00   0.00   
+ Force_LCAO        ftable                     2.70   1        2.70   3.25   
+ Force_LCAO        allocate                   0.00   1        0.00   0.00   
+ LCAO_domain       build_ST_new               0.31   2        0.16   0.38   
+ Force_LCAO_k      allocate_k                 0.00   1        0.00   0.00   
+ Force_LCAO        cal_fedm                   1.28   1        1.28   1.54   
+ Force_LCAO_k      cal_edm_2d                 0.00   1        0.00   0.00   
+ Force_LCAO        cal_ftvnl_dphi             0.00   1        0.00   0.00   
+ Force_LCAO        cal_fvl_dphi               1.10   1        1.10   1.33   
+ Gint_interface    cal_gint_force             1.10   4        0.28   1.33   
+ Gint_Tools        cal_dpsir_ylm              0.25   256      0.00   0.30   
+ Gint_Tools        cal_dpsirr_ylm             0.12   256      0.00   0.15   
+ DensityMatrix     cal_DMR_full               0.89   1        0.89   1.07   
+ NonlocalNew       cal_force_stress           2.79   1        2.79   3.37   
+ DeltaSpin         cal_force_stress           0.49   1        0.49   0.59   
+ ESolver_KS_LCAO   cal_stress                 0.00   1        0.00   0.00   
+ ESolver_KS_LCAO   after_all_runners          0.14   1        0.14   0.17   
+ ModuleIO          write_istate_info          0.14   1        0.14   0.17   
+----------------------------------------------------------------------------
+
+
+ START  Time  : Wed Dec 18 12:07:47 2024
+ FINISH Time  : Wed Dec 18 12:09:09 2024
+ TOTAL  Time  : 82
+ SEE INFORMATION IN : OUT.ABACUS/

@@ -1,0 +1,48 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 687bc7819 (Fri Dec 20 16:44:03 2024 +0800)
+
+ Sat Dec 28 20:55:09 2024
+ MAKE THE DIR         : OUT.SiCCH2/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+ UNIFORM GRID DIM        : 135 * 135 * 135
+ UNIFORM GRID DIM(BIG)   : 45 * 45 * 45
+ DONE(0.06331    SEC) : SETUP UNITCELL
+ DONE(0.0952001  SEC) : SYMMETRY
+ DONE(0.184331   SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  NBASE       
+ 2       2               12          868         
+ ---------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ---------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Si      2s2p1d-7au      13          62          
+ C       2s2p1d-7au      13          4           
+ H       2s1p-6au        5           2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.20036    SEC) : INIT PLANEWAVE
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(2.4501     SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1      5.93e-02   3.50e-01  -7.26398058e+03   0.00000000e+00   1.6381e-01   4.98
+ GE2      8.11e-03   1.51e-01  -7.26795583e+03  -3.97525246e+00   9.6812e-02   4.57
+ GE3     -1.04e-03   4.28e-02  -7.26856279e+03  -6.06954125e-01   6.3741e-02   4.56
+ GE4     -1.64e-03   4.44e-02  -7.26942545e+03  -8.62661508e-01   2.4332e-02   4.56
+ GE5     -4.13e-03   2.84e-02  -7.26982076e+03  -3.95304954e-01   4.7903e-03   4.56

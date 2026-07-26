@@ -1,0 +1,192 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 0a08fe05e (Thu Jun 12 12:13:50 2025 +0800)
+
+ Thu Jan  8 21:45:21 2026
+ MAKE THE DIR         : OUT.test1/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 64 * 64 * 64
+ UNIFORM GRID DIM(BIG)   : 64 * 64 * 64
+ DONE(0.071885   SEC) : SETUP UNITCELL
+ DONE(0.0730039  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 2       72              16          
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ O       2           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.0776     SEC) : INIT PLANEWAVE
+ DONE(0.102416   SEC) : LOCAL POTENTIAL
+ DONE(0.149009   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 11.9048
+ DONE(0.321255   SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : file
+ DONE(0.684279   SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 1
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1      8.03e+00   8.04e+00  -7.68897560e+03   0.00000000e+00   8.7175e-02  10.21
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 2
+ DS2      8.00e+00   8.01e+00  -7.68552021e+03   3.45538859e+00   1.6282e-02   2.44
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 3
+ DS3      8.00e+00   8.01e+00  -7.68555391e+03  -3.36909739e-02   5.7917e-03   1.96
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 4
+ DS4      8.00e+00   8.01e+00  -7.68555746e+03  -3.55447756e-03   2.1822e-03   2.05
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 5
+ DS5      8.00e+00   8.01e+00  -7.68555798e+03  -5.23244358e-04   1.2147e-03   2.10
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 6
+ DS6      8.00e+00   8.01e+00  -7.68555835e+03  -3.66931111e-04   7.9600e-04   1.99
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 7
+ DS7      8.00e+00   8.01e+00  -7.68555850e+03  -1.51310326e-04   4.5834e-04   2.31
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 8
+ DS8      8.00e+00   8.01e+00  -7.68555858e+03  -8.29637332e-05   3.1962e-04   1.92
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 9
+ DS9      8.00e+00   8.01e+00  -7.68555864e+03  -5.58047347e-05   2.3488e-04   2.01
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 10
+ DS10     8.00e+00   8.01e+00  -7.68555853e+03   1.07571727e-04   1.8188e-04   2.08
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 11
+ DS11     8.00e+00   8.01e+00  -7.68555883e+03  -2.93387310e-04   1.2498e-07   2.35
+/abacus-develop/source/module_esolver/esolver_ks_pw.cpp680 0 12
+ DS12     8.00e+00   8.01e+00  -7.68555883e+03  -7.72791761e-06   2.2965e-08   3.02
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------
+ TOTAL-STRESS (KBAR)                                            
+----------------------------------------------------------------
+       131.7891340419       -17.5692179672       -24.1448294663 
+       -17.5692179672       131.7900891584       -24.1441379236 
+       -24.1448294663       -24.1441379236       172.6150896951 
+----------------------------------------------------------------
+ TOTAL-PRESSURE: 145.398104 KBAR
+
+TIME STATISTICS
+-----------------------------------------------------------------------------
+    CLASS_NAME                NAME             TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------------------
+                   total                       35.95  15       2.40   100.00 
+ Driver            reading                     0.01   1        0.01   0.04   
+ Input_Conv        Convert                     0.00   1        0.00   0.00   
+ Driver            driver_line                 35.93  1        35.93  99.96  
+ UnitCell          check_tau                   0.00   1        0.00   0.00   
+ PW_Basis_Sup      setuptransform              0.00   1        0.00   0.01   
+ PW_Basis_Sup      distributeg                 0.00   1        0.00   0.00   
+ mymath            heapsort                    0.00   3        0.00   0.00   
+ PW_Basis_K        setuptransform              0.00   1        0.00   0.01   
+ PW_Basis_K        distributeg                 0.00   1        0.00   0.00   
+ PW_Basis          setup_struc_factor          0.00   1        0.00   0.00   
+ ppcell_vnl        init                        0.00   1        0.00   0.01   
+ ppcell_vl         init_vloc                   0.02   1        0.02   0.05   
+ ppcell_vnl        init_vnl                    0.05   1        0.05   0.13   
+ WF_atomic         init_at_1                   0.17   1        0.17   0.48   
+ wavefunc          wfcinit                     0.00   1        0.00   0.00   
+ Ions              opt_ions                    35.62  1        35.62  99.09  
+ ESolver_KS_PW     runner                      34.84  1        34.84  96.91  
+ H_Ewald_pw        compute_ewald               0.01   1        0.01   0.02   
+ Charge            set_rho_core                0.01   1        0.01   0.04   
+ PW_Basis_Sup      recip2real                  0.04   163      0.00   0.10   
+ PW_Basis_Sup      gathers_scatterp            0.02   163      0.00   0.05   
+ ModuleIO          read_rhog                   0.00   1        0.00   0.00   
+ Potential         init_pot                    0.02   1        0.02   0.07   
+ Potential         update_from_charge          0.28   13       0.02   0.78   
+ Potential         cal_fixed_v                 0.00   1        0.00   0.00   
+ PotLocal          cal_fixed_v                 0.00   1        0.00   0.00   
+ Potential         cal_v_eff                   0.28   13       0.02   0.78   
+ H_Hartree_pw      v_hartree                   0.01   13       0.00   0.02   
+ PW_Basis_Sup      real2recip                  0.06   205      0.00   0.17   
+ PW_Basis_Sup      gatherp_scatters            0.04   205      0.00   0.11   
+ PotXC             cal_v_eff                   0.27   13       0.02   0.75   
+ XC_Functional     v_xc                        0.31   15       0.02   0.85   
+ Potential         interpolate_vrs             0.00   13       0.00   0.00   
+ OnsiteProj        cubspl_tabulate             0.00   2        0.00   0.00   
+ Charge_Mixing     init_mixing                 0.00   1        0.00   0.00   
+ ESolver_KS_PW     hamilt2density              34.16  12       2.85   95.02  
+ HSolverPW         solve                       33.93  12       2.83   94.39  
+ pp_cell_vnl       getvnl                      0.42   864      0.00   1.18   
+ Structure_Factor  get_sk                      0.20   3096     0.00   0.56   
+ OnsiteProj        getvnl                      0.00   864      0.00   0.00   
+ OnsiteProj        tabulate_atomic             0.00   1656     0.00   0.00   
+ wavefunc          diago_PAO_in_pw_k2          2.00   72       0.03   5.55   
+ WF_atomic         atomic_wfc                  0.02   72       0.00   0.05   
+ Diago_DavSubspace diag_once                   27.55  864      0.03   76.65  
+ Diago_DavSubspace first                       9.16   864      0.01   25.48  
+ DavSubspace       hpsi_func                   21.25  2839     0.01   59.10  
+ Operator          hPsi                        21.19  2839     0.01   58.96  
+ Operator          EkineticPW                  0.06   2839     0.00   0.16   
+ Operator          VeffPW                      19.69  2839     0.01   54.79  
+ PW_Basis_K        recip2real                  12.50  111366   0.00   34.78  
+ PW_Basis_K        gathers_scatterp            5.66   111366   0.00   15.75  
+ PW_Basis_K        real2recip                  9.37   80262    0.00   26.06  
+ PW_Basis_K        gatherp_scatters            4.64   80262    0.00   12.91  
+ Operator          NonlocalPW                  0.75   2839     0.00   2.08   
+ Nonlocal          add_nonlocal_pp             0.32   2839     0.00   0.89   
+ Operator          OnsiteProjPW                0.68   2839     0.00   1.90   
+ OnsiteProj        overlap                     0.77   3631     0.00   2.14   
+ FS_Nonlocal_tools cal_becp                    0.87   3919     0.00   2.41   
+ OnsiteProj        add_onsite_proj             0.11   2839     0.00   0.29   
+ Diago_DavSubspace cal_elem                    0.71   2839     0.00   1.98   
+ Diago_DavSubspace diag_zhegvx                 4.48   2839     0.00   12.48  
+ Diago_DavSubspace cal_grad                    13.38  1975     0.01   37.21  
+ Diago_DavSubspace check_update                0.00   1975     0.00   0.00   
+ Diago_DavSubspace last                        0.43   1596     0.00   1.19   
+ Diago_DavSubspace refresh                     0.17   732      0.00   0.47   
+ ElecStatePW       psiToRho                    3.87   12       0.32   10.77  
+ Charge_Mixing     get_drho                    0.01   12       0.00   0.03   
+ Charge_Mixing     inner_product_recip_rho     0.00   12       0.00   0.00   
+ Charge            mix_rho                     0.01   11       0.00   0.04   
+ Charge            Broyden_mixing              0.00   11       0.00   0.01   
+ DFTU              cal_occ_pw                  0.22   11       0.02   0.62   
+ DFTU              copy_locale                 0.00   11       0.00   0.00   
+ Charge_Mixing     inner_product_recip_hartree 0.00   104      0.00   0.01   
+ DFTU              zero_locale                 0.00   10       0.00   0.00   
+ OnsiteProj        cal_occupation              0.02   1        0.02   0.06   
+ Forces            cal_force_loc               0.00   1        0.00   0.00   
+ Forces            cal_force_ew                0.00   1        0.00   0.00   
+ Forces            cal_force_nl                0.05   1        0.05   0.14   
+ FS_Nonlocal_tools cal_dbecp_f                 0.04   432      0.00   0.11   
+ Forces            cal_force_onsite            0.04   1        0.04   0.10   
+ Forces            cal_force_cc                0.04   1        0.04   0.10   
+ Forces            cal_force_scc               0.02   1        0.02   0.06   
+ Stress_PW         cal_stress                  0.64   1        0.64   1.77   
+ Stress_Func       stress_kin                  0.02   1        0.02   0.05   
+ Stress_Func       stress_har                  0.00   1        0.00   0.00   
+ Stress_Func       stress_ewa                  0.00   1        0.00   0.00   
+ Stress_Func       stress_gga                  0.01   1        0.01   0.03   
+ Stress_Func       stress_loc                  0.03   1        0.03   0.09   
+ Stress_Func       stress_cc                   0.06   1        0.06   0.16   
+ Stress_Func       stress_nl                   0.33   1        0.33   0.92   
+ FS_Nonlocal_tools cal_dbecp_s                 0.45   864      0.00   1.26   
+ Stress_Func       stress_onsite               0.18   1        0.18   0.50   
+ ModuleIO          write_istate_info           0.01   1        0.01   0.01   
+-----------------------------------------------------------------------------
+
+
+ START  Time  : Thu Jan  8 21:45:21 2026
+ FINISH Time  : Thu Jan  8 21:45:57 2026
+ TOTAL  Time  : 36
+ SEE INFORMATION IN : OUT.test1/

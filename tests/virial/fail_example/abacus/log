@@ -1,0 +1,192 @@
+[1735731329.831851] [e14r3n15:5118 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_0) returned 38: No space left on device
+[1735731329.834528] [e14r3n15:5118 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_1) returned 38: No space left on device
+[1735731329.837187] [e14r3n15:5118 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_2) returned 38: No space left on device
+[1735731329.839818] [e14r3n15:5118 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_3) returned 38: No space left on device
+[1735731329.840671] [e14r3n15:5118 :0]    ucp_context.c:690  UCX  WARN  network devices 'mlx5_0:1','mlx5_1:1','mlx5_2:1','mlx5_3:1' are not available, please use one or more of: 'eno1'(tcp), 'flannel.1'(tcp), 'ib0'(tcp), 'ib1'(tcp), 'ib2'(tcp), 'ib3'(tcp)
+[1735731329.847258] [e14r3n15:5118 :0]         parser.c:1600 UCX  WARN  unused env variables: UCX_IB_ADDR_TYPE, UCX_RC_MLX5_TIMEOUT... (set UCX_WARN_UNUSED_ENV_VARS=n to suppress this warning)
+[1735731330.447299] [e14r3n15:5119 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_0) returned 38: No space left on device
+[1735731330.449994] [e14r3n15:5119 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_1) returned 38: No space left on device
+[1735731330.452637] [e14r3n15:5119 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_2) returned 38: No space left on device
+[1735731330.455296] [e14r3n15:5119 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_3) returned 38: No space left on device
+[1735731330.456162] [e14r3n15:5119 :0]    ucp_context.c:690  UCX  WARN  network devices 'mlx5_0:1','mlx5_1:1','mlx5_2:1','mlx5_3:1' are not available, please use one or more of: 'eno1'(tcp), 'flannel.1'(tcp), 'ib0'(tcp), 'ib1'(tcp), 'ib2'(tcp), 'ib3'(tcp)
+[1735731330.465680] [e14r3n15:5119 :0]         parser.c:1600 UCX  WARN  unused env variables: UCX_IB_ADDR_TYPE, UCX_RC_MLX5_TIMEOUT... (set UCX_WARN_UNUSED_ENV_VARS=n to suppress this warning)
+[1735731330.600166] [e14r3n15:5121 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_0) returned 38: No space left on device
+[1735731330.615696] [e14r3n15:5121 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_1) returned 38: No space left on device
+[1735731330.634445] [e14r3n15:5121 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_2) returned 38: No space left on device
+[1735731330.654565] [e14r3n15:5121 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_3) returned 38: No space left on device
+[1735731330.655965] [e14r3n15:5121 :0]    ucp_context.c:690  UCX  WARN  network devices 'mlx5_0:1','mlx5_1:1','mlx5_2:1','mlx5_3:1' are not available, please use one or more of: 'eno1'(tcp), 'flannel.1'(tcp), 'ib0'(tcp), 'ib1'(tcp), 'ib2'(tcp), 'ib3'(tcp)
+[1735731330.662873] [e14r3n15:5121 :0]         parser.c:1600 UCX  WARN  unused env variables: UCX_IB_ADDR_TYPE, UCX_RC_MLX5_TIMEOUT... (set UCX_WARN_UNUSED_ENV_VARS=n to suppress this warning)
+[1735731330.683044] [e14r3n15:5120 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_0) returned 38: No space left on device
+[1735731330.700052] [e14r3n15:5120 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_1) returned 38: No space left on device
+[1735731330.708143] [e14r3n15:5120 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_2) returned 38: No space left on device
+[1735731330.723777] [e14r3n15:5120 :0]       ib_verbs.h:84   UCX  ERROR ibv_exp_query_device(mlx5_3) returned 38: No space left on device
+[1735731330.728407] [e14r3n15:5120 :0]    ucp_context.c:690  UCX  WARN  network devices 'mlx5_0:1','mlx5_1:1','mlx5_2:1','mlx5_3:1' are not available, please use one or more of: 'eno1'(tcp), 'flannel.1'(tcp), 'ib0'(tcp), 'ib1'(tcp), 'ib2'(tcp), 'ib3'(tcp)
+[1735731330.744780] [e14r3n15:5120 :0]         parser.c:1600 UCX  WARN  unused env variables: UCX_IB_ADDR_TYPE, UCX_RC_MLX5_TIMEOUT... (set UCX_WARN_UNUSED_ENV_VARS=n to suppress this warning)
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 2953a6f (Fri Sep 20 15:37:26 2024 +0800)
+
+ Wed Jan  1 19:35:30 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : GPU / Z100SM
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 2 for Ba: [Xe] 6s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 75 * 75 * 75
+ UNIFORM GRID DIM(BIG)   : 75 * 75 * 75
+ DONE(17.4612    SEC) : SETUP UNITCELL
+ DONE(17.4722    SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  
+ 1       172             4           
+ ---------------------------------------------------------
+ Use plane wave basis
+ ---------------------------------------------------------
+ ELEMENT NATOM       XC          
+ F       5           
+ Br      3           
+ Ba      8           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(17.558     SEC) : INIT PLANEWAVE
+ DONE(19.6767    SEC) : LOCAL POTENTIAL
+ DONE(20.001     SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 1526.05
+ DONE(21.1549    SEC) : INIT BASIS
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(24.994     SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER       ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1     -1.07304321e+04   0.00000000e+00   5.5405e-01  48.81
+ DS2     -1.07299926e+04   4.39566081e-01   1.7727e-01  10.02
+ DS3     -1.07305206e+04  -5.28060411e-01   2.2698e-02  21.29
+ DS4     -1.07306189e+04  -9.83095169e-02   1.3069e-02  25.62
+ DS5     -1.07306618e+04  -4.28752779e-02   1.0278e-03  20.77
+ DS6     -1.07306682e+04  -6.36285381e-03   2.6819e-04  17.95
+ DS7     -1.07306691e+04  -9.42143221e-04   4.4009e-05  13.40
+ DS8     -1.07306694e+04  -2.61599090e-04   6.3113e-06  16.54
+ DS9     -1.07306694e+04  -3.20872547e-05   7.5535e-07  16.07
+ DS10    -1.07306694e+04  -6.00799367e-06   2.6212e-07  19.65
+ DS11    -1.07306694e+04  -5.22745002e-07   6.7016e-08  13.81
+ DS12    -1.07306694e+04  -1.31068694e-07   8.5253e-09  14.53
+ >> Leave SCF iteration.
+ * * * * * *
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+                                                                                                                                        TOTAL-STRESS (KBAR)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ -27752794852854494276900802819914220088495960981718865590416814551961270537899585099337177718686491478121240164081975727162874043819769559257226254109293976240941400134865944020895611175827600395870301734187096118327597638554908915271470127140562968898417897080810094722098921472.0000000000   2378275733777567423511778162933289973537032472894798367460719002946248713522315233896169094042610321118618300784908573784094775726459154702539397775571427372196321048065833225326874942959783028469536053847397645944337817815819501479201436127311525542523197703717272443336785920.0000000000 -40090934532088795907572660374507205830784914517652778986729307552329327580082716248464752725525499436647740614454308313740570370811320322522541806690326832839663184045515617890563489523877377173502973874011350067299282058906474015920712383302297165133639389500166582278511656960.0000000000 
+   2378275733777567423511778162933289973537032472894798367460719002946248713522315233896169094042610321118618300784908573784094775726459154702539397775571427372196321048065833225326874942959783028469536053847397645944337817815819501479201436127311525542523197703717272443336785920.0000000000 -29485538685998809189460499890194925163518972837083695782483616974033037604684886742024886090857391149979680061942277002617554969743991606217063705988041607559388547113147819785794449062532917342769677756433455327964687458851950722369755843927407868127780769386352470336091455488.0000000000 -28063653705416049590372064885250993360398451028957563096203266285333118868226302635158014839005044788833705903508661708153400977345440283918672629770582648855676448694800180516893168644009211683721331428267884398371180668629929417291825627131353722312232358162026443132626796544.0000000000 
+ -40090934532088795907572660374507205830784914517652778986729307552329327580082716248464752725525499436647740614454308313740570370811320322522541806690326832839663184045515617890563489523877377173502973874011350067299282058906474015920712383302297165133639389500166582278511656960.0000000000 -28063653705416049590372064885250993360398451028957563096203266285333118868226302635158014839005044788833705903508661708153400977345440283918672629770582648855676448694800180516893168644009211683721331428267884398371180668629929417291825627131353722312232358162026443132626796544.0000000000 441922696596312422614243974685634631900713009386545653666080703330936589276904119163333743566801749308441333030249729601299774535388688752316415700667455308149543268223539063622284885699329591953361515001083449402351062939991840845143868540871078641330505556455752879205737562112.0000000000 
+----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ TOTAL-PRESSURE: 128228121019153044964095534845653394444390459673457379168953175645490240695149903486201995522434960488555868525788197626942034654356119309862114612262400595079594861419071895334409406875441865360462117579061325897909662697050103150769607252680513988401443477613629012917092352000.000000 KBAR
+
+TIME STATISTICS
+-----------------------------------------------------------------------------
+    CLASS_NAME                NAME             TIME/s  CALLS   AVG/s  PER/%  
+-----------------------------------------------------------------------------
+                   total                       291.66 15       19.44  100.00 
+ Driver            reading                     0.21   1        0.21   0.07   
+ Input_Conv        Convert                     0.12   1        0.12   0.04   
+ Driver            driver_line                 291.45 1        291.45 99.93  
+ UnitCell          check_tau                   0.00   1        0.00   0.00   
+ PW_Basis_Sup      setuptransform              0.02   1        0.02   0.01   
+ PW_Basis_Sup      distributeg                 0.00   1        0.00   0.00   
+ mymath            heapsort                    0.04   3        0.01   0.01   
+ PW_Basis_K        setuptransform              0.05   1        0.05   0.02   
+ PW_Basis_K        distributeg                 0.00   1        0.00   0.00   
+ PW_Basis          setup_struc_factor          0.44   1        0.44   0.15   
+ ppcell_vnl        init                        0.06   1        0.06   0.02   
+ ppcell_vl         init_vloc                   1.61   1        1.61   0.55   
+ ppcell_vnl        init_vnl                    0.32   1        0.32   0.11   
+ WF_atomic         init_at_1                   0.48   1        0.48   0.17   
+ wavefunc          wfcinit                     0.01   1        0.01   0.00   
+ Ions              opt_ions                    270.35 1        270.35 92.69  
+ ESolver_KS_PW     runner                      242.77 1        242.77 83.24  
+ H_Ewald_pw        compute_ewald               0.02   1        0.02   0.01   
+ Charge            set_rho_core                1.62   1        1.62   0.56   
+ PW_Basis_Sup      recip2real                  1.47   90       0.02   0.50   
+ PW_Basis_Sup      gathers_scatterp            0.13   90       0.00   0.04   
+ Charge            atomic_rho                  1.70   1        1.70   0.58   
+ Potential         init_pot                    0.49   1        0.49   0.17   
+ Potential         update_from_charge          6.18   13       0.48   2.12   
+ Potential         cal_fixed_v                 0.02   1        0.02   0.01   
+ PotLocal          cal_fixed_v                 0.02   1        0.02   0.01   
+ Potential         cal_v_eff                   6.15   13       0.47   2.11   
+ H_Hartree_pw      v_hartree                   0.48   13       0.04   0.17   
+ PW_Basis_Sup      real2recip                  1.76   122      0.01   0.60   
+ PW_Basis_Sup      gatherp_scatters            0.08   122      0.00   0.03   
+ PotXC             cal_v_eff                   5.65   13       0.43   1.94   
+ XC_Functional     v_xc                        6.52   15       0.43   2.24   
+ Potential         interpolate_vrs             0.00   13       0.00   0.00   
+ Charge_Mixing     init_mixing                 0.00   1        0.00   0.00   
+ ESolver_KS_PW     hamilt2density              231.90 13       17.84  79.51  
+ HSolverPW         solve                       231.88 13       17.84  79.50  
+ pp_cell_vnl       getvnl                      1.25   559      0.00   0.43   
+ Structure_Factor  get_sk                      0.58   1333     0.00   0.20   
+ WF_atomic         atomic_wfc                  2.91   43       0.07   1.00   
+ Diago_DavSubspace diag_once                   209.24 559      0.37   71.74  
+ Diago_DavSubspace first                       29.91  559      0.05   10.26  
+ DavSubspace       hpsi_func                   69.74  4296     0.02   23.91  
+ Operator          hPsi                        69.53  4296     0.02   23.84  
+ Operator          EkineticPW                  0.02   4296     0.00   0.01   
+ Operator          VeffPW                      54.17  4296     0.01   18.57  
+ PW_Basis_K        recip_to_real gpu           33.00  182088   0.00   11.31  
+ PW_Basis_K        real_to_recip gpu           30.83  136250   0.00   10.57  
+ Operator          NonlocalPW                  15.31  4296     0.00   5.25   
+ Nonlocal          add_nonlocal_pp             15.19  4296     0.00   5.21   
+ Diago_DavSubspace cal_elem                    0.15   4296     0.00   0.05   
+ Diago_DavSubspace diag_zhegvx                 94.80  4296     0.02   32.50  
+ Diago_DavSubspace cal_grad                    85.25  3737     0.02   29.23  
+ Diago_DavSubspace check_update                0.00   3737     0.00   0.00   
+ Diago_DavSubspace last                        6.94   1384     0.01   2.38   
+ Diago_DavSubspace refresh                     4.76   825      0.01   1.63   
+ ElecStatePW       psiToRho                    14.83  13       1.14   5.08   
+ Charge            rho_mpi                     0.04   13       0.00   0.01   
+ Charge            reduce_diff_pools           0.04   13       0.00   0.01   
+ Charge_Mixing     get_drho                    0.42   13       0.03   0.14   
+ Charge_Mixing     inner_product_recip_rho     0.01   13       0.00   0.01   
+ Charge            mix_rho                     0.41   11       0.04   0.14   
+ Charge            Broyden_mixing              0.13   11       0.01   0.04   
+ Charge_Mixing     inner_product_recip_hartree 0.12   104      0.00   0.04   
+ Forces            cal_force_loc               0.37   1        0.37   0.13   
+ Forces            cal_force_ew                0.36   1        0.36   0.12   
+ Forces            cal_force_nl                3.35   1        3.35   1.15   
+ FS_Nonlocal_tools cal_becp                    5.93   86       0.07   2.03   
+ FS_Nonlocal_tools cal_dbecp_f                 0.03   129      0.00   0.01   
+ Forces            cal_force_cc                0.82   1        0.82   0.28   
+ Forces            cal_force_scc               0.37   1        0.37   0.13   
+ Stress_PW         cal_stress                  22.31  1        22.31  7.65   
+ Stress_Func       stress_kin                  2.32   1        2.32   0.80   
+ Stress_Func       stress_har                  0.02   1        0.02   0.01   
+ Stress_Func       stress_ewa                  0.40   1        0.40   0.14   
+ Stress_Func       stress_gga                  0.28   1        0.28   0.09   
+ Stress_Func       stress_loc                  3.32   1        3.32   1.14   
+ Stress_Func       stress_cc                   0.51   1        0.51   0.18   
+ Stress_Func       stress_nl                   15.44  1        15.44  5.30   
+ FS_Nonlocal_tools cal_dbecp_s                 12.80  258      0.05   4.39   
+ ModuleIO          write_istate_info           0.14   1        0.14   0.05   
+-----------------------------------------------------------------------------
+
+
+ START  Time  : Wed Jan  1 19:35:30 2025
+ FINISH Time  : Wed Jan  1 19:40:22 2025
+ TOTAL  Time  : 292
+ SEE INFORMATION IN : OUT.ABACUS/

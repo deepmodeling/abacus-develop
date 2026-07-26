@@ -172,9 +172,9 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
         case calculation_type::lcao_sc_lambda:
         {
             //update HR first
+            // Only contribute once per SCF iteration (when hr_done=false)
+            // or when lambda has changed (checked inside contributeHR)
             this->contributeHR();
-            //in cal_type=lcao_sc_mag, 
-            //this->contributeHk(ik_in);
             break;
         }
         case calculation_type::lcao_exx:
@@ -250,6 +250,7 @@ void OperatorLCAO<double, double>::contributeHk(int ik) {
         const int ncol = this->hsk->get_pv()->get_col_size();
         hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
     }
+
     ModuleBase::timer::end("OperatorLCAO", "contributeHk");
 }
 // contributeHk()
@@ -281,6 +282,7 @@ void OperatorLCAO<TK, TR>::contributeHk(int ik) {
             hamilt::folding_HR(*this->hR, this->hsk->get_hk(), this->kvec_d[ik], ncol, 0);
         }
     }
+
     ModuleBase::timer::end("OperatorLCAO", "contributeHk");
 }
 

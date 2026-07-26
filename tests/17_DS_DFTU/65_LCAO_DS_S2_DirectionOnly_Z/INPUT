@@ -1,0 +1,35 @@
+INPUT_PARAMETERS
+suffix    autotest
+calculation    scf
+basis_type    lcao
+ecutwfc    20
+gamma_only    0
+
+nspin    2
+#noncolin 1
+#nbands    28
+scf_thr    1.0e-6
+scf_nmax    50
+out_chg    0
+smearing_method    gaussian
+smearing_sigma    0.01
+mixing_type    broyden
+mixing_beta    0.4
+ks_solver    genelpa
+symmetry    0
+
+# DeltaSpin parameters - direction only mode (nspin=2 collinear)
+# Uses two-phase strategy:
+#   Phase 1 (iter 1..sc_dir_phase1_steps): BFGS constrains moment magnitude
+#   Phase 2 (iter > sc_dir_phase1_steps): lambda decays, system relaxes naturally
+sc_mag_switch    1
+sc_thr    1e-4
+nsc    5
+nsc_min    2
+alpha_trial    0.01
+sccut    3.0
+sc_direction_only    1
+sc_dir_phase1_steps    5
+
+pseudo_dir    ../../PP_ORB
+orbital_dir    ../../PP_ORB

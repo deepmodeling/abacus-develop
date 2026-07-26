@@ -408,9 +408,6 @@
     - [sc\_scf\_thr](#sc_scf_thr)
     - [sc\_direction\_only](#sc_direction_only)
     - [sc\_lambda\_strategy](#sc_lambda_strategy)
-    - [sc\_scan\_lambda\_start](#sc_scan_lambda_start)
-    - [sc\_scan\_lambda\_end](#sc_scan_lambda_end)
-    - [sc\_scan\_steps](#sc_scan_steps)
   - [vdW correction](#vdw-correction)
     - [vdw\_method](#vdw_method)
     - [vdw\_d4\_xc](#vdw_d4_xc)
@@ -3679,8 +3676,8 @@
 
 - **Type**: Integer
 - **Description**: Determines whether to calculate the plus U correction, which is especially important for correlated electrons.
-  - 1: Calculate plus U correction with radius-adjustable localized projections (with parameter onsite_radius).
-  - 2: Calculate plus U correction using first zeta of NAOs as projections (this is old method for testing).
+  - 1: Calculate plus U correction with radius-adjustable localized projections (with parameter onsite_radius). Supported for both PW and LCAO basis sets.
+  - 2: Calculate plus U correction using first zeta of NAOs as projections (this is old method for testing). Only available for LCAO basis.
   - 0: Do not calculate plus U correction.
 - **Default**: 0
 
@@ -3824,45 +3821,19 @@
 
 - **Type**: Boolean
 - **Availability**: *sc_mag_switch is true*
-- **Description**: When true, only the direction of the magnetic moment is constrained to the target direction, while the magnitude is allowed to vary freely. This is useful for studying magnetic anisotropy or when the magnitude of the moment is determined by the electronic structure rather than an external constraint.
-
-  When false (default), both the direction and magnitude of the magnetic moment are constrained to the target values.
+- **Description**: When true, only the direction of the magnetic moment is constrained to the target direction, while the magnitude is allowed to vary freely. This is useful for studying magnetic anisotropy or when the magnitude of the moment is determined by the electronic structure rather than an external constraint. When false (default), both the direction and magnitude of the magnetic moment are constrained to the target values.
 - **Default**: False
 
 ### sc_lambda_strategy
 
 - **Type**: String
 - **Availability**: *sc_mag_switch is true*
-- **Description**: Lambda update strategy for spin-constrained DFT:
-  - bfgs: BFGS quasi-Newton method
-  - linear_response: linear response (Scheme B)
-  - augmented_lagrangian: augmented Lagrangian (Scheme C)
+- **Description**: Lambda update strategy for spin-constrained DFT. Available options are:
+  - bfgs: BFGS quasi-Newton method (default, robust and well-tested)
+  - linear_response: linear response method (Scheme B)
+  - augmented_lagrangian: augmented Lagrangian method (Scheme C)
   - hybrid_delayed: hybrid delayed update (Scheme D)
-  - linear_scan: linear sweep of lambda for testing magnetic moment response
 - **Default**: bfgs
-
-### sc_scan_lambda_start
-
-- **Type**: Float
-- **Availability**: *sc_lambda_strategy is linear_scan*
-- **Description**: Starting lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.
-- **Default**: 0.0
-- **Unit**: eV/uB
-
-### sc_scan_lambda_end
-
-- **Type**: Float
-- **Availability**: *sc_lambda_strategy is linear_scan*
-- **Description**: Ending lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.
-- **Default**: 1.0
-- **Unit**: eV/uB
-
-### sc_scan_steps
-
-- **Type**: Integer
-- **Availability**: *sc_lambda_strategy is linear_scan*
-- **Description**: Number of lambda values to scan. Only used when sc_lambda_strategy=linear_scan.
-- **Default**: 20
 
 [back to top](#full-list-of-input-keywords)
 

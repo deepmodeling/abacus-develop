@@ -1,0 +1,63 @@
+                                                                                     
+                              ABACUS v3.7.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 0a08fe05e (Thu Jun 12 12:13:50 2025 +0800)
+
+ Mon Jun 23 15:52:05 2025
+ MAKE THE DIR         : OUT.ABACUS/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8269CY CPU @ 2.50GHz
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 6 for Cr: [Ar] 3d5 4s1
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM        : 64 * 64 * 375
+ UNIFORM GRID DIM(BIG)   : 16 * 16 * 125
+ DONE(0.0787227  SEC) : SETUP UNITCELL
+ DONE(0.0804622  SEC) : INIT K-POINTS
+ ---------------------------------------------------------
+ Self-consistent calculations for electrons
+ ---------------------------------------------------------
+ SPIN    KPOINTS         PROCESSORS  NBASE       
+ 4       144             12          264         
+ ---------------------------------------------------------
+ Use Systematically Improvable Atomic bases
+ ---------------------------------------------------------
+ ELEMENT ORBITALS        NBASE       NATOM       XC          
+ Cr      6s3p3d2f-10au   44          3           
+ ---------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ---------------------------------------------------------
+ DONE(0.161325   SEC) : INIT PLANEWAVE
+ -------------------------------------------
+ SELF-CONSISTENT : 
+ -------------------------------------------
+ START CHARGE      : atomic
+ DONE(2.53455    SEC) : INIT SCF
+ * * * * * *
+ << Start SCF iteration.
+ ITER     TMAGX      TMAGY      TMAGZ       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ GE1     -5.32e-04  -9.21e-04   2.36e-15   3.77e+00  -7.24969759e+03   0.00000000e+00   1.9354e-01  11.56
+ GE2     -1.81e-03  -3.14e-03  -1.57e-14   7.13e+00  -7.25274958e+03  -3.05199198e+00   1.4804e-01  10.90
+ GE3     -2.05e-03  -3.55e-03  -2.60e-15   9.86e+00  -7.25040268e+03   2.34690753e+00   1.7042e-01  10.99
+ GE4      2.84e-05   4.92e-05  -2.70e-14   4.96e+00  -7.24869845e+03   1.70423098e+00   1.2379e-01  11.12
+ GE5      1.11e-01   1.92e-01  -1.69e-12   4.50e+00  -7.25027630e+03  -1.57785743e+00   1.2887e-01  11.19
+ GE6      8.36e-02   1.45e-01   3.17e-12   1.94e+00  -7.25039273e+03  -1.16425639e-01   9.8150e-02  11.56
+ GE7      6.08e-02   1.05e-01  -1.34e-12   8.48e-01  -7.25048675e+03  -9.40202112e-02   4.5529e-02  11.12
+ GE8      1.32e-01   2.29e-01  -3.21e-12   1.74e+00  -7.25073890e+03  -2.52153091e-01   6.0755e-02  11.22
+ GE9      9.90e-02   1.72e-01  -1.33e-12   2.20e+00  -7.25065081e+03   8.80898297e-02   7.0021e-02  11.39
+ GE10    -3.24e-02  -5.61e-02   6.12e-12   2.43e+00  -7.25037892e+03   2.71895263e-01   6.7530e-02  11.15
+ GE11    -4.55e-02  -7.88e-02  -5.27e-11   6.30e-01  -7.25055740e+03  -1.78478746e-01   2.3567e-02  11.34
+ GE12    -1.47e-01  -2.54e-01   3.92e-10   1.37e+00  -7.25056652e+03  -9.12696191e-03   4.3429e-02  11.23
+ GE13    -3.20e-02  -5.55e-02   1.46e-09   9.89e-01  -7.25057361e+03  -7.08499867e-03   3.2122e-02  11.12
+ GE14    -5.26e-03  -9.14e-03   2.83e-09   9.73e-01  -7.25046937e+03   1.04237563e-01   3.0125e-02  11.19
+ GE15     1.29e-01   2.24e-01  -3.26e-08   1.17e+00  -7.25060119e+03  -1.31814397e-01   3.2131e-02  11.34
+ GE16     1.20e-01   2.07e-01   1.42e-07   1.35e+00  -7.25055222e+03   4.89657833e-02   3.5539e-02  11.35

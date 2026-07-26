@@ -10,43 +10,60 @@ bool run_deltaspin_lambda_loop(const int iter,
                                const double drho,
                                const Input_para& inp)
 {
-    /// Return false if DeltaSpin is not enabled
     if (!inp.sc_mag_switch)
     {
         return false;
     }
 
-    /// Get the singleton instance of SpinConstrain
     spinconstrain::SpinConstrain<std::complex<double>>& sc
         = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
 
-    /// Case 0: linear_scan strategy - sweep lambda values for energy landscape mapping
-    /// This is a diagnostic/debugging mode that does NOT optimize lambda,
-    /// only records Mi vs lambda to lambda_scan_results.dat.
     if (inp.sc_lambda_strategy == "linear_scan")
     {
+        sc.set_drho(drho);
         sc.run_lambda_linear_scan(iter);
         return true;
     }
 
-    /// Case 1: Magnetic moments not yet converged and SCF is close to convergence.
-    /// This is the first time we enter the lambda loop after SCF is nearly converged.
+    if (inp.sc_scf_thr_mode == "immediate")
+    {
+        // "immediate" mode: activate lambda loop from second SCF iteration.
+        // First iteration (iter=0) is skipped because initial wavefunctions
+        // are not available to compute initial magnetic moments.
+        if (iter >= 1)
+        {
+            sc.set_drho(drho);
+            sc.run_lambda_loop(iter - 1);
+            if (!sc.mag_converged()) { sc.set_mag_converged(true); }
+            return true;
+        }
+        return false;
+    }
+
+    if (inp.sc_scf_thr_mode == "off")
+    {
+        // "off" mode: never activate the lambda loop.
+        // Lambda values are loaded from STRU and used as constant constraints.
+        // Replaces the old convention of setting sc_scf_thr=1e-10.
+        return false;
+    }
+
+    // "threshold" mode: activate when drho < sc_scf_thr
+    // drho > 0 excludes iterations where drho has not been computed.
     if (!sc.mag_converged() && drho > 0 && drho < inp.sc_scf_thr)
     {
-        /// Optimize lambda to get target magnetic moments
+        sc.set_drho(drho);
         sc.run_lambda_loop(iter - 1);
         sc.set_mag_converged(true);
         return true;
     }
-    /// Case 2: Magnetic moments already converged in previous iteration.
-    /// Re-run the lambda loop to update psi and charge density with current lambda.
     else if (sc.mag_converged())
     {
+        sc.set_drho(drho);
         sc.run_lambda_loop(iter - 1);
         return true;
     }
 
-    /// Default: run the normal solver
     return false;
 }
 

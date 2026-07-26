@@ -66,7 +66,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     // converting rho
     std::vector<double> rho;
     std::vector<double> amag;
-    if(1==nspin || 2==nspin_in)
+    std::vector<double> mag_part;
+    if(1==nspin || 2==PARAM.inp.nspin)
     {
         rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
     }
@@ -75,13 +76,24 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         std::tuple<std::vector<double>,std::vector<double>> rho_amag = XC_Functional_Libxc::convert_rho_amag_nspin4(nspin, nrxx, chr);
         rho = std::get<0>(std::move(rho_amag));
         amag = std::get<1>(std::move(rho_amag));
+        if(PARAM.inp.gga_grad == 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+        {
+            mag_part = XC_Functional_Libxc::compute_mag_part_nspin4(nrxx, chr);
+        }
     }
 
     std::vector<std::vector<ModuleBase::Vector3<double>>> gdr;
     std::vector<double> sigma;
     if(is_gga)
     {
-        gdr = XC_Functional_Libxc::cal_gdr(nspin, nrxx, rho, tpiba, chr);
+        if(PARAM.inp.nspin==4 && PARAM.inp.gga_grad == 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+        {
+            gdr = XC_Functional_Libxc::cal_gdr_sf(nspin, nrxx, rho, mag_part, tpiba, chr);
+        }
+        else
+        {
+            gdr = XC_Functional_Libxc::cal_gdr(nspin, nrxx, rho, tpiba, chr);
+        }
         sigma = XC_Functional_Libxc::convert_sigma(gdr);
     }
 
@@ -179,7 +191,14 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
     if(4==nspin_in)
     {
-        v = XC_Functional_Libxc::convert_v_nspin4(nrxx, chr, amag, v);
+        if(PARAM.inp.gga_grad == 2 && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+        {
+            v = XC_Functional_Libxc::convert_v_nspin4_sf(nrxx, chr, mag_part, v);
+        }
+        else
+        {
+            v = XC_Functional_Libxc::convert_v_nspin4(nrxx, chr, amag, v);
+        }
     }
 
     //-------------------------------------------------

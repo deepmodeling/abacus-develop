@@ -60,6 +60,9 @@ namespace DensityMatrix_Tools
     template <typename TR>
     extern void func_exp_mul_dmk(const std::complex<double> kphase, const std::vector<std::complex<double>> &DMK_mat_trans, TR* target_DMR_mat);
 
+    template <>
+    void func_exp_mul_dmk<float>(const std::complex<double> kphase, const std::vector<std::complex<double>> &DMK_mat_trans, float* target_DMR_mat);
+
     template <typename TR>
     extern void func_xyz_to_updown(const std::complex<double> tmp[4], const int icol, const int step_trace[4], TR* target_DMR_mat);
 }

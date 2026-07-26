@@ -1,0 +1,30 @@
+ATOMIC_SPECIES
+Fe   1.0000 Fe.upf upf201
+O   1.0000 O_ONCV_PBE-1.0.upf upf201
+
+NUMERICAL_ORBITAL
+Fe_gga_6au_100Ry_4s2p2d1f.orb
+O_gga_7au_100Ry_2s2p1d.orb
+
+LATTICE_CONSTANT
+8.1900000000
+
+LATTICE_VECTORS
+        1.0000000000        0.5000000000        0.5000000000
+        0.5000000000        1.0000000000        0.5000000000
+        0.5000000000        0.5000000000        1.0000000000
+
+ATOMIC_POSITIONS
+Direct
+
+Fe #label
+3.0000   #magnetism
+2 #number of atoms
+        0.0143724412        0.0143720036        0.9881577528 m 1 1 1
+        0.5003638355        0.5003642467        0.5524053753 m 1 1 1
+
+O #label
+0.0000   #magnetism
+2 #number of atoms
+        0.2413979236        0.2413978190        0.2634456820 m 1 1 1
+        0.7538657997        0.7538659308        0.7559911898 m 1 1 1

@@ -30,6 +30,8 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
 		double alpha_trial_in,
 		double sccut_in,
 		double sc_drop_thr_in,
+		const std::string& sc_acceleration_mode_in,
+		double sc_acceleration_rms_thr_in,
 		const UnitCell& ucell,
 		bool direction_only_in,
 		Parallel_Orbitals* ParaV_in,
@@ -50,7 +52,10 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     // - alpha_trial: initial trial step size (eV/uB^2), converted to Ry/uB^2
     // - sccut: maximum lambda change per step (eV/uB), converted to Ry/uB
     // - sc_drop_thr: fraction of initial RMS for adaptive threshold
-    this->set_input_parameters(sc_thr_in, nsc_in, nsc_min_in, alpha_trial_in, sccut_in, sc_drop_thr_in);
+    // - sc_acceleration_mode: acceleration mode ("off", "first_order", "subspace")
+    // - sc_acceleration_rms_thr: RMS threshold to activate acceleration (uB)
+    this->set_input_parameters(sc_thr_in, nsc_in, nsc_min_in, alpha_trial_in, sccut_in, sc_drop_thr_in,
+                               sc_acceleration_mode_in, sc_acceleration_rms_thr_in);
 
     // Step 2: Get atom/orbital/lnchi counts from UnitCell for indexing
     // atomCounts: {element_type_index -> number_of_atoms_of_this_type}
@@ -79,6 +84,12 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     // Without this fix, the optimizer would waste iterations trying to
     // drive Mx and My to their (usually non-zero) target values, which
     // is physically meaningless for collinear calculations.
+    //
+    // This masking causes direction_only projection to zero lambda for nspin=2:
+    // since only constrain.z is non-zero, the direction_only projection (which
+    // removes the component parallel to target direction z) removes lambda.z entirely.
+    // The two-phase strategy in esolver_ks_lcao.cpp handles this by temporarily
+    // disabling direction_only during Phase 1 for collinear calculations.
     if (nspin_in == 2)
     {
         for (int iat = 0; iat < static_cast<int>(this->constrain_.size()); iat++)
@@ -91,6 +102,10 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     // Step 6: Set auxiliary parameters
     this->atomLabels_ = ucell.get_atomLabels();      // "Fe_0", "Fe_1", etc.
     this->direction_only_ = direction_only_in;        // Only optimize spin direction
+    // For nspin=2 with direction_only, the two-phase strategy in
+    // esolver_ks_lcao.cpp temporarily disables direction_only during Phase 1
+    // (controlled by sc_dir_phase1_steps). For nspin=4, direction_only
+    // works correctly without two-phase.
     this->tpiba = ucell.tpiba;                        // 2*pi/a lattice scaling
     this->pw_wfc_ = pw_wfc_in;                        // PW basis (PW mode only)
     this->set_decay_grad();                           // Initialize gradient decay thresholds

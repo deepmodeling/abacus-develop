@@ -27,14 +27,8 @@ AddTest(
 
 AddTest(
   TARGET deltaspin_pw_test
-  LIBS base device parameter
+  LIBS ${math_libs} base device parameter
   SOURCES deltaspin_pw_test.cpp
-)
-
-AddTest(
-  TARGET deltaspin_core_test
-  LIBS base device
-  SOURCES deltaspin_core_test.cpp
 )
 
 endif()

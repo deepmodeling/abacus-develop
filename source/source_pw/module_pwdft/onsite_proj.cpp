@@ -291,6 +291,7 @@ void projectors::OnsiteProjector<T, Device>::tabulate_atomic(const int ik, const
     // CACHE 1 - if cache the tab_, <G+k|p> can be reused for SCF and RELAX calculation
     // [in] pw_basis, ik, omega, tpiba, irow2it
     this->ik_ = ik;
+    this->becp_ready_ = false;
     this->npw_ = pw_basis_->npwk[ik];
     this->npwx_ = pw_basis_->npwk_max;
     // std::vector<ModuleBase::Vector3<double>> q(this->npw_);
@@ -408,6 +409,8 @@ void projectors::OnsiteProjector<T, Device>::overlap_proj_psi(
     {
         syncmem_complex_d2h_op()(h_becp, this->becp, this->size_becp);
     }
+    this->becp_ready_ = true;
+    this->ik_becp_ = this->ik_;
     ModuleBase::timer::end("OnsiteProj", "overlap");
 }
 
@@ -539,6 +542,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
     const int nbands = psi_in->get_nbands();
     for(int ik = 0; ik < psi_in->get_nk(); ik++)
     {
+        const_cast<psi::Psi<std::complex<T>, Device>*>(psi_in)->ensure_k_on_gpu(ik);
         psi_in->fix_k(ik);
         if(ik != 0)
         {

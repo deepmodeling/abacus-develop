@@ -1,0 +1,47 @@
+INPUT_PARAMETERS RUNNING ABACUS-DFT
+
+#Parameters (1.General)
+suffix                  Fe-angle  # suffix of OUTPUT DIR
+nspin                   4   #  1/2/4 4 for SOC
+noncolin	        1
+symmetry                0   #  0/1  1 for open, default
+ks_solver               dav_subspace
+pw_diag_ndim            2 
+pseudo_dir              ./PP_ORB
+#orbital_dir             ./PP_ORB
+
+
+#Parameters (2.Iteration)
+calculation             scf #relax cell-relax md
+ecutwfc                 100 # Ry, Default: 50
+scf_thr                 1e-5
+scf_ene_thr		1e-5
+scf_nmax                100
+relax_nmax              100
+relax_method            cg  # cg, bfgs, cg_bfgs, sd, "fire"
+force_thr_ev            1e-2  # ev
+stress_thr              1
+
+#Parameters (3.Basis)
+basis_type              pw  # lcao or pw
+kspacing                0.05 # replace KPT
+#kpar                    12
+
+#Parameters (4.Smearing)
+smearing_method         gau   # mp/gaussian/fd/fixed, mp for metal gau for semicon
+smearing_sigma          0.01  # Rydberg, 0.008 for mp 0.001 for gau
+
+#Parameters (5.Mixing)
+mixing_type             broyden  # pulay/broyden, Default: broyden
+mixing_beta             0.2
+mixing_ndim             30
+#gga_grad 		2
+#Parameters (6.Calculation)
+cal_force          1
+cal_stress         1
+out_stru           1  # print STRU in OUT
+onsite_radius      3.0
+
+sc_mag_switch      1
+#sc_scf_thr         10
+#sc_direction_only 1

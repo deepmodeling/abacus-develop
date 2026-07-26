@@ -2,7 +2,7 @@ INPUT_PARAMETERS
 suffix    autotest
 calculation    nscf
 basis_type    lcao
-ecutwfc    5
+ecutwfc    20
 gamma_only    0
 init_chg    file
 read_file_dir    ./
@@ -25,7 +25,7 @@ nsc    100
 nsc_min    2
 alpha_trial    0.01
 sccut    3.0
-sc_scf_thr    10
+sc_scf_thr_mode    immediate
 
 pseudo_dir    ../../PP_ORB
 orbital_dir    ../../PP_ORB

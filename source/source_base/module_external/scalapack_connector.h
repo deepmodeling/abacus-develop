@@ -78,6 +78,22 @@ extern "C"
 		const std::complex<double> *B, const int *IB, const int *JB, const int *DESCB,
 		const std::complex<double> *beta,
 		std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
+	void pcgemm_(
+		const char *transa, const char *transb,
+		const int *M, const int *N, const int *K,
+		const std::complex<float> *alpha,
+		const std::complex<float> *A, const int *IA, const int *JA, const int *DESCA,
+		const std::complex<float> *B, const int *IB, const int *JB, const int *DESCB,
+		const std::complex<float> *beta,
+		std::complex<float> *C, const int *IC, const int *JC, const int *DESCC);
+	void psgemm_(
+		const char *transa, const char *transb,
+		const int *M, const int *N, const int *K,
+		const float *alpha,
+		const float *A, const int *IA, const int *JA, const int *DESCA,
+		const float *B, const int *IB, const int *JB, const int *DESCB,
+		const float *beta,
+		float *C, const int *IC, const int *JC, const int *DESCC);
 	void pdsymm_(char *side , char *uplo , int *m , int *n ,
 		double *alpha , double *a , int *ia , int *ja , int *desca ,
 		double *b , int *ib , int *jb , int *descb ,
@@ -285,6 +301,34 @@ public:
 			B, &IB, &JB, DESCB, &beta, C, &IC, &JC, DESCC);
 	}
 
+    static inline
+	void gemm(
+		const char transa, const char transb,
+		const int M, const int N, const int K,
+		const std::complex<float> alpha,
+		const std::complex<float> *A, const int IA, const int JA, const int *DESCA,
+		const std::complex<float> *B, const int IB, const int JB, const int *DESCB,
+		const std::complex<float> beta,
+		std::complex<float> *C, const int IC, const int JC, const int *DESCC)
+	{
+		pcgemm_(&transa, &transb, &M, &N, &K, &alpha, A, &IA, &JA, DESCA,
+			B, &IB, &JB, DESCB, &beta, C, &IC, &JC, DESCC);
+	}
+
+    static inline
+	void gemm(
+		const char transa, const char transb,
+		const int M, const int N, const int K,
+		const float alpha,
+		const float* A, const int IA, const int JA, const int* DESCA,
+		const float* B, const int IB, const int JB, const int* DESCB,
+		const float beta,
+		float* C, const int IC, const int JC, const int* DESCC)
+    {
+        psgemm_(&transa, &transb, &M, &N, &K, &alpha, A, &IA, &JA, DESCA,
+            B, &IB, &JB, DESCB, &beta, C, &IC, &JC, DESCC);
+    }
+
 	static inline
 	void gemm(char transa, char transb, int M, int N, int K,
 		double alpha,
@@ -328,6 +372,37 @@ public:
 		
 		int isrc = 1;
 		pzgemm_(&transa,
+			&transb,
+			&M,
+			&N,
+			&K,
+			&alpha,
+			A,
+			&isrc,
+			&isrc,
+			DESC,
+			B,
+			&isrc,
+			&isrc,
+			DESC,
+			&beta,
+			C,
+			&isrc,
+			&isrc,
+			DESC);
+	}
+
+    static inline
+	void gemm(char transa, char transb, int M, int N, int K,
+		std::complex<float> alpha,
+		std::complex<float>* A,
+		std::complex<float>* B,
+		std::complex<float> beta,
+		std::complex<float>* C,
+		int* DESC)
+	{
+		int isrc = 1;
+		pcgemm_(&transa,
 			&transb,
 			&M,
 			&N,

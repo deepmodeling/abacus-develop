@@ -3,7 +3,7 @@
 This directory contains integration test cases for **DeltaSpin (spin-constrained DFT)** and **DFT+U** functionality in ABACUS,
 covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, and their combinations.
 
-## Test List (47 cases)
+## Test List (48 cases)
 
 ### I. LCAO Spin (01-02)
 
@@ -76,19 +76,19 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 |---|------|------|
 | 36 | PW_DS_S2_ReadLam_Z | Verify correctness of `nsc=1` mode (read lambda file directly without iterative optimization), ensures DeltaSpin correctly computes magnetization in non-self-consistent lambda mode |
 | 37 | PW_DS_S4_ReadLam_XY | Verify `nsc=1` mode for noncollinear DeltaSpin, covers non-self-consistent lambda path under XY magnetization constraint |
-| 38 | PW_DS_S2_Thr1e10_Z | Verify stability of DeltaSpin under strict convergence threshold (sc_scf_thr=1e-10), ensures iterative optimization converges to high-precision solution |
-| 39 | PW_DS_S4_Thr1e10_XY | Verify stability of noncollinear DeltaSpin under strict convergence threshold (sc_scf_thr=1e-10), covers XY magnetization constraint scenario |
-| 40 | PW_DS_S2_Thr10_Z | Verify behavior of DeltaSpin under loose convergence threshold (sc_scf_thr=10), tests algorithm robustness and out_alllog log output under low precision requirements |
-| 41 | PW_DS_S4_Thr10_XY | Verify behavior of noncollinear DeltaSpin under loose convergence threshold (sc_scf_thr=10), covers low precision scenario with XY magnetization constraint |
+| 38 | PW_DS_S2_Thr1e10_Z | Verify DeltaSpin with lambda loop disabled (`sc_scf_thr_mode=off`), lambda values from STRU are used as constant constraints without optimization |
+| 39 | PW_DS_S4_Thr1e10_XY | Verify noncollinear DeltaSpin with lambda loop disabled (`sc_scf_thr_mode=off`), covers constant lambda under XY magnetization constraint |
+| 40 | PW_DS_S2_Thr10_Z | Verify behavior of DeltaSpin with immediate lambda loop activation (`sc_scf_thr_mode=immediate`), tests algorithm robustness when lambda loop starts from the second SCF iteration |
+| 41 | PW_DS_S4_Thr10_XY | Verify behavior of noncollinear DeltaSpin with immediate lambda loop activation (`sc_scf_thr_mode=immediate`), covers immediate activation under XY magnetization constraint |
 
 ### X. PW DFT+U + DeltaSpin Special Parameters (42-45)
 
 | # | Test Case | Description |
 |---|------|------|
-| 42 | PW_DFTU_DS_S2_Thr1e10_Z | Verify iterative stability of DFT+U with DeltaSpin combined under strict convergence threshold (sc_scf_thr=1e-10), ensures convergence when both methods are coupled |
-| 43 | PW_DFTU_DS_S4_Thr1e10_XY | Verify coupling stability of noncollinear DFT+U+DeltaSpin under strict convergence threshold (sc_scf_thr=1e-10), covers XY magnetization constraint |
-| 44 | PW_DFTU_DS_S2_Thr10_Z | Verify behavior of DFT+U with DeltaSpin combined under loose convergence threshold (sc_scf_thr=10), tests coupled algorithm robustness under low precision requirements |
-| 45 | PW_DFTU_DS_S4_Thr10_XY | Verify behavior of noncollinear DFT+U+DeltaSpin under loose convergence threshold (sc_scf_thr=10), covers low precision scenario with XY magnetization constraint |
+| 42 | PW_DFTU_DS_S2_Thr1e10_Z | Verify DFT+U+DeltaSpin with lambda loop disabled (`sc_scf_thr_mode=off`), ensures constant lambda constraint with Hubbard U correction |
+| 43 | PW_DFTU_DS_S4_Thr1e10_XY | Verify noncollinear DFT+U+DeltaSpin with lambda loop disabled (`sc_scf_thr_mode=off`), covers constant lambda under XY magnetization constraint |
+| 44 | PW_DFTU_DS_S2_Thr10_Z | Verify behavior of DFT+U with DeltaSpin combined with immediate lambda loop activation (`sc_scf_thr_mode=immediate`), tests coupled algorithm robustness when lambda loop starts immediately |
+| 45 | PW_DFTU_DS_S4_Thr10_XY | Verify behavior of noncollinear DFT+U+DeltaSpin with immediate lambda loop activation (`sc_scf_thr_mode=immediate`), covers immediate activation under XY magnetization constraint |
 
 ### XI. FeO Atom Ordering (50-51)
 
@@ -99,15 +99,6 @@ covering LCAO and PW basis sets, collinear/noncollinear spin, DFT+U, DeltaSpin, 
 
 ### XII. NSCF Mode (55, 60-64)
 
-**Note:** These test cases have been converted to use a **SCF+NSCF workflow**.
-The pre-converged charge density files have been removed. To run these tests:
-
-```bash
-# Use the workflow script (runs SCF first, then NSCF)
-cd tests/17_DS_DFTU/55_PW_DS_NSCF_S4_XY
-bash ../run_scf_nscf.sh <abacus_path> 4
-```
-
 | # | Test Case | Description |
 |---|------|------|
 | 55 | PW_DS_NSCF_S4_XY | Verify DeltaSpin functionality in non-self-consistent (nscf) calculation mode, ensures lambda constraint is applied correctly without charge update |
@@ -117,13 +108,7 @@ bash ../run_scf_nscf.sh <abacus_path> 4
 | 63 | LCAO_DFTU_DS_NSCF_Band_XY | Verify LCAO DFT+U+DeltaSpin in NSCF band structure calculation, tests band output with spin constraints |
 | 64 | PW_DFTU_NSCF_Band_XY | Verify DFT+U (without DeltaSpin) in NSCF band structure calculation, tests band output with Hubbard U correction |
 
-**SCF+NSCF Workflow:**
-1. `scf/INPUT` — SCF input (calculation=scf, init_chg=atomic, out_chg=1)
-2. `scf/STRU`, `scf/KPT` — SCF structure and k-points
-3. `run_scf_nscf.sh` — Script that runs SCF, copies charge density, then runs NSCF
-4. CI tests are **disabled** for these cases (see CASES_CPU.txt)
-
-### XIII. sc_direction_only Constraint (56-59)
+### XIII. sc_direction_only Constraint (56-59, 65)
 
 | # | Test Case | Description |
 |---|------|------|
@@ -131,6 +116,7 @@ bash ../run_scf_nscf.sh <abacus_path> 4
 | 57 | PW_DFTU_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` combined with DFT+U, tests direction-only constraint superposition with Hubbard U correction |
 | 58 | LCAO_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` in LCAO basis, ensures direction-only constraint works correctly in LCAO density matrix path |
 | 59 | LCAO_DFTU_DS_S4_DirectionOnly_XY | Verify `sc_direction_only=1` combined with DFT+U in LCAO basis, tests full direction-only constraint in LCAO path |
+| 65 | LCAO_DS_S2_DirectionOnly_Z | Verify `sc_direction_only=1` in LCAO basis with collinear spin (nspin=2). Tests the two-phase BFGS strategy: Phase 1 (iter 1-5) constrains moment magnitude, Phase 2 (iter 6+) gradually decays lambda for natural relaxation |
 
 ## Running Tests
 
@@ -164,21 +150,13 @@ The following test cases are disabled in `CASES_CPU.txt` (commented out with `#`
 | 44 | PW_DFTU_DS_S2_Thr10_Z | Convergence / numerical stability |
 | 58 | LCAO_DS_S4_DirectionOnly_XY | Convergence / numerical stability |
 | 59 | LCAO_DFTU_DS_S4_DirectionOnly_XY | Convergence / numerical stability |
-| 62 | LCAO_DFTU_NSCF_Band_XY | Convergence / numerical stability; genelpa eigenvalue inconsistency across thread counts (scalapack_gvx consistent); **also disabled for SCF+NSCF workflow conversion** |
-| 63 | LCAO_DFTU_DS_NSCF_Band_XY | Convergence / numerical stability; **also disabled for SCF+NSCF workflow conversion** |
-| 55 | PW_DS_NSCF_S4_XY | **Disabled for SCF+NSCF workflow conversion** — run manually with `run_scf_nscf.sh` |
-| 60 | PW_DFTU_DS_NSCF_Band_XY | **Disabled for SCF+NSCF workflow conversion** — run manually with `run_scf_nscf.sh` |
-| 61 | LCAO_DS_NSCF_S4_XY | **Disabled for SCF+NSCF workflow conversion** — run manually with `run_scf_nscf.sh` |
-| 64 | PW_DFTU_NSCF_Band_XY | **Disabled for SCF+NSCF workflow conversion** — run manually with `run_scf_nscf.sh` |
+| 62 | LCAO_DFTU_NSCF_Band_XY | Convergence / numerical stability; genelpa eigenvalue inconsistency across thread counts (scalapack_gvx consistent) |
+| 63 | LCAO_DFTU_DS_NSCF_Band_XY | Convergence / numerical stability |
 
 ## Test Condition Notes
 
 - 09 (PW DFT+U + noncollinear): Only supports **2-process MPI** execution, `result.ref` reference files provided
 - The following test cases set `kpar=2` in INPUT and require at least **2 MPI processes** to run: 11, 12, 14, 15, 16, 18, 19, 21, 37, 39, 41, 43, 45
-- 62 (LCAO_DFTU_NSCF_Band_XY): Single-thread and multi-thread results are inconsistent; investigation shows HR, HK, and SK are consistent across threads, but eigenvalues from genelpa differ; switching to scalapack_gvx produces consistent results across thread counts. Note: this test is named "NSCF" but actually runs with `calculation = scf` (`scf_nmax = 1`), using pre-shipped charge density and dm_onsite.txt files as initial guess
-- All NSCF tests (55, 60, 61, 62, 63, 64) have been **converted to SCF+NSCF workflow**:
-  - Pre-converged `autotest-CHARGE-DENSITY.restart` and `dm_onsite.txt` files have been removed
-  - Each test directory contains a `scf/` subdirectory with SCF input files
-  - Run with: `bash ../run_scf_nscf.sh <abacus_path> [mpi_np]`
-  - These tests are **disabled in CI** (commented out in CASES_CPU.txt)
+- 62 (LCAO_DFTU_NSCF_Band_XY): Single-thread and multi-thread results are inconsistent; investigation shows HR, HK, and SK are consistent across threads, but eigenvalues from genelpa differ; switching to scalapack_gvx produces consistent results across thread counts. Note: this test is named "NSCF" but actually runs with `calculation = scf` (`scf_nmax = 1`), using pre-shipped charge density and onsite.dm files as initial guess
+- All NSCF tests (55, 60, 61, 63, 64) and test 62 ship pre-converged `autotest-CHARGE-DENSITY.restart` files; DFT+U NSCF tests (60, 63, 64) and test 62 additionally ship pre-converged `onsite.dm` files. These files are self-contained in each test directory — no runtime dependency on other tests
 - All LCAO basis tests use `ks_solver = genelpa`. The genelpa eigenvalue inconsistency across thread counts observed in test 62 may potentially affect other LCAO tests as well

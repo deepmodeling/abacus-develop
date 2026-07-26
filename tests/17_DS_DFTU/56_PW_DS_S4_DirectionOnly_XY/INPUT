@@ -6,7 +6,7 @@ ecutwfc    20
 gamma_only    0
 noncolin    1
 #nbands    28
-scf_thr    1.0e-8
+scf_thr    1.0e-6
 scf_nmax    50
 out_chg    0
 smearing_method    gaussian
@@ -23,7 +23,7 @@ nsc    100
 nsc_min    2
 alpha_trial    0.01
 sccut    3.0
-sc_scf_thr    10
+sc_scf_thr_mode    immediate
 sc_direction_only    1
 
 kpar    1

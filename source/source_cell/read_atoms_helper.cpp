@@ -456,6 +456,9 @@ bool parse_atom_properties(std::ifstream& ifpos,
             atom.lambda[ia].x /= ModuleBase::Ry_to_eV;
             atom.lambda[ia].y /= ModuleBase::Ry_to_eV;
             atom.lambda[ia].z /= ModuleBase::Ry_to_eV;
+            std::cout << "[DS-DIAG] STRU parse: lambda[" << ia << "]=("
+                      << atom.lambda[ia].x << ", " << atom.lambda[ia].y << ", "
+                      << atom.lambda[ia].z << ") Ry/uB (converted from eV/uB)" << std::endl;
         }
         else if ( tmpid == "sc")
         {

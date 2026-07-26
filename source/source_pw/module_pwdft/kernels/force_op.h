@@ -1,5 +1,6 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_source_pw_HAMILT_PWDFT_KERNELS_FORCE_OP_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_source_pw_HAMILT_PWDFT_KERNELS_FORCE_OP_H
+#include "source_io/module_parameter/parameter.h"
 
 #include "source_psi/psi.h"
 
@@ -130,25 +131,24 @@ struct cal_force_nl_op
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* force);
-     /// kernel for DeltaSpin
-     void operator()(const base_device::DEVICE_CPU* ctx,
-                     const int& nbands_occ,
-                     const int& wg_nc,
-                     const int& ntype,
-                     const int& forcenl_nc,
-                     const int& nbands,
-                     const int& ik,
-                     const int& nkb,
-                     const int& npol,
-                     const int* atom_nh,
-                     const int* atom_na,
-                     const FPTYPE& tpiba,
-                     const FPTYPE* d_wg,
-                     const FPTYPE* lambda,
-                     const int* isk,
-                     const std::complex<FPTYPE>* becp,
-                     const std::complex<FPTYPE>* dbecp,
-                     FPTYPE* force);
+    /// kernel for DeltaSpin
+    void operator()(const base_device::DEVICE_CPU* ctx,
+                    const int& nbands_occ,
+                    const int& wg_nc,
+                    const int& ntype,
+                    const int& forcenl_nc,
+                    const int& nbands,
+                    const int& ik,
+                    const int& nkb,
+                    const int& npol,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE& tpiba,
+                    const FPTYPE* d_wg,
+                    const FPTYPE* lambda,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* force);
 };
 
 template <typename FPTYPE, typename Device>
@@ -262,25 +262,24 @@ struct cal_force_nl_op<FPTYPE, base_device::DEVICE_GPU>
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* force);
-     /// kernel for DeltaSpin
-     void operator()(const base_device::DEVICE_GPU* ctx,
-                     const int& nbands_occ,
-                     const int& wg_nc,
-                     const int& ntype,
-                     const int& forcenl_nc,
-                     const int& nbands,
-                     const int& ik,
-                     const int& nkb,
-                     const int& npol,
-                     const int* atom_nh,
-                     const int* atom_na,
-                     const FPTYPE& tpiba,
-                     const FPTYPE* d_wg,
-                     const FPTYPE* lambda,
-                     const int* isk,
-                     const std::complex<FPTYPE>* becp,
-                     const std::complex<FPTYPE>* dbecp,
-                     FPTYPE* force);
+    /// kernel for DeltaSpin
+    void operator()(const base_device::DEVICE_GPU* ctx,
+                    const int& nbands_occ,
+                    const int& wg_nc,
+                    const int& ntype,
+                    const int& forcenl_nc,
+                    const int& nbands,
+                    const int& ik,
+                    const int& nkb,
+                    const int& npol,
+                    const int* atom_nh,
+                    const int* atom_na,
+                    const FPTYPE& tpiba,
+                    const FPTYPE* d_wg,
+                    const FPTYPE* lambda,
+                    const std::complex<FPTYPE>* becp,
+                    const std::complex<FPTYPE>* dbecp,
+                    FPTYPE* force);
 };
 
 /**

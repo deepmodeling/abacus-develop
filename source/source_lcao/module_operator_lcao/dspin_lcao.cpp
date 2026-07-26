@@ -49,18 +49,43 @@ hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::~DeltaSpin()
     this->pre_hr.shrink_to_fit();
 }
 
-// simple functions to calculate the coefficients from lambda
+// ============================================================================
+// cal_coeff_lambda: Convert lambda (Lagrange multipliers) to Hamiltonian
+// coefficients for the DeltaSpin constraint term.
+//
+// The constrained energy functional is:
+//   E'[rho] = E[rho] + sum_i lambda_i . (M_i - M_target_i)
+//
+// Variational derivative gives the Hamiltonian correction:
+//   H_DS = +lambda . sigma
+//
+// nspin=2 (collinear, TR=double):
+//   H_DS |up> = +lambda_z |up>
+//   H_DS |dn> = -lambda_z |dn>
+//   Positive lambda_z increases M_z (more spin-up, less spin-down)
+//
+// nspin=4 (non-collinear, TR=complex<double>):
+//   H_DS = | +lambda_z       +lambda_x - i*lambda_y |
+//          | +lambda_x + i*lambda_y    -lambda_z     |
+// Note: sigma_y = [[0,-i],[i,0]], so the off-diagonal terms get:
+//   H_{up,down}  = lambda_x*sigma_x_{up,dn} + lambda_y*sigma_y_{up,dn}
+//                = lambda_x + lambda_y*(-i) = lambda_x - i*lambda_y
+//   H_{down,up}  = lambda_x*sigma_x_{dn,up} + lambda_y*sigma_y_{dn,up}
+//                = lambda_x + lambda_y*(+i) = lambda_x + i*lambda_y
+// ============================================================================
+
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<double>& coefficients)
 {
     coefficients[0] = current_lambda[0];
     coefficients[1] = -current_lambda[0];
 }
+
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<std::complex<double>>& coefficients)
-{// {\lambda^{I,3}, \lambda^{I,1}-i\lambda^{I,2}, \lambda^{I,1}+i\lambda^{I,2}, -\lambda^{I,3}}
+{
     coefficients[0] = std::complex<double>(current_lambda[2], 0.0);
-    coefficients[1] = std::complex<double>(current_lambda[0] , -current_lambda[1]);
-    coefficients[2] = std::complex<double>(current_lambda[0] , current_lambda[1]);
-    coefficients[3] = std::complex<double>(-1 * current_lambda[2], 0.0);
+    coefficients[1] = std::complex<double>(current_lambda[0], -current_lambda[1]);
+    coefficients[2] = std::complex<double>(current_lambda[0], current_lambda[1]);
+    coefficients[3] = std::complex<double>(-current_lambda[2], 0.0);
 }
 
 template <typename TK, typename TR>
@@ -579,17 +604,14 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
                                             + kvec_d.z * bi_ad.R_index.z);
             const std::complex<double> phase(cos(arg), sin(arg));
 
-            for (const auto& nlm_pair : bi_ad.nlm)
+            for (const auto& [iw_global, nlm_vec] : bi_ad.nlm)
             {
-                const int iw_global = nlm_pair.first;
-                const std::vector<double>& nlm_vec = nlm_pair.second;
                 // Check if this global orbital index is in our local rows
                 const int iw_local = this->paraV->global2local_row(iw_global);
                 if (iw_local < 0) { continue;
                 }
 
-                // D_I[lm + jb_global * r] += nlm_vec[lm] * phase * C_k[iw_local, jb_local]
-                // Column-major storage for BLAS: D_I[lm + jb * r]
+                // D_I[lm, jb_global] += nlm_vec[lm] * phase * C_k[iw_local, jb_local]
                 // C_k is column-major: C_k[irow, icol] = psi_k[irow + icol * lda]
                 for (int jb_local = 0; jb_local < ncol_local; jb_local++)
                 {
@@ -597,7 +619,7 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
                     const std::complex<double> c_val = phase * psi_k[iw_local + jb_local * lda];
                     for (int lm = 0; lm < r; lm++)
                     {
-                        D_I[lm + jb_global * r] += nlm_vec[lm] * c_val;
+                        D_I[lm * nbands_global + jb_global] += nlm_vec[lm] * c_val;
                     }
                 }
             }
@@ -616,14 +638,14 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
         PI_sub[iat].resize(nbands_global * nbands_global, {0.0, 0.0});
         const std::complex<double> one = {1.0, 0.0};
         const std::complex<double> zero_c = {0.0, 0.0};
-        // D_I is stored column-major: D_I[lm + jb_global * r]
-        // zgemm: P = D^H * D, where D is r × nbands (column-major)
-        // A^H: conjugate transpose of A (nbands × r)
-        // B: D_I (r × nbands)
-        // Result: nbands × nbands
-        zgemm_("C", "N", &nbands_global, &nbands_global, &r,
-               &one, D_I.data(), &r,
-               D_I.data(), &r,
+        // D_I is stored in row-major layout: D_I[lm * nbands_global + jb]
+        // In column-major BLAS convention, this looks like a (nbands × r) matrix.
+        // To compute P = D^H * D (nbands × nbands), we use:
+        // P = (D^T) * (D^T)^H = D_memory * D_memory^H
+        // where D_memory is the column-major view of row-major D_I.
+        zgemm_("N", "C", &nbands_global, &nbands_global, &r,
+               &one, D_I.data(), &nbands_global,
+               D_I.data(), &nbands_global,
                &zero_c, PI_sub[iat].data(), &nbands_global);
     }
 }

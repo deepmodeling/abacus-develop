@@ -640,6 +640,20 @@ void DensityMatrix_Tools::func_exp_mul_dmk<double>(const std::complex<double> kp
 }
 
 template <>
+void DensityMatrix_Tools::func_exp_mul_dmk<float>(const std::complex<double> kphase, const std::vector<std::complex<double>> &DMK_mat_trans, float* target_DMR_mat)
+{
+    const std::size_t mat_size = DMK_mat_trans.size();
+    const float kr = static_cast<float>(kphase.real());
+    const float ki = static_cast<float>(kphase.imag());
+    for(std::size_t i = 0; i < mat_size; i++)
+    {
+        target_DMR_mat[i]
+            += kr * static_cast<float>(DMK_mat_trans[i].real())
+            - ki * static_cast<float>(DMK_mat_trans[i].imag());
+    }
+}
+
+template <>
 void DensityMatrix_Tools::func_exp_mul_dmk<std::complex<double>>(const std::complex<double> kphase, const std::vector<std::complex<double>> &DMK_mat_trans, std::complex<double>* target_DMR_mat)
 {
     BlasConnector::axpy(DMK_mat_trans.size(),
@@ -655,7 +669,7 @@ void DensityMatrix_Tools::func_xyz_to_updown<double>(const std::complex<double> 
 {
     target_DMR_mat[icol + step_trace[0]] = tmp[0].real() + tmp[3].real();  // rho_0 = (rho_upup + rho_downdown).real()
     target_DMR_mat[icol + step_trace[1]] = tmp[1].real() + tmp[2].real();  // rho_x = (rho_updown + rho_downup).real()
-    target_DMR_mat[icol + step_trace[2]] = -tmp[1].imag() + tmp[2].imag(); // rho_y = -Im(rho_updown) + Im(rho_downup)
+    target_DMR_mat[icol + step_trace[2]] = tmp[1].imag() - tmp[2].imag(); // rho_y = Im(rho_updown - rho_downup)
     target_DMR_mat[icol + step_trace[3]] = tmp[0].real() - tmp[3].real();  // rho_z = (rho_upup - rho_downdown).real()
 }
 
@@ -664,7 +678,7 @@ void DensityMatrix_Tools::func_xyz_to_updown<std::complex<double>>(const std::co
 {
     target_DMR_mat[icol + step_trace[0]] = tmp[0] + tmp[3];                                         // rho_0 = (rho_upup + rho_downdown)
     target_DMR_mat[icol + step_trace[1]] = tmp[1] + tmp[2];                                         // rho_x = (rho_updown + rho_downup)
-    target_DMR_mat[icol + step_trace[2]] = ModuleBase::IMAG_UNIT * (tmp[1] - tmp[2]); // rho_y = i*(rho_updown - rho_downup)
+    target_DMR_mat[icol + step_trace[2]] = -ModuleBase::IMAG_UNIT * (tmp[1] - tmp[2]); // rho_y = -i*(rho_updown - rho_downup)
     target_DMR_mat[icol + step_trace[3]] = tmp[0] - tmp[3];                                         // rho_z = (rho_upup - rho_downdown)
 }
 

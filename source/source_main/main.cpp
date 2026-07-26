@@ -4,12 +4,12 @@
 //==========================================================
 
 #include "source_main/driver.h"
-#include "fftw3.h"
 #include "source_base/parallel_global.h"
 #include "source_io/parse_args.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/version.h"
 #ifdef _OPENMP
+#include <fftw3.h>
 #include <omp.h>
 #endif
 
@@ -93,13 +93,15 @@ int main(int argc, char** argv)
     DD.init();
 
     /*
-    After running mpi version of abacus, release the mpi resources.
+    Clean up FFTW threads before MPI_Finalize to avoid OpenMPI 4.0.3
+    hwloc segfault: FFTW must release its hwloc resources before MPI
+    finalizes and frees the shared hwloc topology.
     */
-#ifdef __MPI
-    Parallel_Global::finalize_mpi();
-#endif
 #ifdef _OPENMP
     fftw_cleanup_threads();
+#endif
+#ifdef __MPI
+    Parallel_Global::finalize_mpi();
 #endif
 
     return 0;

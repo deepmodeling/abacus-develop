@@ -190,7 +190,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
  *     * For nspin=1: occ is scaled by 0.5 (since only one spin channel computed)
  *   - Subsequent iterations: locale is computed fresh each iteration from updated DMR
  * 
- * Case 2: Locale IS initialized (is_locale_initialized, i.e., read from dm_onsite.txt file)
+ * Case 2: Locale IS initialized (is_locale_initialized, i.e., read from onsite.dm file)
  *   - First electronic iteration: uses pre-read locale directly without DMR calculation
  *     * Skips DMR-based occ calculation entirely
  *     * Reads locale from stored data via get_locale()
@@ -334,8 +334,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         // BRANCH 2: Locale IS initialized (use pre-read data)
         // ============================================================
         // This branch is taken when:
-        // - is_locale_initialized() == true (locale read from dm_onsite.txt file)
-        // - OR omc != 0 (occupation matrix control with dm_onsite_ini.txt)
+        // - is_locale_initialized() == true (locale read from onsite.dm file)
+        // - OR omc != 0 (occupation matrix control with initial_onsite.dm)
         // Typical scenario: first SCF iteration with file input, or restart calculation
         else
         {
@@ -344,10 +344,23 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
             // in the matrix indices (ipol0, ipol1 for Pauli block indices)
             if (this->nspin == 4)
             {
-                // For nspin=4, locale is stored as 4 stacked tlp1^2 blocks
-                // at offsets 0, tlp1^2, 2*tlp1^2, 3*tlp1^2 for the 4 Pauli channels.
-                // Use get_locale_flat to read the stacked blocks directly
-                this->dftu->get_locale_flat(iat0, target_L, occ);
+                const int tlp1_local = 2 * target_L + 1;
+                const int m_size2_local = tlp1_local * tlp1_local;
+                for (int i = 0; i < static_cast<int>(occ.size()); i++)
+                {
+                    // Decode flattened index to (Pauli_block, m, m') format
+                    const int ib = i / m_size2_local;          // Pauli block index (0-3)
+                    const int m = (i % m_size2_local) / tlp1_local;  // m quantum number
+                    const int m2_val = (i % m_size2_local) % tlp1_local; // m' quantum number
+                    const int ipol0 = ib / npol;               // Row Pauli index
+                    const int ipol1 = ib % npol;               // Column Pauli index
+                    const int m0_all = m + ipol0 * tlp1_local; // Combined row index
+                    const int m1_all = m2_val + ipol1 * tlp1_local; // Combined col index
+                    // TODO: UNSAFE - get_locale indices must match storage format exactly.
+                    // Mismatch in indexing between set_locale_flat and get_locale causes silent corruption.
+                    // TODO: Add bounds checking for m0_all, m1_all against locale array dimensions.
+                    occ[i] = this->dftu->get_locale(iat0, target_L, 0, 0, m0_all, m1_all);
+                }
             }
             // nspin=1 or nspin=2: Collinear spin case
             // Locale stored separately for each spin channel
@@ -615,10 +628,10 @@ void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double
     // Pauli-to-spinor conversion for DFT+U potential:
     // V = V_0*I + V_x*sigma_x + V_y*sigma_y + V_z*sigma_z
     // sigma_y = [[0,-i],[i,0]], so:
-    //   V_{up,up}   = 0.5*(V_0 + V_z)
+    //   V_{up,up}     = 0.5*(V_0 + V_z)
     //   V_{down,down} = 0.5*(V_0 - V_z)
-    //   V_{up,down}  = 0.5*(V_x - i*V_y)  <- note: minus sign from sigma_y
-    //   V_{down,up}  = 0.5*(V_x + i*V_y)  <- note: plus sign from sigma_y
+    //   V_{up,down}   = 0.5*(V_x - i*V_y)  <- note: minus sign from sigma_y
+    //   V_{down,up}   = 0.5*(V_x + i*V_y)  <- note: plus sign from sigma_y
     // This is consistent with the convention in gint_common.cpp merge_hr_part_to_hR().
     const int m_size = int(sqrt(vu.size()) / 2);
     const int m_size2 = m_size * m_size;

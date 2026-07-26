@@ -1,0 +1,15 @@
+lambda20/angle135.00/out.log:     PWSCF        :  29m58.76s CPU  33m37.99s WALL
+lambda20/angle45.00/out.log:     PWSCF        :  36m44.25s CPU  41m 4.46s WALL
+lambda20/angle90.00/out.log:     PWSCF        :  25m39.93s CPU  29m27.24s WALL
+lambda2000/angle135.00/out.log:     PWSCF        :  26m 1.33s CPU  29m37.89s WALL
+lambda2000/angle45.00/out.log:     PWSCF        :  27m41.76s CPU  31m 1.53s WALL
+lambda2000/angle90.00/out.log:     PWSCF        :  23m 5.18s CPU  26m16.97s WALL
+lambda5/angle135.00/out.log:     PWSCF        :  32m29.97s CPU  36m10.60s WALL
+lambda5/angle45.00/out.log:     PWSCF        :      1h 3m CPU      1h 9m WALL
+lambda5/angle90.00/out.log:     PWSCF        :  31m11.92s CPU  34m51.49s WALL
+lambda50/angle135.00/out.log:     PWSCF        :  25m17.01s CPU  29m 1.45s WALL
+lambda50/angle45.00/out.log:     PWSCF        :  30m58.53s CPU  34m28.41s WALL
+lambda50/angle90.00/out.log:     PWSCF        :  27m57.44s CPU  31m 6.76s WALL
+lambda500/angle135.00/out.log:     PWSCF        :  23m24.36s CPU  26m27.08s WALL
+lambda500/angle45.00/out.log:     PWSCF        :  24m47.55s CPU  28m25.40s WALL
+lambda500/angle90.00/out.log:     PWSCF        :  22m44.14s CPU  26m11.44s WALL

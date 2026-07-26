@@ -72,7 +72,7 @@ void ReadInput::item_others()
         item.category = "Spin-Constrained DFT";
         item.type = "Integer";
         item.description = "Maximal number of spin-constrained iteration";
-        item.default_value = "100";
+        item.default_value = "5";
         item.unit = "";
         item.availability = "sc_mag_switch is true";
         read_sync_int(input.nsc);
@@ -155,8 +155,8 @@ void ReadInput::item_others()
         item.annotation = "Density error threshold for inner loop of spin-constrained SCF";
         item.category = "Spin-Constrained DFT";
         item.type = "Real";
-        item.description = "Density error threshold for inner loop of spin-constrained SCF";
-        item.default_value = "1.0e-4";
+        item.description = "When the charge density error drho falls below sc_scf_thr, the DeltaSpin lambda optimization loop is activated. Should be 10-100x larger than scf_thr. Only used when sc_scf_thr_mode=\"threshold\". For other activation modes, use sc_scf_thr_mode=\"immediate\" or sc_scf_thr_mode=\"off\" instead.";
+        item.default_value = "1.0e-3";
         item.unit = "";
         item.availability = "sc_mag_switch is true";
         read_sync_double(input.sc_scf_thr);
@@ -164,6 +164,27 @@ void ReadInput::item_others()
             if (para.input.sc_scf_thr <= 0.0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_thr must > 0.0");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_scf_thr_mode");
+        item.annotation = "controls when the DeltaSpin lambda loop is activated";
+        item.category = "Spin-Constrained DFT";
+        item.type = "String";
+        item.description = R"(Controls when the DeltaSpin lambda loop is activated.
+* threshold (default): activate when drho < sc_scf_thr. The lambda loop starts once the charge density is reasonably stable.
+* immediate: activate from the first iteration with valid wavefunctions (iter>=2). Used for PW basis where the first iteration cannot compute initial magnetic moments. Replaces the old convention of setting sc_scf_thr=10.0.
+* off: never activate the lambda loop. Lambda values are loaded from the STRU file and used as constant constraints without optimization. Replaces the old convention of setting sc_scf_thr=1e-10.)";
+        item.default_value = "threshold";
+        item.unit = "";
+        item.availability = "sc_mag_switch is true";
+        read_sync_string(input.sc_scf_thr_mode);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.sc_scf_thr_mode != "threshold" && para.input.sc_scf_thr_mode != "immediate" && para.input.sc_scf_thr_mode != "off")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_scf_thr_mode must be threshold, immediate, or off");
             }
         };
         this->add_item(item);
@@ -189,19 +210,33 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.type = "String";
         item.description = R"(Lambda update strategy for spin-constrained DFT:
 * bfgs: BFGS quasi-Newton method
-* linear_response: linear response (Scheme B)
-* augmented_lagrangian: augmented Lagrangian (Scheme C)
-* hybrid_delayed: hybrid delayed update (Scheme D)
 * linear_scan: linear sweep of lambda for testing magnetic moment response)";
         item.default_value = "bfgs";
         item.unit = "";
         item.availability = "sc_mag_switch is true";
         read_sync_string(input.sc_lambda_strategy);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            const std::vector<std::string> valid = {"bfgs", "bfgs2", "linear_response", "augmented_lagrangian", "hybrid_delayed", "linear_scan"};
-            if (std::find(valid.begin(), valid.end(), para.input.sc_lambda_strategy) == valid.end())
+            if (para.input.sc_lambda_strategy != "bfgs" && para.input.sc_lambda_strategy != "linear_scan")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "sc_lambda_strategy must be bfgs, bfgs2, linear_response, augmented_lagrangian, hybrid_delayed, or linear_scan");
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_lambda_strategy must be bfgs or linear_scan");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_dir_phase1_steps");
+        item.annotation = "Phase 1 iterations for direction_only collinear strategy";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Integer";
+        item.description = R"(Number of SCF iterations for Phase 1 (magnitude constraint) in the direction_only two-phase strategy for collinear (nspin=2) calculations. During Phase 1, direction_only projection is temporarily disabled so BFGS can constrain the magnetic moment magnitude. After Phase 1, lambda decays and the system relaxes naturally. Minimum: 2.)";
+        item.default_value = "5";
+        item.unit = "";
+        item.availability = "sc_mag_switch is true and sc_direction_only is true and nspin=2";
+        read_sync_int(input.sc_dir_phase1_steps);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.sc_dir_phase1_steps < 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_dir_phase1_steps must >= 2");
             }
         };
         this->add_item(item);
@@ -240,6 +275,65 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.unit = "";
         item.availability = "sc_lambda_strategy is linear_scan";
         read_sync_int(input.sc_scan_steps);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_strategy");
+        item.annotation = "DeltaSpin execution strategy for LCAO basis";
+        item.category = "Spin-Constrained DFT";
+        item.type = "String";
+        item.description = R"(Execution strategy controlling how DeltaSpin solves the lambda loop:
+* normal (default): use full diagonalization initially, switch to subspace acceleration once RMS < sc_acceleration_rms_thr (default threshold: 1e-2 uB)
+* fast: use subspace diagonalization from the first lambda step (skips full diagonalization after initialization)
+* accuracy: always use full HSolverLCAO diagonalization (no acceleration)
+
+This parameter automatically sets sc_acceleration_mode and sc_acceleration_rms_thr. If you need fine-grained control, set sc_strategy=normal and override sc_acceleration_mode/sc_acceleration_rms_thr manually.)";
+        item.default_value = "normal";
+        item.unit = "";
+        item.availability = "sc_mag_switch is true";
+        read_sync_string(input.sc_strategy);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& strategy = para.input.sc_strategy;
+            if (strategy != "normal" && strategy != "fast" && strategy != "accuracy") {
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_strategy must be normal, fast, or accuracy");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_acceleration_mode");
+        item.annotation = "acceleration mode for spin-constrained DFT";
+        item.category = "Spin-Constrained DFT";
+        item.type = "String";
+        item.description = R"(Acceleration mode for converged lambda loop (usually set automatically by sc_strategy):
+* off: no acceleration, always use full HSolverLCAO diagonalization
+* first_order: use first-order eigenvalue response (fastest, requires RMS < sc_acceleration_rms_thr)
+* subspace: use subspace diagonalization with wavefunction rotation (faster, requires RMS < sc_acceleration_rms_thr)
+
+When sc_strategy=normal, this is auto-set to subspace. When sc_strategy=fast, this is auto-set to subspace with a large threshold. When sc_strategy=accuracy, this is auto-set to off.
+Manual override is allowed: if sc_acceleration_mode is explicitly set, it takes precedence over sc_strategy.)";
+        item.default_value = "off";
+        item.unit = "";
+        item.availability = "sc_mag_switch is true and basis_type=lcao";
+        read_sync_string(input.sc_acceleration_mode);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::string& mode = para.input.sc_acceleration_mode;
+            if (mode != "off" && mode != "first_order" && mode != "subspace") {
+                ModuleBase::WARNING_QUIT("ReadInput", "sc_acceleration_mode must be off, first_order, or subspace");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("sc_acceleration_rms_thr");
+        item.annotation = "RMS threshold for acceleration activation";
+        item.category = "Spin-Constrained DFT";
+        item.type = "Real";
+        item.description = "RMS threshold (uB) to activate acceleration mode. Must be > 0 to enable. The acceleration activates once RMS < sc_acceleration_rms_thr. Default: 1e-2 uB for sc_strategy=normal, 1e10 for sc_strategy=fast. If explicitly set, overrides the sc_strategy default.";
+        item.default_value = "-1.0";
+        item.unit = "uB";
+        item.availability = "sc_mag_switch is true and sc_acceleration_mode is not off";
+        read_sync_double(input.sc_acceleration_rms_thr);
         this->add_item(item);
     }
 

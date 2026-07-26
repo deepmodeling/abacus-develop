@@ -20,24 +20,6 @@
 namespace container {
 namespace cuSolverConnector {
 
-struct CudaDeleter {
-    void operator()(void* ptr) const noexcept {
-        if (ptr) cudaFree(ptr);
-    }
-};
-
-template <typename T>
-using unique_cuda_ptr = std::unique_ptr<T, CudaDeleter>;
-
-struct HostDeleter {
-    void operator()(void* ptr) const noexcept {
-        if (ptr) free(ptr);
-    }
-};
-
-template <typename T>
-using unique_host_ptr = std::unique_ptr<T, HostDeleter>;
-
 #if CUDA_VERSION >= 11000
 // Generic API (CUDA 11.0+)
 template <typename T>
@@ -59,17 +41,65 @@ void trtri (cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& d
         h_work.reset(raw_h_work);
     }
     int h_info = 0;
-    int* raw_d_info = nullptr;
-    CHECK_CUDA(cudaMalloc((void**)&raw_d_info, sizeof(int)));
-    unique_cuda_ptr<int> d_info(raw_d_info);
-    CHECK_CUSOLVER(cusolverDnXtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, GetTypeCuda<T>::cuda_data_type, reinterpret_cast<Type*>(A), n, d_work.get(), d_lwork, h_work.get(), h_lwork, d_info.get()));
-    CHECK_CUDA(cudaMemcpy(&h_info, d_info.get(), sizeof(int), cudaMemcpyDeviceToHost));
+    int* d_info = nullptr;
+    CHECK_CUDA(cudaMalloc((void**)&d_info, sizeof(int)));
+    // Perform triangular matrix inversion
+    CHECK_CUSOLVER(cusolverDnXtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, GetTypeCuda<T>::cuda_data_type, reinterpret_cast<Type*>(A), n, d_work, d_lwork, h_work, h_lwork, d_info));
+    CHECK_CUDA(cudaMemcpy(&h_info, d_info, sizeof(int), cudaMemcpyDeviceToHost));
     if (h_info != 0) {
         throw std::runtime_error("trtri: failed to invert matrix");
     }
 }
 #else
-#error "CUDA version < 11.0 is not supported. cusolverDnXtrtri (CUDA 11.0+) is required."
+// Legacy API fallback (CUDA < 11.0)
+static inline void trtri(cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, float* A, const int& lda)
+{
+    int lwork = 0;
+    CHECK_CUSOLVER(cusolverDnStrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, &lwork));
+    float* d_work = nullptr;
+    CHECK_CUDA(cudaMalloc((void**)&d_work, lwork * sizeof(float)));
+    int* d_info = nullptr;
+    CHECK_CUDA(cudaMalloc((void**)&d_info, sizeof(int)));
+    CHECK_CUSOLVER(cusolverDnStrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, d_work, lwork, d_info));
+    CHECK_CUDA(cudaFree(d_work));
+    CHECK_CUDA(cudaFree(d_info));
+}
+static inline void trtri(cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, double* A, const int& lda)
+{
+    int lwork = 0;
+    CHECK_CUSOLVER(cusolverDnDtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, &lwork));
+    double* d_work = nullptr;
+    CHECK_CUDA(cudaMalloc((void**)&d_work, lwork * sizeof(double)));
+    int* d_info = nullptr;
+    CHECK_CUDA(cudaMalloc((void**)&d_info, sizeof(int)));
+    CHECK_CUSOLVER(cusolverDnDtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, A, lda, d_work, lwork, d_info));
+    CHECK_CUDA(cudaFree(d_work));
+    CHECK_CUDA(cudaFree(d_info));
+}
+static inline void trtri(cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, std::complex<float>* A, const int& lda)
+{
+    int lwork = 0;
+    CHECK_CUSOLVER(cusolverDnCtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuComplex*>(A), lda, &lwork));
+    cuComplex* d_work = nullptr;
+    CHECK_CUDA(cudaMalloc((void**)&d_work, lwork * sizeof(cuComplex)));
+    int* d_info = nullptr;
+    CHECK_CUDA(cudaMalloc((void**)&d_info, sizeof(int)));
+    CHECK_CUSOLVER(cusolverDnCtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuComplex*>(A), lda, d_work, lwork, d_info));
+    CHECK_CUDA(cudaFree(d_work));
+    CHECK_CUDA(cudaFree(d_info));
+}
+static inline void trtri(cusolverDnHandle_t& cusolver_handle, const char& uplo, const char& diag, const int& n, std::complex<double>* A, const int& lda)
+{
+    int lwork = 0;
+    CHECK_CUSOLVER(cusolverDnZtrtri_bufferSize(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuDoubleComplex*>(A), lda, &lwork));
+    cuDoubleComplex* d_work = nullptr;
+    CHECK_CUDA(cudaMalloc((void**)&d_work, lwork * sizeof(cuDoubleComplex)));
+    int* d_info = nullptr;
+    CHECK_CUDA(cudaMalloc((void**)&d_info, sizeof(int)));
+    CHECK_CUSOLVER(cusolverDnZtrtri(cusolver_handle, cublas_fill_mode(uplo), cublas_diag_type(diag), n, reinterpret_cast<cuDoubleComplex*>(A), lda, d_work, lwork, d_info));
+    CHECK_CUDA(cudaFree(d_work));
+    CHECK_CUDA(cudaFree(d_info));
+}
 #endif
 
 static inline
@@ -1247,7 +1277,7 @@ static inline void geqrf(
         cusolver_handle, m, n,
         reinterpret_cast<cuComplex*>(d_A),
         lda,
-        &lwork
+        &lwork  // ← correct: pass address of lwork
     ));
 
     unique_cuda_ptr<cuComplex> d_work;
@@ -1264,8 +1294,8 @@ static inline void geqrf(
         cusolver_handle, m, n,
         reinterpret_cast<cuComplex*>(d_A),
         lda,
-        reinterpret_cast<cuComplex*>(d_tau),
-        d_work.get(), lwork, d_info.get()));
+        reinterpret_cast<cuComplex*>(d_tau),  // ← correct: d_tau
+        d_work, lwork, d_info));
 
     int h_info = 0;
     CHECK_CUDA(cudaMemcpy(&h_info, d_info.get(), sizeof(int), cudaMemcpyDeviceToHost));

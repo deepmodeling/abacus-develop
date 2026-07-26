@@ -1,0 +1,20 @@
+#!/bin/sh
+#SBATCH -J Bi
+#SBATCH -N 1
+#SBATCH -c 4
+#SBATCH -n 16
+#SBATCH -p intel-sc3-32c,intel-sc3,liushi,amd-ep2,amd-ep2-short
+##SBATCH -q huge
+#SBATCH --mem 470G
+##SBATCH --exclusive
+
+module purge
+module load oneAPI/2022.2 cmake/3.28.0
+source /storage2/liushiLab/yangyudi/Software/abacusLTS/abacus-develop/toolchain/abacus_env.sh
+export PATH=/storage2/liushiLab/yangyudi/Software/abacusLTS/abacus-develop/bin/:$PATH
+
+export OMP_NUM_THREADS=4
+
+
+mpirun -np 16 abacus
+

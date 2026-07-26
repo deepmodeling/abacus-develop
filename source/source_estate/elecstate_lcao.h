@@ -3,6 +3,8 @@
 
 #include "elecstate.h"
 #include "source_estate/module_dm/density_matrix.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_cell/klist.h"
 
 #include <vector>
 
@@ -24,8 +26,23 @@ class ElecStateLCAO : public ElecState
         this->classname = "ElecStateLCAO";
     }
 
-    virtual ~ElecStateLCAO() = default;
+    virtual ~ElecStateLCAO()
+    {
+        if (this->DM != nullptr)
+        {
+            delete this->DM;
+        }
+    }
 
+    // update charge density for next scf step
+    // void getNewRho() override;
+
+    // initial density matrix
+    void init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin);
+    DensityMatrix<TK, double>* get_DM() const
+    {
+        return const_cast<DensityMatrix<TK, double>*>(this->DM);
+    }
     static int out_wfc_lcao;
     static bool need_psi_grid;
 
@@ -43,18 +60,8 @@ class ElecStateLCAO : public ElecState
 			std::vector<TK*> pexsi_EDM,
 			DensityMatrix<TK, double>* dm);
 
-    /**
-     * @brief calculate electronic charge density from the density matrix (DMR)
-     *
-     * Thin wrapper over LCAO_domain::dm2rho so that HSolverLCAO delegates the
-     * charge-density calculation through the ElecState interface, mirroring the
-     * plane-wave path (ElecStatePW::psiToRho) and the pexsi branch above. This
-     * keeps the source_lcao dependency out of source_hsolver.
-     */
-    void dmToRho(std::vector<hamilt::HContainer<double>*>& dmr,
-                 int nspin,
-                 Charge* chr,
-                 bool skip_charge = false);
+  private:
+    DensityMatrix<TK, double>* DM = nullptr;
 
 };
 
@@ -63,6 +70,17 @@ int ElecStateLCAO<TK>::out_wfc_lcao = 0;
 
 template <typename TK>
 bool ElecStateLCAO<TK>::need_psi_grid = true;
+
+// init_DM implementation
+template <typename TK>
+void ElecStateLCAO<TK>::init_DM(const K_Vectors* kv, const Parallel_Orbitals* paraV, const int nspin)
+{
+    if (this->DM != nullptr)
+    {
+        delete this->DM;
+    }
+    this->DM = new DensityMatrix<TK, double>(paraV, nspin);
+}
 
 } // namespace elecstate
 

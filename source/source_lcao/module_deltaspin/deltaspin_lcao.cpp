@@ -58,10 +58,42 @@ void init_deltaspin_lcao(const UnitCell& ucell,
     }
 
     spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+
+    // Derive acceleration parameters from sc_strategy
+    std::string accel_mode = inp.sc_acceleration_mode;
+    double accel_rms_thr = inp.sc_acceleration_rms_thr;
+
+    bool user_overrode_accel_mode = (inp.sc_acceleration_mode != "off");
+    bool user_overrode_rms_thr = (inp.sc_acceleration_rms_thr > 0.0);
+
+    if (!user_overrode_accel_mode || !user_overrode_rms_thr)
+    {
+        if (inp.sc_strategy == "fast")
+        {
+            accel_mode = "subspace";
+            accel_rms_thr = 1e10;
+        }
+        else if (inp.sc_strategy == "accuracy")
+        {
+            accel_mode = "off";
+            accel_rms_thr = -1.0;
+        }
+        else // normal
+        {
+            accel_mode = "subspace";
+            if (!user_overrode_rms_thr)
+            {
+                accel_rms_thr = 1e-2;
+            }
+        }
+    }
+
 #ifdef __LCAO
     // LCAO build: pass density matrix pointer
     sc.init_sc(inp.sc_thr, inp.nsc, inp.nsc_min, inp.alpha_trial,
-               inp.sccut, inp.sc_drop_thr, ucell, inp.sc_direction_only,
+               inp.sccut, inp.sc_drop_thr,
+               accel_mode, accel_rms_thr,
+               ucell, inp.sc_direction_only,
                static_cast<Parallel_Orbitals*>(pv),
                inp.nspin, kv, p_hamilt, psi,
                static_cast<elecstate::DensityMatrix<TK, double>*>(dm),
@@ -69,7 +101,9 @@ void init_deltaspin_lcao(const UnitCell& ucell,
 #else
     // Non-LCAO build: no density matrix
     sc.init_sc(inp.sc_thr, inp.nsc, inp.nsc_min, inp.alpha_trial,
-               inp.sccut, inp.sc_drop_thr, ucell, inp.sc_direction_only,
+               inp.sccut, inp.sc_drop_thr,
+               accel_mode, accel_rms_thr,
+               ucell, inp.sc_direction_only,
                static_cast<Parallel_Orbitals*>(pv),
                inp.nspin, kv, p_hamilt, psi,
                static_cast<elecstate::ElecState*>(pelec));
@@ -136,6 +170,7 @@ bool run_deltaspin_lambda_loop_lcao(const int iter,
         if (!sc.mag_converged() && drho > 0 && drho < inp.sc_scf_thr)
         {
             /// Charge density is stable enough: optimize lambda for the first time
+            sc.set_drho(drho);
             sc.run_lambda_loop(iter);
             sc.set_mag_converged(true);
             skip_solve = true;
@@ -143,12 +178,27 @@ bool run_deltaspin_lambda_loop_lcao(const int iter,
         else if (sc.mag_converged())
         {
             /// Already converged: refine lambda for the current charge density
+            sc.set_drho(drho);
             sc.run_lambda_loop(iter);
             skip_solve = true;
         }
     }
 
     return skip_solve;
+}
+
+template <typename TK>
+void run_deltaspin_scan_diagnostic_lcao(const int iter, const Input_para& inp)
+{
+    if (!inp.sc_mag_switch)
+    {
+        return;
+    }
+
+#ifdef __LCAO
+    spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
+    sc.run_lambda_scan_diagnostic(iter);
+#endif
 }
 
 /// Template instantiations for both spin types
@@ -178,5 +228,8 @@ template bool run_deltaspin_lambda_loop_lcao<double>(const int iter,
 template bool run_deltaspin_lambda_loop_lcao<std::complex<double>>(const int iter,
                                                                       const double drho,
                                                                       const Input_para& inp);
+
+template void run_deltaspin_scan_diagnostic_lcao<double>(const int iter, const Input_para& inp);
+template void run_deltaspin_scan_diagnostic_lcao<std::complex<double>>(const int iter, const Input_para& inp);
 
 } // namespace ModuleESolver

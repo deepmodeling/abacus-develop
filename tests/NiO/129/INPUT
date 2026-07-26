@@ -1,0 +1,44 @@
+INPUT_PARAMETERS
+suffix ABACUS
+calculation scf
+ecutwfc 100
+scf_thr_type 2
+scf_thr 1e-05
+scf_ene_thr 1e-05
+scf_nmax 100
+smearing_method gaussian
+smearing_sigma 0.01
+mixing_type broyden
+mixing_beta 0.2
+mixing_ndim 30
+scf_os_stop 1
+scf_os_thr -0.01
+scf_os_ndim 20
+ks_solver dav_subspace
+basis_type pw
+pw_diag_ndim 2
+pw_diag_nmax 20
+pw_seed 0
+kpar 4
+kspacing 0.5
+symmetry -1
+noncolin 1
+nspin 4
+lspinorb 1
+onsite_radius 3.0
+sc_mag_switch 1
+sc_thr 1e-07
+nsc 10
+nsc_min 2
+alpha_trial 0.01
+sccut 3.0
+sc_scf_thr 10
+sc_os_ndim 5
+cal_stress 1
+cal_force 1
+#device gpu
+gga_grad 2
+hubbard_u 2.359999895095825 0.0
+dft_plus_u 1
+orbital_corr 2 -1
+mixing_dftu   1

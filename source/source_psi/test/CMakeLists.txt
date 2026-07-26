@@ -4,6 +4,7 @@ AddTest(
     SOURCES 
         psi_test.cpp
         ../psi.cpp 
+        ../psi_paging.cpp
 )
 
 if(ENABLE_LCAO)

@@ -1,0 +1,74 @@
+# control
+SYSTEM=name
+SYMPREC=1E-6
+#ISTART=1
+#ICHARG=11
+LCHARG=.FALSE.
+LWAVE=.FALSE.
+LREAL=Auto
+NPAR=4
+
+#SCF
+IALGO=38
+EDIFF=1E-5
+ISMEAR=0
+SIGMA=0.1
+PREC=Normal
+NELM=250
+NELMIN=6
+ENCUT=450
+
+#bader
+#LAECHG=.TRUE.
+
+#NEB
+#LCLIMB=.True.
+#ICHAIN=0
+#IOPT=2
+#IBRION=1
+#POTIM=0.4
+#IMAGES = 3
+#SPRING = -5
+
+#OPT
+EDIFFG=-0.01
+NSW=800
+IBRION=2   # 0: MD, 1: Newton, 2: CG, 7:frequency
+ISIF=3     # 3 for bulk, 2 for surface and others
+#IDIPOL=3   # 1: x, 2:y, 3, z, 4: all
+#ADDGRID=.TRUE.  # use when IBRION=1
+
+#Charge
+#NELECT=
+
+#Frequency
+#NWRITE=3
+#POTIM=0.015
+#LEPSILON=.TRUE.
+
+#DOS
+#LORBIT=10
+#NBANDS=
+#EMIN=-10
+#EMAX=10
+#NEDOS=1001
+
+#spin- polar
+ISPIN=2
+#NUPDOWN=2       # For O2 molecule
+MAGMOM=23*0 5*0 3*0 4*4 4*0
+#VOSKOWN=1    # use when PW91
+
+# workfunction
+#LVTOT=.TRUE. # for vasp5.2.2
+#LVHAR=.TRUE.
+#LDIPOL=.TRUE.
+
+#+U
+LDAU = .TRUE.
+LDAUTYPE =2
+LDAUL=-1 -1 -1 2 2
+LDAUU=0 0 0 4 3
+LDAUJ=0 0 0 0 0
+LDAUPRINT = 1
+LMAXMIX= 4

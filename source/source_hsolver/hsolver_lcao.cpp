@@ -161,7 +161,6 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
 #ifdef __CUDA
     else if (this->method == "cusolver")
     {
-        // Note: This branch will only be executed in the single-process case
         DiagoCusolver<T> cu;
         hamilt::MatrixBlock<T> hk, sk;
         hm->matrix(hk, sk);

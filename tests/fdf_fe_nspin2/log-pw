@@ -1,0 +1,134 @@
+                                                                                     
+                              ABACUS v3.11.0-beta.1
+
+               Atomic-orbital Based Ab-initio Computation at UStc                    
+
+                     Website: http://abacus.ustc.edu.cn/                             
+               Documentation: https://abacus.deepmodeling.com/                       
+                  Repository: https://github.com/abacusmodeling/abacus-develop       
+                              https://github.com/deepmodeling/abacus-develop         
+                      Commit: 9f46caced (Wed May 27 22:06:05 2026 +0800)
+
+ Fri May 29 12:14:17 2026
+ MAKE THE DIR         : OUT.autotest/
+ RUNNING WITH DEVICE  : CPU / Intel(R) Xeon(R) Platinum 8163 CPU @ 2.50GHz (x1)
+ WARNING: some of potential function is set to zero cause of less than 1e-30.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+ Warning: the number of valence electrons in pseudopotential > 8 for Fe: [Ar] 3d6 4s2
+ Pseudopotentials with additional electrons can yield (more) accurate outcomes, but may be less efficient.
+ If you're confident that your chosen pseudopotential is appropriate, you can safely ignore this warning.
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+ UNIFORM GRID DIM     : 36 * 36 * 36
+ UNIFORM GRID DIM(BIG): 36 * 36 * 36
+ DONE(2.96225e-05 SEC) : SETUP UNITCELL
+ DONE(0.00109722 SEC) : INIT K-POINTS
+ ----------------------------------------------------------------
+ Self-consistent calculations for electrons
+ ----------------------------------------------------------------
+ SPIN    KPOINTS         PROCESSES   THREADS/PROC  THREADS/TOTAL 
+ 2       72              4           1             4             
+ ----------------------------------------------------------------
+ Use plane wave basis
+ ----------------------------------------------------------------
+ ELEMENT NATOM       XC          
+ Fe      2           
+ ----------------------------------------------------------------
+ Initial plane wave basis and FFT box
+ ----------------------------------------------------------------
+ DONE(0.00911939 SEC) : INIT PLANEWAVE
+ START CHARGE         : atomic
+ DONE(0.236126   SEC) : LOCAL POTENTIAL
+ DONE(0.287718   SEC) : NON-LOCAL POTENTIAL
+ MEMORY FOR PSI (MB)  : 21.3783
+ DONE(0.45885    SEC) : INIT BASIS
+
+ ================================================================
+ SELF-CONSISTENT: 
+ ================================================================
+ DONE(0.815856   SEC) : INIT SCF
+ ITER      TMAG       AMAG        ETOT/eV          EDIFF/eV         DRHO     TIME/s
+ DS1      4.72e+00   4.73e+00  -6.81969228e+03   0.00000000e+00   7.5335e-02   4.64
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-05
+initial lambda (eV/uB): 
+ATOM      1         0.0000000000
+ATOM      2         0.0000000000
+initial spin (uB): 
+ATOM      1         2.3240300730
+ATOM      2         2.3611761113
+target spin (uB): 
+ATOM      1         2.5380380800
+ATOM      2         3.1229786500
+Step (Outer -- Inner) =  0 -- 1           RMS = 0.559528     TIME(s) = 0.564376   
+Step (Outer -- Inner) =  0 -- 2           RMS = 0.141547     TIME(s) = 0.0342572  
+Step (Outer -- Inner) =  0 -- 3           RMS = 0.0428088     TIME(s) = 0.0341088  
+Step (Outer -- Inner) =  0 -- 4           RMS = 0.0135459     TIME(s) = 0.0340302  
+Step (Outer -- Inner) =  0 -- 5           RMS = 0.00520978     TIME(s) = 0.0340682  
+Reach maximum number of steps ( 5 ), exit.              Total TIME(s) = 0.700841
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.5369049091
+ATOM      2         3.1156985700
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.3816490144
+ATOM      2        -0.9260303476
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.00264293
+ DS2      5.43e+00   5.60e+00  -6.81966064e+03   3.16461379e-02   1.5854e-02   2.40
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-05
+initial lambda (eV/uB): 
+ATOM      1        -0.3816490144
+ATOM      2        -0.9260303476
+initial spin (uB): 
+ATOM      1         2.5878982582
+ATOM      2         3.2085780043
+target spin (uB): 
+ATOM      1         2.5380380800
+ATOM      2         3.1229786500
+Step (Outer -- Inner) =  1 -- 1           RMS = 0.0700474     TIME(s) = 0.561204   
+Step (Outer -- Inner) =  1 -- 2           RMS = 0.0198041     TIME(s) = 0.0342584  
+Step (Outer -- Inner) =  1 -- 3           RMS = 0.0115527     TIME(s) = 0.0339903  
+Step (Outer -- Inner) =  1 -- 4           RMS = 0.00119821     TIME(s) = 0.0338957  
+Step (Outer -- Inner) =  1 -- 5           RMS = 0.000668536     TIME(s) = 0.0338922  
+Reach maximum number of steps ( 5 ), exit.              Total TIME(s) = 0.697241
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.5377316734
+ATOM      2         3.1220842257
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.1836682729
+ATOM      2        -0.6338563713
+Inner optimization for lambda ends.
+===============================================================================
+Current RMS: 0.000556415
+ DS3      5.38e+00   5.62e+00  -6.81969112e+03  -3.04799040e-02   2.6326e-03   2.57
+===============================================================================
+Inner optimization for lambda begins ...
+Covergence criterion for the iteration: 1e-05
+initial lambda (eV/uB): 
+ATOM      1        -0.1836682729
+ATOM      2        -0.6338563713
+initial spin (uB): 
+ATOM      1         2.5838541875
+ATOM      2         3.1441307033
+target spin (uB): 
+ATOM      1         2.5380380800
+ATOM      2         3.1229786500
+Step (Outer -- Inner) =  2 -- 1           RMS = 0.0356828     TIME(s) = 0.563815   
+Step (Outer -- Inner) =  2 -- 2           RMS = 0.0187448     TIME(s) = 0.0349645  
+Step (Outer -- Inner) =  2 -- 3           RMS = 0.00949348     TIME(s) = 0.0341727  
+Step (Outer -- Inner) =  2 -- 4           RMS = 0.000298698     TIME(s) = 0.0339087  
+Step (Outer -- Inner) =  2 -- 5           RMS = 8.46015e-05     TIME(s) = 0.0344306  
+Reach maximum number of steps ( 5 ), exit.              Total TIME(s) = 0.701292
+after-optimization spin (uB): (print in the inner loop): 
+ATOM      1         2.5379568545
+ATOM      2         3.1228908021
+after-optimization lambda (eV/uB): (print in the inner loop): 
+ATOM      1        -0.0829963798
+ATOM      2        -0.5331608751
+Inner optimization for lambda ends.
+===============================================================================

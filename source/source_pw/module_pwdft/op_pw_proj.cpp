@@ -164,8 +164,8 @@ void OnsiteProj<OperatorPW<T, Device>>::cal_ps_delta_spin(const int npol, const 
         {
             tmp_lambda_coeff[iat * 4] = std::complex<double>(lambda[iat][2], 0.0);
             tmp_lambda_coeff[iat * 4 + 1] = std::complex<double>(lambda[iat][0], lambda[iat][1]);
-            tmp_lambda_coeff[iat * 4 + 2] = std::complex<double>(lambda[iat][0], -1 * lambda[iat][1]);
-            tmp_lambda_coeff[iat * 4 + 3] = std::complex<double>(-1 * lambda[iat][2], 0.0);
+            tmp_lambda_coeff[iat * 4 + 2] = std::complex<double>(lambda[iat][0], -lambda[iat][1]);
+            tmp_lambda_coeff[iat * 4 + 3] = std::complex<double>(-lambda[iat][2], 0.0);
         }
     }
     syncmem_complex_h2d_op()(this->lambda_coeff, tmp_lambda_coeff.data(), this->ucell->nat * 4);

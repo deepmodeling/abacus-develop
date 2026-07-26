@@ -1,0 +1,25 @@
+INPUT_PARAMETERS
+#Parameters (1.General)
+suffix                 Ar_lj
+calculation            md
+esolver_type           lj
+
+#Parameters (MD)
+md_type                nve
+md_nstep               1000
+md_dt                  1.0
+md_tfirst              300
+init_vel               true
+
+# LJ Parameters (Argon example)
+lj_rule                2
+lj_eshift              false
+lj_rcut                10.0
+lj_epsilon              0.0104    # eV (Ar-Ar)
+lj_sigma                3.405     # Angstrom (Ar-Ar)
+
+# Output
+dump_force             true
+dump_vel               true
+dump_virial            true
+md_dumpfreq            10
