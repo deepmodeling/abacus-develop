@@ -64,7 +64,7 @@ def main():
     # 3. Dependency files (PW only needs pseudopotentials)
     # ----------------------------------------------------------
     job.pp_orbitals = {"Bi": "../../../tests/PP_ORB/Bi_pbe_fr.upf", "Se": "../../../tests/PP_ORB/Se_pbe_fr.upf"}
-    # PW basis does not require orbital files, orbital_files not set
+    # ← PW基组不需要轨道文件，不设置 orbital_files
 
     # ----------------------------------------------------------
     # 4. Wannier90 Parameters
@@ -99,7 +99,7 @@ def main():
         if DRY_RUN:
             job._validate_inputs()
 
-            # Step 0: SCF (PW basis)
+            # Step 0: SCF (PW基组)
             job.step0_run_scf(
                 scf_mp_grid=[4, 4, 4],
             )
