@@ -187,11 +187,12 @@ void test_deepks<T>::setup_cell()
     const int dfthalf_type = 0;
     const std::string pseudo_dir = "";
     const int nspin = this->nspin;
+    const int symmetry = 0;
 
     ucell.setup_cell("STRU", GlobalV::ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, deepks_setorb, rpa,
-        fixed_atoms, noncolin, calculation, esolver_type, 0);
+        fixed_atoms, noncolin, calculation, esolver_type, symmetry);
 
     const std::string global_out_dir = "./";
     const bool out_element_info = this->out_element_info;
