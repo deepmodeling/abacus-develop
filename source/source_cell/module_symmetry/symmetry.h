@@ -374,7 +374,7 @@ public:
     /// W(g) m_i = m_{g(i)} with W(g)=SpinRotation::spin_so3(gmatc). This prevents operations
     /// that reverse the moment (which are only symmetries when combined with time reversal)
     /// from being applied in k-reduction and density symmetrization.
-    /// See ref/2026-07-SOC磁群对称性判据.md. Non-magnetic (m_i=0) keeps all operations.
+    /// Non-magnetic (m_i=0) keeps all operations.
     void analyze_magnetic_group_nspin4(const Atom* atoms, const Statistics& st, const ModuleBase::Matrix3& latvec);
 };
 }
