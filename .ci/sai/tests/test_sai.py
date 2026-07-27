@@ -326,13 +326,17 @@ class ResultTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "result case"):
                 sai.report(args)
 
-    def test_pmix_signature_requires_all_markers(self):
+    def test_mpi_startup_failure_requires_complete_signature(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "log"
             path.write_bytes(b"PMIX_ERR_FILE_OPEN_FAILURE MPI_Init_thread PMIx_Init failed")
-            self.assertTrue(sai._pmix(path))
+            self.assertTrue(sai._mpi_startup_failure(path))
             path.write_bytes(b"PMIX_ERR_FILE_OPEN_FAILURE")
-            self.assertFalse(sai._pmix(path))
+            self.assertFalse(sai._mpi_startup_failure(path))
+            path.write_bytes(b"srun returned non-zero exit status (512) from launching the per-node daemon")
+            self.assertTrue(sai._mpi_startup_failure(path))
+            path.write_bytes(b"srun returned non-zero exit status (512)")
+            self.assertFalse(sai._mpi_startup_failure(path))
 
 
 class PolicyTests(unittest.TestCase):

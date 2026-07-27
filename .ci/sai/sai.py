@@ -344,9 +344,13 @@ def _stream(command: Sequence[str], cwd: Path, log: Path) -> int:
         return process.wait()
 
 
-def _pmix(log: Path) -> bool:
+def _mpi_startup_failure(log: Path) -> bool:
     data = log.read_bytes()
-    return bool(PMIX.search(data)) and b"MPI_Init_thread" in data and b"PMIx_Init failed" in data
+    return (
+        bool(PMIX.search(data)) and b"MPI_Init_thread" in data and b"PMIx_Init failed" in data
+    ) or (
+        b"srun returned non-zero exit status (512)" in data and b"per-node daemon" in data
+    )
 
 
 def worker(source: Path, control: Path, install: Path, results: Path, manifest: Path) -> int:
@@ -377,7 +381,7 @@ def worker(source: Path, control: Path, install: Path, results: Path, manifest: 
         raise RuntimeError("ABACUS has unresolved runtime libraries")
     start = time.time()
     returncode = 2
-    final_pmix = False
+    final_startup_failure = False
     try:
         if runner == "autotest":
             cases_file = case.parent / "CASES.task.txt"
@@ -397,21 +401,28 @@ def worker(source: Path, control: Path, install: Path, results: Path, manifest: 
                         pass
                 log = artifacts / "attempt-{}.log".format(attempt)
                 returncode = _stream(command, case.parent, log)
-                final_pmix = returncode != 0 and _pmix(log)
-                if returncode == 0 or attempt == 2 or not final_pmix:
+                final_startup_failure = returncode != 0 and _mpi_startup_failure(log)
+                if returncode == 0 or attempt == 2 or not final_startup_failure:
                     break
                 time.sleep(10)
         else:
-            returncode = _stream((
+            command = (
                 "timeout", "--signal=TERM", "--kill-after=30s", "35m",
                 "mpirun", "-np", os.environ["SLURM_NTASKS"], str(abacus),
-            ), case, artifacts / "cusolvermp.log")
+            )
+            for attempt in (1, 2):
+                log = artifacts / ("cusolvermp.log" if attempt == 1 else "cusolvermp-retry.log")
+                returncode = _stream(command, case, log)
+                final_startup_failure = returncode != 0 and _mpi_startup_failure(log)
+                if returncode == 0 or attempt == 2 or not final_startup_failure:
+                    break
+                time.sleep(10)
         for filename in ("log.txt", "result.out", "warning.log"):
             if (case / filename).is_file():
                 shutil.copy2(str(case / filename), str(artifacts / filename))
         state = "PASS" if returncode == 0 else (
             "TIMEOUT" if returncode in (124, 137, 143) else
-            "INFRA" if final_pmix else "FAIL"
+            "INFRA" if final_startup_failure else "FAIL"
         )
         _atomic(results / "status" / (case_id.replace("/", "__") + ".json"), {
             "case_id": case_id, "resource": resource, "runner": runner,
