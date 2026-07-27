@@ -1,0 +1,45 @@
+#!/usr/bin/env bash
+#SBATCH --job-name=@JOB_NAME@
+#SBATCH --partition=@PARTITION@
+#SBATCH --qos=@QOS@
+#SBATCH --nodes=@NODES@
+#SBATCH --ntasks=@TASKS@
+#SBATCH --ntasks-per-node=@TASKS_PER_NODE@
+#SBATCH --gpus-per-node=@GPUS_PER_NODE@
+#SBATCH --time=@TIME@
+#SBATCH --output=@OUTPUT@
+#SBATCH --export=NIL
+
+set -euo pipefail
+
+export HOME=@HOME@
+export USER=${SLURM_JOB_USER:?}
+export LOGNAME=$USER
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+source @CONTROL@/modules.sh
+module -t list 2>&1 | tee @RESULTS@/modules.txt
+command -v cmake make mpicxx nvcc | tee @RESULTS@/tools.txt
+nvidia-smi dmon -s pucvmte -o T > @RESULTS@/dmon-${SLURM_JOB_ID}.log &
+
+cmake -S @SOURCE@ -B @BUILD@ -G "Unix Makefiles" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX=@INSTALL@ \
+    -DCMAKE_CUDA_ARCHITECTURES=70 \
+    -DENABLE_LIBXC=ON \
+    -DUSE_CUDA=ON \
+    -DUSE_CUDA_MPI=ON \
+    -DENABLE_CUSOLVERMP=ON \
+    -DENABLE_CUBLASMP=ON \
+    -DENABLE_NCCL_PARALLEL_DEVICE=ON \
+    -DBUILD_TESTING=OFF \
+    -DGIT_SUBMODULE=OFF 2>&1 | tee @RESULTS@/configure.log
+cmake --build @BUILD@ --parallel 32 2>&1 | tee @RESULTS@/build.log
+cmake --install @BUILD@ 2>&1 | tee @RESULTS@/install.log
+
+@INSTALL@/bin/abacus --info | tee @RESULTS@/abacus-info.txt
+ldd @INSTALL@/bin/abacus | tee @RESULTS@/ldd.txt
+! grep -q 'not found' @RESULTS@/ldd.txt
+cp @BUILD@/CMakeCache.txt @RESULTS@/CMakeCache.txt
+
+exit 0

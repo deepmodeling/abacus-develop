@@ -1,0 +1,8 @@
+This Si48 solid smoke case is reconstructed from the repository's Si64 PEXSI
+supercell and Si RT-TDDFT GPU input. It matches the 48-atom system size used to
+validate the multi-GPU RT-TDDFT implementation in PR #7026, but it is not a
+copy of that unpublished benchmark input.
+
+The case runs only two electronic propagation steps. It checks that the
+multi-node cuSolverMp RT-TDDFT path completes; it is not a physical or
+performance reference calculation.

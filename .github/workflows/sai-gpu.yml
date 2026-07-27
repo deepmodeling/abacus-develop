@@ -1,0 +1,255 @@
+name: SAI GPU validation
+
+on:
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: "Approved commit to execute on SAI"
+        required: true
+        type: string
+      project_root:
+        description: "Optional SAI project root"
+        required: false
+        type: string
+  schedule:
+    - cron: "30 20 * * *"
+
+permissions: {}
+
+concurrency:
+  group: sai-gpu-${{ github.event_name == 'schedule' && 'daily' || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  admit:
+    name: Authorize request
+    if: >-
+      github.event_name != 'issue_comment' ||
+      (github.event.issue.pull_request &&
+       github.event.comment.body == '/abacus-ci sai-gpu')
+    runs-on: ubuntu-24.04
+    permissions:
+      checks: write
+      contents: read
+      pull-requests: read
+    outputs:
+      accepted: ${{ steps.request.outputs.accepted }}
+      check_id: ${{ steps.request.outputs.check_id }}
+      control_sha: ${{ steps.control.outputs.sha }}
+      namespace: ${{ steps.request.outputs.namespace }}
+      pr_number: ${{ steps.request.outputs.pr_number }}
+      source_repository: ${{ steps.request.outputs.source_repository }}
+      source_sha: ${{ steps.request.outputs.source_sha }}
+    steps:
+      - name: Require default branch for manual runs
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: test "$GITHUB_REF_NAME" = "$DEFAULT_BRANCH"
+
+      - name: Checkout trusted control code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          path: control
+          persist-credentials: false
+
+      - name: Pin control commit
+        id: control
+        run: echo "sha=$(git -C control rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve candidate
+        id: request
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MANUAL_SOURCE_SHA: ${{ inputs.source_sha || '' }}
+          SAI_UPSTREAM_REPOSITORY: deepmodeling/abacus-develop
+        run: python3 control/.ci/sai/sai.py github-admit
+
+  rebuild-and-test:
+    name: Build and run on SAI
+    needs: admit
+    if: needs.admit.outputs.accepted == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 240
+    environment:
+      name: ${{ github.event_name == 'schedule' && 'sai-ssh-scheduled' || 'sai-ssh-manual' }}
+    permissions:
+      contents: read
+    outputs:
+      artifact_url: ${{ steps.upload.outputs.artifact-url }}
+      available: ${{ steps.summary.outputs.available }}
+      components: ${{ steps.summary.outputs.components }}
+      failed: ${{ steps.summary.outputs.failed }}
+      infrastructure: ${{ steps.summary.outputs.infrastructure }}
+      passed: ${{ steps.summary.outputs.passed }}
+      total: ${{ steps.summary.outputs.total }}
+    env:
+      CONTROL_SHA: ${{ needs.admit.outputs.control_sha }}
+      PROJECT_ROOT_INPUT: ${{ inputs.project_root || '' }}
+      RUN_NAMESPACE: ${{ needs.admit.outputs.namespace }}
+      SAI_PROJECT_ROOT: ${{ vars.SAI_PROJECT_ROOT }}
+      SAI_SSH_HOST: ${{ vars.SAI_SSH_HOST }}
+      SAI_SSH_PORT: ${{ vars.SAI_SSH_PORT }}
+      SAI_SSH_USER: ${{ vars.SAI_SSH_USER }}
+      SOURCE_REPOSITORY: ${{ needs.admit.outputs.source_repository }}
+      SOURCE_SHA: ${{ needs.admit.outputs.source_sha }}
+    steps:
+      - name: Checkout pinned control code
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ env.CONTROL_SHA }}
+          path: control
+          persist-credentials: false
+
+      - name: Checkout candidate source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: ${{ env.SOURCE_REPOSITORY }}
+          ref: ${{ env.SOURCE_SHA }}
+          fetch-depth: 0
+          path: source
+          persist-credentials: false
+
+      - name: Configure SSH
+        env:
+          SAI_SSH_PRIVATE_KEY: ${{ secrets.SAI_SSH_PRIVATE_KEY }}
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/sai-ssh"
+          mkdir -m 700 "$root"
+          printf '%s\n' "$SAI_SSH_PRIVATE_KEY" > "$root/id_ed25519"
+          chmod 600 "$root/id_ed25519"
+          cp control/.ci/sai/known_hosts "$root/known_hosts"
+          chmod 600 "$root/known_hosts"
+          cat > "$root/config" <<EOF
+          Host sai-ci
+              HostName $SAI_SSH_HOST
+              Port $SAI_SSH_PORT
+              User $SAI_SSH_USER
+              IdentityFile $root/id_ed25519
+              IdentitiesOnly yes
+              StrictHostKeyChecking yes
+              UserKnownHostsFile $root/known_hosts
+              ForwardAgent no
+              ServerAliveInterval 30
+              ServerAliveCountMax 6
+          EOF
+          chmod 600 "$root/config"
+          ssh-keygen -y -f "$root/id_ed25519" >/dev/null
+          echo "SAI_SSH_CONFIG=$root/config" >> "$GITHUB_ENV"
+          echo "ARTIFACT_ROOT=$RUNNER_TEMP/sai-artifacts" >> "$GITHUB_ENV"
+
+      - name: Run shared SAI client
+        id: client
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          project_root=${PROJECT_ROOT_INPUT:-$SAI_PROJECT_ROOT}
+          : "${project_root:?Set SAI_PROJECT_ROOT in the GitHub Environment}"
+          mkdir -p "$ARTIFACT_ROOT"
+          set +e
+          python3 control/.ci/sai/sai.py local \
+              --ssh-config "$SAI_SSH_CONFIG" \
+              --target sai-ci \
+              --project-root "$project_root" \
+              --source-repository "$GITHUB_WORKSPACE/source" \
+              --source-sha "$SOURCE_SHA" \
+              --namespace "$RUN_NAMESPACE" \
+              --run-id "$GITHUB_RUN_ID" \
+              --run-attempt "$GITHUB_RUN_ATTEMPT" \
+              --artifacts "$ARTIFACT_ROOT" \
+              2>&1 | tee "$ARTIFACT_ROOT/client.log"
+          rc=${PIPESTATUS[0]}
+          set -e
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          exit "$rc"
+
+      - name: Publish result summary
+        id: summary
+        if: always()
+        run: |
+          python3 control/.ci/sai/sai.py report \
+              --result "$ARTIFACT_ROOT/results/result.json" \
+              --output "$GITHUB_OUTPUT" \
+              --summary "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload raw results
+        id: upload
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: sai-gpu-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ env.ARTIFACT_ROOT }}
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Archive uploaded run on SAI
+        if: always() && steps.upload.outcome == 'success'
+        run: |
+          set -euo pipefail
+          test -f "$ARTIFACT_ROOT/run.json" || exit 0
+          project=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["project_root"])' "$ARTIFACT_ROOT/run.json")
+          run=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["run_root"])' "$ARTIFACT_ROOT/run.json")
+          ssh -F "$SAI_SSH_CONFIG" sai-ci \
+              python3 "$run/control/sai.py" archive "$project" "$run"
+
+      - name: Remove SSH credentials
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/sai-ssh"
+
+      - name: Validate result protocol
+        if: always()
+        env:
+          AVAILABLE: ${{ steps.summary.outputs.available }}
+        run: |
+          set -euo pipefail
+          test "$AVAILABLE" = true
+
+  component-status:
+    name: SAI / ${{ matrix.component.label }}
+    needs: [admit, rebuild-and-test]
+    if: always() && needs.admit.outputs.accepted == 'true'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        component: ${{ fromJSON(needs.rebuild-and-test.outputs.components || '[{"name":"infrastructure","label":"Infrastructure","state":"INFRA"}]') }}
+    steps:
+      - name: Report component state
+        env:
+          STATE: ${{ matrix.component.state }}
+        run: test "$STATE" = PASS
+
+  report-pr:
+    name: Report result to pull request
+    needs: [admit, rebuild-and-test, component-status]
+    if: always() && needs.admit.outputs.accepted == 'true' && needs.admit.outputs.pr_number != ''
+    runs-on: ubuntu-24.04
+    permissions:
+      checks: write
+      contents: read
+      issues: write
+    steps:
+      - name: Checkout pinned reporter
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ needs.admit.outputs.control_sha }}
+          path: control
+          persist-credentials: false
+
+      - name: Complete check and comment
+        env:
+          ARTIFACT_URL: ${{ needs.rebuild-and-test.outputs.artifact_url }}
+          CHECK_ID: ${{ needs.admit.outputs.check_id }}
+          GH_TOKEN: ${{ github.token }}
+          GPU_FAILED: ${{ needs.rebuild-and-test.outputs.failed }}
+          GPU_INFRASTRUCTURE: ${{ needs.rebuild-and-test.outputs.infrastructure }}
+          GPU_PASSED: ${{ needs.rebuild-and-test.outputs.passed }}
+          PR_NUMBER: ${{ needs.admit.outputs.pr_number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SAI_RESULT: ${{ needs.rebuild-and-test.result == 'success' && needs.component-status.result == 'success' && 'success' || 'failure' }}
+          SOURCE_SHA: ${{ needs.admit.outputs.source_sha }}
+        run: python3 control/.ci/sai/sai.py github-finish
