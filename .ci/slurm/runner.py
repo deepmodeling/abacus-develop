@@ -70,7 +70,16 @@ class Case:
 
 
 @dataclass(frozen=True)
+class Remote:
+    host: str
+    port: int
+    user: str
+    project_root: str
+
+
+@dataclass(frozen=True)
 class Config:
+    remote: Remote
     partition: str
     mapping_root: Path
     disable_nccl_ib: bool
@@ -111,7 +120,7 @@ def _resource(name: str, section: Mapping[str, str], array: bool) -> Resource:
     return profile
 
 
-def load_config(path: Path = ROOT / "gpu-matrix.ini") -> Config:
+def load_config(path: Path = ROOT / "config.ini") -> Config:
     parser = configparser.ConfigParser(interpolation=None, strict=True)
     with Path(path).open(encoding="utf-8") as stream:
         parser.read_file(stream)
@@ -120,11 +129,27 @@ def load_config(path: Path = ROOT / "gpu-matrix.ini") -> Config:
     expected_cases = ["case.{:03d}".format(index) for index in range(1, len(cases) + 1)]
     if not resources or cases != expected_cases:
         raise ValueError("resources and contiguous case sections are required")
-    known = {"cluster", "build", *resources, *cases}
-    if set(parser.sections()) != known or set(parser["cluster"]) != {
+    known = {"remote", "cluster", "build", *resources, *cases}
+    if set(parser.sections()) != known or set(parser["remote"]) != {
+        "host", "port", "user", "project_root",
+    } or set(parser["cluster"]) != {
         "partition", "mapping_root", "disable_nccl_ib", "poll_seconds",
     }:
         raise ValueError("unexpected configuration section or key")
+    remote = parser["remote"]
+    project_root = remote["project_root"]
+    project = PurePosixPath(project_root)
+    if project_root == "~":
+        project_parts: Tuple[str, ...] = ()
+    elif project_root.startswith("~/"):
+        project_parts = project.parts[1:]
+    elif project.is_absolute():
+        project_parts = project.parts[1:]
+    else:
+        raise ValueError("invalid remote project root")
+    if not NAME.fullmatch(remote["host"]) or not NAME.fullmatch(remote["user"]) or \
+            any(not NAME.fullmatch(part) for part in project_parts):
+        raise ValueError("invalid remote configuration")
     partition = parser["cluster"]["partition"]
     mapping = Path(parser["cluster"]["mapping_root"])
     disable = parser["cluster"]["disable_nccl_ib"].lower()
@@ -150,6 +175,10 @@ def load_config(path: Path = ROOT / "gpu-matrix.ini") -> Config:
     if any(not any(case.resource == name for case in matrix) for name in profiles):
         raise ValueError("every resource needs a case")
     return Config(
+        Remote(
+            remote["host"], _integer(remote, "port", 1, 65535),
+            remote["user"], project_root,
+        ),
         partition, mapping, disable == "true",
         _integer(parser["cluster"], "poll_seconds", 1, 300),
         _resource("build", parser["build"], False), profiles, tuple(matrix),
@@ -244,7 +273,7 @@ def _result_markdown(result: Mapping[str, Any]) -> str:
 
 def remote_run(run: Path) -> int:
     run = run.resolve()
-    config = load_config(run / "control" / "gpu-matrix.ini")
+    config = load_config(run / "control" / "config.ini")
     results = run / "results"
     scripts = run / "jobs"
     results.mkdir(parents=True, exist_ok=True)
@@ -934,7 +963,7 @@ def parser() -> argparse.ArgumentParser:
         help="host alias in the SSH config",
     )
     client.add_argument(
-        "--project-root", default="~/abacus_gpu_ci",
+        "--project-root", default=load_config().remote.project_root,
         help="remote directory for caches, runs, and archives",
     )
     client.add_argument(
@@ -962,8 +991,8 @@ def parser() -> argparse.ArgumentParser:
         help="local directory for downloaded results and client logs",
     )
     commands.add_parser(
-        "config", help="validate and summarize gpu-matrix.ini",
-        description="Validate gpu-matrix.ini and print its resource and case counts.",
+        "config", help="validate and summarize config.ini",
+        description="Validate config.ini and print its remote, resource, and case configuration.",
     )
 
     def internal(name: str) -> argparse.ArgumentParser:
@@ -1002,7 +1031,13 @@ def main() -> int:
     args = parser().parse_args()
     if args.command == "config":
         config = load_config()
-        print(json.dumps({"resources": list(config.resources), "cases": len(config.cases)}))
+        print(json.dumps({
+            "remote": {
+                "host": config.remote.host, "port": config.remote.port,
+                "user": config.remote.user, "project_root": config.remote.project_root,
+            },
+            "resources": list(config.resources), "cases": len(config.cases),
+        }))
         return 0
     if args.command == "remote-run":
         return remote_run(args.run)

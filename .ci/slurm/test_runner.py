@@ -45,24 +45,42 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.resources["gpu4"].label, "4 GPUs")
         self.assertEqual(config.resources["gpu8x2"].label, "2 nodes / 16 GPUs")
         self.assertEqual(config.cases[-1].runner, "cusolvermp")
+        self.assertEqual(config.remote.host, "c0.sai.ai-4s.com")
+        self.assertEqual(config.remote.port, 12022)
+        self.assertEqual(config.remote.user, "abacususer01")
+        self.assertEqual(config.remote.project_root, "~/abacus_gpu_ci")
+        known_hosts = (ROOT / "known_hosts").read_text(encoding="utf-8")
+        self.assertIn("[{}]:{}".format(config.remote.host, config.remote.port), known_hosts)
 
     def test_resource_names_are_not_hardcoded(self):
-        text = (ROOT / "gpu-matrix.ini").read_text(encoding="utf-8")
+        text = (ROOT / "config.ini").read_text(encoding="utf-8")
         text = text.replace("resource.gpu1", "resource.single", 1)
         text = text.replace("resource = gpu1", "resource = single", 1)
         with tempfile.TemporaryDirectory() as directory:
-            path = Path(directory) / "matrix.ini"
+            path = Path(directory) / "config.ini"
             path.write_text(text, encoding="utf-8")
             self.assertIn("single", runner.load_config(path).resources)
 
     def test_unknown_resource_and_noncontiguous_case_fail(self):
-        original = (ROOT / "gpu-matrix.ini").read_text(encoding="utf-8")
+        original = (ROOT / "config.ini").read_text(encoding="utf-8")
         for text in (
             original.replace("resource = gpu1", "resource = missing", 1),
             original.replace("[case.002]", "[case.999]", 1),
         ):
             with tempfile.TemporaryDirectory() as directory:
-                path = Path(directory) / "matrix.ini"
+                path = Path(directory) / "config.ini"
+                path.write_text(text, encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    runner.load_config(path)
+
+    def test_invalid_remote_configuration_fails(self):
+        original = (ROOT / "config.ini").read_text(encoding="utf-8")
+        for text in (
+            original.replace("port = 12022", "port = 0", 1),
+            original.replace("project_root = ~/", "project_root = relative/", 1),
+        ):
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "config.ini"
                 path.write_text(text, encoding="utf-8")
                 with self.assertRaises(ValueError):
                     runner.load_config(path)
@@ -180,6 +198,7 @@ class SlurmTests(unittest.TestCase):
 
     def test_pass_requires_successful_slurm_accounting(self):
         config = runner.Config(
+            runner.Remote("cluster.example", 22, "user", "~/gpu-ci"),
             "gpu", Path("/opt/cluster/mps_mapping.d"), False, 1,
             runner.Resource("build", "flood-gpu", 1, 1, 1, 60),
             {"one": runner.Resource("one", "flood-gpu", 1, 1, 1, 60)},
@@ -477,8 +496,11 @@ class PolicyTests(unittest.TestCase):
         self.assertIn("gpu-ci-scheduled", text)
         self.assertIn("gpu-ci-manual", text)
         self.assertIn("/abacus-ci gpu", text)
+        self.assertIn("runner.py config", text)
+        self.assertIn("fromJSON(steps.cluster.outputs.config).remote.host", text)
         self.assertIn("runner.py run", text)
         self.assertIn("pull-requests: write", text)
+        self.assertNotIn("${{ vars.", text)
         self.assertNotIn("cpus-per-task", text)
 
 

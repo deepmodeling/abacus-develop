@@ -90,10 +90,6 @@ jobs:
       CONTROL_SHA: ${{ needs.admit.outputs.control_sha }}
       PROJECT_ROOT_INPUT: ${{ inputs.project_root || '' }}
       RUN_NAMESPACE: ${{ needs.admit.outputs.namespace }}
-      REMOTE_PROJECT_ROOT: ${{ vars.REMOTE_PROJECT_ROOT }}
-      REMOTE_SSH_HOST: ${{ vars.REMOTE_SSH_HOST }}
-      REMOTE_SSH_PORT: ${{ vars.REMOTE_SSH_PORT }}
-      REMOTE_SSH_USER: ${{ vars.REMOTE_SSH_USER }}
       SOURCE_REPOSITORY: ${{ needs.admit.outputs.source_repository }}
       SOURCE_SHA: ${{ needs.admit.outputs.source_sha }}
     steps:
@@ -113,9 +109,18 @@ jobs:
           path: source
           persist-credentials: false
 
+      - name: Read trusted cluster configuration
+        id: cluster
+        run: |
+          config=$(python3 control/.ci/slurm/runner.py config)
+          printf 'config=%s\n' "$config" >> "$GITHUB_OUTPUT"
+
       - name: Configure SSH
         env:
+          REMOTE_SSH_HOST: ${{ fromJSON(steps.cluster.outputs.config).remote.host }}
+          REMOTE_SSH_PORT: ${{ fromJSON(steps.cluster.outputs.config).remote.port }}
           REMOTE_SSH_PRIVATE_KEY: ${{ secrets.REMOTE_SSH_PRIVATE_KEY }}
+          REMOTE_SSH_USER: ${{ fromJSON(steps.cluster.outputs.config).remote.user }}
         run: |
           set -euo pipefail
           root="$RUNNER_TEMP/remote-ssh"
@@ -145,10 +150,11 @@ jobs:
       - name: Run shared GPU client
         id: client
         continue-on-error: true
+        env:
+          REMOTE_PROJECT_ROOT: ${{ fromJSON(steps.cluster.outputs.config).remote.project_root }}
         run: |
           set -euo pipefail
           project_root=${PROJECT_ROOT_INPUT:-$REMOTE_PROJECT_ROOT}
-          : "${project_root:?Set REMOTE_PROJECT_ROOT in the GitHub Environment}"
           mkdir -p "$ARTIFACT_ROOT"
           set +e
           python3 control/.ci/slurm/runner.py run \

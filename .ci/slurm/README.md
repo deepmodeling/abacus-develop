@@ -3,8 +3,9 @@
 ## Purpose and scope
 
 This workflow rebuilds ABACUS at one exact commit on a remote GPU cluster and
-runs the matrix in `gpu-matrix.ini` through Slurm. The current matrix has 49
-cases. It reports build, resource, and case states and saves the raw logs.
+runs the matrix in `config.ini` through Slurm. The configuration contains the
+remote connection, Slurm resources, and 49 test cases. The workflow reports
+build, resource, and case states and saves the raw logs.
 
 This is validation, not a benchmark or a general remote-shell service. The
 client requires a committed checkout: it bundles the checked-out `HEAD` and
@@ -28,15 +29,14 @@ Create these GitHub Environments for the `GPU validation` workflow:
 - `gpu-ci-manual`: require the reviewers who should approve a remote run.
   Manual dispatches and the pull-request comment trigger use this environment.
 
-In each environment, configure the SSH secret and connection variables:
+In each environment, configure one secret:
 
 - Secret: `REMOTE_SSH_PRIVATE_KEY` (the private key used by the runner).
-- Variables: `REMOTE_PROJECT_ROOT`, `REMOTE_SSH_HOST`, `REMOTE_SSH_PORT`, and
-  `REMOTE_SSH_USER`.
 
-`REMOTE_PROJECT_ROOT` should be an absolute path below the remote user's home, for
-example `/home/<group>/<user>/abacus_gpu_ci`. A manual dispatch may provide
-the optional `project_root` input to override this variable for that run.
+The two environments have different approval rules, so the same key must be
+added to each one. Host, port, user, and the default project root come from the
+trusted `[remote]` section in `config.ini`. A manual dispatch may provide the
+optional `project_root` input to override the configured root for that run.
 
 ## Triggers
 
@@ -83,10 +83,12 @@ python3 .ci/slurm/runner.py --help
 python3 .ci/slurm/runner.py run --help
 ```
 
-## Matrix configuration
+## Configuration
 
-`gpu-matrix.ini` is validated before jobs are submitted.
+`config.ini` is validated before jobs are submitted.
 
+- `[remote]`: SSH `host`, `port`, `user`, and `project_root`. The project root
+  must be an absolute path or use `~/` relative to the remote user's home.
 - `[cluster]`: Slurm `partition`, absolute `mapping_root` for the MPI mapping
   script, `disable_nccl_ib` (`true` or `false`), and `poll_seconds` (1-300).
 - `[build]`: build-job `qos`, `nodes`, `tasks_per_node`, `gpus_per_node`, and
@@ -109,7 +111,7 @@ shown as `N nodes / M GPUs`. Thus `gpu1`, `gpu2`, and `gpu4` display `1 GPU`,
 On the remote cluster, a run is created below:
 
 ```
-<REMOTE_PROJECT_ROOT>/runs/<namespace>/<run-id>-<attempt>/
+<project-root>/runs/<namespace>/<run-id>-<attempt>/
 ```
 
 Its `results/` directory contains `result.json`, `summary.md`, build and case
@@ -118,7 +120,7 @@ working data are alongside it while the run is active. After results are
 collected, CI archives `results/` and `jobs/` as:
 
 ```
-<REMOTE_PROJECT_ROOT>/archives/<namespace>/<run-id>-<attempt>.tar.gz
+<project-root>/archives/<namespace>/<run-id>-<attempt>.tar.gz
 ```
 
 The client removes archived files older than 72 hours when preparing a later
@@ -130,10 +132,10 @@ links to the Actions run and the uploaded raw files.
 
 ## Troubleshooting
 
-**SSH fails.** Check `REMOTE_SSH_HOST`, `REMOTE_SSH_PORT`, and `REMOTE_SSH_USER`, that
-the key matches the account, and that the target is reachable. CI uses the
-committed `.ci/slurm/known_hosts` with strict host-key checking. Test the same
-target with the SSH config before retrying; do not disable host-key checking.
+**SSH fails.** Check the `[remote]` values in `config.ini`, that the key matches
+the configured account, and that the target is reachable. CI uses the committed
+`.ci/slurm/known_hosts` with strict host-key checking. Test the same target with
+the SSH config before retrying; do not disable host-key checking.
 
 **A module cannot be loaded.** `modules.sh` sources Lmod, purges modules, and
 loads `cmake/3.31.6` and the configured ABACUS dependency module. Ask the site
