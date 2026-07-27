@@ -227,6 +227,8 @@ test(sternheimer): benchmark global equation MPI layout
 
 With `global_equation`, the same immutable binary, and unchanged resources, run `1e-8`, `1e-7`, and `1e-6`. Do not combine this scan with grouped/global speedup numbers.
 
+A low-cost 20 A/10 Ry/two-frequency iteration-trend gate was submitted as `21402153` (`1e-7`) and `21402154` (`1e-6`), both on two `normal` nodes. This does not complete the 50 Ry tolerance task or its SOS energy gate.
+
 - [ ] **Step 2: Compare numerical targets**
 
 Use `1e-8` as reference. Record wall time, node-hours, mean/max iterations by frequency, solver/equation residuals, response-target relative Frobenius error, maximum element difference, and SIAB selection loss/rank.
