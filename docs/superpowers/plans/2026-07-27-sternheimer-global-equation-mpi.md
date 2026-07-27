@@ -25,7 +25,7 @@
 
 ### Task 1: Add the MPI layout input
 
-- [ ] **Step 1: Write the parser RED test**
+- [x] **Step 1: Write the parser RED test**
 
 Add to `read_input_item_test.cpp` next to `sternheimer_channel_mpi`:
 
@@ -45,11 +45,11 @@ Add to `read_input_item_test.cpp` next to `sternheimer_channel_mpi`:
 }
 ```
 
-- [ ] **Step 2: Run RED remotely**
+- [x] **Step 2: Run RED remotely**
 
 Submit one `normal` node with `--cpus-per-task=30 --mem=110610M --time=1-00:00:00`. Configure the existing Sternheimer unit-test build and run the serial input test. Expected result: compile failure because `Input_para::sternheimer_mpi_layout` does not exist.
 
-- [ ] **Step 3: Implement the input**
+- [x] **Step 3: Implement the input**
 
 Add to `input_parameter.h`:
 
@@ -59,11 +59,11 @@ std::string sternheimer_mpi_layout = "frequency_grouped";
 
 Register a string `Input_Item` after `sternheimer_channel_mpi`. Its checker accepts only `frequency_grouped` and `global_equation` and reports both accepted values.
 
-- [ ] **Step 4: Run GREEN remotely**
+- [x] **Step 4: Run GREEN remotely**
 
 Re-run the same input test. Expected result: the new parser case passes and existing Sternheimer input cases remain green.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 Commit only the three input files with message:
 
@@ -73,7 +73,7 @@ feat(sternheimer): add MPI layout input
 
 ### Task 2: Implement deterministic global equation ownership
 
-- [ ] **Step 1: Write the ownership RED tests**
+- [x] **Step 1: Write the ownership RED tests**
 
 Add tests requiring:
 
@@ -86,11 +86,11 @@ EXPECT_EQ(SternheimerRPA::global_equation_owner(0, 0, 0, 16, 428, 32, 1), 1);
 
 Loop over `nocc=2`, `nfreq=3`, `nchannel=5`, and `nranks=4`: count every returned owner, assert every equation has one valid owner, and assert `max(count)-min(count) <= 1`. Add invalid-dimension and negative-index cases.
 
-- [ ] **Step 2: Run RED remotely**
+- [x] **Step 2: Run RED remotely**
 
 Expected result: compile failure because `global_equation_owner` is absent.
 
-- [ ] **Step 3: Implement the owner API**
+- [x] **Step 3: Implement the owner API**
 
 Use checked 64-bit indexing:
 
@@ -104,11 +104,11 @@ return static_cast<int>((task + normalized_shift) % mpi_ranks);
 
 Reject invalid occupied, frequency, channel, rank-count, and dimension values before arithmetic.
 
-- [ ] **Step 4: Run GREEN and grouped regressions remotely**
+- [x] **Step 4: Run GREEN and grouped regressions remotely**
 
 Run the focused `sternheimer_rpa_test` binary. Expected result: new ownership tests pass and existing `frequency_mpi_assignment`/`channel_group_owner` tests remain unchanged.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```text
 feat(sternheimer): map global response equations to MPI ranks
@@ -116,15 +116,15 @@ feat(sternheimer): map global response equations to MPI ranks
 
 ### Task 3: Integrate global ownership into the SIAB producer
 
-- [ ] **Step 1: Add a producer validation RED test**
+- [x] **Step 1: Add a producer validation RED test**
 
 Extend the existing testable layout validation so that `global_equation` is rejected unless frequency MPI, channel MPI, and SIAB output are all enabled, and accepted when all three are enabled even when `nranks % nfreq != 0`.
 
-- [ ] **Step 2: Run RED remotely**
+- [x] **Step 2: Run RED remotely**
 
 Expected result: the new validation symbol or overload is missing.
 
-- [ ] **Step 3: Implement layout selection and equation filtering**
+- [x] **Step 3: Implement layout selection and equation filtering**
 
 Parse `PARAM.inp.sternheimer_mpi_layout` before building grid data. In `global_equation` mode:
 
@@ -145,7 +145,7 @@ if (equation_owner != GlobalV::MY_RANK)
 
 All ranks own every frequency for loop traversal and progress timing. The grouped branch continues to use `frequency_mpi_assignment` and `channel_group_owner` without changed semantics.
 
-- [ ] **Step 4: Add load diagnostics**
+- [x] **Step 4: Add load diagnostics**
 
 Accumulate `local_solved_equations` and `local_iteration_sum` before global reductions. Reduce minimum and maximum values across ranks and write:
 
@@ -160,11 +160,11 @@ rank_local_iterations_max <value>
 
 Retain `solved_equations=6848`, convergence, and residual reductions. Rely on the existing SIAB gather/writer canonical ordering; do not add a second sort.
 
-- [ ] **Step 5: Run unit GREEN remotely**
+- [x] **Step 5: Run unit GREEN remotely**
 
 Run all module_ri Sternheimer tests. Expected result: all tests pass with no changed grouped-layout expectation.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```text
 feat(sternheimer): distribute SIAB equations across all MPI ranks
@@ -172,19 +172,19 @@ feat(sternheimer): distribute SIAB equations across all MPI ranks
 
 ### Task 4: Verify MPI row completeness and numerical identity
 
-- [ ] **Step 1: Extend the two-rank MPI regression**
+- [x] **Step 1: Extend the two-rank MPI regression**
 
 Construct two frequencies and at least four channels. Assign each row with `global_equation_owner`, gather through `gather_reference_rows_to_root`, and compare the written SIAB file byte-for-byte against a serial row list in a deliberately different order.
 
-- [ ] **Step 2: Run the MPI RED/GREEN cycle remotely**
+- [x] **Step 2: Run the MPI RED/GREEN cycle remotely**
 
 Run with exactly two MPI ranks. First verify the test fails before producer integration is complete; after integration, require pass. Also run the existing empty-local-row MPI test.
 
-- [ ] **Step 3: Build an immutable ABACUS binary**
+- [x] **Step 3: Build an immutable ABACUS binary**
 
 On `df_dcu/normal`, build from the committed source in a new directory. Record source commit, compiler/module environment, binary SHA256, and test counts. Do not reuse a path writable by another job.
 
-- [ ] **Step 4: Run small H2 1/2/4-rank gates**
+- [x] **Step 4: Run small H2 1/2/4-rank gates**
 
 Use one fixed 20 A, 10 Ry H2 input, fixed frequency file, explicit ABFS, identical solver tolerance, and the immutable binary. Compare each global layout to the grouped/serial reference:
 
@@ -193,7 +193,7 @@ Use one fixed 20 A, 10 Ry H2 input, fixed frequency file, explicit ABFS, identic
 - response target and overlap relative Frobenius errors below `1e-10`;
 - maximum solver and explicit equation residuals unchanged within floating-point reduction order.
 
-- [ ] **Step 5: Commit regression scripts**
+- [x] **Step 5: Commit regression scripts**
 
 ```text
 test(sternheimer): validate global equation MPI output
@@ -201,13 +201,15 @@ test(sternheimer): validate global equation MPI output
 
 ### Task 5: Run the full production A/B
 
-- [ ] **Step 1: Freeze the comparison manifest**
+- [x] **Step 1: Freeze the comparison manifest**
 
 Use the completed H2 baseline parameters: 20 A, 50 Ry, 16 fixed frequencies, 428 explicit ABFS channels, 1250 SIAB primitives, full-Coulomb whitening, tolerance `1e-8`, 32 `normal` nodes, one rank/node, 30 OpenMP threads/rank, 110610 MiB/node, and 24 h limit.
 
 - [ ] **Step 2: Run `frequency_grouped` and `global_equation`**
 
 Use the same immutable executable and all identical physical files. Do not submit to `debug`. Save Slurm accounting, progress files, status, `sternheimer_matrix.dat`, and SHA256 manifests.
+
+Submitted as `21402011` (`frequency_grouped`) and `21402012` (`global_equation`) on 2026-07-27. Both jobs request 32 `normal` nodes, one rank and 30 OpenMP threads per node, 110610 MiB per node, and 24 h; both are pending at this checkpoint.
 
 - [ ] **Step 3: Evaluate correctness and speed**
 
@@ -239,11 +241,13 @@ Do not change the default tolerance from `1e-8` based on iteration count alone. 
 
 Add separate rows for global-equation MPI and each tolerance point, including system, Ecut, grid, frequencies, channels, equations, nodes/ranks/threads, wall time, node-hours, MaxRSS, speedup, and matrix error.
 
-- [ ] **Step 2: Update the overall acceleration summary near the solid table**
+The completed 10 Ry scheduling gate is recorded. The 50 Ry production and tolerance rows remain open until those jobs finish.
+
+- [x] **Step 2: Update the overall acceleration summary near the solid table**
 
 Add the molecular global-equation result with an explicit `molecular H2 SIAB` label. Do not report it as a solid speedup. Keep solid OpenMP, symmetry, and k-point results in their existing rows.
 
-- [ ] **Step 3: Compile and inspect the PDF**
+- [x] **Step 3: Compile and inspect the PDF**
 
 Run `latexmk -xelatex -interaction=nonstopmode -halt-on-error main.tex`, render the affected pages, and inspect table width, page breaks, labels, absolute times, resources, and numerical gates.
 
