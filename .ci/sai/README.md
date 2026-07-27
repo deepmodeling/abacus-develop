@@ -153,8 +153,6 @@ GPU availability, node and task limits, and the `time_seconds` value for that
 resource. Slurm output is in `results/`; an allocation or queue delay is an
 infrastructure issue, not a case failure.
 
-**MPI/PMIx initialization fails.** Autotest retries once after a recognized
-`PMIX_ERR_FILE_OPEN_FAILURE` or `PMIX_ERR_OUT_OF_RESOURCE` initialization
-failure. If it persists, inspect the attempt logs and the loaded MPI module,
-Slurm allocation, and mapping file. The `cusolvermp` runner does not use this
-retry.
+**MPI/PMIx initialization fails.** Both runners retry once after a recognized
+MPI startup failure. If it persists, inspect the attempt logs and the loaded
+MPI module, Slurm allocation, and mapping file.

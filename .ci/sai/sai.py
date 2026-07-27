@@ -728,6 +728,11 @@ def local_run(args: argparse.Namespace) -> int:
     if actual != args.source_sha or not SHA.fullmatch(actual):
         raise ValueError("source SHA must be the checked-out HEAD")
     run = project / "runs" / args.namespace / "{}-{}".format(args.run_id, args.run_attempt)
+    args.artifacts.mkdir(parents=True, exist_ok=True)
+    _atomic(args.artifacts / "run.json", {
+        "project_root": args.project_root, "run_root": str(run),
+        "source_sha": args.source_sha,
+    })
     remote_control = str(run / "control")
     _retry((
         "ssh", "-F", str(args.ssh_config), args.target,
@@ -788,7 +793,6 @@ def local_run(args: argparse.Namespace) -> int:
         else:
             failures = 0
         time.sleep(30)
-    args.artifacts.mkdir(parents=True, exist_ok=True)
     command = (
         "ssh", "-F", str(args.ssh_config), args.target,
         shlex.join(("python3", remote_control + "/sai.py", "collect", str(run))),
@@ -798,10 +802,6 @@ def local_run(args: argparse.Namespace) -> int:
     with archive.open("rb") as stream:
         _extract_results(stream, args.artifacts)
     archive.unlink()
-    _atomic(args.artifacts / "run.json", {
-        "project_root": args.project_root, "run_root": str(run),
-        "source_sha": args.source_sha,
-    })
     result_path = args.artifacts / "results" / "result.json"
     if result_path.is_file():
         result = _read_result(result_path)

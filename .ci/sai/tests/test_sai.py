@@ -247,6 +247,33 @@ class TransferTests(unittest.TestCase):
                 sai._retry_download(("ssh", "collect"), path)
             self.assertEqual(path.read_bytes(), b"complete")
 
+    def test_local_run_records_cleanup_metadata_before_remote_work(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source_sha = "a" * 40
+            args = argparse.Namespace(
+                source_repository=root,
+                project_root="/project",
+                target="sai-ci",
+                namespace="manual",
+                run_id="1",
+                run_attempt="1",
+                source_sha=source_sha,
+                artifacts=root / "artifacts",
+                ssh_config=root / "ssh-config",
+            )
+            revision = mock.Mock(stdout=source_sha + "\n")
+            with mock.patch("sai._command", return_value=revision), \
+                    mock.patch("sai._retry", side_effect=RuntimeError("disconnected")), \
+                    self.assertRaisesRegex(RuntimeError, "disconnected"):
+                sai.local_run(args)
+            metadata = json.loads((args.artifacts / "run.json").read_text())
+            self.assertEqual(metadata, {
+                "project_root": "/project",
+                "run_root": "/project/runs/manual/1-1",
+                "source_sha": source_sha,
+            })
+
     def test_result_archive_rejects_traversal_and_links(self):
         for name, link in (("../sai-ssh/id_ed25519", None), ("results/key", "../key")):
             payload = io.BytesIO()
