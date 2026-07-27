@@ -4,6 +4,7 @@
 import argparse
 import configparser
 import fcntl
+import hashlib
 import json
 import os
 import re
@@ -15,6 +16,7 @@ import tarfile
 import tempfile
 import time
 from collections import OrderedDict
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass
 from pathlib import Path
 from pathlib import PurePosixPath
@@ -30,6 +32,7 @@ PMIX = re.compile(br"PMIX_ERR_(?:FILE_OPEN_FAILURE|OUT_OF_RESOURCE)")
 MAX_RESULT_MEMBERS = 10000
 MAX_RESULT_BYTES = 2 * 1024**3
 MAX_REPORT_BYTES = 1024**2
+BUNDLE_PARTS = 8
 
 
 @dataclass(frozen=True)
@@ -448,6 +451,49 @@ def _cache(project: Path) -> Path:
     return project / "cache" / "repository.git"
 
 
+def _split_bundle(bundle: Path, destination: Path) -> Tuple[List[Path], str]:
+    size = bundle.stat().st_size
+    if size < BUNDLE_PARTS:
+        raise ValueError("source bundle is too small")
+    digest = hashlib.sha256()
+    parts = []
+    with bundle.open("rb") as source:
+        for index in range(BUNDLE_PARTS):
+            amount = size * (index + 1) // BUNDLE_PARTS - size * index // BUNDLE_PARTS
+            data = source.read(amount)
+            digest.update(data)
+            part = destination / "source.bundle.part.{:02d}".format(index)
+            part.write_bytes(data)
+            parts.append(part)
+        if source.read(1):
+            raise RuntimeError("unable to split source bundle")
+    return parts, digest.hexdigest()
+
+
+def _assemble_bundle(root: Path, expected: str) -> Path:
+    if not re.fullmatch(r"[0-9a-f]{64}", expected):
+        raise ValueError("invalid bundle checksum")
+    parts = [root / "source.bundle.part.{:02d}".format(index) for index in range(BUNDLE_PARTS)]
+    if set(root.glob("source.bundle.part.*")) != set(parts) or not all(path.is_file() for path in parts):
+        raise ValueError("incomplete source bundle")
+    temporary = root / ".source.bundle.tmp"
+    digest = hashlib.sha256()
+    with temporary.open("wb") as output:
+        for part in parts:
+            with part.open("rb") as stream:
+                for block in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest.update(block)
+                    output.write(block)
+    if digest.hexdigest() != expected:
+        temporary.unlink()
+        raise ValueError("source bundle checksum mismatch")
+    bundle = root / "source.bundle"
+    os.replace(str(temporary), str(bundle))
+    for part in parts:
+        part.unlink()
+    return bundle
+
+
 def remote_prepare(project: Path, run: Path) -> None:
     project = project.resolve()
     run = run.resolve()
@@ -472,15 +518,18 @@ def remote_prepare(project: Path, run: Path) -> None:
     print(json.dumps({"run_root": str(run), "cache_sha": base}))
 
 
-def remote_receive(project: Path, run: Path, source_sha: str) -> None:
+def remote_receive(project: Path, run: Path, source_sha: str, bundle_checksum: str) -> None:
     if not SHA.fullmatch(source_sha):
         raise ValueError("invalid source SHA")
     cache = _cache(project.resolve())
-    bundle = run.resolve() / "input" / "source.bundle"
+    input_root = run.resolve() / "input"
+    bundle = input_root / "source.bundle"
+    if bundle_checksum != "-":
+        bundle = _assemble_bundle(input_root, bundle_checksum)
     lock = cache.parent / "lock"
     with lock.open("w") as stream:
         fcntl.flock(stream, fcntl.LOCK_EX)
-        if bundle.is_file():
+        if bundle_checksum != "-":
             heads = _command(("git", "bundle", "list-heads", str(bundle))).stdout.split()
             if len(heads) != 2 or heads != [source_sha, "HEAD"]:
                 raise ValueError("bundle does not advertise the requested SHA")
@@ -490,6 +539,8 @@ def remote_receive(project: Path, run: Path, source_sha: str) -> None:
                 "HEAD:refs/sai/{}".format(source_sha),
             ))
         else:
+            if any(input_root.iterdir()):
+                raise ValueError("unexpected bundle data for cache hit")
             _command(("git", "--git-dir", str(cache), "cat-file", "-e", source_sha + "^{commit}"))
         source = run / "source"
         shutil.rmtree(str(source))
@@ -667,16 +718,25 @@ def local_run(args: argparse.Namespace) -> int:
     with tempfile.TemporaryDirectory() as directory:
         bundle = Path(directory) / "source.bundle"
         revision = _bundle_revision(repository, base, args.source_sha)
+        checksum = "-"
         if revision:
             _command(("git", "bundle", "create", str(bundle), revision), repository)
-            _retry((
-                "rsync", "-a", "--partial", "--info=progress2", "-e",
-                "ssh -F {}".format(args.ssh_config), str(bundle),
-                "{}:{}/input/source.bundle".format(args.target, run),
-            ), stdout=None)
+            parts, checksum = _split_bundle(bundle, Path(directory))
+
+            def upload(item: Tuple[int, Path]) -> None:
+                index, part = item
+                print("[bundle {}/{}] {}".format(index + 1, BUNDLE_PARTS, part.name), flush=True)
+                _retry((
+                    "rsync", "-a", "--partial", "--info=name1,progress2", "-e",
+                    "ssh -F {}".format(args.ssh_config), str(part),
+                    "{}:{}/input/".format(args.target, run),
+                ), stdout=None)
+
+            with ThreadPoolExecutor(max_workers=BUNDLE_PARTS) as pool:
+                list(pool.map(upload, enumerate(parts)))
     _ssh(args.ssh_config, args.target, (
         "python3", remote_control + "/sai.py", "receive",
-        args.project_root, str(run), args.source_sha,
+        args.project_root, str(run), args.source_sha, checksum,
     ))
     launch = "nohup python3 {} remote-run {} > {}/results/coordinator.log 2>&1 < /dev/null &".format(
         shlex.quote(remote_control + "/sai.py"), shlex.quote(str(run)), shlex.quote(str(run))
@@ -832,6 +892,7 @@ def parser() -> argparse.ArgumentParser:
     receive.add_argument("project", type=Path)
     receive.add_argument("run", type=Path)
     receive.add_argument("source_sha")
+    receive.add_argument("bundle_checksum")
     collect_parser = commands.add_parser("collect")
     collect_parser.add_argument("run", type=Path)
     archive = commands.add_parser("archive")
@@ -871,7 +932,7 @@ def main() -> int:
     if args.command == "prepare":
         remote_prepare(args.project, args.run)
     elif args.command == "receive":
-        remote_receive(args.project, args.run, args.source_sha)
+        remote_receive(args.project, args.run, args.source_sha, args.bundle_checksum)
     elif args.command == "collect":
         collect(args.run)
     elif args.command == "archive":

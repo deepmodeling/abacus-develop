@@ -72,6 +72,11 @@ known-host checking). `--source-repository` must be the checkout used to
 compute `SOURCE_SHA`. The command waits for Slurm completion and exits with a
 non-zero status when a case or infrastructure result is not fully successful.
 
+Source is sent as one compressed Git bundle split into eight parallel rsync
+transfers. The remote side checks the merged SHA-256 and the Git bundle before
+updating its cache. Later runs send only commits after the cached SHA; a run at
+the same SHA sends no source data.
+
 For all available subcommands and options, run:
 
 ```bash

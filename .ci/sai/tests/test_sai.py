@@ -150,6 +150,14 @@ class TransferTests(unittest.TestCase):
     def _git(root, *arguments):
         return subprocess.run(("git", *arguments), cwd=str(root), check=True, text=True, capture_output=True)
 
+    def _bundle(self, repository, run, revision):
+        bundle = run / "source.bundle.local"
+        self._git(repository, "bundle", "create", str(bundle), revision)
+        parts, checksum = sai._split_bundle(bundle, run / "input")
+        bundle.unlink()
+        self.assertEqual(len(parts), 8)
+        return checksum
+
     def test_full_then_incremental_bundle(self):
         with tempfile.TemporaryDirectory() as directory:
             home = Path(directory)
@@ -168,8 +176,8 @@ class TransferTests(unittest.TestCase):
             (run1 / "control").mkdir(parents=True)
             with mock.patch("sai.Path.home", return_value=home):
                 sai.remote_prepare(project, run1)
-            self._git(repository, "bundle", "create", str(run1 / "input" / "source.bundle"), "HEAD")
-            sai.remote_receive(project, run1, first)
+            checksum = self._bundle(repository, run1, "HEAD")
+            sai.remote_receive(project, run1, first, checksum)
             self.assertEqual((run1 / "source" / "value.txt").read_text(), "one\n")
 
             (repository / "value.txt").write_text("two\n", encoding="utf-8")
@@ -179,11 +187,8 @@ class TransferTests(unittest.TestCase):
             (run2 / "control").mkdir(parents=True)
             with mock.patch("sai.Path.home", return_value=home):
                 sai.remote_prepare(project, run2)
-            self._git(
-                repository, "bundle", "create", str(run2 / "input" / "source.bundle"),
-                first + "..HEAD",
-            )
-            sai.remote_receive(project, run2, second)
+            checksum = self._bundle(repository, run2, first + "..HEAD")
+            sai.remote_receive(project, run2, second, checksum)
             self.assertEqual((run2 / "source" / "value.txt").read_text(), "two\n")
 
             run3 = project / "runs" / "manual" / "3-1"
@@ -191,8 +196,18 @@ class TransferTests(unittest.TestCase):
             with mock.patch("sai.Path.home", return_value=home):
                 sai.remote_prepare(project, run3)
             self.assertIsNone(sai._bundle_revision(repository, second, second))
-            sai.remote_receive(project, run3, second)
+            sai.remote_receive(project, run3, second, "-")
             self.assertEqual((run3 / "source" / "value.txt").read_text(), "two\n")
+
+    def test_bundle_merge_rejects_corruption(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle = root / "bundle"
+            bundle.write_bytes(bytes(range(256)) * 4)
+            parts, checksum = sai._split_bundle(bundle, root)
+            parts[0].write_bytes(b"corrupt")
+            with self.assertRaisesRegex(ValueError, "checksum mismatch"):
+                sai._assemble_bundle(root, checksum)
 
     def test_prepare_rejects_reused_run(self):
         with tempfile.TemporaryDirectory() as directory:
