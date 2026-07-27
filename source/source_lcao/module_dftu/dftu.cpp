@@ -85,6 +85,8 @@ void Plus_U::init(UnitCell& cell,
 #endif
 
     Plus_U::nspin = nspin;
+    this->npol = npol;
+    this->device = device;
 
     // mohan update 2025-11-06
     Plus_U::energy_u = 0.0;
