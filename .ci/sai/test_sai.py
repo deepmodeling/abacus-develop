@@ -89,8 +89,12 @@ class CliTests(unittest.TestCase):
             "--source-sha", "--namespace", "--run-id", "--run-attempt", "--artifacts",
         ):
             self.assertIn(option, help_text)
-        self.assertIn("40-character commit SHA", help_text)
-        self.assertIn("checkout's", help_text)
+        normalized = " ".join(help_text.split())
+        for default in (
+            "~/.ssh/config", "sai-ci", "~/abacus_sai_gpu_ci", "HEAD", "manual",
+            "sai-artifacts",
+        ):
+            self.assertIn("default: {}".format(default), normalized)
 
     def test_run_options_parse(self):
         arguments = [
@@ -107,11 +111,18 @@ class CliTests(unittest.TestCase):
         self.assertEqual(args.artifacts, Path("/tmp/results"))
         self.assertEqual(args.source_sha, "a" * 40)
 
-        for index in range(1, len(arguments), 2):
-            with self.subTest(option=arguments[index]), \
-                    mock.patch("sys.stderr", new_callable=io.StringIO), \
-                    self.assertRaises(SystemExit):
-                sai.parser().parse_args(arguments[:index] + arguments[index + 2:])
+    def test_run_defaults_parse(self):
+        with mock.patch("sai.time.time", return_value=42):
+            args = sai.parser().parse_args(["run"])
+        self.assertEqual(args.ssh_config, Path("~/.ssh/config"))
+        self.assertEqual(args.target, "sai-ci")
+        self.assertEqual(args.project_root, "~/abacus_sai_gpu_ci")
+        self.assertEqual(args.source_repository, Path("."))
+        self.assertEqual(args.source_sha, "HEAD")
+        self.assertEqual(args.namespace, "manual")
+        self.assertEqual(args.run_id, "42")
+        self.assertEqual(args.run_attempt, "1")
+        self.assertEqual(args.artifacts, Path("sai-artifacts"))
 
 
 class TemplateTests(unittest.TestCase):
@@ -317,6 +328,35 @@ class TransferTests(unittest.TestCase):
             self.assertEqual(metadata, {
                 "project_root": "/project",
                 "run_root": "/project/runs/manual/1-1",
+                "source_sha": source_sha,
+            })
+
+    def test_run_resolves_head_and_remote_home_defaults(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source_sha = "a" * 40
+            args = argparse.Namespace(
+                source_repository=root,
+                project_root="~/abacus_sai_gpu_ci",
+                target="sai-ci",
+                namespace="manual",
+                run_id="1",
+                run_attempt="1",
+                source_sha="HEAD",
+                artifacts=root / "artifacts",
+                ssh_config=Path("~/.ssh/config"),
+            )
+            revision = mock.Mock(stdout=source_sha + "\n")
+            home = mock.Mock(stdout="/home/user\n")
+            with mock.patch("sai.Path.home", return_value=Path("/home/local")), \
+                    mock.patch("sai._command", return_value=revision), \
+                    mock.patch("sai._retry", side_effect=[home, RuntimeError("disconnected")]), \
+                    self.assertRaisesRegex(RuntimeError, "disconnected"):
+                sai.run(args)
+            metadata = json.loads((args.artifacts / "run.json").read_text())
+            self.assertEqual(metadata, {
+                "project_root": "/home/user/abacus_sai_gpu_ci",
+                "run_root": "/home/user/abacus_sai_gpu_ci/runs/manual/1-1",
                 "source_sha": source_sha,
             })
 

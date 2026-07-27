@@ -49,28 +49,21 @@ Other issue comments are ignored.
 
 ## Run locally
 
-Run from the repository checkout whose `HEAD` is the commit to test. The
-following uses the committed `HEAD` SHA and the same required options as CI:
+Run from the repository checkout whose committed `HEAD` is the revision to
+test. If the SSH config defines the default `sai-ci` target, no options are
+required:
 
 ```bash
-SOURCE_SHA="$(git rev-parse HEAD)"
-RUN_ID="$(date +%s)"
-python3 .ci/sai/sai.py run \
-  --ssh-config "$HOME/.ssh/sai-config" \
-  --target sai-ci \
-  --project-root /home/<group>/<user>/abacus_sai_gpu_ci \
-  --source-repository "$PWD" \
-  --source-sha "$SOURCE_SHA" \
-  --namespace manual \
-  --run-id "$RUN_ID" \
-  --run-attempt 1 \
-  --artifacts ./sai-artifacts
+python3 .ci/sai/sai.py run
 ```
 
-The SSH config must define the `sai-ci` target (host, port, user, key, and
-known-host checking). `--source-repository` must be the checkout used to
-compute `SOURCE_SHA`. The command waits for Slurm completion and exits with a
-non-zero status when a case or infrastructure result is not fully successful.
+By default, the command uses `~/.ssh/config`, the `sai-ci` host alias, the
+current Git checkout and its `HEAD`, and `~/abacus_sai_gpu_ci` below the remote
+user's home. It writes downloaded results to `./sai-artifacts`. Override any
+value shown by `run --help`; for example, use `--target SAI-abacus` for a
+different local host alias. The command waits for Slurm completion and exits
+with a non-zero status when a case or infrastructure result is not fully
+successful.
 
 Source is sent as one compressed Git bundle split into eight parallel rsync
 transfers. The remote side checks the merged SHA-256 and the Git bundle before

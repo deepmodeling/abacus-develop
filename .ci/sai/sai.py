@@ -718,15 +718,25 @@ def _read_result(path: Path) -> Mapping[str, Any]:
 
 
 def run(args: argparse.Namespace) -> int:
+    args.ssh_config = args.ssh_config.expanduser()
+    args.source_repository = args.source_repository.expanduser()
+    args.artifacts = args.artifacts.expanduser()
     repository = args.source_repository.resolve()
-    project = Path(args.project_root)
-    if not project.is_absolute() or any(not NAME.fullmatch(part) for part in project.parts[1:]):
-        raise ValueError("project root must be a simple absolute path")
     if not all(NAME.fullmatch(value) for value in (args.target, args.namespace, args.run_id, args.run_attempt)):
         raise ValueError("invalid target or run name")
     actual = _command(("git", "rev-parse", "HEAD"), repository).stdout.strip()
-    if actual != args.source_sha or not SHA.fullmatch(actual):
+    if args.source_sha == "HEAD":
+        args.source_sha = actual
+    if args.source_sha != actual or not SHA.fullmatch(actual):
         raise ValueError("source SHA must be the checked-out HEAD")
+    if args.project_root == "~" or args.project_root.startswith("~/"):
+        command = shlex.join(("python3", "-c", "from pathlib import Path; print(Path.home())"))
+        home = _retry(("ssh", "-F", str(args.ssh_config), args.target, command)).stdout.strip()
+        relative = "" if args.project_root == "~" else args.project_root[2:]
+        args.project_root = str(Path(home) / relative)
+    project = Path(args.project_root)
+    if not project.is_absolute() or any(not NAME.fullmatch(part) for part in project.parts[1:]):
+        raise ValueError("project root must be a simple absolute path")
     run = project / "runs" / args.namespace / "{}-{}".format(args.run_id, args.run_attempt)
     args.artifacts.mkdir(parents=True, exist_ok=True)
     _atomic(args.artifacts / "run.json", {
@@ -913,41 +923,42 @@ def parser() -> argparse.ArgumentParser:
     client = commands.add_parser(
         "run", help="build and run the GPU matrix on SAI",
         description="Transfer one committed ABACUS revision, build it, and run the GPU matrix on SAI.",
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     client.add_argument(
-        "--ssh-config", required=True, type=Path,
+        "--ssh-config", type=Path, default=Path("~/.ssh/config"),
         help="SSH config file containing the target host alias",
     )
     client.add_argument(
-        "--target", required=True,
+        "--target", default="sai-ci",
         help="host alias in the SSH config",
     )
     client.add_argument(
-        "--project-root", required=True,
-        help="absolute SAI directory for caches, runs, and archives",
+        "--project-root", default="~/abacus_sai_gpu_ci",
+        help="SAI directory for caches, runs, and archives",
     )
     client.add_argument(
-        "--source-repository", required=True, type=Path,
+        "--source-repository", type=Path, default=Path("."),
         help="local ABACUS Git checkout to transfer",
     )
     client.add_argument(
-        "--source-sha", required=True,
-        help="40-character commit SHA; it must equal the checkout's HEAD",
+        "--source-sha", default="HEAD",
+        help="commit to test; it must resolve to the checkout's HEAD",
     )
     client.add_argument(
-        "--namespace", required=True,
+        "--namespace", default="manual",
         help="group for the remote run, such as manual, daily, or pr-123",
     )
     client.add_argument(
-        "--run-id", required=True,
+        "--run-id", default=str(int(time.time())),
         help="unique identifier for this run",
     )
     client.add_argument(
-        "--run-attempt", required=True,
+        "--run-attempt", default="1",
         help="attempt number within the run ID",
     )
     client.add_argument(
-        "--artifacts", required=True, type=Path,
+        "--artifacts", type=Path, default=Path("sai-artifacts"),
         help="local directory for downloaded results and client logs",
     )
     commands.add_parser(
