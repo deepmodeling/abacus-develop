@@ -11,7 +11,7 @@ from pathlib import Path
 from unittest import mock
 
 
-ROOT = Path(__file__).resolve().parents[1]
+ROOT = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT))
 SPEC = importlib.util.spec_from_file_location("sai", ROOT / "sai.py")
 assert SPEC and SPEC.loader
@@ -66,6 +66,52 @@ class ConfigTests(unittest.TestCase):
                 path.write_text(text, encoding="utf-8")
                 with self.assertRaises(ValueError):
                     sai.load_config(path)
+
+
+class CliTests(unittest.TestCase):
+    def test_top_level_help_only_exposes_public_commands(self):
+        help_text = subprocess.run(
+            (sys.executable, str(ROOT / "sai.py"), "--help"),
+            check=True, text=True, capture_output=True,
+        ).stdout
+        self.assertIn("{run,config}", help_text)
+        self.assertIn("build and run the GPU matrix on SAI", help_text)
+        self.assertNotIn("remote-run", help_text)
+        self.assertNotIn("github-admit", help_text)
+
+    def test_run_help_describes_every_option(self):
+        help_text = subprocess.run(
+            (sys.executable, str(ROOT / "sai.py"), "run", "--help"),
+            check=True, text=True, capture_output=True,
+        ).stdout
+        for option in (
+            "--ssh-config", "--target", "--project-root", "--source-repository",
+            "--source-sha", "--namespace", "--run-id", "--run-attempt", "--artifacts",
+        ):
+            self.assertIn(option, help_text)
+        self.assertIn("40-character commit SHA", help_text)
+        self.assertIn("checkout's", help_text)
+
+    def test_run_options_parse(self):
+        arguments = [
+            "run", "--ssh-config", "/tmp/ssh/config", "--target", "sai-ci",
+            "--project-root", "/home/user/abacus_sai_gpu_ci",
+            "--source-repository", "/tmp/abacus", "--source-sha", "a" * 40,
+            "--namespace", "manual", "--run-id", "42", "--run-attempt", "1",
+            "--artifacts", "/tmp/results",
+        ]
+        args = sai.parser().parse_args(arguments)
+        self.assertEqual(args.command, "run")
+        self.assertEqual(args.ssh_config, Path("/tmp/ssh/config"))
+        self.assertEqual(args.source_repository, Path("/tmp/abacus"))
+        self.assertEqual(args.artifacts, Path("/tmp/results"))
+        self.assertEqual(args.source_sha, "a" * 40)
+
+        for index in range(1, len(arguments), 2):
+            with self.subTest(option=arguments[index]), \
+                    mock.patch("sys.stderr", new_callable=io.StringIO), \
+                    self.assertRaises(SystemExit):
+                sai.parser().parse_args(arguments[:index] + arguments[index + 2:])
 
 
 class TemplateTests(unittest.TestCase):
@@ -247,7 +293,7 @@ class TransferTests(unittest.TestCase):
                 sai._retry_download(("ssh", "collect"), path)
             self.assertEqual(path.read_bytes(), b"complete")
 
-    def test_local_run_records_cleanup_metadata_before_remote_work(self):
+    def test_run_records_cleanup_metadata_before_remote_work(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             source_sha = "a" * 40
@@ -266,7 +312,7 @@ class TransferTests(unittest.TestCase):
             with mock.patch("sai._command", return_value=revision), \
                     mock.patch("sai._retry", side_effect=RuntimeError("disconnected")), \
                     self.assertRaisesRegex(RuntimeError, "disconnected"):
-                sai.local_run(args)
+                sai.run(args)
             metadata = json.loads((args.artifacts / "run.json").read_text())
             self.assertEqual(metadata, {
                 "project_root": "/project",
@@ -391,6 +437,7 @@ class PolicyTests(unittest.TestCase):
         self.assertIn("sai-ssh-scheduled", text)
         self.assertIn("sai-ssh-manual", text)
         self.assertIn("/abacus-ci sai-gpu", text)
+        self.assertIn("sai.py run", text)
         self.assertIn("pull-requests: write", text)
         self.assertNotIn("cpus-per-task", text)
 

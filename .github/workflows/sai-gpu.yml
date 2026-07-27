@@ -151,7 +151,7 @@ jobs:
           : "${project_root:?Set SAI_PROJECT_ROOT in the GitHub Environment}"
           mkdir -p "$ARTIFACT_ROOT"
           set +e
-          python3 control/.ci/sai/sai.py local \
+          python3 control/.ci/sai/sai.py run \
               --ssh-config "$SAI_SSH_CONFIG" \
               --target sai-ci \
               --project-root "$project_root" \

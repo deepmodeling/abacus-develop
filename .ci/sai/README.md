@@ -55,7 +55,7 @@ following uses the committed `HEAD` SHA and the same required options as CI:
 ```bash
 SOURCE_SHA="$(git rev-parse HEAD)"
 RUN_ID="$(date +%s)"
-python3 .ci/sai/sai.py local \
+python3 .ci/sai/sai.py run \
   --ssh-config "$HOME/.ssh/sai-config" \
   --target sai-ci \
   --project-root /home/<group>/<user>/abacus_sai_gpu_ci \
@@ -77,11 +77,11 @@ transfers. The remote side checks the merged SHA-256 and the Git bundle before
 updating its cache. Later runs send only commits after the cached SHA; a run at
 the same SHA sends no source data.
 
-For all available subcommands and options, run:
+For the public commands and all `run` options, use:
 
 ```bash
 python3 .ci/sai/sai.py --help
-python3 .ci/sai/sai.py local --help
+python3 .ci/sai/sai.py run --help
 ```
 
 ## Matrix configuration

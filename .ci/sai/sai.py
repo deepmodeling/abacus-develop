@@ -717,7 +717,7 @@ def _read_result(path: Path) -> Mapping[str, Any]:
     return _validate_result(json.loads(path.read_text(encoding="utf-8")))
 
 
-def local_run(args: argparse.Namespace) -> int:
+def run(args: argparse.Namespace) -> int:
     repository = args.source_repository.resolve()
     project = Path(args.project_root)
     if not project.is_absolute() or any(not NAME.fullmatch(part) for part in project.parts[1:]):
@@ -907,42 +907,81 @@ def github_finish() -> int:
 
 def parser() -> argparse.ArgumentParser:
     main = argparse.ArgumentParser(description=__doc__)
-    commands = main.add_subparsers(dest="command", required=True)
-    commands.add_parser("config", help="validate and summarize gpu-matrix.ini")
-    remote = commands.add_parser("remote-run")
+    commands = main.add_subparsers(
+        title="commands", dest="command", required=True, metavar="{run,config}",
+    )
+    client = commands.add_parser(
+        "run", help="build and run the GPU matrix on SAI",
+        description="Transfer one committed ABACUS revision, build it, and run the GPU matrix on SAI.",
+    )
+    client.add_argument(
+        "--ssh-config", required=True, type=Path,
+        help="SSH config file containing the target host alias",
+    )
+    client.add_argument(
+        "--target", required=True,
+        help="host alias in the SSH config",
+    )
+    client.add_argument(
+        "--project-root", required=True,
+        help="absolute SAI directory for caches, runs, and archives",
+    )
+    client.add_argument(
+        "--source-repository", required=True, type=Path,
+        help="local ABACUS Git checkout to transfer",
+    )
+    client.add_argument(
+        "--source-sha", required=True,
+        help="40-character commit SHA; it must equal the checkout's HEAD",
+    )
+    client.add_argument(
+        "--namespace", required=True,
+        help="group for the remote run, such as manual, daily, or pr-123",
+    )
+    client.add_argument(
+        "--run-id", required=True,
+        help="unique identifier for this run",
+    )
+    client.add_argument(
+        "--run-attempt", required=True,
+        help="attempt number within the run ID",
+    )
+    client.add_argument(
+        "--artifacts", required=True, type=Path,
+        help="local directory for downloaded results and client logs",
+    )
+    commands.add_parser(
+        "config", help="validate and summarize gpu-matrix.ini",
+        description="Validate gpu-matrix.ini and print its resource and case counts.",
+    )
+
+    def internal(name: str) -> argparse.ArgumentParser:
+        return commands.add_parser(name)
+
+    remote = internal("remote-run")
     remote.add_argument("run", type=Path)
-    worker_parser = commands.add_parser("worker")
+    worker_parser = internal("worker")
     for name in ("source", "control", "install", "results", "manifest"):
         worker_parser.add_argument(name, type=Path)
-    prepare = commands.add_parser("prepare")
+    prepare = internal("prepare")
     prepare.add_argument("project", type=Path)
     prepare.add_argument("run", type=Path)
-    receive = commands.add_parser("receive")
+    receive = internal("receive")
     receive.add_argument("project", type=Path)
     receive.add_argument("run", type=Path)
     receive.add_argument("source_sha")
     receive.add_argument("bundle_checksum")
-    collect_parser = commands.add_parser("collect")
+    collect_parser = internal("collect")
     collect_parser.add_argument("run", type=Path)
-    archive = commands.add_parser("archive")
+    archive = internal("archive")
     archive.add_argument("project", type=Path)
     archive.add_argument("run", type=Path)
-    local = commands.add_parser("local")
-    local.add_argument("--ssh-config", required=True, type=Path)
-    local.add_argument("--target", required=True)
-    local.add_argument("--project-root", required=True)
-    local.add_argument("--source-repository", required=True, type=Path)
-    local.add_argument("--source-sha", required=True)
-    local.add_argument("--namespace", required=True)
-    local.add_argument("--run-id", required=True)
-    local.add_argument("--run-attempt", required=True)
-    local.add_argument("--artifacts", required=True, type=Path)
-    report_parser = commands.add_parser("report")
+    report_parser = internal("report")
     report_parser.add_argument("--result", required=True, type=Path)
     report_parser.add_argument("--output", required=True, type=Path)
     report_parser.add_argument("--summary", type=Path)
-    commands.add_parser("github-admit")
-    commands.add_parser("github-finish")
+    internal("github-admit")
+    internal("github-finish")
     return main
 
 
@@ -966,8 +1005,8 @@ def main() -> int:
         collect(args.run)
     elif args.command == "archive":
         print(archive_run(args.project, args.run))
-    elif args.command == "local":
-        return local_run(args)
+    elif args.command == "run":
+        return run(args)
     elif args.command == "report":
         return report(args)
     elif args.command == "github-admit":
