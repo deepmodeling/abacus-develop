@@ -26,6 +26,7 @@ source @CONTROL@/modules.sh
 SAI_SYSTEM_MPIRUN=$(command -v mpirun)
 export SAI_SYSTEM_MPIRUN
 export MAP_OPT
+export SLURM_EXPORT_ENV=ALL
 export OMPI_MCA_plm_slurm_args=--external-launcher
 export PRTE_MCA_plm_slurm_args=--external-launcher
 nvidia-smi dmon -s pucvmte -o T > @RESULTS@/dmon-${SLURM_JOB_ID}.log &
