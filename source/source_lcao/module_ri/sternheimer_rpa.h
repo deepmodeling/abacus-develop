@@ -170,6 +170,14 @@ class SternheimerRPA
                                    int auxiliary_channel_count,
                                    int frequency_group_size);
 
+    static int global_equation_owner(int occupied_state,
+                                     int frequency_index,
+                                     int auxiliary_channel,
+                                     int frequency_count,
+                                     int auxiliary_channel_count,
+                                     int mpi_ranks,
+                                     int rank_shift = 0);
+
     static void write_chi0_v1_file(const std::string& filename,
                                    const Chi0V1Metadata& metadata,
                                    const std::vector<AuxiliaryChannel>& channels,

@@ -465,6 +465,65 @@ TEST(SternheimerRPA, AssignsChannelMPIWithinFrequencyGroups)
     EXPECT_THROW(ModuleRI::SternheimerRPA::channel_group_owner(0, 0, 428, 0), std::invalid_argument);
 }
 
+TEST(SternheimerRPA, AssignsGlobalEquationsUniquelyAndEvenly)
+{
+    EXPECT_EQ(ModuleRI::SternheimerRPA::global_equation_owner(0, 0, 0, 16, 428, 32, 0), 0);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::global_equation_owner(0, 0, 31, 16, 428, 32, 0), 31);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::global_equation_owner(0, 0, 32, 16, 428, 32, 0), 0);
+    EXPECT_EQ(ModuleRI::SternheimerRPA::global_equation_owner(0, 0, 0, 16, 428, 32, 1), 1);
+
+    constexpr int occupied_count = 2;
+    constexpr int frequency_count = 3;
+    constexpr int channel_count = 5;
+    constexpr int mpi_ranks = 4;
+    std::vector<int> owner_counts(mpi_ranks, 0);
+    for (int occupied = 0; occupied != occupied_count; ++occupied)
+    {
+        for (int frequency = 0; frequency != frequency_count; ++frequency)
+        {
+            for (int channel = 0; channel != channel_count; ++channel)
+            {
+                const int owner = ModuleRI::SternheimerRPA::global_equation_owner(occupied,
+                                                                                  frequency,
+                                                                                  channel,
+                                                                                  frequency_count,
+                                                                                  channel_count,
+                                                                                  mpi_ranks,
+                                                                                  0);
+                ASSERT_GE(owner, 0);
+                ASSERT_LT(owner, mpi_ranks);
+                ++owner_counts[owner];
+            }
+        }
+    }
+    int minimum_count = owner_counts.front();
+    int maximum_count = owner_counts.front();
+    int total_count = 0;
+    for (const int count: owner_counts)
+    {
+        minimum_count = std::min(minimum_count, count);
+        maximum_count = std::max(maximum_count, count);
+        total_count += count;
+    }
+    EXPECT_EQ(total_count, occupied_count * frequency_count * channel_count);
+    EXPECT_LE(maximum_count - minimum_count, 1);
+
+    EXPECT_THROW(ModuleRI::SternheimerRPA::global_equation_owner(-1, 0, 0, 3, 5, 4, 0),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::global_equation_owner(0, -1, 0, 3, 5, 4, 0),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::global_equation_owner(0, 3, 0, 3, 5, 4, 0),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::global_equation_owner(0, 0, 5, 3, 5, 4, 0),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::global_equation_owner(0, 0, 0, 0, 5, 4, 0),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::global_equation_owner(0, 0, 0, 3, 0, 4, 0),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::global_equation_owner(0, 0, 0, 3, 5, 0, 0),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerRPA, SolveBiCGStabDiagonalComplexSystem)
 {
     const Vector diagonal = {Complex(2.0, 1.0), Complex(3.0, -0.5), Complex(4.0, 2.0)};

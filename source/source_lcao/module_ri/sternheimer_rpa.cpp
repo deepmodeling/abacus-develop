@@ -976,6 +976,43 @@ int SternheimerRPA::channel_group_owner(const int occupied_state,
     return static_cast<int>(equation_index % frequency_group_size);
 }
 
+int SternheimerRPA::global_equation_owner(const int occupied_state,
+                                          const int frequency_index,
+                                          const int auxiliary_channel,
+                                          const int frequency_count,
+                                          const int auxiliary_channel_count,
+                                          const int mpi_ranks,
+                                          const int rank_shift)
+{
+    if (occupied_state < 0 || frequency_count <= 0 || frequency_index < 0
+        || frequency_index >= frequency_count || auxiliary_channel_count <= 0 || auxiliary_channel < 0
+        || auxiliary_channel >= auxiliary_channel_count || mpi_ranks <= 0)
+    {
+        throw std::invalid_argument("SternheimerRPA::global_equation_owner received invalid dimensions or indices.");
+    }
+
+    constexpr std::int64_t max_task_index = std::numeric_limits<std::int64_t>::max();
+    if (static_cast<std::int64_t>(occupied_state)
+        > (max_task_index - frequency_index) / frequency_count)
+    {
+        throw std::overflow_error("SternheimerRPA::global_equation_owner task index overflow.");
+    }
+    const std::int64_t occupied_frequency
+        = static_cast<std::int64_t>(occupied_state) * frequency_count + frequency_index;
+    if (occupied_frequency > (max_task_index - auxiliary_channel) / auxiliary_channel_count)
+    {
+        throw std::overflow_error("SternheimerRPA::global_equation_owner task index overflow.");
+    }
+    const std::int64_t task_index = occupied_frequency * auxiliary_channel_count + auxiliary_channel;
+
+    int normalized_shift = rank_shift % mpi_ranks;
+    if (normalized_shift < 0)
+    {
+        normalized_shift += mpi_ranks;
+    }
+    return static_cast<int>((task_index % mpi_ranks + normalized_shift) % mpi_ranks);
+}
+
 SternheimerRPA::TransitionEnergyWindow SternheimerRPA::transition_energy_window_from_eigenvalues_ry(
     const std::vector<double>& eigenvalues_ry,
     const std::vector<double>& occupations,
