@@ -137,7 +137,7 @@ if(ENABLE_MPI)
     base
     device
     io_input
-    ${math_libs}
+    ${STERNHEIMER_RPA_TEST_LIBS}
     Threads::Threads
     GTest::gtest
   )
