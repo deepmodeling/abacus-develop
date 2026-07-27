@@ -704,7 +704,10 @@ def local_run(args: argparse.Namespace) -> int:
         raise ValueError("source SHA must be the checked-out HEAD")
     run = project / "runs" / args.namespace / "{}-{}".format(args.run_id, args.run_attempt)
     remote_control = str(run / "control")
-    _ssh(args.ssh_config, args.target, ("mkdir", "-p", remote_control))
+    _retry((
+        "ssh", "-F", str(args.ssh_config), args.target,
+        shlex.join(("mkdir", "-p", remote_control)),
+    ))
     _retry((
         "rsync", "-a", "--delete", "--info=stats2", "-e",
         "ssh -F {}".format(args.ssh_config), str(ROOT) + "/",
