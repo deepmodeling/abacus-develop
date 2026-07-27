@@ -11,6 +11,44 @@
 #define THREADS_PER_BLOCK 256
 
 template <typename T>
+class unique_cuda_ptr {
+    T* ptr_;
+public:
+    unique_cuda_ptr() : ptr_(nullptr) {}
+    explicit unique_cuda_ptr(T* ptr) : ptr_(ptr) {}
+    ~unique_cuda_ptr() { if (ptr_) cudaFree(ptr_); }
+    unique_cuda_ptr(const unique_cuda_ptr&) = delete;
+    unique_cuda_ptr& operator=(const unique_cuda_ptr&) = delete;
+    unique_cuda_ptr(unique_cuda_ptr&& other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }
+    unique_cuda_ptr& operator=(unique_cuda_ptr&& other) noexcept {
+        if (this != &other) { if (ptr_) cudaFree(ptr_); ptr_ = other.ptr_; other.ptr_ = nullptr; }
+        return *this;
+    }
+    T* get() const { return ptr_; }
+    operator T*() const { return ptr_; }
+    void reset(T* ptr = nullptr) { if (ptr_) cudaFree(ptr_); ptr_ = ptr; }
+};
+
+template <typename T>
+class unique_host_ptr {
+    T* ptr_;
+public:
+    unique_host_ptr() : ptr_(nullptr) {}
+    explicit unique_host_ptr(T* ptr) : ptr_(ptr) {}
+    ~unique_host_ptr() { if (ptr_) free(ptr_); }
+    unique_host_ptr(const unique_host_ptr&) = delete;
+    unique_host_ptr& operator=(const unique_host_ptr&) = delete;
+    unique_host_ptr(unique_host_ptr&& other) noexcept : ptr_(other.ptr_) { other.ptr_ = nullptr; }
+    unique_host_ptr& operator=(unique_host_ptr&& other) noexcept {
+        if (this != &other) { if (ptr_) free(ptr_); ptr_ = other.ptr_; other.ptr_ = nullptr; }
+        return *this;
+    }
+    T* get() const { return ptr_; }
+    operator T*() const { return ptr_; }
+    void reset(T* ptr = nullptr) { if (ptr_) free(ptr_); ptr_ = ptr; }
+};
+
+template <typename T>
 struct GetTypeThrust
 {
     using type = T;

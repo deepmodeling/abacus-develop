@@ -134,7 +134,7 @@ TYPED_TEST(SpinConstrainTest, SetInputParameters)
     double alpha_trial = 0.01;
     double sccut = 3.0;
     double sc_drop_thr = 1e-3;
-    this->sc.set_input_parameters(sc_thr, nsc, nsc_min, alpha_trial, sccut, sc_drop_thr);
+    this->sc.set_input_parameters(sc_thr, nsc, nsc_min, alpha_trial, sccut, sc_drop_thr, "none", 0.0);
     EXPECT_DOUBLE_EQ(this->sc.get_sc_thr(), sc_thr);
     EXPECT_EQ(this->sc.get_nsc(), nsc);
     EXPECT_EQ(this->sc.get_nsc_min(), nsc_min);
