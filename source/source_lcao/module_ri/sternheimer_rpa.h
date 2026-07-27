@@ -178,6 +178,14 @@ class SternheimerRPA
                                      int mpi_ranks,
                                      int rank_shift = 0);
 
+    static void validate_mpi_layout(const std::string& layout,
+                                    bool use_frequency_mpi,
+                                    bool use_channel_mpi,
+                                    bool write_siab,
+                                    bool write_librpa,
+                                    int frequency_count,
+                                    int mpi_ranks);
+
     static void write_chi0_v1_file(const std::string& filename,
                                    const Chi0V1Metadata& metadata,
                                    const std::vector<AuxiliaryChannel>& channels,

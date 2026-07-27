@@ -3758,6 +3758,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
 
     const bool use_frequency_mpi = PARAM.inp.sternheimer_frequency_mpi;
     const bool use_channel_mpi = PARAM.inp.sternheimer_channel_mpi;
+    const std::string mpi_layout = PARAM.inp.sternheimer_mpi_layout;
+    const bool use_global_equation_mpi = mpi_layout == "global_equation";
     const bool use_distributed_mpi = use_frequency_mpi || use_channel_mpi;
     const int nfreq = PARAM.inp.sternheimer_nfreq;
     if (!use_distributed_mpi && GlobalV::MY_RANK != 0)
@@ -3800,24 +3802,19 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                    -1.0,
                                    elapsed_seconds_since(chi0_start_time),
                                    std::string("frequency_mpi=") + (use_frequency_mpi ? "yes" : "no")
-                                       + " channel_mpi=" + (use_channel_mpi ? "yes" : "no"));
+                                       + " channel_mpi=" + (use_channel_mpi ? "yes" : "no")
+                                       + " mpi_layout=" + mpi_layout);
         if (write_librpa && PARAM.inp.out_librpa_reader_version != 1)
         {
             throw std::runtime_error("out_sternheimer_librpa requires out_librpa_reader_version=1.");
         }
-        if (use_channel_mpi && !use_frequency_mpi)
-        {
-            throw std::runtime_error("sternheimer_channel_mpi requires sternheimer_frequency_mpi=true.");
-        }
-        if (use_channel_mpi && !write_siab)
-        {
-            throw std::runtime_error("sternheimer_channel_mpi currently requires out_sternheimer_siab=true.");
-        }
-        if (use_channel_mpi && write_librpa)
-        {
-            throw std::runtime_error(
-                "sternheimer_channel_mpi does not yet support out_sternheimer_librpa chi0 accumulation.");
-        }
+        SternheimerRPA::validate_mpi_layout(mpi_layout,
+                                            use_frequency_mpi,
+                                            use_channel_mpi,
+                                            write_siab,
+                                            write_librpa,
+                                            nfreq,
+                                            GlobalV::NPROC);
         if (GlobalV::NPROC != 1 && !use_frequency_mpi)
         {
             throw std::runtime_error(
@@ -3911,6 +3908,15 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         const int default_frequency_rank_shift = use_frequency_mpi && GlobalV::NPROC > 1 ? 1 : 0;
         const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
         const auto frequency_assignment = [&](const int ifrequency) {
+            if (use_global_equation_mpi)
+            {
+                SternheimerRPA::FrequencyMPIAssignment assignment;
+                assignment.owns_frequency = true;
+                assignment.frequency_leader_rank = -1;
+                assignment.frequency_group_size = GlobalV::NPROC;
+                assignment.frequency_group_local_rank = GlobalV::MY_RANK;
+                return assignment;
+            }
             if (!use_frequency_mpi)
             {
                 return SternheimerRPA::frequency_mpi_assignment(ifrequency, nfreq, 1, 0, 0, false);
@@ -4193,6 +4199,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
 
         bool all_converged = true;
         int solved_equations = 0;
+        std::int64_t local_iteration_sum = 0;
         double max_solver_relative_residual = 0.0;
         double max_equation_residual_norm = 0.0;
         const std::vector<SternheimerRPA::AuxiliaryChannel> auxiliary_channels
@@ -4556,12 +4563,27 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
 
                     for (int ichannel = 0; ichannel != num_channels; ++ichannel)
                     {
-                        if (use_channel_mpi
-                            && SternheimerRPA::channel_group_owner(occupied_state_offset + ib,
-                                                                  ichannel,
-                                                                  num_channels,
-                                                                  assignment.frequency_group_size)
-                                   != assignment.frequency_group_local_rank)
+                        int equation_owner_rank = owner_rank;
+                        if (use_global_equation_mpi)
+                        {
+                            equation_owner_rank = SternheimerRPA::global_equation_owner(occupied_state_offset + ib,
+                                                                                        ifrequency,
+                                                                                        ichannel,
+                                                                                        nfreq,
+                                                                                        num_channels,
+                                                                                        GlobalV::NPROC,
+                                                                                        frequency_rank_shift);
+                            if (equation_owner_rank != GlobalV::MY_RANK)
+                            {
+                                continue;
+                            }
+                        }
+                        else if (use_channel_mpi
+                                 && SternheimerRPA::channel_group_owner(occupied_state_offset + ib,
+                                                                       ichannel,
+                                                                       num_channels,
+                                                                       assignment.frequency_group_size)
+                                        != assignment.frequency_group_local_rank)
                         {
                             continue;
                         }
@@ -4642,13 +4664,14 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                         }
                         all_converged = all_converged && solver_result.converged;
                         ++solved_equations;
+                        local_iteration_sum += solver_result.iterations;
                         max_solver_relative_residual
                             = std::max(max_solver_relative_residual, result.solver.relative_residual);
                         max_equation_residual_norm
                             = std::max(max_equation_residual_norm, result.equation_residual_norm);
                         append_chi0_progress_event("equation",
                                                    ifrequency + 1,
-                                                   owner_rank,
+                                                   equation_owner_rank,
                                                    ib,
                                                    ichannel,
                                                    solved_equations,
@@ -4671,6 +4694,41 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             spin_diagnostics.push_back(diagnostics);
             occupied_state_offset += static_cast<int>(states.wavefunctions.size());
         }
+
+        const int local_solved_equations = solved_equations;
+        int rank_local_equations_min = local_solved_equations;
+        int rank_local_equations_max = local_solved_equations;
+        std::int64_t rank_local_iterations_min = local_iteration_sum;
+        std::int64_t rank_local_iterations_max = local_iteration_sum;
+#ifdef __MPI
+        if (use_distributed_mpi && GlobalV::NPROC > 1)
+        {
+            MPI_Allreduce(&local_solved_equations,
+                          &rank_local_equations_min,
+                          1,
+                          MPI_INT,
+                          MPI_MIN,
+                          MPI_COMM_WORLD);
+            MPI_Allreduce(&local_solved_equations,
+                          &rank_local_equations_max,
+                          1,
+                          MPI_INT,
+                          MPI_MAX,
+                          MPI_COMM_WORLD);
+            MPI_Allreduce(&local_iteration_sum,
+                          &rank_local_iterations_min,
+                          1,
+                          MPI_INT64_T,
+                          MPI_MIN,
+                          MPI_COMM_WORLD);
+            MPI_Allreduce(&local_iteration_sum,
+                          &rank_local_iterations_max,
+                          1,
+                          MPI_INT64_T,
+                          MPI_MAX,
+                          MPI_COMM_WORLD);
+        }
+#endif
 
         std::vector<siab::ReferenceRow> global_siab_rows;
         if (write_siab)
@@ -4813,9 +4871,20 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         }
         out << "sternheimer_frequency_mpi " << (use_frequency_mpi ? "yes" : "no") << '\n';
         out << "sternheimer_channel_mpi " << (use_channel_mpi ? "yes" : "no") << '\n';
+        out << "sternheimer_mpi_layout " << mpi_layout << '\n';
+        const char* equation_owner_formula
+            = use_global_equation_mpi ? "occupied_frequency_channel_modulo"
+              : use_channel_mpi      ? "frequency_group_then_occupied_channel_modulo"
+              : use_frequency_mpi    ? "frequency_round_robin"
+                                     : "serial";
+        out << "equation_owner_formula " << equation_owner_formula << '\n';
         out << "frequency_group_size " << frequency_group_size << '\n';
         out << "mpi_ranks " << GlobalV::NPROC << '\n';
         out << "frequency_rank_shift " << frequency_rank_shift << '\n';
+        out << "rank_local_equations_min " << rank_local_equations_min << '\n';
+        out << "rank_local_equations_max " << rank_local_equations_max << '\n';
+        out << "rank_local_iterations_min " << rank_local_iterations_min << '\n';
+        out << "rank_local_iterations_max " << rank_local_iterations_max << '\n';
         out << "progress_file_pattern "
             << (write_siab ? "STERNHEIMER_SIAB_PROGRESS_rank*.dat"
                            : "STERNHEIMER_CHI0_PROGRESS_rank*.dat")

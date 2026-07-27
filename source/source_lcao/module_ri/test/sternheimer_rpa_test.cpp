@@ -524,6 +524,73 @@ TEST(SternheimerRPA, AssignsGlobalEquationsUniquelyAndEvenly)
                  std::invalid_argument);
 }
 
+TEST(SternheimerRPA, ValidatesGlobalEquationMPILayoutRequirements)
+{
+    EXPECT_NO_THROW(ModuleRI::SternheimerRPA::validate_mpi_layout("frequency_grouped",
+                                                                   true,
+                                                                   true,
+                                                                   true,
+                                                                   false,
+                                                                   16,
+                                                                   32));
+    EXPECT_THROW(ModuleRI::SternheimerRPA::validate_mpi_layout("frequency_grouped",
+                                                                true,
+                                                                true,
+                                                                true,
+                                                                false,
+                                                                16,
+                                                                30),
+                 std::invalid_argument);
+
+    EXPECT_NO_THROW(ModuleRI::SternheimerRPA::validate_mpi_layout("global_equation",
+                                                                   true,
+                                                                   true,
+                                                                   true,
+                                                                   false,
+                                                                   6,
+                                                                   4));
+    EXPECT_THROW(ModuleRI::SternheimerRPA::validate_mpi_layout("global_equation",
+                                                                false,
+                                                                true,
+                                                                true,
+                                                                false,
+                                                                6,
+                                                                4),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::validate_mpi_layout("global_equation",
+                                                                true,
+                                                                false,
+                                                                true,
+                                                                false,
+                                                                6,
+                                                                4),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::validate_mpi_layout("global_equation",
+                                                                true,
+                                                                true,
+                                                                false,
+                                                                false,
+                                                                6,
+                                                                4),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::validate_mpi_layout("global_equation",
+                                                                true,
+                                                                true,
+                                                                true,
+                                                                true,
+                                                                6,
+                                                                4),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::SternheimerRPA::validate_mpi_layout("invalid",
+                                                                true,
+                                                                true,
+                                                                true,
+                                                                false,
+                                                                6,
+                                                                4),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerRPA, SolveBiCGStabDiagonalComplexSystem)
 {
     const Vector diagonal = {Complex(2.0, 1.0), Complex(3.0, -0.5), Complex(4.0, 2.0)};

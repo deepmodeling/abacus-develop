@@ -1013,6 +1013,54 @@ int SternheimerRPA::global_equation_owner(const int occupied_state,
     return static_cast<int>((task_index % mpi_ranks + normalized_shift) % mpi_ranks);
 }
 
+void SternheimerRPA::validate_mpi_layout(const std::string& layout,
+                                         const bool use_frequency_mpi,
+                                         const bool use_channel_mpi,
+                                         const bool write_siab,
+                                         const bool write_librpa,
+                                         const int frequency_count,
+                                         const int mpi_ranks)
+{
+    if (layout != "frequency_grouped" && layout != "global_equation")
+    {
+        throw std::invalid_argument("Sternheimer MPI layout must be frequency_grouped or global_equation.");
+    }
+    if (frequency_count <= 0 || mpi_ranks <= 0)
+    {
+        throw std::invalid_argument("Sternheimer MPI layout requires positive frequency and MPI rank counts.");
+    }
+    if (use_channel_mpi && !use_frequency_mpi)
+    {
+        throw std::invalid_argument("sternheimer_channel_mpi requires sternheimer_frequency_mpi=true.");
+    }
+    if (use_channel_mpi && !write_siab)
+    {
+        throw std::invalid_argument("sternheimer_channel_mpi currently requires out_sternheimer_siab=true.");
+    }
+    if (use_channel_mpi && write_librpa)
+    {
+        throw std::invalid_argument(
+            "sternheimer_channel_mpi does not yet support out_sternheimer_librpa chi0 accumulation.");
+    }
+
+    if (layout == "global_equation")
+    {
+        if (!use_frequency_mpi || !use_channel_mpi || !write_siab || write_librpa)
+        {
+            throw std::invalid_argument(
+                "sternheimer_mpi_layout=global_equation requires frequency MPI, channel MPI, SIAB output, and no "
+                "LibRPA chi0 output.");
+        }
+        return;
+    }
+
+    if (use_channel_mpi && (mpi_ranks < frequency_count || mpi_ranks % frequency_count != 0))
+    {
+        throw std::invalid_argument(
+            "Sternheimer channel MPI requires MPI ranks to be an integer multiple of the frequency count.");
+    }
+}
+
 SternheimerRPA::TransitionEnergyWindow SternheimerRPA::transition_energy_window_from_eigenvalues_ry(
     const std::vector<double>& eigenvalues_ry,
     const std::vector<double>& occupations,
