@@ -1884,6 +1884,21 @@ TEST_F(InputTest, Item_test2)
         it->second.read_value(it->second, param);
         EXPECT_TRUE(param.input.sternheimer_channel_mpi);
     }
+    { // sternheimer_mpi_layout
+        auto it = find_label("sternheimer_mpi_layout", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.sternheimer_mpi_layout, "frequency_grouped");
+
+        it->second.str_values = {"global_equation"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.sternheimer_mpi_layout, "global_equation");
+
+        param.input.sternheimer_mpi_layout = "invalid";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("frequency_grouped or global_equation"));
+    }
     { // sternheimer_delta
         auto it = find_label("sternheimer_delta", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());
