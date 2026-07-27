@@ -143,6 +143,70 @@ struct SternheimerFixedQKOrbit
     std::vector<int> members;
 };
 
+struct SternheimerFixedQKRoute
+{
+    int iq = 0;
+    int representative_ik_full = -1;
+    int member_ik_full = -1;
+    int spatial_isym = -1;
+    bool time_reversal = false;
+    std::array<int, 3> fold_G{0, 0, 0};
+};
+
+struct SternheimerQStarPermutation
+{
+    int spatial_isym = -1;
+    bool time_reversal = false;
+    std::vector<int> mapped_index_by_full_q;
+    std::vector<std::array<int, 3>> fold_G_by_full_q;
+};
+
+struct SternheimerQStarRoute
+{
+    int representative_iq = 0;
+    int member_iq = 0;
+    int spatial_isym = -1;
+    bool time_reversal = false;
+    std::array<int, 3> fold_G{0, 0, 0};
+};
+
+inline std::string format_sternheimer_fixed_q_routes(
+    const std::vector<SternheimerFixedQKRoute>& routes)
+{
+    if (routes.empty())
+    {
+        throw std::invalid_argument("Sternheimer fixed-q route manifest cannot be empty.");
+    }
+    std::vector<SternheimerFixedQKRoute> ordered = routes;
+    std::sort(ordered.begin(), ordered.end(), [](const auto& lhs, const auto& rhs) {
+        return std::tie(lhs.iq, lhs.member_ik_full, lhs.representative_ik_full)
+               < std::tie(rhs.iq, rhs.member_ik_full, rhs.representative_ik_full);
+    });
+    std::ostringstream output;
+    output << "version 1\n";
+    output << "# iq representative_ik member_ik spatial_isym time_reversal fold_Gx fold_Gy fold_Gz\n";
+    for (std::size_t index = 0; index != ordered.size(); ++index)
+    {
+        const auto& route = ordered[index];
+        if (route.iq <= 0 || route.representative_ik_full < 0 || route.member_ik_full < 0
+            || route.spatial_isym < 0)
+        {
+            throw std::invalid_argument("Invalid Sternheimer fixed-q route record.");
+        }
+        if (index > 0
+            && std::tie(route.iq, route.member_ik_full)
+                   == std::tie(ordered[index - 1].iq, ordered[index - 1].member_ik_full))
+        {
+            throw std::invalid_argument("Duplicate Sternheimer fixed-q route member.");
+        }
+        output << route.iq << ' ' << route.representative_ik_full << ' '
+               << route.member_ik_full << ' ' << route.spatial_isym << ' '
+               << static_cast<int>(route.time_reversal) << ' ' << route.fold_G[0] << ' '
+               << route.fold_G[1] << ' ' << route.fold_G[2] << '\n';
+    }
+    return output.str();
+}
+
 inline std::vector<SternheimerFixedQKOrbit> build_sternheimer_fixed_q_k_orbits_from_permutations(
     const int full_kpoint_count,
     const std::vector<std::vector<int>>& little_group_permutations)
@@ -212,6 +276,94 @@ inline std::vector<SternheimerFixedQKOrbit> build_sternheimer_fixed_q_k_orbits_f
         throw std::invalid_argument("Fixed-q Sternheimer k orbits do not cover the full k grid.");
     }
     return orbits;
+}
+
+inline std::vector<SternheimerQStarRoute> build_sternheimer_qstar_routes_from_permutations(
+    const int full_qpoint_count,
+    const std::vector<SternheimerQStarPermutation>& permutations)
+{
+    if (full_qpoint_count <= 0 || permutations.empty())
+    {
+        throw std::invalid_argument(
+            "Discrete Sternheimer q-star routes require a nonempty full q grid and symmetry group.");
+    }
+    std::vector<std::vector<int>> index_permutations;
+    index_permutations.reserve(permutations.size());
+    for (const auto& permutation: permutations)
+    {
+        if (permutation.spatial_isym < 0
+            || permutation.mapped_index_by_full_q.size()
+                   != static_cast<std::size_t>(full_qpoint_count)
+            || permutation.fold_G_by_full_q.size()
+                   != static_cast<std::size_t>(full_qpoint_count))
+        {
+            throw std::invalid_argument("Invalid discrete Sternheimer q-star permutation.");
+        }
+        index_permutations.push_back(permutation.mapped_index_by_full_q);
+    }
+
+    const auto orbits = build_sternheimer_fixed_q_k_orbits_from_permutations(
+        full_qpoint_count, index_permutations);
+    std::vector<SternheimerQStarRoute> routes;
+    routes.reserve(static_cast<std::size_t>(full_qpoint_count));
+    for (const auto& orbit: orbits)
+    {
+        for (const int member: orbit.members)
+        {
+            const auto inverse = std::find_if(
+                permutations.begin(), permutations.end(), [&](const auto& permutation) {
+                    return permutation.mapped_index_by_full_q[static_cast<std::size_t>(member)]
+                           == orbit.representative_ik_full;
+                });
+            if (inverse == permutations.end())
+            {
+                throw std::invalid_argument(
+                    "A discrete Sternheimer q-star member has no inverse route to its representative.");
+            }
+            routes.push_back({orbit.representative_ik_full + 1,
+                              member + 1,
+                              inverse->spatial_isym,
+                              inverse->time_reversal,
+                              inverse->fold_G_by_full_q[static_cast<std::size_t>(member)]});
+        }
+    }
+    std::sort(routes.begin(), routes.end(), [](const auto& lhs, const auto& rhs) {
+        return lhs.member_iq < rhs.member_iq;
+    });
+    return routes;
+}
+
+inline std::string format_sternheimer_qstar_routes(
+    const std::vector<SternheimerQStarRoute>& routes)
+{
+    if (routes.empty())
+    {
+        throw std::invalid_argument("Sternheimer q-star route manifest cannot be empty.");
+    }
+    std::vector<SternheimerQStarRoute> ordered = routes;
+    std::sort(ordered.begin(), ordered.end(), [](const auto& lhs, const auto& rhs) {
+        return std::tie(lhs.member_iq, lhs.representative_iq)
+               < std::tie(rhs.member_iq, rhs.representative_iq);
+    });
+    std::ostringstream output;
+    output << "version 1\n";
+    output << "# representative_iq member_iq spatial_isym time_reversal fold_Gx fold_Gy fold_Gz\n";
+    for (std::size_t index = 0; index != ordered.size(); ++index)
+    {
+        const auto& route = ordered[index];
+        if (route.representative_iq <= 0 || route.member_iq <= 0 || route.spatial_isym < 0)
+        {
+            throw std::invalid_argument("Invalid Sternheimer q-star route record.");
+        }
+        if (index > 0 && route.member_iq == ordered[index - 1].member_iq)
+        {
+            throw std::invalid_argument("Duplicate Sternheimer q-star route member.");
+        }
+        output << route.representative_iq << ' ' << route.member_iq << ' '
+               << route.spatial_isym << ' ' << static_cast<int>(route.time_reversal) << ' '
+               << route.fold_G[0] << ' ' << route.fold_G[1] << ' ' << route.fold_G[2] << '\n';
+    }
+    return output.str();
 }
 
 struct SternheimerPartialResponseRecord
@@ -307,6 +459,41 @@ inline std::string format_sternheimer_partial_manifest(
         }
         manifest << record.iq << ' ' << record.ik_full << ' ' << record.ifrequency << ' '
                  << record.filename << '\n';
+    }
+    return manifest.str();
+}
+
+inline std::string format_sternheimer_full_kpoint_manifest(
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records)
+{
+    if (records.empty())
+    {
+        throw std::invalid_argument("Sternheimer full-k-point manifest cannot be empty.");
+    }
+    std::vector<const SternheimerLCAOOccupiedKPoint*> ordered(records.size(), nullptr);
+    for (const auto& record: records)
+    {
+        if (record.global_k_index < 0
+            || record.global_k_index >= static_cast<int>(records.size())
+            || !std::isfinite(record.kpoint[0]) || !std::isfinite(record.kpoint[1])
+            || !std::isfinite(record.kpoint[2])
+            || ordered[static_cast<std::size_t>(record.global_k_index)] != nullptr)
+        {
+            throw std::invalid_argument("Invalid Sternheimer full-k-point manifest record.");
+        }
+        ordered[static_cast<std::size_t>(record.global_k_index)] = &record;
+    }
+
+    std::ostringstream manifest;
+    manifest << std::setprecision(17) << "# ik_full kx ky kz\n";
+    for (std::size_t ik = 0; ik != ordered.size(); ++ik)
+    {
+        if (ordered[ik] == nullptr)
+        {
+            throw std::invalid_argument("Sternheimer full-k-point manifest indices are not contiguous.");
+        }
+        const auto& kpoint = ordered[ik]->kpoint;
+        manifest << ik << ' ' << kpoint[0] << ' ' << kpoint[1] << ' ' << kpoint[2] << '\n';
     }
     return manifest.str();
 }
@@ -481,6 +668,47 @@ inline int sternheimer_kpoint_owner_group(const int global_kpoint_index,
         return global_kpoint_index / (base_count + 1);
     }
     return extra_groups + (global_kpoint_index - enlarged_span) / base_count;
+}
+
+struct SternheimerNestedMPIAssignment
+{
+    int kpoint_group = 0;
+    int frequency_slot = 0;
+    int owner_rank = 0;
+};
+
+inline SternheimerNestedMPIAssignment sternheimer_nested_mpi_assignment(
+    const int global_kpoint_index,
+    const int global_kpoint_count,
+    const int ifrequency_zero_based,
+    const int frequency_count,
+    const int kpoint_groups,
+    const int mpi_ranks,
+    const int frequency_rank_shift = 0)
+{
+    if (frequency_count <= 0 || ifrequency_zero_based < 0
+        || ifrequency_zero_based >= frequency_count)
+    {
+        throw std::invalid_argument("Invalid Sternheimer nested-MPI frequency dimensions.");
+    }
+    if (mpi_ranks != kpoint_groups * frequency_count)
+    {
+        throw std::invalid_argument(
+            "Nested Sternheimer MPI requires NPROC=k-point-groups*frequency-count.");
+    }
+
+    const int kpoint_group = sternheimer_kpoint_owner_group(global_kpoint_index,
+                                                             global_kpoint_count,
+                                                             kpoint_groups);
+    int normalized_shift = frequency_rank_shift % frequency_count;
+    if (normalized_shift < 0)
+    {
+        normalized_shift += frequency_count;
+    }
+    const int frequency_slot = (ifrequency_zero_based + normalized_shift) % frequency_count;
+    return {kpoint_group,
+            frequency_slot,
+            kpoint_group * frequency_count + frequency_slot};
 }
 
 inline std::vector<std::size_t> sternheimer_owned_kq_pair_indices(const SternheimerPeriodicResponsePlan& plan,

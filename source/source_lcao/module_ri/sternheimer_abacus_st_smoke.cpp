@@ -26,6 +26,7 @@
 #include <cstdlib>
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <stdexcept>
@@ -59,6 +60,7 @@ constexpr const char* kOrbitalFilesEnv = "ABACUS_STERNHEIMER_FD_ST_ORBITAL_FILES
 constexpr const char* kFrequencyRankShiftEnv = "ABACUS_STERNHEIMER_FD_ST_FREQ_RANK_SHIFT";
 constexpr const char* kDeltaComponentDiagnosticEnv = "ABACUS_STERNHEIMER_DELTA_COMPONENT_DIAG";
 constexpr const char* kLCAOSOSDiagnosticEnv = "ABACUS_STERNHEIMER_LCAO_SOS_DIAG";
+constexpr const char* kKResolvedDiagnosticEnv = "ABACUS_STERNHEIMER_KRESOLVED_DIAG";
 constexpr const char* kDeltaABlockModeEnv = "ABACUS_STERNHEIMER_DELTA_A_BLOCK";
 constexpr double kHartreeToRydberg = 2.0;
 
@@ -324,14 +326,32 @@ SternheimerRPA::TransitionEnergyWindow transition_window_from_all_kpoints(
     return combined;
 }
 
-std::vector<std::vector<int>> build_sternheimer_fixed_q_little_group_permutations(
+struct SternheimerFixedQPermutation
+{
+    int spatial_isym = -1;
+    bool time_reversal = false;
+    std::vector<int> mapped_index_by_full_k;
+    std::vector<std::array<int, 3>> fold_G_by_full_k;
+};
+
+std::vector<SternheimerFixedQPermutation> build_sternheimer_fixed_q_little_group_permutations(
     const UnitCell& ucell,
     const std::vector<SternheimerLCAOOccupiedKPoint>& records,
-    const SternheimerReducedKPoint& qpoint)
+    const SternheimerReducedKPoint& qpoint,
+    const std::vector<int>& allowed_spatial_operations)
 {
-    if (ucell.symm.nrotk <= 0 || records.empty())
+    if (ucell.symm.nrotk <= 0 || records.empty() || allowed_spatial_operations.empty())
     {
         throw std::runtime_error("Cannot build Sternheimer fixed-q permutations without symmetry operations.");
+    }
+    std::vector<bool> spatial_operation_allowed(static_cast<std::size_t>(ucell.symm.nrotk), false);
+    for (const int isym: allowed_spatial_operations)
+    {
+        if (isym < 0 || isym >= ucell.symm.nrotk)
+        {
+            throw std::runtime_error("Sternheimer FD stencil symmetry has an invalid spatial index.");
+        }
+        spatial_operation_allowed[static_cast<std::size_t>(isym)] = true;
     }
     const double tolerance = std::max(1.0e-10, ucell.symm.epsilon);
     auto canonical = [tolerance](ModuleBase::Vector3<double> point) {
@@ -369,11 +389,15 @@ std::vector<std::vector<int>> build_sternheimer_fixed_q_little_group_permutation
             = canonical({record.kpoint[0], record.kpoint[1], record.kpoint[2]});
     }
     const ModuleBase::Vector3<double> q = canonical({qpoint[0], qpoint[1], qpoint[2]});
-    std::vector<std::vector<int>> permutations;
+    std::vector<SternheimerFixedQPermutation> permutations;
     for (const bool time_reversal: {false, true})
     {
         for (int isym = 0; isym != ucell.symm.nrotk; ++isym)
         {
+            if (!spatial_operation_allowed[static_cast<std::size_t>(isym)])
+            {
+                continue;
+            }
             ModuleBase::Vector3<double> transformed_q = q * ucell.symm.kgmatrix[isym];
             if (time_reversal)
             {
@@ -384,7 +408,11 @@ std::vector<std::vector<int>> build_sternheimer_fixed_q_little_group_permutation
                 continue;
             }
 
-            std::vector<int> permutation(records.size(), -1);
+            SternheimerFixedQPermutation operation;
+            operation.spatial_isym = isym;
+            operation.time_reversal = time_reversal;
+            operation.mapped_index_by_full_k.assign(records.size(), -1);
+            operation.fold_G_by_full_k.assign(records.size(), {0, 0, 0});
             for (std::size_t ik = 0; ik != full_kpoints.size(); ++ik)
             {
                 ModuleBase::Vector3<double> transformed
@@ -393,27 +421,158 @@ std::vector<std::vector<int>> build_sternheimer_fixed_q_little_group_permutation
                 {
                     transformed = transformed * -1.0;
                 }
-                transformed = canonical(transformed);
+                const ModuleBase::Vector3<double> unfolded = transformed;
+                transformed = canonical(unfolded);
                 for (std::size_t target = 0; target != full_kpoints.size(); ++target)
                 {
                     if (same_point(transformed, full_kpoints[target]))
                     {
-                        permutation[ik] = static_cast<int>(target);
+                        operation.mapped_index_by_full_k[ik] = static_cast<int>(target);
+                        const ModuleBase::Vector3<double> difference
+                            = unfolded - full_kpoints[target];
+                        operation.fold_G_by_full_k[ik]
+                            = {static_cast<int>(std::llround(difference.x)),
+                               static_cast<int>(std::llround(difference.y)),
+                               static_cast<int>(std::llround(difference.z))};
+                        if (std::abs(difference.x - operation.fold_G_by_full_k[ik][0]) >= tolerance
+                            || std::abs(difference.y - operation.fold_G_by_full_k[ik][1]) >= tolerance
+                            || std::abs(difference.z - operation.fold_G_by_full_k[ik][2]) >= tolerance)
+                        {
+                            throw std::runtime_error(
+                                "A Sternheimer fixed-q symmetry route has a noninteger reciprocal fold.");
+                        }
                         break;
                     }
                 }
-                if (permutation[ik] < 0)
+                if (operation.mapped_index_by_full_k[ik] < 0)
                 {
                     throw std::runtime_error(
                         "A Sternheimer fixed-q little-group operation leaves the full k grid.");
                 }
             }
-            permutations.push_back(std::move(permutation));
+            permutations.push_back(std::move(operation));
         }
     }
     if (permutations.empty())
     {
         throw std::runtime_error("Sternheimer fixed-q little group is empty.");
+    }
+    return permutations;
+}
+
+std::vector<SternheimerQStarPermutation> build_sternheimer_discrete_qstar_permutations(
+    const UnitCell& ucell,
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const std::vector<int>& allowed_spatial_operations)
+{
+    if (ucell.symm.nrotk <= 0 || records.empty() || allowed_spatial_operations.empty())
+    {
+        throw std::runtime_error("Cannot build discrete Sternheimer q-star permutations.");
+    }
+    std::vector<bool> spatial_operation_allowed(static_cast<std::size_t>(ucell.symm.nrotk), false);
+    for (const int isym: allowed_spatial_operations)
+    {
+        if (isym < 0 || isym >= ucell.symm.nrotk)
+        {
+            throw std::runtime_error("Sternheimer q-star symmetry has an invalid spatial index.");
+        }
+        spatial_operation_allowed[static_cast<std::size_t>(isym)] = true;
+    }
+
+    const double tolerance = std::max(1.0e-10, ucell.symm.epsilon);
+    auto canonical = [tolerance](ModuleBase::Vector3<double> point) {
+        point.x = std::fmod(point.x + 100.5 - 0.5 * tolerance, 1.0) - 0.5 + 0.5 * tolerance;
+        point.y = std::fmod(point.y + 100.5 - 0.5 * tolerance, 1.0) - 0.5 + 0.5 * tolerance;
+        point.z = std::fmod(point.z + 100.5 - 0.5 * tolerance, 1.0) - 0.5 + 0.5 * tolerance;
+        if (std::abs(point.x) < tolerance)
+        {
+            point.x = 0.0;
+        }
+        if (std::abs(point.y) < tolerance)
+        {
+            point.y = 0.0;
+        }
+        if (std::abs(point.z) < tolerance)
+        {
+            point.z = 0.0;
+        }
+        return point;
+    };
+    auto same_point = [tolerance](const ModuleBase::Vector3<double>& lhs,
+                                  const ModuleBase::Vector3<double>& rhs) {
+        return std::abs(lhs.x - rhs.x) < tolerance && std::abs(lhs.y - rhs.y) < tolerance
+               && std::abs(lhs.z - rhs.z) < tolerance;
+    };
+
+    std::vector<ModuleBase::Vector3<double>> full_qpoints(records.size());
+    for (const auto& record: records)
+    {
+        if (record.global_k_index < 0 || record.global_k_index >= static_cast<int>(records.size()))
+        {
+            throw std::runtime_error("Sternheimer q-star permutation found an invalid full-q index.");
+        }
+        full_qpoints[static_cast<std::size_t>(record.global_k_index)]
+            = canonical({record.kpoint[0], record.kpoint[1], record.kpoint[2]});
+    }
+
+    std::vector<SternheimerQStarPermutation> permutations;
+    for (const bool time_reversal: {false, true})
+    {
+        for (int isym = 0; isym != ucell.symm.nrotk; ++isym)
+        {
+            if (!spatial_operation_allowed[static_cast<std::size_t>(isym)])
+            {
+                continue;
+            }
+            SternheimerQStarPermutation operation;
+            operation.spatial_isym = isym;
+            operation.time_reversal = time_reversal;
+            operation.mapped_index_by_full_q.assign(records.size(), -1);
+            operation.fold_G_by_full_q.assign(records.size(), {0, 0, 0});
+            for (std::size_t iq = 0; iq != full_qpoints.size(); ++iq)
+            {
+                ModuleBase::Vector3<double> transformed
+                    = full_qpoints[iq] * ucell.symm.kgmatrix[isym];
+                if (time_reversal)
+                {
+                    transformed = transformed * -1.0;
+                }
+                const ModuleBase::Vector3<double> unfolded = transformed;
+                transformed = canonical(unfolded);
+                for (std::size_t target = 0; target != full_qpoints.size(); ++target)
+                {
+                    if (!same_point(transformed, full_qpoints[target]))
+                    {
+                        continue;
+                    }
+                    operation.mapped_index_by_full_q[iq] = static_cast<int>(target);
+                    const ModuleBase::Vector3<double> difference = unfolded - full_qpoints[target];
+                    operation.fold_G_by_full_q[iq]
+                        = {static_cast<int>(std::llround(difference.x)),
+                           static_cast<int>(std::llround(difference.y)),
+                           static_cast<int>(std::llround(difference.z))};
+                    const auto& fold = operation.fold_G_by_full_q[iq];
+                    if (std::abs(difference.x - fold[0]) >= tolerance
+                        || std::abs(difference.y - fold[1]) >= tolerance
+                        || std::abs(difference.z - fold[2]) >= tolerance)
+                    {
+                        throw std::runtime_error(
+                            "A Sternheimer q-star route has a noninteger reciprocal fold.");
+                    }
+                    break;
+                }
+                if (operation.mapped_index_by_full_q[iq] < 0)
+                {
+                    throw std::runtime_error(
+                        "A discrete Sternheimer q-star operation leaves the full q grid.");
+                }
+            }
+            permutations.push_back(std::move(operation));
+        }
+    }
+    if (permutations.empty())
+    {
+        throw std::runtime_error("The discrete Sternheimer q-star group is empty.");
     }
     return permutations;
 }
@@ -1282,31 +1441,99 @@ void run_sternheimer_periodic_lcao_chi0_output(
         throw std::runtime_error("Internal error: the periodic Sternheimer path requires a positive q index.");
     }
     validate_sternheimer_periodic_kmesh(kmesh, static_cast<int>(occupied_kpoints.size()));
+    const int kpoint_groups = PARAM.globalv.kpar_lcao;
+    const bool use_kpoint_mpi = kpoint_groups > 1;
+    const bool use_parallel_grid_mpi = use_frequency_mpi || use_kpoint_mpi;
+    const SternheimerABACUSFDGridData grid_data
+        = use_parallel_grid_mpi ? make_sternheimer_fd_full_grid(pw_basis)
+                                : make_sternheimer_fd_grid(pw_basis);
     const bool use_symmetry_partial_response = PARAM.inp.symmetry == "1";
-    const std::vector<int> canonical_q_indices
+    const bool write_kresolved_diagnostic
+        = !use_symmetry_partial_response && env_is_true(kKResolvedDiagnosticEnv);
+    const bool write_partial_kresolved = use_symmetry_partial_response || write_kresolved_diagnostic;
+    std::vector<int> canonical_q_indices
         = sternheimer_canonical_q_indices_one_based(occupied_kpoints);
     std::vector<SternheimerFixedQKOrbit> fixed_q_orbits;
+    std::vector<SternheimerFixedQKRoute> fixed_q_routes;
+    std::vector<SternheimerQStarRoute> qstar_routes;
     int fixed_q_little_group_order = 1;
+    int fixed_q_discrete_spatial_order = 1;
     std::vector<bool> fixed_q_representative(occupied_kpoints.size(), true);
     if (use_symmetry_partial_response)
     {
-        const int q_record_index = response_plan.record_index_by_global_k[
-            static_cast<std::size_t>(response_plan.iq - 1)];
-        const auto& q_record = occupied_kpoints[static_cast<std::size_t>(q_record_index)];
-        if (q_record.symmetry_spatial_isym != 0 || q_record.symmetry_time_reversal)
+        std::vector<SternheimerFDReducedRotation> reduced_rotations;
+        reduced_rotations.reserve(static_cast<std::size_t>(ucell.symm.nrotk));
+        for (int isym = 0; isym != ucell.symm.nrotk; ++isym)
+        {
+            const auto& rotation = ucell.symm.gmatrix[isym];
+            reduced_rotations.push_back({{{rotation.e11, rotation.e12, rotation.e13},
+                                          {rotation.e21, rotation.e22, rotation.e23},
+                                          {rotation.e31, rotation.e32, rotation.e33}}});
+        }
+        const auto discrete_spatial_operations
+            = sternheimer_fd_second_order_stencil_symmetry_indices(grid_data.grid,
+                                                                    reduced_rotations);
+        fixed_q_discrete_spatial_order = static_cast<int>(discrete_spatial_operations.size());
+        const auto qstar_permutations = build_sternheimer_discrete_qstar_permutations(
+            ucell, occupied_kpoints, discrete_spatial_operations);
+        qstar_routes = build_sternheimer_qstar_routes_from_permutations(
+            static_cast<int>(occupied_kpoints.size()), qstar_permutations);
+        canonical_q_indices.clear();
+        for (const auto& route: qstar_routes)
+        {
+            if (route.representative_iq == route.member_iq)
+            {
+                canonical_q_indices.push_back(route.representative_iq);
+            }
+        }
+        const auto selected_q_route = std::find_if(
+            qstar_routes.begin(), qstar_routes.end(), [&](const auto& route) {
+                return route.member_iq == response_plan.iq;
+            });
+        if (selected_q_route == qstar_routes.end()
+            || selected_q_route->representative_iq != response_plan.iq)
         {
             throw std::runtime_error(
-                "Sternheimer symmetry output requires sternheimer_q_index to select the canonical IBZ q point.");
+                "Sternheimer symmetry output requires sternheimer_q_index to select a discrete q-star representative.");
         }
         const auto permutations = build_sternheimer_fixed_q_little_group_permutations(
-            ucell, occupied_kpoints, response_plan.qpoint);
+            ucell, occupied_kpoints, response_plan.qpoint, discrete_spatial_operations);
         fixed_q_little_group_order = static_cast<int>(permutations.size());
+        std::vector<std::vector<int>> index_permutations;
+        index_permutations.reserve(permutations.size());
+        for (const auto& permutation: permutations)
+        {
+            index_permutations.push_back(permutation.mapped_index_by_full_k);
+        }
         fixed_q_orbits = build_sternheimer_fixed_q_k_orbits_from_permutations(
-            static_cast<int>(occupied_kpoints.size()), permutations);
+            static_cast<int>(occupied_kpoints.size()), index_permutations);
         std::fill(fixed_q_representative.begin(), fixed_q_representative.end(), false);
         for (const auto& orbit: fixed_q_orbits)
         {
             fixed_q_representative[static_cast<std::size_t>(orbit.representative_ik_full)] = true;
+            for (const int member_ik_full: orbit.members)
+            {
+                const auto route = std::find_if(
+                    permutations.begin(),
+                    permutations.end(),
+                    [&](const auto& operation) {
+                        return operation.mapped_index_by_full_k[
+                                   static_cast<std::size_t>(member_ik_full)]
+                               == orbit.representative_ik_full;
+                    });
+                if (route == permutations.end())
+                {
+                    throw std::runtime_error(
+                        "A Sternheimer fixed-q orbit member has no inverse route to its representative.");
+                }
+                fixed_q_routes.push_back(
+                    {response_plan.iq,
+                     orbit.representative_ik_full,
+                     member_ik_full,
+                     route->spatial_isym,
+                     route->time_reversal,
+                     route->fold_G_by_full_k[static_cast<std::size_t>(member_ik_full)]});
+            }
         }
     }
     constexpr double q_tolerance = 1.0e-10;
@@ -1332,15 +1559,6 @@ void run_sternheimer_periodic_lcao_chi0_output(
                                elapsed_seconds_since(chi0_start_time),
                                "kq_pairs=" + std::to_string(response_plan.kq_pairs.size()));
 
-    const int kpoint_groups = PARAM.globalv.kpar_lcao;
-    const bool use_kpoint_mpi = kpoint_groups > 1;
-    const bool use_parallel_grid_mpi = use_frequency_mpi || use_kpoint_mpi;
-    if (use_frequency_mpi && use_kpoint_mpi)
-    {
-        throw std::runtime_error(
-            "Periodic Sternheimer does not yet support nested frequency MPI and k-point MPI.");
-    }
-
     const double solver_tolerance = positive_double_from_env(kSolverToleranceEnv, 1.0e-8);
     const int solver_max_iter = positive_int_from_env(kSolverMaxIterEnv, 300);
     const double pca_threshold = nonnegative_double_from_env(kPCAThresholdEnv, PARAM.inp.exx_pca_threshold);
@@ -1348,6 +1566,11 @@ void run_sternheimer_periodic_lcao_chi0_output(
     const int max_channels = positive_int_from_env(kChannelsEnv, -1);
     const int channel_threads = positive_int_from_env(kChannelThreadsEnv, 0);
     const int nfreq = PARAM.inp.sternheimer_nfreq;
+    const bool use_nested_response_mpi = use_frequency_mpi && use_kpoint_mpi;
+    const int local_kpoint_group
+        = use_kpoint_mpi ? (use_nested_response_mpi ? GlobalV::MY_RANK / nfreq : GlobalV::MY_RANK) : 0;
+    const int local_frequency_slot
+        = use_nested_response_mpi ? GlobalV::MY_RANK % nfreq : 0;
     const int default_frequency_rank_shift = use_frequency_mpi && GlobalV::NPROC > 1 ? 1 : 0;
     const int frequency_rank_shift = int_from_env(kFrequencyRankShiftEnv, default_frequency_rank_shift);
     const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
@@ -1392,8 +1615,6 @@ void run_sternheimer_periodic_lcao_chi0_output(
                                elapsed_seconds_since(chi0_start_time),
                                "nfreq=" + std::to_string(nfreq));
 
-    const SternheimerABACUSFDGridData grid_data
-        = use_parallel_grid_mpi ? make_sternheimer_fd_full_grid(pw_basis) : make_sternheimer_fd_grid(pw_basis);
     const std::vector<double> kpoint_parallel_full_potential
         = use_kpoint_mpi ? copy_sternheimer_full_local_potential(potential, pw_basis, 0)
                          : std::vector<double>();
@@ -1505,7 +1726,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
     std::vector<std::vector<SternheimerRPA::Complex>> lcao_sos_branches(static_cast<std::size_t>(nfreq));
     for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
     {
-        const int owner_rank = use_frequency_mpi
+        const int owner_rank = use_frequency_mpi && !use_kpoint_mpi
                                    ? SternheimerRPA::frequency_owner_rank(ifrequency,
                                                                           GlobalV::NPROC,
                                                                           frequency_rank_shift)
@@ -1532,6 +1753,27 @@ void run_sternheimer_periodic_lcao_chi0_output(
             }
         }
     }
+    const auto response_owner_rank = [&](const int source_kpoint_index,
+                                         const int ifrequency) {
+        if (use_nested_response_mpi)
+        {
+            return sternheimer_nested_mpi_assignment(source_kpoint_index,
+                                                      static_cast<int>(occupied_kpoints.size()),
+                                                      ifrequency,
+                                                      nfreq,
+                                                      kpoint_groups,
+                                                      GlobalV::NPROC,
+                                                      frequency_rank_shift)
+                .owner_rank;
+        }
+        if (use_kpoint_mpi)
+        {
+            return sternheimer_kpoint_owner_group(source_kpoint_index,
+                                                  static_cast<int>(occupied_kpoints.size()),
+                                                  kpoint_groups);
+        }
+        return frequency_owners[static_cast<std::size_t>(ifrequency)];
+    };
 
     SternheimerRPA::SolverOptions solver_options;
     solver_options.max_iter = solver_max_iter;
@@ -1561,7 +1803,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
 
     std::vector<std::size_t> owned_pair_indices
         = sternheimer_owned_kq_pair_indices(response_plan,
-                                            use_kpoint_mpi ? GlobalV::MY_RANK : 0,
+                                            use_kpoint_mpi ? local_kpoint_group : 0,
                                             use_kpoint_mpi ? kpoint_groups : 1);
     if (use_symmetry_partial_response)
     {
@@ -1588,13 +1830,12 @@ void run_sternheimer_periodic_lcao_chi0_output(
             = occupied_kpoints[static_cast<std::size_t>(target_record_index)];
 
         std::vector<std::vector<SternheimerRPA::Complex>> partial_pair_branches;
-        if (use_symmetry_partial_response)
+        if (write_partial_kresolved)
         {
             partial_pair_branches.resize(static_cast<std::size_t>(nfreq));
             for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
             {
-                if (use_kpoint_mpi
-                    || frequency_owners[static_cast<std::size_t>(ifrequency)] == GlobalV::MY_RANK)
+                if (response_owner_rank(pair.source_index, ifrequency) == GlobalV::MY_RANK)
                 {
                     partial_pair_branches[static_cast<std::size_t>(ifrequency)].assign(
                         static_cast<std::size_t>(num_channels) * num_channels,
@@ -1737,14 +1978,14 @@ void run_sternheimer_periodic_lcao_chi0_output(
 
         for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
         {
-            const int owner_rank = frequency_owners[static_cast<std::size_t>(ifrequency)];
-            if (!use_kpoint_mpi && owner_rank != GlobalV::MY_RANK)
+            const int owner_rank = response_owner_rank(pair.source_index, ifrequency);
+            if (owner_rank != GlobalV::MY_RANK)
             {
                 continue;
             }
             const double omega_ry = 2.0 * frequency_grid.omega_ha[static_cast<std::size_t>(ifrequency)];
             std::vector<SternheimerRPA::Complex>& chi0_branch
-                = use_symmetry_partial_response
+                = write_partial_kresolved
                       ? partial_pair_branches[static_cast<std::size_t>(ifrequency)]
                       : chi0_branches[static_cast<std::size_t>(ifrequency)];
             std::vector<SternheimerRPA::Complex>* delta_sos_branch
@@ -1887,7 +2128,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
                 }
             }
         }
-        if (use_symmetry_partial_response)
+        if (write_partial_kresolved)
         {
             for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
             {
@@ -1914,6 +2155,15 @@ void run_sternheimer_periodic_lcao_chi0_output(
                 GlobalV::ofs_running << " Sternheimer periodic partial response: "
                                      << partial.filename << std::endl;
                 local_partial_records.push_back(std::move(partial));
+
+                if (write_kresolved_diagnostic)
+                {
+                    auto& aggregate = chi0_branches[static_cast<std::size_t>(ifrequency)];
+                    for (std::size_t entry = 0; entry != branch.size(); ++entry)
+                    {
+                        aggregate[entry] += branch[entry];
+                    }
+                }
             }
         }
         append_chi0_progress_event("kpair_finish",
@@ -1927,6 +2177,27 @@ void run_sternheimer_periodic_lcao_chi0_output(
                                    elapsed_seconds_since(chi0_start_time),
                                    std::string("mode=") + (use_delta_sternheimer ? "delta" : "standard")
                                        + ",delta_dim=" + std::to_string(delta_subspace.virtual_states.size()));
+    }
+
+    if (use_nested_response_mpi && local_frequency_slot != 0)
+    {
+        std::fill(target_projector_dimensions.begin(), target_projector_dimensions.end(), 0);
+        std::fill(target_delta_dimensions.begin(), target_delta_dimensions.end(), 0);
+        std::fill(target_delta_eigenvalue_min.begin(), target_delta_eigenvalue_min.end(), 0.0);
+        std::fill(target_delta_eigenvalue_max.begin(), target_delta_eigenvalue_max.end(), 0.0);
+        std::fill(target_delta_grid_hamiltonian_relative_difference.begin(),
+                  target_delta_grid_hamiltonian_relative_difference.end(),
+                  0.0);
+        std::fill(target_delta_grid_hamiltonian_max_abs_difference.begin(),
+                  target_delta_grid_hamiltonian_max_abs_difference.end(),
+                  0.0);
+        std::fill(target_lcao_unoccupied_min.begin(), target_lcao_unoccupied_min.end(), 0.0);
+        std::fill(target_lcao_unoccupied_max.begin(), target_lcao_unoccupied_max.end(), 0.0);
+        std::fill(target_lcao_occupied_raw_norm_min.begin(), target_lcao_occupied_raw_norm_min.end(), 0.0);
+        std::fill(target_lcao_occupied_raw_norm_max.begin(), target_lcao_occupied_raw_norm_max.end(), 0.0);
+        std::fill(target_lcao_unoccupied_raw_norm_min.begin(), target_lcao_unoccupied_raw_norm_min.end(), 0.0);
+        std::fill(target_lcao_unoccupied_raw_norm_max.begin(), target_lcao_unoccupied_raw_norm_max.end(), 0.0);
+        std::fill(target_lcao_occ_unocc_overlap_max.begin(), target_lcao_occ_unocc_overlap_max.end(), 0.0);
     }
 
     if (use_kpoint_mpi)
@@ -2027,7 +2298,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
     }
 
     std::vector<SternheimerPartialResponseRecord> gathered_partial_records;
-    if (use_symmetry_partial_response)
+    if (write_partial_kresolved)
     {
         std::vector<int> local_keys;
         local_keys.reserve(3 * local_partial_records.size());
@@ -2119,17 +2390,21 @@ void run_sternheimer_periodic_lcao_chi0_output(
     {
         return;
     }
-    if (use_symmetry_partial_response)
+    if (write_partial_kresolved)
     {
         const std::size_t expected_records
-            = fixed_q_orbits.size() * static_cast<std::size_t>(nfreq);
+            = (use_symmetry_partial_response ? fixed_q_orbits.size() : response_plan.kq_pairs.size())
+              * static_cast<std::size_t>(nfreq);
         if (gathered_partial_records.size() != expected_records)
         {
             throw std::runtime_error(
-                "Sternheimer symmetry output did not produce one partial response per k orbit and frequency.");
+                "Sternheimer k-resolved output did not produce one partial response per expected k record and frequency.");
         }
-        const std::string manifest_file
-            = "v1_sternheimer_partial_manifest_iq_" + std::to_string(response_plan.iq) + ".dat";
+        const std::string manifest_file = use_symmetry_partial_response
+                                              ? "v1_sternheimer_partial_manifest_iq_"
+                                                    + std::to_string(response_plan.iq) + ".dat"
+                                              : "v1_sternheimer_kresolved_manifest_iq_"
+                                                    + std::to_string(response_plan.iq) + ".dat";
         std::ofstream manifest(manifest_file);
         if (!manifest)
         {
@@ -2137,26 +2412,64 @@ void run_sternheimer_periodic_lcao_chi0_output(
         }
         manifest << format_sternheimer_partial_manifest(gathered_partial_records);
 
-        const int q_record_index = response_plan.record_index_by_global_k[
-            static_cast<std::size_t>(response_plan.iq - 1)];
-        const auto& q_record = occupied_kpoints[static_cast<std::size_t>(q_record_index)];
-        const int qstar_size = static_cast<int>(std::count_if(
-            occupied_kpoints.begin(),
-            occupied_kpoints.end(),
-            [&](const auto& record) {
-                return record.zero_order_k_index == q_record.zero_order_k_index;
-            }));
-        const double qweight
-            = static_cast<double>(qstar_size) / static_cast<double>(occupied_kpoints.size());
-        const std::string qpoint_fragment
-            = "v1_sternheimer_qpoint_iq_" + std::to_string(response_plan.iq) + ".dat";
-        std::ofstream qpoint_out(qpoint_fragment);
-        if (!qpoint_out)
+        constexpr const char* full_kpoint_manifest = "v1_sternheimer_full_kpoints.dat";
+        std::ofstream full_kpoint_out(full_kpoint_manifest);
+        if (!full_kpoint_out)
         {
-            throw std::runtime_error("Cannot open Sternheimer q-point fragment: " + qpoint_fragment);
+            throw std::runtime_error("Cannot open Sternheimer full-k-point manifest: "
+                                     + std::string(full_kpoint_manifest));
         }
-        qpoint_out << std::setprecision(17) << response_plan.iq << ' ' << response_plan.qpoint[0] << ' '
-                   << response_plan.qpoint[1] << ' ' << response_plan.qpoint[2] << ' ' << qweight << '\n';
+        full_kpoint_out << format_sternheimer_full_kpoint_manifest(occupied_kpoints);
+
+        if (use_symmetry_partial_response)
+        {
+            const std::string route_fragment
+                = "v1_sternheimer_symmetry_routes_iq_"
+                  + std::to_string(response_plan.iq) + ".dat";
+            std::ofstream route_out(route_fragment);
+            if (!route_out)
+            {
+                throw std::runtime_error(
+                    "Cannot open Sternheimer fixed-q route fragment: " + route_fragment);
+            }
+            route_out << format_sternheimer_fixed_q_routes(fixed_q_routes);
+
+            std::vector<SternheimerQStarRoute> selected_qstar_routes;
+            std::copy_if(qstar_routes.begin(),
+                         qstar_routes.end(),
+                         std::back_inserter(selected_qstar_routes),
+                         [&](const auto& route) {
+                             return route.representative_iq == response_plan.iq;
+                         });
+            if (selected_qstar_routes.empty())
+            {
+                throw std::runtime_error(
+                    "The selected Sternheimer discrete q-star has no route members.");
+            }
+            const std::string qstar_route_fragment
+                = "v1_sternheimer_qstar_routes_iq_"
+                  + std::to_string(response_plan.iq) + ".dat";
+            std::ofstream qstar_route_out(qstar_route_fragment);
+            if (!qstar_route_out)
+            {
+                throw std::runtime_error(
+                    "Cannot open Sternheimer q-star route fragment: " + qstar_route_fragment);
+            }
+            qstar_route_out << format_sternheimer_qstar_routes(selected_qstar_routes);
+
+            const int qstar_size = static_cast<int>(selected_qstar_routes.size());
+            const double qweight
+                = static_cast<double>(qstar_size) / static_cast<double>(occupied_kpoints.size());
+            const std::string qpoint_fragment
+                = "v1_sternheimer_qpoint_iq_" + std::to_string(response_plan.iq) + ".dat";
+            std::ofstream qpoint_out(qpoint_fragment);
+            if (!qpoint_out)
+            {
+                throw std::runtime_error("Cannot open Sternheimer q-point fragment: " + qpoint_fragment);
+            }
+            qpoint_out << std::setprecision(17) << response_plan.iq << ' ' << response_plan.qpoint[0] << ' '
+                       << response_plan.qpoint[1] << ' ' << response_plan.qpoint[2] << ' ' << qweight << '\n';
+        }
     }
     std::vector<std::pair<std::string, SternheimerRPA::Chi0V1Metadata>> index_entries;
     if (!use_symmetry_partial_response)
@@ -2181,12 +2494,27 @@ void run_sternheimer_periodic_lcao_chi0_output(
     }
 
     out << "status success\n";
-    out << "format " << (use_symmetry_partial_response ? "v1_partial" : "v1") << '\n';
+    out << "format " << (use_symmetry_partial_response ? "v1_partial"
+                                            : (write_kresolved_diagnostic ? "v1_kresolved" : "v1"))
+        << '\n';
     if (use_symmetry_partial_response)
     {
         out << "data_files " << gathered_partial_records.size() << '\n';
         out << "partial_manifest v1_sternheimer_partial_manifest_iq_" << response_plan.iq << ".dat\n";
+        out << "symmetry_routes v1_sternheimer_symmetry_routes_iq_" << response_plan.iq << ".dat\n";
+        out << "qstar_routes v1_sternheimer_qstar_routes_iq_" << response_plan.iq << ".dat\n";
         out << "qpoint_fragment v1_sternheimer_qpoint_iq_" << response_plan.iq << ".dat\n";
+        out << "full_kpoints_manifest v1_sternheimer_full_kpoints.dat\n";
+        out << "discrete_spatial_group_order " << fixed_q_discrete_spatial_order << '\n';
+        out << "fixed_q_little_group_order " << fixed_q_little_group_order << '\n';
+    }
+    else if (write_kresolved_diagnostic)
+    {
+        out << "data_files " << index_entries.size() << '\n';
+        out << "index_file v1_sternheimer_chi0_index.dat\n";
+        out << "kresolved_data_files " << gathered_partial_records.size() << '\n';
+        out << "kresolved_manifest v1_sternheimer_kresolved_manifest_iq_" << response_plan.iq << ".dat\n";
+        out << "full_kpoints_manifest v1_sternheimer_full_kpoints.dat\n";
     }
     else
     {
@@ -2263,7 +2591,12 @@ void run_sternheimer_periodic_lcao_chi0_output(
     out << "occupied_bands_total " << sternheimer_lcao_total_occupied_bands(occupied_kpoints) << '\n';
     out << "sternheimer_frequency_mpi " << (use_frequency_mpi ? "yes" : "no") << '\n';
     out << "sternheimer_kpoint_mpi " << (use_kpoint_mpi ? "yes" : "no") << '\n';
+    out << "sternheimer_nested_k_frequency_mpi " << (use_nested_response_mpi ? "yes" : "no") << '\n';
     out << "sternheimer_kpoint_groups " << (use_kpoint_mpi ? kpoint_groups : 1) << '\n';
+    out << "sternheimer_frequency_groups " << (use_frequency_mpi ? (use_nested_response_mpi ? nfreq
+                                                                                              : GlobalV::NPROC)
+                                                                  : 1)
+        << '\n';
     out << "sternheimer_kpoint_group_ranks "
         << (use_kpoint_mpi ? GlobalV::NPROC / kpoint_groups : GlobalV::NPROC) << '\n';
     out << "mpi_ranks " << GlobalV::NPROC << '\n';
@@ -2449,6 +2782,7 @@ void run_sternheimer_abacus_chi0_output_impl(
     const bool use_frequency_mpi = PARAM.inp.sternheimer_frequency_mpi;
     const bool use_kpoint_mpi
         = PARAM.inp.sternheimer_q_index > 0 && PARAM.globalv.kpar_lcao > 1;
+    const bool use_nested_response_mpi = use_frequency_mpi && use_kpoint_mpi;
     const bool use_parallel_response_mpi = use_frequency_mpi || use_kpoint_mpi;
     if (!use_parallel_response_mpi && GlobalV::MY_RANK != 0)
     {
@@ -2490,7 +2824,9 @@ void run_sternheimer_abacus_chi0_output_impl(
                                    elapsed_seconds_since(chi0_start_time),
                                    std::string(use_frequency_mpi ? "frequency_mpi=yes" : "frequency_mpi=no")
                                        + ","
-                                       + (use_kpoint_mpi ? "kpoint_mpi=yes" : "kpoint_mpi=no"));
+                                       + (use_kpoint_mpi ? "kpoint_mpi=yes" : "kpoint_mpi=no")
+                                       + ","
+                                       + (use_nested_response_mpi ? "nested_mpi=yes" : "nested_mpi=no"));
         if (PARAM.inp.out_librpa_reader_version != 1)
         {
             throw std::runtime_error("out_sternheimer_librpa requires out_librpa_reader_version=1.");
@@ -2500,17 +2836,22 @@ void run_sternheimer_abacus_chi0_output_impl(
             throw std::runtime_error(
                 "Sternheimer chi0 output with multiple MPI ranks requires sternheimer_frequency_mpi=true.");
         }
-        if (use_frequency_mpi && use_kpoint_mpi)
+        if (use_kpoint_mpi && PARAM.globalv.kpar_lcao > elec_state.wg.nr)
         {
             throw std::runtime_error(
-                "Periodic Sternheimer does not yet support nested frequency MPI and k-point MPI.");
+                "Sternheimer k-point MPI requires kpar<=number of k points.");
         }
-        if (use_kpoint_mpi
-            && (PARAM.globalv.kpar_lcao != GlobalV::NPROC
-                || PARAM.globalv.kpar_lcao > elec_state.wg.nr))
+        if (use_nested_response_mpi
+            && GlobalV::NPROC != PARAM.globalv.kpar_lcao * PARAM.inp.sternheimer_nfreq)
         {
             throw std::runtime_error(
-                "The first Sternheimer k-point MPI implementation requires NPROC=kpar and kpar<=number of k points.");
+                "Nested Sternheimer MPI requires NPROC=kpar*sternheimer_nfreq.");
+        }
+        if (use_kpoint_mpi && !use_frequency_mpi
+            && PARAM.globalv.kpar_lcao != GlobalV::NPROC)
+        {
+            throw std::runtime_error(
+                "Sternheimer k-point MPI without frequency MPI requires NPROC=kpar.");
         }
         if (use_parallel_response_mpi && GlobalV::NPROC > 1 && pw_basis.poolnproc != GlobalV::NPROC)
         {

@@ -454,6 +454,60 @@ TEST(SternheimerABACUSSTSmoke, RejectsNonBijectiveFixedQOperation)
                  std::invalid_argument);
 }
 
+TEST(SternheimerABACUSSTSmoke, FormatsExplicitInverseRoutesForLibRPA)
+{
+    const std::vector<ModuleRI::SternheimerFixedQKRoute> routes = {
+        {1, 3, 6, 2, true, {0, -1, 0}},
+        {1, 0, 0, 0, false, {0, 0, 0}},
+    };
+
+    EXPECT_EQ(ModuleRI::format_sternheimer_fixed_q_routes(routes),
+              "version 1\n"
+              "# iq representative_ik member_ik spatial_isym time_reversal fold_Gx fold_Gy fold_Gz\n"
+              "1 0 0 0 0 0 0 0\n"
+              "1 3 6 2 1 0 -1 0\n");
+    EXPECT_THROW(ModuleRI::format_sternheimer_fixed_q_routes({routes[0], routes[0]}),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, BuildsDiscreteQStarRoutesFromAllowedGridPermutations)
+{
+    ModuleRI::SternheimerQStarPermutation identity;
+    identity.spatial_isym = 0;
+    identity.time_reversal = false;
+    identity.mapped_index_by_full_q = {0, 1, 2, 3};
+    identity.fold_G_by_full_q = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+
+    ModuleRI::SternheimerQStarPermutation swap;
+    swap.spatial_isym = 4;
+    swap.time_reversal = false;
+    swap.mapped_index_by_full_q = {0, 2, 1, 3};
+    swap.fold_G_by_full_q = {{0, 0, 0}, {-1, 0, 0}, {1, 0, 0}, {0, 0, 0}};
+
+    const auto routes = ModuleRI::build_sternheimer_qstar_routes_from_permutations(
+        4, {identity, swap});
+
+    ASSERT_EQ(routes.size(), 4U);
+    EXPECT_EQ(routes[0].representative_iq, 1);
+    EXPECT_EQ(routes[0].member_iq, 1);
+    EXPECT_EQ(routes[1].representative_iq, 2);
+    EXPECT_EQ(routes[1].member_iq, 2);
+    EXPECT_EQ(routes[2].representative_iq, 2);
+    EXPECT_EQ(routes[2].member_iq, 3);
+    EXPECT_EQ(routes[2].spatial_isym, 4);
+    EXPECT_EQ(routes[2].fold_G, (std::array<int, 3>{1, 0, 0}));
+    EXPECT_EQ(routes[3].representative_iq, 4);
+    EXPECT_EQ(routes[3].member_iq, 4);
+
+    EXPECT_EQ(ModuleRI::format_sternheimer_qstar_routes(routes),
+              "version 1\n"
+              "# representative_iq member_iq spatial_isym time_reversal fold_Gx fold_Gy fold_Gz\n"
+              "1 1 0 0 0 0 0\n"
+              "2 2 0 0 0 0 0\n"
+              "2 3 4 0 1 0 0\n"
+              "4 4 0 0 0 0 0\n");
+}
+
 TEST(SternheimerABACUSSTSmoke, HermitianizesEachPartialResponseBeforeOutput)
 {
     using Complex = std::complex<double>;
@@ -520,6 +574,19 @@ TEST(SternheimerABACUSSTSmoke, FormatsPartialManifestInDeterministicKeyOrder)
                  std::invalid_argument);
 }
 
+TEST(SternheimerABACUSSTSmoke, FormatsFullKPointManifestInGlobalIndexOrder)
+{
+    const auto k2 = make_occupied_kpoint(2, 2, 0, {0.0, 0.5, 0.0}, 0.25);
+    const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.25);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 0.25);
+
+    EXPECT_EQ(ModuleRI::format_sternheimer_full_kpoint_manifest({k2, k0, k1}),
+              "# ik_full kx ky kz\n"
+              "0 0 0 0\n"
+              "1 0.5 0 0\n"
+              "2 0 0.5 0\n");
+}
+
 TEST(SternheimerABACUSSTSmoke, RejectsFractionalOccupationForPeriodicResponse)
 {
     auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
@@ -584,6 +651,66 @@ TEST(SternheimerABACUSSTSmoke, AssignsContiguousKPointOwners)
     EXPECT_THROW(ModuleRI::sternheimer_kpoint_owner_group(0, global_kpoint_count, 0),
                  std::invalid_argument);
     EXPECT_THROW(ModuleRI::sternheimer_kpoint_owner_group(0, 3, 4), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, AssignsEachNestedKFrequencyTaskExactlyOnce)
+{
+    constexpr int global_kpoint_count = 5;
+    constexpr int kpoint_groups = 2;
+    constexpr int frequency_count = 2;
+    constexpr int mpi_ranks = kpoint_groups * frequency_count;
+    std::vector<int> tasks_by_rank(mpi_ranks, 0);
+
+    for (int ik = 0; ik != global_kpoint_count; ++ik)
+    {
+        for (int ifrequency = 0; ifrequency != frequency_count; ++ifrequency)
+        {
+            const auto assignment = ModuleRI::sternheimer_nested_mpi_assignment(ik,
+                                                                                global_kpoint_count,
+                                                                                ifrequency,
+                                                                                frequency_count,
+                                                                                kpoint_groups,
+                                                                                mpi_ranks,
+                                                                                0);
+            EXPECT_EQ(assignment.kpoint_group,
+                      ModuleRI::sternheimer_kpoint_owner_group(ik,
+                                                               global_kpoint_count,
+                                                               kpoint_groups));
+            EXPECT_EQ(assignment.frequency_slot, ifrequency);
+            ASSERT_GE(assignment.owner_rank, 0);
+            ASSERT_LT(assignment.owner_rank, mpi_ranks);
+            ++tasks_by_rank[static_cast<std::size_t>(assignment.owner_rank)];
+        }
+    }
+
+    EXPECT_EQ(tasks_by_rank, (std::vector<int>{3, 3, 2, 2}));
+}
+
+TEST(SternheimerABACUSSTSmoke, WrapsNestedFrequencyRankShiftWithinEachKGroup)
+{
+    const auto positive = ModuleRI::sternheimer_nested_mpi_assignment(3, 5, 1, 3, 2, 6, 1);
+    EXPECT_EQ(positive.kpoint_group, 1);
+    EXPECT_EQ(positive.frequency_slot, 2);
+    EXPECT_EQ(positive.owner_rank, 5);
+
+    const auto negative = ModuleRI::sternheimer_nested_mpi_assignment(0, 5, 0, 3, 2, 6, -1);
+    EXPECT_EQ(negative.kpoint_group, 0);
+    EXPECT_EQ(negative.frequency_slot, 2);
+    EXPECT_EQ(negative.owner_rank, 2);
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsInvalidNestedMPIContracts)
+{
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_assignment(0, 4, 0, 2, 2, 3),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_assignment(-1, 4, 0, 2, 2, 4),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_assignment(0, 4, -1, 2, 2, 4),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_assignment(0, 4, 2, 2, 2, 4),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_assignment(0, 2, 0, 2, 3, 6),
+                 std::invalid_argument);
 }
 
 TEST(SternheimerABACUSSTSmoke, PartitionsResponsePairsBySourceKWithoutOverlap)

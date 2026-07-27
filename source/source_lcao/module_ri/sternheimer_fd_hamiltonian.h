@@ -5,8 +5,13 @@
 #include "source_lcao/module_ri/sternheimer_kq.h"
 
 #include <array>
+#include <algorithm>
+#include <cmath>
 #include <complex>
+#include <map>
 #include <memory>
+#include <set>
+#include <stdexcept>
 #include <vector>
 
 namespace ModuleRI
@@ -81,6 +86,7 @@ class SternheimerFDHamiltonian
 };
 
 using SternheimerFDLatticeVectors = std::array<std::array<double, 3>, 3>;
+using SternheimerFDReducedRotation = std::array<std::array<double, 3>, 3>;
 
 inline SternheimerFDLatticeVectors sternheimer_fd_grid_lattice_vectors(
     const SternheimerFDHamiltonian::Grid& grid)
@@ -126,6 +132,134 @@ inline SternheimerFDLatticeVectors sternheimer_fd_grid_dual_vectors(
         }
     }
     return dual;
+}
+
+inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
+    const SternheimerFDHamiltonian::Grid& grid,
+    const std::vector<SternheimerFDReducedRotation>& rotations,
+    const double tolerance = 1.0e-10)
+{
+    if (grid.nx <= 0 || grid.ny <= 0 || grid.nz <= 0 || tolerance <= 0.0)
+    {
+        throw std::invalid_argument("Invalid grid or tolerance for Sternheimer FD stencil symmetry.");
+    }
+
+    using Offset = std::array<int, 3>;
+    std::map<Offset, double> stencil;
+    const SternheimerFDLatticeVectors dual = sternheimer_fd_grid_dual_vectors(grid);
+    const std::array<double, 3> dimensions{
+        static_cast<double>(grid.nx), static_cast<double>(grid.ny), static_cast<double>(grid.nz)};
+    std::array<std::array<double, 3>, 3> coefficients{};
+    for (int left = 0; left != 3; ++left)
+    {
+        for (int right = 0; right != 3; ++right)
+        {
+            for (int component = 0; component != 3; ++component)
+            {
+                coefficients[left][right]
+                    += dual[left][component] * dual[right][component]
+                       * dimensions[left] * dimensions[right];
+            }
+        }
+    }
+    const auto add = [&stencil](const Offset& offset, const double weight) {
+        stencil[offset] += weight;
+    };
+    for (int direction = 0; direction != 3; ++direction)
+    {
+        Offset positive{0, 0, 0};
+        Offset negative{0, 0, 0};
+        positive[direction] = 1;
+        negative[direction] = -1;
+        add(positive, coefficients[direction][direction]);
+        add(negative, coefficients[direction][direction]);
+    }
+    for (int left = 0; left != 3; ++left)
+    {
+        for (int right = left + 1; right != 3; ++right)
+        {
+            for (const int left_sign: {-1, 1})
+            {
+                for (const int right_sign: {-1, 1})
+                {
+                    Offset offset{0, 0, 0};
+                    offset[left] = left_sign;
+                    offset[right] = right_sign;
+                    add(offset,
+                        0.5 * coefficients[left][right]
+                            * static_cast<double>(left_sign * right_sign));
+                }
+            }
+        }
+    }
+    double weight_scale = 0.0;
+    for (const auto& entry: stencil)
+    {
+        const double weight = entry.second;
+        weight_scale = std::max(weight_scale, std::abs(weight));
+    }
+    for (auto iter = stencil.begin(); iter != stencil.end();)
+    {
+        if (std::abs(iter->second) <= tolerance * std::max(1.0, weight_scale))
+        {
+            iter = stencil.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
+
+    std::vector<int> preserving;
+    for (std::size_t isym = 0; isym != rotations.size(); ++isym)
+    {
+        bool valid = true;
+        std::set<Offset> mapped_offsets;
+        for (const auto& entry: stencil)
+        {
+            const Offset& offset = entry.first;
+            const double weight = entry.second;
+            Offset mapped{};
+            for (int target = 0; target != 3; ++target)
+            {
+                double mapped_index = 0.0;
+                for (int source = 0; source != 3; ++source)
+                {
+                    mapped_index += static_cast<double>(offset[source])
+                                    / dimensions[source]
+                                    * rotations[isym][source][target]
+                                    * dimensions[target];
+                }
+                mapped[target] = static_cast<int>(std::llround(mapped_index));
+                if (std::abs(mapped_index - static_cast<double>(mapped[target])) > tolerance)
+                {
+                    valid = false;
+                    break;
+                }
+            }
+            if (!valid)
+            {
+                break;
+            }
+            const auto mapped_iter = stencil.find(mapped);
+            if (mapped_iter == stencil.end()
+                || std::abs(mapped_iter->second - weight)
+                       > tolerance
+                             * std::max(std::max(1.0, weight_scale),
+                                        std::max(std::abs(weight),
+                                                 std::abs(mapped_iter->second)))
+                || !mapped_offsets.insert(mapped).second)
+            {
+                valid = false;
+                break;
+            }
+        }
+        if (valid && mapped_offsets.size() == stencil.size())
+        {
+            preserving.push_back(static_cast<int>(isym));
+        }
+    }
+    return preserving;
 }
 
 inline std::array<double, 3> sternheimer_fd_grid_cartesian_position(
