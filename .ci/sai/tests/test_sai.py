@@ -391,6 +391,7 @@ class PolicyTests(unittest.TestCase):
         self.assertIn("sai-ssh-scheduled", text)
         self.assertIn("sai-ssh-manual", text)
         self.assertIn("/abacus-ci sai-gpu", text)
+        self.assertIn("pull-requests: write", text)
         self.assertNotIn("cpus-per-task", text)
 
 
