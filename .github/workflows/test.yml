@@ -82,7 +82,7 @@ jobs:
 
       - name: Build
         run: |
-          cmake --build build -j8
+          cmake --build build -j16
           cmake --install build
 
       - name: Check documentation consistency
