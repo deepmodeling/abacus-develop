@@ -42,6 +42,8 @@
 #include <cassert>
 #include <algorithm>
 
+#ifdef __LCAO
+
 namespace spinconstrain
 {
 
@@ -868,3 +870,5 @@ void SpinConstrain<std::complex<double>>::cal_mi_lcao_subspace(
 }
 
 } // namespace spinconstrain
+
+#endif // __LCAO

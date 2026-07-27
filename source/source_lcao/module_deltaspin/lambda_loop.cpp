@@ -98,12 +98,11 @@ template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_local_diagnostic(
     int outer_step, double lambda_ref_ry, const std::string& label)
 {
-#ifdef __LCAO
+#ifndef __LCAO
+    return;
+#else
     if (PARAM.inp.basis_type != "lcao") return;
     if (this->nspin_ != 2) return;
-#else
-    return;
-#endif
 
     int nat = this->get_nat();
     double scan_half_range_ev = 0.5;
@@ -447,6 +446,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_local_diagno
     ofs_diag.close();
     std::cout << "[DS-LOCAL] Results written to: " << fname << std::endl;
     std::cout << std::string(80, '-') << "\n" << std::endl;
+#endif
 }
 
 template <>
@@ -470,7 +470,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
     this->acceleration_active_ = false;
     this->acceleration_subspace_built_ = false;
     this->subspace_just_activated_ = false;
+#ifdef __LCAO
     this->free_lcao_subspace_cache();
+#endif
 
     // =============================================================
     // STATE VECTORS (all sized [nat][3])
@@ -718,7 +720,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             this->lambda_at_acceleration_ = this->lambda_;
 
             // Free any cached subspace data from previous SCF iterations
+#ifdef __LCAO
             this->free_lcao_subspace_cache();
+#endif
 
             // Build fresh subspace at current lambda using full diagonalization.
             // i_step=-2 triggers the special cache-build branch in cal_mw_from_lambda.
@@ -932,6 +936,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(int outer_step)
 {
+#ifndef __LCAO
+    return;
+#else
     int nat = this->get_nat();
     int ntype = this->get_ntype();
 
@@ -1459,6 +1466,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
     std::cout << std::string(80, '=') << "\n" << std::endl;
 
     return;
+#endif
 }
 
 /**
@@ -1474,7 +1482,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
 template <>
 void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_scan_diagnostic(int outer_step)
 {
-#ifdef __LCAO
+#ifndef __LCAO
+    return;
+#else
     if (PARAM.inp.basis_type != "lcao")
     {
         std::cout << "[DS-DIAG] scan_diagnostic: only supported for LCAO basis" << std::endl;
@@ -1485,9 +1495,6 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_scan_diagnos
         std::cout << "[DS-DIAG] scan_diagnostic: only supported for nspin=2" << std::endl;
         return;
     }
-#else
-    return;
-#endif
 
     int nat = this->get_nat();
 
@@ -1769,6 +1776,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_scan_diagnos
     std::cout << "[DS-DIAG] === DIAGNOSTIC SCAN COMPLETE ===" << std::endl;
     std::cout << "[DS-DIAG] Results written to: subspace_vs_full_scan.dat" << std::endl;
     std::cout << std::string(80, '=') << "\n" << std::endl;
+#endif
 }
 
 
