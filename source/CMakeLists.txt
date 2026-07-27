@@ -27,6 +27,7 @@
 # complete link closure below.
 add_library(abacus_compile_requirements INTERFACE)
 add_library(abacus::compile_requirements ALIAS abacus_compile_requirements)
+include(CompilerConfiguration)
 
 set(_abacus_feature_definitions
   __FFTW3

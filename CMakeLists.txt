@@ -317,21 +317,10 @@ if(ENABLE_ASAN)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE AND NOT MSVC)
-  add_compile_options(-O3 -g)
-endif()
-
 if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
-  # stick to strict floating point model on Intel Compiler
-  add_compile_options(-fp-model=strict)
-  set(ENABLE_ABACUS_LIBM OFF) # Force turn off ENABLE_ABACUS_LIBM on Intel Compiler
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Wno-write-strings "
-  )
-endif()
-
-if(ENABLE_NATIVE_OPTIMIZATION)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
+  # Force turn off ENABLE_ABACUS_LIBM on Intel Compiler
+  message(WARNING "ENABLE_ABACUS_LIBM is not available with Intel compilers; switching it off")
+  set(ENABLE_ABACUS_LIBM OFF)
 endif()
 
 if(ENABLE_LCAO)
@@ -476,12 +465,6 @@ if(USE_CUDA)
   endif()
   enable_language(CUDA)
   if(USE_CUDA)
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G" CACHE STRING "CUDA flags for debug build" FORCE)
-    endif()
-    if (ENABLE_OPENMP AND OpenMP_CXX_FOUND)
-      set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
-    endif()
     if (ENABLE_NCCL_PARALLEL_DEVICE)
       include(cmake/modules/SetupNccl.cmake)
       abacus_setup_nccl()
