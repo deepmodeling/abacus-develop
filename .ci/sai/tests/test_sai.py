@@ -88,6 +88,8 @@ class TemplateTests(unittest.TestCase):
             self.assertIn("#SBATCH --nodes=1", text)
             self.assertIn("#SBATCH --array=0-3%4", text)
             self.assertIn("#SBATCH --dependency=afterok:123", text)
+            self.assertIn("OMPI_MCA_plm_slurm_args=--external-launcher", text)
+            self.assertIn("PRTE_MCA_plm_slurm_args=--external-launcher", text)
             self.assertNotRegex(text, r"cpus-per-task|--mem(?:ory)?|--nodelist")
             self.assertNotRegex(text, r"@[A-Z_]+@")
 
