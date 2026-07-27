@@ -50,6 +50,9 @@ set(_abacus_feature_definitions
   $<$<BOOL:${USE_CUDA}>:__CUDA>
   $<$<BOOL:${USE_CUDA}>:__UT_USE_CUDA>
   $<$<BOOL:${ENABLE_NCCL_PARALLEL_DEVICE}>:__NCCL_PARALLEL_DEVICE>
+  $<$<BOOL:${ENABLE_CUSOLVERMP}>:__CUSOLVERMP>
+  $<$<BOOL:${ENABLE_CUBLASMP}>:__CUBLASMP>
+  $<$<BOOL:${_use_cal}>:__USE_CAL>
   $<$<BOOL:${USE_ROCM}>:__ROCM>
   $<$<BOOL:${USE_ROCM}>:__UT_USE_ROCM>
   $<$<BOOL:${USE_ROCM}>:__HIP_PLATFORM_HCC__>

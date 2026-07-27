@@ -5,8 +5,6 @@
 include_guard(GLOBAL)
 
 function(abacus_setup_cusolvermp)
-  abacus_add_feature_definitions(__CUSOLVERMP)
-
   # Find cuSOLVERMp first, then decide communicator backend.
   find_library(CUSOLVERMP_LIBRARY NAMES cusolverMp
       HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
@@ -82,8 +80,6 @@ function(abacus_setup_cusolvermp)
   # - _use_cal=ON  -> cal communicator backend
   # - _use_cal=OFF -> NCCL communicator backend
   if(_use_cal)
-    abacus_add_feature_definitions(__USE_CAL)
-
     find_library(CAL_LIBRARY NAMES cal
         HINTS ${CAL_CUSOLVERMP_PATH} ${NVHPC_ROOT_DIR}
         PATH_SUFFIXES lib lib64 math_libs/lib64)
