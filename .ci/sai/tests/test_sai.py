@@ -94,6 +94,7 @@ class TemplateTests(unittest.TestCase):
     def test_modules_do_not_spell_dependency_paths(self):
         text = (ROOT / "modules.sh").read_text(encoding="utf-8")
         self.assertIn("module load abacus/", text)
+        self.assertIn("LD_PRELOAD=${LD_PRELOAD:-}", text)
         self.assertIn("CMAKE_LIBRARY_PATH=${LIBRARY_PATH:-}", text)
         self.assertIn("CMAKE_INCLUDE_PATH=${CPATH:-}", text)
         self.assertNotRegex(text, r"CUSOLVERMP_PATH|CUBLASMP_PATH|NCCL_PATH|/lib/lib")

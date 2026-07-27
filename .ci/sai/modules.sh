@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
 export LD_LIBRARY_PATH=${LD_LIBRARY_PATH:-}
+export LD_PRELOAD=${LD_PRELOAD:-}
 export CPATH=${CPATH:-}
 export CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH:-}
 
