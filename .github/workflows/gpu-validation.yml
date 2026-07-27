@@ -1,4 +1,4 @@
-name: SAI GPU validation
+name: GPU validation
 
 on:
   issue_comment:
@@ -6,11 +6,11 @@ on:
   workflow_dispatch:
     inputs:
       source_sha:
-        description: "Approved commit to execute on SAI"
+        description: "Approved commit to execute on the remote GPU cluster"
         required: true
         type: string
       project_root:
-        description: "Optional SAI project root"
+        description: "Optional remote project root"
         required: false
         type: string
   schedule:
@@ -19,7 +19,7 @@ on:
 permissions: {}
 
 concurrency:
-  group: sai-gpu-${{ github.event_name == 'schedule' && 'daily' || github.run_id }}
+  group: gpu-validation-${{ github.event_name == 'schedule' && 'daily' || github.run_id }}
   cancel-in-progress: false
 
 jobs:
@@ -28,7 +28,7 @@ jobs:
     if: >-
       github.event_name != 'issue_comment' ||
       (github.event.issue.pull_request &&
-       github.event.comment.body == '/abacus-ci sai-gpu')
+       github.event.comment.body == '/abacus-ci gpu')
     runs-on: ubuntu-24.04
     permissions:
       checks: write
@@ -65,17 +65,17 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           MANUAL_SOURCE_SHA: ${{ inputs.source_sha || '' }}
-          SAI_UPSTREAM_REPOSITORY: deepmodeling/abacus-develop
-        run: python3 control/.ci/sai/sai.py github-admit
+          UPSTREAM_REPOSITORY: deepmodeling/abacus-develop
+        run: python3 control/.ci/slurm/runner.py github-admit
 
   rebuild-and-test:
-    name: Build and run on SAI
+    name: Build and run on GPU cluster
     needs: admit
     if: needs.admit.outputs.accepted == 'true'
     runs-on: ubuntu-24.04
     timeout-minutes: 240
     environment:
-      name: ${{ github.event_name == 'schedule' && 'sai-ssh-scheduled' || 'sai-ssh-manual' }}
+      name: ${{ github.event_name == 'schedule' && 'gpu-ci-scheduled' || 'gpu-ci-manual' }}
     permissions:
       contents: read
     outputs:
@@ -90,10 +90,10 @@ jobs:
       CONTROL_SHA: ${{ needs.admit.outputs.control_sha }}
       PROJECT_ROOT_INPUT: ${{ inputs.project_root || '' }}
       RUN_NAMESPACE: ${{ needs.admit.outputs.namespace }}
-      SAI_PROJECT_ROOT: ${{ vars.SAI_PROJECT_ROOT }}
-      SAI_SSH_HOST: ${{ vars.SAI_SSH_HOST }}
-      SAI_SSH_PORT: ${{ vars.SAI_SSH_PORT }}
-      SAI_SSH_USER: ${{ vars.SAI_SSH_USER }}
+      REMOTE_PROJECT_ROOT: ${{ vars.REMOTE_PROJECT_ROOT }}
+      REMOTE_SSH_HOST: ${{ vars.REMOTE_SSH_HOST }}
+      REMOTE_SSH_PORT: ${{ vars.REMOTE_SSH_PORT }}
+      REMOTE_SSH_USER: ${{ vars.REMOTE_SSH_USER }}
       SOURCE_REPOSITORY: ${{ needs.admit.outputs.source_repository }}
       SOURCE_SHA: ${{ needs.admit.outputs.source_sha }}
     steps:
@@ -115,20 +115,20 @@ jobs:
 
       - name: Configure SSH
         env:
-          SAI_SSH_PRIVATE_KEY: ${{ secrets.SAI_SSH_PRIVATE_KEY }}
+          REMOTE_SSH_PRIVATE_KEY: ${{ secrets.REMOTE_SSH_PRIVATE_KEY }}
         run: |
           set -euo pipefail
-          root="$RUNNER_TEMP/sai-ssh"
+          root="$RUNNER_TEMP/remote-ssh"
           mkdir -m 700 "$root"
-          printf '%s\n' "$SAI_SSH_PRIVATE_KEY" > "$root/id_ed25519"
+          printf '%s\n' "$REMOTE_SSH_PRIVATE_KEY" > "$root/id_ed25519"
           chmod 600 "$root/id_ed25519"
-          cp control/.ci/sai/known_hosts "$root/known_hosts"
+          cp control/.ci/slurm/known_hosts "$root/known_hosts"
           chmod 600 "$root/known_hosts"
           cat > "$root/config" <<EOF
-          Host sai-ci
-              HostName $SAI_SSH_HOST
-              Port $SAI_SSH_PORT
-              User $SAI_SSH_USER
+          Host gpu-ci
+              HostName $REMOTE_SSH_HOST
+              Port $REMOTE_SSH_PORT
+              User $REMOTE_SSH_USER
               IdentityFile $root/id_ed25519
               IdentitiesOnly yes
               StrictHostKeyChecking yes
@@ -139,21 +139,21 @@ jobs:
           EOF
           chmod 600 "$root/config"
           ssh-keygen -y -f "$root/id_ed25519" >/dev/null
-          echo "SAI_SSH_CONFIG=$root/config" >> "$GITHUB_ENV"
-          echo "ARTIFACT_ROOT=$RUNNER_TEMP/sai-artifacts" >> "$GITHUB_ENV"
+          echo "REMOTE_SSH_CONFIG=$root/config" >> "$GITHUB_ENV"
+          echo "ARTIFACT_ROOT=$RUNNER_TEMP/gpu-ci-artifacts" >> "$GITHUB_ENV"
 
-      - name: Run shared SAI client
+      - name: Run shared GPU client
         id: client
         continue-on-error: true
         run: |
           set -euo pipefail
-          project_root=${PROJECT_ROOT_INPUT:-$SAI_PROJECT_ROOT}
-          : "${project_root:?Set SAI_PROJECT_ROOT in the GitHub Environment}"
+          project_root=${PROJECT_ROOT_INPUT:-$REMOTE_PROJECT_ROOT}
+          : "${project_root:?Set REMOTE_PROJECT_ROOT in the GitHub Environment}"
           mkdir -p "$ARTIFACT_ROOT"
           set +e
-          python3 control/.ci/sai/sai.py run \
-              --ssh-config "$SAI_SSH_CONFIG" \
-              --target sai-ci \
+          python3 control/.ci/slurm/runner.py run \
+              --ssh-config "$REMOTE_SSH_CONFIG" \
+              --target gpu-ci \
               --project-root "$project_root" \
               --source-repository "$GITHUB_WORKSPACE/source" \
               --source-sha "$SOURCE_SHA" \
@@ -171,7 +171,7 @@ jobs:
         id: summary
         if: always()
         run: |
-          python3 control/.ci/sai/sai.py report \
+          python3 control/.ci/slurm/runner.py report \
               --result "$ARTIFACT_ROOT/results/result.json" \
               --output "$GITHUB_OUTPUT" \
               --summary "$GITHUB_STEP_SUMMARY"
@@ -181,12 +181,12 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
-          name: sai-gpu-${{ github.run_id }}-${{ github.run_attempt }}
+          name: gpu-validation-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ env.ARTIFACT_ROOT }}
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Archive uploaded run on SAI
+      - name: Archive uploaded remote run
         if: always() && steps.upload.outcome == 'success'
         run: |
           set -euo pipefail
@@ -194,15 +194,15 @@ jobs:
           project=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["project_root"])' "$ARTIFACT_ROOT/run.json")
           run=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["run_root"])' "$ARTIFACT_ROOT/run.json")
           for attempt in 1 2 3; do
-            ssh -F "$SAI_SSH_CONFIG" sai-ci \
-                "test ! -d '$run' || python3 '$run/control/sai.py' archive '$project' '$run'" && exit 0
+            ssh -F "$REMOTE_SSH_CONFIG" gpu-ci \
+                "test ! -d '$run' || python3 '$run/control/runner.py' archive '$project' '$run'" && exit 0
             test "$attempt" = 3 || sleep 5
           done
           exit 1
 
       - name: Remove SSH credentials
         if: always()
-        run: rm -rf "$RUNNER_TEMP/sai-ssh"
+        run: rm -rf "$RUNNER_TEMP/remote-ssh"
 
       - name: Validate result protocol
         if: always()
@@ -213,7 +213,7 @@ jobs:
           test "$AVAILABLE" = true
 
   component-status:
-    name: SAI / ${{ matrix.component.label }}
+    name: GPU / ${{ matrix.component.label }}
     needs: [admit, rebuild-and-test]
     if: always() && needs.admit.outputs.accepted == 'true'
     runs-on: ubuntu-24.04
@@ -255,6 +255,6 @@ jobs:
           GPU_PASSED: ${{ needs.rebuild-and-test.outputs.passed }}
           PR_NUMBER: ${{ needs.admit.outputs.pr_number }}
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
-          SAI_RESULT: ${{ needs.rebuild-and-test.result == 'success' && needs.component-status.result == 'success' && 'success' || 'failure' }}
+          GPU_RESULT: ${{ needs.rebuild-and-test.result == 'success' && needs.component-status.result == 'success' && 'success' || 'failure' }}
           SOURCE_SHA: ${{ needs.admit.outputs.source_sha }}
-        run: python3 control/.ci/sai/sai.py github-finish
+        run: python3 control/.ci/slurm/runner.py github-finish

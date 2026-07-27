@@ -1,4 +1,4 @@
-"""Small Slurm adapter for the SAI GPU matrix."""
+"""Small Slurm adapter for the GPU matrix."""
 
 import re
 import subprocess

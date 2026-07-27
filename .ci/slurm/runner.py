@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Run the ABACUS GPU matrix on SAI from GitHub or a workstation."""
+"""Run the ABACUS GPU matrix on a remote Slurm cluster."""
 
 import argparse
 import configparser
@@ -231,7 +231,7 @@ def _save_result(run: Path, components: Sequence[Mapping[str, Any]], rows: Seque
 
 def _result_markdown(result: Mapping[str, Any]) -> str:
     lines = [
-        "# SAI GPU result", "",
+        "# GPU validation result", "",
         "Passed: **{}**; failed: **{}**; infrastructure: **{}**".format(
             result["passed"], result["failed"], result["infrastructure"]
         ), "", "| Component | State | Slurm job |", "| --- | --- | --- |",
@@ -561,7 +561,7 @@ def remote_receive(project: Path, run: Path, source_sha: str, bundle_checksum: s
             _command(("git", "--git-dir", str(cache), "bundle", "verify", str(bundle)))
             _command((
                 "git", "--git-dir", str(cache), "fetch", str(bundle),
-                "HEAD:refs/sai/{}".format(source_sha),
+                "HEAD:refs/ci/{}".format(source_sha),
             ))
         else:
             if any(input_root.iterdir()):
@@ -754,7 +754,7 @@ def run(args: argparse.Namespace) -> int:
         "{}:{}/".format(args.target, remote_control),
     ))
     prepared = _ssh(args.ssh_config, args.target, (
-        "python3", remote_control + "/sai.py", "prepare", args.project_root, str(run),
+        "python3", remote_control + "/runner.py", "prepare", args.project_root, str(run),
     ))
     data = json.loads(prepared.stdout)
     base = data.get("cache_sha", "")
@@ -778,11 +778,11 @@ def run(args: argparse.Namespace) -> int:
             with ThreadPoolExecutor(max_workers=BUNDLE_PARTS) as pool:
                 list(pool.map(upload, enumerate(parts)))
     _ssh(args.ssh_config, args.target, (
-        "python3", remote_control + "/sai.py", "receive",
+        "python3", remote_control + "/runner.py", "receive",
         args.project_root, str(run), args.source_sha, checksum,
     ))
     launch = "nohup python3 {} remote-run {} > {}/results/coordinator.log 2>&1 < /dev/null &".format(
-        shlex.quote(remote_control + "/sai.py"), shlex.quote(str(run)), shlex.quote(str(run))
+        shlex.quote(remote_control + "/runner.py"), shlex.quote(str(run)), shlex.quote(str(run))
     )
     _ssh(args.ssh_config, args.target, ("bash", "-lc", launch))
     failures = 0
@@ -793,7 +793,7 @@ def run(args: argparse.Namespace) -> int:
         if status.returncode:
             failures += 1
             if failures == 10:
-                raise RuntimeError("lost contact with SAI")
+                raise RuntimeError("lost contact with the remote cluster")
         elif status.stdout.strip():
             done = json.loads(status.stdout)
             if type(done) is not dict or set(done) != {"returncode"} or \
@@ -805,7 +805,7 @@ def run(args: argparse.Namespace) -> int:
         time.sleep(30)
     command = (
         "ssh", "-F", str(args.ssh_config), args.target,
-        shlex.join(("python3", remote_control + "/sai.py", "collect", str(run))),
+        shlex.join(("python3", remote_control + "/runner.py", "collect", str(run))),
     )
     archive = args.artifacts / ".results.tar.gz"
     _retry_download(command, archive)
@@ -853,7 +853,7 @@ def github_admit() -> int:
     repository = os.environ["GITHUB_REPOSITORY"]
     values = {"accepted": "true", "pr_number": "", "check_id": ""}
     if event == "schedule":
-        upstream = os.environ.get("SAI_UPSTREAM_REPOSITORY", "deepmodeling/abacus-develop")
+        upstream = os.environ.get("UPSTREAM_REPOSITORY", "deepmodeling/abacus-develop")
         metadata = _gh("repos/{}".format(upstream))
         commit = _gh("repos/{}/commits/{}".format(upstream, metadata["default_branch"]))
         values.update(source_repository=upstream, source_sha=commit["sha"], namespace="daily")
@@ -878,7 +878,7 @@ def github_admit() -> int:
             pr_number=number,
         )
         check = _gh("repos/{}/check-runs".format(repository), "POST", {
-            "name": "SAI GPU validation", "head_sha": pull["head"]["sha"],
+            "name": "GPU validation", "head_sha": pull["head"]["sha"],
             "status": "in_progress",
         })
         values["check_id"] = str(check["id"])
@@ -892,7 +892,7 @@ def github_admit() -> int:
 
 def github_finish() -> int:
     repository = os.environ["GITHUB_REPOSITORY"]
-    result = os.environ["SAI_RESULT"]
+    result = os.environ["GPU_RESULT"]
     conclusion = "success" if result == "success" else "failure"
     check_id = os.environ["CHECK_ID"]
     if check_id:
@@ -902,7 +902,7 @@ def github_finish() -> int:
     pr = os.environ["PR_NUMBER"]
     if pr:
         body = (
-            "## SAI GPU validation: {}\n\n"
+            "## GPU validation: {}\n\n"
             "GPU cases: **{} passed, {} failed, {} infrastructure**.\n\n"
             "[Open the Actions run]({}) | [Download raw test files]({})\n\n"
             "Candidate: `{}`"
@@ -921,8 +921,8 @@ def parser() -> argparse.ArgumentParser:
         title="commands", dest="command", required=True, metavar="{run,config}",
     )
     client = commands.add_parser(
-        "run", help="build and run the GPU matrix on SAI",
-        description="Transfer one committed ABACUS revision, build it, and run the GPU matrix on SAI.",
+        "run", help="build and run the GPU matrix on a remote cluster",
+        description="Transfer one committed ABACUS revision, build it, and run the GPU matrix through Slurm.",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     client.add_argument(
@@ -930,12 +930,12 @@ def parser() -> argparse.ArgumentParser:
         help="SSH config file containing the target host alias",
     )
     client.add_argument(
-        "--target", default="sai-ci",
+        "--target", default="gpu-ci",
         help="host alias in the SSH config",
     )
     client.add_argument(
-        "--project-root", default="~/abacus_sai_gpu_ci",
-        help="SAI directory for caches, runs, and archives",
+        "--project-root", default="~/abacus_gpu_ci",
+        help="remote directory for caches, runs, and archives",
     )
     client.add_argument(
         "--source-repository", type=Path, default=Path("."),
@@ -958,7 +958,7 @@ def parser() -> argparse.ArgumentParser:
         help="attempt number within the run ID",
     )
     client.add_argument(
-        "--artifacts", type=Path, default=Path("sai-artifacts"),
+        "--artifacts", type=Path, default=Path("gpu-ci-artifacts"),
         help="local directory for downloaded results and client logs",
     )
     commands.add_parser(
@@ -1031,5 +1031,5 @@ if __name__ == "__main__":
     try:
         sys.exit(main())
     except (OSError, RuntimeError, ValueError, SlurmError) as error:
-        print("sai-ci: {}".format(error), file=sys.stderr)
+        print("gpu-ci: {}".format(error), file=sys.stderr)
         sys.exit(2)

@@ -1,8 +1,8 @@
-# SAI GPU CI manual
+# Remote GPU validation
 
 ## Purpose and scope
 
-This workflow rebuilds ABACUS at one exact commit on the SAI GPU cluster and
+This workflow rebuilds ABACUS at one exact commit on a remote GPU cluster and
 runs the matrix in `gpu-matrix.ini` through Slurm. The current matrix has 49
 cases. It reports build, resource, and case states and saves the raw logs.
 
@@ -11,56 +11,62 @@ client requires a committed checkout: it bundles the checked-out `HEAD` and
 checks that it equals `--source-sha`. Uncommitted files are not sent.
 
 **Warning:** approved candidate code is compiled and executed as the configured
-SAI SSH user. Use an account and project root with the intended permissions.
+remote SSH user. Use an account and project root with the intended permissions.
+
+## Reference deployment
+
+The maintained deployment currently runs on the SAI cluster. Its queue,
+module, MPI mapping, and SSH host-key settings are kept in the configuration
+files in this directory and can be adapted for another Slurm site.
 
 ## GitHub setup
 
-Create these GitHub Environments for the `SAI GPU validation` workflow:
+Create these GitHub Environments for the `GPU validation` workflow:
 
-- `sai-ssh-scheduled`: no required reviewers. The daily schedule uses this
+- `gpu-ci-scheduled`: no required reviewers. The daily schedule uses this
   environment.
-- `sai-ssh-manual`: require the reviewers who should approve a remote run.
+- `gpu-ci-manual`: require the reviewers who should approve a remote run.
   Manual dispatches and the pull-request comment trigger use this environment.
 
 In each environment, configure the SSH secret and connection variables:
 
-- Secret: `SAI_SSH_PRIVATE_KEY` (the private key used by the runner).
-- Variables: `SAI_PROJECT_ROOT`, `SAI_SSH_HOST`, `SAI_SSH_PORT`, and
-  `SAI_SSH_USER`.
+- Secret: `REMOTE_SSH_PRIVATE_KEY` (the private key used by the runner).
+- Variables: `REMOTE_PROJECT_ROOT`, `REMOTE_SSH_HOST`, `REMOTE_SSH_PORT`, and
+  `REMOTE_SSH_USER`.
 
-`SAI_PROJECT_ROOT` should be an absolute path below the SAI user's home, for
-example `/home/<group>/<user>/abacus_sai_gpu_ci`. A manual dispatch may provide
+`REMOTE_PROJECT_ROOT` should be an absolute path below the remote user's home, for
+example `/home/<group>/<user>/abacus_gpu_ci`. A manual dispatch may provide
 the optional `project_root` input to override this variable for that run.
 
 ## Triggers
 
-- **Manual:** open Actions, choose `SAI GPU validation`, and select
+- **Manual:** open Actions, choose `GPU validation`, and select
   **Run workflow**. `source_sha` is required and must be a 40-character commit
   SHA. The workflow must be dispatched from the repository default branch.
-  `project_root` is optional. The `sai-ssh-manual` approval is requested before
+  `project_root` is optional. The `gpu-ci-manual` approval is requested before
   the build job starts.
 - **Daily:** the schedule is `30 20 * * *` (20:30 UTC). It tests the default
-  branch of `deepmodeling/abacus-develop` and uses `sai-ssh-scheduled`.
-- **Pull request:** comment exactly `/abacus-ci sai-gpu` on an open pull
+  branch of `deepmodeling/abacus-develop` and uses `gpu-ci-scheduled`.
+- **Pull request:** comment exactly `/abacus-ci gpu` on an open pull
   request. The commenter needs Triage, Write, Maintain, or Admin permission.
-  The pull request head commit is tested after `sai-ssh-manual` approval.
+  The pull request head commit is tested after `gpu-ci-manual` approval.
 
 Other issue comments are ignored.
 
 ## Run locally
 
 Run from the repository checkout whose committed `HEAD` is the revision to
-test. If the SSH config defines the default `sai-ci` target, no options are
+test. If the SSH config defines the default `gpu-ci` target, no options are
 required:
 
 ```bash
-python3 .ci/sai/sai.py run
+python3 .ci/slurm/runner.py run
 ```
 
-By default, the command uses `~/.ssh/config`, the `sai-ci` host alias, the
-current Git checkout and its `HEAD`, and `~/abacus_sai_gpu_ci` below the remote
-user's home. It writes downloaded results to `./sai-artifacts`. Override any
-value shown by `run --help`; for example, use `--target SAI-abacus` for a
+By default, the command uses `~/.ssh/config`, the `gpu-ci` host alias, the
+current Git checkout and its `HEAD`, and `~/abacus_gpu_ci` below the remote
+user's home. It writes downloaded results to `./gpu-ci-artifacts`. Override any
+value shown by `run --help`; for example, use `--target my-cluster` for a
 different local host alias. The command waits for Slurm completion and exits
 with a non-zero status when a case or infrastructure result is not fully
 successful.
@@ -73,8 +79,8 @@ the same SHA sends no source data.
 For the public commands and all `run` options, use:
 
 ```bash
-python3 .ci/sai/sai.py --help
-python3 .ci/sai/sai.py run --help
+python3 .ci/slurm/runner.py --help
+python3 .ci/slurm/runner.py run --help
 ```
 
 ## Matrix configuration
@@ -100,10 +106,10 @@ shown as `N nodes / M GPUs`. Thus `gpu1`, `gpu2`, and `gpu4` display `1 GPU`,
 
 ## Results and retention
 
-On SAI, a run is created below:
+On the remote cluster, a run is created below:
 
 ```
-<SAI_PROJECT_ROOT>/runs/<namespace>/<run-id>-<attempt>/
+<REMOTE_PROJECT_ROOT>/runs/<namespace>/<run-id>-<attempt>/
 ```
 
 Its `results/` directory contains `result.json`, `summary.md`, build and case
@@ -112,25 +118,25 @@ working data are alongside it while the run is active. After results are
 collected, CI archives `results/` and `jobs/` as:
 
 ```
-<SAI_PROJECT_ROOT>/archives/<namespace>/<run-id>-<attempt>.tar.gz
+<REMOTE_PROJECT_ROOT>/archives/<namespace>/<run-id>-<attempt>.tar.gz
 ```
 
 The client removes archived files older than 72 hours when preparing a later
 run, and removes the active run after archiving. On the GitHub runner,
-`ARTIFACT_ROOT` is `${runner.temp}/sai-artifacts`; it contains the collected
+`ARTIFACT_ROOT` is `${runner.temp}/gpu-ci-artifacts`; it contains the collected
 `results/`, `run.json`, and `client.log`. CI uploads that directory as
-`sai-gpu-<run-id>-<attempt>` and retains it for 30 days. A pull-request comment
+`gpu-validation-<run-id>-<attempt>` and retains it for 30 days. A pull-request comment
 links to the Actions run and the uploaded raw files.
 
 ## Troubleshooting
 
-**SSH fails.** Check `SAI_SSH_HOST`, `SAI_SSH_PORT`, and `SAI_SSH_USER`, that
+**SSH fails.** Check `REMOTE_SSH_HOST`, `REMOTE_SSH_PORT`, and `REMOTE_SSH_USER`, that
 the key matches the account, and that the target is reachable. CI uses the
-committed `.ci/sai/known_hosts` with strict host-key checking. Test the same
+committed `.ci/slurm/known_hosts` with strict host-key checking. Test the same
 target with the SSH config before retrying; do not disable host-key checking.
 
 **A module cannot be loaded.** `modules.sh` sources Lmod, purges modules, and
-loads `cmake/3.31.6` and the configured ABACUS dependency module. Ask the SAI
+loads `cmake/3.31.6` and the configured ABACUS dependency module. Ask the site
 administrator to provide or update those modules. Modules provide the
 compiler, CUDA, MPI, and library dependencies; do not add library paths to CI
 (`LD_LIBRARY_PATH`, `CPATH`, or `CMAKE_PREFIX_PATH`) or hard-code site paths.
