@@ -6,7 +6,7 @@
 #include "source_base/timer.h"
 #include "source_estate/cal_ux.h"
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 
@@ -59,7 +59,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
 #endif
     if (XC_Functional::get_ked_flag())
     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         const auto etxc_vtxc_v
             = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rho_basis->nrxx, ucell.omega, ucell.tpiba, chr,
                                              PARAM.inp.nspin, hybrid_alpha, hse_omega);

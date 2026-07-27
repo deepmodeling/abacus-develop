@@ -2,7 +2,7 @@
 // it includes 1 subroutine:
 // 1. tau_xc
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include "source_hamilt/module_xc/xc_functional.h"

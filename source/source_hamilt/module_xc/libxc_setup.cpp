@@ -1,4 +1,4 @@
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 
 #include "libxc_abacus.h"
 #include "source_io/module_parameter/parameter.h"

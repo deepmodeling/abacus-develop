@@ -10,7 +10,7 @@
 #include <stdexcept>
 #include "source_base/global_function.h"
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "libxc_abacus.h"
 #endif
 

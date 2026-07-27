@@ -1,5 +1,5 @@
 abacus_disable_feature_definitions(__LCAO)
-abacus_disable_feature_definitions(USE_LIBXC)
+abacus_disable_feature_definitions(__LIBXC)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 list(APPEND depend_files 
