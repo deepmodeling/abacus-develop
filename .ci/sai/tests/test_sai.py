@@ -229,6 +229,21 @@ class TransferTests(unittest.TestCase):
             self.assertEqual(sai._retry(("rsync", "source", "target")).stdout, "done")
         self.assertEqual(run.call_count, 3)
 
+    def test_download_retry_replaces_partial_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "result.tar.gz"
+
+            def download(_command, _cwd=None, stdout=None):
+                stdout.write(b"partial" if download.calls == 0 else b"complete")
+                download.calls += 1
+                if download.calls == 1:
+                    raise RuntimeError("connection closed")
+
+            download.calls = 0
+            with mock.patch("sai._command", side_effect=download), mock.patch("sai.time.sleep"):
+                sai._retry_download(("ssh", "collect"), path)
+            self.assertEqual(path.read_bytes(), b"complete")
+
     def test_result_archive_rejects_traversal_and_links(self):
         for name, link in (("../sai-ssh/id_ed25519", None), ("results/key", "../key")):
             payload = io.BytesIO()

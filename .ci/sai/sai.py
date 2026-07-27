@@ -458,6 +458,20 @@ def _retry(command: Sequence[str], cwd: Optional[Path] = None, stdout: Any = sub
     raise RuntimeError(str(error))
 
 
+def _retry_download(command: Sequence[str], destination: Path) -> None:
+    error: Optional[Exception] = None
+    for attempt in range(3):
+        try:
+            with destination.open("wb") as output:
+                _command(command, stdout=output)
+            return
+        except RuntimeError as caught:
+            error = caught
+            if attempt < 2:
+                time.sleep(5 * (attempt + 1))
+    raise RuntimeError(str(error))
+
+
 def _cache(project: Path) -> Path:
     return project / "cache" / "repository.git"
 
@@ -775,14 +789,15 @@ def local_run(args: argparse.Namespace) -> int:
             failures = 0
         time.sleep(30)
     args.artifacts.mkdir(parents=True, exist_ok=True)
-    process = subprocess.Popen((
+    command = (
         "ssh", "-F", str(args.ssh_config), args.target,
         shlex.join(("python3", remote_control + "/sai.py", "collect", str(run))),
-    ), stdout=subprocess.PIPE)
-    assert process.stdout is not None
-    _extract_results(process.stdout, args.artifacts)
-    if process.wait():
-        raise RuntimeError("unable to collect SAI results")
+    )
+    archive = args.artifacts / ".results.tar.gz"
+    _retry_download(command, archive)
+    with archive.open("rb") as stream:
+        _extract_results(stream, args.artifacts)
+    archive.unlink()
     _atomic(args.artifacts / "run.json", {
         "project_root": args.project_root, "run_root": str(run),
         "source_sha": args.source_sha,
