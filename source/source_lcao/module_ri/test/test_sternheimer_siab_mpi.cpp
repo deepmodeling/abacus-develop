@@ -1,6 +1,7 @@
 #include "source_lcao/module_ri/sternheimer_siab_mpi.h"
 #include "source_lcao/module_ri/sternheimer_siab_overlap.h"
 #include "source_lcao/module_ri/sternheimer_siab_writer.h"
+#include "source_lcao/module_ri/sternheimer_rpa.h"
 
 #include <complex>
 #include <cstdio>
@@ -54,6 +55,23 @@ siab::ReferenceRow make_row(const int frequency_index,
     row.frequency_weight = 0.25 + 0.5 * frequency_index;
     row.norm = siab::norm(y, 0.5);
     row.q = siab::overlap_q(y, primitives, 0.5);
+    return row;
+}
+
+siab::ReferenceRow make_global_row(const int occupied_state,
+                                   const int frequency_index,
+                                   const int auxiliary_channel)
+{
+    const double tag = 100.0 * occupied_state + 10.0 * frequency_index + auxiliary_channel;
+    siab::ReferenceRow row;
+    row.occupied_state = occupied_state;
+    row.auxiliary_channel = auxiliary_channel;
+    row.frequency_index = frequency_index;
+    row.frequency_ha = 0.2 + 0.6 * frequency_index;
+    row.occupation = 2.0;
+    row.frequency_weight = 0.25 + 0.5 * frequency_index;
+    row.norm = 1.0 + tag;
+    row.q = {Complex(tag + 1.0, -tag), Complex(0.5 * tag, tag + 2.0)};
     return row;
 }
 
@@ -186,6 +204,69 @@ TEST(SternheimerSIABMPI, SupportsRankWithNoLocalReferenceRows)
         ASSERT_EQ(gathered.size(), 2);
         EXPECT_EQ(gathered[0].frequency_index, 0);
         EXPECT_EQ(gathered[1].frequency_index, 1);
+    }
+}
+
+TEST(SternheimerSIABMPI, GlobalEquationOwnershipWritesCanonicalSerialFile)
+{
+    int rank = 0;
+    int size = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (size != 2)
+    {
+        GTEST_SKIP() << "This regression requires exactly two MPI ranks.";
+    }
+
+    constexpr int occupied_count = 2;
+    constexpr int frequency_count = 2;
+    constexpr int channel_count = 4;
+    std::vector<siab::ReferenceRow> local_rows;
+    std::vector<siab::ReferenceRow> serial_rows;
+    for (int occupied = occupied_count - 1; occupied >= 0; --occupied)
+    {
+        for (int frequency = frequency_count - 1; frequency >= 0; --frequency)
+        {
+            for (int channel = channel_count - 1; channel >= 0; --channel)
+            {
+                const siab::ReferenceRow row = make_global_row(occupied, frequency, channel);
+                serial_rows.push_back(row);
+                const int owner = ModuleRI::SternheimerRPA::global_equation_owner(occupied,
+                                                                                  frequency,
+                                                                                  channel,
+                                                                                  frequency_count,
+                                                                                  channel_count,
+                                                                                  size,
+                                                                                  1);
+                if (owner == rank)
+                {
+                    local_rows.push_back(row);
+                }
+            }
+        }
+    }
+    ASSERT_EQ(local_rows.size(), 8);
+
+    const auto gathered = siab::gather_reference_rows_to_root(local_rows, 2, 0, MPI_COMM_WORLD);
+    if (rank == 0)
+    {
+        ASSERT_EQ(gathered.size(), 16);
+        const std::vector<siab::PrimitiveBlock> blocks{{"H", 0, 0, 0, 2, 0}};
+        const std::vector<Complex> overlap_s{Complex(1.0, 0.0),
+                                             Complex(0.0, 0.0),
+                                             Complex(0.0, 0.0),
+                                             Complex(1.0, 0.0)};
+        const std::string mpi_path = "sternheimer_siab_global_mpi_rows.dat";
+        const std::string serial_path = "sternheimer_siab_global_serial_rows.dat";
+        siab::write_v1(mpi_path, 0.5, blocks, gathered, overlap_s, test_provenance());
+        siab::write_v1(serial_path, 0.5, blocks, serial_rows, overlap_s, test_provenance());
+        EXPECT_EQ(read_text(mpi_path), read_text(serial_path));
+        std::remove(mpi_path.c_str());
+        std::remove(serial_path.c_str());
+    }
+    else
+    {
+        EXPECT_TRUE(gathered.empty());
     }
 }
 
