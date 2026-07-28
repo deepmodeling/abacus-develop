@@ -64,7 +64,7 @@ void Driver::driver_run()
     //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
     this->init_hardware();
 
-    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, ucell);
+    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp);
 
     //! 3: initialize Esolver and fill json-structure
     p_esolver->before_all_runners(ucell, PARAM.inp);
