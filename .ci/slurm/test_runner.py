@@ -46,7 +46,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.resources["gpu4"].label, "4 GPUs")
         self.assertEqual(config.resources["gpu8x2"].label, "2 nodes / 16 GPUs")
         self.assertEqual(config.cases[-1].runner, "cusolvermp")
-        self.assertEqual(config.site.name, "SAI Open Source Supercomputing Center")
+        self.assertEqual(config.site.name, "Open Source Supercomputing Center of SAI")
         self.assertEqual(config.site.url, "https://www.open-sai.com/")
         self.assertEqual(config.site.acknowledgement, "Computing resources were provided by")
         self.assertEqual(config.remote.host, "c0.sai.ai-4s.com")
@@ -456,7 +456,7 @@ class ResultTests(unittest.TestCase):
             self.assertIn("| 11_PW_GPU/scf_out_wf | gpu1 | PASS | 00:00:10 | 102_0 |", summary)
             self.assertTrue(summary.rstrip().endswith(
                 "Computing resources were provided by "
-                "[SAI Open Source Supercomputing Center](https://www.open-sai.com/)."
+                "[Open Source Supercomputing Center of SAI](https://www.open-sai.com/)."
             ))
 
     def test_report_rejects_untrusted_counts(self):
