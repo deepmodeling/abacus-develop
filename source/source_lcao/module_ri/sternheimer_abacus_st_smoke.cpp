@@ -17,6 +17,9 @@
 #include "source_lcao/module_ri/exx_abfs-construct_orbs.h"
 #include "source_lcao/module_ri/exx_abfs-io.h"
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
+#include "source_lcao/module_ri/sternheimer_channel_parallel.h"
+#include "source_lcao/module_ri/sternheimer_channel_resources.h"
+#include "source_lcao/module_ri/sternheimer_chi0_mpi.h"
 #include "source_lcao/module_ri/sternheimer_coulomb_whitening.h"
 #include "source_lcao/module_ri/sternheimer_delta.h"
 #include "source_lcao/module_ri/sternheimer_abacus_fd_nonlocal.h"
@@ -66,6 +69,7 @@ namespace
 {
 
 namespace siab = ::module_ri::sternheimer_siab;
+namespace sternheimer_chi0 = ::module_ri::sternheimer_chi0;
 
 constexpr const char* kSmokeEnv = "ABACUS_STERNHEIMER_FD_ST_SMOKE";
 constexpr const char* kOutputEnv = "ABACUS_STERNHEIMER_FD_ST_OUT";
@@ -3642,7 +3646,8 @@ void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
         const int max_dense_size = positive_int_from_env(kMaxDenseEnv, 4096);
         const int lanczos_max_subspace_size = positive_int_from_env(kLanczosSubspaceEnv, 320);
         const double omega = nonnegative_double_from_env(kOmegaEnv, 0.5);
-        const double solver_tolerance = positive_double_from_env(kSolverToleranceEnv, 1.0e-8);
+        const double solver_tolerance
+            = positive_double_from_env(kSolverToleranceEnv, default_sternheimer_solver_tolerance());
         const int solver_max_iter = positive_int_from_env(kSolverMaxIterEnv, 300);
         const double pca_threshold = nonnegative_double_from_env(kPCAThresholdEnv, PARAM.inp.exx_pca_threshold);
         const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
@@ -3907,7 +3912,8 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
 
         const int max_dense_size = positive_int_from_env(kMaxDenseEnv, 4096);
         const int lanczos_max_subspace_size = positive_int_from_env(kLanczosSubspaceEnv, 320);
-        const double solver_tolerance = positive_double_from_env(kSolverToleranceEnv, 1.0e-8);
+        const double solver_tolerance
+            = positive_double_from_env(kSolverToleranceEnv, default_sternheimer_solver_tolerance());
         const int solver_max_iter = positive_int_from_env(kSolverMaxIterEnv, 300);
         const double pca_threshold = nonnegative_double_from_env(kPCAThresholdEnv, PARAM.inp.exx_pca_threshold);
         const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
@@ -3918,7 +3924,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             {
                 SternheimerRPA::FrequencyMPIAssignment assignment;
                 assignment.owns_frequency = true;
-                assignment.frequency_leader_rank = -1;
+                assignment.frequency_leader_rank = 0;
                 assignment.frequency_group_size = GlobalV::NPROC;
                 assignment.frequency_group_local_rank = GlobalV::MY_RANK;
                 return assignment;
@@ -3935,12 +3941,37 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                                              use_channel_mpi);
         };
         const int frequency_group_size = frequency_assignment(0).frequency_group_size;
+#ifdef __MPI
+        MPI_Comm chi0_frequency_group_communicator = MPI_COMM_NULL;
+        bool owns_chi0_frequency_group_communicator = false;
+        if (write_librpa && use_channel_mpi && frequency_group_size > 1)
+        {
+            if (use_global_equation_mpi)
+            {
+                chi0_frequency_group_communicator = MPI_COMM_WORLD;
+            }
+            else
+            {
+                const int frequency_group_color = GlobalV::MY_RANK / frequency_group_size;
+                if (MPI_Comm_split(MPI_COMM_WORLD,
+                                   frequency_group_color,
+                                   GlobalV::MY_RANK,
+                                   &chi0_frequency_group_communicator)
+                    != MPI_SUCCESS)
+                {
+                    throw std::runtime_error("Failed to create the Sternheimer chi0 frequency-group communicator.");
+                }
+                owns_chi0_frequency_group_communicator = true;
+            }
+        }
+#endif
         const std::string frequency_grid_file = PARAM.inp.sternheimer_frequency_grid_file;
         const bool use_frequency_grid_file = !frequency_grid_file.empty();
         const bool use_delta_sternheimer = PARAM.inp.sternheimer_delta;
         const char* lcao_virtual_source_raw = std::getenv(kLCAOVirtualSourceEnv);
         const SternheimerLCAOVirtualSource lcao_virtual_source = parse_sternheimer_lcao_virtual_source(
-            lcao_virtual_source_raw == nullptr ? "projected_ao" : lcao_virtual_source_raw);
+            lcao_virtual_source_raw == nullptr ? PARAM.inp.sternheimer_delta_virtual_source
+                                               : lcao_virtual_source_raw);
         if (use_lcao_zero_order)
         {
             if (!use_delta_sternheimer)
@@ -4446,6 +4477,16 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                 {
                     throw std::runtime_error("Sternheimer delta mode produced no fixed virtual states.");
                 }
+                if (use_lcao_zero_order && lcao_virtual_source == SternheimerLCAOVirtualSource::KSBands)
+                {
+                    const int expected_virtual_states = expected_sternheimer_ks_virtual_states(
+                        static_cast<int>(lcao_channel->unoccupied_coefficients.size()),
+                        PARAM.inp.sternheimer_delta_max_states);
+                    validate_sternheimer_ks_virtual_subspace(spin_index + 1,
+                                                             expected_virtual_states,
+                                                             delta_subspace.accepted_candidates,
+                                                             static_cast<int>(delta_subspace.virtual_states.size()));
+                }
                 delta_fixed_subspace
                     = build_delta_sternheimer_fixed_subspace(occupied_projector, delta_subspace.virtual_states);
                 append_chi0_progress_event("delta_subspace_ready",
@@ -4789,6 +4830,31 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             const double omega_ha = frequency_grid.omega_ha[static_cast<std::size_t>(ifrequency)];
             if (write_librpa)
             {
+#ifdef __MPI
+                if (use_channel_mpi && assignment.frequency_group_size > 1)
+                {
+                    sternheimer_chi0::reduce_branch_to_root(
+                        chi0_branches[static_cast<std::size_t>(ifrequency)],
+                        0,
+                        chi0_frequency_group_communicator);
+                }
+#endif
+                const bool writes_frequency
+                    = !use_channel_mpi || assignment.frequency_group_local_rank == 0;
+                if (!writes_frequency)
+                {
+                    append_chi0_progress_event("frequency_finish",
+                                               ifrequency + 1,
+                                               owner_rank,
+                                               -1,
+                                               -1,
+                                               solved_equations,
+                                               nullptr,
+                                               -1.0,
+                                               elapsed_seconds_since(chi0_start_time),
+                                               "chi0_reduced_to_leader=yes");
+                    continue;
+                }
                 const std::vector<SternheimerRPA::Complex> chi0
                     = SternheimerRPA::symmetrize_chi0_imaginary_frequency(
                         chi0_branches[static_cast<std::size_t>(ifrequency)],
@@ -4816,6 +4882,13 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                                            + std::to_string(elapsed_seconds_since(
                                                frequency_start_times[static_cast<std::size_t>(ifrequency)])));
         }
+
+#ifdef __MPI
+        if (owns_chi0_frequency_group_communicator)
+        {
+            MPI_Comm_free(&chi0_frequency_group_communicator);
+        }
+#endif
 
         reduce_chi0_output_stats(all_converged,
                                  solved_equations,
@@ -4904,6 +4977,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         }
         out << "pca_threshold " << pca_threshold << '\n';
         out << "ccp_rmesh_times " << ccp_rmesh_times << '\n';
+        out << "solver_tolerance " << solver_tolerance << '\n';
         out << "sternheimer_zero_order_source " << (use_lcao_zero_order ? "lcao_ks" : "fd_grid") << '\n';
         if (use_lcao_zero_order)
         {

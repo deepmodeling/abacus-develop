@@ -16,6 +16,13 @@
 #include <omp.h>
 #endif
 
+TEST(SternheimerABACUSSTSmoke, UsesProductionDefaults)
+{
+    EXPECT_DOUBLE_EQ(ModuleRI::default_sternheimer_solver_tolerance(), 1.0e-6);
+    EXPECT_EQ(ModuleRI::parse_sternheimer_lcao_virtual_source(""),
+              ModuleRI::SternheimerLCAOVirtualSource::KSBands);
+}
+
 TEST(SternheimerChannelParallel, ExecutesConcurrentlyAndReturnsChannelOrder)
 {
 #ifdef _OPENMP
@@ -345,6 +352,17 @@ TEST(SternheimerABACUSSTSmoke, SelectsExplicitKSVirtualBandsFromOccupations)
     auto invalid = channels;
     invalid.front().unoccupied_coefficients.front().pop_back();
     EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_channels(invalid, 1, 3), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, RequiresCompleteKSVirtualSubspace)
+{
+    EXPECT_EQ(ModuleRI::expected_sternheimer_ks_virtual_states(21, 0), 21);
+    EXPECT_EQ(ModuleRI::expected_sternheimer_ks_virtual_states(21, 16), 16);
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_ks_virtual_subspace(1, 21, 21, 21));
+    EXPECT_THROW(ModuleRI::validate_sternheimer_ks_virtual_subspace(2, 21, 20, 20),
+                 std::runtime_error);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_ks_virtual_subspace(2, 21, 21, 20),
+                 std::runtime_error);
 }
 
 TEST(SternheimerABACUSSTSmoke, AcceptsOnlyPhysicalGammaSpinRows)

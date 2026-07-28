@@ -1033,23 +1033,17 @@ void SternheimerRPA::validate_mpi_layout(const std::string& layout,
     {
         throw std::invalid_argument("sternheimer_channel_mpi requires sternheimer_frequency_mpi=true.");
     }
-    if (use_channel_mpi && !write_siab)
+    if (!write_siab && !write_librpa)
     {
-        throw std::invalid_argument("sternheimer_channel_mpi currently requires out_sternheimer_siab=true.");
-    }
-    if (use_channel_mpi && write_librpa)
-    {
-        throw std::invalid_argument(
-            "sternheimer_channel_mpi does not yet support out_sternheimer_librpa chi0 accumulation.");
+        throw std::invalid_argument("Sternheimer MPI layout requires an enabled output target.");
     }
 
     if (layout == "global_equation")
     {
-        if (!use_frequency_mpi || !use_channel_mpi || !write_siab || write_librpa)
+        if (!use_frequency_mpi || !use_channel_mpi)
         {
             throw std::invalid_argument(
-                "sternheimer_mpi_layout=global_equation requires frequency MPI, channel MPI, SIAB output, and no "
-                "LibRPA chi0 output.");
+                "sternheimer_mpi_layout=global_equation requires frequency MPI and channel MPI.");
         }
         return;
     }

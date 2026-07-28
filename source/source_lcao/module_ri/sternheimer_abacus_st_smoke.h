@@ -38,7 +38,12 @@ class Potential;
 namespace ModuleRI
 {
 
-struct SternheimerLCAOOccupiedKPoint
+inline constexpr double default_sternheimer_solver_tolerance() noexcept
+{
+    return 1.0e-6;
+}
+
+struct SternheimerLCAOOccupiedChannel
 {
     int local_k_index = -1;
     int global_k_index = -1;
@@ -67,16 +72,40 @@ inline SternheimerLCAOVirtualSource parse_sternheimer_lcao_virtual_source(std::s
     std::transform(value.begin(), value.end(), value.begin(), [](const unsigned char character) {
         return static_cast<char>(std::tolower(character));
     });
-    if (value.empty() || value == "projected_ao")
-    {
-        return SternheimerLCAOVirtualSource::ProjectedAO;
-    }
-    if (value == "ks_bands")
+    if (value.empty() || value == "ks_bands")
     {
         return SternheimerLCAOVirtualSource::KSBands;
     }
+    if (value == "projected_ao")
+    {
+        return SternheimerLCAOVirtualSource::ProjectedAO;
+    }
     throw std::invalid_argument(
         "Sternheimer LCAO virtual source must be projected_ao or ks_bands.");
+}
+
+inline int expected_sternheimer_ks_virtual_states(const int unoccupied_bands, const int max_virtual_states)
+{
+    if (unoccupied_bands <= 0 || max_virtual_states < 0)
+    {
+        throw std::invalid_argument("Sternheimer KS virtual-state dimensions must be positive and non-negative.");
+    }
+    return max_virtual_states > 0 ? std::min(unoccupied_bands, max_virtual_states) : unoccupied_bands;
+}
+
+inline void validate_sternheimer_ks_virtual_subspace(const int spin_index_one_based,
+                                                      const int expected_states,
+                                                      const int accepted_candidates,
+                                                      const int virtual_states)
+{
+    if (expected_states <= 0 || accepted_candidates != expected_states || virtual_states != expected_states)
+    {
+        std::ostringstream message;
+        message << "Sternheimer ks_bands virtual subspace dimension mismatch for spin " << spin_index_one_based
+                << ": expected " << expected_states << ", accepted " << accepted_candidates << ", built "
+                << virtual_states << ". Refusing to continue with a silently incomplete or overcomplete subspace.";
+        throw std::runtime_error(message.str());
+    }
 }
 
 inline std::string sternheimer_lcao_virtual_source_name(const SternheimerLCAOVirtualSource source)

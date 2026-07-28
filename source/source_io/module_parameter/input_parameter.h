@@ -666,9 +666,11 @@ struct Input_para
     int sternheimer_q_index = 0; ///< 1-based nonzero q index on the full k mesh; 0 keeps the Gamma molecular path
     std::string sternheimer_frequency_grid_file = ""; ///< optional fixed omega/weight grid for Sternheimer chi0 output
     bool sternheimer_frequency_mpi = false; ///< whether to split Sternheimer chi0 frequencies over MPI ranks
-    bool sternheimer_channel_mpi = false; ///< whether to split each SIAB frequency over an MPI rank group
-    std::string sternheimer_mpi_layout = "frequency_grouped"; ///< MPI ownership layout for SIAB response equations
+    bool sternheimer_channel_mpi = false; ///< whether to split Sternheimer equations over MPI ranks
+    std::string sternheimer_mpi_layout = "frequency_grouped"; ///< MPI ownership layout for response equations
     bool sternheimer_delta = false; ///< whether to use Delta-Sternheimer projected solver for Sternheimer chi0 output
+    std::string sternheimer_delta_virtual_source
+        = "ks_bands"; ///< fixed virtual source: complete unoccupied KS bands by default
     int sternheimer_delta_max_states = 0; ///< maximum fixed AO virtual states; 0 means all accepted candidates
     double sternheimer_delta_norm_tol = 1.0e-10; ///< norm threshold for fixed AO virtual-state orthogonalization
     bool exx_coul_moment = false;                 ///< whether to use moment method for Coulomb calculation

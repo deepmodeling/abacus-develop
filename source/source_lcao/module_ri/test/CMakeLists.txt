@@ -126,6 +126,7 @@ if(ENABLE_MPI)
   add_executable(
     MODULE_RI_sternheimer_siab_mpi_test
     test_sternheimer_siab_mpi.cpp
+    ../sternheimer_chi0_mpi.cpp
     ../sternheimer_rpa.cpp
     ../sternheimer_siab_mpi.cpp
     ../sternheimer_siab_overlap.cpp

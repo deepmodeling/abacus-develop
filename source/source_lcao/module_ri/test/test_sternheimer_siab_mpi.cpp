@@ -1,3 +1,4 @@
+#include "source_lcao/module_ri/sternheimer_chi0_mpi.h"
 #include "source_lcao/module_ri/sternheimer_siab_mpi.h"
 #include "source_lcao/module_ri/sternheimer_siab_overlap.h"
 #include "source_lcao/module_ri/sternheimer_siab_writer.h"
@@ -267,6 +268,46 @@ TEST(SternheimerSIABMPI, GlobalEquationOwnershipWritesCanonicalSerialFile)
     else
     {
         EXPECT_TRUE(gathered.empty());
+    }
+}
+
+TEST(SternheimerSIABMPI, GlobalEquationChi0ReductionMatchesSerialBranch)
+{
+    int rank = 0;
+    int size = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (size != 2)
+    {
+        GTEST_SKIP() << "This regression requires exactly two MPI ranks.";
+    }
+
+    std::vector<Complex> local_branch(4, Complex(0.0, 0.0));
+    if (rank == 0)
+    {
+        local_branch[0] = Complex(1.0, 0.5);
+        local_branch[2] = Complex(3.0, -2.0);
+    }
+    else
+    {
+        local_branch[1] = Complex(2.0, 1.0);
+        local_branch[3] = Complex(4.0, -0.25);
+    }
+
+    module_ri::sternheimer_chi0::reduce_branch_to_root(local_branch, 0, MPI_COMM_WORLD);
+    if (rank == 0)
+    {
+        const std::vector<Complex> serial_branch{Complex(1.0, 0.5),
+                                                  Complex(2.0, 1.0),
+                                                  Complex(3.0, -2.0),
+                                                  Complex(4.0, -0.25)};
+        EXPECT_EQ(local_branch, serial_branch);
+        EXPECT_EQ(ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(local_branch, 2),
+                  ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(serial_branch, 2));
+    }
+    else
+    {
+        EXPECT_TRUE(local_branch.empty());
     }
 }
 

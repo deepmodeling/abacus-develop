@@ -1908,6 +1908,16 @@ TEST_F(InputTest, Item_test2)
         it->second.read_value(it->second, param);
         EXPECT_TRUE(param.input.sternheimer_delta);
     }
+    { // sternheimer_delta_virtual_source
+        auto it = find_label("sternheimer_delta_virtual_source", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.sternheimer_delta_virtual_source, "ks_bands");
+
+        it->second.str_values = {"PROJECTED_AO"};
+        it->second.read_value(it->second, param);
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.sternheimer_delta_virtual_source, "projected_ao");
+    }
     { // sternheimer_delta_max_states
         auto it = find_label("sternheimer_delta_max_states", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());
