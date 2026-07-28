@@ -840,6 +840,9 @@ public:
     double get_sccut() const;
     /// get sc_drop_thr
     double get_sc_drop_thr() const;
+    const std::string& get_basis_type() const { return basis_type_; }
+    const std::string& get_ks_solver() const { return ks_solver_; }
+    int get_nbands() const { return nbands_; }
     /// @brief set orbital parallel info
     void set_ParaV(Parallel_Orbitals* ParaV_in);
     /// @brief set parameters for solver

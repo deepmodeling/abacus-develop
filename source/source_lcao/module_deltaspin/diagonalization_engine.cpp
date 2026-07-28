@@ -134,7 +134,7 @@ DiagonalizationResult FullSpaceDiagonalizer::solve(int i_step)
     DiagonalizationResult result{};
 
 #ifdef __LCAO
-    if (PARAM.inp.basis_type != "lcao")
+    if (sc_.get_basis_type() != "lcao")
     {
         // FullSpaceDiagonalizer is LCAO-only; signal failure
         result.success = false;
@@ -162,7 +162,7 @@ DiagonalizationResult FullSpaceDiagonalizer::solve(int i_step)
     }
 
     // Full diagonalization without charge update (last param = true)
-    hsolver::HSolverLCAO<std::complex<double>> hsolver_t(sc_.ParaV, PARAM.inp.ks_solver);
+    hsolver::HSolverLCAO<std::complex<double>> hsolver_t(sc_.ParaV, sc_.get_ks_solver());
     hsolver_t.solve(hamilt_t, *psi_t, sc_.pelec, *sc_.dm_, *sc_.pelec->charge,
                     sc_.get_nspin(), true);
 
@@ -177,7 +177,7 @@ DiagonalizationResult FullSpaceDiagonalizer::solve(int i_step)
 
     result.success = true;
     result.used_subspace_approximation = false;
-    result.nbands = PARAM.inp.nbands;
+    result.nbands = sc_.get_nbands();
     result.nk = psi_t->get_nk();
 #else
     result.success = false;
@@ -221,7 +221,7 @@ DiagonalizationResult SubspaceDiagonalizer::solve(int i_step)
     DiagonalizationResult result{};
 
 #ifdef __LCAO
-    if (PARAM.inp.basis_type != "lcao")
+    if (sc_.get_basis_type() != "lcao")
     {
         result.success = false;
         ModuleBase::timer::end("SubspaceDiagonalizer", "solve");
@@ -335,10 +335,10 @@ bool SubspaceDiagonalizer::build_subspace(
     const std::vector<ModuleBase::Vector3<double>>& lambda_ref)
 {
 #ifdef __LCAO
-    if (PARAM.inp.basis_type != "lcao") return false;
+    if (sc_.get_basis_type() != "lcao") return false;
 
     const int nk = sc_.pelec->klist->get_nks();
-    const int nbands = PARAM.inp.nbands;
+    const int nbands = sc_.get_nbands();
     const int nat = sc_.get_nat();
     const int nlocal = sc_.ParaV->nrow;
     const int nn = nbands * nbands;
@@ -366,7 +366,7 @@ bool SubspaceDiagonalizer::build_subspace(
                 sc_.p_operator)->update_lambda();
         }
 
-        hsolver::HSolverLCAO<std::complex<double>> hsolver_t(sc_.ParaV, PARAM.inp.ks_solver);
+        hsolver::HSolverLCAO<std::complex<double>> hsolver_t(sc_.ParaV, sc_.get_ks_solver());
         hsolver_t.solve(hamilt_t, *psi_t, sc_.pelec, *sc_.dm_, *sc_.pelec->charge,
                         sc_.get_nspin(), true);
 
@@ -479,7 +479,7 @@ DiagonalizationResult FirstOrderResponseEngine::solve(int i_step)
     DiagonalizationResult result{};
 
 #ifdef __LCAO
-    if (PARAM.inp.basis_type != "lcao")
+    if (sc_.get_basis_type() != "lcao")
     {
         result.success = false;
         ModuleBase::timer::end("FirstOrderResponseEngine", "solve");
@@ -569,10 +569,10 @@ bool FirstOrderResponseEngine::build_subspace(
     const std::vector<ModuleBase::Vector3<double>>& lambda_ref)
 {
 #ifdef __LCAO
-    if (PARAM.inp.basis_type != "lcao") return false;
+    if (sc_.get_basis_type() != "lcao") return false;
 
     const int nk = sc_.pelec->klist->get_nks();
-    const int nbands = PARAM.inp.nbands;
+    const int nbands = sc_.get_nbands();
     const int nat = sc_.get_nat();
     const int nlocal = sc_.ParaV->nrow;
     const int nn = nbands * nbands;
@@ -596,7 +596,7 @@ bool FirstOrderResponseEngine::build_subspace(
 
         hamilt::Hamilt<std::complex<double>>* hamilt_t
             = static_cast<hamilt::Hamilt<std::complex<double>>*>(sc_.p_hamilt);
-        hsolver::HSolverLCAO<std::complex<double>> hsolver_t(sc_.ParaV, PARAM.inp.ks_solver);
+        hsolver::HSolverLCAO<std::complex<double>> hsolver_t(sc_.ParaV, sc_.get_ks_solver());
         hsolver_t.solve(hamilt_t, *psi_t, sc_.pelec, *sc_.dm_, *sc_.pelec->charge,
                         sc_.get_nspin(), true);
 
