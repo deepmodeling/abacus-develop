@@ -16,7 +16,8 @@ remote SSH user. Use an account and project root with the intended permissions.
 
 ## Reference deployment
 
-The maintained deployment currently runs on the SAI cluster. Its queue,
+The maintained deployment currently runs at the
+[SAI Open Source Supercomputing Center](https://www.open-sai.com/). Its queue,
 module, MPI mapping, and SSH host-key settings are kept in the configuration
 files in this directory and can be adapted for another Slurm site.
 
@@ -87,6 +88,8 @@ python3 .ci/slurm/runner.py run --help
 
 `config.ini` is validated before jobs are submitted.
 
+- `[site]`: the resource acknowledgement, site name, and public URL shown at
+  the end of result reports. Change these values for another cluster.
 - `[remote]`: SSH `host`, `port`, `user`, and `project_root`. The project root
   must be an absolute path or use `~/` relative to the remote user's home.
 - `[cluster]`: Slurm `partition`, absolute `mapping_root` for the MPI mapping

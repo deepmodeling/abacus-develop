@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from pathlib import PurePosixPath
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
+from urllib.parse import urlsplit
 
 from slurm import Slurm, SlurmError
 
@@ -78,7 +79,15 @@ class Remote:
 
 
 @dataclass(frozen=True)
+class Site:
+    name: str
+    url: str
+    acknowledgement: str
+
+
+@dataclass(frozen=True)
 class Config:
+    site: Site
     remote: Remote
     partition: str
     mapping_root: Path
@@ -129,13 +138,21 @@ def load_config(path: Path = ROOT / "config.ini") -> Config:
     expected_cases = ["case.{:03d}".format(index) for index in range(1, len(cases) + 1)]
     if not resources or cases != expected_cases:
         raise ValueError("resources and contiguous case sections are required")
-    known = {"remote", "cluster", "build", *resources, *cases}
-    if set(parser.sections()) != known or set(parser["remote"]) != {
+    known = {"site", "remote", "cluster", "build", *resources, *cases}
+    if set(parser.sections()) != known or set(parser["site"]) != {
+        "name", "url", "acknowledgement",
+    } or set(parser["remote"]) != {
         "host", "port", "user", "project_root",
     } or set(parser["cluster"]) != {
         "partition", "mapping_root", "disable_nccl_ib", "poll_seconds",
     }:
         raise ValueError("unexpected configuration section or key")
+    site = parser["site"]
+    site_url = urlsplit(site["url"])
+    if not site["name"].strip() or not site["acknowledgement"].strip() or \
+            "\n" in site["name"] or "\n" in site["acknowledgement"] or \
+            site_url.scheme != "https" or not site_url.netloc:
+        raise ValueError("invalid site configuration")
     remote = parser["remote"]
     project_root = remote["project_root"]
     project = PurePosixPath(project_root)
@@ -175,6 +192,7 @@ def load_config(path: Path = ROOT / "config.ini") -> Config:
     if any(not any(case.resource == name for case in matrix) for name in profiles):
         raise ValueError("every resource needs a case")
     return Config(
+        Site(site["name"], site["url"], site["acknowledgement"]),
         Remote(
             remote["host"], _integer(remote, "port", 1, 65535),
             remote["user"], project_root,
@@ -259,6 +277,7 @@ def _save_result(run: Path, components: Sequence[Mapping[str, Any]], rows: Seque
 
 
 def _result_markdown(result: Mapping[str, Any]) -> str:
+    site = load_config().site
     lines = [
         "# GPU validation result", "",
         "Passed: **{}**; failed: **{}**; infrastructure: **{}**".format(
@@ -268,6 +287,9 @@ def _result_markdown(result: Mapping[str, Any]) -> str:
     lines.extend("| {} | {} | {} |".format(item["label"], item["state"], item["job_id"]) for item in result["components"])
     lines.extend(("", "| Case | Resource | State | Slurm job |", "| --- | --- | --- | --- |"))
     lines.extend("| {} | {} | {} | {} |".format(row["case_id"], row["resource"], row["state"], row["job_id"]) for row in result["cases"])
+    lines.extend(("", "{} [{}]({}).".format(
+        site.acknowledgement, site.name, site.url,
+    )))
     return "\n".join(lines) + "\n"
 
 
@@ -930,15 +952,18 @@ def github_finish() -> int:
         })
     pr = os.environ["PR_NUMBER"]
     if pr:
+        site = load_config().site
         body = (
             "## GPU validation: {}\n\n"
             "GPU cases: **{} passed, {} failed, {} infrastructure**.\n\n"
             "[Open the Actions run]({}) | [Download raw test files]({})\n\n"
-            "Candidate: `{}`"
+            "Candidate: `{}`\n\n"
+            "{} [{}]({})."
         ).format(
             result, os.environ.get("GPU_PASSED") or "?", os.environ.get("GPU_FAILED") or "?",
             os.environ.get("GPU_INFRASTRUCTURE") or "?", os.environ["RUN_URL"],
             os.environ.get("ARTIFACT_URL", os.environ["RUN_URL"]), os.environ["SOURCE_SHA"],
+            site.acknowledgement, site.name, site.url,
         )
         _gh("repos/{}/issues/{}/comments".format(repository, pr), "POST", {"body": body})
     return 0
@@ -1032,6 +1057,10 @@ def main() -> int:
     if args.command == "config":
         config = load_config()
         print(json.dumps({
+            "site": {
+                "name": config.site.name, "url": config.site.url,
+                "acknowledgement": config.site.acknowledgement,
+            },
             "remote": {
                 "host": config.remote.host, "port": config.remote.port,
                 "user": config.remote.user, "project_root": config.remote.project_root,

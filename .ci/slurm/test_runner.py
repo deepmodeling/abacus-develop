@@ -45,6 +45,9 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.resources["gpu4"].label, "4 GPUs")
         self.assertEqual(config.resources["gpu8x2"].label, "2 nodes / 16 GPUs")
         self.assertEqual(config.cases[-1].runner, "cusolvermp")
+        self.assertEqual(config.site.name, "SAI Open Source Supercomputing Center")
+        self.assertEqual(config.site.url, "https://www.open-sai.com/")
+        self.assertEqual(config.site.acknowledgement, "Computing resources were provided by")
         self.assertEqual(config.remote.host, "c0.sai.ai-4s.com")
         self.assertEqual(config.remote.port, 12022)
         self.assertEqual(config.remote.user, "abacususer01")
@@ -198,6 +201,7 @@ class SlurmTests(unittest.TestCase):
 
     def test_pass_requires_successful_slurm_accounting(self):
         config = runner.Config(
+            runner.Site("Example cluster", "https://cluster.example/", "Computing resources were provided by"),
             runner.Remote("cluster.example", 22, "user", "~/gpu-ci"),
             "gpu", Path("/opt/cluster/mps_mapping.d"), False, 1,
             runner.Resource("build", "flood-gpu", 1, 1, 1, 60),
@@ -444,7 +448,12 @@ class ResultTests(unittest.TestCase):
             output = args.output.read_text(encoding="utf-8")
             self.assertIn("available=true", output)
             self.assertIn('"name":"gpu8x2"', output)
-            self.assertTrue(args.summary.read_text().startswith("# GPU validation result\n"))
+            summary = args.summary.read_text()
+            self.assertTrue(summary.startswith("# GPU validation result\n"))
+            self.assertTrue(summary.rstrip().endswith(
+                "Computing resources were provided by "
+                "[SAI Open Source Supercomputing Center](https://www.open-sai.com/)."
+            ))
 
     def test_report_rejects_untrusted_counts(self):
         invalid = (
