@@ -4,7 +4,7 @@ import re
 import subprocess
 import time
 from pathlib import Path
-from typing import Dict, Optional, Sequence, Tuple
+from typing import Callable, Dict, Optional, Sequence, Tuple
 
 
 Terminal = Tuple[str, str]
@@ -39,12 +39,30 @@ class Slurm:
         self.jobs[job] = array_count
         return job
 
-    def wait(self, jobs: Sequence[str]) -> Dict[str, Terminal]:
+    def wait(
+        self, jobs: Sequence[str],
+        progress: Optional[Callable[[Dict[str, Dict[str, int]]], None]] = None,
+    ) -> Dict[str, Terminal]:
         ids = ",".join(jobs)
         failures = 0
         while True:
             try:
-                if not self._run(("squeue", "--noheader", "--jobs=" + ids)).strip():
+                active = self._run((
+                    "squeue", "--noheader", "--array", "--jobs=" + ids,
+                    "--format=%A|%T",
+                ))
+                if progress is not None:
+                    counts = {
+                        job: {"finished": self.jobs[job] or 1, "running": 0, "total": self.jobs[job] or 1}
+                        for job in jobs
+                    }
+                    for line in active.splitlines():
+                        fields = line.strip().split("|")
+                        if len(fields) == 2 and fields[0] in counts:
+                            counts[fields[0]]["finished"] -= 1
+                            counts[fields[0]]["running"] += fields[1] != "PENDING"
+                    progress(counts)
+                if not active.strip():
                     break
                 failures = 0
             except SlurmError:

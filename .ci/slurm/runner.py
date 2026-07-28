@@ -16,7 +16,7 @@ import tarfile
 import tempfile
 import time
 from collections import OrderedDict
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
 from pathlib import Path
 from pathlib import PurePosixPath
@@ -316,7 +316,11 @@ def remote_run(run: Path) -> int:
             _job_values(config.build, config, run, "build", results / "build-%j.out"),
         )
         build_job = slurm.submit(build_script)
-        build_state, build_exit = slurm.wait((build_job,))[build_job]
+        build_jobs = (("Compile", build_job),)
+        build_progress: Dict[str, Tuple[int, int, int]] = {}
+        build_state, build_exit = slurm.wait(
+            (build_job,), lambda states: _print_progress(build_jobs, states, build_progress),
+        )[build_job]
         build_ok = (build_state, build_exit) == ("COMPLETED", "0:0")
         components.append(_component(
             "build", "Compile", "PASS" if build_ok else "FAIL",
@@ -351,7 +355,11 @@ def remote_run(run: Path) -> int:
             script = scripts / (name + ".sbatch")
             _render(run / "control" / "case.sbatch.in", script, values)
             jobs[name] = slurm.submit(script, len(grouped[name]))
-        accounting = slurm.wait(tuple(jobs.values()))
+        test_jobs = tuple((config.resources[name].label, job) for name, job in jobs.items())
+        test_progress: Dict[str, Tuple[int, int, int]] = {}
+        accounting = slurm.wait(
+            tuple(jobs.values()), lambda states: _print_progress(test_jobs, states, test_progress),
+        )
 
         for name, profile in config.resources.items():
             group_states = []
@@ -384,7 +392,8 @@ def remote_run(run: Path) -> int:
     except Exception as error:
         slurm.cancel()
         _atomic(results / "coordinator-error.txt", str(error) + "\n")
-        raise
+        print("gpu-ci: {}".format(error), file=sys.stderr, flush=True)
+        return returncode
     finally:
         _atomic(results / "done.json", {"returncode": returncode})
 
@@ -774,6 +783,25 @@ def _read_result(path: Path) -> Mapping[str, Any]:
     return _validate_result(json.loads(path.read_text(encoding="utf-8")))
 
 
+def _print_progress(
+    jobs: Sequence[Tuple[str, str]], states: Mapping[str, Mapping[str, int]],
+    previous: Dict[str, Tuple[int, int, int]],
+) -> None:
+    for label, job in jobs:
+        state = states[job]
+        current = state["finished"], state["running"], state["total"]
+        if previous.get(job) == current:
+            continue
+        previous[job] = current
+        queued = state["total"] - state["finished"] - state["running"]
+        details = ["{}/{} finished".format(state["finished"], state["total"])]
+        if state["running"]:
+            details.append("{} running".format(state["running"]))
+        if queued:
+            details.append("{} queued".format(queued))
+        print("  {:<24} [{}] {}".format(label, job, ", ".join(details)), flush=True)
+
+
 def _print_result(
     result: Optional[Mapping[str, Any]], artifacts: Path, remote_archive: str,
 ) -> None:
@@ -792,6 +820,21 @@ def _print_result(
         print("\nSummary: {}".format(root / "results" / "summary.md"))
     print("Raw results: {}".format(root / "results"))
     print("Remote archive: {}".format(remote_archive))
+
+
+def _upload_parts(parts: Sequence[Path], args: argparse.Namespace, run: Path) -> None:
+    def upload(part: Path) -> None:
+        _retry((
+            "rsync", "-a", "--partial", "--info=stats2", "-e",
+            "ssh -F {}".format(args.ssh_config), str(part),
+            "{}:{}/input/".format(args.target, run),
+        ))
+
+    with ThreadPoolExecutor(max_workers=len(parts)) as pool:
+        futures = [pool.submit(upload, part) for part in parts]
+        for count, future in enumerate(as_completed(futures), 1):
+            future.result()
+            print("  Source upload: {}/{} parts transferred".format(count, len(parts)), flush=True)
 
 
 def run(args: argparse.Namespace) -> int:
@@ -844,18 +887,9 @@ def run(args: argparse.Namespace) -> int:
         if revision:
             _command(("git", "bundle", "create", str(bundle), revision), repository)
             parts, checksum = _split_bundle(bundle, Path(directory))
-
-            def upload(item: Tuple[int, Path]) -> None:
-                index, part = item
-                print("[bundle {}/{}] {}".format(index + 1, BUNDLE_PARTS, part.name), flush=True)
-                _retry((
-                    "rsync", "-a", "--partial", "--info=name1,progress2", "-e",
-                    "ssh -F {}".format(args.ssh_config), str(part),
-                    "{}:{}/input/".format(args.target, run),
-                ), stdout=None)
-
-            with ThreadPoolExecutor(max_workers=BUNDLE_PARTS) as pool:
-                list(pool.map(upload, enumerate(parts)))
+            _upload_parts(parts, args, run)
+        else:
+            print("  Source already cached", flush=True)
     _ssh(args.ssh_config, args.target, (
         "python3", remote_control + "/runner.py", "receive",
         args.project_root, str(run), args.source_sha, checksum,
@@ -866,23 +900,37 @@ def run(args: argparse.Namespace) -> int:
     )
     _ssh(args.ssh_config, args.target, ("bash", "-lc", launch))
     failures = 0
+    printed_lines = 0
+    poll_seconds = load_config().poll_seconds
+    marker = "\n---DONE---\n"
     while True:
+        log_path = shlex.quote(str(run / "results" / "coordinator.log"))
+        done_path = shlex.quote(str(run / "results" / "done.json"))
+        read_status = "cat {0} 2>/dev/null || true; printf '\\n---DONE---\\n'; cat {1} 2>/dev/null || true".format(
+            done_path, log_path,
+        )
         status = _ssh(args.ssh_config, args.target, (
-            "bash", "-lc", "test -f {0}/results/done.json && cat {0}/results/done.json || true".format(shlex.quote(str(run))),
+            "bash", "-lc", read_status,
         ), check=False)
+        done_text, _, progress_text = status.stdout.partition(marker)
         if status.returncode:
             failures += 1
             if failures == 10:
                 raise RuntimeError("lost contact with the remote cluster")
-        elif status.stdout.strip():
-            done = json.loads(status.stdout)
+        else:
+            failures = 0
+            if progress_text.strip():
+                lines = progress_text.splitlines()
+                for line in lines[printed_lines:]:
+                    print(line, flush=True)
+                printed_lines = len(lines)
+        if not status.returncode and done_text.strip():
+            done = json.loads(done_text)
             if type(done) is not dict or set(done) != {"returncode"} or \
                     type(done["returncode"]) is not int or done["returncode"] not in (0, 1, 2):
                 raise ValueError("invalid remote completion status")
             break
-        else:
-            failures = 0
-        time.sleep(30)
+        time.sleep(poll_seconds)
     print("Downloading results...", flush=True)
     command = (
         "ssh", "-F", str(args.ssh_config), args.target,

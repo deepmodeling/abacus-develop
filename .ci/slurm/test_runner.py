@@ -183,6 +183,54 @@ class TemplateTests(unittest.TestCase):
 
 
 class SlurmTests(unittest.TestCase):
+    def test_wait_reports_array_progress(self):
+        responses = [
+            mock.Mock(
+                returncode=0,
+                stdout="101|RUNNING\n101|PENDING\n101|COMPLETING\n",
+                stderr="",
+            ),
+            mock.Mock(returncode=0, stdout="", stderr=""),
+            mock.Mock(
+                returncode=0,
+                stdout=(
+                    "101_0|COMPLETED|0:0\n101_1|COMPLETED|0:0\n"
+                    "101_2|COMPLETED|0:0\n"
+                ),
+                stderr="",
+            ),
+        ]
+        progress = []
+        with mock.patch("slurm.subprocess.run", side_effect=responses), \
+                mock.patch("slurm.time.sleep"):
+            client = slurm.Slurm(poll_seconds=0)
+            client.jobs["101"] = 3
+            client.wait(("101",), progress.append)
+        self.assertEqual(progress, [
+            {"101": {"finished": 0, "running": 2, "total": 3}},
+            {"101": {"finished": 3, "running": 0, "total": 3}},
+        ])
+
+    def test_coordinator_error_is_reported_before_completion(self):
+        config = runner.load_config()
+        client = mock.Mock()
+        client.submit.side_effect = runner.SlurmError("submission failed")
+        with tempfile.TemporaryDirectory() as directory, io.StringIO() as errors, \
+                contextlib.redirect_stderr(errors):
+            run = Path(directory)
+            (run / "jobs").mkdir()
+            with mock.patch("runner.load_config", return_value=config), \
+                    mock.patch("runner.Slurm", return_value=client), \
+                    mock.patch("runner._render"):
+                code = runner.remote_run(run)
+            done = json.loads((run / "results" / "done.json").read_text())
+            detail = (run / "results" / "coordinator-error.txt").read_text()
+            error_text = errors.getvalue()
+        self.assertEqual(code, 2)
+        self.assertEqual(done, {"returncode": 2})
+        self.assertIn("submission failed", detail)
+        self.assertIn("gpu-ci: submission failed", error_text)
+
     def test_submit_and_accounting_require_each_array_task(self):
         responses = [
             mock.Mock(returncode=0, stdout="101\n", stderr=""),
@@ -313,6 +361,19 @@ class TransferTests(unittest.TestCase):
             self.assertEqual(runner._retry(("rsync", "source", "target")).stdout, "done")
         self.assertEqual(run.call_count, 3)
 
+    def test_parallel_upload_prints_only_completed_part_counts(self):
+        args = argparse.Namespace(ssh_config=Path("ssh-config"), target="cluster")
+        parts = tuple(Path("part-{}".format(index)) for index in range(3))
+        with mock.patch("runner._retry"), io.StringIO() as output, \
+                contextlib.redirect_stdout(output):
+            runner._upload_parts(parts, args, Path("/remote/run"))
+            text = output.getvalue().splitlines()
+        self.assertEqual(text, [
+            "  Source upload: 1/3 parts transferred",
+            "  Source upload: 2/3 parts transferred",
+            "  Source upload: 3/3 parts transferred",
+        ])
+
     def test_download_retry_replaces_partial_file(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "result.tar.gz"
@@ -438,6 +499,21 @@ class TransferTests(unittest.TestCase):
 
 
 class ResultTests(unittest.TestCase):
+    def test_live_progress_prints_only_changed_job_counts(self):
+        previous = {}
+        jobs = (("4 GPUs", "102"),)
+        first = {"102": {"finished": 8, "running": 16, "total": 40}}
+        second = {"102": {"finished": 24, "running": 16, "total": 40}}
+        with io.StringIO() as output, contextlib.redirect_stdout(output):
+            runner._print_progress(jobs, first, previous)
+            runner._print_progress(jobs, first, previous)
+            runner._print_progress(jobs, second, previous)
+            text = output.getvalue().splitlines()
+        self.assertEqual(text, [
+            "  4 GPUs                   [102] 8/40 finished, 16 running, 16 queued",
+            "  4 GPUs                   [102] 24/40 finished, 16 running",
+        ])
+
     def test_local_result_summary_is_concise_and_points_to_artifacts(self):
         result = valid_result()
         with tempfile.TemporaryDirectory() as directory, io.StringIO() as output, \

@@ -89,7 +89,9 @@ the compressed remote archive.
 Source is sent as one compressed Git bundle split into eight parallel rsync
 transfers. The remote side checks the merged SHA-256 and the Git bundle before
 updating its cache. Later runs send only commits after the cached SHA; a run at
-the same SHA sends no source data.
+the same SHA sends no source data. The client reports completed source parts,
+then prints changing Slurm queue, running, and finished counts for each build
+or test group.
 
 For the public commands and all `run` options, use:
 
