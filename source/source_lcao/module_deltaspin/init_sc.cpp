@@ -57,6 +57,10 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     this->set_input_parameters(sc_thr_in, nsc_in, nsc_min_in, alpha_trial_in, sccut_in, sc_drop_thr_in,
                                sc_acceleration_mode_in, sc_acceleration_rms_thr_in);
 
+    this->basis_type_ = PARAM.inp.basis_type;
+    this->ks_solver_ = PARAM.inp.ks_solver;
+    this->nbands_ = PARAM.inp.nbands;
+
     // Step 2: Get atom/orbital/lnchi counts from UnitCell for indexing
     // atomCounts: {element_type_index -> number_of_atoms_of_this_type}
     // orbitalCounts: {element_type_index -> number_of_orbitals_per_atom}

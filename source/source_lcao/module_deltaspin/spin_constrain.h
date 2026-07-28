@@ -1042,7 +1042,10 @@ public:
      std::vector<ModuleBase::Vector3<double>> lcao_lambda_in_sub_;
       /// Acceleration mode parameters
       std::string sc_acceleration_mode_ = "off"; ///< "off", "first_order", "subspace"
-      double sc_acceleration_rms_thr_ = -1.0;    ///< RMS threshold (uB) to activate acceleration, <0 disables
+       double sc_acceleration_rms_thr_ = -1.0;    ///< RMS threshold (uB) to activate acceleration, <0 disables
+       std::string basis_type_;              ///< Cached basis type for LCAO/PW branching
+       std::string ks_solver_;               ///< Cached KS solver name
+       int nbands_ = 0;                      ///< Cached number of bands
        bool acceleration_active_ = false;          ///< Has acceleration been activated this SCF iteration?
        bool acceleration_subspace_built_ = false;  ///< Has subspace been built at activation lambda?
        bool subspace_just_activated_ = false;      ///< Was subspace just activated? (signals BFGS to reset search direction)
