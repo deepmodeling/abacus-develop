@@ -413,18 +413,18 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2rho_single");
 
-    const int nspin = nspin;
-    const bool ds_mag_switch = ds_mag_switch;
-    const bool ds_dir_only = ds_dir_only;
-    const std::string& ds_scf_mode = ds_scf_mode;
-    const double ds_scf_thr = ds_scf_thr;
-    const int ds_phase1_steps = ds_phase1_steps;
-    const std::string& ds_accel_mode = ds_accel_mode;
-    const std::string& ds_lambda_strat = ds_lambda_strat;
+    const int nspin = PARAM.inp.nspin;
+    const bool ds_mag_switch = PARAM.inp.sc_mag_switch;
+    const bool ds_dir_only = PARAM.inp.sc_direction_only;
+    const std::string& ds_scf_mode = PARAM.inp.sc_scf_thr_mode;
+    const double ds_scf_thr = PARAM.inp.sc_scf_thr;
+    const int ds_phase1_steps = PARAM.inp.sc_dir_phase1_steps;
+    const std::string& ds_accel_mode = PARAM.inp.sc_acceleration_mode;
+    const std::string& ds_lambda_strat = PARAM.inp.sc_lambda_strategy;
     const int scf_nmax = PARAM.inp.scf_nmax;
-    const std::string& calc_type = calc_type;
-    const std::string& basis = basis;
-    const std::string& ks_solver = ks_solver;
+    const std::string& calc_type = PARAM.inp.calculation;
+    const std::string& basis = PARAM.inp.basis_type;
+    const std::string& ks_solver = PARAM.inp.ks_solver;
 
     // 1) reset energy
     this->pelec->f_en.eband = 0.0;
