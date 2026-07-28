@@ -51,7 +51,9 @@ optional `project_root` input to override the configured root for that run.
 - **Pull request:** comment exactly `/abacus-ci gpu` on an open pull
   request. The commenter needs Triage, Write, Maintain, or Admin permission.
   The bot immediately links the queued run, then updates the same comment with
-  the final result after `gpu-ci-manual` approval and execution.
+  the final result after `gpu-ci-manual` approval and execution. Site
+  acknowledgement is shown in the Actions summary, not in pull-request bot
+  comments.
 
 Other issue comments are ignored.
 

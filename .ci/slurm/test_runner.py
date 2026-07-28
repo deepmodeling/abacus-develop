@@ -442,6 +442,7 @@ class ResultTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             result = valid_result()
+            result["cases"][0].update(elapsed_seconds=10, job_id="102_0")
             path = root / "result.json"
             path.write_text(json.dumps(result), encoding="utf-8")
             args = argparse.Namespace(result=path, output=root / "output", summary=root / "summary")
@@ -451,6 +452,8 @@ class ResultTests(unittest.TestCase):
             self.assertIn('"name":"gpu8x2"', output)
             summary = args.summary.read_text()
             self.assertTrue(summary.startswith("# GPU validation result\n"))
+            self.assertIn("| Case | Resource | State | Duration | Slurm job |", summary)
+            self.assertIn("| 11_PW_GPU/scf_out_wf | gpu1 | PASS | 00:00:10 | 102_0 |", summary)
             self.assertTrue(summary.rstrip().endswith(
                 "Computing resources were provided by "
                 "[SAI Open Source Supercomputing Center](https://www.open-sai.com/)."
@@ -528,6 +531,8 @@ class GitHubTests(unittest.TestCase):
             self.assertEqual(queued.args[:2], ("repos/owner/repo/issues/23/comments", "POST"))
             self.assertIn("GPU validation: queued", queued.args[2]["body"])
             self.assertIn("https://example/run", queued.args[2]["body"])
+            self.assertNotIn("SAI", queued.args[2]["body"])
+            self.assertNotIn("Computing resources", queued.args[2]["body"])
             self.assertEqual(api.call_args_list[-1].args[:2], ("repos/owner/repo/check-runs", "POST"))
 
             environment.update({
@@ -542,6 +547,8 @@ class GitHubTests(unittest.TestCase):
             self.assertEqual(updated.args[:2], ("repos/owner/repo/issues/comments/456", "PATCH"))
             self.assertIn("GPU validation: success", updated.args[2]["body"])
             self.assertIn("https://example/artifact", updated.args[2]["body"])
+            self.assertNotIn("SAI", updated.args[2]["body"])
+            self.assertNotIn("Computing resources", updated.args[2]["body"])
 
     def test_final_comment_is_updated_when_check_update_fails(self):
         environment = {

@@ -289,8 +289,11 @@ def _result_markdown(result: Mapping[str, Any]) -> str:
         ), "", "| Component | State | Slurm job |", "| --- | --- | --- |",
     ]
     lines.extend("| {} | {} | {} |".format(item["label"], item["state"], item["job_id"]) for item in result["components"])
-    lines.extend(("", "| Case | Resource | State | Slurm job |", "| --- | --- | --- | --- |"))
-    lines.extend("| {} | {} | {} | {} |".format(row["case_id"], row["resource"], row["state"], row["job_id"]) for row in result["cases"])
+    lines.extend(("", "| Case | Resource | State | Duration | Slurm job |", "| --- | --- | --- | --- | --- |"))
+    lines.extend("| {} | {} | {} | {} | {} |".format(
+        row["case_id"], row["resource"], row["state"],
+        _time(row["elapsed_seconds"]), row["job_id"],
+    ) for row in result["cases"])
     lines.extend(("", _site_credit()))
     return "\n".join(lines) + "\n"
 
@@ -936,8 +939,8 @@ def github_admit() -> int:
             "body": (
                 "## GPU validation: queued\n\n"
                 "[Open the Actions run]({})\n\n"
-                "Candidate: `{}`\n\n{}"
-            ).format(os.environ["RUN_URL"], values["source_sha"], _site_credit()),
+                "Candidate: `{}`"
+            ).format(os.environ["RUN_URL"], values["source_sha"]),
         })
         values["comment_id"] = str(comment["id"])
         check = _gh("repos/{}/check-runs".format(repository), "POST", {
@@ -972,12 +975,11 @@ def github_finish() -> int:
             "## GPU validation: {}\n\n"
             "GPU cases: **{} passed, {} failed, {} infrastructure**.\n\n"
             "[Open the Actions run]({}) | [Download raw test files]({})\n\n"
-            "Candidate: `{}`\n\n{}"
+            "Candidate: `{}`"
         ).format(
             result, os.environ.get("GPU_PASSED") or "?", os.environ.get("GPU_FAILED") or "?",
             os.environ.get("GPU_INFRASTRUCTURE") or "?", os.environ["RUN_URL"],
             os.environ.get("ARTIFACT_URL", os.environ["RUN_URL"]), os.environ["SOURCE_SHA"],
-            _site_credit(),
         )
         try:
             _gh("repos/{}/issues/comments/{}".format(repository, os.environ["COMMENT_ID"]), "PATCH", {"body": body})
