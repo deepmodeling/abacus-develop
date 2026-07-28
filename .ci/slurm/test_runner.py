@@ -1,4 +1,5 @@
 import argparse
+import contextlib
 import io
 import importlib.util
 import json
@@ -437,6 +438,22 @@ class TransferTests(unittest.TestCase):
 
 
 class ResultTests(unittest.TestCase):
+    def test_local_result_summary_is_concise_and_points_to_artifacts(self):
+        result = valid_result()
+        with tempfile.TemporaryDirectory() as directory, io.StringIO() as output, \
+                contextlib.redirect_stdout(output):
+            root = Path(directory)
+            runner._print_result(result, root, "/remote/archives/manual/1-1.tar.gz")
+            text = output.getvalue()
+        self.assertIn("GPU validation: PASS", text)
+        self.assertIn("49 passed, 0 failed, 0 infrastructure", text)
+        self.assertIn("Compile                  PASS", text)
+        self.assertIn("2 nodes / 16 GPUs        PASS", text)
+        self.assertIn("Summary: {}/results/summary.md".format(root.resolve()), text)
+        self.assertIn("Raw results: {}/results".format(root.resolve()), text)
+        self.assertIn("Remote archive: /remote/archives/manual/1-1.tar.gz", text)
+        self.assertNotIn("11_PW_GPU/scf_out_wf", text)
+
     def test_report_publishes_dynamic_components(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -774,6 +774,26 @@ def _read_result(path: Path) -> Mapping[str, Any]:
     return _validate_result(json.loads(path.read_text(encoding="utf-8")))
 
 
+def _print_result(
+    result: Optional[Mapping[str, Any]], artifacts: Path, remote_archive: str,
+) -> None:
+    root = artifacts.resolve()
+    if result is None:
+        print("\nGPU validation: INFRASTRUCTURE ERROR")
+        print("No valid result report was produced.")
+    else:
+        state = "PASS" if result["passed"] == result["total"] else "FAIL"
+        print("\nGPU validation: {}".format(state))
+        print("{} passed, {} failed, {} infrastructure\n".format(
+            result["passed"], result["failed"], result["infrastructure"],
+        ))
+        for component in result["components"]:
+            print("  {:<24} {}".format(component["label"], component["state"]))
+        print("\nSummary: {}".format(root / "results" / "summary.md"))
+    print("Raw results: {}".format(root / "results"))
+    print("Remote archive: {}".format(remote_archive))
+
+
 def run(args: argparse.Namespace) -> int:
     args.ssh_config = args.ssh_config.expanduser()
     args.source_repository = args.source_repository.expanduser()
@@ -795,6 +815,7 @@ def run(args: argparse.Namespace) -> int:
     if not project.is_absolute() or any(not NAME.fullmatch(part) for part in project.parts[1:]):
         raise ValueError("project root must be a simple absolute path")
     run = project / "runs" / args.namespace / "{}-{}".format(args.run_id, args.run_attempt)
+    print("Preparing remote run...", flush=True)
     args.artifacts.mkdir(parents=True, exist_ok=True)
     _atomic(args.artifacts / "run.json", {
         "project_root": args.project_root, "run_root": str(run),
@@ -815,6 +836,7 @@ def run(args: argparse.Namespace) -> int:
     ))
     data = json.loads(prepared.stdout)
     base = data.get("cache_sha", "")
+    print("Uploading source...", flush=True)
     with tempfile.TemporaryDirectory() as directory:
         bundle = Path(directory) / "source.bundle"
         revision = _bundle_revision(repository, base, args.source_sha)
@@ -838,6 +860,7 @@ def run(args: argparse.Namespace) -> int:
         "python3", remote_control + "/runner.py", "receive",
         args.project_root, str(run), args.source_sha, checksum,
     ))
+    print("Building and testing...", flush=True)
     launch = "nohup python3 {} remote-run {} > {}/results/coordinator.log 2>&1 < /dev/null &".format(
         shlex.quote(remote_control + "/runner.py"), shlex.quote(str(run)), shlex.quote(str(run))
     )
@@ -860,6 +883,7 @@ def run(args: argparse.Namespace) -> int:
         else:
             failures = 0
         time.sleep(30)
+    print("Downloading results...", flush=True)
     command = (
         "ssh", "-F", str(args.ssh_config), args.target,
         shlex.join(("python3", remote_control + "/runner.py", "collect", str(run))),
@@ -870,6 +894,7 @@ def run(args: argparse.Namespace) -> int:
         _extract_results(stream, args.artifacts)
     archive.unlink()
     result_path = args.artifacts / "results" / "result.json"
+    result: Optional[Mapping[str, Any]] = None
     if result_path.is_file():
         result = _read_result(result_path)
         expected_returncode = 0 if result["passed"] == result["total"] else 1
@@ -877,6 +902,14 @@ def run(args: argparse.Namespace) -> int:
         expected_returncode = 2
     if done["returncode"] != expected_returncode:
         raise ValueError("completion status does not match result")
+    print("Archiving remote run...", flush=True)
+    archived = project / "archives" / args.namespace / (run.name + ".tar.gz")
+    archive_command = "test -f {archive} || python3 {runner} archive {project} {run} >/dev/null; test -f {archive}".format(
+        archive=shlex.quote(str(archived)), runner=shlex.quote(remote_control + "/runner.py"),
+        project=shlex.quote(str(project)), run=shlex.quote(str(run)),
+    )
+    _retry(("ssh", "-F", str(args.ssh_config), args.target, archive_command))
+    _print_result(result, args.artifacts, str(archived))
     return done["returncode"]
 
 
