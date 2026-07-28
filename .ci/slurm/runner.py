@@ -840,7 +840,7 @@ def _upload_parts(parts: Sequence[Path], args: argparse.Namespace, run: Path) ->
 def _artifact_path(args: argparse.Namespace) -> Path:
     if hasattr(args, "artifacts"):
         return args.artifacts
-    return Path("/var/tmp") / "abacus_gpu_ci_{}".format(os.getuid()) / \
+    return Path("/tmp") / "abacus_gpu_ci_{}".format(os.getuid()) / \
         args.namespace / "{}_{}".format(args.run_id, args.run_attempt)
 
 
@@ -1130,7 +1130,7 @@ def parser() -> argparse.ArgumentParser:
         "--artifacts", type=Path, default=argparse.SUPPRESS,
         help=(
             "local directory for downloaded results and client logs "
-            "(default root: /var/tmp/abacus_gpu_ci_<uid>; "
+            "(default root: /tmp/abacus_gpu_ci_<uid>; "
             "run directory: <namespace>/<run_id>_<attempt>)"
         ),
     )

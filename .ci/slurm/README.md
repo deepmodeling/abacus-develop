@@ -79,7 +79,7 @@ python3 .ci/slurm/runner.py run
 The script finds the repository root from its own location. By default, it uses
 `~/.ssh/config`, the `gpu-ci` host alias, that repository's committed `HEAD`,
 and `~/abacus_gpu_ci` below the remote user's home. It writes each local run to
-`/var/tmp/abacus_gpu_ci_<uid>/<namespace>/<run_id>_<attempt>/`, outside the Git
+`/tmp/abacus_gpu_ci_<uid>/<namespace>/<run_id>_<attempt>/`, outside the Git
 checkout. Override any value shown by `run --help`; for example, use `--target
 my-cluster` for a different local host alias or `--artifacts` for durable local
 storage. The command waits for Slurm completion and exits with a non-zero status

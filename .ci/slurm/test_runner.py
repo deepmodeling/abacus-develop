@@ -118,7 +118,7 @@ class CliTests(unittest.TestCase):
         ):
             self.assertIn("default: {}".format(default), normalized)
         self.assertIn(
-            "default root: /var/tmp/abacus_gpu_ci_<uid>; run directory: "
+            "default root: /tmp/abacus_gpu_ci_<uid>; run directory: "
             "<namespace>/<run_id>_<attempt>",
             normalized,
         )
@@ -152,7 +152,7 @@ class CliTests(unittest.TestCase):
         self.assertEqual(args.run_attempt, "1")
         self.assertEqual(
             runner._artifact_path(args),
-            Path("/var/tmp/abacus_gpu_ci_1000/manual/42_1"),
+            Path("/tmp/abacus_gpu_ci_1000/manual/42_1"),
         )
 
 
