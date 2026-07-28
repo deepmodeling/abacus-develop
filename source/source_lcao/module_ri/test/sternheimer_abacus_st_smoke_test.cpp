@@ -97,23 +97,47 @@ TEST(SternheimerChannelParallel, HonorsExplicitMaximumWorkerCount)
 #endif
 }
 
-TEST(SternheimerChannelParallel, SingleWorkerLeavesNestedGridParallelismAvailable)
+TEST(SternheimerChannelParallel, SingleWorkerPreservesNestedGridTeam)
 {
-    const std::vector<int> parallel_levels = ModuleRI::run_sternheimer_channel_tasks<int>(
+#ifdef _OPENMP
+    const int previous_threads = omp_get_max_threads();
+    const int previous_dynamic = omp_get_dynamic();
+    const int previous_active_levels = omp_get_max_active_levels();
+    omp_set_dynamic(0);
+    omp_set_num_threads(4);
+    omp_set_max_active_levels(1);
+#endif
+
+    const std::vector<int> nested_team_sizes = ModuleRI::run_sternheimer_channel_tasks<int>(
         4,
         [](const int) {
 #ifdef _OPENMP
-            return omp_in_parallel();
+            int nested_team_size = 0;
+#pragma omp parallel
+            {
+#pragma omp single
+                nested_team_size = omp_get_num_threads();
+            }
+            return nested_team_size;
 #else
-            return 0;
+            return 1;
 #endif
         },
         1);
 
-    ASSERT_EQ(parallel_levels.size(), 4U);
-    for (const int parallel_level: parallel_levels)
+#ifdef _OPENMP
+    omp_set_num_threads(previous_threads);
+    omp_set_dynamic(previous_dynamic);
+    omp_set_max_active_levels(previous_active_levels);
+#endif
+    ASSERT_EQ(nested_team_sizes.size(), 4U);
+    for (const int nested_team_size: nested_team_sizes)
     {
-        EXPECT_EQ(parallel_level, 0);
+#ifdef _OPENMP
+        EXPECT_EQ(nested_team_size, 4);
+#else
+        EXPECT_EQ(nested_team_size, 1);
+#endif
     }
 }
 

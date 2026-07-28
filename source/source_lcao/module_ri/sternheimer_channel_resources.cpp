@@ -289,8 +289,8 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
         = std::min({num_channels, omp_threads, static_cast<int>(bounded_memory_workers)});
     const int capped_workers
         = user_cap > 0 ? std::min(plan.automatic_workers, user_cap) : plan.automatic_workers;
-    // A partial outer team disables the nested grid OpenMP kernels while leaving cores idle.
-    plan.effective_workers = capped_workers == omp_threads ? capped_workers : 1;
+    // A small outer team disables nested grid OpenMP while leaving most cores idle.
+    plan.effective_workers = 2 * capped_workers >= omp_threads ? capped_workers : 1;
     return plan;
 }
 

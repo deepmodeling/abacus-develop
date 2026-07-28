@@ -37,6 +37,19 @@ TEST(SternheimerChannelResources, PartialOuterTeamFallsBackToNestedGridParalleli
     EXPECT_EQ(plan.effective_workers, 1);
 }
 
+TEST(SternheimerChannelResources, KeepsOuterParallelismWhenMostThreadsCanWork)
+{
+    const ModuleRI::SternheimerMemorySnapshot memory{
+        ModuleRI::SternheimerMemoryAccountingMode::available,
+        56320,
+        0,
+        1,
+        "proc_meminfo"};
+    const auto plan = ModuleRI::plan_sternheimer_channel_workers(40, 30, 1, 0, memory);
+    EXPECT_EQ(plan.automatic_workers, 22);
+    EXPECT_EQ(plan.effective_workers, 22);
+}
+
 TEST(SternheimerChannelResources, ClampsToChannelsAndOpenMPThreads)
 {
     const ModuleRI::SternheimerMemorySnapshot memory{
