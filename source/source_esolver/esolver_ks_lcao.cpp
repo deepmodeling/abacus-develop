@@ -413,10 +413,23 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "hamilt2rho_single");
 
+    const int nspin = nspin;
+    const bool ds_mag_switch = ds_mag_switch;
+    const bool ds_dir_only = ds_dir_only;
+    const std::string& ds_scf_mode = ds_scf_mode;
+    const double ds_scf_thr = ds_scf_thr;
+    const int ds_phase1_steps = ds_phase1_steps;
+    const std::string& ds_accel_mode = ds_accel_mode;
+    const std::string& ds_lambda_strat = ds_lambda_strat;
+    const int scf_nmax = PARAM.inp.scf_nmax;
+    const std::string& calc_type = calc_type;
+    const std::string& basis = basis;
+    const std::string& ks_solver = ks_solver;
+
     // 1) reset energy
     this->pelec->f_en.eband = 0.0;
     this->pelec->f_en.demet = 0.0;
-    bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
+    bool skip_charge = calc_type == "nscf" ? true : false;
 
     // =====================================================================
     // 2) DeltaSpin: inner lambda loop to constrain atomic magnetic moments
@@ -457,24 +470,24 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     //   - mixing_restart is auto-set based on sc_scf_thr_mode
     // =====================================================================
     bool skip_solve = false;
-    if (PARAM.inp.sc_mag_switch)
+    if (ds_mag_switch)
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
 
-        if (PARAM.inp.sc_lambda_strategy == "linear_scan")
+        if (ds_lambda_strat == "linear_scan")
         {
             sc.set_drho(this->drho);
             sc.run_lambda_linear_scan(iter - 1);
 
             skip_solve = true;
         }
-        else if (PARAM.inp.sc_scf_thr_mode == "off")
+        else if (ds_scf_mode == "off")
         {
             // "off" mode: never activate the lambda loop.
             // Lambda values are loaded from STRU and used as constant constraints.
             // Replaces the old convention of setting sc_scf_thr=1e-10.
         }
-        else if (PARAM.inp.sc_direction_only && PARAM.inp.nspin == 2)
+        else if (ds_dir_only && nspin == 2)
         {
             // ================================================================
             // Collinear direction_only: two-phase strategy
@@ -489,7 +502,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
             // Phase 2 (iter > sc_dir_phase1_steps): Lambda decays gradually,
             //   normal SCF runs, system relaxes to magnetic ground state.
             // ================================================================
-            if (iter <= PARAM.inp.sc_dir_phase1_steps)
+            if (iter <= ds_phase1_steps)
             {
                 sc.set_drho(this->drho);
                 sc.set_direction_only(false);
@@ -499,7 +512,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
             }
             else
             {
-                if (iter == PARAM.inp.sc_dir_phase1_steps + 1)
+                if (iter == ds_phase1_steps + 1)
                 {
                     // Reset mixing at Phase 1->2 transition.
                     // Phase 1 BFGS updates DM directly without charge mixing,
@@ -508,7 +521,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                     // to avoid polluting mixing_dmr logic.
                     this->p_chgmix->mix_reset();
                     this->p_chgmix->mixing_restart_count = 0;
-                    this->p_chgmix->mixing_restart_step = PARAM.inp.scf_nmax + 1;
+                    this->p_chgmix->mixing_restart_step = scf_nmax + 1;
                 }
 
                 // Gradual lambda decay: factor = 0.5^(1/3) per step
@@ -523,12 +536,12 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                 sc.set_lambda(lambda);
             }
         }
-        else if (PARAM.inp.sc_direction_only && PARAM.inp.nspin == 4)
+        else if (ds_dir_only && nspin == 4)
         {
             // Non-collinear direction_only: direction_only projection works
             // correctly for nspin=4 (only removes parallel component, leaving
             // transverse constraint). Use standard sc_scf_thr_mode gate.
-            if (PARAM.inp.sc_scf_thr_mode == "immediate")
+            if (ds_scf_mode == "immediate")
             {
                 if (iter > 1)
                 {
@@ -540,7 +553,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
             }
             else // "threshold"
             {
-                if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
+                if (!sc.mag_converged() && this->drho > 0 && this->drho < ds_scf_thr)
                 {
                     sc.set_drho(this->drho);
                     sc.run_lambda_loop(iter - 1);
@@ -558,7 +571,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         else
         {
             // Standard DeltaSpin (no direction_only)
-            if (PARAM.inp.sc_scf_thr_mode == "immediate")
+            if (ds_scf_mode == "immediate")
             {
                 // "immediate" mode: activate lambda loop from iter>=2.
                 // iter=1 is skipped because initial wavefunctions are not
@@ -575,7 +588,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
             {
                 // "threshold" mode: activate when drho < sc_scf_thr.
                 // drho > 0 excludes iter=1 where drho has not been computed yet.
-                if (!sc.mag_converged() && this->drho > 0 && this->drho < PARAM.inp.sc_scf_thr)
+                if (!sc.mag_converged() && this->drho > 0 && this->drho < ds_scf_thr)
                 {
                     sc.set_drho(this->drho);
                     sc.run_lambda_loop(iter - 1);
@@ -592,9 +605,9 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         }
 
         // Run trace vs DMR diagnostic once near SCF convergence
-        if (PARAM.inp.nspin == 2 && PARAM.inp.basis_type == "lcao"
+        if (nspin == 2 && basis == "lcao"
             && this->drho > 0 && this->drho < 1e-3
-            && PARAM.inp.sc_acceleration_mode != "off"
+            && ds_accel_mode != "off"
             && !sc.local_diag_run_)
         {
             double lambda_ref_ry = 0.0;
@@ -612,20 +625,20 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     // 3) run Hsolver
     if (!skip_solve)
     {
-        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), ks_solver);
         hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt), this->psi[0], this->pelec, *this->dmat.dm, 
-          this->chr, PARAM.inp.nspin, skip_charge);
+          this->chr, nspin, skip_charge);
     }
     else
     {
         // Lambda loop updated the density matrix (DM) but not the real-space charge density.
         // HSolver was skipped, so we need to sync rho from DM manually.
-        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
+        LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), nspin, &this->chr);
     }
 
     // 4) EXX
 #ifdef __EXX
-    if (PARAM.inp.calculation != "nscf")
+    if (calc_type != "nscf")
     {
         if (GlobalC::exx_info.info_ri.real_number)
         {
@@ -639,7 +652,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
 #endif
 
     // 5) symmetrize the charge density
-    Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
+    Symmetry_rho::symmetrize_rho(nspin, this->chr, this->pw_rho, ucell.symm);
 
     // 6) calculate delta energy
     this->pelec->f_en.deband = this->pelec->cal_delta_eband(ucell);

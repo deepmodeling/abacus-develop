@@ -28,6 +28,8 @@ void Plus_U::cal_occ_pw(const int iter,
     ModuleBase::timer::start("Plus_U", "cal_occ_pw");
     this->copy_locale(cell);
     this->zero_locale(cell);
+    const int nspin = PARAM.inp.nspin;
+    const int kpar = PARAM.inp.kpar;
 
     if(this->device == "cpu")
     {
@@ -37,7 +39,7 @@ void Plus_U::cal_occ_pw(const int iter,
         const int npol = psi_p->get_npol();
         for(int ik = 0; ik < psi_p->get_nk(); ik++)
         {
-            int is = (PARAM.inp.nspin == 2) ? isk[ik] : 0;
+            int is = (nspin == 2) ? isk[ik] : 0;
             psi_p->fix_k(ik);
             onsite_p->tabulate_atomic(ik);
 
@@ -59,7 +61,7 @@ void Plus_U::cal_occ_pw(const int iter,
                 const int m_begin = target_l * target_l;
                 const int tlp1 = 2 * target_l + 1;
                 const int tlp1_2 = tlp1 * tlp1;
-                if(PARAM.inp.nspin == 4)
+                if(nspin == 4)
                 {
                     for(int ib = 0;ib<nbands;ib++)
                     {
@@ -117,7 +119,7 @@ void Plus_U::cal_occ_pw(const int iter,
         const int npol = psi_p->get_npol();
         for(int ik = 0; ik < psi_p->get_nk(); ik++)
         {
-            int is = (PARAM.inp.nspin == 2) ? isk[ik] : 0;
+            int is = (nspin == 2) ? isk[ik] : 0;
             const_cast<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>*>(psi_p)->load_k_to_gpu(ik);
             psi_p->fix_k(ik);
             onsite_p->tabulate_atomic(ik);
@@ -139,7 +141,7 @@ void Plus_U::cal_occ_pw(const int iter,
                 const int m_begin = target_l * target_l;
                 const int tlp1 = 2 * target_l + 1;
                 const int tlp1_2 = tlp1 * tlp1;
-                if(PARAM.inp.nspin == 4)
+                if(nspin == 4)
                 {
                     for(int ib = 0;ib<nbands;ib++)
                     {
@@ -200,15 +202,15 @@ void Plus_U::cal_occ_pw(const int iter,
         }
         const int size = (2 * target_l + 1) * (2 * target_l + 1);
 
-        if(PARAM.inp.nspin != 4)
+        if(nspin != 4)
         {
-            Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, 
+            Parallel_Reduce::reduce_double_allpool(kpar, 
                     GlobalV::NPROC_IN_POOL, 
                     this->locale[iat][target_l][0][0].c, 
                     size);
-            if(PARAM.inp.nspin == 2)
+            if(nspin == 2)
             {
-                Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, 
+                Parallel_Reduce::reduce_double_allpool(kpar, 
                         GlobalV::NPROC_IN_POOL, 
                         this->locale[iat][target_l][0][1].c, 
                         size);
@@ -216,7 +218,7 @@ void Plus_U::cal_occ_pw(const int iter,
         }
         else
         {
-            Parallel_Reduce::reduce_double_allpool(PARAM.inp.kpar, 
+            Parallel_Reduce::reduce_double_allpool(kpar, 
                     GlobalV::NPROC_IN_POOL, 
                     this->locale[iat][target_l][0][0].c, 
                     size * 4);
@@ -229,7 +231,7 @@ void Plus_U::cal_occ_pw(const int iter,
             {
                 this->uom_array[eff_pot_pw_index[iat]+mm] = this->locale[iat][target_l][0][0].c[mm];
             }
-            if(PARAM.inp.nspin == 2)
+            if(nspin == 2)
             {
                 const int half_size = this->uom_array.size() / 2;
                 for(int mm=0;mm<size;mm++)
@@ -248,8 +250,8 @@ void Plus_U::cal_occ_pw(const int iter,
     }
 
     Plus_U::energy_u = 0.0;
-    const double weight_eu = (PARAM.inp.nspin == 1) ? 1.0 : (PARAM.inp.nspin == 2) ? 0.5 : 0.25;
-    const double diag_coeff = (PARAM.inp.nspin == 4) ? 1.0 : 0.5;
+    const double weight_eu = (nspin == 1) ? 1.0 : (nspin == 2) ? 0.5 : 0.25;
+    const double diag_coeff = (nspin == 4) ? 1.0 : 0.5;
     // calculate VU and energy (locale already reduced above)
     for(int iat = 0; iat < cell.nat; iat++)
     {
@@ -266,7 +268,7 @@ void Plus_U::cal_occ_pw(const int iter,
         std::complex<double>* vu_iat = &(this->eff_pot_pw[this->eff_pot_pw_index[iat]]);
         const int m_size = 2 * target_l + 1;
 
-        if(PARAM.inp.nspin == 4)
+        if(nspin == 4)
         {
             for (int m1 = 0; m1 < m_size; m1++)
             {
@@ -329,7 +331,7 @@ void Plus_U::cal_occ_pw(const int iter,
                 }
             }
             // spin-down channel for nspin=2
-            if(PARAM.inp.nspin == 2)
+            if(nspin == 2)
             {
                 std::complex<double>* vu_iat1 = &(this->eff_pot_pw[this->eff_pot_pw.size()/2 + this->eff_pot_pw_index[iat]]);
                 for (int m1 = 0; m1 < m_size; m1++)
