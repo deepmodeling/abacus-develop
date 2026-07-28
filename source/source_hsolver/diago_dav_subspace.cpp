@@ -440,13 +440,23 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         {
             if (psi_norm_host[i] <= 1.0e-12)
             {
-                std::cout << "Diago_DavSubspace::cal_grad: psi_norm <= 0 for band " << i << std::endl;
-                std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
-                std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
-                std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
-                delmem_real_h_op()(psi_norm_host);
-                delmem_real_op()(psi_norm);
-                ModuleBase::WARNING_QUIT("cal_grad", "psi_norm <= 0");
+                std::cout << "Diago_DavSubspace::cal_grad: norm of new direction for band " << i
+                          << " is too small, treating as converged." << std::endl;
+            }
+        }
+        {
+            bool all_zero = true;
+            for (int i = 0; i < notconv; i++)
+            {
+                if (psi_norm_host[i] > 1.0e-12)
+                {
+                    all_zero = false;
+                    break;
+                }
+            }
+            if (all_zero && notconv > 0)
+            {
+                this->notconv = 0;
             }
         }
         delmem_real_h_op()(psi_norm_host);
@@ -470,12 +480,23 @@ void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
         {
             if (psi_norm[i] <= 1.0e-12)
             {
-                std::cout << "Diago_DavSubspace::cal_grad: psi_norm <= 0 for band " << i << std::endl;
-                std::cout << "This may be due to npwx < nbands: the number of plane waves is less than" << std::endl;
-                std::cout << "the number of bands, leading to a rank-deficient problem." << std::endl;
-                std::cout << "Please increase ecutwfc or reduce nbands." << std::endl;
-                delmem_real_h_op()(psi_norm);
-                ModuleBase::WARNING_QUIT("cal_grad", "psi_norm <= 0");
+                std::cout << "Diago_DavSubspace::cal_grad: norm of new direction for band " << i
+                          << " is too small, treating as converged." << std::endl;
+            }
+        }
+        {
+            bool all_zero = true;
+            for (int i = 0; i < notconv; i++)
+            {
+                if (psi_norm[i] > 1.0e-12)
+                {
+                    all_zero = false;
+                    break;
+                }
+            }
+            if (all_zero && notconv > 0)
+            {
+                this->notconv = 0;
             }
         }
         delmem_real_h_op()(psi_norm);
