@@ -93,6 +93,14 @@ void OperatorLCAO<TK, TR>::init(const int ik_in) {
             this->hR->set_zero();
         }
     }
+    // propagate current_spin to next operator so all nodes in the chain
+    // share the same spin state, set by HamiltLCAO::updateHk via set_current_spin.
+    // This is done before processing this node so that children receive the
+    // correct spin regardless of any local toggling that may happen inside
+    // this operator's contributeHR().
+    if (this->next_op != nullptr) {
+        dynamic_cast<OperatorLCAO<TK, TR>*>(this->next_op)->current_spin = this->current_spin;
+    }
     switch (this->cal_type) {
         case calculation_type::lcao_overlap: {
             // cal_type=lcao_overlap refer to overlap matrix operators, which are
