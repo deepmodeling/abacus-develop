@@ -2,13 +2,13 @@
 
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_estate/elecstate_lcao.h"
 #include "source_cell/read_pseudo.h"
+#include "source_estate/elecstate_lcao.h"
+#include "source_io/module_ml/io_npz.h"
+#include "source_io/module_output/cube_io.h"
 #include "source_lcao/LCAO_domain.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_io/module_output/cube_io.h"
-#include "source_io/module_ml/io_npz.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
 
 namespace ModuleESolver
@@ -27,8 +27,11 @@ ESolver_DM2rho<TK, TR>::~ESolver_DM2rho()
 }
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void ESolver_DM2rho<TK, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_DM2rho", "before_all_runners");
     ModuleBase::timer::start("ESolver_DM2rho", "before_all_runners");
 
@@ -38,8 +41,11 @@ void ESolver_DM2rho<TK, TR>::before_all_runners(UnitCell& ucell, const Input_par
 }
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
+void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_DM2rho", "runner");
     ModuleBase::timer::start("ESolver_DM2rho", "runner");
 
@@ -87,8 +93,11 @@ void ESolver_DM2rho<TK, TR>::runner(UnitCell& ucell, const int istep)
 }
 
 template <typename TK, typename TR>
-void ESolver_DM2rho<TK, TR>::after_all_runners(UnitCell& ucell)
+void ESolver_DM2rho<TK, TR>::after_all_runners(BaseCell& basecell)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_DM2rho", "after_all_runners");
     ModuleBase::timer::start("ESolver_DM2rho", "after_all_runners");
 

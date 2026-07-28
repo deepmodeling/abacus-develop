@@ -7,12 +7,13 @@
 #include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
 #include "source_cell/module_neighlist/atom_provider.h"
+#include "source_cell/base_cell.h"
 #include "source_cell/nonlocal_info_base.h"
 
 /**
  * @brief Provide the basic information about unitcell.
  */
-class UnitCell : public AtomProvider {
+class UnitCell : public AtomProvider, public BaseCell {
   public:
     double get_lat0() const override {
         return lat0;
@@ -287,6 +288,22 @@ class UnitCell : public AtomProvider {
     std::vector<ModuleBase::Vector3<double>> get_lambda() const;
     /// @brief get constrain for deltaspin
     std::vector<ModuleBase::Vector3<int>> get_constrain() const;
+
+  private:
+    Kind get_kind() const override
+    {
+        return Kind::unit_cell;
+    }
+
+    int get_nat() const override
+    {
+        return nat;
+    }
+
+    const ModuleBase::Matrix3& get_GT() const override
+    {
+        return GT;
+    }
 };
 
 #endif // unitcell class

@@ -12,26 +12,28 @@
 #include "esolver_ks_pw.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 
-namespace ModuleESolver {
+namespace ModuleESolver
+{
 
-class ESolver_DFPT_PW : public ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU> {
-public:
+class ESolver_DFPT_PW : public ESolver_KS_PW<std::complex<double>, base_device::DEVICE_CPU>
+{
+  public:
     ESolver_DFPT_PW();
     ~ESolver_DFPT_PW();
-    
-    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
-    void runner(UnitCell& ucell, const int istep) override;
-    void after_all_runners(UnitCell& ucell) override;
-    
-protected:
+
+    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+    void runner(BaseCell& basecell, const int istep) override;
+    void after_all_runners(BaseCell& basecell) override;
+
+  protected:
     ModuleDFPT::DFPT_PW* dfpt_ = nullptr;
-    
+
     bool gs_done_ = false;
-    
+
     void run_gs(UnitCell& ucell);
-    
+
     void init_dfpt(UnitCell& ucell);
-    
+
     void run_post_process(UnitCell& ucell);
 };
 

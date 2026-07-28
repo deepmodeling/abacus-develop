@@ -5,6 +5,7 @@ add_subdirectory(module_neighlist)
 add_library(
     cell
     OBJECT
+    base_cell.cpp
     atom_pseudo.cpp
     atom_spec.cpp
     pseudo.cpp

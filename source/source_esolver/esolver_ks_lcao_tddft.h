@@ -19,10 +19,10 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 
     ~ESolver_KS_LCAO_TDDFT();
 
-    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
   protected:
-    virtual void runner(UnitCell& cell, const int istep) override;
+    virtual void runner(BaseCell& basecell, const int istep) override;
 
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 

@@ -15,17 +15,18 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+
   public:
     ESolver_SDFT_PW();
     ~ESolver_SDFT_PW();
 
-    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
     double cal_energy() override;
 
-    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
 
-    void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
   public:
     Stochastic_WF<T, Device> stowf;
@@ -41,7 +42,7 @@ class ESolver_SDFT_PW : public ESolver_KS_PW<T, Device>
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
-    virtual void after_all_runners(UnitCell& ucell) override;
+    virtual void after_all_runners(BaseCell& basecell) override;
 
   private:
     int nche_sto;   ///< norder of Chebyshev
