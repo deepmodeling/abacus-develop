@@ -837,10 +837,18 @@ def _upload_parts(parts: Sequence[Path], args: argparse.Namespace, run: Path) ->
             print("  Source upload: {}/{} parts transferred".format(count, len(parts)), flush=True)
 
 
+def _artifact_path(args: argparse.Namespace) -> Path:
+    if hasattr(args, "artifacts"):
+        return args.artifacts
+    return Path("/var/tmp") / "abacus_gpu_ci_{}".format(os.getuid()) / \
+        args.namespace / "{}_{}".format(args.run_id, args.run_attempt)
+
+
 def run(args: argparse.Namespace) -> int:
     args.ssh_config = args.ssh_config.expanduser()
     args.source_repository = args.source_repository.expanduser()
-    args.artifacts = args.artifacts.expanduser()
+    automatic_artifacts = not hasattr(args, "artifacts")
+    args.artifacts = _artifact_path(args).expanduser()
     repository = args.source_repository.resolve()
     if not all(NAME.fullmatch(value) for value in (args.target, args.namespace, args.run_id, args.run_attempt)):
         raise ValueError("invalid target or run name")
@@ -859,7 +867,11 @@ def run(args: argparse.Namespace) -> int:
         raise ValueError("project root must be a simple absolute path")
     run = project / "runs" / args.namespace / "{}-{}".format(args.run_id, args.run_attempt)
     print("Preparing remote run...", flush=True)
-    args.artifacts.mkdir(parents=True, exist_ok=True)
+    if automatic_artifacts:
+        artifact_root = args.artifacts.parents[1]
+        artifact_root.mkdir(mode=0o700, exist_ok=True)
+        artifact_root.chmod(0o700)
+    args.artifacts.mkdir(mode=0o700, parents=True, exist_ok=True)
     _atomic(args.artifacts / "run.json", {
         "project_root": args.project_root, "run_root": str(run),
         "source_sha": args.source_sha,
@@ -1115,8 +1127,12 @@ def parser() -> argparse.ArgumentParser:
         help="attempt number within the run ID",
     )
     client.add_argument(
-        "--artifacts", type=Path, default=REPOSITORY_ROOT / "gpu-ci-artifacts",
-        help="local directory for downloaded results and client logs",
+        "--artifacts", type=Path, default=argparse.SUPPRESS,
+        help=(
+            "local directory for downloaded results and client logs "
+            "(default root: /var/tmp/abacus_gpu_ci_<uid>; "
+            "run directory: <namespace>/<run_id>_<attempt>)"
+        ),
     )
     commands.add_parser(
         "config", help="validate and summarize config.ini",

@@ -117,6 +117,11 @@ class CliTests(unittest.TestCase):
             "~/.ssh/config", "gpu-ci", "~/abacus_gpu_ci", "HEAD", "manual",
         ):
             self.assertIn("default: {}".format(default), normalized)
+        self.assertIn(
+            "default root: /var/tmp/abacus_gpu_ci_<uid>; run directory: "
+            "<namespace>/<run_id>_<attempt>",
+            normalized,
+        )
 
     def test_run_options_parse(self):
         arguments = [
@@ -134,7 +139,8 @@ class CliTests(unittest.TestCase):
         self.assertEqual(args.source_sha, "a" * 40)
 
     def test_run_defaults_parse(self):
-        with mock.patch("runner.time.time", return_value=42):
+        with mock.patch("runner.time.time", return_value=42), \
+                mock.patch("runner.os.getuid", return_value=1000):
             args = runner.parser().parse_args(["run"])
         self.assertEqual(args.ssh_config, Path("~/.ssh/config"))
         self.assertEqual(args.target, "gpu-ci")
@@ -144,7 +150,10 @@ class CliTests(unittest.TestCase):
         self.assertEqual(args.namespace, "manual")
         self.assertEqual(args.run_id, "42")
         self.assertEqual(args.run_attempt, "1")
-        self.assertEqual(args.artifacts, ROOT.parents[1] / "gpu-ci-artifacts")
+        self.assertEqual(
+            runner._artifact_path(args),
+            Path("/var/tmp/abacus_gpu_ci_1000/manual/42_1"),
+        )
 
 
 class TemplateTests(unittest.TestCase):
