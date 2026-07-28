@@ -1141,7 +1141,13 @@ std::vector<std::complex<double>> project_siab_response_to_primitives(
     }
     std::vector<std::complex<double>> response_coefficients(
         static_cast<std::size_t>(primitives.serial_pw_basis->npwk[0]), ModuleBase::ZERO);
-    primitives.serial_pw_basis->real2recip(complete_response.data(), response_coefficients.data(), 0);
+    // PW_Basis_K::real2recip reuses FFT scratch buffers stored in the basis.
+#ifdef _OPENMP
+#pragma omp critical(sternheimer_siab_real2recip)
+#endif
+    {
+        primitives.serial_pw_basis->real2recip(complete_response.data(), response_coefficients.data(), 0);
+    }
     const double coefficient_scale = std::sqrt(ucell.omega);
     for (std::complex<double>& value: response_coefficients)
     {
