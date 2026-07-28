@@ -101,7 +101,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_local_diagno
 #ifndef __LCAO
     return;
 #else
-    if (PARAM.inp.basis_type != "lcao") return;
+    if (this->basis_type_ != "lcao") return;
     if (this->nspin_ != 2) return;
 
     int nat = this->get_nat();
@@ -130,7 +130,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_local_diagno
     dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)
         ->update_lambda();
 
-    hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, PARAM.inp.ks_solver);
+    hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, this->ks_solver_);
     hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->nspin_, true);
     elecstate::calculate_weights(this->pelec->ekb, this->pelec->wg, this->pelec->klist,
                                  this->pelec->eferm, this->pelec->f_en, this->pelec->nelec_spin,
@@ -139,7 +139,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_local_diagno
 
     // Cache subspace data at lambda_ref
     const int nk = psi_t->get_nk();
-    const int nbands = PARAM.inp.nbands;
+    const int nbands = this->nbands_;
     const int nlocal = this->ParaV->nrow;
     const int nn = nbands * nbands;
     this->lcao_nbands_ = nbands;
@@ -706,7 +706,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
 
         const bool nspin_ok = (this->nspin_ == 2);
 
-        const bool accel_enabled = (PARAM.inp.basis_type == "lcao") &&
+        const bool accel_enabled = (this->basis_type_ == "lcao") &&
                                     nspin_ok &&
                                     (this->sc_acceleration_mode_ != "off") &&
                                     (this->sc_acceleration_rms_thr_ > 0.0) &&
@@ -754,7 +754,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_loop(int out
             this->update_psi_charge(dnu_last_step.data(), rerun, true);
 
             // [PW basis] Extra verification: re-compute Mi from scratch
-            if(PARAM.inp.basis_type == "pw")
+            if(this->basis_type_ == "pw")
             {
                 this->cal_mi_pw();
                 subtract_2d(this->Mi_, this->target_mag_, delta_spin);
@@ -1162,7 +1162,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
     // Only runs once when charge density is near convergence (drho < 1e-3)
     // =============================================================
 #ifdef __LCAO
-    if (PARAM.inp.basis_type == "lcao" && this->nspin_ == 2
+    if (this->basis_type_ == "lcao" && this->nspin_ == 2
         && this->last_drho_ > 0 && this->last_drho_ < 1e-3
         && !this->local_diag_run_)
     {
@@ -1186,7 +1186,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
     // Only runs when charge density is near convergence (drho < 1e-3)
     // =============================================================
 #ifdef __LCAO
-    if (PARAM.inp.basis_type == "lcao" && this->nspin_ == 2 && this->last_drho_ > 0 && this->last_drho_ < 1e-3)
+    if (this->basis_type_ == "lcao" && this->nspin_ == 2 && this->last_drho_ > 0 && this->last_drho_ < 1e-3)
     {
         std::cout << "\n" << std::string(80, '=') << std::endl;
         std::cout << "[DS-DIAG] === EIGENVALUE & Mi COMPARISON DIAGNOSTIC ===" << std::endl;
@@ -1204,7 +1204,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
         dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)
             ->update_lambda();
 
-        hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, PARAM.inp.ks_solver);
+        hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, this->ks_solver_);
         hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->nspin_, true);
         elecstate::calculate_weights(this->pelec->ekb, this->pelec->wg, this->pelec->klist,
                                      this->pelec->eferm, this->pelec->f_en, this->pelec->nelec_spin,
@@ -1213,7 +1213,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_linear_scan(
 
         // Cache subspace data
         const int nk = psi_t->get_nk();
-        const int nbands = PARAM.inp.nbands;
+        const int nbands = this->nbands_;
         const int nlocal = this->ParaV->nrow;
         const int nn = nbands * nbands;
         this->lcao_nbands_ = nbands;
@@ -1485,7 +1485,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_scan_diagnos
 #ifndef __LCAO
     return;
 #else
-    if (PARAM.inp.basis_type != "lcao")
+    if (this->basis_type_ != "lcao")
     {
         std::cout << "[DS-DIAG] scan_diagnostic: only supported for LCAO basis" << std::endl;
         return;
@@ -1550,7 +1550,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_scan_diagnos
             ->update_lambda();
     }
 
-    hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, PARAM.inp.ks_solver);
+    hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, this->ks_solver_);
     hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->nspin_, true);
     elecstate::calculate_weights(this->pelec->ekb, this->pelec->wg, this->pelec->klist,
                                  this->pelec->eferm, this->pelec->f_en, this->pelec->nelec_spin,
@@ -1559,7 +1559,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_scan_diagnos
 
     // Cache subspace data
     const int nk = psi_t->get_nk();
-    const int nbands = PARAM.inp.nbands;
+    const int nbands = this->nbands_;
     const int nlocal = this->ParaV->nrow;
     int nn = nbands * nbands;
     this->lcao_nbands_ = nbands;
@@ -1729,7 +1729,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_lambda_scan_diagnos
                 ->update_lambda();
         }
 
-        hsolver::HSolverLCAO<std::complex<double>> hsolver_full(this->ParaV, PARAM.inp.ks_solver);
+        hsolver::HSolverLCAO<std::complex<double>> hsolver_full(this->ParaV, this->ks_solver_);
         hsolver_full.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->nspin_, true);
         elecstate::calculate_weights(this->pelec->ekb, this->pelec->wg, this->pelec->klist,
                                      this->pelec->eferm, this->pelec->f_en, this->pelec->nelec_spin,
@@ -1809,7 +1809,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_trace_vs_dmr_diagno
     int outer_step, double lambda_ref_ry)
 {
 #ifdef __LCAO
-    if (PARAM.inp.basis_type != "lcao") return;
+    if (this->basis_type_ != "lcao") return;
     if (this->nspin_ != 2) return;
 
     const int nat = this->get_nat();
@@ -1828,7 +1828,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_trace_vs_dmr_diagno
     dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)
         ->update_lambda();
 
-    hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, PARAM.inp.ks_solver);
+    hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, this->ks_solver_);
     hsolver_t.solve(hamilt_t, psi_t[0], this->pelec, *this->dm_, *this->pelec->charge, this->nspin_, true);
     elecstate::calculate_weights(this->pelec->ekb, this->pelec->wg, this->pelec->klist,
                                  this->pelec->eferm, this->pelec->f_en, this->pelec->nelec_spin,
@@ -1836,7 +1836,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::run_trace_vs_dmr_diagno
     elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
 
     const int nk = psi_t->get_nk();
-    const int nbands = PARAM.inp.nbands;
+    const int nbands = this->nbands_;
     const int nlocal = this->ParaV->nrow;
     const int nn = nbands * nbands;
     const int nloc_wfc = this->ParaV->nloc_wfc;
