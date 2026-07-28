@@ -628,8 +628,12 @@ T& Psi<T, Device>::operator()(const int ikb1, const int ikb2, const int ibasis) 
 
     if (storage_mode_ == PsiStorageMode::PAGED_GPU)
     {
-        // PAGED_GPU: GPU buffer is single-k, read from CPU full buffer (k_first layout)
+        // PAGED_GPU: GPU buffer is single-k, return from GPU if loaded, else CPU
         assert(psi_cpu_ != nullptr);
+        if (this->current_k_gpu_ == ikb1)
+        {
+            return this->psi[ikb2 * this->nbasis + ibasis];
+        }
         return const_cast<T*>(psi_cpu_)[(ikb1 * this->nbands + ikb2) * this->nbasis + ibasis];
     }
 

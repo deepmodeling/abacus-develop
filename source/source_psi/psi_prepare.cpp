@@ -178,7 +178,9 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             {
                 if (kspw_psi->get_storage_mode() == psi::PsiStorageMode::PAGED_GPU)
                 {
-                    syncmem_h2d_op()(psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
+                    T* dst_cpu = kspw_psi->get_cpu_pointer(ik);
+                    std::memcpy(dst_cpu, psi_cpu->get_pointer(), sizeof(T) * nbands_start * nbasis);
+                    kspw_psi->load_k_to_gpu(ik);
                 }
                 else
                 {
