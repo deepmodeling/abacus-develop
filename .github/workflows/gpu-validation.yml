@@ -34,7 +34,7 @@ jobs:
       checks: write
       contents: read
       issues: write
-      pull-requests: read
+      pull-requests: write
     outputs:
       accepted: ${{ steps.request.outputs.accepted }}
       check_id: ${{ steps.request.outputs.check_id }}
@@ -245,6 +245,7 @@ jobs:
       checks: write
       contents: read
       issues: write
+      pull-requests: write
     steps:
       - name: Checkout pinned reporter
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6

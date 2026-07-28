@@ -575,7 +575,7 @@ class PolicyTests(unittest.TestCase):
         self.assertIn("runner.py config", text)
         self.assertIn("fromJSON(steps.cluster.outputs.config).remote.host", text)
         self.assertIn("runner.py run", text)
-        self.assertNotIn("pull-requests: write", text)
+        self.assertEqual(text.count("pull-requests: write"), 2)
         self.assertNotIn("${{ vars.", text)
         self.assertNotIn("cpus-per-task", text)
 
