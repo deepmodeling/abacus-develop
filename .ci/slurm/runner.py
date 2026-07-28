@@ -276,8 +276,12 @@ def _save_result(run: Path, components: Sequence[Mapping[str, Any]], rows: Seque
     return 0 if rows and passed == len(rows) else 1
 
 
-def _result_markdown(result: Mapping[str, Any]) -> str:
+def _site_credit() -> str:
     site = load_config().site
+    return "{} [{}]({}).".format(site.acknowledgement, site.name, site.url)
+
+
+def _result_markdown(result: Mapping[str, Any]) -> str:
     lines = [
         "# GPU validation result", "",
         "Passed: **{}**; failed: **{}**; infrastructure: **{}**".format(
@@ -287,9 +291,7 @@ def _result_markdown(result: Mapping[str, Any]) -> str:
     lines.extend("| {} | {} | {} |".format(item["label"], item["state"], item["job_id"]) for item in result["components"])
     lines.extend(("", "| Case | Resource | State | Slurm job |", "| --- | --- | --- | --- |"))
     lines.extend("| {} | {} | {} | {} |".format(row["case_id"], row["resource"], row["state"], row["job_id"]) for row in result["cases"])
-    lines.extend(("", "{} [{}]({}).".format(
-        site.acknowledgement, site.name, site.url,
-    )))
+    lines.extend(("", _site_credit()))
     return "\n".join(lines) + "\n"
 
 
@@ -902,7 +904,7 @@ def _gh(path: str, method: str = "GET", fields: Optional[Mapping[str, str]] = No
 def github_admit() -> int:
     event = os.environ["GITHUB_EVENT_NAME"]
     repository = os.environ["GITHUB_REPOSITORY"]
-    values = {"accepted": "true", "pr_number": "", "check_id": ""}
+    values = {"accepted": "true", "pr_number": "", "check_id": "", "comment_id": ""}
     if event == "schedule":
         upstream = os.environ.get("UPSTREAM_REPOSITORY", "deepmodeling/abacus-develop")
         metadata = _gh("repos/{}".format(upstream))
@@ -928,6 +930,16 @@ def github_admit() -> int:
             source_sha=pull["head"]["sha"], namespace="pr-" + number,
             pr_number=number,
         )
+        if not SHA.fullmatch(values["source_sha"]):
+            raise ValueError("invalid source SHA")
+        comment = _gh("repos/{}/issues/{}/comments".format(repository, number), "POST", {
+            "body": (
+                "## GPU validation: queued\n\n"
+                "[Open the Actions run]({})\n\n"
+                "Candidate: `{}`\n\n{}"
+            ).format(os.environ["RUN_URL"], values["source_sha"], _site_credit()),
+        })
+        values["comment_id"] = str(comment["id"])
         check = _gh("repos/{}/check-runs".format(repository), "POST", {
             "name": "GPU validation", "head_sha": pull["head"]["sha"],
             "status": "in_progress",
@@ -945,27 +957,34 @@ def github_finish() -> int:
     repository = os.environ["GITHUB_REPOSITORY"]
     result = os.environ["GPU_RESULT"]
     conclusion = "success" if result == "success" else "failure"
+    errors = []
     check_id = os.environ["CHECK_ID"]
     if check_id:
-        _gh("repos/{}/check-runs/{}".format(repository, check_id), "PATCH", {
-            "status": "completed", "conclusion": conclusion,
-        })
+        try:
+            _gh("repos/{}/check-runs/{}".format(repository, check_id), "PATCH", {
+                "status": "completed", "conclusion": conclusion,
+            })
+        except (OSError, RuntimeError, ValueError) as error:
+            errors.append(error)
     pr = os.environ["PR_NUMBER"]
     if pr:
-        site = load_config().site
         body = (
             "## GPU validation: {}\n\n"
             "GPU cases: **{} passed, {} failed, {} infrastructure**.\n\n"
             "[Open the Actions run]({}) | [Download raw test files]({})\n\n"
-            "Candidate: `{}`\n\n"
-            "{} [{}]({})."
+            "Candidate: `{}`\n\n{}"
         ).format(
             result, os.environ.get("GPU_PASSED") or "?", os.environ.get("GPU_FAILED") or "?",
             os.environ.get("GPU_INFRASTRUCTURE") or "?", os.environ["RUN_URL"],
             os.environ.get("ARTIFACT_URL", os.environ["RUN_URL"]), os.environ["SOURCE_SHA"],
-            site.acknowledgement, site.name, site.url,
+            _site_credit(),
         )
-        _gh("repos/{}/issues/{}/comments".format(repository, pr), "POST", {"body": body})
+        try:
+            _gh("repos/{}/issues/comments/{}".format(repository, os.environ["COMMENT_ID"]), "PATCH", {"body": body})
+        except (OSError, RuntimeError, ValueError) as error:
+            errors.append(error)
+    if errors:
+        raise RuntimeError("; ".join(str(error) for error in errors))
     return 0
 
 

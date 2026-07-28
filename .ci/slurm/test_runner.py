@@ -2,6 +2,7 @@ import argparse
 import io
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -498,6 +499,65 @@ class ResultTests(unittest.TestCase):
             self.assertFalse(runner._mpi_startup_failure(path))
 
 
+class GitHubTests(unittest.TestCase):
+    def test_pr_comment_is_created_queued_and_updated_in_place(self):
+        source_sha = "a" * 40
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            event = root / "event.json"
+            event.write_text(json.dumps({
+                "comment": {"user": {"login": "maintainer"}},
+                "issue": {"number": 23},
+            }), encoding="utf-8")
+            output = root / "output"
+            admitted = [
+                {"permission": "triage"},
+                {"state": "open", "head": {"repo": {"full_name": "owner/fork"}, "sha": source_sha}},
+                {"id": 456}, {"id": 123},
+            ]
+            environment = {
+                "GITHUB_EVENT_NAME": "issue_comment", "GITHUB_REPOSITORY": "owner/repo",
+                "GITHUB_EVENT_PATH": str(event), "GITHUB_OUTPUT": str(output),
+                "RUN_URL": "https://example/run",
+            }
+            with mock.patch.dict(os.environ, environment, clear=True), \
+                    mock.patch("runner._gh", side_effect=admitted) as api:
+                runner.github_admit()
+            self.assertIn("comment_id=456", output.read_text())
+            queued = api.call_args_list[-2]
+            self.assertEqual(queued.args[:2], ("repos/owner/repo/issues/23/comments", "POST"))
+            self.assertIn("GPU validation: queued", queued.args[2]["body"])
+            self.assertIn("https://example/run", queued.args[2]["body"])
+            self.assertEqual(api.call_args_list[-1].args[:2], ("repos/owner/repo/check-runs", "POST"))
+
+            environment.update({
+                "GPU_RESULT": "success", "CHECK_ID": "123", "COMMENT_ID": "456",
+                "PR_NUMBER": "23", "GPU_PASSED": "49", "GPU_FAILED": "0",
+                "GPU_INFRASTRUCTURE": "0", "ARTIFACT_URL": "https://example/artifact",
+                "SOURCE_SHA": source_sha,
+            })
+            with mock.patch.dict(os.environ, environment, clear=True), mock.patch("runner._gh") as api:
+                runner.github_finish()
+            updated = api.call_args_list[-1]
+            self.assertEqual(updated.args[:2], ("repos/owner/repo/issues/comments/456", "PATCH"))
+            self.assertIn("GPU validation: success", updated.args[2]["body"])
+            self.assertIn("https://example/artifact", updated.args[2]["body"])
+
+    def test_final_comment_is_updated_when_check_update_fails(self):
+        environment = {
+            "GITHUB_REPOSITORY": "owner/repo", "GPU_RESULT": "failure",
+            "CHECK_ID": "123", "COMMENT_ID": "456", "PR_NUMBER": "23",
+            "RUN_URL": "https://example/run", "SOURCE_SHA": "a" * 40,
+        }
+        with mock.patch.dict(os.environ, environment, clear=True), \
+                mock.patch("runner._gh", side_effect=(RuntimeError("check failed"), {})) as api, \
+                self.assertRaisesRegex(RuntimeError, "check failed"):
+            runner.github_finish()
+        self.assertEqual(api.call_args_list[-1].args[:2], (
+            "repos/owner/repo/issues/comments/456", "PATCH",
+        ))
+
+
 class PolicyTests(unittest.TestCase):
     def test_workflow_uses_trusted_control_and_protected_environment(self):
         text = (ROOT.parents[1] / ".github" / "workflows" / "gpu-validation.yml").read_text(encoding="utf-8")
@@ -508,7 +568,7 @@ class PolicyTests(unittest.TestCase):
         self.assertIn("runner.py config", text)
         self.assertIn("fromJSON(steps.cluster.outputs.config).remote.host", text)
         self.assertIn("runner.py run", text)
-        self.assertIn("pull-requests: write", text)
+        self.assertNotIn("pull-requests: write", text)
         self.assertNotIn("${{ vars.", text)
         self.assertNotIn("cpus-per-task", text)
 
