@@ -114,7 +114,6 @@ class CliTests(unittest.TestCase):
         normalized = " ".join(help_text.split())
         for default in (
             "~/.ssh/config", "gpu-ci", "~/abacus_gpu_ci", "HEAD", "manual",
-            "gpu-ci-artifacts",
         ):
             self.assertIn("default: {}".format(default), normalized)
 
@@ -139,12 +138,12 @@ class CliTests(unittest.TestCase):
         self.assertEqual(args.ssh_config, Path("~/.ssh/config"))
         self.assertEqual(args.target, "gpu-ci")
         self.assertEqual(args.project_root, "~/abacus_gpu_ci")
-        self.assertEqual(args.source_repository, Path("."))
+        self.assertEqual(args.source_repository, ROOT.parents[1])
         self.assertEqual(args.source_sha, "HEAD")
         self.assertEqual(args.namespace, "manual")
         self.assertEqual(args.run_id, "42")
         self.assertEqual(args.run_attempt, "1")
-        self.assertEqual(args.artifacts, Path("gpu-ci-artifacts"))
+        self.assertEqual(args.artifacts, ROOT.parents[1] / "gpu-ci-artifacts")
 
 
 class TemplateTests(unittest.TestCase):

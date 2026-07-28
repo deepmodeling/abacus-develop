@@ -59,21 +59,30 @@ Other issue comments are ignored.
 
 ## Run locally
 
-Run from the repository checkout whose committed `HEAD` is the revision to
-test. If the SSH config defines the default `gpu-ci` target, no options are
-required:
+Define the default target in `~/.ssh/config` using the values from the
+`[remote]` section of `config.ini`:
+
+```sshconfig
+Host gpu-ci
+    HostName <host>
+    Port <port>
+    User <user>
+    IdentityFile ~/.ssh/<private-key>
+```
+
+If the SSH config defines the default `gpu-ci` target, no options are required:
 
 ```bash
 python3 .ci/slurm/runner.py run
 ```
 
-By default, the command uses `~/.ssh/config`, the `gpu-ci` host alias, the
-current Git checkout and its `HEAD`, and `~/abacus_gpu_ci` below the remote
-user's home. It writes downloaded results to `./gpu-ci-artifacts`. Override any
-value shown by `run --help`; for example, use `--target my-cluster` for a
-different local host alias. The command waits for Slurm completion and exits
-with a non-zero status when a case or infrastructure result is not fully
-successful.
+The script finds the repository root from its own location. By default, it uses
+`~/.ssh/config`, the `gpu-ci` host alias, that repository's committed `HEAD`,
+and `~/abacus_gpu_ci` below the remote user's home. It writes downloaded
+results to `gpu-ci-artifacts/` in the repository root. Override any value shown
+by `run --help`; for example, use `--target my-cluster` for a different local
+host alias. The command waits for Slurm completion and exits with a non-zero
+status when a case or infrastructure result is not fully successful.
 
 Source is sent as one compressed Git bundle split into eight parallel rsync
 transfers. The remote side checks the merged SHA-256 and the Git bundle before

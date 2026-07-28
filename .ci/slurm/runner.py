@@ -27,6 +27,7 @@ from slurm import Slurm, SlurmError
 
 
 ROOT = Path(__file__).resolve().parent
+REPOSITORY_ROOT = ROOT.parents[1]
 NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 PMIX = re.compile(br"PMIX_ERR_(?:FILE_OPEN_FAILURE|OUT_OF_RESOURCE)")
@@ -1013,7 +1014,7 @@ def parser() -> argparse.ArgumentParser:
         help="remote directory for caches, runs, and archives",
     )
     client.add_argument(
-        "--source-repository", type=Path, default=Path("."),
+        "--source-repository", type=Path, default=REPOSITORY_ROOT,
         help="local ABACUS Git checkout to transfer",
     )
     client.add_argument(
@@ -1033,7 +1034,7 @@ def parser() -> argparse.ArgumentParser:
         help="attempt number within the run ID",
     )
     client.add_argument(
-        "--artifacts", type=Path, default=Path("gpu-ci-artifacts"),
+        "--artifacts", type=Path, default=REPOSITORY_ROOT / "gpu-ci-artifacts",
         help="local directory for downloaded results and client logs",
     )
     commands.add_parser(
