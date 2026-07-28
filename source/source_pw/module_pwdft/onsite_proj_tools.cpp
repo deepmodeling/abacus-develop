@@ -905,6 +905,7 @@ void Onsite_Proj_tools<FPTYPE, Device>::cal_force_dspin(int ik,
                                       this->ucell_->tpiba,
                                       d_wg,
                                       lambda_tmp,
+                                      this->kv_ ? this->kv_->isk.data() : nullptr,
                                       becp,
                                       dbecp,
                                       force);
