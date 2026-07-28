@@ -21,10 +21,10 @@ TEST(SternheimerChannelResources, PlansFromNodeAggregateMemory)
         "cgroup_v2"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(40, 30, 1, 0, memory);
     EXPECT_EQ(plan.automatic_workers, 11);
-    EXPECT_EQ(plan.effective_workers, 11);
+    EXPECT_EQ(plan.effective_workers, 1);
 }
 
-TEST(SternheimerChannelResources, UserCapOnlyReducesAutomaticCount)
+TEST(SternheimerChannelResources, PartialOuterTeamFallsBackToNestedGridParallelism)
 {
     const ModuleRI::SternheimerMemorySnapshot memory{
         ModuleRI::SternheimerMemoryAccountingMode::available,
@@ -34,7 +34,7 @@ TEST(SternheimerChannelResources, UserCapOnlyReducesAutomaticCount)
         "proc_meminfo"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(32, 30, 1, 4, memory);
     EXPECT_EQ(plan.automatic_workers, 30);
-    EXPECT_EQ(plan.effective_workers, 4);
+    EXPECT_EQ(plan.effective_workers, 1);
 }
 
 TEST(SternheimerChannelResources, ClampsToChannelsAndOpenMPThreads)
@@ -45,7 +45,7 @@ TEST(SternheimerChannelResources, ClampsToChannelsAndOpenMPThreads)
         0,
         1,
         "proc_meminfo"};
-    EXPECT_EQ(ModuleRI::plan_sternheimer_channel_workers(3, 30, 1, 0, memory).effective_workers, 3);
+    EXPECT_EQ(ModuleRI::plan_sternheimer_channel_workers(3, 30, 1, 0, memory).effective_workers, 1);
     EXPECT_EQ(ModuleRI::plan_sternheimer_channel_workers(40, 5, 1, 0, memory).effective_workers, 5);
 }
 
@@ -98,7 +98,7 @@ TEST(SternheimerChannelResources, FormatsWorkerDecisionDiagnostic)
               "resource_source=cgroup_v2 accounting_mode=node_aggregate "
               "node_memory_limit_bytes=100000 memory_current_bytes=32000 "
               "memory_target_bytes=75000 local_mpi_ranks=2 grid_size=1 "
-              "memory_per_worker_bytes=1920 automatic_workers=11 user_cap=4 effective_workers=4");
+              "memory_per_worker_bytes=1920 automatic_workers=11 user_cap=4 effective_workers=1");
 }
 
 TEST(SternheimerChannelResources, RejectsDetectedBudgetBelowOneWorker)

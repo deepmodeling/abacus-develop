@@ -97,6 +97,26 @@ TEST(SternheimerChannelParallel, HonorsExplicitMaximumWorkerCount)
 #endif
 }
 
+TEST(SternheimerChannelParallel, SingleWorkerLeavesNestedGridParallelismAvailable)
+{
+    const std::vector<int> parallel_levels = ModuleRI::run_sternheimer_channel_tasks<int>(
+        4,
+        [](const int) {
+#ifdef _OPENMP
+            return omp_in_parallel();
+#else
+            return 0;
+#endif
+        },
+        1);
+
+    ASSERT_EQ(parallel_levels.size(), 4U);
+    for (const int parallel_level: parallel_levels)
+    {
+        EXPECT_EQ(parallel_level, 0);
+    }
+}
+
 TEST(SternheimerChannelParallel, RethrowsFirstIndexedExceptionAfterAllTasksFinish)
 {
     std::atomic<int> completed_tasks{0};
