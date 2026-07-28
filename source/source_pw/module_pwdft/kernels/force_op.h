@@ -146,6 +146,7 @@ struct cal_force_nl_op
                     const FPTYPE& tpiba,
                     const FPTYPE* d_wg,
                     const FPTYPE* lambda,
+                    const int* isk,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
                     FPTYPE* force);

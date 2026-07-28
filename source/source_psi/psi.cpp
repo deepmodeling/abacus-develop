@@ -236,9 +236,16 @@ Psi<T, Device>::Psi(const Psi& psi_in)
     }
     else
     {
-        base_device::memory::synchronize_memory_op<T, Device, Device>()(this->psi,
-                                                                        psi_in.get_pointer() - psi_in.get_psi_bias(),
-                                                                        psi_in.size());
+        if (std::is_same<Device, base_device::DEVICE_CPU>::value)
+        {
+            std::memcpy(this->psi, psi_in.get_pointer() - psi_in.get_psi_bias(),
+                        sizeof(T) * psi_in.size());
+        }
+        else
+        {
+            base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>()(
+                this->psi, psi_in.get_pointer() - psi_in.get_psi_bias(), psi_in.size());
+        }
         this->psi_bias = psi_in.get_psi_bias();
         this->psi_current = this->psi + psi_in.get_psi_bias();
     }
@@ -325,6 +332,16 @@ template <typename T, typename Device>
 void Psi<T, Device>::set_all_psi(const T* another_pointer, const std::size_t size_in)
 {
     assert(size_in == this->size());
+    if (this->storage_mode_ == PsiStorageMode::PAGED_GPU)
+    {
+        if (psi_cpu_ != nullptr)
+        {
+            const size_t total_size = static_cast<size_t>(this->nk) * this->nbands * this->nbasis;
+            base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+                this->psi_cpu_, another_pointer, total_size);
+        }
+        return;
+    }
     synchronize_memory_op()(this->psi, another_pointer, this->size());
 }
 

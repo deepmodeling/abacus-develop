@@ -20,6 +20,24 @@
 namespace container {
 namespace cuSolverConnector {
 
+struct CudaDeleter {
+    void operator()(void* ptr) const noexcept {
+        if (ptr) cudaFree(ptr);
+    }
+};
+
+template <typename T>
+using unique_cuda_ptr = std::unique_ptr<T, CudaDeleter>;
+
+struct HostDeleter {
+    void operator()(void* ptr) const noexcept {
+        if (ptr) free(ptr);
+    }
+};
+
+template <typename T>
+using unique_host_ptr = std::unique_ptr<T, HostDeleter>;
+
 #if CUDA_VERSION >= 11000
 // Generic API (CUDA 11.0+)
 template <typename T>

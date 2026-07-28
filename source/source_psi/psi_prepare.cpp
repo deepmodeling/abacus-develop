@@ -178,8 +178,7 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             {
                 if (kspw_psi->get_storage_mode() == psi::PsiStorageMode::PAGED_GPU)
                 {
-                    std::memcpy(psi_device->get_pointer(), psi_cpu->get_pointer(),
-                                sizeof(T) * nbands_start * nbasis);
+                    syncmem_h2d_op()(psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
                 }
                 else
                 {
@@ -216,7 +215,15 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             {
                 if (psi_device->get_pointer() != kspw_psi->get_pointer())
                 {
-                    syncmem_complex_op()(kspw_psi->get_pointer(), psi_device->get_pointer(), nbands_l * nbasis);
+                    if (kspw_psi->get_storage_mode() == psi::PsiStorageMode::PAGED_GPU)
+                    {
+                        base_device::memory::synchronize_memory_op<T, base_device::DEVICE_CPU, Device>()(
+                            kspw_psi->get_pointer(), psi_device->get_pointer(), nbands_l * nbasis);
+                    }
+                    else
+                    {
+                        syncmem_complex_op()(kspw_psi->get_pointer(), psi_device->get_pointer(), nbands_l * nbasis);
+                    }
                 }
             }
         }
