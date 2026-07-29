@@ -52,18 +52,6 @@ add_library(
     ${objects}
 )
 
-if(USE_CUDA AND CUDAToolkit_VERSION VERSION_GREATER_EQUAL "12.8")
-  # -static-global-template-stub exists since CUDA 12.8; its default flipped to
-  # true in CUDA 13.0, giving the host-side stubs of explicitly instantiated
-  # __global__ template kernels local linkage in whole-program mode (-rdc=false).
-  # The instantiations in kernel/phi_operator_kernel.cu are called from
-  # kernel/phi_operator_gpu.cu, so the link fails with "hidden symbol ... isn't
-  # defined". Restore external linkage for the stubs instead of restructuring
-  # the sources.
-  target_compile_options(gint PRIVATE
-    $<$<COMPILE_LANGUAGE:CUDA>:-static-global-template-stub=false>)
-endif()
-
 if(BUILD_TESTING)
   add_subdirectory(test)
 endif()
