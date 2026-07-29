@@ -18,6 +18,7 @@ import time
 from collections import OrderedDict
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dataclasses import dataclass
+from datetime import date
 from pathlib import Path
 from pathlib import PurePosixPath
 from typing import Any, Dict, List, Mapping, Optional, Sequence, Tuple
@@ -35,7 +36,8 @@ MAX_RESULT_MEMBERS = 10000
 MAX_RESULT_BYTES = 2 * 1024**3
 MAX_REPORT_BYTES = 1024**2
 BUNDLE_PARTS = 8
-CACHE_LIMITS = {"daily": 3, "recent": 8}
+RECENT_CACHE_LIMIT = 3
+DAILY_CACHE_LIMIT = 2
 CACHE_RESERVATION_SECONDS = 6 * 3600
 
 
@@ -589,7 +591,12 @@ def _retained_refs(cache: Path) -> List[Tuple[str, str]]:
     for ref, value in _cache_refs(cache):
         if ref.startswith("refs/ci/active/"):
             continue
-        if not re.fullmatch(r"refs/ci/(?:(?:daily|recent)/\d+|[0-9a-f]{40})", ref):
+        if not re.fullmatch(
+            r"refs/ci/(?:daily/(?:day/\d{4}-\d{2}-\d{2}|\d+)|"
+            r"weekly/\d{4}-\d{2}/\d{4}-W\d{2}|monthly/\d{4}-\d{2}|"
+            r"recent/\d+|[0-9a-f]{40})",
+            ref,
+        ):
             raise ValueError("invalid source cache ref")
         refs.append((ref, value))
     return refs
@@ -658,34 +665,62 @@ def _release_cache(cache: Path, run: Path) -> None:
 
 
 def _rotate_cache_refs(cache: Path, bucket: str, source_sha: str) -> None:
-    values: Dict[str, List[Tuple[int, str]]] = {name: [] for name in CACHE_LIMITS}
+    days: Dict[str, str] = {}
+    weeks: Dict[Tuple[str, str], str] = {}
+    months: Dict[str, str] = {}
+    recent: List[Tuple[int, str]] = []
     legacy = []
     retained = _retained_refs(cache)
     for ref, value in retained:
-        match = re.fullmatch(r"refs/ci/(daily|recent)/(\d+)", ref)
-        if match:
-            values[match.group(1)].append((int(match.group(2)), value))
-        elif re.fullmatch(r"refs/ci/[0-9a-f]{40}", ref):
+        daily_match = re.fullmatch(r"refs/ci/daily/day/(\d{4}-\d{2}-\d{2})", ref)
+        weekly_match = re.fullmatch(
+            r"refs/ci/weekly/(\d{4}-\d{2})/(\d{4}-W\d{2})", ref,
+        )
+        monthly_match = re.fullmatch(r"refs/ci/monthly/(\d{4}-\d{2})", ref)
+        recent_match = re.fullmatch(r"refs/ci/recent/(\d+)", ref)
+        if daily_match:
+            days[daily_match.group(1)] = value
+        elif weekly_match:
+            weeks[(weekly_match.group(1), weekly_match.group(2))] = value
+        elif monthly_match:
+            months[monthly_match.group(1)] = value
+        elif recent_match:
+            recent.append((int(recent_match.group(1)), value))
+        elif ref == "refs/ci/" + source_sha:
+            continue
+        elif re.fullmatch(r"refs/ci/(?:daily/\d+|[0-9a-f]{40})", ref):
             legacy.append(value)
         else:
             raise ValueError("invalid source cache ref")
 
-    ordered = {
-        name: [value for _, value in sorted(items)]
-        for name, items in values.items()
-    }
-    ordered["recent"].extend(legacy)
-    ordered[bucket].insert(0, source_sha)
+    stamp = time.gmtime()
+    today = date(stamp.tm_year, stamp.tm_mon, stamp.tm_mday)
+    month = today.strftime("%Y-%m")
+    if bucket == "daily":
+        iso = today.isocalendar()
+        week = "{}-W{:02d}".format(iso.year, iso.week)
+        days[today.isoformat()] = source_sha
+        weeks.setdefault((month, week), source_sha)
+        months.setdefault(month, source_sha)
+    else:
+        recent.append((-1, source_sha))
+
     desired: Dict[str, str] = {}
-    seen = set()
-    for name in ("daily", "recent"):
-        unique = []
-        for value in ordered[name]:
-            if value not in seen:
-                seen.add(value)
-                unique.append(value)
-        for index, value in enumerate(unique[:CACHE_LIMITS[name]]):
-            desired["refs/ci/{}/{}".format(name, index)] = value
+    for name, value in sorted(months.items()):
+        desired["refs/ci/monthly/{}".format(name)] = value
+    for (week_month, week), value in sorted(weeks.items()):
+        if week_month == month:
+            desired["refs/ci/weekly/{}/{}".format(month, week)] = value
+    for day in sorted(days, reverse=True)[:DAILY_CACHE_LIMIT]:
+        desired["refs/ci/daily/day/{}".format(day)] = days[day]
+
+    ordered_recent = [value for _, value in sorted(recent)] + legacy
+    unique_recent = []
+    for value in ordered_recent:
+        if value not in unique_recent:
+            unique_recent.append(value)
+    for index, value in enumerate(unique_recent[:RECENT_CACHE_LIMIT]):
+        desired["refs/ci/recent/{}".format(index)] = value
 
     _update_cache_refs(cache, desired, [ref for ref, _ in retained if ref not in desired])
     _command(("git", "--git-dir", str(cache), "gc", "--auto"))
@@ -752,6 +787,7 @@ def remote_prepare(project: Path, run: Path) -> None:
         fcntl.flock(stream, fcntl.LOCK_EX)
         if not cache.exists():
             _command(("git", "init", "--bare", str(cache)))
+        _command(("git", "--git-dir", str(cache), "config", "fetch.unpackLimit", "1"))
         _cleanup_reservations(cache)
         retained = _retained_refs(cache)
         cached = _cached_commits(cache, retained)

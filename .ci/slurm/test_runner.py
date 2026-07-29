@@ -332,6 +332,15 @@ class TransferTests(unittest.TestCase):
             checksum = self._bundle(repository, run1, "HEAD")
             runner.remote_receive(project, run1, first, checksum)
             self.assertEqual((run1 / "source" / "value.txt").read_text(), "one\n")
+            cache = runner._cache(project)
+            unpack_limit = self._git(
+                repository, "--git-dir", str(cache), "config", "--get", "fetch.unpackLimit",
+            ).stdout.strip()
+            self.assertEqual(unpack_limit, "1")
+            objects = self._git(
+                repository, "--git-dir", str(cache), "count-objects", "-v",
+            ).stdout
+            self.assertIn("count: 0\n", objects)
 
             (repository / "value.txt").write_text("two\n", encoding="utf-8")
             self._git(repository, "commit", "-am", "two")
@@ -361,7 +370,6 @@ class TransferTests(unittest.TestCase):
             self._prepare(project, run4, home)
             checksum = self._bundle(repository, run4, first + "..HEAD")
             runner.remote_receive(project, run4, sibling, checksum)
-            cache = runner._cache(project)
             for ref, value in runner._cache_refs(cache):
                 if value != sibling:
                     self._git(repository, "--git-dir", str(cache), "update-ref", "-d", ref)
@@ -381,7 +389,7 @@ class TransferTests(unittest.TestCase):
             self.assertEqual((run5 / "source" / "value.txt").read_text(), "two\n")
             self.assertFalse(runner._cache_refs(cache, "refs/ci/active"))
 
-    def test_cache_retains_three_daily_and_eight_recent_tips(self):
+    def test_cache_retains_recent_daily_weekly_and_monthly_tips(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
             repository = root / "local"
@@ -390,7 +398,7 @@ class TransferTests(unittest.TestCase):
             self._git(repository, "config", "user.email", "ci@example.invalid")
             self._git(repository, "config", "user.name", "CI")
             commits = []
-            for index in range(13):
+            for index in range(16):
                 (repository / "value.txt").write_text(str(index), encoding="utf-8")
                 self._git(repository, "add", ".")
                 self._git(repository, "commit", "-m", str(index))
@@ -400,23 +408,94 @@ class TransferTests(unittest.TestCase):
             self._git(root, "--git-dir", str(cache), "update-ref", "-d", "refs/heads/master")
             for ref, _ in runner._cache_refs(cache):
                 self._git(root, "--git-dir", str(cache), "update-ref", "-d", ref)
-            self._git(root, "--git-dir", str(cache), "update-ref", "refs/ci/" + commits[0], commits[0])
+            for ref, commit in (
+                ("refs/ci/daily/0", commits[0]),
+                ("refs/ci/daily/1", commits[1]),
+                ("refs/ci/" + commits[2], commits[2]),
+            ):
+                self._git(root, "--git-dir", str(cache), "update-ref", ref, commit)
 
-            for commit in commits[1:10]:
+            for commit in commits[3:8]:
+                self._git(
+                    root, "--git-dir", str(cache), "update-ref",
+                    "refs/ci/" + commit, commit,
+                )
                 runner._rotate_cache_refs(cache, "recent", commit)
-            for commit in commits[10:]:
-                runner._rotate_cache_refs(cache, "daily", commit)
 
-            refs = runner._cache_refs(cache)
-            daily = [value for ref, value in refs if ref.startswith("refs/ci/daily/")]
-            recent = [value for ref, value in refs if ref.startswith("refs/ci/recent/")]
-            self.assertEqual(daily, list(reversed(commits[10:])))
-            self.assertEqual(recent, list(reversed(commits[2:10])))
-            self.assertEqual(len(refs), 11)
+            recent = [
+                value for ref, value in runner._cache_refs(cache)
+                if ref.startswith("refs/ci/recent/")
+            ]
+            self.assertEqual(recent, list(reversed(commits[5:8])))
+            runner._update_cache_refs(
+                cache, {}, ("refs/ci/recent/1", "refs/ci/recent/2"),
+            )
+
+            def daily(commit, year, month, day):
+                stamp = runner.time.struct_time((year, month, day, 0, 0, 0, 0, 1, 0))
+                self._git(
+                    root, "--git-dir", str(cache), "update-ref",
+                    "refs/ci/" + commit, commit,
+                )
+                with mock.patch("runner.time.gmtime", return_value=stamp):
+                    runner._rotate_cache_refs(cache, "daily", commit)
+
+            daily(commits[8], 2026, 1, 1)
+            daily(commits[9], 2026, 1, 1)
+            refs = dict(runner._cache_refs(cache))
+            self.assertEqual(refs["refs/ci/daily/day/2026-01-01"], commits[9])
+            self.assertEqual(refs["refs/ci/weekly/2026-01/2026-W01"], commits[8])
+            self.assertEqual(refs["refs/ci/monthly/2026-01"], commits[8])
+
+            daily(commits[10], 2026, 1, 8)
+            daily(commits[11], 2026, 1, 15)
+            refs = dict(runner._cache_refs(cache))
+            self.assertEqual(
+                {ref: value for ref, value in refs.items() if ref.startswith("refs/ci/weekly/")},
+                {
+                    "refs/ci/weekly/2026-01/2026-W01": commits[8],
+                    "refs/ci/weekly/2026-01/2026-W02": commits[10],
+                    "refs/ci/weekly/2026-01/2026-W03": commits[11],
+                },
+            )
+            self.assertNotIn("refs/ci/daily/day/2026-01-01", refs)
+
+            daily(commits[12], 2026, 2, 1)
+            daily(commits[13], 2026, 2, 1)
+            daily(commits[14], 2026, 2, 8)
+            daily(commits[15], 2026, 3, 1)
+            refs = dict(runner._cache_refs(cache))
+            self.assertEqual(
+                {ref: value for ref, value in refs.items() if ref.startswith("refs/ci/monthly/")},
+                {
+                    "refs/ci/monthly/2026-01": commits[8],
+                    "refs/ci/monthly/2026-02": commits[12],
+                    "refs/ci/monthly/2026-03": commits[15],
+                },
+            )
+            self.assertEqual(
+                {ref: value for ref, value in refs.items() if ref.startswith("refs/ci/weekly/")},
+                {"refs/ci/weekly/2026-03/2026-W09": commits[15]},
+            )
+            self.assertEqual(
+                {ref: value for ref, value in refs.items() if ref.startswith("refs/ci/daily/")},
+                {
+                    "refs/ci/daily/day/2026-02-08": commits[14],
+                    "refs/ci/daily/day/2026-03-01": commits[15],
+                },
+            )
+            self.assertEqual(
+                [
+                    value for ref, value in refs.items()
+                    if ref.startswith("refs/ci/recent/")
+                ],
+                [commits[7]],
+            )
+            self.assertEqual(len(refs), 7)
             run = root / "runs" / "manual" / "1-1"
             with mock.patch("runner.time.time", return_value=100):
                 runner._reserve_cache(cache, run, runner._retained_refs(cache))
-            self.assertEqual(len(runner._active_refs(cache)), 11)
+            self.assertEqual(len(runner._active_refs(cache)), 7)
             with mock.patch(
                 "runner.time.time", return_value=101 + runner.CACHE_RESERVATION_SECONDS,
             ):
