@@ -26,9 +26,10 @@ jobs:
   admit:
     name: Authorize request
     if: >-
-      github.event_name != 'issue_comment' ||
-      (github.event.issue.pull_request &&
-       github.event.comment.body == '/abacus-ci gpu')
+      vars.GPU_VALIDATION_ENABLED == 'true' &&
+      (github.event_name != 'issue_comment' ||
+       (github.event.issue.pull_request &&
+        github.event.comment.body == '/abacus-ci gpu'))
     runs-on: ubuntu-24.04
     permissions:
       checks: write

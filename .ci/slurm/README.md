@@ -23,6 +23,14 @@ files in this directory and can be adapted for another Slurm site.
 
 ## GitHub setup
 
+Create one repository variable under **Settings > Secrets and variables >
+Actions > Variables**:
+
+- `GPU_VALIDATION_ENABLED=true`
+
+Without this opt-in variable, every job in the copied workflow is skipped.
+Repository variables and environment secrets are not copied to forks.
+
 Create these GitHub Environments for the `GPU validation` workflow:
 
 - `gpu-ci-scheduled`: no required reviewers. The daily schedule uses this
@@ -40,6 +48,8 @@ trusted `[remote]` section in `config.ini`. A manual dispatch may provide the
 optional `project_root` input to override the configured root for that run.
 
 ## Triggers
+
+All triggers require the repository variable `GPU_VALIDATION_ENABLED=true`.
 
 - **Manual:** open Actions, choose `GPU validation`, and select
   **Run workflow**. `source_sha` is required and must be a 40-character commit

@@ -677,7 +677,7 @@ class PolicyTests(unittest.TestCase):
         self.assertIn("fromJSON(steps.cluster.outputs.config).remote.host", text)
         self.assertIn("runner.py run", text)
         self.assertEqual(text.count("pull-requests: write"), 2)
-        self.assertNotIn("${{ vars.", text)
+        self.assertIn("vars.GPU_VALIDATION_ENABLED == 'true'", text)
         self.assertNotIn("cpus-per-task", text)
 
 
