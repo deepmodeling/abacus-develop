@@ -21,7 +21,7 @@ template <>
 void OperatorLCAO<double, double>::get_hs_pointers() {
     ModuleBase::timer::start("OperatorLCAO", "get_hs_pointers");
     this->hmatrix_k = this->hsk->get_hk();
-    if ((this->new_e_iteration && ik == 0) || PARAM.inp.out_mat_hs[0])
+    if ((this->new_e_iteration && ik == 0) || PARAM.inp.out_hsk[0] == 1)
     {
         if (this->smatrix_k == nullptr)
         {

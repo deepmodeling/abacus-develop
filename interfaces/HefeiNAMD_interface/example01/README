@@ -47,7 +47,7 @@ read_file_dir    ./
 gamma_only       1 ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 
 out_wfc_lcao     1
-out_mat_hs       1
+out_hsk          1
 cal_syns         1
 dmax             0.01
 ```
@@ -57,7 +57,7 @@ dmax             0.01
 - `cal_syns`: Set to 1 to calculate asynchronous overlap matrix
 - `dmax`: Maximum displacement of all atoms in one step (in bohr) for calculating asynchronous overlap matrix
 - `out_wfc_lcao`: Set to 1 to output wavefunction files
-- `out_mat_hs`: Set to 1 to output Hamiltonian and overlap matrix files
+- `out_hsk`: Set to 1 to output Hamiltonian and overlap matrix files
 
 ### 2. STRU
 
@@ -108,5 +108,5 @@ After running the calculation, you will find the following key output files in t
 ## Troubleshooting
 
 - If you encounter errors related to the overlap matrix calculation, check that `dmax` is set to a reasonable value
-- If you do not see the expected output files, ensure that `out_wfc_lcao` and `out_mat_hs` are both set to 1
+- If you do not see the expected output files, ensure that `out_wfc_lcao` and `out_hsk` are both set to 1
 - For larger systems, you may need to adjust the memory settings to handle the larger matrix calculations

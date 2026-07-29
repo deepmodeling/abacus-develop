@@ -79,11 +79,19 @@ has_dftu=$(get_input_key_value "dft_plus_u" "INPUT")
 has_band=$(get_input_key_value "out_band" "INPUT")
 has_dos=$(get_input_key_value "out_dos" "INPUT")
 has_cond=$(get_input_key_value "cal_cond" "INPUT")
+out_hsk=$(get_input_key_value "out_hsk" "INPUT")
+out_hsr=$(get_input_key_value "out_hsr" "INPUT")
 has_hs=$(get_input_key_value "out_mat_hs" "INPUT")
 has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
 out_hr_npz=$(get_input_key_value "out_hr_npz" "INPUT")
 out_hsr_npz=$(get_input_key_value "out_hsr_npz" "INPUT")
 out_dm_npz=$(get_input_key_value "out_dm_npz" "INPUT")
+if ! test -z "$out_hsk"; then
+    has_hs=$out_hsk
+fi
+if ! test -z "$out_hsr"; then
+    has_hs2=$out_hsr
+fi
 has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
 has_xc2=$(get_input_key_value "out_mat_xc2" "INPUT")
 has_eband_separate=$(get_input_key_value "out_eband_terms" "INPUT")
@@ -433,12 +441,14 @@ fi
 #-----------------------------------
 # H(R), S(R), and DM(R) matrices in NPZ format
 #-----------------------------------
-if ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; then
+if { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
     test -f OUT.autotest/output_SR.npz
     echo "OutputSRNPZ_pass $?" >>$1
 fi
 
-if { ! test -z "$out_hr_npz" && [ "$out_hr_npz" == 1 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
+if { ! test -z "$out_hr_npz" && [ "$out_hr_npz" == 1 ]; } \
+    || { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } \
+    || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
     test -f OUT.autotest/output_HR0.npz
     echo "OutputHRNPZ_pass $?" >>$1
 fi

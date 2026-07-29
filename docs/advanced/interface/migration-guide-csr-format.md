@@ -85,7 +85,7 @@ Matrix number of H(R): 183
 2. **Header Format**: New format uses descriptive comments with `#` prefix
 3. **Section Labels**: New format explicitly labels CSR sections ("# CSR values", "# CSR column indices", "# CSR row pointers")
 4. **Ionic Step**: New format uses "Ionic Step N" instead of "STEP: N"
-5. **Precision Control**: New format supports optional precision parameter: `out_mat_hs2 1 12` (default 8)
+5. **Precision Control**: New format supports optional precision parameter: `out_hsr 1 12` (default 8)
 
 ## Migration Steps for Tool Developers
 
@@ -342,9 +342,9 @@ def compare_csr_data(old_file, new_file):
 The new format supports precision control via the second parameter:
 
 ```
-out_mat_hs2 1 8   # 8 digits (default)
-out_mat_hs2 1 12  # 12 digits (higher precision)
-out_mat_hs2 1 5   # 5 digits (lower precision, smaller files)
+out_hsr 1 8   # 8 digits (default)
+out_hsr 1 12  # 12 digits (higher precision)
+out_hsr 1 5   # 5 digits (lower precision, smaller files)
 ```
 
 This affects the output format of floating-point values in the CSR data.

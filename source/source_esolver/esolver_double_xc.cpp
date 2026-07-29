@@ -212,8 +212,8 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
 
         // update p_hamilt using output charge density
         // Note!!!
-        // This will change the result of out_mat_hs
-        // The original result of out_mat_hs is H of input density, but this change H to that of output density
+        // This will change the result of out_hsk
+        // The original result of out_hsk is H of input density, but this change H to that of output density
         // When converged, these two should be close
         if (PARAM.inp.deepks_v_delta > 0 && PARAM.inp.vl_in_h)
         {

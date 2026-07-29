@@ -199,8 +199,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     // 4) Output H(k) and S(k) matrices for each k-point
     //------------------------------------------------------------------
-    if (inp.out_mat_hs[0])
+    if (inp.out_hsk[0] == 1)
     {
+        const int precision = inp.out_hsk[1];
         ModuleIO::write_hsk(global_out_dir,
                             nspin,
                             kv.get_nks(),
@@ -212,6 +213,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                             gamma_only,
                             out_app_flag,
                             istep,
+                            precision,
                             GlobalV::ofs_running);
     }
 
@@ -263,9 +265,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 7a) Output H(R) and S(R) matrices in CSR format
     //------------------------------------------------------------------
-    if (inp.out_mat_hs2[0])
+    if (inp.out_hsr[0] == 1)
     {
-        const int precision = inp.out_mat_hs2[1];
+        const int precision = inp.out_hsr[1];
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
 
@@ -276,13 +278,14 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 7a.1) Output H(R), S(R), and DM(R) matrices in NPZ format
     //------------------------------------------------------------------
-    if (inp.out_hsr_npz)
+    const bool output_hsr_npz = inp.out_hsr[0] == 3 || inp.out_hsr_npz_compat;
+    if (output_hsr_npz)
     {
         std::string zipname = PARAM.globalv.global_out_dir + "output_SR.npz";
         ModuleIO::output_mat_npz(ucell, zipname, *(p_hamilt->getSR()));
     }
 
-    if (inp.out_hr_npz || inp.out_hsr_npz)
+    if (inp.out_hr_npz || output_hsr_npz)
     {
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         for (int ispin = 0; ispin < hr_vec.size(); ++ispin)

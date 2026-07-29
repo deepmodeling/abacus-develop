@@ -10,9 +10,18 @@ and
 
 - $S(k)=\sum_R S(R)e^{-ikR}$
 
-## out_mat_hs
+## out_hsk
 
-Users can set the keyword [out_mat_hs](../input_files/input-main.md#out_mat_hs) to true to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. It is available for both gamma_only and multi-k calculations. 
+Use [out_hsk](../input_files/input-main.md#out_hsk) to print the upper triangular part of the Hamiltonian and overlap matrices for each k point into `OUT.${suffix}`. It is available for both gamma-only and multi-k calculations. The format value is:
+
+| Value | Format |
+| --- | --- |
+| `0` | Disabled |
+| `1` | Text; an optional second value controls precision, for example `out_hsk 1 12` |
+| `2` | Reserved for future binary output; not implemented |
+| `3` | Reserved for H(k)/S(k) NPZ output; not implemented |
+
+The legacy keyword `out_mat_hs 1 [precision]` remains supported as an alias for `out_hsk 1 [precision]`. If both names are present, `out_hsk` takes precedence.
 
 The $H(k)$ and $S(k)$ matrices are stored with numerical atomic orbitals as basis, and the corresponding sequence of the numerical atomic orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
 
@@ -36,15 +45,24 @@ Each output block starts with a comment header containing the one-based ionic-st
 
 For multi-k calculations, the matrices are Hermitian and each matrix element is written as `(real,imag)`. For gamma-only calculations, the matrices are symmetric and the matrix elements are written as real numbers.
 
-## out_mat_hs2
+## out_hsr
 
-The output of $H(R)$ and $S(R)$ matrices is controlled by the keyword [out_mat_hs2](../input_files/input-main.md#out_mat_hs2). It is available for both gamma-only and multi-k LCAO calculations.
+The output of $H(R)$ and $S(R)$ matrices is controlled by [out_hsr](../input_files/input-main.md#out_hsr). It is available for both gamma-only and multi-k LCAO calculations:
 
-For a multi-k calculation, the files contain the individual real-space blocks stored for the Bravais lattice vectors $R$. For a gamma-only calculation, ABACUS stores the real-space contributions in a folded representation. `out_mat_hs2` writes this internal representation directly: all stored $R$-space contributions are summed into a single block labelled `R = (0, 0, 0)`.
+| Value | Format |
+| --- | --- |
+| `0` | Disabled |
+| `1` | Text CSR; an optional second value controls precision, for example `out_hsr 1 12` |
+| `2` | Reserved for future binary output; not implemented |
+| `3` | NPZ: `output_HR0.npz`, `output_HR1.npz` when needed, and `output_SR.npz` |
 
-The folded gamma-only output is sufficient to inspect the matrix used by the gamma-only real-space container, but it does not retain the original lattice-vector resolution and cannot be used to interpolate matrices at arbitrary k points. Terms that are added only while constructing $H(k)$, rather than stored in the internal $H(R)$ container, are not guaranteed to be present. Use [out_mat_hs](../input_files/input-main.md#out_mat_hs) when the final $H(\Gamma)$ and $S(\Gamma)$ matrices are required.
+The legacy keywords `out_mat_hs2 1 [precision]` and `out_hsr_npz 1` remain supported as aliases for text and NPZ output respectively. If `out_hsr` is present together with either legacy keyword, `out_hsr` takes precedence.
 
-### Output Format
+For a multi-k calculation, the files contain the individual real-space blocks stored for the Bravais lattice vectors $R$. For a gamma-only calculation, ABACUS stores the real-space contributions in a folded representation. Both text CSR and NPZ output write this internal representation directly: all stored $R$-space contributions are summed into a single block labelled `R = (0, 0, 0)`.
+
+The folded gamma-only output is sufficient to inspect the matrix used by the gamma-only real-space container, but it does not retain the original lattice-vector resolution and cannot be used to interpolate matrices at arbitrary k points. Terms that are added only while constructing $H(k)$, rather than stored in the internal $H(R)$ container, are not guaranteed to be present. Use [out_hsk](../input_files/input-main.md#out_hsk) when the final $H(\Gamma)$ and $S(\Gamma)$ matrices are required.
+
+### Text CSR Format
 
 The H(R) and S(R) matrices are output in standard Compressed Sparse Row (CSR) format, matching the format used by `out_dmr`.
 
@@ -58,6 +76,10 @@ In gamma-only mode, every generated file reports one Bravais lattice vector and 
 ```text
 # representation: gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)
 ```
+
+### NPZ Format
+
+Set `out_hsr 3` to write `output_HR0.npz`, `output_HR1.npz` when a second spin channel is present, and `output_SR.npz`. Matrix entry names include the atom-pair indices and the three components of $R$. Multi-k calculations retain the stored $R$ blocks, while gamma-only calculations contain only matrix entry names ending in `_0_0_0`.
 
 ### File Structure
 
@@ -91,7 +113,7 @@ The CSR format stores a sparse m × n matrix M in row form using three arrays (v
 
 ### Precision Control
 
-Use `out_mat_hs2 1 12` to output with 12-digit precision (default is 8).
+Use `out_hsr 1 12` to output text CSR files with 12-digit precision (default is 8). Precision is ignored for NPZ output.
 
 For calculations involving ionic movements, the output frequency of the matrix is controlled by [out_freq_ion](../input_files/input-main.md#out_freq_ion) and [out_app_flag](../input_files/input-main.md#out_app_flag). 
 

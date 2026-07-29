@@ -59,7 +59,8 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c) {
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = PARAM.inp.td_stype;
-    if (PARAM.inp.out_mat_hs2[0] == 1)
+    const auto& input = PARAM.inp;
+    if (input.out_hsr[0] == 1 || input.out_hsr[0] == 3 || input.out_hsr_npz_compat)
     {
         TD_info::out_mat_R = true;
     } else {

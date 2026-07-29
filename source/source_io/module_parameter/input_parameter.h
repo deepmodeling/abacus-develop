@@ -391,10 +391,13 @@ struct Input_para
     std::vector<int> out_dmr = {0, 8};    ///< output density matrix in real space DM(R)
     std::vector<int> out_dmk = {0, 8};    ///< output density matrix in reciprocal space DM(k)
     bool out_bandgap = false;             ///< QO added for bandgap printing
-    std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
+    std::vector<int> out_hsk = {0, 8};    ///< output H(k) and S(k): format and text precision
+    std::vector<int> out_hsr = {0, 8};    ///< output H(R) and S(R): format and text precision
+    bool out_hsr_npz_compat = false;       ///< additional NPZ output for the legacy text-plus-NPZ combination
+    std::vector<int> out_mat_hs = {0, 8}; ///< legacy alias for text H(k) and S(k) output
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};  ///< output L matrix in local basis.
-    std::vector<int> out_mat_hs2 = {0, 8}; ///< output H(R) and S(R) matrix with precision
+    std::vector<int> out_mat_hs2 = {0, 8}; ///< legacy alias for text H(R) and S(R) output
     std::vector<int> out_mat_h_t = {0, 8};   ///< output kinetic energy T(R) matrix
     std::vector<int> out_mat_h_vnl = {0, 8}; ///< output nonlocal pseudopotential Vnl(R) matrix
     std::vector<int> out_mat_h_vl = {0, 8};  ///< output local pseudopotential Vl(R) matrix

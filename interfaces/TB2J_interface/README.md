@@ -40,7 +40,7 @@ The `example01` directory contains a simple example demonstrating how to use the
 
 #### 1. Perform ABACUS calculation. 
  
-After the key parameter `out_mat_hs2` is turned on, the Hamiltonian matrix $H(R)$ (in $Ry$) and overlap matrix $S(R)$ will be written into files in the directory `OUT.${suffix}` . In the INPUT, the line:
+After the key parameter `out_hsr` is set to 1, the Hamiltonian matrix $H(R)$ (in $Ry$) and overlap matrix $S(R)$ will be written into files in the directory `OUT.${suffix}` . In the INPUT, the line:
 
 ```
 suffix                         Fe
@@ -48,7 +48,7 @@ suffix                         Fe
 
 specifies the suffix of the output, in this calculation, we set the path to the directory of the DFT calculation, which is the current directory (".") and the suffix to Fe.
 
-> **Note (ABACUS v3.9.0.25+):** Starting from ABACUS v3.9.0.25, the output format has changed to standard CSR format with filenames `hrs1_nao.csr`, `hrs2_nao.csr` (for nspin=2), and `srs1_nao.csr`. The parameter `out_mat_hs2` now supports optional precision control: `out_mat_hs2 1 8` (default 8 digits). TB2J v0.9.0+ is required to read the new format. For older TB2J versions, please use ABACUS v3.8.x or earlier. 
+> **Note (ABACUS v3.9.0.25+):** Starting from ABACUS v3.9.0.25, the output format has changed to standard CSR format with filenames `hrs1_nao.csr`, `hrs2_nao.csr` (for nspin=2), and `srs1_nao.csr`. The parameter `out_hsr` supports optional precision control: `out_hsr 1 8` (default 8 digits); the legacy spelling `out_mat_hs2` remains accepted. TB2J v0.9.0+ is required to read the new format. For older TB2J versions, please use ABACUS v3.8.x or earlier.
 
 #### 2. Perform TB2J calculation:
 
