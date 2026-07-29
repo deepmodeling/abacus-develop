@@ -329,11 +329,11 @@ if ! test -z "$has_hs"  && [ $has_hs == 1 ]; then
     else
         # ========== Multiple k-points calculation ==========
         if ! test -z "$nspin" && [ $nspin == 2 ]; then
-            # nspin=2 (spin-polarized): compare hks1_2 + hks2_2 Hamiltonian + sk2 overlap matrix
-            h1ref=hks1_2_nao.txt.ref
-            h1cal=OUT.autotest/hks1_2_nao.txt
-            h2ref=hks2_2_nao.txt.ref
-            h2cal=OUT.autotest/hks2_2_nao.txt
+            # nspin=2 (spin-polarized): compare spin-up/spin-down H(k) and S(k) at the second k-point
+            h1ref=hk2s1_nao.txt.ref
+            h1cal=OUT.autotest/hk2s1_nao.txt
+            h2ref=hk2s2_nao.txt.ref
+            h2cal=OUT.autotest/hk2s2_nao.txt
             sref=sk2_nao.txt.ref
             scal=OUT.autotest/sk2_nao.txt
             # Compare Hamiltonian matrix for spin 1

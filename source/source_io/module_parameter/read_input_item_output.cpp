@@ -484,15 +484,14 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output H and S matrix (with precision 8)";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = R"(Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory OUT.${suffix}. The second number controls precision. For more information, please refer to hs_matrix.md. Also controled by out_freq_ion and out_app_flag.
-* For gamma only case:
- * nspin = 1: hks1_nao.txt for the Hamiltonian matrix and sks1_nao.txt for the overlap matrix;
- * nspin = 2: hks1_nao.txt and hks2_nao.txt for the Hamiltonian matrix and sks1_nao.txt for the overlap matrix. Note that the code will not output sks2_nao.txt because it is the same as sks1_nao.txt;
- * nspin = 4: hks12_nao.txt for the Hamiltonian matrix and sks12_nao.txt for the overlap matrix.
-* For multi-k points case:
- * nspin = 1: hks1k1_nao.txt for the Hamiltonian matrix at the 1st k-point, and sks1k1_nao.txt for the overlap matrix for the 1st k-point, ...;
- * nspin = 2: hks1k1_nao.txt and hks2k1_nao.txt for the two spin channels of the Hamiltonian matrix at the 1st k-point, and sks1k1_nao.txt for the overlap matrix for the 1st k-point. Note that the code will not output sks2k1_nao.txt because it is the same as sks1k1_nao.txt, ...;
- * nspin = 4: hks12k1_nao.txt for the Hamiltonian matrix at the 1st k-point, and sks12k1_nao.txt for the overlap matrix for the 1st k-point, ...;
+        item.description = R"(Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory OUT.${suffix}. The second number controls precision. For more information, please refer to hs_matrix.md. Also controlled by out_freq_ion and out_app_flag.
+* Gamma-only, nspin = 1: hk_nao.txt for the Hamiltonian matrix and sk_nao.txt for the overlap matrix.
+* Gamma-only, nspin = 2: hks1_nao.txt and hks2_nao.txt for the two spin channels of the Hamiltonian matrix, and sk_nao.txt for the overlap matrix. Only one overlap matrix is written because it is identical for both spin channels.
+* Gamma-only, nspin = 4: not available with the gamma-only algorithm.
+* Multi-k, nspin = 1: hk1_nao.txt for the Hamiltonian matrix and sk1_nao.txt for the overlap matrix at the first k-point.
+* Multi-k, nspin = 2: hk1s1_nao.txt and hk1s2_nao.txt for the two spin channels of the Hamiltonian matrix, and sk1_nao.txt for the overlap matrix at the first k-point. Only one overlap matrix is written because it is identical for both spin channels.
+* Multi-k, nspin = 4: hk1s4_nao.txt for the spinor Hamiltonian matrix and sk1_nao.txt for the spinor overlap matrix at the first k-point.
+When out_app_flag is false, g followed by the one-based ionic-step index is inserted before _nao, for example hk1s1g1_nao.txt.
 
 [NOTE] In the 3.10-LTS version, the file names are data-0-H and data-0-S, etc.)";
         item.default_value = "False 8";

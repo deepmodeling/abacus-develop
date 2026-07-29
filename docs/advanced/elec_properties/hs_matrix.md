@@ -18,9 +18,23 @@ The $H(k)$ and $S(k)$ matrices are stored with numerical atomic orbitals as basi
 
 As for information on the k points, one may look for the `SETUP K-POINTS` section in the running log.
 
-The first number of the first line in each file gives the size of the matrix, namely, the number of atomic basis functions in the system.
+The output filenames depend on the k-point algorithm and `nspin`:
 
-The rest of the file contains the upper triangular part of the specified matrices. For multi-k calculations, the matrices are Hermitian and the matrix elements are complex; for gamma-only calculations, the matrices are symmetric and the matrix elements are real.
+| Calculation mode | `nspin` | Hamiltonian files | Overlap files |
+| --- | --- | --- | --- |
+| `gamma_only = 1` | 1 | `hk_nao.txt` | `sk_nao.txt` |
+| `gamma_only = 1` | 2 | `hks1_nao.txt`, `hks2_nao.txt` | `sk_nao.txt` |
+| `gamma_only = 0` | 1 | `hk${k}_nao.txt` | `sk${k}_nao.txt` |
+| `gamma_only = 0` | 2 | `hk${k}s1_nao.txt`, `hk${k}s2_nao.txt` | `sk${k}_nao.txt` |
+| `gamma_only = 0` | 4 | `hk${k}s4_nao.txt` | `sk${k}_nao.txt` |
+
+Here `${k}` is the one-based k-point index. For `nspin = 2`, the overlap matrix is spin-independent, so only one overlap file is written for each physical k point. The gamma-only algorithm does not support `nspin = 4`; use the multi-k algorithm with an explicit Gamma-only `KPT` file for a noncollinear calculation at Gamma.
+
+When `out_app_flag` is false, `g${step}` is inserted before `_nao`, where `${step}` is the one-based ionic-step index. For example, the first spin channel at the first k point and first ionic step is written to `hk1s1g1_nao.txt`.
+
+Each output block starts with a comment header containing the one-based ionic-step index, filename, `gamma only` flag, and matrix dimensions. It is followed by `Row 1`, `Row 2`, and so on. Each row contains the matrix elements from the diagonal through the upper triangle.
+
+For multi-k calculations, the matrices are Hermitian and each matrix element is written as `(real,imag)`. For gamma-only calculations, the matrices are symmetric and the matrix elements are written as real numbers.
 
 ## out_mat_hs2
 
@@ -81,11 +95,11 @@ When `nspin` is set to 4, the dimension of the overlap matrix is (2 $\times$ nlo
 
 
 ## examples
-We provide [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/matrix_hs) of outputting the matrices. There are four examples:
+We provide [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/10_hs_matrix) of outputting the matrices.
 
-- out_hs_gammaonly: writing H(k) and S(k) for gamma-only calculation
-- out_hs_multik: writing H(k) and S(k) for multi-k calculation
-- out_hs2_multik: writing H(R) and S(R) for multi-k calculation
-- out_s_multik: running calculation=get_s to obtain overlap matrix for multi-k calculation
+- `03_out_hsk_gamma`: writing H(k) and S(k) for a gamma-only calculation
+- `04_out_hsk_multik`: writing H(k) and S(k) for a multi-k calculation
+- `01_out_hsr_multik` and `02_out_hsr_multik`: writing H(R) and S(R) for a multi-k calculation
+- `05_gets`: running `calculation = get_s` to obtain the overlap matrix
 
 Reference output files are provided in each directory.
