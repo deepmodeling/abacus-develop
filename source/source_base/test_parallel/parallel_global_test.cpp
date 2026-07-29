@@ -170,7 +170,10 @@ TEST_F(ParaGlobal, DivideMPIPools)
 
 TEST_F(ParaGlobal, DivideKAndBandPools)
 {
-    ASSERT_EQ(nproc, 4);
+    if (nproc != 4)
+    {
+        GTEST_SKIP() << "Requires exactly four MPI ranks.";
+    }
 
     Parallel_Global::divide_pools(nproc,
                                   my_rank,
