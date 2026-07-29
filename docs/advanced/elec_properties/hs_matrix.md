@@ -38,15 +38,26 @@ For multi-k calculations, the matrices are Hermitian and each matrix element is 
 
 ## out_mat_hs2
 
-The output of $H(R)$ and $S(R)$ matrices is controlled by the keyword [out_mat_hs2](../input_files/input-main.md#out_mat_hs2). This functionality is not available for gamma_only calculations. To generate such matrices for gamma only calculations, users should turn off [gamma_only](../input_files/input-main.md#gamma_only), and explicitly specify that gamma point is the only k point in the KPT file.
+The output of $H(R)$ and $S(R)$ matrices is controlled by the keyword [out_mat_hs2](../input_files/input-main.md#out_mat_hs2). It is available for both gamma-only and multi-k LCAO calculations.
+
+For a multi-k calculation, the files contain the individual real-space blocks stored for the Bravais lattice vectors $R$. For a gamma-only calculation, ABACUS stores the real-space contributions in a folded representation. `out_mat_hs2` writes this internal representation directly: all stored $R$-space contributions are summed into a single block labelled `R = (0, 0, 0)`.
+
+The folded gamma-only output is sufficient to inspect the matrix used by the gamma-only real-space container, but it does not retain the original lattice-vector resolution and cannot be used to interpolate matrices at arbitrary k points. Terms that are added only while constructing $H(k)$, rather than stored in the internal $H(R)$ container, are not guaranteed to be present. Use [out_mat_hs](../input_files/input-main.md#out_mat_hs) when the final $H(\Gamma)$ and $S(\Gamma)$ matrices are required.
 
 ### Output Format
 
 The H(R) and S(R) matrices are output in standard Compressed Sparse Row (CSR) format, matching the format used by `out_dmr`.
 
 For single-point SCF calculations:
-- **nspin = 1 or nspin = 4**: Two files `hrs1_nao.csr` and `srs1_nao.csr` are generated, containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively.
+- **nspin = 1**: Two files `hrs1_nao.csr` and `srs1_nao.csr` are generated, containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively.
 - **nspin = 2**: Three files `hrs1_nao.csr`, `hrs2_nao.csr`, and `srs1_nao.csr` are created, where the first two files correspond to $H(R)$ for spin up and spin down, respectively.
+- **nspin = 4**: Multi-k calculations generate `hrs1_nao.csr` and `srs1_nao.csr`. The gamma-only algorithm itself does not support `nspin = 4`.
+
+In gamma-only mode, every generated file reports one Bravais lattice vector and contains one CSR block for `0 0 0`. The header also contains:
+
+```text
+# representation: gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)
+```
 
 ### File Structure
 

@@ -940,13 +940,19 @@ TEST_F(InputTest, Item_test)
     }
     { // out_mat_r
         auto it = find_label("out_mat_r", readinput.input_lists);
+        param.input.out_mat_hs2[0] = 1;
+        param.sys.gamma_only_local = true;
+        it->second.check_value(it->second, param);
+        param.input.out_mat_hs2[0] = 0;
+
         param.input.esolver_type = "lcao";
         param.input.out_mat_r[0] = 1;
-        param.sys.gamma_only_local = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("available"));
+        param.input.out_mat_r[0] = 0;
+        param.sys.gamma_only_local = false;
     }
     { // lcao_ecut
         auto it = find_label("lcao_ecut", readinput.input_lists);

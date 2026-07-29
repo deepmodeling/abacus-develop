@@ -95,9 +95,9 @@ static void gather_and_write(const std::string& prefix,
             fname = PARAM.globalv.global_out_dir + hsr_gen_fname(prefix, ispin, append, istep);
         }
 #ifdef __MPI
-        write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, ispin, nspin, label);
+        write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, ispin, nspin, label, "");
 #else
-        write_hcontainer_csr(fname, &ucell, 8, &hR, istep, ispin, nspin, label);
+        write_hcontainer_csr(fname, &ucell, 8, &hR, istep, ispin, nspin, label, "");
 #endif
     }
 }

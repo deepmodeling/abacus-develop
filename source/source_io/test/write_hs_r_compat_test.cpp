@@ -12,6 +12,7 @@
 #include "source_io/module_hs/rr_sparse_writer.h"
 #include "source_io/module_hs/write_HS_R.h"
 #include "source_io/module_hs/write_HS_sparse.h"
+#include "source_io/module_output/csr_reader.h"
 #include "source_hamilt/module_hcontainer/atom_pair.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
@@ -253,7 +254,7 @@ TEST(WriteHsRCompatibility, HContainerCsrHeaderKeepsCurrentFormat)
     double values[4] = {1.0, 0.0, 0.5, 2.0};
     fill_matrix(matrix, pv, values);
 
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 5, &matrix, 0, 0, 1, "H");
+    ModuleIO::write_hcontainer_csr(filename, &ucell, 5, &matrix, 0, 0, 1, "H", "");
 
     const std::string output = read_file(filename);
     EXPECT_THAT(output, testing::HasSubstr(" --- Ionic Step 1 ---\n"));
@@ -270,6 +271,38 @@ TEST(WriteHsRCompatibility, HContainerCsrHeaderKeepsCurrentFormat)
     EXPECT_THAT(output, testing::HasSubstr(" 0 0 0 3\n"));
     EXPECT_THAT(output, testing::HasSubstr(" # CSR values\n"));
     EXPECT_THAT(output, testing::HasSubstr(" 1.00000e+00 5.00000e-01 2.00000e+00"));
+    EXPECT_THAT(output, testing::Not(testing::HasSubstr("# representation:")));
+
+    std::remove(filename.c_str());
+}
+
+TEST(WriteHsRCompatibility, GammaFoldedHeaderKeepsCsrReadable)
+{
+    const std::string filename = "write_hs_r_gamma_folded.csr";
+    const std::string representation_note
+        = "gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)";
+    std::remove(filename.c_str());
+
+    UnitCell ucell;
+    init_unitcell(ucell);
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    hamilt::HContainer<double> matrix(&pv);
+    double values[4] = {1.0, 0.0, 0.5, 2.0};
+    fill_matrix(matrix, pv, values);
+
+    ModuleIO::write_hcontainer_csr(
+        filename, &ucell, 5, &matrix, 0, 0, 1, "H", representation_note);
+
+    const std::string output = read_file(filename);
+    EXPECT_THAT(output, testing::HasSubstr("# representation: " + representation_note + "\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" 1 # number of Bravais lattice vector R\n"));
+    EXPECT_THAT(output, testing::HasSubstr(" 0 0 0 3\n"));
+
+    ModuleIO::csrFileReader<double> reader(filename);
+    ASSERT_EQ(reader.getNumberOfR(), 1);
+    EXPECT_EQ(reader.getMatrixDimension(), 2);
+    EXPECT_EQ(reader.getRCoordinate(0), std::vector<int>({0, 0, 0}));
 
     std::remove(filename.c_str());
 }
@@ -287,8 +320,8 @@ TEST(WriteHsRCompatibility, HContainerCsrAppendKeepsCurrentStepSections)
     double values[4] = {1.0, 0.0, 0.0, 1.0};
     fill_matrix(matrix, pv, values);
 
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 0, 0, 1, "S");
-    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 1, 0, 1, "S");
+    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 0, 0, 1, "S", "");
+    ModuleIO::write_hcontainer_csr(filename, &ucell, 4, &matrix, 1, 0, 1, "S", "");
 
     const std::string output = read_file(filename);
     EXPECT_EQ(count_substr(output, " --- Ionic Step "), 2);

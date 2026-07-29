@@ -81,7 +81,8 @@ void write_hcontainer_csr(const std::string& fname,
                           const int istep,
                           const int ispin,
                           const int nspin,
-                          const std::string& label);
+                          const std::string& label,
+                          const std::string& representation_note);
 
 /// Write H(R) and S(R) in CSR format, unified with write_dmr interface.
 template <typename TR>
@@ -91,6 +92,7 @@ void write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                const int precision,
                const Parallel_2D& paraV,
                const bool append,
+               const bool gamma_only,
                const int* iat2iwt,
                const int nat,
                const int istep);

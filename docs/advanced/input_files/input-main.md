@@ -2024,8 +2024,10 @@
 ### out_mat_hs2
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: *Numerical atomic orbital basis (not gamma-only algorithm)*
+- **Availability**: *Numerical atomic orbital basis*
 - **Description**: Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md.
+
+  For gamma-only calculations, the stored real-space contributions are folded into a single R = (0, 0, 0) block.
 
   > Note: In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.
 - **Default**: False [8]
