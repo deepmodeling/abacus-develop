@@ -35,6 +35,8 @@ MAX_RESULT_MEMBERS = 10000
 MAX_RESULT_BYTES = 2 * 1024**3
 MAX_REPORT_BYTES = 1024**2
 BUNDLE_PARTS = 8
+CACHE_LIMITS = {"daily": 3, "recent": 8}
+CACHE_RESERVATION_SECONDS = 6 * 3600
 
 
 @dataclass(frozen=True)
@@ -555,6 +557,140 @@ def _cache(project: Path) -> Path:
     return project / "cache" / "repository.git"
 
 
+def _run_relative(project: Path, run: Path) -> Path:
+    try:
+        relative = run.resolve().relative_to((project.resolve() / "runs").resolve())
+    except ValueError as error:
+        raise ValueError("invalid run directory") from error
+    if len(relative.parts) != 2 or any(not NAME.fullmatch(part) for part in relative.parts):
+        raise ValueError("invalid run directory")
+    return relative
+
+
+def _cache_refs(cache: Path, prefix: str = "refs/ci") -> List[Tuple[str, str]]:
+    lines = _command((
+        "git", "--git-dir", str(cache), "for-each-ref",
+        "--format=%(refname) %(objectname)", prefix,
+    )).stdout.splitlines()
+    refs = []
+    for line in lines:
+        try:
+            name, value = line.split()
+        except ValueError as error:
+            raise ValueError("invalid source cache ref") from error
+        if not SHA.fullmatch(value):
+            raise ValueError("invalid cached source SHA")
+        refs.append((name, value))
+    return refs
+
+
+def _retained_refs(cache: Path) -> List[Tuple[str, str]]:
+    refs = []
+    for ref, value in _cache_refs(cache):
+        if ref.startswith("refs/ci/active/"):
+            continue
+        if not re.fullmatch(r"refs/ci/(?:(?:daily|recent)/\d+|[0-9a-f]{40})", ref):
+            raise ValueError("invalid source cache ref")
+        refs.append((ref, value))
+    return refs
+
+
+def _cached_commits(cache: Path, retained: Sequence[Tuple[str, str]]) -> List[str]:
+    refs = [name for name, _ in retained]
+    if not refs:
+        return []
+    commits = _command(("git", "--git-dir", str(cache), "rev-list", *refs)).stdout.splitlines()
+    if any(not SHA.fullmatch(value) for value in commits):
+        raise ValueError("invalid cached source SHA")
+    return sorted(set(commits))
+
+
+def _update_cache_refs(cache: Path, updates: Mapping[str, str], deletes: Sequence[str]) -> None:
+    if not updates and not deletes:
+        return
+    commands = ["start"]
+    commands.extend("update {} {}".format(ref, value) for ref, value in updates.items())
+    commands.extend("delete {}".format(ref) for ref in deletes)
+    commands.extend(("prepare", "commit"))
+    result = subprocess.run(
+        ("git", "--git-dir", str(cache), "update-ref", "--stdin"),
+        input="\n".join(commands) + "\n", text=True, capture_output=True,
+    )
+    if result.returncode:
+        raise RuntimeError(result.stderr.strip() or "unable to update source cache refs")
+
+
+def _reservation_token(run: Path) -> str:
+    return hashlib.sha256(str(run.resolve()).encode("utf-8")).hexdigest()
+
+
+def _active_refs(cache: Path) -> List[Tuple[str, int, str]]:
+    active = []
+    for ref, _ in _cache_refs(cache, "refs/ci/active"):
+        match = re.fullmatch(r"refs/ci/active/(\d+)/([0-9a-f]{64})/\d+", ref)
+        if not match:
+            raise ValueError("invalid source cache reservation")
+        active.append((ref, int(match.group(1)), match.group(2)))
+    return active
+
+
+def _cleanup_reservations(cache: Path) -> None:
+    now = time.time()
+    _update_cache_refs(cache, {}, [ref for ref, expires, _ in _active_refs(cache) if expires <= now])
+
+
+def _reserve_cache(cache: Path, run: Path, retained: Sequence[Tuple[str, str]]) -> None:
+    if not retained:
+        return
+    prefix = "refs/ci/active/{}/{}".format(
+        int(time.time() + CACHE_RESERVATION_SECONDS), _reservation_token(run),
+    )
+    _update_cache_refs(cache, {
+        "{}/{}".format(prefix, index): value
+        for index, (_, value) in enumerate(retained)
+    }, ())
+
+
+def _release_cache(cache: Path, run: Path) -> None:
+    token = _reservation_token(run)
+    refs = [ref for ref, _, owner in _active_refs(cache) if owner == token]
+    _update_cache_refs(cache, {}, refs)
+
+
+def _rotate_cache_refs(cache: Path, bucket: str, source_sha: str) -> None:
+    values: Dict[str, List[Tuple[int, str]]] = {name: [] for name in CACHE_LIMITS}
+    legacy = []
+    retained = _retained_refs(cache)
+    for ref, value in retained:
+        match = re.fullmatch(r"refs/ci/(daily|recent)/(\d+)", ref)
+        if match:
+            values[match.group(1)].append((int(match.group(2)), value))
+        elif re.fullmatch(r"refs/ci/[0-9a-f]{40}", ref):
+            legacy.append(value)
+        else:
+            raise ValueError("invalid source cache ref")
+
+    ordered = {
+        name: [value for _, value in sorted(items)]
+        for name, items in values.items()
+    }
+    ordered["recent"].extend(legacy)
+    ordered[bucket].insert(0, source_sha)
+    desired: Dict[str, str] = {}
+    seen = set()
+    for name in ("daily", "recent"):
+        unique = []
+        for value in ordered[name]:
+            if value not in seen:
+                seen.add(value)
+                unique.append(value)
+        for index, value in enumerate(unique[:CACHE_LIMITS[name]]):
+            desired["refs/ci/{}/{}".format(name, index)] = value
+
+    _update_cache_refs(cache, desired, [ref for ref, _ in retained if ref not in desired])
+    _command(("git", "--git-dir", str(cache), "gc", "--auto"))
+
+
 def _split_bundle(bundle: Path, destination: Path) -> Tuple[List[Path], str]:
     size = bundle.stat().st_size
     if size < BUNDLE_PARTS:
@@ -602,8 +738,9 @@ def remote_prepare(project: Path, run: Path) -> None:
     project = project.resolve()
     run = run.resolve()
     roots = tuple(Path(root).resolve() for root in load_config().remote.allowed_project_roots)
-    if not _below_project_root(project, roots) or project not in run.parents:
+    if not _below_project_root(project, roots):
         raise ValueError("project must be below a configured project root")
+    _run_relative(project, run)
     run_paths = tuple(run / name for name in ("source", "results", "jobs", "input"))
     if any(path.exists() for path in run_paths):
         raise ValueError("run directory already exists")
@@ -615,12 +752,12 @@ def remote_prepare(project: Path, run: Path) -> None:
         fcntl.flock(stream, fcntl.LOCK_EX)
         if not cache.exists():
             _command(("git", "init", "--bare", str(cache)))
-        latest = cache.parent / "latest"
-        base = latest.read_text(encoding="utf-8").strip() if latest.is_file() else ""
-        if not SHA.fullmatch(base or ""):
-            base = ""
+        _cleanup_reservations(cache)
+        retained = _retained_refs(cache)
+        cached = _cached_commits(cache, retained)
+        _reserve_cache(cache, run, retained)
         cleanup_archives(project)
-    print(json.dumps({"run_root": str(run), "cache_sha": base}))
+    print(json.dumps({"cache_shas": sorted(set(cached))}))
 
 
 def remote_receive(project: Path, run: Path, source_sha: str, bundle_checksum: str) -> None:
@@ -647,6 +784,8 @@ def remote_receive(project: Path, run: Path, source_sha: str, bundle_checksum: s
             if any(input_root.iterdir()):
                 raise ValueError("unexpected bundle data for cache hit")
             _command(("git", "--git-dir", str(cache), "cat-file", "-e", source_sha + "^{commit}"))
+        relative = _run_relative(project, run)
+        _rotate_cache_refs(cache, "daily" if relative.parts[0] == "daily" else "recent", source_sha)
         source = run / "source"
         shutil.rmtree(str(source))
         source.mkdir()
@@ -656,7 +795,7 @@ def remote_receive(project: Path, run: Path, source_sha: str, bundle_checksum: s
         archive.stdout.close()
         if archive.wait() or extract.returncode:
             raise RuntimeError("unable to extract source tree")
-        _atomic(cache.parent / "latest", source_sha + "\n")
+        _release_cache(cache, run)
 
 
 def collect(run: Path) -> None:
@@ -712,13 +851,14 @@ def _extract_results(stream: Any, destination: Path) -> None:
             archive.extract(member, str(destination))
 
 
-def _bundle_revision(repository: Path, base: str, source_sha: str) -> Optional[str]:
-    if base == source_sha:
+def _bundle_revision(repository: Path, cached: Sequence[str], source_sha: str) -> Optional[str]:
+    if source_sha in cached:
         return None
-    if SHA.fullmatch(base) and subprocess.run(
-        ("git", "merge-base", "--is-ancestor", base, "HEAD"), cwd=str(repository),
-    ).returncode == 0:
-        return base + "..HEAD"
+    cached_set = set(cached)
+    history = _command(("git", "rev-list", "--topo-order", "HEAD"), repository).stdout.splitlines()
+    for base in history:
+        if base in cached_set:
+            return base + "..HEAD"
     return "HEAD"
 
 
@@ -914,11 +1054,14 @@ def run(args: argparse.Namespace) -> int:
         "python3", remote_control + "/runner.py", "prepare", args.project_root, str(run),
     ))
     data = json.loads(prepared.stdout)
-    base = data.get("cache_sha", "")
+    if type(data) is not dict or set(data) != {"cache_shas"} or type(data["cache_shas"]) is not list or \
+            any(type(value) is not str or not SHA.fullmatch(value) for value in data["cache_shas"]) or \
+            len(set(data["cache_shas"])) != len(data["cache_shas"]):
+        raise ValueError("invalid remote source cache")
     print("Uploading source...", flush=True)
     with tempfile.TemporaryDirectory() as directory:
         bundle = Path(directory) / "source.bundle"
-        revision = _bundle_revision(repository, base, args.source_sha)
+        revision = _bundle_revision(repository, data["cache_shas"], args.source_sha)
         checksum = "-"
         if revision:
             _command(("git", "bundle", "create", str(bundle), revision), repository)

@@ -100,10 +100,15 @@ results and the compressed remote archive.
 
 Source is sent as one compressed Git bundle split into eight parallel rsync
 transfers. The remote side checks the merged SHA-256 and the Git bundle before
-updating its cache. Later runs send only commits after the cached SHA; a run at
-the same SHA sends no source data. The client reports completed source parts,
-then prints changing Slurm queue, running, and finished counts for each build
-or test group.
+updating its cache. The remote reports its cached commit history, and the client
+selects the nearest shared commit in the candidate's history. This also allows
+sibling branches to send only their changes after the merge base. The cache
+keeps three daily tips and eight recent manual or pull-request tips in one
+deduplicated Git object store. Six-hour reservations protect concurrent source
+transfers; older unreachable objects follow Git's normal grace period before
+collection. A run at an already cached SHA sends no source data. The client
+reports completed source parts, then prints changing Slurm queue, running, and
+finished counts for each build or test group.
 
 For the public commands and all `run` options, use:
 

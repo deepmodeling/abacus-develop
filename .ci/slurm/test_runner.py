@@ -306,6 +306,12 @@ class TransferTests(unittest.TestCase):
         self.assertEqual(len(parts), 8)
         return checksum
 
+    def _prepare(self, project, run, root):
+        with mock.patch("runner.load_config", return_value=self._remote_config(root)), \
+                io.StringIO() as output, contextlib.redirect_stdout(output):
+            runner.remote_prepare(project, run)
+            return json.loads(output.getvalue())
+
     def test_full_then_incremental_bundle(self):
         with tempfile.TemporaryDirectory() as directory:
             home = Path(directory)
@@ -322,8 +328,7 @@ class TransferTests(unittest.TestCase):
             project = home / "project"
             run1 = project / "runs" / "manual" / "1-1"
             (run1 / "control").mkdir(parents=True)
-            with mock.patch("runner.load_config", return_value=self._remote_config(home)):
-                runner.remote_prepare(project, run1)
+            self.assertEqual(self._prepare(project, run1, home), {"cache_shas": []})
             checksum = self._bundle(repository, run1, "HEAD")
             runner.remote_receive(project, run1, first, checksum)
             self.assertEqual((run1 / "source" / "value.txt").read_text(), "one\n")
@@ -333,19 +338,90 @@ class TransferTests(unittest.TestCase):
             second = self._git(repository, "rev-parse", "HEAD").stdout.strip()
             run2 = project / "runs" / "manual" / "2-1"
             (run2 / "control").mkdir(parents=True)
-            with mock.patch("runner.load_config", return_value=self._remote_config(home)):
-                runner.remote_prepare(project, run2)
+            self.assertEqual(self._prepare(project, run2, home), {"cache_shas": [first]})
             checksum = self._bundle(repository, run2, first + "..HEAD")
             runner.remote_receive(project, run2, second, checksum)
             self.assertEqual((run2 / "source" / "value.txt").read_text(), "two\n")
 
             run3 = project / "runs" / "manual" / "3-1"
             (run3 / "control").mkdir(parents=True)
-            with mock.patch("runner.load_config", return_value=self._remote_config(home)):
-                runner.remote_prepare(project, run3)
-            self.assertIsNone(runner._bundle_revision(repository, second, second))
+            cached = self._prepare(project, run3, home)["cache_shas"]
+            self.assertEqual(cached, sorted((first, second)))
+            self.assertIsNone(runner._bundle_revision(repository, cached, second))
             runner.remote_receive(project, run3, second, "-")
             self.assertEqual((run3 / "source" / "value.txt").read_text(), "two\n")
+
+            self._git(repository, "checkout", "--detach", first)
+            (repository / "sibling.txt").write_text("sibling\n", encoding="utf-8")
+            self._git(repository, "add", ".")
+            self._git(repository, "commit", "-m", "sibling")
+            sibling = self._git(repository, "rev-parse", "HEAD").stdout.strip()
+            run4 = project / "runs" / "manual" / "4-1"
+            (run4 / "control").mkdir(parents=True)
+            self._prepare(project, run4, home)
+            checksum = self._bundle(repository, run4, first + "..HEAD")
+            runner.remote_receive(project, run4, sibling, checksum)
+            cache = runner._cache(project)
+            for ref, value in runner._cache_refs(cache):
+                if value != sibling:
+                    self._git(repository, "--git-dir", str(cache), "update-ref", "-d", ref)
+            self._git(repository, "checkout", "--detach", second)
+            run5 = project / "runs" / "manual" / "5-1"
+            (run5 / "control").mkdir(parents=True)
+            cached = self._prepare(project, run5, home)["cache_shas"]
+            self.assertEqual(cached, sorted((first, sibling)))
+            revision = runner._bundle_revision(repository, cached, second)
+            self.assertEqual(revision, first + "..HEAD")
+            retained = [ref for ref, _ in runner._retained_refs(cache)]
+            runner._update_cache_refs(cache, {}, retained)
+            self._git(repository, "--git-dir", str(cache), "gc", "--prune=now")
+            self._git(repository, "--git-dir", str(cache), "cat-file", "-e", first + "^{commit}")
+            checksum = self._bundle(repository, run5, revision)
+            runner.remote_receive(project, run5, second, checksum)
+            self.assertEqual((run5 / "source" / "value.txt").read_text(), "two\n")
+            self.assertFalse(runner._cache_refs(cache, "refs/ci/active"))
+
+    def test_cache_retains_three_daily_and_eight_recent_tips(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            repository = root / "local"
+            repository.mkdir()
+            self._git(repository, "init")
+            self._git(repository, "config", "user.email", "ci@example.invalid")
+            self._git(repository, "config", "user.name", "CI")
+            commits = []
+            for index in range(13):
+                (repository / "value.txt").write_text(str(index), encoding="utf-8")
+                self._git(repository, "add", ".")
+                self._git(repository, "commit", "-m", str(index))
+                commits.append(self._git(repository, "rev-parse", "HEAD").stdout.strip())
+            cache = root / "repository.git"
+            self._git(root, "clone", "--bare", str(repository), str(cache))
+            self._git(root, "--git-dir", str(cache), "update-ref", "-d", "refs/heads/master")
+            for ref, _ in runner._cache_refs(cache):
+                self._git(root, "--git-dir", str(cache), "update-ref", "-d", ref)
+            self._git(root, "--git-dir", str(cache), "update-ref", "refs/ci/" + commits[0], commits[0])
+
+            for commit in commits[1:10]:
+                runner._rotate_cache_refs(cache, "recent", commit)
+            for commit in commits[10:]:
+                runner._rotate_cache_refs(cache, "daily", commit)
+
+            refs = runner._cache_refs(cache)
+            daily = [value for ref, value in refs if ref.startswith("refs/ci/daily/")]
+            recent = [value for ref, value in refs if ref.startswith("refs/ci/recent/")]
+            self.assertEqual(daily, list(reversed(commits[10:])))
+            self.assertEqual(recent, list(reversed(commits[2:10])))
+            self.assertEqual(len(refs), 11)
+            run = root / "runs" / "manual" / "1-1"
+            with mock.patch("runner.time.time", return_value=100):
+                runner._reserve_cache(cache, run, runner._retained_refs(cache))
+            self.assertEqual(len(runner._active_refs(cache)), 11)
+            with mock.patch(
+                "runner.time.time", return_value=101 + runner.CACHE_RESERVATION_SECONDS,
+            ):
+                runner._cleanup_reservations(cache)
+            self.assertFalse(runner._active_refs(cache))
 
     def test_bundle_merge_rejects_corruption(self):
         with tempfile.TemporaryDirectory() as directory:
