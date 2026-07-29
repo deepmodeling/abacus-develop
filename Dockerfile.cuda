@@ -24,6 +24,13 @@ RUN cd /tmp && \
     ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
     cd /tmp && rm -rf elpa-$ELPA_VER
 
+# RapidJSON
+RUN cd /tmp && wget --quiet https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a -O rapidjson-24b5e7a.tar.gz
+RUN tar -xzf rapidjson-24b5e7a.tar.gz && cd rapidjson-24b5e7a
+RUN cmake -B build -DRAPIDJSON_BUILD_DOC=OFF -DRAPIDJSON_BUILD_EXAMPLES=OFF -DRAPIDJSON_BUILD_TESTS=OFF
+RUN cmake --build build --target install
+RUN cd /tmp && rm -r rapidjson-24b5e7a
+
 ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
 
 RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
