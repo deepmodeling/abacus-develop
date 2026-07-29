@@ -212,7 +212,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
     elecstate::calEBand(_pes_pw->ekb,_pes_pw->wg,_pes_pw->f_en);
     if (skip_charge)
     {
-        if (PARAM.globalv.use_uspp)
+        if (this->use_uspp)
         {
             reinterpret_cast<elecstate::ElecStatePW<T, Device>*>(pes)->cal_becsum(psi);
         }

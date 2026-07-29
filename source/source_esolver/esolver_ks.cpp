@@ -184,13 +184,14 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
     {
         diag_ethr = hsolver::set_diagethr_ks(PARAM.inp.basis_type, PARAM.inp.esolver_type,
           PARAM.inp.calculation, PARAM.inp.init_chg, PARAM.inp.precision, istep, iter,
-          drho, PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nelec);
+          drho, PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nelec, PARAM.inp.scf_thr);
     }
     else if (PARAM.inp.esolver_type == "sdft")
     {
         diag_ethr = hsolver::set_diagethr_sdft(PARAM.inp.basis_type, PARAM.inp.esolver_type,
           PARAM.inp.calculation, PARAM.inp.init_chg, istep, iter, drho,
-          PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nbands, esolver_KS_ne);
+          PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nbands, esolver_KS_ne,
+          PARAM.inp.nelec, PARAM.inp.scf_thr);
     }
 
     // save input charge density (rho)

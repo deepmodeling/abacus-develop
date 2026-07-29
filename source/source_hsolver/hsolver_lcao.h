@@ -28,7 +28,11 @@ class HSolverLCAO
   private:
     void hamiltSolvePsiK(hamilt::Hamilt<TK>* hm, psi::Psi<TK>& psi, double* eigenvalue); // for kpar_lcao == 1
 
-    void parakSolve(hamilt::Hamilt<TK>* pHamilt, psi::Psi<TK>& psi, elecstate::ElecState* pes, int kpar); // for kpar_lcao > 1
+    void parakSolve(hamilt::Hamilt<TK>* pHamilt,
+                    psi::Psi<TK>& psi,
+                    elecstate::ElecState* pes,
+                    const int kpar,
+                    const int nspin); // for kpar_lcao > 1
 
     // The solving algorithm using cusolver is different from others, so a separate function is needed
     void parakSolve_cusolver(hamilt::Hamilt<TK>* pHamilt,
