@@ -1,76 +1,93 @@
 # Remote GPU validation
 
-## Purpose and scope
+This workflow rebuilds one committed ABACUS revision on a remote GPU cluster,
+runs the test matrix in `config.ini` through Slurm, and reports each build and
+test group separately. It is a functional test, not a benchmark.
 
-This workflow rebuilds ABACUS at one exact commit on a remote GPU cluster and
-runs the matrix in `config.ini` through Slurm. The configuration contains the
-remote connection, Slurm resources, and 49 test cases. The workflow reports
-build, resource, and case states and saves the raw logs.
+The maintained setup runs at the
+[Open Source Supercomputing Center of SAI](https://www.open-sai.com/). The same
+client can be configured for another Slurm cluster.
 
-This is validation, not a benchmark or a general remote-shell service. The
-client requires a committed checkout: it bundles the checked-out `HEAD` and
-checks that it equals `--source-sha`. Uncommitted files are not sent.
+**Trust boundary:** the selected commit is compiled and executed as the remote
+SSH user. Approve only code that may run with that account's permissions.
 
-**Warning:** approved candidate code is compiled and executed as the configured
-remote SSH user. Use an account and project root with the intended permissions.
+## Set up GitHub
 
-## Reference deployment
+A repository administrator performs these steps once. Forks start disabled
+because GitHub does not copy variables or secrets from the parent repository.
 
-The maintained deployment currently runs at the
-[Open Source Supercomputing Center of SAI](https://www.open-sai.com/). Its queue,
-module, MPI mapping, and SSH host-key settings are kept in the configuration
-files in this directory and can be adapted for another Slurm site.
+1. Open **Settings > Secrets and variables > Actions > Variables**, choose
+   **New repository variable**, and set:
 
-## GitHub setup
+   - Name: `GPU_VALIDATION_ENABLED`
+   - Value: `true`
 
-Create one repository variable under **Settings > Secrets and variables >
-Actions > Variables**:
+   The value is the lowercase text `true`. If this variable is absent or has
+   another value, the workflow skips all remote work.
 
-- `GPU_VALIDATION_ENABLED=true`
+2. Open **Settings > Environments** and create:
 
-Without this opt-in variable, every job in the copied workflow is skipped.
-Repository variables and environment secrets are not copied to forks.
+   - `gpu-ci-scheduled`, with no required reviewers, for daily tests.
+   - `gpu-ci-manual`, with the maintainers who may approve PR and manual tests
+     listed as required reviewers.
 
-Create these GitHub Environments for the `GPU validation` workflow:
+3. Open each environment, choose **Environment secrets > Add environment
+   secret**, and add:
 
-- `gpu-ci-scheduled`: no required reviewers. The daily schedule uses this
-  environment.
-- `gpu-ci-manual`: require the reviewers who should approve a remote run.
-  Manual dispatches and the pull-request comment trigger use this environment.
+   - Name: `REMOTE_SSH_PRIVATE_KEY`
+   - Value: the complete private key, including its `BEGIN` and `END` lines.
 
-In each environment, configure one secret:
+   Install the matching public key in `authorized_keys` for the remote account
+   named in `config.ini`. Add the private key to both environments because they
+   have different approval rules. Do not create a repository-level SSH secret;
+   the workflow reads this environment secret only after entering the selected
+   environment.
 
-- Secret: `REMOTE_SSH_PRIVATE_KEY` (the private key used by the runner).
+Host, port, user, and the normal remote project directory are read from the
+trusted `[remote]` section of `config.ini`.
 
-The two environments have different approval rules, so the same key must be
-added to each one. Host, port, user, and the default project root come from the
-trusted `[remote]` section in `config.ini`. A manual dispatch may provide the
-optional `project_root` input to override the configured root for that run.
+## Run validation
 
-## Triggers
+All GitHub methods below require `GPU_VALIDATION_ENABLED=true`. The workflow
+must already be present on the repository's default branch.
 
-All triggers require the repository variable `GPU_VALIDATION_ENABLED=true`.
+### Test a pull request
 
-- **Manual:** open Actions, choose `GPU validation`, and select
-  **Run workflow**. `source_sha` is required and must be a 40-character commit
-  SHA. The workflow must be dispatched from the repository default branch.
-  `project_root` is optional. The `gpu-ci-manual` approval is requested before
-  the build job starts.
-- **Daily:** the schedule is `30 20 * * *` (20:30 UTC). It tests the default
-  branch of `deepmodeling/abacus-develop` and uses `gpu-ci-scheduled`.
-- **Pull request:** comment exactly `/abacus-ci gpu` on an open pull
-  request. The commenter needs Triage, Write, Maintain, or Admin permission.
-  The bot immediately links the queued run, then updates the same comment with
-  the final result after `gpu-ci-manual` approval and execution. Site
-  acknowledgement is shown in the Actions summary, not in pull-request bot
-  comments.
+On an open pull request, add this exact comment:
 
-Other issue comments are ignored.
+```text
+/abacus-ci gpu
+```
 
-## Run locally
+The comment cannot contain other text. The author of the comment needs Triage,
+Write, Maintain, or Admin permission. The bot immediately posts a link to the
+queued Actions run. After a reviewer approves the `gpu-ci-manual` environment,
+the workflow tests the PR head commit and updates that same bot comment with the
+result and raw-file link.
 
-Define the default target in `~/.ssh/config` using the values from the
-`[remote]` section of `config.ini`:
+### Run the daily test
+
+No manual action is needed. The workflow is scheduled every day at 20:30 UTC
+(`30 20 * * *`). It tests the current default branch of
+`deepmodeling/abacus-develop` and uses `gpu-ci-scheduled`, so it does not wait
+for approval.
+
+### Start a run from Actions
+
+1. Open **Actions > GPU validation > Run workflow**.
+2. Select the repository default branch under **Use workflow from**.
+3. Enter the full, lowercase 40-character commit SHA in `source_sha`.
+4. Leave `project_root` empty to use `config.ini`, or enter another permitted
+   remote directory.
+5. Start the run and approve the `gpu-ci-manual` environment when prompted.
+
+The commit must exist in the repository where the workflow is running. For an
+external contributor's pull request, use the PR comment command instead.
+
+### Run from a local checkout
+
+Create an SSH host entry. The default alias is `gpu-ci`; use the host, port,
+user, and key for your account:
 
 ```sshconfig
 Host gpu-ci
@@ -80,40 +97,23 @@ Host gpu-ci
     IdentityFile ~/.ssh/<private-key>
 ```
 
-If the SSH config defines the default `gpu-ci` target, no options are required:
+Then run this command from a committed ABACUS checkout:
 
 ```bash
 python3 .ci/slurm/runner.py run
 ```
 
-The script finds the repository root from its own location. By default, it uses
-`~/.ssh/config`, the `gpu-ci` host alias, that repository's committed `HEAD`,
-and `~/abacus_gpu_ci` below the remote user's home. It writes each local run to
-`/tmp/abacus_gpu_ci_<uid>/<namespace>/<run_id>_<attempt>/`, outside the Git
-checkout. Override any value shown by `run --help`; for example, use `--target
-my-cluster` for a different local host alias or `--artifacts` for durable local
-storage. The remote project root must resolve below one of the configured
-`allowed_project_roots`. The command waits for Slurm completion and exits with a
-non-zero status when a case or infrastructure result is not fully successful.
-At the end it prints the component states and the paths to the full local
-results and the compressed remote archive.
+By default, the command uses the checkout's committed `HEAD`, `~/.ssh/config`,
+the `gpu-ci` alias, and the remote directory from `config.ini`. Uncommitted
+candidate-source changes are not sent. The local command does use the current
+`.ci/slurm` control files, including local changes to its scripts and templates.
+The command waits for Slurm, prints live build and test progress, downloads the
+results, and exits nonzero if validation fails.
 
-Source is sent as one compressed Git bundle split into eight parallel rsync
-transfers. The remote side checks the merged SHA-256 and the Git bundle before
-updating its cache. The remote reports its cached commit history, and the client
-selects the nearest shared commit in the candidate's history. This also allows
-sibling branches to send only their changes after the merge base. The cache
-keeps three recent manual or pull-request tips, the latest two daily dates, one
-permanent tip for each UTC month, and one tip per UTC week in the current month.
-Monthly and weekly tips are the first daily run in their period; weekly tips
-from earlier months are removed. Git stores fetched objects in compressed pack
-files inside one deduplicated object store. Six-hour reservations protect
-concurrent source transfers; older unreachable objects follow Git's normal
-grace period before collection. A run at an already cached SHA sends no source
-data. The client reports completed source parts, then prints changing Slurm
-queue, running, and finished counts for each build or test group.
-
-For the public commands and all `run` options, use:
+Local results go to
+`/tmp/abacus_gpu_ci_<uid>/<namespace>/<run_id>_<attempt>/`. Use `--artifacts`
+for a permanent local directory or `--target my-cluster` for another SSH alias.
+All available options and defaults are shown by:
 
 ```bash
 python3 .ci/slurm/runner.py --help
@@ -169,10 +169,16 @@ The client removes archived files older than 72 hours when preparing a later
 run, and removes the active run after archiving. On the GitHub runner,
 `ARTIFACT_ROOT` is `${runner.temp}/gpu-ci-artifacts`; it contains the collected
 `results/`, `run.json`, and `client.log`. CI uploads that directory as
-`gpu-validation-<run-id>-<attempt>` and retains it for 30 days. A pull-request comment
-links to the Actions run and the uploaded raw files. If the client stops before
-completion, the remote run is left in place so that its detached coordinator and
-Slurm jobs are not interrupted.
+`gpu-validation-<run-id>-<attempt>` and retains it for 30 days. A pull-request
+comment links to the Actions run and the uploaded raw files. If the client stops
+before completion, the remote run is left in place so that its detached
+coordinator and Slurm jobs are not interrupted.
+
+Source is sent as a compressed Git bundle. The remote Git cache keeps the three
+most recent PR or manual revisions, the latest two daily dates, the first daily
+revision of every UTC month, and one weekly revision for the current month.
+Weekly revisions from earlier months are removed. Concurrent runs reserve the
+cache revisions they use, so another run cannot remove their transfer base.
 
 ## Troubleshooting
 
