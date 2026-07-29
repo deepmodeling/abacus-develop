@@ -1276,7 +1276,7 @@ def github_finish() -> int:
         ).format(
             result, os.environ.get("GPU_PASSED") or "?", os.environ.get("GPU_FAILED") or "?",
             os.environ.get("GPU_INFRASTRUCTURE") or "?", os.environ["RUN_URL"],
-            os.environ.get("ARTIFACT_URL", os.environ["RUN_URL"]), os.environ["SOURCE_SHA"],
+            os.environ.get("ARTIFACT_URL") or os.environ["RUN_URL"], os.environ["SOURCE_SHA"],
         )
         try:
             _gh("repos/{}/issues/comments/{}".format(repository, os.environ["COMMENT_ID"]), "PATCH", {"body": body})

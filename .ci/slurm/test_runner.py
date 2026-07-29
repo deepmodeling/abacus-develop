@@ -857,7 +857,8 @@ class GitHubTests(unittest.TestCase):
         environment = {
             "GITHUB_REPOSITORY": "owner/repo", "GPU_RESULT": "failure",
             "CHECK_ID": "123", "COMMENT_ID": "456", "PR_NUMBER": "23",
-            "RUN_URL": "https://example/run", "SOURCE_SHA": "a" * 40,
+            "RUN_URL": "https://example/run", "ARTIFACT_URL": "",
+            "SOURCE_SHA": "a" * 40,
         }
         with mock.patch.dict(os.environ, environment, clear=True), \
                 mock.patch("runner._gh", side_effect=(RuntimeError("check failed"), {})) as api, \
@@ -866,6 +867,10 @@ class GitHubTests(unittest.TestCase):
         self.assertEqual(api.call_args_list[-1].args[:2], (
             "repos/owner/repo/issues/comments/456", "PATCH",
         ))
+        self.assertIn(
+            "[Download raw test files](https://example/run)",
+            api.call_args_list[-1].args[2]["body"],
+        )
 
 
 class PolicyTests(unittest.TestCase):
