@@ -279,17 +279,21 @@ int Diago_DavSubspace<T, Device>::diag_once(const HPsiFunc& hpsi_func,
 
 template <typename T, typename Device>
 void Diago_DavSubspace<T, Device>::cal_grad(const HPsiFunc& hpsi_func,
-                                            const HPsiFunc& spsi_func,
-                                            const int& dim,
-                                            const int& nbase,
-                                            const int& notconv,
-                                            T* psi_iter,
-                                            T* hpsi,
-                                            T* spsi,
-                                            T* vcc,
-                                            const int* unconv,
-                                            std::vector<Real>* eigenvalue_iter)
+                                             const HPsiFunc& spsi_func,
+                                             const int& dim,
+                                             const int& nbase,
+                                             const int& notconv_ref,
+                                             T* psi_iter,
+                                             T* hpsi,
+                                             T* spsi,
+                                             T* vcc,
+                                             const int* unconv,
+                                             std::vector<Real>* eigenvalue_iter)
 {
+    // Local copy: notconv_ref is a reference to this->notconv which may be
+    // modified to 0 inside this function (all_zero path). We need the original
+    // value for the remainder of the function.
+    const int notconv = notconv_ref;
     ModuleBase::timer::start("Diago_DavSubspace", "cal_grad");
 
     for (size_t i = 0; i < notconv; i++)

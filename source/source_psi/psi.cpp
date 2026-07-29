@@ -705,43 +705,46 @@ void Psi<T, Device>::zero_out()
 template <typename T, typename Device>
 std::tuple<const T*, int> Psi<T, Device>::to_range(const Range& range) const
 {
-    const int& i1 = range.index_1;
-    const int& r1 = range.range_1;
-    const int& r2 = range.range_2;
+    const size_t i1 = range.index_1;
+    const size_t r1 = range.range_1;
+    const size_t r2 = range.range_2;
 
-    if (range.k_first != this->k_first || r1 < 0
-        || r2 < r1
-        // || (range.k_first && (r2 >= this->nbands || i1 >= this->nk))
-        // || (!range.k_first && (r2 >= this->nk || i1 >= this->nbands)))
-        || (range.k_first ? (i1 >= this->nk) : (i1 >= this->nbands))                      // illegal index 1
-        || (range.k_first ? (i1 > 0 && r2 >= this->nbands) : (i1 > 0 && r2 >= this->nk))  // illegal range of index 2
-        || (range.k_first ? (i1 < 0 && r2 >= this->nk) : (i1 < 0 && r2 >= this->nbands))) // illegal range of index 1
+    if (range.k_first != this->k_first || r2 < r1
+        || (range.k_first ? (i1 >= static_cast<size_t>(this->nk)) : (i1 >= static_cast<size_t>(this->nbands)))
+        || (range.k_first ? (i1 > 0 && r2 >= static_cast<size_t>(this->nbands)) : (i1 > 0 && r2 >= static_cast<size_t>(this->nk))))
     {
         return std::tuple<const T*, int>(nullptr, 0);
     }
-    else if (i1 < 0) // [r1, r2] is the range of index1 with length m
+    else if (i1 > static_cast<size_t>(std::numeric_limits<int>::max()))
     {
+        // Sentinel case: i1 = (size_t)(-1) means a range of index1 (k-points)
+        // For PAGED_GPU, this is not supported since GPU buffer is single-k
+        if (storage_mode_ == PsiStorageMode::PAGED_GPU)
+        {
+            ModuleBase::WARNING_QUIT("Psi::to_range",
+                "In PAGED_GPU mode, multi-k-point range is not supported");
+        }
         const T* p = &this->psi[r1 * (k_first ? this->nbands : this->nk) * this->nbasis];
-        int m = (r2 - r1 + 1) * this->get_npol();
+        int m = static_cast<int>(r2 - r1 + 1) * this->get_npol();
         return std::tuple<const T*, int>(p, m);
     }
-    else // [r1, r2] is the range of index2 with length m
+    else // [r1, r2] is the range of band index for a specific k-point
     {
         if (storage_mode_ == PsiStorageMode::PAGED_GPU)
         {
-            if (k_first && i1 != current_k)
+            if (k_first && static_cast<int>(i1) != current_k)
             {
                 ModuleBase::WARNING_QUIT("Psi::to_range",
                     "In PAGED_GPU mode, requested k-point must match current_k");
             }
-            const T* p = &this->psi[r1 * this->nbasis];
-            int m = (r2 - r1 + 1) * this->get_npol();
+            const T* p = &this->psi[static_cast<size_t>(r1) * static_cast<size_t>(this->nbasis)];
+            int m = static_cast<int>(r2 - r1 + 1) * this->get_npol();
             return std::tuple<const T*, int>(p, m);
         }
         else
         {
             const T* p = &this->psi[(i1 * (k_first ? this->nbands : this->nk) + r1) * this->nbasis];
-            int m = (r2 - r1 + 1) * this->get_npol();
+            int m = static_cast<int>(r2 - r1 + 1) * this->get_npol();
             return std::tuple<const T*, int>(p, m);
         }
     }
