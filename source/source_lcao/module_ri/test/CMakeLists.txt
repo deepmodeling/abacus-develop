@@ -22,6 +22,16 @@ AddTest(
   SOURCES sternheimer_rpa_test.cpp ../sternheimer_rpa.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_wavefunction_diagnostic_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_wavefunction_diagnostic_test.cpp ../sternheimer_wavefunction_diagnostic.cpp
+)
+AddTest(
+  TARGET MODULE_RI_sternheimer_supercell_perturbation_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_supercell_perturbation_test.cpp ../sternheimer_supercell_perturbation.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_fd_hamiltonian_test
   LIBS ${math_libs}
   SOURCES sternheimer_fd_hamiltonian_test.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp

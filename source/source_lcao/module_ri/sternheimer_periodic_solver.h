@@ -9,6 +9,7 @@ namespace ModuleRI
 
 struct SternheimerPeriodicLinearResponse
 {
+    SternheimerFDHamiltonian::Vector projected_rhs;
     SternheimerFDHamiltonian::Vector wavefunction;
     SternheimerRPA::SolverResult solver;
     double residual_norm = 0.0;

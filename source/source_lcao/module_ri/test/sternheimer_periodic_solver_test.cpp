@@ -14,7 +14,11 @@ TEST(SternheimerPeriodicSolver, StandardModeSolvesInFullGridComplement)
     Hamiltonian hamiltonian(grid, std::vector<double>(grid.size(), 0.25));
     const auto states = ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 4, volume_element);
     const std::vector<Hamiltonian::Vector> occupied = {states.wavefunctions[0]};
-    const Hamiltonian::Vector rhs = states.wavefunctions[3];
+    Hamiltonian::Vector rhs = states.wavefunctions[3];
+    for (std::size_t ir = 0; ir != rhs.size(); ++ir)
+    {
+        rhs[ir] += Complex(0.25, -0.125) * states.wavefunctions[0][ir];
+    }
     constexpr double omega = 0.7;
 
     ModuleRI::SternheimerRPA::SolverOptions options;
@@ -35,11 +39,14 @@ TEST(SternheimerPeriodicSolver, StandardModeSolvesInFullGridComplement)
     EXPECT_FALSE(response.has_delta_components);
     EXPECT_LT(response.residual_norm, 1.0e-10);
     EXPECT_NEAR(response.full_grid_equation_residual_norm, response.residual_norm, 1.0e-14);
+    ASSERT_EQ(response.projected_rhs.size(), states.wavefunctions[3].size());
     const Complex factor = 1.0 / Complex(states.eigenvalues[3] - states.eigenvalues[0], omega);
     ASSERT_EQ(response.wavefunction.size(), rhs.size());
     for (std::size_t ir = 0; ir != rhs.size(); ++ir)
     {
-        const Complex expected = factor * rhs[ir];
+        EXPECT_NEAR(response.projected_rhs[ir].real(), states.wavefunctions[3][ir].real(), 1.0e-10);
+        EXPECT_NEAR(response.projected_rhs[ir].imag(), states.wavefunctions[3][ir].imag(), 1.0e-10);
+        const Complex expected = factor * states.wavefunctions[3][ir];
         EXPECT_NEAR(response.wavefunction[ir].real(), expected.real(), 1.0e-10);
         EXPECT_NEAR(response.wavefunction[ir].imag(), expected.imag(), 1.0e-10);
     }

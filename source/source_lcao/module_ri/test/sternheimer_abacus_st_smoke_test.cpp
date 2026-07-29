@@ -609,6 +609,39 @@ TEST(SternheimerABACUSSTSmoke, ZeroQIndexPreservesSingleGammaPlan)
     EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
 }
 
+TEST(SternheimerABACUSSTSmoke, BuildsSingleGammaSupercellTranslationPlanWithPositiveOutputIndex)
+{
+    const auto gamma = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan({gamma}, 1, true);
+
+    EXPECT_EQ(plan.iq, 1);
+    EXPECT_EQ(plan.qpoint, (ModuleRI::SternheimerReducedKPoint{0.0, 0.0, 0.0}));
+    ASSERT_EQ(plan.kq_pairs.size(), 1);
+    EXPECT_EQ(plan.kq_pairs[0].source_index, 0);
+    EXPECT_EQ(plan.kq_pairs[0].target_index, 0);
+    EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
+}
+
+TEST(SternheimerABACUSSTSmoke, LimitsPeriodicOccupiedBandsOnlyWhenRequested)
+{
+    EXPECT_EQ(ModuleRI::sternheimer_periodic_band_count(8, -1), 8);
+    EXPECT_EQ(ModuleRI::sternheimer_periodic_band_count(8, 1), 1);
+    EXPECT_EQ(ModuleRI::sternheimer_periodic_band_count(8, 20), 8);
+    EXPECT_THROW(ModuleRI::sternheimer_periodic_band_count(0, 1), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, TreatsSupercellTranslationResponseAsDiagnosticOnly)
+{
+    EXPECT_TRUE(ModuleRI::sternheimer_write_periodic_v1(false, false));
+    EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(true, false));
+    EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(false, true));
+
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_output_mode(true, true));
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_output_mode(false, false));
+    EXPECT_THROW(ModuleRI::validate_sternheimer_periodic_output_mode(false, true),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, SelectsMassiddaFactorOnlyForPeriodicGamma)
 {
     constexpr double massidda_chi = 1.25;

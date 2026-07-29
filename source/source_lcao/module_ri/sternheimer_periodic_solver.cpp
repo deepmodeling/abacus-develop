@@ -18,6 +18,12 @@ SternheimerPeriodicLinearResponse solve_sternheimer_periodic_linear_response(
     const SternheimerRPA::SolverOptions& options)
 {
     SternheimerPeriodicLinearResponse result;
+    result.projected_rhs = rhs;
+    const auto dot = [volume_element](const SternheimerFDHamiltonian::Vector& lhs,
+                                      const SternheimerFDHamiltonian::Vector& rhs_vector) {
+        return sternheimer_fd_grid_dot(lhs, rhs_vector, volume_element);
+    };
+    SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, result.projected_rhs);
     if (use_delta_sternheimer)
     {
         SternheimerDeltaLinearResponse response

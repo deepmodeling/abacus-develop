@@ -137,6 +137,31 @@ struct SternheimerPeriodicResponsePlan
     double kweight_sum = 0.0;
 };
 
+inline int sternheimer_periodic_band_count(const int available_bands, const int requested_bands)
+{
+    if (available_bands <= 0)
+    {
+        throw std::invalid_argument("Periodic Sternheimer requires at least one occupied band.");
+    }
+    return requested_bands > 0 ? std::min(available_bands, requested_bands) : available_bands;
+}
+
+inline bool sternheimer_write_periodic_v1(const bool use_supercell_translation_sum,
+                                           const bool bands_are_truncated)
+{
+    return !use_supercell_translation_sum && !bands_are_truncated;
+}
+
+inline void validate_sternheimer_periodic_output_mode(const bool write_periodic_v1,
+                                                       const bool write_partial_kresolved)
+{
+    if (!write_periodic_v1 && write_partial_kresolved)
+    {
+        throw std::invalid_argument(
+            "Diagnostic-only periodic Sternheimer output is incompatible with symmetry or k-resolved partial v1.");
+    }
+}
+
 struct SternheimerFixedQKOrbit
 {
     int representative_ik_full = -1;
@@ -538,7 +563,8 @@ inline std::vector<SternheimerABFBlochGridChannel> limit_sternheimer_abf_channel
 
 inline SternheimerPeriodicResponsePlan build_sternheimer_periodic_response_plan(
     const std::vector<SternheimerLCAOOccupiedKPoint>& records,
-    const int q_index)
+    const int q_index,
+    const bool single_gamma_supercell_translation = false)
 {
     if (records.empty())
     {
@@ -570,8 +596,13 @@ inline SternheimerPeriodicResponsePlan build_sternheimer_periodic_response_plan(
     }
 
     constexpr double tolerance = 1.0e-10;
-    if (q_index == 0)
+    if (q_index == 0 || single_gamma_supercell_translation)
     {
+        if (single_gamma_supercell_translation && q_index != 1)
+        {
+            throw std::invalid_argument(
+                "A single-Gamma supercell translation response must use output q index 1.");
+        }
         if (records.size() != 1
             || std::any_of(records.front().kpoint.begin(),
                            records.front().kpoint.end(),

@@ -18,6 +18,8 @@
 #include "source_lcao/module_ri/sternheimer_fd_solver.h"
 #include "source_lcao/module_ri/sternheimer_periodic_solver.h"
 #include "source_lcao/module_ri/sternheimer_rpa.h"
+#include "source_lcao/module_ri/sternheimer_supercell_perturbation.h"
+#include "source_lcao/module_ri/sternheimer_wavefunction_diagnostic.h"
 
 #include <algorithm>
 #include <cctype>
@@ -61,6 +63,8 @@ constexpr const char* kFrequencyRankShiftEnv = "ABACUS_STERNHEIMER_FD_ST_FREQ_RA
 constexpr const char* kDeltaComponentDiagnosticEnv = "ABACUS_STERNHEIMER_DELTA_COMPONENT_DIAG";
 constexpr const char* kLCAOSOSDiagnosticEnv = "ABACUS_STERNHEIMER_LCAO_SOS_DIAG";
 constexpr const char* kKResolvedDiagnosticEnv = "ABACUS_STERNHEIMER_KRESOLVED_DIAG";
+constexpr const char* kWavefunctionDiagnosticEnv = "ABACUS_STERNHEIMER_WAVEFUNCTION_DIAGNOSTIC";
+constexpr const char* kSupercellTranslationSumEnv = "ABACUS_STERNHEIMER_SUPERCELL_TRANSLATION_SUM";
 constexpr const char* kDeltaABlockModeEnv = "ABACUS_STERNHEIMER_DELTA_A_BLOCK";
 constexpr double kHartreeToRydberg = 2.0;
 
@@ -1434,8 +1438,13 @@ void run_sternheimer_periodic_lcao_chi0_output(
         throw std::runtime_error("Periodic Sternheimer output requires symmetry=-1 or symmetry=1.");
     }
 
+    const char* supercell_translation_sum_raw = std::getenv(kSupercellTranslationSumEnv);
+    const bool use_supercell_translation_sum
+        = supercell_translation_sum_raw != nullptr && supercell_translation_sum_raw[0] != '\0';
     const SternheimerPeriodicResponsePlan response_plan
-        = build_sternheimer_periodic_response_plan(occupied_kpoints, PARAM.inp.sternheimer_q_index);
+        = build_sternheimer_periodic_response_plan(occupied_kpoints,
+                                                    PARAM.inp.sternheimer_q_index,
+                                                    use_supercell_translation_sum);
     if (PARAM.inp.sternheimer_q_index <= 0)
     {
         throw std::runtime_error("Internal error: the periodic Sternheimer path requires a positive q index.");
@@ -1564,6 +1573,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
     const double pca_threshold = nonnegative_double_from_env(kPCAThresholdEnv, PARAM.inp.exx_pca_threshold);
     const double ccp_rmesh_times = positive_double_from_env(kCCPRmeshTimesEnv, PARAM.inp.rpa_ccp_rmesh_times);
     const int max_channels = positive_int_from_env(kChannelsEnv, -1);
+    const int max_bands = positive_int_from_env(kBandsEnv, -1);
     const int channel_threads = positive_int_from_env(kChannelThreadsEnv, 0);
     const int nfreq = PARAM.inp.sternheimer_nfreq;
     const bool use_nested_response_mpi = use_frequency_mpi && use_kpoint_mpi;
@@ -1577,7 +1587,41 @@ void run_sternheimer_periodic_lcao_chi0_output(
     const SternheimerDeltaABlockMode delta_a_block_mode = delta_a_block_mode_from_env();
     const bool write_delta_components = use_delta_sternheimer && env_is_true(kDeltaComponentDiagnosticEnv);
     const bool write_lcao_sos = env_is_true(kLCAOSOSDiagnosticEnv);
-    if (use_symmetry_partial_response && (write_delta_components || write_lcao_sos))
+    const char* wavefunction_diagnostic_raw = std::getenv(kWavefunctionDiagnosticEnv);
+    const bool write_wavefunction_diagnostic
+        = wavefunction_diagnostic_raw != nullptr && wavefunction_diagnostic_raw[0] != '\0';
+    SternheimerWavefunctionDiagnostic::Configuration wavefunction_diagnostic_config;
+    if (write_wavefunction_diagnostic)
+    {
+        wavefunction_diagnostic_config
+            = SternheimerWavefunctionDiagnostic::parse_configuration(wavefunction_diagnostic_raw);
+    }
+    SternheimerSupercellTranslationSum supercell_translation_sum;
+    if (use_supercell_translation_sum)
+    {
+        supercell_translation_sum
+            = parse_sternheimer_supercell_translation_sum(supercell_translation_sum_raw);
+        const int expected_atoms
+            = sternheimer_supercell_primitive_cell_count(supercell_translation_sum)
+              * supercell_translation_sum.atoms_per_primitive;
+        if (!gamma_qpoint || ucell.nat != expected_atoms)
+        {
+            throw std::runtime_error(
+                "Supercell translation perturbation requires Gamma q and a matching translation-major atom list.");
+        }
+    }
+    const bool bands_are_truncated
+        = max_bands > 0
+          && std::any_of(occupied_kpoints.begin(),
+                         occupied_kpoints.end(),
+                         [max_bands](const SternheimerLCAOOccupiedKPoint& record) {
+                             return static_cast<int>(record.coefficients.size()) > max_bands;
+                         });
+    const bool write_periodic_v1
+        = sternheimer_write_periodic_v1(use_supercell_translation_sum, bands_are_truncated);
+    validate_sternheimer_periodic_output_mode(write_periodic_v1, write_partial_kresolved);
+    if (use_symmetry_partial_response
+        && (write_delta_components || write_lcao_sos || write_wavefunction_diagnostic))
     {
         throw std::runtime_error(
             "Symmetry-reduced Sternheimer partial output does not yet support component diagnostics.");
@@ -1636,13 +1680,20 @@ void run_sternheimer_periodic_lcao_chi0_output(
             gamma_inverse_k2,
             max_channels,
             pca_threshold);
+    if (use_supercell_translation_sum)
+    {
+        periodic_abfs.densities = {combine_sternheimer_supercell_translation_channel(
+            periodic_abfs.densities, supercell_translation_sum)};
+        periodic_abfs.potentials = {combine_sternheimer_supercell_translation_channel(
+            periodic_abfs.potentials, supercell_translation_sum)};
+    }
     if (periodic_abfs.potentials.empty())
     {
         throw std::runtime_error("No periodic ABFS full-Coulomb perturbation channels were generated.");
     }
     const int num_channels = static_cast<int>(periodic_abfs.potentials.size());
     double gamma_projection_relative_error = 0.0;
-    if (gamma_qpoint)
+    if (gamma_qpoint && !use_supercell_translation_sum)
     {
         const auto target = SternheimerRPA::read_coulomb_v1_files(
             find_coulomb_v1_rank_files(response_plan.iq, GlobalV::NPROC));
@@ -1678,7 +1729,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
                                                        periodic_abfs.densities,
                                                        periodic_abfs.potentials,
                                                        grid_data.volume_element);
-            if (gamma_qpoint)
+            if (gamma_qpoint && !use_supercell_translation_sum)
             {
                 const std::vector<SternheimerABFBlochGridChannel> body_potentials
                     = solve_sternheimer_abf_periodic_full_coulomb(
@@ -1701,7 +1752,10 @@ void run_sternheimer_periodic_lcao_chi0_output(
             out << "perturbation_coulomb_kernel full_periodic_poisson\n";
             out << "periodic_kmesh " << kmesh[0] << ' ' << kmesh[1] << ' ' << kmesh[2] << '\n';
             out << "periodic_gamma_massidda_chi " << massidda_chi << '\n';
-            out << "periodic_gamma_coulomb_projection diagnostic_only_physical_poisson\n";
+            out << "periodic_gamma_coulomb_projection "
+                << (use_supercell_translation_sum ? "skipped_supercell_translation_sum"
+                                                  : "diagnostic_only_physical_poisson")
+                << '\n';
             out << "periodic_gamma_projection_relative_error " << gamma_projection_relative_error << '\n';
             out << "periodic_gamma_limit constant_mode_only_no_headwing\n";
             out << "perturbation_ccp_rmesh_times_used no\n";
@@ -1800,6 +1854,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
     std::vector<double> target_lcao_unoccupied_raw_norm_min(response_plan.kq_pairs.size(), 0.0);
     std::vector<double> target_lcao_unoccupied_raw_norm_max(response_plan.kq_pairs.size(), 0.0);
     std::vector<double> target_lcao_occ_unocc_overlap_max(response_plan.kq_pairs.size(), 0.0);
+    int local_wavefunction_diagnostic_count = 0;
 
     std::vector<std::size_t> owned_pair_indices
         = sternheimer_owned_kq_pair_indices(response_plan,
@@ -1997,7 +2052,9 @@ void run_sternheimer_periodic_lcao_chi0_output(
             std::vector<SternheimerRPA::Complex>* lcao_sos_branch
                 = write_lcao_sos ? &lcao_sos_branches[static_cast<std::size_t>(ifrequency)] : nullptr;
 
-            for (int ib = 0; ib != static_cast<int>(source.states.wavefunctions.size()); ++ib)
+            const int source_band_count = sternheimer_periodic_band_count(
+                static_cast<int>(source.states.wavefunctions.size()), max_bands);
+            for (int ib = 0; ib != source_band_count; ++ib)
             {
                 const double occupation = sternheimer_lcao_weighted_occupation(source_record, ib);
                 struct PeriodicChannelEquationResult
@@ -2005,6 +2062,8 @@ void run_sternheimer_periodic_lcao_chi0_output(
                     SternheimerRPA::SolverResult solver;
                     double equation_residual_norm = 0.0;
                     double full_grid_equation_residual_norm = 0.0;
+                    bool has_wavefunction_diagnostic = false;
+                    SternheimerWavefunctionDiagnostic::Record wavefunction_diagnostic;
                 };
                 const std::vector<PeriodicChannelEquationResult> channel_results
                     = run_sternheimer_channel_tasks<PeriodicChannelEquationResult>(
@@ -2071,6 +2130,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
                                     ichannel,
                                     *delta_out_branch);
                             }
+                            SternheimerFDHamiltonian::Vector lcao_response;
                             if (write_lcao_sos)
                             {
                                 const auto lcao_matrix_elements = delta_sternheimer_perturbation_matrix_elements(
@@ -2078,7 +2138,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
                                     perturbations_ry[channel_index],
                                     source.states.wavefunctions[ib],
                                     grid_data.volume_element);
-                                const auto lcao_response = build_delta_sternheimer_sos_wavefunction(
+                                lcao_response = build_delta_sternheimer_sos_wavefunction(
                                     lcao_virtual_states,
                                     lcao_matrix_elements,
                                     source.states.eigenvalues[ib],
@@ -2097,6 +2157,82 @@ void run_sternheimer_periodic_lcao_chi0_output(
                             result.equation_residual_norm = response.residual_norm;
                             result.full_grid_equation_residual_norm
                                 = response.full_grid_equation_residual_norm;
+                            if (write_wavefunction_diagnostic
+                                && wavefunction_diagnostic_config.selector.matches(response_plan.iq,
+                                                                                   pair.source_index,
+                                                                                   ib,
+                                                                                   ifrequency + 1,
+                                                                                   ichannel))
+                            {
+                                result.has_wavefunction_diagnostic = true;
+                                auto& diagnostic = result.wavefunction_diagnostic;
+                                diagnostic.metadata.nx = grid_data.grid.nx;
+                                diagnostic.metadata.ny = grid_data.grid.ny;
+                                diagnostic.metadata.nz = grid_data.grid.nz;
+                                diagnostic.metadata.iq = response_plan.iq;
+                                diagnostic.metadata.ik_full = pair.source_index;
+                                diagnostic.metadata.ib = ib;
+                                diagnostic.metadata.ifrequency = ifrequency + 1;
+                                diagnostic.metadata.channel = ichannel;
+                                const auto lattice = sternheimer_fd_grid_lattice_vectors(grid_data.grid);
+                                for (int i = 0; i != 3; ++i)
+                                {
+                                    for (int j = 0; j != 3; ++j)
+                                    {
+                                        diagnostic.metadata.lattice[static_cast<std::size_t>(3 * i + j)]
+                                            = lattice[static_cast<std::size_t>(i)][static_cast<std::size_t>(j)];
+                                    }
+                                }
+                                diagnostic.metadata.qpoint
+                                    = use_supercell_translation_sum
+                                          ? supercell_translation_sum.primitive_qpoint
+                                          : response_plan.qpoint;
+                                diagnostic.metadata.source_kpoint = source_record.kpoint;
+                                diagnostic.metadata.target_kpoint = target_record.kpoint;
+                                diagnostic.metadata.omega_ha
+                                    = frequency_grid.omega_ha[static_cast<std::size_t>(ifrequency)];
+                                diagnostic.metadata.omega_ry = omega_ry;
+                                diagnostic.metadata.volume_element = grid_data.volume_element;
+                                diagnostic.metadata.reference_eigenvalue_ry = source.states.eigenvalues[ib];
+                                diagnostic.metadata.weighted_occupation = occupation;
+                                diagnostic.metadata.rhs_norm
+                                    = sternheimer_fd_grid_norm(response.projected_rhs,
+                                                               grid_data.volume_element);
+                                diagnostic.metadata.solver_relative_residual = response.solver.relative_residual;
+                                diagnostic.metadata.equation_relative_residual
+                                    = diagnostic.metadata.rhs_norm > 0.0
+                                          ? response.full_grid_equation_residual_norm
+                                                / diagnostic.metadata.rhs_norm
+                                          : response.full_grid_equation_residual_norm;
+                                diagnostic.metadata.diagonal_branch_element
+                                    = occupation
+                                      * SternheimerRPA::accumulate_polarizability_grid_element(
+                                          potentials[channel_index],
+                                          source.states.wavefunctions[ib],
+                                          response.wavefunction,
+                                          grid_data.volume_element);
+                                diagnostic.vectors.push_back(
+                                    {"psi0", source.states.wavefunctions[ib]});
+                                diagnostic.vectors.push_back(
+                                    {"hartree_potential_ha", potentials[channel_index]});
+                                diagnostic.vectors.push_back(
+                                    {"perturbation_ry", perturbations_ry[channel_index]});
+                                diagnostic.vectors.push_back({"rhs_ry", response.projected_rhs});
+                                diagnostic.vectors.push_back({"delta_psi", response.wavefunction});
+                                if (response.has_delta_components)
+                                {
+                                    diagnostic.vectors.push_back(
+                                        {"delta_in_sos", response.delta_components.in_sos_wavefunction});
+                                    diagnostic.vectors.push_back(
+                                        {"delta_in_pulay", response.delta_components.in_pulay_wavefunction});
+                                    diagnostic.vectors.push_back(
+                                        {"delta_out_grid", response.delta_components.out_wavefunction});
+                                }
+                                if (!lcao_response.empty())
+                                {
+                                    diagnostic.vectors.push_back({"lcao_sos", std::move(lcao_response)});
+                                }
+                            }
                             return result;
                         },
                         channel_threads);
@@ -2114,6 +2250,15 @@ void run_sternheimer_periodic_lcao_chi0_output(
                     max_full_grid_equation_residual_norm
                         = std::max(max_full_grid_equation_residual_norm,
                                    result.full_grid_equation_residual_norm);
+                    if (result.has_wavefunction_diagnostic)
+                    {
+                        SternheimerWavefunctionDiagnostic::write(
+                            wavefunction_diagnostic_config.output_filename,
+                            result.wavefunction_diagnostic);
+                        ++local_wavefunction_diagnostic_count;
+                        GlobalV::ofs_running << " Sternheimer wavefunction diagnostic: "
+                                             << wavefunction_diagnostic_config.output_filename << std::endl;
+                    }
                     append_chi0_progress_event("equation",
                                                ifrequency + 1,
                                                owner_rank,
@@ -2244,7 +2389,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
         std::fill(target_lcao_occ_unocc_overlap_max.begin(), target_lcao_occ_unocc_overlap_max.end(), -1.0);
     }
 
-    if (!use_symmetry_partial_response)
+    if (!use_symmetry_partial_response && write_periodic_v1)
     {
         for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
         {
@@ -2295,6 +2440,21 @@ void run_sternheimer_periodic_lcao_chi0_output(
                                                    lcao_sos);
             }
         }
+    }
+    int global_wavefunction_diagnostic_count = local_wavefunction_diagnostic_count;
+#ifdef __MPI
+    MPI_Allreduce(&local_wavefunction_diagnostic_count,
+                  &global_wavefunction_diagnostic_count,
+                  1,
+                  MPI_INT,
+                  MPI_SUM,
+                  MPI_COMM_WORLD);
+#endif
+    if (write_wavefunction_diagnostic && global_wavefunction_diagnostic_count != 1)
+    {
+        throw std::runtime_error("Sternheimer wavefunction diagnostic selector matched "
+                                 + std::to_string(global_wavefunction_diagnostic_count)
+                                 + " equations; expected exactly one.");
     }
 
     std::vector<SternheimerPartialResponseRecord> gathered_partial_records;
@@ -2472,7 +2632,7 @@ void run_sternheimer_periodic_lcao_chi0_output(
         }
     }
     std::vector<std::pair<std::string, SternheimerRPA::Chi0V1Metadata>> index_entries;
-    if (!use_symmetry_partial_response)
+    if (!use_symmetry_partial_response && write_periodic_v1)
     {
         index_entries.reserve(static_cast<std::size_t>(nfreq));
         for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
@@ -2494,10 +2654,20 @@ void run_sternheimer_periodic_lcao_chi0_output(
     }
 
     out << "status success\n";
-    out << "format " << (use_symmetry_partial_response ? "v1_partial"
-                                            : (write_kresolved_diagnostic ? "v1_kresolved" : "v1"))
+    out << "format " << (!write_periodic_v1
+                              ? "diagnostic_only"
+                              : (use_symmetry_partial_response
+                                     ? "v1_partial"
+                                     : (write_kresolved_diagnostic ? "v1_kresolved" : "v1")))
         << '\n';
-    if (use_symmetry_partial_response)
+    if (!write_periodic_v1)
+    {
+        out << "data_files 0\n";
+        out << "response_output diagnostic_only_no_v1\n";
+        out << "diagnostic_only_reason "
+            << (use_supercell_translation_sum ? "supercell_translation_sum" : "truncated_bands") << '\n';
+    }
+    else if (use_symmetry_partial_response)
     {
         out << "data_files " << gathered_partial_records.size() << '\n';
         out << "partial_manifest v1_sternheimer_partial_manifest_iq_" << response_plan.iq << ".dat\n";
@@ -2573,11 +2743,28 @@ void run_sternheimer_periodic_lcao_chi0_output(
     out << "periodic_kmesh " << kmesh[0] << ' ' << kmesh[1] << ' ' << kmesh[2] << '\n';
     out << "periodic_gamma_massidda_chi " << massidda_chi << '\n';
     out << "periodic_gamma_coulomb_projection "
-        << (gamma_qpoint ? "diagnostic_only_physical_poisson" : "not_applicable") << '\n';
+        << (use_supercell_translation_sum
+                ? "skipped_supercell_translation_sum"
+                : (gamma_qpoint ? "diagnostic_only_physical_poisson" : "not_applicable"))
+        << '\n';
     out << "periodic_gamma_projection_relative_error " << gamma_projection_relative_error << '\n';
     out << "periodic_gamma_limit "
         << (gamma_qpoint ? "constant_mode_only_no_headwing" : "not_applicable") << '\n';
     out << "perturbation_ccp_rmesh_times_used no\n";
+    out << "supercell_translation_perturbation " << (use_supercell_translation_sum ? "yes" : "no") << '\n';
+    if (use_supercell_translation_sum)
+    {
+        out << "supercell_translation_repeats " << supercell_translation_sum.repeats[0] << ' '
+            << supercell_translation_sum.repeats[1] << ' ' << supercell_translation_sum.repeats[2] << '\n';
+        out << "supercell_translation_primitive_q " << supercell_translation_sum.primitive_qpoint[0] << ' '
+            << supercell_translation_sum.primitive_qpoint[1] << ' '
+            << supercell_translation_sum.primitive_qpoint[2] << '\n';
+        out << "supercell_translation_atoms_per_primitive "
+            << supercell_translation_sum.atoms_per_primitive << '\n';
+        out << "supercell_translation_basis_atom " << supercell_translation_sum.basis_atom << '\n';
+        out << "supercell_translation_channel_within_atom "
+            << supercell_translation_sum.channel_within_atom << '\n';
+    }
     out << "sternheimer_channel_threads " << channel_threads << '\n';
     out << "sternheimer_mode " << (use_delta_sternheimer ? "delta" : "standard") << '\n';
     if (use_delta_sternheimer)
@@ -2586,9 +2773,16 @@ void run_sternheimer_periodic_lcao_chi0_output(
     }
     out << "delta_component_diagnostic " << (write_delta_components ? "yes" : "no") << '\n';
     out << "lcao_sos_diagnostic " << (write_lcao_sos ? "yes" : "no") << '\n';
+    out << "wavefunction_diagnostic " << (write_wavefunction_diagnostic ? "yes" : "no") << '\n';
+    if (write_wavefunction_diagnostic)
+    {
+        out << "wavefunction_diagnostic_file " << wavefunction_diagnostic_config.output_filename << '\n';
+    }
     out << "abfs_channels " << num_channels << '\n';
     out << "abfs_max_channels_per_atom " << max_channels << '\n';
     out << "occupied_bands_total " << sternheimer_lcao_total_occupied_bands(occupied_kpoints) << '\n';
+    out << "sternheimer_bands_per_k_limit " << max_bands << '\n';
+    out << "sternheimer_bands_truncated " << (bands_are_truncated ? "yes" : "no") << '\n';
     out << "sternheimer_frequency_mpi " << (use_frequency_mpi ? "yes" : "no") << '\n';
     out << "sternheimer_kpoint_mpi " << (use_kpoint_mpi ? "yes" : "no") << '\n';
     out << "sternheimer_nested_k_frequency_mpi " << (use_nested_response_mpi ? "yes" : "no") << '\n';
