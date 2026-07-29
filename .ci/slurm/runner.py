@@ -77,6 +77,7 @@ class Remote:
     port: int
     user: str
     project_root: str
+    allowed_project_roots: Tuple[PurePosixPath, ...]
 
 
 @dataclass(frozen=True)
@@ -143,7 +144,7 @@ def load_config(path: Path = ROOT / "config.ini") -> Config:
     if set(parser.sections()) != known or set(parser["site"]) != {
         "name", "url", "acknowledgement",
     } or set(parser["remote"]) != {
-        "host", "port", "user", "project_root",
+        "host", "port", "user", "project_root", "allowed_project_roots",
     } or set(parser["cluster"]) != {
         "partition", "mapping_root", "disable_nccl_ib", "poll_seconds",
     }:
@@ -165,8 +166,15 @@ def load_config(path: Path = ROOT / "config.ini") -> Config:
         project_parts = project.parts[1:]
     else:
         raise ValueError("invalid remote project root")
+    allowed_values = [value.strip() for value in remote["allowed_project_roots"].split(",")]
+    allowed_roots = tuple(PurePosixPath(value) for value in allowed_values)
     if not NAME.fullmatch(remote["host"]) or not NAME.fullmatch(remote["user"]) or \
-            any(not NAME.fullmatch(part) for part in project_parts):
+            any(not NAME.fullmatch(part) for part in project_parts) or not allowed_roots or \
+            len(set(allowed_roots)) != len(allowed_roots) or any(
+                not root.is_absolute() or len(root.parts) < 2 or
+                any(not NAME.fullmatch(part) for part in root.parts[1:])
+                for root in allowed_roots
+            ):
         raise ValueError("invalid remote configuration")
     partition = parser["cluster"]["partition"]
     mapping = Path(parser["cluster"]["mapping_root"])
@@ -196,7 +204,7 @@ def load_config(path: Path = ROOT / "config.ini") -> Config:
         Site(site["name"], site["url"], site["acknowledgement"]),
         Remote(
             remote["host"], _integer(remote, "port", 1, 65535),
-            remote["user"], project_root,
+            remote["user"], project_root, allowed_roots,
         ),
         partition, mapping, disable == "true",
         _integer(parser["cluster"], "poll_seconds", 1, 300),
@@ -210,6 +218,11 @@ def _atomic(path: Path, value: Any) -> None:
     text = value if isinstance(value, str) else json.dumps(value, indent=2, sort_keys=True) + "\n"
     temporary.write_text(text, encoding="utf-8")
     os.replace(str(temporary), str(path))
+
+
+def _below_project_root(project: Path, roots: Sequence[Path]) -> bool:
+    return bool(roots) and all(root.is_absolute() and len(root.parts) > 1 for root in roots) and \
+        any(root in project.parents for root in roots)
 
 
 def _time(seconds: int) -> str:
@@ -588,8 +601,9 @@ def _assemble_bundle(root: Path, expected: str) -> Path:
 def remote_prepare(project: Path, run: Path) -> None:
     project = project.resolve()
     run = run.resolve()
-    if Path.home().resolve() not in project.parents or project not in run.parents:
-        raise ValueError("project and run must be below HOME")
+    roots = tuple(Path(root).resolve() for root in load_config().remote.allowed_project_roots)
+    if not _below_project_root(project, roots) or project not in run.parents:
+        raise ValueError("project must be below a configured project root")
     run_paths = tuple(run / name for name in ("source", "results", "jobs", "input"))
     if any(path.exists() for path in run_paths):
         raise ValueError("run directory already exists")
@@ -850,6 +864,7 @@ def run(args: argparse.Namespace) -> int:
     automatic_artifacts = not hasattr(args, "artifacts")
     args.artifacts = _artifact_path(args).expanduser()
     repository = args.source_repository.resolve()
+    config = load_config()
     if not all(NAME.fullmatch(value) for value in (args.target, args.namespace, args.run_id, args.run_attempt)):
         raise ValueError("invalid target or run name")
     actual = _command(("git", "rev-parse", "HEAD"), repository).stdout.strip()
@@ -857,14 +872,23 @@ def run(args: argparse.Namespace) -> int:
         args.source_sha = actual
     if args.source_sha != actual or not SHA.fullmatch(actual):
         raise ValueError("source SHA must be the checked-out HEAD")
-    if args.project_root == "~" or args.project_root.startswith("~/"):
-        command = shlex.join(("python3", "-c", "from pathlib import Path; print(Path.home())"))
-        home = _retry(("ssh", "-F", str(args.ssh_config), args.target, command)).stdout.strip()
-        relative = "" if args.project_root == "~" else args.project_root[2:]
-        args.project_root = str(Path(home) / relative)
-    project = Path(args.project_root)
+    requested = (args.project_root, *(str(root) for root in config.remote.allowed_project_roots))
+    script = (
+        "from pathlib import Path; import json,sys; "
+        "print(json.dumps([str(Path(value).expanduser().resolve()) for value in sys.argv[1:]]))"
+    )
+    command = shlex.join(("python3", "-c", script, *requested))
+    resolved = json.loads(_retry(("ssh", "-F", str(args.ssh_config), args.target, command)).stdout)
+    if type(resolved) is not list or len(resolved) != len(requested) or \
+            any(type(value) is not str for value in resolved):
+        raise ValueError("invalid resolved project paths")
+    project = Path(resolved[0])
+    roots = tuple(Path(value) for value in resolved[1:])
     if not project.is_absolute() or any(not NAME.fullmatch(part) for part in project.parts[1:]):
         raise ValueError("project root must be a simple absolute path")
+    if not _below_project_root(project, roots):
+        raise ValueError("project root must be below a configured project root")
+    args.project_root = str(project)
     run = project / "runs" / args.namespace / "{}-{}".format(args.run_id, args.run_attempt)
     print("Preparing remote run...", flush=True)
     if automatic_artifacts:
@@ -913,7 +937,7 @@ def run(args: argparse.Namespace) -> int:
     _ssh(args.ssh_config, args.target, ("bash", "-lc", launch))
     failures = 0
     printed_lines = 0
-    poll_seconds = load_config().poll_seconds
+    poll_seconds = config.poll_seconds
     marker = "\n---DONE---\n"
     while True:
         log_path = shlex.quote(str(run / "results" / "coordinator.log"))
@@ -1104,7 +1128,7 @@ def parser() -> argparse.ArgumentParser:
     )
     client.add_argument(
         "--project-root", default=load_config().remote.project_root,
-        help="remote directory for caches, runs, and archives",
+        help="remote directory below a configured project root for caches, runs, and archives",
     )
     client.add_argument(
         "--source-repository", type=Path, default=REPOSITORY_ROOT,
@@ -1183,6 +1207,7 @@ def main() -> int:
             "remote": {
                 "host": config.remote.host, "port": config.remote.port,
                 "user": config.remote.user, "project_root": config.remote.project_root,
+                "allowed_project_roots": list(map(str, config.remote.allowed_project_roots)),
             },
             "resources": list(config.resources), "cases": len(config.cases),
         }))

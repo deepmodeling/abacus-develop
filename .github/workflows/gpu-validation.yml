@@ -196,20 +196,6 @@ jobs:
           if-no-files-found: warn
           retention-days: 30
 
-      - name: Archive uploaded remote run
-        if: always() && steps.upload.outcome == 'success'
-        run: |
-          set -euo pipefail
-          test -f "$ARTIFACT_ROOT/run.json" || exit 0
-          project=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["project_root"])' "$ARTIFACT_ROOT/run.json")
-          run=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1]))["run_root"])' "$ARTIFACT_ROOT/run.json")
-          for attempt in 1 2 3; do
-            ssh -F "$REMOTE_SSH_CONFIG" gpu-ci \
-                "test ! -d '$run' || python3 '$run/control/runner.py' archive '$project' '$run'" && exit 0
-            test "$attempt" = 3 || sleep 5
-          done
-          exit 1
-
       - name: Remove SSH credentials
         if: always()
         run: rm -rf "$RUNNER_TEMP/remote-ssh"

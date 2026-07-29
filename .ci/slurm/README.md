@@ -92,10 +92,11 @@ and `~/abacus_gpu_ci` below the remote user's home. It writes each local run to
 `/tmp/abacus_gpu_ci_<uid>/<namespace>/<run_id>_<attempt>/`, outside the Git
 checkout. Override any value shown by `run --help`; for example, use `--target
 my-cluster` for a different local host alias or `--artifacts` for durable local
-storage. The command waits for Slurm completion and exits with a non-zero status
-when a case or infrastructure result is not fully successful. At the end it
-prints the component states and the paths to the full local results and the
-compressed remote archive.
+storage. The remote project root must resolve below one of the configured
+`allowed_project_roots`. The command waits for Slurm completion and exits with a
+non-zero status when a case or infrastructure result is not fully successful.
+At the end it prints the component states and the paths to the full local
+results and the compressed remote archive.
 
 Source is sent as one compressed Git bundle split into eight parallel rsync
 transfers. The remote side checks the merged SHA-256 and the Git bundle before
@@ -117,8 +118,11 @@ python3 .ci/slurm/runner.py run --help
 
 - `[site]`: the resource acknowledgement, site name, and public URL shown at
   the end of result reports. Change these values for another cluster.
-- `[remote]`: SSH `host`, `port`, `user`, and `project_root`. The project root
-  must be an absolute path or use `~/` relative to the remote user's home.
+- `[remote]`: SSH `host`, `port`, `user`, `project_root`, and comma-separated
+  `allowed_project_roots`. The project root may use `~/` or an absolute path,
+  but its remote resolved path must be below one of the allowed roots. Prefixes
+  are also resolved remotely, so aliases such as `/home` pointing to `/org` are
+  accepted.
 - `[cluster]`: Slurm `partition`, absolute `mapping_root` for the MPI mapping
   script, `disable_nccl_ib` (`true` or `false`), and `poll_seconds` (1-300).
 - `[build]`: build-job `qos`, `nodes`, `tasks_per_node`, `gpus_per_node`, and
@@ -158,7 +162,9 @@ run, and removes the active run after archiving. On the GitHub runner,
 `ARTIFACT_ROOT` is `${runner.temp}/gpu-ci-artifacts`; it contains the collected
 `results/`, `run.json`, and `client.log`. CI uploads that directory as
 `gpu-validation-<run-id>-<attempt>` and retains it for 30 days. A pull-request comment
-links to the Actions run and the uploaded raw files.
+links to the Actions run and the uploaded raw files. If the client stops before
+completion, the remote run is left in place so that its detached coordinator and
+Slurm jobs are not interrupted.
 
 ## Troubleshooting
 

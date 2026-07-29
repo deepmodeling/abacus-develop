@@ -54,6 +54,7 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.remote.port, 12022)
         self.assertEqual(config.remote.user, "abacususer01")
         self.assertEqual(config.remote.project_root, "~/abacus_gpu_ci")
+        self.assertEqual(tuple(map(str, config.remote.allowed_project_roots)), ("/home", "/org"))
         known_hosts = (ROOT / "known_hosts").read_text(encoding="utf-8")
         self.assertIn("[{}]:{}".format(config.remote.host, config.remote.port), known_hosts)
 
@@ -83,6 +84,7 @@ class ConfigTests(unittest.TestCase):
         for text in (
             original.replace("port = 12022", "port = 0", 1),
             original.replace("project_root = ~/", "project_root = relative/", 1),
+            original.replace("allowed_project_roots = /home, /org", "allowed_project_roots = /home, relative", 1),
         ):
             with tempfile.TemporaryDirectory() as directory:
                 path = Path(directory) / "config.ini"
@@ -260,7 +262,7 @@ class SlurmTests(unittest.TestCase):
     def test_pass_requires_successful_slurm_accounting(self):
         config = runner.Config(
             runner.Site("Example cluster", "https://cluster.example/", "Computing resources were provided by"),
-            runner.Remote("cluster.example", 22, "user", "~/gpu-ci"),
+            runner.Remote("cluster.example", 22, "user", "~/gpu-ci", (Path("/home"),)),
             "gpu", Path("/opt/cluster/mps_mapping.d"), False, 1,
             runner.Resource("build", "flood-gpu", 1, 1, 1, 60),
             {"one": runner.Resource("one", "flood-gpu", 1, 1, 1, 60)},
@@ -289,6 +291,10 @@ class SlurmTests(unittest.TestCase):
 
 class TransferTests(unittest.TestCase):
     @staticmethod
+    def _remote_config(*roots):
+        return mock.Mock(remote=mock.Mock(allowed_project_roots=tuple(map(Path, roots))))
+
+    @staticmethod
     def _git(root, *arguments):
         return subprocess.run(("git", *arguments), cwd=str(root), check=True, text=True, capture_output=True)
 
@@ -316,7 +322,7 @@ class TransferTests(unittest.TestCase):
             project = home / "project"
             run1 = project / "runs" / "manual" / "1-1"
             (run1 / "control").mkdir(parents=True)
-            with mock.patch("runner.Path.home", return_value=home):
+            with mock.patch("runner.load_config", return_value=self._remote_config(home)):
                 runner.remote_prepare(project, run1)
             checksum = self._bundle(repository, run1, "HEAD")
             runner.remote_receive(project, run1, first, checksum)
@@ -327,7 +333,7 @@ class TransferTests(unittest.TestCase):
             second = self._git(repository, "rev-parse", "HEAD").stdout.strip()
             run2 = project / "runs" / "manual" / "2-1"
             (run2 / "control").mkdir(parents=True)
-            with mock.patch("runner.Path.home", return_value=home):
+            with mock.patch("runner.load_config", return_value=self._remote_config(home)):
                 runner.remote_prepare(project, run2)
             checksum = self._bundle(repository, run2, first + "..HEAD")
             runner.remote_receive(project, run2, second, checksum)
@@ -335,7 +341,7 @@ class TransferTests(unittest.TestCase):
 
             run3 = project / "runs" / "manual" / "3-1"
             (run3 / "control").mkdir(parents=True)
-            with mock.patch("runner.Path.home", return_value=home):
+            with mock.patch("runner.load_config", return_value=self._remote_config(home)):
                 runner.remote_prepare(project, run3)
             self.assertIsNone(runner._bundle_revision(repository, second, second))
             runner.remote_receive(project, run3, second, "-")
@@ -357,10 +363,21 @@ class TransferTests(unittest.TestCase):
             project = home / "project"
             run = project / "runs" / "manual" / "1-1"
             (run / "control").mkdir(parents=True)
-            with mock.patch("runner.Path.home", return_value=home):
+            with mock.patch("runner.load_config", return_value=self._remote_config(home)):
                 runner.remote_prepare(project, run)
                 with self.assertRaisesRegex(ValueError, "already exists"):
                     runner.remote_prepare(project, run)
+
+    def test_prepare_rejects_project_outside_configured_roots(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            project = root / "outside" / "project"
+            run = project / "runs" / "manual" / "1-1"
+            (run / "control").mkdir(parents=True)
+            config = self._remote_config(root / "allowed")
+            with mock.patch("runner.load_config", return_value=config), \
+                    self.assertRaisesRegex(ValueError, "configured project root"):
+                runner.remote_prepare(project, run)
 
     def test_transfer_retry_is_bounded(self):
         completed = mock.Mock(returncode=0, stdout="done", stderr="")
@@ -404,7 +421,7 @@ class TransferTests(unittest.TestCase):
             source_sha = "a" * 40
             args = argparse.Namespace(
                 source_repository=root,
-                project_root="/project",
+                project_root="/home/user/project",
                 target="gpu-ci",
                 namespace="manual",
                 run_id="1",
@@ -414,16 +431,46 @@ class TransferTests(unittest.TestCase):
                 ssh_config=root / "ssh-config",
             )
             revision = mock.Mock(stdout=source_sha + "\n")
+            resolved = mock.Mock(stdout='["/org/user/project", "/org", "/org"]\n')
             with mock.patch("runner._command", return_value=revision), \
-                    mock.patch("runner._retry", side_effect=RuntimeError("disconnected")), \
+                    mock.patch("runner._retry", side_effect=[resolved, RuntimeError("disconnected")]), \
                     self.assertRaisesRegex(RuntimeError, "disconnected"):
                 runner.run(args)
             metadata = json.loads((args.artifacts / "run.json").read_text())
             self.assertEqual(metadata, {
-                "project_root": "/project",
-                "run_root": "/project/runs/manual/1-1",
+                "project_root": "/org/user/project",
+                "run_root": "/org/user/project/runs/manual/1-1",
                 "source_sha": source_sha,
             })
+
+    def test_run_rejects_project_outside_configured_roots_before_upload(self):
+        for requested, resolved_path, resolved_roots in (
+            ("/project", "/project", ("/home", "/org")),
+            ("/home/user/project", "/scratch/project", ("/home", "/org")),
+            ("/org/user/project", "/etc/project", ("/home", "/")),
+        ):
+            with self.subTest(requested=requested), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                source_sha = "a" * 40
+                args = argparse.Namespace(
+                    source_repository=root,
+                    project_root=requested,
+                    target="gpu-ci",
+                    namespace="manual",
+                    run_id="1",
+                    run_attempt="1",
+                    source_sha=source_sha,
+                    artifacts=root / "artifacts",
+                    ssh_config=root / "ssh-config",
+                )
+                revision = mock.Mock(stdout=source_sha + "\n")
+                resolved = mock.Mock(stdout=json.dumps([resolved_path, *resolved_roots]) + "\n")
+                with mock.patch("runner._command", return_value=revision), \
+                        mock.patch("runner._retry", return_value=resolved) as retry, \
+                        self.assertRaisesRegex(ValueError, "configured project root"):
+                    runner.run(args)
+                self.assertEqual(retry.call_count, 1)
+                self.assertFalse(args.artifacts.exists())
 
     def test_run_resolves_head_and_remote_home_defaults(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -441,16 +488,16 @@ class TransferTests(unittest.TestCase):
                 ssh_config=Path("~/.ssh/config"),
             )
             revision = mock.Mock(stdout=source_sha + "\n")
-            home = mock.Mock(stdout="/home/user\n")
+            resolved = mock.Mock(stdout='["/org/user/abacus_gpu_ci", "/home", "/org"]\n')
             with mock.patch("runner.Path.home", return_value=Path("/home/local")), \
                     mock.patch("runner._command", return_value=revision), \
-                    mock.patch("runner._retry", side_effect=[home, RuntimeError("disconnected")]), \
+                    mock.patch("runner._retry", side_effect=[resolved, RuntimeError("disconnected")]), \
                     self.assertRaisesRegex(RuntimeError, "disconnected"):
                 runner.run(args)
             metadata = json.loads((args.artifacts / "run.json").read_text())
             self.assertEqual(metadata, {
-                "project_root": "/home/user/abacus_gpu_ci",
-                "run_root": "/home/user/abacus_gpu_ci/runs/manual/1-1",
+                "project_root": "/org/user/abacus_gpu_ci",
+                "run_root": "/org/user/abacus_gpu_ci/runs/manual/1-1",
                 "source_sha": source_sha,
             })
 
@@ -678,6 +725,7 @@ class PolicyTests(unittest.TestCase):
         self.assertIn("runner.py run", text)
         self.assertEqual(text.count("pull-requests: write"), 2)
         self.assertIn("vars.GPU_VALIDATION_ENABLED == 'true'", text)
+        self.assertNotIn('ssh -F "$REMOTE_SSH_CONFIG" gpu-ci', text)
         self.assertNotIn("cpus-per-task", text)
 
 
