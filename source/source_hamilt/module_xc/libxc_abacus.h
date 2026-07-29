@@ -1,7 +1,7 @@
 #ifndef LIBXC_ABACUS_H
 #define LIBXC_ABACUS_H
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 
 #include "source_base/matrix.h"
 #include "source_base/vector3.h"
@@ -243,6 +243,6 @@ namespace XC_Functional_Libxc
 
 } // namespace XC_Functional_Libxc
 
-#endif // USE_LIBXC
+#endif // __LIBXC
 
 #endif // LIBXC_ABACUS_H

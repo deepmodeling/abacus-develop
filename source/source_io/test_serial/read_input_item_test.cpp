@@ -1025,7 +1025,7 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
-#ifndef __USECNPY
+#ifndef __CNPY
         param.input.dm_to_rho = true;
         GlobalV::NPROC = 1;
         testing::internal::CaptureStdout();

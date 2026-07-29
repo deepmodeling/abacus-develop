@@ -1,4 +1,4 @@
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 
 #include "libxc_abacus.h"
 #ifdef __EXX

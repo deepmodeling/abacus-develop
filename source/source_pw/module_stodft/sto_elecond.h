@@ -10,7 +10,7 @@ template <typename FPTYPE, typename Device>
 class Sto_EleCond : protected EleCond<FPTYPE, Device>
 {
   public:
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     using lowTYPE = float; // Here we use float to accelerate the calculation, which is enough for the accuracy
 #else
     using lowTYPE = double;

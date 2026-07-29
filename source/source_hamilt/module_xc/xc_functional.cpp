@@ -3,7 +3,7 @@
 #include "source_base/global_function.h"
 #include "source_base/tool_title.h"
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "libxc_abacus.h"
 #endif
 
@@ -154,7 +154,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = false;
     }
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     else if ( xc_func == "SCAN")
     {
         func_id.push_back(XC_MGGA_X_SCAN);
@@ -220,7 +220,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 4;
         use_libxc = false;
     }
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     else if( xc_func == "HSE")
     {
         func_id.push_back(XC_HYB_GGA_XC_HSE06);
@@ -278,7 +278,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 #endif
     else
     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         //see if it matches libxc functionals
         const std::pair<int, std::vector<int>> type_id = XC_Functional_Libxc::set_xc_type_libxc(xc_func);
         func_type = std::get<0>(type_id);
@@ -320,7 +320,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     // }
     // #endif
 
-#ifndef USE_LIBXC
+#ifndef __LIBXC
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
         || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22" ||
         xc_func == "LC_PBE" || xc_func == "LC_WPBE" || xc_func == "LRC_WPBE" ||
@@ -336,7 +336,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 std::string XC_Functional::output_info()
 {
     ModuleBase::TITLE("XC_Functional", "output_info");
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     if(use_libxc)
     {
         std::stringstream ss;
