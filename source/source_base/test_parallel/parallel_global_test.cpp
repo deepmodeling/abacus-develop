@@ -168,6 +168,27 @@ TEST_F(ParaGlobal, DivideMPIPools)
     EXPECT_EQ(mpi.rank_in_pool, 1);
 }
 
+TEST_F(ParaGlobal, DivideKAndBandPools)
+{
+    ASSERT_EQ(nproc, 4);
+
+    Parallel_Global::divide_pools(nproc,
+                                  my_rank,
+                                  2,
+                                  2,
+                                  mpi.nproc_in_stogroup,
+                                  mpi.rank_in_stogroup,
+                                  mpi.MY_BNDGROUP,
+                                  mpi.nproc_in_pool,
+                                  mpi.rank_in_pool,
+                                  mpi.my_pool);
+
+    int pool_size = 0;
+    MPI_Comm_size(POOL_WORLD, &pool_size);
+    EXPECT_EQ(mpi.nproc_in_pool, 1);
+    EXPECT_EQ(pool_size, 1);
+}
+
 
 class FakeMPIContext
 {

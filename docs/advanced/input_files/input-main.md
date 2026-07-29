@@ -645,13 +645,13 @@
 ### kpar
 
 - **Type**: Integer
-- **Description**: Divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI processes.
+- **Description**: Divide all MPI processes into kpar groups and distribute k points among them. It must be greater than 0 and no greater than the number of MPI processes. It may exceed the number of symmetry-reduced k points; in that case, some groups are empty, which may reduce load balance.
 - **Default**: 1
 
 ### bndpar
 
 - **Type**: Integer
-- **Description**: Divide all processors into bndpar groups, and bands (only stochastic orbitals now) will be distributed among each group. It should be larger than 0.
+- **Description**: Divide each k-point group into bndpar groups. This distributes stochastic orbitals in SDFT and deterministic bands when ks_solver is bpcg; other solvers reset bndpar to 1. It must be greater than 0. When bndpar is greater than 1, the number of MPI processes must be divisible by kpar * bndpar.
 - **Default**: 1
 
 ### latname

@@ -13,7 +13,8 @@ void PW_Basis:: initmpi(
 {
     if (this->device == "gpu" && poolnproc_in > 1)
     {
-        ModuleBase::WARNING_QUIT("PW_Basis::initmpi", "GPU plane-wave FFT requires one MPI process per k-point pool");
+        ModuleBase::WARNING_QUIT("PW_Basis::initmpi",
+                                 "GPU plane-wave FFT requires NPROC_IN_POOL == 1 after KPAR/BNDPAR partitioning");
     }
         this->poolnproc = poolnproc_in;
         this->poolrank = poolrank_in;

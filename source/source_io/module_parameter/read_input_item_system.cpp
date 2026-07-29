@@ -294,8 +294,10 @@ void ReadInput::item_system()
                           "will be distributed among";
         item.category = "System variables";
         item.type = "Integer";
-        item.description = "Divide all processors into kpar groups, and k points will be distributed among each group. "
-                          "The value taken should be less than or equal to the number of k points as well as the number of MPI processes.";
+        item.description = "Divide all MPI processes into kpar groups and distribute k points among them. "
+                           "It must be greater than 0 and no greater than the number of MPI processes. "
+                           "It may exceed the number of symmetry-reduced k points; in that case, some groups are empty, "
+                           "which may reduce load balance.";
         item.default_value = "1";
         read_sync_int(input.kpar);
         item.reset_after = {"basis_type", "device", "bndpar"};
@@ -336,8 +338,10 @@ void ReadInput::item_system()
                           "will be distributed among each group";
         item.category = "System variables";
         item.type = "Integer";
-        item.description = "Divide all processors into bndpar groups, and bands (only stochastic orbitals now) "
-                          "will be distributed among each group. It should be larger than 0.";
+        item.description = "Divide each k-point group into bndpar groups. This distributes stochastic orbitals in SDFT "
+                           "and deterministic bands when ks_solver is bpcg; other solvers reset bndpar to 1. "
+                           "It must be greater than 0. When bndpar is greater than 1, the number of MPI processes must be "
+                           "divisible by kpar * bndpar.";
         item.default_value = "1";
         read_sync_int(input.bndpar);
         item.reset_after = {"ks_solver", "nbands_sto"};
