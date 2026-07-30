@@ -381,6 +381,42 @@ TEST(SternheimerABACUSSTSmoke, GammaRecordPreservesLegacyWeightedOccupation)
     EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_lcao_weighted_occupation(gamma, 0), 2.0);
 }
 
+TEST(SternheimerABACUSSTSmoke, DividesSupercellKWeightAcrossPrimitiveTranslationSectors)
+{
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_supercell_sector_kweight(2.0, 64), 0.03125);
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_supercell_sector_kweight(0.5, 8), 1.0 / 16.0);
+    EXPECT_THROW(ModuleRI::sternheimer_supercell_sector_kweight(1.0, 0), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, PlansVirtualSamplingWithoutMakingTheOptionalSOSDiagnosticMandatory)
+{
+    const auto standard = ModuleRI::sternheimer_lcao_sampling_plan(false, false, false);
+    EXPECT_FALSE(standard.sample_source_unoccupied);
+    EXPECT_FALSE(standard.sample_target_unoccupied);
+    EXPECT_FALSE(standard.build_target_ao_candidates);
+
+    const auto delta_fallback = ModuleRI::sternheimer_lcao_sampling_plan(true, false, false);
+    EXPECT_FALSE(delta_fallback.sample_source_unoccupied);
+    EXPECT_FALSE(delta_fallback.sample_target_unoccupied);
+    EXPECT_TRUE(delta_fallback.build_target_ao_candidates);
+
+    const auto delta_virtuals = ModuleRI::sternheimer_lcao_sampling_plan(true, false, true);
+    EXPECT_FALSE(delta_virtuals.sample_source_unoccupied);
+    EXPECT_TRUE(delta_virtuals.sample_target_unoccupied);
+    EXPECT_FALSE(delta_virtuals.build_target_ao_candidates);
+
+    EXPECT_THROW(ModuleRI::sternheimer_lcao_sampling_plan(false, true, false), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsNonInsulatingSupercellSectorOccupations)
+{
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_supercell_sector_occupations({1.0, 1.0}, 2));
+    EXPECT_THROW(ModuleRI::validate_sternheimer_supercell_sector_occupations({1.0}, 2),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_supercell_sector_occupations({1.0, 0.5}, 2),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, ValidatesOptionalUnoccupiedLCAOStates)
 {
     auto record = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);

@@ -128,6 +128,18 @@ inline bool sternheimer_lcao_sos_diagnostic_enabled()
     return !(value.empty() || value == "0" || value == "false" || value == "off" || value == "no");
 }
 
+inline bool sternheimer_supercell_translation_sector_enabled()
+{
+    const char* raw = std::getenv("ABACUS_STERNHEIMER_SUPERCELL_TRANSLATION_SUM");
+    return raw != nullptr && raw[0] != '\0';
+}
+
+inline bool sternheimer_lcao_virtual_state_gathering_enabled()
+{
+    return sternheimer_lcao_sos_diagnostic_enabled()
+           || sternheimer_supercell_translation_sector_enabled();
+}
+
 struct SternheimerPeriodicResponsePlan
 {
     int iq = 1;
@@ -920,6 +932,62 @@ inline double sternheimer_lcao_weighted_occupation(const SternheimerLCAOOccupied
         throw std::out_of_range("Sternheimer LCAO occupied band index is out of range.");
     }
     return record.kweight * record.occupations[static_cast<std::size_t>(band_index)];
+}
+
+inline double sternheimer_supercell_sector_kweight(const double supercell_kweight,
+                                                   const int primitive_cell_count)
+{
+    if (!std::isfinite(supercell_kweight) || supercell_kweight <= 0.0
+        || primitive_cell_count <= 0)
+    {
+        throw std::invalid_argument("Invalid supercell translation-sector k-point weight.");
+    }
+    return supercell_kweight / static_cast<double>(primitive_cell_count);
+}
+
+struct SternheimerLCAOSamplingPlan
+{
+    bool sample_source_unoccupied = false;
+    bool sample_target_unoccupied = false;
+    bool build_target_ao_candidates = false;
+};
+
+inline SternheimerLCAOSamplingPlan sternheimer_lcao_sampling_plan(
+    const bool use_delta_sternheimer,
+    const bool write_lcao_sos,
+    const bool target_has_unoccupied_states)
+{
+    if (write_lcao_sos && !target_has_unoccupied_states)
+    {
+        throw std::invalid_argument(
+            "Periodic direct LCAO-SOS diagnostic requires gathered unoccupied LCAO states.");
+    }
+    SternheimerLCAOSamplingPlan plan;
+    plan.sample_target_unoccupied
+        = target_has_unoccupied_states && (use_delta_sternheimer || write_lcao_sos);
+    plan.build_target_ao_candidates = use_delta_sternheimer && !target_has_unoccupied_states;
+    return plan;
+}
+
+inline void validate_sternheimer_supercell_sector_occupations(
+    const std::vector<double>& occupations,
+    const int expected_occupied_count,
+    const double tolerance = 1.0e-10)
+{
+    if (expected_occupied_count <= 0
+        || occupations.size() != static_cast<std::size_t>(expected_occupied_count)
+        || !std::isfinite(tolerance) || tolerance < 0.0)
+    {
+        throw std::invalid_argument("Supercell translation-sector occupations are inconsistent.");
+    }
+    for (const double occupation: occupations)
+    {
+        if (!std::isfinite(occupation) || std::abs(occupation - 1.0) > tolerance)
+        {
+            throw std::invalid_argument(
+                "Supercell translation-sector recovery requires uniformly occupied insulating bands.");
+        }
+    }
 }
 
 inline std::vector<const SternheimerLCAOOccupiedKPoint*> select_sternheimer_gamma_spin_records(

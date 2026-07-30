@@ -141,7 +141,7 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
                           MPI_COMM_WORLD);
 #endif
         }
-        if (ModuleRI::sternheimer_lcao_sos_diagnostic_enabled())
+        if (ModuleRI::sternheimer_lcao_virtual_state_gathering_enabled())
         {
             const int unoccupied_count = elec_state.ekb.nc - occupied_count;
             record.unoccupied_eigenvalues.reserve(static_cast<std::size_t>(unoccupied_count));

@@ -462,6 +462,82 @@ void accumulate_delta_sternheimer_bloch_samples(
     }
 }
 
+void accumulate_delta_sternheimer_lcao_state_samples(
+    const std::vector<double>& sampled_values,
+    const std::array<std::vector<double>, 3>& sampled_gradients,
+    const int sample_count,
+    const int orbital_count,
+    const std::size_t grid_begin,
+    const std::size_t ao_begin,
+    const std::vector<std::vector<SternheimerFDHamiltonian::Complex>>& coefficients,
+    const SternheimerReducedKPoint& kpoint,
+    const std::array<int, 3>& lattice_translation,
+    std::vector<SternheimerDeltaGridFunction>& functions)
+{
+    if (sample_count < 0 || orbital_count <= 0 || coefficients.size() != functions.size())
+    {
+        throw std::invalid_argument(
+            "Sternheimer direct LCAO sampling requires valid sample, orbital, coefficient, and state counts.");
+    }
+    const std::size_t sample_size = static_cast<std::size_t>(sample_count);
+    const std::size_t orbital_size = static_cast<std::size_t>(orbital_count);
+    const std::size_t buffer_size = sample_size * orbital_size;
+    if (sampled_values.size() != buffer_size)
+    {
+        throw std::invalid_argument("Sternheimer direct LCAO value buffer size is inconsistent.");
+    }
+    for (const std::vector<double>& gradient: sampled_gradients)
+    {
+        if (gradient.size() != buffer_size)
+        {
+            throw std::invalid_argument("Sternheimer direct LCAO gradient buffer size is inconsistent.");
+        }
+    }
+    for (std::size_t state_index = 0; state_index != functions.size(); ++state_index)
+    {
+        if (ao_begin > coefficients[state_index].size()
+            || orbital_size > coefficients[state_index].size() - ao_begin)
+        {
+            throw std::invalid_argument("Sternheimer direct LCAO coefficient AO range is out of bounds.");
+        }
+        const SternheimerDeltaGridFunction& function = functions[state_index];
+        if (grid_begin > function.values.size() || sample_size > function.values.size() - grid_begin)
+        {
+            throw std::invalid_argument("Sternheimer direct LCAO sample grid range is out of bounds.");
+        }
+        validate_grid_function(function, function.values.size(), "Sternheimer direct LCAO sample");
+    }
+
+    const Complex image_phase = sternheimer_bloch_phase(kpoint, lattice_translation);
+    for (std::size_t sample = 0; sample != sample_size; ++sample)
+    {
+        const std::size_t grid_index = grid_begin + sample;
+        for (std::size_t state_index = 0; state_index != functions.size(); ++state_index)
+        {
+            SternheimerDeltaGridFunction& state = functions[state_index];
+            Complex value(0.0, 0.0);
+            std::array<Complex, 3> gradient{{Complex(0.0, 0.0),
+                                             Complex(0.0, 0.0),
+                                             Complex(0.0, 0.0)}};
+            for (std::size_t orbital = 0; orbital != orbital_size; ++orbital)
+            {
+                const std::size_t buffer_index = sample * orbital_size + orbital;
+                const Complex coefficient = coefficients[state_index][ao_begin + orbital];
+                value += coefficient * sampled_values[buffer_index];
+                for (std::size_t direction = 0; direction != gradient.size(); ++direction)
+                {
+                    gradient[direction] += coefficient * sampled_gradients[direction][buffer_index];
+                }
+            }
+            state.values[grid_index] += image_phase * value;
+            for (std::size_t direction = 0; direction != gradient.size(); ++direction)
+            {
+                state.gradients[direction][grid_index] += image_phase * gradient[direction];
+            }
+        }
+    }
+}
+
 SternheimerDeltaGridFunction linear_combination_delta_sternheimer_grid_functions(
     const std::vector<SternheimerDeltaGridFunction>& basis_functions,
     const std::vector<SternheimerFDHamiltonian::Complex>& coefficients)

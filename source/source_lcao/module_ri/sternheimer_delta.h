@@ -96,6 +96,20 @@ void accumulate_delta_sternheimer_bloch_samples(
     const std::array<int, 3>& lattice_translation,
     std::vector<SternheimerDeltaGridFunction>& functions);
 
+// Contract sampled AO chunks directly into selected LCAO states. This avoids
+// retaining one full value-and-gradient grid function per AO.
+void accumulate_delta_sternheimer_lcao_state_samples(
+    const std::vector<double>& sampled_values,
+    const std::array<std::vector<double>, 3>& sampled_gradients,
+    int sample_count,
+    int orbital_count,
+    std::size_t grid_begin,
+    std::size_t ao_begin,
+    const std::vector<std::vector<SternheimerFDHamiltonian::Complex>>& coefficients,
+    const SternheimerReducedKPoint& kpoint,
+    const std::array<int, 3>& lattice_translation,
+    std::vector<SternheimerDeltaGridFunction>& functions);
+
 SternheimerDeltaGridFunction make_delta_sternheimer_grid_function_with_fd_gradients(
     const SternheimerFDHamiltonian::Vector& values,
     const SternheimerFDHamiltonian::Grid& grid);

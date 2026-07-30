@@ -29,6 +29,7 @@ if (ENABLE_LIBRI)
         sternheimer_periodic_solver.cpp
         sternheimer_rpa.cpp
         sternheimer_supercell_perturbation.cpp
+        sternheimer_supercell_sector.cpp
         sternheimer_wavefunction_diagnostic.cpp
   )
 

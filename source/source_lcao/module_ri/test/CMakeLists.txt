@@ -32,6 +32,11 @@ AddTest(
   SOURCES sternheimer_supercell_perturbation_test.cpp ../sternheimer_supercell_perturbation.cpp
 )
 AddTest(
+  TARGET MODULE_RI_sternheimer_supercell_sector_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_supercell_sector_test.cpp ../sternheimer_supercell_sector.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_fd_hamiltonian_test
   LIBS ${math_libs}
   SOURCES sternheimer_fd_hamiltonian_test.cpp ../sternheimer_fd_hamiltonian.cpp ../sternheimer_fd_nonlocal_projector.cpp ../sternheimer_kq.cpp

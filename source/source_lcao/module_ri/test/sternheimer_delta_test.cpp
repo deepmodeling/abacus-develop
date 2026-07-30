@@ -371,6 +371,48 @@ TEST(SternheimerDelta, AccumulatesBlochImagePhaseIntoValuesAndEveryGradient)
     }
 }
 
+TEST(SternheimerDelta, AccumulatesLCAOStatesWithoutMaterializingAOGridFunctions)
+{
+    std::vector<ModuleRI::SternheimerDeltaGridFunction> states(2);
+    for (auto& state: states)
+    {
+        state.values.assign(3, Complex(0.0, 0.0));
+        for (auto& gradient: state.gradients)
+        {
+            gradient.assign(3, Complex(0.0, 0.0));
+        }
+    }
+    const std::vector<double> values{1.0, 3.0, 2.0, 4.0};
+    const std::array<std::vector<double>, 3> gradients{{
+        {10.0, 30.0, 20.0, 40.0},
+        {100.0, 300.0, 200.0, 400.0},
+        {1000.0, 3000.0, 2000.0, 4000.0},
+    }};
+    const std::vector<std::vector<Complex>> coefficients{
+        {Complex(1.0, 0.0), Complex(0.0, 0.0)},
+        {Complex(0.0, 0.0), Complex(0.0, 2.0)},
+    };
+
+    ModuleRI::accumulate_delta_sternheimer_lcao_state_samples(values,
+                                                               gradients,
+                                                               2,
+                                                               2,
+                                                               1,
+                                                               0,
+                                                               coefficients,
+                                                               {0.5, 0.0, 0.0},
+                                                               {1, 0, 0},
+                                                               states);
+
+    EXPECT_NEAR(std::abs(states[0].values[0]), 0.0, 1.0e-14);
+    EXPECT_NEAR(states[0].values[1].real(), -1.0, 1.0e-14);
+    EXPECT_NEAR(states[0].values[2].real(), -2.0, 1.0e-14);
+    EXPECT_NEAR(states[1].values[1].imag(), -6.0, 1.0e-14);
+    EXPECT_NEAR(states[1].values[2].imag(), -8.0, 1.0e-14);
+    EXPECT_NEAR(states[0].gradients[0][1].real(), -10.0, 1.0e-14);
+    EXPECT_NEAR(states[1].gradients[2][2].imag(), -8000.0, 1.0e-12);
+}
+
 TEST(SternheimerDelta, OrthonormalizesOccupiedProjectorValuesAndGradientsTogether)
 {
     constexpr double volume_element = 1.0;
