@@ -229,8 +229,9 @@ TEST(WriteHsRCompatibility, FileNameHelpersKeepCurrentContract)
     EXPECT_EQ(ModuleIO::hsr_gen_fname("hrs", 0, true, -1), "hrs1_nao.csr");
     EXPECT_EQ(ModuleIO::hsr_gen_fname("hrs", 1, true, 0), "hrs2_nao.csr");
     EXPECT_EQ(ModuleIO::hsr_gen_fname("hrs", 1, false, 3), "hrs2g4_nao.csr");
-    EXPECT_EQ(ModuleIO::hsr_gen_fname("srs", 0, false, 0), "srs1g1_nao.csr");
-    EXPECT_EQ(ModuleIO::hsr_gen_fname("srs", 0, false, -1), "srs1_nao.csr");
+    EXPECT_EQ(ModuleIO::sr_gen_fname(false, 0), "srg1_nao.csr");
+    EXPECT_EQ(ModuleIO::sr_gen_fname(false, -1), "sr_nao.csr");
+    EXPECT_EQ(ModuleIO::sr_gen_fname(true, 3), "sr_nao.csr");
 
     EXPECT_EQ(ModuleIO::dhr_gen_fname("dhrx", 0, true, -1), "dhrxrs1_nao.csr");
     EXPECT_EQ(ModuleIO::dhr_gen_fname("dhrx", 0, false, 0), "dhrxrs1g1_nao.csr");

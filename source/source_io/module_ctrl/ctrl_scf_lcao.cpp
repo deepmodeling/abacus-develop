@@ -281,7 +281,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     const bool output_hsr_npz = inp.out_hsr[0] == 3 || inp.out_hsr_npz_compat;
     if (output_hsr_npz)
     {
-        std::string zipname = PARAM.globalv.global_out_dir + "output_SR.npz";
+        std::string zipname = PARAM.globalv.global_out_dir + "sr_nao.npz";
         ModuleIO::output_mat_npz(ucell, zipname, *(p_hamilt->getSR()));
     }
 
@@ -291,7 +291,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         for (int ispin = 0; ispin < hr_vec.size(); ++ispin)
         {
             std::string zipname
-                = PARAM.globalv.global_out_dir + "output_HR" + std::to_string(ispin) + ".npz";
+                = PARAM.globalv.global_out_dir + "hrs" + std::to_string(ispin + 1) + "_nao.npz";
             ModuleIO::output_mat_npz(ucell, zipname, *(hr_vec[ispin]));
         }
     }

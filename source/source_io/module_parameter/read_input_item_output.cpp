@@ -481,10 +481,10 @@ Also controled by out_freq_ion and out_app_flag.
     }
     {
         Input_Item item("out_hsk");
-        item.annotation = "output H(k) and S(k) matrices";
+        item.annotation = "output H(k) and S(k) matrices in reciprocal space";
         item.category = "Output information";
         item.type = R"(Integer \[Integer\](optional))";
-        item.description = R"(Output the upper triangular part of the Hamiltonian and overlap matrices for each k-point into files in the directory OUT.${suffix}. The first integer selects the format:
+        item.description = R"(Output the upper triangular part of the Hamiltonian and overlap matrices in reciprocal space for each k-point into files in the directory OUT.${suffix}. The first integer selects the format:
 * 0: disabled;
 * 1: text output; the optional second integer controls precision and defaults to 8;
 * 2: reserved for binary output, which is not implemented yet;
@@ -543,10 +543,10 @@ When out_app_flag is false, g followed by the one-based ionic-step index is inse
     }
     {
         Input_Item item("out_mat_hs");
-        item.annotation = "legacy alias for text H(k) and S(k) output";
+        item.annotation = "legacy alias for text H(k) and S(k) output in reciprocal space";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Legacy alias for out_hsk 1. The optional second integer controls text precision. If both out_hsk and out_mat_hs are present, out_hsk takes precedence.";
+        item.description = "Legacy alias for out_hsk 1, which outputs Hamiltonian and overlap matrices in reciprocal space for each k-point. The optional second integer controls text precision. If both out_hsk and out_mat_hs are present, out_hsk takes precedence.";
         item.default_value = "False 8";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis";
@@ -563,14 +563,14 @@ When out_app_flag is false, g followed by the one-based ionic-step index is inse
     }
     {
         Input_Item item("out_hsr");
-        item.annotation = "output H(R) and S(R) matrices";
+        item.annotation = "output H(R) and S(R) matrices in real space";
         item.category = "Output information";
         item.type = R"(Integer \[Integer\](optional))";
-        item.description = R"(Output Hamiltonian and overlap matrices in the directory OUT.${suffix}. The first integer selects the format:
+        item.description = R"(Output Hamiltonian and overlap matrices in real space, indexed by the Bravais lattice vector R, in the directory OUT.${suffix}. The first integer selects the format:
 * 0: disabled;
 * 1: text CSR output; the optional second integer controls precision and defaults to 8;
 * 2: reserved for binary output, which is not implemented yet;
-* 3: NPZ output using output_HR0.npz, output_HR1.npz when needed, and output_SR.npz.
+* 3: NPZ output using hrs1_nao.npz, hrs2_nao.npz when needed, and sr_nao.npz.
 
 For multi-k calculations, the output contains the individual real-space blocks stored for the Bravais lattice vectors R. For gamma-only calculations, the internal real-space contributions are folded into a single R = (0, 0, 0) block. This folded result cannot recover the original R-resolved contributions or interpolate arbitrary k points. Terms added only while constructing H(k) are not guaranteed to be present.
 
@@ -623,10 +623,10 @@ For multi-k calculations, the output contains the individual real-space blocks s
     }
     {
         Input_Item item("out_mat_hs2");
-        item.annotation = "legacy alias for text H(R) and S(R) output";
+        item.annotation = "legacy alias for text H(R) and S(R) output in real space";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Legacy alias for out_hsr 1. The optional second integer controls text precision. If both out_hsr and out_mat_hs2 are present, out_hsr takes precedence.";
+        item.description = "Legacy alias for out_hsr 1, which outputs Hamiltonian and overlap matrices in real space indexed by the Bravais lattice vector R. The optional second integer controls text precision. If both out_hsr and out_mat_hs2 are present, out_hsr takes precedence.";
         item.default_value = "False 8";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis";
@@ -1284,7 +1284,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.annotation = "output H(R) matrix in npz format";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print Hamiltonian matrices H(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.description = "Whether to print Hamiltonian matrices H(R) in NPZ format as hrs1_nao.npz and, for nspin = 2, hrs2_nao.npz. This feature does not work for gamma-only calculations.";
         item.default_value = "False";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
@@ -1306,7 +1306,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.annotation = "legacy alias for H(R) and S(R) NPZ output";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Legacy alias for out_hsr 3. If both out_hsr and out_hsr_npz are present, out_hsr takes precedence. Gamma-only calculations write the folded R = (0, 0, 0) representation.";
+        item.description = "Legacy alias for out_hsr 3, writing hrs1_nao.npz, hrs2_nao.npz when needed, and sr_nao.npz. If both out_hsr and out_hsr_npz are present, out_hsr takes precedence. Gamma-only calculations write the folded R = (0, 0, 0) representation.";
         item.default_value = "False";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis";

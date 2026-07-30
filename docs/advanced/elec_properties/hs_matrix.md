@@ -2,7 +2,7 @@
 
 In ABACUS, we provide the option to write the Hamiltonian and Overlap matrices to files after SCF calculations.
 
-For periodic systems, there are two ways to construct the matrices, the first is to write the entire square matrices for each $k$ point in the Brillouin zone, namely $H(k)$ and $S(k)$; the second one is the real space representation, $H(R)$ and $S(R)$, where R is the Bravis lattice vector. The two representations are connected by Fourier transform:
+For periodic systems, there are two ways to construct the matrices. The reciprocal-space representation writes the entire square matrices $H(k)$ and $S(k)$ for each $k$ point in the Brillouin zone. The real-space representation writes $H(R)$ and $S(R)$ indexed by the Bravais lattice vector $R$. The two representations are connected by Fourier transform:
 
 - $H(k)=\sum_R H(R)e^{-ikR}$
 
@@ -54,7 +54,7 @@ The output of $H(R)$ and $S(R)$ matrices is controlled by [out_hsr](../input_fil
 | `0` | Disabled |
 | `1` | Text CSR; an optional second value controls precision, for example `out_hsr 1 12` |
 | `2` | Reserved for future binary output; not implemented |
-| `3` | NPZ: `output_HR0.npz`, `output_HR1.npz` when needed, and `output_SR.npz` |
+| `3` | NPZ: `hrs1_nao.npz`, `hrs2_nao.npz` when needed, and `sr_nao.npz` |
 
 The legacy keywords `out_mat_hs2 1 [precision]` and `out_hsr_npz 1` remain supported as aliases for text and NPZ output respectively. If `out_hsr` is present together with either legacy keyword, `out_hsr` takes precedence.
 
@@ -67,9 +67,9 @@ The folded gamma-only output is sufficient to inspect the matrix used by the gam
 The H(R) and S(R) matrices are output in standard Compressed Sparse Row (CSR) format, matching the format used by `out_dmr`.
 
 For single-point SCF calculations:
-- **nspin = 1**: Two files `hrs1_nao.csr` and `srs1_nao.csr` are generated, containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively.
-- **nspin = 2**: Three files `hrs1_nao.csr`, `hrs2_nao.csr`, and `srs1_nao.csr` are created, where the first two files correspond to $H(R)$ for spin up and spin down, respectively.
-- **nspin = 4**: Multi-k calculations generate `hrs1_nao.csr` and `srs1_nao.csr`. The gamma-only algorithm itself does not support `nspin = 4`.
+- **nspin = 1**: Two files `hrs1_nao.csr` and `sr_nao.csr` are generated, containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively.
+- **nspin = 2**: Three files `hrs1_nao.csr`, `hrs2_nao.csr`, and `sr_nao.csr` are created, where the first two files correspond to $H(R)$ for spin up and spin down, respectively.
+- **nspin = 4**: Multi-k calculations generate `hrs1_nao.csr` and `sr_nao.csr`. The gamma-only algorithm itself does not support `nspin = 4`.
 
 In gamma-only mode, every generated file reports one Bravais lattice vector and contains one CSR block for `0 0 0`. The header also contains:
 
@@ -79,7 +79,7 @@ In gamma-only mode, every generated file reports one Bravais lattice vector and 
 
 ### NPZ Format
 
-Set `out_hsr 3` to write `output_HR0.npz`, `output_HR1.npz` when a second spin channel is present, and `output_SR.npz`. Matrix entry names include the atom-pair indices and the three components of $R$. Multi-k calculations retain the stored $R$ blocks, while gamma-only calculations contain only matrix entry names ending in `_0_0_0`.
+Set `out_hsr 3` to write `hrs1_nao.npz`, `hrs2_nao.npz` when a second spin channel is present, and `sr_nao.npz`. Matrix entry names include the atom-pair indices and the three components of $R$. Multi-k calculations retain the stored $R$ blocks, while gamma-only calculations contain only matrix entry names ending in `_0_0_0`.
 
 ### File Structure
 
@@ -120,7 +120,7 @@ For calculations involving ionic movements, the output frequency of the matrix i
 ## get_s
 We also offer the option of only calculating the overlap matrix without running SCF. For that purpose, in `INPUT` file we need to set the value keyword [calculation](../input_files/input-main.md#calculation) to be `get_s`.
 
-A file named `sr_nao.csr` will be generated in the working directory, which contains the overlap matrix.
+A file named `sr_nao.csr` will be generated in `OUT.${suffix}`, which contains the overlap matrix.
 
 > When `nspin` is set to 1 or 2, the dimension of the overlap matrix is nlocal $\times$ nlocal, where nlocal is the total number of numerical atomic orbitals. 
 These numerical atomic orbitals are ordered from outer to inner loop as atom, angular quantum number $l$, zeta (multiple radial orbitals corresponding to each $l$), and magnetic quantum number $m$. 

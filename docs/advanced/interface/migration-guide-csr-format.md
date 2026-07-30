@@ -25,7 +25,7 @@ OUT.${suffix}/data-SR-sparse_SPIN0.csr
 ```
 OUT.${suffix}/hrs1_nao.csr
 OUT.${suffix}/hrs2_nao.csr  (nspin=2 only)
-OUT.${suffix}/srs1_nao.csr
+OUT.${suffix}/sr_nao.csr
 ```
 
 ### File Format

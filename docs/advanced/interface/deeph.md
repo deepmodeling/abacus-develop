@@ -16,7 +16,7 @@ The first stage is during the data preparation phase, where we need to run a ser
 out_hsr 1
 ```
 
-**For ABACUS v3.9.0.25+:** Files named `hrs1_nao.csr`, `hrs2_nao.csr` (for nspin=2), and `srs1_nao.csr` will be generated in `OUT.${suffix}/` directory, containing the Hamiltonian and overlap matrices in standard CSR format. You can optionally specify precision: `out_hsr 1 8` (default 8 digits). The legacy spelling `out_mat_hs2` remains accepted.
+**For ABACUS v3.9.0.25+:** Files named `hrs1_nao.csr`, `hrs2_nao.csr` (for nspin=2), and `sr_nao.csr` will be generated in `OUT.${suffix}/` directory, containing the Hamiltonian and overlap matrices in standard CSR format. You can optionally specify precision: `out_hsr 1 8` (default 8 digits). The legacy spelling `out_mat_hs2` remains accepted.
 
 **For ABACUS v3.8.x and earlier:** Files named `data-HR-sparse_SPIN${x}.csr` and `data-SR-sparse_SPIN${x}.csr` will be generated, where `${x}` takes value of 0 or 1 based on the spin component.
 
@@ -32,4 +32,4 @@ For that purpose, in `INPUT` file we need to make the following specification of
 calculation get_S
 ```
 
-A file named `SR.csr` will be generated in the working directory, which contains the overlap matrix.
+A file named `sr_nao.csr` will be generated in `OUT.${suffix}`, which contains the overlap matrix.

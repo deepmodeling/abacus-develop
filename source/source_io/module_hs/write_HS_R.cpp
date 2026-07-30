@@ -239,6 +239,15 @@ std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
     }
 }
 
+std::string ModuleIO::sr_gen_fname(const bool append, const int istep)
+{
+    if (!append && istep >= 0)
+    {
+        return "srg" + std::to_string(istep + 1) + "_nao.csr";
+    }
+    return "sr_nao.csr";
+}
+
 std::string ModuleIO::dhr_gen_fname(const std::string& prefix,
                                      const int ispin,
                                      const bool append,
@@ -360,7 +369,7 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
         if (GlobalV::MY_RANK == 0)
         {
             std::string fname = PARAM.globalv.global_out_dir
-                                + hsr_gen_fname("srs", 0, append, istep);
+                                + sr_gen_fname(append, istep);
             write_hcontainer_csr(
                 fname, ucell, precision, &sr_serial, istep, 0, 1, "S", representation_note);
         }

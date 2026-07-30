@@ -434,7 +434,7 @@ if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
         python3 $COMPARE_SCRIPT hrs2_nao.csr.ref OUT.autotest/hrs2_nao.csr 8
         echo "CompareHR2_pass $?" >>$1
     fi
-    python3 $COMPARE_SCRIPT srs1_nao.csr.ref OUT.autotest/srs1_nao.csr 8
+    python3 $COMPARE_SCRIPT sr_nao.csr.ref OUT.autotest/sr_nao.csr 8
     echo "CompareSR_pass $?" >>$1
 fi
 
@@ -442,14 +442,14 @@ fi
 # H(R), S(R), and DM(R) matrices in NPZ format
 #-----------------------------------
 if { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
-    test -f OUT.autotest/output_SR.npz
+    test -f OUT.autotest/sr_nao.npz
     echo "OutputSRNPZ_pass $?" >>$1
 fi
 
 if { ! test -z "$out_hr_npz" && [ "$out_hr_npz" == 1 ]; } \
     || { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } \
     || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
-    test -f OUT.autotest/output_HR0.npz
+    test -f OUT.autotest/hrs1_nao.npz
     echo "OutputHRNPZ_pass $?" >>$1
 fi
 

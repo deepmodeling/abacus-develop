@@ -55,16 +55,19 @@ template <typename TK>
 void output_SR(Parallel_Orbitals& pv,
                const Grid_Driver& grid,
                hamilt::Hamilt<TK>* p_ham,
-               const std::string& SR_filename = "srs1_nao.csr",
+               const std::string& SR_filename = "sr_nao.csr",
                const bool& binary = false,
                const double& sparse_threshold = 1e-10,
                const int precision = 16);
 
-/// Generate filename for HR/SR CSR output.
+/// Generate filename for spin-dependent HR CSR output.
 std::string hsr_gen_fname(const std::string& prefix,
                           const int ispin,
                           const bool append,
                           const int istep);
+
+/// Generate filename for spin-independent SR CSR output.
+std::string sr_gen_fname(const bool append, const int istep);
 
 /// Generate filename for derivative matrices (dH/dR, dS/dR).
 std::string dhr_gen_fname(const std::string& prefix,
