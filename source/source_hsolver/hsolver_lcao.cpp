@@ -33,7 +33,6 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hsolver/parallel_k2d.h"
-#include "source_io/module_parameter/parameter.h"
 
 namespace hsolver
 {
@@ -59,13 +58,13 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
             this->parakSolve_cusolver(pHamilt, psi, pes);
         }else 
     #endif
-        if (PARAM.globalv.kpar_lcao > 1
+        if (this->kpar_lcao > 1
             && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx" || this->method == "lapack"))
         {
-            this->parakSolve(pHamilt, psi, pes, PARAM.globalv.kpar_lcao, nspin);
+            this->parakSolve(pHamilt, psi, pes, this->kpar_lcao, nspin);
         } else
     #endif
-        if (PARAM.globalv.kpar_lcao == 1)
+        if (this->kpar_lcao == 1)
         {
             /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
             for (int ik = 0; ik < psi.get_nk(); ++ik)
@@ -113,7 +112,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
     else if (this->method == "pexsi")
     {
 #ifdef __PEXSI // other purification methods should follow this routine
-        DiagoPexsi<TK> pe(ParaV);
+        DiagoPexsi<TK> pe(ParaV, nspin, this->nlocal, this->nelec);
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             /// update H(k) for each k point

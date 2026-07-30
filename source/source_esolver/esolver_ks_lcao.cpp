@@ -434,7 +434,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     // 3) run Hsolver
     if (!skip_solve)
     {
-        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv),
+                                                  PARAM.inp.ks_solver,
+                                                  PARAM.globalv.kpar_lcao,
+                                                  PARAM.globalv.nlocal,
+                                                  PARAM.inp.nelec);
         hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt), this->psi[0], this->pelec, *this->dmat.dm, 
           this->chr, PARAM.inp.nspin, skip_charge);
     }

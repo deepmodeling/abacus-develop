@@ -15,7 +15,12 @@ template <typename TK, typename Device = base_device::DEVICE_CPU>
 class HSolverLCAO
 {
   public:
-    HSolverLCAO(const Parallel_Orbitals* ParaV_in, std::string method_in) : ParaV(ParaV_in), method(method_in) {};
+    HSolverLCAO(const Parallel_Orbitals* ParaV_in,
+                const std::string method_in,
+                const int kpar_lcao_in,
+                const int nlocal_in,
+                const double nelec_in)
+        : ParaV(ParaV_in), method(method_in), kpar_lcao(kpar_lcao_in), nlocal(nlocal_in), nelec(nelec_in) {};
 
     void solve(hamilt::Hamilt<TK>* pHamilt,
                psi::Psi<TK>& psi,
@@ -40,8 +45,12 @@ class HSolverLCAO
                              elecstate::ElecState* pes);
 
     const Parallel_Orbitals* ParaV = nullptr;
-    
+
     const std::string method;
+
+    const int kpar_lcao; // number of pools for LCAO diagonalization
+    const int nlocal;    // global dimension of the NAO Hamiltonian, only used by the pexsi branch
+    const double nelec;  // total number of electrons, only used by the pexsi branch
 };
 
 } // namespace hsolver

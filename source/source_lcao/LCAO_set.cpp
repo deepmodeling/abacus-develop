@@ -230,7 +230,11 @@ void LCAO_domain::init_chg_hr(
     p_hamilt->refresh(false);
 
     // Step 3: Diagonalize to get wavefunctions and charge density
-    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(pv, ks_solver);
+    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(pv,
+                                              ks_solver,
+                                              PARAM.globalv.kpar_lcao,
+                                              PARAM.globalv.nlocal,
+                                              PARAM.inp.nelec);
     hsolver_lcao_obj.solve(p_hamilt, psi, pelec, dm, chr, nspin, 0);
 }
 

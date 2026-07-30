@@ -158,25 +158,33 @@ class TestHSolverPW : public ::testing::Test {
                                                                            "scf",
                                                                            "pw",
                                                                            "cg",
-                                                                           false,
                                                                            PARAM.sys.use_uspp,
                                                                            PARAM.input.nspin,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+                                                                           PARAM.input.nbands,
+                                                                           PARAM.input.diago_smooth_ethr,
+                                                                           PARAM.input.pw_diag_ndim,
+                                                                           PARAM.input.diag_subspace,
+                                                                           PARAM.input.nb2d);
     hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU> hs_d
         = hsolver::HSolverPW<std::complex<double>, base_device::DEVICE_CPU>(&pwbk,
                                                                             "scf",
                                                                             "pw",
                                                                             "cg",
-                                                                            false,
                                                                             PARAM.sys.use_uspp,
                                                                             PARAM.input.nspin,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::SCF_ITER,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_NMAX,
                      hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::PW_DIAG_THR,
-                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace);
+                     hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_CPU>::need_subspace,
+                                                                            PARAM.input.nbands,
+                                                                            PARAM.input.diago_smooth_ethr,
+                                                                            PARAM.input.pw_diag_ndim,
+                                                                            PARAM.input.diag_subspace,
+                                                                            PARAM.input.nb2d);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
     hamilt::Hamilt<std::complex<float>> hamilt_test_f;
@@ -367,9 +375,9 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     elecstate_test.ekb.c[1] = 2.0;
     
     hsolver::HSolverLIP<std::complex<float>> hs_f_lip
-        = hsolver::HSolverLIP<std::complex<float>>(&pwbk);
+        = hsolver::HSolverLIP<std::complex<float>>(&pwbk, PARAM.sys.use_uspp);
     hsolver::HSolverLIP<std::complex<double>> hs_d_lip
-        = hsolver::HSolverLIP<std::complex<double>>(&pwbk);
+        = hsolver::HSolverLIP<std::complex<double>>(&pwbk, PARAM.sys.use_uspp);
     hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,transform_test_cf, true,0.0,0);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cf.size(); i++)

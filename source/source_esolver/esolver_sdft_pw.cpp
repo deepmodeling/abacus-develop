@@ -163,7 +163,15 @@ void ESolver_SDFT_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, int istep, i
                                                            hsolver::DiagoIterAssist<T, Device>::SCF_ITER,
                                                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                            hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
-                                                           hsolver::DiagoIterAssist<T, Device>::need_subspace);
+                                                           hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                           PARAM.inp.nbands,
+                                                           PARAM.inp.diago_smooth_ethr,
+                                                           PARAM.inp.pw_diag_ndim,
+                                                           PARAM.inp.diag_subspace,
+                                                           PARAM.inp.nb2d,
+                                                           PARAM.globalv.ks_run,
+                                                           PARAM.globalv.all_ks_run,
+                                                           PARAM.inp.bndpar);
 
     hsolver_pw_sdft_obj.solve(ucell,
                               static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
