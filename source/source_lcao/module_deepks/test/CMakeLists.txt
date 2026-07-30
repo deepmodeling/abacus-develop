@@ -62,6 +62,9 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_io/module_hs/cal_r_overlap_R.cpp
     ../../../source_io/module_hs/single_R_io.cpp
     ../../../source_io/module_hs/rr_sparse_writer.cpp
+    ../../module_rt/radial_interpolation.cpp
+    ../../module_rt/snap_projector_half_tddft.cpp
+    ../../module_rt/snap_phialpha_half_tddft.cpp
     ../../module_rt/td_folding.cpp
     mock_berryphase.cpp
     mock_tdinfo.cpp
@@ -93,6 +96,9 @@ set(DEEPKS_UNIT_LIBS
 
 set(DEEPKS_UNIT_PHIALPHA_SOURCES
     deepks_test_phialpha.cpp
+)
+set(DEEPKS_UNIT_PHIALPHA_GRID_SOURCES
+    deepks_test_phialpha_grid.cpp
 )
 set(DEEPKS_UNIT_PDM_SOURCES
     ${DEEPKS_UNIT_PHIALPHA_SOURCES}
@@ -157,6 +163,9 @@ function(configure_deepks_unit_target TARGET_NAME CHECK_NAME CASE_DIR)
       DEEPKS_UT_CASE_DIR="${CASE_DIR}"
       DEEPKS_UT_RUNNER=run_deepks_unit_${CHECK_NAME}
   )
+  if("${CHECK_NAME}" STREQUAL "phialpha_grid_zero_field")
+    target_compile_definitions(${TARGET_NAME} PRIVATE DEEPKS_UT_MODERN_ORBITAL_READER=1)
+  endif()
 endfunction()
 
 AddTest(
@@ -165,6 +174,13 @@ AddTest(
     SOURCES main_deepks.cpp ${DEEPKS_UNIT_PHIALPHA_SOURCES}
 )
 configure_deepks_unit_target(MODULE_LCAO_DEEPKS_phialpha_gamma phialpha NO_GO_deepks_UT)
+
+AddTest(
+    TARGET MODULE_LCAO_DEEPKS_phialpha_grid_gamma
+    LIBS ${DEEPKS_UNIT_LIBS}
+    SOURCES main_deepks.cpp ${DEEPKS_UNIT_PHIALPHA_GRID_SOURCES}
+)
+configure_deepks_unit_target(MODULE_LCAO_DEEPKS_phialpha_grid_gamma phialpha_grid_zero_field NO_GO_deepks_UT)
 
 AddTest(
     TARGET MODULE_LCAO_DEEPKS_pdm_gamma
@@ -263,6 +279,13 @@ AddTest(
     SOURCES main_deepks.cpp ${DEEPKS_UNIT_PHIALPHA_SOURCES}
 )
 configure_deepks_unit_target(MODULE_LCAO_DEEPKS_phialpha_multik phialpha NO_KP_deepks_UT)
+
+AddTest(
+    TARGET MODULE_LCAO_DEEPKS_phialpha_grid_multik
+    LIBS ${DEEPKS_UNIT_LIBS}
+    SOURCES main_deepks.cpp ${DEEPKS_UNIT_PHIALPHA_GRID_SOURCES}
+)
+configure_deepks_unit_target(MODULE_LCAO_DEEPKS_phialpha_grid_multik phialpha_grid_zero_field NO_KP_deepks_UT)
 
 AddTest(
     TARGET MODULE_LCAO_DEEPKS_pdm_multik
