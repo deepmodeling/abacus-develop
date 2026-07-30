@@ -95,6 +95,16 @@ class XC_Functional
         return ked_flag;
     };
 
+    static bool get_need_laplacian()
+    {
+        return need_laplacian;
+    };
+
+    static ModuleBase::matrix& get_stress_vlapl()
+    {
+        return stress_vlapl;
+    };
+
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
     static void set_xc_first_loop(const UnitCell& ucell);
 
@@ -105,7 +115,9 @@ class XC_Functional
     static std::vector<int> func_id; // libxc id of functional
     static int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
     static bool ked_flag; // whether the functional has kinetic energy density
+    static bool need_laplacian; // whether any functional needs Laplacian of density
     static bool use_libxc;
+    static ModuleBase::matrix stress_vlapl; // 3x3 vlapl stress contribution
 
     // exx_hybrid_alpha for mixing exx in hybrid functional:
     static double hybrid_alpha;

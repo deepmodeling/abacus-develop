@@ -297,13 +297,12 @@ class XCTest_VXC_meta : public XCTest
 
             const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
             const double hse_omega = XC_Functional::get_hse_omega();
-            std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
+            std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
                 = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin1, hybrid_alpha, hse_omega);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
             vtau1 = std::get<3>(etxc_vtxc_v);
-            ModuleBase::matrix vlapl1 = std::get<4>(etxc_vtxc_v);
 
             etxc_vtxc_v
                 = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin2, hybrid_alpha, hse_omega);
@@ -311,7 +310,6 @@ class XCTest_VXC_meta : public XCTest
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
             vtau2 = std::get<3>(etxc_vtxc_v);
-            ModuleBase::matrix vlapl2 = std::get<4>(etxc_vtxc_v);
         }
 };
 

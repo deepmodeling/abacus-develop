@@ -16,9 +16,11 @@ XC_Functional::~XC_Functional(){}
 std::vector<int> XC_Functional::func_id(1);
 int XC_Functional::func_type = 0;
 bool XC_Functional::ked_flag = false;
+bool XC_Functional::need_laplacian = false;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
 double XC_Functional::hse_omega = 0.0;
+ModuleBase::matrix XC_Functional::stress_vlapl(3, 3);
 std::map<int, double> XC_Functional::scaling_factor_xc = { {1, 1.0} }; // added by jghan, 2024-10-10
 
 void XC_Functional::set_hybrid_alpha(const double alpha_in)
@@ -315,6 +317,29 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         ked_flag = false;
     }
+
+#ifdef USE_LIBXC
+    if (use_libxc && ked_flag)
+    {
+        std::vector<xc_func_type> check_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
+        need_laplacian = false;
+        for (auto& f : check_funcs)
+        {
+            if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
+            {
+                need_laplacian = true;
+                break;
+            }
+        }
+        XC_Functional_Libxc::finish_func(check_funcs);
+    }
+    else
+    {
+        need_laplacian = false;
+    }
+#else
+    need_laplacian = false;
+#endif
 
     if (func_id[0] == XC_GGA_X_OPTX)
     {

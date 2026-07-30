@@ -71,24 +71,8 @@ void XC_Functional::gradcorr(
     assert(nspin0>0);
     const double fac = 1.0/ nspin0;
 
-    // Determine if any functional needs Laplacian of density
-    bool need_laplacian = (func_type == 3 || func_type == 5);
-#ifdef USE_LIBXC
-    if (use_libxc)
-    {
-        std::vector<xc_func_type> check_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
-        need_laplacian = false;
-        for (auto& f : check_funcs)
-        {
-            if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
-            {
-                need_laplacian = true;
-                break;
-            }
-        }
-        XC_Functional_Libxc::finish_func(check_funcs);
-    }
-#endif
+    // Use cached need_laplacian from set_xc_type
+    bool need_laplacian = XC_Functional::get_need_laplacian();
 
     if(is_stress)
     {

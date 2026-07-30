@@ -17,21 +17,10 @@
 
 bool not_supported_xc_with_laplacian(const std::string& xc_func_in)
 {
-    // see Pyscf: https://github.com/pyscf/pyscf/blob/master/pyscf/dft/libxc.py#L1062
-    // ABACUS issue: https://github.com/deepmodeling/abacus-develop/issues/5372
-    const std::vector<std::string> not_supported = {
-        "MGGA_XC_CC06",
-        "MGGA_C_CS",
-        "MGGA_X_BR89",
-        "MGGA_X_MK00"
-    };
-    for (const std::string& s : not_supported)
-    {
-        if (xc_func_in.find(s) != std::string::npos)
-        {
-            return true;
-        }
-    }
+    // Laplacian of density is now supported for meta-GGA functionals.
+    // The following functionals were previously blocked but are now supported:
+    //   MGGA_XC_CC06, MGGA_C_CS, MGGA_X_BR89, MGGA_X_MK00
+    // Ensure PW stress path handles vlapl contribution correctly if using PW basis.
     return false;
 }
 

@@ -70,7 +70,7 @@ namespace XC_Functional_Libxc
         const double hse_omega);
 
     // for mGGA functional
-    extern std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix, ModuleBase::matrix> v_xc_meta(
+    extern std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> v_xc_meta(
         const std::vector<int> &func_id,
         const int &nrxx, // number of real-space grid
         const double &omega, // volume of cell
@@ -112,7 +112,8 @@ namespace XC_Functional_Libxc
         const double tpiba,
         const Charge* const chr,
         std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
-        std::vector<double> &lapl);
+        std::vector<double> &lapl,
+        const bool need_laplacian = true);
 
     // converting grho (abacus=>libxc)
     extern std::vector<double> convert_sigma(

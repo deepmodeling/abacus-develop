@@ -95,7 +95,8 @@ void XC_Functional_Libxc::cal_gdr_and_lapl(
 	const double tpiba,
 	const Charge* const chr,
 	std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
-	std::vector<double> &lapl)
+	std::vector<double> &lapl,
+	const bool need_laplacian)
 {
 	gdr.resize(nspin);
 	lapl.assign(nrxx * nspin, 0.0);
@@ -108,10 +109,13 @@ void XC_Functional_Libxc::cal_gdr_and_lapl(
 		chr->rhopw->real2recip(rhor.data(), rhog.data());
 		gdr[is].resize(nrxx);
 		XC_Functional::grad_rho(rhog.data(), gdr[is].data(), chr->rhopw, tpiba);
-		std::vector<double> lapl_spin(nrxx);
-		XC_Functional::laplacian_rho(rhog.data(), lapl_spin.data(), chr->rhopw, tpiba);
-		for(std::size_t ir=0; ir<nrxx; ++ir)
-			lapl[ir*nspin+is] = lapl_spin[ir];
+		if (need_laplacian)
+		{
+			std::vector<double> lapl_spin(nrxx);
+			XC_Functional::laplacian_rho(rhog.data(), lapl_spin.data(), chr->rhopw, tpiba);
+			for(std::size_t ir=0; ir<nrxx; ++ir)
+				lapl[ir*nspin+is] = lapl_spin[ir];
+		}
 	}
 }
 

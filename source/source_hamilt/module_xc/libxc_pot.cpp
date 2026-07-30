@@ -212,8 +212,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
 //XC_POLARIZED, XC_UNPOLARIZED: internal flags used in LIBXC, denote the polarized(nspin=1) or unpolarized(nspin=2) calculations, definition can be found in xc.h from LIBXC
 
-// [etxc, vtxc, v, vofk, voflapl] = XC_Functional::v_xc(...)
-std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Libxc::v_xc_meta(
+// [etxc, vtxc, v, vofk] = XC_Functional::v_xc(...)
+std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Libxc::v_xc_meta(
     const std::vector<int> &func_id,
     const int &nrxx, // number of real-space grid
     const double &omega, // volume of cell
@@ -225,8 +225,6 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix,ModuleBase::matri
 {
     ModuleBase::TITLE("XC_Functional_Libxc","v_xc_meta");
     ModuleBase::timer::start("XC_Functional_Libxc","v_xc_meta");
-
-    double e2 = 2.0;
 
     //output of the subroutine
     double etxc = 0.0;
@@ -248,9 +246,10 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix,ModuleBase::matri
         /* hse_omega = */ hse_omega);
 
     const std::vector<double> rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
+    const bool need_laplacian = XC_Functional::get_need_laplacian();
     std::vector<std::vector<ModuleBase::Vector3<double>>> gdr;
     std::vector<double> lapl;
-    XC_Functional_Libxc::cal_gdr_and_lapl(nspin, nrxx, rho, tpiba, chr, gdr, lapl);
+    XC_Functional_Libxc::cal_gdr_and_lapl(nspin, nrxx, rho, tpiba, chr, gdr, lapl, need_laplacian);
     const std::vector<double> sigma = XC_Functional_Libxc::convert_sigma(gdr);
 
     //converting kin_r
@@ -465,6 +464,75 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix,ModuleBase::matri
         }
     }
 
+    // Compute vlapl stress contribution for PW path
+    // σ_{αβ} = -e2 × Σ_ig (G_α·G_β·tpiba²) × (Re[ρ(G)]·Re[vlapl(G)] + Im[ρ(G)]·Im[vlapl(G)])
+    XC_Functional::get_stress_vlapl().zero_out();
+    if (need_laplacian)
+    {
+        const int ng = chr->rhopw->npw;
+        const double tpiba2 = tpiba * tpiba;
+        std::vector<std::complex<double>> rho_g(chr->rhopw->nmaxgr);
+        std::vector<std::complex<double>> vlapl_g(chr->rhopw->nmaxgr);
+        for (int is = 0; is < nspin; ++is)
+        {
+            for (int ir = 0; ir < nrxx; ++ir)
+                rho_g[ir] = std::complex<double>(rho[ir * nspin + is], 0.0);
+            for (int ig = ng; ig < chr->rhopw->nmaxgr; ++ig)
+                rho_g[ig] = std::complex<double>(0.0, 0.0);
+            chr->rhopw->real2recip(rho_g.data(), rho_g.data());
+
+            for (int ir = 0; ir < nrxx; ++ir)
+                vlapl_g[ir] = std::complex<double>(voflapl(is, ir), 0.0);
+            for (int ig = ng; ig < chr->rhopw->nmaxgr; ++ig)
+                vlapl_g[ig] = std::complex<double>(0.0, 0.0);
+            chr->rhopw->real2recip(vlapl_g.data(), vlapl_g.data());
+
+            for (int l = 0; l < 3; ++l)
+            {
+                for (int m = 0; m <= l; ++m)
+                {
+                    double sum = 0.0;
+                    for (int ig = 0; ig < ng; ++ig)
+                    {
+                        double g_prod = chr->rhopw->gcar[ig][l] * chr->rhopw->gcar[ig][m] * tpiba2;
+                        sum += g_prod * (rho_g[ig].real() * vlapl_g[ig].real()
+                                       + rho_g[ig].imag() * vlapl_g[ig].imag());
+                    }
+                    XC_Functional::get_stress_vlapl()(l, m) -= sum * ModuleBase::e2;
+                }
+            }
+        }
+    }
+
+    // Apply Laplacian potential correction using FD kernel
+    // v_xc += nabla^2(vlapl) where vlapl = d(rho*eps_xc)/d(nabla^2 rho)
+    if (need_laplacian)
+    {
+        const int ng = chr->rhopw->npw;
+        const double tpiba2 = tpiba * tpiba;
+        std::vector<double> gg_fd = XC_Functional::compute_fd_gg(chr->rhopw);
+        std::vector<std::complex<double>> lapl_tmp(chr->rhopw->nmaxgr);
+        for(int is = 0; is < voflapl.nr; is++)
+        {
+            for(int ir = 0; ir < nrxx; ir++)
+                lapl_tmp[ir] = std::complex<double>(voflapl(is, ir), 0.0);
+            for(int ig = ng; ig < chr->rhopw->nmaxgr; ig++)
+                lapl_tmp[ig] = std::complex<double>(0.0, 0.0);
+            chr->rhopw->real2recip(lapl_tmp.data(), lapl_tmp.data());
+            for(int ig = 0; ig < ng; ig++)
+            {
+                lapl_tmp[ig] *= -gg_fd[ig] * tpiba2;
+            }
+            chr->rhopw->recip2real(lapl_tmp.data(), lapl_tmp.data());
+            for(int ir = 0; ir < nrxx; ir++)
+            {
+                double vlapl_corr = ModuleBase::e2 * lapl_tmp[ir].real();
+                v(is, ir) += vlapl_corr;
+                vtxc += vlapl_corr * chr->rho[is][ir] * omega / chr->rhopw->nxyz;
+            }
+        }
+    }
+
     //-------------------------------------------------
     // for MPI, reduce the exchange-correlation energy
     //-------------------------------------------------
@@ -479,7 +547,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix,ModuleBase::matri
     XC_Functional_Libxc::finish_func(funcs);
 
     ModuleBase::timer::end("XC_Functional_Libxc","v_xc_meta");
-    return std::make_tuple( etxc, vtxc, std::move(v), std::move(vofk), std::move(voflapl) );
+    return std::make_tuple( etxc, vtxc, std::move(v), std::move(vofk) );
 }
 
 #endif
