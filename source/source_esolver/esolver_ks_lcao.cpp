@@ -248,7 +248,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
 
     deepks.dpks_out_type = "tot";  // for deepks method
 
-    fsl.getForceStress(ucell, PARAM.inp.cal_force, PARAM.inp.cal_stress, 
+    fsl.getForceStress(ucell, this->get_vdw_result(), PARAM.inp.cal_force, PARAM.inp.cal_stress,
                        PARAM.inp.test_force, PARAM.inp.test_stress,
                        this->gd, this->pv, this->pelec, this->dmat, this->psi,
                        two_center_bundle_, orb_, force, this->scs,

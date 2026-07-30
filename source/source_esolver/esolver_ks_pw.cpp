@@ -369,6 +369,7 @@ void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix&
     // Calculate forces
     ff.cal_force(ucell,
                  force,
+                 this->get_vdw_result(),
                  *this->pelec,
                  this->pw_rhod,
                  &ucell.symm,
@@ -395,6 +396,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matrix
 
     ss.cal_stress(stress,
                   ucell,
+                  this->get_vdw_result(),
                   this->dftu,
                   this->locpp,
                   this->ppcell,
