@@ -466,7 +466,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
 
     // Compute vlapl stress contribution for PW path
     // σ_{αβ} = -e2 × Σ_ig (G_α·G_β·tpiba²) × (Re[ρ(G)]·Re[vlapl(G)] + Im[ρ(G)]·Im[vlapl(G)])
-    XC_Functional::get_stress_vlapl().zero_out();
+    for (int i = 0; i < 9; ++i) XC_Functional::get_stress_vlapl()[i] = 0.0;
     if (need_laplacian)
     {
         const int ng = chr->rhopw->npw;
@@ -498,7 +498,9 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
                         sum += g_prod * (rho_g[ig].real() * vlapl_g[ig].real()
                                        + rho_g[ig].imag() * vlapl_g[ig].imag());
                     }
-                    XC_Functional::get_stress_vlapl()(l, m) -= sum * ModuleBase::e2;
+                    const double sv = -sum * ModuleBase::e2;
+                    XC_Functional::get_stress_vlapl()[l * 3 + m] += sv;
+                    if (l != m) XC_Functional::get_stress_vlapl()[m * 3 + l] += sv;
                 }
             }
         }

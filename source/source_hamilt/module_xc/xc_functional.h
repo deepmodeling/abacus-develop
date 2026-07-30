@@ -100,7 +100,7 @@ class XC_Functional
         return need_laplacian;
     };
 
-    static ModuleBase::matrix& get_stress_vlapl()
+    static double* get_stress_vlapl()
     {
         return stress_vlapl;
     };
@@ -117,7 +117,7 @@ class XC_Functional
     static bool ked_flag; // whether the functional has kinetic energy density
     static bool need_laplacian; // whether any functional needs Laplacian of density
     static bool use_libxc;
-    static ModuleBase::matrix stress_vlapl; // 3x3 vlapl stress contribution
+    static double stress_vlapl[9]; // 3x3 vlapl stress contribution, row-major
 
     // exx_hybrid_alpha for mixing exx in hybrid functional:
     static double hybrid_alpha;
