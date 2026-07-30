@@ -50,6 +50,13 @@ jobs:
           cmake --build build -j4
           cmake --install build
 
+      - name: Module_LCAO CUDA Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R '^(MODULE_LCAO_tddft_radial_interpolation_cuda_test|MODULE_LCAO_tddft_snap_psibeta_half_test)$'
+
       - name: Test 11_PW_GPU
         run: |
           cd tests/11_PW_GPU
