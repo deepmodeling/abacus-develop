@@ -37,10 +37,13 @@ jobs:
           - intel
           - cuda
 
-    env:
-      DOCKER_CONFIG: ${{ runner.temp }}/docker-${{ github.run_id }}-${{ matrix.dockerfile }}
-
     steps:
+      - name: Configure Docker client
+        run: |
+          config_dir="${RUNNER_TEMP}/docker-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.dockerfile }}"
+          mkdir -p "${config_dir}"
+          echo "DOCKER_CONFIG=${config_dir}" >> "${GITHUB_ENV}"
+
       - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v6
