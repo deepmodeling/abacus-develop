@@ -9,12 +9,13 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.suite || 'build' }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test on CUDA Build
+  # ── Job 1: 只负责编译，产出二进制 ──────────────────────────
+  build:
+    name: Build CUDA
     runs-on: gpu
     if: github.repository_owner == 'deepmodeling'
     container:
@@ -22,7 +23,7 @@ jobs:
       volumes:
         - /tmp/ccache:/github/home/.ccache
       options: --gpus all
-      
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -46,31 +47,55 @@ jobs:
           nvidia-smi
           source toolchain/install/setup
           rm -rf build
-          cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON
-          cmake --build build -j4
+          cmake -B build -G Ninja \
+            -DUSE_CUDA=ON \
+            -DBUILD_TESTING=ON \
+            -DENABLE_FLOAT_FFTW=ON \
+            -DCMAKE_INSTALL_PREFIX="${GITHUB_WORKSPACE}/install"
+          cmake --build build -j $(nproc)
           cmake --install build
 
-      - name: Test 11_PW_GPU
-        run: |
-          cd tests/11_PW_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: abacus-cuda-bin
+          path: install/
+          retention-days: 1
 
-      - name: Test 12_NAO_Gamma_GPU
-        run: |
-          cd tests/12_NAO_Gamma_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+  # ── Job 2: 5 个 Matrix 实例并行跑各自的测试套件 ──────────
+  gpu-test:
+    name: Test ${{ matrix.suite }}
+    needs: build
+    runs-on: gpu
+    if: github.repository_owner == 'deepmodeling'
+    container:
+      image: ghcr.io/deepmodeling/abacus-cuda
+      options: --gpus all
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - 11_PW_GPU
+          - 12_NAO_Gamma_GPU
+          - 13_NAO_multik_GPU
+          - 15_rtTDDFT_GPU
+          - 16_SDFT_GPU
 
-      - name: Test 13_NAO_multik_GPU
-        run: |
-          cd tests/13_NAO_multik_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+    steps:
+      - name: Checkout test scripts
+        uses: actions/checkout@v7
 
-      - name: Test 15_rtTDDFT_GPU
-        run: |
-          cd tests/15_rtTDDFT_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: abacus-cuda-bin
+          path: install/
 
-      - name: Test 16_SDFT_GPU
+      - name: Make binary executable
+        run: find install/bin -type f -exec chmod +x {} \;
+
+      - name: Test ${{ matrix.suite }}
         run: |
-          cd tests/16_SDFT_GPU
+          export PATH="${GITHUB_WORKSPACE}/install/bin:${PATH}"
+          cd "tests/${{ matrix.suite }}"
           bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
