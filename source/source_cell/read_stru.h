@@ -91,16 +91,6 @@ namespace unitcell
     bool read_atom_positions(UnitCell& ucell,
                             std::ifstream &ifpos, 
                             std::ofstream &ofs_running, 
-                            std::ofstream &ofs_warning,
-                            const int nspin,
-                            const std::string& basis_type,
-                            const std::string& orbital_dir,
-                            const std::string& init_wfc,
-                            const double onsite_radius,
-                            const bool fixed_atoms,
-                            const bool noncolin,
-                            const std::string& calculation,
-                            const std::string& esolver_type,
-                            const int symmetry);
+                            std::ofstream &ofs_warning, const int symmetry);
 }
 #endif // READ_STRU_H

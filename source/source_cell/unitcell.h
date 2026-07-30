@@ -93,6 +93,81 @@ class UnitCell : public BaseCell {
                + double(R.z) * a3 - get_tau(iat1);
     }
 
+    // LiuXh add 20180515
+    ModuleBase::Matrix3 G0;
+    ModuleBase::Matrix3 GT0;
+    ModuleBase::Matrix3 GGT0;
+    ModuleBase::Matrix3 invGGT0;
+
+    // I'm doing a bad thing here! Will change later
+    bool ionic_position_updated
+        = false; // whether the ionic position has been updated
+    bool cell_parameter_updated
+        = false; // whether the cell parameters are updated
+
+    //============================================================
+    // meshx : max number of mesh point in pseudopotential file
+    // natomwfc : number of starting wavefunctions
+    // lmax  : Max L used for localized orbital.
+    // nmax  : Max N used for localized orbital.
+    // lmax_ppwf : Max L of pseudo wave functinos
+    // nelec : total number of electrons
+    // lmaxmax : revert from INPUT
+    //============================================================
+    int meshx = 0;
+    int natomwfc = 0;
+    int lmax = 0;
+    int nmax = 0;
+    int nmax_total = 0; // mohan add 2009-09-10
+    int lmax_ppwf = 0;
+    int lmaxmax = 0;   // liuyu 2021-07-04
+    bool init_vel = false; // liuyu 2021-07-15
+                       // double nelec;
+
+  private:
+    ModuleBase::Matrix3 stress; // calculate stress on the cell
+
+  public:
+    UnitCell();
+    ~UnitCell();
+    void print_cell(std::ofstream& ofs) const;
+
+    std::vector<double>      atom_mass;
+    std::vector<std::string> atom_label;
+    std::vector<std::string> pseudo_fn;
+    std::vector<std::string> pseudo_type;
+
+    std::vector<std::string> orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
+    std::string  descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
+
+    void set_iat2itia();
+
+    void setup_cell(const std::string& fn, std::ofstream& log, const int symmetry);
+
+#ifdef __LCAO
+    InfoNonlocal infoNL; // store nonlocal information of lcao, added by zhengdy
+                         // 2021-09-07
+#endif
+
+    // for constrained vc-relaxation where type of lattice
+    // is fixed, adjust the lattice vectors
+
+    //================================================================
+    // cal_natomwfc : calculate total number of atomic wavefunctions
+    // cal_nwfc     : calculate total number of local basis and lmax
+    // cal_meshx	: calculate max number of mesh points in pp file
+    //================================================================
+    bool if_atoms_can_move() const;
+    bool if_cell_can_change() const;
+    void setup(const std::string& latname_in,
+               const int& ntype_in,
+               const int& lmaxmax_in,
+               const bool& init_vel_in,
+               const std::string& fixed_axes_in);
+
+    /// @brief check consistency between two atom labels from STRU and pseudo or
+    /// orb file
+    void compare_atom_labels(const std::string &label1, const std::string &label2);
     /// @brief get atomCounts, which is a map from element type to atom number
     std::map<int, int> get_atom_Counts() const;
     /// @brief get orbitalCounts, which is a map from element type to orbital

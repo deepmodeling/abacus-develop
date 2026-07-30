@@ -188,7 +188,7 @@ class Test_RELAX : public testing::Test
             inp.stress_thr = 0.01;
             inp.fixed_ibrav = false;
 
-            this->setup_cell();
+            this->setup_cell(, 0);
 
             ModuleBase::matrix force_in, stress_in;
             force_in.create(nat,3);

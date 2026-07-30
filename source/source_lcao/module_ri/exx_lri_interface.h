@@ -155,11 +155,7 @@ public:
     std::shared_ptr<Exx_LRI<Tdata>> exx_ptr;
 
 private:
-
-    Mix_DMk_2D<T> mix_DMk_2D;
-
-    Exx_Info_Global info_global;
-    size_t hybrid_step_ = 1;
+    Mix_DMk_2D mix_DMk_2D;
     // non-owning ptr to Charge_Mixing captured in exx_beforescf, used to refresh the
     // borrowed mixing pointer in exx_eachiterinit (mixing_restart reallocates it via init_mixing)
     const Charge_Mixing* p_chgmix_ = nullptr;

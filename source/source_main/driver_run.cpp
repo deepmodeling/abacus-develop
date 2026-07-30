@@ -46,6 +46,30 @@ void Driver::driver_run()
     }
 #endif
 
+    // the life of ucell should begin here, mohan 2024-05-12
+    UnitCell ucell;
+    ucell.setup(PARAM.inp.latname,
+                PARAM.inp.ntype,
+                PARAM.inp.lmaxmax,
+                PARAM.inp.init_vel,
+                PARAM.inp.fixed_axes);
+
+    ucell.setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running, std::stoi(PARAM.inp.symmetry));
+    unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
+
+    //! 2: initialize the ESolver (depends on a set-up ucell after `setup_cell`)
+    this->init_hardware();
+
+    ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp, ucell);
+
+    //! 3: initialize Esolver and fill json-structure
+    p_esolver->before_all_runners(ucell, PARAM.inp);
+
+    // this Json part should be moved to before_all_runners, mohan 2024-05-12
+#ifdef __RAPIDJSON
+    Json::gen_stru_wrapper(&ucell);
+#endif
+
     const std::string cal = PARAM.inp.calculation;
     const Input_para& input = PARAM.inp;
 

@@ -93,31 +93,32 @@ TEST_F(UcellTest,ReadAtomPositions)
 if(GlobalV::MY_RANK==0)
 {
 #endif
-    std::string fn = "./support/STRU_MgO";
-    std::ifstream ifa(fn.c_str());
-    std::ofstream ofs_running;
-    std::ofstream ofs_warning;
-    ofs_running.open("read_atom_species.tmp");
-    ofs_warning.open("read_atom_species.warn");
-    ucell->atoms = new Atom[ucell->ntype];
-    ucell->set_atom_flag = true;
-    const int nspin = 1;
-    //call read_atom_species
-    EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running, *ucell,
-        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa));
-    EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
-    EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
-    EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
-    EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
-    //call read_atom_positions
-    EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
-        basis_type, orbital_dir, init_wfc, onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type, 0));
-    ofs_running.close();
-    ofs_warning.close();
-    ifa.close();
-    remove("read_atom_species.tmp");
-    remove("read_atom_species.warn");
+	std::string fn = "./support/STRU_MgO";
+	std::ifstream ifa(fn.c_str());
+	std::ofstream ofs_running;
+	std::ofstream ofs_warning;
+	ofs_running.open("read_atom_species.tmp");
+	ofs_warning.open("read_atom_species.warn");
+	ucell->atoms = new Atom[ucell->ntype];
+	ucell->set_atom_flag = true;
+	PARAM.input.test_pseudo_cell = 2;
+	PARAM.input.basis_type = "pw";
+	//call read_atom_species
+	EXPECT_NO_THROW(unitcell::read_atom_species(ifa, ofs_running,*ucell));
+	EXPECT_NO_THROW(unitcell::read_lattice_constant(ifa, ofs_running,ucell->lat));
+	EXPECT_DOUBLE_EQ(ucell->latvec.e11,4.27957);
+	EXPECT_DOUBLE_EQ(ucell->latvec.e22,4.27957);
+	EXPECT_DOUBLE_EQ(ucell->latvec.e33,4.27957);
+	//mandatory preliminaries
+	delete[] ucell->magnet.start_mag;
+	ucell->magnet.start_mag = new double[ucell->ntype];
+	//call read_atom_positions
+	EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell,ifa, ofs_running, ofs_warning, 0));
+	ofs_running.close();
+	ofs_warning.close();
+	ifa.close();
+	remove("read_atom_species.tmp");
+	remove("read_atom_species.warn");
 #ifdef __MPI
 }
 #endif
@@ -125,15 +126,13 @@ if(GlobalV::MY_RANK==0)
 
 TEST_F(UcellTest,SetupCell)
 {
-    std::string fn = "./support/STRU_MgO";
-    std::ofstream ofs_running;
-    ofs_running.open("setup_cell.tmp");
-    const int nspin = 1;
-    ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
-        basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
-        fixed_atoms, noncolin, calculation, esolver_type, 0);
-    ofs_running.close();
-    remove("setup_cell.tmp");
+	std::string fn = "./support/STRU_MgO";
+	std::ofstream ofs_running;
+	ofs_running.open("setup_cell.tmp");
+	PARAM.input.nspin = 1;
+	ucell->setup_cell(fn,ofs_running, 0);
+	ofs_running.close();
+	remove("setup_cell.tmp");
 }
 
 #ifdef __MPI

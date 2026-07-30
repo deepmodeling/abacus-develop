@@ -203,11 +203,11 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
             // if it changed, the borrowed engine's history was wiped -> the DM mixer must also
             // restart this iter (reset its per-k mixing_data), else fresh-engine + stale-history is
             // inconsistent and the 2nd SCF diverges.
-            if (!this->info_global.separate_loop && this->p_chgmix_ != nullptr)
+            if (!GlobalC::exx_info.info_global.separate_loop && this->p_chgmix_ != nullptr)
             {
                 const void* cur_mixing = static_cast<const void*>(this->p_chgmix_->get_mixing());
                 if (this->last_borrowed_mixing_ != nullptr && cur_mixing != this->last_borrowed_mixing_)
-                    { flag_restart = true; }   
+                    { flag_restart = true; }
                 this->last_borrowed_mixing_ = cur_mixing;
                 this->mix_DMk_2D.set_mixing(this->p_chgmix_->get_mixing());
             }
