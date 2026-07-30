@@ -93,6 +93,26 @@ TEST(SternheimerABACUSFDAdapter, NonOrthogonalPlaneWaveUsesContravariantMetric)
     }
 }
 
+TEST(SternheimerABACUSFDAdapter, EmptyLocalPotentialSlabContributesZeros)
+{
+    const std::vector<double> full_potential = ModuleRI::embed_sternheimer_local_z_slab({}, 4, 5, 0, 5);
+
+    ASSERT_EQ(full_potential.size(), 20U);
+    for (const double value: full_potential)
+    {
+        EXPECT_DOUBLE_EQ(value, 0.0);
+    }
+}
+
+TEST(SternheimerABACUSFDAdapter, EmbedsOwnedLocalPotentialSlabAtGlobalZOffset)
+{
+    const std::vector<double> local_potential = {1.0, 2.0, 3.0, 4.0};
+    const std::vector<double> full_potential
+        = ModuleRI::embed_sternheimer_local_z_slab(local_potential, 2, 4, 2, 1);
+
+    EXPECT_EQ(full_potential, (std::vector<double>{0.0, 1.0, 2.0, 0.0, 0.0, 3.0, 4.0, 0.0}));
+}
+
 TEST(SternheimerABACUSFDAdapter, BuildsHamiltonianWithNonlocalProjector)
 {
     ModuleRI::SternheimerABACUSFDGridData grid_data;
