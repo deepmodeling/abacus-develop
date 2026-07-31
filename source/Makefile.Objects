@@ -636,8 +636,10 @@ OBJS_LCAO=evolve_elec.o\
       td_folding.o\
       td_info.o\
       velocity_op.o\
+      radial_interpolation.o\
       snap_projector_half_tddft.o\
       snap_psibeta_half_tddft.o\
+      snap_phialpha_half_tddft.o\
       solve_propagation.o\
       boundary_fix.o\
       upsi.o\

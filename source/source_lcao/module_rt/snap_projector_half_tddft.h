@@ -32,7 +32,6 @@ struct ProjectorChannel
 {
     int l = 0;
     int mesh = 0;
-    double dk = 0.0;
     double rcut = 0.0;
     const double* radial_times_r = nullptr;
     const double* radial_grid = nullptr;

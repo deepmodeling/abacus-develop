@@ -1,10 +1,10 @@
 #include "snap_projector_half_tddft.h"
 
+#include "radial_interpolation.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_lebedev_laikov.h"
-#include "source_base/math_polyint.h"
 #include "source_base/timer.h"
 #include "source_base/ylm.h"
 
@@ -104,7 +104,8 @@ AngularGridView angular_grid(const int ngrid)
 {
     if (!is_supported_lebedev_grid(ngrid))
     {
-        ModuleBase::WARNING_QUIT("snap_projector_half_tddft", "Unsupported Lebedev-Laikov grid size: " + std::to_string(ngrid));
+        ModuleBase::WARNING_QUIT("snap_projector_half_tddft",
+                                 "Unsupported Lebedev-Laikov grid size: " + std::to_string(ngrid));
     }
 
     if (ngrid == default_lebedev_grid_points)
@@ -139,9 +140,13 @@ AngularGridView angular_grid(const int ngrid)
     return view;
 }
 
-double radial_factor(const ProjectorChannel& channel, const double r, const double w_radial)
+double radial_factor(const ProjectorChannel& channel,
+                     const RadialGridInfo& grid_info,
+                     const double r,
+                     const double w_radial)
 {
-    const double projector_val = ModuleBase::PolyInt::Polynomial_Interpolation(channel.radial_times_r, channel.mesh, channel.dk, r);
+    const double projector_val
+        = interpolate_radial(channel.radial_grid, channel.radial_times_r, channel.mesh, grid_info, r);
     return projector_val * r * w_radial;
 }
 } // namespace
@@ -196,6 +201,7 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
 
     int natomwfc = 0;
     std::vector<bool> active(projector_channels.size(), false);
+    std::vector<RadialGridInfo> projector_grid_info(projector_channels.size());
 
     const double Rcut1 = orb.Phi[T1].getRcut();
     const ModuleBase::Vector3<double> dRa = R0 - R1;
@@ -205,6 +211,11 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
     for (int ich = 0; ich < static_cast<int>(projector_channels.size()); ++ich)
     {
         const ProjectorChannel& channel = projector_channels[ich];
+        projector_grid_info[ich] = validate_radial_grid(channel.radial_grid,
+                                                        channel.radial_times_r,
+                                                        channel.mesh,
+                                                        "snap_projector_half_tddft",
+                                                        "projector");
         natomwfc += 2 * channel.l + 1;
         if (distance10 <= Rcut1 + channel.rcut)
         {
@@ -228,7 +239,9 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
     const auto& phi_ln = orb.Phi[T1].PhiLN(L1, N1);
     const int mesh_r1 = phi_ln.getNr();
     const double* psi_1 = phi_ln.getPsi();
-    const double dk_1 = phi_ln.getDk();
+    const double* radial_1 = phi_ln.getRadial();
+    const RadialGridInfo orbital_grid_info
+        = validate_radial_grid(radial_1, psi_1, mesh_r1, "snap_projector_half_tddft", "LCAO orbital");
 
     const GaussLegendreGrid& gl = gauss_legendre_grid(radial_grid_num);
     std::vector<double> r_radial(radial_grid_num);
@@ -260,12 +273,8 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
             continue;
         }
 
-        assert(channel.mesh > 0);
-        assert(channel.radial_times_r != nullptr);
-        assert(channel.radial_grid != nullptr);
-
-        const double r_min = channel.radial_grid[0];
-        const double r_max = channel.radial_grid[channel.mesh - 1];
+        const double r_min = projector_grid_info[ich].r_min;
+        const double r_max = projector_grid_info[ich].r_max;
         const double xl = (r_max - r_min) * 0.5;
         const double xmean = (r_max + r_min) * 0.5;
 
@@ -340,7 +349,8 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
 
                 const double phase = r_val * A_dot_lebedev[ian];
                 const std::complex<double> exp_iAr = std::exp(ModuleBase::IMAG_UNIT * phase);
-                const double interp_psi = ModuleBase::PolyInt::Polynomial_Interpolation(psi_1, mesh_r1, dk_1, tnorm);
+                const double interp_psi
+                    = interpolate_radial(radial_1, psi_1, mesh_r1, orbital_grid_info, tnorm);
                 const double ylm_L1_val = rly1[L1 * L1 + m1];
                 const std::complex<double> common_factor = exp_iAr * ylm_L1_val * interp_psi * w_ang;
 
@@ -361,7 +371,7 @@ void snap_projector_half_tddft(const LCAO_Orbitals& orb,
                 }
             }
 
-            const double factor = radial_factor(channel, r_val, w_radial[ir]);
+            const double factor = radial_factor(channel, projector_grid_info[ich], r_val, w_radial[ir]);
             int current_idx = index_offset;
             for (int m0 = 0; m0 < num_m0; ++m0)
             {

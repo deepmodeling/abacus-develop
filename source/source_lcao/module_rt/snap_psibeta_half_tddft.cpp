@@ -44,7 +44,6 @@ void snap_psibeta_half_tddft(const LCAO_Orbitals& orb,
         ProjectorChannel channel;
         channel.l = proj.getL();
         channel.mesh = proj.getNr();
-        channel.dk = proj.getDk();
         channel.rcut = proj.getRcut();
         channel.radial_times_r = proj.getBeta_r();
         channel.radial_grid = proj.getRadial();
