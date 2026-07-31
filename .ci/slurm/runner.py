@@ -1220,7 +1220,7 @@ def github_admit() -> int:
         event_data = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
         user = event_data["comment"]["user"]["login"]
         permission = _gh("repos/{}/collaborators/{}/permission".format(repository, user))
-        if permission.get("permission") not in ("admin", "maintain", "write", "triage"):
+        if permission.get("role_name") not in ("admin", "maintain", "write", "triage"):
             raise ValueError("commenter needs Triage permission")
         number = str(event_data["issue"]["number"])
         pull = _gh("repos/{}/pulls/{}".format(repository, number))
