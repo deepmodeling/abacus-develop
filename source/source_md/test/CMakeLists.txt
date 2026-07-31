@@ -3,6 +3,7 @@ abacus_add_local_feature_definitions(__NORMAL)
 
 list(APPEND depend_files
   ../md_func.cpp
+  ../../source_cell/base_cell.cpp
   ../../source_cell/unitcell.cpp
   ../../source_cell/update_cell.cpp
   ../../source_cell/bcast_cell.cpp
