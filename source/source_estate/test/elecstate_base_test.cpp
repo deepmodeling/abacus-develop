@@ -47,12 +47,7 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+
 SepPot::SepPot(){}
 SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}

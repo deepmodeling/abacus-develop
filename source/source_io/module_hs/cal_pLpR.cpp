@@ -246,7 +246,7 @@ ModuleIO::AngularMomentumCalculator::AngularMomentumCalculator(
     temp = atom_arrange::set_sr_NL(*ofs_,
                                    PARAM.inp.out_level,
                                    std::max(search_radius, rcut_max),
-                                   ucell.infoNL.get_rcutmax_Beta(),
+                                   ucell.infoNL->get_rcutmax_Beta(),
                                    PARAM.globalv.gamma_only_local);
     temp = std::max(temp, std::max(search_radius, rcut_max));
     this->neighbor_searcher_ = std::unique_ptr<Grid_Driver>(new Grid_Driver(tdestructor, tgrid));

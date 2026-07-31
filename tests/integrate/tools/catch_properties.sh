@@ -734,12 +734,23 @@ bash ${script_dir}/catch_deepks_properties.sh $1
 # check symmetry 
 #--------------------------------------------
 if ! test -z "$symmetry" && [ $symmetry == 1 ]; then
-	pointgroup=`grep 'POINT GROUP' $running_path | tail -n 2 | head -n 1 | awk '{print $4}'`
-	spacegroup=`grep 'SPACE GROUP' $running_path | tail -n 1 | awk '{print $7}'`
+	# exclude the nspin=4 MAGNETIC POINT/SPACE GROUP lines so they do not interfere
+	# with the crystallographic point-group / space-group detection below
+	pointgroup=`grep 'POINT GROUP =' $running_path | grep -v 'MAGNETIC' | grep -v 'BvK' | awk '{print $4}'`
+	spacegroup=`grep 'SPACE GROUP =' $running_path | grep -v 'MAGNETIC' | grep -v 'BvK' | awk '{print $7}'`
 	nksibz=`grep 'Number of irreducible k-points' $running_path | awk '{print $6}'`
 	echo "pointgroupref $pointgroup" >>$1
 	echo "spacegroupref $spacegroup" >>$1
 	echo "nksibzref $nksibz" >>$1
+	# (nspin=4) magnetic (Shubnikov) group analysis: capture the space-group-consistent
+	# magnetic point group. Only printed when the group is actually reduced (magnetic);
+	# non-magnetic nspin=4 does not print it, so the capture is skipped when empty.
+	if ! test -z "$nspin" && [ $nspin == 4 ]; then
+		magpointgroup=`grep 'MAGNETIC POINT GROUP IN SPACE GROUP' $running_path | awk '{print $NF}'`
+		if ! test -z "$magpointgroup"; then
+			echo "magpointgroupref $magpointgroup" >>$1
+		fi
+	fi
 fi
 
 #--------------------------------------------

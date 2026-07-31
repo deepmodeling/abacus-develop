@@ -1,29 +1,30 @@
 #include "symmetry.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/output.h"
 
 using namespace ModuleSymmetry;
 
-void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, std::ofstream& ofs_running)
+void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, std::ofstream& ofs_running,
+                         const double symmetry_prec, const int nspin, const std::string& calculation,
+                         const int* cal_symm_repr)
 {
     const double MAX_EPS = std::max(1e-3, epsilon_input * 1.001);
     const double MULT_EPS = 2.0;
 
     ModuleBase::TITLE("Symmetry","analy_sys");
-	ModuleBase::timer::start("Symmetry","analy_sys");
+    ModuleBase::timer::start("Symmetry","analy_sys");
 
-	ofs_running << "\n\n";
-	ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
-	ofs_running << " |                                                                    |" << std::endl;
-	ofs_running << " |                      #Symmetry Analysis#                           |" << std::endl;
-	ofs_running << " | We calculate the norm of 3 vectors and the angles between them,    |" << std::endl;
-	ofs_running << " | the type of Bravais lattice is given. We can judge if the unticell |" << std::endl;
-	ofs_running << " | is a primitive cell. Finally we give the point group operation for |" << std::endl;
-	ofs_running << " | this unitcell. We use the point group operations to perform        |" << std::endl;
-	ofs_running << " | symmetry analysis on given k-point mesh and the charge density.    |" << std::endl;
-	ofs_running << " |                                                                    |" << std::endl;
-	ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
-	ofs_running << "\n";
+    ofs_running << "\n\n";
+    ofs_running << " >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>" << std::endl;
+    ofs_running << " |                                                                    |" << std::endl;
+    ofs_running << " |                      #Symmetry Analysis#                           |" << std::endl;
+    ofs_running << " | We calculate the norm of 3 vectors and the angles between them,    |" << std::endl;
+    ofs_running << " | the type of Bravais lattice is given. We can judge if the unticell |" << std::endl;
+    ofs_running << " | is a primitive cell. Finally we give the point group operation for |" << std::endl;
+    ofs_running << " | this unitcell. We use the point group operations to perform        |" << std::endl;
+    ofs_running << " | symmetry analysis on given k-point mesh and the charge density.    |" << std::endl;
+    ofs_running << " |                                                                    |" << std::endl;
+    ofs_running << " <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<" << std::endl;
+    ofs_running << "\n";
 
     // --------------------------------
     // 1. copy data and allocate memory
@@ -45,21 +46,21 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 
     // atom positions
     // used in checksym.
-	newpos = new double[3*nat]; // positions of atoms before rotation
+    newpos = new double[3*nat]; // positions of atoms before rotation
     rotpos = new double[3*nat]; // positions of atoms after rotation
-	ModuleBase::GlobalFunc::ZEROS(newpos, 3*nat);
+    ModuleBase::GlobalFunc::ZEROS(newpos, 3*nat);
     ModuleBase::GlobalFunc::ZEROS(rotpos, 3*nat);
 
     this->a1 = lat.a1;
     this->a2 = lat.a2;
     this->a3 = lat.a3;
 
-	ModuleBase::Matrix3 latvec1;
-	latvec1.e11 = a1.x; latvec1.e12 = a1.y; latvec1.e13 = a1.z;
-	latvec1.e21 = a2.x; latvec1.e22 = a2.y; latvec1.e23 = a2.z;
-	latvec1.e31 = a3.x; latvec1.e32 = a3.y; latvec1.e33 = a3.z;
+    ModuleBase::Matrix3 latvec1;
+    latvec1.e11 = a1.x; latvec1.e12 = a1.y; latvec1.e13 = a1.z;
+    latvec1.e21 = a2.x; latvec1.e22 = a2.y; latvec1.e23 = a2.z;
+    latvec1.e31 = a3.x; latvec1.e32 = a3.y; latvec1.e33 = a3.z;
 
-	output::printM3(ofs_running,"LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",latvec1);
+    output::printM3(ofs_running,"LATTICE VECTORS: (CARTESIAN COORDINATE: IN UNIT OF A0)",latvec1);
 
     istart[0] = 0;
     this->itmin_type = 0;
@@ -84,61 +85,61 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     s3 = a3;
 
 
-	auto lattice_to_group = [&, this](int& nrot_out, int& nrotk_out, std::ofstream& ofs_running) -> void 
-	{
-		// a: the optimized lattice vectors, output
-		// s: the input lattice vectors, input
-		// find the real_brav type accordiing to lattice vectors.
-		this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3,
-				this->cel_const, this->pre_const, this->real_brav, ilattname, atoms, true, this->newpos);
+    auto lattice_to_group = [&, this](int& nrot_out, int& nrotk_out, std::ofstream& ofs_running) -> void 
+        {
+            // a: the optimized lattice vectors, output
+            // s: the input lattice vectors, input
+            // find the real_brav type accordiing to lattice vectors.
+            this->lattice_type(this->a1, this->a2, this->a3, this->s1, this->s2, this->s3,
+                    this->cel_const, this->pre_const, this->real_brav, ilattname, atoms, true, this->newpos, symmetry_prec);
 
-		ofs_running << " For optimal symmetric configuration:" << std::endl;
-		ModuleBase::GlobalFunc::OUT(ofs_running, "BRAVAIS TYPE", real_brav);
-		ModuleBase::GlobalFunc::OUT(ofs_running, "BRAVAIS LATTICE NAME", ilattname);
-		ModuleBase::GlobalFunc::OUT(ofs_running, "ibrav", real_brav);
-		Symm_Other::print1(real_brav, cel_const, ofs_running);
+            ofs_running << " For optimal symmetric configuration:" << std::endl;
+            ModuleBase::GlobalFunc::OUT(ofs_running, "BRAVAIS TYPE", real_brav);
+            ModuleBase::GlobalFunc::OUT(ofs_running, "BRAVAIS LATTICE NAME", ilattname);
+            ModuleBase::GlobalFunc::OUT(ofs_running, "ibrav", real_brav);
+            Symm_Other::print1(real_brav, cel_const, ofs_running);
 
-		optlat.e11 = a1.x; optlat.e12 = a1.y; optlat.e13 = a1.z;
-		optlat.e21 = a2.x; optlat.e22 = a2.y; optlat.e23 = a2.z;
-		optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
+            optlat.e11 = a1.x; optlat.e12 = a1.y; optlat.e13 = a1.z;
+            optlat.e21 = a2.x; optlat.e22 = a2.y; optlat.e23 = a2.z;
+            optlat.e31 = a3.x; optlat.e32 = a3.y; optlat.e33 = a3.z;
 
-		// count the number of primitive cells in the supercell
-		this->pricell(this->newpos, atoms);
+            // count the number of primitive cells in the supercell
+            this->pricell(this->newpos, atoms);
 
-		test_brav = true; // output the real ibrav and point group
+            test_brav = true; // output the real ibrav and point group
 
-		// list all possible point group operations 
-		this->setgroup(this->symop, this->nop, this->real_brav);
+            // list all possible point group operations 
+            this->setgroup(this->symop, this->nop, this->real_brav, cal_symm_repr);
 
-		// special case for AFM analysis
-		// which should be loop over all atoms, f.e only loop over spin-up atoms
-		// --------------------------------
-		// AFM analysis Start
-		if (PARAM.inp.nspin > 1) 
-		{
-			pricell_loop = this->magmom_same_check(atoms);
-		}
+            // special case for AFM analysis
+            // which should be loop over all atoms, f.e only loop over spin-up atoms
+            // --------------------------------
+            // AFM analysis Start
+            if (nspin > 1) 
+            {
+                pricell_loop = this->magmom_same_check(atoms);
+            }
 
-		if (!pricell_loop && PARAM.inp.nspin == 2)
-		{
-			this->analyze_magnetic_group(atoms, st, nrot_out, nrotk_out);
-		}
-		else
-		{
-			// get the real symmetry operations according to the input structure
-			// nrot_out: the number of pure point group rotations
-			// nrotk_out: the number of all space group operations
-			this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, 
-					this->gmatrix, this->gtrans, this->newpos, this->rotpos, this->index, 
-					this->ntype, this->itmin_type, this->itmin_start, this->istart, this->na);
-		}
-	};
+            if (!pricell_loop && nspin == 2)
+            {
+                this->analyze_magnetic_group(atoms, st, nrot_out, nrotk_out);
+            }
+            else
+            {
+                // get the real symmetry operations according to the input structure
+                // nrot_out: the number of pure point group rotations
+                // nrotk_out: the number of all space group operations
+                this->getgroup(nrot_out, nrotk_out, ofs_running, this->nop, this->symop, 
+                        this->gmatrix, this->gtrans, this->newpos, this->rotpos, this->index, 
+                        this->ntype, this->itmin_type, this->itmin_start, this->istart, this->na);
+            }
+        };
 
     // --------------------------------
     // 2. analyze the symmetry
     // --------------------------------
     // 2.1 skip the symmetry analysis if the symmetry has been analyzed
-    if (PARAM.inp.calculation == "cell-relax" && nrotk > 0)
+    if (calculation == "cell-relax" && nrotk > 0)
     {
         std::ofstream no_out;   // to screen the output when trying new epsilon
 
@@ -178,10 +179,10 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
         {
             this->nrotk = tmp_nrotk;
             ofs_running << " Find new symmtry operations during cell-relax." << std::endl;
-			if (this->nrotk > this->max_nrotk) 
-			{
-				this->max_nrotk = this->nrotk;
-			}
+            if (this->nrotk > this->max_nrotk) 
+            {
+                this->max_nrotk = this->nrotk;
+            }
         }
         if (eps_enlarged)
         {
@@ -250,10 +251,10 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
     // 3. output to running.log
     //----------------------------------
     // output the point group
-    bool valid_group = this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running);
-	ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
+    bool valid_group = this->pointgroup(this->nrot, this->pgnumber, this->pgname, this->gmatrix, ofs_running, cal_symm_repr);
+    ModuleBase::GlobalFunc::OUT(ofs_running,"POINT GROUP", this->pgname);
     // output the space group
-    valid_group = this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running);
+    valid_group = this->pointgroup(this->nrotk, this->spgnumber, this->spgname, this->gmatrix, ofs_running, cal_symm_repr);
     ModuleBase::GlobalFunc::OUT(ofs_running, "POINT GROUP IN SPACE GROUP", this->spgname);
 
     //-----------------------------
@@ -289,8 +290,15 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 
     this->set_atom_map(atoms); // find the atom mapping according to the symmetry operations
 
+    // (nspin=4 / SOC) restrict to the unitary magnetic subgroup: drop operations that reverse
+    // the magnetization (pseudovector), so they are not applied in k-reduction / density symmetrization.
+    if (nspin == 4)
+    {
+        this->analyze_magnetic_group_nspin4(atoms, st, latvec1);
+    }
+
     // Do this here for debug
-    if (PARAM.inp.calculation == "relax")
+    if (calculation == "relax")
     {
         this->all_mbl = this->is_all_movable(atoms, st);
         if (!this->all_mbl)

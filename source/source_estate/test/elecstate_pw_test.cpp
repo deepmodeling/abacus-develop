@@ -5,9 +5,6 @@
 #define private public
 #define protected public
 #include "source_estate/elecstate_pw.h"
-#ifdef __LCAO
-#include "source_basis/module_ao/ORB_gaunt_table.h"
-#endif
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
@@ -52,20 +49,7 @@ SepPot::SepPot(){}
 SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-ORB_gaunt_table::ORB_gaunt_table()
-{
-}
-ORB_gaunt_table::~ORB_gaunt_table()
-{
-}
-#endif
+
 pseudopot_cell_vl::pseudopot_cell_vl()
 {
 }
@@ -78,6 +62,13 @@ pseudopot_cell_vnl::pseudopot_cell_vnl()
 pseudopot_cell_vnl::~pseudopot_cell_vnl()
 {
 }
+
+#ifdef __LCAO
+#include "source_basis/module_ao/ORB_gaunt_table.h"
+ORB_gaunt_table::ORB_gaunt_table() {}
+ORB_gaunt_table::~ORB_gaunt_table() {}
+#endif
+
 template <>
 void pseudopot_cell_vnl::radial_fft_q<float, base_device::DEVICE_CPU>(base_device::DEVICE_CPU* ctx,
                                                                       const int ng,

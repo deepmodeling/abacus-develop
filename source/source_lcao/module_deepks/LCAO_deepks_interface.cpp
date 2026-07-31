@@ -17,9 +17,9 @@
 #include "source_lcao/module_deepks/deepks_spre.h"
 #include "source_lcao/module_deepks/deepks_vdpre.h"
 #include "source_lcao/module_deepks/deepks_vdrpre.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
 
 #include <unordered_map>
 
@@ -554,7 +554,6 @@ void LCAO_Deepks_Interface<TK, TR>::out_deepks_labels(const double& etot,
                 const int nbasis = hR_tot->get_nbasis();
 #ifdef __MPI
                 Parallel_Orbitals serialV;
-                serialV.init(nbasis, nbasis, nbasis, ParaV->comm());
                 serialV.set_serial(nbasis, nbasis);
                 serialV.set_atomic_trace(ucell.get_iat2iwt(), ucell.nat, nbasis);
                 hamilt::HContainer<TR> hR_serial(&serialV);

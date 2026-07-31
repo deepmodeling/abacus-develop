@@ -4,7 +4,7 @@
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #endif
@@ -75,7 +75,7 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::initialize_HR(const Grid_Dr
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < orb_cutoff_[T1] + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < orb_cutoff_[T1] + this->ucell->infoNL->get_rcut_max(T0))
             {
                 is_adj[ad1] = true;
             }

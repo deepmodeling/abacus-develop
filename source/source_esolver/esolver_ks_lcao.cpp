@@ -9,7 +9,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/FORCE_STRESS.h"
-#include "source_lcao/module_gint/gint.h"
+#include "source_hamilt/module_gint/gint.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
@@ -35,15 +35,14 @@ ESolver_KS_LCAO<TK, TR>::ESolver_KS_LCAO()
 {
     this->classname = "ESolver_KS_LCAO";
     this->basisname = "LCAO";
-    this->exx_nao.init(); // mohan add 20251008
 }
 
 template <typename TK, typename TR>
 ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 {
-	//****************************************************
-	// do not add any codes in this deconstructor funcion
-	//****************************************************
+    //****************************************************
+    // do not add any codes in this deconstructor funcion
+    //****************************************************
     Setup_Psi<TK>::deallocate_psi(this->psi);
 }
 
@@ -52,6 +51,9 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_pa
 {
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_all_runners");
+
+    // 0) init EXX - moved from constructor to ensure GlobalC::exx_info.info_global is already set
+    this->exx_nao.init(ucell);
 
     // 1) before_all_runners in ESolver_KS
     ESolver_KS::before_all_runners(ucell, inp);
@@ -114,7 +116,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
 
     //! 2) find search radius
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-      PARAM.inp.out_level, orb_.get_rcutmax_Phi(), ucell.infoNL.get_rcutmax_Beta(),
+      PARAM.inp.out_level, orb_.get_rcutmax_Phi(), ucell.infoNL->get_rcutmax_Beta(),
       PARAM.globalv.gamma_only_local);
 
     //! 3) use search_radius to search adj atoms
@@ -370,7 +372,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     }
 #endif
 
-    init_dftu_lcao<TK>(istep, iter, PARAM.inp, &(this->dftu), this->dmat.dm, ucell, this->chr.rho, this->pw_rho->nrxx);
+    init_dftu_lcao<TK>(istep, iter, PARAM.inp.dft_plus_u, &(this->dftu), this->dmat.dm, ucell, this->chr.rho, this->pw_rho->nrxx);
 
 #ifdef __MLALGO
     // the density matrixes of DeePKS have been updated in each iter
@@ -432,7 +434,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     // 3) run Hsolver
     if (!skip_solve)
     {
-        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv),
+                                                  PARAM.inp.ks_solver,
+                                                  PARAM.globalv.kpar_lcao,
+                                                  PARAM.globalv.nlocal,
+                                                  PARAM.inp.nelec);
         hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt), this->psi[0], this->pelec, *this->dmat.dm, 
           this->chr, PARAM.inp.nspin, skip_charge);
     }
@@ -481,7 +487,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 	const std::vector<std::vector<TK>>& dm_vec = this->dmat.dm->get_DMK_vector();
 
     // 1) calculate the local occupation number matrix and energy correction in DFT+U
-    finish_dftu_lcao<TK>(iter, conv_esolver, PARAM.inp, &(this->dftu), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao);
+    finish_dftu_lcao<TK>(iter, conv_esolver, PARAM.inp.dft_plus_u, PARAM.inp.out_chg[0], &(this->dftu), ucell, dm_vec, this->kv, this->p_chgmix->get_mixing_beta(), hamilt_lcao, PARAM.globalv.global_out_dir, PARAM.inp.nspin, PARAM.globalv.npol);
 
     // 2) for deepks, calculate delta_e, output labels during electronic steps
     this->deepks.delta_e(ucell, this->kv, this->orb_, this->pv, this->gd, dm_vec, this->pelec->f_en, PARAM.inp);

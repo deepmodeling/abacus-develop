@@ -13,7 +13,7 @@
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
+#include "source_hamilt/module_hcontainer/atom_pair.h"
 
 void DeePKS_domain::cal_descriptor_equiv(const int nat,
                                          const DeePKS_Param& deepks_param,

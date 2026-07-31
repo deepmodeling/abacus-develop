@@ -4,7 +4,7 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 
@@ -23,7 +23,7 @@ void PotXC::cal_v_eff(const Charge*const chg, const UnitCell*const ucell, Module
 
     if (XC_Functional::get_ked_flag())
     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
 #ifdef __EXX
         const double hse_omega = XC_Functional::get_hse_omega();

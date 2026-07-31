@@ -723,14 +723,12 @@ struct Input_para
      * 
      * Likewise, the correlation part can be found in corresponding files.
      * 
-     * PBE functional is used as the default functional for XCPNet.
+     * These vectors are empty unless the user explicitly requests an
+     * override. This leaves the version-specific default parameters under
+     * Libxc's control.
      */
-    // src/gga_x_pbe.c
-    std::vector<double> xc_exch_ext = {
-        101, 0.8040, 0.2195149727645171}; 
-    // src/gga_c_pbe.c
-    std::vector<double> xc_corr_ext = {
-        130, 0.06672455060314922, 0.031090690869654895034, 1.00000}; 
+    std::vector<double> xc_exch_ext = {};
+    std::vector<double> xc_corr_ext = {};
 
     // ==============   #Parameters (24.td-ofdft) ===========================
     bool of_cd = false;          ///< add CD potential or not

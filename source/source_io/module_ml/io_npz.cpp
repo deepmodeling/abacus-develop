@@ -7,10 +7,10 @@
 
 #ifdef __MPI
 #include <mpi.h>
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #endif
 
-#ifdef __USECNPY
+#ifdef __CNPY
 #include "cnpy.h"
 #endif
 
@@ -24,7 +24,7 @@ void read_mat_npz(const Parallel_Orbitals* paraV,
 {
     ModuleBase::TITLE("ModuleIO", "read_mat_npz");
 
-#ifdef __USECNPY
+#ifdef __CNPY
 
 #ifdef __MPI
 
@@ -326,7 +326,7 @@ void output_mat_npz_impl(const UnitCell& ucell, std::string& zipname, const hami
 {
     ModuleBase::TITLE("ModuleIO", "output_mat_npz");
 
-#ifdef __USECNPY
+#ifdef __CNPY
     std::string filename = "";
 
     if(GlobalV::MY_RANK == 0)

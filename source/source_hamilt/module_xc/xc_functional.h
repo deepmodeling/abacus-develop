@@ -5,11 +5,11 @@
 #ifndef XC_FUNCTIONAL_H
 #define XC_FUNCTIONAL_H
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include <xc.h>
 #else
 #include "xc_ids.h"
-#endif	// ifdef USE_LIBXC
+#endif	// ifdef __LIBXC
 #include "source_base/macros.h"
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"

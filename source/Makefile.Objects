@@ -205,6 +205,10 @@ OBJS_CELL=atom_pseudo.o\
     read_atom_species.o\
     sep.o\
     sep_cell.o\
+    cal_nelec_nband.o\
+    read_pseudo.o\
+    cal_wfc.o\
+    cal_ux.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\
@@ -246,11 +250,7 @@ OBJS_ELECSTAT=elecstate.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
     pot_xc.o\
-    cal_ux.o\
     read_orb.o\
-    cal_nelec_nband.o\
-    read_pseudo.o\
-    cal_wfc.o\
     setup_estate_pw.o\
     update_pot.o\
 
@@ -637,8 +637,10 @@ OBJS_LCAO=evolve_elec.o\
       td_folding.o\
       td_info.o\
       velocity_op.o\
+      radial_interpolation.o\
       snap_projector_half_tddft.o\
       snap_psibeta_half_tddft.o\
+      snap_phialpha_half_tddft.o\
       solve_propagation.o\
       boundary_fix.o\
       upsi.o\

@@ -4,7 +4,7 @@
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef _OPENMP
 #include <unordered_set>
@@ -190,7 +190,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
  *     * For nspin=1: occ is scaled by 0.5 (since only one spin channel computed)
  *   - Subsequent iterations: locale is computed fresh each iteration from updated DMR
  * 
- * Case 2: Locale IS initialized (is_locale_initialized, i.e., read from onsite.dm file)
+ * Case 2: Locale IS initialized (is_locale_initialized, i.e., read from dm_onsite.txt file)
  *   - First electronic iteration: uses pre-read locale directly without DMR calculation
  *     * Skips DMR-based occ calculation entirely
  *     * Reads locale from stored data via get_locale()
@@ -334,8 +334,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         // BRANCH 2: Locale IS initialized (use pre-read data)
         // ============================================================
         // This branch is taken when:
-        // - is_locale_initialized() == true (locale read from onsite.dm file)
-        // - OR omc != 0 (occupation matrix control with initial_onsite.dm)
+        // - is_locale_initialized() == true (locale read from dm_onsite.txt file)
+        // - OR omc != 0 (occupation matrix control with dm_onsite_ini.txt)
         // Typical scenario: first SCF iteration with file input, or restart calculation
         else
         {

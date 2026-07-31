@@ -192,9 +192,9 @@ SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
-namespace elecstate
+namespace unitcell
 {
-    void cal_ux(UnitCell& ucell)
+    void cal_ux(UnitCell& ucell, const int nspin)
     {
         ucell.magnet.lsign_ = false;
 
@@ -206,10 +206,7 @@ namespace elecstate
     };
 }
 
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal(){};
-InfoNonlocal::~InfoNonlocal(){};
-#endif
+
 
 namespace Parallel_Reduce
 {

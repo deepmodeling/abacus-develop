@@ -14,7 +14,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/module_lr/hamilt_casida.h"
-#include "source_lcao/module_gint/gint_info.h"
+#include "source_hamilt/module_gint/gint_info.h"
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
 #include "source_lcao/module_ri/Exx_LRI.h"
@@ -26,17 +26,14 @@ namespace LR
     class ESolver_LR : public ModuleESolver::ESolver_FP
     {
     public:
-        /// @brief  a move constructor from ESolver_KS_LCAO
-        ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol, const Input_para& inp, UnitCell& ucell);
-        /// @brief a from-scratch constructor
-        ESolver_LR(const Input_para& inp, UnitCell& ucell);
+        explicit ESolver_LR(const Input_para& inp);
         ~ESolver_LR() {
             delete this->psi_ks;
         }
 
         ///input: input, call, basis(LCAO), psi(ground state), elecstate
         // initialize sth. independent of the ground state
-        virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override {};
+        virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
         virtual void runner(UnitCell& ucell, int istep) override;
         virtual void after_all_runners(UnitCell& ucell) override;
 
@@ -46,7 +43,7 @@ namespace LR
 
       protected:
         const Input_para& input;
-        const UnitCell& ucell;
+        const UnitCell* ucell_ = nullptr;
         Grid_Driver gd;
         std::vector<double> orb_cutoff_;
 
@@ -86,6 +83,11 @@ namespace LR
         int nupdown = 0;
         bool openshell = false;
         std::string xc_kernel;
+
+        void initialize_from_unitcell_(UnitCell& ucell, const Input_para& inp);
+        void initialize_from_ks_(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
+                                 UnitCell& ucell,
+                                 const Input_para& inp);
 
         std::unique_ptr<ModuleGint::GintInfo> gint_info_ = nullptr;
         void set_gint();

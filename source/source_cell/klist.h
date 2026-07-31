@@ -8,27 +8,30 @@
 #include "k_vector_utils.h"
 #include <vector>
 
+/**
+ * @brief Class for k-points management.
+ */
 class K_Vectors
 {
 public:
-    std::vector<ModuleBase::Vector3<double>> kvec_c; /// Cartesian coordinates of k points
-    std::vector<ModuleBase::Vector3<double>> kvec_d; /// Direct coordinates of k points
-    std::vector<ModuleBase::Vector3<double>> kvec_c_full; // Cartesian coordinates of full k mesh match with nkstot_full
+    std::vector<ModuleBase::Vector3<double>> kvec_c; ///< Cartesian coordinates of k points
+    std::vector<ModuleBase::Vector3<double>> kvec_d; ///< Direct coordinates of k points
+    std::vector<ModuleBase::Vector3<double>> kvec_c_full; ///< Cartesian coordinates of full k mesh match with nkstot_full
 
-    std::vector<double> wk; /// wk, weight of k points
+    std::vector<double> wk; ///< wk, weight of k points
 
-    std::vector<int> ngk; /// ngk, number of plane waves for each k point
-    std::vector<int> isk; /// distinguish spin up and down k points
+    std::vector<int> ngk; ///< ngk, number of plane waves for each k point
+    std::vector<int> isk; ///< distinguish spin up and down k points
 
-    int nmp[3]={0};                 /// Number of Monhorst-Pack
-    std::vector<int> kl_segids; /// index of kline segment
+    int nmp[3]={0};                 ///< Number of Monhorst-Pack
+    std::vector<int> kl_segids; ///< index of kline segment
 
     /// @brief equal k points to each ibz-kpont, corresponding to a certain symmetry operations. 
     /// dim: [iks_ibz][(isym, kvec_d)]
     std::vector<std::map<int, ModuleBase::Vector3<double>>> kstars;
 
-    bool kc_done = false;
-    bool kd_done = false;
+    bool kc_done = false; ///< flag indicating if Cartesian coordinates are calculated
+    bool kd_done = false; ///< flag indicating if direct coordinates are calculated
 
     K_Vectors(){};
     ~K_Vectors(){};
@@ -65,7 +68,12 @@ public:
         const ModuleBase::Matrix3& reciprocal_vec,
         const ModuleBase::Matrix3& latvec,
         std::ofstream& ofs,
-        const bool use_ibz);
+        const bool use_ibz,
+        const std::string& global_out_dir,
+        const bool gamma_only_local,
+        const double kspacing[3],
+        const std::string& kmesh_type,
+        const double koffset[3]);
 
     int get_nks() const
     {
@@ -156,11 +164,11 @@ public:
     int nkstot = 0;      ///< number of symmetry-reduced k points in full k mesh
     int nkstot_full = 0; ///< number of k points before symmetry reduction in full k mesh
 
-    int nspin = 0;
-    double koffset[3] = {0.0}; // used only in automatic k-points.
-    std::string k_kword;       // LiuXh add 20180619
-    int k_nkstot = 0;          // LiuXh add 20180619 // WHAT IS THIS?????
-    bool is_mp = false;        // Monkhorst-Pack
+    int nspin = 0;              ///< number of spin states
+    double koffset[3] = {0.0};  ///< used only in automatic k-points
+    std::string k_kword;        ///< LiuXh add 20180619
+    int k_nkstot = 0;           ///< LiuXh add 20180619
+    bool is_mp = false;         ///< Monkhorst-Pack
 
     /**
      * @brief Resize the k-point related vectors according to the new k-point number.
@@ -178,7 +186,7 @@ public:
      */
     void renew(const int& kpoint_number);
 
-    // step 1 : generate kpoints
+    /// @brief step 1 : generate kpoints
 
     /**
      * @brief Reads the k-points from a file.
@@ -200,7 +208,11 @@ public:
      * @note If the number of k-points is greater than 100000, it will quit with a warning.
      */
     bool read_kpoints(const UnitCell& ucell,
-                      const std::string& fn); // return 0: something wrong.
+                      const std::string& fn,
+                      const bool gamma_only_local,
+                      const double kspacing[3],
+                      const std::string& kmesh_type,
+                      const double koffset[3]); // return 0: something wrong.
 
     /**
      * @brief Adds k-points linearly between special points.
@@ -259,7 +271,7 @@ public:
      */
     double Monkhorst_Pack_formula(const int& k_type, const double& offset, const int& n, const int& dim);
 
-    // step 2 : set both kvec and kved; normalize weight
+    /// @brief step 2 : set both kvec and kved; normalize weight
 
     //    void set_both_kvec(const ModuleBase::Matrix3& G, const ModuleBase::Matrix3& R, std::string& skpt);
 
@@ -284,7 +296,7 @@ public:
 
 
 
-    // step 4 : *2 kpoints.
+    /// @brief step 4 : *2 kpoints
 
     /**
      * @brief Sets up the k-points for spin-up and spin-down calculations.

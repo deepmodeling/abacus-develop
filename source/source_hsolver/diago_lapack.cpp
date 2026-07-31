@@ -15,6 +15,24 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
+namespace
+{
+template <typename T>
+void check_lapack_layout(const hamilt::MatrixBlock<T>& h_mat,
+                         const hamilt::MatrixBlock<T>& s_mat,
+                         const std::size_t n)
+{
+    if (h_mat.row != n || h_mat.col != n || s_mat.row != n || s_mat.col != n)
+    {
+        ModuleBase::WARNING_QUIT(
+            "DiagoLapack",
+            "The LAPACK eigensolver requires replicated " + std::to_string(n) + " x "
+                + std::to_string(n) + " Hamiltonian and overlap matrices, but received "
+                + std::to_string(h_mat.row) + " x " + std::to_string(h_mat.col)
+                + " local blocks. Please use ScaLAPACK or ELPA for distributed matrices.");
+    }
+}
+} // namespace
 template <>
 void DiagoLapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
 {
@@ -24,8 +42,8 @@ void DiagoLapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>&
     phm_in->matrix(h_mat, s_mat);
 
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-
     std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    check_lapack_layout(h_mat, s_mat, eigen.size());
 
     // Diag
     this->dsygvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
@@ -43,8 +61,8 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
     matcd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-
     std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    check_lapack_layout(h_mat, s_mat, eigen.size());
     this->zhegvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
     BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
@@ -61,6 +79,7 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
     ModuleBase::TITLE("DiagoLapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    check_lapack_layout(h_mat, s_mat, eigen.size());
     this->dsygvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
     BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
@@ -75,6 +94,7 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
     ModuleBase::TITLE("DiagoLapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
     std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    check_lapack_layout(h_mat, s_mat, eigen.size());
     this->zhegvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
     BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);

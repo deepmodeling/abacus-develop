@@ -15,7 +15,6 @@
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_lcao/module_ri/serialization_cereal.h"
 #include "source_lcao/module_ri/Mix_DMk_2D.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_parameter/parameter.h"
@@ -65,7 +64,9 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 	Exx_Abfs::Construct_Orbs::print_orbs_size(ucell, this->abfs, GlobalV::ofs_running);
 
 	for( size_t T=0; T!=this->abfs.size(); ++T )
-		{ GlobalC::exx_info.info_ri.abfs_Lmax = std::max( GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size())-1 ); }
+	{
+		this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size())-1);
+	}
 
 	this->exx_objs.clear();
 	this->coulomb_settings = RI_Util::update_coulomb_settings(this->info.coulomb_param, ucell, this->p_kv);
@@ -77,11 +78,14 @@ void Exx_LRI<Tdata>::init(const MPI_Comm &mpi_comm_in,
 		this->exx_objs[settings_list.first].cv.set_orbitals(ucell, orb,
 															this->lcaos, this->abfs, this->exx_objs[settings_list.first].abfs_ccp,
 															this->info.kmesh_times, this->MGT, settings_list.second.first );
+		this->exx_objs[settings_list.first].cv.set_info_ri(&this->info);
 		if (settings_list.first == Conv_Coulomb_Pot_K::Coulomb_Method::Ewald)
 		{
+			const int evq_abfs_Lmax = this->abfs_Lmax_;
 			this->exx_objs[settings_list.first].evq.init(ucell, orb,
 														this->mpi_comm, this->p_kv, this->lcaos, this->abfs,
-														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times);
+														settings_list.second.second, this->MGT, this->info.ccp_rmesh_times, this->info.kmesh_times,
+														evq_abfs_Lmax);
 		}
 	}
 
@@ -125,8 +129,7 @@ void Exx_LRI<Tdata>::init_spencer(
 
 	for (size_t T = 0; T != this->abfs.size(); ++T)
 	{
-		GlobalC::exx_info.info_ri.abfs_Lmax
-			= std::max(GlobalC::exx_info.info_ri.abfs_Lmax, static_cast<int>(this->abfs[T].size()) - 1);
+		this->abfs_Lmax_ = std::max(this->abfs_Lmax_, static_cast<int>(this->abfs[T].size()) - 1);
 	}
 
 	this->exx_objs.clear();
@@ -152,6 +155,7 @@ void Exx_LRI<Tdata>::init_spencer(
 		this->info.kmesh_times,
 		this->MGT,
 		center2_settings->second.first);
+	this->exx_objs[Conv_Coulomb_Pot_K::Coulomb_Method::Center2].cv.set_info_ri(&this->info);
 
 	ModuleBase::timer::end("Exx_LRI", "init_spencer");
 }
@@ -789,6 +793,16 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	else
 		{ this->exx_lri.set_symmetry(false, {}); }
 
+	// (nspin=4) the spinor H(R) rotation mixes the 4 spin channels, so they cannot be rotated
+	// independently in the per-spin loop below; hand off to the SOC implementation.
+	if (p_symrot && PARAM.inp.nspin == 4)
+	{
+		this->cal_exx_elec_soc(Ds, ucell, judge, p_symrot);
+		this->exx_lri.set_symmetry(false, {});
+		ModuleBase::timer::end("Exx_LRI", "cal_exx_elec");
+		return;
+	}
+
 	this->Hexxs.resize(PARAM.inp.nspin);
 	this->Eexx = 0;
 	for(int is=0; is<PARAM.inp.nspin; ++is)
@@ -823,6 +837,47 @@ void Exx_LRI<Tdata>::cal_exx_elec(const std::vector<std::map<TA, std::map<TAC, R
 	this->Eexx = post_process_Eexx(this->Eexx);
 	this->exx_lri.set_symmetry(false, {});
 	ModuleBase::timer::end("Exx_LRI", "cal_exx_elec");
+}
+
+template<typename Tdata>
+void Exx_LRI<Tdata>::cal_exx_elec_soc(
+	const std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>& Ds,
+	const UnitCell& ucell,
+	const std::vector<std::tuple<std::set<TA>, std::set<TA>>>& judge,
+	const ModuleSymmetry::Symmetry_rotation* p_symrot)
+{
+	ModuleBase::TITLE("Exx_LRI", "cal_exx_elec_soc");
+	this->Hexxs.resize(PARAM.inp.nspin);   // nspin==4
+	this->Eexx = 0;
+
+	// pass 1: compute the irreducible-sector Hs of all 4 spin channels.
+	// distinct suffix per channel keeps all 4 "Ds_*" saves alive for the energy in pass 3.
+	std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_irr;
+	std::array<std::string, 4> suffix;
+	for (int is = 0; is < 4; ++is)
+	{
+		suffix[is] = std::to_string(is);
+		this->exx_lri.set_Ds(Ds[is], this->info.dm_threshold, suffix[is]);
+		this->exx_lri.cal_Hs({ "","",suffix[is] });
+		Hs_irr[is] = this->exx_lri.post_2D.set_tensors_map2(this->exx_lri.Hs);
+	}
+
+	// pass 2: spinor-coupled rotation of the 4 channels from the irreducible sector to the full BZ
+	std::array<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>, 4> Hs_full =
+		p_symrot->restore_HR_nspin4(ucell.symm, ucell.atoms, ucell.st, 'H', Hs_irr);
+
+	// pass 3: per-channel energy (full Hs, no repeat), then gather the repeated full Hs for abacus
+	for (int is = 0; is < 4; ++is)
+	{
+		this->exx_lri.energy = this->exx_lri.post_2D.cal_energy(
+			this->exx_lri.post_2D.saves["Ds_" + suffix[is]],
+			this->exx_lri.post_2D.set_tensors_map2(Hs_full[is]));
+		this->Hexxs[is] = RI::Communicate_Tensors_Map_Judge::comm_map2_first(
+			this->mpi_comm, std::move(Hs_full[is]), std::get<0>(judge[is]), std::get<1>(judge[is]));
+		this->Eexx += std::real(this->exx_lri.energy);
+		post_process_Hexx(this->Hexxs[is]);
+	}
+	this->Eexx = post_process_Eexx(this->Eexx);
 }
 
 template<typename Tdata>

@@ -8,7 +8,7 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/LCAO_domain.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <complex>
 #include <vector>
@@ -38,8 +38,12 @@ struct WriteHParams
     int nat = 0;
     bool also_hR = false; // H(k) is always written; H(R) (CSR) only when this is true
 #ifdef __EXX
-    // gamma (TK==double) exx interfaces used by write_h_exx; exactly one is set depending on
-    // GlobalC::exx_info.info_ri.real_number (exd: real Hexx, exc: complex Hexx).
+    // The gamma-only (TK==double) exx interfaces used by write_h_exx. 
+    // Deliberately NOT templated on TK, because it would force WriteHParams, WriteDHParams and
+    //      every free function taking them to become templates as well -- a large, purely
+    //      mechanical change for a case nobody needs.
+    // Multi-k + EXX is therefore rejected up front (see write_h_exx)
+    // instead of silently producing output with the EXX term missing.
     Exx_LRI_Interface<double, double>* exd = nullptr;
     Exx_LRI_Interface<double, std::complex<double>>* exc = nullptr;
 #endif

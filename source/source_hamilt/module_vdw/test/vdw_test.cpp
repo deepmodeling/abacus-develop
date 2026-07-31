@@ -1,5 +1,5 @@
 #include "source_cell/unitcell.h"
-#include "source_cell/setup_nonlocal.h"
+
 #include "source_base/mathzone.h"
 #include "source_base/vector3.h"
 #include"gtest/gtest.h"
@@ -61,8 +61,7 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
+
 SepPot::SepPot(){}
 SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}

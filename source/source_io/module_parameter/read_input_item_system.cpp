@@ -185,7 +185,7 @@ void ReadInput::item_system()
         item.description = R"(Takes value 1, 0 or -1.
 * -1: No symmetry will be considered. It is recommended to set -1 for non-colinear + soc calculations, where time reversal symmetry is broken sometimes.
 * 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
-* 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
+* 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations (point groups, space groups, primitive cells, and irreducible k-points). For a magnetic system, the symmetry of the initial magnetic structure will be analyzed and preserved.
 
 [NOTE] When symmetry is enabled (value 1), k-points are reduced to the irreducible Brillouin zone (IBZ). For explicit k-point lists with custom weights (see KPT file), the custom weights are preserved during symmetry reduction. For Monkhorst-Pack grids, uniform weights are used.)";
         item.default_value = "default";
@@ -193,7 +193,11 @@ void ReadInput::item_system()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry == "default")
             {
-                if (para.input.gamma_only || para.input.calculation == "nscf" || para.input.calculation == "get_s"
+                if (para.input.lspinorb == 1)
+                {
+                    para.input.symmetry = "-1";
+                }
+                else if (para.input.gamma_only || para.input.calculation == "nscf" || para.input.calculation == "get_s"
                     || para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
                 {
                     para.input.symmetry = "0"; // if md or exx, symmetry will be
@@ -766,7 +770,7 @@ Available options are:
             // cpu single precision is not supported while float_fftw lib is not available
             if (para.inp.device == "cpu" && para.inp.precision == "single")
             {
-#ifndef __ENABLE_FLOAT_FFTW
+#ifndef __FLOAT_FFTW
                 ModuleBase::WARNING_QUIT(
                     "ReadInput",
                     "Single precision with cpu is not supported while float_fftw lib is not available; \
@@ -859,7 +863,7 @@ Available options are:
             }
             if (para.input.dm_to_rho)
             {
-#ifndef __USECNPY
+#ifndef __CNPY
                 ModuleBase::WARNING_QUIT("ReadInput",
                                          "to write in npz format, please "
                                          "recompile with -DENABLE_CNPY=1");

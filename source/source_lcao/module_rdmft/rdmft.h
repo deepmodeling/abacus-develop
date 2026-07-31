@@ -15,7 +15,7 @@
 #include "source_basis/module_nao/two_center_bundle.h"
 
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_lcao/hs_matrix_k.hpp"
 
 #ifdef __EXX

@@ -34,7 +34,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
             const int iat1 = this->ucell->itia2iat(T1, I1);
             const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad];
             if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                < this->orb_cutoff_[T1] + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                < this->orb_cutoff_[T1] + this->ucell->infoNL->get_rcut_max(T0))
             {
                 is_adj[ad] = true;
             }
@@ -101,7 +101,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                 const int iat1 = this->ucell->itia2iat(T1, I1);
                 const ModuleBase::Vector3<int>& R_index1 = adjs.box[ad];
                 if (this->ucell->cal_dtau(iat0, iat1, R_index1).norm() * this->ucell->lat0
-                    < this->orb_cutoff_[T1] + this->ucell->infoNL.Beta[T0].get_rcut_max())
+                    < this->orb_cutoff_[T1] + this->ucell->infoNL->get_rcut_max(T0))
                 {
                     is_adj[ad] = true;
                 }

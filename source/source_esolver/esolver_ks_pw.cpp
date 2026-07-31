@@ -1,6 +1,6 @@
 #include "esolver_ks_pw.h"
 
-#include "source_estate/cal_ux.h"
+#include "source_cell/cal_ux.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 
@@ -222,6 +222,11 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      hsolver::DiagoIterAssist<T, Device>::PW_DIAG_NMAX,
                                                      hsolver::DiagoIterAssist<T, Device>::PW_DIAG_THR,
                                                      hsolver::DiagoIterAssist<T, Device>::need_subspace,
+                                                     PARAM.inp.nbands,
+                                                     PARAM.inp.diago_smooth_ethr,
+                                                     PARAM.inp.pw_diag_ndim,
+                                                     PARAM.inp.diag_subspace,
+                                                     PARAM.inp.nb2d,
                                                      PARAM.inp.use_k_continuity);
 
         hsolver_pw_obj.solve(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), *this->stp.template get_psi_t<T, Device>(), this->pelec, this->pelec->ekb.c,

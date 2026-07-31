@@ -6,7 +6,7 @@
 #include "source_lcao/module_lr/utils/lr_util.h"
 #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 #include "source_lcao/module_lr/utils/lr_util_print.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
 
 template <typename T>
 elecstate::DensityMatrix<T, T> LR::LR_Spectrum<T>::cal_transition_density_matrix(const int istate, const T* X_in, const bool need_R)

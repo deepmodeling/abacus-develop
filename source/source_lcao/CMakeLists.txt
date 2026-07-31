@@ -1,7 +1,6 @@
 add_subdirectory(module_rt)
 add_subdirectory(module_deepks)
 add_subdirectory(module_dftu)
-add_subdirectory(module_hcontainer)
 add_subdirectory(module_deltaspin)
 
 if(ENABLE_LCAO)
@@ -43,6 +42,7 @@ if(ENABLE_LCAO)
         LCAO_allocate.cpp
         LCAO_set_mat2d.cpp
         LCAO_init_basis.cpp
+        setup_nonlocal.cpp
         setup_exx.cpp
         setup_deepks.cpp
         setup_dm.cpp

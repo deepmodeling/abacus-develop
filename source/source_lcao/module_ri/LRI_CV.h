@@ -11,6 +11,7 @@
 #include "source_basis/module_ao/ORB_atomic_lm.h"
 #include "abfs-vector3_order.h"
 #include "source_base/element_basis_index.h"
+#include "source_hamilt/module_xc/exx_info_ri.h"
 
 #include <RI/global/Tensor.h>
 #include <RI/global/Global_Func-2.h>
@@ -32,6 +33,8 @@ private:
 public:
 	LRI_CV();
 	~LRI_CV();
+
+	void set_info_ri(const Exx_Info_RI* p) { p_info_ri = p; }
 
 	void set_orbitals(
 		const UnitCell &ucell,
@@ -72,6 +75,7 @@ private:
 	ModuleBase::Element_Basis_Index::IndexLNM index_abfs;
 	std::vector<double> lcaos_rcut;
     std::vector<double> abfs_ccp_rcut;
+	const Exx_Info_RI* p_info_ri = nullptr;
 
 public:
 	std::map<int,std::map<int,std::map<Abfs::Vector3_Order<double>,RI::Tensor<Tdata>>>> Vws;

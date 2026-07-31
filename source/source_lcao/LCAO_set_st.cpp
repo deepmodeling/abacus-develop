@@ -503,10 +503,10 @@ void build_ST_new(ForceStressArrays& fsr,
                         tau0 = adjs.adjacent_tau[ad0];
                         dtau1 = tau0 - tau1;
                         double distance1 = dtau1.norm() * ucell.lat0;
-                        double rcut1 = orb.Phi[T1].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb.Phi[T1].getRcut() + ucell.infoNL->get_rcut_max(T0);
                         dtau2 = tau0 - tau2;
                         double distance2 = dtau2.norm() * ucell.lat0;
-                        double rcut2 = orb.Phi[T2].getRcut() + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut2 = orb.Phi[T2].getRcut() + ucell.infoNL->get_rcut_max(T0);
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {
                             is_adj = true;

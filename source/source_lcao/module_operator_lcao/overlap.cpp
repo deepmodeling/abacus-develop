@@ -4,8 +4,8 @@
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_rt/td_folding.h"
 #include "source_lcao/module_rt/td_info.h"
@@ -413,11 +413,9 @@ void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::output_SR_async_csr(const in
 
 #ifdef __MPI
     // Gather distributed SR_async to rank 0 for serial output
-    const Parallel_Orbitals* paraV = SR_async->get_paraV();
     const int nbasis = SR_async->get_nbasis();
 
     Parallel_Orbitals serial_paraV;
-    serial_paraV.init(nbasis, nbasis, nbasis, paraV->comm());
     serial_paraV.set_serial(nbasis, nbasis);
     serial_paraV.set_atomic_trace(this->ucell->get_iat2iwt(), this->ucell->nat, nbasis);
 

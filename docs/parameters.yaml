@@ -63,7 +63,7 @@ parameters:
       Takes value 1, 0 or -1.
       * -1: No symmetry will be considered. It is recommended to set -1 for non-colinear + soc calculations, where time reversal symmetry is broken sometimes.
       * 0: Only time reversal symmetry would be considered in symmetry operations, which implied k point and -k point would be treated as a single k point with twice the weight.
-      * 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations. (point groups, space groups, primitive cells, and irreducible k-points)
+      * 1: Symmetry analysis will be performed to determine the type of Bravais lattice and associated symmetry operations (point groups, space groups, primitive cells, and irreducible k-points). For a magnetic system, the symmetry of the initial magnetic structure will be analyzed and preserved.
 
       [NOTE] When symmetry is enabled (value 1), k-points are reduced to the irreducible Brillouin zone (IBZ). For explicit k-point lists with custom weights (see KPT file), the custom weights are preserved during symmetry reduction. For Monkhorst-Pack grids, uniform weights are used.
     default_value: default
@@ -533,9 +533,9 @@ parameters:
       For plane-wave basis,
 
       * cg: The conjugate-gradient (CG) method.
-      * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
       * dav: The Davidson algorithm.
       * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
+      * bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 
       For numerical atomic orbitals basis,
 
@@ -621,20 +621,20 @@ parameters:
     category: Electronic structure
     type: Integer followed by Real values
     description: |
-      Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_x_pbe.c.
+      Customized parameterization of the exchange part of an XC functional. The first value should be the Libxc ID of the original functional, followed by the complete list of external parameters required by the linked Libxc version. If unset, Libxc's own default parameters are used. For functional IDs and parameter definitions, refer to the Libxc documentation and source code.
 
       [NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set dft_functional to the corresponding functional to apply the customized parameterization. Presently this feature can only support parameterization on one exchange functional.
-    default_value: 101 0.8040 0.2195149727645171
+    default_value: ""
     unit: ""
     availability: ""
   - name: xc_corr_ext
     category: Electronic structure
     type: Integer followed by Real values
     description: |
-      Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_c_pbe.c.
+      Customized parameterization of the correlation part of an XC functional. The first value should be the Libxc ID of the original functional, followed by the complete list of external parameters required by the linked Libxc version. If unset, Libxc's own default parameters are used. For functional IDs and parameter definitions, refer to the Libxc documentation and source code.
 
       [NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set dft_functional to the corresponding functional to apply the customized parameterization. Presently this feature can only support parameterization on one correlation functional.
-    default_value: 130 0.06672455060314922 0.031090690869654895034 1.0
+    default_value: ""
     unit: ""
     availability: ""
   - name: pseudo_rcut
@@ -1399,6 +1399,7 @@ parameters:
       * berendsen: Berendsen thermostat, see md_nraise in detail.
       * rescaling: velocity Rescaling method 1, see md_tolerance in detail.
       * rescale_v: velocity Rescaling method 2, see md_nraise in detail.
+      * csvr: Canonical Sampling through Velocity Rescaling, see md_csvr_tau in detail.
     default_value: nhc
     unit: ""
     availability: ""
@@ -4395,10 +4396,10 @@ parameters:
     description: |
       The parameter controls the form of occupation matrix control used.
       * 0: No occupation matrix control is performed, and the onsite density matrix will be calculated from wavefunctions in each SCF step.
-      * 1: The first SCF step will use an initial density matrix read from a file named initial_onsite.dm, but for later steps, the onsite density matrix will be updated.
-      * 2: The same onsite density matrix from initial_onsite.dm will be used throughout the entire calculation.
+      * 1: The first SCF step will use an initial density matrix read from a file named dm_onsite_ini.txt, but for later steps, the onsite density matrix will be updated.
+      * 2: The same onsite density matrix from dm_onsite_ini.txt will be used throughout the entire calculation.
 
-      [NOTE] The easiest way to create initial_onsite.dm is to run a DFT+U calculation, look for a file named onsite.dm in the OUT.prefix directory, and make replacements there. The format of the file is rather straight-forward.
+      [NOTE] The easiest way to create dm_onsite_ini.txt is to run a DFT+U calculation with out_chg=1, look for a file named dm_onsite.txt in the OUT.prefix directory, copy and rename it to dm_onsite_ini.txt. The file dm_onsite_ini.txt should be placed in the directory specified by read_file_dir. The format of the file is rather straight-forward.
     default_value: "0"
     unit: ""
     availability: ""

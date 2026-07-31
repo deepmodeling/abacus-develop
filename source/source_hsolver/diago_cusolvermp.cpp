@@ -3,7 +3,9 @@
 #include "source_io/module_parameter/parameter.h"
 #include "diago_cusolvermp.h"
 
+#include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
+#include "source_base/tool_title.h"
 
 using complex = std::complex<double>;
 

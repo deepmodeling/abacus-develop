@@ -5,7 +5,7 @@
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_estate/cal_ux.h"
+#include "source_cell/cal_ux.h"
 //-----force-------------------
 #include "source_pw/module_pwdft/forces.h"
 //-----stress------------------

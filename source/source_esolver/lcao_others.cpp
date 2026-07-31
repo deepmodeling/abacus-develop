@@ -1,9 +1,9 @@
 #include "source_esolver/esolver_ks_lcao.h"
-#include "source_estate/cal_ux.h"
+#include "source_cell/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_lcao/module_gint/gint.h"
+#include "source_hamilt/module_gint/gint.h"
 #include "source_base/formatter.h"
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
@@ -74,7 +74,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
                                                    PARAM.inp.out_level,
                                                    orb_.get_rcutmax_Phi(),
-                                                   ucell.infoNL.get_rcutmax_Beta(),
+                                                   ucell.infoNL->get_rcutmax_Beta(),
                                                    PARAM.globalv.gamma_only_local);
 
     atom_arrange::search(PARAM.globalv.search_pbc,
@@ -167,7 +167,7 @@ void ESolver_KS_LCAO<TK, TR>::others(UnitCell& ucell, const int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    elecstate::cal_ux(ucell);
+    unitcell::cal_ux(ucell, PARAM.inp.nspin);
 
     // pelec should be initialized before these calculations
     elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, 

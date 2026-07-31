@@ -1,7 +1,5 @@
 #include "source_cell/unitcell.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
+
 /*
     README:
     This file supports idea like "I dont need any functions of UnitCell, I want
@@ -26,7 +24,11 @@ void UnitCell::print_cell(std::ofstream& ofs) const {}
 
 void UnitCell::set_iat2itia() {}
 
-void UnitCell::setup_cell(const std::string& fn, std::ofstream& log) {}
+void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
+    const std::string& basis_type, const std::string& orbital_dir, const std::string& init_wfc,
+    const double onsite_radius, const bool deepks_setorb, const bool rpa,
+    const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type,
+    const int symmetry) {}
 
 bool UnitCell::if_atoms_can_move() const { return true; }
 
@@ -38,6 +40,8 @@ void UnitCell::setup(const std::string& latname_in,
                      const bool& init_vel_in,
                      const std::string& fixed_axes_in) {}
 
-void cal_nelec(const Atom* atoms, const int& ntype, double& nelec) {}
+namespace unitcell {
+void cal_nelec(const Atom* atoms, const int& ntype, double& nelec, const double nelec_delta) {}
+}
 
 void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2) const {}

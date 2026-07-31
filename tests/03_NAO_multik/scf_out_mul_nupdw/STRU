@@ -16,7 +16,7 @@ ATOMIC_POSITIONS
 Direct 
 
 Si	// Element type	
-0.0	// magnetism
+1 // magnetism
 2	
 0.00 0.00 0.00 1 1 1
 0.25 0.25 0.20 1 1 1

@@ -68,7 +68,7 @@ std::string determine_type();
  *
  * @return [out] A pointer to an ESolver object that will be initialized.
  */
-ESolver* init_esolver(const Input_para& inp, UnitCell& ucell);
+ESolver* init_esolver(const Input_para& inp);
 
 
 

@@ -2,8 +2,9 @@
 #include "irreducible_sector.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include <RI/global/Tensor.h>
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/module_symmetry/symmetry_rotation_spin.h"
 
 namespace ModuleSymmetry
 {
@@ -64,6 +65,15 @@ namespace ModuleSymmetry
         std::vector<std::complex<double>> rot_matrix_ao(const std::vector<std::complex<double>>& DMkibz,
             const int ik_ibz, const int kstar_size, const int isym, const Parallel_2D& pv, const bool TRS_conj = false) const;
 
+        /// (nspin=4) build the 2*nao spin operator Sigma_y = I_nao (x) sigma_y in 2d-block layout.
+        std::vector<std::complex<double>> set_sigma_y_2d(const Parallel_2D& pv) const;
+
+        /// (nspin=4) time-reversal on the spin density matrix: D(k) = sigma_y D^*(-k) sigma_y,
+        /// realized distribution-safely as scale * Sigma_y * conj(X) * Sigma_y (X is the already
+        /// space-group-rotated D(-k) stored in the transposed 2d-block convention).
+        std::vector<std::complex<double>> trs_spin_rotate(const std::vector<std::complex<double>>& X,
+            const std::vector<std::complex<double>>& sigma_y, const Parallel_2D& pv, const double scale) const;
+
         /// calculate Wigner D matrix
         double wigner_d(const double beta, const int l, const int m1, const int m2) const;
         std::complex<double> wigner_D(const TCdouble& euler_angle, const int l, const int m1, const int m2, const bool inv) const;
@@ -75,7 +85,9 @@ namespace ModuleSymmetry
         TCdouble get_euler_angle(const ModuleBase::Matrix3& gmatc) const;
 
         /// T_mm' = [c^\dagger D c]_mm', the rotation matrix in the representation of real sphere harmonics
-        void cal_rotmat_Slm(const ModuleBase::Matrix3* gmatc, const int lmax);
+        /// @param nop  number of operations in gmatc; <0 means nsym_ (the unitary ones only).
+        ///             Pass nsym_+nanti_ to also build the antiunitary operations' T_l.
+        void cal_rotmat_Slm(const ModuleBase::Matrix3* gmatc, const int lmax, const int nop);
 
         /// set a block matrix onto a 2d-parallelized matrix(col-maj), at the position (starti, startj) 
         /// if trans=true, the block matrix is transposed before setting
@@ -87,7 +99,8 @@ namespace ModuleSymmetry
         /// 2d-block parallized rotation matrix in AO-representation, denoted as M.
         /// finally we will use D(k)=M(R, k)^\dagger*D(Rk)*M(R, k) to recover D(k) from D(Rk).
         std::vector<std::complex<double>> contruct_2d_rot_mat_ao(const Symmetry& symm, const Atom* atoms, const Statistics& cell_st,
-            const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv) const;
+            const TCdouble& kvec_d_ibz, int isym, const Parallel_2D& pv,
+            const SpinRotation::Su2& spin_U /*= SpinRotation::Su2{ 1.0, 0.0, 0.0, 1.0 }*/) const;
 
         std::vector<std::vector<RI::Tensor<std::complex<double>>>>& get_rotmat_Slm() { return this->rotmat_Slm_; }
 
@@ -102,6 +115,18 @@ namespace ModuleSymmetry
         void restore_HR(
             const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
             const hamilt::HContainer<TR>& HR_irreduceble, hamilt::HContainer<TR>& HR_rotated)const;
+        /// (nspin=4) spinor overload: rotate all 4 spin channels of H(R) together. On top of the
+        /// orbital rotation T1^dagger(.)T2 (mode 'H') / T1^T(.)T2^* (mode 'D') applied to every
+        /// channel, the SU(2) spin part U(isym) mixes them:  H'^{ab}=sum_{cd} conj(U_{ca}) U_{db} [T1^dagger H^{cd} T2].
+        /// The 4 channels are ordered is=a*2+b (a=row spin, b=col spin), matching RI_2D_Comm::split_is_block.
+        /// (nspin=4 magnetic) The atom-pair reduction may also use the ANTIUNITARY elements of the
+        /// Shubnikov group, flagged by isym >= nsym_. In real space time reversal acts as
+        /// H(R) -> sigma_y H^*(R) sigma_y (R and the orbital indices untouched), which becomes a
+        /// remap of the 4 channels applied after the SU(2) mixing; see symmetry_rotation_R.hpp.
+        template<typename Tdata>    // RI::Tensor type
+        std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4> restore_HR_nspin4(
+            const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
+            const std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4>& HR_irreducible_soc)const;
 
         //--------------------------------------------------------------------------------
         /// test functions
@@ -152,10 +177,23 @@ namespace ModuleSymmetry
         //--------------------------------------------------------------------------------
 
         int nsym_ = 1;
+        /// (nspin=4, magnetic) number of ANTIUNITARY elements Theta*g of the Shubnikov group.
+        /// Their orbital rotations / return lattices / Ms are appended after the nsym_ unitary
+        /// ones, so the raw index isym in [nsym_, nsym_+nanti_) addresses gmatrix_anti[isym-nsym_].
+        int nanti_ = 0;
+        /// (nspin=4) true when the configuration carries a non-zero local moment. Then pure time
+        /// reversal is NOT a symmetry (it reverses m) and the k-star must be restored with the
+        /// Shubnikov elements Theta*gmatrix_anti[] instead of the generic -k shortcut.
+        bool magnetic_nspin4_ = false;
 
         double eps_ = 1e-6;
 
-        bool TRS_first_ = true; //if R(k)=-k, firstly use TRS to restore D(k) from D(R(k)), i.e conjugate D(R(k)).
+        // (removed, not needed) TRS_first_: 
+        // it used to short-circuit any star member equal to -k to pure time reversal, 
+        // which silently pre-empted the genuine space-group operation that produced it.
+        // The operation is now decided by the index alone: isym<nsym_ unitary / isym>=nsym_ antiunitary. 
+        // A -k member reached through the TRS doubling lands on the antiunitary branch with M=I, 
+        // which reduces exactly to the direct conjugation.
 
         bool reduce_Cs_ = false;
         int abfs_Lmax_ = 0;
@@ -167,9 +205,14 @@ namespace ModuleSymmetry
         // [natom][nsym], phase factor corresponding to a certain kvec_d_ibz
         // std::vector<std::vector<std::complex<double>>> phase_factor_;
 
-        /// The unitary matrix associate D(Rk) with D(k) for each ibz-kpoint Rk and each symmetry operation. 
+        /// The unitary matrix associate D(Rk) with D(k) for each ibz-kpoint Rk and each symmetry operation.
         /// size: [nks_ibz][nsym][nbasis*nbasis], only need to calculate once.
         std::vector<std::map<int, std::vector<std::complex<double>>>> Ms_;
+
+        /// (nspin=4) the SU(2) spin-1/2 rotation U(isym) for each symmetry operation, size [nsym].
+        /// The spinor AO rotation is T(isym) (x) U(isym); restore_HR_nspin4 uses it to mix the 4 spin
+        /// channels of the real-space EXX H(R). Filled in cal_Ms (identity for nspin<4).
+        std::vector<SpinRotation::Su2> spin_U_;
 
         /// irreducible sector
         Irreducible_Sector irs_;

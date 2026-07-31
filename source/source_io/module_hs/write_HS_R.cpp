@@ -220,8 +220,8 @@ template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
                                                         const double& sparse_thr,
                                                         const int precision);
 
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
 #include "source_io/module_output/ucell_io.h"
 
 std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
@@ -316,7 +316,6 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         hamilt::HContainer<TR> hr_serial(&serialV);
@@ -339,7 +338,6 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         hamilt::HContainer<TR> sr_serial(&serialV);
@@ -410,7 +408,6 @@ void ModuleIO::write_matrix_r(const std::string& matrix_label,
         // Gather parallel matrix to serial
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         

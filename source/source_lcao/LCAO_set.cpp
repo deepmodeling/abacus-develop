@@ -3,7 +3,7 @@
 #include "source_psi/setup_psi.h" // use Setup_Psi
 #include "source_io/module_wf/read_wfc_nao.h" // use read_wfc_nao
 #include "source_estate/elecstate_tools.h" // use fixed_weights
-#include "source_lcao/module_hcontainer/read_hcontainer.h"
+#include "source_hamilt/module_hcontainer/read_hcontainer.h"
 #include "source_lcao/rho_tau_lcao.h" // use dm2rho
 #include "source_lcao/hamilt_lcao.h" // use HamiltLCAO for init_chg_hr
 #include "source_hsolver/hsolver_lcao.h" // use HSolverLCAO for init_chg_hr
@@ -78,10 +78,22 @@ void LCAO_domain::set_pot(
           &(pelec->f_en.etxc), &(pelec->f_en.vtxc));
     }
 
-    //! 3) initialize DFT+U
     if (inp.dft_plus_u)
     {
-        dftu.init(ucell, &pv, kv.get_nks(), &orb);
+        dftu.init(ucell, &pv,
+                  PARAM.globalv.npol,
+                  inp.nspin, inp.orbital_corr, inp.yukawa_potential, inp.yukawa_lambda,
+                  PARAM.globalv.global_readin_dir,
+                  PARAM.globalv.global_out_dir,
+                  inp.init_chg,
+                  pv.get_global_row_size(),
+                  PARAM.globalv.gamma_only_local,
+                  inp.ks_solver,
+                  inp.cal_force,
+                  inp.cal_stress,
+                  inp.device,
+                  inp.kpar,
+                  &orb);
     }
 
     //! 4) init exact exchange calculations
@@ -218,7 +230,11 @@ void LCAO_domain::init_chg_hr(
     p_hamilt->refresh(false);
 
     // Step 3: Diagonalize to get wavefunctions and charge density
-    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(pv, ks_solver);
+    hsolver::HSolverLCAO<TK> hsolver_lcao_obj(pv,
+                                              ks_solver,
+                                              PARAM.globalv.kpar_lcao,
+                                              PARAM.globalv.nlocal,
+                                              PARAM.inp.nelec);
     hsolver_lcao_obj.solve(p_hamilt, psi, pelec, dm, chr, nspin, 0);
 }
 

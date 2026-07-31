@@ -12,8 +12,8 @@
 #include "source_io/module_hs/rr_sparse_writer.h"
 #include "source_io/module_hs/write_HS_R.h"
 #include "source_io/module_hs/write_HS_sparse.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/atom_pair.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <complex>
 #include <cstdio>

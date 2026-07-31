@@ -1,7 +1,9 @@
 #include "hsolver.h"
 
 #include "source_base/global_function.h"
-#include "source_io/module_parameter/parameter.h"
+
+#include <algorithm>
+#include <cmath>
 
 namespace hsolver
 {
@@ -16,7 +18,8 @@ double set_diagethr_ks(const std::string basis_type,
                        const double drho,
                        const double pw_diag_thr_init,
                        const double diag_ethr_in,
-                       const double nelec_in)
+                       const double nelec_in,
+                       const double scf_thr_in)
 {
     double res_diag_ethr = diag_ethr_in;
 
@@ -27,7 +30,7 @@ double set_diagethr_ks(const std::string basis_type,
         {
             if (res_diag_ethr - 1e-2 > -1e-5)
             {
-                res_diag_ethr = std::max(1e-13, 0.1 * std::min(1e-2, PARAM.inp.scf_thr / PARAM.inp.nelec));
+                res_diag_ethr = std::max(1e-13, 0.1 * std::min(1e-2, scf_thr_in / nelec_in));
             }
         }
         else if (iter == 1)
@@ -97,7 +100,9 @@ double set_diagethr_sdft(const std::string basis_type,
                          const double pw_diag_thr_init,
                          const double diag_ethr_in,
                          const int nband_in,
-                         const double stoiter_ks_ne_in)
+                         const double stoiter_ks_ne_in,
+                         const double nelec_in,
+                         const double scf_thr_in)
 {
     double res_diag_ethr = diag_ethr_in;
 
@@ -105,7 +110,7 @@ double set_diagethr_sdft(const std::string basis_type,
     {
         if (calculation_in == "nscf")
         {
-            res_diag_ethr = std::max(std::min(1e-5, 0.1 * PARAM.inp.scf_thr / std::max(1.0, PARAM.inp.nelec)), 1e-12);
+            res_diag_ethr = std::max(std::min(1e-5, 0.1 * scf_thr_in / std::max(1.0, nelec_in)), 1e-12);
         }
         else if (iter == 1)
         {
@@ -124,7 +129,7 @@ double set_diagethr_sdft(const std::string basis_type,
         }
         else
         {
-            if (nband_in > 0 && stoiter_ks_ne_in > 1e-6) //PARAM.inp.nbands > 0 && this->stoiter.KS_ne > 1e-6
+            if (nband_in > 0 && stoiter_ks_ne_in > 1e-6)
             {
                 res_diag_ethr = std::min(res_diag_ethr, 0.1 * drho / std::max(1.0, stoiter_ks_ne_in));
             }

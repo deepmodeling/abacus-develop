@@ -5,7 +5,7 @@
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_estate/cal_ux.h"
+#include "source_cell/cal_ux.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_ofdft/of_stress_pw.h"
 #include "source_pw/module_ofdft/of_print_info.h"
@@ -278,7 +278,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 void ESolver_OF::update_potential(UnitCell& ucell)
 {
     // (1) get dL/dphi
-    elecstate::cal_ux(ucell);
+    unitcell::cal_ux(ucell, PARAM.inp.nspin);
 
     this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
     this->kedf_manager_->get_potential(this->chr.rho,

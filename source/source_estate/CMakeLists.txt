@@ -38,11 +38,7 @@ list(APPEND objects
     module_charge/symmetry_rhog.cpp
     fp_energy.cpp
     occupy.cpp
-    cal_ux.cpp
-    read_orb.cpp
-    cal_nelec_nband.cpp
-    read_pseudo.cpp
-    cal_wfc.cpp
+    param_update.cpp
     setup_estate_pw.cpp
     update_pot.cpp
 )

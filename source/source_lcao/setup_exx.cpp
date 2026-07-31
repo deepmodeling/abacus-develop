@@ -2,6 +2,7 @@
 
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_hamilt/module_xc/exx_info.h" // use the global Exx_Info
 #endif
 
 template <typename TK>
@@ -12,7 +13,7 @@ Exx_NAO<TK>::~Exx_NAO(){}
 
 
 template <typename TK>
-void Exx_NAO<TK>::init()
+void Exx_NAO<TK>::init(const UnitCell& ucell)
 {
 #ifdef __EXX
     // 1. currently this initialization must be put in constructor rather than `before_all_runners()`
@@ -20,13 +21,22 @@ void Exx_NAO<TK>::init()
     //  which cause the failure of the subsequent procedure reused by ESolver_LCAO_TDDFT
     // 2. always construct but only initialize when if(cal_exx) is true
     //  because some members like two_level_step are used outside if(cal_exx)
+
+    // The ABFS/JLE orbital-file lists are read from STRU into the UnitCell (and
+    // broadcast with it). Copy them into the EXX info here, before Exx_LRI copies
+    // info_ri below. This keeps the EXX-specific routing (which list feeds info_ri
+    // vs info_opt_abfs) in the LCAO EXX layer, so source_cell stays decoupled.
+    GlobalC::exx_info.info_ri.files_abfs = ucell.abfs_orbital_files;
+    GlobalC::exx_info.info_opt_abfs.files_abfs = ucell.abfs_orbital_files;
+    GlobalC::exx_info.info_opt_abfs.files_jles = ucell.jle_orbital_files;
+
     if (GlobalC::exx_info.info_ri.real_number)
     {
-        this->exd = std::make_shared<Exx_LRI_Interface<TK, double>>(GlobalC::exx_info.info_ri);
+        this->exd = std::make_shared<Exx_LRI_Interface<TK, double>>(GlobalC::exx_info.info_ri, GlobalC::exx_info.info_global);
     }
     else
     {
-        this->exc = std::make_shared<Exx_LRI_Interface<TK, std::complex<double>>>(GlobalC::exx_info.info_ri);
+        this->exc = std::make_shared<Exx_LRI_Interface<TK, std::complex<double>>>(GlobalC::exx_info.info_ri, GlobalC::exx_info.info_global);
     }
 #endif
 }
