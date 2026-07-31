@@ -32,6 +32,9 @@ REPOSITORY_ROOT = ROOT.parents[1]
 NAME = re.compile(r"[A-Za-z0-9][A-Za-z0-9_.-]*\Z")
 SHA = re.compile(r"[0-9a-f]{40}\Z")
 PMIX = re.compile(br"PMIX_ERR_(?:FILE_OPEN_FAILURE|OUT_OF_RESOURCE)")
+SRUN_DAEMON = re.compile(
+    br"srun returned non-zero exit status \([1-9][0-9]*\) from launching\s+the per-node daemon"
+)
 MAX_RESULT_MEMBERS = 10000
 MAX_RESULT_BYTES = 2 * 1024**3
 MAX_REPORT_BYTES = 1024**2
@@ -431,9 +434,7 @@ def _mpi_startup_failure(log: Path) -> bool:
     data = log.read_bytes()
     return (
         bool(PMIX.search(data)) and b"MPI_Init_thread" in data and b"PMIx_Init failed" in data
-    ) or (
-        b"srun returned non-zero exit status (512)" in data and b"per-node daemon" in data
-    )
+    ) or bool(SRUN_DAEMON.search(data))
 
 
 def worker(source: Path, control: Path, install: Path, results: Path, manifest: Path) -> int:

@@ -801,6 +801,8 @@ class ResultTests(unittest.TestCase):
             self.assertFalse(runner._mpi_startup_failure(path))
             path.write_bytes(b"srun returned non-zero exit status (512) from launching the per-node daemon")
             self.assertTrue(runner._mpi_startup_failure(path))
+            path.write_bytes(b"srun returned non-zero exit status (35840) from launching\nthe per-node daemon")
+            self.assertTrue(runner._mpi_startup_failure(path))
             path.write_bytes(b"srun returned non-zero exit status (512)")
             self.assertFalse(runner._mpi_startup_failure(path))
 
