@@ -877,6 +877,14 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
 
     if (this->device == base_device::GpuDevice)
     {
+#if defined(__CUDA) || defined(__ROCM)
+        // this->d_eigenvalue was last synced inside cal_grad, i.e. BEFORE the
+        // latest diag_zhegvx. eigenvalue_in_hsolver holds the up-to-date
+        // eigenvalues, so refresh the device copy here; otherwise the restarted
+        // subspace Hamiltonian gets a stale diagonal and the Davidson
+        // iteration diverges on GPU.
+        syncmem_var_h2d_op()(this->d_eigenvalue, eigenvalue_in_hsolver, nband);
+#endif
         refresh_hcc_scc_vcc_op<T, Device>()(nbase, hcc, scc, vcc, this->nbase_x, this->d_eigenvalue, this->one_);
     }
     else
