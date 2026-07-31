@@ -71,8 +71,17 @@ class Slurm:
                     raise
             time.sleep(self.poll_seconds)
 
+        failures = 0
         for _ in range(30):
-            rows = self._accounting(ids)
+            try:
+                rows = self._accounting(ids)
+                failures = 0
+            except SlurmError:
+                failures += 1
+                if failures == 6:
+                    raise
+                time.sleep(self.poll_seconds)
+                continue
             required = []
             for job in jobs:
                 count = self.jobs[job]

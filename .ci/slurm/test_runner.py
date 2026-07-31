@@ -259,6 +259,18 @@ class SlurmTests(unittest.TestCase):
         self.assertEqual(states["101_0"], ("COMPLETED", "0:0"))
         self.assertEqual(states["101_1"], ("FAILED", "1:0"))
 
+    def test_accounting_retries_transient_failure(self):
+        responses = [
+            mock.Mock(returncode=0, stdout="", stderr=""),
+            mock.Mock(returncode=1, stdout="", stderr="Socket timed out"),
+            mock.Mock(returncode=0, stdout="101|COMPLETED|0:0\n", stderr=""),
+        ]
+        with mock.patch("slurm.subprocess.run", side_effect=responses):
+            client = slurm.Slurm(poll_seconds=0)
+            client.jobs["101"] = None
+            states = client.wait(("101",))
+        self.assertEqual(states["101"], ("COMPLETED", "0:0"))
+
     def test_pass_requires_successful_slurm_accounting(self):
         config = runner.Config(
             runner.Site("Example cluster", "https://cluster.example/", "Computing resources were provided by"),
