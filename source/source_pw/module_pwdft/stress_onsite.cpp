@@ -60,6 +60,12 @@ void Stress_Func<FPTYPE, Device>::stress_onsite(
     // Loop over all k-points
     for (int ik = 0; ik < nks; ik++)
     {
+        // In PAGED_GPU mode only one k-point resides on the GPU; load this
+        // k-point's wavefunction before the onsite projector reads psi_
+        // (otherwise psi_(ik,0,0) returns a host pointer used as a device
+        // pointer by the GPU gemm -> illegal memory access).
+        const_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(
+            static_cast<const psi::Psi<std::complex<FPTYPE>, Device>*>(psi_in))->ensure_k_on_gpu(ik);
         // Determine number of occupied bands (skip zero weights)
         int nbands_occ = wg.nc;
         
