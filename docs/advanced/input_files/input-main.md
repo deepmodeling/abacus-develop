@@ -651,7 +651,7 @@
 ### bndpar
 
 - **Type**: Integer
-- **Description**: Divide all processors into bndpar groups, and bands (only stochastic orbitals now) will be distributed among each group. It should be larger than 0.
+- **Description**: Divide all processors into bndpar groups for SDFT or the BPCG solver. bndpar must be positive, no greater than the number of MPI processes, and divide it exactly.
 - **Default**: 1
 
 ### latname
@@ -1263,7 +1263,7 @@
 - **Description**: The number of spin components of wave functions.
   - 1: Spin degeneracy
   - 2: Collinear spin polarized.
-  - 4: For the case of noncollinear polarized, nspin will be automatically set to 4 without being specified by the user.
+  - 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.
 - **Default**: 1
 
 ### smearing_method
@@ -1467,7 +1467,7 @@
 - **Type**: Boolean
 - **Description**: Whether to consider spin-orbit coupling (SOC) effect in the calculation.
   - True: Consider spin-orbit coupling effect. When enabled:
-  - nspin is automatically set to 4 (noncollinear spin representation)
+  - nspin must be explicitly set to 4 (noncollinear spin representation)
   - Symmetry is automatically disabled (SOC breaks inversion symmetry)
   - Requires full-relativistic pseudopotentials with has_so=true in the UPF header
   - False: Do not consider spin-orbit coupling effect.
@@ -1479,7 +1479,7 @@
 - **Type**: Boolean
 - **Description**: Whether to allow non-collinear magnetic moments, where magnetization can point in arbitrary directions (x, y, z components) rather than being constrained to the z-axis.
   - True: Allow non-collinear polarization. When enabled:
-  - nspin is automatically set to 4
+  - nspin must be explicitly set to 4
   - Wave function dimension is doubled (npol=2), and the number of occupied states is doubled
   - Charge density has 4 components (Pauli spin matrices)
   - Cannot be used with gamma_only=true
@@ -1534,7 +1534,7 @@
 - **Availability**: *esolver_type = sdft*
 - **Description**: The number of stochastic orbitals
   - &gt; 0: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
-  - 0: Perform Kohn-Sham DFT.
+  - 0: Invalid with esolver_type=sdft. Use esolver_type=ksdft for Kohn-Sham DFT.
   - all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.
 - **Default**: 256
 

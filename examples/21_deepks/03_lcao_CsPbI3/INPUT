@@ -29,6 +29,7 @@ deepks_model         model.ptg
 
 #Parameters (7.SOC)
 lspinorb             1
+nspin                4
 
 
 
