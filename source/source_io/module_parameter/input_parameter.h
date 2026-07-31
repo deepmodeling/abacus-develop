@@ -69,7 +69,7 @@ struct Input_para
     std::string kmesh_type = "gamma";               ///< k-point mesh type for kspacing-generated k-point mesh: gamma or mp
     double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
 
-    std::string device = "auto";
+    std::string device = "cpu";
     std::string precision = "double";
     std::string gint_precision = "double";
     bool timer_enable_nvtx = false;
