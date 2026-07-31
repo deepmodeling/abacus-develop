@@ -333,7 +333,9 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell,
                                                                         PARAM.inp.ks_solver,
                                                                         PARAM.globalv.kpar_lcao,
                                                                         PARAM.globalv.nlocal,
-                                                                        PARAM.inp.nelec);
+                                                                        PARAM.inp.nbands,
+                                                                        PARAM.inp.nelec,
+                                                                        PARAM.inp.device == "gpu");
             hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt),
                                    this->psi[0],
                                    this->pelec,

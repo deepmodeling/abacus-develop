@@ -19,9 +19,11 @@ class DiagoCusolver
 
   public:
 
-    DiagoCusolver();
+    /// @param nlocal_in global dimension of the NAO Hamiltonian
+    /// @param nbands_in number of lowest eigenpairs to compute
+    DiagoCusolver(const int nlocal_in, const int nbands_in);
     ~DiagoCusolver();
-    
+
     // Override the diag function for CUSOLVER diagonalization
     void diag(
       hamilt::MatrixBlock<T>& h_mat,
@@ -40,6 +42,9 @@ class DiagoCusolver
     // Function to check if ELPA handle needs to be created or reused in MPI settings
     bool ifElpaHandle(const bool& newIteration, const bool& ifNSCF) const;
 #endif
+
+    const int nlocal;
+    const int nbands;
 };
 
 } // namespace hsolver
