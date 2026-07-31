@@ -55,7 +55,7 @@ class ESolver_KS_LCAO : public ESolver_KS
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
-    virtual void others(UnitCell& ucell, const int istep) override;
+    virtual void others(BaseCell& basecell, const int istep) override;
 
     //! Electronic wave functions (moved from base class)
     psi::Psi<TK>* psi = nullptr;
