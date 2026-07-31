@@ -6,8 +6,8 @@
 #include "source_io/module_hs/write_HS_R.h"
 #include "source_io/module_output/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
 #endif
@@ -48,7 +48,6 @@ void write_dh_perI(WriteDHParams& params,
 
 #ifdef __MPI
     Parallel_Orbitals serialV;
-    serialV.init(nbasis, nbasis, nbasis, pv.comm());
     serialV.set_serial(nbasis, nbasis);
     serialV.set_atomic_trace(params.iat2iwt, nat, nbasis);
 #endif
@@ -80,9 +79,11 @@ void write_dh_perI(WriteDHParams& params,
             {
                 std::string fr = r_dir + ModuleIO::dhr_gen_fname(rprefix + tag, ispin, params.append, params.istep);
 #ifdef __MPI
-                ModuleIO::write_hcontainer_csr(fr, &ucell, 8, &hR_s, params.istep, ispin, nspin, label);
+                ModuleIO::write_hcontainer_csr(
+                    fr, &ucell, 8, &hR_s, params.istep, ispin, nspin, label, "");
 #else
-                ModuleIO::write_hcontainer_csr(fr, &ucell, 8, hR, params.istep, ispin, nspin, label);
+                ModuleIO::write_hcontainer_csr(
+                    fr, &ucell, 8, hR, params.istep, ispin, nspin, label, "");
 #endif
             }
             }

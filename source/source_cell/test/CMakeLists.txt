@@ -40,8 +40,8 @@ list(APPEND cell_simple_srcs
     ../read_pp_vwr.cpp
     ../read_pp_blps.cpp
     ../check_atomic_stru.cpp
-    ../../source_estate/read_pseudo.cpp
-    ../../source_estate/cal_wfc.cpp
+    ../read_pseudo.cpp
+    ../cal_wfc.cpp
     ../cal_nelec_nband.cpp
     ../read_orb.cpp
     ../sep.cpp
@@ -149,7 +149,7 @@ add_test(NAME MODULE_CELL_parallel_kpoints_test
 AddTest(
   TARGET MODULE_CELL_unitcell_test
   LIBS base device cell_info symmetry
-  SOURCES unitcell_test.cpp ../../source_estate/cal_ux.cpp
+  SOURCES unitcell_test.cpp ../cal_ux.cpp
 
 )
 

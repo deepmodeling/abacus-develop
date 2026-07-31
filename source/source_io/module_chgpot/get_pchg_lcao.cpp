@@ -4,7 +4,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
 
 Get_pchg_lcao::Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
     : psi_gamma(psi_gamma_in), ParaV(ParaV_in)

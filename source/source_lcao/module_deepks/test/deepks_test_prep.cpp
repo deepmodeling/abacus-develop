@@ -1,6 +1,7 @@
 #include "deepks_test.h"
 #include "source_base/global_variable.h"
-#include "source_estate/read_pseudo.h"
+#include "source_basis/module_nao/two_center_bundle.h"
+#include "source_cell/read_pseudo.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "../../LCAO_nonlocal_info.h"
 #include "source_io/module_parameter/parameter.h"
@@ -38,7 +39,7 @@ public:
 };
 
 template <typename T>
-void test_deepks<T>::preparation()
+void test_deepks<T>::preparation(const bool use_modern_orbital_reader)
 {
     this->count_ntype();
     this->set_parameters();
@@ -52,7 +53,7 @@ void test_deepks<T>::preparation()
     this->setup_kpt();
 
     this->set_ekcut();
-    this->set_orbs();
+    this->set_orbs(use_modern_orbital_reader);
     this->prep_neighbour();
 
     this->ParaO.set_serial(this->nlocal, this->nlocal);
@@ -187,11 +188,12 @@ void test_deepks<T>::setup_cell()
     const int dfthalf_type = 0;
     const std::string pseudo_dir = "";
     const int nspin = this->nspin;
+    const int symmetry = 0;
 
     ucell.setup_cell("STRU", GlobalV::ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, deepks_setorb, rpa,
-        fixed_atoms, noncolin, calculation, esolver_type);
+        fixed_atoms, noncolin, calculation, esolver_type, symmetry);
 
     const std::string global_out_dir = "./";
     const bool out_element_info = this->out_element_info;
@@ -209,7 +211,7 @@ void test_deepks<T>::setup_cell()
     const double nelec = 0.0;
     const double nupdown = 0.0;
 
-    auto atoms_info = elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec, nupdown);
+    auto atoms_info = unitcell::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec, nupdown);
 
     this->nlocal = atoms_info.nlocal;
     this->nbands = atoms_info.nbands;
@@ -237,23 +239,41 @@ void test_deepks<T>::prep_neighbour()
 }
 
 template <typename T>
-void test_deepks<T>::set_orbs()
+void test_deepks<T>::set_orbs(const bool use_modern_orbital_reader)
 {
-    ORB.init(GlobalV::ofs_running,
-             ucell.ntype,
-             this->orbital_dir,
-             ucell.orbital_fn.data(),
-             ucell.descriptor_file,
-             ucell.lmax,
-             lcao_ecut,
-             lcao_dk,
-             lcao_dr,
-             lcao_rmax,
-             this->deepks_setorb,
-             out_mat_r,
-             this->out_element_info,
-             this->cal_force,
-             my_rank);
+    std::string file_alpha = this->orbital_dir + ucell.descriptor_file;
+    if (use_modern_orbital_reader)
+    {
+        TwoCenterBundle two_center_bundle;
+        two_center_bundle.build_orb(ucell.ntype, ucell.orbital_fn.data(), this->orbital_dir);
+        two_center_bundle.build_alpha(this->deepks_setorb, &file_alpha);
+        two_center_bundle.to_LCAO_Orbitals(ORB, lcao_ecut, lcao_dk, lcao_dr, lcao_rmax, this->out_element_info, this->cal_force);
+
+        // Feed both integration paths with data from the same modern read.
+        orb_ = *two_center_bundle.orb_;
+        alpha_ = *two_center_bundle.alpha_;
+    }
+    else
+    {
+        ORB.init(GlobalV::ofs_running,
+                 ucell.ntype,
+                 this->orbital_dir,
+                 ucell.orbital_fn.data(),
+                 ucell.descriptor_file,
+                 ucell.lmax,
+                 lcao_ecut,
+                 lcao_dk,
+                 lcao_dr,
+                 lcao_rmax,
+                 this->deepks_setorb,
+                 out_mat_r,
+                 this->out_element_info,
+                 this->cal_force,
+                 my_rank);
+
+        orb_.build(ntype, ucell.orbital_fn.data());
+        alpha_.build(1, &file_alpha);
+    }
 
     const std::string basis_type = "lcao";
     const bool out_element_info = this->out_element_info;
@@ -265,14 +285,12 @@ void test_deepks<T>::set_orbs()
                            basis_type, out_element_info, lspinorb, nspin);
     ucell.infoNL.reset(lcao_nl);
 
-    orb_.build(ntype, ucell.orbital_fn.data());
-
-    std::string file_alpha = this->orbital_dir + ucell.descriptor_file;
-    alpha_.build(1, &file_alpha);
-
     double rmax = std::max(orb_.rcut_max(), alpha_.rcut_max());
     double cutoff = 2.0 * rmax;
-    int nr = static_cast<int>(rmax / lcao_dr) + 1;
+    // The focused grid-integration comparison needs the requested lcao_dr
+    // spacing across the complete two-center tabulation range.
+    const double tabulation_spacing = use_modern_orbital_reader ? 0.5 * lcao_dr : lcao_dr;
+    int nr = static_cast<int>((use_modern_orbital_reader ? cutoff : rmax) / tabulation_spacing) + 1;
 
     orb_.set_uniform_grid(true, nr, cutoff, 'i', true);
     alpha_.set_uniform_grid(true, nr, cutoff, 'i', true);

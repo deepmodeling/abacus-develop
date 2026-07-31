@@ -3,6 +3,7 @@ abacus_add_local_feature_definitions(__NORMAL)
 
 list(APPEND depend_files
   ../md_func.cpp
+  ../../source_cell/base_cell.cpp
   ../../source_cell/unitcell.cpp
   ../../source_cell/update_cell.cpp
   ../../source_cell/bcast_cell.cpp
@@ -57,8 +58,8 @@ list(APPEND depend_files
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp
   ../../source_base/parallel_comm.cpp
-  ../../source_estate/read_pseudo.cpp
-  ../../source_estate/cal_wfc.cpp
+  ../../source_cell/read_pseudo.cpp
+  ../../source_cell/cal_wfc.cpp
   ../../source_cell/cal_nelec_nband.cpp
   ../../source_cell/read_orb.cpp
   ../../source_cell/sep.cpp

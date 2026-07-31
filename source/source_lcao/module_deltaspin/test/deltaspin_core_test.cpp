@@ -23,7 +23,7 @@ struct Vec3i { int x, y, z; };
 // 1. pauli_to_moment: spinor -> magnetic moment
 //
 // Mx = w * (occ[1] + occ[2]).real()
-// My = w * (occ[1] - occ[2]).imag()
+// My = -w * (occ[1] - occ[2]).imag()  (from sigma_y = [[0,-i],[i,0]])
 // Mz = w * (occ[0] - occ[3]).real()
 // =====================================================================
 
@@ -31,7 +31,7 @@ static Vec3 pauli_to_moment(const std::complex<double> occ[4], double weight)
 {
     return {
         weight * (occ[1] + occ[2]).real(),
-        weight * (occ[1] - occ[2]).imag(),
+        -weight * (occ[1] - occ[2]).imag(),
         weight * (occ[0] - occ[3]).real()
     };
 }
@@ -82,10 +82,10 @@ TEST_F(PauliToMomentTest, GeneralCase_AllComponents)
     occ[3] = {0.4, 0.0};
     auto M = pauli_to_moment(occ, 1.0);
     // Mx = (0.1+0.2i + 0.1-0.2i).real = 0.2
-    // My = (0.1+0.2i - (0.1-0.2i)).imag = (0+0.4i).imag = 0.4
+    // My = -(0.1+0.2i - (0.1-0.2i)).imag = -(0+0.4i).imag = -0.4
     // Mz = (0.6 - 0.4) = 0.2
     EXPECT_NEAR(M.x, 0.2, 1e-15);
-    EXPECT_NEAR(M.y, 0.4, 1e-15);
+    EXPECT_NEAR(M.y, -0.4, 1e-15);
     EXPECT_NEAR(M.z, 0.2, 1e-15);
 }
 

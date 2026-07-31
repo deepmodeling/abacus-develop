@@ -123,7 +123,7 @@ std::string determine_type()
 }
 
 // Some API to operate E_Solver
-ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
+ESolver* init_esolver(const Input_para& inp)
 {
     // determine type of esolver based on INPUT information
     const std::string esolver_type = determine_type();
@@ -273,58 +273,25 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     }
     else if (esolver_type == "lr_lcao")
     {
-        // use constructor rather than Init function to initialize reference (instead of pointers) to ucell
         if (PARAM.globalv.gamma_only_local)
         {
-            return new LR::ESolver_LR<double, double>(inp, ucell);
+            return new LR::ESolver_LR<double, double>(inp);
         }
         else
         {
-            return new LR::ESolver_LR<std::complex<double>, double>(inp, ucell);
+            return new LR::ESolver_LR<std::complex<double>, double>(inp);
         }
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {
-        // initialize the 1st ESolver_KS
-        ModuleESolver::ESolver* p_esolver = nullptr;
         if (PARAM.globalv.gamma_only_local)
         {
-            p_esolver = new ESolver_KS_LCAO<double, double>();
-        }
-        else if (PARAM.inp.nspin < 4)
-        {
-            p_esolver = new ESolver_KS_LCAO<std::complex<double>, double>();
+            return new LR::ESolver_LR<double, double>(inp);
         }
         else
         {
-            p_esolver = new ESolver_KS_LCAO<std::complex<double>, std::complex<double>>();
+            return new LR::ESolver_LR<std::complex<double>, double>(inp);
         }
-        p_esolver->before_all_runners(ucell, inp);
-        p_esolver->runner(ucell, 0); // scf-only
-
-        // force and stress is not needed currently,
-        // they will be supported after the analytical gradient
-        // of LR-TDDFT is implemented.
-        std::cout << " PREPARING FOR EXCITED STATES." << std::endl;
-        // initialize the 2nd ESolver_LR at the temporary pointer
-	ModuleESolver::ESolver* p_esolver_lr = nullptr;
-	if (PARAM.globalv.gamma_only_local)
-	{
-		p_esolver_lr = new LR::ESolver_LR<double, double>(
-				std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<double, double>*>(p_esolver)),
-				inp,
-				ucell);
-	}
-	else
-	{
-		p_esolver_lr = new LR::ESolver_LR<std::complex<double>, double>(
-				std::move(*dynamic_cast<ModuleESolver::ESolver_KS_LCAO<std::complex<double>, double>*>(p_esolver)),
-				inp,
-				ucell);
-	}
-	// clean the 1st ESolver_KS and swap the pointer
-	delete p_esolver;
-        return p_esolver_lr;
     }
 #endif
     else if (esolver_type == "ofdft")
@@ -350,6 +317,5 @@ ESolver* init_esolver(const Input_para& inp, UnitCell& ucell)
     throw std::invalid_argument("esolver_type = " + std::string(esolver_type) + ". Wrong in " + std::string(__FILE__)
                                 + " line " + std::to_string(__LINE__));
 }
-
 
 } // namespace ModuleESolver

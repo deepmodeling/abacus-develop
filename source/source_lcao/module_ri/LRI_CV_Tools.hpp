@@ -6,7 +6,7 @@
 #ifndef LRI_CV_TOOLS_HPP
 #define LRI_CV_TOOLS_HPP
 
-#include "../../source_base/mathzone.h"
+#include "source_base/mathzone.h"
 #include "Inverse_Matrix.h"
 #include "LRI_CV_Tools.h"
 #include "RI_Util.h"

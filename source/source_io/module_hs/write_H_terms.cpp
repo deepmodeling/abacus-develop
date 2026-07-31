@@ -9,9 +9,9 @@
 #include "source_io/module_output/filename.h"
 #include "source_io/module_output/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_gint/gint_interface.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
+#include "source_hamilt/module_gint/gint_interface.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_lcao/module_operator_lcao/operator_force_stress_utils.h"
@@ -78,7 +78,6 @@ static void gather_and_write(const std::string& prefix,
     const int nbasis = hR.get_nbasis();
 #ifdef __MPI
     Parallel_Orbitals serialV;
-    serialV.init(nbasis, nbasis, nbasis, pv.comm());
     serialV.set_serial(nbasis, nbasis);
     serialV.set_atomic_trace(iat2iwt, nat, nbasis);
     hamilt::HContainer<double> hr_serial(&serialV);
@@ -96,9 +95,9 @@ static void gather_and_write(const std::string& prefix,
             fname = PARAM.globalv.global_out_dir + hsr_gen_fname(prefix, ispin, append, istep);
         }
 #ifdef __MPI
-        write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, ispin, nspin, label);
+        write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, ispin, nspin, label, "");
 #else
-        write_hcontainer_csr(fname, &ucell, 8, &hR, istep, ispin, nspin, label);
+        write_hcontainer_csr(fname, &ucell, 8, &hR, istep, ispin, nspin, label, "");
 #endif
     }
 }

@@ -152,6 +152,12 @@ private:
 
     Exx_Info_Global info_global;
     size_t hybrid_step_ = 1;
+    // non-owning ptr to Charge_Mixing captured in exx_beforescf, used to refresh the
+    // borrowed mixing pointer in exx_eachiterinit (mixing_restart reallocates it via init_mixing)
+    const Charge_Mixing* p_chgmix_ = nullptr;
+    // identity of the last borrowed mixing engine; a change means init_mixing() reallocated it
+    // (mixing_restart fired), so the DM mixer must also restart to keep engine+history consistent
+    const void* last_borrowed_mixing_ = nullptr;
 
     bool exx_spacegroup_symmetry = false;
     ModuleSymmetry::Symmetry_rotation symrot_;

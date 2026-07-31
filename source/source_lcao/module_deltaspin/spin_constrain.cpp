@@ -142,7 +142,7 @@ int SpinConstrain<TK>::get_spin_sign(int ik) const
  * where P_at = sum_{l,m} |alpha_{l,m}><alpha_{l,m}| is the atomic projector.
  *
  * The magnetic moment is extracted via Pauli matrix traces:
- *   Mx = Re(occ[1] + occ[2]), My = Im(occ[1] - occ[2]), Mz = Re(occ[0] - occ[3])
+ *   Mx = Re(occ[1] + occ[2]), My = -Im(occ[1] - occ[2]), Mz = Re(occ[0] - occ[3])
  *
  * @par Algorithm (npol=1, collinear):
  * Only the z-component (spin projection) is computed:

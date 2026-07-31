@@ -254,7 +254,8 @@ void ReadInput::create_directory(const Parameter& param)
     //----------------------------------------------------------
     bool out_dir = false;
     if (!param.input.out_app_flag
-        && (param.input.out_mat_hs2[0] || param.input.out_mat_r[0] || param.input.out_mat_t[0] || param.input.out_mat_dh[0] || param.input.out_mat_ds[0]))
+        && (param.input.out_hsr[0] == 1 || param.input.out_mat_r[0] || param.input.out_mat_t[0]
+            || param.input.out_mat_dh[0] || param.input.out_mat_ds[0]))
     {
         out_dir = true;
     }
@@ -412,6 +413,63 @@ void ReadInput::read_txt_input(Parameter& param, const std::string& filename)
 		{
 			resetvalue_item->reset_value(*resetvalue_item, param);
         }
+    }
+
+    this->normalize_hs_output_options(param);
+}
+
+void ReadInput::normalize_hs_output_options(Parameter& param)
+{
+    const auto item_is_read = [this](const std::string& label) {
+        const auto item = std::find_if(
+            this->input_lists.begin(),
+            this->input_lists.end(),
+            [&label](const std::pair<std::string, Input_Item>& entry) { return entry.first == label; });
+        return item != this->input_lists.end() && item->second.is_read();
+    };
+
+    const bool out_hsk_is_read = item_is_read("out_hsk");
+    const bool out_mat_hs_is_read = item_is_read("out_mat_hs");
+    if (out_hsk_is_read)
+    {
+        if (out_mat_hs_is_read)
+        {
+            ModuleBase::WARNING("ReadInput", "both out_hsk and out_mat_hs are set; out_hsk takes precedence");
+        }
+    }
+    else
+    {
+        param.input.out_hsk = param.input.out_mat_hs;
+    }
+
+    const bool out_hsr_is_read = item_is_read("out_hsr");
+    const bool out_mat_hs2_is_read = item_is_read("out_mat_hs2");
+    const bool out_hsr_npz_is_read = item_is_read("out_hsr_npz");
+    param.input.out_hsr_npz_compat = false;
+    if (out_hsr_is_read)
+    {
+        if (out_mat_hs2_is_read || out_hsr_npz_is_read)
+        {
+            ModuleBase::WARNING(
+                "ReadInput",
+                "out_hsr is set together with out_mat_hs2 or out_hsr_npz; out_hsr takes precedence");
+        }
+        param.input.out_hsr_npz = false;
+    }
+    else if (param.input.out_mat_hs2[0] != 0)
+    {
+        param.input.out_hsr = param.input.out_mat_hs2;
+        param.input.out_hsr_npz_compat = param.input.out_hsr_npz;
+    }
+    else if (param.input.out_hsr_npz)
+    {
+        param.input.out_hsr[0] = 3;
+        param.input.out_hsr[1] = 8;
+    }
+
+    if (param.input.qo_switch)
+    {
+        param.input.out_hsk[0] = 1;
     }
 }
 

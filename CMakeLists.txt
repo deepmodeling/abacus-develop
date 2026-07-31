@@ -1,4 +1,23 @@
 cmake_minimum_required(VERSION 3.16)
+
+# Require out-of-source builds
+file(TO_CMAKE_PATH "${CMAKE_BINARY_DIR}/CMakeLists.txt" LOC_PATH)
+if(EXISTS "${LOC_PATH}")
+  message(
+    FATAL_ERROR
+      "You cannot build in a source directory (or any directory with a CMakeLists.txt file). "
+      "Please make a build subdirectory.")
+endif()
+
+include(CMakeDependentOption)
+message(WARNING
+  "The build system now uses cmake_dependent_option extensively.\n"
+  "Many advanced options are now conditionally enabled based on their dependencies; "
+  "when dependency conditions are not met, the corresponding options will be"
+  "automatically turned OFF and hidden in cmake-gui/ccmake.\n"
+  "Please review your configuration if you previously set these options manually."
+)
+
 if(POLICY CMP0135) # https://cmake.org/cmake/help/git-stage/policy/CMP0135.html
   cmake_policy(SET CMP0135 NEW)
   # Otherwise this policy generates a warning on CMake 3.24
@@ -16,10 +35,9 @@ project(
 option(ENABLE_MPI "Enable MPI" ON)
 option(ENABLE_OPENMP "Enable OpenMP" ON)
 option(USE_CUDA "Enable CUDA" OFF)
-option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF)
-option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_ROCM "Enable ROCm" OFF)
 option(USE_DSP "Enable DSP" OFF)
+option(USE_CUDA_ON_DCU "Enable CUDA on DCU" OFF)
 option(USE_KML "Enable Kunpeng Math Library" OFF)
 option(USE_SW "Enable SW Architecture" OFF)
 
@@ -27,13 +45,7 @@ option(ENABLE_ABACUS_LIBM "Build libmath from source to speed up" OFF)
 option(ENABLE_LIBXC "Enable using the LibXC package" OFF)
 option(ENABLE_FLOAT_FFTW "Enable using single-precision FFTW library." OFF)
 
-option(ENABLE_MLALGO "Enable the machine learning algorithms" OFF)
-
 option(ENABLE_LCAO "Enable LCAO algorithm" ON)
-option(ENABLE_ELPA "Enable ELPA for LCAO" ON)
-option(ENABLE_LIBRI "Enable LibRI for hybrid functional" OFF)
-option(EXX_DEV "Enable LibRI developing features" OFF)
-option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF)
 option(ENABLE_DFTD4 "Enable DFT-D4 dispersion correction" OFF)
 
 option(BUILD_TESTING "Build unittests" OFF)
@@ -48,12 +60,37 @@ option(ENABLE_NATIVE_OPTIMIZATION
        "Enable compilation optimization for the native machine's CPU type" OFF)
 
 option(COMMIT_INFO "Print commit information in log" ON)
-option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method" ON)
 option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage" OFF)
 option(ENABLE_RAPIDJSON "Enable rapid-json usage" OFF)
 option(ENABLE_CNPY "Enable cnpy usage" OFF)
-option(ENABLE_CUSOLVERMP "Enable cusolvermp" OFF)
-option(ENABLE_NCCL_PARALLEL_DEVICE "Enable NCCL-backed collectives in parallel_device" OFF)
+
+# Options requiring MPI and LCAO
+cmake_dependent_option(ENABLE_ELPA "Enable ELPA for LCAO" ON "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_LIBRI "Enable LibRI for hybrid functional"
+                       OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_PEXSI "Enable PEXSI for LCAO" OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_MLALGO "Enable the machine learning algorithms"
+                       OFF "ENABLE_LCAO;ENABLE_MPI" OFF)
+
+# EXX_DEV works with libRI PR#10 which is not merged into main branch; disabling it
+# cmake_dependent_option(ENABLE_EXX_DEV "Enable LibRI developing features" OFF "ENABLE_LIBRI" OFF)
+
+# Two-center FFT is only used in LCAO
+cmake_dependent_option(ENABLE_FFT_TWO_CENTER "Enable FFT-based two-center integral method"
+                       ON "ENABLE_LCAO" OFF)
+
+# Benchmark requires BUILD_TESTING
+cmake_dependent_option(ENABLE_GOOGLEBENCH "Enable GOOGLE-benchmark usage"
+                       OFF "BUILD_TESTING" OFF)
+
+# Options requiring CUDA
+cmake_dependent_option(USE_CUDA_MPI "Enable CUDA-aware MPI" OFF "USE_CUDA;ENABLE_MPI" OFF)
+cmake_dependent_option(ENABLE_CUSOLVERMP "Enable cuSOLVERMp"
+                       OFF "USE_CUDA;ENABLE_MPI;ENABLE_LCAO" OFF)
+cmake_dependent_option(ENABLE_CUBLASMP "Enable cuBLASMp" OFF "ENABLE_CUSOLVERMP" OFF)
+cmake_dependent_option(ENABLE_NCCL_PARALLEL_DEVICE
+                       "Enable NCCL-backed collectives in parallel_device; requires MPI"
+                       OFF "USE_CUDA;ENABLE_MPI" OFF)
 
 # ==============================================================================
 # Deprecated options (TODO: Remove this section in the future release)
@@ -63,7 +100,7 @@ function(abacus_rename_option old_name new_name)
   if(NOT _old_defined)
     return()
   endif()
-  message(WARNING "${old_name} has been renamed to ${new_name}.")
+  message(DEPRECATION "${old_name} has been renamed to ${new_name}.")
   get_property(_type CACHE "${new_name}" PROPERTY TYPE)
   get_property(_help CACHE "${new_name}" PROPERTY HELPSTRING)
   set("${new_name}" "${${old_name}}" CACHE "${_type}" "${_help}" FORCE)
@@ -71,12 +108,11 @@ function(abacus_rename_option old_name new_name)
 endfunction()
 abacus_rename_option(USE_OPENMP ENABLE_OPENMP)
 abacus_rename_option(USE_ABACUS_LIBM ENABLE_ABACUS_LIBM)
-abacus_rename_option(USE_ELPA ENABLE_ELPA)
 abacus_rename_option(INFO MATH_INFO)
 
 if(DEFINED CACHE{ENABLE_LIBCOMM})
   message(
-    WARNING
+    DEPRECATION
       "Option ENABLE_LIBCOMM is deprecated and will be ignored in a future release. "
       "LibComm is now treated as an implementation dependency of LibRI; "
       "please use -DENABLE_LIBRI=ON instead."
@@ -102,37 +138,16 @@ if(NOT DEFINED NVHPC_ROOT_DIR AND DEFINED ENV{NVHPC_ROOT})
       CACHE PATH "Path to NVIDIA HPC SDK root directory.")
 endif()
 
-# Feature definitions are collected while options and dependencies are resolved
-# below. They are applied to targets in source/CMakeLists.txt.
-set_property(GLOBAL PROPERTY ABACUS_FEATURE_DEFINITIONS "")
-
-function(abacus_normalize_definitions out_var)
-  set(_defs)
-  foreach(_def IN LISTS ARGN)
-    if(_def MATCHES "^-D(.+)")
-      list(APPEND _defs "${CMAKE_MATCH_1}")
-    else()
-      list(APPEND _defs "${_def}")
-    endif()
-  endforeach()
-  set(${out_var} ${_defs} PARENT_SCOPE)
-endfunction()
-
-function(abacus_add_feature_definitions)
-  abacus_normalize_definitions(_defs ${ARGN})
-  set_property(GLOBAL APPEND PROPERTY ABACUS_FEATURE_DEFINITIONS ${_defs})
-endfunction()
-
 # enable json support
 if(ENABLE_RAPIDJSON)
   find_package(RapidJSON CONFIG REQUIRED)
   if(NOT TARGET RapidJSON)
     message(
       FATAL_ERROR
-      "RapidJSON was found, but target RapidJSON is missing. Check if your RapidJSON installation provides a complete exported CMake configuration."
+      "RapidJSON was found, but target RapidJSON is missing. "
+      "Check if your RapidJSON installation provides a complete exported CMake configuration."
     )
   endif()
-  abacus_add_feature_definitions(__RAPIDJSON)
 endif()
 
 # get commit info
@@ -141,8 +156,8 @@ if(COMMIT_INFO)
   if(NOT Git_FOUND)
     message(
       WARNING
-        "Git is not found, and abacus will not output the git commit information in log. \n\
-You can install Git first and reinstall abacus.")
+        "Git is not found, and abacus will not output the git commit information in log.\n"
+        "You can install Git first and reinstall abacus.")
   else()
     message(STATUS "Found git: attempting to get commit info...")
     execute_process(
@@ -158,7 +173,6 @@ You can install Git first and reinstall abacus.")
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
       RESULT_VARIABLE GIT_COMMIT_DATE_RESULT)
     if(GIT_COMMIT_HASH_RESULT EQUAL 0 AND GIT_COMMIT_DATE_RESULT EQUAL 0)
-      abacus_add_feature_definitions(COMMIT_INFO)
       file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/commit.h"
            "#define COMMIT \"${GIT_COMMIT_HASH} (${GIT_COMMIT_DATE})\"\n")
       set(ABACUS_COMMIT_INFO_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}")
@@ -168,12 +182,6 @@ You can install Git first and reinstall abacus.")
       message(WARNING "Failed to get git commit info")
     endif()
   endif()
-endif()
-
-# Serial version of ABACUS will not use ELPA
-if(NOT ENABLE_MPI)
-  set(ENABLE_ELPA OFF)
-  set(ENABLE_MLALGO OFF)
 endif()
 
 # Different exe files of ABACUS
@@ -236,16 +244,11 @@ endif()
 
 # Use DSP hardware
 if (USE_DSP)
-  set(ENABLE_ELPA OFF)
+  if(ENABLE_ELPA)
+    message(WARNING USE_DSP is incompatible with ELPA; switching off ENABLE_ELPA)
+    set(ENABLE_ELPA OFF)
+  endif()
   set(ABACUS_BIN_NAME abacus_dsp)
-endif()
-
-if (USE_CUDA_ON_DCU)
-  abacus_add_feature_definitions(__CUDA_ON_DCU)
-endif()
-
-if (USE_CUDA_MPI)
-  abacus_add_feature_definitions(__CUDA_MPI)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH
@@ -314,61 +317,23 @@ if(ENABLE_ASAN)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 
-if(NOT CMAKE_BUILD_TYPE AND NOT MSVC)
-  add_compile_options(-O3 -g)
-endif()
-
 if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
-  # stick to strict floating point model on Intel Compiler
-  add_compile_options(-fp-model=strict)
-  set(ENABLE_ABACUS_LIBM OFF) # Force turn off ENABLE_ABACUS_LIBM on Intel Compiler
-  set(CMAKE_CXX_FLAGS
-      "${CMAKE_CXX_FLAGS} -Wno-write-strings "
-  )
-endif()
-
-if(ENABLE_ABACUS_LIBM)
-  abacus_add_feature_definitions(__ABACUS_LIBM)
-endif()
-
-if(ENABLE_NATIVE_OPTIMIZATION)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=native -mtune=native")
-endif()
-
-# Windows (native build, e.g. MinGW-w64 or MSVC) portability defines:
-#   _USE_MATH_DEFINES     - expose M_PI and friends from <cmath>
-#   NOMINMAX              - stop <windows.h> defining min()/max() macros
-#   _CRT_SECURE_NO_WARNINGS - silence CRT "use _s function" deprecations
-if(WIN32)
-  abacus_add_feature_definitions(_USE_MATH_DEFINES NOMINMAX _CRT_SECURE_NO_WARNINGS)
+  # Force turn off ENABLE_ABACUS_LIBM on Intel Compiler
+  message(WARNING "ENABLE_ABACUS_LIBM is not available with Intel compilers; switching it off")
+  set(ENABLE_ABACUS_LIBM OFF)
 endif()
 
 if(ENABLE_LCAO)
-  abacus_add_feature_definitions(__LCAO)
   if(ENABLE_ELPA)
     find_package(ELPA REQUIRED)
-    abacus_add_feature_definitions(__ELPA)
   endif()
-
-  if(ENABLE_FFT_TWO_CENTER)
-    abacus_add_feature_definitions(USE_NEW_TWO_CENTER)
-  endif()
-
   if(ENABLE_PEXSI)
     find_package(PEXSI REQUIRED CONFIG)
     if(PEXSI_VERSION VERSION_LESS "2.0.0")
       message(FATAL_ERROR "PEXSI >= 2.0.0 is required")
     endif()
-    abacus_add_feature_definitions(__PEXSI)
     set(CMAKE_CXX_STANDARD 14)
   endif()
-else()
-  set(ENABLE_MLALGO OFF)
-  set(ENABLE_LIBRI OFF)
-endif()
-
-if(DEBUG_INFO)
-  abacus_add_feature_definitions(__DEBUG)
 endif()
 
 if(ENABLE_MPI)
@@ -379,18 +344,9 @@ if(ENABLE_MPI)
     set(MPI_DETERMINE_LIBRARY_VERSION TRUE)
   endif()
   find_package(MPI COMPONENTS CXX REQUIRED)
-  abacus_add_feature_definitions(__MPI)
 endif()
 
-
-if (USE_DSP)
-  abacus_add_feature_definitions(__DSP)
-endif()
-
-
-
-if (USE_SW)
-  abacus_add_feature_definitions(__SW)
+if(USE_SW)
   set(SW ON)
 endif()
 
@@ -413,10 +369,8 @@ if(USE_KML)
   endif()
 
   find_package(KML REQUIRED COMPONENTS ${_kml_components})
-  abacus_add_feature_definitions(__KML)
 elseif(MKLROOT OR MKL_ROOT)
   find_package(MKL REQUIRED)
-  abacus_add_feature_definitions(__MKL)
 elseif(NOT USE_SW)
   find_package(Lapack REQUIRED)
   # ScaLAPACK is a distributed-memory library and is only needed for the
@@ -511,20 +465,7 @@ if(USE_CUDA)
   endif()
   enable_language(CUDA)
   if(USE_CUDA)
-    abacus_add_feature_definitions(__CUDA)
-    abacus_add_feature_definitions(__UT_USE_CUDA)
-    if (CMAKE_BUILD_TYPE STREQUAL "Debug")
-      set(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG} -g -G" CACHE STRING "CUDA flags for debug build" FORCE)
-    endif()
-    if (ENABLE_OPENMP AND OpenMP_CXX_FOUND)
-      set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} -Xcompiler=${OpenMP_CXX_FLAGS}" CACHE STRING "CUDA flags" FORCE)
-    endif()
     if (ENABLE_NCCL_PARALLEL_DEVICE)
-      if (NOT ENABLE_MPI)
-        message(FATAL_ERROR
-          "ENABLE_NCCL_PARALLEL_DEVICE requires ENABLE_MPI=ON.")
-      endif()
-      abacus_add_feature_definitions(__NCCL_PARALLEL_DEVICE)
       include(cmake/modules/SetupNccl.cmake)
       abacus_setup_nccl()
     endif()
@@ -593,9 +534,6 @@ if(USE_ROCM)
     )
   endif()
 
-  abacus_add_feature_definitions(__ROCM)
-  abacus_add_feature_definitions(__UT_USE_ROCM)
-  abacus_add_feature_definitions(__HIP_PLATFORM_HCC__)
 endif()
 
 if(ENABLE_ASAN)
@@ -607,10 +545,6 @@ if(ENABLE_ASAN)
   endif()
   add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
   add_link_options(-fsanitize=address)
-endif()
-
-if(ENABLE_FLOAT_FFTW)
-  abacus_add_feature_definitions(__ENABLE_FLOAT_FFTW)
 endif()
 
 if(ENABLE_MLALGO)
@@ -625,8 +559,6 @@ if(ENABLE_MLALGO)
     FetchContent_MakeAvailable(libnpy)
   else()
   endif()
-
-  abacus_add_feature_definitions(__MLALGO)
 endif()
 
 # Torch uses outdated components to detect CUDA arch, causing failure on
@@ -660,7 +592,6 @@ if (ENABLE_CNPY)
 
   # find ZLIB and link
   find_package(ZLIB REQUIRED)
-  abacus_add_feature_definitions(__USECNPY)
 endif()
 
 function(git_submodule_update)
@@ -691,11 +622,6 @@ if(ENABLE_LIBRI)
   find_package(LibRI REQUIRED)
   find_package(LibComm REQUIRED)
   find_package(cereal REQUIRED CONFIG)
-  abacus_add_feature_definitions(__EXX EXX_DM=3 EXX_H_COMM=2 TEST_EXX_LCAO=0
-                                 TEST_EXX_RADIAL=1)
-  if(EXX_DEV)
-    abacus_add_feature_definitions(__EXX_DEV)
-  endif()
 endif()
 
 if(ENABLE_LIBXC)
@@ -703,35 +629,22 @@ if(ENABLE_LIBXC)
   if(Libxc_VERSION VERSION_LESS "5.1.7")
     message(FATAL_ERROR "Libxc >= 5.1.7 is required")
   endif()
-  abacus_add_feature_definitions(USE_LIBXC)
 endif()
 
 if(DEFINED DeePMD_DIR)
-  abacus_add_feature_definitions(__DPMD HIGH_PREC)
-  add_compile_options(-Wl,--no-as-needed)
   find_package(DeePMD REQUIRED)
-  if(DeePMDC_FOUND)
-    abacus_add_feature_definitions(__DPMDC)
-  endif()
 endif()
 
 if(DEFINED NEP_DIR)
   find_package(NEP REQUIRED)
-
-  if(NEP_FOUND)
-    abacus_add_feature_definitions(__NEP)
-  endif()
 endif()
 
 if(DEFINED TensorFlow_DIR)
   find_package(TensorFlow REQUIRED)
 endif()
 
-abacus_add_feature_definitions(__FFTW3 __SELINV METIS)
-
 if(MATH_INFO)
   message(STATUS "Will gather math lib info.")
-  abacus_add_feature_definitions(GATHER_INFO)
   # modifications on blas_connector and lapack_connector
 endif()
 

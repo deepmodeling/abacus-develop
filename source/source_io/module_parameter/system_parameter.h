@@ -21,9 +21,7 @@ struct System_para
     // ------------ but decided by INPUT parameters      -------------
     // ---------------------------------------------------------------
     /**
-     * @brief Total number of local basis functions.
-     * 
-     * Calculated by CalAtomsInfo::cal_atoms_info() during pseudopotential reading,
+     * Calculated in elecstate::ParamUpdater after pseudopotential reading,
      * based on atoms[it].nw * atoms[it].na for each atom type.
      * For nspin == 4 (non-collinear), each basis function has 2 polarizations,
      * so nlocal is doubled.

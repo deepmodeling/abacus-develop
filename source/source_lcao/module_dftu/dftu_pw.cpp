@@ -309,8 +309,8 @@ void Plus_U::cal_occ_pw(const int iter,
                     }
                     vu_iat[index[0]] = 0.5 * (vu_tmp[0] + vu_tmp[3]);
                     vu_iat[index[3]] = 0.5 * (vu_tmp[0] - vu_tmp[3]);
-                    vu_iat[index[1]] = 0.5 * (vu_tmp[1] + std::complex<double>(0.0, 1.0) * vu_tmp[2]);
-                    vu_iat[index[2]] = 0.5 * (vu_tmp[1] - std::complex<double>(0.0, 1.0) * vu_tmp[2]);
+                    vu_iat[index[1]] = 0.5 * (vu_tmp[1] - std::complex<double>(0.0, 1.0) * vu_tmp[2]);
+                    vu_iat[index[2]] = 0.5 * (vu_tmp[1] + std::complex<double>(0.0, 1.0) * vu_tmp[2]);
                 }
             }
         }

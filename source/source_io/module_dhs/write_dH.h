@@ -6,7 +6,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/LCAO_domain.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <array>
 #include <complex>

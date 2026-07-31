@@ -17,7 +17,7 @@
 #include <ATen/core/tensor_types.h>
 #include <source_hamilt/module_xc/kernels/xc_functional_op.h>
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "libxc_abacus.h"
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
@@ -298,7 +298,7 @@ void XC_Functional::gradcorr(
                     }
                     if (use_libxc && is_stress)
                     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
                         if(func_type == 3 || func_type == 5)
                         {
                             double v3xc = 0.0;
@@ -355,7 +355,7 @@ void XC_Functional::gradcorr(
             {
                 if(use_libxc)
                 {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
                     double sxc = 0.0;
                     double v1xcup = 0.0;
                     double v1xcdw = 0.0;

@@ -129,7 +129,7 @@ TEST_F(PWTEST,test2_2)
     delete [] rhor;
     delete []tmp; 
     fftw_cleanup();
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     fftwf_cleanup();
 #endif
 }

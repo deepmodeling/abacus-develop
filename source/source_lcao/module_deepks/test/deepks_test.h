@@ -71,7 +71,7 @@ class test_deepks
     elecstate::DensityMatrix<T, double>* p_elec_DM = nullptr;
 
     // preparation
-    void preparation();
+    void preparation(bool use_modern_orbital_reader);
     void set_parameters(); // set some global variables
     void setup_cell();
 
@@ -80,7 +80,7 @@ class test_deepks
 
     void prep_neighbour();
     void setup_kpt();
-    void set_orbs();
+    void set_orbs(bool use_modern_orbital_reader);
 
     // tranfer Matrix into vector<T>
     void set_dm_new();
@@ -91,6 +91,7 @@ class test_deepks
     // checking
     void check_dstable();
     void check_phialpha();
+    void check_phialpha_grid_zero_field();
 
     void read_dm(const int nks);
 

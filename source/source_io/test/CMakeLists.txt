@@ -299,7 +299,7 @@ AddTest(
   ../module_output/csr_reader.cpp
   ../module_output/file_reader.cpp
   ../../source_basis/module_ao/parallel_orbitals.cpp
-  ../../source_lcao/module_hcontainer/test/tmp_mocks.cpp
+  ../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
 )
 endif()
 

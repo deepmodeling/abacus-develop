@@ -5,6 +5,7 @@ add_subdirectory(module_neighlist)
 add_library(
     cell
     OBJECT
+    base_cell.cpp
     atom_pseudo.cpp
     atom_spec.cpp
     pseudo.cpp
@@ -34,6 +35,9 @@ add_library(
     qlist.cpp
     qlist.h
     cal_nelec_nband.cpp
+    read_pseudo.cpp
+    cal_wfc.cpp
+    cal_ux.cpp
 )
 
 if(ENABLE_COVERAGE)

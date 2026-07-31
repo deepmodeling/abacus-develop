@@ -13,7 +13,7 @@ LATTICE_CONSTANT
 ATOMIC_POSITIONS
 Cartesian   		#Cartesian(Unit is LATTICE_CONSTANT)
 H 			#Name of element	
-0.0			#Magnetic for this element.
+1			#Magnetic for this element.
 2			#Number of atoms
 0.00 0.00 -0.0661400 0 0 0	#x,y,z, move_x, move_y, move_z
 0.00 0.00  0.0661400 0 0 0	#x,y,z, move_x, move_y, move_z

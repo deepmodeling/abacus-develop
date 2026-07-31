@@ -1,4 +1,4 @@
-#include "../basic_funcs.h"
+#include "source_lcao/module_deltaspin/basic_funcs.h"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 

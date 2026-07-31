@@ -53,9 +53,9 @@ void ReadInput::item_elec_stru()
 For plane-wave basis,
 
 * cg: The conjugate-gradient (CG) method.
-* bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
 * dav: The Davidson algorithm.
 * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
+* bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 
 For numerical atomic orbitals basis,
 
@@ -354,14 +354,14 @@ The other way is only available when compiling with LIBXC, and it allows for sup
     }
     {
         Input_Item item("xc_exch_ext");
-        item.annotation = "placeholder for xcpnet exchange functional";
+        item.annotation = "customize Libxc exchange functional parameters";
         item.category = "Electronic structure";
         item.type = "Integer followed by Real values";
-        item.description = "Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_x_pbe.c."
+        item.description = "Customized parameterization of the exchange part of an XC functional. The first value should be the Libxc ID of the original functional, followed by the complete list of external parameters required by the linked Libxc version. If unset, Libxc's own default parameters are used. For functional IDs and parameter definitions, refer to the Libxc documentation and source code."
                           "\n\n[NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set "
                           "dft_functional to the corresponding functional to apply the customized parameterization. "
                           "Presently this feature can only support parameterization on one exchange functional.";
-        item.default_value = "101 0.8040 0.2195149727645171";
+        item.default_value = "";
         item.unit = "";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -371,10 +371,15 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                            [](const std::string& str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            // at least one value should be set
-            if (para.input.xc_exch_ext.empty())
+            if (!item.is_read())
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "xc_exch_ext should not be empty.");
+                return;
+            }
+            if (para.input.xc_exch_ext.size() < 2)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "xc_exch_ext requires a Libxc ID followed by external parameters.");
             }
             // the first value is actually an integer, not a double
             const double libxc_id_dbl = para.input.xc_exch_ext[0];
@@ -397,14 +402,14 @@ The other way is only available when compiling with LIBXC, and it allows for sup
     }
     {
         Input_Item item("xc_corr_ext");
-        item.annotation = "placeholder for xcpnet exchange functional";
+        item.annotation = "customize Libxc correlation functional parameters";
         item.category = "Electronic structure";
         item.type = "Integer followed by Real values";
-        item.description = "Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_c_pbe.c."
+        item.description = "Customized parameterization of the correlation part of an XC functional. The first value should be the Libxc ID of the original functional, followed by the complete list of external parameters required by the linked Libxc version. If unset, Libxc's own default parameters are used. For functional IDs and parameter definitions, refer to the Libxc documentation and source code."
                           "\n\n[NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set "
                           "dft_functional to the corresponding functional to apply the customized parameterization. "
                           "Presently this feature can only support parameterization on one correlation functional.";
-        item.default_value = "130 0.06672455060314922 0.031090690869654895034 1.0";
+        item.default_value = "";
         item.unit = "";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -414,10 +419,15 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                            [](const std::string& str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            // at least one value should be set
-            if (para.input.xc_corr_ext.empty())
+            if (!item.is_read())
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "xc_corr_ext should not be empty.");
+                return;
+            }
+            if (para.input.xc_corr_ext.size() < 2)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "xc_corr_ext requires a Libxc ID followed by external parameters.");
             }
             // the first value is actually an integer, not a double
             const double libxc_id_dbl = para.input.xc_corr_ext[0];

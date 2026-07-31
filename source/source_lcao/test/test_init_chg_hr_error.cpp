@@ -31,7 +31,7 @@ TEST(InitChgHrErrorTest, MissingFileError)
                 error_msg += "  - For nspin=1: hrs1_nao.csr\n";
                 error_msg += "  - For nspin=2: hrs1_nao.csr (spin-up) and hrs2_nao.csr (spin-down)\n\n";
                 error_msg += "Solutions:\n";
-                error_msg += "  1. Run an SCF calculation first with 'out_mat_hs2 1' to generate HR files\n";
+                error_msg += "  1. Run an SCF calculation first with 'out_hsr 1' to generate HR files\n";
                 error_msg += "  2. Check that 'read_file_dir' points to the correct directory\n";
                 error_msg += "  3. Use 'init_chg file' or 'init_chg atomic' instead";
                 ModuleBase::WARNING_QUIT("LCAO_domain::init_hr_from_file", error_msg);

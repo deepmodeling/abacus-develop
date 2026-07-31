@@ -1,8 +1,5 @@
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include <iostream>
 #include <string>
 
@@ -29,15 +26,10 @@ Magnetism::~Magnetism()
  *   - atom_arrange::delete_vector(void)
  *     - delete vector
  *   - atom_arrange::set_sr_NL
- * 	   - set the sr: search radius including nonlocal beta
+ *        - set the sr: search radius including nonlocal beta
  *   - filter_adjs function
  *     - filter AdjacentAtomInfo to the minimized adjacent atoms
  */
-
-void SetGlobalV()
-{
-    PARAM.input.test_grid = false;
-}
 
 class SltkAtomArrangeTest : public testing::Test
 {
@@ -52,7 +44,6 @@ class SltkAtomArrangeTest : public testing::Test
     std::string output;
     void SetUp()
     {
-        SetGlobalV();
         ucell = utp.SetUcellInfo();
     }
     void TearDown()
@@ -94,7 +85,7 @@ TEST_F(SltkAtomArrangeTest, setsrNL)
 TEST_F(SltkAtomArrangeTest, Search)
 {
     unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
-    Grid_Driver grid_d(PARAM.input.test_deconstructor, PARAM.input.test_grid);
+    Grid_Driver grid_d(false, false);
     ofs.open("test.out");
     bool test_only = true;
     atom_arrange::search(pbc, ofs, grid_d, *ucell, radius, test_atom_in, test_only);
@@ -110,7 +101,7 @@ TEST_F(SltkAtomArrangeTest, Search)
 TEST_F(SltkAtomArrangeTest, Filteradjs)
 {
     unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
-    Grid_Driver grid_d(PARAM.input.test_deconstructor, PARAM.input.test_grid);
+    Grid_Driver grid_d(false, false);
     ofs.open("test.out");
     bool test_only = true;
     atom_arrange::search(pbc, ofs, grid_d, *ucell, radius, test_atom_in, test_only);

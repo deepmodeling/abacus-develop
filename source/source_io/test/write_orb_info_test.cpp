@@ -6,7 +6,7 @@
 #include "source_io/module_output/write_orb_info.h"
 #include "source_cell/unitcell.h"
 #include "prepare_unitcell.h"
-#include "source_estate/read_pseudo.h"
+#include "source_cell/read_pseudo.h"
 
 Magnetism::Magnetism()
 {
@@ -48,8 +48,8 @@ TEST(OrbInfo,WriteOrbInfo)
     const std::string esolver_type = "ksdft";
     const std::string init_wfc = "";
     const int nbands = 6;
-    elecstate::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda);
-    elecstate::cal_nwfc(ofs,*ucell,ucell->atoms, nspin, nlocal, npol, basis_type, esolver_type, init_wfc, nbands);
+    unitcell::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda);
+    unitcell::cal_nwfc(ofs,*ucell,ucell->atoms, nspin, nlocal, npol, basis_type, esolver_type, init_wfc, nbands);
     ModuleIO::write_orb_info(ucell);
     ofs.close();
     std::ifstream ifs("Orbital");

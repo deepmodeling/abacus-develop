@@ -1,23 +1,40 @@
+/**
+ * @file cal_atoms_info.h
+ * @brief CalAtomsInfo class for calculating atom information.
+ */
 #ifndef CAL_ATOMS_INFO_H
 #define CAL_ATOMS_INFO_H
 #include "source_cell/cal_nelec_nband.h"
 #include "source_base/global_function.h"
 
+/**
+ * @brief Result struct for atom information calculation.
+ */
 struct AtomsInfoResult
 {
-    int nlocal = 0;
-    double nelec = 0.0;
-    int nbands = 0;
-    double nupdown = 0.0;
-    bool use_uspp = false;
-    int nbands_l = 0;
-    bool ks_run = false;
+    int nlocal = 0;        ///< total number of local basis
+    double nelec = 0.0;    ///< total number of electrons
+    int nbands = 0;        ///< number of bands
+    double nupdown = 0.0;  ///< spin polarization
+    bool use_uspp = false; ///< whether to use USPP
+    int nbands_l = 0;      ///< number of local bands
+    bool ks_run = false;   ///< whether to run KS solver
 };
 
+/**
+ * @brief CalAtomsInfo class for calculating atom information.
+ */
 class CalAtomsInfo
 {
   public:
+    /**
+     * @brief Default constructor.
+     */
     CalAtomsInfo(){};
+
+    /**
+     * @brief Destructor.
+     */
     ~CalAtomsInfo(){};
 
     /**

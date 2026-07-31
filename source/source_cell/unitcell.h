@@ -7,10 +7,13 @@
 #include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
 #include "source_cell/module_neighlist/atom_provider.h"
+#include "source_cell/base_cell.h"
 #include "source_cell/nonlocal_info_base.h"
 
-// provide the basic information about unitcell.
-class UnitCell : public AtomProvider {
+/**
+ * @brief Provide the basic information about unitcell.
+ */
+class UnitCell : public AtomProvider, public BaseCell {
   public:
     double get_lat0() const override {
         return lat0;
@@ -43,9 +46,9 @@ class UnitCell : public AtomProvider {
     Atom* atoms = nullptr;
     Sep_Cell sep_cell;
 
-    bool set_atom_flag = false;                     // added on 2009-3-8 by mohan
-    Magnetism magnet;                               // magnetism Yu Liu 2021-07-03
-    std::vector<std::vector<double>> atom_mulliken; //[nat][nspin]
+    bool set_atom_flag = false;                     ///< added on 2009-3-8 by mohan
+    Magnetism magnet;                               ///< magnetism Yu Liu 2021-07-03
+    std::vector<std::vector<double>> atom_mulliken; ///< [nat][nspin]
     int n_mag_at = 0;
 
     Lattice lat;
@@ -80,37 +83,33 @@ class UnitCell : public AtomProvider {
 
     ModuleSymmetry::Symmetry symm;
 
-    // ========================================================
-    // iat2iwt is the atom index iat to the first global index for orbital of
-    // this atom the size of iat2iwt is nat, the value should be
-    // sum_{i=0}^{iat-1} atoms[it].nw * npol where the npol is the number of
-    // polarizations, 1 for non-magnetic(NSPIN=1 or 2), 2 for magnetic(only
-    // NSPIN=4) this part only used for Atomic Orbital based calculation
-    // ========================================================
+    /// iat2iwt is the atom index iat to the first global index for orbital of
+    /// this atom the size of iat2iwt is nat, the value should be
+    /// sum_{i=0}^{iat-1} atoms[it].nw * npol where the npol is the number of
+    /// polarizations, 1 for non-magnetic(NSPIN=1 or 2), 2 for magnetic(only
+    /// NSPIN=4) this part only used for Atomic Orbital based calculation
   public:
-    // indexing tool for find orbital global index from it,ia,iw
+    /// @brief Indexing tool for find orbital global index from it,ia,iw
     template <typename Tiait>
     inline Tiait
         itiaiw2iwt(const Tiait& it, const Tiait& ia, const Tiait& iw) const {
         return Tiait(this->iat2iwt[this->itia2iat(it, ia)] + iw);
     }
-    // initialize iat2iwt
+    /// @brief Initialize iat2iwt
     void set_iat2iwt(const int& npol_in);
-    // get iat2iwt
+    /// @brief Get iat2iwt
     inline const int* get_iat2iwt() const { return iat2iwt.data(); }
-    // get npol
+    /// @brief Get npol
     inline const int& get_npol() const { return npol; }
 
   private:
-    std::vector<int> iat2iwt; // iat ==> iwt, the first global index for orbital of this atom
-    int npol = 1; // number of spin polarizations, initialized in set_iat2iwt
-                  // ----------------- END of iat2iwt part -----------------
+    std::vector<int> iat2iwt; ///< iat ==> iwt, the first global index for orbital of this atom
+    int npol = 1; ///< number of spin polarizations, initialized in set_iat2iwt
+                  /// ----------------- END of iat2iwt part -----------------
 
   public:
-    //========================================================
-    // indexing tools for ia and it
-    // return true if the last out is reset
-    //========================================================
+    /// @brief Indexing tools for ia and it
+    /// @return true if the last out is reset
     template <typename Tiat, typename Tiait>
     inline bool iat2iait(const Tiat iat, Tiait* ia, Tiait* it) const {
         if (iat >= nat) {
@@ -171,12 +170,12 @@ class UnitCell : public AtomProvider {
         return false;
     }
 
-    // get tau for atom iat
+    /// @brief Get tau for atom iat
     inline const ModuleBase::Vector3<double>& get_tau(const int& iat) const {
         return atoms[iat2it[iat]].tau[iat2ia[iat]];
     }
 
-    // calculate vector between two atoms with R cell
+    /// @brief Calculate vector between two atoms with R cell
     inline const ModuleBase::Vector3<double>
         cal_dtau(const int& iat1,
                  const int& iat2,
@@ -185,41 +184,38 @@ class UnitCell : public AtomProvider {
                + double(R.z) * a3 - get_tau(iat1);
     }
 
-    // LiuXh add 20180515
+    /// @brief LiuXh add 20180515
     ModuleBase::Matrix3 G0;
     ModuleBase::Matrix3 GT0;
     ModuleBase::Matrix3 GGT0;
     ModuleBase::Matrix3 invGGT0;
 
-    // TODO(abacus-team): encapsulate ionic_position_updated and
-    // cell_parameter_updated with setters that enforce state invariants;
-    // currently exposed as mutable flags that can be toggled from anywhere.
+    /// @todo Encapsulate ionic_position_updated and cell_parameter_updated with
+    /// setters that enforce state invariants; currently exposed as mutable
+    /// flags that can be toggled from anywhere.
     bool ionic_position_updated
         = false; ///< whether the ionic position has been updated
     bool cell_parameter_updated
         = false; ///< whether the cell parameters are updated
 
-    //============================================================
-    // meshx : max number of mesh point in pseudopotential file
-    // natomwfc : number of starting wavefunctions
-    // lmax  : Max L used for localized orbital.
-    // nmax  : Max N used for localized orbital.
-    // lmax_ppwf : Max L of pseudo wave functinos
-    // nelec : total number of electrons
-    // lmaxmax : revert from INPUT
-    //============================================================
+    /// @brief meshx : max number of mesh point in pseudopotential file
+    /// @brief natomwfc : number of starting wavefunctions
+    /// @brief lmax : Max L used for localized orbital
+    /// @brief nmax : Max N used for localized orbital
+    /// @brief lmax_ppwf : Max L of pseudo wave functions
+    /// @brief lmaxmax : revert from INPUT
     int meshx = 0;
     int natomwfc = 0;
     int lmax = 0;
     int nmax = 0;
-    int nmax_total = 0; // mohan add 2009-09-10
+    int nmax_total = 0; ///< mohan add 2009-09-10
     int lmax_ppwf = 0;
-    int lmaxmax = 0;   // liuyu 2021-07-04
-    bool init_vel = false; // liuyu 2021-07-15
+    int lmaxmax = 0;   ///< liuyu 2021-07-04
+    bool init_vel = false; ///< liuyu 2021-07-15
                        // double nelec;
 
   private:
-    ModuleBase::Matrix3 stress; // calculate stress on the cell
+    ModuleBase::Matrix3 stress; ///< calculate stress on the cell
 
   public:
     UnitCell();
@@ -231,17 +227,18 @@ class UnitCell : public AtomProvider {
     std::vector<std::string> pseudo_fn;
     std::vector<std::string> pseudo_type;
 
-    std::vector<std::string> orbital_fn;  // filenames of orbitals, liuyu add 2022-10-19
-    std::string  descriptor_file; // filenames of descriptor_file, liuyu add 2023-04-06
-    std::vector<std::string> abfs_orbital_files; // ABFS orbital filenames read from STRU "ABFS_ORBITAL" (used by LCAO EXX)
-    std::vector<std::string> jle_orbital_files;  // JLE orbital filenames read from STRU "ABFS_JLES_ORBITAL" (used by LCAO EXX)
+    std::vector<std::string> orbital_fn;  ///< filenames of orbitals, liuyu add 2022-10-19
+    std::string  descriptor_file; ///< filenames of descriptor_file, liuyu add 2023-04-06
+    std::vector<std::string> abfs_orbital_files; ///< ABFS orbital filenames read from STRU "ABFS_ORBITAL" (used by LCAO EXX)
+    std::vector<std::string> jle_orbital_files;  ///< JLE orbital filenames read from STRU "ABFS_JLES_ORBITAL" (used by LCAO EXX)
 
     void set_iat2itia();
 
     void setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
         const std::string& basis_type, const std::string& orbital_dir, const std::string& init_wfc,
         const double onsite_radius, const bool deepks_setorb, const bool rpa,
-        const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type);
+        const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type,
+        const int symmetry);
 
     /**
      * @brief Pointer to non-local pseudopotential information.
@@ -251,14 +248,11 @@ class UnitCell : public AtomProvider {
      */
     std::unique_ptr<NonlocalInfoBase> infoNL;
 
-    // for constrained vc-relaxation where type of lattice
-    // is fixed, adjust the lattice vectors
+    /// @brief For constrained vc-relaxation where type of lattice is fixed, adjust the lattice vectors
 
-    //================================================================
-    // cal_natomwfc : calculate total number of atomic wavefunctions
-    // cal_nwfc     : calculate total number of local basis and lmax
-    // cal_meshx	: calculate max number of mesh points in pp file
-    //================================================================
+    /// @brief cal_natomwfc : calculate total number of atomic wavefunctions
+    /// @brief cal_nwfc : calculate total number of local basis and lmax
+    /// @brief cal_meshx : calculate max number of mesh points in pp file
     bool if_atoms_can_move() const;
     bool if_cell_can_change() const;
     void setup(const std::string& latname_in,
@@ -294,6 +288,22 @@ class UnitCell : public AtomProvider {
     std::vector<ModuleBase::Vector3<double>> get_lambda() const;
     /// @brief get constrain for deltaspin
     std::vector<ModuleBase::Vector3<int>> get_constrain() const;
+
+  private:
+    Kind get_kind() const override
+    {
+        return Kind::unit_cell;
+    }
+
+    int get_nat() const override
+    {
+        return nat;
+    }
+
+    const ModuleBase::Matrix3& get_GT() const override
+    {
+        return GT;
+    }
 };
 
 #endif // unitcell class

@@ -2,7 +2,7 @@
 
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_hsolver/hsolver_lcao.h"
 
 #include "source_io/module_parameter/parameter.h"
@@ -21,7 +21,7 @@ template <>
 void OperatorLCAO<double, double>::get_hs_pointers() {
     ModuleBase::timer::start("OperatorLCAO", "get_hs_pointers");
     this->hmatrix_k = this->hsk->get_hk();
-    if ((this->new_e_iteration && ik == 0) || PARAM.inp.out_mat_hs[0])
+    if ((this->new_e_iteration && ik == 0) || PARAM.inp.out_hsk[0] == 1)
     {
         if (this->smatrix_k == nullptr)
         {

@@ -65,8 +65,8 @@ namespace unitcell {
     ifs.close();
     if(!atom->nw)
     {
-		ModuleBase::WARNING("unitcell::read_orb_file","get nw = 0, check the ORBITAL file");
-		return false;
+        ModuleBase::WARNING("unitcell::read_orb_file","get nw = 0, check the ORBITAL file");
+        return false;
     }
     return true;
 }

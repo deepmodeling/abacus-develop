@@ -7,7 +7,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/mathzone.h"
 #include "source_cell/unitcell.h"
-#include "source_estate/read_pseudo.h"
+#include "source_cell/read_pseudo.h"
 #include <valarray>
 #include <vector>
 #ifdef __MPI
@@ -226,7 +226,7 @@ TEST_F(UcellTest, ReadPseudo)
     const int bndpar = 1;
     const double nelec = 0.0;
     const double nupdown = 0.0;
-    auto atoms_info = elecstate::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec, nupdown);
+    auto atoms_info = unitcell::read_pseudo(ofs, *ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec, nupdown);
     // check_structure will print some warning info
     // output nonlocal file
     if (GlobalV::MY_RANK == 0)

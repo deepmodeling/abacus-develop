@@ -8,10 +8,10 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
 
     for (int it = 0; it < ntype; it++)
     {
-		//------------------------------------
+        //------------------------------------
         // impose periodic boundary condition
-		// 0.5 -> -0.5
-		//------------------------------------
+        // 0.5 -> -0.5
+        //------------------------------------
         for (int j = istart[it]; j < istart[it] + na[it]; ++j)
         {
             this->check_boundary(pos[j*3+0]);
@@ -36,7 +36,7 @@ void Symmetry::pricell(double* pos, const Atom* atoms)
     ModuleBase::Vector3<double> diff;
     double tmp_ptrans[3];
 
-	//---------------------------------------------------------
+    //---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
     //---------------------------------------------------------
     // (s)tart (p)osition of atom (t)ype which has (min)inal number.

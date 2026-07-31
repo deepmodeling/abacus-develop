@@ -58,17 +58,17 @@ namespace unitcell
             << std::setw(19) << "vz"
             << std::endl;
  
-		for(int it = 0; it < ntype; it++)
-		{
-			for (int ia = 0; ia < atoms[it].na; ia++)
-			{
+        for(int it = 0; it < ntype; it++)
+        {
+            for (int ia = 0; ia < atoms[it].na; ia++)
+            {
                 ofs << std::setw(5) << atoms[it].label;
                 ofs << " " << std::setw(18) << atoms[it].vel[ia].x;
                 ofs << " " << std::setw(18) << atoms[it].vel[ia].y;
                 ofs << " " << std::setw(18) << atoms[it].vel[ia].z;
                 ofs << std::endl;
-			}
-		}
+            }
+        }
         ofs << std::endl;
         ofs << std::setprecision(6); // return to 6, as original
 

@@ -1,4 +1,7 @@
-etotref -146.7749964274117
-etotperatomref -146.7749964274
+etotref -146.1249994660216
+etotperatomref -146.1249994660
 ComparePot1_pass 0
+pointgroupref O_h
+spacegroupref O_h
+nksibzref 2
 totaltimeref 1.39

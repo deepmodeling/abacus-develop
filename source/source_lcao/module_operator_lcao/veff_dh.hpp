@@ -3,9 +3,9 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_estate/module_pot/pot_xc_fdm.h"
-#include "source_lcao/module_gint/gint_dvlocal.h"
-#include "source_lcao/module_gint/gint_interface.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_gint/gint_dvlocal.h"
+#include "source_hamilt/module_gint/gint_interface.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "veff_lcao.h"
 #ifdef __MPI

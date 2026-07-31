@@ -103,7 +103,6 @@ bool read_atom_species(std::ifstream& ifa,
             ucell.descriptor_file = orbital_dir + ucell.orbital_fn[0];
         }
     }
-#ifdef __LCAO
     // Peize Lin add 2016-09-23
     // Read the ABFS/JLE orbital filenames (used by LCAO EXX) into the UnitCell.
     // The EXX layer copies these into the global Exx_Info during its own setup, so
@@ -126,7 +125,6 @@ bool read_atom_species(std::ifstream& ifa,
             ucell.jle_orbital_files.push_back(ofile);
         }
     }
-#endif // __LCAO
     return true;
 }
 

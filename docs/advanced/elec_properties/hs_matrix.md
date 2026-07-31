@@ -2,7 +2,7 @@
 
 In ABACUS, we provide the option to write the Hamiltonian and Overlap matrices to files after SCF calculations.
 
-For periodic systems, there are two ways to construct the matrices, the first is to write the entire square matrices for each $k$ point in the Brillouin zone, namely $H(k)$ and $S(k)$; the second one is the real space representation, $H(R)$ and $S(R)$, where R is the Bravis lattice vector. The two representations are connected by Fourier transform:
+For periodic systems, there are two ways to construct the matrices. The reciprocal-space representation writes the entire square matrices $H(k)$ and $S(k)$ for each $k$ point in the Brillouin zone. The real-space representation writes $H(R)$ and $S(R)$ indexed by the Bravais lattice vector $R$. The two representations are connected by Fourier transform:
 
 - $H(k)=\sum_R H(R)e^{-ikR}$
 
@@ -10,29 +10,76 @@ and
 
 - $S(k)=\sum_R S(R)e^{-ikR}$
 
-## out_mat_hs
+## out_hsk
 
-Users can set the keyword [out_mat_hs](../input_files/input-main.md#out_mat_hs) to true to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k point into files in the directory `OUT.${suffix}`. It is available for both gamma_only and multi-k calculations. 
+Use [out_hsk](../input_files/input-main.md#out_hsk) to print the upper triangular part of the Hamiltonian and overlap matrices for each k point into `OUT.${suffix}`. It is available for both gamma-only and multi-k calculations. The format value is:
+
+| Value | Format |
+| --- | --- |
+| `0` | Disabled |
+| `1` | Text; an optional second value controls precision, for example `out_hsk 1 12` |
+| `2` | Reserved for future binary output; not implemented |
+| `3` | Reserved for H(k)/S(k) NPZ output; not implemented |
+
+The legacy keyword `out_mat_hs 1 [precision]` remains supported as an alias for `out_hsk 1 [precision]`. If both names are present, `out_hsk` takes precedence.
 
 The $H(k)$ and $S(k)$ matrices are stored with numerical atomic orbitals as basis, and the corresponding sequence of the numerical atomic orbitals can be seen in [Basis Set](../pp_orb.md#basis-set).
 
 As for information on the k points, one may look for the `SETUP K-POINTS` section in the running log.
 
-The first number of the first line in each file gives the size of the matrix, namely, the number of atomic basis functions in the system.
+The output filenames depend on the k-point algorithm and `nspin`:
 
-The rest of the file contains the upper triangular part of the specified matrices. For multi-k calculations, the matrices are Hermitian and the matrix elements are complex; for gamma-only calculations, the matrices are symmetric and the matrix elements are real.
+| Calculation mode | `nspin` | Hamiltonian files | Overlap files |
+| --- | --- | --- | --- |
+| `gamma_only = 1` | 1 | `hk_nao.txt` | `sk_nao.txt` |
+| `gamma_only = 1` | 2 | `hks1_nao.txt`, `hks2_nao.txt` | `sk_nao.txt` |
+| `gamma_only = 0` | 1 | `hk${k}_nao.txt` | `sk${k}_nao.txt` |
+| `gamma_only = 0` | 2 | `hk${k}s1_nao.txt`, `hk${k}s2_nao.txt` | `sk${k}_nao.txt` |
+| `gamma_only = 0` | 4 | `hk${k}s4_nao.txt` | `sk${k}_nao.txt` |
 
-## out_mat_hs2
+Here `${k}` is the one-based k-point index. For `nspin = 2`, the overlap matrix is spin-independent, so only one overlap file is written for each physical k point. The gamma-only algorithm does not support `nspin = 4`; use the multi-k algorithm with an explicit Gamma-only `KPT` file for a noncollinear calculation at Gamma.
 
-The output of $H(R)$ and $S(R)$ matrices is controlled by the keyword [out_mat_hs2](../input_files/input-main.md#out_mat_hs2). This functionality is not available for gamma_only calculations. To generate such matrices for gamma only calculations, users should turn off [gamma_only](../input_files/input-main.md#gamma_only), and explicitly specify that gamma point is the only k point in the KPT file.
+When `out_app_flag` is false, `g${step}` is inserted before `_nao`, where `${step}` is the one-based ionic-step index. For example, the first spin channel at the first k point and first ionic step is written to `hk1s1g1_nao.txt`.
 
-### Output Format
+Each output block starts with a comment header containing the one-based ionic-step index, filename, `gamma only` flag, and matrix dimensions. It is followed by `Row 1`, `Row 2`, and so on. Each row contains the matrix elements from the diagonal through the upper triangle.
+
+For multi-k calculations, the matrices are Hermitian and each matrix element is written as `(real,imag)`. For gamma-only calculations, the matrices are symmetric and the matrix elements are written as real numbers.
+
+## out_hsr
+
+The output of $H(R)$ and $S(R)$ matrices is controlled by [out_hsr](../input_files/input-main.md#out_hsr). It is available for both gamma-only and multi-k LCAO calculations:
+
+| Value | Format |
+| --- | --- |
+| `0` | Disabled |
+| `1` | Text CSR; an optional second value controls precision, for example `out_hsr 1 12` |
+| `2` | Reserved for future binary output; not implemented |
+| `3` | NPZ: `hrs1_nao.npz`, `hrs2_nao.npz` when needed, and `sr_nao.npz` |
+
+The legacy keywords `out_mat_hs2 1 [precision]` and `out_hsr_npz 1` remain supported as aliases for text and NPZ output respectively. If `out_hsr` is present together with either legacy keyword, `out_hsr` takes precedence.
+
+For a multi-k calculation, the files contain the individual real-space blocks stored for the Bravais lattice vectors $R$. For a gamma-only calculation, ABACUS stores the real-space contributions in a folded representation. Both text CSR and NPZ output write this internal representation directly: all stored $R$-space contributions are summed into a single block labelled `R = (0, 0, 0)`.
+
+The folded gamma-only output is sufficient to inspect the matrix used by the gamma-only real-space container, but it does not retain the original lattice-vector resolution and cannot be used to interpolate matrices at arbitrary k points. Terms that are added only while constructing $H(k)$, rather than stored in the internal $H(R)$ container, are not guaranteed to be present. Use [out_hsk](../input_files/input-main.md#out_hsk) when the final $H(\Gamma)$ and $S(\Gamma)$ matrices are required.
+
+### Text CSR Format
 
 The H(R) and S(R) matrices are output in standard Compressed Sparse Row (CSR) format, matching the format used by `out_dmr`.
 
 For single-point SCF calculations:
-- **nspin = 1 or nspin = 4**: Two files `hrs1_nao.csr` and `srs1_nao.csr` are generated, containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively.
-- **nspin = 2**: Three files `hrs1_nao.csr`, `hrs2_nao.csr`, and `srs1_nao.csr` are created, where the first two files correspond to $H(R)$ for spin up and spin down, respectively.
+- **nspin = 1**: Two files `hrs1_nao.csr` and `sr_nao.csr` are generated, containing the Hamiltonian matrix $H(R)$ and overlap matrix $S(R)$ respectively.
+- **nspin = 2**: Three files `hrs1_nao.csr`, `hrs2_nao.csr`, and `sr_nao.csr` are created, where the first two files correspond to $H(R)$ for spin up and spin down, respectively.
+- **nspin = 4**: Multi-k calculations generate `hrs1_nao.csr` and `sr_nao.csr`. The gamma-only algorithm itself does not support `nspin = 4`.
+
+In gamma-only mode, every generated file reports one Bravais lattice vector and contains one CSR block for `0 0 0`. The header also contains:
+
+```text
+# representation: gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)
+```
+
+### NPZ Format
+
+Set `out_hsr 3` to write `hrs1_nao.npz`, `hrs2_nao.npz` when a second spin channel is present, and `sr_nao.npz`. Matrix entry names include the atom-pair indices and the three components of $R$. Multi-k calculations retain the stored $R$ blocks, while gamma-only calculations contain only matrix entry names ending in `_0_0_0`.
 
 ### File Structure
 
@@ -66,14 +113,14 @@ The CSR format stores a sparse m × n matrix M in row form using three arrays (v
 
 ### Precision Control
 
-Use `out_mat_hs2 1 12` to output with 12-digit precision (default is 8).
+Use `out_hsr 1 12` to output text CSR files with 12-digit precision (default is 8). Precision is ignored for NPZ output.
 
 For calculations involving ionic movements, the output frequency of the matrix is controlled by [out_freq_ion](../input_files/input-main.md#out_freq_ion) and [out_app_flag](../input_files/input-main.md#out_app_flag). 
 
 ## get_s
 We also offer the option of only calculating the overlap matrix without running SCF. For that purpose, in `INPUT` file we need to set the value keyword [calculation](../input_files/input-main.md#calculation) to be `get_s`.
 
-A file named `sr_nao.csr` will be generated in the working directory, which contains the overlap matrix.
+A file named `sr_nao.csr` will be generated in `OUT.${suffix}`, which contains the overlap matrix.
 
 > When `nspin` is set to 1 or 2, the dimension of the overlap matrix is nlocal $\times$ nlocal, where nlocal is the total number of numerical atomic orbitals. 
 These numerical atomic orbitals are ordered from outer to inner loop as atom, angular quantum number $l$, zeta (multiple radial orbitals corresponding to each $l$), and magnetic quantum number $m$. 
@@ -81,11 +128,11 @@ When `nspin` is set to 4, the dimension of the overlap matrix is (2 $\times$ nlo
 
 
 ## examples
-We provide [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/matrix_hs) of outputting the matrices. There are four examples:
+We provide [examples](https://github.com/deepmodeling/abacus-develop/tree/develop/examples/10_hs_matrix) of outputting the matrices.
 
-- out_hs_gammaonly: writing H(k) and S(k) for gamma-only calculation
-- out_hs_multik: writing H(k) and S(k) for multi-k calculation
-- out_hs2_multik: writing H(R) and S(R) for multi-k calculation
-- out_s_multik: running calculation=get_s to obtain overlap matrix for multi-k calculation
+- `03_out_hsk_gamma`: writing H(k) and S(k) for a gamma-only calculation
+- `04_out_hsk_multik`: writing H(k) and S(k) for a multi-k calculation
+- `01_out_hsr_multik` and `02_out_hsr_multik`: writing H(R) and S(R) for a multi-k calculation
+- `05_gets`: running `calculation = get_s` to obtain the overlap matrix
 
 Reference output files are provided in each directory.

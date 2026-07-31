@@ -63,8 +63,8 @@ bool probe_gpu_availability() {
 std::string get_device_flag(const std::string &device,
                             const std::string &basis_type) {
     // 1. Validate input string
-    if (device != "cpu" && device != "gpu" && device != "auto") {
-        ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\", \"gpu\", or \"auto\"!");
+    if (device != "cpu" && device != "gpu") {
+        ModuleBase::WARNING_QUIT("device", "Parameter \"device\" can only be set to \"cpu\" or \"gpu\"!");
     }
     
     // NOTE: This function is called only on rank 0 during input parsing.
@@ -79,15 +79,6 @@ std::string get_device_flag(const std::string &device,
             // std::cout << " INFO: 'device=gpu' specified. GPU will be used." << std::endl;
         } else {
             ModuleBase::WARNING_QUIT("device", "Device is set to 'gpu', but no available GPU was found. Please check your hardware/drivers or set 'device=cpu'.");
-        }
-    } else if (device == "auto") {
-        if (probe_gpu_availability()) {
-            result = "gpu";
-            // std::cout << " INFO: 'device=auto' specified. GPU detected and will be used." << std::endl;
-        } else {
-            result = "cpu";
-            // std::cout << " WARNING: 'device=auto' specified, but no GPU was found. Falling back to CPU." << std::endl;
-            // std::cout << "          To suppress this warning, please explicitly set 'device=cpu' in your input." << std::endl;
         }
     } else { // device == "cpu"
         result = "cpu";

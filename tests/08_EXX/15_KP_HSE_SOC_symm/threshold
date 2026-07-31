@@ -1,0 +1,13 @@
+# Loosened tolerances for this deliberately-minimal metallic EXX+SOC case.
+# The total energy is NOT bit-reproducible under MPI (np>1): the run-to-run
+# seed is non-reproducible MPI floating-point reduction order in the EXX/LibRI
+# sums, amplified by an ill-conditioned metallic SCF (ecutwfc=5, anisotropic
+# 2x2x1 k-mesh, EXX updated every step) that never reaches a stable fixed point
+# and stops mid-oscillation. Observed spread ~0.004 eV peak-to-peak; the
+# discrete symmetry/magnetic-group assertions (O_h / C_4h / nksibz=3), which are
+# the real purpose of this test, remain exact. Mirrors sibling metallic HSE
+# case 07_KP_CR_HSE. See also: np=1 is bit-identical, confirming the MPI seed.
+threshold 0.005
+force_threshold 0.01
+stress_threshold 10
+fatal_threshold 20

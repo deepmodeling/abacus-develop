@@ -9,7 +9,7 @@
 #include "source_base/timer.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <torch/script.h>
 #include <torch/torch.h>

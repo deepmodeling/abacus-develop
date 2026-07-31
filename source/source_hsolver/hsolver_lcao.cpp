@@ -33,9 +33,6 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_hsolver/parallel_k2d.h"
-#include "source_io/module_parameter/parameter.h"
-
-#include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
 
 namespace hsolver
 {
@@ -61,13 +58,13 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
             this->parakSolve_cusolver(pHamilt, psi, pes);
         }else 
     #endif
-        if (PARAM.globalv.kpar_lcao > 1
+        if (this->kpar_lcao > 1
             && (this->method == "genelpa" || this->method == "elpa" || this->method == "scalapack_gvx" || this->method == "lapack"))
         {
-            this->parakSolve(pHamilt, psi, pes, PARAM.globalv.kpar_lcao);
+            this->parakSolve(pHamilt, psi, pes, this->kpar_lcao, nspin);
         } else
     #endif
-        if (PARAM.globalv.kpar_lcao == 1)
+        if (this->kpar_lcao == 1)
         {
             /// Loop over k points for solve Hamiltonian to eigenpairs(eigenvalues and eigenvectors).
             for (int ik = 0; ik < psi.get_nk(); ++ik)
@@ -103,7 +100,9 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
         if (!skip_charge)
         {
             // compute charge density from density matrix, mohan update 20251024
-            LCAO_domain::dm2rho(dm.get_DMR_vector(), nspin, &chr);
+            // delegate to ElecStateLCAO to keep the source_lcao dependency out of
+            // source_hsolver (mirrors the pexsi branch below and the PW psiToRho path)
+            dynamic_cast<elecstate::ElecStateLCAO<TK>*>(pes)->dmToRho(dm.get_DMR_vector(), nspin, &chr);
         }
         else
         {
@@ -113,7 +112,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
     else if (this->method == "pexsi")
     {
 #ifdef __PEXSI // other purification methods should follow this routine
-        DiagoPexsi<TK> pe(ParaV);
+        DiagoPexsi<TK> pe(ParaV, nspin, this->nlocal, this->nelec);
         for (int ik = 0; ik < psi.get_nk(); ++ik)
         {
             /// update H(k) for each k point
@@ -192,7 +191,8 @@ template <typename T, typename Device>
 void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                                         psi::Psi<T>& psi,
                                         elecstate::ElecState* pes,
-                                        int kpar)
+                                        const int kpar,
+                                        const int nspin)
 {
 #ifdef __MPI
     ModuleBase::timer::start("HSolverLCAO", "parakSolve");
@@ -202,7 +202,7 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
     int nks = psi.get_nk();
     int nrow = this->ParaV->get_global_row_size();
     int nb2d = this->ParaV->get_block_size();
-    k2d.set_para_env(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, PARAM.inp.nspin);
+    k2d.set_para_env(psi.get_nk(), nrow, nb2d, GlobalV::NPROC, GlobalV::MY_RANK, nspin);
     /// set psi_pool
     const int zero = 0;
     int coord_col = k2d.get_p2D_pool()->get_coord_col();

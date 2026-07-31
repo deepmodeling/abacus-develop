@@ -1,8 +1,8 @@
 #include "esolver_fp.h"
 
-#include "source_estate/cal_ux.h"
+#include "source_cell/cal_ux.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "source_estate/read_pseudo.h"
+#include "source_cell/read_pseudo.h"
 #include "source_estate/param_update.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
@@ -35,8 +35,11 @@ ESolver_FP::~ESolver_FP()
 	delete this->pelec;
 }
 
-void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
     //! 1) read pseudopotentials
@@ -60,7 +63,7 @@ void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
     const int bndpar = PARAM.inp.bndpar;
     const double nelec = PARAM.inp.nelec;
     const double nupdown = PARAM.inp.nupdown;
-    auto atoms_info = elecstate::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec, nupdown);
+    auto atoms_info = unitcell::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec, nupdown);
     elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
 
     //! 2) setup pw_rho, pw_rhod, pw_big, sf, and read_pseudopotentials
@@ -201,7 +204,7 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     }
 
     //! set direction of magnetism, used in non-collinear case 
-    elecstate::cal_ux(ucell, PARAM.inp.nspin);
+    unitcell::cal_ux(ucell, PARAM.inp.nspin);
 
     //! output the initial charge density
     ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep,
@@ -254,8 +257,11 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
     }
 }
 
-void ESolver_FP::after_all_runners(UnitCell& ucell)
+void ESolver_FP::after_all_runners(BaseCell& basecell)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     // print out the final total energy
     GlobalV::ofs_running << "\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);

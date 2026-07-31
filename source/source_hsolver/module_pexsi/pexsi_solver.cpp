@@ -1,6 +1,5 @@
 #include "source_base/parallel_global.h"
 #ifdef __PEXSI
-#include "source_io/module_parameter/parameter.h"
 #include "pexsi_solver.h"
 
 #include <mpi.h>
@@ -44,6 +43,8 @@ void PEXSI_Solver::prepare(const int blacs_text,
                            const int nb,
                            const int nrow,
                            const int ncol,
+                           const int nlocal,
+                           const double nelec,
                            const double* h,
                            const double* s,
                            double*& _DM,
@@ -53,6 +54,8 @@ void PEXSI_Solver::prepare(const int blacs_text,
     this->nb = nb;
     this->nrow = nrow;
     this->ncol = ncol;
+    this->nlocal = nlocal;
+    this->nelec = nelec;
     this->h = const_cast<double*>(h);
     this->s = const_cast<double*>(s);
     this->DM = _DM;
@@ -78,14 +81,14 @@ int PEXSI_Solver::solve(double mu0)
                 DIAG_WORLD,
                 grid_group,
                 this->blacs_text,
-                PARAM.globalv.nlocal,
+                this->nlocal,
                 this->nb,
                 this->nrow,
                 this->ncol,
                 'c',
                 this->h,
                 this->s,
-                PARAM.inp.nelec,
+                this->nelec,
                 "PEXSIOPTION",
                 this->DM,
                 this->EDM,
