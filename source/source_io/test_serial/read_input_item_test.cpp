@@ -871,11 +871,11 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.nbands_sto, 8);
         EXPECT_EQ(param.input.esolver_type, "sdft");
 
-        it->second.str_values = {"100000"};
+        it->second.str_values = {"1000000"};
         it->second.read_value(it->second, param);
         EXPECT_NO_THROW(it->second.check_value(it->second, param));
 
-        it->second.str_values = {"100001"};
+        it->second.str_values = {"1000001"};
         it->second.read_value(it->second, param);
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");

@@ -234,15 +234,21 @@ TEST_F(InputTest, ValidateSdftStochasticBands)
     EXPECT_NO_THROW(read_parameters("sdft_all_INPUT", "esolver_type sdft\nnbands_sto all\n", all_param));
     EXPECT_EQ(all_param.inp.esolver_type, "sdft");
 
+    Parameter relaxed_limit_param;
+    EXPECT_NO_THROW(read_parameters("sdft_relaxed_limit_INPUT",
+                                    "esolver_type sdft\nnbands_sto 100001\n",
+                                    relaxed_limit_param));
+    EXPECT_EQ(relaxed_limit_param.inp.nbands_sto, 100001);
+
     expect_invalid_input("sdft_zero_INPUT",
                          "esolver_type sdft\nnbands_sto 00\n",
-                         "nbands_sto should be in the range of 1 to 100000 or be all");
+                         "nbands_sto should be in the range of 1 to 1000000 or be all");
     expect_invalid_input("ksdft_zero_INPUT",
                          "esolver_type ksdft\nnbands_sto 0\n",
-                         "nbands_sto should be in the range of 1 to 100000 or be all");
+                         "nbands_sto should be in the range of 1 to 1000000 or be all");
     expect_invalid_input("sdft_fractional_INPUT",
                          "esolver_type sdft\nnbands_sto 1.5\n",
-                         "nbands_sto should be in the range of 1 to 100000 or be all");
+                         "nbands_sto should be in the range of 1 to 1000000 or be all");
 }
 
 TEST_F(InputTest, ValidateBandParallelization)

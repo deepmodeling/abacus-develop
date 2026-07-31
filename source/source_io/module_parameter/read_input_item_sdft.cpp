@@ -38,7 +38,7 @@ void ReadInput::item_sdft()
         item.category = "Electronic structure (SDFT)";
         item.type = "Integer or string";
         item.description = R"(The number of stochastic orbitals
-* 1-100000: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
+* 1-1000000: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
 * 0: Invalid. Use all for the complete-basis SDFT mode.
 * all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.)";
         item.default_value = "256";
@@ -56,12 +56,12 @@ void ReadInput::item_sdft()
                 catch (const std::exception&)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput",
-                                             "nbands_sto should be in the range of 1 to 100000 or be all");
+                                             "nbands_sto should be in the range of 1 to 1000000 or be all");
                 }
                 if (parsed_chars != nbandsto_str.size())
                 {
                     ModuleBase::WARNING_QUIT("ReadInput",
-                                             "nbands_sto should be in the range of 1 to 100000 or be all");
+                                             "nbands_sto should be in the range of 1 to 1000000 or be all");
                 }
             }
             else
@@ -71,9 +71,9 @@ void ReadInput::item_sdft()
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const bool use_complete_basis = item.is_read() && strvalue == "all";
-            if ((!use_complete_basis && para.input.nbands_sto < 1) || para.input.nbands_sto > 100000)
+            if ((!use_complete_basis && para.input.nbands_sto < 1) || para.input.nbands_sto > 1000000)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 1 to 100000 or be all");
+                ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 1 to 1000000 or be all");
             }
         };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
