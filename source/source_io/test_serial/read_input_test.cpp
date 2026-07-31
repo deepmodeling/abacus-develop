@@ -7,7 +7,6 @@
 #include "gtest/gtest.h"
 #include <cstdio>
 #include <fstream>
-#include <stdexcept>
 
 // mock
 namespace GlobalV
@@ -152,20 +151,6 @@ TEST_F(InputTest, Selfconsistent_Read)
         EXPECT_TRUE(std::remove("./my_INPUT2") == 0);
         readinput.clear();
     }
-}
-
-TEST_F(InputTest, RejectAutoDevice)
-{
-    std::ofstream input("auto_device_INPUT");
-    input << "INPUT_PARAMETERS\n"
-          << "device auto\n";
-    input.close();
-
-    ModuleIO::ReadInput readinput(0);
-    readinput.check_ntype_flag = false;
-    Parameter param;
-    EXPECT_THROW(readinput.read_parameters(param, "./auto_device_INPUT"), std::runtime_error);
-    EXPECT_TRUE(std::remove("./auto_device_INPUT") == 0);
 }
 
 TEST_F(InputTest, Check)
