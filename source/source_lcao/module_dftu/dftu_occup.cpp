@@ -30,6 +30,7 @@ void Plus_U::copy_locale(const UnitCell& ucell)
             if (Plus_U::nspin == 4)
             {
                 locale_save[iat][target_l][0][0] = locale[iat][target_l][0][0];
+                // nspin=4 locale matrix already contains all spin components interleaved
                 if(this->uom_save.size() != 0)
                 {
                     const int size = locale[iat][target_l][0][0].nr * locale[iat][target_l][0][0].nc;
@@ -43,6 +44,7 @@ void Plus_U::copy_locale(const UnitCell& ucell)
             {
                 locale_save[iat][target_l][0][0] = locale[iat][target_l][0][0];
                 locale_save[iat][target_l][0][1] = locale[iat][target_l][0][1];
+                // save locale matrix for spin=0,1 to uom_save
                 if(this->uom_save.size() != 0)
                 {
                     const int size = locale[iat][target_l][0][0].nr * locale[iat][target_l][0][0].nc;
@@ -107,13 +109,15 @@ void Plus_U::mix_locale(const UnitCell& ucell,
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-        int target_l = get_orbital_corr(T);
-        if (target_l == -1)
-            continue;
+		if (!has_correlated_orbital(T))
+		{
+			continue;
+		}
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
+            int target_l = get_orbital_corr(T);
 
             if (Plus_U::nspin == 4)
             {

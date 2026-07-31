@@ -131,6 +131,10 @@ void Plus_U::init(UnitCell& cell,
     // it:index of type of atom
     for (int it = 0; it < cell.ntype; ++it)
     {
+        if(!has_correlated_orbital(it))
+        {
+            continue;
+        }
         for (int ia = 0; ia < cell.atoms[it].na; ia++)
         {
             // ia:index of atoms of this type
@@ -139,14 +143,6 @@ void Plus_U::init(UnitCell& cell,
 
             locale[iat].resize(cell.atoms[it].nwl + 1);
             locale_save[iat].resize(cell.atoms[it].nwl + 1);
-
-            // initialize the arrry iatlnm2iwt[iat][l][n][m]
-            this->iatlnmipol2iwt[iat].resize(cell.atoms[it].nwl + 1);
-
-            if(!has_correlated_orbital(it))
-            {
-                continue;
-            }
 
             const int tlp1_npol = (get_orbital_corr(it)*2+1)*npol;
             const int tlp1 = 2 * get_orbital_corr(it) + 1;

@@ -27,10 +27,10 @@ void Plus_U::output(const UnitCell& ucell,
 
             if (L >= get_orbital_corr(T) && has_correlated_orbital(T))
             {
-                if (L != get_orbital_corr(T))
-                {
-                    continue;
-                }
+				if (L != get_orbital_corr(T)) 
+				{
+					continue;
+				}
 
                 if (!Yukawa)
                 {
@@ -97,11 +97,11 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-        if (!has_correlated_orbital(T))
-        {
-            continue;
-        }
-        const int NL = ucell.atoms[T].nwl + 1;
+		if (!has_correlated_orbital(T)) 
+		{
+			continue;
+		}
+		const int NL = ucell.atoms[T].nwl + 1;
         const int LC = get_orbital_corr(T);
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
@@ -110,10 +110,10 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != get_orbital_corr(T))
-                {
-                    continue;
-                }
+				if (l != get_orbital_corr(T)) 
+				{
+					continue;
+				}
 
                 const int N = ucell.atoms[T].l_nchi[l];
 
@@ -316,7 +316,14 @@ void Plus_U::read_occup_m(const UnitCell& ucell,
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != get_orbital_corr(T))
+				if (l != get_orbital_corr(T)) 
+				{
+					continue;
+				}
+
+                ifdftu >> word;
+
+                if (strcmp("L", word) == 0)
                 {
                     continue;
                 }
@@ -397,10 +404,10 @@ void Plus_U::local_occup_bcast(const UnitCell& ucell,
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-        if (!has_correlated_orbital(T))
-        {
-            continue;
-        }
+		if (!has_correlated_orbital(T)) 
+		{
+			continue;
+		}
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
@@ -409,10 +416,10 @@ void Plus_U::local_occup_bcast(const UnitCell& ucell,
 
             for (int l = 0; l <= ucell.atoms[T].nwl; l++)
             {
-                if (l != get_orbital_corr(T))
-                {
-                    continue;
-                }
+				if (l != get_orbital_corr(T)) 
+				{
+					continue;
+				}
 
                 for (int n = 0; n < ucell.atoms[T].l_nchi[l]; n++)
                 {
