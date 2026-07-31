@@ -39,7 +39,11 @@ cmake --install @BUILD@ 2>&1 | tee @RESULTS@/install.log
 
 @INSTALL@/bin/abacus --info | tee @RESULTS@/abacus-info.txt
 ldd @INSTALL@/bin/abacus | tee @RESULTS@/ldd.txt
-! grep -q 'not found' @RESULTS@/ldd.txt
+if grep -q 'not found' @RESULTS@/ldd.txt; then
+    echo "ERROR: unresolved dynamic dependencies" >&2
+    sed -n 's/.*not found.*/&/p' @RESULTS@/ldd.txt >&2
+    exit 1
+fi
 cp @BUILD@/CMakeCache.txt @RESULTS@/CMakeCache.txt
 
 exit 0
