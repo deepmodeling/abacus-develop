@@ -1533,8 +1533,8 @@
 - **Type**: Integer or string
 - **Availability**: *esolver_type = sdft*
 - **Description**: The number of stochastic orbitals
-  - &gt; 0: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
-  - 0: Invalid with esolver_type=sdft. Use esolver_type=ksdft for Kohn-Sham DFT.
+  - 1-100000: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
+  - 0: Invalid. Use all for the complete-basis SDFT mode.
   - all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.
 - **Default**: 256
 

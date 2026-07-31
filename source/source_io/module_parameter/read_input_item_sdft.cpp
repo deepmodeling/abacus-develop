@@ -36,8 +36,8 @@ void ReadInput::item_sdft()
         item.category = "Electronic structure (SDFT)";
         item.type = "Integer or string";
         item.description = R"(The number of stochastic orbitals
-* > 0: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
-* 0: Invalid with esolver_type=sdft. Use esolver_type=ksdft for Kohn-Sham DFT.
+* 1-100000: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
+* 0: Invalid. Use all for the complete-basis SDFT mode.
 * all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.)";
         item.default_value = "256";
         item.unit = "";
@@ -54,16 +54,10 @@ void ReadInput::item_sdft()
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nbands_sto < 0 || para.input.nbands_sto > 100000)
+            const bool use_complete_basis = item.is_read() && strvalue == "all";
+            if ((!use_complete_basis && para.input.nbands_sto < 1) || para.input.nbands_sto > 100000)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 0 to 100000");
-            }
-            if (para.input.esolver_type == "sdft" && item.is_read() && para.input.nbands_sto == 0
-                && strvalue != "all")
-            {
-                ModuleBase::WARNING_QUIT("ReadInput",
-                                         "nbands_sto=0 is incompatible with esolver_type=sdft; use "
-                                         "esolver_type=ksdft instead.");
+                ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 1 to 100000 or be all");
             }
         };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {

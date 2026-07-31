@@ -236,7 +236,10 @@ TEST_F(InputTest, ValidateSdftStochasticBands)
 
     expect_invalid_input("sdft_zero_INPUT",
                          "esolver_type sdft\nnbands_sto 00\n",
-                         "nbands_sto=0 is incompatible with esolver_type=sdft");
+                         "nbands_sto should be in the range of 1 to 100000 or be all");
+    expect_invalid_input("ksdft_zero_INPUT",
+                         "esolver_type ksdft\nnbands_sto 0\n",
+                         "nbands_sto should be in the range of 1 to 100000 or be all");
 }
 
 TEST_F(InputTest, ValidateBandParallelization)
