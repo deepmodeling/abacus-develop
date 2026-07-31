@@ -651,7 +651,7 @@
 ### bndpar
 
 - **Type**: Integer
-- **Description**: Divide all processors into bndpar groups for SDFT or the BPCG solver. bndpar must be positive, no greater than the number of MPI processes, and divide it exactly.
+- **Description**: Divide all processors into bndpar groups for SDFT or the BPCG solver. bndpar must be positive, no greater than the number of MPI processes, and kpar * bndpar must divide the number of MPI processes exactly.
 - **Default**: 1
 
 ### latname

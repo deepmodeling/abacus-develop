@@ -2,6 +2,8 @@
 #include "read_input.h"
 #include "read_input_tool.h"
 
+#include <exception>
+
 namespace ModuleIO
 {
 void ReadInput::item_sdft()
@@ -46,7 +48,21 @@ void ReadInput::item_sdft()
             std::string nbandsto_str = strvalue;
             if (nbandsto_str != "all")
             {
-                para.input.nbands_sto = std::stoi(nbandsto_str);
+                std::size_t parsed_chars = 0;
+                try
+                {
+                    para.input.nbands_sto = std::stoi(nbandsto_str, &parsed_chars);
+                }
+                catch (const std::exception&)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "nbands_sto should be in the range of 1 to 100000 or be all");
+                }
+                if (parsed_chars != nbandsto_str.size())
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "nbands_sto should be in the range of 1 to 100000 or be all");
+                }
             }
             else
             {

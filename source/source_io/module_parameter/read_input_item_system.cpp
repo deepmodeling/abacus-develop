@@ -340,7 +340,8 @@ void ReadInput::item_system()
         item.category = "System variables";
         item.type = "Integer";
         item.description = "Divide all processors into bndpar groups for SDFT or the BPCG solver. bndpar must be "
-                           "positive, no greater than the number of MPI processes, and divide it exactly.";
+                           "positive, no greater than the number of MPI processes, and kpar * bndpar must divide "
+                           "the number of MPI processes exactly.";
         item.default_value = "1";
         read_sync_int(input.bndpar);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -359,6 +360,12 @@ void ReadInput::item_system()
             if (GlobalV::NPROC % para.input.bndpar != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "The number of processors can not be divided by bndpar");
+            }
+            if (para.input.bndpar > 1
+                && (para.input.kpar <= 0 || (GlobalV::NPROC / para.input.bndpar) % para.input.kpar != 0))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "The number of processors can not be divided by kpar * bndpar");
             }
         };
         this->add_item(item);

@@ -240,6 +240,9 @@ TEST_F(InputTest, ValidateSdftStochasticBands)
     expect_invalid_input("ksdft_zero_INPUT",
                          "esolver_type ksdft\nnbands_sto 0\n",
                          "nbands_sto should be in the range of 1 to 100000 or be all");
+    expect_invalid_input("sdft_fractional_INPUT",
+                         "esolver_type sdft\nnbands_sto 1.5\n",
+                         "nbands_sto should be in the range of 1 to 100000 or be all");
 }
 
 TEST_F(InputTest, ValidateBandParallelization)
@@ -247,7 +250,7 @@ TEST_F(InputTest, ValidateBandParallelization)
     set_nproc(4);
     Parameter valid_param;
     EXPECT_NO_THROW(read_parameters("bndpar_valid_INPUT",
-                                    "esolver_type sdft\nnbands_sto all\nbndpar 2\n",
+                                    "esolver_type sdft\nnbands_sto all\nkpar 2\nbndpar 2\n",
                                     valid_param));
     EXPECT_EQ(valid_param.inp.bndpar, 2);
 
@@ -259,6 +262,9 @@ TEST_F(InputTest, ValidateBandParallelization)
     expect_invalid_input("bndpar_wrong_solver_INPUT",
                          "bndpar 2\n",
                          "bndpar > 1 requires esolver_type=sdft or ks_solver=bpcg");
+    expect_invalid_input("bndpar_kpar_not_divisible_INPUT",
+                         "esolver_type sdft\nnbands_sto all\nkpar 2\nbndpar 4\n",
+                         "The number of processors can not be divided by kpar * bndpar");
 
     set_nproc(3);
     expect_invalid_input("bndpar_not_divisible_INPUT",
