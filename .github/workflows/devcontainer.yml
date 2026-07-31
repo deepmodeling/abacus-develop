@@ -1,13 +1,20 @@
 name: Container
 
 on:
-  create:
   push:
     branches:
       - develop
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: container-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref == 'refs/heads/develop' }}
 
 defaults:
   run:
@@ -15,41 +22,46 @@ defaults:
 
 jobs:
   build_container_and_push:
+    name: Build and push (${{ matrix.dockerfile }})
     runs-on: X64
-    if: github.repository_owner == 'deepmodeling'
+
+    if: >-
+      github.repository == 'deepmodeling/abacus-develop' &&
+      (github.ref == 'refs/heads/develop' ||
+       startsWith(github.ref, 'refs/tags/v'))
+
     strategy:
       matrix:
-        dockerfile: ["gnu","intel","cuda"]
-    steps:
-      - name: Force Clean Workspace
-        run: |
-          sudo chattr -i -R ${{ github.workspace }} 2>/dev/null || true
-          sudo chown -R $USER:$USER ${{ github.workspace }}
-          sudo find ${{ github.workspace }} -mindepth 1 -delete
-        
-      - name: Checkout
-        uses: actions/checkout@v7
+        dockerfile:
+          - gnu
+          - intel
+          - cuda
 
-      - name: Docker meta
+    steps:
+      - name: Configure Docker client
+        run: |
+          config_dir="${RUNNER_TEMP}/docker-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.dockerfile }}"
+          mkdir -p "${config_dir}"
+          echo "DOCKER_CONFIG=${config_dir}" >> "${GITHUB_ENV}"
+
+      - name: Docker metadata
         id: meta
         uses: docker/metadata-action@v6
         with:
           images: |
             ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}
             dp-harbor-registry.us-east-1.cr.aliyuncs.com/deepmodeling/abacus-${{ matrix.dockerfile }}
+          flavor: |
+            latest=false
           tags: |
-            type=semver,pattern={{version}},enable=${{ github.ref_type == 'tag' }}
+            type=semver,pattern={{version}},value=${{ github.ref_name }},enable=${{ github.ref_type == 'tag' }}
             type=raw,value=latest
-
-      - name: Fix Docker Directory Permissions
-        run: |
-          sudo mkdir -p /home/runner/.docker
-          sudo chown -R $USER:$USER /home/runner/.docker
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v4
 
       - name: Login to GitHub Container Registry
+        if: github.event_name != 'workflow_dispatch'
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
@@ -57,19 +69,22 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Login to Aliyun Registry
+        if: github.event_name != 'workflow_dispatch'
         uses: docker/login-action@v4
         with:
           registry: dp-harbor-registry.us-east-1.cr.aliyuncs.com
-            # AliCloud automatically mirrors to registry.dp.tech
+          # AliCloud automatically mirrors this registry to registry.dp.tech.
           username: ${{ secrets.DP_HARBOR_USERNAME }}
           password: ${{ secrets.DP_HARBOR_PASSWORD }}
 
-      - name: Build and Push Container
+      - name: Build and push container
         uses: docker/build-push-action@v7
         with:
+          context: "{{defaultContext}}"
+          file: Dockerfile.${{ matrix.dockerfile }}
+          push: ${{ github.event_name != 'workflow_dispatch' }}
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          file: Dockerfile.${{ matrix.dockerfile }}
-          push: true
-          cache-from: type=registry,ref=ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}:latest
+          cache-from: |
+            type=registry,ref=ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}:latest
           cache-to: type=inline
