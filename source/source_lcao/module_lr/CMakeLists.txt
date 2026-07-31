@@ -4,9 +4,15 @@ if(ENABLE_LCAO)
   add_subdirectory(dm_trans)
   add_subdirectory(ri_benchmark)
 
+  if(ENABLE_LIBRI)
+    add_subdirectory(bse)
+  endif()
+
   list(APPEND objects
     utils/lr_util.cpp
     utils/lr_util_hcontainer.cpp
+    utils/lr_io.cpp
+    utils/exciton_plotter.cpp
     ao_to_mo_transformer/ao_to_mo_parallel.cpp
     ao_to_mo_transformer/ao_to_mo_serial.cpp
     dm_trans/dm_trans_parallel.cpp
@@ -19,6 +25,14 @@ if(ENABLE_LCAO)
     hamilt_casida.cpp
     esolver_lrtd_lcao.cpp
     potentials/xc_kernel.cpp)
+
+  if(ENABLE_LIBRI)
+    list(APPEND objects
+      bse/esolver_bse_lcao.cpp
+      bse/hamilt_bse.cpp
+      bse/hamilt_bse_solver.cpp
+      bse/bse_util.cpp)
+  endif()
 
 add_library(
     lr

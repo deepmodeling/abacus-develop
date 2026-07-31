@@ -982,5 +982,129 @@ void ReadInput::item_lr_tddft()
         read_sync_double(input.abs_broadening);
         this->add_item(item);
     }
+    {
+        Input_Item item("bse_tda");
+        item.annotation = "whether Tamm-Dancoff Approximation is used (can be 'tda', 'full' or 'both')";
+        read_sync_string(input.bse_tda);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("bse_spin_types");
+        item.annotation = "which spin type is calculated (can be 'singlet', 'triplet', also for test 'rpa', 'ipa')";
+
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            size_t count = item.get_size();
+            auto& ist = para.input.bse_spin_types;
+            ist.clear();
+            for (int i = 0; i < count; i++) { ist.push_back(item.str_values[i]); }
+            };
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.bse_spin_types.empty()) { para.input.bse_spin_types={"singlet","triplet"}; }
+            };
+        sync_stringvec(input.bse_spin_types, para.input.bse_spin_types.size(), "singlet");
+        this->add_item(item);
+    }
+    {
+        Input_Item item("bse_mem_save");
+        item.annotation = "whether to save memory by adding V and W to BSE matrix directly";
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            if (para.input.bse_mem_save == true) { para.input.bse_continue=0; para.input.bse_ri_hartree=true; }
+            };
+        read_sync_bool(input.bse_mem_save);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("bse_ri_hartree");
+        item.annotation = "whether to use RI approximation for Hartree term in BSE";
+        read_sync_bool(input.bse_ri_hartree);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("bse_use_fine_kgrid");
+        item.annotation = "whether to use a finer k-grid for BSE";
+        read_sync_int(input.bse_use_fine_kgrid);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("bse_q_approx_mode");
+        item.annotation = "q->kpair mapping mode: 0=exact, 1=coarse q grid, 2=mixed";
+        read_sync_int(input.bse_q_approx_mode);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("bse_q_approx_threshold");
+        item.annotation = "threshold radius (Bohr^-1) for exact q mapping in mode 2";
+        read_sync_double(input.bse_q_approx_threshold);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_bse_ab");
+        item.annotation = "whether to output the AB matrix to file";
+        read_sync_bool(input.out_bse_ab);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("bse_continue");
+        item.annotation = "which step to continue from previous BSE calculation";
+        read_sync_int(input.bse_continue);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("plot_istate");
+        item.annotation = "which state of exciton to be ploted";
+        read_sync_int(input.plot_istate);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exciton_plot_type");
+        item.annotation = "exciton density plot type: average or conditional";
+        read_sync_string(input.exciton_plot_type);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exciton_plot_format");
+        item.annotation = "exciton plot format: cube, slice, or both";
+        read_sync_string(input.exciton_plot_format);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exciton_fixed_coordinate");
+        item.annotation = "fixed hole and electron Cartesian coordinates (Bohr): hx hy hz ex ey ez";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_expression(item.str_values, para.input.exciton_fixed_coordinate);
+        };
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.exciton_fixed_coordinate.size() != 6)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "exciton_fixed_coordinate should have exactly 6 values");
+            }
+        };
+        sync_doublevec(input.exciton_fixed_coordinate, 6, 0.0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exciton_slice_plane");
+        item.annotation = "cross-section plane: ab, bc, or ca";
+        read_sync_string(input.exciton_slice_plane);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exciton_slice_pos");
+        item.annotation = "offset along perpendicular direction (Bohr) for slice";
+        read_sync_double(input.exciton_slice_pos);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exciton_slice_npoints");
+        item.annotation = "grid points per dimension for slice";
+        read_sync_int(input.exciton_slice_npoints);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("exciton_slice_scale");
+        item.annotation = "scale relative to BvK supercell for slice";
+        read_sync_double(input.exciton_slice_scale);
+        this->add_item(item);
+    }
 }
 }

@@ -377,10 +377,29 @@ struct Input_para
     bool lr_unrestricted = false;               ///< whether to use the unrestricted construction for LR-TDDFT
     std::vector<double> abs_wavelen_range = {}; ///< the range of wavelength(nm) to output the absorption spectrum
     double abs_broadening = 0.01;               ///< the broadening (eta) for LR-TDDFT absorption spectrum
-    std::string abs_gauge = "length";          ///< whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT
+    std::string abs_gauge = "velocity"; ///< whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT
     std::string ri_hartree_benchmark = "none"; ///< whether to use the RI approximation for the Hartree potential in
                                                ///< LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)
-    std::vector<int> aims_nbasis = {};         ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
+    std::vector<int> aims_nbasis = {}; ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
+    std::string bse_tda = "tda"; ///< TDA type can be: "tda", "full", "both"
+    std::vector<std::string> bse_spin_types = {"singlet", "triplet"}; ///< spin types for close-shell case to be calculated
+    bool bse_mem_save = false;    ///< whether to save memory by adding V and W to BSE matrix directly
+    bool bse_ri_hartree = true; ///< whether to use RI approximation for Hartree term in BSE
+    int bse_use_fine_kgrid = 0; ///< 0: coarse k-grid; 1: uniform fine k-grid; 2: non-uniform fine k-grid
+    int bse_q_approx_mode = 0;   ///< q→kpair mapping mode: 0=exact, 1=coarse q grid, 2=mixed
+    double bse_q_approx_threshold = 0.1; ///< threshold radius (Bohr^-1) for exact q in mode 2
+    bool out_bse_ab = false;    ///< whether to output the AB matrix to file
+    int bse_continue = 0; ///< which step to continue from previous BSE calculation
+                          ///< 0: new; 1: continue from A_V; 2: A_V and A_W; 3: A_V, A_W and B_V; 4: A_V, A_W, B_V and B_W
+    int plot_istate = 0; ///< the index of excited state to be plotted (starting from 0)
+    std::string exciton_plot_type = "average"; ///< exciton density plot type: "average" or "conditional"
+    std::string exciton_plot_format = "cube"; ///< exciton plot format: "cube", "slice", or "both"
+    std::vector<double> exciton_fixed_coordinate = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; ///< fixed hole and electron coordinates (Bohr): hx hy hz ex ey ez
+    std::string exciton_slice_plane = "ab"; ///< cross-section plane for conditional density: "ab", "bc", "ca"
+    double exciton_slice_pos = 0.0; ///< offset along perpendicular direction (Bohr) for slice
+    int exciton_slice_npoints = 200; ///< grid points per dimension for slice
+    double exciton_slice_scale = 1.3; ///< scale relative to BvK supercell for slice
+
     // ==============   #Parameters (11.Output) ===========================
     int out_stru = 1;                         ///< output stru file each ion step
                                               ///< 0: no output, 1: STRU format, 2: CIF format
@@ -445,13 +464,15 @@ struct Input_para
     std::vector<int> cal_symm_repr = {0, 3}; ///< output the symmetry representation matrix
     bool restart_save = false;               ///< restart //Peize Lin add 2020-04-04
     bool rpa = false;                        ///< rpa calculation
+    bool rpa_out_vel = false;                ///< whether to output velocity matrix for librpa
+    std::string rpa_outdir = "./OUT.librpa/";///< output directory for librpa
     std::vector<int> out_pchg = {};          ///< specify the bands to be calculated for partial charge
     std::vector<int> out_wfc_norm = {};      ///< specify the bands to be calculated for norm of wfc
     std::vector<int> out_wfc_re_im = {};     ///< specify the bands to be calculated for real and imaginary parts of wfc
-    bool if_separate_k = false;              ///< whether to write partial charge for all k-points to individual files or merge them
-    std::vector<int> out_elf = {0, 3};       ///< output the electron localization function (ELF). 0: no; 1: yes
-    int out_spillage = 0;                    ///< output the spillage of the wave function
-    std::string spillage_outdir = "./";      ///< output directory for spillage
+    bool if_separate_k = false; ///< whether to write partial charge for all k-points to individual files or merge them
+    std::vector<int> out_elf = {0, 3}; ///< output the electron localization function (ELF). 0: no; 1: yes
+    int out_spillage = 0;       ///< output the spillage of the wave function
+    std::string spillage_outdir = "./"; ///< output directory for spillage
 
     // ==============   #Parameters (12.Postprocess) ===========================
     double dos_emin_ev = -15.0;

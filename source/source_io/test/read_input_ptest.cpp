@@ -359,6 +359,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.omc, 0);
     EXPECT_FALSE(param.inp.dft_plus_dmft);
     EXPECT_FALSE(param.inp.rpa);
+    EXPECT_FALSE(param.inp.rpa_out_vel);
+    EXPECT_EQ(param.inp.rpa_outdir, "./OUT.librpa/");
     EXPECT_EQ(param.inp.imp_sol, 0);
     EXPECT_DOUBLE_EQ(param.inp.eb_k, 80.0);
     EXPECT_DOUBLE_EQ(param.inp.tau, 1.0798 * 1e-5);
@@ -454,7 +456,27 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.abs_wavelen_range.size(), 2);
     EXPECT_DOUBLE_EQ(param.inp.abs_wavelen_range[0], 0.0);
     EXPECT_DOUBLE_EQ(param.inp.abs_broadening, 0.01);
-    EXPECT_EQ(param.inp.abs_gauge, "length");
+    EXPECT_EQ(param.inp.abs_gauge, "velocity");
+    EXPECT_EQ(param.inp.bse_tda, "tda");
+    EXPECT_EQ(param.inp.bse_spin_types[0], "singlet");
+    EXPECT_EQ(param.inp.bse_spin_types[1], "triplet");
+    EXPECT_FALSE(param.inp.bse_mem_save);
+    EXPECT_TRUE(param.inp.bse_ri_hartree);
+    EXPECT_EQ(param.inp.bse_use_fine_kgrid, 0);
+    EXPECT_FALSE(param.inp.out_bse_ab);
+    EXPECT_EQ(param.inp.bse_continue, 0);
+    EXPECT_EQ(param.inp.plot_istate, 0);
+    EXPECT_EQ(param.inp.exciton_plot_type, "average");
+    EXPECT_EQ(param.inp.exciton_plot_format, "cube");
+    ASSERT_EQ(param.inp.exciton_fixed_coordinate.size(), 6);
+    for (const double coordinate : param.inp.exciton_fixed_coordinate)
+    {
+        EXPECT_DOUBLE_EQ(coordinate, 0.0);
+    }
+    EXPECT_EQ(param.inp.exciton_slice_plane, "ab");
+    EXPECT_DOUBLE_EQ(param.inp.exciton_slice_pos, 0.0);
+    EXPECT_EQ(param.inp.exciton_slice_npoints, 200);
+    EXPECT_DOUBLE_EQ(param.inp.exciton_slice_scale, 1.3);
     EXPECT_EQ(param.inp.rdmft, 0);
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
 }

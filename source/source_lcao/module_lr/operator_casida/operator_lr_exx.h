@@ -7,7 +7,7 @@
 namespace LR
 {
 
-    /// @brief  Hxc part of A operator
+    /// @brief  Exx part of A operator
     template<typename T = double>
     class OperatorLREXX : public hamilt::Operator<T, base_device::DEVICE_CPU>
     {
@@ -30,19 +30,19 @@ namespace LR
             const Parallel_2D& pX_in,
             const Parallel_2D& pc_in,
             const Parallel_Orbitals& pmat_in,
-            const double& alpha = 1.0,
-            const std::vector<int>& aims_nbasis = {})
+            const double& alpha = 1.0)
             : nspin(nspin), naos(naos), nocc(nocc), nvirt(nvirt), nk(kv_in.get_nks() / nspin),
             psi_ks(psi_ks_in), DM_trans(DM_trans_in), exx_lri(exx_lri_in), kv(kv_in),
-            pX(pX_in), pc(pc_in), pmat(pmat_in), ucell(ucell_in), alpha(alpha),
-            aims_nbasis(aims_nbasis)
+            pX(pX_in), pc(pc_in), pmat(pmat_in), ucell(ucell_in), alpha(alpha)
         {
             ModuleBase::TITLE("OperatorLREXX", "OperatorLREXX");
+            std::cout<<"Initializing OperatorLREXX"<<std::endl;
             this->cal_type = hamilt::calculation_type::lcao_exx;
             this->is_first_node = false;
 
             // reduce psi_ks for later use
             this->psi_ks_full.resize(this->nk, nocc + nvirt, this->naos);
+            this->psi_ks_full.zero_out();
             for (int ik = 0;ik < nk;++ik)
             {
                 LR_Util::gather_2d_to_full(this->pc, &this->psi_ks(ik, 0, 0), &this->psi_ks_full(ik, 0, 0), false, this->naos, nocc + nvirt);
@@ -80,13 +80,12 @@ namespace LR
         /// ground state wavefunction
         const psi::Psi<T>& psi_ks = nullptr;
         psi::Psi<T> psi_ks_full;
-        const std::vector<int> aims_nbasis={};    ///< number of basis functions for each type of atom in FHI-aims
 
         /// transition density matrix 
         std::unique_ptr<elecstate::DensityMatrix<T, T>>& DM_trans;
 
         /// density matrix of a certain (i, a, k), with full naos*naos size for each key
-        /// D^{iak}_{\mu\nu}(k): 1/N_k * c^*_{ak,\mu} c_{ik,\nu}
+        /// D^{iak}_{\mu\nu}(k): 1/N_k * c_{ak,\mu} c^*_{ik,\nu}
         /// D^{iak}_{\mu\nu}(R): D^{iak}_{\mu\nu}(k)e^{-ikR}
         // elecstate::DensityMatrix<T, double>* DM_onebase;
         mutable std::map<TA, std::map<TAC, RI::Tensor<T>>> Ds_onebase;
@@ -109,7 +108,6 @@ namespace LR
         const Parallel_2D& pc;
         const Parallel_2D& pX;
         const Parallel_Orbitals& pmat;
-
 
         // allocate Ds_onebase
         void allocate_Ds_onebase();

@@ -69,11 +69,11 @@ namespace LR
         ModuleBase::matrix eig_ks;///< energy of ground state
 
         /// @brief Excited state wavefunction (locc, lvirt are local size of nocc and nvirt in each process)
-        /// size of X: [neq][{nstate, nloc_per_band}], namely:
+        /// size of X: [neq][{nstate, nloc_per_state}], namely:
         /// - [nspin][{nstates, nk* (locc* lvirt}] for close- shell,
         /// -  [1][{nstates, nk * (locc[0] * lvirt[0]) + nk * (locc[1] * lvirt[1])}] for open-shell
         std::vector<ct::Tensor> X;
-        int nloc_per_band = 1;
+        int nloc_per_state = 1;
 
         std::vector<int> nocc;   ///< number of occupied orbitals for each spin used in the calculation
         int nocc_in = 1;    ///< nocc read from input (adjusted by nelec): max(spin-up, spindown)
@@ -109,16 +109,21 @@ namespace LR
 
         TwoCenterBundle two_center_bundle_;
 
+        LCAO_Orbitals orb_; ///< numerical atomic orbital data for single-point evaluation
+        std::vector<std::complex<double>> velocity_mo; ///< store the velocity matrix elements in MO basis
+        int cal_nupdown_form_occ(const ModuleBase::matrix& wg);
+        void setup_2center_table(TwoCenterBundle& two_center_bundle, LCAO_Orbitals& orb, UnitCell& ucell);
+
         /// @brief allocate and set the inital value of X
         void setup_eigenvectors_X();
         void set_X_initial_guess();
 
         /// @brief read in the ground state wave function, band energy and occupation
-        void read_ks_wfc();
+        virtual void read_ks_wfc();
         /// @brief  read in the ground state charge density
         void read_ks_chg(Charge& chg);
 
-        void init_pot(const Charge& chg_gs);
+        virtual void init_pot(const Charge& chg_gs);
 
         /// @brief check the legality of the input parameters
         void parameter_check() const;

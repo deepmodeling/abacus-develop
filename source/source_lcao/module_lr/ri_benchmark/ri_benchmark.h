@@ -2,10 +2,12 @@
 #pragma once
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
-
+#include "source_lcao/module_lr/utils/lr_io.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include <RI/global/Tensor.h>
 namespace RI_Benchmark
 {
+    using TA = int;
     using TC = std::array<int, 3>;
     using TAC = std::pair<int, TC>;
 
@@ -29,9 +31,7 @@ namespace RI_Benchmark
         const psi::Psi<TK>& wfc_ks,
         const int& nocc,
         const int& nvirt,
-        const int& occ_first=false,
-        const bool& read_from_aims=false,
-        const std::vector<int>& aims_nbasis={});
+        const int& occ_first=false);
 
     /// A=CVC, sum over atom quads
     template <typename TK, typename TR>
@@ -61,16 +61,13 @@ namespace RI_Benchmark
         TK* AX,
         const double& scale = 2.0);
 
+    // 3. read/write tools    
     template<typename FPTYPE>
-    std::vector<FPTYPE> read_bands(const std::string& file, const int nocc, const int nvirt, int& ncore);
+    std::vector<FPTYPE> read_aims_ebands(const std::string& file, const int nocc, const int nvirt, int& ncore);
+
     template <typename TK>
     void read_aims_eigenvectors(psi::Psi<TK>& wfc_ks, const std::string& file, const int ncore, const int nbands, const int nbasis);
-    /// only for blocking by atom pairs
-    template <typename TR>
-    TLRI<TR> read_coulomb_mat(const std::string& file, const TLRI<TR>& Cs);
-    /// for any way of blocking
-    template <typename TR>
-    TLRI<TR> read_coulomb_mat_general(const std::string& file, const TLRI<TR>& Cs);
+
     template <typename TR>
     bool compare_Vs(const TLRI<TR>& Vs1, const TLRI<TR>& Vs2, const double thr = 1e-4);
     template <typename TR>

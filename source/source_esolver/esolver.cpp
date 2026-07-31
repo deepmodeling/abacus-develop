@@ -12,6 +12,7 @@
 #include "esolver_ks_lcao_tddft.h"
 #include "esolver_ks_lcaopw.h"
 #include "source_lcao/module_lr/esolver_lrtd_lcao.h"
+#include "source_lcao/module_lr/bse/esolver_bse_lcao.h"
 #include "source_base/module_external/blacs_connector.h"
 #endif
 #include "esolver_dp.h"
@@ -273,13 +274,27 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "lr_lcao")
     {
-        if (PARAM.globalv.gamma_only_local)
+        if (PARAM.inp.xc_kernel != "bse")
         {
-            return new LR::ESolver_LR<double, double>(inp);
+            if (PARAM.globalv.gamma_only_local)
+            {
+                return new LR::ESolver_LR<double, double>(inp);
+            }
+            else
+            {
+                return new LR::ESolver_LR<std::complex<double>, double>(inp);
+            }
         }
         else
-        {
-            return new LR::ESolver_LR<std::complex<double>, double>(inp);
+        {        
+            if (PARAM.globalv.gamma_only_local)
+            {
+                return new BSE::ESolver_BSE<double, double>(inp);
+            }
+            else
+            {
+                return new BSE::ESolver_BSE<std::complex<double>, double>(inp);
+            }
         }
     }
     else if (esolver_type == "ksdft_lr_lcao")

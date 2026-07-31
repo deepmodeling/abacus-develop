@@ -16,8 +16,10 @@
 
 #include "rpa_lri.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
+#include "source_base/global_function.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_lr/utils/spectrum_mo.hpp"
 
 #if defined(__GLIBC__)
 #include <malloc.h>
@@ -45,6 +47,7 @@ void RPA_LRI<T, Tdata>::postSCF(const UnitCell& ucell,
 {
     ModuleBase::TITLE("RPA_LRI", "postSCF");
     ModuleBase::timer::start("RPA_LRI", "postSCF");
+    ModuleBase::GlobalFunc::MAKE_DIR(outdir);
 
     this->cal_postSCF_exx(dm, mpi_comm_in, ucell, kv, orb);
     this->init(mpi_comm_in, kv, orb.cutoffs());
@@ -624,7 +627,7 @@ void RPA_LRI<T, Tdata>::out_abfs_overlap(const UnitCell& ucell,
     ss << filename << GlobalV::MY_RANK << ".txt";
 
     std::ofstream ofs;
-    ofs.open(ss.str().c_str(), std::ios::out);
+    ofs.open(outdir + ss.str().c_str(), std::ios::out);
 
     ofs << nks_tot << std::endl;
 
@@ -972,8 +975,9 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
         std::ofstream ofs;
         if (GlobalV::MY_RANK == 0)
         {
-            ofs.open(ss.str().c_str(), std::ios::out);
+            ofs.open(outdir + ss.str().c_str(), std::ios::out);
         }
+        ofs << std::fixed << std::setprecision(15);
         std::vector<ModuleBase::ComplexMatrix> is_wfc_ib_iw(npsin_tmp);
         for (int is = 0; is < npsin_tmp; is++)
         {
@@ -1009,8 +1013,8 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
             {
                 for (int is = 0; is < npsin_tmp; is++)
                 {
-                    ofs << std::setw(30) << std::fixed << std::setprecision(15) << is_wfc_ib_iw[is](ib, iw).real()
-                        << std::setw(30) << std::fixed << std::setprecision(15) << is_wfc_ib_iw[is](ib, iw).imag()
+                    ofs << std::setw(30) << is_wfc_ib_iw[is](ib, iw).real()
+                        << std::setw(30) << is_wfc_ib_iw[is](ib, iw).imag()
                         << std::endl;
                 }
             }
@@ -1035,7 +1039,8 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     std::stringstream ss;
     ss << "stru_out";
     std::ofstream ofs;
-    ofs.open(ss.str().c_str(), std::ios::out);
+    ofs.open(outdir + ss.str().c_str(), std::ios::out);
+    ofs << std::fixed << std::setprecision(9);
     ofs << lat.e11 << std::setw(15) << lat.e12 << std::setw(15) << lat.e13 << std::endl;
     ofs << lat.e21 << std::setw(15) << lat.e22 << std::setw(15) << lat.e23 << std::endl;
     ofs << lat.e31 << std::setw(15) << lat.e32 << std::setw(15) << lat.e33 << std::endl;
@@ -1059,8 +1064,7 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
                                      : ucell.atoms[it].tau[ia].y;
             const double& z = direct ? ucell.atoms[it].tau[ia].z * ucell.lat0
                                      : ucell.atoms[it].tau[ia].z;
-            ofs << std::setw(15) << std::fixed << std::setprecision(9) << x << std::setw(15) << std::fixed
-                << std::setprecision(9) << y << std::setw(15) << std::fixed << std::setprecision(9) << z
+            ofs << std::setw(15) << x << std::setw(15) << y << std::setw(15) << z
                 << std::setw(15) << 1 << std::endl;
         }
     }
@@ -1069,9 +1073,9 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
 
     for (int ik = 0; ik != nks_tot; ik++)
     {
-        ofs << std::setw(15) << std::fixed << std::setprecision(9) << p_kv->kvec_c[ik].x * TWOPI_Bohr2A << std::setw(15)
-            << std::fixed << std::setprecision(9) << p_kv->kvec_c[ik].y * TWOPI_Bohr2A << std::setw(15) << std::fixed
-            << std::setprecision(9) << p_kv->kvec_c[ik].z * TWOPI_Bohr2A << std::endl;
+        ofs << std::setw(15) << p_kv->kvec_c[ik].x * TWOPI_Bohr2A << std::setw(15)
+            << p_kv->kvec_c[ik].y * TWOPI_Bohr2A << std::setw(15)
+            << p_kv->kvec_c[ik].z * TWOPI_Bohr2A << std::endl;
     }
     // added for BZ to IBZ (actually LibRPA interface only support BZ by 2025/03/30)
     if (PARAM.inp.symmetry == "-1")
@@ -1098,7 +1102,8 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
     std::stringstream ss;
     ss << "band_out";
     std::ofstream ofs;
-    ofs.open(ss.str().c_str(), std::ios::out);
+    ofs.open(outdir + ss.str().c_str(), std::ios::out);
+    ofs << std::fixed << std::setprecision(15);
     ofs << nks_tot << std::endl;
     ofs << nspin_tmp << std::endl;
     ofs << PARAM.inp.nbands << std::endl;
@@ -1113,8 +1118,8 @@ void RPA_LRI<T, Tdata>::out_bands(const elecstate::ElecState* pelec)
             for (int ib = 0; ib != PARAM.inp.nbands; ib++)
             {
                 ofs << std::setw(5) << ib + 1 << "   " << std::setw(8) << pelec->wg(ik + is * nks_tot, ib) * nks_tot
-                    << std::setw(25) << std::fixed << std::setprecision(15) << pelec->ekb(ik + is * nks_tot, ib) / 2.0
-                    << std::setw(25) << std::fixed << std::setprecision(15)
+                    << std::setw(25) << pelec->ekb(ik + is * nks_tot, ib) / 2.0
+                    << std::setw(25)
                     << pelec->ekb(ik + is * nks_tot, ib) * ModuleBase::Ry_to_eV << std::endl;
             }
         }
@@ -1132,8 +1137,9 @@ void RPA_LRI<T, Tdata>::out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC,
     std::stringstream ss;
     ss << filename << GlobalV::MY_RANK << ".txt";
     std::ofstream ofs;
-    ofs.open(ss.str().c_str(), std::ios::out);
+    ofs.open(outdir + ss.str().c_str(), std::ios::out);
     ofs << ucell.nat << "    " << 0 << std::endl;
+    ofs << std::fixed << std::setprecision(15);
     for (auto& Ip: Cs_in)
     {
         size_t I = Ip.first;
@@ -1154,7 +1160,7 @@ void RPA_LRI<T, Tdata>::out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC,
                 {
                     for (int mu = 0; mu != tmp_Cs.shape[0]; mu++)
                     {
-                        ofs << std::setw(30) << std::fixed << std::setprecision(15) << tmp_Cs(mu, i, j) << std::endl;
+                        ofs << std::setw(30) << tmp_Cs(mu, i, j) << std::endl;
                     }
                 }
             }
@@ -1193,9 +1199,10 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
     ss << filename << GlobalV::MY_RANK << ".txt";
 
     std::ofstream ofs;
-    ofs.open(ss.str().c_str(), std::ios::out);
+    ofs.open(outdir + ss.str().c_str(), std::ios::out);
 
     ofs << nks_tot << std::endl;
+    ofs << std::fixed << std::setprecision(15);
     for (auto& Ip: Vs)
     {
         auto I = Ip.first;
@@ -1233,8 +1240,8 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
                 ofs << ik + 1 << "  " << p_kv->wk[ik] / 2.0 * PARAM.inp.nspin << std::endl;
                 for (int i = 0; i != vq_J.data->size(); i++)
                 {
-                    ofs << std::setw(25) << std::fixed << std::setprecision(15) << (*vq_J.data)[i].real()
-                        << std::setw(25) << std::fixed << std::setprecision(15) << (*vq_J.data)[i].imag() << std::endl;
+                    ofs << std::setw(25) << (*vq_J.data)[i].real()
+                        << std::setw(25) << (*vq_J.data)[i].imag() << std::endl;
                 }
             }
         }
@@ -1243,6 +1250,43 @@ void RPA_LRI<T, Tdata>::out_coulomb_k(const UnitCell& ucell,
     ModuleBase::timer::end("RPA_LRI", "out_coulomb_k");
 }
 
+template <typename T, typename Tdata>
+void RPA_LRI<T, Tdata>::out_velocity(const UnitCell &ucell,
+                                    const Grid_Driver &gd,
+                                    const TwoCenterBundle &two_center_bundle,
+                                    const Parallel_Orbitals &parav,/*nbasis×nbasis*/
+                                    const psi::Psi<T> &psi,
+                                    const elecstate::ElecState* pelec)
+{
+    ModuleBase::TITLE("DFT_RPA_interface", "out_velocity");
+    ModuleBase::timer::start("RPA_LRI", "out_velocity");
+
+    Parallel_2D parac;/*nbasis×nbands*/
+    LR_Util::setup_2d_division(parac, parav.get_block_size(), PARAM.globalv.nlocal, PARAM.inp.nbands
+        #ifdef __MPI
+            , parav.blacs_ctxt
+        #endif
+            );
+
+    const int nk = PARAM.inp.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
+    const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
+
+    // nocc and nvirt dosen't matter, their sum is actually used
+    std::vector<int> nocc(2, PARAM.inp.nbands);
+    std::vector<int> nvirt(2, 0);
+
+    std::vector<std::complex<double>> velocity_mo = LR_Util::cal_velocity_mo(ucell, gd, two_center_bundle,
+        parav, parac, *this->p_kv, psi, nk, nspin_tmp, PARAM.globalv.nlocal, nocc, nvirt);
+    if (GlobalV::MY_RANK == 0){
+        // for librpa readable
+        LR_Util::output_spectrum_mo_librpa(velocity_mo, outdir + "velocity_matrix",
+            nk, nspin_tmp, PARAM.inp.nbands, *this->p_kv);
+        // for human readable
+        // LR_Util::output_spectrum_mo(velocity_mo, PARAM.globalv.global_out_dir + "velocity_matrix_rpa.dat",
+        //     pelec->ekb.c, nk, nspin_tmp, PARAM.inp.nbands, *this->p_kv);
+    }
+    ModuleBase::timer::end("RPA_LRI", "out_velocity");
+}
 
 // template<typename Tdata>
 // void RPA_LRI<T, Tdata>::init(const MPI_Comm &mpi_comm_in)

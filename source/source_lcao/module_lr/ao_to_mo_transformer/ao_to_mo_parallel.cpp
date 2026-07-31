@@ -21,20 +21,21 @@ namespace LR
         const Parallel_2D& pmat_mo,
         double* mat_mo,
         const bool add_on,
-        const MO_TYPE type)
+        const LR_Util::MO_TYPE type)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "ao_to_mo_pblas");
+        ModuleBase::TITLE("LR", "ao_to_mo_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
         assert(pmat_ao.blacs_ctxt == pcoeff.blacs_ctxt && pmat_ao.blacs_ctxt == pmat_mo.blacs_ctxt);
         assert(pmat_mo.get_local_size() > 0);
 
         const int nks = mat_ao.size();
+        int nmo1_set, nmo2_set, imo1_set, imo2_set;
+        LR_Util::set_dim(type, nocc, nvirt, nmo1_set, nmo2_set, imo1_set, imo2_set);
+        const int nmo1 = nmo1_set;
+        const int nmo2 = nmo2_set;
+        const int imo1 = imo1_set + 1;
+        const int imo2 = imo2_set + 1;
         const int i1 = 1;
-        const int ivirt = nocc + 1;
-        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
-        const int imo1 = type == MO_TYPE::VV ? ivirt : i1;
-        const int imo2 = type == MO_TYPE::OO ? i1 : ivirt;
 
         Parallel_2D pVc;        // for intermediate Vc
         LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.blacs_ctxt);
@@ -79,20 +80,21 @@ namespace LR
         const Parallel_2D& pmat_mo,
         std::complex<double>* const mat_mo,
         const bool add_on,
-        const MO_TYPE type)
+        const LR_Util::MO_TYPE type)
     {
-        ModuleBase::TITLE("hamilt_lrtd", "cal_AX_plas");
+        ModuleBase::TITLE("LR", "ao_to_mo_pblas");
         assert(pmat_ao.comm() == pcoeff.comm() && pmat_ao.comm() == pmat_mo.comm());
         assert(pmat_ao.blacs_ctxt == pcoeff.blacs_ctxt && pmat_ao.blacs_ctxt == pmat_mo.blacs_ctxt);
         assert(pmat_mo.get_local_size() > 0);
 
         const int nks = mat_ao.size();
+        int nmo1_set, nmo2_set, imo1_set, imo2_set;
+        LR_Util::set_dim(type, nocc, nvirt, nmo1_set, nmo2_set, imo1_set, imo2_set);
+        const int nmo1 = nmo1_set;
+        const int nmo2 = nmo2_set;
+        const int imo1 = imo1_set + 1;
+        const int imo2 = imo2_set + 1;
         const int i1 = 1;
-        const int ivirt = nocc + 1;
-        const int nmo1 = type == MO_TYPE::VV ? nvirt : nocc;
-        const int nmo2 = type == MO_TYPE::OO ? nocc : nvirt;
-        const int imo1 = type == MO_TYPE::VV ? ivirt : i1;
-        const int imo2 = type == MO_TYPE::OO ? i1 : ivirt;
 
         Parallel_2D pVc;        // for intermediate Vc
         LR_Util::setup_2d_division(pVc, pmat_ao.get_block_size(), naos, nmo1, pmat_ao.blacs_ctxt);
