@@ -1161,7 +1161,7 @@
   For numerical atomic orbitals basis,
 
   - lapack: Use LAPACK to diagonalize the Hamiltonian, only used for serial version
-  - genelpa: Use GEN-ELPA to diagonalize the Hamiltonian.
+  - genelpa: Use the CPU-only GEN-ELPA interface to diagonalize the Hamiltonian.
   - scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
   - cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
   - cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.

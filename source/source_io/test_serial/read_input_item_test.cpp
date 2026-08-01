@@ -649,6 +649,14 @@ TEST_F(InputTest, Item_test)
         param.input.device = "gpu";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.ks_solver, "cusolver");
+
+        param.input.ks_solver = "genelpa";
+        param.input.basis_type = "lcao";
+        param.input.device = "gpu";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("Please use ks_solver = elpa with device = gpu"));
 #ifdef __ELPA
         param.input.towannier90 = true;
         param.input.basis_type = "lcao_in_pw";
