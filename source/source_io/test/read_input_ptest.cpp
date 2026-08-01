@@ -147,7 +147,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.ndx, 0);
     EXPECT_EQ(param.inp.ndy, 0);
     EXPECT_EQ(param.inp.ndz, 0);
-    EXPECT_EQ(param.inp.diago_proc, std::min(GlobalV::NPROC, 4));
+    EXPECT_EQ(param.inp.diago_proc, GlobalV::NPROC);
     EXPECT_EQ(param.inp.pw_diag_nmax, 50);
     EXPECT_EQ(param.inp.diago_cg_prec, 1);
     EXPECT_EQ(param.inp.pw_diag_ndim, 4);
@@ -454,6 +454,29 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.abs_gauge, "length");
     EXPECT_EQ(param.inp.rdmft, 0);
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
+}
+
+TEST_F(InputParaTest, DiagoProc)
+{
+    int rank = 0;
+    int nproc = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &nproc);
+
+    ModuleIO::ReadInput readinput(rank);
+    readinput.check_ntype_flag = false;
+    Parameter full_param;
+    readinput.read_parameters(full_param, "./support/INPUT.diago_proc_full");
+    EXPECT_EQ(full_param.inp.diago_proc, nproc);
+
+    if (nproc == 4)
+    {
+        ModuleIO::ReadInput subset_readinput(rank);
+        subset_readinput.check_ntype_flag = false;
+        Parameter subset_param;
+        subset_readinput.read_parameters(subset_param, "./support/INPUT.diago_proc_subset");
+        EXPECT_EQ(subset_param.inp.diago_proc, 2);
+    }
 }
 
 // comment out this part of tests, since Parameter is in another directory now, mohan 2025-05-18

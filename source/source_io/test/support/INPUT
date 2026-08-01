@@ -33,7 +33,7 @@ out_freq_elec                  0 #the frequency ( >= 0) of electronic iter to ou
 dft_plus_dmft                  0 #true:DFT+DMFT; false: standard DFT calcullation(default)
 rpa                            0 #true:generate output files used in rpa calculation; false:(default)
 mem_saver                      0 #Only for nscf calculations. if set to 1, then a memory saving technique will be used for many k point calculations.
-diago_proc                     4 #the number of procs used to do diagonalization
+diago_proc                     0 #the number of procs used to do diagonalization
 nbspline                       -1 #the order of B-spline basis
 soc_lambda                     1 #The fraction of averaged SOC pseudopotential is given by (1-soc_lambda)
 cal_force                      0 #if calculate the force at the end of the electronic iteration

@@ -336,6 +336,24 @@ TEST_F(InputTest, ValidateDeepksOutputFrequency)
     EXPECT_EQ(enabled_param.inp.deepks_out_freq_elec, 2);
 }
 
+TEST_F(InputTest, ValidateDiagoProc)
+{
+    set_nproc(4);
+
+    Parameter full_param;
+    EXPECT_NO_THROW(read_parameters("diago_proc_full_INPUT", "diago_proc 0\n", full_param));
+    EXPECT_EQ(full_param.inp.diago_proc, 4);
+
+    Parameter subset_param;
+    EXPECT_NO_THROW(read_parameters("diago_proc_subset_INPUT", "diago_proc 2\n", subset_param));
+    EXPECT_EQ(subset_param.inp.diago_proc, 2);
+
+    expect_invalid_input("diago_proc_negative_INPUT", "diago_proc -1\n", "diago_proc must not be negative");
+    expect_invalid_input("diago_proc_oversized_INPUT",
+                         "diago_proc 5\n",
+                         "diago_proc cannot exceed the number of MPI processes");
+}
+
 TEST_F(InputTest, Check)
 {
     ModuleIO::ReadInput readinput(0);
