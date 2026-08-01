@@ -1042,7 +1042,6 @@ class UcellTestReadStru : public ::testing::Test
       void SetUp() override
     {
         ucell->ntype = 2;
-        ucell->atom_mass.resize(ucell->ntype);
         ucell->atom_label.resize(ucell->ntype);
         ucell->pseudo_fn.resize(ucell->ntype);
         ucell->pseudo_type.resize(ucell->ntype);

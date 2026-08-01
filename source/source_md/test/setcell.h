@@ -28,9 +28,8 @@ class Setcell
         ucell.atoms = new Atom[ucell.ntype];
         ucell.set_atom_flag = true;
         
-        ucell.atom_mass.resize(ucell.ntype);
         ucell.atom_label.resize(ucell.ntype);
-        ucell.atom_mass[0] = 39.948;
+        ucell.atoms[0].mass = 39.948;
         ucell.atom_label[0] = "Ar";
 
         ucell.lat0 = 1;
@@ -63,7 +62,6 @@ class Setcell
         ucell.atoms[0].taud.resize(4);
         ucell.atoms[0].vel.resize(4);
         ucell.atoms[0].mbl.resize(4);
-        ucell.atoms[0].mass = ucell.atom_mass[0];
 
         ucell.atoms[0].angle1.resize(4);
         ucell.atoms[0].angle2.resize(4);

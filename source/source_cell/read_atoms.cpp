@@ -72,7 +72,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
 
             if (na > 0)
             {
-                unitcell::allocate_atom_properties(ucell.atoms[it], na, ucell.atom_mass[it]);
+                unitcell::allocate_atom_properties(ucell.atoms[it], na);
                 for (int ia = 0;ia < na; ia++)
                 {
                  // modify the reading of frozen ions and velocities  -- Yuanbo Li 2021/8/20

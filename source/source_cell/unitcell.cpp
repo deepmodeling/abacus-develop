@@ -117,7 +117,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
     bool ok3 = true; // for sep potential in DFT-1/2
 
     // (3) read in atom information
-    this->atom_mass.resize(ntype);
     this->atom_label.resize(ntype);
     this->pseudo_fn.resize(ntype);
     this->pseudo_type.resize(ntype);

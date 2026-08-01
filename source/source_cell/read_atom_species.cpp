@@ -34,7 +34,7 @@ bool read_atom_species(std::ifstream& ifa,
             std::getline(ifa, one_line);
             std::stringstream ss;
             ss << one_line;
-            ss >> ucell.atom_label[i] >> ucell.atom_mass[i];
+            ss >> ucell.atom_label[i] >> ucell.atoms[i].mass;
             ucell.pseudo_fn[i] = "auto";
             ucell.pseudo_type[i] = "auto";
 

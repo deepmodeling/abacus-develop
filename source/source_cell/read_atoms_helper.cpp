@@ -48,7 +48,7 @@ bool validate_coordinate_system(const std::string& Coordinate,
     return true;
 }
 
-void allocate_atom_properties(Atom& atom, int na, double mass)
+void allocate_atom_properties(Atom& atom, int na)
 {
     atom.tau.resize(na, ModuleBase::Vector3<double>(0,0,0));
     atom.dis.resize(na, ModuleBase::Vector3<double>(0,0,0));
@@ -62,7 +62,6 @@ void allocate_atom_properties(Atom& atom, int na, double mass)
     atom.m_loc_.resize(na, ModuleBase::Vector3<double>(0,0,0));
     atom.lambda.resize(na, ModuleBase::Vector3<double>(0,0,0));
     atom.constrain.resize(na, ModuleBase::Vector3<int>(0,0,0));
-    atom.mass = mass;
 }
 
 void set_atom_movement_flags(Atom& atom, int ia,
