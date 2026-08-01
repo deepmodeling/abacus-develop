@@ -46,6 +46,7 @@ list(APPEND cell_simple_srcs
     ../read_orb.cpp
     ../sep.cpp
     ../sep_cell.cpp
+    ../cell_tools.cpp
 )
 
 add_library(cell_info OBJECT ${cell_simple_srcs})
