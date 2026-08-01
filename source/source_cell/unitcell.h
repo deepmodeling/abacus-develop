@@ -184,12 +184,6 @@ class UnitCell : public AtomProvider, public BaseCell {
                + double(R.z) * a3 - get_tau(iat1);
     }
 
-    /// @brief LiuXh add 20180515
-    ModuleBase::Matrix3 G0;
-    ModuleBase::Matrix3 GT0;
-    ModuleBase::Matrix3 GGT0;
-    ModuleBase::Matrix3 invGGT0;
-
     /// @todo Encapsulate ionic_position_updated and cell_parameter_updated with
     /// setters that enforce state invariants; currently exposed as mutable
     /// flags that can be toggled from anywhere.

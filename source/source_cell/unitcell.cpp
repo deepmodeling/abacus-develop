@@ -330,12 +330,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
     this->GGT = G * GT;
     this->invGGT = GGT.Inverse();
 
-    // LiuXh add 20180515
-    this->GT0 = latvec.Inverse();
-    this->G0 = GT.Transpose();
-    this->GGT0 = G * GT;
-    this->invGGT0 = GGT.Inverse();
-
     log << std::endl;
     output::printM3(log,
                     "Lattice vectors: (Cartesian coordinate: in unit of a_0)",

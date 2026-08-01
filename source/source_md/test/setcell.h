@@ -90,11 +90,6 @@ class Setcell
         ucell.GGT = ucell.G * ucell.GT;
         ucell.invGGT = ucell.GGT.Inverse();
 
-        ucell.GT0 = ucell.latvec.Inverse();
-        ucell.G0 = ucell.GT.Transpose();
-        ucell.GGT0 = ucell.G * ucell.GT;
-        ucell.invGGT0 = ucell.GGT.Inverse();
-
         ucell.set_iat2itia();
     };
 
