@@ -236,21 +236,11 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 
     elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
 
-    Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
-
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    const int nspin = PARAM.inp.nspin;
+    if (PARAM.inp.init_chg == "file")
     {
-        if (PARAM.inp.init_chg != "file")
-        {
-            for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
-            {
-                // Here we initialize rho to be uniform,
-                // because the rho got by pot.init_pot -> Charge::atomic_rho may contain minus elements.
-                this->chr.rho[is][ibs] = this->nelec_[is] / ucell.omega;
-                this->pphi_[is][ibs] = sqrt(this->chr.rho[is][ibs]);
-            }
-        }
-        else
+        Symmetry_rho::symmetrize_rho(nspin, this->chr, this->pw_rho, ucell.symm);
+        for (int is = 0; is < nspin; ++is)
         {
             for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
             {
@@ -258,8 +248,22 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
             }
         }
     }
+    else
+    {
+        // Non-file densities are replaced with a uniform density, so
+        // symmetrizing them would only add an unnecessary FFT round trip.
+        for (int is = 0; is < nspin; ++is)
+        {
+            for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
+            {
+                // The density from pot.init_pot -> Charge::atomic_rho may contain negative elements.
+                this->chr.rho[is][ibs] = this->nelec_[is] / ucell.omega;
+                this->pphi_[is][ibs] = sqrt(this->chr.rho[is][ibs]);
+            }
+        }
+    }
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < nspin; ++is)
     {
         this->pelec->eferm.set_efval(is, 0);
         this->theta_[is] = 0.;
@@ -267,7 +271,7 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         ModuleBase::GlobalFunc::ZEROS(this->pdEdphi_[is], this->pw_rho->nrxx);
         ModuleBase::GlobalFunc::ZEROS(this->pdirect_[is], this->pw_rho->nrxx);
     }
-    if (PARAM.inp.nspin == 1)
+    if (nspin == 1)
     {
         this->theta_[0] = 0.2;
     }
