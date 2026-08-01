@@ -39,4 +39,55 @@ namespace unitcell
         }
         return lnchiCounts;
     }
+
+    std::vector<ModuleBase::Vector3<double>> get_target_mag(const Atom* atoms,
+                                                            const int ntype,
+                                                            const int nat)
+    {
+        std::vector<ModuleBase::Vector3<double>> target_mag(nat);
+        int iat = 0;
+        for (int it = 0; it < ntype; it++)
+        {
+            for (int ia = 0; ia < atoms[it].na; ia++)
+            {
+                target_mag[iat] = atoms[it].m_loc_[ia];
+                ++iat;
+            }
+        }
+        return target_mag;
+    }
+
+    std::vector<ModuleBase::Vector3<double>> get_lambda(const Atom* atoms,
+                                                         const int ntype,
+                                                         const int nat)
+    {
+        std::vector<ModuleBase::Vector3<double>> lambda(nat);
+        int iat = 0;
+        for (int it = 0; it < ntype; it++)
+        {
+            for (int ia = 0; ia < atoms[it].na; ia++)
+            {
+                lambda[iat] = atoms[it].lambda[ia];
+                ++iat;
+            }
+        }
+        return lambda;
+    }
+
+    std::vector<ModuleBase::Vector3<int>> get_constrain(const Atom* atoms,
+                                                        const int ntype,
+                                                        const int nat)
+    {
+        std::vector<ModuleBase::Vector3<int>> constrain(nat);
+        int iat = 0;
+        for (int it = 0; it < ntype; it++)
+        {
+            for (int ia = 0; ia < atoms[it].na; ia++)
+            {
+                constrain[iat] = atoms[it].constrain[ia];
+                ++iat;
+            }
+        }
+        return constrain;
+    }
 }

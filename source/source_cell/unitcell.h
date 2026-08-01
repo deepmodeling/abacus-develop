@@ -264,12 +264,6 @@ class UnitCell : public AtomProvider, public BaseCell {
     std::map<int, std::map<int, int>> get_lnchi_Counts() const;
     /// these are newly added functions, the three above functions are
     /// deprecated and will be removed in the future
-    /// @brief get target magnetic moment for deltaspin
-    std::vector<ModuleBase::Vector3<double>> get_target_mag() const;
-    /// @brief get lagrange multiplier for deltaspin
-    std::vector<ModuleBase::Vector3<double>> get_lambda() const;
-    /// @brief get constrain for deltaspin
-    std::vector<ModuleBase::Vector3<int>> get_constrain() const;
 
   private:
     Kind get_kind() const override

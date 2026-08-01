@@ -90,48 +90,6 @@ std::map<int, std::map<int, int>> UnitCell::get_lnchi_Counts() const {
     return lnchiCounts;
 }
 
-std::vector<ModuleBase::Vector3<double>> UnitCell::get_target_mag() const
-{
-    std::vector<ModuleBase::Vector3<double>> target_mag(this->nat);
-    for (int it = 0; it < this->ntype; it++)
-    {
-        for (int ia = 0; ia < this->atoms[it].na; ia++)
-        {
-            int iat = itia2iat(it, ia);
-            target_mag[iat] = this->atoms[it].m_loc_[ia];
-        }
-    }
-    return target_mag;
-}
-
-std::vector<ModuleBase::Vector3<double>> UnitCell::get_lambda() const
-{
-    std::vector<ModuleBase::Vector3<double>> lambda(this->nat);
-    for (int it = 0; it < this->ntype; it++)
-    {
-        for (int ia = 0; ia < this->atoms[it].na; ia++)
-        {
-            int iat = itia2iat(it, ia);
-            lambda[iat] = this->atoms[it].lambda[ia];
-        }
-    }
-    return lambda;
-}
-
-std::vector<ModuleBase::Vector3<int>> UnitCell::get_constrain() const
-{
-    std::vector<ModuleBase::Vector3<int>> constrain(this->nat);
-    for (int it = 0; it < this->ntype; it++)
-    {
-        for (int ia = 0; ia < this->atoms[it].na; ia++)
-        {
-            int iat = itia2iat(it, ia);
-            constrain[iat] = this->atoms[it].constrain[ia];
-        }
-    }
-    return constrain;
-}
-
 //==============================================================
 // Calculate various lattice related quantities for given latvec
 //==============================================================
