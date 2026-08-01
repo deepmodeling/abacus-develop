@@ -71,7 +71,7 @@ public:
         //basic info
         this->ntype = this->elements.size();
         UnitCell* ucell = new UnitCell;
-        ucell->setup(this->latname,
+        ucell->setup_from_input(this->latname,
                 this->ntype,
                 this->lmaxmax,
                 this->init_vel,
