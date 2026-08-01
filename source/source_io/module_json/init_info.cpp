@@ -44,6 +44,28 @@ void gen_init(UnitCell* ucell)
     AbacusJson::add_json({"init", "nelectron"}, nelec_total, false);
 
     // Json::AbacusJson::add_Json(nelec_total,false,"init", "nelectron");
+
+    // energy cutoff for wavefunctions (Ry)
+    AbacusJson::add_json({"init", "ecutwfc"}, PARAM.inp.ecutwfc, false);
+    AbacusJson::add_json({"init", "ecutwfc_unit"}, "Ry", false);
+
+    // smearing method and sigma (Ry)
+    AbacusJson::add_json({"init", "smearing_method"}, PARAM.inp.smearing_method, false);
+    AbacusJson::add_json({"init", "smearing_sigma"}, PARAM.inp.smearing_sigma, false);
+    AbacusJson::add_json({"init", "smearing_sigma_unit"}, "Ry", false);
+
+    // k-point mesh generation parameters
+    AbacusJson::add_json({"init", "kmesh_type"}, PARAM.inp.kmesh_type, false);
+    Json::jsonValue kspacing_array(JarrayType);
+    kspacing_array.JPushBack(PARAM.inp.kspacing[0]);
+    kspacing_array.JPushBack(PARAM.inp.kspacing[1]);
+    kspacing_array.JPushBack(PARAM.inp.kspacing[2]);
+    AbacusJson::add_json({"init", "kspacing"}, kspacing_array, false);
+    Json::jsonValue koffset_array(JarrayType);
+    koffset_array.JPushBack(PARAM.inp.koffset[0]);
+    koffset_array.JPushBack(PARAM.inp.koffset[1]);
+    koffset_array.JPushBack(PARAM.inp.koffset[2]);
+    AbacusJson::add_json({"init", "koffset"}, koffset_array, false);
 }
 
 void add_nkstot(int nkstot)

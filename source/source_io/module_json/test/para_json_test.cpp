@@ -257,6 +257,12 @@ TEST(AbacusJsonTest, InitInfo)
     ucell.atoms = atomlist;
     ucell.ntype = 3;
     PARAM.input.nbands = 10;
+    PARAM.input.ecutwfc = 50.0;
+    PARAM.input.smearing_method = "gauss";
+    PARAM.input.smearing_sigma = 0.015;
+    PARAM.input.kspacing = {0.04, 0.04, 0.04};
+    PARAM.input.koffset = {0.0, 0.0, 0.0};
+    PARAM.input.kmesh_type = "gamma";
 
     ucell.atoms[0].label = "Si";
     ucell.atoms[0].ncpp.zv = 3;
@@ -295,6 +301,19 @@ TEST(AbacusJsonTest, InitInfo)
     ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["Si"].GetInt(), 1);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["C"].GetInt(), 2);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["O"].GetInt(), 3);
+
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["ecutwfc"].GetDouble(), 50.0);
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["ecutwfc_unit"].GetString(), "Ry");
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["smearing_method"].GetString(), "gauss");
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["smearing_sigma"].GetDouble(), 0.015);
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["smearing_sigma_unit"].GetString(), "Ry");
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["kmesh_type"].GetString(), "gamma");
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["kspacing"][0].GetDouble(), 0.04);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["kspacing"][1].GetDouble(), 0.04);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["kspacing"][2].GetDouble(), 0.04);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["koffset"][0].GetDouble(), 0.0);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["koffset"][1].GetDouble(), 0.0);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["koffset"][2].GetDouble(), 0.0);
 }
 
 TEST(AbacusJsonTest, Init_stru_test)
