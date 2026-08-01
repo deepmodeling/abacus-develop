@@ -37,6 +37,9 @@ void Forces<FPTYPE, Device>::cal_force_nl(ModuleBase::matrix& forcenl,
     const int max_nbands = wg.nc;
     for (int ik = 0; ik < nks; ik++) // loop k points
     {
+        // Ensure k-point is loaded to GPU for PAGED_GPU mode
+        const_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(psi_in)->ensure_k_on_gpu(ik);
+
         // skip zero weights to speed up
         int nbands_occ = wg.nc;
         while (wg(ik, nbands_occ - 1) == 0.0)

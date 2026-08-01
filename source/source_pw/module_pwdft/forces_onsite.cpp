@@ -32,6 +32,11 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
     const int nks = wfc_basis->nks;
     for (int ik = 0; ik < nks; ik++)
     {
+        // In PAGED_GPU mode only one k-point resides on the GPU; make sure the
+        // wavefunction of this k-point is loaded before the onsite projector
+        // reads psi_ (otherwise psi_(ik,0,0) returns a host pointer that the
+        // GPU gemm would dereference as a device pointer -> illegal access).
+        const_cast<psi::Psi<std::complex<FPTYPE>, Device>*>(psi_in)->ensure_k_on_gpu(ik);
         int nbands_occ = wg.nc;
         while (wg(ik, nbands_occ - 1) == 0.0)
         {

@@ -109,13 +109,14 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // update H(k) for each k point
             pHamilt->updateHk(ik);
 
-
+            psi.load_k_to_gpu(ik);
 
             // update psi pointer for each k point
             psi.fix_k(ik);
 
             // If using k-point continuity and not first k-point, propagate from parent
-            if (ik > 0 && count == 0 && k_parent.find(ik) != k_parent.end()) {
+            if (ik > 0 && count == 0 && k_parent.find(ik) != k_parent.end()
+                && psi.get_storage_mode() != psi::PsiStorageMode::PAGED_GPU) {
                 propagate_psi(psi, k_parent[ik], ik);
             }
 
@@ -136,6 +137,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
 
+            psi.store_k_from_gpu(ik);
+
             if (skip_charge)
             {
                 GlobalV::ofs_running << " Average iterative diagonalization steps for k-points " << ik
@@ -152,7 +155,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
             // update H(k) for each k point
             pHamilt->updateHk(ik);
 
-
+            psi.load_k_to_gpu(ik);
 
             // update psi pointer for each k point
             psi.fix_k(ik);
@@ -173,6 +176,8 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
 
             // solve eigenvector and eigenvalue for H(k)
             this->hamiltSolvePsiK(pHamilt, psi, precondition, eigenvalues.data() + ik * psi.get_nbands(), this->wfc_basis->nks);
+
+            psi.store_k_from_gpu(ik);
 
             // output iteration information and reset avg_iter
             if (skip_charge)

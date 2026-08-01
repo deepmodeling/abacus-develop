@@ -40,7 +40,33 @@ void Setup_Psi_pw::before_runner_impl(
     }
 
     if (inp.device == "gpu" || inp.precision == "single") {
+        const int nks = kv.get_nks();
+        psi::PsiStorageMode target_mode = psi::PsiStorageMode::ALL_GPU;
+        if (inp.device_memory_mode == "paged")
+        {
+            target_mode = psi::PsiStorageMode::PAGED_GPU;
+        }
+        else if (inp.device_memory_mode == "full_gpu")
+        {
+            target_mode = psi::PsiStorageMode::ALL_GPU;
+        }
+        else if (nks > 10)
+        {
+            target_mode = psi::PsiStorageMode::PAGED_GPU;
+        }
+        if (target_mode != psi::PsiStorageMode::ALL_GPU)
+        {
+            this->psi_cpu->set_storage_mode(target_mode);
+        }
+        const char* mode_str = (target_mode == psi::PsiStorageMode::PAGED_GPU) ? "PAGED_GPU" : "ALL_GPU";
+        GlobalV::ofs_running << " GPU memory mode for Psi: " << mode_str
+                             << " (nks=" << nks << ", device_memory_mode=\""
+                             << inp.device_memory_mode << "\")" << std::endl;
         this->psi_t = static_cast<void*>(new psi::Psi<T, Device>(this->psi_cpu[0]));
+        if (target_mode != psi::PsiStorageMode::ALL_GPU)
+        {
+            this->psi_cpu->set_storage_mode(psi::PsiStorageMode::ALL_GPU);
+        }
     } else {
         this->psi_t = static_cast<void*>(reinterpret_cast<psi::Psi<T, Device>*>(this->psi_cpu));
     }
@@ -178,9 +204,19 @@ template <typename T, typename Device>
 void Setup_Psi_pw::copy_d2h_impl()
 {
     auto* psi_t = this->get_psi_t<T, Device>();
-    this->castmem_d2h_impl<T, Device>(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
-                                      psi_t->get_pointer() - psi_t->get_psi_bias(),
-                                      this->psi_cpu[0].size());
+    if (psi_t->get_storage_mode() == psi::PsiStorageMode::PAGED_GPU)
+    {
+        // PAGED_GPU: full data is on CPU in psi_cpu_, just memcpy
+        const size_t total_size = sizeof(T) * psi_t->get_nk() * psi_t->get_nbands() * psi_t->get_nbasis();
+        std::memcpy(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
+                    psi_t->get_cpu_pointer(), total_size);
+    }
+    else
+    {
+        this->castmem_d2h_impl<T, Device>(this->psi_cpu[0].get_pointer() - this->psi_cpu[0].get_psi_bias(),
+                                          psi_t->get_pointer() - psi_t->get_psi_bias(),
+                                          this->psi_cpu[0].size());
+    }
 }
 
 void Setup_Psi_pw::copy_d2h()
