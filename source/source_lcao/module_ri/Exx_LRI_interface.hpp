@@ -9,6 +9,7 @@
 #include "source_io/module_output/csr_reader.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"
+#include "source_io/module_restart/restart_exx_csr.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_ri/exx_abfs-jle.h"
 

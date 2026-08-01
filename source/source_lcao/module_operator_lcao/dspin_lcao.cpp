@@ -628,8 +628,6 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
     }
 }
 
-#include "dspin_force_stress.hpp"
-
 template class hamilt::DeltaSpin<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

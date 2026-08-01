@@ -3,7 +3,6 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
-#include "source_hsolver/hsolver_lcao.h"
 
 #include "source_io/module_parameter/parameter.h"
 

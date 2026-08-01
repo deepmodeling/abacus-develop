@@ -16,7 +16,11 @@ class PSIPrepareBase
   public:
     PSIPrepareBase() = default;
     virtual ~PSIPrepareBase() = default;
-    virtual void prepare_init(const int& random_seed) = 0;
+    ///@brief prepare the wavefunction initialization
+    ///@param random_seed seed for random initialization
+    ///@param istep current ion/relax step; used to suppress repeated
+    ///       informational warnings (only printed on the first step)
+    virtual void prepare_init(const int& random_seed, const int istep) = 0;
 };
 
 } // namespace psi

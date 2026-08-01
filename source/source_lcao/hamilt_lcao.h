@@ -5,7 +5,7 @@
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_hamilt/hamilt.h"
-#include "source_lcao/hs_matrix_k.hpp"
+#include "source_hamilt/hs_matrix_k.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <memory>

@@ -16,7 +16,7 @@ list(APPEND objects
     setup_pwrho.cpp
     setup_pwwfc.cpp
     update_cell_pw.cpp
-    dftu_pw.cpp
+    setup_dftu_pw.cpp
     deltaspin_pw.cpp
     forces_nl.cpp
     forces_cc.cpp

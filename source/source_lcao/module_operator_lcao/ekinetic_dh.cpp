@@ -1,6 +1,4 @@
-#pragma once
 #include "ekinetic.h"
-#include "operator_force_stress_utils.hpp"
 #include "source_base/timer.h"
 
 namespace hamilt
@@ -161,5 +159,13 @@ void EKinetic<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
 
     ModuleBase::timer::end("EKinetic", "cal_dH");
 }
+
+// explicit member function instantiations
+template void EKinetic<OperatorLCAO<double, double>>::cal_dH(
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR);
+template void EKinetic<OperatorLCAO<std::complex<double>, double>>::cal_dH(
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR);
+template void EKinetic<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_dH(
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR);
 
 } // namespace hamilt

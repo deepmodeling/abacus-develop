@@ -1,4 +1,3 @@
-#pragma once
 #include "source_base/timer.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_pot/H_Hartree_pw.h"
@@ -523,5 +522,25 @@ void Veff<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContaine
     }
     ModuleBase::timer::end("Veff", "cal_dH");
 }
+
+// explicit member function instantiations
+template void Veff<OperatorLCAO<double, double>>::cal_dH(
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR,
+    const std::string& hellmann_feynman_type,
+    const std::vector<const hamilt::HContainer<double>*>& dmR,
+    const Charge* chg,
+    const int ispin);
+template void Veff<OperatorLCAO<std::complex<double>, double>>::cal_dH(
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR,
+    const std::string& hellmann_feynman_type,
+    const std::vector<const hamilt::HContainer<double>*>& dmR,
+    const Charge* chg,
+    const int ispin);
+template void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_dH(
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR,
+    const std::string& hellmann_feynman_type,
+    const std::vector<const hamilt::HContainer<double>*>& dmR,
+    const Charge* chg,
+    const int ispin);
 
 } // namespace hamilt

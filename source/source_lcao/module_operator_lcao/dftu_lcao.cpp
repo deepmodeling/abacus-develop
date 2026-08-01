@@ -700,8 +700,6 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(const std::vector<do
     }
 }
 
-#include "dftu_force_stress.hpp"
-
 template class hamilt::DFTU<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

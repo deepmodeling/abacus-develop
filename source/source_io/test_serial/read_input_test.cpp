@@ -68,6 +68,50 @@ void make_dir_out(const std::string& suffix,
 class InputTest : public testing::Test
 {
   protected:
+    void TearDown() override
+    {
+        set_nproc(1);
+    }
+
+    void set_nproc(const int nproc)
+    {
+        GlobalV::NPROC = nproc;
+    }
+
+    void write_input(const std::string& filename, const std::string& parameters)
+    {
+        std::ofstream input(filename.c_str());
+        input << "INPUT_PARAMETERS\n" << parameters;
+    }
+
+    void read_parameters(const std::string& filename, const std::string& parameters, Parameter& param)
+    {
+        write_input(filename, parameters);
+        ModuleIO::ReadInput readinput(0);
+        readinput.check_ntype_flag = false;
+        try
+        {
+            readinput.read_parameters(param, filename);
+        }
+        catch (...)
+        {
+            std::remove(filename.c_str());
+            throw;
+        }
+        EXPECT_EQ(std::remove(filename.c_str()), 0);
+    }
+
+    void expect_invalid_input(const std::string& filename,
+                              const std::string& parameters,
+                              const std::string& reason)
+    {
+        Parameter param;
+        testing::internal::CaptureStdout();
+        EXPECT_THROW(read_parameters(filename, parameters, param), std::runtime_error);
+        const std::string output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr(reason));
+    }
+
     bool compare_two_files(const std::string& filename1, const std::string& filename2)
     {
         std::ifstream file1(filename1.c_str());
@@ -166,6 +210,77 @@ TEST_F(InputTest, RejectAutoDevice)
     Parameter param;
     EXPECT_THROW(readinput.read_parameters(param, "./auto_device_INPUT"), std::runtime_error);
     EXPECT_TRUE(std::remove("./auto_device_INPUT") == 0);
+}
+
+TEST_F(InputTest, ValidateNoncollinearSpin)
+{
+    Parameter valid_param;
+    EXPECT_NO_THROW(read_parameters("noncolin_valid_INPUT", "noncolin 1\nnspin 4\n", valid_param));
+
+    expect_invalid_input("noncolin_missing_nspin_INPUT",
+                         "noncolin 1\n",
+                         "nspin must be 4 when noncolin or lspinorb is enabled");
+    expect_invalid_input("noncolin_invalid_nspin_INPUT",
+                         "noncolin 1\nnspin 2\n",
+                         "nspin must be 4 when noncolin or lspinorb is enabled");
+    expect_invalid_input("soc_missing_nspin_INPUT",
+                         "lspinorb 1\n",
+                         "nspin must be 4 when noncolin or lspinorb is enabled");
+}
+
+TEST_F(InputTest, ValidateSdftStochasticBands)
+{
+    Parameter all_param;
+    EXPECT_NO_THROW(read_parameters("sdft_all_INPUT", "esolver_type sdft\nnbands_sto all\n", all_param));
+    EXPECT_EQ(all_param.inp.esolver_type, "sdft");
+
+    Parameter relaxed_limit_param;
+    EXPECT_NO_THROW(read_parameters("sdft_relaxed_limit_INPUT",
+                                    "esolver_type sdft\nnbands_sto 100001\n",
+                                    relaxed_limit_param));
+    EXPECT_EQ(relaxed_limit_param.inp.nbands_sto, 100001);
+
+    expect_invalid_input("sdft_zero_INPUT",
+                         "esolver_type sdft\nnbands_sto 00\n",
+                         "nbands_sto should be in the range of 1 to 1000000 or be all");
+    expect_invalid_input("ksdft_zero_INPUT",
+                         "esolver_type ksdft\nnbands_sto 0\n",
+                         "nbands_sto should be in the range of 1 to 1000000 or be all");
+    expect_invalid_input("sdft_fractional_INPUT",
+                         "esolver_type sdft\nnbands_sto 1.5\n",
+                         "nbands_sto should be in the range of 1 to 1000000 or be all");
+}
+
+TEST_F(InputTest, ValidateBandParallelization)
+{
+    set_nproc(4);
+    Parameter valid_param;
+    EXPECT_NO_THROW(read_parameters("bndpar_valid_INPUT",
+                                    "esolver_type sdft\nnbands_sto all\nkpar 2\nbndpar 2\n",
+                                    valid_param));
+    EXPECT_EQ(valid_param.inp.bndpar, 2);
+
+    Parameter bpcg_param;
+    EXPECT_NO_THROW(read_parameters("bndpar_bpcg_INPUT", "ks_solver bpcg\nbndpar 2\n", bpcg_param));
+    EXPECT_EQ(bpcg_param.inp.bndpar, 2);
+
+    expect_invalid_input("bndpar_zero_INPUT", "bndpar 0\n", "bndpar must be greater than 0");
+    expect_invalid_input("bndpar_wrong_solver_INPUT",
+                         "bndpar 2\n",
+                         "bndpar > 1 requires esolver_type=sdft or ks_solver=bpcg");
+    expect_invalid_input("bndpar_kpar_not_divisible_INPUT",
+                         "esolver_type sdft\nnbands_sto all\nkpar 2\nbndpar 4\n",
+                         "The number of processors can not be divided by kpar * bndpar");
+
+    set_nproc(3);
+    expect_invalid_input("bndpar_not_divisible_INPUT",
+                         "esolver_type sdft\nnbands_sto all\nbndpar 2\n",
+                         "The number of processors can not be divided by bndpar");
+
+    set_nproc(1);
+    expect_invalid_input("bndpar_too_large_INPUT",
+                         "esolver_type sdft\nnbands_sto all\nbndpar 2\n",
+                         "bndpar can not exceed the number of MPI processes");
 }
 
 TEST_F(InputTest, Check)

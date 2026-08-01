@@ -88,11 +88,7 @@ TEST_F(InputTest, Item_test)
     }
     { // nspin
         auto it = find_label("nspin", readinput.input_lists);
-        param.input.nspin = 0;
-        param.input.noncolin = true;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.nspin, 4);
-
+        param.input.noncolin = false;
         param.input.nspin = 3;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -188,15 +184,9 @@ TEST_F(InputTest, Item_test)
     }
     { // bndpar
         auto it = find_label("bndpar", readinput.input_lists);
-        param.input.esolver_type = "ksdft";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.bndpar, 1);
-
         param.input.esolver_type = "sdft";
-        param.input.bndpar = 2;
-        GlobalV::NPROC = 1;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.bndpar, 1);
+        param.input.bndpar = 1;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
     }
     { // dft_plus_dmft
         auto it = find_label("dft_plus_dmft", readinput.input_lists);
@@ -871,22 +861,37 @@ TEST_F(InputTest, Item_test)
 
         it->second.str_values = {"all"};
         it->second.read_value(it->second, param);
-        it->second.reset_value(it->second, param);
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
         EXPECT_EQ(param.input.nbands_sto, 0);
         EXPECT_EQ(param.input.esolver_type, "sdft");
 
         it->second.str_values = {"8"};
         it->second.read_value(it->second, param);
-        it->second.reset_value(it->second, param);
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
         EXPECT_EQ(param.input.nbands_sto, 8);
         EXPECT_EQ(param.input.esolver_type, "sdft");
 
+        it->second.str_values = {"1000000"};
+        it->second.read_value(it->second, param);
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+
+        it->second.str_values = {"1000001"};
+        it->second.read_value(it->second, param);
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
         it->second.str_values = {"0"};
         it->second.read_value(it->second, param);
-        it->second.reset_value(it->second, param);
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
         EXPECT_EQ(param.input.nbands_sto, 0);
-        EXPECT_EQ(param.input.esolver_type, "ksdft");
+        EXPECT_EQ(param.input.esolver_type, "sdft");
 
+        it->second.str_values = {"-1"};
         param.input.nbands_sto = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");

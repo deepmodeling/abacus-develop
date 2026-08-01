@@ -9,6 +9,7 @@ endif()
 
 list(APPEND objects
     operator.cpp
+    hs_matrix_k.cpp
     module_ewald/H_Ewald_pw.cpp
     module_ewald/dnrm2.cpp
 )

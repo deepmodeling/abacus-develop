@@ -1,6 +1,5 @@
-#pragma once
 #include "nonlocal.h"
-#include "operator_force_stress_utils.h"
+#include "operator_fs_utils.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 
@@ -219,7 +218,7 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
 }
 
 template <>
-void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_IJR(const int& iat1,
+inline void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_IJR(const int& iat1,
                                                const int& iat2,
                                                const int& T0,
                                                const Parallel_Orbitals* paraV,
@@ -284,7 +283,7 @@ void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_for
 }
 
 template <>
-void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_stress_IJR(const int& iat1,
+inline void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_stress_IJR(const int& iat1,
                                                 const int& iat2,
                                                 const int& T0,
                                                 const Parallel_Orbitals* paraV,
@@ -453,5 +452,55 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_stress_IJR(const int& iat1,
         }
     }
 }
+
+// explicit member function instantiations for cal_force_stress
+template void Nonlocal<OperatorLCAO<double, double>>::cal_force_stress(
+    const bool cal_force, const bool cal_stress,
+    const HContainer<double>* dmR,
+    ModuleBase::matrix& force, ModuleBase::matrix& stress);
+template void Nonlocal<OperatorLCAO<std::complex<double>, double>>::cal_force_stress(
+    const bool cal_force, const bool cal_stress,
+    const HContainer<double>* dmR,
+    ModuleBase::matrix& force, ModuleBase::matrix& stress);
+template void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_stress(
+    const bool cal_force, const bool cal_stress,
+    const HContainer<std::complex<double>>* dmR,
+    ModuleBase::matrix& force, ModuleBase::matrix& stress);
+
+// explicit member function instantiations for cal_force_IJR (generic template)
+template void Nonlocal<OperatorLCAO<double, double>>::cal_force_IJR(
+    const int& iat1, const int& iat2, const int& T0,
+    const Parallel_Orbitals* paraV,
+    const std::unordered_map<int, std::vector<double>>& nlm1_all,
+    const std::unordered_map<int, std::vector<double>>& nlm2_all,
+    const hamilt::BaseMatrix<double>* dmR_pointer,
+    double* force1, double* force2);
+template void Nonlocal<OperatorLCAO<std::complex<double>, double>>::cal_force_IJR(
+    const int& iat1, const int& iat2, const int& T0,
+    const Parallel_Orbitals* paraV,
+    const std::unordered_map<int, std::vector<double>>& nlm1_all,
+    const std::unordered_map<int, std::vector<double>>& nlm2_all,
+    const hamilt::BaseMatrix<double>* dmR_pointer,
+    double* force1, double* force2);
+
+// explicit member function instantiations for cal_stress_IJR (generic template)
+template void Nonlocal<OperatorLCAO<double, double>>::cal_stress_IJR(
+    const int& iat1, const int& iat2, const int& T0,
+    const Parallel_Orbitals* paraV,
+    const std::unordered_map<int, std::vector<double>>& nlm1_all,
+    const std::unordered_map<int, std::vector<double>>& nlm2_all,
+    const hamilt::BaseMatrix<double>* dmR_pointer,
+    const ModuleBase::Vector3<double>& dis1,
+    const ModuleBase::Vector3<double>& dis2,
+    double* stress);
+template void Nonlocal<OperatorLCAO<std::complex<double>, double>>::cal_stress_IJR(
+    const int& iat1, const int& iat2, const int& T0,
+    const Parallel_Orbitals* paraV,
+    const std::unordered_map<int, std::vector<double>>& nlm1_all,
+    const std::unordered_map<int, std::vector<double>>& nlm2_all,
+    const hamilt::BaseMatrix<double>* dmR_pointer,
+    const ModuleBase::Vector3<double>& dis1,
+    const ModuleBase::Vector3<double>& dis2,
+    double* stress);
 
 } // namespace hamilt

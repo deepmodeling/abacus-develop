@@ -19,7 +19,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 
 #include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "source_lcao/hs_matrix_k.hpp"
+#include "source_hamilt/hs_matrix_k.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 
 

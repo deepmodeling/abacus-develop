@@ -61,7 +61,71 @@ class Nonlocal<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                           ModuleBase::matrix& force,
                           ModuleBase::matrix& stress);
 
-    // per-atom-I derivative d<phi|V^NL|phi>/dtau_I; one HContainer per atom I (size nat each)
+    /**
+ * @brief Calculate the derivative of the non-local pseudopotential Hamiltonian
+ *        with respect to atomic displacements: dH^{NL}/dτ_I
+ *
+ * For each atom I and each Cartesian direction d ∈ {0,1,2} (x,y,z),
+ * fills an HContainer matrix dhR[d][I] that stores
+ * dH^{NL}_{IJ}/dτ_I for all atom-pair blocks (I,J,R).
+ *
+ * ### Mathematical Background
+ *
+ * Kleinman-Bylander non-local pseudopotential:
+ * \f[
+ *   V^{NL}(r, r') = \sum_{I} \sum_{m,m'} \beta_{m}^{I}(r)\, D_{mm'}^{I}\, \beta_{m'}^{I}(r')
+ * \f]
+ *
+ * In LCAO basis:
+ * \f[
+ *   H_{ij}^{NL} = \sum_{m,m'} \langle \phi_i | \beta_{m}^{I} \rangle
+ *                            D_{mm'}^{I}
+ *                            \langle \beta_{m'}^{I} | \phi_j \rangle
+ * \f]
+ *
+ * ### Derivative
+ * \f[
+ * \frac{d H_{ij}^{NL}}{d \tau_I}
+ *   = \sum_{m,m'} \Bigg[
+ *       \langle \frac{d \phi_i}{d \tau_I} | \beta_{m}^{I} \rangle D_{mm'}^{I}
+ *           \langle \beta_{m'}^{I} | \phi_j \rangle
+ *     + \langle \phi_i | \frac{d \beta_{m}^{I}}{d \tau_I} \rangle D_{mm'}^{I}
+ *           \langle \beta_{m'}^{I} | \phi_j \rangle
+ *     + \langle \phi_i | \beta_{m}^{I} \rangle D_{mm'}^{I}
+ *           \langle \beta_{m'}^{I} | \frac{d \phi_j}{d \tau_I} \rangle
+ *     \Bigg]
+ * \f]
+ *
+ * ### Hellmann-Feynman relation
+ * \f[
+ *   \langle \phi | \frac{d \beta}{d \tau} \rangle
+ *     = - \langle \phi | \nabla \beta \rangle
+ *     = \langle \nabla \phi | \beta \rangle
+ * \f]
+ *
+ * ### Computational strategy
+ *
+ * Intermediate vectors per direction d:
+ * \f[
+ * tU[d] = \sum_{p_1,p_2}
+ *     \langle \nabla \phi_{I1} | \beta \rangle_{p_1, d}
+ *     \, D_{p_1, p_2} \,
+ *     \langle \beta | \phi_{I2} \rangle_{p_2}
+ * \f]
+ * \f[
+ * tV[d] = \sum_{p_1,p_2}
+ *     \langle \phi_{I1} | \beta \rangle_{p_1}
+ *     \, D_{p_1, p_2} \,
+ *     \langle \beta | \nabla \phi_{I2} \rangle_{p_2, d}
+ * \f]
+ *
+ * Distribution:
+ *   - dhR[d][I1] -= tU[d]   (orbital 1 moves)
+ *   - dhR[d][I2] -= tV[d]   (orbital 2 moves)
+ *   - dhR[d][I0] += tU[d]+tV[d]  (Hellmann-Feynman: nucleus moves)
+ *
+ * @param[out] dhR  Array of 3 vectors (x,y,z), each nat HContainer pointers.
+ */
     void cal_dH(std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR);
 
     virtual void set_HR_fixed(void*) override;
