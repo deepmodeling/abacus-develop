@@ -502,13 +502,14 @@ bool read_atom_type_header(int it, UnitCell& ucell,
     // (1) read in atom label
     // start magnetization
     //=======================================
+    const std::string label_from_species = ucell.atoms[it].label;
     ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.atoms[it].label);
 
-    if(ucell.atoms[it].label != ucell.atom_label[it])
+    if(ucell.atoms[it].label != label_from_species)
     {
         ofs_warning << " Label orders in ATOMIC_POSITIONS and ATOMIC_SPECIES sections do not match!" << std::endl;
         ofs_warning << " Label read from ATOMIC_POSITIONS is " << ucell.atoms[it].label << std::endl;
-        ofs_warning << " Label from ATOMIC_SPECIES is " << ucell.atom_label[it] << std::endl;
+        ofs_warning << " Label from ATOMIC_SPECIES is " << label_from_species << std::endl;
         return false;
     }
     ModuleBase::GlobalFunc::OUT(ofs_running, "Atom label", ucell.atoms[it].label);

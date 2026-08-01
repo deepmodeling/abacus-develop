@@ -99,7 +99,7 @@ namespace unitcell
         for(int it=0; it<ucell.ntype; it++)
         { 
             str += FmtCore::format("%s %8.4f %s %s\n", 
-                                    ucell.atom_label[it], 
+                                    ucell.atoms[it].label, 
                                     ucell.atoms[it].mass, 
                                     ucell.pseudo_fn[it], 
                                     ucell.pseudo_type[it]); 

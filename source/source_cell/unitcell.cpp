@@ -117,7 +117,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
     bool ok3 = true; // for sep potential in DFT-1/2
 
     // (3) read in atom information
-    this->atom_label.resize(ntype);
     this->pseudo_fn.resize(ntype);
     this->pseudo_type.resize(ntype);
     this->orbital_fn.resize(ntype);
@@ -165,7 +164,12 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
             //==========================
             if (dfthalf_type > 0) {
                 sep_cell.init(this->ntype);
-                ok3 = sep_cell.read_sep_potentials(ifa, pseudo_dir, GlobalV::ofs_warning, this->atom_label);
+                std::vector<std::string> atom_labels(this->ntype);
+                for (int i = 0; i < this->ntype; ++i)
+                {
+                    atom_labels[i] = this->atoms[i].label;
+                }
+                ok3 = sep_cell.read_sep_potentials(ifa, pseudo_dir, GlobalV::ofs_warning, atom_labels);
             }
             //==========================
             // call read_atom_positions

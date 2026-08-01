@@ -77,7 +77,6 @@ public:
                 this->init_vel,
                 this->fixed_axes);
     
-        ucell->atom_label.resize(ucell->ntype);
         ucell->pseudo_fn.resize(ucell->ntype);
         ucell->pseudo_type.resize(ucell->ntype);
         ucell->orbital_fn.resize(ucell->ntype);
@@ -86,7 +85,6 @@ public:
         ucell->magnet.ux_[2] = 0.0;
         for(int it=0;it<ucell->ntype;++it)
         {
-            ucell->atom_label[it] = this->elements[it];
             ucell->pseudo_fn[it] = this->pp_files[it];
             ucell->pseudo_type[it] = this->pp_types[it];
             ucell->orbital_fn[it] = this->orb_files[it];

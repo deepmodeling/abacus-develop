@@ -99,7 +99,6 @@ void gen_stru(UnitCell* ucell)
 
     // atom coordinate, mag and label
     double lat0 = ucell->lat0;
-    std::string* label = ucell->atom_label.data();
     for (int i = 0; i < ntype; i++)
     {
         ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau.data();
@@ -117,7 +116,7 @@ void gen_stru(UnitCell* ucell)
 
             // Json::AbacusJson::add_Json(ucell->atoms[i].mag[j],true,"init","mag");
 
-            std::string str = label[i];
+            std::string str = ucell->atoms[i].label;
             Json::AbacusJson::add_json({"init", "label"}, str, true);
             // Json::AbacusJson::add_Json(str,true,"init","label");
         }

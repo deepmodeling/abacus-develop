@@ -219,7 +219,6 @@ class UnitCell : public AtomProvider, public BaseCell {
 
     /// @name File lists
     /// @{
-    std::vector<std::string> atom_label;
     std::vector<std::string> pseudo_fn;
     std::vector<std::string> pseudo_type;
 

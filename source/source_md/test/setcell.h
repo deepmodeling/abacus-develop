@@ -28,9 +28,8 @@ class Setcell
         ucell.atoms = new Atom[ucell.ntype];
         ucell.set_atom_flag = true;
         
-        ucell.atom_label.resize(ucell.ntype);
         ucell.atoms[0].mass = 39.948;
-        ucell.atom_label[0] = "Ar";
+        ucell.atoms[0].label = "Ar";
 
         ucell.lat0 = 1;
         ucell.lat0_angstrom = ucell.lat0 * ModuleBase::BOHR_TO_A;

@@ -324,7 +324,6 @@ TEST(AbacusJsonTest, Init_stru_test)
     ucell.pseudo_fn.resize(1);
     ucell.orbital_fn.resize(1);
     ucell.atoms = atomlist;
-    ucell.atom_label.resize(1);
     ucell.lat0 = lat0;
 
     ModuleBase::Vector3<double> tau[2];
@@ -335,7 +334,7 @@ TEST(AbacusJsonTest, Init_stru_test)
     // fill ucell
     for (int i = 0; i < 1; i++)
     {
-        ucell.atom_label[i] = "Si";
+        ucell.atoms[i].label = "Si";
         atomlist[i].na = 2;
         atomlist[i].label = "Fe";
         ucell.pseudo_fn[i] = "si.ufp";
