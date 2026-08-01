@@ -46,8 +46,14 @@ jobs:
           nvidia-smi
           source toolchain/install/setup
           rm -rf build
-          cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON
-          cmake --build build -j4
+          # Build only for the GPU architecture of the CI runner instead of the
+          # default 7 architectures (60/70/75/80/86/89/90). The CI GPU pool is
+          # Tesla V100 (sm_70, see the nvidia-smi output above); update this if
+          # the runner GPU model changes (V100=70, A100=80, H100=90, T4=75).
+          # This cuts nvcc work by ~7x and allows safe -j.
+          cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
+            -DCMAKE_CUDA_ARCHITECTURES=70
+          cmake --build build -j "$(nproc)"
           cmake --install build
 
       - name: Module_LCAO CUDA Unittests
