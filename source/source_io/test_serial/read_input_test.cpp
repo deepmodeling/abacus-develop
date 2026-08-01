@@ -212,6 +212,29 @@ TEST_F(InputTest, RejectAutoDevice)
     EXPECT_TRUE(std::remove("./auto_device_INPUT") == 0);
 }
 
+TEST_F(InputTest, ValidateRelaxMethodVariants)
+{
+    Parameter cg_param;
+    EXPECT_NO_THROW(read_parameters("relax_cg_INPUT", "relax_method cg\n", cg_param));
+    EXPECT_EQ(cg_param.inp.relax_method, (std::vector<std::string>{"cg", "2"}));
+    EXPECT_TRUE(cg_param.inp.uses_simultaneous_relaxation());
+
+    Parameter bfgs_default_param;
+    EXPECT_NO_THROW(read_parameters("relax_bfgs_default_INPUT", "relax_method bfgs\n", bfgs_default_param));
+    EXPECT_EQ(bfgs_default_param.inp.relax_method, (std::vector<std::string>{"bfgs", "2"}));
+    EXPECT_FALSE(bfgs_default_param.inp.uses_simultaneous_relaxation());
+
+    Parameter bfgs_one_param;
+    EXPECT_NO_THROW(read_parameters("relax_bfgs_one_INPUT", "relax_method bfgs 1\n", bfgs_one_param));
+    EXPECT_EQ(bfgs_one_param.inp.relax_method, (std::vector<std::string>{"bfgs", "1"}));
+
+    expect_invalid_input("relax_bad_variant_INPUT", "relax_method cg 3\n", "the CG variant must be 1 or 2");
+    expect_invalid_input("relax_irrelevant_variant_INPUT",
+                         "relax_method sd 1\n",
+                         "relax_method sd does not accept a second value");
+    expect_invalid_input("relax_new_removed_INPUT", "relax_new 1\n", "THE PARAMETER NAME 'relax_new' IS INCORRECT");
+}
+
 TEST_F(InputTest, ValidateNoncollinearSpin)
 {
     Parameter valid_param;

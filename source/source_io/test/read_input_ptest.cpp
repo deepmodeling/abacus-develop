@@ -120,7 +120,6 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_DOUBLE_EQ(param.inp.relax_cg_thr, 0.5);
     EXPECT_EQ(param.inp.out_level, "ie");
     EXPECT_TRUE(param.globalv.out_md_control);
-    EXPECT_TRUE(param.inp.relax_new);
     EXPECT_DOUBLE_EQ(param.inp.relax_bfgs_w1, 0.01);
     EXPECT_DOUBLE_EQ(param.inp.relax_bfgs_w2, 0.5);
     EXPECT_DOUBLE_EQ(param.inp.relax_bfgs_rmax, 0.8);

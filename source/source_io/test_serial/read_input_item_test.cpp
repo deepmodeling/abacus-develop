@@ -35,6 +35,55 @@ class InputTest : public testing::Test
     }
 };
 
+TEST_F(InputTest, RelaxMethod)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    auto it = find_label("relax_method", readinput.input_lists);
+
+    it->second.str_values = {"cg"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"cg", "2"}));
+    EXPECT_TRUE(param.input.uses_simultaneous_relaxation());
+
+    it->second.str_values = {"cg", "1"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"cg", "1"}));
+    EXPECT_FALSE(param.input.uses_simultaneous_relaxation());
+
+    it->second.str_values = {"cg", "2"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"cg", "2"}));
+    EXPECT_TRUE(param.input.uses_simultaneous_relaxation());
+
+    it->second.str_values = {"bfgs"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"bfgs", "2"}));
+    EXPECT_FALSE(param.input.uses_simultaneous_relaxation());
+
+    it->second.str_values = {"bfgs", "1"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"bfgs", "1"}));
+
+    it->second.str_values = {"bfgs", "2"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"bfgs", "2"}));
+
+    for (const std::vector<std::string>& invalid : {
+             std::vector<std::string>{"cg", "3"},
+             std::vector<std::string>{"bfgs", "3"},
+             std::vector<std::string>{"sd", "1"},
+             std::vector<std::string>{"none"},
+             std::vector<std::string>{"cg", "2", "extra"}})
+    {
+        it->second.str_values = invalid;
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+    }
+
+    EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
+}
+
 TEST_F(InputTest, Item_test)
 {
     ModuleIO::ReadInput readinput(0);
@@ -738,14 +787,14 @@ TEST_F(InputTest, Item_test)
     { // fixed_axes
         auto it = find_label("fixed_axes", readinput.input_lists);
         param.input.fixed_axes = "shape";
-        param.input.relax_new = false;
+        param.input.relax_method = {"cg", "1"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         param.input.fixed_axes = "volume";
-        param.input.relax_new = false;
+        param.input.relax_method = {"cg", "1"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -754,7 +803,7 @@ TEST_F(InputTest, Item_test)
     { // fixed_ibrav
         auto it = find_label("fixed_ibrav", readinput.input_lists);
         param.input.fixed_ibrav = true;
-        param.input.relax_new = false;
+        param.input.relax_method = {"cg", "1"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -775,26 +824,6 @@ TEST_F(InputTest, Item_test)
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
-    { // relax_method
-        auto it = find_label("relax_method", readinput.input_lists);
-        param.input.relax_method[0] = "none";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
-    { //relax_new
-        auto it = find_label("relax_new", readinput.input_lists);
-        param.input.relax_new = true;
-        param.input.relax_method[0] = "cg";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.relax_new, true);
-
-        param.input.relax_new = true;
-        param.input.relax_method[0] = "none";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.relax_new, false);
     }
     { // force_thr
         auto it = find_label("force_thr", readinput.input_lists);

@@ -169,11 +169,7 @@ void UnitCell::setup(const std::string& latname_in,
         this->lat_axis_free[0] = 1;
         this->lat_axis_free[1] = 1;
         this->lat_axis_free[2] = 1;
-        // Note: fixed_axes="volume" is now supported with relax_new=false
-        // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
     } else if (fixed_axes_in == "shape") {
-        // Note: fixed_axes="shape" is now supported with relax_new=false
-        // (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
         this->lat_axis_free[0] = 1;
         this->lat_axis_free[1] = 1;
         this->lat_axis_free[2] = 1;
