@@ -33,13 +33,21 @@ namespace LR
 
         ///input: input, call, basis(LCAO), psi(ground state), elecstate
         // initialize sth. independent of the ground state
-        virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
-        virtual void runner(UnitCell& ucell, int istep) override;
-        virtual void after_all_runners(UnitCell& ucell) override;
+        virtual void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+        virtual void runner(BaseCell& basecell, int istep) override;
+        virtual void after_all_runners(BaseCell& basecell) override;
 
         virtual double cal_energy()  override { return 0.0; };
-        virtual void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override {};
-        virtual void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override {};
+        virtual void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override
+        {
+            static_cast<void>(force);
+            basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+        };
+        virtual void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override
+        {
+            static_cast<void>(stress);
+            basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+        };
 
       protected:
         const Input_para& input;

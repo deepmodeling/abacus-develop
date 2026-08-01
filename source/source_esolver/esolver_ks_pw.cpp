@@ -1,39 +1,27 @@
 #include "esolver_ks_pw.h"
 
-#include "source_cell/cal_ux.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-
 #include "source_hsolver/diago_iter_assist.h"
-#include "source_hsolver/hsolver_pw.h"
 #include "source_hsolver/diago_params.h"
-
-#include "source_hsolver/kernels/hegvd_op.h"
+#include "source_hsolver/hsolver_pw.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_pw/module_pwdft/onsite_proj.h"
-#include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/module_pwdft/vsep_pw.h"
-#include "source_pw/module_pwdft/hamilt_pw.h"
-
 #include "source_pw/module_pwdft/forces.h"
+#include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_pw/module_pwdft/stress_pw.h"
-#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
 #endif
 
-#include "source_pw/module_pwdft/setup_pot.h" // mohan add 20250929
-#include "source_estate/setup_estate_pw.h" // mohan add 20251005
-#include "source_io/module_ctrl/ctrl_output_pw.h" // mohan add 20250927
-#include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006 
-#include "source_estate/update_pot.h" // mohan add 20251016
+#include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
+#include "source_estate/setup_estate_pw.h"         // mohan add 20251005
+#include "source_hamilt/module_xc/exx_info.h"      // use GlobalC::exx_info
+#include "source_io/module_ctrl/ctrl_output_pw.h"  // mohan add 20250927
+#include "source_pw/module_pwdft/deltaspin_pw.h"   // mohan add 20250309
+#include "source_pw/module_pwdft/setup_pot.h"      // mohan add 20250929
 #include "source_pw/module_pwdft/update_cell_pw.h" // mohan add 20250309
-#include "source_pw/module_pwdft/dftu_pw.h" // mohan add 20250309
-#include "source_pw/module_pwdft/deltaspin_pw.h" // mohan add 20250309
-
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_pw/module_pwdft/setup_dftu_pw.h"  // mohan add 20250309
 
 namespace ModuleESolver
 {
@@ -72,26 +60,37 @@ ESolver_KS_PW<T, Device>::~ESolver_KS_PW()
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::allocate_hamilt(const UnitCell& ucell)
 {
-	this->p_hamilt = new hamilt::HamiltPW<T, Device>(
-			this->pelec->pot, 
-			this->pw_wfc, 
-			&this->kv, 
-			&this->ppcell, 
-			&this->dftu,
-			&ucell);
+    this->p_hamilt = new hamilt::HamiltPW<T, Device>(this->pelec->pot,
+                                                     this->pw_wfc,
+                                                     &this->kv,
+                                                     &this->ppcell,
+                                                     &this->dftu,
+                                                     &ucell);
 }
 
-
-
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ESolver_KS::before_all_runners(ucell, inp);
 
-    //! setup and allocation for pelec, potentials, etc. 
-    elecstate::setup_estate_pw(ucell, this->kv, this->sf, this->pelec, this->chr,
-      this->locpp, this->ppcell, this->vsep_cell, this->pw_wfc, this->pw_rho,
-      this->pw_rhod, this->pw_big, this->solvent, inp);
+    //! setup and allocation for pelec, potentials, etc.
+    elecstate::setup_estate_pw(ucell,
+                               this->kv,
+                               this->sf,
+                               this->pelec,
+                               this->chr,
+                               this->locpp,
+                               this->ppcell,
+                               this->vsep_cell,
+                               this->pw_wfc,
+                               this->pw_rho,
+                               this->pw_rhod,
+                               this->pw_big,
+                               this->solvent,
+                               inp);
 
     this->stp.before_runner(ucell, this->kv, this->sf, *this->pw_wfc, this->ppcell, PARAM.inp);
 
@@ -143,7 +142,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     if (ucell.cell_parameter_updated)
     {
-        this->stp.p_psi_init->prepare_init(PARAM.inp.pw_seed);
+        this->stp.p_psi_init->prepare_init(PARAM.inp.pw_seed, istep);
     }
 
     //! Init Hamiltonian (cell changed)
@@ -159,13 +158,25 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->allocate_hamilt(ucell);
 
     //! Setup potentials (local, non-local, sc, +U, DFT-1/2)
-    // note: init DFT+U is done here for pw basis for every scf iteration, however, 
+    // note: init DFT+U is done here for pw basis for every scf iteration, however,
     // init DFT+U is done in "before_all_runners" in LCAO basis. This should be refactored, mohan note 2025-11-06
-    pw::setup_pot(istep, ucell, this->kv, this->sf, this->pelec, this->Pgrid,
-              this->chr, this->locpp, this->ppcell, this->dftu, this->vsep_cell,
-              this->stp.template get_psi_t<T, Device>(), 
-	      this->p_hamilt, 
-	      this->pw_wfc, this->pw_rhod, PARAM.globalv.global_out_dir, PARAM.inp);
+    pw::setup_pot(istep,
+                  ucell,
+                  this->kv,
+                  this->sf,
+                  this->pelec,
+                  this->Pgrid,
+                  this->chr,
+                  this->locpp,
+                  this->ppcell,
+                  this->dftu,
+                  this->vsep_cell,
+                  this->stp.template get_psi_t<T, Device>(),
+                  this->p_hamilt,
+                  this->pw_wfc,
+                  this->pw_rhod,
+                  PARAM.globalv.global_out_dir,
+                  PARAM.inp);
 
     // setup psi (electronic wave functions)
     this->stp.init(this->p_hamilt);
@@ -189,7 +200,14 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
 
     // update local occupations for DFT+U
     // should before lambda loop in DeltaSpin
-    pw::iter_init_dftu_pw(iter, istep, this->dftu, this->stp.template get_psi_t<T, Device>(), this->pelec->wg, ucell, this->p_chgmix, this->kv.isk.data());
+    pw::iter_init_dftu_pw(iter,
+                          istep,
+                          this->dftu,
+                          this->stp.template get_psi_t<T, Device>(),
+                          this->pelec->wg,
+                          ucell,
+                          this->p_chgmix,
+                          this->kv.isk.data());
 }
 
 // Temporary, it should be replaced by hsolver later.
@@ -229,8 +247,15 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
                                                      PARAM.inp.nb2d,
                                                      PARAM.inp.use_k_continuity);
 
-        hsolver_pw_obj.solve(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt), *this->stp.template get_psi_t<T, Device>(), this->pelec, this->pelec->ekb.c,
-          GlobalV::RANK_IN_POOL, GlobalV::NPROC_IN_POOL, skip_charge, ucell.tpiba, ucell.nat);
+        hsolver_pw_obj.solve(static_cast<hamilt::Hamilt<T, Device>*>(this->p_hamilt),
+                             *this->stp.template get_psi_t<T, Device>(),
+                             this->pelec,
+                             this->pelec->ekb.c,
+                             GlobalV::RANK_IN_POOL,
+                             GlobalV::NPROC_IN_POOL,
+                             skip_charge,
+                             ucell.tpiba,
+                             ucell.nat);
     }
 
     // symmetrize the charge density
@@ -238,7 +263,6 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
 
     ModuleBase::timer::end("ESolver_KS_PW", "hamilt2rho_single");
 }
-
 
 template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
@@ -248,7 +272,9 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
     if (cal_exx && !exx_helper->get_op_first_iter())
     {
-        this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()), cal_exx, hybrid_alpha);
+        this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()),
+                             cal_exx,
+                             hybrid_alpha);
     }
 
     // deband is calculated from "output" charge density
@@ -267,14 +293,19 @@ void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int
     }
 
     // Handle EXX-related operations after SCF iteration
-    exx_helper->iter_finish(this->pelec, &this->chr, this->stp.template get_psi_t<T, Device>(), ucell, PARAM.inp, conv_esolver, iter);
+    exx_helper->iter_finish(this->pelec,
+                            &this->chr,
+                            this->stp.template get_psi_t<T, Device>(),
+                            ucell,
+                            PARAM.inp,
+                            conv_esolver,
+                            iter);
 
     // check if oscillate for delta_spin method
     pw::check_deltaspin_oscillation(iter, this->drho, this->p_chgmix, PARAM.inp);
 
     // the output quantities
-    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp.psi_cpu, 
-              this->kv, this->pw_wfc, PARAM.inp);
+    ModuleIO::ctrl_iter_pw(istep, iter, conv_esolver, this->stp.psi_cpu, this->kv, this->pw_wfc, PARAM.inp);
 }
 
 template <typename T, typename Device>
@@ -294,9 +325,18 @@ void ESolver_KS_PW<T, Device>::after_scf(UnitCell& ucell, const int istep, const
     ESolver_KS::after_scf(ucell, istep, conv_esolver);
 
     // Output quantities
-    ModuleIO::ctrl_scf_pw<T, Device>(istep, ucell, this->pelec, this->chr, this->kv, this->pw_wfc,
-              this->pw_rho, this->pw_rhod, this->pw_big, this->stp,
-              this->Pgrid, PARAM.inp);
+    ModuleIO::ctrl_scf_pw<T, Device>(istep,
+                                     ucell,
+                                     this->pelec,
+                                     this->chr,
+                                     this->kv,
+                                     this->pw_wfc,
+                                     this->pw_rho,
+                                     this->pw_rhod,
+                                     this->pw_big,
+                                     this->stp,
+                                     this->Pgrid,
+                                     PARAM.inp);
 
     ModuleBase::timer::end("ESolver_KS_PW", "after_scf");
 }
@@ -308,29 +348,56 @@ double ESolver_KS_PW<T, Device>::cal_energy()
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
+void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     Forces<double, Device> ff(ucell.nat);
 
     // mohan add 2025-10-12
     this->stp.update_psi_d();
 
     // Calculate forces
-    ff.cal_force(ucell, force, *this->pelec, this->pw_rhod, &ucell.symm,
-                 &this->sf, this->solvent, &this->dftu, &this->locpp, &this->ppcell, 
-                 &this->kv, this->pw_wfc, this->stp.template get_psi_d<T, Device>());
+    ff.cal_force(ucell,
+                 force,
+                 this->get_vdw_result(),
+                 *this->pelec,
+                 this->pw_rhod,
+                 &ucell.symm,
+                 &this->sf,
+                 this->solvent,
+                 &this->dftu,
+                 &this->locpp,
+                 &this->ppcell,
+                 &this->kv,
+                 this->pw_wfc,
+                 this->stp.template get_psi_d<T, Device>());
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
+void ESolver_KS_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     Stress_PW<double, Device> ss(this->pelec);
 
     // mohan add 2025-10-12
     this->stp.update_psi_d();
 
-    ss.cal_stress(stress, ucell, this->dftu, this->locpp, this->ppcell, this->pw_rhod,
-                  &ucell.symm, &this->sf, &this->kv, this->pw_wfc, this->stp.template get_psi_d<T, Device>());
+    ss.cal_stress(stress,
+                  ucell,
+                  this->get_vdw_result(),
+                  this->dftu,
+                  this->locpp,
+                  this->ppcell,
+                  this->pw_rhod,
+                  &ucell.symm,
+                  &this->sf,
+                  &this->kv,
+                  this->pw_wfc,
+                  this->stp.template get_psi_d<T, Device>());
 
     // external stress
     double unit_transform = 0.0;
@@ -343,16 +410,28 @@ void ESolver_KS_PW<T, Device>::cal_stress(UnitCell& ucell, ModuleBase::matrix& s
 }
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::after_all_runners(UnitCell& ucell)
+void ESolver_KS_PW<T, Device>::after_all_runners(BaseCell& basecell)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ESolver_KS::after_all_runners(ucell);
 
-    ModuleIO::ctrl_runner_pw<T, Device>(ucell, this->pelec, this->pw_wfc, 
-            this->pw_rho, this->pw_rhod, this->chr, this->kv, this->stp, 
-            this->sf, this->ppcell, this->solvent, this->Pgrid, PARAM.inp); 
+    ModuleIO::ctrl_runner_pw<T, Device>(ucell,
+                                        this->pelec,
+                                        this->pw_wfc,
+                                        this->pw_rho,
+                                        this->pw_rhod,
+                                        this->chr,
+                                        this->kv,
+                                        this->stp,
+                                        this->sf,
+                                        this->ppcell,
+                                        this->solvent,
+                                        this->Pgrid,
+                                        PARAM.inp);
 
     elecstate::teardown_estate_pw(this->pelec, this->vsep_cell);
-    
 }
 
 template class ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>;

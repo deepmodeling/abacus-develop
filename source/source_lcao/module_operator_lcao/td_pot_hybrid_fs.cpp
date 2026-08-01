@@ -1,8 +1,8 @@
-#pragma once
 #include "td_pot_hybrid.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/libm/libm.h"
+#include "source_estate/module_pot/H_TDDFT_pw.h"
 
 namespace hamilt
 {
@@ -176,4 +176,29 @@ void TD_pot_hybrid<OperatorLCAO<TK, TR>>::cal_force_IJR(const int& iat1,
         }
     }
 }
+// explicit member function instantiations for cal_force_stress
+template void TD_pot_hybrid<OperatorLCAO<double, double>>::cal_force_stress(
+    const bool cal_force, const HContainer<double>* dmR, ModuleBase::matrix& force);
+template void TD_pot_hybrid<OperatorLCAO<std::complex<double>, double>>::cal_force_stress(
+    const bool cal_force, const HContainer<double>* dmR, ModuleBase::matrix& force);
+template void TD_pot_hybrid<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_force_stress(
+    const bool cal_force, const HContainer<std::complex<double>>* dmR, ModuleBase::matrix& force);
+
+// explicit member function instantiations for cal_force_IJR (generic template, TR=double cases)
+// Note: <complex<double>,complex<double>> has a template<> specialization above
+template void TD_pot_hybrid<OperatorLCAO<double, double>>::cal_force_IJR(
+    const int& iat1, const int& iat2,
+    const Parallel_Orbitals* paraV,
+    const ModuleBase::Vector3<double>& dtau,
+    const ModuleBase::Vector3<double>& dR,
+    double* dmR_pointer,
+    double* force1, double* force2);
+template void TD_pot_hybrid<OperatorLCAO<std::complex<double>, double>>::cal_force_IJR(
+    const int& iat1, const int& iat2,
+    const Parallel_Orbitals* paraV,
+    const ModuleBase::Vector3<double>& dtau,
+    const ModuleBase::Vector3<double>& dR,
+    double* dmR_pointer,
+    double* force1, double* force2);
+
 }// namespace hamilt

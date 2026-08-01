@@ -54,8 +54,11 @@ ESolver_OF::~ESolver_OF()
     delete this->opt_cg_mag_;
 }
 
-void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void ESolver_OF::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ESolver_FP::before_all_runners(ucell, inp);
 
     // save necessary parameters
@@ -127,8 +130,11 @@ void ESolver_OF::before_all_runners(UnitCell& ucell, const Input_para& inp)
     this->allocate_array();
 }
 
-void ESolver_OF::runner(UnitCell& ucell, const int istep)
+void ESolver_OF::runner(BaseCell& basecell, const int istep)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::timer::start("ESolver_OF", "runner");
     // get Ewald energy, initial rho and phi if necessary
     this->before_opt(istep, ucell);
@@ -505,8 +511,11 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
 /**
  * @brief Output the FINAL_ETOT
  */
-void ESolver_OF::after_all_runners(UnitCell& ucell)
+void ESolver_OF::after_all_runners(BaseCell& basecell)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ESolver_FP::after_all_runners(ucell);
 }
 
@@ -540,13 +549,17 @@ double ESolver_OF::cal_energy()
  *
  * @param [out] force
  */
-void ESolver_OF::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
+void ESolver_OF::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     Forces<double> ff(ucell.nat);
  
     // here nullptr is for DFT+U, which may cause bugs, mohan note 2025-11-07
     // solvent can be used? mohan ask 2025-11-07
-    ff.cal_force(ucell, force, *pelec, this->pw_rho, &ucell.symm, &sf, this->solvent, nullptr, &this->locpp);
+    ff.cal_force(ucell, force, this->get_vdw_result(), *pelec, this->pw_rho, &ucell.symm, &sf,
+                 this->solvent, nullptr, &this->locpp);
 }
 
 /**
@@ -554,14 +567,17 @@ void ESolver_OF::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
  *
  * @param [out] stress
  */
-void ESolver_OF::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
+void ESolver_OF::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::matrix kinetic_stress_;
     kinetic_stress_.create(3, 3);
     this->kedf_manager_->get_stress(ucell.omega, this->chr.rho,
                          this->pphi_, this->pw_rho, kinetic_stress_); // kinetic stress
 
     OF_Stress_PW ss(this->pelec, this->pw_rho);
-    ss.cal_stress(stress, kinetic_stress_, ucell, &ucell.symm, this->locpp, &sf, &kv);
+    ss.cal_stress(stress, kinetic_stress_, ucell, this->get_vdw_result(), &ucell.symm, this->locpp, &sf, &kv);
 }
 } // namespace ModuleESolver

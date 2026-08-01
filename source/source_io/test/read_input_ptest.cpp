@@ -208,6 +208,10 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.out_mat_hs[1], 8);
     EXPECT_EQ(param.inp.out_mat_hs2[0], 0);
     EXPECT_EQ(param.inp.out_mat_hs2[1], 8);
+    EXPECT_EQ(param.inp.out_hsk[0], 0);
+    EXPECT_EQ(param.inp.out_hsk[1], 8);
+    EXPECT_EQ(param.inp.out_hsr[0], 0);
+    EXPECT_EQ(param.inp.out_hsr[1], 8);
     EXPECT_FALSE(param.inp.out_mat_xc);
     EXPECT_EQ(param.inp.out_mat_xc2[0], 0);
     EXPECT_EQ(param.inp.out_mat_xc2[1], 8);

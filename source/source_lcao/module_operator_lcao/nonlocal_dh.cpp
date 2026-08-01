@@ -1,11 +1,13 @@
-#pragma once
 #include "nonlocal.h"
-#include "operator_force_stress_utils.h"
+#include "operator_fs_utils.h"
 #include "source_base/timer.h"
 
 namespace hamilt
 {
 
+/**
+ * @see Nonlocal<OperatorLCAO<TK, TR>>::cal_dH in nonlocal.h for full documentation.
+ */
 template <typename TK, typename TR>
 void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR)
 {
@@ -43,7 +45,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
         for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
         {
             if (!is_adj[ad1])
+            {
                 continue;
+            }
             const int T1 = adjs.ntype[ad1];
             const int I1 = adjs.natom[ad1];
             const int iat1 = this->ucell->itia2iat(T1, I1);
@@ -52,7 +56,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
             for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
             {
                 if (!is_adj[ad2])
+                {
                     continue;
+                }
                 const int T2 = adjs.ntype[ad2];
                 const int I2 = adjs.natom[ad2];
                 const int iat2 = this->ucell->itia2iat(T2, I2);
@@ -69,7 +75,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                 for (int iat = 0; iat < nat; ++iat)
                 {
                     for (int d = 0; d < 3; ++d)
+                    {
                         dhR[d][iat]->insert_pair(ap);
+                    }
                 }
             }
         }
@@ -78,7 +86,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
     for (int iat = 0; iat < nat; ++iat)
     {
         for (int d = 0; d < 3; ++d)
+        {
             dhR[d][iat]->allocate(nullptr, true);
+        }
     }
 
 #pragma omp parallel
@@ -112,7 +122,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
             for (int ad = 0; ad < adjs.adj_num + 1; ++ad)
             {
                 if (!is_adj[ad])
+                {
                     continue;
+                }
 
                 const int T1 = adjs.ntype[ad];
                 const int I1 = adjs.natom[ad];
@@ -142,7 +154,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                     for (size_t index = 0; index < length; index++)
                     {
                         for (int n = 0; n < 4; n++)
+                        {
                             nlm_target[index + n * length] = nlm[n][index];
+                        }
                     }
                     nlm_iat0[ad].insert({all_indexes[iw1l], nlm_target});
                 }
@@ -151,7 +165,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
             for (int ad1 = 0; ad1 < adjs.adj_num + 1; ++ad1)
             {
                 if (!is_adj[ad1])
+                {
                     continue;
+                }
                 const int T1 = adjs.ntype[ad1];
                 const int I1 = adjs.natom[ad1];
                 const int iat1 = this->ucell->itia2iat(T1, I1);
@@ -160,7 +176,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                 for (int ad2 = 0; ad2 < adjs.adj_num + 1; ++ad2)
                 {
                     if (!is_adj[ad2])
+                    {
                         continue;
+                    }
                     const int T2 = adjs.ntype[ad2];
                     const int I2 = adjs.natom[ad2];
                     const int iat2 = this->ucell->itia2iat(T2, I2);
@@ -183,7 +201,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                     }
 
                     if (!m1[0] || !m1[1] || !m1[2] || !m2[0] || !m2[1] || !m2[2] || !m0[0] || !m0[1] || !m0[2])
+                    {
                         continue;
+                    }
 
                     double* p1[3] = {m1[0]->get_pointer(), m1[1]->get_pointer(), m1[2]->get_pointer()};
                     double* p2[3] = {m2[0]->get_pointer(), m2[1]->get_pointer(), m2[2]->get_pointer()};
@@ -200,7 +220,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                     {
                         auto it1 = nlm1_all.find(row_indexes[iw1l]);
                         if (it1 == nlm1_all.end())
+                        {
                             continue;
+                        }
                         const std::vector<double>& nlm1 = it1->second;
                         const size_t length = nlm1.size() / 4;
                         const int iw1_row = static_cast<int>(iw1l);
@@ -209,7 +231,9 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
                         {
                             auto it2 = nlm2_all.find(col_indexes[iw2l]);
                             if (it2 == nlm2_all.end())
+                            {
                                 continue;
+                            }
                             const std::vector<double>& nlm2 = it2->second;
                             const int iw2_col = static_cast<int>(iw2l);
 
@@ -253,5 +277,13 @@ void Nonlocal<OperatorLCAO<TK, TR>>::cal_dH(std::array<std::vector<hamilt::HCont
 
     ModuleBase::timer::end("Nonlocal", "cal_dH");
 }
+
+// explicit member function instantiations
+template void Nonlocal<OperatorLCAO<double, double>>::cal_dH(
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR);
+template void Nonlocal<OperatorLCAO<std::complex<double>, double>>::cal_dH(
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR);
+template void Nonlocal<OperatorLCAO<std::complex<double>, std::complex<double>>>::cal_dH(
+    std::array<std::vector<hamilt::HContainer<double>*>, 3>& dhR);
 
 } // namespace hamilt

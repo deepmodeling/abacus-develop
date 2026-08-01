@@ -6,6 +6,7 @@ ecutwfc    20
 gamma_only    0
 init_chg    atomic
 noncolin    1
+nspin       4
 #nbands    28
 scf_thr    1.0e-6
 scf_nmax    50

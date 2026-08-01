@@ -35,8 +35,11 @@ ESolver_FP::~ESolver_FP()
 	delete this->pelec;
 }
 
-void ESolver_FP::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
     //! 1) read pseudopotentials
@@ -187,11 +190,18 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
                                     GlobalV::ofs_running, GlobalV::ofs_warning);
     }
 
-    //! calculate D2 or D3 vdW
+    //! Evaluate the vdW correction once for this ionic configuration.
+    this->vdw_result_.reset();
     auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
     {
-        this->pelec->f_en.evdw = vdw_solver->get_energy();
+        const vdw::VdwRequest request(PARAM.inp.cal_force, PARAM.inp.cal_stress);
+        this->vdw_result_.reset(new vdw::VdwResult(vdw_solver->evaluate(request)));
+        this->pelec->f_en.evdw = this->vdw_result_->energy;
+    }
+    else
+    {
+        this->pelec->f_en.evdw = 0.0;
     }
 
     //! calculate ewald energy
@@ -254,8 +264,11 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
     }
 }
 
-void ESolver_FP::after_all_runners(UnitCell& ucell)
+void ESolver_FP::after_all_runners(BaseCell& basecell)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     // print out the final total energy
     GlobalV::ofs_running << "\n --------------------------------------------" << std::endl;
     GlobalV::ofs_running << std::setprecision(16);

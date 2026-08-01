@@ -318,5 +318,4 @@ ESolver* init_esolver(const Input_para& inp)
                                 + " line " + std::to_string(__LINE__));
 }
 
-
 } // namespace ModuleESolver

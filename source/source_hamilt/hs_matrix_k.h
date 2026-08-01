@@ -1,8 +1,9 @@
-#ifndef HS_MATRIX_K_HPP
-#define HS_MATRIX_K_HPP
+#ifndef HS_MATRIX_K_H
+#define HS_MATRIX_K_H
 
 #include "source_basis/module_ao/parallel_orbitals.h"
 
+#include <complex>
 #include <vector>
 namespace hamilt
 {

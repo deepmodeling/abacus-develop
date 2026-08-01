@@ -79,11 +79,19 @@ has_dftu=$(get_input_key_value "dft_plus_u" "INPUT")
 has_band=$(get_input_key_value "out_band" "INPUT")
 has_dos=$(get_input_key_value "out_dos" "INPUT")
 has_cond=$(get_input_key_value "cal_cond" "INPUT")
+out_hsk=$(get_input_key_value "out_hsk" "INPUT")
+out_hsr=$(get_input_key_value "out_hsr" "INPUT")
 has_hs=$(get_input_key_value "out_mat_hs" "INPUT")
 has_hs2=$(get_input_key_value "out_mat_hs2" "INPUT")
 out_hr_npz=$(get_input_key_value "out_hr_npz" "INPUT")
 out_hsr_npz=$(get_input_key_value "out_hsr_npz" "INPUT")
 out_dm_npz=$(get_input_key_value "out_dm_npz" "INPUT")
+if ! test -z "$out_hsk"; then
+    has_hs=$out_hsk
+fi
+if ! test -z "$out_hsr"; then
+    has_hs2=$out_hsr
+fi
 has_xc=$(get_input_key_value "out_mat_xc" "INPUT")
 has_xc2=$(get_input_key_value "out_mat_xc2" "INPUT")
 has_eband_separate=$(get_input_key_value "out_eband_terms" "INPUT")
@@ -329,11 +337,11 @@ if ! test -z "$has_hs"  && [ $has_hs == 1 ]; then
     else
         # ========== Multiple k-points calculation ==========
         if ! test -z "$nspin" && [ $nspin == 2 ]; then
-            # nspin=2 (spin-polarized): compare hks1_2 + hks2_2 Hamiltonian + sk2 overlap matrix
-            h1ref=hks1_2_nao.txt.ref
-            h1cal=OUT.autotest/hks1_2_nao.txt
-            h2ref=hks2_2_nao.txt.ref
-            h2cal=OUT.autotest/hks2_2_nao.txt
+            # nspin=2 (spin-polarized): compare spin-up/spin-down H(k) and S(k) at the second k-point
+            h1ref=hk2s1_nao.txt.ref
+            h1cal=OUT.autotest/hk2s1_nao.txt
+            h2ref=hk2s2_nao.txt.ref
+            h2cal=OUT.autotest/hk2s2_nao.txt
             sref=sk2_nao.txt.ref
             scal=OUT.autotest/sk2_nao.txt
             # Compare Hamiltonian matrix for spin 1
@@ -426,20 +434,22 @@ if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
         python3 $COMPARE_SCRIPT hrs2_nao.csr.ref OUT.autotest/hrs2_nao.csr 8
         echo "CompareHR2_pass $?" >>$1
     fi
-    python3 $COMPARE_SCRIPT srs1_nao.csr.ref OUT.autotest/srs1_nao.csr 8
+    python3 $COMPARE_SCRIPT sr_nao.csr.ref OUT.autotest/sr_nao.csr 8
     echo "CompareSR_pass $?" >>$1
 fi
 
 #-----------------------------------
 # H(R), S(R), and DM(R) matrices in NPZ format
 #-----------------------------------
-if ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; then
-    test -f OUT.autotest/output_SR.npz
+if { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
+    test -f OUT.autotest/sr_nao.npz
     echo "OutputSRNPZ_pass $?" >>$1
 fi
 
-if { ! test -z "$out_hr_npz" && [ "$out_hr_npz" == 1 ]; } || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
-    test -f OUT.autotest/output_HR0.npz
+if { ! test -z "$out_hr_npz" && [ "$out_hr_npz" == 1 ]; } \
+    || { ! test -z "$out_hsr" && [ "$out_hsr" == 3 ]; } \
+    || { ! test -z "$out_hsr_npz" && [ "$out_hsr_npz" == 1 ]; }; then
+    test -f OUT.autotest/hrs1_nao.npz
     echo "OutputHRNPZ_pass $?" >>$1
 fi
 

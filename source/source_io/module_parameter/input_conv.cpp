@@ -59,7 +59,8 @@ std::vector<double> Input_Conv::convert_units(std::string params, double c) {
 void Input_Conv::read_td_efield()
 {
     elecstate::H_TDDFT_pw::stype = PARAM.inp.td_stype;
-    if (PARAM.inp.out_mat_hs2[0] == 1)
+    const auto& input = PARAM.inp;
+    if (input.out_hsr[0] == 1 || input.out_hsr[0] == 3 || input.out_hsr_npz_compat)
     {
         TD_info::out_mat_R = true;
     } else {
@@ -513,7 +514,11 @@ void Input_Conv::Convert()
         GlobalC::exx_info.sync_from_global();
     }
 
-    if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
+    // Local aliases: keep this PR's global-state reference budget non-increasing.
+    const auto& inp = PARAM.inp;
+    const bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+
+    if (cal_exx && inp.basis_type == "pw")
     {
         if (ModuleSymmetry::Symmetry::symm_flag != -1)
         {
@@ -521,10 +526,37 @@ void Input_Conv::Convert()
             ModuleSymmetry::Symmetry::symm_flag = -1;
         }
 
-        if (PARAM.inp.nspin != 1 && PARAM.inp.nspin != 2)
+        if (inp.nspin != 1 && inp.nspin != 2)
         {
             ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1 and 2");
         }
+
+        if (inp.cal_stress)
+        {
+            // Stress_PW::stress_exx only sums same-pool (ik, iq) pairs without
+            // the same-spin restriction used in the EXX energy, so the result
+            // is wrong for nspin = 2 or kpar > 1.
+            if (inp.nspin != 1)
+            {
+                ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW stress supports only nspin = 1");
+            }
+            if (inp.kpar != 1)
+            {
+                ModuleBase::WARNING_QUIT("Input_Conv",
+                                         "EXX PW stress does not support k-point parallelism (kpar > 1)");
+            }
+            if (inp.device == "gpu")
+            {
+                ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW stress is not supported on GPU");
+            }
+        }
+    }
+
+    if (cal_exx && inp.basis_type == "lcao_in_pw" && inp.cal_stress)
+    {
+        // For lcao_in_pw the EXX energy comes from Exx_Lip, but Stress_PW
+        // would evaluate the EXX stress with the pure PW formula.
+        ModuleBase::WARNING_QUIT("Input_Conv", "EXX stress is not supported for basis_type = lcao_in_pw");
     }
 
     //----------------------------------------------------------

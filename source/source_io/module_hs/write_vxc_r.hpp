@@ -41,8 +41,8 @@ void write_Vxc_R(const int nspin,
                  bool real_number
 #ifdef __EXX
                  ,
-                 const std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* const Hexxd,
-                 const std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* const Hexxc
+                 const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* const Hexxd,
+                 const std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* const Hexxc
 #endif
                  ,
                  const double sparse_thr = 1e-10)

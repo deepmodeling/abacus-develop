@@ -1,5 +1,5 @@
-#ifndef DFTU_PW_H
-#define DFTU_PW_H
+#ifndef SETUP_DFTU_PW_H
+#define SETUP_DFTU_PW_H
 
 #include "source_cell/unitcell.h"
 #include "source_base/matrix.h"
