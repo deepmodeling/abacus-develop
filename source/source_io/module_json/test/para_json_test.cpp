@@ -336,7 +336,6 @@ TEST(AbacusJsonTest, Init_stru_test)
     {
         ucell.atoms[i].label = "Si";
         atomlist[i].na = 2;
-        atomlist[i].label = "Fe";
         ucell.pseudo_fn[i] = "si.ufp";
         ucell.atoms[i].tau.resize(2);
         atomlist[i].mag.resize(2);
@@ -355,9 +354,9 @@ TEST(AbacusJsonTest, Init_stru_test)
     ASSERT_EQ(Json::AbacusJson::doc["init"]["mag"][0].GetDouble(), 0);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["mag"][1].GetDouble(), 131.0);
 
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["pp"]["Fe"].GetString(), "si.ufp");
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["pp"]["Si"].GetString(), "si.ufp");
     ASSERT_STREQ(Json::AbacusJson::doc["init"]["label"][0].GetString(), "Si");
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["element"]["Fe"].GetString(), "");
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["element"]["Si"].GetString(), "");
 
     ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][0][0].GetDouble(), 0);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][0][1].GetDouble(), 0);
