@@ -8,6 +8,7 @@
 #include "read_pp.h"
 #include "bcast_cell.h"
 #include "print_cell.h"
+#include "source_base/atom_in.h"
 #include "source_base/element_elec_config.h"
 #include "source_base/parallel_common.h"
 
