@@ -70,6 +70,7 @@ struct Input_para
     double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
 
     std::string device = "cpu";
+    std::string device_memory_mode = "";    ///< GPU memory mode: "" (auto), "full_gpu" (all on GPU), "paged" (CPU storage + k-point paging)
     std::string precision = "double";
     std::string gint_precision = "double";
     bool timer_enable_nvtx = false;

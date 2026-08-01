@@ -2,6 +2,7 @@ add_library(
     psi
     OBJECT
     psi.cpp
+    psi_paging.cpp
 )
 
 add_library(
