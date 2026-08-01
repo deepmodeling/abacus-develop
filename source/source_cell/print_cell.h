@@ -53,6 +53,14 @@ namespace unitcell
                          const bool& orb = false,
                          const bool& dpks_desc = false,
                          const int& iproc = 0);
+
+    /**
+     * @brief Print basic unitcell information to output stream.
+     *
+     * @param ucell reference of unitcell [in]
+     * @param ofs output file stream [in]
+     */
+    void print_cell(const UnitCell& ucell, std::ofstream& ofs);
 }
 
 #endif

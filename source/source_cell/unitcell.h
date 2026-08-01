@@ -214,7 +214,6 @@ class UnitCell : public AtomProvider, public BaseCell {
   public:
     UnitCell();
     ~UnitCell();
-    void print_cell(std::ofstream& ofs) const;
 
     std::vector<double>      atom_mass;
     std::vector<std::string> atom_label;

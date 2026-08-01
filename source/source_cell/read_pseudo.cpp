@@ -7,6 +7,7 @@
 #include "cal_atoms_info.h"
 #include "read_pp.h"
 #include "bcast_cell.h"
+#include "print_cell.h"
 #include "source_base/element_elec_config.h"
 #include "source_base/parallel_common.h"
 
@@ -393,7 +394,7 @@ void print_unitcell_pseudo(const std::string& fn, UnitCell& ucell)
     ModuleBase::TITLE("unitcell", "print_unitcell_pseudo");
     std::ofstream ofs(fn.c_str());
 
-    ucell.print_cell(ofs);
+    unitcell::print_cell(ucell, ofs);
     for (int i = 0; i < ucell.ntype; i++)
     {
         ucell.atoms[i].print_Atom(ofs);

@@ -40,28 +40,6 @@ UnitCell::~UnitCell()
 }
 
 
-void UnitCell::print_cell(std::ofstream& ofs) const {
-
-    ModuleBase::GlobalFunc::OUT(ofs, "print_unitcell()");
-
-    ModuleBase::GlobalFunc::OUT(ofs, "latName", latName);
-    ModuleBase::GlobalFunc::OUT(ofs, "ntype", ntype);
-    ModuleBase::GlobalFunc::OUT(ofs, "nat", nat);
-    ModuleBase::GlobalFunc::OUT(ofs, "lat0", lat0);
-    ModuleBase::GlobalFunc::OUT(ofs, "lat0_angstrom", lat0_angstrom);
-    ModuleBase::GlobalFunc::OUT(ofs, "tpiba", tpiba);
-    ModuleBase::GlobalFunc::OUT(ofs, "omega", omega);
-
-    output::printM3(ofs, "Lattices Vector (R) : ", latvec);
-    output::printM3(ofs, "Supercell lattice vector : ", latvec_supercell);
-    output::printM3(ofs, "Reciprocal lattice Vector (G): ", G);
-    output::printM3(ofs, "GGT : ", GGT);
-
-    ofs << std::endl;
-    return;
-}
-
-
 void UnitCell::set_iat2itia() {
     assert(nat > 0);
     delete[] iat2it;

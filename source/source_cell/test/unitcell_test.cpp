@@ -78,7 +78,7 @@ Magnetism::~Magnetism()
  *   - PrintTauCartesian
  *     - print_tau(): print atomic coordinates, magmom and initial velocities
  *   - PrintUnitcellPseudo
- *     - Actually an integrated function to call UnitCell::print_cell and Atom::print_Atom
+ *     - Actually an integrated function to call unitcell::print_cell and Atom::print_Atom
  *   - UpdateVel
  *     - update_vel(const ModuleBase::Vector3<double>* vel_in)
  *   - CalUx
@@ -769,7 +769,7 @@ TEST_F(UcellTest, PrintCell)
     ucell = utp.SetUcellInfo();
     std::ofstream ofs;
     ofs.open("printcell.log");
-    ucell->print_cell(ofs);
+    unitcell::print_cell(*ucell, ofs);
     ofs.close();
     std::ifstream ifs;
     ifs.open("printcell.log");

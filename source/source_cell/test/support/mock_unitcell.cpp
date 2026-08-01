@@ -20,8 +20,6 @@ SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
-void UnitCell::print_cell(std::ofstream& ofs) const {}
-
 void UnitCell::set_iat2itia() {}
 
 void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin,

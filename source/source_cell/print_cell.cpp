@@ -5,6 +5,7 @@
 #include "source_base/formatter.h"
 #include "source_base/tool_title.h"
 #include "source_base/global_variable.h"
+#include "source_base/output.h"
 
 namespace unitcell
 {
@@ -164,6 +165,27 @@ namespace unitcell
         std::ofstream ofs(fn.c_str());
         ofs << str;
         ofs.close();
+        return;
+    }
+
+    void print_cell(const UnitCell& ucell, std::ofstream& ofs)
+    {
+        ModuleBase::GlobalFunc::OUT(ofs, "print_unitcell()");
+
+        ModuleBase::GlobalFunc::OUT(ofs, "latName", ucell.latName);
+        ModuleBase::GlobalFunc::OUT(ofs, "ntype", ucell.ntype);
+        ModuleBase::GlobalFunc::OUT(ofs, "nat", ucell.nat);
+        ModuleBase::GlobalFunc::OUT(ofs, "lat0", ucell.lat0);
+        ModuleBase::GlobalFunc::OUT(ofs, "lat0_angstrom", ucell.lat0_angstrom);
+        ModuleBase::GlobalFunc::OUT(ofs, "tpiba", ucell.tpiba);
+        ModuleBase::GlobalFunc::OUT(ofs, "omega", ucell.omega);
+
+        output::printM3(ofs, "Lattices Vector (R) : ", ucell.latvec);
+        output::printM3(ofs, "Supercell lattice vector : ", ucell.latvec_supercell);
+        output::printM3(ofs, "Reciprocal lattice Vector (G): ", ucell.G);
+        output::printM3(ofs, "GGT : ", ucell.GGT);
+
+        ofs << std::endl;
         return;
     }
 }
