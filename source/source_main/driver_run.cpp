@@ -49,7 +49,7 @@ void Driver::driver_run()
 
     // the life of ucell should begin here, mohan 2024-05-12
     UnitCell ucell;
-    ucell.setup(PARAM.inp.latname,
+    ucell.setup_from_input(PARAM.inp.latname,
                 PARAM.inp.ntype,
                 PARAM.inp.lmaxmax,
                 PARAM.inp.init_vel,

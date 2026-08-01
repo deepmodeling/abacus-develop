@@ -72,7 +72,7 @@ class UcellTestPrepare
         // basic info
         this->ntype = this->elements.size();
         static UnitCell ucell;
-        ucell.setup(this->latname, this->ntype, this->lmaxmax, this->init_vel, this->fixed_axes);
+        ucell.setup_from_input(this->latname, this->ntype, this->lmaxmax, this->init_vel, this->fixed_axes);
         
         ucell.atom_label.resize(ucell.ntype);
 		ucell.atom_mass.resize(ucell.ntype);

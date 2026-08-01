@@ -37,7 +37,7 @@ Magnetism::~Magnetism()
  *   - Constructor:
  *     - UnitCell() and ~UnitCell()
  *   - Setup:
- *     - setup(): to set latname, ntype, lmaxmax, init_vel, and lc
+ *     - setup_from_input(): to set latname, ntype, lmaxmax, init_vel, and lc
  *     - if_cell_can_change(): judge if any lattice vector can change
  *   - SetupWarningQuit1:
  *     - setup(): deliver warning: "there are bugs in the old implementation;
@@ -169,7 +169,7 @@ TEST_F(UcellTest, Setup)
     std::vector<std::string> fixed_axes_in = {"None", "volume", "shape", "a", "b", "c", "ab", "ac", "bc", "abc"};
     for (int i = 0; i < fixed_axes_in.size(); ++i)
     {
-        ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in[i]);
+        ucell->setup_from_input(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in[i]);
         EXPECT_EQ(ucell->latName, latname_in);
         EXPECT_EQ(ucell->ntype, ntype_in);
         EXPECT_EQ(ucell->lmaxmax, lmaxmax_in);
