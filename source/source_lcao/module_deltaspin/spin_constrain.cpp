@@ -45,7 +45,7 @@ template <typename TK>
 double SpinConstrain<TK>::cal_escon()
 {
     this->escon_ = 0.0;
-    if (!this->is_Mi_converged)
+    if (this->lambda_.empty() || this->Mi_.empty())
     {
         return this->escon_;
     }
