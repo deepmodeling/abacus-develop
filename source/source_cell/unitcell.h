@@ -264,14 +264,6 @@ class UnitCell : public AtomProvider, public BaseCell {
     std::map<int, std::map<int, int>> get_lnchi_Counts() const;
     /// these are newly added functions, the three above functions are
     /// deprecated and will be removed in the future
-    /// @brief get atom labels
-    std::vector<std::string> get_atomLabels() const;
-    /// @brief get atomCounts, which is a vector of element type with atom
-    /// number
-    std::vector<int> get_atomCounts() const;
-    /// @brief get lnchiCounts, which is a vector of element type with the
-    /// l:nchi vector
-    std::vector<std::vector<int>> get_lnchiCounts() const;
     /// @brief get target magnetic moment for deltaspin
     std::vector<ModuleBase::Vector3<double>> get_target_mag() const;
     /// @brief get lagrange multiplier for deltaspin

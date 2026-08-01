@@ -5,6 +5,7 @@
 #include "source_cell/read_orb.h"
 #include "source_cell/read_pseudo.h"
 #include "source_cell/read_stru.h"
+#include "source_cell/cell_tools.h"
 #include "source_cell/print_cell.h"
 #include "memory"
 #include "source_cell/read_stru.h"
@@ -633,7 +634,7 @@ TEST_F(UcellTest, GetAtomCounts)
     EXPECT_EQ(atomCounts[0], 1);
     EXPECT_EQ(atomCounts[1], 2);
     /// atomCounts as vector
-    std::vector<int> atomCounts2 = ucell->get_atomCounts();
+    std::vector<int> atomCounts2 = unitcell::get_atomCounts(ucell->atoms, ucell->ntype);
     EXPECT_EQ(atomCounts2[0], 1);
     EXPECT_EQ(atomCounts2[1], 2);
 }
@@ -663,7 +664,7 @@ TEST_F(UcellTest, GetLnchiCounts)
     EXPECT_EQ(LnchiCounts[1][1], 1);
     EXPECT_EQ(LnchiCounts[1][2], 1);
     /// LnchiCounts as vector
-    std::vector<std::vector<int>> LnchiCounts2 = ucell->get_lnchiCounts();
+    std::vector<std::vector<int>> LnchiCounts2 = unitcell::get_lnchiCounts(ucell->atoms, ucell->ntype);
     EXPECT_EQ(LnchiCounts2[0][0], 1);
     EXPECT_EQ(LnchiCounts2[0][1], 1);
     EXPECT_EQ(LnchiCounts2[0][2], 1);

@@ -1,4 +1,5 @@
 #include "spin_constrain.h"
+#include "source_cell/cell_tools.h"
 
 /**
  * @file init_sc.cpp
@@ -89,7 +90,7 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     }
 
     // Step 6: Set auxiliary parameters
-    this->atomLabels_ = ucell.get_atomLabels();      // "Fe_0", "Fe_1", etc.
+    this->atomLabels_ = unitcell::get_atomLabels(ucell.atoms, ucell.ntype);      // "Fe_0", "Fe_1", etc.
     this->direction_only_ = direction_only_in;        // Only optimize spin direction
     this->tpiba = ucell.tpiba;                        // 2*pi/a lattice scaling
     this->pw_wfc_ = pw_wfc_in;                        // PW basis (PW mode only)

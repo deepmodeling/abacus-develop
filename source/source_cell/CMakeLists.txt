@@ -22,6 +22,7 @@ add_library(
     klist.cpp
     parallel_kpoints.cpp
     cell_index.cpp
+    cell_tools.cpp
     check_atomic_stru.cpp
     update_cell.cpp
     magnetism.cpp

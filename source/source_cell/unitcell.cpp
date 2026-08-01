@@ -90,33 +90,6 @@ std::map<int, std::map<int, int>> UnitCell::get_lnchi_Counts() const {
     return lnchiCounts;
 }
 
-std::vector<std::string> UnitCell::get_atomLabels() const {
-    std::vector<std::string> atomLabels(this->ntype);
-    for (int it = 0; it < this->ntype; it++) {
-        atomLabels[it] = this->atoms[it].label;
-    }
-    return atomLabels;
-}
-
-std::vector<int> UnitCell::get_atomCounts() const {
-    std::vector<int> atomCounts(this->ntype);
-    for (int it = 0; it < this->ntype; it++) {
-        atomCounts[it] = this->atoms[it].na;
-    }
-    return atomCounts;
-}
-
-std::vector<std::vector<int>> UnitCell::get_lnchiCounts() const {
-    std::vector<std::vector<int>> lnchiCounts(this->ntype);
-    for (int it = 0; it < this->ntype; it++) {
-        lnchiCounts[it].resize(this->atoms[it].nwl + 1);
-        for (int L = 0; L < this->atoms[it].nwl + 1; L++) {
-            lnchiCounts[it][L] = this->atoms[it].l_nchi[L];
-        }
-    }
-    return lnchiCounts;
-}
-
 std::vector<ModuleBase::Vector3<double>> UnitCell::get_target_mag() const
 {
     std::vector<ModuleBase::Vector3<double>> target_mag(this->nat);
