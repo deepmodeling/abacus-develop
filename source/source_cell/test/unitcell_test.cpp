@@ -183,56 +183,56 @@ TEST_F(UcellTest, Setup)
             EXPECT_EQ(ucell->lat_axis_free[0], 1);
             EXPECT_EQ(ucell->lat_axis_free[1], 1);
             EXPECT_EQ(ucell->lat_axis_free[2], 1);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "a")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 0);
             EXPECT_EQ(ucell->lat_axis_free[1], 1);
             EXPECT_EQ(ucell->lat_axis_free[2], 1);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "b")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 1);
             EXPECT_EQ(ucell->lat_axis_free[1], 0);
             EXPECT_EQ(ucell->lat_axis_free[2], 1);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "c")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 1);
             EXPECT_EQ(ucell->lat_axis_free[1], 1);
             EXPECT_EQ(ucell->lat_axis_free[2], 0);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "ab")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 0);
             EXPECT_EQ(ucell->lat_axis_free[1], 0);
             EXPECT_EQ(ucell->lat_axis_free[2], 1);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "ac")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 0);
             EXPECT_EQ(ucell->lat_axis_free[1], 1);
             EXPECT_EQ(ucell->lat_axis_free[2], 0);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "bc")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 1);
             EXPECT_EQ(ucell->lat_axis_free[1], 0);
             EXPECT_EQ(ucell->lat_axis_free[2], 0);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "abc")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 0);
             EXPECT_EQ(ucell->lat_axis_free[1], 0);
             EXPECT_EQ(ucell->lat_axis_free[2], 0);
-            EXPECT_FALSE(ucell->if_cell_can_change());
+            EXPECT_FALSE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
     }
 }
@@ -737,7 +737,7 @@ TEST_F(UcellTest, SelectiveDynamics)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-SD"];
     ucell = utp.SetUcellInfo();
-    EXPECT_TRUE(ucell->if_atoms_can_move());
+    EXPECT_TRUE(unitcell::if_atoms_can_move(ucell->atoms, ucell->ntype));
 }
 
 

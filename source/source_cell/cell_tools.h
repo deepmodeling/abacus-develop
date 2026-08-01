@@ -60,6 +60,17 @@ namespace unitcell
     std::vector<ModuleBase::Vector3<int>> get_constrain(const Atom* atoms,
                                                         const int ntype,
                                                         const int nat);
+
+    /// @brief Judge if any atom can move (any mbl component is non-zero).
+    /// @param atoms atom pointer [in]
+    /// @param ntype number of atom types [in]
+    /// @return true if at least one atom is allowed to move
+    bool if_atoms_can_move(const Atom* atoms, const int ntype);
+
+    /// @brief Judge if any lattice vector can change.
+    /// @param lat_axis_free lattice-axis freedom flags (size 3) [in]
+    /// @return true if at least one lattice axis is free to change
+    bool if_cell_can_change(const std::vector<int>& lat_axis_free);
 }
 
 #endif // CELL_TOOLS_H

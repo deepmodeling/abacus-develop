@@ -285,34 +285,6 @@ void UnitCell::set_iat2iwt(const int& npol_in)
 
 
 
-// check if any atom can be moved
-bool UnitCell::if_atoms_can_move() const
-{
-    for (int it = 0; it < this->ntype; it++)
-    {
-        Atom* atom = &atoms[it];
-        for (int ia = 0; ia < atom->na; ia++)
-        {
-            if (atom->mbl[ia].x || atom->mbl[ia].y || atom->mbl[ia].z)
-            {
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-// check if lattice vector can be changed
-bool UnitCell::if_cell_can_change() const
-{
-    // need to be fixed next
-    if (this->lat_axis_free[0] || this->lat_axis_free[1] || this->lat_axis_free[2])
-    {
-        return true;
-    }
-    return false;
-}
-
 void UnitCell::setup(const std::string& latname_in,
                      const int& ntype_in,
                      const int& lmaxmax_in,

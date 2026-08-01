@@ -246,8 +246,6 @@ class UnitCell : public AtomProvider, public BaseCell {
     /// @brief cal_natomwfc : calculate total number of atomic wavefunctions
     /// @brief cal_nwfc : calculate total number of local basis and lmax
     /// @brief cal_meshx : calculate max number of mesh points in pp file
-    bool if_atoms_can_move() const;
-    bool if_cell_can_change() const;
     void setup(const std::string& latname_in,
                const int& ntype_in,
                const int& lmaxmax_in,

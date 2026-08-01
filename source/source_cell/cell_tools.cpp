@@ -90,4 +90,28 @@ namespace unitcell
         }
         return constrain;
     }
+
+    bool if_atoms_can_move(const Atom* atoms, const int ntype)
+    {
+        for (int it = 0; it < ntype; it++)
+        {
+            for (int ia = 0; ia < atoms[it].na; ia++)
+            {
+                if (atoms[it].mbl[ia].x || atoms[it].mbl[ia].y || atoms[it].mbl[ia].z)
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    bool if_cell_can_change(const std::vector<int>& lat_axis_free)
+    {
+        if (lat_axis_free[0] || lat_axis_free[1] || lat_axis_free[2])
+        {
+            return true;
+        }
+        return false;
+    }
 }

@@ -5,6 +5,7 @@
 #include "read_stru.h"
 #include "print_cell.h"
 #include "read_orb.h"
+#include "cell_tools.h"
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -138,7 +139,7 @@ bool finalize_atom_positions(UnitCell& ucell,
                              const std::string& esolver_type)
 {
     // Check if any atom can move in MD
-    if(!ucell.if_atoms_can_move() && calculation=="md" && esolver_type!="tddft")
+    if(!unitcell::if_atoms_can_move(ucell.atoms, ucell.ntype) && calculation=="md" && esolver_type!="tddft")
     {
         ModuleBase::WARNING("read_atoms", "no atoms can move in MD simulations!");
         return false;

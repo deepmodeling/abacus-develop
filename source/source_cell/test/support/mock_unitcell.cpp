@@ -28,10 +28,6 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
     const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type,
     const int symmetry) {}
 
-bool UnitCell::if_atoms_can_move() const { return true; }
-
-bool UnitCell::if_cell_can_change() const { return true; }
-
 void UnitCell::setup(const std::string& latname_in,
                      const int& ntype_in,
                      const int& lmaxmax_in,
