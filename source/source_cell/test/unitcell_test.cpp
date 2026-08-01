@@ -55,10 +55,6 @@ Magnetism::~Magnetism()
  *     - iat2iait(): depends on the above function, but can find both ia & it from iat
  *     - ijat2iaitjajt(): find ia, it, ja, jt from ijat (ijat_max = nat*nat)
  *         which collapses it, ia, jt, ja loop into a single loop
- *     - step_ia(): periodically set ia to 0 when ia reaches atom[it].na - 1
- *     - step_it(): periodically set it to 0 when it reaches ntype -1
- *     - step_iait(): return true only the above two conditions are true
- *     - step_jajtiait(): return ture only two of the above function (for i and j) are true
  *   - GetAtomCounts
  *     - get_atomCounts(): get atomCounts, which is a map from atom type to atom number
  *   - GetOrbitalCounts
@@ -585,15 +581,11 @@ TEST_F(UcellTest, Index)
     int it_beg2;
     long long iat2 = ucell->nat + 1;
     EXPECT_FALSE(ucell->iat2iait(iat2, &ia_beg2, &it_beg2));
-    // test ijat2iaitjajt, step_jajtiait, step_iat, step_ia, step_it
+    // test ijat2iaitjajt
     int ia_test;
     int it_test;
     int ja_test;
     int jt_test;
-    int ia_test2 = 0;
-    int it_test2 = 0;
-    int ja_test2 = 0;
-    int jt_test2 = 0;
     long long ijat = 0;
     for (int it = 0; it < utp.natom.size(); ++it)
     {
@@ -609,15 +601,6 @@ TEST_F(UcellTest, Index)
                     EXPECT_EQ(ja_test, ja);
                     EXPECT_EQ(jt_test, jt);
                     ++ijat;
-                    if (it_test == utp.natom.size() - 1 && ia_test == utp.natom[it] - 1
-                        && jt_test == utp.natom.size() - 1 && ja_test == utp.natom[jt] - 1)
-                    {
-                        EXPECT_TRUE(ucell->step_jajtiait(&ja_test, &jt_test, &ia_test, &it_test));
-                    }
-                    else
-                    {
-                        EXPECT_FALSE(ucell->step_jajtiait(&ja_test, &jt_test, &ia_test, &it_test));
-                    }
                 }
             }
         }

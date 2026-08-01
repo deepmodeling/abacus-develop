@@ -135,41 +135,6 @@ class UnitCell : public AtomProvider, public BaseCell {
         return true;
     }
 
-    template <typename Tiait>
-    inline bool step_it(Tiait* it) const {
-        if (++(*it) >= ntype) {
-            *it = 0;
-            return true;
-        }
-        return false;
-    }
-
-    template <typename Tiait>
-    inline bool step_ia(const Tiait it, Tiait* ia) const {
-        if (++(*ia) >= atoms[it].na) {
-            *ia = 0;
-            return true;
-        }
-        return false;
-    }
-
-    template <typename Tiait>
-    inline bool step_iait(Tiait* ia, Tiait* it) const {
-        if (step_ia(*it, ia)) {
-            return step_it(it);
-        }
-        return false;
-    }
-
-    template <typename Tiait>
-    inline bool
-        step_jajtiait(Tiait* ja, Tiait* jt, Tiait* ia, Tiait* it) const {
-        if (step_iait(ja, jt)) {
-            return step_iait(ia, it);
-        }
-        return false;
-    }
-
     /// @brief Get tau for atom iat
     inline const ModuleBase::Vector3<double>& get_tau(const int& iat) const {
         return atoms[iat2it[iat]].tau[iat2ia[iat]];
