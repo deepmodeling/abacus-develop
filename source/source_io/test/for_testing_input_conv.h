@@ -149,9 +149,9 @@ void Occupy::decision(const std::string& name,
                       const double& smearing_sigma) {
     return;
 }
-// void UnitCell::setup(const std::string&,const int&,const int&,const
+// void UnitCell::setup_from_input(const std::string&,const int&,const int&,const
 // bool&,const std::string&){return;}
-void UnitCell::setup(const std::string& latname_in,
+void UnitCell::setup_from_input(const std::string& latname_in,
                      const int& ntype_in,
                      const int& lmaxmax_in,
                      const bool& init_vel_in,

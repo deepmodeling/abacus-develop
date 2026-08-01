@@ -28,7 +28,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
     const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type,
     const int symmetry) {}
 
-void UnitCell::setup(const std::string& latname_in,
+void UnitCell::setup_from_input(const std::string& latname_in,
                      const int& ntype_in,
                      const int& lmaxmax_in,
                      const bool& init_vel_in,
