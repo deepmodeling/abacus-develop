@@ -254,9 +254,6 @@ class UnitCell : public AtomProvider, public BaseCell {
                const bool& init_vel_in,
                const std::string& fixed_axes_in);
 
-    /// @brief check consistency between two atom labels from STRU and pseudo or
-    /// orb file
-    void compare_atom_labels(const std::string& label1, const std::string& label2) const;
     /// @brief get atomCounts, which is a map from element type to atom number
     std::map<int, int> get_atom_Counts() const;
     /// @brief get orbitalCounts, which is a map from element type to orbital
