@@ -33,13 +33,10 @@ RUN cd /tmp && \
     cmake --build build --target install && \
     cd /tmp && rm -rf rapidjson-24b5e7a rapidjson-24b5e7a.tar.gz
 
-ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
-
-RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
-    cd abacus-develop && \
-    cmake -B build -DUSE_CUDA=ON -DENABLE_RAPIDJSON=ON && \
-    cmake --build build -j $(nproc) && \
-    cmake --install build && \
-    rm -rf build && \
-    cd .. 
-    #&& rm -rf abacus-develop
+# NOTE: This image intentionally does NOT build ABACUS itself. The CI
+# workflows always check out the PR code and rebuild from source, so baking
+# a binary into the image was pure churn: the cache-busting ADD below plus an
+# in-image build made the published image change after EVERY merge to
+# develop, forcing every self-hosted runner to re-download gigabytes of
+# layers ("Initialize containers" took 8-78 min in CI). Keep this image
+# dependency-only so runners can cache it for weeks.

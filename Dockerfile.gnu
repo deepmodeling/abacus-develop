@@ -4,8 +4,14 @@
 # Also available at `docker pull registry.dp.tech/deepmodeling/abacus-intel:latest`.
 # Available image names: abacus-gnu, abacus-intel, abacus-cuda
 
-# Docker images are aimed for evaluating ABACUS.
-# For production use, please compile ABACUS from source code and run in bare-metal for a better performace.
+# Docker images provide the build/runtime dependencies of ABACUS (used by CI
+# and for compiling ABACUS from source). They intentionally do NOT contain a
+# built ABACUS binary: the CI always checks out the PR code and rebuilds, and
+# baking a build into the image (plus a cache-busting ADD of the develop ref)
+# made the image change after EVERY merge, forcing every self-hosted runner
+# to re-download gigabytes of layers ("Initialize containers" took 8-78 min).
+# For production use, compile ABACUS from source code and run in bare-metal
+# for a better performace.
 
 FROM ubuntu:22.04
 RUN apt update && apt install -y --no-install-recommends \
@@ -36,15 +42,3 @@ RUN cd /tmp && \
     cd /tmp && rm -r rapidjson-24b5e7a rapidjson-24b5e7a.tar.gz
 
 ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake
-
-ADD https://api.github.com/repos/deepmodeling/abacus-develop/git/refs/heads/develop /dev/null
-    # This will fetch the latest commit info, and store in docker building cache.
-    # If there are newer commits, docker build will ignore the cache and build latest codes.
-
-RUN git clone https://github.com/deepmodeling/abacus-develop.git --depth 1 && \
-    cd abacus-develop && \
-    cmake -B build -DENABLE_MLALGO=ON -DENABLE_LIBXC=ON -DENABLE_LIBRI=ON -DENABLE_RAPIDJSON=ON && \
-    cmake --build build -j $(nproc) && \
-    cmake --install build && \
-    rm -rf build
-    #&& rm -rf abacus-develop
