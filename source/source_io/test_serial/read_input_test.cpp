@@ -283,6 +283,36 @@ TEST_F(InputTest, ValidateBandParallelization)
                          "bndpar can not exceed the number of MPI processes");
 }
 
+TEST_F(InputTest, ValidateDeepksOutputFrequency)
+{
+    Parameter default_param;
+    EXPECT_NO_THROW(read_parameters("deepks_freq_default_INPUT", "", default_param));
+    EXPECT_EQ(default_param.inp.deepks_out_freq_elec, 0);
+
+    Parameter disabled_param;
+    EXPECT_NO_THROW(read_parameters("deepks_freq_disabled_INPUT", "deepks_out_freq_elec 0\n", disabled_param));
+    EXPECT_EQ(disabled_param.inp.deepks_out_freq_elec, 0);
+
+    expect_invalid_input("deepks_freq_negative_INPUT",
+                         "deepks_out_freq_elec -1\n",
+                         "deepks_out_freq_elec must not be negative");
+    expect_invalid_input("deepks_freq_missing_base_INPUT",
+                         "deepks_out_freq_elec 2\n",
+                         "to use deepks_out_freq_elec, please set deepks_out_base");
+
+    Parameter enabled_param;
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(read_parameters("deepks_freq_enabled_INPUT",
+                                 "deepks_out_freq_elec 2\n"
+                                 "deepks_out_base pbe\n"
+                                 "deepks_out_labels 1\n",
+                                 enabled_param),
+                 std::runtime_error);
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("please compile with DeePKS"));
+    EXPECT_EQ(enabled_param.inp.deepks_out_freq_elec, 2);
+}
+
 TEST_F(InputTest, Check)
 {
     ModuleIO::ReadInput readinput(0);
