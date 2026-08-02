@@ -173,6 +173,10 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
         return;
     }
 
+    // cache global parameters to reduce repeated PARAM access
+    const std::string& out_dir = PARAM.globalv.global_out_dir;
+    const bool deepks_setorb = PARAM.globalv.deepks_setorb;
+
     // Build header comment with version, timestamp, energy and stress
     std::time_t now = std::time(nullptr);
     char time_buf[64];
@@ -207,19 +211,19 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
         unitcell::print_stru_file(ucell,
                               ucell.atoms,
                               ucell.latvec,
-                              PARAM.globalv.global_out_dir + "STRU_NOW",
+                              out_dir + "STRU_NOW",
                               header,
                               inp.nspin,
                               true,
                               inp.calculation == "md",
                               inp.out_mul,
                               need_orb,
-                              PARAM.globalv.deepks_setorb,
+                              deepks_setorb,
                               GlobalV::MY_RANK);
     }
     else if (inp.out_stru == 2)
     {
-        ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_NOW.cif",
+        ModuleIO::CifParser::write(out_dir + "STRU_NOW.cif",
                                    ucell,
                                    header,
                                    "data_?",
@@ -234,19 +238,19 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
             unitcell::print_stru_file(ucell,
                                   ucell.atoms,
                                   ucell.latvec,
-                                  PARAM.globalv.global_out_dir + "STRU" + std::to_string(istep + 1),
+                                  out_dir + "STRU" + std::to_string(istep + 1),
                                   header,
                                   inp.nspin,
                                   true,
                                   inp.calculation == "md",
                                   inp.out_mul,
                                   need_orb,
-                                  PARAM.globalv.deepks_setorb,
+                                  deepks_setorb,
                                   GlobalV::MY_RANK);
         }
         else if (inp.out_stru == 2)
         {
-            ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU" + std::to_string(istep + 1) + ".cif",
+            ModuleIO::CifParser::write(out_dir + "STRU" + std::to_string(istep + 1) + ".cif",
                                        ucell,
                                        header,
                                        "data_?",
@@ -277,6 +281,10 @@ void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para&
     // 1: write STRU_FINAL; 2: write STRU_FINAL.cif
     if (inp.out_stru == 1 || inp.out_stru == 2)
     {
+        // cache global parameters to reduce repeated PARAM access
+        const std::string& out_dir = PARAM.globalv.global_out_dir;
+        const bool deepks_setorb = PARAM.globalv.deepks_setorb;
+
         // Build header comment for STRU_FINAL
         std::time_t now = std::time(nullptr);
         char time_buf[64];
@@ -307,19 +315,19 @@ void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para&
             unitcell::print_stru_file(ucell,
                                       ucell.atoms,
                                       ucell.latvec,
-                                      PARAM.globalv.global_out_dir + "STRU_FINAL",
+                                      out_dir + "STRU_FINAL",
                                       header,
                                       inp.nspin,
                                       true,
                                       inp.calculation == "md",
                                       inp.out_mul,
                                       need_orb,
-                                      PARAM.globalv.deepks_setorb,
+                                      deepks_setorb,
                                       GlobalV::MY_RANK);
         }
         else if (inp.out_stru == 2)
         {
-            ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_FINAL.cif",
+            ModuleIO::CifParser::write(out_dir + "STRU_FINAL.cif",
                                        ucell,
                                        header,
                                        "data_?",
