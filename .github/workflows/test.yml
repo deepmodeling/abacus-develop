@@ -130,18 +130,75 @@ jobs:
           ctest --test-dir build -V --timeout 1700 -j "$(nproc)" \
             -R 'MODULE_' -E PERF_MODULE_HSOLVER_KERNELS
 
-      - name: Integration Test Suites
+      - name: 01_PW Test
         env:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          # The 10 integration suites are independent ctest entries (each
-          # runs Autotest.sh in its own tests/<suite> directory). Run up to
-          # 4 concurrently instead of fully serial (measured ~14 min serial).
-          # -j4 (not nproc) avoids extreme oversubscription: each suite
-          # already spawns MPI ranks with OMP_NUM_THREADS=2.
-          ctest --test-dir build -V --timeout 1700 -j 4 \
-            -R '01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others'
+          ctest --test-dir build -V --timeout 1700 -R 01_PW
+
+      - name: 02_NAO_Gamma Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R 02_NAO_Gamma
+
+      - name: 03_NAO_multik Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R 03_NAO_multik
+
+      - name: 04_FF Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R 04_FF
+
+      - name: 05_rtTDDFT Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R 05_rtTDDFT
+
+      - name: 06_SDFT Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R 06_SDFT
+
+      - name: 07_OFDFT Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R 07_OFDFT
+
+      - name: 08_EXX Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R 08_EXX
+
+      - name: 09_DeePKS Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R 09_DeePKS
+
+      - name: 10_others Test
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R 10_others
 
 #      - name: 17_DS_DFTU Test
 #        env:
