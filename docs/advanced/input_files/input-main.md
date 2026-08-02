@@ -133,7 +133,6 @@
     - [npart\_sto](#npart_sto)
   - [Geometry relaxation](#geometry-relaxation)
     - [relax\_method](#relax_method)
-    - [relax\_new](#relax_new)
     - [relax\_scale\_force](#relax_scale_force)
     - [relax\_nmax](#relax_nmax)
     - [relax\_cg\_thr](#relax_cg_thr)
@@ -653,7 +652,7 @@
 ### bndpar
 
 - **Type**: Integer
-- **Description**: Divide all processors into bndpar groups, and bands (only stochastic orbitals now) will be distributed among each group. It should be larger than 0.
+- **Description**: Divide all processors into bndpar groups for SDFT or the BPCG solver. bndpar must be positive, no greater than the number of MPI processes, and kpar * bndpar must divide the number of MPI processes exactly.
 - **Default**: 1
 
 ### latname
@@ -1161,7 +1160,7 @@
   For numerical atomic orbitals basis,
 
   - lapack: Use LAPACK to diagonalize the Hamiltonian, only used for serial version
-  - genelpa: Use GEN-ELPA to diagonalize the Hamiltonian.
+  - genelpa: Use the CPU-only GEN-ELPA interface to diagonalize the Hamiltonian.
   - scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
   - cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
   - cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
@@ -1265,7 +1264,7 @@
 - **Description**: The number of spin components of wave functions.
   - 1: Spin degeneracy
   - 2: Collinear spin polarized.
-  - 4: For the case of noncollinear polarized, nspin will be automatically set to 4 without being specified by the user.
+  - 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.
 - **Default**: 1
 
 ### smearing_method
@@ -1469,7 +1468,7 @@
 - **Type**: Boolean
 - **Description**: Whether to consider spin-orbit coupling (SOC) effect in the calculation.
   - True: Consider spin-orbit coupling effect. When enabled:
-  - nspin is automatically set to 4 (noncollinear spin representation)
+  - nspin must be explicitly set to 4 (noncollinear spin representation)
   - Symmetry is automatically disabled (SOC breaks inversion symmetry)
   - Requires full-relativistic pseudopotentials with has_so=true in the UPF header
   - False: Do not consider spin-orbit coupling effect.
@@ -1481,7 +1480,7 @@
 - **Type**: Boolean
 - **Description**: Whether to allow non-collinear magnetic moments, where magnetization can point in arbitrary directions (x, y, z components) rather than being constrained to the z-axis.
   - True: Allow non-collinear polarization. When enabled:
-  - nspin is automatically set to 4
+  - nspin must be explicitly set to 4
   - Wave function dimension is doubled (npol=2), and the number of occupied states is doubled
   - Charge density has 4 components (Pauli spin matrices)
   - Cannot be used with gamma_only=true
@@ -1535,8 +1534,8 @@
 - **Type**: Integer or string
 - **Availability**: *esolver_type = sdft*
 - **Description**: The number of stochastic orbitals
-  - &gt; 0: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
-  - 0: Perform Kohn-Sham DFT.
+  - 1-1000000: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
+  - 0: Invalid. Use all for the complete-basis SDFT mode.
   - all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.
 - **Default**: 256
 
@@ -1605,51 +1604,32 @@
 ### relax_method
 
 - **Type**: Vector of string
-- **Description**: The methods to do geometry optimization. The available algorithms depend on the relax_new setting.
+- **Description**: The method used for geometry optimization.
 
   First element (algorithm selection):
 
-  - cg: Conjugate gradient (CG) algorithm. Available for both relax_new = True (default, simultaneous optimization) and relax_new = False (nested optimization). See relax_new for implementation details.
-  - bfgs: Broyden–Fletcher–Goldfarb–Shanno (BFGS) quasi-Newton algorithm. Only available when relax_new = False.
-  - lbfgs: Limited-memory BFGS algorithm, suitable for large systems. Only available when relax_new = False.
-  - cg_bfgs: Mixed method starting with CG and switching to BFGS when force convergence reaches relax_cg_thr. Only available when relax_new = False.
-  - sd: Steepest descent algorithm. Only available when relax_new = False. Not recommended for production use.
-  - fire: Fast Inertial Relaxation Engine method, a molecular-dynamics-based relaxation algorithm. Use by setting calculation to md and md_type to fire. Ionic velocities must be set in STRU file. See fire for details.
+  - cg: Conjugate gradient (CG) algorithm.
+  - bfgs: Broyden–Fletcher–Goldfarb–Shanno (BFGS) quasi-Newton algorithm.
+  - lbfgs: Limited-memory BFGS algorithm, suitable for large systems.
+  - cg_bfgs: Mixed method starting with CG and switching to BFGS when force convergence reaches relax_cg_thr.
+  - sd: Steepest descent algorithm. Not recommended for production use.
 
-  Second element (BFGS variant, only when first element is bfgs):
+  Optional second element:
 
-  - 1: Traditional BFGS that updates the Hessian matrix B and then inverts it.
-  - 2 or omitted: Default BFGS that directly updates the inverse Hessian (recommended).
+  - cg 1: First optimize ionic positions at fixed cell, then update the cell, and repeat.
+  - cg 2 or omitted: Simultaneously optimize ionic positions and cell parameters with line search (recommended).
+  - bfgs 1: Traditional BFGS that updates the Hessian matrix B and then inverts it.
+  - bfgs 2 or omitted: Default BFGS that directly updates the inverse Hessian (recommended).
+
+  The second element is not accepted by other methods.
 
   > Note: In the 3.10-LTS version, the type of this parameter is std::string. It can be set to "cg", "bfgs", "cg_bfgs", "bfgs_trad", "lbfgs", "sd", "fire".
-- **Default**: cg 1
-
-### relax_new
-
-- **Type**: Boolean
-- **Description**: Controls which implementation of geometry relaxation to use. At the end of 2022, a new implementation of the Conjugate Gradient (CG) method was introduced for relax and cell-relax calculations, while the old implementation was kept for backward compatibility.
-
-
-  - True (default): Use the new CG implementation with the following features:
-   - Simultaneous optimization of ionic positions and cell parameters (for cell-relax)
-   - Line search algorithm for step size determination
-   - Only CG algorithm is available (relax_method must be cg)
-   - Supports advanced cell constraints: fixed_axes = "shape", "volume", "a", "b", "c", etc.
-   - Supports fixed_ibrav to maintain lattice type
-   - More efficient for variable-cell relaxation
-   - Step size controlled by relax_scale_force
-
-  - False: Use the old implementation with the following features:
-   - Nested optimization procedure: ionic positions optimized first, then cell parameters (for cell-relax)
-   - Multiple algorithms available: cg, bfgs, lbfgs, sd, cg_bfgs
-   - Limited cell constraints: only fixed_axes = "volume" is supported
-   - Traditional approach with separate ionic and cell optimization steps
-- **Default**: True
+- **Default**: cg 2
 
 ### relax_scale_force
 
 - **Type**: Real
-- **Availability**: *Only used when relax_new set to True*
+- **Availability**: *Only used when relax_method is cg 2*
 - **Description**: The paramether controls the size of the first conjugate gradient step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
 - **Default**: 0.5
 
@@ -1662,7 +1642,7 @@
 ### relax_cg_thr
 
 - **Type**: Real
-- **Availability**: *Only used when relax_new = False and relax_method = cg_bfgs*
+- **Availability**: *Only used when relax_method is cg_bfgs*
 - **Description**: When relax_method is set to cg_bfgs, a mixed algorithm of conjugate gradient (CG) and Broyden–Fletcher–Goldfarb–Shanno (BFGS) is used. The ions first move according to the CG method, then switch to the BFGS method when the maximum force on atoms is reduced below this threshold.
 - **Default**: 0.5
 - **Unit**: eV/Angstrom
@@ -1691,21 +1671,21 @@
 ### relax_bfgs_w1
 
 - **Type**: Real
-- **Availability**: *Only used when relax_new = False and relax_method is bfgs or cg_bfgs*
+- **Availability**: *Only used when relax_method is bfgs or cg_bfgs*
 - **Description**: Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the sufficient decrease condition (c1 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.
 - **Default**: 0.01
 
 ### relax_bfgs_w2
 
 - **Type**: Real
-- **Availability**: *Only used when relax_new = False and relax_method is bfgs or cg_bfgs*
+- **Availability**: *Only used when relax_method is bfgs or cg_bfgs*
 - **Description**: Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the curvature condition (c2 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.
 - **Default**: 0.5
 
 ### relax_bfgs_rmax
 
 - **Type**: Real
-- **Availability**: *Only used when relax_new = False and relax_method is bfgs or cg_bfgs*
+- **Availability**: *Only used when relax_method is bfgs or cg_bfgs*
 - **Description**: Maximum allowed total displacement of all atoms during geometry optimization. The sum of atomic displacements can increase during optimization steps but cannot exceed this value.
 - **Default**: 0.8
 - **Unit**: Bohr
@@ -1713,7 +1693,7 @@
 ### relax_bfgs_rmin
 
 - **Type**: Real
-- **Availability**: *Only used when relax_new = False and relax_method = bfgs 1 (traditional BFGS)*
+- **Availability**: *Only used when relax_method is bfgs 1 (traditional BFGS)*
 - **Description**: Minimum allowed total displacement of all atoms. When the total atomic displacement falls below this value and force convergence is not achieved, the calculation will terminate. Note: This parameter is not used in the default BFGS algorithm (relax_method = bfgs 2 or bfgs).
 - **Default**: 1e-5
 - **Unit**: Bohr
@@ -1721,7 +1701,7 @@
 ### relax_bfgs_init
 
 - **Type**: Real
-- **Availability**: *Only used when relax_new = False and relax_method is bfgs or cg_bfgs*
+- **Availability**: *Only used when relax_method is bfgs or cg_bfgs*
 - **Description**: Initial total displacement of all atoms in the first BFGS step. This sets the scale for the initial movement.
 - **Default**: 0.5
 - **Unit**: Bohr
@@ -1758,9 +1738,9 @@
 
 - **Type**: String
 - **Availability**: *Only used when calculation is set to cell-relax*
-- **Description**: Specifies which cell degrees of freedom are fixed during variable-cell relaxation. The available options depend on the relax_new setting:
+- **Description**: Specifies which cell degrees of freedom are fixed during variable-cell relaxation. The available options depend on relax_method:
 
-  When relax_new = True (default), all options are available:
+  With relax_method = cg 2 (default), all options are available:
 
   - None: Default; all cell parameters can relax freely
   - volume: Relaxation with fixed volume (allows shape changes)
@@ -1771,21 +1751,17 @@
   - ab: Fix both a and b axes during relaxation
   - ac: Fix both a and c axes during relaxation
   - bc: Fix both b and c axes during relaxation
+  - abc: Fix all three lattice vectors during relaxation
 
-  When relax_new = False, all options are now available:
+  With relax_method set to cg 1, bfgs, lbfgs, sd, or cg_bfgs, None and a, b, c, ab, ac, bc, abc are available. The shape and volume options require cg 2.
 
-  - None: Default; all cell parameters can relax freely
-  - volume: Relaxation with fixed volume (allows shape changes). Volume is preserved by rescaling the lattice after each update.
-  - shape: Fix shape but allow volume changes (hydrostatic pressure only). Stress tensor is replaced with isotropic pressure.
-  - a, b, c, ab, ac, bc: Fix specific lattice vectors. Gradients for fixed vectors are set to zero.
-
-  > Note: For VASP users, see the ISIF correspondence table in the geometry optimization documentation. Both implementations now support all constraint types.
+  > Note: For VASP users, see the ISIF correspondence table in the geometry optimization documentation.
 - **Default**: None
 
 ### fixed_ibrav
 
 - **Type**: Boolean
-- **Availability**: *Can be used with both relax_new = True and relax_new = False. A specific latname must be provided.*
+- **Availability**: *Only used with relax_method = cg 2. A specific latname must be provided.*
 - **Description**: - True: the lattice type will be preserved during relaxation. The lattice vectors are reconstructed to match the specified Bravais lattice type after each update.
   - False: No restrictions are exerted during relaxation in terms of lattice type
 

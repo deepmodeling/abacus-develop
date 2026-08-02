@@ -14,7 +14,7 @@
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
-#include "source_lcao/module_operator_lcao/operator_force_stress_utils.h"
+#include "source_lcao/module_operator_lcao/operator_fs_utils.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_ri/Exx_LRI_interface.h"

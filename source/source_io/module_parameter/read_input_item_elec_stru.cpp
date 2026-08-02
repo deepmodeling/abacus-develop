@@ -60,7 +60,7 @@ For plane-wave basis,
 For numerical atomic orbitals basis,
 
 * lapack: Use LAPACK to diagonalize the Hamiltonian, only used for serial version
-* genelpa: Use GEN-ELPA to diagonalize the Hamiltonian.
+* genelpa: Use the CPU-only GEN-ELPA interface to diagonalize the Hamiltonian.
 * scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
 * cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
 * cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
@@ -164,6 +164,13 @@ Then the user has to correct the input file and restart the calculation.)";
                 }
                 else if (ks_solver == "genelpa")
                 {
+                    if (para.input.device == "gpu")
+                    {
+                        ModuleBase::WARNING_QUIT(
+                            "ReadInput",
+                            "ks_solver = genelpa does not support GPU acceleration. "
+                            "Please use ks_solver = elpa with device = gpu.");
+                    }
 #ifndef __ELPA
                     ModuleBase::WARNING_QUIT("Input",
                                              "Can not use genelpa if abacus is not compiled with "
@@ -482,21 +489,19 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.description = R"(The number of spin components of wave functions.
 * 1: Spin degeneracy
 * 2: Collinear spin polarized.
-* 4: For the case of noncollinear polarized, nspin will be automatically set to 4 without being specified by the user.)";
+* 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.)";
         item.default_value = "1";
         item.unit = "";
         item.availability = "";
         read_sync_int(input.nspin);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.noncolin || para.input.lspinorb)
-            {
-                para.input.nspin = 4;
-            }
-        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nspin != 1 && para.input.nspin != 2 && para.input.nspin != 4)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nspin should be 1, 2 or 4.");
+            }
+            if ((para.input.noncolin || para.input.lspinorb) && para.input.nspin != 4)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 4 when noncolin or lspinorb is enabled.");
             }
         };
         this->add_item(item);
@@ -986,7 +991,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.type = "Boolean";
         item.description = R"(Whether to consider spin-orbit coupling (SOC) effect in the calculation.
 * True: Consider spin-orbit coupling effect. When enabled:
-  * nspin is automatically set to 4 (noncollinear spin representation)
+  * nspin must be explicitly set to 4 (noncollinear spin representation)
   * Symmetry is automatically disabled (SOC breaks inversion symmetry)
   * Requires full-relativistic pseudopotentials with has_so=true in the UPF header
 * False: Do not consider spin-orbit coupling effect.
@@ -1004,7 +1009,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.type = "Boolean";
         item.description = R"(Whether to allow non-collinear magnetic moments, where magnetization can point in arbitrary directions (x, y, z components) rather than being constrained to the z-axis.
 * True: Allow non-collinear polarization. When enabled:
-  * nspin is automatically set to 4
+  * nspin must be explicitly set to 4
   * Wave function dimension is doubled (npol=2), and the number of occupied states is doubled
   * Charge density has 4 components (Pauli spin matrices)
   * Cannot be used with gamma_only=true

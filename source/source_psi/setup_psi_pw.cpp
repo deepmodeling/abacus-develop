@@ -25,7 +25,10 @@ void Setup_Psi_pw::before_runner_impl(
     allocate_psi(this->psi_cpu, kv.get_nks(), kv.ngk, PARAM.globalv.nbands_l, pw_wfc.npwk_max);
 
     auto* p_psi_init = static_cast<psi::PSIPrepare<T, Device>*>(this->p_psi_init);
-    p_psi_init->prepare_init(inp.pw_seed);
+    // before_runner_impl is invoked only once before the ion dynamics starts,
+    // so istep == 0 here ensures any one-time informational warnings are
+    // printed from this initial setup call.
+    p_psi_init->prepare_init(inp.pw_seed, 0);
 
     if (std::is_same<T, float>::value) 
     {

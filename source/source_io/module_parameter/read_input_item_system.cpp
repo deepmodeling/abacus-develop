@@ -313,7 +313,7 @@ void ReadInput::item_system()
             // GPU + PW: validate kpar against total processors
             // Moved from base_device::information::get_device_kpar()
 #if defined(__CUDA) || defined(__ROCM)
-            if (para.input.device == "gpu" && para.input.basis_type == "pw")
+            if (para.input.device == "gpu" && para.input.basis_type == "pw" && para.input.bndpar > 0)
             {
                 if (GlobalV::NPROC != para.input.kpar * para.input.bndpar)
                 {
@@ -339,24 +339,33 @@ void ReadInput::item_system()
                           "will be distributed among each group";
         item.category = "System variables";
         item.type = "Integer";
-        item.description = "Divide all processors into bndpar groups, and bands (only stochastic orbitals now) "
-                          "will be distributed among each group. It should be larger than 0.";
+        item.description = "Divide all processors into bndpar groups for SDFT or the BPCG solver. bndpar must be "
+                           "positive, no greater than the number of MPI processes, and kpar * bndpar must divide "
+                           "the number of MPI processes exactly.";
         item.default_value = "1";
         read_sync_int(input.bndpar);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.esolver_type != "sdft" && para.input.ks_solver != "bpcg")
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.bndpar <= 0)
             {
-                para.input.bndpar = 1;
+                ModuleBase::WARNING_QUIT("ReadInput", "bndpar must be greater than 0");
             }
             if (para.input.bndpar > GlobalV::NPROC)
             {
-                para.input.bndpar = GlobalV::NPROC;
+                ModuleBase::WARNING_QUIT("ReadInput", "bndpar can not exceed the number of MPI processes");
             }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.bndpar > 1 && para.input.esolver_type != "sdft" && para.input.ks_solver != "bpcg")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "bndpar > 1 requires esolver_type=sdft or ks_solver=bpcg");
+            }
             if (GlobalV::NPROC % para.input.bndpar != 0)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "The number of processors can not be divided by bndpar");
+            }
+            if (para.input.bndpar > 1
+                && (para.input.kpar <= 0 || (GlobalV::NPROC / para.input.bndpar) % para.input.kpar != 0))
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "The number of processors can not be divided by kpar * bndpar");
             }
         };
         this->add_item(item);
@@ -585,9 +594,19 @@ Available options are:
         item.availability = "Used only for plane wave basis set.";
         read_sync_int(input.diago_proc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.diago_proc > GlobalV::NPROC || para.input.diago_proc <= 0)
+            if (para.input.diago_proc == 0)
             {
                 para.input.diago_proc = GlobalV::NPROC;
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.diago_proc < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "diago_proc must not be negative");
+            }
+            if (para.input.diago_proc > GlobalV::NPROC)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "diago_proc cannot exceed the number of MPI processes");
             }
         };
         this->add_item(item);

@@ -28,7 +28,11 @@ class PSIPrepare : public PSIPrepareBase
 
     ~PSIPrepare(){};
 
-    void prepare_init(const int& random_seed);
+    ///@brief prepare the wavefunction initialization
+    ///@param random_seed seed for random initialization
+    ///@param istep current ion/relax step; informational warnings are only
+    ///       printed on the first step to avoid spamming relax output
+    void prepare_init(const int& random_seed, const int istep);
 
     void initialize_psi(Psi<std::complex<double>>* psi,
                         psi::Psi<T, Device>* kspw_psi,

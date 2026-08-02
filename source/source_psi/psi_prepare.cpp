@@ -37,7 +37,7 @@ PSIPrepare<T, Device>::PSIPrepare(const std::string& init_wfc_in,
 }
 
 template <typename T, typename Device>
-void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
+void PSIPrepare<T, Device>::prepare_init(const int& random_seed, const int istep)
 {
 
     // under restriction of C++11, std::unique_ptr can not be allocate via std::make_unique
@@ -63,17 +63,23 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed)
     }
     else if ((this->init_wfc.substr(0, 6) == "atomic") && (this->ucell.natomwfc == 0))
     {
-        std::cout << " WARNING: init_wfc = " + this->init_wfc +
-            " requires atomic pseudo wavefunctions(PP_PSWFC),\n but none available."
-            " Automatically switch to random initialization." << std::endl;
+        // The switch to random initialization still happens every ion step,
+        // but the warning is printed only on the first step to avoid
+        // spamming relax/cell-relax output with the same message.
+        if (istep == 0)
+        {
+            std::cout << " WARNING: init_wfc = " + this->init_wfc +
+                " requires atomic pseudo wavefunctions(PP_PSWFC),\n but none available."
+                " Automatically switch to random initialization." << std::endl;
+            GlobalV::ofs_running << "\n WARNING:\n init_wfc = " + this->init_wfc + " requires atomic pseudo wavefunctions(PP_PSWFC), but none available. \n"
+                " Automatically switch to random initialization.\n"
+                " Note: Random starting wavefunctions may slow down convergence.\n"
+                "      For faster convergence, consider using:\n"
+                "      1) A pseudopotential file that includes atomic wavefunctions (with PP_PSWFC), or\n"
+                "      2) Numerical atomic orbitals with 'init_wfc = nao' or 'nao+random' if available.\n"
+                << std::endl;
+        }
         GlobalV::ofs_running << "\n Using RANDOM starting wave functions for all " << PARAM.inp.nbands << " bands\n";
-        GlobalV::ofs_running << "\n WARNING:\n init_wfc = " + this->init_wfc + " requires atomic pseudo wavefunctions(PP_PSWFC), but none available. \n"
-            " Automatically switch to random initialization.\n"
-            " Note: Random starting wavefunctions may slow down convergence.\n"
-            "      For faster convergence, consider using:\n"
-            "      1) A pseudopotential file that includes atomic wavefunctions (with PP_PSWFC), or\n"
-            "      2) Numerical atomic orbitals with 'init_wfc = nao' or 'nao+random' if available.\n"
-            << std::endl;
         this->psi_initer = std::unique_ptr<psi_base<T>>(new psi_init_random<T>());
     }
     else if (this->init_wfc == "atomic"

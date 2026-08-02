@@ -1,21 +1,14 @@
 #include "esolver_ks_pw.h"
 
-#include "source_cell/cal_ux.h"
 #include "source_estate/elecstate_pw.h"
 #include "source_estate/module_charge/symmetry_rho.h"
-#include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "source_hsolver/kernels/hegvd_op.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
-#include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_pw/module_pwdft/stress_pw.h"
-#include "source_pw/module_pwdft/vsep_pw.h"
 
 #ifdef __DSP
 #include "source_base/kernels/dsp/dsp_connector.h"
@@ -23,13 +16,12 @@
 
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
 #include "source_estate/setup_estate_pw.h"         // mohan add 20251005
-#include "source_estate/update_pot.h"              // mohan add 20251016
 #include "source_hamilt/module_xc/exx_info.h"      // use GlobalC::exx_info
 #include "source_io/module_ctrl/ctrl_output_pw.h"  // mohan add 20250927
 #include "source_pw/module_pwdft/deltaspin_pw.h"   // mohan add 20250309
-#include "source_pw/module_pwdft/dftu_pw.h"        // mohan add 20250309
 #include "source_pw/module_pwdft/setup_pot.h"      // mohan add 20250929
 #include "source_pw/module_pwdft/update_cell_pw.h" // mohan add 20250309
+#include "source_pw/module_pwdft/setup_dftu_pw.h"  // mohan add 20250309
 
 namespace ModuleESolver
 {
@@ -150,7 +142,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
 
     if (ucell.cell_parameter_updated)
     {
-        this->stp.p_psi_init->prepare_init(PARAM.inp.pw_seed);
+        this->stp.p_psi_init->prepare_init(PARAM.inp.pw_seed, istep);
     }
 
     //! Init Hamiltonian (cell changed)
@@ -369,6 +361,7 @@ void ESolver_KS_PW<T, Device>::cal_force(BaseCell& basecell, ModuleBase::matrix&
     // Calculate forces
     ff.cal_force(ucell,
                  force,
+                 this->get_vdw_result(),
                  *this->pelec,
                  this->pw_rhod,
                  &ucell.symm,
@@ -395,6 +388,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matrix
 
     ss.cal_stress(stress,
                   ucell,
+                  this->get_vdw_result(),
                   this->dftu,
                   this->locpp,
                   this->ppcell,

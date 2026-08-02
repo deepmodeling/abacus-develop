@@ -16,7 +16,7 @@
 
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "source_lcao/hs_matrix_k.hpp"
+#include "source_hamilt/hs_matrix_k.h"
 
 #ifdef __EXX
 // Exx_LRI forward declaration, full definition in Exx_LRI.h (moved to .cpp)

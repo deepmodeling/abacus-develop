@@ -6,7 +6,7 @@
 #include "source_hamilt/module_hcontainer/output_hcontainer.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
-#include "source_lcao/module_operator_lcao/operator_force_stress_utils.h"
+#include "source_lcao/module_operator_lcao/operator_fs_utils.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_lcao/module_lr/utils/lr_util_xc.hpp"

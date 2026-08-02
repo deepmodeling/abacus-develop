@@ -257,10 +257,6 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     return;
 }
 
-// Include force/stress implementation
-#include "ekinetic_force_stress.hpp"
-#include "ekinetic_dh.hpp"
-
 template class hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

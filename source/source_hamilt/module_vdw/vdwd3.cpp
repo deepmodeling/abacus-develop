@@ -22,6 +22,8 @@ void Vdwd3::init()
     lat_[2] = ucell_.a3 * ucell_.lat0;
 
     std::vector<double> at_kind = atom_kind();
+    iz_.clear();
+    xyz_.clear();
     iz_.reserve(ucell_.nat);
     xyz_.reserve(ucell_.nat);
     for (size_t it = 0; it != ucell_.ntype; it++) {
@@ -82,10 +84,10 @@ std::vector<double> Vdwd3::atom_kind()
     return atom_kind;
 }
 
-void Vdwd3::cal_energy()
+void Vdwd3::evaluate_energy(double& energy)
 {
-    ModuleBase::TITLE("Vdwd3", "cal_energy");
-    ModuleBase::timer::start("Vdwd3", "cal_energy");
+    ModuleBase::TITLE("Vdwd3", "evaluate_energy");
+    ModuleBase::timer::start("Vdwd3", "evaluate_energy");
     init();
 
     int ij = 0;
@@ -257,51 +259,53 @@ void Vdwd3::cal_energy()
     {
         pbc_three_body(iz_, lat_, xyz_, rep_cn_, cc6ab, eabc);
     }
-    energy_ = (-para_.s6() * e6 - para_.s18() * e8 - eabc) * 2;
-    ModuleBase::timer::end("Vdwd3", "cal_energy");
+    energy = (-para_.s6() * e6 - para_.s18() * e8 - eabc) * 2.0;
+    ModuleBase::timer::end("Vdwd3", "evaluate_energy");
 }
 
-void Vdwd3::cal_force()
+void Vdwd3::evaluate_impl(const VdwRequest& request, VdwResult& result)
 {
-    ModuleBase::TITLE("Vdwd3", "cal_force");
-    ModuleBase::timer::start("Vdwd3", "cal_force");
+    if (!request.force && !request.stress)
+    {
+        evaluate_energy(result.energy);
+        return;
+    }
+
+    ModuleBase::TITLE("Vdwd3", "evaluate");
+    ModuleBase::timer::start("Vdwd3", "evaluate");
+
     init();
 
-    force_.clear();
-    force_.resize(ucell_.nat);
-
-    std::vector<ModuleBase::Vector3<double>> g;
-    g.clear();
-    g.resize(ucell_.nat);
+    std::vector<ModuleBase::Vector3<double>> gradient(ucell_.nat);
     ModuleBase::matrix smearing_sigma(3, 3);
+    pbc_gdisp(gradient, smearing_sigma, result.energy);
 
-    pbc_gdisp(g, smearing_sigma);
+    if (request.force)
+    {
+        result.force.resize(ucell_.nat);
+        for (int iat = 0; iat < ucell_.nat; ++iat)
+        {
+            result.force[iat] = -2.0 * gradient[iat];
+        }
+        result.has_force = true;
+    }
 
-    for (size_t iat = 0; iat != ucell_.nat; iat++) {
-        force_[iat] = -2.0 * g[iat];
-}
+    if (request.stress)
+    {
+        result.stress = ModuleBase::Matrix3(2.0 * smearing_sigma(0, 0),
+                                            2.0 * smearing_sigma(0, 1),
+                                            2.0 * smearing_sigma(0, 2),
+                                            2.0 * smearing_sigma(1, 0),
+                                            2.0 * smearing_sigma(1, 1),
+                                            2.0 * smearing_sigma(1, 2),
+                                            2.0 * smearing_sigma(2, 0),
+                                            2.0 * smearing_sigma(2, 1),
+                                            2.0 * smearing_sigma(2, 2))
+                        / ucell_.omega;
+        result.has_stress = true;
+    }
 
-    ModuleBase::timer::end("Vdwd3", "cal_force");
-}
-
-void Vdwd3::cal_stress()
-{
-    ModuleBase::TITLE("Vdwd3", "cal_stress");
-    ModuleBase::timer::start("Vdwd3", "cal_stress");
-    init();
-
-    std::vector<ModuleBase::Vector3<double>> g;
-    g.clear();
-    g.resize(ucell_.nat);
-    ModuleBase::matrix smearing_sigma(3, 3);
-
-    pbc_gdisp(g, smearing_sigma);
-
-    stress_ = ModuleBase::Matrix3(2.0 * smearing_sigma(0, 0), 2.0 * smearing_sigma(0, 1), 2.0 * smearing_sigma(0, 2),
-                                  2.0 * smearing_sigma(1, 0), 2.0 * smearing_sigma(1, 1), 2.0 * smearing_sigma(1, 2),
-                                  2.0 * smearing_sigma(2, 0), 2.0 * smearing_sigma(2, 1), 2.0 * smearing_sigma(2, 2))
-              / ucell_.omega;
-    ModuleBase::timer::end("Vdwd3", "cal_stress");
+    ModuleBase::timer::end("Vdwd3", "evaluate");
 }
 
 void Vdwd3::get_c6(int iat, int jat, double nci, double ncj, double &c6)
@@ -735,8 +739,13 @@ void Vdwd3::get_dc6_dcnij(int mxci, int mxcj, double cni, double cnj, int izi, i
     }
 }
 
-void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::matrix &smearing_sigma)
+void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>>& g,
+                       ModuleBase::matrix& smearing_sigma,
+                       double& energy)
 {
+    double e6 = 0.0;
+    double e8 = 0.0;
+    double eabc = 0.0;
     std::vector<double> c6save(ucell_.nat * (ucell_.nat + 1)), dc6_rest_sum(ucell_.nat * (ucell_.nat + 1) / 2),
         dc6i(ucell_.nat), cn(ucell_.nat);
     pbc_ncoord(cn);
@@ -787,6 +796,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                             damp6 = 1.0 / (1.0 + 6.0 * t6);
                             t8 = std::pow(r / (para_.rs18() * r0), -para_.alp8());
                             damp8 = 1.0 / (1.0 + 6.0 * t8);
+
+                            e6 += c6 * damp6 / r6 * 0.5;
+                            e8 += 3.0 * c6 * r42 * damp8 / r8 * 0.5;
 
                             // d(r^(-6))/d(tau)
                             drij[linii][taux + rep_vdw_[0]][tauy + rep_vdw_[1]][tauz + rep_vdw_[2]]
@@ -839,6 +851,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                             damp6 = 1.0 / (1.0 + 6.0 * t6);
                             t8 = std::pow(r / (para_.rs18() * r0), -para_.alp8());
                             damp8 = 1.0 / (1.0 + 6.0 * t8);
+
+                            e6 += c6 * damp6 / r6;
+                            e8 += 3.0 * c6 * r42 * damp8 / r8;
 
                             // d(r^(-6))/d(r_ij)
                             drij[linij][taux + rep_vdw_[0]][tauy + rep_vdw_[1]][tauz + rep_vdw_[2]]
@@ -894,6 +909,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                             t6 = r6 + std::pow(r0, 6);
                             t8 = r8 + std::pow(r0, 8);
 
+                            e6 += c6 / t6 * 0.5;
+                            e8 += 3.0 * c6 * r42 / t8 * 0.5;
+
                             // d(1/r^(-6)+r0^6)/d(r)
                             drij[linii][taux + rep_vdw_[0]][tauy + rep_vdw_[1]][tauz + rep_vdw_[2]]
                                 += -para_.s6() * c6 * 6.0 * r4 * r / (t6 * t6) * 0.5
@@ -938,6 +956,9 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
 
                             t6 = r6 + std::pow(r0, 6);
                             t8 = r8 + std::pow(r0, 8);
+
+                            e6 += c6 / t6;
+                            e8 += 3.0 * c6 * r42 / t8;
 
                             drij[linij][taux + rep_vdw_[0]][tauy + rep_vdw_[1]][tauz + rep_vdw_[2]]
                                 += -para_.s6() * c6 * 6.0 * r4 * r / (t6 * t6)
@@ -1027,6 +1048,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                             ang = 0.375 * (rij2 + rjk2 - rik2) * (rij2 - rjk2 + rik2)
                                                       * (-rij2 + rjk2 + rik2) / (geomean3 * geomean2)
                                                   + 1.0 / geomean3;
+                                            eabc += ang * c9 * damp9;
                                             dc6_rest = ang * damp9;
                                             dfdmp = 2.0 * alp9 * std::pow(0.75 * r0av, alp9) * damp9 * damp9;
 
@@ -1149,6 +1171,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                         ang = 0.375 * (rij2 + rjk2 - rik2) * (rij2 - rjk2 + rik2)
                                                   * (-rij2 + rjk2 + rik2) / (geomean3 * geomean2)
                                               + 1.0 / geomean3;
+                                        eabc += ang * c9 * damp9 / 2.0;
                                         dc6_rest = ang * damp9 / 2.0;
                                         dfdmp = 2.0 * alp9 * std::pow(0.75 * r0av, alp9) * damp9 * damp9;
 
@@ -1269,6 +1292,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                         ang = 0.375 * (rij2 + rjk2 - rik2) * (rij2 - rjk2 + rik2)
                                                   * (-rij2 + rjk2 + rik2) / (geomean3 * geomean2)
                                               + 1.0 / geomean3;
+                                        eabc += ang * c9 * damp9 / 2.0;
                                         dc6_rest = ang * damp9 / 2.0;
                                         dfdmp = 2.0 * alp9 * std::pow(0.75 * r0av, alp9) * damp9 * damp9;
 
@@ -1394,6 +1418,7 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
                                     ang = 0.375 * (rij2 + rjk2 - rik2) * (rij2 - rjk2 + rik2) * (-rij2 + rjk2 + rik2)
                                               / (geomean3 * geomean2)
                                           + 1.0 / geomean3;
+                                    eabc += ang * c9 * damp9 / 6.0;
                                     dc6_rest = ang * damp9 / 6.0;
                                     dfdmp = 2.0 * alp9 * std::pow(0.75 * r0av, alp9) * damp9 * damp9;
 
@@ -1533,6 +1558,8 @@ void Vdwd3::pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::m
 }
 }
     } // end iat
+
+    energy = (-para_.s6() * e6 - para_.s18() * e8 - eabc) * 2.0;
 }
 
 } // namespace vdw

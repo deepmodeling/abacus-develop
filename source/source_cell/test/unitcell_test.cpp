@@ -38,11 +38,6 @@ Magnetism::~Magnetism()
  *   - Setup:
  *     - setup(): to set latname, ntype, lmaxmax, init_vel, and lc
  *     - if_cell_can_change(): judge if any lattice vector can change
- *   - SetupWarningQuit1:
- *     - setup(): deliver warning: "there are bugs in the old implementation;
- *         set relax_new to be 1 for fixed_volume relaxation"
- *   - SetupWarningQuit2:
- *     - setup(): deliver warning: "set relax_new to be 1 for fixed_shape relaxation"
  *   - RemakeCell
  *     - remake_cell(): rebuild cell according to its latName
  *   - RemakeCellWarnings
@@ -235,10 +230,6 @@ TEST_F(UcellTest, Setup)
         }
     }
 }
-
-// These tests are removed because fixed_axes="volume" and fixed_axes="shape"
-// are now supported with relax_new=false (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
-// The old implementation now properly handles these constraints via post-update enforcement
 
 TEST_F(UcellDeathTest, CompareAatomLabel)
 {

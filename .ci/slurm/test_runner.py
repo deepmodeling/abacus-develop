@@ -259,6 +259,18 @@ class SlurmTests(unittest.TestCase):
         self.assertEqual(states["101_0"], ("COMPLETED", "0:0"))
         self.assertEqual(states["101_1"], ("FAILED", "1:0"))
 
+    def test_accounting_retries_transient_failure(self):
+        responses = [
+            mock.Mock(returncode=0, stdout="", stderr=""),
+            mock.Mock(returncode=1, stdout="", stderr="Socket timed out"),
+            mock.Mock(returncode=0, stdout="101|COMPLETED|0:0\n", stderr=""),
+        ]
+        with mock.patch("slurm.subprocess.run", side_effect=responses):
+            client = slurm.Slurm(poll_seconds=0)
+            client.jobs["101"] = None
+            states = client.wait(("101",))
+        self.assertEqual(states["101"], ("COMPLETED", "0:0"))
+
     def test_pass_requires_successful_slurm_accounting(self):
         config = runner.Config(
             runner.Site("Example cluster", "https://cluster.example/", "Computing resources were provided by"),
@@ -808,6 +820,26 @@ class ResultTests(unittest.TestCase):
 
 
 class GitHubTests(unittest.TestCase):
+    def test_read_user_cannot_trigger_pr_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            event = root / "event.json"
+            event.write_text(json.dumps({
+                "comment": {"user": {"login": "reader"}},
+                "issue": {"number": 23},
+            }), encoding="utf-8")
+            output = root / "output"
+            environment = {
+                "GITHUB_EVENT_NAME": "issue_comment", "GITHUB_REPOSITORY": "owner/repo",
+                "GITHUB_EVENT_PATH": str(event), "GITHUB_OUTPUT": str(output),
+            }
+            with mock.patch.dict(os.environ, environment, clear=True), \
+                    mock.patch("runner._gh", return_value={"permission": "read", "role_name": "read"}) as api:
+                with self.assertRaisesRegex(ValueError, "commenter needs Triage permission"):
+                    runner.github_admit()
+            api.assert_called_once_with("repos/owner/repo/collaborators/reader/permission")
+            self.assertFalse(output.exists())
+
     def test_pr_comment_is_created_queued_and_updated_in_place(self):
         source_sha = "a" * 40
         with tempfile.TemporaryDirectory() as directory:
@@ -819,7 +851,7 @@ class GitHubTests(unittest.TestCase):
             }), encoding="utf-8")
             output = root / "output"
             admitted = [
-                {"permission": "triage"},
+                {"permission": "read", "role_name": "triage"},
                 {"state": "open", "head": {"repo": {"full_name": "owner/fork"}, "sha": source_sha}},
                 {"id": 456}, {"id": 123},
             ]

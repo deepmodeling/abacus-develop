@@ -321,7 +321,6 @@ void psi_init_nao<T>::init_psig(T* psig, const int& ik)
                     {
                         /* FOR EACH SPIN CHANNEL */
                         for (int is_N = 0; is_N < 2; is_N++) // rotate base
-                        // for(int is_N = 0; is_N < 1; is_N++)
                         {
                             if (L == 0 && is_N == 1)
                             {
