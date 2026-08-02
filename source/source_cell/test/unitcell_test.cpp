@@ -829,9 +829,9 @@ TEST_F(UcellTest, PrintSTRU)
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_CONSTANT"));
     EXPECT_THAT(str, testing::HasSubstr("1.8897261255"));
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_VECTORS"));
-    EXPECT_THAT(str, testing::HasSubstr("10.0000000000        0.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000       10.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000        0.0000000000       10.0000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("10.0000000000000000      0.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000     10.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000      0.0000000000000000     10.0000000000000000"));
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_POSITIONS"));
     EXPECT_THAT(str, testing::HasSubstr("Cartesian"));
     EXPECT_THAT(str, testing::HasSubstr("C #label"));
@@ -860,9 +860,9 @@ TEST_F(UcellTest, PrintSTRU)
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_CONSTANT"));
     EXPECT_THAT(str, testing::HasSubstr("1.8897261255"));
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_VECTORS"));
-    EXPECT_THAT(str, testing::HasSubstr("10.0000000000        0.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000       10.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000        0.0000000000       10.0000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("10.0000000000000000      0.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000     10.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000      0.0000000000000000     10.0000000000000000"));
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_POSITIONS"));
     EXPECT_THAT(str, testing::HasSubstr("Direct"));
     EXPECT_THAT(str, testing::HasSubstr("C #label"));
@@ -907,9 +907,9 @@ TEST_F(UcellTest, PrintSTRU)
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_CONSTANT"));
     EXPECT_THAT(str, testing::HasSubstr("1.8897261255"));
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_VECTORS"));
-    EXPECT_THAT(str, testing::HasSubstr("10.0000000000        0.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000       10.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000        0.0000000000       10.0000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("10.0000000000000000      0.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000     10.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000      0.0000000000000000     10.0000000000000000"));
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_POSITIONS"));
     EXPECT_THAT(str, testing::HasSubstr("Direct"));
     EXPECT_THAT(str, testing::HasSubstr("C #label"));
