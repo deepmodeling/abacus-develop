@@ -8,6 +8,7 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace elecstate {
@@ -54,6 +55,14 @@ ElecStatePW<T, Device>::~ElecStatePW()
     }
     delmem_complex_op()(this->wfcr);
     delmem_complex_op()(this->wfcr_another_spin);
+}
+
+template<typename T, typename Device>
+double ElecStatePW<T, Device>::get_spin_constrain_energy()
+{
+    spinconstrain::SpinConstrain<std::complex<double>>& sc
+        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+    return sc.cal_escon();
 }
 
 template<typename T, typename Device>
