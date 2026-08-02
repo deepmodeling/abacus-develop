@@ -3,18 +3,23 @@ name: CUDA Test
 on:
   workflow_dispatch:
   pull_request:
+  schedule:
+    # Nightly at 18:00 UTC: run the full 01_PW GPU case list. Pull requests
+    # run the smaller CASES_GPU_SMOKE.txt subset instead.
+    - cron: '0 18 * * *'
 
 defaults:
   run:
     shell: bash
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.suite || 'build' }}
   cancel-in-progress: true
 
 jobs:
-  test:
-    name: Test on CUDA Build
+  # ── Job 1: build once, publish the binary as an artifact ─────────────
+  build:
+    name: Build CUDA
     runs-on: gpu
     if: github.repository_owner == 'deepmodeling'
     container:
@@ -22,7 +27,7 @@ jobs:
       volumes:
         - /tmp/ccache:/github/home/.ccache
       options: --gpus all
-      
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -33,6 +38,12 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y ccache xz-utils ninja-build pkg-config
+
+      - name: Setup ccache
+        run: |
+          ccache --max-size=30G
+          ccache --zero-stats
+          ccache -s
 
       - name: Install external tools from toolchain
         run: |
@@ -46,15 +57,20 @@ jobs:
           nvidia-smi
           source toolchain/install/setup
           rm -rf build
-          # Build only for the GPU architecture of the CI runner instead of the
-          # default 7 architectures (60/70/75/80/86/89/90). The CI GPU pool is
-          # Tesla V100 (sm_70, see the nvidia-smi output above); update this if
-          # the runner GPU model changes (V100=70, A100=80, H100=90, T4=75).
-          # This cuts nvcc work by ~7x and allows safe -j.
+          # Build only for the GPU architecture of the CI runner instead of
+          # the default 7 architectures (60/70/75/80/86/89/90). The CI GPU
+          # pool is Tesla V100 (sm_70, see the nvidia-smi output above);
+          # update this if the runner GPU model changes (V100=70, A100=80,
+          # H100=90, T4=75). This cuts nvcc work by ~7x and allows safe -j.
           cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
-            -DCMAKE_CUDA_ARCHITECTURES=70
+            -DCMAKE_CUDA_ARCHITECTURES=70 \
+            -DCMAKE_INSTALL_PREFIX="${GITHUB_WORKSPACE}/install"
           cmake --build build -j "$(nproc)"
           cmake --install build
+
+      - name: ccache statistics
+        if: always()
+        run: ccache -s
 
       - name: Module_LCAO CUDA Unittests
         env:
@@ -63,39 +79,72 @@ jobs:
         run: |
           ctest --test-dir build -V --timeout 1700 -R '^(MODULE_LCAO_tddft_radial_interpolation_cuda_test|MODULE_LCAO_tddft_snap_psibeta_half_test)$'
 
-      - name: Test 11_PW_GPU
-        run: |
-          cd tests/11_PW_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: abacus-cuda-bin
+          path: install/
+          retention-days: 1
 
-      - name: Test 12_NAO_Gamma_GPU
-        run: |
-          cd tests/12_NAO_Gamma_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+  # ── Job 2: matrix instances run their test suites in parallel ────────
+  gpu-test:
+    name: Test ${{ matrix.suite }}
+    needs: build
+    runs-on: gpu
+    if: github.repository_owner == 'deepmodeling'
+    container:
+      image: ghcr.io/deepmodeling/abacus-cuda
+      options: --gpus all
+    strategy:
+      fail-fast: false
+      matrix:
+        suite:
+          - 11_PW_GPU
+          - 12_NAO_Gamma_GPU
+          - 13_NAO_multik_GPU
+          - 15_rtTDDFT_GPU
+          - 16_SDFT_GPU
+          - 01_PW
 
-      - name: Test 13_NAO_multik_GPU
-        run: |
-          cd tests/13_NAO_multik_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+    steps:
+      - name: Checkout test scripts
+        uses: actions/checkout@v7
 
-      - name: Test 15_rtTDDFT_GPU
-        run: |
-          cd tests/15_rtTDDFT_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+      - name: Download binary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: abacus-cuda-bin
+          path: install/
 
-      - name: Test 16_SDFT_GPU
-        run: |
-          cd tests/16_SDFT_GPU
-          bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+      - name: Make binary executable
+        run: find install/bin -type f -exec chmod +x {} \;
 
-      - name: Test 01_PW on GPU
+      - name: Select 01_PW case list
+        if: matrix.suite == '01_PW'
         run: |
-          cd tests/01_PW
-          find . -name INPUT | while read f; do
-              if grep -q "^device" "$f"; then
-                  sed -i 's/^device.*/device    gpu/' "$f"
-              else
-                  echo "device    gpu" >> "$f"
-              fi
-          done
-          bash ../integrate/Autotest.sh -n 1 -a abacus -f CASES_GPU.txt
+          # PRs run the smoke subset; schedule/dispatch runs the full list.
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "CASE_FILE=CASES_GPU_SMOKE.txt" >> "$GITHUB_ENV"
+          else
+            echo "CASE_FILE=CASES_GPU.txt" >> "$GITHUB_ENV"
+          fi
+
+      - name: Test ${{ matrix.suite }}
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          export PATH="${GITHUB_WORKSPACE}/install/bin:${PATH}"
+          cd "tests/${{ matrix.suite }}"
+          if [ "${{ matrix.suite }}" = "01_PW" ]; then
+            find . -name INPUT | while read f; do
+                if grep -q "^device" "$f"; then
+                    sed -i 's/^device.*/device    gpu/' "$f"
+                else
+                    echo "device    gpu" >> "$f"
+                fi
+            done
+            bash ../integrate/Autotest.sh -n 2 -f "$CASE_FILE"
+          else
+            bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+          fi

@@ -1,0 +1,29 @@
+# Smoke subset of CASES_GPU.txt for pull_request runs (~1/3 of the cases,
+# chosen to cover: basic SCF with different pseudopotentials, diagonalization
+# solvers CG/David/DS_sca, spin variants nspin=1/2/4, smearing, charge
+# mixing, force/stress, relax/cell-relax, symmetry, vdW, MD, DFT+half and
+# output options). The full CASES_GPU.txt list still runs on schedule
+# (nightly) and workflow_dispatch triggers.
+nscf_out_pot
+scf_out_elf
+001_PW_UPF100_Al
+004_PW_UPF201_Si
+006_PW_UPF201_Eu
+020_PW_kspace
+022_PW_CG
+023_PW_DA
+025_PW_DS_sca
+029_PW_15_CF_CS_S1_smallg
+035_PW_15_SO
+036_PW_AF
+037_PW_FM
+041_PW_GA_smear
+045_PW_BD_chgmix
+051_PW_OBOD_MemSaver
+058_PW_RE_MB
+066_PW_CR_fix_abc
+073_PW_SY
+083_PW_sol_H2
+090_PW_VWR
+101_PW_MD_1O
+209_PW_DFTHALF
