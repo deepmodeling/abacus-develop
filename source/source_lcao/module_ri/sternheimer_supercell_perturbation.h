@@ -26,6 +26,11 @@ SternheimerABFBlochGridChannel combine_sternheimer_supercell_translation_channel
     const std::vector<SternheimerABFBlochGridChannel>& channels,
     const SternheimerSupercellTranslationSum& config);
 
+std::vector<SternheimerABFBlochGridChannel>
+combine_all_sternheimer_supercell_translation_channels(
+    const std::vector<SternheimerABFBlochGridChannel>& channels,
+    const SternheimerSupercellTranslationSum& config);
+
 int sternheimer_supercell_primitive_cell_count(const SternheimerSupercellTranslationSum& config);
 
 } // namespace ModuleRI

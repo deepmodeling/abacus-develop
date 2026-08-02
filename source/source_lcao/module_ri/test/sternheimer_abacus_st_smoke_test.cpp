@@ -388,6 +388,15 @@ TEST(SternheimerABACUSSTSmoke, DividesSupercellKWeightAcrossPrimitiveTranslation
     EXPECT_THROW(ModuleRI::sternheimer_supercell_sector_kweight(1.0, 0), std::invalid_argument);
 }
 
+TEST(SternheimerABACUSSTSmoke, RestoresPrimitiveNormalizationForFullSupercellResponseMatrix)
+{
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_supercell_response_matrix_scale(false, 64), 1.0);
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_supercell_response_matrix_scale(true, 8), 8.0);
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_supercell_response_matrix_scale(true, 64), 64.0);
+    EXPECT_THROW(ModuleRI::sternheimer_supercell_response_matrix_scale(true, 0),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, PlansVirtualSamplingWithoutMakingTheOptionalSOSDiagnosticMandatory)
 {
     const auto standard = ModuleRI::sternheimer_lcao_sampling_plan(false, false, false);
@@ -658,6 +667,56 @@ TEST(SternheimerABACUSSTSmoke, BuildsSingleGammaSupercellTranslationPlanWithPosi
     EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
 }
 
+TEST(SternheimerABACUSSTSmoke, ExpandsGammaSupercellIntoPrimitiveKRecordsWithGammaGridBoundary)
+{
+    ModuleRI::SternheimerLCAOOccupiedKPoint gamma;
+    gamma.local_k_index = 0;
+    gamma.global_k_index = 0;
+    gamma.zero_order_k_index = 0;
+    gamma.spin_index = 0;
+    gamma.kpoint = {0.0, 0.0, 0.0};
+    gamma.kweight = 2.0;
+    gamma.eigenvalues = {-2.0, -1.0};
+    gamma.occupations = {1.0, 1.0};
+    gamma.coefficients = {
+        {1.0, 0.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0, 0.0},
+    };
+    gamma.unoccupied_eigenvalues = {1.0, 2.0};
+    gamma.unoccupied_coefficients = {
+        {0.0, 0.0, 1.0, 0.0},
+        {0.0, 0.0, 0.0, 1.0},
+    };
+
+    std::vector<ModuleRI::SternheimerSupercellKPointSector> sectors(2);
+    sectors[0].kpoint = {0.0, 0.0, 0.0};
+    sectors[0].sector.eigenvalues = {-2.0, 1.0};
+    sectors[0].sector.coefficients = {gamma.coefficients[0], gamma.unoccupied_coefficients[0]};
+    sectors[1].kpoint = {0.5, 0.0, 0.0};
+    sectors[1].sector.eigenvalues = {-1.0, 2.0};
+    sectors[1].sector.coefficients = {gamma.coefficients[1], gamma.unoccupied_coefficients[1]};
+
+    const auto records
+        = ModuleRI::build_sternheimer_supercell_full_kpoint_records(gamma, sectors);
+
+    ASSERT_EQ(records.size(), 2U);
+    for (std::size_t ik = 0; ik != records.size(); ++ik)
+    {
+        EXPECT_EQ(records[ik].local_k_index, static_cast<int>(ik));
+        EXPECT_EQ(records[ik].global_k_index, static_cast<int>(ik));
+        EXPECT_EQ(records[ik].zero_order_k_index, static_cast<int>(ik));
+        EXPECT_DOUBLE_EQ(records[ik].kweight, 1.0);
+        EXPECT_EQ(records[ik].kpoint, sectors[ik].kpoint);
+        EXPECT_EQ(ModuleRI::sternheimer_lcao_grid_kpoint(records[ik]),
+                  (ModuleRI::SternheimerReducedKPoint{0.0, 0.0, 0.0}));
+        ASSERT_EQ(records[ik].eigenvalues.size(), 1U);
+        ASSERT_EQ(records[ik].unoccupied_eigenvalues.size(), 1U);
+        EXPECT_DOUBLE_EQ(records[ik].occupations[0], 1.0);
+    }
+    EXPECT_DOUBLE_EQ(records[0].eigenvalues[0], -2.0);
+    EXPECT_DOUBLE_EQ(records[1].eigenvalues[0], -1.0);
+}
+
 TEST(SternheimerABACUSSTSmoke, LimitsPeriodicOccupiedBandsOnlyWhenRequested)
 {
     EXPECT_EQ(ModuleRI::sternheimer_periodic_band_count(8, -1), 8);
@@ -671,6 +730,8 @@ TEST(SternheimerABACUSSTSmoke, TreatsSupercellTranslationResponseAsDiagnosticOnl
     EXPECT_TRUE(ModuleRI::sternheimer_write_periodic_v1(false, false));
     EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(true, false));
     EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(false, true));
+    EXPECT_TRUE(ModuleRI::sternheimer_write_periodic_v1(true, false, true));
+    EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(true, true, true));
 
     EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_output_mode(true, true));
     EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_output_mode(false, false));
@@ -720,6 +781,17 @@ TEST(SternheimerABACUSSTSmoke, AssignsContiguousKPointOwners)
     EXPECT_THROW(ModuleRI::sternheimer_kpoint_owner_group(0, global_kpoint_count, 0),
                  std::invalid_argument);
     EXPECT_THROW(ModuleRI::sternheimer_kpoint_owner_group(0, 3, 4), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, SelectsIndependentSupercellKPointGroups)
+{
+    EXPECT_EQ(ModuleRI::sternheimer_response_kpoint_group_count(false, 1, 4, 64), 4);
+    EXPECT_EQ(ModuleRI::sternheimer_response_kpoint_group_count(true, 8, 1, 64), 8);
+    EXPECT_EQ(ModuleRI::sternheimer_response_kpoint_group_count(true, 64, 1, 64), 64);
+    EXPECT_THROW(ModuleRI::sternheimer_response_kpoint_group_count(true, 0, 1, 64),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_response_kpoint_group_count(true, 65, 1, 64),
+                 std::invalid_argument);
 }
 
 TEST(SternheimerABACUSSTSmoke, AssignsEachNestedKFrequencyTaskExactlyOnce)

@@ -202,7 +202,7 @@ SternheimerABFBlochGridChannel combine_sternheimer_supercell_translation_channel
                     result = channel;
                     result.channel_index = 0;
                     result.atom_index = config.basis_atom;
-                    result.atom_local_index = config.basis_atom;
+                    result.atom_local_index = config.channel_within_atom;
                     result.label = "supercell_translation_sum:" + channel.label;
                     result.potential_r.assign(channel.potential_r.size(), std::complex<double>(0.0, 0.0));
                     initialized = true;
@@ -232,6 +232,45 @@ SternheimerABFBlochGridChannel combine_sternheimer_supercell_translation_channel
         result.max_abs = std::max(result.max_abs, std::abs(value));
     }
     return result;
+}
+
+std::vector<SternheimerABFBlochGridChannel>
+combine_all_sternheimer_supercell_translation_channels(
+    const std::vector<SternheimerABFBlochGridChannel>& channels,
+    const SternheimerSupercellTranslationSum& config)
+{
+    sternheimer_supercell_primitive_cell_count(config);
+    if (channels.empty())
+    {
+        throw std::invalid_argument("Supercell translation sum requires auxiliary channels.");
+    }
+
+    std::vector<SternheimerABFBlochGridChannel> combined;
+    for (int basis_atom = 0; basis_atom != config.atoms_per_primitive; ++basis_atom)
+    {
+        const int channels_on_atom = static_cast<int>(std::count_if(
+            channels.begin(), channels.end(), [basis_atom](const auto& channel) {
+                return channel.atom_index == basis_atom;
+            }));
+        if (channels_on_atom <= 0)
+        {
+            throw std::invalid_argument(
+                "Supercell translation sum found no auxiliary channels on a primitive atom.");
+        }
+        for (int ordinal = 0; ordinal != channels_on_atom; ++ordinal)
+        {
+            SternheimerSupercellTranslationSum channel_config = config;
+            channel_config.basis_atom = basis_atom;
+            channel_config.channel_within_atom = ordinal;
+            SternheimerABFBlochGridChannel channel
+                = combine_sternheimer_supercell_translation_channel(channels, channel_config);
+            channel.channel_index = static_cast<int>(combined.size());
+            channel.atom_index = basis_atom;
+            channel.atom_local_index = ordinal;
+            combined.push_back(std::move(channel));
+        }
+    }
+    return combined;
 }
 
 } // namespace ModuleRI

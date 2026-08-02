@@ -11,12 +11,14 @@ namespace
 using Complex = std::complex<double>;
 using Channel = ModuleRI::SternheimerABFBlochGridChannel;
 
-Channel make_channel(const int atom_index, const Complex value)
+Channel make_channel(const int atom_index,
+                     const Complex value,
+                     const int atom_local_index = 0)
 {
     Channel channel;
-    channel.channel_index = atom_index;
+    channel.channel_index = 2 * atom_index + atom_local_index;
     channel.atom_index = atom_index;
-    channel.atom_local_index = atom_index;
+    channel.atom_local_index = atom_local_index;
     channel.type_index = 0;
     channel.angular_momentum = 0;
     channel.radial_index = 0;
@@ -83,4 +85,41 @@ TEST(SternheimerSupercellPerturbation, RejectsMissingEquivalentAtomChannel)
                                         make_channel(3, Complex(40.0, 0.0))};
     EXPECT_THROW(ModuleRI::combine_sternheimer_supercell_translation_channel(channels, config),
                  std::invalid_argument);
+}
+
+TEST(SternheimerSupercellPerturbation, CombinesAllPrimitiveChannelsWithStableMetadata)
+{
+    ModuleRI::SternheimerSupercellTranslationSum config;
+    config.repeats = {2, 1, 1};
+    config.primitive_qpoint = {0.5, 0.0, 0.0};
+    config.atoms_per_primitive = 2;
+    config.basis_atom = 0;
+    config.channel_within_atom = 0;
+
+    const std::vector<Channel> channels{
+        make_channel(0, Complex(1.0, 0.0), 0),
+        make_channel(0, Complex(2.0, 0.0), 1),
+        make_channel(1, Complex(10.0, 0.0), 0),
+        make_channel(1, Complex(20.0, 0.0), 1),
+        make_channel(2, Complex(3.0, 0.0), 0),
+        make_channel(2, Complex(5.0, 0.0), 1),
+        make_channel(3, Complex(30.0, 0.0), 0),
+        make_channel(3, Complex(50.0, 0.0), 1),
+    };
+
+    const auto combined
+        = ModuleRI::combine_all_sternheimer_supercell_translation_channels(channels, config);
+    const double inverse_sqrt_two = 1.0 / std::sqrt(2.0);
+
+    ASSERT_EQ(combined.size(), 4U);
+    for (std::size_t index = 0; index != combined.size(); ++index)
+    {
+        EXPECT_EQ(combined[index].channel_index, static_cast<int>(index));
+        EXPECT_EQ(combined[index].atom_index, static_cast<int>(index / 2));
+        EXPECT_EQ(combined[index].atom_local_index, static_cast<int>(index % 2));
+    }
+    EXPECT_NEAR(combined[0].potential_r[0].real(), -2.0 * inverse_sqrt_two, 1.0e-14);
+    EXPECT_NEAR(combined[1].potential_r[0].real(), -3.0 * inverse_sqrt_two, 1.0e-14);
+    EXPECT_NEAR(combined[2].potential_r[0].real(), -20.0 * inverse_sqrt_two, 1.0e-14);
+    EXPECT_NEAR(combined[3].potential_r[0].real(), -30.0 * inverse_sqrt_two, 1.0e-14);
 }

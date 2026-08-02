@@ -18,11 +18,22 @@ struct SternheimerSupercellSector
     double max_full_space_residual = 0.0;
 };
 
+struct SternheimerSupercellKPointSector
+{
+    SternheimerReducedKPoint kpoint{0.0, 0.0, 0.0};
+    SternheimerSupercellSector sector;
+};
+
 SternheimerSupercellSector recover_sternheimer_supercell_sector(
     const std::vector<double>& eigenvalues,
     const std::vector<std::vector<std::complex<double>>>& eigenvectors,
     const std::array<int, 3>& repeats,
     const SternheimerReducedKPoint& primitive_kpoint);
+
+std::vector<SternheimerSupercellKPointSector> recover_all_sternheimer_supercell_sectors(
+    const std::vector<double>& eigenvalues,
+    const std::vector<std::vector<std::complex<double>>>& eigenvectors,
+    const std::array<int, 3>& repeats);
 
 } // namespace ModuleRI
 

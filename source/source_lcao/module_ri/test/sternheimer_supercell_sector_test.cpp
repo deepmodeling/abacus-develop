@@ -98,3 +98,33 @@ TEST(SternheimerSupercellSector, RecoversDenseComplexNonunitarySectorWithoutLayo
         EXPECT_NEAR(std::abs(coefficients[1] + coefficients[3]), 0.0, 1.0e-11);
     }
 }
+
+TEST(SternheimerSupercellSector, RecoversEveryCommensurateSectorInPrimitiveKGridOrder)
+{
+    const std::vector<double> eigenvalues{1.0, 2.0, 4.0, 7.0};
+    const std::vector<std::vector<Complex>> eigenvectors{
+        sector_vector(0, 0.0),
+        sector_vector(1, 0.0),
+        sector_vector(0, 0.5),
+        sector_vector(1, 0.5),
+    };
+
+    const auto sectors = ModuleRI::recover_all_sternheimer_supercell_sectors(
+        eigenvalues, eigenvectors, {2, 1, 1});
+
+    ASSERT_EQ(sectors.size(), 2U);
+    EXPECT_EQ(sectors[0].kpoint,
+              (ModuleRI::SternheimerReducedKPoint{0.0, 0.0, 0.0}));
+    EXPECT_EQ(sectors[1].kpoint,
+              (ModuleRI::SternheimerReducedKPoint{0.5, 0.0, 0.0}));
+    ASSERT_EQ(sectors[0].sector.eigenvalues.size(), 2U);
+    ASSERT_EQ(sectors[1].sector.eigenvalues.size(), 2U);
+    EXPECT_NEAR(sectors[0].sector.eigenvalues[0], 1.0, 1.0e-12);
+    EXPECT_NEAR(sectors[0].sector.eigenvalues[1], 2.0, 1.0e-12);
+    EXPECT_NEAR(sectors[1].sector.eigenvalues[0], 4.0, 1.0e-12);
+    EXPECT_NEAR(sectors[1].sector.eigenvalues[1], 7.0, 1.0e-12);
+    EXPECT_LT(sectors[0].sector.max_orthonormality_error, 1.0e-12);
+    EXPECT_LT(sectors[1].sector.max_orthonormality_error, 1.0e-12);
+    EXPECT_LT(sectors[0].sector.max_full_space_residual, 1.0e-12);
+    EXPECT_LT(sectors[1].sector.max_full_space_residual, 1.0e-12);
+}
