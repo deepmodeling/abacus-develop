@@ -34,6 +34,7 @@ namespace unitcell
      * @param atoms Atom list [in]
      * @param latvec lattice parameter vector [in]
      * @param fn STRU file name [in]
+     * @param header comment lines written at the top of the file [in]
      * @param nspin number of spin channels [in]
      * @param direct true for direct coords, false for cartesian coords [in]
      * @param vel true for printing velocities [in]
@@ -46,6 +47,7 @@ namespace unitcell
                          const Atom*     atoms,
                          const ModuleBase::Matrix3& latvec,
                          const std::string& fn,
+                         const std::string& header,
                          const int& nspin = 1,
                          const bool& direct = false,
                          const bool& vel = false,

@@ -1,5 +1,7 @@
 #include "relax_driver.h"
+#include "source_base/formatter.h"
 #include "source_base/global_file.h"
+#include "source_base/version.h"
 #include "source_io/module_output/cif_io.h"
 #include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
@@ -7,6 +9,8 @@
 #include "source_io/module_output/read_exit_file.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/print_cell.h"
+
+#include <ctime>
 
 void Relax_Driver::relax_driver(
         ModuleESolver::ESolver* p_esolver,
@@ -35,6 +39,7 @@ void Relax_Driver::relax_driver(
 
         this->iter_info(steps, inp);
         this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
+        this->stru_out(steps[0], ucell, inp, etot, stress);
         bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
         this->json_out(p_esolver, ucell, inp, force, stress);
 
@@ -147,27 +152,53 @@ bool Relax_Driver::relax_step(std::vector<int>& steps,
 			stress, steps[1], steps[2], ofs_running);
     }
 
-    this->stru_out(steps[0], ucell, inp);
-
     ModuleIO::output_after_relax(converged, p_esolver->conv_esolver, ofs_running);
 
     return converged;
 }
 
-void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& inp)
+void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress)
 {
+    // Guard: only output structure files for relaxation calculations
+    if (inp.calculation != "relax" && inp.calculation != "cell-relax")
+    {
+        return;
+    }
+
+    // Build header comment with version, timestamp, energy and stress
+    std::time_t now = std::time(nullptr);
+    char time_buf[64];
+    std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    std::string header = FmtCore::format("# ABACUS version: %s\n# Written at %s\n# RELAX STEP %d, Energy: %.8f eV\n",
+                                          VERSION,
+                                          time_buf,
+                                          istep + 1,
+                                          etot * ModuleBase::Ry_to_eV);
+    // stress in kbar: Ry/Bohr^3 -> kbar, 3 rows
+    const double stress_transform = ModuleBase::RYDBERG_SI
+                                    / (ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI)
+                                    * 1.0e-8;
+    for (int i = 0; i < 3; i++)
+    {
+        header += FmtCore::format("# Stress (kbar): %.6f %.6f %.6f\n",
+                                  stress(i, 0) * stress_transform,
+                                  stress(i, 1) * stress_transform,
+                                  stress(i, 2) * stress_transform);
+    }
+
     bool need_orb = inp.basis_type == "pw";
     need_orb = need_orb && inp.init_wfc.substr(0, 3) == "nao";
     need_orb = need_orb || inp.basis_type == "lcao";
     need_orb = need_orb || inp.basis_type == "lcao_in_pw";
 
     std::stringstream ss, ss1;
-    ss << PARAM.globalv.global_out_dir << "STRU_ION_D";
+    ss << PARAM.globalv.global_out_dir << "STRU";
 
     unitcell::print_stru_file(ucell,
                           ucell.atoms,
                           ucell.latvec,
                           ss.str(),
+                          header,
                           inp.nspin,
                           true,
                           inp.calculation == "md",
@@ -180,12 +211,13 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
     {
         if (inp.out_freq_ion == 0 || istep % inp.out_freq_ion == 0)
         {
-            ss1 << PARAM.globalv.global_out_dir << "STRU_ION";
-            ss1 << istep+1 << "_D";
+            ss1 << PARAM.globalv.global_out_dir << "STRU";
+            ss1 << istep+1;
             unitcell::print_stru_file(ucell,
                                   ucell.atoms,
                                   ucell.latvec,
                                   ss1.str(),
+                                  header,
                                   inp.nspin,
                                   true,
                                   inp.calculation == "md",

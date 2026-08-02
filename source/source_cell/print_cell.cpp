@@ -79,7 +79,8 @@ namespace unitcell
     void print_stru_file(const UnitCell& ucell,
                          const Atom*     atoms,
                          const ModuleBase::Matrix3& latvec,
-                         const std::string& fn, 
+                         const std::string& fn,
+                         const std::string& header,
                          const int& nspin,
                          const bool& direct,
                          const bool& vel,
@@ -89,12 +90,18 @@ namespace unitcell
                          const int& iproc)
     {
         ModuleBase::TITLE("UnitCell","print_stru_file");
-        if (iproc != 0) 
+        if (iproc != 0)
         {
             return; // old: if(GlobalV::MY_RANK != 0) return;
         }
+        // optional header comments
+        std::string str;
+        if (!header.empty())
+        {
+            str = header;
+        }
         // ATOMIC_SPECIES
-        std::string str = "ATOMIC_SPECIES\n";
+        str += "ATOMIC_SPECIES\n";
         for(int it=0; it<ucell.ntype; it++)
         { 
             str += FmtCore::format("%s %8.4f %s %s\n", 
@@ -118,12 +125,12 @@ namespace unitcell
             str += "\nNUMERICAL_DESCRIPTOR\n" + ucell.descriptor_file + "\n"; 
         }
         // LATTICE_CONSTANT
-        str += "\nLATTICE_CONSTANT\n" + FmtCore::format("%-.10f\n", ucell.lat0);
+        str += "\nLATTICE_CONSTANT\n" + FmtCore::format("%-.10f", ucell.lat0) + "  # in Bohr\n";
         // LATTICE_VECTORS
-        str += "\nLATTICE_VECTORS\n";
-        str += FmtCore::format("%20.10f%20.10f%20.10f\n", latvec.e11, latvec.e12, latvec.e13);
-        str += FmtCore::format("%20.10f%20.10f%20.10f\n", latvec.e21, latvec.e22, latvec.e23);
-        str += FmtCore::format("%20.10f%20.10f%20.10f\n", latvec.e31, latvec.e32, latvec.e33);
+        str += "\nLATTICE_VECTORS  # in units of lat0\n";
+        str += FmtCore::format("%24.16f%24.16f%24.16f\n", latvec.e11, latvec.e12, latvec.e13);
+        str += FmtCore::format("%24.16f%24.16f%24.16f\n", latvec.e21, latvec.e22, latvec.e23);
+        str += FmtCore::format("%24.16f%24.16f%24.16f\n", latvec.e31, latvec.e32, latvec.e33);
         // ATOMIC_POSITIONS
         str += "\nATOMIC_POSITIONS\n";
         const std::string scale = direct? "Direct": "Cartesian";
