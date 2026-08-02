@@ -72,7 +72,7 @@ void Driver::driver_run()
 
     // this Json part should be moved to before_all_runners, mohan 2024-05-12
 #ifdef __RAPIDJSON
-    Json::gen_stru_wrapper(&ucell);
+    Json::gen_stru_wrapper(&ucell, PARAM.inp);
 #endif
 
     const std::string cal = PARAM.inp.calculation;

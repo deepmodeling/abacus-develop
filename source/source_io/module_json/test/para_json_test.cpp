@@ -209,16 +209,17 @@ TEST(AbacusJsonTest, GeneralInfo)
     std::time_t time_now = std::time(nullptr);
     std::string start_time_str;
     Json::convert_time(time_now, start_time_str);
-    PARAM.sys.start_time = time_now;
 
-    PARAM.input.device = "cpu";
-    PARAM.input.pseudo_dir = "./abacus/test/pseudo_dir";
-    PARAM.input.orbital_dir = "./abacus/test/orbital_dir";
-    PARAM.sys.global_in_stru = "./abacus/test/stru_file";
-    PARAM.input.kpoint_file = "./abacus/test/kpoint_file";
+    Parameter param;
+    param.sys.start_time = time_now;
+    param.input.device = "cpu";
+    param.input.pseudo_dir = "./abacus/test/pseudo_dir";
+    param.input.orbital_dir = "./abacus/test/orbital_dir";
+    param.sys.global_in_stru = "./abacus/test/stru_file";
+    param.input.kpoint_file = "./abacus/test/kpoint_file";
     // output the json file
     Json::AbacusJson::doc.Parse("{}");
-    Json::gen_general_info(PARAM);
+    Json::gen_general_info(param);
     Json::json_output();
 
     std::string filename = "abacus.json";
@@ -256,13 +257,14 @@ TEST(AbacusJsonTest, InitInfo)
     ucell.symm.spgname = "O_h";
     ucell.atoms = atomlist;
     ucell.ntype = 3;
-    PARAM.input.nbands = 10;
-    PARAM.input.ecutwfc = 50.0;
-    PARAM.input.smearing_method = "gauss";
-    PARAM.input.smearing_sigma = 0.015;
-    PARAM.input.kspacing = {0.04, 0.04, 0.04};
-    PARAM.input.koffset = {0.0, 0.0, 0.0};
-    PARAM.input.kmesh_type = "gamma";
+    Input_para inp;
+    inp.nbands = 10;
+    inp.ecutwfc = 50.0;
+    inp.smearing_method = "gauss";
+    inp.smearing_sigma = 0.015;
+    inp.kspacing = {0.04, 0.04, 0.04};
+    inp.koffset = {0.0, 0.0, 0.0};
+    inp.kmesh_type = "gamma";
 
     ucell.atoms[0].label = "Si";
     ucell.atoms[0].ncpp.zv = 3;
@@ -283,7 +285,7 @@ TEST(AbacusJsonTest, InitInfo)
     int Jnkstot = 1;
 
     Json::add_nkstot(Jnkstot);
-    Json::gen_init(&ucell);
+    Json::gen_init(&ucell, inp);
 
     ASSERT_TRUE(Json::AbacusJson::doc.HasMember("init"));
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nkstot"].GetInt(), 1);
@@ -366,7 +368,7 @@ TEST(AbacusJsonTest, Init_stru_test)
             ucell.atoms[i].tau[j] = 0.1 * j;
         }
     }
-    Json::gen_stru(&ucell);
+    Json::gen_stru(&ucell, Input_para{});
 
     std::string filename = "readin.json";
     Json::AbacusJson::write_to_json(filename);
