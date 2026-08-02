@@ -15,11 +15,8 @@
  */
 class UnitCell : public AtomProvider, public BaseCell {
   public:
-    /// @name Construction / Destruction
-    /// @{
     UnitCell();
     ~UnitCell();
-    /// @}
 
     /// @name BaseCell / AtomProvider interface overrides
     /// @{
@@ -52,8 +49,6 @@ class UnitCell : public AtomProvider, public BaseCell {
     }
     /// @}
 
-    /// @name Initialization / Setup
-    /// @{
     /// @brief Initialize basic cell parameters (latname, ntype, lmaxmax, init_vel)
     ///        from INPUT and parse fixed_axes into lat_axis_free flags.
     void setup_from_input(const std::string& latname_in,
@@ -73,8 +68,6 @@ class UnitCell : public AtomProvider, public BaseCell {
 
     void set_iat2iwt(const int& npol_in);
 
-    /// @name Indexing / Query
-    /// @{
     /// iat2iwt is the atom index iat to the first global index for orbital of
     /// this atom the size of iat2iwt is nat, the value should be
     /// sum_{i=0}^{iat-1} atoms[it].nw * npol where the npol is the number of
@@ -142,10 +135,8 @@ class UnitCell : public AtomProvider, public BaseCell {
     std::map<int, std::map<int, int>> get_lnchi_Counts() const;
     /// these are newly added functions, the three above functions are
     /// deprecated and will be removed in the future
-    /// @}
 
   public:
-    // --------------------- Data Members ---------------------
 
     /// @name Lattice
     /// @{
