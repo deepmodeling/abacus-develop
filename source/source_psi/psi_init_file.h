@@ -25,7 +25,6 @@ class psi_init_file : public psi_base<T>
     };
     ~psi_init_file(){};
 
-    /// @brief initialize the psi_base with external data and methods
     virtual void initialize(const Structure_Factor* sf,             //< structure factor
                             const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
                             const UnitCell* p_ucell,                     //< unit cell

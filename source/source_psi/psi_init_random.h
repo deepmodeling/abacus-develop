@@ -24,7 +24,6 @@ class psi_init_random : public psi_base<T>
     /// @param ik kpoint index
     /// @return initialized planewave wavefunction (psi::Psi<std::complex<double>>*)
     virtual void init_psig(T* psig, const int& ik) override;
-    /// @brief initialize the psi_init with external data and methods
     virtual void initialize(const Structure_Factor* sf,             //< structure factor
                             const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
                             const UnitCell* p_ucell,                     //< unit cell

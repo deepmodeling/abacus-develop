@@ -80,26 +80,26 @@ void Setup_Psi_pw::before_runner(
 #if ((defined __CUDA) || (defined __ROCM))
     if (is_gpu) 
     {
-        if (is_single) 
-	{
+        if (is_single)
+        {
             before_runner_impl<std::complex<float>, base_device::DEVICE_GPU>(
                 ucell, kv, sf, pw_wfc, lmaxkb, inp);
-        } 
-	else 
-	{
+        }
+        else
+        {
             before_runner_impl<std::complex<double>, base_device::DEVICE_GPU>(
                 ucell, kv, sf, pw_wfc, lmaxkb, inp);
         }
     } else
 #endif
     {
-        if (is_single) 
-	{
+        if (is_single)
+        {
             before_runner_impl<std::complex<float>, base_device::DEVICE_CPU>(
                 ucell, kv, sf, pw_wfc, lmaxkb, inp);
-        } 
-	else 
-	{
+        }
+        else
+        {
             before_runner_impl<std::complex<double>, base_device::DEVICE_CPU>(
                 ucell, kv, sf, pw_wfc, lmaxkb, inp);
         }

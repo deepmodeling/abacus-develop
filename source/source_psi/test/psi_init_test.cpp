@@ -265,15 +265,15 @@ class PsiIntializerUnitTest : public ::testing::Test {
             }
             this->p_pw_wfc->gk2 = new double[1];
             this->p_pw_wfc->gk2[0] = 0.0;
-            this->p_pw_wfc->latvec.e11 = this->p_ucell->latvec.e11; 
-	    this->p_pw_wfc->latvec.e12 = this->p_ucell->latvec.e12; 
-	    this->p_pw_wfc->latvec.e13 = this->p_ucell->latvec.e13;
-            this->p_pw_wfc->latvec.e21 = this->p_ucell->latvec.e21; 
-	    this->p_pw_wfc->latvec.e22 = this->p_ucell->latvec.e22; 
-	    this->p_pw_wfc->latvec.e23 = this->p_ucell->latvec.e23;
-            this->p_pw_wfc->latvec.e31 = this->p_ucell->latvec.e31; 
-	    this->p_pw_wfc->latvec.e32 = this->p_ucell->latvec.e32; 
-	    this->p_pw_wfc->latvec.e33 = this->p_ucell->latvec.e33;
+            this->p_pw_wfc->latvec.e11 = this->p_ucell->latvec.e11;
+            this->p_pw_wfc->latvec.e12 = this->p_ucell->latvec.e12;
+            this->p_pw_wfc->latvec.e13 = this->p_ucell->latvec.e13;
+            this->p_pw_wfc->latvec.e21 = this->p_ucell->latvec.e21;
+            this->p_pw_wfc->latvec.e22 = this->p_ucell->latvec.e22;
+            this->p_pw_wfc->latvec.e23 = this->p_ucell->latvec.e23;
+            this->p_pw_wfc->latvec.e31 = this->p_ucell->latvec.e31;
+            this->p_pw_wfc->latvec.e32 = this->p_ucell->latvec.e32;
+            this->p_pw_wfc->latvec.e33 = this->p_ucell->latvec.e33;
             this->p_pw_wfc->G = this->p_ucell->G;
             this->p_pw_wfc->GT = this->p_ucell->GT;
             this->p_pw_wfc->GGT = this->p_ucell->GGT;

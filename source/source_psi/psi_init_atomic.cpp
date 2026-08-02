@@ -115,9 +115,9 @@ void psi_init_atomic<T>::tabulate()
 
     for (int it=0; it<this->p_ucell_->ntype; it++)
     {
-	Atom* atom = &this->p_ucell_->atoms[it];
+        Atom* atom = &this->p_ucell_->atoms[it];
 
-	GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
+        GlobalV::ofs_running<<"\n number of pseudo atomic orbitals for "<<atom->label<<" is "<< atom->ncpp.nchi << std::endl;
 
         // QE uses atom->ncpp.mesh
         const int n_rgrid = (this->pseudo_mesh_) ? atom->ncpp.mesh : atom->ncpp.msh;
@@ -349,17 +349,17 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                                 int ipswfc_noncolin_soc=0;
         /* J = L - 1/2 -> continue */
         /* J = L + 1/2 */
-						if(fabs(j - l + 0.5) < 1e-4) 
-						{
-							continue;
-						}
-						chiaux.clear(); 
-						chiaux.resize(npw);
+                                if(fabs(j - l + 0.5) < 1e-4)
+                                {
+                                    continue;
+                                }
+                                chiaux.clear();
+                                chiaux.resize(npw);
         /* L == 0 */
-						if(l == 0) 
-						{
-							std::memcpy(chiaux.data(), ovlp_pswfcjlg.data(), npw * sizeof(double));
-						}
+                                if(l == 0)
+                                {
+                                    std::memcpy(chiaux.data(), ovlp_pswfcjlg.data(), npw * sizeof(double));
+                                }
                                 else
                                 {
         /* L != 0, scan pswfcs that have the same L and satisfy J(pswfc) = L - 0.5 */
@@ -485,14 +485,14 @@ void psi_init_atomic<T>::init_psig(T* psig,  const int& ik)
                     }
                 }
             }
-			delete [] sk;
+            delete [] sk;
         }
     }
-	/* complement the rest of bands if there are */
-	if(this->nbands_complem() > 0)
-	{
-		this->random_t(psig, index, this->nbands_start_, ik);
-	}
+    /* complement the rest of bands if there are */
+    if(this->nbands_complem() > 0)
+    {
+        this->random_t(psig, index, this->nbands_start_, ik);
+    }
     ModuleBase::timer::end("psi_init_atomic", "init_psig");
 }
 
