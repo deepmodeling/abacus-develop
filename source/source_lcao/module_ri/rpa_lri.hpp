@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <cmath>
 #include <complex>
+#include <cstdio>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -45,7 +46,7 @@ constexpr int LIBRPA_KS_EIGENVECTOR_V1_KIND_COMPLEX_DOUBLE = 28;
 constexpr int LIBRPA_COULOMB_V1_COMPLEX_FLAG = 1;
 
 static_assert(sizeof(std::complex<double>) == 2 * sizeof(double),
-              "LibRPA v1 Coulomb output expects complex<double> as two doubles.");
+              "LibRPA v1 binary output expects complex<double> as two doubles.");
 
 inline void trim_malloc_cache()
 {
@@ -122,6 +123,17 @@ inline unsigned long long checked_mul_u64(const unsigned long long lhs,
     return lhs * rhs;
 }
 
+inline unsigned long long checked_add_u64(const unsigned long long lhs,
+                                          const unsigned long long rhs,
+                                          const std::string& context)
+{
+    if (rhs > std::numeric_limits<unsigned long long>::max() - lhs)
+    {
+        throw std::runtime_error(context + " exceeds uint64_t range.");
+    }
+    return lhs + rhs;
+}
+
 inline std::int64_t checked_i64_from_u64(const unsigned long long value, const std::string& context)
 {
     if (value > static_cast<unsigned long long>(std::numeric_limits<std::int64_t>::max()))
@@ -148,6 +160,631 @@ inline std::int32_t checked_i32_from_int(const int value, const std::string& con
     }
     return checked_i32_from_size(static_cast<std::size_t>(value), context);
 }
+
+#ifdef __MPI
+inline std::string mpi_error_string(const int error_code)
+{
+    char error_buffer[MPI_MAX_ERROR_STRING] = {};
+    int error_length = 0;
+    if (MPI_Error_string(error_code, error_buffer, &error_length) != MPI_SUCCESS)
+    {
+        return "MPI error " + std::to_string(error_code);
+    }
+    return std::string(error_buffer, static_cast<std::size_t>(error_length));
+}
+
+inline void collective_mpi_check(const MPI_Comm mpi_comm,
+                                 const int local_error,
+                                 const std::string& context)
+{
+    int mpi_rank = 0;
+    MPI_Comm_rank(mpi_comm, &mpi_rank);
+    const int no_failure = std::numeric_limits<int>::max();
+    const int local_failed_rank = local_error == MPI_SUCCESS ? no_failure : mpi_rank;
+    int first_failed_rank = no_failure;
+    const int reduce_error
+        = MPI_Allreduce(&local_failed_rank, &first_failed_rank, 1, MPI_INT, MPI_MIN, mpi_comm);
+    if (reduce_error != MPI_SUCCESS)
+    {
+        throw std::runtime_error(context + ": failed to synchronize MPI error status: "
+                                 + mpi_error_string(reduce_error));
+    }
+    if (first_failed_rank == no_failure)
+    {
+        return;
+    }
+
+    int shared_error = mpi_rank == first_failed_rank ? local_error : MPI_SUCCESS;
+    const int broadcast_error = MPI_Bcast(&shared_error, 1, MPI_INT, first_failed_rank, mpi_comm);
+    if (broadcast_error != MPI_SUCCESS)
+    {
+        throw std::runtime_error(context + ": failed to broadcast MPI error status: "
+                                 + mpi_error_string(broadcast_error));
+    }
+    throw std::runtime_error(context + ": " + mpi_error_string(shared_error));
+}
+
+inline void collective_require(const MPI_Comm mpi_comm,
+                               const bool local_condition,
+                               const std::string& context)
+{
+    int mpi_rank = 0;
+    MPI_Comm_rank(mpi_comm, &mpi_rank);
+    const int no_failure = std::numeric_limits<int>::max();
+    const int local_failed_rank = local_condition ? no_failure : mpi_rank;
+    int first_failed_rank = no_failure;
+    const int reduce_error
+        = MPI_Allreduce(&local_failed_rank, &first_failed_rank, 1, MPI_INT, MPI_MIN, mpi_comm);
+    if (reduce_error != MPI_SUCCESS)
+    {
+        throw std::runtime_error(context + ": failed to synchronize validation status: "
+                                 + mpi_error_string(reduce_error));
+    }
+    if (first_failed_rank != no_failure)
+    {
+        throw std::runtime_error(context + " (first failing MPI rank "
+                                 + std::to_string(first_failed_rank) + ").");
+    }
+}
+
+inline MPI_Aint checked_mpi_aint_from_u64(const unsigned long long value, const std::string& context)
+{
+    if (value > static_cast<unsigned long long>(std::numeric_limits<MPI_Aint>::max()))
+    {
+        throw std::runtime_error(context + " exceeds MPI_Aint range.");
+    }
+    return static_cast<MPI_Aint>(value);
+}
+
+inline MPI_Offset checked_mpi_offset_from_u64(const unsigned long long value, const std::string& context)
+{
+    if (value > static_cast<unsigned long long>(std::numeric_limits<MPI_Offset>::max()))
+    {
+        throw std::runtime_error(context + " exceeds MPI_Offset range.");
+    }
+    return static_cast<MPI_Offset>(value);
+}
+
+struct KSEigenvectorMpiLayout
+{
+    MPI_Datatype filetype = MPI_C_DOUBLE_COMPLEX;
+    bool free_filetype = false;
+    unsigned long long local_count = 0;
+    unsigned long long max_local_count = 0;
+};
+
+inline KSEigenvectorMpiLayout make_ks_eigenvector_mpi_layout(const MPI_Comm mpi_comm,
+                                                              const Parallel_Orbitals& parav,
+                                                              const int nbands,
+                                                              const int nbasis_wfc,
+                                                              const bool is_soc,
+                                                              const int spinor_component)
+{
+    KSEigenvectorMpiLayout layout;
+    std::vector<int> block_lengths;
+    std::vector<MPI_Aint> block_displacements;
+    bool local_valid = nbands >= 0 && nbasis_wfc >= 0 && parav.ncol_bands >= 0
+                       && parav.ncol_bands <= parav.get_col_size()
+                       && spinor_component >= 0 && spinor_component < (is_soc ? 2 : 1);
+    const int spatial_basis = is_soc ? nbasis_wfc / 2 : nbasis_wfc;
+
+    try
+    {
+        bool have_run = false;
+        unsigned long long run_first_index = 0;
+        unsigned long long previous_index = 0;
+        int run_length = 0;
+
+        const auto flush_run = [&]()
+        {
+            if (!have_run)
+            {
+                return;
+            }
+            const unsigned long long byte_displacement
+                = checked_mul_u64(run_first_index,
+                                  static_cast<unsigned long long>(sizeof(std::complex<double>)),
+                                  "KS eigenvector MPI file displacement");
+            block_lengths.push_back(run_length);
+            block_displacements.push_back(
+                checked_mpi_aint_from_u64(byte_displacement, "KS eigenvector MPI file displacement"));
+            have_run = false;
+            run_length = 0;
+        };
+
+        for (int ib_local = 0; local_valid && ib_local < parav.ncol_bands; ++ib_local)
+        {
+            const int ib_global = parav.local2global_col(ib_local);
+            for (int ir_local = 0; ir_local < parav.get_row_size(); ++ir_local)
+            {
+                const int iw_global = parav.local2global_row(ir_local);
+                if (is_soc && iw_global % 2 != spinor_component)
+                {
+                    continue;
+                }
+
+                const int iw_file = is_soc ? iw_global / 2 : iw_global;
+                const unsigned long long band_offset
+                    = checked_mul_u64(static_cast<unsigned long long>(ib_global),
+                                      static_cast<unsigned long long>(spatial_basis),
+                                      "KS eigenvector MPI file index");
+                const unsigned long long file_index
+                    = checked_add_u64(band_offset,
+                                      static_cast<unsigned long long>(iw_file),
+                                      "KS eigenvector MPI file index");
+                if (!have_run)
+                {
+                    have_run = true;
+                    run_first_index = file_index;
+                    previous_index = file_index;
+                    run_length = 1;
+                }
+                else if (file_index == previous_index + 1
+                         && run_length < std::numeric_limits<int>::max())
+                {
+                    ++run_length;
+                    previous_index = file_index;
+                }
+                else
+                {
+                    flush_run();
+                    have_run = true;
+                    run_first_index = file_index;
+                    previous_index = file_index;
+                    run_length = 1;
+                }
+                layout.local_count = checked_add_u64(layout.local_count,
+                                                     1,
+                                                     "Local KS eigenvector MPI element count");
+            }
+        }
+        flush_run();
+    }
+    catch (const std::exception&)
+    {
+        local_valid = false;
+    }
+
+    local_valid = local_valid
+                  && block_lengths.size()
+                         <= static_cast<std::size_t>(std::numeric_limits<int>::max());
+    collective_require(mpi_comm, local_valid, "Invalid local KS eigenvector MPI layout");
+
+    unsigned long long global_count = 0;
+    collective_mpi_check(
+        mpi_comm,
+        MPI_Allreduce(&layout.local_count,
+                      &global_count,
+                      1,
+                      MPI_UNSIGNED_LONG_LONG,
+                      MPI_SUM,
+                      mpi_comm),
+        "Failed to validate KS eigenvector MPI ownership");
+    const unsigned long long expected_count
+        = checked_mul_u64(static_cast<unsigned long long>(nbands),
+                          static_cast<unsigned long long>(spatial_basis),
+                          "Global KS eigenvector MPI element count");
+    collective_require(mpi_comm,
+                       global_count == expected_count,
+                       "KS eigenvector MPI ownership does not cover the global matrix exactly");
+
+    collective_mpi_check(
+        mpi_comm,
+        MPI_Allreduce(&layout.local_count,
+                      &layout.max_local_count,
+                      1,
+                      MPI_UNSIGNED_LONG_LONG,
+                      MPI_MAX,
+                      mpi_comm),
+        "Failed to determine the KS eigenvector MPI chunk count");
+
+    int type_create_error = MPI_SUCCESS;
+    if (layout.local_count > 0)
+    {
+        type_create_error = MPI_Type_create_hindexed(static_cast<int>(block_lengths.size()),
+                                                     block_lengths.data(),
+                                                     block_displacements.data(),
+                                                     MPI_C_DOUBLE_COMPLEX,
+                                                     &layout.filetype);
+    }
+    collective_mpi_check(mpi_comm,
+                         type_create_error,
+                         "Failed to create KS eigenvector MPI file type");
+
+    int type_commit_error = MPI_SUCCESS;
+    if (layout.local_count > 0)
+    {
+        type_commit_error = MPI_Type_commit(&layout.filetype);
+    }
+    collective_mpi_check(mpi_comm,
+                         type_commit_error,
+                         "Failed to commit KS eigenvector MPI file type");
+    layout.free_filetype = layout.local_count > 0;
+    return layout;
+}
+
+inline int free_ks_eigenvector_mpi_layout(KSEigenvectorMpiLayout& layout)
+{
+    if (!layout.free_filetype)
+    {
+        return MPI_SUCCESS;
+    }
+    layout.free_filetype = false;
+    return MPI_Type_free(&layout.filetype);
+}
+
+template <typename Value>
+inline void append_binary_scalar(std::vector<char>& bytes, const Value& value)
+{
+    const std::size_t old_size = bytes.size();
+    bytes.resize(old_size + sizeof(Value));
+    std::memcpy(bytes.data() + old_size, &value, sizeof(Value));
+}
+
+struct KSEigenvectorV1Metadata
+{
+    std::vector<char> bytes;
+    std::vector<unsigned long long> payload_offsets;
+    unsigned long long component_bytes = 0;
+    unsigned long long total_bytes = 0;
+};
+
+inline KSEigenvectorV1Metadata make_ks_eigenvector_v1_metadata(const int nks_tot,
+                                                               const int nspins,
+                                                               const int ncomponents,
+                                                               const int nbands,
+                                                               const int nbasis_wfc,
+                                                               const int spatial_basis)
+{
+    KSEigenvectorV1Metadata metadata;
+    const unsigned long long header_bytes
+        = checked_mul_u64(6,
+                          static_cast<unsigned long long>(sizeof(std::int32_t)),
+                          "KS eigenvector v1 header size");
+    const unsigned long long record_bytes
+        = checked_add_u64(static_cast<unsigned long long>(sizeof(std::int32_t)),
+                          static_cast<unsigned long long>(sizeof(std::int64_t)),
+                          "KS eigenvector v1 directory record size");
+    const unsigned long long directory_bytes
+        = checked_mul_u64(static_cast<unsigned long long>(nks_tot),
+                          record_bytes,
+                          "KS eigenvector v1 directory size");
+    const unsigned long long payload_begin
+        = checked_add_u64(header_bytes, directory_bytes, "KS eigenvector v1 metadata size");
+    const unsigned long long component_values
+        = checked_mul_u64(static_cast<unsigned long long>(nbands),
+                          static_cast<unsigned long long>(spatial_basis),
+                          "KS eigenvector v1 component size");
+    metadata.component_bytes
+        = checked_mul_u64(component_values,
+                          static_cast<unsigned long long>(sizeof(std::complex<double>)),
+                          "KS eigenvector v1 component byte size");
+    const unsigned long long kpoint_bytes
+        = checked_mul_u64(static_cast<unsigned long long>(ncomponents),
+                          metadata.component_bytes,
+                          "KS eigenvector v1 k-point byte size");
+    const unsigned long long payload_bytes
+        = checked_mul_u64(static_cast<unsigned long long>(nks_tot),
+                          kpoint_bytes,
+                          "KS eigenvector v1 payload byte size");
+    metadata.total_bytes
+        = checked_add_u64(payload_begin, payload_bytes, "KS eigenvector v1 file size");
+
+    const std::int32_t marker = LIBRPA_KS_EIGENVECTOR_V1_MARKER;
+    const std::int32_t kind = LIBRPA_KS_EIGENVECTOR_V1_KIND_COMPLEX_DOUBLE;
+    const std::int32_t nkpoints_i32 = checked_i32_from_int(nks_tot, "KS eigenvector k-point count");
+    const std::int32_t nspins_i32 = checked_i32_from_int(nspins, "KS eigenvector spin count");
+    const std::int32_t nstates_i32 = checked_i32_from_int(nbands, "KS eigenvector state count");
+    const std::int32_t nbasis_i32 = checked_i32_from_int(nbasis_wfc, "KS eigenvector basis count");
+    append_binary_scalar(metadata.bytes, marker);
+    append_binary_scalar(metadata.bytes, kind);
+    append_binary_scalar(metadata.bytes, nkpoints_i32);
+    append_binary_scalar(metadata.bytes, nspins_i32);
+    append_binary_scalar(metadata.bytes, nstates_i32);
+    append_binary_scalar(metadata.bytes, nbasis_i32);
+
+    metadata.payload_offsets.reserve(static_cast<std::size_t>(nks_tot));
+    for (int ik = 0; ik < nks_tot; ++ik)
+    {
+        const unsigned long long kpoint_offset
+            = checked_mul_u64(static_cast<unsigned long long>(ik),
+                              kpoint_bytes,
+                              "KS eigenvector v1 k-point offset");
+        const unsigned long long payload_offset
+            = checked_add_u64(payload_begin, kpoint_offset, "KS eigenvector v1 payload offset");
+        metadata.payload_offsets.push_back(payload_offset);
+        const std::int32_t ik_file = checked_i32_from_int(ik + 1, "KS eigenvector k-point index");
+        const std::int64_t payload_offset_i64
+            = checked_i64_from_u64(payload_offset, "KS eigenvector v1 payload offset");
+        append_binary_scalar(metadata.bytes, ik_file);
+        append_binary_scalar(metadata.bytes, payload_offset_i64);
+    }
+    if (metadata.bytes.size() != static_cast<std::size_t>(payload_begin))
+    {
+        throw std::runtime_error("KS eigenvector v1 metadata size is inconsistent.");
+    }
+    return metadata;
+}
+
+struct KSEigenvectorPackCursor
+{
+    int band_local = 0;
+    int row_local = 0;
+};
+
+template <typename T>
+inline int pack_ks_eigenvector_chunk(const Parallel_Orbitals& parav,
+                                     const psi::Psi<T>& psi,
+                                     const int psi_k,
+                                     const bool is_soc,
+                                     const int spinor_component,
+                                     KSEigenvectorPackCursor& cursor,
+                                     std::vector<std::complex<double>>& buffer,
+                                     const int requested_count)
+{
+    int packed = 0;
+    while (cursor.band_local < parav.ncol_bands && packed < requested_count)
+    {
+        while (cursor.row_local < psi.get_nbasis() && packed < requested_count)
+        {
+            const int ir_local = cursor.row_local++;
+            const int iw_global = parav.local2global_row(ir_local);
+            if (is_soc && iw_global % 2 != spinor_component)
+            {
+                continue;
+            }
+            buffer[static_cast<std::size_t>(packed)]
+                = std::complex<double>(psi(psi_k, cursor.band_local, ir_local));
+            ++packed;
+        }
+        if (cursor.row_local == psi.get_nbasis())
+        {
+            ++cursor.band_local;
+            cursor.row_local = 0;
+        }
+    }
+    return packed;
+}
+
+template <typename T>
+inline void write_ks_eigenvector_v1_mpi(const MPI_Comm mpi_comm,
+                                        const Parallel_Orbitals& parav,
+                                        const psi::Psi<T>& psi,
+                                        const int nks_tot,
+                                        const int nspins,
+                                        const int nspin_abacus,
+                                        const int nbands,
+                                        const int nbasis_wfc,
+                                        const std::string& final_name)
+{
+    if (mpi_comm == MPI_COMM_NULL)
+    {
+        throw std::runtime_error("KS eigenvector MPI-IO writer received MPI_COMM_NULL.");
+    }
+    int mpi_rank = 0;
+    collective_mpi_check(mpi_comm,
+                         MPI_Comm_rank(mpi_comm, &mpi_rank),
+                         "Failed to query the KS eigenvector MPI rank");
+
+    const bool is_soc = nspin_abacus == 4;
+    const int ncomponents = is_soc ? 2 : nspins;
+    bool dimensions_valid
+        = nks_tot >= 0 && nbands >= 0 && nbasis_wfc >= 0 && nspins > 0
+          && (nspin_abacus == 1 || nspin_abacus == 2 || nspin_abacus == 4)
+          && nspins == (nspin_abacus == 2 ? 2 : 1)
+          && (!is_soc || nbasis_wfc % 2 == 0)
+          && psi.get_nbasis() == parav.get_row_size()
+          && psi.get_nbands() == parav.ncol_bands
+          && parav.get_wfc_global_nbasis() == nbasis_wfc
+          && parav.get_wfc_global_nbands() == nbands;
+    if (dimensions_valid)
+    {
+        const unsigned long long required_psi_kpoints
+            = checked_mul_u64(static_cast<unsigned long long>(nks_tot),
+                              static_cast<unsigned long long>(nspins),
+                              "KS eigenvector MPI source k-point count");
+        dimensions_valid
+            = required_psi_kpoints <= static_cast<unsigned long long>(psi.get_nk());
+    }
+    collective_require(mpi_comm, dimensions_valid, "Invalid KS eigenvector MPI-IO dimensions");
+
+    const int spatial_basis = is_soc ? nbasis_wfc / 2 : nbasis_wfc;
+    std::vector<KSEigenvectorMpiLayout> layouts;
+    layouts.reserve(static_cast<std::size_t>(is_soc ? 2 : 1));
+    for (int component = 0; component < (is_soc ? 2 : 1); ++component)
+    {
+        layouts.push_back(make_ks_eigenvector_mpi_layout(
+            mpi_comm, parav, nbands, nbasis_wfc, is_soc, component));
+    }
+
+    const unsigned long long chunk_elements = 4ULL * 1024ULL * 1024ULL;
+    unsigned long long local_buffer_elements = 0;
+    for (const auto& layout: layouts)
+    {
+        local_buffer_elements = std::max(local_buffer_elements,
+                                         std::min(layout.local_count, chunk_elements));
+    }
+    bool buffer_allocated = true;
+    std::vector<std::complex<double>> buffer;
+    try
+    {
+        buffer.resize(static_cast<std::size_t>(local_buffer_elements));
+    }
+    catch (const std::exception&)
+    {
+        buffer_allocated = false;
+    }
+    collective_require(mpi_comm,
+                       buffer_allocated,
+                       "Failed to allocate the bounded KS eigenvector MPI pack buffer");
+    std::complex<double> dummy(0.0, 0.0);
+
+    const KSEigenvectorV1Metadata metadata
+        = make_ks_eigenvector_v1_metadata(
+            nks_tot, nspins, ncomponents, nbands, nbasis_wfc, spatial_basis);
+    collective_require(
+        mpi_comm,
+        metadata.bytes.size() <= static_cast<std::size_t>(std::numeric_limits<int>::max()),
+        "KS eigenvector MPI metadata exceeds the MPI count range");
+
+    const std::string temporary_name = final_name + ".tmp";
+    MPI_File file = MPI_FILE_NULL;
+    bool file_opened = false;
+    try
+    {
+        int mpi_error = MPI_File_open(mpi_comm,
+                                      const_cast<char*>(temporary_name.c_str()),
+                                      MPI_MODE_CREATE | MPI_MODE_WRONLY,
+                                      MPI_INFO_NULL,
+                                      &file);
+        collective_mpi_check(mpi_comm, mpi_error, "Failed to open " + temporary_name);
+        file_opened = true;
+        collective_mpi_check(mpi_comm,
+                             MPI_File_set_errhandler(file, MPI_ERRORS_RETURN),
+                             "Failed to set the KS eigenvector MPI file error handler");
+        collective_mpi_check(
+            mpi_comm,
+            MPI_File_set_size(
+                file,
+                checked_mpi_offset_from_u64(metadata.total_bytes, "KS eigenvector MPI file size")),
+            "Failed to set the KS eigenvector MPI file size");
+
+        const int metadata_count
+            = mpi_rank == 0 ? static_cast<int>(metadata.bytes.size()) : 0;
+        MPI_Status metadata_status;
+        mpi_error = MPI_File_write_at_all(file,
+                                          0,
+                                          metadata_count == 0
+                                              ? static_cast<void*>(&dummy)
+                                              : static_cast<void*>(
+                                                  const_cast<char*>(metadata.bytes.data())),
+                                          metadata_count,
+                                          MPI_BYTE,
+                                          &metadata_status);
+        collective_mpi_check(mpi_comm, mpi_error, "Failed to write KS eigenvector MPI metadata");
+
+        for (int ik = 0; ik < nks_tot; ++ik)
+        {
+            for (int component = 0; component < ncomponents; ++component)
+            {
+                KSEigenvectorMpiLayout& layout = layouts[is_soc ? component : 0];
+                const unsigned long long component_offset
+                    = checked_mul_u64(static_cast<unsigned long long>(component),
+                                      metadata.component_bytes,
+                                      "KS eigenvector MPI component offset");
+                const unsigned long long displacement
+                    = checked_add_u64(metadata.payload_offsets[static_cast<std::size_t>(ik)],
+                                      component_offset,
+                                      "KS eigenvector MPI view displacement");
+                collective_mpi_check(
+                    mpi_comm,
+                    MPI_File_set_view(
+                        file,
+                        checked_mpi_offset_from_u64(displacement,
+                                                    "KS eigenvector MPI view displacement"),
+                        MPI_C_DOUBLE_COMPLEX,
+                        layout.filetype,
+                        const_cast<char*>("native"),
+                        MPI_INFO_NULL),
+                    "Failed to set the KS eigenvector MPI file view");
+
+                KSEigenvectorPackCursor cursor;
+                const int psi_k = is_soc ? ik : ik + nks_tot * component;
+                unsigned long long chunk_begin = 0;
+                while (chunk_begin < layout.max_local_count)
+                {
+                    const unsigned long long local_remaining
+                        = chunk_begin < layout.local_count ? layout.local_count - chunk_begin : 0;
+                    const int local_chunk_count = static_cast<int>(
+                        std::min(local_remaining, chunk_elements));
+                    const int packed = pack_ks_eigenvector_chunk(parav,
+                                                                 psi,
+                                                                 psi_k,
+                                                                 is_soc,
+                                                                 component,
+                                                                 cursor,
+                                                                 buffer,
+                                                                 local_chunk_count);
+                    collective_require(mpi_comm,
+                                       packed == local_chunk_count,
+                                       "Failed to pack the expected KS eigenvector MPI chunk");
+
+                    MPI_Status payload_status;
+                    mpi_error = MPI_File_write_at_all(
+                        file,
+                        checked_mpi_offset_from_u64(chunk_begin,
+                                                    "KS eigenvector MPI chunk offset"),
+                        local_chunk_count == 0 ? static_cast<void*>(&dummy)
+                                               : static_cast<void*>(buffer.data()),
+                        local_chunk_count,
+                        MPI_C_DOUBLE_COMPLEX,
+                        &payload_status);
+                    collective_mpi_check(mpi_comm,
+                                         mpi_error,
+                                         "Failed to write a KS eigenvector MPI payload chunk");
+                    if (layout.max_local_count - chunk_begin <= chunk_elements)
+                    {
+                        break;
+                    }
+                    chunk_begin = checked_add_u64(
+                        chunk_begin, chunk_elements, "KS eigenvector MPI chunk offset");
+                }
+            }
+        }
+
+        mpi_error = MPI_File_sync(file);
+        collective_mpi_check(mpi_comm, mpi_error, "Failed to sync the KS eigenvector MPI file");
+        mpi_error = MPI_File_close(&file);
+        file_opened = false;
+        collective_mpi_check(mpi_comm, mpi_error, "Failed to close the KS eigenvector MPI file");
+
+        int free_error = MPI_SUCCESS;
+        for (auto& layout: layouts)
+        {
+            const int layout_error = free_ks_eigenvector_mpi_layout(layout);
+            if (free_error == MPI_SUCCESS && layout_error != MPI_SUCCESS)
+            {
+                free_error = layout_error;
+            }
+        }
+        collective_mpi_check(mpi_comm,
+                             free_error,
+                             "Failed to free a KS eigenvector MPI file type");
+
+        const int rename_error
+            = mpi_rank == 0 && std::rename(temporary_name.c_str(), final_name.c_str()) != 0
+                  ? MPI_ERR_IO
+                  : MPI_SUCCESS;
+        collective_mpi_check(mpi_comm,
+                             rename_error,
+                             "Failed to publish the completed KS eigenvector MPI file");
+    }
+    catch (...)
+    {
+        if (file_opened)
+        {
+            MPI_File_close(&file);
+        }
+        for (auto& layout: layouts)
+        {
+            free_ks_eigenvector_mpi_layout(layout);
+        }
+        MPI_Barrier(mpi_comm);
+        if (mpi_rank == 0)
+        {
+            std::remove(temporary_name.c_str());
+        }
+        MPI_Barrier(mpi_comm);
+        throw;
+    }
+
+    if (mpi_rank == 0)
+    {
+        std::cout << "KS eigenvector writer: binary v1 MPI-IO, bounded pack buffer, file "
+                  << final_name << std::endl;
+    }
+}
+#endif
 
 inline int checked_near_int(const double value, const std::string& context)
 {
@@ -1892,6 +2529,41 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
 
     if (PARAM.inp.out_librpa_reader_version == 1)
     {
+#ifdef __MPI
+        ModuleBase::timer::tick("RPA_LRI", "out_eigen_vector_v1_mpi_io");
+        try
+        {
+            const MPI_Comm io_comm = parav.comm();
+            if (io_comm == MPI_COMM_NULL)
+            {
+                throw std::runtime_error("KS eigenvector MPI-IO writer has no wavefunction communicator.");
+            }
+            int communicator_relation = MPI_UNEQUAL;
+            RpaLriDetail::collective_mpi_check(
+                io_comm,
+                MPI_Comm_compare(io_comm, this->mpi_comm, &communicator_relation),
+                "Failed to compare KS eigenvector MPI communicators");
+            RpaLriDetail::collective_require(
+                io_comm,
+                communicator_relation == MPI_IDENT || communicator_relation == MPI_CONGRUENT,
+                "KS eigenvector wavefunction and RPA communicators are inconsistent");
+            RpaLriDetail::write_ks_eigenvector_v1_mpi(io_comm,
+                                                      parav,
+                                                      psi,
+                                                      nks_tot,
+                                                      npsin_tmp,
+                                                      PARAM.inp.nspin,
+                                                      PARAM.inp.nbands,
+                                                      PARAM.globalv.nlocal,
+                                                      "KS_eigenvector_0.dat");
+        }
+        catch (...)
+        {
+            ModuleBase::timer::tick("RPA_LRI", "out_eigen_vector_v1_mpi_io");
+            throw;
+        }
+        ModuleBase::timer::tick("RPA_LRI", "out_eigen_vector_v1_mpi_io");
+#else
         struct KSEigenRecord
         {
             std::int32_t ik = 0;
@@ -1922,15 +2594,6 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
                         }
                     }
 
-                    std::vector<std::complex<double>> tmp = wfc_iks;
-#ifdef __MPI
-                    MPI_Allreduce(&tmp[0],
-                                  &wfc_iks[0],
-                                  PARAM.globalv.nlocal,
-                                  MPI_DOUBLE_COMPLEX,
-                                  MPI_SUM,
-                                  MPI_COMM_WORLD);
-#endif
                     for (int iw = 0; iw < PARAM.globalv.nlocal; iw++)
                     {
                         is_wfc_ib_iw[is](ib_global, iw) = wfc_iks[iw];
@@ -2028,6 +2691,7 @@ void RPA_LRI<T, Tdata>::out_eigen_vector(const Parallel_Orbitals& parav, const p
             }
             ofs.close();
         }
+#endif
         return;
     }
 
