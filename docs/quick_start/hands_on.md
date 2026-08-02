@@ -232,4 +232,4 @@ relax_nmax		100		# the maximal number of ionic iteration steps
 out_stru		1
 ```
 
-Use the same `KPT`, `STRU`, and pseudopotential files as in the above SCF-PW examples. The final optimized structure can be found in `STRU_NOW.cif` and `STRU_ION_D` with different format.
+Use the same `KPT`, `STRU`, and pseudopotential files as in the above SCF-PW examples. The final optimized structure can be found in `STRU_NOW.cif` and `STRU` with different format.

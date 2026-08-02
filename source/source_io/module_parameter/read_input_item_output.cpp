@@ -436,10 +436,10 @@ Also controled by out_freq_ion and out_app_flag.
     }
     {
         Input_Item item("out_stru");
-        item.annotation = "output the structure files after each ion step";
+        item.annotation = "output the structure files per ion step";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to output structure files per ionic step in geometry relaxation calculations into OUT.{istep}_D, where ${istep} is the ionic step.";
+        item.description = "Whether to output structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory as STRU{istep} (e.g., STRU1, STRU2), where ${istep} is the ionic step. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor.";
         item.default_value = "False";
         item.unit = "";
         item.availability = "";

@@ -1970,7 +1970,7 @@
 ### out_stru
 
 - **Type**: Boolean
-- **Description**: Whether to output structure files per ionic step in geometry relaxation calculations into OUT.{istep}_D, where ${istep} is the ionic step.
+- **Description**: Whether to output structure files per ionic step in geometry relaxation calculations. The files are written to the `OUT.{suffix}/` directory as `STRU{istep}` (e.g., `STRU1`, `STRU2`), where ${istep} is the ionic step. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor.
 - **Default**: False
 
 ### out_level
