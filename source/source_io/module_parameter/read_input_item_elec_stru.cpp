@@ -53,9 +53,9 @@ void ReadInput::item_elec_stru()
 For plane-wave basis,
 
 * cg: The conjugate-gradient (CG) method.
+* bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
 * dav: The Davidson algorithm.
 * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
-* bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 
 For numerical atomic orbitals basis,
 
@@ -341,6 +341,28 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         this->add_item(item);
     }
     {
+        Input_Item item("gga_grad");
+        item.annotation = "1: collinear approximation (grad|m|); 2: projected div(h); 3: Scalmani-Frisch transform (default, most accurate)";
+        item.category = "Electronic structure";
+        item.type = "Integer";
+        item.description = R"(Method for computing GGA gradients in noncollinear spin (nspin=4) calculations.
+* 1: Collinear approximation. Treats nspin=4 as nspin=2 with |m|, computes grad(rho +/- |m|). Fastest but least accurate.
+* 2: Improved gradient. Computes grad(m_mu)*m_hat_mu and projects div(h) via m_hat. Intermediate accuracy.
+* 3: Scalmani-Frisch transform. Applies SF rotation to decompose gradients per spin channel and retains all cross-terms in div(h). Most accurate.
+Only relevant when nspin=4 and a GGA or hybrid functional is used.)";
+        item.default_value = "3";
+        item.unit = "";
+        item.availability = "Only relevant for nspin=4 with GGA/hybrid functionals";
+        read_sync_int(input.gga_grad);
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            if (para.input.gga_grad < 1 || para.input.gga_grad > 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "gga_grad must be 1, 2, or 3.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("xc_temperature");
         item.annotation = "temperature for finite temperature functionals";
         item.category = "Electronic structure";
@@ -354,14 +376,14 @@ The other way is only available when compiling with LIBXC, and it allows for sup
     }
     {
         Input_Item item("xc_exch_ext");
-        item.annotation = "customize Libxc exchange functional parameters";
+        item.annotation = "placeholder for xcpnet exchange functional";
         item.category = "Electronic structure";
         item.type = "Integer followed by Real values";
-        item.description = "Customized parameterization of the exchange part of an XC functional. The first value should be the Libxc ID of the original functional, followed by the complete list of external parameters required by the linked Libxc version. If unset, Libxc's own default parameters are used. For functional IDs and parameter definitions, refer to the Libxc documentation and source code."
+        item.description = "Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_x_pbe.c."
                           "\n\n[NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set "
                           "dft_functional to the corresponding functional to apply the customized parameterization. "
                           "Presently this feature can only support parameterization on one exchange functional.";
-        item.default_value = "";
+        item.default_value = "101 0.8040 0.2195149727645171";
         item.unit = "";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -371,15 +393,10 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                            [](const std::string& str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            // at least one value should be set
+            if (para.input.xc_exch_ext.empty())
             {
-                return;
-            }
-            if (para.input.xc_exch_ext.size() < 2)
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "xc_exch_ext requires a Libxc ID followed by external parameters.");
+                ModuleBase::WARNING_QUIT("ReadInput", "xc_exch_ext should not be empty.");
             }
             // the first value is actually an integer, not a double
             const double libxc_id_dbl = para.input.xc_exch_ext[0];
@@ -402,14 +419,14 @@ The other way is only available when compiling with LIBXC, and it allows for sup
     }
     {
         Input_Item item("xc_corr_ext");
-        item.annotation = "customize Libxc correlation functional parameters";
+        item.annotation = "placeholder for xcpnet exchange functional";
         item.category = "Electronic structure";
         item.type = "Integer followed by Real values";
-        item.description = "Customized parameterization of the correlation part of an XC functional. The first value should be the Libxc ID of the original functional, followed by the complete list of external parameters required by the linked Libxc version. If unset, Libxc's own default parameters are used. For functional IDs and parameter definitions, refer to the Libxc documentation and source code."
+        item.description = "Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_c_pbe.c."
                           "\n\n[NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set "
                           "dft_functional to the corresponding functional to apply the customized parameterization. "
                           "Presently this feature can only support parameterization on one correlation functional.";
-        item.default_value = "";
+        item.default_value = "130 0.06672455060314922 0.031090690869654895034 1.0";
         item.unit = "";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -419,15 +436,10 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                            [](const std::string& str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (!item.is_read())
+            // at least one value should be set
+            if (para.input.xc_corr_ext.empty())
             {
-                return;
-            }
-            if (para.input.xc_corr_ext.size() < 2)
-            {
-                ModuleBase::WARNING_QUIT(
-                    "ReadInput",
-                    "xc_corr_ext requires a Libxc ID followed by external parameters.");
+                ModuleBase::WARNING_QUIT("ReadInput", "xc_corr_ext should not be empty.");
             }
             // the first value is actually an integer, not a double
             const double libxc_id_dbl = para.input.xc_corr_ext[0];
@@ -675,15 +687,23 @@ For systems that are difficult to converge, one could try increasing the value o
         item.availability = "";
         read_sync_double(input.mixing_restart);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.sc_mag_switch == 1)
-            {// for DeltaSpin calculation, the mixing_restart should be same as sc_scf_thr
-                if(para.input.sc_scf_thr != 10.0)
+            if (para.input.sc_mag_switch)
+            {
+                if (para.input.sc_direction_only)
+                {
+                    para.input.mixing_restart = 0.0;
+                }
+                else if (para.input.sc_scf_thr_mode == "threshold")
                 {
                     para.input.mixing_restart = para.input.sc_scf_thr;
                 }
-                else
-                {// no mixing_restart until oscillation happen in PW base
+                else if (para.input.sc_scf_thr_mode == "immediate")
+                {
                     para.input.mixing_restart = para.input.scf_thr / 10.0;
+                }
+                else // "off"
+                {
+                    para.input.mixing_restart = 0.0;
                 }
             }
         };

@@ -24,30 +24,14 @@ namespace XC_Functional_Libxc
 //-------------------
 
     // sets functional type, which allows combination of LIBXC keyword connected by "+"
-    //        for example, "XC_LDA_X+XC_LDA_C_PZ"
+    //        for example: "XC_LDA_X+XC_LDA_C_PZ"
     extern std::pair<int, std::vector<int>> set_xc_type_libxc(const std::string& xc_func_in);
 
-    /**
-     * @brief instantiate the XC functional by its ID, and set the external parameters if provided.
-     * 
-     * @param func_id libxc ID of functional, see https://libxc.gitlab.io/functionals/ for details
-     * @param xc_polarized 0: unpolarized, 1: spin-polarized
-     * @return std::vector<xc_func_type> 
-     * 
-     * @note the functionality of this method is extended by supporting the user-defined
-     *       external parameters of xc. However, there are several functionals' external 
-     *       parameters are pre-defined in the code, which herein we call those are 
-     *       "in-built" parameters. If the same functional ID is found in both in-built 
-     *       and external parameters, the external parameters will overwrite the in-built ones.
-     *       The external parameters can be passed here by keywords xc_exch_ext and
-     *       xc_corr_ext in the input file. The expected format would be an XC ID 
-     *       followed by a list of parameters.
-     */
     extern std::vector<xc_func_type> init_func(
         const std::vector<int> &func_id,
         const int xc_polarized,
-        const double hybrid_alpha,
-        const double hse_omega);
+        const double hybrid_alpha = 0.0,
+        const double hse_omega = 0.0);
 
     extern void finish_func(std::vector<xc_func_type> &funcs);
 
@@ -65,9 +49,9 @@ namespace XC_Functional_Libxc
         const int nspin,
         const bool domag,
         const bool domag_z,
-        const std::map<int, double>* scaling_factor,
-        const double hybrid_alpha,
-        const double hse_omega);
+        const std::map<int, double>* scaling_factor = nullptr,
+        const double hybrid_alpha = 0.0,
+        const double hse_omega = 0.0);
 
     // for mGGA functional
     extern std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> v_xc_meta(
@@ -77,8 +61,8 @@ namespace XC_Functional_Libxc
         const double tpiba,
         const Charge* const chr,
         const int nspin,
-        const double hybrid_alpha,
-        const double hse_omega);
+        const double hybrid_alpha = 0.0,
+        const double hse_omega = 0.0);
 
 
 //-------------------
@@ -157,6 +141,34 @@ namespace XC_Functional_Libxc
         const std::vector<double> &amag,
         const ModuleBase::matrix &v);
 
+    extern std::vector<double> compute_mag_part_nspin4(
+        const std::size_t nrxx,
+        const Charge* const chr);
+
+    extern std::vector<std::vector<ModuleBase::Vector3<double>>> cal_gdr_sf(
+        const int nspin,
+        const std::size_t nrxx,
+        const std::vector<double> &rho,
+        const std::vector<double> &mag_part,
+        const double tpiba,
+        const Charge* const chr);
+
+    extern std::vector<std::vector<double>> cal_dh_sf(
+        const int nspin,
+        const std::size_t nrxx,
+        const std::vector<double> &sgn,
+        const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
+        const std::vector<double> &vsigma,
+        const std::vector<double> &mag_part,
+        const double tpiba,
+        const Charge* const chr);
+
+    extern ModuleBase::matrix convert_v_nspin4_sf(
+        const std::size_t nrxx,
+        const Charge* const chr,
+        const std::vector<double> &mag_part,
+        const ModuleBase::matrix &v);
+
 
 //-------------------
 //  libxc_lda_wrap.cpp
@@ -169,8 +181,8 @@ namespace XC_Functional_Libxc
         double &exc,
         double &vxcup,
         double &vxcdw,
-        const double hybrid_alpha,
-        const double hse_omega);
+        const double hybrid_alpha = 0.0,
+        const double hse_omega = 0.0);
 
 
 //-------------------
@@ -185,8 +197,8 @@ namespace XC_Functional_Libxc
         double &sxc,
         double &v1xc,
         double &v2xc,
-        const double hybrid_alpha,
-        const double hse_omega);
+        const double hybrid_alpha = 0.0,
+        const double hse_omega = 0.0);
 
     // the entire GGA functional, for nspin=2 case
     extern void gcxc_spin_libxc(
@@ -201,8 +213,8 @@ namespace XC_Functional_Libxc
         double &v2xcup,
         double &v2xcdw,
         double &v2xcud,
-        const double hybrid_alpha,
-        const double hse_omega);
+        const double hybrid_alpha = 0.0,
+        const double hse_omega = 0.0);
 
 
 //-------------------
@@ -219,8 +231,8 @@ namespace XC_Functional_Libxc
         double &v1xc,
         double &v2xc,
         double &v3xc,
-        const double &hybrid_alpha,
-        const double &hse_omega);
+        const double &hybrid_alpha = 0.0,
+        const double &hse_omega = 0.0);
 
     extern void tau_xc_spin(
         const std::vector<int> &func_id,
@@ -238,8 +250,8 @@ namespace XC_Functional_Libxc
         double &v2xcud,
         double &v3xcup,
         double &v3xcdw,
-        const double &hybrid_alpha,
-        const double &hse_omega);
+        const double &hybrid_alpha = 0.0,
+        const double &hse_omega = 0.0);
 
 } // namespace XC_Functional_Libxc
 
