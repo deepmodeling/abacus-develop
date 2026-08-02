@@ -594,9 +594,19 @@ Available options are:
         item.availability = "Used only for plane wave basis set.";
         read_sync_int(input.diago_proc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.diago_proc > GlobalV::NPROC || para.input.diago_proc <= 0)
+            if (para.input.diago_proc == 0)
             {
                 para.input.diago_proc = GlobalV::NPROC;
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.diago_proc < 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "diago_proc must not be negative");
+            }
+            if (para.input.diago_proc > GlobalV::NPROC)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "diago_proc cannot exceed the number of MPI processes");
             }
         };
         this->add_item(item);

@@ -60,7 +60,7 @@ For plane-wave basis,
 For numerical atomic orbitals basis,
 
 * lapack: Use LAPACK to diagonalize the Hamiltonian, only used for serial version
-* genelpa: Use GEN-ELPA to diagonalize the Hamiltonian.
+* genelpa: Use the CPU-only GEN-ELPA interface to diagonalize the Hamiltonian.
 * scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
 * cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
 * cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
@@ -164,6 +164,13 @@ Then the user has to correct the input file and restart the calculation.)";
                 }
                 else if (ks_solver == "genelpa")
                 {
+                    if (para.input.device == "gpu")
+                    {
+                        ModuleBase::WARNING_QUIT(
+                            "ReadInput",
+                            "ks_solver = genelpa does not support GPU acceleration. "
+                            "Please use ks_solver = elpa with device = gpu.");
+                    }
 #ifndef __ELPA
                     ModuleBase::WARNING_QUIT("Input",
                                              "Can not use genelpa if abacus is not compiled with "

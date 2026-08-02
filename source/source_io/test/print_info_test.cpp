@@ -172,7 +172,6 @@ TEST_F(PrintInfoTest, PrintScreen)
 		}
 		else
 		{
-			PARAM.input.relax_new = false;
 			if(PARAM.input.calculation=="relax")
 			{
 				testing::internal::CaptureStdout();

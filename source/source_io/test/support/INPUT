@@ -33,7 +33,7 @@ out_freq_elec                  0 #the frequency ( >= 0) of electronic iter to ou
 dft_plus_dmft                  0 #true:DFT+DMFT; false: standard DFT calcullation(default)
 rpa                            0 #true:generate output files used in rpa calculation; false:(default)
 mem_saver                      0 #Only for nscf calculations. if set to 1, then a memory saving technique will be used for many k point calculations.
-diago_proc                     4 #the number of procs used to do diagonalization
+diago_proc                     0 #the number of procs used to do diagonalization
 nbspline                       -1 #the order of B-spline basis
 soc_lambda                     1 #The fraction of averaged SOC pseudopotential is given by (1-soc_lambda)
 cal_force                      0 #if calculate the force at the end of the electronic iteration
@@ -116,8 +116,7 @@ fixed_axes                     None #which axes are fixed
 fixed_ibrav                    0 #whether to preseve lattice type during relaxation
 fixed_atoms                    0 #whether to preseve direct coordinates of atoms during relaxation
 relax_method                   cg #bfgs; sd; cg; cg_bfgs;
-relax_new                      TRUE #whether to use the new relaxation method
-relax_scale_force              0.5 #controls the size of the first CG step if relax_new is true
+relax_scale_force              0.5 #controls the size of the first CG 2 step
 out_level                      ie #ie(for electrons); i(for ions);
 out_dmk                        0 #>0 output density matrix DM(k)
 deepks_out_labels              0 #>0 compute descriptor for deepks

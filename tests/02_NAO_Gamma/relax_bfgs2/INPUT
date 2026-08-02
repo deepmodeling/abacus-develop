@@ -31,5 +31,3 @@ mixing_type       broyden
 mixing_beta       0.5
 
 gamma_only        1
-
-relax_new         0

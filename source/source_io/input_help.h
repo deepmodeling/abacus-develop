@@ -100,7 +100,7 @@ public:
      * @brief Find similar parameter names for fuzzy matching
      *
      * Uses a multi-tier matching strategy to find relevant parameters:
-     * 1. Prefix matches (e.g., "relax" matches "relax_new") - highest priority
+     * 1. Prefix matches (e.g., "relax" matches "relax_method") - highest priority
      * 2. Substring matches (e.g., "cut" matches "ecutwfc") - medium priority
      * 3. Levenshtein distance for typos - lowest priority
      *
