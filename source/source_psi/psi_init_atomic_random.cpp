@@ -1,7 +1,5 @@
 #include "psi_init_atomic_random.h"
 
-#include "source_io/module_parameter/parameter.h"
-
 template <typename T>
 void psi_init_atomic_random<T>::initialize(const Structure_Factor* sf,         //< structure factor
                                                   const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis

@@ -13,7 +13,6 @@
 #include "source_base/tool_quit.h"
 // three global variables definition
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
 
 #ifdef __MPI
 #include "source_base/parallel_reduce.h"

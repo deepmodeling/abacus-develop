@@ -4,10 +4,6 @@
 #include "source_psi/psi_base.h"
 #include "source_psi/psi_prepare_base.h"
 
-class UnitCell;
-class Structure_Factor;
-namespace ModulePW { class PW_Basis_K; }
-
 namespace psi
 {
 

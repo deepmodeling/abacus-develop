@@ -9,7 +9,6 @@
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_base/module_device/device.h"
 #include "source_hamilt/hamilt.h"
-#include "source_psi/psi_base.h"
 
 class Setup_Psi_pw
 {

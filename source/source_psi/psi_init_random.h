@@ -2,7 +2,6 @@
 #define PSI_INIT_RANDOM_H
 
 #include <vector>
-#include "source_pw/module_pwdft/vnl_pw.h"
 #include "psi_base.h"
 
 /*
