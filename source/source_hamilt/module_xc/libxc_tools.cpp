@@ -250,8 +250,8 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 				for (std::size_t ir = 0; ir < nrxx; ++ir)
 				{
 					double rho_ir = 0.0;
-					if (is == 0) { rho_ir = rho[ir * nspin + 0]; }
-					else { rho_ir = rho[ir * nspin + 0] * mag_part_tmp[ir + (is - 1) * nrxx]; }
+					if (is == 0) { rho_ir = chr->rho[0][ir]; }
+					else { rho_ir = chr->rho[is][ir]; }
 					rvtxc += dh[is][ir] * rho_ir;
 					v(is, ir) -= dh[is][ir];
 				}
