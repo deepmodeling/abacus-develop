@@ -440,11 +440,10 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output the structure files per ion step";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Controls the output of structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. The output frequency of the numbered files is controlled by out_freq_ion.\n"
-                          "    - -1: No structure files are output at all (useful for very large systems).\n"
-                          "    - 0: The latest structure is written to STRU_NOW (overwritten each step), and the final converged structure is written to STRU_FINAL. No numbered files are output.\n"
-                          "    - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written per out_freq_ion, and the final converged structure is written to STRU_FINAL. No CIF files are output.\n"
-                          "    - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written per out_freq_ion, and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output.\n"
+        item.description = "Controls the output of structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion > 0, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps; when out_freq_ion = 0, no numbered files are output.\n"
+                          "    - 0: No structure files are output.\n"
+                          "    - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written every out_freq_ion steps (when out_freq_ion > 0), and the final converged structure is written to STRU_FINAL. No CIF files are output.\n"
+                          "    - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written every out_freq_ion steps (when out_freq_ion > 0), and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output.\n"
                           "[NOTE] For backward compatibility, true/false (case insensitive) are accepted and converted to 1/0.";
         item.default_value = "1";
         item.unit = "";
@@ -468,19 +467,19 @@ Also controled by out_freq_ion and out_app_flag.
                     if (pos != item.str_values[0].size())
                     {
                         ModuleBase::WARNING_QUIT("ReadInput",
-                            "out_stru must be one of -1, 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
+                            "out_stru must be one of 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
                     }
                     para.input.out_stru = parsed;
                 }
                 catch (const std::invalid_argument&)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput",
-                        "out_stru must be one of -1, 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
+                        "out_stru must be one of 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
                 }
                 catch (const std::out_of_range&)
                 {
                     ModuleBase::WARNING_QUIT("ReadInput",
-                        "out_stru must be one of -1, 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
+                        "out_stru must be one of 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
                 }
             }
         };
@@ -492,10 +491,10 @@ Also controled by out_freq_ion and out_app_flag.
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_stru < -1 || para.input.out_stru > 2)
+            if (para.input.out_stru < 0 || para.input.out_stru > 2)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                    "out_stru must be one of -1, 0, 1, 2. For backward compatibility, true/false are also accepted.");
+                    "out_stru must be one of 0, 1, 2. For backward compatibility, true/false are also accepted.");
             }
         };
         sync_int(input.out_stru);

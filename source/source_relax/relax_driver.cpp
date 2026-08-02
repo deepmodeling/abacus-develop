@@ -199,10 +199,10 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
     need_orb = need_orb || inp.basis_type == "lcao";
     need_orb = need_orb || inp.basis_type == "lcao_in_pw";
 
-    const bool freq_ok = (inp.out_freq_ion == 0 || istep % inp.out_freq_ion == 0);
+    const bool freq_ok = (inp.out_freq_ion > 0 && istep % inp.out_freq_ion == 0);
 
-    // STRU_NOW: overwrite each step (for out_stru 0, 1, 2)
-    if (inp.out_stru == 0 || inp.out_stru == 1)
+    // STRU_NOW: overwrite each step (for out_stru 1 and 2)
+    if (inp.out_stru == 1)
     {
         unitcell::print_stru_file(ucell,
                               ucell.atoms,
@@ -273,9 +273,9 @@ void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para&
         return;
     }
 
-    // out_stru: -1 no output, 0 final only (STRU format), 1 STRU format, 2 CIF format
-    // -1: skip structure output entirely; 0/1: write STRU_FINAL; 2: write STRU_FINAL.cif
-    if (inp.out_stru >= 0)
+    // out_stru: 0 no output, 1 STRU format, 2 CIF format
+    // 1: write STRU_FINAL; 2: write STRU_FINAL.cif
+    if (inp.out_stru == 1 || inp.out_stru == 2)
     {
         // Build header comment for STRU_FINAL
         std::time_t now = std::time(nullptr);
@@ -297,7 +297,7 @@ void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para&
                                       stress(i, 2) * stress_transform);
         }
 
-        if (inp.out_stru == 0 || inp.out_stru == 1)
+        if (inp.out_stru == 1)
         {
             bool need_orb = inp.basis_type == "pw";
             need_orb = need_orb && inp.init_wfc.substr(0, 3) == "nao";

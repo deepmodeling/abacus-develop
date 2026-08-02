@@ -2157,11 +2157,6 @@ TEST_F(InputTest, OutStru)
 
     // --- Valid numeric values ---
     {
-        it->second.str_values = {"-1"};
-        it->second.read_value(it->second, param);
-        EXPECT_EQ(param.input.out_stru, -1);
-    }
-    {
         it->second.str_values = {"0"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.out_stru, 0);
@@ -2221,7 +2216,7 @@ TEST_F(InputTest, OutStru)
 
     // --- Valid value check_value passes ---
     {
-        for (const int v : {-1, 0, 1, 2})
+        for (const int v : {0, 1, 2})
         {
             param.input.out_stru = v;
             // Expect no exit / no crash; check_value is a void function that only
@@ -2251,7 +2246,7 @@ TEST_F(InputTest, OutStru)
 
     // --- Invalid integer values -> WARNING_QUIT via check_value ---
     {
-        for (const std::string& s : {"3", "-2", "4", "10"})
+        for (const std::string& s : {"3", "-1", "-2", "4", "10"})
         {
             it->second.str_values = {s};
             it->second.read_value(it->second, param);
