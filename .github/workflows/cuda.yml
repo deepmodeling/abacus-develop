@@ -18,7 +18,7 @@ jobs:
     runs-on: gpu
     if: github.repository_owner == 'deepmodeling'
     container:
-      image: ghcr.io/deepmodeling/abacus-cuda
+      image: registry.dp.tech/deepmodeling/abacus-cuda
       volumes:
         - /tmp/ccache:/github/home/.ccache
       options: --gpus all
