@@ -228,7 +228,7 @@ TEST_F(MSST_test, print_md)
     getline(ifs, output_str);
 	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.8301538")); // result different from other MD methods
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.830153796556")); // result different from other MD methods
     getline(ifs, output_str);
 	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0762537")); // result different from other MD methods
     getline(ifs, output_str);    
@@ -243,9 +243,9 @@ TEST_F(MSST_test, print_md)
         testing::HasSubstr(
             " Energy (Ry)             Potential (Ry)          Kinetic (Ry)            "));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("-0.01545074"));
-    EXPECT_THAT(output_str, testing::HasSubstr("-0.023915637"));
-    EXPECT_THAT(output_str, testing::HasSubstr("0.0084648976"));
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0154507396226"));
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0239156372471"));
+    EXPECT_THAT(output_str, testing::HasSubstr("0.00846489762446"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,

@@ -172,7 +172,7 @@ TEST_F(Langevin_test, print_md)
     getline(ifs, output_str);
 	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.838539188441"));
     getline(ifs, output_str);
 	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391"));
     getline(ifs, output_str);
@@ -187,9 +187,9 @@ TEST_F(Langevin_test, print_md)
         testing::HasSubstr(
             " Energy (Ry)             Potential (Ry)          Kinetic (Ry)            "));
     getline(ifs, output_str);
-    EXPECT_THAT(output_str, testing::HasSubstr("-0.015365236"));
-    EXPECT_THAT(output_str, testing::HasSubstr("-0.023915637"));
-    EXPECT_THAT(output_str, testing::HasSubstr("0.0085504016"));
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0153652356062"));
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0239156372471"));
+    EXPECT_THAT(output_str, testing::HasSubstr("0.00855040164087"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
