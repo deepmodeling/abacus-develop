@@ -46,13 +46,12 @@ jobs:
           nvidia-smi
           source toolchain/install/setup
           rm -rf build
-          # Build only for the GPU architecture of the CI runner instead of the
-          # default 7 architectures (60/70/75/80/86/89/90). The CI GPU pool is
-          # Tesla V100 (sm_70, see the nvidia-smi output above); update this if
-          # the runner GPU model changes (V100=70, A100=80, H100=90, T4=75).
-          # This cuts nvcc work by ~7x and allows safe -j.
-          cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
-            -DCMAKE_CUDA_ARCHITECTURES=70
+          # The GPU architecture is detected automatically by CMakeLists.txt at
+          # configure time (via `nvidia-smi --query-gpu=compute_cap`), so no
+          # explicit -DCMAKE_CUDA_ARCHITECTURES is needed here. Building for a
+          # single architecture instead of the default 7 (60/70/75/80/86/89/90)
+          # cuts nvcc work by ~7x and allows safe -j on the build host.
+          cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON
           cmake --build build -j "$(nproc)"
           cmake --install build
 

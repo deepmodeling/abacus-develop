@@ -435,7 +435,37 @@ if(USE_CUDA)
     # check
     # https://gitlab.kitware.com/cmake/cmake/-/blob/master/Modules/Internal/CMakeCUDAArchitecturesAll.cmake
     # for available architectures in different CUDA versions
-    
+
+    # Auto-detect GPU compute capability at configure time when the user has
+    # not explicitly set CMAKE_CUDA_ARCHITECTURES and the build host has an
+    # NVIDIA GPU. This lets CI builds (and any other single-GPU host) compile
+    # for the GPU they actually have, instead of hardcoding an architecture.
+    # Falls back to the historical multi-arch default if nvidia-smi is not
+    # present (e.g., CPU-only build host) or returns an unrecognized value.
+    # User-provided CMAKE_CUDA_ARCHITECTURES still takes precedence.
+    if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES AND USE_CUDA AND COMMAND nvidia-smi)
+      execute_process(
+          COMMAND nvidia-smi --query-gpu=compute_cap --format=csv,noheader
+          OUTPUT_VARIABLE ABACUS_DETECTED_GPU_CAP
+          OUTPUT_STRIP_TRAILING_WHITESPACE
+          RESULT_VARIABLE ABACUS_DETECTED_GPU_CAP_RC)
+      if(ABACUS_DETECTED_GPU_CAP_RC EQUAL 0 AND NOT "${ABACUS_DETECTED_GPU_CAP}" STREQUAL "")
+        # Map "7.0" -> 70, "8.0" -> 80, "8.9" -> 89, "9.0" -> 90, etc.
+        string(REPLACE "." "" ABACUS_DETECTED_ARCH "${ABACUS_DETECTED_GPU_CAP}")
+        # Accept known CUDA architectures (50..99 covers all current generations).
+        if("${ABACUS_DETECTED_ARCH}" MATCHES "^[5-9][0-9]$")
+          set(CMAKE_CUDA_ARCHITECTURES "${ABACUS_DETECTED_ARCH}"
+              CACHE STRING "GPU architectures to compile for")
+          message(STATUS "ABACUS: detected GPU compute capability "
+                         "${ABACUS_DETECTED_GPU_CAP}; building for sm_${ABACUS_DETECTED_ARCH}")
+        else()
+          message(STATUS "ABACUS: detected GPU compute capability "
+                         "'${ABACUS_DETECTED_GPU_CAP}' looks unrecognized; "
+                         "falling back to default arch list")
+        endif()
+      endif()
+    endif()
+
     # CUDA 13.0+ dropped support for architectures below 75
     if(CUDAToolkit_VERSION VERSION_LESS "13.0")
       set(CMAKE_CUDA_ARCHITECTURES
