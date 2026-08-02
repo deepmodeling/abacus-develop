@@ -25,6 +25,26 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
     if (PARAM.inp.nspin != 4 || (!PARAM.globalv.domag && !PARAM.globalv.domag_z))
         throw std::domain_error("v_xc_ncgga_sf_builtin requires NSPIN==4.");
 
+    // ======================================================================
+    // Scalmani-Frisch (SF) builtin for noncollinear GGA (gga_grad=3)
+    //
+    // Reference: Scalmani & Frisch, JCTC 8, 1069 (2012)
+    //
+    // Key formulas:
+    //   rho_up   = 0.5*(rho + |m|),    rho_dn = 0.5*(rho - |m|)
+    //   m_hat    = m / |m|             (magnetization unit vector)
+    //
+    // Gradient decomposition (chain rule via m_hat):
+    //   grad(rho_up) = 0.5 grad(rho) + 0.5 m_hat_mu * grad(m_mu)
+    //   grad(rho_dn) = 0.5 grad(rho) - 0.5 m_hat_mu * grad(m_mu)
+    //
+    // For GGA, the sigma = |grad(rho_up)|^2 etc. are computed from gdr1,gdr2,
+    // then passed to spin-polarized XC functionals (xc_spin, gcx_spin, gcc_spin).
+    // The resulting potential is converted back to nspin=4 representation:
+    //   v_tot = 0.5*(v_up + v_dn)
+    //   v_mag = 0.5*(v_up - v_dn) * m_hat
+    // ======================================================================
+
     ModulePW::PW_Basis* rhopw = chr->rhopw;
     const int npw = rhopw->npw;
     const double e2 = ModuleBase::e2;
@@ -33,6 +53,7 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
     const double fac = 0.5;
     const bool is_gga = (XC_Functional::get_func_type() == 2 || XC_Functional::get_func_type() == 4);
 
+    // Step 1: decompose charge density into spin-up/spin-down and compute m_hat
     std::vector<double> rhotmp1(nrxx), rhotmp2(nrxx), amag(nrxx);
     std::vector<double> mag_part(3 * nrxx, 0.0);
 
@@ -83,6 +104,9 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
         }
     }
 
+    // Step 3: LDA contribution (xc_spin) and convert to nspin=4 potential
+    //   v(0,:) = 0.5*(vxc[0] + vxc[1])    -- total density channel
+    //   v(1..3,:) = 0.5*(vxc[0] - vxc[1]) * m_mu / |m|    -- magnetization channels
     double etxc = 0, vtxc = 0;
     ModuleBase::matrix v(PARAM.inp.nspin, nrxx);
 
@@ -114,6 +138,9 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
         etxc += e2 * exc * arho;
     }
 
+    // Step 4: GGA contribution (gcx_spin + gcc_spin) and divergence correction (grad_dot)
+    //   The gradient correction uses the same SF-decomposed gdr1, gdr2 and converts
+    //   back to nspin=4 via m_hat, matching the LDA conversion above.
     if (is_gga)
     {
         double etxcgc = 0, vtxcgc = 0;

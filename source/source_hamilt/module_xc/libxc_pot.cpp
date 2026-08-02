@@ -64,6 +64,10 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     }();
 
     // converting rho
+    // For nspin=4, the charge density has 4 components:
+    //   rho[0] = total charge, rho[1..3] = magnetization (mx, my, mz)
+    // libxc works with spin-up/spin-down densities:
+    //   rho_up = 0.5*(rho[0] + |m|), rho_dn = 0.5*(rho[0] - |m|)
     std::vector<double> rho;
     std::vector<double> amag;
     std::vector<double> mag_part;
@@ -76,6 +80,11 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         std::tuple<std::vector<double>,std::vector<double>> rho_amag = XC_Functional_Libxc::convert_rho_amag_nspin4(nspin, nrxx, chr);
         rho = std::get<0>(std::move(rho_amag));
         amag = std::get<1>(std::move(rho_amag));
+        // gga_grad=2/3: compute magnetization unit vector m_hat = m/|m|
+        // needed for the Scalmani-Frisch (SF) gradient decomposition:
+        //   grad(rho_up)   = 0.5 grad(rho[0]) + 0.5 m_hat_mu * grad(m_mu)
+        //   grad(rho_dn)   = 0.5 grad(rho[0]) - 0.5 m_hat_mu * grad(m_mu)
+        // gga_grad=1 (else): collinear approximation, uses grad(|m|) only
         if((PARAM.inp.gga_grad == 2 || PARAM.inp.gga_grad == 3) && (PARAM.globalv.domag || PARAM.globalv.domag_z))
         {
             mag_part = XC_Functional_Libxc::compute_mag_part_nspin4(nrxx, chr);
@@ -86,6 +95,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     std::vector<double> sigma;
     if(is_gga)
     {
+        // gga_grad=2/3: use SF method to compute spin-up/spin-down gradients
+        // via the chain-rule decomposition. This is more accurate than the
+        // collinear approximation (gga_grad=1) for noncollinear magnetism.
         if(PARAM.inp.nspin==4 && (PARAM.inp.gga_grad == 2 || PARAM.inp.gga_grad == 3) && (PARAM.globalv.domag || PARAM.globalv.domag_z))
         {
             gdr = XC_Functional_Libxc::cal_gdr_sf(nspin, nrxx, rho, mag_part, tpiba, chr);
@@ -191,6 +203,9 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
 
     if(4==nspin_in)
     {
+        // gga_grad=2/3: convert libxc spin-up/spin-down potential back to
+        // nspin=4 representation via SF method (v_total, v_mag_hat)
+        // gga_grad=1: standard conversion using |m| decomposition only
         if((PARAM.inp.gga_grad == 2 || PARAM.inp.gga_grad == 3) && (PARAM.globalv.domag || PARAM.globalv.domag_z))
         {
             v = XC_Functional_Libxc::convert_v_nspin4_sf(nrxx, chr, mag_part, v);

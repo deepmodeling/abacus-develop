@@ -52,6 +52,10 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
 #endif
     }
 
+    // For non-libxc builds: gga_grad=3 uses the SF builtin that computes the
+    // full nspin=4 GGA potential via the Scalmani-Frisch transformation.
+    // This path handles spin-up/spin-down decomposition and gradient
+    // corrections internally, returning (etxc, vtxc, v) directly.
     if (PARAM.inp.nspin == 4 && (PARAM.globalv.domag || PARAM.globalv.domag_z) && PARAM.inp.gga_grad == 3)
     {
         return ModuleXC::NCGGA_SF_Builtin::v_xc_ncgga_sf_builtin(nrxx, ucell->omega, ucell->tpiba, chr);

@@ -235,6 +235,11 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 
 	if(func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA)
 	{
+		// For nspin=4 with domag and gga_grad=2/3, use the SF (Scalmani-Frisch)
+		// gradient correction. The potential v has 4 components:
+		//   v(0,:) = total density channel,  v(1..3,:) = magnetization channels
+		// cal_dh_sf returns dh[4][nrxx] in the same 4-component representation.
+		// The vtxc contribution sums dh[is] * rho[is] for each channel.
 		if(PARAM.inp.nspin==4 && (PARAM.inp.gga_grad == 2 || PARAM.inp.gga_grad == 3) && (PARAM.globalv.domag || PARAM.globalv.domag_z))
 		{
 			std::vector<double> mag_part_tmp = XC_Functional_Libxc::compute_mag_part_nspin4(nrxx, chr);
