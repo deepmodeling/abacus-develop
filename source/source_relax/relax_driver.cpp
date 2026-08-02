@@ -31,11 +31,12 @@ void Relax_Driver::relax_driver(
     // Main iteration loop for relaxation calculations
     // For scf/nscf calculations, relax_step returns true immediately,
     // so the loop exits after one iteration
+    double etot = 0.0;
+    ModuleBase::matrix stress(3, 3);
+
     while (steps[0] < inp.relax_nmax)
     {
         ModuleBase::matrix force(ucell.nat, 3);
-        ModuleBase::matrix stress(3, 3);
-        double etot = 0.0;
 
         this->iter_info(steps, inp);
         this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
@@ -58,7 +59,7 @@ void Relax_Driver::relax_driver(
         ++steps[0];
     }
 
-    this->final_out(steps[0], ucell, inp);
+    this->final_out(steps[0], ucell, inp, etot, stress);
 
     ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
@@ -245,12 +246,50 @@ void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, 
 #endif
 }
 
-void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para& inp)
+void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress)
 {
     if (inp.calculation != "relax" && inp.calculation != "cell-relax")
     {
         return;
     }
+
+    // Build header comment for STRU_FINAL
+    std::time_t now = std::time(nullptr);
+    char time_buf[64];
+    std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    std::string header = FmtCore::format("# ABACUS version: %s\n# Written at %s\n# RELAX STEP %d (FINAL), Energy: %.8f eV\n",
+                                          VERSION,
+                                          time_buf,
+                                          istep + 1,
+                                          etot * ModuleBase::Ry_to_eV);
+    const double stress_transform = ModuleBase::RYDBERG_SI
+                                    / (ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI)
+                                    * 1.0e-8;
+    for (int i = 0; i < 3; i++)
+    {
+        header += FmtCore::format("# Stress (kbar): %.6f %.6f %.6f\n",
+                                  stress(i, 0) * stress_transform,
+                                  stress(i, 1) * stress_transform,
+                                  stress(i, 2) * stress_transform);
+    }
+
+    bool need_orb = inp.basis_type == "pw";
+    need_orb = need_orb && inp.init_wfc.substr(0, 3) == "nao";
+    need_orb = need_orb || inp.basis_type == "lcao";
+    need_orb = need_orb || inp.basis_type == "lcao_in_pw";
+
+    unitcell::print_stru_file(ucell,
+                              ucell.atoms,
+                              ucell.latvec,
+                              PARAM.globalv.global_out_dir + "STRU_FINAL",
+                              header,
+                              inp.nspin,
+                              true,
+                              inp.calculation == "md",
+                              inp.out_mul,
+                              need_orb,
+                              PARAM.globalv.deepks_setorb,
+                              GlobalV::MY_RANK);
 
     ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_FINAL.cif",
                                ucell,

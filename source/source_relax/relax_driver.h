@@ -122,8 +122,10 @@ class Relax_Driver
      * @param istep Final iteration step.
      * @param ucell Reference to the unit cell.
      * @param inp Input parameters for the calculation.
+     * @param etot Total energy of the final step.
+     * @param stress Stress tensor of the final step.
      */
-    void final_out(const int istep, UnitCell& ucell, const Input_para& inp);
+    void final_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress);
 };
 
 #endif

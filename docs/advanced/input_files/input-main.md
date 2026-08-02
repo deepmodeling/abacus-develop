@@ -1782,7 +1782,7 @@
 ### out_freq_ion
 
 - **Type**: Integer
-- **Description**: Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every n ionic steps.
+- **Description**: Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis, and structure files (`STRU{istep}`, when `out_stru` is enabled) is printed every n ionic steps.
 
   > Note: In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.
 - **Default**: 0
@@ -1970,7 +1970,7 @@
 ### out_stru
 
 - **Type**: Boolean
-- **Description**: Whether to output structure files per ionic step in geometry relaxation calculations. The files are written to the `OUT.{suffix}/` directory as `STRU{istep}` (e.g., `STRU1`, `STRU2`), where ${istep} is the ionic step. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor.
+- **Description**: Whether to output structure files per ionic step in geometry relaxation calculations. When enabled, the files are written to the `OUT.{suffix}/` directory as `STRU{istep}` (e.g., `STRU1`, `STRU2`), where ${istep} is the ionic step. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. The output frequency is controlled by `out_freq_ion`. Regardless of this setting, the latest structure is always written to `STRU` (overwritten each step), and the final converged structure is written to `STRU_FINAL` at the end of relaxation.
 - **Default**: False
 
 ### out_level

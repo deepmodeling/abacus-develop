@@ -14,7 +14,7 @@ void ReadInput::item_output()
         item.annotation = "print information every few ionic steps";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every n ionic steps."
+        item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis, and structure files (STRU{istep}, when out_stru is enabled) is printed every n ionic steps."
                           "\n\n[NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.";
         item.default_value = "0";
         item.unit = "";
@@ -439,7 +439,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output the structure files per ion step";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to output structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory as STRU{istep} (e.g., STRU1, STRU2), where ${istep} is the ionic step. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor.";
+        item.description = "Whether to output structure files per ionic step in geometry relaxation calculations. When enabled, the files are written to the OUT.{suffix}/ directory as STRU{istep} (e.g., STRU1, STRU2), where ${istep} is the ionic step. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. The output frequency is controlled by out_freq_ion. Regardless of this setting, the latest structure is always written to STRU (overwritten each step), and the final converged structure is written to STRU_FINAL at the end of relaxation.";
         item.default_value = "False";
         item.unit = "";
         item.availability = "";
