@@ -442,7 +442,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.type = "Integer";
         item.description = "Controls the output of structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. The output frequency of the numbered files is controlled by out_freq_ion.\n"
                           "    - -1: No structure files are output at all (useful for very large systems).\n"
-                          "    - 0: Only the final converged structure STRU_FINAL is output at the end of relaxation.\n"
+                          "    - 0: The latest structure is written to STRU_NOW (overwritten each step), and the final converged structure is written to STRU_FINAL. No numbered files are output.\n"
                           "    - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written per out_freq_ion, and the final converged structure is written to STRU_FINAL. No CIF files are output.\n"
                           "    - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written per out_freq_ion, and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output.\n"
                           "[NOTE] For backward compatibility, true/false (case insensitive) are accepted and converted to 1/0.";

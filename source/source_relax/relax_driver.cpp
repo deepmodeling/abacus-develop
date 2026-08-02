@@ -201,9 +201,9 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
 
     const bool freq_ok = (inp.out_freq_ion == 0 || istep % inp.out_freq_ion == 0);
 
-    if (inp.out_stru == 1)
+    // STRU_NOW: overwrite each step (for out_stru 0, 1, 2)
+    if (inp.out_stru == 0 || inp.out_stru == 1)
     {
-        // Overwrite STRU_NOW each step
         unitcell::print_stru_file(ucell,
                               ucell.atoms,
                               ucell.latvec,
@@ -216,9 +216,20 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
                               need_orb,
                               PARAM.globalv.deepks_setorb,
                               GlobalV::MY_RANK);
+    }
+    else if (inp.out_stru == 2)
+    {
+        ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_NOW.cif",
+                                   ucell,
+                                   header,
+                                   "data_?",
+                                   GlobalV::MY_RANK);
+    }
 
-        // Numbered file STRU{istep+1} per out_freq_ion
-        if (freq_ok)
+    // Numbered files per out_freq_ion (for out_stru 1 and 2 only)
+    if (freq_ok)
+    {
+        if (inp.out_stru == 1)
         {
             unitcell::print_stru_file(ucell,
                                   ucell.atoms,
@@ -233,18 +244,7 @@ void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& 
                                   PARAM.globalv.deepks_setorb,
                                   GlobalV::MY_RANK);
         }
-    }
-    else if (inp.out_stru == 2)
-    {
-        // Overwrite STRU_NOW.cif each step
-        ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_NOW.cif",
-                                   ucell,
-                                   header,
-                                   "data_?",
-                                   GlobalV::MY_RANK);
-
-        // Numbered file STRU{istep+1}.cif per out_freq_ion
-        if (freq_ok)
+        else if (inp.out_stru == 2)
         {
             ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU" + std::to_string(istep + 1) + ".cif",
                                        ucell,
