@@ -192,11 +192,6 @@ class Psi
     T* psi_gpu_transfer_buffer_ = nullptr;
     int current_k_gpu_ = -1;
 
-#if defined(__CUDA) || defined(__ROCM)
-    void* compute_stream_ = nullptr;
-    void* transfer_stream_ = nullptr;
-#endif
-
 #ifdef __DSP
     using delete_memory_op = base_device::memory::delete_memory_op_mt<T, Device>;
     using resize_memory_op = base_device::memory::resize_memory_op_mt<T, Device>;

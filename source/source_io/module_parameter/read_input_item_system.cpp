@@ -755,7 +755,10 @@ Available options are:
 
 Only relevant when device=gpu and basis_type=pw.)";
         item.default_value = "";
-        read_sync_string(input.device_memory_mode);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.device_memory_mode = item.get_size() > 0 ? strvalue : "";
+        };
+        sync_string(input.device_memory_mode);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> avail_list = {"", "full_gpu", "paged"};
             if (std::find(avail_list.begin(), avail_list.end(), para.input.device_memory_mode) == avail_list.end())

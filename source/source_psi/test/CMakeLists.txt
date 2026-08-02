@@ -3,7 +3,8 @@ AddTest(
     LIBS parameter base device
     SOURCES 
         psi_test.cpp
-        ../psi.cpp 
+        ../psi.cpp
+        ../psi_paging.cpp
 )
 
 if(ENABLE_LCAO)
