@@ -1782,7 +1782,7 @@
 ### out_freq_ion
 
 - **Type**: Integer
-- **Description**: Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis, and structure files (`STRU{istep}` or `STRU{istep}.cif`, when `out_stru` is 1 or 2) is printed every n ionic steps.
+- **Description**: Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis, and structure files (STRU{istep} or STRU{istep}.cif, when out_stru is 1 or 2) is printed every n ionic steps.
 
   > Note: In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.
 - **Default**: 0
@@ -1970,12 +1970,11 @@
 ### out_stru
 
 - **Type**: Integer
-- **Description**: Controls the output of structure files per ionic step in geometry relaxation calculations. The files are written to the `OUT.{suffix}/` directory. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When `out_freq_ion > 0`, the numbered files `STRU{istep}` (or `STRU{istep}.cif`) are written every `out_freq_ion` steps; when `out_freq_ion = 0`, no numbered files are output.
-  - 0: No structure files are output.
-  - 1: ABACUS STRU format files are output. The latest structure is written to `STRU_NOW` (overwritten each step), the numbered file `STRU{istep}` (e.g., `STRU1`, `STRU2`) is written every `out_freq_ion` steps (when `out_freq_ion > 0`), and the final converged structure is written to `STRU_FINAL`. No CIF files are output.
-  - 2: CIF format files are output. The latest structure is written to `STRU_NOW.cif` (overwritten each step), the numbered file `STRU{istep}.cif` (e.g., `STRU1.cif`, `STRU2.cif`) is written every `out_freq_ion` steps (when `out_freq_ion > 0`), and the final converged structure is written to `STRU_FINAL.cif`. No non-CIF files are output.
-
-  [NOTE] For backward compatibility, `true`/`false` (case insensitive) are accepted and converted to `1`/`0`.
+- **Description**: Controls the output of structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion is positive, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps; when out_freq_ion is 0, no numbered files are output.
+    - 0: No structure files are output.
+    - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL. No CIF files are output.
+    - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output.
+  > Note: For backward compatibility, true/false (case insensitive) are accepted and converted to 1/0.
 - **Default**: 1
 
 ### out_level
