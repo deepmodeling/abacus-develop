@@ -99,7 +99,6 @@ void gen_stru(UnitCell* ucell)
 
     // atom coordinate, mag and label
     const double lat0_angstrom = ucell->lat0_angstrom;
-    std::string* label = ucell->atom_label.data();
     for (int i = 0; i < ntype; i++)
     {
         ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau.data();
