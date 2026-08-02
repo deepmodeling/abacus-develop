@@ -7,6 +7,7 @@
 #include "source_io/module_json/readin_info.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_json/para_json.h"
+#include "source_base/constants.h"
 #include "source_base/version.h"
 #undef private
 /************************************************
@@ -325,6 +326,7 @@ TEST(AbacusJsonTest, Init_stru_test)
     ucell.orbital_fn.resize(1);
     ucell.atoms = atomlist;
     ucell.lat0 = lat0;
+    ucell.lat0_angstrom = lat0 * ModuleBase::BOHR_TO_A;
 
     ModuleBase::Vector3<double> tau[2];
 
@@ -362,19 +364,23 @@ TEST(AbacusJsonTest, Init_stru_test)
     ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][0][1].GetDouble(), 0);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][0][2].GetDouble(), 0);
 
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][1][0].GetDouble(), 1.0);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][1][1].GetDouble(), 1.0);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][1][2].GetDouble(), 1.0);
+    EXPECT_NEAR(Json::AbacusJson::doc["init"]["coordinate"][1][0].GetDouble(),
+                ModuleBase::BOHR_TO_A,
+                1.0e-12);
+    EXPECT_NEAR(Json::AbacusJson::doc["init"]["coordinate"][1][1].GetDouble(),
+                ModuleBase::BOHR_TO_A,
+                1.0e-12);
+    EXPECT_NEAR(Json::AbacusJson::doc["init"]["coordinate"][1][2].GetDouble(),
+                ModuleBase::BOHR_TO_A,
+                1.0e-12);
 
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][0][0].GetDouble(), 0.1);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][0][1].GetDouble(), 0.1);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][0][2].GetDouble(), 0.1);
-
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][1][0].GetDouble(), 0.2);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][1][1].GetDouble(), 0.2);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][1][2].GetDouble(), 0.2);
-
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][2][0].GetDouble(), 0.3);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][2][1].GetDouble(), 0.3);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][2][2].GetDouble(), 0.3);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            EXPECT_NEAR(Json::AbacusJson::doc["init"]["cell"][i][j].GetDouble(),
+                        (i + 1) * ModuleBase::BOHR_TO_A,
+                        1.0e-12);
+        }
+    }
 }

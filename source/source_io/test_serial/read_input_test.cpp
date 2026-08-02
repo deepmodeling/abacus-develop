@@ -212,6 +212,29 @@ TEST_F(InputTest, RejectAutoDevice)
     EXPECT_TRUE(std::remove("./auto_device_INPUT") == 0);
 }
 
+TEST_F(InputTest, ValidateRelaxMethodVariants)
+{
+    Parameter cg_param;
+    EXPECT_NO_THROW(read_parameters("relax_cg_INPUT", "relax_method cg\n", cg_param));
+    EXPECT_EQ(cg_param.inp.relax_method, (std::vector<std::string>{"cg", "2"}));
+    EXPECT_TRUE(cg_param.inp.uses_simultaneous_relaxation());
+
+    Parameter bfgs_default_param;
+    EXPECT_NO_THROW(read_parameters("relax_bfgs_default_INPUT", "relax_method bfgs\n", bfgs_default_param));
+    EXPECT_EQ(bfgs_default_param.inp.relax_method, (std::vector<std::string>{"bfgs", "2"}));
+    EXPECT_FALSE(bfgs_default_param.inp.uses_simultaneous_relaxation());
+
+    Parameter bfgs_one_param;
+    EXPECT_NO_THROW(read_parameters("relax_bfgs_one_INPUT", "relax_method bfgs 1\n", bfgs_one_param));
+    EXPECT_EQ(bfgs_one_param.inp.relax_method, (std::vector<std::string>{"bfgs", "1"}));
+
+    expect_invalid_input("relax_bad_variant_INPUT", "relax_method cg 3\n", "the CG variant must be 1 or 2");
+    expect_invalid_input("relax_irrelevant_variant_INPUT",
+                         "relax_method sd 1\n",
+                         "relax_method sd does not accept a second value");
+    expect_invalid_input("relax_new_removed_INPUT", "relax_new 1\n", "THE PARAMETER NAME 'relax_new' IS INCORRECT");
+}
+
 TEST_F(InputTest, ValidateNoncollinearSpin)
 {
     Parameter valid_param;
@@ -281,6 +304,54 @@ TEST_F(InputTest, ValidateBandParallelization)
     expect_invalid_input("bndpar_too_large_INPUT",
                          "esolver_type sdft\nnbands_sto all\nbndpar 2\n",
                          "bndpar can not exceed the number of MPI processes");
+}
+
+TEST_F(InputTest, ValidateDeepksOutputFrequency)
+{
+    Parameter default_param;
+    EXPECT_NO_THROW(read_parameters("deepks_freq_default_INPUT", "", default_param));
+    EXPECT_EQ(default_param.inp.deepks_out_freq_elec, 0);
+
+    Parameter disabled_param;
+    EXPECT_NO_THROW(read_parameters("deepks_freq_disabled_INPUT", "deepks_out_freq_elec 0\n", disabled_param));
+    EXPECT_EQ(disabled_param.inp.deepks_out_freq_elec, 0);
+
+    expect_invalid_input("deepks_freq_negative_INPUT",
+                         "deepks_out_freq_elec -1\n",
+                         "deepks_out_freq_elec must not be negative");
+    expect_invalid_input("deepks_freq_missing_base_INPUT",
+                         "deepks_out_freq_elec 2\n",
+                         "to use deepks_out_freq_elec, please set deepks_out_base");
+
+    Parameter enabled_param;
+    testing::internal::CaptureStdout();
+    EXPECT_THROW(read_parameters("deepks_freq_enabled_INPUT",
+                                 "deepks_out_freq_elec 2\n"
+                                 "deepks_out_base pbe\n"
+                                 "deepks_out_labels 1\n",
+                                 enabled_param),
+                 std::runtime_error);
+    const std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_THAT(output, testing::HasSubstr("please compile with DeePKS"));
+    EXPECT_EQ(enabled_param.inp.deepks_out_freq_elec, 2);
+}
+
+TEST_F(InputTest, ValidateDiagoProc)
+{
+    set_nproc(4);
+
+    Parameter full_param;
+    EXPECT_NO_THROW(read_parameters("diago_proc_full_INPUT", "diago_proc 0\n", full_param));
+    EXPECT_EQ(full_param.inp.diago_proc, 4);
+
+    Parameter subset_param;
+    EXPECT_NO_THROW(read_parameters("diago_proc_subset_INPUT", "diago_proc 2\n", subset_param));
+    EXPECT_EQ(subset_param.inp.diago_proc, 2);
+
+    expect_invalid_input("diago_proc_negative_INPUT", "diago_proc -1\n", "diago_proc must not be negative");
+    expect_invalid_input("diago_proc_oversized_INPUT",
+                         "diago_proc 5\n",
+                         "diago_proc cannot exceed the number of MPI processes");
 }
 
 TEST_F(InputTest, Check)

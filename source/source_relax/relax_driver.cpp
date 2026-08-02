@@ -63,7 +63,7 @@ void Relax_Driver::init_relax(const int nat, const Input_para& inp)
 {
     if (inp.calculation == "relax" || inp.calculation == "cell-relax")
     {
-        if (!inp.relax_new)
+        if (!inp.uses_simultaneous_relaxation())
         {
             this->rl_old.init_relax(nat);
         }
@@ -133,7 +133,7 @@ bool Relax_Driver::relax_step(std::vector<int>& steps,
 
     bool converged = false;
 
-    if (inp.relax_new)
+    if (inp.uses_simultaneous_relaxation())
     {
         converged = this->rl.relax_step(ucell, force, stress, etot, ofs_running);
 	// stress step +1
