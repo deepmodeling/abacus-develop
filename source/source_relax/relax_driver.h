@@ -94,7 +94,7 @@ class Relax_Driver
             const double etot, std::ofstream& ofs_running);
 
     /**
-     * @brief Output structure files before relaxation move (Option A).
+     * @brief Output structure files before relaxation move.
      *
      * @param istep Current iteration step.
      * @param ucell Reference to the unit cell.
