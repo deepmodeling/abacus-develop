@@ -211,7 +211,7 @@ stress_thr		5		# the threshold of the stress convergence, in unit of kBar
 relax_nmax		100		# the maximal number of ionic iteration steps
 out_stru		1
 ```
-Use the same `KPT`, `STRU`, pseudopotential, and orbital files as in the above SCF-LCAO example. The final optimized structure can be found in `STRU_NOW.cif` and `OUT.MgO/running_cell-relax.log`.
+Use the same `KPT`, `STRU`, pseudopotential, and orbital files as in the above SCF-LCAO example. The final optimized structure can be found in `STRU_FINAL` and `OUT.MgO/running_cell-relax.log`.
 
 ### A quick PW example
 
@@ -232,4 +232,4 @@ relax_nmax		100		# the maximal number of ionic iteration steps
 out_stru		1
 ```
 
-Use the same `KPT`, `STRU`, and pseudopotential files as in the above SCF-PW examples. The final optimized structure can be found in `STRU_NOW.cif` and `STRU` with different format.
+Use the same `KPT`, `STRU`, and pseudopotential files as in the above SCF-PW examples. The final optimized structure can be found in `STRU_FINAL` and `STRU` with different format.

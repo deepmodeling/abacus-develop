@@ -1,3 +1,4 @@
+#include "source_base/formatter.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
 #include "read_input.h"
@@ -14,7 +15,7 @@ void ReadInput::item_output()
         item.annotation = "print information every few ionic steps";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis, and structure files (STRU{istep}, when out_stru is enabled) is printed every n ionic steps."
+        item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis, and structure files (STRU{istep} or STRU{istep}.cif, when out_stru is 1 or 2) is printed every n ionic steps."
                           "\n\n[NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.";
         item.default_value = "0";
         item.unit = "";
@@ -438,19 +439,66 @@ Also controled by out_freq_ion and out_app_flag.
         Input_Item item("out_stru");
         item.annotation = "output the structure files per ion step";
         item.category = "Output information";
-        item.type = "Boolean";
-        item.description = "Whether to output structure files per ionic step in geometry relaxation calculations. When enabled, the files are written to the OUT.{suffix}/ directory as STRU{istep} (e.g., STRU1, STRU2), where ${istep} is the ionic step. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. The output frequency is controlled by out_freq_ion. Regardless of this setting, the latest structure is always written to STRU (overwritten each step), and the final converged structure is written to STRU_FINAL at the end of relaxation.";
-        item.default_value = "False";
+        item.type = "Integer";
+        item.description = "Controls the output of structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. The output frequency of the numbered files is controlled by out_freq_ion.\n"
+                          "    - -1: No structure files are output at all (useful for very large systems).\n"
+                          "    - 0: Only the final converged structure STRU_FINAL is output at the end of relaxation.\n"
+                          "    - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written per out_freq_ion, and the final converged structure is written to STRU_FINAL. No CIF files are output.\n"
+                          "    - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written per out_freq_ion, and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output.\n"
+                          "[NOTE] For backward compatibility, true/false (case insensitive) are accepted and converted to 1/0.";
+        item.default_value = "1";
         item.unit = "";
         item.availability = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const std::string val = FmtCore::lower(item.str_values[0]);
+            if (val == "true" || val == "t" || val == "yes" || val == "y" || val == "on" || val == ".true.")
+            {
+                para.input.out_stru = 1;
+            }
+            else if (val == "false" || val == "f" || val == "no" || val == "n" || val == "off" || val == ".false.")
+            {
+                para.input.out_stru = 0;
+            }
+            else
+            {
+                try
+                {
+                    size_t pos = 0;
+                    const int parsed = std::stoi(item.str_values[0], &pos);
+                    if (pos != item.str_values[0].size())
+                    {
+                        ModuleBase::WARNING_QUIT("ReadInput",
+                            "out_stru must be one of -1, 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
+                    }
+                    para.input.out_stru = parsed;
+                }
+                catch (const std::invalid_argument&)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                        "out_stru must be one of -1, 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
+                }
+                catch (const std::out_of_range&)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                        "out_stru must be one of -1, 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
+                }
+            }
+        };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             const std::vector<std::string> offlist = {"nscf", "get_s", "get_pchg", "get_wf"};
             if (std::find(offlist.begin(), offlist.end(), para.input.calculation) != offlist.end())
             {
-                para.input.out_stru = false;
+                para.input.out_stru = 0;
             }
         };
-        read_sync_bool(input.out_stru);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_stru < -1 || para.input.out_stru > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "out_stru must be one of -1, 0, 1, 2. For backward compatibility, true/false are also accepted.");
+            }
+        };
+        sync_int(input.out_stru);
         this->add_item(item);
     }
     {
