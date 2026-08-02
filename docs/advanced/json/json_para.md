@@ -64,7 +64,7 @@ An array of dicts, including information about each self-consistent field (SCF) 
 - `force` -  [array(array(double))] The forces calculated on each atom. Unit in eV/Angstrom.
 - `stress` - [array(array(double))] The stress tensor. Unit in Kbar.
 - `cell` - [array(array(double))] The cell parameters. Unit in Angstrom.
-- `coordinate` - [array(array(double))] The coordinates of the atoms in the box after the simulation.
+- `coordinate` - [array(array(double))] The coordinates of the atoms in the box after the simulation. Unit in Angstrom.
 - `total_mag` , `absolute_mag` , `mag` - [double] The total magnetic moment; total absolute magnetic moment; and a list of magnetic moments for each atom, respectively.
 - `scf_converge` - [bool] A boolean indicating whether the scf optimization has converged.
 - `scf` - [array(object(str:double)] A list of each scf step, each item contains:

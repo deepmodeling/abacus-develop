@@ -98,7 +98,7 @@ void gen_stru(UnitCell* ucell)
     }
 
     // atom coordinate, mag and label
-    double lat0 = ucell->lat0;
+    const double lat0_angstrom = ucell->lat0_angstrom;
     std::string* label = ucell->atom_label.data();
     for (int i = 0; i < ntype; i++)
     {
@@ -107,9 +107,9 @@ void gen_stru(UnitCell* ucell)
         for (int j = 0; j < na; j++)
         {
             Json::jsonValue coordinateArray(JarrayType);
-            coordinateArray.JPushBack(tau[j][0] * lat0);
-            coordinateArray.JPushBack(tau[j][1] * lat0);
-            coordinateArray.JPushBack(tau[j][2] * lat0);
+            coordinateArray.JPushBack(tau[j][0] * lat0_angstrom);
+            coordinateArray.JPushBack(tau[j][1] * lat0_angstrom);
+            coordinateArray.JPushBack(tau[j][2] * lat0_angstrom);
             Json::AbacusJson::add_json({"init", "coordinate"}, coordinateArray, true);
             // Json::AbacusJson::add_Json(coordinateArray,true,"init","coordinate");
 
