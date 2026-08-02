@@ -30,6 +30,7 @@
     - [kmesh\_type](#kmesh_type)
     - [min\_dist\_coef](#min_dist_coef)
     - [device](#device)
+    - [device\_memory\_mode](#device_memory_mode)
     - [precision](#precision)
     - [gint\_precision](#gint_precision)
     - [timer\_enable\_nvtx](#timer_enable_nvtx)
@@ -798,6 +799,16 @@
 
   > Note: ks_solver must also be set to the algorithms supported. lcao_in_pw currently does not support gpu.
 - **Default**: cpu
+
+### device_memory_mode
+
+- **Type**: String
+- **Description**: Controls GPU memory strategy for wavefunction storage.
+  - "" (empty/auto): Automatic selection based on system size.
+  - "full_gpu": All wavefunction data resides on GPU (default behavior).
+  - "paged": CPU storage with single k-point paging to GPU, reduces GPU memory at the cost of transfer overhead.
+
+  Only relevant when device=gpu and basis_type=pw.
 
 ### precision
 

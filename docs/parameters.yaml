@@ -277,6 +277,19 @@ parameters:
     default_value: cpu
     unit: ""
     availability: ""
+  - name: device_memory_mode
+    category: System variables
+    type: String
+    description: |
+      Controls GPU memory strategy for wavefunction storage.
+      * "" (empty/auto): Automatic selection based on system size.
+      * "full_gpu": All wavefunction data resides on GPU (default behavior).
+      * "paged": CPU storage with single k-point paging to GPU, reduces GPU memory at the cost of transfer overhead.
+
+      Only relevant when device=gpu and basis_type=pw.
+    default_value: ""
+    unit: ""
+    availability: ""
   - name: precision
     category: System variables
     type: String
