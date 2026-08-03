@@ -12,9 +12,7 @@
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
-#ifdef __LCAO
 #include "H_TDDFT_pw.h"
-#endif
 #ifdef __MLALGO
 #include "pot_ml_exx.h"
 #endif
@@ -49,14 +47,12 @@ PotBase* Potential::get_pot_type(const std::string& pot_type)
     {
         return new PotGate(this->rho_basis_, this->ucell_);
     }
-#ifdef __LCAO
     else if (pot_type == "tddft")
     {
         // The RT-TDDFT ESolver injects this manager before potential
         // registration so the potential does not own a separate time counter.
         return new H_TDDFT_pw(this->rho_basis_, this->ucell_, this->td_field_manager_);
     }
-#endif
 #ifdef __MLALGO
     else if (pot_type == "ml_exx")
     {

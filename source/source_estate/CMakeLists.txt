@@ -13,6 +13,7 @@ list(APPEND objects
     module_pot/gatefield.cpp
     module_pot/efield.cpp
     module_pot/H_Hartree_pw.cpp
+    module_pot/H_TDDFT_pw.cpp
     module_pot/pot_xc.cpp
     module_pot/pot_local.cpp
     module_pot/potential_new.cpp
@@ -22,6 +23,7 @@ list(APPEND objects
     module_pot/pot_sep.cpp
     module_pot/pot_xc_fdm.cpp
     module_pot/pot_cosikr.cpp
+    module_pot/td_field.cpp
     module_charge/chgmixing.cpp
     module_charge/gint_precision_controller.cpp
     module_charge/charge.cpp
@@ -46,8 +48,6 @@ list(APPEND objects
 if(ENABLE_LCAO)
   list(APPEND objects
       elecstate_lcao.cpp
-      module_pot/H_TDDFT_pw.cpp
-      module_pot/td_field.cpp
       module_dm/init_dm.cpp
       module_dm/density_matrix.cpp
       module_dm/density_matrix_io.cpp
