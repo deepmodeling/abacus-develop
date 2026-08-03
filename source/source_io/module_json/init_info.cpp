@@ -1,6 +1,6 @@
 #include "init_info.h"
 
-#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/input_parameter.h"
 #include "para_json.h"
 #include "abacusjson.h"
 
@@ -10,7 +10,7 @@ namespace Json
 
 #ifdef __RAPIDJSON
 
-void gen_init(UnitCell* ucell)
+void gen_init(UnitCell* ucell, const Input_para& inp)
 {
     std::string pgname = ucell->symm.pgname;
     std::string spgname = ucell->symm.spgname;
@@ -22,7 +22,7 @@ void gen_init(UnitCell* ucell)
 
     int numAtoms = ucell->nat;
     AbacusJson::add_json({"init", "natom"}, numAtoms, false);
-    AbacusJson::add_json({"init", "nband"}, PARAM.inp.nbands, false);
+    AbacusJson::add_json({"init", "nband"}, inp.nbands, false);
 
     // Json::AbacusJson::add_Json(numAtoms,false,"init", "natom");
     // Json::AbacusJson::add_Json(PARAM.inp.nbands,false,"init", "nband");
@@ -44,6 +44,28 @@ void gen_init(UnitCell* ucell)
     AbacusJson::add_json({"init", "nelectron"}, nelec_total, false);
 
     // Json::AbacusJson::add_Json(nelec_total,false,"init", "nelectron");
+
+    // energy cutoff for wavefunctions (Ry)
+    AbacusJson::add_json({"init", "ecutwfc"}, inp.ecutwfc, false);
+    AbacusJson::add_json({"init", "ecutwfc_unit"}, "Ry", false);
+
+    // smearing method and sigma (Ry)
+    AbacusJson::add_json({"init", "smearing_method"}, inp.smearing_method, false);
+    AbacusJson::add_json({"init", "smearing_sigma"}, inp.smearing_sigma, false);
+    AbacusJson::add_json({"init", "smearing_sigma_unit"}, "Ry", false);
+
+    // k-point mesh generation parameters
+    AbacusJson::add_json({"init", "kmesh_type"}, inp.kmesh_type, false);
+    Json::jsonValue kspacing_array(JarrayType);
+    kspacing_array.JPushBack(inp.kspacing[0]);
+    kspacing_array.JPushBack(inp.kspacing[1]);
+    kspacing_array.JPushBack(inp.kspacing[2]);
+    AbacusJson::add_json({"init", "kspacing"}, kspacing_array, false);
+    Json::jsonValue koffset_array(JarrayType);
+    koffset_array.JPushBack(inp.koffset[0]);
+    koffset_array.JPushBack(inp.koffset[1]);
+    koffset_array.JPushBack(inp.koffset[2]);
+    AbacusJson::add_json({"init", "koffset"}, koffset_array, false);
 }
 
 void add_nkstot(int nkstot)
@@ -54,7 +76,7 @@ void add_nkstot(int nkstot)
     // Json::AbacusJson::add_Json(nkstot_ibz,false,"init", "nkstot_ibz");
 }
 
-void gen_stru(UnitCell* ucell)
+void gen_stru(UnitCell* ucell, const Input_para& inp)
 {
     AbacusJson::add_json({"comment"},
                          "Unless otherwise specified, the unit of energy is eV and the unit of length is Angstrom",
@@ -77,7 +99,7 @@ void gen_stru(UnitCell* ucell)
 
         Json::AbacusJson::add_json({"init", "element", atom_label}, atom_element, false);
 
-        std::string orbital_str = PARAM.inp.orbital_dir + orbital_fn[i];
+        std::string orbital_str = inp.orbital_dir + orbital_fn[i];
         if (!orbital_str.compare(""))
         {
             Json::jsonValue nullValue;
@@ -99,7 +121,6 @@ void gen_stru(UnitCell* ucell)
 
     // atom coordinate, mag and label
     const double lat0_angstrom = ucell->lat0_angstrom;
-    std::string* label = ucell->atom_label.data();
     for (int i = 0; i < ntype; i++)
     {
         ModuleBase::Vector3<double>* tau = ucell->atoms[i].tau.data();
@@ -117,7 +138,7 @@ void gen_stru(UnitCell* ucell)
 
             // Json::AbacusJson::add_Json(ucell->atoms[i].mag[j],true,"init","mag");
 
-            std::string str = label[i];
+            std::string str = ucell->atoms[i].label;
             Json::AbacusJson::add_json({"init", "label"}, str, true);
             // Json::AbacusJson::add_Json(str,true,"init","label");
         }

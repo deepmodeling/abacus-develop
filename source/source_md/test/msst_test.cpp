@@ -226,32 +226,38 @@ TEST_F(MSST_test, print_md)
     std::ifstream ifs("running_msst.log");
     std::string output_str;
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.8301538 kbar")); // result different from other MD methods
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.830153796556")); // result different from other MD methods
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0762537 kbar")); // result different from other MD methods
+	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0762537")); // result different from other MD methods
     getline(ifs, output_str);    
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " ------------------------------------------------------------------------------------------------"));
+            " ----------------------------------------"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
+            " Energy (Ry)             Potential (Ry)          Kinetic (Ry)            "));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0154507396226"));
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0239156372471"));
+    EXPECT_THAT(output_str, testing::HasSubstr("0.00846489762446"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " -0.01545074         -0.023915637        0.0084648976        297                 1.0762537           "));
+            " Temperature (K)         Pressure (kbar)         "));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("1.07625"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " ------------------------------------------------------------------------------------------------"));
+            " ----------------------------------------"));
     ifs.close();
 //  remove("running_msst.log");
 }

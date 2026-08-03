@@ -247,7 +247,7 @@ void Plus_U::cal_occ_pw(const int iter,
     }
 
     Plus_U::energy_u = 0.0;
-    const double weight_eu = (Plus_U::nspin == 1) ? 0.25 : (Plus_U::nspin == 2) ? 0.5 : 0.25;
+    const double weight_eu = (Plus_U::nspin == 1) ? 1.0 : (Plus_U::nspin == 2) ? 0.5 : 0.25;
     const double diag_coeff = (Plus_U::nspin == 4) ? 1.0 : 0.5;
     // calculate VU and energy (locale already reduced above)
     for(int iat = 0; iat < cell.nat; iat++)
@@ -309,8 +309,8 @@ void Plus_U::cal_occ_pw(const int iter,
                     }
                     vu_iat[index[0]] = 0.5 * (vu_tmp[0] + vu_tmp[3]);
                     vu_iat[index[3]] = 0.5 * (vu_tmp[0] - vu_tmp[3]);
-                    vu_iat[index[1]] = 0.5 * (vu_tmp[1] - std::complex<double>(0.0, 1.0) * vu_tmp[2]);
-                    vu_iat[index[2]] = 0.5 * (vu_tmp[1] + std::complex<double>(0.0, 1.0) * vu_tmp[2]);
+                    vu_iat[index[1]] = 0.5 * (vu_tmp[1] + std::complex<double>(0.0, 1.0) * vu_tmp[2]);
+                    vu_iat[index[2]] = 0.5 * (vu_tmp[1] - std::complex<double>(0.0, 1.0) * vu_tmp[2]);
                 }
             }
         }

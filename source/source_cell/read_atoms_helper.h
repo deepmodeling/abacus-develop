@@ -24,7 +24,7 @@ bool validate_coordinate_system(const std::string& Coordinate,
  * @param na Number of atoms
  * @param mass Atomic mass
  */
-void allocate_atom_properties(Atom& atom, int na, double mass);
+void allocate_atom_properties(Atom& atom, int na);
 
 /**
  * @brief Set atom movement constraints based on fixed_atoms parameter

@@ -198,6 +198,7 @@ OBJS_CELL=atom_pseudo.o\
     klist.o\
     k_vector_utils.o\
     cell_index.o\
+    cell_tools.o\
     check_atomic_stru.o\
     update_cell.o\
     bcast_cell.o\

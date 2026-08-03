@@ -92,6 +92,8 @@ class Relax
     double dmoveh = 0.0;
     double etot = 0.0;
     double etot_p = 0.0;
+    /// previous cell volume in Angstrom^3, used to print volume diff during cell-relax
+    double omega_p = 0.0;
     double force_thr_eva = 0.0;
 
     bool brent_done = false; // if brent line search is finished

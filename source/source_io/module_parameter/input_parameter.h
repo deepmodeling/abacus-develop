@@ -377,7 +377,8 @@ struct Input_para
     std::vector<int> aims_nbasis
         = {}; ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
     // ==============   #Parameters (11.Output) ===========================
-    bool out_stru = false;                ///< outut stru file each ion step
+    int out_stru = 1;                     ///< output stru file each ion step
+                                          ///< 0: no output, 1: STRU format, 2: CIF format
     int out_freq_elec = 0;                ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                 ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                           ///< 0: output only when ion steps are finished

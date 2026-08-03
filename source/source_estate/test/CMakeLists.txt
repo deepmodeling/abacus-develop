@@ -51,6 +51,7 @@ AddTest(
     ../elecstate.cpp
     ../occupy.cpp
     ../module_charge/charge_mpi.cpp
+    ../../source_lcao/module_deltaspin/spin_constrain.cpp
     ../../source_psi/psi.cpp
     ../../source_base/module_device/memory_op.cpp
 )
