@@ -536,16 +536,13 @@ void Psi<T, Device>::fix_k(const int ik) const
     if (storage_mode_ == PsiStorageMode::PAGED_GPU)
     {
         this->psi_bias = 0;
-        if (this->current_k_gpu_ == ik)
+        if (this->current_k_gpu_ != ik)
         {
-            // This k-point is loaded on GPU by load_k_to_gpu
-            this->psi_current = const_cast<T*>(this->psi);
+            const_cast<Psi*>(this)->load_k_to_gpu(ik);
         }
         else
         {
-            // Read from CPU full buffer (psi_cpu_ has all k-points)
-            this->psi_current = const_cast<T*>(psi_cpu_
-                + static_cast<size_t>(ik) * this->nbands * this->nbasis);
+            this->psi_current = const_cast<T*>(this->psi);
         }
         return;
     }
@@ -572,7 +569,14 @@ void Psi<T, Device>::fix_b(const int ib) const
     if (storage_mode_ == PsiStorageMode::PAGED_GPU)
     {
         this->psi_bias = 0;
-        this->psi_current = const_cast<T*>(this->psi);
+        if (this->current_k_gpu_ != this->current_k)
+        {
+            const_cast<Psi*>(this)->load_k_to_gpu(this->current_k);
+        }
+        else
+        {
+            this->psi_current = const_cast<T*>(this->psi);
+        }
         return;
     }
 
@@ -604,7 +608,14 @@ void Psi<T, Device>::fix_kb(const int ik, const int ib) const
     if (storage_mode_ == PsiStorageMode::PAGED_GPU)
     {
         this->psi_bias = 0;
-        this->psi_current = const_cast<T*>(this->psi);
+        if (this->current_k_gpu_ != ik)
+        {
+            const_cast<Psi*>(this)->load_k_to_gpu(ik);
+        }
+        else
+        {
+            this->psi_current = const_cast<T*>(this->psi);
+        }
         return;
     }
 

@@ -190,7 +190,7 @@ class Psi
     bool psi_cpu_owned_ = true;
     T* psi_gpu_buffer_ = nullptr;
     T* psi_gpu_transfer_buffer_ = nullptr;
-    int current_k_gpu_ = -1;
+    mutable int current_k_gpu_ = -1;
 
 #ifdef __DSP
     using delete_memory_op = base_device::memory::delete_memory_op_mt<T, Device>;
