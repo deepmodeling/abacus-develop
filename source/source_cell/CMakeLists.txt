@@ -15,6 +15,8 @@ add_library(
     read_pp_upf201.cpp
     read_pp_blps.cpp
     read_pp_vwr.cpp
+    distributed_mdcell_reader.cpp
+    md_cell.cpp
     unitcell.cpp
     read_atoms.cpp
     read_atoms_helper.cpp

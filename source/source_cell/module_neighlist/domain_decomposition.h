@@ -3,13 +3,16 @@
 
 #ifdef __MPI
 
-#include "source_cell/module_neighlist/atom_provider.h"
+#include "source_base/matrix3.h"
+#include "source_base/vector3.h"
 #include "source_cell/module_neighlist/local_atom.h"
 
 #include <array>
 #include <vector>
 
 #include <mpi.h>
+
+class UnitCell;
 
 /**
  * @brief MPI domain decomposition for distributed neighbor-search input.
@@ -32,11 +35,12 @@ public:
 
     int owner_rank_from_frac(const ModuleBase::Vector3<double>& frac) const;
 
-    void split_owned_atoms_from_ucell(const AtomProvider& ucell,
+    void split_owned_atoms_from_ucell(const UnitCell& ucell,
                                       std::vector<LocalAtom>& owned_atoms) const;
 
     void exchange_ghost_atoms(const std::vector<LocalAtom>& owned_atoms,
                               std::vector<LocalAtom>& ghost_atoms) const;
+    void migrate_owned_atoms(std::vector<LocalAtom>& owned_atoms) const;
 
     const std::array<int, 3>& dims() const;
     const std::array<int, 3>& coords() const;
@@ -47,10 +51,13 @@ private:
     struct PackedAtom
     {
         double frac[3];
+        double vel[3];
+        double force[3];
+        int mbl[3];
+        double mass;
         int image_shift[3];
         int type;
         int type_index;
-        ModuleNeighList::GlobalAtomId global_id;
         int owner_rank;
     };
 
@@ -99,6 +106,7 @@ private:
     void build_ghost_exchange_slots(std::vector<GhostExchangeSlot>& slots) const;
     PackedAtom pack_atom(const LocalAtom& atom, const std::array<int, 3>& image_shift) const;
     LocalAtom unpack_ghost_atom(const PackedAtom& packed) const;
+    LocalAtom unpack_owned_atom(const PackedAtom& packed) const;
 };
 
 #endif // __MPI
