@@ -13,11 +13,14 @@ defaults:
     shell: bash
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}-${{ matrix.suite || 'build' }}
+  # The matrix context is not available at workflow scope; referencing
+  # matrix.suite here made the workflow fail to run entirely. Keep the
+  # same per-ref cancellation semantics as before.
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  # ── Job 1: build once, publish the binary as an artifact ─────────────
+  # 鈹€鈹€ Job 1: build once, publish the binary as an artifact 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
   build:
     name: Build CUDA
     runs-on: gpu
@@ -86,7 +89,7 @@ jobs:
           path: install/
           retention-days: 1
 
-  # ── Job 2: matrix instances run their test suites in parallel ────────
+  # 鈹€鈹€ Job 2: matrix instances run their test suites in parallel 鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€
   gpu-test:
     name: Test ${{ matrix.suite }}
     needs: build
@@ -144,7 +147,9 @@ jobs:
                     echo "device    gpu" >> "$f"
                 fi
             done
-            bash ../integrate/Autotest.sh -n 2 -f "$CASE_FILE"
+            # CI pods are single-GPU: keep the intentional -n 1 from #7690.
+            # The speed win comes from the smoke subset, not MPI processes.
+            bash ../integrate/Autotest.sh -n 1 -f "$CASE_FILE"
           else
             bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
           fi
