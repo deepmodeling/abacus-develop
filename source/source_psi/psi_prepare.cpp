@@ -198,7 +198,9 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
                                                                              nbands_start,
                                                                              nbasis,
                                                                              *(kspw_psi),
-                                                                             etatom.data());
+                                                                             etatom.data(),
+                                                                             this->basis_type,
+                                                                             PARAM.inp.calculation);
                 }
                 else
                 {

@@ -135,7 +135,10 @@ namespace ModuleESolver
         hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
         bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
-        hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc, PARAM.globalv.use_uspp);
+        hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc,
+                                               PARAM.globalv.use_uspp,
+                                               PARAM.inp.basis_type,
+                                               PARAM.inp.calculation);
         hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec, 
           *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
 
