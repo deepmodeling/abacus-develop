@@ -3,7 +3,6 @@
 #include "libxc_abacus.h"
 #include "xc_functional.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_io/module_parameter/parameter.h"
 
 // converting rho (abacus=>libxc)
 std::vector<double> XC_Functional_Libxc::convert_rho(
@@ -32,7 +31,7 @@ XC_Functional_Libxc::convert_rho_amag_nspin4(
 	const std::size_t nrxx,
 	const Charge* const chr)
 {
-	assert(PARAM.inp.nspin==4);
+	assert(nspin==2); // nspin here is the collapsed spin dimension for libxc (up/down)
 	std::vector<double> rho(nrxx*nspin);
 	std::vector<double> amag(nrxx);
 	#ifdef _OPENMP
@@ -213,7 +212,8 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 	const std::vector<double> &vrho,
 	const std::vector<double> &vsigma,
 	const double tpiba,
-	const Charge* const chr)
+	const Charge* const chr,
+	const bool use_sf)
 {
     // assert(nrxx>0); // will cause error
 	double vtxc = 0.0;
@@ -235,12 +235,12 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 
 	if(func.info->family == XC_FAMILY_GGA || func.info->family == XC_FAMILY_HYB_GGA)
 	{
-		// For nspin=4 with domag and gga_grad=2/3, use the SF (Scalmani-Frisch)
-		// gradient correction. The potential v has 4 components:
+		// For nspin=4 with noncollinear magnetism and gga_grad=2/3 (use_sf),
+		// use the SF (Scalmani-Frisch) gradient correction. The potential v has 4 components:
 		//   v(0,:) = total density channel,  v(1..3,:) = magnetization channels
 		// cal_dh_sf returns dh[4][nrxx] in the same 4-component representation.
 		// The vtxc contribution sums dh[is] * rho[is] for each channel.
-		if(PARAM.inp.nspin==4 && (PARAM.inp.gga_grad == 2 || PARAM.inp.gga_grad == 3) && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+		if(use_sf)
 		{
 			std::vector<double> mag_part_tmp = XC_Functional_Libxc::compute_mag_part_nspin4(nrxx, chr);
 			const std::vector<std::vector<double>> dh = XC_Functional_Libxc::cal_dh_sf(nspin, nrxx, sgn, gdr, vsigma, mag_part_tmp, tpiba, chr);
@@ -343,24 +343,25 @@ ModuleBase::matrix XC_Functional_Libxc::convert_v_nspin4(
 	const std::size_t nrxx,
 	const Charge* const chr,
 	const std::vector<double> &amag,
-	const ModuleBase::matrix &v)
+	const ModuleBase::matrix &v,
+	const bool has_mag)
 {
     //assert(nrxx>0);
-	assert(PARAM.inp.nspin==4);
+	constexpr int nspin4 = 4;
 	constexpr double vanishing_charge = 1.0e-10;
-	ModuleBase::matrix v_nspin4(PARAM.inp.nspin, nrxx);
+	ModuleBase::matrix v_nspin4(nspin4, nrxx);
 	for( int ir=0; ir<nrxx; ++ir )
 	{
 		v_nspin4(0,ir) = 0.5 * (v(0,ir)+v(1,ir));
 	}
-	if(PARAM.globalv.domag || PARAM.globalv.domag_z)
+	if(has_mag)
 	{
 		for( int ir=0; ir<nrxx; ++ir )
 		{
 			if ( amag[ir] > vanishing_charge )
 			{
 				const double vs = 0.5 * (v(0,ir)-v(1,ir));
-				for(int ipol=1; ipol<PARAM.inp.nspin; ++ipol)
+				for(int ipol=1; ipol<nspin4; ++ipol)
 				{
 					v_nspin4(ipol,ir) = vs * chr->rho[ipol][ir] / amag[ir];
 				}
@@ -496,29 +497,27 @@ ModuleBase::matrix XC_Functional_Libxc::convert_v_nspin4_sf(
 	const std::vector<double> &mag_part,
 	const ModuleBase::matrix &v)
 {
-	assert(PARAM.inp.nspin==4);
+	// Only called for nspin=4 with noncollinear magnetism (use_sf in v_xc_libxc)
+	constexpr int nspin4 = 4;
 	constexpr double vanishing_charge = 1.0e-10;
-	ModuleBase::matrix v_nspin4(PARAM.inp.nspin, nrxx);
+	ModuleBase::matrix v_nspin4(nspin4, nrxx);
 
 	for (std::size_t ir = 0; ir < nrxx; ++ir)
 	{
 		v_nspin4(0, ir) = 0.5 * (v(0, ir) + v(1, ir));
 	}
 
-	if (PARAM.globalv.domag || PARAM.globalv.domag_z)
+	for (std::size_t ir = 0; ir < nrxx; ++ir)
 	{
-		for (std::size_t ir = 0; ir < nrxx; ++ir)
+		double amag = std::sqrt(std::pow(chr->rho[1][ir], 2)
+							  + std::pow(chr->rho[2][ir], 2)
+							  + std::pow(chr->rho[3][ir], 2));
+		if (amag > vanishing_charge)
 		{
-			double amag = std::sqrt(std::pow(chr->rho[1][ir], 2)
-								  + std::pow(chr->rho[2][ir], 2)
-								  + std::pow(chr->rho[3][ir], 2));
-			if (amag > vanishing_charge)
+			const double vs = 0.5 * (v(0, ir) - v(1, ir));
+			for (int ipol = 1; ipol < nspin4; ++ipol)
 			{
-				const double vs = 0.5 * (v(0, ir) - v(1, ir));
-				for (int ipol = 1; ipol < PARAM.inp.nspin; ++ipol)
-				{
-					v_nspin4(ipol, ir) = vs * mag_part[ir + (ipol - 1) * nrxx];
-				}
+				v_nspin4(ipol, ir) = vs * mag_part[ir + (ipol - 1) * nrxx];
 			}
 		}
 	}

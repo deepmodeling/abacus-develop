@@ -6,7 +6,6 @@
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 #include "xc_functional.h"
 
 #include "xc_functional_gga_noncol_sf_builtin.h"
@@ -28,6 +27,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     const int nspin,
     const bool domag,
     const bool domag_z,
+    const int gga_grad,
     const double hybrid_alpha,
     const double hse_omega)
 {
@@ -44,6 +44,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
                                                nspin,
                                                domag,
                                                domag_z,
+                                               gga_grad,
                                                &(scaling_factor_xc),
                                                hybrid_alpha,
                                                hse_omega);
@@ -56,7 +57,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     // full nspin=4 GGA potential via the Scalmani-Frisch transformation.
     // This path handles spin-up/spin-down decomposition and gradient
     // corrections internally, returning (etxc, vtxc, v) directly.
-    if (PARAM.inp.nspin == 4 && (PARAM.globalv.domag || PARAM.globalv.domag_z) && PARAM.inp.gga_grad == 3)
+    if (nspin == 4 && (domag || domag_z) && gga_grad == 3)
     {
         return ModuleXC::NCGGA_SF_Builtin::v_xc_ncgga_sf_builtin(nrxx, ucell->omega, ucell->tpiba, chr);
     }

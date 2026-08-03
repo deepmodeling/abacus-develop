@@ -78,6 +78,7 @@ void Stress_Func<FPTYPE, Device>::stress_cc(ModuleBase::matrix& sigma,
                                               PARAM.inp.nspin,
                                               PARAM.globalv.domag,
                                               PARAM.globalv.domag_z,
+                                              PARAM.inp.gga_grad,
                                               hybrid_alpha,
                                               hse_omega);
         // etxc = std::get<0>(etxc_vtxc_v); // may delete?

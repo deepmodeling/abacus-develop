@@ -4,7 +4,6 @@
 #include "libxc_abacus.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
@@ -25,6 +24,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         const int nspin_in,
         const bool domag,
         const bool domag_z,
+        const int gga_grad,
         const std::map<int, double>* scaling_factor,
         const double hybrid_alpha,
         const double hse_omega)
@@ -35,6 +35,12 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     const int nspin =
         (nspin_in == 1 || ( nspin_in ==4 && !domag && !domag_z))
         ? 1 : 2;
+
+    // For nspin=4 with noncollinear magnetism, gga_grad=2/3 selects the
+    // Scalmani-Frisch (SF) gradient decomposition; gga_grad=0/1 keeps the
+    // original collinear algorithm.
+    const bool has_mag = domag || domag_z;
+    const bool use_sf = (nspin_in == 4) && has_mag && (gga_grad == 2 || gga_grad == 3);
 
     //----------------------------------------------------------
     // xc_func_type is defined in Libxc package
@@ -71,7 +77,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     std::vector<double> rho;
     std::vector<double> amag;
     std::vector<double> mag_part;
-    if(1==nspin || 2==PARAM.inp.nspin)
+    if(1==nspin || 2==nspin_in)
     {
         rho = XC_Functional_Libxc::convert_rho(nspin, nrxx, chr);
     }
@@ -84,8 +90,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         // needed for the Scalmani-Frisch (SF) gradient decomposition:
         //   grad(rho_up)   = 0.5 grad(rho[0]) + 0.5 m_hat_mu * grad(m_mu)
         //   grad(rho_dn)   = 0.5 grad(rho[0]) - 0.5 m_hat_mu * grad(m_mu)
-        // gga_grad=1 (else): collinear approximation, uses grad(|m|) only
-        if((PARAM.inp.gga_grad == 2 || PARAM.inp.gga_grad == 3) && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+        // gga_grad=0/1 (else): collinear approximation, uses grad(|m|) only
+        if(use_sf)
         {
             mag_part = XC_Functional_Libxc::compute_mag_part_nspin4(nrxx, chr);
         }
@@ -97,8 +103,8 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     {
         // gga_grad=2/3: use SF method to compute spin-up/spin-down gradients
         // via the chain-rule decomposition. This is more accurate than the
-        // collinear approximation (gga_grad=1) for noncollinear magnetism.
-        if(PARAM.inp.nspin==4 && (PARAM.inp.gga_grad == 2 || PARAM.inp.gga_grad == 3) && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+        // collinear approximation (gga_grad=0/1) for noncollinear magnetism.
+        if(use_sf)
         {
             gdr = XC_Functional_Libxc::cal_gdr_sf(nspin, nrxx, rho, mag_part, tpiba, chr);
         }
@@ -196,7 +202,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
             func, nspin, nrxx,
             sgn, rho, gdr,
             vrho, vsigma,
-            tpiba, chr);
+            tpiba, chr, use_sf);
         vtxc += std::get<0>(vtxc_v) * factor;
         v += std::get<1>(vtxc_v) * factor;
     } // end for( xc_func_type &func : funcs )
@@ -205,14 +211,14 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
     {
         // gga_grad=2/3: convert libxc spin-up/spin-down potential back to
         // nspin=4 representation via SF method (v_total, v_mag_hat)
-        // gga_grad=1: standard conversion using |m| decomposition only
-        if((PARAM.inp.gga_grad == 2 || PARAM.inp.gga_grad == 3) && (PARAM.globalv.domag || PARAM.globalv.domag_z))
+        // gga_grad=0/1: standard conversion using |m| decomposition only
+        if(use_sf)
         {
             v = XC_Functional_Libxc::convert_v_nspin4_sf(nrxx, chr, mag_part, v);
         }
         else
         {
-            v = XC_Functional_Libxc::convert_v_nspin4(nrxx, chr, amag, v);
+            v = XC_Functional_Libxc::convert_v_nspin4(nrxx, chr, amag, v, has_mag);
         }
     }
 

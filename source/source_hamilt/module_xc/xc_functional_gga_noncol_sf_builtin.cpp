@@ -5,7 +5,7 @@
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_estate/module_charge/charge.h"
 #include "xc_functional.h"
 
 #include <cmath>
@@ -22,8 +22,7 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
     ModuleBase::TITLE("XC_Functional", "v_xc_ncgga_sf_builtin");
     ModuleBase::timer::start("XC_Functional", "v_xc_ncgga_sf_builtin");
 
-    if (PARAM.inp.nspin != 4 || (!PARAM.globalv.domag && !PARAM.globalv.domag_z))
-        throw std::domain_error("v_xc_ncgga_sf_builtin requires NSPIN==4.");
+    // Caller (XC_Functional::v_xc) guarantees nspin==4 with noncollinear magnetism.
 
     // ======================================================================
     // Scalmani-Frisch (SF) builtin for noncollinear GGA (gga_grad=3)
@@ -108,7 +107,7 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
     //   v(0,:) = 0.5*(vxc[0] + vxc[1])    -- total density channel
     //   v(1..3,:) = 0.5*(vxc[0] - vxc[1]) * m_mu / |m|    -- magnetization channels
     double etxc = 0, vtxc = 0;
-    ModuleBase::matrix v(PARAM.inp.nspin, nrxx);
+    ModuleBase::matrix v(4, nrxx);
 
     for (int ir = 0; ir < nrxx; ++ir)
     {

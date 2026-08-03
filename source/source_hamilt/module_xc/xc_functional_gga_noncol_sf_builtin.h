@@ -2,11 +2,11 @@
 #define XC_FUNCTIONAL_GGA_NONCOL_SF_BUILTIN_H
 
 #include "source_base/matrix.h"
-#include "source_estate/module_charge/charge.h"
 
 #include <tuple>
 #include <vector>
 
+class Charge;
 namespace ModulePW
 {
 class PW_Basis;
