@@ -17,15 +17,17 @@ namespace NCGGA_SF_Builtin
 {
 
 std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
-    const int& nrxx, const double& omega, const double tpiba, const Charge* const chr)
+    const int& nrxx, const double& omega, const double tpiba, const Charge* const chr,
+    const int gga_grad)
 {
     ModuleBase::TITLE("XC_Functional", "v_xc_ncgga_sf_builtin");
     ModuleBase::timer::start("XC_Functional", "v_xc_ncgga_sf_builtin");
 
-    // Caller (XC_Functional::v_xc) guarantees nspin==4 with noncollinear magnetism.
+    // Caller (XC_Functional::v_xc) guarantees nspin==4 with noncollinear magnetism
+    // and gga_grad==2 or 3.
 
     // ======================================================================
-    // Scalmani-Frisch (SF) builtin for noncollinear GGA (gga_grad=3)
+    // Scalmani-Frisch (SF) builtin for noncollinear GGA (gga_grad=2/3)
     //
     // Reference: Scalmani & Frisch, JCTC 8, 1069 (2012)
     //
@@ -33,7 +35,7 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
     //   rho_up   = 0.5*(rho + |m|),    rho_dn = 0.5*(rho - |m|)
     //   m_hat    = m / |m|             (magnetization unit vector)
     //
-    // Gradient decomposition (chain rule via m_hat):
+    // Gradient decomposition (chain rule via m_hat), identical for 2 and 3:
     //   grad(rho_up) = 0.5 grad(rho) + 0.5 m_hat_mu * grad(m_mu)
     //   grad(rho_dn) = 0.5 grad(rho) - 0.5 m_hat_mu * grad(m_mu)
     //
@@ -42,6 +44,14 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
     // The resulting potential is converted back to nspin=4 representation:
     //   v_tot = 0.5*(v_up + v_dn)
     //   v_mag = 0.5*(v_up - v_dn) * m_hat
+    //
+    // The two methods differ in the divergence of h_s = df/d(grad rho_s):
+    //   gga_grad=2 (projected):  v_mu -= m_hat_mu * div( (h_up - h_dn)/2 )
+    //     the cross terms (h_up - h_dn) . grad(m_hat_mu) are dropped;
+    //     only one divergence of a single vector field is computed.
+    //   gga_grad=3 (full SF):    v_mu -= div( (h_up - h_dn)/2 * m_hat_mu )
+    //     the divergence is taken after multiplying by m_hat_mu, retaining
+    //     all cross terms; this is the most accurate method.
     // ======================================================================
 
     ModulePW::PW_Basis* rhopw = chr->rhopw;
@@ -190,6 +200,8 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
         std::vector<double> dh(nrxx);
         std::vector<ModuleBase::Vector3<double>> tmp_h(nrxx);
 
+        // total-density channel (same for gga_grad=2 and 3):
+        //   v(0,:) -= div( (h_up + h_dn)/2 )
         for (int ir = 0; ir < nrxx; ++ir)
             tmp_h[ir] = 0.5 * (h1[ir] + h2[ir]);
         XC_Functional::grad_dot(tmp_h.data(), dh.data(), rhopw, tpiba);
@@ -200,18 +212,48 @@ std::tuple<double, double, ModuleBase::matrix> v_xc_ncgga_sf_builtin(
             sum += dh[ir] * chr->rho[0][ir];
         vtxcgc -= sum;
 
-        for (int mu = 1; mu < 4; ++mu)
+        if (gga_grad == 2)
         {
-            const double* mp = mag_part.data() + (mu - 1) * nrxx;
+            // gga_grad=2 (projected method):
+            //   v(mu,:) -= m_hat_mu * div( (h_up - h_dn)/2 )
+            // The divergence of (h_up - h_dn)/2 is computed once and then
+            // projected onto m_hat; the cross terms
+            // (h_up - h_dn) . grad(m_hat_mu) are dropped.
             for (int ir = 0; ir < nrxx; ++ir)
-                tmp_h[ir] = 0.5 * (h1[ir] - h2[ir]) * mp[ir];
+                tmp_h[ir] = 0.5 * (h1[ir] - h2[ir]);
             XC_Functional::grad_dot(tmp_h.data(), dh.data(), rhopw, tpiba);
-            for (int ir = 0; ir < nrxx; ++ir)
-                v(mu, ir) -= dh[ir];
-            double sum_mu = 0;
-            for (int ir = 0; ir < nrxx; ++ir)
-                sum_mu += dh[ir] * chr->rho[mu][ir];
-            vtxcgc -= sum_mu;
+            for (int mu = 1; mu < 4; ++mu)
+            {
+                const double* mp = mag_part.data() + (mu - 1) * nrxx;
+                double sum_mu = 0;
+                for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    const double dh_mu = mp[ir] * dh[ir];
+                    v(mu, ir) -= dh_mu;
+                    sum_mu += dh_mu * chr->rho[mu][ir];
+                }
+                vtxcgc -= sum_mu;
+            }
+        }
+        else // gga_grad == 3
+        {
+            // gga_grad=3 (full Scalmani-Frisch):
+            //   v(mu,:) -= div( (h_up - h_dn)/2 * m_hat_mu )
+            // The divergence is taken after multiplying by m_hat_mu,
+            // retaining the cross terms (h_up - h_dn) . grad(m_hat_mu).
+            for (int mu = 1; mu < 4; ++mu)
+            {
+                const double* mp = mag_part.data() + (mu - 1) * nrxx;
+                for (int ir = 0; ir < nrxx; ++ir)
+                    tmp_h[ir] = 0.5 * (h1[ir] - h2[ir]) * mp[ir];
+                XC_Functional::grad_dot(tmp_h.data(), dh.data(), rhopw, tpiba);
+                for (int ir = 0; ir < nrxx; ++ir)
+                    v(mu, ir) -= dh[ir];
+                double sum_mu = 0;
+                for (int ir = 0; ir < nrxx; ++ir)
+                    sum_mu += dh[ir] * chr->rho[mu][ir];
+                vtxcgc -= sum_mu;
+            }
         }
 
         etxc += etxcgc;

@@ -202,7 +202,7 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
             func, nspin, nrxx,
             sgn, rho, gdr,
             vrho, vsigma,
-            tpiba, chr, use_sf);
+            tpiba, chr, use_sf, gga_grad);
         vtxc += std::get<0>(vtxc_v) * factor;
         v += std::get<1>(vtxc_v) * factor;
     } // end for( xc_func_type &func : funcs )

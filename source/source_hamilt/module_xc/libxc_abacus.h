@@ -130,7 +130,8 @@ namespace XC_Functional_Libxc
 
     // converting vtxc and v from vrho and vsigma (libxc=>abacus)
     // use_sf: for nspin=4 magnetic GGA, apply the Scalmani-Frisch
-    // gradient correction instead of the collinear one
+    // gradient correction instead of the collinear one; gga_grad then
+    // selects the projected (2) or full (3) divergence of h
     extern std::pair<double, ModuleBase::matrix> convert_vtxc_v(
         const xc_func_type &func,
         const int nspin,
@@ -142,7 +143,8 @@ namespace XC_Functional_Libxc
         const std::vector<double> &vsigma,
         const double tpiba,
         const Charge* const chr,
-        const bool use_sf);
+        const bool use_sf,
+        const int gga_grad);
 
     // dh for gga v
     extern std::vector<std::vector<double>> cal_dh(
@@ -183,6 +185,7 @@ namespace XC_Functional_Libxc
         const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
         const std::vector<double> &vsigma,
         const std::vector<double> &mag_part,
+        const int gga_grad,
         const double tpiba,
         const Charge* const chr);
 

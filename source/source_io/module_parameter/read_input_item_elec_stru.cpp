@@ -506,11 +506,11 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "GGA gradient method for nspin=4: 0 original algorithm, 1 collinear approx, 2 projected div(h), 3 Scalmani-Frisch";
         item.category = "Electronic structure";
         item.type = "Integer";
-        item.description = R"(Method used to evaluate the density gradient entering GGA exchange-correlation terms in noncollinear-spin (nspin=4) calculations.
+        item.description = R"(Method used to evaluate the density gradient entering GGA exchange-correlation terms in noncollinear-spin (nspin=4) calculations. With rho_up/dn = (rho +/- |m|)/2 and m_hat = m/|m|:
 * 0: original algorithm, identical to the behavior before this keyword was introduced; the default.
-* 1: collinear approximation, only the gradient of the magnetization magnitude |m| is used (equivalent to 0 for LIBXC functionals).
-* 2: projected method, the gradient of the magnetization direction is projected out via div(h), with h = m/|m|.
-* 3: Scalmani-Frisch transformation (G. Scalmani and M. J. Frisch, J. Chem. Theory Comput. 8, 2193 (2012)), which retains all cross terms of grad(m/|m|); the most accurate.
+* 1: collinear approximation, grad(rho_up/dn) = (grad(rho) +/- grad(|m|))/2; only the gradient of the magnetization magnitude is used (equivalent to 0).
+* 2: projected method. The gradients use the full chain rule, grad(rho_up/dn) = (grad(rho) +/- m_hat . grad(m))/2, but the divergence of h = df/d(grad rho) in the potential is projected onto m_hat: v_mu -= m_hat_mu * div((h_up - h_dn)/2), dropping the (h_up - h_dn) . grad(m_hat_mu) cross terms.
+* 3: Scalmani-Frisch transformation (G. Scalmani and M. J. Frisch, J. Chem. Theory Comput. 8, 2193 (2012)). Same gradients as 2, but the full divergence is kept: v_mu -= div((h_up - h_dn)/2 * m_hat_mu), retaining all cross terms; the most accurate.
 This parameter only takes effect for nspin=4 with GGA functionals (and magnetic calculation).)";
         item.default_value = "0";
         read_sync_int(input.gga_grad);

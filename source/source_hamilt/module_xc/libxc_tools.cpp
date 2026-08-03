@@ -213,7 +213,8 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 	const std::vector<double> &vsigma,
 	const double tpiba,
 	const Charge* const chr,
-	const bool use_sf)
+	const bool use_sf,
+	const int gga_grad)
 {
     // assert(nrxx>0); // will cause error
 	double vtxc = 0.0;
@@ -243,7 +244,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 		if(use_sf)
 		{
 			std::vector<double> mag_part_tmp = XC_Functional_Libxc::compute_mag_part_nspin4(nrxx, chr);
-			const std::vector<std::vector<double>> dh = XC_Functional_Libxc::cal_dh_sf(nspin, nrxx, sgn, gdr, vsigma, mag_part_tmp, tpiba, chr);
+			const std::vector<std::vector<double>> dh = XC_Functional_Libxc::cal_dh_sf(nspin, nrxx, sgn, gdr, vsigma, mag_part_tmp, gga_grad, tpiba, chr);
 
 			// vtxc contribution: sum dh[is] * rho[is] over the 4 nspin=4 channels
 			constexpr int nspin4 = 4;
@@ -447,9 +448,14 @@ std::vector<std::vector<double>> XC_Functional_Libxc::cal_dh_sf(
 	const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
 	const std::vector<double> &vsigma,
 	const std::vector<double> &mag_part,
+	const int gga_grad,
 	const double tpiba,
 	const Charge* const chr)
 {
+	// h1/h2: functional derivative of the GGA energy density w.r.t. the
+	// spin-up/spin-down density gradients, h_s = df/d(grad rho_s):
+	//   h_up = 2*(2*vsgm(0)*sgn_up^2*gdr_up + vsgm(1)*sgn_up*sgn_dn*gdr_dn)
+	//   h_dn = 2*(2*vsgm(2)*sgn_dn^2*gdr_dn + vsgm(1)*sgn_up*sgn_dn*gdr_up)
 	std::vector<ModuleBase::Vector3<double>> h1(nrxx), h2(nrxx);
 	#ifdef _OPENMP
 	#pragma omp parallel for schedule(static, 1024)
@@ -465,6 +471,8 @@ std::vector<std::vector<double>> XC_Functional_Libxc::cal_dh_sf(
 	std::vector<ModuleBase::Vector3<double>> tmp_h(nrxx);
 	std::vector<double> dh0(nrxx), dh_mu(nrxx);
 
+	// total-density channel (same for gga_grad=2 and 3):
+	//   dh_0 = div( (h_up + h_dn)/2 )
 	#ifdef _OPENMP
 	#pragma omp parallel for schedule(static, 1024)
 	#endif
@@ -483,23 +491,58 @@ std::vector<std::vector<double>> XC_Functional_Libxc::cal_dh_sf(
 		dh_total[0][ir] = dh0[ir];
 	}
 
-	for (int mu = 1; mu < 4; ++mu)
+	if (gga_grad == 2)
 	{
-		const double* mp_mu = mag_part.data() + (mu - 1) * nrxx;
+		// gga_grad=2 (projected method): the divergence of the magnetic part
+		// of h is projected onto m_hat BEFORE differentiating, i.e. the
+		// cross terms (h_up - h_dn) . grad(m_hat_mu) are dropped:
+		//   dh_mu = m_hat_mu * div( (h_up - h_dn)/2 )
+		// Only one divergence (of a single vector field) is needed.
 		#ifdef _OPENMP
 		#pragma omp parallel for schedule(static, 1024)
 		#endif
 		for (std::size_t ir = 0; ir < nrxx; ++ir)
 		{
-			tmp_h[ir] = 0.5 * (h1[ir] - h2[ir]) * mp_mu[ir];
+			tmp_h[ir] = 0.5 * (h1[ir] - h2[ir]);
 		}
 		XC_Functional::grad_dot(tmp_h.data(), dh_mu.data(), chr->rhopw, tpiba);
-		#ifdef _OPENMP
-		#pragma omp parallel for schedule(static, 1024)
-		#endif
-		for (std::size_t ir = 0; ir < nrxx; ++ir)
+		for (int mu = 1; mu < 4; ++mu)
 		{
-			dh_total[mu][ir] = dh_mu[ir];
+			const double* mp_mu = mag_part.data() + (mu - 1) * nrxx;
+			#ifdef _OPENMP
+			#pragma omp parallel for schedule(static, 1024)
+			#endif
+			for (std::size_t ir = 0; ir < nrxx; ++ir)
+			{
+				dh_total[mu][ir] = mp_mu[ir] * dh_mu[ir];
+			}
+		}
+	}
+	else // gga_grad == 3
+	{
+		// gga_grad=3 (full Scalmani-Frisch): the divergence is taken AFTER
+		// multiplying by m_hat_mu, retaining the cross terms
+		// (h_up - h_dn) . grad(m_hat_mu):
+		//   dh_mu = div( (h_up - h_dn)/2 * m_hat_mu )
+		//         = m_hat_mu * div((h_up-h_dn)/2) + (h_up-h_dn)/2 . grad(m_hat_mu)
+		for (int mu = 1; mu < 4; ++mu)
+		{
+			const double* mp_mu = mag_part.data() + (mu - 1) * nrxx;
+			#ifdef _OPENMP
+			#pragma omp parallel for schedule(static, 1024)
+			#endif
+			for (std::size_t ir = 0; ir < nrxx; ++ir)
+			{
+				tmp_h[ir] = 0.5 * (h1[ir] - h2[ir]) * mp_mu[ir];
+			}
+			XC_Functional::grad_dot(tmp_h.data(), dh_mu.data(), chr->rhopw, tpiba);
+			#ifdef _OPENMP
+			#pragma omp parallel for schedule(static, 1024)
+			#endif
+			for (std::size_t ir = 0; ir < nrxx; ++ir)
+			{
+				dh_total[mu][ir] = dh_mu[ir];
+			}
 		}
 	}
 
