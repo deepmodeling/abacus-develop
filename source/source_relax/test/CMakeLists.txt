@@ -13,6 +13,11 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_RELAX_socket_frame_test
+  SOURCES socket_frame_test.cpp ../socket_frame.cpp
+)
+
+AddTest(
   TARGET MODULE_RELAX_relax_new_line_search
   LIBS parameter
   SOURCES line_search_test.cpp ../line_search.cpp ../../source_base/global_variable.cpp ../../source_base/global_file.cpp ../../source_base/global_function.cpp ../../source_base/memory_recorder.cpp ../../source_base/timer.cpp ../../source_base/tool_quit.cpp
