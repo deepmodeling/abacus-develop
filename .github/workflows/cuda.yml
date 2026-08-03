@@ -46,8 +46,9 @@ jobs:
           nvidia-smi
           source toolchain/install/setup
           rm -rf build
-          cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON
-          cmake --build build -j4
+          cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
+            -DCMAKE_CUDA_ARCHITECTURES=70
+          cmake --build build -j "$(nproc)"
           cmake --install build
 
       - name: Module_LCAO CUDA Unittests
