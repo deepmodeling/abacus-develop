@@ -96,6 +96,30 @@ TEST(SocketFrameTest, InconsistentReceivedInverseIsRejected)
     EXPECT_GT(out.inverse_residual, 1.0);
 }
 
+TEST(SocketFrameTest, ReceivedInverseResidualUsesConditionScaledRelativeTolerance)
+{
+    const Matrix9 cell = {{1.0, 0.0, 0.0,
+                           0.0, 1.0, 0.0,
+                           0.0, 0.0, 1.0e-6}};
+    Matrix9 accepted_inverse = {{1.0 + 1.0e-8, 0.0, 0.0,
+                                 0.0, 1.0, 0.0,
+                                 0.0, 0.0, 1.0e6}};
+    Matrix9 rejected_inverse = accepted_inverse;
+    rejected_inverse[0] = 1.0 + 2.0e-8;
+
+    const CellValidation accepted
+        = validate_ipi_cell(cell, accepted_inverse, 1.0e12, 0.0, 64.0);
+    const CellValidation rejected
+        = validate_ipi_cell(cell, rejected_inverse, 1.0e12, 0.0, 64.0);
+
+    ASSERT_TRUE(accepted.ok) << accepted.message;
+    EXPECT_DOUBLE_EQ(1.0e6, accepted.condition_number_2);
+    EXPECT_NEAR(1.0e-8, accepted.inverse_residual, EPSILON);
+    EXPECT_FALSE(rejected.ok);
+    EXPECT_NE(std::string::npos, rejected.message.find("inverse"));
+    EXPECT_NEAR(2.0e-8, rejected.inverse_residual, EPSILON);
+}
+
 TEST(SocketFrameTest, NegativeAndZeroDeterminantsAreRejected)
 {
     const Matrix9 identity = {{1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0}};
@@ -136,7 +160,7 @@ TEST(SocketFrameTest, UnderflowedCellVolumeIsRejectedAsZeroDeterminant)
     EXPECT_NE(std::string::npos, out.message.find("determinant"));
 }
 
-TEST(SocketFrameTest, ConditionNumberBoundaryIsInclusive)
+TEST(SocketFrameTest, ConditionNumberMustBeStrictlyBelowMaximum)
 {
     const Matrix9 below = {{1.0, 0.0, 0.0, 0.0, 1.0e-6, 0.0, 0.0, 0.0, 2.0e-12}};
     const Matrix9 below_inverse = {{1.0, 0.0, 0.0, 0.0, 1.0e6, 0.0, 0.0, 0.0, 5.0e11}};
@@ -147,7 +171,8 @@ TEST(SocketFrameTest, ConditionNumberBoundaryIsInclusive)
 
     EXPECT_TRUE(validate_with_driver_thresholds(below, below_inverse).ok);
     const CellValidation boundary = validate_with_driver_thresholds(at, at_inverse);
-    EXPECT_TRUE(boundary.ok) << boundary.message;
+    EXPECT_FALSE(boundary.ok);
+    EXPECT_NE(std::string::npos, boundary.message.find("condition"));
     EXPECT_DOUBLE_EQ(1.0e12, boundary.condition_number_2);
     EXPECT_FALSE(validate_with_driver_thresholds(above, above_inverse).ok);
 }
@@ -255,6 +280,31 @@ TEST(SocketFrameTest, ExcessiveStressAsymmetryIsRejected)
     EXPECT_NEAR(0.6, out.max_antisymmetric_component, 4.0 * EPSILON);
 }
 
+TEST(SocketFrameTest, StressAsymmetryUsesAbsolutePlusRelativeTolerance)
+{
+    const Matrix9 accepted_stress = {{10.0, 2.0 + 4.0e-8, 3.0,
+                                      2.0 - 4.0e-8, 5.0, 6.0,
+                                      3.0, 6.0, 9.0}};
+    Matrix9 rejected_stress = accepted_stress;
+    rejected_stress[1] = 2.0 + 6.0e-8;
+    rejected_stress[3] = 2.0 - 6.0e-8;
+    const Matrix9 expected = {{10.0, 2.0, 3.0,
+                               2.0, 5.0, 6.0,
+                               3.0, 6.0, 9.0}};
+
+    const VirialConversion accepted
+        = make_ipi_virial(accepted_stress, 2.0, 1.0e-10, 1.0e-8);
+    const VirialConversion rejected
+        = make_ipi_virial(rejected_stress, 2.0, 1.0e-10, 1.0e-8);
+
+    ASSERT_TRUE(accepted.ok) << accepted.message;
+    expect_matrix_near(expected, accepted.wire_virial_hartree, 4.0 * EPSILON);
+    EXPECT_NEAR(8.0e-8, accepted.max_antisymmetric_component, EPSILON);
+    EXPECT_FALSE(rejected.ok);
+    EXPECT_NE(std::string::npos, rejected.message.find("symmetric"));
+    EXPECT_NEAR(1.2e-7, rejected.max_antisymmetric_component, EPSILON);
+}
+
 TEST(SocketFrameTest, NonpositiveOrNonfiniteVolumeIsRejected)
 {
     const Matrix9 zero_stress = {{0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0}};
@@ -266,6 +316,19 @@ TEST(SocketFrameTest, NonpositiveOrNonfiniteVolumeIsRejected)
                                  1.0e-10,
                                  1.0e-8)
                      .ok);
+}
+
+TEST(SocketFrameTest, FiniteStressAndVolumeRejectConvertedVirialOverflow)
+{
+    const double largest_finite = std::numeric_limits<double>::max();
+    const Matrix9 stress = {{largest_finite, 0.0, 0.0,
+                             0.0, 1.0, 0.0,
+                             0.0, 0.0, 1.0}};
+
+    const VirialConversion out = make_ipi_virial(stress, 4.0, 1.0e-10, 1.0e-8);
+
+    EXPECT_FALSE(out.ok);
+    EXPECT_NE(std::string::npos, out.message.find("representable"));
 }
 
 TEST(SocketFrameTest, NonfiniteStressIsRejected)

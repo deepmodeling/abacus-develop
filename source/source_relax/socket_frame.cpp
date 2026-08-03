@@ -250,9 +250,9 @@ CellValidation validate_ipi_cell(const Matrix9& cell_wire,
     }
     result.condition_number_2 = largest_singular / smallest_singular;
     if (!std::isfinite(result.condition_number_2)
-        || result.condition_number_2 > max_condition_number)
+        || result.condition_number_2 >= max_condition_number)
     {
-        result.message = "cell condition number exceeds the configured maximum";
+        result.message = "cell condition number is not below the configured maximum";
         return result;
     }
 
