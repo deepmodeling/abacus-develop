@@ -245,6 +245,7 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 			std::vector<double> mag_part_tmp = XC_Functional_Libxc::compute_mag_part_nspin4(nrxx, chr);
 			const std::vector<std::vector<double>> dh = XC_Functional_Libxc::cal_dh_sf(nspin, nrxx, sgn, gdr, vsigma, mag_part_tmp, tpiba, chr);
 
+			// vtxc contribution: sum dh[is] * rho[is] over the 4 nspin=4 channels
 			constexpr int nspin4 = 4;
 			double rvtxc = 0.0;
 			#ifdef _OPENMP
@@ -254,14 +255,28 @@ std::pair<double,ModuleBase::matrix> XC_Functional_Libxc::convert_vtxc_v(
 			{
 				for (std::size_t ir = 0; ir < nrxx; ++ir)
 				{
-					double rho_ir = 0.0;
-					if (is == 0) { rho_ir = chr->rho[0][ir]; }
-					else { rho_ir = chr->rho[is][ir]; }
-					rvtxc += dh[is][ir] * rho_ir;
-					v(is, ir) -= dh[is][ir];
+					rvtxc += dh[is][ir] * chr->rho[is][ir];
 				}
 			}
 			vtxc -= rvtxc;
+
+			// v is kept in the spin-up/down representation here, so map the
+			// 4-component dh back with the inverse of the SF decomposition:
+			//   v_up -= dh0 + sum_mu dh_mu * m_hat_mu
+			//   v_dn -= dh0 - sum_mu dh_mu * m_hat_mu
+			#ifdef _OPENMP
+			#pragma omp parallel for schedule(static, 1024)
+			#endif
+			for (std::size_t ir = 0; ir < nrxx; ++ir)
+			{
+				double dh_mag = 0.0;
+				for (int mu = 1; mu < nspin4; ++mu)
+				{
+					dh_mag += dh[mu][ir] * mag_part_tmp[ir + (mu - 1) * nrxx];
+				}
+				v(0, ir) -= dh[0][ir] + dh_mag;
+				v(1, ir) -= dh[0][ir] - dh_mag;
+			}
 		}
 		else
 		{
