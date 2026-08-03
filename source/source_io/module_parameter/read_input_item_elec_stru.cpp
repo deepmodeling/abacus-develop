@@ -506,6 +506,11 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.annotation = "GGA gradient method for nspin=4: 1 collinear approx, 2 projected div(h), 3 Scalmani-Frisch";
         item.category = "Electronic structure";
         item.type = "Integer";
+        item.description = R"(Method used to evaluate the density gradient entering GGA exchange-correlation terms in noncollinear-spin (nspin=4) calculations.
+* 1: collinear approximation, only the gradient of the magnetization magnitude |m| is used.
+* 2: projected method, the gradient of the magnetization direction is projected out via div(h), with h = m/|m|.
+* 3: Scalmani-Frisch transformation (G. Scalmani and M. J. Frisch, J. Chem. Theory Comput. 8, 2193 (2012)), which retains all cross terms of grad(m/|m|); the most accurate and the default.
+This parameter only takes effect for nspin=4 with GGA functionals (and magnetic calculation).)";
         item.default_value = "3";
         read_sync_int(input.gga_grad);
         item.check_value = [](const Input_Item& item, const Parameter& para) {

@@ -1268,6 +1268,17 @@
   - 4: For the case of noncollinear polarized, nspin will be automatically set to 4 without being specified by the user.
 - **Default**: 1
 
+### gga_grad
+
+- **Type**: Integer
+- **Description**: Method used to evaluate the density gradient entering GGA exchange-correlation terms in noncollinear-spin (nspin=4) calculations.
+  - 1: collinear approximation, only the gradient of the magnetization magnitude |m| is used.
+  - 2: projected method, the gradient of the magnetization direction is projected out via div(h), with h = m/|m|.
+  - 3: Scalmani-Frisch transformation (G. Scalmani and M. J. Frisch, J. Chem. Theory Comput. 8, 2193 (2012)), which retains all cross terms of grad(m/|m|); the most accurate and the default.
+
+  This parameter only takes effect for nspin=4 with GGA functionals (and magnetic calculation).
+- **Default**: 3
+
 ### smearing_method
 
 - **Type**: String

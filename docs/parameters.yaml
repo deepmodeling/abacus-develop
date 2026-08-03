@@ -665,6 +665,18 @@ parameters:
     default_value: "1"
     unit: ""
     availability: ""
+  - name: gga_grad
+    category: Electronic structure
+    type: Integer
+    description: |
+      Method used to evaluate the density gradient entering GGA exchange-correlation terms in noncollinear-spin (nspin=4) calculations.
+      * 1: collinear approximation, only the gradient of the magnetization magnitude |m| is used.
+      * 2: projected method, the gradient of the magnetization direction is projected out via div(h), with h = m/|m|.
+      * 3: Scalmani-Frisch transformation (G. Scalmani and M. J. Frisch, J. Chem. Theory Comput. 8, 2193 (2012)), which retains all cross terms of grad(m/|m|); the most accurate and the default.
+      This parameter only takes effect for nspin=4 with GGA functionals (and magnetic calculation).
+    default_value: "3"
+    unit: ""
+    availability: ""
   - name: smearing_method
     category: Electronic structure
     type: String
