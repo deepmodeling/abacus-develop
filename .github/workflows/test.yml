@@ -127,7 +127,7 @@ jobs:
         run: |
           # Run all module unit tests in one parallel ctest invocation
           # instead of 16 serial steps (measured ~4.5 min serial).
-          ctest --test-dir build -V --timeout 1700 -j "$(nproc)" \
+          ctest --test-dir build --output-on-failure --timeout 1700 -j "$(nproc)" \
             -R 'MODULE_' -E PERF_MODULE_HSOLVER_KERNELS
 
       - name: 01_PW Test
@@ -212,4 +212,7 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|17_DS_DFTU|MODULE_BASE|MODULE_IO|MODULE_HSOLVER|MODULE_CELL|MODULE_MD|MODULE_PSI|MODULE_ESTATE|MODULE_RI|MODULE_HAMILT|MODULE_PW|MODULE_LCAO|MODULE_AO|MODULE_NAO|MODULE_RELAX|MODULE_LR'
+          # Exclude every MODULE_* test with a single regex: the old list of
+          # 15 MODULE_* prefixes missed MODULE_ESOLVER, which made it run
+          # twice (once here, once under "All Module Unittests").
+          ctest --test-dir build -V --timeout 1700 -E 'integrate_test|01_PW|02_NAO_Gamma|03_NAO_multik|04_FF|05_rtTDDFT|06_SDFT|07_OFDFT|08_EXX|09_DeePKS|10_others|11_PW_GPU|12_NAO_Gamma_GPU|13_NAO_multik_GPU|15_rtTDDFT_GPU|16_SDFT_GPU|17_DS_DFTU|MODULE_'
