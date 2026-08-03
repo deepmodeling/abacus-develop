@@ -47,6 +47,7 @@ if(ENABLE_LCAO)
   list(APPEND objects
       elecstate_lcao.cpp
       module_pot/H_TDDFT_pw.cpp
+      module_pot/td_field.cpp
       module_dm/init_dm.cpp
       module_dm/density_matrix.cpp
       module_dm/density_matrix_io.cpp

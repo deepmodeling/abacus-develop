@@ -1,23 +1,22 @@
 #ifndef INPUT_CONV_TEST_H
 #define INPUT_CONV_TEST_H
 #define private public
-#include "source_io/module_parameter/parameter.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_charge/charge_mixing.h"
-#include "source_estate/occupy.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
+#include "source_estate/occupy.h"
+#include "source_hsolver/hsolver_lcao.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_restart/restart.h"
+#include "source_io/module_unk/berryphase.h"
 #include "source_lcao/FORCE_STRESS.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_pw/module_pwdft/vnl_pw.h"
-#include "source_pw/module_pwdft/structure_factor.h"
-#include "source_hsolver/hsolver_lcao.h"
-#include "source_io/module_unk/berryphase.h"
-#include "source_io/module_restart/restart.h"
 #include "source_md/md_func.h"
+#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_relax/bfgs_basic.h"
 #include "source_relax/ions_move_basic.h"
 #include "source_relax/ions_move_cg.h"
@@ -37,53 +36,6 @@ int elecstate::Efield::efield_dir;
 double elecstate::Efield::efield_pos_max;
 double elecstate::Efield::efield_pos_dec;
 double elecstate::Efield::efield_amp;
-
-// Parameters of electric field for RT-TDDFT
-
-int elecstate::H_TDDFT_pw::stype;
-
-std::vector<int> elecstate::H_TDDFT_pw::ttype;
-
-int elecstate::H_TDDFT_pw::tstart;
-int elecstate::H_TDDFT_pw::tend;
-double elecstate::H_TDDFT_pw::dt;
-double elecstate::H_TDDFT_pw::dt_int;
-
-double elecstate::H_TDDFT_pw::lcut1;
-double elecstate::H_TDDFT_pw::lcut2;
-
-// Gaussian
-int elecstate::H_TDDFT_pw::gauss_count;
-std::vector<double> elecstate::H_TDDFT_pw::gauss_omega; // time(a.u.)^-1
-std::vector<double> elecstate::H_TDDFT_pw::gauss_phase;
-std::vector<double> elecstate::H_TDDFT_pw::gauss_sigma; // time(a.u.)
-std::vector<double> elecstate::H_TDDFT_pw::gauss_t0;
-std::vector<double> elecstate::H_TDDFT_pw::gauss_amp; // Ry/bohr
-std::vector<int> elecstate::H_TDDFT_pw::gauss_ncut;
-
-// Trapezoid
-int elecstate::H_TDDFT_pw::trape_count;
-std::vector<double> elecstate::H_TDDFT_pw::trape_omega; // time(a.u.)^-1
-std::vector<double> elecstate::H_TDDFT_pw::trape_phase;
-std::vector<double> elecstate::H_TDDFT_pw::trape_t1;
-std::vector<double> elecstate::H_TDDFT_pw::trape_t2;
-std::vector<double> elecstate::H_TDDFT_pw::trape_t3;
-std::vector<double> elecstate::H_TDDFT_pw::trape_amp; // Ry/bohr
-std::vector<int> elecstate::H_TDDFT_pw::trape_ncut;
-
-// Trigonometric
-int elecstate::H_TDDFT_pw::trigo_count;
-std::vector<double> elecstate::H_TDDFT_pw::trigo_omega1; // time(a.u.)^-1
-std::vector<double> elecstate::H_TDDFT_pw::trigo_omega2; // time(a.u.)^-1
-std::vector<double> elecstate::H_TDDFT_pw::trigo_phase1;
-std::vector<double> elecstate::H_TDDFT_pw::trigo_phase2;
-std::vector<double> elecstate::H_TDDFT_pw::trigo_amp; // Ry/bohr
-std::vector<int> elecstate::H_TDDFT_pw::trigo_ncut;
-
-// Heaviside
-int elecstate::H_TDDFT_pw::heavi_count;
-std::vector<double> elecstate::H_TDDFT_pw::heavi_t0;
-std::vector<double> elecstate::H_TDDFT_pw::heavi_amp; // Ry/bohr
 
 double BFGS_Basic::relax_bfgs_w1 = -1.0;
 double BFGS_Basic::relax_bfgs_w2 = -1.0;
@@ -141,70 +93,95 @@ UnitCell::UnitCell()
 {
     itia2iat.create(1, 1);
 }
-UnitCell::~UnitCell() {}
-Magnetism::Magnetism() {}
-Magnetism::~Magnetism() {}
-void Occupy::decision(const std::string& name,
-                      const std::string& smearing_method,
-                      const double& smearing_sigma) {
+UnitCell::~UnitCell()
+{
+}
+Magnetism::Magnetism()
+{
+}
+Magnetism::~Magnetism()
+{
+}
+void Occupy::decision(const std::string& name, const std::string& smearing_method, const double& smearing_sigma)
+{
     return;
 }
 // void UnitCell::setup_from_input(const std::string&,const int&,const int&,const
 // bool&,const std::string&){return;}
 void UnitCell::setup_from_input(const std::string& latname_in,
-                     const int& ntype_in,
-                     const int& lmaxmax_in,
-                     const bool& init_vel_in,
-                     const std::string& fixed_axes_in) {
+                                const int& ntype_in,
+                                const int& lmaxmax_in,
+                                const bool& init_vel_in,
+                                const std::string& fixed_axes_in)
+{
     this->latName = latname_in;
     this->ntype = ntype_in;
     this->lmaxmax = lmaxmax_in;
     this->init_vel = init_vel_in;
     // pengfei Li add 2018-11-11
-    if (fixed_axes_in == "None") {
+    if (fixed_axes_in == "None")
+    {
         this->lat_axis_free[0] = 1;
         this->lat_axis_free[1] = 1;
         this->lat_axis_free[2] = 1;
-    } else if (fixed_axes_in == "volume") {
+    }
+    else if (fixed_axes_in == "volume")
+    {
         this->lat_axis_free[0] = 1;
         this->lat_axis_free[1] = 1;
         this->lat_axis_free[2] = 1;
-    } else if (fixed_axes_in == "shape") {
+    }
+    else if (fixed_axes_in == "shape")
+    {
         this->lat_axis_free[0] = 1;
         this->lat_axis_free[1] = 1;
         this->lat_axis_free[2] = 1;
-    } else if (fixed_axes_in == "a") {
+    }
+    else if (fixed_axes_in == "a")
+    {
         this->lat_axis_free[0] = 0;
         this->lat_axis_free[1] = 1;
         this->lat_axis_free[2] = 1;
-    } else if (fixed_axes_in == "b") {
+    }
+    else if (fixed_axes_in == "b")
+    {
         this->lat_axis_free[0] = 1;
         this->lat_axis_free[1] = 0;
         this->lat_axis_free[2] = 1;
-    } else if (fixed_axes_in == "c") {
+    }
+    else if (fixed_axes_in == "c")
+    {
         this->lat_axis_free[0] = 1;
         this->lat_axis_free[1] = 1;
         this->lat_axis_free[2] = 0;
-    } else if (fixed_axes_in == "ab") {
+    }
+    else if (fixed_axes_in == "ab")
+    {
         this->lat_axis_free[0] = 0;
         this->lat_axis_free[1] = 0;
         this->lat_axis_free[2] = 1;
-    } else if (fixed_axes_in == "ac") {
+    }
+    else if (fixed_axes_in == "ac")
+    {
         this->lat_axis_free[0] = 0;
         this->lat_axis_free[1] = 1;
         this->lat_axis_free[2] = 0;
-    } else if (fixed_axes_in == "bc") {
+    }
+    else if (fixed_axes_in == "bc")
+    {
         this->lat_axis_free[0] = 1;
         this->lat_axis_free[1] = 0;
         this->lat_axis_free[2] = 0;
-    } else if (fixed_axes_in == "abc") {
+    }
+    else if (fixed_axes_in == "abc")
+    {
         this->lat_axis_free[0] = 0;
         this->lat_axis_free[1] = 0;
         this->lat_axis_free[2] = 0;
-    } else {
-        ModuleBase::WARNING_QUIT(
-            "Input",
-            "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
+    }
+    else
+    {
+        ModuleBase::WARNING_QUIT("Input", "fixed_axes should be None,volume,shape,a,b,c,ab,ac,bc or abc!");
     }
     return;
 }
@@ -213,22 +190,23 @@ void UnitCell::setup_from_input(const std::string& latname_in,
 //     return;
 // }
 
-namespace MD_func {
-void current_md_info(const int& my_rank,
-                     const std::string& file_dir,
-                     int& md_step,
-                     double& temperature) {
+namespace MD_func
+{
+void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
+{
     return;
 }
 } // namespace MD_func
 
-namespace GlobalC {
+namespace GlobalC
+{
 ModuleDFTU::DFTU dftu;
 Restart restart;
 } // namespace GlobalC
 
 #ifdef __PEXSI
-namespace pexsi {
+namespace pexsi
+{
 int PEXSI_Solver::pexsi_npole = 0;
 bool PEXSI_Solver::pexsi_inertia = 0;
 int PEXSI_Solver::pexsi_nmax = 0;

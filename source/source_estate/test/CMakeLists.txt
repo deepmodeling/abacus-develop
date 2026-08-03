@@ -74,7 +74,7 @@ AddTest(
 AddTest(
   TARGET MODULE_ESTATE_potentials_new
   LIBS parameter  base device planewave_serial
-  SOURCES potential_new_test.cpp ../module_pot/potential_new.cpp
+  SOURCES potential_new_test.cpp td_field_test.cpp ../module_pot/potential_new.cpp ../module_pot/td_field.cpp
 )
 
 AddTest(

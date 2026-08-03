@@ -1,0 +1,37 @@
+INPUT_PARAMETERS
+
+td_vext                 1
+td_vext_dire            1 2 3 1 2 3 1 2 3 1
+td_stype                2
+td_ttype                4 0 1 2 3 0 4 1 2 3
+td_tstart               0
+td_tend                 6
+
+td_gauss_freq           0.7 -1.1
+td_gauss_phase          0.1 -0.4
+td_gauss_sigma          0.12 -0.20
+td_gauss_t0             2 4
+td_gauss_amp            0.04 -0.03
+
+td_trape_freq           0.8 -1.3
+td_trape_phase          0.2 -0.6
+td_trape_t1             1 2
+td_trape_t2             3 4
+td_trape_t3             5 6
+td_trape_amp            0.025 -0.02
+
+td_trigo_freq1          0.9 -1.4
+td_trigo_freq2          1.8 -1.1
+td_trigo_phase1         0.3 -0.2
+td_trigo_phase2         0.1 0.7
+td_trigo_amp            0.015 -0.018
+
+td_heavi_t0             3 5
+td_heavi_amp            0.01 -0.012
+
+td_supersine_amp        0.05 -0.04
+td_supersine_freq       0.7 -1.0
+td_supersine_phase      0.2 -0.5
+td_supersine_sigma      0.75 1.20
+td_supersine_tstart     default 2
+td_supersine_tend       5 default

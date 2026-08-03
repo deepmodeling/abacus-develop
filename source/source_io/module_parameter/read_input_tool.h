@@ -1,6 +1,8 @@
+#include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
+
 #ifdef __MPI
 #include "source_base/parallel_common.h"
 #endif
@@ -179,7 +181,12 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
         // If no '*' found, convert the whole expression to double/int and add to result
         if (first_star_pos == std::string::npos)
         {
-            T T_value = static_cast<T>(std::stof(expr));
+            std::istringstream value_stream(expr);
+            T T_value;
+            if (!(value_stream >> T_value) || !value_stream.eof())
+            {
+                throw std::runtime_error("Invalid expression value: " + expr);
+            }
             result.push_back(T_value);
         }
         // e.g. "2*3", "2*3.5"
@@ -189,14 +196,24 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
             std::string int_part = expr.substr(0, first_star_pos);
             std::string T_part = expr.substr(first_star_pos + 1);
 
-            int num = std::stoi(int_part);
-            T T_value = static_cast<T>(std::stof(T_part));
-            for(int i = 0 ; i < num; ++i)
+            std::istringstream count_stream(int_part);
+            int num;
+            if (!(count_stream >> num) || !count_stream.eof() || num < 0)
+            {
+                throw std::runtime_error("Invalid expression count: " + int_part);
+            }
+            std::istringstream value_stream(T_part);
+            T T_value;
+            if (!(value_stream >> T_value) || !value_stream.eof())
+            {
+                throw std::runtime_error("Invalid expression value: " + T_part);
+            }
+            for (int i = 0; i < num; ++i)
             {
                 result.push_back(T_value);
             }
         }
-        // e.g. "2*3*3" 
+        // e.g. "2*3*3"
         // If more than one '*' found, output an error message
         else
         {

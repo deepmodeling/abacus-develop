@@ -1616,8 +1616,9 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output dipole or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Boolean";
-        item.description = R"(* True: Output electric dipole moment.
-* False: Do not output electric dipole moment.)";
+        item.description = R"(Controls electric-dipole output. In RT-TDDFT, each enabled spin channel is written to OUT.{suffix}/dipole_s[spin].txt using a one-based spin number. Every row contains the one-based electronic-step index followed by the Cartesian electronic-dipole components $P_x$, $P_y$, and $P_z$ in atomic units. The running log additionally reports the electronic, ionic, and total dipoles and the norm of the total dipole.
+* True: Output the electric dipole information.
+* False: Do not output the electric dipole information.)";
         item.default_value = "False";
         item.unit = "";
         item.availability = "";
@@ -1629,13 +1630,13 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output current or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Integer";
-        item.description = R"(Controls the current-density output method for LCAO RT-TDDFT.
+        item.description = R"(Controls the current-density output method for LCAO RT-TDDFT. Output rows contain the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
 * 0: Do not output current.
-* 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center integral / spherical grid integral: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms (e.g., EXX) are not included explicitly.
-* 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis: $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive.)";
+* 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to OUT.{suffix}/current_tot.txt.
+* 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to OUT.{suffix}/current_tot_comm.txt.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
+        item.availability = "basis_type==lcao and esolver_type==tddft";
         read_sync_int(input.out_current);
         this->add_item(item);
     }
@@ -1644,11 +1645,12 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output current for each k";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Boolean";
-        item.description = R"(* True: Output current for each k-points separately.
-* False: Output current in total.)";
+        item.description = R"(Controls whether LCAO RT-TDDFT current density is also resolved by spin and k-point. The total-current file is always written when out_current is 1 or 2.
+* True: In addition to the total, out_current=1 writes OUT.{suffix}/current_s[spin]k[kpoint].txt; out_current=2 writes OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
+* False: Output only current_tot.txt for out_current=1 or current_tot_comm.txt for out_current=2.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
+        item.availability = "basis_type==lcao and esolver_type==tddft and out_current>0";
         read_sync_bool(input.out_current_k);
         this->add_item(item);
     }
@@ -1657,12 +1659,12 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output dipole or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Boolean";
-        item.description = R"(Whether to output the electric field data to files. When enabled, writes real-time electric field values (unit: V/A) into files named efield_[num].txt, where [num] is the sequential index of the electric field ranges from 0 to N-1 for N configured fields. It is noteworthy that the field type sequence follows td_ttype, while the direction sequence follows td_vext_dire.
-* True: Output electric field.
-* False: Do not output electric field.)";
+        item.description = R"(Controls time-dependent electric-field output. For each configured field, OUT.{suffix}/efield_[index].txt contains two columns: physical time in fs and the field value in V/Angstrom. The one-based field index follows the occurrence order shared by td_ttype and td_vext_dire, so fields assigned to the same direction remain in separate files. At initialization, a fresh calculation with md_restart=False truncates the files corresponding to the currently configured fields, whereas a calculation with md_restart=True preserves them and appends new samples.
+* True: Output electric-field values on active electronic steps.
+* False: Do not output electric-field values.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
+        item.availability = "esolver_type==tddft and td_vext==true";
         read_sync_bool(input.out_efield);
         this->add_item(item);
     }
@@ -1671,12 +1673,12 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output TDDFT vector potential or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Boolean";
-        item.description = R"(Output vector potential or not (unit: a.u.).
-* True: Output vector potential into file At.dat.
-* False: Do not output vector potential.)";
+        item.description = R"(Controls Cartesian vector-potential output for LCAO RT-TDDFT.
+* True: Write OUT.{suffix}/At.txt. Its four columns are the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in atomic units.
+* False: Do not output the vector potential.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
+        item.availability = "basis_type==lcao and esolver_type==tddft";
         read_sync_bool(input.out_vecpot);
         this->add_item(item);
     }

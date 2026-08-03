@@ -35,6 +35,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_IO_td_efield_io_test
+  LIBS parameter base device
+  SOURCES td_efield_io_test.cpp ../module_efield/td_efield_io.cpp ../../source_estate/module_pot/td_field.cpp
+)
+
+AddTest(
   TARGET MODULE_IO_binstream_test
   SOURCES binstream_test.cpp ../module_output/binstream.cpp
 )

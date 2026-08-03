@@ -124,6 +124,8 @@ base=$(get_input_key_value "basis_type" "INPUT")
 word_total_time="atomic_world"
 symmetry=$(get_input_key_value "symmetry" "INPUT")
 out_current=$(get_input_key_value "out_current" "INPUT")
+out_efield=$(get_input_key_value "out_efield" "INPUT")
+out_vecpot=$(get_input_key_value "out_vecpot" "INPUT")
 nspin=$(get_input_key_value "nspin" "INPUT")
 test -e $1 && rm $1
 
@@ -771,6 +773,29 @@ if ! test -z "$out_current" && [ $out_current ]; then
 	current1cal=OUT.autotest/current_tot.txt
 	python3 $COMPARE_SCRIPT $current1ref $current1cal 10
 	echo "CompareCurrent_pass $?" >>$1
+fi
+
+#--------------------------------------------
+# Check electric fields in rt-TDDFT
+#--------------------------------------------
+if ! test -z "$out_efield" && [ "$out_efield" == 1 ]; then
+	efield_refs=(efield_*.txt.ref)
+	if [ ! -e "${efield_refs[0]}" ]; then
+		echo "CompareEfieldReference_pass 1" >>$1
+	else
+		for efield_ref in "${efield_refs[@]}"; do
+			efield_name=${efield_ref%.ref}
+			efield_key=$(sanitize_result_key "$efield_name")
+			record_compare_result "$1" "Compare${efield_key}_pass" "$efield_ref" "OUT.autotest/$efield_name" 8
+		done
+	fi
+fi
+
+#--------------------------------------------
+# Check vector potential in rt-TDDFT
+#--------------------------------------------
+if ! test -z "$out_vecpot" && [ "$out_vecpot" == 1 ]; then
+	record_compare_result "$1" "CompareAt_pass" "At.txt.ref" "OUT.autotest/At.txt" 8
 fi
 
 #--------------------------------------------
