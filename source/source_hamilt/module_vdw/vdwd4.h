@@ -25,15 +25,10 @@ class Vdwd4 : public Vdw
     double cutoff_cn_ = 0.0;    // Bohr, coordination-number cutoff
     double total_charge_ = 0.0; // e, total system charge (sum zv*na - nelec)
 
-    bool has_force_cache_ = false;
-    bool has_stress_cache_ = false;
+    void evaluate_impl(const VdwRequest& request, VdwResult& result) override;
 
-    void set_force_from_gradient(const std::vector<double>& gradient_ha_bohr);
-    void set_stress_from_sigma(const std::array<double, 9>& sigma_ha);
-
-    void cal_energy() override;
-    void cal_force() override;
-    void cal_stress() override;
+    void set_force_from_gradient(const std::vector<double>& gradient_ha_bohr, VdwResult& result) const;
+    void set_stress_from_sigma(const std::array<double, 9>& sigma_ha, VdwResult& result) const;
 
     void build_structure(std::vector<int>& numbers,
                          std::vector<double>& positions,

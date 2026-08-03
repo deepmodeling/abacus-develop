@@ -63,7 +63,7 @@ void init_basis_lcao(Parallel_Orbitals& pv,
         two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().Beta);
     }
 
-#ifdef USE_NEW_TWO_CENTER
+#ifdef __FFT_TWO_CENTER
     two_center_bundle.tabulate();
 #else
     two_center_bundle.tabulate(lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);

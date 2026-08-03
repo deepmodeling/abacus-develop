@@ -1,6 +1,7 @@
 #include "of_stress_pw.h"
 
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/output_log.h"
 
@@ -9,6 +10,7 @@
 void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
                               ModuleBase::matrix& kinetic_stress,
                               UnitCell& ucell,
+                              const vdw::VdwResult* vdw_result,
                               ModuleSymmetry::Symmetry* p_symm,
                               const pseudopot_cell_vl& locpp,
                               Structure_Factor* p_sf,
@@ -80,8 +82,15 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
     // nlcc
     stress_cc(sigmaxcc, this->rhopw, ucell, p_sf, true, locpp.numeric, pelec->charge);
 
-    // vdw term
-    stress_vdw(sigmavdw, ucell);
+    // vdW term prepared before SCF for this ionic configuration.
+    if (vdw_result != nullptr)
+    {
+        if (!vdw_result->has_stress)
+        {
+            ModuleBase::WARNING_QUIT("OF_Stress_PW::cal_stress", "The cached vdW stress is unavailable.");
+        }
+        sigmavdw = vdw_result->stress.to_matrix();
+    }
 
     for (int ipol = 0; ipol < 3; ipol++)
     {
@@ -117,15 +126,5 @@ void OF_Stress_PW::cal_stress(ModuleBase::matrix& sigmatot,
         ModuleIO::print_stress("TOTAL    STRESS", sigmatot, screen, ry, GlobalV::ofs_running);
     }
     ModuleBase::timer::end("OF_Stress_PW", "cal_stress");
-    return;
-}
-
-void OF_Stress_PW::stress_vdw(ModuleBase::matrix& sigma, UnitCell& ucell)
-{
-    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp);
-    if (vdw_solver != nullptr)
-    {
-        sigma = vdw_solver->get_stress().to_matrix();
-    }
     return;
 }

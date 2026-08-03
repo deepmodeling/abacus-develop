@@ -32,7 +32,7 @@ read_file_dir    ./
 gamma_only       1 ### Abacus will generate/overwrite a KPT file when gamma_only is set to 1.
 
 out_wfc_lcao     1
-out_mat_hs       1
+out_hsk          1
 cal_syns         1
 dmax             0.01
 

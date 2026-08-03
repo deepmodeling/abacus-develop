@@ -20,7 +20,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_RELAX_relax_new_relax
-  SOURCES  relax_test.cpp ../relax_sync.cpp ../line_search.cpp ../../source_base/tool_quit.cpp ../../source_base/global_variable.cpp ../../source_base/global_file.cpp ../../source_base/memory_recorder.cpp ../../source_base/timer.cpp
+  SOURCES  relax_test.cpp ../relax_sync.cpp ../line_search.cpp ../relax_data.cpp ../../source_base/tool_quit.cpp ../../source_base/global_variable.cpp ../../source_base/global_file.cpp ../../source_base/memory_recorder.cpp ../../source_base/timer.cpp
     ../../source_base/matrix3.cpp ../../source_base/intarray.cpp ../../source_base/tool_title.cpp
     ../../source_base/global_function.cpp ../../source_base/complexmatrix.cpp ../../source_base/matrix.cpp
     ../../source_base/complexarray.cpp ../../source_base/tool_quit.cpp ../../source_base/realarray.cpp

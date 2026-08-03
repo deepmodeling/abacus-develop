@@ -42,8 +42,6 @@ UnitCell::UnitCell()
     tpiba2 = 0.0;
     omega = 0.0;
 
-    atom_mass.shrink_to_fit();
-    atom_label.resize(1);
     pseudo_fn.resize(1);
     pseudo_type.resize(1);
     orbital_fn.resize(1);

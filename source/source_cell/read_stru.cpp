@@ -1,3 +1,7 @@
+/**
+ * @file read_stru.cpp
+ * @brief Implementation of STRU file reading functions.
+ */
 #include "read_stru.h"
 #include "source_base/timer.h"
 #include "source_base/vector3.h"

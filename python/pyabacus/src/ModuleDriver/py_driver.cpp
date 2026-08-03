@@ -428,7 +428,8 @@ CalculationResult PyDriver::run(
         impl_->ucell_->setup_cell(PARAM.globalv.global_in_stru, GlobalV::ofs_running, PARAM.inp.symmetry_prec, PARAM.inp.dfthalf_type, PARAM.inp.pseudo_dir, PARAM.inp.nspin,
             PARAM.inp.basis_type, PARAM.inp.orbital_dir, PARAM.inp.init_wfc,
             PARAM.inp.onsite_radius, PARAM.globalv.deepks_setorb, PARAM.inp.rpa,
-            PARAM.inp.fixed_atoms, PARAM.inp.noncolin, PARAM.inp.calculation, PARAM.inp.esolver_type);
+            PARAM.inp.fixed_atoms, PARAM.inp.noncolin, PARAM.inp.calculation, PARAM.inp.esolver_type,
+            std::stoi(PARAM.inp.symmetry));
 
         // Check atomic structure
         unitcell::check_atomic_stru(*impl_->ucell_, PARAM.inp.min_dist_coef);

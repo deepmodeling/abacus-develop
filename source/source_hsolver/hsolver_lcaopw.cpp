@@ -7,7 +7,6 @@
 #include "source_estate/elecstate_pw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_estate/elecstate_tools.h"
 #include "source_hamilt/module_xc/exx_info.h"
 
@@ -106,7 +105,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
     elecstate::calEBand(pes->ekb,pes->wg,pes->f_en);
     if (skip_charge)
     {
-        if (PARAM.globalv.use_uspp)
+        if (this->use_uspp)
         {
             reinterpret_cast<elecstate::ElecStatePW<T>*>(pes)->cal_becsum(psi);
         }

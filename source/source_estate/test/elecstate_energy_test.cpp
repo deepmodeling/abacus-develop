@@ -37,12 +37,10 @@ double ElecState::get_solvent_model_Acav()
 {
     return 0.5;
 }
-#ifdef __LCAO
 double ElecState::get_dftu_energy()
 {
     return 0.6;
 }
-#endif
 double ElecState::get_local_pp_energy()
 {
     return 0.7;
@@ -128,11 +126,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesHarrisDFTU)
     PARAM.input.dft_plus_u = 1;
     elecstate->cal_energies(1);
     // deband_harris + hatree + efiled + gatefield + edftu + escon
-#ifdef __LCAO
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 1.3);
-#else
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot_harris, 0.7);
-#endif
 }
 
 TEST_F(ElecStateEnergyTest, CalEnergiesEtot)
@@ -158,11 +152,7 @@ TEST_F(ElecStateEnergyTest, CalEnergiesEtotDFTU)
     PARAM.input.dft_plus_u = 1;
     elecstate->cal_energies(2);
     // deband + hatree + efiled + gatefield + edftu + escon
-#ifdef __LCAO
     EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 1.3);
-#else
-    EXPECT_DOUBLE_EQ(elecstate->f_en.etot, 0.7);
-#endif
 }
 
 TEST_F(ElecStateEnergyTest, CalConverged)

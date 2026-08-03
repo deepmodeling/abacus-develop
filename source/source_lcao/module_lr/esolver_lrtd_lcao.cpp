@@ -6,7 +6,7 @@
 #include "source_lcao/LCAO_nonlocal_info.h"
 #include "source_lcao/module_lr/hsolver_lrtd.hpp"
 #include "source_lcao/module_lr/lr_spectrum.h"
-#include "source_lcao/module_gint/gint.h"
+#include "source_hamilt/module_gint/gint.h"
 #include <memory>
 #include "source_lcao/hamilt_lcao.h"
 #include "source_io/module_wf/read_wfc_nao.h"
@@ -67,7 +67,7 @@ inline int cal_nupdown_form_occ(const ModuleBase::matrix& wg)
 inline void setup_2center_table(TwoCenterBundle& two_center_bundle, LCAO_Orbitals& orb, UnitCell& ucell)
 {
     // set up 2-center table
-#ifdef USE_NEW_TWO_CENTER
+#ifdef __FFT_TWO_CENTER
     two_center_bundle.tabulate();
 #else
     two_center_bundle.tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
@@ -107,7 +107,7 @@ void LR::ESolver_LR<T, TR>::set_dimension()
     this->nbasis = PARAM.globalv.nlocal;
     // calculate the number of occupied and unoccupied states
     // which determines the basis size of the excited states
-    this->nocc_max = LR_Util::cal_nocc(LR_Util::cal_nelec(ucell));
+    this->nocc_max = LR_Util::cal_nocc(LR_Util::cal_nelec(*this->ucell_));
     this->nocc_in = std::max(1, std::min(input.nocc, this->nocc_max));
     this->nvirt_in = PARAM.inp.nbands - this->nocc_max;   //nbands-nocc
     if (input.nvirt > this->nvirt_in) { GlobalV::ofs_warning << "ESolver_LR: input nvirt is too large to cover by nbands, set nvirt = nbands - nocc = " << this->nvirt_in << std::endl; }
@@ -128,7 +128,7 @@ void LR::ESolver_LR<T, TR>::set_dimension()
         // calculate total number of basis funcs, see https://en.cppreference.com/w/cpp/algorithm/inner_product
         this->nbasis = std::inner_product(input.aims_nbasis.begin(), /* iterator1.begin */
                                           input.aims_nbasis.end(),  /* iterator1.end */
-                                          ucell.atoms,  /* iterator2.begin */
+                                          this->ucell_->atoms,  /* iterator2.begin */
                                           0,  /* init value */
                                           std::plus<int>(), /* iter op1 */
                                           [](const int& a, const Atom& b) { return a * b.na; }); /* iter op2 */
@@ -173,12 +173,37 @@ void LR::ESolver_LR<T, TR>::reset_dim_spin2()
 }
 
 template <typename T, typename TR>
-LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
-    const Input_para& inp, UnitCell& ucell)
-    : input(inp), ucell(ucell)
+LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp)
+    : input(inp)
 #ifdef __EXX
     , exx_info(GlobalC::exx_info)
 #endif
+{
+}
+
+template <typename T, typename TR>
+void LR::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
+{
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    this->ucell_ = &ucell;
+    if (inp.esolver_type == "ks-lr")
+    {
+        ModuleESolver::ESolver_KS_LCAO<T, TR> ks_solver;
+        ks_solver.before_all_runners(basecell, inp);
+        ks_solver.runner(basecell, 0);
+        this->initialize_from_ks_(std::move(ks_solver), ucell, inp);
+    }
+    else
+    {
+        this->initialize_from_unitcell_(ucell, inp);
+    }
+}
+
+template <typename T, typename TR>
+void LR::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
+                                                 UnitCell& ucell,
+                                                 const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(KS)");
 
@@ -289,10 +314,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol
 }
 
 template <typename T, typename TR>
-LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : input(inp), ucell(ucell)
-#ifdef __EXX
-, exx_info(GlobalC::exx_info)
-#endif
+void LR::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(from scratch)");
     // xc kernel
@@ -392,7 +414,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
     atom_arrange::search(PARAM.globalv.search_pbc,
                          GlobalV::ofs_running,
                          this->gd,
-                         this->ucell,
+                         *this->ucell_,
                          search_radius,
                          PARAM.inp.test_atom_input);
     gint_info_.reset(
@@ -430,8 +452,11 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp, UnitCell& ucell) : inpu
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
+void LR::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int istep)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_LR", "runner");
     ModuleBase::timer::start("ESolver_LR", "runner");
     //allocate 2-particle state and setup 2d division
@@ -463,7 +488,7 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
                               this->nbasis,
                               this->nocc,
                               this->nvirt,
-                              this->ucell,
+                              *this->ucell_,
                               orb_cutoff_,
                               this->gd,
                               *this->psi_ks,
@@ -493,7 +518,7 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
                                 this->nbasis,
                                 this->nocc,
                                 this->nvirt,
-                                this->ucell,
+                                *this->ucell_,
                                 orb_cutoff_,
                                 this->gd,
                                 *this->psi_ks,
@@ -541,8 +566,11 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
+void LR::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_LR", "after_all_runners");
     if (input.ri_hartree_benchmark != "none") { return; } //no need to calculate the spectrum in the benchmark routine
     //cal spectrum
@@ -559,7 +587,7 @@ void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
     for (int is = 0;is < this->X.size();++is)
     {
         LR_Spectrum<T> spectrum(nspin, this->nbasis, this->nocc, this->nvirt, *this->pw_rho, *this->psi_ks,
-            this->ucell, this->kv, this->gd, this->orb_cutoff_, this->two_center_bundle_,
+            *this->ucell_, this->kv, this->gd, this->orb_cutoff_, this->two_center_bundle_,
             this->paraX_, this->paraC_, this->paraMat_,
             &this->pelec->ekb.c[is * nstates], this->X[is].template data<T>(), nstates, openshell,
             LR_Util::tolower(input.abs_gauge));
@@ -656,11 +684,11 @@ void LR::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
     {
         using ST = PotHxcLR::SpinType;
     case 1:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, Pgrid, ST::S1, input.lr_init_xc_kernel);
+        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, ST::S1, input.lr_init_xc_kernel);
         break;
     case 2:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, input.lr_init_xc_kernel);
-        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, input.lr_init_xc_kernel);
+        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, input.lr_init_xc_kernel);
+        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, input.lr_init_xc_kernel);
         break;
     default:
         throw std::invalid_argument("ESolver_LR: nspin must be 1 or 2");
@@ -717,7 +745,7 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
             GlobalV::ofs_running,
             ssc.str(),
             chg_gs.rho[is],
-            ucell.nat)) {
+            this->ucell_->nat)) {
             GlobalV::ofs_running << " Read in the charge density: " << ssc.str() << std::endl;
         } else {    // prenspin for nspin=4 is not supported currently
             ModuleBase::WARNING_QUIT(

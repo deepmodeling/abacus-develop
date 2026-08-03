@@ -1,6 +1,5 @@
 #include <mpi.h>
 #include <complex>
-#include "source_io/module_parameter/parameter.h"
 #include <memory>
 #ifdef __PEXSI
 #include "diago_pexsi.h"
@@ -19,25 +18,27 @@ template <typename T>
 std::vector<double> DiagoPexsi<T>::mu_buffer;
 
 template <typename T>
-DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in)
+DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in,
+                          const int nspin_in,
+                          const int nlocal_in,
+                          const double nelec_in)
 {
-    int nspin = PARAM.inp.nspin;
-    if (PARAM.inp.nspin == 4)
+    this->nspin_dm = (nspin_in == 4) ? 1 : nspin_in;
+    this->nlocal = nlocal_in;
+    this->nelec = nelec_in;
+
+    mu_buffer.resize(this->nspin_dm);
+    for (int i = 0; i < this->nspin_dm; i++)
     {
-        nspin = 1;
-    }
-    mu_buffer.resize(nspin);
-    for (int i = 0; i < nspin; i++)
-    {
-        mu_buffer[i] = this->ps->pexsi_mu;
+        mu_buffer[i] = pexsi::PEXSI_Solver::pexsi_mu;
     }
 
     this->ParaV = ParaV_in;
     this->ps = std::make_unique<pexsi::PEXSI_Solver>();
 
-    this->DM.resize(nspin);
-    this->EDM.resize(nspin);
-    for (int i = 0; i < nspin; i++)
+    this->DM.resize(this->nspin_dm);
+    this->EDM.resize(this->nspin_dm);
+    for (int i = 0; i < this->nspin_dm; i++)
     {
         this->DM[i] = new T[ParaV->nrow * ParaV->ncol];
         this->EDM[i] = new T[ParaV->nrow * ParaV->ncol];
@@ -48,12 +49,7 @@ DiagoPexsi<T>::DiagoPexsi(const Parallel_Orbitals* ParaV_in)
 template <typename T>
 DiagoPexsi<T>::~DiagoPexsi()
 {
-    int nspin = PARAM.inp.nspin;
-    if (PARAM.inp.nspin == 4)
-    {
-        nspin = 1;
-    }
-    for (int i = 0; i < nspin; i++)
+    for (int i = 0; i < this->nspin_dm; i++)
     {
         delete[] this->DM[i];
         delete[] this->EDM[i];
@@ -67,12 +63,13 @@ void DiagoPexsi<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& 
     ModuleBase::TITLE("DiagoPEXSI", "diag");
     matd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
     int ik = psi.get_current_k();
     this->ps->prepare(this->ParaV->blacs_ctxt,
                       this->ParaV->nb,
                       this->ParaV->nrow,
                       this->ParaV->ncol,
+                      this->nlocal,
+                      this->nelec,
                       h_mat.p,
                       s_mat.p,
                       DM[ik],

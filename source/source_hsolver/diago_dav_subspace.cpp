@@ -795,6 +795,9 @@ void Diago_DavSubspace<T, Device>::refresh(const int& dim,
 
     if (this->device == base_device::GpuDevice)
     {
+#if defined(__CUDA) || defined(__ROCM)
+        syncmem_var_h2d_op()(this->d_eigenvalue, eigenvalue_in_hsolver, nbase);
+#endif
         refresh_hcc_scc_vcc_op<T, Device>()(nbase, hcc, scc, vcc, this->nbase_x, this->d_eigenvalue, this->one_);
     }
     else

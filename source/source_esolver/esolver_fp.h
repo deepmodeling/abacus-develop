@@ -2,19 +2,22 @@
 #define ESOLVER_FP_H
 
 #include "esolver.h"
-
 #include "source_base/timer_wrapper.h"
-
-#include "source_basis/module_pw/pw_basis.h" // plane wave basis
-#include "source_estate/elecstate.h" // electronic states
+#include "source_basis/module_pw/pw_basis.h"          // plane wave basis
+#include "source_estate/elecstate.h"                  // electronic states
 #include "source_estate/module_charge/charge_extra.h" // charge extrapolation
-#include "source_hamilt/module_surchem/surchem.h" // solvation model
-#include "source_pw/module_pwdft/parallel_grid.h" // Parallel_Grid (value member below)
-#include "source_pw/module_pwdft/vl_pw.h" // local pseudopotential
-#include "source_pw/module_pwdft/structure_factor.h" // structure factor
+#include "source_hamilt/module_surchem/surchem.h"     // solvation model
+#include "source_pw/module_pwdft/parallel_grid.h"     // Parallel_Grid (value member below)
+#include "source_pw/module_pwdft/structure_factor.h"  // structure factor
+#include "source_pw/module_pwdft/vl_pw.h"             // local pseudopotential
 
 #include <fstream>
+#include <memory>
 
+namespace vdw
+{
+struct VdwResult;
+}
 
 //! The First-Principles (FP) Energy Solver Class
 /**
@@ -26,7 +29,7 @@
 
 namespace ModuleESolver
 {
-class ESolver_FP: public ESolver
+class ESolver_FP : public ESolver
 {
   public:
     ESolver_FP();
@@ -34,16 +37,21 @@ class ESolver_FP: public ESolver
     virtual ~ESolver_FP();
 
     //! Initialize of the first-principels energy solver
-    virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    virtual void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
-    virtual void after_all_runners(UnitCell& ucell) override;
+    virtual void after_all_runners(BaseCell& basecell) override;
 
   protected:
     virtual void before_scf(UnitCell& ucell, const int istep);
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver);
 
-    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool &conv_esolver);
+    virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver);
+
+    const vdw::VdwResult* get_vdw_result() const { return this->vdw_result_.get(); }
+
+    //! vdW correction evaluated once for the current ionic configuration.
+    std::unique_ptr<const vdw::VdwResult> vdw_result_;
 
     //! These pointers will be deleted in the free_pointers() function every ion step.
     elecstate::ElecState* pelec = nullptr; ///< Electronic states
@@ -78,7 +86,7 @@ class ESolver_FP: public ESolver
     //! solvent model
     surchem solvent;
 
-    bool pw_rho_flag  = false; ///< flag for pw_rho, 0: not initialized, 1: initialized
+    bool pw_rho_flag = false; ///< flag for pw_rho, 0: not initialized, 1: initialized
 
     //! the start time of scf iteration
     ModuleBase::TimePoint iter_time;

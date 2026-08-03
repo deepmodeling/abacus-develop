@@ -2,7 +2,7 @@
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/LCAO_domain.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
 #include <vector>
 
 void sparse_format::cal_dS(const UnitCell& ucell,

@@ -51,11 +51,11 @@ noncolin              0
 
 # Variables related to output information
 out_chg               1
-out_mat_hs2           1
+out_hsr               1
 out_mat_r             1
 ```
 
-After the key parameters `out_mat_hs2` and `out_mat_r` are turned on, ABACUS will generate files containing the Hamiltonian matrix $H(R)$, overlap matrix $S(R)$, and dipole matrix $r(R)$ after completing the self-consistent calculation. These parameters can be found in the ABACUS `INPUT` file.
+After the key parameters `out_hsr` and `out_mat_r` are turned on, ABACUS will generate files containing the Hamiltonian matrix $H(R)$, overlap matrix $S(R)$, and dipole matrix $r(R)$ after completing the self-consistent calculation. These parameters can be found in the ABACUS `INPUT` file.
 
 2. Copy the HR, SR, and rR files output by ABACUS's self-consistent calculation, which are located in the `OUT*` directory and named `data-HR-sparse_SPIN0.csr`, `data-SR-sparse_SPIN0.csr`, and `data-rR-sparse.csr`, respectively. Copy these files to the working directory and write the `Input` file for PYATB:
 

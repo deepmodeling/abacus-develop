@@ -1,6 +1,8 @@
-//
-// Created by rhx on 25-6-3.
-//
+/**
+ * @file k_vector_utils.cpp
+ * @brief Implementation of k-vector utility functions.
+ * @author rhx (created on 25-6-3)
+ */
 #include "k_vector_utils.h"
 
 #include "klist.h"
@@ -537,7 +539,23 @@ void kvec_ibz_kpoint(K_Vectors& kv,
             kgmatrix[i] = symm.kgmatrix[i];
         }
 
-        if (!include_inv)
+        if (symm.magnetic_nspin4)
+        {
+            // (nspin=4, magnetic) Time reversal Theta reverses the magnetization, so Theta alone is
+            // NOT a symmetry and the blanket "-k is always equivalent" doubling below is invalid.
+            // Only the antiunitary elements Theta*g with g in the moment-reversing coset belong to
+            // the Shubnikov group; append exactly those, keeping the index convention
+            // j + nrotk  <->  Theta * gmatrix_anti[j]  (decoded the same way in restore_dm).
+            // (nspin=2 is unaffected: there the antiunitary operation is plain conjugation K, which
+            //  does not touch the spin, so D_s(-k)=D_s^*(k) holds even for a ferromagnet and the
+            //  generic branch below stays correct.)
+            for (int j = 0; j < symm.nrotk_anti; ++j)
+            {
+                kgmatrix[j + symm.nrotk] = inv * symm.kgmatrix_anti[j];
+            }
+            nrotkm = symm.nrotk + symm.nrotk_anti;
+        }
+        else if (!include_inv)
         {
             for (int i = 0; i < symm.nrotk; ++i)
             {

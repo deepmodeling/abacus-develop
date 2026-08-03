@@ -4,7 +4,6 @@
 #define private public
 #include "source_cell/module_neighbor/sltk_grid.h"
 #include "prepare_unitcell.h"
-#include "source_io/module_parameter/parameter.h"
 #undef private
 #include "source_cell/read_stru.h"
 
@@ -30,11 +29,6 @@ Magnetism::~Magnetism()
  *       member Cell as a 3D array of CellSet
  */
 
-void SetGlobalV()
-{
-    PARAM.input.test_grid = 0;
-}
-
 class SltkGridTest : public testing::Test
 {
   protected:
@@ -48,7 +42,6 @@ class SltkGridTest : public testing::Test
     std::string output;
     void SetUp()
     {
-        SetGlobalV();
         ucell = utp.SetUcellInfo();
     }
     void TearDown()
@@ -64,8 +57,7 @@ TEST_F(SltkGridTest, Init)
     ofs.open("test.out");
     unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
-    PARAM.input.test_grid = 1;
-    Grid LatGrid(PARAM.input.test_grid);
+    Grid LatGrid(1);
     LatGrid.init(ofs, *ucell, radius, pbc);
     EXPECT_EQ(LatGrid.getGlayerX(), 6);
     EXPECT_EQ(LatGrid.getGlayerY(), 6);
@@ -82,9 +74,8 @@ TEST_F(SltkGridTest, InitSmall)
     ofs.open("test.out");
     unitcell::check_dtau(ucell->atoms,ucell->ntype, ucell->lat0, ucell->latvec);
     test_atom_in = 2;
-    PARAM.input.test_grid = 1;
     radius = 0.5;
-    Grid LatGrid(PARAM.input.test_grid);
+    Grid LatGrid(1);
     LatGrid.init(ofs, *ucell, radius, pbc);
     LatGrid.setMemberVariables(ofs,  *ucell);
     EXPECT_EQ(LatGrid.pbc, true);

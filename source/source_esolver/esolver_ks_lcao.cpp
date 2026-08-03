@@ -5,11 +5,11 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_deltaspin/deltaspin_lcao.h"
 #include "source_lcao/dftu_lcao.h"
-#include "source_lcao/hs_matrix_k.hpp" // there may be multiple definitions if using hpp
+#include "source_hamilt/hs_matrix_k.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/FORCE_STRESS.h"
-#include "source_lcao/module_gint/gint.h"
+#include "source_hamilt/module_gint/gint.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_hsolver/hsolver_lcao.h"
@@ -47,8 +47,11 @@ ESolver_KS_LCAO<TK, TR>::~ESolver_KS_LCAO()
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_all_runners");
 
@@ -233,8 +236,11 @@ double ESolver_KS_LCAO<TK, TR>::cal_energy()
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& force)
+void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_force");
     ModuleBase::timer::start("ESolver_KS_LCAO", "cal_force");
 
@@ -242,7 +248,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
 
     deepks.dpks_out_type = "tot";  // for deepks method
 
-    fsl.getForceStress(ucell, PARAM.inp.cal_force, PARAM.inp.cal_stress, 
+    fsl.getForceStress(ucell, this->get_vdw_result(), PARAM.inp.cal_force, PARAM.inp.cal_stress,
                        PARAM.inp.test_force, PARAM.inp.test_stress,
                        this->gd, this->pv, this->pelec, this->dmat, this->psi,
                        two_center_bundle_, orb_, force, this->scs,
@@ -260,8 +266,11 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(UnitCell& ucell, ModuleBase::matrix& for
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& stress)
+void ESolver_KS_LCAO<TK, TR>::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_KS_LCAO", "cal_stress");
     ModuleBase::timer::start("ESolver_KS_LCAO", "cal_stress");
 
@@ -279,8 +288,11 @@ void ESolver_KS_LCAO<TK, TR>::cal_stress(UnitCell& ucell, ModuleBase::matrix& st
 }
 
 template <typename TK, typename TR>
-void ESolver_KS_LCAO<TK, TR>::after_all_runners(UnitCell& ucell)
+void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_KS_LCAO", "after_all_runners");
     ModuleBase::timer::start("ESolver_KS_LCAO", "after_all_runners");
 
@@ -434,7 +446,11 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
     // 3) run Hsolver
     if (!skip_solve)
     {
-        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv), PARAM.inp.ks_solver);
+        hsolver::HSolverLCAO<TK> hsolver_lcao_obj(&(this->pv),
+                                                  PARAM.inp.ks_solver,
+                                                  PARAM.globalv.kpar_lcao,
+                                                  PARAM.globalv.nlocal,
+                                                  PARAM.inp.nelec);
         hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt), this->psi[0], this->pelec, *this->dmat.dm, 
           this->chr, PARAM.inp.nspin, skip_charge);
     }

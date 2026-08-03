@@ -223,7 +223,9 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
 
     if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
-        psi::Psi<T, Device> psi_temp(1, 1, psi_nc, dmin, true);
+        /// NOTE: current_nbasis must be npw (WITHOUT npol) for Nonlocal::act's
+        /// gemm K (vkb only has npw rows). See CPU branch comment above.
+        psi::Psi<T, Device> psi_temp(1, 1, psi_nc, evc.get_current_nbas(), true);
 
         T* ppsi = psi_temp.get_pointer();
         // hpsi and spsi share the temp space
@@ -270,7 +272,11 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
     }
     else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
     {
-        psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, dmin, true);
+        /// NOTE: the 4th arg (current_nbasis) must be npw (WITHOUT npol),
+        /// NOT dmin (= nbasis = npol*npwx in SOC). Nonlocal::act uses
+        /// psi_temp.get_current_nbas() as gemm K, but vkb only has npw rows.
+        /// dmin (still = nbasis) is kept for hcc/scc gemm K which needs npol.
+        psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, evc.get_current_nbas(), true);
 
         T* ppsi = psi_temp.get_pointer();
         syncmem_complex_op()(ppsi, psi, psi_temp.size());
@@ -295,7 +301,6 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
         delmem_complex_op()(temp);
 
         add_to_hcc(hcc, nstart);
-
     }
 
     if (GlobalV::NPROC_IN_POOL > 1)

@@ -35,8 +35,11 @@ ESolver_KS::~ESolver_KS()
 }
 
 
-void ESolver_KS::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_KS", "before_all_runners");
 
     //! 1) setup "before_all_runniers" in ESolver_FP
@@ -116,8 +119,11 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
     }
 }
 
-void ESolver_KS::runner(UnitCell& ucell, const int istep)
+void ESolver_KS::runner(BaseCell& basecell, const int istep)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_KS", "runner");
     ModuleBase::timer::start(this->classname, "runner");
 
@@ -184,13 +190,14 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
     {
         diag_ethr = hsolver::set_diagethr_ks(PARAM.inp.basis_type, PARAM.inp.esolver_type,
           PARAM.inp.calculation, PARAM.inp.init_chg, PARAM.inp.precision, istep, iter,
-          drho, PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nelec);
+          drho, PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nelec, PARAM.inp.scf_thr);
     }
     else if (PARAM.inp.esolver_type == "sdft")
     {
         diag_ethr = hsolver::set_diagethr_sdft(PARAM.inp.basis_type, PARAM.inp.esolver_type,
           PARAM.inp.calculation, PARAM.inp.init_chg, istep, iter, drho,
-          PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nbands, esolver_KS_ne);
+          PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nbands, esolver_KS_ne,
+          PARAM.inp.nelec, PARAM.inp.scf_thr);
     }
 
     // save input charge density (rho)
@@ -307,8 +314,11 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
 
 }
 
-void ESolver_KS::after_all_runners(UnitCell& ucell)
+void ESolver_KS::after_all_runners(BaseCell& basecell)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     // 1) write Etot information
     ESolver_FP::after_all_runners(ucell);
 }

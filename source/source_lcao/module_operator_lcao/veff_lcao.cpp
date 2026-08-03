@@ -1,11 +1,10 @@
 #include "veff_lcao.h"
-#include "veff_dh.hpp"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/tool_title.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_cell/unitcell.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
 namespace hamilt
 {
 

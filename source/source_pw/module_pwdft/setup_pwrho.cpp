@@ -34,7 +34,7 @@ void pw::setup_pwrho(
     }
 
     // for GPU
-#if (not defined(__ENABLE_FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
+#if (not defined(__FLOAT_FFTW) and (defined(__CUDA) || defined(__RCOM)))
     if (fft_device == "gpu")
     {
         fft_precision = "double";

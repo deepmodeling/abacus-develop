@@ -17,17 +17,17 @@ namespace ModuleESolver
 
         UnitCellLite change_from_ucell_to_ucell_lite(const UnitCell& ucell);
 
-        void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+        void before_all_runners(BaseCell& cell, const Input_para& inp) override;
 
-        void runner(UnitCell& cell, const int istep) override;
+        void runner(BaseCell& cell, const int istep) override;
 
         double cal_energy() override;
 
-        void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
+        void cal_force(BaseCell& cell, ModuleBase::matrix& force) override;
 
-        void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
+        void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) override;
 
-        void after_all_runners(UnitCell& ucell) override;
+        void after_all_runners(BaseCell& cell) override;
 
       private:
         double LJ_energy(const double& d, const int& i, const int& j) const;

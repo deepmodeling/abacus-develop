@@ -192,7 +192,7 @@ SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
-namespace elecstate
+namespace unitcell
 {
     void cal_ux(UnitCell& ucell, const int nspin)
     {

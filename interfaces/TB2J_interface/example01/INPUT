@@ -19,4 +19,4 @@ mixing_type                    broyden
 nspin                          2
 kspacing                       0.10
 out_mul                        1
-out_mat_hs2                    1
+out_hsr                        1

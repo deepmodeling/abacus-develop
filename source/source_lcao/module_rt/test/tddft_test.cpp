@@ -47,5 +47,5 @@ int main(int argc, char** argv)
     Cblacs_exit(ictxt);
 
     // MPI_Finalize();
-    return 0;
+    return result;
 }

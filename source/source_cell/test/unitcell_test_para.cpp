@@ -7,6 +7,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/mathzone.h"
 #include "source_cell/unitcell.h"
+#include "source_cell/cell_tools.h"
 #include "source_cell/read_pseudo.h"
 #include <valarray>
 #include <vector>
@@ -77,7 +78,7 @@ TEST_F(UcellTest, BcastUnitcell)
         EXPECT_EQ(ucell->atoms[0].na, 1);
         EXPECT_EQ(ucell->atoms[1].na, 2);
         /// this is to ensure all processes have the atom label info
-        auto atom_labels = ucell->get_atomLabels();
+        auto atom_labels = unitcell::get_atomLabels(ucell->atoms, ucell->ntype);
         std::string atom_type1_expected = "C";
         std::string atom_type2_expected = "H";
         EXPECT_EQ(atom_labels[0], atom_type1_expected);
@@ -94,7 +95,7 @@ TEST_F(UcellTest, BcastLattice)
         EXPECT_EQ(ucell->atoms[0].na, 1);
         EXPECT_EQ(ucell->atoms[1].na, 2);
         /// this is to ensure all processes have the atom label info
-        auto atom_labels = ucell->get_atomLabels();
+        auto atom_labels = unitcell::get_atomLabels(ucell->atoms, ucell->ntype);
         std::string atom_type1_expected = "C";
         std::string atom_type2_expected = "H";
         EXPECT_EQ(atom_labels[0], atom_type1_expected);

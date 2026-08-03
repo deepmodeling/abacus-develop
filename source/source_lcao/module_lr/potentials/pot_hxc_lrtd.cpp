@@ -45,7 +45,7 @@ namespace LR
             ModuleBase::timer::end("PotHxcLR", "cal_v_eff");
             return; 
         }    // no xc
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         this->kernel_to_potential_[spin_type_](rho[0], v_eff, ispin_op);
 #else
         throw std::domain_error("GlobalV::XC_Functional::get_func_type() =" + std::to_string(XC_Functional::get_func_type())

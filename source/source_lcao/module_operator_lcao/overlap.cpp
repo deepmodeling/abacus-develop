@@ -4,8 +4,8 @@
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_rt/td_folding.h"
 #include "source_lcao/module_rt/td_info.h"
@@ -456,9 +456,6 @@ void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::output_SR_async_csr(const in
 
     ModuleBase::timer::end("OverlapNew", "output_SR_async_csr");
 }
-
-// Include force/stress implementation
-#include "overlap_force_stress.hpp"
 
 template class hamilt::Overlap<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, double>>;
