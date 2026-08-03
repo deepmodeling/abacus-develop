@@ -3,12 +3,18 @@
 #include <arpa/inet.h>
 #include <cerrno>
 #include <cstring>
+#include <limits>
 #include <netdb.h>
 #include <stdexcept>
 #include <string>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
+
+static_assert(sizeof(std::int32_t) == 4, "i-PI requires a 4-byte integer");
+static_assert(sizeof(double) == 8, "i-PI requires an 8-byte float");
+static_assert(std::numeric_limits<double>::is_iec559,
+              "i-PI requires IEEE-754 double precision");
 
 namespace
 {
@@ -38,6 +44,15 @@ std::string padded_header(const std::string& header)
     std::string out = header;
     out.resize(IPI_HEADER_LEN, ' ');
     return out;
+}
+
+std::size_t checked_double_bytes(std::size_t n)
+{
+    if (n > SIZE_MAX / sizeof(double))
+    {
+        throw std::overflow_error("i-PI double payload byte count overflows for " + std::to_string(n) + " elements");
+    }
+    return n * sizeof(double);
 }
 } // namespace
 
@@ -166,14 +181,14 @@ void IpiSocket::write_header(const std::string& header)
     this->write_exact(padded.data(), padded.size());
 }
 
-int IpiSocket::read_int()
+std::int32_t IpiSocket::read_int32()
 {
-    int value = 0;
+    std::int32_t value = 0;
     this->read_exact(&value, sizeof(value));
     return value;
 }
 
-void IpiSocket::write_int(int value)
+void IpiSocket::write_int32(std::int32_t value)
 {
     this->write_exact(&value, sizeof(value));
 }
@@ -192,19 +207,21 @@ void IpiSocket::write_double(double value)
 
 std::vector<double> IpiSocket::read_doubles(std::size_t n)
 {
+    const std::size_t nbytes = checked_double_bytes(n);
     std::vector<double> values(n);
     if (!values.empty())
     {
-        this->read_exact(values.data(), values.size() * sizeof(double));
+        this->read_exact(values.data(), nbytes);
     }
     return values;
 }
 
 void IpiSocket::write_doubles(const std::vector<double>& values)
 {
+    const std::size_t nbytes = checked_double_bytes(values.size());
     if (!values.empty())
     {
-        this->write_exact(values.data(), values.size() * sizeof(double));
+        this->write_exact(values.data(), nbytes);
     }
 }
 

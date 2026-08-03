@@ -2,6 +2,7 @@
 #define ABACUS_SOCKET_IPI_H
 
 #include <cstddef>
+#include <cstdint>
 #include <stdexcept>
 #include <string>
 #include <vector>
@@ -27,8 +28,8 @@ class IpiSocket
     std::string read_header();
     void write_header(const std::string& header);
 
-    int read_int();
-    void write_int(int value);
+    std::int32_t read_int32();
+    void write_int32(std::int32_t value);
 
     double read_double();
     void write_double(double value);

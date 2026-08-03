@@ -371,8 +371,8 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
                 {
                     try
                     {
-                        rid = socket.read_int();
-                        nbytes = socket.read_int();
+                        rid = socket.read_int32();
+                        nbytes = socket.read_int32();
                         if (nbytes < 0)
                         {
                             io_failed = 1;
@@ -416,7 +416,7 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
                     {
                         cell = socket.read_doubles(9);
                         inv_cell = socket.read_doubles(9);
-                        nat_socket = socket.read_int();
+                        nat_socket = socket.read_int32();
                         if (nat_socket < 0)
                         {
                             io_failed = 1;
@@ -494,10 +494,10 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
                     {
                         socket.write_header("FORCEREADY");
                         socket.write_double(energy_hartree);
-                        socket.write_int(nat_return);
+                        socket.write_int32(nat_return);
                         socket.write_doubles(forces_hartree_bohr);
                         socket.write_doubles(virial_hartree);
-                        socket.write_int(0);
+                        socket.write_int32(0);
                     }
                     catch (const std::exception& exc)
                     {
