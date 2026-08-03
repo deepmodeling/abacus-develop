@@ -46,21 +46,6 @@ jobs:
           nvidia-smi
           source toolchain/install/setup
           rm -rf build
-          # Pin the CUDA architecture to sm_70 (Tesla V100) instead of building
-          # for the default 7 architectures (60/70/75/80/86/89/90). The CI GPU
-          # pool is a homogeneous set of V100 pods (verified by sampling 5+
-          # runner IDs, all on the gpu-runner-6qqd8-* K8s deployment with
-          # identical test step timings across runs). Building for a single
-          # arch cuts nvcc work to ~1/7 and keeps the ccache key uniform so
-          # cache_warmer (#7756) can populate every runner with the same
-          # entries.
-          #
-          # NOTE: this is an explicit pin rather than auto-detection. On a
-          # cluster, configuring on a login node whose GPU differs from the
-          # compute node would silently produce a binary that fails with
-          # "no kernel image is available" at run time; HPC convention is to
-          # build on the compute node, where the workflow's hardcoded -D
-          # matches the actual hardware.
           cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
             -DCMAKE_CUDA_ARCHITECTURES=70
           cmake --build build -j "$(nproc)"
