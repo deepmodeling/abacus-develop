@@ -12,6 +12,38 @@
 #include "verlet.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h"
+#include <memory>
+
+namespace
+{
+std::unique_ptr<MD_base> create_md_runner(const Parameter& param_in, UnitCell& unit_in)
+{
+    if (param_in.mdp.md_type == "fire")
+    {
+        return std::unique_ptr<MD_base>(new FIRE(param_in, unit_in));
+    }
+    if ((param_in.mdp.md_type == "nvt" && param_in.mdp.md_thermostat == "nhc") || param_in.mdp.md_type == "npt")
+    {
+        return std::unique_ptr<MD_base>(new Nose_Hoover(param_in, unit_in));
+    }
+    if (param_in.mdp.md_type == "nve" || param_in.mdp.md_type == "nvt")
+    {
+        return std::unique_ptr<MD_base>(new Verlet(param_in, unit_in));
+    }
+    if (param_in.mdp.md_type == "langevin")
+    {
+        return std::unique_ptr<MD_base>(new Langevin(param_in, unit_in));
+    }
+    if (param_in.mdp.md_type == "msst")
+    {
+        return std::unique_ptr<MD_base>(new MSST(param_in, unit_in));
+    }
+
+    ModuleBase::WARNING_QUIT("md_line", "no such md_type!");
+    return nullptr;
+}
+} // namespace
+
 namespace Run_MD
 {
 
@@ -20,32 +52,7 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::start("Run_MD", "md_line");
 
-    /// determine the md_type
-    MD_base* mdrun = nullptr;
-    if (param_in.mdp.md_type == "fire")
-    {
-        mdrun = new FIRE(param_in, unit_in);
-    }
-    else if ((param_in.mdp.md_type == "nvt" && param_in.mdp.md_thermostat == "nhc") || param_in.mdp.md_type == "npt")
-    {
-        mdrun = new Nose_Hoover(param_in, unit_in);
-    }
-    else if (param_in.mdp.md_type == "nve" || param_in.mdp.md_type == "nvt")
-    {
-        mdrun = new Verlet(param_in, unit_in);
-    }
-    else if (param_in.mdp.md_type == "langevin")
-    {
-        mdrun = new Langevin(param_in, unit_in);
-    }
-    else if (param_in.mdp.md_type == "msst")
-    {
-        mdrun = new MSST(param_in, unit_in);
-    }
-    else
-    {
-        ModuleBase::WARNING_QUIT("md_line", "no such md_type!");
-    }
+    std::unique_ptr<MD_base> mdrun = create_md_runner(param_in, unit_in);
 
     /// md cycle, mohan update 2026-01-04, change '<=' to '<'
     while ((mdrun->step_ + mdrun->step_rst_) < param_in.mdp.md_nstep && !mdrun->stop)
@@ -130,7 +137,6 @@ void md_line(UnitCell& unit_in, ModuleESolver::ESolver* p_esolver, const Paramet
         mdrun->step_++;
     }
 
-    delete mdrun;
     ModuleBase::timer::end("Run_MD", "md_line");
     return;
 }

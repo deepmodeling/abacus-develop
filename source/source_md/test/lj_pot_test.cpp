@@ -1,9 +1,9 @@
 #include "gtest/gtest.h"
 #define private public
 #include "source_io/module_parameter/parameter.h"
+#include "md_test_fixture.h"
 #include "source_esolver/esolver_lj.h"
 #include "source_md/md_func.h"
-#include "setcell.h"
 #undef private
 #define doublethreshold 1e-12
 
@@ -17,46 +17,23 @@
  *     - calculate energy, force, virial for lj pot
  */
 
-class LJ_pot_test : public testing::Test
+class LJ_pot_test : public LjPotTestFixture
 {
-  protected:
-    ModuleBase::Vector3<double>* force;
-    ModuleBase::matrix stress;
-    double potential;
-    int natom;
-    UnitCell ucell;
-    Input_para input;
-
-    void SetUp()
-    {
-        Setcell::setupcell(ucell);
-
-        natom = ucell.nat;
-        force = new ModuleBase::Vector3<double>[natom];
-        stress.create(3, 3);
-
-        Setcell::parameters(input);
-    }
-
-    void TearDown()
-    {
-        delete[] force;
-    }
 };
 
 TEST_F(LJ_pot_test, potential)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    std::unique_ptr<ModuleESolver::ESolver> p_esolver(new ModuleESolver::ESolver_LJ());
     p_esolver->before_all_runners(ucell, input);
-    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
+    MD_func::force_virial(p_esolver.get(), 0, ucell, potential, force, true, stress);
     EXPECT_NEAR(potential, -0.011957818623534381, doublethreshold);
 }
 
 TEST_F(LJ_pot_test, force)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    std::unique_ptr<ModuleESolver::ESolver> p_esolver(new ModuleESolver::ESolver_LJ());
     p_esolver->before_all_runners(ucell, input);
-    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
+    MD_func::force_virial(p_esolver.get(), 0, ucell, potential, force, true, stress);
     EXPECT_NEAR(force[0].x, 0.00049817733089377704, doublethreshold);
     EXPECT_NEAR(force[0].y, 0.00082237246837022328, doublethreshold);
     EXPECT_NEAR(force[0].z, -3.0493186101154812e-20, doublethreshold);
@@ -73,9 +50,9 @@ TEST_F(LJ_pot_test, force)
 
 TEST_F(LJ_pot_test, stress)
 {
-    ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
+    std::unique_ptr<ModuleESolver::ESolver> p_esolver(new ModuleESolver::ESolver_LJ());
     p_esolver->before_all_runners(ucell, input);
-    MD_func::force_virial(p_esolver, 0, ucell, potential, force, true, stress);
+    MD_func::force_virial(p_esolver.get(), 0, ucell, potential, force, true, stress);
     EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 1), 1.7207745586539077e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 2), 0, doublethreshold);
@@ -89,7 +66,7 @@ TEST_F(LJ_pot_test, stress)
 
 TEST_F(LJ_pot_test, RcutSearchRadius)
 {
-    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    std::unique_ptr<ModuleESolver::ESolver_LJ> p_esolver(new ModuleESolver::ESolver_LJ());
     ucell.ntype = 2;
     std::vector<double> rcut = {3.0};
     p_esolver->rcut_search_radius(ucell.ntype, rcut);
@@ -114,7 +91,7 @@ TEST_F(LJ_pot_test, RcutSearchRadius)
 
 TEST_F(LJ_pot_test, SetC6C12)
 {
-    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    std::unique_ptr<ModuleESolver::ESolver_LJ> p_esolver(new ModuleESolver::ESolver_LJ());
     ucell.ntype = 2;
 
     // no rule
@@ -187,7 +164,7 @@ TEST_F(LJ_pot_test, SetC6C12)
 
 TEST_F(LJ_pot_test, CalEnShift)
 {
-    ModuleESolver::ESolver_LJ* p_esolver = new ModuleESolver::ESolver_LJ();
+    std::unique_ptr<ModuleESolver::ESolver_LJ> p_esolver(new ModuleESolver::ESolver_LJ());
     ucell.ntype = 2;
 
     std::vector<double> rcut = {3.0};
