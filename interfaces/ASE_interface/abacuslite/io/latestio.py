@@ -679,16 +679,14 @@ class TestLatestIO(unittest.TestCase):
         # make files ready
         shutil.copy(self.testfiles / 'pw-symm0-nspin4-gamma-md', 
                     self.testfiles / 'running_md.log')
-        eig_occ_file = self.testfiles / 'eig_occ.txt'
         shutil.copy(self.testfiles / 'nspin4-gamma-eigocc',
-                    eig_occ_file)
+                    self.testfiles / 'eig_occ.txt')
         shutil.copy(self.testfiles / 'nspin4-gamma-mddump',
                     self.testfiles / 'MD_dump')
 
         res = read_abacus_out(self.testfiles / 'running_md.log')
         self.assertIsNotNone(res)
         self.assertEqual(len(res), 2) # two frames
-        self.assertTrue(eig_occ_file.is_file())
 
         for atoms in res:
             self.assertIsInstance(atoms, Atoms)
@@ -700,7 +698,7 @@ class TestLatestIO(unittest.TestCase):
 
         # remove the files
         (self.testfiles / 'running_md.log').unlink()
-        eig_occ_file.unlink()
+        (self.testfiles / 'eig_occ.txt').unlink()
         (self.testfiles / 'MD_dump').unlink()
 
     def test_read_iter_header_from_running_log(self):
