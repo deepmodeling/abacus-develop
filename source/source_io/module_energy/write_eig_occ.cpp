@@ -212,8 +212,9 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
     if (GlobalV::MY_RANK == 0)
     {
         std::ofstream ofs_eig0;
+        const auto& inp = PARAM.inp;
         const bool append = istep > 0
-                            || (PARAM.inp.calculation == "md" && PARAM.inp.mdp.md_restart);
+                            || (inp.calculation == "md" && inp.mdp.md_restart);
 
 		if (append)
 		{
