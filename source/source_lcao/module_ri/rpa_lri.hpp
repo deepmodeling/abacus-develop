@@ -2867,11 +2867,12 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
 
     if (ModuleSymmetry::Symmetry::symm_flag == 1 && ucell.symm.nrotk > 0)
     {
-        ofs << ucell.symm.nrotk << " row" << std::endl;
-        for (int isym = 0; isym < ucell.symm.nrotk; ++isym)
-        {
-            const auto& rot = ucell.symm.gmatrix[isym];
-            const auto& trans = ucell.symm.gtrans[isym];
+        const auto& symm = ucell.symm;
+        // (nspin=4, magnetic) the symmetry relevant for LibRPA is the Shubnikov group
+        // H + Theta*A: export the spatial parts of both blocks, unitary first, and mark
+        // the antiunitary block in the spin_symmetry trailer below.
+        const int n_anti = symm.magnetic_nspin4 ? symm.nrotk_anti : 0;
+        const auto write_op = [&ofs](const ModuleBase::Matrix3& rot, const ModuleBase::Vector3<double>& trans) {
             ofs << std::setw(4) << RpaLriDetail::checked_near_int(rot.e11, "symmetry rotation e11")
                 << std::setw(4) << RpaLriDetail::checked_near_int(rot.e12, "symmetry rotation e12")
                 << std::setw(4) << RpaLriDetail::checked_near_int(rot.e13, "symmetry rotation e13")
@@ -2885,6 +2886,30 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
                 << std::setw(24) << std::scientific << std::setprecision(15) << trans.y
                 << std::setw(24) << std::scientific << std::setprecision(15) << trans.z
                 << std::endl;
+        };
+        ofs << (symm.nrotk + n_anti) << " row" << std::endl;
+        for (int isym = 0; isym < symm.nrotk; ++isym)
+        {
+            write_op(symm.gmatrix[isym], symm.gtrans[isym]);
+        }
+        for (int j = 0; j < n_anti; ++j)
+        {
+            write_op(symm.gmatrix_anti[j], symm.gtrans_anti[j]);
+        }
+        if (PARAM.inp.nspin == 4)
+        {
+            // spin_symmetry <grey_group> <spin_action_source>:
+            // grey_group=1 for non-magnetic nspin=4 (LibRPA appends the Theta copies);
+            // spin_action_source=2 lets LibRPA reconstruct U_s = U[det(Q)Q] per operation.
+            ofs << "spin_symmetry " << (symm.magnetic_nspin4 ? 0 : 1) << " 2" << std::endl;
+            for (int isym = 0; isym < symm.nrotk; ++isym)
+            {
+                ofs << 0 << std::endl;
+            }
+            for (int j = 0; j < n_anti; ++j)
+            {
+                ofs << 1 << std::endl;
+            }
         }
     }
     ofs.close();
