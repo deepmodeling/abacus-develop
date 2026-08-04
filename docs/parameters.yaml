@@ -2670,7 +2670,7 @@ parameters:
     default_value: "1.0"
     unit: V/Angstrom
     availability: td_ttype contains 3
-  - name: td_supersine_amp
+  - name: td_supsine_amp
     category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
     type: Vector of Real
     description: |
@@ -2678,7 +2678,7 @@ parameters:
     default_value: "0.27"
     unit: V/Angstrom
     availability: td_ttype contains 4
-  - name: td_supersine_freq
+  - name: td_supsine_freq
     category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
     type: Vector of Real
     description: |
@@ -2686,7 +2686,7 @@ parameters:
     default_value: "0.18737028625"
     unit: 1/fs
     availability: td_ttype contains 4
-  - name: td_supersine_phase
+  - name: td_supsine_phase
     category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
     type: Vector of Real
     description: |
@@ -2694,7 +2694,7 @@ parameters:
     default_value: "0.0"
     unit: rad
     availability: td_ttype contains 4
-  - name: td_supersine_sigma
+  - name: td_supsine_sigma
     category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
     type: Vector of Real
     description: |
@@ -2702,19 +2702,19 @@ parameters:
     default_value: "0.75"
     unit: ""
     availability: td_ttype contains 4
-  - name: td_supersine_tstart
+  - name: td_supsine_tstart
     category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
     type: Vector of String
     description: |
-      Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supersine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
+      Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supsine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
     default_value: default
     unit: ""
     availability: td_ttype contains 4
-  - name: td_supersine_tend
+  - name: td_supsine_tend
     category: "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory"
     type: Vector of String
     description: |
-      Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supersine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
+      Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
     default_value: default
     unit: ""
     availability: td_ttype contains 4

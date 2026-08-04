@@ -29,12 +29,12 @@ td_stype          1
 td_ttype          4 4
 td_tstart         0
 td_tend           6
-td_supersine_amp  0.27 0.18
-td_supersine_freq 0.18737028625 0.35
-td_supersine_phase 0.0 1.5707963267948966
-td_supersine_sigma 0.75 0.60
-td_supersine_tstart 1 1
-td_supersine_tend 5 5
+td_supsine_amp  0.27 0.18
+td_supsine_freq 0.18737028625 0.35
+td_supsine_phase 0.0 1.5707963267948966
+td_supsine_sigma 0.75 0.60
+td_supsine_tstart 1 1
+td_supsine_tend 5 5
 
 out_efield        1
 out_vecpot        1

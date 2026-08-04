@@ -89,12 +89,12 @@ void check_td_efield_parameters(const Input_para& input)
         {"td_trigo_amp", 2, input.td_trigo_amp.size()},
         {"td_heavi_t0", 3, input.td_heavi_t0.size()},
         {"td_heavi_amp", 3, input.td_heavi_amp.size()},
-        {"td_supersine_amp", 4, input.td_supersine_amp.size()},
-        {"td_supersine_freq", 4, input.td_supersine_freq.size()},
-        {"td_supersine_phase", 4, input.td_supersine_phase.size()},
-        {"td_supersine_sigma", 4, input.td_supersine_sigma.size()},
-        {"td_supersine_tstart", 4, input.td_supersine_tstart.size()},
-        {"td_supersine_tend", 4, input.td_supersine_tend.size()},
+        {"td_supsine_amp", 4, input.td_supsine_amp.size()},
+        {"td_supsine_freq", 4, input.td_supsine_freq.size()},
+        {"td_supsine_phase", 4, input.td_supsine_phase.size()},
+        {"td_supsine_sigma", 4, input.td_supsine_sigma.size()},
+        {"td_supsine_tstart", 4, input.td_supsine_tstart.size()},
+        {"td_supsine_tend", 4, input.td_supsine_tend.size()},
     }};
     for (const FieldParameterRule& rule: rules)
     {
@@ -127,24 +127,24 @@ void check_td_efield_parameters(const Input_para& input)
     }
     for (std::size_t index = 0; index < field_counts[4]; ++index)
     {
-        if (input.td_supersine_freq[index] == 0.0)
+        if (input.td_supsine_freq[index] == 0.0)
         {
-            ModuleBase::WARNING_QUIT("ReadInput", "td_supersine_freq must be nonzero.");
+            ModuleBase::WARNING_QUIT("ReadInput", "td_supsine_freq must be nonzero.");
         }
-        if (input.td_supersine_sigma[index] <= 0.0
-            || input.td_supersine_sigma[index] >= ModuleBase::PI / 2.0)
+        if (input.td_supsine_sigma[index] <= 0.0
+            || input.td_supsine_sigma[index] >= ModuleBase::PI / 2.0)
         {
             ModuleBase::WARNING_QUIT("ReadInput",
-                                     "td_supersine_sigma must be greater than 0 and less than pi/2.");
+                                     "td_supsine_sigma must be greater than 0 and less than pi/2.");
         }
-        if (input.td_supersine_tstart[index] < input.td_tstart
-            || input.td_supersine_tstart[index] >= input.td_supersine_tend[index]
-            || input.td_supersine_tend[index] > input.td_tend)
+        if (input.td_supsine_tstart[index] < input.td_tstart
+            || input.td_supsine_tstart[index] >= input.td_supsine_tend[index]
+            || input.td_supsine_tend[index] > input.td_tend)
         {
             ModuleBase::WARNING_QUIT(
                 "ReadInput",
-                "Each supersine pulse must satisfy td_tstart <= td_supersine_tstart < "
-                "td_supersine_tend <= td_tend.");
+                "Each supersine pulse must satisfy td_tstart <= td_supsine_tstart < "
+                "td_supsine_tend <= td_tend.");
         }
     }
 }
@@ -623,7 +623,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         this->add_item(item);
     }
     {
-        Input_Item item("td_supersine_amp");
+        Input_Item item("td_supsine_amp");
         item.annotation = "carrier electric-field scale of the supersine pulse";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Vector of Real";
@@ -632,13 +632,13 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.unit = "V/Angstrom";
         item.availability = "td_ttype contains 4";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            parse_expression(item.str_values, para.input.td_supersine_amp);
+            parse_expression(item.str_values, para.input.td_supsine_amp);
         };
-        sync_doublevec(input.td_supersine_amp, para.input.td_supersine_amp.size(), 0.0);
+        sync_doublevec(input.td_supsine_amp, para.input.td_supsine_amp.size(), 0.0);
         this->add_item(item);
     }
     {
-        Input_Item item("td_supersine_freq");
+        Input_Item item("td_supsine_freq");
         item.annotation = "carrier frequency of the supersine pulse";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Vector of Real";
@@ -647,13 +647,13 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.unit = "1/fs";
         item.availability = "td_ttype contains 4";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            parse_expression(item.str_values, para.input.td_supersine_freq);
+            parse_expression(item.str_values, para.input.td_supsine_freq);
         };
-        sync_doublevec(input.td_supersine_freq, para.input.td_supersine_freq.size(), 0.0);
+        sync_doublevec(input.td_supsine_freq, para.input.td_supsine_freq.size(), 0.0);
         this->add_item(item);
     }
     {
-        Input_Item item("td_supersine_phase");
+        Input_Item item("td_supsine_phase");
         item.annotation = "carrier phase at the center of the supersine pulse";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Vector of Real";
@@ -662,13 +662,13 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.unit = "rad";
         item.availability = "td_ttype contains 4";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            parse_expression(item.str_values, para.input.td_supersine_phase);
+            parse_expression(item.str_values, para.input.td_supsine_phase);
         };
-        sync_doublevec(input.td_supersine_phase, para.input.td_supersine_phase.size(), 0.0);
+        sync_doublevec(input.td_supsine_phase, para.input.td_supsine_phase.size(), 0.0);
         this->add_item(item);
     }
     {
-        Input_Item item("td_supersine_sigma");
+        Input_Item item("td_supsine_sigma");
         item.annotation = "shape parameter of the supersine envelope";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Vector of Real";
@@ -677,45 +677,45 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.unit = "";
         item.availability = "td_ttype contains 4";
         item.read_value = [](const Input_Item& item, Parameter& para) {
-            parse_expression(item.str_values, para.input.td_supersine_sigma);
+            parse_expression(item.str_values, para.input.td_supsine_sigma);
         };
-        sync_doublevec(input.td_supersine_sigma, para.input.td_supersine_sigma.size(), 0.0);
+        sync_doublevec(input.td_supsine_sigma, para.input.td_supsine_sigma.size(), 0.0);
         this->add_item(item);
     }
     {
-        Input_Item item("td_supersine_tstart");
+        Input_Item item("td_supsine_tstart");
         item.annotation = "start boundary step of the supersine pulse";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Vector of String";
-        item.description = R"(Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supersine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.)";
+        item.description = R"(Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supsine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.)";
         item.default_value = "default";
         item.unit = "";
         item.availability = "td_ttype contains 4";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_supersine_tstart = parse_supersine_steps(item, para.input.td_tstart);
+            para.input.td_supsine_tstart = parse_supersine_steps(item, para.input.td_tstart);
         };
         item.get_final_value = [](Input_Item& item, const Parameter&) {
             item.final_value << (item.is_read() ? longstring(item.str_values) : "default");
         };
-        add_intvec_bcast(input.td_supersine_tstart, para.input.td_supersine_tstart.size(), 0);
+        add_intvec_bcast(input.td_supsine_tstart, para.input.td_supsine_tstart.size(), 0);
         this->add_item(item);
     }
     {
-        Input_Item item("td_supersine_tend");
+        Input_Item item("td_supsine_tend");
         item.annotation = "end boundary step of the supersine pulse";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Vector of String";
-        item.description = R"(Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supersine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.)";
+        item.description = R"(Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.)";
         item.default_value = "default";
         item.unit = "";
         item.availability = "td_ttype contains 4";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            para.input.td_supersine_tend = parse_supersine_steps(item, para.input.td_tend);
+            para.input.td_supsine_tend = parse_supersine_steps(item, para.input.td_tend);
         };
         item.get_final_value = [](Input_Item& item, const Parameter&) {
             item.final_value << (item.is_read() ? longstring(item.str_values) : "default");
         };
-        add_intvec_bcast(input.td_supersine_tend, para.input.td_supersine_tend.size(), 0);
+        add_intvec_bcast(input.td_supsine_tend, para.input.td_supsine_tend.size(), 0);
         this->add_item(item);
     }
     {

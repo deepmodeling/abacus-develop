@@ -29,9 +29,9 @@ td_trigo_amp            0.015 -0.018
 td_heavi_t0             3 5
 td_heavi_amp            0.01 -0.012
 
-td_supersine_amp        0.05 -0.04
-td_supersine_freq       0.7 -1.0
-td_supersine_phase      0.2 -0.5
-td_supersine_sigma      0.75 1.20
-td_supersine_tstart     default 2
-td_supersine_tend       5 default
+td_supsine_amp          0.05 -0.04
+td_supsine_freq         0.7 -1.0
+td_supsine_phase        0.2 -0.5
+td_supsine_sigma        0.75 1.20
+td_supsine_tstart       default 2
+td_supsine_tend         5 default

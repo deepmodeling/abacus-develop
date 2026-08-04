@@ -424,14 +424,14 @@ std::shared_ptr<TDFieldManager> create_td_field_manager(const Input_para& input)
         }
         else if (field_type == 4)
         {
-            const double omega = angular_frequency(input.td_supersine_freq.at(occurrence));
+            const double omega = angular_frequency(input.td_supsine_freq.at(occurrence));
             subdivisions = integration_subdivisions(omega, dt, input.td_stype);
             profile.reset(new TDSupersineProfile(omega,
-                                                 input.td_supersine_phase.at(occurrence),
-                                                 input.td_supersine_sigma.at(occurrence),
-                                                 input.td_supersine_tstart.at(occurrence),
-                                                 input.td_supersine_tend.at(occurrence),
-                                                 field_amplitude(input.td_supersine_amp.at(occurrence)),
+                                                 input.td_supsine_phase.at(occurrence),
+                                                 input.td_supsine_sigma.at(occurrence),
+                                                 input.td_supsine_tstart.at(occurrence),
+                                                 input.td_supsine_tend.at(occurrence),
+                                                 field_amplitude(input.td_supsine_amp.at(occurrence)),
                                                  dt));
         }
 

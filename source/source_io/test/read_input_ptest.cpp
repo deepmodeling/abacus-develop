@@ -340,8 +340,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_THAT(param.inp.td_trigo_amp, testing::ElementsAre(2.74));
     EXPECT_THAT(param.inp.td_heavi_t0, testing::ElementsAre(100.0));
     EXPECT_THAT(param.inp.td_heavi_amp, testing::ElementsAre(1.0));
-    EXPECT_THAT(param.inp.td_supersine_tstart, testing::ElementsAre(1));
-    EXPECT_THAT(param.inp.td_supersine_tend, testing::ElementsAre(1000));
+    EXPECT_THAT(param.inp.td_supsine_tstart, testing::ElementsAre(1));
+    EXPECT_THAT(param.inp.td_supsine_tend, testing::ElementsAre(1000));
 
     EXPECT_EQ(param.inp.out_dipole, 0);
     EXPECT_EQ(param.inp.out_efield, 0);
@@ -476,10 +476,10 @@ TEST_F(InputParaTest, TypedTDFieldLists)
     EXPECT_THAT(param.inp.td_trigo_amp, testing::ElementsAre(0.015, -0.018));
     EXPECT_THAT(param.inp.td_heavi_t0, testing::ElementsAre(3.0, 5.0));
     EXPECT_THAT(param.inp.td_heavi_amp, testing::ElementsAre(0.01, -0.012));
-    EXPECT_THAT(param.inp.td_supersine_freq, testing::ElementsAre(0.7, -1.0));
-    EXPECT_THAT(param.inp.td_supersine_amp, testing::ElementsAre(0.05, -0.04));
-    EXPECT_THAT(param.inp.td_supersine_tstart, testing::ElementsAre(0, 2));
-    EXPECT_THAT(param.inp.td_supersine_tend, testing::ElementsAre(5, 6));
+    EXPECT_THAT(param.inp.td_supsine_freq, testing::ElementsAre(0.7, -1.0));
+    EXPECT_THAT(param.inp.td_supsine_amp, testing::ElementsAre(0.05, -0.04));
+    EXPECT_THAT(param.inp.td_supsine_tstart, testing::ElementsAre(0, 2));
+    EXPECT_THAT(param.inp.td_supsine_tend, testing::ElementsAre(5, 6));
 }
 
 TEST_F(InputParaTest, TDFieldStructureErrors)

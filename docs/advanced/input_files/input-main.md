@@ -476,12 +476,12 @@
     - [td\_trigo\_amp](#td_trigo_amp)
     - [td\_heavi\_t0](#td_heavi_t0)
     - [td\_heavi\_amp](#td_heavi_amp)
-    - [td\_supersine\_amp](#td_supersine_amp)
-    - [td\_supersine\_freq](#td_supersine_freq)
-    - [td\_supersine\_phase](#td_supersine_phase)
-    - [td\_supersine\_sigma](#td_supersine_sigma)
-    - [td\_supersine\_tstart](#td_supersine_tstart)
-    - [td\_supersine\_tend](#td_supersine_tend)
+    - [td\_supsine\_amp](#td_supsine_amp)
+    - [td\_supsine\_freq](#td_supsine_freq)
+    - [td\_supsine\_phase](#td_supsine_phase)
+    - [td\_supsine\_sigma](#td_supsine_sigma)
+    - [td\_supsine\_tstart](#td_supsine_tstart)
+    - [td\_supsine\_tend](#td_supsine_tend)
     - [init\_vecpot\_file](#init_vecpot_file)
     - [ocp](#ocp)
     - [ocp\_set](#ocp_set)
@@ -4387,7 +4387,7 @@
 - **Default**: 1.0
 - **Unit**: V/Angstrom
 
-### td_supersine_amp
+### td_supsine_amp
 
 - **Type**: Vector of Real
 - **Availability**: *td_ttype contains 4*
@@ -4395,7 +4395,7 @@
 - **Default**: 0.27
 - **Unit**: V/Angstrom
 
-### td_supersine_freq
+### td_supsine_freq
 
 - **Type**: Vector of Real
 - **Availability**: *td_ttype contains 4*
@@ -4403,7 +4403,7 @@
 - **Default**: 0.18737028625
 - **Unit**: 1/fs
 
-### td_supersine_phase
+### td_supsine_phase
 
 - **Type**: Vector of Real
 - **Availability**: *td_ttype contains 4*
@@ -4411,25 +4411,25 @@
 - **Default**: 0.0
 - **Unit**: rad
 
-### td_supersine_sigma
+### td_supsine_sigma
 
 - **Type**: Vector of Real
 - **Availability**: *td_ttype contains 4*
 - **Description**: Dimensionless shape parameter $\sigma$ of each supersine envelope. It must satisfy $0\lt\sigma\lt\pi/2$ so that the electric field approaches zero at the pulse boundaries. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
 - **Default**: 0.75
 
-### td_supersine_tstart
+### td_supsine_tstart
 
 - **Type**: Vector of String
 - **Availability**: *td_ttype contains 4*
-- **Description**: Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supersine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
+- **Description**: Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supsine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
 - **Default**: default
 
-### td_supersine_tend
+### td_supsine_tend
 
 - **Type**: Vector of String
 - **Availability**: *td_ttype contains 4*
-- **Description**: Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supersine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
+- **Description**: Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
 - **Default**: default
 
 ### init_vecpot_file

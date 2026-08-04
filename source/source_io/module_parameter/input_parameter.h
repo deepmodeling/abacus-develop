@@ -354,12 +354,12 @@ struct Input_para
     std::vector<double> td_heavi_amp = {1.0}; // V/A
 
     // Supersine
-    std::vector<double> td_supersine_amp = {0.27};           ///< V/A
-    std::vector<double> td_supersine_freq = {0.18737028625}; ///< time(fs)^-1
-    std::vector<double> td_supersine_phase = {0.0};          ///< rad
-    std::vector<double> td_supersine_sigma = {0.75};
-    std::vector<int> td_supersine_tstart = {1};
-    std::vector<int> td_supersine_tend = {1000};
+    std::vector<double> td_supsine_amp = {0.27};           ///< V/A
+    std::vector<double> td_supsine_freq = {0.18737028625}; ///< time(fs)^-1
+    std::vector<double> td_supsine_phase = {0.0};          ///< rad
+    std::vector<double> td_supsine_sigma = {0.75};
+    std::vector<int> td_supsine_tstart = {1};
+    std::vector<int> td_supsine_tend = {1000};
 
     bool ocp = false;
     // std::string ocp_set = "";
