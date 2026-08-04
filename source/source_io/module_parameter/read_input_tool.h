@@ -182,7 +182,7 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
         if (first_star_pos == std::string::npos)
         {
             std::istringstream value_stream(expr);
-            T T_value;
+            T T_value{};
             if (!(value_stream >> T_value) || !value_stream.eof())
             {
                 throw std::runtime_error("Invalid expression value: " + expr);
@@ -197,13 +197,13 @@ void parse_expression(const std::vector<std::string>& expressions, std::vector<T
             std::string T_part = expr.substr(first_star_pos + 1);
 
             std::istringstream count_stream(int_part);
-            int num;
+            int num = 0;
             if (!(count_stream >> num) || !count_stream.eof() || num < 0)
             {
                 throw std::runtime_error("Invalid expression count: " + int_part);
             }
             std::istringstream value_stream(T_part);
-            T T_value;
+            T T_value{};
             if (!(value_stream >> T_value) || !value_stream.eof())
             {
                 throw std::runtime_error("Invalid expression value: " + T_part);
