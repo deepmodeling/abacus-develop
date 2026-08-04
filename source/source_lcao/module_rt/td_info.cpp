@@ -1,7 +1,9 @@
 #include "td_info.h"
 
+#include "source_base/global_variable.h"
 #include "source_base/libm/libm.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_io/module_efield/td_vector_pot_io.h"
 #include "source_io/module_parameter/parameter.h"
 
 bool TD_info::out_mat_R = false;
@@ -23,7 +25,8 @@ TD_info::TD_info(const UnitCell* ucell_in, const Parallel_Orbitals& pv, const LC
 {
     if (init_vecpot_file && istep == -1)
     {
-        this->read_cart_At();
+        At_from_file = ModuleIO::read_td_vector_pot("");
+        max_istep = At_from_file.size() - 1;
     }
     // read in restart step
     if (PARAM.inp.mdp.md_restart)
@@ -67,38 +70,6 @@ TD_info::~TD_info()
     }
 }
 
-void TD_info::output_cart_At(const std::string& out_dir)
-{
-    if (GlobalV::MY_RANK == 0)
-    {
-        std::string out_file;
-        // generate the output file name
-        out_file = out_dir + "At.txt";
-        std::ofstream ofs;
-        // output title
-        if (istep == estep_shift)
-        {
-            ofs.open(out_file.c_str(), std::ofstream::out);
-            ofs << std::left << std::setw(8) << "#istep" << std::setw(15) << "A_x" << std::setw(15) << "A_y" << std::setw(15) << "A_z"
-                << std::endl;
-        }
-        else
-        {
-            ofs.open(out_file.c_str(), std::ofstream::app);
-        }
-        // output the vector potential
-        ofs << std::left << std::setw(8) << istep + 1;
-        // divide by 2.0 to get the atomic unit
-        for (int i = 0; i < 3; i++)
-        {
-            ofs << std::scientific << std::setprecision(4) << std::setw(15) << cart_At[i];
-        }
-        ofs << std::endl;
-        ofs.close();
-    }
-    return;
-}
-
 void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
 {
     istep++;
@@ -112,9 +83,9 @@ void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
         cart_At = At / 2.0;
     }
     // output the vector potential if needed
-    if (out_vecpot == true)
+    if (out_vecpot && GlobalV::MY_RANK == 0)
     {
-        this->output_cart_At(PARAM.globalv.global_out_dir);
+        ModuleIO::write_td_vector_pot(PARAM.globalv.global_out_dir, istep, cart_At);
     }
     // update hybrid gauge phase
     if (elecstate::H_TDDFT_pw::stype == 2)
@@ -131,56 +102,6 @@ void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
     }
 }
 
-void TD_info::read_cart_At(void)
-{
-    std::string in_file;
-    // generate the input file name
-    in_file = "At.txt";
-    std::ifstream ifs(in_file.c_str());
-    // check if the file is exist
-    if (!ifs)
-    {
-        ModuleBase::WARNING_QUIT("TD_info::read_cart_At", "Cannot open vector-potential file At.txt!");
-    }
-    std::string line;
-    std::vector<std::string> str_vec;
-    // use tmp to skip the istep number
-    int tmp = 0;
-    while (std::getline(ifs, line))
-    {
-        // A tmporary vector3 to store the data of this line
-        ModuleBase::Vector3<double> At;
-        if (line[0] == '#')
-        {
-            continue;
-        }
-        std::istringstream iss(line);
-        // skip the istep number
-        if (!(iss >> tmp))
-        {
-            ModuleBase::WARNING_QUIT("TD_info::read_cart_At", "Error reading istep!");
-        }
-        // read the vector potential
-        double component = 0;
-        // Read three components
-        for (int i = 0; i < 3; i++)
-        {
-            if (!(iss >> component))
-            {
-                ModuleBase::WARNING_QUIT("TD_info::read_cart_At",
-                                         "Error reading component " + std::to_string(i + 1) + " for istep " + std::to_string(tmp) + "!");
-            }
-            At[i] = component;
-        }
-        // add the tmporary vector3 to the vector potential vector
-        At_from_file.push_back(At);
-    }
-    // set the max_istep
-    max_istep = At_from_file.size() - 1;
-    ifs.close();
-
-    return;
-}
 void TD_info::out_restart_info(const int nstep,
                                const ModuleBase::Vector3<double>& At_current,
                                const ModuleBase::Vector3<double>& At_laststep)

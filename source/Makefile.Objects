@@ -69,6 +69,7 @@ VPATH=./src_global:\
 ./src_ri:\
 ./source_lcao/module_ri:\
 ./source_io/module_parameter:\
+./source_io/module_efield:\
 ./source_lcao/module_lr:\
 ./source_lcao/module_lr/ao_to_mo_transformer:\
 ./source_lcao/module_lr/dm_trans:\
@@ -578,6 +579,8 @@ OBJS_IO=module_parameter/input_conv.o\
     write_init.o\
     td_current_io.o\
     td_current_io_comm.o\
+    td_efield_io.o\
+    td_vector_pot_io.o\
     write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\

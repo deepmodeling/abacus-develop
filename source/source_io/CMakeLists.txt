@@ -38,6 +38,7 @@ list(APPEND objects
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
     module_efield/td_efield_io.cpp
+    module_efield/td_vector_pot_io.cpp
     module_chgpot/write_libxc_r.cpp
     module_output/output_log.cpp
     module_json/para_json.cpp

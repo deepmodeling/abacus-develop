@@ -795,7 +795,7 @@ fi
 # Check vector potential in rt-TDDFT
 #--------------------------------------------
 if ! test -z "$out_vecpot" && [ "$out_vecpot" == 1 ]; then
-	record_compare_result "$1" "CompareAt_pass" "At.txt.ref" "OUT.autotest/At.txt" 8
+	record_compare_result "$1" "CompareVectorPot_pass" "vector_pot.txt.ref" "OUT.autotest/vector_pot.txt" 8
 fi
 
 #--------------------------------------------

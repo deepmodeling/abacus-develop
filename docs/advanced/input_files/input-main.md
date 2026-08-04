@@ -4436,7 +4436,7 @@
 
 - **Type**: Boolean
 - **Description**: Selects the source of the Cartesian vector potential used by LCAO RT-TDDFT.
-  - True: Read At.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in atomic units. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
+  - True: Read vector_pot.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in atomic units. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
   - False: Obtain the vector potential by integrating the configured electric field.
 - **Default**: False
 
@@ -4497,8 +4497,8 @@
 
 - **Type**: Boolean
 - **Availability**: *basis_type==lcao and esolver_type==tddft*
-- **Description**: Controls Cartesian vector-potential output for LCAO RT-TDDFT.
-  - True: Write OUT.{suffix}/At.txt. Its four columns are the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in atomic units.
+- **Description**: Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in atomic units. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
+  - True: Write vector-potential samples on electronic propagation steps.
   - False: Do not output the vector potential.
 - **Default**: False
 

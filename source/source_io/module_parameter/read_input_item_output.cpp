@@ -1673,8 +1673,8 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output TDDFT vector potential or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Boolean";
-        item.description = R"(Controls Cartesian vector-potential output for LCAO RT-TDDFT.
-* True: Write OUT.{suffix}/At.txt. Its four columns are the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in atomic units.
+        item.description = R"(Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in atomic units. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
+* True: Write vector-potential samples on electronic propagation steps.
 * False: Do not output the vector potential.)";
         item.default_value = "False";
         item.unit = "";

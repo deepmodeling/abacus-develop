@@ -724,7 +724,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Boolean";
         item.description = R"(Selects the source of the Cartesian vector potential used by LCAO RT-TDDFT.
-* True: Read At.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in atomic units. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
+* True: Read vector_pot.txt from the calculation working directory. Each non-comment line must contain four columns: a conventionally one-based electronic-step label followed by $A_x$, $A_y$, and $A_z$ in atomic units. Rows are consumed sequentially; the first column is read as a label and is not used for lookup. If propagation continues beyond the available rows, the last row is reused.
 * False: Obtain the vector potential by integrating the configured electric field.)";
         item.default_value = "False";
         item.unit = "";
@@ -770,8 +770,6 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         add_doublevec_bcast(input.ocp_kb, para.input.ocp_kb.size(), 0.0);
         this->add_item(item);
     }
-
-
 }
 void ReadInput::item_tdofdft()
 {

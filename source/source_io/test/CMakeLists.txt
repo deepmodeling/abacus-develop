@@ -41,6 +41,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_IO_td_vector_pot_io_test
+  LIBS parameter base device
+  SOURCES td_vector_pot_io_test.cpp ../module_efield/td_vector_pot_io.cpp
+)
+
+AddTest(
   TARGET MODULE_IO_binstream_test
   SOURCES binstream_test.cpp ../module_output/binstream.cpp
 )

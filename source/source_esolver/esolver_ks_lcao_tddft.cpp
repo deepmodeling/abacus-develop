@@ -7,6 +7,7 @@
 #include "source_base/global_variable.h"
 #include "source_io/module_ctrl/ctrl_output_td.h"
 #include "source_io/module_efield/td_efield_io.h"
+#include "source_io/module_efield/td_vector_pot_io.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_wf/read_wfc_nao.h"
@@ -88,6 +89,10 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
     if (inp.out_efield && GlobalV::MY_RANK == 0)
     {
         ModuleIO::prepare_td_field_output(PARAM.globalv.global_out_dir, td_field_manager_->fields().size(), inp.mdp.md_restart);
+    }
+    if (inp.out_vecpot && GlobalV::MY_RANK == 0)
+    {
+        ModuleIO::prepare_td_vector_pot_output(PARAM.globalv.global_out_dir, inp.mdp.md_restart);
     }
     elecstate::H_TDDFT_pw::sync_compatibility_state(*td_field_manager_);
 
