@@ -54,7 +54,7 @@ void FFT_Bundle::initfft(int nx_in,
         {
             double_flag = true;
         }
-#if not defined(__ENABLE_FLOAT_FFTW)
+#if not defined(__FLOAT_FFTW)
         if (this->device == "cpu")
         {
             ModuleBase::WARNING_QUIT("FFT_Bundle", "Please enable float fftw in the cmake to use float fft");

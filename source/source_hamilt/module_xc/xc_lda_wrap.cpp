@@ -5,9 +5,9 @@
 // 2. xc_spin, which is the spin polarized counterpart of xc
 // 3. xc_spin_libxc, which is the wrapper for LDA functional, spin polarized
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include <xc_funcs.h>
-#endif	// ifdef USE_LIBXC
+#endif	// ifdef __LIBXC
 
 #include "xc_functional.h"
 #include <stdexcept>

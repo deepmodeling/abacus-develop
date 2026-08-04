@@ -5,6 +5,7 @@
 #include "source_basis/module_ao/ORB_read.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/cell_index.h"
+#include "source_cell/cell_tools.h"
 #include "source_cell/klist.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
@@ -36,8 +37,9 @@ void cal_mag(Parallel_Orbitals* pv,
     if (PARAM.inp.out_mul)
     {
         auto cell_index
-            = CellIndex(ucell.get_atomLabels(),
-			ucell.get_atomCounts(), ucell.get_lnchiCounts(), PARAM.inp.nspin);
+            = CellIndex(unitcell::get_atomLabels(ucell.atoms, ucell.ntype),
+			unitcell::get_atomCounts(ucell.atoms, ucell.ntype),
+			unitcell::get_lnchiCounts(ucell.atoms, ucell.ntype), PARAM.inp.nspin);
         auto out_s_k = ModuleIO::Output_Sk<TK>(p_ham, pv, PARAM.inp.nspin, kv.get_nks());
         auto out_dm_k = ModuleIO::Output_DMK<TK>(dm, pv, PARAM.inp.nspin, kv.get_nks());
 
@@ -61,7 +63,7 @@ void cal_mag(Parallel_Orbitals* pv,
         std::vector<double> mag_x(ucell.nat, 0.0);
         std::vector<double> mag_y(ucell.nat, 0.0);
         std::vector<double> mag_z(ucell.nat, 0.0);
-        auto atomLabels = ucell.get_atomLabels();
+        auto atomLabels = unitcell::get_atomLabels(ucell.atoms, ucell.ntype);
 
         if(PARAM.inp.nspin == 2)
         {

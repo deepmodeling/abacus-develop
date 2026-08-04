@@ -9,7 +9,7 @@
 #include "source_base/mathzone.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
-#include "source_estate/cal_ux.h"
+#include "source_cell/cal_ux.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
@@ -22,7 +22,7 @@
 #endif
 
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 
@@ -63,7 +63,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 #endif
     if (XC_Functional::get_ked_flag())
     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         const auto etxc_vtxc_v
             = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rho_basis->nrxx, ucell_in.omega, ucell_in.tpiba, chr,
                                              PARAM.inp.nspin, hybrid_alpha, hse_omega);
@@ -77,7 +77,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     else
     {
-        elecstate::cal_ux(ucell_in, PARAM.inp.nspin);
+        unitcell::cal_ux(ucell_in, PARAM.inp.nspin);
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell_in,
                                               PARAM.inp.nspin,
                                               PARAM.globalv.domag,

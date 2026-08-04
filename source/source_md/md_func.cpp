@@ -387,7 +387,7 @@ void dump_info(const int& step,
     {
         for (int ia = 0; ia < unit_in.atoms[it].na; ++ia)
         {
-            ofs << "  " << index << "  " << unit_in.atom_label[it] << "  " << unit_in.atoms[it].tau[ia].x * unit_pos
+            ofs << "  " << index << "  " << unit_in.atoms[it].label << "  " << unit_in.atoms[it].tau[ia].x * unit_pos
                 << "  " << unit_in.atoms[it].tau[ia].y * unit_pos << "  " << unit_in.atoms[it].tau[ia].z * unit_pos;
 
             if (param_in.mdp.dump_force)

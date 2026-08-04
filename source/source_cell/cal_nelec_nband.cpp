@@ -1,3 +1,7 @@
+/**
+ * @file cal_nelec_nband.cpp
+ * @brief Implementation of electron and band calculation functions.
+ */
 #include "cal_nelec_nband.h"
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"

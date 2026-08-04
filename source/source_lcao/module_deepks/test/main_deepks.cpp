@@ -27,6 +27,10 @@
 #error "DEEPKS_UT_RUNNER must be defined by CMake."
 #endif
 
+#ifndef DEEPKS_UT_MODERN_ORBITAL_READER
+#define DEEPKS_UT_MODERN_ORBITAL_READER 0
+#endif
+
 template <typename T>
 void DEEPKS_UT_RUNNER(test_deepks<T>& test);
 
@@ -71,7 +75,7 @@ template <typename T>
 void run_typed_check()
 {
     test_deepks<T> test;
-    test.preparation();
+    test.preparation(DEEPKS_UT_MODERN_ORBITAL_READER != 0);
     if (testing::Test::HasFatalFailure())
     {
         return;

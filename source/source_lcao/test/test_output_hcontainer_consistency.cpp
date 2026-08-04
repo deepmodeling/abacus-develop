@@ -8,9 +8,9 @@
 #include <sys/stat.h>
 
 #define private public
-#include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
-#include "source_lcao/module_hcontainer/read_hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
+#include "source_hamilt/module_hcontainer/read_hcontainer.h"
 #undef private
 
 #include "source_cell/unitcell.h"

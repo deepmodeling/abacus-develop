@@ -216,32 +216,38 @@ TEST_F(NHC_test, print_md)
     std::ifstream ifs("running_nhchain.log");
     std::string output_str;
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.83853919 kbar"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.838539188441"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391 kbar"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0846391"));
     getline(ifs, output_str);
-    getline(ifs, output_str);
-    EXPECT_THAT(
-        output_str,
-        testing::HasSubstr(
-            " ------------------------------------------------------------------------------------------------"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
+            " ----------------------------------------"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " -0.015365236        -0.023915637        0.0085504016        300                 1.0846391           "));
+            " Energy (Ry)             Potential (Ry)          Kinetic (Ry)            "));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0153652356062"));
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0239156372471"));
+    EXPECT_THAT(output_str, testing::HasSubstr("0.00855040164087"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " ------------------------------------------------------------------------------------------------"));
+            " Temperature (K)         Pressure (kbar)         "));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("1.08464"));
+    getline(ifs, output_str);
+    EXPECT_THAT(
+        output_str,
+        testing::HasSubstr(
+            " ----------------------------------------"));
     ifs.close();
     //remove("running_nhchain.log");
 }

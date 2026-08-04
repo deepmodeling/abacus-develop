@@ -9,7 +9,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "xc_functional.h"
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "libxc_abacus.h"
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
@@ -31,7 +31,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
 
     if (use_libxc)
     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         return XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(),
                                                nrxx,
                                                ucell->omega,
@@ -144,7 +144,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
 
                 if(use_libxc)
                 {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
                     double rhoup = arhox * (1.0+zeta) / 2.0;
                     double rhodw = arhox * (1.0-zeta) / 2.0;
                     XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), rhoup, rhodw, exc, vxc[0], vxc[1], hybrid_alpha, hse_omega);

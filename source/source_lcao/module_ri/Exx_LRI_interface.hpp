@@ -9,6 +9,7 @@
 #include "source_io/module_output/csr_reader.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"
+#include "source_io/module_restart/restart_exx_csr.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_ri/exx_abfs-jle.h"
 
@@ -114,7 +115,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_before_all_runners(
 {
     ModuleBase::TITLE("Exx_LRI_Interface","exx_before_all_runners");
     // initialize the rotation matrix in AO representation
-    this->exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
+    this->exx_spacegroup_symmetry = (ModuleSymmetry::Symmetry::symm_flag == 1);
     if (this->exx_spacegroup_symmetry)
     {
         const std::array<int, 3>& period = RI_Util::get_Born_vonKarmen_period(kv);
@@ -164,6 +165,10 @@ void Exx_LRI_Interface<T, Tdata>::exx_beforescf(const int istep,
         else
             { this->mix_DMk_2D.set_mixing(chgmix.get_mixing()); }
 
+        // remember chgmix so exx_eachiterinit can re-borrow its mixing pointer after
+        // mixing_restart's init_mixing() has reallocated it (else use-after-free -> SIGSEGV)
+        this->p_chgmix_ = &chgmix;
+
         // for exx two_level scf
         this->two_level_step = 0;
     }
@@ -190,7 +195,21 @@ void Exx_LRI_Interface<T, Tdata>::exx_eachiterinit(const int istep,
                 && iter == 1)
            )  // the first iter in separate loop case
         {
-            const bool flag_restart = (iter == 1) ? true : false;
+            bool flag_restart = (iter == 1) ? true : false;
+
+            // the non-separate-loop DM mixer borrows chgmix's mixing object; mixing_restart may
+            // have freed+reallocated it (Charge_Mixing::init_mixing), so re-borrow the live pointer.
+            // if it changed, the borrowed engine's history was wiped -> the DM mixer must also
+            // restart this iter (reset its per-k mixing_data), else fresh-engine + stale-history is
+            // inconsistent and the 2nd SCF diverges.
+            if (!this->info_global.separate_loop && this->p_chgmix_ != nullptr)
+            {
+                const void* cur_mixing = static_cast<const void*>(this->p_chgmix_->get_mixing());
+                if (this->last_borrowed_mixing_ != nullptr && cur_mixing != this->last_borrowed_mixing_)
+                    { flag_restart = true; }   
+                this->last_borrowed_mixing_ = cur_mixing;
+                this->mix_DMk_2D.set_mixing(this->p_chgmix_->get_mixing());
+            }
 
             auto cal = [this, &ucell,&kv, &flag_restart](const elecstate::DensityMatrix<T, double>& dm_in)
             {

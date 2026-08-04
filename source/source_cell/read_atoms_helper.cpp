@@ -5,6 +5,7 @@
 #include "read_stru.h"
 #include "print_cell.h"
 #include "read_orb.h"
+#include "cell_tools.h"
 #include <cmath>
 #include <iostream>
 #include <sstream>
@@ -47,7 +48,7 @@ bool validate_coordinate_system(const std::string& Coordinate,
     return true;
 }
 
-void allocate_atom_properties(Atom& atom, int na, double mass)
+void allocate_atom_properties(Atom& atom, int na)
 {
     atom.tau.resize(na, ModuleBase::Vector3<double>(0,0,0));
     atom.dis.resize(na, ModuleBase::Vector3<double>(0,0,0));
@@ -61,7 +62,6 @@ void allocate_atom_properties(Atom& atom, int na, double mass)
     atom.m_loc_.resize(na, ModuleBase::Vector3<double>(0,0,0));
     atom.lambda.resize(na, ModuleBase::Vector3<double>(0,0,0));
     atom.constrain.resize(na, ModuleBase::Vector3<int>(0,0,0));
-    atom.mass = mass;
 }
 
 void set_atom_movement_flags(Atom& atom, int ia,
@@ -138,7 +138,7 @@ bool finalize_atom_positions(UnitCell& ucell,
                              const std::string& esolver_type)
 {
     // Check if any atom can move in MD
-    if(!ucell.if_atoms_can_move() && calculation=="md" && esolver_type!="tddft")
+    if(!unitcell::if_atoms_can_move(ucell.atoms, ucell.ntype) && calculation=="md" && esolver_type!="tddft")
     {
         ModuleBase::WARNING("read_atoms", "no atoms can move in MD simulations!");
         return false;
@@ -502,13 +502,14 @@ bool read_atom_type_header(int it, UnitCell& ucell,
     // (1) read in atom label
     // start magnetization
     //=======================================
+    const std::string label_from_species = ucell.atoms[it].label;
     ModuleBase::GlobalFunc::READ_VALUE(ifpos, ucell.atoms[it].label);
 
-    if(ucell.atoms[it].label != ucell.atom_label[it])
+    if(ucell.atoms[it].label != label_from_species)
     {
         ofs_warning << " Label orders in ATOMIC_POSITIONS and ATOMIC_SPECIES sections do not match!" << std::endl;
         ofs_warning << " Label read from ATOMIC_POSITIONS is " << ucell.atoms[it].label << std::endl;
-        ofs_warning << " Label from ATOMIC_SPECIES is " << ucell.atom_label[it] << std::endl;
+        ofs_warning << " Label from ATOMIC_SPECIES is " << label_from_species << std::endl;
         return false;
     }
     ModuleBase::GlobalFunc::OUT(ofs_running, "Atom label", ucell.atoms[it].label);

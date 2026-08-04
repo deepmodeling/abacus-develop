@@ -41,7 +41,7 @@ void UnitCell::set_iat2iwt(const int& npol_in) {
 
 // mock of OperatorLCAO
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 
 /* template<typename FPTYPE, typename Device>
 hamilt::Operator<FPTYPE, Device>::Operator(){}

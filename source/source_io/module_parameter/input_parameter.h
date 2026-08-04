@@ -69,7 +69,7 @@ struct Input_para
     std::string kmesh_type = "gamma";               ///< k-point mesh type for kspacing-generated k-point mesh: gamma or mp
     double min_dist_coef = 0.2;                     ///< allowed minimum distance between two atoms
 
-    std::string device = "auto";
+    std::string device = "cpu";
     std::string precision = "double";
     std::string gint_precision = "double";
     bool timer_enable_nvtx = false;
@@ -155,8 +155,12 @@ struct Input_para
     //  int		bessel_nao_lmax;		///< lmax used in descriptor
 
     // ==============   #Parameters (4.Relaxation) ===========================
-    std::vector<std::string> relax_method = {"cg", "1"}; ///< methods to move_ion: sd, bfgs, cg...
-    bool relax_new = true;
+    std::vector<std::string> relax_method = {"cg", "2"}; ///< relaxation algorithm and optional variant
+
+    bool uses_simultaneous_relaxation() const
+    {
+        return relax_method.size() == 2 && relax_method[0] == "cg" && relax_method[1] == "2";
+    }
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;
     int relax_nmax = -1;       ///< number of max ionic iter
@@ -373,7 +377,8 @@ struct Input_para
     std::vector<int> aims_nbasis
         = {}; ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
     // ==============   #Parameters (11.Output) ===========================
-    bool out_stru = false;                ///< outut stru file each ion step
+    int out_stru = 1;                     ///< output stru file each ion step
+                                          ///< 0: no output, 1: STRU format, 2: CIF format
     int out_freq_elec = 0;                ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                 ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                           ///< 0: output only when ion steps are finished
@@ -391,10 +396,13 @@ struct Input_para
     std::vector<int> out_dmr = {0, 8};    ///< output density matrix in real space DM(R)
     std::vector<int> out_dmk = {0, 8};    ///< output density matrix in reciprocal space DM(k)
     bool out_bandgap = false;             ///< QO added for bandgap printing
-    std::vector<int> out_mat_hs = {0, 8}; ///< output H matrix and S matrix in local basis.
+    std::vector<int> out_hsk = {0, 8};    ///< output H(k) and S(k): format and text precision
+    std::vector<int> out_hsr = {0, 8};    ///< output H(R) and S(R): format and text precision
+    bool out_hsr_npz_compat = false;       ///< additional NPZ output for the legacy text-plus-NPZ combination
+    std::vector<int> out_mat_hs = {0, 8}; ///< legacy alias for text H(k) and S(k) output
     std::vector<int> out_mat_tk = {0, 8}; ///< output T(k) matrix in local basis.
     std::vector<int> out_mat_l = {0, 8};  ///< output L matrix in local basis.
-    std::vector<int> out_mat_hs2 = {0, 8}; ///< output H(R) and S(R) matrix with precision
+    std::vector<int> out_mat_hs2 = {0, 8}; ///< legacy alias for text H(R) and S(R) output
     std::vector<int> out_mat_h_t = {0, 8};   ///< output kinetic energy T(R) matrix
     std::vector<int> out_mat_h_vnl = {0, 8}; ///< output nonlocal pseudopotential Vnl(R) matrix
     std::vector<int> out_mat_h_vl = {0, 8};  ///< output local pseudopotential Vl(R) matrix
@@ -722,14 +730,12 @@ struct Input_para
      * 
      * Likewise, the correlation part can be found in corresponding files.
      * 
-     * PBE functional is used as the default functional for XCPNet.
+     * These vectors are empty unless the user explicitly requests an
+     * override. This leaves the version-specific default parameters under
+     * Libxc's control.
      */
-    // src/gga_x_pbe.c
-    std::vector<double> xc_exch_ext = {
-        101, 0.8040, 0.2195149727645171}; 
-    // src/gga_c_pbe.c
-    std::vector<double> xc_corr_ext = {
-        130, 0.06672455060314922, 0.031090690869654895034, 1.00000}; 
+    std::vector<double> xc_exch_ext = {};
+    std::vector<double> xc_corr_ext = {};
 
     // ==============   #Parameters (24.td-ofdft) ===========================
     bool of_cd = false;          ///< add CD potential or not

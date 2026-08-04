@@ -1,3 +1,7 @@
+/**
+ * @file magnetism.cpp
+ * @brief Implementation of Magnetism class.
+ */
 #include "magnetism.h"
 #include "source_base/parallel_reduce.h"
 

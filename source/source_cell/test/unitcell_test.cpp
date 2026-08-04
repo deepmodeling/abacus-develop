@@ -1,10 +1,11 @@
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 
-#include "source_estate/cal_ux.h"
+#include "source_cell/cal_ux.h"
 #include "source_cell/read_orb.h"
 #include "source_cell/read_pseudo.h"
 #include "source_cell/read_stru.h"
+#include "source_cell/cell_tools.h"
 #include "source_cell/print_cell.h"
 #include "memory"
 #include "source_cell/read_stru.h"
@@ -36,13 +37,8 @@ Magnetism::~Magnetism()
  *   - Constructor:
  *     - UnitCell() and ~UnitCell()
  *   - Setup:
- *     - setup(): to set latname, ntype, lmaxmax, init_vel, and lc
+ *     - setup_from_input(): to set latname, ntype, lmaxmax, init_vel, and lc
  *     - if_cell_can_change(): judge if any lattice vector can change
- *   - SetupWarningQuit1:
- *     - setup(): deliver warning: "there are bugs in the old implementation;
- *         set relax_new to be 1 for fixed_volume relaxation"
- *   - SetupWarningQuit2:
- *     - setup(): deliver warning: "set relax_new to be 1 for fixed_shape relaxation"
  *   - RemakeCell
  *     - remake_cell(): rebuild cell according to its latName
  *   - RemakeCellWarnings
@@ -54,10 +50,6 @@ Magnetism::~Magnetism()
  *     - iat2iait(): depends on the above function, but can find both ia & it from iat
  *     - ijat2iaitjajt(): find ia, it, ja, jt from ijat (ijat_max = nat*nat)
  *         which collapses it, ia, jt, ja loop into a single loop
- *     - step_ia(): periodically set ia to 0 when ia reaches atom[it].na - 1
- *     - step_it(): periodically set it to 0 when it reaches ntype -1
- *     - step_iait(): return true only the above two conditions are true
- *     - step_jajtiait(): return ture only two of the above function (for i and j) are true
  *   - GetAtomCounts
  *     - get_atomCounts(): get atomCounts, which is a map from atom type to atom number
  *   - GetOrbitalCounts
@@ -78,7 +70,7 @@ Magnetism::~Magnetism()
  *   - PrintTauCartesian
  *     - print_tau(): print atomic coordinates, magmom and initial velocities
  *   - PrintUnitcellPseudo
- *     - Actually an integrated function to call UnitCell::print_cell and Atom::print_Atom
+ *     - Actually an integrated function to call unitcell::print_cell and Atom::print_Atom
  *   - UpdateVel
  *     - update_vel(const ModuleBase::Vector3<double>* vel_in)
  *   - CalUx
@@ -172,7 +164,7 @@ TEST_F(UcellTest, Setup)
     std::vector<std::string> fixed_axes_in = {"None", "volume", "shape", "a", "b", "c", "ab", "ac", "bc", "abc"};
     for (int i = 0; i < fixed_axes_in.size(); ++i)
     {
-        ucell->setup(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in[i]);
+        ucell->setup_from_input(latname_in, ntype_in, lmaxmax_in, init_vel_in, fixed_axes_in[i]);
         EXPECT_EQ(ucell->latName, latname_in);
         EXPECT_EQ(ucell->ntype, ntype_in);
         EXPECT_EQ(ucell->lmaxmax, lmaxmax_in);
@@ -182,63 +174,59 @@ TEST_F(UcellTest, Setup)
             EXPECT_EQ(ucell->lat_axis_free[0], 1);
             EXPECT_EQ(ucell->lat_axis_free[1], 1);
             EXPECT_EQ(ucell->lat_axis_free[2], 1);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "a")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 0);
             EXPECT_EQ(ucell->lat_axis_free[1], 1);
             EXPECT_EQ(ucell->lat_axis_free[2], 1);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "b")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 1);
             EXPECT_EQ(ucell->lat_axis_free[1], 0);
             EXPECT_EQ(ucell->lat_axis_free[2], 1);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "c")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 1);
             EXPECT_EQ(ucell->lat_axis_free[1], 1);
             EXPECT_EQ(ucell->lat_axis_free[2], 0);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "ab")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 0);
             EXPECT_EQ(ucell->lat_axis_free[1], 0);
             EXPECT_EQ(ucell->lat_axis_free[2], 1);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "ac")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 0);
             EXPECT_EQ(ucell->lat_axis_free[1], 1);
             EXPECT_EQ(ucell->lat_axis_free[2], 0);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "bc")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 1);
             EXPECT_EQ(ucell->lat_axis_free[1], 0);
             EXPECT_EQ(ucell->lat_axis_free[2], 0);
-            EXPECT_TRUE(ucell->if_cell_can_change());
+            EXPECT_TRUE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
         else if (fixed_axes_in[i] == "abc")
         {
             EXPECT_EQ(ucell->lat_axis_free[0], 0);
             EXPECT_EQ(ucell->lat_axis_free[1], 0);
             EXPECT_EQ(ucell->lat_axis_free[2], 0);
-            EXPECT_FALSE(ucell->if_cell_can_change());
+            EXPECT_FALSE(unitcell::if_cell_can_change(ucell->lat_axis_free));
         }
     }
 }
-
-// These tests are removed because fixed_axes="volume" and fixed_axes="shape"
-// are now supported with relax_new=false (see commit cdc3457f5a8546cda869655c3faabd8b29687aff)
-// The old implementation now properly handles these constraints via post-update enforcement
 
 TEST_F(UcellDeathTest, CompareAatomLabel)
 {
@@ -248,14 +236,14 @@ TEST_F(UcellDeathTest, CompareAatomLabel)
         = {"Ag", "47", "Silver", "Ag", "47", "Silver", "Ag", "47", "Silver", "Ag1", "ag", "ag_locpsp", "Ag"};
     for (int it = 0; it < 12; it++)
     {
-        ucell->compare_atom_labels(stru_label[it], pseudo_label[it]);
+        unitcell::compare_atom_labels(stru_label[it], pseudo_label[it]);
     }
     stru_label[0] = "Fe";
     pseudo_label[0] = "O";
     std::string atom_label_in_orbtial = "atom label in orbital file ";
     std::string mismatch_with_pseudo = " mismatch with pseudo file of ";
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(ucell->compare_atom_labels(stru_label[0], pseudo_label[0]), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(unitcell::compare_atom_labels(stru_label[0], pseudo_label[0]), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,
                 testing::HasSubstr(atom_label_in_orbtial + stru_label[0] + mismatch_with_pseudo + pseudo_label[0]));
@@ -555,7 +543,7 @@ TEST_F(UcellTest, JudgeParallel)
 {
     ModuleBase::Vector3<double> b(1.0, 1.0, 1.0);
     double a[3] = {1.0, 1.0, 1.0};
-    EXPECT_TRUE(elecstate::judge_parallel(a, b));
+    EXPECT_TRUE(unitcell::judge_parallel(a, b));
 }
 
 TEST_F(UcellTest, Index)
@@ -584,15 +572,11 @@ TEST_F(UcellTest, Index)
     int it_beg2;
     long long iat2 = ucell->nat + 1;
     EXPECT_FALSE(ucell->iat2iait(iat2, &ia_beg2, &it_beg2));
-    // test ijat2iaitjajt, step_jajtiait, step_iat, step_ia, step_it
+    // test ijat2iaitjajt
     int ia_test;
     int it_test;
     int ja_test;
     int jt_test;
-    int ia_test2 = 0;
-    int it_test2 = 0;
-    int ja_test2 = 0;
-    int jt_test2 = 0;
     long long ijat = 0;
     for (int it = 0; it < utp.natom.size(); ++it)
     {
@@ -608,15 +592,6 @@ TEST_F(UcellTest, Index)
                     EXPECT_EQ(ja_test, ja);
                     EXPECT_EQ(jt_test, jt);
                     ++ijat;
-                    if (it_test == utp.natom.size() - 1 && ia_test == utp.natom[it] - 1
-                        && jt_test == utp.natom.size() - 1 && ja_test == utp.natom[jt] - 1)
-                    {
-                        EXPECT_TRUE(ucell->step_jajtiait(&ja_test, &jt_test, &ia_test, &it_test));
-                    }
-                    else
-                    {
-                        EXPECT_FALSE(ucell->step_jajtiait(&ja_test, &jt_test, &ia_test, &it_test));
-                    }
                 }
             }
         }
@@ -633,7 +608,7 @@ TEST_F(UcellTest, GetAtomCounts)
     EXPECT_EQ(atomCounts[0], 1);
     EXPECT_EQ(atomCounts[1], 2);
     /// atomCounts as vector
-    std::vector<int> atomCounts2 = ucell->get_atomCounts();
+    std::vector<int> atomCounts2 = unitcell::get_atomCounts(ucell->atoms, ucell->ntype);
     EXPECT_EQ(atomCounts2[0], 1);
     EXPECT_EQ(atomCounts2[1], 2);
 }
@@ -663,7 +638,7 @@ TEST_F(UcellTest, GetLnchiCounts)
     EXPECT_EQ(LnchiCounts[1][1], 1);
     EXPECT_EQ(LnchiCounts[1][2], 1);
     /// LnchiCounts as vector
-    std::vector<std::vector<int>> LnchiCounts2 = ucell->get_lnchiCounts();
+    std::vector<std::vector<int>> LnchiCounts2 = unitcell::get_lnchiCounts(ucell->atoms, ucell->ntype);
     EXPECT_EQ(LnchiCounts2[0][0], 1);
     EXPECT_EQ(LnchiCounts2[0][1], 1);
     EXPECT_EQ(LnchiCounts2[0][2], 1);
@@ -736,7 +711,7 @@ TEST_F(UcellTest, SelectiveDynamics)
 {
     UcellTestPrepare utp = UcellTestLib["C1H2-SD"];
     ucell = utp.SetUcellInfo();
-    EXPECT_TRUE(ucell->if_atoms_can_move());
+    EXPECT_TRUE(unitcell::if_atoms_can_move(ucell->atoms, ucell->ntype));
 }
 
 
@@ -769,7 +744,7 @@ TEST_F(UcellTest, PrintCell)
     ucell = utp.SetUcellInfo();
     std::ofstream ofs;
     ofs.open("printcell.log");
-    ucell->print_cell(ofs);
+    unitcell::print_cell(*ucell, ofs);
     ofs.close();
     std::ifstream ifs;
     ifs.open("printcell.log");
@@ -828,7 +803,7 @@ TEST_F(UcellTest, PrintSTRU)
      *
      */
     unitcell::print_stru_file(*ucell,ucell->atoms,ucell->latvec,
-                              fn, 1, false, false, false, false, false, 0);
+                              fn, "", 1, false, false, false, false, false, 0);
     std::ifstream ifs;
     ifs.open("C1H2_STRU");
     std::string str((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
@@ -838,9 +813,9 @@ TEST_F(UcellTest, PrintSTRU)
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_CONSTANT"));
     EXPECT_THAT(str, testing::HasSubstr("1.8897261255"));
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_VECTORS"));
-    EXPECT_THAT(str, testing::HasSubstr("10.0000000000        0.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000       10.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000        0.0000000000       10.0000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("10.0000000000000000      0.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000     10.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000      0.0000000000000000     10.0000000000000000"));
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_POSITIONS"));
     EXPECT_THAT(str, testing::HasSubstr("Cartesian"));
     EXPECT_THAT(str, testing::HasSubstr("C #label"));
@@ -860,7 +835,7 @@ TEST_F(UcellTest, PrintSTRU)
      *
      */
     unitcell::print_stru_file(*ucell,ucell->atoms,ucell->latvec,
-                            fn, 2, true, true, false, false, false, 0);
+                            fn, "", 2, true, true, false, false, false, 0);
     ifs.open("C1H2_STRU");
     str = {(std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>()};
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_SPECIES"));
@@ -869,9 +844,9 @@ TEST_F(UcellTest, PrintSTRU)
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_CONSTANT"));
     EXPECT_THAT(str, testing::HasSubstr("1.8897261255"));
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_VECTORS"));
-    EXPECT_THAT(str, testing::HasSubstr("10.0000000000        0.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000       10.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000        0.0000000000       10.0000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("10.0000000000000000      0.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000     10.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000      0.0000000000000000     10.0000000000000000"));
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_POSITIONS"));
     EXPECT_THAT(str, testing::HasSubstr("Direct"));
     EXPECT_THAT(str, testing::HasSubstr("C #label"));
@@ -902,7 +877,7 @@ TEST_F(UcellTest, PrintSTRU)
     ucell->atom_mulliken
         = {{-1, 0.5}, {-1, 0.4}, {-1, 0.3}}; // first index is iat, the second is components, starts seems from 1
     unitcell::print_stru_file(*ucell,ucell->atoms,ucell->latvec,
-                            fn, 2, true, false, true, true, true, 0);
+                            fn, "", 2, true, false, true, true, true, 0);
     ifs.open("C1H2_STRU");
     str = {(std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>()};
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_SPECIES"));
@@ -916,9 +891,9 @@ TEST_F(UcellTest, PrintSTRU)
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_CONSTANT"));
     EXPECT_THAT(str, testing::HasSubstr("1.8897261255"));
     EXPECT_THAT(str, testing::HasSubstr("LATTICE_VECTORS"));
-    EXPECT_THAT(str, testing::HasSubstr("10.0000000000        0.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000       10.0000000000        0.0000000000"));
-    EXPECT_THAT(str, testing::HasSubstr(" 0.0000000000        0.0000000000       10.0000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("10.0000000000000000      0.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000     10.0000000000000000      0.0000000000000000"));
+    EXPECT_THAT(str, testing::HasSubstr("0.0000000000000000      0.0000000000000000     10.0000000000000000"));
     EXPECT_THAT(str, testing::HasSubstr("ATOMIC_POSITIONS"));
     EXPECT_THAT(str, testing::HasSubstr("Direct"));
     EXPECT_THAT(str, testing::HasSubstr("C #label"));
@@ -1011,7 +986,7 @@ TEST_F(UcellTest, CalUx1)
     ucell->atoms[1].m_loc_[0].set(1, 1, 1);
     ucell->atoms[1].m_loc_[1].set(0, 0, 0);
     const int nspin = 4;
-    elecstate::cal_ux(*ucell, nspin);
+    unitcell::cal_ux(*ucell, nspin);
     EXPECT_FALSE(ucell->magnet.lsign_);
     EXPECT_DOUBLE_EQ(ucell->magnet.ux_[0], 0);
     EXPECT_DOUBLE_EQ(ucell->magnet.ux_[1], -1);
@@ -1027,7 +1002,7 @@ TEST_F(UcellTest, CalUx2)
     ucell->atoms[1].m_loc_[1].set(0, 0, 0);
     //(0,0,0) is also parallel to (1,1,1)
     const int nspin = 4;
-    elecstate::cal_ux(*ucell, nspin);
+    unitcell::cal_ux(*ucell, nspin);
     EXPECT_TRUE(ucell->magnet.lsign_);
     EXPECT_NEAR(ucell->magnet.ux_[0], 0.57735, 1e-5);
     EXPECT_NEAR(ucell->magnet.ux_[1], 0.57735, 1e-5);
@@ -1058,8 +1033,6 @@ class UcellTestReadStru : public ::testing::Test
       void SetUp() override
     {
         ucell->ntype = 2;
-        ucell->atom_mass.resize(ucell->ntype);
-        ucell->atom_label.resize(ucell->ntype);
         ucell->pseudo_fn.resize(ucell->ntype);
         ucell->pseudo_type.resize(ucell->ntype);
         ucell->orbital_fn.resize(ucell->ntype);
@@ -1271,7 +1244,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS1)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1312,7 +1285,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS2)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1353,7 +1326,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS4Noncolin)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1394,7 +1367,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsS4Colin)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1435,7 +1408,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsC)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1476,7 +1449,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCA)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1517,7 +1490,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACXY)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1558,7 +1531,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACXZ)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1599,7 +1572,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACYZ)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1640,7 +1613,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCACXYZ)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1681,7 +1654,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsCAU)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1722,7 +1695,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsAutosetMag)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     for (int it = 0; it < ucell->ntype; it++)
     {
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
@@ -1736,7 +1709,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsAutosetMag)
     unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type);
+        calculation, esolver_type, 0);
     for (int it = 0; it < ucell->ntype; it++)
     {
         for (int ia = 0; ia < ucell->atoms[it].na; ia++)
@@ -1787,7 +1760,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning1)
     EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type));
+        calculation, esolver_type, 0));
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1841,7 +1814,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning2)
     EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type));
+        calculation, esolver_type, 0));
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -1888,7 +1861,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning3)
     EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, GlobalV::ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type));
+        calculation, esolver_type, 0));
     ofs_running.close();
     GlobalV::ofs_warning.close();
     ifa.close();
@@ -1937,7 +1910,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning4)
     EXPECT_EXIT(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type), ::testing::ExitedWithCode(1), "");
+        calculation, esolver_type, 0), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output, testing::HasSubstr("read_atom_positions, mismatch in atom number for atom type: Mg"));
     ofs_running.close();
@@ -1979,7 +1952,7 @@ TEST_F(UcellTestReadStru, ReadAtomPositionsWarning5)
     EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, GlobalV::ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc,
         onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type));
+        calculation, esolver_type, 0));
     ofs_running.close();
     GlobalV::ofs_warning.close();
     ifa.close();

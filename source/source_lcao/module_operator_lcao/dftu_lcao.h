@@ -8,7 +8,7 @@
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <unordered_map>
 

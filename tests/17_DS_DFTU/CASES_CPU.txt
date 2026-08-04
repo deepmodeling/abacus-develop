@@ -19,8 +19,8 @@
 # ========================
 06_PW_SPIN_S2_Z
 07_PW_SPIN_S4_XYZ
-08_PW_DFTU_S2_Z
-09_PW_DFTU_S4_XY
+# 08_PW_DFTU_S2_Z  # MIGRATED to 01_PW/815_PW_DFTU_S2_Z
+# 09_PW_DFTU_S4_XY  # MIGRATED to 01_PW/816_PW_DFTU_S4_XY
 11_PW_DFTU_S2_FeO
 
 # ========================

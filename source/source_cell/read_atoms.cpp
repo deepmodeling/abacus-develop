@@ -25,7 +25,8 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
                          const bool fixed_atoms,
                          const bool noncolin,
                          const std::string& calculation,
-                         const std::string& esolver_type)
+                         const std::string& esolver_type,
+                         const int symmetry)
 {
     ModuleBase::TITLE("UnitCell","read_atom_positions");
 
@@ -71,7 +72,7 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
 
             if (na > 0)
             {
-                unitcell::allocate_atom_properties(ucell.atoms[it], na, ucell.atom_mass[it]);
+                unitcell::allocate_atom_properties(ucell.atoms[it], na);
                 for (int ia = 0;ia < na; ia++)
                 {
                  // modify the reading of frozen ions and velocities  -- Yuanbo Li 2021/8/20
@@ -123,8 +124,21 @@ bool unitcell::read_atom_positions(UnitCell& ucell,
             }
         } // end for ntype
 
-        // Auto-set magnetization if needed
-        unitcell::autoset_magnetization(ucell, nspin, ofs_running);
+        // Auto-set magnetization if needed.
+        // symmetry=1 means "analyze and preserve the symmetry of the initial magnetic moment"; 
+        // an all-zero moment is a legitimate nonmagnetic choice under the full point group, 
+        // so do not override it with an autoset seed. Warn instead.
+        if (symmetry == 1)
+        {
+            ofs_running << "\n WARNING: initial magmom is all zero and symmetry=1; "
+                        << "autoset magnetism is SKIPPED to preserve the symmetry of the initial (nonmagnetic) structure.\n"
+                        << "          If spontaneous magnetism is expected, set magmom explicitly "
+                        << "in STRU, or use symmetry = 0 or -1." << std::endl;
+        }
+        else
+        {
+            unitcell::autoset_magnetization(ucell, nspin, ofs_running);
+        }
     }   // end scan_begin
 
     // Final validation and output

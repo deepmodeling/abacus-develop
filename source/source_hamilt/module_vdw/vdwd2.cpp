@@ -7,89 +7,91 @@
 #include "vdwd2.h"
 #include "source_base/timer.h"
 
+#include <algorithm>
+#include <cmath>
+
 namespace vdw
 {
 
-void Vdwd2::cal_energy()
+void Vdwd2::evaluate_impl(const VdwRequest& request, VdwResult& result)
 {
-    ModuleBase::TITLE("Vdwd2", "energy");
-    ModuleBase::timer::start("Vdwd2", "energy");
+    ModuleBase::TITLE("Vdwd2", "evaluate");
+    ModuleBase::timer::start("Vdwd2", "evaluate");
+
     para_.initset(ucell_);
-    energy_ = 0;
 
-    auto energy = [&](double r,
-                      double R0_sum,
-                      double C6_product,
-                      double r_sqr,
-                      int,
-                      int,
-                      const ModuleBase::Vector3<double> &,
-                      const ModuleBase::Vector3<double> &) {
-        const double tmp_damp_recip = 1 + exp(-para_.damping() * (r / R0_sum - 1));
-        energy_ -= C6_product / pow(r_sqr, 3) / tmp_damp_recip / 2;
-    };
-    index_loops(energy);
-    energy_ *= para_.scaling();
-    ModuleBase::timer::end("Vdwd2", "energy");
-}
+    if (request.force)
+    {
+        result.force.resize(ucell_.nat);
+    }
+    if (request.stress)
+    {
+        result.stress.Zero();
+    }
 
-void Vdwd2::cal_force()
-{
-    ModuleBase::TITLE("Vdwd2", "force");
-    ModuleBase::timer::start("Vdwd2", "force");
-    para_.initset(ucell_);
-    force_.clear();
-    force_.resize(ucell_.nat);
-
-    auto force = [&](double r,
-                     double R0_sum,
-                     double C6_product,
-                     double r_sqr,
-                     int it1,
-                     int ia1,
-                     const ModuleBase::Vector3<double> &tau1,
-                     const ModuleBase::Vector3<double> &tau2) {
+    const bool need_derivatives = request.force || request.stress;
+    auto evaluate_pair = [&](double r,
+                             double R0_sum,
+                             double C6_product,
+                             double r_sqr,
+                             int it1,
+                             int ia1,
+                             const ModuleBase::Vector3<double>& tau1,
+                             const ModuleBase::Vector3<double>& tau2) {
         const double tmp_exp = exp(-para_.damping() * (r / R0_sum - 1));
-        const double tmp_factor = C6_product / pow(r_sqr, 3) / r / (1 + tmp_exp)
-                                  * (-6 / r + tmp_exp / (1 + tmp_exp) * para_.damping() / R0_sum);
-        force_[ucell_.itia2iat(it1, ia1)] += tmp_factor * (tau1 - tau2);
+        const double tmp_damp_recip = 1.0 + tmp_exp;
+
+        result.energy -= C6_product / pow(r_sqr, 3) / tmp_damp_recip / 2.0;
+
+        if (!need_derivatives)
+        {
+            return;
+        }
+
+        const double tmp_factor = C6_product / pow(r_sqr, 3) / r / tmp_damp_recip
+                                  * (-6.0 / r
+                                     + tmp_exp / tmp_damp_recip * para_.damping() / R0_sum);
+
+        if (request.force)
+        {
+            result.force[ucell_.itia2iat(it1, ia1)] += tmp_factor * (tau1 - tau2);
+        }
+
+        if (request.stress)
+        {
+            const ModuleBase::Vector3<double> dr = tau2 - tau1;
+            result.stress += tmp_factor / 2.0
+                             * ModuleBase::Matrix3(dr.x * dr.x,
+                                                   dr.x * dr.y,
+                                                   dr.x * dr.z,
+                                                   dr.y * dr.x,
+                                                   dr.y * dr.y,
+                                                   dr.y * dr.z,
+                                                   dr.z * dr.x,
+                                                   dr.z * dr.y,
+                                                   dr.z * dr.z);
+        }
     };
 
-    index_loops(force);
-    std::for_each(force_.begin(), force_.end(), [&](ModuleBase::Vector3<double> &f) {
-        f *= para_.scaling() / ucell_.lat0;
-    });
-    ModuleBase::timer::end("Vdwd2", "force");
-}
+    index_loops(evaluate_pair);
 
-void Vdwd2::cal_stress()
-{
-    ModuleBase::TITLE("Vdwd2", "stress");
-    ModuleBase::timer::start("Vdwd2", "stress");
-    para_.initset(ucell_);
-    stress_.Zero();
+    result.energy *= para_.scaling();
 
-    auto stress = [&](double r,
-                      double R0_sum,
-                      double C6_product,
-                      double r_sqr,
-                      int it1,
-                      int ia1,
-                      const ModuleBase::Vector3<double> &tau1,
-                      const ModuleBase::Vector3<double> &tau2) {
-        const double tmp_exp = exp(-para_.damping() * (r / R0_sum - 1));
-        const double tmp_factor = C6_product / pow(r_sqr, 3) / r / (1 + tmp_exp)
-                                  * (-6 / r + tmp_exp / (1 + tmp_exp) * para_.damping() / R0_sum);
-        const ModuleBase::Vector3<double> dr = tau2 - tau1;
-        stress_ += tmp_factor / 2
-                   * ModuleBase::Matrix3(dr.x * dr.x, dr.x * dr.y, dr.x * dr.z,
-                                         dr.y * dr.x, dr.y * dr.y, dr.y * dr.z,
-                                         dr.z * dr.x, dr.z * dr.y, dr.z * dr.z);
-    };
+    if (request.force)
+    {
+        std::for_each(result.force.begin(), result.force.end(), [&](ModuleBase::Vector3<double>& force) {
+            force *= para_.scaling() / ucell_.lat0;
+        });
+        result.has_force = true;
+    }
 
-    index_loops(stress);
-    stress_ *= para_.scaling() / ucell_.omega;
-    ModuleBase::timer::end("Vdwd2", "stress");
+    if (request.stress)
+    {
+        result.stress *= para_.scaling() / ucell_.omega;
+        result.has_stress = true;
+    }
+
+    ModuleBase::timer::end("Vdwd2", "evaluate");
 }
 
 } // namespace vdw

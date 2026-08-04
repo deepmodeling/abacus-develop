@@ -57,8 +57,6 @@ protected:
     {
         ucell->lmaxmax = 2;
         ucell->ntype   = 2;
-        ucell->atom_mass.resize(ucell->ntype);
-        ucell->atom_label.resize(ucell->ntype);
         ucell->pseudo_fn.resize(ucell->ntype);
         ucell->pseudo_type.resize(ucell->ntype);
         ucell->orbital_fn.resize(ucell->ntype);
@@ -116,7 +114,7 @@ if(GlobalV::MY_RANK==0)
     //call read_atom_positions
     EXPECT_NO_THROW(unitcell::read_atom_positions(*ucell, ifa, ofs_running, ofs_warning, nspin,
         basis_type, orbital_dir, init_wfc, onsite_radius, fixed_atoms, noncolin,
-        calculation, esolver_type));
+        calculation, esolver_type, 0));
     ofs_running.close();
     ofs_warning.close();
     ifa.close();
@@ -135,7 +133,7 @@ TEST_F(UcellTest,SetupCell)
     const int nspin = 1;
     ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
         basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
-        fixed_atoms, noncolin, calculation, esolver_type);
+        fixed_atoms, noncolin, calculation, esolver_type, 0);
     ofs_running.close();
     remove("setup_cell.tmp");
 }

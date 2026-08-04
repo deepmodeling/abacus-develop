@@ -1,10 +1,10 @@
 #include "nonlocal.h"
-
+#include "operator_fs_utils.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #ifdef _OPENMP
 #include <unordered_set>
 #endif
@@ -322,9 +322,6 @@ void hamilt::Nonlocal<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     ModuleBase::timer::end("Nonlocal", "contributeHR");
     return;
 }
-
-#include "nonlocal_force_stress.hpp"
-#include "nonlocal_dh.hpp"
 
 template class hamilt::Nonlocal<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::Nonlocal<hamilt::OperatorLCAO<std::complex<double>, double>>;

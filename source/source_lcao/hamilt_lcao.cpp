@@ -29,7 +29,7 @@
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "module_operator_lcao/dftu_lcao.h"
 #include "module_operator_lcao/dspin_lcao.h"

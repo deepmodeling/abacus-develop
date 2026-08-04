@@ -151,9 +151,9 @@ TEST_F(ReadAtomsHelperTest, AllocateAtomProperties)
 {
     Atom atom;
     int na = 5;
-    double mass = 12.0;
+    atom.mass = 12.0;
 
-    unitcell::allocate_atom_properties(atom, na, mass);
+    unitcell::allocate_atom_properties(atom, na);
 
     EXPECT_EQ(atom.tau.size(), na);
     EXPECT_EQ(atom.dis.size(), na);
@@ -167,7 +167,7 @@ TEST_F(ReadAtomsHelperTest, AllocateAtomProperties)
     EXPECT_EQ(atom.m_loc_.size(), na);
     EXPECT_EQ(atom.lambda.size(), na);
     EXPECT_EQ(atom.constrain.size(), na);
-    EXPECT_DOUBLE_EQ(atom.mass, mass);
+    EXPECT_DOUBLE_EQ(atom.mass, 12.0);
 }
 
 // Test transform_atom_coordinates for Direct coordinates

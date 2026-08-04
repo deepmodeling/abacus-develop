@@ -12,6 +12,7 @@ add_library(
     symm_pricell.cpp
     symm_rho.cpp
     symmetry.cpp
+    symmetry_rotation_spin.cpp
 )
 
 if(ENABLE_COVERAGE)

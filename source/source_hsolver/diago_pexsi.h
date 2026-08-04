@@ -19,7 +19,7 @@ class DiagoPexsi
     static std::vector<double> mu_buffer;
 
   public:
-    DiagoPexsi(const Parallel_Orbitals* ParaV_in);
+    DiagoPexsi(const Parallel_Orbitals* ParaV_in, const int nspin_in, const int nlocal_in, const double nelec_in);
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
     const Parallel_Orbitals* ParaV = nullptr;
     std::vector<T*> DM;
@@ -29,6 +29,14 @@ class DiagoPexsi
     double totalFreeEnergy;
     std::unique_ptr<pexsi::PEXSI_Solver> ps;
     ~DiagoPexsi();
+
+  private:
+    /// number of density matrices to keep: nspin, except that nspin == 4 is
+    /// treated as a single (spinor) density matrix
+    int nspin_dm = 1;
+    /// global dimension of the NAO Hamiltonian
+    int nlocal = 0;
+    double nelec = 0.0;
 };
 } // namespace hsolver
 

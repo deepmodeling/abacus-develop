@@ -2,20 +2,38 @@
 #include "source_io/module_parameter/parameter.h"
 namespace ModuleSymmetry
 {
+    // Raw-index dispatch shared by the real-space sector helpers, matching the convention used
+    // everywhere else (symmetry_rotation.h): isym < nrotk -> unitary gmatrix[isym];
+    // isym >= nrotk -> spatial part of the antiunitary element Theta*gmatrix_anti[isym-nrotk].
+    // Only the SPATIAL part is needed here: Theta acts on H(R) as sigma_y (.)^* sigma_y and
+    // leaves R and the atom pair untouched, so the sector bookkeeping is identical for both kinds.
+    static inline const ModuleBase::Matrix3& sector_gmatrix(const Symmetry& symm, const int isym)
+    {
+        return (isym < symm.nrotk) ? symm.gmatrix[isym] : symm.gmatrix_anti[isym - symm.nrotk];
+    }
+    static inline int sector_rotated_atom(const Symmetry& symm, const int isym, const int iat)
+    {
+        return (isym < symm.nrotk) ? symm.get_rotated_atom(isym, iat)
+                                   : symm.get_rotated_atom_anti(isym - symm.nrotk, iat);
+    }
+
     TC Irreducible_Sector::rotate_R(const Symmetry& symm,
         const int isym, const int iat1, const int iat2, const TC& R, const char gauge) const
     {
         auto round2int = [symm](const double x) -> int { return x > 0 ? static_cast<int>(x + symm.epsilon) : static_cast<int>(x - symm.epsilon); };
         const TCdouble R_double(static_cast<double>(R[0]), static_cast<double>(R[1]), static_cast<double>(R[2]));
+        // return_lattice_ is already sized nrotk+nrotk_anti and indexed by the same raw isym.
+        const ModuleBase::Matrix3& gmat = sector_gmatrix(symm, isym);
         const TCdouble Rrot_double = (gauge == 'L')
-            ? R_double * symm.gmatrix[isym] + this->return_lattice_[iat1][isym] - this->return_lattice_[iat2][isym]
-            : R_double * symm.gmatrix[isym] + this->return_lattice_[iat2][isym] - this->return_lattice_[iat1][isym];
+            ? R_double * gmat + this->return_lattice_[iat1][isym] - this->return_lattice_[iat2][isym]
+            : R_double * gmat + this->return_lattice_[iat2][isym] - this->return_lattice_[iat1][isym];
         return { round2int(Rrot_double.x), round2int(Rrot_double.y), round2int(Rrot_double.z) };
     }
     TapR Irreducible_Sector::rotate_apR_by_formula(const Symmetry& symm,
         const int isym, const TapR& apR, const char gauge) const
     {
-        const Tap& aprot = { symm.get_rotated_atom(isym, apR.first.first), symm.get_rotated_atom(isym, apR.first.second) };
+        const Tap& aprot = { sector_rotated_atom(symm, isym, apR.first.first),
+                             sector_rotated_atom(symm, isym, apR.first.second) };
         return { aprot, this->rotate_R(symm, isym, apR.first.first, apR.first.second, apR.second, gauge) };
     }
 
@@ -89,7 +107,10 @@ namespace ModuleSymmetry
     void Irreducible_Sector::cal_return_lattice_all(const Symmetry& symm, const Atom* atoms, const Statistics& st)
     {
         ModuleBase::TITLE("Symmetry_rotation", "cal_return_lattice_all");
-        this->return_lattice_.resize(st.nat, std::vector<TCdouble>(symm.nrotk));
+        // Columns [0, nrotk) are the unitary operations; columns [nrotk, nrotk+nrotk_anti) are the
+        // spatial parts of the antiunitary elements Theta*g of the Shubnikov group (nspin=4 magnetic),
+        // so that Symmetry_rotation can address both with one raw index. 
+        this->return_lattice_.resize(st.nat, std::vector<TCdouble>(symm.nrotk + symm.nrotk_anti));
         for (int iat1 = 0;iat1 < st.nat;++iat1)
         {
             int it = st.iat2it[iat1];
@@ -99,6 +120,12 @@ namespace ModuleSymmetry
                 int iat2 = symm.get_rotated_atom(isym, iat1);
                 int ia2 = st.iat2ia[iat2];
                 this->return_lattice_[iat1][isym] = get_return_lattice(symm, symm.gmatrix[isym], symm.gtrans[isym], atoms[it].taud[ia1], atoms[it].taud[ia2]);
+            }
+            for (int j = 0;j < symm.nrotk_anti;++j)
+            {
+                int iat2 = symm.get_rotated_atom_anti(j, iat1);
+                int ia2 = st.iat2ia[iat2];
+                this->return_lattice_[iat1][symm.nrotk + j] = get_return_lattice(symm, symm.gmatrix_anti[j], symm.gtrans_anti[j], atoms[it].taud[ia1], atoms[it].taud[ia2]);
             }
         }
         // test: output return_lattice
@@ -174,11 +201,21 @@ namespace ModuleSymmetry
                 for (auto& R : Rs)
                     apR_all[{iat1, iat2}].insert(R);
 
-        // get invmap
+        // get invmap over the operation set actually used by the sector search.
+        // For nspin=4 magnetic that is the full Shubnikov group H (union) A, laid out as
+        // [gmatrix[0..nrotk) | gmatrix_anti[0..nrotk_anti)]. gmatrix_invmap needs no change:
+        // it searches the whole array for s[i]*s[j]==I, and A is closed under inversion
+        // (if g in A had g^-1 in H then g = (g^-1)^-1 would be in H, contradicting H n A = {}),
+        // so the concatenated array is exactly the parent group and every inverse is found,
+        // with the inverse of a coset member landing inside the coset block.
         if (this->invmap_.empty())
         {
-            this->invmap_.resize(symm.nrotk);
-            symm.gmatrix_invmap(symm.gmatrix, symm.nrotk, invmap_.data());
+            const int nop = symm.nrotk + symm.nrotk_anti;
+            std::vector<ModuleBase::Matrix3> gmat_all(nop);
+            for (int i = 0; i < symm.nrotk; ++i) { gmat_all[i] = symm.gmatrix[i]; }
+            for (int j = 0; j < symm.nrotk_anti; ++j) { gmat_all[symm.nrotk + j] = symm.gmatrix_anti[j]; }
+            this->invmap_.resize(nop);
+            symm.gmatrix_invmap(gmat_all.data(), nop, invmap_.data());
         }
 
         // get symmetry of BvK supercell
@@ -204,6 +241,13 @@ namespace ModuleSymmetry
                 //     if (!in_2d_plain[isym]) continue;
                 // }
                 const int& isym = this->isymbvk_to_isym_[isymbvk];
+                // A BvK operation with no counterpart in the unit-cell operation set is marked -1.
+                // For a magnetic nspin=4 system the unit-cell set is the Shubnikov group H (union) A,
+                // which is generally a PROPER subset of the crystallographic group (operations that
+                // merely tilt the moment belong to neither), so an unmatched BvK operation is a
+                // normal outcome, not an error: it is simply not a symmetry of the magnetic system.
+                // Skipping it only costs reduction, never correctness.
+                if (isym < 0) { continue; }
                 const TapR& apRrot = this->rotate_apR_by_formula(symm, this->invmap_[isym], irapR);
                 const Tap& aprot = apRrot.first;
                 const TC& Rrot = apRrot.second;

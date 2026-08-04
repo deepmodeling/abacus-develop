@@ -37,7 +37,7 @@ Sto_EleCond<FPTYPE, Device>::Sto_EleCond(UnitCell* p_ucell_in,
     this->nbands_sto = p_stowf_in->nchi;
     this->stofunc.set_E_range(&stoche.emin_sto, &stoche.emax_sto);
     this->cond_dtbatch = PARAM.inp.cond_dtbatch;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     if(!std::is_same<FPTYPE, lowTYPE>::value)
     {
         this->hamilt_sto_ = new hamilt::HamiltSdftPW<std::complex<lowTYPE>, Device>(p_elec_in->pot, p_wfcpw_in, p_kv_in, p_ppcell_in, p_ucell_in, 1, &this->low_emin_, &this->low_emax_);

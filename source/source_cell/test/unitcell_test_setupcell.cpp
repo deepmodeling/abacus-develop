@@ -65,8 +65,6 @@ protected:
     {
         ucell->lmaxmax = 2;
         ucell->ntype   = 2;
-        ucell->atom_mass.resize(ucell->ntype);
-        ucell->atom_label.resize(ucell->ntype);
         ucell->pseudo_fn.resize(ucell->ntype);
         ucell->pseudo_type.resize(ucell->ntype);
         ucell->orbital_fn.resize(ucell->ntype);
@@ -84,7 +82,7 @@ TEST_F(UcellTest,SetupCellS1)
     
     ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
         basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
-        fixed_atoms, noncolin, calculation, esolver_type);
+        fixed_atoms, noncolin, calculation, esolver_type, 0);
     ofs_running.close();
     remove("setup_cell.tmp");
 }
@@ -98,7 +96,7 @@ TEST_F(UcellTest,SetupCellS2)
     
     ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
         basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
-        fixed_atoms, noncolin, calculation, esolver_type);
+        fixed_atoms, noncolin, calculation, esolver_type, 0);
     ofs_running.close();
     remove("setup_cell.tmp");
 }
@@ -112,7 +110,7 @@ TEST_F(UcellTest,SetupCellS4)
     
     ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
         basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
-        fixed_atoms, noncolin, calculation, esolver_type);
+        fixed_atoms, noncolin, calculation, esolver_type, 0);
     ofs_running.close();
     remove("setup_cell.tmp");
 }
@@ -127,7 +125,7 @@ TEST_F(UcellDeathTest,SetupCellWarning1)
     const int nspin = 1;
     EXPECT_EXIT(ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
         basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
-        fixed_atoms, noncolin, calculation, esolver_type), ::testing::ExitedWithCode(1), "");
+        fixed_atoms, noncolin, calculation, esolver_type, 0), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("Can not find the file containing atom positions.!"));
     ofs_running.close();
@@ -144,7 +142,7 @@ TEST_F(UcellDeathTest,SetupCellWarning2)
     const int nspin = 1;
     EXPECT_EXIT(ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
         basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
-        fixed_atoms, noncolin, calculation, esolver_type), ::testing::ExitedWithCode(1), "");
+        fixed_atoms, noncolin, calculation, esolver_type, 0), ::testing::ExitedWithCode(1), "");
     output = testing::internal::GetCapturedStdout();
     EXPECT_THAT(output,testing::HasSubstr("Something wrong during read_atom_positions"));
     ofs_running.close();
@@ -160,7 +158,7 @@ TEST_F(UcellTest,SetupCellAfterVC)
 
     ucell->setup_cell(fn, ofs_running, symmetry_prec, dfthalf_type, pseudo_dir, nspin,
         basis_type, orbital_dir, init_wfc, onsite_radius, deepks_setorb, rpa,
-        fixed_atoms, noncolin, calculation, esolver_type);
+        fixed_atoms, noncolin, calculation, esolver_type, 0);
     ucell->lat0 = 1.0;
     ucell->latvec.Zero();
     ucell->latvec.e11 = 10.0;

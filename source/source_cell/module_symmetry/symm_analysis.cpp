@@ -290,6 +290,13 @@ void Symmetry::analy_sys(const Lattice& lat, const Statistics& st, Atom* atoms, 
 
     this->set_atom_map(atoms); // find the atom mapping according to the symmetry operations
 
+    // (nspin=4 / SOC) restrict to the unitary magnetic subgroup: drop operations that reverse
+    // the magnetization (pseudovector), so they are not applied in k-reduction / density symmetrization.
+    if (nspin == 4)
+    {
+        this->analyze_magnetic_group_nspin4(atoms, st, latvec1);
+    }
+
     // Do this here for debug
     if (calculation == "relax")
     {

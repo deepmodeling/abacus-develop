@@ -12,6 +12,8 @@ class PEXSI_Solver
                  const int nb,
                  const int nrow,
                  const int ncol,
+                 const int nlocal,
+                 const double nelec,
                  const double* h,
                  const double* s,
                  double*& DM,
@@ -130,6 +132,8 @@ class PEXSI_Solver
     int nb;
     int nrow;
     int ncol;
+    int nlocal;   ///< global dimension of the NAO Hamiltonian
+    double nelec; ///< total number of electrons
     double* h = nullptr;
     double* s = nullptr;
     double* DM = nullptr;

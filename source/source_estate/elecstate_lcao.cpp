@@ -6,7 +6,7 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
 #include "source_lcao/rho_tau_lcao.h"
 
 #include <vector>

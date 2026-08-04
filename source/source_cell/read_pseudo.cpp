@@ -1,8 +1,14 @@
+/**
+ * @file read_pseudo.cpp
+ * @brief Implementation of pseudopotential reading functions.
+ */
 #include "read_pseudo.h"
 #include "source_base/global_file.h"
 #include "cal_atoms_info.h"
 #include "read_pp.h"
 #include "bcast_cell.h"
+#include "print_cell.h"
+#include "source_base/atom_in.h"
 #include "source_base/element_elec_config.h"
 #include "source_base/parallel_common.h"
 
@@ -56,7 +62,7 @@ AtomsInfoResult read_pseudo(std::ofstream& ofs, UnitCell& ucell,
 			Atom* atom = &ucell.atoms[it];
 			if (!(atom->label_orb.empty())) 
 			{
-                ucell.compare_atom_labels(atom->label_orb, atom->ncpp.psd);
+                unitcell::compare_atom_labels(atom->label_orb, atom->ncpp.psd);
             }
         }
 
@@ -389,7 +395,7 @@ void print_unitcell_pseudo(const std::string& fn, UnitCell& ucell)
     ModuleBase::TITLE("unitcell", "print_unitcell_pseudo");
     std::ofstream ofs(fn.c_str());
 
-    ucell.print_cell(ofs);
+    unitcell::print_cell(ucell, ofs);
     for (int i = 0; i < ucell.ntype; i++)
     {
         ucell.atoms[i].print_Atom(ofs);
@@ -397,6 +403,79 @@ void print_unitcell_pseudo(const std::string& fn, UnitCell& ucell)
 
     ofs.close();
     return;
+}
+
+void compare_atom_labels(const std::string& label1, const std::string& label2)
+{
+    if (label1!= label2) //'!( "Ag" == "Ag" || "47" == "47" || "Silver" == Silver" )'
+    {
+        atom_in ai;
+        if (!(std::to_string(ai.atom_Z[label1]) == label2
+              ||                                  // '!( "Ag" == "47" )'
+              ai.atom_symbol[label1] == label2 || // '!( "Ag" == "Silver" )'
+              label1 == std::to_string(ai.atom_Z[label2])
+              || // '!( "47" == "Ag" )'
+              label1 == std::to_string(ai.symbol_Z[label2])
+              ||                                  // '!( "47" == "Silver" )'
+              label1 == ai.atom_symbol[label2] || // '!( "Silver" == "Ag" )'
+              std::to_string(ai.symbol_Z[label1])
+                  == label2)) // '!( "Silver" == "47" )'
+        {
+            std::string stru_label = "";
+            std::string psuedo_label = "";
+            for (int ip = 0; ip < label1.length(); ip++)
+            {
+                if (!(isdigit(label1[ip]) || label1[ip] == '_'))
+                {
+                    stru_label += label1[ip];
+                }
+                else
+                {
+                    break;
+                }
+            }
+            stru_label[0] = toupper(stru_label[0]);
+
+            for (int ip = 0; ip < label2.length(); ip++)
+            {
+                if (!(isdigit(label2[ip]) || label2[ip] == '_'))
+                {
+                    psuedo_label += label2[ip];
+                }
+                else
+                {
+                    break;
+                }
+            }
+            psuedo_label[0] = toupper(psuedo_label[0]);
+
+            if (!(stru_label == psuedo_label
+                  || //' !("Ag1" == "ag_locpsp" || "47" == "47" || "Silver" ==
+                     //Silver" )'
+                  std::to_string(ai.atom_Z[stru_label]) == psuedo_label
+                  || // ' !("Ag1" == "47" )'
+                  ai.atom_symbol[stru_label] == psuedo_label
+                  || // ' !("Ag1" == "Silver")'
+                  stru_label == std::to_string(ai.atom_Z[psuedo_label])
+                  || // ' !("47" == "Ag1" )'
+                  stru_label == std::to_string(ai.symbol_Z[psuedo_label])
+                  || // ' !("47" == "Silver1" )'
+                  stru_label == ai.atom_symbol[psuedo_label]
+                  || // ' !("Silver1" == "Ag" )'
+                  std::to_string(ai.symbol_Z[stru_label])
+                      == psuedo_label)) // ' !("Silver1" == "47" )'
+
+            {
+                std::string atom_label_in_orbtial
+                    = "atom label in orbital file ";
+                std::string mismatch_with_pseudo
+                    = " mismatch with pseudo file of ";
+                ModuleBase::WARNING_QUIT("UnitCell::read_pseudo",
+                                         atom_label_in_orbtial + label1
+                                             + mismatch_with_pseudo + label2);
+            }
+        }
+    }
 }
 
 }

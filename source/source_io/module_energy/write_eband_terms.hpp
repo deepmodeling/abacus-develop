@@ -29,8 +29,8 @@ void write_eband_terms(const int nspin,
                        const TwoCenterBundle& two_center_bundle
 #ifdef __EXX
                        ,
-                       std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
-                       std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
+                       std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
 #endif
 )
     {

@@ -71,6 +71,13 @@ class ReadInput
      */
     void read_txt_input(Parameter& param, const std::string& filename);
     /**
+     * @brief Resolve the primary H/S output options and their legacy aliases.
+     *
+     * This is called after all INPUT values have been read so that the result
+     * does not depend on the order of keywords in the INPUT file.
+     */
+    void normalize_hs_output_options(Parameter& param);
+    /**
      * @brief write INPUT file of txt format
      *
      * @param param parameters of ABACUS

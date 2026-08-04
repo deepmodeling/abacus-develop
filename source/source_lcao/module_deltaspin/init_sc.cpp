@@ -1,4 +1,5 @@
 #include "spin_constrain.h"
+#include "source_cell/cell_tools.h"
 
 /**
  * @file init_sc.cpp
@@ -68,9 +69,9 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
 
     // Step 4: Load target magnetic moments and initial lambda from UnitCell
     // These are parsed from the STRU file's "sc_mag" and "lambda" keywords
-    this->set_target_mag(ucell.get_target_mag());
-    this->lambda_ = ucell.get_lambda();
-    this->constrain_ = ucell.get_constrain();
+    this->set_target_mag(unitcell::get_target_mag(ucell.atoms, ucell.ntype, ucell.nat));
+    this->lambda_ = unitcell::get_lambda(ucell.atoms, ucell.ntype, ucell.nat);
+    this->constrain_ = unitcell::get_constrain(ucell.atoms, ucell.ntype, ucell.nat);
 
     // Step 5: CRITICAL FIX for collinear spin (nspin=2)
     // In collinear mode, spins are constrained along the z-axis only.
@@ -89,7 +90,7 @@ void spinconstrain::SpinConstrain<TK>::init_sc(double sc_thr_in,
     }
 
     // Step 6: Set auxiliary parameters
-    this->atomLabels_ = ucell.get_atomLabels();      // "Fe_0", "Fe_1", etc.
+    this->atomLabels_ = unitcell::get_atomLabels(ucell.atoms, ucell.ntype);      // "Fe_0", "Fe_1", etc.
     this->direction_only_ = direction_only_in;        // Only optimize spin direction
     this->tpiba = ucell.tpiba;                        // 2*pi/a lattice scaling
     this->pw_wfc_ = pw_wfc_in;                        // PW basis (PW mode only)

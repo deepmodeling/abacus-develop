@@ -344,6 +344,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_cp
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
             hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+            PARAM.inp.nbands,
+            PARAM.inp.diago_smooth_ethr,
+            PARAM.inp.pw_diag_ndim,
+            PARAM.inp.diag_subspace,
+            PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
         hsolver_pw_obj.solve(hamilt_t, psi_t[0], this->pelec, this->pelec->ekb.c,
@@ -451,6 +456,11 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_gp
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::PW_DIAG_THR,
             hsolver::DiagoIterAssist<std::complex<double>, base_device::DEVICE_GPU>::need_subspace,
+            PARAM.inp.nbands,
+            PARAM.inp.diago_smooth_ethr,
+            PARAM.inp.pw_diag_ndim,
+            PARAM.inp.diag_subspace,
+            PARAM.inp.nb2d,
             PARAM.inp.use_k_continuity);
 
         hsolver_pw_obj.solve(hamilt_t, psi_t[0], this->pelec, this->pelec->ekb.c,
@@ -511,7 +521,13 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
         // =============================================================
         psi::Psi<std::complex<double>>* psi_t = static_cast<psi::Psi<std::complex<double>>*>(this->psi);
         hamilt::Hamilt<std::complex<double>>* hamilt_t = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
-        hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV, PARAM.inp.ks_solver);
+        hsolver::HSolverLCAO<std::complex<double>> hsolver_t(this->ParaV,
+                                                            PARAM.inp.ks_solver,
+                                                            PARAM.globalv.kpar_lcao,
+                                                            PARAM.globalv.nlocal,
+                                                            PARAM.inp.nbands,
+                                                            PARAM.inp.nelec,
+                                                            PARAM.inp.device == "gpu");
         if (this->nspin_ == 2)
         {
             dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)
