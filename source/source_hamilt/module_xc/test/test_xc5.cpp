@@ -370,15 +370,16 @@ namespace
 constexpr int gga_grad_nrxx = 5;
 
 // build a mock 4-component charge on the mocked 5-point grid.
-// rotating=false: m = (0,0,mz), mz>0, so m_hat = (0,0,1) everywhere
-// rotating=true:  m direction varies from point to point
+// pattern 0: m = (0,0,mz), mz>0, so m_hat = (0,0,1) everywhere
+// pattern 1: m direction varies from point to point
+// pattern 2: m . ux changes sign across the grid (ux = (0,1,2) in the mock)
 struct Ns4Charge
 {
     ModulePW::PW_Basis rhopw;
     UnitCell ucell;
     Charge chr;
 
-    Ns4Charge(const bool rotating)
+    Ns4Charge(const int pattern)
     {
         rhopw.nrxx = gga_grad_nrxx;
         rhopw.npw = gga_grad_nrxx;
@@ -406,11 +407,17 @@ struct Ns4Charge
         for (int i = 0; i < gga_grad_nrxx; ++i)
         {
             chr.rho[0][i] = 2.0 + i;
-            if (rotating)
+            if (pattern == 1)
             {
                 chr.rho[1][i] = 0.10 * (i + 1);
                 chr.rho[2][i] = 0.05 * (gga_grad_nrxx - i);
                 chr.rho[3][i] = 0.20 * (i + 1);
+            }
+            else if (pattern == 2)
+            {
+                chr.rho[1][i] = 0.0;
+                chr.rho[2][i] = (i % 2 == 0) ? 0.3 : -0.3;
+                chr.rho[3][i] = 0.05;
             }
             else
             {
@@ -430,10 +437,10 @@ struct Ns4Charge
 // run XC_Functional::v_xc for nspin=4 with noncollinear magnetism
 std::tuple<double, double, ModuleBase::matrix> run_vxc_nspin4(
     const std::string& functional,
-    const bool rotating,
+    const int pattern,
     const int gga_grad)
 {
-    Ns4Charge mock(rotating);
+    Ns4Charge mock(pattern);
     XC_Functional::set_xc_type(functional);
     return XC_Functional::v_xc(gga_grad_nrxx,
                                &mock.chr,
@@ -496,7 +503,7 @@ TEST(GgaGradTools, ComputeMagPartNspin4)
 // v_tot = 0.5*(v_up+v_dn), v_mu = 0.5*(v_up-v_dn)*m_hat_mu
 TEST(GgaGradTools, ConvertVNspin4Sf)
 {
-    Ns4Charge mock(false); // m_hat = (0,0,1)
+    Ns4Charge mock(0); // m_hat = (0,0,1)
     const std::vector<double> mag_part
         = XC_Functional_Libxc::compute_mag_part_nspin4(gga_grad_nrxx, &mock.chr);
 
@@ -521,7 +528,7 @@ TEST(GgaGradTools, ConvertVNspin4Sf)
 // original conversion: has_mag=false leaves magnetic channels zero
 TEST(GgaGradTools, ConvertVNspin4HasMag)
 {
-    Ns4Charge mock(false);
+    Ns4Charge mock(0);
     std::vector<double> amag(gga_grad_nrxx);
     for (int ir = 0; ir < gga_grad_nrxx; ++ir)
     {
@@ -557,12 +564,12 @@ class GgaGradDh : public testing::Test
 {
   protected:
     // dh from cal_dh_sf for gga_grad=2 and 3 on a given magnetization pattern
-    void run(const bool rotating,
+    void run(const int pattern,
              std::vector<std::vector<double>>& dh2,
              std::vector<std::vector<double>>& dh3,
              std::vector<double>& mag_part)
     {
-        Ns4Charge mock(rotating);
+        Ns4Charge mock(pattern);
         mag_part = XC_Functional_Libxc::compute_mag_part_nspin4(gga_grad_nrxx, &mock.chr);
 
         const std::tuple<std::vector<double>, std::vector<double>> rho_amag
@@ -593,7 +600,7 @@ TEST_F(GgaGradDh, UniformDirectionMethodsAgree)
 {
     std::vector<std::vector<double>> dh2, dh3;
     std::vector<double> mag_part;
-    run(false, dh2, dh3, mag_part);
+    run(0, dh2, dh3, mag_part);
 
     for (int is = 0; is < 4; ++is)
     {
@@ -610,7 +617,7 @@ TEST_F(GgaGradDh, ProjectedDivergenceIsProjection)
 {
     std::vector<std::vector<double>> dh2, dh3;
     std::vector<double> mag_part;
-    run(true, dh2, dh3, mag_part);
+    run(1, dh2, dh3, mag_part);
 
     for (int ir = 0; ir < gga_grad_nrxx; ++ir)
     {
@@ -638,8 +645,8 @@ TEST_F(GgaGradDh, ProjectedDivergenceIsProjection)
 // built-in functionals: v_xc dispatches nspin=4 + gga_grad=2/3 to the SF builtin
 TEST(GgaGradVxc, BuiltinUniformDirectionMethodsAgree)
 {
-    const auto r2 = run_vxc_nspin4("PBE", false, 2);
-    const auto r3 = run_vxc_nspin4("PBE", false, 3);
+    const auto r2 = run_vxc_nspin4("PBE", 0, 2);
+    const auto r3 = run_vxc_nspin4("PBE", 0, 3);
     EXPECT_EQ(std::get<2>(r2).nr, 4);
     expect_vxc_equal(r2, r3, 1e-10);
 }
@@ -647,16 +654,82 @@ TEST(GgaGradVxc, BuiltinUniformDirectionMethodsAgree)
 // gga_grad=0 keeps the original built-in algorithm and must not crash
 TEST(GgaGradVxc, BuiltinOriginalAlgorithmRuns)
 {
-    const auto r0 = run_vxc_nspin4("PBE", true, 0);
+    const auto r0 = run_vxc_nspin4("PBE", 1, 0);
     EXPECT_EQ(std::get<2>(r0).nr, 4);
     EXPECT_TRUE(std::isfinite(std::get<0>(r0)));
     EXPECT_TRUE(std::isfinite(std::get<1>(r0)));
 }
 
+// noncolin_rho with lsign=true defines up/down w.r.t. the global axis ux
+// through sign(m . ux); with lsign=false, up is always the local |m|
+TEST(GgaGradTools, NoncolinRhoGlobalAxis)
+{
+    Ns4Charge mock(2); // pattern 2: m . ux changes sign across the grid
+    const double* ux = mock.ucell.magnet.ux_; // (0,1,2) in the mock
+
+    std::vector<double> rup(gga_grad_nrxx), rdn(gga_grad_nrxx), neg(gga_grad_nrxx);
+    XC_Functional::noncolin_rho(
+        rup.data(), rdn.data(), neg.data(), mock.chr.rho, gga_grad_nrxx, ux, true);
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        const double mx = mock.chr.rho[1][ir], my = mock.chr.rho[2][ir], mz = mock.chr.rho[3][ir];
+        const double amag = std::sqrt(mx * mx + my * my + mz * mz);
+        const double sign = (mx * ux[0] + my * ux[1] + mz * ux[2] > 0) ? 1.0 : -1.0;
+        EXPECT_NEAR(rup[ir], 0.5 * (mock.chr.rho[0][ir] + sign * amag), 1e-14);
+        EXPECT_NEAR(rdn[ir], 0.5 * (mock.chr.rho[0][ir] - sign * amag), 1e-14);
+    }
+    // the sign really flips on this grid, i.e. the global axis matters here
+    EXPECT_NEAR(neg[0], 1.0, 1e-14);
+    EXPECT_NEAR(neg[1], -1.0, 1e-14);
+
+    XC_Functional::noncolin_rho(
+        rup.data(), rdn.data(), neg.data(), mock.chr.rho, gga_grad_nrxx, ux, false);
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        const double mx = mock.chr.rho[1][ir], my = mock.chr.rho[2][ir], mz = mock.chr.rho[3][ir];
+        const double amag = std::sqrt(mx * mx + my * my + mz * mz);
+        EXPECT_NEAR(rup[ir], 0.5 * (mock.chr.rho[0][ir] + amag), 1e-14);
+        EXPECT_NEAR(rdn[ir], 0.5 * (mock.chr.rho[0][ir] - amag), 1e-14);
+    }
+}
+
+// gga_grad=1 must ignore the global magnetization direction: with lsign_=true
+// it has to give the same gradcorr result as gga_grad=0 with lsign_=false
+TEST(GgaGradVxc, BuiltinGgaGrad1IgnoresGlobalAxis)
+{
+    XC_Functional::set_xc_type("PBE");
+    const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+    const double hse_omega = XC_Functional::get_hse_omega();
+
+    Ns4Charge mock_a(2); // lsign_ = true
+    double et1 = 0, vt1 = 0;
+    ModuleBase::matrix v1(4, gga_grad_nrxx);
+    std::vector<double> dum;
+    XC_Functional::gradcorr(et1, vt1, v1, &mock_a.chr, &mock_a.rhopw, &mock_a.ucell,
+                            dum, false, 4, true, false, 1, hybrid_alpha, hse_omega);
+
+    Ns4Charge mock_b(2);
+    mock_b.ucell.magnet.lsign_ = false;
+    double et0 = 0, vt0 = 0;
+    ModuleBase::matrix v0(4, gga_grad_nrxx);
+    XC_Functional::gradcorr(et0, vt0, v0, &mock_b.chr, &mock_b.rhopw, &mock_b.ucell,
+                            dum, false, 4, true, false, 0, hybrid_alpha, hse_omega);
+
+    EXPECT_NEAR(et0, et1, 1e-12);
+    EXPECT_NEAR(vt0, vt1, 1e-12);
+    for (int is = 0; is < 4; ++is)
+    {
+        for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+        {
+            EXPECT_NEAR(v0(is, ir), v1(is, ir), 1e-12);
+        }
+    }
+}
+
 // regression anchors for the built-in SF path (gga_grad=3)
 TEST(GgaGradVxc, BuiltinSfAnchoredValues)
 {
-    const auto r = run_vxc_nspin4("PBE", true, 3);
+    const auto r = run_vxc_nspin4("PBE", 1, 3);
     const ModuleBase::matrix& v = std::get<2>(r);
     EXPECT_NEAR(std::get<0>(r), -5.1906253324e+01, 1.0e-8);
     EXPECT_NEAR(std::get<1>(r), -6.8184946486e+01, 1.0e-8);
@@ -673,8 +746,8 @@ TEST(GgaGradVxc, BuiltinSfAnchoredValues)
 // LIBXC functionals: gga_grad=2/3 select the SF path in v_xc_libxc
 TEST(GgaGradVxc, LibxcUniformDirectionMethodsAgree)
 {
-    const auto r2 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", false, 2);
-    const auto r3 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", false, 3);
+    const auto r2 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 0, 2);
+    const auto r3 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 0, 3);
     EXPECT_EQ(std::get<2>(r2).nr, 4);
     expect_vxc_equal(r2, r3, 1e-10);
 }
@@ -682,8 +755,8 @@ TEST(GgaGradVxc, LibxcUniformDirectionMethodsAgree)
 // for LIBXC, gga_grad=0 and 1 both keep the original collinear algorithm
 TEST(GgaGradVxc, LibxcZeroEqualsOne)
 {
-    const auto r0 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", true, 0);
-    const auto r1 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", true, 1);
+    const auto r0 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 1, 0);
+    const auto r1 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 1, 1);
     expect_vxc_equal(r0, r1, 1e-12);
 }
 
@@ -691,7 +764,7 @@ TEST(GgaGradVxc, LibxcZeroEqualsOne)
 // through the SF branch of convert_vtxc_v
 TEST(GgaGradVxc, LibxcSfAnchoredValues)
 {
-    const auto r = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", true, 3);
+    const auto r = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 1, 3);
     const ModuleBase::matrix& v = std::get<2>(r);
     EXPECT_NEAR(std::get<0>(r), -5.1906239921e+01, 1.0e-8);
     EXPECT_NEAR(std::get<1>(r), -6.8184928281e+01, 1.0e-8);
