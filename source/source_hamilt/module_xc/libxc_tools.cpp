@@ -400,12 +400,16 @@ std::vector<std::vector<ModuleBase::Vector3<double>>> XC_Functional_Libxc::cal_g
 	std::vector<std::complex<double>> rhog(chr->rhopw->npw);
 	std::vector<ModuleBase::Vector3<double>> gdr_tmp(nrxx);
 
+	// gradient of the TOTAL charge density (including the core charge),
+	// matching the up/down decomposition in convert_rho_amag_nspin4:
+	//   grad(rho_up) = 0.5 grad(rho + rho_core) + 0.5 m_hat_mu * grad(m_mu)
+	// NOTE: rho[ir*nspin+0] is rho_up, not the total density; use chr->rho[0].
 	#ifdef _OPENMP
 	#pragma omp parallel for schedule(static, 1024)
 	#endif
 	for (std::size_t ir = 0; ir < nrxx; ++ir)
 	{
-		rhor[ir] = rho[ir * nspin + 0];
+		rhor[ir] = chr->rho[0][ir] + chr->rho_core[ir];
 	}
 	chr->rhopw->real2recip(rhor.data(), rhog.data());
 	gdr[0].resize(nrxx);
