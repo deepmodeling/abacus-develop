@@ -8,7 +8,7 @@
 #include "source_base/timer.h"
 #include "xc_functional.h"
 
-#include "xc_functional_gga_noncol_sf_builtin.h"
+#include "xc_functional_ncgga_sf.h"
 
 #ifdef __LIBXC
 #include "libxc_abacus.h"

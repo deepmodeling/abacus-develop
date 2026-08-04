@@ -1,4 +1,4 @@
-#include "xc_functional_gga_noncol_sf_builtin.h"
+#include "xc_functional_ncgga_sf.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"

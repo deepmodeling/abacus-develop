@@ -1,5 +1,5 @@
-#ifndef XC_FUNCTIONAL_GGA_NONCOL_SF_BUILTIN_H
-#define XC_FUNCTIONAL_GGA_NONCOL_SF_BUILTIN_H
+#ifndef XC_FUNCTIONAL_NCGGA_SF_H
+#define XC_FUNCTIONAL_NCGGA_SF_H
 
 #include "source_base/matrix.h"
 
