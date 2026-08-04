@@ -218,6 +218,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
                                   PARAM.globalv.domag,
                                   PARAM.globalv.domag_z,
                                   this->basis->nrxx,
+                                  this->charge->nrxx,
                                   w1,
                                   this->rho,
                                   this->wfcr,
@@ -240,7 +241,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             if (w1 != 0.0)
             {
                 // replaced by denghui at 20221110
-                elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, w1, this->rho, this->wfcr);
+                elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, this->charge->nrxx, w1, this->rho, this->wfcr);
             }
 
             // kinetic energy density
@@ -263,7 +264,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 
                     this->basis->recip_to_real(this->ctx, this->wfcr, this->wfcr, ik);
 
-                    elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, w1, this->kin_r, this->wfcr);
+                    elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, this->charge->nrxx, w1, this->kin_r, this->wfcr);
                 }
             }
         }

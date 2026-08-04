@@ -8,6 +8,7 @@ struct elecstate_pw_op<FPTYPE, base_device::DEVICE_CPU>
     void operator()(const base_device::DEVICE_CPU* /*ctx*/,
                     const int& spin,
                     const int& nrxx,
+                    const int& /*rho_stride*/,
                     const FPTYPE& w1,
                     FPTYPE** rho,
                     const std::complex<FPTYPE>* wfcr)
@@ -29,6 +30,7 @@ struct elecstate_pw_op<FPTYPE, base_device::DEVICE_CPU>
                     const bool& DOMAG,
                     const bool& DOMAG_Z,
                     const int& nrxx,
+                    const int& /*rho_stride*/,
                     const FPTYPE& w1,
                     FPTYPE** rho,
                     const std::complex<FPTYPE>* wfcr,
