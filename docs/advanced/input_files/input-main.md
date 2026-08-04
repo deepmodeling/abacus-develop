@@ -1351,8 +1351,8 @@
 ### mixing_gg0
 
 - **Type**: Real
-- **Description**: Whether to perfom Kerker scaling for charge density.
-  - &gt;0: The high frequency wave vectors will be suppressed by multiplying a scaling factor. Setting mixing_gg0 = 1.0 is normally a good starting point. Kerker preconditioner will be automatically turned off if mixing_beta &lt;= 0.1.
+- **Description**: Controls the Kerker preconditioner for charge-density mixing.
+  - &gt;0: Enables Kerker scaling to suppress long-wavelength (small-G) charge-density fluctuations. Setting mixing_gg0 = 1.0 is normally a good starting point. This setting has no effect when mixing_beta &lt;= 0.1 because the charge-density Kerker preconditioner is bypassed.
   - 0: No Kerker scaling is performed.
 
   For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.
@@ -1361,13 +1361,17 @@
 ### mixing_gg0_mag
 
 - **Type**: Real
-- **Description**: Whether to perfom Kerker preconditioner of magnetic density. Note: we do not recommand to open Kerker preconditioner of magnetic density unless the system is too hard to converge.
+- **Description**: Controls the Kerker preconditioner for magnetic-density mixing. It is disabled by default and is generally only recommended for systems whose magnetic density is difficult to converge.
+
+  The magnetic-density Kerker preconditioner is bypassed when mixing_beta_mag &lt;= 0.1, so mixing_gg0_mag has no effect in that regime. It is also unavailable when the charge-density Kerker preconditioner itself is bypassed.
 - **Default**: 0.0
 
 ### mixing_gg0_min
 
 - **Type**: Real
-- **Description**: The minimum kerker coefficient.
+- **Description**: Sets the lower bound used by the Kerker filter. The lower bound is evaluated as mixing_gg0_min / mixing_beta for charge-density mixing and mixing_gg0_min / mixing_beta_mag for magnetic-density mixing.
+
+  In the current implementation, the automatic bypass thresholds are fixed independently of mixing_gg0_min: charge-density Kerker is bypassed when mixing_beta &lt;= 0.1, and magnetic-density Kerker is bypassed when mixing_beta_mag &lt;= 0.1. Changing mixing_gg0_min does not change these thresholds or re-enable Kerker.
 - **Default**: 0.1
 
 ### mixing_angle
