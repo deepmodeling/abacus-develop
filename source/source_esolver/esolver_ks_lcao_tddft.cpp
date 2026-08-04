@@ -18,7 +18,7 @@
 #include "source_estate/module_dm/cal_edm_tddft.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_estate/module_pot/potential_new.h"
-#include "source_estate/module_pot/td_field.h"
+#include "source_estate/module_pot/td_field_manager.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/rho_tau_lcao.h"
