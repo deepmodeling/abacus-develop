@@ -145,9 +145,11 @@ void TDFieldManager::read_restart(const std::string& file_dir)
     }
 
     int restart_step = -1;
-    file >> restart_step;
-    file >> vector_potential_[0] >> vector_potential_[1] >> vector_potential_[2];
-    file >> vector_potential_laststep_[0] >> vector_potential_laststep_[1] >> vector_potential_laststep_[2];
+    if (!(file >> restart_step >> vector_potential_[0] >> vector_potential_[1] >> vector_potential_[2] >> vector_potential_laststep_[0]
+          >> vector_potential_laststep_[1] >> vector_potential_laststep_[2]))
+    {
+        ModuleBase::WARNING_QUIT("TDFieldManager::read_restart", "Invalid Restart_td.txt!");
+    }
     // Retain the legacy restart-file sign convention expected by the first
     // half-step update in advance_vector_gauge().
     vector_potential_laststep_ = -vector_potential_laststep_;

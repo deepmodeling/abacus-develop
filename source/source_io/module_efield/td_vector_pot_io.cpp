@@ -61,6 +61,12 @@ std::vector<ModuleBase::Vector3<double>> read_td_vector_pot(const std::string& i
             ModuleBase::WARNING_QUIT("ModuleIO::read_td_vector_pot",
                                      "Invalid vector-potential data on line " + std::to_string(line_number) + " of " + input_path + "!");
         }
+        row >> std::ws;
+        if (!row.eof())
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::read_td_vector_pot",
+                                     "Unexpected vector-potential data on line " + std::to_string(line_number) + " of " + input_path + "!");
+        }
         vector_potentials.push_back(vector_pot);
     }
 

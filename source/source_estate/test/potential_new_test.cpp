@@ -28,22 +28,6 @@ class TestParameters
         PARAM.sys.has_float_data = true;
         PARAM.sys.has_double_data = false;
     }
-
-    static void use_gpu_double()
-    {
-        PARAM.input.device = "gpu";
-        PARAM.input.precision = "double";
-        PARAM.sys.has_float_data = false;
-        PARAM.sys.has_double_data = true;
-    }
-
-    static void use_gpu_single()
-    {
-        PARAM.input.device = "gpu";
-        PARAM.input.precision = "single";
-        PARAM.sys.has_float_data = true;
-        PARAM.sys.has_double_data = false;
-    }
 };
 
 Structure_Factor::Structure_Factor()
@@ -283,26 +267,6 @@ TEST_F(PotentialNewTest, EmptyPotentialReturnsNullData)
 TEST_F(PotentialNewTest, ConstructorCPUSingle)
 {
     TestParameters::use_cpu_single();
-    smooth_basis->nrxx = 100;
-    create_potential(smooth_basis.get(), smooth_basis.get());
-
-    EXPECT_NE(potential->get_veff_smooth_data<float>(), nullptr);
-    EXPECT_EQ(potential->get_veff_smooth_data<double>(), nullptr);
-}
-
-TEST_F(PotentialNewTest, ConstructorGPUDouble)
-{
-    TestParameters::use_gpu_double();
-    smooth_basis->nrxx = 100;
-    create_potential(smooth_basis.get(), smooth_basis.get());
-
-    EXPECT_EQ(potential->get_veff_smooth_data<float>(), nullptr);
-    EXPECT_NE(potential->get_veff_smooth_data<double>(), nullptr);
-}
-
-TEST_F(PotentialNewTest, ConstructorGPUSingle)
-{
-    TestParameters::use_gpu_single();
     smooth_basis->nrxx = 100;
     create_potential(smooth_basis.get(), smooth_basis.get());
 

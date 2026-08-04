@@ -1,7 +1,6 @@
 #include "source_io/module_efield/td_vector_pot_io.h"
 
 #include "gtest/gtest.h"
-
 #include <cstdio>
 #include <fstream>
 #include <string>
@@ -52,12 +51,8 @@ TEST_F(TDVectorPotIOTest, FreshCalculationTruncatesAndWritesHeader)
     }
 
     ModuleIO::prepare_td_vector_pot_output(output_prefix_, false);
-    ModuleIO::write_td_vector_pot(output_prefix_,
-                                  0,
-                                  ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
-    ModuleIO::write_td_vector_pot(output_prefix_,
-                                  1,
-                                  ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
+    ModuleIO::write_td_vector_pot(output_prefix_, 0, ModuleBase::Vector3<double>(1.0, 2.0, 3.0));
+    ModuleIO::write_td_vector_pot(output_prefix_, 1, ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
 
     const std::vector<std::string> lines = read_lines();
     ASSERT_EQ(lines.size(), 3U);
@@ -65,8 +60,7 @@ TEST_F(TDVectorPotIOTest, FreshCalculationTruncatesAndWritesHeader)
     EXPECT_EQ(lines[1].find("1"), 0U);
     EXPECT_EQ(lines[2].find("2"), 0U);
 
-    const std::vector<ModuleBase::Vector3<double>> vector_potentials
-        = ModuleIO::read_td_vector_pot(output_prefix_);
+    const std::vector<ModuleBase::Vector3<double>> vector_potentials = ModuleIO::read_td_vector_pot(output_prefix_);
     ASSERT_EQ(vector_potentials.size(), 2U);
     EXPECT_DOUBLE_EQ(vector_potentials[0][0], 1.0);
     EXPECT_DOUBLE_EQ(vector_potentials[0][1], 2.0);
@@ -85,9 +79,7 @@ TEST_F(TDVectorPotIOTest, RestartPreservesExistingSamples)
     }
 
     ModuleIO::prepare_td_vector_pot_output(output_prefix_, true);
-    ModuleIO::write_td_vector_pot(output_prefix_,
-                                  7,
-                                  ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
+    ModuleIO::write_td_vector_pot(output_prefix_, 7, ModuleBase::Vector3<double>(4.0, 5.0, 6.0));
 
     const std::vector<std::string> lines = read_lines();
     ASSERT_EQ(lines.size(), 3U);
@@ -119,11 +111,10 @@ TEST_F(TDVectorPotIOTest, ReaderSkipsBlankAndCommentLinesAndIgnoresLabels)
         output << "  # comment\n";
         output << "\n";
         output << "19 1.5 -2.5 3.5\n";
-        output << "42 4.5 5.5 -6.5 extra\n";
+        output << "42 4.5 5.5 -6.5\n";
     }
 
-    const std::vector<ModuleBase::Vector3<double>> vector_potentials
-        = ModuleIO::read_td_vector_pot(output_prefix_);
+    const std::vector<ModuleBase::Vector3<double>> vector_potentials = ModuleIO::read_td_vector_pot(output_prefix_);
     ASSERT_EQ(vector_potentials.size(), 2U);
     EXPECT_DOUBLE_EQ(vector_potentials[0][0], 1.5);
     EXPECT_DOUBLE_EQ(vector_potentials[0][1], -2.5);
@@ -139,17 +130,19 @@ TEST_F(TDVectorPotIOTest, ReaderRejectsEmptyAndMalformedFiles)
         std::ofstream output(output_path_.c_str());
         output << "# no samples\n";
     }
-    EXPECT_EXIT(ModuleIO::read_td_vector_pot(output_prefix_),
-                testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(ModuleIO::read_td_vector_pot(output_prefix_), testing::ExitedWithCode(1), "");
 
     {
         std::ofstream output(output_path_.c_str(), std::ofstream::out);
         output << "1 2.0 invalid 4.0\n";
     }
-    EXPECT_EXIT(ModuleIO::read_td_vector_pot(output_prefix_),
-                testing::ExitedWithCode(1),
-                "");
+    EXPECT_EXIT(ModuleIO::read_td_vector_pot(output_prefix_), testing::ExitedWithCode(1), "");
+
+    {
+        std::ofstream output(output_path_.c_str(), std::ofstream::out);
+        output << "1 2.0 3.0 4.0 extra\n";
+    }
+    EXPECT_EXIT(ModuleIO::read_td_vector_pot(output_prefix_), testing::ExitedWithCode(1), "");
 }
 
 } // namespace

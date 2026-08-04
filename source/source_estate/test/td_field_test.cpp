@@ -4,6 +4,9 @@
 #include "source_io/module_parameter/input_parameter.h"
 
 #include "gtest/gtest.h"
+#include <cstdio>
+#include <fstream>
+#include <string>
 
 namespace
 {
@@ -92,6 +95,35 @@ TEST(TDFieldManagerTest, MixedFieldsSumAndAccumulate)
     ASSERT_EQ(oscillatory_manager->fields().size(), 2U);
     EXPECT_EQ(oscillatory_manager->fields()[0].subdivisions(), 12);
     EXPECT_EQ(oscillatory_manager->fields()[1].subdivisions(), 12);
+}
+
+TEST(TDFieldManagerTest, RestartRequiresCompleteState)
+{
+    Input_para input;
+    input.td_stype = 1;
+    std::shared_ptr<elecstate::TDFieldManager> manager = elecstate::create_td_field_manager(input);
+    const std::string restart_prefix = "td_field_manager_test_";
+    const std::string restart_path = restart_prefix + "Restart_td.txt";
+
+    {
+        std::ofstream output(restart_path.c_str());
+        output << "7\n1 2 3\n4 5 6\n";
+    }
+    manager->read_restart(restart_prefix);
+    EXPECT_EQ(manager->current_step(), 6);
+    EXPECT_DOUBLE_EQ(manager->vector_potential()[0], 1.0);
+    EXPECT_DOUBLE_EQ(manager->vector_potential()[1], 2.0);
+    EXPECT_DOUBLE_EQ(manager->vector_potential()[2], 3.0);
+    EXPECT_DOUBLE_EQ(manager->vector_potential_laststep()[0], -4.0);
+    EXPECT_DOUBLE_EQ(manager->vector_potential_laststep()[1], -5.0);
+    EXPECT_DOUBLE_EQ(manager->vector_potential_laststep()[2], -6.0);
+
+    {
+        std::ofstream output(restart_path.c_str(), std::ofstream::out);
+        output << "7\n1 2 3\n4 5\n";
+    }
+    EXPECT_EXIT(manager->read_restart(restart_prefix), testing::ExitedWithCode(1), "");
+    std::remove(restart_path.c_str());
 }
 
 } // namespace

@@ -39,6 +39,7 @@ class TDEFieldIOTest : public testing::Test
         {
             std::remove(output_path(field_index).c_str());
         }
+        std::remove(blocking_path_.c_str());
     }
 
     std::shared_ptr<elecstate::TDFieldManager> create_manager(const std::vector<double>& amplitudes) const
@@ -77,6 +78,7 @@ class TDEFieldIOTest : public testing::Test
     }
 
     const std::string output_prefix_ = "td_efield_io_test_";
+    const std::string blocking_path_ = "td_efield_io_test_blocking_path";
 };
 
 TEST_F(TDEFieldIOTest, FreshCalculationTruncatesAndUsesOneBasedFiles)
@@ -131,6 +133,21 @@ TEST_F(TDEFieldIOTest, RestartPreservesExistingSamples)
     EXPECT_DOUBLE_EQ(samples[0].second, 8.0);
     EXPECT_DOUBLE_EQ(samples[1].first, 0.0);
     EXPECT_NEAR(samples[1].second, 4.0, 1.0e-12);
+}
+
+TEST_F(TDEFieldIOTest, ReportsOutputOpenFailures)
+{
+    {
+        std::ofstream blocking_file(blocking_path_.c_str());
+        blocking_file << "not a directory\n";
+    }
+    const std::string invalid_directory = blocking_path_ + "/";
+    std::shared_ptr<elecstate::TDFieldManager> manager = create_manager({4.0});
+
+    EXPECT_EXIT(ModuleIO::prepare_td_field_output(invalid_directory, manager->fields().size(), false), testing::ExitedWithCode(1), "");
+
+    manager->advance_length_gauge();
+    EXPECT_EXIT(ModuleIO::write_td_field_values(*manager, invalid_directory), testing::ExitedWithCode(1), "");
 }
 
 } // namespace
