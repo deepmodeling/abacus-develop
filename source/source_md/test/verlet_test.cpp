@@ -261,8 +261,7 @@ TEST_F(Verlet_test, rescale_v)
 
 TEST_F(Verlet_test, CSVR)
 {
-    std::ofstream ofs;
-    mdrun->first_half(ofs);
+    mdrun->first_half(GlobalV::ofs_running);
     param_in.input.mdp.md_type = "nvt";
     param_in.input.mdp.md_thermostat = "csvr";
     param_in.input.mdp.md_csvr_tau = 100.0;
