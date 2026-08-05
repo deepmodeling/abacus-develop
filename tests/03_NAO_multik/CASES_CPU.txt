@@ -30,6 +30,7 @@ scf_out_chg_tau
 scf_out_pot3
 scf_out_dmr_dmk
 scf_out_hsk
+scf_out_hsk_binary
 scf_out_hsr
 scf_out_hsr_spin4
 scf_out_dh_t
