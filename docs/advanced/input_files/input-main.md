@@ -856,11 +856,14 @@
 - **Type**: String
 - **Description**: Wavefunction extrapolation method for LCAO calculations.
 
-  - none: Disable wavefunction-based extrapolation.
-  - use_prev_wf: Use the previous ionic step wavefunctions as the initial guess.
+  - none: Disable wavefunction-based extrapolation and use chg_extrap instead.
+  - use_prev_wf: Restore the previous converged ionic-step wavefunctions,
+  reorthonormalize their occupied subspace in the current AO metric, and rebuild rho.
 
+  The first ionic step uses the normal init_wfc/init_chg initialization because no
+  history exists yet. From the second ionic step onward, the selected WFN method
+  must succeed; ABACUS does not silently fall back to charge-density extrapolation.
   This option is currently limited to Gamma-only LCAO calculations.
-  The k-point, ASPC, and GExt_PROJ paths will be enabled by later updates.
 - **Default**: none
 
 ### nb2d

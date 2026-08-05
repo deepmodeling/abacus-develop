@@ -401,8 +401,19 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
     const int nbasis_global = pv.get_global_row_size();
     const int ncoeff_global_basis = pv.get_global_col_size();
     const int ncoeff_global_bands = pv.get_wfc_global_nbands();
-    const bool coeff_columns_are_basis = (ncoeff_local == pv.get_col_size());
-    const bool coeff_columns_are_bands = (ncoeff_local == pv.ncol_bands);
+    int layout_matches[2] = {
+        ncoeff_local == pv.get_col_size(),
+        ncoeff_local == pv.ncol_bands,
+    };
+#ifdef __MPI
+    const MPI_Comm comm = pv.comm();
+    if (comm != MPI_COMM_NULL)
+    {
+        MPI_Allreduce(MPI_IN_PLACE, layout_matches, 2, MPI_INT, MPI_MIN, comm);
+    }
+#endif
+    const bool coeff_columns_are_basis = layout_matches[0] != 0;
+    const bool coeff_columns_are_bands = layout_matches[1] != 0;
     const int ncoeff_global = coeff_columns_are_basis ? ncoeff_global_basis : ncoeff_global_bands;
     result.nstate = nstate;
     result.nbands = ncoeff_global;
@@ -410,7 +421,9 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
 
     if (nstate <= 0 || ncoeff_local <= 0 || nbasis_local <= 0 || nbasis_global <= 0 || ncoeff_global <= 0
         || ncoeff_global > nbasis_global || pv.get_row_size() != nbasis_local
-        || pv.get_global_col_size() != nbasis_global || (!coeff_columns_are_basis && !coeff_columns_are_bands))
+        || pv.get_global_col_size() != nbasis_global || (!coeff_columns_are_basis && !coeff_columns_are_bands)
+        || (coeff_columns_are_basis && coeff_columns_are_bands
+            && ncoeff_global_basis != ncoeff_global_bands))
     {
         result.status = WfcExtrapStatus::DimensionMismatch;
         return result;

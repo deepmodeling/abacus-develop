@@ -14,6 +14,9 @@ namespace
 constexpr int nstate = 1;
 constexpr int nbands = 3;
 constexpr int nbasis = 3;
+constexpr double occupation_threshold = 1.0e-12;
+constexpr double pivot_threshold = 1.0e-14;
+constexpr double check_tolerance = 1.0e-8;
 
 void initialize_serial_orbitals(Parallel_Orbitals& pv)
 {
@@ -72,6 +75,14 @@ const std::vector<double> coeff = {
     7.0, 8.0, 9.0,
 };
 
+ModuleExtrap::WfOrthonormalizeResult reorthonormalize(const Parallel_Orbitals& pv,
+                                                       psi::Psi<double>& wfc,
+                                                       const ModuleBase::matrix& occupations)
+{
+    return ModuleExtrap::reorthonormalize_gamma_lcao(overlap.data(), pv, wfc, occupations,
+                                                      occupation_threshold, pivot_threshold, check_tolerance);
+}
+
 } // namespace
 
 TEST(WfSnapshotLCAO, OwnsAndRestoresData)
@@ -102,8 +113,7 @@ TEST(WfOrthonormalizeLCAO, ReorthonormalizesOccupiedSubspace)
     psi::Psi<double> wfc = make_psi(coeff);
     const ModuleBase::matrix occupations = make_occupations();
 
-    const ModuleExtrap::WfOrthonormalizeResult result
-        = ModuleExtrap::reorthonormalize_gamma_lcao(overlap.data(), pv, wfc, occupations);
+    const ModuleExtrap::WfOrthonormalizeResult result = reorthonormalize(pv, wfc, occupations);
 
     ASSERT_TRUE(result.ok());
     EXPECT_EQ(result.nstate, nstate);
@@ -133,8 +143,7 @@ TEST(WfOrthonormalizeLCAO, DoesNotModifyPsiOnFailure)
     psi::Psi<double> wfc = make_psi(rank_deficient_coeff);
     const ModuleBase::matrix occupations = make_occupations();
 
-    const ModuleExtrap::WfOrthonormalizeResult result
-        = ModuleExtrap::reorthonormalize_gamma_lcao(overlap.data(), pv, wfc, occupations);
+    const ModuleExtrap::WfOrthonormalizeResult result = reorthonormalize(pv, wfc, occupations);
 
     EXPECT_EQ(result.status, ModuleExtrap::WfcExtrapStatus::OrthogonalizationFailed);
     for (std::size_t i = 0; i < rank_deficient_coeff.size(); ++i)
@@ -143,12 +152,45 @@ TEST(WfOrthonormalizeLCAO, DoesNotModifyPsiOnFailure)
     }
 }
 
+TEST(WfOrthonormalizeLCAO, HandlesBandDistributedCoefficients)
+{
+    Parallel_Orbitals pv;
+    initialize_serial_orbitals(pv);
+    pv.ncol_bands = 2;
+    pv.nbands = 2;
+#ifdef __MPI
+    pv.desc_wfc[3] = 2;
+#endif
+    psi::Psi<double> wfc(nstate, 2, nbasis, nbasis, true);
+    wfc.set_all_psi(coeff.data(), 2 * nbasis);
+
+    const ModuleExtrap::WfOrthonormalizeResult result = reorthonormalize(pv, wfc, make_occupations());
+    EXPECT_TRUE(result.ok());
+}
+
+TEST(WfHistoryLCAO, ReportsMissingHistory)
+{
+    Parallel_Orbitals pv;
+    initialize_serial_orbitals(pv);
+    ModuleExtrap::WfHistoryLCAO<double> history;
+    psi::Psi<double> predicted = make_psi(coeff);
+
+    const ModuleExtrap::WfExtrapApplyResult result
+        = history.try_use_prev_wf_gamma(overlap.data(),
+                                        pv,
+                                        predicted,
+                                        make_occupations(),
+                                        pivot_threshold,
+                                        check_tolerance);
+    EXPECT_EQ(result.status, ModuleExtrap::WfcExtrapStatus::EmptyHistory);
+}
+
 TEST(WfHistoryLCAO, UsesLatestOwnedSnapshot)
 {
     Parallel_Orbitals pv;
     initialize_serial_orbitals(pv);
     const ModuleBase::matrix occupations = make_occupations();
-    ModuleExtrap::WfHistoryLCAO<double> history(ModuleExtrap::WfcExtrapMethod::UsePrevWf, 2);
+    ModuleExtrap::WfHistoryLCAO<double> history;
 
     psi::Psi<double> first = make_psi(coeff);
     history.update_after_scf(3, first, occupations);
@@ -164,15 +206,16 @@ TEST(WfHistoryLCAO, UsesLatestOwnedSnapshot)
 
     psi::Psi<double> predicted(nstate, nbands, nbasis, nbasis, true);
     const ModuleExtrap::WfExtrapApplyResult result
-        = history.try_use_prev_wf_gamma(overlap.data(), pv, predicted, occupations);
+        = history.try_use_prev_wf_gamma(overlap.data(),
+                                        pv,
+                                        predicted,
+                                        occupations,
+                                        pivot_threshold,
+                                        check_tolerance);
 
     ASSERT_TRUE(result.ok());
     EXPECT_EQ(result.snapshot_istep, 4);
-    EXPECT_EQ(history.size(), 2U);
     EXPECT_NEAR(metric_element(predicted, overlap, 0, 0), 1.0, 1.0e-10);
     EXPECT_NEAR(metric_element(predicted, overlap, 1, 1), 1.0, 1.0e-10);
     EXPECT_NEAR(metric_element(predicted, overlap, 0, 1), 0.0, 1.0e-10);
-
-    history.set_max_depth(1);
-    EXPECT_EQ(history.size(), 1U);
 }

@@ -1,7 +1,7 @@
 #ifndef SOURCE_LCAO_MODULE_EXTRAP_WF_ORTHONORMALIZE_LCAO_H
 #define SOURCE_LCAO_MODULE_EXTRAP_WF_ORTHONORMALIZE_LCAO_H
 
-#include "source_lcao/module_extrap/wf_extrap_method.h"
+#include "source_lcao/module_extrap/wf_extrap_status.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_base/matrix.h"
 #include "source_psi/psi.h"
@@ -67,9 +67,9 @@ WfOrthonormalizeResult reorthonormalize_gamma_lcao(const double* overlap,
                                                    const Parallel_Orbitals& pv,
                                                    psi::Psi<double>& wfc,
                                                    const ModuleBase::matrix& occupations,
-                                                   double occupation_threshold = 1.0e-12,
-                                                   double pivot_threshold = 1.0e-14,
-                                                   double check_tolerance = 1.0e-8);
+                                                   double occupation_threshold,
+                                                   double pivot_threshold,
+                                                   double check_tolerance);
 
 } // namespace ModuleExtrap
 

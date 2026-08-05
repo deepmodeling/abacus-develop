@@ -73,7 +73,9 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     this->sf.set(this->pw_rhod, inp.nbspline);
 
     //! 4) init charge extrapolation
-    this->CE.Init_CE(inp.nspin, ucell.nat, this->pw_rhod->nrxx, inp.chg_extrap);
+    this->use_wfc_extrapolation_ = inp.wfc_extrap != "none";
+    this->CE.Init_CE(inp.nspin, ucell.nat, this->pw_rhod->nrxx,
+                     this->use_wfc_extrapolation_ ? "none" : inp.chg_extrap);
 
     //! 5) symmetry analysis should be performed every time the cell is changed
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
@@ -180,19 +182,13 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     // charge extrapolation
     if (ucell.ionic_position_updated)
     {
-        this->CE.update_all_dis(ucell);
-
-        const bool skip_charge_extrap_for_wfc = PARAM.inp.basis_type == "lcao"
-                                                && PARAM.inp.wfc_extrap != "none"
-                                                && istep > 0;
-        if (skip_charge_extrap_for_wfc)
+        if (this->use_wfc_extrapolation_)
         {
             this->sf.setup(&ucell, this->Pgrid, this->pw_rhod);
-            GlobalV::ofs_running << " charge density extrapolation is skipped because wfc_extrap = "
-                                 << PARAM.inp.wfc_extrap << "." << std::endl;
         }
         else
         {
+            this->CE.update_all_dis(ucell);
             this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, &this->sf,
                                         GlobalV::ofs_running, GlobalV::ofs_warning);
         }

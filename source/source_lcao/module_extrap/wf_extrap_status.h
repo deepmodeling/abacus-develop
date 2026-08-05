@@ -1,21 +1,12 @@
-#ifndef SOURCE_LCAO_MODULE_EXTRAP_WF_EXTRAP_METHOD_H
-#define SOURCE_LCAO_MODULE_EXTRAP_WF_EXTRAP_METHOD_H
-
-#include <string>
+#ifndef SOURCE_LCAO_MODULE_EXTRAP_WF_EXTRAP_STATUS_H
+#define SOURCE_LCAO_MODULE_EXTRAP_WF_EXTRAP_STATUS_H
 
 namespace ModuleExtrap
 {
 
-enum class WfcExtrapMethod
-{
-    None,
-    UsePrevWf
-};
-
 enum class WfcExtrapStatus
 {
     Success,
-    Disabled,
     EmptyHistory,
     DimensionMismatch,
     InvalidInput,
@@ -23,35 +14,12 @@ enum class WfcExtrapStatus
     OrthogonalizationFailed
 };
 
-inline WfcExtrapMethod wfc_extrap_method_from_string(const std::string& method)
-{
-    if (method == "use_prev_wf")
-    {
-        return WfcExtrapMethod::UsePrevWf;
-    }
-    return WfcExtrapMethod::None;
-}
-
-inline const char* to_string(const WfcExtrapMethod method) noexcept
-{
-    switch (method)
-    {
-    case WfcExtrapMethod::UsePrevWf:
-        return "use_prev_wf";
-    case WfcExtrapMethod::None:
-    default:
-        return "none";
-    }
-}
-
 inline const char* to_string(const WfcExtrapStatus status) noexcept
 {
     switch (status)
     {
     case WfcExtrapStatus::Success:
         return "success";
-    case WfcExtrapStatus::Disabled:
-        return "disabled";
     case WfcExtrapStatus::EmptyHistory:
         return "empty_history";
     case WfcExtrapStatus::DimensionMismatch:
@@ -69,4 +37,4 @@ inline const char* to_string(const WfcExtrapStatus status) noexcept
 
 } // namespace ModuleExtrap
 
-#endif // SOURCE_LCAO_MODULE_EXTRAP_WF_EXTRAP_METHOD_H
+#endif // SOURCE_LCAO_MODULE_EXTRAP_WF_EXTRAP_STATUS_H

@@ -82,6 +82,7 @@ class ESolver_FP : public ESolver
 
     //! charge extrapolation method
     Charge_Extra CE;
+    bool use_wfc_extrapolation_ = false;
 
     //! solvent model
     surchem solvent;

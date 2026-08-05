@@ -1,14 +1,10 @@
 #ifndef SOURCE_LCAO_MODULE_EXTRAP_WF_HISTORY_LCAO_H
 #define SOURCE_LCAO_MODULE_EXTRAP_WF_HISTORY_LCAO_H
 
-#include "source_lcao/module_extrap/wf_extrap_method.h"
+#include "source_lcao/module_extrap/wf_extrap_status.h"
 #include "source_lcao/module_extrap/wf_snapshot_lcao.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_hamilt/hamilt.h"
-#include <cstddef>
-#include <deque>
-#include <string>
-
 namespace elecstate
 {
 template <typename TK, typename TR>
@@ -22,7 +18,7 @@ namespace ModuleExtrap
 
 struct WfExtrapApplyResult
 {
-    WfcExtrapStatus status = WfcExtrapStatus::Disabled;
+    WfcExtrapStatus status = WfcExtrapStatus::InvalidInput;
     double max_orthonormality_deviation = 0.0;
 
     // Propagated diagnostics from WfOrthonormalizeResult.
@@ -49,24 +45,9 @@ template <typename TK>
 class WfHistoryLCAO
 {
   public:
-    explicit WfHistoryLCAO(WfcExtrapMethod method = WfcExtrapMethod::None, std::size_t max_depth = 1);
-
-    WfcExtrapMethod method() const noexcept;
-    bool enabled() const noexcept;
-
-    std::size_t size() const noexcept;
-    std::size_t max_depth() const noexcept;
-    bool empty() const noexcept;
-
-    void set_method(WfcExtrapMethod method) noexcept;
-    void set_max_depth(std::size_t max_depth);
-    void clear() noexcept;
+    WfHistoryLCAO() = default;
 
     void update_after_scf(const int istep, const psi::Psi<TK>& psi, const ModuleBase::matrix& wg);
-
-    // Return a copy of the most recent snapshot.  This avoids exposing an internal
-    // pointer/reference whose lifetime would be invalidated by the next history update.
-    bool latest_snapshot(WfSnapshotLCAO<TK>& snapshot) const;
 
     /**
      * Restore the latest Gamma-only NAO wavefunction and reorthonormalize it with
@@ -85,24 +66,19 @@ class WfHistoryLCAO
                                               const Parallel_Orbitals& pv,
                                               psi::Psi<TK>& psi,
                                               const ModuleBase::matrix& wg_now,
-                                              double pivot_threshold = 1.0e-14,
-                                              double check_tolerance = 1.0e-8);
+                                              double pivot_threshold,
+                                              double check_tolerance);
 
-    bool initialize_gamma_density(hamilt::Hamilt<TK>& hamiltonian,
+    void initialize_gamma_density(hamilt::Hamilt<TK>& hamiltonian,
                                   const Parallel_Orbitals& pv,
                                   psi::Psi<TK>& psi,
                                   const ModuleBase::matrix& wg_now,
                                   elecstate::DensityMatrix<TK, double>& dmat,
-                                  Charge& charge,
-                                  int nspin,
-                                  const std::string& ks_solver);
+                                  Charge& charge);
 
   private:
-    void prune_history();
-
-    WfcExtrapMethod method_ = WfcExtrapMethod::None;
-    std::size_t max_depth_ = 1;
-    std::deque<WfSnapshotLCAO<TK>> snapshots_;
+    bool has_snapshot_ = false;
+    WfSnapshotLCAO<TK> snapshot_;
 };
 
 } // namespace ModuleExtrap

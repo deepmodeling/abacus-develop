@@ -182,6 +182,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mem_saver, 0);
     EXPECT_EQ(param.inp.init_chg, "atomic");
     EXPECT_EQ(param.inp.chg_extrap, "atomic");
+    EXPECT_EQ(param.inp.wfc_extrap, "use_prev_wf");
     EXPECT_EQ(param.inp.out_freq_elec, 50);
     EXPECT_EQ(param.inp.out_freq_ion, 0);
     EXPECT_EQ(param.inp.out_freq_td, 0);
