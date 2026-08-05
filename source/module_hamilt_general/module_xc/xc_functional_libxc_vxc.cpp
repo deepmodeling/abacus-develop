@@ -10,7 +10,7 @@
 #include "module_base/tool_title.h"
 
 #include <xc.h>
-
+#include <omp.h>
 #include <vector>
 
 std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		// Peize Lin update for nspin==4 at 2023.01.14
@@ -94,16 +94,46 @@ std::tuple<double,double,ModuleBase::matrix> XC_Functional_Libxc::v_xc_libxc(		/
         switch( func.info->family )
         {
             case XC_FAMILY_LDA:
-                // call Libxc function: xc_lda_exc_vxc
-                xc_lda_exc_vxc( &func, nrxx, rho.data(),
-                    exc.data(), vrho.data() );
+            {
+                constexpr int nr_batch_size = 1024;
+                #ifdef _OPENMP
+                #pragma omp parallel for schedule(static, nr_batch_size)
+                #endif
+                for( int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size )
+                {
+                    const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
+                    const int nrxx_thread = ir_end - ir_start;
+                    xc_lda_exc_vxc(
+                        &func,
+                        nrxx_thread,
+                        rho.data() + ir_start * nspin,
+                        exc.data() + ir_start,
+                        vrho.data() + ir_start * nspin );
+                }                    
                 break;
+            }
             case XC_FAMILY_GGA:
             case XC_FAMILY_HYB_GGA:
-                // call Libxc function: xc_gga_exc_vxc
-                xc_gga_exc_vxc( &func, nrxx, rho.data(), sigma.data(),
-                    exc.data(), vrho.data(), vsigma.data() );
+            {
+                constexpr int nr_batch_size = 1024;
+                #ifdef _OPENMP
+                #pragma omp parallel for schedule(static, nr_batch_size)
+                #endif
+                for( int ir_start = 0; ir_start < nrxx; ir_start += nr_batch_size )
+                {
+                    const int ir_end = std::min(ir_start + nr_batch_size, nrxx);
+                    const int nrxx_thread = ir_end - ir_start;
+                    xc_gga_exc_vxc(
+                        &func,
+                        nrxx_thread,
+                        rho.data() + ir_start * nspin,
+                        sigma.data() + ir_start * ((1==nspin)?1:3),
+                        exc.data() + ir_start,
+                        vrho.data() + ir_start * nspin,
+                        vsigma.data() + ir_start * ((1==nspin)?1:3) );
+                }
                 break;
+            }
             default:
                 throw std::domain_error("func.info->family ="+std::to_string(func.info->family)
                     +" unfinished in "+std::string(__FILE__)+" line "+std::to_string(__LINE__));
