@@ -232,9 +232,55 @@ def generate_toc(sorted_categories: OrderedDict) -> str:
     return '\n'.join(lines)
 
 
-def generate(yaml_path: Path, output: Path, verbose: bool = False):
+def _report_availability(all_params):
+    """Classify every non-empty availability string and summarise the result.
+
+    Uses tools/03_code_analysis/availability_parser.py. This is a status
+    report only; it does not modify the generated documentation.
+    """
+    try:
+        sys.path.insert(0, str(DOC_FOLDER.parent / 'tools' / '03_code_analysis'))
+        from availability_parser import parse_availability
+    except ImportError:
+        print("[availability] parser not found; skipping availability check")
+        return
+
+    counts = {"Expression": 0, "Label": 0, "Unstructured": 0}
+    unstructured = []
+    labelled = 0
+    for p in all_params:
+        avail = p.get('availability', '')
+        if not avail:
+            continue
+        parsed = parse_availability(avail)
+        if parsed.kind in counts:
+            counts[parsed.kind] += 1
+        if parsed.kind == "Unstructured":
+            unstructured.append((p.get('name', '?'), avail))
+        elif parsed.kind == "Label":
+            labelled += 1
+
+    print("[availability] non-empty:", sum(counts.values()),
+          " Expression:", counts["Expression"],
+          " Label:", counts["Label"],
+          " Unstructured:", counts["Unstructured"])
+    if unstructured:
+        print("[availability] parameters with unstructured availability"
+              " waiting for review (%d):" % len(unstructured))
+        for name, text in unstructured:
+            print(f"  {name}: {text}")
+
+
+def generate(yaml_path: Path, output: Path, verbose: bool = False,
+             check_availability: bool = False):
     """
     Core generation logic. Can be called from conf.py or CLI.
+
+    When ``check_availability`` is True, additionally report how many INPUT
+    ``availability`` strings are machine-parsable conditions, applicability
+    labels, or unstructured prose waiting for review (see
+    tools/03_code_analysis/availability_parser.py). It does not alter the
+    generated markdown.
     """
     yaml_path = Path(yaml_path)
     output = Path(output)
@@ -247,6 +293,9 @@ def generate(yaml_path: Path, output: Path, verbose: bool = False):
 
     all_params = data.get('parameters', [])
     print(f"Total: {len(all_params)} documented parameters")
+
+    if check_availability:
+        _report_availability(all_params)
 
     # Group by category
     by_category: Dict[str, List[Dict[str, str]]] = OrderedDict()
@@ -313,9 +362,15 @@ def main():
         action='store_true',
         help='Print verbose output'
     )
+    parser.add_argument(
+        '--check-availability',
+        action='store_true',
+        help='Report how many INPUT availability strings are parseable '
+             'conditions vs. labels vs. unstructured text (no doc changes)'
+    )
 
     args = parser.parse_args()
-    generate(args.yaml_file, args.output, args.verbose)
+    generate(args.yaml_file, args.output, args.verbose, args.check_availability)
 
 
 if __name__ == '__main__':
