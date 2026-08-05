@@ -272,6 +272,27 @@ TEST(SternheimerABACUSSTSmoke, DistinguishesTwoKPointsFromTwoSpinChannels)
     EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints(two_spins, 2, 2, 2, 3));
 }
 
+TEST(SternheimerABACUSSTSmoke, DoesNotReconstructFullKGridWhenSymmetryIsDisabled)
+{
+    EXPECT_FALSE(ModuleRI::sternheimer_full_k_reconstruction_required(2, 1, 2, 0));
+}
+
+TEST(SternheimerABACUSSTSmoke, DoesNotReconstructAnAlreadyFullKGrid)
+{
+    EXPECT_FALSE(ModuleRI::sternheimer_full_k_reconstruction_required(4, 4, 1, 1));
+}
+
+TEST(SternheimerABACUSSTSmoke, ReconstructsASymmetryReducedSingleSpinKGrid)
+{
+    EXPECT_TRUE(ModuleRI::sternheimer_full_k_reconstruction_required(2, 8, 1, 1));
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsSymmetryReducedSpinPolarizedKGrid)
+{
+    EXPECT_THROW(ModuleRI::sternheimer_full_k_reconstruction_required(4, 8, 2, 1),
+                 std::invalid_argument);
+}
+
 TEST(SternheimerABACUSSTSmoke, AllowsFullKRecordsToShareAnIBZZeroOrderState)
 {
     auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.5);

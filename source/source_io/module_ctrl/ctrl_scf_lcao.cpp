@@ -185,14 +185,13 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
 
     const int ibz_kpoint_count = kv.get_nkstot();
     const int full_kpoint_count = kv.get_nkstot_full();
-    if (full_kpoint_count == ibz_kpoint_count)
+    if (!ModuleRI::sternheimer_full_k_reconstruction_required(
+            ibz_kpoint_count,
+            full_kpoint_count,
+            PARAM.inp.nspin,
+            ModuleSymmetry::Symmetry::symm_flag))
     {
         return records;
-    }
-    if (PARAM.inp.nspin != 1 || ModuleSymmetry::Symmetry::symm_flag != 1)
-    {
-        throw std::runtime_error(
-            "Sternheimer full-k reconstruction requires nspin=1 and symmetry=1.");
     }
     if (full_kpoint_count <= 0
         || kv.kstars.size() != static_cast<std::size_t>(ibz_kpoint_count)

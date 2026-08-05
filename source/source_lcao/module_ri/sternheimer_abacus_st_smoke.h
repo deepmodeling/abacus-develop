@@ -61,6 +61,27 @@ inline const SternheimerReducedKPoint& sternheimer_lcao_grid_kpoint(
     return record.has_grid_kpoint_override ? record.grid_kpoint : record.kpoint;
 }
 
+inline bool sternheimer_full_k_reconstruction_required(const int stored_kpoint_count,
+                                                        const int full_kpoint_count,
+                                                        const int spin_channel_count,
+                                                        const int symmetry_flag)
+{
+    if (stored_kpoint_count <= 0 || full_kpoint_count <= 0 || spin_channel_count <= 0)
+    {
+        throw std::invalid_argument("Invalid Sternheimer k-point reconstruction dimensions.");
+    }
+    if (symmetry_flag != 1 || stored_kpoint_count == full_kpoint_count)
+    {
+        return false;
+    }
+    if (spin_channel_count != 1)
+    {
+        throw std::invalid_argument(
+            "Sternheimer full-k reconstruction supports only nspin=1.");
+    }
+    return true;
+}
+
 inline SternheimerLCAOOccupiedKPoint make_sternheimer_full_kpoint_record(
     const SternheimerLCAOOccupiedKPoint& ibz_record,
     const int full_k_index,
