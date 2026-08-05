@@ -45,7 +45,7 @@ if(MKLROOT)
 # Since libtorch will find its own MKL, the fftw part conflicts with the original one.
 # When enable deepks, mkl will be linked within ${TORCH_LIBRARIES}.
   if(NOT ENABLE_DEEPKS)
-    list(APPEND math_libs IntelMKL::MKL)
+    list(APPEND math_libs MKL::MKL)
   endif()
 
   if(CMAKE_CXX_COMPILER_ID MATCHES Intel)
