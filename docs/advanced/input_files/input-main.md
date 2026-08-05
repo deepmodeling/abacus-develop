@@ -36,6 +36,7 @@
     - [cell\_factor](#cell_factor)
     - [dm\_to\_rho](#dm_to_rho)
     - [chg\_extrap](#chg_extrap)
+    - [wfc\_extrap](#wfc_extrap)
     - [nb2d](#nb2d)
     - [cal\_symm\_repr](#cal_symm_repr)
   - [Input files](#input-files)
@@ -849,6 +850,18 @@
 - **Type**: String
 - **Description**: Charge extrapolation method for MD and relaxation calculations.
 - **Default**: default
+
+### wfc_extrap
+
+- **Type**: String
+- **Description**: Wavefunction extrapolation method for LCAO calculations.
+
+  - none: Disable wavefunction-based extrapolation.
+  - use_prev_wf: Use the previous ionic step wavefunctions as the initial guess.
+
+  This option is currently limited to Gamma-only LCAO calculations.
+  The k-point, ASPC, and GExt_PROJ paths will be enabled by later updates.
+- **Default**: none
 
 ### nb2d
 

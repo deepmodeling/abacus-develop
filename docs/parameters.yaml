@@ -333,6 +333,20 @@ parameters:
     default_value: default
     unit: ""
     availability: ""
+  - name: wfc_extrap
+    category: System variables
+    type: String
+    description: |
+      Wavefunction extrapolation method for LCAO calculations.
+
+      * none: Disable wavefunction-based extrapolation.
+      * use_prev_wf: Use the previous ionic step wavefunctions as the initial guess.
+
+      This option is currently limited to Gamma-only LCAO calculations.
+      The k-point, ASPC, and GExt_PROJ paths will be enabled by later updates.
+    default_value: none
+    unit: ""
+    availability: ""
   - name: ecutwfc
     category: Plane wave related variables
     type: Real
