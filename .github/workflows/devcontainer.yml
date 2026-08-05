@@ -26,8 +26,8 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}
-            dp-harbor-registry.us-east-1.cr.aliyuncs.com/deepmodeling/abacus-${{ matrix.dockerfile }}
+            ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}-lts
+            dp-harbor-registry.us-east-1.cr.aliyuncs.com/deepmodeling/abacus-${{ matrix.dockerfile }}-lts
           tags: |
             type=semver,pattern={{version}},enable=${{ github.ref_type == 'tag' }}
             type=raw,value=latest
@@ -57,5 +57,5 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           file: Dockerfile.${{ matrix.dockerfile }}
           push: true
-          cache-from: type=registry,ref=ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}:latest
+          cache-from: type=registry,ref=ghcr.io/deepmodeling/abacus-${{ matrix.dockerfile }}-lts:latest
           cache-to: type=inline
