@@ -132,8 +132,10 @@ TEST_F(InputTest, Item_test)
         param.input.esolver_type = "lr";
         param.input.calculation = "scf";
         it = find_label("esolver_type", readinput.input_lists);
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.calculation, "nscf");
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("esolver_type=lr requires calculation=nscf"));
     }
     { // nspin
         auto it = find_label("nspin", readinput.input_lists);
