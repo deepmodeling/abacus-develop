@@ -83,7 +83,7 @@ _IS_EQ = re.compile(r"\bis\b", re.IGNORECASE)
 _CONTAINS = re.compile(r"\bcontains\b", re.IGNORECASE)
 _IN = re.compile(r"\bin\b", re.IGNORECASE)
 
-_PARAM_LIKE = re.compile(r"^[a-z][a-z0-9_]*$")
+_PARAM_LIKE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
 
 
 def _canonical_value(v):
@@ -115,30 +115,57 @@ def _split_values_tokens(tokens):
 def _parse_single_condition(text, param_regex):
     """Try to parse ``text`` (a single atom) as ``param <op> <values>``.
 
-    Returns a Condition or None.
+    Returns a Condition or None. Handles the canonical grammar (==, >=, <=,
+    !=, >, <, ``in [a, b]``) plus the historical spellings (``=``,
+    ``is set to``, ``is``, ``contains``).
     """
     text = text.strip().strip('"').strip()
     if not text:
         return None
 
-    # param == value / param = value
-    for op in ("==", "="):
-        idx = text.find(op)
-        if idx > 0:
-            param = text[:idx].strip()
-            rhs = text[idx + len(op):].strip()
-            if param_regex(param) and rhs:
+    # canonical comparison operators (longest/most specific first)
+    for op in ("==", ">=", "<=", "!=", ">", "<"):
+        pos = text.find(op)
+        if pos > 0:
+            param = text[:pos].strip()
+            rhs = text[pos + len(op):].strip()
+            if not (param_regex(param) and rhs):
+                return None
+            if op == "==":
+                # equality may carry a slash/comma-separated value list
                 values = _split_values_tokens([t for t in re.split(r"[/,]", rhs)])
                 values = [v for v in values if v]
-                if values:
-                    return Condition(param, "==", values)
-            return None
+                if not values:
+                    return None
+                return Condition(param, "==", values)
+            return Condition(param, op, [rhs])
 
-    # param is set to <values> / param is <value> / param contains <value>
-    for marker, op in (
-        (_IS_SETTO, "=="),
-        (_CONTAINS, "in"),
-    ):
+    # legacy single '=' as equality
+    pos = text.find("=")
+    if pos > 0:
+        param = text[:pos].strip()
+        rhs = text[pos + 1:].strip()
+        if param_regex(param) and rhs:
+            values = _split_values_tokens([t for t in re.split(r"[/,]", rhs)])
+            values = [v for v in values if v]
+            if values:
+                return Condition(param, "==", values)
+        return None
+
+    # canonical in-list: param in [v1, v2]
+    m_in = re.search(r"\bin\s*\[", text, re.IGNORECASE)
+    if m_in:
+        param = text[:m_in.start()].strip()
+        rest = text[m_in.end():].strip()
+        if rest.endswith("]") and param_regex(param):
+            values = [v.strip().strip('"').strip("'").rstrip(".") for v in rest[:-1].split(",")]
+            values = [v for v in values if v]
+            if values:
+                return Condition(param, "in", values)
+        return None
+
+    # historical: is set to / contains / is
+    for marker, op in ((_IS_SETTO, "=="), (_CONTAINS, "contains")):
         m = marker.search(text)
         if m:
             param = text[: m.start()].strip()
@@ -159,7 +186,6 @@ def _parse_single_condition(text, param_regex):
             values = _split_values_tokens([t for t in re.split(r"[,/]", rhs)])
             values = [v for v in values if v]
             if values:
-                # "param is true/false" -> ==; otherwise treat as membership
                 op = "==" if len(values) == 1 else "in"
                 return Condition(param, op, values)
         return None
@@ -167,28 +193,106 @@ def _parse_single_condition(text, param_regex):
     return None
 
 
-def _tokenise_bool(text):
-    """Split a boolean expression at top-level ``and``/``or``/``,``.
+def _split_top_level(text, keywords):
+    """Split ``text`` on the given keywords at bracket/paren depth 0.
 
-    Returns a list of ``(atom_text, sep)`` pairs where ``sep`` is the
-    connecting keyword that followed the atom (``and``/``or``/``,``), or
-    ``None`` for the last atom.
+    Comma counts as a separator; word keywords (and/or) require word
+    boundaries. Everything inside ``(...)`` or ``[...]`` is kept intact.
     """
-    tokens = re.split(r"(\band\b|\bor\b|,)", text, flags=re.IGNORECASE)
+    keywords = sorted(keywords, key=len, reverse=True)
     parts = []
-    pending_sep = None
-    for t in tokens:
-        t = t.strip()
-        if not t:
+    depth = 0
+    start = 0
+    n = len(text)
+    i = 0
+    while i < n:
+        c = text[i]
+        if c in "([":
+            depth += 1
+            i += 1
             continue
-        low = t.lower()
-        if low in ("and", "or", ","):
-            # separator that binds the *previous* atom to the next one
-            pending_sep = low if low != "," else "and"
+        if c in ")]":
+            depth = max(0, depth - 1)
+            i += 1
             continue
-        parts.append((t, pending_sep))
-        pending_sep = None
+        if depth == 0:
+            matched = False
+            for kw in keywords:
+                if kw == ",":
+                    if c == ",":
+                        seg = text[start:i].strip()
+                        if seg:
+                            parts.append(seg)
+                        start = i + 1
+                        i = start
+                        matched = True
+                        break
+                else:
+                    prev_bound = (i == 0) or text[i - 1].isspace()
+                    next_bound = (i + len(kw) >= n) or text[i + len(kw)].isspace() \
+                        or text[i + len(kw)] in "(["
+                    if prev_bound and next_bound and text.startswith(kw, i):
+                        seg = text[start:i].strip()
+                        if seg:
+                            parts.append(seg)
+                        start = i + len(kw)
+                        i = start
+                        matched = True
+                        break
+            if matched:
+                continue
+        i += 1
+    seg = text[start:].strip()
+    if seg:
+        parts.append(seg)
     return parts
+
+
+def _build_expr(text, param_regex):
+    """Recursively build an Expr/leaf from a boolean availability string.
+
+    Returns a Condition/Expr or None if any part is not parseable.
+    """
+    text = text.strip()
+    if not text:
+        return None
+
+    # Unwrap a parenthesized group that wraps the entire expression.
+    if text.startswith("(") and text.endswith(")"):
+        depth = 0
+        wraps_all = True
+        for k, ch in enumerate(text):
+            if ch == "(":
+                depth += 1
+            elif ch == ")":
+                depth -= 1
+                if depth == 0 and k != len(text) - 1:
+                    wraps_all = False
+                    break
+        if wraps_all:
+            return _build_expr(text[1:-1], param_regex)
+
+    # OR (top level)
+    or_parts = _split_top_level(text, ["or"])
+    if len(or_parts) > 1:
+        children = [_build_expr(p, param_regex) for p in or_parts]
+        if all(children):
+            return Expr("or", children)
+        return None
+
+    # AND (top level, including comma)
+    and_parts = _split_top_level(text, ["and", ","])
+    if len(and_parts) > 1:
+        children = [_build_expr(p, param_regex) for p in and_parts]
+        if all(children):
+            return Expr("and", children)
+        return None
+
+    # A single atom (which may itself be a parenthesized group).
+    atom = text.strip()
+    if atom.startswith("(") and atom.endswith(")"):
+        return _build_expr(atom[1:-1], param_regex)
+    return _parse_single_condition(atom, param_regex)
 
 
 def parse_availability(text, param_regex=_PARAM_LIKE.match):
@@ -197,34 +301,30 @@ def parse_availability(text, param_regex=_PARAM_LIKE.match):
     :param text: raw availability string (may be empty).
     :param param_regex: callable ``(str) -> bool`` used to decide whether a
         leading token is a plausible parameter name. Defaults to a loose
-        lowercase identifier check.
+        identifier check.
     """
     text = (text or "").strip()
     if not text:
         return Availability("Label", text=text)
 
+    # Canonical label form: "label: <name>"
+    if len(text) >= 6 and text[:6].lower() == "label:":
+        return Availability("Label", label=text[6:].strip(), text=text)
+
     # Cheap rejection of obvious prose / bare labels (no operator present).
     has_operator = re.search(
-        r"==|=| in | in$| is set to|\bis\b|\bcontains\b", text, re.IGNORECASE
+        r"==|=| in | in\[| in$| is set to|\bis\b|\bcontains\b|>=|<=|!=|\b>\b|\b<\b",
+        text, re.IGNORECASE,
     )
     if not has_operator:
         return Availability("Label", label=text.strip('"').rstrip('.'), text=text)
 
-    # Try to interpret as a boolean condition over atoms.
-    atoms = _tokenise_bool(text)
-    conds = []
-    for atom, sep in atoms:
-        c = _parse_single_condition(atom, param_regex)
-        if c is None:
-            # Not parseable -> whole thing is unstructured.
-            return Availability("Unstructured", text=text)
-        conds.append((c, sep))
-
-    if not conds:
+    expr = _build_expr(text, param_regex)
+    if expr is None:
         return Availability("Unstructured", text=text)
-
-    # Build an AND/OR expression tree from the parsed atoms and connectors.
-    nodes = [c for c, _ in conds]
-    expr = Expr("and", nodes)  # flat AND; OR connectors are recorded but not
-    # given a separate tree node (no parenthesised precedence in current data).
+    # Always expose a top-level Expr node so that consumers can iterate
+    # ``expr.children`` (matching the historical flat-AND shape for simple
+    # conditions).
+    if isinstance(expr, Condition):
+        expr = Expr("and", [expr])
     return Availability("Expression", expr=expr, text=text)

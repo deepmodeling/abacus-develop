@@ -117,6 +117,7 @@ add_library(
     module_parameter/read_input_item_exx_dftu.cpp
     module_parameter/read_input_item_other.cpp   
     module_parameter/read_input_item_output.cpp  
+    module_parameter/availability.cpp
     module_parameter/read_input.cpp
     module_parameter/read_set_globalv.cpp
 )

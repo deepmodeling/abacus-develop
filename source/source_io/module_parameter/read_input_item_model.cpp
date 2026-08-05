@@ -36,7 +36,7 @@ void ReadInput::item_model()
 [NOTE] Note: If you do not want any electric field, the parameter efield_amp should be set to zero. This should ONLY be used in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "With dip_cor_flag = True and efield_flag = True.";
+        item.set_availability("dip_cor_flag==true and efield_flag==true");
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.dip_cor_flag && !para.input.efield_flag)
             {
@@ -57,7 +57,7 @@ void ReadInput::item_model()
 * 2: parallel to the third reciprocal lattice vector)";
         item.default_value = "2";
         item.unit = "";
-        item.availability = "with efield_flag = True.";
+        item.set_availability("efield_flag==true");
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.gate_flag && para.input.efield_flag && !para.input.dip_cor_flag)
             {
@@ -78,7 +78,7 @@ void ReadInput::item_model()
         item.description = "Position of the maximum of the saw-like potential along crystal axis efield_dir, within the unit cell, 0 <= efield_pos_max < 1.";
         item.default_value = "Autoset to center of vacuum - width of vacuum / 20";
         item.unit = "";
-        item.availability = "with efield_flag = True.";
+        item.set_availability("efield_flag==true");
         read_sync_double(input.efield_pos_max);
         this->add_item(item);
     }
@@ -90,7 +90,7 @@ void ReadInput::item_model()
         item.description = "Zone in the unit cell where the saw-like potential decreases, 0 < efield_pos_dec < 1.";
         item.default_value = "Autoset to width of vacuum / 10";
         item.unit = "";
-        item.availability = "with efield_flag = True.";
+        item.set_availability("efield_flag==true");
         read_sync_double(input.efield_pos_dec);
         this->add_item(item);
     }
@@ -104,7 +104,7 @@ void ReadInput::item_model()
 [NOTE] Note: The change of slope of this potential must be located in the empty region, or else unphysical forces will result.)";
         item.default_value = "0.0";
         item.unit = "a.u., 1 a.u. = 51.4220632*10^10 V/m.";
-        item.availability = "with efield_flag = True.";
+        item.set_availability("efield_flag==true");
         read_sync_double(input.efield_amp);
         this->add_item(item);
     }
@@ -209,7 +209,7 @@ void ReadInput::item_model()
         item.description = "The relative permittivity of the bulk solvent, 80 for water";
         item.default_value = "80";
         item.unit = "";
-        item.availability = "imp_sol is true.";
+        item.set_availability("imp_sol==true");
         read_sync_double(input.eb_k);
         this->add_item(item);
     }
@@ -279,7 +279,7 @@ void ReadInput::item_model()
 If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.)";
         item.default_value = "default";
         item.unit = "";
-        item.availability = "vdw_method is set to d4";
+        item.set_availability("vdw_method==d4");
         read_sync_string(input.vdw_d4_xc);
         this->add_item(item);
     }
@@ -294,7 +294,7 @@ Available options are:
 * d4s: smooth D4S model)";
         item.default_value = "d4";
         item.unit = "";
-        item.availability = "vdw_method is set to d4";
+        item.set_availability("vdw_method==d4");
         read_sync_string(input.vdw_d4_model);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.vdw_d4_model != "d4" && para.input.vdw_d4_model != "d4s"
@@ -313,7 +313,7 @@ Available options are:
         item.description = "This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). If not set, will use values of PBE functional. For DFT-D3, recommended values with different DFT functionals can be found on the here. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
-        item.availability = "vdw_method is set to d2, d3_0, or d3_bj";
+        item.set_availability("vdw_method in [d2, d3_0, d3_bj]");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.vdw_s6 == "default")
             {
@@ -338,7 +338,7 @@ Available options are:
         item.description = "This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
-        item.availability = "vdw_method is set to d3_0 or d3_bj";
+        item.set_availability("vdw_method in [d3_0, d3_bj]");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             // if (para.input.vdw_s8 == "default")
             // {
@@ -363,7 +363,7 @@ Available options are:
         item.description = "This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
-        item.availability = "vdw_method is set to d3_0 or d3_bj";
+        item.set_availability("vdw_method in [d3_0, d3_bj]");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             // if (para.input.vdw_a1 == "default")
             // {
@@ -388,7 +388,7 @@ Available options are:
         item.description = "This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.";
         item.default_value = "";
         item.unit = "";
-        item.availability = "vdw_method is set to d3_0 or d3_bj";
+        item.set_availability("vdw_method in [d3_0, d3_bj]");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             // if (para.input.vdw_a2 == "default")
             // {
@@ -413,7 +413,7 @@ Available options are:
         item.description = "Controls the damping rate of the damping function in the DFT-D2 method.";
         item.default_value = "20";
         item.unit = "";
-        item.availability = "vdw_method is set to d2";
+        item.set_availability("vdw_method==d2");
         read_sync_double(input.vdw_d);
         this->add_item(item);
     }
@@ -427,7 +427,7 @@ Available options are:
 * False: The three-body term is not included.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "vdw_method is set to d3_0 or d3_bj";
+        item.set_availability("vdw_method in [d3_0, d3_bj]");
         read_sync_bool(input.vdw_abc);
         this->add_item(item);
     }
@@ -443,7 +443,7 @@ H 0.1 Si 9.0
 Namely, each line contains the element name and the corresponding parameter.)";
         item.default_value = "default";
         item.unit = "";
-        item.availability = "vdw_method is set to d2";
+        item.set_availability("vdw_method==d2");
         read_sync_string(input.vdw_C6_file);
         this->add_item(item);
     }
@@ -457,7 +457,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
 * eVA (eV Angstrom))";
         item.default_value = "Jnm6/mol";
         item.unit = "";
-        item.availability = "vdw_C6_file is not default";
+        item.set_availability("vdw_C6_file!=default");
         read_sync_string(input.vdw_C6_unit);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_C6_unit != "Jnm6/mol") && (para.input.vdw_C6_unit != "eVA6"))
@@ -479,7 +479,7 @@ Li 1.0 Cl 2.0
 Namely, each line contains the element name and the corresponding parameter.)";
         item.default_value = "default";
         item.unit = "";
-        item.availability = "vdw_method is set to d2";
+        item.set_availability("vdw_method==d2");
         read_sync_string(input.vdw_R0_file);
         this->add_item(item);
     }
@@ -493,7 +493,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
 * Bohr)";
         item.default_value = "A";
         item.unit = "";
-        item.availability = "vdw_R0_file is not default";
+        item.set_availability("vdw_R0_file!=default");
         read_sync_string(input.vdw_R0_unit);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_R0_unit != "A") && (para.input.vdw_R0_unit != "Bohr"))
@@ -531,7 +531,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
         item.description = "Defines the radius of the cutoff sphere when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method.";
         item.default_value = "";
         item.unit = "defined by vdw_radius_unit (default Bohr)";
-        item.availability = "vdw_cutoff_type is set to radius";
+        item.set_availability("vdw_cutoff_type==radius");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.vdw_cutoff_radius == "default")
             {
@@ -575,7 +575,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
 * Bohr)";
         item.default_value = "Bohr";
         item.unit = "";
-        item.availability = "vdw_cutoff_type is set to radius";
+        item.set_availability("vdw_cutoff_type==radius");
         read_sync_string(input.vdw_radius_unit);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_radius_unit != "A") && (para.input.vdw_radius_unit != "Bohr"))
@@ -593,7 +593,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
         item.description = "The three integers supplied here explicitly specify the extent of the supercell in the directions of the three basis lattice vectors.";
         item.default_value = "3 3 3";
         item.unit = "";
-        item.availability = "vdw_cutoff_type is set to period";
+        item.set_availability("vdw_cutoff_type==period");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             if (count == 3)
@@ -632,7 +632,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
         item.description = "The cutoff radius when calculating coordination numbers.";
         item.default_value = "40";
         item.unit = "defined by vdw_cn_thr_unit (default: Bohr)";
-        item.availability = "vdw_method is set to d3_0, d3_bj, or d4";
+        item.set_availability("vdw_method in [d3_0, d3_bj, d4]");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (!item.is_read() && para.input.vdw_method == "d4")
             {

@@ -141,6 +141,36 @@ def format_description(desc: str) -> str:
     return result.strip()
 
 
+def _availability_display(param):
+    """Return a display string for a parameter's availability.
+
+    Prefers the exported structured fields (availability_kind / label) when
+    present; otherwise falls back to the raw ``availability`` string (e.g. for
+    older parameters.yaml files that only carry the string).
+    """
+    # The raw string is already the canonical, user-facing representation
+    # (a boolean expression for Expression items, the human text otherwise).
+    return str(param.get('availability', ''))
+
+
+def _availability_kind(param, parse_legacy):
+    """Return the structured availability kind for a parameter.
+
+    Prefers ``availability_kind`` from the YAML. When it is absent (legacy
+    dump), classifies the raw string with the provided parser function.
+    """
+    kind = param.get('availability_kind')
+    if kind in ('Expression', 'Label', 'Unstructured'):
+        return kind
+    avail = (param.get('availability', '') or '').strip()
+    if not avail:
+        return None
+    if parse_legacy is None:
+        return 'Unstructured'
+    parsed = parse_legacy(avail)
+    return parsed.kind if parsed.kind in ('Expression', 'Label', 'Unstructured') else 'Unstructured'
+
+
 def generate_parameter_markdown(param: Dict[str, str]) -> str:
     """
     Generate markdown for a single parameter.
@@ -154,7 +184,7 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
 
     # Availability (before description, as in original format)
     if param.get('availability', '') != '':
-        availability_text = escape_md_text(str(param['availability']))
+        availability_text = escape_md_text(_availability_display(param))
         lines.append(f"- **Availability**: *{availability_text}*")
 
     # Description
@@ -238,12 +268,17 @@ def _report_availability(all_params):
     Uses tools/03_code_analysis/availability_parser.py. This is a status
     report only; it does not modify the generated documentation.
     """
-    try:
-        sys.path.insert(0, str(DOC_FOLDER.parent / 'tools' / '03_code_analysis'))
-        from availability_parser import parse_availability
-    except ImportError:
-        print("[availability] parser not found; skipping availability check")
-        return
+    # Prefer the structured availability_kind exported by abacus; only fall
+    # back to the text parser for older dumps that do not carry the field.
+    parse_legacy = None
+    if not any(p.get('availability_kind') for p in all_params if p.get('availability')):
+        try:
+            sys.path.insert(0, str(DOC_FOLDER.parent / 'tools' / '03_code_analysis'))
+            from availability_parser import parse_availability
+            parse_legacy = parse_availability
+        except ImportError:
+            print("[availability] parser not found; skipping availability check")
+            return
 
     counts = {"Expression": 0, "Label": 0, "Unstructured": 0}
     unstructured = []
@@ -252,12 +287,12 @@ def _report_availability(all_params):
         avail = p.get('availability', '')
         if not avail:
             continue
-        parsed = parse_availability(avail)
-        if parsed.kind in counts:
-            counts[parsed.kind] += 1
-        if parsed.kind == "Unstructured":
+        kind = _availability_kind(p, parse_legacy)
+        if kind in counts:
+            counts[kind] += 1
+        if kind == "Unstructured":
             unstructured.append((p.get('name', '?'), avail))
-        elif parsed.kind == "Label":
+        elif kind == "Label":
             labelled += 1
 
     print("[availability] non-empty:", sum(counts.values()),

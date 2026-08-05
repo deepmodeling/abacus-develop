@@ -702,7 +702,7 @@ For systems that are difficult to converge, one could try increasing the value o
         item.description = "At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "Only for mixing_restart >= 0.0";
+        item.set_availability("mixing_restart>=0");
         read_sync_bool(input.mixing_dmr);
         this->add_item(item);
     }
@@ -760,7 +760,7 @@ In the current implementation, the automatic bypass thresholds are fixed indepen
 * >0: Angle mixing for the modulus with mixing_angle=1.0)";
         item.default_value = "-10.0";
         item.unit = "";
-        item.availability = "Only relevant for non-colinear calculations nspin=4.";
+        item.set_availability("nspin==4");
         read_sync_double(input.mixing_angle);
         this->add_item(item);
     }
@@ -774,7 +774,7 @@ In the current implementation, the automatic bypass thresholds are fixed indepen
 * False: The kinetic energy density will not be mixed.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Only relevant for meta-GGA calculations.";
+        item.availability = "";
         read_sync_bool(input.mixing_tau);
         this->add_item(item);
     }
@@ -788,7 +788,7 @@ In the current implementation, the automatic bypass thresholds are fixed indepen
 * False: The occupation matrices will not be mixed.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Only relevant for DFT+U calculations.";
+        item.set_availability("dft_plus_u==1");
         read_sync_bool(input.mixing_dftu);
         this->add_item(item);
     }
@@ -805,7 +805,7 @@ In the current implementation, the automatic bypass thresholds are fixed indepen
 Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "Only used in localized orbitals set";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.gamma_only);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.basis_type == "pw" && para.input.gamma_only)
@@ -1044,7 +1044,7 @@ soc_lambda, which has value range [0.0, 1.0], is used to modulate SOC effect:
 Use case: When experimental or high-level theoretical results suggest that the SOC effect is weaker or stronger than what full-relativistic pseudopotentials predict, you can adjust this parameter to match the target behavior.)";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "Only works when lspinorb=true";
+        item.set_availability("lspinorb==true");
         read_sync_double(input.soc_lambda);
         this->add_item(item);
     }
@@ -1101,7 +1101,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "If TRUE, the wavefunctions at k-point will be initialized from the converged wavefunctions at the nearest k-point, which can speed up the SCF convergence. Only works for PW basis.";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "Used only for plane wave basis set.";
+        item.set_availability("basis_type==pw");
         read_sync_bool(input.use_k_continuity);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.use_k_continuity && para.input.basis_type != "pw") {
@@ -1130,7 +1130,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
         item.default_value = "50";
         item.unit = "";
-        item.availability = "basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg";
+        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg]");
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }

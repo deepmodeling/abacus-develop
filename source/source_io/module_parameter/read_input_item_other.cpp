@@ -56,7 +56,7 @@ void ReadInput::item_others()
         item.description = "Convergence criterion of spin-constrained iteration (RMS) in uB";
         item.default_value = "1.0e-6";
         item.unit = "uB";
-        item.availability = "sc_mag_switch is true";
+        item.set_availability("sc_mag_switch==true");
         read_sync_double(input.sc_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sc_thr < 0)
@@ -74,7 +74,7 @@ void ReadInput::item_others()
         item.description = "Maximal number of spin-constrained iteration";
         item.default_value = "100";
         item.unit = "";
-        item.availability = "sc_mag_switch is true";
+        item.set_availability("sc_mag_switch==true");
         read_sync_int(input.nsc);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nsc <= 0)
@@ -92,7 +92,7 @@ void ReadInput::item_others()
         item.description = "Minimum number of spin-constrained iteration";
         item.default_value = "2";
         item.unit = "";
-        item.availability = "sc_mag_switch is true";
+        item.set_availability("sc_mag_switch==true");
         read_sync_int(input.nsc_min);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nsc_min <= 0)
@@ -110,7 +110,7 @@ void ReadInput::item_others()
         item.description = "Initial trial step size for lambda in eV/uB^2";
         item.default_value = "0.01";
         item.unit = "eV/uB^2";
-        item.availability = "sc_mag_switch is true";
+        item.set_availability("sc_mag_switch==true");
         read_sync_double(input.alpha_trial);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.alpha_trial <= 0)
@@ -128,7 +128,7 @@ void ReadInput::item_others()
         item.description = "Maximal step size for lambda in eV/uB";
         item.default_value = "3.0";
         item.unit = "eV/uB";
-        item.availability = "sc_mag_switch is true";
+        item.set_availability("sc_mag_switch==true");
         read_sync_double(input.sccut);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sccut <= 0)
@@ -146,7 +146,7 @@ void ReadInput::item_others()
         item.description = "Convergence criterion ratio of lambda iteration in Spin-constrained DFT";
         item.default_value = "1.0e-2";
         item.unit = "";
-        item.availability = "sc_mag_switch is true";
+        item.set_availability("sc_mag_switch==true");
         read_sync_double(input.sc_drop_thr);
         this->add_item(item);
     }
@@ -158,7 +158,7 @@ void ReadInput::item_others()
         item.description = "Density error threshold for inner loop of spin-constrained SCF";
         item.default_value = "1.0e-4";
         item.unit = "";
-        item.availability = "sc_mag_switch is true";
+        item.set_availability("sc_mag_switch==true");
         read_sync_double(input.sc_scf_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.sc_scf_thr <= 0.0)
@@ -178,7 +178,7 @@ void ReadInput::item_others()
 When false (default), both the direction and magnitude of the magnetic moment are constrained to the target values.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "sc_mag_switch is true";
+        item.set_availability("sc_mag_switch==true");
         read_sync_bool(input.sc_direction_only);
         this->add_item(item);
     }
@@ -195,7 +195,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * linear_scan: linear sweep of lambda for testing magnetic moment response)";
         item.default_value = "bfgs";
         item.unit = "";
-        item.availability = "sc_mag_switch is true";
+        item.set_availability("sc_mag_switch==true");
         read_sync_string(input.sc_lambda_strategy);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> valid = {"bfgs", "bfgs2", "linear_response", "augmented_lagrangian", "hybrid_delayed", "linear_scan"};
@@ -214,7 +214,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Starting lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.";
         item.default_value = "0.0";
         item.unit = "eV/uB";
-        item.availability = "sc_lambda_strategy is linear_scan";
+        item.set_availability("sc_lambda_strategy==linear_scan");
         read_sync_double(input.sc_scan_lambda_start);
         this->add_item(item);
     }
@@ -226,7 +226,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Ending lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.";
         item.default_value = "1.0";
         item.unit = "eV/uB";
-        item.availability = "sc_lambda_strategy is linear_scan";
+        item.set_availability("sc_lambda_strategy==linear_scan");
         read_sync_double(input.sc_scan_lambda_end);
         this->add_item(item);
     }
@@ -238,7 +238,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Number of lambda values to scan. Only used when sc_lambda_strategy=linear_scan.";
         item.default_value = "20";
         item.unit = "";
-        item.availability = "sc_lambda_strategy is linear_scan";
+        item.set_availability("sc_lambda_strategy==linear_scan");
         read_sync_int(input.sc_scan_steps);
         this->add_item(item);
     }
@@ -845,7 +845,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Atomic basis set size for each atom type (with the same order as in STRU) in FHI-aims.";
         item.default_value = "{} (empty list, where ABACUS use its own basis set size)";
         item.unit = "";
-        item.availability = "ri_hartree_benchmark = aims";
+        item.set_availability("ri_hartree_benchmark==aims");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
@@ -917,7 +917,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * False: Use the traditional method to calculate the Fock exchange operator.)";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "exx_separate_loop==True.";
+        item.set_availability("exx_separate_loop==true");
         read_sync_bool(input.exxace);
         this->add_item(item);
     }
@@ -982,7 +982,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "The threshold for the change of exact exchange energy to judge convergence of the outer loop in the separate loop EXX calculation.";
         item.default_value = "1e-5";
         item.unit = "Ry";
-        item.availability = "exx_thr_type==energy";
+        item.set_availability("exx_thr_type==energy");
         read_sync_double(input.exx_ene_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_ene_thr <= 0)

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/availability.h"
 namespace ModuleIO
 {
 class Input_Item
@@ -31,6 +32,7 @@ class Input_Item
         default_value = item.default_value;
         unit = item.unit;
         availability = item.availability;
+        availability_expr = item.availability_expr;
         annotation = item.annotation;
         read_value = item.read_value;
         check_value = item.check_value;
@@ -49,6 +51,18 @@ class Input_Item
     std::string default_value; ///< default value as string
     std::string unit;          ///< unit of measurement (empty if none)
     std::string availability;  ///< availability conditions (empty if always)
+
+    /// Structured availability representation, kept in sync with `availability`
+    /// via set_availability(). See availability.h for the grammar.
+    AvailabilityExpr availability_expr;  ///< parsed condition tree
+
+    /// Set the canonical availability string and (re)parse it into the
+    /// structured expression tree, so the two representations never diverge.
+    void set_availability(const std::string& value)
+    {
+        availability = value;
+        availability_expr = parse_availability(value);
+    }
 
     bool is_read() const ///< check if the input item is read
     {

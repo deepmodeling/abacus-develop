@@ -170,7 +170,7 @@ void ReadInput::item_postprocess()
         item.description = "Whether to calculate electronic conductivities.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "basis_type = pw";
+        item.set_availability("basis_type==pw");
         read_sync_bool(input.cal_cond);
         this->add_item(item);
     }
@@ -182,7 +182,7 @@ void ReadInput::item_postprocess()
         item.description = "Control the error of Chebyshev expansions for conductivities.";
         item.default_value = "1e-8";
         item.unit = "";
-        item.availability = "esolver_type = sdft";
+        item.set_availability("esolver_type==sdft");
         read_sync_double(input.cond_che_thr);
         this->add_item(item);
     }
@@ -194,7 +194,7 @@ void ReadInput::item_postprocess()
         item.description = "Frequency interval () for frequency-dependent conductivities.";
         item.default_value = "0.1";
         item.unit = "eV";
-        item.availability = "basis_type = pw";
+        item.set_availability("basis_type==pw");
         read_sync_double(input.cond_dw);
         this->add_item(item);
     }
@@ -206,7 +206,7 @@ void ReadInput::item_postprocess()
         item.description = "Cutoff frequency for frequency-dependent conductivities.";
         item.default_value = "10.0";
         item.unit = "eV";
-        item.availability = "basis_type = pw";
+        item.set_availability("basis_type==pw");
         read_sync_double(input.cond_wcut);
         this->add_item(item);
     }
@@ -218,7 +218,7 @@ void ReadInput::item_postprocess()
         item.description = "Time interval () to integrate Onsager coefficients.";
         item.default_value = "0.02";
         item.unit = "a.u.";
-        item.availability = "basis_type = pw";
+        item.set_availability("basis_type==pw");
         read_sync_double(input.cond_dt);
         this->add_item(item);
     }
@@ -231,7 +231,7 @@ void ReadInput::item_postprocess()
 * If cond_dtbatch = 0: Autoset this parameter to make expansion orders larger than 100.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "esolver_type = sdft";
+        item.set_availability("esolver_type==sdft");
         read_sync_int(input.cond_dtbatch);
         this->add_item(item);
     }
@@ -257,7 +257,7 @@ void ReadInput::item_postprocess()
         item.description = "FWHM for conductivities. For Gaussian smearing, ; for Lorentzian smearing, .";
         item.default_value = "0.4";
         item.unit = "eV";
-        item.availability = "basis_type = pw";
+        item.set_availability("basis_type==pw");
         read_sync_double(input.cond_fwhm);
         this->add_item(item);
     }
@@ -271,7 +271,7 @@ void ReadInput::item_postprocess()
 * False: .)";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "basis_type = pw";
+        item.set_availability("basis_type==pw");
         read_sync_bool(input.cond_nonlocal);
         this->add_item(item);
     }

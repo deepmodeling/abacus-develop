@@ -536,7 +536,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.description = "Rescaling factor to use a temperature-dependent DP. Energy, stress and force calculated by DP will be multiplied by this factor.";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "esolver_type = dp.";
+        item.set_availability("esolver_type==dp");
         read_sync_double(input.mdp.dp_rescaling);
         this->add_item(item);
     }
@@ -548,7 +548,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.description = "The frame parameter for dp potential. The array size is dim_fparam, then all frames are assumed to be provided with the same fparam.";
         item.default_value = "{}";
         item.unit = "";
-        item.availability = "esolver_type = dp.";
+        item.set_availability("esolver_type==dp");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             para.input.mdp.dp_fparam.resize(count);
@@ -568,7 +568,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
         item.description = "The atomic parameter for dp potential. The array size can be (1) natoms x dim_aparam, then all frames are assumed to be provided with the same aparam; (2) dim_aparam, then all frames and atoms are assumed to be provided with the same aparam.";
         item.default_value = "{}";
         item.unit = "";
-        item.availability = "esolver_type = dp.";
+        item.set_availability("esolver_type==dp");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             para.input.mdp.dp_aparam.resize(count);
@@ -672,7 +672,7 @@ Note: It is a system-dependent empirical parameter. An improper choice might lea
                           "stronger coupling. Recommended value: 100 * md_dt.";
         item.default_value = "100.0";
         item.unit = "fs";
-        item.availability = "md_thermostat = csvr";
+        item.set_availability("md_thermostat==csvr");
         read_sync_double(input.mdp.md_csvr_tau);
         this->add_item(item);
     }

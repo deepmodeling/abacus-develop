@@ -193,7 +193,7 @@ void ReadInput::item_exx()
         item.description = "The maximal iteration number of the outer-loop, where the Fock exchange is calculated";
         item.default_value = "100";
         item.unit = "";
-        item.availability = "exx_separate_loop==1";
+        item.set_availability("exx_separate_loop==1");
         read_sync_int(input.exx_hybrid_step);
         item.check_value = [](const Input_Item& item, const Parameter& para) 
         {
@@ -212,7 +212,7 @@ void ReadInput::item_exx()
         item.description = "Mixing parameter for densty matrix in each iteration of the outer-loop";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "exx_separate_loop==1";
+        item.set_availability("exx_separate_loop==1");
         read_sync_double(input.exx_mixing_beta);
         this->add_item(item);
     }
@@ -226,7 +226,7 @@ void ReadInput::item_exx()
         item.description = "It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.";
         item.default_value = "0.3";
         item.unit = "";
-        item.availability = "basis_type==lcao_in_pw";
+        item.set_availability("basis_type==lcao_in_pw");
         item.read_value = [](const Input_Item& item, Parameter& para)
         {
             para.input.exx_fock_lambda = item.str_values;
@@ -411,7 +411,7 @@ void ReadInput::item_exx()
         item.description = "The maximum l of the spherical Bessel functions, when the radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. A reasonable choice is 2.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "calculation==gen_opt_abfs";
+        item.set_availability("calculation==gen_opt_abfs");
         read_sync_int(input.exx_opt_orb_lmax);
         this->add_item(item);
     }
@@ -423,7 +423,7 @@ void ReadInput::item_exx()
         item.description = "The cut-off of plane wave expansion, when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.";
         item.default_value = "0";
         item.unit = "Ry";
-        item.availability = "calculation==gen_opt_abfs";
+        item.set_availability("calculation==gen_opt_abfs");
         read_sync_double(input.exx_opt_orb_ecut);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_opt_orb_ecut < 0)
@@ -442,7 +442,7 @@ void ReadInput::item_exx()
         item.description = "The threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.";
         item.default_value = "1E-12";
         item.unit = "";
-        item.availability = "calculation==gen_opt_abfs";
+        item.set_availability("calculation==gen_opt_abfs");
         read_sync_double(input.exx_opt_orb_tolerence);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.exx_opt_orb_tolerence < 0)
@@ -545,7 +545,7 @@ void ReadInput::item_exx()
 * True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation)";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "symmetry==1 and exx calculation (dft_fuctional==hse/hf/pbe0/scan0 or rpa==True)";
+        item.set_availability("symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or rpa==true)");
         read_sync_bool(input.exx_symmetry_realspace);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry != "1") { para.input.exx_symmetry_realspace = false; }
@@ -659,7 +659,7 @@ void ReadInput::item_dftu()
         item.description = "Whether to enable DFT+DMFT calculation. True: DFT+DMFT; False: standard DFT calculation.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "basis_type==lcao";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.dft_plus_dmft);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type != "lcao" && para.input.dft_plus_dmft)
@@ -787,7 +787,7 @@ void ReadInput::item_dftu()
         item.description = "The screen length of Yukawa potential. If left to default, the screen length will be calculated as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.";
         item.default_value = "Calculated on the fly.";
         item.unit = "";
-        item.availability = "DFT+U with yukawa_potential = True.";
+        item.set_availability("dft_plus_u==1 and yukawa_potential==true");
         read_sync_double(input.yukawa_lambda);
         this->add_item(item);
     }
@@ -799,7 +799,7 @@ void ReadInput::item_dftu()
         item.description = "Once uramping > 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho<mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.";
         item.default_value = "-1.0.";
         item.unit = "eV";
-        item.availability = "DFT+U calculations with mixing_restart > 0.";
+        item.set_availability("dft_plus_u==1 and mixing_restart>0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.uramping_eV = doublevalue;
             para.sys.uramping = para.input.uramping_eV / ModuleBase::Ry_to_eV;
@@ -853,7 +853,7 @@ void ReadInput::item_dftu()
 * The modulation algorithm applies a smooth truncation to the orbital tail followed by normalization. A representative profile is $f(r)=\frac{1}{2}\left[1+\operatorname{erf}\!\left(\frac{r_c-r}{\sigma}\right)\right]$, where $r_c$ is the cutoff radius and $\sigma=\gamma r_c$ controls smoothness.)";
         item.default_value = "3.0";
         item.unit = "Bohr";
-        item.availability = "dft_plus_u is set to 1";
+        item.set_availability("dft_plus_u==1");
         read_sync_double(input.onsite_radius);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if ((para.input.dft_plus_u == 1 || para.input.sc_mag_switch) && para.input.onsite_radius == 0.0)

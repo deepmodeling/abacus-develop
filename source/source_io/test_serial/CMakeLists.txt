@@ -21,6 +21,7 @@ add_library(
     ../module_parameter/read_input_item_output.cpp
     ../module_parameter/read_input.cpp
     ../module_parameter/read_set_globalv.cpp
+    ../module_parameter/availability.cpp
 )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -37,6 +38,15 @@ AddTest(
   TARGET MODULE_IO_read_item_serial
   LIBS parameter base device io_input_serial
   SOURCES read_input_item_test.cpp
+)
+
+# The availability parser is dependency-free (standard library only). It does
+# not need libs such as `base`/`device`, so this target intentionally links only
+# the gtest/gmock/linalg closure that AddTest adds automatically.
+AddTest(
+  TARGET MODULE_IO_availability_serial
+  SOURCES availability_test.cpp
+          ../module_parameter/availability.cpp
 )
 
 AddTest(

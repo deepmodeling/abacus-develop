@@ -28,7 +28,7 @@ void ReadInput::item_ofdft()
 * cpn5: CPN5 KEDF (automatically sets ml parameters))";
         item.default_value = "wt";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.check_value = [](const Input_Item& item, const Parameter& para) {
 #ifndef __MLALGO
             if (para.input.of_kinetic == "ml" || para.input.of_kinetic == "mpn" || para.input.of_kinetic == "cpn5")
@@ -124,7 +124,7 @@ void ReadInput::item_ofdft()
 * tn: Truncated Newton algorithm.)";
         item.default_value = "tn";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_string(input.of_method);
         this->add_item(item);
     }
@@ -139,7 +139,7 @@ void ReadInput::item_ofdft()
 * both: Both energy and potential must satisfy the convergence criterion.)";
         item.default_value = "energy";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_string(input.of_conv);
         this->add_item(item);
     }
@@ -152,7 +152,7 @@ void ReadInput::item_ofdft()
         item.description = "Tolerance of the energy change for determining the convergence.";
         item.default_value = "2e-6";
         item.unit = "Ry";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_double(input.of_tole);
         this->add_item(item);
     }
@@ -165,7 +165,7 @@ void ReadInput::item_ofdft()
         item.description = "Tolerance of potential for determining the convergence.";
         item.default_value = "1e-5";
         item.unit = "Ry";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_double(input.of_tolp);
         this->add_item(item);
     }
@@ -177,7 +177,7 @@ void ReadInput::item_ofdft()
         item.description = "Weight of TF KEDF (kinetic energy density functional).";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=tf, tf+, wt, ext-wt, xwm";
+        item.set_availability("esolver_type==ofdft and of_kinetic in [tf, tf+, wt, ext-wt, xwm]");
         read_sync_double(input.of_tf_weight);
         this->add_item(item);
     }
@@ -189,7 +189,7 @@ void ReadInput::item_ofdft()
         item.description = "Weight of vW KEDF (kinetic energy density functional).";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=vw, tf+, wt, ext-wt, lkt, xwm";
+        item.set_availability("esolver_type==ofdft and of_kinetic in [vw, tf+, wt, ext-wt, lkt, xwm]");
         read_sync_double(input.of_vw_weight);
         this->add_item(item);
     }
@@ -201,7 +201,7 @@ void ReadInput::item_ofdft()
         item.description = "Parameter alpha of WT KEDF (kinetic energy density functional).";
         item.default_value = "";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=wt, ext-wt";
+        item.set_availability("esolver_type==ofdft and of_kinetic in [wt, ext-wt]");
         read_sync_double(input.of_wt_alpha);
         this->add_item(item);
     }
@@ -213,7 +213,7 @@ void ReadInput::item_ofdft()
         item.description = "Parameter beta of WT KEDF (kinetic energy density functional).";
         item.default_value = "";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=wt, ext-wt";
+        item.set_availability("esolver_type==ofdft and of_kinetic in [wt, ext-wt]");
         read_sync_double(input.of_wt_beta);
         this->add_item(item);
     }
@@ -225,7 +225,7 @@ void ReadInput::item_ofdft()
         item.description = "Parameter kappa for EXT-WT KEDF.";
         item.default_value = "1.0 / (2.0 * std::pow(4./3., 1./3.) - 1.0)";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=ext-wt";
+        item.set_availability("esolver_type==ofdft and of_kinetic==ext-wt");
         read_sync_double(input.of_extwt_kappa);
         this->add_item(item);
     }
@@ -237,7 +237,7 @@ void ReadInput::item_ofdft()
         item.description = "The average density of system.";
         item.default_value = "0.0";
         item.unit = "Bohr^-3";
-        item.availability = "OFDFT with of_kinetic=wt";
+        item.set_availability("esolver_type==ofdft and of_kinetic==wt");
         read_sync_double(input.of_wt_rho0);
         this->add_item(item);
     }
@@ -253,7 +253,7 @@ void ReadInput::item_ofdft()
 * False: rho0 will change if volume of system has changed.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=wt";
+        item.set_availability("esolver_type==ofdft and of_kinetic==wt");
         read_sync_bool(input.of_hold_rho0);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.of_wt_rho0 != 0)
@@ -271,7 +271,7 @@ void ReadInput::item_ofdft()
         item.description = "Parameter a of LKT KEDF (kinetic energy density functional).";
         item.default_value = "1.3";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=lkt";
+        item.set_availability("esolver_type==ofdft and of_kinetic==lkt");
         read_sync_double(input.of_lkt_a);
         this->add_item(item);
     }
@@ -283,7 +283,7 @@ void ReadInput::item_ofdft()
         item.description = "Reference charge density for XWM kinetic energy functional. If set to 0, the program will use average charge density.";
         item.default_value = "0.0";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=xwm";
+        item.set_availability("esolver_type==ofdft and of_kinetic==xwm");
         read_sync_double(input.of_xwm_rho_ref);
         this->add_item(item);
     }
@@ -295,7 +295,7 @@ void ReadInput::item_ofdft()
         item.description = "Parameter for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.";
         item.default_value = "0.0";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=xwm";
+        item.set_availability("esolver_type==ofdft and of_kinetic==xwm");
         read_sync_double(input.of_xwm_kappa);
         this->add_item(item);
     }
@@ -311,7 +311,7 @@ void ReadInput::item_ofdft()
 * False: The kernel of WT KEDF (kinetic energy density functional) will be filled from formula.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "OFDFT with of_kinetic=wt";
+        item.set_availability("esolver_type==ofdft and of_kinetic==wt");
         read_sync_bool(input.of_read_kernel);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.of_kinetic != "wt")
@@ -329,7 +329,7 @@ void ReadInput::item_ofdft()
         item.description = "The name of WT kernel file.";
         item.default_value = "WTkernel.txt";
         item.unit = "";
-        item.availability = "OFDFT with of_read_kernel=True";
+        item.set_availability("esolver_type==ofdft and of_read_kernel==true");
         read_sync_string(input.of_kernel_file);
         this->add_item(item);
     }
@@ -344,7 +344,7 @@ void ReadInput::item_ofdft()
 * False: Only use the planewaves inside ecut, the same as KSDFT.)";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_bool(input.of_full_pw);
         this->add_item(item);
     }
@@ -363,7 +363,7 @@ void ReadInput::item_ofdft()
 Note: Even dimensions may cause slight errors in FFT. It should be ignorable in ofdft calculation, but it may make Cardinal B-spline interpolation unstable, so please set of_full_pw_dim = 1 if nbspline != -1.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT with of_full_pw = True";
+        item.set_availability("esolver_type==ofdft and of_full_pw==true");
         read_sync_int(input.of_full_pw_dim);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (!para.input.of_full_pw)
@@ -381,7 +381,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Controls the generation of machine learning training data. When enabled, training data in .npy format will be saved in the directory OUT.${suffix}/.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Used only for KSDFT with plane wave basis";
+        item.set_availability("esolver_type==ksdft and basis_type==pw");
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.of_ml_gene_data
                 && (para.input.esolver_type != "ksdft" || para.input.basis_type != "pw" || GlobalV::NPROC != 1))
@@ -404,7 +404,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
 * gpu: GPU)";
         item.default_value = "cpu";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_string(input.of_ml_device);
         this->add_item(item);
     }
@@ -419,7 +419,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
 * 3: Incorporate the FEG limit by nonlinear transformation using softplus function.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_int(input.of_ml_feg);
         this->add_item(item);
     }
@@ -431,7 +431,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Number of kernel functions.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.of_ml_nkernel > 0)
             {
@@ -469,7 +469,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
 * 3: Truncated kinetic kernel (TKK), the file containing TKK is specified by of_ml_kernel_file.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_kernel);
         };
@@ -484,7 +484,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the RECIPROCAL of scaling parameter of the i-th kernel function.";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_kernel_scaling);
         };
@@ -499,7 +499,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the parameter alpha of i-th kernel function. ONLY used for Yukawa kernel function.";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_yukawa_alpha);
         };
@@ -514,7 +514,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the file containing the i-th kernel function. ONLY used for TKK.";
         item.default_value = "none";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
@@ -533,7 +533,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Local descriptor: gamma = (rho / rho0)^(1/3).";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_bool(input.of_ml_gamma);
         this->add_item(item);
     }
@@ -545,7 +545,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Semi-local descriptor: p = |nabla rho|^2 / [2 (3 pi^2)^(1/3) rho^(4/3)]^2.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_bool(input.of_ml_p);
         this->add_item(item);
     }
@@ -557,7 +557,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Semi-local descriptor: q = nabla^2 rho / [4 (3 pi^2)^(2/3) rho^(5/3)].";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_bool(input.of_ml_q);
         this->add_item(item);
     }
@@ -569,7 +569,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Semi-local descriptor: tanhp = tanh(chi_p * p).";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_bool(input.of_ml_tanhp);
         this->add_item(item);
     }
@@ -581,7 +581,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Semi-local descriptor: tanhq = tanh(chi_q * q).";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_bool(input.of_ml_tanhq);
         this->add_item(item);
     }
@@ -593,7 +593,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Hyperparameter chi_p: tanhp = tanh(chi_p * p).";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_double(input.of_ml_chi_p);
         this->add_item(item);
     }
@@ -605,7 +605,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Hyperparameter chi_q: tanhq = tanh(chi_q * q).";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_double(input.of_ml_chi_q);
         this->add_item(item);
     }
@@ -617,7 +617,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor gammanl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_gammanl);
         };
@@ -632,7 +632,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor pnl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_pnl);
         };
@@ -647,7 +647,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor qnl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_qnl);
         };
@@ -662,7 +662,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor xi defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_xi);
         };
@@ -677,7 +677,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhxi defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_tanhxi);
         };
@@ -692,7 +692,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhxi_nl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_tanhxi_nl);
         };
@@ -707,7 +707,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanh_pnl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_tanh_pnl);
         };
@@ -722,7 +722,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanh_qnl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_tanh_qnl);
         };
@@ -737,7 +737,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhp_nl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_tanhp_nl);
         };
@@ -752,7 +752,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhq_nl defined by the i-th kernel function.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_tanhq_nl);
         };
@@ -767,7 +767,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_xi of non-local descriptor tanhxi defined by the i-th kernel function.";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_chi_xi);
         };
@@ -782,7 +782,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_pnl of non-local descriptor tanh_pnl defined by the i-th kernel function.";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_chi_pnl);
         };
@@ -797,7 +797,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_qnl of non-local descriptor tanh_qnl defined by the i-th kernel function.";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.of_ml_chi_qnl);
         };
@@ -812,7 +812,7 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "FOR TEST. Read in the density, and output the F and Pauli potential.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "OFDFT";
+        item.set_availability("esolver_type==ofdft");
         read_sync_bool(input.of_ml_local_test);
         this->add_item(item);
     }

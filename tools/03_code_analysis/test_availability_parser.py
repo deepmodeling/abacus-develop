@@ -84,6 +84,80 @@ class AvailabilityParserTest(unittest.TestCase):
         r = parse_availability("basis_type==lcao")
         self.assertEqual(r.text, "basis_type==lcao")
 
+    def test_in_list(self):
+        r = parse_availability("vdw_method in [d2, d3_0, d3_bj]")
+        self.assertEqual(r.kind, "Expression")
+        c = _conds(r)[0]
+        self.assertEqual((c.param, c.op, c.values),
+                         ("vdw_method", "in", ["d2", "d3_0", "d3_bj"]))
+
+    def test_comparison_operator(self):
+        r = parse_availability("vdw_C6_file!=default")
+        self.assertEqual(r.kind, "Expression")
+        c = _conds(r)[0]
+        self.assertEqual((c.param, c.op, c.values), ("vdw_C6_file", "!=", ["default"]))
+
+    def test_label_prefix(self):
+        r = parse_availability("label: Numerical atomic orbital basis")
+        self.assertEqual(r.kind, "Label")
+        self.assertEqual(r.label, "Numerical atomic orbital basis")
+
+    def test_parens_or_group(self):
+        r = parse_availability(
+            "symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or rpa==true)")
+        self.assertEqual(r.kind, "Expression")
+        root = r.expr
+        # "and" binds looser than "or"; the grouped "(A or B)" must stay a
+        # separate child so precedence is preserved.
+        self.assertIsInstance(root, Expr)
+        self.assertEqual(root.op, "and")
+        self.assertEqual(len(root.children), 2)
+        c0, c1 = root.children
+        self.assertIsInstance(c0, Condition)
+        self.assertEqual((c0.param, c0.op, c0.values), ("symmetry", "==", ["1"]))
+        self.assertIsInstance(c1, Expr)
+        self.assertEqual(c1.op, "or")
+        self.assertEqual(len(c1.children), 2)
+        d, rpa = c1.children
+        self.assertEqual((d.param, d.op, d.values),
+                         ("dft_functional", "in", ["hse", "hf", "pbe0", "scan0"]))
+        self.assertEqual((rpa.param, rpa.op, rpa.values), ("rpa", "==", ["true"]))
+
+    def test_contains_vector_semantics(self):
+        # td_ttype is a Vector: "contains 2" is containment, distinct from
+        # scalar membership ("in [2]"), so the operator must be preserved.
+        r = parse_availability("td_ttype contains 2")
+        self.assertEqual(r.kind, "Expression")
+        c = _conds(r)[0]
+        self.assertEqual((c.param, c.op, c.values), ("td_ttype", "contains", ["2"]))
+
+    def test_parameters_yaml_availability_are_all_expression(self):
+        """Every non-empty availability in the canonical parameters.yaml must be
+        a concrete boolean Expression. Any Label/Unstructured (prose) non-empty
+        value fails the PR build: we do not silently accept non-expressions.
+        """
+        try:
+            import yaml
+        except ImportError:
+            self.skipTest("PyYAML not available")
+        yaml_path = REPO_ROOT / "docs" / "parameters.yaml"
+        if not yaml_path.exists():
+            self.skipTest("docs/parameters.yaml not present")
+        data = yaml.safe_load(yaml_path.read_text())
+        params = data.get("parameters", [])
+        bad = []
+        for p in params:
+            avail = (p.get("availability") or "").strip()
+            if not avail:
+                continue
+            r = parse_availability(avail)
+            if r.kind != "Expression":
+                bad.append((p.get("name"), avail, r.kind))
+        self.assertEqual(bad, [],
+                         "non-Expression availability present (not all "
+                         "availability are machine-evaluable conditions): "
+                         + repr(bad))
+
 
 if __name__ == "__main__":
     unittest.main()
