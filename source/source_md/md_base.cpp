@@ -165,34 +165,36 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
     }
 
     // screen output
-    std::cout << std::setprecision(8);
-    std::cout << " ------------------------------------------------------------------------------------------------"
+    std::cout << " -------------------------------------------------------------------------"
               << std::endl;
-    std::cout << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
-              << std::left << std::setw(20) << "Kinetic (Ry)" << std::left << std::setw(20) << "Temperature (K)";
+    std::cout << " " << std::left << std::setw(24) << "Energy (Ry)" << std::left << std::setw(24) << "Potential (Ry)"
+              << std::left << std::setw(24) << "Kinetic (Ry)" << std::endl;
+    std::cout << std::setprecision(12);
+    std::cout << " " << std::left << std::setw(24) << 2 * (potential + kinetic) << std::left << std::setw(24)
+              << 2 * potential << std::left << std::setw(24) << 2 * kinetic << std::endl;
+    std::cout << " " << std::left << std::setw(24) << "Temperature (K)";
 
     if (cal_stress)
     {
-        std::cout << std::left << std::setw(20) << "Pressure (kbar)";
+        std::cout << std::left << std::setw(24) << "Pressure (kbar)";
     }
 
     std::cout << std::endl;
-    std::cout << " " << std::left << std::setw(20) << 2 * (potential + kinetic) << std::left << std::setw(20)
-              << 2 * potential << std::left << std::setw(20) << 2 * kinetic << std::left << std::setw(20)
-              << t_current * ModuleBase::Hartree_to_K;
+    std::cout << std::setprecision(6);
+    std::cout << " " << std::left << std::setw(24) << t_current * ModuleBase::Hartree_to_K;
 
     if (cal_stress)
     {
-        std::cout << std::left << std::setw(20) << press * unit_transform;
+        std::cout << std::left << std::setw(24) << press * unit_transform;
     }
 
     std::cout << std::endl;
-    std::cout << " ------------------------------------------------------------------------------------------------"
+    std::cout << " -------------------------------------------------------------------------"
               << std::endl;
 
     // running_log output
     ofs.unsetf(std::ios::fixed);
-    ofs << std::setprecision(8);
+    ofs << std::setprecision(12);
 
     if (cal_stress)
     {
@@ -200,28 +202,30 @@ void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
 	    ofs << std::endl;
     }
 
-    ofs << " ------------------------------------------------------------------------------------------------"
+    ofs << " -------------------------------------------------------------------------"
         << std::endl;
-    ofs << " " << std::left << std::setw(20) << "Energy (Ry)" << std::left << std::setw(20) << "Potential (Ry)"
-        << std::left << std::setw(20) << "Kinetic (Ry)" << std::left << std::setw(20) << "Temperature (K)";
+    ofs << " " << std::left << std::setw(24) << "Energy (Ry)" << std::left << std::setw(24) << "Potential (Ry)"
+        << std::left << std::setw(24) << "Kinetic (Ry)" << std::endl;
+    ofs << " " << std::left << std::setw(24) << 2 * (potential + kinetic) << std::left << std::setw(24) << 2 * potential
+        << std::left << std::setw(24) << 2 * kinetic << std::endl;
+    ofs << " " << std::left << std::setw(24) << "Temperature (K)";
 
     if (cal_stress)
     {
-        ofs << std::left << std::setw(20) << "Pressure (kbar)";
+        ofs << std::left << std::setw(24) << "Pressure (kbar)";
     }
 
     ofs << std::endl;
-    ofs << " " << std::left << std::setw(20) << 2 * (potential + kinetic) << std::left << std::setw(20) << 2 * potential
-        << std::left << std::setw(20) << 2 * kinetic << std::left << std::setw(20)
-        << t_current * ModuleBase::Hartree_to_K;
+    ofs << std::setprecision(6);
+    ofs << " " << std::left << std::setw(24) << t_current * ModuleBase::Hartree_to_K;
 
     if (cal_stress)
     {
-        ofs << std::left << std::setw(20) << press * unit_transform;
+        ofs << std::left << std::setw(24) << press * unit_transform;
     }
 
     ofs << std::endl;
-    ofs << " ------------------------------------------------------------------------------------------------"
+    ofs << " -------------------------------------------------------------------------"
         << std::endl;
     ofs << std::endl;
     return;

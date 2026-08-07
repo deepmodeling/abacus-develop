@@ -1,0 +1,41 @@
+INPUT_PARAMETERS
+
+suffix            autotest
+pseudo_dir        ../../PP_ORB
+orbital_dir       ../../PP_ORB
+
+calculation       md
+esolver_type      tddft
+basis_type        lcao
+gamma_only        0
+ecutwfc           20
+
+scf_nmax          50
+scf_thr           1.0e-6
+device            gpu
+ks_solver         cusolver
+mixing_type       broyden
+mixing_beta       0.7
+mixing_gg0        0.0
+
+md_type           nve
+md_nstep          1
+estep_per_md      7
+td_dt             0.05
+md_tfirst         0
+
+td_vext           1
+td_vext_dire      1 2
+td_stype          1
+td_ttype          4 4
+td_tstart         0
+td_tend           6
+td_supsine_amp  0.27 0.18
+td_supsine_freq 0.18737028625 0.35
+td_supsine_phase 0.0 1.5707963267948966
+td_supsine_sigma 0.75 0.60
+td_supsine_tstart 1 1
+td_supsine_tend 5 5
+
+out_efield        1
+out_vecpot        1

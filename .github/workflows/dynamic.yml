@@ -17,7 +17,7 @@ jobs:
     container: ghcr.io/deepmodeling/abacus-gnu
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: Install external tools from toolchain
         run: |
           sudo apt update && sudo apt install -y xz-utils ninja-build pkg-config

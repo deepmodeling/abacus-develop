@@ -780,9 +780,9 @@ TEST_F(InputTest, Item_test)
     { // out_stru
         auto it = find_label("out_stru", readinput.input_lists);
         param.input.calculation = "get_wf";
-        param.input.out_stru = true;
+        param.input.out_stru = 1;
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_stru, false);
+        EXPECT_EQ(param.input.out_stru, 0);
     }
     { // cal_stress
         auto it = find_label("cal_stress", readinput.input_lists);
@@ -1026,11 +1026,11 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_hsk[0], 1);
         EXPECT_EQ(param.input.out_hsk[1], 12);
 
-        param.input.out_hsk[0] = 2;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("reserved but not implemented"));
+        it->second.str_values = {"2", "12"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsk[0], 2);
+        EXPECT_EQ(param.input.out_hsk[1], 12);
+        it->second.check_value(it->second, param);
 
         param.input.out_hsk[0] = 3;
         testing::internal::CaptureStdout();
@@ -2144,5 +2144,122 @@ TEST_F(InputTest, Item_test_out_mat_vec)
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.out_mat_xc2[0], 1);
         EXPECT_EQ(param.input.out_mat_xc2[1], 9);
+    }
+}
+
+TEST_F(InputTest, OutStru)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    auto it = find_label("out_stru", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+
+    // --- Valid numeric values ---
+    {
+        it->second.str_values = {"0"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+    }
+    {
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+    {
+        it->second.str_values = {"2"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 2);
+    }
+
+    // --- Backward-compatible boolean aliases (true -> 1, false -> 0) ---
+    {
+        it->second.str_values = {"true"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+    {
+        it->second.str_values = {"TRUE"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+    {
+        it->second.str_values = {".true."};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+    {
+        it->second.str_values = {"Yes"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+    {
+        it->second.str_values = {"false"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+    }
+    {
+        it->second.str_values = {"FALSE"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+    }
+    {
+        it->second.str_values = {".false."};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+    }
+    {
+        it->second.str_values = {"No"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+    }
+
+    // --- Valid value check_value passes ---
+    {
+        for (const int v : {0, 1, 2})
+        {
+            param.input.out_stru = v;
+            // Expect no exit / no crash; check_value is a void function that only
+            // calls WARNING_QUIT on bad input.
+            it->second.check_value(it->second, param);
+        }
+    }
+
+    // --- reset_value: calculation in offlist forces out_stru to 0 ---
+    {
+        param.input.calculation = "get_wf";
+        param.input.out_stru = 1;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+
+        param.input.calculation = "nscf";
+        param.input.out_stru = 2;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+
+        // Non-offlist calculation preserves value
+        param.input.calculation = "cell-relax";
+        param.input.out_stru = 1;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+
+    // --- Invalid integer values -> WARNING_QUIT via check_value ---
+    {
+        for (const std::string& s : {"3", "-1", "-2", "4", "10"})
+        {
+            it->second.str_values = {s};
+            it->second.read_value(it->second, param);
+            EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        }
+    }
+
+    // --- Non-numeric / malformed inputs -> WARNING_QUIT via read_value ---
+    {
+        for (const std::string& s : {"abc", "2.5", "2abc", "-1abc", "xyz", ""})
+        {
+            it->second.str_values = {s};
+            EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        }
     }
 }

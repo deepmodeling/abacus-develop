@@ -139,6 +139,7 @@ void ModuleIO::read_wf2rho_pw(
                                                                                   PARAM.globalv.domag,
                                                                                   PARAM.globalv.domag_z,
                                                                                   nrxx,
+                                                                                  nrxx,
                                                                                   w1,
                                                                                   chg.rho,
                                                                                   rho_tmp.data(),
@@ -158,7 +159,7 @@ void ModuleIO::read_wf2rho_pw(
                 if (w1 != 0.0)
                 {
 					base_device::DEVICE_CPU* ctx = nullptr;
-					elecstate::elecstate_pw_op<double, base_device::DEVICE_CPU>()(ctx, is, nrxx, 
+					elecstate::elecstate_pw_op<double, base_device::DEVICE_CPU>()(ctx, is, nrxx, nrxx,
 							w1, chg.rho, rho_tmp.data());
                 }
             }

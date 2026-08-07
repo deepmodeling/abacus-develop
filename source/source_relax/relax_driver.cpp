@@ -1,5 +1,7 @@
 #include "relax_driver.h"
+#include "source_base/formatter.h"
 #include "source_base/global_file.h"
+#include "source_base/version.h"
 #include "source_io/module_output/cif_io.h"
 #include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
@@ -7,6 +9,8 @@
 #include "source_io/module_output/read_exit_file.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/print_cell.h"
+
+#include <ctime>
 
 void Relax_Driver::relax_driver(
         ModuleESolver::ESolver* p_esolver,
@@ -27,14 +31,16 @@ void Relax_Driver::relax_driver(
     // Main iteration loop for relaxation calculations
     // For scf/nscf calculations, relax_step returns true immediately,
     // so the loop exits after one iteration
+    double etot = 0.0;
+    ModuleBase::matrix stress(3, 3);
+
     while (steps[0] < inp.relax_nmax)
     {
         ModuleBase::matrix force(ucell.nat, 3);
-        ModuleBase::matrix stress(3, 3);
-        double etot = 0.0;
 
         this->iter_info(steps, inp);
         this->esolve(steps[0], p_esolver, ucell, inp, force, stress, etot);
+        this->stru_out(steps[0], ucell, inp, etot, stress);
         bool converged = this->relax_step(steps, p_esolver, ucell, inp, force, stress, etot, ofs_running);
         this->json_out(p_esolver, ucell, inp, force, stress);
 
@@ -53,7 +59,7 @@ void Relax_Driver::relax_driver(
         ++steps[0];
     }
 
-    this->final_out(steps[0], ucell, inp);
+    this->final_out(steps[0], ucell, inp, etot, stress);
 
     ModuleBase::timer::end("Relax_Driver", "relax_driver");
     return;
@@ -147,57 +153,108 @@ bool Relax_Driver::relax_step(std::vector<int>& steps,
 			stress, steps[1], steps[2], ofs_running);
     }
 
-    this->stru_out(steps[0], ucell, inp);
-
     ModuleIO::output_after_relax(converged, p_esolver->conv_esolver, ofs_running);
 
     return converged;
 }
 
-void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& inp)
+void Relax_Driver::stru_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress)
 {
+    // Guard: only output structure files for relaxation calculations
+    if (inp.calculation != "relax" && inp.calculation != "cell-relax")
+    {
+        return;
+    }
+
+    // out_stru: -1 no output, 0 final only, 1 STRU format, 2 CIF format
+    // For -1 and 0, no per-step structure output
+    if (inp.out_stru <= 0)
+    {
+        return;
+    }
+
+    // cache global parameters to reduce repeated PARAM access
+    const std::string& out_dir = PARAM.globalv.global_out_dir;
+    const bool deepks_setorb = PARAM.globalv.deepks_setorb;
+
+    // Build header comment with version, timestamp, energy and stress
+    std::time_t now = std::time(nullptr);
+    char time_buf[64];
+    std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+    std::string header = FmtCore::format("# ABACUS version: %s\n# Written at %s\n# RELAX STEP %d, Energy: %.8f eV\n",
+                                          VERSION,
+                                          time_buf,
+                                          istep + 1,
+                                          etot * ModuleBase::Ry_to_eV);
+    // stress in kbar: Ry/Bohr^3 -> kbar, 3 rows
+    const double stress_transform = ModuleBase::RYDBERG_SI
+                                    / (ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI)
+                                    * 1.0e-8;
+    for (int i = 0; i < 3; i++)
+    {
+        header += FmtCore::format("# Stress (kbar): %.6f %.6f %.6f\n",
+                                  stress(i, 0) * stress_transform,
+                                  stress(i, 1) * stress_transform,
+                                  stress(i, 2) * stress_transform);
+    }
+
     bool need_orb = inp.basis_type == "pw";
     need_orb = need_orb && inp.init_wfc.substr(0, 3) == "nao";
     need_orb = need_orb || inp.basis_type == "lcao";
     need_orb = need_orb || inp.basis_type == "lcao_in_pw";
 
-    std::stringstream ss, ss1;
-    ss << PARAM.globalv.global_out_dir << "STRU_ION_D";
+    const bool freq_ok = (inp.out_freq_ion > 0 && istep % inp.out_freq_ion == 0);
 
-    unitcell::print_stru_file(ucell,
-                          ucell.atoms,
-                          ucell.latvec,
-                          ss.str(),
-                          inp.nspin,
-                          true,
-                          inp.calculation == "md",
-                          inp.out_mul,
-                          need_orb,
-                          PARAM.globalv.deepks_setorb,
-                          GlobalV::MY_RANK);
-
-    if (inp.out_stru)
+    // STRU_NOW: overwrite each step (for out_stru 1 and 2)
+    if (inp.out_stru == 1)
     {
-        if (inp.out_freq_ion == 0 || istep % inp.out_freq_ion == 0)
+        unitcell::print_stru_file(ucell,
+                              ucell.atoms,
+                              ucell.latvec,
+                              out_dir + "STRU_NOW",
+                              header,
+                              inp.nspin,
+                              true,
+                              inp.calculation == "md",
+                              inp.out_mul,
+                              need_orb,
+                              deepks_setorb,
+                              GlobalV::MY_RANK);
+    }
+    else if (inp.out_stru == 2)
+    {
+        ModuleIO::CifParser::write(out_dir + "STRU_NOW.cif",
+                                   ucell,
+                                   header,
+                                   "data_?",
+                                   GlobalV::MY_RANK);
+    }
+
+    // Numbered files per out_freq_ion (for out_stru 1 and 2 only)
+    if (freq_ok)
+    {
+        if (inp.out_stru == 1)
         {
-            ss1 << PARAM.globalv.global_out_dir << "STRU_ION";
-            ss1 << istep+1 << "_D";
             unitcell::print_stru_file(ucell,
                                   ucell.atoms,
                                   ucell.latvec,
-                                  ss1.str(),
+                                  out_dir + "STRU" + std::to_string(istep + 1),
+                                  header,
                                   inp.nspin,
                                   true,
                                   inp.calculation == "md",
                                   inp.out_mul,
                                   need_orb,
-                                  PARAM.globalv.deepks_setorb,
+                                  deepks_setorb,
                                   GlobalV::MY_RANK);
-
-            ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_NOW.cif",
+        }
+        else if (inp.out_stru == 2)
+        {
+            ModuleIO::CifParser::write(out_dir + "STRU" + std::to_string(istep + 1) + ".cif",
                                        ucell,
-                                       "# Generated by ABACUS ModuleIO::CifParser",
-                                       "data_?");
+                                       header,
+                                       "data_?",
+                                       GlobalV::MY_RANK);
         }
     }
 }
@@ -213,17 +270,70 @@ void Relax_Driver::json_out(ModuleESolver::ESolver* p_esolver, UnitCell& ucell, 
 #endif
 }
 
-void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para& inp)
+void Relax_Driver::final_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress)
 {
     if (inp.calculation != "relax" && inp.calculation != "cell-relax")
     {
         return;
     }
 
-    ModuleIO::CifParser::write(PARAM.globalv.global_out_dir + "STRU_FINAL.cif",
-                               ucell,
-                               "# Generated by ABACUS ModuleIO::CifParser",
-                               "data_?");
+    // out_stru: 0 no output, 1 STRU format, 2 CIF format
+    // 1: write STRU_FINAL; 2: write STRU_FINAL.cif
+    if (inp.out_stru == 1 || inp.out_stru == 2)
+    {
+        // cache global parameters to reduce repeated PARAM access
+        const std::string& out_dir = PARAM.globalv.global_out_dir;
+        const bool deepks_setorb = PARAM.globalv.deepks_setorb;
+
+        // Build header comment for STRU_FINAL
+        std::time_t now = std::time(nullptr);
+        char time_buf[64];
+        std::strftime(time_buf, sizeof(time_buf), "%Y-%m-%d %H:%M:%S", std::localtime(&now));
+        std::string header = FmtCore::format("# ABACUS version: %s\n# Written at %s\n# RELAX STEP %d (FINAL), Energy: %.8f eV\n",
+                                              VERSION,
+                                              time_buf,
+                                              istep + 1,
+                                              etot * ModuleBase::Ry_to_eV);
+        const double stress_transform = ModuleBase::RYDBERG_SI
+                                        / (ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI * ModuleBase::BOHR_RADIUS_SI)
+                                        * 1.0e-8;
+        for (int i = 0; i < 3; i++)
+        {
+            header += FmtCore::format("# Stress (kbar): %.6f %.6f %.6f\n",
+                                      stress(i, 0) * stress_transform,
+                                      stress(i, 1) * stress_transform,
+                                      stress(i, 2) * stress_transform);
+        }
+
+        if (inp.out_stru == 1)
+        {
+            bool need_orb = inp.basis_type == "pw";
+            need_orb = need_orb && inp.init_wfc.substr(0, 3) == "nao";
+            need_orb = need_orb || inp.basis_type == "lcao";
+            need_orb = need_orb || inp.basis_type == "lcao_in_pw";
+
+            unitcell::print_stru_file(ucell,
+                                      ucell.atoms,
+                                      ucell.latvec,
+                                      out_dir + "STRU_FINAL",
+                                      header,
+                                      inp.nspin,
+                                      true,
+                                      inp.calculation == "md",
+                                      inp.out_mul,
+                                      need_orb,
+                                      deepks_setorb,
+                                      GlobalV::MY_RANK);
+        }
+        else if (inp.out_stru == 2)
+        {
+            ModuleIO::CifParser::write(out_dir + "STRU_FINAL.cif",
+                                       ucell,
+                                       header,
+                                       "data_?",
+                                       GlobalV::MY_RANK);
+        }
+    }
 
     if (istep == inp.relax_nmax)
     {

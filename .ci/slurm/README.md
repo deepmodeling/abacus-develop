@@ -97,7 +97,7 @@ python3 .ci/slurm/runner.py run --help
 - `[resource.NAME]`: the same allocation fields plus `parallelism`, the maximum number of array tasks running at once. Each resource must have a case. There is one rank per GPU and no resource may exceed 16 GPUs.
 - `[case.NNN]`: contiguous, zero-padded sections with `suite`, `name`, `resource`, and `runner` (`autotest` or `cusolvermp`).
 
-Resource component labels are generated, not configured separately. A single-node resource is shown as `N GPU` or `N GPUs`; a multi-node resource is shown as `N nodes / M GPUs`. Thus `gpu1`, `gpu2`, and `gpu4` display `1 GPU`, `2 GPUs`, and `4 GPUs`; `gpu8x2` displays `2 nodes / 16 GPUs`. `case.049` is `15_rtTDDFT_GPU/19_NO_Si48_CUSOLVERMP_TDDFT_GPU`; it uses `gpu8x2` and the `cusolvermp` runner.
+Resource labels are generated, not configured separately. A single-node resource is shown as `N GPU` or `N GPUs`; a multi-node resource is shown as `N nodes / M GPUs`. Thus `gpu1`, `gpu2`, and `gpu4` display `1 GPU`, `2 GPUs`, and `4 GPUs`; `gpu4x2` displays `2 nodes / 8 GPUs`. Test results are reported by their `tests/` folder even though Slurm arrays remain grouped by resource. `case.049` is `15_rtTDDFT_GPU/19_NO_Si48_CUSOLVERMP_TDDFT_GPU`; it uses `gpu4x2` and the `cusolvermp` runner.
 
 ## Results and retention
 

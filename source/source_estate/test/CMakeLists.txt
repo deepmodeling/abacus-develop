@@ -51,6 +51,7 @@ AddTest(
     ../elecstate.cpp
     ../occupy.cpp
     ../module_charge/charge_mpi.cpp
+    ../../source_lcao/module_deltaspin/spin_constrain.cpp
     ../../source_psi/psi.cpp
     ../../source_base/module_device/memory_op.cpp
 )
@@ -73,7 +74,8 @@ AddTest(
 AddTest(
   TARGET MODULE_ESTATE_potentials_new
   LIBS parameter  base device planewave_serial
-  SOURCES potential_new_test.cpp ../module_pot/potential_new.cpp
+  SOURCES potential_new_test.cpp td_field_test.cpp ../module_pot/potential_new.cpp
+    ../module_pot/td_field.cpp ../module_pot/td_field_profiles.cpp ../module_pot/td_field_manager.cpp
 )
 
 AddTest(

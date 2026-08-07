@@ -1,16 +1,19 @@
 #ifndef POTENTIALNEW_H
 #define POTENTIALNEW_H
 
+#include "pot_base.h"
 #include "source_base/complexmatrix.h"
 #include "source_hamilt/module_surchem/surchem.h"
-#include "source_pw/module_pwdft/vsep_pw.h"
 #include "source_pw/module_pwdft/structure_factor.h"
-#include "pot_base.h"
+#include "source_pw/module_pwdft/vsep_pw.h"
 
+#include <memory>
 #include <vector>
 
 namespace elecstate
 {
+class TDFieldManager;
+
 /**
  * Potential is the main class of potentials module, it contains:
  * 1. Constructors and deconstructor
@@ -48,7 +51,7 @@ class Potential : public PotBase
 {
   public:
     // default constructor for UT
-    Potential(){};
+    Potential() {};
     // In constructor, size of every potential components should be allocated
     // rho_basis_in is the dense grids, rho_basis_smooth_in is the smooth grids in USPP
     // charge density and potential are defined on dense grids,
@@ -66,15 +69,25 @@ class Potential : public PotBase
     ~Potential();
 
     // initialize potential when SCF begin
-    void init_pot(const Charge*const chg);
+    void init_pot(const Charge* const chg);
     // initialize potential components before SCF
     void pot_register(const std::vector<std::string>& components_list);
     // update potential from current charge
-    void update_from_charge(const Charge*const chg, const UnitCell*const ucell);
+    void update_from_charge(const Charge* const chg, const UnitCell* const ucell);
     // interface for SCF-converged, etxc vtxc for Energy, vnew for force_scc
     void get_vnew(const Charge* chg, ModuleBase::matrix& vnew);
 
     PotBase* get_pot_type(const std::string& pot_type);
+
+    /**
+     * @brief Inject the shared RT-TDDFT field state before potential setup.
+     *
+     * @param field_manager Manager shared with the RT-TDDFT ESolver.
+     */
+    void set_td_field_manager(const std::shared_ptr<TDFieldManager>& field_manager)
+    {
+        this->td_field_manager_ = field_manager;
+    }
 
     // interfaces to get values
     ModuleBase::matrix& get_eff_v()
@@ -171,7 +184,7 @@ class Potential : public PotBase
     {
         return this->v_eff_fixed.data();
     }
-    const ModulePW::PW_Basis *get_rho_basis() const
+    const ModulePW::PW_Basis* get_rho_basis() const
     {
         return this->rho_basis_;
     }
@@ -187,7 +200,6 @@ class Potential : public PotBase
     // What about adding a function to get the wfc?
     // This is useful for the calculation of the exx energy
 
-
     /// @brief get the value of vloc at G=0;
     /// @return vl(0)
     double get_vl_of_0() const
@@ -200,7 +212,7 @@ class Potential : public PotBase
     double get_ml_exx_energy() const;
 
   private:
-    void cal_v_eff(const Charge*const chg, const UnitCell*const ucell, ModuleBase::matrix& v_eff) override;
+    void cal_v_eff(const Charge* const chg, const UnitCell* const ucell, ModuleBase::matrix& v_eff) override;
     void cal_fixed_v(double* vl_pseudo) override;
     // interpolate potential on the smooth mesh if necessary
     void interpolate_vrs();
@@ -215,10 +227,10 @@ class Potential : public PotBase
 
     ModuleBase::matrix v_xc; // if PAW is used, vxc must be stored separately
 
-    float *s_veff_smooth = nullptr;
-    float *s_vofk_smooth = nullptr;
-    double *d_veff_smooth = nullptr;
-    double *d_vofk_smooth = nullptr;
+    float* s_veff_smooth = nullptr;
+    float* s_vofk_smooth = nullptr;
+    double* d_veff_smooth = nullptr;
+    double* d_vofk_smooth = nullptr;
 
     ModuleBase::matrix vofk_eff;
 
@@ -238,6 +250,7 @@ class Potential : public PotBase
     surchem* solvent_ = nullptr;
     VSep* vsep_cell = nullptr;
     bool use_gpu_ = false;
+    std::shared_ptr<TDFieldManager> td_field_manager_;
 };
 
 } // namespace elecstate

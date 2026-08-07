@@ -1,16 +1,17 @@
-#include <cstdio>
-#include <fstream>
+#include "source_base/tool_quit.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/read_input.h"
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "source_base/tool_quit.h"
-#include "source_io/module_parameter/read_input.h"
-#include "source_io/module_parameter/parameter.h"
+#include <cstdio>
+#include <fstream>
+#include <functional>
 
 // #ifdef __MPI
+#include "mpi.h"
 #include "source_base/parallel_global.h"
 #include "source_basis/module_pw/test/test_tool.h"
-#include "mpi.h"
 // #endif
 /************************************************
  *  unit test of read_input_test.cpp
@@ -26,7 +27,7 @@
 
 class InputParaTest : public testing::Test
 {
-	protected:
+  protected:
 };
 
 // #ifdef __MPI
@@ -316,29 +317,31 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.td_vext, 0);
     EXPECT_EQ(param.inp.propagator, 0);
     EXPECT_EQ(param.inp.td_stype, 0);
-    EXPECT_EQ(param.inp.td_ttype, "0");
+    EXPECT_THAT(param.inp.td_ttype, testing::ElementsAre(0));
     EXPECT_EQ(param.inp.td_tstart, 1);
     EXPECT_EQ(param.inp.td_tend, 1000);
     EXPECT_EQ(param.inp.td_lcut1, 0.05);
     EXPECT_EQ(param.inp.td_lcut2, 0.95);
-    EXPECT_EQ(param.inp.td_gauss_amp, "0.25");
-    EXPECT_EQ(param.inp.td_gauss_freq, "22.13");
-    EXPECT_EQ(param.inp.td_gauss_phase, "0.0");
-    EXPECT_EQ(param.inp.td_gauss_t0, "100.0");
-    EXPECT_EQ(param.inp.td_gauss_sigma, "30.0");
-    EXPECT_EQ(param.inp.td_trape_amp, "2.74");
-    EXPECT_EQ(param.inp.td_trape_freq, "1.60");
-    EXPECT_EQ(param.inp.td_trape_phase, "0.0");
-    EXPECT_EQ(param.inp.td_trape_t1, "1875");
-    EXPECT_EQ(param.inp.td_trape_t2, "5625");
-    EXPECT_EQ(param.inp.td_trape_t3, "7500");
-    EXPECT_EQ(param.inp.td_trigo_freq1, "1.164656");
-    EXPECT_EQ(param.inp.td_trigo_freq2, "0.029116");
-    EXPECT_EQ(param.inp.td_trigo_phase1, "0.0");
-    EXPECT_EQ(param.inp.td_trigo_phase2, "0.0");
-    EXPECT_EQ(param.inp.td_trigo_amp, "2.74");
-    EXPECT_EQ(param.inp.td_heavi_t0, "100");
-    EXPECT_EQ(param.inp.td_heavi_amp, "1.0");
+    EXPECT_THAT(param.inp.td_gauss_amp, testing::ElementsAre(0.25));
+    EXPECT_THAT(param.inp.td_gauss_freq, testing::ElementsAre(22.13));
+    EXPECT_THAT(param.inp.td_gauss_phase, testing::ElementsAre(0.0));
+    EXPECT_THAT(param.inp.td_gauss_t0, testing::ElementsAre(100.0));
+    EXPECT_THAT(param.inp.td_gauss_sigma, testing::ElementsAre(30.0));
+    EXPECT_THAT(param.inp.td_trape_amp, testing::ElementsAre(2.74));
+    EXPECT_THAT(param.inp.td_trape_freq, testing::ElementsAre(1.60));
+    EXPECT_THAT(param.inp.td_trape_phase, testing::ElementsAre(0.0));
+    EXPECT_THAT(param.inp.td_trape_t1, testing::ElementsAre(1875.0));
+    EXPECT_THAT(param.inp.td_trape_t2, testing::ElementsAre(5625.0));
+    EXPECT_THAT(param.inp.td_trape_t3, testing::ElementsAre(7500.0));
+    EXPECT_THAT(param.inp.td_trigo_freq1, testing::ElementsAre(1.164656));
+    EXPECT_THAT(param.inp.td_trigo_freq2, testing::ElementsAre(0.029116));
+    EXPECT_THAT(param.inp.td_trigo_phase1, testing::ElementsAre(0.0));
+    EXPECT_THAT(param.inp.td_trigo_phase2, testing::ElementsAre(0.0));
+    EXPECT_THAT(param.inp.td_trigo_amp, testing::ElementsAre(2.74));
+    EXPECT_THAT(param.inp.td_heavi_t0, testing::ElementsAre(100.0));
+    EXPECT_THAT(param.inp.td_heavi_amp, testing::ElementsAre(1.0));
+    EXPECT_THAT(param.inp.td_supsine_tstart, testing::ElementsAre(1));
+    EXPECT_THAT(param.inp.td_supsine_tend, testing::ElementsAre(1000));
 
     EXPECT_EQ(param.inp.out_dipole, 0);
     EXPECT_EQ(param.inp.out_efield, 0);
@@ -454,6 +457,50 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.abs_gauge, "length");
     EXPECT_EQ(param.inp.rdmft, 0);
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
+}
+
+TEST_F(InputParaTest, TypedTDFieldLists)
+{
+    ModuleIO::ReadInput readinput(GlobalV::MY_RANK);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    readinput.read_parameters(param, "./support/INPUT.td_field_mixed");
+
+    EXPECT_THAT(param.inp.td_ttype, testing::ElementsAre(4, 0, 1, 2, 3, 0, 4, 1, 2, 3));
+    EXPECT_THAT(param.inp.td_vext_dire, testing::ElementsAre(1, 2, 3, 1, 2, 3, 1, 2, 3, 1));
+    EXPECT_THAT(param.inp.td_gauss_freq, testing::ElementsAre(0.7, -1.1));
+    EXPECT_THAT(param.inp.td_gauss_amp, testing::ElementsAre(0.04, -0.03));
+    EXPECT_THAT(param.inp.td_trape_t1, testing::ElementsAre(1.0, 2.0));
+    EXPECT_THAT(param.inp.td_trape_amp, testing::ElementsAre(0.025, -0.02));
+    EXPECT_THAT(param.inp.td_trigo_freq1, testing::ElementsAre(0.9, -1.4));
+    EXPECT_THAT(param.inp.td_trigo_amp, testing::ElementsAre(0.015, -0.018));
+    EXPECT_THAT(param.inp.td_heavi_t0, testing::ElementsAre(3.0, 5.0));
+    EXPECT_THAT(param.inp.td_heavi_amp, testing::ElementsAre(0.01, -0.012));
+    EXPECT_THAT(param.inp.td_supsine_freq, testing::ElementsAre(0.7, -1.0));
+    EXPECT_THAT(param.inp.td_supsine_amp, testing::ElementsAre(0.05, -0.04));
+    EXPECT_THAT(param.inp.td_supsine_tstart, testing::ElementsAre(0, 2));
+    EXPECT_THAT(param.inp.td_supsine_tend, testing::ElementsAre(5, 6));
+}
+
+TEST_F(InputParaTest, TDFieldStructureErrors)
+{
+    struct InvalidCase
+    {
+        const char* name;
+        std::function<void(Input_para&)> mutate;
+    };
+
+    const std::vector<InvalidCase> cases = {{"missing", [](Input_para& input) { input.td_gauss_amp.clear(); }},
+                                            {"extra", [](Input_para& input) { input.td_gauss_freq.push_back(1.0); }},
+                                            {"field count", [](Input_para& input) { input.td_ttype.push_back(0); }}};
+
+    for (const InvalidCase& invalid_case: cases)
+    {
+        Input_para input;
+        input.td_vext = true;
+        invalid_case.mutate(input);
+        EXPECT_EXIT(ModuleIO::check_td_efield_parameters(input), testing::ExitedWithCode(1), "") << invalid_case.name;
+    }
 }
 
 TEST_F(InputParaTest, DiagoProc)

@@ -1,10 +1,12 @@
 #include "force_rt_overlap.h"
-#include "td_info.h"
-#include "td_folding.h"
+
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_base/parallel_reduce.h"
+#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_io/module_parameter/parameter.h"
+#include "td_folding.h"
+#include "td_info.h"
 template <>
 void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                      const LCAO_domain::Setup_DM<std::complex<double>>& dmat,
@@ -18,7 +20,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
     assert(nlocal >= 0);
 
     TD_info* td_info = TD_info::td_vel_op;
-    //get dS/dR_{x,y,z}
+    // get dS/dR_{x,y,z}
     std::vector<hamilt::HContainer<double>*> dsxr = td_info->get_grad_overlap();
     // allocate matrix
     const long nloc = pv.nloc;
@@ -32,7 +34,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
     std::complex<double>* tmp3 = new std::complex<double>[nloc];
     std::complex<double>* Hybridtmp = new std::complex<double>[nloc];
     std::vector<std::complex<double>*> tmp_out = {nullptr, nullptr, nullptr};
-    for(int dir = 0; dir<3; dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         tmp_out[dir] = new std::complex<double>[nloc];
         ModuleBase::GlobalFunc::ZEROS(tmp_out[dir], nloc);
@@ -48,12 +50,12 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         ModuleBase::GlobalFunc::ZEROS(tmp1, nloc);
         ModuleBase::GlobalFunc::ZEROS(tmp2, nloc);
         ModuleBase::GlobalFunc::ZEROS(Hybridtmp, nloc);
-        
+
         const int inc = 1;
 
         hamilt::MatrixBlock<std::complex<double>> h_mat;
         hamilt::MatrixBlock<std::complex<double>> s_mat;
-        //get Hk Sk
+        // get Hk Sk
         p_hamilt->matrix(h_mat, s_mat);
         BlasConnector::copy(nloc, h_mat.p, inc, Htmp, inc);
         BlasConnector::copy(nloc, s_mat.p, inc, Sinv, inc);
@@ -77,39 +79,18 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
         // if liwork = -1, then the size of iwork is (at least) of length 1.
         std::vector<int> iwork(1, 0);
 
-        ScalapackConnector::getri(nlocal,
-                                  Sinv,
-                                  one_int,
-                                  one_int,
-                                  pv.desc,
-                                  ipiv.data(),
-                                  work.data(),
-                                  &lwork,
-                                  iwork.data(),
-                                  &liwork,
-                                  &info);
+        ScalapackConnector::getri(nlocal, Sinv, one_int, one_int, pv.desc, ipiv.data(), work.data(), &lwork, iwork.data(), &liwork, &info);
 
         lwork = work[0].real();
         work.resize(lwork, 0);
         liwork = iwork[0];
         iwork.resize(liwork, 0);
 
-        ScalapackConnector::getri(nlocal,
-                                  Sinv,
-                                  one_int,
-                                  one_int,
-                                  pv.desc,
-                                  ipiv.data(),
-                                  work.data(),
-                                  &lwork,
-                                  iwork.data(),
-                                  &liwork,
-                                  &info);
+        ScalapackConnector::getri(nlocal, Sinv, one_int, one_int, pv.desc, ipiv.data(), work.data(), &lwork, iwork.data(), &liwork, &info);
 
         const char N_char = 'N';
         const char T_char = 'T';
         const char C_char = 'C';
-        
 
         ScalapackConnector::gemm(T_char,
                                  C_char,
@@ -150,13 +131,21 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                  one_int,
                                  one_int,
                                  pv.desc);
-        for(int dir = 0; dir<3; dir++)
+        for (int dir = 0; dir < 3; dir++)
         {
             ModuleBase::GlobalFunc::ZEROS(dsxk, nloc);
             ModuleBase::GlobalFunc::ZEROS(pdsxk, nloc);
             ModuleBase::GlobalFunc::ZEROS(tmp3, nloc);
             module_rt::folding_HR_td(*dsxr[dir], dsxk, kv.kvec_d[ik], TD_info::cart_At, TD_info::td_vel_op->get_phase_hybrid(), nrow, 1);
-            module_rt::folding_partial_dot(*dsxr[dir], pdsxk, kv.kvec_d[ik], nrow, 1, &ucell, TD_info::td_vel_op->get_phase_hybrid(), TD_info::cart_At, elecstate::H_TDDFT_pw::Et);
+            module_rt::folding_partial_dot(*dsxr[dir],
+                                           pdsxk,
+                                           kv.kvec_d[ik],
+                                           nrow,
+                                           1,
+                                           &ucell,
+                                           TD_info::td_vel_op->get_phase_hybrid(),
+                                           TD_info::cart_At,
+                                           elecstate::H_TDDFT_pw::Et);
             ScalapackConnector::gemm(N_char,
                                      N_char,
                                      nlocal,
@@ -196,7 +185,7 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
                                      one_int,
                                      one_int,
                                      pv.desc);
-            
+
             ScalapackConnector::geadd(N_char,
                                       nlocal,
                                       nlocal,
@@ -239,34 +228,33 @@ void cal_foverlap_rt(ModuleBase::matrix& foverlap,
     // }
     auto row_indexes = pv.get_indexes_row();
     auto col_indexes = pv.get_indexes_col();
-    #pragma omp parallel for
-    for(int iat = 0; iat < ucell.nat; iat++)
+#pragma omp parallel for
+    for (int iat = 0; iat < ucell.nat; iat++)
     {
-        
+
         double* force_tmp1 = &foverlap(iat, 0);
         int row0 = pv.atom_begin_row[iat];
         int col0 = pv.atom_begin_col[iat];
         const int row_size = pv.get_row_size();
         std::vector<std::complex<double>*> p_diag = {tmp_out[0], tmp_out[1], tmp_out[2]};
-        for(int mu = 0; mu < pv.get_nrow_atom(iat); ++mu)
+        for (int mu = 0; mu < pv.get_nrow_atom(iat); ++mu)
         {
-            for(int nu = 0; nu < pv.get_ncol_atom(iat); ++nu)
+            for (int nu = 0; nu < pv.get_ncol_atom(iat); ++nu)
             {
-                if(row_indexes[row0+mu]==col_indexes[col0+nu])
+                if (row_indexes[row0 + mu] == col_indexes[col0 + nu])
                 {
-                    const long index = (row0 + mu) + (col0 + nu)*row_size;
-                    for(int dir = 0; dir<3; dir++)
+                    const long index = (row0 + mu) + (col0 + nu) * row_size;
+                    for (int dir = 0; dir < 3; dir++)
                     {
                         // p_diag[dir] = tmp_out[dir] + (row0 + mu) + (col0 + nu) * row_size;
                         force_tmp1[dir] += (tmp_out[dir][index]).real();
                     }
                 }
             }
-            
         }
     }
     Parallel_Reduce::reduce_all(foverlap.c, foverlap.nr * foverlap.nc);
-    for(int dir = 0; dir<3; dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         delete[] tmp_out[dir];
     }

@@ -71,8 +71,10 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
             transform.get_pointer(), // transform matrix between lcao and pw
             transform.get_nbands(),
             transform.get_nbasis(),
-            psi,                                  // psi in pw basis
-            eigenvalues.data() + ik * pes->ekb.nc // eigenvalues
+            psi,                                   // psi in pw basis
+            eigenvalues.data() + ik * pes->ekb.nc, // eigenvalues
+            this->basis_type,
+            this->calculation
 #ifdef __EXX
             ,
             add_exx_to_subspace_hamilt,

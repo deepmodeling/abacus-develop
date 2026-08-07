@@ -23,7 +23,6 @@
 #include "source_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
 #include "source_basis/module_ao/ORB_read.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_lcao/FORCE_STRESS.h"
 #include "source_lcao/module_rt/td_info.h"
 #endif
@@ -44,123 +43,6 @@
 #include "source_hsolver/hsolver_pw.h"
 #include "source_relax/bfgs_basic.h"
 #include "source_relax/ions_move_cg.h"
-
-#ifdef __LCAO
-std::vector<double> Input_Conv::convert_units(std::string params, double c) {
-    std::vector<double> params_ori;
-    std::vector<double> params_out;
-    parse_expression(params, params_ori);
-    for (auto param: params_ori)
-        params_out.emplace_back(param * c);
-
-    return params_out;
-}
-
-void Input_Conv::read_td_efield()
-{
-    elecstate::H_TDDFT_pw::stype = PARAM.inp.td_stype;
-    const auto& input = PARAM.inp;
-    if (input.out_hsr[0] == 1 || input.out_hsr[0] == 3 || input.out_hsr_npz_compat)
-    {
-        TD_info::out_mat_R = true;
-    } else {
-        TD_info::out_mat_R = false;
-    }
-    parse_expression(PARAM.inp.td_ttype, elecstate::H_TDDFT_pw::ttype);
-
-    elecstate::H_TDDFT_pw::tstart = PARAM.inp.td_tstart;
-    elecstate::H_TDDFT_pw::tend = PARAM.inp.td_tend;
-    if(PARAM.inp.td_dt!=-1.0)
-    {
-        elecstate::H_TDDFT_pw::dt = PARAM.inp.td_dt / ModuleBase::AU_to_FS;
-    }
-    else
-    {
-        elecstate::H_TDDFT_pw::dt = PARAM.mdp.md_dt / PARAM.inp.estep_per_md / ModuleBase::AU_to_FS;
-    }
-    elecstate::H_TDDFT_pw::dt_int = elecstate::H_TDDFT_pw::dt;
-
-    // space domain parameters
-
-    // length gauge
-    elecstate::H_TDDFT_pw::lcut1 = PARAM.inp.td_lcut1;
-    elecstate::H_TDDFT_pw::lcut2 = PARAM.inp.td_lcut2;
-
-    // time domain parameters
-
-    // Gauss
-    elecstate::H_TDDFT_pw::gauss_omega = convert_units(PARAM.inp.td_gauss_freq,
-                                                       2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    elecstate::H_TDDFT_pw::gauss_phase = convert_units(PARAM.inp.td_gauss_phase, 1.0);
-    elecstate::H_TDDFT_pw::gauss_sigma = convert_units(PARAM.inp.td_gauss_sigma, 1 / ModuleBase::AU_to_FS);
-    elecstate::H_TDDFT_pw::gauss_t0 = convert_units(PARAM.inp.td_gauss_t0, 1.0);
-    elecstate::H_TDDFT_pw::gauss_amp = convert_units(PARAM.inp.td_gauss_amp,
-                                                     ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-    // init ncut for velocity gauge integral
-    for (auto omega: elecstate::H_TDDFT_pw::gauss_omega) {
-        int ncut
-            = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if (ncut % 2 == 0) {
-            ncut += 2;
-        } else {
-            ncut += 1;
-        }
-        if (elecstate::H_TDDFT_pw::stype == 0)
-            ncut = 1;
-        elecstate::H_TDDFT_pw::gauss_ncut.push_back(ncut);
-    }
-    // trapezoid
-    elecstate::H_TDDFT_pw::trape_omega = convert_units(PARAM.inp.td_trape_freq,
-                                                       2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    elecstate::H_TDDFT_pw::trape_phase = convert_units(PARAM.inp.td_trape_phase, 1.0);
-    elecstate::H_TDDFT_pw::trape_t1 = convert_units(PARAM.inp.td_trape_t1, 1.0);
-    elecstate::H_TDDFT_pw::trape_t2 = convert_units(PARAM.inp.td_trape_t2, 1.0);
-    elecstate::H_TDDFT_pw::trape_t3 = convert_units(PARAM.inp.td_trape_t3, 1.0);
-    elecstate::H_TDDFT_pw::trape_amp = convert_units(PARAM.inp.td_trape_amp,
-                                                     ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-    // init ncut for velocity gauge integral
-    for (auto omega: elecstate::H_TDDFT_pw::trape_omega) {
-        int ncut
-            = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if (ncut % 2 == 0) {
-            ncut += 2;
-        } else {
-            ncut += 1;
-        }
-        if (elecstate::H_TDDFT_pw::stype == 0)
-            ncut = 1;
-        elecstate::H_TDDFT_pw::trape_ncut.push_back(ncut);
-    }
-    // Trigonometric
-    elecstate::H_TDDFT_pw::trigo_omega1 = convert_units(PARAM.inp.td_trigo_freq1,
-                                                        2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    elecstate::H_TDDFT_pw::trigo_omega2 = convert_units(PARAM.inp.td_trigo_freq2,
-                                                        2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    elecstate::H_TDDFT_pw::trigo_phase1 = convert_units(PARAM.inp.td_trigo_phase1, 1.0);
-    elecstate::H_TDDFT_pw::trigo_phase2 = convert_units(PARAM.inp.td_trigo_phase2, 1.0);
-    elecstate::H_TDDFT_pw::trigo_amp = convert_units(PARAM.inp.td_trigo_amp,
-                                                     ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-    // init ncut for velocity gauge integral
-    for (auto omega: elecstate::H_TDDFT_pw::trigo_omega1) {
-        int ncut
-            = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if (ncut % 2 == 0) {
-            ncut += 2;
-        } else {
-            ncut += 1;
-        }
-        if (elecstate::H_TDDFT_pw::stype == 0)
-            ncut = 1;
-        elecstate::H_TDDFT_pw::trigo_ncut.push_back(ncut);
-    }
-    // Heaviside
-    elecstate::H_TDDFT_pw::heavi_t0 = convert_units(PARAM.inp.td_heavi_t0, 1.0);
-    elecstate::H_TDDFT_pw::heavi_amp = convert_units(PARAM.inp.td_heavi_amp,
-                                                     ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-
-    return;
-}
-#endif
 
 void Input_Conv::Convert()
 {
@@ -251,7 +133,7 @@ void Input_Conv::Convert()
     TD_info::out_current_k = PARAM.inp.out_current_k;
     TD_info::out_vecpot = PARAM.inp.out_vecpot;
     TD_info::init_vecpot_file = PARAM.inp.init_vecpot_file;
-    read_td_efield();
+    TD_info::out_mat_R = PARAM.inp.out_hsr[0] == 1 || PARAM.inp.out_hsr[0] == 3 || PARAM.inp.out_hsr_npz_compat;
 #endif // __LCAO
 
 

@@ -102,12 +102,6 @@ class TD_info
     /// @brief store time-dependent phase for hybrid gauge
     std::map<ModuleBase::Vector3<int>, std::complex<double>> phase_hybrid;
 
-    /// @brief read At from output file
-    void read_cart_At();
-
-    /// @brief output cart_At to output file
-    void output_cart_At(const std::string& out_dir);
-
     /// @brief store isteps now
     static int istep;
 

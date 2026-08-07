@@ -22,7 +22,7 @@ jobs:
         - /tmp/ccache:/github/home/.ccache
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           # CMake only needs `git log -1` for the commit info; a shallow
           # fetch is enough and saves ~10 min on cache-cold runners.

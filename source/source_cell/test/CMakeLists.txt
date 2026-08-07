@@ -46,6 +46,7 @@ list(APPEND cell_simple_srcs
     ../read_orb.cpp
     ../sep.cpp
     ../sep_cell.cpp
+    ../cell_tools.cpp
 )
 
 add_library(cell_info OBJECT ${cell_simple_srcs})
@@ -109,6 +110,7 @@ AddTest(
   SOURCES read_atoms_helper_test.cpp
     ../read_atoms.cpp
     ../read_atoms_helper.cpp
+    ../cell_tools.cpp
     ../read_orb.cpp
     ../read_stru.cpp
     ../print_cell.cpp
