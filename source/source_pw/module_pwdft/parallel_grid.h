@@ -27,9 +27,9 @@ class Parallel_Grid
     void reduce(double* rhotot, const double* constrhoin, const bool reduce_all_pool) const;
 #endif
 
-    const int& nx = this->ncx;
-    const int& ny = this->ncy;
-    const int& nz = this->ncz;
+    int get_nx() const { return ncx; }
+    int get_ny() const { return ncy; }
+    int get_nz() const { return ncz; }
 
     private:
 
@@ -55,8 +55,6 @@ class Parallel_Grid
     int nrxx=0;
     int nbz=0;
     int bz=0;
-
-    bool allocate = false;
 };
 
 #endif

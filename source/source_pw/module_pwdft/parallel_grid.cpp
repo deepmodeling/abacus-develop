@@ -10,7 +10,6 @@
 
 Parallel_Grid::Parallel_Grid()
 {
-    this->allocate = false;
 }
 
 Parallel_Grid::~Parallel_Grid()
@@ -54,18 +53,17 @@ void Parallel_Grid::init(const int& ncx_in,
 #endif
 
     // enable to call this function again liuyu 2023-03-10
-    if (this->allocate)
+    if (!this->numz.empty())
     {
         this->nproc_in_pool.clear();
         this->numz.clear();
         this->startz.clear();
         this->whichpro.clear();
         this->whichpro_loc.clear();
-        this->allocate = false;
     }
 
     // (2)
-    assert(allocate == false);
+    assert(this->numz.empty());
     assert(GlobalV::KPAR > 0);
 
     this->nproc_in_pool.resize(GlobalV::KPAR);
@@ -103,7 +101,6 @@ void Parallel_Grid::init(const int& ncx_in,
         this->whichpro_loc[ip].assign(this->ncz, 0);
     }
 
-    this->allocate = true;
     this->z_distribution();
 
     return;
@@ -111,7 +108,7 @@ void Parallel_Grid::init(const int& ncx_in,
 
 void Parallel_Grid::z_distribution()
 {
-    assert(allocate);
+    assert(!this->numz.empty());
 
     int* startp = new int[GlobalV::KPAR];
     startp[0] = 0;
@@ -208,7 +205,7 @@ void Parallel_Grid::zpiece_to_all(double* zpiece, const int& iz, double* rho) co
         this->zpiece_to_stogroup(zpiece, iz, rho);
         return;
     }
-    assert(allocate);
+    assert(!this->numz.empty());
     // ModuleBase::TITLE("Parallel_Grid","zpiece_to_all");
     MPI_Status ierror;
 
@@ -277,7 +274,7 @@ void Parallel_Grid::zpiece_to_all(double* zpiece, const int& iz, double* rho) co
 #ifdef __MPI
 void Parallel_Grid::zpiece_to_stogroup(double* zpiece, const int& iz, double* rho) const
 {
-    assert(allocate);
+    assert(!this->numz.empty());
     // TITLE("Parallel_Grid","zpiece_to_all");
     MPI_Status ierror;
 
