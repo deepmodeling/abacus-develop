@@ -525,7 +525,9 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                                                             PARAM.inp.ks_solver,
                                                             PARAM.globalv.kpar_lcao,
                                                             PARAM.globalv.nlocal,
-                                                            PARAM.inp.nelec);
+                                                            PARAM.inp.nbands,
+                                                            PARAM.inp.nelec,
+                                                            PARAM.inp.device == "gpu");
         if (this->nspin_ == 2)
         {
             dynamic_cast<hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>*>(this->p_operator)

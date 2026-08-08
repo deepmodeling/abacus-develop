@@ -450,7 +450,9 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
                                                   PARAM.inp.ks_solver,
                                                   PARAM.globalv.kpar_lcao,
                                                   PARAM.globalv.nlocal,
-                                                  PARAM.inp.nelec);
+                                                  PARAM.inp.nbands,
+                                                  PARAM.inp.nelec,
+                                                  PARAM.inp.device == "gpu");
         hsolver_lcao_obj.solve(static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt), this->psi[0], this->pelec, *this->dmat.dm, 
           this->chr, PARAM.inp.nspin, skip_charge);
     }

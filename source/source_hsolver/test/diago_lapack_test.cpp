@@ -1,8 +1,5 @@
 // Author: Zhang Xiaoyang
 // A modified version of diago_lcao_test.cpp
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 // Remove some useless functions and dependencies. Serialized the full code
 // and refactored some function.
 
@@ -184,21 +181,14 @@ class DiagoLapackPrepare
         hmtest.ncol = nlocal;
     }
 
-    void set_env()
-    {
-        PARAM.sys.nlocal = nlocal;
-        PARAM.input.nbands = nbands;
-    }
-
     void diago()
     {
         this->pb2d();
         this->print_hs();
-        this->set_env();
 
         for (int i = 0; i < REPEATRUN; i++)
         {
-            hsolver::DiagoLapack<T> dh;
+            hsolver::DiagoLapack<T> dh(nlocal, nbands);
             dh.diag(&hmtest, psi, e_solver.data());
             // dh->diag(&hmtest, psi, e_solver.data());
         }

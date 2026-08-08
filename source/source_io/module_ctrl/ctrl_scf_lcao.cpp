@@ -199,7 +199,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     // 4) Output H(k) and S(k) matrices for each k-point
     //------------------------------------------------------------------
-    if (inp.out_hsk[0] == 1)
+    const int hsk_out_type = inp.out_hsk[0];
+    if (hsk_out_type == 1 || hsk_out_type == 2)
     {
         const int precision = inp.out_hsk[1];
         ModuleIO::write_hsk(global_out_dir,
@@ -213,6 +214,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                             gamma_only,
                             out_app_flag,
                             istep,
+                            hsk_out_type,
                             precision,
                             GlobalV::ofs_running);
     }

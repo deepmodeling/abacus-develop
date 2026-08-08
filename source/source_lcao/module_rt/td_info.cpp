@@ -1,7 +1,9 @@
 #include "td_info.h"
 
+#include "source_base/global_variable.h"
 #include "source_base/libm/libm.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_io/module_efield/td_vector_pot_io.h"
 #include "source_io/module_parameter/parameter.h"
 
 bool TD_info::out_mat_R = false;
@@ -19,14 +21,15 @@ int TD_info::max_istep = -1;
 ModuleBase::Vector3<double> TD_info::cart_At;
 std::vector<ModuleBase::Vector3<double>> TD_info::At_from_file;
 
-TD_info::TD_info(const UnitCell* ucell_in,const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
+TD_info::TD_info(const UnitCell* ucell_in, const Parallel_Orbitals& pv, const LCAO_Orbitals& orb)
 {
     if (init_vecpot_file && istep == -1)
     {
-        this->read_cart_At();
+        At_from_file = ModuleIO::read_td_vector_pot("");
+        max_istep = At_from_file.size() - 1;
     }
-    //read in restart step
-    if(PARAM.inp.mdp.md_restart)
+    // read in restart step
+    if (PARAM.inp.mdp.md_restart)
     {
         std::stringstream ssc;
         ssc << PARAM.globalv.global_readin_dir << "Restart_td.txt";
@@ -36,10 +39,10 @@ TD_info::TD_info(const UnitCell* ucell_in,const Parallel_Orbitals& pv, const LCA
             ModuleBase::WARNING_QUIT("TD_info::TD_info", "No Restart_td.txt!");
         }
         file >> estep_shift;
-        //std::cout<<"estep_shift"<<estep_shift<<std::endl;
+        // std::cout<<"estep_shift"<<estep_shift<<std::endl;
     }
     this->istep += estep_shift;
-    if(out_current==2||elecstate::H_TDDFT_pw::stype == 2)
+    if (out_current == 2 || elecstate::H_TDDFT_pw::stype == 2)
     {
         r_calculator.init(*ucell_in, pv, orb);
     }
@@ -47,7 +50,7 @@ TD_info::TD_info(const UnitCell* ucell_in,const Parallel_Orbitals& pv, const LCA
 }
 TD_info::~TD_info()
 {
-    if(elecstate::H_TDDFT_pw::stype == 1)
+    if (elecstate::H_TDDFT_pw::stype == 1)
     {
         this->destroy_HS_R_td_sparse();
     }
@@ -67,38 +70,6 @@ TD_info::~TD_info()
     }
 }
 
-void TD_info::output_cart_At(const std::string& out_dir)
-{
-    if (GlobalV::MY_RANK == 0)
-    {
-        std::string out_file;
-        // generate the output file name
-        out_file = out_dir + "At.dat";
-        std::ofstream ofs;
-        // output title
-        if (istep == estep_shift)
-        {
-            ofs.open(out_file.c_str(), std::ofstream::out);
-            ofs << std::left << std::setw(8) << "#istep" << std::setw(15) << "A_x" << std::setw(15) << "A_y"
-                << std::setw(15) << "A_z" << std::endl;
-        }
-        else
-        {
-            ofs.open(out_file.c_str(), std::ofstream::app);
-        }
-        // output the vector potential
-        ofs << std::left << std::setw(8) << istep;
-        // divide by 2.0 to get the atomic unit
-        for (int i = 0; i < 3; i++)
-        {
-            ofs << std::scientific << std::setprecision(4) << std::setw(15) << cart_At[i];
-        }
-        ofs << std::endl;
-        ofs.close();
-    }
-    return;
-}
-
 void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
 {
     istep++;
@@ -112,14 +83,14 @@ void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
         cart_At = At / 2.0;
     }
     // output the vector potential if needed
-    if (out_vecpot == true)
+    if (out_vecpot && GlobalV::MY_RANK == 0)
     {
-        this->output_cart_At(PARAM.globalv.global_out_dir);
+        ModuleIO::write_td_vector_pot(PARAM.globalv.global_out_dir, istep, cart_At);
     }
     // update hybrid gauge phase
-    if(elecstate::H_TDDFT_pw::stype == 2)
+    if (elecstate::H_TDDFT_pw::stype == 2)
     {
-        for(const auto& phase_pair : phase_hybrid)
+        for (const auto& phase_pair: phase_hybrid)
         {
             const ModuleBase::Vector3<int>& r_index = phase_pair.first;
             ModuleBase::Vector3<double> dR = double(r_index.x) * a1 + double(r_index.y) * a2 + double(r_index.z) * a3;
@@ -131,67 +102,17 @@ void TD_info::cal_cart_At(const ModuleBase::Vector3<double>& At)
     }
 }
 
-void TD_info::read_cart_At(void)
-{
-    std::string in_file;
-    // generate the input file name
-    in_file = "At.dat";
-    std::ifstream ifs(in_file.c_str());
-    // check if the file is exist
-    if (!ifs)
-    {
-        ModuleBase::WARNING_QUIT("TD_info::read_cart_At", "Cannot open Vector potential file!");
-    }
-    std::string line;
-    std::vector<std::string> str_vec;
-    // use tmp to skip the istep number
-    int tmp = 0;
-    while (std::getline(ifs, line))
-    {
-        // A tmporary vector3 to store the data of this line
-        ModuleBase::Vector3<double> At;
-        if (line[0] == '#')
-        {
-            continue;
-        }
-        std::istringstream iss(line);
-        // skip the istep number
-        if (!(iss >> tmp))
-        {
-            ModuleBase::WARNING_QUIT("TD_info::read_cart_At", "Error reading istep!");
-        }
-        // read the vector potential
-        double component = 0;
-        // Read three components
-        for (int i = 0; i < 3; i++)
-        {
-            if (!(iss >> component))
-            {
-                ModuleBase::WARNING_QUIT("TD_info::read_cart_At",
-                                         "Error reading component " + std::to_string(i + 1) + " for istep "
-                                             + std::to_string(tmp) + "!");
-            }
-            At[i] = component;
-        }
-        // add the tmporary vector3 to the vector potential vector
-        At_from_file.push_back(At);
-    }
-    // set the max_istep
-    max_istep = At_from_file.size() - 1;
-    ifs.close();
-
-    return;
-}
-void TD_info::out_restart_info(const int nstep, 
-                      const ModuleBase::Vector3<double>& At_current, 
-                      const ModuleBase::Vector3<double>& At_laststep)
+void TD_info::out_restart_info(const int nstep,
+                               const ModuleBase::Vector3<double>& At_current,
+                               const ModuleBase::Vector3<double>& At_laststep)
 {
     if (GlobalV::MY_RANK == 0)
     {
         // open file
         std::string outdir = PARAM.globalv.global_out_dir + "Restart_td.txt";
         std::ofstream outFile(outdir);
-        if (!outFile) {
+        if (!outFile)
+        {
             ModuleBase::WARNING_QUIT("out_restart_info", "no Restart_td.txt!");
         }
         // write data
@@ -200,7 +121,6 @@ void TD_info::out_restart_info(const int nstep,
         outFile << At_laststep[0] << " " << At_laststep[1] << " " << At_laststep[2] << std::endl;
         outFile.close();
     }
-    
 
     return;
 }
@@ -214,11 +134,11 @@ void TD_info::initialize_phase_hybrid(const UnitCell& ucell, const hamilt::HCont
     for (int i = 0; i < hR->size_atom_pairs(); ++i)
     {
         hamilt::AtomPair<TR>& tmp = hR->get_atom_pair(i);
-        for(int ir = 0;ir < tmp.get_R_size(); ++ir )
+        for (int ir = 0; ir < tmp.get_R_size(); ++ir)
         {
             const ModuleBase::Vector3<int> r_index = tmp.get_R_index(ir);
-            if(phase_hybrid.count(r_index))continue;
-
+            if (phase_hybrid.count(r_index))
+                continue;
 
             ModuleBase::Vector3<double> dR = double(r_index.x) * a1 + double(r_index.y) * a2 + double(r_index.z) * a3;
             const double arg_td = cart_At * dR * lat0;
@@ -228,8 +148,7 @@ void TD_info::initialize_phase_hybrid(const UnitCell& ucell, const hamilt::HCont
         }
     }
 }
-void TD_info::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR,
-                                          const Parallel_Orbitals* paraV)
+void TD_info::initialize_current_term(const hamilt::HContainer<std::complex<double>>* HR, const Parallel_Orbitals* paraV)
 {
     ModuleBase::TITLE("TD_info", "initialize_current_term");
     ModuleBase::timer::start("TD_info", "initialize_current_term");
@@ -266,10 +185,8 @@ void TD_info::initialize_current_term(const hamilt::HContainer<std::complex<doub
 
 void TD_info::destroy_HS_R_td_sparse(void)
 {
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
-        empty_HR_sparse_td_vel_up;
-    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>>
-        empty_HR_sparse_td_vel_down;
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_HR_sparse_td_vel_up;
+    std::map<Abfs::Vector3_Order<int>, std::map<size_t, std::map<size_t, std::complex<double>>>> empty_HR_sparse_td_vel_down;
     HR_sparse_td_vel[0].swap(empty_HR_sparse_td_vel_up);
     HR_sparse_td_vel[1].swap(empty_HR_sparse_td_vel_down);
 }
@@ -282,7 +199,7 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
 {
     ModuleBase::TITLE("TD_info", "calculate_grad_overlap");
     ModuleBase::timer::start("TD_info", "calculate_grad_overlap");
-    for (int dir=0;dir<3;dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         if (this->grad_overlap[dir] != nullptr)
         {
@@ -293,8 +210,8 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
     for (int iat1 = 0; iat1 < ucell.nat; iat1++)
     {
         auto tau1 = ucell.get_tau(iat1);
-        int T1=0;
-        int I1=0;
+        int T1 = 0;
+        int I1 = 0;
         ucell.iat2iait(iat1, &I1, &T1);
         AdjacentAtomInfo adjs;
         GridD.Find_atom(ucell, tau1, T1, I1, &adjs);
@@ -312,20 +229,19 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
             // Note: the distance of atoms should less than the cutoff radius,
             // When equal, the theoretical value of matrix element is zero,
             // but the calculated value is not zero due to the numerical error, which would lead to result changes.
-            if (ucell.cal_dtau(iat1, iat2, R_index).norm() * ucell.lat0
-                >= orb_cutoff[T1] + orb_cutoff[T2])
+            if (ucell.cal_dtau(iat1, iat2, R_index).norm() * ucell.lat0 >= orb_cutoff[T1] + orb_cutoff[T2])
             {
                 continue;
             }
             hamilt::AtomPair<double> tmp(iat1, iat2, R_index, &paraV);
-            for (int dir=0;dir<3;dir++)
+            for (int dir = 0; dir < 3; dir++)
             {
                 this->grad_overlap[dir]->insert_pair(tmp);
             }
         }
     }
     // allocate the memory of BaseMatrix in grad_overlap, and set the new values to zero
-    for (int dir=0;dir<3;dir++)
+    for (int dir = 0; dir < 3; dir++)
     {
         this->grad_overlap[dir]->allocate(nullptr, true);
     }
@@ -352,11 +268,11 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
             // ---------------------------------------------
             // get info of orbitals of atom1 and atom2 from ucell
             // ---------------------------------------------
-            int T1=0;
-            int I1=0;
+            int T1 = 0;
+            int I1 = 0;
             ucell.iat2iait(iat1, &I1, &T1);
-            int T2=0;
-            int I2=0;
+            int T2 = 0;
+            int I2 = 0;
             ucell.iat2iait(iat2, &I2, &T2);
             Atom& atom1 = ucell.atoms[T1];
             Atom& atom2 = ucell.atoms[T2];
@@ -413,13 +329,10 @@ void TD_info::calculate_grad_overlap(const Parallel_Orbitals& paraV,
                 {
                     p_data[dir] += (npol - 1) * col_indexes.size();
                 }
-                
             }
         }
     }
     ModuleBase::timer::end("TD_info", "calculate_grad_overlap");
 }
-template
-void TD_info::initialize_phase_hybrid<std::complex<double>>(const UnitCell& ucell, const hamilt::HContainer<std::complex<double>>* hR);
-template
-void TD_info::initialize_phase_hybrid<double>(const UnitCell& ucell, const hamilt::HContainer<double>* hR);
+template void TD_info::initialize_phase_hybrid<std::complex<double>>(const UnitCell& ucell, const hamilt::HContainer<std::complex<double>>* hR);
+template void TD_info::initialize_phase_hybrid<double>(const UnitCell& ucell, const hamilt::HContainer<double>* hR);
