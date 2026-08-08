@@ -5,7 +5,7 @@
 #include "source_base/global_variable.h"
 #include "source_io/module_output/cube_io.h"
 #include "prepare_unitcell.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_base/parallel_grid.h"
 
 Magnetism::Magnetism()
 {

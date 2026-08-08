@@ -1,6 +1,6 @@
 #include "source_io/module_output/cube_io.h"
 #include <limits>
-#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_base/parallel_grid.h"
 #include "source_io/module_parameter/parameter.h"
 #include <cstring>  // use std::memcpy
 

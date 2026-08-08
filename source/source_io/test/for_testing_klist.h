@@ -12,7 +12,7 @@
 #include "source_cell/magnetism.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_base/parallel_grid.h"
 
 pseudo::pseudo(){}
 pseudo::~pseudo(){}
