@@ -15,21 +15,6 @@ Parallel_Grid::Parallel_Grid()
 
 Parallel_Grid::~Parallel_Grid()
 {
-    if (this->allocate)
-    {
-        for (int ip = 0; ip < GlobalV::KPAR; ip++)
-        {
-            delete[] numz[ip];
-            delete[] startz[ip];
-            delete[] whichpro[ip];
-            delete[] whichpro_loc[ip];
-        }
-        delete[] numz;
-        delete[] startz;
-        delete[] whichpro;
-        delete[] whichpro_loc;
-        delete[] nproc_in_pool;
-    }
 }
 
 void Parallel_Grid::init(const int& ncx_in,
@@ -71,18 +56,11 @@ void Parallel_Grid::init(const int& ncx_in,
     // enable to call this function again liuyu 2023-03-10
     if (this->allocate)
     {
-        for (int ip = 0; ip < GlobalV::KPAR; ip++)
-        {
-            delete[] numz[ip];
-            delete[] startz[ip];
-            delete[] whichpro[ip];
-            delete[] whichpro_loc[ip];
-        }
-        delete[] numz;
-        delete[] startz;
-        delete[] whichpro;
-        delete[] whichpro_loc;
-        delete[] nproc_in_pool;
+        this->nproc_in_pool.clear();
+        this->numz.clear();
+        this->startz.clear();
+        this->whichpro.clear();
+        this->whichpro_loc.clear();
         this->allocate = false;
     }
 
@@ -90,7 +68,7 @@ void Parallel_Grid::init(const int& ncx_in,
     assert(allocate == false);
     assert(GlobalV::KPAR > 0);
 
-    this->nproc_in_pool = new int[GlobalV::KPAR];
+    this->nproc_in_pool.resize(GlobalV::KPAR);
     int nprocgroup = 0;
     if (PARAM.inp.esolver_type == "sdft")
     {
@@ -111,22 +89,18 @@ void Parallel_Grid::init(const int& ncx_in,
         }
     }
 
-    this->numz = new int*[GlobalV::KPAR];
-    this->startz = new int*[GlobalV::KPAR];
-    this->whichpro = new int*[GlobalV::KPAR];
-    this->whichpro_loc = new int*[GlobalV::KPAR];
+    this->numz.resize(GlobalV::KPAR);
+    this->startz.resize(GlobalV::KPAR);
+    this->whichpro.resize(GlobalV::KPAR);
+    this->whichpro_loc.resize(GlobalV::KPAR);
 
     for (int ip = 0; ip < GlobalV::KPAR; ip++)
     {
         const int nproc = nproc_in_pool[ip];
-        this->numz[ip] = new int[nproc];
-        this->startz[ip] = new int[nproc];
-        this->whichpro[ip] = new int[this->ncz];
-        this->whichpro_loc[ip] = new int[this->ncz];
-        ModuleBase::GlobalFunc::ZEROS(this->numz[ip], nproc);
-        ModuleBase::GlobalFunc::ZEROS(this->startz[ip], nproc);
-        ModuleBase::GlobalFunc::ZEROS(this->whichpro[ip], this->ncz);
-        ModuleBase::GlobalFunc::ZEROS(this->whichpro_loc[ip], this->ncz);
+        this->numz[ip].assign(nproc, 0);
+        this->startz[ip].assign(nproc, 0);
+        this->whichpro[ip].assign(this->ncz, 0);
+        this->whichpro_loc[ip].assign(this->ncz, 0);
     }
 
     this->allocate = true;

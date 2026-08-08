@@ -2,6 +2,7 @@
 #define PARALLEL_GRID_H
 
 #include <cassert>
+#include <vector>
 
 class Parallel_Grid
 {
@@ -39,11 +40,11 @@ class Parallel_Grid
     void zpiece_to_stogroup(double* zpiece, const int& iz, double* rho) const; //qainrui add for sto-dft 2021-7-21
 #endif
 
-    int *nproc_in_pool = nullptr;
-    int **numz = nullptr;
-    int **startz = nullptr;
-    int **whichpro = nullptr;
-    int **whichpro_loc = nullptr;
+    std::vector<int> nproc_in_pool;
+    std::vector<std::vector<int>> numz;
+    std::vector<std::vector<int>> startz;
+    std::vector<std::vector<int>> whichpro;
+    std::vector<std::vector<int>> whichpro_loc;
 
     int ncx=0;
     int ncy=0;

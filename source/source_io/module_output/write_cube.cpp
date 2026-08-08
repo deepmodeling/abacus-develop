@@ -34,9 +34,9 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
     time_t end;
     std::stringstream ss;
 
-    const int& nx = pgrid.nx;
-    const int& ny = pgrid.ny;
-    const int& nz = pgrid.nz;
+    const int nx = pgrid.get_nx();
+    const int ny = pgrid.get_ny();
+    const int nz = pgrid.get_nz();
     const int& nxyz = nx * ny * nz;
 
     start = time(nullptr);

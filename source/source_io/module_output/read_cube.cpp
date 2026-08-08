@@ -27,9 +27,9 @@ bool ModuleIO::read_vdata_palgrid(
     }
 
     // read the full grid data
-    const int& nx = pgrid.nx;
-    const int& ny = pgrid.ny;
-    const int& nz = pgrid.nz;
+    const int nx = pgrid.get_nx();
+    const int ny = pgrid.get_ny();
+    const int nz = pgrid.get_nz();
     const int& nxyz = nx * ny * nz;
     std::vector<double> data_xyz_full(nxyz, 0.0);
     if (my_rank == 0)
