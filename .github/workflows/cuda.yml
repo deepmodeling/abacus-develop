@@ -4,6 +4,10 @@ on:
   workflow_dispatch:
   pull_request:
 
+defaults:
+  run:
+    shell: bash
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
@@ -21,22 +25,38 @@ jobs:
       
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           submodules: recursive
 
-      - name: Install Ccache
+      - name: Install CI tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache
+          sudo apt-get install -y ccache xz-utils ninja-build pkg-config
+
+      - name: Install external tools from toolchain
+        run: |
+          cd toolchain
+          ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
+          ./scripts/stage4/install_stage4.sh
+          cd ..
 
       - name: Configure & Build
         run: |
           nvidia-smi
+          source toolchain/install/setup
           rm -rf build
-          cmake -B build -DUSE_CUDA=ON -DBUILD_TESTING=ON
-          cmake --build build -j4
+          cmake -B build -G Ninja -DUSE_CUDA=ON -DBUILD_TESTING=ON -DENABLE_FLOAT_FFTW=ON \
+            -DCMAKE_CUDA_ARCHITECTURES=70
+          cmake --build build -j "$(nproc)"
           cmake --install build
+
+      - name: Module_LCAO CUDA Unittests
+        env:
+          GTEST_COLOR: 'yes'
+          OMP_NUM_THREADS: '2'
+        run: |
+          ctest --test-dir build -V --timeout 1700 -R '^(MODULE_LCAO_tddft_radial_interpolation_cuda_test|MODULE_LCAO_tddft_snap_psibeta_half_test)$'
 
       - name: Test 11_PW_GPU
         run: |
@@ -62,3 +82,15 @@ jobs:
         run: |
           cd tests/16_SDFT_GPU
           bash ../integrate/Autotest.sh -n 2 -f CASES_GPU.txt
+
+      - name: Test 01_PW on GPU
+        run: |
+          cd tests/01_PW
+          find . -name INPUT | while read f; do
+              if grep -q "^device" "$f"; then
+                  sed -i 's/^device.*/device    gpu/' "$f"
+              else
+                  echo "device    gpu" >> "$f"
+              fi
+          done
+          bash ../integrate/Autotest.sh -n 1 -a abacus -f CASES_GPU.txt

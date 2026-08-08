@@ -131,12 +131,16 @@ void FIRE::restart(const std::string& global_readin_dir)
         if (ok)
         {
             file >> step_rst_ >> md_tfirst >> alpha >> negative_count >> dt_max >> md_dt;
+            if(!file)
+            {
+                ok = false;
+            }    
             file.close();
         }
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 #endif
 
     if (!ok)

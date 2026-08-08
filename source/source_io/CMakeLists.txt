@@ -37,6 +37,8 @@ list(APPEND objects
     module_ml/write_mlkedf_descriptors.cpp
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
+    module_efield/td_efield_io.cpp
+    module_efield/td_vector_pot_io.cpp
     module_chgpot/write_libxc_r.cpp
     module_output/output_log.cpp
     module_json/para_json.cpp
@@ -81,10 +83,13 @@ if(ENABLE_LCAO)
       module_mulliken/output_mulliken.cpp
       module_ml/io_npz.cpp
       module_hs/cal_pLpR.cpp
+      module_dhs/write_dH.cpp
+      module_dhs/write_dH_terms.cpp
   )
   list(APPEND objects_advanced	   
       module_unk/unk_overlap_lcao.cpp
       module_hs/write_HS_R.cpp
+      module_hs/write_H_terms.cpp
       module_hs/write_HS_sparse.cpp
       module_hs/single_R_io.cpp
       module_hs/rr_sparse_writer.cpp

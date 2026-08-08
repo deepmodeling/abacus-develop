@@ -3,6 +3,10 @@ on:
   push:
   pull_request:
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -10,13 +14,13 @@ jobs:
       matrix:
         include:
         - tag: intel
-          build_args: "CXX=mpiicpc ELPA_LIB_DIR=/usr/local/lib ELPA_INCLUDE_DIR=/usr/local/include CEREAL_DIR=/usr/include/cereal OPENMP=ON"
+          build_args: "CXX=mpiicpx ELPA_LIB_DIR=/usr/local/lib ELPA_INCLUDE_DIR=/usr/local/include CEREAL_DIR=/usr/include/cereal OPENMP=ON"
           name: "Build with Makefile & Intel compilers"
     name: ${{ matrix.name }}
     container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
       - name: Build
         run: |
           export I_MPI_CXX=icpx

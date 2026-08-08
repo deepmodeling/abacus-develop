@@ -25,6 +25,26 @@ namespace ModuleSymmetry
                     break;
                 }
             }
+            // (nspin=4 magnetic) second pass over the antiunitary coset: the spatial part of
+            // Theta*g is a genuine crystallographic operation of the BvK supercell too
+            // (time-reversal factor is only needed when the data is rotated.)
+            // Recorded after unitary ops so downstream (rotate_R, restore_HR_nspin4) can tell the two apart by isym vs. nrotk.
+            if (isymbvk2isym[isymbvk] < 0)
+            {
+                for (int j = 0;j < symm.nrotk_anti;++j)
+                {
+                    if (matequal(bvkgmat[isymbvk], symm.gmatrix_anti[j]))
+                    {
+                        isymbvk2isym[isymbvk] = symm.nrotk + j;
+                        break;
+                    }
+                }
+            }
+            // Unmatched stays -1. That is legitimate for nspin=4 magnetic: the unit-cell set is the
+            // Shubnikov group H (union) A, generally a PROPER subset of the crystallographic group
+            // (operations that merely tilt the moment belong to neither), so a BvK operation may
+            // have no counterpart. The consumer in find_irreducible_sector skips negative entries;
+            // it must never use one as an index.
         }
         return isymbvk2isym;
     }
@@ -42,9 +62,12 @@ namespace ModuleSymmetry
             -> ModuleBase::Matrix3 {return ModuleBase::Matrix3(a1.x, a1.y, a1.z, a2.x, a2.y, a2.z, a3.x, a3.y, a3.z);};
         auto set_bvk_same_as_ucell = [&symm, this]()->void
             {
-                this->bvk_nsym_ = symm.nrotk;
-                this->isymbvk_to_isym_.resize(symm.nrotk);
-                for (int isym = 0;isym < symm.nrotk;++isym) { this->isymbvk_to_isym_[isym] = isym; }
+                // include the antiunitary coset (nspin=4 magnetic); nrotk_anti is 0 otherwise,
+                // so this is unchanged for every other case.
+                const int nop = symm.nrotk + symm.nrotk_anti;
+                this->bvk_nsym_ = nop;
+                this->isymbvk_to_isym_.resize(nop);
+                for (int isym = 0;isym < nop;++isym) { this->isymbvk_to_isym_[isym] = isym; }
             };
         if (bvk_period[0] == bvk_period[1] && bvk_period[0] == bvk_period[2])
         {   //the BvK supercell has the same symmetry as the original cell
@@ -107,7 +130,7 @@ namespace ModuleSymmetry
         int bvk_brav = 0;
         std::string bvk_latname="";
         // bvk_brav = symm.standard_lat(s1, s2, s3, cel_const); //not enough, optimal lattice may change after cell-extension
-        symm.lattice_type(a1, a2, a3, s1, s2, s3, cel_const, pre_const, bvk_brav, bvk_latname, nullptr, false, nullptr);
+        symm.lattice_type(a1, a2, a3, s1, s2, s3, cel_const, pre_const, bvk_brav, bvk_latname, nullptr, false, nullptr, 1e-6);
         ModuleBase::Matrix3 bvk_min_optlat = set_matrix3(a1, a2, a3);
         // convert the direct coordinates to the optimized lattice
         for (int i = 0;i < bvk_nat;++i)
@@ -127,7 +150,8 @@ namespace ModuleSymmetry
         // generate symmetry operation of the BvK lattice using the original optlat-direct coordinates
         std::vector<ModuleBase::Matrix3> bvk_op(48);
         int bvk_nop = 0;
-        symm.setgroup(bvk_op.data(), bvk_nop, bvk_brav);
+        const int cal_symm_repr[2] = {0, 6};
+        symm.setgroup(bvk_op.data(), bvk_nop, bvk_brav, cal_symm_repr);
         bvk_op.resize(bvk_nop);
         int bvk_npg = 0, bvk_nsg = 0, bvk_pgnum = 0, bvk_sgnum = 0;
         std::string bvk_pgname, bvk_sgname;
@@ -140,16 +164,18 @@ namespace ModuleSymmetry
         bvk_gmatrix.resize(bvk_nsg);
         bvk_gtrans.resize(bvk_nsg);
         this->bvk_nsym_ = bvk_nsg;
-        // bvk suppercell cannot have higher symmetry than the original cell
-        if (this->bvk_nsym_ > symm.nrotk)
+        // bvk suppercell cannot have higher symmetry than the original cell.
+        // The comparison is against the FULL operation set the sector search may use, i.e. the
+        // Shubnikov group H (union) A for nspin=4 magnetic (nrotk_anti is 0 in every other case).
+        if (this->bvk_nsym_ > symm.nrotk + symm.nrotk_anti)
         {
             std::cout << "reset bvk symmetry to the same as the original cell" << std::endl;
             set_bvk_same_as_ucell();
             return;
         }
-        symm.pointgroup(bvk_npg, bvk_pgnum, bvk_pgname, bvk_gmatrix.data(), GlobalV::ofs_running);
+        symm.pointgroup(bvk_npg, bvk_pgnum, bvk_pgname, bvk_gmatrix.data(), GlobalV::ofs_running, cal_symm_repr);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP OF BvK SCELL", bvk_pgname);
-        symm.pointgroup(bvk_nsg, bvk_sgnum, bvk_sgname, bvk_gmatrix.data(), GlobalV::ofs_running);
+        symm.pointgroup(bvk_nsg, bvk_sgnum, bvk_sgname, bvk_gmatrix.data(), GlobalV::ofs_running, cal_symm_repr);
         ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "POINT GROUP IN SPACE GROUP OF BvK SCELL", bvk_sgname);
         symm.gmatrix_convert_int(bvk_gmatrix.data(), bvk_gmatrix.data(), bvk_nsg, bvk_min_optlat, lat.latvec);
         symm.gtrans_convert(bvk_gtrans.data(), bvk_gtrans.data(), bvk_nsg, bvk_min_optlat, lat.latvec);

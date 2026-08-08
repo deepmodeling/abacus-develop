@@ -4,6 +4,7 @@
 #include "../exx_info.h"
 #include "xc3_mock.h"
 #include "source_base/matrix.h"
+#include "source_cell/cal_ux.h"
 
 /************************************************
 *  unit test of functionals
@@ -41,7 +42,7 @@ class XCTest_GRADCORR : public XCTest
             bool domag = false;
             bool domag_z = false;
             bool domag_true = true;
-            
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -53,7 +54,7 @@ class XCTest_GRADCORR : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            unitcell::cal_ux(ucell, 4);
 
             chr.rho = new double*[4];
             chr.rho[0] = new double[5];
@@ -89,13 +90,15 @@ class XCTest_GRADCORR : public XCTest
 
             XC_Functional::set_xc_type("PBE");
 
-            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false,nspin1,domag,domag_z);
-            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true,nspin1,domag,domag_z);
+            double hybrid_alpha = 0.0;
+            double hse_omega = 0.0;
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false,nspin1,domag,domag_z, hybrid_alpha, hse_omega);
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true,nspin1,domag,domag_z, hybrid_alpha, hse_omega);
 
-            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false,nspin2,domag,domag_z);
-            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true,nspin2,domag,domag_z);
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false,nspin2,domag,domag_z, hybrid_alpha, hse_omega);
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true,nspin2,domag,domag_z, hybrid_alpha, hse_omega);
 
-            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false,nspin4,domag_true,domag_z);
+            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false,nspin4,domag_true,domag_z, hybrid_alpha, hse_omega);
         }
 };
 

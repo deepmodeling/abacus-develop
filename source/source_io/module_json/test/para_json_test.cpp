@@ -1,14 +1,14 @@
 #include "gtest/gtest.h"
 
 #define private public
-#define __RAPIDJSON 1
 #include "source_io/module_json/abacusjson.h"
 #include "source_io/module_json/general_info.h"
 #include "source_io/module_json/init_info.h"
 #include "source_io/module_json/readin_info.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_json/para_json.h"
-#include "source_main/version.h"
+#include "source_base/constants.h"
+#include "source_base/version.h"
 #undef private
 /************************************************
  *  unit test of json output module
@@ -210,16 +210,17 @@ TEST(AbacusJsonTest, GeneralInfo)
     std::time_t time_now = std::time(nullptr);
     std::string start_time_str;
     Json::convert_time(time_now, start_time_str);
-    PARAM.sys.start_time = time_now;
 
-    PARAM.input.device = "cpu";
-    PARAM.input.pseudo_dir = "./abacus/test/pseudo_dir";
-    PARAM.input.orbital_dir = "./abacus/test/orbital_dir";
-    PARAM.sys.global_in_stru = "./abacus/test/stru_file";
-    PARAM.input.kpoint_file = "./abacus/test/kpoint_file";
+    Parameter param;
+    param.sys.start_time = time_now;
+    param.input.device = "cpu";
+    param.input.pseudo_dir = "./abacus/test/pseudo_dir";
+    param.input.orbital_dir = "./abacus/test/orbital_dir";
+    param.sys.global_in_stru = "./abacus/test/stru_file";
+    param.input.kpoint_file = "./abacus/test/kpoint_file";
     // output the json file
     Json::AbacusJson::doc.Parse("{}");
-    Json::gen_general_info(PARAM);
+    Json::gen_general_info(param);
     Json::json_output();
 
     std::string filename = "abacus.json";
@@ -239,30 +240,14 @@ TEST(AbacusJsonTest, GeneralInfo)
     ASSERT_NE(content.find(start_time_str), std::string::npos);
 }
 
-#ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h"
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-LCAO_Orbitals::LCAO_Orbitals()
-{
-}
-LCAO_Orbitals::~LCAO_Orbitals()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
-    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
 TEST(AbacusJsonTest, InitInfo)
 {
@@ -273,7 +258,14 @@ TEST(AbacusJsonTest, InitInfo)
     ucell.symm.spgname = "O_h";
     ucell.atoms = atomlist;
     ucell.ntype = 3;
-    PARAM.input.nbands = 10;
+    Input_para inp;
+    inp.nbands = 10;
+    inp.ecutwfc = 50.0;
+    inp.smearing_method = "gauss";
+    inp.smearing_sigma = 0.015;
+    inp.kspacing = {0.04, 0.04, 0.04};
+    inp.koffset = {0.0, 0.0, 0.0};
+    inp.kmesh_type = "gamma";
 
     ucell.atoms[0].label = "Si";
     ucell.atoms[0].ncpp.zv = 3;
@@ -294,7 +286,7 @@ TEST(AbacusJsonTest, InitInfo)
     int Jnkstot = 1;
 
     Json::add_nkstot(Jnkstot);
-    Json::gen_init(&ucell);
+    Json::gen_init(&ucell, inp);
 
     ASSERT_TRUE(Json::AbacusJson::doc.HasMember("init"));
     ASSERT_EQ(Json::AbacusJson::doc["init"]["nkstot"].GetInt(), 1);
@@ -312,6 +304,19 @@ TEST(AbacusJsonTest, InitInfo)
     ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["Si"].GetInt(), 1);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["C"].GetInt(), 2);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["natom_each_type"]["O"].GetInt(), 3);
+
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["ecutwfc"].GetDouble(), 50.0);
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["ecutwfc_unit"].GetString(), "Ry");
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["smearing_method"].GetString(), "gauss");
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["smearing_sigma"].GetDouble(), 0.015);
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["smearing_sigma_unit"].GetString(), "Ry");
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["kmesh_type"].GetString(), "gamma");
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["kspacing"][0].GetDouble(), 0.04);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["kspacing"][1].GetDouble(), 0.04);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["kspacing"][2].GetDouble(), 0.04);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["koffset"][0].GetDouble(), 0.0);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["koffset"][1].GetDouble(), 0.0);
+    ASSERT_EQ(Json::AbacusJson::doc["init"]["koffset"][2].GetDouble(), 0.0);
 }
 
 TEST(AbacusJsonTest, Init_stru_test)
@@ -341,8 +346,8 @@ TEST(AbacusJsonTest, Init_stru_test)
     ucell.pseudo_fn.resize(1);
     ucell.orbital_fn.resize(1);
     ucell.atoms = atomlist;
-    ucell.atom_label.resize(1);
     ucell.lat0 = lat0;
+    ucell.lat0_angstrom = lat0 * ModuleBase::BOHR_TO_A;
 
     ModuleBase::Vector3<double> tau[2];
 
@@ -352,9 +357,8 @@ TEST(AbacusJsonTest, Init_stru_test)
     // fill ucell
     for (int i = 0; i < 1; i++)
     {
-        ucell.atom_label[i] = "Si";
+        ucell.atoms[i].label = "Si";
         atomlist[i].na = 2;
-        atomlist[i].label = "Fe";
         ucell.pseudo_fn[i] = "si.ufp";
         ucell.atoms[i].tau.resize(2);
         atomlist[i].mag.resize(2);
@@ -364,7 +368,7 @@ TEST(AbacusJsonTest, Init_stru_test)
             ucell.atoms[i].tau[j] = 0.1 * j;
         }
     }
-    Json::gen_stru(&ucell);
+    Json::gen_stru(&ucell, Input_para{});
 
     std::string filename = "readin.json";
     Json::AbacusJson::write_to_json(filename);
@@ -373,27 +377,31 @@ TEST(AbacusJsonTest, Init_stru_test)
     ASSERT_EQ(Json::AbacusJson::doc["init"]["mag"][0].GetDouble(), 0);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["mag"][1].GetDouble(), 131.0);
 
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["pp"]["Fe"].GetString(), "si.ufp");
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["pp"]["Si"].GetString(), "si.ufp");
     ASSERT_STREQ(Json::AbacusJson::doc["init"]["label"][0].GetString(), "Si");
-    ASSERT_STREQ(Json::AbacusJson::doc["init"]["element"]["Fe"].GetString(), "");
+    ASSERT_STREQ(Json::AbacusJson::doc["init"]["element"]["Si"].GetString(), "");
 
     ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][0][0].GetDouble(), 0);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][0][1].GetDouble(), 0);
     ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][0][2].GetDouble(), 0);
 
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][1][0].GetDouble(), 1.0);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][1][1].GetDouble(), 1.0);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["coordinate"][1][2].GetDouble(), 1.0);
+    EXPECT_NEAR(Json::AbacusJson::doc["init"]["coordinate"][1][0].GetDouble(),
+                ModuleBase::BOHR_TO_A,
+                1.0e-12);
+    EXPECT_NEAR(Json::AbacusJson::doc["init"]["coordinate"][1][1].GetDouble(),
+                ModuleBase::BOHR_TO_A,
+                1.0e-12);
+    EXPECT_NEAR(Json::AbacusJson::doc["init"]["coordinate"][1][2].GetDouble(),
+                ModuleBase::BOHR_TO_A,
+                1.0e-12);
 
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][0][0].GetDouble(), 0.1);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][0][1].GetDouble(), 0.1);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][0][2].GetDouble(), 0.1);
-
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][1][0].GetDouble(), 0.2);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][1][1].GetDouble(), 0.2);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][1][2].GetDouble(), 0.2);
-
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][2][0].GetDouble(), 0.3);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][2][1].GetDouble(), 0.3);
-    ASSERT_EQ(Json::AbacusJson::doc["init"]["cell"][2][2].GetDouble(), 0.3);
+    for (int i = 0; i < 3; ++i)
+    {
+        for (int j = 0; j < 3; ++j)
+        {
+            EXPECT_NEAR(Json::AbacusJson::doc["init"]["cell"][i][j].GetDouble(),
+                        (i + 1) * ModuleBase::BOHR_TO_A,
+                        1.0e-12);
+        }
+    }
 }

@@ -1,3 +1,7 @@
+/**
+ * @file sep_cell.cpp
+ * @brief Implementation of SepCell class.
+ */
 #include "sep_cell.h"
 
 #include "source_base/global_function.h"
@@ -8,11 +12,6 @@
 #include <algorithm>
 #include <string>
 #include <vector>
-
-// namespace GlobalC
-// {
-// Sep_Cell sep_cell;
-// }
 
 Sep_Cell::Sep_Cell() noexcept : ntype(0), omega(0.0), tpiba2(0.0)
 {

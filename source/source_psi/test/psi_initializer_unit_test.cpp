@@ -72,12 +72,13 @@ pseudopot_cell_vl::pseudopot_cell_vl() {}
 pseudopot_cell_vl::~pseudopot_cell_vl() {}
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
+
 #ifdef __LCAO
+#include "source_basis/module_ao/ORB_gaunt_table.h"
 ORB_gaunt_table::ORB_gaunt_table() {}
 ORB_gaunt_table::~ORB_gaunt_table() {}
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
 #endif
+
 Structure_Factor::Structure_Factor() {}
 Structure_Factor::~Structure_Factor() {}
 void Structure_Factor::setup(const UnitCell* Ucell, const Parallel_Grid&, const ModulePW::PW_Basis* rho_basis) {}
@@ -137,9 +138,6 @@ class PsiIntializerUnitTest : public ::testing::Test {
             this->p_ucell->tpiba = 2.0 * M_PI / this->p_ucell->lat0;
             this->p_ucell->tpiba2 = this->p_ucell->tpiba * this->p_ucell->tpiba;
             // atom
-            this->p_ucell->atom_label.shrink_to_fit();
-            this->p_ucell->atom_label.resize(1);
-            this->p_ucell->atom_label[0] = "Si";
             // atom properties
             this->p_ucell->nat = 1;
             this->p_ucell->ntype = 1;

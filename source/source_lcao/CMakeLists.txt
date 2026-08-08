@@ -1,7 +1,6 @@
 add_subdirectory(module_rt)
 add_subdirectory(module_deepks)
 add_subdirectory(module_dftu)
-add_subdirectory(module_hcontainer)
 add_subdirectory(module_deltaspin)
 
 if(ENABLE_LCAO)
@@ -10,19 +9,28 @@ if(ENABLE_LCAO)
         hamilt_lcao.cpp
         module_operator_lcao/operator_lcao.cpp
         module_operator_lcao/veff_lcao.cpp
+        module_operator_lcao/veff_dh.cpp
         module_operator_lcao/meta_lcao.cpp
         module_operator_lcao/op_dftu_lcao.cpp
         module_operator_lcao/deepks_lcao.cpp
         module_operator_lcao/op_exx_lcao.cpp
         module_operator_lcao/overlap.cpp
+        module_operator_lcao/overlap_fs.cpp
         module_operator_lcao/ekinetic.cpp
+        module_operator_lcao/ekinetic_fs.cpp
+        module_operator_lcao/ekinetic_dh.cpp
         module_operator_lcao/nonlocal.cpp
+        module_operator_lcao/nonlocal_dh.cpp
+        module_operator_lcao/nonlocal_fs.cpp
         module_operator_lcao/td_ekinetic_lcao.cpp
         module_operator_lcao/td_nonlocal_lcao.cpp
         module_operator_lcao/td_pot_hybrid.cpp
+        module_operator_lcao/td_pot_hybrid_fs.cpp
         module_operator_lcao/dspin_lcao.cpp
+        module_operator_lcao/dspin_fs.cpp
         module_operator_lcao/dftu_lcao.cpp
-        module_operator_lcao/operator_force_stress_utils.cpp
+        module_operator_lcao/dftu_fs.cpp
+        module_operator_lcao/operator_fs_utils.cpp
         dftu_lcao.cpp
         pulay_fs_center2.cpp
         FORCE_STRESS.cpp
@@ -43,6 +51,7 @@ if(ENABLE_LCAO)
         LCAO_allocate.cpp
         LCAO_set_mat2d.cpp
         LCAO_init_basis.cpp
+        setup_nonlocal.cpp
         setup_exx.cpp
         setup_deepks.cpp
         setup_dm.cpp

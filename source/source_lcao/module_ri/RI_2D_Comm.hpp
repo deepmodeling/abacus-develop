@@ -490,6 +490,86 @@ void RI_2D_Comm::add_HexxR(
     ModuleBase::timer::end("RI_2D_Comm", "add_HexxR");
 }
 
+// DM(R) format conversion: HContainer<TR> -> Ds (atom-pair / cell map).
+// This is the real-space (DM(R)) counterpart of split_m2D_ktoR (which converts DM(k)),
+// and the inverse of add_HexxR (which converts Ds -> HContainer); it therefore reuses the
+// exact same atom/orbital/spin-block index mapping as add_HexxR.
+// dm_container is the DM(R) vector returned by DensityMatrix::get_DMR_vector():
+//   nspin==1 : size 1 (container 0  -> spin-block 0)
+//   nspin==2 : size 2 (container is -> spin-block is)
+//   nspin==4 : size 1 (container 0 holds the 2x2 npol blocks -> spin-blocks 0,1,2,3)
+template <typename TR, typename Tdata>
+auto RI_2D_Comm::dm_container_to_Ds(
+    const std::vector<hamilt::HContainer<TR>*>& dm_container,
+    const UnitCell& ucell,
+    const Parallel_Orbitals& pv,
+    const int nspin)
+-> std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>>
+{
+    ModuleBase::TITLE("RI_2D_Comm", "dm_container_to_Ds");
+    ModuleBase::timer::start("RI_2D_Comm", "dm_container_to_Ds");
+
+    const int npol = (nspin == 4) ? 2 : 1;
+    // same spin prefactor as split_m2D_ktoR: DM(R) carries the full (spin-summed) occupation,
+    // while Ds is the single-spin-channel density matrix
+    const double SPIN_multiple = std::map<int, double>{ {1, 0.5}, {2, 1}, {4, 1} }.at(nspin);
+
+    std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> Ds(nspin);
+
+    for (int ic = 0; ic < static_cast<int>(dm_container.size()); ++ic)
+    {
+        const hamilt::HContainer<TR>& dmR = *dm_container[ic];
+        // spin-blocks carried by this container (cf. add_HexxR's is_list)
+        const std::vector<int> is_list = (nspin == 4)
+            ? std::vector<int>{ 0, 1, 2, 3 }
+            : std::vector<int>{ ic };
+        for (int iap = 0; iap < static_cast<int>(dmR.size_atom_pairs()); ++iap)
+        {
+            const hamilt::AtomPair<TR>& ap = dmR.get_atom_pair(iap);
+            const int iat0 = ap.get_atom_i();
+            const int iat1 = ap.get_atom_j();
+            const int it0 = ucell.iat2it[iat0];
+            const int it1 = ucell.iat2it[iat1];
+            const std::vector<int> row_indexes = pv.get_indexes_row(iat0);
+            const std::vector<int> col_indexes = pv.get_indexes_col(iat1);
+            for (int iR = 0; iR < ap.get_R_size(); ++iR)
+            {
+                const ModuleBase::Vector3<int> R_index = ap.get_R_index(iR);
+                const TC cell = { R_index.x, R_index.y, R_index.z };
+                const hamilt::BaseMatrix<TR>* const dm_mat = ap.find_matrix(R_index);
+                if (dm_mat == nullptr) { continue; }
+                for (const int is_b : is_list)
+                {
+                    int is0_b = 0, is1_b = 0;
+                    std::tie(is0_b, is1_b) = RI_2D_Comm::split_is_block(is_b);
+                    RI::Tensor<Tdata>& D = Ds[is_b][iat0][{iat1, cell}];
+                    if (D.empty())
+                    {
+                        D = RI::Tensor<Tdata>(
+                            { static_cast<size_t>(ucell.atoms[it0].nw),
+                              static_cast<size_t>(ucell.atoms[it1].nw) });
+                    }
+                    for (int lw0_b = 0; lw0_b < static_cast<int>(row_indexes.size()); lw0_b += npol)
+                    {
+                        const int gw0 = row_indexes[lw0_b] / npol;
+                        const int lw0 = (npol == 2) ? (lw0_b + is0_b) : lw0_b;
+                        for (int lw1_b = 0; lw1_b < static_cast<int>(col_indexes.size()); lw1_b += npol)
+                        {
+                            const int gw1 = col_indexes[lw1_b] / npol;
+                            const int lw1 = (npol == 2) ? (lw1_b + is1_b) : lw1_b;
+                            D(gw0, gw1) = RI::Global_Func::convert<Tdata>(
+                                SPIN_multiple * dm_mat->get_value(lw0, lw1));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    ModuleBase::timer::end("RI_2D_Comm", "dm_container_to_Ds");
+    return Ds;
+}
+
 template <typename TA, typename TAC, typename T>
 std::map<TA, std::map<TAC, T>> RI_2D_Comm::comm_map2_first(const MPI_Comm& mpi_comm,
                                                            const std::map<TA, std::map<TAC, T>>& Ds_in,

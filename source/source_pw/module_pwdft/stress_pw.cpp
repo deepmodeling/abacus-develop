@@ -1,6 +1,7 @@
 #include "stress_pw.h"
 
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_base/global_variable.h" // use GlobalC
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/output_log.h"
@@ -10,6 +11,7 @@
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
+                                           const vdw::VdwResult* vdw_result,
                                            Plus_U &dftu, // mhan add 2025-11-07 
                                            const pseudopot_cell_vl& locpp,
                                            const pseudopot_cell_vnl& nlpp,
@@ -116,8 +118,15 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         this->stress_us(sigmanl, rho_basis, nlpp, ucell);
     }
 
-    // vdw term
-    stress_vdw(sigmavdw, ucell);
+    // vdW term prepared before SCF for this ionic configuration.
+    if (vdw_result != nullptr)
+    {
+        if (!vdw_result->has_stress)
+        {
+            ModuleBase::WARNING_QUIT("Stress_PW::cal_stress", "The cached vdW stress is unavailable.");
+        }
+        sigmavdw = vdw_result->stress.to_matrix();
+    }
 
     // DFT+U and DeltaSpin stress
     if (PARAM.inp.dft_plus_u || PARAM.inp.sc_mag_switch)
@@ -126,9 +135,12 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // EXX PW stress
-    if (GlobalC::exx_info.info_global.cal_exx)
+    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    auto coulomb_param = GlobalC::exx_info.info_global.coulomb_param;
+    if (cal_exx)
     {
-        this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell);
+        this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell, hybrid_alpha, coulomb_param);
     }
 
 
@@ -169,7 +181,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
         {
             ModuleIO::print_stress("ONSITE    STRESS", sigmaonsite, screen, ry, GlobalV::ofs_running);
         }
-        if (GlobalC::exx_info.info_global.cal_exx)
+        if (cal_exx)
         {
             ModuleIO::print_stress("EXX    STRESS", sigmaexx, screen, ry, GlobalV::ofs_running);
         }
@@ -179,16 +191,6 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     return;
 }
 
-template <typename FPTYPE, typename Device>
-void Stress_PW<FPTYPE, Device>::stress_vdw(ModuleBase::matrix& sigma, UnitCell& ucell)
-{
-    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp);
-    if (vdw_solver != nullptr)
-    {
-        sigma = vdw_solver->get_stress().to_matrix();
-    }
-    return;
-}
 
 template class Stress_PW<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))

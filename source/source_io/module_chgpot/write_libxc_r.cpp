@@ -3,7 +3,7 @@
 // DATE :   2024-09-12
 //======================
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 
 #include "write_libxc_r.h"
 #include "source_base/parallel_comm.h"
@@ -50,10 +50,14 @@ void ModuleIO::write_libxc_r(
 	// https://www.tddft.org/programs/libxc/manual/libxc-5.1.x/
 	//----------------------------------------------------------
 
+	double hybrid_alpha = 0.0;
+	double hse_omega = 0.0;
 	std::vector<xc_func_type> funcs =
 		XC_Functional_Libxc::init_func(
 			func_id, 
-			(1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED
+			(1==nspin) ? XC_UNPOLARIZED : XC_POLARIZED,
+			hybrid_alpha,
+			hse_omega
 		);
 
 	const bool is_gga = [&funcs]()
@@ -494,4 +498,4 @@ void ModuleIO::write_cube_core(
 
 #endif  // #ifdef __MPI
 
-#endif // USE_LIBXC
+#endif // __LIBXC

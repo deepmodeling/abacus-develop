@@ -2,8 +2,8 @@
 #define EXX_OPT_ORB_H
 
 #include "source_hamilt/module_xc/exx_info_opt_abfs.h"
-#include "../../source_base/matrix.h"
-#include "../../source_base/element_basis_index.h"
+#include "source_base/matrix.h"
+#include "source_base/element_basis_index.h"
 #include "source_cell/klist.h"
 #include "source_basis/module_ao/ORB_read.h"
 #include <RI/global/Tensor.h>

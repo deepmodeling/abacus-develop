@@ -1,16 +1,12 @@
 #include "esolver_ks_lcaopw.h"
-
 #include "source_pw/module_pwdft/elecond.h"
 #include "source_io/module_parameter/input_conv.h"
-#include "source_io/module_output/output_log.h"
-
 #include <iostream>
 
 //--------------temporary----------------------------
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_io/module_output/print_info.h"
 //-----force-------------------
 #include "source_pw/module_pwdft/forces.h"
 //-----stress------------------
@@ -23,11 +19,6 @@
 #include "source_hsolver/hsolver_lcaopw.h"
 #include "source_hsolver/kernels/hegvd_op.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_io/module_unk/berryphase.h"
-#include "source_io/module_bessel/numerical_basis.h"
-#include "source_io/module_bessel/numerical_descriptor.h"
-#include "source_io/module_wannier/to_wannier90_pw.h"
-#include "source_io/module_chgpot/write_elecstat_pot.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
@@ -81,9 +72,11 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::before_all_runners(UnitCell& ucell, const Input_para& inp)
+    void ESolver_KS_LIP<T>::before_all_runners(BaseCell& basecell, const Input_para& inp)
     {
-        ESolver_KS_PW<T>::before_all_runners(ucell, inp);
+        basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+        UnitCell& ucell = static_cast<UnitCell&>(basecell);
+        ESolver_KS_PW<T>::before_all_runners(basecell, inp);
         auto* p_psi_init = static_cast<psi::PSIPrepare<T>*>(this->stp.p_psi_init);
         delete this->psi_local;
         this->psi_local = new psi::Psi<T>(this->stp.psi_cpu->get_nk(),
@@ -142,15 +135,20 @@ namespace ModuleESolver
         hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
         bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
 
-        hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc);
+        hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc,
+                                               PARAM.globalv.use_uspp,
+                                               PARAM.inp.basis_type,
+                                               PARAM.inp.calculation);
         hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec, 
           *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
 
         // add exx
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx)
+        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        if (cal_exx)
         {
-            this->pelec->set_exx(this->exx_lip->get_exx_energy()); // Peize Lin add 2019-03-09
+            this->pelec->set_exx(this->exx_lip->get_exx_energy(), cal_exx, hybrid_alpha); // Peize Lin add 2019-03-09
         }
 #endif
 
@@ -227,13 +225,22 @@ namespace ModuleESolver
     }
 
     template <typename T>
-    void ESolver_KS_LIP<T>::after_all_runners(UnitCell& ucell)
+    void ESolver_KS_LIP<T>::after_all_runners(BaseCell& basecell)
     {
-        ESolver_KS_PW<T>::after_all_runners(ucell);
+        basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+        UnitCell& ucell = static_cast<UnitCell&>(basecell);
+        ESolver_KS_PW<T>::after_all_runners(basecell);
 
 #ifdef __LCAO
         if (PARAM.inp.out_mat_xc)
         {
+#ifdef __EXX
+            bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+            double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+#else
+            bool cal_exx = false;
+            double hybrid_alpha = 0.0;
+#endif
             ModuleIO::write_Vxc(PARAM.inp.nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
@@ -247,7 +254,9 @@ namespace ModuleESolver
                                 this->locpp.vloc,
                                 this->chr,
                                 this->kv,
-                                this->pelec->wg
+                                this->pelec->wg,
+                                cal_exx,
+                                hybrid_alpha
 #ifdef __EXX
                                 ,
                                 *this->exx_lip

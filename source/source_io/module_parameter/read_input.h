@@ -4,10 +4,9 @@
 #include "input_item.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include <string>
 #include <fstream>
 #include <sstream>
-
+#include <string>
 
 namespace ModuleIO
 {
@@ -15,7 +14,7 @@ class ReadInput
 {
   public:
     ReadInput(const int& rank);
-    ~ReadInput(){};
+    ~ReadInput() {};
     /**
      * @brief clear all input items
      */
@@ -71,6 +70,13 @@ class ReadInput
      */
     void read_txt_input(Parameter& param, const std::string& filename);
     /**
+     * @brief Resolve the primary H/S output options and their legacy aliases.
+     *
+     * This is called after all INPUT values have been read so that the result
+     * does not depend on the order of keywords in the INPUT file.
+     */
+    void normalize_hs_output_options(Parameter& param);
+    /**
      * @brief write INPUT file of txt format
      *
      * @param param parameters of ABACUS
@@ -96,7 +102,7 @@ class ReadInput
      */
     void add_item(const Input_Item& item);
     /// @brief set System_para according to input parameters
-    /// INPUT and STRU need to refer to each other in ABACUS, 
+    /// INPUT and STRU need to refer to each other in ABACUS,
     /// so it is necessary to obtain the file paths related to all inputs
     void set_global_dir(const Input_para& inp, System_para& sys);
     // set System_para according to input parameters
@@ -164,12 +170,16 @@ std::string to_dir(const std::string& str);
 // return a warning string if the string is not found in the vector
 std::string nofound_str(std::vector<std::string> init_chgs, const std::string& str);
 
-
 // filter non-ASCII characters from ifstream and output to stringstream
 // return true if successful, false otherwise
-bool filter_nonascii_and_comment(std::ifstream& ifs,
-                       std::stringstream& out_ascii_stream);
+bool filter_nonascii_and_comment(std::ifstream& ifs, std::stringstream& out_ascii_stream);
 
+/**
+ * @brief Validate the structure and waveform-defining constraints of RT-TDDFT fields.
+ *
+ * @param input Input parameters after all values and dynamic defaults are resolved.
+ */
+void check_td_efield_parameters(const Input_para& input);
 
 } // namespace ModuleIO
 

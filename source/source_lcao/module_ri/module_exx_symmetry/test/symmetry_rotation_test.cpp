@@ -29,8 +29,7 @@ Atom_pseudo::Atom_pseudo() {}
 Atom_pseudo::~Atom_pseudo() {}
 UnitCell::UnitCell() {}
 UnitCell::~UnitCell() {}
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
+
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
 SepPot::SepPot(){}
@@ -116,7 +115,7 @@ TEST_F(SymmetryRotationTest, OvlpYS)
 
 TEST_F(SymmetryRotationTest, RotMat)
 {
-    symrot.cal_rotmat_Slm(&C41, 1);
+    symrot.cal_rotmat_Slm(&C41, 1, -1);
     RI::Tensor<std::complex<double>>& rotmat = symrot.get_rotmat_Slm()[0][1];
     int l = 1;
     for (int m1 = -l;m1 <= l;++m1)
@@ -158,6 +157,82 @@ TEST_F(SymmetryRotationTest, SetBlockToMat2d)
                 EXPECT_NEAR(obj_mat[local_index].real(), block(j - 3, i - 2).real(), DOUBLETHRESHOLD);
                 EXPECT_NEAR(obj_mat[local_index].imag(), block(j - 3, i - 2).imag(), DOUBLETHRESHOLD);
             }
+        }
+}
+
+// --- nspin=4 (SOC) time-reversal spin-flip machinery used by restore_dm ---
+// Sigma_y = I_nao (x) sigma_y and  trs_spin_rotate(X) = scale * Sigma_y * conj(X) * Sigma_y,
+// which realizes the per-orbital-pair 2x2 block operation sigma_y * conj(block) * sigma_y
+// (the D(-k) = sigma_y D*(k) sigma_y Kramers relation). Block size 2 keeps each interleaved
+// spin block on one process, so the oracle can read it locally for any process count.
+TEST_F(SymmetryRotationTest, SetSigmaY2d)
+{
+    const int nao = 3, nl = 2 * nao;
+    Parallel_2D pv2;
+    pv2.init(nl, nl, 2, MPI_COMM_WORLD);
+    std::vector<std::complex<double>> sy = symrot.set_sigma_y_2d(pv2);
+    // every entry: sigma_y[[0,-i],[i,0]] on the orbital-diagonal 2x2 blocks, zero elsewhere
+    for (int gi = 0; gi < nl; ++gi)
+        for (int gj = 0; gj < nl; ++gj)
+        {
+            if (!pv2.in_this_processor(gi, gj)) { continue; }
+            const int idx = pv2.global2local_col(gj) * pv2.get_row_size() + pv2.global2local_row(gi);
+            std::complex<double> expect(0.0, 0.0);
+            if (gi / 2 == gj / 2) // same orbital
+            {
+                if (gi % 2 == 0 && gj % 2 == 1) { expect = std::complex<double>(0.0, -1.0); }
+                else if (gi % 2 == 1 && gj % 2 == 0) { expect = std::complex<double>(0.0, 1.0); }
+            }
+            EXPECT_NEAR(sy[idx].real(), expect.real(), DOUBLETHRESHOLD);
+            EXPECT_NEAR(sy[idx].imag(), expect.imag(), DOUBLETHRESHOLD);
+        }
+}
+
+TEST_F(SymmetryRotationTest, TrsSpinRotate)
+{
+    const int nao = 3, nl = 2 * nao;
+    Parallel_2D pv2;
+    pv2.init(nl, nl, 2, MPI_COMM_WORLD);
+    std::vector<std::complex<double>> sy = symrot.set_sigma_y_2d(pv2);
+
+    // deterministic distributed input X (stored col-major per the 2d-block convention)
+    auto val = [](int gi, int gj) {
+        return std::complex<double>(0.1 * gi - 0.3 * gj + 1.0, 0.2 * gi * gj - 0.5 * gi + 0.7);
+    };
+    std::vector<std::complex<double>> X(pv2.get_local_size(), 0.0);
+    for (int gi = 0; gi < nl; ++gi)
+        for (int gj = 0; gj < nl; ++gj)
+            if (pv2.in_this_processor(gi, gj))
+                X[pv2.global2local_col(gj) * pv2.get_row_size() + pv2.global2local_row(gi)] = val(gi, gj);
+
+    const double scale = 0.5;
+    std::vector<std::complex<double>> out = symrot.trs_spin_rotate(X, sy, pv2, scale);
+
+    // oracle: for each orbital pair, out_block = scale * sigma_y * conj(X_block) * sigma_y
+    const std::complex<double> SY[2][2] = {{{0.0, 0.0}, {0.0, -1.0}}, {{0.0, 1.0}, {0.0, 0.0}}};
+    for (int io = 0; io < nao; ++io)
+        for (int jo = 0; jo < nao; ++jo)
+        {
+            if (!pv2.in_this_processor(2 * io, 2 * jo)) { continue; } // whole 2x2 block is co-located (nb=2)
+            std::complex<double> B[2][2];
+            for (int a = 0; a < 2; ++a)
+                for (int b = 0; b < 2; ++b)
+                {
+                    const int idx = pv2.global2local_col(2 * jo + b) * pv2.get_row_size() + pv2.global2local_row(2 * io + a);
+                    B[a][b] = std::conj(X[idx]);
+                }
+            for (int a = 0; a < 2; ++a)
+                for (int b = 0; b < 2; ++b)
+                {
+                    std::complex<double> s(0.0, 0.0);
+                    for (int p = 0; p < 2; ++p)
+                        for (int q = 0; q < 2; ++q)
+                            s += SY[a][p] * B[p][q] * SY[q][b];
+                    s *= scale;
+                    const int idx = pv2.global2local_col(2 * jo + b) * pv2.get_row_size() + pv2.global2local_row(2 * io + a);
+                    EXPECT_NEAR(out[idx].real(), s.real(), DOUBLETHRESHOLD);
+                    EXPECT_NEAR(out[idx].imag(), s.imag(), DOUBLETHRESHOLD);
+                }
         }
 }
 

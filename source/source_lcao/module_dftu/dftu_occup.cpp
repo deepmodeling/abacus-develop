@@ -27,10 +27,9 @@ void Plus_U::copy_locale(const UnitCell& ucell)
         {
             const int iat = ucell.itia2iat(T, I);
 
-            if (PARAM.inp.nspin == 4)
+            if (Plus_U::nspin == 4)
             {
                 locale_save[iat][target_l][0][0] = locale[iat][target_l][0][0];
-                // nspin=4 locale matrix already contains all spin components interleaved
                 if(this->uom_save.size() != 0)
                 {
                     const int size = locale[iat][target_l][0][0].nr * locale[iat][target_l][0][0].nc;
@@ -40,11 +39,10 @@ void Plus_U::copy_locale(const UnitCell& ucell)
                     }
                 }
             }
-            else if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+            else if (Plus_U::nspin == 1 || Plus_U::nspin == 2)
             {
                 locale_save[iat][target_l][0][0] = locale[iat][target_l][0][0];
                 locale_save[iat][target_l][0][1] = locale[iat][target_l][0][1];
-                // save locale matrix for spin=0,1 to uom_save
                 if(this->uom_save.size() != 0)
                 {
                     const int size = locale[iat][target_l][0][0].nr * locale[iat][target_l][0][0].nc;
@@ -83,11 +81,11 @@ void Plus_U::zero_locale(const UnitCell& ucell)
 
                 for (int n = 0; n < N; n++)
                 {
-                    if (PARAM.inp.nspin == 4)
+                    if (Plus_U::nspin == 4)
                     {
                         locale[iat][l][n][0].zero_out();
                     }
-                    else if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+                    else if (Plus_U::nspin == 1 || Plus_U::nspin == 2)
                     {
                         locale[iat][l][n][0].zero_out();
                         locale[iat][l][n][1].zero_out();
@@ -117,7 +115,7 @@ void Plus_U::mix_locale(const UnitCell& ucell,
         {
             const int iat = ucell.itia2iat(T, I);
 
-            if (PARAM.inp.nspin == 4)
+            if (Plus_U::nspin == 4)
             {
                 const int size = locale[iat][target_l][0][0].nr * locale[iat][target_l][0][0].nc;
                 for (int mm = 0; mm < size; mm++)
@@ -132,7 +130,7 @@ void Plus_U::mix_locale(const UnitCell& ucell,
                     }
                 }
             }
-            else if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+            else if (Plus_U::nspin == 1 || Plus_U::nspin == 2)
             {
                 const int size = locale[iat][target_l][0][0].nr * locale[iat][target_l][0][0].nc;
                 const int half_size = this->uom_save.size() / 2;
@@ -173,18 +171,18 @@ void Plus_U::set_locale(const UnitCell& ucell)
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
-            if (PARAM.inp.nspin == 4)
+            if (Plus_U::nspin == 4)
             {
                 for(int mm = 0; mm < locale[iat][l][0][0].nr * locale[iat][l][0][0].nc; mm++)
                     locale[iat][l][0][0].c[mm] = this->uom_array[eff_pot_pw_index[iat] + mm];
             }
-            else if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 2)
+            else if (Plus_U::nspin == 1 || Plus_U::nspin == 2)
             {
                 const int half_size = this->uom_array.size() / 2;
                 for(int mm = 0; mm < locale[iat][l][0][0].nr * locale[iat][l][0][0].nc; mm++)
                 {
                     locale[iat][l][0][0].c[mm] = this->uom_array[eff_pot_pw_index[iat] + mm];
-                    if (PARAM.inp.nspin == 2)
+                    if (Plus_U::nspin == 2)
                     {
                         locale[iat][l][0][1].c[mm] = this->uom_array[half_size + eff_pot_pw_index[iat] + mm];
                     }
@@ -259,7 +257,7 @@ void Plus_U::cal_occup_m_k(const int iter,
 
         std::complex<double>* s_k_pointer = nullptr;
 
-        if(PARAM.inp.nspin != 4)
+        if(Plus_U::nspin != 4)
         {
             s_k_pointer = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
         }
@@ -271,16 +269,15 @@ void Plus_U::cal_occup_m_k(const int iter,
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
             transT,
-            PARAM.globalv.nlocal,
-            PARAM.globalv.nlocal,
-            PARAM.globalv.nlocal,
+            this->nlocal,
+            this->nlocal,
+            this->nlocal,
             alpha,
             s_k_pointer,
             one_int,
             one_int,
             &this->paraV->desc[0],
             dm_k[ik].data(),
-            //dm_k[ik].c,
             one_int,
             one_int,
             &this->paraV->desc[0],
@@ -289,26 +286,6 @@ void Plus_U::cal_occup_m_k(const int iter,
             one_int,
             one_int,
             &this->paraV->desc[0]);
-        /*pzgemm_(&transN,
-                &transT,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &PARAM.globalv.nlocal,
-                &alpha,
-                s_k_pointer,
-                &one_int,
-                &one_int,
-                this->paraV->desc,
-                dm_k[ik].data(),
-                //dm_k[ik].c,
-                &one_int,
-                &one_int,
-                this->paraV->desc,
-                &beta,
-                &srho[0],
-                &one_int,
-                &one_int,
-                this->paraV->desc);*/
 #endif
 
         const int spin = kv.isk[ik];
@@ -346,7 +323,7 @@ void Plus_U::cal_occup_m_k(const int iter,
                         // Calculate the local occupation number matrix
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
+                            for (int ipol0 = 0; ipol0 < this->npol; ipol0++)
                             {
                                 const int iwt0 = this->iatlnmipol2iwt[iat][l][n][m0][ipol0];
                                 const int mu = this->paraV->global2local_row(iwt0);
@@ -354,7 +331,7 @@ void Plus_U::cal_occup_m_k(const int iter,
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < this->npol; ipol1++)
                                     {
                                         const int iwt1 = this->iatlnmipol2iwt[iat][l][n][m1][ipol1];
                                         const int nu = this->paraV->global2local_col(iwt1);
@@ -419,17 +396,17 @@ void Plus_U::cal_occup_m_k(const int iter,
 					// set the local occupation mumber matrix of spin up and down zeros
 
 #ifdef __MPI
-                    if (PARAM.inp.nspin == 1 || PARAM.inp.nspin == 4)
+                    if (Plus_U::nspin == 1 || Plus_U::nspin == 4)
                     {
                         ModuleBase::matrix temp(locale[iat][l][n][0]);
                         MPI_Allreduce(&temp(0, 0),
                                       &locale[iat][l][n][0](0, 0),
-                                      (2 * l + 1) * PARAM.globalv.npol * (2 * l + 1) * PARAM.globalv.npol,
+                                      (2 * l + 1) * this->npol * (2 * l + 1) * this->npol,
                                       MPI_DOUBLE,
                                       MPI_SUM,
                                       MPI_COMM_WORLD);
                     }
-                    else if (PARAM.inp.nspin == 2)
+                    else if (Plus_U::nspin == 2)
                     {
                         ModuleBase::matrix temp0(locale[iat][l][n][0]);
                         MPI_Allreduce(&temp0(0, 0),
@@ -449,8 +426,7 @@ void Plus_U::cal_occup_m_k(const int iter,
                     }
 #endif
 
-                    // for the case spin independent calculation
-                    switch (PARAM.inp.nspin)
+                    switch (Plus_U::nspin)
                     {
                     case 1:
                         locale[iat][l][n][0] += transpose(locale[iat][l][n][0]);
@@ -459,11 +435,11 @@ void Plus_U::cal_occup_m_k(const int iter,
                         break;
 
                     case 2:
-                        for (int is = 0; is < PARAM.inp.nspin; is++)
+                        for (int is = 0; is < Plus_U::nspin; is++)
                             locale[iat][l][n][is] += transpose(locale[iat][l][n][is]);
                         break;
 
-                    case 4: // SOC
+                    case 4:
                         locale[iat][l][n][0] += transpose(locale[iat][l][n][0]);
                         break;
 
@@ -504,17 +480,16 @@ void Plus_U::cal_occup_m_gamma(const int iter,
     const double alpha = 1.0, beta = 0.0;
 
     std::vector<double> srho(this->paraV->nloc);
-    for (int is = 0; is < PARAM.inp.nspin; is++)
+    for (int is = 0; is < Plus_U::nspin; is++)
     {
-        // srho(mu,nu) = \sum_{iw} S(mu,iw)*dm_gamma(iw,nu)
         double* s_gamma_pointer = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
             transT,
-            PARAM.globalv.nlocal,
-            PARAM.globalv.nlocal,
-            PARAM.globalv.nlocal,
+            this->nlocal,
+            this->nlocal,
+            this->nlocal,
             alpha,
             s_gamma_pointer,
             one_int,
@@ -562,7 +537,7 @@ void Plus_U::cal_occup_m_gamma(const int iter,
                         // Calculate the local occupation number matrix
                         for (int m0 = 0; m0 < 2 * l + 1; m0++)
                         {
-                            for (int ipol0 = 0; ipol0 < PARAM.globalv.npol; ipol0++)
+                            for (int ipol0 = 0; ipol0 < this->npol; ipol0++)
                             {
                                 const int iwt0 = this->iatlnmipol2iwt[iat][l][n][m0][ipol0];
                                 const int mu = this->paraV->global2local_row(iwt0);
@@ -570,7 +545,7 @@ void Plus_U::cal_occup_m_gamma(const int iter,
 
                                 for (int m1 = 0; m1 < 2 * l + 1; m1++)
                                 {
-                                    for (int ipol1 = 0; ipol1 < PARAM.globalv.npol; ipol1++)
+                                    for (int ipol1 = 0; ipol1 < this->npol; ipol1++)
                                     {
                                         const int iwt1 = this->iatlnmipol2iwt[iat][l][n][m1][ipol1];
                                         const int nu = this->paraV->global2local_col(iwt1);
@@ -604,14 +579,14 @@ void Plus_U::cal_occup_m_gamma(const int iter,
 #ifdef __MPI
                         MPI_Allreduce(&temp(0, 0),
                                       &locale[iat][l][n][is](0, 0),
-                                      (2 * l + 1) * PARAM.globalv.npol * (2 * l + 1) * PARAM.globalv.npol,
+                                      (2 * l + 1) * this->npol * (2 * l + 1) * this->npol,
                                       MPI_DOUBLE,
                                       MPI_SUM,
                                       MPI_COMM_WORLD);
 #endif
 
                         // for the case spin independent calculation
-                        switch (PARAM.inp.nspin)
+                        switch (Plus_U::nspin)
                         {
                         case 1:
                             locale[iat][l][n][0] += transpose(locale[iat][l][n][0]);

@@ -1,0 +1,11 @@
+# ========== ABACUS INPUT ==========
+INPUT_PARAMETERS
+suffix         CaOMgO
+calculation    cell-relax
+ecutwfc        100
+basis_type     lcao
+kspacing       0.5
+scf_nmax       100
+# ... other parameters ...
+pseudo_dir     /path/to/ABACUS-pot/apns-pseudopotentials-v1
+orbital_dir    /path/to/ABACUS-pot/apns-orbitals-efficiency-v1

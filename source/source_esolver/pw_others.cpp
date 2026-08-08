@@ -1,23 +1,25 @@
 #include "esolver_ks_pw.h"
-#include "source_base/module_device/device.h"
-#include "source_io/module_bessel/numerical_basis.h"
-#include "source_io/module_bessel/numerical_descriptor.h"
-
 #include "source_base/formatter.h"
+#include "source_base/module_device/device.h"
+#include "source_io/module_bessel/numerical_descriptor.h"
 
 // mohan add 2025-03-06
 #include "source_io/module_output/cal_test.h"
 
-namespace ModuleESolver {
+namespace ModuleESolver
+{
 
 template <typename T, typename Device>
-void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
+void ESolver_KS_PW<T, Device>::others(BaseCell& basecell, const int istep)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_KS_PW", "others");
 
     const std::string cal_type = PARAM.inp.calculation;
 
-    if (cal_type == "test_memory") 
+    if (cal_type == "test_memory")
     {
         Cal_Test::test_memory(ucell.nat,
                               ucell.ntype,
@@ -26,8 +28,8 @@ void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
                               this->pw_wfc,
                               this->p_chgmix->get_mixing_mode(),
                               this->p_chgmix->get_mixing_ndim());
-    } 
-    else if (cal_type == "gen_bessel") 
+    }
+    else if (cal_type == "gen_bessel")
     {
         Numerical_Descriptor nc;
         nc.output_descriptor(ucell,
@@ -37,11 +39,10 @@ void ESolver_KS_PW<T, Device>::others(UnitCell& ucell, const int istep)
                              PARAM.inp.bessel_descriptor_tolerence,
                              this->kv.get_nks());
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "GENERATE DESCRIPTOR FOR DEEPKS");
-    } 
-    else 
+    }
+    else
     {
-        ModuleBase::WARNING_QUIT("ESolver_KS_PW::others",
-                                 "CALCULATION type not supported");
+        ModuleBase::WARNING_QUIT("ESolver_KS_PW::others", "CALCULATION type not supported");
     }
 
     return;

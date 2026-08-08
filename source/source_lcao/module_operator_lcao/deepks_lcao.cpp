@@ -6,7 +6,7 @@
 #include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_lcao/module_deepks/deepks_descriptor.h"
 #include "source_lcao/module_deepks/deepks_pdm.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef _OPENMP
 #include <unordered_set>

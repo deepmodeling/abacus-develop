@@ -6,7 +6,6 @@
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_lcao/module_deepks/LCAO_deepks.h"
 #include "source_io/module_parameter/parameter.h"
 #include "occupy.h"
 namespace elecstate
@@ -387,9 +386,9 @@ void print_etot(const Magnetism& magnet,
                                            : PARAM.inp.ks_solver;
         elecstate::print_scf_iterinfo(iter_label,
                                       iter,
-                                      6,
+                                      4,
                                       mag,
-                                      10,
+                                      9,
                                       elec.f_en.etot * ModuleBase::Ry_to_eV,
                                       elec.f_en.etot_delta * ModuleBase::Ry_to_eV,
                                       16,

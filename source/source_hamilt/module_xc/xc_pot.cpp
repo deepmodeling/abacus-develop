@@ -9,8 +9,11 @@
 #include "source_io/module_parameter/parameter.h"
 #include "xc_functional.h"
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "libxc_abacus.h"
+#ifdef __EXX
+#include "source_hamilt/module_xc/exx_info.h"
+#endif
 #endif
 
 // [etxc, vtxc, v] = XC_Functional::v_xc(...)
@@ -20,13 +23,15 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     const UnitCell* ucell,
     const int nspin,
     const bool domag,
-    const bool domag_z)
+    const bool domag_z,
+    const double hybrid_alpha,
+    const double hse_omega)
 {
     ModuleBase::TITLE("XC_Functional", "v_xc");
 
     if (use_libxc)
     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         return XC_Functional_Libxc::v_xc_libxc(XC_Functional::get_func_id(),
                                                nrxx,
                                                ucell->omega,
@@ -35,7 +40,9 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
                                                nspin,
                                                domag,
                                                domag_z,
-                                               &(scaling_factor_xc));
+                                               &(scaling_factor_xc),
+                                               hybrid_alpha,
+                                               hse_omega);
 #else
         ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
@@ -137,10 +144,10 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
 
                 if(use_libxc)
                 {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
                     double rhoup = arhox * (1.0+zeta) / 2.0;
                     double rhodw = arhox * (1.0-zeta) / 2.0;
-                    XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), rhoup, rhodw, exc, vxc[0], vxc[1]);
+                    XC_Functional_Libxc::xc_spin_libxc(XC_Functional::get_func_id(), rhoup, rhodw, exc, vxc[0], vxc[1], hybrid_alpha, hse_omega);
 #else
                     ModuleBase::WARNING_QUIT("v_xc", "compile with LIBXC");
 #endif
@@ -177,7 +184,7 @@ std::tuple<double, double, ModuleBase::matrix> XC_Functional::v_xc(
     // the dummy variable dum contains gradient correction to stress
     // which is not used here
     std::vector<double> dum;
-    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z);
+    gradcorr(etxc, vtxc, v, chr, chr->rhopw, ucell, dum, false, nspin, domag, domag_z, hybrid_alpha, hse_omega);
 
     // parallel code : collect vtxc,etxc
     // mohan add 2008-06-01

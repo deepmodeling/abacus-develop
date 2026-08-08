@@ -6,7 +6,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 #include <unordered_map>
 #include <complex>
 
@@ -75,7 +75,7 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * spin switch. sc_hr_done must be reset here so each spin's HR is computed
      * independently.
      */
-    void set_current_spin(const int current_spin_in)
+    void set_current_spin(const int current_spin_in) override
     {
         if (this->current_spin != current_spin_in)
         {

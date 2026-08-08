@@ -2,7 +2,7 @@
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/LCAO_domain.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
 #include <vector>
 
 void sparse_format::cal_dS(const UnitCell& ucell,
@@ -16,7 +16,7 @@ void sparse_format::cal_dS(const UnitCell& ucell,
 ModuleBase::TITLE("sparse_format", "cal_dS");
 
 sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
-const int nnr = pv.nnr;
+const int nnr = PARAM.globalv.gamma_only_local ? pv.nloc : pv.nnr;
 
 ForceStressArrays fsr_dh;
 fsr_dh.DHloc_fixedR_x = new double[nnr];
@@ -64,7 +64,7 @@ void sparse_format::cal_dH(const UnitCell& ucell,
 
     sparse_format::set_R_range(HS_Arrays.all_R_coor, grid);
 
-    const int nnr = pv.nnr;
+    const int nnr = PARAM.globalv.gamma_only_local ? pv.nloc : pv.nnr;
 
     ForceStressArrays fsr_dh;
 
@@ -203,8 +203,8 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff[T1] + ucell.infoNL->get_rcut_max(T0);
+                        double rcut2 = orb_cutoff[T2] + ucell.infoNL->get_rcut_max(T0);
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {

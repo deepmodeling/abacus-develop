@@ -1,3 +1,7 @@
+/**
+ * @file klist.cpp
+ * @brief Implementation of K_Vectors class.
+ */
 #include "klist.h"
 
 #include "k_vector_utils.h"
@@ -6,8 +10,6 @@
 #include "source_base/parallel_global.h"
 #include "source_base/parallel_reduce.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_io/module_unk/berryphase.h"
-#include "source_io/module_parameter/parameter.h"
 
 void K_Vectors::cal_ik_global()
 {
@@ -44,7 +46,13 @@ void K_Vectors::set(const UnitCell& ucell,
                     const int& nspin_in,
                     const ModuleBase::Matrix3& reciprocal_vec,
                     const ModuleBase::Matrix3& latvec,
-                    std::ofstream& ofs)
+                    std::ofstream& ofs,
+                    const bool use_ibz,
+                    const std::string& global_out_dir,
+                    const bool gamma_only_local,
+                    const double kspacing[3],
+                    const std::string& kmesh_type,
+                    const double koffset[3])
 {
     ModuleBase::TITLE("K_Vectors", "set");
 
@@ -61,6 +69,10 @@ void K_Vectors::set(const UnitCell& ucell,
 
     ofs << "\n SETUP K-POINTS" << std::endl;
 
+    const std::string global_out_dir_ = global_out_dir;
+    const bool gamma_only_local_ = gamma_only_local;
+    const std::string kmesh_type_ = kmesh_type;
+
     // (1) set nspin, read kpoints.
     this->nspin = nspin_in;
     ModuleBase::GlobalFunc::OUT(ofs, "nspin", nspin);
@@ -72,8 +84,7 @@ void K_Vectors::set(const UnitCell& ucell,
 
     this->nspin = (this->nspin == 4) ? 1 : this->nspin;
 
-    // read KPT file and generate K-point grid
-    bool read_succesfully = this->read_kpoints(ucell,k_file_name);
+    bool read_succesfully = this->read_kpoints(ucell, k_file_name, gamma_only_local_, kspacing, kmesh_type_, koffset);
 #ifdef __MPI
     Parallel_Common::bcast_bool(read_succesfully);
 #endif
@@ -99,9 +110,8 @@ void K_Vectors::set(const UnitCell& ucell,
 
 
     // (2)
-    // only berry phase need all kpoints including time-reversal symmetry!
-    // if symm_flag is not set, only time-reversal symmetry would be considered.
-    if (!berryphase::berry_phase_flag && ModuleSymmetry::Symmetry::symm_flag != -1)
+    // reduce kpoints to IBZ according to symmetry operations
+    if (use_ibz)
     {
         bool match = true;
         // calculate kpoints in IBZ and reduce kpoints according to symmetry
@@ -143,7 +153,7 @@ void K_Vectors::set(const UnitCell& ucell,
     {
         // output kpoints file
         std::stringstream skpt;
-        skpt << PARAM.globalv.global_out_dir << "KPT.info"; //mohan modified 20250325
+        skpt << global_out_dir_ << "KPT.info"; //mohan modified 20250325
         std::ofstream ofkpt(skpt.str().c_str()); // clear kpoints
         ofkpt << skpt2 << skpt1;
         ofkpt.close();
@@ -204,7 +214,11 @@ void K_Vectors::renew(const int& kpoint_number)
 // Read the KPT file, which contains K-point coordinates, weights, and grid size information
 // Generate K-point grid according to different parameters of the KPT file
 bool K_Vectors::read_kpoints(const UnitCell& ucell,
-                             const std::string& fn)
+                             const std::string& fn,
+                             const bool gamma_only_local,
+                             const double kspacing[3],
+                             const std::string& kmesh_type,
+                             const double koffset[3])
 {
     ModuleBase::TITLE("K_Vectors", "read_kpoints");
     if (GlobalV::MY_RANK != 0)
@@ -212,9 +226,14 @@ bool K_Vectors::read_kpoints(const UnitCell& ucell,
         return true;
     }
 
+    const bool gamma_only_local_ = gamma_only_local;
+    const double kspacing_[3] = {kspacing[0], kspacing[1], kspacing[2]};
+    const std::string kmesh_type_ = kmesh_type;
+    const double koffset_[3] = {koffset[0], koffset[1], koffset[2]};
+
     // 1. Overwrite the KPT file and default K-point information if needed
     // mohan add 2010-09-04
-    if (PARAM.globalv.gamma_only_local)
+    if (gamma_only_local_)
     {
         GlobalV::ofs_warning << " Auto generating k-points file: " << fn << std::endl;
         std::ofstream ofs(fn.c_str());
@@ -224,9 +243,9 @@ bool K_Vectors::read_kpoints(const UnitCell& ucell,
         ofs << "1 1 1 0 0 0" << std::endl;
         ofs.close();
     }
-    else if (PARAM.inp.kspacing[0] > 0.0)
+    else if (kspacing_[0] > 0.0)
     {
-        if (PARAM.inp.kspacing[1] <= 0 || PARAM.inp.kspacing[2] <= 0)
+        if (kspacing_[1] <= 0 || kspacing_[2] <= 0)
         {
             ModuleBase::WARNING_QUIT("K_Vectors", "kspacing should > 0");
         };
@@ -236,17 +255,17 @@ bool K_Vectors::read_kpoints(const UnitCell& ucell,
         double b2 = sqrt(btmp.e21 * btmp.e21 + btmp.e22 * btmp.e22 + btmp.e23 * btmp.e23);
         double b3 = sqrt(btmp.e31 * btmp.e31 + btmp.e32 * btmp.e32 + btmp.e33 * btmp.e33);
         int nk1
-            = std::max(1, static_cast<int>(b1 * ModuleBase::TWO_PI / PARAM.inp.kspacing[0] / ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b1 * ModuleBase::TWO_PI / kspacing_[0] / ucell.lat0 + 1));
         int nk2
-            = std::max(1, static_cast<int>(b2 * ModuleBase::TWO_PI / PARAM.inp.kspacing[1] / ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b2 * ModuleBase::TWO_PI / kspacing_[1] / ucell.lat0 + 1));
         int nk3
-            = std::max(1, static_cast<int>(b3 * ModuleBase::TWO_PI / PARAM.inp.kspacing[2] / ucell.lat0 + 1));
+            = std::max(1, static_cast<int>(b3 * ModuleBase::TWO_PI / kspacing_[2] / ucell.lat0 + 1));
 
         GlobalV::ofs_warning << " Generate k-points file according to KSPACING: " << fn << std::endl;
         std::ofstream ofs(fn.c_str());
         ofs << "K_POINTS" << std::endl;
         ofs << "0" << std::endl;
-        if (PARAM.inp.kmesh_type == "mp")
+        if (kmesh_type_ == "mp")
         {
             ofs << "Monkhorst-Pack" << std::endl;
         }
@@ -254,8 +273,8 @@ bool K_Vectors::read_kpoints(const UnitCell& ucell,
         {
             ofs << "Gamma" << std::endl;
         }
-        ofs << nk1 << " " << nk2 << " " << nk3 << " " << PARAM.inp.koffset[0] << " " << PARAM.inp.koffset[1] << " "
-            << PARAM.inp.koffset[2] << std::endl;
+        ofs << nk1 << " " << nk2 << " " << nk3 << " " << koffset_[0] << " " << koffset_[1] << " "
+            << koffset_[2] << std::endl;
         ofs.close();
     }
 
@@ -341,15 +360,15 @@ bool K_Vectors::read_kpoints(const UnitCell& ucell,
 
         ifk >> nmp[0] >> nmp[1] >> nmp[2];
 
-        koffset[0] = 0;
-        koffset[1] = 0;
-        koffset[2] = 0;
-        if (!(ifk >> koffset[0] >> koffset[1] >> koffset[2]))
+        this->koffset[0] = 0;
+        this->koffset[1] = 0;
+        this->koffset[2] = 0;
+        if (!(ifk >> this->koffset[0] >> this->koffset[1] >> this->koffset[2]))
         {
             ModuleBase::WARNING("K_Vectors::read_kpoints", "Missing k-point offsets in the k-points file.");
         }
 
-        this->Monkhorst_Pack(nmp, koffset, k_type);
+        this->Monkhorst_Pack(nmp, this->koffset, k_type);
     }
     else if (nkstot > 0) // nkstot>0, the K-point information is clearly set
     {

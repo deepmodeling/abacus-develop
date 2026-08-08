@@ -115,8 +115,8 @@ class ElecState
     bool vnew_exist = false;
     void cal_converged();
     void cal_energies(const int type);
-    void set_exx(const double& Eexx);
-    void set_exx(const std::complex<double>& Eexx);
+    void set_exx(const double& Eexx, const bool cal_exx, const double hybrid_alpha);
+    void set_exx(const std::complex<double>& Eexx, const bool cal_exx, const double hybrid_alpha);
 
     double get_hartree_energy();
     double get_etot_efield();

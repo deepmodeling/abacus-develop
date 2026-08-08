@@ -5,9 +5,7 @@
 #include <string>
 
 /**
- * Sep Potential for DFT-1/2 etc.
- *
- * Sep Potential
+ * @brief Sep Potential for DFT-1/2 etc.
  */
 class SepPot
 {
@@ -15,23 +13,45 @@ class SepPot
     SepPot();
     ~SepPot();
 
-    bool is_enable = false;
-    double r_in = 0.0;      /**< cut-off radius inner */
-    double r_out = 0.0;     /**< cut-off radius outter */
-    double r_power = 20.0;  /**< shell function exp factor */
-    double enhence_a = 1.0; /**< scale sep potential */
-    std::string label;      /**< element nameof sep  */
-    std::string xc_type;    /**< Exch-Corr type */
-    std::string orbital;    /** atomic angular moment s,p,d,f */
-    int mesh = 0;           /**< number of points in radial mesh */
-    int strip_elec = 0;     /**< strip electron amount 1->0.01 50->0.5 */
-    double* r = nullptr;    /**< ridial mesh */
-    double* rv = nullptr;   /**< sep potential, but rV, unit: Ry */
+    bool is_enable = false;      ///< whether sep potential is enabled
+    double r_in = 0.0;           ///< cut-off radius inner
+    double r_out = 0.0;          ///< cut-off radius outter
+    double r_power = 20.0;       ///< shell function exp factor
+    double enhence_a = 1.0;      ///< scale sep potential
+    std::string label;           ///< element name of sep
+    std::string xc_type;         ///< Exch-Corr type
+    std::string orbital;         ///< atomic angular moment s,p,d,f
+    int mesh = 0;                ///< number of points in radial mesh
+    int strip_elec = 0;          ///< strip electron amount 1->0.01 50->0.5
+    double* r = nullptr;         ///< radial mesh
+    double* rv = nullptr;        ///< sep potential, but rV, unit: Ry
 
+    /**
+     * @brief Read sep potential from file.
+     *
+     * @param is input file stream
+     * @return 0 if successful, non-zero otherwise
+     */
     int read_sep(std::ifstream& is);
+
+    /**
+     * @brief Print sep potential information.
+     *
+     * @param ofs output file stream
+     */
     void print_sep_info(std::ofstream& ofs) const;
+
+    /**
+     * @brief Print sep potential vs. radial mesh.
+     *
+     * @param ofs output file stream
+     */
     void print_sep_vsep(std::ofstream& ofs) const;
+
 #ifdef __MPI
+    /**
+     * @brief Broadcast sep potential to all processes.
+     */
     void bcast_sep();
 #endif /* ifdef __MPI */
 };

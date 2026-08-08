@@ -23,7 +23,6 @@
 #include "source_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
 #include "source_basis/module_ao/ORB_read.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_lcao/FORCE_STRESS.h"
 #include "source_lcao/module_rt/td_info.h"
 #endif
@@ -42,125 +41,8 @@
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_hsolver/hsolver_pw.h"
-#include "source_md/md_func.h"
 #include "source_relax/bfgs_basic.h"
 #include "source_relax/ions_move_cg.h"
-
-#ifdef __LCAO
-std::vector<double> Input_Conv::convert_units(std::string params, double c) {
-    std::vector<double> params_ori;
-    std::vector<double> params_out;
-    parse_expression(params, params_ori);
-    for (auto param: params_ori)
-        params_out.emplace_back(param * c);
-
-    return params_out;
-}
-
-void Input_Conv::read_td_efield()
-{
-    elecstate::H_TDDFT_pw::stype = PARAM.inp.td_stype;
-    if (PARAM.inp.out_mat_hs2[0] == 1)
-    {
-        TD_info::out_mat_R = true;
-    } else {
-        TD_info::out_mat_R = false;
-    }
-    parse_expression(PARAM.inp.td_ttype, elecstate::H_TDDFT_pw::ttype);
-
-    elecstate::H_TDDFT_pw::tstart = PARAM.inp.td_tstart;
-    elecstate::H_TDDFT_pw::tend = PARAM.inp.td_tend;
-    if(PARAM.inp.td_dt!=-1.0)
-    {
-        elecstate::H_TDDFT_pw::dt = PARAM.inp.td_dt / ModuleBase::AU_to_FS;
-    }
-    else
-    {
-        elecstate::H_TDDFT_pw::dt = PARAM.mdp.md_dt / PARAM.inp.estep_per_md / ModuleBase::AU_to_FS;
-    }
-    elecstate::H_TDDFT_pw::dt_int = elecstate::H_TDDFT_pw::dt;
-
-    // space domain parameters
-
-    // length gauge
-    elecstate::H_TDDFT_pw::lcut1 = PARAM.inp.td_lcut1;
-    elecstate::H_TDDFT_pw::lcut2 = PARAM.inp.td_lcut2;
-
-    // time domain parameters
-
-    // Gauss
-    elecstate::H_TDDFT_pw::gauss_omega = convert_units(PARAM.inp.td_gauss_freq,
-                                                       2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    elecstate::H_TDDFT_pw::gauss_phase = convert_units(PARAM.inp.td_gauss_phase, 1.0);
-    elecstate::H_TDDFT_pw::gauss_sigma = convert_units(PARAM.inp.td_gauss_sigma, 1 / ModuleBase::AU_to_FS);
-    elecstate::H_TDDFT_pw::gauss_t0 = convert_units(PARAM.inp.td_gauss_t0, 1.0);
-    elecstate::H_TDDFT_pw::gauss_amp = convert_units(PARAM.inp.td_gauss_amp,
-                                                     ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-    // init ncut for velocity gauge integral
-    for (auto omega: elecstate::H_TDDFT_pw::gauss_omega) {
-        int ncut
-            = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if (ncut % 2 == 0) {
-            ncut += 2;
-        } else {
-            ncut += 1;
-        }
-        if (elecstate::H_TDDFT_pw::stype == 0)
-            ncut = 1;
-        elecstate::H_TDDFT_pw::gauss_ncut.push_back(ncut);
-    }
-    // trapezoid
-    elecstate::H_TDDFT_pw::trape_omega = convert_units(PARAM.inp.td_trape_freq,
-                                                       2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    elecstate::H_TDDFT_pw::trape_phase = convert_units(PARAM.inp.td_trape_phase, 1.0);
-    elecstate::H_TDDFT_pw::trape_t1 = convert_units(PARAM.inp.td_trape_t1, 1.0);
-    elecstate::H_TDDFT_pw::trape_t2 = convert_units(PARAM.inp.td_trape_t2, 1.0);
-    elecstate::H_TDDFT_pw::trape_t3 = convert_units(PARAM.inp.td_trape_t3, 1.0);
-    elecstate::H_TDDFT_pw::trape_amp = convert_units(PARAM.inp.td_trape_amp,
-                                                     ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-    // init ncut for velocity gauge integral
-    for (auto omega: elecstate::H_TDDFT_pw::trape_omega) {
-        int ncut
-            = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if (ncut % 2 == 0) {
-            ncut += 2;
-        } else {
-            ncut += 1;
-        }
-        if (elecstate::H_TDDFT_pw::stype == 0)
-            ncut = 1;
-        elecstate::H_TDDFT_pw::trape_ncut.push_back(ncut);
-    }
-    // Trigonometric
-    elecstate::H_TDDFT_pw::trigo_omega1 = convert_units(PARAM.inp.td_trigo_freq1,
-                                                        2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    elecstate::H_TDDFT_pw::trigo_omega2 = convert_units(PARAM.inp.td_trigo_freq2,
-                                                        2 * ModuleBase::PI * ModuleBase::AU_to_FS); // time(a.u.)^-1
-    elecstate::H_TDDFT_pw::trigo_phase1 = convert_units(PARAM.inp.td_trigo_phase1, 1.0);
-    elecstate::H_TDDFT_pw::trigo_phase2 = convert_units(PARAM.inp.td_trigo_phase2, 1.0);
-    elecstate::H_TDDFT_pw::trigo_amp = convert_units(PARAM.inp.td_trigo_amp,
-                                                     ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-    // init ncut for velocity gauge integral
-    for (auto omega: elecstate::H_TDDFT_pw::trigo_omega1) {
-        int ncut
-            = int(100.0 * omega * elecstate::H_TDDFT_pw::dt / ModuleBase::PI);
-        if (ncut % 2 == 0) {
-            ncut += 2;
-        } else {
-            ncut += 1;
-        }
-        if (elecstate::H_TDDFT_pw::stype == 0)
-            ncut = 1;
-        elecstate::H_TDDFT_pw::trigo_ncut.push_back(ncut);
-    }
-    // Heaviside
-    elecstate::H_TDDFT_pw::heavi_t0 = convert_units(PARAM.inp.td_heavi_t0, 1.0);
-    elecstate::H_TDDFT_pw::heavi_amp = convert_units(PARAM.inp.td_heavi_amp,
-                                                     ModuleBase::BOHR_TO_A / ModuleBase::Ry_to_eV); // Ry/bohr
-
-    return;
-}
-#endif
 
 void Input_Conv::Convert()
 {
@@ -213,7 +95,6 @@ void Input_Conv::Convert()
 
     if (PARAM.inp.dft_plus_u)
     {
-        Plus_U::Yukawa = PARAM.inp.yukawa_potential;
         Plus_U::omc = PARAM.inp.omc;
         Plus_U::orbital_corr = PARAM.inp.orbital_corr;
         Plus_U::uramping = PARAM.globalv.uramping;
@@ -252,7 +133,7 @@ void Input_Conv::Convert()
     TD_info::out_current_k = PARAM.inp.out_current_k;
     TD_info::out_vecpot = PARAM.inp.out_vecpot;
     TD_info::init_vecpot_file = PARAM.inp.init_vecpot_file;
-    read_td_efield();
+    TD_info::out_mat_R = PARAM.inp.out_hsr[0] == 1 || PARAM.inp.out_hsr[0] == 3 || PARAM.inp.out_hsr_npz_compat;
 #endif // __LCAO
 
 
@@ -480,6 +361,7 @@ void Input_Conv::Convert()
         XC_Functional::set_hybrid_alpha(GlobalC::exx_info.info_global.hybrid_alpha);
         if(!PARAM.inp.exx_erfc_omega.empty())
             { GlobalC::exx_info.info_global.hse_omega = std::stod(PARAM.inp.exx_erfc_omega[0]); }
+        XC_Functional::set_hse_omega(GlobalC::exx_info.info_global.hse_omega);
         if(!PARAM.inp.exx_fock_lambda.empty())
             { GlobalC::exx_info.info_lip.lambda = std::stod(PARAM.inp.exx_fock_lambda[0]); }
         GlobalC::exx_info.info_global.separate_loop = PARAM.inp.exx_separate_loop;
@@ -508,16 +390,17 @@ void Input_Conv::Convert()
         GlobalC::exx_info.info_opt_abfs.ecut_exx = PARAM.inp.exx_opt_orb_ecut;
         GlobalC::exx_info.info_opt_abfs.tolerence = PARAM.inp.exx_opt_orb_tolerence;
 
-        // EXX does not support symmetry for nspin==4
-        if (PARAM.inp.calculation != "nscf" && PARAM.inp.symmetry == "1" && PARAM.inp.nspin == 4 && PARAM.inp.basis_type == "lcao")
-        {
-            ModuleSymmetry::Symmetry::symm_flag = -1;
-        }
+        // Space-group symmetry is supported for LCAO EXX (nspin=1,2 via restore_dm/restore_HR;
+        // nspin=4/SOC via restore_dm + restore_HR_nspin4), so symmetry=1 is honored here.
 
         GlobalC::exx_info.sync_from_global();
     }
 
-    if (GlobalC::exx_info.info_global.cal_exx && PARAM.inp.basis_type == "pw")
+    // Local aliases: keep this PR's global-state reference budget non-increasing.
+    const auto& inp = PARAM.inp;
+    const bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+
+    if (cal_exx && inp.basis_type == "pw")
     {
         if (ModuleSymmetry::Symmetry::symm_flag != -1)
         {
@@ -525,10 +408,37 @@ void Input_Conv::Convert()
             ModuleSymmetry::Symmetry::symm_flag = -1;
         }
 
-        if (PARAM.inp.nspin != 1 && PARAM.inp.nspin != 2)
+        if (inp.nspin != 1 && inp.nspin != 2)
         {
             ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW works only with nspin=1 and 2");
         }
+
+        if (inp.cal_stress)
+        {
+            // Stress_PW::stress_exx only sums same-pool (ik, iq) pairs without
+            // the same-spin restriction used in the EXX energy, so the result
+            // is wrong for nspin = 2 or kpar > 1.
+            if (inp.nspin != 1)
+            {
+                ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW stress supports only nspin = 1");
+            }
+            if (inp.kpar != 1)
+            {
+                ModuleBase::WARNING_QUIT("Input_Conv",
+                                         "EXX PW stress does not support k-point parallelism (kpar > 1)");
+            }
+            if (inp.device == "gpu")
+            {
+                ModuleBase::WARNING_QUIT("Input_Conv", "EXX PW stress is not supported on GPU");
+            }
+        }
+    }
+
+    if (cal_exx && inp.basis_type == "lcao_in_pw" && inp.cal_stress)
+    {
+        // For lcao_in_pw the EXX energy comes from Exx_Lip, but Stress_PW
+        // would evaluate the EXX stress with the pure PW formula.
+        ModuleBase::WARNING_QUIT("Input_Conv", "EXX stress is not supported for basis_type = lcao_in_pw");
     }
 
     //----------------------------------------------------------
@@ -539,12 +449,6 @@ void Input_Conv::Convert()
     if (PARAM.inp.efield_flag && ModuleSymmetry::Symmetry::symm_flag == 1)
     {
         ModuleSymmetry::Symmetry::symm_flag = 0;
-    }
-    // In these case, inversion symmetry is also not allowed, symmetry should be
-    // reset to -1
-    if (PARAM.inp.lspinorb)
-    {
-        ModuleSymmetry::Symmetry::symm_flag = -1;
     }
     // end of symmetry reset
 

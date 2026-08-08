@@ -2,7 +2,7 @@
 // it includes 1 subroutine:
 // 1. tau_xc
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 
 #include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include "source_hamilt/module_xc/xc_functional.h"
@@ -22,7 +22,8 @@ void XC_Functional_Libxc::tau_xc(
     double& v1xc,
     double& v2xc,
     double& v3xc,
-    const double& hybrid_alpha)
+    const double& hybrid_alpha,
+    const double& hse_omega)
 {
     double s = 0.0;
     double v1 = 0.0;
@@ -32,7 +33,9 @@ void XC_Functional_Libxc::tau_xc(
     double vlapl_rho = 0.0;
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id,
-        /* xc_polarized = */ XC_UNPOLARIZED);
+        /* xc_polarized = */ XC_UNPOLARIZED,
+        /* hybrid_alpha = */ hybrid_alpha,
+        /* hse_omega = */ hse_omega);
 
     sxc = 0.0;
     v1xc = 0.0;
@@ -78,7 +81,8 @@ void XC_Functional_Libxc::tau_xc_spin(
     double& v2xcud,
     double& v3xcup,
     double& v3xcdw,
-    const double& hybrid_alpha)
+    const double& hybrid_alpha,
+    const double& hse_omega)
 {
     sxc = 0.0;
     v1xcup = 0.0;
@@ -95,7 +99,9 @@ void XC_Functional_Libxc::tau_xc_spin(
 
     std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(
         /* func_id = */ func_id,
-        /* xc_polarized = */ XC_POLARIZED);
+        /* xc_polarized = */ XC_POLARIZED,
+        /* hybrid_alpha = */ hybrid_alpha,
+        /* hse_omega = */ hse_omega);
 
     for (xc_func_type& func : funcs)
     {

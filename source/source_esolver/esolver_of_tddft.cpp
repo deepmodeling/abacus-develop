@@ -1,15 +1,11 @@
 #include "esolver_of_tddft.h"
 
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_output/cube_io.h"
-#include "source_io/module_output/output_log.h"
-#include "source_io/module_chgpot/write_elecstat_pot.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_io/module_output/print_info.h"
-#include "source_estate/cal_ux.h"
+#include "source_cell/cal_ux.h"
 //-----force-------------------
 #include "source_pw/module_pwdft/forces.h"
 //-----stress------------------
@@ -32,8 +28,11 @@ ESolver_OF_TDDFT::~ESolver_OF_TDDFT()
 }
 
 
-void ESolver_OF_TDDFT::runner(UnitCell& ucell, const int istep)
+void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::timer::start("ESolver_OF_TDDFT", "runner");
     // get Ewald energy, initial rho and phi if necessary
     this->before_opt(istep, ucell);

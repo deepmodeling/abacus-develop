@@ -159,7 +159,7 @@ void OperatorEXXPW<T, Device>::construct_ace() const
                     iq = iq0 + ispin * nk; // iq in the same spin channel
 
                     // for \psi_nk, get the pw of iq and band m
-                    get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq);
+                    get_exx_potential<Real,  Device>(kv, wfcpw, rhopw_dev, pot, tpiba, gamma_extrapolation, ucell->omega, ik, iq, false, this->coulomb_param);
 
                     // decide which pool does the iq belong to
                     int iq_pool = kv->para_k.whichpool[iq0];
@@ -295,7 +295,7 @@ double OperatorEXXPW<T, Device>::cal_exx_energy_ace(psi::Psi<T, Device>* ppsi_) 
     psi::Psi<T, Device> psi_ = *ppsi_;
     int* ik_ = const_cast<int*>(&this->ik);
     int ik_save = this->ik;
-    Real hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    Real hybrid_alpha = this->hybrid_alpha;
     for (int i = 0; i < wfcpw->nks; i++)
     {
         setmem_complex_op()(h_psi_ace, 0, psi_.get_nbands() * psi_.get_nbasis());

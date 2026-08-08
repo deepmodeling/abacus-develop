@@ -6,6 +6,7 @@
 #include "source_io/module_parameter/parameter.h"
 // new
 #include "source_base/timer.h"
+#include "source_base/tool_quit.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"       // Taoni add 2025-02-20
@@ -66,6 +67,7 @@ Force_Stress_LCAO<T>::~Force_Stress_LCAO()
 }
 template <typename T>
 void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
+                                          const vdw::VdwResult* vdw_result,
                                           const bool isforce,
                                           const bool isstress,
                                           const bool istestf,
@@ -347,23 +349,31 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     //  jiyy add 2019-05-18, update 2021-05-02
     ModuleBase::matrix force_vdw;
     ModuleBase::matrix stress_vdw;
-    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp);
-    if (vdw_solver != nullptr)
+    if (vdw_result != nullptr)
     {
         if (isforce)
         {
-            force_vdw.create(nat, 3);
-            const std::vector<ModuleBase::Vector3<double>>& force_vdw_temp = vdw_solver->get_force();
-            for (int iat = 0; iat < ucell.nat; ++iat)
+            if (!vdw_result->has_force || vdw_result->force.size() != static_cast<std::size_t>(nat))
             {
-                force_vdw(iat, 0) = force_vdw_temp[iat].x;
-                force_vdw(iat, 1) = force_vdw_temp[iat].y;
-                force_vdw(iat, 2) = force_vdw_temp[iat].z;
+                ModuleBase::WARNING_QUIT("Force_Stress_LCAO::getForceStress",
+                                         "The cached vdW force is unavailable or has an invalid size.");
+            }
+            force_vdw.create(nat, 3);
+            for (int iat = 0; iat < nat; ++iat)
+            {
+                force_vdw(iat, 0) = vdw_result->force[iat].x;
+                force_vdw(iat, 1) = vdw_result->force[iat].y;
+                force_vdw(iat, 2) = vdw_result->force[iat].z;
             }
         }
         if (isstress)
         {
-            stress_vdw = vdw_solver->get_stress().to_matrix();
+            if (!vdw_result->has_stress)
+            {
+                ModuleBase::WARNING_QUIT("Force_Stress_LCAO::getForceStress",
+                                         "The cached vdW stress is unavailable.");
+            }
+            stress_vdw = vdw_result->stress.to_matrix();
         }
     }
 
@@ -420,7 +430,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             std::vector<std::vector<double>>* dmk_d = nullptr;
             std::vector<std::vector<std::complex<double>>>* dmk_c = nullptr;
             assign_dmk_ptr<T>(dmat.dm, dmk_d, dmk_c, PARAM.globalv.gamma_only_local);
-            dftu.force_stress(ucell, gd, dmk_d, dmk_c, pv, fsr_dftu, force_u, stress_u, kv);
+            dftu.force_stress(ucell, gd, dmk_d, dmk_c, pv, fsr_dftu, force_u, stress_u, kv, PARAM.globalv.npol);
         }
         else
         {
@@ -478,35 +488,38 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     // }
 
 #ifdef __EXX
-    // Force and Stress contribution from exx
+    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+    bool real_number = GlobalC::exx_info.info_ri.real_number;
+    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+
     ModuleBase::matrix force_exx;
     ModuleBase::matrix stress_exx;
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (cal_exx)
     {
         if (isforce)
         {
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (real_number)
             {
                 exx_nao.exd->cal_exx_force(ucell.nat);
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exd->get_force();
+                force_exx = hybrid_alpha * exx_nao.exd->get_force();
             }
             else
             {
                 exx_nao.exc->cal_exx_force(ucell.nat);
-                force_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exc->get_force();
+                force_exx = hybrid_alpha * exx_nao.exc->get_force();
             }
         }
         if (isstress)
         {
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (real_number)
             {
                 exx_nao.exd->cal_exx_stress(ucell.omega, ucell.lat0);
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exd->get_stress();
+                stress_exx = hybrid_alpha * exx_nao.exd->get_stress();
             }
             else
             {
                 exx_nao.exc->cal_exx_stress(ucell.omega, ucell.lat0);
-                stress_exx = GlobalC::exx_info.info_global.hybrid_alpha * exx_nao.exc->get_stress();
+                stress_exx = hybrid_alpha * exx_nao.exc->get_stress();
             }
         }
     }
@@ -550,7 +563,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 }
 #endif
                 // VDW force of vdwd2 or vdwd3
-                if (vdw_solver != nullptr)
+                if (vdw_result != nullptr)
                 {
                     fcs(iat, i) += force_vdw(iat, i);
                 }
@@ -672,7 +685,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 ModuleIO::print_force(GlobalV::ofs_running, ucell, "IMP_SOL     FORCE", fsol, false);
                 // this->print_force("IMP_SOL     FORCE",fsol,1,ry);
             }
-            if (vdw_solver != nullptr)
+            if (vdw_result != nullptr)
             {
                 ModuleIO::print_force(GlobalV::ofs_running, ucell, "VDW        FORCE", force_vdw, false);
                 // this->print_force("VDW        FORCE",force_vdw,1,ry);
@@ -743,7 +756,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                              + sigmahar(i, j); // hartree stress
 
                 // VDW stress from linpz and jiyy
-                if (vdw_solver != nullptr)
+                if (vdw_result != nullptr)
                 {
                     scs(i, j) += stress_vdw(i, j);
                 }
@@ -813,7 +826,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
             ModuleIO::print_stress("EWALD    STRESS", sigmaewa, screen, ry, GlobalV::ofs_running);
             ModuleIO::print_stress("cc       STRESS", sigmacc, screen, ry, GlobalV::ofs_running);
             ModuleIO::print_stress("XC       STRESS", sigmaxc, screen, ry, GlobalV::ofs_running);
-            if (vdw_solver != nullptr)
+            if (vdw_result != nullptr)
             {
                 ModuleIO::print_stress("VDW      STRESS", stress_vdw, screen, ry, GlobalV::ofs_running);
             }

@@ -2,6 +2,7 @@
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_cell/cell_tools.h"
 #include "source_cell/update_cell.h"
 
 /**
@@ -81,8 +82,8 @@ bool IonCellOptimizer::relax_step(const int& istep,
     }
 
     // Determine what relaxation steps are needed
-    const bool need_atom_relax = (is_relax || is_cell_relax) && ucell.if_atoms_can_move();
-    const bool need_cell_relax = is_cell_relax && ucell.if_cell_can_change();
+    const bool need_atom_relax = (is_relax || is_cell_relax) && unitcell::if_atoms_can_move(ucell.atoms, ucell.ntype);
+    const bool need_cell_relax = is_cell_relax && unitcell::if_cell_can_change(ucell.lat_axis_free);
 
     // Atomic relaxation branch
     if (need_atom_relax)
@@ -132,13 +133,13 @@ bool IonCellOptimizer::relax_step(const int& istep,
             ucell.cell_parameter_updated = true;
             
             // Update cell-related parameters after volume change
-            unitcell::setup_cell_after_vc(ucell, ofs_running);
+            unitcell::setup_cell_after_vc(ucell, ofs_running, PARAM.inp.nspin);
             ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
         }
         
         return converged;
     }
-    else if (is_cell_relax && !ucell.if_cell_can_change())
+    else if (is_cell_relax && !unitcell::if_cell_can_change(ucell.lat_axis_free))
     {
         ModuleBase::WARNING("IonCellOptimizer", "Lattice vectors are not allowed to change!");
         return true;

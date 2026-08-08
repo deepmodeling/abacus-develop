@@ -7,7 +7,7 @@
 #
 # This script:
 #   1. Runs SCF calculation in scf/ subdirectory
-#   2. Copies charge density (and onsite.dm for DFT+U) from SCF output
+#   2. Copies charge density (and dm_onsite.txt for DFT+U) from SCF output
 #   3. Runs NSCF calculation in current directory
 #   4. Compares output with reference
 #
@@ -31,6 +31,10 @@ MPI_NP="${2:-4}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 TEST_DIR="$(pwd)"
 
+# Allow OpenMPI run as root
+export OMPI_ALLOW_RUN_AS_ROOT=1
+export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
 echo "========================================"
 echo " SCF + NSCF Workflow"
 echo "========================================"
@@ -52,11 +56,11 @@ if [ ! -f "${TEST_DIR}/STRU" ]; then
     exit 1
 fi
 
-# Check if this is a DFT+U test (needs onsite.dm handling)
+# Check if this is a DFT+U test (needs dm_onsite.txt handling)
 IS_DFTU=false
 if grep -q "dft_plus_u" "${TEST_DIR}/INPUT" 2>/dev/null; then
     IS_DFTU=true
-    echo "DFT+U test detected: will handle onsite.dm files"
+    echo "DFT+U test detected: will handle dm_onsite.txt files"
 fi
 
 # -------------------------------------------------------
@@ -94,7 +98,7 @@ echo "-----------------"
 echo ""
 echo "[1/4] Running SCF calculation..."
 cd "${SCF_DIR}"
-mpirun -np ${MPI_NP} --allow-run-as-root "${ABACUS}" > scf.log 2>&1 || {
+mpirun -np ${MPI_NP} "${ABACUS}" > scf.log 2>&1 || {
     echo "ERROR: SCF calculation failed!"
     echo "Check ${SCF_DIR}/scf.log for details"
     cd "${TEST_DIR}"
@@ -131,14 +135,15 @@ NSCF_CHG_FILE="${NSCF_SUFFIX}-${CHG_BASENAME#*-}"
 cp "${CHG_FILE}" "${TEST_DIR}/${NSCF_CHG_FILE}"
 echo "  Copied to: ${TEST_DIR}/${NSCF_CHG_FILE}"
 
-# For DFT+U tests, also copy onsite.dm if it exists
+# For DFT+U tests, also copy dm_onsite.txt if it exists.
+# dm_onsite.txt is read from read_file_dir (global_readin_dir), same as charge density
 if [ "${IS_DFTU}" = true ]; then
-    ONSITE_FILE=$(find "${SCF_OUT}" -name "onsite.dm" 2>/dev/null | head -1)
+    ONSITE_FILE=$(find "${SCF_OUT}" -name "dm_onsite.txt" 2>/dev/null | head -1)
     if [ -n "${ONSITE_FILE}" ]; then
-        cp "${ONSITE_FILE}" "${TEST_DIR}/onsite.dm"
-        echo "  Copied onsite.dm"
+        cp "${ONSITE_FILE}" "${TEST_DIR}/dm_onsite.txt"
+        echo "  Copied dm_onsite.txt to: ${TEST_DIR}/dm_onsite.txt"
     else
-        echo "  WARNING: onsite.dm not found in SCF output"
+        echo "  WARNING: dm_onsite.txt not found in SCF output"
     fi
 fi
 
@@ -146,7 +151,7 @@ fi
 # Step 4: Run NSCF calculation
 # -------------------------------------------------------
 echo "[3/4] Running NSCF calculation..."
-mpirun -np ${MPI_NP} --allow-run-as-root "${ABACUS}" > nscf.log 2>&1 || {
+mpirun -np ${MPI_NP} "${ABACUS}" > nscf.log 2>&1 || {
     echo "ERROR: NSCF calculation failed!"
     echo "Check ${TEST_DIR}/nscf.log for details"
     exit 1

@@ -9,18 +9,6 @@
 #include "source_io/module_output/print_info.h"
 #include "prepare_unitcell.h"
 #undef private
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
-LCAO_Orbitals::LCAO_Orbitals(){}
-LCAO_Orbitals::~LCAO_Orbitals(){}
-void LCAO_Orbitals::bcast_files(
-	const int &ntype_in,
-	const int &my_rank)
-{
-	return;
-}
-#endif
 Magnetism::Magnetism(){}
 Magnetism::~Magnetism(){}
 
@@ -61,7 +49,11 @@ TEST_F(PrintInfoTest, SetupParameters)
 	ucell = utp.SetUcellInfo();
 	std::string k_file = "./support/KPT";
 	kv->nspin = 1;
-	kv->read_kpoints(*ucell,k_file);
+	const bool gamma_only_local = false;
+	const double kspacing[3] = {0.0, 0.0, 0.0};
+	const std::string kmesh_type = "gamma";
+	const double koffset[3] = {0.0, 0.0, 0.0};
+	kv->read_kpoints(*ucell, k_file, gamma_only_local, kspacing, kmesh_type, koffset);
 	EXPECT_EQ(kv->get_nkstot(),512);
 	std::vector<std::string> cal_type = {"scf","relax","cell-relax","md"};
 	std::vector<std::string> md_types = {"fire","nve","nvt","npt","langevin","msst"};
@@ -180,7 +172,6 @@ TEST_F(PrintInfoTest, PrintScreen)
 		}
 		else
 		{
-			PARAM.input.relax_new = false;
 			if(PARAM.input.calculation=="relax")
 			{
 				testing::internal::CaptureStdout();
@@ -194,8 +185,8 @@ TEST_F(PrintInfoTest, PrintScreen)
                 ModuleIO::print_screen(stress_step, force_step, istep);
                 output = testing::internal::GetCapturedStdout();
 				EXPECT_THAT(output,testing::HasSubstr("RELAX STEP"));
-				EXPECT_THAT(output,testing::HasSubstr("CELL_CHANGE#"));
-				EXPECT_THAT(output,testing::HasSubstr("IONS_CHANGE#"));
+			EXPECT_THAT(output,testing::HasSubstr("CELL#"));
+			EXPECT_THAT(output,testing::HasSubstr("IONS#"));
 			}
 		}
 	}

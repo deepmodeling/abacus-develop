@@ -10,7 +10,6 @@ relax_nmax        2
 cal_force         1
 force_thr_ev      0.01
 relax_method      bfgs 2
-relax_new         0
 
 # Self-Consistent Field
 basis_type        pw

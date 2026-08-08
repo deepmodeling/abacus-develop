@@ -17,7 +17,7 @@
 #include <ATen/core/tensor_types.h>
 #include <source_hamilt/module_xc/kernels/xc_functional_op.h>
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "libxc_abacus.h"
 #ifdef __EXX
 #include "source_hamilt/module_xc/exx_info.h"
@@ -35,7 +35,9 @@ void XC_Functional::gradcorr(
     const bool is_stress,
     const int nspin,
     const bool domag,
-    const bool domag_z)
+    const bool domag_z,
+    const double hybrid_alpha_in,
+    const double hse_omega_in)
 {
     ModuleBase::TITLE("XC_Functional","gradcorr");
 
@@ -296,20 +298,16 @@ void XC_Functional::gradcorr(
                     }
                     if (use_libxc && is_stress)
                     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
                         if(func_type == 3 || func_type == 5)
                         {
                             double v3xc = 0.0;
                             double atau = chr->kin_r[0][ir]/2.0;
-                            double hybrid_alpha = 0.0;
-#ifdef __EXX
-                            hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-#endif
-                            XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, atau, sxc, v1xc, v2xc, v3xc, hybrid_alpha);
+                            XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, atau, sxc, v1xc, v2xc, v3xc, hybrid_alpha_in, hse_omega_in);
                         }
                         else
                         {
-                            XC_Functional_Libxc::gcxc_libxc( func_id, arho, grho2a, sxc, v1xc, v2xc);
+                            XC_Functional_Libxc::gcxc_libxc( func_id, arho, grho2a, sxc, v1xc, v2xc, hybrid_alpha_in, hse_omega_in);
                         }
 #endif
                     }
@@ -357,7 +355,7 @@ void XC_Functional::gradcorr(
             {
                 if(use_libxc)
                 {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
                     double sxc = 0.0;
                     double v1xcup = 0.0;
                     double v1xcdw = 0.0;
@@ -370,21 +368,18 @@ void XC_Functional::gradcorr(
                         double v3xcdw = 0.0;
                         double atau1 = chr->kin_r[0][ir]/2.0;
                         double atau2 = chr->kin_r[1][ir]/2.0;
-                        double hybrid_alpha = 0.0;
-#ifdef __EXX
-                        hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-#endif
                         XC_Functional_Libxc::tau_xc_spin(
                             func_id,
                             rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir],
-                            atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw, hybrid_alpha);
+                            atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw, hybrid_alpha_in, hse_omega_in);
                     }
                     else
                     {
                         XC_Functional_Libxc::gcxc_spin_libxc(
                             func_id,
                             rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir],
-                            sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud);
+                            sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud,
+                            hybrid_alpha_in, hse_omega_in);
                     }
                     if(is_stress)
                     {

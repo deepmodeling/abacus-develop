@@ -4,4 +4,10 @@ ComparerTR_pass 0
 ComparerdHRx_pass 0
 ComparerdHRy_pass 0
 ComparerdHRz_pass 0
+Compare_dhkx_iat1_ik0_nao_pass 0
+Compare_dhky_iat1_ik0_nao_pass 0
+Compare_dhkz_iat1_ik0_nao_pass 0
+Compare_dhkx_iat1_ik1_nao_pass 0
+Compare_dhky_iat1_ik1_nao_pass 0
+Compare_dhkz_iat1_ik1_nao_pass 0
 totaltimeref 0.39079

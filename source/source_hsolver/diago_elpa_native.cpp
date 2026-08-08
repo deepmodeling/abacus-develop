@@ -4,7 +4,6 @@
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/module_external/blacs_connector.h"
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_hsolver/module_genelpa/elpa_new.h"
@@ -59,7 +58,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
 
     ModuleBase::timer::start("DiagoElpaNative", "elpa_solve");
 
-    int nev = PARAM.inp.nbands;
+    int nev = this->nbands;
     int narows = h_mat.row;
     int nacols = h_mat.col;
 
@@ -70,7 +69,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     int nprows, npcols, myprow, mypcol;
 
     Cblacs_gridinfo(cblacs_ctxt, &nprows, &npcols, &myprow, &mypcol);
-    std::vector<Real> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<Real> eigen(this->nlocal, 0.0);
     std::vector<T> eigenvectors(narows * nacols);
 
     if (elpa_init(20210430) != ELPA_OK)
@@ -107,7 +106,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     #define ELPA_WITH_SYCL_GPU_VERSION 0
  */
 #if ELPA_WITH_NVIDIA_GPU_VERSION
-    if (PARAM.inp.device == "gpu")
+    if (this->use_gpu)
     {
         elpa_set(handle, "nvidia-gpu", 1, &success);
         elpa_set(handle, "real_kernel", ELPA_2STAGE_REAL_NVIDIA_GPU, &success);
@@ -138,7 +137,7 @@ void DiagoElpaNative<T>::diag_pool(hamilt::MatrixBlock<T>& h_mat,
     }
 
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
     const int size = psi.get_nbands() * psi.get_nbasis();
     BlasConnector::copy(size, eigenvectors.data(), inc, psi.get_pointer(), inc);
 }

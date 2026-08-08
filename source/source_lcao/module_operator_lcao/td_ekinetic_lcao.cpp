@@ -10,7 +10,7 @@
 #include "source_lcao/center2_orb-orb11.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "source_lcao/spar_hsr.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 
 namespace hamilt
 {

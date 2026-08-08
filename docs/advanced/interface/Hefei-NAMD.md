@@ -10,7 +10,7 @@ The steps are as follows :
 1. Add output parameters in INPUT when running MD using ABACUS .
 ```
 out_wfc_lcao    1
-out_mat_hs      1  
+out_hsk         1
 ```
 Then we obtain output files of hamiltonian matrix, overlap matrix, and wavefunction to do NAMD simulation. 
 

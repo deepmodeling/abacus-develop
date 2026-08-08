@@ -10,8 +10,7 @@
 #include "source_estate/module_pot/H_Hartree_pw.h"
 #include "source_estate/module_pot/pot_local.h"
 #include "source_estate/module_pot/pot_xc.h"
-#include "source_pw/module_pwdft/structure_factor.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <iostream>

@@ -8,6 +8,13 @@
 #include "source_lcao/module_rt/td_moving_gauge.h"
 #include "source_lcao/module_rt/velocity_op.h"
 
+#include <memory>
+
+namespace elecstate
+{
+class TDFieldManager;
+}
+
 namespace ModuleESolver
 {
 
@@ -19,21 +26,16 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 
     ~ESolver_KS_LCAO_TDDFT();
 
-    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
   protected:
-    virtual void runner(UnitCell& cell, const int istep) override;
+    virtual void runner(BaseCell& basecell, const int istep) override;
 
     virtual void hamilt2rho_single(UnitCell& ucell, const int istep, const int iter, const double ethr) override;
 
     void store_h_s_psi(UnitCell& ucell, const int istep, const int iter, const bool conv_esolver);
 
-    void iter_finish(UnitCell& ucell,
-                     const int istep,
-                     const int estep,
-                     const int estep_max,
-                     int& iter,
-                     bool& conv_esolver);
+    void iter_finish(UnitCell& ucell, const int istep, const int estep, const int estep_max, int& iter, bool& conv_esolver);
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
@@ -71,6 +73,8 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 
     //! Restart flag
     bool restart_done = false;
+
+    std::shared_ptr<elecstate::TDFieldManager> td_field_manager_;
 
   private:
     void weight_dm_rho(const UnitCell& ucell);

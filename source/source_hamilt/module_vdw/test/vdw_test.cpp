@@ -1,5 +1,5 @@
 #include "source_cell/unitcell.h"
-#include "source_cell/setup_nonlocal.h"
+
 #include "source_base/mathzone.h"
 #include "source_base/vector3.h"
 #include"gtest/gtest.h"
@@ -25,8 +25,8 @@
 *   - vdw::make_vdw():
 *       Based on the value of INPUT.vdw_method, construct
 *       Vdwd2 or Vdwd3 class, and do the initialization.
-*   - vdw::get_energy()/vdw::get_force()/vdw::get_stress():
-*       Calculate the VDW (d2, d3_0 and d3_bj types) enerygy, force, stress.
+*   - vdw::Vdw::evaluate():
+*       Calculate the requested vdW energy, force and stress in one evaluation.
 *   - Vdwd2Parameters::initial_parameters()
 *   - Vdwd3Parameters::initial_parameters()
 */
@@ -61,8 +61,7 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
+
 SepPot::SepPot(){}
 SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
@@ -314,21 +313,26 @@ TEST_F(vdwd2Test, D2R0ZeroQuit)
     vdwd2_test.parameter().R0_["Si"] = 0.0;
 
     testing::internal::CaptureStdout();
-    EXPECT_EXIT(vdwd2_test.get_energy(), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(vdwd2_test.evaluate(vdw::VdwRequest(false, false)), ::testing::ExitedWithCode(1), "");
     std::string output = testing::internal::GetCapturedStdout();
 }
 
 TEST_F(vdwd2Test, D2GetEnergy)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    double ene = vdw_solver->get_energy();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
+    const double ene = result.energy;
     EXPECT_NEAR(ene,-0.034526673470525196,1E-10);
 }
 
 TEST_F(vdwd2Test, D2GetForce)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    std::vector<ModuleBase::Vector3<double>> force = vdw_solver->get_force();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
+    EXPECT_NEAR(result.energy, -0.034526673470525196, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    EXPECT_FALSE(result.has_stress);
+    const std::vector<ModuleBase::Vector3<double>>& force = result.force;
     EXPECT_NEAR(force[0].x, -0.00078824525563651242,1e-12);
     EXPECT_NEAR(force[0].y,  2.6299822052061785e-08,1e-12);
     EXPECT_NEAR(force[0].z,  2.6299822050796364e-08,1e-12);
@@ -340,7 +344,11 @@ TEST_F(vdwd2Test, D2GetForce)
 TEST_F(vdwd2Test, D2GetStress)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    ModuleBase::Matrix3 stress = vdw_solver->get_stress();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
+    EXPECT_NEAR(result.energy, -0.034526673470525196, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    ASSERT_TRUE(result.has_stress);
+    const ModuleBase::Matrix3& stress = result.stress;
     EXPECT_NEAR(stress.e11, -0.00020532319044269705,1e-12);
     EXPECT_NEAR(stress.e12, -3.5642821939401251e-08,1e-12);
     EXPECT_NEAR(stress.e13, -3.5642821939437223e-08,1e-12);
@@ -434,14 +442,19 @@ TEST_F(vdwd3Test, D30Period)
 TEST_F(vdwd3Test, D30GetEnergy)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    double ene = vdw_solver->get_energy();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
+    const double ene = result.energy;
     EXPECT_NEAR(ene,-0.20932367230529664,1E-10);
 }
 
 TEST_F(vdwd3Test, D30GetForce)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    std::vector<ModuleBase::Vector3<double>> force = vdw_solver->get_force();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
+    EXPECT_NEAR(result.energy, -0.20932367230529664, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    EXPECT_FALSE(result.has_stress);
+    const std::vector<ModuleBase::Vector3<double>>& force = result.force;
     EXPECT_NEAR(force[0].x, -0.032450975169023302,1e-12);
     EXPECT_NEAR(force[0].y, 0.0,1e-12);
     EXPECT_NEAR(force[0].z, 0.0,1e-12);
@@ -453,7 +466,11 @@ TEST_F(vdwd3Test, D30GetForce)
 TEST_F(vdwd3Test, D30GetStress)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    ModuleBase::Matrix3 stress = vdw_solver->get_stress();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
+    EXPECT_NEAR(result.energy, -0.20932367230529664, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    ASSERT_TRUE(result.has_stress);
+    const ModuleBase::Matrix3& stress = result.stress;
     EXPECT_NEAR(stress.e11, -0.0011141545452036336,1e-12);
     EXPECT_NEAR(stress.e12, 0.0,1e-12);
     EXPECT_NEAR(stress.e13, 0.0,1e-12);
@@ -469,7 +486,8 @@ TEST_F(vdwd3Test, D3bjGetEnergy)
 {
     input.vdw_method = "d3_bj";
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    double ene = vdw_solver->get_energy();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
+    const double ene = result.energy;
     EXPECT_NEAR(ene,-0.047458675421836918,1E-10);
 }
 
@@ -477,7 +495,11 @@ TEST_F(vdwd3Test, D3bjGetForce)
 {
     input.vdw_method = "d3_bj";
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    std::vector<ModuleBase::Vector3<double>> force = vdw_solver->get_force();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
+    EXPECT_NEAR(result.energy, -0.047458675421836918, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    EXPECT_FALSE(result.has_stress);
+    const std::vector<ModuleBase::Vector3<double>>& force = result.force;
     EXPECT_NEAR(force[0].x, -0.0026006968781200602,1e-12);
     EXPECT_NEAR(force[0].y, 0.0,1e-12);
     EXPECT_NEAR(force[0].z, 0.0,1e-12);
@@ -490,7 +512,11 @@ TEST_F(vdwd3Test, D3bjGetStress)
 {
     input.vdw_method = "d3_bj";
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    ModuleBase::Matrix3 stress = vdw_solver->get_stress();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
+    EXPECT_NEAR(result.energy, -0.047458675421836918, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    ASSERT_TRUE(result.has_stress);
+    const ModuleBase::Matrix3& stress = result.stress;
     EXPECT_NEAR(stress.e11, -0.00014376286737216365,1e-12);
     EXPECT_NEAR(stress.e12, 0.0,1e-12);
     EXPECT_NEAR(stress.e13, 0.0,1e-12);
@@ -539,14 +565,19 @@ class vdwd3abcTest: public testing::Test
 TEST_F(vdwd3abcTest, D30GetEnergy)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    double ene = vdw_solver->get_energy();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
+    const double ene = result.energy;
     EXPECT_NEAR(ene,-0.11487062308916372,1E-10);
 }
 
 TEST_F(vdwd3abcTest, D30GetForce)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    std::vector<ModuleBase::Vector3<double>> force = vdw_solver->get_force();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
+    EXPECT_NEAR(result.energy, -0.11487062308916372, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    EXPECT_FALSE(result.has_stress);
+    const std::vector<ModuleBase::Vector3<double>>& force = result.force;
     EXPECT_NEAR(force[0].x, 0.030320738678429094,1e-12);
     EXPECT_NEAR(force[0].y, 0.025570534655235538,1e-12);
     EXPECT_NEAR(force[0].z, 0.025570534655235538,1e-12);
@@ -558,7 +589,11 @@ TEST_F(vdwd3abcTest, D30GetForce)
 TEST_F(vdwd3abcTest, D30GetStress)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    ModuleBase::Matrix3 stress = vdw_solver->get_stress();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
+    EXPECT_NEAR(result.energy, -0.11487062308916372, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    ASSERT_TRUE(result.has_stress);
+    const ModuleBase::Matrix3& stress = result.stress;
     EXPECT_NEAR(stress.e11, -0.00023421562840819491,1e-12);
     EXPECT_NEAR(stress.e12, -0.00015112406243413323,1e-12);
     EXPECT_NEAR(stress.e13, -0.00015112406243413302,1e-12);
@@ -574,7 +609,8 @@ TEST_F(vdwd3abcTest, D3bjGetEnergy)
 {
     input.vdw_method = "d3_bj";
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    double ene = vdw_solver->get_energy();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
+    const double ene = result.energy;
     EXPECT_NEAR(ene,-0.030667806197006021,1E-10);
 }
 
@@ -582,7 +618,11 @@ TEST_F(vdwd3abcTest, D3bjGetForce)
 {
     input.vdw_method = "d3_bj";
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    std::vector<ModuleBase::Vector3<double>> force = vdw_solver->get_force();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
+    EXPECT_NEAR(result.energy, -0.030667806197006021, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    EXPECT_FALSE(result.has_stress);
+    const std::vector<ModuleBase::Vector3<double>>& force = result.force;
     EXPECT_NEAR(force[0].x, -0.0010630099217696475,1e-12);
     EXPECT_NEAR(force[0].y, -0.0010031953309458587,1e-12);
     EXPECT_NEAR(force[0].z, -0.0010031953309458642,1e-12);
@@ -595,7 +635,11 @@ TEST_F(vdwd3abcTest, D3bjGetStress)
 {
     input.vdw_method = "d3_bj";
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    ModuleBase::Matrix3 stress = vdw_solver->get_stress();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
+    EXPECT_NEAR(result.energy, -0.030667806197006021, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    ASSERT_TRUE(result.has_stress);
+    const ModuleBase::Matrix3& stress = result.stress;
     EXPECT_NEAR(stress.e11, -3.3803329202372578e-05,1e-12);
     EXPECT_NEAR(stress.e12, 5.1291622417145846e-06,1e-12);
     EXPECT_NEAR(stress.e13, 5.1291622417145889e-06,1e-12);
@@ -644,7 +688,8 @@ class vdwd4Test: public testing::Test
 TEST_F(vdwd4Test, D4GetEnergy)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    double ene = vdw_solver->get_energy();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
+    const double ene = result.energy;
     EXPECT_NEAR(ene, -0.04998837990336073, 1E-10);
 }
 
@@ -653,14 +698,19 @@ TEST_F(vdwd4Test, D4GetEnergyForChargedSystem)
     input.nelec = 7.0;
 
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    const double ene = vdw_solver->get_energy();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
+    const double ene = result.energy;
     EXPECT_NEAR(ene, -0.04359451765256733, 1E-10);
 }
 
 TEST_F(vdwd4Test, D4GetForce)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    std::vector<ModuleBase::Vector3<double>> force = vdw_solver->get_force();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
+    EXPECT_NEAR(result.energy, -0.04998837990336073, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    EXPECT_FALSE(result.has_stress);
+    const std::vector<ModuleBase::Vector3<double>>& force = result.force;
     EXPECT_NEAR(force[0].x, -0.0023357259921368717, 1e-12);
     EXPECT_NEAR(force[0].y, 0.0, 1e-12);
     EXPECT_NEAR(force[0].z, 0.0, 1e-12);
@@ -672,7 +722,11 @@ TEST_F(vdwd4Test, D4GetForce)
 TEST_F(vdwd4Test, D4GetStress)
 {
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    ModuleBase::Matrix3 stress = vdw_solver->get_stress();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
+    EXPECT_NEAR(result.energy, -0.04998837990336073, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    ASSERT_TRUE(result.has_stress);
+    const ModuleBase::Matrix3& stress = result.stress;
     EXPECT_NEAR(stress.e11, 0.00015830384474877792, 1e-12);
     EXPECT_NEAR(stress.e12, 0.0, 1e-12);
     EXPECT_NEAR(stress.e13, 0.0, 1e-12);
@@ -688,7 +742,8 @@ TEST_F(vdwd4Test, D4SGetEnergy)
 {
     input.vdw_d4_model = "d4s";
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    double ene = vdw_solver->get_energy();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(false, false));
+    const double ene = result.energy;
     EXPECT_NEAR(ene, -0.05638517144755526, 1E-10);
 }
 
@@ -696,7 +751,11 @@ TEST_F(vdwd4Test, D4SGetForce)
 {
     input.vdw_d4_model = "d4s";
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    std::vector<ModuleBase::Vector3<double>> force = vdw_solver->get_force();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, false));
+    EXPECT_NEAR(result.energy, -0.05638517144755526, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    EXPECT_FALSE(result.has_stress);
+    const std::vector<ModuleBase::Vector3<double>>& force = result.force;
     EXPECT_NEAR(force[0].x, -0.005448661796788402, 1e-12);
     EXPECT_NEAR(force[0].y, 0.0, 1e-12);
     EXPECT_NEAR(force[0].z, 0.0, 1e-12);
@@ -709,7 +768,11 @@ TEST_F(vdwd4Test, D4SGetStress)
 {
     input.vdw_d4_model = "d4s";
     auto vdw_solver = vdw::make_vdw(ucell, input);
-    ModuleBase::Matrix3 stress = vdw_solver->get_stress();
+    const vdw::VdwResult result = vdw_solver->evaluate(vdw::VdwRequest(true, true));
+    EXPECT_NEAR(result.energy, -0.05638517144755526, 1E-10);
+    ASSERT_TRUE(result.has_force);
+    ASSERT_TRUE(result.has_stress);
+    const ModuleBase::Matrix3& stress = result.stress;
     EXPECT_NEAR(stress.e11, 0.00013831119855416262, 1e-12);
     EXPECT_NEAR(stress.e12, 0.0, 1e-12);
     EXPECT_NEAR(stress.e13, 0.0, 1e-12);

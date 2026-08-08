@@ -1,75 +1,36 @@
-FROM ubuntu:22.04
+FROM intel/oneapi-hpckit:2025.2.2-0-devel-ubuntu22.04
 
 RUN apt-get update && apt-get install -y \
     bc cmake git gnupg gcc g++ python3-numpy sudo wget vim unzip \
     libcereal-dev libxc-dev libgtest-dev libgmock-dev libbenchmark-dev \
-    pkg-config build-essential autoconf automake libtool
-
-# Following steps by https://software.intel.com/content/www/us/en/develop/documentation/installation-guide-for-intel-oneapi-toolkits-linux/top/installation/install-using-package-managers/apt.html .
-RUN wget -O- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB \
-    | gpg --dearmor | sudo tee /usr/share/keyrings/oneapi-archive-keyring.gpg > /dev/null && \
-    echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" \
-    | sudo tee /etc/apt/sources.list.d/oneAPI.list
-
-# To save disk space, only install the essential components, but not the whole toolkit.
-RUN apt-get update && \
-    apt-get install -y \
-        intel-oneapi-compiler-dpcpp-cpp \
-        intel-oneapi-compiler-fortran \
-        intel-oneapi-mkl-devel \
-        intel-oneapi-mkl-sycl-devel \
-        intel-oneapi-mkl-sycl-distributed-dft-devel \
-        intel-oneapi-mpi-devel \
-        intel-oneapi-vtune && \
-    apt-get clean && \
+    pkg-config build-essential autoconf automake libtool ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-RUN ls -la /opt/intel/oneapi/mkl/latest/lib/intel64/*sycl*dft*
-RUN ls -la /opt/intel/oneapi/mkl/latest/lib/intel64/*dis*
-
-# Set oneAPI environment variables
-ENV ONEAPI_ROOT=/opt/intel/oneapi
-ENV I_MPI_ROOT=${ONEAPI_ROOT}/mpi/latest
-ENV MKLROOT=${ONEAPI_ROOT}/mkl/latest
-ENV CMPLR_ROOT=${ONEAPI_ROOT}/compiler/latest
-
-# Set library paths and include paths
-ENV LIBRARY_PATH=${ONEAPI_ROOT}/tbb/latest/lib/intel64/gcc4.8:${ONEAPI_ROOT}/mpi/latest/lib:${MKLROOT}/lib/intel64:${ONEAPI_ROOT}/compiler/latest/lib/:${LIBRARY_PATH}
-ENV LD_LIBRARY_PATH=${ONEAPI_ROOT}/tbb/latest/lib/intel64/gcc4.8:${ONEAPI_ROOT}/mpi/latest/lib:${MKLROOT}/lib/intel64:${ONEAPI_ROOT}/compiler/latest/lib/:${LD_LIBRARY_PATH}
-ENV PATH=${ONEAPI_ROOT}/vtune/latest/bin64:${ONEAPI_ROOT}/mpi/latest/bin:${MKLROOT}/bin/intel64:${ONEAPI_ROOT}/compiler/latest/bin:${PATH}
-ENV CPATH=${MKLROOT}/include:${ONEAPI_ROOT}/mpi/latest/include:${CPATH}
-ENV PKG_CONFIG_PATH=${MKLROOT}/lib/pkgconfig:${ONEAPI_ROOT}/mpi/latest/lib/pkgconfig:${PKG_CONFIG_PATH}
-
-# Set CMAKE related paths
-ENV CMAKE_PREFIX_PATH=${ONEAPI_ROOT}/tbb/latest:${MKLROOT}/lib/cmake:${ONEAPI_ROOT}/dpl/latest/lib/cmake:${ONEAPI_ROOT}/dnnl/latest/lib/cmake:${ONEAPI_ROOT}/dal/latest:${ONEAPI_ROOT}/compiler/latest:${CMAKE_PREFIX_PATH}
-
-SHELL ["/bin/bash", "-c"]
-ENV CC=mpiicx CXX=mpiicpx FC=mpiifx
-
-# Verify oneAPI installation
-RUN source ${ONEAPI_ROOT}/setvars.sh && \
-    echo "=== Verify compiler ===" && \
-    which mpiicx && mpiicx --version && \
-    echo "=== Verify MKL ===" && \
-    ls ${MKLROOT}/lib/intel64/ && \
-    echo "=== Verify MPI ===" && \
-    which mpirun && mpirun --version
+ENV CC="mpiicx"
+ENV CXX="mpiicpx"
+ENV FC="mpiifx"
 
 # https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
-RUN source /opt/intel/oneapi/setvars.sh && \
-    cd /tmp && \
+RUN cd /tmp && \
     ELPA_VER=2022.11.001 && \
     wget -q https://elpa.mpcdf.mpg.de/software/tarball-archive/Releases/$ELPA_VER/elpa-$ELPA_VER.tar.gz && \
     tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
     cd elpa-$ELPA_VER && mkdir build && cd build && \
     ../configure CFLAGS="-O3 -march=native" FCFLAGS="-O3 -qmkl=cluster" --enable-openmp && \
-    make -j$(nproc) && \
+    make -j $(nproc) && \
     make PREFIX=/usr/local install && \
     ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
     cd /tmp && rm -rf elpa-$ELPA_VER
 
-# rapidjson and libtorch
-RUN cd /tmp && git clone --depth 1 https://github.com/Tencent/rapidjson.git && cp -r rapidjson/include/rapidjson /usr/include/ && rm -rf rapidjson
+# RapidJSON
+RUN cd /tmp && \
+    wget --quiet https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a -O rapidjson-24b5e7a.tar.gz && \
+    tar -xzf rapidjson-24b5e7a.tar.gz && cd rapidjson-24b5e7a && \
+    cmake -B build -DRAPIDJSON_BUILD_DOC=OFF -DRAPIDJSON_BUILD_EXAMPLES=OFF -DRAPIDJSON_BUILD_TESTS=OFF && \
+    cmake --build build --target install && \
+    cd /tmp && rm -r rapidjson-24b5e7a rapidjson-24b5e7a.tar.gz
+
+# LibTorch (Note: Using pre-built Torch library with MKL might cause issues)
 RUN wget -q https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip -O /tmp/libtorch.zip && \
     unzip -q /tmp/libtorch.zip -d /opt && rm -f /tmp/libtorch.zip
 ENV CMAKE_PREFIX_PATH=/opt/libtorch/share/cmake:${CMAKE_PREFIX_PATH}
@@ -94,7 +55,7 @@ RUN wget --no-check-certificate --quiet --tries=3 --timeout=30 \
     unzip GKlib-${GKLIB_VERSION}.zip && \
     cd GKlib-${GKLIB_VERSION} && \
     make config shared=1 prefix=${GKLIB_ROOT} openmp=set && \
-    make -j$(nproc) && \
+    make -j $(nproc) && \
     make install && \
     ls ${GKLIB_ROOT}/lib && \
     cp -n ${GKLIB_ROOT}/lib/libGKlib.so.0 ${GKLIB_ROOT}/lib/libGKlib.so || true && \
@@ -108,7 +69,7 @@ RUN export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${LD_LIBRARY_PATH} && \
     unzip METIS-${METIS_VERSION}.zip && \
     cd METIS-${METIS_VERSION} && \
     make config shared=1 prefix=${METIS32_ROOT} gklib_path=${GKLIB_ROOT} && \
-    make -j$(nproc) && \
+    make -j $(nproc) && \
     make install && \
     cd / && rm -rf METIS-${METIS_VERSION} METIS-${METIS_VERSION}.zip
 
@@ -120,7 +81,7 @@ RUN export LD_LIBRARY_PATH=${METIS32_ROOT}/lib:${GKLIB_ROOT}/lib:${LD_LIBRARY_PA
     unzip ParMETIS-${PARMETIS_VERSION}.zip && \
     cd ParMETIS-${PARMETIS_VERSION} && \
     make config shared=1 prefix=${PARMETIS32_ROOT} gklib_path=${GKLIB_ROOT} metis_path=${METIS32_ROOT} && \
-    make -j$(nproc) && \
+    make -j $(nproc) && \
     make install && \
     cd / && rm -rf ParMETIS-${PARMETIS_VERSION} ParMETIS-${PARMETIS_VERSION}.zip
 
@@ -147,7 +108,7 @@ RUN wget --no-check-certificate --quiet --tries=3 --timeout=30 \
     -DCMAKE_CXX_FLAGS="-O3 -fopenmp" \
     -DXSDK_ENABLE_Fortran=ON \
     -DCMAKE_Fortran_COMPILER=mpiifx && \                             
-    make -j$(nproc) && \
+    make -j $(nproc) && \
     make install && \
     cd / && rm -rf superlu_dist-${SUPERLU_DIST_VERSION} v${SUPERLU_DIST_VERSION}.tar.gz
 
@@ -175,7 +136,7 @@ RUN export LD_LIBRARY_PATH=${SUPERLU_DIST32_ROOT}/lib:${METIS32_ROOT}/lib:${PARM
         -DCMAKE_INSTALL_PREFIX=${PEXSI32_ROOT} \
         -DPEXSI_ENABLE_OPENMP=ON \
         -DPEXSI_ENABLE_FORTRAN=OFF && \
-    make pexsi -j$(nproc) && \
+    make pexsi -j $(nproc) && \
     make install && \
     cd / && rm -rf pexsi-${PEXSI_VERSION} pexsi-${PEXSI_VERSION}.tar.gz
 
@@ -199,7 +160,7 @@ RUN cd /tmp && git clone https://github.com/deepmodeling/abacus-develop.git --de
         -DENABLE_LIBRI=ON \
         -DENABLE_RAPIDJSON=ON \
         -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build build -j"$(nproc)" && \
+    cmake --build build -j $(nproc) && \
     cmake --install build && \
     (/usr/local/bin/abacus --version || echo "ABACUS installed but version check failed") && \
     rm -rf /tmp/abacus-develop

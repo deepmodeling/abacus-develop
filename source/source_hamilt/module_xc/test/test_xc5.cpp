@@ -5,6 +5,7 @@
 #include "../exx_info.h"
 #include "xc3_mock.h"
 #include "source_base/matrix.h"
+#include "source_cell/cal_ux.h"
 #include "../../../source_base/parallel_reduce.h"
 
 /************************************************
@@ -20,7 +21,7 @@
 class XCTest_VXC : public XCTest
 {
     protected:
-    
+
         double et1 = 0, vt1 = 0;
         ModuleBase::matrix v1;
 
@@ -34,11 +35,11 @@ class XCTest_VXC : public XCTest
             int nspin2 = 2;
             bool domag = false;
             bool domag_z = false;
-            
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
-            
+
             rhopw.nrxx = 5;
             rhopw.npw = 5;
             rhopw.nmaxgr = 5;
@@ -47,7 +48,7 @@ class XCTest_VXC : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            unitcell::cal_ux(ucell, 4);
             ucell.omega = 1;
 
             chr.rhopw = &(rhopw);
@@ -78,14 +79,16 @@ class XCTest_VXC : public XCTest
 
             XC_Functional::set_xc_type("PBE");
 
+            const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+            const double hse_omega = XC_Functional::get_hse_omega();
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z, hybrid_alpha, hse_omega);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z, hybrid_alpha, hse_omega);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -122,7 +125,7 @@ TEST_F(XCTest_VXC, set_xc_type)
 class XCTest_VXC_Libxc : public XCTest
 {
     protected:
-    
+
         double et1 = 0, vt1 = 0;
         ModuleBase::matrix v1;
 
@@ -136,7 +139,7 @@ class XCTest_VXC_Libxc : public XCTest
             int nspin2 = 2;
             bool domag = false;
             bool domag_z = false;
-            
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -149,7 +152,7 @@ class XCTest_VXC_Libxc : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            unitcell::cal_ux(ucell, 4);
             ucell.omega = 1;
 
             chr.rhopw = &(rhopw);
@@ -180,14 +183,16 @@ class XCTest_VXC_Libxc : public XCTest
 
             XC_Functional::set_xc_type("GGA_X_PBE+GGA_C_PBE");
 
+            const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+            const double hse_omega = XC_Functional::get_hse_omega();
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z, hybrid_alpha, hse_omega);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z, hybrid_alpha, hse_omega);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -224,7 +229,7 @@ TEST_F(XCTest_VXC_Libxc, set_xc_type)
 class XCTest_VXC_meta : public XCTest
 {
     protected:
-    
+
         double et1 = 0, vt1 = 0;
         ModuleBase::matrix v1,vtau1;
 
@@ -236,7 +241,7 @@ class XCTest_VXC_meta : public XCTest
             // Define variables for parameters
             int nspin1 = 1;
             int nspin2 = 2;
-            
+
             ModulePW::PW_Basis rhopw;
             UnitCell ucell;
             Charge chr;
@@ -249,7 +254,7 @@ class XCTest_VXC_meta : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            unitcell::cal_ux(ucell, 4);
             ucell.omega = 1;
 
             chr.rhopw = &(rhopw);
@@ -290,15 +295,17 @@ class XCTest_VXC_meta : public XCTest
 
             XC_Functional::set_xc_type("SCAN");
 
+            const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+            const double hse_omega = XC_Functional::get_hse_omega();
             std::tuple<double, double, ModuleBase::matrix, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin1);
+                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin1, hybrid_alpha, hse_omega);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
             vtau1 = std::get<3>(etxc_vtxc_v);
 
             etxc_vtxc_v
-                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin2);
+                = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rhopw.nrxx,ucell.omega,ucell.tpiba,&chr,nspin2, hybrid_alpha, hse_omega);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -343,7 +350,7 @@ TEST_F(XCTest_VXC_meta, set_xc_type)
     EXPECT_NEAR(vtau2(1,1),0.01591158497,1.0e-8);
     EXPECT_NEAR(vtau2(1,2),0.07990709956,1.0e-8);
     EXPECT_NEAR(vtau2(1,3),0.04145463825,1.0e-8);
-    EXPECT_NEAR(vtau2(1,4),0.0311787189,1.0e-8);    
+    EXPECT_NEAR(vtau2(1,4),0.0311787189,1.0e-8);
 }
 
 

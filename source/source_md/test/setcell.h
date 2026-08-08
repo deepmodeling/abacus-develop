@@ -13,11 +13,9 @@ Magnetism::Magnetism()
 {
     this->tot_mag = 0.0;
     this->abs_mag = 0.0;
-    this->start_mag = nullptr;
 }
 Magnetism::~Magnetism()
 {
-    delete[] this->start_mag;
 }
 
 class Setcell
@@ -30,10 +28,8 @@ class Setcell
         ucell.atoms = new Atom[ucell.ntype];
         ucell.set_atom_flag = true;
         
-        ucell.atom_mass.resize(ucell.ntype);
-        ucell.atom_label.resize(ucell.ntype);
-        ucell.atom_mass[0] = 39.948;
-        ucell.atom_label[0] = "Ar";
+        ucell.atoms[0].mass = 39.948;
+        ucell.atoms[0].label = "Ar";
 
         ucell.lat0 = 1;
         ucell.lat0_angstrom = ucell.lat0 * ModuleBase::BOHR_TO_A;
@@ -65,7 +61,6 @@ class Setcell
         ucell.atoms[0].taud.resize(4);
         ucell.atoms[0].vel.resize(4);
         ucell.atoms[0].mbl.resize(4);
-        ucell.atoms[0].mass = ucell.atom_mass[0];
 
         ucell.atoms[0].angle1.resize(4);
         ucell.atoms[0].angle2.resize(4);
@@ -91,11 +86,6 @@ class Setcell
         ucell.G = ucell.GT.Transpose();
         ucell.GGT = ucell.G * ucell.GT;
         ucell.invGGT = ucell.GGT.Inverse();
-
-        ucell.GT0 = ucell.latvec.Inverse();
-        ucell.G0 = ucell.GT.Transpose();
-        ucell.GGT0 = ucell.G * ucell.GT;
-        ucell.invGGT0 = ucell.GGT.Inverse();
 
         ucell.set_iat2itia();
     };

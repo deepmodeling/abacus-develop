@@ -2,7 +2,6 @@
 #include "stress_func.h"
 #include "source_base/parallel_reduce.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_output/output_log.h"
 // new
 #include "source_base/complexmatrix.h"
 #include "source_base/libm/libm.h"
@@ -10,7 +9,7 @@
 #include "source_base/mathzone.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
-#include "source_estate/cal_ux.h"
+#include "source_cell/cal_ux.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
@@ -23,7 +22,7 @@
 #endif
 
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "source_hamilt/module_xc/libxc_abacus.h"
 #endif
 
@@ -56,12 +55,18 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
 
     ModuleBase::matrix v(PARAM.inp.nspin, rho_basis->nrxx);
 
+    const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+#ifdef __EXX
+    const double hse_omega = XC_Functional::get_hse_omega();
+#else
+    const double hse_omega = 0.0;
+#endif
     if (XC_Functional::get_ked_flag())
     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         const auto etxc_vtxc_v
             = XC_Functional_Libxc::v_xc_meta(XC_Functional::get_func_id(), rho_basis->nrxx, ucell_in.omega, ucell_in.tpiba, chr,
-                                             PARAM.inp.nspin);
+                                             PARAM.inp.nspin, hybrid_alpha, hse_omega);
 
         // etxc = std::get<0>(etxc_vtxc_v);
         // vtxc = std::get<1>(etxc_vtxc_v);
@@ -72,11 +77,13 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
     }
     else
     {
-        elecstate::cal_ux(ucell_in);
+        unitcell::cal_ux(ucell_in, PARAM.inp.nspin);
         const auto etxc_vtxc_v = XC_Functional::v_xc(rho_basis->nrxx, chr, &ucell_in,
                                               PARAM.inp.nspin,
                                               PARAM.globalv.domag,
-                                              PARAM.globalv.domag_z);
+                                              PARAM.globalv.domag_z,
+                                              hybrid_alpha,
+                                              hse_omega);
 
         // etxc = std::get<0>(etxc_vtxc_v);
         // vtxc = std::get<1>(etxc_vtxc_v);

@@ -25,6 +25,7 @@ void Relax::init_relax(const int nat_in)
     srp_srp = 100000;
     etot = 0;
     etot_p = 0;
+    omega_p = 0.0;
 
     force_thr_eva = PARAM.inp.force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; // convert to eV/Angstrom
     fac_force = PARAM.inp.relax_scale_force * 0.1;
@@ -66,6 +67,7 @@ bool Relax::relax_step(UnitCell& ucell,
     if (istep == 0)
     {
         etot_p = etot;
+        omega_p = ucell.omega * pow(ModuleBase::BOHR_TO_A, 3);
     }
 
     bool relax_done = this->setup_gradient(ucell, force, stress, ofs_running);
@@ -158,6 +160,16 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
     }
     if (PARAM.inp.out_level == "ie")
     {
+        if (if_cell_moves)
+        {
+            const double omega_ang = ucell.omega * pow(ModuleBase::BOHR_TO_A, 3);
+            const double omega_diff = omega_ang - omega_p;
+            const double omega_ratio = (std::abs(omega_p) > 0.0) ? omega_diff / omega_p * 100.0 : 0.0;
+            std::cout << " CELL VOLUME (Angstroms^3)   : " << omega_ang << std::endl;
+            std::cout << " VOLUME DIFF (Angstroms^3)   : " << omega_diff << std::endl;
+            std::cout << " VOLUME RATIO (%)            : " << omega_ratio << std::endl;
+            omega_p = omega_ang;
+        }
         std::cout << " ETOT DIFF (eV)              : " << etot - etot_p << std::endl;
         std::cout << " LARGEST GRAD (eV/Angstrom)  : " << max_grad << std::endl;
         etot_p = etot;
@@ -196,19 +208,19 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
             // So we need to first convert to Cartesian and then apply the constraint
             ModuleBase::matrix stress_cart = ucell.latvec.to_matrix() * stress_ev;
 
-            if (ucell.lc[0] == 0)
+            if (ucell.lat_axis_free[0] == 0)
             {
                 stress_cart(0, 0) = 0;
                 stress_cart(0, 1) = 0;
                 stress_cart(0, 2) = 0;
             }
-            if (ucell.lc[1] == 0)
+            if (ucell.lat_axis_free[1] == 0)
             {
                 stress_cart(1, 0) = 0;
                 stress_cart(1, 1) = 0;
                 stress_cart(1, 2) = 0;
             }
-            if (ucell.lc[2] == 0)
+            if (ucell.lat_axis_free[2] == 0)
             {
                 stress_cart(2, 0) = 0;
                 stress_cart(2, 1) = 0;
@@ -539,19 +551,19 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream
         ModuleBase::Matrix3 move_cell = latvec_save * sr_dr_cell;
 
         // should be close to 0, but set again to avoid numerical issues
-        if (ucell.lc[0] == 0)
+        if (ucell.lat_axis_free[0] == 0)
         {
             move_cell.e11 = 0;
             move_cell.e12 = 0;
             move_cell.e13 = 0;
         }
-        if (ucell.lc[1] == 0)
+        if (ucell.lat_axis_free[1] == 0)
         {
             move_cell.e21 = 0;
             move_cell.e22 = 0;
             move_cell.e23 = 0;
         }
-        if (ucell.lc[2] == 0)
+        if (ucell.lat_axis_free[2] == 0)
         {
             move_cell.e31 = 0;
             move_cell.e32 = 0;
@@ -675,7 +687,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream
     // I do not want to change it
     if (if_cell_moves)
     {
-        unitcell::setup_cell_after_vc(ucell, ofs_running);
+        unitcell::setup_cell_after_vc(ucell, ofs_running, PARAM.inp.nspin);
         ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
     }
 }

@@ -156,7 +156,7 @@ TEST_F(PWTEST,test8_2_1)
     delete [] rhogr;
 
     fftw_cleanup();
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     fftwf_cleanup();
 #endif
 }

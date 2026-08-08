@@ -4,7 +4,7 @@
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef _OPENMP
 #include <unordered_set>
@@ -190,7 +190,7 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_nlm_all(const Parallel_Orbi
  *     * For nspin=1: occ is scaled by 0.5 (since only one spin channel computed)
  *   - Subsequent iterations: locale is computed fresh each iteration from updated DMR
  * 
- * Case 2: Locale IS initialized (is_locale_initialized, i.e., read from onsite.dm file)
+ * Case 2: Locale IS initialized (is_locale_initialized, i.e., read from dm_onsite.txt file)
  *   - First electronic iteration: uses pre-read locale directly without DMR calculation
  *     * Skips DMR-based occ calculation entirely
  *     * Reads locale from stored data via get_locale()
@@ -334,8 +334,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
         // BRANCH 2: Locale IS initialized (use pre-read data)
         // ============================================================
         // This branch is taken when:
-        // - is_locale_initialized() == true (locale read from onsite.dm file)
-        // - OR omc != 0 (occupation matrix control with initial_onsite.dm)
+        // - is_locale_initialized() == true (locale read from dm_onsite.txt file)
+        // - OR omc != 0 (occupation matrix control with dm_onsite_ini.txt)
         // Typical scenario: first SCF iteration with file input, or restart calculation
         else
         {
@@ -612,7 +612,14 @@ void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double
     assert(vu.size() == vu_tmp.size());
 #endif
 
-    // TR == std::complex<double> transfer from double to std::complex<double>
+    // Pauli-to-spinor conversion for DFT+U potential:
+    // V = V_0*I + V_x*sigma_x + V_y*sigma_y + V_z*sigma_z
+    // sigma_y = [[0,-i],[i,0]], so:
+    //   V_{up,up}   = 0.5*(V_0 + V_z)
+    //   V_{down,down} = 0.5*(V_0 - V_z)
+    //   V_{up,down}  = 0.5*(V_x - i*V_y)  <- note: minus sign from sigma_y
+    //   V_{down,up}  = 0.5*(V_x + i*V_y)  <- note: plus sign from sigma_y
+    // This is consistent with the convention in gint_common.cpp merge_hr_part_to_hR().
     const int m_size = int(sqrt(vu.size()) / 2);
     const int m_size2 = m_size * m_size;
     vu.resize(vu_tmp.size());
@@ -627,9 +634,8 @@ void hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, std::complex<double
             index[3] = m2 * m_size + m1 + m_size2 * 3;
             vu[index[0]] = 0.5 * (vu_tmp[index[0]] + vu_tmp[index[3]]);
             vu[index[3]] = 0.5 * (vu_tmp[index[0]] - vu_tmp[index[3]]);
-            // vu should be std::complex<double> type, but here we use double type for test
-            vu[index[1]] = 0.5 * (vu_tmp[index[1]] + std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
-            vu[index[2]] = 0.5 * (vu_tmp[index[1]] - std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
+            vu[index[1]] = 0.5 * (vu_tmp[index[1]] - std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
+            vu[index[2]] = 0.5 * (vu_tmp[index[1]] + std::complex<double>(0.0, 1.0) * vu_tmp[index[2]]);
         }
     }
 }
@@ -680,8 +686,6 @@ void hamilt::DFTU<hamilt::OperatorLCAO<TK, TR>>::cal_v_of_u(const std::vector<do
         }
     }
 }
-
-#include "dftu_force_stress.hpp"
 
 template class hamilt::DFTU<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::DFTU<hamilt::OperatorLCAO<std::complex<double>, double>>;

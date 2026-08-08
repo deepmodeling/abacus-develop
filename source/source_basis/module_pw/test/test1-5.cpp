@@ -60,7 +60,7 @@ TEST_F(PWTEST,test1_5)
     std::complex<double> *tmp = new std::complex<double> [nx*ny*nz];
     std::complex<double> * rhogr = new std::complex<double> [nmaxgr];
     double * rhor = new double [nrxx];
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     float * rhofr = new float [nrxx];
     complex<float> * rhofgr = new complex<float> [nmaxgr];
 #endif
@@ -115,7 +115,7 @@ TEST_F(PWTEST,test1_5)
 #endif
         std::complex<double> * rhog = new std::complex<double> [npwk];
         std::complex<double> * rhogout = new std::complex<double> [npwk];
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
         complex<float> * rhofg = new complex<float> [npwk];
         complex<float> * rhofgout = new complex<float> [npwk];
 #endif
@@ -130,7 +130,7 @@ TEST_F(PWTEST,test1_5)
                 rhogr[ig]+=ModuleBase::IMAG_UNIT / (std::abs(f.x+1) + 1);
             }
         }    
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
         for(int ig = 0 ; ig < npwk ; ++ig)
         {
             rhofg[ig] = 1.0/(pwtest.getgk2(ik,ig)+1); 
@@ -148,7 +148,7 @@ TEST_F(PWTEST,test1_5)
 
         pwtest.recip2real(rhogr,(double*)rhogr,ik); //check in-place transform
 
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
         pwtest.recip2real(rhofg,rhofr,ik); //check out-of-place transform
 
         pwtest.recip2real(rhofgr,(float*)rhofgr,ik); //check in-place transform
@@ -161,7 +161,7 @@ TEST_F(PWTEST,test1_5)
             {
                 EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),rhor[ixy*nplane+iz],1e-6);
                 EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),((double*)rhogr)[ixy*nplane+iz],1e-6);
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
                 EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),rhofr[ixy*nplane+iz],1e-4);
                 EXPECT_NEAR(tmp[ixy * nz + startiz + iz].real(),((float*)rhofgr)[ixy*nplane+iz],1e-4);
 #endif
@@ -172,7 +172,7 @@ TEST_F(PWTEST,test1_5)
 
         pwtest.real2recip((double*)rhogr,rhogr,ik);
 
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
         pwtest.real2recip(rhofr,rhofgout,ik);
 
         pwtest.real2recip((float*)rhofgr,rhofgr,ik);
@@ -184,7 +184,7 @@ TEST_F(PWTEST,test1_5)
             EXPECT_NEAR(rhog[ig].imag(),rhogout[ig].imag(),1e-6);
             EXPECT_NEAR(rhog[ig].real(),rhogr[ig].real(),1e-6);
             EXPECT_NEAR(rhog[ig].imag(),rhogr[ig].imag(),1e-6);
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
             EXPECT_NEAR(rhofg[ig].real(),rhofgout[ig].real(),1e-6);
             EXPECT_NEAR(rhofg[ig].imag(),rhofgout[ig].imag(),1e-6);
             EXPECT_NEAR(rhofg[ig].real(),rhofgr[ig].real(),1e-6);
@@ -195,7 +195,7 @@ TEST_F(PWTEST,test1_5)
 
         delete [] rhog;
         delete [] rhogout;
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
         delete [] rhofg;
         delete [] rhofgout;
 #endif
@@ -216,7 +216,7 @@ TEST_F(PWTEST,test1_5)
     delete[] kvec_d;
     delete[] rhogr;
     fftw_cleanup();
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     delete[] rhofr;
     delete[] rhofgr;
     fftwf_cleanup();

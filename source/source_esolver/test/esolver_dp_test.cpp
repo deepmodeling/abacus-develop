@@ -43,9 +43,8 @@ class ESolverDPTest : public ::testing::Test
         ucell.atoms[0].taud.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
         ucell.atoms[1].taud.resize(1, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
 
-        ucell.atom_label.resize(ucell.ntype);
-        ucell.atom_label[0] = "Cu";
-        ucell.atom_label[1] = "Al";
+        ucell.atoms[0].label = "Cu";
+        ucell.atoms[1].label = "Al";
         esolver->before_all_runners(ucell, inp);
     }
 

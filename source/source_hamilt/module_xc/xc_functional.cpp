@@ -3,7 +3,7 @@
 #include "source_base/global_function.h"
 #include "source_base/tool_title.h"
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 #include "libxc_abacus.h"
 #endif
 
@@ -16,11 +16,17 @@ int XC_Functional::func_type = 0;
 bool XC_Functional::ked_flag = false;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
+double XC_Functional::hse_omega = 0.0;
 std::map<int, double> XC_Functional::scaling_factor_xc = { {1, 1.0} }; // added by jghan, 2024-10-10
 
 void XC_Functional::set_hybrid_alpha(const double alpha_in)
 {
     hybrid_alpha = alpha_in;
+}
+
+void XC_Functional::set_hse_omega(const double omega_in)
+{
+    hse_omega = omega_in;
 }
 
 void XC_Functional::set_xc_first_loop(const UnitCell& ucell)
@@ -148,7 +154,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 2;
         use_libxc = false;
     }
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     else if ( xc_func == "SCAN")
     {
         func_id.push_back(XC_MGGA_X_SCAN);
@@ -214,7 +220,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 4;
         use_libxc = false;
     }
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     else if( xc_func == "HSE")
     {
         func_id.push_back(XC_HYB_GGA_XC_HSE06);
@@ -272,7 +278,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 #endif
     else
     {
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         //see if it matches libxc functionals
         const std::pair<int, std::vector<int>> type_id = XC_Functional_Libxc::set_xc_type_libxc(xc_func);
         func_type = std::get<0>(type_id);
@@ -314,7 +320,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     // }
     // #endif
 
-#ifndef USE_LIBXC
+#ifndef __LIBXC
     if(xc_func == "SCAN" || xc_func == "HSE" || xc_func == "SCAN0" 
         || xc_func == "MULLER" || xc_func == "POWER" || xc_func == "WP22" || xc_func == "CWP22" ||
         xc_func == "LC_PBE" || xc_func == "LC_WPBE" || xc_func == "LRC_WPBE" ||
@@ -330,14 +336,16 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
 std::string XC_Functional::output_info()
 {
     ModuleBase::TITLE("XC_Functional", "output_info");
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     if(use_libxc)
     {
         std::stringstream ss;
         ss<<" Libxc v"<<xc_version_string()<<std::endl;
         ss<<"\t"<<xc_reference()<<std::endl;
 
-        std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED);
+        double hybrid_alpha = 0.0;
+        double hse_omega = 0.0;
+        std::vector<xc_func_type> funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, hybrid_alpha, hse_omega);
         for(const auto &func : funcs)
         {
             const xc_func_info_type *info = xc_func_get_info(&func);

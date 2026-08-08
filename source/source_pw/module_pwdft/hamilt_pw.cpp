@@ -132,7 +132,10 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
     }
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-        auto exx = new OperatorEXXPW<T, Device>(isk, wfc_basis, pot_in->get_rho_basis(), pkv, ucell);
+        bool separate_loop = GlobalC::exx_info.info_global.separate_loop;
+        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        auto coulomb_param = GlobalC::exx_info.info_global.coulomb_param;
+        auto exx = new OperatorEXXPW<T, Device>(isk, wfc_basis, pot_in->get_rho_basis(), pkv, ucell, separate_loop, hybrid_alpha, coulomb_param);
         if (this->ops == nullptr)
         {
             this->ops = exx;
@@ -249,15 +252,22 @@ void HamiltPW<T, Device>::sPsi(const T* psi_in, // psi
                     const int nh = atoms->ncpp.nh;
                     T* qqc = nullptr;
                     resmem_complex_op()(qqc, nh * nh, "Hamilt<PW>::qqc");
-                    Real* qq_now = &qq_nt[it * this->ppcell->nhm * this->ppcell->nhm];
+                    std::vector<T> qqc_host(nh*nh);
+                    const double* qq_now_host = &this->ppcell->qq_nt.ptr[it * this->ppcell->nhm * this->ppcell->nhm];
+
                     for (int i = 0; i < nh; i++)
                     {
                         for (int j = 0; j < nh; j++)
                         {
-                            int index = i * this->ppcell->nhm + j;
-                            qqc[i * nh + j] = qq_now[index] * one;
+                            const int source_index = i * this->ppcell->nhm + j;
+                            const int target_index = i * nh + j;
+
+                            qqc_host[target_index] = static_cast<Real>(qq_now_host[source_index]) * one;
                         }
                     }
+
+                    syncmem_complex_h2d_op()(qqc, qqc_host.data(), qqc_host.size());
+
                     for (int ia = 0; ia < atoms->na; ia++)
                     {
                         const int iat = ucell->itia2iat(it, ia);

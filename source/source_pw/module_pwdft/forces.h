@@ -16,12 +16,22 @@
 
 class pseudopot_cell_vnl;
 
+namespace vdw
+{
+struct VdwResult;
+}
+
+// forward declaration so that the dH module (out_mat_dh_vl) can reuse cal_force_loc
+namespace hamilt { template <class T> class Veff; }
+
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Forces
 {
   public:
     template <typename T>
     friend class Force_Stress_LCAO;
+    template <class T>
+    friend class hamilt::Veff;
     /* This routine is a driver routine which compute the forces
      * acting on the atoms, the complete forces in plane waves
      * is computed from 4 main parts
@@ -37,6 +47,7 @@ class Forces
 
     void cal_force(UnitCell& ucell,
                    ModuleBase::matrix& force,
+                   const vdw::VdwResult* vdw_result,
                    const elecstate::ElecState& elec,
                    const ModulePW::PW_Basis* const rho_basis,
                    ModuleSymmetry::Symmetry* p_symm,

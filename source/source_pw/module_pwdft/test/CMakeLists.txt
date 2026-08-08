@@ -1,11 +1,11 @@
-remove_definitions(-D__MLALGO)
-remove_definitions(-D__CUDA)
-remove_definitions(-D__ROCM)
-remove_definitions(-D__EXX)
+abacus_disable_feature_definitions(__MLALGO)
+abacus_disable_feature_definitions(__CUDA)
+abacus_disable_feature_definitions(__ROCM)
+abacus_disable_feature_definitions(__EXX)
 
 AddTest(
   TARGET MODULE_PW_pwdft_soc
-  LIBS parameter  ${math_libs}
+  LIBS parameter
   SOURCES soc_test.cpp ../soc.cpp
   	../../../source_base/global_variable.cpp
   	../../../source_base/global_function.cpp
@@ -24,13 +24,13 @@ AddTest(
 
 AddTest(
 	TARGET MODULE_PW_radial_proj_test
-	LIBS parameter  base device ${math_libs}
+	LIBS parameter  base device
 	SOURCES radial_proj_test.cpp ../radial_proj.cpp
 )
 
 AddTest(
 	TARGET MODULE_PW_structure_factor_test
-	LIBS parameter ${math_libs} base device planewave
+	LIBS parameter base device planewave
 	SOURCES structure_factor_test.cpp ../structure_factor.cpp ../parallel_grid.cpp
 	../../../source_cell/unitcell.cpp
 
@@ -44,6 +44,7 @@ AddTest(
 	../../../source_cell/read_atom_species.cpp
 	../../../source_cell/read_atoms.cpp
 	../../../source_cell/read_atoms_helper.cpp
+	../../../source_cell/cell_tools.cpp
 	../../../source_cell/read_pp.cpp
 	../../../source_cell/read_pp_complete.cpp
 	../../../source_cell/read_pp_upf100.cpp
@@ -52,8 +53,8 @@ AddTest(
 	../../../source_cell/read_pp_blps.cpp
   ../../../source_cell/sep.cpp
   ../../../source_cell/sep_cell.cpp
-	../../../source_estate/read_pseudo.cpp
-	../../../source_estate/cal_wfc.cpp
-	../../../source_estate/cal_nelec_nband.cpp
-	../../../source_estate/read_orb.cpp
+	../../../source_cell/read_pseudo.cpp
+	../../../source_cell/cal_wfc.cpp
+	../../../source_cell/cal_nelec_nband.cpp
+	../../../source_cell/read_orb.cpp
 )

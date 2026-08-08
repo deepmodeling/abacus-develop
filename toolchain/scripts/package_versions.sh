@@ -68,11 +68,11 @@ fftw_main_sha256="5630c24cdeb33b131612f7eb4b1a9934234754f9f388ff8617458d0be6f239
 fftw_alt_ver="3.3.10"
 fftw_alt_sha256="56c932549852cddcfafdab3820b0200c7742675be92179e59e6215b340e26467"
 
-# LibXC (supports dual versions) - main=7.0.0, alt=6.2.2
-libxc_main_ver="7.0.0"
-libxc_main_sha256="e9ae69f8966d8de6b7585abd9fab588794ada1fab8f689337959a35abbf9527d"
-libxc_alt_ver="6.2.2"
-libxc_alt_sha256="f72ed08af7b9dff5f57482c5f97bff22c7dc49da9564bc93871997cbda6dacf3"
+# LibXC (supports dual versions) - main=7.1.0, alt=7.0.0
+libxc_main_ver="7.1.2"
+libxc_main_sha256="3915fac94416e4c415534223ea492ad2663f928acf27e98662c861b094a6c306"
+libxc_alt_ver="7.0.0"
+libxc_alt_sha256="e9ae69f8966d8de6b7585abd9fab588794ada1fab8f689337959a35abbf9527d"
 
 # ScaLAPACK (supports dual versions) - main=2.2.2, alt=2.2.1
 scalapack_main_ver="2.2.3"

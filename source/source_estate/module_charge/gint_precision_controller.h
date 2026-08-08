@@ -1,7 +1,7 @@
 #ifndef GINT_PRECISION_CONTROLLER_H
 #define GINT_PRECISION_CONTROLLER_H
 
-#include "source_lcao/module_gint/gint_helper.h"
+#include "source_hamilt/module_gint/gint_helper.h"
 
 #include <string>
 

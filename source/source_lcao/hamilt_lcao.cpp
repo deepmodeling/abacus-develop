@@ -29,7 +29,7 @@
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "module_operator_lcao/dftu_lcao.h"
 #include "module_operator_lcao/dspin_lcao.h"
@@ -225,9 +225,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
             {
                 plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
-															  this->hR, // no explicit call yet
-															  p_dftu, // mohan add 2025-11-07
-															  this->kv->isk);
+															  this->hR,
+															  p_dftu,
+															  this->kv->isk,
+															  PARAM.globalv.npol);
             }
             else
             {
@@ -381,9 +382,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
             {
                 plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
-															  this->hR, // no explicit call yet
-															  p_dftu, // mohan add 2025-11-07
-                                                              this->kv->isk);
+															  this->hR,
+															  p_dftu,
+                                                              this->kv->isk,
+                                                              PARAM.globalv.npol);
             }
             else
             {
@@ -416,21 +418,6 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 #ifdef __EXX
     if (GlobalC::exx_info.info_global.cal_exx)
     {
-	    int* exx_two_level_step = nullptr;
-	    std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr;
-	    std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr;
-
-		if(GlobalC::exx_info.info_ri.real_number)
-		{
-            exx_two_level_step = &exx_nao.exd->two_level_step;
-			Hexxd = &exx_nao.exd->get_Hexxs();
-		}
-		else
-		{
-            exx_two_level_step = &exx_nao.exc->two_level_step;
-			Hexxc = &exx_nao.exc->get_Hexxs();
-		}
-
         // Peize Lin add 2016-12-03
         // set xc type before the first cal of xc in pelec->init_scf
         // and calculate Cs, Vs
@@ -441,13 +428,12 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                         this->hR,
                                                         ucell,
                                                         *this->kv,
-                                                        Hexxd,
-                                                        Hexxc,
+                                                        exx_nao.exd.get(),
+                                                        exx_nao.exc.get(),
                                                         Add_Hexx_Type::k,
                                                         istep,
-                                                        exx_two_level_step,
                                                         !GlobalC::restart.info_load.restart_exx
-                                                        && GlobalC::restart.info_load.load_H);
+                                                            && GlobalC::restart.info_load.load_H);
         }
         else
         {
@@ -455,13 +441,12 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                         this->hR,
                                                         ucell,
                                                         *kv,
-                                                        Hexxd,
-                                                        Hexxc,
+                                                        exx_nao.exd.get(),
+                                                        exx_nao.exc.get(),
                                                         Add_Hexx_Type::R,
                                                         istep,
-                                                        exx_two_level_step,
                                                         !GlobalC::restart.info_load.restart_exx
-                                                        && GlobalC::restart.info_load.load_H);
+                                                            && GlobalC::restart.info_load.load_H);
         }
         this->getOperator()->add(exx);
     }

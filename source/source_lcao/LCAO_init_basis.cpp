@@ -2,6 +2,7 @@
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_comm.h"
+#include "LCAO_nonlocal_info.h"
 
 namespace LCAO_domain
 {
@@ -54,11 +55,15 @@ void init_basis_lcao(Parallel_Orbitals& pv,
 
     if (PARAM.inp.vnl_in_h)
     {
-        ucell.infoNL.setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb);
-        two_center_bundle.build_beta(ucell.ntype, ucell.infoNL.Beta);
+        auto* lcao_nl = new LCAONonlocalInfo();
+        lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb,
+                               PARAM.inp.basis_type, PARAM.inp.out_element_info,
+                               PARAM.inp.lspinorb, PARAM.inp.nspin);
+        ucell.infoNL.reset(lcao_nl);
+        two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().Beta);
     }
 
-#ifdef USE_NEW_TWO_CENTER
+#ifdef __FFT_TWO_CENTER
     two_center_bundle.tabulate();
 #else
     two_center_bundle.tabulate(lcao_ecut, lcao_dk, lcao_dr, lcao_rmax);

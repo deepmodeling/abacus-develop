@@ -69,6 +69,7 @@ VPATH=./src_global:\
 ./src_ri:\
 ./source_lcao/module_ri:\
 ./source_io/module_parameter:\
+./source_io/module_efield:\
 ./source_lcao/module_lr:\
 ./source_lcao/module_lr/ao_to_mo_transformer:\
 ./source_lcao/module_lr/dm_trans:\
@@ -198,6 +199,7 @@ OBJS_CELL=atom_pseudo.o\
     klist.o\
     k_vector_utils.o\
     cell_index.o\
+    cell_tools.o\
     check_atomic_stru.o\
     update_cell.o\
     bcast_cell.o\
@@ -205,6 +207,10 @@ OBJS_CELL=atom_pseudo.o\
     read_atom_species.o\
     sep.o\
     sep_cell.o\
+    cal_nelec_nband.o\
+    read_pseudo.o\
+    cal_wfc.o\
+    cal_ux.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\
@@ -245,11 +251,7 @@ OBJS_ELECSTAT=elecstate.o\
     H_Hartree_pw.o\
     H_TDDFT_pw.o\
     pot_xc.o\
-    cal_ux.o\
     read_orb.o\
-    cal_nelec_nband.o\
-    read_pseudo.o\
-    cal_wfc.o\
     setup_estate_pw.o\
     update_pot.o\
 
@@ -343,18 +345,28 @@ OBJS_HAMILT_OF=kedf_tf.o\
 OBJS_HAMILT_LCAO=hamilt_lcao.o\
     operator_lcao.o\
     ekinetic.o\
+    ekinetic_fs.o\
+    ekinetic_dh.o\
     nonlocal.o\
+    nonlocal_dh.o\
+    nonlocal_fs.o\
     overlap.o\
+    overlap_fs.o\
     td_ekinetic_lcao.o\
     td_nonlocal_lcao.o\
     td_pot_hybrid.o\
+    td_pot_hybrid_fs.o\
     veff_lcao.o\
+    veff_dh.o\
     meta_lcao.o\
     op_dftu_lcao.o\
     deepks_lcao.o\
     op_exx_lcao.o\
     dspin_lcao.o\
+    dspin_fs.o\
     dftu_lcao.o\
+    dftu_fs.o\
+    operator_fs_utils.o\
 
 OBJS_HCONTAINER=base_matrix.o\
     atom_pair.o\
@@ -415,6 +427,9 @@ OBJS_NEIGHBOR=sltk_atom.o\
 
 OBJS_NEIGHBOR_SEARCH=neighbor_search.o\
     bin_manager.o\
+    domain_decomposition.o\
+    page_allocator.o\
+    unitcell_lite.o\
 
 
 OBJS_ORBITAL=ORB_atomic.o\
@@ -564,6 +579,8 @@ OBJS_IO=module_parameter/input_conv.o\
     write_init.o\
     td_current_io.o\
     td_current_io_comm.o\
+    td_efield_io.o\
+    td_vector_pot_io.o\
     write_libxc_r.o\
     output_log.o\
     output_mat_sparse.o\
@@ -633,7 +650,10 @@ OBJS_LCAO=evolve_elec.o\
       td_folding.o\
       td_info.o\
       velocity_op.o\
+      radial_interpolation.o\
+      snap_projector_half_tddft.o\
       snap_psibeta_half_tddft.o\
+      snap_phialpha_half_tddft.o\
       solve_propagation.o\
       boundary_fix.o\
       upsi.o\
@@ -715,7 +735,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     setup_pwrho.o\
     setup_pwwfc.o\
     update_cell_pw.o\
-    dftu_pw.o\
+    setup_dftu_pw.o\
     deltaspin_pw.o\
     forces.o\
     forces_us.o\
@@ -787,7 +807,7 @@ OBJS_DFTU=dftu.o\
       dftu_tools.o\
       dftu_occup.o\
       dftu_hamilt.o\
-      dftu_pw.o
+      setup_dftu_pw.o
 
 OBJS_DELTASPIN=basic_funcs.o\
       cal_mw_from_lambda.o\

@@ -4,7 +4,7 @@
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 
 // Constructor
 template <typename TK, typename TR>
@@ -256,9 +256,6 @@ void hamilt::EKinetic<hamilt::OperatorLCAO<TK, TR>>::contributeHR()
     ModuleBase::timer::end("EKinetic", "contributeHR");
     return;
 }
-
-// Include force/stress implementation
-#include "ekinetic_force_stress.hpp"
 
 template class hamilt::EKinetic<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::EKinetic<hamilt::OperatorLCAO<std::complex<double>, double>>;

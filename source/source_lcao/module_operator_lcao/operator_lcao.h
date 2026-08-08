@@ -3,8 +3,8 @@
 #include "source_base/vector3.h"
 #include "source_hamilt/matrixblock.h"
 #include "source_hamilt/operator.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
-#include "source_lcao/hs_matrix_k.hpp"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/hs_matrix_k.h"
 
 namespace hamilt {
 

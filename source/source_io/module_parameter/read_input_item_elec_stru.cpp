@@ -53,18 +53,18 @@ void ReadInput::item_elec_stru()
 For plane-wave basis,
 
 * cg: The conjugate-gradient (CG) method.
-* bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment.
 * dav: The Davidson algorithm.
 * dav_subspace: The Davidson algorithm without orthogonalization operation, this method is the most recommended for efficiency. `pw_diag_ndim` can be set to 2 for this method.
+* bpcg: The BPCG method, which is a block-parallel Conjugate Gradient (CG) method, typically exhibits higher acceleration in a GPU environment. The BPCG method is currently under testing and is not recommended for use.
 
 For numerical atomic orbitals basis,
 
 * lapack: Use LAPACK to diagonalize the Hamiltonian, only used for serial version
-* genelpa: Use GEN-ELPA to diagonalize the Hamiltonian.
+* genelpa: Use the CPU-only GEN-ELPA interface to diagonalize the Hamiltonian.
 * scalapack_gvx: Use Scalapack to diagonalize the Hamiltonian.
 * cusolver: Use CUSOLVER to diagonalize the Hamiltonian, at least one GPU is needed.
 * cusolvermp: Use CUSOLVER to diagonalize the Hamiltonian, supporting multi-GPU devices. Note that you should set the number of MPI processes equal to the number of GPUs.
-* elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DUSE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
+* elpa: The ELPA solver supports both CPU and GPU. By setting the `device` to GPU, you can launch the ELPA solver with GPU acceleration (provided that you have installed a GPU-supported version of ELPA, which requires you to manually compile and install ELPA, and the ABACUS should be compiled with -DENABLE_ELPA=ON and -DUSE_CUDA=ON). The ELPA solver also supports multi-GPU acceleration.
 
 If you set ks_solver=`genelpa` for basis_type=`pw`, the program will stop with an error message:
 
@@ -74,9 +74,9 @@ Then the user has to correct the input file and restart the calculation.)";
         item.default_value = R"(
     - PW basis: cg.
     - LCAO basis:
-        - genelpa (if compiling option `USE_ELPA` has been set)
+        - genelpa (if compiling option `ENABLE_ELPA` has been set)
         - lapack (if compiling option `ENABLE_MPI` has not been set)
-        - scalapack_gvx (if compiling option `USE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
+        - scalapack_gvx (if compiling option `ENABLE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
         - cusolver (if compiling option `USE_CUDA` has been set))";
         item.unit = "";
         item.availability = "";
@@ -164,6 +164,13 @@ Then the user has to correct the input file and restart the calculation.)";
                 }
                 else if (ks_solver == "genelpa")
                 {
+                    if (para.input.device == "gpu")
+                    {
+                        ModuleBase::WARNING_QUIT(
+                            "ReadInput",
+                            "ks_solver = genelpa does not support GPU acceleration. "
+                            "Please use ks_solver = elpa with device = gpu.");
+                    }
 #ifndef __ELPA
                     ModuleBase::WARNING_QUIT("Input",
                                              "Can not use genelpa if abacus is not compiled with "
@@ -354,14 +361,14 @@ The other way is only available when compiling with LIBXC, and it allows for sup
     }
     {
         Input_Item item("xc_exch_ext");
-        item.annotation = "placeholder for xcpnet exchange functional";
+        item.annotation = "customize Libxc exchange functional parameters";
         item.category = "Electronic structure";
         item.type = "Integer followed by Real values";
-        item.description = "Customized parameterization on the exchange part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_x_pbe.c."
+        item.description = "Customized parameterization of the exchange part of an XC functional. The first value should be the Libxc ID of the original functional, followed by the complete list of external parameters required by the linked Libxc version. If unset, Libxc's own default parameters are used. For functional IDs and parameter definitions, refer to the Libxc documentation and source code."
                           "\n\n[NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set "
                           "dft_functional to the corresponding functional to apply the customized parameterization. "
                           "Presently this feature can only support parameterization on one exchange functional.";
-        item.default_value = "101 0.8040 0.2195149727645171";
+        item.default_value = "";
         item.unit = "";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -371,10 +378,15 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                            [](const std::string& str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            // at least one value should be set
-            if (para.input.xc_exch_ext.empty())
+            if (!item.is_read())
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "xc_exch_ext should not be empty.");
+                return;
+            }
+            if (para.input.xc_exch_ext.size() < 2)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "xc_exch_ext requires a Libxc ID followed by external parameters.");
             }
             // the first value is actually an integer, not a double
             const double libxc_id_dbl = para.input.xc_exch_ext[0];
@@ -397,14 +409,14 @@ The other way is only available when compiling with LIBXC, and it allows for sup
     }
     {
         Input_Item item("xc_corr_ext");
-        item.annotation = "placeholder for xcpnet exchange functional";
+        item.annotation = "customize Libxc correlation functional parameters";
         item.category = "Electronic structure";
         item.type = "Integer followed by Real values";
-        item.description = "Customized parameterization on the correlation part of XC functional. The first value should be the LibXC ID of the original functional, and latter values are external parameters. Default values are those of Perdew-Burke-Ernzerhof (PBE) functional. For more information on LibXC ID of functionals, please refer to LibXC. For parameters of functionals of interest, please refer to the source code of LibXC, such as PBE functional interface in LibXC: gga_c_pbe.c."
+        item.description = "Customized parameterization of the correlation part of an XC functional. The first value should be the Libxc ID of the original functional, followed by the complete list of external parameters required by the linked Libxc version. If unset, Libxc's own default parameters are used. For functional IDs and parameter definitions, refer to the Libxc documentation and source code."
                           "\n\n[NOTE] Solely setting this keyword will take no effect on XC functionals. One should also set "
                           "dft_functional to the corresponding functional to apply the customized parameterization. "
                           "Presently this feature can only support parameterization on one correlation functional.";
-        item.default_value = "130 0.06672455060314922 0.031090690869654895034 1.0";
+        item.default_value = "";
         item.unit = "";
         item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -414,10 +426,15 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                            [](const std::string& str) { return std::stod(str); });
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            // at least one value should be set
-            if (para.input.xc_corr_ext.empty())
+            if (!item.is_read())
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "xc_corr_ext should not be empty.");
+                return;
+            }
+            if (para.input.xc_corr_ext.size() < 2)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "xc_corr_ext requires a Libxc ID followed by external parameters.");
             }
             // the first value is actually an integer, not a double
             const double libxc_id_dbl = para.input.xc_corr_ext[0];
@@ -472,21 +489,19 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.description = R"(The number of spin components of wave functions.
 * 1: Spin degeneracy
 * 2: Collinear spin polarized.
-* 4: For the case of noncollinear polarized, nspin will be automatically set to 4 without being specified by the user.)";
+* 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.)";
         item.default_value = "1";
         item.unit = "";
         item.availability = "";
         read_sync_int(input.nspin);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.noncolin || para.input.lspinorb)
-            {
-                para.input.nspin = 4;
-            }
-        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nspin != 1 && para.input.nspin != 2 && para.input.nspin != 4)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "nspin should be 1, 2 or 4.");
+            }
+            if ((para.input.noncolin || para.input.lspinorb) && para.input.nspin != 4)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "nspin must be 4 when noncolin or lspinorb is enabled.");
             }
         };
         this->add_item(item);
@@ -577,8 +592,11 @@ In general, the convergence of the Broyden method is slightly faster than that o
 * 0.4: nspin=2 and nspin=4
 * 0: keep charge density unchanged, usually used for restarting with init_chg=file or testing.
 * 0.1 or less: if convergence of SCF calculation is difficult to reach, please try 0 < mixing_beta < 0.1.
+A progressive tuning strategy might help, for example, 0.4 -> 0.1 -> 0.025.
 
-Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.)";
+Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_ndim=20, and mixing_gg0=1.0 usually works well.
+
+For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to converge, try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
         item.default_value = "0.8 for nspin=1, 0.4 for nspin=2 and nspin=4.";
         item.unit = "";
         item.availability = "";
@@ -611,7 +629,10 @@ Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_nd
         item.annotation = "mixing parameter for magnetic density";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "Mixing parameter of magnetic density.";
+        item.description = R"(Mixing parameter of magnetic density.
+
+If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
+
         item.default_value = "4*mixing_beta, but the maximum value is 1.6.";
         item.unit = "";
         item.availability = "";
@@ -690,8 +711,8 @@ For systems that are difficult to converge, one could try increasing the value o
         item.annotation = "mixing parameter in kerker";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = R"(Whether to perfom Kerker scaling for charge density.
-* >0: The high frequency wave vectors will be suppressed by multiplying a scaling factor. Setting mixing_gg0 = 1.0 is normally a good starting point. Kerker preconditioner will be automatically turned off if mixing_beta <= 0.1.
+        item.description = R"(Controls the Kerker preconditioner for charge-density mixing.
+* >0: Enables Kerker scaling to suppress long-wavelength (small-G) charge-density fluctuations. Setting mixing_gg0 = 1.0 is normally a good starting point. This setting has no effect when mixing_beta <= 0.1 because the charge-density Kerker preconditioner is bypassed.
 * 0: No Kerker scaling is performed.
 
 For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.)";
@@ -706,7 +727,9 @@ For systems that are difficult to converge, particularly metallic systems, enabl
         item.annotation = "mixing parameter in kerker";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "Whether to perfom Kerker preconditioner of magnetic density. Note: we do not recommand to open Kerker preconditioner of magnetic density unless the system is too hard to converge.";
+        item.description = R"(Controls the Kerker preconditioner for magnetic-density mixing. It is disabled by default and is generally only recommended for systems whose magnetic density is difficult to converge.
+
+The magnetic-density Kerker preconditioner is bypassed when mixing_beta_mag <= 0.1, so mixing_gg0_mag has no effect in that regime. It is also unavailable when the charge-density Kerker preconditioner itself is bypassed.)";
         item.default_value = "0.0";
         item.unit = "";
         item.availability = "";
@@ -718,7 +741,9 @@ For systems that are difficult to converge, particularly metallic systems, enabl
         item.annotation = "the minimum kerker coefficient";
         item.category = "Electronic structure";
         item.type = "Real";
-        item.description = "The minimum kerker coefficient.";
+        item.description = R"(Sets the lower bound used by the Kerker filter. The lower bound is evaluated as mixing_gg0_min / mixing_beta for charge-density mixing and mixing_gg0_min / mixing_beta_mag for magnetic-density mixing.
+
+In the current implementation, the automatic bypass thresholds are fixed independently of mixing_gg0_min: charge-density Kerker is bypassed when mixing_beta <= 0.1, and magnetic-density Kerker is bypassed when mixing_beta_mag <= 0.1. Changing mixing_gg0_min does not change these thresholds or re-enable Kerker.)";
         item.default_value = "0.1";
         item.unit = "";
         item.availability = "";
@@ -970,7 +995,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.type = "Boolean";
         item.description = R"(Whether to consider spin-orbit coupling (SOC) effect in the calculation.
 * True: Consider spin-orbit coupling effect. When enabled:
-  * nspin is automatically set to 4 (noncollinear spin representation)
+  * nspin must be explicitly set to 4 (noncollinear spin representation)
   * Symmetry is automatically disabled (SOC breaks inversion symmetry)
   * Requires full-relativistic pseudopotentials with has_so=true in the UPF header
 * False: Do not consider spin-orbit coupling effect.
@@ -988,7 +1013,7 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.type = "Boolean";
         item.description = R"(Whether to allow non-collinear magnetic moments, where magnetization can point in arbitrary directions (x, y, z components) rather than being constrained to the z-axis.
 * True: Allow non-collinear polarization. When enabled:
-  * nspin is automatically set to 4
+  * nspin must be explicitly set to 4
   * Wave function dimension is doubled (npol=2), and the number of occupied states is doubled
   * Charge density has 4 components (Pauli spin matrices)
   * Cannot be used with gamma_only=true

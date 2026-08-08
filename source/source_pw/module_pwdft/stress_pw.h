@@ -5,6 +5,12 @@
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "stress_func.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
+#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
+
+namespace vdw
+{
+struct VdwResult;
+}
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Stress_PW : public Stress_Func<FPTYPE, Device>
@@ -15,6 +21,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     // calculate the stress in PW basis
     void cal_stress(ModuleBase::matrix& smearing_sigmatot,
 			UnitCell& ucell,
+            const vdw::VdwResult* vdw_result,
 			Plus_U &dftu, // mhan add 2025-11-07 
 			const pseudopot_cell_vl& locpp,
 			const pseudopot_cell_vnl& nlpp,
@@ -26,10 +33,6 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
 			const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in = nullptr);
 
   protected:
-    // call the vdw stress
-    void stress_vdw(ModuleBase::matrix& smearing_sigma,
-                    UnitCell& ucell); // force and stress calculated in vdw together.
-
     // the stress from the non-local pseudopotentials in uspp
     // which is due to the dependence of the Q function on the atomic position
     void stress_us(ModuleBase::matrix& sigma,
@@ -45,7 +48,9 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
                     ModulePW::PW_Basis_K* wfc_basis,
                     const K_Vectors* p_kv,
                     const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in,
-                    const UnitCell& ucell); // exx stress in PW basis
+                    const UnitCell& ucell,
+                    const double hybrid_alpha,
+                    const CoulombParam& coulomb_param); // exx stress in PW basis
 
     const elecstate::ElecState* pelec = nullptr;
 };

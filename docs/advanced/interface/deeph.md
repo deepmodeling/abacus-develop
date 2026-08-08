@@ -13,16 +13,16 @@ As mentioned in the README.md file in the above-mentioned example, there are two
 The first stage is during the data preparation phase, where we need to run a series of SCF calculations and output the Hamiltonian and overlap matrices. For such purpose, one needs to add the following line in the `INPUT` file:
 
 ```
-out_mat_hs2 1
+out_hsr 1
 ```
 
-**For ABACUS v3.9.0.25+:** Files named `hrs1_nao.csr`, `hrs2_nao.csr` (for nspin=2), and `srs1_nao.csr` will be generated in `OUT.${suffix}/` directory, containing the Hamiltonian and overlap matrices in standard CSR format. You can optionally specify precision: `out_mat_hs2 1 8` (default 8 digits).
+**For ABACUS v3.9.0.25+:** Files named `hrs1_nao.csr`, `hrs2_nao.csr` (for nspin=2), and `sr_nao.csr` will be generated in `OUT.${suffix}/` directory, containing the Hamiltonian and overlap matrices in standard CSR format. You can optionally specify precision: `out_hsr 1 8` (default 8 digits). The legacy spelling `out_mat_hs2` remains accepted.
 
 **For ABACUS v3.8.x and earlier:** Files named `data-HR-sparse_SPIN${x}.csr` and `data-SR-sparse_SPIN${x}.csr` will be generated, where `${x}` takes value of 0 or 1 based on the spin component.
 
 > **Note:** DeepH v1.0.0+ is required to read the new CSR format from ABACUS v3.9.0.25+. For older DeepH versions, please use ABACUS v3.8.x or earlier.
 
-More details on this keyword can be found in the [list of input keywords](../input_files/input-main.md#out_mat_hs2).
+More details on this keyword can be found in the [list of input keywords](../input_files/input-main.md#out_hsr).
 
 The second stage is during the inference phase. After DeepH training completes, we can apply the model to predict the Hamiltonian on other systems. For that purpose, we also need the overlap matrices from the new systems, but no SCF calculation is required.
 
@@ -32,4 +32,4 @@ For that purpose, in `INPUT` file we need to make the following specification of
 calculation get_S
 ```
 
-A file named `SR.csr` will be generated in the working directory, which contains the overlap matrix.
+A file named `sr_nao.csr` will be generated in `OUT.${suffix}`, which contains the overlap matrix.

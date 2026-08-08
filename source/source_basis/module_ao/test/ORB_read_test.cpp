@@ -286,12 +286,12 @@ TEST_F(LcaoOrbitalsTest, ReadOrbitals) {
         EXPECT_EQ(aod.PhiLN(L,N).getType(), 0);
         EXPECT_EQ(aod.PhiLN(L,N).getL(), L);
         EXPECT_EQ(aod.PhiLN(L,N).getChi(), N);
-        EXPECT_EQ(aod.PhiLN(L,N).getNr(), 205);
+        EXPECT_EQ(aod.PhiLN(L,N).getNr(), 201);
         EXPECT_EQ(aod.PhiLN(L,N).getNk(), lcao_.kmesh);
         EXPECT_EQ(aod.PhiLN(L,N).getDk(), lcao_.dk);
         EXPECT_EQ(aod.PhiLN(L,N).getDruniform(), lcao_.dr_uniform);
 
-        for (int ir = 0; ir != 205; ++ir) {
+        for (int ir = 0; ir != 201; ++ir) {
             EXPECT_DOUBLE_EQ(aod.PhiLN(L,N).getRab(ir), 0.01);
             EXPECT_DOUBLE_EQ(aod.PhiLN(L,N).getRadial(ir), 0.01*ir);
         }
@@ -340,5 +340,3 @@ int main(int argc, char **argv)
 
     return result;
 } 
-
-

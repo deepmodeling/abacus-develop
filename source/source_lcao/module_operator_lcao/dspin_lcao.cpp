@@ -56,10 +56,10 @@ inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vec
     coefficients[1] = -current_lambda[0];
 }
 inline void cal_coeff_lambda(const std::vector<double>& current_lambda, std::vector<std::complex<double>>& coefficients)
-{// {\lambda^{I,3}, \lambda^{I,1}+i\lambda^{I,2}, \lambda^{I,1}-i\lambda^{I,2}, -\lambda^{I,3}}
+{// {\lambda^{I,3}, \lambda^{I,1}-i\lambda^{I,2}, \lambda^{I,1}+i\lambda^{I,2}, -\lambda^{I,3}}
     coefficients[0] = std::complex<double>(current_lambda[2], 0.0);
-    coefficients[1] = std::complex<double>(current_lambda[0] , current_lambda[1]);
-    coefficients[2] = std::complex<double>(current_lambda[0] , -1 * current_lambda[1]);
+    coefficients[1] = std::complex<double>(current_lambda[0] , -current_lambda[1]);
+    coefficients[2] = std::complex<double>(current_lambda[0] , current_lambda[1]);
     coefficients[3] = std::complex<double>(-1 * current_lambda[2], 0.0);
 }
 
@@ -627,8 +627,6 @@ void hamilt::DeltaSpin<hamilt::OperatorLCAO<TK, TR>>::cal_PI_sub(
                &zero_c, PI_sub[iat].data(), &nbands_global);
     }
 }
-
-#include "dspin_force_stress.hpp"
 
 template class hamilt::DeltaSpin<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::DeltaSpin<hamilt::OperatorLCAO<std::complex<double>, double>>;

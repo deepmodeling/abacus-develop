@@ -24,12 +24,20 @@ To compile and use ABACUS in CUDA mode, you currently need to have an NVIDIA GPU
 
 - Install a driver and toolkit appropriate for your system (SDK is not necessary)
 
+NVIDIA reports that cuSOLVERMp 0.4.2 through 0.8.0 contain an STEDC defect
+affecting non-power-of-two block sizes and certain 2D process grids. Because
+`Syevd` and `Sygvd` use STEDC internally, affected versions may fail or hang
+during distributed diagonalization. ABACUS therefore requires cuSOLVERMp 0.9.0
+or newer when `ENABLE_CUSOLVERMP=ON`. The recommended stack is cuSOLVERMp 0.9.0
+with cuBLASMp 0.9.1. See the
+[cuSOLVERMp 0.9.0 release notes](https://docs.nvidia.com/cuda/cusolvermp/release_notes/index.html#cusolvermp-v0-9-0)
+for the upstream fix details.
 
 ## Building ABACUS with the GPU support:
 
 Check the [Advanced Installation Options](https://abacus-rtd.readthedocs.io/en/latest/advanced/install.html#build-with-cuda-support) for the installation of CUDA version support.
 
-Setting both USE_ELPA and USE_CUDA to ON does not automatically enable ELPA to run on GPUs. ELPA support for GPUs needs to be enabled when ELPA is compiled. [enable GPU support](https://github.com/marekandreas/elpa/blob/master/documentation/INSTALL.md).
+Setting both `ENABLE_ELPA` and `USE_CUDA` to ON does not automatically enable ELPA to run on GPUs. ELPA support for GPUs needs to be enabled when ELPA is compiled. [enable GPU support](https://github.com/marekandreas/elpa/blob/master/documentation/INSTALL.md).
 
 The ABACUS program will automatically determine whether the current ELPA supports GPU based on the elpa/elpa_configured_options.h header file. Users can also check this header file to determine the GPU support of ELPA in their environment. ELPA introduced a new API elpa_setup_gpu in version 2023.11.001. So if you want to enable ELPA GPU in ABACUS, the ELPA version must be greater than or equal to 2023.11.001.
 
