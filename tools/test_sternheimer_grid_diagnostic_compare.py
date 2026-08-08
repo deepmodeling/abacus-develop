@@ -103,7 +103,7 @@ class GridDiagnosticCompareTest(unittest.TestCase):
             self.assertAlmostEqual(float(by_quantity["overlap"]["relative_norm_change"]), 0.1)
             self.assertEqual(by_quantity["overlap"]["profile_kind"], "diagonal")
             self.assertAlmostEqual(float(by_quantity["overlap"]["profile_relative_difference"]), 0.1)
-            self.assertEqual(by_quantity["perturbation"]["profile_kind"], "occupied_auxiliary_norm")
+            self.assertEqual(by_quantity["perturbation"]["profile_kind"], "auxiliary_norm")
             self.assertAlmostEqual(
                 float(by_quantity["perturbation"]["profile_relative_difference"]), 0.1
             )

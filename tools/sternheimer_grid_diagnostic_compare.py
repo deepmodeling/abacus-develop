@@ -110,9 +110,8 @@ def _invariant_profile(quantity, values):
     if quantity == "perturbation":
         squared_norms = {}
         for (occupied, virtual, auxiliary), value in values.items():
-            key = (occupied, auxiliary)
-            squared_norms[key] = squared_norms.get(key, 0.0) + abs(value) ** 2
-        return "occupied_auxiliary_norm", [
+            squared_norms[auxiliary] = squared_norms.get(auxiliary, 0.0) + abs(value) ** 2
+        return "auxiliary_norm", [
             math.sqrt(squared_norms[key]) for key in sorted(squared_norms)
         ]
     if quantity == "occupied_virtual_overlap":
