@@ -35,6 +35,14 @@ class Verlet : public MD_base
      * @param target_temp the target temperature
      */
     void thermalize(const int& nraise, const double& current_temp, const double& target_temp);
+
+    /**
+     * @brief apply CSVR thermostat
+     *
+     * @param current_temp the current temperature
+     * @param target_temp the target temperature
+     */
+    void apply_csvr(const double& current_temp, const double& target_temp);
 };
 
 #endif
