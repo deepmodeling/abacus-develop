@@ -24,6 +24,7 @@ if (ENABLE_LIBRI)
         sternheimer_coulomb_whitening.cpp
         sternheimer_dft_zero_order.cpp
         sternheimer_delta.cpp
+        sternheimer_grid_diagnostics.cpp
         sternheimer_fd_hamiltonian.cpp
         sternheimer_fd_nonlocal_projector.cpp
         sternheimer_fd_projector_sampler.cpp
