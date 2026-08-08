@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <string>
-#include "binstream.h"
+#include "source_base/module_out/binstream.h"
 
 namespace
 {

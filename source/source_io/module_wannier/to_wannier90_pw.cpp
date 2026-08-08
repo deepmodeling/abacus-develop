@@ -7,7 +7,7 @@
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/parallel_reduce.h"
-#include "../module_output/binstream.h"
+#include "source_base/module_out/binstream.h"
 
 toWannier90_PW::toWannier90_PW(
     const bool &out_wannier_mmn, 

@@ -181,6 +181,7 @@ OBJS_BASE=assoc_laguerre.o\
     device_helpers.o\
     output_device.o\
     parallel_2d.o\
+    binstream.o\
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
@@ -560,7 +561,6 @@ OBJS_IO=module_parameter/input_conv.o\
     read_wfc_pw.o\
     read_wf2rho_pw.o\
     restart.o\
-    binstream.o\
     module_wannier/to_wannier90.o\
     module_qo/to_qo_kernel.o\
     module_qo/to_qo_mpi.o\

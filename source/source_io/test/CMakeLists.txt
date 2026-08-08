@@ -50,7 +50,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_IO_binstream_test
-  SOURCES binstream_test.cpp ../module_output/binstream.cpp
+  SOURCES binstream_test.cpp ../../source_base/module_out/binstream.cpp
 )
 
 AddTest(
@@ -93,7 +93,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_wfc_nao
   LIBS parameter  base psi device
-  SOURCES write_wfc_nao_test.cpp ../module_output/filename.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp ../module_output/binstream.cpp
+  SOURCES write_wfc_nao_test.cpp ../module_output/filename.cpp ../module_wf/write_wfc_nao.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
 )
 
 configure_file(write_wfc_nao_para.sh ${CMAKE_CURRENT_BINARY_DIR}/write_wfc_nao_para.sh COPYONLY)
@@ -154,7 +154,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_read_rhog_test
   LIBS parameter  base device planewave
-  SOURCES read_rhog_test.cpp ../module_chgpot/rhog_io.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES read_rhog_test.cpp ../module_chgpot/rhog_io.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 if(ENABLE_LCAO)
@@ -177,7 +177,7 @@ endif()
 AddTest(
   TARGET MODULE_IO_read_wfc_pw_test
   LIBS parameter  base device planewave
-  SOURCES read_wfc_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES read_wfc_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 
 add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
@@ -188,7 +188,7 @@ add_test(NAME MODULE_IO_read_wfc_pw_test_parallel
 AddTest(
   TARGET MODULE_IO_read_wf2rho_pw_test
   LIBS parameter base device planewave psi
-  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../module_output/binstream.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge_mpi.cpp ../module_output/filename.cpp ../module_wf/write_wfc_pw.cpp
+  SOURCES read_wf2rho_pw_test.cpp ../module_wf/read_wfc_pw.cpp ../module_wf/read_wf2rho_pw.cpp ../../source_basis/module_pw/test/test_tool.cpp  ../../source_estate/module_charge/charge_mpi.cpp ../module_output/filename.cpp ../module_wf/write_wfc_pw.cpp
 )
 
 add_test(NAME MODULE_IO_read_wf2rho_pw_parallel

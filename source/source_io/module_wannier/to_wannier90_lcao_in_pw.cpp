@@ -6,7 +6,7 @@
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/parallel_reduce.h"
-#include "../module_output/binstream.h"
+#include "source_base/module_out/binstream.h"
 
 #include "source_psi/psi_init_nao.h"
 #ifdef __LCAO
