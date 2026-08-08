@@ -61,6 +61,8 @@ add_library(
     projgen.cpp
     module_out/binstream.cpp
     module_out/filename.cpp
+    module_out/sparse_matrix.cpp
+    module_out/file_reader.cpp
     module_mixing/mixing_data.cpp
     module_mixing/mixing.cpp
     module_mixing/plain_mixing.cpp

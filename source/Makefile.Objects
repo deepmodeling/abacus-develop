@@ -182,6 +182,8 @@ OBJS_BASE=assoc_laguerre.o\
     output_device.o\
     parallel_2d.o\
     binstream.o\
+    filename.o\
+    sparse_matrix.o\
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
@@ -631,7 +633,6 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       single_R_io.o\
       module_hs/write_HS_R.o\
       module_dm/write_dmr.o\
-      sparse_matrix.o\
       module_mulliken/output_mulliken.o\
       module_mulliken/output_sk.o\
       module_mulliken/output_dmk.o\

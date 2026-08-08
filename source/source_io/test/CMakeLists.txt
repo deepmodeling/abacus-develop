@@ -136,19 +136,19 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_sparse_matrix_test
   LIBS parameter  base device
-  SOURCES sparse_matrix_test.cpp ../module_output/sparse_matrix.cpp
+  SOURCES sparse_matrix_test.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_file_reader_test
   LIBS parameter  base device
-  SOURCES file_reader_test.cpp ../module_output/file_reader.cpp
+  SOURCES file_reader_test.cpp
 )
 
 AddTest(
   TARGET MODULE_IO_csr_reader_test
   LIBS parameter  base device
-  SOURCES csr_reader_test.cpp ../module_output/csr_reader.cpp ../module_output/file_reader.cpp ../module_output/sparse_matrix.cpp
+  SOURCES csr_reader_test.cpp ../module_output/csr_reader.cpp
 )
 
 AddTest(
@@ -309,9 +309,7 @@ AddTest(
   ../module_hs/rr_sparse_writer.cpp
   ../module_dm/write_dmr.cpp
   ../module_output/ucell_io.cpp
-  ../module_output/sparse_matrix.cpp
   ../module_output/csr_reader.cpp
-  ../module_output/file_reader.cpp
   ../../source_basis/module_ao/parallel_orbitals.cpp
   ../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
 )

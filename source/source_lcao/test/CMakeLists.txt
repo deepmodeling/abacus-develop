@@ -17,9 +17,7 @@ AddTest(
     ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/func_folding.cpp
     ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/transfer.cpp
     ${ABACUS_SOURCE_DIR}/source_basis/module_ao/parallel_orbitals.cpp
-    ${ABACUS_SOURCE_DIR}/source_io/module_output/sparse_matrix.cpp
     ${ABACUS_SOURCE_DIR}/source_io/module_output/csr_reader.cpp
-    ${ABACUS_SOURCE_DIR}/source_io/module_output/file_reader.cpp
 
     ${ABACUS_SOURCE_DIR}/source_io/module_dm/write_dmr.cpp
     ${ABACUS_SOURCE_DIR}/source_io/module_output/ucell_io.cpp
@@ -38,8 +36,6 @@ AddTest(
     ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/func_transfer.cpp
     ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/transfer.cpp
     ${ABACUS_SOURCE_DIR}/source_basis/module_ao/parallel_orbitals.cpp
-    ${ABACUS_SOURCE_DIR}/source_io/module_output/sparse_matrix.cpp
-    ${ABACUS_SOURCE_DIR}/source_io/module_output/file_reader.cpp
     ${ABACUS_SOURCE_DIR}/source_io/module_output/csr_reader.cpp
     ${ABACUS_SOURCE_DIR}/source_io/module_dm/write_dmr.cpp
     ${ABACUS_SOURCE_DIR}/source_io/module_output/ucell_io.cpp

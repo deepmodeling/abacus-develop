@@ -70,8 +70,6 @@ if(ENABLE_LCAO)
       module_wf/write_wfc_nao.cpp
       module_dm/write_dmk.cpp
       module_dm/write_dmr.cpp
-      module_output/sparse_matrix.cpp
-      module_output/file_reader.cpp
       module_output/csr_reader.cpp
       module_qo/to_qo_kernel.cpp
       module_qo/to_qo_mpi.cpp
