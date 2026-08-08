@@ -293,8 +293,16 @@ TEST(SternheimerDelta, AssemblesReferenceGridHamiltonianWithAnalyticGradientsAnd
     EXPECT_NEAR(matrices.overlap[0].real(), 1.0, 1.0e-14);
     EXPECT_NEAR(matrices.overlap[0].imag(), 0.0, 1.0e-14);
     // T=1.25, Vloc=0.5, and Vnl=1.5 in the same grid metric.
+    EXPECT_NEAR(matrices.kinetic[0].real(), 1.25, 1.0e-14);
+    EXPECT_NEAR(matrices.local_potential[0].real(), 0.5, 1.0e-14);
+    EXPECT_NEAR(matrices.nonlocal[0].real(), 1.5, 1.0e-14);
     EXPECT_NEAR(matrices.hamiltonian[0].real(), 3.25, 1.0e-14);
     EXPECT_NEAR(matrices.hamiltonian[0].imag(), 0.0, 1.0e-14);
+    EXPECT_NEAR((matrices.kinetic[0] + matrices.local_potential[0] + matrices.nonlocal[0]
+                 - matrices.hamiltonian[0])
+                    .real(),
+                0.0,
+                1.0e-14);
 }
 
 TEST(SternheimerDelta, CombinesLCAOCoefficientsWithAOValuesAndAnalyticGradients)

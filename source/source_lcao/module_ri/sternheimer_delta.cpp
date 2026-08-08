@@ -895,6 +895,9 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices(
         = static_cast<std::size_t>(basis_size) * static_cast<std::size_t>(basis_size);
     SternheimerDeltaGridMatrices matrices;
     matrices.overlap.assign(matrix_size, Complex(0.0, 0.0));
+    matrices.kinetic.assign(matrix_size, Complex(0.0, 0.0));
+    matrices.local_potential.assign(matrix_size, Complex(0.0, 0.0));
+    matrices.nonlocal.assign(matrix_size, Complex(0.0, 0.0));
     matrices.hamiltonian.assign(matrix_size, Complex(0.0, 0.0));
     if (basis_size == 0)
     {
@@ -920,7 +923,9 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices(
         {
             const SternheimerDeltaGridFunction& bra = basis_functions[static_cast<std::size_t>(ia)];
             Complex overlap(0.0, 0.0);
-            Complex hamiltonian_element(0.0, 0.0);
+            Complex kinetic_element(0.0, 0.0);
+            Complex local_potential_element(0.0, 0.0);
+            Complex nonlocal_element(0.0, 0.0);
             for (std::size_t ir = 0; ir != grid_size; ++ir)
             {
                 overlap += volume_element * std::conj(bra.values[ir]) * ket.values[ir];
@@ -930,19 +935,22 @@ SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices(
                     gradient_dot += std::conj(bra.gradients[static_cast<std::size_t>(direction)][ir])
                                     * ket.gradients[static_cast<std::size_t>(direction)][ir];
                 }
-                hamiltonian_element += volume_element
-                                       * (kinetic_prefactor * gradient_dot
-                                          + std::conj(bra.values[ir]) * local_potential[ir] * ket.values[ir]);
+                kinetic_element += volume_element * kinetic_prefactor * gradient_dot;
+                local_potential_element += volume_element * std::conj(bra.values[ir])
+                                           * local_potential[ir] * ket.values[ir];
             }
             if (nonlocal_projector != nullptr)
             {
-                hamiltonian_element += sternheimer_fd_grid_dot(
+                nonlocal_element = sternheimer_fd_grid_dot(
                     bra.values, nonlocal_basis[static_cast<std::size_t>(ib)], volume_element);
             }
             const std::size_t index
                 = static_cast<std::size_t>(ia) + static_cast<std::size_t>(basis_size) * static_cast<std::size_t>(ib);
             matrices.overlap[index] = overlap;
-            matrices.hamiltonian[index] = hamiltonian_element;
+            matrices.kinetic[index] = kinetic_element;
+            matrices.local_potential[index] = local_potential_element;
+            matrices.nonlocal[index] = nonlocal_element;
+            matrices.hamiltonian[index] = kinetic_element + local_potential_element + nonlocal_element;
         }
     }
     return matrices;
