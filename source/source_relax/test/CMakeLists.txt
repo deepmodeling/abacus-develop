@@ -49,14 +49,14 @@ AddTest(
           ../cg_base.cpp
           ../relax_data.cpp
           mock_remake_cell.cpp
-          ../../source_io/module_output/orb_io.cpp
+          
 )
 
 AddTest(
   TARGET MODULE_RELAX_bfgs_basic_test
   LIBS parameter base device symmetry
   SOURCES bfgs_basic_test.cpp ../bfgs_basic.cpp ../relax_data.cpp ../ions_move_basic.cpp
-          ../../source_io/module_output/orb_io.cpp
+          
           ${cell_source_files}
 )
 
@@ -81,7 +81,7 @@ AddTest(
           ../ions_move_basic.cpp 
           ../bfgs_basic.cpp
           ../relax_data.cpp
-          ../../source_io/module_output/orb_io.cpp
+          
           ${cell_source_files}
 )
 
@@ -100,7 +100,7 @@ AddTest(
           ../cg_base.cpp
           ../matrix_methods.cpp
           ../relax_data.cpp
-          ../../source_io/module_output/orb_io.cpp
+          
           ../../source_cell/bcast_cell.cpp
           ../../source_cell/print_cell.cpp
 )
@@ -113,7 +113,7 @@ AddTest(
           ../cg_base.cpp
           ../ions_move_basic.cpp
           ../relax_data.cpp
-          ../../source_io/module_output/orb_io.cpp
+          
           ${cell_source_files}
 )
 

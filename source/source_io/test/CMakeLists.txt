@@ -20,7 +20,7 @@ add_test(NAME MODULE_IO_input_test_para_4
 AddTest(
   TARGET MODULE_IO_read_exit_file_test
   LIBS parameter  base device
-  SOURCES read_exit_file_test.cpp ../module_output/read_exit_file.cpp
+  SOURCES read_exit_file_test.cpp
 )
 
 add_test(NAME MODULE_IO_read_exit_file_test_para_4
@@ -57,7 +57,7 @@ AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  base device symmetry
   SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
-		../module_output/cif_io.cpp
+		../../source_cell/cif_io.cpp
 )
 
 AddTest(
@@ -148,7 +148,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_csr_reader_test
   LIBS parameter  base device
-  SOURCES csr_reader_test.cpp ../module_output/csr_reader.cpp
+  SOURCES csr_reader_test.cpp
 )
 
 AddTest(
@@ -170,7 +170,7 @@ AddTest(
   ../../source_cell/parallel_kpoints.cpp
   ../../source_cell/test/support/mock_unitcell.cpp
   ../../source_lcao/center2_orb.cpp
-  ../module_output/orb_io.cpp
+  
 )
 endif()
 
@@ -203,7 +203,7 @@ AddTest(
   SOURCES numerical_basis_test.cpp
           ../module_bessel/numerical_basis_jyjy.cpp
           ../../source_lcao/center2_orb.cpp
-          ../module_output/orb_io.cpp
+          
 )
 
 
@@ -213,7 +213,7 @@ AddTest(
   SOURCES output_mulliken_test.cpp output_mulliken_mock.cpp ../module_mulliken/output_mulliken.cpp
   ../../source_cell/cell_index.cpp
   ../../source_basis/module_ao/parallel_orbitals.cpp
-  ../module_output/orb_io.cpp
+  
 )
 
 #if(ENABLE_LCAO)
@@ -233,7 +233,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_cif_io_test
   LIBS parameter base device
-  SOURCES cif_io_test.cpp ../module_output/cif_io.cpp
+  SOURCES cif_io_test.cpp ../../source_cell/cif_io.cpp
 )
 
 add_test(NAME MODULE_IO_cif_io_test_parallel
@@ -244,7 +244,7 @@ add_test(NAME MODULE_IO_cif_io_test_parallel
 AddTest(
   TARGET MODULE_IO_orb_io_test
   LIBS parameter base device
-  SOURCES orb_io_test.cpp ../module_output/orb_io.cpp
+  SOURCES orb_io_test.cpp
 )
 
 add_test(NAME MODULE_IO_orb_io_test_parallel
@@ -309,7 +309,6 @@ AddTest(
   ../module_hs/rr_sparse_writer.cpp
   ../module_dm/write_dmr.cpp
   ../module_output/ucell_io.cpp
-  ../module_output/csr_reader.cpp
   ../../source_basis/module_ao/parallel_orbitals.cpp
   ../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
 )

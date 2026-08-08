@@ -39,6 +39,7 @@ add_library(
     read_pseudo.cpp
     cal_wfc.cpp
     cal_ux.cpp
+    cif_io.cpp
 )
 
 if(ENABLE_COVERAGE)

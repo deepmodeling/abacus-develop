@@ -63,6 +63,9 @@ add_library(
     module_out/filename.cpp
     module_out/sparse_matrix.cpp
     module_out/file_reader.cpp
+    module_out/csr_reader.cpp
+    module_out/read_exit_file.cpp
+    module_out/orb_io.cpp
     module_mixing/mixing_data.cpp
     module_mixing/mixing.cpp
     module_mixing/plain_mixing.cpp

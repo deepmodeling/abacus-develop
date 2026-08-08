@@ -184,6 +184,8 @@ OBJS_BASE=assoc_laguerre.o\
     binstream.o\
     filename.o\
     sparse_matrix.o\
+    read_exit_file.o\
+    orb_io.o\
 
 OBJS_CELL=atom_pseudo.o\
     atom_spec.o\
@@ -214,6 +216,7 @@ OBJS_CELL=atom_pseudo.o\
     read_pseudo.o\
     cal_wfc.o\
     cal_ux.o\
+    cif_io.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\
@@ -551,7 +554,6 @@ OBJS_IO=module_parameter/input_conv.o\
     module_dos/cal_pdos_gamma.o\
     module_dos/cal_pdos_multik.o\
     module_dos/cal_ldos.o\
-    cif_io.o\
     module_bessel/numerical_descriptor.o\
     module_bessel/numerical_basis.o\
     module_bessel/numerical_basis_jyjy.o\
@@ -614,7 +616,6 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_input_item_other.o\
     module_parameter/read_input_item_output.o\
     module_parameter/read_set_globalv.o\
-    orb_io.o\
     cal_pLpR.o\
     ucell_io.o\
 

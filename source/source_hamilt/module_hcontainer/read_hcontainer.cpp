@@ -1,7 +1,7 @@
 #include "read_hcontainer.h"
 
 #include "source_base/module_out/sparse_matrix.h"
-#include "source_io/module_output/csr_reader.h"
+#include "source_base/module_out/csr_reader.h"
 #include "hcontainer_funcs.h"
 
 #include <fstream>
