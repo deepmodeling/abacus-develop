@@ -44,7 +44,6 @@ list(APPEND objects
     parse_args.cpp
     input_help.cpp
     module_output/orb_io.cpp
-    module_output/filename.cpp
     module_output/ucell_io.cpp
 )
 

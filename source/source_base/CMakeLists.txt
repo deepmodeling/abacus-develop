@@ -60,6 +60,7 @@ add_library(
     parallel_2d.cpp
     projgen.cpp
     module_out/binstream.cpp
+    module_out/filename.cpp
     module_mixing/mixing_data.cpp
     module_mixing/mixing.cpp
     module_mixing/plain_mixing.cpp

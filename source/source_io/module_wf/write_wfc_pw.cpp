@@ -9,7 +9,7 @@
 #include "source_base/parallel_global.h"
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_output/filename.h"
+#include "source_base/module_out/filename.h"
 
 void ModuleIO::write_wfc_pw(
         const int istep,

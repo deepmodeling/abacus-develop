@@ -614,7 +614,6 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_set_globalv.o\
     orb_io.o\
     cal_pLpR.o\
-    filename.o\
     ucell_io.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
