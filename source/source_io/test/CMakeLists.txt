@@ -255,7 +255,7 @@ add_test(NAME MODULE_IO_orb_io_test_parallel
 AddTest(
   TARGET MODULE_IO_write_dmk
   LIBS parameter base device cell_info
-  SOURCES ../module_dm/test/write_dmk_test.cpp ../module_dm/write_dmk.cpp ../module_output/ucell_io.cpp
+  SOURCES ../module_dm/test/write_dmk_test.cpp ../module_dm/write_dmk.cpp ../../source_cell/ucell_io.cpp
 )
 
 add_test(
@@ -308,7 +308,7 @@ AddTest(
   ../module_hs/single_R_io.cpp
   ../module_hs/rr_sparse_writer.cpp
   ../module_dm/write_dmr.cpp
-  ../module_output/ucell_io.cpp
+  ../../source_cell/ucell_io.cpp
   ../../source_basis/module_ao/parallel_orbitals.cpp
   ../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
 )

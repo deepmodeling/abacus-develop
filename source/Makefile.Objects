@@ -217,6 +217,7 @@ OBJS_CELL=atom_pseudo.o\
     cal_wfc.o\
     cal_ux.o\
     cif_io.o\
+    ucell_io.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\
@@ -617,7 +618,6 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_input_item_output.o\
     module_parameter/read_set_globalv.o\
     cal_pLpR.o\
-    ucell_io.o\
 
 OBJS_IO_LCAO=cal_r_overlap_R.o\
       write_orb_info.o\

@@ -40,6 +40,7 @@ add_library(
     cal_wfc.cpp
     cal_ux.cpp
     cif_io.cpp
+    ucell_io.cpp
 )
 
 if(ENABLE_COVERAGE)

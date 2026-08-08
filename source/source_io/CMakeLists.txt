@@ -41,7 +41,6 @@ list(APPEND objects
     module_json/para_json.cpp
     parse_args.cpp
     input_help.cpp
-    module_output/ucell_io.cpp
 )
 
 list(APPEND objects_advanced
