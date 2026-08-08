@@ -669,6 +669,7 @@ struct Input_para
     bool sternheimer_channel_mpi = false; ///< whether to split Sternheimer equations over MPI ranks
     std::string sternheimer_mpi_layout = "frequency_grouped"; ///< MPI ownership layout for response equations
     bool sternheimer_delta = false; ///< whether to use Delta-Sternheimer projected solver for Sternheimer chi0 output
+    bool sternheimer_grid_diagnostics = false; ///< whether to write Delta-Sternheimer grid component diagnostics
     std::string sternheimer_delta_virtual_source
         = "ks_bands"; ///< fixed virtual source: complete unoccupied KS bands by default
     int sternheimer_delta_max_states = 0; ///< maximum fixed AO virtual states; 0 means all accepted candidates

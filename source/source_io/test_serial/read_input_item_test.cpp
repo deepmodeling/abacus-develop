@@ -1908,6 +1908,15 @@ TEST_F(InputTest, Item_test2)
         it->second.read_value(it->second, param);
         EXPECT_TRUE(param.input.sternheimer_delta);
     }
+    { // sternheimer_grid_diagnostics
+        auto it = find_label("sternheimer_grid_diagnostics", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_FALSE(param.input.sternheimer_grid_diagnostics);
+
+        it->second.str_values = {"true"};
+        it->second.read_value(it->second, param);
+        EXPECT_TRUE(param.input.sternheimer_grid_diagnostics);
+    }
     { // sternheimer_delta_virtual_source
         auto it = find_label("sternheimer_delta_virtual_source", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());
