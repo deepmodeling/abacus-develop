@@ -112,12 +112,14 @@ SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian_from_local_potential(
     const SternheimerABACUSFDGridData& grid_data,
     std::vector<double> local_potential,
     const double kinetic_prefactor,
-    std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector)
+    std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector,
+    const int finite_difference_order)
 {
     return SternheimerFDHamiltonian(grid_data.grid,
                                     std::move(local_potential),
                                     kinetic_prefactor,
-                                    std::move(nonlocal_projector));
+                                    std::move(nonlocal_projector),
+                                    finite_difference_order);
 }
 
 } // namespace ModuleRI

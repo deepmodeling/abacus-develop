@@ -1917,6 +1917,21 @@ TEST_F(InputTest, Item_test2)
         it->second.read_value(it->second, param);
         EXPECT_TRUE(param.input.sternheimer_grid_diagnostics);
     }
+    { // sternheimer_fd_order
+        auto it = find_label("sternheimer_fd_order", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.sternheimer_fd_order, 2);
+
+        it->second.str_values = {"4"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.sternheimer_fd_order, 4);
+
+        param.input.sternheimer_fd_order = 6;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("must be 2 or 4"));
+    }
     { // sternheimer_delta_virtual_source
         auto it = find_label("sternheimer_delta_virtual_source", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());

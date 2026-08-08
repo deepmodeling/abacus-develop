@@ -3660,7 +3660,8 @@ void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
         result.perturbation_source = "abfs_ccp";
 
         const SternheimerFDHamiltonian hamiltonian
-            = make_sternheimer_fd_hamiltonian(potential, pw_basis, ucell, 0, 1.0);
+            = make_sternheimer_fd_hamiltonian(
+                potential, pw_basis, ucell, 0, 1.0, PARAM.inp.sternheimer_fd_order);
         const SternheimerFDZeroOrderStates states = solve_fd_zero_order_auto(hamiltonian,
                                                                              num_bands,
                                                                              result.grid_data.volume_element,
@@ -4325,8 +4326,11 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                 = use_lcao_zero_order ? &(*lcao_occupied_channels)[ispin] : nullptr;
 
             const SternheimerFDHamiltonian hamiltonian
-                = use_frequency_mpi ? make_sternheimer_fd_full_hamiltonian(potential, pw_basis, ucell, spin_index, 1.0)
-                                    : make_sternheimer_fd_hamiltonian(potential, pw_basis, ucell, spin_index, 1.0);
+                = use_frequency_mpi
+                      ? make_sternheimer_fd_full_hamiltonian(
+                            potential, pw_basis, ucell, spin_index, 1.0, PARAM.inp.sternheimer_fd_order)
+                      : make_sternheimer_fd_hamiltonian(
+                            potential, pw_basis, ucell, spin_index, 1.0, PARAM.inp.sternheimer_fd_order);
             append_chi0_progress_event("hamiltonian_ready",
                                        0,
                                        -1,
@@ -5262,6 +5266,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
         }
         out << "sternheimer_delta " << (use_delta_sternheimer ? "yes" : "no") << '\n';
         out << "sternheimer_grid_diagnostics " << (write_grid_diagnostics ? "yes" : "no") << '\n';
+        out << "sternheimer_fd_order " << PARAM.inp.sternheimer_fd_order << '\n';
         if (write_grid_diagnostics)
         {
             out << "sternheimer_component_reconstruction_error_max " << max_component_reconstruction_error << '\n';

@@ -50,12 +50,13 @@ class SternheimerFDHamiltonian
     SternheimerFDHamiltonian(Grid grid,
                              std::vector<double> local_potential,
                              double kinetic_prefactor = 0.5,
-                             std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector = nullptr);
+                             std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector = nullptr,
+                             int finite_difference_order = 2);
 
     const Grid& grid() const;
     const std::vector<double>& local_potential() const;
     double kinetic_prefactor() const;
-    const SternheimerReducedKPoint& kpoint() const;
+    int finite_difference_order() const;
     const SternheimerFDNonlocalProjector* nonlocal_projector() const;
 
     void apply(const Vector& psi, Vector& hpsi) const;
@@ -86,6 +87,7 @@ class SternheimerFDHamiltonian
     Grid grid_;
     std::vector<double> local_potential_;
     double kinetic_prefactor_ = 0.5;
+    int finite_difference_order_ = 2;
     std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector_;
 };
 
