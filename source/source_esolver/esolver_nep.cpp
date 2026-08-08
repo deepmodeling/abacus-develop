@@ -55,6 +55,7 @@ void ESolver_NEP::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
+    use_gpu_ = inp.device == "gpu";
 
     nep_potential = 0.0;
     nep_force.create(ucell.nat, 3);
@@ -67,7 +68,7 @@ void ESolver_NEP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     coord.resize(3 * ucell.nat);
 
 #ifdef __CUDA
-    if (inp.device == "gpu")
+    if (use_gpu_)
     {
         init_nep_cuda_postprocess_workspace(cuda_postprocess_workspace, ucell.nat);
 
@@ -103,7 +104,7 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
     nep_virial.zero_out();
 
 #ifdef __CUDA
-    if (PARAM.inp.device == "gpu")
+    if (use_gpu_)
     {
         // === GPU compute path ===
         const int N = ucell.nat;
@@ -219,7 +220,7 @@ void ESolver_NEP::postprocess_outputs(const UnitCell& ucell)
     const double fact_v = 1.0 / (ucell.omega * ModuleBase::Ry_to_eV);
 
 #ifdef __CUDA
-    if (PARAM.inp.device == "gpu")
+    if (use_gpu_)
     {
         postprocess_nep_cuda(ucell.nat,
                              _e.data(),

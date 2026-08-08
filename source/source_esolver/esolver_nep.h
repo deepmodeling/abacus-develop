@@ -93,6 +93,7 @@ class ESolver_NEP : public ESolver
     std::vector<double> _v;        ///< temporary storage for virial computation
     std::vector<double> cell;
     std::vector<double> coord;
+    bool use_gpu_ = false;
 #ifdef __CUDA
     NepCudaPostprocessWorkspace cuda_postprocess_workspace;
 
