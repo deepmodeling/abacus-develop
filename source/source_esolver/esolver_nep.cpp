@@ -47,6 +47,7 @@ extern void nep_cuda_compute(
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <algorithm>
 #include <unordered_map>
 
 using namespace ModuleESolver;
@@ -66,6 +67,19 @@ void ESolver_NEP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     _v.resize(9 * ucell.nat);
     cell.resize(9);
     coord.resize(3 * ucell.nat);
+
+    atom_type_index.resize(ucell.nat);
+    atom_local_index.resize(ucell.nat);
+    int iat = 0;
+    for (int it = 0; it < ucell.ntype; ++it)
+    {
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
+        {
+            atom_type_index[iat] = it;
+            atom_local_index[iat] = ia;
+            ++iat;
+        }
+    }
 
 #ifdef __CUDA
     if (use_gpu_)
@@ -193,19 +207,16 @@ void ESolver_NEP::prepare_input_buffers(const UnitCell& ucell)
     cell[7] = ucell.latvec.e23 * ucell.lat0_angstrom;
     cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
-    int iat = 0;
     const int nat = ucell.nat;
-    for (int it = 0; it < ucell.ntype; ++it)
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int iat = 0; iat < nat; ++iat)
     {
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-        {
-            coord[iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
-            coord[iat + nat] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
-            coord[iat + 2 * nat] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
-            iat++;
-        }
+        const int it = atom_type_index[iat];
+        const int ia = atom_local_index[iat];
+        coord[iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
+        coord[iat + nat] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
+        coord[iat + 2 * nat] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
     }
-    assert(ucell.nat == iat);
 
     ModuleBase::timer::end("ESolver_NEP", "prepare_input");
 }
