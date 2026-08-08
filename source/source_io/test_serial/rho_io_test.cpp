@@ -17,7 +17,6 @@ Magnetism::Magnetism()
 Magnetism::~Magnetism()
 {
 }
-Parallel_Grid::~Parallel_Grid() {}
 
 
 #define private public

@@ -22,12 +22,6 @@
 #include "mpi.h"
 #endif
 
-Parallel_Grid::Parallel_Grid()
-{
-}
-Parallel_Grid::~Parallel_Grid()
-{
-}
 Charge::Charge()
 {
 }
