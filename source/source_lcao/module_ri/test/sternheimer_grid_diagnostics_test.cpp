@@ -41,6 +41,45 @@ TEST(SternheimerGridDiagnostics, MeasuresResponseComponentReconstruction)
     EXPECT_THROW(ModuleRI::relative_component_reconstruction_error(total, sos, pulay, {}), std::invalid_argument);
 }
 
+TEST(SternheimerGridDiagnostics, ValidatesProductionModeAndStableComponentFilenames)
+{
+    EXPECT_NO_THROW(ModuleRI::validate_grid_diagnostic_request(false, false, false, false, false));
+    EXPECT_NO_THROW(ModuleRI::validate_grid_diagnostic_request(true, true, true, true, true));
+    EXPECT_THROW(ModuleRI::validate_grid_diagnostic_request(true, false, true, true, true), std::invalid_argument);
+    EXPECT_THROW(ModuleRI::validate_grid_diagnostic_request(true, true, false, true, true), std::invalid_argument);
+    EXPECT_THROW(ModuleRI::validate_grid_diagnostic_request(true, true, true, false, true), std::invalid_argument);
+    EXPECT_THROW(ModuleRI::validate_grid_diagnostic_request(true, true, true, true, false), std::invalid_argument);
+
+    EXPECT_EQ(ModuleRI::sternheimer_component_v1_filename("sos", 1, 4, 3),
+              "v1_sternheimer_component_sos_iq_1_ifreq_4_rank3.dat");
+    EXPECT_THROW(ModuleRI::sternheimer_component_v1_filename("total", 1, 4, 3), std::invalid_argument);
+}
+
+TEST(SternheimerGridDiagnostics, DistributesRawKSVirtualPerturbationRows)
+{
+    ModuleRI::SternheimerDeltaGridFunction first_virtual;
+    first_virtual.values = {Complex(1.0, 0.0), Complex(0.0, 0.0)};
+    ModuleRI::SternheimerDeltaGridFunction second_virtual;
+    second_virtual.values = {Complex(0.0, 0.0), Complex(0.0, 1.0)};
+    const std::vector<ModuleRI::SternheimerDeltaGridFunction> virtuals = {first_virtual, second_virtual};
+    const std::vector<std::vector<double>> potentials = {{2.0, 3.0}, {-1.0, 4.0}};
+    const std::vector<std::vector<Complex>> occupied = {{Complex(1.0, 0.0), Complex(2.0, 0.0)}};
+
+    auto rank0 = ModuleRI::build_local_delta_perturbation_tensor(virtuals, potentials, occupied, 0.5, 0, 2);
+    const auto rank1 = ModuleRI::build_local_delta_perturbation_tensor(virtuals, potentials, occupied, 0.5, 1, 2);
+    ASSERT_EQ(rank0.row_counts, (std::vector<int>{1, 0}));
+    ASSERT_EQ(rank1.row_counts, (std::vector<int>{0, 1}));
+
+    for (std::size_t index = 0; index != rank0.tensor.values.size(); ++index)
+    {
+        rank0.tensor.values[index] += rank1.tensor.values[index];
+    }
+    EXPECT_EQ(rank0.tensor.at(0, 0, 0), Complex(1.0, 0.0));
+    EXPECT_EQ(rank0.tensor.at(0, 1, 0), Complex(0.0, -3.0));
+    EXPECT_EQ(rank0.tensor.at(0, 0, 1), Complex(-0.5, 0.0));
+    EXPECT_EQ(rank0.tensor.at(0, 1, 1), Complex(0.0, -4.0));
+}
+
 TEST(SternheimerGridDiagnostics, WritesVersionedOperatorAndPerturbationData)
 {
     ModuleRI::SternheimerDeltaGridMatrices matrices;
@@ -76,6 +115,7 @@ TEST(SternheimerGridDiagnostics, WritesVersionedOperatorAndPerturbationData)
     EXPECT_NE(matrix_text.find("ABACUS_STERNHEIMER_GRID_DIAGNOSTICS 1"), std::string::npos);
     EXPECT_NE(matrix_text.find("grid 2 1 1"), std::string::npos);
     EXPECT_NE(matrix_text.find("spin 1"), std::string::npos);
+    EXPECT_NE(matrix_text.find("energy_unit Rydberg"), std::string::npos);
     EXPECT_NE(matrix_text.find("matrix overlap"), std::string::npos);
     EXPECT_NE(matrix_text.find("matrix kinetic"), std::string::npos);
     EXPECT_NE(matrix_text.find("matrix local_potential"), std::string::npos);
@@ -92,6 +132,7 @@ TEST(SternheimerGridDiagnostics, WritesVersionedOperatorAndPerturbationData)
 
     const std::string perturbation_text = read_text_file(perturbation_path);
     EXPECT_NE(perturbation_text.find("ABACUS_STERNHEIMER_GRID_DIAGNOSTICS 1"), std::string::npos);
+    EXPECT_NE(perturbation_text.find("potential_unit Rydberg"), std::string::npos);
     EXPECT_NE(perturbation_text.find("tensor perturbation occupied virtual auxiliary"), std::string::npos);
     EXPECT_NE(perturbation_text.find("0 1 2"), std::string::npos);
 

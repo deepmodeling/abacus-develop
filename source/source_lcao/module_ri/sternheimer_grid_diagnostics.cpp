@@ -4,6 +4,7 @@
 #include <fstream>
 #include <iomanip>
 #include <limits>
+#include <sstream>
 #include <stdexcept>
 
 namespace ModuleRI
@@ -140,6 +141,98 @@ const SternheimerPerturbationTensor::Complex& SternheimerPerturbationTensor::at(
     return values[index];
 }
 
+SternheimerLocalPerturbationTensor build_local_delta_perturbation_tensor(
+    const std::vector<SternheimerDeltaGridFunction>& virtual_functions,
+    const std::vector<std::vector<double>>& perturbation_potentials,
+    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
+    const double volume_element,
+    const int owner_rank,
+    const int owner_count)
+{
+    if (volume_element <= 0.0)
+    {
+        throw std::invalid_argument("Sternheimer perturbation tensor requires a positive grid volume element.");
+    }
+    if (owner_count <= 0 || owner_rank < 0 || owner_rank >= owner_count)
+    {
+        throw std::invalid_argument("Sternheimer perturbation tensor owner rank is invalid.");
+    }
+    if (virtual_functions.size() > static_cast<std::size_t>(std::numeric_limits<int>::max())
+        || perturbation_potentials.size() > static_cast<std::size_t>(std::numeric_limits<int>::max())
+        || occupied_wavefunctions.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+    {
+        throw std::overflow_error("Sternheimer perturbation tensor dimensions exceed integer storage.");
+    }
+
+    std::size_t grid_size = 0;
+    if (!occupied_wavefunctions.empty())
+    {
+        grid_size = occupied_wavefunctions.front().size();
+    }
+    else if (!virtual_functions.empty())
+    {
+        grid_size = virtual_functions.front().values.size();
+    }
+    else if (!perturbation_potentials.empty())
+    {
+        grid_size = perturbation_potentials.front().size();
+    }
+    for (const SternheimerFDHamiltonian::Vector& occupied: occupied_wavefunctions)
+    {
+        if (occupied.size() != grid_size)
+        {
+            throw std::invalid_argument("Sternheimer occupied grids have inconsistent dimensions.");
+        }
+    }
+    for (const SternheimerDeltaGridFunction& virtual_function: virtual_functions)
+    {
+        if (virtual_function.values.size() != grid_size)
+        {
+            throw std::invalid_argument("Sternheimer virtual grids have inconsistent dimensions.");
+        }
+    }
+    for (const std::vector<double>& potential: perturbation_potentials)
+    {
+        if (potential.size() != grid_size)
+        {
+            throw std::invalid_argument("Sternheimer perturbation potential grids have inconsistent dimensions.");
+        }
+    }
+
+    const int occupied_count = static_cast<int>(occupied_wavefunctions.size());
+    const int virtual_count = static_cast<int>(virtual_functions.size());
+    const int auxiliary_count = static_cast<int>(perturbation_potentials.size());
+    SternheimerLocalPerturbationTensor result;
+    result.tensor = SternheimerPerturbationTensor(occupied_count, virtual_count, auxiliary_count);
+    result.row_counts.assign(checked_product(occupied_count, auxiliary_count, "Sternheimer perturbation rows"), 0);
+    for (int occupied = 0; occupied != occupied_count; ++occupied)
+    {
+        for (int auxiliary = 0; auxiliary != auxiliary_count; ++auxiliary)
+        {
+            const std::size_t row = static_cast<std::size_t>(occupied) * static_cast<std::size_t>(auxiliary_count)
+                                    + static_cast<std::size_t>(auxiliary);
+            if (static_cast<int>(row % static_cast<std::size_t>(owner_count)) != owner_rank)
+            {
+                continue;
+            }
+            result.row_counts[row] = 1;
+            for (int virtual_index = 0; virtual_index != virtual_count; ++virtual_index)
+            {
+                Complex value(0.0, 0.0);
+                for (std::size_t grid_index = 0; grid_index != grid_size; ++grid_index)
+                {
+                    value += volume_element
+                             * std::conj(virtual_functions[static_cast<std::size_t>(virtual_index)].values[grid_index])
+                             * perturbation_potentials[static_cast<std::size_t>(auxiliary)][grid_index]
+                             * occupied_wavefunctions[static_cast<std::size_t>(occupied)][grid_index];
+                }
+                result.tensor.at(occupied, virtual_index, auxiliary) = value;
+            }
+        }
+    }
+    return result;
+}
+
 double relative_component_reconstruction_error(const std::vector<Complex>& total,
                                                const std::vector<Complex>& sos,
                                                const std::vector<Complex>& pulay,
@@ -174,6 +267,53 @@ double relative_operator_reconstruction_error(const SternheimerDeltaGridMatrices
     return relative_norm(difference_squared, reference_squared);
 }
 
+void validate_grid_diagnostic_request(const bool diagnostics_enabled,
+                                      const bool write_librpa,
+                                      const bool use_delta_sternheimer,
+                                      const bool use_lcao_zero_order,
+                                      const bool use_ks_virtual_source)
+{
+    if (!diagnostics_enabled)
+    {
+        return;
+    }
+    if (!write_librpa)
+    {
+        throw std::invalid_argument("sternheimer_grid_diagnostics requires out_sternheimer_librpa=true.");
+    }
+    if (!use_delta_sternheimer)
+    {
+        throw std::invalid_argument("sternheimer_grid_diagnostics requires sternheimer_delta=true.");
+    }
+    if (!use_lcao_zero_order)
+    {
+        throw std::invalid_argument("sternheimer_grid_diagnostics requires the LCAO zero-order route.");
+    }
+    if (!use_ks_virtual_source)
+    {
+        throw std::invalid_argument("sternheimer_grid_diagnostics requires sternheimer_delta_virtual_source=ks_bands.");
+    }
+}
+
+std::string sternheimer_component_v1_filename(const std::string& component,
+                                              const int iq,
+                                              const int ifrequency,
+                                              const int rank)
+{
+    if (component != "sos" && component != "pulay" && component != "qspace")
+    {
+        throw std::invalid_argument("Unknown Sternheimer response component: " + component);
+    }
+    if (iq <= 0 || ifrequency <= 0 || rank < 0)
+    {
+        throw std::invalid_argument("Sternheimer response component file indices are invalid.");
+    }
+    std::ostringstream filename;
+    filename << "v1_sternheimer_component_" << component << "_iq_" << iq << "_ifreq_" << ifrequency << "_rank" << rank
+             << ".dat";
+    return filename.str();
+}
+
 void write_delta_grid_matrices(const std::string& path,
                                const SternheimerGridDiagnosticMetadata& metadata,
                                const SternheimerDeltaGridMatrices& matrices,
@@ -204,6 +344,7 @@ void write_delta_grid_matrices(const std::string& path,
         throw std::runtime_error("Failed to open Sternheimer grid diagnostic output: " + path);
     }
     write_metadata(output, metadata, "delta_grid_matrices");
+    output << "energy_unit Rydberg\n";
     output << "storage column_major\n";
     write_column_major_matrix(output, "overlap", matrices.overlap, metadata.virtuals);
     write_column_major_matrix(output, "kinetic", matrices.kinetic, metadata.virtuals);
@@ -248,6 +389,7 @@ void write_delta_perturbation_tensor(const std::string& path,
         throw std::runtime_error("Failed to open Sternheimer perturbation diagnostic output: " + path);
     }
     write_metadata(output, metadata, "delta_perturbation_tensor");
+    output << "potential_unit Rydberg\n";
     output << "storage row_major\n";
     output << "tensor perturbation occupied virtual auxiliary\n";
     for (int occupied = 0; occupied != tensor.occupied; ++occupied)

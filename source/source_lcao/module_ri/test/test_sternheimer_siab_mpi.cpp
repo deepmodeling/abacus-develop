@@ -1,4 +1,5 @@
 #include "source_lcao/module_ri/sternheimer_chi0_mpi.h"
+#include "source_lcao/module_ri/sternheimer_grid_diagnostics.h"
 #include "source_lcao/module_ri/sternheimer_siab_mpi.h"
 #include "source_lcao/module_ri/sternheimer_siab_overlap.h"
 #include "source_lcao/module_ri/sternheimer_siab_writer.h"
@@ -308,6 +309,57 @@ TEST(SternheimerSIABMPI, GlobalEquationChi0ReductionMatchesSerialBranch)
     else
     {
         EXPECT_TRUE(local_branch.empty());
+    }
+}
+
+TEST(SternheimerSIABMPI, DeltaResponseComponentsRemainCompleteAfterMPIReduction)
+{
+    int rank = 0;
+    int size = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    if (size != 2)
+    {
+        GTEST_SKIP() << "This regression requires exactly two MPI ranks.";
+    }
+
+    std::vector<Complex> sos(4, Complex(0.0, 0.0));
+    std::vector<Complex> pulay(4, Complex(0.0, 0.0));
+    std::vector<Complex> qspace(4, Complex(0.0, 0.0));
+    std::vector<Complex> total(4, Complex(0.0, 0.0));
+    for (std::size_t index = static_cast<std::size_t>(rank); index < total.size(); index += 2)
+    {
+        sos[index] = Complex(1.0 + index, 0.25 * index);
+        pulay[index] = Complex(-0.1 * index, 0.5 + index);
+        qspace[index] = Complex(0.2, -0.3 * index);
+        total[index] = sos[index] + pulay[index] + qspace[index];
+    }
+
+    module_ri::sternheimer_chi0::reduce_branch_to_root(total, 0, MPI_COMM_WORLD);
+    module_ri::sternheimer_chi0::reduce_branch_to_root(sos, 0, MPI_COMM_WORLD);
+    module_ri::sternheimer_chi0::reduce_branch_to_root(pulay, 0, MPI_COMM_WORLD);
+    module_ri::sternheimer_chi0::reduce_branch_to_root(qspace, 0, MPI_COMM_WORLD);
+
+    if (rank == 0)
+    {
+        EXPECT_NEAR(ModuleRI::relative_component_reconstruction_error(total, sos, pulay, qspace), 0.0, 1.0e-15);
+        const auto total_symmetric = ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(total, 2);
+        const auto sos_symmetric = ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(sos, 2);
+        const auto pulay_symmetric = ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(pulay, 2);
+        const auto qspace_symmetric = ModuleRI::SternheimerRPA::symmetrize_chi0_imaginary_frequency(qspace, 2);
+        EXPECT_NEAR(ModuleRI::relative_component_reconstruction_error(total_symmetric,
+                                                                      sos_symmetric,
+                                                                      pulay_symmetric,
+                                                                      qspace_symmetric),
+                    0.0,
+                    1.0e-15);
+    }
+    else
+    {
+        EXPECT_TRUE(total.empty());
+        EXPECT_TRUE(sos.empty());
+        EXPECT_TRUE(pulay.empty());
+        EXPECT_TRUE(qspace.empty());
     }
 }
 
