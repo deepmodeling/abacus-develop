@@ -11,12 +11,11 @@
 Parallel_Grid::Parallel_Grid()
 {
     this->allocate = false;
-    this->allocate_final_scf = false; // LiuXh add 20180619
 }
 
 Parallel_Grid::~Parallel_Grid()
 {
-    if (this->allocate || this->allocate_final_scf) // LiuXh add 20180619
+    if (this->allocate)
     {
         for (int ip = 0; ip < GlobalV::KPAR; ip++)
         {
@@ -425,75 +424,3 @@ void Parallel_Grid::reduce(double* rhotot, const double* const rhoin, const bool
     return;
 }
 #endif
-
-void Parallel_Grid::init_final_scf(const int& ncx_in,
-                                   const int& ncy_in,
-                                   const int& ncz_in,
-                                   const int& nczp_in,
-                                   const int& nrxx_in,
-                                   const int& nbz_in,
-                                   const int& bz_in)
-{
-
-    ModuleBase::TITLE("Parallel_Grid", "init");
-
-    this->ncx = ncx_in;
-    this->ncy = ncy_in;
-    this->ncz = ncz_in;
-    this->nczp = nczp_in;
-    this->nrxx = nrxx_in;
-    this->nbz = nbz_in;
-    this->bz = bz_in;
-
-    if (nczp < 0)
-    {
-        GlobalV::ofs_warning << " nczp = " << nczp << std::endl;
-        ModuleBase::WARNING_QUIT("Parallel_Grid::init", "nczp<0");
-    }
-
-    assert(ncx > 0);
-    assert(ncy > 0);
-    assert(ncz > 0);
-
-    this->ncxy = ncx * ncy;
-    this->ncxyz = ncxy * ncz;
-
-#ifndef __MPI
-    return;
-#endif
-
-    // (2)
-    assert(allocate_final_scf == false);
-    assert(GlobalV::KPAR > 0);
-
-    this->nproc_in_pool = new int[GlobalV::KPAR];
-    const int remain_pro = GlobalV::NPROC % GlobalV::KPAR;
-    for (int i = 0; i < GlobalV::KPAR; i++)
-    {
-        nproc_in_pool[i] = GlobalV::NPROC / GlobalV::KPAR;
-        if (i < remain_pro)
-        {
-            this->nproc_in_pool[i]++;
-        }
-    }
-
-    this->numz = new int*[GlobalV::KPAR];
-    this->startz = new int*[GlobalV::KPAR];
-    this->whichpro = new int*[GlobalV::KPAR];
-
-    for (int ip = 0; ip < GlobalV::KPAR; ip++)
-    {
-        const int nproc = nproc_in_pool[ip];
-        this->numz[ip] = new int[nproc];
-        this->startz[ip] = new int[nproc];
-        this->whichpro[ip] = new int[this->ncz];
-        ModuleBase::GlobalFunc::ZEROS(this->numz[ip], nproc);
-        ModuleBase::GlobalFunc::ZEROS(this->startz[ip], nproc);
-        ModuleBase::GlobalFunc::ZEROS(this->whichpro[ip], this->ncz);
-    }
-
-    this->allocate_final_scf = true;
-    this->z_distribution();
-
-    return;
-}
