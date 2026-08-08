@@ -23,7 +23,6 @@ void ReadInput::item_others()
         item.description = "Switch to control spin-constrained DFT calculation";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.sc_mag_switch);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
              if (para.input.sc_mag_switch)
@@ -44,7 +43,6 @@ void ReadInput::item_others()
         item.description = "Switch to control gradient break condition in spin-constrained DFT";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.decay_grad_switch);
         this->add_item(item);
     }
@@ -252,7 +250,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Whether to let ABACUS output QO analysis required files";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.qo_switch);
         this->add_item(item);
     }
@@ -268,7 +265,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * szv: single-zeta valence basis)";
         item.default_value = "szv";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.qo_basis);
         this->add_item(item);
     }
@@ -280,7 +276,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Strategy to generate radial orbitals for QO analysis. For hydrogen: energy-valence, for pswfc and szv: all";
         item.default_value = "for hydrogen: energy-valence, for pswfc and szv: all";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
@@ -328,7 +323,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "The screening coefficient for each atom type to rescale the shape of radial orbitals";
         item.default_value = "0.1";
         item.unit = "Bohr^-1";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
@@ -385,7 +379,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "The convergence threshold determining the cutoff of generated orbital. Lower threshold will yield orbital with larger cutoff radius.";
         item.default_value = "1.0e-6";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.qo_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.qo_thr > 1e-6)
@@ -407,7 +400,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "The number of poles used in the pole expansion method, should be a even number.";
         item.default_value = "40";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.pexsi_npole);
         this->add_item(item);
     }
@@ -420,7 +412,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Whether inertia counting is used at the very beginning.";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.pexsi_inertia);
         this->add_item(item);
     }
@@ -433,7 +424,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Maximum number of PEXSI iterations after each inertia counting procedure.";
         item.default_value = "80";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.pexsi_nmax);
         this->add_item(item);
     }
@@ -445,7 +435,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Whether to construct PSelInv communication pattern.";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.pexsi_comm);
         this->add_item(item);
     }
@@ -458,7 +447,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Whether to use symmetric storage space used by the Selected Inversion algorithm for symmetric matrices.";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.pexsi_storage);
         this->add_item(item);
     }
@@ -470,7 +458,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Ordering strategy for factorization and selected inversion. 0: Parallel ordering using ParMETIS, 1: Sequential ordering using METIS, 2: Multiple minimum degree ordering";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.pexsi_ordering);
         this->add_item(item);
     }
@@ -483,7 +470,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Row permutation strategy for factorization and selected inversion, 0: No row permutation, 1: Make the diagonal entry of the matrix larger than the off-diagonal entries.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.pexsi_row_ordering);
         this->add_item(item);
     }
@@ -495,7 +481,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Number of processors for PARMETIS. Only used if pexsi_ordering == 0.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.pexsi_nproc);
         this->add_item(item);
     }
@@ -507,7 +492,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Whether the matrix is symmetric.";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.pexsi_symm);
         this->add_item(item);
     }
@@ -519,7 +503,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Whether to factorize the transpose of the matrix.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.pexsi_trans);
         this->add_item(item);
     }
@@ -532,7 +515,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "The pole expansion method to be used. 1 for Cauchy Contour Integral method, 2 for Moussa optimized method.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.pexsi_method);
         this->add_item(item);
     }
@@ -544,7 +526,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "The point parallelizaion of PEXSI. Recommend two points parallelization.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.pexsi_nproc_pole);
         this->add_item(item);
     }
@@ -556,7 +537,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Temperature in Fermi-Dirac distribution, in Ry, should have the same effect as the smearing sigma when smearing method is set to Fermi-Dirac.";
         item.default_value = "0.015";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_temp);
         this->add_item(item);
     }
@@ -568,7 +548,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Spectral gap, this can be set to be 0 in most cases.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_gap);
         this->add_item(item);
     }
@@ -580,7 +559,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Upper bound for the spectral radius of S^{-1}H.";
         item.default_value = "20";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_delta_e);
         this->add_item(item);
     }
@@ -592,7 +570,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Initial guess of lower bound for mu.";
         item.default_value = "-10";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_mu_lower);
         this->add_item(item);
     }
@@ -604,7 +581,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Initial guess of upper bound for mu.";
         item.default_value = "10";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_mu_upper);
         this->add_item(item);
     }
@@ -616,7 +592,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Initial guess for mu (for the solver).";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_mu);
         this->add_item(item);
     }
@@ -629,7 +604,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Stopping criterion in terms of the chemical potential for the inertia counting procedure.";
         item.default_value = "0.05";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_mu_thr);
         this->add_item(item);
     }
@@ -643,7 +617,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "If the chemical potential is not in the initial interval, the interval is expanded by this value.";
         item.default_value = "0.3";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_mu_expand);
         this->add_item(item);
     }
@@ -656,7 +629,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Safe guard criterion in terms of the chemical potential to reinvoke the inertia counting procedure.";
         item.default_value = "0.2";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_mu_guard);
         this->add_item(item);
     }
@@ -670,7 +642,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Stopping criterion of the PEXSI iteration in terms of the number of electrons compared to numElectronExact.";
         item.default_value = "0.001";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_elec_thr);
         this->add_item(item);
     }
@@ -683,7 +654,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "if the absolute value of CCS matrix element is less than this value, it will be considered as zero.";
         item.default_value = "1e-10";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pexsi_zero_thr);
         this->add_item(item);
     }
@@ -697,7 +667,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Whether to print information into individual logs from all ranks in an MPI run.\n* True: Information from each rank will be written into individual files named OUT.{calculation}_{suffix}/running_${calculation}.log.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_alllog);
         this->add_item(item);
     }
@@ -709,7 +678,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Debugging flag for developers";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.nurse);
         this->add_item(item);
     }
@@ -723,7 +691,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * 1: Yes.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.t_in_h);
         this->add_item(item);
     }
@@ -737,7 +704,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * 1: Yes.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.vl_in_h);
         this->add_item(item);
     }
@@ -751,7 +717,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * 1: Yes.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.vnl_in_h);
         this->add_item(item);
     }
@@ -765,7 +730,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * 1: Yes.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.vh_in_h);
         this->add_item(item);
     }
@@ -779,7 +743,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * 1: Yes.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.vion_in_h);
         this->add_item(item);
     }
@@ -793,7 +756,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * 1: Yes.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.test_force);
         this->add_item(item);
     }
@@ -807,7 +769,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * 1: Yes.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.test_stress);
         this->add_item(item);
     }
@@ -821,7 +782,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * 1: Yes.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.test_skip_ewald);
         this->add_item(item);
     }
@@ -833,7 +793,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)";
         item.default_value = "none";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.ri_hartree_benchmark);
         this->add_item(item);
     }
@@ -866,7 +825,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Whether to perform rdmft calculation (reduced density matrix funcional theory)";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.rdmft);
         this->add_item(item);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
@@ -885,7 +843,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "The alpha parameter of power-functional(or other exx-type/hybrid functionals) which used in RDMFT, g(occ_number) = occ_number^alpha";
         item.default_value = "0.656";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.rdmft_power_alpha);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if( para.input.dft_functional == "hf" || para.input.dft_functional == "pbe0" )
@@ -929,7 +886,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Whether to use the gamma point extrapolation method to calculate the Fock exchange operator. See https://doi.org/10.1103/PhysRevB.79.205114 for details. Should be set to true most of the time.";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.exx_gamma_extrapolation);
         this->add_item(item);
     }
@@ -941,7 +897,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "The energy cutoff for EXX (Fock) exchange operator in plane wave basis calculations. Reducing ecutexx below ecutrho may significantly accelerate EXX computations. This speed improvement comes with a reduced numerical accuracy in the exchange energy calculation.";
         item.default_value = "same as ecutrho";
         item.unit = "Ry";
-        item.availability = "";
         read_sync_double(input.ecutexx);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.ecutexx < 0)
@@ -962,7 +917,6 @@ When false (default), both the direction and magnitude of the magnetic moment ar
 * density: if the change of charge density difference between two successive outer loop iterations is seen as converged according to scf_thr, then the outer loop is seen as converged.)";
         item.default_value = "density";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.exx_thr_type);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::string thr_type = para.input.exx_thr_type;

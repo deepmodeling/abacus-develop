@@ -19,7 +19,6 @@ void ReadInput::item_output()
                           "\n\n[NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.out_freq_ion <= 0)
             {
@@ -38,7 +37,6 @@ void ReadInput::item_output()
                           "\n\n[NOTE] This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.out_freq_td <= 0)
             {
@@ -56,7 +54,6 @@ void ReadInput::item_output()
         item.description = "Output the charge density (only binary format, controlled by out_chg), wavefunction (controlled by out_wfc_pw) per out_freq_elec electronic iterations. Note that they are always output when converged or reach the maximum iterations scf_nmax.";
         item.default_value = "scf_nmax";
         item.unit = "";
-        item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.out_freq_elec <= 0)
             {
@@ -102,7 +99,6 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
 [NOTE] In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc.)";
         item.default_value = "0 3";
         item.unit = "";
-        item.availability = "";
 			item.read_value = [](const Input_Item& item, Parameter& para) {
 				const size_t count = item.get_size();
 				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_chg needs at least 1 value");
@@ -151,7 +147,6 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
 [NOTE] In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
                     const size_t count = item.get_size();
                     if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_pot needs at least 1 value");
@@ -326,7 +321,6 @@ Also controled by out_freq_ion and out_app_flag.
 * 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.out_dos);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
@@ -362,7 +356,6 @@ Also controled by out_freq_ion and out_app_flag.
 * 3: output both two LDOS modes above.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count != 1 && count != 2)
@@ -392,7 +385,6 @@ Also controled by out_freq_ion and out_app_flag.
  * For more information, refer to the band.md)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count != 1 && count != 2)
@@ -419,7 +411,6 @@ Also controled by out_freq_ion and out_app_flag.
         item.description = "Whether to output the projected band structure. For more information, refer to the band.md";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_proj_band);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
@@ -447,7 +438,6 @@ Also controled by out_freq_ion and out_app_flag.
                           "[NOTE] For backward compatibility, true/false (case insensitive) are accepted and converted to 1/0.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const std::string val = FmtCore::lower(item.str_values[0]);
             if (val == "true" || val == "t" || val == "yes" || val == "y" || val == "on" || val == ".true.")
@@ -511,7 +501,6 @@ Also controled by out_freq_ion and out_app_flag.
 * m: molecular dynamics level, which does not print some information for simplicity.)";
         item.default_value = "ie";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_level = strvalue;
             para.sys.out_md_control = true;
@@ -1288,7 +1277,6 @@ The second integer controls the precision of the charge density output, if not g
 The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).)";
         item.default_value = "-1 3";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count >= 1)
@@ -1443,7 +1431,6 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Whether to print element information into files in the directory OUT.{element_label}, including pseudopotential and orbital information of the element (in atomic Ryberg units).";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_element_info);
         this->add_item(item);
     }
@@ -1474,7 +1461,6 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
                           "irreducible_sector.txt, symrot_k.txt and symrot_R.txt.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.rpa);
         this->add_item(item);
     }
@@ -1549,7 +1535,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.description = "Specifies whether to write the partial charge densities for all k-points to individual files or merge them. Warning: Enabling symmetry may produce unwanted results due to reduced k-point weights and symmetry operations in real space. Therefore when calculating partial charge densities, if you are not sure what you want exactly, it is strongly recommended to set symmetry = -1. It is noteworthy that your symmetry setting should remain the same as that in the SCF procedure.";
         item.default_value = "false";
         item.unit = "";
-        item.set_availability("basis_type==pw and out_pchg!=none or basis_type==lcao and calculation==get_pchg and gamma_only==0");
+        item.set_availability("(basis_type==pw and out_pchg!=none) or (basis_type==lcao and calculation==get_pchg and gamma_only==0)");
         read_sync_bool(input.if_separate_k);
         this->add_item(item);
     }
@@ -1619,7 +1605,6 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
 * False: Do not output the electric dipole information.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_dipole);
         this->add_item(item);
     }
@@ -1692,7 +1677,6 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.description = "Whether to print the matrix representation of symmetry operation to running log file. If the first value is given as 1, then all matrix representations will be printed. The second optional parameter controls the precision (number of digits) to print, default is 3, which is enough for a quick check.";
         item.default_value = "1 3";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count >= 1)

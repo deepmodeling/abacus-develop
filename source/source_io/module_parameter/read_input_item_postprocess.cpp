@@ -17,7 +17,6 @@ void ReadInput::item_postprocess()
         item.description = "The step size in writing Density of States (DOS)";
         item.default_value = "0.01";
         item.unit = "eV";
-        item.availability = "";
         read_sync_double(input.dos_edelta_ev);
         this->add_item(item);
     }
@@ -29,7 +28,6 @@ void ReadInput::item_postprocess()
         item.description = "The width of the Gaussian factor when obtaining smeared Density of States (DOS)";
         item.default_value = "0.07";
         item.unit = "eV";
-        item.availability = "";
         read_sync_double(input.dos_sigma);
         this->add_item(item);
     }
@@ -41,7 +39,6 @@ void ReadInput::item_postprocess()
         item.description = "Defines the energy range of DOS output as (emax-emin)*(1+dos_scale), centered at (emax+emin)/2. This parameter will be used when dos_emin and dos_emax are not set.";
         item.default_value = "0.01";
         item.unit = "eV";
-        item.availability = "";
         read_sync_double(input.dos_scale);
         this->add_item(item);
     }
@@ -55,7 +52,6 @@ void ReadInput::item_postprocess()
 * If set, "dos_scale" will be ignored.)";
         item.default_value = "Minimal eigenenergy of";
         item.unit = "eV";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.dos_emin_ev = doublevalue;
             para.sys.dos_setemin = true;
@@ -73,7 +69,6 @@ void ReadInput::item_postprocess()
 * If set, "dos_scale" will be ignored.)";
         item.default_value = "Maximal eigenenergy of";
         item.unit = "eV";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.dos_emax_ev = doublevalue;
             para.sys.dos_setemax = true;
@@ -90,7 +85,6 @@ void ReadInput::item_postprocess()
         item.description = "The order of Chebyshev expansions when using Stochastic Density Functional Theory (SDFT) to calculate DOS.";
         item.default_value = "100";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.dos_nche);
         this->add_item(item);
     }
@@ -106,7 +100,6 @@ void ReadInput::item_postprocess()
 * The third parameter determines the total number of voltage points)";
         item.default_value = "1.0";
         item.unit = "V";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count != 1 && count != 3)
@@ -138,7 +131,6 @@ void ReadInput::item_postprocess()
         item.description = "Specify the path of the three-dimensional space and display LDOS in the form of a two-dimensional color chart, see details in out_ldos. The first three paramenters are the direct coordinates of the start point, the next three paramenters are the direct coordinates of the end point, and the final one is the number of points along the path, whose default is 100.";
         item.default_value = "0.0 0.0 0.0 0.0 0.0 1.0 100";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count != 6 && count != 7)
@@ -245,7 +237,6 @@ void ReadInput::item_postprocess()
 * 2: Lorentzian smearing)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.cond_smear);
         this->add_item(item);
     }
@@ -293,7 +284,6 @@ void ReadInput::item_postprocess()
 * false: Do not calculate Berry phase.)";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.berry_phase);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.berry_phase)
@@ -332,7 +322,6 @@ void ReadInput::item_postprocess()
 * 3: Calculate the polarization in the direction of the lattice vector a_3 defined in the STRU file.)";
         item.default_value = "3";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.gdir);
         this->add_item(item);
     }
@@ -346,7 +335,6 @@ void ReadInput::item_postprocess()
 * 0: Do not generate files for the Wannier90 code.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.towannier90);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.towannier90)
@@ -376,7 +364,6 @@ void ReadInput::item_postprocess()
         item.description = "The file name generated when running \"wannier90 -pp ...\" command";
         item.default_value = "seedname.nnkp";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.nnkpfile);
         this->add_item(item);
     }
@@ -390,7 +377,6 @@ void ReadInput::item_postprocess()
 * 2: The overlap between atomic orbitals is calculated using grid integration. The radial grid points are generated using the Gauss-Legendre method, while the spherical grid points are generated using the Lebedev-Laikov method.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             /*
                        Developer's notes: on the repair of lcao_in_pw
@@ -424,7 +410,6 @@ void ReadInput::item_postprocess()
 * down: Calculate spin down for the Wannier function.)";
         item.default_value = "up";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.wannier_spin);
         this->add_item(item);
     }
@@ -438,7 +423,6 @@ void ReadInput::item_postprocess()
 * 1: write the "*.mmn" file.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_wannier_mmn);
         this->add_item(item);
     }
@@ -452,7 +436,6 @@ void ReadInput::item_postprocess()
 * 1: write the "*.amn" file.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_wannier_amn);
         this->add_item(item);
     }
@@ -466,7 +449,6 @@ void ReadInput::item_postprocess()
 * 1: write the "*.eig" file.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_wannier_eig);
         this->add_item(item);
     }
@@ -480,7 +462,6 @@ void ReadInput::item_postprocess()
 * 1: write the "UNK.*" file.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_wannier_unk);
         this->add_item(item);
     }
@@ -494,7 +475,6 @@ void ReadInput::item_postprocess()
 * 1: write the "UNK.*" file in ASCII format (text file format).)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_wannier_wvfn_formatted);
         this->add_item(item);
     }

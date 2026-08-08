@@ -3,8 +3,11 @@
 /// availability.{h,cpp} is dependency-free (only the C++ standard library), so
 /// this test exercises the actual parser used by Input_Item directly.
 #include "source_io/module_parameter/availability.h"
+#include "source_io/module_parameter/input_item.h"
 
 #include "gtest/gtest.h"
+
+#include <stdexcept>
 
 namespace ModuleIO
 {
@@ -54,7 +57,7 @@ TEST(AvailabilityParser, AndGroup)
 
 TEST(AvailabilityParser, ParenthesisedOrNesting)
 {
-    // "and" binds looser than "or"; the grouped "(A or B)" stays a sub-tree.
+    // "and" binds tighter than "or"; the grouped "(A or B)" stays a sub-tree.
     const AvailabilityExpr e = parse_availability(
         "symmetry==1 and (dft_functional in [hse, hf] or rpa==true)");
     EXPECT_FALSE(e.is_leaf());
@@ -79,24 +82,37 @@ TEST(AvailabilityParser, EmptyIsAlwaysAvailable)
     EXPECT_TRUE(e.condition.param.empty());
 }
 
-TEST(AvailabilityParser, KeywordsNearStringEndDoNotCrash)
+TEST(AvailabilityParser, InvalidExpressionsAreRejected)
 {
-    // Exercise inputs where a keyword ("and"/"or") sits at/just before the
-    // string end, which previously could index past the buffer.
-    const char* edge_cases[] = {
+    const char* invalid_expressions[] = {
+        "Only used for plane wave basis.",
+        "   ",
         "and",
         " or",
         "basis_type==pw or",
         "a and",
         " and basis_type==pw",
         "basis_type==lcao and esolver_type==tddft or ",
+        "basis_type==pw==lcao",
+        "basis_type==pw)",
+        "(basis_type==pw",
     };
-    for (const char* s : edge_cases)
+    for (const char* s : invalid_expressions)
     {
-        const AvailabilityExpr e = parse_availability(s);
-        // Parser must not crash; result is either empty or a parseable tree.
-        EXPECT_NO_THROW(e.to_string());
+        EXPECT_THROW(parse_availability(s), std::invalid_argument) << s;
     }
+}
+
+TEST(AvailabilityParser, SetterRejectsInvalidInputWithoutChangingState)
+{
+    Input_Item item("example");
+    item.set_availability("basis_type==pw");
+    EXPECT_EQ(item.get_availability(), "basis_type==pw");
+    EXPECT_EQ(item.get_availability_expr().to_string(), "basis_type==pw");
+
+    EXPECT_THROW(item.set_availability("basis_type==pw and"), std::invalid_argument);
+    EXPECT_EQ(item.get_availability(), "basis_type==pw");
+    EXPECT_EQ(item.get_availability_expr().to_string(), "basis_type==pw");
 }
 
 } // namespace ModuleIO

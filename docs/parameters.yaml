@@ -1327,7 +1327,7 @@ parameters:
       [NOTE] Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges. When both are used, fixed_ibrav is applied first, then fixed_axes = "volume" rescaling is applied.
     default_value: "False"
     unit: ""
-    availability: "relax_method in [cg 2] and latname != none"
+    availability: "relax_method in [cg 2] and latname!=none"
   - name: fixed_atoms
     category: Geometry relaxation
     type: Boolean
@@ -2245,7 +2245,7 @@ parameters:
       Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
     default_value: "1"
     unit: ""
-    availability: method_sto==2 and out_dos==1 or cal_cond==true
+    availability: (method_sto==2 and out_dos==1) or cal_cond==true
   - name: deepks_out_labels
     category: DeePKS
     type: Integer
@@ -3495,7 +3495,7 @@ parameters:
       Specifies whether to write the partial charge densities for all k-points to individual files or merge them. Warning: Enabling symmetry may produce unwanted results due to reduced k-point weights and symmetry operations in real space. Therefore when calculating partial charge densities, if you are not sure what you want exactly, it is strongly recommended to set symmetry = -1. It is noteworthy that your symmetry setting should remain the same as that in the SCF procedure.
     default_value: "false"
     unit: ""
-    availability: "basis_type==pw and out_pchg!=none or basis_type==lcao and calculation==get_pchg and gamma_only==0"
+    availability: "(basis_type==pw and out_pchg!=none) or (basis_type==lcao and calculation==get_pchg and gamma_only==0)"
   - name: out_elf
     category: Output information
     type: "Integer \\[Integer\\](optional)"
@@ -4105,7 +4105,7 @@ parameters:
       * eVA (eV Angstrom)
     default_value: Jnm6/mol
     unit: ""
-    availability: "vdw_C6_file!=default"
+    availability: "vdw_c6_file!=default"
   - name: vdw_r0_file
     category: vdW correction
     type: String
@@ -4127,7 +4127,7 @@ parameters:
       * Bohr
     default_value: "A"
     unit: ""
-    availability: "vdw_R0_file!=default"
+    availability: "vdw_r0_file!=default"
   - name: vdw_cutoff_type
     category: vdW correction
     type: String

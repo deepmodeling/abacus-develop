@@ -20,7 +20,6 @@ void ReadInput::item_model()
 * False: Not added the electric field.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.efield_flag);
         this->add_item(item);
     }
@@ -120,7 +119,6 @@ void ReadInput::item_model()
 * false: No compensating charge is added.)";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.gate_flag);
         this->add_item(item);
     }
@@ -132,7 +130,6 @@ void ReadInput::item_model()
         item.description = "Position of the charged plate in the unit cell";
         item.default_value = "0.5";
         item.unit = "Unit cell size";
-        item.availability = "";
         read_sync_double(input.zgate);
         this->add_item(item);
     }
@@ -147,7 +144,6 @@ void ReadInput::item_model()
 * false: No potential barrier is added.)";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.block);
         this->add_item(item);
     }
@@ -159,7 +155,6 @@ void ReadInput::item_model()
         item.description = "Lower beginning of the potential barrier";
         item.default_value = "0.45";
         item.unit = "Unit cell size";
-        item.availability = "";
         read_sync_double(input.block_down);
         this->add_item(item);
     }
@@ -171,7 +166,6 @@ void ReadInput::item_model()
         item.description = "Upper beginning of the potential barrier";
         item.default_value = "0.55";
         item.unit = "Unit cell size";
-        item.availability = "";
         read_sync_double(input.block_up);
         this->add_item(item);
     }
@@ -183,7 +177,6 @@ void ReadInput::item_model()
         item.description = "Height of the potential barrier";
         item.default_value = "0.1";
         item.unit = "Rydberg";
-        item.availability = "";
         read_sync_double(input.block_height);
         this->add_item(item);
     }
@@ -197,7 +190,6 @@ void ReadInput::item_model()
         item.description = "Calculate implicit solvation correction";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.imp_sol);
         this->add_item(item);
     }
@@ -221,7 +213,6 @@ void ReadInput::item_model()
         item.description = "The effective surface tension parameter that describes the cavitation, the dispersion, and the repulsion interaction between the solute and the solvent which are not captured by the electrostatic terms";
         item.default_value = "1.0798e-05";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.tau);
         this->add_item(item);
     }
@@ -233,7 +224,6 @@ void ReadInput::item_model()
         item.description = "The width of the diffuse cavity that is implicitly determined by the electronic structure of the solute";
         item.default_value = "0.6";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.sigma_k);
         this->add_item(item);
     }
@@ -245,7 +235,6 @@ void ReadInput::item_model()
         item.description = "The value of the electron density at which the dielectric cavity forms";
         item.default_value = "0.00037";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.nc_k);
         this->add_item(item);
     }
@@ -266,7 +255,6 @@ void ReadInput::item_model()
 [NOTE] ABACUS supports automatic setting of DFT-D3 parameters for common functionals. To benefit from this feature, please specify the parameter dft_functional explicitly, otherwise the autoset procedure will crash. If not satisfied with the built-in parameters, any manual setting on vdw_s6, vdw_s8, vdw_a1 and vdw_a2 will overwrite the automatic values.)";
         item.default_value = "none";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.vdw_method);
         this->add_item(item);
     }
@@ -457,7 +445,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
 * eVA (eV Angstrom))";
         item.default_value = "Jnm6/mol";
         item.unit = "";
-        item.set_availability("vdw_C6_file!=default");
+        item.set_availability("vdw_c6_file!=default");
         read_sync_string(input.vdw_C6_unit);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_C6_unit != "Jnm6/mol") && (para.input.vdw_C6_unit != "eVA6"))
@@ -493,7 +481,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
 * Bohr)";
         item.default_value = "A";
         item.unit = "";
-        item.set_availability("vdw_R0_file!=default");
+        item.set_availability("vdw_r0_file!=default");
         read_sync_string(input.vdw_R0_unit);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_R0_unit != "A") && (para.input.vdw_R0_unit != "Bohr"))
@@ -513,7 +501,6 @@ Namely, each line contains the element name and the corresponding parameter.)";
 * period: The extent of the supercell is explicitly specified using the vdw_cutoff_period keyword.)";
         item.default_value = "radius";
         item.unit = "";
-        item.availability = "";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.vdw_cutoff_type != "radius" && para.input.vdw_cutoff_type != "period")
             {
@@ -659,7 +646,6 @@ Namely, each line contains the element name and the corresponding parameter.)";
 * Bohr)";
         item.default_value = "Bohr";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.vdw_cn_thr_unit);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_cn_thr_unit != "A") && (para.input.vdw_cn_thr_unit != "Bohr"))

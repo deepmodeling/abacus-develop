@@ -824,7 +824,6 @@ Note: Even dimensions may cause slight errors in FFT. It should be ignorable in 
         item.description = "Whether to use machine learning based exact exchange (ML-EXX).";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.ml_exx);
         this->add_item(item);
     }

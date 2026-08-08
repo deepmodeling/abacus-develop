@@ -1602,7 +1602,7 @@
 ### npart_sto
 
 - **Type**: Integer
-- **Availability**: *method_sto==2 and out_dos==1 or cal_cond==true*
+- **Availability**: *(method_sto==2 and out_dos==1) or cal_cond==true*
 - **Description**: Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
 - **Default**: 1
 
@@ -1770,7 +1770,7 @@
 ### fixed_ibrav
 
 - **Type**: Boolean
-- **Availability**: *relax_method in [cg 2] and latname != none*
+- **Availability**: *relax_method in [cg 2] and latname!=none*
 - **Description**: - True: the lattice type will be preserved during relaxation. The lattice vectors are reconstructed to match the specified Bravais lattice type after each update.
   - False: No restrictions are exerted during relaxation in terms of lattice type
 
@@ -2354,7 +2354,7 @@
 ### if_separate_k
 
 - **Type**: Boolean
-- **Availability**: *basis_type==pw and out_pchg!=none or basis_type==lcao and calculation==get_pchg and gamma_only==0*
+- **Availability**: *(basis_type==pw and out_pchg!=none) or (basis_type==lcao and calculation==get_pchg and gamma_only==0)*
 - **Description**: Specifies whether to write the partial charge densities for all k-points to individual files or merge them. Warning: Enabling symmetry may produce unwanted results due to reduced k-point weights and symmetry operations in real space. Therefore when calculating partial charge densities, if you are not sure what you want exactly, it is strongly recommended to set symmetry = -1. It is noteworthy that your symmetry setting should remain the same as that in the SCF procedure.
 - **Default**: false
 
@@ -3973,7 +3973,7 @@
 ### vdw_c6_unit
 
 - **Type**: String
-- **Availability**: *vdw_C6_file!=default*
+- **Availability**: *vdw_c6_file!=default*
 - **Description**: Specifies the unit of the provided parameters in the D2 method. Available options are:
   - Jnm6/mol (J nm^6/mol)
   - eVA (eV Angstrom)
@@ -3993,7 +3993,7 @@
 ### vdw_r0_unit
 
 - **Type**: String
-- **Availability**: *vdw_R0_file!=default*
+- **Availability**: *vdw_r0_file!=default*
 - **Description**: Specifies the unit for the parameters in the D2 method when manually set by the user. Available options are:
   - A (Angstrom)
   - Bohr

@@ -316,7 +316,6 @@ void ReadInput::item_deepks()
                           "When set to 1, ABACUS needs to be run with only 1 process.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.deepks_out_unittest);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.deepks_out_unittest)

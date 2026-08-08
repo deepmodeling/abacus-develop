@@ -39,7 +39,8 @@ struct AvailabilityExpr
 /// Accepts the canonical grammar (`param==value`, `param in [a, b]`, the
 /// comparison operators ==, !=, >, >=, <, <=, `and`/`or`/`,` combinators and
 /// `(...)` grouping). An empty string yields an empty (always-available)
-/// expression.
+/// expression. Non-empty input that is not consumed by this grammar throws
+/// std::invalid_argument.
 AvailabilityExpr parse_availability(const std::string& raw);
 
 } // namespace ModuleIO

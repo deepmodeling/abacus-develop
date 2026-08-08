@@ -92,10 +92,10 @@ class AvailabilityParserTest(unittest.TestCase):
                          ("vdw_method", "in", ["d2", "d3_0", "d3_bj"]))
 
     def test_comparison_operator(self):
-        r = parse_availability("vdw_C6_file!=default")
+        r = parse_availability("vdw_c6_file!=default")
         self.assertEqual(r.kind, "Expression")
         c = _conds(r)[0]
-        self.assertEqual((c.param, c.op, c.values), ("vdw_C6_file", "!=", ["default"]))
+        self.assertEqual((c.param, c.op, c.values), ("vdw_c6_file", "!=", ["default"]))
 
     def test_label_prefix(self):
         r = parse_availability("label: Numerical atomic orbital basis")
@@ -107,7 +107,7 @@ class AvailabilityParserTest(unittest.TestCase):
             "symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or rpa==true)")
         self.assertEqual(r.kind, "Expression")
         root = r.expr
-        # "and" binds looser than "or"; the grouped "(A or B)" must stay a
+        # "and" binds tighter than "or"; the grouped "(A or B)" must stay a
         # separate child so precedence is preserved.
         self.assertIsInstance(root, Expr)
         self.assertEqual(root.op, "and")
@@ -122,6 +122,23 @@ class AvailabilityParserTest(unittest.TestCase):
         self.assertEqual((d.param, d.op, d.values),
                          ("dft_functional", "in", ["hse", "hf", "pbe0", "scan0"]))
         self.assertEqual((rpa.param, rpa.op, rpa.values), ("rpa", "==", ["true"]))
+
+    def test_malformed_expressions_are_unstructured(self):
+        for text in (
+            "basis_type==pw and",
+            "basis_type==pw or",
+            "basis_type==pw==lcao",
+            "basis_type==pw)",
+            "(basis_type==pw",
+            "basis_type==pw trailing text",
+        ):
+            self.assertEqual(parse_availability(text).kind, "Unstructured", text)
+
+    def test_natural_language_is_not_an_expression(self):
+        self.assertNotEqual(
+            parse_availability("Only used for plane wave basis.").kind,
+            "Expression",
+        )
 
     def test_contains_vector_semantics(self):
         # td_ttype is a Vector: "contains 2" is containment, distinct from

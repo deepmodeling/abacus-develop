@@ -1,284 +1,317 @@
 #include "source_io/module_parameter/availability.h"
 
 #include <cctype>
+#include <stdexcept>
+#include <utility>
 
 namespace ModuleIO
 {
 namespace
 {
 
-std::string trim_copy(const std::string& s)
+bool is_identifier_start(const char c)
 {
-    std::size_t b = 0, e = s.size();
-    while (b < e && std::isspace(static_cast<unsigned char>(s[b])))
-    {
-        ++b;
-    }
-    while (e > b && std::isspace(static_cast<unsigned char>(s[e - 1])))
-    {
-        --e;
-    }
-    return s.substr(b, e - b);
+    return std::isalpha(static_cast<unsigned char>(c)) != 0;
 }
 
-std::string lower_copy(const std::string& s)
+bool is_identifier_char(const char c)
 {
-    std::string r = s;
-    for (std::size_t i = 0; i < r.size(); ++i)
-    {
-        r[i] = static_cast<char>(std::tolower(static_cast<unsigned char>(r[i])));
-    }
-    return r;
+    return std::isalnum(static_cast<unsigned char>(c)) != 0 || c == '_';
 }
 
-/// Split `text` on the keyword `kw` (e.g. "and"/"or", space separated, or the
-/// plain "," separator) occurring at bracket/paren depth 0. Respects () and []
-/// so value lists are not split. Returns trimmed, non-empty parts.
-std::vector<std::string> split_top_keyword(const std::string& text,
-                                           const std::string& kw)
+std::string trim_copy(const std::string& value)
 {
-    std::vector<std::string> out;
-    int depth = 0;
-    std::size_t start = 0;
-    const std::size_t n = text.size();
-    std::size_t i = 0;
-    while (i < n)
+    std::size_t begin = 0;
+    std::size_t end = value.size();
+    while (begin < end && std::isspace(static_cast<unsigned char>(value[begin])))
     {
-        char c = text[i];
-        if (c == '(' || c == '[')
-        {
-            ++depth;
-            ++i;
-            continue;
-        }
-        if (c == ')' || c == ']')
-        {
-            if (depth > 0)
-            {
-                --depth;
-            }
-            ++i;
-            continue;
-        }
-        if (depth == 0)
-        {
-            // "," is a plain separator; word keywords need word boundaries
-            const bool bound_ok = (kw == ",") || (i == 0) ||
-                std::isspace(static_cast<unsigned char>(text[i - 1]));
-            const bool next_ok = (kw == ",") ||
-                (i + kw.size() >= n ||
-                 std::isspace(static_cast<unsigned char>(text[i + kw.size()])) ||
-                 text[i + kw.size()] == '(' || text[i + kw.size()] == '[');
-            if (bound_ok && next_ok &&
-                i + kw.size() <= n &&
-                text.compare(i, kw.size(), kw) == 0)
-            {
-                std::string part = trim_copy(text.substr(start, i - start));
-                if (!part.empty() && part != kw)
-                {
-                    out.push_back(part);
-                }
-                start = i + kw.size();
-                i = start;
-                continue;
-            }
-        }
-        ++i;
+        ++begin;
     }
-    std::string part = trim_copy(text.substr(start));
-    if (!part.empty())
+    while (end > begin && std::isspace(static_cast<unsigned char>(value[end - 1])))
     {
-        out.push_back(part);
+        --end;
     }
-    return out;
+    return value.substr(begin, end - begin);
 }
 
-/// Split a comma-separated list inside `[...]`.
-std::vector<std::string> split_commas(const std::string& inner)
+std::vector<std::string> split_slash_values(const std::string& value)
 {
-    std::vector<std::string> out;
-    std::size_t start = 0;
-    for (std::size_t i = 0; i <= inner.size(); ++i)
+    std::vector<std::string> values;
+    std::size_t begin = 0;
+    while (begin <= value.size())
     {
-        if (i == inner.size() || inner[i] == ',')
+        const std::size_t slash = value.find('/', begin);
+        const std::string part = trim_copy(value.substr(
+            begin, slash == std::string::npos ? std::string::npos : slash - begin));
+        if (part.empty())
         {
-            std::string v = trim_copy(inner.substr(start, i - start));
-            if (!v.empty())
-            {
-                out.push_back(v);
-            }
-            start = i + 1;
+            return {};
         }
+        values.push_back(part);
+        if (slash == std::string::npos)
+        {
+            break;
+        }
+        begin = slash + 1;
     }
-    return out;
+    return values;
 }
 
-bool parse_atom(const std::string& text, AvailabilityCondition& cond)
+class AvailabilityParser
 {
-    std::string t = trim_copy(text);
-    if (t.empty())
+  public:
+    explicit AvailabilityParser(const std::string& text) : text_(text) {}
+
+    AvailabilityExpr parse()
     {
+        if (at_end())
+        {
+            return AvailabilityExpr();
+        }
+        skip_space();
+        if (at_end())
+        {
+            fail("expected parameter identifier");
+        }
+
+        AvailabilityExpr result = parse_or();
+        skip_space();
+        if (!at_end())
+        {
+            fail("unexpected token");
+        }
+        return result;
+    }
+
+  private:
+    const std::string& text_;
+    std::size_t pos_ = 0;
+
+    bool at_end() const
+    {
+        return pos_ == text_.size();
+    }
+
+    void skip_space()
+    {
+        while (!at_end() && std::isspace(static_cast<unsigned char>(text_[pos_])))
+        {
+            ++pos_;
+        }
+    }
+
+    [[noreturn]] void fail(const std::string& message) const
+    {
+        throw std::invalid_argument("Invalid availability expression at column "
+                                    + std::to_string(pos_ + 1) + ": " + message
+                                    + " in '" + text_ + "'");
+    }
+
+    bool consume_char(const char expected)
+    {
+        skip_space();
+        if (!at_end() && text_[pos_] == expected)
+        {
+            ++pos_;
+            return true;
+        }
         return false;
     }
-    // canonical comparison operators (longest/most specific first)
-    static const char* OPS[] = {"==", "!=", ">=", "<=", ">", "<"};
-    for (const char* op: OPS)
+
+    bool consume_keyword(const char* keyword)
     {
-        std::string opstr(op);
-        const std::size_t pos = t.find(opstr);
-        if (pos != std::string::npos)
+        skip_space();
+        const std::size_t length = std::char_traits<char>::length(keyword);
+        if (text_.compare(pos_, length, keyword) != 0)
         {
-            std::string param = trim_copy(t.substr(0, pos));
-            std::string rhs = trim_copy(t.substr(pos + opstr.size()));
-            if (param.empty() || rhs.empty())
+            return false;
+        }
+        const std::size_t end = pos_ + length;
+        if ((pos_ > 0 && is_identifier_char(text_[pos_ - 1]))
+            || (end < text_.size() && is_identifier_char(text_[end])))
+        {
+            return false;
+        }
+        pos_ = end;
+        return true;
+    }
+
+    std::string parse_identifier()
+    {
+        skip_space();
+        if (at_end() || !is_identifier_start(text_[pos_]))
+        {
+            fail("expected parameter identifier");
+        }
+        const std::size_t begin = pos_++;
+        while (!at_end() && is_identifier_char(text_[pos_]))
+        {
+            ++pos_;
+        }
+        return text_.substr(begin, pos_ - begin);
+    }
+
+    std::string parse_scalar_value()
+    {
+        skip_space();
+        const std::size_t begin = pos_;
+        while (!at_end() && !std::isspace(static_cast<unsigned char>(text_[pos_]))
+               && text_[pos_] != '(' && text_[pos_] != ')' && text_[pos_] != '['
+               && text_[pos_] != ']' && text_[pos_] != ',')
+        {
+            if (text_[pos_] == '=' || text_[pos_] == '<' || text_[pos_] == '>'
+                || text_[pos_] == '!')
             {
-                return false;
+                fail("invalid character in value");
             }
-            cond.param = param;
-            cond.op = opstr;
-            if (opstr == "==" && rhs.find('/') != std::string::npos)
+            ++pos_;
+        }
+        if (begin == pos_)
+        {
+            fail("expected value");
+        }
+        return text_.substr(begin, pos_ - begin);
+    }
+
+    std::string parse_list_value()
+    {
+        skip_space();
+        const std::size_t begin = pos_;
+        while (!at_end() && text_[pos_] != ',' && text_[pos_] != ']')
+        {
+            if (text_[pos_] == '[' || text_[pos_] == '(' || text_[pos_] == ')'
+                || text_[pos_] == '=' || text_[pos_] == '<' || text_[pos_] == '>'
+                || text_[pos_] == '!')
             {
-                // equality may carry a slash-separated value list
-                std::size_t beg = 0;
-                while (beg <= rhs.size())
+                fail("invalid character in list value");
+            }
+            ++pos_;
+        }
+        const std::string value = trim_copy(text_.substr(begin, pos_ - begin));
+        if (value.empty())
+        {
+            fail("expected non-empty list value");
+        }
+        return value;
+    }
+
+    AvailabilityExpr parse_condition()
+    {
+        AvailabilityExpr result;
+        result.condition.param = parse_identifier();
+        skip_space();
+
+        static const char* comparison_ops[] = {"==", "!=", ">=", "<=", ">", "<"};
+        for (const char* op : comparison_ops)
+        {
+            const std::size_t length = std::char_traits<char>::length(op);
+            if (text_.compare(pos_, length, op) == 0)
+            {
+                pos_ += length;
+                result.condition.op = op;
+                const std::string value = parse_scalar_value();
+                if (std::string(op) == "==")
                 {
-                    std::size_t sl = rhs.find('/', beg);
-                    std::string v = trim_copy(rhs.substr(beg,
-                        sl == std::string::npos ? std::string::npos : sl - beg));
-                    if (!v.empty())
-                    {
-                        cond.values.push_back(v);
-                    }
-                    if (sl == std::string::npos)
-                    {
-                        break;
-                    }
-                    beg = sl + 1;
+                    result.condition.values = split_slash_values(value);
                 }
-                return !cond.values.empty();
-            }
-            cond.values.push_back(rhs);
-            return true;
-        }
-    }
-    // canonical containment: param contains value (e.g. a Vector holds an element)
-    {
-        const std::string marker = " contains ";
-        const std::size_t cp = t.find(marker);
-        if (cp != std::string::npos)
-        {
-            std::string param = trim_copy(t.substr(0, cp));
-            std::string rhs = trim_copy(t.substr(cp + marker.size()));
-            if (param.empty() || rhs.empty())
-            {
-                return false;
-            }
-            cond.param = param;
-            cond.op = "contains";
-            cond.values.push_back(rhs);
-            return true;
-        }
-    }
-    // canonical in-list: param in [v1, v2]
-    std::size_t i = 0;
-    while (i < t.size())
-    {
-        if (std::isspace(static_cast<unsigned char>(t[i])))
-        {
-            std::size_t j = i + 1;
-            while (j < t.size() && std::isspace(static_cast<unsigned char>(t[j])))
-            {
-                ++j;
-            }
-            if (j + 2 <= t.size() && t.compare(j, 2, "in") == 0 &&
-                (j + 2 == t.size() || std::isspace(static_cast<unsigned char>(t[j + 2]))))
-            {
-                std::string param = trim_copy(t.substr(0, i));
-                std::string rest = trim_copy(t.substr(j + 2));
-                if (param.empty() || rest.size() < 2 ||
-                    rest[0] != '[' || rest[rest.size() - 1] != ']')
+                else
                 {
-                    return false;
+                    result.condition.values.push_back(value);
                 }
-                cond.param = param;
-                cond.op = "in";
-                cond.values = split_commas(rest.substr(1, rest.size() - 2));
-                return !cond.values.empty();
-            }
-            i = j;
-        }
-        else
-        {
-            ++i;
-        }
-    }
-    return false;
-}
-
-AvailabilityExpr parse_or(const std::string& text);
-AvailabilityExpr parse_and(const std::string& text);
-AvailabilityExpr parse_unary(const std::string& text);
-
-AvailabilityExpr parse_or(const std::string& text)
-{
-    std::vector<std::string> parts = split_top_keyword(text, "or");
-    if (parts.size() == 1)
-    {
-        return parse_and(text);
-    }
-    AvailabilityExpr node;
-    node.op = "or";
-    for (std::size_t k = 0; k < parts.size(); ++k)
-    {
-        node.children.push_back(parse_and(parts[k]));
-    }
-    return node;
-}
-
-AvailabilityExpr parse_and(const std::string& text)
-{
-    std::vector<std::string> parts;
-    {
-        std::vector<std::string> a = split_top_keyword(text, "and");
-        for (std::size_t k = 0; k < a.size(); ++k)
-        {
-            std::vector<std::string> c = split_top_keyword(a[k], ",");
-            for (std::size_t m = 0; m < c.size(); ++m)
-            {
-                if (!c[m].empty() && c[m] != "," && c[m] != "and")
+                if (result.condition.values.empty())
                 {
-                    parts.push_back(c[m]);
+                    fail("expected value");
                 }
+                return result;
             }
         }
-    }
-    if (parts.size() == 1)
-    {
-        return parse_unary(parts[0]);
-    }
-    AvailabilityExpr node;
-    node.op = "and";
-    for (std::size_t k = 0; k < parts.size(); ++k)
-    {
-        node.children.push_back(parse_unary(parts[k]));
-    }
-    return node;
-}
 
-AvailabilityExpr parse_unary(const std::string& text)
-{
-    std::string t = trim_copy(text);
-    if (t.size() >= 2 && t[0] == '(' && t[t.size() - 1] == ')')
-    {
-        return parse_or(t.substr(1, t.size() - 2));
+        if (consume_keyword("contains"))
+        {
+            result.condition.op = "contains";
+            result.condition.values.push_back(parse_scalar_value());
+            return result;
+        }
+
+        if (consume_keyword("in"))
+        {
+            if (!consume_char('['))
+            {
+                fail("expected '[' after 'in'");
+            }
+            result.condition.op = "in";
+            result.condition.values.push_back(parse_list_value());
+            while (consume_char(','))
+            {
+                result.condition.values.push_back(parse_list_value());
+            }
+            if (!consume_char(']'))
+            {
+                fail("expected ']' after list");
+            }
+            return result;
+        }
+
+        fail("expected comparison operator");
     }
-    AvailabilityExpr leaf;
-    if (parse_atom(t, leaf.condition))
+
+    AvailabilityExpr parse_primary()
     {
-        return leaf;
+        skip_space();
+        if (consume_char('('))
+        {
+            AvailabilityExpr result = parse_or();
+            if (!consume_char(')'))
+            {
+                fail("expected ')' after grouped expression");
+            }
+            return result;
+        }
+        return parse_condition();
     }
-    return leaf;
-}
+
+    AvailabilityExpr parse_and()
+    {
+        AvailabilityExpr result = parse_primary();
+        std::vector<AvailabilityExpr> children;
+        children.push_back(result);
+        while (true)
+        {
+            if (!consume_keyword("and") && !consume_char(','))
+            {
+                break;
+            }
+            children.push_back(parse_primary());
+        }
+        if (children.size() == 1)
+        {
+            return result;
+        }
+        AvailabilityExpr node;
+        node.op = "and";
+        node.children = std::move(children);
+        return node;
+    }
+
+    AvailabilityExpr parse_or()
+    {
+        AvailabilityExpr result = parse_and();
+        std::vector<AvailabilityExpr> children;
+        children.push_back(result);
+        while (consume_keyword("or"))
+        {
+            children.push_back(parse_and());
+        }
+        if (children.size() == 1)
+        {
+            return result;
+        }
+        AvailabilityExpr node;
+        node.op = "or";
+        node.children = std::move(children);
+        return node;
+    }
+};
 
 } // namespace
 
@@ -290,23 +323,27 @@ std::string AvailabilityCondition::to_string() const
     }
     if (op == "in")
     {
-        std::string s = param + " in [";
+        std::string result = param + " in [";
         for (std::size_t i = 0; i < values.size(); ++i)
         {
             if (i)
             {
-                s += ", ";
+                result += ", ";
             }
-            s += values[i];
+            result += values[i];
         }
-        return s + "]";
+        return result + "]";
     }
     if (op == "contains")
     {
         return param + " contains " + values[0];
     }
-    // single-value comparison (==, !=, >, >=, <, <=)
-    return param + op + values[0];
+    std::string result = param + op + values[0];
+    for (std::size_t i = 1; i < values.size(); ++i)
+    {
+        result += "/" + values[i];
+    }
+    return result;
 }
 
 std::string AvailabilityExpr::to_string() const
@@ -315,34 +352,29 @@ std::string AvailabilityExpr::to_string() const
     {
         return condition.to_string();
     }
-    std::string sep = (op == "or") ? " or " : " and ";
-    std::string s;
+    const std::string separator = op == "or" ? " or " : " and ";
+    std::string result;
     for (std::size_t i = 0; i < children.size(); ++i)
     {
         if (i)
         {
-            s += sep;
+            result += separator;
         }
         if (children[i].is_leaf())
         {
-            s += children[i].to_string();
+            result += children[i].to_string();
         }
         else
         {
-            s += "(" + children[i].to_string() + ")";
+            result += "(" + children[i].to_string() + ")";
         }
     }
-    return s;
+    return result;
 }
 
 AvailabilityExpr parse_availability(const std::string& raw)
 {
-    std::string t = trim_copy(raw);
-    if (t.empty())
-    {
-        return AvailabilityExpr();
-    }
-    return parse_or(t);
+    return AvailabilityParser(raw).parse();
 }
 
 } // namespace ModuleIO

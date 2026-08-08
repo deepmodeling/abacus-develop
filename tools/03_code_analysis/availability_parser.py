@@ -84,6 +84,7 @@ _CONTAINS = re.compile(r"\bcontains\b", re.IGNORECASE)
 _IN = re.compile(r"\bin\b", re.IGNORECASE)
 
 _PARAM_LIKE = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+_BARE_VALUE = re.compile(r"^[^\s,()\[\]=<>!]+(?:/[^\s,()\[\]=<>!]+)*$")
 
 
 def _canonical_value(v):
@@ -131,6 +132,8 @@ def _parse_single_condition(text, param_regex):
             rhs = text[pos + len(op):].strip()
             if not (param_regex(param) and rhs):
                 return None
+            if not _BARE_VALUE.fullmatch(rhs):
+                return None
             if op == "==":
                 # equality may carry a slash/comma-separated value list
                 values = _split_values_tokens([t for t in re.split(r"[/,]", rhs)])
@@ -145,7 +148,7 @@ def _parse_single_condition(text, param_regex):
     if pos > 0:
         param = text[:pos].strip()
         rhs = text[pos + 1:].strip()
-        if param_regex(param) and rhs:
+        if param_regex(param) and rhs and _BARE_VALUE.fullmatch(rhs):
             values = _split_values_tokens([t for t in re.split(r"[/,]", rhs)])
             values = [v for v in values if v]
             if values:
@@ -170,7 +173,7 @@ def _parse_single_condition(text, param_regex):
         if m:
             param = text[: m.start()].strip()
             rhs = text[m.end():].strip()
-            if param_regex(param) and rhs:
+            if param_regex(param) and rhs and _BARE_VALUE.fullmatch(rhs):
                 tokens = re.split(r"[,]", rhs)
                 values = _split_values_tokens(tokens)
                 values = [v for v in values if v]
@@ -233,8 +236,7 @@ def _split_top_level(text, keywords):
                         or text[i + len(kw)] in "(["
                     if prev_bound and next_bound and text.startswith(kw, i):
                         seg = text[start:i].strip()
-                        if seg:
-                            parts.append(seg)
+                        parts.append(seg)
                         start = i + len(kw)
                         i = start
                         matched = True
@@ -243,8 +245,7 @@ def _split_top_level(text, keywords):
                 continue
         i += 1
     seg = text[start:].strip()
-    if seg:
-        parts.append(seg)
+    parts.append(seg)
     return parts
 
 
@@ -306,6 +307,17 @@ def parse_availability(text, param_regex=_PARAM_LIKE.match):
     text = (text or "").strip()
     if not text:
         return Availability("Label", text=text)
+
+    delimiters = []
+    pairs = {')': '(', ']': '['}
+    for index, char in enumerate(text):
+        if char in '([':
+            delimiters.append(char)
+        elif char in ')]':
+            if not delimiters or delimiters.pop() != pairs[char]:
+                return Availability("Unstructured", text=text)
+    if delimiters:
+        return Availability("Unstructured", text=text)
 
     # Canonical label form: "label: <name>"
     if len(text) >= 6 and text[:6].lower() == "label:":

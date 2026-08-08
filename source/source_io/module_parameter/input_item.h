@@ -31,8 +31,8 @@ class Input_Item
         description = item.description;
         default_value = item.default_value;
         unit = item.unit;
-        availability = item.availability;
-        availability_expr = item.availability_expr;
+        availability_ = item.availability_;
+        availability_expr_ = item.availability_expr_;
         annotation = item.annotation;
         read_value = item.read_value;
         check_value = item.check_value;
@@ -50,18 +50,23 @@ class Input_Item
     std::string description;   ///< full description (supports multi-line, lists, notes)
     std::string default_value; ///< default value as string
     std::string unit;          ///< unit of measurement (empty if none)
-    std::string availability;  ///< availability conditions (empty if always)
-
-    /// Structured availability representation, kept in sync with `availability`
-    /// via set_availability(). See availability.h for the grammar.
-    AvailabilityExpr availability_expr;  ///< parsed condition tree
-
-    /// Set the canonical availability string and (re)parse it into the
-    /// structured expression tree, so the two representations never diverge.
+    /// Set and validate the canonical availability expression. An empty value
+    /// means that the item is always available.
     void set_availability(const std::string& value)
     {
-        availability = value;
-        availability_expr = parse_availability(value);
+        const AvailabilityExpr parsed = parse_availability(value);
+        availability_expr_ = parsed;
+        availability_ = parsed.to_string();
+    }
+
+    const std::string& get_availability() const
+    {
+        return availability_;
+    }
+
+    const AvailabilityExpr& get_availability_expr() const
+    {
+        return availability_expr_;
     }
 
     bool is_read() const ///< check if the input item is read
@@ -88,6 +93,10 @@ class Input_Item
     /// get final_value function for output INPUT file
     std::function<void(Input_Item&, const Parameter&)> get_final_value = nullptr;
     // ====== !!! Do not add any more functions here.  ======
+
+  private:
+    std::string availability_;             ///< canonical availability string
+    AvailabilityExpr availability_expr_;   ///< parsed condition tree
 };
 
 } // namespace ModuleIO
