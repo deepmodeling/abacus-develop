@@ -49,11 +49,6 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_IO_binstream_test
-  SOURCES binstream_test.cpp ../../source_base/module_out/binstream.cpp
-)
-
-AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  base device symmetry
   SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
@@ -134,24 +129,6 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_IO_sparse_matrix_test
-  LIBS parameter  base device
-  SOURCES sparse_matrix_test.cpp
-)
-
-AddTest(
-  TARGET MODULE_IO_file_reader_test
-  LIBS parameter  base device
-  SOURCES file_reader_test.cpp
-)
-
-AddTest(
-  TARGET MODULE_IO_csr_reader_test
-  LIBS parameter  base device
-  SOURCES csr_reader_test.cpp
-)
-
-AddTest(
   TARGET MODULE_IO_read_rhog_test
   LIBS parameter  base device planewave
   SOURCES read_rhog_test.cpp ../module_chgpot/rhog_io.cpp ../../source_basis/module_pw/test/test_tool.cpp
@@ -229,17 +206,6 @@ AddTest(
 #)
 
 #endif()
-
-AddTest(
-  TARGET MODULE_IO_cif_io_test
-  LIBS parameter base device
-  SOURCES cif_io_test.cpp ../../source_cell/cif_io.cpp
-)
-
-add_test(NAME MODULE_IO_cif_io_test_parallel
-      COMMAND mpirun -np 4 ./MODULE_IO_cif_io_test
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
 
 AddTest(
   TARGET MODULE_IO_orb_io_test

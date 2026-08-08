@@ -28,6 +28,7 @@ VPATH=./src_global:\
 ./source_base/module_container/ATen/ops:\
 ./source_base/module_device:\
 ./source_base/module_mixing:\
+./source_base/module_out:\
 ./source_md:\
 ./source_basis/module_pw:\
 ./source_base/module_fft:\
