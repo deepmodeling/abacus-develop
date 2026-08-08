@@ -18,11 +18,12 @@ class Parallel_Grid
     ~Parallel_Grid();
 
     void init(const int &ncx, const int &ncy, const int &ncz,
-        const int &nczp, const int &nrxx, const int &nbz, const int &bz);
+        const int &nczp, const int &nrxx, const int &nbz, const int &bz,
+        const int nprocgroup);
 
 #ifdef __MPI
     /// @brief  Broadcast data from root to all processors. The index order is [x][y][z].
-    void bcast(const double* const data_global, double* data_local, const int& rank) const;
+    void bcast(const double* const data_global, double* data_local, const int& rank, const bool is_sdft) const;
     /// @brief  Reduce data from all processors to root. The index order is [x][y][z].
     void reduce(double* rhotot, const double* constrhoin, const bool reduce_all_pool) const;
 #endif

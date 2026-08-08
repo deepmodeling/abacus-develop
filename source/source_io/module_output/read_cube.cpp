@@ -1,6 +1,7 @@
 #include "source_io/module_output/cube_io.h"
 #include <limits>
 #include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_io/module_parameter/parameter.h"
 #include <cstring>  // use std::memcpy
 
 bool ModuleIO::read_vdata_palgrid(
@@ -67,7 +68,7 @@ bool ModuleIO::read_vdata_palgrid(
 
     // distribute
 #ifdef __MPI 
-    pgrid.bcast(data_xyz_full.data(), data, my_rank);
+    pgrid.bcast(data_xyz_full.data(), data, my_rank, PARAM.inp.esolver_type == "sdft");
 #else
     std::memcpy(data, data_xyz_full.data(), nxyz * sizeof(double));
 #endif

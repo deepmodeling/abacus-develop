@@ -1,7 +1,6 @@
 #include "parallel_grid.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
 
 #ifdef __MPI
 #include "source_base/parallel_comm.h" // use POOL_WORLD
@@ -22,7 +21,8 @@ void Parallel_Grid::init(const int& ncx_in,
                          const int& nczp_in,
                          const int& nrxx_in,
                          const int& nbz_in,
-                         const int& bz_in)
+                         const int& bz_in,
+                         const int nprocgroup)
 {
 
     ModuleBase::TITLE("Parallel_Grid", "init");
@@ -67,15 +67,6 @@ void Parallel_Grid::init(const int& ncx_in,
     assert(GlobalV::KPAR > 0);
 
     this->nproc_in_pool.resize(GlobalV::KPAR);
-    int nprocgroup = 0;
-    if (PARAM.inp.esolver_type == "sdft")
-    {
-        nprocgroup = GlobalV::NPROC_IN_BNDGROUP;
-    }
-    else
-    {
-        nprocgroup = GlobalV::NPROC;
-    }
 
     const int remain_pro = nprocgroup % GlobalV::KPAR;
     for (int i = 0; i < GlobalV::KPAR; i++)
@@ -177,7 +168,7 @@ void Parallel_Grid::z_distribution()
 }
 
 #ifdef __MPI
-void Parallel_Grid::bcast(const double* const data_global, double* data_local, const int& rank) const
+void Parallel_Grid::bcast(const double* const data_global, double* data_local, const int& rank, const bool is_sdft) const
 {
     std::vector<double> zpiece(ncxy);
     for (int iz = 0; iz < this->ncz; ++iz)
@@ -194,17 +185,19 @@ void Parallel_Grid::bcast(const double* const data_global, double* data_local, c
                 }
             }
         }
-        this->zpiece_to_all(zpiece.data(), iz, data_local);
+        if (is_sdft)
+        {
+            this->zpiece_to_stogroup(zpiece.data(), iz, data_local);
+        }
+        else
+        {
+            this->zpiece_to_all(zpiece.data(), iz, data_local);
+        }
     }
 }
 
 void Parallel_Grid::zpiece_to_all(double* zpiece, const int& iz, double* rho) const
 {
-    if (PARAM.inp.esolver_type == "sdft")
-    {
-        this->zpiece_to_stogroup(zpiece, iz, rho);
-        return;
-    }
     assert(!this->numz.empty());
     // ModuleBase::TITLE("Parallel_Grid","zpiece_to_all");
     MPI_Status ierror;
