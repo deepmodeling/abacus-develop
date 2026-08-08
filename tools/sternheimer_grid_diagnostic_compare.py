@@ -106,6 +106,24 @@ def _validate_pair(metadata40, metadata50, values40, values50, path40, path50):
         raise ValueError("coordinate mismatch: {} vs {}".format(path40, path50))
 
 
+def _invariant_profile(quantity, values):
+    if quantity == "perturbation":
+        squared_norms = {}
+        for (occupied, virtual, auxiliary), value in values.items():
+            key = (occupied, auxiliary)
+            squared_norms[key] = squared_norms.get(key, 0.0) + abs(value) ** 2
+        return "occupied_auxiliary_norm", [
+            math.sqrt(squared_norms[key]) for key in sorted(squared_norms)
+        ]
+    if quantity == "occupied_virtual_overlap":
+        squared_norms = {}
+        for (occupied, virtual), value in values.items():
+            squared_norms[occupied] = squared_norms.get(occupied, 0.0) + abs(value) ** 2
+        return "occupied_norm", [math.sqrt(squared_norms[key]) for key in sorted(squared_norms)]
+    diagonal = [value for (row, column), value in sorted(values.items()) if row == column]
+    return "diagonal", diagonal
+
+
 def _comparison_row(kind, spin, quantity, metadata40, metadata50, values40, values50):
     ordered_coordinates = sorted(values40)
     vector40 = [values40[index] for index in ordered_coordinates]
@@ -115,6 +133,18 @@ def _comparison_row(kind, spin, quantity, metadata40, metadata50, values40, valu
     norm50 = math.sqrt(sum(abs(value) ** 2 for value in vector50))
     difference_norm = math.sqrt(sum(abs(value) ** 2 for value in differences))
     relative_difference = difference_norm / norm40 if norm40 > 0.0 else difference_norm
+    relative_norm_change = abs(norm50 - norm40) / norm40 if norm40 > 0.0 else norm50
+    profile_kind40, profile40 = _invariant_profile(quantity, values40)
+    profile_kind50, profile50 = _invariant_profile(quantity, values50)
+    if profile_kind40 != profile_kind50 or len(profile40) != len(profile50):
+        raise ValueError("diagnostic profile mismatch for {}".format(quantity))
+    profile_difference_norm = math.sqrt(
+        sum(abs(value50 - value40) ** 2 for value40, value50 in zip(profile40, profile50))
+    )
+    profile_norm40 = math.sqrt(sum(abs(value) ** 2 for value in profile40))
+    profile_relative_difference = (
+        profile_difference_norm / profile_norm40 if profile_norm40 > 0.0 else profile_difference_norm
+    )
     return {
         "kind": kind,
         "spin": spin,
@@ -124,6 +154,9 @@ def _comparison_row(kind, spin, quantity, metadata40, metadata50, values40, valu
         "norm50": "{:.17e}".format(norm50),
         "difference_norm": "{:.17e}".format(difference_norm),
         "relative_difference": "{:.17e}".format(relative_difference),
+        "relative_norm_change": "{:.17e}".format(relative_norm_change),
+        "profile_kind": profile_kind40,
+        "profile_relative_difference": "{:.17e}".format(profile_relative_difference),
         "max_abs_difference": "{:.17e}".format(max((abs(value) for value in differences), default=0.0)),
         "grid40": "x".join(str(value) for value in metadata40["grid"]),
         "grid50": "x".join(str(value) for value in metadata50["grid"]),
