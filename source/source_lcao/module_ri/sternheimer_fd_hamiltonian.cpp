@@ -48,9 +48,9 @@ SternheimerFDHamiltonian::SternheimerFDHamiltonian(Grid grid,
     {
         throw std::invalid_argument("SternheimerFDHamiltonian requires a non-negative kinetic prefactor.");
     }
-    if (finite_difference_order_ != 2 && finite_difference_order_ != 4)
+    if (finite_difference_order_ != 2 && finite_difference_order_ != 4 && finite_difference_order_ != 6)
     {
-        throw std::invalid_argument("SternheimerFDHamiltonian finite-difference order must be 2 or 4.");
+        throw std::invalid_argument("SternheimerFDHamiltonian finite-difference order must be 2, 4, or 6.");
     }
     if (nonlocal_projector_ != nullptr && nonlocal_projector_->grid_size() != grid_.size())
     {
@@ -155,8 +155,11 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threa
                     const Complex psi_center = psi[center];
 
                     const bool fourth_order = finite_difference_order_ == 4;
+                    const bool sixth_order = finite_difference_order_ == 6;
+                    const double center_coefficient
+                        = sixth_order ? -49.0 / 18.0 : (fourth_order ? -2.5 : -2.0);
                     Complex laplacian
-                        = (fourth_order ? -2.5 : -2.0) * (hx2_inv + hy2_inv + hz2_inv) * psi_center;
+                        = center_coefficient * (hx2_inv + hy2_inv + hz2_inv) * psi_center;
                     const int xp = shifted_index(ix + 1, iy, iz);
                     const int xm = shifted_index(ix - 1, iy, iz);
                     const int yp = shifted_index(ix, iy + 1, iz);
@@ -164,7 +167,8 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threa
                     const int zp = shifted_index(ix, iy, iz + 1);
                     const int zm = shifted_index(ix, iy, iz - 1);
 
-                    const double nearest_coefficient = fourth_order ? 4.0 / 3.0 : 1.0;
+                    const double nearest_coefficient
+                        = sixth_order ? 3.0 / 2.0 : (fourth_order ? 4.0 / 3.0 : 1.0);
                     if (xp >= 0)
                     {
                         laplacian += nearest_coefficient * hx2_inv * psi[xp];
@@ -190,9 +194,9 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threa
                         laplacian += nearest_coefficient * hz2_inv * psi[zm];
                     }
 
-                    if (fourth_order)
+                    if (fourth_order || sixth_order)
                     {
-                        constexpr double next_nearest_coefficient = -1.0 / 12.0;
+                        const double next_nearest_coefficient = sixth_order ? -3.0 / 20.0 : -1.0 / 12.0;
                         const int xpp = shifted_index(ix + 2, iy, iz);
                         const int xmm = shifted_index(ix - 2, iy, iz);
                         const int ypp = shifted_index(ix, iy + 2, iz);
@@ -222,6 +226,41 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threa
                         if (zmm >= 0)
                         {
                             laplacian += next_nearest_coefficient * hz2_inv * psi[zmm];
+                        }
+                    }
+
+                    if (sixth_order)
+                    {
+                        constexpr double third_nearest_coefficient = 1.0 / 90.0;
+                        const int xppp = shifted_index(ix + 3, iy, iz);
+                        const int xmmm = shifted_index(ix - 3, iy, iz);
+                        const int yppp = shifted_index(ix, iy + 3, iz);
+                        const int ymmm = shifted_index(ix, iy - 3, iz);
+                        const int zppp = shifted_index(ix, iy, iz + 3);
+                        const int zmmm = shifted_index(ix, iy, iz - 3);
+                        if (xppp >= 0)
+                        {
+                            laplacian += third_nearest_coefficient * hx2_inv * psi[xppp];
+                        }
+                        if (xmmm >= 0)
+                        {
+                            laplacian += third_nearest_coefficient * hx2_inv * psi[xmmm];
+                        }
+                        if (yppp >= 0)
+                        {
+                            laplacian += third_nearest_coefficient * hy2_inv * psi[yppp];
+                        }
+                        if (ymmm >= 0)
+                        {
+                            laplacian += third_nearest_coefficient * hy2_inv * psi[ymmm];
+                        }
+                        if (zppp >= 0)
+                        {
+                            laplacian += third_nearest_coefficient * hz2_inv * psi[zppp];
+                        }
+                        if (zmmm >= 0)
+                        {
+                            laplacian += third_nearest_coefficient * hz2_inv * psi[zmmm];
                         }
                     }
 

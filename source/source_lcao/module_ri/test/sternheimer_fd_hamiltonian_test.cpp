@@ -403,9 +403,49 @@ TEST(SternheimerFDHamiltonian, FourthOrderPeriodicLaplacianReducesPlaneWaveError
     EXPECT_NEAR(fourth_rayleigh.imag(), 0.0, 1.0e-12);
 }
 
+TEST(SternheimerFDHamiltonian, SixthOrderPeriodicLaplacianFurtherReducesPlaneWaveError)
+{
+    constexpr int nx = 32;
+    constexpr int mode = 3;
+    const double length = 2.0 * std::acos(-1.0);
+    const double spacing = length / nx;
+    Hamiltonian::Grid grid{nx, 1, 1, spacing, 1.0, 1.0, true};
+    const std::vector<double> potential(grid.size(), 0.0);
+    Hamiltonian fourth_order(grid, potential, 1.0, nullptr, 4);
+    Hamiltonian sixth_order(grid, potential, 1.0, nullptr, 6);
+
+    Hamiltonian::Vector plane_wave(grid.size());
+    for (int ix = 0; ix != nx; ++ix)
+    {
+        const double phase = static_cast<double>(mode) * spacing * ix;
+        plane_wave[static_cast<std::size_t>(ix)] = Complex(std::cos(phase), std::sin(phase));
+    }
+    Hamiltonian::Vector fourth_action;
+    Hamiltonian::Vector sixth_action;
+    fourth_order.apply(plane_wave, fourth_action);
+    sixth_order.apply(plane_wave, sixth_action);
+
+    Complex fourth_rayleigh(0.0, 0.0);
+    Complex sixth_rayleigh(0.0, 0.0);
+    for (int ix = 0; ix != nx; ++ix)
+    {
+        fourth_rayleigh += std::conj(plane_wave[static_cast<std::size_t>(ix)])
+                           * fourth_action[static_cast<std::size_t>(ix)];
+        sixth_rayleigh += std::conj(plane_wave[static_cast<std::size_t>(ix)])
+                          * sixth_action[static_cast<std::size_t>(ix)];
+    }
+    fourth_rayleigh /= static_cast<double>(nx);
+    sixth_rayleigh /= static_cast<double>(nx);
+    const double exact = static_cast<double>(mode * mode);
+
+    EXPECT_EQ(sixth_order.finite_difference_order(), 6);
+    EXPECT_LT(std::abs(sixth_rayleigh.real() - exact), 0.1 * std::abs(fourth_rayleigh.real() - exact));
+    EXPECT_NEAR(sixth_rayleigh.imag(), 0.0, 1.0e-12);
+}
+
 TEST(SternheimerFDHamiltonian, RejectsUnsupportedFiniteDifferenceOrder)
 {
     Hamiltonian::Grid grid{4, 1, 1, 1.0, 1.0, 1.0, true};
-    EXPECT_THROW(Hamiltonian(grid, std::vector<double>(grid.size(), 0.0), 1.0, nullptr, 6),
+    EXPECT_THROW(Hamiltonian(grid, std::vector<double>(grid.size(), 0.0), 1.0, nullptr, 8),
                  std::invalid_argument);
 }
