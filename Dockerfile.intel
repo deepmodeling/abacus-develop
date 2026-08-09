@@ -3,8 +3,12 @@ FROM intel/oneapi-hpckit:2025.2.2-0-devel-ubuntu22.04
 RUN apt-get update && apt-get install -y \
     bc cmake git gnupg gcc g++ python3-numpy sudo wget vim unzip \
     libcereal-dev libxc-dev libgtest-dev libgmock-dev libbenchmark-dev \
-    pkg-config build-essential autoconf automake libtool && \
+    pkg-config build-essential autoconf automake libtool ca-certificates && \
     rm -rf /var/lib/apt/lists/*
+
+ENV CC="mpiicx"
+ENV CXX="mpiicpx"
+ENV FC="mpiifx"
 
 # https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 RUN cd /tmp && \

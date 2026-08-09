@@ -5,9 +5,8 @@
 #undef private
 #define private public
 #define protected public
-#include "source_esolver/esolver_lj.h"
 #include "source_md/msst.h"
-#include "setcell.h"
+#include "md_test_fixture.h"
 #define doublethreshold 1e-12
 
 /************************************************
@@ -35,31 +34,8 @@
  *     - output MD information such as energy, temperature, and pressure
  */
 
-class MSST_test : public testing::Test
+class MSST_test : public MdIntegratorFixture<MSST>
 {
-  protected:
-    MD_base* mdrun;
-    UnitCell ucell;
-    Parameter param_in;
-    ModuleESolver::ESolver* p_esolver;
-
-    void SetUp()
-    {
-        Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
-
-        p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(ucell, param_in.inp);
-
-        mdrun = new MSST(param_in, ucell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
-    }
-
-    void TearDown()
-    {
-        delete mdrun;
-        delete p_esolver;
-    }
 };
 
 TEST_F(MSST_test, setup)
@@ -208,7 +184,7 @@ TEST_F(MSST_test, restart)
     mdrun->restart(PARAM.sys.global_readin_dir);
     remove("Restart_md.txt");
 
-    MSST* msst = dynamic_cast<MSST*>(mdrun);
+    MSST* msst = dynamic_cast<MSST*>(mdrun.get());
     EXPECT_EQ(mdrun->step_rst_, 3);
     EXPECT_EQ(msst->omega[mdrun->mdp.msst_direction], -0.00977662);
     EXPECT_EQ(msst->e0, -0.00768262);
@@ -226,32 +202,38 @@ TEST_F(MSST_test, print_md)
     std::ifstream ifs("running_msst.log");
     std::string output_str;
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992 kbar"));
+	EXPECT_THAT(output_str, testing::HasSubstr(" ELECTRONIC      PART OF STRESS: 0.24609992"));
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.8301538 kbar")); // result different from other MD methods
+	EXPECT_THAT(output_str, testing::HasSubstr(" IONIC (KINETIC) PART OF STRESS: 0.830153796556")); // result different from other MD methods
     getline(ifs, output_str);
-	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0762537 kbar")); // result different from other MD methods
+	EXPECT_THAT(output_str, testing::HasSubstr(" MD PRESSURE (ELECTRONS+IONS)  : 1.0762537")); // result different from other MD methods
     getline(ifs, output_str);    
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " ------------------------------------------------------------------------------------------------"));
+            " ----------------------------------------"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " Energy (Ry)         Potential (Ry)      Kinetic (Ry)        Temperature (K)     Pressure (kbar)     "));
+            " Energy (Ry)             Potential (Ry)          Kinetic (Ry)            "));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0154507396226"));
+    EXPECT_THAT(output_str, testing::HasSubstr("-0.0239156372471"));
+    EXPECT_THAT(output_str, testing::HasSubstr("0.00846489762446"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " -0.01545074         -0.023915637        0.0084648976        297                 1.0762537           "));
+            " Temperature (K)         Pressure (kbar)         "));
+    getline(ifs, output_str);
+    EXPECT_THAT(output_str, testing::HasSubstr("1.07625"));
     getline(ifs, output_str);
     EXPECT_THAT(
         output_str,
         testing::HasSubstr(
-            " ------------------------------------------------------------------------------------------------"));
+            " ----------------------------------------"));
     ifs.close();
 //  remove("running_msst.log");
 }

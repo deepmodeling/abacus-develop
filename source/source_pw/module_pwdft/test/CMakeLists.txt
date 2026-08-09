@@ -44,6 +44,7 @@ AddTest(
 	../../../source_cell/read_atom_species.cpp
 	../../../source_cell/read_atoms.cpp
 	../../../source_cell/read_atoms_helper.cpp
+	../../../source_cell/cell_tools.cpp
 	../../../source_cell/read_pp.cpp
 	../../../source_cell/read_pp_complete.cpp
 	../../../source_cell/read_pp_upf100.cpp

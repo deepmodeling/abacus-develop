@@ -7,6 +7,7 @@
 #include "source_psi/psi.h"
 
 #include <functional>
+#include <string>
 
 namespace hsolver
 {
@@ -61,7 +62,10 @@ class DiagoIterAssist
     /// @param psi_nc number of columns (nbasis)
     /// @param evc new wavefunction
     /// @param en eigenenergies
-    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc, 
+    /// @param basis_type "lcao", "lcao_in_pw" or "pw"; together with calculation it selects
+    /// how the rotation matrix is applied to psi
+    /// @param calculation "scf", "nscf", "md", "relax", ...
+    /// @note exception handle: if there is no operator initialized in Hamilt, will directly copy value from psi to evc,
     /// and return all - zero eigenenergies.
     static void diag_subspace_init(
             hamilt::Hamilt<T, Device>* pHamilt,
@@ -70,6 +74,8 @@ class DiagoIterAssist
             int psi_nc,
             psi::Psi<T, Device> &evc,
             Real* en,
+            const std::string& basis_type,
+            const std::string& calculation,
             const std::function<void(T*, const int)>& add_to_hcc = [](T* null, const int n) {},
             const std::function<void(const T* const, const int, const int)>& export_vcc = [](const T* null, const int n, const int m) {});
 
@@ -119,8 +125,6 @@ class DiagoIterAssist
                               const int dim_subspace,
                               psi::Psi<T, Device>& evc,
                               Real* en);
-
-    static bool test_exit_cond(const int& ntry, const int& notconv);
 
   private:
     constexpr static const Device* ctx = {};

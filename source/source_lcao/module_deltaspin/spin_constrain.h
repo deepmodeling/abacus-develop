@@ -79,7 +79,7 @@ inline ModuleBase::Vector3<double> pauli_to_moment(const std::complex<double> oc
 {
     return ModuleBase::Vector3<double>(
         weight * (occ[1] + occ[2]).real(),
-        -weight * (occ[1] - occ[2]).imag(),
+        weight * (occ[1] - occ[2]).imag(),
         weight * (occ[0] - occ[3]).real()
     );
 }

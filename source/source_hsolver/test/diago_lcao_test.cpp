@@ -1,9 +1,6 @@
 #include "source_hsolver/diago_scalapack.h"
 #include "source_hsolver/diago_lapack.h"
 #include "source_hsolver/test/diago_elpa_utils.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "mpi.h"
 #include "string.h"
 
@@ -205,8 +202,6 @@ class DiagoPrepare
 
     void set_env()
     {
-        PARAM.sys.nlocal = nlocal;
-        PARAM.input.nbands = nbands;
         GlobalV::DSIZE = dsize;
     }
 
@@ -226,18 +221,18 @@ class DiagoPrepare
             hmtest.s_local = this->s_local;
             if (ks_solver == "scalapack_gvx")
             {
-                hsolver::DiagoScalapack<T> dh;
+                hsolver::DiagoScalapack<T> dh(nlocal, nbands);
                 dh.diag(&hmtest, psi, e_solver.data());
             }
             else if (ks_solver == "lapack")
             {
-                hsolver::DiagoLapack<T> la;
+                hsolver::DiagoLapack<T> la(nlocal, nbands);
                 la.diag(&hmtest, psi, e_solver.data());
             }
     #ifdef __ELPA
             else if (ks_solver == "genelpa")
             {
-                hsolver::DiagoElpa<T> dh;
+                hsolver::DiagoElpa<T> dh(nlocal, nbands);
                 dh.diag(&hmtest, psi, e_solver.data());
             }
     #endif

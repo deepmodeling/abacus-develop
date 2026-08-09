@@ -35,8 +35,34 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_IO_td_efield_io_test
+  LIBS parameter base device
+  SOURCES td_efield_io_test.cpp ../module_efield/td_efield_io.cpp
+    ../../source_estate/module_pot/td_field.cpp ../../source_estate/module_pot/td_field_profiles.cpp
+    ../../source_estate/module_pot/td_field_manager.cpp
+)
+
+AddTest(
+  TARGET MODULE_IO_td_vector_pot_io_test
+  LIBS parameter base device
+  SOURCES td_vector_pot_io_test.cpp ../module_efield/td_vector_pot_io.cpp
+)
+
+AddTest(
   TARGET MODULE_IO_binstream_test
   SOURCES binstream_test.cpp ../module_output/binstream.cpp
+)
+
+AddTest(
+  TARGET MODULE_IO_write_hsk_binary_test
+  LIBS parameter base device
+  SOURCES write_hsk_binary_test.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
+)
+
+add_test(
+  NAME MODULE_IO_write_hsk_binary_test_parallel
+  COMMAND mpirun -np 2 ./MODULE_IO_write_hsk_binary_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
 
 AddTest(

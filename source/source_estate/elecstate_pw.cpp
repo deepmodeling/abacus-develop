@@ -8,6 +8,7 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace elecstate {
@@ -54,6 +55,14 @@ ElecStatePW<T, Device>::~ElecStatePW()
     }
     delmem_complex_op()(this->wfcr);
     delmem_complex_op()(this->wfcr_another_spin);
+}
+
+template<typename T, typename Device>
+double ElecStatePW<T, Device>::get_spin_constrain_energy()
+{
+    spinconstrain::SpinConstrain<std::complex<double>>& sc
+        = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+    return sc.cal_escon();
 }
 
 template<typename T, typename Device>
@@ -218,6 +227,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
                                   PARAM.globalv.domag,
                                   PARAM.globalv.domag_z,
                                   this->basis->nrxx,
+                                  this->charge->nrxx,
                                   w1,
                                   this->rho,
                                   this->wfcr,
@@ -240,7 +250,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
             if (w1 != 0.0)
             {
                 // replaced by denghui at 20221110
-                elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, w1, this->rho, this->wfcr);
+                elecstate_pw_op()(this->ctx, current_spin, this->basis->nrxx, this->charge->nrxx, w1, this->rho, this->wfcr);
             }
 
             // kinetic energy density
@@ -263,7 +273,7 @@ void ElecStatePW<T, Device>::rhoBandK(const psi::Psi<T, Device>& psi)
 
                     this->basis->recip_to_real(this->ctx, this->wfcr, this->wfcr, ik);
 
-                    elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, w1, this->kin_r, this->wfcr);
+                    elecstate_pw_op()(this->ctx, current_spin, this->charge->nrxx, this->charge->nrxx, w1, this->kin_r, this->wfcr);
                 }
             }
         }

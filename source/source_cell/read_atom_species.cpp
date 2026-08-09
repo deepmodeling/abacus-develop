@@ -34,7 +34,7 @@ bool read_atom_species(std::ifstream& ifa,
             std::getline(ifa, one_line);
             std::stringstream ss;
             ss << one_line;
-            ss >> ucell.atom_label[i] >> ucell.atom_mass[i];
+            ss >> ucell.atoms[i].label >> ucell.atoms[i].mass;
             ucell.pseudo_fn[i] = "auto";
             ucell.pseudo_type[i] = "auto";
 
@@ -73,8 +73,8 @@ bool read_atom_species(std::ifstream& ifa,
             // Peize Lin test for bsse 2021.04.07
             const std::string bsse_label = "empty";
             ucell.atoms[i].flag_empty_element = 
-                (search( ucell.atom_label[i].begin(), ucell.atom_label[i].end(), 
-                    bsse_label.begin(), bsse_label.end() ) != ucell.atom_label[i].end())
+                (search( ucell.atoms[i].label.begin(), ucell.atoms[i].label.end(), 
+                    bsse_label.begin(), bsse_label.end() ) != ucell.atoms[i].label.end())
                 ? true : false;
         }
     }

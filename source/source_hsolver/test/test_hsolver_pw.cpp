@@ -375,9 +375,15 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     elecstate_test.ekb.c[1] = 2.0;
     
     hsolver::HSolverLIP<std::complex<float>> hs_f_lip
-        = hsolver::HSolverLIP<std::complex<float>>(&pwbk, PARAM.sys.use_uspp);
+        = hsolver::HSolverLIP<std::complex<float>>(&pwbk,
+                                                   PARAM.sys.use_uspp,
+                                                   PARAM.input.basis_type,
+                                                   PARAM.input.calculation);
     hsolver::HSolverLIP<std::complex<double>> hs_d_lip
-        = hsolver::HSolverLIP<std::complex<double>>(&pwbk, PARAM.sys.use_uspp);
+        = hsolver::HSolverLIP<std::complex<double>>(&pwbk,
+                                                    PARAM.sys.use_uspp,
+                                                    PARAM.input.basis_type,
+                                                    PARAM.input.calculation);
     hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,transform_test_cf, true,0.0,0);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cf.size(); i++)

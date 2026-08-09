@@ -1,11 +1,24 @@
 #include "source_lcao/module_rt/band_energy.h"
 
-#include <gtest/gtest.h>
-#include <source_base/module_external/scalapack_connector.h>
-#include <mpi.h>
-
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_io/module_parameter/parameter.h"
 #include "tddft_test.h"
+
+#include <cstdio>
+#include <fstream>
+#include <gtest/gtest.h>
+#include <iterator>
+#include <mpi.h>
+#include <source_base/module_external/scalapack_connector.h>
+
+class TestParameters
+{
+  public:
+    static void set_td_print_eij(const double threshold)
+    {
+        PARAM.input.td_print_eij = threshold;
+    }
+};
 
 /************************************************
  *  unit test of functions in band_energy.h
@@ -26,7 +39,6 @@ TEST(BandEnergyTest, testBandEnergy)
     double* ekb;
     int nband = 3;
     int nlocal = 4;
-    bool print_matrix = false;
     Parallel_Orbitals* pv;
     pv = new Parallel_Orbitals();
     pv->nloc = nlocal * nlocal;
@@ -34,6 +46,7 @@ TEST(BandEnergyTest, testBandEnergy)
     pv->ncol = nlocal;
     pv->nrow = nlocal;
     pv->ncol_bands = nband;
+    pv->nrow_bands = nband;
     pv->dim0 = 1;
     pv->dim1 = 1;
     pv->nb = 1;
@@ -47,8 +60,7 @@ TEST(BandEnergyTest, testBandEnergy)
     // Initialize input matrices
     int info;
     int mb = 1, nb = 1, lda = nband, ldc = nlocal;
-    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow),
-        lld1 = numroc_(&nband, &mb, &myprow, &irsrc, &nprow);
+    int irsrc = 0, icsrc = 0, lld = numroc_(&nlocal, &mb, &myprow, &irsrc, &nprow), lld1 = numroc_(&nband, &mb, &myprow, &irsrc, &nprow);
     descinit_(pv->desc, &nlocal, &nlocal, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
     descinit_(pv->desc_wfc, &nlocal, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
     descinit_(pv->desc_Eij, &nband, &nband, &mb, &nb, &irsrc, &icsrc, &ictxt, &lld, &info);
@@ -85,13 +97,28 @@ TEST(BandEnergyTest, testBandEnergy)
     psi_k[11] = 1.0;
 
     // Call the function with local ofstream
-    std::ofstream ofs("/dev/null");
+    int rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    const std::string output_path = "band_energy_test_output_" + std::to_string(rank) + ".txt";
+    std::ofstream ofs(output_path.c_str());
+    TestParameters::set_td_print_eij(0.0);
     module_rt::compute_ekb(pv, nband, nlocal, Htmp, psi_k, ekb, ofs);
+    ofs.close();
+    TestParameters::set_td_print_eij(-1.0);
 
     // Check the results
     EXPECT_NEAR(ekb[0], 3.0, doublethreshold);
     EXPECT_NEAR(ekb[1], 8.0, doublethreshold);
     EXPECT_NEAR(ekb[2], 10.0, doublethreshold);
+
+    std::ifstream output(output_path.c_str());
+    const std::string output_text((std::istreambuf_iterator<char>(output)), std::istreambuf_iterator<char>());
+    EXPECT_NE(output_text.find("i =  1"), std::string::npos);
+    EXPECT_NE(output_text.find("j =  1"), std::string::npos);
+    EXPECT_EQ(output_text.find("i =  0"), std::string::npos);
+    EXPECT_EQ(output_text.find("j =  0"), std::string::npos);
+    output.close();
+    std::remove(output_path.c_str());
 
     delete[] psi_k;
     delete[] Htmp;

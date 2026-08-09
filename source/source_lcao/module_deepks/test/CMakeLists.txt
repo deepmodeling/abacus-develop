@@ -21,6 +21,7 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_cell/atom_pseudo.cpp
     ../../../source_cell/read_atoms.cpp
     ../../../source_cell/read_atoms_helper.cpp
+    ../../../source_cell/cell_tools.cpp
     ../../../source_cell/read_stru.cpp
     ../../../source_cell/print_cell.cpp
     ../../../source_cell/read_atom_species.cpp
