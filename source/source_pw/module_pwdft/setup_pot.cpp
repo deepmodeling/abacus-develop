@@ -1,6 +1,6 @@
 #include "source_pw/module_pwdft/setup_pot.h"
 
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_pw/module_pwdft/vnl_pw.h"

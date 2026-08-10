@@ -22,7 +22,7 @@
 // Exx_LRI forward declaration, full definition in exx_lri.h (moved to .cpp)
 // mohan add 20260605
 template <typename TR> class Exx_LRI;
-#include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
+#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 #endif
 
 #include "source_estate/elecstate.h"

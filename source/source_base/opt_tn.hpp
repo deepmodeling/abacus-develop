@@ -1,7 +1,7 @@
 #ifndef OPT_TN_H
 #define OPT_TN_H
 
-#include "opt_CG.h"
+#include "opt_cg.h"
 
 #include <limits>
 

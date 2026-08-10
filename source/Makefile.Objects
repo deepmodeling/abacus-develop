@@ -167,8 +167,8 @@ OBJS_BASE=assoc_laguerre.o\
     tool_quit.o\
     tool_title.o\
     ylm.o\
-    opt_CG.o\
-    opt_DCsrch.o\
+    opt_cg.o\
+    opt_dcsrch.o\
     cubic_spline.o\
     sph_bessel_tf.o\
     mixing_data.o\
@@ -208,7 +208,7 @@ OBJS_CELL=atom_pseudo.o\
     sep.o\
     sep_cell.o\
     cal_nelec_nband.o\
-    read_pseudo.o\
+    read_pp_ucell.o\
     cal_wfc.o\
     cal_ux.o\
 
@@ -364,7 +364,7 @@ OBJS_HAMILT_LCAO=hamilt_lcao.o\
     op_exx_lcao.o\
     dspin_lcao.o\
     dspin_fs.o\
-    dftu_lcao.o\
+    setup_dftu_lcao.o\
     dftu_fs.o\
     operator_fs_utils.o\
 
@@ -507,7 +507,7 @@ OBJS_SURCHEM=surchem.o\
     sol_force.o\
 
 OBJS_SYMMETRY=symm_other.o\
-    symmetry_basic.o\
+    symm_basic.o\
     symm_analysis.o\
     symm_check.o\
     symm_getgroup.o\
@@ -700,7 +700,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       matrix_orbs22.o\
       ri_2d_comm.o\
       mix_dmk_2d.o\
-      symmetry_rotation.o\
+      symm_rotation.o\
       symm_rot_out.o\
       symmetry_irreducible_sector.o\
       gaussian_abfs.o\
@@ -776,8 +776,8 @@ OBJS_SRCPW=h_ewald_pw.o\
     stress_pw.o\
     of_stress_pw.o\
     of_print_info.o\
-    symmetry_rho.o\
-    symmetry_rhog.o\
+    symm_rho.o\
+    symm_rhog.o\
     setup_psi_pw.o\
     setup_psi.o\
     psi_prepare.o\

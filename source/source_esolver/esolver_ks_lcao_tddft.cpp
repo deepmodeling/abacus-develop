@@ -13,7 +13,7 @@
 #include "source_io/module_wf/read_wfc_nao.h"
 //------LCAO HSolver ElecState-------
 #include "source_estate/elecstate_tools.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/cal_edm_tddft.h"
 #include "source_estate/module_pot/h_tddft_pw.h"

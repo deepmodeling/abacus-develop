@@ -1,4 +1,4 @@
-#include "dftu_lcao.h"
+#include "setup_dftu_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/hamilt_lcao.h"

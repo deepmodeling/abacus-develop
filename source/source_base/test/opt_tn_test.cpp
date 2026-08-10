@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 #include "../opt_tn.hpp"
-#include "../opt_DCsrch.h"
+#include "../opt_dcsrch.h"
 #include "./opt_test_tools.h"
 
 #define DOUBLETHRESHOLD 1e-5

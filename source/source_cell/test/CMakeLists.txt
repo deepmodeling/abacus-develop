@@ -40,7 +40,7 @@ list(APPEND cell_simple_srcs
     ../read_pp_vwr.cpp
     ../read_pp_blps.cpp
     ../check_atomic_stru.cpp
-    ../read_pseudo.cpp
+    ../read_pp_ucell.cpp
     ../cal_wfc.cpp
     ../cal_nelec_nband.cpp
     ../read_orb.cpp

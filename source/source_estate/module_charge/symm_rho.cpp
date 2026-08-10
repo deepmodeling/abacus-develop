@@ -1,4 +1,4 @@
-#include "symmetry_rho.h"
+#include "symm_rho.h"
 
 #include "source_hamilt/module_xc/xc_functional.h"
 

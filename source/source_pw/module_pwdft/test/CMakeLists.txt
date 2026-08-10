@@ -53,7 +53,7 @@ AddTest(
 	../../../source_cell/read_pp_blps.cpp
   ../../../source_cell/sep.cpp
   ../../../source_cell/sep_cell.cpp
-	../../../source_cell/read_pseudo.cpp
+	../../../source_cell/read_pp_ucell.cpp
 	../../../source_cell/cal_wfc.cpp
 	../../../source_cell/cal_nelec_nband.cpp
 	../../../source_cell/read_orb.cpp

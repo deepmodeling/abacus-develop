@@ -1,5 +1,5 @@
-#ifndef _ORBUNITTEST_
-#define _ORBUNITTEST_
+#ifndef _ORB_TEST_
+#define _ORB_TEST_
 
 #include "source_base/global_function.h"
 #include "source_basis/module_ao/ORB_control.h"

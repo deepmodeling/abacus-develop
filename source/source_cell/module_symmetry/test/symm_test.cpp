@@ -1,4 +1,4 @@
-#include "symmetry_test.h"
+#include "symm_test.h"
 
 void SymmetryTest::construct_ucell(stru_ &stru)
 {

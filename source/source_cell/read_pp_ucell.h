@@ -1,9 +1,9 @@
 /**
- * @file read_pseudo.h
+ * @file read_pp_ucell.h
  * @brief Functions for reading pseudopotential files.
  */
-#ifndef READ_PSEUDO_H
-#define READ_PSEUDO_H
+#ifndef READ_PP_UCELL_H
+#define READ_PP_UCELL_H
 
 #include "unitcell.h"
 #include "cal_atoms_info.h"
@@ -140,4 +140,4 @@ namespace unitcell {
 
 }
 
-#endif
+#endif // READ_PP_UCELL_H

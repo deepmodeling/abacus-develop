@@ -7,7 +7,7 @@
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_pw/module_pwdft/parallel_grid.h"
 #include "source_io/module_wf/read_wf2rho_pw.h"

@@ -3,7 +3,7 @@
 #include "source_io/module_parameter/parameter.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_cell/cal_ux.h"
 #include "source_pw/module_pwdft/force_pw.h"

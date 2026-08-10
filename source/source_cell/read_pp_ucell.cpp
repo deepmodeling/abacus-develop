@@ -1,8 +1,8 @@
 /**
- * @file read_pseudo.cpp
+ * @file read_pp_ucell.cpp
  * @brief Implementation of pseudopotential reading functions.
  */
-#include "read_pseudo.h"
+#include "read_pp_ucell.h"
 #include "source_base/global_file.h"
 #include "cal_atoms_info.h"
 #include "read_pp.h"

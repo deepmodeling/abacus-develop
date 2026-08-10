@@ -1,4 +1,4 @@
-#include "symmetry_test_cases.h"
+#include "symm_test_cases.h"
 #include "source_base/output.h"
 #include "mpi.h"
 

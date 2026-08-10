@@ -122,7 +122,7 @@ namespace ModuleSymmetry
         /// (nspin=4 magnetic) The atom-pair reduction may also use the ANTIUNITARY elements of the
         /// Shubnikov group, flagged by isym >= nsym_. In real space time reversal acts as
         /// H(R) -> sigma_y H^*(R) sigma_y (R and the orbital indices untouched), which becomes a
-        /// remap of the 4 channels applied after the SU(2) mixing; see symmetry_rotation_r.hpp.
+        /// remap of the 4 channels applied after the SU(2) mixing; see symm_rotation_r.hpp.
         template<typename Tdata>    // RI::Tensor type
         std::array<std::map<int, std::map<std::pair<int, TC>, RI::Tensor<Tdata>>>, 4> restore_HR_nspin4(
             const Symmetry& symm, const Atom* atoms, const Statistics& st, const char mode,
@@ -234,5 +234,5 @@ namespace ModuleSymmetry
         const int lmax_ao, const std::vector<TC>& Rs);
 }
 
-#include "symmetry_rotation_r.hpp"
-#include "symmetry_rotation_r_hcontainer.hpp"      
+#include "symm_rotation_r.hpp"
+#include "symm_rotation_r_hcontainer.hpp"      

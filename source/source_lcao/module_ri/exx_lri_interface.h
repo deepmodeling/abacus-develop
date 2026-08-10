@@ -4,7 +4,7 @@
 #include "exx_lri.h"
 #include "source_estate/module_charge/charge_mixing.h"
 #include "source_lcao/module_ri/mix_dmk_2d.h"
-#include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
+#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 #include "source_estate/module_dm/density_matrix.h" // mohan add 2025-11-04
 #include "source_hamilt/hamilt.h"
 #include "source_hamilt/module_xc/exx_info_global.h"

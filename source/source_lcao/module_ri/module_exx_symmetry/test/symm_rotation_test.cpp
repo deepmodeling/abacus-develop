@@ -1,5 +1,5 @@
 #include "mpi.h"
-#include "../symmetry_rotation.h"
+#include "../symm_rotation.h"
 #include  "gtest/gtest.h"
 #define DOUBLETHRESHOLD 1e-8
 

@@ -38,8 +38,8 @@ add_library(
     matrix3.cpp
     memory_recorder.cpp
     mymath.cpp
-    opt_CG.cpp
-    opt_DCsrch.cpp
+    opt_cg.cpp
+    opt_dcsrch.cpp
     output.cpp
     para_gemm.cpp
     realarray.cpp

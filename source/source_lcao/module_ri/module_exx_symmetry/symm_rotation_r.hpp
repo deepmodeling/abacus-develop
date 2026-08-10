@@ -1,4 +1,4 @@
-#include "symmetry_rotation.h"
+#include "symm_rotation.h"
 #include "source_lcao/module_ri/ri_util.h"
 #include "source_base/timer.h"
 #include <array>

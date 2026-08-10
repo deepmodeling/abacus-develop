@@ -4,7 +4,7 @@
 #include <iostream>
 
 //--------------temporary----------------------------
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/occupy.h"
 #include "source_hamilt/module_ewald/h_ewald_pw.h"
 //-----force-------------------

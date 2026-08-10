@@ -1,11 +1,11 @@
 /**
- * @file symmetry_basic.h
+ * @file symm_basic.h
  * @author Zhengpan, mohan, spshu
  * @date 2007-9
  * @brief Basic symmetry operations class.
  */
-#ifndef SYMMETRY_BASIC_H
-#define SYMMETRY_BASIC_H
+#ifndef SYMM_BASIC_H
+#define SYMM_BASIC_H
 #include "symm_other.h"
 #include "source_base/mymath.h"
 #include "source_base/ylm.h"

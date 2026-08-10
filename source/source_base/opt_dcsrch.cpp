@@ -1,4 +1,4 @@
-#include "opt_DCsrch.h"
+#include "opt_dcsrch.h"
 
 #include <math.h>
 #include <string.h>

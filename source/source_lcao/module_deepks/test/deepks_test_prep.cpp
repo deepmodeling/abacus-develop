@@ -1,7 +1,7 @@
 #include "deepks_test.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_nao/two_center_bundle.h"
-#include "source_cell/read_pseudo.h"
+#include "source_cell/read_pp_ucell.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "../../lcao_nonlocal_info.h"
 #include "source_io/module_parameter/parameter.h"

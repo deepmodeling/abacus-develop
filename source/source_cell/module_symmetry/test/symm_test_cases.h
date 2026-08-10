@@ -1,4 +1,4 @@
-#include "symmetry_test.h"
+#include "symm_test.h"
 // cases
 /**
     switch(ibrav)

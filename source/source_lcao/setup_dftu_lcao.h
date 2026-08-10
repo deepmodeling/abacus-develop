@@ -1,5 +1,5 @@
-#ifndef DFTU_LCAO_H
-#define DFTU_LCAO_H
+#ifndef SETUP_DFTU_LCAO_H
+#define SETUP_DFTU_LCAO_H
 
 #include <string>
 #include <vector>
@@ -71,4 +71,4 @@ void finish_dftu_lcao(const int iter,
 
 } // namespace ModuleESolver
 
-#endif // DFTU_LCAO_H
+#endif // SETUP_DFTU_LCAO_H

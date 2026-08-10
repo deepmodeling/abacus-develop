@@ -2,7 +2,7 @@ add_library(
     symmetry
     OBJECT
     symm_other.cpp
-    symmetry_basic.cpp
+    symm_basic.cpp
     symm_analysis.cpp
     symm_check.cpp
     symm_getgroup.cpp

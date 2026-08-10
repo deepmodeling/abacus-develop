@@ -12,7 +12,7 @@
 #include <set>
 #include <stdexcept>
 #include <vector>
-#include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
+#include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
 #include "rpa_lri.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"

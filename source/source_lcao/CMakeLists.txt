@@ -31,7 +31,7 @@ if(ENABLE_LCAO)
         module_operator_lcao/dftu_lcao.cpp
         module_operator_lcao/dftu_fs.cpp
         module_operator_lcao/operator_fs_utils.cpp
-        dftu_lcao.cpp
+        setup_dftu_lcao.cpp
         pulay_fs_center2.cpp
         force_stress_lcao.cpp
         force_lcao_gamma.cpp

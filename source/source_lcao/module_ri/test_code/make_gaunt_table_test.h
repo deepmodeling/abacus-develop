@@ -3,8 +3,8 @@
 // DATE : 2016-09-09
 //==========================================================
 
-#ifndef MAKE_GAUNT_TABLE_UNITTEST_H
-#define MAKE_GAUNT_TABLE_UNITTEST_H
+#ifndef MAKE_GAUNT_TABLE_TEST_H
+#define MAKE_GAUNT_TABLE_TEST_H
 
 #include "source_basis/module_ao/orb_gaunt_table.h"
 

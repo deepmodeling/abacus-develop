@@ -5,12 +5,12 @@ abacus_disable_feature_definitions(__ROCM)
 AddTest(
   TARGET MODULE_CELL_SYMMETRY_analysis
   LIBS base device symmetry
-  SOURCES symmetry_test.cpp symmetry_test_analysis.cpp
+  SOURCES symm_test.cpp symm_test_analysis.cpp
 )
 AddTest(
   TARGET MODULE_CELL_SYMMETRY_symtrz
   LIBS base device symmetry
-  SOURCES symmetry_test.cpp symmetry_test_symtrz.cpp
+  SOURCES symm_test.cpp symm_test_symtrz.cpp
 )
 AddTest(
   TARGET MODULE_CELL_SYMMETRY_rotation_spin

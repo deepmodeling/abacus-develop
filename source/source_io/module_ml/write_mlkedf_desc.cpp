@@ -3,7 +3,7 @@
 #include "write_mlkedf_desc.h"
 
 #include "npy.hpp"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 
 namespace ModuleIO
 {

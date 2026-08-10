@@ -1,7 +1,7 @@
 #include "esolver_ks_pw.h"
 
 #include "source_estate/elecstate_pw.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_hsolver/hsolver_pw.h"

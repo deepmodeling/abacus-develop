@@ -1,5 +1,5 @@
-#ifndef SYMMETRY_RHO_H
-#define SYMMETRY_RHO_H
+#ifndef SYMM_RHO_H
+#define SYMM_RHO_H
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_estate/module_charge/charge.h"

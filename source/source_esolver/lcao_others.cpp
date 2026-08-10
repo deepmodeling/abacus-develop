@@ -1,6 +1,6 @@
 #include "source_esolver/esolver_ks_lcao.h"
 #include "source_cell/cal_ux.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_hamilt/module_gint/gint.h"

@@ -143,7 +143,7 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_BASE_opt_CG
+  TARGET MODULE_BASE_opt_cg
   LIBS parameter  base device
   SOURCES opt_cg_test.cpp opt_test_tools.cpp
 )

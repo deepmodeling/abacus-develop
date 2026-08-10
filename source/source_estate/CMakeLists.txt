@@ -38,8 +38,8 @@ list(APPEND objects
     module_charge/mix_precond.cpp
     module_charge/charge_mixing_rho.cpp
     module_charge/charge_mixing_uspp.cpp
-    module_charge/symmetry_rho.cpp
-    module_charge/symmetry_rhog.cpp
+    module_charge/symm_rho.cpp
+    module_charge/symm_rhog.cpp
     fp_energy.cpp
     occupy.cpp
     param_update.cpp
