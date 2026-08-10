@@ -1930,11 +1930,15 @@ TEST_F(InputTest, Item_test2)
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.sternheimer_fd_order, 6);
 
-        param.input.sternheimer_fd_order = 8;
+        it->second.str_values = {"8"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.sternheimer_fd_order, 8);
+
+        param.input.sternheimer_fd_order = 10;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("must be 2, 4, or 6"));
+        EXPECT_THAT(output, testing::HasSubstr("must be 2, 4, 6, or 8"));
     }
     { // sternheimer_delta_virtual_source
         auto it = find_label("sternheimer_delta_virtual_source", readinput.input_lists);
