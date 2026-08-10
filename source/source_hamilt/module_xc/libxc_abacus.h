@@ -24,23 +24,23 @@ namespace XC_Functional_Libxc
 //-------------------
 
     // sets functional type, which allows combination of LIBXC keyword connected by "+"
-    //        for example, "XC_LDA_X+XC_LDA_C_PZ"
+    //        for example: "XC_LDA_X+XC_LDA_C_PZ"
     extern std::pair<int, std::vector<int>> set_xc_type_libxc(const std::string& xc_func_in);
 
     /**
      * @brief instantiate the XC functional by its ID, and set the external parameters if provided.
-     * 
+     *
      * @param func_id libxc ID of functional, see https://libxc.gitlab.io/functionals/ for details
      * @param xc_polarized 0: unpolarized, 1: spin-polarized
-     * @return std::vector<xc_func_type> 
-     * 
+     * @return std::vector<xc_func_type>
+     *
      * @note the functionality of this method is extended by supporting the user-defined
-     *       external parameters of xc. However, there are several functionals' external 
-     *       parameters are pre-defined in the code, which herein we call those are 
-     *       "in-built" parameters. If the same functional ID is found in both in-built 
+     *       external parameters of xc. However, there are several functionals' external
+     *       parameters are pre-defined in the code, which herein we call those are
+     *       "in-built" parameters. If the same functional ID is found in both in-built
      *       and external parameters, the external parameters will overwrite the in-built ones.
      *       The external parameters can be passed here by keywords xc_exch_ext and
-     *       xc_corr_ext in the input file. The expected format would be an XC ID 
+     *       xc_corr_ext in the input file. The expected format would be an XC ID
      *       followed by a list of parameters.
      */
     extern std::vector<xc_func_type> init_func(
@@ -65,6 +65,7 @@ namespace XC_Functional_Libxc
         const int nspin,
         const bool domag,
         const bool domag_z,
+        const int gga_grad,
         const std::map<int, double>* scaling_factor,
         const double hybrid_alpha,
         const double hse_omega);
@@ -128,6 +129,9 @@ namespace XC_Functional_Libxc
         std::vector<double> exc);
 
     // converting vtxc and v from vrho and vsigma (libxc=>abacus)
+    // use_sf: for nspin=4 magnetic GGA, apply the Scalmani-Frisch
+    // gradient correction instead of the collinear one; gga_grad then
+    // selects the projected (2) or full (3) divergence of h
     extern std::pair<double, ModuleBase::matrix> convert_vtxc_v(
         const xc_func_type &func,
         const int nspin,
@@ -138,7 +142,9 @@ namespace XC_Functional_Libxc
         const std::vector<double> &vrho,
         const std::vector<double> &vsigma,
         const double tpiba,
-        const Charge* const chr);
+        const Charge* const chr,
+        const bool use_sf,
+        const int gga_grad);
 
     // dh for gga v
     extern std::vector<std::vector<double>> cal_dh(
@@ -151,10 +157,42 @@ namespace XC_Functional_Libxc
         const Charge* const chr);
 
     // convert v for NSPIN=4
+    // has_mag: whether the calculation has (noncollinear) magnetization,
+    // i.e. domag || domag_z
     extern ModuleBase::matrix convert_v_nspin4(
         const std::size_t nrxx,
         const Charge* const chr,
         const std::vector<double> &amag,
+        const ModuleBase::matrix &v,
+        const bool has_mag);
+
+    extern std::vector<double> compute_mag_part_nspin4(
+        const std::size_t nrxx,
+        const Charge* const chr);
+
+    extern std::vector<std::vector<ModuleBase::Vector3<double>>> cal_gdr_sf(
+        const int nspin,
+        const std::size_t nrxx,
+        const std::vector<double> &rho,
+        const std::vector<double> &mag_part,
+        const double tpiba,
+        const Charge* const chr);
+
+    extern std::vector<std::vector<double>> cal_dh_sf(
+        const int nspin,
+        const std::size_t nrxx,
+        const std::vector<double> &sgn,
+        const std::vector<std::vector<ModuleBase::Vector3<double>>> &gdr,
+        const std::vector<double> &vsigma,
+        const std::vector<double> &mag_part,
+        const int gga_grad,
+        const double tpiba,
+        const Charge* const chr);
+
+    extern ModuleBase::matrix convert_v_nspin4_sf(
+        const std::size_t nrxx,
+        const Charge* const chr,
+        const std::vector<double> &mag_part,
         const ModuleBase::matrix &v);
 
 

@@ -82,13 +82,13 @@ class XCTest_VXC : public XCTest
             const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
             const double hse_omega = XC_Functional::get_hse_omega();
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z, hybrid_alpha, hse_omega);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z,0, hybrid_alpha, hse_omega);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z, hybrid_alpha, hse_omega);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z,0, hybrid_alpha, hse_omega);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -186,13 +186,13 @@ class XCTest_VXC_Libxc : public XCTest
             const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
             const double hse_omega = XC_Functional::get_hse_omega();
             std::tuple<double, double, ModuleBase::matrix> etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z, hybrid_alpha, hse_omega);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin1,domag,domag_z,0, hybrid_alpha, hse_omega);
             et1 = std::get<0>(etxc_vtxc_v);
             vt1 = std::get<1>(etxc_vtxc_v);
             v1  = std::get<2>(etxc_vtxc_v);
 
             etxc_vtxc_v
-                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z, hybrid_alpha, hse_omega);
+                = XC_Functional::v_xc(rhopw.nrxx,&chr,&ucell,nspin2,domag,domag_z,0, hybrid_alpha, hse_omega);
             et2 = std::get<0>(etxc_vtxc_v);
             vt2 = std::get<1>(etxc_vtxc_v);
             v2  = std::get<2>(etxc_vtxc_v);
@@ -351,6 +351,432 @@ TEST_F(XCTest_VXC_meta, set_xc_type)
     EXPECT_NEAR(vtau2(1,2),0.07990709956,1.0e-8);
     EXPECT_NEAR(vtau2(1,3),0.04145463825,1.0e-8);
     EXPECT_NEAR(vtau2(1,4),0.0311787189,1.0e-8);
+}
+
+/************************************************
+ *  unit tests for the gga_grad keyword (nspin=4
+ *  noncollinear GGA gradient methods)
+ *
+ *  Methods 2 and 3 share the same chain-rule spin-up/down gradients
+ *    grad(rho_up/dn) = (grad(rho) +/- m_hat . grad(m))/2, m_hat = m/|m|
+ *  but differ in the divergence of h = df/d(grad rho):
+ *    gga_grad=2 (projected): v_mu -= m_hat_mu * div((h_up - h_dn)/2)
+ *    gga_grad=3 (full SF):   v_mu -= div((h_up - h_dn)/2 * m_hat_mu)
+ *  The two are identical when grad(m_hat) = 0 (magnetization direction
+ *  uniform in space) and differ otherwise.
+ ***********************************************/
+
+namespace
+{
+constexpr int gga_grad_nrxx = 5;
+
+// build a mock 4-component charge on the mocked 5-point grid.
+// pattern 0: m = (0,0,mz), mz>0, so m_hat = (0,0,1) everywhere
+// pattern 1: m direction varies from point to point
+// pattern 2: m . ux changes sign across the grid (ux = (0,1,2) in the mock)
+struct Ns4Charge
+{
+    ModulePW::PW_Basis rhopw;
+    UnitCell ucell;
+    Charge chr;
+
+    Ns4Charge(const int pattern)
+    {
+        rhopw.nrxx = gga_grad_nrxx;
+        rhopw.npw = gga_grad_nrxx;
+        rhopw.nmaxgr = gga_grad_nrxx;
+        rhopw.gcar = new ModuleBase::Vector3<double>[gga_grad_nrxx];
+        rhopw.nxyz = 1;
+
+        ucell.tpiba = 1;
+        ucell.omega = 1;
+        ucell.magnet.lsign_ = true;
+        unitcell::cal_ux(ucell, 4);
+
+        chr.rhopw = &(rhopw);
+        chr.rho = new double*[4];
+        for (int is = 0; is < 4; ++is)
+        {
+            chr.rho[is] = new double[gga_grad_nrxx];
+        }
+        chr.rhog = new std::complex<double>*[2];
+        chr.rhog[0] = new std::complex<double>[gga_grad_nrxx];
+        chr.rhog[1] = new std::complex<double>[gga_grad_nrxx];
+        chr.rho_core = new double[gga_grad_nrxx];
+        chr.rhog_core = new std::complex<double>[gga_grad_nrxx];
+
+        for (int i = 0; i < gga_grad_nrxx; ++i)
+        {
+            chr.rho[0][i] = 2.0 + i;
+            if (pattern == 1)
+            {
+                chr.rho[1][i] = 0.10 * (i + 1);
+                chr.rho[2][i] = 0.05 * (gga_grad_nrxx - i);
+                chr.rho[3][i] = 0.20 * (i + 1);
+            }
+            else if (pattern == 2)
+            {
+                chr.rho[1][i] = 0.0;
+                chr.rho[2][i] = (i % 2 == 0) ? 0.3 : -0.3;
+                chr.rho[3][i] = 0.05;
+            }
+            else
+            {
+                chr.rho[1][i] = 0.0;
+                chr.rho[2][i] = 0.0;
+                chr.rho[3][i] = 0.2 * (i + 1);
+            }
+            chr.rhog[0][i] = chr.rho[0][i];
+            chr.rhog[1][i] = chr.rho[1][i];
+            chr.rho_core[i] = 0;
+            chr.rhog_core[i] = 0;
+            rhopw.gcar[i] = 1;
+        }
+    }
+};
+
+// run XC_Functional::v_xc for nspin=4 with noncollinear magnetism
+std::tuple<double, double, ModuleBase::matrix> run_vxc_nspin4(
+    const std::string& functional,
+    const int pattern,
+    const int gga_grad)
+{
+    Ns4Charge mock(pattern);
+    XC_Functional::set_xc_type(functional);
+    return XC_Functional::v_xc(gga_grad_nrxx,
+                               &mock.chr,
+                               &mock.ucell,
+                               4,
+                               true,
+                               false,
+                               gga_grad,
+                               XC_Functional::get_hybrid_alpha(),
+                               XC_Functional::get_hse_omega());
+}
+
+// compare two (etxc, vtxc, v) results
+void expect_vxc_equal(const std::tuple<double, double, ModuleBase::matrix>& a,
+                      const std::tuple<double, double, ModuleBase::matrix>& b,
+                      const double tol)
+{
+    EXPECT_NEAR(std::get<0>(a), std::get<0>(b), tol);
+    EXPECT_NEAR(std::get<1>(a), std::get<1>(b), tol);
+    const ModuleBase::matrix& va = std::get<2>(a);
+    const ModuleBase::matrix& vb = std::get<2>(b);
+    ASSERT_EQ(va.nr, vb.nr);
+    ASSERT_EQ(va.nc, vb.nc);
+    for (int ir = 0; ir < va.nr; ++ir)
+    {
+        for (int ic = 0; ic < va.nc; ++ic)
+        {
+            EXPECT_NEAR(va(ir, ic), vb(ir, ic), tol);
+        }
+    }
+}
+} // namespace
+
+// m_hat = m/|m|, zero where |m| ~ 0
+TEST(GgaGradTools, ComputeMagPartNspin4)
+{
+    Charge chr;
+    chr.rho = new double*[4];
+    for (int is = 0; is < 4; ++is)
+    {
+        chr.rho[is] = new double[3];
+    }
+    chr.rho[1][0] = 3.0; chr.rho[2][0] = 0.0; chr.rho[3][0] = 4.0; // |m|=5
+    chr.rho[1][1] = 0.0; chr.rho[2][1] = 0.0; chr.rho[3][1] = 0.0; // |m|=0
+    chr.rho[1][2] = 1.0; chr.rho[2][2] = 2.0; chr.rho[3][2] = 2.0; // |m|=3
+
+    const std::vector<double> mp = XC_Functional_Libxc::compute_mag_part_nspin4(3, &chr);
+
+    EXPECT_NEAR(mp[0], 3.0 / 5.0, 1e-15);
+    EXPECT_NEAR(mp[3], 0.0, 1e-15);
+    EXPECT_NEAR(mp[6], 4.0 / 5.0, 1e-15);
+    EXPECT_NEAR(mp[1], 0.0, 1e-15);
+    EXPECT_NEAR(mp[4], 0.0, 1e-15);
+    EXPECT_NEAR(mp[7], 0.0, 1e-15);
+    EXPECT_NEAR(mp[2], 1.0 / 3.0, 1e-15);
+    EXPECT_NEAR(mp[5], 2.0 / 3.0, 1e-15);
+    EXPECT_NEAR(mp[8], 2.0 / 3.0, 1e-15);
+}
+
+// v_tot = 0.5*(v_up+v_dn), v_mu = 0.5*(v_up-v_dn)*m_hat_mu
+TEST(GgaGradTools, ConvertVNspin4Sf)
+{
+    Ns4Charge mock(0); // m_hat = (0,0,1)
+    const std::vector<double> mag_part
+        = XC_Functional_Libxc::compute_mag_part_nspin4(gga_grad_nrxx, &mock.chr);
+
+    ModuleBase::matrix v(2, gga_grad_nrxx);
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        v(0, ir) = 1.0 + ir;
+        v(1, ir) = 0.5 * ir;
+    }
+    const ModuleBase::matrix v4
+        = XC_Functional_Libxc::convert_v_nspin4_sf(gga_grad_nrxx, &mock.chr, mag_part, v);
+
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        EXPECT_NEAR(v4(0, ir), 0.5 * (v(0, ir) + v(1, ir)), 1e-14);
+        EXPECT_NEAR(v4(1, ir), 0.0, 1e-14);
+        EXPECT_NEAR(v4(2, ir), 0.0, 1e-14);
+        EXPECT_NEAR(v4(3, ir), 0.5 * (v(0, ir) - v(1, ir)), 1e-14);
+    }
+}
+
+// original conversion: has_mag=false leaves magnetic channels zero
+TEST(GgaGradTools, ConvertVNspin4HasMag)
+{
+    Ns4Charge mock(0);
+    std::vector<double> amag(gga_grad_nrxx);
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        amag[ir] = mock.chr.rho[3][ir];
+    }
+    ModuleBase::matrix v(2, gga_grad_nrxx);
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        v(0, ir) = 1.0 + ir;
+        v(1, ir) = 0.5 * ir;
+    }
+
+    const ModuleBase::matrix v_nomag
+        = XC_Functional_Libxc::convert_v_nspin4(gga_grad_nrxx, &mock.chr, amag, v, false);
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        EXPECT_NEAR(v_nomag(0, ir), 0.5 * (v(0, ir) + v(1, ir)), 1e-14);
+        EXPECT_NEAR(v_nomag(1, ir), 0.0, 1e-14);
+        EXPECT_NEAR(v_nomag(2, ir), 0.0, 1e-14);
+        EXPECT_NEAR(v_nomag(3, ir), 0.0, 1e-14);
+    }
+
+    const ModuleBase::matrix v_mag
+        = XC_Functional_Libxc::convert_v_nspin4(gga_grad_nrxx, &mock.chr, amag, v, true);
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        const double vs = 0.5 * (v(0, ir) - v(1, ir));
+        EXPECT_NEAR(v_mag(3, ir), vs * mock.chr.rho[3][ir] / amag[ir], 1e-14);
+    }
+}
+
+class GgaGradDh : public testing::Test
+{
+  protected:
+    // dh from cal_dh_sf for gga_grad=2 and 3 on a given magnetization pattern
+    void run(const int pattern,
+             std::vector<std::vector<double>>& dh2,
+             std::vector<std::vector<double>>& dh3,
+             std::vector<double>& mag_part)
+    {
+        Ns4Charge mock(pattern);
+        mag_part = XC_Functional_Libxc::compute_mag_part_nspin4(gga_grad_nrxx, &mock.chr);
+
+        const std::tuple<std::vector<double>, std::vector<double>> rho_amag
+            = XC_Functional_Libxc::convert_rho_amag_nspin4(2, gga_grad_nrxx, &mock.chr);
+        const std::vector<double>& rho = std::get<0>(rho_amag);
+        const std::vector<std::vector<ModuleBase::Vector3<double>>> gdr
+            = XC_Functional_Libxc::cal_gdr_sf(2, gga_grad_nrxx, rho, mag_part, mock.ucell.tpiba, &mock.chr);
+
+        std::vector<double> sgn(gga_grad_nrxx * 2, 1.0);
+        std::vector<double> vsigma(gga_grad_nrxx * 3);
+        for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+        {
+            for (int j = 0; j < 3; ++j)
+            {
+                vsigma[ir * 3 + j] = 0.2 + 0.1 * ir + 0.05 * j;
+            }
+        }
+
+        dh2 = XC_Functional_Libxc::cal_dh_sf(
+            2, gga_grad_nrxx, sgn, gdr, vsigma, mag_part, 2, mock.ucell.tpiba, &mock.chr);
+        dh3 = XC_Functional_Libxc::cal_dh_sf(
+            2, gga_grad_nrxx, sgn, gdr, vsigma, mag_part, 3, mock.ucell.tpiba, &mock.chr);
+    }
+};
+
+// uniform m_hat => grad(m_hat) = 0 => projected and full SF divergences agree
+TEST_F(GgaGradDh, UniformDirectionMethodsAgree)
+{
+    std::vector<std::vector<double>> dh2, dh3;
+    std::vector<double> mag_part;
+    run(0, dh2, dh3, mag_part);
+
+    for (int is = 0; is < 4; ++is)
+    {
+        for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+        {
+            EXPECT_NEAR(dh2[is][ir], dh3[is][ir], 1e-12);
+        }
+    }
+}
+
+// for gga_grad=2, dh_mu = m_hat_mu * div((h_up-h_dn)/2), so the magnetic
+// channels satisfy dh_mu = m_hat_mu * (m_hat . dh) exactly
+TEST_F(GgaGradDh, ProjectedDivergenceIsProjection)
+{
+    std::vector<std::vector<double>> dh2, dh3;
+    std::vector<double> mag_part;
+    run(1, dh2, dh3, mag_part);
+
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        double proj = 0.0;
+        for (int mu = 1; mu < 4; ++mu)
+        {
+            proj += mag_part[ir + (mu - 1) * gga_grad_nrxx] * dh2[mu][ir];
+        }
+        for (int mu = 1; mu < 4; ++mu)
+        {
+            EXPECT_NEAR(dh2[mu][ir], mag_part[ir + (mu - 1) * gga_grad_nrxx] * proj, 1e-12);
+        }
+    }
+}
+
+// NOTE on the mocked FFT: the mock derivative is pointwise
+// (grad(f)[ir] ~ f[ir], div(h)[ir] ~ h[ir]), so multiplication by a
+// scalar field commutes with the divergence and the projected (2) and
+// full (3) SF divergences coincide under this mock. The two methods can
+// only be distinguished with a real (nonlocal) FFT, e.g. in integration
+// tests. The tests below therefore anchor the wiring (exact values,
+// projection identities, crash-free dispatch) rather than the 2-vs-3
+// numerical difference.
+
+// built-in functionals: v_xc dispatches nspin=4 + gga_grad=2/3 to the SF builtin
+TEST(GgaGradVxc, BuiltinUniformDirectionMethodsAgree)
+{
+    const auto r2 = run_vxc_nspin4("PBE", 0, 2);
+    const auto r3 = run_vxc_nspin4("PBE", 0, 3);
+    EXPECT_EQ(std::get<2>(r2).nr, 4);
+    expect_vxc_equal(r2, r3, 1e-10);
+}
+
+// gga_grad=0 keeps the original built-in algorithm and must not crash
+TEST(GgaGradVxc, BuiltinOriginalAlgorithmRuns)
+{
+    const auto r0 = run_vxc_nspin4("PBE", 1, 0);
+    EXPECT_EQ(std::get<2>(r0).nr, 4);
+    EXPECT_TRUE(std::isfinite(std::get<0>(r0)));
+    EXPECT_TRUE(std::isfinite(std::get<1>(r0)));
+}
+
+// noncolin_rho with lsign=true defines up/down w.r.t. the global axis ux
+// through sign(m . ux); with lsign=false, up is always the local |m|
+TEST(GgaGradTools, NoncolinRhoGlobalAxis)
+{
+    Ns4Charge mock(2); // pattern 2: m . ux changes sign across the grid
+    const double* ux = mock.ucell.magnet.ux_; // (0,1,2) in the mock
+
+    std::vector<double> rup(gga_grad_nrxx), rdn(gga_grad_nrxx), neg(gga_grad_nrxx);
+    XC_Functional::noncolin_rho(
+        rup.data(), rdn.data(), neg.data(), mock.chr.rho, gga_grad_nrxx, ux, true);
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        const double mx = mock.chr.rho[1][ir], my = mock.chr.rho[2][ir], mz = mock.chr.rho[3][ir];
+        const double amag = std::sqrt(mx * mx + my * my + mz * mz);
+        const double sign = (mx * ux[0] + my * ux[1] + mz * ux[2] > 0) ? 1.0 : -1.0;
+        EXPECT_NEAR(rup[ir], 0.5 * (mock.chr.rho[0][ir] + sign * amag), 1e-14);
+        EXPECT_NEAR(rdn[ir], 0.5 * (mock.chr.rho[0][ir] - sign * amag), 1e-14);
+    }
+    // the sign really flips on this grid, i.e. the global axis matters here
+    EXPECT_NEAR(neg[0], 1.0, 1e-14);
+    EXPECT_NEAR(neg[1], -1.0, 1e-14);
+
+    XC_Functional::noncolin_rho(
+        rup.data(), rdn.data(), neg.data(), mock.chr.rho, gga_grad_nrxx, ux, false);
+    for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+    {
+        const double mx = mock.chr.rho[1][ir], my = mock.chr.rho[2][ir], mz = mock.chr.rho[3][ir];
+        const double amag = std::sqrt(mx * mx + my * my + mz * mz);
+        EXPECT_NEAR(rup[ir], 0.5 * (mock.chr.rho[0][ir] + amag), 1e-14);
+        EXPECT_NEAR(rdn[ir], 0.5 * (mock.chr.rho[0][ir] - amag), 1e-14);
+    }
+}
+
+// gga_grad=1 must ignore the global magnetization direction: with lsign_=true
+// it has to give the same gradcorr result as gga_grad=0 with lsign_=false
+TEST(GgaGradVxc, BuiltinGgaGrad1IgnoresGlobalAxis)
+{
+    XC_Functional::set_xc_type("PBE");
+    const double hybrid_alpha = XC_Functional::get_hybrid_alpha();
+    const double hse_omega = XC_Functional::get_hse_omega();
+
+    Ns4Charge mock_a(2); // lsign_ = true
+    double et1 = 0, vt1 = 0;
+    ModuleBase::matrix v1(4, gga_grad_nrxx);
+    std::vector<double> dum;
+    XC_Functional::gradcorr(et1, vt1, v1, &mock_a.chr, &mock_a.rhopw, &mock_a.ucell,
+                            dum, false, 4, true, false, 1, hybrid_alpha, hse_omega);
+
+    Ns4Charge mock_b(2);
+    mock_b.ucell.magnet.lsign_ = false;
+    double et0 = 0, vt0 = 0;
+    ModuleBase::matrix v0(4, gga_grad_nrxx);
+    XC_Functional::gradcorr(et0, vt0, v0, &mock_b.chr, &mock_b.rhopw, &mock_b.ucell,
+                            dum, false, 4, true, false, 0, hybrid_alpha, hse_omega);
+
+    EXPECT_NEAR(et0, et1, 1e-12);
+    EXPECT_NEAR(vt0, vt1, 1e-12);
+    for (int is = 0; is < 4; ++is)
+    {
+        for (int ir = 0; ir < gga_grad_nrxx; ++ir)
+        {
+            EXPECT_NEAR(v0(is, ir), v1(is, ir), 1e-12);
+        }
+    }
+}
+
+// regression anchors for the built-in SF path (gga_grad=3)
+TEST(GgaGradVxc, BuiltinSfAnchoredValues)
+{
+    const auto r = run_vxc_nspin4("PBE", 1, 3);
+    const ModuleBase::matrix& v = std::get<2>(r);
+    EXPECT_NEAR(std::get<0>(r), -5.1906253324e+01, 1.0e-8);
+    EXPECT_NEAR(std::get<1>(r), -6.8184946486e+01, 1.0e-8);
+    EXPECT_NEAR(v(0, 0), -2.6284212276e+00, 1.0e-8);
+    EXPECT_NEAR(v(0, 4), -3.7476729308e+00, 1.0e-8);
+    EXPECT_NEAR(v(1, 0), -3.7774725540e-02, 1.0e-8);
+    EXPECT_NEAR(v(1, 4), -9.2204398939e-02, 1.0e-8);
+    EXPECT_NEAR(v(2, 0), -9.4436813851e-02, 1.0e-8);
+    EXPECT_NEAR(v(2, 4), -9.2204398939e-03, 1.0e-8);
+    EXPECT_NEAR(v(3, 0), -7.5549451081e-02, 1.0e-8);
+    EXPECT_NEAR(v(3, 4), -1.8440879788e-01, 1.0e-8);
+}
+
+// LIBXC functionals: gga_grad=2/3 select the SF path in v_xc_libxc
+TEST(GgaGradVxc, LibxcUniformDirectionMethodsAgree)
+{
+    const auto r2 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 0, 2);
+    const auto r3 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 0, 3);
+    EXPECT_EQ(std::get<2>(r2).nr, 4);
+    expect_vxc_equal(r2, r3, 1e-10);
+}
+
+// for LIBXC, gga_grad=0 and 1 both keep the original collinear algorithm
+TEST(GgaGradVxc, LibxcZeroEqualsOne)
+{
+    const auto r0 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 1, 0);
+    const auto r1 = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 1, 1);
+    expect_vxc_equal(r0, r1, 1e-12);
+}
+
+// regression anchors for the LIBXC SF path (gga_grad=3); this path goes
+// through the SF branch of convert_vtxc_v
+TEST(GgaGradVxc, LibxcSfAnchoredValues)
+{
+    const auto r = run_vxc_nspin4("GGA_X_PBE+GGA_C_PBE", 1, 3);
+    const ModuleBase::matrix& v = std::get<2>(r);
+    EXPECT_NEAR(std::get<0>(r), -5.1906239921e+01, 1.0e-8);
+    EXPECT_NEAR(std::get<1>(r), -6.8184928281e+01, 1.0e-8);
+    EXPECT_NEAR(v(0, 0), -2.6284203722e+00, 1.0e-8);
+    EXPECT_NEAR(v(0, 4), -3.7476719779e+00, 1.0e-8);
+    EXPECT_NEAR(v(1, 0), -3.7774739650e-02, 1.0e-8);
+    EXPECT_NEAR(v(1, 4), -9.2204427285e-02, 1.0e-8);
+    EXPECT_NEAR(v(2, 0), -9.4436849124e-02, 1.0e-8);
+    EXPECT_NEAR(v(2, 4), -9.2204427285e-03, 1.0e-8);
+    EXPECT_NEAR(v(3, 0), -7.5549479300e-02, 1.0e-8);
+    EXPECT_NEAR(v(3, 4), -1.8440885457e-01, 1.0e-8);
 }
 
 

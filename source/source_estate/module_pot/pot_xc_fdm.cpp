@@ -31,6 +31,7 @@ PotXC_FDM::PotXC_FDM(
 							  PARAM.inp.nspin,
 							  PARAM.globalv.domag,
 							  PARAM.globalv.domag_z,
+							  PARAM.inp.gga_grad,
 							  hybrid_alpha,
 							  hse_omega);
 	this->v_xc_0 = std::get<2>(etxc_vtxc_v_0);
@@ -69,6 +70,7 @@ void PotXC_FDM::cal_v_eff(
 							  PARAM.inp.nspin,
 							  PARAM.globalv.domag,
 							  PARAM.globalv.domag_z,
+							  PARAM.inp.gga_grad,
 							  hybrid_alpha,
 							  hse_omega);
 	const ModuleBase::matrix &v_xc_01 = std::get<2>(etxc_vtxc_v_01);

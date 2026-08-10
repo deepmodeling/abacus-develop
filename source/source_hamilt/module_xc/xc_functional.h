@@ -51,6 +51,7 @@ class XC_Functional
         const int nspin,
         const bool domag,
         const bool domag_z,
+        const int gga_grad,
         const double hybrid_alpha,
         const double hse_omega);
 
@@ -225,6 +226,7 @@ class XC_Functional
         const int nspin,
         const bool domag,
         const bool domag_z,
+        const int gga_grad,
         const double hybrid_alpha,
         const double hse_omega);
 
@@ -249,15 +251,13 @@ class XC_Functional
         double* dh,
         const ModulePW::PW_Basis* rho_basis,
         const double tpiba);
-
-    static void noncolin_rho(
-        double* rhoout1,
-        double* rhoout2,
-        double* seg,
-        const double* const* const rho,
-        const int nrxx,
-        const double* ux_,
-        const bool lsign_);
+    static void noncolin_rho(double* rhoout1,
+                             double* rhoout2,
+                             double* neg,
+                             const double* const* const rho,
+                             const int nrxx,
+                             const double* ux_,
+                             const bool lsign_);
 
     //-------------------
     //  xc_lda_exch.cpp

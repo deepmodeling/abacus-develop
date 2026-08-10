@@ -36,6 +36,7 @@ void XC_Functional::gradcorr(
     const int nspin,
     const bool domag,
     const bool domag_z,
+    const int gga_grad,
     const double hybrid_alpha_in,
     const double hse_omega_in)
 {
@@ -204,7 +205,18 @@ void XC_Functional::gradcorr(
                 vgg[is] = new double[rhopw->nrxx];
             }
         }
-        noncolin_rho(rhotmp1, rhotmp2, neg, chr->rho, rhopw->nrxx, ucell->magnet.ux_, ucell->magnet.lsign_);
+        // gga_grad=0 (original): when the initial magnetic moments in STRU are
+        // all collinear, lsign_ is set and their common direction ux_ is used
+        // as a global quantization axis: up/down are defined w.r.t. this axis
+        // through the sign of m . ux. This reproduces the nspin=2 collinear
+        // result exactly for collinear configurations, but makes the magnetic
+        // potential energy surface discontinuous when the moments are tilted
+        // slightly away from collinearity.
+        // gga_grad=1: ignore the global direction (neg = 1 everywhere), so the
+        // magnetic potential energy surface stays continuous, at the price of
+        // giving up exact consistency with nspin=2 for collinear cases.
+        const bool use_global_axis = ucell->magnet.lsign_ && (gga_grad != 1);
+        noncolin_rho(rhotmp1, rhotmp2, neg, chr->rho, rhopw->nrxx, ucell->magnet.ux_, use_global_axis);
         rhopw->real2recip(rhotmp1, rhogsum1);
         rhopw->real2recip(rhotmp2, rhogsum2);
 #ifdef _OPENMP

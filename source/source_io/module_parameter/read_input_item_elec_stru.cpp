@@ -507,6 +507,27 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         this->add_item(item);
     }
     {
+        Input_Item item("gga_grad");
+        item.annotation = "GGA gradient method for nspin=4: 0 original algorithm, 1 collinear approx, 2 projected div(h), 3 Scalmani-Frisch";
+        item.category = "Electronic structure";
+        item.type = "Integer";
+        item.description = R"(Method used to evaluate the density gradient entering GGA exchange-correlation terms in noncollinear-spin (nspin=4) calculations. With rho_up/dn = (rho +/- |m|)/2 and m_hat = m/|m|:
+* 0: original algorithm; the default. When the initial magnetic moments in STRU are all collinear, their common direction u is used as a global quantization axis and the up/down densities are defined w.r.t. this axis via the sign of m . u. This reproduces the nspin=2 collinear result exactly for collinear configurations, but makes the magnetic potential energy surface discontinuous when the initial moments are tilted slightly away from collinearity.
+* 1: collinear approximation without the global direction: up/down are always defined w.r.t. the local |m|, so the magnetic potential energy surface stays continuous, at the price of giving up exact consistency with nspin=2 for collinear configurations. (For LIBXC functionals the global axis is never used, so 0 and 1 are equivalent.)
+* 2: projected method. The gradients use the full chain rule, grad(rho_up/dn) = (grad(rho) +/- m_hat . grad(m))/2, but the divergence of h = df/d(grad rho) in the potential is projected onto m_hat: v_mu -= m_hat_mu * div((h_up - h_dn)/2), dropping the (h_up - h_dn) . grad(m_hat_mu) cross terms.
+* 3: Scalmani-Frisch transformation (G. Scalmani and M. J. Frisch, J. Chem. Theory Comput. 8, 2193 (2012)). Same gradients as 2, but the full divergence is kept: v_mu -= div((h_up - h_dn)/2 * m_hat_mu), retaining all cross terms; the most accurate.
+This parameter only takes effect for nspin=4 with GGA functionals (and magnetic calculation).)";
+        item.default_value = "0";
+        read_sync_int(input.gga_grad);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.gga_grad < 0 || para.input.gga_grad > 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "gga_grad must be 0, 1, 2, or 3.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("smearing_method");
         item.annotation = "type of smearing_method: gauss; fd; fixed; mp; mp2; mv";
         item.category = "Electronic structure";

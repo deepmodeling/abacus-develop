@@ -71,6 +71,7 @@ AddTest(
     ../xc_gga_corr.cpp ../xc_lda_corr.cpp ../xc_gga_exch.cpp
     ../xc_lda_exch.cpp ../xc_hcth.cpp
     ../xc_pot.cpp
+    ../xc_functional_ncgga_sf.cpp
     ../libxc_pot.cpp
     ../libxc_tools.cpp
     ../../../source_base/module_external/blas_connector_base.cpp ../../../source_base/module_external/blas_connector_vector.cpp ../../../source_base/module_external/blas_connector_matrix.cpp

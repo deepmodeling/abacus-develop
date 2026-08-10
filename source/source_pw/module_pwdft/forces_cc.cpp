@@ -82,6 +82,7 @@ void Forces<FPTYPE, Device>::cal_force_cc(ModuleBase::matrix& forcecc,
                                               PARAM.inp.nspin,
                                               PARAM.globalv.domag,
                                               PARAM.globalv.domag_z,
+                                              PARAM.inp.gga_grad,
                                               hybrid_alpha,
                                               hse_omega);
 
