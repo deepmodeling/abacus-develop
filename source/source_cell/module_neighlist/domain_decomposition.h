@@ -26,6 +26,10 @@ class DomainDecomposition
 public:
     DomainDecomposition();
     ~DomainDecomposition();
+    DomainDecomposition(const DomainDecomposition&) = delete;
+    DomainDecomposition& operator=(const DomainDecomposition&) = delete;
+    DomainDecomposition(DomainDecomposition&& other) noexcept;
+    DomainDecomposition& operator=(DomainDecomposition&& other) noexcept;
 
     void init(MPI_Comm comm,
               const ModuleBase::Matrix3& latvec,

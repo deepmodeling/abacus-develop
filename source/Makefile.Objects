@@ -211,6 +211,8 @@ OBJS_CELL=atom_pseudo.o\
     read_pseudo.o\
     cal_wfc.o\
     cal_ux.o\
+    distributed_mdcell_reader.o\
+    md_cell.o\
 
 OBJS_DEEPKS=LCAO_deepks.o\
         deepks_basic.o\

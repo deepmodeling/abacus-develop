@@ -34,6 +34,11 @@ class MDCell : public BaseCell
 {
 public:
     MDCell(UnitCell& ucell, double cutoff, double skin);
+    MDCell(const MDCell&) = delete;
+    MDCell& operator=(const MDCell&) = delete;
+    MDCell(MDCell&&) = default;
+    MDCell& operator=(MDCell&&) = default;
+
     MDCell(const ModuleBase::Matrix3& latvec,
            const ModuleBase::Matrix3& gt,
            double lat0,

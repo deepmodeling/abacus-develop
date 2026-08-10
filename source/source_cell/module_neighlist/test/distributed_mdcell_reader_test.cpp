@@ -9,6 +9,10 @@
 #include <mpi.h>
 #include <set>
 #include <string>
+#include <type_traits>
+
+static_assert(!std::is_copy_constructible<MDCell>::value,
+              "MDCell must not copy MPI communicator ownership.");
 
 namespace
 {
