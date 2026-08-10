@@ -183,16 +183,20 @@ SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
+namespace
+{
+std::vector<LocalAtom> mdcell_owned_atoms_for_output_test;
+std::vector<std::string> mdcell_type_labels_for_output_test;
+}
+
 const std::vector<LocalAtom>& MDCell::owned_atoms() const
 {
-    static const std::vector<LocalAtom> atoms;
-    return atoms;
+    return mdcell_owned_atoms_for_output_test;
 }
 
 const std::vector<std::string>& MDCell::type_labels() const
 {
-    static const std::vector<std::string> labels;
-    return labels;
+    return mdcell_type_labels_for_output_test;
 }
 
 #ifdef __MPI
@@ -287,6 +291,59 @@ TEST(PrintForce, PrintForce)
 
     ifs.close();
     std::remove("running_force.txt");
+}
+
+TEST(PrintForce, MDCellWritesForceBlocksWithoutGathering)
+{
+    const std::string filename = "running_mdcell_force.txt";
+    int rank = 0;
+#ifdef __MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank == 0) std::remove(filename.c_str());
+    MPI_Barrier(MPI_COMM_WORLD);
+#else
+    std::remove(filename.c_str());
+#endif
+
+    PARAM.input.out_alllog = false;
+    PARAM.sys.global_out_dir = "./";
+    PARAM.sys.log_file = filename;
+    mdcell_type_labels_for_output_test.assign(1, "X");
+    mdcell_owned_atoms_for_output_test.resize(1);
+    LocalAtom& atom = mdcell_owned_atoms_for_output_test[0];
+    atom.type = 0;
+    atom.type_index = rank;
+    atom.force.set(static_cast<double>(rank + 1), 0.0, 0.0);
+
+    std::ofstream ofs;
+    if (rank == 0) ofs.open(filename.c_str());
+    ModuleIO::print_force(ofs, *static_cast<MDCell*>(nullptr), "TOTAL-FORCE");
+    if (rank == 0)
+    {
+        ofs << "after-force\n";
+        ofs.close();
+    }
+#ifdef __MPI
+    MPI_Barrier(MPI_COMM_WORLD);
+#endif
+
+    if (rank == 0)
+    {
+        std::ifstream ifs(filename.c_str());
+        std::stringstream text;
+        text << ifs.rdbuf();
+        EXPECT_THAT(text.str(), testing::HasSubstr("#TOTAL-FORCE#"));
+        EXPECT_THAT(text.str(), testing::HasSubstr("X1"));
+#ifdef __MPI
+        int size = 1;
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+        EXPECT_THAT(text.str(), testing::HasSubstr("X" + std::to_string(size)));
+#endif
+        EXPECT_THAT(text.str(), testing::HasSubstr("after-force"));
+        std::remove(filename.c_str());
+    }
+    mdcell_owned_atoms_for_output_test.clear();
+    mdcell_type_labels_for_output_test.clear();
 }
 
 TEST(PrintStress, PrintStress)

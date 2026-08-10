@@ -149,7 +149,7 @@ TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     MPI_Comm_free(&md_comm);
 }
 
-TEST(DistributedMDCellReaderTest, RestartStruPreservesTypeIndexOrderAcrossRanks)
+TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
 {
     int rank = 0;
     int size = 1;
@@ -164,7 +164,7 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesTypeIndexOrderAcrossRanks)
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                         ModuleBase::Vector3<double>(0.11, 0.0, 0.0),
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                        ModuleBase::Vector3<int>(1, 1, 1),
+                                        ModuleBase::Vector3<int>(1, 0, 1),
                                         1.0,
                                         1,
                                         1,
@@ -177,7 +177,7 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesTypeIndexOrderAcrossRanks)
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                         ModuleBase::Vector3<double>(0.01, 0.0, 0.0),
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                        ModuleBase::Vector3<int>(1, 1, 1),
+                                        ModuleBase::Vector3<int>(0, 1, 1),
                                         1.0,
                                         0,
                                         1,
@@ -190,7 +190,7 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesTypeIndexOrderAcrossRanks)
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                         ModuleBase::Vector3<double>(0.10, 0.0, 0.0),
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                        ModuleBase::Vector3<int>(1, 1, 1),
+                                        ModuleBase::Vector3<int>(1, 1, 0),
                                         1.0,
                                         1,
                                         0,
@@ -203,7 +203,7 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesTypeIndexOrderAcrossRanks)
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                        ModuleBase::Vector3<int>(1, 1, 1),
+                                        ModuleBase::Vector3<int>(0, 0, 1),
                                         1.0,
                                         0,
                                         0,
@@ -240,23 +240,40 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesTypeIndexOrderAcrossRanks)
                                                             round_trip_metadata,
                                                             ModuleBase::world_communication_domain());
     double local_positions[4] = {0.0, 0.0, 0.0, 0.0};
+    double local_velocities[4] = {0.0, 0.0, 0.0, 0.0};
+    int local_mbl_x[4] = {0, 0, 0, 0};
     int local_owners[4] = {0, 0, 0, 0};
     for (std::size_t iat = 0; iat < round_trip.owned_atoms().size(); ++iat)
     {
         const LocalAtom& atom = round_trip.owned_atoms()[iat];
-        const int index = atom.type * 2 + atom.type_index;
+        const int index = atom.type == 0 ? static_cast<int>(atom.cart.x)
+                                         : 2 + static_cast<int>(atom.cart.x) - 10;
         local_positions[index] = atom.cart.x;
+        local_velocities[index] = atom.vel.x;
+        local_mbl_x[index] = atom.mbl.x;
         local_owners[index] = 1;
     }
     double global_positions[4] = {0.0, 0.0, 0.0, 0.0};
+    double global_velocities[4] = {0.0, 0.0, 0.0, 0.0};
+    int global_mbl_x[4] = {0, 0, 0, 0};
     int global_owners[4] = {0, 0, 0, 0};
     MPI_Allreduce(local_positions, global_positions, 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(local_velocities, global_velocities, 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(local_mbl_x, global_mbl_x, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     MPI_Allreduce(local_owners, global_owners, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
     for (int iat = 0; iat < 4; ++iat) EXPECT_EQ(global_owners[iat], 1);
     EXPECT_DOUBLE_EQ(global_positions[0], 0.0);
     EXPECT_DOUBLE_EQ(global_positions[1], 1.0);
     EXPECT_DOUBLE_EQ(global_positions[2], 10.0);
     EXPECT_DOUBLE_EQ(global_positions[3], 11.0);
+    EXPECT_DOUBLE_EQ(global_velocities[0], 0.0);
+    EXPECT_DOUBLE_EQ(global_velocities[1], 0.01);
+    EXPECT_DOUBLE_EQ(global_velocities[2], 0.10);
+    EXPECT_DOUBLE_EQ(global_velocities[3], 0.11);
+    EXPECT_EQ(global_mbl_x[0], 0);
+    EXPECT_EQ(global_mbl_x[1], 0);
+    EXPECT_EQ(global_mbl_x[2], 1);
+    EXPECT_EQ(global_mbl_x[3], 1);
 
     if (rank == 0)
     {
@@ -298,10 +315,10 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesTypeIndexOrderAcrossRanks)
         }
         ASSERT_EQ(coordinates_a.size(), 2U);
         ASSERT_EQ(coordinates_b.size(), 2U);
-        EXPECT_DOUBLE_EQ(coordinates_a[0], 0.0);
-        EXPECT_DOUBLE_EQ(coordinates_a[1], 1.0);
-        EXPECT_DOUBLE_EQ(coordinates_b[0], 10.0);
-        EXPECT_DOUBLE_EQ(coordinates_b[1], 11.0);
+        std::set<double> expected_a = {0.0, 1.0};
+        std::set<double> expected_b = {10.0, 11.0};
+        EXPECT_EQ(std::set<double>(coordinates_a.begin(), coordinates_a.end()), expected_a);
+        EXPECT_EQ(std::set<double>(coordinates_b.begin(), coordinates_b.end()), expected_b);
     }
     MPI_Barrier(MPI_COMM_WORLD);
     if (rank == 0) std::remove(output_file.c_str());

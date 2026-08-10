@@ -77,57 +77,16 @@ void Verlet::apply_thermostat(void)
     }
     else if (mdp.md_thermostat == "anderson")
     {
-#ifdef __MPI
-        if (mdcell.mpi_size() > 1)
+        for (LocalAtom& atom : mdcell.mutable_owned_atoms())
         {
-            const std::vector<int>& type_atom_counts = mdcell.type_atom_counts();
-            const std::vector<double>& type_masses = mdcell.type_masses();
-            for (std::size_t it = 0; it < type_atom_counts.size(); ++it)
+            if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
             {
-                const double deviation = sqrt(md_tlast / (type_masses[it] / ModuleBase::AU_to_MASS));
-                for (int ia = 0; ia < type_atom_counts[it]; ++ia)
+                const double deviation = sqrt(md_tlast / atom.mass);
+                for (int k = 0; k < 3; ++k)
                 {
-                    int collision = 0;
-                    double velocity[3] = {0.0, 0.0, 0.0};
-                    if (mdcell.mpi_rank() == 0)
+                    if (atom.mbl[k])
                     {
-                        collision = static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise;
-                        if (collision)
-                        {
-                            for (int k = 0; k < 3; ++k) velocity[k] = deviation * MD_func::gaussrand();
-                        }
-                    }
-                    MPI_Bcast(&collision, 1, MPI_INT, 0, mdcell.communicator());
-                    MPI_Bcast(velocity, 3, MPI_DOUBLE, 0, mdcell.communicator());
-                    if (collision)
-                    {
-                        for (LocalAtom& atom : mdcell.mutable_owned_atoms())
-                        {
-                            if (atom.type == static_cast<int>(it) && atom.type_index == ia)
-                            {
-                                for (int k = 0; k < 3; ++k) if (atom.mbl[k]) atom.vel[k] = velocity[k];
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-            return;
-        }
-#endif
-        if (my_rank == 0)
-        {
-            for (LocalAtom& atom : mdcell.mutable_owned_atoms())
-            {
-                if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
-                {
-                    const double deviation = sqrt(md_tlast / atom.mass);
-                    for (int k = 0; k < 3; ++k)
-                    {
-                        if (atom.mbl[k])
-                        {
-                            atom.vel[k] = deviation * MD_func::gaussrand();
-                        }
+                        atom.vel[k] = deviation * MD_func::gaussrand();
                     }
                 }
             }

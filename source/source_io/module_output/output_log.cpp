@@ -9,8 +9,13 @@
 #include "source_base/parallel_comm.h"
 
 #include <cmath>
+#include <cerrno>
+#include <cstring>
+#include <fcntl.h>
 #include <iomanip>
 #include <sstream>
+#include <stdexcept>
+#include <unistd.h>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -294,40 +299,112 @@ std::string mdcell_force_text(const MDCell& cell)
     }
     return output.str();
 }
+
+#ifdef __MPI
+bool write_at(const int file, const std::string& data, MPI_Offset offset)
+{
+    std::size_t written = 0;
+    while (written < data.size())
+    {
+        const ssize_t count = pwrite(file,
+                                     data.data() + written,
+                                     data.size() - written,
+                                     static_cast<off_t>(offset + written));
+        if (count <= 0)
+        {
+            return false;
+        }
+        written += static_cast<std::size_t>(count);
+    }
+    return true;
+}
+#endif
 }
 
 void print_force(std::ofstream& ofs, const MDCell& cell, const std::string& name)
 {
     const std::string local_text = mdcell_force_text(cell);
 #ifdef __MPI
-    const MPI_Comm comm = cell.communicator();
-    int rank = 0;
-    int size = 1;
-    MPI_Comm_rank(comm, &rank);
-    MPI_Comm_size(comm, &size);
-    if (rank == 0)
+    if (PARAM.inp.out_alllog)
     {
         ofs << "\n #" << name << "#\n" << local_text;
-        for (int source = 1; source < size; ++source)
+        return;
+    }
+
+    const MPI_Comm comm = cell.communicator();
+    int rank = 0;
+    MPI_Comm_rank(comm, &rank);
+    const std::string header = "\n #" + name + "#\n";
+    if (rank == 0)
+    {
+        ofs << header;
+        ofs.flush();
+    }
+    MPI_Barrier(comm);
+
+    const std::string filename = PARAM.globalv.global_out_dir + PARAM.globalv.log_file;
+    const int file = open(filename.c_str(), O_WRONLY);
+    int file_ok = file >= 0 ? 1 : 0;
+    int all_files_ok = 0;
+    MPI_Allreduce(&file_ok, &all_files_ok, 1, MPI_INT, MPI_MIN, comm);
+    if (all_files_ok == 0)
+    {
+        if (file >= 0)
         {
-            int length = 0;
-            MPI_Recv(&length, 1, MPI_INT, source, 9400, comm, MPI_STATUS_IGNORE);
-            std::string text(static_cast<std::size_t>(length), '\0');
-            if (length > 0)
-            {
-                MPI_Recv(&text[0], length, MPI_CHAR, source, 9401, comm, MPI_STATUS_IGNORE);
-            }
-            ofs << text;
+            close(file);
+        }
+        throw std::runtime_error("Unable to open MDCell force log: " + filename + ": " + std::strerror(errno));
+    }
+
+    MPI_Offset data_offset = 0;
+    int offset_ok = 1;
+    if (rank == 0)
+    {
+        const off_t end = lseek(file, 0, SEEK_END);
+        if (end < 0)
+        {
+            offset_ok = 0;
+        }
+        else
+        {
+            data_offset = static_cast<MPI_Offset>(end);
         }
     }
-    else
+    MPI_Bcast(&offset_ok, 1, MPI_INT, 0, comm);
+    if (offset_ok == 0)
     {
-        const int length = static_cast<int>(local_text.size());
-        MPI_Send(&length, 1, MPI_INT, 0, 9400, comm);
-        if (length > 0)
-        {
-            MPI_Send(local_text.data(), length, MPI_CHAR, 0, 9401, comm);
-        }
+        close(file);
+        throw std::runtime_error("Unable to seek MDCell force log: " + filename + ": " + std::strerror(errno));
+    }
+    MPI_Bcast(&data_offset, 1, MPI_OFFSET, 0, comm);
+
+    const MPI_Offset local_size = static_cast<MPI_Offset>(local_text.size());
+    MPI_Offset rank_offset = 0;
+    MPI_Exscan(&local_size, &rank_offset, 1, MPI_OFFSET, MPI_SUM, comm);
+    if (rank == 0)
+    {
+        rank_offset = 0;
+    }
+
+    int write_ok = 1;
+    if (local_size > 0)
+    {
+        write_ok = write_at(file, local_text, data_offset + rank_offset) ? 1 : 0;
+    }
+    int all_writes_ok = 0;
+    MPI_Allreduce(&write_ok, &all_writes_ok, 1, MPI_INT, MPI_MIN, comm);
+    const int close_ok = close(file) == 0 ? 1 : 0;
+    int all_closes_ok = 0;
+    MPI_Allreduce(&close_ok, &all_closes_ok, 1, MPI_INT, MPI_MIN, comm);
+    if (all_writes_ok == 0 || all_closes_ok == 0)
+    {
+        throw std::runtime_error("Unable to write MDCell force log: " + filename + ": " + std::strerror(errno));
+    }
+    MPI_Barrier(comm);
+    if (rank == 0)
+    {
+        ofs.clear();
+        ofs.seekp(0, std::ios::end);
     }
 #else
     ofs << "\n #" << name << "#\n" << local_text;
