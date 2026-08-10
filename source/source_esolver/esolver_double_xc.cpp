@@ -4,7 +4,7 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_deepks/LCAO_deepks_interface.h"
+#include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #include "source_lcao/module_deepks/LCAO_deepks_io.h"
 #endif
 #include "source_lcao/FORCE_STRESS.h"

@@ -1,5 +1,5 @@
-#ifndef LCAO_DEEPKS_INTERFACE_H
-#define LCAO_DEEPKS_INTERFACE_H
+#ifndef LCAO_DEEPKS_IFACE_H
+#define LCAO_DEEPKS_IFACE_H
 
 #ifdef __MLALGO
 #include "LCAO_deepks.h"

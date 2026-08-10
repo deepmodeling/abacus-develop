@@ -228,7 +228,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         deepks_pdm.o\
         deepks_phialpha.o\
         LCAO_deepks_io.o\
-        LCAO_deepks_interface.o\
+        lcao_deepks_iface.o\
 
 
 OBJS_ELECSTAT=elecstate.o\
@@ -381,7 +381,7 @@ OBJS_HSOLVER=diago_cg.o\
     diago_david.o\
     diago_dav_subspace.o\
     diago_bpcg.o\
-    para_linear_transform.o\
+    para_lin_tf.o\
     hsolver.o\
     hsolver_pw.o\
     hsolver_lcaopw.o\
@@ -600,16 +600,16 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_input.o\
     module_parameter/read_inp_sys.o\
     module_parameter/read_inp_estruc.o\
-    module_parameter/read_input_item_relax.o\
+    module_parameter/read_inp_relax.o\
     module_parameter/read_input_item_md.o\
-    module_parameter/read_input_item_ofdft.o\
+    module_parameter/read_inp_ofdft.o\
     module_parameter/read_input_item_sdft.o\
-    module_parameter/read_input_item_tddft.o\
+    module_parameter/read_inp_tddft.o\
     module_parameter/read_inp_deepks.o\
-    module_parameter/read_input_item_model.o\
+    module_parameter/read_inp_model.o\
     module_parameter/read_inp_postproc.o\
     module_parameter/read_inp_exx_dftu.o\
-    module_parameter/read_input_item_other.o\
+    module_parameter/read_inp_other.o\
     module_parameter/read_inp_out.o\
     module_parameter/read_set_globalv.o\
     orb_io.o\
@@ -797,7 +797,7 @@ OBJS_VDW=vdw.o\
     vdwd3.o\
     vdwd3_parameters_tab.o\
     vdwd3_autoset_xcname.o\
-    vdwd3_autoset_xcparam.o
+    vdwd3_auto_xcpar.o
 
 OBJS_DFTU=dftu.o\
       dftu_force.o\

@@ -16,7 +16,7 @@ if(ENABLE_MLALGO)
       deepks_pdm.cpp
       deepks_phialpha.cpp
       LCAO_deepks_io.cpp
-      LCAO_deepks_interface.cpp
+      lcao_deepks_iface.cpp
   )
 
   add_library(

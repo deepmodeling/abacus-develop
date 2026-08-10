@@ -28,7 +28,7 @@
 #include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_deepks/LCAO_deepks_interface.h"
+#include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
 #ifdef __EXX
 #include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes

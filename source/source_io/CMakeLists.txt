@@ -106,16 +106,16 @@ add_library(
     OBJECT
     module_parameter/read_inp_sys.cpp
     module_parameter/read_inp_estruc.cpp
-    module_parameter/read_input_item_relax.cpp
+    module_parameter/read_inp_relax.cpp
     module_parameter/read_input_item_md.cpp
-    module_parameter/read_input_item_ofdft.cpp
+    module_parameter/read_inp_ofdft.cpp
     module_parameter/read_input_item_sdft.cpp
-    module_parameter/read_input_item_tddft.cpp
+    module_parameter/read_inp_tddft.cpp
     module_parameter/read_inp_deepks.cpp
-    module_parameter/read_input_item_model.cpp
+    module_parameter/read_inp_model.cpp
     module_parameter/read_inp_postproc.cpp  
     module_parameter/read_inp_exx_dftu.cpp
-    module_parameter/read_input_item_other.cpp   
+    module_parameter/read_inp_other.cpp   
     module_parameter/read_inp_out.cpp  
     module_parameter/read_input.cpp
     module_parameter/read_set_globalv.cpp

@@ -5,7 +5,7 @@ set(vdw_sources
     vdwd2.cpp
     vdwd3.cpp
     vdwd3_autoset_xcname.cpp
-    vdwd3_autoset_xcparam.cpp
+    vdwd3_auto_xcpar.cpp
     vdw.cpp
 )
 

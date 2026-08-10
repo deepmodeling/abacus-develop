@@ -9,7 +9,7 @@
 #include "source_base/para_gemm.h"
 #include "source_hamilt/hamilt.h"
 #include "source_hsolver/kernels/hegvd_op.h"
-#include "source_hsolver/para_linear_transform.h"
+#include "source_hsolver/para_lin_tf.h"
 
 #include <ATen/core/tensor.h>
 #include <ATen/core/tensor_map.h>

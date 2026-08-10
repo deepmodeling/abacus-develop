@@ -1,5 +1,5 @@
 #ifdef __MLALGO
-#include "LCAO_deepks_interface.h"
+#include "lcao_deepks_iface.h"
 
 #include "LCAO_deepks_io.h" // mohan add 2024-07-22
 #include "source_base/global_variable.h"

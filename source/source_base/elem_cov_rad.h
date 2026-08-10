@@ -1,5 +1,5 @@
-#ifndef ELEMENT_COVALENT_RADIUS
-#define ELEMENT_COVALENT_RADIUS
+#ifndef ELEM_COV_RAD_H
+#define ELEM_COV_RAD_H
 
 #include <map>
 #include <string>

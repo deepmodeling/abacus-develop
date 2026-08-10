@@ -1,5 +1,5 @@
-#ifndef __PARA_LINEAR_TRANSFORM_H__
-#define __PARA_LINEAR_TRANSFORM_H__
+#ifndef __PARA_LIN_TF_H__
+#define __PARA_LIN_TF_H__
 #include "source_base/module_device/device.h"
 #include "source_base/module_device/memory_op.h"
 
