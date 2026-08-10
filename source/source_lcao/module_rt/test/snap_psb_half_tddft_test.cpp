@@ -275,7 +275,7 @@ class SnapPsibetaHalfTddftTest : public ::testing::Test
         const std::string orb_file = "tests/PP_ORB/Ti_gga_10au_100Ry_4s2p2d1f.orb";
         const std::string orbital_files[1] = {orb_file};
 
-        std::ofstream ofs("snap_psibeta_half_tddft_test.log");
+        std::ofstream ofs("snap_psb_half_tddft_test.log");
         // Keep the reciprocal transform spacing intentionally different from
         // the 0.01 Bohr real-space orbital grid.
         orb.init(ofs, 1, root, orbital_files, "", 3, 100.0, 0.013, 0.01, 30.0, false, 0, false, false, 0);

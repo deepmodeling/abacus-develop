@@ -186,7 +186,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_BASE_sph_bessel_tf
-  SOURCES spherical_bessel_transformer_test.cpp
+  SOURCES sph_bessel_tf_test.cpp
   LIBS parameter  base device
 )
 
