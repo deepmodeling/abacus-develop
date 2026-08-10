@@ -9,6 +9,8 @@
 #endif
 
 #include <cctype>
+#include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdlib>
 #include <fstream>
@@ -180,15 +182,32 @@ StruMetadata parse_stru_metadata(std::ifstream& ifs)
 
 std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                                          StruMetadata& metadata,
-                                         double cutoff_bohr,
-                                         double skin_bohr,
+                                         const ModuleBase::Matrix3& primitive_latvec,
+                                         const ModuleBase::Matrix3& primitive_gt,
+                                         const std::vector<int>& replicate,
+                                         double cutoff,
+                                         double skin,
                                          int& nat)
 {
     int rank = 0;
 #ifdef __MPI
     DomainDecomposition decomposition;
-    decomposition.init(MPI_COMM_WORLD, metadata.latvec, metadata.lat0, cutoff_bohr, skin_bohr);
+    decomposition.init(MPI_COMM_WORLD, metadata.latvec, metadata.lat0, cutoff, skin);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+
+    int begin[3] = {0, 0, 0};
+    int end[3] = {replicate[0], replicate[1], replicate[2]};
+#ifdef __MPI
+    const std::array<int, 3>& dims = decomposition.dims();
+    const std::array<int, 3>& coords = decomposition.coords();
+    for (int idim = 0; idim < 3; ++idim)
+    {
+        begin[idim] = std::max(0, static_cast<int>(std::floor(
+            static_cast<double>(coords[idim]) * replicate[idim] / dims[idim])) - 1);
+        end[idim] = std::min(replicate[idim], static_cast<int>(std::ceil(
+            static_cast<double>(coords[idim] + 1) * replicate[idim] / dims[idim])) + 1);
+    }
 #endif
 
     expect_keyword(ifs, "ATOMIC_POSITIONS");
@@ -197,7 +216,7 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
     const bool is_direct = coord_type == "Direct";
     if (!is_cartesian && !is_direct)
     {
-        throw std::runtime_error("Only Direct and Cartesian ATOMIC_POSITIONS are supported for LJ MD.");
+        throw std::runtime_error("Only Direct and Cartesian ATOMIC_POSITIONS are supported for MD.");
     }
 
     std::vector<LocalAtom> owned_atoms;
@@ -231,13 +250,13 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
             if (is_cartesian)
             {
                 cart.set(c1, c2, c3);
-                frac = wrap_fractional(cart * metadata.gt);
-                cart = frac * metadata.latvec;
+                frac = wrap_fractional(cart * primitive_gt);
+                cart = frac * primitive_latvec;
             }
             else
             {
                 frac = wrap_fractional(ModuleBase::Vector3<double>(c1, c2, c3));
-                cart = frac * metadata.latvec;
+                cart = frac * primitive_latvec;
             }
 
             ModuleBase::Vector3<int> mbl(1, 1, 1);
@@ -267,37 +286,52 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                 }
             }
 
-            int owner = 0;
-#ifdef __MPI
-            owner = decomposition.owner_rank_from_frac(frac);
-#endif
-            if (owner == rank)
+            for (int ix = begin[0]; ix < end[0]; ++ix)
             {
-                owned_atoms.push_back(LocalAtom(cart,
-                                                 frac,
-                                                 vel,
-                                                 ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                                 mbl,
-                                                 metadata.masses[it] / ModuleBase::AU_to_MASS,
-                                                 static_cast<int>(it),
-                                                 ia,
-                                                 owner,
-                                                 false));
+                for (int iy = begin[1]; iy < end[1]; ++iy)
+                {
+                    for (int iz = begin[2]; iz < end[2]; ++iz)
+                    {
+                        ModuleBase::Vector3<double> final_frac(
+                            (ix + frac.x) / replicate[0],
+                            (iy + frac.y) / replicate[1],
+                            (iz + frac.z) / replicate[2]);
+                        int owner = 0;
+#ifdef __MPI
+                        owner = decomposition.owner_rank_from_frac(final_frac);
+#endif
+                        if (owner == rank)
+                        {
+                            owned_atoms.push_back(LocalAtom(final_frac * metadata.latvec,
+                                                             final_frac,
+                                                             vel,
+                                                             ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                                             mbl,
+                                                             metadata.masses[it] / ModuleBase::AU_to_MASS,
+                                                             static_cast<int>(it),
+                                                             ((ix * replicate[1] + iy) * replicate[2] + iz) * nat_type + ia,
+                                                             owner,
+                                                             false));
+                        }
+                    }
+                }
             }
-            ++nat;
         }
+        metadata.stru_metadata.species[it].atom_count = nat_type * replicate[0] * replicate[1] * replicate[2];
+        nat += metadata.stru_metadata.species[it].atom_count;
     }
     return owned_atoms;
 }
 } // namespace
 
-MdCell DistributedMdCellReader::read_lj_stru(const std::string& stru_file,
-                                             double cutoff_bohr,
-                                             double skin_bohr)
+MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
+                                          const std::vector<int>& replicate,
+                                          double cutoff,
+                                          double skin)
 {
-    if (cutoff_bohr <= 0.0)
+    if (cutoff <= 0.0)
     {
-        throw std::runtime_error("MdCell requires a positive LJ cutoff from Parameter.");
+        throw std::runtime_error("MDCell requires a positive cutoff.");
     }
 
     std::ifstream ifs(stru_file.c_str(), std::ios::in);
@@ -306,10 +340,22 @@ MdCell DistributedMdCellReader::read_lj_stru(const std::string& stru_file,
         throw std::runtime_error("Failed to open STRU file: " + stru_file);
     }
 
+    if (replicate.size() != 3 || replicate[0] <= 0 || replicate[1] <= 0 || replicate[2] <= 0)
+    {
+        throw std::runtime_error("replicate requires three positive integers.");
+    }
     StruMetadata metadata = parse_stru_metadata(ifs);
+    const ModuleBase::Matrix3 primitive_latvec = metadata.latvec;
+    const ModuleBase::Matrix3 primitive_gt = metadata.gt;
+    metadata.latvec.e11 *= replicate[0]; metadata.latvec.e12 *= replicate[0]; metadata.latvec.e13 *= replicate[0];
+    metadata.latvec.e21 *= replicate[1]; metadata.latvec.e22 *= replicate[1]; metadata.latvec.e23 *= replicate[1];
+    metadata.latvec.e31 *= replicate[2]; metadata.latvec.e32 *= replicate[2]; metadata.latvec.e33 *= replicate[2];
+    metadata.gt = metadata.latvec.Inverse();
+    metadata.omega = std::abs(metadata.latvec.Det()) * metadata.lat0 * metadata.lat0 * metadata.lat0;
     int nat = 0;
-    const std::vector<LocalAtom> owned_atoms = read_owned_atoms(ifs, metadata, cutoff_bohr, skin_bohr, nat);
-    MdCell mdcell(metadata.latvec,
+    const std::vector<LocalAtom> owned_atoms = read_owned_atoms(ifs, metadata, primitive_latvec, primitive_gt,
+                                                                  replicate, cutoff, skin, nat);
+    MDCell mdcell(metadata.latvec,
                   metadata.gt,
                   metadata.lat0,
                   metadata.omega,
@@ -317,8 +363,9 @@ MdCell DistributedMdCellReader::read_lj_stru(const std::string& stru_file,
                   owned_atoms,
                   metadata.labels,
                   metadata.masses,
-                  cutoff_bohr,
-                  skin_bohr);
+                  cutoff,
+                  skin);
     mdcell.set_stru_metadata(metadata.stru_metadata);
+    mdcell.set_uses_replicated_stru(replicate[0] != 1 || replicate[1] != 1 || replicate[2] != 1);
     return mdcell;
 }

@@ -11,7 +11,6 @@
 #include <string>
 #include <vector>
 
-class Parameter;
 class UnitCell;
 
 struct MdStruSpecies
@@ -31,11 +30,11 @@ struct MdStruMetadata
     std::string descriptor_file;
 };
 
-class MdCell : public BaseCell
+class MDCell : public BaseCell
 {
 public:
-    MdCell(UnitCell& ucell, const Parameter& param);
-    MdCell(const ModuleBase::Matrix3& latvec,
+    MDCell(UnitCell& ucell, double cutoff, double skin);
+    MDCell(const ModuleBase::Matrix3& latvec,
            const ModuleBase::Matrix3& gt,
            double lat0,
            double omega,
@@ -47,7 +46,7 @@ public:
            double skin);
 
 #ifdef __MPI
-    MdCell(const ModuleBase::Matrix3& latvec,
+    MDCell(const ModuleBase::Matrix3& latvec,
            const ModuleBase::Matrix3& gt,
            double lat0,
            double omega,
@@ -59,7 +58,7 @@ public:
            double cutoff,
            double skin);
 
-    MdCell(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin);
+    MDCell(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin);
 
     int mpi_rank() const;
     int mpi_size() const;
@@ -69,6 +68,7 @@ public:
 #endif
 
     void exchange_ghost_atoms();
+    void accumulate_ghost_forces();
     void migrate_owned_atoms();
     void set_lattice_vectors(const ModuleBase::Matrix3& latvec);
     void refresh_cart_from_frac();
@@ -81,6 +81,7 @@ public:
     void set_stru_metadata(const MdStruMetadata& metadata);
     std::vector<LocalAtom>& mutable_owned_atoms();
     std::vector<LocalAtom>& mutable_ghost_atoms();
+    void replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned_atoms);
 
     int nlocal() const;
     int nghost() const;
@@ -89,6 +90,8 @@ public:
     double cutoff() const;
     double skin() const;
     bool has_backing_unitcell() const;
+    bool uses_replicated_stru() const;
+    void set_uses_replicated_stru(bool uses_replicated_stru);
     UnitCell& backing_unitcell();
     const UnitCell& backing_unitcell() const;
     void sync_backing_unitcell();
@@ -101,7 +104,6 @@ private:
     const ModuleBase::Matrix3& get_latvec() const override;
     const ModuleBase::Matrix3& get_GT() const override;
 
-    static double infer_cutoff_from_parameter_(const Parameter& param);
 #ifdef __MPI
     void initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin);
 #endif
@@ -130,6 +132,7 @@ private:
     double cutoff_ = 0.0;
     double skin_ = 0.0;
     UnitCell* backing_unitcell_ = nullptr;
+    bool uses_replicated_stru_ = false;
 
 #ifdef __MPI
     MPI_Comm comm_ = MPI_COMM_NULL;

@@ -1,13 +1,11 @@
 #include "source_cell/md_cell.h"
 
 #include "source_cell/unitcell.h"
-#include "source_io/module_parameter/parameter.h"
 
-#include <algorithm>
 #include <cmath>
 #include <stdexcept>
 
-double MdCell::wrap_fractional_(double value)
+double MDCell::wrap_fractional_(double value)
 {
     value -= std::floor(value);
     if (value >= 1.0 - 1.0e-12 || value < 1.0e-12)
@@ -17,18 +15,7 @@ double MdCell::wrap_fractional_(double value)
     return value;
 }
 
-double MdCell::infer_cutoff_from_parameter_(const Parameter& param)
-{
-    double cutoff = 0.0;
-    const std::vector<double>& lj_rcut = param.inp.mdp.lj_rcut;
-    for (std::size_t i = 0; i < lj_rcut.size(); ++i)
-    {
-        cutoff = std::max(cutoff, lj_rcut[i] * ModuleBase::ANGSTROM_AU);
-    }
-    return cutoff;
-}
-
-void MdCell::clear_forces_(std::vector<LocalAtom>& atoms)
+void MDCell::clear_forces_(std::vector<LocalAtom>& atoms)
 {
     for (std::size_t i = 0; i < atoms.size(); ++i)
     {
@@ -36,7 +23,7 @@ void MdCell::clear_forces_(std::vector<LocalAtom>& atoms)
     }
 }
 
-void MdCell::sync_backing_unitcell_geometry_()
+void MDCell::sync_backing_unitcell_geometry_()
 {
     if (backing_unitcell_ == nullptr)
     {
@@ -58,7 +45,7 @@ void MdCell::sync_backing_unitcell_geometry_()
     backing_unitcell_->cell_parameter_updated = true;
 }
 
-void MdCell::sync_backing_unitcell_owned_atoms_()
+void MDCell::sync_backing_unitcell_owned_atoms_()
 {
     if (backing_unitcell_ == nullptr)
     {
@@ -75,7 +62,7 @@ void MdCell::sync_backing_unitcell_owned_atoms_()
     }
 }
 
-void MdCell::initialize_from_ucell_serial_(UnitCell& ucell, double cutoff, double skin)
+void MDCell::initialize_from_ucell_serial_(UnitCell& ucell, double cutoff, double skin)
 {
     backing_unitcell_ = &ucell;
     nat_ = ucell.nat;
@@ -83,16 +70,18 @@ void MdCell::initialize_from_ucell_serial_(UnitCell& ucell, double cutoff, doubl
     omega_ = ucell.omega;
     latvec_ = ucell.latvec;
     gt_ = ucell.GT;
-    type_labels_.resize(static_cast<std::size_t>(ucell.ntype));
-    type_masses_.resize(static_cast<std::size_t>(ucell.ntype));
+    type_labels_.clear();
+    type_masses_.clear();
+    type_labels_.reserve(static_cast<std::size_t>(ucell.ntype));
+    type_masses_.reserve(static_cast<std::size_t>(ucell.ntype));
     stru_metadata_.species.resize(static_cast<std::size_t>(ucell.ntype));
     for (int it = 0; it < ucell.ntype; ++it)
     {
         MdStruSpecies& species = stru_metadata_.species[static_cast<std::size_t>(it)];
         species.label = ucell.atoms[it].label;
         species.mass = ucell.atoms[it].mass;
-        type_labels_[static_cast<std::size_t>(it)] = species.label;
-        type_masses_[static_cast<std::size_t>(it)] = species.mass;
+        type_labels_.push_back(species.label);
+        type_masses_.push_back(species.mass);
         if (static_cast<std::size_t>(it) < ucell.pseudo_fn.size()) species.pseudo_file = ucell.pseudo_fn[it];
         if (static_cast<std::size_t>(it) < ucell.pseudo_type.size()) species.pseudo_type = ucell.pseudo_type[it];
         if (static_cast<std::size_t>(it) < ucell.orbital_fn.size()) species.orbital_file = ucell.orbital_fn[it];
@@ -126,7 +115,7 @@ void MdCell::initialize_from_ucell_serial_(UnitCell& ucell, double cutoff, doubl
 }
 
 #ifdef __MPI
-void MdCell::initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin)
+void MDCell::initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin)
 {
     backing_unitcell_ = &ucell;
     nat_ = ucell.nat;
@@ -134,16 +123,18 @@ void MdCell::initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutof
     omega_ = ucell.omega;
     latvec_ = ucell.latvec;
     gt_ = ucell.GT;
-    type_labels_.resize(static_cast<std::size_t>(ucell.ntype));
-    type_masses_.resize(static_cast<std::size_t>(ucell.ntype));
+    type_labels_.clear();
+    type_masses_.clear();
+    type_labels_.reserve(static_cast<std::size_t>(ucell.ntype));
+    type_masses_.reserve(static_cast<std::size_t>(ucell.ntype));
     stru_metadata_.species.resize(static_cast<std::size_t>(ucell.ntype));
     for (int it = 0; it < ucell.ntype; ++it)
     {
         MdStruSpecies& species = stru_metadata_.species[static_cast<std::size_t>(it)];
         species.label = ucell.atoms[it].label;
         species.mass = ucell.atoms[it].mass;
-        type_labels_[static_cast<std::size_t>(it)] = species.label;
-        type_masses_[static_cast<std::size_t>(it)] = species.mass;
+        type_labels_.push_back(species.label);
+        type_masses_.push_back(species.mass);
         if (static_cast<std::size_t>(it) < ucell.pseudo_fn.size()) species.pseudo_file = ucell.pseudo_fn[it];
         if (static_cast<std::size_t>(it) < ucell.pseudo_type.size()) species.pseudo_type = ucell.pseudo_type[it];
         if (static_cast<std::size_t>(it) < ucell.orbital_fn.size()) species.orbital_file = ucell.orbital_fn[it];
@@ -167,7 +158,7 @@ void MdCell::initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutof
     exchange_ghost_atoms();
 }
 
-void MdCell::initialize_from_owned_atoms_(MPI_Comm comm, double cutoff, double skin)
+void MDCell::initialize_from_owned_atoms_(MPI_Comm comm, double cutoff, double skin)
 {
     comm_ = comm;
     cutoff_ = cutoff;
@@ -182,7 +173,7 @@ void MdCell::initialize_from_owned_atoms_(MPI_Comm comm, double cutoff, double s
 #endif
 
 #ifndef __MPI
-void MdCell::initialize_from_owned_atoms_(double cutoff, double skin)
+void MDCell::initialize_from_owned_atoms_(double cutoff, double skin)
 {
     cutoff_ = cutoff;
     skin_ = skin;
@@ -191,17 +182,16 @@ void MdCell::initialize_from_owned_atoms_(double cutoff, double skin)
 }
 #endif
 
-MdCell::MdCell(UnitCell& ucell, const Parameter& param)
+MDCell::MDCell(UnitCell& ucell, double cutoff, double skin)
 {
-    const double cutoff = infer_cutoff_from_parameter_(param);
 #ifdef __MPI
-    initialize_from_ucell_(ucell, MPI_COMM_WORLD, cutoff, 0.0);
+    initialize_from_ucell_(ucell, MPI_COMM_WORLD, cutoff, skin);
 #else
-    initialize_from_ucell_serial_(ucell, cutoff, 0.0);
+    initialize_from_ucell_serial_(ucell, cutoff, skin);
 #endif
 }
 
-MdCell::MdCell(const ModuleBase::Matrix3& latvec,
+MDCell::MDCell(const ModuleBase::Matrix3& latvec,
                const ModuleBase::Matrix3& gt,
                double lat0,
                double omega,
@@ -229,7 +219,7 @@ MdCell::MdCell(const ModuleBase::Matrix3& latvec,
 }
 
 #ifdef __MPI
-MdCell::MdCell(const ModuleBase::Matrix3& latvec,
+MDCell::MDCell(const ModuleBase::Matrix3& latvec,
                const ModuleBase::Matrix3& gt,
                double lat0,
                double omega,
@@ -253,33 +243,33 @@ MdCell::MdCell(const ModuleBase::Matrix3& latvec,
     initialize_from_owned_atoms_(comm, cutoff, skin);
 }
 
-MdCell::MdCell(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin)
+MDCell::MDCell(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin)
 {
     initialize_from_ucell_(ucell, comm, cutoff, skin);
 }
 
-int MdCell::mpi_rank() const
+int MDCell::mpi_rank() const
 {
     return rank_;
 }
 
-int MdCell::mpi_size() const
+int MDCell::mpi_size() const
 {
     return size_;
 }
 
-MPI_Comm MdCell::communicator() const
+MPI_Comm MDCell::communicator() const
 {
     return comm_;
 }
 
-const DomainDecomposition& MdCell::decomposition() const
+const DomainDecomposition& MDCell::decomposition() const
 {
     return decomp_;
 }
 #endif
 
-void MdCell::exchange_ghost_atoms()
+void MDCell::exchange_ghost_atoms()
 {
 #ifdef __MPI
     decomp_.exchange_ghost_atoms(owned_atoms_, ghost_atoms_);
@@ -309,7 +299,7 @@ void MdCell::exchange_ghost_atoms()
     const double volume = std::abs(a1.x * a2xa3.x + a1.y * a2xa3.y + a1.z * a2xa3.z);
     if (volume <= 0.0)
     {
-        throw std::runtime_error("MdCell requires a nonzero cell volume for periodic ghosts.");
+        throw std::runtime_error("MDCell requires a nonzero cell volume for periodic ghosts.");
     }
 
     const double search_radius = (cutoff_ + skin_) / lat0_;
@@ -344,7 +334,28 @@ void MdCell::exchange_ghost_atoms()
     }
 }
 
-void MdCell::migrate_owned_atoms()
+void MDCell::accumulate_ghost_forces()
+{
+#ifdef __MPI
+    decomp_.accumulate_ghost_forces(owned_atoms_, ghost_atoms_);
+#else
+    for (std::size_t ighost = 0; ighost < ghost_atoms_.size(); ++ighost)
+    {
+        const LocalAtom& ghost = ghost_atoms_[ighost];
+        for (std::size_t iowned = 0; iowned < owned_atoms_.size(); ++iowned)
+        {
+            LocalAtom& owned = owned_atoms_[iowned];
+            if (owned.type == ghost.type && owned.type_index == ghost.type_index)
+            {
+                owned.force += ghost.force;
+                break;
+            }
+        }
+    }
+#endif
+}
+
+void MDCell::migrate_owned_atoms()
 {
 #ifdef __MPI
     decomp_.migrate_owned_atoms(owned_atoms_);
@@ -361,9 +372,10 @@ void MdCell::migrate_owned_atoms()
         atom.cart = atom.frac * latvec_;
     }
     sync_backing_unitcell_owned_atoms_();
+    exchange_ghost_atoms();
 }
 
-void MdCell::set_lattice_vectors(const ModuleBase::Matrix3& latvec)
+void MDCell::set_lattice_vectors(const ModuleBase::Matrix3& latvec)
 {
     latvec_ = latvec;
     gt_ = latvec_.Inverse();
@@ -377,7 +389,7 @@ void MdCell::set_lattice_vectors(const ModuleBase::Matrix3& latvec)
     sync_backing_unitcell_geometry_();
 }
 
-void MdCell::refresh_cart_from_frac()
+void MDCell::refresh_cart_from_frac()
 {
     for (std::size_t i = 0; i < owned_atoms_.size(); ++i)
     {
@@ -390,94 +402,111 @@ void MdCell::refresh_cart_from_frac()
     exchange_ghost_atoms();
 }
 
-const std::vector<LocalAtom>& MdCell::owned_atoms() const
+const std::vector<LocalAtom>& MDCell::owned_atoms() const
 {
     return owned_atoms_;
 }
 
-const std::vector<LocalAtom>& MdCell::ghost_atoms() const
+const std::vector<LocalAtom>& MDCell::ghost_atoms() const
 {
     return ghost_atoms_;
 }
 
-const std::vector<std::string>& MdCell::type_labels() const
+const std::vector<std::string>& MDCell::type_labels() const
 {
     return type_labels_;
 }
 
-const std::vector<double>& MdCell::type_masses() const
+const std::vector<double>& MDCell::type_masses() const
 {
     return type_masses_;
 }
 
-const MdStruMetadata& MdCell::stru_metadata() const
+const MdStruMetadata& MDCell::stru_metadata() const
 {
     return stru_metadata_;
 }
 
-void MdCell::set_stru_metadata(const MdStruMetadata& metadata)
+void MDCell::set_stru_metadata(const MdStruMetadata& metadata)
 {
     stru_metadata_ = metadata;
 }
 
-std::vector<LocalAtom>& MdCell::mutable_owned_atoms()
+std::vector<LocalAtom>& MDCell::mutable_owned_atoms()
 {
     return owned_atoms_;
 }
 
-std::vector<LocalAtom>& MdCell::mutable_ghost_atoms()
+std::vector<LocalAtom>& MDCell::mutable_ghost_atoms()
 {
     return ghost_atoms_;
 }
 
-int MdCell::nlocal() const
+void MDCell::replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned_atoms)
+{
+    owned_atoms_ = owned_atoms;
+    clear_forces_(owned_atoms_);
+    exchange_ghost_atoms();
+}
+
+int MDCell::nlocal() const
 {
     return static_cast<int>(owned_atoms_.size());
 }
 
-int MdCell::nghost() const
+int MDCell::nghost() const
 {
     return static_cast<int>(ghost_atoms_.size());
 }
 
-bool MdCell::init_vel() const
+bool MDCell::init_vel() const
 {
     return init_vel_;
 }
 
-void MdCell::set_init_vel(bool init_vel)
+void MDCell::set_init_vel(bool init_vel)
 {
     init_vel_ = init_vel;
 }
 
-double MdCell::cutoff() const
+double MDCell::cutoff() const
 {
     return cutoff_;
 }
 
-double MdCell::skin() const
+double MDCell::skin() const
 {
     return skin_;
 }
 
-bool MdCell::has_backing_unitcell() const
+bool MDCell::has_backing_unitcell() const
 {
     return backing_unitcell_ != nullptr;
 }
 
-UnitCell& MdCell::backing_unitcell()
+bool MDCell::uses_replicated_stru() const
+{
+    return uses_replicated_stru_;
+}
+
+void MDCell::set_uses_replicated_stru(const bool uses_replicated_stru)
+{
+    uses_replicated_stru_ = uses_replicated_stru;
+}
+
+UnitCell& MDCell::backing_unitcell()
 {
     assert(backing_unitcell_ != nullptr);
     return *backing_unitcell_;
 }
 
-const UnitCell& MdCell::backing_unitcell() const
+const UnitCell& MDCell::backing_unitcell() const
 {
     assert(backing_unitcell_ != nullptr);
     return *backing_unitcell_;
 }
 
-void MdCell::sync_backing_unitcell()
+void MDCell::sync_backing_unitcell()
 {
     if (backing_unitcell_ == nullptr)
     {
@@ -533,7 +562,7 @@ void MdCell::sync_backing_unitcell()
                 const int iat = type_offset[it] + ia;
                 if (owner[iat] != 1)
                 {
-                    throw std::runtime_error("MdCell backing UnitCell atom ownership is invalid.");
+                    throw std::runtime_error("MDCell backing UnitCell atom ownership is invalid.");
                 }
                 backing_unitcell_->atoms[it].tau[ia].set(cart[3 * iat], cart[3 * iat + 1], cart[3 * iat + 2]);
                 backing_unitcell_->atoms[it].taud[ia].set(frac[3 * iat], frac[3 * iat + 1], frac[3 * iat + 2]);
@@ -548,32 +577,32 @@ void MdCell::sync_backing_unitcell()
     sync_backing_unitcell_owned_atoms_();
 }
 
-BaseCell::Kind MdCell::get_kind() const
+BaseCell::Kind MDCell::get_kind() const
 {
     return Kind::md_cell;
 }
 
-int MdCell::get_nat() const
+int MDCell::get_nat() const
 {
     return nat_;
 }
 
-double MdCell::get_lat0() const
+double MDCell::get_lat0() const
 {
     return lat0_;
 }
 
-double MdCell::get_omega() const
+double MDCell::get_omega() const
 {
     return omega_;
 }
 
-const ModuleBase::Matrix3& MdCell::get_latvec() const
+const ModuleBase::Matrix3& MDCell::get_latvec() const
 {
     return latvec_;
 }
 
-const ModuleBase::Matrix3& MdCell::get_GT() const
+const ModuleBase::Matrix3& MDCell::get_GT() const
 {
     return gt_;
 }

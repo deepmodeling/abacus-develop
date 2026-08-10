@@ -7,7 +7,7 @@
 #include "source_cell/module_neighlist/local_atom.h"
 #include "source_cell/base_cell.h"
 
-class MdCell;
+class MDCell;
 class UnitCell;
 
 /**
@@ -47,11 +47,6 @@ public:
      * @param sr Search radius (cutoff distance) in Bohr.
      */
     void init(BaseCell& cell, double sr);
-
-    void init_distributed(const std::vector<LocalAtom>& owned_atoms,
-                          const std::vector<LocalAtom>& ghost_atoms,
-                          double sr,
-                          double lat0);
 
     /**
      * @brief Build the neighbor list for all inside atoms.
@@ -115,7 +110,7 @@ private:
      */
     void init_from_unitcell_(const UnitCell& ucell, double sr);
 
-    void init_from_mdcell_(const MdCell& cell, double sr);
+    void init_from_mdcell_(const MDCell& cell, double sr);
 
     void check_expand_condition(const UnitCell& ucell, int& glayerX_minus, int& glayerX, int& glayerY_minus, int& glayerY, int& glayerZ_minus, int& glayerZ);
 

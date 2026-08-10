@@ -39,53 +39,61 @@ const NeighborList& NeighborSearch::get_neighbor_list() const {
 
 // ========== Main public interface ==========
 
-void NeighborSearch::init_distributed(const std::vector<LocalAtom>& owned_atoms,
-                                      const std::vector<LocalAtom>& ghost_atoms,
-                                      double sr,
-                                      double lat0)
+void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
 {
     inside_atoms_.clear();
     ghost_atoms_.clear();
     all_atoms_.clear();
     bin_manager_.clear();
-    search_radius_ = sr / lat0;
 
-    const std::size_t total_atoms = ModuleNeighList::checked_size_sum(owned_atoms.size(),
-                                                                       ghost_atoms.size(),
+    search_radius_ = sr / cell.lat0();
+
+    const std::size_t total_atoms = ModuleNeighList::checked_size_sum(cell.owned_atoms().size(),
+                                                                       cell.ghost_atoms().size(),
                                                                        "NeighborSearch distributed atom count");
     if (total_atoms > static_cast<std::size_t>(std::numeric_limits<ModuleNeighList::LocalAtomIndex>::max()))
     {
         throw std::overflow_error("NeighborSearch distributed atom count exceeds local atom index range.");
     }
+
     all_atoms_.reserve(total_atoms);
-    inside_atoms_.reserve(owned_atoms.size());
-    ghost_atoms_.reserve(ghost_atoms.size());
-    for (std::size_t iat = 0; iat < owned_atoms.size(); ++iat)
+    inside_atoms_.reserve(cell.owned_atoms().size());
+    ghost_atoms_.reserve(cell.ghost_atoms().size());
+
+    for (size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
     {
-        const LocalAtom& local = owned_atoms[iat];
-        NeighborAtom atom(local.cart.x, local.cart.y, local.cart.z, local.type, local.type_index,
-                          ModuleNeighList::checked_local_atom_index(all_atoms_.size(), "NeighborSearch owned atom id"),
+        const LocalAtom& local = cell.owned_atoms()[iat];
+        NeighborAtom atom(local.cart.x,
+                          local.cart.y,
+                          local.cart.z,
+                          local.type,
+                          local.type_index,
+                          ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
+                                                                    "NeighborSearch owned atom id"),
                           local.owner_rank);
         all_atoms_.push_back(atom);
         inside_atoms_.push_back(atom);
     }
-    for (std::size_t iat = 0; iat < ghost_atoms.size(); ++iat)
+
+    for (size_t iat = 0; iat < cell.ghost_atoms().size(); ++iat)
     {
-        const LocalAtom& local = ghost_atoms[iat];
-        NeighborAtom atom(local.cart.x, local.cart.y, local.cart.z, local.type, local.type_index,
-                          ModuleNeighList::checked_local_atom_index(all_atoms_.size(), "NeighborSearch ghost atom id"),
+        const LocalAtom& local = cell.ghost_atoms()[iat];
+        NeighborAtom atom(local.cart.x,
+                          local.cart.y,
+                          local.cart.z,
+                          local.type,
+                          local.type_index,
+                          ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
+                                                                    "NeighborSearch ghost atom id"),
                           local.owner_rank);
         all_atoms_.push_back(atom);
         ghost_atoms_.push_back(atom);
     }
-    neighbor_list_.initialize(inside_atoms_.size(),
-                              ModuleNeighList::checked_size_product(all_atoms_.size(), neighbor_reserve_factor,
-                                                                     "NeighborSearch page size"));
-}
 
-void NeighborSearch::init_from_mdcell_(const MdCell& cell, double sr)
-{
-    init_distributed(cell.owned_atoms(), cell.ghost_atoms(), sr, cell.lat0());
+    const std::size_t page_size = ModuleNeighList::checked_size_product(all_atoms_.size(),
+                                                                        neighbor_reserve_factor,
+                                                                        "NeighborSearch page size");
+    neighbor_list_.initialize(inside_atoms_.size(), page_size);
 }
 
 void NeighborSearch::init_from_unitcell_(const UnitCell& ucell, double sr)
@@ -138,7 +146,7 @@ void NeighborSearch::init(BaseCell& cell, double sr)
 {
     if (cell.kind() == BaseCell::Kind::md_cell)
     {
-        MdCell& md_cell = static_cast<MdCell&>(cell);
+        MDCell& md_cell = static_cast<MDCell&>(cell);
         init_from_mdcell_(md_cell, sr);
         return;
     }

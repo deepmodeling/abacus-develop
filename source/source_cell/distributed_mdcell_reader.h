@@ -2,15 +2,17 @@
 #define DISTRIBUTED_MDCELL_READER_H
 
 #include <string>
+#include <vector>
 
-class MdCell;
+class MDCell;
 
-class DistributedMdCellReader
+class DistributedMDCellReader
 {
 public:
-    static MdCell read_lj_stru(const std::string& stru_file,
-                               double cutoff_bohr,
-                               double skin_bohr);
+    static MDCell read_stru(const std::string& stru_file,
+                            const std::vector<int>& replicate,
+                            double cutoff,
+                            double skin);
 };
 
 #endif

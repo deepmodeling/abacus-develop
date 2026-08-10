@@ -50,7 +50,7 @@ ModuleBase::Matrix3 make_lattice()
 }
 } // namespace
 
-TEST(DistributedMdCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
+TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 {
     int rank = 0;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -62,9 +62,10 @@ TEST(DistributedMdCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    MdCell mdcell = DistributedMdCellReader::read_lj_stru(stru_file,
-                                                          1.0 * ModuleBase::ANGSTROM_AU,
-                                                          0.0);
+    MDCell mdcell = DistributedMDCellReader::read_stru(stru_file,
+                                                        std::vector<int>{1, 1, 1},
+                                                        1.0 * ModuleBase::ANGSTROM_AU,
+                                                        0.0);
 
     EXPECT_EQ(mdcell.type_labels().size(), 1U);
     EXPECT_EQ(mdcell.type_labels()[0], "He");

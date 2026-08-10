@@ -46,7 +46,7 @@ ModuleBase::Matrix3 identity_lattice()
     return latvec;
 }
 
-MdCell make_mdcell(const ModuleBase::Matrix3& latvec,
+MDCell make_mdcell(const ModuleBase::Matrix3& latvec,
                    const std::vector<ModuleBase::Vector3<double> >& positions,
                    double cutoff)
 {
@@ -69,7 +69,7 @@ MdCell make_mdcell(const ModuleBase::Matrix3& latvec,
                                         rank,
                                         false));
     }
-    return MdCell(latvec,
+    return MDCell(latvec,
                   gt,
                   1.0,
                   cell_volume(latvec),
@@ -77,6 +77,7 @@ MdCell make_mdcell(const ModuleBase::Matrix3& latvec,
                   owned_atoms,
                   std::vector<std::string>(1, "X"),
                   std::vector<double>(1, 1.0),
+                  MPI_COMM_SELF,
                   cutoff,
                   0.0);
 }
@@ -98,7 +99,7 @@ TEST(NeighborSearchTest, MdCellTwoAtomsNeighbor)
 
     const ModuleBase::Matrix3 latvec = identity_lattice();
     const std::vector<ModuleBase::Vector3<double> > positions{{0.0, 0.0, 0.0}, {0.5, 0.0, 0.0}};
-    MdCell mdcell = make_mdcell(latvec, positions, 1.0);
+    MDCell mdcell = make_mdcell(latvec, positions, 1.0);
 
     NeighborSearch ns;
     ns.init(mdcell, 1.0);
@@ -116,7 +117,7 @@ TEST(NeighborSearchTest, MdCellNoNeighbor)
 
     const ModuleBase::Matrix3 latvec = identity_lattice();
     const std::vector<ModuleBase::Vector3<double> > positions{{0.0, 0.0, 0.0}, {0.49, 0.0, 0.0}};
-    MdCell mdcell = make_mdcell(latvec, positions, 0.1);
+    MDCell mdcell = make_mdcell(latvec, positions, 0.1);
 
     NeighborSearch ns;
     ns.init(mdcell, 0.1);
@@ -134,7 +135,7 @@ TEST(NeighborSearchTest, MdCellInitBuildsOwnedAndGhostAtoms)
 
     const ModuleBase::Matrix3 latvec = identity_lattice();
     const std::vector<ModuleBase::Vector3<double> > positions{{0.0, 0.0, 0.0}, {0.5, 0.0, 0.0}};
-    MdCell mdcell = make_mdcell(latvec, positions, 1.0);
+    MDCell mdcell = make_mdcell(latvec, positions, 1.0);
 
     NeighborSearch ns;
     ns.init(mdcell, 1.0);
@@ -154,7 +155,7 @@ TEST(NeighborSearchTest, MdCellNeighborIdsStayLocalToAllAtoms)
     const std::vector<ModuleBase::Vector3<double> > positions{{0.0, 0.0, 0.0},
                                                               {0.5, 0.0, 0.0},
                                                               {0.0, 0.5, 0.0}};
-    MdCell mdcell = make_mdcell(latvec, positions, 0.75);
+    MDCell mdcell = make_mdcell(latvec, positions, 0.75);
 
     NeighborSearch ns;
     ns.init(mdcell, 0.75);
@@ -185,7 +186,7 @@ TEST(NeighborSearchTest, MdCellPreservesMdAtomStateAcrossOwnedAndGhostStorage)
 
     const ModuleBase::Matrix3 latvec = identity_lattice();
     const std::vector<ModuleBase::Vector3<double> > positions{{0.0, 0.0, 0.0}, {0.5, 0.0, 0.0}};
-    MdCell mdcell = make_mdcell(latvec, positions, 1.0);
+    MDCell mdcell = make_mdcell(latvec, positions, 1.0);
 
     ASSERT_EQ(mdcell.nlocal(), 2);
     std::vector<LocalAtom>& owned_atoms = mdcell.mutable_owned_atoms();
@@ -244,7 +245,7 @@ TEST(NeighborSearchTest, MdCellMigrateOwnedAtomsReassignsOwnership)
 
     const ModuleBase::Matrix3 latvec = identity_lattice();
     const std::vector<ModuleBase::Vector3<double> > positions{{0.1, 0.1, 0.1}};
-    MdCell mdcell = make_mdcell(latvec, positions, 0.2);
+    MDCell mdcell = make_mdcell(latvec, positions, 0.2);
 
     ASSERT_EQ(mdcell.nlocal(), 1);
     mdcell.mutable_owned_atoms()[0].cart.set(1.2, -0.1, 0.1);
