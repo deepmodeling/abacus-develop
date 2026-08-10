@@ -8,7 +8,7 @@
 #include "source_estate/cal_dm.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/lcao_domain.h"
 #include "source_lcao/pulay_fs.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -16,7 +16,7 @@
 #include <unordered_map>
 
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
 #include "source_lcao/module_deepks/deepks_force.h"
 #endif
 

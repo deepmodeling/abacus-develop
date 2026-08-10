@@ -9,7 +9,7 @@
 #include "RI_Util.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/lcao_domain.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_rt/td_info.h"
 #include <Comm/Comm_Assemble/Comm_Assemble.h>

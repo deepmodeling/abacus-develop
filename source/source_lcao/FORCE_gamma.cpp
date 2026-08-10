@@ -5,13 +5,13 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h" //caoyu add for deepks on 20210813
-#include "source_lcao/module_deepks/LCAO_deepks_io.h"
+#include "source_lcao/module_deepks/lcao_deepks.h" //caoyu add for deepks on 20210813
+#include "source_lcao/module_deepks/lcao_deepks_io.h"
 #include "source_lcao/module_deepks/deepks_force.h"
 #endif
 #include "source_cell/module_neighbor/sltk_grid_driver.h" //GridD
 #include "source_estate/elecstate_lcao.h"
-#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/lcao_domain.h"
 #include "source_lcao/pulay_fs.h"
 
 template <>

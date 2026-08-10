@@ -2,7 +2,7 @@
 
 #ifdef __MLALGO
 
-#include "LCAO_deepks.h"
+#include "lcao_deepks.h"
 #include "deepks_iterate.h"
 
 // Constructor of the class

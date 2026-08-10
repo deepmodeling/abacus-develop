@@ -43,14 +43,14 @@ if(ENABLE_LCAO)
         spar_hsr.cpp
         spar_st.cpp
         spar_u.cpp
-        LCAO_set.cpp
-		LCAO_set_fs.cpp
-		LCAO_set_st.cpp
-		LCAO_nl_mu.cpp	
-        LCAO_set_zero.cpp
-        LCAO_allocate.cpp
-        LCAO_set_mat2d.cpp
-        LCAO_init_basis.cpp
+        lcao_set.cpp
+		lcao_set_fs.cpp
+		lcao_set_st.cpp
+		lcao_nl_mu.cpp	
+        lcao_set_zero.cpp
+        lcao_allocate.cpp
+        lcao_set_mat2d.cpp
+        lcao_init_basis.cpp
         setup_nonlocal.cpp
         setup_exx.cpp
         setup_deepks.cpp

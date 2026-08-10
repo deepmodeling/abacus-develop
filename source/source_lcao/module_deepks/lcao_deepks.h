@@ -96,7 +96,7 @@ class LCAO_Deepks
     }
 
     //-------------------
-    // LCAO_deepks.cpp
+    // lcao_deepks.cpp
     //-------------------
 
     // This file contains constructor and destructor of the class LCAO_deepks,

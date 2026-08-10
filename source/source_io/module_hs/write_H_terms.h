@@ -7,7 +7,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_pot/potential_new.h"
-#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/lcao_domain.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <complex>

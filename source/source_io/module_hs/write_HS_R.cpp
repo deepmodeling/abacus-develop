@@ -3,7 +3,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/LCAO_HS_arrays.hpp"
+#include "source_lcao/lcao_hs_arrays.hpp"
 #include "source_lcao/spar_dh.h"
 #include "source_lcao/spar_hsr.h"
 #include "source_lcao/spar_st.h"

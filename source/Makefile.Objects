@@ -212,7 +212,7 @@ OBJS_CELL=atom_pseudo.o\
     cal_wfc.o\
     cal_ux.o\
 
-OBJS_DEEPKS=LCAO_deepks.o\
+OBJS_DEEPKS=lcao_deepks.o\
         deepks_basic.o\
         deepks_check.o\
         deepks_descriptor.o\
@@ -227,7 +227,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
         deepks_vdrpre.o\
         deepks_pdm.o\
         deepks_phialpha.o\
-        LCAO_deepks_io.o\
+        lcao_deepks_io.o\
         lcao_deepks_iface.o\
 
 
@@ -668,14 +668,14 @@ OBJS_LCAO=evolve_elec.o\
       spar_hsr.o\
       spar_st.o\
       spar_u.o\
-      LCAO_set.o\
-      LCAO_set_fs.o\
-      LCAO_set_st.o\
-      LCAO_nl_mu.o\
-      LCAO_set_zero.o\
-      LCAO_allocate.o\
-      LCAO_set_mat2d.o\
-      LCAO_init_basis.o\
+      lcao_set.o\
+      lcao_set_fs.o\
+      lcao_set_st.o\
+      lcao_nl_mu.o\
+      lcao_set_zero.o\
+      lcao_allocate.o\
+      lcao_set_mat2d.o\
+      lcao_init_basis.o\
       setup_exx.o\
       setup_deepks.o\
       setup_dm.o\

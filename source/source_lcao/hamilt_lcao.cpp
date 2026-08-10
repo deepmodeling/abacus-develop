@@ -13,7 +13,7 @@
 #include <vector>
 
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
 #include "module_operator_lcao/deepks_lcao.h"
 #endif
 

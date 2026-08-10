@@ -2,7 +2,7 @@
 
 #include "source_base/global_variable.h" // use GlobalC
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
 #include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
 #include "source_io/module_restart/restart.h"

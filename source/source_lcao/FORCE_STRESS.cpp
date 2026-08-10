@@ -16,8 +16,8 @@
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"    //caoyu add for deepks 2021-06-03
-#include "source_lcao/module_deepks/LCAO_deepks_io.h" // mohan add 2024-07-22
+#include "source_lcao/module_deepks/lcao_deepks.h"    //caoyu add for deepks 2021-06-03
+#include "source_lcao/module_deepks/lcao_deepks_io.h" // mohan add 2024-07-22
 #include "source_lcao/module_deepks/deepks_force.h"
 #endif
 #include "source_lcao/module_operator_lcao/dftu_lcao.h"

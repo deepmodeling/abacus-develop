@@ -1,8 +1,8 @@
-#include "LCAO_domain.h"
+#include "lcao_domain.h"
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_comm.h"
-#include "LCAO_nonlocal_info.h"
+#include "lcao_nonlocal_info.h"
 
 namespace LCAO_domain
 {

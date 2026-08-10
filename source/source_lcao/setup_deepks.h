@@ -14,7 +14,7 @@
 
 
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h" // deepks
+#include "source_lcao/module_deepks/lcao_deepks.h" // deepks
 #endif
 
 

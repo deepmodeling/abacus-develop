@@ -1,4 +1,4 @@
-#include "source_lcao/LCAO_set.h"
+#include "source_lcao/lcao_set.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/setup_psi.h" // use Setup_Psi
 #include "source_io/module_wf/read_wfc_nao.h" // use read_wfc_nao

@@ -1,4 +1,4 @@
-#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/lcao_domain.h"
 #include "source_base/global_variable.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"

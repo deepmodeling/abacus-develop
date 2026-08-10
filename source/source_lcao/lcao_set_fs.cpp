@@ -1,4 +1,4 @@
-#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/lcao_domain.h"
 
 namespace LCAO_domain
 {

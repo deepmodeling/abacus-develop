@@ -1,4 +1,4 @@
-#include "../LCAO_deepks.h"
+#include "../lcao_deepks.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_basis/module_ao/ORB_read.h"

@@ -2,7 +2,7 @@
 #define LCAO_DEEPKS_IFACE_H
 
 #ifdef __MLALGO
-#include "LCAO_deepks.h"
+#include "lcao_deepks.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/matrix.h"
 #include "source_lcao/hamilt_lcao.h"

@@ -3,7 +3,7 @@
 
 #include "gtest/gtest.h"
 #include <chrono>
-#include "../../LCAO_nonlocal_info.h"
+#include "../../lcao_nonlocal_info.h"
 
 //---------------------------------------
 // Unit test of EKinetic + Nonlocal class

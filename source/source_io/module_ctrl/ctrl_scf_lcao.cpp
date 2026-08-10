@@ -27,7 +27,7 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
 #include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
 #include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
 #ifdef __EXX

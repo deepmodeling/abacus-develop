@@ -1,7 +1,7 @@
 #ifdef __MLALGO
 #include "lcao_deepks_iface.h"
 
-#include "LCAO_deepks_io.h" // mohan add 2024-07-22
+#include "lcao_deepks_io.h" // mohan add 2024-07-22
 #include "source_base/global_variable.h"
 #include "source_base/tool_title.h"
 #include "source_estate/cal_dm.h"

@@ -4,7 +4,7 @@
 #include "source_cell/read_pp.h"
 #include "source_cell/unitcell.h"
 #include "source_io/module_hs/cal_r_overlap_R.h"
-#include "../../LCAO_nonlocal_info.h"
+#include "../../lcao_nonlocal_info.h"
 
 #ifdef __CUDA
 #include "source_lcao/module_rt/kernels/snap_psibeta_gpu.h"
