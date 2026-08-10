@@ -11,60 +11,42 @@
 #include <string>
 #include <vector>
 
-class Parameter;
 class UnitCell;
+namespace ModuleBase
+{
+class CommunicationDomain;
+}
 
-class MdCell : public BaseCell
+class MDCell : public BaseCell
 {
 public:
-    MdCell(const UnitCell& ucell, const Parameter& param);
-    MdCell(const UnitCell& ucell, double cutoff, double skin = 0.0);
-    MdCell(const ModuleBase::Matrix3& latvec,
-           const ModuleBase::Matrix3& gt,
-           double lat0,
-           double omega,
-           const std::vector<ModuleBase::Vector3<double> >& positions,
+    MDCell(UnitCell& ucell,
            double cutoff,
-           double skin = 0.0);
-    MdCell(const ModuleBase::Matrix3& latvec,
+           double skin,
+           const ModuleBase::CommunicationDomain& communication_domain);
+    MDCell(const ModuleBase::Matrix3& latvec,
            const ModuleBase::Matrix3& gt,
            double lat0,
            double omega,
+           int nat,
            const std::vector<LocalAtom>& owned_atoms,
            const std::vector<std::string>& type_labels,
            const std::vector<double>& type_masses,
+           const std::vector<int>& type_atom_counts,
            double cutoff,
-           double skin = 0.0);
+           double skin,
+           const ModuleBase::CommunicationDomain& communication_domain);
 
 #ifdef __MPI
-    MdCell(const UnitCell& ucell, const Parameter& param, MPI_Comm comm);
-    MdCell(const UnitCell& ucell, MPI_Comm comm, double cutoff, double skin = 0.0);
-    MdCell(const ModuleBase::Matrix3& latvec,
-           const ModuleBase::Matrix3& gt,
-           double lat0,
-           double omega,
-           const std::vector<ModuleBase::Vector3<double> >& positions,
-           MPI_Comm comm,
-           double cutoff,
-           double skin = 0.0);
-    MdCell(const ModuleBase::Matrix3& latvec,
-           const ModuleBase::Matrix3& gt,
-           double lat0,
-           double omega,
-           const std::vector<LocalAtom>& owned_atoms,
-           const std::vector<std::string>& type_labels,
-           const std::vector<double>& type_masses,
-           MPI_Comm comm,
-           double cutoff,
-           double skin = 0.0);
-
     int mpi_rank() const;
     int mpi_size() const;
+    MPI_Comm communicator() const;
 
     const DomainDecomposition& decomposition() const;
 #endif
 
     void exchange_ghost_atoms();
+    void accumulate_ghost_forces();
     void migrate_owned_atoms();
     void set_lattice_vectors(const ModuleBase::Matrix3& latvec);
     void refresh_cart_from_frac();
@@ -73,8 +55,10 @@ public:
     const std::vector<LocalAtom>& ghost_atoms() const;
     const std::vector<std::string>& type_labels() const;
     const std::vector<double>& type_masses() const;
+    const std::vector<int>& type_atom_counts() const;
     std::vector<LocalAtom>& mutable_owned_atoms();
     std::vector<LocalAtom>& mutable_ghost_atoms();
+    void replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned_atoms);
 
     int nlocal() const;
     int nghost() const;
@@ -85,35 +69,28 @@ public:
     bool has_backing_unitcell() const;
     UnitCell& backing_unitcell();
     const UnitCell& backing_unitcell() const;
+    void sync_backing_unitcell();
 
 private:
-    Kind do_kind() const override;
-    int do_nat() const override;
-    double do_lat0() const override;
-    double do_omega() const override;
-    const ModuleBase::Matrix3& do_latvec() const override;
-    const ModuleBase::Matrix3& do_GT() const override;
+    Kind get_kind() const override;
+    int get_nat() const override;
+    double get_lat0() const override;
+    double get_omega() const override;
+    const ModuleBase::Matrix3& get_latvec() const override;
+    const ModuleBase::Matrix3& get_GT() const override;
 
-    static double infer_cutoff_from_parameter_(const Parameter& param);
 #ifdef __MPI
-    void initialize_from_ucell_(const UnitCell& ucell, MPI_Comm comm, double cutoff, double skin);
+    void initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin);
+    void initialize_from_owned_atoms_(MPI_Comm comm, double cutoff, double skin);
+#else
+    void initialize_from_ucell_(UnitCell& ucell, double cutoff, double skin);
+    void initialize_from_owned_atoms_(double cutoff, double skin);
 #endif
-    void initialize_from_ucell_serial_(const UnitCell& ucell, double cutoff, double skin);
-    void initialize_from_positions_serial_(const std::vector<ModuleBase::Vector3<double> >& positions,
-                                           double cutoff,
-                                           double skin);
-    void initialize_from_owned_atoms_serial_(double cutoff, double skin);
+
     void sync_backing_unitcell_geometry_();
     void sync_backing_unitcell_owned_atoms_();
     void clear_forces_(std::vector<LocalAtom>& atoms);
     static double wrap_fractional_(double value);
-#ifdef __MPI
-    void initialize_from_positions_(const std::vector<ModuleBase::Vector3<double> >& positions,
-                                    MPI_Comm comm,
-                                    double cutoff,
-                                    double skin);
-    void initialize_from_owned_atoms_(MPI_Comm comm, double cutoff, double skin);
-#endif
 
     int nat_ = 0;
     double lat0_ = 0.0;
@@ -124,6 +101,7 @@ private:
     std::vector<LocalAtom> ghost_atoms_;
     std::vector<std::string> type_labels_;
     std::vector<double> type_masses_;
+    std::vector<int> type_atom_counts_;
     bool init_vel_ = false;
     double cutoff_ = 0.0;
     double skin_ = 0.0;

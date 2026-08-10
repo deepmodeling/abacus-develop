@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <map>
 #include <stdexcept>
 
 DomainDecomposition::DomainDecomposition()
@@ -212,7 +213,6 @@ void DomainDecomposition::split_owned_atoms_from_ucell(const UnitCell& ucell,
     owned_atoms.clear();
     owned_atoms.reserve(static_cast<size_t>(ucell.nat / std::max(1, size_) + 1));
 
-    ModuleNeighList::GlobalAtomId global_id = 0;
     for (int it = 0; it < ucell.ntype; ++it)
     {
         for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
@@ -231,11 +231,9 @@ void DomainDecomposition::split_owned_atoms_from_ucell(const UnitCell& ucell,
                                                     ucell.atoms[it].mass / ModuleBase::AU_to_MASS,
                                                     it,
                                                     ia,
-                                                    global_id,
                                                     owner,
                                                     false));
                 }
-            ++global_id;
         }
     }
 }
@@ -341,7 +339,6 @@ DomainDecomposition::PackedAtom DomainDecomposition::pack_atom(
     packed.image_shift[2] = image_shift[2];
     packed.type = atom.type;
     packed.type_index = atom.type_index;
-    packed.global_id = atom.global_id;
     packed.owner_rank = atom.owner_rank;
     return packed;
 }
@@ -364,7 +361,6 @@ LocalAtom DomainDecomposition::unpack_ghost_atom(const PackedAtom& packed) const
                      packed.mass,
                      packed.type,
                      packed.type_index,
-                     packed.global_id,
                      packed.owner_rank,
                      true);
 }
@@ -384,7 +380,6 @@ LocalAtom DomainDecomposition::unpack_owned_atom(const PackedAtom& packed) const
                      packed.mass,
                      packed.type,
                      packed.type_index,
-                     packed.global_id,
                      packed.owner_rank,
                      false);
 }
@@ -401,6 +396,7 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
     const int span_y = 2 * nlayer[1] + 1;
     const int span_z = 2 * nlayer[2] + 1;
     const int lookup_size = (2 * nlayer[0] + 1) * span_y * span_z;
+    //assert(lookup_size==slots.size());
     std::vector<int> slot_lookup(static_cast<std::size_t>(lookup_size), -1);
     for (std::size_t islot = 0; islot < slots.size(); ++islot)
     {
@@ -538,6 +534,97 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
         {
             ghost_atoms.push_back(unpack_ghost_atom(recv_atoms[i]));
         }
+    }
+}
+
+void DomainDecomposition::accumulate_ghost_forces(std::vector<LocalAtom>& owned_atoms,
+                                                   std::vector<LocalAtom>& ghost_atoms) const
+{
+    std::map<std::pair<int, int>, std::size_t> owned_lookup;
+    for (std::size_t iat = 0; iat < owned_atoms.size(); ++iat)
+    {
+        const LocalAtom& atom = owned_atoms[iat];
+        owned_lookup[std::make_pair(atom.type, atom.type_index)] = iat;
+    }
+
+    std::vector<std::vector<ForceRecord> > send_buffers(static_cast<std::size_t>(size_));
+    for (std::size_t iat = 0; iat < ghost_atoms.size(); ++iat)
+    {
+        LocalAtom& atom = ghost_atoms[iat];
+        if (atom.owner_rank == rank_)
+        {
+            const std::map<std::pair<int, int>, std::size_t>::const_iterator found
+                = owned_lookup.find(std::make_pair(atom.type, atom.type_index));
+            if (found == owned_lookup.end())
+            {
+                throw std::runtime_error("Cannot match a local ghost force to an owned atom.");
+            }
+            owned_atoms[found->second].force += atom.force;
+        }
+        else
+        {
+            ForceRecord record;
+            record.type = atom.type;
+            record.type_index = atom.type_index;
+            record.force[0] = atom.force.x;
+            record.force[1] = atom.force.y;
+            record.force[2] = atom.force.z;
+            send_buffers[static_cast<std::size_t>(atom.owner_rank)].push_back(record);
+        }
+        atom.force.set(0.0, 0.0, 0.0);
+    }
+
+    std::vector<int> send_counts(static_cast<std::size_t>(size_), 0);
+    std::vector<int> recv_counts(static_cast<std::size_t>(size_), 0);
+    for (int irank = 0; irank < size_; ++irank)
+    {
+        const std::size_t bytes = send_buffers[static_cast<std::size_t>(irank)].size() * sizeof(ForceRecord);
+        if (bytes > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        {
+            throw std::overflow_error("DomainDecomposition ghost force message exceeds MPI int range.");
+        }
+        send_counts[static_cast<std::size_t>(irank)] = static_cast<int>(bytes);
+    }
+    MPI_Alltoall(&send_counts[0], 1, MPI_INT, &recv_counts[0], 1, MPI_INT, comm_);
+
+    std::vector<int> send_displs(static_cast<std::size_t>(size_), 0);
+    std::vector<int> recv_displs(static_cast<std::size_t>(size_), 0);
+    int total_send_bytes = 0;
+    int total_recv_bytes = 0;
+    for (int irank = 0; irank < size_; ++irank)
+    {
+        send_displs[static_cast<std::size_t>(irank)] = total_send_bytes;
+        recv_displs[static_cast<std::size_t>(irank)] = total_recv_bytes;
+        total_send_bytes += send_counts[static_cast<std::size_t>(irank)];
+        total_recv_bytes += recv_counts[static_cast<std::size_t>(irank)];
+    }
+
+    std::vector<ForceRecord> send_records;
+    send_records.reserve(static_cast<std::size_t>(total_send_bytes / static_cast<int>(sizeof(ForceRecord))));
+    for (int irank = 0; irank < size_; ++irank)
+    {
+        const std::vector<ForceRecord>& records = send_buffers[static_cast<std::size_t>(irank)];
+        send_records.insert(send_records.end(), records.begin(), records.end());
+    }
+    std::vector<ForceRecord> recv_records(static_cast<std::size_t>(total_recv_bytes / static_cast<int>(sizeof(ForceRecord))));
+    MPI_Alltoallv(send_records.empty() ? NULL : reinterpret_cast<const char*>(&send_records[0]),
+                  &send_counts[0], &send_displs[0], MPI_BYTE,
+                  recv_records.empty() ? NULL : reinterpret_cast<char*>(&recv_records[0]),
+                  &recv_counts[0], &recv_displs[0], MPI_BYTE, comm_);
+
+    for (std::size_t irecord = 0; irecord < recv_records.size(); ++irecord)
+    {
+        const ForceRecord& record = recv_records[irecord];
+        const std::map<std::pair<int, int>, std::size_t>::const_iterator found
+            = owned_lookup.find(std::make_pair(record.type, record.type_index));
+        if (found == owned_lookup.end())
+        {
+            throw std::runtime_error("Cannot match a received ghost force to an owned atom.");
+        }
+        LocalAtom& atom = owned_atoms[found->second];
+        atom.force.x += record.force[0];
+        atom.force.y += record.force[1];
+        atom.force.z += record.force[2];
     }
 }
 

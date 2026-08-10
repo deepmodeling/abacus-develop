@@ -54,6 +54,7 @@ struct Input_para
 
     std::string input_file = "INPUT";   ///< input file name
     std::string stru_file = "STRU";     ///< file contains atomic positions --
+    std::vector<int> replicate = {1, 1, 1}; ///< replicate the input STRU along its lattice vectors
                                         ///< xiaohui modify 2015-02-01
     std::string kpoint_file = "KPT";    ///< file contains k-points -- xiaohui modify 2015-02-01
     std::string pseudo_dir = "";        ///< directory of pseudopotential

@@ -7,7 +7,7 @@
 #include "source_cell/module_neighlist/local_atom.h"
 #include "source_cell/base_cell.h"
 
-class MdCell;
+class MDCell;
 class UnitCell;
 
 /**
@@ -110,7 +110,7 @@ private:
      */
     void init_from_unitcell_(const UnitCell& ucell, double sr);
 
-    void init_from_mdcell_(const MdCell& cell, double sr);
+    void init_from_mdcell_(const MDCell& cell, double sr);
 
     void check_expand_condition(const UnitCell& ucell, int& glayerX_minus, int& glayerX, int& glayerY_minus, int& glayerY, int& glayerZ_minus, int& glayerZ);
 

@@ -22,7 +22,6 @@ struct LocalAtom
     double mass;
     int type;
     int type_index;
-    ModuleNeighList::GlobalAtomId global_id;
     int owner_rank;
     bool is_ghost;
 
@@ -35,7 +34,6 @@ struct LocalAtom
           mass(1.0),
           type(0),
           type_index(0),
-          global_id(-1),
           owner_rank(0),
           is_ghost(false)
     {
@@ -49,7 +47,6 @@ struct LocalAtom
               double mass_in,
               int type_in,
               int type_index_in,
-              ModuleNeighList::GlobalAtomId global_id_in,
               int owner_rank_in,
               bool is_ghost_in)
         : cart(cart_in),
@@ -60,7 +57,6 @@ struct LocalAtom
           mass(mass_in),
           type(type_in),
           type_index(type_index_in),
-          global_id(global_id_in),
           owner_rank(owner_rank_in),
           is_ghost(is_ghost_in)
     {

@@ -10,7 +10,7 @@
 class Verlet : public MD_base
 {
   public:
-    Verlet(const Parameter& param_in, MdCell& mdcell_in);
+    Verlet(const Parameter& param_in, MDCell& mdcell_in);
     ~Verlet();
 
   private:

@@ -1,9 +1,11 @@
 #include <gtest/gtest.h>
 
 #include "source_cell/md_cell.h"
+#include "source_base/communication_domain.h"
 
 #include <mpi.h>
 
+#include <string>
 #include <vector>
 
 namespace
@@ -38,10 +40,33 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
     ASSERT_GE(size, 2);
 
     const ModuleBase::Matrix3 latvec = make_lattice();
-    const std::vector<ModuleBase::Vector3<double> > positions{
-        ModuleBase::Vector3<double>(0.2, 0.2, 0.2),
-        ModuleBase::Vector3<double>(0.7, 0.2, 0.2)};
-    MdCell mdcell(latvec, latvec.Inverse(), 1.0, 1.0, positions, MPI_COMM_WORLD, 0.1, 0.0);
+    std::vector<LocalAtom> owned_atoms;
+    if (rank < 2)
+    {
+        const ModuleBase::Vector3<double> frac(rank == 0 ? 0.2 : 0.7, 0.2, 0.2);
+        owned_atoms.push_back(LocalAtom(frac,
+                                        frac,
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<int>(1, 1, 1),
+                                        1.0,
+                                        0,
+                                        rank,
+                                        rank,
+                                        false));
+    }
+    MDCell mdcell(latvec,
+                  latvec.Inverse(),
+                  1.0,
+                  1.0,
+                  2,
+                  owned_atoms,
+                  std::vector<std::string>(1, "X"),
+                  std::vector<double>(1, 1.0),
+                  std::vector<int>(1, 2),
+                  0.1,
+                  0.0,
+                  ModuleBase::world_communication_domain());
 
     ASSERT_EQ(mdcell.mpi_size(), size);
     if (size == 2)

@@ -45,14 +45,11 @@ void init_vel(const UnitCell& unit_in,
               int& frozen_freedom,
               ModuleBase::Vector3<int>* ionmbl,
               ModuleBase::Vector3<double>* vel);
-void init_vel(const MdCell& mdcell,
+void init_vel(MDCell& mdcell,
               const int& my_rank,
               const bool& restart,
               double& temperature,
-              double* allmass,
-              int& frozen_freedom,
-              ModuleBase::Vector3<int>* ionmbl,
-              ModuleBase::Vector3<double>* vel);
+              int& frozen_freedom);
 
 /**
  * @brief read in atomic velocities from STRU
@@ -61,7 +58,6 @@ void init_vel(const MdCell& mdcell,
  * @param vel the read-in atomic velocities
  */
 void read_vel(const UnitCell& unit_in, ModuleBase::Vector3<double>* vel);
-void read_vel(const MdCell& mdcell, ModuleBase::Vector3<double>* vel);
 
 /**
  * @brief generate atomic velocities that satisfy the Boltzmann distribution
@@ -119,9 +115,8 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
                   ModuleBase::matrix& virial);
 void force_virial(ModuleESolver::ESolver* p_esolver,
                   const int& istep,
-                  MdCell& mdcell,
+                  MDCell& mdcell,
                   double& potential,
-                  ModuleBase::Vector3<double>* force,
                   const bool& cal_stress,
                   ModuleBase::matrix& virial);
 /**
@@ -150,9 +145,7 @@ void compute_stress(const UnitCell& unit_in,
                     const bool& cal_stress,
                     const ModuleBase::matrix& virial,
                     ModuleBase::matrix& stress);
-void compute_stress(const MdCell& mdcell,
-                    const ModuleBase::Vector3<double>* vel,
-                    const double* allmass,
+void compute_stress(const MDCell& mdcell,
                     const bool& cal_stress,
                     const ModuleBase::matrix& virial,
                     ModuleBase::matrix& stress);
@@ -189,11 +182,9 @@ void dump_info(const int& step,
                const ModuleBase::Vector3<double>* vel);
 void dump_info(const int& step,
                const std::string& global_out_dir,
-               const MdCell& mdcell,
+               const MDCell& mdcell,
                const Parameter& param_in,
-               const ModuleBase::matrix& virial,
-               const ModuleBase::Vector3<double>* force,
-               const ModuleBase::Vector3<double>* vel);
+               const ModuleBase::matrix& virial);
 
 /**
  * @brief obtain the atomic mass and whether the freedom is fixed
@@ -204,10 +195,6 @@ void dump_info(const int& step,
  * @param ionmbl determine whether the atomic freedom is fixed
  */
 void get_mass_mbl(const UnitCell& unit_in,
-                  double* allmass,
-                  ModuleBase::Vector3<int>& frozen,
-                  ModuleBase::Vector3<int>* ionmbl);
-void get_mass_mbl(const MdCell& mdcell,
                   double* allmass,
                   ModuleBase::Vector3<int>& frozen,
                   ModuleBase::Vector3<int>* ionmbl);
@@ -239,11 +226,9 @@ double current_temp(double& kinetic,
                     const double* allmass,
                     const ModuleBase::Vector3<double>* vel);
 double current_temp(double& kinetic,
-                    const MdCell& mdcell,
-                    const int& frozen_freedom,
-                    const double* allmass,
-                    const ModuleBase::Vector3<double>* vel);
-int global_dof(const MdCell& mdcell, const int& frozen_freedom);
+                    const MDCell& mdcell,
+                    const int& frozen_freedom);
+int global_dof(const MDCell& mdcell, const int& frozen_freedom);
 
 /**
  * @brief get the temperature vectors

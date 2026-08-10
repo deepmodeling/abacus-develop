@@ -1,11 +1,16 @@
 #include "output_log.h"
 
+#include "source_cell/md_cell.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/constants.h"
 #include "source_base/formatter.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/parallel_comm.h"
+
+#include <cmath>
+#include <iomanip>
+#include <sstream>
 
 #ifdef __MPI
 #include <mpi.h>
@@ -269,6 +274,64 @@ void print_force(std::ofstream& ofs_running,
 	{ 
 		std::cout << table;
 	}
+}
+
+namespace
+{
+std::string mdcell_force_text(const MDCell& cell)
+{
+    const double output_acc = 1.0e-8;
+    const double factor = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
+    std::ostringstream output;
+    output << std::fixed << std::setprecision(10);
+    for (const LocalAtom& atom : cell.owned_atoms())
+    {
+        const double fx = std::abs(atom.force.x) > output_acc ? atom.force.x * factor : 0.0;
+        const double fy = std::abs(atom.force.y) > output_acc ? atom.force.y * factor : 0.0;
+        const double fz = std::abs(atom.force.z) > output_acc ? atom.force.z * factor : 0.0;
+        output << " " << cell.type_labels()[static_cast<std::size_t>(atom.type)] << atom.type_index + 1 << " "
+               << fx << " " << fy << " " << fz << "\n";
+    }
+    return output.str();
+}
+}
+
+void print_force(std::ofstream& ofs, const MDCell& cell, const std::string& name)
+{
+    const std::string local_text = mdcell_force_text(cell);
+#ifdef __MPI
+    const MPI_Comm comm = cell.communicator();
+    int rank = 0;
+    int size = 1;
+    MPI_Comm_rank(comm, &rank);
+    MPI_Comm_size(comm, &size);
+    if (rank == 0)
+    {
+        ofs << "\n #" << name << "#\n" << local_text;
+        for (int source = 1; source < size; ++source)
+        {
+            int length = 0;
+            MPI_Recv(&length, 1, MPI_INT, source, 9400, comm, MPI_STATUS_IGNORE);
+            std::string text(static_cast<std::size_t>(length), '\0');
+            if (length > 0)
+            {
+                MPI_Recv(&text[0], length, MPI_CHAR, source, 9401, comm, MPI_STATUS_IGNORE);
+            }
+            ofs << text;
+        }
+    }
+    else
+    {
+        const int length = static_cast<int>(local_text.size());
+        MPI_Send(&length, 1, MPI_INT, 0, 9400, comm);
+        if (length > 0)
+        {
+            MPI_Send(local_text.data(), length, MPI_CHAR, 0, 9401, comm);
+        }
+    }
+#else
+    ofs << "\n #" << name << "#\n" << local_text;
+#endif
 }
 
 void print_stress(const std::string& name, const ModuleBase::matrix& scs, 

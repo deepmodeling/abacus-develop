@@ -5,58 +5,20 @@
 #endif
 #include "source_io/module_output/print_info.h"
 #include <algorithm>
+#include <iomanip>
 
-void MD_base::refresh_runtime_storage_from_mdcell()
-{
-    delete[] allmass;
-    delete[] pos;
-    delete[] vel;
-    delete[] ionmbl;
-    delete[] force;
-
-    allmass = new double[mdcell.nlocal()];
-    pos = new ModuleBase::Vector3<double>[mdcell.nlocal()];
-    vel = new ModuleBase::Vector3<double>[mdcell.nlocal()];
-    ionmbl = new ModuleBase::Vector3<int>[mdcell.nlocal()];
-    force = new ModuleBase::Vector3<double>[mdcell.nlocal()];
-    state_ = MdStateView::from_mdcell(mdcell);
-    for (int i = 0; i < mdcell.nlocal(); ++i)
-    {
-        allmass[i] = state_.mass(i);
-        vel[i] = state_.vel(i);
-        ionmbl[i] = state_.mbl(i);
-        force[i] = state_.force(i);
-        pos[i].set(0.0, 0.0, 0.0);
-    }
-}
-
-void MD_base::sync_velocity_buffer_to_state()
-{
-    for (int i = 0; i < state_.size(); ++i)
-    {
-        state_.vel(i) = vel[i];
-    }
-}
-
-MD_base::MD_base(const Parameter& param_in, MdCell& mdcell_in)
+MD_base::MD_base(const Parameter& param_in, MDCell& mdcell_in)
 : mdp(param_in.mdp), mdcell(mdcell_in)
 {
     my_rank = param_in.globalv.myrank;
     cal_stress = param_in.inp.cal_stress;
     if (mdp.md_seed >= 0)
     {
-        srand(mdp.md_seed);
+        srand(mdp.md_seed + my_rank * 104729);
     }
 
     stop = false;
 
-    assert(mdcell.nlocal() > 0);
-
-    allmass = nullptr;
-    pos = nullptr;
-    vel = nullptr;
-    ionmbl = nullptr;
-    force = nullptr;
     virial.create(3, 3);
     stress.create(3, 3);
 
@@ -71,25 +33,12 @@ MD_base::MD_base(const Parameter& param_in, MdCell& mdcell_in)
     step_ = 0;
     step_rst_ = 0;
 
-    refresh_runtime_storage_from_mdcell();
-    MD_func::init_vel(mdcell, my_rank, mdp.md_restart, md_tfirst, allmass, frozen_freedom_, ionmbl, vel);
-    for (int i = 0; i < mdcell.nlocal(); ++i)
-    {
-        state_.vel(i) = vel[i];
-        state_.mbl(i) = ionmbl[i];
-    }
-    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_, allmass, vel);
+    MD_func::init_vel(mdcell, my_rank, mdp.md_restart, md_tfirst, frozen_freedom_);
+    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 }
 
 
-MD_base::~MD_base()
-{
-    delete[] allmass;
-    delete[] pos;
-    delete[] vel;
-    delete[] ionmbl;
-    delete[] force;
-}
+MD_base::~MD_base() {}
 
 
 void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_readin_dir)
@@ -97,7 +46,6 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
     if (mdp.md_restart)
     {
         restart(global_readin_dir);
-        refresh_runtime_storage_from_mdcell();
     }
 
     // mohan add 2026-01-04
@@ -107,8 +55,8 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
 	ModuleIO::print_screen(stress_step, force_step, istep_print);
 
-    MD_func::force_virial(p_esolver, step_, mdcell, potential, force, cal_stress, virial);
-    MD_func::compute_stress(mdcell, vel, allmass, cal_stress, virial, stress);
+    MD_func::force_virial(p_esolver, step_, mdcell, potential, cal_stress, virial);
+    MD_func::compute_stress(mdcell, cal_stress, virial, stress);
 
     return;
 }
@@ -116,7 +64,7 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
 void MD_base::first_half(std::ofstream& ofs)
 {
-    update_vel(force);
+    update_vel();
     update_pos();
 
     return;
@@ -125,7 +73,7 @@ void MD_base::first_half(std::ofstream& ofs)
 
 void MD_base::second_half()
 {
-    update_vel(force);
+    update_vel();
 
     return;
 }
@@ -133,51 +81,49 @@ void MD_base::second_half()
 
 void MD_base::update_pos()
 {
-    for (int i = 0; i < state_.size(); ++i)
+    std::vector<LocalAtom>& atoms = mdcell.mutable_owned_atoms();
+    for (std::size_t i = 0; i < atoms.size(); ++i)
     {
+        LocalAtom& atom = atoms[i];
+        ModuleBase::Vector3<double> pos;
         for (int k = 0; k < 3; ++k)
         {
-            if (state_.mbl(i)[k])
+            if (atom.mbl[k])
             {
-                pos[i][k] = state_.vel(i)[k] * md_dt / mdcell.lat0();
+                pos[k] = atom.vel[k] * md_dt / mdcell.lat0();
             }
             else
             {
-                pos[i][k] = 0;
+                pos[k] = 0;
             }
         }
-        pos[i] = pos[i] * mdcell.GT();
-        state_.frac(i) += pos[i];
-        state_.frac(i).x -= std::floor(state_.frac(i).x);
-        state_.frac(i).y -= std::floor(state_.frac(i).y);
-        state_.frac(i).z -= std::floor(state_.frac(i).z);
-        state_.cart(i) = state_.frac(i) * mdcell.latvec();
+        pos = pos * mdcell.GT();
+        atom.frac += pos;
+        atom.frac.x -= std::floor(atom.frac.x);
+        atom.frac.y -= std::floor(atom.frac.y);
+        atom.frac.z -= std::floor(atom.frac.z);
+        atom.cart = atom.frac * mdcell.latvec();
     }
 
-#ifdef __MPI
     mdcell.migrate_owned_atoms();
-    refresh_runtime_storage_from_mdcell();
-#endif
 
     return;
 }
 
 
-void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
+void MD_base::update_vel()
 {
-    for (int i = 0; i < state_.size(); ++i)
+    std::vector<LocalAtom>& atoms = mdcell.mutable_owned_atoms();
+    for (std::size_t i = 0; i < atoms.size(); ++i)
     {
+        LocalAtom& atom = atoms[i];
         for (int k = 0; k < 3; ++k)
         {
-            if (state_.mbl(i)[k])
+            if (atom.mbl[k])
             {
-                state_.vel(i)[k] += 0.5 * force[i][k] * md_dt / state_.mass(i);
+                atom.vel[k] += 0.5 * atom.force[k] * md_dt / atom.mass;
             }
         }
-    }
-    for (int i = 0; i < state_.size(); ++i)
-    {
-        vel[i] = state_.vel(i);
     }
     return;
 }
@@ -185,7 +131,7 @@ void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
 
 void MD_base::print_md(std::ofstream& ofs, const bool& cal_stress)
 {
-    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_, allmass, vel);
+    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 
     if (my_rank!=0)
     {

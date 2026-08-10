@@ -9,12 +9,13 @@
 
 namespace
 {
-ModuleBase::matrix global_temp_tensor(const MdCell& mdcell,
-                                      const ModuleBase::Vector3<double>* vel,
-                                      const double* allmass)
+ModuleBase::matrix global_temp_tensor(const MDCell& mdcell)
 {
-    ModuleBase::matrix t_vector;
-    MD_func::temp_vector(mdcell.nlocal(), vel, allmass, t_vector);
+    ModuleBase::matrix t_vector(3, 3);
+    for (const LocalAtom& atom : mdcell.owned_atoms())
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                t_vector(i, j) += atom.mass * atom.vel[i] * atom.vel[j];
 #ifdef __MPI
     Parallel_Reduce::reduce_all(t_vector.c, t_vector.nr * t_vector.nc);
 #endif
@@ -22,7 +23,7 @@ ModuleBase::matrix global_temp_tensor(const MdCell& mdcell,
 }
 }
 
-Nose_Hoover::Nose_Hoover(const Parameter& param_in, MdCell& mdcell_in) : MD_base(param_in, mdcell_in)
+Nose_Hoover::Nose_Hoover(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
 
@@ -245,8 +246,8 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     if (npt_flag)
     {
         /// update temperature and stress due to velocity rescaling
-        t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_, allmass, vel);
-        MD_func::compute_stress(mdcell, vel, allmass, cal_stress, virial, stress);
+        t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
+        MD_func::compute_stress(mdcell, cal_stress, virial, stress);
 
         /// couple stress component due to md_pcouple
         couple_stress();
@@ -262,7 +263,7 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     }
 
     /// perform half-step update of vel due to atomic force
-    MD_base::update_vel(force);
+    MD_base::update_vel();
 
     if (npt_flag)
     {
@@ -291,7 +292,7 @@ void Nose_Hoover::second_half()
     ModuleBase::timer::start("Nose_Hoover", "second_half");
 
     /// perform half-step update of vel due to atomic force
-    MD_base::update_vel(force);
+    MD_base::update_vel();
 
     if (npt_flag)
     {
@@ -300,12 +301,12 @@ void Nose_Hoover::second_half()
     }
 
     /// update temperature and kinetic energy due to velocity rescaling
-    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_, allmass, vel);
+    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 
     if (npt_flag)
     {
         /// update stress due to velocity rescaling
-        MD_func::compute_stress(mdcell, vel, allmass, cal_stress, virial, stress);
+        MD_func::compute_stress(mdcell, cal_stress, virial, stress);
 
         /// couple stress component due to md_pcouple
         couple_stress();
@@ -566,11 +567,7 @@ void Nose_Hoover::particle_thermo()
     }
 
     /// rescale velocity due to thermostats
-    for (int i = 0; i < state_.size(); ++i)
-    {
-        vel[i] *= scale;
-    }
-    sync_velocity_buffer_to_state();
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel *= scale;
 }
 
 void Nose_Hoover::baro_thermo()
@@ -663,7 +660,7 @@ void Nose_Hoover::update_baro()
     }
     else
     {
-        const ModuleBase::matrix t_vector = global_temp_tensor(mdcell, vel, allmass);
+        const ModuleBase::matrix t_vector = global_temp_tensor(mdcell);
 
         for (int i = 0; i < 3; ++i)
         {
@@ -708,29 +705,28 @@ void Nose_Hoover::vel_baro()
         factor[i] = exp(-(v_omega[i] + mtk_term) * md_dt / 4);
     }
 
-    for (int i = 0; i < state_.size(); ++i)
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {
-            vel[i][j] *= factor[j];
+            atom.vel[j] *= factor[j];
         }
 
         /// Note: I am not sure whether fixed atoms should update here
-        if (ionmbl[i][0])
+        if (atom.mbl[0])
         {
-            vel[i][0] -= (vel[i][1] * v_omega[5] + vel[i][2] * v_omega[4]) * md_dt / 2;
+            atom.vel[0] -= (atom.vel[1] * v_omega[5] + atom.vel[2] * v_omega[4]) * md_dt / 2;
         }
-        if (ionmbl[i][1])
+        if (atom.mbl[1])
         {
-            vel[i][1] -= vel[i][2] * v_omega[3] * md_dt / 2;
+            atom.vel[1] -= atom.vel[2] * v_omega[3] * md_dt / 2;
         }
 
         for (int j = 0; j < 3; ++j)
         {
-            vel[i][j] *= factor[j];
+            atom.vel[j] *= factor[j];
         }
     }
-    sync_velocity_buffer_to_state();
 }
 
 void Nose_Hoover::update_volume(std::ofstream& ofs)
@@ -825,7 +821,6 @@ void Nose_Hoover::update_volume(std::ofstream& ofs)
 
     mdcell.set_lattice_vectors(latvec);
     mdcell.refresh_cart_from_frac();
-    refresh_runtime_storage_from_mdcell();
     static_cast<void>(ofs);
 }
 

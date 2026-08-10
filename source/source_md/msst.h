@@ -15,7 +15,7 @@
 class MSST : public MD_base
 {
   public:
-    MSST(const Parameter& param_in, MdCell& mdcell_in);
+    MSST(const Parameter& param_in, MDCell& mdcell_in);
     ~MSST();
 
   private:

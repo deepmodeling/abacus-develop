@@ -5,72 +5,68 @@
 
 namespace ModuleESolver
 {
-    class ESolver_LJ;
+class ESolver_LJ;
 }
 
-class MdCell;
+class MDCell;
 
 namespace ModuleESolver
 {
 
-    class ESolver_LJ : public ESolver
+class ESolver_LJ : public ESolver
+{
+  public:
+    ESolver_LJ()
     {
-    public:
-        ESolver_LJ()
-        {
-            classname = "ESolver_LJ";
-        }
+        classname = "ESolver_LJ";
+    }
 
-        void before_all_runners(BaseCell& cell, const Input_para& inp) override;
-        void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    void before_all_runners(BaseCell& cell, const Input_para& inp) override;
 
-        void runner(BaseCell& cell, const int istep) override;
-        void runner(UnitCell& cell, const int istep) override;
+    void runner(BaseCell& cell, const int istep) override;
 
-        double cal_energy() override;
+    double cal_energy() override;
 
-        void cal_force(BaseCell& cell, ModuleBase::matrix& force) override;
-        void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell& cell, ModuleBase::matrix& force) override;
 
-        void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) override;
-        void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell& cell, ModuleBase::matrix& stress) override;
 
         void after_all_runners(BaseCell& cell) override;
-        void after_all_runners(UnitCell& ucell) override;
 
-      private:
-        void before_all_runners_mdcell_(MdCell& mdcell, const Input_para& inp);
-        void runner_mdcell_(MdCell& mdcell, const int istep);
-        void cal_force_mdcell_(MdCell& mdcell, ModuleBase::matrix& force);
-        void cal_stress_mdcell_(MdCell& mdcell, ModuleBase::matrix& stress);
-        void after_all_runners_mdcell_(MdCell& mdcell);
+        void others(BaseCell& cell, const int istep) override;
 
-        double LJ_energy(const double& d, const int& i, const int& j) const;
+        bool supports_mdcell() const override
+        {
+            return true;
+        }
 
-        ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const;
+        double mdcell_cutoff(const Input_para& inp) const override;
 
-        void LJ_virial(const ModuleBase::Vector3<double>& force, const ModuleBase::Vector3<double>& dtau);
+  private:
+    double LJ_energy(const double& d, const int& i, const int& j) const;
 
-        void rcut_search_radius(const int& ntype, const std::vector<double>& rcut);
+    ModuleBase::Vector3<double> LJ_force(const ModuleBase::Vector3<double>& dr, const int& i, const int& j) const;
 
-        void set_c6_c12(const int& ntype,
-                        const int& rule,
-                        const std::vector<double>& epsilon,
-                        const std::vector<double>& sigma);
+    void rcut_search_radius(const int& ntype, const std::vector<double>& rcut);
 
-        void cal_en_shift(const int& ntype, const bool& is_shift);
+    void set_c6_c12(const int& ntype,
+                    const int& rule,
+                    const std::vector<double>& epsilon,
+                    const std::vector<double>& sigma);
 
-        //--------------temporary----------------------------
-        double search_radius=-1.0;
-        ModuleBase::matrix lj_rcut;
-        ModuleBase::matrix lj_c12;
-        ModuleBase::matrix lj_c6;
-        ModuleBase::matrix en_shift;
+    void cal_en_shift(const int& ntype, const bool& is_shift);
 
-        double lj_potential=0.0;
-        ModuleBase::matrix lj_force;
-        ModuleBase::matrix lj_virial;
-        //---------------------------------------------------
-    };
-}
+    //--------------temporary----------------------------
+    double search_radius = -1.0;
+    ModuleBase::matrix lj_rcut;
+    ModuleBase::matrix lj_c12;
+    ModuleBase::matrix lj_c6;
+    ModuleBase::matrix en_shift;
+
+    double lj_potential = 0.0;
+    ModuleBase::matrix lj_force;
+    ModuleBase::matrix lj_virial;
+    //---------------------------------------------------
+};
+} // namespace ModuleESolver
 #endif

@@ -580,6 +580,12 @@
 - **Description**: Number of different atom species in the calculation.
 - **Default**: 0
 
+### replicate
+
+- **Type**: Three Integers
+- **Description**: Replicate the input STRU by `Na Nb Nc` along its three lattice vectors for distributed MDCell workflows. The input structure is unchanged when this parameter is omitted; UnitCell workflows do not yet use this parameter.
+- **Default**: `1 1 1`
+
 ### calculation
 
 - **Type**: String

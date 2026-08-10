@@ -2,7 +2,6 @@
 #define MD_BASE_H
 
 #include "source_cell/md_cell.h"
-#include "source_md/md_state_view.h"
 #include "source_esolver/esolver.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -17,7 +16,7 @@
 class MD_base
 {
   public:
-    MD_base(const Parameter& param_in, MdCell& mdcell_in);
+    MD_base(const Parameter& param_in, MDCell& mdcell_in);
     virtual ~MD_base();
 
     /**
@@ -54,9 +53,6 @@ class MD_base
     virtual void write_restart(const std::string& global_out_dir);
 
   protected:
-    void refresh_runtime_storage_from_mdcell();
-    void sync_velocity_buffer_to_state();
-
     /**
      * @brief restart MD when md_restart is true
      * @param global_readin_dir directory of files for reading
@@ -72,7 +68,7 @@ class MD_base
      * @brief perform half-step update of vel due to atomic force
      * @param force atomic forces
      */
-    virtual void update_vel(const ModuleBase::Vector3<double>* force);
+    virtual void update_vel();
 
   public:
     bool stop;                          ///< MD stop or not
@@ -80,20 +76,14 @@ class MD_base
     int step_;                          ///< the MD step finished in current calculation
     int step_rst_;                      ///< the MD step finished in previous calculations
     int frozen_freedom_;                ///< the fixed freedom of the system
-    double* allmass = nullptr;                    ///< atom mass
-    ModuleBase::Vector3<double>* pos;   ///< atom displacements  liuyu modify 2023-03-22
-    ModuleBase::Vector3<double>* vel;   ///< atom velocity
-    ModuleBase::Vector3<int>* ionmbl;   ///< atom is frozen or not
-    ModuleBase::Vector3<double>* force; ///< force of each atom
     ModuleBase::matrix virial;          ///< virial for this lattice
     ModuleBase::matrix stress;          ///< stress for this lattice
     double potential=0.0;               ///< potential energy
     double kinetic;                     ///< kinetic energy
-    MdStateView state_;                 ///< flattened owned-atom runtime state view
 
   protected:
     const MD_para& mdp; ///< input parameters used in md
-    MdCell& mdcell;     ///< mdcell information
+    MDCell& mdcell;     ///< mdcell information
     double energy_=0.0; ///< total energy of the system
 
     bool cal_stress;  ///< whether calculate stress

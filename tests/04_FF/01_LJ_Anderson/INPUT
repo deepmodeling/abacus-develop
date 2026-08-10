@@ -10,6 +10,7 @@ esolver_type      lj
 lj_rcut           8.5
 lj_epsilon        0.01032
 lj_sigma          3.405
+replicate 50 50 50
 
 cal_force         1
 cal_stress        1

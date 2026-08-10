@@ -3,7 +3,7 @@ abacus_add_local_feature_definitions(__NORMAL)
 
 list(APPEND depend_files
   ../md_func.cpp
-  ../md_state_view.cpp
+  ../../source_cell/base_cell.cpp
   ../../source_cell/unitcell.cpp
   ../../source_cell/update_cell.cpp
   ../../source_cell/bcast_cell.cpp
@@ -58,6 +58,7 @@ list(APPEND depend_files
   ../../source_esolver/esolver_lj.cpp
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp
+  ../../source_base/communication_domain.cpp
   ../../source_base/parallel_comm.cpp
   ../../source_estate/read_pseudo.cpp
   ../../source_estate/cal_wfc.cpp
@@ -78,14 +79,6 @@ AddTest(
   TARGET MODULE_MD_func
   LIBS parameter psi device
   SOURCES md_func_test.cpp
-  ${depend_files}
-)
-
-AddTest(
-  TARGET MODULE_MD_state_view
-  LIBS parameter psi device
-  SOURCES md_state_view_test.cpp
-  ../md_state_view.cpp
   ${depend_files}
 )
 

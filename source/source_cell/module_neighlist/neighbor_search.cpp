@@ -39,7 +39,7 @@ const NeighborList& NeighborSearch::get_neighbor_list() const {
 
 // ========== Main public interface ==========
 
-void NeighborSearch::init_from_mdcell_(const MdCell& cell, double sr)
+void NeighborSearch::init_from_mdcell_(const MDCell& cell, double sr)
 {
     inside_atoms_.clear();
     ghost_atoms_.clear();
@@ -70,7 +70,6 @@ void NeighborSearch::init_from_mdcell_(const MdCell& cell, double sr)
                           local.type_index,
                           ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
                                                                     "NeighborSearch owned atom id"),
-                          local.global_id,
                           local.owner_rank);
         all_atoms_.push_back(atom);
         inside_atoms_.push_back(atom);
@@ -86,7 +85,6 @@ void NeighborSearch::init_from_mdcell_(const MdCell& cell, double sr)
                           local.type_index,
                           ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
                                                                     "NeighborSearch ghost atom id"),
-                          local.global_id,
                           local.owner_rank);
         all_atoms_.push_back(atom);
         ghost_atoms_.push_back(atom);
@@ -148,7 +146,7 @@ void NeighborSearch::init(BaseCell& cell, double sr)
 {
     if (cell.kind() == BaseCell::Kind::md_cell)
     {
-        MdCell& md_cell = static_cast<MdCell&>(cell);
+        MDCell& md_cell = static_cast<MDCell&>(cell);
         init_from_mdcell_(md_cell, sr);
         return;
     }

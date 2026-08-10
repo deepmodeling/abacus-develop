@@ -40,6 +40,8 @@ public:
 
     void exchange_ghost_atoms(const std::vector<LocalAtom>& owned_atoms,
                               std::vector<LocalAtom>& ghost_atoms) const;
+    void accumulate_ghost_forces(std::vector<LocalAtom>& owned_atoms,
+                                 std::vector<LocalAtom>& ghost_atoms) const;
     void migrate_owned_atoms(std::vector<LocalAtom>& owned_atoms) const;
 
     const std::array<int, 3>& dims() const;
@@ -58,7 +60,6 @@ private:
         int image_shift[3];
         int type;
         int type_index;
-        ModuleNeighList::GlobalAtomId global_id;
         int owner_rank;
     };
 
@@ -70,6 +71,13 @@ private:
         std::array<int, 3> recv_image_shift;
         int send_rank;
         int recv_rank;
+    };
+
+    struct ForceRecord
+    {
+        int type;
+        int type_index;
+        double force[3];
     };
 
     MPI_Comm comm_;

@@ -10,6 +10,7 @@
 
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
+#include "source_cell/md_cell.h"
 #include "source_io/module_output/output_log.h"
 
 #ifdef __MPI
@@ -181,6 +182,25 @@ SepPot::SepPot(){}
 SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
+
+const std::vector<LocalAtom>& MDCell::owned_atoms() const
+{
+    static const std::vector<LocalAtom> atoms;
+    return atoms;
+}
+
+const std::vector<std::string>& MDCell::type_labels() const
+{
+    static const std::vector<std::string> labels;
+    return labels;
+}
+
+#ifdef __MPI
+MPI_Comm MDCell::communicator() const
+{
+    return MPI_COMM_WORLD;
+}
+#endif
 
 TEST(OutputVacuumLevelTest, OutputVacuumLevel)
 {

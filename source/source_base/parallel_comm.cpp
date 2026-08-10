@@ -1,6 +1,7 @@
+#include "parallel_comm.h"
+
 #if defined __MPI
 
-#include "mpi.h"
 #include "parallel_global.h"
 
 MPI_Comm POOL_WORLD; //groups for different plane waves. In this group, only plane waves are different. K-points and bands are the same.

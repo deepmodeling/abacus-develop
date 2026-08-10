@@ -7,7 +7,7 @@
 #endif
 #include "source_base/timer.h"
 
-MSST::MSST(const Parameter& param_in, MdCell& mdcell_in) : MD_base(param_in, mdcell_in)
+MSST::MSST(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
 {
     msst_qmass = mdp.msst_qmass / pow(ModuleBase::ANGSTROM_AU, 4) / pow(ModuleBase::AU_to_MASS, 2);
     msst_vel = mdp.msst_vel * ModuleBase::ANGSTROM_AU * ModuleBase::AU_to_FS;
@@ -24,10 +24,7 @@ MSST::MSST(const Parameter& param_in, MdCell& mdcell_in) : MD_base(param_in, mdc
     lag_pos = 0;
     vsum = 0;
 
-    for (int i = 0; i < mdcell.nlocal(); ++i)
-    {
-        totmass += allmass[i];
-    }
+    for (const LocalAtom& atom : mdcell.owned_atoms()) totmass += atom.mass;
 #ifdef __MPI
     Parallel_Reduce::reduce_all(&totmass, 1);
 #endif
@@ -61,15 +58,11 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
 
             std::cout << "initial strain rate = " << fac2 << "    msst_tscale = " << mdp.msst_tscale << std::endl;
 
-            for (int i = 0; i < state_.size(); ++i)
-            {
-                vel[i] *= sqrt(1.0 - mdp.msst_tscale);
-            }
-            sync_velocity_buffer_to_state();
+            for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel *= sqrt(1.0 - mdp.msst_tscale);
         }
 
-        MD_func::compute_stress(mdcell, vel, allmass, cal_stress, virial, stress);
-        t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_, allmass, vel);
+        MD_func::compute_stress(mdcell, cal_stress, virial, stress);
+        t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
     }
 
     ModuleBase::timer::end("MSST", "setup");
@@ -93,10 +86,10 @@ void MSST::first_half(std::ofstream& ofs)
     vsum = vel_sum();
 
     /// save the velocities
-    old_v.resize(static_cast<std::size_t>(state_.size()));
-    for (int i = 0; i < state_.size(); ++i)
+    old_v.resize(mdcell.owned_atoms().size());
+    for (int i = 0; i < mdcell.nlocal(); ++i)
     {
-        old_v[static_cast<std::size_t>(i)] = vel[i];
+        old_v[static_cast<std::size_t>(i)] = mdcell.owned_atoms()[static_cast<std::size_t>(i)].vel;
     }
 
     /// propagate velocity sum 1/2 step by temporarily propagating the velocities
@@ -105,11 +98,10 @@ void MSST::first_half(std::ofstream& ofs)
     vsum = vel_sum();
 
     /// reset the velocities
-    for (int i = 0; i < state_.size(); ++i)
+    for (int i = 0; i < mdcell.nlocal(); ++i)
     {
-        vel[i] = old_v[static_cast<std::size_t>(i)];
+        mdcell.mutable_owned_atoms()[static_cast<std::size_t>(i)].vel = old_v[static_cast<std::size_t>(i)];
     }
-    sync_velocity_buffer_to_state();
 
     /// propagate velocities 1/2 step using the new velocity sum
     propagate_vel();
@@ -147,8 +139,8 @@ void MSST::second_half()
     propagate_vel();
 
     vsum = vel_sum();
-    MD_func::compute_stress(mdcell, vel, allmass, cal_stress, virial, stress);
-    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_, allmass, vel);
+    MD_func::compute_stress(mdcell, cal_stress, virial, stress);
+    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 
     /// propagate the time derivative of volume 1/2 step
     propagate_voldot();
@@ -243,10 +235,7 @@ double MSST::vel_sum() const
 {
     double vsum = 0;
 
-    for (int i = 0; i < state_.size(); ++i)
-    {
-        vsum += vel[i].norm2();
-    }
+    for (const LocalAtom& atom : mdcell.owned_atoms()) vsum += atom.vel.norm2();
 #ifdef __MPI
     Parallel_Reduce::reduce_all(&vsum, 1);
 #endif
@@ -268,12 +257,7 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     mdcell.refresh_cart_from_frac();
 
     /// rescale velocity
-    for (int i = 0; i < state_.size(); ++i)
-    {
-        vel[i][sd] *= dilation[sd];
-    }
-    sync_velocity_buffer_to_state();
-    refresh_runtime_storage_from_mdcell();
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel[sd] *= dilation[sd];
     static_cast<void>(ofs);
 }
 
@@ -284,11 +268,11 @@ void MSST::propagate_vel()
     const double dthalf = 0.5 * md_dt;
     const double fac = msst_vis * pow(omega[sd], 2) / (vsum * mdcell.omega());
 
-    for (int i = 0; i < state_.size(); ++i)
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
     {
-        ModuleBase::Vector3<double> const_C = force[i] / allmass[i];
+        ModuleBase::Vector3<double> const_C = atom.force / atom.mass;
         ModuleBase::Vector3<double> const_D;
-        const_D.set(fac / allmass[i], fac / allmass[i], fac / allmass[i]);
+        const_D.set(fac / atom.mass, fac / atom.mass, fac / atom.mass);
         const_D[sd] -= 2 * omega[sd] / mdcell.omega();
 
         for (int k = 0; k < 3; ++k)
@@ -296,18 +280,16 @@ void MSST::propagate_vel()
             if (fabs(dthalf * const_D[k]) > 1e-6)
             {
                 double expd = exp(dthalf * const_D[k]);
-                vel[i][k] = expd * (const_C[k] + const_D[k] * vel[i][k] - const_C[k] / expd) / const_D[k];
+                atom.vel[k] = expd * (const_C[k] + const_D[k] * atom.vel[k] - const_C[k] / expd) / const_D[k];
             }
             else
             {
-                vel[i][k]
-                    += (const_C[k] + const_D[k] * vel[i][k]) * dthalf
-                       + 0.5 * (const_D[k] * const_D[k] * vel[i][k] + const_C[k] * const_D[k]) * dthalf * dthalf;
+                atom.vel[k]
+                    += (const_C[k] + const_D[k] * atom.vel[k]) * dthalf
+                       + 0.5 * (const_D[k] * const_D[k] * atom.vel[k] + const_C[k] * const_D[k]) * dthalf * dthalf;
             }
         }
     }
-    sync_velocity_buffer_to_state();
-
     return;
 }
 

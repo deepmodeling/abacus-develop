@@ -1,21 +1,26 @@
 #ifndef DISTRIBUTED_MDCELL_READER_H
 #define DISTRIBUTED_MDCELL_READER_H
 
-#include "source_cell/md_cell.h"
+#include "source_cell/md_stru_file_metadata.h"
 
-#ifdef __MPI
-#include <mpi.h>
 #include <string>
+#include <vector>
 
-class DistributedMdCellReader
+class MDCell;
+namespace ModuleBase
+{
+class CommunicationDomain;
+}
+
+class DistributedMDCellReader
 {
 public:
-    static MdCell read_lj_stru(const std::string& stru_file,
-                               MPI_Comm comm,
-                               double cutoff_bohr,
-                               double skin_bohr = 0.0);
+    static MDCell read_stru(const std::string& stru_file,
+                            const std::vector<int>& replicate,
+                            double cutoff,
+                            double skin,
+                            MdStruFileMetadata& stru_metadata,
+                            const ModuleBase::CommunicationDomain& communication_domain);
 };
-
-#endif
 
 #endif

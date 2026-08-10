@@ -11,12 +11,12 @@
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #include "esolver_ks_lcaopw.h"
-#include "source_lcao/module_lr/esolver_lrtd_lcao.h"
 #include "source_base/module_external/blacs_connector.h"
+#include "source_lcao/module_lr/esolver_lrtd_lcao.h"
 #endif
 #include "esolver_dp.h"
-#include "esolver_nep.h"
 #include "esolver_lj.h"
+#include "esolver_nep.h"
 #include "esolver_of.h"
 #include "esolver_of_tddft.h"
 
@@ -24,56 +24,6 @@
 
 namespace ModuleESolver
 {
-
-void ESolver::before_all_runners(BaseCell& cell, const Input_para& inp)
-{
-    if (cell.kind() != BaseCell::Kind::unit_cell)
-    {
-        ModuleBase::WARNING_QUIT("ESolver::before_all_runners",
-                                 "This ESolver does not support MdCell input.");
-    }
-    this->before_all_runners(static_cast<UnitCell&>(cell), inp);
-}
-
-void ESolver::runner(BaseCell& cell, const int istep)
-{
-    if (cell.kind() != BaseCell::Kind::unit_cell)
-    {
-        ModuleBase::WARNING_QUIT("ESolver::runner",
-                                 "This ESolver does not support MdCell input.");
-    }
-    this->runner(static_cast<UnitCell&>(cell), istep);
-}
-
-void ESolver::after_all_runners(BaseCell& cell)
-{
-    if (cell.kind() != BaseCell::Kind::unit_cell)
-    {
-        ModuleBase::WARNING_QUIT("ESolver::after_all_runners",
-                                 "This ESolver does not support MdCell input.");
-    }
-    this->after_all_runners(static_cast<UnitCell&>(cell));
-}
-
-void ESolver::cal_force(BaseCell& cell, ModuleBase::matrix& force)
-{
-    if (cell.kind() != BaseCell::Kind::unit_cell)
-    {
-        ModuleBase::WARNING_QUIT("ESolver::cal_force",
-                                 "This ESolver does not support MdCell input.");
-    }
-    this->cal_force(static_cast<UnitCell&>(cell), force);
-}
-
-void ESolver::cal_stress(BaseCell& cell, ModuleBase::matrix& stress)
-{
-    if (cell.kind() != BaseCell::Kind::unit_cell)
-    {
-        ModuleBase::WARNING_QUIT("ESolver::cal_stress",
-                                 "This ESolver does not support MdCell input.");
-    }
-    this->cal_stress(static_cast<UnitCell&>(cell), stress);
-}
 
 std::string determine_type()
 {

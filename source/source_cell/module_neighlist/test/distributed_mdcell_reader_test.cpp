@@ -1,7 +1,9 @@
 #include <gtest/gtest.h>
 
 #include "source_cell/distributed_mdcell_reader.h"
+#include "source_cell/md_cell.h"
 #include "source_base/constants.h"
+#include "source_base/communication_domain.h"
 #include "source_base/global_variable.h"
 #include "source_cell/module_neighlist/domain_decomposition.h"
 
@@ -50,43 +52,55 @@ ModuleBase::Matrix3 make_lattice()
 }
 } // namespace
 
-TEST(DistributedMdCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
+TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 {
-    int rank = 0;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int world_rank = 0;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
     const std::string stru_file = "distributed_mdcell_reader_cartesian.STRU";
-    if (rank == 0)
+    if (world_rank == 0)
     {
         write_cartesian_stru_case(stru_file);
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
-    MdCell mdcell = DistributedMdCellReader::read_lj_stru(stru_file,
-                                                          MPI_COMM_WORLD,
-                                                          1.0 * ModuleBase::ANGSTROM_AU,
-                                                          0.0);
+    MPI_Comm md_comm = MPI_COMM_NULL;
+    MPI_Comm_split(MPI_COMM_WORLD, world_rank % 2, world_rank, &md_comm);
+    const ModuleBase::CommunicationDomain communication_domain(md_comm);
+
+    MdStruFileMetadata stru_metadata;
+    MDCell mdcell = DistributedMDCellReader::read_stru(stru_file,
+                                                        std::vector<int>{1, 1, 1},
+                                                        1.0 * ModuleBase::ANGSTROM_AU,
+                                                        0.0,
+                                                        stru_metadata,
+                                                        communication_domain);
 
     EXPECT_EQ(mdcell.type_labels().size(), 1U);
     EXPECT_EQ(mdcell.type_labels()[0], "He");
     ASSERT_EQ(mdcell.type_masses().size(), 1U);
     EXPECT_DOUBLE_EQ(mdcell.type_masses()[0], 4.0026);
+    ASSERT_EQ(mdcell.type_atom_counts().size(), 1U);
+    EXPECT_EQ(mdcell.type_atom_counts()[0], 4);
+    ASSERT_EQ(stru_metadata.species.size(), 1U);
+    EXPECT_EQ(stru_metadata.species[0].pseudo_file, "auto");
+    EXPECT_EQ(stru_metadata.species[0].pseudo_type, "auto");
     EXPECT_EQ(mdcell.nat(), 4);
 
     DomainDecomposition decomp;
-    decomp.init(MPI_COMM_WORLD, make_lattice(), 1.0, 1.0 * ModuleBase::ANGSTROM_AU, 0.0);
+    decomp.init(md_comm, make_lattice(), 1.0, 1.0 * ModuleBase::ANGSTROM_AU, 0.0);
 
     long long local_count = static_cast<long long>(mdcell.owned_atoms().size());
     long long global_count = 0;
-    MPI_Allreduce(&local_count, &global_count, 1, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(&local_count, &global_count, 1, MPI_LONG_LONG, MPI_SUM, md_comm);
     EXPECT_EQ(global_count, 4);
 
-    std::set<long long> local_ids;
+    std::set<std::pair<int, int> > local_ids;
     for (std::size_t iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[iat];
-        EXPECT_EQ(decomp.owner_rank_from_frac(atom.frac), rank);
-        local_ids.insert(static_cast<long long>(atom.global_id));
+        EXPECT_EQ(decomp.owner_rank_from_frac(atom.frac), communication_domain.rank());
+        local_ids.insert(std::make_pair(atom.type, atom.type_index));
         EXPECT_GE(atom.type, 0);
         EXPECT_DOUBLE_EQ(atom.force.x, 0.0);
         EXPECT_DOUBLE_EQ(atom.force.y, 0.0);
@@ -99,7 +113,7 @@ TEST(DistributedMdCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     for (std::size_t iat = 0; iat < mdcell.owned_atoms().size(); ++iat)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[iat];
-        if (atom.global_id == 0)
+        if (atom.type == 0 && atom.type_index == 0)
         {
             saw_v01 = true;
             EXPECT_DOUBLE_EQ(atom.vel.x, 0.01);
@@ -108,7 +122,7 @@ TEST(DistributedMdCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
             EXPECT_EQ(atom.mbl.z, 1);
             EXPECT_DOUBLE_EQ(atom.mass, 4.0026 / ModuleBase::AU_to_MASS);
         }
-        if (atom.global_id == 3)
+        if (atom.type == 0 && atom.type_index == 3)
         {
             saw_v04 = true;
             EXPECT_DOUBLE_EQ(atom.vel.x, 0.04);
@@ -120,9 +134,11 @@ TEST(DistributedMdCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
 
     const int saw_flags[2] = {saw_v01 ? 1 : 0, saw_v04 ? 1 : 0};
     int reduced_flags[2] = {0, 0};
-    MPI_Allreduce(saw_flags, reduced_flags, 2, MPI_INT, MPI_MAX, MPI_COMM_WORLD);
+    MPI_Allreduce(saw_flags, reduced_flags, 2, MPI_INT, MPI_MAX, md_comm);
     EXPECT_EQ(reduced_flags[0], 1);
     EXPECT_EQ(reduced_flags[1], 1);
+
+    MPI_Comm_free(&md_comm);
 }
 
 int main(int argc, char** argv)
