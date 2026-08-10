@@ -2,7 +2,7 @@
 #define EXX_ROTATE_ABFS_HPP
 #include "source_base/constants.h"
 #include "source_base/math_integral.h"
-#include "source_basis/module_ao/element_basis_index-ORB.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "exx_rotate_abfs.h"
 
 #include <cmath> // For std::erfc function used in smooth truncation

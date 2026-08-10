@@ -15,8 +15,8 @@ list(APPEND depend_files
   ../../../source_base/matrix.cpp
   ../../../source_base/realarray.cpp
   ../../../source_base/intarray.cpp
-  ../../../source_base/sph_bessel_recursive-d1.cpp
-  ../../../source_base/sph_bessel_recursive-d2.cpp
+  ../../../source_base/sph_bessel_rec_d1.cpp
+  ../../../source_base/sph_bessel_rec_d2.cpp
   ../../../source_base/tool_title.cpp
   ../../../source_base/tool_quit.cpp
   ../../../source_base/tool_check.cpp

@@ -16,7 +16,7 @@
 #include "conv_coulomb_pot_k.h"
 #include "exx_abfs_ctor_orbs.h"
 #include "gaussian_abfs.h"
-#include "source_basis/module_ao/element_basis_index-ORB.h"
+#include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_base/element_basis_index.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"

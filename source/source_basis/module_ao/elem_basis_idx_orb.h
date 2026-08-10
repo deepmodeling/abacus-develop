@@ -1,5 +1,5 @@
-#ifndef ELEMENT_BASIS_INDEX_ORB_H
-#define ELEMENT_BASIS_INDEX_ORB_H
+#ifndef ELEM_BASIS_IDX_ORB_H
+#define ELEM_BASIS_IDX_ORB_H
 
 #include "../../source_base/element_basis_index.h"
 #include <vector>

@@ -1,5 +1,5 @@
-#ifndef TO_WANNIER90_LCAO_IN_PW_H
-#define TO_WANNIER90_LCAO_IN_PW_H
+#ifndef TO_W90_LCAO_PW_H
+#define TO_W90_LCAO_PW_H
 
 #include "source_base/complexmatrix.h"
 #include "source_base/global_function.h"

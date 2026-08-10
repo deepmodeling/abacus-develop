@@ -160,8 +160,8 @@ OBJS_BASE=assoc_laguerre.o\
     mymath.o\
     para_gemm.o\
     realarray.o\
-    sph_bessel_recursive-d1.o\
-    sph_bessel_recursive-d2.o\
+    sph_bessel_rec_d1.o\
+    sph_bessel_rec_d2.o\
     timer.o\
     tool_check.o\
     tool_quit.o\
@@ -409,7 +409,7 @@ OBJS_HSOLVER_PEXSI=diago_pexsi.o\
       simple_pexsi.o\
       dist_bcd_matrix.o\
       dist_ccs_matrix.o\
-      dist_matrix_transformer.o\
+      dist_mat_tf.o\
 
 OBJS_MD=fire.o\
     langevin.o\
@@ -566,7 +566,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_qo/to_qo_mpi.o\
     module_qo/to_qo_structures.o\
     module_wannier/to_wannier90_pw.o\
-    module_wannier/to_wannier90_lcao_in_pw.o\
+    module_wannier/to_w90_lcao_pw.o\
     module_wannier/to_wannier90_lcao.o\
     fR_overlap.o\
     module_unk/unk_overlap_pw.o\

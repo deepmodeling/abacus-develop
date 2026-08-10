@@ -43,8 +43,8 @@ add_library(
     output.cpp
     para_gemm.cpp
     realarray.cpp
-    sph_bessel_recursive-d1.cpp
-    sph_bessel_recursive-d2.cpp
+    sph_bessel_rec_d1.cpp
+    sph_bessel_rec_d2.cpp
     timer.cpp
     tool_check.cpp
     tool_quit.cpp

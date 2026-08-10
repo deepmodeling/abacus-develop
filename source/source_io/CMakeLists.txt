@@ -54,7 +54,7 @@ list(APPEND objects_advanced
     module_unk/berryphase.cpp
     module_wannier/to_wannier90.cpp
     module_wannier/to_wannier90_pw.cpp
-    module_wannier/to_wannier90_lcao_in_pw.cpp
+    module_wannier/to_w90_lcao_pw.cpp
     module_wannier/to_wannier90_lcao.cpp
     module_wannier/fR_overlap.cpp
 )

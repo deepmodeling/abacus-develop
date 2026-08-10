@@ -1,5 +1,5 @@
 #ifdef __PEXSI
-#include "dist_matrix_transformer.h"
+#include "dist_mat_tf.h"
 
 #include <mpi.h>
 

@@ -1,5 +1,5 @@
-#ifndef DISTMATRIXTRANSFORMER_H
-#define DISTMATRIXTRANSFORMER_H
+#ifndef DIST_MAT_TF_H
+#define DIST_MAT_TF_H
 
 #include <mpi.h>
 #include <map>
@@ -88,4 +88,4 @@ int transformCCStoBCD(DistCCSMatrix& SRC_Matrix,
                       double* ED_2d);
 }; // namespace DistMatrixTransformer
 } // namespace pexsi
-#endif // DISTMATRIXTRANSFORMER_H
+#endif // DIST_MAT_TF_H
