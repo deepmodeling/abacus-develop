@@ -6,7 +6,7 @@
 #ifndef INVERSE_MATRIX_TEST_H
 #define INVERSE_MATRIX_TEST_H
 
-#include "source_lcao/module_ri/Inverse_Matrix.h"
+#include "source_lcao/module_ri/invmat_ri.h"
 #include <LibRI/unittests/global/Tensor-test.h>
 
 namespace Inverse_Matrix_Test

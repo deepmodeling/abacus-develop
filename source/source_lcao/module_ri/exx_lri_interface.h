@@ -1,7 +1,7 @@
 #ifndef EXX_LRI_INTERFACE_H
 #define EXX_LRI_INTERFACE_H
 
-#include "Exx_LRI.h"
+#include "exx_lri.h"
 #include "source_estate/module_charge/charge_mixing.h"
 #include "source_lcao/module_ri/mix_dmk_2d.h"
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
@@ -174,6 +174,6 @@ private:
     Flag_Finish flag_finish;
 };
 
-#include "Exx_LRI_interface.hpp"
+#include "exx_lri_interface.hpp"
 
 #endif

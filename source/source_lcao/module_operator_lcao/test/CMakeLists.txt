@@ -73,7 +73,7 @@ AddTest(
 AddTest(
   TARGET MODULE_LCAO_operator_T_NL_cd_test
   LIBS parameter psi base device container
-  SOURCES test_T_NL_cd.cpp ../nonlocal.cpp ../nonlocal_fs.cpp ../nonlocal_dh.cpp ../ekinetic.cpp ../ekinetic_fs.cpp ../ekinetic_dh.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
+  SOURCES test_t_nl_cd.cpp ../nonlocal.cpp ../nonlocal_fs.cpp ../nonlocal_dh.cpp ../ekinetic.cpp ../ekinetic_fs.cpp ../ekinetic_dh.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
   ../../../source_basis/module_ao/parallel_orbitals.cpp
   ../../../source_basis/module_ao/orb_atomic_lm.cpp

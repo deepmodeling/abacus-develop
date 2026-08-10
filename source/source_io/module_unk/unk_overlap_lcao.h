@@ -9,10 +9,10 @@
 #include "source_basis/module_ao/orb_read.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/klist.h"
-#include "source_lcao/center2_orb-orb11.h"
+#include "source_lcao/center2orb_orb11.h"
 #include "source_psi/psi.h"
-#include "source_lcao/center2_orb-orb21.h"
-#include "source_lcao/center2_orb.h"
+#include "source_lcao/center2orb_orb21.h"
+#include "source_lcao/center2orb.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 
 #include <map>

@@ -15,7 +15,7 @@ AddTest(
           test6-1-1.cpp test6-1-2.cpp test6-2-1.cpp test6-2-2.cpp test6-3-1.cpp test6-4-1.cpp test6-4-2.cpp 
           test7-1.cpp test6-2-1.cpp test7-3-1.cpp test7-3-2.cpp
           test8-1.cpp test8-2-1.cpp test8-3-1.cpp test8-3-2.cpp
-          test_tool.cpp test-big.cpp test-other.cpp test_sup.cpp
+          test_tool.cpp test_big.cpp test_other.cpp test_sup.cpp
 )
 
 add_test(NAME MODULE_PW_pw_test_parallel

@@ -568,7 +568,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_wannier/to_wannier90_pw.o\
     module_wannier/to_w90_lcao_pw.o\
     module_wannier/to_wannier90_lcao.o\
-    fR_overlap.o\
+    fr_overlap.o\
     module_unk/unk_overlap_pw.o\
     write_pao.o\
     write_wfc_pw.o\
@@ -613,11 +613,11 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_out.o\
     module_parameter/read_set_globalv.o\
     orb_io.o\
-    cal_pLpR.o\
+    cal_plpr.o\
     filename.o\
     ucell_io.o\
 
-OBJS_IO_LCAO=cal_r_overlap_R.o\
+OBJS_IO_LCAO=cal_r_overlap_r.o\
       write_orb_info.o\
       write_dos_lcao.o\
       write_proj_band_lcao.o\
@@ -628,9 +628,9 @@ OBJS_IO_LCAO=cal_r_overlap_R.o\
       module_unk/unk_overlap_lcao.o\
       read_wfc_nao.o\
       write_wfc_nao.o\
-      module_hs/write_HS_sparse.o\
-      single_R_io.o\
-      module_hs/write_HS_R.o\
+      module_hs/write_hs_sparse.o\
+      single_r_io.o\
+      module_hs/write_hs_r.o\
       module_dm/write_dmr.o\
       sparse_matrix.o\
       module_mulliken/output_mulliken.o\
@@ -680,10 +680,10 @@ OBJS_LCAO=evolve_elec.o\
       setup_deepks.o\
       setup_dm.o\
       rho_tau_lcao.o\
-      center2_orb.o\
-      center2_orb_orb11.o\
-      center2_orb_orb21.o\
-      center2_orb_orb22.o\
+      center2orb.o\
+      center2orb_orb11.o\
+      center2orb_orb21.o\
+      center2orb_orb22.o\
       record_adj.o\
       wavefunc_in_pw.o\
 
@@ -692,7 +692,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       exx_abfs_jle.o\
       exx_abfs_io.o\
       exx_abfs_ctor_orbs.o\
-      ABFs_Construct-PCA.o\
+      abfs_construct_pca.o\
       exx_opt_orb_print.o\
       exx_opt_orb.o\
       matrix_orbs11.o\

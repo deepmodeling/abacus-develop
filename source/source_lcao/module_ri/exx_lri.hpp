@@ -6,10 +6,10 @@
 #ifndef EXX_LRI_HPP
 #define EXX_LRI_HPP
 
-#include "Exx_LRI.h"
+#include "exx_lri.h"
 #include "ri_2d_comm.h"
 #include "ri_util.h"
-#include "ExxLriDetail.h"
+#include "exx_lri_detail.h"
 #include "source_lcao/module_ri/exx_abfs_ctor_orbs.h"
 #include "source_lcao/module_ri/exx_abfs_io.h"
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"

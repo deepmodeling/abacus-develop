@@ -3,7 +3,7 @@
 
 #include "esolver_fp.h"
 #include "source_base/opt_DCsrch.h"
-#include "source_base/opt_TN.hpp"
+#include "source_base/opt_tn.hpp"
 #include "source_psi/psi.h"
 #include "source_pw/module_ofdft/kedf_manager.h"
 

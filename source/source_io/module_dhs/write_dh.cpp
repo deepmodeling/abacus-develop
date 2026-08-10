@@ -1,9 +1,9 @@
-#include "write_dH.h"
+#include "write_dh.h"
 
 #include "source_base/global_function.h"
 #include "source_base/timer.h"
-#include "source_io/module_hs/write_HS.h"
-#include "source_io/module_hs/write_HS_R.h"
+#include "source_io/module_hs/write_hs.h"
+#include "source_io/module_hs/write_hs_r.h"
 #include "source_io/module_output/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -143,7 +143,7 @@ void write_dH_components(WriteDHParams& params)
     }
 
 #ifdef __EXX
-    // The EXX interfaces carried by WriteDHParams are gamma-only (see write_dH.h): at multi-k
+    // The EXX interfaces carried by WriteDHParams are gamma-only (see write_dh.h): at multi-k
     // dH^EXX would be the derivative with respect to every mirror atom, which this output is
     // not meant for. Quit instead of writing a dH sum that silently omits the EXX term.
     if (GlobalC::exx_info.info_global.cal_exx && !PARAM.globalv.gamma_only_local

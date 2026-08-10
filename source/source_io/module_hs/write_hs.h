@@ -52,5 +52,5 @@ namespace ModuleIO
         const bool reduce = true);
 
 }
-#include "write_HS.hpp"
+#include "write_hs.hpp"
 #endif

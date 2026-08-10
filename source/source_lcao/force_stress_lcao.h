@@ -10,7 +10,7 @@
 #include "source_io/module_parameter/input_conv.h"
 #include "source_psi/psi.h"
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
 #include "force_stress_arrays.h"
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008

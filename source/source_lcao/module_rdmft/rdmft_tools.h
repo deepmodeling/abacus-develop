@@ -24,7 +24,7 @@
 
 
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI.h"
+#include "source_lcao/module_ri/exx_lri.h"
 // there are some operator reload to print data in different formats
 #endif
 

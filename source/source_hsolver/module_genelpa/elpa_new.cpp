@@ -3,7 +3,7 @@
 #include "elpa_solver.h"
 extern "C"
 {
-#include "Cblacs.h"
+#include "cblacs.h"
 }
 #include "utils.h"
 #include <cfloat>

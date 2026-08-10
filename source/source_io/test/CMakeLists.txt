@@ -81,7 +81,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_single_R_test
   LIBS parameter
-  SOURCES single_R_io_test.cpp ../module_hs/single_R_io.cpp
+  SOURCES single_r_io_test.cpp ../module_hs/single_r_io.cpp
 	../../source_base/global_variable.cpp
 	../../source_base/parallel_reduce.cpp
 	../../source_base/parallel_common.cpp
@@ -169,7 +169,7 @@ AddTest(
   ../../source_cell/atom_spec.cpp
   ../../source_cell/parallel_kpoints.cpp
   ../../source_cell/test/support/mock_unitcell.cpp
-  ../../source_lcao/center2_orb.cpp
+  ../../source_lcao/center2orb.cpp
   ../module_output/orb_io.cpp
 )
 endif()
@@ -202,7 +202,7 @@ AddTest(
   LIBS parameter  base device numerical_atomic_orbitals container orb
   SOURCES numerical_basis_test.cpp
           ../module_bessel/numerical_basis_jyjy.cpp
-          ../../source_lcao/center2_orb.cpp
+          ../../source_lcao/center2orb.cpp
           ../module_output/orb_io.cpp
 )
 
@@ -278,11 +278,11 @@ add_test(
 
 if(ENABLE_LCAO)
 AddTest(
-  TARGET MODULE_IO_cal_pLpR_test
+  TARGET MODULE_IO_cal_plpr_test
   LIBS parameter base device neighbor
   SOURCES
-  cal_pLpR_test.cpp
-  ../module_hs/cal_pLpR.cpp
+  cal_plpr_test.cpp
+  ../module_hs/cal_plpr.cpp
   ../../source_basis/module_ao/orb_atomic_lm.cpp
   ../../source_basis/module_ao/orb_atomic.cpp
   ../../source_basis/module_nao/radial_set.cpp
@@ -303,9 +303,9 @@ AddTest(
   LIBS parameter base device hcontainer
   SOURCES
   write_hs_r_compat_test.cpp
-  ../module_hs/write_HS_R.cpp
-  ../module_hs/write_HS_sparse.cpp
-  ../module_hs/single_R_io.cpp
+  ../module_hs/write_hs_r.cpp
+  ../module_hs/write_hs_sparse.cpp
+  ../module_hs/single_r_io.cpp
   ../module_hs/rr_sparse_writer.cpp
   ../module_dm/write_dmr.cpp
   ../module_output/ucell_io.cpp

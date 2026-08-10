@@ -3,7 +3,7 @@
 #include "source_base/ylm.h"
 #include "source_cell/read_pp.h"
 #include "source_cell/unitcell.h"
-#include "source_io/module_hs/cal_r_overlap_R.h"
+#include "source_io/module_hs/cal_r_overlap_r.h"
 #include "../../lcao_nonlocal_info.h"
 
 #ifdef __CUDA

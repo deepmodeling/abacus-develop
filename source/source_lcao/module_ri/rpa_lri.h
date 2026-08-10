@@ -11,7 +11,7 @@
 // #include "module_xc/exx_info.h"
 // #include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_base/matrix.h"
-// #include "source_lcao/module_ri/Exx_LRI.h"
+// #include "source_lcao/module_ri/exx_lri.h"
 // #include <RI/physics/Exx.h>
 #include <RI/ri/RI_Tools.h>
 #include <array>

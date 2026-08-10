@@ -18,7 +18,7 @@
 #endif
 
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/exx_lri_interface.h"
 #include "module_operator_lcao/op_exx_lcao.h"
 #endif
 

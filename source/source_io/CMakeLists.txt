@@ -56,7 +56,7 @@ list(APPEND objects_advanced
     module_wannier/to_wannier90_pw.cpp
     module_wannier/to_w90_lcao_pw.cpp
     module_wannier/to_wannier90_lcao.cpp
-    module_wannier/fR_overlap.cpp
+    module_wannier/fr_overlap.cpp
 )
 
 if(ENABLE_LCAO)
@@ -82,18 +82,18 @@ if(ENABLE_LCAO)
       module_mulliken/output_dmk.cpp
       module_mulliken/output_mulliken.cpp
       module_ml/io_npz.cpp
-      module_hs/cal_pLpR.cpp
-      module_dhs/write_dH.cpp
-      module_dhs/write_dH_terms.cpp
+      module_hs/cal_plpr.cpp
+      module_dhs/write_dh.cpp
+      module_dhs/write_dh_terms.cpp
   )
   list(APPEND objects_advanced	   
       module_unk/unk_overlap_lcao.cpp
-      module_hs/write_HS_R.cpp
-      module_hs/write_H_terms.cpp
-      module_hs/write_HS_sparse.cpp
-      module_hs/single_R_io.cpp
+      module_hs/write_hs_r.cpp
+      module_hs/write_h_terms.cpp
+      module_hs/write_hs_sparse.cpp
+      module_hs/single_r_io.cpp
       module_hs/rr_sparse_writer.cpp
-      module_hs/cal_r_overlap_R.cpp
+      module_hs/cal_r_overlap_r.cpp
       module_hs/output_mat_sparse.cpp
       module_ctrl/ctrl_scf_lcao.cpp
       module_ctrl/ctrl_runner_lcao.cpp

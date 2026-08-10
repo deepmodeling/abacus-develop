@@ -6,7 +6,7 @@
 #ifndef LRI_CV_TOOLS_H
 #define LRI_CV_TOOLS_H
 
-#include "Inverse_Matrix.h"
+#include "invmat_ri.h"
 #include "abfs_vector3_order.h"
 #include "source_lcao/module_ri/abfs.h"
 

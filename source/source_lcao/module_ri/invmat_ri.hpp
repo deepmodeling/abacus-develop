@@ -6,7 +6,7 @@
 #ifndef INVERSE_MATRIX_HPP
 #define INVERSE_MATRIX_HPP
 
-#include "Inverse_Matrix.h"
+#include "invmat_ri.h"
 #include "source_base/module_external/lapack_connector.h"
 
 #include <algorithm>

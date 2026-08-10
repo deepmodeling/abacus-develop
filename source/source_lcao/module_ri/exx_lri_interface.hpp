@@ -1,11 +1,11 @@
 #ifndef EXX_LRI_INTERFACE_HPP
 #define EXX_LRI_INTERFACE_HPP
-#include "Exx_LRI_interface.h"
+#include "exx_lri_interface.h"
 #include "source_base/formatter.h"
 #include "source_base/parallel_common.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_hs/write_HS_sparse.h"
+#include "source_io/module_hs/write_hs_sparse.h"
 #include "source_io/module_output/csr_reader.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_restart/restart.h"

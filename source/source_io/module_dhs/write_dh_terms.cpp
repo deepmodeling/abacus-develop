@@ -1,5 +1,5 @@
 #include "source_base/timer.h"
-#include "source_io/module_hs/write_HS_R.h"
+#include "source_io/module_hs/write_hs_r.h"
 #include "source_io/module_output/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
@@ -12,10 +12,10 @@
 #include "source_lcao/module_lr/utils/lr_util_xc.hpp"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_reduce.h"
-#include "write_dH.h"
+#include "write_dh.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
-#include "source_lcao/module_ri/Exx_LRI_interface.hpp"
+#include "source_lcao/module_ri/exx_lri_interface.hpp"
 #endif
 
 #include <algorithm>

@@ -43,9 +43,9 @@ AddTest(
   TARGET MODULE_LCAO_tddft_snap_psibeta_half_test
   LIBS parameter base device orb numerical_atomic_orbitals tddft_test_lib
   SOURCES snap_psibeta_half_tddft_test.cpp ../radial_interpolation.cpp ../snap_proj_half_tddft.cpp ../snap_psb_half_tddft.cpp
-          ../../center2_orb.cpp
-          ../../center2_orb-orb11.cpp
-          ../../center2_orb-orb21.cpp
+          ../../center2orb.cpp
+          ../../center2orb_orb11.cpp
+          ../../center2orb_orb21.cpp
           ../../setup_nonlocal.cpp
           ../../../source_cell/atom_spec.cpp
           ../../../source_cell/atom_pseudo.cpp
@@ -56,8 +56,8 @@ AddTest(
           ../../../source_cell/read_pp_upf100.cpp
           ../../../source_cell/read_pp_vwr.cpp
           ../../../source_cell/read_pp_blps.cpp
-          ../../../source_io/module_hs/cal_r_overlap_R.cpp
-          ../../../source_io/module_hs/single_R_io.cpp
+          ../../../source_io/module_hs/cal_r_overlap_r.cpp
+          ../../../source_io/module_hs/single_r_io.cpp
           ../../../source_io/module_hs/rr_sparse_writer.cpp
           ../../../source_pw/module_pwdft/soc.cpp
           ${SNAP_PSIBETA_CUDA_TEST_SOURCES}

@@ -34,4 +34,4 @@ class Inverse_Matrix
     RI::Tensor<Tdata> A;
 };
 
-#include "Inverse_Matrix.hpp"
+#include "invmat_ri.hpp"

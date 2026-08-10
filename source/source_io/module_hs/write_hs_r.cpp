@@ -1,4 +1,4 @@
-#include "write_HS_R.h"
+#include "write_hs_r.h"
 
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
@@ -7,7 +7,7 @@
 #include "source_lcao/spar_dh.h"
 #include "source_lcao/spar_hsr.h"
 #include "source_lcao/spar_st.h"
-#include "write_HS_sparse.h"
+#include "write_hs_sparse.h"
 
 // if 'binary=true', output binary file.
 // The 'sparse_thr' is the accuracy of the sparse matrix.

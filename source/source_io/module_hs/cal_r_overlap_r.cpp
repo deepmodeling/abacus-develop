@@ -1,7 +1,7 @@
-#include "cal_r_overlap_R.h"
+#include "cal_r_overlap_r.h"
 
 #include "rr_sparse_writer.h"
-#include "single_R_io.h"
+#include "single_r_io.h"
 #include "source_base/mathzone_add1.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"

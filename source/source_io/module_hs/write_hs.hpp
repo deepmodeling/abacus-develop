@@ -1,4 +1,4 @@
-#include "write_HS.h"
+#include "write_hs.h"
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/parallel_reduce.h"

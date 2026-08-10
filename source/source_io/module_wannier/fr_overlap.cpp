@@ -1,5 +1,5 @@
 #ifdef __LCAO
-#include "fR_overlap.h"
+#include "fr_overlap.h"
 #include "source_basis/module_ao/orb_read.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"

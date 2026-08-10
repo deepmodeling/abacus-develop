@@ -192,7 +192,7 @@ void Moment_abfs<Tdata>::cal_VR(
 {
     ModuleBase::TITLE("Rotate_abfs", "cal_VR");
     ModuleBase::timer::start("Rotate_abfs", "cal_VR");
-    // copy in source\module_hamilt_lcao\hamilt_lcaodft\center2_orb-orb11.cpp
+    // copy in source\module_hamilt_lcao\hamilt_lcaodft\center2orb_orb11.cpp
     const double tiny1 = 1e-12;
     const ModuleBase::Element_Basis_Index::Range range = ModuleBase::Element_Basis_Index::construct_range(orb_in);
     // index: T: type, L: angular momentum, N: radial index, M: magnetic moment

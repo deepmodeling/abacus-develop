@@ -4,7 +4,7 @@
 //=======================
 
 
-#include "ExxLriDetail.h"
+#include "exx_lri_detail.h"
 
 #include "ri_util.h"
 #include "source_cell/klist.h"

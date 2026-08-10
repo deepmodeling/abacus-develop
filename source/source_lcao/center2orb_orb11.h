@@ -6,7 +6,7 @@
 #ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_CENTER2_ORB_ORB11_H
 #define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_CENTER2_ORB_ORB11_H
 
-#include "center2_orb.h"
+#include "center2orb.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_ao/orb_atomic_lm.h"

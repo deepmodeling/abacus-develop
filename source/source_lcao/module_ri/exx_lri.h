@@ -7,7 +7,7 @@
 #define EXX_LRI_H
 
 #include "lri_cv.h"
-#include "ewald_Vq.h"
+#include "ewald_vq.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_base/matrix.h"
@@ -151,6 +151,6 @@ private:
 	friend class LR::OperatorLREXX<std::complex<double>>;
 };
 
-#include "Exx_LRI.hpp"
+#include "exx_lri.hpp"
 
 #endif

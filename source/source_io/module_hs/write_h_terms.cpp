@@ -1,11 +1,11 @@
-#include "write_H_terms.h"
+#include "write_h_terms.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_io/module_hs/write_HS.h"
-#include "source_io/module_hs/write_HS_R.h"
+#include "source_io/module_hs/write_hs.h"
+#include "source_io/module_hs/write_hs_r.h"
 #include "source_io/module_output/filename.h"
 #include "source_io/module_output/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
@@ -17,7 +17,7 @@
 #include "source_lcao/module_operator_lcao/operator_fs_utils.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/exx_lri_interface.h"
 #include "source_lcao/module_ri/ri_2d_comm.h"
 #endif
 

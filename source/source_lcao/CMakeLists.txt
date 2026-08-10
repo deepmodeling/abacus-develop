@@ -57,10 +57,10 @@ if(ENABLE_LCAO)
         setup_dm.cpp
         rho_tau_lcao.cpp
 		record_adj.cpp
-        center2_orb.cpp
-        center2_orb-orb11.cpp
-        center2_orb-orb21.cpp
-        center2_orb-orb22.cpp
+        center2orb.cpp
+        center2orb_orb11.cpp
+        center2orb_orb21.cpp
+        center2orb_orb22.cpp
         wavefunc_in_pw.cpp
     )
 

@@ -180,8 +180,8 @@ test8-1.o\
 test8-2-1.o\
 test8-3-1.o\
 test8-3-2.o\
-test-big.o\
-test-other.o
+test_big.o\
+test_other.o
 
 MATH_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${MATH_OBJS0})
 OTHER_OBJS=$(patsubst %.o, ${OBJ_DIR}/%.o, ${OTHER_OBJS0})

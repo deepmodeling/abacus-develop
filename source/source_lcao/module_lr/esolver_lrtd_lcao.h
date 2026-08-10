@@ -17,7 +17,7 @@
 #include "source_hamilt/module_gint/gint_info.h"
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
-#include "source_lcao/module_ri/Exx_LRI.h"
+#include "source_lcao/module_ri/exx_lri.h"
 #endif
 namespace LR
 {
