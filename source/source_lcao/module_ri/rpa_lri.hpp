@@ -22,6 +22,7 @@
 #include "source_lcao/module_ri/module_exx_symmetry/symm_rotation.h"
 
 #include "RPA_LRI.h"
+#include "librpa_2d_coulomb_head.h"
 #include "librpa_stru_units.h"
 #include "source_basis/module_ao/element_basis_index-ORB.h"
 #include "source_estate/elecstate_lcao.h"
@@ -790,6 +791,45 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
                                   use_shrink ? "basis_aux_shrink_out" : "basis_aux_out",
                                   use_shrink ? "basis_out_shrink" : "basis_out");
         this->out_coulomb_k_v1(ucell, this->Vs_period, "v1_coulomb_full_iq_", exx_full_coulomb.get());
+        if (GlobalC::exx_info.info_ri.ewald_dimension == 2 && GlobalV::MY_RANK == 0)
+        {
+            const auto multipoles =
+                Exx_Abfs::Construct_Orbs::get_multipole(exx_full_coulomb->abfs);
+            std::vector<std::vector<double>> s_multipoles_by_type(
+                static_cast<std::size_t>(ucell.ntype));
+            std::vector<int> atoms_per_type(static_cast<std::size_t>(ucell.ntype), 0);
+            for (int it = 0; it != ucell.ntype; ++it)
+            {
+                if (static_cast<std::size_t>(it) < multipoles.size()
+                    && !multipoles[static_cast<std::size_t>(it)].empty())
+                {
+                    s_multipoles_by_type[static_cast<std::size_t>(it)] =
+                        multipoles[static_cast<std::size_t>(it)][0];
+                }
+                atoms_per_type[static_cast<std::size_t>(it)] = ucell.atoms[it].na;
+            }
+            const ModuleBase::Vector3<double> a1_bohr = ucell.a1 * ucell.lat0;
+            const ModuleBase::Vector3<double> a2_bohr = ucell.a2 * ucell.lat0;
+            const auto normalization = RpaLriDetail::strict_2d_coulomb_head_normalization(
+                (a1_bohr ^ a2_bohr).norm(), s_multipoles_by_type, atoms_per_type);
+
+            const std::string filename = "librpa_2d_coulomb_head.dat";
+            std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
+            if (!ofs.good())
+            {
+                throw std::runtime_error("Failed to open " + filename);
+            }
+            ofs << RpaLriDetail::format_strict_2d_coulomb_head_sidecar(normalization);
+            if (!ofs.good())
+            {
+                throw std::runtime_error("Failed to write " + filename);
+            }
+            std::cout << "Wrote strict 2D Coulomb head normalization to " << filename
+                      << ": A_lambda=" << std::setprecision(17)
+                      << normalization.raw_head_coefficient
+                      << ", sheet_to_raw_scale=" << normalization.sheet_to_raw_scale
+                      << std::endl;
+        }
     }
     else
     {
