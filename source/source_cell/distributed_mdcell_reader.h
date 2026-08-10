@@ -5,6 +5,10 @@
 #include <vector>
 
 class MDCell;
+namespace ModuleBase
+{
+class CommunicationDomain;
+}
 
 class DistributedMDCellReader
 {
@@ -12,7 +16,8 @@ public:
     static MDCell read_stru(const std::string& stru_file,
                             const std::vector<int>& replicate,
                             double cutoff,
-                            double skin);
+                            double skin,
+                            const ModuleBase::CommunicationDomain& communication_domain);
 };
 
 #endif

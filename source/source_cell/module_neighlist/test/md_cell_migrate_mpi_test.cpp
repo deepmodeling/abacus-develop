@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include "source_cell/md_cell.h"
+#include "source_base/communication_domain.h"
 
 #include <mpi.h>
 
@@ -63,7 +64,8 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
                   std::vector<std::string>(1, "X"),
                   std::vector<double>(1, 1.0),
                   0.1,
-                  0.0);
+                  0.0,
+                  ModuleBase::world_communication_domain());
 
     ASSERT_EQ(mdcell.mpi_size(), size);
     if (size == 2)

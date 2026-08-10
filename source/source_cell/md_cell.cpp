@@ -1,5 +1,6 @@
 #include "source_cell/md_cell.h"
 
+#include "source_base/communication_domain.h"
 #include "source_cell/unitcell.h"
 
 #include <cmath>
@@ -162,11 +163,15 @@ void MDCell::initialize_from_owned_atoms_(double cutoff, double skin)
 }
 #endif
 
-MDCell::MDCell(UnitCell& ucell, double cutoff, double skin)
+MDCell::MDCell(UnitCell& ucell,
+               double cutoff,
+               double skin,
+               const ModuleBase::CommunicationDomain& communication_domain)
 {
 #ifdef __MPI
-    initialize_from_ucell_(ucell, MPI_COMM_WORLD, cutoff, skin);
+    initialize_from_ucell_(ucell, communication_domain.communicator(), cutoff, skin);
 #else
+    static_cast<void>(communication_domain);
     initialize_from_ucell_serial_(ucell, cutoff, skin);
 #endif
 }
@@ -180,7 +185,8 @@ MDCell::MDCell(const ModuleBase::Matrix3& latvec,
                const std::vector<std::string>& type_labels,
                const std::vector<double>& type_masses,
                double cutoff,
-               double skin)
+               double skin,
+               const ModuleBase::CommunicationDomain& communication_domain)
 {
     latvec_ = latvec;
     gt_ = gt;
@@ -192,8 +198,9 @@ MDCell::MDCell(const ModuleBase::Matrix3& latvec,
     type_masses_ = type_masses;
     init_vel_ = true;
 #ifdef __MPI
-    initialize_from_owned_atoms_(MPI_COMM_WORLD, cutoff, skin);
+    initialize_from_owned_atoms_(communication_domain.communicator(), cutoff, skin);
 #else
+    static_cast<void>(communication_domain);
     initialize_from_owned_atoms_(cutoff, skin);
 #endif
 }

@@ -12,10 +12,17 @@
 #include <vector>
 
 class UnitCell;
+namespace ModuleBase
+{
+class CommunicationDomain;
+}
 class MDCell : public BaseCell
 {
 public:
-    MDCell(UnitCell& ucell, double cutoff, double skin);
+    MDCell(UnitCell& ucell,
+           double cutoff,
+           double skin,
+           const ModuleBase::CommunicationDomain& communication_domain);
     MDCell(const MDCell&) = delete;
     MDCell& operator=(const MDCell&) = delete;
     MDCell(MDCell&&) = default;
@@ -30,7 +37,8 @@ public:
            const std::vector<std::string>& type_labels,
            const std::vector<double>& type_masses,
            double cutoff,
-           double skin);
+           double skin,
+           const ModuleBase::CommunicationDomain& communication_domain);
 
 #ifdef __MPI
     int mpi_rank() const;

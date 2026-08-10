@@ -58,6 +58,7 @@ if(ENABLE_MPI)
     ../../md_cell.cpp
     ../domain_decomposition.cpp
     ../../../source_base/global_variable.cpp
+    ../../../source_base/communication_domain.cpp
     ../../../source_base/matrix.cpp
     ../../../source_base/matrix3.cpp
     ../../../source_base/tool_quit.cpp

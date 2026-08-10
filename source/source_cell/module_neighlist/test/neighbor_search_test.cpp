@@ -2,6 +2,7 @@
 
 #include "source_cell/md_cell.h"
 #include "../neighbor_search.h"
+#include "source_base/communication_domain.h"
 
 #ifdef __MPI
 #include <mpi.h>
@@ -71,7 +72,8 @@ MDCell make_mdcell(const ModuleBase::Matrix3& latvec,
     }
     return MDCell(latvec, gt, 1.0, cell_volume(latvec), static_cast<int>(positions.size()),
                   owned_atoms, std::vector<std::string>(1, "X"),
-                  std::vector<double>(1, 1.0), cutoff, 0.0);
+                  std::vector<double>(1, 1.0), cutoff, 0.0,
+                  ModuleBase::world_communication_domain());
 }
 
 std::size_t count_pairs(const NeighborList& list)
