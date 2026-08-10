@@ -3,6 +3,7 @@
 #include <functional>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -31,7 +32,6 @@ class Input_Item
         description = item.description;
         default_value = item.default_value;
         unit = item.unit;
-        availability_ = item.availability_;
         availability_expr_ = item.availability_expr_;
         annotation = item.annotation;
         read_value = item.read_value;
@@ -55,13 +55,18 @@ class Input_Item
     void set_availability(const std::string& value)
     {
         const AvailabilityExpr parsed = parse_availability(value);
+        const std::string canonical = parsed.to_string();
+        if (value != canonical)
+        {
+            throw std::invalid_argument("Non-canonical availability expression '" + value
+                                        + "'; expected '" + canonical + "'");
+        }
         availability_expr_ = parsed;
-        availability_ = parsed.to_string();
     }
 
-    const std::string& get_availability() const
+    std::string get_availability() const
     {
-        return availability_;
+        return availability_expr_.to_string();
     }
 
     const AvailabilityExpr& get_availability_expr() const
@@ -95,7 +100,6 @@ class Input_Item
     // ====== !!! Do not add any more functions here.  ======
 
   private:
-    std::string availability_;             ///< canonical availability string
     AvailabilityExpr availability_expr_;   ///< parsed condition tree
 };
 

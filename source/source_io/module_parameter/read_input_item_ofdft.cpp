@@ -329,7 +329,7 @@ void ReadInput::item_ofdft()
         item.description = "The name of WT kernel file.";
         item.default_value = "WTkernel.txt";
         item.unit = "";
-        item.set_availability("esolver_type==ofdft and of_read_kernel==true");
+        item.set_availability("esolver_type==ofdft and of_kinetic==wt and of_read_kernel==true");
         read_sync_string(input.of_kernel_file);
         this->add_item(item);
     }

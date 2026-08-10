@@ -177,7 +177,7 @@ void ReadInput::item_sdft()
         item.description = "Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.";
         item.default_value = "1";
         item.unit = "";
-        item.set_availability("(method_sto==2 and out_dos==1) or cal_cond==true");
+        item.set_availability("esolver_type==sdft and ((method_sto==2 and out_dos==1) or (basis_type==pw and cal_cond==true))");
         read_sync_int(input.npart_sto);
         this->add_item(item);
     }

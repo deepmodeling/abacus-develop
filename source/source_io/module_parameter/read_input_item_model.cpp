@@ -445,7 +445,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
 * eVA (eV Angstrom))";
         item.default_value = "Jnm6/mol";
         item.unit = "";
-        item.set_availability("vdw_c6_file!=default");
+        item.set_availability("vdw_method==d2 and vdw_c6_file!=default");
         read_sync_string(input.vdw_C6_unit);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_C6_unit != "Jnm6/mol") && (para.input.vdw_C6_unit != "eVA6"))
@@ -481,7 +481,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
 * Bohr)";
         item.default_value = "A";
         item.unit = "";
-        item.set_availability("vdw_r0_file!=default");
+        item.set_availability("vdw_method==d2 and vdw_r0_file!=default");
         read_sync_string(input.vdw_R0_unit);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if ((para.input.vdw_R0_unit != "A") && (para.input.vdw_R0_unit != "Bohr"))

@@ -1419,7 +1419,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.";
         item.default_value = "8";
         item.unit = "";
-        item.set_availability("out_hsk==1");
+        item.set_availability("basis_type==lcao and out_hsk==1");
         read_sync_int(input.out_ndigits);
         this->add_item(item);
     }

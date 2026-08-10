@@ -1890,7 +1890,7 @@ parameters:
       The name of WT kernel file.
     default_value: WTkernel.txt
     unit: ""
-    availability: esolver_type==ofdft and of_read_kernel==true
+    availability: esolver_type==ofdft and of_kinetic==wt and of_read_kernel==true
   - name: of_full_pw
     category: "OFDFT: orbital free density functional theory"
     type: Boolean
@@ -2245,7 +2245,7 @@ parameters:
       Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
     default_value: "1"
     unit: ""
-    availability: (method_sto==2 and out_dos==1) or cal_cond==true
+    availability: esolver_type==sdft and ((method_sto==2 and out_dos==1) or (basis_type==pw and cal_cond==true))
   - name: deepks_out_labels
     category: DeePKS
     type: Integer
@@ -3434,7 +3434,7 @@ parameters:
       Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.
     default_value: "8"
     unit: ""
-    availability: out_hsk==1
+    availability: basis_type==lcao and out_hsk==1
   - name: out_element_info
     category: Output information
     type: Boolean
@@ -4105,7 +4105,7 @@ parameters:
       * eVA (eV Angstrom)
     default_value: Jnm6/mol
     unit: ""
-    availability: "vdw_c6_file!=default"
+    availability: "vdw_method==d2 and vdw_c6_file!=default"
   - name: vdw_r0_file
     category: vdW correction
     type: String
@@ -4127,7 +4127,7 @@ parameters:
       * Bohr
     default_value: "A"
     unit: ""
-    availability: "vdw_r0_file!=default"
+    availability: "vdw_method==d2 and vdw_r0_file!=default"
   - name: vdw_cutoff_type
     category: vdW correction
     type: String
@@ -4578,7 +4578,7 @@ parameters:
       Starting lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.
     default_value: "0.0"
     unit: eV/uB
-    availability: sc_lambda_strategy==linear_scan
+    availability: sc_mag_switch==true and sc_lambda_strategy==linear_scan
   - name: sc_scan_lambda_end
     category: Spin-Constrained DFT
     type: Float
@@ -4586,7 +4586,7 @@ parameters:
       Ending lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.
     default_value: "1.0"
     unit: eV/uB
-    availability: sc_lambda_strategy==linear_scan
+    availability: sc_mag_switch==true and sc_lambda_strategy==linear_scan
   - name: sc_scan_steps
     category: Spin-Constrained DFT
     type: Integer
@@ -4594,7 +4594,7 @@ parameters:
       Number of lambda values to scan. Only used when sc_lambda_strategy=linear_scan.
     default_value: "20"
     unit: ""
-    availability: sc_lambda_strategy==linear_scan
+    availability: sc_mag_switch==true and sc_lambda_strategy==linear_scan
   - name: qo_switch
     category: Quasiatomic Orbital (QO) analysis
     type: Boolean

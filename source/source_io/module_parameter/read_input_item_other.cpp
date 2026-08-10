@@ -212,7 +212,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Starting lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.";
         item.default_value = "0.0";
         item.unit = "eV/uB";
-        item.set_availability("sc_lambda_strategy==linear_scan");
+        item.set_availability("sc_mag_switch==true and sc_lambda_strategy==linear_scan");
         read_sync_double(input.sc_scan_lambda_start);
         this->add_item(item);
     }
@@ -224,7 +224,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Ending lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.";
         item.default_value = "1.0";
         item.unit = "eV/uB";
-        item.set_availability("sc_lambda_strategy==linear_scan");
+        item.set_availability("sc_mag_switch==true and sc_lambda_strategy==linear_scan");
         read_sync_double(input.sc_scan_lambda_end);
         this->add_item(item);
     }
@@ -236,7 +236,7 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.description = "Number of lambda values to scan. Only used when sc_lambda_strategy=linear_scan.";
         item.default_value = "20";
         item.unit = "";
-        item.set_availability("sc_lambda_strategy==linear_scan");
+        item.set_availability("sc_mag_switch==true and sc_lambda_strategy==linear_scan");
         read_sync_int(input.sc_scan_steps);
         this->add_item(item);
     }

@@ -176,6 +176,9 @@ ABACUS includes a built-in help system that allows users to query INPUT paramete
 
 The C++ `Input_Item` registrations are the source of truth for parameter metadata. The checked-in `docs/parameters.yaml` and `docs/advanced/input_files/input-main.md` files are generated artifacts: do not edit either file manually. `parameters.yaml` is generated from the binary and is used by Sphinx to produce `input-main.md`.
 
+Availability expressions follow the grammar and invariants in
+[`developers_guide/input_availability.md`](developers_guide/input_availability.md).
+
 ### When to Update `docs/parameters.yaml`
 
 You **must** regenerate `docs/parameters.yaml` whenever you:

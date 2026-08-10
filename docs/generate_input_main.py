@@ -154,8 +154,7 @@ def generate_parameter_markdown(param: Dict[str, str]) -> str:
 
     # Availability (before description, as in original format)
     if param.get('availability', '') != '':
-        availability_text = escape_md_text(str(param['availability']))
-        lines.append(f"- **Availability**: *{availability_text}*")
+        lines.append(f"- **Availability**: `{param['availability']}`")
 
     # Description
     if param.get('description', '') != '':

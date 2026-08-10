@@ -34,29 +34,6 @@ std::string trim_copy(const std::string& value)
     return value.substr(begin, end - begin);
 }
 
-std::vector<std::string> split_slash_values(const std::string& value)
-{
-    std::vector<std::string> values;
-    std::size_t begin = 0;
-    while (begin <= value.size())
-    {
-        const std::size_t slash = value.find('/', begin);
-        const std::string part = trim_copy(value.substr(
-            begin, slash == std::string::npos ? std::string::npos : slash - begin));
-        if (part.empty())
-        {
-            return {};
-        }
-        values.push_back(part);
-        if (slash == std::string::npos)
-        {
-            break;
-        }
-        begin = slash + 1;
-    }
-    return values;
-}
-
 class AvailabilityParser
 {
   public:
@@ -209,19 +186,7 @@ class AvailabilityParser
             {
                 pos_ += length;
                 result.condition.op = op;
-                const std::string value = parse_scalar_value();
-                if (std::string(op) == "==")
-                {
-                    result.condition.values = split_slash_values(value);
-                }
-                else
-                {
-                    result.condition.values.push_back(value);
-                }
-                if (result.condition.values.empty())
-                {
-                    fail("expected value");
-                }
+                result.condition.values.push_back(parse_scalar_value());
                 return result;
             }
         }
@@ -338,12 +303,7 @@ std::string AvailabilityCondition::to_string() const
     {
         return param + " contains " + values[0];
     }
-    std::string result = param + op + values[0];
-    for (std::size_t i = 1; i < values.size(); ++i)
-    {
-        result += "/" + values[i];
-    }
-    return result;
+    return param + op + values[0];
 }
 
 std::string AvailabilityExpr::to_string() const
