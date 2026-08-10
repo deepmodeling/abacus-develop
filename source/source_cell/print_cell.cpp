@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <regex>
 #include <cassert>
 #include <cerrno>
@@ -6,6 +7,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <unistd.h>
+#include <vector>
 
 #include "print_cell.h"
 #include "source_cell/md_cell.h"
@@ -262,7 +264,151 @@ std::string mdcell_atom_line(const LocalAtom& atom)
     return output.str();
 }
 
+std::string mdcell_atom_line(const ModuleBase::Vector3<double>& cart,
+                             const ModuleBase::Vector3<int>& mbl,
+                             const ModuleBase::Vector3<double>& vel)
+{
+    std::ostringstream output;
+    output << std::fixed << std::setprecision(10)
+           << cart.x << " " << cart.y << " " << cart.z
+           << " m " << mbl.x << " " << mbl.y << " " << mbl.z
+           << " v " << vel.x << " " << vel.y << " " << vel.z << "\n";
+    return output.str();
+}
+
+std::string ordered_local_mdcell_atoms(const MDCell& cell, const std::size_t type)
+{
+    std::vector<const LocalAtom*> atoms;
+    for (std::size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
+    {
+        const LocalAtom& atom = cell.owned_atoms()[iat];
+        if (atom.type == static_cast<int>(type)) atoms.push_back(&atom);
+    }
+    std::sort(atoms.begin(), atoms.end(), [](const LocalAtom* lhs, const LocalAtom* rhs) {
+        return lhs->type_index < rhs->type_index;
+    });
+    std::string output;
+    for (std::size_t iat = 0; iat < atoms.size(); ++iat) output += mdcell_atom_line(*atoms[iat]);
+    return output;
+}
+
 #ifdef __MPI
+struct MdStruAtomRecord
+{
+    int type_index;
+    double cart[3];
+    int mbl[3];
+    double vel[3];
+};
+
+MdStruAtomRecord make_mdstru_atom_record(const LocalAtom& atom)
+{
+    MdStruAtomRecord record;
+    record.type_index = atom.type_index;
+    for (int idim = 0; idim < 3; ++idim)
+    {
+        record.cart[idim] = atom.cart[idim];
+        record.mbl[idim] = atom.mbl[idim];
+        record.vel[idim] = atom.vel[idim];
+    }
+    return record;
+}
+
+std::string ordered_distributed_mdcell_atoms(const MDCell& cell,
+                                             const std::size_t type,
+                                             const MPI_Comm comm,
+                                             const int rank,
+                                             const int size)
+{
+    const int type_count = cell.type_atom_counts()[type];
+    if (type_count == 0)
+    {
+        return std::string();
+    }
+    int locally_valid = 1;
+    for (std::size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
+    {
+        const LocalAtom& atom = cell.owned_atoms()[iat];
+        if (atom.type == static_cast<int>(type) && (atom.type_index < 0 || atom.type_index >= type_count))
+        {
+            locally_valid = 0;
+        }
+    }
+    int globally_valid = 0;
+    MPI_Allreduce(&locally_valid, &globally_valid, 1, MPI_INT, MPI_MIN, comm);
+    if (globally_valid == 0)
+    {
+        throw std::runtime_error("MDCell restart STRU contains an invalid type index.");
+    }
+    std::vector<std::vector<MdStruAtomRecord> > send_records(static_cast<std::size_t>(size));
+    for (std::size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
+    {
+        const LocalAtom& atom = cell.owned_atoms()[iat];
+        if (atom.type != static_cast<int>(type)) continue;
+        const int writer_rank = atom.type_index * size / type_count;
+        send_records[static_cast<std::size_t>(writer_rank)].push_back(make_mdstru_atom_record(atom));
+    }
+
+    std::vector<int> send_counts(static_cast<std::size_t>(size), 0);
+    std::vector<int> recv_counts(static_cast<std::size_t>(size), 0);
+    for (int irank = 0; irank < size; ++irank)
+        send_counts[static_cast<std::size_t>(irank)] = static_cast<int>(send_records[static_cast<std::size_t>(irank)].size()
+                                                                        * sizeof(MdStruAtomRecord));
+    MPI_Alltoall(send_counts.data(), 1, MPI_INT, recv_counts.data(), 1, MPI_INT, comm);
+
+    std::vector<int> send_displacements(static_cast<std::size_t>(size), 0);
+    std::vector<int> recv_displacements(static_cast<std::size_t>(size), 0);
+    int total_send_bytes = 0;
+    int total_recv_bytes = 0;
+    for (int irank = 0; irank < size; ++irank)
+    {
+        send_displacements[static_cast<std::size_t>(irank)] = total_send_bytes;
+        recv_displacements[static_cast<std::size_t>(irank)] = total_recv_bytes;
+        total_send_bytes += send_counts[static_cast<std::size_t>(irank)];
+        total_recv_bytes += recv_counts[static_cast<std::size_t>(irank)];
+    }
+    std::vector<MdStruAtomRecord> send_buffer(static_cast<std::size_t>(total_send_bytes / sizeof(MdStruAtomRecord)));
+    std::size_t send_index = 0;
+    for (int irank = 0; irank < size; ++irank)
+        for (std::size_t irecord = 0; irecord < send_records[static_cast<std::size_t>(irank)].size(); ++irecord)
+            send_buffer[send_index++] = send_records[static_cast<std::size_t>(irank)][irecord];
+    std::vector<MdStruAtomRecord> recv_buffer(static_cast<std::size_t>(total_recv_bytes / sizeof(MdStruAtomRecord)));
+    MPI_Alltoallv(total_send_bytes > 0 ? reinterpret_cast<const char*>(send_buffer.data()) : NULL,
+                  send_counts.data(),
+                  send_displacements.data(),
+                  MPI_BYTE,
+                  total_recv_bytes > 0 ? reinterpret_cast<char*>(recv_buffer.data()) : NULL,
+                  recv_counts.data(),
+                  recv_displacements.data(),
+                  MPI_BYTE,
+                  comm);
+
+    std::sort(recv_buffer.begin(), recv_buffer.end(), [](const MdStruAtomRecord& lhs, const MdStruAtomRecord& rhs) {
+        return lhs.type_index < rhs.type_index;
+    });
+    const int first_index = (rank * type_count + size - 1) / size;
+    const int last_index = ((rank + 1) * type_count + size - 1) / size;
+    int locally_ordered = static_cast<int>(recv_buffer.size()) == last_index - first_index ? 1 : 0;
+    for (std::size_t irecord = 0; irecord < recv_buffer.size(); ++irecord)
+        locally_ordered = locally_ordered && recv_buffer[irecord].type_index == first_index + static_cast<int>(irecord);
+    int globally_ordered = 0;
+    MPI_Allreduce(&locally_ordered, &globally_ordered, 1, MPI_INT, MPI_MIN, comm);
+    if (globally_ordered == 0)
+    {
+        throw std::runtime_error("MDCell restart STRU atom ownership is not a complete type-index partition.");
+    }
+
+    std::string output;
+    for (std::size_t irecord = 0; irecord < recv_buffer.size(); ++irecord)
+    {
+        const MdStruAtomRecord& record = recv_buffer[irecord];
+        output += mdcell_atom_line(ModuleBase::Vector3<double>(record.cart[0], record.cart[1], record.cart[2]),
+                                   ModuleBase::Vector3<int>(record.mbl[0], record.mbl[1], record.mbl[2]),
+                                   ModuleBase::Vector3<double>(record.vel[0], record.vel[1], record.vel[2]));
+    }
+    return output;
+}
+
 bool write_at(const int file, const std::string& data, MPI_Offset offset)
 {
     std::size_t written = 0;
@@ -311,12 +457,6 @@ void print_stru_file(const MDCell& cell, const MdStruFileMetadata& metadata, con
         || metadata.species.size() != cell.type_atom_counts().size())
     {
         throw std::runtime_error("MDCell STRU metadata does not match the MDCell type data.");
-    }
-    std::vector<std::string> local_atoms(metadata.species.size());
-    for (std::size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
-    {
-        const LocalAtom& atom = cell.owned_atoms()[iat];
-        local_atoms[static_cast<std::size_t>(atom.type)] += mdcell_atom_line(atom);
     }
     const std::string header = mdcell_stru_header(cell, metadata);
 #ifdef __MPI
@@ -368,7 +508,8 @@ void print_stru_file(const MDCell& cell, const MdStruFileMetadata& metadata, con
             throw std::runtime_error("Unable to write MDCell restart STRU type header: " + fn + ": " + std::strerror(errno));
         }
         offset += static_cast<MPI_Offset>(type_header.size());
-        const int local_size = static_cast<int>(local_atoms[it].size());
+        const std::string local_atoms = ordered_distributed_mdcell_atoms(cell, it, comm, rank, cell.mpi_size());
+        const int local_size = static_cast<int>(local_atoms.size());
         int type_size = 0;
         int rank_offset = 0;
         MPI_Allreduce(&local_size, &type_size, 1, MPI_INT, MPI_SUM, comm);
@@ -377,7 +518,7 @@ void print_stru_file(const MDCell& cell, const MdStruFileMetadata& metadata, con
         int atom_data_ok = 1;
         if (local_size > 0)
         {
-            atom_data_ok = write_at(file, local_atoms[it], offset + rank_offset) ? 1 : 0;
+            atom_data_ok = write_at(file, local_atoms, offset + rank_offset) ? 1 : 0;
         }
         int all_atom_data_ok = 0;
         MPI_Allreduce(&atom_data_ok, &all_atom_data_ok, 1, MPI_INT, MPI_MIN, comm);
@@ -397,7 +538,7 @@ void print_stru_file(const MDCell& cell, const MdStruFileMetadata& metadata, con
     std::ofstream output(fn.c_str());
     output << header;
     for (std::size_t it = 0; it < metadata.species.size(); ++it)
-        output << mdcell_type_header(cell, metadata, it) << local_atoms[it];
+        output << mdcell_type_header(cell, metadata, it) << ordered_local_mdcell_atoms(cell, it);
 #endif
 }
 }

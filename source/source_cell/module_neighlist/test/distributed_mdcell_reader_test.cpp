@@ -2,15 +2,23 @@
 
 #include "source_cell/distributed_mdcell_reader.h"
 #include "source_cell/md_cell.h"
+#include "source_cell/print_cell.h"
 #include "source_base/constants.h"
 #include "source_base/communication_domain.h"
 #include "source_base/global_variable.h"
 #include "source_cell/module_neighlist/domain_decomposition.h"
 
+#include <cstdio>
 #include <fstream>
 #include <mpi.h>
 #include <set>
+#include <sstream>
 #include <string>
+#include <type_traits>
+
+static_assert(!std::is_copy_constructible<MDCell>::value, "MDCell must not be copy constructible.");
+static_assert(!std::is_copy_assignable<MDCell>::value, "MDCell must not be copy assignable.");
+static_assert(std::is_move_constructible<MDCell>::value, "MDCell must be move constructible.");
 
 namespace
 {
@@ -139,6 +147,164 @@ TEST(DistributedMDCellReaderTest, ReadOwnedAtomsFromSTRUWithoutUnitCell)
     EXPECT_EQ(reduced_flags[1], 1);
 
     MPI_Comm_free(&md_comm);
+}
+
+TEST(DistributedMDCellReaderTest, RestartStruPreservesTypeIndexOrderAcrossRanks)
+{
+    int rank = 0;
+    int size = 1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    ASSERT_GE(size, 4);
+
+    std::vector<LocalAtom> owned_atoms;
+    if (rank == 0)
+    {
+        owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(11.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.11, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<int>(1, 1, 1),
+                                        1.0,
+                                        1,
+                                        1,
+                                        rank,
+                                        false));
+    }
+    if (rank == 1)
+    {
+        owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(1.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.01, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<int>(1, 1, 1),
+                                        1.0,
+                                        0,
+                                        1,
+                                        rank,
+                                        false));
+    }
+    if (rank == 2)
+    {
+        owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(10.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.10, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<int>(1, 1, 1),
+                                        1.0,
+                                        1,
+                                        0,
+                                        rank,
+                                        false));
+    }
+    if (rank == 3)
+    {
+        owned_atoms.push_back(LocalAtom(ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                        ModuleBase::Vector3<int>(1, 1, 1),
+                                        1.0,
+                                        0,
+                                        0,
+                                        rank,
+                                        false));
+    }
+
+    ModuleBase::Matrix3 lattice = make_lattice();
+    lattice.e11 = 20.0;
+    lattice.e22 = 20.0;
+    lattice.e33 = 20.0;
+    MDCell mdcell(lattice,
+                  lattice.Inverse(),
+                  1.0,
+                  1.0,
+                  4,
+                  owned_atoms,
+                  std::vector<std::string>{"A", "B"},
+                  std::vector<double>{1.0, 1.0},
+                  std::vector<int>{2, 2},
+                  0.0,
+                  0.0,
+                  ModuleBase::world_communication_domain());
+    MdStruFileMetadata metadata;
+    metadata.species.resize(2);
+    const std::string output_file = "distributed_mdcell_restart.STRU";
+    mdcell::print_stru_file(mdcell, metadata, output_file);
+
+    MdStruFileMetadata round_trip_metadata;
+    MDCell round_trip = DistributedMDCellReader::read_stru(output_file,
+                                                            std::vector<int>{1, 1, 1},
+                                                            0.1,
+                                                            0.0,
+                                                            round_trip_metadata,
+                                                            ModuleBase::world_communication_domain());
+    double local_positions[4] = {0.0, 0.0, 0.0, 0.0};
+    int local_owners[4] = {0, 0, 0, 0};
+    for (std::size_t iat = 0; iat < round_trip.owned_atoms().size(); ++iat)
+    {
+        const LocalAtom& atom = round_trip.owned_atoms()[iat];
+        const int index = atom.type * 2 + atom.type_index;
+        local_positions[index] = atom.cart.x;
+        local_owners[index] = 1;
+    }
+    double global_positions[4] = {0.0, 0.0, 0.0, 0.0};
+    int global_owners[4] = {0, 0, 0, 0};
+    MPI_Allreduce(local_positions, global_positions, 4, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+    MPI_Allreduce(local_owners, global_owners, 4, MPI_INT, MPI_SUM, MPI_COMM_WORLD);
+    for (int iat = 0; iat < 4; ++iat) EXPECT_EQ(global_owners[iat], 1);
+    EXPECT_DOUBLE_EQ(global_positions[0], 0.0);
+    EXPECT_DOUBLE_EQ(global_positions[1], 1.0);
+    EXPECT_DOUBLE_EQ(global_positions[2], 10.0);
+    EXPECT_DOUBLE_EQ(global_positions[3], 11.0);
+
+    if (rank == 0)
+    {
+        std::ifstream input(output_file.c_str());
+        ASSERT_TRUE(input.good());
+        std::vector<double> coordinates_a;
+        std::vector<double> coordinates_b;
+        std::string line;
+        int current_type = -1;
+        int atoms_remaining = 0;
+        while (std::getline(input, line))
+        {
+            if (line == "A #label")
+            {
+                current_type = 0;
+                continue;
+            }
+            if (line == "B #label")
+            {
+                current_type = 1;
+                continue;
+            }
+            if (current_type >= 0 && line.find("#number of atoms") != std::string::npos)
+            {
+                std::istringstream count_stream(line);
+                count_stream >> atoms_remaining;
+                continue;
+            }
+            if (current_type < 0 || atoms_remaining == 0) continue;
+            std::istringstream values(line);
+            double x = 0.0;
+            values >> x;
+            --atoms_remaining;
+            if (values)
+            {
+                if (current_type == 0) coordinates_a.push_back(x);
+                else coordinates_b.push_back(x);
+            }
+        }
+        ASSERT_EQ(coordinates_a.size(), 2U);
+        ASSERT_EQ(coordinates_b.size(), 2U);
+        EXPECT_DOUBLE_EQ(coordinates_a[0], 0.0);
+        EXPECT_DOUBLE_EQ(coordinates_a[1], 1.0);
+        EXPECT_DOUBLE_EQ(coordinates_b[0], 10.0);
+        EXPECT_DOUBLE_EQ(coordinates_b[1], 11.0);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    if (rank == 0) std::remove(output_file.c_str());
 }
 
 int main(int argc, char** argv)

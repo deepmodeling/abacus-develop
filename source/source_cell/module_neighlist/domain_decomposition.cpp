@@ -40,6 +40,54 @@ DomainDecomposition::~DomainDecomposition()
     }
 }
 
+DomainDecomposition::DomainDecomposition(DomainDecomposition&& other) noexcept
+    : comm_(other.comm_),
+      cart_comm_(other.cart_comm_),
+      owns_cart_comm_(other.owns_cart_comm_),
+      rank_(other.rank_),
+      size_(other.size_),
+      dims_(other.dims_),
+      coords_(other.coords_),
+      margin_(other.margin_),
+      latvec_(other.latvec_),
+      inv_latvec_(other.inv_latvec_),
+      lat0_(other.lat0_),
+      cutoff_(other.cutoff_),
+      skin_(other.skin_)
+{
+    other.comm_ = MPI_COMM_NULL;
+    other.cart_comm_ = MPI_COMM_NULL;
+    other.owns_cart_comm_ = false;
+}
+
+DomainDecomposition& DomainDecomposition::operator=(DomainDecomposition&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (owns_cart_comm_ && cart_comm_ != MPI_COMM_NULL)
+        {
+            MPI_Comm_free(&cart_comm_);
+        }
+        comm_ = other.comm_;
+        cart_comm_ = other.cart_comm_;
+        owns_cart_comm_ = other.owns_cart_comm_;
+        rank_ = other.rank_;
+        size_ = other.size_;
+        dims_ = other.dims_;
+        coords_ = other.coords_;
+        margin_ = other.margin_;
+        latvec_ = other.latvec_;
+        inv_latvec_ = other.inv_latvec_;
+        lat0_ = other.lat0_;
+        cutoff_ = other.cutoff_;
+        skin_ = other.skin_;
+        other.comm_ = MPI_COMM_NULL;
+        other.cart_comm_ = MPI_COMM_NULL;
+        other.owns_cart_comm_ = false;
+    }
+    return *this;
+}
+
 double DomainDecomposition::wrap_fractional(double value)
 {
     value -= std::floor(value);

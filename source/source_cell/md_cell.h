@@ -20,6 +20,11 @@ class CommunicationDomain;
 class MDCell : public BaseCell
 {
 public:
+    MDCell(const MDCell&) = delete;
+    MDCell& operator=(const MDCell&) = delete;
+    MDCell(MDCell&&) = default;
+    MDCell& operator=(MDCell&&) = default;
+
     MDCell(UnitCell& ucell,
            double cutoff,
            double skin,
