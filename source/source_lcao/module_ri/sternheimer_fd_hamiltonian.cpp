@@ -12,6 +12,38 @@
 #include <omp.h>
 #endif
 
+namespace
+{
+
+template <int Radius>
+std::array<double, Radius + 1> second_derivative_coefficients();
+
+template <>
+std::array<double, 2> second_derivative_coefficients<1>()
+{
+    return {{-2.0, 1.0}};
+}
+
+template <>
+std::array<double, 3> second_derivative_coefficients<2>()
+{
+    return {{-5.0 / 2.0, 4.0 / 3.0, -1.0 / 12.0}};
+}
+
+template <>
+std::array<double, 4> second_derivative_coefficients<3>()
+{
+    return {{-49.0 / 18.0, 3.0 / 2.0, -3.0 / 20.0, 1.0 / 90.0}};
+}
+
+template <>
+std::array<double, 5> second_derivative_coefficients<4>()
+{
+    return {{-205.0 / 72.0, 8.0 / 5.0, -1.0 / 5.0, 8.0 / 315.0, -1.0 / 560.0}};
+}
+
+} // namespace
+
 namespace ModuleRI
 {
 
@@ -20,17 +52,14 @@ int SternheimerFDHamiltonian::Grid::size() const
     return nx * ny * nz;
 }
 
-SternheimerFDHamiltonian::SternheimerFDHamiltonian(Grid grid,
-                                                   std::vector<double> local_potential,
-                                                   const double kinetic_prefactor,
-                                                   std::shared_ptr<const SternheimerFDNonlocalProjector>
-                                                       nonlocal_projector,
-                                                   const int finite_difference_order)
-    : grid_(grid),
-      local_potential_(std::move(local_potential)),
-      kinetic_prefactor_(kinetic_prefactor),
-      finite_difference_order_(finite_difference_order),
-      nonlocal_projector_(std::move(nonlocal_projector))
+SternheimerFDHamiltonian::SternheimerFDHamiltonian(
+    Grid grid,
+    std::vector<double> local_potential,
+    const double kinetic_prefactor,
+    std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector,
+    const int finite_difference_order)
+    : grid_(grid), local_potential_(std::move(local_potential)), kinetic_prefactor_(kinetic_prefactor),
+      finite_difference_order_(finite_difference_order), nonlocal_projector_(std::move(nonlocal_projector))
 {
     if (grid_.nx <= 0 || grid_.ny <= 0 || grid_.nz <= 0)
     {
@@ -48,14 +77,47 @@ SternheimerFDHamiltonian::SternheimerFDHamiltonian(Grid grid,
     {
         throw std::invalid_argument("SternheimerFDHamiltonian requires a non-negative kinetic prefactor.");
     }
-    if (finite_difference_order_ != 2 && finite_difference_order_ != 4 && finite_difference_order_ != 6)
+    if (finite_difference_order_ != 2 && finite_difference_order_ != 4 && finite_difference_order_ != 6
+        && finite_difference_order_ != 8)
     {
-        throw std::invalid_argument("SternheimerFDHamiltonian finite-difference order must be 2, 4, or 6.");
+        throw std::invalid_argument("SternheimerFDHamiltonian finite-difference order must be 2, 4, 6, or 8.");
     }
     if (nonlocal_projector_ != nullptr && nonlocal_projector_->grid_size() != grid_.size())
     {
         throw std::invalid_argument("SternheimerFDHamiltonian nonlocal projector size does not match the grid.");
     }
+
+    const int radius = finite_difference_order_ / 2;
+    const auto shifted_coordinate = [this](const int shifted, const int extent) {
+        if (grid_.periodic)
+        {
+            return (shifted % extent + extent) % extent;
+        }
+        return shifted >= 0 && shifted < extent ? shifted : -1;
+    };
+    const auto initialize_coordinates
+        = [radius, shifted_coordinate](const int extent,
+                                       std::array<std::vector<int>, max_stencil_radius_>& positive_coordinates,
+                                       std::array<std::vector<int>, max_stencil_radius_>& negative_coordinates) {
+              for (int offset = 1; offset <= radius; ++offset)
+              {
+                  std::vector<int>& positive = positive_coordinates[offset - 1];
+                  std::vector<int>& negative = negative_coordinates[offset - 1];
+                  positive.resize(extent);
+                  negative.resize(extent);
+                  for (int coordinate = 0; coordinate != extent; ++coordinate)
+                  {
+                      const int positive_shifted = coordinate + offset;
+                      const int negative_shifted = coordinate - offset;
+                      positive[coordinate] = shifted_coordinate(positive_shifted, extent);
+                      negative[coordinate] = shifted_coordinate(negative_shifted, extent);
+                  }
+              }
+          };
+
+    initialize_coordinates(grid_.nx, x_positive_coordinates_, x_negative_coordinates_);
+    initialize_coordinates(grid_.ny, y_positive_coordinates_, y_negative_coordinates_);
+    initialize_coordinates(grid_.nz, z_positive_coordinates_, z_negative_coordinates_);
 }
 
 const SternheimerFDHamiltonian::Grid& SternheimerFDHamiltonian::grid() const
@@ -88,33 +150,6 @@ int SternheimerFDHamiltonian::index(const int ix, const int iy, const int iz) co
     return (ix * grid_.ny + iy) * grid_.nz + iz;
 }
 
-SternheimerFDHamiltonian::ShiftedGridPoint SternheimerFDHamiltonian::shifted_grid_point(int ix,
-                                                                                        int iy,
-                                                                                        int iz) const
-{
-    if (grid_.periodic)
-    {
-        const std::array<int, 3> dimensions{grid_.nx, grid_.ny, grid_.nz};
-        std::array<int, 3> coordinates{ix, iy, iz};
-        std::array<int, 3> lattice_translation{};
-        for (std::size_t direction = 0; direction != coordinates.size(); ++direction)
-        {
-            const int dimension = dimensions[direction];
-            const int wrapped = (coordinates[direction] % dimension + dimension) % dimension;
-            lattice_translation[direction] = (coordinates[direction] - wrapped) / dimension;
-            coordinates[direction] = wrapped;
-        }
-        return {index(coordinates[0], coordinates[1], coordinates[2]),
-                sternheimer_bloch_phase(grid_.kpoint, lattice_translation)};
-    }
-
-    if (ix < 0 || ix >= grid_.nx || iy < 0 || iy >= grid_.ny || iz < 0 || iz >= grid_.nz)
-    {
-        return {-1, Complex(1.0, 0.0)};
-    }
-    return {index(ix, iy, iz), Complex(1.0, 0.0)};
-}
-
 void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi) const
 {
     apply(psi, hpsi, nullptr);
@@ -128,6 +163,35 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threa
     }
 
     hpsi.assign(psi.size(), Complex(0.0, 0.0));
+
+    switch (finite_difference_order_)
+    {
+    case 2:
+        apply_local<1>(psi, hpsi, threads_used);
+        break;
+    case 4:
+        apply_local<2>(psi, hpsi, threads_used);
+        break;
+    case 6:
+        apply_local<3>(psi, hpsi, threads_used);
+        break;
+    case 8:
+        apply_local<4>(psi, hpsi, threads_used);
+        break;
+    default:
+        throw std::logic_error("Unsupported Sternheimer finite-difference order.");
+    }
+
+    if (nonlocal_projector_ != nullptr)
+    {
+        nonlocal_projector_->add_to(psi, hpsi);
+    }
+}
+
+template <int Radius>
+void SternheimerFDHamiltonian::apply_local(const Vector& psi, Vector& hpsi, int* threads_used) const
+{
+    const std::array<double, Radius + 1> coefficients = second_derivative_coefficients<Radius>();
     const double hx2_inv = 1.0 / (grid_.hx * grid_.hx);
     const double hy2_inv = 1.0 / (grid_.hy * grid_.hy);
     const double hz2_inv = 1.0 / (grid_.hz * grid_.hz);
@@ -154,113 +218,40 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threa
                     const int center = index(ix, iy, iz);
                     const Complex psi_center = psi[center];
 
-                    const bool fourth_order = finite_difference_order_ == 4;
-                    const bool sixth_order = finite_difference_order_ == 6;
-                    const double center_coefficient
-                        = sixth_order ? -49.0 / 18.0 : (fourth_order ? -2.5 : -2.0);
-                    Complex laplacian
-                        = center_coefficient * (hx2_inv + hy2_inv + hz2_inv) * psi_center;
-                    const int xp = shifted_index(ix + 1, iy, iz);
-                    const int xm = shifted_index(ix - 1, iy, iz);
-                    const int yp = shifted_index(ix, iy + 1, iz);
-                    const int ym = shifted_index(ix, iy - 1, iz);
-                    const int zp = shifted_index(ix, iy, iz + 1);
-                    const int zm = shifted_index(ix, iy, iz - 1);
+                    Complex laplacian = coefficients[0] * (hx2_inv + hy2_inv + hz2_inv) * psi_center;
+                    for (int offset = 0; offset != Radius; ++offset)
+                    {
+                        const double coefficient = coefficients[offset + 1];
+                        const int xp = x_positive_coordinates_[offset][ix];
+                        const int xm = x_negative_coordinates_[offset][ix];
+                        const int yp = y_positive_coordinates_[offset][iy];
+                        const int ym = y_negative_coordinates_[offset][iy];
+                        const int zp = z_positive_coordinates_[offset][iz];
+                        const int zm = z_negative_coordinates_[offset][iz];
 
-                    const double nearest_coefficient
-                        = sixth_order ? 3.0 / 2.0 : (fourth_order ? 4.0 / 3.0 : 1.0);
-                    if (xp >= 0)
-                    {
-                        laplacian += nearest_coefficient * hx2_inv * psi[xp];
-                    }
-                    if (xm >= 0)
-                    {
-                        laplacian += nearest_coefficient * hx2_inv * psi[xm];
-                    }
-                    if (yp >= 0)
-                    {
-                        laplacian += nearest_coefficient * hy2_inv * psi[yp];
-                    }
-                    if (ym >= 0)
-                    {
-                        laplacian += nearest_coefficient * hy2_inv * psi[ym];
-                    }
-                    if (zp >= 0)
-                    {
-                        laplacian += nearest_coefficient * hz2_inv * psi[zp];
-                    }
-                    if (zm >= 0)
-                    {
-                        laplacian += nearest_coefficient * hz2_inv * psi[zm];
-                    }
-
-                    if (fourth_order || sixth_order)
-                    {
-                        const double next_nearest_coefficient = sixth_order ? -3.0 / 20.0 : -1.0 / 12.0;
-                        const int xpp = shifted_index(ix + 2, iy, iz);
-                        const int xmm = shifted_index(ix - 2, iy, iz);
-                        const int ypp = shifted_index(ix, iy + 2, iz);
-                        const int ymm = shifted_index(ix, iy - 2, iz);
-                        const int zpp = shifted_index(ix, iy, iz + 2);
-                        const int zmm = shifted_index(ix, iy, iz - 2);
-                        if (xpp >= 0)
+                        if (xp != -1)
                         {
-                            laplacian += next_nearest_coefficient * hx2_inv * psi[xpp];
+                            laplacian += coefficient * hx2_inv * psi[index(xp, iy, iz)];
                         }
-                        if (xmm >= 0)
+                        if (xm != -1)
                         {
-                            laplacian += next_nearest_coefficient * hx2_inv * psi[xmm];
+                            laplacian += coefficient * hx2_inv * psi[index(xm, iy, iz)];
                         }
-                        if (ypp >= 0)
+                        if (yp != -1)
                         {
-                            laplacian += next_nearest_coefficient * hy2_inv * psi[ypp];
+                            laplacian += coefficient * hy2_inv * psi[index(ix, yp, iz)];
                         }
-                        if (ymm >= 0)
+                        if (ym != -1)
                         {
-                            laplacian += next_nearest_coefficient * hy2_inv * psi[ymm];
+                            laplacian += coefficient * hy2_inv * psi[index(ix, ym, iz)];
                         }
-                        if (zpp >= 0)
+                        if (zp != -1)
                         {
-                            laplacian += next_nearest_coefficient * hz2_inv * psi[zpp];
+                            laplacian += coefficient * hz2_inv * psi[index(ix, iy, zp)];
                         }
-                        if (zmm >= 0)
+                        if (zm != -1)
                         {
-                            laplacian += next_nearest_coefficient * hz2_inv * psi[zmm];
-                        }
-                    }
-
-                    if (sixth_order)
-                    {
-                        constexpr double third_nearest_coefficient = 1.0 / 90.0;
-                        const int xppp = shifted_index(ix + 3, iy, iz);
-                        const int xmmm = shifted_index(ix - 3, iy, iz);
-                        const int yppp = shifted_index(ix, iy + 3, iz);
-                        const int ymmm = shifted_index(ix, iy - 3, iz);
-                        const int zppp = shifted_index(ix, iy, iz + 3);
-                        const int zmmm = shifted_index(ix, iy, iz - 3);
-                        if (xppp >= 0)
-                        {
-                            laplacian += third_nearest_coefficient * hx2_inv * psi[xppp];
-                        }
-                        if (xmmm >= 0)
-                        {
-                            laplacian += third_nearest_coefficient * hx2_inv * psi[xmmm];
-                        }
-                        if (yppp >= 0)
-                        {
-                            laplacian += third_nearest_coefficient * hy2_inv * psi[yppp];
-                        }
-                        if (ymmm >= 0)
-                        {
-                            laplacian += third_nearest_coefficient * hy2_inv * psi[ymmm];
-                        }
-                        if (zppp >= 0)
-                        {
-                            laplacian += third_nearest_coefficient * hz2_inv * psi[zppp];
-                        }
-                        if (zmmm >= 0)
-                        {
-                            laplacian += third_nearest_coefficient * hz2_inv * psi[zmmm];
+                            laplacian += coefficient * hz2_inv * psi[index(ix, iy, zm)];
                         }
                     }
 
@@ -276,109 +267,6 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threa
         *threads_used = 1;
     }
 #endif
-
-#ifdef _OPENMP
-#pragma omp parallel
-    {
-#pragma omp single
-        {
-            if (threads_used != nullptr)
-            {
-                *threads_used = omp_get_num_threads();
-            }
-        }
-
-#pragma omp for collapse(2) schedule(static)
-#endif
-        for (int ix = 0; ix != grid_.nx; ++ix)
-        {
-            for (int iy = 0; iy != grid_.ny; ++iy)
-            {
-                for (int iz = 0; iz != grid_.nz; ++iz)
-                {
-                    const int center = index(ix, iy, iz);
-                    const Complex psi_center = psi[center];
-
-                    Complex laplacian = -2.0 * (laplacian_coefficients[0][0]
-                                                 + laplacian_coefficients[1][1]
-                                                 + laplacian_coefficients[2][2])
-                                        * psi_center;
-                    const auto add_shift = [&](const int dx, const int dy, const int dz, const double coefficient) {
-                        const ShiftedGridPoint shifted = shifted_grid_point(ix + dx, iy + dy, iz + dz);
-                        if (shifted.index >= 0)
-                        {
-                            laplacian += coefficient * shifted.phase * psi[shifted.index];
-                        }
-                    };
-                    add_shift(1, 0, 0, laplacian_coefficients[0][0]);
-                    add_shift(-1, 0, 0, laplacian_coefficients[0][0]);
-                    add_shift(0, 1, 0, laplacian_coefficients[1][1]);
-                    add_shift(0, -1, 0, laplacian_coefficients[1][1]);
-                    add_shift(0, 0, 1, laplacian_coefficients[2][2]);
-                    add_shift(0, 0, -1, laplacian_coefficients[2][2]);
-
-                    const auto add_mixed = [&](const int dx1,
-                                               const int dy1,
-                                               const int dz1,
-                                               const int dx2,
-                                               const int dy2,
-                                               const int dz2,
-                                               const double coefficient) {
-                        add_shift(dx1 + dx2, dy1 + dy2, dz1 + dz2, 0.5 * coefficient);
-                        add_shift(dx1 - dx2, dy1 - dy2, dz1 - dz2, -0.5 * coefficient);
-                        add_shift(-dx1 + dx2, -dy1 + dy2, -dz1 + dz2, -0.5 * coefficient);
-                        add_shift(-dx1 - dx2, -dy1 - dy2, -dz1 - dz2, 0.5 * coefficient);
-                    };
-                    add_mixed(1, 0, 0, 0, 1, 0, laplacian_coefficients[0][1]);
-                    add_mixed(1, 0, 0, 0, 0, 1, laplacian_coefficients[0][2]);
-                    add_mixed(0, 1, 0, 0, 0, 1, laplacian_coefficients[1][2]);
-
-                    output[center] = -kinetic_prefactor_ * laplacian;
-                    if (include_local_potential)
-                    {
-                        output[center] += local_potential_[center] * psi_center;
-                    }
-                }
-            }
-        }
-#ifdef _OPENMP
-    }
-#else
-    if (threads_used != nullptr)
-    {
-        *threads_used = 1;
-    }
-#endif
-
-}
-
-void SternheimerFDHamiltonian::apply_local_potential(const Vector& psi, Vector& local_psi) const
-{
-    if (static_cast<int>(psi.size()) != grid_.size())
-    {
-        throw std::invalid_argument(
-            "SternheimerFDHamiltonian::apply_local_potential input size does not match the grid.");
-    }
-    local_psi.resize(psi.size());
-#pragma omp parallel for schedule(static)
-    for (std::size_t ir = 0; ir != psi.size(); ++ir)
-    {
-        local_psi[ir] = local_potential_[ir] * psi[ir];
-    }
-}
-
-void SternheimerFDHamiltonian::apply_nonlocal(const Vector& psi, Vector& nonlocal_psi) const
-{
-    if (static_cast<int>(psi.size()) != grid_.size())
-    {
-        throw std::invalid_argument(
-            "SternheimerFDHamiltonian::apply_nonlocal input size does not match the grid.");
-    }
-    nonlocal_psi.assign(psi.size(), Complex(0.0, 0.0));
-    if (nonlocal_projector_ != nullptr)
-    {
-        nonlocal_projector_->add_to(psi, nonlocal_psi);
-    }
 }
 
 SternheimerFDHamiltonian::Matrix SternheimerFDHamiltonian::dense_matrix(const int max_size) const
