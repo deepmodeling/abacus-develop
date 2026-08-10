@@ -60,9 +60,7 @@ class psi_base
                             const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
                             const UnitCell* p_ucell,                     //< unit cell
                             const std::vector<int>& ik2iktot,             //< ik2iktot: local->global k-point mapping
-                            const int& nkstot,                          //< nkstot: total number of k-points
                             const int& random_seed,                      //< random seed
-                            const int& lmaxkb,                          //< lmaxkb: max angular momentum for non-local projectors
                             const int& rank,                            //< rank
                             const int& npol,                            //< npol
                             const int& nbands);                         //< nbands
@@ -134,11 +132,7 @@ class psi_base
 
     const UnitCell* p_ucell_ = nullptr;              ///< UnitCell
 
-    int lmaxkb_ = 0;                                 ///< max angular momentum for non-local projectors
-
     std::vector<int> ik2iktot_;                      ///< local->global k-point mapping
-
-    int nkstot_ = 0;                                 ///< total number of k-points
 
     int random_seed_ = 1;                            ///< random seed, shared by random, atomic+random, nao+random
 

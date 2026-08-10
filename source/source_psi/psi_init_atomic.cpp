@@ -41,7 +41,8 @@ void psi_init_atomic<T>::prepare_params(const int& nqx,
                                         const int& nspin,
                                         const bool& domag,
                                         const bool& domag_z,
-                                        const bool& pseudo_mesh)
+                                        const bool& pseudo_mesh,
+                                        const int& lmaxkb)
 {
     this->nqx_ = nqx;
     this->dq_ = dq;
@@ -49,6 +50,7 @@ void psi_init_atomic<T>::prepare_params(const int& nqx,
     this->domag_ = domag;
     this->domag_z_ = domag_z;
     this->pseudo_mesh_ = pseudo_mesh;
+    this->lmaxkb_ = lmaxkb;
     this->params_prepared_ = true;
 }
 
@@ -57,9 +59,7 @@ void psi_init_atomic<T>::initialize(const Structure_Factor* sf,
     const ModulePW::PW_Basis_K* pw_wfc,
     const UnitCell* p_ucell,
     const std::vector<int>& ik2iktot,
-    const int& nkstot,
     const int& random_seed,
-    const int& lmaxkb,
     const int& rank,
     const int& npol,
     const int& nbands)
@@ -72,7 +72,7 @@ void psi_init_atomic<T>::initialize(const Structure_Factor* sf,
             "prepare_params() must be called before initialize()");
     }
 
-    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, lmaxkb, rank, npol, nbands);
+    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
 
     this->nbands_start_ = std::max(this->p_ucell_->natomwfc, nbands);
     this->nbands_complem_ = this->nbands_start_ - this->p_ucell_->natomwfc;

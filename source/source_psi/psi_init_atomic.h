@@ -19,6 +19,7 @@ class psi_init_atomic : public psi_base<T>
     bool domag_ = false;
     bool domag_z_ = false;
     bool pseudo_mesh_ = false;
+    int lmaxkb_ = 0;
     bool params_prepared_ = false;
 
   public:
@@ -40,7 +41,8 @@ class psi_init_atomic : public psi_base<T>
      * @param domag Whether to use non-collinear magnetism
      * @param domag_z Whether to use z-axis only non-collinear magnetism
      * @param pseudo_mesh Whether to use pseudo mesh for radial grid
-     * 
+     * @param lmaxkb Max angular momentum for non-local projectors
+     *
      * @see initialize()
      */
     void prepare_params(const int& nqx,
@@ -48,15 +50,14 @@ class psi_init_atomic : public psi_base<T>
                         const int& nspin,
                         const bool& domag,
                         const bool& domag_z,
-                        const bool& pseudo_mesh);
+                        const bool& pseudo_mesh,
+                        const int& lmaxkb);
 
     virtual void initialize(const Structure_Factor* sf,             //< structure factor
                             const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
                             const UnitCell* p_ucell,                     //< unit cell
                             const std::vector<int>& ik2iktot,             //< ik2iktot: local->global k-point mapping
-                            const int& nkstot,                          //< nkstot: total number of k-points
                             const int& random_seed,                      //< random seed
-                            const int& lmaxkb,                          //< lmaxkb: max angular momentum for non-local projectors
                             const int& rank,                            //< MPI rank
                             const int& npol,                            //< npol
                             const int& nbands) override;                //< nbands

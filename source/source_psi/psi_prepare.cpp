@@ -56,7 +56,8 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed, const int istep
             PARAM.inp.nspin,
             PARAM.globalv.global_readin_dir,
             GlobalV::RANK_IN_POOL,
-            GlobalV::NPROC_IN_POOL
+            GlobalV::NPROC_IN_POOL,
+            this->nkstot_
         );
         this->psi_initer = std::unique_ptr<psi_base<T>>(file_initer);
         GlobalV::ofs_running << "\n Using FILE starting wave functions\n";
@@ -104,7 +105,8 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed, const int istep
             PARAM.inp.nspin,
             PARAM.globalv.domag,
             PARAM.globalv.domag_z,
-            PARAM.inp.pseudo_mesh
+            PARAM.inp.pseudo_mesh,
+            this->lmaxkb
         );
         this->psi_initer = std::unique_ptr<psi_base<T>>(atomic_initer);
     }
@@ -117,7 +119,8 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed, const int istep
             PARAM.inp.nspin,
             PARAM.globalv.domag,
             PARAM.globalv.domag_z,
-            PARAM.inp.pseudo_mesh
+            PARAM.inp.pseudo_mesh,
+            this->lmaxkb
         );
         this->psi_initer = std::unique_ptr<psi_base<T>>(atomic_rand_initer);
         GlobalV::ofs_running << "\n Using ATOMIC+RANDOM starting wave functions with "
@@ -152,7 +155,7 @@ void PSIPrepare<T, Device>::prepare_init(const int& random_seed, const int istep
         ModuleBase::WARNING_QUIT("PSIInit::prepare_init", "for new psi initializer, init_wfc type not supported");
     }
 
-    this->psi_initer->initialize(&sf, &pw_wfc, &ucell, ik2iktot_, nkstot_, random_seed, lmaxkb, rank,
+    this->psi_initer->initialize(&sf, &pw_wfc, &ucell, ik2iktot_, random_seed, rank,
                                      PARAM.globalv.npol, PARAM.inp.nbands);
     this->psi_initer->tabulate();
 

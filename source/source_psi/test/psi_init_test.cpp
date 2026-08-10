@@ -356,9 +356,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigRandom)
                                this->p_pw_wfc,
                                this->p_ucell,
                                this->ik2iktot_,
-                               this->nkstot_,
                                this->random_seed,
-                               this->lmaxkb,
                                GlobalV::MY_RANK,
                                this->npol_,
                                this->nbands_);
@@ -374,15 +372,13 @@ TEST_F(PsiIntializerUnitTest, CalPsigRandom)
 TEST_F(PsiIntializerUnitTest, CalPsigAtomic)
 {
     psi_init_atomic<std::complex<double>>* atomic_initer = new psi_init_atomic<std::complex<double>>();
-    atomic_initer->prepare_params(this->nqx_, this->dq_, this->nspin_, this->domag_, this->domag_z_, this->pseudo_mesh_);
+    atomic_initer->prepare_params(this->nqx_, this->dq_, this->nspin_, this->domag_, this->domag_z_, this->pseudo_mesh_, this->lmaxkb);
     this->psi_init = atomic_initer;
     this->psi_init->initialize(this->p_sf,
                                this->p_pw_wfc,
                                this->p_ucell,
                                this->ik2iktot_,
-                               this->nkstot_,
                                this->random_seed,
-                               this->lmaxkb,
                                GlobalV::MY_RANK,
                                this->npol_,
                                this->nbands_);
@@ -404,15 +400,13 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSoc)
     this->p_ucell->atoms[0].ncpp.has_so = false;
     this->p_ucell->natomwfc *= 2;
     psi_init_atomic<std::complex<double>>* atomic_initer = new psi_init_atomic<std::complex<double>>();
-    atomic_initer->prepare_params(this->nqx_, this->dq_, this->nspin_, this->domag_, this->domag_z_, this->pseudo_mesh_);
+    atomic_initer->prepare_params(this->nqx_, this->dq_, this->nspin_, this->domag_, this->domag_z_, this->pseudo_mesh_, this->lmaxkb);
     this->psi_init = atomic_initer;
     this->psi_init->initialize(this->p_sf,
                                this->p_pw_wfc,
                                this->p_ucell,
                                this->ik2iktot_,
-                               this->nkstot_,
                                this->random_seed,
-                               this->lmaxkb,
                                GlobalV::MY_RANK,
                                this->npol_,
                                this->nbands_);
@@ -438,15 +432,13 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo)
     this->p_ucell->atoms[0].ncpp.has_so = true;
     this->p_ucell->natomwfc *= 2;
     psi_init_atomic<std::complex<double>>* atomic_initer = new psi_init_atomic<std::complex<double>>();
-    atomic_initer->prepare_params(this->nqx_, this->dq_, this->nspin_, this->domag_, this->domag_z_, this->pseudo_mesh_);
+    atomic_initer->prepare_params(this->nqx_, this->dq_, this->nspin_, this->domag_, this->domag_z_, this->pseudo_mesh_, this->lmaxkb);
     this->psi_init = atomic_initer;
     this->psi_init->initialize(this->p_sf,
                                this->p_pw_wfc,
                                this->p_ucell,
                                this->ik2iktot_,
-                               this->nkstot_,
                                this->random_seed,
-                               this->lmaxkb,
                                GlobalV::MY_RANK,
                                this->npol_,
                                this->nbands_);
@@ -466,15 +458,13 @@ TEST_F(PsiIntializerUnitTest, CalPsigAtomicSocHasSo)
 TEST_F(PsiIntializerUnitTest, CalPsigAtomicRandom)
 {
     psi_init_atomic_random<std::complex<double>>* atomic_rand_initer = new psi_init_atomic_random<std::complex<double>>();
-    atomic_rand_initer->prepare_params(this->nqx_, this->dq_, this->nspin_, this->domag_, this->domag_z_, this->pseudo_mesh_);
+    atomic_rand_initer->prepare_params(this->nqx_, this->dq_, this->nspin_, this->domag_, this->domag_z_, this->pseudo_mesh_, this->lmaxkb);
     this->psi_init = atomic_rand_initer;
     this->psi_init->initialize(this->p_sf,
                                this->p_pw_wfc,
                                this->p_ucell,
                                this->ik2iktot_,
-                               this->nkstot_,
                                this->random_seed,
-                               this->lmaxkb,
                                GlobalV::MY_RANK,
                                this->npol_,
                                this->nbands_);
@@ -496,9 +486,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNao)
                                this->p_pw_wfc,
                                this->p_ucell,
                                this->ik2iktot_,
-                               this->nkstot_,
                                this->random_seed,
-                               this->lmaxkb,
                                GlobalV::MY_RANK,
                                this->npol_,
                                this->nbands_);
@@ -520,9 +508,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoRandom)
                                this->p_pw_wfc,
                                this->p_ucell,
                                this->ik2iktot_,
-                               this->nkstot_,
                                this->random_seed,
-                               this->lmaxkb,
                                GlobalV::MY_RANK,
                                this->npol_,
                                this->nbands_);
@@ -549,9 +535,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSoc)
                                this->p_pw_wfc,
                                this->p_ucell,
                                this->ik2iktot_,
-                               this->nkstot_,
                                this->random_seed,
-                               this->lmaxkb,
                                GlobalV::MY_RANK,
                                this->npol_,
                                this->nbands_);
@@ -580,9 +564,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSo)
                                this->p_pw_wfc,
                                this->p_ucell,
                                this->ik2iktot_,
-                               this->nkstot_,
                                this->random_seed,
-                               this->lmaxkb,
                                GlobalV::MY_RANK,
                                this->npol_,
                                this->nbands_);
@@ -611,9 +593,7 @@ TEST_F(PsiIntializerUnitTest, CalPsigNaoSocHasSoDOMAG)
                                this->p_pw_wfc,
                                this->p_ucell,
                                this->ik2iktot_,
-                               this->nkstot_,
                                this->random_seed,
-                               this->lmaxkb,
                                GlobalV::MY_RANK,
                                this->npol_,
                                this->nbands_);

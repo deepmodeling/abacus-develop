@@ -27,9 +27,7 @@ class psi_init_random : public psi_base<T>
                             const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
                             const UnitCell* p_ucell,                     //< unit cell
                             const std::vector<int>& ik2iktot,             //< ik2iktot: local->global k-point mapping
-                            const int& nkstot,                          //< nkstot: total number of k-points
                             const int& random_seed,                      //< random seed
-                            const int& lmaxkb,                          //< lmaxkb: max angular momentum for non-local projectors
                             const int& rank,                            //< MPI rank
                             const int& npol,                            //< npol
                             const int& nbands) override;                //< nbands

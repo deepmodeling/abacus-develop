@@ -14,14 +14,12 @@ void psi_init_file<T>::initialize(const Structure_Factor* sf,
                                                const ModulePW::PW_Basis_K* pw_wfc,
                                                const UnitCell* p_ucell,
                                                const std::vector<int>& ik2iktot,
-                                               const int& nkstot,
                                                const int& random_seed,
-                                               const int& lmaxkb,
                                                const int& rank,
                                                const int& npol,
                                                const int& nbands)
 {
-    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, lmaxkb, rank, npol, nbands);
+    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
     this->nbands_start_ = nbands;
     this->nbands_complem_ = 0;
 }
@@ -30,12 +28,14 @@ template <typename T>
 void psi_init_file<T>::prepare_params(const int& nspin,
                                       const std::string& global_readin_dir,
                                       const int& rank_in_pool,
-                                      const int& nproc_in_pool)
+                                      const int& nproc_in_pool,
+                                      const int& nkstot)
 {
     this->nspin_ = nspin;
     this->global_readin_dir_ = global_readin_dir;
     this->rank_in_pool_ = rank_in_pool;
     this->nproc_in_pool_ = nproc_in_pool;
+    this->nkstot_ = nkstot;
 }
 
 template <typename T>

@@ -6,14 +6,12 @@ void psi_init_random<T>::initialize(const Structure_Factor* sf,
                                                const ModulePW::PW_Basis_K* pw_wfc,
                                                const UnitCell* p_ucell,
                                                const std::vector<int>& ik2iktot,
-                                               const int& nkstot,
                                                const int& random_seed,
-                                               const int& lmaxkb,
                                                const int& rank,
                                                const int& npol,
                                                const int& nbands)
 {
-    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, lmaxkb, rank, npol, nbands);
+    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
     this->ixy2is_.clear();
     this->ixy2is_.resize(this->pw_wfc_->fftnxy);
     this->pw_wfc_->getfftixy2is(this->ixy2is_.data());

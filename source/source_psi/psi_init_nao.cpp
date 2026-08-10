@@ -162,9 +162,7 @@ void psi_init_nao<T>::initialize(const Structure_Factor* sf,
                                         const ModulePW::PW_Basis_K* pw_wfc,
                                         const UnitCell* p_ucell,
                                         const std::vector<int>& ik2iktot,
-                                        const int& nkstot,
                                         const int& random_seed,
-                                        const int& lmaxkb,
                                         const int& rank,
                                         const int& npol,
                                         const int& nbands)
@@ -178,7 +176,7 @@ void psi_init_nao<T>::initialize(const Structure_Factor* sf,
     }
 
     // import
-    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, lmaxkb, rank, npol, nbands);
+    psi_base<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, random_seed, rank, npol, nbands);
 
     // allocate
     this->allocate_ao_table();

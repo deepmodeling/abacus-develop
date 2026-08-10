@@ -23,9 +23,7 @@ void psi_base<T>::initialize(const Structure_Factor* sf,
                                     const ModulePW::PW_Basis_K* pw_wfc,
                                     const UnitCell* p_ucell,
                                     const std::vector<int>& ik2iktot,
-                                    const int& nkstot,
                                     const int& random_seed,
-                                    const int& lmaxkb,
                                     const int& rank,
                                     const int& npol,
                                     const int& nbands)
@@ -34,9 +32,7 @@ void psi_base<T>::initialize(const Structure_Factor* sf,
     this->pw_wfc_ = pw_wfc;
     this->p_ucell_ = p_ucell;
     this->ik2iktot_ = ik2iktot;
-    this->nkstot_ = nkstot;
     this->random_seed_ = random_seed;
-    this->lmaxkb_ = lmaxkb;
     this->npol_ = npol;
     this->nbands_ = nbands;
 }
