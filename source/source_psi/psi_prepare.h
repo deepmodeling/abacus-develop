@@ -66,7 +66,7 @@ class PSIPrepare : public PSIPrepareBase
     const ModulePW::PW_Basis_K& pw_wfc;
 
     // local->global k-point mapping
-    const std::vector<int>& ik2iktot_;
+    std::vector<int> ik2iktot_;
     // total number of k-points
     const int nkstot_;
 

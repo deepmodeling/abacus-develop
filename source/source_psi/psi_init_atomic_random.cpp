@@ -1,21 +1,6 @@
 #include "psi_init_atomic_random.h"
 
 template <typename T>
-void psi_init_atomic_random<T>::initialize(const Structure_Factor* sf,         //< structure factor
-                                                  const ModulePW::PW_Basis_K* pw_wfc, //< planewave basis
-                                                  const UnitCell* p_ucell,            //< unit cell
-                                                  const std::vector<int>& ik2iktot,
-                                                  const int& nkstot,
-                                                  const int& random_seed, //< random seed
-                                                  const int& lmaxkb,
-                                                  const int& rank,
-                                                  const int& npol,
-                                                  const int& nbands)
-{
-    psi_init_atomic<T>::initialize(sf, pw_wfc, p_ucell, ik2iktot, nkstot, random_seed, lmaxkb, rank, npol, nbands);
-}
-
-template <typename T>
 void psi_init_atomic_random<T>::init_psig(T* psig, const int& ik)
 {
     double rm = this->mixing_coef_;
