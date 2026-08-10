@@ -34,7 +34,6 @@ void psi_base<T>::initialize(const Structure_Factor* sf,
     this->ik2iktot_ = ik2iktot;
     this->random_seed_ = random_seed;
     this->npol_ = npol;
-    this->nbands_ = nbands;
 }
 
 template <typename T>

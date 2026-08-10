@@ -138,8 +138,6 @@ class psi_base
 
     std::vector<int> ixy2is_;                        ///< used by stick_to_pool function
 
-    int mem_saver_ = 0;                              ///< if save memory, only for nscf
-
     std::string method_ = "none";                    ///< method name
 
     int nbands_complem_ = 0; ///< complement number of bands, which is nbands_start_ - ucell.natomwfc
@@ -149,7 +147,5 @@ class psi_base
     int nbands_start_ = 0;   ///< starting nbands, which is no less than PARAM.inp.nbands
 
     int npol_ = 1;           ///< number of polarizations
-
-    int nbands_ = 1;         ///< number of bands
 };
 #endif
