@@ -6,7 +6,7 @@
 #ifndef EWALD_VQ_H
 #define EWALD_VQ_H
 
-#include "LRI_CV.h"
+#include "lri_cv.h"
 #include "gaussian_abfs.h"
 #include "source_base/element_basis_index.h"
 #include "source_cell/klist.h"

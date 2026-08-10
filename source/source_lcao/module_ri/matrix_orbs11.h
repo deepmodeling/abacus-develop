@@ -78,6 +78,6 @@ class Matrix_Orbs11
     // this->center2_orb11_s[TA][TB][LA][NA][LB][NB]
 };
 
-#include "Matrix_Orbs11.hpp"
+#include "matrix_orbs11.hpp"
 
 #endif

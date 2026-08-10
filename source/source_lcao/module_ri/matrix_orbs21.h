@@ -87,6 +87,6 @@ class Matrix_Orbs21
     // this->center2_orb21_s[TA][TB][LA1][NA1][LA2][NA2][LB][NB]
 };
 
-#include "Matrix_Orbs21.hpp"
+#include "matrix_orbs21.hpp"
 
 #endif

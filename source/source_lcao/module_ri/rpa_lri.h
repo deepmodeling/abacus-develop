@@ -6,7 +6,7 @@
 #ifndef RPA_LRI_H
 #define RPA_LRI_H
 
-#include "LRI_CV.h"
+#include "lri_cv.h"
 #include "source_hamilt/module_xc/exx_info_ri.h"
 // #include "module_xc/exx_info.h"
 // #include "source_basis/module_ao/orb_atomic_lm.h"
@@ -107,6 +107,6 @@ template <typename T, typename Tdata> class RPA_LRI
     Exx_LRI<double>* exx_cut_coulomb = nullptr;
     Exx_LRI<double>* exx_full_coulomb = nullptr;
 };
-#include "RPA_LRI.hpp"
+#include "rpa_lri.hpp"
 
 #endif

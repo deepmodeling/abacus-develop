@@ -79,6 +79,6 @@ namespace RI_Util
 		const K_Vectors *p_kv);
 }
 
-#include "RI_Util.hpp"
+#include "ri_util.hpp"
 
 #endif

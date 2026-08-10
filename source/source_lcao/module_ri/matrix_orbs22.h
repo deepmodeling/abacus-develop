@@ -113,6 +113,6 @@ class Matrix_Orbs22
     // this->center2_orb22_s[TA][TB][LA1][NA1][LA2][NA2][LB1][NB1][LB2][NB2]
 };
 
-#include "Matrix_Orbs22.hpp"
+#include "matrix_orbs22.hpp"
 
 #endif

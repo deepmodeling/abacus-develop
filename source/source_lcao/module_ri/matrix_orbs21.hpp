@@ -6,8 +6,8 @@
 #ifndef MATRIX_ORB21_HPP
 #define MATRIX_ORB21_HPP
 
-#include "Matrix_Orbs21.h"
-#include "RI_Util.h"
+#include "matrix_orbs21.h"
+#include "ri_util.h"
 
 template<typename Tdata>
 RI::Tensor<Tdata> Matrix_Orbs21::cal_overlap_matrix(

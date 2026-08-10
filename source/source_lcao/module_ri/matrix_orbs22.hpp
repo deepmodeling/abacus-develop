@@ -6,8 +6,8 @@
 #ifndef MATRIX_ORB22_HPP
 #define MATRIX_ORB22_HPP
 
-#include "Matrix_Orbs22.h"
-#include "RI_Util.h"
+#include "matrix_orbs22.h"
+#include "ri_util.h"
 
 template<typename Tdata>
 RI::Tensor<Tdata> Matrix_Orbs22::cal_overlap_matrix(

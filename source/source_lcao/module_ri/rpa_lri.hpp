@@ -14,7 +14,7 @@
 #include <vector>
 #include "source_lcao/module_ri/module_exx_symmetry/symmetry_rotation.h"
 
-#include "RPA_LRI.h"
+#include "rpa_lri.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/parameter.h"

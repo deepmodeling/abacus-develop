@@ -6,7 +6,7 @@
 #ifndef EXX_LRI_H
 #define EXX_LRI_H
 
-#include "LRI_CV.h"
+#include "lri_cv.h"
 #include "ewald_Vq.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "source_basis/module_ao/orb_atomic_lm.h"

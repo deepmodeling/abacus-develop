@@ -7,15 +7,15 @@
 #define EXX_LRI_HPP
 
 #include "Exx_LRI.h"
-#include "RI_2D_Comm.h"
-#include "RI_Util.h"
+#include "ri_2d_comm.h"
+#include "ri_util.h"
 #include "ExxLriDetail.h"
 #include "source_lcao/module_ri/exx_abfs_ctor_orbs.h"
 #include "source_lcao/module_ri/exx_abfs-io.h"
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_lcao/module_ri/Mix_DMk_2D.h"
+#include "source_lcao/module_ri/mix_dmk_2d.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_parameter/parameter.h"
 

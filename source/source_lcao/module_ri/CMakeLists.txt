@@ -3,11 +3,11 @@ if (ENABLE_LIBRI)
   add_subdirectory(module_exx_symmetry)
 
   list(APPEND objects
-        Matrix_Orbs11.cpp
-        Matrix_Orbs21.cpp
-        Matrix_Orbs22.cpp
-        RI_2D_Comm.cpp
-        Mix_DMk_2D.cpp
+        matrix_orbs11.cpp
+        matrix_orbs21.cpp
+        matrix_orbs22.cpp
+        ri_2d_comm.cpp
+        mix_dmk_2d.cpp
   )
 
   if(ENABLE_LCAO)

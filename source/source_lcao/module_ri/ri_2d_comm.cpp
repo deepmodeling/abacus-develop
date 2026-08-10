@@ -4,7 +4,7 @@
 //=======================
 
 #include "source_io/module_parameter/parameter.h"
-#include "RI_2D_Comm.h"
+#include "ri_2d_comm.h"
 #include "source_cell/klist.h"
 #include "source_io/module_parameter/parameter.h"
 

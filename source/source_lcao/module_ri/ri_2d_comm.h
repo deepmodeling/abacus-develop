@@ -146,6 +146,6 @@ extern std::vector<std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>> split_m2D_kto
                         std::map<Tkey0, std::map<Tkey1, Tvalue>>& data_recv);
 } // namespace RI_2D_Comm
 
-#include "RI_2D_Comm.hpp"
+#include "ri_2d_comm.hpp"
 
 #endif

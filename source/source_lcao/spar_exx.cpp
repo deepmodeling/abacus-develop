@@ -15,8 +15,8 @@
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_ri/RI_2D_Comm.h"
-#include "source_lcao/module_ri/RI_Util.hpp"
+#include "source_lcao/module_ri/ri_2d_comm.h"
+#include "source_lcao/module_ri/ri_util.hpp"
 
 // --------------------------------------------------------
 // Implementation of the cal_HR_exx function

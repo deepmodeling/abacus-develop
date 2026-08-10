@@ -11,8 +11,8 @@
 #include <RI/global/Global_Func-1.h>
 
 // #include <chrono>
-#include "RI_2D_Comm.h"
-#include "RI_Util.h"
+#include "ri_2d_comm.h"
+#include "ri_util.h"
 #include "conv_coulomb_pot_k.h"
 #include "exx_abfs_ctor_orbs.h"
 #include "gaussian_abfs.h"

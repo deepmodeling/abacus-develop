@@ -6,10 +6,10 @@
 #include "exx_abfs-jle.h"
 #include "source_basis/module_ao/elem_basis_idx_orb.h"
 #include "source_basis/module_ao/orb_read.h"
-#include "source_lcao/module_ri/Matrix_Orbs11.h"
-#include "source_lcao/module_ri/Matrix_Orbs21.h"
-#include "source_lcao/module_ri/Matrix_Orbs22.h"
-#include "source_lcao/module_ri/LRI_CV_Tools.h"
+#include "source_lcao/module_ri/matrix_orbs11.h"
+#include "source_lcao/module_ri/matrix_orbs21.h"
+#include "source_lcao/module_ri/matrix_orbs22.h"
+#include "source_lcao/module_ri/lri_cv_tools.h"
 #include <RI/global/Tensor_Multiply.h>
 
 void Exx_Opt_Orb::generate_matrix(

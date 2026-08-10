@@ -4,7 +4,7 @@ abacus_disable_feature_definitions(__ROCM)
 AddTest(
   TARGET MODULE_RI_dm_mixing_test
   LIBS parameter base device
-  SOURCES dm_mixing_test.cpp ../Mix_DMk_2D.cpp
+  SOURCES dm_mixing_test.cpp ../mix_dmk_2d.cpp
 )
 AddTest(
   TARGET MODULE_RI_ri_cv_io_test

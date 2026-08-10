@@ -5,8 +5,8 @@
 
 #ifndef RI_2D_COMM_HPP
 #define RI_2D_COMM_HPP
-#include "RI_2D_Comm.h"
-#include "RI_Util.h"
+#include "ri_2d_comm.h"
+#include "ri_util.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 #include "source_lcao/lcao_domain.h"

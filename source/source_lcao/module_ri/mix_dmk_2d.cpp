@@ -3,7 +3,7 @@
 // DATE :   2023-05-09
 //=======================
 
-#include "Mix_DMk_2D.h"
+#include "mix_dmk_2d.h"
 #include "source_base/module_mixing/plain_mixing.h"
 #include "source_base/tool_title.h"
 

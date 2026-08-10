@@ -271,6 +271,6 @@ struct plus
 };
 } // namespace LRI_CV_Tools
 
-#include "LRI_CV_Tools.hpp"
+#include "lri_cv_tools.hpp"
 #include "write_ri_cv.hpp"
 #endif

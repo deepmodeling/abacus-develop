@@ -6,7 +6,7 @@
 
 #include "ExxLriDetail.h"
 
-#include "RI_Util.h"
+#include "ri_util.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 #include "source_base/global_function.h"
