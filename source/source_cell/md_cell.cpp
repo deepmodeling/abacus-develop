@@ -74,21 +74,11 @@ void MDCell::initialize_from_ucell_serial_(UnitCell& ucell, double cutoff, doubl
     type_masses_.clear();
     type_labels_.reserve(static_cast<std::size_t>(ucell.ntype));
     type_masses_.reserve(static_cast<std::size_t>(ucell.ntype));
-    stru_metadata_.species.resize(static_cast<std::size_t>(ucell.ntype));
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        MdStruSpecies& species = stru_metadata_.species[static_cast<std::size_t>(it)];
-        species.label = ucell.atoms[it].label;
-        species.mass = ucell.atoms[it].mass;
-        type_labels_.push_back(species.label);
-        type_masses_.push_back(species.mass);
-        if (static_cast<std::size_t>(it) < ucell.pseudo_fn.size()) species.pseudo_file = ucell.pseudo_fn[it];
-        if (static_cast<std::size_t>(it) < ucell.pseudo_type.size()) species.pseudo_type = ucell.pseudo_type[it];
-        if (static_cast<std::size_t>(it) < ucell.orbital_fn.size()) species.orbital_file = ucell.orbital_fn[it];
-        if (static_cast<std::size_t>(it) < ucell.magnet.start_mag.size()) species.start_mag = ucell.magnet.start_mag[it];
-        species.atom_count = ucell.atoms[it].na;
+        type_labels_.push_back(ucell.atoms[it].label);
+        type_masses_.push_back(ucell.atoms[it].mass);
     }
-    stru_metadata_.descriptor_file = ucell.descriptor_file;
     init_vel_ = ucell.init_vel;
     cutoff_ = cutoff;
     skin_ = skin;
@@ -127,21 +117,11 @@ void MDCell::initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutof
     type_masses_.clear();
     type_labels_.reserve(static_cast<std::size_t>(ucell.ntype));
     type_masses_.reserve(static_cast<std::size_t>(ucell.ntype));
-    stru_metadata_.species.resize(static_cast<std::size_t>(ucell.ntype));
     for (int it = 0; it < ucell.ntype; ++it)
     {
-        MdStruSpecies& species = stru_metadata_.species[static_cast<std::size_t>(it)];
-        species.label = ucell.atoms[it].label;
-        species.mass = ucell.atoms[it].mass;
-        type_labels_.push_back(species.label);
-        type_masses_.push_back(species.mass);
-        if (static_cast<std::size_t>(it) < ucell.pseudo_fn.size()) species.pseudo_file = ucell.pseudo_fn[it];
-        if (static_cast<std::size_t>(it) < ucell.pseudo_type.size()) species.pseudo_type = ucell.pseudo_type[it];
-        if (static_cast<std::size_t>(it) < ucell.orbital_fn.size()) species.orbital_file = ucell.orbital_fn[it];
-        if (static_cast<std::size_t>(it) < ucell.magnet.start_mag.size()) species.start_mag = ucell.magnet.start_mag[it];
-        species.atom_count = ucell.atoms[it].na;
+        type_labels_.push_back(ucell.atoms[it].label);
+        type_masses_.push_back(ucell.atoms[it].mass);
     }
-    stru_metadata_.descriptor_file = ucell.descriptor_file;
     init_vel_ = ucell.init_vel;
     comm_ = comm;
     cutoff_ = cutoff;
@@ -219,35 +199,6 @@ MDCell::MDCell(const ModuleBase::Matrix3& latvec,
 }
 
 #ifdef __MPI
-MDCell::MDCell(const ModuleBase::Matrix3& latvec,
-               const ModuleBase::Matrix3& gt,
-               double lat0,
-               double omega,
-               int nat,
-               const std::vector<LocalAtom>& owned_atoms,
-               const std::vector<std::string>& type_labels,
-               const std::vector<double>& type_masses,
-               MPI_Comm comm,
-               double cutoff,
-               double skin)
-{
-    latvec_ = latvec;
-    gt_ = gt;
-    lat0_ = lat0;
-    omega_ = omega;
-    nat_ = nat;
-    owned_atoms_ = owned_atoms;
-    type_labels_ = type_labels;
-    type_masses_ = type_masses;
-    init_vel_ = true;
-    initialize_from_owned_atoms_(comm, cutoff, skin);
-}
-
-MDCell::MDCell(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin)
-{
-    initialize_from_ucell_(ucell, comm, cutoff, skin);
-}
-
 int MDCell::mpi_rank() const
 {
     return rank_;
@@ -420,16 +371,6 @@ const std::vector<std::string>& MDCell::type_labels() const
 const std::vector<double>& MDCell::type_masses() const
 {
     return type_masses_;
-}
-
-const MdStruMetadata& MDCell::stru_metadata() const
-{
-    return stru_metadata_;
-}
-
-void MDCell::set_stru_metadata(const MdStruMetadata& metadata)
-{
-    stru_metadata_ = metadata;
 }
 
 std::vector<LocalAtom>& MDCell::mutable_owned_atoms()

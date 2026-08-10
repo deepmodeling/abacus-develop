@@ -27,7 +27,6 @@ struct StruMetadata
     ModuleBase::Matrix3 gt;
     std::vector<std::string> labels;
     std::vector<double> masses;
-    MdStruMetadata stru_metadata;
 };
 
 std::string trim_copy(const std::string& value)
@@ -126,15 +125,15 @@ StruMetadata parse_stru_metadata(std::ifstream& ifs)
         }
         if (line == "NUMERICAL_ORBITAL")
         {
-            for (std::size_t it = 0; it < metadata.stru_metadata.species.size(); ++it)
+            for (std::size_t it = 0; it < metadata.labels.size(); ++it)
             {
-                metadata.stru_metadata.species[it].orbital_file = next_data_line(ifs, "NUMERICAL_ORBITAL body");
+                next_data_line(ifs, "NUMERICAL_ORBITAL body");
             }
             continue;
         }
         if (line == "NUMERICAL_DESCRIPTOR")
         {
-            metadata.stru_metadata.descriptor_file = next_data_line(ifs, "NUMERICAL_DESCRIPTOR body");
+            next_data_line(ifs, "NUMERICAL_DESCRIPTOR body");
             continue;
         }
 
@@ -149,11 +148,6 @@ StruMetadata parse_stru_metadata(std::ifstream& ifs)
 
         metadata.labels.push_back(label);
         metadata.masses.push_back(parse_double(mass_token, "atomic mass"));
-        MdStruSpecies species;
-        species.label = label;
-        species.mass = metadata.masses.back();
-        iss >> species.pseudo_file >> species.pseudo_type;
-        metadata.stru_metadata.species.push_back(species);
     }
 
     expect_keyword(ifs, "LATTICE_CONSTANT");
@@ -228,10 +222,8 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
         {
             throw std::runtime_error("ATOMIC_POSITIONS label order does not match ATOMIC_SPECIES.");
         }
-        std::istringstream magnetism(next_data_line(ifs, "magnetism"));
-        magnetism >> metadata.stru_metadata.species[it].start_mag;
+        next_data_line(ifs, "magnetism");
         const int nat_type = parse_int(next_data_line(ifs, "atom count"), "atom count");
-        metadata.stru_metadata.species[it].atom_count = nat_type;
 
         for (int ia = 0; ia < nat_type; ++ia)
         {
@@ -317,8 +309,7 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                 }
             }
         }
-        metadata.stru_metadata.species[it].atom_count = nat_type * replicate[0] * replicate[1] * replicate[2];
-        nat += metadata.stru_metadata.species[it].atom_count;
+        nat += nat_type * replicate[0] * replicate[1] * replicate[2];
     }
     return owned_atoms;
 }
@@ -365,6 +356,5 @@ MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
                   metadata.masses,
                   cutoff,
                   skin);
-    mdcell.set_stru_metadata(metadata.stru_metadata);
     return mdcell;
 }

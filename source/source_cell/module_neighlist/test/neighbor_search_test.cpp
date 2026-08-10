@@ -3,7 +3,9 @@
 #include "source_cell/md_cell.h"
 #include "../neighbor_search.h"
 
+#ifdef __MPI
 #include <mpi.h>
+#endif
 
 #include <cmath>
 #include <cstddef>
@@ -14,6 +16,7 @@ namespace
 {
 void ensure_mpi_initialized()
 {
+#ifdef __MPI
     int initialized = 0;
     MPI_Initialized(&initialized);
     if (!initialized)
@@ -21,14 +24,7 @@ void ensure_mpi_initialized()
         int provided = 0;
         MPI_Init_thread(NULL, NULL, MPI_THREAD_SINGLE, &provided);
     }
-}
-
-double cell_volume(const ModuleBase::Matrix3& latvec)
-{
-    const double cx = latvec.e22 * latvec.e33 - latvec.e23 * latvec.e32;
-    const double cy = latvec.e23 * latvec.e31 - latvec.e21 * latvec.e33;
-    const double cz = latvec.e21 * latvec.e32 - latvec.e22 * latvec.e31;
-    return std::abs(latvec.e11 * cx + latvec.e12 * cy + latvec.e13 * cz);
+#endif
 }
 
 ModuleBase::Matrix3 identity_lattice()
@@ -46,40 +42,36 @@ ModuleBase::Matrix3 identity_lattice()
     return latvec;
 }
 
+double cell_volume(const ModuleBase::Matrix3& latvec)
+{
+    const double cx = latvec.e22 * latvec.e33 - latvec.e23 * latvec.e32;
+    const double cy = latvec.e23 * latvec.e31 - latvec.e21 * latvec.e33;
+    const double cz = latvec.e21 * latvec.e32 - latvec.e22 * latvec.e31;
+    return std::abs(latvec.e11 * cx + latvec.e12 * cy + latvec.e13 * cz);
+}
+
 MDCell make_mdcell(const ModuleBase::Matrix3& latvec,
                    const std::vector<ModuleBase::Vector3<double> >& positions,
                    double cutoff)
 {
     int rank = 0;
-    MPI_Comm_rank(MPI_COMM_SELF, &rank);
-
+#ifdef __MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
     const ModuleBase::Matrix3 gt = latvec.Inverse();
     std::vector<LocalAtom> owned_atoms;
     owned_atoms.reserve(positions.size());
     for (std::size_t iat = 0; iat < positions.size(); ++iat)
     {
-        owned_atoms.push_back(LocalAtom(positions[iat],
-                                        positions[iat] * gt,
+        owned_atoms.push_back(LocalAtom(positions[iat], positions[iat] * gt,
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
                                         ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
-                                        ModuleBase::Vector3<int>(1, 1, 1),
-                                        1.0,
-                                        0,
-                                        static_cast<int>(iat),
-                                        rank,
-                                        false));
+                                        ModuleBase::Vector3<int>(1, 1, 1), 1.0, 0,
+                                        static_cast<int>(iat), rank, false));
     }
-    return MDCell(latvec,
-                  gt,
-                  1.0,
-                  cell_volume(latvec),
-                  static_cast<int>(positions.size()),
-                  owned_atoms,
-                  std::vector<std::string>(1, "X"),
-                  std::vector<double>(1, 1.0),
-                  MPI_COMM_SELF,
-                  cutoff,
-                  0.0);
+    return MDCell(latvec, gt, 1.0, cell_volume(latvec), static_cast<int>(positions.size()),
+                  owned_atoms, std::vector<std::string>(1, "X"),
+                  std::vector<double>(1, 1.0), cutoff, 0.0);
 }
 
 std::size_t count_pairs(const NeighborList& list)
@@ -140,7 +132,6 @@ TEST(NeighborSearchTest, MdCellInitBuildsOwnedAndGhostAtoms)
     NeighborSearch ns;
     ns.init(mdcell, 1.0);
 
-    EXPECT_EQ(mdcell.mpi_size(), 1);
     EXPECT_EQ(ns.get_inside_atoms().size(), 2U);
     EXPECT_GT(ns.get_ghost_atoms().size(), 0U);
     EXPECT_GT(ns.get_all_atoms().size(), ns.get_inside_atoms().size());

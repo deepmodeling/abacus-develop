@@ -62,7 +62,6 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
                   owned_atoms,
                   std::vector<std::string>(1, "X"),
                   std::vector<double>(1, 1.0),
-                  MPI_COMM_WORLD,
                   0.1,
                   0.0);
 

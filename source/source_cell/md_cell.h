@@ -12,24 +12,6 @@
 #include <vector>
 
 class UnitCell;
-
-struct MdStruSpecies
-{
-    std::string label;
-    double mass = 0.0;
-    std::string pseudo_file;
-    std::string pseudo_type;
-    std::string orbital_file;
-    double start_mag = 0.0;
-    int atom_count = 0;
-};
-
-struct MdStruMetadata
-{
-    std::vector<MdStruSpecies> species;
-    std::string descriptor_file;
-};
-
 class MDCell : public BaseCell
 {
 public:
@@ -51,20 +33,6 @@ public:
            double skin);
 
 #ifdef __MPI
-    MDCell(const ModuleBase::Matrix3& latvec,
-           const ModuleBase::Matrix3& gt,
-           double lat0,
-           double omega,
-           int nat,
-           const std::vector<LocalAtom>& owned_atoms,
-           const std::vector<std::string>& type_labels,
-           const std::vector<double>& type_masses,
-           MPI_Comm comm,
-           double cutoff,
-           double skin);
-
-    MDCell(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin);
-
     int mpi_rank() const;
     int mpi_size() const;
     MPI_Comm communicator() const;
@@ -82,8 +50,6 @@ public:
     const std::vector<LocalAtom>& ghost_atoms() const;
     const std::vector<std::string>& type_labels() const;
     const std::vector<double>& type_masses() const;
-    const MdStruMetadata& stru_metadata() const;
-    void set_stru_metadata(const MdStruMetadata& metadata);
     std::vector<LocalAtom>& mutable_owned_atoms();
     std::vector<LocalAtom>& mutable_ghost_atoms();
 
@@ -129,7 +95,6 @@ private:
     std::vector<LocalAtom> ghost_atoms_;
     std::vector<std::string> type_labels_;
     std::vector<double> type_masses_;
-    MdStruMetadata stru_metadata_;
     bool init_vel_ = false;
     double cutoff_ = 0.0;
     double skin_ = 0.0;
