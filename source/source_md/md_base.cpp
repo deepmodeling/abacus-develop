@@ -10,7 +10,11 @@
 MD_base::MD_base(const Parameter& param_in, MDCell& mdcell_in)
 : mdp(param_in.mdp), mdcell(mdcell_in)
 {
+#ifdef __MPI
+    my_rank = mdcell.mpi_rank();
+#else
     my_rank = param_in.globalv.myrank;
+#endif
     cal_stress = param_in.inp.cal_stress;
     if (mdp.md_seed >= 0)
     {
@@ -224,7 +228,7 @@ void MD_base::write_restart(const std::string& global_out_dir)
         file.close();
     }
 #ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(mdcell.communicator());
 #endif
 
     return;
@@ -233,7 +237,7 @@ void MD_base::write_restart(const std::string& global_out_dir)
 
 void MD_base::restart(const std::string& global_readin_dir)
 {
-    MD_func::current_md_info(my_rank, global_readin_dir, step_rst_, md_tfirst);
+    MD_func::current_md_info(mdcell, global_readin_dir, step_rst_, md_tfirst);
 
     return;
 }

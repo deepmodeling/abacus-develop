@@ -9,7 +9,6 @@
 #include "source_io/module_output/output_log.h"
 #ifdef __MPI
 #include <mpi.h>
-#include "source_base/parallel_reduce.h"
 #endif
 
 #include <algorithm>
@@ -172,8 +171,13 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     }
 
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(&local_potential, 1);
-    Parallel_Reduce::reduce_all(local_virial.data(), static_cast<int>(local_virial.size()));
+    MPI_Allreduce(MPI_IN_PLACE, &local_potential, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
+    MPI_Allreduce(MPI_IN_PLACE,
+                  local_virial.data(),
+                  static_cast<int>(local_virial.size()),
+                  MPI_DOUBLE,
+                  MPI_SUM,
+                  mdcell.communicator());
 #endif
 
     lj_potential = local_potential / 2.0;

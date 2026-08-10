@@ -3,7 +3,6 @@
 #include "md_func.h"
 #ifdef __MPI
 #include "mpi.h"
-#include "source_base/parallel_reduce.h"
 #endif
 #include "source_base/timer.h"
 
@@ -17,7 +16,7 @@ ModuleBase::matrix global_temp_tensor(const MDCell& mdcell)
             for (int j = 0; j < 3; ++j)
                 t_vector(i, j) += atom.mass * atom.vel[i] * atom.vel[j];
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(t_vector.c, t_vector.nr * t_vector.nc);
+    MPI_Allreduce(MPI_IN_PLACE, t_vector.c, t_vector.nr * t_vector.nc, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
     return t_vector;
 }
@@ -381,7 +380,7 @@ void Nose_Hoover::write_restart(const std::string& global_out_dir)
         file.close();
     }
 #ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(mdcell.communicator());
 #endif
 }
 
@@ -456,9 +455,9 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&ok2, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&ok3, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, mdcell.communicator());
+    MPI_Bcast(&ok2, 1, MPI_C_BOOL, 0, mdcell.communicator());
+    MPI_Bcast(&ok3, 1, MPI_C_BOOL, 0, mdcell.communicator());
 #endif
 
     if (!ok)
@@ -475,15 +474,15 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
     }
 
 #ifdef __MPI
-    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&md_tfirst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(eta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(v_eta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, mdcell.communicator());
+    MPI_Bcast(&md_tfirst, 1, MPI_DOUBLE, 0, mdcell.communicator());
+    MPI_Bcast(eta, mdp.md_tchain, MPI_DOUBLE, 0, mdcell.communicator());
+    MPI_Bcast(v_eta, mdp.md_tchain, MPI_DOUBLE, 0, mdcell.communicator());
     if (npt_flag)
     {
-        MPI_Bcast(v_omega, 6, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Bcast(peta, mdp.md_pchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Bcast(v_peta, mdp.md_pchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(v_omega, 6, MPI_DOUBLE, 0, mdcell.communicator());
+        MPI_Bcast(peta, mdp.md_pchain, MPI_DOUBLE, 0, mdcell.communicator());
+        MPI_Bcast(v_peta, mdp.md_pchain, MPI_DOUBLE, 0, mdcell.communicator());
     }
 #endif
 }

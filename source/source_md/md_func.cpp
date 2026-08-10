@@ -1,9 +1,6 @@
 #include "md_func.h"
 
 #include "source_base/global_variable.h"
-#ifdef __MPI
-#include "source_base/parallel_reduce.h"
-#endif
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -143,7 +140,7 @@ void compute_stress(const MDCell& mdcell,
             t_vector(a, b) += atom.mass * atom.vel[a] * atom.vel[b];
     }
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(t_vector.c, 9);
+    MPI_Allreduce(MPI_IN_PLACE, t_vector.c, 9, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
     for (int i = 0; i < 3; ++i) for (int j = 0; j < 3; ++j)
         stress(i, j) = virial(i, j) + t_vector(i, j) / mdcell.omega();
@@ -331,7 +328,7 @@ void init_vel(MDCell& mdcell,
 #ifdef __MPI
     if (mdcell.mpi_size() > 1)
     {
-        Parallel_Reduce::reduce_all(&frozen.x, 3);
+        MPI_Allreduce(MPI_IN_PLACE, &frozen.x, 3, MPI_INT, MPI_SUM, mdcell.communicator());
     }
 #endif
     frozen_freedom = frozen.x + frozen.y + frozen.z;
@@ -363,8 +360,8 @@ void init_vel(MDCell& mdcell,
         }
     }
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(&local_mass, 1);
-    Parallel_Reduce::reduce_all(&momentum.x, 3);
+    MPI_Allreduce(MPI_IN_PLACE, &local_mass, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
+    MPI_Allreduce(MPI_IN_PLACE, &momentum.x, 3, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
     for (int k = 0; k < 3; ++k)
     {
@@ -612,12 +609,18 @@ void dump_info(const int& step,
     if (param_in.mdp.dump_force) header << "    FORCE (eV/Angstrom)";
     if (param_in.mdp.dump_vel) header << "    VELOCITY (Angstrom/fs)";
     header << "\n";
+    std::vector<int> type_offsets(mdcell.type_atom_counts().size() + 1, 0);
+    for (std::size_t it = 0; it < mdcell.type_atom_counts().size(); ++it)
+    {
+        type_offsets[it + 1] = type_offsets[it] + mdcell.type_atom_counts()[it];
+    }
     std::ostringstream local;
     local << std::fixed << std::setprecision(12);
     for (int i = 0; i < mdcell.nlocal(); ++i)
     {
         const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(i)];
-        local << "  " << atom.type_index << "  " << mdcell.type_labels()[static_cast<std::size_t>(atom.type)]
+        local << "  " << type_offsets[static_cast<std::size_t>(atom.type)] + atom.type_index
+              << "  " << mdcell.type_labels()[static_cast<std::size_t>(atom.type)]
               << "  " << atom.cart.x * unit_pos << "  " << atom.cart.y * unit_pos << "  " << atom.cart.z * unit_pos;
         if (param_in.mdp.dump_force)
             local << "  " << atom.force.x * unit_force << "  " << atom.force.y * unit_force << "  " << atom.force.z * unit_force;
@@ -715,7 +718,7 @@ double current_temp(double& kinetic,
         kinetic += 0.5 * atom.mass * atom.vel.norm2();
     }
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(&kinetic, 1);
+    MPI_Allreduce(MPI_IN_PLACE, &kinetic, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
     if (3 * mdcell.nat() == frozen_freedom) return 0.0;
     return 2.0 * kinetic / (3 * mdcell.nat() - frozen_freedom);
@@ -735,8 +738,8 @@ int global_dof(const MDCell& mdcell, const int& frozen_freedom)
     }
     int global_frozen[3] = {local_frozen[0], local_frozen[1], local_frozen[2]};
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(&natom, 1);
-    Parallel_Reduce::reduce_all(global_frozen, 3);
+    MPI_Allreduce(MPI_IN_PLACE, &natom, 1, MPI_INT, MPI_SUM, mdcell.communicator());
+    MPI_Allreduce(MPI_IN_PLACE, global_frozen, 3, MPI_INT, MPI_SUM, mdcell.communicator());
 #endif
     int total_frozen = global_frozen[0] + global_frozen[1] + global_frozen[2];
     if (global_frozen[0] == 0) ++total_frozen;
@@ -832,6 +835,44 @@ void current_md_info(const int& my_rank, const std::string& file_dir, int& md_st
 #endif
 
     return;
+}
+
+void current_md_info(const MDCell& mdcell, const std::string& file_dir, int& md_step, double& temperature)
+{
+    bool ok = true;
+
+#ifdef __MPI
+    const int rank = mdcell.mpi_rank();
+#else
+    const int rank = 0;
+#endif
+    if (rank == 0)
+    {
+        std::stringstream ssc;
+        ssc << file_dir << "Restart_md.txt";
+        std::ifstream file(ssc.str().c_str());
+        if (!file)
+        {
+            ok = false;
+        }
+        if (ok)
+        {
+            file >> md_step >> temperature;
+            if (!file) ok = false;
+        }
+    }
+
+#ifdef __MPI
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, mdcell.communicator());
+#endif
+    if (!ok)
+    {
+        ModuleBase::WARNING_QUIT("current_md_info", "no Restart_md.txt!");
+    }
+#ifdef __MPI
+    MPI_Bcast(&md_step, 1, MPI_INT, 0, mdcell.communicator());
+    MPI_Bcast(&temperature, 1, MPI_DOUBLE, 0, mdcell.communicator());
+#endif
 }
 
 } // namespace MD_func

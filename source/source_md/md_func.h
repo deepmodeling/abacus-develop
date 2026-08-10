@@ -254,6 +254,7 @@ void temp_vector(const int& natom,
  * @param temperature current temperature
  */
 void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature);
+void current_md_info(const MDCell& mdcell, const std::string& file_dir, int& md_step, double& temperature);
 
 } // namespace MD_func
 

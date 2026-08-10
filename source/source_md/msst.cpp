@@ -3,7 +3,6 @@
 #include "md_func.h"
 #ifdef __MPI
 #include "mpi.h"
-#include "source_base/parallel_reduce.h"
 #endif
 #include "source_base/timer.h"
 
@@ -26,7 +25,7 @@ MSST::MSST(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdc
 
     for (const LocalAtom& atom : mdcell.owned_atoms()) totmass += atom.mass;
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(&totmass, 1);
+    MPI_Allreduce(MPI_IN_PLACE, &totmass, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
 }
 
@@ -180,7 +179,7 @@ void MSST::write_restart(const std::string& global_out_dir)
         file.close();
     }
 #ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(mdcell.communicator());
 #endif
 
     return;
@@ -205,12 +204,16 @@ void MSST::restart(const std::string& global_readin_dir)
         if (ok)
         {
             file >> step_rst_ >> md_tfirst >> omega[mdp.msst_direction] >> e0 >> v0 >> p0 >> lag_pos;
+            if(!file)
+            {
+                ok = false;
+            }
             file.close();
         }
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, mdcell.communicator());
 #endif
 
     if (!ok)
@@ -219,13 +222,13 @@ void MSST::restart(const std::string& global_readin_dir)
     }
 
 #ifdef __MPI
-    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&md_tfirst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&omega[mdp.msst_direction], 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&e0, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&v0, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&p0, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&lag_pos, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, mdcell.communicator());
+    MPI_Bcast(&md_tfirst, 1, MPI_DOUBLE, 0, mdcell.communicator());
+    MPI_Bcast(&omega[mdp.msst_direction], 1, MPI_DOUBLE, 0, mdcell.communicator());
+    MPI_Bcast(&e0, 1, MPI_DOUBLE, 0, mdcell.communicator());
+    MPI_Bcast(&v0, 1, MPI_DOUBLE, 0, mdcell.communicator());
+    MPI_Bcast(&p0, 1, MPI_DOUBLE, 0, mdcell.communicator());
+    MPI_Bcast(&lag_pos, 1, MPI_DOUBLE, 0, mdcell.communicator());
 #endif
 
     return;
@@ -237,7 +240,7 @@ double MSST::vel_sum() const
 
     for (const LocalAtom& atom : mdcell.owned_atoms()) vsum += atom.vel.norm2();
 #ifdef __MPI
-    Parallel_Reduce::reduce_all(&vsum, 1);
+    MPI_Allreduce(MPI_IN_PLACE, &vsum, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
     return vsum;
 }
