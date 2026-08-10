@@ -19,6 +19,28 @@ using Complex = std::complex<double>;
 using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
 using Vector = Hamiltonian::Vector;
 
+void ExpectOrderEightDenseMatrixIsHermitian(const bool periodic)
+{
+    Hamiltonian::Grid grid{6, 5, 4, 0.4, 0.5, 0.6, periodic};
+    std::vector<double> potential(grid.size());
+    for (int ir = 0; ir != grid.size(); ++ir)
+    {
+        potential[static_cast<std::size_t>(ir)] = 0.07 * (ir % 11) - 0.13 * (ir % 5);
+    }
+    Hamiltonian hamiltonian(grid, potential, 1.0, nullptr, 8);
+
+    const auto matrix = hamiltonian.dense_matrix();
+    for (std::size_t row = 0; row != matrix.size(); ++row)
+    {
+        for (std::size_t col = 0; col != matrix.size(); ++col)
+        {
+            const Complex difference = matrix[row][col] - std::conj(matrix[col][row]);
+            EXPECT_NEAR(difference.real(), 0.0, 1.0e-12);
+            EXPECT_NEAR(difference.imag(), 0.0, 1.0e-12);
+        }
+    }
+}
+
 } // namespace
 
 TEST(SternheimerFDHamiltonian, ConstantFunctionHasOnlyLocalPotential)
@@ -88,7 +110,7 @@ TEST(SternheimerFDHamiltonian, ApplyUsesRequestedOpenMPThreadsAndMatchesSerial)
         potential[static_cast<std::size_t>(ir)] = 0.01 * (ir % 17);
         psi[static_cast<std::size_t>(ir)] = Complex(0.03 * (ir % 11), -0.02 * (ir % 7));
     }
-    Hamiltonian hamiltonian(grid, potential);
+    Hamiltonian hamiltonian(grid, potential, 1.0, nullptr, 8);
 
     const int previous_threads = omp_get_max_threads();
     omp_set_dynamic(0);
@@ -311,6 +333,16 @@ TEST(SternheimerFDHamiltonian, DenseMatrixIsHermitianForLocalRealPotential)
     }
 }
 
+TEST(SternheimerFDHamiltonian, DenseMatrixIsHermitianForOrderEightLocalRealPotentialPeriodic)
+{
+    ExpectOrderEightDenseMatrixIsHermitian(true);
+}
+
+TEST(SternheimerFDHamiltonian, DenseMatrixIsHermitianForOrderEightLocalRealPotentialNonperiodic)
+{
+    ExpectOrderEightDenseMatrixIsHermitian(false);
+}
+
 TEST(SternheimerFDHamiltonian, DenseDiagonalizationReturnsFreeParticleEigenpairs)
 {
     constexpr int nx = 4;
@@ -387,10 +419,10 @@ TEST(SternheimerFDHamiltonian, FourthOrderPeriodicLaplacianReducesPlaneWaveError
     Complex fourth_rayleigh(0.0, 0.0);
     for (int ix = 0; ix != nx; ++ix)
     {
-        second_rayleigh += std::conj(plane_wave[static_cast<std::size_t>(ix)])
-                           * second_action[static_cast<std::size_t>(ix)];
-        fourth_rayleigh += std::conj(plane_wave[static_cast<std::size_t>(ix)])
-                           * fourth_action[static_cast<std::size_t>(ix)];
+        second_rayleigh
+            += std::conj(plane_wave[static_cast<std::size_t>(ix)]) * second_action[static_cast<std::size_t>(ix)];
+        fourth_rayleigh
+            += std::conj(plane_wave[static_cast<std::size_t>(ix)]) * fourth_action[static_cast<std::size_t>(ix)];
     }
     second_rayleigh /= static_cast<double>(nx);
     fourth_rayleigh /= static_cast<double>(nx);
@@ -429,10 +461,10 @@ TEST(SternheimerFDHamiltonian, SixthOrderPeriodicLaplacianFurtherReducesPlaneWav
     Complex sixth_rayleigh(0.0, 0.0);
     for (int ix = 0; ix != nx; ++ix)
     {
-        fourth_rayleigh += std::conj(plane_wave[static_cast<std::size_t>(ix)])
-                           * fourth_action[static_cast<std::size_t>(ix)];
-        sixth_rayleigh += std::conj(plane_wave[static_cast<std::size_t>(ix)])
-                          * sixth_action[static_cast<std::size_t>(ix)];
+        fourth_rayleigh
+            += std::conj(plane_wave[static_cast<std::size_t>(ix)]) * fourth_action[static_cast<std::size_t>(ix)];
+        sixth_rayleigh
+            += std::conj(plane_wave[static_cast<std::size_t>(ix)]) * sixth_action[static_cast<std::size_t>(ix)];
     }
     fourth_rayleigh /= static_cast<double>(nx);
     sixth_rayleigh /= static_cast<double>(nx);
@@ -443,9 +475,48 @@ TEST(SternheimerFDHamiltonian, SixthOrderPeriodicLaplacianFurtherReducesPlaneWav
     EXPECT_NEAR(sixth_rayleigh.imag(), 0.0, 1.0e-12);
 }
 
+TEST(SternheimerFDHamiltonian, EighthOrderPeriodicLaplacianFurtherReducesPlaneWaveError)
+{
+    constexpr int nx = 32;
+    constexpr int mode = 3;
+    const double length = 2.0 * std::acos(-1.0);
+    const double spacing = length / nx;
+    Hamiltonian::Grid grid{nx, 1, 1, spacing, 1.0, 1.0, true};
+    const std::vector<double> potential(grid.size(), 0.0);
+    Hamiltonian sixth_order(grid, potential, 1.0, nullptr, 6);
+    Hamiltonian eighth_order(grid, potential, 1.0, nullptr, 8);
+
+    Hamiltonian::Vector plane_wave(grid.size());
+    for (int ix = 0; ix != nx; ++ix)
+    {
+        const double phase = static_cast<double>(mode) * spacing * ix;
+        plane_wave[static_cast<std::size_t>(ix)] = Complex(std::cos(phase), std::sin(phase));
+    }
+    Hamiltonian::Vector sixth_action;
+    Hamiltonian::Vector eighth_action;
+    sixth_order.apply(plane_wave, sixth_action);
+    eighth_order.apply(plane_wave, eighth_action);
+
+    Complex sixth_rayleigh(0.0, 0.0);
+    Complex eighth_rayleigh(0.0, 0.0);
+    for (int ix = 0; ix != nx; ++ix)
+    {
+        sixth_rayleigh
+            += std::conj(plane_wave[static_cast<std::size_t>(ix)]) * sixth_action[static_cast<std::size_t>(ix)];
+        eighth_rayleigh
+            += std::conj(plane_wave[static_cast<std::size_t>(ix)]) * eighth_action[static_cast<std::size_t>(ix)];
+    }
+    sixth_rayleigh /= static_cast<double>(nx);
+    eighth_rayleigh /= static_cast<double>(nx);
+    const double exact = static_cast<double>(mode * mode);
+
+    EXPECT_EQ(eighth_order.finite_difference_order(), 8);
+    EXPECT_LT(std::abs(eighth_rayleigh.real() - exact), 0.1 * std::abs(sixth_rayleigh.real() - exact));
+    EXPECT_NEAR(eighth_rayleigh.imag(), 0.0, 1.0e-12);
+}
+
 TEST(SternheimerFDHamiltonian, RejectsUnsupportedFiniteDifferenceOrder)
 {
     Hamiltonian::Grid grid{4, 1, 1, 1.0, 1.0, 1.0, true};
-    EXPECT_THROW(Hamiltonian(grid, std::vector<double>(grid.size(), 0.0), 1.0, nullptr, 8),
-                 std::invalid_argument);
+    EXPECT_THROW(Hamiltonian(grid, std::vector<double>(grid.size(), 0.0), 1.0, nullptr, 10), std::invalid_argument);
 }
