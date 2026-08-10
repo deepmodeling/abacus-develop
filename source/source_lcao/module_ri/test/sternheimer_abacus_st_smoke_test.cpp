@@ -282,6 +282,11 @@ TEST(SternheimerABACUSSTSmoke, DoesNotReconstructAnAlreadyFullKGrid)
     EXPECT_FALSE(ModuleRI::sternheimer_full_k_reconstruction_required(4, 4, 1, 1));
 }
 
+TEST(SternheimerABACUSSTSmoke, DoesNotReconstructFullGammaForTwoSpinChannels)
+{
+    EXPECT_FALSE(ModuleRI::sternheimer_full_k_reconstruction_required(2, 1, 2, 1));
+}
+
 TEST(SternheimerABACUSSTSmoke, ReconstructsASymmetryReducedSingleSpinKGrid)
 {
     EXPECT_TRUE(ModuleRI::sternheimer_full_k_reconstruction_required(2, 8, 1, 1));

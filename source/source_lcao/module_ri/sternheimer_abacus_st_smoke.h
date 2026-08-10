@@ -70,7 +70,9 @@ inline bool sternheimer_full_k_reconstruction_required(const int stored_kpoint_c
     {
         throw std::invalid_argument("Invalid Sternheimer k-point reconstruction dimensions.");
     }
-    if (symmetry_flag != 1 || stored_kpoint_count == full_kpoint_count)
+    const long long full_record_count
+        = static_cast<long long>(full_kpoint_count) * spin_channel_count;
+    if (symmetry_flag != 1 || stored_kpoint_count == full_record_count)
     {
         return false;
     }
