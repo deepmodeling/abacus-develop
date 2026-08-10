@@ -27,7 +27,7 @@ list(APPEND depend_files
   ../../../source_base/global_file.cpp
   ../../../source_base/libm/branred.cpp
   ../../../source_base/libm/sincos.cpp
-  ../../../source_base/spherical_bessel_transformer.cpp
+  ../../../source_base/sph_bessel_tf.cpp
   ../../../source_base/cubic_spline.cpp
   ../../../source_base/parallel_2d.cpp
   ../ORB_read.cpp

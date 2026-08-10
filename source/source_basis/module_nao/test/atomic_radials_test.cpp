@@ -1,7 +1,7 @@
 #include "source_basis/module_nao/atomic_radials.h"
 
 #include "gtest/gtest.h"
-#include "source_base/spherical_bessel_transformer.h"
+#include "source_base/sph_bessel_tf.h"
 
 #ifdef __MPI
 #include <mpi.h>

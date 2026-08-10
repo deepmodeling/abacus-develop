@@ -1,4 +1,4 @@
-#include "gint_vl_metagga_nspin4_gpu.h"
+#include "gint_vl_mgga_n4_gpu.h"
 #include "gint_common.h"
 #include "gint_helper.h"
 #include "batch_biggrid.h"

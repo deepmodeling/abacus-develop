@@ -113,7 +113,7 @@ add_library(
     module_parameter/read_input_item_tddft.cpp
     module_parameter/read_input_item_deepks.cpp
     module_parameter/read_input_item_model.cpp
-    module_parameter/read_input_item_postprocess.cpp  
+    module_parameter/read_inp_postproc.cpp  
     module_parameter/read_input_item_exx_dftu.cpp
     module_parameter/read_input_item_other.cpp   
     module_parameter/read_input_item_output.cpp  

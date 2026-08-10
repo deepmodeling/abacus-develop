@@ -55,7 +55,7 @@ add_library(
     parallel_comm.cpp
     parallel_reduce.cpp
     parallel_device.cpp
-    spherical_bessel_transformer.cpp
+    sph_bessel_tf.cpp
     cubic_spline.cpp
     parallel_2d.cpp
     projgen.cpp

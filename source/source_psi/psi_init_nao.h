@@ -2,7 +2,7 @@
 #define PSI_INIT_NAO_H
 #include "source_base/cubic_spline.h"
 #include "source_base/realarray.h"
-#include "source_base/spherical_bessel_transformer.h"
+#include "source_base/sph_bessel_tf.h"
 #include "psi_initializer.h"
 
 #include <memory>

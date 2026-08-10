@@ -1,5 +1,5 @@
-#ifndef SNAP_PROJECTOR_HALF_TDDFT_H
-#define SNAP_PROJECTOR_HALF_TDDFT_H
+#ifndef SNAP_PROJ_HALF_TDDFT_H
+#define SNAP_PROJ_HALF_TDDFT_H
 
 #include "source_base/vector3.h"
 #include "source_basis/module_ao/ORB_read.h"

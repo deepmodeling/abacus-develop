@@ -18,7 +18,7 @@
 #include "gint_fvl_gpu.h"
 #include "gint_vl_nspin4_gpu.h"
 #include "gint_vl_metagga_gpu.h"
-#include "gint_vl_metagga_nspin4_gpu.h"
+#include "gint_vl_mgga_n4_gpu.h"
 #include "gint_tau_gpu.h"
 #include "gint_fvl_meta_gpu.h"
 #endif

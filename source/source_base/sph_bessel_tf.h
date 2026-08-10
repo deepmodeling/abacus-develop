@@ -1,5 +1,5 @@
-#ifndef SPHERICAL_BESSEL_TRANSFORMER_H_
-#define SPHERICAL_BESSEL_TRANSFORMER_H_
+#ifndef SPH_BESSEL_TF_H_
+#define SPH_BESSEL_TF_H_
 
 #include <memory>
 #include <fftw3.h>

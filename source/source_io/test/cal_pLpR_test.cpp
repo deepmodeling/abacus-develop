@@ -28,7 +28,7 @@
 #include "source_io/module_hs/cal_pLpR.h"
 #include "source_basis/module_nao/two_center_integrator.h"
 #include "source_basis/module_nao/radial_collection.h"
-#include "source_base/spherical_bessel_transformer.h"
+#include "source_base/sph_bessel_tf.h"
 #include "source_base/ylm.h"
 
 #define DOUBLETHRESHOLD 1e-12

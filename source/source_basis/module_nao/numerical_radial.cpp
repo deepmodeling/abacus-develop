@@ -10,7 +10,7 @@
 #include "source_base/cubic_spline.h"
 #include "source_base/global_variable.h"
 #include "source_base/math_integral.h"
-#include "source_base/spherical_bessel_transformer.h"
+#include "source_base/sph_bessel_tf.h"
 
 using ModuleBase::PI;
 

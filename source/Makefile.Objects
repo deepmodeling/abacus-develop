@@ -170,7 +170,7 @@ OBJS_BASE=assoc_laguerre.o\
     opt_CG.o\
     opt_DCsrch.o\
     cubic_spline.o\
-    spherical_bessel_transformer.o\
+    sph_bessel_tf.o\
     mixing_data.o\
     mixing.o\
     plain_mixing.o\
@@ -607,7 +607,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_input_item_tddft.o\
     module_parameter/read_input_item_deepks.o\
     module_parameter/read_input_item_model.o\
-    module_parameter/read_input_item_postprocess.o\
+    module_parameter/read_inp_postproc.o\
     module_parameter/read_input_item_exx_dftu.o\
     module_parameter/read_input_item_other.o\
     module_parameter/read_input_item_output.o\
@@ -651,7 +651,7 @@ OBJS_LCAO=evolve_elec.o\
       td_info.o\
       velocity_op.o\
       radial_interpolation.o\
-      snap_projector_half_tddft.o\
+      snap_proj_half_tddft.o\
       snap_psibeta_half_tddft.o\
       snap_phialpha_half_tddft.o\
       solve_propagation.o\
@@ -727,7 +727,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_mixing.o\
     charge_mixing_dmr.o\
     charge_mixing_residual.o\
-    charge_mixing_preconditioner.o\
+    mix_precond.o\
     charge_mixing_rho.o\
     charge_mixing_uspp.o\
     fp_energy.o\
