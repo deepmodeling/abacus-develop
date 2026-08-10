@@ -8,8 +8,8 @@
 
 #include "source_base/element_basis_index.h"
 #include "source_base/vector3.h"
-#include "source_basis/module_ao/ORB_gaunt_table.h"
-#include "source_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/orb_gaunt_table.h"
+#include "source_basis/module_ao/orb_read.h"
 #include "source_lcao/center2_orb-orb22.h"
 #include "source_cell/unitcell.h"
 

@@ -1,7 +1,7 @@
 #include "elem_basis_idx_orb.h"
 
-#include "ORB_read.h"
-#include "ORB_atomic_lm.h"
+#include "orb_read.h"
+#include "orb_atomic_lm.h"
 
 namespace ModuleBase
 {

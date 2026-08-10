@@ -1,8 +1,8 @@
 #ifndef LCAO_ORBITALS_H
 #define LCAO_ORBITALS_H
 
-#include "ORB_atomic.h"
-#include "ORB_atomic_lm.h"
+#include "orb_atomic.h"
+#include "orb_atomic_lm.h"
 
 ////////////////////////////////////////////////////////////
 /// advices for reconstructions:

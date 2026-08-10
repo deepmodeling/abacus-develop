@@ -5,7 +5,7 @@
 
 #include "source_base/intarray.h"
 #include "source_base/vector3.h"
-#include "ORB_atomic_lm.h"
+#include "orb_atomic_lm.h"
 
 class Numerical_Orbital_AtomRelation
 {

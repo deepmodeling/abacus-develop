@@ -1,11 +1,11 @@
 #include <fstream>
 #include "gtest/gtest.h"
 #include "source_base/global_variable.h"
-#include "source_basis/module_ao/ORB_atomic.h"
-#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/orb_atomic.h"
+#include "source_basis/module_ao/orb_atomic_lm.h"
 
 #define private public
-#include "source_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/orb_read.h"
 #undef private
 
 #ifdef __MPI

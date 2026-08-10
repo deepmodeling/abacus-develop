@@ -5,7 +5,7 @@
 #include "source_cell/klist.h" // k points
 #include "source_io/module_parameter/input_parameter.h" // Input_para
 #include "source_basis/module_ao/parallel_orbitals.h" // parallel orbitals
-#include "source_basis/module_ao/ORB_read.h" // orb
+#include "source_basis/module_ao/orb_read.h" // orb
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 
 // for EXX

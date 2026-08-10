@@ -30,12 +30,12 @@ list(APPEND depend_files
   ../../../source_base/sph_bessel_tf.cpp
   ../../../source_base/cubic_spline.cpp
   ../../../source_base/parallel_2d.cpp
-  ../ORB_read.cpp
-  ../ORB_atomic.cpp
-  ../ORB_atomic_lm.cpp
-  ../ORB_nonlocal.cpp
-  ../ORB_nonlocal_lm.cpp
-  ../ORB_gaunt_table.cpp
+  ../orb_read.cpp
+  ../orb_atomic.cpp
+  ../orb_atomic_lm.cpp
+  ../orb_nonlocal.cpp
+  ../orb_nonlocal_lm.cpp
+  ../orb_gaunt_table.cpp
   ../parallel_orbitals.cpp
   ../../../source_lcao/center2_orb-orb11.cpp
   ../../../source_lcao/center2_orb.cpp
@@ -47,32 +47,32 @@ install(DIRECTORY GaAs DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 AddTest(
     TARGET MODULE_AO_ORB_nonlocal_test
-    SOURCES ORB_nonlocal_test.cpp
-        ../ORB_nonlocal.cpp
-        ../ORB_nonlocal_lm.cpp
+    SOURCES orb_nonlocal_test.cpp
+        ../orb_nonlocal.cpp
+        ../orb_nonlocal_lm.cpp
     LIBS parameter device base
 )
 
 AddTest(
     TARGET MODULE_AO_ORB_nonlocal_lm_test
-    SOURCES ORB_nonlocal_lm_test.cpp
-        ../ORB_nonlocal_lm.cpp
+    SOURCES orb_nonlocal_lm_test.cpp
+        ../orb_nonlocal_lm.cpp
     LIBS parameter device base
 )
 
 AddTest(
     TARGET MODULE_AO_ORB_atomic_lm_test
-    SOURCES ORB_atomic_lm_test.cpp
-        ../ORB_atomic_lm.cpp
+    SOURCES orb_atomic_lm_test.cpp
+        ../orb_atomic_lm.cpp
     LIBS parameter device base
 )
 
 AddTest(
     TARGET MODULE_AO_ORB_read_test
-    SOURCES ORB_read_test.cpp
-        ../ORB_read.cpp
-        ../ORB_atomic.cpp
-        ../ORB_atomic_lm.cpp
+    SOURCES orb_read_test.cpp
+        ../orb_read.cpp
+        ../orb_atomic.cpp
+        ../orb_atomic_lm.cpp
     LIBS parameter device base
 )
 
@@ -92,4 +92,3 @@ add_test(NAME MODULE_AO_parallel_orbitals_test_para
 
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(DIRECTORY lcao_H2O DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/../../../tests)
-

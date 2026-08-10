@@ -9,7 +9,7 @@
 
 #include "source_base/constants.h"
 #include "source_base/global_variable.h"
-#include "source_basis/module_ao/ORB_atomic.h"
+#include "source_basis/module_ao/orb_atomic.h"
 
 using ModuleBase::SphericalBesselTransformer;
 

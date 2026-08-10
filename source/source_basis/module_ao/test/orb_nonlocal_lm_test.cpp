@@ -6,7 +6,7 @@
 #include <iomanip>
 
 #define private public
-#include "source_basis/module_ao/ORB_nonlocal_lm.h"
+#include "source_basis/module_ao/orb_nonlocal_lm.h"
 #undef private
 
 
@@ -334,7 +334,7 @@ double NumericalNonlocalLmTest::err_r2k2r(Numerical_Nonlocal_Lm& nnl_tmp) {
 size_t NumericalNonlocalLmTest::calc_nk(double const& ecutwfc, double const& dk) {
 
     // current formula for nk
-    // see source_basis/module_ao/ORB_read.cpp, function "Read_Orbitals"
+    // see source_basis/module_ao/orb_read.cpp, function "Read_Orbitals"
 
     size_t nk = 0;
 

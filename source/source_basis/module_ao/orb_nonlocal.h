@@ -2,7 +2,7 @@
 #define NUMERICAL_NONLOCAL_H
 
 #include "source_base/complexmatrix.h"
-#include "ORB_nonlocal_lm.h"
+#include "orb_nonlocal_lm.h"
 /**
  * \class Numerical_Nonlocal
  *CLASS  Numerical_Nonlocal

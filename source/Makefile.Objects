@@ -432,12 +432,12 @@ OBJS_NEIGHBOR_SEARCH=neighbor_search.o\
     unitcell_lite.o\
 
 
-OBJS_ORBITAL=ORB_atomic.o\
-      ORB_atomic_lm.o\
-      ORB_gaunt_table.o\
-      ORB_nonlocal.o\
-      ORB_nonlocal_lm.o\
-      ORB_read.o\
+OBJS_ORBITAL=orb_atomic.o\
+      orb_atomic_lm.o\
+      orb_gaunt_table.o\
+      orb_nonlocal.o\
+      orb_nonlocal_lm.o\
+      orb_read.o\
       parallel_orbitals.o\
       atomic_radials.o\
       hydrogen_radials.o\

@@ -12,7 +12,7 @@
 #endif
 
 #define private public
-#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/orb_atomic_lm.h"
 #undef private
 
 /***********************************************************
@@ -91,7 +91,7 @@ protected:
 size_t NumericalOrbitalLmTest::calc_nk(double const& ecutwfc, double const& dk) {
 
     // current formula for calculating nk from ecutwfc & dk
-    // see source_basis/module_ao/ORB_read.cpp, function "Read_Orbitals"
+    // see source_basis/module_ao/orb_read.cpp, function "Read_Orbitals"
 
     size_t nk = 0;
 

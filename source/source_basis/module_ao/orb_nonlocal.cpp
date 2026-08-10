@@ -1,4 +1,4 @@
-#include "ORB_nonlocal.h"
+#include "orb_nonlocal.h"
 #include "source_base/global_function.h"
 
 Numerical_Nonlocal::Numerical_Nonlocal()

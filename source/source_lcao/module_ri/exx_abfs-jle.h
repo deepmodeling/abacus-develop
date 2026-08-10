@@ -3,7 +3,7 @@
 
 #include "exx_abfs.h"
 #include "source_hamilt/module_xc/exx_info_opt_abfs.h"
-#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/orb_atomic_lm.h"
 
 #include <vector>
 

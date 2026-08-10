@@ -6,7 +6,7 @@
 #include <memory>
 
 #include "source_base/sph_bessel_tf.h"
-#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/orb_atomic_lm.h"
 
 /**
  * @brief A class that represents a numerical radial function.

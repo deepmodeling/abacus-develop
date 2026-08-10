@@ -283,8 +283,8 @@ AddTest(
   SOURCES
   cal_pLpR_test.cpp
   ../module_hs/cal_pLpR.cpp
-  ../../source_basis/module_ao/ORB_atomic_lm.cpp
-  ../../source_basis/module_ao/ORB_atomic.cpp
+  ../../source_basis/module_ao/orb_atomic_lm.cpp
+  ../../source_basis/module_ao/orb_atomic.cpp
   ../../source_basis/module_nao/radial_set.cpp
   ../../source_basis/module_nao/numerical_radial.cpp
   ../../source_basis/module_nao/beta_radials.cpp

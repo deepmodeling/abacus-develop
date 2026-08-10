@@ -3,7 +3,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
-#include "source_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/orb_read.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_estate/cal_dm.h"
 #include "source_estate/elecstate_lcao.h"

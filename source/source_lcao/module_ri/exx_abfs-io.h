@@ -5,7 +5,7 @@
 
 #include <map>
 #include <vector>
-#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_cell/klist.h"
 #ifdef __MPI
 #include "mpi.h"

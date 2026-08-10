@@ -2,7 +2,7 @@
 #define FOR_TESTING_KLIST_H
 
 #include "source_base/parallel_global.h"
-#include "source_basis/module_ao/ORB_gaunt_table.h"
+#include "source_basis/module_ao/orb_gaunt_table.h"
 #include "source_cell/atom_pseudo.h"
 #include "source_cell/atom_spec.h"
 #include "source_cell/klist.h"

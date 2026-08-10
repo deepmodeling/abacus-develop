@@ -2,7 +2,7 @@
 #include "source_base/global_variable.h"
 
 #define private public
-#include "source_basis/module_ao/ORB_nonlocal.h"
+#include "source_basis/module_ao/orb_nonlocal.h"
 #undef private
 
 #ifdef __MPI

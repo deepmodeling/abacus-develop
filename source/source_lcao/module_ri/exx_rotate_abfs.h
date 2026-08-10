@@ -5,7 +5,7 @@
 #include "LRI_CV.h"
 #include "source_hamilt/module_xc/exx_info_ri.h"
 // #include "module_xc/exx_info.h"
-// #include "module_basis/module_ao/ORB_atomic_lm.h"
+// #include "module_basis/module_ao/orb_atomic_lm.h"
 #include "Exx_LRI.h"
 // #include "module_ri/Exx_LRI.h"
 // #include <RI/physics/Exx.h>

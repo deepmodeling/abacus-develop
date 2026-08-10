@@ -9,7 +9,7 @@
 #include "LRI_CV.h"
 #include "ewald_Vq.h"
 #include "source_hamilt/module_xc/exx_info.h"
-#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/orb_atomic_lm.h"
 #include "source_base/matrix.h"
 #include <RI/physics/Exx.h>
 

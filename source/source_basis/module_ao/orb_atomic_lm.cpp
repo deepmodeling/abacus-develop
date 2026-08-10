@@ -1,4 +1,4 @@
-#include "ORB_atomic_lm.h"
+#include "orb_atomic_lm.h"
 #include "source_base/sph_bessel_recursive.h"
 #include "source_base/global_variable.h"
 #include "source_base/tool_quit.h"

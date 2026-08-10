@@ -1,4 +1,4 @@
-#include "ORB_atomic.h"
+#include "orb_atomic.h"
 
 Numerical_Orbital_AtomRelation Numerical_Orbital::NOAR;
 
