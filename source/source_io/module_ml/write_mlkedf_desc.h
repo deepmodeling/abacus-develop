@@ -1,5 +1,5 @@
-#ifndef Write_MLKEDF_DESCRIPTORS_H
-#define Write_MLKEDF_DESCRIPTORS_H
+#ifndef WRITE_MLKEDF_DESC_H
+#define WRITE_MLKEDF_DESC_H
 
 #ifdef __MLALGO
 

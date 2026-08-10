@@ -139,7 +139,7 @@ OBJS_BASE=assoc_laguerre.o\
     gather_math_lib_info.o\
     global_file.o\
     global_function.o\
-    global_function_ddotreal.o\
+    glob_fn_ddotreal.o\
     global_variable.o\
     intarray.o\
     math_integral.o\
@@ -599,7 +599,7 @@ OBJS_IO=module_parameter/input_conv.o\
     parse_args.o\
     module_parameter/read_input.o\
     module_parameter/read_input_item_system.o\
-    module_parameter/read_input_item_elec_stru.o\
+    module_parameter/read_inp_estruc.o\
     module_parameter/read_input_item_relax.o\
     module_parameter/read_input_item_md.o\
     module_parameter/read_input_item_ofdft.o\
@@ -608,7 +608,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_input_item_deepks.o\
     module_parameter/read_input_item_model.o\
     module_parameter/read_inp_postproc.o\
-    module_parameter/read_input_item_exx_dftu.o\
+    module_parameter/read_inp_exx_dftu.o\
     module_parameter/read_input_item_other.o\
     module_parameter/read_input_item_output.o\
     module_parameter/read_set_globalv.o\
@@ -652,8 +652,8 @@ OBJS_LCAO=evolve_elec.o\
       velocity_op.o\
       radial_interpolation.o\
       snap_proj_half_tddft.o\
-      snap_psibeta_half_tddft.o\
-      snap_phialpha_half_tddft.o\
+      snap_psb_half_tddft.o\
+      snap_pha_half_tddft.o\
       solve_propagation.o\
       boundary_fix.o\
       upsi.o\
@@ -691,7 +691,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       exx_abfs-abfs_index.o\
       exx_abfs-jle.o\
       exx_abfs-io.o\
-      exx_abfs-construct_orbs.o\
+      exx_abfs_ctor_orbs.o\
       ABFs_Construct-PCA.o\
       exx_opt_orb-print.o\
       exx_opt_orb.o\
@@ -701,7 +701,7 @@ OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       RI_2D_Comm.o\
       Mix_DMk_2D.o\
       symmetry_rotation.o\
-      symmetry_rotation_output.o\
+      symm_rot_out.o\
       symmetry_irreducible_sector.o\
       gaussian_abfs.o\
       singular_value.o\

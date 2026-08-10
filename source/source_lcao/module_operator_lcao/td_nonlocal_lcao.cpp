@@ -9,7 +9,7 @@
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/module_rt/td_info.h"
-#include "source_lcao/module_rt/snap_psibeta_half_tddft.h"
+#include "source_lcao/module_rt/snap_psb_half_tddft.h"
 #ifdef __CUDA
 #include "source_base/module_device/device.h"
 #include "source_lcao/module_rt/kernels/snap_psibeta_gpu.h"

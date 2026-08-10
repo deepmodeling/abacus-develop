@@ -1,6 +1,6 @@
 #include "gtest/gtest.h"
 
-#include "../module_charge/gint_precision_controller.h"
+#include "../module_charge/gint_prec_ctrl.h"
 
 TEST(GintPrecisionControllerTest, AutoModeSwitchesToFp64ImmediatelyWhenDrhoIsSmallEnough)
 {

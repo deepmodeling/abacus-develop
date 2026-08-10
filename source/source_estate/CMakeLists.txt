@@ -27,7 +27,7 @@ list(APPEND objects
     module_pot/td_field_profiles.cpp
     module_pot/td_field_manager.cpp
     module_charge/chgmixing.cpp
-    module_charge/gint_precision_controller.cpp
+    module_charge/gint_prec_ctrl.cpp
     module_charge/charge.cpp
     module_charge/charge_init.cpp
     module_charge/charge_mpi.cpp

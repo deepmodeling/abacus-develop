@@ -1,5 +1,5 @@
-#ifndef SNAP_PHIALPHA_HALF_TDDFT_H
-#define SNAP_PHIALPHA_HALF_TDDFT_H
+#ifndef SNAP_PHA_HALF_TDDFT_H
+#define SNAP_PHA_HALF_TDDFT_H
 
 #include <complex>
 #include <vector>

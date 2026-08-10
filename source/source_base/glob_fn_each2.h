@@ -1,8 +1,8 @@
 // AUTHOR:	Peize Lin
 // Date: 	2016-09-07
 
-#ifndef FUNC_EACH_2_H
-#define FUNC_EACH_2_H
+#ifndef GLOB_FN_EACH2_H
+#define GLOB_FN_EACH2_H
 
 #include <functional>
 #include <map>
@@ -53,4 +53,4 @@ void FUNC_EACH_2(
 
 }
 }
-#endif // FUNC_EACH_2_H
+#endif // GLOB_FN_EACH2_H

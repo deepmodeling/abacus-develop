@@ -1,5 +1,5 @@
-#ifndef GINT_PRECISION_CONTROLLER_H
-#define GINT_PRECISION_CONTROLLER_H
+#ifndef GINT_PREC_CTRL_H
+#define GINT_PREC_CTRL_H
 
 #include "source_hamilt/module_gint/gint_helper.h"
 

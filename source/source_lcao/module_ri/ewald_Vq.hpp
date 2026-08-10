@@ -14,7 +14,7 @@
 #include "RI_2D_Comm.h"
 #include "RI_Util.h"
 #include "conv_coulomb_pot_k.h"
-#include "exx_abfs-construct_orbs.h"
+#include "exx_abfs_ctor_orbs.h"
 #include "gaussian_abfs.h"
 #include "source_basis/module_ao/element_basis_index-ORB.h"
 #include "source_base/element_basis_index.h"

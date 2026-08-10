@@ -7,7 +7,7 @@ add_library(
     io_input_serial
     OBJECT
     ../module_parameter/read_input_item_system.cpp
-    ../module_parameter/read_input_item_elec_stru.cpp
+    ../module_parameter/read_inp_estruc.cpp
     ../module_parameter/read_input_item_relax.cpp
     ../module_parameter/read_input_item_md.cpp
     ../module_parameter/read_input_item_ofdft.cpp
@@ -16,7 +16,7 @@ add_library(
     ../module_parameter/read_input_item_deepks.cpp
     ../module_parameter/read_input_item_model.cpp
     ../module_parameter/read_inp_postproc.cpp  
-    ../module_parameter/read_input_item_exx_dftu.cpp
+    ../module_parameter/read_inp_exx_dftu.cpp
     ../module_parameter/read_input_item_other.cpp   
     ../module_parameter/read_input_item_output.cpp
     ../module_parameter/read_input.cpp

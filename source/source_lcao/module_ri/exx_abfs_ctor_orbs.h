@@ -1,5 +1,5 @@
-#ifndef EXX_ABFS_CONSTRUCT_ORBS_H
-#define EXX_ABFS_CONSTRUCT_ORBS_H
+#ifndef EXX_ABFS_CTOR_ORBS_H
+#define EXX_ABFS_CTOR_ORBS_H
 
 #include "exx_abfs.h"
 

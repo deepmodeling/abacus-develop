@@ -22,7 +22,7 @@ add_library(
     gather_math_lib_info.cpp
     global_file.cpp
     global_function.cpp
-    global_function_ddotreal.cpp
+    glob_fn_ddotreal.cpp
     global_variable.cpp
     intarray.cpp
     math_integral.cpp

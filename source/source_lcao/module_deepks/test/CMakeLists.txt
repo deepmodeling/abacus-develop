@@ -65,7 +65,7 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_io/module_hs/rr_sparse_writer.cpp
     ../../module_rt/radial_interpolation.cpp
     ../../module_rt/snap_proj_half_tddft.cpp
-    ../../module_rt/snap_phialpha_half_tddft.cpp
+    ../../module_rt/snap_pha_half_tddft.cpp
     ../../module_rt/td_folding.cpp
     mock_berryphase.cpp
     mock_tdinfo.cpp

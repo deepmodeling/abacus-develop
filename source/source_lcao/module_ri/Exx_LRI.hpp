@@ -10,7 +10,7 @@
 #include "RI_2D_Comm.h"
 #include "RI_Util.h"
 #include "ExxLriDetail.h"
-#include "source_lcao/module_ri/exx_abfs-construct_orbs.h"
+#include "source_lcao/module_ri/exx_abfs_ctor_orbs.h"
 #include "source_lcao/module_ri/exx_abfs-io.h"
 #include "source_lcao/module_ri/conv_coulomb_pot_k.h"
 #include "source_base/tool_title.h"

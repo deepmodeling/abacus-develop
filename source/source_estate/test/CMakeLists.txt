@@ -102,10 +102,10 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_ESTATE_gint_precision_controller
+  TARGET MODULE_ESTATE_gint_prec_ctrl
   LIBS parameter base device
   SOURCES gint_precision_controller_test.cpp
-    ../module_charge/gint_precision_controller.cpp
+    ../module_charge/gint_prec_ctrl.cpp
 )
 
 endif()

@@ -34,7 +34,7 @@ list(APPEND objects
     module_elf/write_elf.cpp
     module_dipole/write_dipole.cpp
     module_chgpot/write_init.cpp
-    module_ml/write_mlkedf_descriptors.cpp
+    module_ml/write_mlkedf_desc.cpp
     module_current/td_current_io.cpp
     module_current/td_current_io_comm.cpp
     module_efield/td_efield_io.cpp
@@ -105,7 +105,7 @@ add_library(
     io_input
     OBJECT
     module_parameter/read_input_item_system.cpp
-    module_parameter/read_input_item_elec_stru.cpp
+    module_parameter/read_inp_estruc.cpp
     module_parameter/read_input_item_relax.cpp
     module_parameter/read_input_item_md.cpp
     module_parameter/read_input_item_ofdft.cpp
@@ -114,7 +114,7 @@ add_library(
     module_parameter/read_input_item_deepks.cpp
     module_parameter/read_input_item_model.cpp
     module_parameter/read_inp_postproc.cpp  
-    module_parameter/read_input_item_exx_dftu.cpp
+    module_parameter/read_inp_exx_dftu.cpp
     module_parameter/read_input_item_other.cpp   
     module_parameter/read_input_item_output.cpp  
     module_parameter/read_input.cpp
