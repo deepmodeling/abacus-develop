@@ -77,7 +77,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_sph_bessel_recursive
   LIBS parameter
-  SOURCES sph_bessel_recursive_test.cpp ../sph_bessel_rec_d1.cpp ../sph_bessel_rec_d2.cpp ../memory_recorder.cpp ../global_variable.cpp
+  SOURCES sph_bessel_rec_test.cpp ../sph_bessel_rec_d1.cpp ../sph_bessel_rec_d2.cpp ../memory_recorder.cpp ../global_variable.cpp
 )
 AddTest(
   TARGET MODULE_BASE_ylmreal
@@ -127,7 +127,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_container
   LIBS parameter
-  SOURCES container_operator_test.cpp ../container_operator.h
+  SOURCES container_op_test.cpp ../container_operator.h
 )
 
 AddTest(
@@ -175,7 +175,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_element_basis_index
   LIBS parameter
-  SOURCES element_basis_index_test.cpp ../element_basis_index.cpp
+  SOURCES elem_basis_idx_test.cpp ../element_basis_index.cpp
 )
 
 AddTest(
@@ -198,7 +198,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_BASE_clebsch_gordan_coeff_test
-  SOURCES clebsch_gordan_coeff_test.cpp
+  SOURCES cg_coeff_test.cpp
   LIBS parameter  base device
 )
 

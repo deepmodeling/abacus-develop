@@ -122,7 +122,7 @@ AddTest(
 AddTest(
   TARGET MODULE_NAO_two_center_integrator
   SOURCES
-    two_center_integrator_test.cpp
+    two_center_integ_test.cpp
     ../two_center_integrator.cpp
     ../two_center_table.cpp
     ../real_gaunt_table.cpp

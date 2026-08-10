@@ -14,6 +14,6 @@ AddTest(
 AddTest(
   TARGET MODULE_RI_abfs_vector3_order
   LIBS parameter
-  SOURCES abfs_vector3_order_test.cpp
+  SOURCES abfs_vec3_order_test.cpp
 )
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

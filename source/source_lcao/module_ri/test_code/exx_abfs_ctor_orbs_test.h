@@ -1,5 +1,5 @@
-#ifndef EXX_ABFS_CONSTRUCT_ORBS_TEST_H
-#define EXX_ABFS_CONSTRUCT_ORBS_TEST_H
+#ifndef EXX_ABFS_CTOR_ORBS_TEST_H
+#define EXX_ABFS_CTOR_ORBS_TEST_H
 
 #include <fstream>
 #include <vector>
@@ -35,4 +35,4 @@ static void print_orbs( const std::vector<std::vector<std::vector<Numerical_Orbi
 	ofsN.close();
 }
 
-#endif	// EXX_ABFS_CONSTRUCT_ORBS_TEST_H
+#endif	// EXX_ABFS_CTOR_ORBS_TEST_H

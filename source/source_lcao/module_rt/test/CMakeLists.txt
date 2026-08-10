@@ -64,15 +64,15 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_LCAO_tddft_radial_interpolation_test
+  TARGET MODULE_LCAO_tddft_rad_interp_test
   LIBS base device
-  SOURCES radial_interpolation_test.cpp ../radial_interpolation.cpp
+  SOURCES rad_interp_test.cpp ../radial_interpolation.cpp
 )
 
 if(USE_CUDA)
   AddTest(
-    TARGET MODULE_LCAO_tddft_radial_interpolation_cuda_test
+    TARGET MODULE_LCAO_tddft_rad_interp_cuda_test
     LIBS base device
-    SOURCES radial_interpolation_cuda_test.cu ../radial_interpolation.cpp
+    SOURCES rad_interp_cuda_test.cu ../radial_interpolation.cpp
   )
 endif()

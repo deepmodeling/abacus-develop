@@ -11,7 +11,7 @@ AddTest(
     TARGET MODULE_PSI_initializer_unit_test
     LIBS parameter base device psi psi_initializer planewave
     SOURCES
-        psi_initializer_unit_test.cpp
+        psi_init_unit_test.cpp
         ../../source_pw/module_pwdft/soc.cpp
         ../../source_cell/atom_spec.cpp
         ../../source_cell/parallel_kpoints.cpp
