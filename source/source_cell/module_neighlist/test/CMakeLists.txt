@@ -43,7 +43,7 @@ if(ENABLE_MPI)
   )
   target_link_libraries(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     PRIVATE
-    parameter base device GTest::gtest_main GTest::gmock_main abacus::linalg_libs
+    parameter base device MPI::MPI_CXX GTest::gtest_main GTest::gmock_main abacus::linalg_libs
   )
   install(TARGETS MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi DESTINATION ${CMAKE_BINARY_DIR}/tests)
   add_test(NAME MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi

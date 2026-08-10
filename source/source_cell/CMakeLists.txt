@@ -24,6 +24,7 @@ add_library(
     klist.cpp
     parallel_kpoints.cpp
     cell_index.cpp
+    cell_tools.cpp
     check_atomic_stru.cpp
     update_cell.cpp
     magnetism.cpp
@@ -39,6 +40,7 @@ add_library(
     cal_nelec_nband.cpp
     read_pseudo.cpp
     cal_wfc.cpp
+    cal_ux.cpp
 )
 
 if(ENABLE_COVERAGE)

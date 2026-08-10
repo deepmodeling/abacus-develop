@@ -442,13 +442,6 @@ std::vector<LocalAtom>& MDCell::mutable_ghost_atoms()
     return ghost_atoms_;
 }
 
-void MDCell::replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned_atoms)
-{
-    owned_atoms_ = owned_atoms;
-    clear_forces_(owned_atoms_);
-    exchange_ghost_atoms();
-}
-
 int MDCell::nlocal() const
 {
     return static_cast<int>(owned_atoms_.size());
@@ -482,16 +475,6 @@ double MDCell::skin() const
 bool MDCell::has_backing_unitcell() const
 {
     return backing_unitcell_ != nullptr;
-}
-
-bool MDCell::uses_replicated_stru() const
-{
-    return uses_replicated_stru_;
-}
-
-void MDCell::set_uses_replicated_stru(const bool uses_replicated_stru)
-{
-    uses_replicated_stru_ = uses_replicated_stru;
 }
 
 UnitCell& MDCell::backing_unitcell()

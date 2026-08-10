@@ -366,6 +366,5 @@ MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
                   cutoff,
                   skin);
     mdcell.set_stru_metadata(metadata.stru_metadata);
-    mdcell.set_uses_replicated_stru(replicate[0] != 1 || replicate[1] != 1 || replicate[2] != 1);
     return mdcell;
 }
