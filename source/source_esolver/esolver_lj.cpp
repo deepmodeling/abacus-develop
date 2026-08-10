@@ -6,6 +6,7 @@
 #include "source_cell/module_neighlist/neighbor_types.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include "source_cell/md_cell.h"
+#include "source_base/communication_domain.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #ifdef __MPI
@@ -58,7 +59,8 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     {
         ModuleBase::timer::start("ESolverLJ", "mpi_total");
         ModuleBase::timer::start("ESolverLJ", "neigh_init");
-        MDCell mdcell(ucell, MPI_COMM_WORLD, search_radius, 0.0);
+        const ModuleBase::CommunicationDomain communication_domain = ModuleBase::world_communication_domain();
+        MDCell mdcell(ucell, search_radius, 0.0, communication_domain);
         neighbor_search.init(mdcell, search_radius);
         ModuleBase::timer::end("ESolverLJ", "neigh_init");
         ModuleBase::timer::start("ESolverLJ", "neigh_bld");
