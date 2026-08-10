@@ -17,7 +17,7 @@
 #include <algorithm>
 
 #ifdef __EXX
-#include "source_lcao/module_ri/exx_abfs-jle.h"
+#include "source_lcao/module_ri/exx_abfs_jle.h"
 #endif
 
 #include "source_lcao/module_dftu/dftu.h"

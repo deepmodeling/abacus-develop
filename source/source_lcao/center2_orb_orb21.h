@@ -3,10 +3,10 @@
 // DATE : 2016-01-24
 //=========================================================
 
-#ifndef CENTER2_ORB_ORB22_H
-#define CENTER2_ORB_ORB22_H
+#ifndef W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_CENTER2_ORB_ORB21_H
+#define W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_CENTER2_ORB_ORB21_H
 
-#include "center2_orb-orb21.h"
+#include "center2_orb_orb11.h"
 #include "center2_orb.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_ao/orb_atomic_lm.h"
@@ -16,13 +16,12 @@
 #include <set>
 #include <vector>
 
-class Center2_Orb::Orb22
+class Center2_Orb::Orb21
 {
   public:
-    Orb22(const Numerical_Orbital_Lm& nA1_in,
+    Orb21(const Numerical_Orbital_Lm& nA1_in,
           const Numerical_Orbital_Lm& nA2_in,
-          const Numerical_Orbital_Lm& nB1_in,
-          const Numerical_Orbital_Lm& nB2_in,
+          const Numerical_Orbital_Lm& nB_in,
           const ModuleBase::Sph_Bessel_Recursive::D2* psb,
           const ORB_gaunt_table& MGT_in);
 
@@ -33,29 +32,26 @@ class Center2_Orb::Orb22
                        const ModuleBase::Vector3<double>& RB, // unit: Bohr
                        const int& mA1,
                        const int& mA2,
-                       const int& mB1,
-                       const int& mB2) const;
+                       const int& mB) const;
 
     ModuleBase::Vector3<double> cal_grad_overlap(const ModuleBase::Vector3<double>& RA,
                                                  const ModuleBase::Vector3<double>& RB, // unit: Bohr
                                                  const int& mA1,
                                                  const int& mA2,
-                                                 const int& mB1,
-                                                 const int& mB2) const;
+                                                 const int& mB) const;
 
-  protected: // Peize Lin test 2016-10-07
+  private:
     const Numerical_Orbital_Lm& nA1;
     const Numerical_Orbital_Lm& nA2;
-    const Numerical_Orbital_Lm& nB1;
-    const Numerical_Orbital_Lm& nB2;
+    const Numerical_Orbital_Lm& nB;
 
     const ModuleBase::Sph_Bessel_Recursive::D2* psb_ = nullptr;
     const ORB_gaunt_table& MGT;
 
-    std::map<int, Numerical_Orbital_Lm> nB;
-    std::map<int, Center2_Orb::Orb21> orb21s;
+    std::map<int, Numerical_Orbital_Lm> nA;
+    std::map<int, Center2_Orb::Orb11> orb11s;
 };
 
-// this->orb21s[L34].psi2_center2[L12].Table_r[L1234][ir]
+// this->orb11s[LA].Table_r[LAB][ir]
 
-#endif // CENTER2_ORB_ORB22_H
+#endif // W_ABACUS_DEVELOP_ABACUS_DEVELOP_SOURCE_MODULE_HAMILT_LCAO_HAMILT_LCAODFT_CENTER2_ORB_ORB21_H

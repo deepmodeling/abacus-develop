@@ -4,7 +4,7 @@
 //==========================================================
 
 #include "source_base/element_basis_index.h"
-#include "element_basis_index-test.h"
+#include "element_basis_index_test.h"
 
 ModuleBase::Element_Basis_Index::Range construct_range()
 {

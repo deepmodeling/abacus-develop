@@ -9,7 +9,7 @@
 #include "matrix_orbs11.h"
 #include "matrix_orbs21.h"
 #include "source_basis/module_ao/orb_atomic_lm.h"
-#include "abfs-vector3_order.h"
+#include "abfs_vector3_order.h"
 #include "source_base/element_basis_index.h"
 #include "source_hamilt/module_xc/exx_info_ri.h"
 

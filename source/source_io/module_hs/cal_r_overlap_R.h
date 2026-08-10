@@ -13,7 +13,7 @@
 #include "source_lcao/center2_orb-orb11.h"
 #include "source_lcao/center2_orb-orb21.h"
 #include "source_lcao/center2_orb.h"
-#include "source_lcao/module_ri/abfs-vector3_order.h"
+#include "source_lcao/module_ri/abfs_vector3_order.h"
 
 #include <map>
 #include <set>

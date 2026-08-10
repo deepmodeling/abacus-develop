@@ -4,7 +4,7 @@
 // DATE : 2016-01-24
 //=========================================================
 
-#include "center2_orb-orb22.h"
+#include "center2_orb_orb22.h"
 
 Center2_Orb::Orb22::Orb22(const Numerical_Orbital_Lm& nA1_in,
                           const Numerical_Orbital_Lm& nA2_in,

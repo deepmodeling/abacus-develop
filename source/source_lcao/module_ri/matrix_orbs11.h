@@ -11,7 +11,7 @@
 #include "source_base/vector3.h"
 #include "source_basis/module_ao/orb_gaunt_table.h"
 #include "source_basis/module_ao/orb_read.h"
-#include "source_lcao/center2_orb-orb11.h"
+#include "source_lcao/center2_orb_orb11.h"
 #include "source_cell/unitcell.h"
 #include <RI/global/Tensor.h>
 #include <map>

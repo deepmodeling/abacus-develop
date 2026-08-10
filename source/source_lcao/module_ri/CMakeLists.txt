@@ -14,10 +14,10 @@ if (ENABLE_LIBRI)
     list(APPEND objects
         conv_coulomb_pot_k.cpp
         exx_abfs_ctor_orbs.cpp
-        exx_abfs-io.cpp
-        exx_abfs-jle.cpp
-        ABFs_Construct-PCA.cpp
-        exx_opt_orb-print.cpp
+        exx_abfs_io.cpp
+        exx_abfs_jle.cpp
+        abfs_construct_pca.cpp
+        exx_opt_orb_print.cpp
         exx_opt_orb.cpp
         gaussian_abfs.cpp
         singular_value.cpp

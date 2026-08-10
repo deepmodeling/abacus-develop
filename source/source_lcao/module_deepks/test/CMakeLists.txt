@@ -48,8 +48,8 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_estate/module_dm/density_matrix.cpp
     ../../../source_estate/module_dm/density_matrix_io.cpp
     ../../center2_orb.cpp
-    ../../center2_orb-orb11.cpp
-    ../../center2_orb-orb21.cpp
+    ../../center2_orb_orb11.cpp
+    ../../center2_orb_orb21.cpp
     ../../../source_hamilt/module_hcontainer/base_matrix.cpp
     ../../../source_hamilt/module_hcontainer/hcontainer.cpp
     ../../../source_hamilt/module_hcontainer/atom_pair.cpp

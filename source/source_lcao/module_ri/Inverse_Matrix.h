@@ -5,7 +5,7 @@
 
 #pragma once
 
-#include "ABFs_Construct-PCA.h"
+#include "abfs_construct_pca.h"
 
 #include <RI/global/Tensor.h>
 #include <vector>
