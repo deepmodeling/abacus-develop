@@ -66,13 +66,11 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
     /// @brief get Bloch function from LCAO wavefunction
     /// @param psi_in
     /// @param wfcpw [in] data carrier, storing planewave basis number and k information
-    /// @param sf [in] computational methods instance, structure factor calculator
     /// @param kv [in] data carrier, storing kpoints information
     /// @return psi::Psi<std::complex<double>>*
     psi::Psi<std::complex<double>>* get_unk_from_lcao(const UnitCell& ucell,
                                                       const psi::Psi<std::complex<double>>& psi_in,
                                                       const ModulePW::PW_Basis_K* wfcpw,
-                                                      const Structure_Factor& sf,
                                                       const K_Vectors& kv);
     /// @brief expand numerical atomic orbital (nao) in planewave basis at specific k point
     /// @param ik [in] index of kpoint
