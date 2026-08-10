@@ -372,6 +372,21 @@ if ! test -z "$has_hs"  && [ $has_hs == 1 ]; then
             echo "CompareS_pass $?" >>$1
         fi
     fi
+elif ! test -z "$has_hs" && [ $has_hs == 2 ]; then
+    HSK_BINARY_COMPARE="../../integrate/tools/compare_hsk_binary.py"
+    if ! test -z "$gamma_only" && [ $gamma_only == 1 ]; then
+        HSK_TEXT_REFERENCE_DIR="../scf_out_hk"
+        python3 $HSK_BINARY_COMPARE OUT.autotest/hk_nao.dat "$HSK_TEXT_REFERENCE_DIR/hk_nao.txt.ref" real 3
+        echo "CompareH_pass $?" >>$1
+        python3 $HSK_BINARY_COMPARE OUT.autotest/sk_nao.dat "$HSK_TEXT_REFERENCE_DIR/sk_nao.txt.ref" real 3
+        echo "CompareS_pass $?" >>$1
+    else
+        HSK_TEXT_REFERENCE_DIR="../scf_out_hsk"
+        python3 $HSK_BINARY_COMPARE OUT.autotest/hk2_nao.dat "$HSK_TEXT_REFERENCE_DIR/hk2_nao.txt.ref" complex 3
+        echo "CompareH_pass $?" >>$1
+        python3 $HSK_BINARY_COMPARE OUT.autotest/sk2_nao.dat "$HSK_TEXT_REFERENCE_DIR/sk2_nao.txt.ref" complex 3
+        echo "CompareS_pass $?" >>$1
+    fi
 fi
 
 #--------------------------------

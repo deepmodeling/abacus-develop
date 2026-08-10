@@ -21,7 +21,7 @@
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include <numeric>
+#include <algorithm>
 #include <unordered_map>
 
 using namespace ModuleESolver;
@@ -35,6 +35,9 @@ void ESolver_NEP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     nep_force.create(ucell.nat, 3);
     nep_virial.create(3, 3);
     atype.resize(ucell.nat);
+    nep_cell.resize(9);
+    nep_coord.resize(3 * ucell.nat);
+    nep_virial_sum.resize(9);
     _e.resize(ucell.nat);
     _f.resize(3 * ucell.nat);
     _v.resize(9 * ucell.nat);
@@ -55,39 +58,35 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
 
     // note that NEP are column major, thus a transpose is needed
     // cell
-    std::vector<double> cell(9, 0.0);
-    cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
-    cell[1] = ucell.latvec.e21 * ucell.lat0_angstrom;
-    cell[2] = ucell.latvec.e31 * ucell.lat0_angstrom;
-    cell[3] = ucell.latvec.e12 * ucell.lat0_angstrom;
-    cell[4] = ucell.latvec.e22 * ucell.lat0_angstrom;
-    cell[5] = ucell.latvec.e32 * ucell.lat0_angstrom;
-    cell[6] = ucell.latvec.e13 * ucell.lat0_angstrom;
-    cell[7] = ucell.latvec.e23 * ucell.lat0_angstrom;
-    cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
+    nep_cell[0] = ucell.latvec.e11 * ucell.lat0_angstrom;
+    nep_cell[1] = ucell.latvec.e21 * ucell.lat0_angstrom;
+    nep_cell[2] = ucell.latvec.e31 * ucell.lat0_angstrom;
+    nep_cell[3] = ucell.latvec.e12 * ucell.lat0_angstrom;
+    nep_cell[4] = ucell.latvec.e22 * ucell.lat0_angstrom;
+    nep_cell[5] = ucell.latvec.e32 * ucell.lat0_angstrom;
+    nep_cell[6] = ucell.latvec.e13 * ucell.lat0_angstrom;
+    nep_cell[7] = ucell.latvec.e23 * ucell.lat0_angstrom;
+    nep_cell[8] = ucell.latvec.e33 * ucell.lat0_angstrom;
 
     // coord
-    std::vector<double> coord(3 * ucell.nat, 0.0);
-    int iat = 0;
+    nep_coord.resize(3 * ucell.nat);
     const int nat = ucell.nat;
-    for (int it = 0; it < ucell.ntype; ++it)
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int iat = 0; iat < nat; ++iat)
     {
-        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
-        {
-            coord[iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
-            coord[iat + nat] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
-            coord[iat + 2 * nat] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
-            iat++;
-        }
+        const int it = atom_type_index[iat];
+        const int ia = atom_local_index[iat];
+        nep_coord[iat] = ucell.atoms[it].tau[ia].x * ucell.lat0_angstrom;
+        nep_coord[iat + nat] = ucell.atoms[it].tau[ia].y * ucell.lat0_angstrom;
+        nep_coord[iat + 2 * nat] = ucell.atoms[it].tau[ia].z * ucell.lat0_angstrom;
     }
-    assert(ucell.nat == iat);
 
 #ifdef __NEP
     nep_potential = 0.0;
     nep_force.zero_out();
     nep_virial.zero_out();
 
-    nep.compute(atype, cell, coord, _e, _f, _v);
+    nep.compute(atype, nep_cell, nep_coord, _e, _f, _v);
 
     // unit conversion
     const double fact_e = 1.0 / ModuleBase::Ry_to_eV;
@@ -95,11 +94,18 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
     const double fact_v = 1.0 / (ucell.omega * ModuleBase::Ry_to_eV);
 
     // potential energy
-    nep_potential = fact_e * std::accumulate(_e.begin(), _e.end(), 0.0);
+    double energy_sum = 0.0;
+#pragma omp parallel for reduction(+:energy_sum) schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
+    {
+        energy_sum += _e[i];
+    }
+    nep_potential = fact_e * energy_sum;
     GlobalV::ofs_running << " #TOTAL ENERGY# " << std::setprecision(11) << nep_potential * ModuleBase::Ry_to_eV << " eV"
                          << std::endl;
 
     // forces
+#pragma omp parallel for schedule(static) if (nat >= 256)
     for (int i = 0; i < nat; ++i)
     {
         nep_force(i, 0) = _f[i] * fact_f;
@@ -108,22 +114,44 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
     }
 
     // virial
-    std::vector<double> v_sum(9, 0.0);
-    for (int j = 0; j < 9; ++j)
+    double v0 = 0.0;
+    double v1 = 0.0;
+    double v2 = 0.0;
+    double v3 = 0.0;
+    double v4 = 0.0;
+    double v5 = 0.0;
+    double v6 = 0.0;
+    double v7 = 0.0;
+    double v8 = 0.0;
+#pragma omp parallel for reduction(+:v0, v1, v2, v3, v4, v5, v6, v7, v8) schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
-        for (int i = 0; i < nat; ++i)
-        {
-            int index = j * nat + i;
-            v_sum[j] += _v[index];
-        }
+        v0 += _v[i];
+        v1 += _v[nat + i];
+        v2 += _v[2 * nat + i];
+        v3 += _v[3 * nat + i];
+        v4 += _v[4 * nat + i];
+        v5 += _v[5 * nat + i];
+        v6 += _v[6 * nat + i];
+        v7 += _v[7 * nat + i];
+        v8 += _v[8 * nat + i];
     }
+    nep_virial_sum[0] = v0;
+    nep_virial_sum[1] = v1;
+    nep_virial_sum[2] = v2;
+    nep_virial_sum[3] = v3;
+    nep_virial_sum[4] = v4;
+    nep_virial_sum[5] = v5;
+    nep_virial_sum[6] = v6;
+    nep_virial_sum[7] = v7;
+    nep_virial_sum[8] = v8;
 
     // virial -> stress
     for (int i = 0; i < 3; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            nep_virial(i, j) = v_sum[3 * i + j] * fact_v;
+            nep_virial(i, j) = nep_virial_sum[3 * i + j] * fact_v;
         }
     }
 #else

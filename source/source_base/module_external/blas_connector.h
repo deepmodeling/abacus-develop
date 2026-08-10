@@ -406,26 +406,32 @@ public:
 	void copy(const int n, const std::complex<double> *a, const int incx, std::complex<double> *b, const int incy, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
 
 	// There is some other operators needed, so implemented manually here
-	template <typename T>
+	template <typename T, typename Operand>
 	static
-	void vector_mul_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+	void vector_mul_vector(const int& dim,
+	                       T* result,
+	                       const T* vector1,
+	                       const Operand* vector2,
+	                       base_device::AbacusDevice_t device_type);
 
-	template <typename T>
+	template <typename T, typename Operand>
 	static
-	void vector_div_vector(const int& dim, T* result, const T* vector1, const T* vector2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+	void vector_div_vector(const int& dim,
+	                       T* result,
+	                       const T* vector1,
+	                       const Operand* vector2,
+	                       base_device::AbacusDevice_t device_type);
 
-	// y = alpha * x + beta * y
+	// result = constant1 * vector1 + constant2 * vector2
+	template <typename T, typename Scalar>
 	static
-	void vector_add_vector(const int& dim, float *result, const float *vector1, const float constant1, const float *vector2, const float constant2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
-
-	static
-	void vector_add_vector(const int& dim, double *result, const double *vector1, const double constant1, const double *vector2, const double constant2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
-
-	static
-	void vector_add_vector(const int& dim, std::complex<float> *result, const std::complex<float> *vector1, const float constant1, const std::complex<float> *vector2, const float constant2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
-
-	static
-	void vector_add_vector(const int& dim, std::complex<double> *result, const std::complex<double> *vector1, const double constant1, const std::complex<double> *vector2, const double constant2, base_device::AbacusDevice_t device_type = base_device::AbacusDevice_t::CpuDevice);
+	void vector_add_vector(const int& dim,
+	                       T* result,
+	                       const T* vector1,
+	                       const Scalar constant1,
+	                       const T* vector2,
+	                       const Scalar constant2,
+	                       base_device::AbacusDevice_t device_type);
 
 #ifdef __DSP
 	/// @brief Inject the DSP cluster id used by mt-allocator BLAS kernels.

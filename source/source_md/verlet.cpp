@@ -124,7 +124,9 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
         fac = sqrt(target_temp / current_temp);
     }
 
-    for (int i = 0; i < ucell.nat; ++i)
+    const int nat = ucell.nat;
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
         vel[i] *= fac;
     }
@@ -180,7 +182,9 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
     double scale = sqrt(resample);
 
     // Apply velocity scaling
-    for (int i = 0; i < ucell.nat; ++i)
+    const int nat = ucell.nat;
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
         vel[i] *= scale;
     }

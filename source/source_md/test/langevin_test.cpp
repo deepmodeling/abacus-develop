@@ -5,9 +5,8 @@
 #undef private
 #define private public
 #define protected public
-#include "source_esolver/esolver_lj.h"
 #include "source_md/langevin.h"
-#include "setcell.h"
+#include "md_test_fixture.h"
 #define doublethreshold 1e-12
 
 /************************************************
@@ -35,31 +34,8 @@
  *     - output MD information such as energy, temperature, and pressure
  */
 
-class Langevin_test : public testing::Test
+class Langevin_test : public MdIntegratorFixture<Langevin>
 {
-  protected:
-    MD_base* mdrun;
-    UnitCell ucell;
-    Parameter param_in;
-    ModuleESolver::ESolver* p_esolver;
-
-    void SetUp()
-    {
-        Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
-
-        p_esolver = new ModuleESolver::ESolver_LJ();
-        p_esolver->before_all_runners(ucell, param_in.inp);
-
-        mdrun = new Langevin(param_in, ucell);
-        mdrun->setup(p_esolver, PARAM.sys.global_readin_dir);
-    }
-
-    void TearDown()
-    {
-        delete mdrun;
-        delete p_esolver;
-    }
 };
 
 TEST_F(Langevin_test, setup)
