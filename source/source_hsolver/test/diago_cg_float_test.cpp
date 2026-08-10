@@ -4,7 +4,6 @@
 #undef private
 #include "source_base/inverse_matrix.h"
 #include "source_base/module_external/lapack_connector.h"
-#include "source_pw/module_pwdft/structure_factor.h"
 #include "source_psi/psi.h"
 #include "source_hamilt/hamilt.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"

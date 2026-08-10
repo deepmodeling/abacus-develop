@@ -753,8 +753,8 @@ OBJS_SRCPW=H_Ewald_pw.o\
     vnl_op.o\
     magnetism.o\
     occupy.o\
-    structure_factor.o\
-    structure_factor_k.o\
+    stru_fac.o\
+    stru_fac_k.o\
     soc.o\
     sto_iter.o\
     sto_che.o\

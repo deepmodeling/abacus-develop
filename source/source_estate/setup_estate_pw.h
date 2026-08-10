@@ -3,7 +3,7 @@
 
 #include "source_cell/unitcell.h"
 #include "source_cell/klist.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_estate/elecstate.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_pw/module_pwdft/vsep_pw.h"

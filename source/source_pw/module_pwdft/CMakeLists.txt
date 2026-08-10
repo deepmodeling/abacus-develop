@@ -39,8 +39,8 @@ list(APPEND objects
     vl_pw.cpp
     vnl_pw.cpp
     vnl_pw_grad.cpp
-    structure_factor.cpp
-    structure_factor_k.cpp
+    stru_fac.cpp
+    stru_fac_k.cpp
     soc.cpp
     parallel_grid.cpp
     elecond.cpp

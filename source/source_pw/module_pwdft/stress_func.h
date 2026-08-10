@@ -11,7 +11,7 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_pw/module_pwdft/kernels/stress_op.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06

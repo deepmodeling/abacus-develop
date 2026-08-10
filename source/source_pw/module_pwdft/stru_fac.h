@@ -1,5 +1,5 @@
-#ifndef STRUCTURE_FACTOR_H 
-#define STRUCTURE_FACTOR_H
+#ifndef STRU_FAC_H 
+#define STRU_FAC_H
 
 #include "source_base/complexmatrix.h"
 #include "source_basis/module_pw/pw_basis_k.h"
@@ -75,4 +75,4 @@ public:
     const ModulePW::PW_Basis* rho_basis = nullptr;
     std::string device = "cpu";
 };
-#endif //PlaneWave class
+#endif // STRU_FAC_H

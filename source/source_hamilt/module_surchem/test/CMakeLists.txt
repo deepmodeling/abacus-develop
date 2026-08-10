@@ -15,7 +15,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_cal_pseudo  
   LIBS parameter planewave device base psi
-  SOURCES cal_pseudo_test.cpp  ../cal_pseudo.cpp ../surchem.cpp ../cal_epsilon.cpp ../../../source_pw/module_pwdft/structure_factor.cpp
+  SOURCES cal_pseudo_test.cpp  ../cal_pseudo.cpp ../surchem.cpp ../cal_epsilon.cpp ../../../source_pw/module_pwdft/stru_fac.cpp
   ../../../source_pw/module_pwdft/parallel_grid.cpp 
 
 )

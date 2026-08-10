@@ -3,7 +3,7 @@
 // data structure support
 #include "source_basis/module_pw/pw_basis_k.h" // for kpoint related data structure
 #include "source_pw/module_pwdft/vnl_pw.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_psi/psi.h" // for psi data structure
 // smart pointer for auto-memory management
 #include <memory>
