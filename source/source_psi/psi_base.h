@@ -1,17 +1,18 @@
 #ifndef PSI_BASE_H
 #define PSI_BASE_H
-#include "source_basis/module_pw/pw_basis_k.h"
-#include "source_pw/module_pwdft/structure_factor.h"
-#include "source_psi/psi.h" 
+#include "source_psi/psi.h"
 #include <memory>
 #ifdef __MPI
 #include <mpi.h>
 #endif
 #include "source_base/macros.h"
-#include "source_cell/unitcell.h"
 
 #include <type_traits>
 #include <vector>
+
+namespace ModulePW { class PW_Basis_K; }
+class Structure_Factor;
+class UnitCell;
 
 using namespace std;
 

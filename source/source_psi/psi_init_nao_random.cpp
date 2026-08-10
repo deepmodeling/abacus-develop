@@ -1,4 +1,5 @@
 #include "psi_init_nao_random.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 
 template <typename T>
 void psi_init_nao_random<T>::init_psig(T* psig, const int& ik)

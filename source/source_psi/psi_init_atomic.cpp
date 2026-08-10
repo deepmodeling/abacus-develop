@@ -1,4 +1,7 @@
 #include "psi_init_atomic.h"
+#include "source_basis/module_pw/pw_basis_k.h"
+#include "source_cell/unitcell.h"
+#include "source_pw/module_pwdft/structure_factor.h"
 #include "source_pw/module_pwdft/soc.h"
 #include "source_base/math_integral.h" // for numerical integration
 #include "source_base/math_polyint.h" // for polynomial interpolation
