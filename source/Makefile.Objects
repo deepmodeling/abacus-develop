@@ -248,8 +248,8 @@ OBJS_ELECSTAT=elecstate.o\
     potential_types.o\
     pot_sep.o\
     pot_local.o\
-    H_Hartree_pw.o\
-    H_TDDFT_pw.o\
+    h_hartree_pw.o\
+    h_tddft_pw.o\
     pot_xc.o\
     read_orb.o\
     setup_estate_pw.o\
@@ -497,7 +497,7 @@ OBJS_RELAXATION=relax_data.o\
 
 
 OBJS_SURCHEM=surchem.o\
-    H_correction_pw.o\
+    h_corr_pw.o\
     cal_epsilon.o\
     cal_pseudo.o\
     cal_totn.o\
@@ -657,9 +657,9 @@ OBJS_LCAO=evolve_elec.o\
       solve_propagation.o\
       boundary_fix.o\
       upsi.o\
-      FORCE_STRESS.o\
-      FORCE_gamma.o\
-      FORCE_k.o\
+      force_stress_lcao.o\
+      force_lcao_gamma.o\
+      force_lcao_k.o\
       stress_tools.o\
       edm.o\
       pulay_fs_center2.o\
@@ -714,7 +714,7 @@ OBJS_PARALLEL=parallel_common.o\
     parallel_reduce.o\
     parallel_device.o
 
-OBJS_SRCPW=H_Ewald_pw.o\
+OBJS_SRCPW=h_ewald_pw.o\
     dnrm2.o\
     vl_pw.o\
     vnl_pw.o\
@@ -737,12 +737,12 @@ OBJS_SRCPW=H_Ewald_pw.o\
     update_cell_pw.o\
     setup_dftu_pw.o\
     deltaspin_pw.o\
-    forces.o\
-    forces_us.o\
-    forces_nl.o\
-    forces_cc.o\
-    forces_scc.o\
-    forces_onsite.o\
+    force_pw.o\
+    force_pw_us.o\
+    force_pw_nl.o\
+    force_pw_cc.o\
+    force_pw_scc.o\
+    force_pw_onsite.o\
     onsite_proj_pw.o\
     fs_nonlocal_tools.o\
     fs_kin_tools.o\

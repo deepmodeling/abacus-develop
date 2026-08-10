@@ -63,7 +63,7 @@ AddTest(
     ../elecstate_energy.cpp
     ../fp_energy.cpp
     ../makov_payne.cpp
-    ../module_pot/H_Hartree_pw.cpp
+    ../module_pot/h_hartree_pw.cpp
 )
 
 AddTest(

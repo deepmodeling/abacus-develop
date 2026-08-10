@@ -23,7 +23,7 @@
 #include "source_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
 #include "source_basis/module_ao/orb_read.h"
-#include "source_lcao/FORCE_STRESS.h"
+#include "source_lcao/force_stress_lcao.h"
 #include "source_lcao/module_rt/td_info.h"
 #endif
 #ifdef __PEXSI

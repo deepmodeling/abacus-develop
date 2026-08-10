@@ -1,6 +1,6 @@
 #include "elecstate.h"
 #include "source_base/parallel_reduce.h"
-#include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06

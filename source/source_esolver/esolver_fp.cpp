@@ -4,7 +4,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_cell/read_pseudo.h"
 #include "source_estate/param_update.h"
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
+#include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"

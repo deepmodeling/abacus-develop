@@ -1,5 +1,5 @@
-#ifndef FORCES_H
-#define FORCES_H
+#ifndef FORCE_PW_H
+#define FORCE_PW_H
 
 #include "source_base/global_function.h"
 #include "source_base/matrix.h"

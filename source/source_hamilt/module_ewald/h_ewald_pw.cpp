@@ -1,4 +1,4 @@
-#include "H_Ewald_pw.h"
+#include "h_ewald_pw.h"
 #include "source_base/parallel_comm.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/mymath.h" // use heapsort

@@ -2,7 +2,7 @@
 
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_hs/write_HS.h"
 #include "source_io/module_hs/write_HS_R.h"

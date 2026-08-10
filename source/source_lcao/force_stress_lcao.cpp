@@ -1,4 +1,4 @@
-#include "FORCE_STRESS.h"
+#include "force_stress_lcao.h"
 
 #include "source_base/parallel_reduce.h"
 #include "source_lcao/module_dftu/dftu.h" //Quxin add for DFT+U on 20201029
@@ -9,7 +9,7 @@
 #include "source_base/tool_quit.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_estate/elecstate_lcao.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"       // Taoni add 2025-02-20
+#include "source_estate/module_pot/h_tddft_pw.h"       // Taoni add 2025-02-20
 #include "source_estate/module_pot/efield.h"           // liuyu add 2022-05-18
 #include "source_estate/module_pot/gatefield.h"        // liuyu add 2022-09-13
 #include "source_hamilt/module_surchem/surchem.h" //sunml add 2022-08-10

@@ -26,7 +26,7 @@
 #include "source_hsolver/diago_elpa.h"
 #endif
 
-#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"

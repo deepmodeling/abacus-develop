@@ -16,7 +16,7 @@
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/cal_edm_tddft.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_estate/module_pot/td_field_manager.h"
 #include "source_hsolver/hsolver_lcao.h"

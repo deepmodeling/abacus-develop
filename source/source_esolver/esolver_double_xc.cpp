@@ -1,13 +1,13 @@
 #include "esolver_double_xc.h"
 
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
+#include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/lcao_deepks.h"
 #include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #include "source_lcao/module_deepks/lcao_deepks_io.h"
 #endif
-#include "source_lcao/FORCE_STRESS.h"
+#include "source_lcao/force_stress_lcao.h"
 
 //-----HSolver ElecState Hamilt--------
 #include "source_estate/elecstate_lcao.h"

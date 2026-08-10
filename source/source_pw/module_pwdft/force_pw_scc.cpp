@@ -1,4 +1,4 @@
-#include "forces.h"
+#include "force_pw.h"
 #include "source_base/parallel_reduce.h"
 #include "stress_func.h"
 // new
@@ -10,7 +10,7 @@
 #include "source_base/tool_threading.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
+#include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_hamilt/module_vdw/vdw.h"
 

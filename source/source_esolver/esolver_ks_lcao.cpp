@@ -8,7 +8,7 @@
 #include "source_hamilt/hs_matrix_k.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/lcao_domain.h" // need DeePKS_init
-#include "source_lcao/FORCE_STRESS.h"
+#include "source_lcao/force_stress_lcao.h"
 #include "source_hamilt/module_gint/gint.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"

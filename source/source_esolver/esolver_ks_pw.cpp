@@ -6,7 +6,7 @@
 #include "source_hsolver/diago_params.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/forces.h"
+#include "source_pw/module_pwdft/force_pw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_pw/module_pwdft/stress_pw.h"
 

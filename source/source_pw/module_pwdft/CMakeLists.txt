@@ -18,12 +18,12 @@ list(APPEND objects
     update_cell_pw.cpp
     setup_dftu_pw.cpp
     deltaspin_pw.cpp
-    forces_nl.cpp
-    forces_cc.cpp
-    forces_scc.cpp
-    forces.cpp
-    forces_us.cpp
-    forces_onsite.cpp
+    force_pw_nl.cpp
+    force_pw_cc.cpp
+    force_pw_scc.cpp
+    force_pw.cpp
+    force_pw_us.cpp
+    force_pw_onsite.cpp
     stress_cc.cpp
     stress_ewa.cpp
     stress_gga.cpp

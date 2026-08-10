@@ -7,7 +7,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
 #include "source_base/vector3.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_rt/td_folding.h"

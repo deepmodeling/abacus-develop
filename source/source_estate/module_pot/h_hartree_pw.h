@@ -1,5 +1,5 @@
-#ifndef HHARTREEPW_H
-#define HHARTREEPW_H
+#ifndef H_HARTREE_PW_H
+#define H_HARTREE_PW_H
 
 #include "source_base/global_function.h"
 #include "source_base/matrix.h"

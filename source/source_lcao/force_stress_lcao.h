@@ -1,10 +1,10 @@
 #ifndef FORCE_STRESS_LCAO_H
 #define FORCE_STRESS_LCAO_H
 
-#include "FORCE.h"
+#include "force_lcao.h"
 #include "source_base/global_function.h"
 #include "source_base/matrix.h"
-#include "source_pw/module_pwdft/forces.h"
+#include "source_pw/module_pwdft/force_pw.h"
 #include "source_pw/module_pwdft/stress_func.h"
 #include "source_pw/module_pwdft/structure_factor.h"
 #include "source_io/module_parameter/input_conv.h"

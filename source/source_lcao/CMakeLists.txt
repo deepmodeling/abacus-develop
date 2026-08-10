@@ -33,9 +33,9 @@ if(ENABLE_LCAO)
         module_operator_lcao/operator_fs_utils.cpp
         dftu_lcao.cpp
         pulay_fs_center2.cpp
-        FORCE_STRESS.cpp
-        FORCE_gamma.cpp
-        FORCE_k.cpp
+        force_stress_lcao.cpp
+        force_lcao_gamma.cpp
+        force_lcao_k.cpp
         stress_tools.cpp
         edm.cpp
         spar_dh.cpp
