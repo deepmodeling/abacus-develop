@@ -54,6 +54,18 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_IO_write_hsk_binary_test
+  LIBS parameter base device
+  SOURCES write_hsk_binary_test.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
+)
+
+add_test(
+  NAME MODULE_IO_write_hsk_binary_test_parallel
+  COMMAND mpirun -np 2 ./MODULE_IO_write_hsk_binary_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
+
+AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  base device symmetry
   SOURCES write_eig_occ_test.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp

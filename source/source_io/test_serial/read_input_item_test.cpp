@@ -1028,11 +1028,11 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_hsk[0], 1);
         EXPECT_EQ(param.input.out_hsk[1], 12);
 
-        param.input.out_hsk[0] = 2;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("reserved but not implemented"));
+        it->second.str_values = {"2", "12"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsk[0], 2);
+        EXPECT_EQ(param.input.out_hsk[1], 12);
+        it->second.check_value(it->second, param);
 
         param.input.out_hsk[0] = 3;
         testing::internal::CaptureStdout();

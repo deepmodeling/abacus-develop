@@ -93,14 +93,19 @@ class ESolver_NEP : public ESolver
     NEP nep; ///< NEP object for NEP calculations
 #endif
 
-    std::string nep_file;          ///< directory of NEP model file
-    std::vector<int> atype = {};   ///< atom type mapping for NEP model
-    double nep_potential;          ///< computed potential energy
-    ModuleBase::matrix nep_force;  ///< computed atomic forces
-    ModuleBase::matrix nep_virial; ///< computed lattice virials
-    std::vector<double> _e;        ///< temporary storage for energy computation
-    std::vector<double> _f;        ///< temporary storage for force computation
-    std::vector<double> _v;        ///< temporary storage for virial computation
+    std::string nep_file;                ///< directory of NEP model file
+    std::vector<int> atype = {};         ///< atom type mapping for NEP model
+    std::vector<int> atom_type_index;     ///< global atom index to UnitCell atom type
+    std::vector<int> atom_local_index;    ///< global atom index to local index inside atom type
+    double nep_potential;                ///< computed potential energy
+    ModuleBase::matrix nep_force;        ///< computed atomic forces
+    ModuleBase::matrix nep_virial;       ///< computed lattice virials
+    std::vector<double> nep_cell;        ///< NEP cell buffer in Angstrom, column-major
+    std::vector<double> nep_coord;       ///< NEP coordinate buffer in Angstrom, column-major
+    std::vector<double> nep_virial_sum;  ///< summed per-atom virial components
+    std::vector<double> _e;              ///< temporary storage for energy computation
+    std::vector<double> _f;              ///< temporary storage for force computation
+    std::vector<double> _v;              ///< temporary storage for virial computation
 };
 
 } // namespace ModuleESolver
