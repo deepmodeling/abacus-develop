@@ -63,7 +63,7 @@ struct OrbitalEvaluator
                             std::complex<double>* phi_bloch,
                             const ModuleBase::Vector3<double>& kvec_d) const;
 
-    /// @brief Evaluate a Bloch-summed LCAO wavefunction at one point.
+    /// @brief Evaluate a Bloch-summed LCAO KS wavefunction at r_fix point.
     /// Uses the same neighboring-cell AO sum as eval_phi_all_bloch().
     template <typename T>
     std::complex<double> eval_wfc_bloch(const ModuleBase::Vector3<double>& r_fix,
@@ -195,26 +195,17 @@ class ExcitonPlotter
     /// @param plane cross-section plane: "ab", "bc", or "ca"
     /// @param slice_pos offset along the perpendicular direction (Bohr)
     /// @param npoints desired grid resolution
-    /// @param scale view range relative to the plotted periodic cell
+    /// @param range in-plane cell range {ustart, uend, vstart, vend}
     void plot_average_slice(const int istate,
                             const std::string& type,
                             const std::string& plane,
                             double slice_pos,
                             int npoints,
-                            double scale);
-
-    /// @brief Plot conditional electron or hole density as home-cell and BvK .cube files
-    /// Fixes the opposite particle at r_fix and evaluates the coherent conditional
-    /// wavefunction. Uses direct real-space evaluation (NOT the DMR pipeline) to
-    /// preserve k-point coherence.
-    /// @param istate BSE state index
-    /// @param r_fix fixed opposite-particle position {x, y, z} in Bohr
-    /// @param type "elec" or "hole"
-    void plot_conditional_density(const int istate, const std::array<double, 3>& r_fix, const std::string& type);
+                            const std::vector<int>& range);
 
     /// @brief Compute conditional electron or hole density on a 2D BvK cross-section
     /// Evaluates psi_cond(r) on a regular grid in the chosen plane (ab, bc, or ca),
-    /// spanning scale × BvK supercell extent centered on the home cell. Uses full
+    /// spanning an explicitly selected range of primitive cells. Uses full
     /// Bloch-summed orbital evaluation with home-cell caching for efficiency.
     /// Writes a data file with grid + metadata readable by plot_cond_silce.py.
     /// @param istate BSE state index
@@ -222,14 +213,14 @@ class ExcitonPlotter
     /// @param plane cross-section plane: "ab", "bc", or "ca"
     /// @param slice_pos offset along the perpendicular direction (Bohr)
     /// @param npoints desired grid resolution (pts per cell ≈ npoints / total_cells)
-    /// @param scale view range relative to BvK supercell (default 1.3)
+    /// @param range in-plane cell range {ustart, uend, vstart, vend}
     /// @param type "elec" or "hole"
     void plot_cond_slice(const int istate,
                          const std::array<double, 3>& r_fix,
                          const std::string& plane,
                          double slice_pos,
                          int npoints,
-                         double scale,
+                         const std::vector<int>& range,
                          const std::string& type);
 
   private:

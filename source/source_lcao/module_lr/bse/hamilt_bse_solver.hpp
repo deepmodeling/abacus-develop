@@ -1,6 +1,25 @@
 #pragma once
 
 #include "hamilt_bse_solver.h"
+#include "source_base/timer.h"
+#include "source_base/tool_title.h"
+#include "source_base/global_function.h"
+#include "source_base/global_variable.h"
+#include "source_base/tool_quit.h"
+#include "source_base/module_external/blacs_connector.h"
+#include "source_base/module_external/scalapack_connector.h"
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+#ifdef __ELPA
+#define HAVE_SKEWSYMMETRIC // for elpa_skew_eigenvectors
+#include <elpa/elpa.h>
+#undef HAVE_SKEWSYMMETRIC
+#ifdef I // avoid conflict with the macro defined by ELPA
+#undef I
+#endif
+#endif
+
 namespace BSE
 {
 template <typename T>
@@ -10,6 +29,7 @@ void solve_tda(const int my_rank,
                std::vector<double>& ev,
                std::vector<T>& v)
 {
+#ifdef __ELPA
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_tda1");
     ModuleBase::timer::start("HamiltBSE", "elpa_solve_tda");
 
@@ -58,5 +78,14 @@ void solve_tda(const int my_rank,
     elpa_uninit(&status);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "elpa_solve_tda");
     ModuleBase::timer::end("HamiltBSE", "elpa_solve_tda");
+#else
+    (void)my_rank;
+    (void)A;
+    (void)pA;
+    (void)ev;
+    (void)v;
+    ModuleBase::WARNING_QUIT("BSE::solve_tda",
+                             "No BSE diagonalization backend is available; rebuild with ENABLE_ELPA=ON");
+#endif
 }
 }

@@ -1,16 +1,10 @@
 #pragma once
 
+#include <complex>
+#include <string>
+#include <vector>
+
 #include "source_base/parallel_2d.h"
-#include "source_base/parallel_reduce.h"
-#include "source_base/module_external/blacs_connector.h"
-#include "source_base/module_external/scalapack_connector.h"
-#include "source_lcao/module_lr/utils/lr_util.h"
-#define HAVE_SKEWSYMMETRIC // for elpa_skew_eigenvectors
-#include <elpa/elpa.h>
-#ifdef I // to avoid conflict with macro I defined in elpa
-#undef I
-#endif
-#include <omp.h>
 
 namespace BSE
 {

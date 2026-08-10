@@ -23,12 +23,10 @@ if(ENABLE_LCAO)
     lr_spectrum.cpp
     lr_spectrum_velocity.cpp
     hamilt_casida.cpp
-    esolver_lrtd_lcao.cpp
     potentials/xc_kernel.cpp)
 
   if(ENABLE_LIBRI)
     list(APPEND objects
-      bse/esolver_bse_lcao.cpp
       bse/hamilt_bse.cpp
       bse/hamilt_bse_solver.cpp
       bse/bse_util.cpp)

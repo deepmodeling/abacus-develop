@@ -1,10 +1,16 @@
-#include "source_lcao/module_lr/bse/esolver_bse_lcao.h"
+#include "esolver_lr_lcao_bse.h"
 #include <array>
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_io/module_output/print_info.h"
 #include "source_hamilt/module_gint/gint.h"
-namespace BSE
+#include "source_lcao/module_lr/bse/hamilt_bse.h"
+#include "source_lcao/module_lr/lr_spectrum.h"
+#include "source_lcao/module_lr/utils/exciton_plotter.h"
+#include "source_lcao/module_lr/utils/lr_io.h"
+
+namespace ModuleESolver
 {
+
 template <typename T, typename TR>
 void ESolver_BSE<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
@@ -18,7 +24,7 @@ void ESolver_BSE<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& i
     ModuleESolver::ESolver_FP::before_all_runners(ucell, inp);
     this->pelec = new elecstate::ElecStateLCAO<T>();
 
-    this->kRlist = LR_IO::RI_kRlist(*this->ucell_, &this->kv);
+    this->kRlist = LR_IO::RI_kRlist(*this->ucell_, &this->kv, this->rpa_dir, inp.bse_use_fine_kgrid);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "Set K-POINTS and R-list for RI");
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
@@ -82,7 +88,7 @@ void ESolver_BSE<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& i
     // search adjacent atoms and init Gint
     double search_radius = -1.0;
     search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                            PARAM.inp.out_level,
+                                            inp.out_level,
                                             this->orb_.get_rcutmax_Phi(),
                                             ucell.infoNL->get_rcutmax_Beta(),
                                             PARAM.globalv.gamma_only_local);
@@ -91,7 +97,7 @@ void ESolver_BSE<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& i
                          this->gd,
                          *this->ucell_,
                          search_radius,
-                         PARAM.inp.test_atom_input);
+                         inp.test_atom_input);
 
         this->gint_info_.reset(new ModuleGint::GintInfo(
             this->pw_big->nbx,
@@ -114,7 +120,7 @@ void ESolver_BSE<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& i
     this->pot.resize(this->nspin, nullptr);
     if (this->input.lr_solver != "spectrum" && this->input.lr_solver != "plot")
     {
-        this->mo_lri = LR_Util::make_unique<MolecularLRI<T>>(*this->ucell_,
+        this->mo_lri = LR_Util::make_unique<BSE::MolecularLRI<T>>(*this->ucell_,
             this->nk,
             this->kRlist,
             this->nocc[0],
@@ -159,7 +165,7 @@ void ESolver_BSE<T, TR>::runner(UnitCell& ucell, const int istep)
             std::cout << "Calculating Casida/BSE matrix directly." << std::endl;
             assert(this->xc_kernel == "bse");
             this->lri_init();
-            HamiltBSE<T> bse_matrix(this->nspin, this->nbasis, this->nocc, this->nvirt, *this->ucell_,
+            BSE::HamiltBSE<T> bse_matrix(this->nspin, this->nbasis, this->nocc, this->nvirt, *this->ucell_,
                                     this->orb_cutoff_, this->gd, *this->psi_ks, *this->psi_ks_global, this->eig_gw,
                                     *this->mo_lri,
                                     this->pot[0], this->kv, this->paraX_, this->paraC_, this->paraMat_,
@@ -375,6 +381,12 @@ void ESolver_BSE<T, TR>::after_all_runners(UnitCell& ucell)
 
             if (plot_type == "conditional")
             {
+                if (plot_format != "slice")
+                {
+                    ModuleBase::WARNING_QUIT(
+                        "ESolver_BSE",
+                        "conditional exciton density only supports exciton_plot_format = slice");
+                }
                 if (this->input.exciton_fixed_coordinate.size() != 6)
                 {
                     ModuleBase::WARNING_QUIT(
@@ -387,24 +399,16 @@ void ESolver_BSE<T, TR>::after_all_runners(UnitCell& ucell)
                 const std::array<double, 3> r_e_fix = {this->input.exciton_fixed_coordinate[3],
                                                        this->input.exciton_fixed_coordinate[4],
                                                        this->input.exciton_fixed_coordinate[5]};
-                if (write_cube)
-                {
-                    eplot.plot_conditional_density(this->input.plot_istate, r_h_fix, "elec");
-                    eplot.plot_conditional_density(this->input.plot_istate, r_e_fix, "hole");
-                }
-                if (write_slice)
-                {
-                    eplot.plot_cond_slice(this->input.plot_istate, r_h_fix,
-                        this->input.exciton_slice_plane,
-                        this->input.exciton_slice_pos,
-                        this->input.exciton_slice_npoints,
-                        this->input.exciton_slice_scale, "elec");
-                    eplot.plot_cond_slice(this->input.plot_istate, r_e_fix,
-                        this->input.exciton_slice_plane,
-                        this->input.exciton_slice_pos,
-                        this->input.exciton_slice_npoints,
-                        this->input.exciton_slice_scale, "hole");
-                }
+                eplot.plot_cond_slice(this->input.plot_istate, r_h_fix,
+                    this->input.exciton_slice_plane,
+                    this->input.exciton_slice_pos,
+                    this->input.exciton_slice_npoints,
+                    this->input.exciton_slice_range, "elec");
+                eplot.plot_cond_slice(this->input.plot_istate, r_e_fix,
+                    this->input.exciton_slice_plane,
+                    this->input.exciton_slice_pos,
+                    this->input.exciton_slice_npoints,
+                    this->input.exciton_slice_range, "hole");
             }
             else if (plot_type == "average")
             {
@@ -421,12 +425,12 @@ void ESolver_BSE<T, TR>::after_all_runners(UnitCell& ucell)
                         this->input.exciton_slice_plane,
                         this->input.exciton_slice_pos,
                         this->input.exciton_slice_npoints,
-                        this->input.exciton_slice_scale);
+                        this->input.exciton_slice_range);
                     eplot.plot_average_slice(this->input.plot_istate, "elec",
                         this->input.exciton_slice_plane,
                         this->input.exciton_slice_pos,
                         this->input.exciton_slice_npoints,
-                        this->input.exciton_slice_scale);
+                        this->input.exciton_slice_range);
                 }
             }
             else
@@ -440,7 +444,7 @@ void ESolver_BSE<T, TR>::after_all_runners(UnitCell& ucell)
         std::cout << "Calculating BSE optical absorption spectrum." << std::endl;
         if (LR_Util::tolower(this->input.abs_gauge) == "velocity" )
         {
-            const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
+            const int nspin_tmp = this->input.nspin == 2 ? 2 : 1;
             this->velocity_mo = LR_Util::cal_velocity_mo(*this->ucell_, this->gd, this->two_center_bundle_, 
                                                         this->paraMat_, this->paraC_, this->kv, *this->psi_ks, 
                                                         this->nk, nspin_tmp, this->nbasis, this->nocc, this->nvirt);
@@ -469,7 +473,7 @@ void ESolver_BSE<T, TR>::after_all_runners(UnitCell& ucell)
                     if (LR_Util::tolower(this->input.abs_gauge) == "velocity")
                     {   //// TEST the formula v/omega rather than v/(e_a-e_i)
                         // spectrum.test_transition_dipoles_velocity_omega();
-                        // spectrum.write_transition_dipole(PARAM.globalv.global_out_dir + 
+                        // spectrum.write_transition_dipole(out_dir + 
                         //     "trans_dipole_" + spin_types[is] + "_vomega_tda.dat");
                     }
                     // ============================== for test ==============================
@@ -564,17 +568,16 @@ void ESolver_BSE<T, TR>::lri_init()
     std::map<TA, std::map<TAC, RI::Tensor<T>>> Cs_in;
     std::map<TA, std::map<TAC, RI::Tensor<T>>> Vs_in;
     std::map<TA, std::map<TAC, RI::Tensor<T>>> Ws_in;
-    const std::string& dir = PARAM.globalv.global_readin_dir;
     // if (GlobalV::MY_RANK == 0) // comment to read from all processes to avoid communication
     // {
-        Cs_in = LRI_CV_Tools::read_Cs_ao_all<T>(dir);
+        Cs_in = LRI_CV_Tools::read_Cs_ao_all<T>(this->rpa_dir);
         if (this->input.ri_hartree_benchmark == "aims-librpa" )
         {
-            Vs_in = LR_IO::read_coulomb_mat_general_k<T, T>(dir, Cs_in, this->kRlist);
+            Vs_in = LR_IO::read_coulomb_mat_general_k<T, T>(this->rpa_dir, Cs_in, this->kRlist);
         }
         else if (this->input.ri_hartree_benchmark == "none" || this->input.ri_hartree_benchmark == "abacus-librpa" )
         {
-            Vs_in = LR_IO::read_coulomb_mat_k<T, T>(dir, Cs_in, this->kRlist);
+            Vs_in = LR_IO::read_coulomb_mat_k<T, T>(this->rpa_dir, Cs_in, this->kRlist);
         }
         Ws_in = LR_IO::read_Ws<T, T>(Vs_in, this->kRlist.Rlist);
     // }
@@ -599,26 +602,26 @@ void ESolver_BSE<T, TR>::read_ks_wfc()
     int nk_file = 0;
     int nspin_file = 0;
     int nocc_file = 0;
-    int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
-    LR_IO::parse_band_out_file(nbands_file, nk_file, nspin_file, nocc_file);
+    int nspin_tmp = this->input.nspin == 2 ? 2 : 1;
+    LR_IO::parse_band_out_file(this->rpa_dir, nbands_file, nk_file, nspin_file, nocc_file);
     if (nk_file != this->nk) {
         ModuleBase::WARNING_QUIT("ESolver_BSE", "Inconsistence: The nk in `band_out` is " + std::to_string(nk_file)
              + ", while BSE::nk is " + std::to_string(this->nk));
     }
     std::vector<double> eig_gw_info;
-    if (PARAM.inp.bse_use_fine_kgrid)
+    if (this->input.bse_use_fine_kgrid)
     {
         eig_gw_info = LR_IO::read_energy_qp_from_band_files(this->kv, this->nocc[0], this->nvirt[0], ncore,
-                                                            this->nk, nspin_tmp, nspin_file);
+                                        this->rpa_dir, this->nk, nspin_tmp, nspin_file);
         LR_IO::read_librpa_eigenvectors_from_band_files<T>(*this->psi_ks, *this->psi_ks_global,
-            PARAM.globalv.global_readin_dir, ncore, nbands_file, nspin_tmp, nspin_file, this->paraMat_);
+            this->rpa_dir, ncore, nbands_file, nspin_tmp, nspin_file, this->paraMat_);
     }
     else
     {
         eig_gw_info = LR_IO::read_energy_qp(this->nocc[0], this->nvirt[0],
-                                            ncore, this->nk, nspin_tmp, nspin_file);
+                                        this->rpa_dir, ncore, this->nk, nspin_tmp, nspin_file);
         LR_IO::read_librpa_eigenvectors<T>(*this->psi_ks, *this->psi_ks_global,
-            PARAM.globalv.global_readin_dir, ncore, nbands_file, nspin_tmp, nspin_file, this->paraMat_);
+            this->rpa_dir, ncore, nbands_file, nspin_tmp, nspin_file, this->paraMat_);
     }
     int cbm_k(0), vbm_k(0), direct_k(0);
     for (int iks = 0; iks < this->kv.get_nks(); ++iks) {
@@ -728,4 +731,4 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
 
 template class ESolver_BSE<double, double>;
 template class ESolver_BSE<std::complex<double>, double>;
-} // namespace BSE
+} // namespace ModuleESolver

@@ -476,7 +476,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.exciton_slice_plane, "ab");
     EXPECT_DOUBLE_EQ(param.inp.exciton_slice_pos, 0.0);
     EXPECT_EQ(param.inp.exciton_slice_npoints, 200);
-    EXPECT_DOUBLE_EQ(param.inp.exciton_slice_scale, 1.3);
+    EXPECT_EQ(param.inp.exciton_slice_range, (std::vector<int>{-1, 2, -1, 2}));
     EXPECT_EQ(param.inp.rdmft, 0);
     EXPECT_DOUBLE_EQ(param.inp.rdmft_power_alpha, 0.656);
 }

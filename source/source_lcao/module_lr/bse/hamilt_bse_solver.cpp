@@ -113,6 +113,7 @@ void solve_full(const int my_rank,
                 std::vector<double>& ev,
                 std::vector<std::complex<double>>& v)
 {
+#ifdef __ELPA
     ModuleBase::TITLE("HamiltBSE", "elpa_solve_full");
     ModuleBase::timer::start("HamiltBSE", "elpa_solve_full");
 
@@ -327,5 +328,16 @@ void solve_full(const int my_rank,
     elpa_uninit(&status);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "elpa_solve_full");
     ModuleBase::timer::end("HamiltBSE", "elpa_solve_full");
+#else
+    (void)my_rank;
+    (void)A_part;
+    (void)B_part;
+    (void)pA;
+    (void)pM;
+    (void)ev;
+    (void)v;
+    ModuleBase::WARNING_QUIT("BSE::solve_full",
+                             "No BSE diagonalization backend is available; rebuild with ENABLE_ELPA=ON");
+#endif
 }
 } // namespace BSE

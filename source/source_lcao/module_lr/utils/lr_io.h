@@ -45,7 +45,7 @@ inline void set_zero_if_close(ModuleBase::Vector3<double>& vec, const double tol
     if (std::abs(vec.z) < tol) vec.z = 0.0;
 }
 
-void parse_band_out_file(int& nbands_file, int& nk_file, int& nspin_file, int& nocc_file);
+void parse_band_out_file(const std::string& path, int& nbands_file, int& nk_file, int& nspin_file, int& nocc_file);
 
 #ifdef __EXX
 using TA = int;
@@ -62,7 +62,8 @@ class RI_kRlist
     TC period;
     std::vector<TC> Rlist;
     RI_kRlist() = default;
-    RI_kRlist(const UnitCell& ucell, K_Vectors* pkv);
+    RI_kRlist(const UnitCell& ucell, K_Vectors* pkv,
+              const std::string& path, const int bse_use_fine_kgrid);
     ~RI_kRlist() = default;
     void read_kpts_coarse(const std::string& file, const UnitCell& ucell, K_Vectors* const klist);
     void read_kpts_fine(const std::string& file, const UnitCell& ucell, K_Vectors* const klist, const bool is_weighted);
@@ -72,6 +73,7 @@ class RI_kRlist
 /// @param ncore: as output, number of core orbitals parsed from file
 std::vector<double> read_energy_qp(const int nocc,
                                    const int nvirt,
+                                   const std::string& path,
                                    int& ncore,
                                    const int nk,
                                    const int nspin_tmp,
@@ -82,6 +84,7 @@ std::vector<double> read_energy_qp_from_band_files(const K_Vectors& kv,
                                                    const int nocc,
                                                    const int nvirt,
                                                    int& ncore,
+                                                   const std::string& path,
                                                    const int nk,
                                                    const int nspin_tmp,
                                                    const int nspin_file);

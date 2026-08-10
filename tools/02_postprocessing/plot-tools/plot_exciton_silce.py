@@ -103,73 +103,6 @@ def _parse_v1(comments):
         raise ValueError("Slice header ended before all atom records were read")
     return meta
 
-
-def _parse_legacy(comments):
-    raw = {}
-    for line in comments:
-        fields = line.split(None, 1)
-        if len(fields) == 2:
-            raw[fields[0]] = fields[1]
-
-    integer_keys = (
-        "state", "grid_nu", "grid_nv", "BvK_u", "BvK_v",
-        "u_min", "u_max", "v_min", "v_max", "n_atoms", "has_hole",
-    )
-    for key in integer_keys:
-        if key in raw:
-            raw[key] = int(raw[key])
-
-    float_keys = (
-        "energy_Ry", "slice_pos", "hole_fix_x", "hole_fix_y", "hole_fix_z",
-        "u_vec_x", "u_vec_y", "u_vec_z", "v_vec_x", "v_vec_y", "v_vec_z",
-        "cell_a_x", "cell_a_y", "cell_a_z", "cell_b_x", "cell_b_y", "cell_b_z",
-        "cell_c_x", "cell_c_y", "cell_c_z",
-    )
-    for key in float_keys:
-        if key in raw:
-            raw[key] = float(raw[key])
-
-    meta = {
-        "format_version": 0,
-        "state": raw["state"],
-        "energy_Ry": raw["energy_Ry"],
-        "density_kind": raw.get("density_kind", "conditional_elec"),
-        "fixed_particle": raw.get("fixed_particle", "hole"),
-        "plane": raw.get("plane", "ab"),
-        "slice_pos": raw.get("slice_pos", 0.0),
-        "nu": raw["grid_nu"],
-        "nv": raw["grid_nv"],
-        "nk_u": raw.get("BvK_u", 1),
-        "nk_v": raw.get("BvK_v", 1),
-        "u_min": raw["u_min"],
-        "u_max": raw["u_max"],
-        "v_min": raw["v_min"],
-        "v_max": raw["v_max"],
-        "u_vec": _vector([raw["u_vec_x"], raw["u_vec_y"], raw["u_vec_z"]]),
-        "v_vec": _vector([raw["v_vec_x"], raw["v_vec_y"], raw["v_vec_z"]]),
-        "a": _vector([raw["cell_a_x"], raw["cell_a_y"], raw["cell_a_z"]]),
-        "b": _vector([raw["cell_b_x"], raw["cell_b_y"], raw["cell_b_z"]]),
-        "c": _vector([raw["cell_c_x"], raw["cell_c_y"], raw["cell_c_z"]]),
-        "atoms": [],
-    }
-    has_fixed = raw.get(
-        "has_hole", 1 if meta["density_kind"].startswith("conditional") else 0)
-    if has_fixed:
-        meta["hole"] = _vector([
-            raw["hole_fix_x"], raw["hole_fix_y"], raw["hole_fix_z"]])
-    for index in range(raw["n_atoms"]):
-        meta["atoms"].append({
-            "label": raw["atom_label_{}".format(index)],
-            "pos": _vector([
-                raw["atom_x_{}".format(index)],
-                raw["atom_y_{}".format(index)],
-                raw["atom_z_{}".format(index)],
-            ]),
-        })
-    meta["n_atoms"] = len(meta["atoms"])
-    return meta
-
-
 def _validate(meta, data, filename):
     required = (
         "state", "energy_Ry", "density_kind", "fixed_particle", "plane",
@@ -205,23 +138,14 @@ def read_slice(filename):
     if not comments:
         raise ValueError("{} has no exciton slice header".format(filename))
 
-    meta = (_parse_v1(comments) if comments[0].startswith(_MAGIC)
-            else _parse_legacy(comments))
+    if comments[0].startswith(_MAGIC):
+        meta = _parse_v1(comments)
+    else:
+        raise ValueError("{} has no format-v1 header".format(filename))
     data = np.loadtxt(filename, comments="#", dtype=float)
     data = np.atleast_2d(data)
     _validate(meta, data, filename)
     return meta, data
-
-
-def parse(filename):
-    """Compatibility wrapper returning only metadata."""
-    return read_slice(filename)[0]
-
-
-def load_data(filename):
-    """Compatibility wrapper returning only the density matrix."""
-    return read_slice(filename)[1]
-
 
 def _density_labels(kind):
     labels = {
@@ -238,6 +162,7 @@ def plot(data, meta, output):
     import matplotlib.pyplot as plt
     from matplotlib.colors import LogNorm
     from matplotlib.lines import Line2D
+    from mpl_toolkits.axes_grid1 import make_axes_locatable
 
     u_vec, v_vec = meta["u_vec"], meta["v_vec"]
     u_length = np.linalg.norm(u_vec)
@@ -270,11 +195,13 @@ def plot(data, meta, output):
 
     fig, axis = plt.subplots(figsize=(12, 10))
     image = axis.pcolormesh(
-        x_edges, y_edges, data.T, cmap="hot",
+        x_edges, y_edges, data, cmap="hot",
         norm=LogNorm(vmin=minimum, vmax=maximum),
         shading="flat", rasterized=True)
     color_label, title_kind = _density_labels(meta["density_kind"])
-    fig.colorbar(image, ax=axis, label=color_label, shrink=0.78)
+    divider = make_axes_locatable(axis)
+    cax = divider.append_axes("right", size="5%", pad=0.1)
+    fig.colorbar(image, cax=cax, label=color_label)
 
     def project(position):
         return np.dot(position, u_hat), np.dot(position, v_perp_hat)
@@ -357,10 +284,9 @@ def plot(data, meta, output):
             meta["fixed_particle"].title(), *meta["hole"])
         if "hole" in meta else "")
     axis.set_title(
-        "{} | State {} | {}-plane\n{}E = {:.6f} Ry = {:.3f} eV\n"
-        "BvK {}x{} | grid {}x{}".format(
+        "{} | State {} | {}-plane\n"
+        "{}BvK {}x{} | grid {}x{}".format(
             title_kind, meta["state"], meta["plane"], fixed_text,
-            meta["energy_Ry"], meta["energy_Ry"] * 13.605693,
             meta["nk_u"], meta["nk_v"], meta["nu"], meta["nv"]))
     fig.tight_layout()
     fig.savefig(output, dpi=150, bbox_inches="tight")

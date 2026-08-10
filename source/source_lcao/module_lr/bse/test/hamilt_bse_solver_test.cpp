@@ -3,6 +3,7 @@
 #include <mpi.h>
 #include "source_base/module_container/base/third_party/blas.h"
 
+#ifdef __ELPA
 #define rand01 (static_cast<double>(rand()) / static_cast<double>(RAND_MAX) - 0.5 ) // [-0.5, 0.5]
 
 std::vector<std::complex<double>> generate_conjugate_matrix(int n) {
@@ -232,6 +233,22 @@ TEST(BSETest, skewSolver2) {
         std::cout << "left_v.v execution time: " << elapsed.count() << " seconds" << std::endl;
     check_eq(Ωv.data(), identity.data(), pM.get_local_size(), 1e-6);
 }
+#else
+TEST(BSETest, MissingDiagonalizationBackend)
+{
+    Parallel_2D pA;
+    Parallel_2D pM;
+    std::vector<double> ev;
+    std::vector<double> A;
+    std::vector<double> v_tda;
+    std::vector<std::complex<double>> A_full;
+    std::vector<std::complex<double>> B_full;
+    std::vector<std::complex<double>> v_full;
+
+    EXPECT_EXIT(BSE::solve_tda(0, A, pA, ev, v_tda), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(BSE::solve_full(0, A_full, B_full, pA, pM, ev, v_full), ::testing::ExitedWithCode(1), "");
+}
+#endif
 
 
 int main(int argc, char **argv) {

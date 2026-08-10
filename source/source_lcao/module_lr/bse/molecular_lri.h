@@ -4,6 +4,7 @@
 //=======================
 #pragma once
 #include <RI/physics/LR.h>
+#include <RI/ri/Cell_Nearest.h>
 #include "source_base/timer.h"
 #include "source_base/global_function.h"
 #include "source_base/module_container/base/third_party/blas.h"
@@ -53,7 +54,7 @@ public:
         const std::array<TatomR, 3> latvec = {RI_Util::Vector3_to_array3(this->ucell.a1),
                                               RI_Util::Vector3_to_array3(this->ucell.a2),
                                               RI_Util::Vector3_to_array3(this->ucell.a3)};
-        this->LR_lri.set_parallel(MPI_COMM_WORLD, atoms_pos, latvec, kRlist.period);
+
         this->cell_nearest.init(atoms_pos, latvec, kRlist.period);
     };
     

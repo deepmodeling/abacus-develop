@@ -1,27 +1,23 @@
 #pragma once
-#include "hamilt_bse.h"
+#include "esolver_lr_lcao_tddft.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_lr/esolver_lrtd_lcao.h"
-#include "source_lcao/module_lr/lr_spectrum.h"
-#include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
-#include "source_lcao/module_lr/utils/lr_io.h"
-#include "source_lcao/module_lr/utils/exciton_plotter.h"
-#include "source_lcao/module_ri/lri_cv_tools.h"
+#include "source_lcao/module_lr/bse/molecular_lri.h"
 
-namespace BSE
+namespace ModuleESolver
 {
     template<typename T> using Real = typename GetTypeReal<T>::type;
 
     template<typename T, typename TR = double>
-    class ESolver_BSE : public LR::ESolver_LR<T, TR> {
+    class ESolver_BSE : public ESolver_LR<T, TR> {
     public:
-        explicit ESolver_BSE(const Input_para& inp) : LR::ESolver_LR<T, TR>(inp) {}
+        explicit ESolver_BSE(const Input_para& inp) : ESolver_LR<T, TR>(inp), rpa_dir(inp.rpa_outdir) {}
 
         ~ESolver_BSE() override {
             //delete this->psi_ks; // already deleted in ESolver_LR
             delete this->psi_ks_global;
         }
 
+        const std::string rpa_dir;
         LR_IO::RI_kRlist kRlist;
         psi::Psi<T>* psi_ks_global; ///< global version of psi_ks
         ModuleBase::matrix eig_gw; ///< GW energy
@@ -32,7 +28,7 @@ namespace BSE
         /// @brief [nspin_types][{nstates, nk* (locc* lvirt}]
         std::vector<ct::Tensor> full_X, full_Y;
 
-        std::unique_ptr<MolecularLRI<T>> mo_lri;
+        std::unique_ptr<BSE::MolecularLRI<T>> mo_lri;
 
         virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
         virtual void runner(UnitCell& ucell, int istep) override;

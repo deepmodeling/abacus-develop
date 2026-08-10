@@ -1,7 +1,7 @@
-#include "esolver_lrtd_lcao.h"
-#include "utils/lr_util.h"
-#include "hamilt_casida.h"
-#include "hamilt_ulr.hpp"
+#include "esolver_lr_lcao_tddft.h"
+#include "source_lcao/module_lr/utils/lr_util.h"
+#include "source_lcao/module_lr/hamilt_casida.h"
+#include "source_lcao/module_lr/hamilt_ulr.hpp"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
 #include "source_lcao/lcao_nonlocal_info.h"
 #include "source_lcao/module_lr/hsolver_lrtd.hpp"
@@ -20,37 +20,40 @@
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h" // for precondition
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lri_interface.h"
+#include "source_hamilt/module_xc/exx_info.h"
 #endif
 
 #ifdef __EXX
 template<>
-void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
+void ModuleESolver::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
 {
     ModuleBase::TITLE("ESolver_LR<double>", "move_exx_lri");
     this->exx_lri = exx_ks;
     exx_ks = nullptr;
 }
 template<>
-void LR::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
+void ModuleESolver::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
 {
     ModuleBase::TITLE("ESolver_LR<complex>", "move_exx_lri");
     this->exx_lri = exx_ks;
     exx_ks = nullptr;
 }
 template<>
-void LR::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
+void ModuleESolver::ESolver_LR<std::complex<double>>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
 {
     throw std::runtime_error("ESolver_LR<std::complex<double>>::move_exx_lri: cannot move double to std::complex<double>");
 }
 template<>
-void LR::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
+void ModuleESolver::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>& exx_ks)
 {
     throw std::runtime_error("ESolver_LR<double>::move_exx_lri: cannot move std::complex<double> to double");
 }
 #endif
 
+using namespace LR;
+
 template<typename T, typename TR>
-int LR::ESolver_LR<T, TR>::cal_nupdown_form_occ(const ModuleBase::matrix& wg)
+int ModuleESolver::ESolver_LR<T, TR>::cal_nupdown_form_occ(const ModuleBase::matrix& wg)
 {   // only for nspin=2
     const int& nk = wg.nr / 2;
     auto occ_sum_k = [&](const int& is, const int& ib)->double { double o = 0.0; for (int ik = 0;ik < nk;++ik) { o += wg(is * nk + ik, ib); } return o;};
@@ -66,7 +69,7 @@ int LR::ESolver_LR<T, TR>::cal_nupdown_form_occ(const ModuleBase::matrix& wg)
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::setup_2center_table(TwoCenterBundle& two_center_bundle, LCAO_Orbitals& orb, UnitCell& ucell)
+void ModuleESolver::ESolver_LR<T, TR>::setup_2center_table(TwoCenterBundle& two_center_bundle, LCAO_Orbitals& orb, UnitCell& ucell)
 {
     // set up 2-center table
 #ifdef __FFT_TWO_CENTER
@@ -74,19 +77,19 @@ void LR::ESolver_LR<T, TR>::setup_2center_table(TwoCenterBundle& two_center_bund
 #else
     two_center_bundle.tabulate(inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax);
 #endif
-    if (PARAM.inp.vnl_in_h)
+    if (input.vnl_in_h)
     {
         auto* lcao_nl = new LCAONonlocalInfo();
         lcao_nl->setupNonlocal(ucell.ntype, ucell.atoms, GlobalV::ofs_running, orb,
-                               PARAM.inp.basis_type, PARAM.inp.out_element_info,
-                               PARAM.inp.lspinorb, PARAM.inp.nspin);
+                               input.basis_type, input.out_element_info,
+                               input.lspinorb, input.nspin);
         ucell.infoNL.reset(lcao_nl);
         two_center_bundle.build_beta(ucell.ntype, lcao_nl->get_nonlocal().Beta);
     }
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::parameter_check()const
+void ModuleESolver::ESolver_LR<T, TR>::parameter_check()const
 {
     const std::set<std::string> lr_solvers = { "dav", "lapack" , "spectrum", "dav_subspace", "cg", "elpa", "plot" };
     const std::set<std::string> xc_kernels = { "rpa", "lda", "pwlda", "pbe", "hf", "hse", "bse" };
@@ -106,12 +109,12 @@ void LR::ESolver_LR<T, TR>::parameter_check()const
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::set_dimension()
+void ModuleESolver::ESolver_LR<T, TR>::set_dimension()
 {
-    this->nspin = PARAM.inp.nspin;
+    this->nspin = input.nspin;
     this->nstates = input.lr_nstates;
     this->nbasis = PARAM.globalv.nlocal;
-    int ks_nbands = PARAM.inp.nbands;
+    int ks_nbands = input.nbands;
     this->nocc_max = LR_Util::cal_nocc(LR_Util::cal_nelec(*this->ucell_));
     if (input.ri_hartree_benchmark == "aims" || input.ri_hartree_benchmark == "aims-librpa"
         && !input.aims_nbasis.empty())
@@ -134,7 +137,7 @@ void LR::ESolver_LR<T, TR>::set_dimension()
         int nk_file = 0;
         int nspin_file = 0;
         int nocc_file = 0;
-        LR_IO::parse_band_out_file(nbands_file, nk_file, nspin_file, nocc_file);
+        LR_IO::parse_band_out_file(input.rpa_outdir, nbands_file, nk_file, nspin_file, nocc_file);
         std::cout << "nocc from band_out: " << nocc_file << std::endl;
         ks_nbands = nbands_file;
         this->nocc_max = nocc_file;
@@ -146,7 +149,7 @@ void LR::ESolver_LR<T, TR>::set_dimension()
     if (input.nvirt > this->nvirt_in) { GlobalV::ofs_running << "ESolver_LR: input nvirt is too large to cover by nbands, set nvirt = nbands - nocc = " << this->nvirt_in << std::endl; }
     else if (input.nvirt > 0) { this->nvirt_in = input.nvirt; }
     this->nbands = this->nocc_in + this->nvirt_in;
-    this->nk = PARAM.inp.nspin == 2 ? this->kv.get_nks() / 2 : this->kv.get_nks();
+    this->nk = input.nspin == 2 ? this->kv.get_nks() / 2 : this->kv.get_nks();
     this->nocc.resize(nspin, nocc_in);
     this->nvirt.resize(nspin, nvirt_in);
     if (this->nstates <= 0) { 
@@ -163,7 +166,7 @@ void LR::ESolver_LR<T, TR>::set_dimension()
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::reset_dim_spin2()
+void ModuleESolver::ESolver_LR<T, TR>::reset_dim_spin2()
 {
 	if (nspin != 2) 
 	{ 
@@ -199,7 +202,7 @@ void LR::ESolver_LR<T, TR>::reset_dim_spin2()
 }
 
 template <typename T, typename TR>
-LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp)
+ModuleESolver::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp)
     : input(inp)
 #ifdef __EXX
     , exx_info(GlobalC::exx_info)
@@ -208,7 +211,7 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp)
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
+void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
 {
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
@@ -227,7 +230,7 @@ void LR::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, const Input_p
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
+void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolver_KS_LCAO<T, TR>&& ks_sol,
                                                  UnitCell& ucell,
                                                  const Input_para& inp)
 {
@@ -270,7 +273,7 @@ void LR::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolver_KS_LCAO<T
             this->eig_ks = std::move(ks_sol.pelec->ekb);
         };
 #ifdef __MPI
-	if (this->nbands == PARAM.inp.nbands) 
+	if (this->nbands == input.nbands)
 	{ 
 		move_gs(); 
 	}
@@ -340,7 +343,7 @@ void LR::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolver_KS_LCAO<T
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Input_para& inp)
+void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Input_para& inp)
 {
     ModuleBase::TITLE("ESolver_LR", "ESolver_LR(from scratch)");
     // xc kernel
@@ -353,18 +356,18 @@ void LR::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Inp
     // necessary steps in ESolver_KS::before_all_runners : symmetry and k-points
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        const int cal_symm_repr[2] = {PARAM.inp.cal_symm_repr[0], PARAM.inp.cal_symm_repr[1]};
+        const int cal_symm_repr[2] = {input.cal_symm_repr[0], input.cal_symm_repr[1]};
         ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
-                             PARAM.inp.symmetry_prec, PARAM.inp.nspin, PARAM.inp.calculation, cal_symm_repr);
+                             input.symmetry_prec, input.nspin, input.calculation, cal_symm_repr);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
     const bool use_ibz = false;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
-    const double kspacing[3] = {PARAM.inp.kspacing[0], PARAM.inp.kspacing[1], PARAM.inp.kspacing[2]};
-    const std::string kmesh_type = PARAM.inp.kmesh_type;
-    const double koffset[3] = {PARAM.inp.koffset[0], PARAM.inp.koffset[1], PARAM.inp.koffset[2]};
-    this->kv.set(ucell, ucell.symm, PARAM.inp.kpoint_file, PARAM.inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
+    const double kspacing[3] = {input.kspacing[0], input.kspacing[1], input.kspacing[2]};
+    const std::string kmesh_type = input.kmesh_type;
+    const double koffset[3] = {input.koffset[0], input.koffset[1], input.koffset[2]};
+    this->kv.set(ucell, ucell.symm, input.kpoint_file, input.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
@@ -435,7 +438,7 @@ void LR::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Inp
     // search adjacent atoms and init Gint
     double search_radius = -1.0;
     search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-        PARAM.inp.out_level,
+        input.out_level,
         orb.get_rcutmax_Phi(),
         ucell.infoNL->get_rcutmax_Beta(),
         PARAM.globalv.gamma_only_local);
@@ -444,7 +447,7 @@ void LR::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Inp
                          this->gd,
                          *this->ucell_,
                          search_radius,
-                         PARAM.inp.test_atom_input);
+                         input.test_atom_input);
     gint_info_.reset(
         new ModuleGint::GintInfo(
         this->pw_big->nbx,
@@ -480,7 +483,7 @@ void LR::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Inp
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int istep)
+void ModuleESolver::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
@@ -619,7 +622,7 @@ void LR::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int istep)
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
+void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
 {
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
@@ -629,7 +632,7 @@ void LR::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
     //cal spectrum
     if (LR_Util::tolower(this->input.abs_gauge) == "velocity" )
     {
-        const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
+        const int nspin_tmp = input.nspin == 2 ? 2 : 1;
         this->velocity_mo = LR_Util::cal_velocity_mo(*this->ucell_, this->gd, this->two_center_bundle_, 
                                                     this->paraMat_, this->paraC_, this->kv, *this->psi_ks, 
                                                     this->nk, nspin_tmp, this->nbasis, this->nocc, this->nvirt);
@@ -673,7 +676,7 @@ void LR::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::setup_eigenvectors_X()
+void ModuleESolver::ESolver_LR<T, TR>::setup_eigenvectors_X()
 {
     ModuleBase::TITLE("ESolver_LR", "setup_eigenvectors_X");
     for (int is = 0;is < nspin;++is)
@@ -697,7 +700,7 @@ void LR::ESolver_LR<T, TR>::setup_eigenvectors_X()
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::set_X_initial_guess()
+void ModuleESolver::ESolver_LR<T, TR>::set_X_initial_guess()
 {
     // set the initial guess of X
     for (int is = 0;is < this->nspin;++is)
@@ -744,7 +747,7 @@ void LR::ESolver_LR<T, TR>::set_X_initial_guess()
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
+void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
 {
     this->pot.resize(nspin, nullptr);
     if (this->input.ri_hartree_benchmark != "none") { return; } //no need to initialize potential for Hxc kernel in the RI-benchmark routine
@@ -764,7 +767,7 @@ void LR::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::read_ks_wfc()
+void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
 {
     assert(this->psi_ks != nullptr);
     this->pelec->ekb.create(this->kv.get_nks(), this->nbands);
@@ -789,7 +792,7 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
                 this->pelec->wg,
 				this->kv.ik2iktot,
 				this->kv.get_nkstot(),
-                PARAM.inp.nspin,
+                input.nspin,
 				/*skip_bands=*/this->nocc_max - this->nocc_in)) {
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
     }
@@ -797,7 +800,7 @@ void LR::ESolver_LR<T, TR>::read_ks_wfc()
 }
 
 template<typename T, typename TR>
-void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
+void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
 {
     chg_gs.set_rhopw(this->pw_rho);
     const bool kin_den = chg_gs.kin_density(); // mohan add 20251202
@@ -823,5 +826,5 @@ void LR::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
         }
     }
 }
-template class LR::ESolver_LR<double, double>;
-template class LR::ESolver_LR<std::complex<double>, double>;
+template class ModuleESolver::ESolver_LR<double, double>;
+template class ModuleESolver::ESolver_LR<std::complex<double>, double>;

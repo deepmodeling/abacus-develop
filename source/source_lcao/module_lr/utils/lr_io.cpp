@@ -21,9 +21,9 @@ namespace LR_IO {
     const std::string FILE_BAND_OUT = "band_out";
     const std::string FILE_BAND_KPATH = "band_kpath_info";
 
-void parse_band_out_file(int& nbands_file, int& nk_file, int& nspin_file, int& nocc_file)
+void parse_band_out_file(const std::string& path, int& nbands_file, int& nk_file, int& nspin_file, int& nocc_file)
 {
-    std::string file = PARAM.globalv.global_readin_dir + FILE_BAND_OUT;
+    std::string file = path + FILE_BAND_OUT;
     std::ifstream ifs(file);
     if (!ifs) throw std::runtime_error(file + " not found");
     std::string tmp, line;
@@ -65,11 +65,11 @@ void parse_band_out_file(int& nbands_file, int& nk_file, int& nspin_file, int& n
 
 #ifdef __EXX
 
-RI_kRlist::RI_kRlist(const UnitCell& ucell,
-                     K_Vectors* const pkv)
+RI_kRlist::RI_kRlist(const UnitCell& ucell, K_Vectors* const pkv,
+    const std::string& path, const int use_fine_kgrid)
     : klist(pkv)
 {
-    read_kpts_coarse(PARAM.globalv.global_readin_dir + FILE_COARSE, ucell, this->klist);
+    read_kpts_coarse(path + FILE_COARSE, ucell, this->klist);
     this->klist_coarse = *this->klist;
     this->period = RI_Util::get_Born_vonKarmen_period(*klist);
     this->Rlist = RI_Util::get_Born_von_Karmen_cells(period);
@@ -80,16 +80,16 @@ RI_kRlist::RI_kRlist(const UnitCell& ucell,
     //     count++;
     //     std::cout << "iR=" << count <<": "<< iR[0] << " " << iR[1] << " " << iR[2] << std::endl;
     // }
-    if (PARAM.inp.bse_use_fine_kgrid==1)
+    if (use_fine_kgrid==1)
     {
-        read_kpts_fine(PARAM.globalv.global_readin_dir + FILE_FINE_UNIFORM, ucell, this->klist, false);
+        read_kpts_fine(path + FILE_FINE_UNIFORM, ucell, this->klist, false);
     }
-    else if (PARAM.inp.bse_use_fine_kgrid==2)
+    else if (use_fine_kgrid==2)
     {
-        read_kpts_fine(PARAM.globalv.global_readin_dir + FILE_FINE_NONUNIFORM, ucell, this->klist, true);
+        read_kpts_fine(path + FILE_FINE_NONUNIFORM, ucell, this->klist, true);
     }
-    else if (PARAM.inp.bse_use_fine_kgrid!=0)
-        ModuleBase::WARNING_QUIT("LR_IO", "bse_use_fine_kgrid must be 0, 1 or 2");
+    else if (use_fine_kgrid!=0)
+        ModuleBase::WARNING_QUIT("LR_IO", "use_fine_kgrid must be 0, 1 or 2");
 };
 
 void RI_kRlist::read_kpts_coarse(const std::string& file, const UnitCell& ucell, K_Vectors* const klist)
@@ -207,12 +207,13 @@ void RI_kRlist::read_kpts_fine(const std::string& file, const UnitCell& ucell, K
 
 std::vector<double> read_energy_qp(const int nocc,
                                    const int nvirt,
+                                   const std::string& path,
                                    int& ncore,
                                    const int nk,
                                    const int nspin_tmp,
                                    const int nspin_file)
 {
-    const std::string file = PARAM.globalv.global_readin_dir + "energy_qp";
+    const std::string file = path + "energy_qp";
     std::cout << "in read_energy_qp, nbands(nocc+nvir): " << (nocc+nvirt) << std::endl;
     std::vector<double> eig_info( nspin_tmp * nk * (nocc + nvirt) * 3 ); // occ, eig_ks, eig_gw
     std::ifstream ifs_gw (file);
@@ -277,12 +278,13 @@ std::vector<double> read_energy_qp_from_band_files(const K_Vectors& kv,
                                                    const int nocc,
                                                    const int nvirt,
                                                    int& ncore,
+                                                   const std::string& path,
                                                    const int nk,
                                                    const int nspin_tmp,
                                                    const int nspin_file)
 {
-    const std::string ks_prefix = PARAM.globalv.global_readin_dir + "KS_band_spin_";
-    const std::string gw_prefix = PARAM.globalv.global_readin_dir + "GW_band_spin_";
+    const std::string ks_prefix = path + "KS_band_spin_";
+    const std::string gw_prefix = path + "GW_band_spin_";
     std::cout << "in read_energy_qp_from_band_files, nbands(nocc+nvir): " << (nocc+nvirt) << std::endl;
     std::vector<double> eig_info( nspin_tmp * nk * (nocc + nvirt) * 3 ); // occ, eig_ks, eig_gw
     for (int is =0; is < nspin_file; ++is)

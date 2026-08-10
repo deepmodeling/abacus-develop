@@ -11,8 +11,10 @@
 #include "esolver_ks_lcao.h"
 #include "esolver_ks_lcao_tddft.h"
 #include "esolver_ks_lcaopw.h"
-#include "source_lcao/module_lr/esolver_lrtd_lcao.h"
-#include "source_lcao/module_lr/bse/esolver_bse_lcao.h"
+#include "esolver_lr_lcao_tddft.h"
+#ifdef __EXX
+#include "esolver_lr_lcao_bse.h"
+#endif
 #include "source_base/module_external/blacs_connector.h"
 #endif
 #include "esolver_dp.h"
@@ -274,38 +276,43 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "lr_lcao")
     {
-        if (PARAM.inp.xc_kernel != "bse")
+        if (inp.xc_kernel != "bse")
         {
             if (PARAM.globalv.gamma_only_local)
             {
-                return new LR::ESolver_LR<double, double>(inp);
+                return new ModuleESolver::ESolver_LR<double, double>(inp);
             }
             else
             {
-                return new LR::ESolver_LR<std::complex<double>, double>(inp);
+                return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp);
             }
         }
         else
-        {        
+        {
+#ifdef __EXX
             if (PARAM.globalv.gamma_only_local)
             {
-                return new BSE::ESolver_BSE<double, double>(inp);
+                return new ModuleESolver::ESolver_BSE<double, double>(inp);
             }
             else
             {
-                return new BSE::ESolver_BSE<std::complex<double>, double>(inp);
+                return new ModuleESolver::ESolver_BSE<std::complex<double>, double>(inp);
             }
+#else
+            ModuleBase::WARNING_QUIT("ESolver", "BSE requires ENABLE_LIBRI=ON");
+            return nullptr;
+#endif
         }
     }
     else if (esolver_type == "ksdft_lr_lcao")
     {
         if (PARAM.globalv.gamma_only_local)
         {
-            return new LR::ESolver_LR<double, double>(inp);
+            return new ModuleESolver::ESolver_LR<double, double>(inp);
         }
         else
         {
-            return new LR::ESolver_LR<std::complex<double>, double>(inp);
+            return new ModuleESolver::ESolver_LR<std::complex<double>, double>(inp);
         }
     }
 #endif

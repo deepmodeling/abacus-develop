@@ -23,37 +23,22 @@ void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const
 {
     ModuleBase::TITLE("MolecularLRI", "init");
     ModuleBase::timer::start("MolecularLRI", "init");
-    // 1. distribute atom and k-point tasks among MPI processes
+
+    // 1. build kindex_map: index → fractional coordinate for all k-points
+    std::vector<Tk> kindex_map_in(this->nk);
+    for (int ik = 0; ik < this->nk; ++ik)
+        kindex_map_in[ik] = RI_Util::Vector3_to_array3(this->kv.kvec_d.at(ik));
+    this->LR_lri.init(kindex_map_in, this->nocc, this->nvirt);
+    
+    // 2. distribute atom and k-point tasks among MPI processes
     int nproc = GlobalV::NPROC;
-    std::set<int> set_I, set_J, set_IJ, set_k;
     int task_sizes = this->ucell.nat * this->ucell.nat * this->nk * this->nk;
     std::cout << "Total Molecular LRI tasks: " << task_sizes << ", number of MPI processes: " << nproc << std::endl;
-    RI::Distribute_Equally::distribute_atom_and_k_pair(MPI_COMM_WORLD,
-                                                       (std::size_t)this->ucell.nat,
-                                                       (std::size_t)this->nk,
-                                                       this->LR_lri.list_I,
-                                                       this->LR_lri.list_J,
-                                                       this->LR_lri.k1_indices,
-                                                       this->LR_lri.k2_indices,
-                                                       false);
-
-    set_IJ.insert(this->LR_lri.list_I.begin(), this->LR_lri.list_I.end());
-    set_IJ.insert(this->LR_lri.list_J.begin(), this->LR_lri.list_J.end());
-    // transform set to vector, since openmp cannot handle set for parallelization
-    this->LR_lri.list_IJ.assign(set_IJ.begin(), set_IJ.end());
-
+    this->LR_lri.set_parallel(MPI_COMM_WORLD, (std::size_t)this->ucell.nat, (std::size_t)this->nk, this->kRlist.period);
     for (int k1 : this->LR_lri.k1_indices)
     {
         this->is_local_k1[k1] = true;
     }
-    set_k.insert(this->LR_lri.k1_indices.begin(), this->LR_lri.k1_indices.end());
-    set_k.insert(this->LR_lri.k2_indices.begin(), this->LR_lri.k2_indices.end());
-    this->LR_lri.k_indices.assign(set_k.begin(), set_k.end());
-
-    // build kindex_map: index → fractional coordinate for all k-points
-    this->LR_lri.kindex_map.resize(this->nk);
-    for (int ik = 0; ik < this->nk; ++ik)
-        this->LR_lri.kindex_map[ik] = RI_Util::Vector3_to_array3(this->kv.kvec_d.at(ik));
 
     int proc_ntasks = this->LR_lri.list_I.size() * this->LR_lri.list_J.size() * this->LR_lri.k1_indices.size() * this->LR_lri.k2_indices.size();
     GlobalV::ofs_running << "Molecular LRI init: Process " << GlobalV::MY_RANK
@@ -70,7 +55,7 @@ void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const
     this->build_q_to_kpair_map(PARAM.inp.bse_q_approx_mode, PARAM.inp.bse_q_approx_threshold);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "distribute_atom_and_k");
 
-    // 2. move R of tensors to nearest image Bvk cell for valid Fourier interpolation
+    // 3. move R of tensors to nearest image Bvk cell for valid Fourier interpolation
     double dist;
     std::set<int> all_atoms;
     for (int i = 0; i < this->ucell.nat; ++i)
@@ -90,9 +75,11 @@ void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const
             }
         }
     }
+    std::set<TA> set_I(this->LR_lri.list_I.begin(), this->LR_lri.list_I.end());
+    std::set<TA> set_J(this->LR_lri.list_J.begin(), this->LR_lri.list_J.end());
+    std::set<TA> set_IJ(this->LR_lri.list_IJ.begin(), this->LR_lri.list_IJ.end());
 
-
-    // 3. set tensors, in these functions MPI distribution will be performed
+    // 4. set tensors, in these functions MPI distribution will be performed
     ModuleBase::TITLE("MolecularLRI", "before_set_Cs");
     this->LR_lri.set_Cs(Cs_in, info_ri.C_threshold, set_IJ, all_atoms);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "set_Cs");
@@ -104,16 +91,14 @@ void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "set_Ws");
     if (PARAM.inp.out_ri_cv)
     {        
-        TLRI<T>& Cs_LRI = this->LR_lri.lri.data_pool.at("Cs_").Ds_ab;// see LRI::set_tensor_map2
-        LRI_CV_Tools::write_Cs_ao(Cs_LRI, PARAM.globalv.global_out_dir + "Cs_lri_test_" + std::to_string(GlobalV::MY_RANK));
-        TLRI<T>& Vs_LRI = this->LR_lri.lri.data_pool.at("Vs_").Ds_ab;
-        LRI_CV_Tools::write_Vs_abf(Vs_LRI, PARAM.globalv.global_out_dir + "Vs_lri_test_" + std::to_string(GlobalV::MY_RANK));
-        TLRI<T>& Ws_LRI = this->LR_lri.lri.data_pool.at("Ws_").Ds_ab;
-        LRI_CV_Tools::write_Vs_abf(Ws_LRI, PARAM.globalv.global_out_dir + "Ws_lri_test_" + std::to_string(GlobalV::MY_RANK));
+        TLRI<T>& Cs_LRI = this->LR_lri.lrik.data_pool.at("Cs_").Ds_ab;// see LRI::set_tensor_map2
+        LRI_CV_Tools::write_Cs_ao(Cs_LRI, PARAM.globalv.global_out_dir + "Cs_lrik_test_" + std::to_string(GlobalV::MY_RANK));
+        TLRI<T>& Vs_LRI = this->LR_lri.lrik.data_pool.at("Vs_").Ds_ab;
+        LRI_CV_Tools::write_Vs_abf(Vs_LRI, PARAM.globalv.global_out_dir + "Vs_lrik_test_" + std::to_string(GlobalV::MY_RANK));
+        TLRI<T>& Ws_LRI = this->LR_lri.lrik.data_pool.at("Ws_").Ds_ab;
+        LRI_CV_Tools::write_Vs_abf(Ws_LRI, PARAM.globalv.global_out_dir + "Ws_lrik_test_" + std::to_string(GlobalV::MY_RANK));
     }
-    // 4. prepare mo-type tensors
-    this->LR_lri.nocc = this->nocc;
-    this->LR_lri.nvirt = this->nvirt;    
+    // 5. prepare mo-type tensors  
     this->LR_lri.map_psi = this->transform_psi_k(this->psi_ks, this->LR_lri.k_indices);
 
     ModuleBase::TITLE("MolecularLRI", "cal_Csk_ao_mo");

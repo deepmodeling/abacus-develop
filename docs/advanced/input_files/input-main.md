@@ -575,7 +575,7 @@
     - [exciton\_slice\_plane](#exciton_slice_plane)
     - [exciton\_slice\_pos](#exciton_slice_pos)
     - [exciton\_slice\_npoints](#exciton_slice_npoints)
-    - [exciton\_slice\_scale](#exciton_slice_scale)
+    - [exciton\_slice\_range](#exciton_slice_range)
     - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
     - [aims\_nbasis](#aims_nbasis)
   - [Reduced Density Matrix Functional Theory](#reduced-density-matrix-functional-theory)
@@ -5048,7 +5048,7 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`, `BSE`.
 - **Type**: String
 - **Description**: The exciton density represented when `lr_solver` is `plot`.
   - `average`: Integrate out the other particle coordinate and plot the average electron and hole densities.
-  - `conditional`: Fix one particle at the Cartesian position specified by the exciton fixed-coordinate parameters and plot the density of the other particle.
+  - `conditional`: Fix one particle at the Cartesian position specified by `exciton_fixed_coordinate` and plot a two-dimensional slice of the other particle's density.
 - **Default**: average
 
 ### exciton_plot_format
@@ -5057,8 +5057,9 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`, `BSE`.
 - **Description**: The output format for exciton-density plotting.
   - `cube`: Write three-dimensional density files in Gaussian cube format.
   - `slice`: Write two-dimensional cross-section data files.
-  - `both`: Write both cube and slice files.
-  - The default value is `cube`.
+  - `both`: Write both cube and slice files for average density.
+  - For `exciton_plot_type = average`, `cube`, `slice`, and `both` are supported.
+  - For `exciton_plot_type = conditional`, only `slice` is supported; `cube` and `both` are invalid.
 - **Default**: cube
 
 ### exciton_fixed_coordinate
@@ -5087,14 +5088,15 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`, `BSE`.
 ### exciton_slice_npoints
 
 - **Type**: Integer
-- **Description**: Target in-plane grid resolution. The final number of points is adjusted to use a uniform number of points per primitive cell over the plotted BvK range and includes both endpoints.
+- **Description**: Target in-plane grid resolution. The final number of points is adjusted to use a uniform number of points per primitive cell over `exciton_slice_range` and includes both endpoints.
 - **Default**: 200
 
-### exciton_slice_scale
+### exciton_slice_range
 
-- **Type**: Real
-- **Description**: Scale factor for the in-plane range relative to the BvK supercell. Values smaller than 1.0 are treated as 1.0.
-- **Default**: 1.3
+- **Type**: Vector of Integer (4 values)
+- **Description**: In-plane primitive-cell range written as `ustart uend vstart vend`. The end values are exclusive cell boundaries, while the generated grid includes both range endpoints. For example, `-1 2 -2 3` plots $u\in[-1,2]$ and $v\in[-2,3]$.
+- **Default**: -1 2 -1 2
+- **Unit**: Primitive cells
 
 ### ri_hartree_benchmark
 

@@ -1,7 +1,6 @@
 #include "exciton_plotter.h"
 
 #include "source_base/constants.h"
-#include "source_base/element_name.h"
 #include "source_base/matrix3.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/parallel_global.h"
@@ -15,52 +14,11 @@
 #include <fstream>
 #include <iomanip>
 #include <iostream>
-#include <set>
 #include <utility>
 
 namespace
 {
 using Vec3 = ModuleBase::Vector3<double>;
-
-Vec3 atom_position_bohr(const UnitCell& ucell, const int iat)
-{
-    return ucell.get_tau(iat) * ucell.lat0;
-}
-
-int atomic_number_from_label(std::string element)
-{
-    element.erase(std::remove_if(element.begin(), element.end(), [](const char c) { return c >= '0' && c <= '9'; }),
-                  element.end());
-    for (int i = 0; i < static_cast<int>(ModuleBase::element_name.size()); ++i)
-    {
-        if (element == ModuleBase::element_name[i])
-        {
-            return i + 1;
-        }
-    }
-    return 0;
-}
-
-std::array<int, 3> bvk_mesh_from_kpoints(const K_Vectors& kv, const int nk)
-{
-    if (kv.nmp[0] > 0 && kv.nmp[1] > 0 && kv.nmp[2] > 0)
-    {
-        return {kv.nmp[0], kv.nmp[1], kv.nmp[2]};
-    }
-
-    std::set<long long> kx, ky, kz;
-    const int n = std::min<int>(nk, kv.kvec_d.size());
-    constexpr double scale = 1.0e10;
-    for (int ik = 0; ik < n; ++ik)
-    {
-        kx.insert(static_cast<long long>(std::llround(kv.kvec_d[ik].x * scale)));
-        ky.insert(static_cast<long long>(std::llround(kv.kvec_d[ik].y * scale)));
-        kz.insert(static_cast<long long>(std::llround(kv.kvec_d[ik].z * scale)));
-    }
-    return {std::max(1, static_cast<int>(kx.size())),
-            std::max(1, static_cast<int>(ky.size())),
-            std::max(1, static_cast<int>(kz.size()))};
-}
 
 struct SliceGeometry
 {
@@ -79,12 +37,16 @@ struct SliceGeometry
 
 SliceGeometry make_slice_geometry(const UnitCell& ucell,
                                   const K_Vectors& kv,
-                                  const int nk,
                                   const std::string& plane,
                                   const double slice_pos,
                                   const int npoints,
-                                  const double scale)
+                                  const std::vector<int>& range)
 {
+    if (range.size() != 4 || range[0] >= range[1] || range[2] >= range[3])
+    {
+        ModuleBase::WARNING_QUIT("ExcitonPlotter", "Invalid slice range: expected ustart < uend and vstart < vend.");
+    }
+
     SliceGeometry geom;
     geom.plane = plane;
     geom.slice_pos = slice_pos;
@@ -92,7 +54,6 @@ SliceGeometry make_slice_geometry(const UnitCell& ucell,
     geom.b_bohr = ucell.a2 * ucell.lat0;
     geom.c_bohr = ucell.a3 * ucell.lat0;
 
-    const auto mesh = bvk_mesh_from_kpoints(kv, nk);
     if (plane == "ab")
     {
         geom.u_vec = geom.a_bohr;
@@ -100,8 +61,8 @@ SliceGeometry make_slice_geometry(const UnitCell& ucell,
         geom.perp_offset = geom.c_bohr * (slice_pos / geom.c_bohr.norm());
         geom.u_axis = 0;
         geom.v_axis = 1;
-        geom.nk_u = mesh[0];
-        geom.nk_v = mesh[1];
+        geom.nk_u = std::max(1, kv.nmp[0]);
+        geom.nk_v = std::max(1, kv.nmp[1]);
     }
     else if (plane == "bc")
     {
@@ -110,8 +71,8 @@ SliceGeometry make_slice_geometry(const UnitCell& ucell,
         geom.perp_offset = geom.a_bohr * (slice_pos / geom.a_bohr.norm());
         geom.u_axis = 1;
         geom.v_axis = 2;
-        geom.nk_u = mesh[1];
-        geom.nk_v = mesh[2];
+        geom.nk_u = std::max(1, kv.nmp[1]);
+        geom.nk_v = std::max(1, kv.nmp[2]);
     }
     else if (plane == "ca")
     {
@@ -120,29 +81,25 @@ SliceGeometry make_slice_geometry(const UnitCell& ucell,
         geom.perp_offset = geom.b_bohr * (slice_pos / geom.b_bohr.norm());
         geom.u_axis = 2;
         geom.v_axis = 0;
-        geom.nk_u = mesh[2];
-        geom.nk_v = mesh[0];
+        geom.nk_u = std::max(1, kv.nmp[2]);
+        geom.nk_v = std::max(1, kv.nmp[0]);
     }
     else
     {
         ModuleBase::WARNING_QUIT("ExcitonPlotter", "Unknown slice plane: " + plane + ". Use ab, bc, or ca.");
     }
 
-    const double safe_scale = std::max(1.0, scale);
-    const int pad_u = std::max(0, static_cast<int>(std::ceil((safe_scale - 1.0) * 0.5 * geom.nk_u)));
-    const int pad_v = std::max(0, static_cast<int>(std::ceil((safe_scale - 1.0) * 0.5 * geom.nk_v)));
-    const int total_u = geom.nk_u + 2 * pad_u;
-    const int total_v = geom.nk_v + 2 * pad_v;
-
-    geom.u_start_cells = static_cast<int>(std::floor(0.5 - total_u * 0.5));
-    geom.u_end_cells = geom.u_start_cells + total_u;
-    geom.v_start_cells = static_cast<int>(std::floor(0.5 - total_v * 0.5));
-    geom.v_end_cells = geom.v_start_cells + total_v;
+    geom.u_start_cells = range[0];
+    geom.u_end_cells = range[1];
+    geom.v_start_cells = range[2];
+    geom.v_end_cells = range[3];
     geom.u_start = static_cast<double>(geom.u_start_cells);
     geom.u_end = static_cast<double>(geom.u_end_cells);
     geom.v_start = static_cast<double>(geom.v_start_cells);
     geom.v_end = static_cast<double>(geom.v_end_cells);
 
+    const int total_u = geom.u_end_cells - geom.u_start_cells;
+    const int total_v = geom.v_end_cells - geom.v_start_cells;
     const int max_cells = std::max(total_u, total_v);
     geom.res = std::max(1, npoints / std::max(1, max_cells));
     geom.nu = total_u * geom.res + 1;
@@ -245,7 +202,7 @@ void write_slice_data(const UnitCell& ucell,
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
         const int it = ucell.iat2it[iat];
-        const Vec3 tau = atom_position_bohr(ucell, iat);
+        const Vec3 tau = ucell.get_tau(iat) * ucell.lat0; // tau in Bohr
         ofs << "# " << ucell.atoms[it].label << " " << tau.x << " " << tau.y << " " << tau.z << "\n";
     }
     ofs << "# data\n";
@@ -563,7 +520,7 @@ void ExcitonPlotter<T>::plot_average_slice(const int istate,
                                            const std::string& plane,
                                            const double slice_pos,
                                            const int npoints,
-                                           const double scale)
+                                           const std::vector<int>& range)
 {
     ModuleBase::TITLE("ExcitonPlotter", "plot_average_slice");
     assert(this->nspin_x == 1);
@@ -578,7 +535,7 @@ void ExcitonPlotter<T>::plot_average_slice(const int istate,
     }
 
     const auto dmk = type == "hole" ? cal_effective_dmk_hole(istate) : cal_effective_dmk_elec(istate);
-    const SliceGeometry geom = make_slice_geometry(this->ucell, this->kv, this->nk, plane, slice_pos, npoints, scale);
+    const SliceGeometry geom = make_slice_geometry(this->ucell, this->kv, plane, slice_pos, npoints, range);
     const double du = (geom.u_end - geom.u_start) / (geom.nu - 1);
     const double dv = (geom.v_end - geom.v_start) / (geom.nv - 1);
     const int cell_res = geom.res;
@@ -640,7 +597,8 @@ void ExcitonPlotter<T>::plot_average_slice(const int istate,
                      false,
                      {0.0, 0.0, 0.0});
     std::cout << "Average " << type << " density slice written to " << filename << " (" << geom.nu << "x" << geom.nv
-              << ", " << geom.res << " pts/cell)" << std::endl;
+              << ", range [" << geom.u_start_cells << ", " << geom.u_end_cells << "] x [" << geom.v_start_cells
+              << ", " << geom.v_end_cells << "], " << geom.res << " pts/cell)" << std::endl;
 }
 
 template <typename T>
@@ -662,30 +620,30 @@ std::vector<std::vector<std::complex<double>>> ExcitonPlotter<T>::build_conditio
         const int x_start = ik * nocc * nvirt;
         if (plot_electron)
         {
-            for (int v = 0; v < nocc; ++v)
+            for (int io = 0; io < nocc; ++io)
             {
                 const Complex fixed_wfc = std::conj(
                     this->orb_eval_
-                        .eval_wfc_bloch<T>(r_fix, ik, v, this->psi_ks_vec[0], this->ucell, this->kv.kvec_d[ik]));
-                for (int c = 0; c < nvirt; ++c)
+                        .eval_wfc_bloch<T>(r_fix, ik, io, this->psi_ks_vec[0], this->ucell, this->kv.kvec_d[ik]));
+                for (int iv = 0; iv < nvirt; ++iv)
                 {
-                    mixing[ik][c] += to_complex(this->X[offset_b + x_start + c + v * nvirt]) * fixed_wfc;
+                    mixing[ik][iv] += this->X[offset_b + x_start + iv + io * nvirt] * fixed_wfc;
                 }
             }
         }
         else
         {
-            for (int c = 0; c < nvirt; ++c)
+            for (int iv = 0; iv < nvirt; ++iv)
             {
                 const Complex fixed_wfc = this->orb_eval_.eval_wfc_bloch<T>(r_fix,
                                                                             ik,
-                                                                            nocc + c,
+                                                                            nocc + iv,
                                                                             this->psi_ks_vec[0],
                                                                             this->ucell,
                                                                             this->kv.kvec_d[ik]);
-                for (int v = 0; v < nocc; ++v)
+                for (int io = 0; io < nocc; ++io)
                 {
-                    mixing[ik][v] += to_complex(this->X[offset_b + x_start + c + v * nvirt]) * fixed_wfc;
+                    mixing[ik][io] += this->X[offset_b + x_start + iv + io * nvirt] * fixed_wfc;
                 }
             }
         }
@@ -695,230 +653,31 @@ std::vector<std::vector<std::complex<double>>> ExcitonPlotter<T>::build_conditio
     for (int ik = 0; ik < this->nk; ++ik)
     {
         this->psi_ks_vec[0].fix_k(ik);
-        if (!plot_electron)
+        const int band_start = plot_electron ? nocc : 0;
+        if (plot_electron)
         {
-            for (Complex& value: mixing[ik])
+            for (int ib = 0; ib < nmix; ++ib)
             {
-                value = std::conj(value);
+                const T* const band = this->psi_ks_vec[0].get_pointer(band_start + ib);
+                for (int mu = 0; mu < this->naos; ++mu)
+                {
+                    coefficients[ik][mu] += band[mu] * mixing[ik][ib];
+                }
             }
         }
-        const int band_start = plot_electron ? nocc : 0;
-        for (int ib = 0; ib < nmix; ++ib)
+        else
         {
-            const T* const band = this->psi_ks_vec[0].get_pointer(band_start + ib);
-            for (int mu = 0; mu < this->naos; ++mu)
+            for (int ib = 0; ib < nmix; ++ib)
             {
-                coefficients[ik][mu] += to_complex(band[mu]) * mixing[ik][ib];
+                const T* const band = this->psi_ks_vec[0].get_pointer(band_start + ib);
+                for (int mu = 0; mu < this->naos; ++mu)
+                {
+                    coefficients[ik][mu] += std::conj(band[mu]) * mixing[ik][ib];
+                }
             }
         }
     }
     return coefficients;
-}
-
-template <typename T>
-void ExcitonPlotter<T>::plot_conditional_density(const int istate,
-                                                 const std::array<double, 3>& r_fix_in,
-                                                 const std::string& type)
-{
-    using Complex = std::complex<double>;
-    ModuleBase::TITLE("ExcitonPlotter", "plot_conditional_density");
-    assert(this->nspin_x == 1);
-    if (!this->orb_)
-    {
-        ModuleBase::WARNING_QUIT("ExcitonPlotter",
-                                 "plot_conditional_density requires LCAO_Orbitals; pass orb to constructor.");
-    }
-    const bool plot_electron = type == "elec";
-    if (!plot_electron && type != "hole")
-    {
-        ModuleBase::WARNING_QUIT("ExcitonPlotter", "Unknown conditional density type: " + type + ". Use elec or hole.");
-    }
-    const auto coefficients = build_conditional_coefficients(istate, r_fix_in, plot_electron);
-
-    const int nx = this->rho_basis.nx;
-    const int ny = this->rho_basis.ny;
-    const int nz = this->rho_basis.nz;
-    const int nrxx = this->rho_basis.nrxx;
-    const Vec3 a = this->ucell.a1 * this->ucell.lat0;
-    const Vec3 b = this->ucell.a2 * this->ucell.lat0;
-    const Vec3 c = this->ucell.a3 * this->ucell.lat0;
-    const Vec3 dx = a * (1.0 / nx);
-    const Vec3 dy = b * (1.0 / ny);
-    const Vec3 dz = c * (1.0 / nz);
-
-    const auto mesh = bvk_mesh_from_kpoints(this->kv, this->nk);
-    const int nk1 = mesh[0];
-    const int nk2 = mesh[1];
-    const int nk3 = mesh[2];
-    const bool write_supercell = nk1 > 1 || nk2 > 1 || nk3 > 1;
-    const int snx = nx * nk1;
-    const int sny = ny * nk2;
-    const int snz = nz * nk3;
-
-    double** rho_result = nullptr;
-    LR_Util::_allocate_2order_nested_ptr(rho_result, this->nspin_x, nrxx);
-    ModuleBase::GlobalFunc::ZEROS(rho_result[0], nrxx);
-    std::cout << "Conditional density: coherent sum over " << this->nk << " k-points"
-              << ", BvK supercell " << nk1 << "x" << nk2 << "x" << nk3 << ", grid " << snx << "x" << sny << "x" << snz
-              << std::endl;
-
-    std::vector<double> supercell_data;
-    std::vector<std::vector<Complex>> psi_k_cache;
-    if (write_supercell)
-    {
-        supercell_data.resize(snx * sny * snz, 0.0);
-        psi_k_cache.resize(this->nk, std::vector<Complex>(nrxx));
-    }
-
-#ifdef _OPENMP
-#pragma omp parallel for schedule(dynamic)
-#endif
-    for (int ix = 0; ix < nx; ++ix)
-    {
-        std::vector<Complex> phi_bloch(this->naos);
-        for (int iy = 0; iy < ny; ++iy)
-        {
-            for (int iz = 0; iz < nz; ++iz)
-            {
-                const int index = ix * ny * nz + iy * nz + iz;
-                const Vec3 position
-                    = dx * static_cast<double>(ix) + dy * static_cast<double>(iy) + dz * static_cast<double>(iz);
-                Complex conditional_wfc(0.0, 0.0);
-                for (int ik = 0; ik < this->nk; ++ik)
-                {
-                    std::fill(phi_bloch.begin(), phi_bloch.end(), Complex(0.0, 0.0));
-                    this->orb_eval_.eval_phi_all_bloch(position, this->ucell, phi_bloch.data(), this->kv.kvec_d[ik]);
-                    Complex wfc_k(0.0, 0.0);
-                    for (int mu = 0; mu < this->naos; ++mu)
-                    {
-                        wfc_k += coefficients[ik][mu] * phi_bloch[mu];
-                    }
-                    if (!plot_electron)
-                    {
-                        wfc_k = std::conj(wfc_k);
-                    }
-                    if (write_supercell)
-                    {
-                        psi_k_cache[ik][index] = wfc_k;
-                    }
-                    conditional_wfc += wfc_k;
-                }
-                rho_result[0][index] = std::norm(conditional_wfc);
-            }
-        }
-    }
-    std::cout << "Home cell coherent evaluation complete." << std::endl;
-
-    const std::string home_filename
-        = this->output_dir_ + "Exciton_cond_" + type + "_state" + std::to_string(istate) + "_spin0_home.cube";
-    ModuleIO::write_vdata_palgrid(this->Pgrid,
-                                  rho_result[0],
-                                  0,
-                                  this->nspin_x,
-                                  0,
-                                  home_filename,
-                                  this->eig[istate],
-                                  &this->ucell,
-                                  8,
-                                  0,
-                                  false, /*two_fermi*/
-                                  false);
-
-    if (write_supercell)
-    {
-        std::cout << "Writing BvK supercell cube (" << snx << "x" << sny << "x" << snz << ")..." << std::endl;
-#ifdef _OPENMP
-#pragma omp parallel for collapse(3) schedule(dynamic)
-#endif
-        for (int ni = 0; ni < nk1; ++ni)
-        {
-            for (int nj = 0; nj < nk2; ++nj)
-            {
-                for (int nk_cell = 0; nk_cell < nk3; ++nk_cell)
-                {
-                    for (int ix = 0; ix < nx; ++ix)
-                    {
-                        for (int iy = 0; iy < ny; ++iy)
-                        {
-                            for (int iz = 0; iz < nz; ++iz)
-                            {
-                                const int home_index = ix * ny * nz + iy * nz + iz;
-                                Complex wfc(0.0, 0.0);
-                                for (int ik = 0; ik < this->nk; ++ik)
-                                {
-                                    double phase_arg = bloch_phase_arg(this->kv.kvec_d[ik], ni, nj, nk_cell);
-                                    if (!plot_electron)
-                                    {
-                                        phase_arg = -phase_arg;
-                                    }
-                                    const Complex phase(std::cos(phase_arg), std::sin(phase_arg));
-                                    wfc += phase * psi_k_cache[ik][home_index];
-                                }
-                                const int super_index
-                                    = (ni * nx + ix) * sny * snz + (nj * ny + iy) * snz + nk_cell * nz + iz;
-                                supercell_data[super_index] = std::norm(wfc);
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
-        const Vec3 super_a = a * static_cast<double>(nk1);
-        const Vec3 super_b = b * static_cast<double>(nk2);
-        const Vec3 super_c = c * static_cast<double>(nk3);
-        const int super_natoms = this->ucell.nat * nk1 * nk2 * nk3;
-        std::vector<int> atom_type;
-        std::vector<double> atom_charge;
-        std::vector<std::vector<double>> atom_position;
-        atom_type.reserve(super_natoms);
-        atom_charge.reserve(super_natoms);
-        atom_position.reserve(super_natoms);
-        for (int iat = 0; iat < this->ucell.nat; ++iat)
-        {
-            const int it = this->ucell.iat2it[iat];
-            const Vec3 tau = atom_position_bohr(this->ucell, iat);
-            for (int ni = 0; ni < nk1; ++ni)
-            {
-                for (int nj = 0; nj < nk2; ++nj)
-                {
-                    for (int nk_cell = 0; nk_cell < nk3; ++nk_cell)
-                    {
-                        const Vec3 position = tau + a * static_cast<double>(ni) + b * static_cast<double>(nj)
-                                              + c * static_cast<double>(nk_cell);
-                        atom_type.push_back(atomic_number_from_label(this->ucell.atoms[it].label));
-                        atom_charge.push_back(this->ucell.atoms[it].ncpp.zv);
-                        atom_position.push_back({position.x, position.y, position.z});
-                    }
-                }
-            }
-        }
-
-        const std::string supercell_filename
-            = this->output_dir_ + "Exciton_cond_" + type + "_state" + std::to_string(istate) + "_spin0_supercell.cube";
-        ModuleIO::write_cube(supercell_filename,
-                             {"BvK supercell conditional " + type + " density, state " + std::to_string(istate),
-                              "Exciton energy (Ry) = " + std::to_string(this->eig[istate])},
-                             super_natoms,
-                             {0.0, 0.0, 0.0},
-                             snx,
-                             sny,
-                             snz,
-                             {super_a.x / snx, super_a.y / snx, super_a.z / snx},
-                             {super_b.x / sny, super_b.y / sny, super_b.z / sny},
-                             {super_c.x / snz, super_c.y / snz, super_c.z / snz},
-                             atom_type,
-                             atom_charge,
-                             atom_position,
-                             supercell_data,
-                             8);
-        std::cout << "Supercell cube written to " << supercell_filename << std::endl;
-    }
-
-    LR_Util::_deallocate_2order_nested_ptr(rho_result, this->nspin_x);
-    std::cout << "Conditional " << type << " density for state " << istate << ", "
-              << (plot_electron ? "hole" : "electron") << " fixed at (" << r_fix_in[0] << ", " << r_fix_in[1] << ", "
-              << r_fix_in[2] << ") Bohr" << std::endl;
 }
 
 template <typename T>
@@ -927,7 +686,7 @@ void ExcitonPlotter<T>::plot_cond_slice(const int istate,
                                         const std::string& plane,
                                         const double slice_pos,
                                         const int npoints,
-                                        const double scale,
+                                        const std::vector<int>& range,
                                         const std::string& type)
 {
     using Complex = std::complex<double>;
@@ -943,7 +702,7 @@ void ExcitonPlotter<T>::plot_cond_slice(const int istate,
         ModuleBase::WARNING_QUIT("ExcitonPlotter", "Unknown conditional slice type: " + type + ". Use elec or hole.");
     }
     const auto coefficients = build_conditional_coefficients(istate, r_fix_in, plot_electron);
-    const SliceGeometry geom = make_slice_geometry(this->ucell, this->kv, this->nk, plane, slice_pos, npoints, scale);
+    const SliceGeometry geom = make_slice_geometry(this->ucell, this->kv, plane, slice_pos, npoints, range);
     const double du = (geom.u_end - geom.u_start) / (geom.nu - 1);
     const double dv = (geom.v_end - geom.v_start) / (geom.nv - 1);
 
@@ -995,11 +754,21 @@ void ExcitonPlotter<T>::plot_cond_slice(const int istate,
                                                        phi_bloch.data(),
                                                        this->kv.kvec_d[ik]);
                     Complex wfc_k(0.0, 0.0);
-                    for (int mu = 0; mu < this->naos; ++mu)
+                    if (plot_electron)
                     {
-                        wfc_k += coefficients[ik][mu] * phi_bloch[mu];
+                        for (int mu = 0; mu < this->naos; ++mu)
+                        {
+                            wfc_k += coefficients[ik][mu] * phi_bloch[mu];
+                        }
                     }
-                    psi_cache[cache_index][ik] = plot_electron ? wfc_k : std::conj(wfc_k);
+                    else
+                    {
+                        for (int mu = 0; mu < this->naos; ++mu)
+                        {
+                            wfc_k += coefficients[ik][mu] * std::conj(phi_bloch[mu]);
+                        }
+                    }
+                    psi_cache[cache_index][ik] = wfc_k;
                 }
                 cache_valid[cache_index] = true;
             }
@@ -1033,7 +802,8 @@ void ExcitonPlotter<T>::plot_cond_slice(const int istate,
                      true,
                      r_fix_in);
     std::cout << "Conditional density slice written to " << filename << " (" << geom.nu << "x" << geom.nv << ", range "
-              << scale << "x BvK, " << geom.res << " pts/cell)" << std::endl;
+              << "[" << geom.u_start_cells << ", " << geom.u_end_cells << "] x [" << geom.v_start_cells << ", "
+              << geom.v_end_cells << "], " << geom.res << " pts/cell)" << std::endl;
 }
 
 template class ExcitonPlotter<double>;

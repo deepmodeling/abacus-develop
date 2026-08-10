@@ -19,7 +19,7 @@
 // #include <RI/physics/Exx.h>
 #include "source_lcao/module_ri/exx_lri.h"
 #endif
-namespace LR
+namespace ModuleESolver
 {
     ///Excited State Solver: Linear Response TDDFT (Tamm Dancoff Approximation) 
     template<typename T, typename TR = double>
@@ -58,7 +58,7 @@ namespace LR
         // not to use ElecState because 2-particle state is quite different from 1-particle state.
         // implement a independent one (ExcitedState) to pack physical properties if needed.
         // put the components of ElecState here: 
-        std::vector<std::shared_ptr<PotHxcLR>> pot;
+        std::vector<std::shared_ptr<LR::PotHxcLR>> pot;
 
         // ground state info 
 

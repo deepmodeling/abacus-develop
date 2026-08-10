@@ -393,12 +393,12 @@ struct Input_para
                           ///< 0: new; 1: continue from A_V; 2: A_V and A_W; 3: A_V, A_W and B_V; 4: A_V, A_W, B_V and B_W
     int plot_istate = 0; ///< the index of excited state to be plotted (starting from 0)
     std::string exciton_plot_type = "average"; ///< exciton density plot type: "average" or "conditional"
-    std::string exciton_plot_format = "cube"; ///< exciton plot format: "cube", "slice", or "both"
+    std::string exciton_plot_format = "cube"; ///< average: "cube", "slice", or "both"; conditional: "slice"
     std::vector<double> exciton_fixed_coordinate = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0}; ///< fixed hole and electron coordinates (Bohr): hx hy hz ex ey ez
     std::string exciton_slice_plane = "ab"; ///< cross-section plane for conditional density: "ab", "bc", "ca"
     double exciton_slice_pos = 0.0; ///< offset along perpendicular direction (Bohr) for slice
     int exciton_slice_npoints = 200; ///< grid points per dimension for slice
-    double exciton_slice_scale = 1.3; ///< scale relative to BvK supercell for slice
+    std::vector<int> exciton_slice_range = {-1, 2, -1, 2}; ///< cell range: ustart uend vstart vend
 
     // ==============   #Parameters (11.Output) ===========================
     int out_stru = 1;                         ///< output stru file each ion step
