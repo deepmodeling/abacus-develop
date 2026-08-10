@@ -89,7 +89,7 @@ AddTest(
   TARGET MODULE_ESTATE_charge_mixing
   LIBS parameter base  psi  device planewave_serial cell_info
   SOURCES charge_mixing_test.cpp  
-  ../module_charge/charge_mixing.cpp ../module_charge/charge_mixing_dmr.cpp ../module_charge/charge_mixing_residual.cpp
+  ../module_charge/charge_mixing.cpp ../module_charge/charge_mixing_dmr.cpp ../module_charge/mix_resid.cpp
   ../module_charge/mix_precond.cpp ../module_charge/charge_mixing_rho.cpp
   ../module_charge/charge_mixing_uspp.cpp
 )

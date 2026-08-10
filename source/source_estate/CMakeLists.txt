@@ -1,7 +1,7 @@
 list(APPEND objects
     elecstate.cpp
     init_scf.cpp
-    elecstate_energy_terms.cpp
+    estate_e_terms.cpp
     elecstate_energy.cpp
     elecstate_exx.cpp
     elecstate_print.cpp
@@ -34,7 +34,7 @@ list(APPEND objects
     module_charge/charge_extra.cpp
     module_charge/charge_mixing.cpp
     module_charge/charge_mixing_dmr.cpp
-    module_charge/charge_mixing_residual.cpp
+    module_charge/mix_resid.cpp
     module_charge/mix_precond.cpp
     module_charge/charge_mixing_rho.cpp
     module_charge/charge_mixing_uspp.cpp

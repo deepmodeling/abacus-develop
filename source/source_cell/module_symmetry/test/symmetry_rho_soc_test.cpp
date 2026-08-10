@@ -4,7 +4,7 @@
 #include <array>
 
 #include "../symmetry.h"
-#include "../symmetry_rotation_spin.h"
+#include "../symm_rot_spin.h"
 #include "source_cell/unitcell.h"
 
 /************************************************

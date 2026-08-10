@@ -1,4 +1,4 @@
-#include "cal_mlkedf_descriptors.h"
+#include "cal_mlkedf_desc.h"
 
 namespace ModuleIO
 {
@@ -196,7 +196,7 @@ void Cal_MLKEDF_Descriptors::read_kernel(const std::string &fileName, const doub
         }
     }
 
-    if (maxEta > maxEta_in) ModuleBase::WARNING("cal_mlkedf_descriptors.cpp", "Please increase the maximal eta value in KEDF kernel file");
+    if (maxEta > maxEta_in) ModuleBase::WARNING("cal_mlkedf_desc.cpp", "Please increase the maximal eta value in KEDF kernel file");
 
     delete[] eta_in;
     delete[] w0_in;

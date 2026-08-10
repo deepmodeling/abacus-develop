@@ -2,7 +2,7 @@
 #define ION_CELL_OPTIMIZER_H
 
 #include "ions_move_methods.h"
-#include "lattice_change_methods.h"
+#include "lat_change_method.h"
 #include "source_cell/unitcell.h"
 #include <fstream>
 

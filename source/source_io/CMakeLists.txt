@@ -10,7 +10,7 @@ list(APPEND objects
     module_output/cal_test.cpp
     module_dos/cal_dos.cpp
     module_dos/cal_ldos.cpp
-    module_ml/cal_mlkedf_descriptors.cpp
+    module_ml/cal_mlkedf_desc.cpp
     module_output/cif_io.cpp
     module_dos/write_dos_pw.cpp
     module_energy/write_bands.cpp
@@ -104,19 +104,19 @@ endif()
 add_library(
     io_input
     OBJECT
-    module_parameter/read_input_item_system.cpp
+    module_parameter/read_inp_sys.cpp
     module_parameter/read_inp_estruc.cpp
     module_parameter/read_input_item_relax.cpp
     module_parameter/read_input_item_md.cpp
     module_parameter/read_input_item_ofdft.cpp
     module_parameter/read_input_item_sdft.cpp
     module_parameter/read_input_item_tddft.cpp
-    module_parameter/read_input_item_deepks.cpp
+    module_parameter/read_inp_deepks.cpp
     module_parameter/read_input_item_model.cpp
     module_parameter/read_inp_postproc.cpp  
     module_parameter/read_inp_exx_dftu.cpp
     module_parameter/read_input_item_other.cpp   
-    module_parameter/read_input_item_output.cpp  
+    module_parameter/read_inp_out.cpp  
     module_parameter/read_input.cpp
     module_parameter/read_set_globalv.cpp
 )

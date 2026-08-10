@@ -1,4 +1,4 @@
-#include "psi_init_atomic_random.h"
+#include "psi_init_atom_rand.h"
 
 #include "source_io/module_parameter/parameter.h"
 

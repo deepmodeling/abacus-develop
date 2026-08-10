@@ -120,8 +120,8 @@ pw_distributer.o\
 pw_init.o\
 pw_transform.o\
 pw_distributeg.o\
-pw_distributeg_method1.o\
-pw_distributeg_method2.o\
+pw_distg_method1.o\
+pw_distg_method2.o\
 pw_basis_k.o\
 pw_basis_sup.o\
 pw_transform_k.o\

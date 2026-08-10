@@ -1,5 +1,5 @@
 #include <fstream>
-#include "source_relax/lattice_change_methods.h"
+#include "source_relax/lat_change_method.h"
 #include "mock_remake_cell.h"
 
 #include "for_test.h"

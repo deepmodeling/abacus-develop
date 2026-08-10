@@ -15,7 +15,7 @@ AddTest(
 AddTest(
   TARGET MODULE_CELL_SYMMETRY_rotation_spin
   LIBS parameter base ${math_libs} device
-  SOURCES symmetry_rotation_spin_test.cpp ../symmetry_rotation_spin.cpp
+  SOURCES symmetry_rotation_spin_test.cpp ../symm_rot_spin.cpp
 )
 AddTest(
   TARGET MODULE_CELL_SYMMETRY_rho_soc

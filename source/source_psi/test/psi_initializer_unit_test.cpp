@@ -4,7 +4,7 @@
 #undef private
 #include "../psi_initializer.h"
 #include "../psi_init_atomic.h"
-#include "../psi_init_atomic_random.h"
+#include "../psi_init_atom_rand.h"
 #include "../psi_init_nao.h"
 #include "../psi_init_nao_random.h"
 #include "../psi_init_random.h"

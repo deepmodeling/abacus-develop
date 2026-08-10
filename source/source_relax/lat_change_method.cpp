@@ -1,4 +1,4 @@
-#include "lattice_change_methods.h"
+#include "lat_change_method.h"
 
 #include "source_base/global_function.h"
 

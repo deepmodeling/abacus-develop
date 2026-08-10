@@ -232,7 +232,7 @@ OBJS_DEEPKS=LCAO_deepks.o\
 
 
 OBJS_ELECSTAT=elecstate.o\
-    elecstate_energy_terms.o\
+    estate_e_terms.o\
     elecstate_energy.o\
     elecstate_exx.o\
     elecstate_print.o\
@@ -299,7 +299,7 @@ OBJS_GINT=batch_biggrid.o\
       gint_interface.o\
       gint_rho.o\
       gint_tau.o\
-      gint_vl_metagga_nspin4.o\
+      gint_vl_mgga_n4.o\
       gint_vl_metagga.o\
       gint_vl_nspin4.o\
       gint_vl.o\
@@ -329,7 +329,7 @@ OBJS_HAMILT=hamilt_pw.o\
     op_pw_proj.o\
     radial_proj.o\
     exx_helper.o\
-    vec_mul_vec_complex_op.o\
+    vec_mul_cx_op.o\
     exx_cal_energy_op.o\
     cal_density_real_op.o\
     mul_potential_op.o\
@@ -459,7 +459,7 @@ OBJS_PSI_INITIALIZER=psi_initializer.o\
                      psi_init_random.o\
                      psi_init_file.o\
                      psi_init_atomic.o\
-                     psi_init_atomic_random.o\
+                     psi_init_atom_rand.o\
                      psi_init_nao.o\
                      psi_init_nao_random.o\
 
@@ -469,8 +469,8 @@ OBJS_PW=fft_bundle.o\
     pw_basis_k.o\
     pw_basis_sup.o\
     pw_distributeg.o\
-    pw_distributeg_method1.o\
-    pw_distributeg_method2.o\
+    pw_distg_method1.o\
+    pw_distg_method2.o\
     pw_distributer.o\
     pw_init.o\
     pw_transform.o\
@@ -488,7 +488,7 @@ OBJS_RELAXATION=relax_data.o\
     ions_move_sd.o\
     lattice_change_basic.o\
     lattice_change_cg.o\
-    lattice_change_methods.o\
+    lat_change_method.o\
     relax_nsync.o\
     relax_sync.o\
     ions_move_lbfgs.o\
@@ -598,19 +598,19 @@ OBJS_IO=module_parameter/input_conv.o\
     output_info.o\
     parse_args.o\
     module_parameter/read_input.o\
-    module_parameter/read_input_item_system.o\
+    module_parameter/read_inp_sys.o\
     module_parameter/read_inp_estruc.o\
     module_parameter/read_input_item_relax.o\
     module_parameter/read_input_item_md.o\
     module_parameter/read_input_item_ofdft.o\
     module_parameter/read_input_item_sdft.o\
     module_parameter/read_input_item_tddft.o\
-    module_parameter/read_input_item_deepks.o\
+    module_parameter/read_inp_deepks.o\
     module_parameter/read_input_item_model.o\
     module_parameter/read_inp_postproc.o\
     module_parameter/read_inp_exx_dftu.o\
     module_parameter/read_input_item_other.o\
-    module_parameter/read_input_item_output.o\
+    module_parameter/read_inp_out.o\
     module_parameter/read_set_globalv.o\
     orb_io.o\
     cal_pLpR.o\
@@ -726,7 +726,7 @@ OBJS_SRCPW=H_Ewald_pw.o\
     charge_extra.o\
     charge_mixing.o\
     charge_mixing_dmr.o\
-    charge_mixing_residual.o\
+    mix_resid.o\
     mix_precond.o\
     charge_mixing_rho.o\
     charge_mixing_uspp.o\

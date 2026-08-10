@@ -1,5 +1,5 @@
-#ifndef LATTICE_CHANGE_METHODS_H
-#define LATTICE_CHANGE_METHODS_H
+#ifndef LAT_CHANGE_METHOD_H
+#define LAT_CHANGE_METHOD_H
 
 #include <fstream>
 #include <vector>

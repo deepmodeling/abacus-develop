@@ -1,5 +1,5 @@
-#ifndef SYMMETRY_ROTATION_SPIN_H
-#define SYMMETRY_ROTATION_SPIN_H
+#ifndef SYMM_ROT_SPIN_H
+#define SYMM_ROT_SPIN_H
 
 #include "source_base/matrix3.h"
 
@@ -76,4 +76,4 @@ void rotate_pauli_components(const ModuleBase::Matrix3& gmatc,
 } // namespace SpinRotation
 } // namespace ModuleSymmetry
 
-#endif // SYMMETRY_ROTATION_SPIN_H
+#endif // SYMM_ROT_SPIN_H

@@ -1,5 +1,5 @@
-#ifndef PSI_INIT_ATOMIC_RANDOM_H
-#define PSI_INIT_ATOMIC_RANDOM_H
+#ifndef PSI_INIT_ATOM_RAND_H
+#define PSI_INIT_ATOM_RAND_H
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "psi_init_atomic.h"
 

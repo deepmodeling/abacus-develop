@@ -1,5 +1,5 @@
-#ifndef CAL_MLKEDF_DESCRIPTORS_H
-#define CAL_MLKEDF_DESCRIPTORS_H
+#ifndef CAL_MLKEDF_DESC_H
+#define CAL_MLKEDF_DESC_H
 
 #include <vector>
 #include "source_io/module_parameter/parameter.h"

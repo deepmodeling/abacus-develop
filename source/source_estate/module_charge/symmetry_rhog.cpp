@@ -1,7 +1,7 @@
 #include "symmetry_rho.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/parallel_global.h"
-#include "source_cell/module_symmetry/symmetry_rotation_spin.h"
+#include "source_cell/module_symmetry/symm_rot_spin.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
 

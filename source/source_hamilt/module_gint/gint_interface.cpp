@@ -4,7 +4,7 @@
 #include "gint_vl.h"
 #include "gint_vl_metagga.h"
 #include "gint_vl_nspin4.h"
-#include "gint_vl_metagga_nspin4.h"
+#include "gint_vl_mgga_n4.h"
 #include "gint_fvl.h"
 #include "gint_fvl_meta.h"
 #include "gint_rho.h"

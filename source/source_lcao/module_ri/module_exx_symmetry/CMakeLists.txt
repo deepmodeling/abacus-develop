@@ -2,7 +2,7 @@ if (ENABLE_LIBRI)
 
     list(APPEND objects
         irreducible_sector.cpp
-        irreducible_sector_bvk.cpp
+        irred_sec_bvk.cpp
         symmetry_rotation.cpp
         symm_rot_out.cpp
     )

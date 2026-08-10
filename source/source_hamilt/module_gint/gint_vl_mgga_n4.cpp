@@ -1,7 +1,7 @@
 #include "source_base/global_function.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "gint_common.h"
-#include "gint_vl_metagga_nspin4.h"
+#include "gint_vl_mgga_n4.h"
 #include "phi_operator.h"
 #include "gint_helper.h"
 

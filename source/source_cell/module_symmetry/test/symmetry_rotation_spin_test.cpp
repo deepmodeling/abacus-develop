@@ -1,4 +1,4 @@
-#include "../symmetry_rotation_spin.h"
+#include "../symm_rot_spin.h"
 
 #include "source_base/constants.h"
 
