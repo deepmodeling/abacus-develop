@@ -44,8 +44,10 @@ void toWannier90_LCAO_IN_PW::calculate(
     Structure_Factor* sf_ptr = const_cast<Structure_Factor*>(&sf);
     ModulePW::PW_Basis_K* wfcpw_ptr = const_cast<ModulePW::PW_Basis_K*>(wfcpw);
     delete this->psi_initer_;
-    this->psi_initer_ = new psi_init_nao<std::complex<double>>();
-    this->psi_initer_->initialize(sf_ptr, wfcpw_ptr, &ucell, &kv, 1, nullptr, GlobalV::MY_RANK);
+    psi_init_nao<std::complex<double>>* nao_initer = new psi_init_nao<std::complex<double>>();
+    nao_initer->prepare_params(PARAM.globalv.nqx, PARAM.globalv.dq, PARAM.inp.nspin, PARAM.inp.orbital_dir);
+    this->psi_initer_ = nao_initer;
+    this->psi_initer_->initialize(sf_ptr, wfcpw_ptr, &ucell, kv.ik2iktot, 1, GlobalV::MY_RANK, PARAM.globalv.npol, PARAM.inp.nbands);
     this->psi_initer_->tabulate();
     delete this->psi;
     const int nks_psi = (PARAM.inp.calculation == "nscf" && PARAM.inp.mem_saver == 1)? 1 : wfcpw->nks;

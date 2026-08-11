@@ -21,7 +21,7 @@
 
 #ifdef __LCAO
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_psi/psi_initializer.h"
+#include "source_psi/psi_base.h"
 
 class toWannier90_LCAO_IN_PW : public toWannier90_PW
 {
@@ -59,7 +59,7 @@ class toWannier90_LCAO_IN_PW : public toWannier90_PW
   protected:
     const Parallel_Orbitals* ParaV = nullptr;
     /// @brief psi initializer for expanding nao in planewave basis
-    psi_initializer<std::complex<double>>* psi_initer_ = nullptr;
+    psi_base<std::complex<double>>* psi_initer_ = nullptr;
 
     psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi = nullptr;
 

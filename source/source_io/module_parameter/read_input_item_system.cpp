@@ -168,13 +168,15 @@ void ReadInput::item_system()
                     ModuleBase::WARNING_QUIT("ReadInput", "Can not find `pot_file` !");
                 }
             }
-        };
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            // LR reads the ground state wave function from a separate SCF run,
+            // so it cannot be combined with a self-consistent calculation.
             if (para.input.esolver_type == "lr" && para.input.calculation == "scf")
-            {   // for LR-only calculation based on the ground-state, set calculation to "nscf"
-                para.input.calculation = "nscf";
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "esolver_type=lr requires calculation=nscf (it reads the ground state "
+                    "wave function computed by a separate SCF run); please set calculation=nscf.");
             }
-            };
+        };
         this->add_item(item);
     }
     {

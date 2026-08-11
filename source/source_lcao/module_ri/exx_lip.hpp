@@ -18,7 +18,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/elecstate.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_psi/psi_initializer.h"
+#include "source_psi/psi_base.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
 #include "source_hamilt/module_xc/exx_info_lip.h"
