@@ -33,6 +33,18 @@ void validate_availability_expr(
     const AvailabilityExpr& expression,
     const std::map<std::string, AvailabilityValueKind>& parameter_types);
 
+/// Validate that each path referencing a parameter implies that parameter's
+/// availability AST. Associative AND/OR groups are flattened and
+/// order-independent; AND prerequisites require every operand, while any
+/// satisfied OR branch is sufficient. Different leaf conditions are not
+/// related. \p expressions maps every parameter label to its availability AST.
+/// Throws std::invalid_argument when a referenced parameter's prerequisite is
+/// missing.
+void validate_availability_self_contained(
+    const std::string& owner,
+    const AvailabilityExpr& expression,
+    const std::map<std::string, AvailabilityExpr>& expressions);
+
 } // namespace ModuleIO
 
 #endif // AVAILABILITY_VALIDATOR_H

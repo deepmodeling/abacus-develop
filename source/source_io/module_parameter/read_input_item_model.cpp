@@ -35,7 +35,7 @@ void ReadInput::item_model()
 [NOTE] Note: If you do not want any electric field, the parameter efield_amp should be set to zero. This should ONLY be used in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.)";
         item.default_value = "False";
         item.unit = "";
-        item.set_availability("dip_cor_flag==true and efield_flag==true");
+        item.set_availability("efield_flag==true");
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.dip_cor_flag && !para.input.efield_flag)
             {

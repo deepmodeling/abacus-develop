@@ -637,7 +637,7 @@
 ### symmetry_autoclose
 
 - **Type**: Boolean
-- **Availability**: `symmetry==1`
+- **Availability**: *[`symmetry`](#symmetry)==1*
 - **Description**: Control how to deal with error in symmetry analysis due to inaccurate lattice parameters or atom positions in STRU file, especially useful when calculation==cell-relax
   - False: quit with an error message
   - True: automatically set symmetry to 0 and continue running without symmetry analysis
@@ -739,7 +739,7 @@
 ### mem_saver
 
 - **Type**: Integer
-- **Availability**: `calculation==nscf and basis_type==pw`
+- **Availability**: *[`calculation`](#calculation)==nscf and [`basis_type`](#basis_type)==pw*
 - **Description**: Save memory when performing nscf calculations.
   - 0: no memory saving techniques are used.
   - 1: a memory saving technique will be used for many k point calculations.
@@ -754,7 +754,7 @@
 ### diago_proc
 
 - **Type**: Integer
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: - 0: it will be set to the number of MPI processes.
   - &gt;0: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes.
 - **Default**: 0
@@ -807,7 +807,7 @@
 ### precision
 
 - **Type**: String
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: Specifies the precision when performing scf calculation.
   - single: single precision
   - double: double precision
@@ -816,7 +816,7 @@
 ### gint_precision
 
 - **Type**: String
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Specifies the precision when performing grid integral in LCAO calculations.
   - single: single precision
   - double: double precision
@@ -899,14 +899,14 @@
 ### restart_load
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: If restart_save is set to true and an electronic iteration is finished, calculations can be restarted from the charge density file, which are saved in the former calculation.
 - **Default**: False
 
 ### spillage_outdir
 
 - **Type**: String
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: The directory to save the spillage files.
 - **Default**: "./"
 
@@ -980,7 +980,7 @@
 ### pw_seed
 
 - **Type**: Integer
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: Specify the random seed to initialize wave functions. Only positive integers are available.
 - **Default**: 0
 
@@ -1039,14 +1039,14 @@
 ### use_k_continuity
 
 - **Type**: Boolean
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: If TRUE, the wavefunctions at k-point will be initialized from the converged wavefunctions at the nearest k-point, which can speed up the SCF convergence. Only works for PW basis.
 - **Default**: false
 
 ### pw_diag_nmax
 
 - **Type**: Integer
-- **Availability**: `basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg]`
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver) in [cg, dav, dav_subspace, bpcg]*
 - **Description**: Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.
 - **Default**: 50
 
@@ -1350,7 +1350,7 @@
 ### mixing_dmr
 
 - **Type**: Boolean
-- **Availability**: `mixing_restart>=0`
+- **Availability**: *[`mixing_restart`](#mixing_restart)>=0*
 - **Description**: At n-th iteration which is calculated by drho&lt;mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
 - **Default**: false
 
@@ -1383,7 +1383,7 @@
 ### mixing_angle
 
 - **Type**: Real
-- **Availability**: `nspin==4`
+- **Availability**: *[`nspin`](#nspin)==4*
 - **Description**: Normal broyden mixing can give the converged result for a given magnetic configuration. If one is not interested in the energies of a given magnetic configuration but wants to determine the ground state by relaxing the magnetic moments' directions, one cannot rely on the standard Broyden mixing algorithm. To enhance the ability to find correct magnetic configuration for non-colinear calculations, ABACUS implements a promising mixing method proposed by J. Phys. Soc. Jpn. 82 (2013) 114706. Here, mixing_angle is the angle mixing parameter. In fact, only mixing_angle=1.0 is implemented currently.
   - &lt;=0: Normal broyden mixing
   - &gt;0: Angle mixing for the modulus with mixing_angle=1.0
@@ -1400,7 +1400,7 @@
 ### mixing_dftu
 
 - **Type**: Boolean
-- **Availability**: `dft_plus_u==1`
+- **Availability**: *[`dft_plus_u`](#dft_plus_u)==1*
 - **Description**: Whether to mix the occupation matrices.
   - True: The occupation matrices will also be mixed by plain mixing. From experience this is not very helpful if the +U calculation does not converge.
   - False: The occupation matrices will not be mixed.
@@ -1409,7 +1409,7 @@
 ### gamma_only
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Whether to use gamma_only algorithm.
   - 0: more than one k-point is used and the ABACUS is slower compared to the gamma only algorithm.
   - 1: ABACUS uses gamma only, the algorithm is faster and you don't need to specify the k-points file.
@@ -1504,7 +1504,7 @@
 ### soc_lambda
 
 - **Type**: Real
-- **Availability**: `lspinorb==true`
+- **Availability**: *[`lspinorb`](#lspinorb)==true*
 - **Description**: Modulates the strength of spin-orbit coupling effect. Sometimes, for some real materials, both scalar-relativistic and full-relativistic pseudopotentials cannot describe the exact spin-orbit coupling. Artificial modulation may help in such cases.
 
   soc_lambda, which has value range [0.0, 1.0], is used to modulate SOC effect:
@@ -1531,7 +1531,7 @@
 ### method_sto
 
 - **Type**: Integer
-- **Availability**: `esolver_type==sdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft*
 - **Description**: Different methods to do stochastic DFT
   - 1: Calculate twice, this method cost less memory but is slower.
   - 2: Calculate once but needs much more memory. This method is much faster. Besides, it calculates with a smaller nche_sto. However, when the memory is not enough, only method 1 can be used.
@@ -1541,7 +1541,7 @@
 ### nbands_sto
 
 - **Type**: Integer or string
-- **Availability**: `esolver_type==sdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft*
 - **Description**: The number of stochastic orbitals
   - 1-1000000: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
   - 0: Invalid. Use all for the complete-basis SDFT mode.
@@ -1551,14 +1551,14 @@
 ### nche_sto
 
 - **Type**: Integer
-- **Availability**: `esolver_type==sdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft*
 - **Description**: Chebyshev expansion orders for stochastic DFT.
 - **Default**: 100
 
 ### emin_sto
 
 - **Type**: Real
-- **Availability**: `esolver_type==sdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft*
 - **Description**: Trial energy to guess the lower bound of eigen energies of the Hamiltonian Operator.
 - **Default**: 0.0
 - **Unit**: Ry
@@ -1566,7 +1566,7 @@
 ### emax_sto
 
 - **Type**: Real
-- **Availability**: `esolver_type==sdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft*
 - **Description**: Trial energy to guess the upper bound of eigen energies of the Hamiltonian Operator.
 - **Default**: 0.0
 - **Unit**: Ry
@@ -1574,7 +1574,7 @@
 ### seed_sto
 
 - **Type**: Integer
-- **Availability**: `esolver_type==sdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft*
 - **Description**: The random seed to generate stochastic orbitals.
   - &gt;= 0: Stochastic orbitals have the form of exp(i*theta), where theta is a uniform distribution in [0, 2*pi).
   - 0: the seed is decided by time(NULL).
@@ -1585,7 +1585,7 @@
 ### initsto_ecut
 
 - **Type**: Real
-- **Availability**: `esolver_type==sdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft*
 - **Description**: Stochastic wave functions are initialized in a large box generated by "4*initsto_ecut". initsto_ecut should be larger than ecutwfc. In this method, SDFT results are the same when using different cores. Besides, coefficients of the same G are the same when ecutwfc is rising to initsto_ecut. If it is smaller than ecutwfc, it will be turned off.
 - **Default**: 0.0
 - **Unit**: Ry
@@ -1593,7 +1593,7 @@
 ### initsto_freq
 
 - **Type**: Integer
-- **Availability**: `esolver_type==sdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft*
 - **Description**: Frequency (once each initsto_freq steps) to generate new stochastic orbitals when running md.
   - positive integer: Update stochastic orbitals
   - 0: Never change stochastic orbitals.
@@ -1602,7 +1602,7 @@
 ### npart_sto
 
 - **Type**: Integer
-- **Availability**: `esolver_type==sdft and ((method_sto==2 and out_dos==1) or (basis_type==pw and cal_cond==true))`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft and (([`method_sto`](#method_sto)==2 and [`out_dos`](#out_dos)==1) or ([`basis_type`](#basis_type)==pw and [`cal_cond`](#cal_cond)==true))*
 - **Description**: Make memory cost to 1/npart_sto times of the previous one when running the post process of SDFT like DOS or conductivities.
 - **Default**: 1
 
@@ -1638,7 +1638,7 @@
 ### relax_scale_force
 
 - **Type**: Real
-- **Availability**: `relax_method in [cg 2]`
+- **Availability**: *[`relax_method`](#relax_method) in [cg 2]*
 - **Description**: The paramether controls the size of the first conjugate gradient step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
 - **Default**: 0.5
 
@@ -1651,7 +1651,7 @@
 ### relax_cg_thr
 
 - **Type**: Real
-- **Availability**: `relax_method==cg_bfgs`
+- **Availability**: *[`relax_method`](#relax_method)==cg_bfgs*
 - **Description**: When relax_method is set to cg_bfgs, a mixed algorithm of conjugate gradient (CG) and Broyden–Fletcher–Goldfarb–Shanno (BFGS) is used. The ions first move according to the CG method, then switch to the BFGS method when the maximum force on atoms is reduced below this threshold.
 - **Default**: 0.5
 - **Unit**: eV/Angstrom
@@ -1680,21 +1680,21 @@
 ### relax_bfgs_w1
 
 - **Type**: Real
-- **Availability**: `relax_method in [bfgs, cg_bfgs]`
+- **Availability**: *[`relax_method`](#relax_method) in [bfgs, cg_bfgs]*
 - **Description**: Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the sufficient decrease condition (c1 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.
 - **Default**: 0.01
 
 ### relax_bfgs_w2
 
 - **Type**: Real
-- **Availability**: `relax_method in [bfgs, cg_bfgs]`
+- **Availability**: *[`relax_method`](#relax_method) in [bfgs, cg_bfgs]*
 - **Description**: Controls the Wolfe condition for the Broyden–Fletcher–Goldfarb–Shanno (BFGS) algorithm used in geometry relaxation. This parameter sets the curvature condition (c2 in Wolfe conditions). For more information, see Phys. Chem. Chem. Phys., 2000, 2, 2177.
 - **Default**: 0.5
 
 ### relax_bfgs_rmax
 
 - **Type**: Real
-- **Availability**: `relax_method in [bfgs, cg_bfgs]`
+- **Availability**: *[`relax_method`](#relax_method) in [bfgs, cg_bfgs]*
 - **Description**: Maximum allowed total displacement of all atoms during geometry optimization. The sum of atomic displacements can increase during optimization steps but cannot exceed this value.
 - **Default**: 0.8
 - **Unit**: Bohr
@@ -1702,7 +1702,7 @@
 ### relax_bfgs_rmin
 
 - **Type**: Real
-- **Availability**: `relax_method in [bfgs 1]`
+- **Availability**: *[`relax_method`](#relax_method) in [bfgs 1]*
 - **Description**: Minimum allowed total displacement of all atoms. When the total atomic displacement falls below this value and force convergence is not achieved, the calculation will terminate. Note: This parameter is not used in the default BFGS algorithm (relax_method = bfgs 2 or bfgs).
 - **Default**: 1e-5
 - **Unit**: Bohr
@@ -1710,7 +1710,7 @@
 ### relax_bfgs_init
 
 - **Type**: Real
-- **Availability**: `relax_method in [bfgs, cg_bfgs]`
+- **Availability**: *[`relax_method`](#relax_method) in [bfgs, cg_bfgs]*
 - **Description**: Initial total displacement of all atoms in the first BFGS step. This sets the scale for the initial movement.
 - **Default**: 0.5
 - **Unit**: Bohr
@@ -1746,7 +1746,7 @@
 ### fixed_axes
 
 - **Type**: String
-- **Availability**: `calculation==cell-relax`
+- **Availability**: *[`calculation`](#calculation)==cell-relax*
 - **Description**: Specifies which cell degrees of freedom are fixed during variable-cell relaxation. The available options depend on relax_method:
 
   With relax_method = cg 2 (default), all options are available:
@@ -1770,7 +1770,7 @@
 ### fixed_ibrav
 
 - **Type**: Boolean
-- **Availability**: `relax_method in [cg 2] and latname!=none`
+- **Availability**: *[`relax_method`](#relax_method) in [cg 2] and [`latname`](#latname)!=none*
 - **Description**: - True: the lattice type will be preserved during relaxation. The lattice vectors are reconstructed to match the specified Bravais lattice type after each update.
   - False: No restrictions are exerted during relaxation in terms of lattice type
 
@@ -1874,7 +1874,7 @@
 ### out_dmk
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Whether to output the density matrix for each k-point into files in the folder OUT.${suffix}. For current develop versions, out_dmk writes *_nao.txt files and includes a g{istep} index in the file name:
     - For gamma only case:
      - nspin = 1 and 4: dmg1_nao.txt;
@@ -1893,7 +1893,7 @@
 ### out_dmr
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: `basis_type==lcao and gamma_only==0`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`gamma_only`](#gamma_only)==0*
 - **Description**: Whether to output the density matrix with Bravias lattice vector R index into files in the folder OUT.${suffix}. The files are named as dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in out_hsr. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
   - nspin = 1: dmrs1_nao.csr;
   - nspin = 2: dmrs1_nao.csr and dmrs2_nao.csr for the two spin channels.
@@ -1904,7 +1904,7 @@
 ### out_wfc_pw
 
 - **Type**: Integer
-- **Availability**: `basis_type==pw or (basis_type==lcao and calculation==get_wf)`
+- **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_wf)*
 - **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}. Here, the s index refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and s4 refers to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. For scf or nscf calculations, g index will not appear, but the g index appears for geometry relaxation and molecular dynamics, where one can use the out_freq_ion command to control. To print out the electroinc wave functions every few SCF iterations, use the out_freq_elec command and the e index will appear in the file name.
   - 0: no output
   - 1: (txt format)
@@ -1922,7 +1922,7 @@
 ### out_wfc_lcao
 
 - **Type**: Integer
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{s}{spin index}{k(optional)}{k-point index}{g(optional)}{geometry index1}{_nao} + {".txt"/".dat"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and 's12' refer to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. In addition, if 'gamma_only' is set to 0, then the optinoal k-point sampling index appears with the k-point index attached to the electronic wave function file names. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the wave functions accumulate during ionic steps. If the out_app_flag is set to false, a new folder named WFC will be created, and the wave function files will be saved into it.
   - 0: no output
   - 1: (txt format)
@@ -1998,7 +1998,7 @@
 ### out_hsk
 
 - **Type**: Integer \[Integer\](optional)
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Output the upper triangular part of the Hamiltonian and overlap matrices in reciprocal space for each k-point into files in the directory OUT.${suffix}. The first integer selects the format:
   - 0: disabled;
   - 1: text output; the optional second integer controls precision and defaults to 8;
@@ -2024,7 +2024,7 @@
 ### out_mat_hs
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Legacy alias for out_hsk 1, which outputs Hamiltonian and overlap matrices in reciprocal space for each k-point. The optional second integer controls text precision. If both out_hsk and out_mat_hs are present, out_hsk takes precedence.
 - **Default**: False 8
 - **Unit**: Ry
@@ -2032,7 +2032,7 @@
 ### out_hsr
 
 - **Type**: Integer \[Integer\](optional)
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Output Hamiltonian and overlap matrices in real space, indexed by the Bravais lattice vector R, in the directory OUT.${suffix}. The first integer selects the format:
   - 0: disabled;
   - 1: text CSR output; the optional second integer controls precision and defaults to 8;
@@ -2048,7 +2048,7 @@
 ### out_mat_hs2
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Legacy alias for out_hsr 1, which outputs Hamiltonian and overlap matrices in real space indexed by the Bravais lattice vector R. The optional second integer controls text precision. If both out_hsr and out_mat_hs2 are present, out_hsr takes precedence.
 - **Default**: False 8
 - **Unit**: Ry
@@ -2056,7 +2056,7 @@
 ### out_mat_tk
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Whether to print the upper triangular part of the kinetic matrices for each k-point into OUT.${suffix}/tks1ki_nao.txt, where i is the index of k points. One may optionally provide a second parameter to specify the precision.
 
   > Note: In the 3.10-LTS version, the file names are data-TR-sparse_SPIN0.csr, etc.
@@ -2066,7 +2066,7 @@
 ### out_mat_r
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: `basis_type==lcao and gamma_only==0`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`gamma_only`](#gamma_only)==0*
 - **Description**: Whether to print the matrix representation of the position matrix into files named rxrs1_nao.csr, ryrs1_nao.csr, rzrs1_nao.csr in the directory OUT.${suffix}. The optional second parameter controls text output precision. If calculation is set to get_s, the position matrix can be obtained without scf iterations. For more information, please refer to position_matrix.md.
 
   > Note: In the 3.10-LTS version, the file name is data-rR-sparse.csr.
@@ -2076,7 +2076,7 @@
 ### out_mat_t
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: `basis_type==lcao and gamma_only==0`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`gamma_only`](#gamma_only)==0*
 - **Description**: Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_hsr. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
   > Note: In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.
@@ -2086,7 +2086,7 @@
 ### out_mat_dh
 
 - **Type**: Integer
-- **Availability**: `basis_type==lcao and gamma_only==0`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`gamma_only`](#gamma_only)==0*
 - **Description**: Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_hsr. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag.
 
   Format: &lt;enable&gt; [precision] [iat1 iat2 ...]. The first value (0/1) enables/disables output. The second optional value sets the output precision (default: 8). Starting from the third value, 1-based atom indices can be listed to restrict output to derivatives with respect to those specific atoms only; if no atom indices are given, all atoms are written.
@@ -2206,7 +2206,7 @@
 ### out_mat_ds
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: `basis_type==lcao and gamma_only==0`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`gamma_only`](#gamma_only)==0*
 - **Description**: Whether to print files containing the derivatives of the overlap matrix. The optional second parameter controls text output precision. The format will be the same as the overlap matrix as mentioned in out_mat_dh. The name of the files will be dsxrs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag. This feature can be used with calculation get_s.
 
   > Note: In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.
@@ -2216,7 +2216,7 @@
 ### out_mat_xc
 
 - **Type**: Boolean
-- **Availability**: `basis_type in [lcao, lcao_in_pw]`
+- **Availability**: *[`basis_type`](#basis_type) in [lcao, lcao_in_pw]*
 - **Description**: Whether to print the upper triangular part of the exchange-correlation matrices in Kohn-Sham orbital representation: for each k point into files in the directory OUT.i_nao.txt, where {suffix}/vxc_out.dat. If EXX is calculated, the local and EXX part of band energy will also be printed in OUT.{suffix}/vxc_exx_out.dat, respectively. All the vxc_out.dat files contains 3 integers (nk, nspin, nband) followed by nk*nspin*nband lines of energy Hartree and eV.
 
   > Note: In the 3.10-LTS version, the file name is k-$k-Vxc and so on.
@@ -2226,7 +2226,7 @@
 ### out_mat_xc2
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Whether to print the exchange-correlation matrices in numerical orbital representation: in CSR format in the directory OUT.${suffix}. The name of the files will be vxcrs1_nao.csr and so on.
 
   > Note: In the 3.10-LTS version, the file name is Vxc_R_spin$s and so on.
@@ -2236,7 +2236,7 @@
 ### out_mat_l
 
 - **Type**: Boolean \[Integer\](optional)
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named OUT.{suffix}_Lx.dat, OUT.{suffix}_Ly.dat, and OUT.{suffix}_Lz.dat. The second integer controls the precision of the output.
 - **Default**: False 8
 
@@ -2258,14 +2258,14 @@
 ### out_eband_terms
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Whether to print the band energy terms separately in the file OUT.{term}_out.dat. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).
 - **Default**: False
 
 ### out_hr_npz
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao and gamma_only==0`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`gamma_only`](#gamma_only)==0*
 - **Description**: Whether to print Hamiltonian matrices H(R) in NPZ format as hrs1_nao.npz and, for nspin = 2, hrs2_nao.npz. This feature does not work for gamma-only calculations.
 - **Default**: False
 - **Unit**: Ry
@@ -2273,7 +2273,7 @@
 ### out_hsr_npz
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Legacy alias for out_hsr 3, writing hrs1_nao.npz, hrs2_nao.npz when needed, and sr_nao.npz. If both out_hsr and out_hsr_npz are present, out_hsr takes precedence. Gamma-only calculations write the folded R = (0, 0, 0) representation.
 - **Default**: False
 - **Unit**: Ry
@@ -2281,28 +2281,28 @@
 ### out_dm_npz
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao and gamma_only==0`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`gamma_only`](#gamma_only)==0*
 - **Description**: Whether to print density matrices DM(R) in npz format. This feature does not work for gamma-only calculations.
 - **Default**: False
 
 ### out_mul
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Whether to print the Mulliken population analysis result into OUT.${suffix}/mulliken.txt. In molecular dynamics calculations, the output frequency is controlled by out_freq_ion.
 - **Default**: False
 
 ### out_app_flag
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao and gamma_only==0`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`gamma_only`](#gamma_only)==0*
 - **Description**: Whether to output r(R), H(R), S(R), T(R), dH(R), dS(R), and wfc matrices in an append manner during molecular dynamics calculations. Check input parameters out_mat_r, out_hsr, out_mat_t, out_mat_dh, out_hsk and out_wfc_lcao for more information.
 - **Default**: true
 
 ### out_ndigits
 
 - **Type**: Integer
-- **Availability**: `basis_type==lcao and out_hsk==1`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`out_hsk`](#out_hsk)==1*
 - **Description**: Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.
 - **Default**: 8
 
@@ -2315,7 +2315,7 @@
 ### restart_save
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Whether to save charge density files per ionic step, which are used to restart calculations. According to the value of read_file_dir:
   - auto: These files are saved in folder OUT.{read_file_dir}/restart/.
 
@@ -2333,35 +2333,35 @@
 ### out_pchg
 
 - **Type**: String
-- **Availability**: `basis_type==pw or (basis_type==lcao and calculation==get_pchg)`
+- **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_pchg)*
 - **Description**: Specifies the electronic states to calculate the charge densities with state index for, using a space-separated string of 0s and 1s. Each digit in the string corresponds to a state, starting from the first state. A 1 indicates that the charge density should be calculated for that state, while a 0 means the state will be ignored. The parameter allows a compact and flexible notation (similar to ocp_set), for example the syntax 1 4*0 5*1 0 is used to denote the selection of states: 1 means calculate for the first state, 4*0 skips the next four states, 5*1 means calculate for the following five states, and the final 0 skips the next state. It's essential that the total count of states does not exceed the total number of states (nbands); otherwise, it results in an error, and the process exits. The input string must contain only numbers and the asterisk (*) for repetition, ensuring correct format and intention of state selection. The outputs comprise multiple .cube files following the naming convention pchgi[state]s[spin]k[kpoint].cube.
 - **Default**: none
 
 ### out_wfc_norm
 
 - **Type**: String
-- **Availability**: `basis_type==pw or (basis_type==lcao and calculation==get_wf)`
+- **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_wf)*
 - **Description**: Specifies the electronic states to calculate the real-space wave function modulus (norm, or known as the envelope function) with state index. The syntax and state selection rules are identical to out_pchg, but the output is the norm of the wave function. The outputs comprise multiple .cube files following the naming convention wfi[state]s[spin]k[kpoint].cube.
 - **Default**: none
 
 ### out_wfc_re_im
 
 - **Type**: String
-- **Availability**: `basis_type==pw or (basis_type==lcao and calculation==get_wf)`
+- **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_wf)*
 - **Description**: Specifies the electronic states to calculate the real and imaginary parts of the wave function with state index. The syntax and state selection rules are identical to out_pchg, but the output contains both the real and imaginary components of the wave function. The outputs comprise multiple .cube files following the naming convention wfi[state]s[spin]k[kpoint][re/im].cube.
 - **Default**: none
 
 ### if_separate_k
 
 - **Type**: Boolean
-- **Availability**: `(basis_type==pw and out_pchg!=none) or (basis_type==lcao and calculation==get_pchg and gamma_only==0)`
+- **Availability**: *([`basis_type`](#basis_type)==pw and [`out_pchg`](#out_pchg)!=none) or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_pchg and [`gamma_only`](#gamma_only)==0)*
 - **Description**: Specifies whether to write the partial charge densities for all k-points to individual files or merge them. Warning: Enabling symmetry may produce unwanted results due to reduced k-point weights and symmetry operations in real space. Therefore when calculating partial charge densities, if you are not sure what you want exactly, it is strongly recommended to set symmetry = -1. It is noteworthy that your symmetry setting should remain the same as that in the SCF procedure.
 - **Default**: false
 
 ### out_elf
 
 - **Type**: Integer \[Integer\](optional)
-- **Availability**: `esolver_type in [ksdft, ofdft]`
+- **Availability**: *[`esolver_type`](#esolver_type) in [ksdft, ofdft]*
 - **Description**: Whether to output the electron localization function (ELF) in the folder `OUT.${suffix}`. The files are named as
   - nspin = 1:
     - elftot.cube: ${\rm{ELF}} = \frac{1}{1+\chi^2}$, $\chi = \frac{\frac{1}{2}\sum_{i}{f_i |\nabla\psi_{i}|^2} - \frac{|\nabla\rho|^2}{8\rho}}{\frac{3}{10}(3\pi^2)^{2/3}\rho^{5/3}}$;
@@ -2381,7 +2381,7 @@
 ### out_spillage
 
 - **Type**: Integer
-- **Availability**: `esolver_type==ksdft and basis_type==pw`
+- **Availability**: *[`esolver_type`](#esolver_type)==ksdft and [`basis_type`](#basis_type)==pw*
 - **Description**: This output is only intentively needed by the ABACUS numerical atomic orbital generation workflow. This parameter is used to control whether to output the overlap integrals between truncated spherical Bessel functions (TSBFs) and plane-wave basis expanded wavefunctions (named as OVERLAP_Q), and between TSBFs (named as OVERLAP_Sq), also their first order derivatives. The output files are named starting with orb_matrix. A value of 2 would enable the output.
 - **Default**: 0
 
@@ -2497,7 +2497,7 @@
 ### deepks_out_labels
 
 - **Type**: Integer
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Print labels and descriptors for DeePKS in OUT.${suffix}. The names of these files start with "deepks".
   - 0 : No output.
   - 1 : Output intermediate files needed during DeePKS training.
@@ -2509,21 +2509,21 @@
 ### deepks_out_freq_elec
 
 - **Type**: Integer
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: When deepks_out_freq_elec is greater than 0, print labels and descriptors for DeePKS in OUT.${suffix}/DeePKS_Labels_Elec per deepks_out_freq_elec electronic iterations, with suffix _e* to distinguish different steps. Often used with deepks_out_labels equals 1.
 - **Default**: 0
 
 ### deepks_out_base
 
 - **Type**: String
-- **Availability**: `basis_type==lcao and deepks_out_freq_elec>0`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`deepks_out_freq_elec`](#deepks_out_freq_elec)>0*
 - **Description**: Print labels and descriptors calculated by base functional ( determined by deepks_out_base ) and target functional ( determined by dft_functional ) for DeePKS in per deepks_out_freq_elec electronic iterations. The SCF process, labels and descriptors output of the target functional are all consistent with those when the target functional is used alone. The only additional output under this configuration is the labels of the base functional. Often used with deepks_out_labels equals 1.
 - **Default**: None
 
 ### deepks_scf
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: perform self-consistent field iteration in DeePKS method
 
   > Note: A trained, traced model file is needed.
@@ -2532,7 +2532,7 @@
 ### deepks_equiv
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: whether to use equivariant version of DeePKS
 
   > Note: The equivariant version of DeePKS-kit is still under development, so this feature is currently only intended for internal usage.
@@ -2541,21 +2541,21 @@
 ### deepks_model
 
 - **Type**: String
-- **Availability**: `basis_type==lcao and deepks_scf==true`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`deepks_scf`](#deepks_scf)==true*
 - **Description**: the path of the trained, traced neural network model file generated by deepks-kit
 - **Default**: None
 
 ### bessel_descriptor_lmax
 
 - **Type**: Integer
-- **Availability**: `calculation==gen_bessel`
+- **Availability**: *[`calculation`](#calculation)==gen_bessel*
 - **Description**: the maximum angular momentum of the Bessel functions generated as the projectors in DeePKS - NOte: To generate such projectors, set calculation type to gen_bessel in ABACUS. See also calculation.
 - **Default**: 2
 
 ### bessel_descriptor_ecut
 
 - **Type**: String
-- **Availability**: `calculation==gen_bessel`
+- **Availability**: *[`calculation`](#calculation)==gen_bessel*
 - **Description**: energy cutoff of Bessel functions
 - **Default**: same as ecutwfc
 - **Unit**: Ry
@@ -2563,14 +2563,14 @@
 ### bessel_descriptor_tolerence
 
 - **Type**: Real
-- **Availability**: `calculation==gen_bessel`
+- **Availability**: *[`calculation`](#calculation)==gen_bessel*
 - **Description**: tolerance for searching the zeros of Bessel functions
 - **Default**: 1.0e-12
 
 ### bessel_descriptor_rcut
 
 - **Type**: Real
-- **Availability**: `calculation==gen_bessel`
+- **Availability**: *[`calculation`](#calculation)==gen_bessel*
 - **Description**: cutoff radius of Bessel functions
 - **Default**: 6.0
 - **Unit**: Bohr
@@ -2578,14 +2578,14 @@
 ### bessel_descriptor_smooth
 
 - **Type**: Boolean
-- **Availability**: `calculation==gen_bessel`
+- **Availability**: *[`calculation`](#calculation)==gen_bessel*
 - **Description**: smooth the Bessel functions at radius cutoff
 - **Default**: False
 
 ### bessel_descriptor_sigma
 
 - **Type**: Real
-- **Availability**: `calculation==gen_bessel`
+- **Availability**: *[`calculation`](#calculation)==gen_bessel*
 - **Description**: smooth parameter at the cutoff radius of projectors
 - **Default**: 0.1
 - **Unit**: Bohr
@@ -2593,7 +2593,7 @@
 ### deepks_bandgap
 
 - **Type**: Integer
-- **Availability**: `basis_type==lcao and deepks_scf==true`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`deepks_scf`](#deepks_scf)==true*
 - **Description**: include bandgap label for DeePKS training
   - 0: Don't include bandgap label
   - 1: Include target bandgap label (see deepks_band_range for more details)
@@ -2604,7 +2604,7 @@
 ### deepks_band_range
 
 - **Type**: Integer*2
-- **Availability**: `basis_type==lcao and deepks_scf==true and deepks_bandgap in [1, 2]`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`deepks_scf`](#deepks_scf)==true and [`deepks_bandgap`](#deepks_bandgap) in [1, 2]*
 - **Description**: The first value should not be larger than the second one and the meaning differs in different cases below
   - deepks_bandgap is 1: Bandgap label is the energy between LUMO + deepks_band_range[0] and LUMO + deepks_band_range[1]. If not set, it will calculate energy between HOMO and LUMO states.
   - deepks_bandgap is 2: Bandgap labels are energies between HOMO and all states in range [LUMO + deepks_band_range[0], LUMO + deepks_band_range[1]] (Thus there are deepks_band_range[1] - deepks_band_range[0] + 1 bandgaps in total). If HOMO is included in the setting range, it will be ignored since it will always be zero and has no valuable messages (deepks_band_range[1] - deepks_band_range[0] bandgaps in this case). NOTICE: The set range can be greater than, less than, or include the value of HOMO. In the bandgap label, we always calculate the energy of the state in the set range minus the energy of HOMO state, so the bandgap can be negative if the state is lower than HOMO.
@@ -2613,7 +2613,7 @@
 ### deepks_v_delta
 
 - **Type**: Integer
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Include V_delta/V_delta_R (Hamiltonian in k/real space) label for DeePKS training. When deepks_out_labels is true and deepks_v_delta &gt; 0 (k space), ABACUS will output deepks_hbase.npy, deepks_vdelta.npy and deepks_htot.npy(htot=hbase+vdelta). When deepks_out_labels is true and deepks_v_delta &lt; 0 (real space), ABACUS will output deepks_hrtot.csr, deepks_hrdelta.csr. Some more files output for different settings. NOTICE: To match the unit Normally used in DeePKS, the unit of Hamiltonian in k space is Hartree. However, currently in R space the unit is still Ry.
   - deepks_v_delta = 1: deepks_vdpre.npy, which is used to calculate V_delta during DeePKS training.
   - deepks_v_delta = 2: deepks_phialpha.npy and deepks_gevdm.npy, which can be used to calculate deepks_vdpre.npy. A recommanded method for memory saving.
@@ -2636,7 +2636,7 @@
 ### of_kinetic
 
 - **Type**: String
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Kinetic energy functional type:
   - tf: Thomas-Fermi (TF) functional
   - vw: von Weizsacker (vW) functional
@@ -2653,7 +2653,7 @@
 ### of_method
 
 - **Type**: String
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: The optimization method used in OFDFT.
   - cg1: Polak-Ribiere. Standard CG algorithm.
   - cg2: Hager-Zhang (generally faster than cg1).
@@ -2663,7 +2663,7 @@
 ### of_conv
 
 - **Type**: String
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Criterion used to check the convergence of OFDFT.
   - energy: Total energy changes less than of_tole.
   - potential: The norm of potential is less than of_tolp.
@@ -2673,7 +2673,7 @@
 ### of_tole
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Tolerance of the energy change for determining the convergence.
 - **Default**: 2e-6
 - **Unit**: Ry
@@ -2681,7 +2681,7 @@
 ### of_tolp
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Tolerance of potential for determining the convergence.
 - **Default**: 1e-5
 - **Unit**: Ry
@@ -2689,40 +2689,40 @@
 ### of_tf_weight
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft and of_kinetic in [tf, tf+, wt, ext-wt, xwm]`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic) in [tf, tf+, wt, ext-wt, xwm]*
 - **Description**: Weight of TF KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_vw_weight
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft and of_kinetic in [vw, tf+, wt, ext-wt, lkt, xwm]`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic) in [vw, tf+, wt, ext-wt, lkt, xwm]*
 - **Description**: Weight of vW KEDF (kinetic energy density functional).
 - **Default**: 1.0
 
 ### of_wt_alpha
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft and of_kinetic in [wt, ext-wt]`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic) in [wt, ext-wt]*
 - **Description**: Parameter alpha of WT KEDF (kinetic energy density functional).
 
 ### of_wt_beta
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft and of_kinetic in [wt, ext-wt]`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic) in [wt, ext-wt]*
 - **Description**: Parameter beta of WT KEDF (kinetic energy density functional).
 
 ### of_extwt_kappa
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft and of_kinetic==ext-wt`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic)==ext-wt*
 - **Description**: Parameter kappa for EXT-WT KEDF.
 - **Default**: 1.0 / (2.0 * std::pow(4./3., 1./3.) - 1.0)
 
 ### of_wt_rho0
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft and of_kinetic==wt`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic)==wt*
 - **Description**: The average density of system.
 - **Default**: 0.0
 - **Unit**: Bohr^-3
@@ -2730,7 +2730,7 @@
 ### of_hold_rho0
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==ofdft and of_kinetic==wt`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic)==wt*
 - **Description**: Whether to fix the average density rho0.
   - True: rho0 will be fixed even if the volume of system has changed, it will be set to True automatically if of_wt_rho0 is not zero.
   - False: rho0 will change if volume of system has changed.
@@ -2739,28 +2739,28 @@
 ### of_lkt_a
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft and of_kinetic==lkt`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic)==lkt*
 - **Description**: Parameter a of LKT KEDF (kinetic energy density functional).
 - **Default**: 1.3
 
 ### of_xwm_rho_ref
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft and of_kinetic==xwm`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic)==xwm*
 - **Description**: Reference charge density for XWM kinetic energy functional. If set to 0, the program will use average charge density.
 - **Default**: 0.0
 
 ### of_xwm_kappa
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft and of_kinetic==xwm`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic)==xwm*
 - **Description**: Parameter for XWM kinetic energy functional. See PHYSICAL REVIEW B 100, 205132 (2019) for optimal values.
 - **Default**: 0.0
 
 ### of_read_kernel
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==ofdft and of_kinetic==wt`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic)==wt*
 - **Description**: Whether to read in the kernel file.
   - True: The kernel of WT KEDF (kinetic energy density functional) will be filled from the file specified by of_kernel_file.
   - False: The kernel of WT KEDF (kinetic energy density functional) will be filled from formula.
@@ -2769,14 +2769,14 @@
 ### of_kernel_file
 
 - **Type**: String
-- **Availability**: `esolver_type==ofdft and of_kinetic==wt and of_read_kernel==true`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_kinetic`](#of_kinetic)==wt and [`of_read_kernel`](#of_read_kernel)==true*
 - **Description**: The name of WT kernel file.
 - **Default**: WTkernel.txt
 
 ### of_full_pw
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Whether to use full planewaves.
   - True: Ecut will be ignored while collecting planewaves, so that all planewaves will be used in FFT.
   - False: Only use the planewaves inside ecut, the same as KSDFT.
@@ -2785,7 +2785,7 @@
 ### of_full_pw_dim
 
 - **Type**: Integer
-- **Availability**: `esolver_type==ofdft and of_full_pw==true`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft and [`of_full_pw`](#of_full_pw)==true*
 - **Description**: Specify the parity of FFT dimensions.
   - 0: either odd or even.
   - 1: odd only.
@@ -2801,14 +2801,14 @@
 ### of_ml_gene_data
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==ksdft and basis_type==pw`
+- **Availability**: *[`esolver_type`](#esolver_type)==ksdft and [`basis_type`](#basis_type)==pw*
 - **Description**: Controls the generation of machine learning training data. When enabled, training data in .npy format will be saved in the directory OUT.${suffix}/.
 - **Default**: False
 
 ### of_ml_device
 
 - **Type**: String
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Run Neural Network on GPU or CPU.
   - cpu: CPU
   - gpu: GPU
@@ -2817,7 +2817,7 @@
 ### of_ml_feg
 
 - **Type**: Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: The method to incorporate the Free Electron Gas (FEG) limit.
   - 0: Do not incorporate the FEG limit.
   - 1: Incorporate the FEG limit by translation.
@@ -2827,14 +2827,14 @@
 ### of_ml_nkernel
 
 - **Type**: Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Number of kernel functions.
 - **Default**: 1
 
 ### of_ml_kernel
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the type of the i-th kernel function.
   - 1: Wang-Teter kernel function.
   - 2: Modified Yukawa function, and alpha is specified by of_ml_yukawa_alpha.
@@ -2844,168 +2844,168 @@
 ### of_ml_kernel_scaling
 
 - **Type**: Vector of Real
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the RECIPROCAL of scaling parameter of the i-th kernel function.
 - **Default**: 1.0
 
 ### of_ml_yukawa_alpha
 
 - **Type**: Vector of Real
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the parameter alpha of i-th kernel function. ONLY used for Yukawa kernel function.
 - **Default**: 1.0
 
 ### of_ml_kernel_file
 
 - **Type**: Vector of String
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the file containing the i-th kernel function. ONLY used for TKK.
 - **Default**: none
 
 ### of_ml_gamma
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Local descriptor: gamma = (rho / rho0)^(1/3).
 - **Default**: False
 
 ### of_ml_p
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Semi-local descriptor: p = |nabla rho|^2 / [2 (3 pi^2)^(1/3) rho^(4/3)]^2.
 - **Default**: False
 
 ### of_ml_q
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Semi-local descriptor: q = nabla^2 rho / [4 (3 pi^2)^(2/3) rho^(5/3)].
 - **Default**: False
 
 ### of_ml_tanhp
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Semi-local descriptor: tanhp = tanh(chi_p * p).
 - **Default**: False
 
 ### of_ml_tanhq
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Semi-local descriptor: tanhq = tanh(chi_q * q).
 - **Default**: False
 
 ### of_ml_chi_p
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Hyperparameter chi_p: tanhp = tanh(chi_p * p).
 - **Default**: 1.0
 
 ### of_ml_chi_q
 
 - **Type**: Real
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Hyperparameter chi_q: tanhq = tanh(chi_q * q).
 - **Default**: 1.0
 
 ### of_ml_gammanl
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor gammanl defined by the i-th kernel function.
 - **Default**: 0
 
 ### of_ml_pnl
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor pnl defined by the i-th kernel function.
 - **Default**: 0
 
 ### of_ml_qnl
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor qnl defined by the i-th kernel function.
 - **Default**: 0
 
 ### of_ml_xi
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor xi defined by the i-th kernel function.
 - **Default**: 0
 
 ### of_ml_tanhxi
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhxi defined by the i-th kernel function.
 - **Default**: 0
 
 ### of_ml_tanhxi_nl
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhxi_nl defined by the i-th kernel function.
 - **Default**: 0
 
 ### of_ml_tanh_pnl
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanh_pnl defined by the i-th kernel function.
 - **Default**: 0
 
 ### of_ml_tanh_qnl
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanh_qnl defined by the i-th kernel function.
 - **Default**: 0
 
 ### of_ml_tanhp_nl
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhp_nl defined by the i-th kernel function.
 - **Default**: 0
 
 ### of_ml_tanhq_nl
 
 - **Type**: Vector of Integer
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element controls the non-local descriptor tanhq_nl defined by the i-th kernel function.
 - **Default**: 0
 
 ### of_ml_chi_xi
 
 - **Type**: Vector of Real
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_xi of non-local descriptor tanhxi defined by the i-th kernel function.
 - **Default**: 1.0
 
 ### of_ml_chi_pnl
 
 - **Type**: Vector of Real
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_pnl of non-local descriptor tanh_pnl defined by the i-th kernel function.
 - **Default**: 1.0
 
 ### of_ml_chi_qnl
 
 - **Type**: Vector of Real
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: Containing nkernel (see of_ml_nkernel) elements. The i-th element specifies the hyperparameter chi_qnl of non-local descriptor tanh_qnl defined by the i-th kernel function.
 - **Default**: 1.0
 
 ### of_ml_local_test
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==ofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==ofdft*
 - **Description**: FOR TEST. Read in the density, and output the F and Pauli potential.
 - **Default**: False
 
@@ -3022,7 +3022,7 @@
 ### of_cd
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==tdofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==tdofdft*
 - **Description**: Added the current dependent(CD) potential. (https://doi.org/10.1103/PhysRevB.98.144302)
   - True: Added the CD potential.
   - False: Not added the CD potential.
@@ -3031,7 +3031,7 @@
 ### of_mcd_alpha
 
 - **Type**: Real
-- **Availability**: `esolver_type==tdofdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==tdofdft*
 - **Description**: The value of the parameter alpha in modified CD potential method. mCDPotential=alpha*CDPotential (proposed in paper PhysRevB.98.144302)
 - **Default**: 1.0
 
@@ -3050,7 +3050,7 @@
 ### dip_cor_flag
 
 - **Type**: Boolean
-- **Availability**: `dip_cor_flag==true and efield_flag==true`
+- **Availability**: *[`efield_flag`](#efield_flag)==true*
 - **Description**: Added a dipole correction to the bare ionic potential.
   - True: A dipole correction is also added to the bare ionic potential.
   - False: A dipole correction is not added to the bare ionic potential.
@@ -3061,7 +3061,7 @@
 ### efield_dir
 
 - **Type**: Integer
-- **Availability**: `efield_flag==true`
+- **Availability**: *[`efield_flag`](#efield_flag)==true*
 - **Description**: The direction of the electric field or dipole correction is parallel to the reciprocal lattice vector, so the potential is constant in planes defined by FFT grid points, efield_dir can set to 0, 1 or 2.
   - 0: parallel to the first reciprocal lattice vector
   - 1: parallel to the second reciprocal lattice vector
@@ -3071,21 +3071,21 @@
 ### efield_pos_max
 
 - **Type**: Real
-- **Availability**: `efield_flag==true`
+- **Availability**: *[`efield_flag`](#efield_flag)==true*
 - **Description**: Position of the maximum of the saw-like potential along crystal axis efield_dir, within the unit cell, 0 &lt;= efield_pos_max &lt; 1.
 - **Default**: Autoset to center of vacuum - width of vacuum / 20
 
 ### efield_pos_dec
 
 - **Type**: Real
-- **Availability**: `efield_flag==true`
+- **Availability**: *[`efield_flag`](#efield_flag)==true*
 - **Description**: Zone in the unit cell where the saw-like potential decreases, 0 &lt; efield_pos_dec &lt; 1.
 - **Default**: Autoset to width of vacuum / 10
 
 ### efield_amp
 
 - **Type**: Real
-- **Availability**: `efield_flag==true`
+- **Availability**: *[`efield_flag`](#efield_flag)==true*
 - **Description**: Amplitude of the electric field. The saw-like potential increases with slope efield_amp in the region from efield_pos_max+efield_pos_dec-1) to (efield_pos_max), then decreases until (efield_pos_max+efield_pos_dec), in units of the crystal vector efield_dir.
 
   > Note: The change of slope of this potential must be located in the empty region, or else unphysical forces will result.
@@ -3173,14 +3173,14 @@
 ### exx_hybrid_step
 
 - **Type**: Integer
-- **Availability**: `exx_separate_loop==1`
+- **Availability**: *[`exx_separate_loop`](#exx_separate_loop)==1*
 - **Description**: The maximal iteration number of the outer-loop, where the Fock exchange is calculated
 - **Default**: 100
 
 ### exx_mixing_beta
 
 - **Type**: Real
-- **Availability**: `exx_separate_loop==1`
+- **Availability**: *[`exx_separate_loop`](#exx_separate_loop)==1*
 - **Description**: Mixing parameter for densty matrix in each iteration of the outer-loop
 - **Default**: 1.0
 
@@ -3191,7 +3191,7 @@
 ### exx_fock_lambda
 
 - **Type**: Real
-- **Availability**: `basis_type==lcao_in_pw`
+- **Availability**: *[`basis_type`](#basis_type)==lcao_in_pw*
 - **Description**: It is used to compensate for divergence points at G=0 in the evaluation of Fock exchange using lcao_in_pw method.
 - **Default**: 0.3
 
@@ -3261,14 +3261,14 @@
 ### exx_opt_orb_lmax
 
 - **Type**: Integer
-- **Availability**: `calculation==gen_opt_abfs`
+- **Availability**: *[`calculation`](#calculation)==gen_opt_abfs*
 - **Description**: The maximum l of the spherical Bessel functions, when the radial part of opt-ABFs are generated as linear combinations of spherical Bessel functions. A reasonable choice is 2.
 - **Default**: 0
 
 ### exx_opt_orb_ecut
 
 - **Type**: Real
-- **Availability**: `calculation==gen_opt_abfs`
+- **Availability**: *[`calculation`](#calculation)==gen_opt_abfs*
 - **Description**: The cut-off of plane wave expansion, when the plane wave basis is used to optimize the radial ABFs. A reasonable choice is 60.
 - **Default**: 0
 - **Unit**: Ry
@@ -3276,7 +3276,7 @@
 ### exx_opt_orb_tolerence
 
 - **Type**: Real
-- **Availability**: `calculation==gen_opt_abfs`
+- **Availability**: *[`calculation`](#calculation)==gen_opt_abfs*
 - **Description**: The threshold when solving for the zeros of spherical Bessel functions. A reasonable choice is 1e-12.
 - **Default**: 1E-12
 
@@ -3303,7 +3303,7 @@
 ### exx_symmetry_realspace
 
 - **Type**: Boolean
-- **Availability**: `symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or rpa==true)`
+- **Availability**: *[`symmetry`](#symmetry)==1 and ([`dft_functional`](#dft_functional) in [hse, hf, pbe0, scan0] or [`rpa`](#rpa)==true)*
 - **Description**: - False: only rotate k-space density matrix D(k) from irreducible k-points to accelerate diagonalization
   - True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
 - **Default**: True
@@ -3321,7 +3321,7 @@
 ### exxace
 
 - **Type**: Boolean
-- **Availability**: `exx_separate_loop==true`
+- **Availability**: *[`exx_separate_loop`](#exx_separate_loop)==true*
 - **Description**: Whether to use the ACE method (https://doi.org/10.1021/acs.jctc.6b00092) to accelerate the calculation the Fock exchange matrix. Should be set to true most of the time.
   - True: Use the ACE method to calculate the Fock exchange operator.
   - False: Use the traditional method to calculate the Fock exchange operator.
@@ -3351,7 +3351,7 @@
 ### exx_ene_thr
 
 - **Type**: Real
-- **Availability**: `exx_thr_type==energy`
+- **Availability**: *[`exx_thr_type`](#exx_thr_type)==energy*
 - **Description**: The threshold for the change of exact exchange energy to judge convergence of the outer loop in the separate loop EXX calculation.
 - **Default**: 1e-5
 - **Unit**: Ry
@@ -3588,21 +3588,21 @@
 ### dp_rescaling
 
 - **Type**: Real
-- **Availability**: `esolver_type==dp`
+- **Availability**: *[`esolver_type`](#esolver_type)==dp*
 - **Description**: Rescaling factor to use a temperature-dependent DP. Energy, stress and force calculated by DP will be multiplied by this factor.
 - **Default**: 1.0
 
 ### dp_fparam
 
 - **Type**: Real
-- **Availability**: `esolver_type==dp`
+- **Availability**: *[`esolver_type`](#esolver_type)==dp*
 - **Description**: The frame parameter for dp potential. The array size is dim_fparam, then all frames are assumed to be provided with the same fparam.
 - **Default**: {}
 
 ### dp_aparam
 
 - **Type**: Real
-- **Availability**: `esolver_type==dp`
+- **Availability**: *[`esolver_type`](#esolver_type)==dp*
 - **Description**: The atomic parameter for dp potential. The array size can be (1) natoms x dim_aparam, then all frames are assumed to be provided with the same aparam; (2) dim_aparam, then all frames and atoms are assumed to be provided with the same aparam.
 - **Default**: {}
 
@@ -3651,7 +3651,7 @@
 ### md_csvr_tau
 
 - **Type**: Real
-- **Availability**: `md_thermostat==csvr`
+- **Availability**: *[`md_thermostat`](#md_thermostat)==csvr*
 - **Description**: The characteristic time scale for the CSVR (Canonical Sampling through Velocity Rescaling) thermostat. Larger values give weaker coupling, smaller values give stronger coupling. Recommended value: 100 * md_dt.
 - **Default**: 100.0
 - **Unit**: fs
@@ -3706,7 +3706,7 @@
 ### dft_plus_dmft
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao`
+- **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: Whether to enable DFT+DMFT calculation. True: DFT+DMFT; False: standard DFT calculation.
 - **Default**: False
 
@@ -3739,14 +3739,14 @@
 ### yukawa_lambda
 
 - **Type**: Real
-- **Availability**: `dft_plus_u==1 and yukawa_potential==true`
+- **Availability**: *[`dft_plus_u`](#dft_plus_u)==1 and [`yukawa_potential`](#yukawa_potential)==true*
 - **Description**: The screen length of Yukawa potential. If left to default, the screen length will be calculated as an average of the entire system. It's better to stick to the default setting unless there is a very good reason.
 - **Default**: Calculated on the fly.
 
 ### uramping
 
 - **Type**: Real
-- **Availability**: `dft_plus_u==1 and mixing_restart>0`
+- **Availability**: *[`dft_plus_u`](#dft_plus_u)==1 and [`mixing_restart`](#mixing_restart)>0*
 - **Description**: Once uramping &gt; 0.15 eV. DFT+U calculations will start SCF with U = 0 eV, namely normal LDA/PBE calculations. Once SCF restarts when drho&lt;mixing_restart, U value will increase by uramping eV. SCF will repeat above calcuations until U values reach target defined in hubbard_u. As for uramping=1.0 eV, the recommendations of mixing_restart is around 5e-4.
 - **Default**: -1.0.
 - **Unit**: eV
@@ -3765,7 +3765,7 @@
 ### onsite_radius
 
 - **Type**: Real
-- **Availability**: `dft_plus_u==1`
+- **Availability**: *[`dft_plus_u`](#dft_plus_u)==1*
 - **Description**: - The onsite_radius parameter facilitates modulation of the single-zeta portion of numerical atomic orbitals used for DFT+U projections.
   - The modulation algorithm applies a smooth truncation to the orbital tail followed by normalization. A representative profile is $f(r)=\frac{1}{2}\left[1+\operatorname{erf}\!\left(\frac{r_c-r}{\sigma}\right)\right]$, where $r_c$ is the cutoff radius and $\sigma=\gamma r_c$ controls smoothness.
 - **Default**: 3.0
@@ -3790,7 +3790,7 @@
 ### sc_thr
 
 - **Type**: Real
-- **Availability**: `sc_mag_switch==true`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true*
 - **Description**: Convergence criterion of spin-constrained iteration (RMS) in uB
 - **Default**: 1.0e-6
 - **Unit**: uB
@@ -3798,21 +3798,21 @@
 ### nsc
 
 - **Type**: Integer
-- **Availability**: `sc_mag_switch==true`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true*
 - **Description**: Maximal number of spin-constrained iteration
 - **Default**: 100
 
 ### nsc_min
 
 - **Type**: Integer
-- **Availability**: `sc_mag_switch==true`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true*
 - **Description**: Minimum number of spin-constrained iteration
 - **Default**: 2
 
 ### alpha_trial
 
 - **Type**: Real
-- **Availability**: `sc_mag_switch==true`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true*
 - **Description**: Initial trial step size for lambda in eV/uB^2
 - **Default**: 0.01
 - **Unit**: eV/uB^2
@@ -3820,7 +3820,7 @@
 ### sccut
 
 - **Type**: Real
-- **Availability**: `sc_mag_switch==true`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true*
 - **Description**: Maximal step size for lambda in eV/uB
 - **Default**: 3.0
 - **Unit**: eV/uB
@@ -3828,21 +3828,21 @@
 ### sc_drop_thr
 
 - **Type**: Real
-- **Availability**: `sc_mag_switch==true`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true*
 - **Description**: Convergence criterion ratio of lambda iteration in Spin-constrained DFT
 - **Default**: 1.0e-2
 
 ### sc_scf_thr
 
 - **Type**: Real
-- **Availability**: `sc_mag_switch==true`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true*
 - **Description**: Density error threshold for inner loop of spin-constrained SCF
 - **Default**: 1.0e-4
 
 ### sc_direction_only
 
 - **Type**: Boolean
-- **Availability**: `sc_mag_switch==true`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true*
 - **Description**: When true, only the direction of the magnetic moment is constrained to the target direction, while the magnitude is allowed to vary freely. This is useful for studying magnetic anisotropy or when the magnitude of the moment is determined by the electronic structure rather than an external constraint.
 
   When false (default), both the direction and magnitude of the magnetic moment are constrained to the target values.
@@ -3851,7 +3851,7 @@
 ### sc_lambda_strategy
 
 - **Type**: String
-- **Availability**: `sc_mag_switch==true`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true*
 - **Description**: Lambda update strategy for spin-constrained DFT:
   - bfgs: BFGS quasi-Newton method
   - linear_response: linear response (Scheme B)
@@ -3863,7 +3863,7 @@
 ### sc_scan_lambda_start
 
 - **Type**: Float
-- **Availability**: `sc_mag_switch==true and sc_lambda_strategy==linear_scan`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true and [`sc_lambda_strategy`](#sc_lambda_strategy)==linear_scan*
 - **Description**: Starting lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.
 - **Default**: 0.0
 - **Unit**: eV/uB
@@ -3871,7 +3871,7 @@
 ### sc_scan_lambda_end
 
 - **Type**: Float
-- **Availability**: `sc_mag_switch==true and sc_lambda_strategy==linear_scan`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true and [`sc_lambda_strategy`](#sc_lambda_strategy)==linear_scan*
 - **Description**: Ending lambda value for linear_scan strategy. Only used when sc_lambda_strategy=linear_scan.
 - **Default**: 1.0
 - **Unit**: eV/uB
@@ -3879,7 +3879,7 @@
 ### sc_scan_steps
 
 - **Type**: Integer
-- **Availability**: `sc_mag_switch==true and sc_lambda_strategy==linear_scan`
+- **Availability**: *[`sc_mag_switch`](#sc_mag_switch)==true and [`sc_lambda_strategy`](#sc_lambda_strategy)==linear_scan*
 - **Description**: Number of lambda values to scan. Only used when sc_lambda_strategy=linear_scan.
 - **Default**: 20
 
@@ -3903,7 +3903,7 @@
 ### vdw_d4_xc
 
 - **Type**: String
-- **Availability**: `vdw_method==d4`
+- **Availability**: *[`vdw_method`](#vdw_method)==d4*
 - **Description**: Functional name used to load DFT-D4 damping parameters from the DFT-D4 library.
   If set to default, ABACUS infers the functional name from dft_functional or pseudopotential metadata.
 - **Default**: default
@@ -3911,7 +3911,7 @@
 ### vdw_d4_model
 
 - **Type**: String
-- **Availability**: `vdw_method==d4`
+- **Availability**: *[`vdw_method`](#vdw_method)==d4*
 - **Description**: DFT-D4 dispersion model used by the external DFT-D4 library.
   Available options are:
 
@@ -3922,38 +3922,38 @@
 ### vdw_s6
 
 - **Type**: String
-- **Availability**: `vdw_method in [d2, d3_0, d3_bj]`
+- **Availability**: *[`vdw_method`](#vdw_method) in [d2, d3_0, d3_bj]*
 - **Description**: This scale factor is used to optimize the interaction energy deviations in van der Waals (vdW) corrected calculations. The recommended values of this parameter are dependent on the chosen vdW correction method and the DFT functional being used. For DFT-D2, the recommended values are 0.75 (PBE), 1.2 (BLYP), 1.05 (B-P86), 1.0 (TPSS), and 1.05 (B3LYP). If not set, will use values of PBE functional. For DFT-D3, recommended values with different DFT functionals can be found on the here. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
 
 ### vdw_s8
 
 - **Type**: String
-- **Availability**: `vdw_method in [d3_0, d3_bj]`
+- **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj]*
 - **Description**: This scale factor is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
 
 ### vdw_a1
 
 - **Type**: String
-- **Availability**: `vdw_method in [d3_0, d3_bj]`
+- **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj]*
 - **Description**: This damping function parameter is relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
 
 ### vdw_a2
 
 - **Type**: String
-- **Availability**: `vdw_method in [d3_0, d3_bj]`
+- **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj]*
 - **Description**: This damping function parameter is only relevant for D3(0) and D3(BJ) van der Waals (vdW) correction methods. The recommended values of this parameter with different DFT functionals can be found on the webpage. If not set, will search in ABACUS built-in dataset based on the dft_functional keywords. User set value will overwrite the searched value.
 
 ### vdw_d
 
 - **Type**: Real
-- **Availability**: `vdw_method==d2`
+- **Availability**: *[`vdw_method`](#vdw_method)==d2*
 - **Description**: Controls the damping rate of the damping function in the DFT-D2 method.
 - **Default**: 20
 
 ### vdw_abc
 
 - **Type**: Boolean
-- **Availability**: `vdw_method in [d3_0, d3_bj]`
+- **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj]*
 - **Description**: Determines whether three-body terms are calculated for DFT-D3 methods.
   - True: ABACUS will calculate the three-body term.
   - False: The three-body term is not included.
@@ -3962,7 +3962,7 @@
 ### vdw_c6_file
 
 - **Type**: String
-- **Availability**: `vdw_method==d2`
+- **Availability**: *[`vdw_method`](#vdw_method)==d2*
 - **Description**: Specifies the name of the file containing parameters for each element when using the D2 method. If not set, ABACUS uses the default parameters (Jnm6/mol) stored in the program. To manually set the parameters, provide a file containing the parameters. An example is given by:
 
   H 0.1 Si 9.0
@@ -3973,7 +3973,7 @@
 ### vdw_c6_unit
 
 - **Type**: String
-- **Availability**: `vdw_method==d2 and vdw_c6_file!=default`
+- **Availability**: *[`vdw_method`](#vdw_method)==d2 and [`vdw_c6_file`](#vdw_c6_file)!=default*
 - **Description**: Specifies the unit of the provided parameters in the D2 method. Available options are:
   - Jnm6/mol (J nm^6/mol)
   - eVA (eV Angstrom)
@@ -3982,7 +3982,7 @@
 ### vdw_r0_file
 
 - **Type**: String
-- **Availability**: `vdw_method==d2`
+- **Availability**: *[`vdw_method`](#vdw_method)==d2*
 - **Description**: Specifies the name of the file containing parameters for each element when using the D2 method. If not set, ABACUS uses the default parameters (Angstrom) stored in the program. To manually set the parameters, provide a file containing the parameters. An example is given by:
 
   Li 1.0 Cl 2.0
@@ -3993,7 +3993,7 @@
 ### vdw_r0_unit
 
 - **Type**: String
-- **Availability**: `vdw_method==d2 and vdw_r0_file!=default`
+- **Availability**: *[`vdw_method`](#vdw_method)==d2 and [`vdw_r0_file`](#vdw_r0_file)!=default*
 - **Description**: Specifies the unit for the parameters in the D2 method when manually set by the user. Available options are:
   - A (Angstrom)
   - Bohr
@@ -4010,14 +4010,14 @@
 ### vdw_cutoff_radius
 
 - **Type**: String
-- **Availability**: `vdw_cutoff_type==radius`
+- **Availability**: *[`vdw_cutoff_type`](#vdw_cutoff_type)==radius*
 - **Description**: Defines the radius of the cutoff sphere when vdw_cutoff_type is set to radius. The default values depend on the chosen vdw_method.
 - **Unit**: defined by vdw_radius_unit (default Bohr)
 
 ### vdw_radius_unit
 
 - **Type**: String
-- **Availability**: `vdw_cutoff_type==radius`
+- **Availability**: *[`vdw_cutoff_type`](#vdw_cutoff_type)==radius*
 - **Description**: Specify the unit of vdw_cutoff_radius. Available options are:
   - A(Angstrom)
   - Bohr
@@ -4026,14 +4026,14 @@
 ### vdw_cutoff_period
 
 - **Type**: Integer Integer Integer
-- **Availability**: `vdw_cutoff_type==period`
+- **Availability**: *[`vdw_cutoff_type`](#vdw_cutoff_type)==period*
 - **Description**: The three integers supplied here explicitly specify the extent of the supercell in the directions of the three basis lattice vectors.
 - **Default**: 3 3 3
 
 ### vdw_cn_thr
 
 - **Type**: Real
-- **Availability**: `vdw_method in [d3_0, d3_bj, d4]`
+- **Availability**: *[`vdw_method`](#vdw_method) in [d3_0, d3_bj, d4]*
 - **Description**: The cutoff radius when calculating coordination numbers.
 - **Default**: 40
 - **Unit**: defined by vdw_cn_thr_unit (default: Bohr)
@@ -4252,7 +4252,7 @@
 ### td_gauss_freq
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 0`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 0*
 - **Description**: Ordinary frequency $f$ in the Gaussian-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
 - **Default**: 22.13
 - **Unit**: 1/fs
@@ -4260,7 +4260,7 @@
 ### td_gauss_phase
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 0`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 0*
 - **Description**: Carrier phase $\varphi$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
@@ -4268,7 +4268,7 @@
 ### td_gauss_sigma
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 0`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 0*
 - **Description**: Nonzero standard deviation $\sigma$ of the Gaussian envelope. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
 - **Default**: 30.0
 - **Unit**: fs
@@ -4276,14 +4276,14 @@
 ### td_gauss_t0
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 0`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 0*
 - **Description**: Electronic-step position of the Gaussian center, which defines $t_0=\mathtt{td\_gauss\_t0}\Delta t$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
 - **Default**: 100
 
 ### td_gauss_amp
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 0`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 0*
 - **Description**: Electric-field scale $E_0$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
 - **Default**: 0.25
 - **Unit**: V/Angstrom
@@ -4291,7 +4291,7 @@
 ### td_trape_freq
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 1`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
 - **Description**: Ordinary carrier frequency $f$ in the trapezoid-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 1.60
 - **Unit**: 1/fs
@@ -4299,7 +4299,7 @@
 ### td_trape_phase
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 1`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
 - **Description**: Carrier phase $\varphi$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
@@ -4307,28 +4307,28 @@
 ### td_trape_t1
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 1`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
 - **Description**: Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 1875
 
 ### td_trape_t2
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 1`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
 - **Description**: Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 5625
 
 ### td_trape_t3
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 1`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
 - **Description**: Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 7500
 
 ### td_trape_amp
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 1`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
 - **Description**: Electric-field scale $E_0$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 2.74
 - **Unit**: V/Angstrom
@@ -4336,7 +4336,7 @@
 ### td_trigo_freq1
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 2`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 2*
 - **Description**: First ordinary frequency $f_1$ in the trigonometric-pulse formula, with $\omega_1=2\pi f_1$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
 - **Default**: 1.164656
 - **Unit**: 1/fs
@@ -4344,7 +4344,7 @@
 ### td_trigo_freq2
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 2`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 2*
 - **Description**: Second ordinary frequency $f_2$ in the trigonometric-pulse formula, with $\omega_2=2\pi f_2$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
 - **Default**: 0.029116
 - **Unit**: 1/fs
@@ -4352,7 +4352,7 @@
 ### td_trigo_phase1
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 2`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 2*
 - **Description**: Carrier phase $\varphi_1$ in the cosine factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
@@ -4360,7 +4360,7 @@
 ### td_trigo_phase2
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 2`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 2*
 - **Description**: Envelope phase $\varphi_2$ in the sine-squared factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
@@ -4368,7 +4368,7 @@
 ### td_trigo_amp
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 2`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 2*
 - **Description**: Electric-field scale $E_0$ in the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
 - **Default**: 2.74
 - **Unit**: V/Angstrom
@@ -4376,14 +4376,14 @@
 ### td_heavi_t0
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 3`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 3*
 - **Description**: Electronic switch step $n_0$ in the Heaviside-pulse definition. The field is $E_0$ for $n\lt n_0$ and zero for $n\geqslant n_0$. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.
 - **Default**: 100
 
 ### td_heavi_amp
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 3`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 3*
 - **Description**: Electric-field scale $E_0$ in the Heaviside-pulse definition. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.
 - **Default**: 1.0
 - **Unit**: V/Angstrom
@@ -4391,7 +4391,7 @@
 ### td_supsine_amp
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 4`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
 - **Description**: Carrier electric-field scale $E_0$ of each supersine pulse. This is not a normalization of the complete waveform maximum, because the envelope-derivative term also contributes. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
 - **Default**: 0.27
 - **Unit**: V/Angstrom
@@ -4399,7 +4399,7 @@
 ### td_supsine_freq
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 4`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
 - **Description**: Nonzero ordinary carrier frequency $f$ of each supersine pulse, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
 - **Default**: 0.18737028625
 - **Unit**: 1/fs
@@ -4407,7 +4407,7 @@
 ### td_supsine_phase
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 4`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
 - **Description**: Electric-field carrier phase $\varphi$ at the center of each supersine envelope. A value of 0 places a cosine carrier maximum at the envelope center. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
@@ -4415,21 +4415,21 @@
 ### td_supsine_sigma
 
 - **Type**: Vector of Real
-- **Availability**: `td_ttype contains 4`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
 - **Description**: Dimensionless shape parameter $\sigma$ of each supersine envelope. It must satisfy $0\lt\sigma\lt\pi/2$ so that the electric field approaches zero at the pulse boundaries. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
 - **Default**: 0.75
 
 ### td_supsine_tstart
 
 - **Type**: Vector of String
-- **Availability**: `td_ttype contains 4`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
 - **Description**: Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supsine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
 - **Default**: default
 
 ### td_supsine_tend
 
 - **Type**: Vector of String
-- **Availability**: `td_ttype contains 4`
+- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
 - **Description**: Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
 - **Default**: default
 
@@ -4469,7 +4469,7 @@
 ### out_current
 
 - **Type**: Integer
-- **Availability**: `basis_type==lcao and esolver_type==tddft`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
 - **Description**: Controls the current-density output method for LCAO RT-TDDFT. Output rows contain the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
   - 0: Do not output current.
   - 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to OUT.{suffix}/current_tot.txt.
@@ -4479,7 +4479,7 @@
 ### out_current_k
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao and esolver_type==tddft and out_current>0`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft and [`out_current`](#out_current)>0*
 - **Description**: Controls whether LCAO RT-TDDFT current density is also resolved by spin and k-point. The total-current file is always written when out_current is 1 or 2.
   - True: In addition to the total, out_current=1 writes OUT.{suffix}/current_s[spin]k[kpoint].txt; out_current=2 writes OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
   - False: Output only current_tot.txt for out_current=1 or current_tot_comm.txt for out_current=2.
@@ -4488,7 +4488,7 @@
 ### out_efield
 
 - **Type**: Boolean
-- **Availability**: `esolver_type==tddft and td_vext==true`
+- **Availability**: *[`esolver_type`](#esolver_type)==tddft and [`td_vext`](#td_vext)==true*
 - **Description**: Controls time-dependent electric-field output. For each configured field, OUT.{suffix}/efield_[index].txt contains two columns: physical time in fs and the field value in V/Angstrom. The one-based field index follows the occurrence order shared by td_ttype and td_vext_dire, so fields assigned to the same direction remain in separate files. At initialization, a fresh calculation with md_restart=False truncates the files corresponding to the currently configured fields, whereas a calculation with md_restart=True preserves them and appends new samples.
   - True: Output electric-field values on active electronic steps.
   - False: Do not output electric-field values.
@@ -4497,7 +4497,7 @@
 ### out_vecpot
 
 - **Type**: Boolean
-- **Availability**: `basis_type==lcao and esolver_type==tddft`
+- **Availability**: *[`basis_type`](#basis_type)==lcao and [`esolver_type`](#esolver_type)==tddft*
 - **Description**: Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in atomic units. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
   - True: Write vector-potential samples on electronic propagation steps.
   - False: Do not output the vector potential.
@@ -4584,21 +4584,21 @@
 ### cal_cond
 
 - **Type**: Boolean
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: Whether to calculate electronic conductivities.
 - **Default**: False
 
 ### cond_che_thr
 
 - **Type**: Real
-- **Availability**: `esolver_type==sdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft*
 - **Description**: Control the error of Chebyshev expansions for conductivities.
 - **Default**: 1e-8
 
 ### cond_dw
 
 - **Type**: Real
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: Frequency interval () for frequency-dependent conductivities.
 - **Default**: 0.1
 - **Unit**: eV
@@ -4606,7 +4606,7 @@
 ### cond_wcut
 
 - **Type**: Real
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: Cutoff frequency for frequency-dependent conductivities.
 - **Default**: 10.0
 - **Unit**: eV
@@ -4614,7 +4614,7 @@
 ### cond_dt
 
 - **Type**: Real
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: Time interval () to integrate Onsager coefficients.
 - **Default**: 0.02
 - **Unit**: a.u.
@@ -4622,7 +4622,7 @@
 ### cond_dtbatch
 
 - **Type**: Integer
-- **Availability**: `esolver_type==sdft`
+- **Availability**: *[`esolver_type`](#esolver_type)==sdft*
 - **Description**: exp(iH\dt\cond_dtbatch) is expanded with Chebyshev expansion to calculate conductivities. It is faster but costs more memory.
   - If cond_dtbatch = 0: Autoset this parameter to make expansion orders larger than 100.
 - **Default**: 0
@@ -4638,7 +4638,7 @@
 ### cond_fwhm
 
 - **Type**: Real
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: FWHM for conductivities. For Gaussian smearing, ; for Lorentzian smearing, .
 - **Default**: 0.4
 - **Unit**: eV
@@ -4646,7 +4646,7 @@
 ### cond_nonlocal
 
 - **Type**: Boolean
-- **Availability**: `basis_type==pw`
+- **Availability**: *[`basis_type`](#basis_type)==pw*
 - **Description**: Whether to consider nonlocal potential correction when calculating velocity matrix .
   - True: .
   - False: .
@@ -4665,7 +4665,7 @@
 ### eb_k
 
 - **Type**: Real
-- **Availability**: `imp_sol==true`
+- **Availability**: *[`imp_sol`](#imp_sol)==true*
 - **Description**: The relative permittivity of the bulk solvent, 80 for water
 - **Default**: 80
 
@@ -4880,7 +4880,7 @@
 ### aims_nbasis
 
 - **Type**: A number(ntype) of Integers
-- **Availability**: `ri_hartree_benchmark==aims`
+- **Availability**: *[`ri_hartree_benchmark`](#ri_hartree_benchmark)==aims*
 - **Description**: Atomic basis set size for each atom type (with the same order as in STRU) in FHI-aims.
 - **Default**: {} (empty list, where ABACUS use its own basis set size)
 

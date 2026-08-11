@@ -3869,7 +3869,7 @@ parameters:
       [NOTE] Note: If you do not want any electric field, the parameter efield_amp should be set to zero. This should ONLY be used in a slab geometry for surface calculations, with the discontinuity FALLING IN THE EMPTY SPACE.
     default_value: "False"
     unit: ""
-    availability: dip_cor_flag==true and efield_flag==true
+    availability: efield_flag==true
   - name: efield_dir
     category: Electric field and dipole correction
     type: Integer

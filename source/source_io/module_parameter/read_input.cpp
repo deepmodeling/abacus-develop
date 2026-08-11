@@ -184,15 +184,20 @@ ReadInput::ReadInput(const int& rank)
     if (!this->input_lists.empty())
     {
         std::map<std::string, AvailabilityValueKind> parameter_types;
+        std::map<std::string, AvailabilityExpr> expressions;
         for (const auto& entry : this->input_lists)
         {
             parameter_types[entry.first] = availability_value_kind(entry.second.type);
+            expressions[entry.first] = entry.second.get_availability_expr();
         }
         for (const auto& entry : this->input_lists)
         {
             validate_availability_expr(entry.first,
                                        entry.second.get_availability_expr(),
                                        parameter_types);
+            validate_availability_self_contained(entry.first,
+                                                 entry.second.get_availability_expr(),
+                                                 expressions);
         }
     }
 }

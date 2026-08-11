@@ -43,6 +43,12 @@ Some existing INPUT parameters accept multiple whitespace-separated tokens as
 one value. Such existing INPUT forms are preserved and are not assigned a new
 runtime interpretation by this metadata contract.
 
+A path that references a parameter must imply that parameter's availability.
+Every `and` operand is required, while satisfying either branch of an `or` is
+sufficient. Repeated `and` or `or` groups are order-independent. Different leaf
+conditions are not related; for example, `mode==a` does not satisfy
+`mode in [a, b]`.
+
 Examples:
 
 ```cpp
@@ -56,7 +62,7 @@ item.set_availability("esolver_type==sdft and method_sto==2");
 
 1. Parse and require canonical spelling in `set_availability()`.
 2. Finish registering all `Input_Item` objects.
-3. Validate referenced parameter names, operator compatibility and literals.
+3. Validate referenced parameter names, operator compatibility, literal values, and that every referenced parameter carries its own enclosing requirements on the referencing path.
 4. Serialize the AST into `docs/parameters.yaml`.
 5. Generate `docs/advanced/input_files/input-main.md` from that YAML.
 
