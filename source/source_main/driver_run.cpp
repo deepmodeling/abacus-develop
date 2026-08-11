@@ -54,6 +54,7 @@ void Driver::driver_run()
 #endif
 
     const std::string cal = PARAM.inp.calculation;
+    const Input_para& input = PARAM.inp;
 
     this->init_hardware();
     ModuleESolver::ESolver* p_esolver = ModuleESolver::init_esolver(PARAM.inp);
@@ -61,40 +62,40 @@ void Driver::driver_run()
     // UnitCell is initialized only for workflows that require its full DFT state.
     UnitCell ucell;
     bool ucell_initialized = false;
-    const auto initialize_ucell = [&]()
+    const auto initialize_ucell = [&ucell, &ucell_initialized, &input]()
     {
         if (ucell_initialized)
         {
             return;
         }
 
-        ucell.setup_from_input(PARAM.inp.latname,
-                               PARAM.inp.ntype,
-                               PARAM.inp.lmaxmax,
-                               PARAM.inp.init_vel,
-                               PARAM.inp.fixed_axes);
+        ucell.setup_from_input(input.latname,
+                               input.ntype,
+                               input.lmaxmax,
+                               input.init_vel,
+                               input.fixed_axes);
         ucell.setup_cell(PARAM.globalv.global_in_stru,
                          GlobalV::ofs_running,
-                         PARAM.inp.symmetry_prec,
-                         PARAM.inp.dfthalf_type,
-                         PARAM.inp.pseudo_dir,
-                         PARAM.inp.nspin,
-                         PARAM.inp.basis_type,
-                         PARAM.inp.orbital_dir,
-                         PARAM.inp.init_wfc,
-                         PARAM.inp.onsite_radius,
+                         input.symmetry_prec,
+                         input.dfthalf_type,
+                         input.pseudo_dir,
+                         input.nspin,
+                         input.basis_type,
+                         input.orbital_dir,
+                         input.init_wfc,
+                         input.onsite_radius,
                          PARAM.globalv.deepks_setorb,
-                         PARAM.inp.rpa,
-                         PARAM.inp.fixed_atoms,
-                         PARAM.inp.noncolin,
-                         PARAM.inp.calculation,
-                         PARAM.inp.esolver_type,
-                         std::stoi(PARAM.inp.symmetry));
-        unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
+                         input.rpa,
+                         input.fixed_atoms,
+                         input.noncolin,
+                         input.calculation,
+                         input.esolver_type,
+                         std::stoi(input.symmetry));
+        unitcell::check_atomic_stru(ucell, input.min_dist_coef);
         ucell_initialized = true;
 
 #ifdef __RAPIDJSON
-        Json::gen_stru_wrapper(&ucell);
+        Json::gen_stru_wrapper(&ucell, input);
 #endif
     };
 
