@@ -1,13 +1,11 @@
-# RFC: structured INPUT availability
-
-Status: Phase 1 contract proposed by PR #7783.
+# Structured INPUT availability
 
 ## Purpose
 
 `Input_Item::availability` describes when an INPUT parameter is applicable. It
-is metadata for documentation and tooling; Phase 1 does not reject or alter a
-user's INPUT from this condition. A later runtime workflow may emit warnings
-for explicitly supplied parameters whose conditions are false.
+is metadata for documentation and tooling; it does not reject or alter a
+user's INPUT based on this condition. Runtime diagnostics, if added, must define
+how explicitly supplied parameters whose conditions are false are handled.
 
 ## Invariants
 
@@ -43,7 +41,7 @@ spelling of membership. Ordered comparisons require a numeric scalar, and
 
 Some existing INPUT parameters accept multiple whitespace-separated tokens as
 one value. Such existing INPUT forms are preserved and are not assigned a new
-runtime interpretation in Phase 1.
+runtime interpretation by this metadata contract.
 
 Examples:
 
@@ -62,6 +60,6 @@ item.set_availability("esolver_type==sdft and method_sto==2");
 4. Serialize the AST into `docs/parameters.yaml`.
 5. Generate `docs/advanced/input_files/input-main.md` from that YAML.
 
-Runtime evaluation is intentionally deferred. Before it is enabled, the
-project must define evaluation timing, treatment of defaults and reset values,
-and warning behavior for explicitly supplied parameters.
+Runtime evaluation is outside this metadata contract. Any implementation must
+define evaluation timing, treatment of defaults and reset values, and warning
+behavior for explicitly supplied parameters.
