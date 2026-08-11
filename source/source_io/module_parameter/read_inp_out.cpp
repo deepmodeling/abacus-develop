@@ -534,7 +534,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.description = R"(Output the upper triangular part of the Hamiltonian and overlap matrices in reciprocal space for each k-point into files in the directory OUT.${suffix}. The first integer selects the format:
 * 0: disabled;
 * 1: text output; the optional second integer controls precision and defaults to 8;
-* 2: reserved for binary output, which is not implemented yet;
+* 2: binary output in the native ABACUS .dat format;
 * 3: NPZ output, which is not implemented for H(k)/S(k).
 
 The output is also controlled by out_freq_ion and out_app_flag. For more information, refer to hs_matrix.md.
@@ -544,6 +544,8 @@ The output is also controlled by out_freq_ion and out_app_flag. For more informa
 * Multi-k, nspin = 1: hk1_nao.txt for the Hamiltonian matrix and sk1_nao.txt for the overlap matrix at the first k-point.
 * Multi-k, nspin = 2: hk1s1_nao.txt and hk1s2_nao.txt for the two spin channels of the Hamiltonian matrix, and sk1_nao.txt for the overlap matrix at the first k-point. Only one overlap matrix is written because it is identical for both spin channels.
 * Multi-k, nspin = 4: hk1s4_nao.txt for the spinor Hamiltonian matrix and sk1_nao.txt for the spinor overlap matrix at the first k-point.
+For binary output, the same names use the .dat suffix. Each native binary record contains the matrix dimension as an int followed by the row-major upper triangle. Gamma-only elements are doubles; multi-k and spinor elements are pairs of doubles containing the real and imaginary parts. Native integer representation and byte order are used.
+When out_app_flag is true, the first ionic step truncates the file and later steps append complete records.
 When out_app_flag is false, g followed by the one-based ionic-step index is inserted before _nao, for example hk1s1g1_nao.txt.
 
 [NOTE] In the 3.10-LTS version, the file names are data-0-H and data-0-S, etc.)";
@@ -575,10 +577,6 @@ When out_app_flag is false, g followed by the one-based ionic-step index is inse
             if (format < 0 || format > 3)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "out_hsk format must be 0, 1, 2, or 3");
-            }
-            if (format == 2)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_hsk binary output is reserved but not implemented");
             }
             if (format == 3)
             {

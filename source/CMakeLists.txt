@@ -67,6 +67,7 @@ set(_abacus_feature_definitions
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
   $<$<BOOL:${ENABLE_EXX_DEV}>:__EXX_DEV>
   $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
+  $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
   $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)

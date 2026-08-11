@@ -17,7 +17,6 @@ add_library(vdw OBJECT ${vdw_sources})
 
 if(ENABLE_DFTD4)
   target_link_libraries(vdw PUBLIC dftd4::dftd4)
-  target_compile_definitions(vdw PUBLIC __DFTD4)
 endif()
 
 if(ENABLE_COVERAGE)

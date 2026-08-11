@@ -26,6 +26,7 @@ namespace ModuleIO
 				const bool gamma_only,
 				const bool out_app_flag,
 				const int istep,
+				const int out_type,
 				const int precision,
 				std::ofstream &ofs_running);	
 

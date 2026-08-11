@@ -96,7 +96,9 @@ void MD_base::update_pos()
 {
     if (my_rank == 0)
     {
-        for (int i = 0; i < ucell.nat; ++i)
+        const int natom = ucell.nat;
+#pragma omp parallel for schedule(static) if (natom >= 256)
+        for (int i = 0; i < natom; ++i)
         {
             for (int k = 0; k < 3; ++k)
             {
@@ -127,7 +129,9 @@ void MD_base::update_vel(const ModuleBase::Vector3<double>* force)
 {
     if (my_rank == 0)
     {
-        for (int i = 0; i < ucell.nat; ++i)
+        const int natom = ucell.nat;
+#pragma omp parallel for schedule(static) if (natom >= 256)
+        for (int i = 0; i < natom; ++i)
         {
             for (int k = 0; k < 3; ++k)
             {

@@ -152,7 +152,5 @@ if(BUILD_TESTING)
 endif()
 
 if(ENABLE_RAPIDJSON)
-  if(ENABLE_MPI)
-    add_subdirectory(module_json)
-  endif()
+  add_subdirectory(module_json)
 endif()

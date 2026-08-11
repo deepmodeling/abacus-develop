@@ -21,6 +21,7 @@ void ModuleIO::write_hsk(
         const bool gamma_only,
         const bool out_app_flag,
         const int istep,
+        const int out_type,
         const int precision,
         std::ofstream &ofs_running)    
 {
@@ -40,25 +41,21 @@ void ModuleIO::write_hsk(
     for (int ik = 0; ik < nks; ++ik)
     {
         p_hamilt->updateHk(ik);
-        bool bit = false; // LiuXh, 2017-03-21
-        // if set bit = true, there would be error in soc-multi-core
-        // calculation, noted by zhengdy-soc
+        const bool binary = (out_type == 2);
 
         hamilt::MatrixBlock<T> h_mat;
         hamilt::MatrixBlock<T> s_mat;
 
         p_hamilt->matrix(h_mat, s_mat);
 
-        const int out_label=1; // 1: .txt, 2: .dat
-
         std::string h_fn = ModuleIO::filename_output(global_out_dir,
                 "hk","nao",ik,ik2iktot,nspin,nkstot,
-                out_label,out_app_flag,gamma_only,istep);
+                out_type,out_app_flag,gamma_only,istep);
 
         ModuleIO::save_mat(istep,
                 h_mat.p,
                 PARAM.globalv.nlocal,
-                bit,
+                binary,
                 precision,
                 1,
                 out_app_flag,
@@ -77,14 +74,14 @@ void ModuleIO::write_hsk(
 
         std::string s_fn = ModuleIO::filename_output(global_out_dir,
                 "sk","nao",ik,ik2iktot,nspin,nkstot,
-                out_label,out_app_flag,gamma_only,istep);
+                out_type,out_app_flag,gamma_only,istep);
 
         ofs_running << " The output filename is " << s_fn << std::endl;
 
         ModuleIO::save_mat(istep,
                 s_mat.p,
                 PARAM.globalv.nlocal,
-                bit,
+                binary,
                 precision,
                 1,
                 out_app_flag,
@@ -123,7 +120,8 @@ void ModuleIO::save_mat(const int istep,
 
         if (drank == 0)
         {
-            out_matrix = fopen(filename.c_str(), "wb");
+            const char* mode = (app && istep > 0) ? "ab" : "wb";
+            out_matrix = fopen(filename.c_str(), mode);
             if (out_matrix == nullptr)
             {
                 ModuleBase::WARNING_QUIT("ModuleIO::save_mat", "Cannot open matrix file: " + filename);
@@ -184,7 +182,8 @@ void ModuleIO::save_mat(const int istep,
         }
 // write .dat file without MPI
 #else
-        FILE* out_matrix = fopen(filename.c_str(), "wb");
+        const char* mode = (app && istep > 0) ? "ab" : "wb";
+        FILE* out_matrix = fopen(filename.c_str(), mode);
         if (out_matrix == nullptr)
         {
             ModuleBase::WARNING_QUIT("ModuleIO::save_mat", "Cannot open matrix file: " + filename);

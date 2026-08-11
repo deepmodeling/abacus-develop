@@ -5,9 +5,8 @@
 #undef private
 #define private public
 #define protected public
-#include "source_esolver/esolver_lj.h"
+#include "md_test_fixture.h"
 #include "source_md/md_func.h"
-#include "setcell.h"
 
 #define doublethreshold 1e-12
 /************************************************
@@ -50,45 +49,8 @@
  *     - test the current_md_info function with an incorrect file path
  */
 
-class MD_func_test : public testing::Test
+class MD_func_test : public MdFuncTestFixture
 {
-  protected:
-    UnitCell ucell;
-    double* allmass;                    // atom mass
-    ModuleBase::Vector3<double>* pos;   // atom position
-    ModuleBase::Vector3<double>* vel;   // atom velocity
-    ModuleBase::Vector3<int>* ionmbl;   // atom is frozen or not
-    ModuleBase::Vector3<double>* force; // atom force
-    ModuleBase::matrix virial;          // virial for this lattice
-    ModuleBase::matrix stress;          // stress for this lattice
-    double potential;                   // potential energy
-    int natom;                          // atom number
-    double temperature;                 // temperature
-    int frozen_freedom;                 // frozen_freedom
-    Parameter param_in;
-
-    void SetUp()
-    {
-        Setcell::setupcell(ucell);
-        Setcell::parameters(param_in.input);
-        natom = ucell.nat;
-        allmass = new double[natom];
-        pos = new ModuleBase::Vector3<double>[natom];
-        ionmbl = new ModuleBase::Vector3<int>[natom];
-        vel = new ModuleBase::Vector3<double>[natom];
-        force = new ModuleBase::Vector3<double>[natom];
-        stress.create(3, 3);
-        virial.create(3, 3);
-    }
-
-    void TearDown()
-    {
-        delete[] allmass;
-        delete[] pos;
-        delete[] vel;
-        delete[] ionmbl;
-        delete[] force;
-    }
 };
 
 TEST_F(MD_func_test, gaussrand)
