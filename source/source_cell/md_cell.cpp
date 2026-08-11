@@ -377,16 +377,6 @@ void MDCell::replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned
     exchange_ghost_atoms();
 }
 
-int MDCell::nlocal() const
-{
-    return static_cast<int>(owned_atoms_.size());
-}
-
-int MDCell::nghost() const
-{
-    return static_cast<int>(ghost_atoms_.size());
-}
-
 bool MDCell::init_vel() const
 {
     return init_vel_;

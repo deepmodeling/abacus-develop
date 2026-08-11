@@ -65,8 +65,8 @@ public:
     std::vector<LocalAtom>& mutable_ghost_atoms();
     void replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned_atoms);
 
-    int nlocal() const;
-    int nghost() const;
+    int nlocal() const { return static_cast<int>(owned_atoms_.size()); }
+    int nghost() const { return static_cast<int>(ghost_atoms_.size()); }
     bool init_vel() const;
     void set_init_vel(bool init_vel);
     double cutoff() const;
