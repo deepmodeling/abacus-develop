@@ -2358,8 +2358,8 @@
 ### rpa_outdir
 
 - **Type**: String
-- **Description**: Output directory for LibRPA package.
-- **Default**: "./OUT_rpa/"
+- **Description**: Output directory for LibRPA package. Files include `band_out`、`coulomb_cut_{rank}.txt`、`coulomb_mat_{rank}.txt`、`coulomb_unshrinked_cut_{rank}.txt`、`Cs_data_{rank}.txt`、`Cs_shrinked_data_{rank}.txt`、`KS_eigenvector_{k_index}.dat`、`shrink_sinvS_{rank}.txt`、`velocity_matrix`、`vxc_out`、`stru_out`.
+- **Default**: "./OUT.librpa/"
 
 ### out_pchg
 
