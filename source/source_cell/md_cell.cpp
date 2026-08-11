@@ -216,11 +216,6 @@ int MDCell::mpi_size() const
     return size_;
 }
 
-MPI_Comm MDCell::communicator() const
-{
-    return comm_;
-}
-
 const DomainDecomposition& MDCell::decomposition() const
 {
     return decomp_;
@@ -360,29 +355,9 @@ void MDCell::refresh_cart_from_frac()
     exchange_ghost_atoms();
 }
 
-const std::vector<LocalAtom>& MDCell::owned_atoms() const
-{
-    return owned_atoms_;
-}
-
 const std::vector<LocalAtom>& MDCell::ghost_atoms() const
 {
     return ghost_atoms_;
-}
-
-const std::vector<std::string>& MDCell::type_labels() const
-{
-    return type_labels_;
-}
-
-const std::vector<double>& MDCell::type_masses() const
-{
-    return type_masses_;
-}
-
-const std::vector<int>& MDCell::type_atom_counts() const
-{
-    return type_atom_counts_;
 }
 
 std::vector<LocalAtom>& MDCell::mutable_owned_atoms()

@@ -45,7 +45,7 @@ public:
 #ifdef __MPI
     int mpi_rank() const;
     int mpi_size() const;
-    MPI_Comm communicator() const;
+    MPI_Comm communicator() const { return comm_; }
 
     const DomainDecomposition& decomposition() const;
 #endif
@@ -56,11 +56,11 @@ public:
     void set_lattice_vectors(const ModuleBase::Matrix3& latvec);
     void refresh_cart_from_frac();
 
-    const std::vector<LocalAtom>& owned_atoms() const;
+    const std::vector<LocalAtom>& owned_atoms() const { return owned_atoms_; }
     const std::vector<LocalAtom>& ghost_atoms() const;
-    const std::vector<std::string>& type_labels() const;
-    const std::vector<double>& type_masses() const;
-    const std::vector<int>& type_atom_counts() const;
+    const std::vector<std::string>& type_labels() const { return type_labels_; }
+    const std::vector<double>& type_masses() const { return type_masses_; }
+    const std::vector<int>& type_atom_counts() const { return type_atom_counts_; }
     std::vector<LocalAtom>& mutable_owned_atoms();
     std::vector<LocalAtom>& mutable_ghost_atoms();
     void replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned_atoms);
