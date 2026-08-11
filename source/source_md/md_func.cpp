@@ -415,7 +415,20 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     else
     {
         if (!mdcell.has_backing_unitcell()) ModuleBase::WARNING_QUIT("MD_func::force_virial", "This ESolver requires UnitCell, but MDCell has no backing UnitCell.");
-        mdcell.sync_backing_unitcell(); UnitCell& ucell = mdcell.backing_unitcell();
+        UnitCell& ucell = mdcell.backing_unitcell();
+        std::vector<std::vector<ModuleBase::Vector3<double>>> backing_velocities(
+            static_cast<std::size_t>(ucell.ntype));
+        for (int it = 0; it < ucell.ntype; ++it)
+        {
+            backing_velocities[static_cast<std::size_t>(it)] = ucell.atoms[it].vel;
+        }
+        mdcell.sync_backing_unitcell();
+        for (int it = 0; it < ucell.ntype; ++it)
+        {
+            std::copy(backing_velocities[static_cast<std::size_t>(it)].begin(),
+                      backing_velocities[static_cast<std::size_t>(it)].end(),
+                      ucell.atoms[it].vel.begin());
+        }
         p_esolver->runner(ucell, istep); potential = 0.5 * p_esolver->cal_energy();
         ModuleBase::matrix full_force(ucell.nat, 3); p_esolver->cal_force(ucell, full_force); full_force *= 0.5;
         if (cal_stress) { p_esolver->cal_stress(ucell, virial); virial *= 0.5; }

@@ -100,6 +100,10 @@ void md_line(MDCell& mdcell,
 
         if ((mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)
         {
+            if (mdcell.has_backing_unitcell())
+            {
+                mdcell.sync_backing_unitcell();
+            }
             std::stringstream file;
             file << PARAM.globalv.global_stru_dir << "STRU_MD_" << mdrun->step_ + mdrun->step_rst_;
             mdcell::print_stru_file(mdcell, stru_metadata, file.str());
