@@ -10,15 +10,21 @@
 
 #include "source_psi/psi_init_nao.h"
 #ifdef __LCAO
-toWannier90_LCAO_IN_PW::toWannier90_LCAO_IN_PW(
-    const bool &out_wannier_mmn, 
-    const bool &out_wannier_amn, 
-    const bool &out_wannier_unk, 
-    const bool &out_wannier_eig,
-    const bool &out_wannier_wvfn_formatted, 
-    const std::string &nnkpfile,
-    const std::string &wannier_spin
-):toWannier90_PW(out_wannier_mmn, out_wannier_amn, out_wannier_unk, out_wannier_eig, out_wannier_wvfn_formatted, nnkpfile, wannier_spin)
+toWannier90_LCAO_IN_PW::toWannier90_LCAO_IN_PW(const bool& out_wannier_mmn,
+                                               const bool& out_wannier_amn,
+                                               const bool& out_wannier_unk,
+                                               const bool& out_wannier_eig,
+                                               const bool& out_wannier_wvfn_formatted,
+                                               const std::string& nnkpfile,
+                                               const std::string& wannier_spin)
+    : toWannier90_PW(out_wannier_mmn,
+                     out_wannier_amn,
+                     out_wannier_unk,
+                     out_wannier_eig,
+                     out_wannier_wvfn_formatted,
+                     nnkpfile,
+                     wannier_spin,
+                     false)
 {
 }
 

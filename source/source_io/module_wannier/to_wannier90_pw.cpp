@@ -1,23 +1,106 @@
 #include "to_wannier90_pw.h"
-#include "source_base/parallel_comm.h" // use POOL_WORLD
 
-#include "source_io/module_parameter/parameter.h"
+#include "../module_output/binstream.h"
 #include "source_base/math_integral.h"
 #include "source_base/math_polyint.h"
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
+#include "source_base/module_device/memory_op.h"
+#include "source_base/parallel_comm.h" // use POOL_WORLD
 #include "source_base/parallel_reduce.h"
-#include "../module_output/binstream.h"
+#include "source_io/module_parameter/parameter.h"
 
-toWannier90_PW::toWannier90_PW(
-    const bool &out_wannier_mmn, 
-    const bool &out_wannier_amn, 
-    const bool &out_wannier_unk, 
-    const bool &out_wannier_eig,
-    const bool &out_wannier_wvfn_formatted, 
-    const std::string &nnkpfile,
-    const std::string &wannier_spin
-):toWannier90(out_wannier_mmn, out_wannier_amn, out_wannier_unk, out_wannier_eig, out_wannier_wvfn_formatted, nnkpfile, wannier_spin)
+#include <memory>
+
+class toWannier90_PW::Wannier90PWFFT
+{
+  public:
+    Wannier90PWFFT(const ModulePW::PW_Basis_K* wfcpw, const bool use_gpu_fft) : wfcpw_(wfcpw)
+    {
+#if defined(__CUDA) || defined(__ROCM)
+        if (use_gpu_fft)
+        {
+            reciprocal_.reset(new psi::Psi<std::complex<double>, base_device::DEVICE_GPU>(1,
+                                                                                          1,
+                                                                                          wfcpw_->npwk_max,
+                                                                                          wfcpw_->npwk_max,
+                                                                                          true));
+            realspace_.reset(
+                new psi::Psi<std::complex<double>, base_device::DEVICE_GPU>(1, 1, wfcpw_->nrxx, wfcpw_->nrxx, true));
+        }
+#endif
+    }
+
+    void recip_to_real(const std::complex<double>* in, std::complex<double>* out, const int ik) const
+    {
+#if defined(__CUDA) || defined(__ROCM)
+        if (reciprocal_)
+        {
+            base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                       base_device::DEVICE_GPU,
+                                                       base_device::DEVICE_CPU>()(reciprocal_->get_pointer(),
+                                                                                  in,
+                                                                                  wfcpw_->npwk[ik]);
+            const base_device::DEVICE_GPU* ctx = nullptr;
+            wfcpw_->recip_to_real(ctx, reciprocal_->get_pointer(), realspace_->get_pointer(), ik);
+            base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                       base_device::DEVICE_CPU,
+                                                       base_device::DEVICE_GPU>()(out,
+                                                                                  realspace_->get_pointer(),
+                                                                                  wfcpw_->nrxx);
+            return;
+        }
+#endif
+        wfcpw_->recip2real(in, out, ik);
+    }
+
+    void real_to_recip(const std::complex<double>* in, std::complex<double>* out, const int ik) const
+    {
+#if defined(__CUDA) || defined(__ROCM)
+        if (realspace_)
+        {
+            base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                       base_device::DEVICE_GPU,
+                                                       base_device::DEVICE_CPU>()(realspace_->get_pointer(),
+                                                                                  in,
+                                                                                  wfcpw_->nrxx);
+            const base_device::DEVICE_GPU* ctx = nullptr;
+            wfcpw_->real_to_recip(ctx, realspace_->get_pointer(), reciprocal_->get_pointer(), ik);
+            base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                       base_device::DEVICE_CPU,
+                                                       base_device::DEVICE_GPU>()(out,
+                                                                                  reciprocal_->get_pointer(),
+                                                                                  wfcpw_->npwk[ik]);
+            return;
+        }
+#endif
+        wfcpw_->real2recip(in, out, ik);
+    }
+
+  private:
+    const ModulePW::PW_Basis_K* wfcpw_;
+#if defined(__CUDA) || defined(__ROCM)
+    std::unique_ptr<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>> reciprocal_;
+    std::unique_ptr<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>> realspace_;
+#endif
+};
+
+toWannier90_PW::toWannier90_PW(const bool& out_wannier_mmn,
+                               const bool& out_wannier_amn,
+                               const bool& out_wannier_unk,
+                               const bool& out_wannier_eig,
+                               const bool& out_wannier_wvfn_formatted,
+                               const std::string& nnkpfile,
+                               const std::string& wannier_spin,
+                               const bool use_gpu_fft)
+    : toWannier90(out_wannier_mmn,
+                  out_wannier_amn,
+                  out_wannier_unk,
+                  out_wannier_eig,
+                  out_wannier_wvfn_formatted,
+                  nnkpfile,
+                  wannier_spin),
+      use_gpu_fft_(use_gpu_fft)
 {
 
 }
@@ -88,6 +171,7 @@ void toWannier90_PW::cal_Mmn(
 )
 {
     std::ofstream mmn_file;
+    Wannier90PWFFT fft(wfcpw, this->use_gpu_fft_);
 
     if (GlobalV::MY_RANK == 0)
     {
@@ -109,7 +193,7 @@ void toWannier90_PW::cal_Mmn(
 
             int cal_ik = ik + start_k_index;
             int cal_ikb = ikb + start_k_index;
-            unkdotkb(psi_pw, wfcpw, cal_ik, cal_ikb, phase_G, Mmn);
+            unkdotkb(psi_pw, wfcpw, cal_ik, cal_ikb, phase_G, Mmn, fft);
 
             if (GlobalV::MY_RANK == 0)
             {
@@ -353,15 +437,13 @@ void toWannier90_PW::out_unk(
 
 }
 
-
-void toWannier90_PW::unkdotkb(
-    const psi::Psi<std::complex<double>>& psi_pw, 
-    const ModulePW::PW_Basis_K* wfcpw,
-    const int& cal_ik,
-    const int& cal_ikb,
-    const ModuleBase::Vector3<double> G,
-    ModuleBase::ComplexMatrix &Mmn
-)
+void toWannier90_PW::unkdotkb(const psi::Psi<std::complex<double>>& psi_pw,
+                              const ModulePW::PW_Basis_K* wfcpw,
+                              const int& cal_ik,
+                              const int& cal_ikb,
+                              const ModuleBase::Vector3<double> G,
+                              ModuleBase::ComplexMatrix& Mmn,
+                              Wannier90PWFFT& fft)
 {
     Mmn.create(num_bands, num_bands);
 
@@ -383,7 +465,7 @@ void toWannier90_PW::unkdotkb(
             }
         }
 
-        wfcpw->recip2real(phase, phase, cal_ik);
+        fft.recip_to_real(phase, phase, cal_ik);
 
         if (PARAM.inp.nspin == 4)
         {
@@ -396,17 +478,17 @@ void toWannier90_PW::unkdotkb(
             // (2) fft and get value
             // int npw_ik = wfcpw->npwk[cal_ik];
             int npwx = wfcpw->npwk_max;
-            wfcpw->recip2real(&psi_pw(cal_ik, im, 0), psir_up, cal_ik);
+            fft.recip_to_real(&psi_pw(cal_ik, im, 0), psir_up, cal_ik);
             // wfcpw->recip2real(&psi_pw(cal_ik, im, npw_ik), psir_dn, cal_ik);
-            wfcpw->recip2real(&psi_pw(cal_ik, im, npwx), psir_dn, cal_ik);
+            fft.recip_to_real(&psi_pw(cal_ik, im, npwx), psir_dn, cal_ik);
             for (int ir = 0; ir < wfcpw->nrxx; ir++)
             {
                 psir_up[ir] *= phase[ir];
                 psir_dn[ir] *= phase[ir];
             }
 
-            wfcpw->real2recip(psir_up, psir_up, cal_ikb);
-            wfcpw->real2recip(psir_dn, psir_dn, cal_ikb);
+            fft.real_to_recip(psir_up, psir_up, cal_ikb);
+            fft.real_to_recip(psir_dn, psir_dn, cal_ikb);
 
             for (int n = 0; n < num_bands; n++)
             {
@@ -447,13 +529,13 @@ void toWannier90_PW::unkdotkb(
             ModuleBase::GlobalFunc::ZEROS(psir, wfcpw->nmaxgr);
 
             // (2) fft and get value
-            wfcpw->recip2real(&psi_pw(cal_ik, im, 0), psir, cal_ik);
+            fft.recip_to_real(&psi_pw(cal_ik, im, 0), psir, cal_ik);
             for (int ir = 0; ir < wfcpw->nrxx; ir++)
             {
                 psir[ir] *= phase[ir];
             }
 
-            wfcpw->real2recip(psir, psir, cal_ikb);
+            fft.real_to_recip(psir, psir, cal_ikb);
 
             for (int n = 0; n < num_bands; n++)
             {
