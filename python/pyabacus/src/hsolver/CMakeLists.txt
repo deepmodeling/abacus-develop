@@ -20,6 +20,7 @@ list(APPEND _diago
     ${BASE_PATH}/module_device/memory_op.cpp
 
     ${PSI_PATH}/psi.cpp
+    ${PSI_PATH}/psi_paging.cpp
   )
 add_library(diagopack SHARED 
     ${_diago}

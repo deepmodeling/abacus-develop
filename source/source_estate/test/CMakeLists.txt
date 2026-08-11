@@ -38,7 +38,7 @@ AddTest(
 AddTest(
   TARGET MODULE_ESTATE_elecstate_base
   LIBS parameter  base device
-  SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp
+  SOURCES elecstate_base_test.cpp ../elecstate.cpp  ../elecstate_tools.cpp ../occupy.cpp ../../source_psi/psi.cpp ../../source_psi/psi_paging.cpp
   ../../source_base/module_fft/fft_bundle.cpp ../../source_base/module_fft/fft_cpu.cpp
 )
 
@@ -53,6 +53,7 @@ AddTest(
     ../module_charge/charge_mpi.cpp
     ../../source_lcao/module_deltaspin/spin_constrain.cpp
     ../../source_psi/psi.cpp
+    ../../source_psi/psi_paging.cpp
     ../../source_base/module_device/memory_op.cpp
 )
 

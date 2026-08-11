@@ -3,7 +3,8 @@ AddTest(
     LIBS parameter base device
     SOURCES 
         psi_test.cpp
-        ../psi.cpp 
+        ../psi.cpp
+        ../psi_paging.cpp
 )
 
 if(ENABLE_LCAO)
@@ -25,3 +26,4 @@ AddTest(
 endif()
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

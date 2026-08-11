@@ -182,7 +182,16 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             this->psi_initer->init_psig(psi_cpu->get_pointer(), ik);
             if (psi_device->get_pointer() != psi_cpu->get_pointer())
             {
-                syncmem_h2d_op()(psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
+                if (kspw_psi->get_storage_mode() == psi::PsiStorageMode::PAGED_GPU)
+                {
+                    T* dst_cpu = kspw_psi->get_cpu_pointer(ik);
+                    std::memcpy(dst_cpu, psi_cpu->get_pointer(), sizeof(T) * nbands_l * nbasis);
+                    kspw_psi->load_k_to_gpu(ik);
+                }
+                else
+                {
+                    syncmem_h2d_op()(psi_device->get_pointer(), psi_cpu->get_pointer(), nbands_start * nbasis);
+                }
             }
 
 
@@ -216,7 +225,13 @@ void PSIPrepare<T, Device>::initialize_psi(Psi<std::complex<double>>* psi,
             {
                 if (psi_device->get_pointer() != kspw_psi->get_pointer())
                 {
-                    syncmem_complex_op()(kspw_psi->get_pointer(), psi_device->get_pointer(), nbands_l * nbasis);
+                    if (kspw_psi->get_storage_mode() == psi::PsiStorageMode::PAGED_GPU)
+                    {
+                    }
+                    else
+                    {
+                        syncmem_complex_op()(kspw_psi->get_pointer(), psi_device->get_pointer(), nbands_l * nbasis);
+                    }
                 }
             }
         }
