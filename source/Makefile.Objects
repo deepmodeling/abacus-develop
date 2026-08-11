@@ -563,7 +563,6 @@ OBJS_IO=module_parameter/input_conv.o\
     print_info.o\
     read_cube.o\
     rhog_io.o\
-    read_exit_file.o\
     read_wfc_pw.o\
     read_wf2rho_pw.o\
     restart.o\
