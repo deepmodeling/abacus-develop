@@ -30,9 +30,9 @@ namespace ModuleESolver
 
         std::unique_ptr<BSE::MolecularLRI<T>> mo_lri;
 
-        virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
-        virtual void runner(UnitCell& ucell, int istep) override;
-        virtual void after_all_runners(UnitCell& ucell) override;
+        virtual void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
+        virtual void runner(BaseCell& basecell, int istep) override;
+        virtual void after_all_runners(BaseCell& basecell) override;
 
         void lri_init();
 

@@ -12,8 +12,11 @@ namespace ModuleESolver
 {
 
 template <typename T, typename TR>
-void ESolver_BSE<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_BSE", "before_all_runners");
     ModuleBase::timer::start("ESolver_BSE", "before_all_runners");
     this->ucell_ = &ucell;
@@ -21,7 +24,7 @@ void ESolver_BSE<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& i
     this->xc_kernel = LR_Util::tolower(inp.xc_kernel);
 
     // necessary steps in ESolver_FP
-    ModuleESolver::ESolver_FP::before_all_runners(ucell, inp);
+    ModuleESolver::ESolver_FP::before_all_runners(basecell, inp);
     this->pelec = new elecstate::ElecStateLCAO<T>();
 
     this->kRlist = LR_IO::RI_kRlist(*this->ucell_, &this->kv, this->rpa_dir, inp.bse_use_fine_kgrid);
@@ -138,8 +141,11 @@ void ESolver_BSE<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& i
 }
 
 template <typename T, typename TR>
-void ESolver_BSE<T, TR>::runner(UnitCell& ucell, const int istep)
+void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_BSE", "runner");
     ModuleBase::timer::start("ESolver_BSE", "runner");
     //allocate 2-particle state and setup 2d division
@@ -346,8 +352,11 @@ void ESolver_BSE<T, TR>::runner(UnitCell& ucell, const int istep)
 }
 
 template <typename T, typename TR>
-void ESolver_BSE<T, TR>::after_all_runners(UnitCell& ucell)
+void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_BSE", "after_all_runners");
     ModuleBase::timer::start("ESolver_BSE", "after_all_runners");
     const std::string& output_dir = PARAM.globalv.global_out_dir;

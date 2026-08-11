@@ -211,7 +211,7 @@ ModuleESolver::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp)
 }
 
 template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void ModuleESolver::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
@@ -483,7 +483,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
 }
 
 template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
+void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int istep)
 {
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
@@ -622,7 +622,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
 }
 
 template <typename T, typename TR>
-void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
+void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
 {
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);

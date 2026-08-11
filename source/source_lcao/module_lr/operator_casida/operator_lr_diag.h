@@ -45,10 +45,11 @@ namespace LR
         {
             ModuleBase::TITLE("OperatorLRDiag", "act");
             ModuleBase::timer::start("OperatorLRDiag", "act");
-            ModuleBase::vector_mul_vector_op<T, Device>()(nk * pX.get_local_size(),   // local size of particle-hole basis
+            ModuleBase::vector_mul_vector_op<T, Device, double>()(nk * pX.get_local_size(),   // local size of particle-hole basis
                 hpsi,
                 psi_in,
-                this->eig_ks_diff.c);
+                this->eig_ks_diff.c,
+                false);
             ModuleBase::timer::end("OperatorLRDiag", "act");
         }
     private:
