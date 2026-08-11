@@ -72,11 +72,13 @@ void MDCell::initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutof
     omega_ = ucell.omega;
     latvec_ = ucell.latvec;
     gt_ = ucell.GT;
-    type_labels_ = ucell.atom_label;
-    type_masses_ = ucell.atom_mass;
+    type_labels_.resize(static_cast<std::size_t>(ucell.ntype));
+    type_masses_.resize(static_cast<std::size_t>(ucell.ntype));
     type_atom_counts_.resize(static_cast<std::size_t>(ucell.ntype));
     for (int it = 0; it < ucell.ntype; ++it)
     {
+        type_labels_[static_cast<std::size_t>(it)] = ucell.atoms[it].label;
+        type_masses_[static_cast<std::size_t>(it)] = ucell.atoms[it].mass;
         type_atom_counts_[static_cast<std::size_t>(it)] = ucell.atoms[it].na;
     }
     init_vel_ = ucell.init_vel;
@@ -115,11 +117,13 @@ void MDCell::initialize_from_ucell_(UnitCell& ucell, double cutoff, double skin)
     omega_ = ucell.omega;
     latvec_ = ucell.latvec;
     gt_ = ucell.GT;
-    type_labels_ = ucell.atom_label;
-    type_masses_ = ucell.atom_mass;
+    type_labels_.resize(static_cast<std::size_t>(ucell.ntype));
+    type_masses_.resize(static_cast<std::size_t>(ucell.ntype));
     type_atom_counts_.resize(static_cast<std::size_t>(ucell.ntype));
     for (int it = 0; it < ucell.ntype; ++it)
     {
+        type_labels_[static_cast<std::size_t>(it)] = ucell.atoms[it].label;
+        type_masses_[static_cast<std::size_t>(it)] = ucell.atoms[it].mass;
         type_atom_counts_[static_cast<std::size_t>(it)] = ucell.atoms[it].na;
     }
     init_vel_ = ucell.init_vel;

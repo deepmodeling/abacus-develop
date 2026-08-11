@@ -68,11 +68,11 @@ void Driver::driver_run()
             return;
         }
 
-        ucell.setup(PARAM.inp.latname,
-                    PARAM.inp.ntype,
-                    PARAM.inp.lmaxmax,
-                    PARAM.inp.init_vel,
-                    PARAM.inp.fixed_axes);
+        ucell.setup_from_input(PARAM.inp.latname,
+                               PARAM.inp.ntype,
+                               PARAM.inp.lmaxmax,
+                               PARAM.inp.init_vel,
+                               PARAM.inp.fixed_axes);
         ucell.setup_cell(PARAM.globalv.global_in_stru,
                          GlobalV::ofs_running,
                          PARAM.inp.symmetry_prec,
@@ -88,7 +88,8 @@ void Driver::driver_run()
                          PARAM.inp.fixed_atoms,
                          PARAM.inp.noncolin,
                          PARAM.inp.calculation,
-                         PARAM.inp.esolver_type);
+                         PARAM.inp.esolver_type,
+                         std::stoi(PARAM.inp.symmetry));
         unitcell::check_atomic_stru(ucell, PARAM.inp.min_dist_coef);
         ucell_initialized = true;
 
@@ -118,7 +119,6 @@ void Driver::driver_run()
                                                                  0.0,
                                                                  stru_metadata,
                                                                  communication_domain);
-            mdcell.set_init_vel(PARAM.inp.init_vel);
             GlobalV::ofs_running << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
             GlobalV::ofs_running << std::endl;

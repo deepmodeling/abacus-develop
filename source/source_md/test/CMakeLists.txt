@@ -14,6 +14,7 @@ list(APPEND depend_files
   ../../source_cell/atom_pseudo.cpp
   ../../source_cell/read_atoms.cpp
   ../../source_cell/read_atoms_helper.cpp
+  ../../source_cell/cell_tools.cpp
   ../../source_cell/pseudo.cpp
   ../../source_cell/read_pp.cpp
   ../../source_cell/read_pp_complete.cpp
@@ -60,10 +61,10 @@ list(APPEND depend_files
   ../../source_base/parallel_global.cpp
   ../../source_base/communication_domain.cpp
   ../../source_base/parallel_comm.cpp
-  ../../source_estate/read_pseudo.cpp
-  ../../source_estate/cal_wfc.cpp
-  ../../source_estate/cal_nelec_nband.cpp
-  ../../source_estate/read_orb.cpp
+  ../../source_cell/read_pseudo.cpp
+  ../../source_cell/cal_wfc.cpp
+  ../../source_cell/cal_nelec_nband.cpp
+  ../../source_cell/read_orb.cpp
   ../../source_cell/sep.cpp
   ../../source_cell/sep_cell.cpp
 )
