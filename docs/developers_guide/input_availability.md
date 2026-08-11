@@ -42,9 +42,8 @@ spelling of membership. Ordered comparisons require a numeric scalar, and
 `contains` requires a vector.
 
 Some existing INPUT parameters accept multiple whitespace-separated tokens as
-one value. In particular, PR #6517 changed `relax_method` from `string` to
-`vector<string>`, so `relax_method in [cg 2]` preserves that existing two-token
-INPUT form. It does not introduce a new runtime interpretation in Phase 1.
+one value. Such existing INPUT forms are preserved and are not assigned a new
+runtime interpretation in Phase 1.
 
 Examples:
 
