@@ -258,7 +258,7 @@ class UnitCell : public AtomProvider, public BaseCell {
         return Kind::unit_cell;
     }
 
-    int get_nat() const override
+    std::int64_t get_nat() const override
     {
         return nat;
     }

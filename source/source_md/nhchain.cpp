@@ -198,7 +198,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
         couple_stress();
 
         /// init barostat
-        double nkt = (mdcell.nat() + 1) * t_target;
+        double nkt = (static_cast<double>(mdcell.nat()) + 1.0) * t_target;
 
         for (int i = 0; i < 6; ++i)
         {
@@ -669,7 +669,7 @@ void Nose_Hoover::update_baro()
             }
         }
     }
-    term_one /= pdim * mdcell.nat();
+    term_one /= static_cast<double>(pdim) * mdcell.nat();
 
     double g_omega = 0.0;
     double term_two = 0;
@@ -682,7 +682,7 @@ void Nose_Hoover::update_baro()
             term_two += v_omega[i];
         }
     }
-    term_two /= pdim * mdcell.nat();
+    term_two /= static_cast<double>(pdim) * mdcell.nat();
 
     for (int i = 3; i < 6; ++i)
     {

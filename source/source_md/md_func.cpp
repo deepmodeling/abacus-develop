@@ -290,16 +290,16 @@ void init_vel(MDCell& mdcell,
               const int& my_rank,
               const bool& restart,
               double& temperature,
-              int& frozen_freedom)
+              std::int64_t& frozen_freedom)
 {
     std::vector<LocalAtom>& atoms = mdcell.mutable_owned_atoms();
-    ModuleBase::Vector3<int> frozen(0, 0, 0);
+    ModuleBase::Vector3<std::int64_t> frozen(0, 0, 0);
     for (std::size_t i = 0; i < atoms.size(); ++i)
         for (int k = 0; k < 3; ++k) if (!atoms[i].mbl[k]) ++frozen[k];
 #ifdef __MPI
     if (mdcell.mpi_size() > 1)
     {
-        MPI_Allreduce(MPI_IN_PLACE, &frozen.x, 3, MPI_INT, MPI_SUM, mdcell.communicator());
+        MPI_Allreduce(MPI_IN_PLACE, &frozen.x, 3, MPI_INT64_T, MPI_SUM, mdcell.communicator());
     }
 #endif
     frozen_freedom = frozen.x + frozen.y + frozen.z;
@@ -580,7 +580,7 @@ void dump_info(const int& step,
     if (param_in.mdp.dump_force) header << "    FORCE (eV/Angstrom)";
     if (param_in.mdp.dump_vel) header << "    VELOCITY (Angstrom/fs)";
     header << "\n";
-    std::vector<int> type_offsets(mdcell.type_atom_counts().size() + 1, 0);
+    std::vector<std::int64_t> type_offsets(mdcell.type_atom_counts().size() + 1, 0);
     for (std::size_t it = 0; it < mdcell.type_atom_counts().size(); ++it)
     {
         type_offsets[it + 1] = type_offsets[it] + mdcell.type_atom_counts()[it];
@@ -612,8 +612,10 @@ void dump_info(const int& step,
     }
     MPI_Bcast(&base, 1, MPI_OFFSET, 0, comm);
     const MPI_Offset atom_offset = base + static_cast<MPI_Offset>(header.str().size());
-    const int local_size = static_cast<int>(local.str().size());
-    int rank_offset = 0; MPI_Exscan(&local_size, &rank_offset, 1, MPI_INT, MPI_SUM, comm); if (rank == 0) rank_offset = 0;
+    const MPI_Offset local_size = static_cast<MPI_Offset>(local.str().size());
+    MPI_Offset rank_offset = 0;
+    MPI_Exscan(&local_size, &rank_offset, 1, MPI_OFFSET, MPI_SUM, comm);
+    if (rank == 0) rank_offset = 0;
     const int file_descriptor = open(file.str().c_str(), O_WRONLY);
     if (file_descriptor < 0 || !write_dump_at(file_descriptor, local.str(), atom_offset + rank_offset) || close(file_descriptor) != 0) ModuleBase::WARNING_QUIT("MD_func::dump_info", "cannot write MD_dump atoms.");
 #else
@@ -676,7 +678,7 @@ double current_temp(double& kinetic,
 
 double current_temp(double& kinetic,
                     const MDCell& mdcell,
-                    const int& frozen_freedom)
+                    const std::int64_t& frozen_freedom)
 {
     kinetic = 0.0;
     for (std::size_t i = 0; i < mdcell.owned_atoms().size(); ++i)
@@ -687,15 +689,16 @@ double current_temp(double& kinetic,
 #ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, &kinetic, 1, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
 #endif
-    if (3 * mdcell.nat() == frozen_freedom) return 0.0;
-    return 2.0 * kinetic / (3 * mdcell.nat() - frozen_freedom);
+    const std::int64_t dof = 3 * mdcell.nat() - frozen_freedom;
+    if (dof == 0) return 0.0;
+    return 2.0 * kinetic / static_cast<double>(dof);
 }
 
-int global_dof(const MDCell& mdcell, const int& frozen_freedom)
+std::int64_t global_dof(const MDCell& mdcell, const std::int64_t& frozen_freedom)
 {
     static_cast<void>(frozen_freedom);
-    int natom = mdcell.nlocal();
-    int local_frozen[3] = {0, 0, 0};
+    std::int64_t natom = mdcell.nlocal();
+    std::int64_t local_frozen[3] = {0, 0, 0};
     for (int i = 0; i < mdcell.nlocal(); ++i)
     {
         const ModuleBase::Vector3<int>& mbl = mdcell.owned_atoms()[static_cast<std::size_t>(i)].mbl;
@@ -703,12 +706,12 @@ int global_dof(const MDCell& mdcell, const int& frozen_freedom)
         if (mbl.y == 0) ++local_frozen[1];
         if (mbl.z == 0) ++local_frozen[2];
     }
-    int global_frozen[3] = {local_frozen[0], local_frozen[1], local_frozen[2]};
+    std::int64_t global_frozen[3] = {local_frozen[0], local_frozen[1], local_frozen[2]};
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &natom, 1, MPI_INT, MPI_SUM, mdcell.communicator());
-    MPI_Allreduce(MPI_IN_PLACE, global_frozen, 3, MPI_INT, MPI_SUM, mdcell.communicator());
+    MPI_Allreduce(MPI_IN_PLACE, &natom, 1, MPI_INT64_T, MPI_SUM, mdcell.communicator());
+    MPI_Allreduce(MPI_IN_PLACE, global_frozen, 3, MPI_INT64_T, MPI_SUM, mdcell.communicator());
 #endif
-    int total_frozen = global_frozen[0] + global_frozen[1] + global_frozen[2];
+    std::int64_t total_frozen = global_frozen[0] + global_frozen[1] + global_frozen[2];
     if (global_frozen[0] == 0) ++total_frozen;
     if (global_frozen[1] == 0) ++total_frozen;
     if (global_frozen[2] == 0) ++total_frozen;

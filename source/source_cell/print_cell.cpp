@@ -374,11 +374,11 @@ void print_stru_file(const MDCell& cell, const MdStruFileMetadata& metadata, con
         }
         offset += static_cast<MPI_Offset>(type_header.size());
         const std::string local_atoms = local_mdcell_atoms(cell, it);
-        const int local_size = static_cast<int>(local_atoms.size());
-        int type_size = 0;
-        int rank_offset = 0;
-        MPI_Allreduce(&local_size, &type_size, 1, MPI_INT, MPI_SUM, comm);
-        MPI_Exscan(&local_size, &rank_offset, 1, MPI_INT, MPI_SUM, comm);
+        const MPI_Offset local_size = static_cast<MPI_Offset>(local_atoms.size());
+        MPI_Offset type_size = 0;
+        MPI_Offset rank_offset = 0;
+        MPI_Allreduce(&local_size, &type_size, 1, MPI_OFFSET, MPI_SUM, comm);
+        MPI_Exscan(&local_size, &rank_offset, 1, MPI_OFFSET, MPI_SUM, comm);
         if (rank == 0) rank_offset = 0;
         int atom_data_ok = 1;
         if (local_size > 0)

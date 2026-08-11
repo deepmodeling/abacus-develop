@@ -21,8 +21,8 @@ parameters:
     category: System variables
     type: Three Integers
     description: |
-      Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for distributed MDCell workflows. The default preserves the input structure.
-    default_value: "1 1 1"
+      Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for distributed MDCell workflows. The default is 1 1 1, which preserves the input structure.
+    default_value: 1 1 1
     unit: ""
     availability: ""
   - name: calculation

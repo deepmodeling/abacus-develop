@@ -8,6 +8,7 @@
   - [System variables](#system-variables)
     - [suffix](#suffix)
     - [ntype](#ntype)
+    - [replicate](#replicate)
     - [calculation](#calculation)
     - [esolver\_type](#esolver_type)
     - [symmetry](#symmetry)
@@ -583,8 +584,8 @@
 ### replicate
 
 - **Type**: Three Integers
-- **Description**: Replicate the input STRU by `Na Nb Nc` along its three lattice vectors for distributed MDCell workflows. The input structure is unchanged when this parameter is omitted; UnitCell workflows do not yet use this parameter.
-- **Default**: `1 1 1`
+- **Description**: Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for distributed MDCell workflows. The default is 1 1 1, which preserves the input structure.
+- **Default**: 1 1 1
 
 ### calculation
 

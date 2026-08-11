@@ -178,11 +178,11 @@ MDCell::MDCell(const ModuleBase::Matrix3& latvec,
                const ModuleBase::Matrix3& gt,
                double lat0,
                double omega,
-               int nat,
+               std::int64_t nat,
                const std::vector<LocalAtom>& owned_atoms,
                const std::vector<std::string>& type_labels,
                const std::vector<double>& type_masses,
-               const std::vector<int>& type_atom_counts,
+               const std::vector<std::int64_t>& type_atom_counts,
                double cutoff,
                double skin,
                const ModuleBase::CommunicationDomain& communication_domain)
@@ -490,7 +490,7 @@ BaseCell::Kind MDCell::get_kind() const
     return Kind::md_cell;
 }
 
-int MDCell::get_nat() const
+std::int64_t MDCell::get_nat() const
 {
     return nat_;
 }

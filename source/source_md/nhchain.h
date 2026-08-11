@@ -71,7 +71,7 @@ class Nose_Hoover : public MD_base
     const static int nys = 7; ///< the number of scale evolution operator
     double w[nys];            ///< scale evolution operator
 
-    int tdof;           ///< particle degree of freedom
+    std::int64_t tdof;  ///< particle degree of freedom
     double t_target=0.0;///< target temperature
     double* mass_eta = nullptr;   ///< mass of thermostats coupled with particles
     double* eta = nullptr;        ///< position of thermostats coupled with particles

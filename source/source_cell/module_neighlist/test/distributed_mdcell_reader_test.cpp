@@ -9,6 +9,7 @@
 #include "source_cell/module_neighlist/domain_decomposition.h"
 
 #include <cstdio>
+#include <cstdint>
 #include <fstream>
 #include <mpi.h>
 #include <set>
@@ -223,7 +224,7 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
                   owned_atoms,
                   std::vector<std::string>{"A", "B"},
                   std::vector<double>{1.0, 1.0},
-                  std::vector<int>{2, 2},
+                  std::vector<std::int64_t>{2, 2},
                   0.0,
                   0.0,
                   ModuleBase::world_communication_domain());

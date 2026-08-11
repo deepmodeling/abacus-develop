@@ -5,6 +5,8 @@
 #include "source_esolver/esolver.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <cstdint>
+
 /**
  * @brief base class of md
  *
@@ -75,7 +77,7 @@ class MD_base
     double t_current;                   ///< current temperature
     int step_;                          ///< the MD step finished in current calculation
     int step_rst_;                      ///< the MD step finished in previous calculations
-    int frozen_freedom_;                ///< the fixed freedom of the system
+    std::int64_t frozen_freedom_;       ///< the fixed freedom of the system
     ModuleBase::matrix virial;          ///< virial for this lattice
     ModuleBase::matrix stress;          ///< stress for this lattice
     double potential=0.0;               ///< potential energy

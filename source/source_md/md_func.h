@@ -4,6 +4,8 @@
 #include "source_cell/md_cell.h"
 #include "source_esolver/esolver.h"
 
+#include <cstdint>
+
 class Parameter;
 
 #ifdef __MPI
@@ -49,7 +51,7 @@ void init_vel(MDCell& mdcell,
               const int& my_rank,
               const bool& restart,
               double& temperature,
-              int& frozen_freedom);
+              std::int64_t& frozen_freedom);
 
 /**
  * @brief read in atomic velocities from STRU
@@ -227,8 +229,8 @@ double current_temp(double& kinetic,
                     const ModuleBase::Vector3<double>* vel);
 double current_temp(double& kinetic,
                     const MDCell& mdcell,
-                    const int& frozen_freedom);
-int global_dof(const MDCell& mdcell, const int& frozen_freedom);
+                    const std::int64_t& frozen_freedom);
+std::int64_t global_dof(const MDCell& mdcell, const std::int64_t& frozen_freedom);
 
 /**
  * @brief get the temperature vectors

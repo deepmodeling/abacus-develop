@@ -10,6 +10,7 @@
 #endif
 
 #include <cctype>
+#include <cstdint>
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -28,7 +29,7 @@ struct StruMetadata
     ModuleBase::Matrix3 gt;
     std::vector<std::string> labels;
     std::vector<double> masses;
-    std::vector<int> type_atom_counts;
+    std::vector<std::int64_t> type_atom_counts;
     MdStruFileMetadata stru_file_metadata;
 };
 
@@ -96,6 +97,17 @@ int parse_int(const std::string& token, const char* context)
         throw std::runtime_error(std::string("Failed to parse int for ") + context + ": " + token);
     }
     return static_cast<int>(value);
+}
+
+std::int64_t parse_int64(const std::string& token, const char* context)
+{
+    char* end = NULL;
+    const long long value = std::strtoll(token.c_str(), &end, 10);
+    if (end == token.c_str() || *end != '\0')
+    {
+        throw std::runtime_error(std::string("Failed to parse int64 for ") + context + ": " + token);
+    }
+    return static_cast<std::int64_t>(value);
 }
 
 ModuleBase::Vector3<double> wrap_fractional(const ModuleBase::Vector3<double>& frac)
@@ -187,7 +199,7 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                                          const std::vector<int>& replicate,
                                          double cutoff,
                                          double skin,
-                                         int& nat,
+                                         std::int64_t& nat,
                                          const ModuleBase::CommunicationDomain& communication_domain)
 {
     int rank = 0;
@@ -231,9 +243,9 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
         }
         std::istringstream magnetism(next_data_line(ifs, "magnetism"));
         magnetism >> metadata.stru_file_metadata.species[it].start_mag;
-        const int nat_type = parse_int(next_data_line(ifs, "atom count"), "atom count");
+        const std::int64_t nat_type = parse_int64(next_data_line(ifs, "atom count"), "atom count");
 
-        for (int ia = 0; ia < nat_type; ++ia)
+        for (std::int64_t ia = 0; ia < nat_type; ++ia)
         {
             std::istringstream iss(next_data_line(ifs, "atom line"));
             double c1 = 0.0;
@@ -309,7 +321,8 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                                                              mbl,
                                                              metadata.masses[it] / ModuleBase::AU_to_MASS,
                                                              static_cast<int>(it),
-                                                             ((ix * replicate[1] + iy) * replicate[2] + iz) * nat_type + ia,
+                                                             ((static_cast<std::int64_t>(ix) * replicate[1] + iy)
+                                                                  * replicate[2] + iz) * nat_type + ia,
                                                              owner,
                                                              false));
                         }
@@ -317,7 +330,7 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                 }
             }
         }
-        const int replicated_atom_count = nat_type * replicate[0] * replicate[1] * replicate[2];
+        const std::int64_t replicated_atom_count = nat_type * replicate[0] * replicate[1] * replicate[2];
         metadata.type_atom_counts.push_back(replicated_atom_count);
         nat += replicated_atom_count;
     }
@@ -355,7 +368,7 @@ MDCell DistributedMDCellReader::read_stru(const std::string& stru_file,
     metadata.latvec.e31 *= replicate[2]; metadata.latvec.e32 *= replicate[2]; metadata.latvec.e33 *= replicate[2];
     metadata.gt = metadata.latvec.Inverse();
     metadata.omega = std::abs(metadata.latvec.Det()) * metadata.lat0 * metadata.lat0 * metadata.lat0;
-    int nat = 0;
+    std::int64_t nat = 0;
     const std::vector<LocalAtom> owned_atoms = read_owned_atoms(ifs, metadata, primitive_latvec, primitive_gt,
                                                                   replicate, cutoff, skin, nat, communication_domain);
     MDCell mdcell(metadata.latvec,

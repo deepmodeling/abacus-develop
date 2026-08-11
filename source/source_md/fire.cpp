@@ -164,7 +164,7 @@ void FIRE::check_force(void)
 {
     max = 0.0;
 
-    int movable_dof = 0;
+    std::int64_t movable_dof = 0;
 
     for (const LocalAtom& atom : mdcell.owned_atoms())
     {
@@ -195,9 +195,9 @@ void FIRE::check_force(void)
     if (mdcell.mpi_size() > 1)
     {
         double global_max = 0.0;
-        int global_movable_dof = 0;
+        std::int64_t global_movable_dof = 0;
         MPI_Allreduce(&max, &global_max, 1, MPI_DOUBLE, MPI_MAX, mdcell.communicator());
-        MPI_Allreduce(&movable_dof, &global_movable_dof, 1, MPI_INT, MPI_SUM, mdcell.communicator());
+        MPI_Allreduce(&movable_dof, &global_movable_dof, 1, MPI_INT64_T, MPI_SUM, mdcell.communicator());
         max = global_max;
         movable_dof = global_movable_dof;
     }
@@ -231,7 +231,7 @@ void FIRE::check_fire(void)
         dt_max = 2.5 * md_dt;
     }
 
-    int movable_dof = 0;
+    std::int64_t movable_dof = 0;
 
     // Compute P, |F| and |v| only on movable degrees of freedom.
     // Fixed atoms/directions may have non-zero raw forces, but they should not
@@ -260,9 +260,9 @@ void FIRE::check_fire(void)
     {
         double local_values[3] = {P, sumforce, normvel};
         double global_values[3] = {0.0, 0.0, 0.0};
-        int global_movable_dof = 0;
+        std::int64_t global_movable_dof = 0;
         MPI_Allreduce(local_values, global_values, 3, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
-        MPI_Allreduce(&movable_dof, &global_movable_dof, 1, MPI_INT, MPI_SUM, mdcell.communicator());
+        MPI_Allreduce(&movable_dof, &global_movable_dof, 1, MPI_INT64_T, MPI_SUM, mdcell.communicator());
         P = global_values[0];
         sumforce = global_values[1];
         normvel = global_values[2];

@@ -9,6 +9,7 @@
 #endif
 
 #include <string>
+#include <cstdint>
 #include <vector>
 
 class UnitCell;
@@ -33,11 +34,11 @@ public:
            const ModuleBase::Matrix3& gt,
            double lat0,
            double omega,
-           int nat,
+           std::int64_t nat,
            const std::vector<LocalAtom>& owned_atoms,
            const std::vector<std::string>& type_labels,
            const std::vector<double>& type_masses,
-           const std::vector<int>& type_atom_counts,
+           const std::vector<std::int64_t>& type_atom_counts,
            double cutoff,
            double skin,
            const ModuleBase::CommunicationDomain& communication_domain);
@@ -60,7 +61,7 @@ public:
     const std::vector<LocalAtom>& ghost_atoms() const;
     const std::vector<std::string>& type_labels() const { return type_labels_; }
     const std::vector<double>& type_masses() const { return type_masses_; }
-    const std::vector<int>& type_atom_counts() const { return type_atom_counts_; }
+    const std::vector<std::int64_t>& type_atom_counts() const { return type_atom_counts_; }
     std::vector<LocalAtom>& mutable_owned_atoms();
     std::vector<LocalAtom>& mutable_ghost_atoms();
     void replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned_atoms);
@@ -78,7 +79,7 @@ public:
 
 private:
     Kind get_kind() const override;
-    int get_nat() const override;
+    std::int64_t get_nat() const override;
     double get_lat0() const override;
     double get_omega() const override;
     const ModuleBase::Matrix3& get_latvec() const override;
@@ -97,7 +98,7 @@ private:
     void clear_forces_(std::vector<LocalAtom>& atoms);
     static double wrap_fractional_(double value);
 
-    int nat_ = 0;
+    std::int64_t nat_ = 0;
     double lat0_ = 0.0;
     double omega_ = 0.0;
     ModuleBase::Matrix3 latvec_;
@@ -106,7 +107,7 @@ private:
     std::vector<LocalAtom> ghost_atoms_;
     std::vector<std::string> type_labels_;
     std::vector<double> type_masses_;
-    std::vector<int> type_atom_counts_;
+    std::vector<std::int64_t> type_atom_counts_;
     bool init_vel_ = false;
     double cutoff_ = 0.0;
     double skin_ = 0.0;
