@@ -129,12 +129,36 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi) const
 
 void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threads_used) const
 {
+    apply_grid_terms(psi, hpsi, true, threads_used);
+    if (nonlocal_projector_ != nullptr)
+    {
+        nonlocal_projector_->add_to(psi, hpsi);
+    }
+}
+
+void SternheimerFDHamiltonian::apply_kinetic(const Vector& psi, Vector& kinetic_psi) const
+{
+    apply_kinetic(psi, kinetic_psi, nullptr);
+}
+
+void SternheimerFDHamiltonian::apply_kinetic(const Vector& psi,
+                                             Vector& kinetic_psi,
+                                             int* threads_used) const
+{
+    apply_grid_terms(psi, kinetic_psi, false, threads_used);
+}
+
+void SternheimerFDHamiltonian::apply_grid_terms(const Vector& psi,
+                                                Vector& output,
+                                                const bool include_local_potential,
+                                                int* threads_used) const
+{
     if (static_cast<int>(psi.size()) != grid_.size())
     {
-        throw std::invalid_argument("SternheimerFDHamiltonian::apply input size does not match the grid.");
+        throw std::invalid_argument("SternheimerFDHamiltonian::apply_kinetic input size does not match the grid.");
     }
 
-    hpsi.assign(psi.size(), Complex(0.0, 0.0));
+    output.assign(psi.size(), Complex(0.0, 0.0));
     const SternheimerFDLatticeVectors dual = sternheimer_fd_grid_dual_vectors(grid_);
     const std::array<double, 3> dimensions{
         static_cast<double>(grid_.nx), static_cast<double>(grid_.ny), static_cast<double>(grid_.nz)};
@@ -207,7 +231,11 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threa
                     add_mixed(1, 0, 0, 0, 0, 1, laplacian_coefficients[0][2]);
                     add_mixed(0, 1, 0, 0, 0, 1, laplacian_coefficients[1][2]);
 
-                    hpsi[center] = -kinetic_prefactor_ * laplacian + local_potential_[center] * psi_center;
+                    output[center] = -kinetic_prefactor_ * laplacian;
+                    if (include_local_potential)
+                    {
+                        output[center] += local_potential_[center] * psi_center;
+                    }
                 }
             }
         }
@@ -220,9 +248,34 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threa
     }
 #endif
 
+}
+
+void SternheimerFDHamiltonian::apply_local_potential(const Vector& psi, Vector& local_psi) const
+{
+    if (static_cast<int>(psi.size()) != grid_.size())
+    {
+        throw std::invalid_argument(
+            "SternheimerFDHamiltonian::apply_local_potential input size does not match the grid.");
+    }
+    local_psi.resize(psi.size());
+#pragma omp parallel for schedule(static)
+    for (std::size_t ir = 0; ir != psi.size(); ++ir)
+    {
+        local_psi[ir] = local_potential_[ir] * psi[ir];
+    }
+}
+
+void SternheimerFDHamiltonian::apply_nonlocal(const Vector& psi, Vector& nonlocal_psi) const
+{
+    if (static_cast<int>(psi.size()) != grid_.size())
+    {
+        throw std::invalid_argument(
+            "SternheimerFDHamiltonian::apply_nonlocal input size does not match the grid.");
+    }
+    nonlocal_psi.assign(psi.size(), Complex(0.0, 0.0));
     if (nonlocal_projector_ != nullptr)
     {
-        nonlocal_projector_->add_to(psi, hpsi);
+        nonlocal_projector_->add_to(psi, nonlocal_psi);
     }
 }
 

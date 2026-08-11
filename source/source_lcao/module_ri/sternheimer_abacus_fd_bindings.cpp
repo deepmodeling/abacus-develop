@@ -107,6 +107,56 @@ std::vector<double> copy_sternheimer_full_local_potential(const elecstate::Poten
     return full_potential;
 }
 
+std::vector<double> copy_sternheimer_fixed_local_potential(const elecstate::Potential& potential,
+                                                           const ModulePW::PW_Basis& pw_basis)
+{
+    const SternheimerABACUSFDGridData grid_data = make_sternheimer_fd_grid(pw_basis);
+    if (grid_data.grid.size() != pw_basis.nrxx || pw_basis.nrxx <= 0)
+    {
+        throw std::invalid_argument(
+            "Sternheimer ABACUS FD fixed potential size does not match the real-space grid.");
+    }
+    const double* fixed = potential.get_fixed_v();
+    if (fixed == nullptr)
+    {
+        throw std::invalid_argument("Sternheimer ABACUS FD fixed potential is not allocated.");
+    }
+    return std::vector<double>(fixed, fixed + pw_basis.nrxx);
+}
+
+std::vector<double> copy_sternheimer_full_fixed_local_potential(
+    const elecstate::Potential& potential,
+    const ModulePW::PW_Basis& pw_basis)
+{
+    std::vector<double> local_fixed;
+    if (pw_basis.nrxx > 0)
+    {
+        const double* fixed = potential.get_fixed_v();
+        if (fixed == nullptr)
+        {
+            throw std::invalid_argument("Sternheimer ABACUS FD fixed potential is not allocated.");
+        }
+        local_fixed.assign(fixed, fixed + pw_basis.nrxx);
+    }
+    std::vector<double> full_fixed = embed_sternheimer_local_z_slab(local_fixed,
+                                                                    pw_basis.nxy,
+                                                                    pw_basis.nz,
+                                                                    pw_basis.nplane,
+                                                                    pw_basis.startz_current);
+#ifdef __MPI
+    if (pw_basis.poolnproc > 1)
+    {
+        MPI_Allreduce(MPI_IN_PLACE,
+                      full_fixed.data(),
+                      pw_basis.nxyz,
+                      MPI_DOUBLE,
+                      MPI_SUM,
+                      pw_basis.pool_world);
+    }
+#endif
+    return full_fixed;
+}
+
 SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian(const elecstate::Potential& potential,
                                                          const ModulePW::PW_Basis& pw_basis,
                                                          const int spin,

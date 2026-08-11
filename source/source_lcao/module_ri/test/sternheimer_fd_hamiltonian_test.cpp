@@ -259,6 +259,40 @@ TEST(SternheimerFDHamiltonian, ApplyIncludesNonlocalProjector)
     ASSERT_NE(hamiltonian.nonlocal_projector(), nullptr);
 }
 
+TEST(SternheimerFDHamiltonian, OperatorComponentsSumToFullHamiltonian)
+{
+    Hamiltonian::Grid grid{4, 1, 1, 0.5, 1.0, 1.0, true};
+    grid.kpoint = {0.25, 0.0, 0.0};
+    ModuleRI::SternheimerFDNonlocalProjector::ProjectorBlock block;
+    block.projectors = {{Complex(1.0, 0.0), Complex(0.0, 0.0),
+                         Complex(0.5, -0.25), Complex(0.0, 0.0)}};
+    block.d_matrix = {{Complex(1.5, 0.0)}};
+    auto nonlocal_projector = std::make_shared<ModuleRI::SternheimerFDNonlocalProjector>(
+        grid.size(),
+        0.5,
+        std::vector<ModuleRI::SternheimerFDNonlocalProjector::ProjectorBlock>{block});
+    Hamiltonian hamiltonian(grid, {0.1, -0.2, 0.3, -0.4}, 1.0, nonlocal_projector);
+    const Vector psi = {Complex(0.2, -0.1), Complex(-0.4, 0.3),
+                        Complex(0.7, 0.2), Complex(-0.1, -0.5)};
+
+    Vector full;
+    Vector kinetic;
+    Vector local;
+    Vector nonlocal;
+    hamiltonian.apply(psi, full);
+    hamiltonian.apply_kinetic(psi, kinetic);
+    hamiltonian.apply_local_potential(psi, local);
+    hamiltonian.apply_nonlocal(psi, nonlocal);
+
+    ASSERT_EQ(full.size(), psi.size());
+    for (std::size_t ir = 0; ir != full.size(); ++ir)
+    {
+        const Complex decomposed = kinetic[ir] + local[ir] + nonlocal[ir];
+        EXPECT_NEAR(full[ir].real(), decomposed.real(), 1.0e-13);
+        EXPECT_NEAR(full[ir].imag(), decomposed.imag(), 1.0e-13);
+    }
+}
+
 TEST(SternheimerFDHamiltonian, DenseMatrixIsHermitianForLocalRealPotential)
 {
     Hamiltonian::Grid grid{3, 2, 1, 0.4, 0.7, 1.0, true};

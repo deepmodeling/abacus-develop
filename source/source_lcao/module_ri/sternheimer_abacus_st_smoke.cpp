@@ -2050,6 +2050,12 @@ void run_sternheimer_periodic_lcao_chi0_output(
     const std::vector<double> kpoint_parallel_full_potential
         = use_kpoint_mpi ? copy_sternheimer_full_local_potential(potential, pw_basis, 0)
                          : std::vector<double>();
+    const std::vector<double> diagnostic_fixed_local_potential
+        = write_wavefunction_diagnostic
+              ? (use_kpoint_mpi
+                     ? copy_sternheimer_full_fixed_local_potential(potential, pw_basis)
+                     : copy_sternheimer_fixed_local_potential(potential, pw_basis))
+              : std::vector<double>();
     append_chi0_progress_event("full_grid_ready",
                                0,
                                -1,
@@ -2792,6 +2798,28 @@ void run_sternheimer_periodic_lcao_chi0_output(
                                         {"delta_in_pulay", response.delta_components.in_pulay_wavefunction});
                                     diagnostic.vectors.push_back(
                                         {"delta_out_grid", response.delta_components.out_wavefunction});
+                                    const SternheimerDeltaPulayOperatorComponents pulay_terms
+                                        = decompose_delta_sternheimer_pulay_operator_terms(
+                                            hamiltonian,
+                                            diagnostic_fixed_local_potential,
+                                            target_occupied_projector,
+                                            delta_subspace.virtual_states,
+                                            response.delta_components.out_wavefunction,
+                                            source.states.eigenvalues[ib],
+                                            omega_ry,
+                                            grid_data.volume_element);
+                                    diagnostic.vectors.push_back(
+                                        {"delta_in_pulay_kinetic", pulay_terms.kinetic});
+                                    diagnostic.vectors.push_back(
+                                        {"delta_in_pulay_fixed_local", pulay_terms.fixed_local});
+                                    diagnostic.vectors.push_back(
+                                        {"delta_in_pulay_hxc_local", pulay_terms.hxc_local});
+                                    diagnostic.vectors.push_back(
+                                        {"delta_in_pulay_nonlocal", pulay_terms.nonlocal});
+                                    diagnostic.vectors.push_back(
+                                        {"delta_in_pulay_eigenvalue", pulay_terms.eigenvalue});
+                                    diagnostic.vectors.push_back(
+                                        {"delta_in_pulay_operator_total", pulay_terms.total});
                                 }
                                 if (!lcao_response.empty())
                                 {

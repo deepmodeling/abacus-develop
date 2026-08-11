@@ -60,6 +60,12 @@ std::vector<double> copy_sternheimer_full_local_potential(const elecstate::Poten
                                                           const ModulePW::PW_Basis& pw_basis,
                                                           int spin);
 
+std::vector<double> copy_sternheimer_fixed_local_potential(const elecstate::Potential& potential,
+                                                           const ModulePW::PW_Basis& pw_basis);
+
+std::vector<double> copy_sternheimer_full_fixed_local_potential(const elecstate::Potential& potential,
+                                                                const ModulePW::PW_Basis& pw_basis);
+
 SternheimerFDHamiltonian make_sternheimer_fd_hamiltonian_from_local_potential(
     const SternheimerABACUSFDGridData& grid_data,
     std::vector<double> local_potential,

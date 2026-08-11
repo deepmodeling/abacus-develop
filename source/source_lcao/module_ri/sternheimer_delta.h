@@ -51,6 +51,16 @@ struct SternheimerDeltaCoefficientComponents
     std::vector<SternheimerFDHamiltonian::Complex> total;
 };
 
+struct SternheimerDeltaPulayOperatorComponents
+{
+    SternheimerFDHamiltonian::Vector kinetic;
+    SternheimerFDHamiltonian::Vector fixed_local;
+    SternheimerFDHamiltonian::Vector hxc_local;
+    SternheimerFDHamiltonian::Vector nonlocal;
+    SternheimerFDHamiltonian::Vector eigenvalue;
+    SternheimerFDHamiltonian::Vector total;
+};
+
 struct SternheimerDeltaSubspaceOptions
 {
     int max_virtual_states = 0;
@@ -154,6 +164,19 @@ struct SternheimerDeltaLinearResponse
 SternheimerDeltaPostprocessResult postprocess_delta_sternheimer_solution(
     const SternheimerFDHamiltonian::Vector& standard_delta_wavefunction,
     const SternheimerDeltaPostprocessInput& input);
+
+// Split the Pulay first-order wavefunction into the operator terms that form
+// Q_out (H_grid - epsilon_a) eta_a. This is a diagnostic decomposition; the
+// sum of the five operator terms must reproduce total.
+SternheimerDeltaPulayOperatorComponents decompose_delta_sternheimer_pulay_operator_terms(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<double>& fixed_local_potential,
+    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const SternheimerFDHamiltonian::Vector& out_wavefunction,
+    double occupied_eigenvalue,
+    double omega,
+    double volume_element);
 
 // Matrices use LAPACK column-major storage. This solves
 // (H_delta - shift S_delta) c = rhs_delta - h_out by two shared-LU right-hand sides.

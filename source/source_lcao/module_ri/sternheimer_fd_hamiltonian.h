@@ -60,6 +60,10 @@ class SternheimerFDHamiltonian
 
     void apply(const Vector& psi, Vector& hpsi) const;
     void apply(const Vector& psi, Vector& hpsi, int* threads_used) const;
+    void apply_kinetic(const Vector& psi, Vector& kinetic_psi) const;
+    void apply_kinetic(const Vector& psi, Vector& kinetic_psi, int* threads_used) const;
+    void apply_local_potential(const Vector& psi, Vector& local_psi) const;
+    void apply_nonlocal(const Vector& psi, Vector& nonlocal_psi) const;
 
     Matrix dense_matrix(int max_size = 4096) const;
 
@@ -78,6 +82,10 @@ class SternheimerFDHamiltonian
     };
 
     ShiftedGridPoint shifted_grid_point(int ix, int iy, int iz) const;
+    void apply_grid_terms(const Vector& psi,
+                          Vector& output,
+                          bool include_local_potential,
+                          int* threads_used) const;
 
     Grid grid_;
     std::vector<double> local_potential_;

@@ -776,6 +776,96 @@ SternheimerDeltaPostprocessResult postprocess_delta_sternheimer_solution(
     return result;
 }
 
+SternheimerDeltaPulayOperatorComponents decompose_delta_sternheimer_pulay_operator_terms(
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<double>& fixed_local_potential,
+    const std::vector<Vector>& occupied_wavefunctions,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const Vector& out_wavefunction,
+    const double occupied_eigenvalue,
+    const double omega,
+    const double volume_element)
+{
+    const std::size_t grid_size = static_cast<std::size_t>(hamiltonian.grid().size());
+    if (fixed_local_potential.size() != grid_size || out_wavefunction.size() != grid_size)
+    {
+        throw std::invalid_argument(
+            "Sternheimer Pulay operator decomposition requires full-grid potentials and wavefunctions.");
+    }
+    if (volume_element <= 0.0)
+    {
+        throw std::invalid_argument(
+            "Sternheimer Pulay operator decomposition requires a positive grid volume element.");
+    }
+    validate_virtual_states(virtual_states, grid_size);
+    for (const Vector& occupied: occupied_wavefunctions)
+    {
+        check_vector_size(occupied, grid_size, "Sternheimer Pulay operator occupied state");
+    }
+
+    SternheimerDeltaPulayOperatorComponents result;
+    Vector* outputs[] = {&result.kinetic,
+                         &result.fixed_local,
+                         &result.hxc_local,
+                         &result.nonlocal,
+                         &result.eigenvalue,
+                         &result.total};
+    for (Vector* output: outputs)
+    {
+        output->assign(grid_size, Complex(0.0, 0.0));
+    }
+
+    const auto dot = [volume_element](const Vector& lhs, const Vector& rhs) {
+        return sternheimer_fd_grid_dot(lhs, rhs, volume_element);
+    };
+    std::vector<Vector> fixed_subspace = occupied_wavefunctions;
+    const std::vector<Vector> virtual_orbitals = collect_virtual_orbitals(virtual_states);
+    fixed_subspace.insert(fixed_subspace.end(), virtual_orbitals.begin(), virtual_orbitals.end());
+    const std::vector<double>& full_local_potential = hamiltonian.local_potential();
+
+    for (const SternheimerDeltaVirtualState& state: virtual_states)
+    {
+        const Complex denominator(occupied_eigenvalue - state.eigenvalue, -omega);
+        if (std::abs(denominator) < 1.0e-30)
+        {
+            throw std::runtime_error(
+                "Sternheimer Pulay operator decomposition found a singular denominator.");
+        }
+
+        std::array<Vector, 5> residual_terms;
+        for (Vector& term: residual_terms)
+        {
+            term.assign(grid_size, Complex(0.0, 0.0));
+        }
+        hamiltonian.apply_kinetic(state.orbital, residual_terms[0]);
+        hamiltonian.apply_nonlocal(state.orbital, residual_terms[3]);
+#pragma omp parallel for schedule(static)
+        for (std::size_t ir = 0; ir != grid_size; ++ir)
+        {
+            residual_terms[1][ir] = fixed_local_potential[ir] * state.orbital[ir];
+            residual_terms[2][ir]
+                = (full_local_potential[ir] - fixed_local_potential[ir]) * state.orbital[ir];
+            residual_terms[4][ir] = -state.eigenvalue * state.orbital[ir];
+        }
+
+        Vector* component_outputs[] = {&result.kinetic,
+                                       &result.fixed_local,
+                                       &result.hxc_local,
+                                       &result.nonlocal,
+                                       &result.eigenvalue};
+        for (std::size_t iterm = 0; iterm != residual_terms.size(); ++iterm)
+        {
+            SternheimerRPA::project_out_subspace(fixed_subspace, dot, residual_terms[iterm]);
+            const Complex coefficient = dot(residual_terms[iterm], out_wavefunction) / denominator;
+            axpy(coefficient, state.orbital, *component_outputs[iterm]);
+        }
+
+        const Complex total_coefficient = dot(state.residual, out_wavefunction) / denominator;
+        axpy(total_coefficient, state.orbital, result.total);
+    }
+    return result;
+}
+
 SternheimerDeltaGridMatrices assemble_delta_sternheimer_grid_matrices(
     const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerDeltaGridFunction>& basis_functions,

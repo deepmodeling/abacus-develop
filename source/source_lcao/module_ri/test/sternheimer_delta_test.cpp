@@ -115,6 +115,67 @@ TEST(SternheimerDelta, PostprocessReconstructsStandardSolutionWithResidualCoupli
                 1.0e-14);
 }
 
+TEST(SternheimerDelta, PulayOperatorTermsCloseToStoredResidualContribution)
+{
+    using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+    constexpr double volume_element = 0.25;
+    Hamiltonian::Grid grid{4, 1, 1, 0.5, 1.0, 1.0, true};
+    const std::vector<double> full_local{0.2, -0.1, 0.4, -0.3};
+    const std::vector<double> fixed_local{0.1, -0.2, 0.15, -0.05};
+    Hamiltonian hamiltonian(grid, full_local, 1.0);
+    const Vector occupied(4, Complex(1.0, 0.0));
+    const Vector eta{Complex(1.0, 0.0), Complex(0.0, 1.0),
+                     Complex(-1.0, 0.0), Complex(0.0, -1.0)};
+    const Vector out{Complex(1.0, 0.0), Complex(-1.0, 0.0),
+                     Complex(1.0, 0.0), Complex(-1.0, 0.0)};
+    const double eta_norm = ModuleRI::sternheimer_fd_grid_norm(eta, volume_element);
+    const double occupied_norm = ModuleRI::sternheimer_fd_grid_norm(occupied, volume_element);
+    Vector occupied_normalized = occupied;
+    Vector eta_normalized = eta;
+    for (Complex& value: occupied_normalized)
+    {
+        value /= occupied_norm;
+    }
+    for (Complex& value: eta_normalized)
+    {
+        value /= eta_norm;
+    }
+
+    constexpr double virtual_eigenvalue = 0.75;
+    Vector residual;
+    hamiltonian.apply(eta_normalized, residual);
+    for (std::size_t ir = 0; ir != residual.size(); ++ir)
+    {
+        residual[ir] -= virtual_eigenvalue * eta_normalized[ir];
+    }
+    const auto dot = [volume_element](const Vector& lhs, const Vector& rhs) {
+        return ModuleRI::sternheimer_fd_grid_dot(lhs, rhs, volume_element);
+    };
+    ModuleRI::SternheimerRPA::project_out_subspace(
+        {occupied_normalized, eta_normalized}, dot, residual);
+
+    const std::vector<ModuleRI::SternheimerDeltaVirtualState> states
+        = {{eta_normalized, residual, virtual_eigenvalue}};
+    const auto components = ModuleRI::decompose_delta_sternheimer_pulay_operator_terms(
+        hamiltonian,
+        fixed_local,
+        {occupied_normalized},
+        states,
+        out,
+        -0.25,
+        0.4,
+        volume_element);
+
+    for (std::size_t ir = 0; ir != components.total.size(); ++ir)
+    {
+        const Complex sum = components.kinetic[ir] + components.fixed_local[ir]
+                            + components.hxc_local[ir] + components.nonlocal[ir]
+                            + components.eigenvalue[ir];
+        EXPECT_NEAR(sum.real(), components.total[ir].real(), 1.0e-13);
+        EXPECT_NEAR(sum.imag(), components.total[ir].imag(), 1.0e-13);
+    }
+}
+
 TEST(SternheimerDelta, BuildsDirectSOSWavefunctionFromExplicitVirtualStates)
 {
     constexpr double eps_i = -0.5;
