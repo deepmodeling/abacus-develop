@@ -137,6 +137,27 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
+        Input_Item item("socket_driver");
+        item.annotation = "run as a socket client for external drivers using the i-PI protocol";
+        item.category = "System variables";
+        item.type = "Boolean";
+        item.description = R"(If set to True, ABACUS keeps the calculation type as scf and receives atomic positions from an external driver through the i-PI socket protocol.
+
+[NOTE] Use calculation = scf with socket_driver = True. ABACUS connects to the external i-PI server selected by ABACUS_SOCKET_ADDRESS. If ABACUS_SOCKET_ADDRESS is unset, ABACUS uses localhost:31415. The value can use one of two forms:
+* host:port, for example localhost:31415 or 127.0.0.1:31415, opens a TCP connection to that host and port. Use this when the i-PI server listens on a TCP port.
+* path:UNIX, for example /tmp/ipi_abacus_si:UNIX, opens a Unix-domain socket at the given filesystem path. The :UNIX suffix tells ABACUS that the preceding value is a local socket path rather than a TCP host name. This form only works on the same machine.
+When using the ASE AbacusSocketIO interface, this environment variable is set automatically from the port or unixsocket calculator argument.)";
+        item.default_value = "False";
+        read_sync_bool(input.socket_driver);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.socket_driver && para.input.calculation != "scf")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "socket_driver is only supported with calculation = scf.");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("esolver_type");
         item.annotation = "the energy solver: ksdft, sdft, ofdft, tdofdft, tddft, lj, dp, ks-lr, lr";
         item.category = "System variables";
@@ -272,7 +293,7 @@ void ReadInput::item_system()
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             std::vector<std::string> use_force = {"cell-relax", "relax", "md"};
             std::vector<std::string> not_use_force = {"get_wf", "get_pchg", "get_s"};
-            if (std::find(use_force.begin(), use_force.end(), para.input.calculation) != use_force.end())
+            if (para.input.socket_driver || std::find(use_force.begin(), use_force.end(), para.input.calculation) != use_force.end())
             {
                 if (!para.input.cal_force)
                 {
@@ -896,7 +917,12 @@ Available options are:
         item.annotation = "atomic; first-order; second-order; dm:coefficients of SIA";
         item.category = "System variables";
         item.type = "String";
-        item.description = "Charge extrapolation method for MD and relaxation calculations.";
+        item.description = R"(Charge extrapolation method for MD, relaxation, and socket-driven calculations.
+
+When set to default, ABACUS chooses second-order for md, first-order for
+relax/cell-relax and socket_driver calculations, and atomic for other calculations. Socket-driven
+molecular dynamics can explicitly set second-order if the external driver
+updates structures smoothly enough for second-order extrapolation.)";
         item.default_value = "default";
         read_sync_string(input.chg_extrap);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
@@ -905,7 +931,7 @@ Available options are:
                 para.input.chg_extrap = "second-order";
             }
             else if (para.input.chg_extrap == "default"
-                     && (para.input.calculation == "relax" || para.input.calculation == "cell-relax"))
+                     && (para.input.calculation == "relax" || para.input.calculation == "cell-relax" || para.input.socket_driver))
             {
                 para.input.chg_extrap = "first-order";
             }

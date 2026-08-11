@@ -6,6 +6,12 @@ abacus_disable_feature_definitions(__ROCM)
 
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
+
+AddTest(
+  TARGET MODULE_RELAX_socket_ipi_test
+  SOURCES socket_ipi_test.cpp ../socket_ipi.cpp
+)
+
 AddTest(
   TARGET MODULE_RELAX_relax_new_line_search
   LIBS parameter

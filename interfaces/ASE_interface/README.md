@@ -32,6 +32,7 @@ Please refer to the example scripts in the `examples` folder. Recommended learni
 7. **constraintmd.py** - Constrained molecular dynamics simulation
 8. **metadynamics.py** - Metadynamics simulation
 9. **neb.py** - Nudged Elastic Band (NEB) calculation
+10. **socketio.py** - ASE optimization with the AbacusSocketIO calculator running ABACUS as an i-PI socket client
 
 More usage examples will be provided in future versions.
 

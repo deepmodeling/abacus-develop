@@ -1,4 +1,5 @@
 #include "relax_driver.h"
+#include "socket_driver.h"
 #include "source_base/formatter.h"
 #include "source_base/global_file.h"
 #include "source_base/version.h"
@@ -20,6 +21,14 @@ void Relax_Driver::relax_driver(
 {
     ModuleBase::TITLE("Relax_Driver", "relax_driver");
     ModuleBase::timer::start("Relax_Driver", "relax_driver");
+
+    if (inp.socket_driver)
+    {
+        Socket_Driver socket_driver;
+        socket_driver.socket_driver(p_esolver, ucell, inp, ofs_running);
+        ModuleBase::timer::end("Relax_Driver", "relax_driver");
+        return;
+    }
 
     this->init_relax(ucell.nat, inp);
 

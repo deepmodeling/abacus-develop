@@ -19,6 +19,7 @@ struct Input_para
     std::string calculation = "scf";    ///< "scf" : self consistent calculation.
                                         ///< "nscf" : non-self consistent calculation.
                                         ///< "relax" : cell relaxations
+    bool socket_driver = false;         ///< run ABACUS as an i-PI socket client
     std::string esolver_type = "ksdft"; ///< the energy solver: ksdft, sdft, ofdft, tddft, lj, dp
     /* symmetry level:
       -1, no symmetry at all;

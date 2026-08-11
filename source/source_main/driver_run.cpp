@@ -75,9 +75,8 @@ void Driver::driver_run()
     Json::gen_stru_wrapper(&ucell, PARAM.inp);
 #endif
 
-    const std::string cal = PARAM.inp.calculation;
-
     //! 4: different types of calculations
+    const std::string cal = PARAM.inp.calculation;
     if (cal == "md")
     {
         Run_MD::md_line(ucell, p_esolver, PARAM);

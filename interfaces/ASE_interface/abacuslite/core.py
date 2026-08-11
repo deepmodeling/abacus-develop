@@ -45,6 +45,7 @@ from ase.calculators.genericfileio import (
     GenericFileIOCalculator,
     read_stdout
 )
+from ase.calculators.socketio import SocketIOCalculator
 from ase.atoms import Atoms
 from ase.dft.kpoints import BandPath
 from ase.io import read
@@ -124,16 +125,34 @@ class AbacusProfile(BaseProfile):
 
     @staticmethod
     def parse_version(stdout) -> str:
-        # up to the ABACUS version v3.9.0.17, the run of command
-        # `abacus --version` would returns the information organized
-        # in the following way:
-        # ABACUS version v3.9.0.17
-        return re.match(r'ABACUS version (\S+)', stdout).group(1)
+        # MPI launchers may add informational lines before ABACUS output.
+        match = re.search(r'ABACUS version (\S+)', stdout or '')
+        if match is None:
+            raise RuntimeError(
+                'Could not parse ABACUS version from command output. '
+                'Expected a line like "ABACUS version vX.Y.Z".'
+            )
+        return match.group(1)
 
     def get_calculator_command(self, inputfile) -> List[str]:
         # because ABACUS run in the folder where there are INPUT files, so the
         # additional inputfile argument is not used.
         return []
+
+    def socketio_argv_inet(self, port: Optional[int] = None) -> List[str]:
+        port = 31415 if port is None else port
+        return [
+            'env',
+            f'ABACUS_SOCKET_ADDRESS=localhost:{port}',
+            *self._split_command,
+        ]
+
+    def socketio_argv_unix(self, socket: str) -> List[str]:
+        return [
+            'env',
+            f'ABACUS_SOCKET_ADDRESS=/tmp/ipi_{socket}:UNIX',
+            *self._split_command,
+        ]
 
     def version(self) -> str:
         '''get the abacus version information'''
@@ -443,6 +462,17 @@ class Abacus(GenericFileIOCalculator):
             directory=directory,
         )
 
+    def write_input(self, atoms, properties=None, system_changes=None):
+        if properties is None:
+            properties = self.template.implemented_properties
+        self.template.write_input(
+            profile=self.profile,
+            directory=Path(self.directory),
+            atoms=atoms,
+            parameters=self.parameters,
+            properties=properties,
+        )
+
     @classmethod
     def restart(cls, profile=None, directory='.', **kwargs):
         '''instantiate one ABACUS calculator from an existing job directory,
@@ -558,10 +588,207 @@ class Abacus(GenericFileIOCalculator):
         from ase.spectrum.band_structure import get_band_structure
         return get_band_structure(calc=self, reference=efermi)
 
+class AbacusSocketIO(SocketIOCalculator):
+    """ASE socket I/O calculator that launches ABACUS as an i-PI client.
+
+    A socket calculator owns one ABACUS process with one fixed INPUT/STRU
+    setup. The i-PI protocol can update positions, but electronic-structure
+    parameters such as k-points, spin, basis, pseudopotentials, and species
+    require a new calculator instance. Energy-only ASE calls are accepted, but
+    ABACUS still computes forces because i-PI GETFORCE returns energy, forces,
+    and virial together.
+    """
+
+    def __init__(self,
+                 profile=None,
+                 directory='.',
+                 port=None,
+                 unixsocket=None,
+                 timeout=None,
+                 log=None,
+                 **kwargs):
+        inp = self._socket_inp(kwargs.pop('inp', {}))
+        self.abacus = Abacus(
+            profile=profile,
+            directory=directory,
+            inp=inp,
+            **kwargs,
+        )
+        self._reference_cell = None
+        super().__init__(
+            port=port,
+            unixsocket=unixsocket,
+            timeout=timeout,
+            log=log,
+            launch_client=self._launch_client,
+        )
+
+    def calculate(self, atoms=None, properties=['energy'], system_changes=None):
+        from ase.calculators.calculator import (
+            PropertyNotImplementedError,
+            all_changes,
+        )
+        from ase.stress import full_3x3_to_voigt_6_stress
+
+        if system_changes is None:
+            system_changes = all_changes
+        if atoms is None:
+            atoms = self.atoms
+        if atoms is None:
+            raise ValueError('AbacusSocketIO.calculate requires atoms')
+
+        bad = [change for change in system_changes
+               if change not in self.supported_changes]
+        if self.atoms is not None and any(bad):
+            raise PropertyNotImplementedError(
+                'Cannot change {} through IPI protocol. '
+                'Please create new socket calculator.'
+                .format(bad if len(bad) > 1 else bad[0]))
+
+        self._check_fixed_cell(atoms)
+        order = self._socket_sort_indices(atoms)
+        socket_atoms = atoms[order]
+        self.atoms = atoms.copy()
+
+        if self.server is None:
+            self.server = self.launch_server()
+            proc = self.launch_client(socket_atoms, properties,
+                                      port=self._port,
+                                      unixsocket=self._unixsocket)
+            self.server.proc = proc
+
+        results = self.server.calculate(socket_atoms)
+        results['free_energy'] = results['energy']
+        virial = results.pop('virial')
+        if self.atoms.cell.rank == 3 and any(self.atoms.pbc):
+            vol = atoms.get_volume()
+            results['stress'] = -full_3x3_to_voigt_6_stress(virial) / vol
+        if 'forces' in results:
+            results['forces'] = self._forces_to_input_order(
+                results['forces'], order)
+        self.results.update(results)
+
+    def _check_fixed_cell(self, atoms):
+        from ase.calculators.calculator import PropertyNotImplementedError
+
+        cell = atoms.cell.array.copy()
+        if self._reference_cell is None:
+            self._reference_cell = cell
+            return
+        max_delta = np.max(np.abs(cell - self._reference_cell))
+        if max_delta > 1.0e-10:
+            raise PropertyNotImplementedError(
+                'AbacusSocketIO is fixed-cell only; create a new socket '
+                'calculator for a changed cell, or use the normal Abacus '
+                'FileIO calculator for variable-cell workflows.'
+            )
+
+    def set(self, **kwargs):
+        if kwargs:
+            raise ValueError(
+                'AbacusSocketIO input parameters are fixed after construction; '
+                'create a new AbacusSocketIO calculator to change k-points, '
+                'spin, basis, pseudopotentials, species, or other INPUT/STRU '
+                'settings.'
+            )
+        return super().set(**kwargs)
+
+    def _launch_client(self, atoms, properties=None, port=None, unixsocket=None):
+        from subprocess import Popen
+
+        if properties is None:
+            properties = self.abacus.template.implemented_properties
+
+        directory = Path(self.abacus.directory)
+        directory.mkdir(exist_ok=True, parents=True)
+
+        if hasattr(self.abacus, 'write_inputfiles'):
+            self.abacus.write_inputfiles(atoms, properties)
+        else:
+            self.abacus.write_input(atoms, properties=properties)
+
+        if unixsocket is not None:
+            argv = self.abacus.profile.socketio_argv_unix(socket=unixsocket)
+        else:
+            argv = self.abacus.profile.socketio_argv_inet(port=port)
+
+        stdout = open(directory / self.abacus.template.outputname, 'w')
+        stderr = open(directory / self.abacus.template.errorname, 'w')
+        try:
+            return Popen(argv, cwd=directory, env=os.environ,
+                         stdout=stdout, stderr=stderr)
+        finally:
+            stdout.close()
+            stderr.close()
+
+    @staticmethod
+    def _socket_inp(inp):
+        inp = dict(inp)
+        calculation = inp.get('calculation', 'scf')
+        if calculation != 'scf':
+            raise ValueError('ABACUS socket I/O requires calculation="scf"')
+        inp.update({
+            'calculation': 'scf',
+            'socket_driver': 1,
+            'cal_force': 1,
+        })
+        return inp
+
+    @staticmethod
+    def _socket_sort_indices(atoms):
+        return species_group_indices(atoms.get_chemical_symbols())
+
+    @staticmethod
+    def _forces_to_input_order(forces, order):
+        reordered = np.empty_like(forces)
+        for sorted_index, original_index in enumerate(order):
+            reordered[original_index] = forces[sorted_index]
+        return reordered
+
+
 class TestAbacusCalculator(unittest.TestCase):
 
     here = Path(__file__).parent
     pporb = here.parent.parent.parent / 'tests' / 'PP_ORB'
+
+    def test_socketio_species_order_mapping(self):
+        atoms = Atoms(symbols=['Si', 'O', 'C', 'Si', 'O', 'C'])
+        order = AbacusSocketIO._socket_sort_indices(atoms)
+        self.assertEqual(order, [0, 3, 1, 4, 2, 5])
+
+        socket_forces = np.arange(18).reshape(6, 3)
+        input_forces = AbacusSocketIO._forces_to_input_order(
+            socket_forces, order)
+
+        expected = np.empty_like(socket_forces)
+        for sorted_index, original_index in enumerate(order):
+            expected[original_index] = socket_forces[sorted_index]
+        np.testing.assert_array_equal(input_forces, expected)
+
+    def test_socketio_rejects_parameter_changes(self):
+        calc = object.__new__(AbacusSocketIO)
+        with self.assertRaisesRegex(ValueError, 'fixed after construction'):
+            calc.set(kpts={'mode': 'mp-sampling', 'nk': [2, 2, 2]})
+
+    def test_socketio_rejects_cell_changes(self):
+        from ase.calculators.calculator import PropertyNotImplementedError
+
+        calc = object.__new__(AbacusSocketIO)
+        calc.atoms = Atoms('Si', cell=[5.0, 5.0, 5.0], pbc=True)
+        calc._reference_cell = calc.atoms.cell.array.copy()
+
+        changed = calc.atoms.copy()
+        changed.cell[0, 0] = 5.1
+        with self.assertRaisesRegex(PropertyNotImplementedError, 'fixed-cell'):
+            calc._check_fixed_cell(changed)
+
+    def test_parse_version_allows_launcher_noise(self):
+        stdout = 'launcher info\nABACUS version v3.11.0-beta6\n'
+        self.assertEqual(AbacusProfile.parse_version(stdout), 'v3.11.0-beta6')
+
+    def test_parse_version_rejects_missing_version(self):
+        with self.assertRaisesRegex(RuntimeError, 'ABACUS version'):
+            AbacusProfile.parse_version('launcher failed before abacus started')
 
     def test_calculator_results(self):
         from ase.build.bulk import bulk
