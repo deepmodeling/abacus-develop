@@ -13,7 +13,7 @@
 #endif
 #ifdef __ELPA
 #define HAVE_SKEWSYMMETRIC // for elpa_skew_eigenvectors
-#include <elpa/elpa.h>
+#include "source_hsolver/module_genelpa/elpa_new.h"
 #undef HAVE_SKEWSYMMETRIC
 #ifdef I // avoid conflict with the macro defined by ELPA
 #undef I

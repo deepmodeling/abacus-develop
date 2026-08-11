@@ -128,7 +128,11 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
             this->kRlist,
             this->nocc[0],
             this->nvirt[0],
-            *this->psi_ks_global);
+            *this->psi_ks_global,
+            this->input.bse_q_approx_mode,
+            this->input.bse_q_approx_threshold,
+            this->input.out_ri_cv,
+            PARAM.globalv.global_out_dir);
 
         if (!this->input.bse_ri_hartree && this->input.ri_hartree_benchmark == "none")
         {
@@ -177,6 +181,12 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
                                     this->pot[0], this->kv, this->paraX_, this->paraC_, this->paraMat_,
                                     this->input.bse_spin_types,
                                     this->input.bse_tda,
+                                    this->input.bse_ri_hartree,
+                                    this->input.bse_mem_save,
+                                    this->input.bse_continue,
+                                    this->input.out_bse_ab,
+                                    PARAM.globalv.global_out_dir,
+                                    PARAM.globalv.global_readin_dir,
                                     this->input.ri_hartree_benchmark);
 
             auto write_tda_states = [&](const std::string& label,

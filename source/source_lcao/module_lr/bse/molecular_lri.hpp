@@ -47,12 +47,9 @@ void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const
     print_a(GlobalV::ofs_running, this->LR_lri.list_J, "list_J");
     print_k(GlobalV::ofs_running, this->LR_lri.kindex_map, this->LR_lri.k1_indices, "list_k1");
     print_k(GlobalV::ofs_running, this->LR_lri.kindex_map, this->LR_lri.k2_indices, "list_k2");
-    // LRI_CV_Tools::write_Cs_ao(Cs_in, PARAM.globalv.global_out_dir + "Cs_in_test_" + std::to_string(GlobalV::MY_RANK));
-    // LRI_CV_Tools::write_Vs_abf(Vs_in, PARAM.globalv.global_out_dir + "Vs_in_test_" + std::to_string(GlobalV::MY_RANK));
-    // LRI_CV_Tools::write_Vs_abf(Ws_in, PARAM.globalv.global_out_dir + "Ws_in_test_" + std::to_string(GlobalV::MY_RANK));
 
     // build q→kpair mapping (for W term q-approximation)
-    this->build_q_to_kpair_map(PARAM.inp.bse_q_approx_mode, PARAM.inp.bse_q_approx_threshold);
+    this->build_q_to_kpair_map(this->bse_q_approx_mode, this->bse_q_approx_threshold);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "distribute_atom_and_k");
 
     // 3. move R of tensors to nearest image Bvk cell for valid Fourier interpolation
@@ -89,14 +86,14 @@ void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const
     ModuleBase::TITLE("MolecularLRI", "before_set_Ws");
     this->LR_lri.set_Ws(Ws_in, info_ri.V_threshold, set_I, set_J);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "set_Ws");
-    if (PARAM.inp.out_ri_cv)
+    if (this->out_ri_cv)
     {        
         TLRI<T>& Cs_LRI = this->LR_lri.lrik.data_pool.at("Cs_").Ds_ab;// see LRI::set_tensor_map2
-        LRI_CV_Tools::write_Cs_ao(Cs_LRI, PARAM.globalv.global_out_dir + "Cs_lrik_test_" + std::to_string(GlobalV::MY_RANK));
+        LRI_CV_Tools::write_Cs_ao(Cs_LRI, this->out_dir + "Cs_lrik_test_" + std::to_string(GlobalV::MY_RANK));
         TLRI<T>& Vs_LRI = this->LR_lri.lrik.data_pool.at("Vs_").Ds_ab;
-        LRI_CV_Tools::write_Vs_abf(Vs_LRI, PARAM.globalv.global_out_dir + "Vs_lrik_test_" + std::to_string(GlobalV::MY_RANK));
+        LRI_CV_Tools::write_Vs_abf(Vs_LRI, this->out_dir + "Vs_lrik_test_" + std::to_string(GlobalV::MY_RANK));
         TLRI<T>& Ws_LRI = this->LR_lri.lrik.data_pool.at("Ws_").Ds_ab;
-        LRI_CV_Tools::write_Vs_abf(Ws_LRI, PARAM.globalv.global_out_dir + "Ws_lrik_test_" + std::to_string(GlobalV::MY_RANK));
+        LRI_CV_Tools::write_Vs_abf(Ws_LRI, this->out_dir + "Ws_lrik_test_" + std::to_string(GlobalV::MY_RANK));
     }
     // 5. prepare mo-type tensors  
     this->LR_lri.map_psi = this->transform_psi_k(this->psi_ks, this->LR_lri.k_indices);
@@ -215,7 +212,7 @@ void MolecularLRI<T>::build_q_to_kpair_map(int mode, double threshold)
     // Print q_list with both direct and Cartesian coordinates
     GlobalV::ofs_running << "q_list: size = " << this->LR_lri.q_list.size() << std::endl;
     GlobalV::ofs_running << "detailed q_list see 'qlist_{rank}.dat'" << std::endl;
-    std::ofstream ofs_qlist(PARAM.globalv.global_out_dir + "qlist_" + std::to_string(GlobalV::MY_RANK) + ".dat");
+    std::ofstream ofs_qlist(this->out_dir + "qlist_" + std::to_string(GlobalV::MY_RANK) + ".dat");
     ofs_qlist << "q_list: size = " << this->LR_lri.q_list.size() << std::endl;
     ofs_qlist << "(direct coords)       | (Cartesian, Bohr^-1)" << std::endl;
     ofs_qlist << std::fixed << std::setprecision(4);

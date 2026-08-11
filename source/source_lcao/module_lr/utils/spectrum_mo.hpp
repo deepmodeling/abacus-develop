@@ -109,13 +109,12 @@ std::vector<std::complex<double>> cal_velocity_mo(const UnitCell& ucell,
                             = v_mo[loc_offset + j * pmo.get_row_size() + i];
                     }
                 }
-                
-                //std::cout<< "is" << is << "id: " << id << " ik: " << ik << " v_mo: " << std::endl;            
-                //LR_Util::print_value(velocity_mo.data()+(is * 3 * nk + id * nk + ik) * KS_num * KS_num, KS_num, KS_num);
             }
         }
     }//id
+#ifdef __MPI
     MPI_Allreduce(MPI_IN_PLACE, velocity_mo.data(), velocity_mo.size(), LR_Util::MPIType<T>::value(), MPI_SUM, pmo.comm());
+#endif
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "Finish velocity matrix in KS presentation.");
     ModuleBase::timer::end("LR_Util", "cal_velocity_mo");
     return velocity_mo;

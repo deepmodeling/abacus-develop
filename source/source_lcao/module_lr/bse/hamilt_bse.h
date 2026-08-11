@@ -51,6 +51,12 @@ public:
               const Parallel_Orbitals& pmat_in,
               const std::vector<std::string>& spin_types_in,
               const std::string& tda,
+              const bool bse_ri_hartree_in,
+              const bool bse_mem_save_in,
+              const int bse_continue_in,
+              const bool out_bse_ab_in,
+              const std::string& out_dir_in,
+              const std::string& readin_dir_in,
               const std::string& ri_hartree_benchmark_in = "none");
     /// @note these four functions shouldn't be called when `bse_mem_save` is true
     void cal_V_for_A();
@@ -113,6 +119,12 @@ private:
     const Parallel_2D& pc;
     const Parallel_Orbitals& pmat;
     const std::vector<std::string>& spin_types; // singlet, triplet, and rpa, ipa(independent particle approx)
+    const bool bse_ri_hartree;
+    const bool bse_mem_save;
+    const int bse_continue;
+    const bool out_bse_ab;
+    const std::string out_dir;
+    const std::string readin_dir;
     const std::string ri_hartree_benchmark;
 
     std::unique_ptr<elecstate::DensityMatrix<T, T>> DM_trans = nullptr;

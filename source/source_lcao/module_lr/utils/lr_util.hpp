@@ -140,7 +140,7 @@ namespace LR_Util
         MPI_Allreduce(&local_flag, &global_flag, 1, MPI_INT, MPI_LAND, pmat.comm());
         is_herm = (global_flag != 0);
 #else
-        assert(pmat.is_serial());
+        assert(pmat.is_serial);
         std::vector<T> minus_mat(pmat.get_local_size());
         std::vector<T> sum_mat(pmat.get_local_size());
         for (std::size_t i = 0;i < n;++i) {
@@ -202,7 +202,7 @@ namespace LR_Util
         MPI_Allreduce(&local_flag, &global_flag, 1, MPI_INT, MPI_LAND, pmat.comm());
         is_sym = (global_flag != 0);
 #else
-        assert(pmat.is_serial());
+        assert(pmat.is_serial);
         std::vector<T> minus_mat(pmat.get_local_size());
         std::vector<T> sum_mat(pmat.get_local_size());
         for (std::size_t i = 0;i < n;++i) {

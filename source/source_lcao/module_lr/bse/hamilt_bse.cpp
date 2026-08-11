@@ -27,13 +27,21 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
                 const Parallel_Orbitals& pmat_in, //parallel as {nbasis, nbasis}
                 const std::vector<std::string>& spin_types_in, //can be singlet and triplet
                 const std::string& tda, // can be: "tda", "full", "both"
+                const bool bse_ri_hartree_in,
+                const bool bse_mem_save_in,
+                const int bse_continue_in,
+                const bool out_bse_ab_in,
+                const std::string& out_dir_in,
+                const std::string& readin_dir_in,
                 const std::string& ri_hartree_benchmark_in)
     : nspin(nspin), naos(naos), nocc(nocc), nvirt(nvirt), ucell(ucell_in),
     orb_cutoff(orb_cutoff_in), gd(gd_in), psi_ks(psi_in), psi_ks_glb(psi_glb_in), eig_gw(eig_gw_in),
     mo_lri(mo_lri_in),
     pot(pot_in), kv(kv_in),
     pX(pX_in), pc(pc_in), pmat(pmat_in),
-    spin_types(spin_types_in), ri_hartree_benchmark(ri_hartree_benchmark_in)
+    spin_types(spin_types_in), bse_ri_hartree(bse_ri_hartree_in), bse_mem_save(bse_mem_save_in),
+    bse_continue(bse_continue_in), out_bse_ab(out_bse_ab_in), out_dir(out_dir_in), readin_dir(readin_dir_in),
+    ri_hartree_benchmark(ri_hartree_benchmark_in)
 {
     ModuleBase::TITLE("BSE", "HamiltBSE");
     if (this->pX[0].get_local_size() == 0) {
@@ -64,42 +72,41 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
         #endif
         );
 
-    if (!PARAM.inp.bse_ri_hartree && this->ri_hartree_benchmark == "none")
+    if (!this->bse_ri_hartree && this->ri_hartree_benchmark == "none")
     {
         this->DM_trans = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat, 1/*nspin*/, kv_in.kvec_d, nk);
         this->DM_trans->set_DMK_zero();
         LR_Util::initialize_DMR(*this->DM_trans, this->pmat, this->ucell, this->gd, this->orb_cutoff);
     }
-    if (PARAM.inp.bse_mem_save) { assert(PARAM.inp.bse_continue == 0 && PARAM.inp.bse_ri_hartree); }
+    if (this->bse_mem_save) { assert(this->bse_continue == 0 && this->bse_ri_hartree); }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "HamiltBSE is ready to calculate");
 
-    const std::string read_dir = PARAM.globalv.global_readin_dir;
-    if (PARAM.inp.bse_continue >= 1) {
+    if (this->bse_continue >= 1) {
         BSE_Util::print_mem_estimate("V matrix of A", this->pA.get_local_size(), sizeof(T));
         this->VA_local.resize(this->pA.get_local_size(), 0.0);
-        this->read_AB_matrix(read_dir + "A_V_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", this->VA_local.data(), this->ndim, this->ndim);
+        this->read_AB_matrix(this->readin_dir + "A_V_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", this->VA_local.data(), this->ndim, this->ndim);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_V_for_A");
     }
-    if (PARAM.inp.bse_continue >= 2) {
+    if (this->bse_continue >= 2) {
         BSE_Util::print_mem_estimate("W matrix of A", this->pA.get_local_size(), sizeof(T));
         this->WA_local.resize(this->pA.get_local_size(), 0.0);
-        this->read_AB_matrix(read_dir + "A_W_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", this->WA_local.data(), this->ndim, this->ndim);
+        this->read_AB_matrix(this->readin_dir + "A_W_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", this->WA_local.data(), this->ndim, this->ndim);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_W_for_A");
     }
-    if (PARAM.inp.bse_continue >= 3) {
+    if (this->bse_continue >= 3) {
         BSE_Util::print_mem_estimate("V matrix of B", this->pA.get_local_size(), sizeof(T));
         this->VB_local.resize(this->pA.get_local_size(), 0.0);
-        this->read_AB_matrix(read_dir + "B_V_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", this->VB_local.data(), this->ndim, this->ndim);
+        this->read_AB_matrix(this->readin_dir + "B_V_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", this->VB_local.data(), this->ndim, this->ndim);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_V_for_B");
     }
-    if (PARAM.inp.bse_continue >= 4) {
+    if (this->bse_continue >= 4) {
         BSE_Util::print_mem_estimate("W matrix of B", this->pA.get_local_size(), sizeof(T));
         this->WB_local.resize(this->pA.get_local_size(), 0.0);
-        this->read_AB_matrix(read_dir + "B_W_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", this->WB_local.data(), this->ndim, this->ndim);
+        this->read_AB_matrix(this->readin_dir + "B_W_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", this->WB_local.data(), this->ndim, this->ndim);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read_W_for_B");
     }
     
-    if (!PARAM.inp.bse_mem_save)
+    if (!this->bse_mem_save)
     {
         for (const auto& st : this->spin_types) {
             if (st == "singlet" || st == "triplet") {
@@ -144,7 +151,7 @@ void HamiltBSE<T>::cal_V_for_A(){
     if (this->ri_hartree_benchmark == "aims" || this->ri_hartree_benchmark == "abacus") {
         throw std::runtime_error("this BSE routine only supports aims-librpa/abacus-librpa benchmark");
     }
-    else if (PARAM.inp.bse_ri_hartree || this->ri_hartree_benchmark =="aims-librpa" || this->ri_hartree_benchmark == "abacus-librpa") {
+    else if (this->bse_ri_hartree || this->ri_hartree_benchmark =="aims-librpa" || this->ri_hartree_benchmark == "abacus-librpa") {
         std::cout << "Calculating Hartree term for A with RI approximation" << std::endl;
         this->mo_lri.cal_hartree_for_A(this->VA_local, this->pA);
     }
@@ -152,8 +159,8 @@ void HamiltBSE<T>::cal_V_for_A(){
         std::cout << "Calculating Hartree term for A with grid integration" << std::endl;
         this->cal_V_by_grid(true);
     }
-    if (PARAM.inp.out_bse_ab){
-        this->write_AB_matrix(PARAM.globalv.global_out_dir+"A_V_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", 6, this->VA_local.data(), this->ndim, this->ndim);
+    if (this->out_bse_ab){
+        this->write_AB_matrix(this->out_dir+"A_V_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", 6, this->VA_local.data(), this->ndim, this->ndim);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_V_for_A");
     ModuleBase::timer::end("HamiltBSE", "cal_V_for_A");
@@ -173,7 +180,7 @@ void HamiltBSE<T>::cal_V_for_B(){
     if (this->ri_hartree_benchmark == "aims" || this->ri_hartree_benchmark == "abacus") {
         throw std::runtime_error("this BSE routine only supports aims-librpa/abacus-librpa benchmark");
     }
-    else if (PARAM.inp.bse_ri_hartree || this->ri_hartree_benchmark =="aims-librpa" || this->ri_hartree_benchmark == "abacus-librpa") {
+    else if (this->bse_ri_hartree || this->ri_hartree_benchmark =="aims-librpa" || this->ri_hartree_benchmark == "abacus-librpa") {
         std::cout << "Calculating Hartree term for B with RI approximation" << std::endl;
         this->mo_lri.cal_hartree_for_B(this->VB_local, this->pA);
     }
@@ -181,8 +188,8 @@ void HamiltBSE<T>::cal_V_for_B(){
         std::cout << "Calculating Hartree term for B with grid integration" << std::endl;
         this->cal_V_by_grid(false);
     }
-    if (PARAM.inp.out_bse_ab){
-        this->write_AB_matrix(PARAM.globalv.global_out_dir+"B_V_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", 6, this->VB_local.data(), this->ndim, this->ndim);
+    if (this->out_bse_ab){
+        this->write_AB_matrix(this->out_dir+"B_V_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", 6, this->VB_local.data(), this->ndim, this->ndim);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_V_for_B");
     ModuleBase::timer::end("HamiltBSE", "cal_V_for_B");
@@ -200,8 +207,8 @@ void HamiltBSE<T>::cal_W_for_A(){
     BSE_Util::print_mem_estimate("W matrix of A", this->pA.get_local_size(), sizeof(T));
     this->WA_local.resize(this->pA.get_local_size(), 0.0);
     this->mo_lri.cal_W_for_A(this->WA_local, this->pA);    
-    if (PARAM.inp.out_bse_ab){
-        this->write_AB_matrix(PARAM.globalv.global_out_dir+"A_W_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", 6, this->WA_local.data(), this->ndim, this->ndim);
+    if (this->out_bse_ab){
+        this->write_AB_matrix(this->out_dir+"A_W_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", 6, this->WA_local.data(), this->ndim, this->ndim);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_W_for_A");
     ModuleBase::timer::end("HamiltBSE", "cal_W_for_A");
@@ -220,8 +227,8 @@ void HamiltBSE<T>::cal_W_for_B(){
     this->WB_local.resize(this->pA.get_local_size(), 0.0);
     this->mo_lri.cal_W_for_B(this->WB_local, this->pA);
     
-    if (PARAM.inp.out_bse_ab){
-        this->write_AB_matrix(PARAM.globalv.global_out_dir+"B_W_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", 6, this->WB_local.data(), this->ndim, this->ndim);
+    if (this->out_bse_ab){
+        this->write_AB_matrix(this->out_dir+"B_W_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", 6, this->WB_local.data(), this->ndim, this->ndim);
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "cal_W_for_B");
     ModuleBase::timer::end("HamiltBSE", "cal_W_for_B");
@@ -276,7 +283,7 @@ void HamiltBSE<T>::init_bse_matrix(const bool is_full, const int & st_index){
         }
     }
     // 2) add V/W contributions
-    if (PARAM.inp.bse_mem_save)
+    if (this->bse_mem_save)
     {
         std::cout << "| bse_mem_save is true, V and W matrix will be added to BSE matrix directly." << std::endl;
         if (alpha != 0.0) {
@@ -324,7 +331,7 @@ void HamiltBSE<T>::init_bse_matrix(const bool is_full, const int & st_index){
     {
         std::cout << "|  CHECK WARNING: Matrix A is not hermitian under threshold " << threshold << std::endl;
     }
-    if (PARAM.inp.out_bse_ab)
+    if (this->out_bse_ab)
     {
         this->write_AB_matrix("A_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", 6, this->BSE_A_local.data(), this->ndim, this->ndim);
     }
@@ -339,7 +346,7 @@ void HamiltBSE<T>::init_bse_matrix(const bool is_full, const int & st_index){
         {
             std::cout << "|  CHECK WARNING: Matrix B is not symmetric under threshold " << threshold << std::endl;
         }
-        if (PARAM.inp.out_bse_ab)
+        if (this->out_bse_ab)
         {
             this->write_AB_matrix("B_matrix_"+std::to_string(GlobalV::MY_RANK)+".dat", 6, this->BSE_B_local.data(), this->ndim, this->ndim);
         }
@@ -502,8 +509,7 @@ void HamiltBSE<T>::cal_V_by_grid(bool is_A)
                 // 5. V(R)→V(k) 
                 std::vector<ct::Tensor> v_k_2d(nk, LR_Util::newTensor<T>({ pmat.get_col_size(), pmat.get_row_size() }));
                 for (auto& v : v_k_2d) v.zero();
-                int nrow = ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver) ? 
-                    this->pmat.get_row_size() : this->pmat.get_col_size();
+                int nrow = this->pmat.get_row_size();
                 for (int ik1 = 0;ik1 < nk;++ik1) {
                     folding_HR(*VR, v_k_2d[ik1].data<T>(), this->kv.kvec_d[ik1], nrow, 1);
                 }
