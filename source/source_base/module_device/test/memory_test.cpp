@@ -65,6 +65,7 @@ class TestModulePsiMemory : public ::testing::Test
 
 #if __UT_USE_CUDA || __UT_USE_ROCM
     using set_memory_double_gpu_op = base_device::memory::set_memory_op<double, base_device::DEVICE_GPU>;
+    using set_memory_float_gpu_op = base_device::memory::set_memory_op<float, base_device::DEVICE_GPU>;
     using set_memory_complex_double_gpu_op
         = base_device::memory::set_memory_op<std::complex<double>, base_device::DEVICE_GPU>;
     using resize_memory_double_gpu_op = base_device::memory::resize_memory_op<double, base_device::DEVICE_GPU>;
@@ -156,6 +157,81 @@ TEST_F(TestModulePsiMemory, synchronize_memory_op_complex_double_cpu_to_cpu)
     {
         EXPECT_EQ(hz_xx[ii], z_xx[ii]);
     }
+}
+
+TEST_F(TestModulePsiMemory, synchronize_memory_dispatch)
+{
+    const auto cpu = base_device::AbacusDevice_t::CpuDevice;
+    std::vector<double> output(xx.size(), 0.0);
+    base_device::memory::synchronize_memory(output.data(), xx.data(), xx.size(), cpu, cpu);
+    EXPECT_EQ(output, xx);
+
+#if __UT_USE_CUDA || __UT_USE_ROCM
+    const auto gpu = base_device::AbacusDevice_t::GpuDevice;
+    thrust::device_ptr<double> device_source = thrust::device_malloc<double>(xx.size());
+    thrust::device_ptr<double> device_output = thrust::device_malloc<double>(xx.size());
+
+    base_device::memory::synchronize_memory(
+        thrust::raw_pointer_cast(device_output), xx.data(), xx.size(), gpu, cpu);
+    thrust::copy(device_output, device_output + xx.size(), output.begin());
+    EXPECT_EQ(output, xx);
+
+    thrust::copy(xx.begin(), xx.end(), device_source);
+    std::fill(output.begin(), output.end(), 0.0);
+    base_device::memory::synchronize_memory(
+        output.data(), thrust::raw_pointer_cast(device_source), xx.size(), cpu, gpu);
+    EXPECT_EQ(output, xx);
+
+    set_memory_double_gpu_op()(thrust::raw_pointer_cast(device_output), 0, xx.size());
+    base_device::memory::synchronize_memory(thrust::raw_pointer_cast(device_output),
+                                            thrust::raw_pointer_cast(device_source),
+                                            xx.size(),
+                                            gpu,
+                                            gpu);
+    thrust::copy(device_output, device_output + xx.size(), output.begin());
+    EXPECT_EQ(output, xx);
+
+    thrust::device_free(device_source);
+    thrust::device_free(device_output);
+#endif
+}
+
+TEST_F(TestModulePsiMemory, cast_memory_dispatch)
+{
+    const auto cpu = base_device::AbacusDevice_t::CpuDevice;
+    std::vector<float> expected(xx.begin(), xx.end());
+    std::vector<float> output(xx.size(), 0.0F);
+    base_device::memory::cast_memory(output.data(), xx.data(), xx.size(), cpu, cpu);
+    EXPECT_EQ(output, expected);
+
+#if __UT_USE_CUDA || __UT_USE_ROCM
+    const auto gpu = base_device::AbacusDevice_t::GpuDevice;
+    thrust::device_ptr<double> device_source = thrust::device_malloc<double>(xx.size());
+    thrust::device_ptr<float> device_output = thrust::device_malloc<float>(xx.size());
+
+    base_device::memory::cast_memory(
+        thrust::raw_pointer_cast(device_output), xx.data(), xx.size(), gpu, cpu);
+    thrust::copy(device_output, device_output + xx.size(), output.begin());
+    EXPECT_EQ(output, expected);
+
+    thrust::copy(xx.begin(), xx.end(), device_source);
+    std::fill(output.begin(), output.end(), 0.0F);
+    base_device::memory::cast_memory(
+        output.data(), thrust::raw_pointer_cast(device_source), xx.size(), cpu, gpu);
+    EXPECT_EQ(output, expected);
+
+    set_memory_float_gpu_op()(thrust::raw_pointer_cast(device_output), 0, xx.size());
+    base_device::memory::cast_memory(thrust::raw_pointer_cast(device_output),
+                                     thrust::raw_pointer_cast(device_source),
+                                     xx.size(),
+                                     gpu,
+                                     gpu);
+    thrust::copy(device_output, device_output + xx.size(), output.begin());
+    EXPECT_EQ(output, expected);
+
+    thrust::device_free(device_source);
+    thrust::device_free(device_output);
+#endif
 }
 
 TEST_F(TestModulePsiMemory, delete_memory_op_double_cpu)

@@ -549,16 +549,16 @@ void set_memory(FPTYPE* arr, const int var, const size_t size, base_device::Abac
 
 template <typename FPTYPE>
 void synchronize_memory(FPTYPE* arr_out, const FPTYPE* arr_in, const size_t size, base_device::AbacusDevice_t device_type_out, base_device::AbacusDevice_t device_type_in){
-    if (device_type_out == base_device::AbacusDevice_t::CpuDevice || device_type_in == base_device::AbacusDevice_t::CpuDevice){
+    if (device_type_out == base_device::AbacusDevice_t::CpuDevice && device_type_in == base_device::AbacusDevice_t::CpuDevice){
         synchronize_memory_op<FPTYPE, DEVICE_CPU, DEVICE_CPU>()(arr_out, arr_in, size);
     }
-    else if (device_type_out == base_device::AbacusDevice_t::CpuDevice || device_type_in == base_device::AbacusDevice_t::GpuDevice){
+    else if (device_type_out == base_device::AbacusDevice_t::CpuDevice && device_type_in == base_device::AbacusDevice_t::GpuDevice){
         synchronize_memory_op<FPTYPE, DEVICE_CPU, DEVICE_GPU>()(arr_out, arr_in, size);
     }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice || device_type_in == base_device::AbacusDevice_t::CpuDevice){
+    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice && device_type_in == base_device::AbacusDevice_t::CpuDevice){
         synchronize_memory_op<FPTYPE, DEVICE_GPU, DEVICE_CPU>()(arr_out, arr_in, size);
     }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice || device_type_in == base_device::AbacusDevice_t::GpuDevice){
+    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice && device_type_in == base_device::AbacusDevice_t::GpuDevice){
         synchronize_memory_op<FPTYPE, DEVICE_GPU, DEVICE_GPU>()(arr_out, arr_in, size);
     }
 }
@@ -566,16 +566,16 @@ void synchronize_memory(FPTYPE* arr_out, const FPTYPE* arr_in, const size_t size
 template <typename FPTYPE_out, typename FPTYPE_in>
 void cast_memory(FPTYPE_out* arr_out, const FPTYPE_in* arr_in, const size_t size, base_device::AbacusDevice_t device_type_out, base_device::AbacusDevice_t device_type_in)
 {
-    if (device_type_out == base_device::AbacusDevice_t::CpuDevice || device_type_in == base_device::AbacusDevice_t::CpuDevice){
+    if (device_type_out == base_device::AbacusDevice_t::CpuDevice && device_type_in == base_device::AbacusDevice_t::CpuDevice){
         cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_CPU, DEVICE_CPU>()(arr_out, arr_in, size);
     }
-    else if (device_type_out == base_device::AbacusDevice_t::CpuDevice || device_type_in == base_device::AbacusDevice_t::GpuDevice){
+    else if (device_type_out == base_device::AbacusDevice_t::CpuDevice && device_type_in == base_device::AbacusDevice_t::GpuDevice){
         cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_CPU, DEVICE_GPU>()(arr_out, arr_in, size);
     }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice || device_type_in == base_device::AbacusDevice_t::CpuDevice){
+    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice && device_type_in == base_device::AbacusDevice_t::CpuDevice){
         cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_GPU, DEVICE_CPU>()(arr_out, arr_in, size);
     }
-    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice || device_type_in == base_device::AbacusDevice_t::GpuDevice){
+    else if (device_type_out == base_device::AbacusDevice_t::GpuDevice && device_type_in == base_device::AbacusDevice_t::GpuDevice){
         cast_memory_op<FPTYPE_out, FPTYPE_in, DEVICE_GPU, DEVICE_GPU>()(arr_out, arr_in, size);
     }
 }
@@ -590,6 +590,17 @@ void delete_memory(FPTYPE* arr, base_device::AbacusDevice_t device_type)
         delete_memory_op<FPTYPE, DEVICE_GPU>()(arr);
     }
 }
+
+template void synchronize_memory<double>(double*,
+                                         const double*,
+                                         const size_t,
+                                         base_device::AbacusDevice_t,
+                                         base_device::AbacusDevice_t);
+template void cast_memory<float, double>(float*,
+                                         const double*,
+                                         const size_t,
+                                         base_device::AbacusDevice_t,
+                                         base_device::AbacusDevice_t);
 
 } // namespace memory
 } // namespace base_device
