@@ -3,6 +3,7 @@ INPUT_PARAMETERS
 suffix            autotest
 calculation       scf
 init_wfc          random
+pw_seed           1
 
 nbands            6
 symmetry          1
@@ -10,7 +11,7 @@ pseudo_dir        ../../PP_ORB
 
 #Parameters (2.Iteration)
 ecutwfc           20
-scf_thr           1e-9
+scf_thr           1e-12
 scf_nmax          100
 
 
@@ -25,5 +26,5 @@ smearing_sigma    0.002
 mixing_type       broyden
 mixing_beta       0.7
 
-out_ldos          1
+out_ldos          1 8
 stm_bias          2

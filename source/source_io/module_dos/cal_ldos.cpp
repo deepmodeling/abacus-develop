@@ -5,8 +5,6 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_hamilt/module_gint/gint_interface.h"
 
-#include <type_traits>
-
 namespace ModuleIO
 {
 
@@ -104,26 +102,14 @@ void Cal_ldos<T>::cal_ldos_lcao(
 template class Cal_ldos<double>;               // Gamma_only case
 template class Cal_ldos<std::complex<double>>; // multi-k case
 
-// pw case
-void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
-                 const Parallel_Grid& pgrid,
-                 const UnitCell& ucell)
+namespace
 {
-    if (PARAM.inp.out_ldos[0] == 1 || PARAM.inp.out_ldos[0] == 3)
-    {
-        ModuleIO::stm_mode_pw(pelec, psi, pgrid, ucell);
-    }
-    if (PARAM.inp.out_ldos[0] == 2 || PARAM.inp.out_ldos[0] == 3)
-    {
-        ModuleIO::ldos_mode_pw(pelec, psi, pgrid, ucell);
-    }
-}
 
-void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
-                 const Parallel_Grid& pgrid,
-                 const UnitCell& ucell)
+void stm_mode_pw_impl(const elecstate::ElecState* pelec,
+                      const psi::Psi<std::complex<double>>& psi,
+                      const ModulePW::PW_Basis_K* pw_wfc,
+                      const Parallel_Grid& pgrid,
+                      const UnitCell& ucell)
 {
     for (int ie = 0; ie < PARAM.inp.stm_bias[2]; ie++)
     {
@@ -133,7 +119,7 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
         const double emax = en > 0 ? en : 0;
 
         std::vector<double> ldos(pelec->charge->nrxx);
-        std::vector<std::complex<double>> wfcr(pelec->basis->nrxx);
+        std::vector<std::complex<double>> wfcr(pw_wfc->nrxx);
 
         for (int ik = 0; ik < pelec->klist->get_nks(); ++ik)
         {
@@ -143,7 +129,7 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
             for (int ib = 0; ib < nbands; ib++)
             {
-                pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+                pw_wfc->recip2real(&psi(ib, 0), wfcr.data(), ik);
 
                 const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
                 double weight = en > 0 ? pelec->klist->wk[ik] - pelec->wg(ik, ib) : pelec->wg(ik, ib);
@@ -151,7 +137,7 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
                 if (eigenval >= emin && eigenval <= emax)
                 {
-                    for (int ir = 0; ir < pelec->basis->nrxx; ir++)
+                    for (int ir = 0; ir < pw_wfc->nrxx; ir++)
                     {
                         ldos[ir] += weight * norm(wfcr[ir]);
                     }
@@ -168,10 +154,11 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
     }
 }
 
-void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                  const psi::Psi<std::complex<double>>& psi,
-                  const Parallel_Grid& pgrid,
-                  const UnitCell& ucell)
+void ldos_mode_pw_impl(const elecstate::ElecState* pelec,
+                       const psi::Psi<std::complex<double>>& psi,
+                       const ModulePW::PW_Basis_K* pw_wfc,
+                       const Parallel_Grid& pgrid,
+                       const UnitCell& ucell)
 {
     double emax = 0.0;
     double emin = 0.0;
@@ -204,7 +191,7 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
     // calculate ldos
     std::vector<double> tmp(pelec->charge->nrxx);
-    std::vector<std::complex<double>> wfcr(pelec->basis->nrxx);
+    std::vector<std::complex<double>> wfcr(pw_wfc->nrxx);
     for (int ik = 0; ik < pelec->klist->get_nks(); ++ik)
     {
         psi.fix_k(ik);
@@ -213,10 +200,10 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
         for (int ib = 0; ib < nbands; ib++)
         {
-            pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+            pw_wfc->recip2real(&psi(ib, 0), wfcr.data(), ik);
             const double weight = pelec->klist->wk[ik] / ucell.omega;
 
-            for (int ir = 0; ir < pelec->basis->nrxx; ir++)
+            for (int ir = 0; ir < pw_wfc->nrxx; ir++)
             {
                 tmp[ir] += weight * norm(wfcr[ir]);
             }
@@ -256,6 +243,25 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
             ofs_ldos << std::endl;
         }
         ofs_ldos.close();
+    }
+}
+
+} // namespace
+
+void cal_ldos_pw(const elecstate::ElecState* pelec,
+                 const psi::Psi<std::complex<double>>& psi,
+                 const ModulePW::PW_Basis_K* pw_wfc,
+                 const int out_ldos,
+                 const Parallel_Grid& pgrid,
+                 const UnitCell& ucell)
+{
+    if (out_ldos == 1 || out_ldos == 3)
+    {
+        stm_mode_pw_impl(pelec, psi, pw_wfc, pgrid, ucell);
+    }
+    if (out_ldos == 2 || out_ldos == 3)
+    {
+        ldos_mode_pw_impl(pelec, psi, pw_wfc, pgrid, ucell);
     }
 }
 

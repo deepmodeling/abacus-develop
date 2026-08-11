@@ -32,20 +32,12 @@ class Cal_ldos
 
 }; // namespace Cal_ldos
 
-void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
+void cal_ldos_pw(const elecstate::ElecState* pelec,
                  const psi::Psi<std::complex<double>>& psi,
+                 const ModulePW::PW_Basis_K* pw_wfc,
+                 const int out_ldos,
                  const Parallel_Grid& pgrid,
                  const UnitCell& ucell);
-
-void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
-                 const Parallel_Grid& pgrid,
-                 const UnitCell& ucell);
-
-void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                  const psi::Psi<std::complex<double>>& psi,
-                  const Parallel_Grid& pgrid,
-                  const UnitCell& ucell);
 
 /*
  * @brief Get grid points and shifts for interpolation.

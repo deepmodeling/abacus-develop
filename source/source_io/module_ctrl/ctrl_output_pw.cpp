@@ -13,6 +13,9 @@
 #include "../module_chgpot/get_pchg_pw.h"
 #include "../module_wf/get_wf_pw.h"
 #include "source_pw/module_pwdft/elecond.h"
+#include "source_pw/module_pwdft/setup_pwwfc.h"
+
+#include <memory>
 
 #ifdef __MLALGO
 #include "../module_ml/write_mlkedf_descriptors.h"
@@ -271,8 +274,22 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
 	//----------------------------------------------------------
 	if (inp.out_ldos[0])
 	{
-		ModuleIO::cal_ldos_pw(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(pelec),
-			    stp.psi_cpu[0], para_grid, ucell);
+		// Match the FFT backend to the double-precision host wavefunctions used by LDOS.
+		ModulePW::PW_Basis_K* ldos_basis = pw_wfc;
+		std::unique_ptr<ModulePW::PW_Basis_K> cpu_ldos_basis;
+		if (inp.device != "cpu" || inp.precision != "double")
+		{
+			Input_para cpu_input = inp;
+			cpu_input.device = "cpu";
+			cpu_input.precision = "double";
+			K_Vectors cpu_kv;
+			cpu_kv = kv;
+			ModulePW::PW_Basis_K* basis = nullptr;
+			pw::setup_pwwfc(cpu_input, ucell, *pw_rho, cpu_kv, basis);
+			cpu_ldos_basis.reset(basis);
+			ldos_basis = cpu_ldos_basis.get();
+		}
+		ModuleIO::cal_ldos_pw(pelec, stp.psi_cpu[0], ldos_basis, inp.out_ldos[0], para_grid, ucell);
 	}
 
     //----------------------------------------------------------

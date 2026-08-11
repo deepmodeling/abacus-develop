@@ -1,6 +1,6 @@
 nscf_out_pot
 scf_out_elf
-#scf_out_ldos
+scf_out_ldos
 #scf_out_chg_tau
 001_PW_UPF100_Al
 002_PW_UPF100_RAPPE_Fe
