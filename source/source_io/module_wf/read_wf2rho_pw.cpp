@@ -7,6 +7,61 @@
 #include "source_estate/kernels/elecstate_op.h"
 #include "source_io/module_output/filename.h"
 
+#if defined(__CUDA) || defined(__ROCM)
+#include "source_base/module_device/memory_op.h"
+#include "source_psi/psi.h"
+
+#include <memory>
+#endif
+
+namespace
+{
+class FileWavefunctionFFT
+{
+  public:
+    explicit FileWavefunctionFFT(const ModulePW::PW_Basis_K* pw_wfc) : pw_wfc_(pw_wfc)
+    {
+#if defined(__CUDA) || defined(__ROCM)
+        if (pw_wfc_->get_device() == "gpu")
+        {
+            reciprocal_.reset(new psi::Psi<std::complex<double>, base_device::DEVICE_GPU>(
+                1, 1, pw_wfc_->npwk_max, pw_wfc_->npwk_max, true));
+            realspace_.reset(new psi::Psi<std::complex<double>, base_device::DEVICE_GPU>(
+                1, 1, pw_wfc_->nrxx, pw_wfc_->nrxx, true));
+        }
+#endif
+    }
+
+    void recip_to_real(const std::complex<double>* in, std::complex<double>* out, const int ik) const
+    {
+#if defined(__CUDA) || defined(__ROCM)
+        if (reciprocal_)
+        {
+            base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                       base_device::DEVICE_GPU,
+                                                       base_device::DEVICE_CPU>()(
+                reciprocal_->get_pointer(), in, pw_wfc_->npwk[ik]);
+            const base_device::DEVICE_GPU* ctx = nullptr;
+            pw_wfc_->recip_to_real(ctx, reciprocal_->get_pointer(), realspace_->get_pointer(), ik);
+            base_device::memory::synchronize_memory_op<std::complex<double>,
+                                                       base_device::DEVICE_CPU,
+                                                       base_device::DEVICE_GPU>()(
+                out, realspace_->get_pointer(), pw_wfc_->nrxx);
+            return;
+        }
+#endif
+        pw_wfc_->recip2real(in, out, ik);
+    }
+
+  private:
+    const ModulePW::PW_Basis_K* pw_wfc_;
+#if defined(__CUDA) || defined(__ROCM)
+    std::unique_ptr<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>> reciprocal_;
+    std::unique_ptr<psi::Psi<std::complex<double>, base_device::DEVICE_GPU>> realspace_;
+#endif
+};
+} // namespace
+
 void ModuleIO::read_wf2rho_pw(
 		const ModulePW::PW_Basis_K* pw_wfc,
 		ModuleSymmetry::Symmetry& symm,
@@ -59,6 +114,7 @@ void ModuleIO::read_wf2rho_pw(
 
     ModuleBase::ComplexMatrix wfc_tmp(nbands, ng_npol);
     std::vector<std::complex<double>> rho_tmp(nrxx);
+    FileWavefunctionFFT fft(pw_wfc);
 
     // read occupation numbers
     ModuleBase::matrix wg_tmp(nkstot, nbands);
@@ -128,8 +184,8 @@ void ModuleIO::read_wf2rho_pw(
             {
                 const std::complex<double>* wfc_ib = wfc_tmp.c + ib * ng_npol;
                 const std::complex<double>* wfc_ib2 = wfc_tmp.c + ib * ng_npol + ng_npol / 2;
-                pw_wfc->recip2real(wfc_ib, rho_tmp.data(), ik);
-                pw_wfc->recip2real(wfc_ib2, rho_tmp2.data(), ik);
+                fft.recip_to_real(wfc_ib, rho_tmp.data(), ik);
+                fft.recip_to_real(wfc_ib2, rho_tmp2.data(), ik);
                 const double w1 = wg_tmp(ikstot, ib) / pw_wfc->omega;
 
                 if (w1 != 0.0)
@@ -152,7 +208,7 @@ void ModuleIO::read_wf2rho_pw(
             for (int ib = 0; ib < nbands; ++ib)
             {
                 const std::complex<double>* wfc_ib = wfc_tmp.c + ib * ng_npol;
-                pw_wfc->recip2real(wfc_ib, rho_tmp.data(), ik);
+                fft.recip_to_real(wfc_ib, rho_tmp.data(), ik);
 
                 const double w1 = wg_tmp(ikstot, ib) / pw_wfc->omega;
 
