@@ -182,6 +182,9 @@ class Test_RELAX : public testing::Test
             int nstep = 3;
             int nat = 5;
             double energy;
+            inp.calculation = "cell-relax";
+            inp.force_thr = 0.001;
+            inp.fixed_axes = "a";
             inp.stress_thr = 0.01;
             inp.fixed_ibrav = false;
 
