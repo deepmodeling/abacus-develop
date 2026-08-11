@@ -80,6 +80,20 @@ AddTest(
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
 )
 
+if(ENABLE_LIBRI)
+AddTest(
+  TARGET MODULE_LCAO_operator_exx_nscf_cell_nearest_test
+  LIBS parameter ${math_libs} psi base device container
+  SOURCES test_op_exx_nscf_cell_nearest.cpp ../op_exx_lcao.cpp ../../module_hcontainer/func_folding.cpp
+  ../../module_hcontainer/base_matrix.cpp ../../module_hcontainer/hcontainer.cpp ../../module_hcontainer/atom_pair.cpp
+  ../../../source_basis/module_ao/parallel_orbitals.cpp
+  ../../../source_basis/module_ao/ORB_atomic_lm.cpp
+  ../../../source_io/module_output/file_reader.cpp ../../../source_io/module_output/csr_reader.cpp
+  ../../../source_io/module_output/sparse_matrix.cpp
+  tmp_mocks.cpp ../../../source_hamilt/operator.cpp
+)
+endif()
+
 install(FILES parallel_operator_tests.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 find_program(BASH bash)
 add_test(NAME MODULE_LCAO_operators_para_test
