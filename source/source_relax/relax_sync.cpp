@@ -25,6 +25,7 @@ void Relax::init_relax(const int nat_in)
     srp_srp = 100000;
     etot = 0;
     etot_p = 0;
+    omega_p = 0.0;
 
     force_thr_eva = PARAM.inp.force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; // convert to eV/Angstrom
     fac_force = PARAM.inp.relax_scale_force * 0.1;
@@ -66,6 +67,7 @@ bool Relax::relax_step(UnitCell& ucell,
     if (istep == 0)
     {
         etot_p = etot;
+        omega_p = ucell.omega * pow(ModuleBase::BOHR_TO_A, 3);
     }
 
     bool relax_done = this->setup_gradient(ucell, force, stress, ofs_running);
@@ -158,6 +160,16 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
     }
     if (PARAM.inp.out_level == "ie")
     {
+        if (if_cell_moves)
+        {
+            const double omega_ang = ucell.omega * pow(ModuleBase::BOHR_TO_A, 3);
+            const double omega_diff = omega_ang - omega_p;
+            const double omega_ratio = (std::abs(omega_p) > 0.0) ? omega_diff / omega_p * 100.0 : 0.0;
+            std::cout << " CELL VOLUME (Angstroms^3)   : " << omega_ang << std::endl;
+            std::cout << " VOLUME DIFF (Angstroms^3)   : " << omega_diff << std::endl;
+            std::cout << " VOLUME RATIO (%)            : " << omega_ratio << std::endl;
+            omega_p = omega_ang;
+        }
         std::cout << " ETOT DIFF (eV)              : " << etot - etot_p << std::endl;
         std::cout << " LARGEST GRAD (eV/Angstrom)  : " << max_grad << std::endl;
         etot_p = etot;

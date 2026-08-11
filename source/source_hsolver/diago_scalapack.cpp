@@ -1,6 +1,5 @@
 //=====================
 // AUTHOR : Peize Lin
-#include "source_io/module_parameter/parameter.h"
 // DATE : 2021-11-02
 // REFACTORING AUTHOR : Daye Zheng
 // DATE : 2022-04-14
@@ -28,10 +27,10 @@ namespace hsolver
     matd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
     this->pdsygvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
     template<>
     void DiagoScalapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>>* phm_in, psi::Psi<std::complex<double>>& psi, Real* eigenvalue_in)
@@ -40,10 +39,10 @@ namespace hsolver
     matcd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
     this->pzhegvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 
 #ifdef __MPI
@@ -56,10 +55,10 @@ namespace hsolver
 {
     ModuleBase::TITLE("DiagoScalapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
     this->pdsygvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
     template<>
     void DiagoScalapack<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex<double>>& h_mat,
@@ -70,10 +69,10 @@ namespace hsolver
 {
     ModuleBase::TITLE("DiagoScalapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
     this->pzhegvx_diag(h_mat.desc, h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 #endif
 
@@ -92,13 +91,13 @@ namespace hsolver
     memcpy(s_tmp.c, s_mat, sizeof(double) * ncol * nrow);
 
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
+    const int itype = 1, il = 1, iu = this->nbands, one = 1;
     int M = 0, NZ = 0, lwork = -1, liwork = -1, info = 0;
     double vl = 0, vu = 0;
     const double abstol = SCALAPACK_ABSTOL, orfac = SCALAPACK_ORFAC;
     std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
-    std::vector<int> ifail(PARAM.globalv.nlocal, 0);
+    std::vector<int> ifail(this->nlocal, 0);
     std::vector<int> iclustr(2 * GlobalV::DSIZE);
     std::vector<double> gap(GlobalV::DSIZE);
 
@@ -106,7 +105,7 @@ namespace hsolver
              &jobz,
              &range,
              &uplo,
-             &PARAM.globalv.nlocal,
+             &this->nlocal,
              h_tmp.c,
              &one,
              &one,
@@ -152,7 +151,7 @@ namespace hsolver
              &jobz,
              &range,
              &uplo,
-             &PARAM.globalv.nlocal,
+             &this->nlocal,
              h_tmp.c,
              &one,
              &one,
@@ -217,7 +216,7 @@ namespace hsolver
     memcpy(s_tmp.c, s_mat, sizeof(std::complex<double>) * ncol * nrow);
 
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
+    const int itype = 1, il = 1, iu = this->nbands, one = 1;
     int M = 0, NZ = 0, lwork = -1, lrwork = -1, liwork = -1, info = 0;
     const double abstol = SCALAPACK_ABSTOL, orfac = SCALAPACK_ORFAC;
     //Note: pzhegvx_ has a bug
@@ -227,7 +226,7 @@ namespace hsolver
     std::vector<std::complex<double>> work(1, 0);
     std::vector<double> rwork(3, 0);
     std::vector<int> iwork(1, 0);
-    std::vector<int> ifail(PARAM.globalv.nlocal, 0);
+    std::vector<int> ifail(this->nlocal, 0);
     std::vector<int> iclustr(2 * GlobalV::DSIZE);
     std::vector<double> gap(GlobalV::DSIZE);
 
@@ -235,7 +234,7 @@ namespace hsolver
              &jobz,
              &range,
              &uplo,
-             &PARAM.globalv.nlocal,
+             &this->nlocal,
              h_tmp.c,
              &one,
              &one,
@@ -276,7 +275,7 @@ namespace hsolver
     //	GlobalV::ofs_running<<"lwork="<<work[0]<<"\t"<<"lrwork="<<rwork[0]<<"\t"<<"liwork="<<iwork[0]<<std::endl;
     lwork = work[0].real();
     work.resize(lwork, 0);
-    lrwork = rwork[0] + this->degeneracy_max * PARAM.globalv.nlocal;
+    lrwork = rwork[0] + this->degeneracy_max * this->nlocal;
     int maxlrwork = std::max(lrwork,3);
     rwork.resize(maxlrwork, 0);
     liwork = iwork[0];
@@ -286,7 +285,7 @@ namespace hsolver
              &jobz,
              &range,
              &uplo,
-             &PARAM.globalv.nlocal,
+             &this->nlocal,
              h_tmp.c,
              &one,
              &one,
@@ -431,7 +430,7 @@ namespace hsolver
         const std::string str_M = "M = " + ModuleBase::GlobalFunc::TO_STRING(vec[0]) + ".\n";
         const std::string str_NZ = "NZ = " + ModuleBase::GlobalFunc::TO_STRING(vec[1]) + ".\n";
         const std::string str_NBANDS
-            = "PARAM.inp.nbands = " + ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.nbands) + ".\n";
+            = "nbands = " + ModuleBase::GlobalFunc::TO_STRING(this->nbands) + ".\n";
         throw std::runtime_error(str_info_FILE + str_M + str_NZ + str_NBANDS);
     }
     else if (info / 16 % 2)

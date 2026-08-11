@@ -1,0 +1,1010 @@
+import argparse
+import contextlib
+import io
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import tarfile
+import unittest
+from pathlib import Path
+from unittest import mock
+
+
+ROOT = Path(__file__).resolve().parent
+sys.path.insert(0, str(ROOT))
+SPEC = importlib.util.spec_from_file_location("runner", ROOT / "runner.py")
+assert SPEC and SPEC.loader
+runner = importlib.util.module_from_spec(SPEC)
+sys.modules["runner"] = runner
+SPEC.loader.exec_module(runner)
+import slurm  # noqa: E402
+
+
+def valid_result():
+    config = runner.load_config()
+    components = [runner._component("build", "Compile", "PASS")]
+    components.extend(runner._component(name, profile.label, "PASS") for name, profile in config.resources.items())
+    rows = [
+        runner._result_row(case, "PASS", exit_code=0)
+        for resource in config.resources
+        for case in config.cases if case.resource == resource
+    ]
+    return {
+        "protocol": 1, "total": len(rows), "passed": len(rows),
+        "failed": 0, "infrastructure": 0, "components": components,
+        "cases": rows,
+    }
+
+
+class ConfigTests(unittest.TestCase):
+    def test_current_matrix_is_loaded_from_ini(self):
+        config = runner.load_config()
+        self.assertEqual(len(config.cases), 123)
+        self.assertEqual(list(config.resources), ["gpu1", "gpu2", "gpu4", "gpu4x2", "pw_gpu1"])
+        self.assertEqual(config.resources["gpu4"].label, "4 GPUs")
+        self.assertEqual(config.resources["gpu4x2"].label, "2 nodes / 8 GPUs")
+        resources = {(case.suite, case.name): case.resource for case in config.cases}
+        self.assertEqual(resources[("11_PW_GPU", "scf_cg")], "gpu4")
+        self.assertEqual(resources[("13_NAO_multik_GPU", "001_NO_KP_BiSeCuO_GPU")], "gpu4")
+        self.assertEqual(resources[("15_rtTDDFT_GPU", "12_NO_re_TDDFT_GPU")], "gpu4")
+        self.assertEqual(resources[("15_rtTDDFT_GPU", "19_NO_Si48_CUSOLVERMP_TDDFT_GPU")], "gpu4x2")
+        self.assertEqual(
+            {identity for identity, resource in resources.items() if resource == "gpu4"},
+            {
+                ("11_PW_GPU", "scf_cg"),
+                ("13_NAO_multik_GPU", "001_NO_KP_BiSeCuO_GPU"),
+                ("15_rtTDDFT_GPU", "12_NO_re_TDDFT_GPU"),
+            },
+        )
+        pw_cases = [case for case in config.cases if case.suite == "01_PW"]
+        self.assertEqual(len(pw_cases), 73)
+        self.assertTrue(all(case.resource == "pw_gpu1" for case in pw_cases))
+        self.assertTrue(all(case.runner == "autotest_gpu" for case in pw_cases))
+        ofdft_cases = [case for case in config.cases if case.suite == "07_OFDFT"]
+        self.assertEqual(
+            ofdft_cases,
+            [runner.Case("07_OFDFT", "31_OF_KE_WT_GPU", "pw_gpu1", "autotest")],
+        )
+        self.assertEqual(config.site.name, "Open Source Supercomputing Center of SAI")
+        self.assertEqual(config.site.url, "https://www.open-sai.com/")
+        self.assertEqual(config.site.acknowledgement, "Computing resources were provided by")
+        self.assertEqual(config.remote.host, "c0.sai.ai-4s.com")
+        self.assertEqual(config.remote.port, 12022)
+        self.assertEqual(config.remote.user, "abacususer01")
+        self.assertEqual(config.remote.project_root, "~/abacus_gpu_ci")
+        self.assertEqual(tuple(map(str, config.remote.allowed_project_roots)), ("/home", "/org"))
+        known_hosts = (ROOT / "known_hosts").read_text(encoding="utf-8")
+        self.assertIn("[{}]:{}".format(config.remote.host, config.remote.port), known_hosts)
+
+    def test_resource_names_are_not_hardcoded(self):
+        text = (ROOT / "config.ini").read_text(encoding="utf-8")
+        text = text.replace("resource.gpu1", "resource.single", 1)
+        text = text.replace("resource = gpu1", "resource = single", 1)
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "config.ini"
+            path.write_text(text, encoding="utf-8")
+            self.assertIn("single", runner.load_config(path).resources)
+
+    def test_unknown_resource_and_noncontiguous_case_fail(self):
+        original = (ROOT / "config.ini").read_text(encoding="utf-8")
+        for text in (
+            original.replace("resource = gpu1", "resource = missing", 1),
+            original.replace("[case.002]", "[case.999]", 1),
+        ):
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "config.ini"
+                path.write_text(text, encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    runner.load_config(path)
+
+    def test_invalid_remote_configuration_fails(self):
+        original = (ROOT / "config.ini").read_text(encoding="utf-8")
+        for text in (
+            original.replace("port = 12022", "port = 0", 1),
+            original.replace("project_root = ~/", "project_root = relative/", 1),
+            original.replace("allowed_project_roots = /home, /org", "allowed_project_roots = /home, relative", 1),
+        ):
+            with tempfile.TemporaryDirectory() as directory:
+                path = Path(directory) / "config.ini"
+                path.write_text(text, encoding="utf-8")
+                with self.assertRaises(ValueError):
+                    runner.load_config(path)
+
+
+class CliTests(unittest.TestCase):
+    def test_top_level_help_only_exposes_public_commands(self):
+        help_text = subprocess.run(
+            (sys.executable, str(ROOT / "runner.py"), "--help"),
+            check=True, text=True, capture_output=True,
+        ).stdout
+        self.assertIn("{run,config}", help_text)
+        self.assertIn("build and run the GPU matrix on a remote cluster", help_text)
+        self.assertNotIn("remote-run", help_text)
+        self.assertNotIn("github-admit", help_text)
+
+    def test_run_help_describes_every_option(self):
+        help_text = subprocess.run(
+            (sys.executable, str(ROOT / "runner.py"), "run", "--help"),
+            check=True, text=True, capture_output=True,
+        ).stdout
+        for option in (
+            "--ssh-config", "--target", "--project-root", "--source-repository",
+            "--source-sha", "--namespace", "--run-id", "--run-attempt", "--artifacts",
+        ):
+            self.assertIn(option, help_text)
+        normalized = " ".join(help_text.split())
+        for default in (
+            "~/.ssh/config", "gpu-ci", "~/abacus_gpu_ci", "HEAD", "manual",
+        ):
+            self.assertIn("default: {}".format(default), normalized)
+        self.assertIn(
+            "default root: /tmp/abacus_gpu_ci_<uid>; run directory: "
+            "<namespace>/<run_id>_<attempt>",
+            normalized,
+        )
+
+    def test_run_options_parse(self):
+        arguments = [
+            "run", "--ssh-config", "/tmp/ssh/config", "--target", "gpu-ci",
+            "--project-root", "/home/user/abacus_gpu_ci",
+            "--source-repository", "/tmp/abacus", "--source-sha", "a" * 40,
+            "--namespace", "manual", "--run-id", "42", "--run-attempt", "1",
+            "--artifacts", "/tmp/results",
+        ]
+        args = runner.parser().parse_args(arguments)
+        self.assertEqual(args.command, "run")
+        self.assertEqual(args.ssh_config, Path("/tmp/ssh/config"))
+        self.assertEqual(args.source_repository, Path("/tmp/abacus"))
+        self.assertEqual(args.artifacts, Path("/tmp/results"))
+        self.assertEqual(args.source_sha, "a" * 40)
+
+    def test_run_defaults_parse(self):
+        with mock.patch("runner.time.time", return_value=42), \
+                mock.patch("runner.os.getuid", return_value=1000):
+            args = runner.parser().parse_args(["run"])
+        self.assertEqual(args.ssh_config, Path("~/.ssh/config"))
+        self.assertEqual(args.target, "gpu-ci")
+        self.assertEqual(args.project_root, "~/abacus_gpu_ci")
+        self.assertEqual(args.source_repository, ROOT.parents[1])
+        self.assertEqual(args.source_sha, "HEAD")
+        self.assertEqual(args.namespace, "manual")
+        self.assertEqual(args.run_id, "42")
+        self.assertEqual(args.run_attempt, "1")
+        self.assertEqual(
+            runner._artifact_path(args),
+            Path("/tmp/abacus_gpu_ci_1000/manual/42_1"),
+        )
+
+
+class TemplateTests(unittest.TestCase):
+    def test_resource_template_is_complete_and_has_no_cpu_request(self):
+        config = runner.load_config()
+        with tempfile.TemporaryDirectory() as directory:
+            run = Path(directory) / "runs" / "manual" / "1-1"
+            destination = run / "jobs" / "gpu4.sbatch"
+            values = runner._job_values(
+                config.resources["gpu4"], config, run, "gpu4",
+                run / "results" / "gpu4-%A_%a.out",
+            )
+            values.update({
+                "ARRAY": "0-3%4", "BUILD_JOB": "123",
+                "MAPPING_ROOT": config.mapping_root,
+                "DISABLE_NCCL_IB": "false", "MANIFEST": run / "jobs" / "gpu4.tsv",
+            })
+            runner._render(ROOT / "case.sbatch.in", destination, values)
+            text = destination.read_text(encoding="utf-8")
+            self.assertIn("#SBATCH --nodes=1", text)
+            self.assertIn("#SBATCH --array=0-3%4", text)
+            self.assertIn("#SBATCH --dependency=afterok:123", text)
+            self.assertIn("SLURM_EXPORT_ENV=ALL", text)
+            self.assertIn("OMPI_MCA_plm_slurm_args=--external-launcher", text)
+            self.assertIn("PRTE_MCA_plm_slurm_args=--external-launcher", text)
+            self.assertNotRegex(text, r"cpus-per-task|--mem(?:ory)?|--nodelist")
+            self.assertNotRegex(text, r"@[A-Z_]+@")
+
+    def test_modules_do_not_spell_dependency_paths(self):
+        text = (ROOT / "modules.sh").read_text(encoding="utf-8")
+        self.assertIn("module load abacus/", text)
+        self.assertIn("LD_PRELOAD=${LD_PRELOAD:-}", text)
+        self.assertIn("CMAKE_LIBRARY_PATH=${LIBRARY_PATH:-}", text)
+        self.assertIn("CMAKE_INCLUDE_PATH=${CPATH:-}", text)
+        self.assertNotRegex(text, r"CUSOLVERMP_PATH|CUBLASMP_PATH|NCCL_PATH|/lib/lib")
+
+
+class GpuInputTests(unittest.TestCase):
+    def test_replaces_existing_device_and_preserves_comment(self):
+        with tempfile.TemporaryDirectory() as directory:
+            case = Path(directory) / "case"
+            case.mkdir()
+            path = case / "INPUT"
+            path.write_text("INPUT_PARAMETERS\n  device   cpu  # selected device\n", encoding="utf-8")
+            runner._force_gpu_inputs(case)
+            self.assertEqual(
+                path.read_text(encoding="utf-8"),
+                "INPUT_PARAMETERS\n  device gpu  # selected device\n",
+            )
+
+    def test_replaces_equals_form(self):
+        with tempfile.TemporaryDirectory() as directory:
+            case = Path(directory) / "case"
+            case.mkdir()
+            path = case / "INPUT"
+            path.write_text("device = cpu\n", encoding="utf-8")
+            runner._force_gpu_inputs(case)
+            self.assertEqual(path.read_text(encoding="utf-8"), "device gpu\n")
+
+    def test_appends_device_and_archives_nested_input(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            case = root / "case"
+            nested = case / "nested"
+            nested.mkdir(parents=True)
+            path = nested / "INPUT"
+            path.write_text("INPUT_PARAMETERS", encoding="utf-8")
+            artifacts = root / "artifacts"
+            runner._force_gpu_inputs(case, artifacts)
+            self.assertEqual(path.read_text(encoding="utf-8"), "INPUT_PARAMETERS\ndevice gpu\n")
+            self.assertEqual(
+                (artifacts / "effective-inputs" / "nested" / "INPUT").read_text(encoding="utf-8"),
+                "INPUT_PARAMETERS\ndevice gpu\n",
+            )
+
+    def test_rejects_duplicate_active_device_entries(self):
+        with tempfile.TemporaryDirectory() as directory:
+            case = Path(directory) / "case"
+            case.mkdir()
+            (case / "INPUT").write_text(
+                "# device cpu\ndevice cpu\n device = gpu\n", encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "duplicate device"):
+                runner._force_gpu_inputs(case)
+
+
+class SlurmTests(unittest.TestCase):
+    def test_wait_reports_array_progress(self):
+        responses = [
+            mock.Mock(
+                returncode=0,
+                stdout="101|RUNNING\n101|PENDING\n101|COMPLETING\n",
+                stderr="",
+            ),
+            mock.Mock(returncode=0, stdout="", stderr=""),
+            mock.Mock(
+                returncode=0,
+                stdout=(
+                    "101_0|COMPLETED|0:0\n101_1|COMPLETED|0:0\n"
+                    "101_2|COMPLETED|0:0\n"
+                ),
+                stderr="",
+            ),
+        ]
+        progress = []
+        with mock.patch("slurm.subprocess.run", side_effect=responses), \
+                mock.patch("slurm.time.sleep"):
+            client = slurm.Slurm(poll_seconds=0)
+            client.jobs["101"] = 3
+            client.wait(("101",), progress.append)
+        self.assertEqual(progress, [
+            {"101": {"finished": 0, "running": 2, "total": 3}},
+            {"101": {"finished": 3, "running": 0, "total": 3}},
+        ])
+
+    def test_coordinator_error_is_reported_before_completion(self):
+        config = runner.load_config()
+        client = mock.Mock()
+        client.submit.side_effect = runner.SlurmError("submission failed")
+        with tempfile.TemporaryDirectory() as directory, io.StringIO() as errors, \
+                contextlib.redirect_stderr(errors):
+            run = Path(directory)
+            (run / "jobs").mkdir()
+            with mock.patch("runner.load_config", return_value=config), \
+                    mock.patch("runner.Slurm", return_value=client), \
+                    mock.patch("runner._render"):
+                code = runner.remote_run(run)
+            done = json.loads((run / "results" / "done.json").read_text())
+            detail = (run / "results" / "coordinator-error.txt").read_text()
+            error_text = errors.getvalue()
+        self.assertEqual(code, 2)
+        self.assertEqual(done, {"returncode": 2})
+        self.assertIn("submission failed", detail)
+        self.assertIn("gpu-ci: submission failed", error_text)
+
+    def test_submit_and_accounting_require_each_array_task(self):
+        responses = [
+            mock.Mock(returncode=0, stdout="101\n", stderr=""),
+            mock.Mock(returncode=0, stdout="", stderr=""),
+            mock.Mock(
+                returncode=0,
+                stdout="101|COMPLETED|0:0\n101_0|COMPLETED|0:0\n101_1|FAILED|1:0\n",
+                stderr="",
+            ),
+        ]
+        with mock.patch("slurm.subprocess.run", side_effect=responses):
+            client = slurm.Slurm(poll_seconds=0)
+            job = client.submit(Path("case.sbatch"), array_count=2)
+            states = client.wait((job,))
+        self.assertEqual(states["101_0"], ("COMPLETED", "0:0"))
+        self.assertEqual(states["101_1"], ("FAILED", "1:0"))
+
+    def test_accounting_retries_transient_failure(self):
+        responses = [
+            mock.Mock(returncode=0, stdout="", stderr=""),
+            mock.Mock(returncode=1, stdout="", stderr="Socket timed out"),
+            mock.Mock(returncode=0, stdout="101|COMPLETED|0:0\n", stderr=""),
+        ]
+        with mock.patch("slurm.subprocess.run", side_effect=responses):
+            client = slurm.Slurm(poll_seconds=0)
+            client.jobs["101"] = None
+            states = client.wait(("101",))
+        self.assertEqual(states["101"], ("COMPLETED", "0:0"))
+
+    def test_pass_requires_successful_slurm_accounting(self):
+        config = runner.Config(
+            runner.Site("Example cluster", "https://cluster.example/", "Computing resources were provided by"),
+            runner.Remote("cluster.example", 22, "user", "~/gpu-ci", (Path("/home"),)),
+            "gpu", Path("/opt/cluster/mps_mapping.d"), False, 1,
+            runner.Resource("build", "flood-gpu", 1, 1, 1, 60),
+            {"one": runner.Resource("one", "flood-gpu", 1, 1, 1, 60)},
+            (runner.Case("suite", "case", "one", "autotest"),),
+        )
+        client = mock.Mock()
+        client.submit.side_effect = ["100", "101"]
+        client.wait.side_effect = [
+            {"100": ("COMPLETED", "0:0")},
+            {"101_0": ("FAILED", "1:0")},
+        ]
+        with tempfile.TemporaryDirectory() as directory:
+            run = Path(directory)
+            (run / "jobs").mkdir()
+            status = run / "results" / "status" / "suite__case.json"
+            status.parent.mkdir(parents=True)
+            status.write_text(json.dumps({"state": "PASS", "exit_code": 0}), encoding="utf-8")
+            with mock.patch("runner.load_config", return_value=config), \
+                    mock.patch("runner.Slurm", return_value=client), \
+                    mock.patch("runner._render"):
+                self.assertEqual(runner.remote_run(run), 1)
+            row = json.loads((run / "results" / "result.json").read_text())["cases"][0]
+            self.assertEqual(row["state"], "INFRA")
+            self.assertEqual(row["slurm_exit_code"], "1:0")
+
+
+class TransferTests(unittest.TestCase):
+    @staticmethod
+    def _remote_config(*roots):
+        return mock.Mock(remote=mock.Mock(allowed_project_roots=tuple(map(Path, roots))))
+
+    @staticmethod
+    def _git(root, *arguments):
+        return subprocess.run(("git", *arguments), cwd=str(root), check=True, text=True, capture_output=True)
+
+    def _bundle(self, repository, run, revision):
+        bundle = run / "source.bundle.local"
+        self._git(repository, "bundle", "create", str(bundle), revision)
+        parts, checksum = runner._split_bundle(bundle, run / "input")
+        bundle.unlink()
+        self.assertEqual(len(parts), 8)
+        return checksum
+
+    def _prepare(self, project, run, root):
+        with mock.patch("runner.load_config", return_value=self._remote_config(root)), \
+                io.StringIO() as output, contextlib.redirect_stdout(output):
+            runner.remote_prepare(project, run)
+            return json.loads(output.getvalue())
+
+    def test_full_then_incremental_bundle(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            repository = home / "local"
+            repository.mkdir()
+            self._git(repository, "init")
+            self._git(repository, "config", "user.email", "ci@example.invalid")
+            self._git(repository, "config", "user.name", "CI")
+            (repository / "value.txt").write_text("one\n", encoding="utf-8")
+            self._git(repository, "add", ".")
+            self._git(repository, "commit", "-m", "one")
+            first = self._git(repository, "rev-parse", "HEAD").stdout.strip()
+
+            project = home / "project"
+            run1 = project / "runs" / "manual" / "1-1"
+            (run1 / "control").mkdir(parents=True)
+            self.assertEqual(self._prepare(project, run1, home), {"cache_shas": []})
+            checksum = self._bundle(repository, run1, "HEAD")
+            runner.remote_receive(project, run1, first, checksum)
+            self.assertEqual((run1 / "source" / "value.txt").read_text(), "one\n")
+            cache = runner._cache(project)
+            unpack_limit = self._git(
+                repository, "--git-dir", str(cache), "config", "--get", "fetch.unpackLimit",
+            ).stdout.strip()
+            self.assertEqual(unpack_limit, "1")
+            objects = self._git(
+                repository, "--git-dir", str(cache), "count-objects", "-v",
+            ).stdout
+            self.assertIn("count: 0\n", objects)
+
+            (repository / "value.txt").write_text("two\n", encoding="utf-8")
+            self._git(repository, "commit", "-am", "two")
+            second = self._git(repository, "rev-parse", "HEAD").stdout.strip()
+            run2 = project / "runs" / "manual" / "2-1"
+            (run2 / "control").mkdir(parents=True)
+            self.assertEqual(self._prepare(project, run2, home), {"cache_shas": [first]})
+            checksum = self._bundle(repository, run2, first + "..HEAD")
+            runner.remote_receive(project, run2, second, checksum)
+            self.assertEqual((run2 / "source" / "value.txt").read_text(), "two\n")
+
+            run3 = project / "runs" / "manual" / "3-1"
+            (run3 / "control").mkdir(parents=True)
+            cached = self._prepare(project, run3, home)["cache_shas"]
+            self.assertEqual(cached, sorted((first, second)))
+            self.assertIsNone(runner._bundle_revision(repository, cached, second))
+            runner.remote_receive(project, run3, second, "-")
+            self.assertEqual((run3 / "source" / "value.txt").read_text(), "two\n")
+
+            self._git(repository, "checkout", "--detach", first)
+            (repository / "sibling.txt").write_text("sibling\n", encoding="utf-8")
+            self._git(repository, "add", ".")
+            self._git(repository, "commit", "-m", "sibling")
+            sibling = self._git(repository, "rev-parse", "HEAD").stdout.strip()
+            run4 = project / "runs" / "manual" / "4-1"
+            (run4 / "control").mkdir(parents=True)
+            self._prepare(project, run4, home)
+            checksum = self._bundle(repository, run4, first + "..HEAD")
+            runner.remote_receive(project, run4, sibling, checksum)
+            for ref, value in runner._cache_refs(cache):
+                if value != sibling:
+                    self._git(repository, "--git-dir", str(cache), "update-ref", "-d", ref)
+            self._git(repository, "checkout", "--detach", second)
+            run5 = project / "runs" / "manual" / "5-1"
+            (run5 / "control").mkdir(parents=True)
+            cached = self._prepare(project, run5, home)["cache_shas"]
+            self.assertEqual(cached, sorted((first, sibling)))
+            revision = runner._bundle_revision(repository, cached, second)
+            self.assertEqual(revision, first + "..HEAD")
+            retained = [ref for ref, _ in runner._retained_refs(cache)]
+            runner._update_cache_refs(cache, {}, retained)
+            self._git(repository, "--git-dir", str(cache), "gc", "--prune=now")
+            self._git(repository, "--git-dir", str(cache), "cat-file", "-e", first + "^{commit}")
+            checksum = self._bundle(repository, run5, revision)
+            runner.remote_receive(project, run5, second, checksum)
+            self.assertEqual((run5 / "source" / "value.txt").read_text(), "two\n")
+            self.assertFalse(runner._cache_refs(cache, "refs/ci/active"))
+
+    def test_cache_retains_recent_daily_weekly_and_monthly_tips(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            repository = root / "local"
+            repository.mkdir()
+            self._git(repository, "init")
+            self._git(repository, "config", "user.email", "ci@example.invalid")
+            self._git(repository, "config", "user.name", "CI")
+            commits = []
+            for index in range(16):
+                (repository / "value.txt").write_text(str(index), encoding="utf-8")
+                self._git(repository, "add", ".")
+                self._git(repository, "commit", "-m", str(index))
+                commits.append(self._git(repository, "rev-parse", "HEAD").stdout.strip())
+            cache = root / "repository.git"
+            self._git(root, "clone", "--bare", str(repository), str(cache))
+            self._git(root, "--git-dir", str(cache), "update-ref", "-d", "refs/heads/master")
+            for ref, _ in runner._cache_refs(cache):
+                self._git(root, "--git-dir", str(cache), "update-ref", "-d", ref)
+            for ref, commit in (
+                ("refs/ci/daily/0", commits[0]),
+                ("refs/ci/daily/1", commits[1]),
+                ("refs/ci/" + commits[2], commits[2]),
+            ):
+                self._git(root, "--git-dir", str(cache), "update-ref", ref, commit)
+
+            for commit in commits[3:8]:
+                self._git(
+                    root, "--git-dir", str(cache), "update-ref",
+                    "refs/ci/" + commit, commit,
+                )
+                runner._rotate_cache_refs(cache, "recent", commit)
+
+            recent = [
+                value for ref, value in runner._cache_refs(cache)
+                if ref.startswith("refs/ci/recent/")
+            ]
+            self.assertEqual(recent, list(reversed(commits[5:8])))
+            runner._update_cache_refs(
+                cache, {}, ("refs/ci/recent/1", "refs/ci/recent/2"),
+            )
+
+            def daily(commit, year, month, day):
+                stamp = runner.time.struct_time((year, month, day, 0, 0, 0, 0, 1, 0))
+                self._git(
+                    root, "--git-dir", str(cache), "update-ref",
+                    "refs/ci/" + commit, commit,
+                )
+                with mock.patch("runner.time.gmtime", return_value=stamp):
+                    runner._rotate_cache_refs(cache, "daily", commit)
+
+            daily(commits[8], 2026, 1, 1)
+            daily(commits[9], 2026, 1, 1)
+            refs = dict(runner._cache_refs(cache))
+            self.assertEqual(refs["refs/ci/daily/day/2026-01-01"], commits[9])
+            self.assertEqual(refs["refs/ci/weekly/2026-01/2026-W01"], commits[8])
+            self.assertEqual(refs["refs/ci/monthly/2026-01"], commits[8])
+
+            daily(commits[10], 2026, 1, 8)
+            daily(commits[11], 2026, 1, 15)
+            refs = dict(runner._cache_refs(cache))
+            self.assertEqual(
+                {ref: value for ref, value in refs.items() if ref.startswith("refs/ci/weekly/")},
+                {
+                    "refs/ci/weekly/2026-01/2026-W01": commits[8],
+                    "refs/ci/weekly/2026-01/2026-W02": commits[10],
+                    "refs/ci/weekly/2026-01/2026-W03": commits[11],
+                },
+            )
+            self.assertNotIn("refs/ci/daily/day/2026-01-01", refs)
+
+            daily(commits[12], 2026, 2, 1)
+            daily(commits[13], 2026, 2, 1)
+            daily(commits[14], 2026, 2, 8)
+            daily(commits[15], 2026, 3, 1)
+            refs = dict(runner._cache_refs(cache))
+            self.assertEqual(
+                {ref: value for ref, value in refs.items() if ref.startswith("refs/ci/monthly/")},
+                {
+                    "refs/ci/monthly/2026-01": commits[8],
+                    "refs/ci/monthly/2026-02": commits[12],
+                    "refs/ci/monthly/2026-03": commits[15],
+                },
+            )
+            self.assertEqual(
+                {ref: value for ref, value in refs.items() if ref.startswith("refs/ci/weekly/")},
+                {"refs/ci/weekly/2026-03/2026-W09": commits[15]},
+            )
+            self.assertEqual(
+                {ref: value for ref, value in refs.items() if ref.startswith("refs/ci/daily/")},
+                {
+                    "refs/ci/daily/day/2026-02-08": commits[14],
+                    "refs/ci/daily/day/2026-03-01": commits[15],
+                },
+            )
+            self.assertEqual(
+                [
+                    value for ref, value in refs.items()
+                    if ref.startswith("refs/ci/recent/")
+                ],
+                [commits[7]],
+            )
+            self.assertEqual(len(refs), 7)
+            run = root / "runs" / "manual" / "1-1"
+            with mock.patch("runner.time.time", return_value=100):
+                runner._reserve_cache(cache, run, runner._retained_refs(cache))
+            self.assertEqual(len(runner._active_refs(cache)), 7)
+            with mock.patch(
+                "runner.time.time", return_value=101 + runner.CACHE_RESERVATION_SECONDS,
+            ):
+                runner._cleanup_reservations(cache)
+            self.assertFalse(runner._active_refs(cache))
+
+    def test_bundle_merge_rejects_corruption(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            bundle = root / "bundle"
+            bundle.write_bytes(bytes(range(256)) * 4)
+            parts, checksum = runner._split_bundle(bundle, root)
+            parts[0].write_bytes(b"corrupt")
+            with self.assertRaisesRegex(ValueError, "checksum mismatch"):
+                runner._assemble_bundle(root, checksum)
+
+    def test_prepare_rejects_reused_run(self):
+        with tempfile.TemporaryDirectory() as directory:
+            home = Path(directory)
+            project = home / "project"
+            run = project / "runs" / "manual" / "1-1"
+            (run / "control").mkdir(parents=True)
+            with mock.patch("runner.load_config", return_value=self._remote_config(home)):
+                runner.remote_prepare(project, run)
+                with self.assertRaisesRegex(ValueError, "already exists"):
+                    runner.remote_prepare(project, run)
+
+    def test_prepare_rejects_project_outside_configured_roots(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            project = root / "outside" / "project"
+            run = project / "runs" / "manual" / "1-1"
+            (run / "control").mkdir(parents=True)
+            config = self._remote_config(root / "allowed")
+            with mock.patch("runner.load_config", return_value=config), \
+                    self.assertRaisesRegex(ValueError, "configured project root"):
+                runner.remote_prepare(project, run)
+
+    def test_transfer_retry_is_bounded(self):
+        completed = mock.Mock(returncode=0, stdout="done", stderr="")
+        failed = mock.Mock(returncode=1, stdout="", stderr="disconnected")
+        with mock.patch("runner.subprocess.run", side_effect=[failed, failed, completed]) as run, \
+                mock.patch("runner.time.sleep"):
+            self.assertEqual(runner._retry(("rsync", "source", "target")).stdout, "done")
+        self.assertEqual(run.call_count, 3)
+
+    def test_parallel_upload_prints_only_completed_part_counts(self):
+        args = argparse.Namespace(ssh_config=Path("ssh-config"), target="cluster")
+        parts = tuple(Path("part-{}".format(index)) for index in range(3))
+        with mock.patch("runner._retry"), io.StringIO() as output, \
+                contextlib.redirect_stdout(output):
+            runner._upload_parts(parts, args, Path("/remote/run"))
+            text = output.getvalue().splitlines()
+        self.assertEqual(text, [
+            "  Source upload: 1/3 parts transferred",
+            "  Source upload: 2/3 parts transferred",
+            "  Source upload: 3/3 parts transferred",
+        ])
+
+    def test_download_retry_replaces_partial_file(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "result.tar.gz"
+
+            def download(_command, _cwd=None, stdout=None):
+                stdout.write(b"partial" if download.calls == 0 else b"complete")
+                download.calls += 1
+                if download.calls == 1:
+                    raise RuntimeError("connection closed")
+
+            download.calls = 0
+            with mock.patch("runner._command", side_effect=download), mock.patch("runner.time.sleep"):
+                runner._retry_download(("ssh", "collect"), path)
+            self.assertEqual(path.read_bytes(), b"complete")
+
+    def test_run_records_cleanup_metadata_before_remote_work(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source_sha = "a" * 40
+            args = argparse.Namespace(
+                source_repository=root,
+                project_root="/home/user/project",
+                target="gpu-ci",
+                namespace="manual",
+                run_id="1",
+                run_attempt="1",
+                source_sha=source_sha,
+                artifacts=root / "artifacts",
+                ssh_config=root / "ssh-config",
+            )
+            revision = mock.Mock(stdout=source_sha + "\n")
+            resolved = mock.Mock(stdout='["/org/user/project", "/org", "/org"]\n')
+            with mock.patch("runner._command", return_value=revision), \
+                    mock.patch("runner._retry", side_effect=[resolved, RuntimeError("disconnected")]), \
+                    self.assertRaisesRegex(RuntimeError, "disconnected"):
+                runner.run(args)
+            metadata = json.loads((args.artifacts / "run.json").read_text())
+            self.assertEqual(metadata, {
+                "project_root": "/org/user/project",
+                "run_root": "/org/user/project/runs/manual/1-1",
+                "source_sha": source_sha,
+            })
+
+    def test_run_rejects_project_outside_configured_roots_before_upload(self):
+        for requested, resolved_path, resolved_roots in (
+            ("/project", "/project", ("/home", "/org")),
+            ("/home/user/project", "/scratch/project", ("/home", "/org")),
+            ("/org/user/project", "/etc/project", ("/home", "/")),
+        ):
+            with self.subTest(requested=requested), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                source_sha = "a" * 40
+                args = argparse.Namespace(
+                    source_repository=root,
+                    project_root=requested,
+                    target="gpu-ci",
+                    namespace="manual",
+                    run_id="1",
+                    run_attempt="1",
+                    source_sha=source_sha,
+                    artifacts=root / "artifacts",
+                    ssh_config=root / "ssh-config",
+                )
+                revision = mock.Mock(stdout=source_sha + "\n")
+                resolved = mock.Mock(stdout=json.dumps([resolved_path, *resolved_roots]) + "\n")
+                with mock.patch("runner._command", return_value=revision), \
+                        mock.patch("runner._retry", return_value=resolved) as retry, \
+                        self.assertRaisesRegex(ValueError, "configured project root"):
+                    runner.run(args)
+                self.assertEqual(retry.call_count, 1)
+                self.assertFalse(args.artifacts.exists())
+
+    def test_run_resolves_head_and_remote_home_defaults(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source_sha = "a" * 40
+            args = argparse.Namespace(
+                source_repository=root,
+                project_root="~/abacus_gpu_ci",
+                target="gpu-ci",
+                namespace="manual",
+                run_id="1",
+                run_attempt="1",
+                source_sha="HEAD",
+                artifacts=root / "artifacts",
+                ssh_config=Path("~/.ssh/config"),
+            )
+            revision = mock.Mock(stdout=source_sha + "\n")
+            resolved = mock.Mock(stdout='["/org/user/abacus_gpu_ci", "/home", "/org"]\n')
+            with mock.patch("runner.Path.home", return_value=Path("/home/local")), \
+                    mock.patch("runner._command", return_value=revision), \
+                    mock.patch("runner._retry", side_effect=[resolved, RuntimeError("disconnected")]), \
+                    self.assertRaisesRegex(RuntimeError, "disconnected"):
+                runner.run(args)
+            metadata = json.loads((args.artifacts / "run.json").read_text())
+            self.assertEqual(metadata, {
+                "project_root": "/org/user/abacus_gpu_ci",
+                "run_root": "/org/user/abacus_gpu_ci/runs/manual/1-1",
+                "source_sha": source_sha,
+            })
+
+    def test_result_archive_rejects_traversal_and_links(self):
+        for name, link in (("../runner-ssh/id_ed25519", None), ("results/key", "../key")):
+            payload = io.BytesIO()
+            with tarfile.open(fileobj=payload, mode="w:gz") as archive:
+                member = tarfile.TarInfo(name)
+                if link is None:
+                    member.size = 3
+                    archive.addfile(member, io.BytesIO(b"key"))
+                else:
+                    member.type = tarfile.SYMTYPE
+                    member.linkname = link
+                    archive.addfile(member)
+            payload.seek(0)
+            with tempfile.TemporaryDirectory() as directory, self.assertRaises(ValueError):
+                runner._extract_results(payload, Path(directory))
+
+    def test_result_archive_extracts_regular_results(self):
+        payload = io.BytesIO()
+        with tarfile.open(fileobj=payload, mode="w:gz") as archive:
+            member = tarfile.TarInfo("results/result.json")
+            member.size = 3
+            archive.addfile(member, io.BytesIO(b"{}\n"))
+        payload.seek(0)
+        with tempfile.TemporaryDirectory() as directory:
+            runner._extract_results(payload, Path(directory))
+            self.assertEqual((Path(directory) / "results" / "result.json").read_text(), "{}\n")
+
+    def test_result_archive_rejects_oversized_content(self):
+        payload = io.BytesIO()
+        with tarfile.open(fileobj=payload, mode="w:gz") as archive:
+            member = tarfile.TarInfo("results/large")
+            member.size = 3
+            archive.addfile(member, io.BytesIO(b"abc"))
+        payload.seek(0)
+        with tempfile.TemporaryDirectory() as directory, \
+                mock.patch("runner.MAX_RESULT_BYTES", 2), \
+                self.assertRaisesRegex(ValueError, "too large"):
+            runner._extract_results(payload, Path(directory))
+
+    def test_result_archive_limits_directory_members(self):
+        payload = io.BytesIO()
+        with tarfile.open(fileobj=payload, mode="w:gz") as archive:
+            for name in ("results/one", "results/two"):
+                member = tarfile.TarInfo(name)
+                member.type = tarfile.DIRTYPE
+                archive.addfile(member)
+        payload.seek(0)
+        with tempfile.TemporaryDirectory() as directory, \
+                mock.patch("runner.MAX_RESULT_MEMBERS", 1), \
+                self.assertRaisesRegex(ValueError, "too large"):
+            runner._extract_results(payload, Path(directory))
+
+
+class ResultTests(unittest.TestCase):
+    def test_live_progress_prints_only_changed_job_counts(self):
+        previous = {}
+        jobs = (("4 GPUs", "102"),)
+        first = {"102": {"finished": 8, "running": 16, "total": 40}}
+        second = {"102": {"finished": 24, "running": 16, "total": 40}}
+        with io.StringIO() as output, contextlib.redirect_stdout(output):
+            runner._print_progress(jobs, first, previous)
+            runner._print_progress(jobs, first, previous)
+            runner._print_progress(jobs, second, previous)
+            text = output.getvalue().splitlines()
+        self.assertEqual(text, [
+            "  4 GPUs                   [102] 8/40 finished, 16 running, 16 queued",
+            "  4 GPUs                   [102] 24/40 finished, 16 running",
+        ])
+
+    def test_local_result_summary_is_concise_and_points_to_artifacts(self):
+        result = valid_result()
+        with tempfile.TemporaryDirectory() as directory, io.StringIO() as output, \
+                contextlib.redirect_stdout(output):
+            root = Path(directory)
+            runner._print_result(result, root, "/remote/archives/manual/1-1.tar.gz")
+            text = output.getvalue()
+        self.assertIn("GPU validation: PASS", text)
+        self.assertIn("123 passed, 0 failed, 0 infrastructure", text)
+        self.assertIn("Compile                  PASS", text)
+        self.assertIn("tests/01_PW              PASS", text)
+        self.assertRegex(text, r"tests/15_rtTDDFT_GPU\s+PASS")
+        self.assertIn("Summary: {}/results/summary.md".format(root.resolve()), text)
+        self.assertIn("Raw results: {}/results".format(root.resolve()), text)
+        self.assertIn("Remote archive: /remote/archives/manual/1-1.tar.gz", text)
+        self.assertNotIn("11_PW_GPU/scf_out_wf", text)
+
+    def test_report_publishes_dynamic_components(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            result = valid_result()
+            result["cases"][0].update(elapsed_seconds=10, job_id="102_0")
+            path = root / "result.json"
+            path.write_text(json.dumps(result), encoding="utf-8")
+            args = argparse.Namespace(result=path, output=root / "output", summary=root / "summary")
+            runner.report(args)
+            output = args.output.read_text(encoding="utf-8")
+            self.assertIn("available=true", output)
+            self.assertIn('"name":"01_PW","label":"tests/01_PW"', output)
+            self.assertIn('"name":"15_rtTDDFT_GPU","label":"tests/15_rtTDDFT_GPU"', output)
+            summary = args.summary.read_text()
+            self.assertTrue(summary.startswith("# GPU validation result\n"))
+            self.assertIn("| Component | State | Slurm jobs |", summary)
+            self.assertIn("| Case | Resource | State | Duration | Slurm job |", summary)
+            self.assertIn("| 11_PW_GPU/scf_out_wf | gpu1 | PASS | 00:00:10 | 102_0 |", summary)
+            self.assertTrue(summary.rstrip().endswith(
+                "Computing resources were provided by "
+                "[Open Source Supercomputing Center of SAI](https://www.open-sai.com/)."
+            ))
+
+    def test_folder_components_aggregate_case_failures(self):
+        result = valid_result()
+        failed = next(row for row in result["cases"] if row["case_id"].startswith("12_NAO_Gamma_GPU/"))
+        failed["state"] = "FAIL"
+        components = {item["name"]: item for item in runner._folder_components(result)}
+        self.assertEqual(components["12_NAO_Gamma_GPU"]["state"], "FAIL")
+        self.assertEqual(components["13_NAO_multik_GPU"]["state"], "PASS")
+
+    def test_report_rejects_untrusted_counts(self):
+        invalid = (
+            {"passed": "x[$(printf ARITH_EXEC >&2)0]", "failed": 0, "infrastructure": 0, "total": 1},
+            {"passed": True, "failed": 0, "infrastructure": 0, "total": 1},
+            {"passed": -1, "failed": 1, "infrastructure": 0, "total": 0},
+            {"passed": 1, "failed": 1, "infrastructure": 0, "total": 1},
+        )
+        for counts in invalid:
+            with self.subTest(counts=counts), tempfile.TemporaryDirectory() as directory:
+                root = Path(directory)
+                path = root / "result.json"
+                result = valid_result()
+                result.update(counts)
+                path.write_text(json.dumps(result), encoding="utf-8")
+                args = argparse.Namespace(result=path, output=root / "output", summary=None)
+                with self.assertRaisesRegex(ValueError, "result counts"):
+                    runner.report(args)
+                self.assertFalse(args.output.exists())
+
+    def test_report_rejects_wrong_matrix_identity(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            result = valid_result()
+            result["cases"][0]["case_id"] = "invented/case"
+            path = root / "result.json"
+            path.write_text(json.dumps(result), encoding="utf-8")
+            args = argparse.Namespace(result=path, output=root / "output", summary=None)
+            with self.assertRaisesRegex(ValueError, "result case"):
+                runner.report(args)
+
+    def test_mpi_startup_failure_requires_complete_signature(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "log"
+            path.write_bytes(b"PMIX_ERR_FILE_OPEN_FAILURE MPI_Init_thread PMIx_Init failed")
+            self.assertTrue(runner._mpi_startup_failure(path))
+            path.write_bytes(b"PMIX_ERR_FILE_OPEN_FAILURE MPI_Init_thread Local abort before MPI_INIT")
+            self.assertTrue(runner._mpi_startup_failure(path))
+            path.write_bytes(b"PMIX_ERR_FILE_OPEN_FAILURE")
+            self.assertFalse(runner._mpi_startup_failure(path))
+            path.write_bytes(b"srun returned non-zero exit status (512) from launching the per-node daemon")
+            self.assertTrue(runner._mpi_startup_failure(path))
+            path.write_bytes(b"srun returned non-zero exit status (35840) from launching\nthe per-node daemon")
+            self.assertTrue(runner._mpi_startup_failure(path))
+            path.write_bytes(b"srun returned non-zero exit status (512)")
+            self.assertFalse(runner._mpi_startup_failure(path))
+
+
+class GitHubTests(unittest.TestCase):
+    def test_read_user_cannot_trigger_pr_validation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            event = root / "event.json"
+            event.write_text(json.dumps({
+                "comment": {"user": {"login": "reader"}},
+                "issue": {"number": 23},
+            }), encoding="utf-8")
+            output = root / "output"
+            environment = {
+                "GITHUB_EVENT_NAME": "issue_comment", "GITHUB_REPOSITORY": "owner/repo",
+                "GITHUB_EVENT_PATH": str(event), "GITHUB_OUTPUT": str(output),
+            }
+            with mock.patch.dict(os.environ, environment, clear=True), \
+                    mock.patch("runner._gh", return_value={"permission": "read", "role_name": "read"}) as api:
+                with self.assertRaisesRegex(ValueError, "commenter needs Triage permission"):
+                    runner.github_admit()
+            api.assert_called_once_with("repos/owner/repo/collaborators/reader/permission")
+            self.assertFalse(output.exists())
+
+    def test_pr_comment_is_created_queued_and_updated_in_place(self):
+        source_sha = "a" * 40
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            event = root / "event.json"
+            event.write_text(json.dumps({
+                "comment": {"user": {"login": "maintainer"}},
+                "issue": {"number": 23},
+            }), encoding="utf-8")
+            output = root / "output"
+            admitted = [
+                {"permission": "read", "role_name": "triage"},
+                {"state": "open", "head": {"repo": {"full_name": "owner/fork"}, "sha": source_sha}},
+                {"id": 456}, {"id": 123},
+            ]
+            environment = {
+                "GITHUB_EVENT_NAME": "issue_comment", "GITHUB_REPOSITORY": "owner/repo",
+                "GITHUB_EVENT_PATH": str(event), "GITHUB_OUTPUT": str(output),
+                "RUN_URL": "https://example/run",
+            }
+            with mock.patch.dict(os.environ, environment, clear=True), \
+                    mock.patch("runner._gh", side_effect=admitted) as api:
+                runner.github_admit()
+            self.assertIn("comment_id=456", output.read_text())
+            queued = api.call_args_list[-2]
+            self.assertEqual(queued.args[:2], ("repos/owner/repo/issues/23/comments", "POST"))
+            self.assertIn("GPU validation: queued", queued.args[2]["body"])
+            self.assertIn("https://example/run", queued.args[2]["body"])
+            self.assertNotIn("SAI", queued.args[2]["body"])
+            self.assertNotIn("Computing resources", queued.args[2]["body"])
+            self.assertEqual(api.call_args_list[-1].args[:2], ("repos/owner/repo/check-runs", "POST"))
+
+            environment.update({
+                "GPU_RESULT": "success", "CHECK_ID": "123", "COMMENT_ID": "456",
+                "PR_NUMBER": "23", "GPU_PASSED": "49", "GPU_FAILED": "0",
+                "GPU_INFRASTRUCTURE": "0", "ARTIFACT_URL": "https://example/artifact",
+                "SOURCE_SHA": source_sha,
+            })
+            with mock.patch.dict(os.environ, environment, clear=True), mock.patch("runner._gh") as api:
+                runner.github_finish()
+            updated = api.call_args_list[-1]
+            self.assertEqual(updated.args[:2], ("repos/owner/repo/issues/comments/456", "PATCH"))
+            self.assertIn("GPU validation: success", updated.args[2]["body"])
+            self.assertIn("https://example/artifact", updated.args[2]["body"])
+            self.assertNotIn("SAI", updated.args[2]["body"])
+            self.assertNotIn("Computing resources", updated.args[2]["body"])
+
+    def test_final_comment_is_updated_when_check_update_fails(self):
+        environment = {
+            "GITHUB_REPOSITORY": "owner/repo", "GPU_RESULT": "failure",
+            "CHECK_ID": "123", "COMMENT_ID": "456", "PR_NUMBER": "23",
+            "RUN_URL": "https://example/run", "ARTIFACT_URL": "",
+            "SOURCE_SHA": "a" * 40,
+        }
+        with mock.patch.dict(os.environ, environment, clear=True), \
+                mock.patch("runner._gh", side_effect=(RuntimeError("check failed"), {})) as api, \
+                self.assertRaisesRegex(RuntimeError, "check failed"):
+            runner.github_finish()
+        self.assertEqual(api.call_args_list[-1].args[:2], (
+            "repos/owner/repo/issues/comments/456", "PATCH",
+        ))
+        self.assertIn(
+            "[Download raw test files](https://example/run)",
+            api.call_args_list[-1].args[2]["body"],
+        )
+
+
+class PolicyTests(unittest.TestCase):
+    def test_workflow_uses_trusted_control_and_protected_environment(self):
+        text = (ROOT.parents[1] / ".github" / "workflows" / "gpu-validation.yml").read_text(encoding="utf-8")
+        self.assertIn("ref: ${{ env.CONTROL_SHA }}", text)
+        self.assertIn("gpu-ci-scheduled", text)
+        self.assertIn("gpu-ci-manual", text)
+        self.assertIn("/abacus-ci gpu", text)
+        self.assertIn("runner.py config", text)
+        self.assertIn("fromJSON(steps.cluster.outputs.config).remote.host", text)
+        self.assertIn("runner.py run", text)
+        self.assertEqual(text.count("pull-requests: write"), 2)
+        self.assertIn("vars.GPU_VALIDATION_ENABLED == 'true'", text)
+        self.assertNotIn('ssh -F "$REMOTE_SSH_CONFIG" gpu-ci', text)
+        self.assertNotIn("cpus-per-task", text)
+
+
+if __name__ == "__main__":
+    unittest.main()

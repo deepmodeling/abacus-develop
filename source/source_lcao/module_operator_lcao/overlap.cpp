@@ -457,9 +457,6 @@ void hamilt::Overlap<hamilt::OperatorLCAO<TK, TR>>::output_SR_async_csr(const in
     ModuleBase::timer::end("OverlapNew", "output_SR_async_csr");
 }
 
-// Include force/stress implementation
-#include "overlap_force_stress.hpp"
-
 template class hamilt::Overlap<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class hamilt::Overlap<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

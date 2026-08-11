@@ -307,7 +307,6 @@ void ModuleIO::CifParser::_unpack_ucell(const UnitCell& ucell,
     for (int i = 0; i < natom; ++i)
     {
         atom_site_labels[i] = ucell.atoms[ucell.iat2it[i]].ncpp.psd; // the most standard label
-        atom_site_labels[i] = atom_site_labels[i].empty() ? ucell.atom_label[ucell.iat2it[i]]: atom_site_labels[i];
         atom_site_labels[i] = atom_site_labels[i].empty() ? ucell.atoms[ucell.iat2it[i]].label: atom_site_labels[i];
         assert(!atom_site_labels[i].empty()); // ensure the label is not empty
         atom_site_fract_coords[3 * i] = ucell.atoms[ucell.iat2it[i]].taud[ucell.iat2ia[i]].x;

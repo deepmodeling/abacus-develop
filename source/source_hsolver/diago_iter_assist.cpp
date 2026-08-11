@@ -1,5 +1,4 @@
 #include "diago_iter_assist.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/complexmatrix.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
@@ -177,6 +176,8 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
     int psi_nc,
     psi::Psi<T, Device>& evc,
     Real* en,
+    const std::string& basis_type,
+    const std::string& calculation,
     const std::function<void(T*, const int)>& add_to_hcc,
     const std::function<void(const T* const, const int, const int)>& export_vcc)
 {
@@ -223,7 +224,9 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
 
     if (base_device::get_device_type(ctx) == base_device::GpuDevice)
     {
-        psi::Psi<T, Device> psi_temp(1, 1, psi_nc, dmin, true);
+        /// NOTE: current_nbasis must be npw (WITHOUT npol) for Nonlocal::act's
+        /// gemm K (vkb only has npw rows). See CPU branch comment above.
+        psi::Psi<T, Device> psi_temp(1, 1, psi_nc, evc.get_current_nbas(), true);
 
         T* ppsi = psi_temp.get_pointer();
         // hpsi and spsi share the temp space
@@ -270,7 +273,11 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
     }
     else if (base_device::get_device_type(ctx) == base_device::CpuDevice)
     {
-        psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, dmin, true);
+        /// NOTE: the 4th arg (current_nbasis) must be npw (WITHOUT npol),
+        /// NOT dmin (= nbasis = npol*npwx in SOC). Nonlocal::act uses
+        /// psi_temp.get_current_nbas() as gemm K, but vkb only has npw rows.
+        /// dmin (still = nbasis) is kept for hcc/scc gemm K which needs npol.
+        psi::Psi<T, Device> psi_temp(1, nstart, psi_nc, evc.get_current_nbas(), true);
 
         T* ppsi = psi_temp.get_pointer();
         syncmem_complex_op()(ppsi, psi, psi_temp.size());
@@ -295,7 +302,6 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
         delmem_complex_op()(temp);
 
         add_to_hcc(hcc, nstart);
-
     }
 
     if (GlobalV::NPROC_IN_POOL > 1)
@@ -325,13 +331,13 @@ void DiagoIterAssist<T, Device>::diag_subspace_init(hamilt::Hamilt<T, Device>* p
     //=======================
     // diagonize the H-matrix
     //=======================
-    if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw") && PARAM.inp.calculation == "nscf")
+    if ((basis_type == "lcao" || basis_type == "lcao_in_pw") && calculation == "nscf")
     {
         GlobalV::ofs_running << " Not do zgemm to get evc." << std::endl;
     }
-    else if ((PARAM.inp.basis_type == "lcao" || PARAM.inp.basis_type == "lcao_in_pw" || PARAM.inp.basis_type == "pw")
-             && (PARAM.inp.calculation == "scf" || PARAM.inp.calculation == "md"
-                 || PARAM.inp.calculation == "relax")) // pengfei 2014-10-13
+    else if ((basis_type == "lcao" || basis_type == "lcao_in_pw" || basis_type == "pw")
+             && (calculation == "scf" || calculation == "md"
+                 || calculation == "relax")) // pengfei 2014-10-13
     {
         // because psi and evc are different here,
         // I think if psi and evc are the same,
@@ -630,31 +636,6 @@ void DiagoIterAssist<T, Device>::diag_subspace_psi(const T* hcc,
     delmem_complex_op()(vcc);
 
     ModuleBase::timer::end("DiagoIterAssist", "diag_subspace_psi");
-}
-
-template <typename T, typename Device>
-bool DiagoIterAssist<T, Device>::test_exit_cond(const int& ntry, const int& notconv)
-{
-    //================================================================
-    // If this logical function is true, need to do diag_subspace
-    // and cg again.
-    //================================================================
-
-    bool scf = true;
-    if (PARAM.inp.calculation == "nscf") {
-        scf = false;
-}
-
-    // If ntry <=5, try to do it better, if ntry > 5, exit.
-    const bool f1 = (ntry <= 5);
-
-    // In non-self consistent calculation, do until totally converged.
-    const bool f2 = ((!scf && (notconv > 0)));
-
-    // if self consistent calculation, if not converged > 5,
-    // using diag_subspace and cg method again. ntry++
-    const bool f3 = ((scf && (notconv > 5)));
-    return (f1 && (f2 || f3));
 }
 
 template class DiagoIterAssist<std::complex<float>, base_device::DEVICE_CPU>;

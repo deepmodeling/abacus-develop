@@ -212,8 +212,11 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
     if (GlobalV::MY_RANK == 0)
     {
         std::ofstream ofs_eig0;
+        const auto& inp = PARAM.inp;
+        const bool append = istep > 0
+                            || (inp.calculation == "md" && inp.mdp.md_restart);
 
-		if(PARAM.inp.out_app_flag==true)
+		if (append)
 		{
 			ofs_eig0.open(filename.c_str(), std::ios::app);
 		}

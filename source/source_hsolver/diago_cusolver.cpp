@@ -6,7 +6,6 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <memory>
 #include <type_traits>
@@ -22,7 +21,7 @@ template <typename T>
 int DiagoCusolver<T>::DecomposedState = 0;
 
 template <typename T>
-DiagoCusolver<T>::DiagoCusolver()
+DiagoCusolver<T>::DiagoCusolver(const int nlocal_in, const int nbands_in) : nlocal(nlocal_in), nbands(nbands_in)
 {
 }
 
@@ -42,13 +41,13 @@ void DiagoCusolver<T>::diag(
     ModuleBase::TITLE("DiagoCusolver", "diag");
     ModuleBase::timer::start("DiagoCusolver", "cusolver");
     // Allocate memory for eigenvalues
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
     std::vector<T> eigenvectors(h_mat.row * h_mat.col);
     this->dc.Dngvd(h_mat.row, h_mat.col, h_mat.p, s_mat.p, eigen.data(), eigenvectors.data());
     const int size = psi.get_nbands() * psi.get_nbasis();
     BlasConnector::copy(size, eigenvectors.data(), 1, psi.get_pointer(), 1);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
     ModuleBase::timer::end("DiagoCusolver", "cusolver");
 }
 

@@ -51,7 +51,7 @@ The ABACUS-Hefei-NAMD interface allows ABACUS to generate the necessary files fo
 - `cal_syns`: Set to 1 to calculate asynchronous overlap matrix
 - `dmax`: Maximum displacement of all atoms in one step (in bohr) for calculating asynchronous overlap matrix
 - `out_wfc_lcao`: Set to 1 to output wavefunction files
-- `out_mat_hs`: Set to 1 to output Hamiltonian and overlap matrix files
+- `out_hsk`: Set to 1 to output Hamiltonian and overlap matrix files
 
 ### Examples
 

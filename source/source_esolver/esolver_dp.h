@@ -36,7 +36,7 @@ class ESolver_DP : public ESolver
      * @param inp input parameters
      * @param cell unitcell information
      */
-    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
     /**
      * @brief Run the DP solver for a given ion/md step and unit cell
@@ -44,7 +44,7 @@ class ESolver_DP : public ESolver
      * @param istep the current ion/md step
      * @param cell unitcell information
      */
-    void runner(UnitCell& cell, const int istep) override;
+    void runner(BaseCell& basecell, const int istep) override;
 
     /**
      * @brief get the total energy without ion kinetic energy
@@ -59,21 +59,21 @@ class ESolver_DP : public ESolver
      *
      * @param force the computed atomic forces
      */
-    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
 
     /**
      * @brief get the computed lattice virials
      *
      * @param stress the computed lattice virials
      */
-    void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
     /**
      * @brief Prints the final total energy of the DP model to the output file
      *
      * This function prints the final total energy of the DP model in eV to the output file along with some formatting.
      */
-    void after_all_runners(UnitCell& ucell) override;
+    void after_all_runners(BaseCell& basecell) override;
 
   private:
     /**
@@ -109,12 +109,18 @@ class ESolver_DP : public ESolver
 
     std::string dp_file;             ///< directory of DP model file
     std::vector<int> atype = {};     ///< atom type corresponding to DP model
+    std::vector<int> atom_type_index;  ///< type index (it) for each global atom iat
+    std::vector<int> atom_local_index; ///< local index (ia) within type for each global atom iat
     std::vector<double> fparam = {}; ///< frame parameter for dp potential: dim_fparam
     std::vector<double> aparam = {}; ///< atomic parameter for dp potential: natoms x dim_aparam
     double rescaling = 1.0;          ///< rescaling factor for DP model
     double dp_potential = 0.0;       ///< computed potential energy
     ModuleBase::matrix dp_force;     ///< computed atomic forces
     ModuleBase::matrix dp_virial;    ///< computed lattice virials
+    std::vector<double> dp_cell;     ///< DP cell buffer in Angstrom
+    std::vector<double> dp_coord;    ///< DP coordinate buffer in Angstrom
+    std::vector<double> dp_model_force;  ///< raw force buffer returned by DP
+    std::vector<double> dp_model_virial; ///< raw virial buffer returned by DP
 };
 
 } // namespace ModuleESolver

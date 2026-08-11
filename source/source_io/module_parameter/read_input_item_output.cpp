@@ -1,3 +1,4 @@
+#include "source_base/formatter.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
 #include "read_input.h"
@@ -14,7 +15,7 @@ void ReadInput::item_output()
         item.annotation = "print information every few ionic steps";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, and Mulliken population analysis is printed every n ionic steps."
+        item.description = "Controls the output interval in ionic steps. When set to a positive integer, information such as charge density, local potential, electrostatic potential, Hamiltonian matrix, overlap matrix, density matrix, Mulliken population analysis, and structure files (STRU{istep} or STRU{istep}.cif, when out_stru is 1 or 2) is printed every n ionic steps."
                           "\n\n[NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.";
         item.default_value = "0";
         item.unit = "";
@@ -214,7 +215,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
 	    item.annotation = "output density matrix DM(R) with respect to lattice vector R (with precision 8)";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = R"(Whether to output the density matrix with Bravias lattice vector R index into files in the folder OUT.${suffix}. The files are named as dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in out_mat_hs2. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
+        item.description = R"(Whether to output the density matrix with Bravias lattice vector R index into files in the folder OUT.${suffix}. The files are named as dmr{s}{spin index}{g}{geometry index}{_nao} + {".csr"}. Here, 's' refers to spin, where s1 means spin up channel while s2 means spin down channel, and the sparse matrix format 'csr' is mentioned in out_hsr. Finally, if out_app_flag is set to false, the file name contains the optional 'g' index for each ionic step that may have different geometries, and if out_app_flag is set to true, the density matrix with respect to Bravias lattice vector R accumulates during ionic steps:
 * nspin = 1: dmrs1_nao.csr;
 * nspin = 2: dmrs1_nao.csr and dmrs2_nao.csr for the two spin channels.
 
@@ -436,21 +437,67 @@ Also controled by out_freq_ion and out_app_flag.
     }
     {
         Input_Item item("out_stru");
-        item.annotation = "output the structure files after each ion step";
+        item.annotation = "output the structure files per ion step";
         item.category = "Output information";
-        item.type = "Boolean";
-        item.description = "Whether to output structure files per ionic step in geometry relaxation calculations into OUT.{istep}_D, where ${istep} is the ionic step.";
-        item.default_value = "False";
+        item.type = "Integer";
+        item.description = "Controls the output of structure files per ionic step in geometry relaxation calculations. The files are written to the OUT.{suffix}/ directory. Each file corresponds to the structure at RELAX STEP ${istep}, i.e., the structure for which that step's energy was computed (before the relax move), and includes a header comment with the ABACUS version, timestamp, energy, and stress tensor. When out_freq_ion is positive, the numbered files STRU{istep} (or STRU{istep}.cif) are written every out_freq_ion steps; when out_freq_ion is 0, no numbered files are output.\n"
+                          "    - 0: No structure files are output.\n"
+                          "    - 1: ABACUS STRU format files are output. The latest structure is written to STRU_NOW (overwritten each step), the numbered file STRU{istep} (e.g., STRU1, STRU2) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL. No CIF files are output.\n"
+                          "    - 2: CIF format files are output. The latest structure is written to STRU_NOW.cif (overwritten each step), the numbered file STRU{istep}.cif (e.g., STRU1.cif, STRU2.cif) is written every out_freq_ion steps (when out_freq_ion is positive), and the final converged structure is written to STRU_FINAL.cif. No non-CIF files are output.\n"
+                          "[NOTE] For backward compatibility, true/false (case insensitive) are accepted and converted to 1/0.";
+        item.default_value = "1";
         item.unit = "";
         item.availability = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const std::string val = FmtCore::lower(item.str_values[0]);
+            if (val == "true" || val == "t" || val == "yes" || val == "y" || val == "on" || val == ".true.")
+            {
+                para.input.out_stru = 1;
+            }
+            else if (val == "false" || val == "f" || val == "no" || val == "n" || val == "off" || val == ".false.")
+            {
+                para.input.out_stru = 0;
+            }
+            else
+            {
+                try
+                {
+                    size_t pos = 0;
+                    const int parsed = std::stoi(item.str_values[0], &pos);
+                    if (pos != item.str_values[0].size())
+                    {
+                        ModuleBase::WARNING_QUIT("ReadInput",
+                            "out_stru must be one of 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
+                    }
+                    para.input.out_stru = parsed;
+                }
+                catch (const std::invalid_argument&)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                        "out_stru must be one of 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
+                }
+                catch (const std::out_of_range&)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                        "out_stru must be one of 0, 1, 2. For backward compatibility, true/false are also accepted. Got: '" + item.str_values[0] + "'.");
+                }
+            }
+        };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             const std::vector<std::string> offlist = {"nscf", "get_s", "get_pchg", "get_wf"};
             if (std::find(offlist.begin(), offlist.end(), para.input.calculation) != offlist.end())
             {
-                para.input.out_stru = false;
+                para.input.out_stru = 0;
             }
         };
-        read_sync_bool(input.out_stru);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_stru < 0 || para.input.out_stru > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput",
+                    "out_stru must be one of 0, 1, 2. For backward compatibility, true/false are also accepted.");
+            }
+        };
+        sync_int(input.out_stru);
         this->add_item(item);
     }
     {
@@ -480,53 +527,154 @@ Also controled by out_freq_ion and out_app_flag.
         this->add_item(item);
     }
     {
-        Input_Item item("out_mat_hs");
-        item.annotation = "output H and S matrix (with precision 8)";
+        Input_Item item("out_hsk");
+        item.annotation = "output H(k) and S(k) matrices in reciprocal space";
         item.category = "Output information";
-        item.type = R"(Boolean \[Integer\](optional))";
-        item.description = R"(Whether to print the upper triangular part of the Hamiltonian matrices and overlap matrices for each k-point into files in the directory OUT.${suffix}. The second number controls precision. For more information, please refer to hs_matrix.md. Also controled by out_freq_ion and out_app_flag.
-* For gamma only case:
- * nspin = 1: hks1_nao.txt for the Hamiltonian matrix and sks1_nao.txt for the overlap matrix;
- * nspin = 2: hks1_nao.txt and hks2_nao.txt for the Hamiltonian matrix and sks1_nao.txt for the overlap matrix. Note that the code will not output sks2_nao.txt because it is the same as sks1_nao.txt;
- * nspin = 4: hks12_nao.txt for the Hamiltonian matrix and sks12_nao.txt for the overlap matrix.
-* For multi-k points case:
- * nspin = 1: hks1k1_nao.txt for the Hamiltonian matrix at the 1st k-point, and sks1k1_nao.txt for the overlap matrix for the 1st k-point, ...;
- * nspin = 2: hks1k1_nao.txt and hks2k1_nao.txt for the two spin channels of the Hamiltonian matrix at the 1st k-point, and sks1k1_nao.txt for the overlap matrix for the 1st k-point. Note that the code will not output sks2k1_nao.txt because it is the same as sks1k1_nao.txt, ...;
- * nspin = 4: hks12k1_nao.txt for the Hamiltonian matrix at the 1st k-point, and sks12k1_nao.txt for the overlap matrix for the 1st k-point, ...;
+        item.type = R"(Integer \[Integer\](optional))";
+        item.description = R"(Output the upper triangular part of the Hamiltonian and overlap matrices in reciprocal space for each k-point into files in the directory OUT.${suffix}. The first integer selects the format:
+* 0: disabled;
+* 1: text output; the optional second integer controls precision and defaults to 8;
+* 2: binary output in the native ABACUS .dat format;
+* 3: NPZ output, which is not implemented for H(k)/S(k).
+
+The output is also controlled by out_freq_ion and out_app_flag. For more information, refer to hs_matrix.md.
+* Gamma-only, nspin = 1: hk_nao.txt for the Hamiltonian matrix and sk_nao.txt for the overlap matrix.
+* Gamma-only, nspin = 2: hks1_nao.txt and hks2_nao.txt for the two spin channels of the Hamiltonian matrix, and sk_nao.txt for the overlap matrix. Only one overlap matrix is written because it is identical for both spin channels.
+* Gamma-only, nspin = 4: not available with the gamma-only algorithm.
+* Multi-k, nspin = 1: hk1_nao.txt for the Hamiltonian matrix and sk1_nao.txt for the overlap matrix at the first k-point.
+* Multi-k, nspin = 2: hk1s1_nao.txt and hk1s2_nao.txt for the two spin channels of the Hamiltonian matrix, and sk1_nao.txt for the overlap matrix at the first k-point. Only one overlap matrix is written because it is identical for both spin channels.
+* Multi-k, nspin = 4: hk1s4_nao.txt for the spinor Hamiltonian matrix and sk1_nao.txt for the spinor overlap matrix at the first k-point.
+For binary output, the same names use the .dat suffix. Each native binary record contains the matrix dimension as an int followed by the row-major upper triangle. Gamma-only elements are doubles; multi-k and spinor elements are pairs of doubles containing the real and imaginary parts. Native integer representation and byte order are used.
+When out_app_flag is true, the first ionic step truncates the file and later steps append complete records.
+When out_app_flag is false, g followed by the one-based ionic-step index is inserted before _nao, for example hk1s1g1_nao.txt.
 
 [NOTE] In the 3.10-LTS version, the file names are data-0-H and data-0-S, etc.)";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.availability = "Numerical atomic orbital basis";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1 || count > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_hsk expects a format and optional precision");
+            }
+            try
+            {
+                para.input.out_hsk[0] = std::stoi(item.str_values[0]);
+                para.input.out_hsk[1] = count == 2 ? std::stoi(item.str_values[1]) : 8;
+            }
+            catch (const std::exception&)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_hsk format and precision must be integers");
+            }
+            if (count == 2 && para.input.out_hsk[0] != 1)
+            {
+                ModuleBase::WARNING("ReadInput", "out_hsk precision is ignored unless format is 1");
+            }
+        };
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const int format = para.input.out_hsk[0];
+            if (format < 0 || format > 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_hsk format must be 0, 1, 2, or 3");
+            }
+            if (format == 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_hsk NPZ output is not implemented");
+            }
+        };
+        sync_intvec(input.out_hsk, 2, 0);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_mat_hs");
+        item.annotation = "legacy alias for text H(k) and S(k) output in reciprocal space";
+        item.category = "Output information";
+        item.type = R"(Boolean \[Integer\](optional))";
+        item.description = "Legacy alias for out_hsk 1, which outputs Hamiltonian and overlap matrices in reciprocal space for each k-point. The optional second integer controls text precision. If both out_hsk and out_mat_hs are present, out_hsk takes precedence.";
         item.default_value = "False 8";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis";
-			item.read_value = [](const Input_Item& item, Parameter& para) {
-				const size_t count = item.get_size();
-				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs needs at least 1 value");
-				para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs needs at least 1 value");
+            para.input.out_mat_hs[0] = assume_as_boolean(item.str_values[0]);
             para.input.out_mat_hs[1] = 8;
-			if (count >= 2) try { para.input.out_mat_hs[1] = std::stoi(item.str_values[1]); }
-			catch (const std::invalid_argument&) { /* do nothing */ }
-			catch (const std::out_of_range&) {/* do nothing */}
-		};
-        // reset value in some special case
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.qo_switch)
+            if (count >= 2) try { para.input.out_mat_hs[1] = std::stoi(item.str_values[1]); }
+            catch (const std::invalid_argument&) { /* do nothing */ }
+            catch (const std::out_of_range&) {/* do nothing */}
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("out_hsr");
+        item.annotation = "output H(R) and S(R) matrices in real space";
+        item.category = "Output information";
+        item.type = R"(Integer \[Integer\](optional))";
+        item.description = R"(Output Hamiltonian and overlap matrices in real space, indexed by the Bravais lattice vector R, in the directory OUT.${suffix}. The first integer selects the format:
+* 0: disabled;
+* 1: text CSR output; the optional second integer controls precision and defaults to 8;
+* 2: reserved for binary output, which is not implemented yet;
+* 3: NPZ output using hrs1_nao.npz, hrs2_nao.npz when needed, and sr_nao.npz.
+
+For multi-k calculations, the output contains the individual real-space blocks stored for the Bravais lattice vectors R. For gamma-only calculations, the internal real-space contributions are folded into a single R = (0, 0, 0) block. This folded result cannot recover the original R-resolved contributions or interpolate arbitrary k points. Terms added only while constructing H(k) are not guaranteed to be present.
+
+[NOTE] In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.)";
+        item.default_value = "0 8";
+        item.unit = "Ry";
+        item.availability = "Numerical atomic orbital basis";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            const size_t count = item.get_size();
+            if (count < 1 || count > 2)
             {
-                para.input.out_mat_hs[0] = 1; // print H(k) and S(k)
+                ModuleBase::WARNING_QUIT("ReadInput", "out_hsr expects a format and optional precision");
+            }
+            try
+            {
+                para.input.out_hsr[0] = std::stoi(item.str_values[0]);
+                para.input.out_hsr[1] = count == 2 ? std::stoi(item.str_values[1]) : 8;
+            }
+            catch (const std::exception&)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_hsr format and precision must be integers");
+            }
+            if (count == 2 && para.input.out_hsr[0] != 1)
+            {
+                ModuleBase::WARNING("ReadInput", "out_hsr precision is ignored unless format is 1");
             }
         };
-        sync_intvec(input.out_mat_hs, 2, 0);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const int format = para.input.out_hsr[0];
+            if (format < 0 || format > 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_hsr format must be 0, 1, 2, or 3");
+            }
+            if (format == 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_hsr binary output is reserved but not implemented");
+            }
+            if (format == 3)
+            {
+#ifndef __CNPY
+                ModuleBase::WARNING_QUIT("ReadInput",
+                                         "to write in npz format, please "
+                                         "recompile with -DENABLE_CNPY=1");
+#endif
+            }
+        };
+        sync_intvec(input.out_hsr, 2, 0);
+        add_bool_bcast(input.out_hsr_npz_compat);
         this->add_item(item);
     }
     {
         Input_Item item("out_mat_hs2");
-        item.annotation = "output H(R) and S(R) matrix";
+        item.annotation = "legacy alias for text H(R) and S(R) output in real space";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Whether to print files containing the Hamiltonian matrix and overlap matrix into files in the directory OUT.${suffix}. For more information, please refer to hs_matrix.md."
-                          "\n\n[NOTE] In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.";
-        item.default_value = "False [8]";
+        item.description = "Legacy alias for out_hsr 1, which outputs Hamiltonian and overlap matrices in real space indexed by the Bravais lattice vector R. The optional second integer controls text precision. If both out_hsr and out_mat_hs2 are present, out_hsr takes precedence.";
+        item.default_value = "False 8";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        item.availability = "Numerical atomic orbital basis";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs2 needs at least 1 value");
@@ -536,13 +684,6 @@ Also controled by out_freq_ion and out_app_flag.
             catch (const std::invalid_argument&) { /* do nothing */ }
             catch (const std::out_of_range&) {/* do nothing */}
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.out_mat_r[0] && para.sys.gamma_only_local)
-            {
-                ModuleBase::WARNING_QUIT("ReadInput", "out_mat_r is not available for gamma only calculations");
-            }
-        };
-        sync_intvec(input.out_mat_hs2, 2, 0);
         this->add_item(item);
     }
     {
@@ -593,12 +734,13 @@ Also controled by out_freq_ion and out_app_flag.
             }
         };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if ((para.inp.out_mat_r[0] || para.inp.out_mat_hs2[0] || para.inp.out_mat_t[0]
-                 || para.inp.out_hr_npz || para.inp.out_hsr_npz || para.inp.out_dm_npz || para.inp.dm_to_rho)
+            if ((para.inp.out_mat_r[0] || para.inp.out_mat_t[0]
+                 || para.inp.out_hr_npz || para.inp.out_dm_npz || para.inp.dm_to_rho)
                 && para.sys.gamma_only_local)
             {
                 ModuleBase::WARNING_QUIT("ReadInput",
-                                         "output of r(R)/H(R)/S(R)/T(R)/dH(R)/DM(R) is not "
+                                         "output of r(R)/T(R), H(R)-only/DM(R) in NPZ format, "
+                                         "or conversion from DM(R) to rho is not "
                                          "available for gamma only calculations");
             }
         };
@@ -610,7 +752,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output T(R) matrix";
         item.category = "Output information";
         item.type = R"(Boolean \[Integer\](optional))";
-        item.description = "Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+        item.description = "Generate files containing the kinetic energy matrix. The optional second parameter controls text output precision. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_hsr. The name of the files will be trs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.";
         item.default_value = "False 8";
         item.unit = "Ry";
@@ -638,7 +780,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.annotation = "output Hamiltonian derivatives dH/dR matrices";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = "Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_mat_hs2. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
+        item.description = "Whether to print files containing the derivatives of the Hamiltonian matrix. The format will be the same as the Hamiltonian matrix and overlap matrix as mentioned in out_hsr. The name of the files will be dhrxs1_nao.csr, dhrys1_nao.csr, dhrzs1_nao.csr and so on. Also controled by out_freq_ion and out_app_flag."
                           "\n\nFormat: <enable> [precision] [iat1 iat2 ...]. The first value (0/1) enables/disables output. The second optional value sets the output precision (default: 8). Starting from the third value, 1-based atom indices can be listed to restrict output to derivatives with respect to those specific atoms only; if no atom indices are given, all atoms are written."
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.";
         item.default_value = "0 8";
@@ -889,7 +1031,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.category = "Output information";
         item.type = "Integer";
         item.description = "Whether to print files containing the kinetic energy matrix T(R) in CSR format."
-                          "\n\nSee out_mat_hs2 for format details.";
+                          "\n\nSee out_hsr for format details.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -914,7 +1056,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.category = "Output information";
         item.type = "Integer";
         item.description = "Whether to print files containing the nonlocal pseudopotential matrix Vnl(R) in CSR format."
-                          "\n\nSee out_mat_hs2 for format details.";
+                          "\n\nSee out_hsr for format details.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -939,7 +1081,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.category = "Output information";
         item.type = "Integer";
         item.description = "Whether to print files containing the local pseudopotential matrix Vl(R) in CSR format."
-                          "\n\nSee out_mat_hs2 for format details.";
+                          "\n\nSee out_hsr for format details.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -964,7 +1106,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.category = "Output information";
         item.type = "Integer";
         item.description = "Whether to print files containing the Hartree matrix Vh(R) in CSR format."
-                          "\n\nSee out_mat_hs2 for format details.";
+                          "\n\nSee out_hsr for format details.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -989,7 +1131,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.category = "Output information";
         item.type = "Integer";
         item.description = "Whether to print files containing the XC matrix Vxc(R) in CSR format."
-                          "\n\nSee out_mat_hs2 for format details.";
+                          "\n\nSee out_hsr for format details.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -1014,7 +1156,7 @@ Also controled by out_freq_ion and out_app_flag.
         item.category = "Output information";
         item.type = "Integer";
         item.description = "Whether to print files containing the exact-exchange matrix Vexx(R) in CSR format."
-                          "\n\nSee out_mat_hs2 for format details.";
+                          "\n\nSee out_hsr for format details.";
         item.default_value = "0 8";
         item.unit = "Ry";
         item.read_value = [](const Input_Item& item, Parameter& para) {
@@ -1187,7 +1329,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.annotation = "output H(R) matrix in npz format";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print Hamiltonian matrices H(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.description = "Whether to print Hamiltonian matrices H(R) in NPZ format as hrs1_nao.npz and, for nspin = 2, hrs2_nao.npz. This feature does not work for gamma-only calculations.";
         item.default_value = "False";
         item.unit = "Ry";
         item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
@@ -1206,14 +1348,16 @@ The circle order of the charge density on real space grids is: x is the outer lo
     }
     {
         Input_Item item("out_hsr_npz");
-        item.annotation = "output H(R) and S(R) matrices in npz format";
+        item.annotation = "legacy alias for H(R) and S(R) NPZ output";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to print Hamiltonian matrices H(R) and overlap matrix S(R) in npz format. This feature does not work for gamma-only calculations.";
+        item.description = "Legacy alias for out_hsr 3, writing hrs1_nao.npz, hrs2_nao.npz when needed, and sr_nao.npz. If both out_hsr and out_hsr_npz are present, out_hsr takes precedence. Gamma-only calculations write the folded R = (0, 0, 0) representation.";
         item.default_value = "False";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
-        read_sync_bool(input.out_hsr_npz);
+        item.availability = "Numerical atomic orbital basis";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            para.input.out_hsr_npz = assume_as_boolean(item.str_values[0]);
+        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_hsr_npz)
             {
@@ -1272,7 +1416,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
                           "matrices in an append manner during MD";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Whether to output r(R), H(R), S(R), T(R), dH(R), dS(R), and wfc matrices in an append manner during molecular dynamics calculations. Check input parameters out_mat_r, out_mat_hs2, out_mat_t, out_mat_dh, out_mat_hs and out_wfc_lcao for more information.";
+        item.description = "Whether to output r(R), H(R), S(R), T(R), dH(R), dS(R), and wfc matrices in an append manner during molecular dynamics calculations. Check input parameters out_mat_r, out_hsr, out_mat_t, out_mat_dh, out_hsk and out_wfc_lcao for more information.";
         item.default_value = "true";
         item.unit = "";
         item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
@@ -1287,7 +1431,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.";
         item.default_value = "8";
         item.unit = "";
-        item.availability = "out_mat_hs 1 case presently.";
+        item.availability = "out_hsk 1 case presently.";
         read_sync_int(input.out_ndigits);
         this->add_item(item);
     }
@@ -1470,8 +1614,9 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output dipole or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Boolean";
-        item.description = R"(* True: Output electric dipole moment.
-* False: Do not output electric dipole moment.)";
+        item.description = R"(Controls electric-dipole output. In RT-TDDFT, each enabled spin channel is written to OUT.{suffix}/dipole_s[spin].txt using a one-based spin number. Every row contains the one-based electronic-step index followed by the Cartesian electronic-dipole components $P_x$, $P_y$, and $P_z$ in atomic units. The running log additionally reports the electronic, ionic, and total dipoles and the norm of the total dipole.
+* True: Output the electric dipole information.
+* False: Do not output the electric dipole information.)";
         item.default_value = "False";
         item.unit = "";
         item.availability = "";
@@ -1483,13 +1628,13 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output current or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Integer";
-        item.description = R"(Controls the current-density output method for LCAO RT-TDDFT.
+        item.description = R"(Controls the current-density output method for LCAO RT-TDDFT. Output rows contain the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
 * 0: Do not output current.
-* 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center integral / spherical grid integral: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms (e.g., EXX) are not included explicitly.
-* 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis: $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive.)";
+* 1: Explicitly construct the velocity operator from the momentum, vector-potential, and KB nonlocal-pseudopotential terms using two-center and spherical-grid integrals: $\hat{v}_{\alpha}=-\mathrm{i}\nabla_{\alpha}+A_{\alpha}(t)+\mathrm{i}\left[\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}},r_{\alpha}\right]$, where $\widetilde{V}_{\mathrm{NL}}^{\mathrm{KB}}=\mathrm{e}^{-\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}\hat{V}_{\mathrm{NL}}^{\mathrm{KB}}\mathrm{e}^{\mathrm{i}\boldsymbol{A}(t)\cdot\boldsymbol{r}}$. $\boldsymbol{A}(t)$ is nonzero only for the velocity gauge (td_stype=1); otherwise $\boldsymbol{A}(t)=0$. Other nonlocal Hamiltonian terms, such as EXX, are not included explicitly. The total current is written to OUT.{suffix}/current_tot.txt.
+* 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to OUT.{suffix}/current_tot_comm.txt.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
+        item.availability = "basis_type==lcao and esolver_type==tddft";
         read_sync_int(input.out_current);
         this->add_item(item);
     }
@@ -1498,11 +1643,12 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output current for each k";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Boolean";
-        item.description = R"(* True: Output current for each k-points separately.
-* False: Output current in total.)";
+        item.description = R"(Controls whether LCAO RT-TDDFT current density is also resolved by spin and k-point. The total-current file is always written when out_current is 1 or 2.
+* True: In addition to the total, out_current=1 writes OUT.{suffix}/current_s[spin]k[kpoint].txt; out_current=2 writes OUT.{suffix}/current_s[spin]k[kpoint]_comm.txt. Both use one-based spin and k-point numbers, with k-points numbered independently within each spin channel. Each row contains the one-based electronic-step index followed by $J_x$, $J_y$, and $J_z$ in atomic units.
+* False: Output only current_tot.txt for out_current=1 or current_tot_comm.txt for out_current=2.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
+        item.availability = "basis_type==lcao and esolver_type==tddft and out_current>0";
         read_sync_bool(input.out_current_k);
         this->add_item(item);
     }
@@ -1511,12 +1657,12 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output dipole or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Boolean";
-        item.description = R"(Whether to output the electric field data to files. When enabled, writes real-time electric field values (unit: V/A) into files named efield_[num].txt, where [num] is the sequential index of the electric field ranges from 0 to N-1 for N configured fields. It is noteworthy that the field type sequence follows td_ttype, while the direction sequence follows td_vext_dire.
-* True: Output electric field.
-* False: Do not output electric field.)";
+        item.description = R"(Controls time-dependent electric-field output. For each configured field, OUT.{suffix}/efield_[index].txt contains two columns: physical time in fs and the field value in V/Angstrom. The one-based field index follows the occurrence order shared by td_ttype and td_vext_dire, so fields assigned to the same direction remain in separate files. At initialization, a fresh calculation with md_restart=False truncates the files corresponding to the currently configured fields, whereas a calculation with md_restart=True preserves them and appends new samples.
+* True: Output electric-field values on active electronic steps.
+* False: Do not output electric-field values.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
+        item.availability = "esolver_type==tddft and td_vext==true";
         read_sync_bool(input.out_efield);
         this->add_item(item);
     }
@@ -1525,12 +1671,12 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output TDDFT vector potential or not";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "Boolean";
-        item.description = R"(Output vector potential or not (unit: a.u.).
-* True: Output vector potential into file At.dat.
-* False: Do not output vector potential.)";
+        item.description = R"(Controls Cartesian vector-potential output for LCAO RT-TDDFT. OUT.{suffix}/vector_pot.txt contains four columns: the one-based electronic-step index followed by $A_x$, $A_y$, and $A_z$ in atomic units. At initialization, a fresh calculation with md_restart=False truncates the file and writes a new header, whereas a calculation with md_restart=True preserves a nonempty existing file and appends new samples. If the restart output file is missing or empty, a new file with a header is created.
+* True: Write vector-potential samples on electronic propagation steps.
+* False: Do not output the vector potential.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
+        item.availability = "basis_type==lcao and esolver_type==tddft";
         read_sync_bool(input.out_vecpot);
         this->add_item(item);
     }

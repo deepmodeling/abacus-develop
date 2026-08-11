@@ -32,9 +32,9 @@ class Vdwd3 : public Vdw
     std::vector<int> rep_vdw_;
     std::vector<int> rep_cn_;
 
-    void cal_energy() override;
-    void cal_force() override;
-    void cal_stress() override;
+    void evaluate_impl(const VdwRequest& request, VdwResult& result) override;
+
+    void evaluate_energy(double& energy);
 
     void init();
 
@@ -53,7 +53,9 @@ class Vdwd3 : public Vdw
                         const std::vector<double> &cc6ab,
                         double &eabc);
 
-    void pbc_gdisp(std::vector<ModuleBase::Vector3<double>> &g, ModuleBase::matrix &smearing_sigma);
+    void pbc_gdisp(std::vector<ModuleBase::Vector3<double>>& g,
+                   ModuleBase::matrix& smearing_sigma,
+                   double& energy);
 
     void get_dc6_dcnij(int mxci, int mxcj, double cni, double cnj, int izi, int izj, int iat, int jat,
                        double &c6check, double &dc6i, double &dc6j);

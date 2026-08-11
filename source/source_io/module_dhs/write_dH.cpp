@@ -79,9 +79,11 @@ void write_dh_perI(WriteDHParams& params,
             {
                 std::string fr = r_dir + ModuleIO::dhr_gen_fname(rprefix + tag, ispin, params.append, params.istep);
 #ifdef __MPI
-                ModuleIO::write_hcontainer_csr(fr, &ucell, 8, &hR_s, params.istep, ispin, nspin, label);
+                ModuleIO::write_hcontainer_csr(
+                    fr, &ucell, 8, &hR_s, params.istep, ispin, nspin, label, "");
 #else
-                ModuleIO::write_hcontainer_csr(fr, &ucell, 8, hR, params.istep, ispin, nspin, label);
+                ModuleIO::write_hcontainer_csr(
+                    fr, &ucell, 8, hR, params.istep, ispin, nspin, label, "");
 #endif
             }
             }

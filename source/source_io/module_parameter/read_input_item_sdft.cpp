@@ -1,7 +1,8 @@
-#include "source_base/global_function.h"
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+
+#include <exception>
 
 namespace ModuleIO
 {
@@ -37,8 +38,8 @@ void ReadInput::item_sdft()
         item.category = "Electronic structure (SDFT)";
         item.type = "Integer or string";
         item.description = R"(The number of stochastic orbitals
-* > 0: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
-* 0: Perform Kohn-Sham DFT.
+* 1-1000000: Perform stochastic DFT. Increasing the number of bands improves accuracy and reduces stochastic errors; To perform mixed stochastic-deterministic DFT, you should set nbands, which represents the number of KS orbitals.
+* 0: Invalid. Use all for the complete-basis SDFT mode.
 * all: All complete basis sets are used to replace stochastic orbitals with the Chebyshev method (CT), resulting in the same results as KSDFT without stochastic errors.)";
         item.default_value = "256";
         item.unit = "";
@@ -47,28 +48,32 @@ void ReadInput::item_sdft()
             std::string nbandsto_str = strvalue;
             if (nbandsto_str != "all")
             {
-                para.input.nbands_sto = std::stoi(nbandsto_str);
+                std::size_t parsed_chars = 0;
+                try
+                {
+                    para.input.nbands_sto = std::stoi(nbandsto_str, &parsed_chars);
+                }
+                catch (const std::exception&)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "nbands_sto should be in the range of 1 to 1000000 or be all");
+                }
+                if (parsed_chars != nbandsto_str.size())
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput",
+                                             "nbands_sto should be in the range of 1 to 1000000 or be all");
+                }
             }
             else
             {
                 para.input.nbands_sto = 0;
             }
         };
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
-            // only do it when nbands_sto is set in INPUT
-            if (item.is_read())
-            {
-                if (strvalue == "0" && para.input.esolver_type == "sdft")
-                {
-                    para.input.esolver_type = "ksdft";
-                    ModuleBase::GlobalFunc::AUTO_SET("esolver_type", para.input.esolver_type);
-                }
-            }
-        };
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.nbands_sto < 0 || para.input.nbands_sto > 100000)
+            const bool use_complete_basis = item.is_read() && strvalue == "all";
+            if ((!use_complete_basis && para.input.nbands_sto < 1) || para.input.nbands_sto > 1000000)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 0 to 100000");
+                ModuleBase::WARNING_QUIT("ReadInput", "nbands_sto should be in the range of 1 to 1000000 or be all");
             }
         };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {

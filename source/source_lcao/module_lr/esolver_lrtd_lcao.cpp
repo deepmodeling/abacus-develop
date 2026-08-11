@@ -182,14 +182,16 @@ LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp)
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::before_all_runners(UnitCell& ucell, const Input_para& inp)
+void LR::ESolver_LR<T, TR>::before_all_runners(BaseCell& basecell, const Input_para& inp)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
     this->ucell_ = &ucell;
     if (inp.esolver_type == "ks-lr")
     {
         ModuleESolver::ESolver_KS_LCAO<T, TR> ks_solver;
-        ks_solver.before_all_runners(ucell, inp);
-        ks_solver.runner(ucell, 0);
+        ks_solver.before_all_runners(basecell, inp);
+        ks_solver.runner(basecell, 0);
         this->initialize_from_ks_(std::move(ks_solver), ucell, inp);
     }
     else
@@ -450,8 +452,11 @@ void LR::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Inp
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
+void LR::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int istep)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_LR", "runner");
     ModuleBase::timer::start("ESolver_LR", "runner");
     //allocate 2-particle state and setup 2d division
@@ -561,8 +566,11 @@ void LR::ESolver_LR<T, TR>::runner(UnitCell& ucell, const int istep)
 }
 
 template <typename T, typename TR>
-void LR::ESolver_LR<T, TR>::after_all_runners(UnitCell& ucell)
+void LR::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
 {
+    basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
+    UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
     ModuleBase::TITLE("ESolver_LR", "after_all_runners");
     if (input.ri_hartree_benchmark != "none") { return; } //no need to calculate the spectrum in the benchmark routine
     //cal spectrum

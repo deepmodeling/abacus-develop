@@ -63,9 +63,6 @@ class SepCellTest : public ::testing::Test
         // Initialize UnitCell for tests that need it.
         // This setup is common for many read_sep_potentials tests.
         ucell.ntype = 2;
-        ucell.atom_label.resize(ucell.ntype);
-        ucell.atom_label[0] = "Li";
-        ucell.atom_label[1] = "F";
         ucell.atoms = new Atom[ucell.ntype];
         ucell.atoms[0].label = "Li";
         ucell.atoms[0].na = 1; // Number of atoms of this type
@@ -121,7 +118,8 @@ TEST_F(SepCellTest, ReadSepPotentialsSuccess)
 
         sep_cell.init(ucell.ntype);
         std::ofstream ofs_running_dummy("dummy_ofs_running.tmp");
-        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, ucell.atom_label);
+        std::vector<std::string> atom_labels = {ucell.atoms[0].label, ucell.atoms[1].label};
+        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, atom_labels);
         ifs.close();
         std::remove("dummy_ofs_running.tmp");
 
@@ -166,7 +164,8 @@ TEST_F(SepCellTest, ReadSepPotentialsNoSepFilesSection)
         std::ofstream ofs_running_dummy("dummy_ofs_running.tmp");
 
         sep_cell.init(ucell.ntype);
-        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, ucell.atom_label);
+        std::vector<std::string> atom_labels = {ucell.atoms[0].label, ucell.atoms[1].label};
+        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, atom_labels);
         ifs.close();
         std::remove("dummy_ofs_running.tmp");
 
@@ -189,7 +188,8 @@ TEST_F(SepCellTest, BcastSepCell)
 
         sep_cell.init(ucell.ntype);
         std::ofstream ofs_running_dummy("dummy_ofs_running.tmp");
-        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, ucell.atom_label);
+        std::vector<std::string> atom_labels = {ucell.atoms[0].label, ucell.atoms[1].label};
+        int result = sep_cell.read_sep_potentials(ifs, pp_dir, ofs_running_dummy, atom_labels);
         ifs.close();
         std::remove("dummy_ofs_running.tmp");
 

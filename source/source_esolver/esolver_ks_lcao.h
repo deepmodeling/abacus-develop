@@ -34,15 +34,15 @@ class ESolver_KS_LCAO : public ESolver_KS
     ESolver_KS_LCAO();
     ~ESolver_KS_LCAO();
 
-    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
     double cal_energy() override;
 
-    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
 
-    void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
-    void after_all_runners(UnitCell& ucell) override;
+    void after_all_runners(BaseCell& basecell) override;
 
   protected:
     virtual void before_scf(UnitCell& ucell, const int istep) override;
@@ -55,7 +55,7 @@ class ESolver_KS_LCAO : public ESolver_KS
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
-    virtual void others(UnitCell& ucell, const int istep) override;
+    virtual void others(BaseCell& basecell, const int istep) override;
 
     //! Electronic wave functions (moved from base class)
     psi::Psi<TK>* psi = nullptr;

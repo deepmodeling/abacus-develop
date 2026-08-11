@@ -3,7 +3,12 @@ FROM intel/oneapi-hpckit:2025.2.2-0-devel-ubuntu22.04
 RUN apt-get update && apt-get install -y \
     bc cmake git gnupg gcc g++ python3-numpy sudo wget vim unzip \
     libcereal-dev libxc-dev libgtest-dev libgmock-dev libbenchmark-dev \
-    pkg-config build-essential autoconf automake libtool
+    pkg-config build-essential autoconf automake libtool ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+ENV CC="mpiicx"
+ENV CXX="mpiicpx"
+ENV FC="mpiifx"
 
 # https://elpa.mpcdf.mpg.de/software/tarball-archive/ELPA_TARBALL_ARCHIVE.html
 RUN cd /tmp && \
@@ -12,17 +17,18 @@ RUN cd /tmp && \
     tar xzf elpa-$ELPA_VER.tar.gz  && rm elpa-$ELPA_VER.tar.gz && \
     cd elpa-$ELPA_VER && mkdir build && cd build && \
     ../configure CFLAGS="-O3 -march=native" FCFLAGS="-O3 -qmkl=cluster" --enable-openmp && \
-    make -j$(nproc) && \
+    make -j $(nproc) && \
     make PREFIX=/usr/local install && \
     ln -s /usr/local/include/elpa_openmp-$ELPA_VER/elpa /usr/local/include/ && \
     cd /tmp && rm -rf elpa-$ELPA_VER
 
 # RapidJSON
-RUN cd /tmp && wget --quiet https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a -O rapidjson-24b5e7a.tar.gz
-RUN tar -xzf rapidjson-24b5e7a.tar.gz && cd rapidjson-24b5e7a
-RUN cmake -B build -DRAPIDJSON_BUILD_DOC=OFF -DRAPIDJSON_BUILD_EXAMPLES=OFF -DRAPIDJSON_BUILD_TESTS=OFF
-RUN cmake --build build --target install
-RUN cd /tmp && rm -r rapidjson-24b5e7a
+RUN cd /tmp && \
+    wget --quiet https://codeload.github.com/Tencent/rapidjson/tar.gz/24b5e7a -O rapidjson-24b5e7a.tar.gz && \
+    tar -xzf rapidjson-24b5e7a.tar.gz && cd rapidjson-24b5e7a && \
+    cmake -B build -DRAPIDJSON_BUILD_DOC=OFF -DRAPIDJSON_BUILD_EXAMPLES=OFF -DRAPIDJSON_BUILD_TESTS=OFF && \
+    cmake --build build --target install && \
+    cd /tmp && rm -r rapidjson-24b5e7a rapidjson-24b5e7a.tar.gz
 
 # LibTorch (Note: Using pre-built Torch library with MKL might cause issues)
 RUN wget -q https://download.pytorch.org/libtorch/cpu/libtorch-cxx11-abi-shared-with-deps-2.0.0%2Bcpu.zip -O /tmp/libtorch.zip && \
@@ -49,7 +55,7 @@ RUN wget --no-check-certificate --quiet --tries=3 --timeout=30 \
     unzip GKlib-${GKLIB_VERSION}.zip && \
     cd GKlib-${GKLIB_VERSION} && \
     make config shared=1 prefix=${GKLIB_ROOT} openmp=set && \
-    make -j$(nproc) && \
+    make -j $(nproc) && \
     make install && \
     ls ${GKLIB_ROOT}/lib && \
     cp -n ${GKLIB_ROOT}/lib/libGKlib.so.0 ${GKLIB_ROOT}/lib/libGKlib.so || true && \
@@ -63,7 +69,7 @@ RUN export LD_LIBRARY_PATH=${GKLIB_ROOT}/lib:${LD_LIBRARY_PATH} && \
     unzip METIS-${METIS_VERSION}.zip && \
     cd METIS-${METIS_VERSION} && \
     make config shared=1 prefix=${METIS32_ROOT} gklib_path=${GKLIB_ROOT} && \
-    make -j$(nproc) && \
+    make -j $(nproc) && \
     make install && \
     cd / && rm -rf METIS-${METIS_VERSION} METIS-${METIS_VERSION}.zip
 
@@ -75,7 +81,7 @@ RUN export LD_LIBRARY_PATH=${METIS32_ROOT}/lib:${GKLIB_ROOT}/lib:${LD_LIBRARY_PA
     unzip ParMETIS-${PARMETIS_VERSION}.zip && \
     cd ParMETIS-${PARMETIS_VERSION} && \
     make config shared=1 prefix=${PARMETIS32_ROOT} gklib_path=${GKLIB_ROOT} metis_path=${METIS32_ROOT} && \
-    make -j$(nproc) && \
+    make -j $(nproc) && \
     make install && \
     cd / && rm -rf ParMETIS-${PARMETIS_VERSION} ParMETIS-${PARMETIS_VERSION}.zip
 
@@ -102,7 +108,7 @@ RUN wget --no-check-certificate --quiet --tries=3 --timeout=30 \
     -DCMAKE_CXX_FLAGS="-O3 -fopenmp" \
     -DXSDK_ENABLE_Fortran=ON \
     -DCMAKE_Fortran_COMPILER=mpiifx && \                             
-    make -j$(nproc) && \
+    make -j $(nproc) && \
     make install && \
     cd / && rm -rf superlu_dist-${SUPERLU_DIST_VERSION} v${SUPERLU_DIST_VERSION}.tar.gz
 
@@ -130,7 +136,7 @@ RUN export LD_LIBRARY_PATH=${SUPERLU_DIST32_ROOT}/lib:${METIS32_ROOT}/lib:${PARM
         -DCMAKE_INSTALL_PREFIX=${PEXSI32_ROOT} \
         -DPEXSI_ENABLE_OPENMP=ON \
         -DPEXSI_ENABLE_FORTRAN=OFF && \
-    make pexsi -j$(nproc) && \
+    make pexsi -j $(nproc) && \
     make install && \
     cd / && rm -rf pexsi-${PEXSI_VERSION} pexsi-${PEXSI_VERSION}.tar.gz
 
@@ -154,7 +160,7 @@ RUN cd /tmp && git clone https://github.com/deepmodeling/abacus-develop.git --de
         -DENABLE_LIBRI=ON \
         -DENABLE_RAPIDJSON=ON \
         -DCMAKE_BUILD_TYPE=Release && \
-    cmake --build build -j"$(nproc)" && \
+    cmake --build build -j $(nproc) && \
     cmake --install build && \
     (/usr/local/bin/abacus --version || echo "ABACUS installed but version check failed") && \
     rm -rf /tmp/abacus-develop

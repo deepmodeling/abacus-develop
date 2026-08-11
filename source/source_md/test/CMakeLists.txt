@@ -3,6 +3,7 @@ abacus_add_local_feature_definitions(__NORMAL)
 
 list(APPEND depend_files
   ../md_func.cpp
+  ../../source_cell/base_cell.cpp
   ../../source_cell/unitcell.cpp
   ../../source_cell/update_cell.cpp
   ../../source_cell/bcast_cell.cpp
@@ -13,6 +14,7 @@ list(APPEND depend_files
   ../../source_cell/atom_pseudo.cpp
   ../../source_cell/read_atoms.cpp
   ../../source_cell/read_atoms_helper.cpp
+  ../../source_cell/cell_tools.cpp
   ../../source_cell/pseudo.cpp
   ../../source_cell/read_pp.cpp
   ../../source_cell/read_pp_complete.cpp

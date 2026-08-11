@@ -3,6 +3,7 @@ INPUT_PARAMETERS
 # non-collinear LCAO calculations
 basis_type        lcao
 noncolin          1
+nspin             4
 symmetry          1
 
 calculation       scf

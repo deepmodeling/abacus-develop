@@ -293,7 +293,6 @@ template <typename TK, typename TR>
 void hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<TK, TR>>::contributeHk(int ik) {
     return;
 }
-#include "td_pot_hybrid_force.hpp"
 template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<double, double>>;
 template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<std::complex<double>, double>>;
 template class hamilt::TD_pot_hybrid<hamilt::OperatorLCAO<std::complex<double>, std::complex<double>>>;

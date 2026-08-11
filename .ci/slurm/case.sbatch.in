@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+#SBATCH --job-name=@JOB_NAME@
+#SBATCH --partition=@PARTITION@
+#SBATCH --qos=@QOS@
+#SBATCH --nodes=@NODES@
+#SBATCH --ntasks=@TASKS@
+#SBATCH --ntasks-per-node=@TASKS_PER_NODE@
+#SBATCH --gpus-per-node=@GPUS_PER_NODE@
+#SBATCH --time=@TIME@
+#SBATCH --array=@ARRAY@
+#SBATCH --dependency=afterok:@BUILD_JOB@
+#SBATCH --output=@OUTPUT@
+#SBATCH --export=NIL
+
+set -euo pipefail
+
+export HOME=@HOME@
+export USER=${SLURM_JOB_USER:?}
+export LOGNAME=$USER
+export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+export OMP_NUM_THREADS=1
+
+# shellcheck source=/dev/null
+source @MAPPING_ROOT@/${SLURM_JOB_PARTITION}.bash
+source @CONTROL@/modules.sh
+CI_SYSTEM_MPIRUN=$(command -v mpirun)
+export CI_SYSTEM_MPIRUN
+export MAP_OPT
+export SLURM_EXPORT_ENV=ALL
+export OMPI_MCA_plm_slurm_args=--external-launcher
+export PRTE_MCA_plm_slurm_args=--external-launcher
+nvidia-smi dmon -s pucvmte -o T > @RESULTS@/dmon-${SLURM_JOB_ID}.log &
+
+CI_DISABLE_NCCL_IB=@DISABLE_NCCL_IB@
+if [[ $CI_DISABLE_NCCL_IB == true ]]; then
+    export NCCL_IB_DISABLE=1
+else
+    unset NCCL_IB_DISABLE
+fi
+
+python3 @CONTROL@/runner.py worker \
+    @SOURCE@ @CONTROL@ @INSTALL@ @RESULTS@ @MANIFEST@
+
+exit $?

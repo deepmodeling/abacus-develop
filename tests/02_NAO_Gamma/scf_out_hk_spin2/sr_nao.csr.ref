@@ -1,0 +1,37 @@
+ --- Ionic Step 1 ---
+ # print S matrix in real space S(R)
+ 1 # number of spin directions
+ 1 # spin index
+ 8 # number of localized basis
+ 1 # number of Bravais lattice vector R
+
+ user_defined_lattice
+ 10.5835
+ 0 0.5 0.5
+ 0.5 0 0.5
+ 0.5 0.5 0
+ Si
+ 2
+ Direct
+ 0 0 0
+ 0.25 0.25 0.25
+# representation: gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)
+
+ #----------------------------------------------------------------------#
+ #                               CSR Format                             #
+ # The outer loop corresponds to the number of Bravais lattice vectors. #
+ # The first line contains the index of the Bravais lattice vector      #
+ # (Rx, Ry, Rz), followed by the number of non-zero elements.           #
+ # The subsequent lines consist of three blocks of data, which are      #
+ # values, column indices, row pointers.                                #
+ #----------------------------------------------------------------------#
+
+ 0 0 0 16
+ # CSR values
+ 1.00000000e+00 6.14434994e-03 1.00000000e+00 -1.54250862e-02 1.00000000e+00 -1.54250862e-02
+ 1.00000000e+00 -1.54250862e-02 6.14434994e-03 1.00000000e+00 -1.54250862e-02 1.00000000e+00
+ -1.54250862e-02 1.00000000e+00 -1.54250862e-02 1.00000000e+00
+ # CSR column indices
+ 0 4 1 5 2 6 3 7 0 4 1 5 2 6 3 7
+ # CSR row pointers
+ 0 2 4 6 8 10 12 14 16

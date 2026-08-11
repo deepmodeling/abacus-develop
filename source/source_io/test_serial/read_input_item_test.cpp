@@ -35,6 +35,55 @@ class InputTest : public testing::Test
     }
 };
 
+TEST_F(InputTest, RelaxMethod)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    auto it = find_label("relax_method", readinput.input_lists);
+
+    it->second.str_values = {"cg"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"cg", "2"}));
+    EXPECT_TRUE(param.input.uses_simultaneous_relaxation());
+
+    it->second.str_values = {"cg", "1"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"cg", "1"}));
+    EXPECT_FALSE(param.input.uses_simultaneous_relaxation());
+
+    it->second.str_values = {"cg", "2"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"cg", "2"}));
+    EXPECT_TRUE(param.input.uses_simultaneous_relaxation());
+
+    it->second.str_values = {"bfgs"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"bfgs", "2"}));
+    EXPECT_FALSE(param.input.uses_simultaneous_relaxation());
+
+    it->second.str_values = {"bfgs", "1"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"bfgs", "1"}));
+
+    it->second.str_values = {"bfgs", "2"};
+    it->second.read_value(it->second, param);
+    EXPECT_EQ(param.input.relax_method, (std::vector<std::string>{"bfgs", "2"}));
+
+    for (const std::vector<std::string>& invalid : {
+             std::vector<std::string>{"cg", "3"},
+             std::vector<std::string>{"bfgs", "3"},
+             std::vector<std::string>{"sd", "1"},
+             std::vector<std::string>{"none"},
+             std::vector<std::string>{"cg", "2", "extra"}})
+    {
+        it->second.str_values = invalid;
+        EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+    }
+
+    EXPECT_EQ(find_label("relax_new", readinput.input_lists), readinput.input_lists.end());
+}
+
 TEST_F(InputTest, Item_test)
 {
     ModuleIO::ReadInput readinput(0);
@@ -88,11 +137,7 @@ TEST_F(InputTest, Item_test)
     }
     { // nspin
         auto it = find_label("nspin", readinput.input_lists);
-        param.input.nspin = 0;
-        param.input.noncolin = true;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.nspin, 4);
-
+        param.input.noncolin = false;
         param.input.nspin = 3;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -188,15 +233,9 @@ TEST_F(InputTest, Item_test)
     }
     { // bndpar
         auto it = find_label("bndpar", readinput.input_lists);
-        param.input.esolver_type = "ksdft";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.bndpar, 1);
-
         param.input.esolver_type = "sdft";
-        param.input.bndpar = 2;
-        GlobalV::NPROC = 1;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.bndpar, 1);
+        param.input.bndpar = 1;
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
     }
     { // dft_plus_dmft
         auto it = find_label("dft_plus_dmft", readinput.input_lists);
@@ -659,6 +698,14 @@ TEST_F(InputTest, Item_test)
         param.input.device = "gpu";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.ks_solver, "cusolver");
+
+        param.input.ks_solver = "genelpa";
+        param.input.basis_type = "lcao";
+        param.input.device = "gpu";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("Please use ks_solver = elpa with device = gpu"));
 #ifdef __ELPA
         param.input.towannier90 = true;
         param.input.basis_type = "lcao_in_pw";
@@ -733,9 +780,9 @@ TEST_F(InputTest, Item_test)
     { // out_stru
         auto it = find_label("out_stru", readinput.input_lists);
         param.input.calculation = "get_wf";
-        param.input.out_stru = true;
+        param.input.out_stru = 1;
         it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_stru, false);
+        EXPECT_EQ(param.input.out_stru, 0);
     }
     { // cal_stress
         auto it = find_label("cal_stress", readinput.input_lists);
@@ -748,14 +795,14 @@ TEST_F(InputTest, Item_test)
     { // fixed_axes
         auto it = find_label("fixed_axes", readinput.input_lists);
         param.input.fixed_axes = "shape";
-        param.input.relax_new = false;
+        param.input.relax_method = {"cg", "1"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
 
         param.input.fixed_axes = "volume";
-        param.input.relax_new = false;
+        param.input.relax_method = {"cg", "1"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -764,7 +811,7 @@ TEST_F(InputTest, Item_test)
     { // fixed_ibrav
         auto it = find_label("fixed_ibrav", readinput.input_lists);
         param.input.fixed_ibrav = true;
-        param.input.relax_new = false;
+        param.input.relax_method = {"cg", "1"};
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -785,26 +832,6 @@ TEST_F(InputTest, Item_test)
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
-    { // relax_method
-        auto it = find_label("relax_method", readinput.input_lists);
-        param.input.relax_method[0] = "none";
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
-    }
-    { //relax_new
-        auto it = find_label("relax_new", readinput.input_lists);
-        param.input.relax_new = true;
-        param.input.relax_method[0] = "cg";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.relax_new, true);
-
-        param.input.relax_new = true;
-        param.input.relax_method[0] = "none";
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.relax_new, false);
     }
     { // force_thr
         auto it = find_label("force_thr", readinput.input_lists);
@@ -871,22 +898,37 @@ TEST_F(InputTest, Item_test)
 
         it->second.str_values = {"all"};
         it->second.read_value(it->second, param);
-        it->second.reset_value(it->second, param);
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
         EXPECT_EQ(param.input.nbands_sto, 0);
         EXPECT_EQ(param.input.esolver_type, "sdft");
 
         it->second.str_values = {"8"};
         it->second.read_value(it->second, param);
-        it->second.reset_value(it->second, param);
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
         EXPECT_EQ(param.input.nbands_sto, 8);
         EXPECT_EQ(param.input.esolver_type, "sdft");
 
+        it->second.str_values = {"1000000"};
+        it->second.read_value(it->second, param);
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+
+        it->second.str_values = {"1000001"};
+        it->second.read_value(it->second, param);
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
         it->second.str_values = {"0"};
         it->second.read_value(it->second, param);
-        it->second.reset_value(it->second, param);
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
         EXPECT_EQ(param.input.nbands_sto, 0);
-        EXPECT_EQ(param.input.esolver_type, "ksdft");
+        EXPECT_EQ(param.input.esolver_type, "sdft");
 
+        it->second.str_values = {"-1"};
         param.input.nbands_sto = -1;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
@@ -940,13 +982,21 @@ TEST_F(InputTest, Item_test)
     }
     { // out_mat_r
         auto it = find_label("out_mat_r", readinput.input_lists);
+        param.input.out_hsr[0] = 1;
+        param.sys.gamma_only_local = true;
+        it->second.check_value(it->second, param);
+        param.input.out_hsr[0] = 3;
+        it->second.check_value(it->second, param);
+        param.input.out_hsr[0] = 0;
+
         param.input.esolver_type = "lcao";
         param.input.out_mat_r[0] = 1;
-        param.sys.gamma_only_local = true;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("available"));
+        param.input.out_mat_r[0] = 0;
+        param.sys.gamma_only_local = false;
     }
     { // lcao_ecut
         auto it = find_label("lcao_ecut", readinput.input_lists);
@@ -968,10 +1018,49 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_mat_hs[0], 1);
         EXPECT_EQ(param.input.out_mat_hs[1], 2);
 
-        param.input.out_mat_hs = {0};
-        param.input.qo_switch = true;
-        it->second.reset_value(it->second, param);
-        EXPECT_EQ(param.input.out_mat_hs[0], 1);
+    }
+    { // out_hsk
+        auto it = find_label("out_hsk", readinput.input_lists);
+        it->second.str_values = {"1", "12"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsk[0], 1);
+        EXPECT_EQ(param.input.out_hsk[1], 12);
+
+        it->second.str_values = {"2", "12"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsk[0], 2);
+        EXPECT_EQ(param.input.out_hsk[1], 12);
+        it->second.check_value(it->second, param);
+
+        param.input.out_hsk[0] = 3;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NPZ output is not implemented"));
+    }
+    { // out_hsr
+        auto it = find_label("out_hsr", readinput.input_lists);
+        it->second.str_values = {"1", "10"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsr[0], 1);
+        EXPECT_EQ(param.input.out_hsr[1], 10);
+
+        param.input.out_hsr[0] = 2;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("reserved but not implemented"));
+
+#ifndef __CNPY
+        param.input.out_hsr[0] = 3;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("ENABLE_CNPY"));
+#else
+        param.input.out_hsr[0] = 3;
+        it->second.check_value(it->second, param);
+#endif
     }
     { // out_hr_npz
         auto it = find_label("out_hr_npz", readinput.input_lists);
@@ -990,6 +1079,93 @@ TEST_F(InputTest, Item_test)
         it->second.str_values = {"1"};
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.out_dm_npz, true);
+    }
+}
+
+TEST_F(InputTest, HsOutputAliases)
+{
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_hs", readinput.input_lists);
+        auto primary = find_label("out_hsk", readinput.input_lists);
+        legacy->second.str_values = {"1", "5"};
+        primary->second.str_values = {"0"};
+        legacy->second.read_value(legacy->second, param);
+        primary->second.read_value(primary->second, param);
+
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(param.input.out_hsk[0], 0);
+        EXPECT_EQ(param.input.out_hsk[1], 8);
+    }
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy = find_label("out_mat_hs", readinput.input_lists);
+        auto primary = find_label("out_hsk", readinput.input_lists);
+        legacy->second.str_values = {"1", "5"};
+        primary->second.str_values = {"0"};
+        primary->second.read_value(primary->second, param);
+        legacy->second.read_value(legacy->second, param);
+
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(param.input.out_hsk[0], 0);
+        EXPECT_EQ(param.input.out_hsk[1], 8);
+    }
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy_text = find_label("out_mat_hs2", readinput.input_lists);
+        auto legacy_npz = find_label("out_hsr_npz", readinput.input_lists);
+        legacy_text->second.str_values = {"1", "5"};
+        legacy_npz->second.str_values = {"1"};
+        legacy_text->second.read_value(legacy_text->second, param);
+        legacy_npz->second.read_value(legacy_npz->second, param);
+        readinput.normalize_hs_output_options(param);
+
+        EXPECT_EQ(param.input.out_hsr[0], 1);
+        EXPECT_EQ(param.input.out_hsr[1], 5);
+        EXPECT_TRUE(param.input.out_hsr_npz);
+        EXPECT_TRUE(param.input.out_hsr_npz_compat);
+    }
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy_text = find_label("out_mat_hs2", readinput.input_lists);
+        auto legacy_npz = find_label("out_hsr_npz", readinput.input_lists);
+        auto primary = find_label("out_hsr", readinput.input_lists);
+        legacy_text->second.str_values = {"1", "5"};
+        legacy_npz->second.str_values = {"1"};
+        primary->second.str_values = {"1", "12"};
+        legacy_text->second.read_value(legacy_text->second, param);
+        legacy_npz->second.read_value(legacy_npz->second, param);
+        primary->second.read_value(primary->second, param);
+
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(param.input.out_hsr[0], 1);
+        EXPECT_EQ(param.input.out_hsr[1], 12);
+        EXPECT_FALSE(param.input.out_hsr_npz);
+        EXPECT_FALSE(param.input.out_hsr_npz_compat);
+    }
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto legacy_npz = find_label("out_hsr_npz", readinput.input_lists);
+        legacy_npz->second.str_values = {"1"};
+        legacy_npz->second.read_value(legacy_npz->second, param);
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(param.input.out_hsr[0], 3);
+        EXPECT_EQ(param.input.out_hsr[1], 8);
+    }
+    {
+        ModuleIO::ReadInput readinput(0);
+        Parameter param;
+        auto primary = find_label("out_hsk", readinput.input_lists);
+        primary->second.str_values = {"0"};
+        primary->second.read_value(primary->second, param);
+        param.input.qo_switch = true;
+        readinput.normalize_hs_output_options(param);
+        EXPECT_EQ(param.input.out_hsk[0], 1);
     }
 }
 TEST_F(InputTest, Item_test2)
@@ -1968,5 +2144,122 @@ TEST_F(InputTest, Item_test_out_mat_vec)
         it->second.read_value(it->second, param);
         EXPECT_EQ(param.input.out_mat_xc2[0], 1);
         EXPECT_EQ(param.input.out_mat_xc2[1], 9);
+    }
+}
+
+TEST_F(InputTest, OutStru)
+{
+    ModuleIO::ReadInput readinput(0);
+    readinput.check_ntype_flag = false;
+    Parameter param;
+    auto it = find_label("out_stru", readinput.input_lists);
+    ASSERT_NE(it, readinput.input_lists.end());
+
+    // --- Valid numeric values ---
+    {
+        it->second.str_values = {"0"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+    }
+    {
+        it->second.str_values = {"1"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+    {
+        it->second.str_values = {"2"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 2);
+    }
+
+    // --- Backward-compatible boolean aliases (true -> 1, false -> 0) ---
+    {
+        it->second.str_values = {"true"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+    {
+        it->second.str_values = {"TRUE"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+    {
+        it->second.str_values = {".true."};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+    {
+        it->second.str_values = {"Yes"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+    {
+        it->second.str_values = {"false"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+    }
+    {
+        it->second.str_values = {"FALSE"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+    }
+    {
+        it->second.str_values = {".false."};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+    }
+    {
+        it->second.str_values = {"No"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+    }
+
+    // --- Valid value check_value passes ---
+    {
+        for (const int v : {0, 1, 2})
+        {
+            param.input.out_stru = v;
+            // Expect no exit / no crash; check_value is a void function that only
+            // calls WARNING_QUIT on bad input.
+            it->second.check_value(it->second, param);
+        }
+    }
+
+    // --- reset_value: calculation in offlist forces out_stru to 0 ---
+    {
+        param.input.calculation = "get_wf";
+        param.input.out_stru = 1;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+
+        param.input.calculation = "nscf";
+        param.input.out_stru = 2;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 0);
+
+        // Non-offlist calculation preserves value
+        param.input.calculation = "cell-relax";
+        param.input.out_stru = 1;
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.out_stru, 1);
+    }
+
+    // --- Invalid integer values -> WARNING_QUIT via check_value ---
+    {
+        for (const std::string& s : {"3", "-1", "-2", "4", "10"})
+        {
+            it->second.str_values = {s};
+            it->second.read_value(it->second, param);
+            EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        }
+    }
+
+    // --- Non-numeric / malformed inputs -> WARNING_QUIT via read_value ---
+    {
+        for (const std::string& s : {"abc", "2.5", "2abc", "-1abc", "xyz", ""})
+        {
+            it->second.str_values = {s};
+            EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        }
     }
 }

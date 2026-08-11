@@ -50,7 +50,7 @@ To perform SOC calculations in ABACUS, follow these steps:
 2. **Use full-relativistic pseudopotentials**: SOC calculations require pseudopotentials with `has_so=true` in the UPF header
    - Download full-relativistic versions of SG15_ONCV pseudopotentials from [quantum-simulation.org](http://quantum-simulation.org/potentials/sg15_oncv/upf/)
    - Check the UPF file header for `relativistic="full"` and `has_so="T"`
-3. **Verify automatic settings**: When `lspinorb=1` is set, `nspin` is automatically set to 4 and symmetry is automatically disabled
+3. **Set the spin representation**: When `lspinorb=1` is set, explicitly set `nspin=4`; symmetry is automatically disabled
 
 **Basis set support**: Both `basis_type=pw` (plane wave) and `basis_type=lcao` (numerical atomic orbitals) support SOC calculations for both SCF and NSCF.
 

@@ -228,8 +228,8 @@ void DiagoCG<T, Device>::calc_grad(const ct::Tensor& prec,
     // }
     // denghui replace this at 20221106
     // TODO: use GPU precondition to initialize CG class
-    ModuleBase::vector_div_vector_op<T, Device>()(this->n_basis_, grad.data<T>(), hphi.data<T>(), prec.data<Real>());
-    ModuleBase::vector_div_vector_op<T, Device>()(this->n_basis_, pphi.data<T>(), sphi.data<T>(), prec.data<Real>());
+    ModuleBase::vector_div_vector_op<T, Device, Real>()(this->n_basis_, grad.data<T>(), hphi.data<T>(), prec.data<Real>());
+    ModuleBase::vector_div_vector_op<T, Device, Real>()(this->n_basis_, pphi.data<T>(), sphi.data<T>(), prec.data<Real>());
 
     // Update lambda !
     // (4) <psi|SPH|psi >
@@ -249,12 +249,12 @@ void DiagoCG<T, Device>::calc_grad(const ct::Tensor& prec,
     //     grad.data<T>()[i] -= lambda * this->pphi[i];
     // }
     // haozhihan replace this 2022-10-6
-    ModuleBase::vector_add_vector_op<T, Device>()(this->n_basis_,
-                                                  grad.data<T>(),
-                                                  grad.data<T>(),
-                                                  1.0,
-                                                  pphi.data<T>(),
-                                                  (-lambda));
+    ModuleBase::vector_add_vector_op<T, Device, Real>()(this->n_basis_,
+                                                        grad.data<T>(),
+                                                        grad.data<T>(),
+                                                        1.0,
+                                                        pphi.data<T>(),
+                                                        (-lambda));
 }
 
 template <typename T, typename Device>
@@ -340,7 +340,7 @@ void DiagoCG<T, Device>::calc_gamma_cg(const int& iter,
     // }
     // denghui replace this 20221106
     // TODO: use GPU precondition instead
-    ModuleBase::vector_mul_vector_op<T, Device>()(this->n_basis_, g0.data<T>(), scg.data<T>(), prec.data<Real>());
+    ModuleBase::vector_mul_vector_op<T, Device, Real>()(this->n_basis_, g0.data<T>(), scg.data<T>(), prec.data<Real>(), false);
 
     // (3) Update gg_now!
     // gg_now = < g|P|scg > = < g|g0 >
@@ -368,12 +368,12 @@ void DiagoCG<T, Device>::calc_gamma_cg(const int& iter,
         //     pcg[i] = gamma * pcg[i] + grad.data<T>()[i];
         // }
         // haozhihan replace this 2022-10-6
-        ModuleBase::vector_add_vector_op<T, Device>()(this->n_basis_,
-                                                      cg.data<T>(),
-                                                      cg.data<T>(),
-                                                      gamma,
-                                                      grad.data<T>(),
-                                                      1.0);
+        ModuleBase::vector_add_vector_op<T, Device, Real>()(this->n_basis_,
+                                                            cg.data<T>(),
+                                                            cg.data<T>(),
+                                                            gamma,
+                                                            grad.data<T>(),
+                                                            1.0);
 
         const Real norma = gamma * cg_norm * sin(theta);
         T znorma = static_cast<T>(norma * -1);
@@ -436,12 +436,12 @@ bool DiagoCG<T, Device>::update_psi(const ct::Tensor& pphi,
     // }
 
     // haozhihan replace this 2022-10-6
-    ModuleBase::vector_add_vector_op<T, Device>()(this->n_basis_,
-                                                  phi_m.data<T>(),
-                                                  phi_m.data<T>(),
-                                                  cost,
-                                                  cg.data<T>(),
-                                                  sint_norm);
+    ModuleBase::vector_add_vector_op<T, Device, Real>()(this->n_basis_,
+                                                        phi_m.data<T>(),
+                                                        phi_m.data<T>(),
+                                                        cost,
+                                                        cg.data<T>(),
+                                                        sint_norm);
 
     if (std::abs(eigen - e0) < ethreshold)
     {
@@ -457,18 +457,18 @@ bool DiagoCG<T, Device>::update_psi(const ct::Tensor& pphi,
         // }
 
         // haozhihan replace this 2022-10-6
-        ModuleBase::vector_add_vector_op<T, Device>()(this->n_basis_,
-                                                      sphi.data<T>(),
-                                                      sphi.data<T>(),
-                                                      cost,
-                                                      scg.data<T>(),
-                                                      sint_norm);
-        ModuleBase::vector_add_vector_op<T, Device>()(this->n_basis_,
-                                                      hphi.data<T>(),
-                                                      hphi.data<T>(),
-                                                      cost,
-                                                      pphi.data<T>(),
-                                                      sint_norm);
+        ModuleBase::vector_add_vector_op<T, Device, Real>()(this->n_basis_,
+                                                            sphi.data<T>(),
+                                                            sphi.data<T>(),
+                                                            cost,
+                                                            scg.data<T>(),
+                                                            sint_norm);
+        ModuleBase::vector_add_vector_op<T, Device, Real>()(this->n_basis_,
+                                                            hphi.data<T>(),
+                                                            hphi.data<T>(),
+                                                            cost,
+                                                            pphi.data<T>(),
+                                                            sint_norm);
         return false;
     }
 }

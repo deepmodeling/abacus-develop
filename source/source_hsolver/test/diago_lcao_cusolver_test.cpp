@@ -1,8 +1,5 @@
 #include "source_hsolver/diago_scalapack.h"
 #include "source_hsolver/test/diago_elpa_utils.h"
-#define private public
-#include "source_io/module_parameter/parameter.h"
-#undef private
 #include "mpi.h"
 #include "string.h"
 
@@ -204,8 +201,6 @@ class DiagoPrepare
 
     void set_env()
     {
-        PARAM.sys.nlocal = nlocal;
-        PARAM.input.nbands = nbands;
         GlobalV::DSIZE = dsize;
     }
 
@@ -225,13 +220,13 @@ class DiagoPrepare
             hmtest.s_local = this->s_local;
             if (ks_solver == "scalapack_gvx")
             {
-                hsolver::DiagoScalapack<T> dh;
+                hsolver::DiagoScalapack<T> dh(nlocal, nbands);
                 dh.diag(&hmtest, psi, e_solver.data());
             }
     #ifdef __CUDA
             else if (ks_solver == "cusolver")
                 {
-                    hsolver::DiagoCusolver<T> dh;
+                    hsolver::DiagoCusolver<T> dh(nlocal, nbands);
                     hamilt::MatrixBlock<T> h_mat, s_mat;
                     hmtest.matrix(h_mat, s_mat);
                     dh.diag(h_mat, s_mat, psi, e_solver.data());
