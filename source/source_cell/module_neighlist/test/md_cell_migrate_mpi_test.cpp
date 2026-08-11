@@ -5,6 +5,7 @@
 
 #include <mpi.h>
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
@@ -63,7 +64,7 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
                   owned_atoms,
                   std::vector<std::string>(1, "X"),
                   std::vector<double>(1, 1.0),
-                  std::vector<int>(1, 2),
+                  std::vector<std::int64_t>(1, 2),
                   0.1,
                   0.0,
                   ModuleBase::world_communication_domain());
