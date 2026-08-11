@@ -828,7 +828,6 @@ void current_md_info(const MDCell& mdcell, const std::string& file_dir, int& md_
         if (ok)
         {
             file >> md_step >> temperature;
-            if (!file) ok = false;
         }
     }
 
