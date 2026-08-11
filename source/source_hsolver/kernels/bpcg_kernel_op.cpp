@@ -141,7 +141,7 @@ struct precondition_op<T, base_device::DEVICE_CPU> {
                 Real x = std::abs(precondition[i] - eigenvalues[m]);
                 pre[i] = 0.5 * (1.0 + x + sqrt(1 + (x - 1.0) * (x - 1.0)));
             }
-            ModuleBase::vector_div_vector_op<T, base_device::DEVICE_CPU>()(
+            ModuleBase::vector_div_vector_op<T, base_device::DEVICE_CPU, Real>()(
                                                              dim,
                                                              psi_iter + (nbase + m) * dim,
                                                              psi_iter + (nbase + m) * dim,

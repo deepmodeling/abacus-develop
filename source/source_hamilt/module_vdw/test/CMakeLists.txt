@@ -12,6 +12,5 @@ AddTest(
 )
 
 if(ENABLE_DFTD4)
-  target_compile_definitions(MODULE_HAMILT_vdwTest PRIVATE __DFTD4)
   target_link_libraries(MODULE_HAMILT_vdwTest PRIVATE dftd4::dftd4)
 endif()
