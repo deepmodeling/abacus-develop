@@ -29,19 +29,17 @@ or-expression := and-expression ("or" and-expression)*
 and-expression := primary (("and" | ",") primary)*
 primary := condition | "(" expression ")"
 condition := parameter comparison value
-           | parameter "in" "[" value ("," value)* "]"
+           | parameter "in" "[" value "," value ("," value)* "]"
            | parameter "contains" value
 comparison := "==" | "!=" | ">" | ">=" | "<" | "<="
+value := token | '"' quoted-value '"'
 ```
 
-`and` binds more tightly than `or`. `==` has exactly one right-hand value;
-alternatives use `in [...]`. `/` is an ordinary value character, not another
-spelling of membership. Ordered comparisons require a numeric scalar, and
-`contains` requires a vector.
-
-Some existing INPUT parameters accept multiple whitespace-separated tokens as
-one value. Such existing INPUT forms are preserved and are not assigned a new
-runtime interpretation by this metadata contract.
+`and` binds more tightly than `or`. `==` compares one complete value; double
+quotes delimit a complete value containing whitespace, such as
+`relax_method=="cg 2"`. Two or more alternatives use `in [...]`, while
+`contains` tests one vector element. `/` is an ordinary value character, not
+another spelling of membership. Ordered comparisons require a numeric scalar.
 
 A path that references a parameter must imply that parameter's availability.
 Every `and` operand is required, while satisfying either branch of an `or` is

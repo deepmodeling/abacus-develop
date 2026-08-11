@@ -19,19 +19,18 @@ bool is_identifier_char(const char c)
     return std::isalnum(static_cast<unsigned char>(c)) != 0 || c == '_';
 }
 
-std::string trim_copy(const std::string& value)
+std::string format_value(const std::string& value)
 {
-    std::size_t begin = 0;
-    std::size_t end = value.size();
-    while (begin < end && std::isspace(static_cast<unsigned char>(value[begin])))
+    for (const char c : value)
     {
-        ++begin;
+        if (std::isspace(static_cast<unsigned char>(c)) || c == '(' || c == ')'
+            || c == '[' || c == ']' || c == ',' || c == '=' || c == '<'
+            || c == '>' || c == '!')
+        {
+            return "\"" + value + "\"";
+        }
     }
-    while (end > begin && std::isspace(static_cast<unsigned char>(value[end - 1])))
-    {
-        --end;
-    }
-    return value.substr(begin, end - begin);
+    return value;
 }
 
 class AvailabilityParser
@@ -131,6 +130,27 @@ class AvailabilityParser
     std::string parse_scalar_value()
     {
         skip_space();
+        if (!at_end() && text_[pos_] == '"')
+        {
+            ++pos_;
+            const std::size_t content_begin = pos_;
+            while (!at_end() && text_[pos_] != '"')
+            {
+                ++pos_;
+            }
+            if (at_end())
+            {
+                fail("expected closing quote");
+            }
+            if (pos_ == content_begin)
+            {
+                fail("expected non-empty quoted value");
+            }
+            const std::string value = text_.substr(content_begin, pos_ - content_begin);
+            ++pos_;
+            return value;
+        }
+
         const std::size_t begin = pos_;
         while (!at_end() && !std::isspace(static_cast<unsigned char>(text_[pos_]))
                && text_[pos_] != '(' && text_[pos_] != ')' && text_[pos_] != '['
@@ -148,28 +168,6 @@ class AvailabilityParser
             fail("expected value");
         }
         return text_.substr(begin, pos_ - begin);
-    }
-
-    std::string parse_list_value()
-    {
-        skip_space();
-        const std::size_t begin = pos_;
-        while (!at_end() && text_[pos_] != ',' && text_[pos_] != ']')
-        {
-            if (text_[pos_] == '[' || text_[pos_] == '(' || text_[pos_] == ')'
-                || text_[pos_] == '=' || text_[pos_] == '<' || text_[pos_] == '>'
-                || text_[pos_] == '!')
-            {
-                fail("invalid character in list value");
-            }
-            ++pos_;
-        }
-        const std::string value = trim_copy(text_.substr(begin, pos_ - begin));
-        if (value.empty())
-        {
-            fail("expected non-empty list value");
-        }
-        return value;
     }
 
     AvailabilityExpr parse_condition()
@@ -205,14 +203,18 @@ class AvailabilityParser
                 fail("expected '[' after 'in'");
             }
             result.condition.op = "in";
-            result.condition.values.push_back(parse_list_value());
+            result.condition.values.push_back(parse_scalar_value());
             while (consume_char(','))
             {
-                result.condition.values.push_back(parse_list_value());
+                result.condition.values.push_back(parse_scalar_value());
             }
             if (!consume_char(']'))
             {
                 fail("expected ']' after list");
+            }
+            if (result.condition.values.size() == 1)
+            {
+                fail("use '==' for a single value");
             }
             return result;
         }
@@ -295,15 +297,15 @@ std::string AvailabilityCondition::to_string() const
             {
                 result += ", ";
             }
-            result += values[i];
+            result += format_value(values[i]);
         }
         return result + "]";
     }
     if (op == "contains")
     {
-        return param + " contains " + values[0];
+        return param + " contains " + format_value(values[0]);
     }
-    return param + op + values[0];
+    return param + op + format_value(values[0]);
 }
 
 std::string AvailabilityExpr::to_string() const

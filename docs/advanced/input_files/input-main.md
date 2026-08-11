@@ -1638,7 +1638,7 @@
 ### relax_scale_force
 
 - **Type**: Real
-- **Availability**: *[`relax_method`](#relax_method) in [cg 2]*
+- **Availability**: *[`relax_method`](#relax_method)=="cg 2"*
 - **Description**: The paramether controls the size of the first conjugate gradient step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
 - **Default**: 0.5
 
@@ -1702,7 +1702,7 @@
 ### relax_bfgs_rmin
 
 - **Type**: Real
-- **Availability**: *[`relax_method`](#relax_method) in [bfgs 1]*
+- **Availability**: *[`relax_method`](#relax_method)=="bfgs 1"*
 - **Description**: Minimum allowed total displacement of all atoms. When the total atomic displacement falls below this value and force convergence is not achieved, the calculation will terminate. Note: This parameter is not used in the default BFGS algorithm (relax_method = bfgs 2 or bfgs).
 - **Default**: 1e-5
 - **Unit**: Bohr
@@ -1770,7 +1770,7 @@
 ### fixed_ibrav
 
 - **Type**: Boolean
-- **Availability**: *[`relax_method`](#relax_method) in [cg 2] and [`latname`](#latname)!=none*
+- **Availability**: *[`relax_method`](#relax_method)=="cg 2" and [`latname`](#latname)!=none*
 - **Description**: - True: the lattice type will be preserved during relaxation. The lattice vectors are reconstructed to match the specified Bravais lattice type after each update.
   - False: No restrictions are exerted during relaxation in terms of lattice type
 

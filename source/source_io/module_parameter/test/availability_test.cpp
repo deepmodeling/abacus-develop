@@ -47,6 +47,15 @@ TEST(AvailabilityParser, ContainsVectorSemantics)
     EXPECT_EQ(e.to_string(), "td_ttype contains 2");
 }
 
+TEST(AvailabilityParser, QuotedMultiTokenValueRoundTrip)
+{
+    const AvailabilityExpr e = parse_availability("relax_method==\"cg 2\"");
+    EXPECT_TRUE(e.is_leaf());
+    EXPECT_EQ(e.condition.op, "==");
+    EXPECT_EQ(e.condition.values, (std::vector<std::string>{"cg 2"}));
+    EXPECT_EQ(e.to_string(), "relax_method==\"cg 2\"");
+}
+
 TEST(AvailabilityParser, AndGroup)
 {
     const AvailabilityExpr e = parse_availability("basis_type==lcao and esolver_type==tddft");
@@ -86,6 +95,10 @@ TEST(AvailabilityParser, InvalidExpressionsAreRejected)
         " and basis_type==pw",
         "basis_type==lcao and esolver_type==tddft or ",
         "basis_type==pw==lcao",
+        "relax_method in [cg 2]",
+        "relax_method in [cg 2, bfgs]",
+        "relax_method in [\"cg 2\"]",
+        "relax_method==\"cg 2",
         "basis_type==pw)",
         "(basis_type==pw",
     };
@@ -121,7 +134,7 @@ TEST(AvailabilityValidator, AcceptsKnownTypedReferences)
     EXPECT_NO_THROW(validate_availability_expr(
         "example", parse_availability("td_ttype contains 2"), types));
     EXPECT_NO_THROW(validate_availability_expr(
-        "example", parse_availability("relax_method in [cg 2]"), types));
+        "example", parse_availability("relax_method==\"cg 2\""), types));
 }
 
 TEST(AvailabilityValidator, InfersDocumentedTypes)

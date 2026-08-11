@@ -86,7 +86,7 @@ The second element is not accepted by other methods.
         item.description = "The paramether controls the size of the first conjugate gradient step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.";
         item.default_value = "0.5";
         item.unit = "";
-        item.set_availability("relax_method in [cg 2]");
+        item.set_availability("relax_method==\"cg 2\"");
         read_sync_double(input.relax_scale_force);
         this->add_item(item);
     }
@@ -229,7 +229,7 @@ The second element is not accepted by other methods.
         item.description = "Minimum allowed total displacement of all atoms. When the total atomic displacement falls below this value and force convergence is not achieved, the calculation will terminate. Note: This parameter is not used in the default BFGS algorithm (relax_method = bfgs 2 or bfgs).";
         item.default_value = "1e-5";
         item.unit = "Bohr";
-        item.set_availability("relax_method in [bfgs 1]");
+        item.set_availability("relax_method==\"bfgs 1\"");
         read_sync_double(input.relax_bfgs_rmin);
         this->add_item(item);
     }
@@ -335,7 +335,7 @@ With relax_method set to cg 1, bfgs, lbfgs, sd, or cg_bfgs, None and a, b, c, ab
 [NOTE] Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges. When both are used, fixed_ibrav is applied first, then fixed_axes = "volume" rescaling is applied.)";
         item.default_value = "False";
         item.unit = "";
-        item.set_availability("relax_method in [cg 2] and latname!=none");
+        item.set_availability("relax_method==\"cg 2\" and latname!=none");
         read_sync_bool(input.fixed_ibrav);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.fixed_ibrav && !para.input.uses_simultaneous_relaxation())

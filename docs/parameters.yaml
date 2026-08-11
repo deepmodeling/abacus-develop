@@ -1180,7 +1180,7 @@ parameters:
       The paramether controls the size of the first conjugate gradient step. A smaller value means the first step along a new CG direction is smaller. This might be helpful for large systems, where it is safer to take a smaller initial step to prevent the collapse of the whole configuration.
     default_value: "0.5"
     unit: ""
-    availability: "relax_method in [cg 2]"
+    availability: "relax_method==\"cg 2\""
   - name: relax_nmax
     category: Geometry relaxation
     type: Integer
@@ -1252,7 +1252,7 @@ parameters:
       Minimum allowed total displacement of all atoms. When the total atomic displacement falls below this value and force convergence is not achieved, the calculation will terminate. Note: This parameter is not used in the default BFGS algorithm (relax_method = bfgs 2 or bfgs).
     default_value: "1e-5"
     unit: Bohr
-    availability: "relax_method in [bfgs 1]"
+    availability: "relax_method==\"bfgs 1\""
   - name: relax_bfgs_init
     category: Geometry relaxation
     type: Real
@@ -1327,7 +1327,7 @@ parameters:
       [NOTE] Note: it is possible to use fixed_ibrav with fixed_axes, but please make sure you know what you are doing. For example, if we are doing relaxation of a simple cubic lattice (latname = "sc"), and we use fixed_ibrav along with fixed_axes = "volume", then the cell is never allowed to move and as a result, the relaxation never converges. When both are used, fixed_ibrav is applied first, then fixed_axes = "volume" rescaling is applied.
     default_value: "False"
     unit: ""
-    availability: "relax_method in [cg 2] and latname!=none"
+    availability: "relax_method==\"cg 2\" and latname!=none"
   - name: fixed_atoms
     category: Geometry relaxation
     type: Boolean
