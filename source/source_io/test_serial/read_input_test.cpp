@@ -306,6 +306,25 @@ TEST_F(InputTest, ValidateBandParallelization)
                          "bndpar can not exceed the number of MPI processes");
 }
 
+TEST_F(InputTest, ValidateLrRequiresNscf)
+{
+    // esolver_type=lr reads the ground state wave function from a separate SCF run,
+    // so it cannot be combined with a self-consistent calculation.
+    expect_invalid_input("lr_scf_INPUT",
+                         "esolver_type lr\n",
+                         "esolver_type=lr requires calculation=nscf");
+    expect_invalid_input("lr_explicit_scf_INPUT",
+                         "esolver_type lr\ncalculation scf\n",
+                         "esolver_type=lr requires calculation=nscf");
+
+    Parameter valid_param;
+    EXPECT_NO_THROW(read_parameters("lr_nscf_INPUT",
+                                    "esolver_type lr\ncalculation nscf\n",
+                                    valid_param));
+    EXPECT_EQ(valid_param.inp.esolver_type, "lr");
+    EXPECT_EQ(valid_param.inp.calculation, "nscf");
+}
+
 TEST_F(InputTest, ValidateDeepksOutputFrequency)
 {
     Parameter default_param;

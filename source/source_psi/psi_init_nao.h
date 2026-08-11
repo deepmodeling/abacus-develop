@@ -3,17 +3,23 @@
 #include "source_base/cubic_spline.h"
 #include "source_base/realarray.h"
 #include "source_base/spherical_bessel_transformer.h"
-#include "psi_initializer.h"
+#include "psi_base.h"
 
 #include <memory>
+#include <string>
 /*
 Psi (planewave based wavefunction) initializer: numerical atomic orbital method
 */
 template <typename T>
-class psi_init_nao : public psi_initializer<T>
+class psi_init_nao : public psi_base<T>
 {
   private:
     using Real = typename GetTypeReal<T>::type;
+    int nqx_ = 0;
+    double dq_ = 0.0;
+    int nspin_ = 1;
+    std::string orbital_dir_;
+    bool params_prepared_ = false;
 
   public:
     psi_init_nao()
@@ -22,63 +28,94 @@ class psi_init_nao : public psi_initializer<T>
     };
     ~psi_init_nao(){};
 
-    virtual void init_psig(T* psig, const int& ik) override;
+    /**
+     * @brief Prepare parameters before initialization.
+     * 
+     * This method must be called before initialize(). It sets up the necessary
+     * parameters for the psi initialization process.
+     * 
+     * @param nqx Number of q-points for interpolation
+     * @param dq Spacing between q-points
+     * @param nspin Number of spin components
+     * @param orbital_dir Directory containing orbital files
+     * 
+     * @see initialize()
+     */
+    void prepare_params(const int& nqx,
+                        const double& dq,
+                        const int& nspin,
+                        const std::string& orbital_dir);
 
-    /// @brief initialize the psi_initializer with external data and methods
-    virtual void initialize(const Structure_Factor*,             //< structure factor
-                            const ModulePW::PW_Basis_K*,         //< planewave basis
-                            const UnitCell*,                     //< unit cell
-                            const K_Vectors*,                    //< kpoints
-                            const int& = 1,                      //< random seed
-                            const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0) override;            //< MPI rank
+    virtual void initialize(const Structure_Factor* sf,             //< structure factor
+                            const ModulePW::PW_Basis_K* pw_wfc,         //< planewave basis
+                            const UnitCell* p_ucell,                     //< unit cell
+                            const std::vector<int>& ik2iktot,             //< ik2iktot: local->global k-point mapping
+                            const int& random_seed,                      //< random seed
+                            const int& rank,                            //< MPI rank
+                            const int& npol,                            //< npol
+                            const int& nbands) override;                //< nbands
 
     void read_external_orbs(const std::string* orbital_files, const int& rank);
+
     virtual void tabulate() override;
+
+    virtual void init_psig(T* psig, const int& ik) override;
+
     std::vector<std::string> external_orbs() const
     {
         return orbital_files_;
     }
+
     std::vector<std::vector<int>> nr() const
     {
         return nr_;
     }
+
     std::vector<int> nr(const int& itype) const
     {
         return nr_[itype];
     }
+
     int nr(const int& itype, const int& ichi) const
     {
         return nr_[itype][ichi];
     }
+
     std::vector<std::vector<std::vector<double>>> chi() const
     {
         return chi_;
     }
+
     std::vector<std::vector<double>> chi(const int& itype) const
     {
         return chi_[itype];
     }
+
     std::vector<double> chi(const int& itype, const int& ichi) const
     {
         return chi_[itype][ichi];
     }
+
     double chi(const int& itype, const int& ichi, const int& ir) const
     {
         return chi_[itype][ichi][ir];
     }
+
     std::vector<std::vector<std::vector<double>>> rgrid() const
     {
         return rgrid_;
     }
+
     std::vector<std::vector<double>> rgrid(const int& itype) const
     {
         return rgrid_[itype];
     }
+
     std::vector<double> rgrid(const int& itype, const int& ichi) const
     {
         return rgrid_[itype][ichi];
     }
+
     double rgrid(const int& itype, const int& ichi, const int& ir) const
     {
         return rgrid_[itype][ichi][ir];

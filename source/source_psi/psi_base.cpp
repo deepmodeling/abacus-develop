@@ -1,50 +1,57 @@
-#include "psi_initializer.h"
+#include "psi_base.h"
 
+#include <vector>
+#include <cassert>
+#include <cstdlib>
+
+#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_cell/unitcell.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 #include "source_base/parallel_global.h"
 // basic functions support
 #include "source_base/timer.h"
 #include "source_base/tool_quit.h"
 // three global variables definition
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
 
 #ifdef __MPI
 #include "source_base/parallel_reduce.h"
 #endif
 
 template <typename T>
-void psi_initializer<T>::initialize(const Structure_Factor* sf,
+void psi_base<T>::initialize(const Structure_Factor* sf,
                                     const ModulePW::PW_Basis_K* pw_wfc,
                                     const UnitCell* p_ucell,
-                                    const K_Vectors* p_kv_in,
+                                    const std::vector<int>& ik2iktot,
                                     const int& random_seed,
-                                    const pseudopot_cell_vnl* p_pspot_nl,
-                                    const int& rank)
+                                    const int& rank,
+                                    const int& npol,
+                                    const int& nbands)
 {
     this->sf_ = sf;
     this->pw_wfc_ = pw_wfc;
     this->p_ucell_ = p_ucell;
-    this->p_kv = p_kv_in;
+    this->ik2iktot_ = ik2iktot;
     this->random_seed_ = random_seed;
-    this->p_pspot_nl_ = p_pspot_nl;
+    this->npol_ = npol;
 }
 
 template <typename T>
-void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, const int ik, const int mode)
+void psi_base<T>::random_t(T* psi, const int iw_start, const int iw_end, const int ik, const int mode)
 {
     ModuleBase::timer::start("psi_init", "random_t");
     assert(mode <= 1);
     assert(iw_start >= 0);
     const int ng = this->pw_wfc_->npwk[ik];
     const int npwk_max = this->pw_wfc_->npwk_max;
-    const int npol = PARAM.globalv.npol;
+    const int npol = this->npol_;
 
     // If random seed is specified, then generate random wavefunction satisfying that
     // it can generate the same results using different number of processors.
     if (this->random_seed_ > 0) // qianrui add 2021-8-13
     {
 #ifdef __MPI
-        srand(unsigned(this->random_seed_ + this->p_kv->ik2iktot[ik]));
+        srand(unsigned(this->random_seed_ + this->ik2iktot_[ik]));
 #else
         srand(unsigned(this->random_seed_ + ik));
 #endif
@@ -184,7 +191,7 @@ void psi_initializer<T>::random_t(T* psi, const int iw_start, const int iw_end, 
 
 #ifdef __MPI
 template <typename T>
-void psi_initializer<T>::stick_to_pool(Real* stick, const int& ir, Real* out) const
+void psi_base<T>::stick_to_pool(Real* stick, const int& ir, Real* out) const
 {
     ModuleBase::timer::start("psi_init", "stick_to_pool");
     MPI_Status ierror;
@@ -211,7 +218,7 @@ void psi_initializer<T>::stick_to_pool(Real* stick, const int& ir, Real* out) co
         }
         else
         {
-            ModuleBase::WARNING_QUIT("psi_initializer", "stick_to_pool: Real type not supported");
+            ModuleBase::WARNING_QUIT("psi_base", "stick_to_pool: Real type not supported");
         }
         for (int iz = 0; iz < nz; iz++)
         {
@@ -230,7 +237,7 @@ void psi_initializer<T>::stick_to_pool(Real* stick, const int& ir, Real* out) co
         }
         else
         {
-            ModuleBase::WARNING_QUIT("psi_initializer", "stick_to_pool: Real type not supported");
+            ModuleBase::WARNING_QUIT("psi_base", "stick_to_pool: Real type not supported");
         }
     }
 
@@ -240,8 +247,8 @@ void psi_initializer<T>::stick_to_pool(Real* stick, const int& ir, Real* out) co
 #endif
 
 // explicit instantiation
-template class psi_initializer<std::complex<double>>;
-template class psi_initializer<std::complex<float>>;
+template class psi_base<std::complex<double>>;
+template class psi_base<std::complex<float>>;
 // gamma point calculation
-template class psi_initializer<double>;
-template class psi_initializer<float>;
+template class psi_base<double>;
+template class psi_base<float>;
