@@ -1,5 +1,6 @@
 #include "md_base.h"
 #include "md_func.h"
+#include "source_cell/unitcell.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -61,6 +62,10 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
     MD_func::force_virial(p_esolver, step_, mdcell, potential, cal_stress, virial);
     MD_func::compute_stress(mdcell, cal_stress, virial, stress);
+    if (mdcell.has_backing_unitcell())
+    {
+        mdcell.backing_unitcell().ionic_position_updated = true;
+    }
 
     return;
 }

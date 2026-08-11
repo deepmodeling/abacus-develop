@@ -43,7 +43,6 @@ void MDCell::sync_backing_unitcell_geometry_()
     backing_unitcell_->a1.set(latvec_.e11, latvec_.e12, latvec_.e13);
     backing_unitcell_->a2.set(latvec_.e21, latvec_.e22, latvec_.e23);
     backing_unitcell_->a3.set(latvec_.e31, latvec_.e32, latvec_.e33);
-    backing_unitcell_->cell_parameter_updated = true;
 }
 
 void MDCell::sync_backing_unitcell_owned_atoms_()
@@ -56,8 +55,21 @@ void MDCell::sync_backing_unitcell_owned_atoms_()
     for (std::size_t i = 0; i < owned_atoms_.size(); ++i)
     {
         const LocalAtom& atom = owned_atoms_[i];
+        ModuleBase::Vector3<double> displacement = atom.frac - backing_unitcell_->atoms[atom.type].taud[atom.type_index];
+        for (int k = 0; k < 3; ++k)
+        {
+            if (displacement[k] > 0.5)
+            {
+                displacement[k] -= 1.0;
+            }
+            else if (displacement[k] < -0.5)
+            {
+                displacement[k] += 1.0;
+            }
+        }
         backing_unitcell_->atoms[atom.type].tau[atom.type_index] = atom.cart;
         backing_unitcell_->atoms[atom.type].taud[atom.type_index] = atom.frac;
+        backing_unitcell_->atoms[atom.type].dis[atom.type_index] = displacement;
         backing_unitcell_->atoms[atom.type].vel[atom.type_index] = atom.vel;
         backing_unitcell_->atoms[atom.type].mbl[atom.type_index] = atom.mbl;
     }
@@ -340,6 +352,10 @@ void MDCell::set_lattice_vectors(const ModuleBase::Matrix3& latvec)
     }
 #endif
     sync_backing_unitcell_geometry_();
+    if (backing_unitcell_ != nullptr)
+    {
+        backing_unitcell_->cell_parameter_updated = true;
+    }
 }
 
 void MDCell::refresh_cart_from_frac()
@@ -351,7 +367,6 @@ void MDCell::refresh_cart_from_frac()
         owned_atoms_[i].frac.z = wrap_fractional_(owned_atoms_[i].frac.z);
         owned_atoms_[i].cart = owned_atoms_[i].frac * latvec_;
     }
-    sync_backing_unitcell_owned_atoms_();
     exchange_ghost_atoms();
 }
 
@@ -473,7 +488,22 @@ void MDCell::sync_backing_unitcell()
                     throw std::runtime_error("MDCell backing UnitCell atom ownership is invalid.");
                 }
                 backing_unitcell_->atoms[it].tau[ia].set(cart[3 * iat], cart[3 * iat + 1], cart[3 * iat + 2]);
+                ModuleBase::Vector3<double> displacement(frac[3 * iat] - backing_unitcell_->atoms[it].taud[ia].x,
+                                                         frac[3 * iat + 1] - backing_unitcell_->atoms[it].taud[ia].y,
+                                                         frac[3 * iat + 2] - backing_unitcell_->atoms[it].taud[ia].z);
+                for (int k = 0; k < 3; ++k)
+                {
+                    if (displacement[k] > 0.5)
+                    {
+                        displacement[k] -= 1.0;
+                    }
+                    else if (displacement[k] < -0.5)
+                    {
+                        displacement[k] += 1.0;
+                    }
+                }
                 backing_unitcell_->atoms[it].taud[ia].set(frac[3 * iat], frac[3 * iat + 1], frac[3 * iat + 2]);
+                backing_unitcell_->atoms[it].dis[ia] = displacement;
                 backing_unitcell_->atoms[it].vel[ia].set(vel[3 * iat], vel[3 * iat + 1], vel[3 * iat + 2]);
                 backing_unitcell_->atoms[it].mbl[ia].set(mbl[3 * iat], mbl[3 * iat + 1], mbl[3 * iat + 2]);
             }

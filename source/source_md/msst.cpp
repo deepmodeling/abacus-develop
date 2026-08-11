@@ -1,6 +1,7 @@
 #include "msst.h"
 
 #include "md_func.h"
+#include "source_cell/unitcell.h"
 #ifdef __MPI
 #include "mpi.h"
 #endif
@@ -39,6 +40,10 @@ void MSST::setup(ModuleESolver::ESolver* p_esolver, const std::string& global_re
     ModuleBase::timer::start("MSST", "setup");
 
     MD_base::setup(p_esolver, global_readin_dir);
+    if (mdcell.has_backing_unitcell())
+    {
+        mdcell.backing_unitcell().cell_parameter_updated = true;
+    }
 
     int sd = mdp.msst_direction;
 
