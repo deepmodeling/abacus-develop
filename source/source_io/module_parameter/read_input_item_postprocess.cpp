@@ -403,7 +403,7 @@ void ReadInput::item_postprocess()
 
                        In the future lcao_in_pw will have its own ESolver.
 
-                       2023/12/22 use new psi_initializer to expand numerical
+                       2023/12/22 use new psi_base to expand numerical
                       atomic orbitals, ykhuang
                    */
             if (para.input.towannier90 && para.input.basis_type == "lcao_in_pw")
