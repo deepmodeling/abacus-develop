@@ -1,4 +1,5 @@
 #include "psi_init_atom_rand.h"
+#include "source_basis/module_pw/pw_basis_k.h"
 
 template <typename T>
 void psi_init_atomic_random<T>::initialize(const Structure_Factor* sf,
