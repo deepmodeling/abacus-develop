@@ -14,7 +14,7 @@
 #include "source_lcao/setup_deepks.h"                  // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h"                     // for exx, mohan add 20251008
 #include "source_psi/psi.h"                            // use Psi<TK>
-#include "source_pw/module_pwdft/structure_factor.h"   // use Structure_Factor
+#include "source_pw/module_pwdft/stru_fac.h"   // use Structure_Factor
 
 #include <complex>
 

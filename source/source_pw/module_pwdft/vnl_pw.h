@@ -7,7 +7,7 @@
 #include "source_base/realarray.h"
 #include "source_cell/unitcell.h"
 #include "source_pw/module_pwdft/soc.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_psi/psi.h"
 #ifdef __LCAO
 #include "source_basis/module_ao/ORB_gaunt_table.h"

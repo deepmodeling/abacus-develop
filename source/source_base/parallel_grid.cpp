@@ -1,7 +1,6 @@
 #include "parallel_grid.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
 
 #ifdef __MPI
 #include "source_base/parallel_comm.h" // use POOL_WORLD
@@ -10,27 +9,10 @@
 
 Parallel_Grid::Parallel_Grid()
 {
-    this->allocate = false;
-    this->allocate_final_scf = false; // LiuXh add 20180619
 }
 
 Parallel_Grid::~Parallel_Grid()
 {
-    if (this->allocate || this->allocate_final_scf) // LiuXh add 20180619
-    {
-        for (int ip = 0; ip < GlobalV::KPAR; ip++)
-        {
-            delete[] numz[ip];
-            delete[] startz[ip];
-            delete[] whichpro[ip];
-            delete[] whichpro_loc[ip];
-        }
-        delete[] numz;
-        delete[] startz;
-        delete[] whichpro;
-        delete[] whichpro_loc;
-        delete[] nproc_in_pool;
-    }
 }
 
 void Parallel_Grid::init(const int& ncx_in,
@@ -39,7 +21,8 @@ void Parallel_Grid::init(const int& ncx_in,
                          const int& nczp_in,
                          const int& nrxx_in,
                          const int& nbz_in,
-                         const int& bz_in)
+                         const int& bz_in,
+                         const int nprocgroup)
 {
 
     ModuleBase::TITLE("Parallel_Grid", "init");
@@ -70,37 +53,20 @@ void Parallel_Grid::init(const int& ncx_in,
 #endif
 
     // enable to call this function again liuyu 2023-03-10
-    if (this->allocate)
+    if (!this->numz.empty())
     {
-        for (int ip = 0; ip < GlobalV::KPAR; ip++)
-        {
-            delete[] numz[ip];
-            delete[] startz[ip];
-            delete[] whichpro[ip];
-            delete[] whichpro_loc[ip];
-        }
-        delete[] numz;
-        delete[] startz;
-        delete[] whichpro;
-        delete[] whichpro_loc;
-        delete[] nproc_in_pool;
-        this->allocate = false;
+        this->nproc_in_pool.clear();
+        this->numz.clear();
+        this->startz.clear();
+        this->whichpro.clear();
+        this->whichpro_loc.clear();
     }
 
     // (2)
-    assert(allocate == false);
+    assert(this->numz.empty());
     assert(GlobalV::KPAR > 0);
 
-    this->nproc_in_pool = new int[GlobalV::KPAR];
-    int nprocgroup = 0;
-    if (PARAM.inp.esolver_type == "sdft")
-    {
-        nprocgroup = GlobalV::NPROC_IN_BNDGROUP;
-    }
-    else
-    {
-        nprocgroup = GlobalV::NPROC;
-    }
+    this->nproc_in_pool.resize(GlobalV::KPAR);
 
     const int remain_pro = nprocgroup % GlobalV::KPAR;
     for (int i = 0; i < GlobalV::KPAR; i++)
@@ -112,25 +78,20 @@ void Parallel_Grid::init(const int& ncx_in,
         }
     }
 
-    this->numz = new int*[GlobalV::KPAR];
-    this->startz = new int*[GlobalV::KPAR];
-    this->whichpro = new int*[GlobalV::KPAR];
-    this->whichpro_loc = new int*[GlobalV::KPAR];
+    this->numz.resize(GlobalV::KPAR);
+    this->startz.resize(GlobalV::KPAR);
+    this->whichpro.resize(GlobalV::KPAR);
+    this->whichpro_loc.resize(GlobalV::KPAR);
 
     for (int ip = 0; ip < GlobalV::KPAR; ip++)
     {
         const int nproc = nproc_in_pool[ip];
-        this->numz[ip] = new int[nproc];
-        this->startz[ip] = new int[nproc];
-        this->whichpro[ip] = new int[this->ncz];
-        this->whichpro_loc[ip] = new int[this->ncz];
-        ModuleBase::GlobalFunc::ZEROS(this->numz[ip], nproc);
-        ModuleBase::GlobalFunc::ZEROS(this->startz[ip], nproc);
-        ModuleBase::GlobalFunc::ZEROS(this->whichpro[ip], this->ncz);
-        ModuleBase::GlobalFunc::ZEROS(this->whichpro_loc[ip], this->ncz);
+        this->numz[ip].assign(nproc, 0);
+        this->startz[ip].assign(nproc, 0);
+        this->whichpro[ip].assign(this->ncz, 0);
+        this->whichpro_loc[ip].assign(this->ncz, 0);
     }
 
-    this->allocate = true;
     this->z_distribution();
 
     return;
@@ -138,7 +99,7 @@ void Parallel_Grid::init(const int& ncx_in,
 
 void Parallel_Grid::z_distribution()
 {
-    assert(allocate);
+    assert(!this->numz.empty());
 
     int* startp = new int[GlobalV::KPAR];
     startp[0] = 0;
@@ -207,7 +168,7 @@ void Parallel_Grid::z_distribution()
 }
 
 #ifdef __MPI
-void Parallel_Grid::bcast(const double* const data_global, double* data_local, const int& rank) const
+void Parallel_Grid::bcast(const double* const data_global, double* data_local, const int& rank, const bool is_sdft) const
 {
     std::vector<double> zpiece(ncxy);
     for (int iz = 0; iz < this->ncz; ++iz)
@@ -224,18 +185,20 @@ void Parallel_Grid::bcast(const double* const data_global, double* data_local, c
                 }
             }
         }
-        this->zpiece_to_all(zpiece.data(), iz, data_local);
+        if (is_sdft)
+        {
+            this->zpiece_to_stogroup(zpiece.data(), iz, data_local);
+        }
+        else
+        {
+            this->zpiece_to_all(zpiece.data(), iz, data_local);
+        }
     }
 }
 
 void Parallel_Grid::zpiece_to_all(double* zpiece, const int& iz, double* rho) const
 {
-    if (PARAM.inp.esolver_type == "sdft")
-    {
-        this->zpiece_to_stogroup(zpiece, iz, rho);
-        return;
-    }
-    assert(allocate);
+    assert(!this->numz.empty());
     // ModuleBase::TITLE("Parallel_Grid","zpiece_to_all");
     MPI_Status ierror;
 
@@ -304,7 +267,7 @@ void Parallel_Grid::zpiece_to_all(double* zpiece, const int& iz, double* rho) co
 #ifdef __MPI
 void Parallel_Grid::zpiece_to_stogroup(double* zpiece, const int& iz, double* rho) const
 {
-    assert(allocate);
+    assert(!this->numz.empty());
     // TITLE("Parallel_Grid","zpiece_to_all");
     MPI_Status ierror;
 
@@ -425,75 +388,3 @@ void Parallel_Grid::reduce(double* rhotot, const double* const rhoin, const bool
     return;
 }
 #endif
-
-void Parallel_Grid::init_final_scf(const int& ncx_in,
-                                   const int& ncy_in,
-                                   const int& ncz_in,
-                                   const int& nczp_in,
-                                   const int& nrxx_in,
-                                   const int& nbz_in,
-                                   const int& bz_in)
-{
-
-    ModuleBase::TITLE("Parallel_Grid", "init");
-
-    this->ncx = ncx_in;
-    this->ncy = ncy_in;
-    this->ncz = ncz_in;
-    this->nczp = nczp_in;
-    this->nrxx = nrxx_in;
-    this->nbz = nbz_in;
-    this->bz = bz_in;
-
-    if (nczp < 0)
-    {
-        GlobalV::ofs_warning << " nczp = " << nczp << std::endl;
-        ModuleBase::WARNING_QUIT("Parallel_Grid::init", "nczp<0");
-    }
-
-    assert(ncx > 0);
-    assert(ncy > 0);
-    assert(ncz > 0);
-
-    this->ncxy = ncx * ncy;
-    this->ncxyz = ncxy * ncz;
-
-#ifndef __MPI
-    return;
-#endif
-
-    // (2)
-    assert(allocate_final_scf == false);
-    assert(GlobalV::KPAR > 0);
-
-    this->nproc_in_pool = new int[GlobalV::KPAR];
-    const int remain_pro = GlobalV::NPROC % GlobalV::KPAR;
-    for (int i = 0; i < GlobalV::KPAR; i++)
-    {
-        nproc_in_pool[i] = GlobalV::NPROC / GlobalV::KPAR;
-        if (i < remain_pro)
-        {
-            this->nproc_in_pool[i]++;
-        }
-    }
-
-    this->numz = new int*[GlobalV::KPAR];
-    this->startz = new int*[GlobalV::KPAR];
-    this->whichpro = new int*[GlobalV::KPAR];
-
-    for (int ip = 0; ip < GlobalV::KPAR; ip++)
-    {
-        const int nproc = nproc_in_pool[ip];
-        this->numz[ip] = new int[nproc];
-        this->startz[ip] = new int[nproc];
-        this->whichpro[ip] = new int[this->ncz];
-        ModuleBase::GlobalFunc::ZEROS(this->numz[ip], nproc);
-        ModuleBase::GlobalFunc::ZEROS(this->startz[ip], nproc);
-        ModuleBase::GlobalFunc::ZEROS(this->whichpro[ip], this->ncz);
-    }
-
-    this->allocate_final_scf = true;
-    this->z_distribution();
-
-    return;
-}

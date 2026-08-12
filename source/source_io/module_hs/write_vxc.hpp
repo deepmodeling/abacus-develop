@@ -11,7 +11,7 @@
 #endif
 #include "source_psi/psi.h"
 #include "source_io/module_hs/write_HS.h"
-#include "source_io/module_output/filename.h" // use filename_output function
+#include "source_base/module_out/filename.h" // use filename_output function
 
 namespace ModuleIO
 {

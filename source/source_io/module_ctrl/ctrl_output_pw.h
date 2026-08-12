@@ -4,7 +4,9 @@
 #include "source_base/module_device/device.h" // use Device
 #include "source_psi/psi.h"                   // define psi
 #include "source_estate/elecstate_lcao.h"     // use pelec
-#include "source_psi/setup_psi_pw.h" // use Setup_Psi class
+#include "source_psi/setup_psi_pw.h"          // use Setup_Psi class
+
+class pseudopot_cell_vnl;
 
 namespace ModuleIO
 {
