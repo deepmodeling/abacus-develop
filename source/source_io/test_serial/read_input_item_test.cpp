@@ -1047,11 +1047,17 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_hsr[0], 1);
         EXPECT_EQ(param.input.out_hsr[1], 10);
 
-        param.input.out_hsr[0] = 2;
+        it->second.str_values = {"2", "12"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsr[0], 2);
+        EXPECT_EQ(param.input.out_hsr[1], 12);
+        it->second.check_value(it->second, param);
+
+        param.input.out_hsr[0] = 4;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("reserved but not implemented"));
+        EXPECT_THAT(output, testing::HasSubstr("format must be 0, 1, 2, or 3"));
 
 #ifndef __CNPY
         param.input.out_hsr[0] = 3;
