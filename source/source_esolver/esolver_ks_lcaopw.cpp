@@ -137,8 +137,8 @@ namespace ModuleESolver
                                                PARAM.globalv.use_uspp,
                                                PARAM.inp.basis_type,
                                                PARAM.inp.calculation);
-        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec, 
-          *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
+        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec,
+          *this->psi_local, skip_charge,ucell.tpiba,ucell.nat, *this->exx_info_);
 
         // add exx
 #ifdef __EXX

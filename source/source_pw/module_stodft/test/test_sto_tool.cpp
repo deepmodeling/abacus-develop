@@ -8,12 +8,13 @@
  ***********************************************/
 
 template <typename T, typename Device>
-hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in, 
-		ModulePW::PW_Basis_K* wfc_basis, 
+hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
+		ModulePW::PW_Basis_K* wfc_basis,
 		K_Vectors* p_kv,
 		pseudopot_cell_vnl*,
         Plus_U* p_dftu, // mohan add 20251108
-		const UnitCell*){}
+		const UnitCell*,
+        const Exx_Info*){}
 
 template <typename T, typename Device>
 hamilt::HamiltPW<T, Device>::~HamiltPW(){};
@@ -31,7 +32,7 @@ hamilt::HamiltSdftPW<T, Device>::HamiltSdftPW(elecstate::Potential* pot_in,
                                               const int& npol,
                                               Real* emin_in,
                                               Real* emax_in)
-    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell), ngk(p_kv->ngk)
+    : HamiltPW<T, Device>(pot_in, wfc_basis, p_kv, nlpp, nullptr, ucell, nullptr), ngk(p_kv->ngk)
 {
 }
 

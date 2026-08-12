@@ -11,6 +11,7 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "source_base/global_variable.h"
+#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
 #include "source_hsolver/hsolver_pw.h"
 #undef private
 #undef protected
@@ -373,7 +374,8 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     // check solve()
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    
+
+    Exx_Info exx_info_local;
     hsolver::HSolverLIP<std::complex<float>> hs_f_lip
         = hsolver::HSolverLIP<std::complex<float>>(&pwbk,
                                                    PARAM.sys.use_uspp,
@@ -384,7 +386,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
                                                     PARAM.sys.use_uspp,
                                                     PARAM.input.basis_type,
                                                     PARAM.input.calculation);
-    hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,transform_test_cf, true,0.0,0);
+    hs_f_lip.solve(&hamilt_test_f, psi_test_cf, &elecstate_test,transform_test_cf, true,0.0,0, exx_info_local);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<float>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cf.size(); i++)
     {
@@ -395,7 +397,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
 
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
-    hs_d_lip.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true,0.0,0);
+    hs_d_lip.solve(&hamilt_test_d, psi_test_cd, &elecstate_test, transform_test_cd, true,0.0,0, exx_info_local);
     EXPECT_DOUBLE_EQ(hsolver::DiagoIterAssist<std::complex<double>>::avg_iter, 0.0);
     for (int i = 0; i < psi_test_cd.size(); i++)
     {

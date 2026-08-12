@@ -4,6 +4,10 @@
 #include "source_estate/elecstate.h"
 #include "source_hamilt/hamilt.h"
 #include "source_base/macros.h"
+
+/// Exx_Info forward declaration, full definition in exx_info.h
+struct Exx_Info;
+
 namespace hsolver
 {
 
@@ -36,7 +40,8 @@ class HSolverLIP
                psi::Psi<T>& transform,
                const bool skip_charge,
                const double tpiba,
-               const int nat);
+               const int nat,
+               const Exx_Info& exx_info);
 
   private:
     ModulePW::PW_Basis_K* wfc_basis = nullptr;

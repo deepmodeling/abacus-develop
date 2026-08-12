@@ -21,7 +21,8 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
                               K_Vectors* pkv,
                               pseudopot_cell_vnl* nlpp,
                               Plus_U* p_dftu, // mohan add 2025-11-06
-                              const UnitCell* ucell)
+                              const UnitCell* ucell,
+                              const Exx_Info* exx_info)
     : ucell(ucell)
 {
     this->classname = "HamiltPW";
@@ -130,11 +131,11 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
                                                                                  (PARAM.inp.dft_plus_u > 0));
         this->ops->add(onsite_proj);
     }
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (exx_info && exx_info->info_global.cal_exx)
     {
-        bool separate_loop = GlobalC::exx_info.info_global.separate_loop;
-        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-        auto coulomb_param = GlobalC::exx_info.info_global.coulomb_param;
+        bool separate_loop = exx_info->info_global.separate_loop;
+        double hybrid_alpha = exx_info->info_global.hybrid_alpha;
+        auto coulomb_param = exx_info->info_global.coulomb_param;
         auto exx = new OperatorEXXPW<T, Device>(isk, wfc_basis, pot_in->get_rho_basis(), pkv, ucell, separate_loop, hybrid_alpha, coulomb_param);
         if (this->ops == nullptr)
         {
