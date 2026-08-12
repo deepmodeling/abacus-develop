@@ -378,7 +378,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
         Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
     }
 #ifdef __EXX
-    if (GlobalC::exx_info.info_ri.real_number)
+    if (this->exx_info_->info_ri.real_number)
         this->exx_nao.exd->exx_hamilt2rho(*this->pelec, this->pv, iter);
     else
         this->exx_nao.exc->exx_hamilt2rho(*this->pelec, this->pv, iter);

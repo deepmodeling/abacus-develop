@@ -55,7 +55,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_all_runners");
 
-    // 0) init EXX - moved from constructor to ensure GlobalC::exx_info.info_global is already set
+    // 0) init EXX - moved from constructor to ensure exx_info_->info_global is already set
     this->exx_nao.init(ucell);
 
     // 1) before_all_runners in ESolver_KS
@@ -78,7 +78,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
     {
 #ifdef __EXX
         Exx_Opt_Orb exx_opt_orb;
-        exx_opt_orb.generate_matrix(GlobalC::exx_info.info_opt_abfs, this->kv, ucell, this->orb_);
+        exx_opt_orb.generate_matrix(exx_info_->info_opt_abfs, this->kv, ucell, this->orb_);
 #else
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_all_runners", "calculation=gen_opt_abfs must compile __EXX");
 #endif
@@ -358,11 +358,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 	{
 		int exx_two_level_step = 0;
 #ifdef __EXX
-		if (GlobalC::exx_info.info_global.cal_exx)
+		if (exx_info_->info_global.cal_exx)
 		{
 			// the following steps are only needed in the first outer exx loop
 			exx_two_level_step
-				= GlobalC::exx_info.info_ri.real_number ? 
+				= exx_info_->info_ri.real_number ? 
                   this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
@@ -373,7 +373,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // calculate exact-exchange
     if (PARAM.inp.calculation != "nscf")
     {
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (exx_info_->info_ri.real_number)
         {
             this->exx_nao.exd->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, iter);
         }
@@ -467,7 +467,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
 #ifdef __EXX
     if (PARAM.inp.calculation != "nscf")
     {
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (exx_info_->info_ri.real_number)
         {
             this->exx_nao.exd->exx_hamilt2rho(*this->pelec, this->pv, iter);
         }

@@ -10,6 +10,9 @@
 #include "source_lcao/module_dftu/dftu.h"              // mohan add 20251107
 #include "source_pw/module_pwdft/vnl_pw.h"
 
+/// forward declaration for EXX info bridge
+struct Exx_Info;
+
 namespace ModuleESolver
 {
 
@@ -73,6 +76,9 @@ class ESolver_KS : public ESolver_FP
     int niter;                      //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated
     bool scf_nmax_flag = false;     // whether scf has reached nmax, mohan add 20250921
+
+    /// EXX info bridge, points to GlobalC::exx_info for now
+    Exx_Info* exx_info_ = nullptr;
 };
 } // namespace ModuleESolver
 #endif

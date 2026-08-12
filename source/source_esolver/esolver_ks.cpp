@@ -14,11 +14,15 @@
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
+#include "source_hamilt/module_xc/exx_info.h" // for GlobalC::exx_info bridge
 
 namespace ModuleESolver
 {
 
-ESolver_KS::ESolver_KS() {}
+ESolver_KS::ESolver_KS()
+{
+    exx_info_ = &GlobalC::exx_info;
+}
 
 
 ESolver_KS::~ESolver_KS()

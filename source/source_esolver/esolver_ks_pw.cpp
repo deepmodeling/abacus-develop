@@ -16,7 +16,7 @@
 
 #include "source_estate/module_charge/chgmixing.h" // use charge mixing, mohan add 20251006
 #include "source_estate/setup_estate_pw.h"         // mohan add 20251005
-#include "source_hamilt/module_xc/exx_info.h"      // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h"      // for Exx_Info type used via exx_info_
 #include "source_io/module_ctrl/ctrl_output_pw.h"  // mohan add 20250927
 #include "source_pw/module_pwdft/deltaspin_pw.h"   // mohan add 20250309
 #include "source_pw/module_pwdft/setup_pot.h"      // mohan add 20250929
@@ -268,8 +268,8 @@ template <typename T, typename Device>
 void ESolver_KS_PW<T, Device>::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     // Related to EXX
-    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    bool cal_exx = exx_info_->info_global.cal_exx;
+    double hybrid_alpha = exx_info_->info_global.hybrid_alpha;
     if (cal_exx && !exx_helper->get_op_first_iter())
     {
         this->pelec->set_exx(exx_helper->cal_exx_energy(this->stp.template get_psi_t<T, Device>()),
