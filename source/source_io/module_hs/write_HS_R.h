@@ -60,14 +60,24 @@ void output_SR(Parallel_Orbitals& pv,
                const double& sparse_threshold = 1e-10,
                const int precision = 16);
 
-/// Generate filename for spin-dependent HR CSR output.
+/// Generate filename for spin-dependent HR output.
 std::string hsr_gen_fname(const std::string& prefix,
                           const int ispin,
                           const bool append,
                           const int istep);
 
-/// Generate filename for spin-independent SR CSR output.
+/// Generate filename for spin-dependent HR output in the selected format.
+std::string hsr_gen_fname(const std::string& prefix,
+                          const int ispin,
+                          const bool append,
+                          const int istep,
+                          const int out_type);
+
+/// Generate filename for spin-independent SR output.
 std::string sr_gen_fname(const bool append, const int istep);
+
+/// Generate filename for spin-independent SR output in the selected format.
+std::string sr_gen_fname(const bool append, const int istep, const int out_type);
 
 /// Generate filename for derivative matrices (dH/dR, dS/dR).
 std::string dhr_gen_fname(const std::string& prefix,
@@ -87,11 +97,19 @@ void write_hcontainer_csr(const std::string& fname,
                           const std::string& label,
                           const std::string& representation_note);
 
+/// Write one HContainer record in the native binary CSR format.
+template <typename TR>
+void write_hcontainer_csr_binary(const std::string& fname,
+                                 hamilt::HContainer<TR>* mat_serial,
+                                 const int istep,
+                                 const bool append);
+
 /// Write H(R) and S(R) in CSR format, unified with write_dmr interface.
 template <typename TR>
 void write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                const hamilt::HContainer<TR>* sr,
                const UnitCell* ucell,
+               const int out_type,
                const int precision,
                const Parallel_2D& paraV,
                const bool append,

@@ -32,6 +32,7 @@ scf_out_dmr_dmk
 scf_out_hsk
 scf_out_hsk_binary
 scf_out_hsr
+scf_out_hsr_binary_spin2
 scf_out_hsr_spin4
 scf_out_dh_t
 scf_out_dos_spin4
