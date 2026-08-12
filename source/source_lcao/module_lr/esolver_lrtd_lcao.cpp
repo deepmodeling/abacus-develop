@@ -399,7 +399,8 @@ void LR::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell, const Inp
         this->pw_rho->nplane,
         this->pw_rho->nrxx,
         pw_big->nbz,
-        pw_big->bz);
+        pw_big->bz,
+        GlobalV::NPROC);
     Charge chg_gs;
     if (input.ri_hartree_benchmark != "aims") { this->read_ks_chg(chg_gs); }
     this->init_pot(chg_gs);

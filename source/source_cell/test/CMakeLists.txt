@@ -211,3 +211,14 @@ AddTest(
   LIBS base device
   SOURCES magnetism_test.cpp ../magnetism.cpp
 )
+
+AddTest(
+  TARGET MODULE_CELL_cif_io
+  LIBS parameter base device
+  SOURCES cif_io_test.cpp ../cif_io.cpp
+)
+
+add_test(NAME MODULE_CELL_cif_io_parallel
+      COMMAND mpirun -np 4 ./MODULE_CELL_cif_io
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)

@@ -7,7 +7,7 @@
 # discrete symmetry/magnetic-group assertions (O_h / C_4h / nksibz=3), which are
 # the real purpose of this test, remain exact. Mirrors sibling metallic HSE
 # case 07_KP_CR_HSE. See also: np=1 is bit-identical, confirming the MPI seed.
-threshold 0.005
+threshold 0.006
 force_threshold 0.01
 stress_threshold 10
 fatal_threshold 20

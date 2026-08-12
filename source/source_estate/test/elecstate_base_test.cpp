@@ -39,8 +39,6 @@ UnitCell::UnitCell()
 UnitCell::~UnitCell()
 {
 }
-Parallel_Grid::Parallel_Grid() {};
-Parallel_Grid::~Parallel_Grid() {};
 Magnetism::Magnetism()
 {
 }

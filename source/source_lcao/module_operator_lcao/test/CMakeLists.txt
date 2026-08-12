@@ -7,7 +7,7 @@ AddTest(
   SOURCES test_overlap.cpp ../overlap.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
   ../../../source_hamilt/module_hcontainer/func_transfer.cpp ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp ../../../source_hamilt/module_hcontainer/transfer.cpp
-  ../../../source_io/module_output/sparse_matrix.cpp
+
   ../../../source_basis/module_ao/parallel_orbitals.cpp
   ../../../source_basis/module_ao/orb_atomic_lm.cpp
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
@@ -20,7 +20,7 @@ AddTest(
   SOURCES test_overlap_serial.cpp ../overlap.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
   ../../../source_hamilt/module_hcontainer/func_transfer.cpp ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp ../../../source_hamilt/module_hcontainer/transfer.cpp
-  ../../../source_io/module_output/sparse_matrix.cpp
+
   ../../../source_basis/module_ao/parallel_orbitals.cpp
   ../../../source_basis/module_ao/orb_atomic_lm.cpp
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp
@@ -33,7 +33,7 @@ AddTest(
   SOURCES test_overlap_cd.cpp ../overlap.cpp ../overlap_fs.cpp ../operator_fs_utils.cpp ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp ../../../source_hamilt/module_hcontainer/hcontainer.cpp ../../../source_hamilt/module_hcontainer/atom_pair.cpp
   ../../../source_hamilt/module_hcontainer/func_transfer.cpp ../../../source_hamilt/module_hcontainer/output_hcontainer.cpp ../../../source_hamilt/module_hcontainer/transfer.cpp
-  ../../../source_io/module_output/sparse_matrix.cpp
+
   ../../../source_basis/module_ao/parallel_orbitals.cpp
   ../../../source_basis/module_ao/orb_atomic_lm.cpp
   tmp_mocks.cpp ../../../source_hamilt/operator.cpp

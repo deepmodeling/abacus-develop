@@ -1,6 +1,7 @@
 #include "symm_rho.h"
 
 #include "source_hamilt/module_xc/xc_functional.h"
+#include "source_io/module_parameter/parameter.h"
 
 Symmetry_rho::Symmetry_rho()
 {
@@ -193,7 +194,7 @@ void Symmetry_rho::psymm(double* rho_part,
 #ifdef __MPI
     }
 
-	Pgrid.bcast(rhotot.data(), rho_part, GlobalV::MY_RANK);
+	Pgrid.bcast(rhotot.data(), rho_part, GlobalV::MY_RANK, PARAM.inp.esolver_type == "sdft");
 #endif
 
     ModuleBase::timer::end("Symmetry_rho","psymm");

@@ -9,10 +9,10 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_base/parallel_grid.h"
 #include "source_io/module_wf/read_wf2rho_pw.h"
 #include "source_io/module_wf/write_wfc_pw.h"
-#include "source_io/module_output/filename.h" // mohan add 2025-05-17
+#include "source_base/module_out/filename.h" // mohan add 2025-05-17
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
 
@@ -22,12 +22,6 @@
 #include "mpi.h"
 #endif
 
-Parallel_Grid::Parallel_Grid()
-{
-}
-Parallel_Grid::~Parallel_Grid()
-{
-}
 Charge::Charge()
 {
 }

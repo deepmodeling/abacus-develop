@@ -12,7 +12,7 @@
 #include "source_io/module_hs/rr_sparse_writer.h"
 #include "source_io/module_hs/write_hs_r.h"
 #include "source_io/module_hs/write_hs_sparse.h"
-#include "source_io/module_output/csr_reader.h"
+#include "source_base/module_out/csr_reader.h"
 #include "source_hamilt/module_hcontainer/atom_pair.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 

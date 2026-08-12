@@ -31,7 +31,7 @@ AddTest(
 AddTest(
 	TARGET MODULE_PW_structure_factor_test
 	LIBS parameter base device planewave
-	SOURCES structure_factor_test.cpp ../structure_factor.cpp ../parallel_grid.cpp
+	SOURCES structure_factor_test.cpp ../structure_factor.cpp
 	../../../source_cell/unitcell.cpp
 
 	../../../source_cell/update_cell.cpp
