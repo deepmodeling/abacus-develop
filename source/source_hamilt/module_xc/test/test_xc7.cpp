@@ -86,7 +86,7 @@ TEST_F(XCTest_LaplacianAnalytical, single_plane_wave)
 
     std::vector<std::complex<double>> rhog(n, 0.0);
     rhog[1] = std::complex<double>(0.0, 1.0);  // non-zero at gcar[1]=(1,0,0)
-std::vector<double> lapl(n);
+    std::vector<double> lapl(n);
     XC_Functional::laplacian_rho(rhog.data(), lapl.data(), &rhopw, tpiba);
 
     double g2 = 0.0;
