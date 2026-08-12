@@ -1,5 +1,5 @@
 #include <set>
-#include "source_io/module_output/filename.h"
+#include "source_base/module_out/filename.h"
 #include "source_base/tool_quit.h"
 
 namespace ModuleIO
@@ -19,7 +19,7 @@ std::string filename_output(
 			const int istep,
             const int iter)
 {
-    // output filename = "{PARAM.globalv.global_out_dir}/property{s}{spin index}
+    // output filename = "{global_out_dir}/property{s}{spin index}
     // {k(optional)}{k-point index}{g(optional)}{geometry index1}{_basis(nao|pw)} 
     // + {".txt"/".dat"}"
 

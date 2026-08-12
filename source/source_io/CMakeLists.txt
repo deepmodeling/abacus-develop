@@ -11,7 +11,6 @@ list(APPEND objects
     module_dos/cal_dos.cpp
     module_dos/cal_ldos.cpp
     module_ml/cal_mlkedf_descriptors.cpp
-    module_output/cif_io.cpp
     module_dos/write_dos_pw.cpp
     module_energy/write_bands.cpp
     module_energy/nscf_fermi_surf.cpp
@@ -22,11 +21,9 @@ list(APPEND objects
     module_output/print_info.cpp
     module_output/read_cube.cpp
     module_chgpot/rhog_io.cpp
-    module_output/read_exit_file.cpp
     module_wf/read_wfc_pw.cpp
     module_wf/read_wf2rho_pw.cpp
     module_restart/restart.cpp
-    module_output/binstream.cpp
     module_wf/write_wfc_pw.cpp
     module_output/write_pao.cpp
     module_output/write_cube.cpp
@@ -44,9 +41,6 @@ list(APPEND objects
     module_json/para_json.cpp
     parse_args.cpp
     input_help.cpp
-    module_output/orb_io.cpp
-    module_output/filename.cpp
-    module_output/ucell_io.cpp
 )
 
 list(APPEND objects_advanced
@@ -72,9 +66,6 @@ if(ENABLE_LCAO)
       module_wf/write_wfc_nao.cpp
       module_dm/write_dmk.cpp
       module_dm/write_dmr.cpp
-      module_output/sparse_matrix.cpp
-      module_output/file_reader.cpp
-      module_output/csr_reader.cpp
       module_qo/to_qo_kernel.cpp
       module_qo/to_qo_mpi.cpp
       module_qo/to_qo_structures.cpp

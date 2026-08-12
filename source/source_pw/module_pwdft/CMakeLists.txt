@@ -42,7 +42,6 @@ list(APPEND objects
     stru_fac.cpp
     stru_fac_k.cpp
     soc.cpp
-    parallel_grid.cpp
     elecond.cpp
     fs_nonlocal_tools.cpp
     fs_kin_tools.cpp
