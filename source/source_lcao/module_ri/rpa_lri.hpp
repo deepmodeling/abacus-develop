@@ -1451,9 +1451,11 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell &ucell,
 
     const int nk = PARAM.inp.nspin == 2 ? p_kv->get_nks() / 2 : p_kv->get_nks();
     const int nspin_tmp = PARAM.inp.nspin == 2 ? 2 : 1;
+    const int nbands = parav.get_wfc_global_nbands();
+    const int nbasis = parav.get_wfc_global_nbasis();
 
     // nocc and nvirt dosen't matter, their sum is actually used
-    std::vector<int> nocc(2, PARAM.inp.nbands);
+    std::vector<int> nocc(2, nbands);
     std::vector<int> nvirt(2, 0);
 
     std::vector<std::complex<double>> velocity_mo = LR_Util::cal_velocity_mo(ucell, gd, two_center_bundle,
@@ -1461,7 +1463,7 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell &ucell,
     if (GlobalV::MY_RANK == 0){
         // for librpa readable
         LR_Util::output_spectrum_mo_librpa(velocity_mo, outdir + "velocity_matrix",
-            nk, nspin_tmp, PARAM.inp.nbands, *this->p_kv);
+            nk, nspin_tmp, nbands, nbasis, nbands, *this->p_kv);
         // for human readable
         // LR_Util::output_spectrum_mo(velocity_mo, PARAM.globalv.global_out_dir + "velocity_matrix_rpa.dat",
         //     pelec->ekb.c, nk, nspin_tmp, PARAM.inp.nbands, *this->p_kv);

@@ -97,10 +97,10 @@ namespace LR_Util
     void matsym(T* inout, const int n, const Parallel_2D& pmat);
 #endif
     template<typename T>
-    bool is_hermitian(const T* mat, const Parallel_2D& pmat, const double threshold);
+    bool is_hermitian(const T* mat, const Parallel_2D& pmat, const double threshold, const int my_rank);
 
     template<typename T>
-    bool is_symmetric(const T* mat, const Parallel_2D& pmat, const double threshold);
+    bool is_symmetric(const T* mat, const Parallel_2D& pmat, const double threshold, const int my_rank);
 
     ///===================Psi wrapper=================
     /// psi(nk=1, nbands=nb, nk * nbasis) -> psi(nb, nk, nbasis) without memory copy
@@ -146,7 +146,8 @@ namespace LR_Util
     void pA2pX(T* X_pX, const T* X_pA, const int nband, const int nk, 
         const std::vector<int>& nocc, const std::vector<int>& nvirt,
         const std::vector<Parallel_2D>& pX, const Parallel_2D& pA,
-        const int row_offset, const int col_offset, const bool openshell);
+        const int row_offset, const int col_offset, const bool openshell,
+        const int my_rank, const int nproc);
 
     /// @brief  gather 2d matrix to full matrix
     /// the defination of row and col is consistent with setup_2d_division

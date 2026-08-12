@@ -203,8 +203,10 @@ void ModuleESolver::ESolver_LR<T, TR>::reset_dim_spin2()
 }
 
 template <typename T, typename TR>
-ModuleESolver::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp)
-    : input(inp)
+ModuleESolver::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp,
+                                            const std::string& in_dir,
+                                            const std::string& out_dir)
+    : input(inp), in_dir(in_dir), out_dir(out_dir)
 #ifdef __EXX
     , exx_info(GlobalC::exx_info)
 #endif
@@ -363,12 +365,11 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
     const bool use_ibz = false;
-    const std::string global_out_dir = PARAM.globalv.global_out_dir;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
     const double kspacing[3] = {input.kspacing[0], input.kspacing[1], input.kspacing[2]};
     const std::string kmesh_type = input.kmesh_type;
     const double koffset[3] = {input.koffset[0], input.koffset[1], input.koffset[2]};
-    this->kv.set(ucell, ucell.symm, input.kpoint_file, input.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
+    this->kv.set(ucell, ucell.symm, input.kpoint_file, input.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, this->out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
@@ -495,8 +496,8 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     this->setup_eigenvectors_X();
     this->pelec->ekb.create(nspin, this->nstates);
 
-    auto efile_out = [&](const std::string& label)->std::string {return PARAM.globalv.global_out_dir + "Excitation_Energy_" + label + ".dat";};
-    auto vfile_out = [&](const std::string& label)->std::string {return PARAM.globalv.global_out_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
+    auto efile_out = [&](const std::string& label)->std::string {return this->out_dir + "Excitation_Energy_" + label + ".dat";};
+    auto vfile_out = [&](const std::string& label)->std::string {return this->out_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
     if (this->input.lr_solver == "elpa")
     {
         ModuleBase::WARNING_QUIT("ESolver_LR", "ESolver_LR doesn't support elpa now.");
@@ -577,6 +578,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                                 this->paraC_,
                                 this->paraMat_,
                                 spin_types[is],
+                                this->out_dir,
                                 input.ri_hartree_benchmark,
                                 (input.ri_hartree_benchmark == "aims" ? input.aims_nbasis : std::vector<int>({})));
                 LR::HSolver::solve(hlr, this->X[is].template data<T>(), nloc_per_state, nstates,
@@ -591,8 +593,8 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
     }
     else    // lr_solver == "spectrum", read the eigenvalues
     {
-        auto efile_in = [&](const std::string& label)->std::string {return PARAM.globalv.global_readin_dir + "Excitation_Energy_" + label + ".dat";};
-        auto vfile_in = [&](const std::string& label)->std::string {return PARAM.globalv.global_readin_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
+        auto efile_in = [&](const std::string& label)->std::string {return this->in_dir + "Excitation_Energy_" + label + ".dat";};
+        auto vfile_in = [&](const std::string& label)->std::string {return this->in_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
     
         auto read_states = [&](const std::string& label, Real<T>* e, T* v, const int& dim, const int& nst)->void
             {
@@ -654,21 +656,21 @@ void ModuleESolver::ESolver_LR<T, TR>::after_all_runners(BaseCell& basecell)
             *this->ucell_, this->kv, this->gd, this->orb_cutoff_, this->two_center_bundle_,
             this->paraX_, this->paraC_, this->paraMat_,
             &this->pelec->ekb.c[is * nstates], this->eig_ks.c, this->X[is].template data<T>(), nstates, openshell,
-            LR_Util::tolower(input.abs_gauge));
+            LR_Util::tolower(input.abs_gauge), GlobalV::MY_RANK, this->out_dir);
         if (LR_Util::tolower(this->input.abs_gauge) == "velocity" ) {spectrum.set_vmo(this->velocity_mo.data());}
         spectrum.cal_spectrum();
         spectrum.transition_analysis(spin_types[is]+"_tda");
         if (spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
         {
             spectrum.optical_absorption_method1(freq, input.abs_broadening);
-            spectrum.write_transition_dipole(PARAM.globalv.global_out_dir + 
+            spectrum.write_transition_dipole(this->out_dir +
                 "trans_dipole_" + spin_types[is] + "_tda.dat");
             // =============================================== for test ====================================================
             // spectrum.optical_absorption_method2(freq, input.abs_broadening);
             // if (LR_Util::tolower(input.abs_gauge) == "velocity")
             // {   // TEST the formula v/omega rather than v/(e_a-e_i)
             //     spectrum.test_transition_dipoles_velocity_omega();
-            //     spectrum.write_transition_dipole(PARAM.globalv.global_out_dir + 
+            //     spectrum.write_transition_dipole(this->out_dir +
             //         "trans_dipole_" + spin_types[is] + "_vomega_tda.dat");
             // }
             // =============================================== for test ====================================================
@@ -778,17 +780,17 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
     {
 #ifdef __EXX
         int ncore = 0;
-        std::vector<double> eig_ks_vec = RI_Benchmark::read_aims_ebands<double>(PARAM.globalv.global_readin_dir + "band_out", nocc_in, nvirt_in, ncore);
+        std::vector<double> eig_ks_vec = RI_Benchmark::read_aims_ebands<double>(this->in_dir + "band_out", nocc_in, nvirt_in, ncore);
         std::cout << "ncore=" << ncore << ", nocc=" << nocc_in << ", nvirt=" << nvirt_in << ", nbands=" << this->nbands << std::endl;
         std::cout << "eig_ks_vec.size()=" << eig_ks_vec.size() << std::endl;
         if(eig_ks_vec.size() != this->nbands) {ModuleBase::WARNING_QUIT("ESolver_LR", "read_aims_ebands failed.");};
         for (int i = 0;i < nbands;++i) { this->pelec->ekb(0, i) = eig_ks_vec[i]; }
-        RI_Benchmark::read_aims_eigenvectors<T>(*this->psi_ks, PARAM.globalv.global_readin_dir + "KS_eigenvectors.out", ncore, nbands, nbasis);
+        RI_Benchmark::read_aims_eigenvectors<T>(*this->psi_ks, this->in_dir + "KS_eigenvectors.out", ncore, nbands, nbasis);
 #else
         ModuleBase::WARNING_QUIT("ESolver_LR", "RI benchmark is only supported when compile with LibRI.");
 #endif
     }
-	else if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir, this->paraMat_, *this->psi_ks, 
+	else if (!ModuleIO::read_wfc_nao(this->in_dir, this->paraMat_, *this->psi_ks,
 				this->pelec->ekb,
                 this->pelec->wg,
 				this->kv.ik2iktot,
@@ -810,7 +812,7 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
     for (int is = 0; is < this->nspin; ++is)
     {
         std::stringstream ssc;
-        ssc << PARAM.globalv.global_readin_dir << "chgs" << is + 1 << ".cube";
+        ssc << this->in_dir << "chgs" << is + 1 << ".cube";
         GlobalV::ofs_running << ssc.str() << std::endl;
         if (ModuleIO::read_vdata_palgrid(Pgrid,
             GlobalV::MY_RANK,

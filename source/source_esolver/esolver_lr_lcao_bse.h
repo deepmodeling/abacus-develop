@@ -1,6 +1,5 @@
 #pragma once
 #include "esolver_lr_lcao_tddft.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_lcao/module_lr/bse/molecular_lri.h"
 
 namespace ModuleESolver
@@ -10,7 +9,10 @@ namespace ModuleESolver
     template<typename T, typename TR = double>
     class ESolver_BSE : public ESolver_LR<T, TR> {
     public:
-        explicit ESolver_BSE(const Input_para& inp) : ESolver_LR<T, TR>(inp), rpa_dir(inp.rpa_outdir) {}
+        ESolver_BSE(const Input_para& inp, const std::string& in_dir, const std::string& out_dir)
+            : ESolver_LR<T, TR>(inp, in_dir, out_dir), rpa_dir(inp.rpa_outdir)
+        {
+        }
 
         ~ESolver_BSE() override {
             //delete this->psi_ks; // already deleted in ESolver_LR

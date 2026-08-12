@@ -1,6 +1,6 @@
 #include "lr_spectrum.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_base/global_variable.h"
 #include "source_lcao/module_lr/dm_trans/dm_trans.h"
 #include "source_base/parallel_reduce.h"
 #include "source_lcao/module_lr/utils/lr_util.h"
@@ -180,9 +180,9 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
 {
     // ============test dipole================
     // this->cal_transition_dipoles_length();
-    // this->write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_length.dat");
+    // this->write_transition_dipole(this->out_dir + "dipole_length.dat");
     // this->cal_transition_dipoles_velocity();
-    // this->write_transition_dipole(PARAM.globalv.global_out_dir + "dipole_velocity.dat");
+    // this->write_transition_dipole(this->out_dir + "dipole_velocity.dat");
     // exit(0);
     // ============test dipole================
     ModuleBase::TITLE("LR::LR_Spectrum", "optical_absorption");
@@ -190,9 +190,9 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
     // = -8*pi*Omega_S/V * mean_squared_dipole * Im[1/[(w+i\eta)^2-\Omega_S^2]]
     // = -4*pi/V * oscilator_strength * Im[1/[(w+i\eta)^2-\Omega_S^2]]
     std::vector<double>& osc = this->oscillator_strength_;
-    std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption.dat");
+    std::ofstream ofs(this->out_dir + "absorption.dat");
 
-	if (GlobalV::MY_RANK == 0) 
+	if (this->my_rank == 0)
 	{ 
 		ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; 
 	}
@@ -206,7 +206,7 @@ void LR::LR_Spectrum<T>::optical_absorption_method1(const std::vector<double>& f
         double abs = 0.0;
         // for (int i = 0;i < osc.size();++i) { abs += (osc[i] / (f_complex * f_complex - omega[i] * omega[i])).imag() * freq[f] * FourPI_div_c; }
         for (int i = 0;i < osc.size();++i) { abs += (osc[i] / (f_complex * f_complex - omega[i] * omega[i])).imag() * fac; }
-        if (GlobalV::MY_RANK == 0) { ofs << freq[f] * ModuleBase::Ry_to_eV << "\t" << 91.126664 / freq[f] << "\t" << std::abs(abs) << std::endl; }
+        if (this->my_rank == 0) { ofs << freq[f] * ModuleBase::Ry_to_eV << "\t" << 91.126664 / freq[f] << "\t" << std::abs(abs) << std::endl; }
     }
     ofs.close();
 }
@@ -220,10 +220,10 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
     std::ofstream ofs_k;
     const int nbands = nocc[0] + nvirt[0];
     const bool use_td_weight = (this->vmo_ptr != nullptr && LR_Util::tolower(this->gauge) == "velocity");
-    if (GlobalV::MY_RANK == 0)
+    if (this->my_rank == 0)
     {
-        ofs.open(PARAM.globalv.global_out_dir + "trans_analysis_" + spintype + ".dat");
-        ofs_k.open(PARAM.globalv.global_out_dir + "trans_kweight_" + spintype + ".dat");
+        ofs.open(this->out_dir + "trans_analysis_" + spintype + ".dat");
+        ofs_k.open(this->out_dir + "trans_kweight_" + spintype + ".dat");
         ofs << "==================================================================== \n";
         ofs << std::setw(40) << spintype << '\n';
         ofs << "==================================================================== \n";
@@ -332,12 +332,12 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
         MPI_Comm_size(this->pX[0].comm(), &comm_size);
         std::vector<int> recv_counts;
         std::vector<int> displs;
-        if (GlobalV::MY_RANK == 0)
+        if (this->my_rank == 0)
         {
             recv_counts.resize(comm_size);
         }
         MPI_Gather(&local_count, 1, MPI_INT, recv_counts.data(), 1, MPI_INT, 0, this->pX[0].comm());
-        if (GlobalV::MY_RANK == 0)
+        if (this->my_rank == 0)
         {
             displs.resize(comm_size, 0);
             for (int ip = 1; ip < comm_size; ++ip)
@@ -358,7 +358,7 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
         all_indices = std::move(local_indices);
         all_amplitudes = std::move(local_amplitudes);
     #endif
-        if (GlobalV::MY_RANK != 0) continue; // only rank 0 write the analysis file
+        if (this->my_rank != 0) continue; // only rank 0 write the analysis file
 
         std::vector<std::vector<std::pair<int, T>>> contributions(iend - istart);
         for (std::size_t i = 0; i < all_indices.size(); ++i)
@@ -395,7 +395,7 @@ void LR::LR_Spectrum<T>::transition_analysis(const std::string& spintype)
     k_weight = std::move(local_k_weight);
     k_td_weight = std::move(local_k_td_weight);
 #endif
-    if (GlobalV::MY_RANK == 0)
+    if (this->my_rank == 0)
     {
         ofs_k << std::fixed << std::setprecision(5);
         for (int ik = 0; ik < nk; ++ik)

@@ -9,6 +9,7 @@
 
 #include <vector>   //future tensor
 #include <memory>
+#include <string>
 
 #include "source_esolver/esolver_ks_lcao.h" //for the move constructor
 #include "source_estate/module_dm/density_matrix.h"
@@ -26,7 +27,7 @@ namespace ModuleESolver
     class ESolver_LR : public ModuleESolver::ESolver_FP
     {
     public:
-        explicit ESolver_LR(const Input_para& inp);
+        ESolver_LR(const Input_para& inp, const std::string& in_dir, const std::string& out_dir);
         ~ESolver_LR() {
             delete this->psi_ks;
         }
@@ -51,6 +52,8 @@ namespace ModuleESolver
 
       protected:
         const Input_para& input;
+        const std::string in_dir;
+        const std::string out_dir;
         const UnitCell* ucell_ = nullptr;
         Grid_Driver gd;
         std::vector<double> orb_cutoff_;

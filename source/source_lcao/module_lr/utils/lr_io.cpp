@@ -4,6 +4,8 @@
 #include <sstream>
 #include <stdexcept>
 #include "source_lcao/module_lr/utils/lr_util.h"
+#include "source_base/global_variable.h"
+#include "source_io/module_parameter/parameter.h"
 #include <algorithm>
 #include <cassert>
 #include <dirent.h>
@@ -21,9 +23,9 @@ namespace LR_IO {
     const std::string FILE_BAND_OUT = "band_out";
     const std::string FILE_BAND_KPATH = "band_kpath_info";
 
-void parse_band_out_file(const std::string& path, int& nbands_file, int& nk_file, int& nspin_file, int& nocc_file)
+void parse_band_out_file(const std::string& in_dir, int& nbands_file, int& nk_file, int& nspin_file, int& nocc_file)
 {
-    std::string file = path + FILE_BAND_OUT;
+    std::string file = in_dir + FILE_BAND_OUT;
     std::ifstream ifs(file);
     if (!ifs) throw std::runtime_error(file + " not found");
     std::string tmp, line;
@@ -50,7 +52,7 @@ void parse_band_out_file(const std::string& path, int& nbands_file, int& nk_file
 
     if (PARAM.inp.bse_use_fine_kgrid)
     {
-        file = PARAM.globalv.global_readin_dir + FILE_BAND_KPATH;
+        file = in_dir + FILE_BAND_KPATH;
         std::ifstream ifs(file);
         if (!ifs) throw std::runtime_error(file + " not found");
         std::string tmp;
@@ -66,10 +68,10 @@ void parse_band_out_file(const std::string& path, int& nbands_file, int& nk_file
 #ifdef __EXX
 
 RI_kRlist::RI_kRlist(const UnitCell& ucell, K_Vectors* const pkv,
-    const std::string& path, const int use_fine_kgrid)
+    const std::string& in_dir, const int use_fine_kgrid, const std::string& out_dir)
     : klist(pkv)
 {
-    read_kpts_coarse(path + FILE_COARSE, ucell, this->klist);
+    read_kpts_coarse(in_dir + FILE_COARSE, ucell, this->klist, out_dir);
     this->klist_coarse = *this->klist;
     this->period = RI_Util::get_Born_vonKarmen_period(*klist);
     this->Rlist = RI_Util::get_Born_von_Karmen_cells(period);
@@ -82,17 +84,18 @@ RI_kRlist::RI_kRlist(const UnitCell& ucell, K_Vectors* const pkv,
     // }
     if (use_fine_kgrid==1)
     {
-        read_kpts_fine(path + FILE_FINE_UNIFORM, ucell, this->klist, false);
+        read_kpts_fine(in_dir + FILE_FINE_UNIFORM, ucell, this->klist, false, out_dir);
     }
     else if (use_fine_kgrid==2)
     {
-        read_kpts_fine(path + FILE_FINE_NONUNIFORM, ucell, this->klist, true);
+        read_kpts_fine(in_dir + FILE_FINE_NONUNIFORM, ucell, this->klist, true, out_dir);
     }
     else if (use_fine_kgrid!=0)
         ModuleBase::WARNING_QUIT("LR_IO", "use_fine_kgrid must be 0, 1 or 2");
 };
 
-void RI_kRlist::read_kpts_coarse(const std::string& file, const UnitCell& ucell, K_Vectors* const klist)
+void RI_kRlist::read_kpts_coarse(const std::string& file, const UnitCell& ucell,
+                                 K_Vectors* const klist, const std::string& out_dir)
 {
     std::ifstream ifs;
     ifs.open(file);
@@ -133,7 +136,7 @@ void RI_kRlist::read_kpts_coarse(const std::string& file, const UnitCell& ucell,
         }
     }
 
-    std::ofstream ofs_kpts_coarse(PARAM.globalv.global_out_dir + "kpts_coarse.dat");
+    std::ofstream ofs_kpts_coarse(out_dir + "kpts_coarse.dat");
     ofs_kpts_coarse << "kpts_coarse:" << nk << std::setw(16) << "( Cartesian" << std::setw(36) 
         << "|                Direct )" << std::setw(15) << "| wk (normalized as sum = nk)" << std::endl;
     for (int ik = 0; ik < nks; ++ik)
@@ -146,7 +149,9 @@ void RI_kRlist::read_kpts_coarse(const std::string& file, const UnitCell& ucell,
     ofs_kpts_coarse.close();
 }
 
-void RI_kRlist::read_kpts_fine(const std::string& file, const UnitCell& ucell, K_Vectors* const klist, const bool is_weighted)
+void RI_kRlist::read_kpts_fine(const std::string& file, const UnitCell& ucell,
+                               K_Vectors* const klist, const bool is_weighted,
+                               const std::string& out_dir)
 {
     // band_kpath_info format: first line: nband nbasis nspin nk, then kx ky kz per line (direct coords)
     // KPT_bse format: first line = nk, then kx ky kz wk per line (direct coords, BSE weight sum=nk)
@@ -192,7 +197,7 @@ void RI_kRlist::read_kpts_fine(const std::string& file, const UnitCell& ucell, K
             klist->wk[ik + nk] = klist->wk[ik];
         }
     }
-    std::ofstream ofs_kpts_fine(PARAM.globalv.global_out_dir + "kpts_fine.dat");
+    std::ofstream ofs_kpts_fine(out_dir + "kpts_fine.dat");
     ofs_kpts_fine << "kpts_fine:" << nk << std::setw(18) << "( Cartesian" << std::setw(36) 
         << "|                Direct )" << std::setw(15) << "| wk (normalized as sum = nk)" << std::endl;
     for (int ik = 0; ik < nk; ++ik)
@@ -207,13 +212,13 @@ void RI_kRlist::read_kpts_fine(const std::string& file, const UnitCell& ucell, K
 
 std::vector<double> read_energy_qp(const int nocc,
                                    const int nvirt,
-                                   const std::string& path,
+                                   const std::string& in_dir,
                                    int& ncore,
                                    const int nk,
                                    const int nspin_tmp,
                                    const int nspin_file)
 {
-    const std::string file = path + "energy_qp";
+    const std::string file = in_dir + "energy_qp";
     std::cout << "in read_energy_qp, nbands(nocc+nvir): " << (nocc+nvirt) << std::endl;
     std::vector<double> eig_info( nspin_tmp * nk * (nocc + nvirt) * 3 ); // occ, eig_ks, eig_gw
     std::ifstream ifs_gw (file);
@@ -278,13 +283,13 @@ std::vector<double> read_energy_qp_from_band_files(const K_Vectors& kv,
                                                    const int nocc,
                                                    const int nvirt,
                                                    int& ncore,
-                                                   const std::string& path,
+                                                   const std::string& in_dir,
                                                    const int nk,
                                                    const int nspin_tmp,
                                                    const int nspin_file)
 {
-    const std::string ks_prefix = path + "KS_band_spin_";
-    const std::string gw_prefix = path + "GW_band_spin_";
+    const std::string ks_prefix = in_dir + "KS_band_spin_";
+    const std::string gw_prefix = in_dir + "GW_band_spin_";
     std::cout << "in read_energy_qp_from_band_files, nbands(nocc+nvir): " << (nocc+nvirt) << std::endl;
     std::vector<double> eig_info( nspin_tmp * nk * (nocc + nvirt) * 3 ); // occ, eig_ks, eig_gw
     for (int is =0; is < nspin_file; ++is)
@@ -362,11 +367,12 @@ std::vector<double> read_energy_qp_from_band_files(const K_Vectors& kv,
 template <typename TK>
 void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
                               psi::Psi<TK>& wfc_ks_global,
-                              const std::string& path,
+                              const std::string& in_dir,
                               const int ncore,
                               const int nbands_file,
                               const int nspin_tmp,
                               const int nspin_file,
+                              const int my_rank,
                               Parallel_Orbitals& pmat)
 {
     int nbands = pmat.get_wfc_global_nbands();// nbands = nocc + nvirt
@@ -376,11 +382,11 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
     assert((ncore + nbands) <= nbands_file);
     const size_t nk = PARAM.inp.nspin == 2 ? wfc_ks.get_nk() / 2 : wfc_ks.get_nk();
 
-    if (GlobalV::MY_RANK == 0)
+    if (my_rank == 0)
     {
         struct dirent *ptr;
         DIR *dir;
-        dir = opendir(path.c_str());
+        dir = opendir(in_dir.c_str());
         std::vector<bool> readen_k(nk, false);
 
         while ((ptr = readdir(dir)) != NULL){// read all the files in the directory
@@ -388,7 +394,7 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
             if (fm.find("KS_eigenvector") == 0)// find file KS_eigenvectorXXX
             {
                 //std::cout << "found librpa_eigenvector file:" << fm << std::endl;
-                std::ifstream file_librpa_ks(path + fm);
+                std::ifstream file_librpa_ks(in_dir + fm);
                 std::string tmp;
                 while (file_librpa_ks.peek() != EOF)
                 {
@@ -424,12 +430,12 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
                 throw std::runtime_error("librpa_eigenvector file not found for k-point " + std::to_string(ik+1));
         }
         
-    }// end of if (GlobalV::MY_RANK == 0); next MPI_comm to other ranks
+    }// end of if (my_rank == 0); next MPI_comm to other ranks
 
     // change wfc_ks_global phase to make arg(<psi(k)|psi(k'=0)>) = 0
     std::cout << "Do phase correction" << std::endl;
     for (int iks = 0; iks < wfc_ks.get_nk(); ++iks){
-        if (GlobalV::MY_RANK == 0) {
+        if (my_rank == 0) {
             // test: output wfc            
             // std::cout << "wfc_gs_read_from_librpa for iks:" << iks << std::endl;
             // for (int ib = 0; ib < nbands; ++ib)
@@ -476,11 +482,12 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
 template <typename TK>
 void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
                                               psi::Psi<TK>& wfc_ks_global,
-                                              const std::string& path,
+                                              const std::string& in_dir,
                                               const int ncore,
                                               const int nbands_file,
                                               const int nspin_tmp,
                                               const int nspin_file,
+                                              const int my_rank,
                                               Parallel_Orbitals& pmat)
 {
     int nbands = pmat.get_wfc_global_nbands();// nbands = nocc + nvirt
@@ -490,12 +497,12 @@ void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
     assert((ncore + nbands) <= nbands_file);
     const size_t nk = PARAM.inp.nspin == 2 ? wfc_ks.get_nk() / 2 : wfc_ks.get_nk();
     
-    if (GlobalV::MY_RANK == 0)
+    if (my_rank == 0)
     {
         for (int ik = 0; ik < nk; ++ik)
         {
             std::stringstream ss;
-            ss << path << "band_KS_eigenvector_k_" << std::setfill('0') << std::setw(5) << ik + 1 << ".txt";
+            ss << in_dir << "band_KS_eigenvector_k_" << std::setfill('0') << std::setw(5) << ik + 1 << ".txt";
             std::ifstream infile(ss.str(), std::ios::binary);
             if (!infile)
             {
@@ -523,12 +530,12 @@ void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
             }
             infile.close();
         }
-    }// end of if (GlobalV::MY_RANK == 0); next MPI_comm to other ranks
+    }// end of if (my_rank == 0); next MPI_comm to other ranks
 
     // change wfc_ks_global phase to make arg(<psi(k)|psi(k'=0)>) = 0
     std::cout << "Do phase correction" << std::endl;
     for (int iks = 0; iks < wfc_ks.get_nk(); ++iks){
-        if (GlobalV::MY_RANK == 0) {
+        if (my_rank == 0) {
             // test: output wfc            
             // std::cout << "wfc_gs_read_from_librpa for iks:" << iks << std::endl;
             // for (int ib = 0; ib < nbands; ++ib)
@@ -573,15 +580,15 @@ void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
 }
 
 template <typename TCs, typename TVs> // only for blocking by atom pairs
-TLRI<TVs> read_coulomb_mat_k(const std::string& path, const TLRI<TCs>& Cs, LR_IO::RI_kRlist& kRlist)
+TLRI<TVs> read_coulomb_mat_k(const std::string& in_dir, const TLRI<TCs>& Cs, LR_IO::RI_kRlist& kRlist)
 {
     struct dirent *ptr;
     DIR *dir;
     bool has_unshrinked = false;
-    dir = opendir(path.c_str());
+    dir = opendir(in_dir.c_str());
     if (!dir)
     {
-        throw std::runtime_error("Cannot open directory: " + path);
+        throw std::runtime_error("Cannot open directory: " + in_dir);
     }
     while ((ptr = readdir(dir)) != nullptr)
     {
@@ -594,7 +601,7 @@ TLRI<TVs> read_coulomb_mat_k(const std::string& path, const TLRI<TCs>& Cs, LR_IO
     }
     rewinddir(dir);
     const std::string prefix = has_unshrinked ? "coulomb_unshrinked_cut_" : "coulomb_cut_";
-    std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << path << "\"" << std::endl;
+    std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << in_dir << "\"" << std::endl;
 
     size_t nk = 0, nabf = 0, istart = 0, jstart = 0, iend = 0, jend = 0;
 
@@ -629,7 +636,7 @@ TLRI<TVs> read_coulomb_mat_k(const std::string& path, const TLRI<TCs>& Cs, LR_IO
         if (fm.find(prefix) == 0)// find file coulomb_cut_xxx
         {
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "found Coulomb file: " + fm + ", start reading...");
-            std::ifstream ifs(path  + fm);
+            std::ifstream ifs(in_dir  + fm);
             ifs >> nk;//   actual nk
             assert(nk == klist_nk);
 
@@ -705,15 +712,15 @@ TLRI<TVs> read_coulomb_mat_k(const std::string& path, const TLRI<TCs>& Cs, LR_IO
 }
 
 template <typename TCs, typename TVs> // any blocking
-TLRI<TVs> read_coulomb_mat_general_k(const std::string& path, const TLRI<TCs>& Cs, LR_IO::RI_kRlist& kRlist)
+TLRI<TVs> read_coulomb_mat_general_k(const std::string& in_dir, const TLRI<TCs>& Cs, LR_IO::RI_kRlist& kRlist)
 {
     struct dirent *ptr;
     DIR *dir;
     bool has_unshrinked = false;
-    dir = opendir(path.c_str());
+    dir = opendir(in_dir.c_str());
     if (!dir)
     {
-        throw std::runtime_error("Cannot open directory: " + path);
+        throw std::runtime_error("Cannot open directory: " + in_dir);
     }
     while ((ptr = readdir(dir)) != nullptr)
     {
@@ -726,7 +733,7 @@ TLRI<TVs> read_coulomb_mat_general_k(const std::string& path, const TLRI<TCs>& C
     }
     rewinddir(dir);
     const std::string prefix = has_unshrinked ? "coulomb_unshrinked_cut_" : "coulomb_cut_";
-    std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << path << "\"" << std::endl;
+    std::cout << "read_coulomb_mat_k: using prefix \"" << prefix << "\" in directory \"" << in_dir << "\"" << std::endl;
     
     TLRI<TVs> Vs;
     std::map<int, std::map<std::pair<int,int>, RI::Tensor<std::complex<double>>>> Vq; // <iat1, <<iat2,ik>, T>>
@@ -743,7 +750,7 @@ TLRI<TVs> read_coulomb_mat_general_k(const std::string& path, const TLRI<TCs>& C
         if (fm.find(prefix) == 0)// find file coulomb_cut_xxx
         {
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "found Coulomb file: " + fm + ", start reading...");
-            std::ifstream ifs(path  + fm);
+            std::ifstream ifs(in_dir  + fm);
             ifs >> nk;  //   actual nk            
             assert(nk == klist_nk);
             
@@ -909,35 +916,35 @@ TLRI<Tdata> read_Ws(const TLRI<TVs>& Vs, const std::vector<TC>& Rlist)
 
 template void read_librpa_eigenvectors<double>(
     psi::Psi<double>& wfc_ks, psi::Psi<double>& wfc_ks_global,
-    const std::string& path, const int ncore, const int nbands_file,
-    const int nspin_tmp, const int nspin_file, Parallel_Orbitals& pmat);
+    const std::string& in_dir, const int ncore, const int nbands_file,
+    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
 
 template void read_librpa_eigenvectors<std::complex<double>>(
     psi::Psi<std::complex<double>>& wfc_ks, psi::Psi<std::complex<double>>& wfc_ks_global,
-    const std::string& path, const int ncore, const int nbands_file,
-    const int nspin_tmp, const int nspin_file, Parallel_Orbitals& pmat);
+    const std::string& in_dir, const int ncore, const int nbands_file,
+    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
 
 template void read_librpa_eigenvectors_from_band_files<double>(
     psi::Psi<double>& wfc_ks, psi::Psi<double>& wfc_ks_global,
-    const std::string& path, const int ncore, const int nbands_file,
-    const int nspin_tmp, const int nspin_file, Parallel_Orbitals& pmat);
+    const std::string& in_dir, const int ncore, const int nbands_file,
+    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
 
 template void read_librpa_eigenvectors_from_band_files<std::complex<double>>(
     psi::Psi<std::complex<double>>& wfc_ks, psi::Psi<std::complex<double>>& wfc_ks_global,
-    const std::string& path, const int ncore, const int nbands_file,
-    const int nspin_tmp, const int nspin_file, Parallel_Orbitals& pmat);
+    const std::string& in_dir, const int ncore, const int nbands_file,
+    const int nspin_tmp, const int nspin_file, const int my_rank, Parallel_Orbitals& pmat);
 
 template TLRI<double> read_coulomb_mat_k<double, double>
-(const std::string& path, const TLRI<double>& Cs, LR_IO::RI_kRlist& kRlist);
+(const std::string& in_dir, const TLRI<double>& Cs, LR_IO::RI_kRlist& kRlist);
 
 template TLRI<std::complex<double>> read_coulomb_mat_k<std::complex<double>, std::complex<double>>
-(const std::string& path, const TLRI<std::complex<double>>& Cs, LR_IO::RI_kRlist& kRlist);
+(const std::string& in_dir, const TLRI<std::complex<double>>& Cs, LR_IO::RI_kRlist& kRlist);
 
 template TLRI<double> read_coulomb_mat_general_k<double, double>
-(const std::string& path, const TLRI<double>& Cs, LR_IO::RI_kRlist& kRlist);
+(const std::string& in_dir, const TLRI<double>& Cs, LR_IO::RI_kRlist& kRlist);
 
 template TLRI<std::complex<double>> read_coulomb_mat_general_k<std::complex<double>, std::complex<double>>
-(const std::string& path, const TLRI<std::complex<double>>& Cs, LR_IO::RI_kRlist& kRlist);
+(const std::string& in_dir, const TLRI<std::complex<double>>& Cs, LR_IO::RI_kRlist& kRlist);
 
 template TLRI<double> read_Ws<double, double>
 (const TLRI<double>& Vs, const std::vector<TC>& Rlist);

@@ -37,8 +37,7 @@ void solve_full(const int my_rank,
                 std::vector<std::complex<double>>& global_v);
 /// @brief template solve TDA BSE, implemented in hamilt_bse_solver.hpp
 template <typename T>
-void solve_tda(const int my_rank,
-               const std::vector<T>& A,
+void solve_tda(const std::vector<T>& A,
                const Parallel_2D& pA,
                std::vector<double>& ev,
                std::vector<T>& v);

@@ -1,6 +1,7 @@
 #include "esolver_lr_lcao_bse.h"
 #include <array>
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
+#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_output/print_info.h"
 #include "source_hamilt/module_gint/gint.h"
 #include "source_lcao/module_lr/bse/hamilt_bse.h"
@@ -27,7 +28,11 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
     ModuleESolver::ESolver_FP::before_all_runners(basecell, inp);
     this->pelec = new elecstate::ElecStateLCAO<T>();
 
-    this->kRlist = LR_IO::RI_kRlist(*this->ucell_, &this->kv, this->rpa_dir, inp.bse_use_fine_kgrid);
+    this->kRlist = LR_IO::RI_kRlist(*this->ucell_,
+                                    &this->kv,
+                                    this->rpa_dir,
+                                    inp.bse_use_fine_kgrid,
+                                    this->out_dir);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "Set K-POINTS and R-list for RI");
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
@@ -86,7 +91,8 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
                this->pw_rho->nplane,
                this->pw_rho->nrxx,
                this->pw_big->nbz,
-               this->pw_big->bz);
+               this->pw_big->bz,
+               GlobalV::NPROC);
 
     // search adjacent atoms and init Gint
     double search_radius = -1.0;
@@ -132,7 +138,9 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
             this->input.bse_q_approx_mode,
             this->input.bse_q_approx_threshold,
             this->input.out_ri_cv,
-            PARAM.globalv.global_out_dir);
+            this->out_dir,
+            GlobalV::MY_RANK,
+            GlobalV::NPROC);
 
         if (!this->input.bse_ri_hartree && this->input.ri_hartree_benchmark == "none")
         {
@@ -156,13 +164,13 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
     this->allocate_eigen_infos();
 
     auto efile_out = [&](const std::string& label)->std::string {
-        return PARAM.globalv.global_out_dir + "Excitation_Energy_" + label + ".dat";};
+        return this->out_dir + "Excitation_Energy_" + label + ".dat";};
     auto vfile_out = [&](const std::string& label)->std::string {
-        return PARAM.globalv.global_out_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
+        return this->out_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
     auto efile_in = [&](const std::string& label)->std::string {
-        return PARAM.globalv.global_readin_dir + "Excitation_Energy_" + label + ".dat";};
+        return this->in_dir + "Excitation_Energy_" + label + ".dat";};
     auto vfile_in = [&](const std::string& label)->std::string {
-        return PARAM.globalv.global_readin_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
+        return this->in_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
 
     if (this->input.lr_solver == "elpa")
     {
@@ -185,8 +193,10 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
                                     this->input.bse_mem_save,
                                     this->input.bse_continue,
                                     this->input.out_bse_ab,
-                                    PARAM.globalv.global_out_dir,
-                                    PARAM.globalv.global_readin_dir,
+                                    this->out_dir,
+                                    this->in_dir,
+                                    GlobalV::MY_RANK,
+                                    GlobalV::NPROC,
                                     this->input.ri_hartree_benchmark);
 
             auto write_tda_states = [&](const std::string& label,
@@ -369,7 +379,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
 
     ModuleBase::TITLE("ESolver_BSE", "after_all_runners");
     ModuleBase::timer::start("ESolver_BSE", "after_all_runners");
-    const std::string& output_dir = PARAM.globalv.global_out_dir;
+    const std::string& output_dir = this->out_dir;
     const std::set<std::string> benchmarks = {"abacus-librpa", "abacus", "none" };
     if (benchmarks.find(this->input.ri_hartree_benchmark) == benchmarks.end())
     {
@@ -477,7 +487,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                                             this->paraX_, this->paraC_, this->paraMat_,
                                             &this->tda_ene[is * this->nstates], this->eig_ks.c,
                                             this->X[is].template data<T>(), this->nstates, false/*openshell*/,
-                                            LR_Util::tolower(this->input.abs_gauge));
+                                            LR_Util::tolower(this->input.abs_gauge), GlobalV::MY_RANK, output_dir);
                 if (LR_Util::tolower(this->input.abs_gauge) == "velocity")
                 {
                     spectrum.set_vmo(this->velocity_mo.data());
@@ -508,7 +518,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                                             this->paraX_, this->paraC_, this->paraMat_,
                                             &this->full_ene[is * this->nstates], this->eig_ks.c,
                                             this->full_X[is].template data<T>(), this->nstates, false/*openshell*/,
-                                            LR_Util::tolower(this->input.abs_gauge));
+                                            LR_Util::tolower(this->input.abs_gauge), GlobalV::MY_RANK, output_dir);
                 if (LR_Util::tolower(this->input.abs_gauge) == "velocity")
                 {
                     spectrum.set_vmo(this->velocity_mo.data());
@@ -633,14 +643,14 @@ void ESolver_BSE<T, TR>::read_ks_wfc()
         eig_gw_info = LR_IO::read_energy_qp_from_band_files(this->kv, this->nocc[0], this->nvirt[0], ncore,
                                         this->rpa_dir, this->nk, nspin_tmp, nspin_file);
         LR_IO::read_librpa_eigenvectors_from_band_files<T>(*this->psi_ks, *this->psi_ks_global,
-            this->rpa_dir, ncore, nbands_file, nspin_tmp, nspin_file, this->paraMat_);
+            this->rpa_dir, ncore, nbands_file, nspin_tmp, nspin_file, GlobalV::MY_RANK, this->paraMat_);
     }
     else
     {
         eig_gw_info = LR_IO::read_energy_qp(this->nocc[0], this->nvirt[0],
                                         this->rpa_dir, ncore, this->nk, nspin_tmp, nspin_file);
         LR_IO::read_librpa_eigenvectors<T>(*this->psi_ks, *this->psi_ks_global,
-            this->rpa_dir, ncore, nbands_file, nspin_tmp, nspin_file, this->paraMat_);
+            this->rpa_dir, ncore, nbands_file, nspin_tmp, nspin_file, GlobalV::MY_RANK, this->paraMat_);
     }
     int cbm_k(0), vbm_k(0), direct_k(0);
     for (int iks = 0; iks < this->kv.get_nks(); ++iks) {

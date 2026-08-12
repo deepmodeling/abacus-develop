@@ -63,12 +63,12 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
     MPI_Datatype mpitype_blockhead = mpi_type_blockhead();
     // 0. outer loop of k1: communicate per 64 k1
     constexpr int comm_nk1 = 64;
-    std::vector<int> send_head_counts(GlobalV::NPROC, 0), recv_head_counts(GlobalV::NPROC, 0);
-    std::vector<int> send_buffer_counts(GlobalV::NPROC, 0), recv_buffer_counts(GlobalV::NPROC, 0);
-    std::vector<std::size_t> send_buffer_counts_c(GlobalV::NPROC, 0);
-    std::vector<int> shdispls(GlobalV::NPROC, 0), rhdispls(GlobalV::NPROC, 0); //displacements of block heads
-    std::vector<int> sbdispls(GlobalV::NPROC, 0), rbdispls(GlobalV::NPROC, 0); //displacements of buffer
-    std::vector<int> cursor_head(GlobalV::NPROC, 0), cursor_buffer(GlobalV::NPROC, 0);
+    std::vector<int> send_head_counts(this->nproc, 0), recv_head_counts(this->nproc, 0);
+    std::vector<int> send_buffer_counts(this->nproc, 0), recv_buffer_counts(this->nproc, 0);
+    std::vector<std::size_t> send_buffer_counts_c(this->nproc, 0);
+    std::vector<int> shdispls(this->nproc, 0), rhdispls(this->nproc, 0); //displacements of block heads
+    std::vector<int> sbdispls(this->nproc, 0), rbdispls(this->nproc, 0); //displacements of buffer
+    std::vector<int> cursor_head(this->nproc, 0), cursor_buffer(this->nproc, 0);
     std::vector<BlockHead> send_heads, recv_heads;
     std::vector<T> send_buffers, recv_buffers;
     int max_send_head_total = 0, max_recv_head_total = 0;
@@ -109,7 +109,7 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
                 }
             }
         }
-        for (int p = 0; p < GlobalV::NPROC; ++p)
+        for (int p = 0; p < this->nproc; ++p)
         {
             if (send_buffer_counts_c[p] > std::numeric_limits<int>::max())
             {
@@ -117,14 +117,14 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
             }
             send_buffer_counts[p] = static_cast<int>(send_buffer_counts_c[p]);
         }
-        assert(send_head_counts.at(GlobalV::MY_RANK) == 0);
-        assert(send_buffer_counts.at(GlobalV::MY_RANK) == 0);
+        assert(send_head_counts.at(this->my_rank) == 0);
+        assert(send_buffer_counts.at(this->my_rank) == 0);
         MPI_Alltoall(send_head_counts.data(), 1, MPI_INT, recv_head_counts.data(), 1, MPI_INT, pm_2d.comm());
         MPI_Alltoall(send_buffer_counts.data(), 1, MPI_INT,
                      recv_buffer_counts.data(), 1, MPI_INT, pm_2d.comm());
         
         int send_head_total = 0, recv_head_total = 0, send_buffer_total = 0, recv_buffer_total = 0;
-        for (int p = 0; p < GlobalV::NPROC; ++p)
+        for (int p = 0; p < this->nproc; ++p)
         {
             shdispls[p] = send_head_total; send_head_total += send_head_counts[p];
             rhdispls[p] = recv_head_total; recv_head_total += recv_head_counts[p];
@@ -165,7 +165,7 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
                         const int global_row = row_base + i;
                         const int i_next = std::min(global_row/nb*nb + nb - row_base, npair);
                         const int owner = pm_2d.owner_processor(global_row, global_col);
-                        if (owner == GlobalV::MY_RANK)
+                        if (owner == this->my_rank)
                         {
                             const int lr0 = pm_2d.global2local_row(global_row);
                             const int lc0 = pm_2d.global2local_col(global_col);
@@ -202,7 +202,7 @@ void MolecularLRI<T>::transform_k_2dlocal(std::vector<T>& m_2d,
                 }
             }
         }
-        for (int p = 0; p < GlobalV::NPROC; ++p)
+        for (int p = 0; p < this->nproc; ++p)
         {
             assert(cursor_head[p] == shdispls[p] + send_head_counts[p]);
             assert(cursor_buffer[p] == sbdispls[p] + send_buffer_counts[p]);

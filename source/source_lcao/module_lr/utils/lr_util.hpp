@@ -98,7 +98,7 @@ namespace LR_Util
         }
     }
     template<typename T>
-    bool is_hermitian(const T* mat, const Parallel_2D& pmat, const double threshold){
+    bool is_hermitian(const T* mat, const Parallel_2D& pmat, const double threshold, const int my_rank){
         bool is_herm = true;
         int n = pmat.get_global_row_size();
         assert(n == pmat.get_global_col_size());
@@ -111,7 +111,7 @@ namespace LR_Util
         T beta = 0.0;
         if (pmat.get_local_size() > std::numeric_limits<int>::max())
         {
-            std::cerr<< "Warning: pmat in RANK " + std::to_string(GlobalV::MY_RANK) + " has "
+            std::cerr<< "Warning: pmat in RANK " + std::to_string(my_rank) + " has "
              + std::to_string(pmat.get_local_size()) + " elements, which may overflow during `tranc`, please use more mpi." << std::endl;
         }
         std::vector<T> herm_mat(pmat.get_local_size());
@@ -155,7 +155,7 @@ namespace LR_Util
         norm1 = LapackConnector::lange(norm_type, n, n, minus_mat.data(), n, &work_dummy);
         norm2 = LapackConnector::lange(norm_type, n, n, sum_mat.data(), n, &work_dummy);
 #endif
-        if (GlobalV::MY_RANK == 0) {
+        if (my_rank == 0) {
             std::cout << "|  Hermitian check: ||A - A^H||_F = " << norm1 << ", ||A + A^H||_F = " << norm2 << std::endl;
             std::cout << "|   ||A - A^H||_F / ||A + A^H||_F = " << norm1 / norm2 << std::endl;
         }
@@ -163,7 +163,7 @@ namespace LR_Util
     }
 
     template<typename T>
-    bool is_symmetric(const T* mat, const Parallel_2D& pmat, const double threshold){
+    bool is_symmetric(const T* mat, const Parallel_2D& pmat, const double threshold, const int my_rank){
         bool is_sym = true;
         int n = pmat.get_global_row_size();
         assert(n == pmat.get_global_col_size());
@@ -176,7 +176,7 @@ namespace LR_Util
         T beta = 0.0;
         if (pmat.get_local_size() > std::numeric_limits<int>::max())
         {
-            std::cerr<< "Warning: pmat in RANK " + std::to_string(GlobalV::MY_RANK) + " has "
+            std::cerr<< "Warning: pmat in RANK " + std::to_string(my_rank) + " has "
              + std::to_string(pmat.get_local_size()) + " elements, which may overflow during `tranu`, please use more mpi." << std::endl;
         }
         std::vector<T> trans_mat(pmat.get_local_size());
@@ -217,7 +217,7 @@ namespace LR_Util
         norm1 = LapackConnector::lange(norm_type, n, n, minus_mat.data(), n, &work_dummy);
         norm2 = LapackConnector::lange(norm_type, n, n, sum_mat.data(), n, &work_dummy);
 #endif
-        if (GlobalV::MY_RANK == 0) {
+        if (my_rank == 0) {
             std::cout << "|  Symmetric check: ||B - B^T||_F = " << norm1 << ", ||B + B^T||_F = " << norm2 << std::endl;
             std::cout << "|   ||B - B^T||_F / ||B + B^T||_F = " << norm1 / norm2 << std::endl;
         }
@@ -355,7 +355,8 @@ namespace LR_Util
     void pA2pX(T* X_pX, const T* X_pA, const int nband, const int nk, 
         const std::vector<int>& nocc, const std::vector<int>& nvirt,
         const std::vector<Parallel_2D>& pX, const Parallel_2D& pA,
-        const int row_offset, const int col_offset, const bool openshell)
+        const int row_offset, const int col_offset, const bool openshell,
+        const int my_rank, const int nproc)
     {
         ModuleBase::TITLE("LR_Util", "pA2pX");
         ModuleBase::timer::start("LR_Util", "pA2pX");
@@ -374,11 +375,11 @@ namespace LR_Util
 
         // 0. outer loop of row, communicate per 64 kpoints
         constexpr int comm_nk = 64;
-        std::vector<int> send_head_counts(GlobalV::NPROC, 0), recv_head_counts(GlobalV::NPROC, 0);
-        std::vector<int> send_buffer_counts(GlobalV::NPROC, 0), recv_buffer_counts(GlobalV::NPROC, 0);
-        std::vector<int> shdispls(GlobalV::NPROC, 0), rhdispls(GlobalV::NPROC, 0); // displacements of block heads
-        std::vector<int> sbdispls(GlobalV::NPROC, 0), rbdispls(GlobalV::NPROC, 0); // displacements of buffer
-        std::vector<int> cursor_head(GlobalV::NPROC, 0), cursor_buffer(GlobalV::NPROC, 0);
+        std::vector<int> send_head_counts(nproc, 0), recv_head_counts(nproc, 0);
+        std::vector<int> send_buffer_counts(nproc, 0), recv_buffer_counts(nproc, 0);
+        std::vector<int> shdispls(nproc, 0), rhdispls(nproc, 0); // displacements of block heads
+        std::vector<int> sbdispls(nproc, 0), rbdispls(nproc, 0); // displacements of buffer
+        std::vector<int> cursor_head(nproc, 0), cursor_buffer(nproc, 0);
         std::vector<BlockHead> send_heads, recv_heads;
         std::vector<T> send_buffers, recv_buffers;
         int max_send_head_total = 0, max_recv_head_total = 0;
@@ -387,8 +388,8 @@ namespace LR_Util
         // 1. pre-calculate local bands and global band list on each processor
         const int gb_start = col_offset;
         const int gb_end = col_offset + nband;
-        std::vector<int> lnbands(GlobalV::NPROC, 0);
-        std::vector<std::vector<int>> gblist(GlobalV::NPROC);
+        std::vector<int> lnbands(nproc, 0);
+        std::vector<std::vector<int>> gblist(nproc);
         const int nbpA = pA.get_block_size();
         for (int gb = gb_start; gb < gb_end; ++gb)
         {
@@ -400,12 +401,12 @@ namespace LR_Util
                 gblist[ownerA].push_back(gb);
             }
         }
-        const int lnband = lnbands[GlobalV::MY_RANK];
+        const int lnband = lnbands[my_rank];
         if (lnband == 0)
         {
-            throw std::runtime_error("rank" + std::to_string(GlobalV::MY_RANK) + "lnband = 0, please check the pA and pX distribution!");
+            throw std::runtime_error("rank" + std::to_string(my_rank) + "lnband = 0, please check the pA and pX distribution!");
         }
-        const int lb_start = pA.global2local_col(gblist[GlobalV::MY_RANK].front());
+        const int lb_start = pA.global2local_col(gblist[my_rank].front());
         const int lb_end = lb_start + lnband;        
 
         for (int is = 0; is < nspin_X; ++is)
@@ -431,12 +432,12 @@ namespace LR_Util
                     const int io = (ir-ik*npairs[is]) / nvirt[is];
                     const int iv = ir % nvirt[is];
                     int ownerX = pX[is].owner_processor(iv, io);
-                    if (ownerX != GlobalV::MY_RANK)
+                    if (ownerX != my_rank)
                     {
                         ++send_head_counts[ownerX];
                     }
                 }
-                for (int p = 0; p < GlobalV::NPROC; ++p)
+                for (int p = 0; p < nproc; ++p)
                 {
                     std::size_t nbuffer = size_t(lnband) * send_head_counts[p];
                     if (nbuffer > std::numeric_limits<int>::max())
@@ -446,14 +447,14 @@ namespace LR_Util
                     send_buffer_counts[p] = static_cast<int>(nbuffer);
                 }
 
-                assert(send_head_counts.at(GlobalV::MY_RANK) == 0);
-                assert(send_buffer_counts.at(GlobalV::MY_RANK) == 0);
+                assert(send_head_counts.at(my_rank) == 0);
+                assert(send_buffer_counts.at(my_rank) == 0);
                 MPI_Alltoall(send_head_counts.data(), 1, MPI_INT, recv_head_counts.data(), 1, MPI_INT, pA.comm());
                 MPI_Alltoall(send_buffer_counts.data(), 1, MPI_INT,
                              recv_buffer_counts.data(), 1, MPI_INT, pA.comm());
 
                 int send_head_total = 0, recv_head_total = 0, send_buffer_total = 0, recv_buffer_total = 0;
-                for (int p = 0; p < GlobalV::NPROC; ++p)
+                for (int p = 0; p < nproc; ++p)
                 {
                     shdispls[p] = send_head_total; send_head_total += send_head_counts[p];
                     rhdispls[p] = recv_head_total; recv_head_total += recv_head_counts[p];
@@ -486,7 +487,7 @@ namespace LR_Util
                     const int io = (ir-ik*npairs[is]) / nvirt[is];
                     const int iv = ir % nvirt[is];
                     const int ownerX = pX[is].owner_processor(iv, io);
-                    if (ownerX == GlobalV::MY_RANK)
+                    if (ownerX == my_rank)
                     {
                         for (std::size_t lb = lb_start; lb < lb_end; ++lb)
                         {
@@ -502,14 +503,14 @@ namespace LR_Util
                     else
                     {
                         BlockHead& head = send_heads[cursor_head[ownerX]++];
-                        head.set(iv, io, ik, GlobalV::MY_RANK);
+                        head.set(iv, io, ik, my_rank);
                         for (std::size_t lb = lb_start; lb < lb_end; ++lb)
                         {
                             send_buffers[cursor_buffer[ownerX]++] = X_pA[static_cast<std::size_t>(lr) + lb * pA.get_row_size()];
                         }
                     }
                 }
-                for (int p = 0; p < GlobalV::NPROC; ++p)
+                for (int p = 0; p < nproc; ++p)
                 {
                     assert(cursor_head[p] == shdispls[p] + send_head_counts[p]);
                     assert(cursor_buffer[p] == sbdispls[p] + send_buffer_counts[p]);
@@ -523,7 +524,7 @@ namespace LR_Util
                               pA.comm());
 
                 // 5. unpack received buffers to pX
-                for (int src = 0; src < GlobalV::NPROC; ++src)
+                for (int src = 0; src < nproc; ++src)
                 {
                     const int nh = recv_head_counts[src];
                     if (nh == 0) continue;

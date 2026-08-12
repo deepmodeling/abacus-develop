@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include "../hamilt_bse_solver.h"
+#include <chrono>
 #include <mpi.h>
 #include "source_base/module_container/base/third_party/blas.h"
 
@@ -95,7 +96,7 @@ TEST(BSETest, TDASolver) {
     std::vector<std::complex<double>> Ωv(pA.get_local_size(), 0.0);
     
     auto start = std::chrono::high_resolution_clock::now();
-    BSE::solve_tda(my_rank, A_part, pA, ev, v);
+    BSE::solve_tda(A_part, pA, ev, v);
     auto end = std::chrono::high_resolution_clock::now();
     auto elapsed = std::chrono::duration_cast<std::chrono::seconds>(end - start);
     if (my_rank == 0){
@@ -103,7 +104,7 @@ TEST(BSETest, TDASolver) {
     }
 
     start = std::chrono::high_resolution_clock::now();
-    #pragma omp parallel for collapse(2)
+    #pragma omp parallel for
     for (int i = 0; i < pA.get_col_size(); ++i) {
         int col_glb = pA.local2global_col(i);
         for (int j = 0; j < pA.get_row_size(); ++j) {
@@ -245,7 +246,7 @@ TEST(BSETest, MissingDiagonalizationBackend)
     std::vector<std::complex<double>> B_full;
     std::vector<std::complex<double>> v_full;
 
-    EXPECT_EXIT(BSE::solve_tda(0, A, pA, ev, v_tda), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(BSE::solve_tda(A, pA, ev, v_tda), ::testing::ExitedWithCode(1), "");
     EXPECT_EXIT(BSE::solve_full(0, A_full, B_full, pA, pM, ev, v_full), ::testing::ExitedWithCode(1), "");
 }
 #endif

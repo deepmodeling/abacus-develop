@@ -23,8 +23,7 @@
 namespace BSE
 {
 template <typename T>
-void solve_tda(const int my_rank,
-               const std::vector<T>& A,
+void solve_tda(const std::vector<T>& A,
                const Parallel_2D& pA,
                std::vector<double>& ev,
                std::vector<T>& v)
@@ -79,7 +78,6 @@ void solve_tda(const int my_rank,
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "elpa_solve_tda");
     ModuleBase::timer::end("HamiltBSE", "elpa_solve_tda");
 #else
-    (void)my_rank;
     (void)A;
     (void)pA;
     (void)ev;

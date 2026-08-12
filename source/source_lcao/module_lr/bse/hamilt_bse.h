@@ -57,6 +57,8 @@ public:
               const bool out_bse_ab_in,
               const std::string& out_dir_in,
               const std::string& readin_dir_in,
+              const int my_rank_in,
+              const int nproc_in,
               const std::string& ri_hartree_benchmark_in = "none");
     /// @note these four functions shouldn't be called when `bse_mem_save` is true
     void cal_V_for_A();
@@ -125,6 +127,8 @@ private:
     const bool out_bse_ab;
     const std::string out_dir;
     const std::string readin_dir;
+    const int my_rank;
+    const int nproc;
     const std::string ri_hartree_benchmark;
 
     std::unique_ptr<elecstate::DensityMatrix<T, T>> DM_trans = nullptr;

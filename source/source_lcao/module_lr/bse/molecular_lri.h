@@ -45,11 +45,13 @@ public:
         const int bse_q_approx_mode_in,
         const double bse_q_approx_threshold_in,
         const bool out_ri_cv_in,
-        const std::string& out_dir_in) // < ATTENTION: psi_ks should be global
+        const std::string& out_dir_in,
+        const int my_rank_in,
+        const int nproc_in) // < ATTENTION: psi_ks should be global
     : ucell(ucell), nk(nk), kv(*kRlist_in.klist), kRlist(kRlist_in), nocc(nocc), nvirt(nvirt),
     ndim(nk*nocc*nvirt), psi_ks(psi_ks_in), bse_q_approx_mode(bse_q_approx_mode_in),
     bse_q_approx_threshold(bse_q_approx_threshold_in), out_ri_cv(out_ri_cv_in),
-    out_dir(out_dir_in), is_local_k1(nk, false)
+    out_dir(out_dir_in), my_rank(my_rank_in), nproc(nproc_in), is_local_k1(nk, false)
     {
         std::map<TA, TatomR> atoms_pos;
         for (int iat = 0; iat < this->ucell.nat; ++iat)
@@ -165,6 +167,8 @@ protected:
     const double bse_q_approx_threshold;
     const bool out_ri_cv;
     const std::string out_dir;
+    const int my_rank;
+    const int nproc;
     std::vector<bool> is_local_k1;
     
 };// class MolecularLRI

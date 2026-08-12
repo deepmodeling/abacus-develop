@@ -169,17 +169,16 @@ inline void output_spectrum_mo(const std::vector<std::complex<double>>& out_spec
 /// @brief output the velocity matrix in KS presentation in LibRPA format
 inline void output_spectrum_mo_librpa(const std::vector<std::complex<double>>& out_spectrum_mo,
                         const std::string& filename,
-                        const int nk,
-                        const int nspin_tmp,
-                        const int KS_num,
+                        const int nk, const int nspin_tmp, const int nbands, const int nbasis,
+                        const int KS_num,/*= nocc+nvirt, can be different from nbands, */
                         const K_Vectors& kv)
 {
     assert(out_spectrum_mo.size() == nspin_tmp * 3 * nk * KS_num * KS_num);
     std::ofstream ofs(filename);
     ofs << std::scientific << nk << std::endl;
     ofs << nspin_tmp << std::endl;
-    ofs << PARAM.inp.nbands << std::endl;
-    ofs << PARAM.globalv.nlocal << std::endl;
+    ofs << nbands << std::endl;
+    ofs << nbasis << std::endl;
     double HaBohrToEvAng = ModuleBase::Hartree_to_eV * ModuleBase::BOHR_TO_A; // 27.211396 * 0.5291770
     int offset = 0, ipair = 0;
     for (int is = 0; is < nspin_tmp; ++is)

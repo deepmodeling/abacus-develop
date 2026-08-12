@@ -38,6 +38,7 @@ namespace LR
                const Parallel_2D& pc_in,
                const Parallel_Orbitals& pmat_in,
                const std::string& spin_type,
+               const std::string& out_dir,
                const std::string& ri_hartree_benchmark = "none",
                const std::vector<int>& aims_nbasis = {})
           : nspin(nspin), nocc(nocc), nvirt(nvirt), pX(pX_in), nk(kv_in.get_nks() / nspin)
@@ -72,7 +73,11 @@ namespace LR
                     int use_fine_kgrid = 0;
                     if (ri_hartree_benchmark == "aims" || ri_hartree_benchmark == "aims-librpa")
                     {
-                        LR_IO::RI_kRlist kRlist (ucell_in, const_cast<K_Vectors*>(&kv_in), dir, use_fine_kgrid);
+                        LR_IO::RI_kRlist kRlist (ucell_in,
+                                                const_cast<K_Vectors*>(&kv_in),
+                                                dir,
+                                                use_fine_kgrid,
+                                                out_dir);
                         // though C and V are real, here still use <T> to multiply with psi
                         Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(dir);
                         Vs_read = LR_IO::read_coulomb_mat_general_k<T,T>(dir, Cs_read, kRlist);
@@ -84,7 +89,11 @@ namespace LR
                     }
                     else if (ri_hartree_benchmark == "abacus-librpa")
                     {
-                        LR_IO::RI_kRlist kRlist (ucell_in, const_cast<K_Vectors*>(&kv_in), dir, use_fine_kgrid);
+                        LR_IO::RI_kRlist kRlist (ucell_in,
+                                                const_cast<K_Vectors*>(&kv_in),
+                                                dir,
+                                                use_fine_kgrid,
+                                                out_dir);
                         Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(dir);
                         Vs_read = LR_IO::read_coulomb_mat_k<T,T>(dir, Cs_read, kRlist);
                     }

@@ -3,7 +3,6 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi.h"
 #ifdef __EXX
 #include "source_lcao/module_ri/RI_Util.h" // for get_Born_von_Karmen_cells
@@ -63,10 +62,14 @@ class RI_kRlist
     std::vector<TC> Rlist;
     RI_kRlist() = default;
     RI_kRlist(const UnitCell& ucell, K_Vectors* pkv,
-              const std::string& path, const int bse_use_fine_kgrid);
+              const std::string& path, const int bse_use_fine_kgrid,
+              const std::string& out_dir);
     ~RI_kRlist() = default;
-    void read_kpts_coarse(const std::string& file, const UnitCell& ucell, K_Vectors* const klist);
-    void read_kpts_fine(const std::string& file, const UnitCell& ucell, K_Vectors* const klist, const bool is_weighted);
+    void read_kpts_coarse(const std::string& file, const UnitCell& ucell,
+                          K_Vectors* const klist, const std::string& out_dir);
+    void read_kpts_fine(const std::string& file, const UnitCell& ucell,
+                        K_Vectors* const klist, const bool is_weighted,
+                        const std::string& out_dir);
 };
 
 /// @brief vector as {ik, iband, <occ, ks_ene, gw_ene>}
@@ -97,6 +100,7 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
                               const int nbands_file,
                               const int nspin_tmp,
                               const int nspin_file,
+                              const int my_rank,
                               Parallel_Orbitals& pmat);
 
 template <typename TK>
@@ -107,6 +111,7 @@ void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
                                               const int nbands_file,
                                               const int nspin_tmp,
                                               const int nspin_file,
+                                              const int my_rank,
                                               Parallel_Orbitals& pmat);
 
 /// only for blocking by atom pairs (abacus type)

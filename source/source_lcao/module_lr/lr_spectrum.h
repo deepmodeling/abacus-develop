@@ -19,13 +19,13 @@ namespace LR
             const TwoCenterBundle& two_center_bundle_,
             const std::vector<Parallel_2D>& pX_in, const Parallel_2D& pc_in, const Parallel_Orbitals& pmat_in,
             const double* omega, const double* eig_ks, const T* X, const int& nstate, const bool& openshell,
-            const std::string& gauge) :
-            nspin_x(openshell ? 2 : 1), naos(naos), nocc(nocc), nvirt(nvirt),
+            const std::string& gauge, const int my_rank, const std::string& out_dir) :
+            my_rank(my_rank), nspin_x(openshell ? 2 : 1), naos(naos), nocc(nocc), nvirt(nvirt),
             nk(nspin_global == 2 ? kv_in.get_nks() / 2 : kv_in.get_nks()),
             rho_basis(rho_basis), ucell(ucell), kv(kv_in), gd_(gd),
             orb_cutoff_(orb_cutoff), two_center_bundle_(two_center_bundle_),
             pX(pX_in), pc(pc_in), pmat(pmat_in),
-            omega(omega), eig_ks(eig_ks), X(X), nstate(nstate), gauge(gauge),
+            omega(omega), eig_ks(eig_ks), X(X), nstate(nstate), gauge(gauge), out_dir(out_dir),
             ldim(nk* (nspin_x == 2 ? pX_in[0].get_local_size() + pX_in[1].get_local_size() : pX_in[0].get_local_size())),
             gdim(nk* std::inner_product(nocc.begin(), nocc.end(), nvirt.begin(), 0))
         {
@@ -74,6 +74,7 @@ namespace LR
         /// calculate the transition density matrix
         elecstate::DensityMatrix<T, T> cal_transition_density_matrix(const int istate, const T* X_in = nullptr, const bool need_R = true);
         
+        const int my_rank;
         const int nspin_x = 1;   ///< 1 for singlet/triplet, 2 for updown(openshell)
         const int naos = 1;
         const std::vector<int>& nocc;
@@ -99,6 +100,7 @@ namespace LR
         const std::vector<double>& orb_cutoff_;
         const TwoCenterBundle& two_center_bundle_;
         const std::string gauge;
+        const std::string out_dir;
 
         void cal_gint_rho(double** rho, const int& nrxx);
         std::map<std::string, int> get_pair_info(const int i); ///< given the index in X, return its ispin, ik, iocc, ivirt

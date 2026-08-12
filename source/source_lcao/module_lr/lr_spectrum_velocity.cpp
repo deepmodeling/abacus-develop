@@ -1,4 +1,5 @@
 #include "lr_spectrum.h"
+#include "source_base/global_variable.h"
 #include "source_lcao/module_lr/dm_trans/dm_trans.h"
 #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 #include "math.h"
@@ -38,8 +39,8 @@ namespace LR
     {
         ModuleBase::TITLE("LR::LR_Spectrum", "optical_absorption_method2");
         // 4*pi^2/V * mean_squared_dipole *delta(w-Omega_S)
-        std::ofstream ofs(PARAM.globalv.global_out_dir + "absorption.dat");
-        if (GlobalV::MY_RANK == 0) { ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; }
+        std::ofstream ofs(this->out_dir + "absorption.dat");
+        if (this->my_rank == 0) { ofs << "Frequency (eV) | wave length(nm) | Absorption (a.u.)" << std::endl; }
         const double fac = 4 * M_PI * M_PI / ucell.omega / this->nk;
         for (int f = 0;f < freq.size();++f)
         {
@@ -49,7 +50,7 @@ namespace LR
                 abs_value += this->mean_squared_transition_dipole_[i] * lorentz_delta((freq[f] - omega[i]) / ModuleBase::e2, eta / ModuleBase::e2); // e2: Ry to Hartree 
             }
             abs_value *= fac;
-            if (GlobalV::MY_RANK == 0) { ofs << freq[f] * ModuleBase::Ry_to_eV << "\t" << 91.126664 / freq[f] << "\t" << abs_value << std::endl; }
+            if (this->my_rank == 0) { ofs << freq[f] * ModuleBase::Ry_to_eV << "\t" << 91.126664 / freq[f] << "\t" << abs_value << std::endl; }
         }
     }
 
