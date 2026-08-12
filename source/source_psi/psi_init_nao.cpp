@@ -1,7 +1,7 @@
 #include "psi_init_nao.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 
 #include <fstream>
 // numerical algorithm support
@@ -19,8 +19,8 @@
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_reduce.h"
 #endif
-#include "source_io/module_output/orb_io.h"
-
+#include "source_base/module_out/orb_io.h"
+#include "source_io/module_parameter/parameter.h"
 
 #include <algorithm>
 #include <numeric>

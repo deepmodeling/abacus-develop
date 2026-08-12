@@ -6,7 +6,7 @@
 #include "source_base/math_sphbes.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/parallel_reduce.h"
-#include "../module_output/binstream.h"
+#include "source_base/module_out/binstream.h"
 
 #include "source_psi/psi_init_nao.h"
 #ifdef __LCAO
@@ -76,7 +76,7 @@ void toWannier90_LCAO_IN_PW::calculate(
         }
     }
 
-    psi::Psi<std::complex<double>> *unk_inLcao = get_unk_from_lcao(ucell,*psi, wfcpw, sf, kv);
+    psi::Psi<std::complex<double>> *unk_inLcao = get_unk_from_lcao(ucell,*psi, wfcpw, kv);
 
     if (out_wannier_eig)
     {
@@ -114,9 +114,8 @@ void toWannier90_LCAO_IN_PW::calculate(
 
 psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
     const UnitCell& ucell,
-    const psi::Psi<std::complex<double>>& psi_in, 
+    const psi::Psi<std::complex<double>>& psi_in,
     const ModulePW::PW_Basis_K* wfcpw,
-    const Structure_Factor& sf,
     const K_Vectors& kv
 )
 {
@@ -129,15 +128,10 @@ psi::Psi<std::complex<double>>* toWannier90_LCAO_IN_PW::get_unk_from_lcao(
                                                                                     true);
     unk_inLcao->zero_out();
 
-    // Orbital projection to plane wave
-    ModuleBase::realArray table_local(ucell.ntype, ucell.nmax_total, PARAM.globalv.nqx);
-
     for (int ik = 0; ik < num_kpts; ik++)
     {
         int npw = kv.ngk[ik];
         ModuleBase::ComplexMatrix orbital_in_G(PARAM.globalv.nlocal, npwx*PARAM.globalv.npol);
-        // Wavefunc_in_pw::produce_local_basis_in_pw(ik, wfcpw, sf, orbital_in_G, table_local);
-        //produce_local_basis_in_pw(ik, wfcpw, sf, orbital_in_G, table_local);
         nao_G_expansion(ik, wfcpw, orbital_in_G);
 
         ModuleBase::ComplexMatrix lcao_wfc_global;

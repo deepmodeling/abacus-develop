@@ -92,13 +92,11 @@ namespace ModuleESolver
             {
                 XC_Functional::set_xc_first_loop(ucell);
                 this->exx_lip = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(GlobalC::exx_info.info_lip,
-                                                                           ucell.symm,
                                                                            &this->kv,
                                                                            this->psi_local,
                                                                            this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
                                                                            this->pw_wfc,
                                                                            this->pw_rho,
-                                                                           this->sf,
                                                                            &ucell,
                                                                            this->pelec));
             }
