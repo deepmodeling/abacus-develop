@@ -309,7 +309,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
 		    this->gd, this->psi, this->chr, hamilt_lcao,
 		    this->two_center_bundle_,
 		    this->orb_, this->pw_rho, this->pw_rhod,
-		    this->sf, this->locpp.vloc, this->exx_nao, this->solvent);
+		    this->sf, this->locpp.vloc, this->exx_nao, *this->exx_info_, this->solvent);
 
 
 #ifdef __MPI
@@ -537,7 +537,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, this->pelec, *this->dmat.dm,
       this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
       hamilt_lcao, this->orb_, this->deepks, 
-      this->exx_nao, iter, istep, conv_esolver, this->scf_ene_thr);
+      this->exx_nao, *this->exx_info_, iter, istep, conv_esolver, this->scf_ene_thr);
 }
 
 template <typename TK, typename TR>
@@ -567,7 +567,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             this->gd, this->psi, hamilt_lcao, this->dftu, this->two_center_bundle_,
             this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
             this->pw_rhod, this->locpp.vloc, this->solvent,
-            this->rdmft_solver, this->deepks, this->exx_nao,
+            this->rdmft_solver, this->deepks, this->exx_nao, *this->exx_info_,
             this->conv_esolver, this->scf_nmax_flag, istep);
 
     //! 3) Clean up RA, which is used to serach for adjacent atoms

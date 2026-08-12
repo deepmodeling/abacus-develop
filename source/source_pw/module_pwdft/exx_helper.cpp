@@ -1,6 +1,6 @@
 #include "exx_helper.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info type
 #include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 #include "source_pw/module_pwdft/hamilt_pw.h" // use HamiltPW
 #include "source_estate/update_pot.h" // use elecstate::update_pot

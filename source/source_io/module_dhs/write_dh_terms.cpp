@@ -359,14 +359,14 @@ bool write_dH_vxc_pulay(WriteDHParams& params)
 }
 
 #ifdef __EXX
-bool write_dH_exx(WriteDHParams& params)
+bool write_dH_exx(WriteDHParams& params, const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "write_dH_exx");
     ModuleBase::timer::start("ModuleIO", "write_dH_exx");
 
     bool ok = false;
     // exd (real Hexx) and exc (complex Hexx) are mutually exclusive; pick by real_number.
-    if (GlobalC::exx_info.info_ri.real_number)
+    if (exx_info.info_ri.real_number)
     {
         if (params.exd != nullptr)
         {
@@ -393,7 +393,7 @@ bool write_dH_exx(WriteDHParams& params)
 // full sum. Each term is built into its own per-atom-I containers (via the same fillers the
 // per-term writers use) and accumulated with HContainer::add_value_union, which unions the
 // (generally different) sparsities and sums values. Each term already carries its own sign.
-bool write_dH_sum(WriteDHParams& params)
+bool write_dH_sum(WriteDHParams& params, const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "write_dH_sum");
     ModuleBase::timer::start("ModuleIO", "write_dH_sum");
@@ -407,9 +407,9 @@ bool write_dH_sum(WriteDHParams& params)
     const bool do_exx = (params.exd != nullptr || params.exc != nullptr);
     if (do_exx)
     {
-        if (GlobalC::exx_info.info_ri.real_number && params.exd != nullptr)
+        if (exx_info.info_ri.real_number && params.exd != nullptr)
             params.exd->cal_exx_dHs(*params.ucell, pv, nspin);
-        else if (!GlobalC::exx_info.info_ri.real_number && params.exc != nullptr)
+        else if (!exx_info.info_ri.real_number && params.exc != nullptr)
             params.exc->cal_exx_dHs(*params.ucell, pv, nspin);
     }
 #endif
@@ -459,7 +459,7 @@ bool write_dH_sum(WriteDHParams& params)
         if (do_exx)
         {
             PerIContainers c(pv, nat);
-            if (GlobalC::exx_info.info_ri.real_number && params.exd != nullptr)
+            if (exx_info.info_ri.real_number && params.exd != nullptr)
                 fill_dH_exx(params, params.exd, ispin, c);
             else if (params.exc != nullptr)
                 fill_dH_exx(params, params.exc, ispin, c);

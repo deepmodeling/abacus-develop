@@ -14,18 +14,16 @@
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
-#include "source_hamilt/module_xc/exx_info.h" // for GlobalC::exx_info bridge
+#include "source_hamilt/module_xc/exx_info.h" // for init_exx_info and Exx_Info
 
 namespace ModuleESolver
 {
 
 ESolver_KS::ESolver_KS()
 {
-    // ESolver owns its own Exx_Info object, copied from the global instance
-    // initialized by Input_Conv::Convert(). This breaks the dependency on
-    // GlobalC::exx_info from ESolver internals; the global will be removed
-    // in a follow-up commit.
-    exx_info_obj_ = GlobalC::exx_info;
+    // ESolver owns its own Exx_Info object, initialized directly from input
+    // parameters. This breaks the dependency on any global Exx_Info instance.
+    init_exx_info(exx_info_obj_, PARAM.inp);
 }
 
 

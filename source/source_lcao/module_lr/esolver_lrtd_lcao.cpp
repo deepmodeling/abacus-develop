@@ -20,6 +20,7 @@
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h" // for precondition
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lri_interface.h"
+#include "source_hamilt/module_xc/exx_info.h" // for init_exx_info
 #endif
 
 #ifdef __EXX
@@ -175,10 +176,10 @@ void LR::ESolver_LR<T, TR>::reset_dim_spin2()
 template <typename T, typename TR>
 LR::ESolver_LR<T, TR>::ESolver_LR(const Input_para& inp)
     : input(inp)
-#ifdef __EXX
-    , exx_info(GlobalC::exx_info)
-#endif
 {
+#ifdef __EXX
+    init_exx_info(this->exx_info, inp);
+#endif
 }
 
 template <typename T, typename TR>

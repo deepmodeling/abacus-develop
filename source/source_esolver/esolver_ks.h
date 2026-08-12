@@ -75,8 +75,7 @@ class ESolver_KS : public ESolver_FP
     bool oscillate_esolver = false; // whether esolver is oscillated
     bool scf_nmax_flag = false;     // whether scf has reached nmax, mohan add 20250921
 
-    /// EXX info owned by ESolver, copied from GlobalC::exx_info during construction.
-    /// Will become the sole owner after GlobalC::exx_info is removed.
+    /// EXX info owned by ESolver, initialized from input parameters.
     Exx_Info exx_info_obj_;
 
     /// Pointer to the owned Exx_Info object, for uniform access pattern.

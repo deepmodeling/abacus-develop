@@ -11,7 +11,7 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "source_base/global_variable.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info type
 #include "source_hsolver/hsolver_pw.h"
 #undef private
 #undef protected

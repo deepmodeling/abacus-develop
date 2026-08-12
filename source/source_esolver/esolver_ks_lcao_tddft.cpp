@@ -580,7 +580,8 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
                                  hamilt_lcao,
                                  this->RA,
                                  this->td_p,
-                                 this->exx_nao);
+                                 this->exx_nao,
+                                 *this->exx_info_);
 
     ModuleBase::timer::end(this->classname, "after_scf");
 }

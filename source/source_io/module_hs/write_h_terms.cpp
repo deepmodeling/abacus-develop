@@ -382,11 +382,12 @@ static void write_h_exx_impl(const UnitCell& ucell,
                              const bool append,
                              const int* iat2iwt,
                              const int nat,
-                             const bool also_hR)
+                             const bool also_hR,
+                             const Exx_Info& exx_info)
 {
     const auto& Hexxs = ex->get_Hexxs(); // vector over spin of map<iat, map<(jat,R), Tensor>>
     const int nspin_out = (nspin == 2 ? 2 : 1);
-    const double alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    const double alpha = exx_info.info_global.hybrid_alpha;
 
     for (int ispin = 0; ispin < nspin_out; ispin++)
     {
@@ -405,7 +406,7 @@ static void write_h_exx_impl(const UnitCell& ucell,
     }
 }
 
-void write_h_exx(WriteHParams& params)
+void write_h_exx(WriteHParams& params, const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "write_h_exx");
     ModuleBase::timer::start("ModuleIO", "write_h_exx");
@@ -423,18 +424,18 @@ void write_h_exx(WriteHParams& params)
     const bool also_hR = params.also_hR;
 
     // exd (real Hexx) and exc (complex Hexx) are mutually exclusive; pick by real_number.
-    if (GlobalC::exx_info.info_ri.real_number)
+    if (exx_info.info_ri.real_number)
     {
         if (params.exd != nullptr)
         {
-            write_h_exx_impl(ucell, pv, params.exd, kv, nspin, istep, append, iat2iwt, nat, also_hR);
+            write_h_exx_impl(ucell, pv, params.exd, kv, nspin, istep, append, iat2iwt, nat, also_hR, exx_info);
         }
     }
     else
     {
         if (params.exc != nullptr)
         {
-            write_h_exx_impl(ucell, pv, params.exc, kv, nspin, istep, append, iat2iwt, nat, also_hR);
+            write_h_exx_impl(ucell, pv, params.exc, kv, nspin, istep, append, iat2iwt, nat, also_hR, exx_info);
         }
     }
 

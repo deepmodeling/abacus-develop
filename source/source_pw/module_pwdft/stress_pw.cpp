@@ -6,7 +6,7 @@
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/output_log.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info type
 
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,

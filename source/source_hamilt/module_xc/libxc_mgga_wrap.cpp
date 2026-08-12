@@ -4,7 +4,7 @@
 
 #ifdef __LIBXC
 
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info type
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "libxc_abacus.h"
 #include <array>
