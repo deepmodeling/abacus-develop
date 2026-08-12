@@ -100,11 +100,6 @@ class XC_Functional
         return need_laplacian;
     };
 
-    static double* get_stress_vlapl()
-    {
-        return stress_vlapl;
-    };
-
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
     static void set_xc_first_loop(const UnitCell& ucell);
 
@@ -117,8 +112,6 @@ class XC_Functional
     static bool ked_flag; // whether the functional has kinetic energy density
     static bool need_laplacian; // whether any functional needs Laplacian of density
     static bool use_libxc;
-    static double stress_vlapl[9]; // 3x3 vlapl stress contribution, row-major
-
     // exx_hybrid_alpha for mixing exx in hybrid functional:
     static double hybrid_alpha;
 

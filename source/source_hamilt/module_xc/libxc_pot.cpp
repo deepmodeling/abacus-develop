@@ -462,51 +462,8 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
                 voflapl(is,ir) += vlapl[ir*nspin+is] * sgn[ir*nspin+is];
             }
         }
-    }
+}
 
-    // Compute vlapl stress contribution for PW path
-    // σ_{αβ} = -e2 × Σ_ig (G_α·G_β·tpiba²) × (Re[ρ(G)]·Re[vlapl(G)] + Im[ρ(G)]·Im[vlapl(G)])
-    for (int i = 0; i < 9; ++i) XC_Functional::get_stress_vlapl()[i] = 0.0;
-    if (need_laplacian)
-    {
-        const int ng = chr->rhopw->npw;
-        const double tpiba2 = tpiba * tpiba;
-        std::vector<std::complex<double>> rho_g(chr->rhopw->nmaxgr);
-        std::vector<std::complex<double>> vlapl_g(chr->rhopw->nmaxgr);
-        for (int is = 0; is < nspin; ++is)
-        {
-            for (int ir = 0; ir < nrxx; ++ir)
-                rho_g[ir] = std::complex<double>(rho[ir * nspin + is], 0.0);
-            for (int ig = ng; ig < chr->rhopw->nmaxgr; ++ig)
-                rho_g[ig] = std::complex<double>(0.0, 0.0);
-            chr->rhopw->real2recip(rho_g.data(), rho_g.data());
-
-            for (int ir = 0; ir < nrxx; ++ir)
-                vlapl_g[ir] = std::complex<double>(voflapl(is, ir), 0.0);
-            for (int ig = ng; ig < chr->rhopw->nmaxgr; ++ig)
-                vlapl_g[ig] = std::complex<double>(0.0, 0.0);
-            chr->rhopw->real2recip(vlapl_g.data(), vlapl_g.data());
-
-            for (int l = 0; l < 3; ++l)
-            {
-                for (int m = 0; m <= l; ++m)
-                {
-                    double sum = 0.0;
-                    for (int ig = 0; ig < ng; ++ig)
-                    {
-                        double g_prod = chr->rhopw->gcar[ig][l] * chr->rhopw->gcar[ig][m] * tpiba2;
-                        sum += g_prod * (rho_g[ig].real() * vlapl_g[ig].real()
-                                       + rho_g[ig].imag() * vlapl_g[ig].imag());
-                    }
-                    const double sv = -sum * ModuleBase::e2;
-                    XC_Functional::get_stress_vlapl()[l * 3 + m] += sv;
-                    if (l != m) XC_Functional::get_stress_vlapl()[m * 3 + l] += sv;
-                }
-            }
-        }
-    }
-
-    // Apply Laplacian potential correction using FD kernel
     // v_xc += nabla^2(vlapl) where vlapl = d(rho*eps_xc)/d(nabla^2 rho)
     if (need_laplacian)
     {
