@@ -85,14 +85,15 @@ TEST_F(XCTest_LaplacianAnalytical, single_plane_wave)
         rhopw.gcar[ig] = ModuleBase::Vector3<double>(static_cast<double>(ig), 0.0, 0.0);
 
     std::vector<std::complex<double>> rhog(n, 0.0);
-    rhog[0] = std::complex<double>(0.0, 1.0);
+    rhog[1] = std::complex<double>(0.0, 1.0);  // non-zero at gcar[1]=(1,0,0)
     std::vector<double> lapl(n);
     XC_Functional::laplacian_rho(rhog.data(), lapl.data(), &rhopw, tpiba);
 
     double g2 = 0.0;
     for (int i = 0; i < 3; i++)
-        g2 += rhopw.gcar[0][i] * rhopw.gcar[0][i];
+        g2 += rhopw.gcar[1][i] * rhopw.gcar[1][i];
     double expected = -g2 * tpiba * tpiba;
-    for (int ir = 0; ir < n; ir++)
+    EXPECT_NEAR(lapl[0], expected, 1e-14);
+    for (int ir = 1; ir < n; ir++)
         EXPECT_NEAR(lapl[ir], expected, 1e-14);
 }

@@ -530,7 +530,7 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
             {
                 double vlapl_corr = ModuleBase::e2 * lapl_tmp[ir].real();
                 v(is, ir) += vlapl_corr;
-                vtxc += vlapl_corr * chr->rho[is][ir] * omega / chr->rhopw->nxyz;
+                vtxc += vlapl_corr * chr->rho[is][ir];
             }
         }
     }

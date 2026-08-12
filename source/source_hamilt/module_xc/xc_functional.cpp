@@ -318,7 +318,7 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         ked_flag = false;
     }
 
-#ifdef USE_LIBXC
+#ifdef __LIBXC
     if (use_libxc && ked_flag)
     {
         std::vector<xc_func_type> check_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);

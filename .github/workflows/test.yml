@@ -230,7 +230,7 @@ jobs:
           GTEST_COLOR: 'yes'
           OMP_NUM_THREADS: '2'
         run: |
-          ctest --test-dir build -V --timeout 1700 -R 01_PW || true
+          ctest --test-dir build -V --timeout 1700 -R 01_PW
           mkdir -p /tmp/refs
           find build -name "result.out" -path "*207_PW_SCANL*" -exec cp {} /tmp/refs/ \;
           find build -name "result.ref" -path "*207_PW_SCANL*" -exec cp {} /tmp/refs/ \;
