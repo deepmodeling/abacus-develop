@@ -620,7 +620,7 @@ void XC_Functional::gradcorr(
                         sum += g_prod * (rho_g[ig].real() * vlapl_g[ig].real()
                                        + rho_g[ig].imag() * vlapl_g[ig].imag());
                     }
-                    stress_gga[l*3+m] -= 2.0 * static_cast<double>(rhopw->nxyz) * sum;
+                    stress_gga[l*3+m] += 2.0 * static_cast<double>(rhopw->nxyz) * sum;
                 }
             }
         }
