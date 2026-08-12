@@ -7,6 +7,7 @@
 #include "source_base/matrix.h"
 #include "source_base/matrix3.h"
 #include "source_cell/unitcell.h"
+#include "source_io/module_parameter/input_parameter.h"
 #include <fstream>
 
 class Relax
@@ -16,7 +17,7 @@ class Relax
     ~Relax() {};
 
     // prepare for relaxation
-    void init_relax(const int nat_in);
+    void init_relax(const int nat_in, const Input_para& inp);
     // perform a single relaxation step
     bool relax_step(UnitCell& ucell,
                     const ModuleBase::matrix& force,
@@ -103,6 +104,7 @@ class Relax
 
     ModuleBase::Matrix3 latvec_save;
     Line_Search ls;
+    const Input_para* inp_ = nullptr;
 };
 
 #endif

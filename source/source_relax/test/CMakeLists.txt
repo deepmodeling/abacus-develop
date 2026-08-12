@@ -9,15 +9,15 @@ install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 AddTest(
   TARGET MODULE_RELAX_relax_new_line_search
   LIBS parameter
-  SOURCES line_search_test.cpp ../line_search.cpp ../../source_base/global_variable.cpp ../../source_base/global_file.cpp ../../source_base/global_function.cpp ../../source_base/memory_recorder.cpp ../../source_base/timer.cpp ../../source_base/tool_quit.cpp
+  SOURCES line_search_test.cpp ../line_search.cpp ../../source_base/global_variable.cpp ../../source_base/global_file.cpp ../../source_base/global_function.cpp ../../source_base/timer.cpp ../../source_base/tool_quit.cpp
 )
 
 AddTest(
   TARGET MODULE_RELAX_relax_new_relax
-  SOURCES  relax_test.cpp ../relax_sync.cpp ../line_search.cpp ../relax_data.cpp ../../source_base/tool_quit.cpp ../../source_base/global_variable.cpp ../../source_base/global_file.cpp ../../source_base/memory_recorder.cpp ../../source_base/timer.cpp
+  SOURCES  relax_test.cpp ../relax_sync.cpp ../line_search.cpp ../relax_data.cpp ../../source_base/tool_quit.cpp ../../source_base/global_variable.cpp ../../source_base/global_file.cpp ../../source_base/timer.cpp
     ../../source_base/matrix3.cpp ../../source_base/intarray.cpp ../../source_base/tool_title.cpp
-    ../../source_base/global_function.cpp ../../source_base/complexmatrix.cpp ../../source_base/matrix.cpp
-    ../../source_base/complexarray.cpp ../../source_base/tool_quit.cpp ../../source_base/realarray.cpp
+    ../../source_base/global_function.cpp ../../source_base/matrix.cpp
+    ../../source_base/complexarray.cpp ../../source_base/realarray.cpp
     ../../source_base/module_external/blas_connector_base.cpp ../../source_base/module_external/blas_connector_vector.cpp ../../source_base/module_external/blas_connector_matrix.cpp
     ../../source_cell/update_cell.cpp ../../source_cell/print_cell.cpp  ../../source_cell/bcast_cell.cpp ../../source_base/output.cpp
     LIBS parameter

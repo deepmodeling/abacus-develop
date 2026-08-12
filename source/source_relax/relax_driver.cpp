@@ -71,11 +71,11 @@ void Relax_Driver::init_relax(const int nat, const Input_para& inp)
     {
         if (!inp.uses_simultaneous_relaxation())
         {
-            this->rl_old.init_relax(nat);
+            this->rl_old.init_relax(nat, inp);
         }
         else
         {
-            this->rl.init_relax(nat);
+            this->rl.init_relax(nat, inp);
         }
     }
 }

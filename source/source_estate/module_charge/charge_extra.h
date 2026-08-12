@@ -3,7 +3,7 @@
 
 #include "charge.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #ifdef __MPI
 #include "source_base/parallel_grid.h"
 #endif

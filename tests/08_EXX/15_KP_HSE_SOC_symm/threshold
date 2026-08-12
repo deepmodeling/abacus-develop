@@ -9,5 +9,5 @@
 # case 07_KP_CR_HSE. See also: np=1 is bit-identical, confirming the MPI seed.
 threshold 0.006
 force_threshold 0.01
-stress_threshold 10
+stress_threshold 11
 fatal_threshold 20

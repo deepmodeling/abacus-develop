@@ -6,7 +6,7 @@
 #include "source_base/matrix.h"
 #include "source_pw/module_pwdft/force_pw.h"
 #include "source_pw/module_pwdft/stress_func.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_io/module_parameter/input_conv.h"
 #include "source_psi/psi.h"
 #ifdef __EXX

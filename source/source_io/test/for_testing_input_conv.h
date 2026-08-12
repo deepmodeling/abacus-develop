@@ -15,7 +15,7 @@
 #include "source_lcao/force_stress_lcao.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_md/md_func.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 #include "source_relax/bfgs_basic.h"
 #include "source_relax/ions_move_basic.h"

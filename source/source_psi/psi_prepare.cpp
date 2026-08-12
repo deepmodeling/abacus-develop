@@ -16,7 +16,7 @@
 #include "source_psi/psi_init_nao.h"
 #include "source_psi/psi_init_nao_random.h"
 #include "source_psi/psi_init_random.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 
 namespace psi
 {

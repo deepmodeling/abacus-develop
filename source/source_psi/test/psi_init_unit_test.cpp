@@ -2,7 +2,7 @@
 #include <complex>
 
 #include "source_pw/module_pwdft/vl_pw.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_base/parallel_grid.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/pseudo.h"

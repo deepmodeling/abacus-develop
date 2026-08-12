@@ -1,6 +1,6 @@
 #include "source_base/global_function.h"
 #include "source_io/module_parameter/parameter.h"
-#include "structure_factor.h"
+#include "stru_fac.h"
 #include "source_base/constants.h"
 #include "source_base/math_bspline.h"
 #include "source_base/memory_recorder.h"
