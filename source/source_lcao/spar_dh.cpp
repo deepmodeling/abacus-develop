@@ -2,7 +2,7 @@
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_lcao/LCAO_domain.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
 #include <vector>
 
 void sparse_format::cal_dS(const UnitCell& ucell,
@@ -203,8 +203,8 @@ void sparse_format::cal_dSTN_R(const UnitCell& ucell,
                         double distance1 = dtau1.norm() * ucell.lat0;
                         double distance2 = dtau2.norm() * ucell.lat0;
 
-                        double rcut1 = orb_cutoff[T1] + ucell.infoNL.Beta[T0].get_rcut_max();
-                        double rcut2 = orb_cutoff[T2] + ucell.infoNL.Beta[T0].get_rcut_max();
+                        double rcut1 = orb_cutoff[T1] + ucell.infoNL->get_rcut_max(T0);
+                        double rcut2 = orb_cutoff[T2] + ucell.infoNL->get_rcut_max(T0);
 
                         if (distance1 < rcut1 && distance2 < rcut2)
                         {

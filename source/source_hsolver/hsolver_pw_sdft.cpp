@@ -47,7 +47,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     {
         ModuleBase::timer::start("HSolverPW_SDFT", "solve_KS");
         pHamilt->updateHk(ik);
-        if (nbands > 0 && PARAM.globalv.ks_run)
+        if (nbands > 0 && this->ks_run)
         {
             /// update psi pointer for each k point
             psi.fix_k(ik);
@@ -59,7 +59,7 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
         }
 
 #ifdef __MPI
-        if (nbands > 0 && !PARAM.globalv.all_ks_run)
+        if (nbands > 0 && !this->all_ks_run)
         {
             Parallel_Common::bcast_dev<T,Device>(&psi(ik, 0, 0), npwx * nbands, BP_WORLD, 0, &psi_cpu(ik, 0, 0));
             MPI_Bcast(&pes->ekb(ik, 0), nbands, MPI_DOUBLE, 0, BP_WORLD);
@@ -91,9 +91,9 @@ void HSolverPW_SDFT<T, Device>::solve(const UnitCell& ucell,
     // calculate eband = \sum_{ik,ib} w(ik)f(ik,ib)e_{ikib}, demet = -TS
     elecstate::ElecStatePW<T, Device>* pes_pw = static_cast<elecstate::ElecStatePW<T, Device>*>(pes);
     elecstate::calEBand(pes_pw->ekb,pes_pw->wg,pes_pw->f_en);
-    if(!PARAM.globalv.all_ks_run)
+    if(!this->all_ks_run)
     {
-        pes->f_en.eband /= PARAM.inp.bndpar;
+        pes->f_en.eband /= this->bndpar;
     }
     stoiter.sum_stoeband(stowf, pes_pw, pHamilt, wfc_basis);
     

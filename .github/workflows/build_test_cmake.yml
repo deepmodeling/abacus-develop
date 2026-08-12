@@ -11,6 +11,7 @@ jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - tag: gnu
@@ -55,13 +56,13 @@ jobs:
     container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@v7.0.1
         with:
           submodules: recursive
 
       - name: Install external tools from toolchain
         run: |
-          sudo apt update && sudo apt install -y gfortran ninja-build xz-utils
+          sudo apt update && sudo apt install -y gfortran ninja-build pkg-config xz-utils
           cd toolchain
           ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run ${{matrix.external_toolchain_args}}
           ./scripts/stage4/install_stage4.sh

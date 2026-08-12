@@ -6,7 +6,7 @@
 
 #include "source_io/module_wf/write_wfc_nao.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_io/module_output/filename.h"
+#include "source_base/module_out/filename.h"
 #include "source_base/tool_title.h" // use title
 #include "source_base/global_function.h" // use READ_VALUE
 

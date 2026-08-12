@@ -1,6 +1,9 @@
+/**
+ * @file read_pp.cpp
+ * @brief Implementation of Pseudopot_upf class.
+ */
 #include "read_pp.h"
 
-#include "source_io/module_parameter/parameter.h"
 #include <cmath>
 
 #include <cstring> // Peize Lin fix bug about strcpy 2016-08-02
@@ -25,40 +28,40 @@ int Pseudopot_upf::init_pseudo_reader(const std::string &fn, std::string &type, 
     // First check if this pseudo-potential has spin-orbit information
     std::ifstream ifs(fn.c_str(), std::ios::in);
 
-	// can't find the file.
-	if (!ifs)
+    // can't find the file.
+    if (!ifs)
     {
         return 1;
     }
 
-	if (type == "auto")
-	{
-		set_pseudo_type(fn, type);
-	}
+    if (type == "auto")
+    {
+        set_pseudo_type(fn, type);
+    }
 
-	int info = -1;
-	if (type == "upf")
-	{
-		info = read_pseudo_upf(ifs, pp);
-	}
-	else if (type == "vwr")
-	{
-		info = read_pseudo_vwr(ifs, pp);
-	}
-	else if (type == "upf201")
-	{
-		info = read_pseudo_upf201(ifs, pp);
-	}
-	else if (type == "blps")
-	{
-		info = read_pseudo_blps(ifs, pp);
-	}
+    int info = -1;
+    if (type == "upf")
+    {
+        info = read_pseudo_upf(ifs, pp);
+    }
+    else if (type == "vwr")
+    {
+        info = read_pseudo_vwr(ifs, pp);
+    }
+    else if (type == "upf201")
+    {
+        info = read_pseudo_upf201(ifs, pp);
+    }
+    else if (type == "blps")
+    {
+        info = read_pseudo_blps(ifs, pp);
+    }
     else
     {
         return 4;
     }
 
-	return info;
+    return info;
 }
 
 
@@ -69,26 +72,26 @@ int Pseudopot_upf::set_pseudo_type(const std::string &fn, std::string &type) //z
 {
     std::ifstream pptype_ifs(fn.c_str(), std::ios::in);
     std::string dummy;
-	std::string strversion;
+    std::string strversion;
 
-	if (pptype_ifs.good())
-	{
-		getline(pptype_ifs,dummy);
+    if (pptype_ifs.good())
+    {
+        getline(pptype_ifs,dummy);
 
-		std::stringstream wdsstream(dummy);
-		getline(wdsstream,strversion,'"');
-		getline(wdsstream,strversion,'"');
+        std::stringstream wdsstream(dummy);
+        getline(wdsstream,strversion,'"');
+        getline(wdsstream,strversion,'"');
 
-		if ( trim(strversion) == "2.0.1" )
-		{
-			type = "upf201";
-		}
-		else
-		{
-			type = "upf";
-		}
-	}
-	return 0;
+        if ( trim(strversion) == "2.0.1" )
+        {
+            type = "upf201";
+        }
+        else
+        {
+            type = "upf";
+        }
+    }
+    return 0;
 }
 
 std::string& Pseudopot_upf::trim(std::string &in_str)
@@ -96,9 +99,9 @@ std::string& Pseudopot_upf::trim(std::string &in_str)
     static const std::string deltri = " \t" ; // delete tab or space
     std::string::size_type position = in_str.find_first_of(deltri, 0);
     if (position == std::string::npos)
-	{
+    {
         return in_str;
-	}
+    }
     return trim(in_str.erase(position, 1) );
 }
 
@@ -111,11 +114,12 @@ std::string Pseudopot_upf::trimend(std::string &in_str)
 } //zws
 
 
-int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
+int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp, const bool lspinorb)
 {
     int error = 0;
     double lambda_ = lambda;
-    if(!PARAM.inp.lspinorb) { lambda_ = 0.0; }
+    const bool lspinorb_ = lspinorb;
+    if(!lspinorb_) { lambda_ = 0.0; }
     if (pp.has_so && pp.tvanp)
     {
         error++;
@@ -124,7 +128,7 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
         std::cout << "------------------------------------------------------" << std::endl;
         return error;
     }
-    if (!pp.has_so && PARAM.inp.lspinorb)
+    if (!pp.has_so && lspinorb_)
     {
         error++;
         std::cout << "warning_quit! no soc upf used for lspinorb calculation, error!" << std::endl;
@@ -132,282 +136,282 @@ int Pseudopot_upf::average_p(const double& lambda, Atom_pseudo& pp)
     }
     // ModuleBase::WARNING_QUIT("average_p", "no soc upf used for lspinorb calculation, error!");
 
-    if (!pp.has_so || (PARAM.inp.lspinorb && std::abs(lambda_ - 1.0) < 1.0e-8))
+    if (!pp.has_so || (lspinorb_ && std::abs(lambda_ - 1.0) < 1.0e-8))
     {
         return error;
     }
 
     //if(std::abs(lambda_)<1.0e-8)
-	if(!PARAM.inp.lspinorb)
-	{
-		int new_nbeta = 0; //calculate the new nbeta
-		for(int nb=0; nb< pp.nbeta; nb++)
-		{
-			new_nbeta++;
-			if(pp.lll[nb] != 0 && std::abs(pp.jjj[nb] - pp.lll[nb] - 0.5) < 1e-6) //two J = l +- 0.5 average to one
-			{
-				new_nbeta--;
-			}
-		}
+    if(!lspinorb_)
+    {
+        int new_nbeta = 0; //calculate the new nbeta
+        for(int nb=0; nb< pp.nbeta; nb++)
+        {
+            new_nbeta++;
+            if(pp.lll[nb] != 0 && std::abs(pp.jjj[nb] - pp.lll[nb] - 0.5) < 1e-6) //two J = l +- 0.5 average to one
+            {
+                new_nbeta--;
+            }
+        }
 
-		pp.nbeta = new_nbeta;
-		ModuleBase::matrix dion_new;
-		dion_new.create(pp.nbeta, pp.nbeta);
+        pp.nbeta = new_nbeta;
+        ModuleBase::matrix dion_new;
+        dion_new.create(pp.nbeta, pp.nbeta);
 
-		int old_nbeta=-1;
-		for(int nb=0; nb<pp.nbeta; nb++)
-		{
-			old_nbeta++;
-			int l = pp.lll[old_nbeta];
-			int ind=0, ind1=0;
-			if(l != 0)
-			{
-				if(std::abs(pp.jjj[old_nbeta] - pp.lll[old_nbeta] + 0.5) < 1e-6)
-				{
-					if(std::abs(pp.jjj[old_nbeta+1]-pp.lll[old_nbeta+1]-0.5)>1e-6) 
-					{
-						error = 1;
-						std::cout<<"warning_quit! error beta function 1 !" <<std::endl;
-						return error;
-					}
-					ind = old_nbeta +1;
-					ind1 = old_nbeta;
-				}
-				else
-				{
-					if(std::abs(pp.jjj[old_nbeta+1]-pp.lll[old_nbeta+1]+0.5)>1e-6)
-					{
-						error = 1;
-						std::cout<<"warning_quit! error beta function 2 !" <<std::endl;
-						return error;
-					}
-					ind = old_nbeta;
-					ind1 = old_nbeta +1;
-				}
-				double vion1 = ((l+1.0) * pp.dion(ind,ind) + l * pp.dion(ind1,ind1)) / (2.0*l+1.0);
-				if(std::abs(vion1)<1.0e-8) 
-				{ 
-					vion1 = 0.1;
-				}
+        int old_nbeta=-1;
+        for(int nb=0; nb<pp.nbeta; nb++)
+        {
+            old_nbeta++;
+            int l = pp.lll[old_nbeta];
+            int ind=0, ind1=0;
+            if(l != 0)
+            {
+                if(std::abs(pp.jjj[old_nbeta] - pp.lll[old_nbeta] + 0.5) < 1e-6)
+                {
+                    if(std::abs(pp.jjj[old_nbeta+1]-pp.lll[old_nbeta+1]-0.5)>1e-6) 
+                    {
+                        error = 1;
+                        std::cout<<"warning_quit! error beta function 1 !" <<std::endl;
+                        return error;
+                    }
+                    ind = old_nbeta +1;
+                    ind1 = old_nbeta;
+                }
+                else
+                {
+                    if(std::abs(pp.jjj[old_nbeta+1]-pp.lll[old_nbeta+1]+0.5)>1e-6)
+                    {
+                        error = 1;
+                        std::cout<<"warning_quit! error beta function 2 !" <<std::endl;
+                        return error;
+                    }
+                    ind = old_nbeta;
+                    ind1 = old_nbeta +1;
+                }
+                double vion1 = ((l+1.0) * pp.dion(ind,ind) + l * pp.dion(ind1,ind1)) / (2.0*l+1.0);
+                if(std::abs(vion1)<1.0e-8) 
+                { 
+                    vion1 = 0.1;
+                }
 
-				//average beta (betar)
-				for(int ir = 0; ir<pp.mesh;ir++)
-				{
-					pp.betar(nb, ir) = 1.0 / (2.0 * l + 1.0) * 
-							( (l + 1.0) * sqrt(std::abs(pp.dion(ind,ind) / vion1)) *
-							pp.betar(ind, ir) + 
-							l * sqrt(std::abs(pp.dion(ind1,ind1) / vion1)) *
-							pp.betar(ind1, ir) ) ;
-				}
+                //average beta (betar)
+                for(int ir = 0; ir<pp.mesh;ir++)
+                {
+                    pp.betar(nb, ir) = 1.0 / (2.0 * l + 1.0) * 
+                            ( (l + 1.0) * sqrt(std::abs(pp.dion(ind,ind) / vion1)) *
+                            pp.betar(ind, ir) + 
+                            l * sqrt(std::abs(pp.dion(ind1,ind1) / vion1)) *
+                            pp.betar(ind1, ir) ) ;
+                }
 
-				//average the dion matrix
-				pp.dion(nb, nb) = vion1;
-				old_nbeta++;	
-			}
-			else
-			{
-				for(int ir = 0; ir<pp.mesh;ir++) 
-				{
-					pp.betar(nb, ir) = pp.betar(old_nbeta, ir);
-				}
-				pp.dion(nb, nb) = pp.dion(old_nbeta, old_nbeta);
-			}
-			pp.lll[nb] = pp.lll[old_nbeta]; //reset the lll index, ignore jjj index
-		}
+                //average the dion matrix
+                pp.dion(nb, nb) = vion1;
+                old_nbeta++;    
+            }
+            else
+            {
+                for(int ir = 0; ir<pp.mesh;ir++) 
+                {
+                    pp.betar(nb, ir) = pp.betar(old_nbeta, ir);
+                }
+                pp.dion(nb, nb) = pp.dion(old_nbeta, old_nbeta);
+            }
+            pp.lll[nb] = pp.lll[old_nbeta]; //reset the lll index, ignore jjj index
+        }
 
-		//store the old dion and then recreate dion 
-		for(int i=0;i<pp.nbeta; i++)
-		{
-			for(int j=0;j<pp.nbeta;j++)
-			{
-				dion_new(i,j) = pp.dion(i,j);
-			}
-		}
+        //store the old dion and then recreate dion 
+        for(int i=0;i<pp.nbeta; i++)
+        {
+            for(int j=0;j<pp.nbeta;j++)
+            {
+                dion_new(i,j) = pp.dion(i,j);
+            }
+        }
 
-		pp.dion = dion_new;
-	//	pp.dion.create(pp.nbeta, pp.nbeta);
-	//	for(int i=0;i<pp.nbeta; i++)
-	//		for(int j=0;j<pp.nbeta;j++)
-	//			pp.dion(i,j) = dion_new(i,j);
-		
-		int new_nwfc = 0;
-		for(int nb=0; nb<pp.nchi; nb++)
-		{
-			new_nwfc++;
-			if(pp.lchi[nb] != 0 && std::abs(pp.jchi[nb] - pp.lchi[nb] - 0.5)<1e-6)
-			{
-				new_nwfc--;
-			}
-		}
+        pp.dion = dion_new;
+    //    pp.dion.create(pp.nbeta, pp.nbeta);
+    //    for(int i=0;i<pp.nbeta; i++)
+    //        for(int j=0;j<pp.nbeta;j++)
+    //            pp.dion(i,j) = dion_new(i,j);
+        
+        int new_nwfc = 0;
+        for(int nb=0; nb<pp.nchi; nb++)
+        {
+            new_nwfc++;
+            if(pp.lchi[nb] != 0 && std::abs(pp.jchi[nb] - pp.lchi[nb] - 0.5)<1e-6)
+            {
+                new_nwfc--;
+            }
+        }
 
-		pp.nchi = new_nwfc;
-		int old_nwfc=-1;
-		for(int nb=0; nb<pp.nchi; nb++)
-		{
-			old_nwfc++;
-			int l = pp.lchi[old_nwfc];
-			int ind=0, ind1=0;
-			if(l!=0)
-			{
-				if(std::abs(pp.jchi[old_nwfc] - pp.lchi[old_nwfc] + 0.5) < 1e-6)
-				{
-					if(std::abs(pp.jchi[old_nwfc+1]-pp.lchi[old_nwfc+1]-0.5)>1e-6) 
-					{
-						error++; 
-						std::cout<<"warning_quit! error chi function 1 !"<<std::endl; 
-						return error;
-					}
-					ind = old_nwfc +1;
-					ind1 = old_nwfc;
-				}
-				else
-				{
-					if(std::abs(pp.jchi[old_nwfc+1]-pp.lchi[old_nwfc+1]+0.5)>1e-6)
-					{
-						error++; 
-						std::cout<<"warning_quit! error chi function 2 !"<<std::endl; 
-						return error;
-					}
-					ind = old_nwfc;
-					ind1 = old_nwfc +1;
-				}
-				//average chi
-				for(int ir = 0; ir<pp.mesh;ir++)
-				{
-					pp.chi(nb, ir) = 1.0 / (2.0 * l + 1.0) *
-						( (l+1.0)*pp.chi(ind,ir) + (l*pp.chi(ind1,ir)) );
-				}
-				old_nwfc++;
-			}
-			else
-			{
-				for(int ir = 0; ir<pp.mesh;ir++) 
-				{
-					pp.chi(nb, ir) = pp.chi(old_nwfc, ir);
-				}
-			}
-			pp.lchi[nb] = pp.lchi[old_nwfc]; //reset lchi index
-		}
-		pp.has_so = false;	
-		return error;
-	}
-	else//lambda_ != 0, modulate the soc effect in pseudopotential
-	{
-		for(int nb=0; nb<pp.nbeta; nb++)
-		{
-			int l = pp.lll[nb];
-			int ind=0, ind1=0;
-			if(l != 0)
-			{
-				if(std::abs(pp.jjj[nb] - pp.lll[nb] + 0.5) < 1e-6)
-				{
-					if(std::abs(pp.jjj[nb+1]-pp.lll[nb+1]-0.5)>1e-6) 
-					{
-						error = 1;
-						std::cout<<"warning_quit! error beta function 1 !" <<std::endl;
-						return error;
-					}
-					ind = nb +1;
-					ind1 = nb;
-				}
-				else
-				{
-					if(std::abs(pp.jjj[nb+1]-pp.lll[nb+1]+0.5)>1e-6)
-					{
-						error = 1;
-						std::cout<<"warning_quit! error beta function 2 !" <<std::endl;
-						return error;
-					}
-					ind = nb;
-					ind1 = nb +1;
-				}
-				double vion1 = ((l+1.0) * pp.dion(ind,ind) + l * pp.dion(ind1,ind1)) / (2.0*l+1.0);
-				if(std::abs(vion1)<1.0e-10) 
-				{ 
-					vion1 = 0.1;
-				}
-				//average beta (betar)
-				const double sqrtDplus = sqrt(std::abs(pp.dion(ind,ind) / vion1));
-				const double sqrtDminus = sqrt(std::abs(pp.dion(ind1,ind1) / vion1));
-				pp.dion(ind, ind) = vion1;
-				pp.dion(ind1, ind1) = vion1;
-				for(int ir = 0; ir<pp.mesh;ir++)
-				{
-					double avera = 1.0 / (2.0 * l + 1.0) * 
-							( (l + 1.0) * sqrtDplus *
-							pp.betar(ind, ir) + 
-							l * sqrtDminus *
-							pp.betar(ind1, ir) ) ;
-					double delta = 1.0 / (2.0 * l + 1.0) * 
-							( sqrtDplus *
-							pp.betar(ind, ir) - 
-							sqrtDminus *
-							pp.betar(ind1, ir) ) ;
-					pp.betar(ind, ir) = (avera + l * delta * lambda_) ;
-					pp.betar(ind1, ir) = (avera - (l + 1) * delta * lambda_); 
-				}
-				nb++;
-			}
-		}
+        pp.nchi = new_nwfc;
+        int old_nwfc=-1;
+        for(int nb=0; nb<pp.nchi; nb++)
+        {
+            old_nwfc++;
+            int l = pp.lchi[old_nwfc];
+            int ind=0, ind1=0;
+            if(l!=0)
+            {
+                if(std::abs(pp.jchi[old_nwfc] - pp.lchi[old_nwfc] + 0.5) < 1e-6)
+                {
+                    if(std::abs(pp.jchi[old_nwfc+1]-pp.lchi[old_nwfc+1]-0.5)>1e-6) 
+                    {
+                        error++; 
+                        std::cout<<"warning_quit! error chi function 1 !"<<std::endl; 
+                        return error;
+                    }
+                    ind = old_nwfc +1;
+                    ind1 = old_nwfc;
+                }
+                else
+                {
+                    if(std::abs(pp.jchi[old_nwfc+1]-pp.lchi[old_nwfc+1]+0.5)>1e-6)
+                    {
+                        error++; 
+                        std::cout<<"warning_quit! error chi function 2 !"<<std::endl; 
+                        return error;
+                    }
+                    ind = old_nwfc;
+                    ind1 = old_nwfc +1;
+                }
+                //average chi
+                for(int ir = 0; ir<pp.mesh;ir++)
+                {
+                    pp.chi(nb, ir) = 1.0 / (2.0 * l + 1.0) *
+                        ( (l+1.0)*pp.chi(ind,ir) + (l*pp.chi(ind1,ir)) );
+                }
+                old_nwfc++;
+            }
+            else
+            {
+                for(int ir = 0; ir<pp.mesh;ir++) 
+                {
+                    pp.chi(nb, ir) = pp.chi(old_nwfc, ir);
+                }
+            }
+            pp.lchi[nb] = pp.lchi[old_nwfc]; //reset lchi index
+        }
+        pp.has_so = false;    
+        return error;
+    }
+    else//lambda_ != 0, modulate the soc effect in pseudopotential
+    {
+        for(int nb=0; nb<pp.nbeta; nb++)
+        {
+            int l = pp.lll[nb];
+            int ind=0, ind1=0;
+            if(l != 0)
+            {
+                if(std::abs(pp.jjj[nb] - pp.lll[nb] + 0.5) < 1e-6)
+                {
+                    if(std::abs(pp.jjj[nb+1]-pp.lll[nb+1]-0.5)>1e-6) 
+                    {
+                        error = 1;
+                        std::cout<<"warning_quit! error beta function 1 !" <<std::endl;
+                        return error;
+                    }
+                    ind = nb +1;
+                    ind1 = nb;
+                }
+                else
+                {
+                    if(std::abs(pp.jjj[nb+1]-pp.lll[nb+1]+0.5)>1e-6)
+                    {
+                        error = 1;
+                        std::cout<<"warning_quit! error beta function 2 !" <<std::endl;
+                        return error;
+                    }
+                    ind = nb;
+                    ind1 = nb +1;
+                }
+                double vion1 = ((l+1.0) * pp.dion(ind,ind) + l * pp.dion(ind1,ind1)) / (2.0*l+1.0);
+                if(std::abs(vion1)<1.0e-10) 
+                { 
+                    vion1 = 0.1;
+                }
+                //average beta (betar)
+                const double sqrtDplus = sqrt(std::abs(pp.dion(ind,ind) / vion1));
+                const double sqrtDminus = sqrt(std::abs(pp.dion(ind1,ind1) / vion1));
+                pp.dion(ind, ind) = vion1;
+                pp.dion(ind1, ind1) = vion1;
+                for(int ir = 0; ir<pp.mesh;ir++)
+                {
+                    double avera = 1.0 / (2.0 * l + 1.0) * 
+                            ( (l + 1.0) * sqrtDplus *
+                            pp.betar(ind, ir) + 
+                            l * sqrtDminus *
+                            pp.betar(ind1, ir) ) ;
+                    double delta = 1.0 / (2.0 * l + 1.0) * 
+                            ( sqrtDplus *
+                            pp.betar(ind, ir) - 
+                            sqrtDminus *
+                            pp.betar(ind1, ir) ) ;
+                    pp.betar(ind, ir) = (avera + l * delta * lambda_) ;
+                    pp.betar(ind1, ir) = (avera - (l + 1) * delta * lambda_); 
+                }
+                nb++;
+            }
+        }
 
-		for(int nb=0; nb<pp.nchi; nb++)
-		{
-			int l = pp.lchi[nb];
-			int ind=0, ind1=0;
-			if(l!=0)
-			{
-				if(std::abs(pp.jchi[nb] - pp.lchi[nb] + 0.5) < 1e-6)
-				{
-					if(std::abs(pp.jchi[nb+1]-pp.lchi[nb+1]-0.5)>1e-6) 
-					{
-						error++; 
-						std::cout<<"warning_quit! error chi function 1 !"<<std::endl; 
-						return error;
-					}
-					ind = nb +1;
-					ind1 = nb;
-				}
-				else
-				{
-					if(std::abs(pp.jchi[nb+1]-pp.lchi[nb+1]+0.5)>1e-6)
-					{
-						error++; 
-						std::cout<<"warning_quit! error chi function 2 !"<<std::endl; 
-						return error;
-					}
-					ind = nb;
-					ind1 = nb +1;
-				}
-				//average chi
-				for(int ir = 0; ir<pp.mesh;ir++)
-				{
-					double avera = 0.5 * 
-						( pp.chi(ind,ir) + pp.chi(ind1,ir) );
-					double delta = 0.5 * 
-						( pp.chi(ind,ir) - pp.chi(ind1,ir) );
-					pp.chi(ind, ir) = avera + delta * lambda_ ; 
-					pp.chi(ind1, ir) = avera - delta * lambda_ ; 
-				}
-				nb++;
-			}
-		}
-		return error;
-	}
+        for(int nb=0; nb<pp.nchi; nb++)
+        {
+            int l = pp.lchi[nb];
+            int ind=0, ind1=0;
+            if(l!=0)
+            {
+                if(std::abs(pp.jchi[nb] - pp.lchi[nb] + 0.5) < 1e-6)
+                {
+                    if(std::abs(pp.jchi[nb+1]-pp.lchi[nb+1]-0.5)>1e-6) 
+                    {
+                        error++; 
+                        std::cout<<"warning_quit! error chi function 1 !"<<std::endl; 
+                        return error;
+                    }
+                    ind = nb +1;
+                    ind1 = nb;
+                }
+                else
+                {
+                    if(std::abs(pp.jchi[nb+1]-pp.lchi[nb+1]+0.5)>1e-6)
+                    {
+                        error++; 
+                        std::cout<<"warning_quit! error chi function 2 !"<<std::endl; 
+                        return error;
+                    }
+                    ind = nb;
+                    ind1 = nb +1;
+                }
+                //average chi
+                for(int ir = 0; ir<pp.mesh;ir++)
+                {
+                    double avera = 0.5 * 
+                        ( pp.chi(ind,ir) + pp.chi(ind1,ir) );
+                    double delta = 0.5 * 
+                        ( pp.chi(ind,ir) - pp.chi(ind1,ir) );
+                    pp.chi(ind, ir) = avera + delta * lambda_ ; 
+                    pp.chi(ind1, ir) = avera - delta * lambda_ ; 
+                }
+                nb++;
+            }
+        }
+        return error;
+    }
 }
 
 // Peize Lin add for bsse 2021.04.07
 void Pseudopot_upf::set_empty_element(Atom_pseudo& pp)
 {
-	pp.zv = 0;
-	for(double &value : pp.vloc_at)
-		{ value = 0; }
-	for(double &value : pp.rho_atc)
-		{ value = 0; }
-	for(double &value : pp.rho_at)
-		{ value = 0; }
-	pp.chi.zero_out();
-	pp.dion.zero_out();
-	pp.betar.zero_out();
+    pp.zv = 0;
+    for(double &value : pp.vloc_at)
+        { value = 0; }
+    for(double &value : pp.rho_atc)
+        { value = 0; }
+    for(double &value : pp.rho_at)
+        { value = 0; }
+    pp.chi.zero_out();
+    pp.dion.zero_out();
+    pp.betar.zero_out();
 }
 
 /**
@@ -489,9 +493,9 @@ void Pseudopot_upf::setqfnew(const int& nqf,
 
 void Pseudopot_upf::skip_number(std::ifstream& ifs, bool mesh_changed)
 {
-	if (mesh_changed)
-	{
-		double temp = 0.;
-		ifs >> temp;
-	}
+    if (mesh_changed)
+    {
+        double temp = 0.;
+        ifs >> temp;
+    }
 }

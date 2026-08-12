@@ -3,7 +3,7 @@
 #include "cal_dos.h"
 #include "../module_output/cube_io.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
-#include "source_lcao/module_gint/gint_interface.h"
+#include "source_hamilt/module_gint/gint_interface.h"
 
 #include <type_traits>
 
@@ -198,7 +198,7 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
     // calculate grid points
     std::vector<std::vector<int>> points(npoints, std::vector<int>(3, 0));
     std::vector<std::vector<double>> shifts(npoints, std::vector<double>(3, 0));
-    get_grid_points(start, end, npoints, pgrid.nx, pgrid.ny, pgrid.nz, points, shifts);
+    get_grid_points(start, end, npoints, pgrid.get_nx(), pgrid.get_ny(), pgrid.get_nz(), points, shifts);
 
     std::vector<std::vector<double>> ldos(npoints, std::vector<double>(ndata, 0));
 
@@ -315,9 +315,9 @@ void trilinear_interpolate(const std::vector<std::vector<int>>& points,
                            const std::vector<double>& data,
                            std::vector<double>& results)
 {
-    const int nx = pgrid.nx;
-    const int ny = pgrid.ny;
-    const int nz = pgrid.nz;
+    const int nx = pgrid.get_nx();
+    const int ny = pgrid.get_ny();
+    const int nz = pgrid.get_nz();
     const int nyz = ny * nz;
     const int nxyz = nx * ny * nz;
 

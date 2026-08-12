@@ -52,7 +52,7 @@ class toolfunc
             spin_out[LDA * i + 1] = factor * j * spin_in[LDA * i];
         }
     }
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
     float x7(float x)
     {
         return pow(x, 7);
@@ -164,7 +164,7 @@ TEST_F(MathChebyshevTest, checkconverge)
     delete p_chetest;
 }
 
-#ifdef __ENABLE_FLOAT_FFTW
+#ifdef __FLOAT_FFTW
 TEST_F(MathChebyshevTest, checkconverge_float)
 {
     const int norder = 100;

@@ -37,13 +37,11 @@ void ReadInput::item_deepks()
         item.unit = "";
         item.availability = "Numerical atomic orbital basis";
         read_sync_int(input.deepks_out_freq_elec);
-        item.reset_value = [](const Input_Item& item, Parameter& para) {
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.deepks_out_freq_elec < 0)
             {
-                para.input.deepks_out_freq_elec = 0;
+                ModuleBase::WARNING_QUIT("ReadInput", "deepks_out_freq_elec must not be negative");
             }
-        };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.deepks_out_freq_elec > 0 && para.input.deepks_out_base == "none")
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "to use deepks_out_freq_elec, please set deepks_out_base ");

@@ -8,8 +8,8 @@
 #include "source_base/tool_threading.h"
 #include "source_base/vector3.h"
 #include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_rt/td_folding.h"
 #include "source_lcao/module_rt/td_info.h"
 #include "td_current_io.h"
@@ -773,20 +773,22 @@ void ModuleIO::write_current(const UnitCell& ucell,
     }
     for (int is = 0; is < nspin0; ++is)
     {
+        int kpoint_index = 0;
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
             if (is == kv.isk[ik])
             {
+                ++kpoint_index;
                 if (GlobalV::MY_RANK == 0 && TD_info::out_current_k)
                 {
-                    std::string filename
-                        = PARAM.globalv.global_out_dir + "currents" + std::to_string(is) + "k" + std::to_string(ik) + "comm.txt";
+                    std::string filename = PARAM.globalv.global_out_dir + "current_s" + std::to_string(is + 1) + "k"
+                                           + std::to_string(kpoint_index) + "_comm.txt";
                     std::ofstream fout;
                     fout.open(filename, std::ios::app);
                     fout << std::setprecision(16);
                     fout << std::scientific;
-                    fout << istep << " " << current_k[ik][0] / omega << " " << current_k[ik][1] / omega << " " << current_k[ik][2] / omega
-                         << std::endl;
+                    fout << istep + 1 << " " << current_k[ik][0] / omega << " " << current_k[ik][1] / omega << " "
+                         << current_k[ik][2] / omega << std::endl;
                     fout.close();
                 }
             }
@@ -808,7 +810,8 @@ void ModuleIO::write_current(const UnitCell& ucell,
         fout.open(filename, std::ios::app);
         fout << std::setprecision(16);
         fout << std::scientific;
-        fout << istep << " " << current_total[0] / omega << " " << current_total[1] / omega << " " << current_total[2] / omega << std::endl;
+        fout << istep + 1 << " " << current_total[0] / omega << " " << current_total[1] / omega << " " << current_total[2] / omega
+             << std::endl;
         fout.close();
     }
 

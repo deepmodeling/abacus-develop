@@ -220,9 +220,9 @@ template void ModuleIO::output_SR<std::complex<double>>(Parallel_Orbitals& pv,
                                                         const double& sparse_thr,
                                                         const int precision);
 
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
-#include "source_io/module_output/ucell_io.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
+#include "source_cell/ucell_io.h"
 
 std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
                                      const int ispin,
@@ -237,6 +237,15 @@ std::string ModuleIO::hsr_gen_fname(const std::string& prefix,
     {
         return prefix + std::to_string(ispin + 1) + "_nao.csr";
     }
+}
+
+std::string ModuleIO::sr_gen_fname(const bool append, const int istep)
+{
+    if (!append && istep >= 0)
+    {
+        return "srg" + std::to_string(istep + 1) + "_nao.csr";
+    }
+    return "sr_nao.csr";
 }
 
 std::string ModuleIO::dhr_gen_fname(const std::string& prefix,
@@ -261,7 +270,8 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
                                      const int istep,
                                      const int ispin,
                                      const int nspin,
-                                     const std::string& label)
+                                     const std::string& label,
+                                     const std::string& representation_note)
 {
     std::ofstream ofs;
     if (istep <= 0)
@@ -287,6 +297,10 @@ void ModuleIO::write_hcontainer_csr(const std::string& fname,
     ofs << std::endl;
 
     ModuleIO::UcellIO::write_ucell(ofs, ucell);
+    if (!representation_note.empty())
+    {
+        ofs << "# representation: " << representation_note << std::endl;
+    }
     ofs << std::endl;
 
     const double sparse_threshold = 1e-10;
@@ -302,12 +316,17 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
                           const int precision,
                           const Parallel_2D& paraV,
                           const bool append,
+                          const bool gamma_only,
                           const int* iat2iwt,
                           const int nat,
                           const int istep)
 {
     const int nspin = hr_vec.size();
     assert(nspin > 0);
+    const std::string representation_note
+        = gamma_only
+              ? "gamma-only folded matrix; stored R-space contributions are summed into R = (0, 0, 0)"
+              : "";
 
     // Output HR (one file per spin)
     for (int ispin = 0; ispin < nspin; ispin++)
@@ -316,7 +335,6 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         hamilt::HContainer<TR> hr_serial(&serialV);
@@ -329,7 +347,8 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
         {
             std::string fname = PARAM.globalv.global_out_dir
                                 + hsr_gen_fname("hrs", ispin, append, istep);
-            write_hcontainer_csr(fname, ucell, precision, &hr_serial, istep, ispin, nspin, "H");
+            write_hcontainer_csr(
+                fname, ucell, precision, &hr_serial, istep, ispin, nspin, "H", representation_note);
         }
     }
 
@@ -339,7 +358,6 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         hamilt::HContainer<TR> sr_serial(&serialV);
@@ -351,8 +369,9 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
         if (GlobalV::MY_RANK == 0)
         {
             std::string fname = PARAM.globalv.global_out_dir
-                                + hsr_gen_fname("srs", 0, append, istep);
-            write_hcontainer_csr(fname, ucell, precision, &sr_serial, istep, 0, 1, "S");
+                                + sr_gen_fname(append, istep);
+            write_hcontainer_csr(
+                fname, ucell, precision, &sr_serial, istep, 0, 1, "S", representation_note);
         }
     }
 }
@@ -360,21 +379,21 @@ void ModuleIO::write_hsr(const std::vector<hamilt::HContainer<TR>*>& hr_vec,
 // Explicit instantiations
 template void ModuleIO::write_hcontainer_csr<double>(
     const std::string&, const UnitCell*, const int,
-    hamilt::HContainer<double>*, const int, const int, const int, const std::string&);
+    hamilt::HContainer<double>*, const int, const int, const int, const std::string&, const std::string&);
 template void ModuleIO::write_hcontainer_csr<std::complex<double>>(
     const std::string&, const UnitCell*, const int,
-    hamilt::HContainer<std::complex<double>>*, const int, const int, const int, const std::string&);
+    hamilt::HContainer<std::complex<double>>*, const int, const int, const int, const std::string&, const std::string&);
 
 template void ModuleIO::write_hsr<double>(
     const std::vector<hamilt::HContainer<double>*>&,
     const hamilt::HContainer<double>*,
     const UnitCell*, const int, const Parallel_2D&,
-    const bool, const int*, const int, const int);
+    const bool, const bool, const int*, const int, const int);
 template void ModuleIO::write_hsr<std::complex<double>>(
     const std::vector<hamilt::HContainer<std::complex<double>>*>&,
     const hamilt::HContainer<std::complex<double>>*,
     const UnitCell*, const int, const Parallel_2D&,
-    const bool, const int*, const int, const int);
+    const bool, const bool, const int*, const int, const int);
 
 
 template <typename TR>
@@ -410,7 +429,6 @@ void ModuleIO::write_matrix_r(const std::string& matrix_label,
         // Gather parallel matrix to serial
 #ifdef __MPI
         Parallel_Orbitals serialV;
-        serialV.init(nbasis, nbasis, nbasis, paraV.comm());
         serialV.set_serial(nbasis, nbasis);
         serialV.set_atomic_trace(iat2iwt, nat, nbasis);
         
@@ -419,10 +437,12 @@ void ModuleIO::write_matrix_r(const std::string& matrix_label,
         
         if (GlobalV::MY_RANK == 0)
         {
-            write_hcontainer_csr(fname, ucell, precision, &matrix_serial, istep, ispin, nspin, description);
+            write_hcontainer_csr(
+                fname, ucell, precision, &matrix_serial, istep, ispin, nspin, description, "");
         }
 #else
-        write_hcontainer_csr(fname, ucell, precision, matrices[ispin], istep, ispin, nspin, description);
+        write_hcontainer_csr(
+            fname, ucell, precision, matrices[ispin], istep, ispin, nspin, description, "");
 #endif
     }
 }

@@ -1,9 +1,13 @@
+/**
+ * @file parallel_kpoints.cpp
+ * @brief Implementation of Parallel_Kpoints class.
+ */
 #include "parallel_kpoints.h"
 
 #include "source_base/parallel_common.h"
 #include "source_base/parallel_global.h"
 
-// the kpoints here are reduced after symmetry applied.
+/// @note the kpoints here are reduced after symmetry applied.
 void Parallel_Kpoints::kinfo(int& nkstot_in,
                              const int& kpar_in,
                              const int& my_pool_in,
@@ -211,10 +215,10 @@ void Parallel_Kpoints::pool_collection_aux(T* value, const V& w, const int& dim,
     T* p = &w.ptr[begin];
     // temprary restrict kpar=1 for NSPIN=2 case for generating_orbitals
     int pool = 0;
-	if (this->nspin != 2) 
-	{
-		pool = this->whichpool[ik];
-	}
+    if (this->nspin != 2) 
+    {
+        pool = this->whichpool[ik];
+    }
 
     if (this->rank_in_pool == 0)
     {

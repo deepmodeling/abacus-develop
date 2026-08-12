@@ -285,7 +285,15 @@ class TestHSolverPW_SDFT : public ::testing::Test
             hsolver::DiagoIterAssist<std::complex<double>>::SCF_ITER,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_NMAX,
             hsolver::DiagoIterAssist<std::complex<double>>::PW_DIAG_THR,
-            hsolver::DiagoIterAssist<std::complex<double>>::need_subspace);
+            hsolver::DiagoIterAssist<std::complex<double>>::need_subspace,
+            PARAM.input.nbands,
+            PARAM.input.diago_smooth_ethr,
+            PARAM.input.pw_diag_ndim,
+            PARAM.input.diag_subspace,
+            PARAM.input.nb2d,
+            PARAM.sys.ks_run,
+            PARAM.sys.all_ks_run,
+            PARAM.input.bndpar);
 
     hamilt::Hamilt<std::complex<double>> hamilt_test_d;
 

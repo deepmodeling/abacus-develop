@@ -122,5 +122,4 @@ void reallocate_hcontainer(const int nat,
 
 } // namespace hamilt
 #endif // __EXX
-#include "op_exx_lcao.hpp"
 #endif // OPEXXLCAO_H

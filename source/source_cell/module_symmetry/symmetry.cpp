@@ -42,21 +42,21 @@ void Symmetry::set_atom_map(const Atom* atoms)
     {
         for (int ia = istart[it]; ia < istart[it] + na[it]; ++ia)
         {
-			const int xx = ia * 3; 
-			const int yy = ia * 3 + 1; 
-			const int zz = ia * 3 + 2;
+            const int xx = ia * 3; 
+            const int yy = ia * 3 + 1; 
+            const int zz = ia * 3 + 2;
 
-			for (int k = 0;k < this->nrotk;++k)
+            for (int k = 0;k < this->nrotk;++k)
             {
-				rotpos[xx] = pos[xx] * gmatrix[k].e11 
-					+ pos[yy] * gmatrix[k].e21 
-					+ pos[zz] * gmatrix[k].e31 + gtrans[k].x;
-				rotpos[yy] = pos[xx] * gmatrix[k].e12 
-					+ pos[yy] * gmatrix[k].e22 
-					+ pos[zz] * gmatrix[k].e32 + gtrans[k].y;
-				rotpos[zz] = pos[xx] * gmatrix[k].e13 
-					+ pos[yy] * gmatrix[k].e23 
-					+ pos[zz] * gmatrix[k].e33 + gtrans[k].z;
+                rotpos[xx] = pos[xx] * gmatrix[k].e11 
+                    + pos[yy] * gmatrix[k].e21 
+                    + pos[zz] * gmatrix[k].e31 + gtrans[k].x;
+                rotpos[yy] = pos[xx] * gmatrix[k].e12 
+                    + pos[yy] * gmatrix[k].e22 
+                    + pos[zz] * gmatrix[k].e32 + gtrans[k].y;
+                rotpos[zz] = pos[xx] * gmatrix[k].e13 
+                    + pos[yy] * gmatrix[k].e23 
+                    + pos[zz] * gmatrix[k].e33 + gtrans[k].z;
 
                 check_translation(rotpos[xx], -floor(rotpos[xx]));
                 check_boundary(rotpos[xx]);
@@ -104,7 +104,7 @@ void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
             vtot[l*3+2] = vtot[l*3+2] + v[jx] * gmatrix[k].e13 + v[jy] * gmatrix[k].e23 + v[jz] * gmatrix[k].e33;
             n[l]++;
         }
-	}
+    }
     for (int j = 0;j < nat; ++j)
     {
         v[j * 3] = vtot[j * 3] / n[j];
@@ -113,7 +113,7 @@ void Symmetry::symmetrize_vec3_nat(double* v)const   // pengfei 2016-12-20
     }
     delete[] vtot;
     delete[] n;
-	return;
+    return;
 }
 
 void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)const   //zhengdy added 2017
@@ -129,7 +129,7 @@ void Symmetry::symmetrize_mat3(ModuleBase::matrix& sigma, const Lattice& lat)con
                      * gmatrix[k].Transpose().to_matrix() * invAT;
     }
     sigma = tot_sigma * static_cast<double>(1.0 / nrotk);
-	return;
+    return;
 }
 
 void Symmetry::gmatrix_convert_int(const ModuleBase::Matrix3* sa, ModuleBase::Matrix3* sb, 
@@ -248,7 +248,7 @@ void Symmetry::get_shortest_latvec(ModuleBase::Vector3<double> &a1,
 void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<double> &v2, 
         ModuleBase::Vector3<double> &v3, ModuleBase::Vector3<double> &w1, 
         ModuleBase::Vector3<double> &w2, ModuleBase::Vector3<double> &w3, 
-        int& real_brav, double* cel_const, double* tmp_const) const
+        int& real_brav, double* cel_const, double* tmp_const, const double symmetry_prec) const
 {
     ModuleBase::Vector3<double> r1, r2, r3;
     double cos1 = 1;
@@ -282,15 +282,15 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
                                             r1.y = n11 * v1.y + n12 * v2.y + n13 * v3.y;
                                             r1.z = n11 * v1.z + n12 * v2.z + n13 * v3.z;
                                      
-									        r2.x = n21 * v1.x + n22 * v2.x + n23 * v3.x;
+                                            r2.x = n21 * v1.x + n22 * v2.x + n23 * v3.x;
                                             r2.y = n21 * v1.y + n22 * v2.y + n23 * v3.y;
                                             r2.z = n21 * v1.z + n22 * v2.z + n23 * v3.z;
                                      
-									        r3.x = n31 * v1.x + n32 * v2.x + n33 * v3.x;
+                                            r3.x = n31 * v1.x + n32 * v2.x + n33 * v3.x;
                                             r3.y = n31 * v1.y + n32 * v2.y + n33 * v3.y;
                                             r3.z = n31 * v1.z + n32 * v2.z + n33 * v3.z;
-											
-                                            ibrav = standard_lat(r1, r2, r3, cel_const);
+                                            
+                                            ibrav = standard_lat(r1, r2, r3, cel_const, symmetry_prec);
 
                                             if ( ibrav < real_brav || ( ibrav == real_brav
                                                     && ( fabs(cel_const[3]) < (cos1-1.0e-9) )
@@ -299,7 +299,7 @@ void Symmetry::get_optlat(ModuleBase::Vector3<double> &v1, ModuleBase::Vector3<d
                                                )
                                             {
                                                 real_brav = ibrav;
-												
+                                                
                                                 cos1 = fabs(cel_const[3]);
                                                 cos2 = fabs(cel_const[4]);
                                                 cos3 = fabs(cel_const[5]);

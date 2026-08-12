@@ -1,7 +1,7 @@
 #include "relax_nsync.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_cell/cell_tools.h"
 #include "source_cell/update_cell.h"
 
 /**
@@ -14,15 +14,17 @@
  * 
  * @param natom Number of atoms in the system
  */
-void IonCellOptimizer::init_relax(const int& natom)
+void IonCellOptimizer::init_relax(const int& natom, const Input_para& inp)
 {
-    if (PARAM.inp.calculation == "relax")
+    inp_ = &inp;
+
+    if (inp_->calculation == "relax")
     {
-        IMM.allocate(natom, PARAM.inp.relax_method[0], PARAM.inp.relax_method[1]);
+        IMM.allocate(natom, inp_->relax_method[0], inp_->relax_method[1]);
     }
-    if (PARAM.inp.calculation == "cell-relax")
+    if (inp_->calculation == "cell-relax")
     {
-        IMM.allocate(natom, PARAM.inp.relax_method[0], PARAM.inp.relax_method[1]);
+        IMM.allocate(natom, inp_->relax_method[0], inp_->relax_method[1]);
         LCM.allocate();
     }
 }
@@ -65,14 +67,14 @@ bool IonCellOptimizer::relax_step(const int& istep,
     ucell.cell_parameter_updated = false;
 
     // Check if we've reached the maximum number of iterations
-    if (istep == PARAM.inp.relax_nmax)
+    if (istep == inp_->relax_nmax)
     {
         return true;
     }
 
     // Determine calculation mode
-    const bool is_cell_relax = (PARAM.inp.calculation == "cell-relax");
-    const bool is_relax = (PARAM.inp.calculation == "relax");
+    const bool is_cell_relax = (inp_->calculation == "cell-relax");
+    const bool is_relax = (inp_->calculation == "relax");
 
     // In non-cell-relax mode, force_step follows istep
     if (!is_cell_relax)
@@ -81,16 +83,16 @@ bool IonCellOptimizer::relax_step(const int& istep,
     }
 
     // Determine what relaxation steps are needed
-    const bool need_atom_relax = (is_relax || is_cell_relax) && ucell.if_atoms_can_move();
-    const bool need_cell_relax = is_cell_relax && ucell.if_cell_can_change();
+    const bool need_atom_relax = (is_relax || is_cell_relax) && unitcell::if_atoms_can_move(ucell.atoms, ucell.ntype);
+    const bool need_cell_relax = is_cell_relax && unitcell::if_cell_can_change(ucell.lat_axis_free);
 
     // Atomic relaxation branch
     if (need_atom_relax)
     {
-        assert(PARAM.inp.cal_force == 1);
+        assert(inp_->cal_force == 1);
         
         // Calculate and apply atomic movement
-        std::vector<std::string> relax_method = PARAM.inp.relax_method;
+        std::vector<std::string> relax_method = inp_->relax_method;
         IMM.cal_movement(istep, force_step, force, energy, ucell, ofs_running, relax_method);
         ++force_step;
         
@@ -117,7 +119,7 @@ bool IonCellOptimizer::relax_step(const int& istep,
     // Cell relaxation branch (only in cell-relax mode)
     if (need_cell_relax)
     {
-        assert(PARAM.inp.cal_stress == 1);
+        assert(inp_->cal_stress == 1);
         
         // Calculate and apply lattice change
         LCM.cal_lattice_change(istep, stress_step, stress, energy, ucell, ofs_running);
@@ -128,17 +130,17 @@ bool IonCellOptimizer::relax_step(const int& istep,
             // Reset force_step counter after cell change for fresh atomic relaxation
             force_step = 1;
             stress_step++;
-            IMM.reset_after_cell_change(PARAM.inp.relax_method, ofs_running);
+            IMM.reset_after_cell_change(inp_->relax_method, ofs_running);
             ucell.cell_parameter_updated = true;
             
             // Update cell-related parameters after volume change
-            unitcell::setup_cell_after_vc(ucell, ofs_running);
+            unitcell::setup_cell_after_vc(ucell, ofs_running, inp_->nspin);
             ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
         }
         
         return converged;
     }
-    else if (is_cell_relax && !ucell.if_cell_can_change())
+    else if (is_cell_relax && !unitcell::if_cell_can_change(ucell.lat_axis_free))
     {
         ModuleBase::WARNING("IonCellOptimizer", "Lattice vectors are not allowed to change!");
         return true;

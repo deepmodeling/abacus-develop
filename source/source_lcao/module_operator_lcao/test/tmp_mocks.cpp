@@ -11,8 +11,7 @@ Atom_pseudo::~Atom_pseudo() {}
 Magnetism::Magnetism() {}
 Magnetism::~Magnetism() {}
 
-InfoNonlocal::InfoNonlocal() {}
-InfoNonlocal::~InfoNonlocal() {}
+
 
 pseudo::pseudo() {}
 pseudo::~pseudo() {}
@@ -42,7 +41,7 @@ void UnitCell::set_iat2iwt(const int& npol_in) {
 
 // mock of OperatorLCAO
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 
 /* template<typename FPTYPE, typename Device>
 hamilt::Operator<FPTYPE, Device>::Operator(){}
@@ -200,6 +199,18 @@ void filter_adjs(const std::vector<bool>& is_adj, AdjacentAtomInfo& adjs) {
 
 Numerical_Nonlocal::Numerical_Nonlocal() { this->rcut_max = 1.0; }
 Numerical_Nonlocal::~Numerical_Nonlocal() {}
+
+#include "../../setup_nonlocal.h"
+InfoNonlocal::InfoNonlocal() {
+    this->Beta = new Numerical_Nonlocal[1];
+    this->nproj = nullptr;
+    this->nprojmax = 0;
+    this->rcutmax_Beta = 0.0;
+}
+InfoNonlocal::~InfoNonlocal() {
+    delete[] Beta;
+    delete[] nproj;
+}
 
 Numerical_Orbital::Numerical_Orbital() { this->rcut = 1.0; }
 Numerical_Orbital::~Numerical_Orbital() {}

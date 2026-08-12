@@ -11,7 +11,7 @@
 #endif
 #include "source_psi/psi.h"
 #include "source_io/module_hs/write_HS.h"
-#include "source_io/module_output/filename.h" // use filename_output function
+#include "source_base/module_out/filename.h" // use filename_output function
 
 namespace ModuleIO
 {
@@ -156,8 +156,8 @@ void write_Vxc(const int nspin,
                bool cal_exx
 #ifdef __EXX
                ,
-               std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
-               std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
+               std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<double>>>>* Hexxd = nullptr,
+               std::vector<std::map<int, std::map<hamilt::TAC, RI::Tensor<std::complex<double>>>>>* Hexxc = nullptr
 #endif
 )
 {
@@ -207,7 +207,7 @@ void write_Vxc(const int nspin,
         &vxcs_R_ao[0],ucell,/*for paraV*/ kv, Hexxd, Hexxc, hamilt::Add_Hexx_Type::k);
     std::vector<std::vector<double>> e_orb_exx; // orbital energy (EXX)
 #endif
-    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, nullptr, kv.isk);
+    hamilt::OperatorDFTU<hamilt::OperatorLCAO<TK, TR>> vdftu_op_ao(&vxc_k_ao, kv.kvec_d, nullptr, nullptr, kv.isk, PARAM.globalv.npol);
 
     // 4. calculate and write the MO-matrix Exc
     Parallel_2D p2d;

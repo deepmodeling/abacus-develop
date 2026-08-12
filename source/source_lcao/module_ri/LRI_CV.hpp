@@ -10,10 +10,10 @@
 #include "LRI_CV_Tools.h"
 #include "exx_abfs-construct_orbs.h"
 #include "RI_Util.h"
-#include "../../source_basis/module_ao/element_basis_index-ORB.h"
-#include "../../source_base/tool_title.h"
-#include "../../source_base/timer.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_basis/module_ao/element_basis_index-ORB.h"
+#include "source_base/tool_title.h"
+#include "source_base/timer.h"
+#include "source_hamilt/module_xc/exx_info_ri.h"
 #include <RI/global/Global_Func-1.h>
 #include <omp.h>
 
@@ -353,8 +353,9 @@ LRI_CV<Tdata>::DPcal_C_dC(
 						Matrix_Orbs21::Matrix_Order::A1A2B);
             const RI::Tensor<Tdata> V = this->DPcal_V(it0, it0, {0, 0, 0}, {{"writable_Vws", true}});
             RI::Tensor<Tdata> L;
-            if (GlobalC::exx_info.info_ri.Cs_inv_thr > 0)
-                L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, GlobalC::exx_info.info_ri.Cs_inv_thr);
+            const double cs_inv_thr = this->p_info_ri != nullptr ? this->p_info_ri->Cs_inv_thr : 0.0;
+            if (cs_inv_thr > 0)
+                L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, cs_inv_thr);
             else
                 L = LRI_CV_Tools::cal_I(V);
 
@@ -405,8 +406,9 @@ LRI_CV<Tdata>::DPcal_C_dC(
 				      DPcal_V(it1, it1, {0,0,0}, {{"writable_Vws",true}})}};
 
             std::vector<std::vector<RI::Tensor<Tdata>>> L;
-            if (GlobalC::exx_info.info_ri.Cs_inv_thr > 0)
-                L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, GlobalC::exx_info.info_ri.Cs_inv_thr);
+            const double cs_inv_thr = this->p_info_ri != nullptr ? this->p_info_ri->Cs_inv_thr : 0.0;
+            if (cs_inv_thr > 0)
+                L = LRI_CV_Tools::cal_I(V, Inverse_Matrix<Tdata>::Method::syev, cs_inv_thr);
             else
 				L = LRI_CV_Tools::cal_I(V);
 

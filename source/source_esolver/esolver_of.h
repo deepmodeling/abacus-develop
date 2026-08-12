@@ -4,8 +4,8 @@
 #include "esolver_fp.h"
 #include "source_base/opt_DCsrch.h"
 #include "source_base/opt_TN.hpp"
-#include "source_pw/module_ofdft/kedf_manager.h"
 #include "source_psi/psi.h"
+#include "source_pw/module_ofdft/kedf_manager.h"
 
 namespace ModuleESolver
 {
@@ -15,17 +15,17 @@ class ESolver_OF : public ESolver_FP
     ESolver_OF();
     ~ESolver_OF();
 
-    virtual void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    virtual void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
-    virtual void runner(UnitCell& ucell, const int istep) override;
+    virtual void runner(BaseCell& basecell, const int istep) override;
 
-    virtual void after_all_runners(UnitCell& ucell) override;
+    virtual void after_all_runners(BaseCell& basecell) override;
 
     virtual double cal_energy() override;
 
-    virtual void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
+    virtual void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
 
-    virtual void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
+    virtual void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
   protected:
     // ======================= variables ==========================
@@ -83,7 +83,7 @@ class ESolver_OF : public ESolver_FP
 
     // ============================ tools ===============================
     // --------------------- initialize ---------------------------------
-    void init_elecstate(UnitCell& ucell);                                                                 
+    void init_elecstate(UnitCell& ucell);
     void allocate_array();
 
     // --------------------- calculate physical qualities ---------------

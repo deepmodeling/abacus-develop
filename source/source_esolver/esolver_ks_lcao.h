@@ -4,7 +4,7 @@
 #include "esolver_ks.h"
 #include "source_lcao/record_adj.h" // adjacent atoms
 #include "source_basis/module_nao/two_center_bundle.h" // nao basis
-#include "source_lcao/module_gint/gint_info.h"
+#include "source_hamilt/module_gint/gint_info.h"
 #include "source_estate/module_charge/gint_precision_controller.h"
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
@@ -34,15 +34,15 @@ class ESolver_KS_LCAO : public ESolver_KS
     ESolver_KS_LCAO();
     ~ESolver_KS_LCAO();
 
-    void before_all_runners(UnitCell& ucell, const Input_para& inp) override;
+    void before_all_runners(BaseCell& basecell, const Input_para& inp) override;
 
     double cal_energy() override;
 
-    void cal_force(UnitCell& ucell, ModuleBase::matrix& force) override;
+    void cal_force(BaseCell& basecell, ModuleBase::matrix& force) override;
 
-    void cal_stress(UnitCell& ucell, ModuleBase::matrix& stress) override;
+    void cal_stress(BaseCell& basecell, ModuleBase::matrix& stress) override;
 
-    void after_all_runners(UnitCell& ucell) override;
+    void after_all_runners(BaseCell& basecell) override;
 
   protected:
     virtual void before_scf(UnitCell& ucell, const int istep) override;
@@ -55,7 +55,7 @@ class ESolver_KS_LCAO : public ESolver_KS
 
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver) override;
 
-    virtual void others(UnitCell& ucell, const int istep) override;
+    virtual void others(BaseCell& basecell, const int istep) override;
 
     //! Electronic wave functions (moved from base class)
     psi::Psi<TK>* psi = nullptr;

@@ -6,7 +6,7 @@
 #include "source_base/realarray.h"
 #include "source_base/vector3.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 
 //---------------------------------------------------
 // FUNCTION: expand the local basis sets into plane

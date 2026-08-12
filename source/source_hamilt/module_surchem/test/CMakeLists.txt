@@ -1,5 +1,5 @@
 abacus_disable_feature_definitions(__LCAO)
-abacus_disable_feature_definitions(USE_LIBXC)
+abacus_disable_feature_definitions(__LIBXC)
 install(DIRECTORY support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 list(APPEND depend_files 
@@ -15,21 +15,19 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_cal_pseudo  
   LIBS parameter planewave device base psi
-  SOURCES cal_pseudo_test.cpp  ../cal_pseudo.cpp ../surchem.cpp ../cal_epsilon.cpp ../../../source_pw/module_pwdft/structure_factor.cpp
-  ../../../source_pw/module_pwdft/parallel_grid.cpp 
-
+  SOURCES cal_pseudo_test.cpp  ../cal_pseudo.cpp ../surchem.cpp ../cal_epsilon.cpp ../../../source_pw/module_pwdft/stru_fac.cpp
 )
 
 AddTest(
   TARGET MODULE_HAMILT_surchem_cal_totn
   LIBS parameter planewave device base
-  SOURCES cal_totn_test.cpp  ../cal_totn.cpp ../surchem.cpp ../../../source_pw/module_pwdft/parallel_grid.cpp 
+  SOURCES cal_totn_test.cpp  ../cal_totn.cpp ../surchem.cpp
 )
 
 AddTest(
   TARGET MODULE_HAMILT_surchem_cal_vcav
   LIBS parameter planewave device base container
-  SOURCES cal_vcav_test.cpp  ../cal_vcav.cpp ../surchem.cpp ../../../source_pw/module_pwdft/parallel_grid.cpp 
+  SOURCES cal_vcav_test.cpp  ../cal_vcav.cpp ../surchem.cpp
   ../../module_xc/xc_grad.cpp ../../module_xc/xc_functional.cpp
   ../../module_xc/xc_lda_wrap.cpp ../../module_xc/xc_gga_wrap.cpp
   ../../module_xc/libxc_setup.cpp
@@ -44,7 +42,7 @@ AddTest(
 AddTest(
   TARGET MODULE_HAMILT_surchem_cal_vel
   LIBS parameter planewave device base container
-  SOURCES cal_vel_test.cpp  ../cal_vel.cpp ../surchem.cpp ../cal_epsilon.cpp ../minimize_cg.cpp ../../../source_pw/module_pwdft/parallel_grid.cpp 
+  SOURCES cal_vel_test.cpp  ../cal_vel.cpp ../surchem.cpp ../cal_epsilon.cpp ../minimize_cg.cpp
   ../../module_xc/xc_grad.cpp ../../module_xc/xc_functional.cpp
   ../../module_xc/xc_lda_wrap.cpp ../../module_xc/xc_gga_wrap.cpp
   ../../module_xc/libxc_setup.cpp

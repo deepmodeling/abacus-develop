@@ -1,4 +1,4 @@
-#ifdef USE_LIBXC
+#ifdef __LIBXC
 
 #include "libxc_abacus.h"
 #include "source_io/module_parameter/parameter.h"
@@ -14,7 +14,6 @@
 #include <regex>
 #include <map>
 #include <algorithm>
-#include <cassert>
 
 bool not_supported_xc_with_laplacian(const std::string& xc_func_in)
 {
@@ -200,7 +199,7 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
 #ifdef __EXX
         // hybrid functionals
         case XC_HYB_GGA_XC_PBEH:
-            return {hybrid_alpha, hse_omega, hse_omega};
+            return {hybrid_alpha};
         case XC_HYB_GGA_XC_HSE06:
             return {hybrid_alpha, hse_omega, hse_omega};
         // short-range of B88_X
@@ -262,20 +261,19 @@ const std::vector<double> in_built_xc_func_ext_params(const int id,
 
 const std::vector<double> external_xc_func_ext_params(const int id)
 {
-    const std::map<int, std::vector<double>> mymap = {
-        {
-            PARAM.inp.xc_exch_ext[0],
-            std::vector<double>(PARAM.inp.xc_exch_ext.begin()+1,
-                                PARAM.inp.xc_exch_ext.end())
-        },
-        {
-            PARAM.inp.xc_corr_ext[0],
-            std::vector<double>(PARAM.inp.xc_corr_ext.begin()+1,
-                                PARAM.inp.xc_corr_ext.end())
-        }
-     };
-    auto it = mymap.find(id);
-    return (it != mymap.end()) ? it->second : std::vector<double>{};
+    const auto& exch_ext = PARAM.inp.xc_exch_ext;
+    if (!exch_ext.empty() && static_cast<int>(exch_ext.front()) == id)
+    {
+        return {exch_ext.begin() + 1, exch_ext.end()};
+    }
+
+    const auto& corr_ext = PARAM.inp.xc_corr_ext;
+    if (!corr_ext.empty() && static_cast<int>(corr_ext.front()) == id)
+    {
+        return {corr_ext.begin() + 1, corr_ext.end()};
+    }
+
+    return {};
 }
 
 std::vector<xc_func_type> 
@@ -290,33 +288,32 @@ XC_Functional_Libxc::init_func(const std::vector<int> &func_id,
         funcs.push_back({}); // create placeholder
         xc_func_init(&funcs.back(), id, xc_polarized); // instantiate the XC term
 
-        // search for external parameters
-        const std::vector<double> in_built_ext_params = in_built_xc_func_ext_params(id, hybrid_alpha, hse_omega);
-        const std::vector<double> external_ext_params = external_xc_func_ext_params(id);
-        // for temporary use, I name their size as n1 and n2
-        const int n1 = in_built_ext_params.size();
-        const int n2 = external_ext_params.size();
+        // Search for external parameters. User-supplied parameters take precedence
+        // over ABACUS built-in overrides.
+        const std::vector<double> in_built_ext_params
+            = in_built_xc_func_ext_params(id, hybrid_alpha, hse_omega);
+        const std::vector<double> external_ext_params
+            = external_xc_func_ext_params(id);
+        const std::vector<double>& requested_ext_params
+            = external_ext_params.empty() ? in_built_ext_params : external_ext_params;
 
-// #ifdef __DEBUG // will the following assertion cause performance issue?
-        // assert the number of parameters should be either zero or the value from
-        // libxc function xc_func_info_get_n_ext_params, this is to avoid the undefined
-        // behavior of illegal memory access
-        const xc_func_info_type* info = xc_func_get_info(&funcs.back());
-        const int nref = xc_func_info_get_n_ext_params(info);
-        assert ((n1 == 0) || (n1 == nref) || (n2 == 0) || (n2 == nref));
-// #endif
-
-        // external overwrites in-built if the same functional id is found in both maps
-        const double* xc_func_ext_params = 
-            (n2 > 0) ? external_ext_params.data() : 
-            (n1 > 0) ? in_built_ext_params.data() :
-            nullptr; // nullptr if no external parameters are found
-
-        // if there are no external parameters, do nothing, otherwise we set
-        if(xc_func_ext_params != nullptr)
+        if (!requested_ext_params.empty())
         {
-            // set the external parameters
-            xc_func_set_ext_params(&funcs.back(), const_cast<double*>(xc_func_ext_params));
+            const xc_func_info_type* info = xc_func_get_info(&funcs.back());
+            const int nref = xc_func_info_get_n_ext_params(info);
+
+            // xc_func_set_ext_params() reads exactly nref entries
+            if (requested_ext_params.size() != static_cast<std::size_t>(nref))
+            {
+                ModuleBase::WARNING_QUIT(
+                    "XC_Functional_Libxc::init_func",
+                    "Invalid number of external parameters for Libxc functional id "
+                        + std::to_string(id) + ": got "
+                        + std::to_string(requested_ext_params.size())
+                        + ", expected " + std::to_string(nref) + ".");
+            }
+
+            xc_func_set_ext_params(&funcs.back(), requested_ext_params.data());
         }
     }
     return funcs;

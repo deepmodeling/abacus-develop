@@ -13,11 +13,11 @@
 #include "source_base/mathzone.h"
 #include "source_base/timer.h"
 #include "source_base/tool_threading.h"
+#include "source_base/tool_quit.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
 #include "source_hamilt/module_surchem/surchem.h"
-#include "source_pw/module_pwdft/structure_factor.h" // Structure_Factor member access (p_sf->strucFac)
 #include "source_hamilt/module_vdw/vdw.h"
 
 #ifdef _OPENMP
@@ -28,6 +28,7 @@
 template <typename FPTYPE, typename Device>
 void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                                        ModuleBase::matrix& force,
+                                       const vdw::VdwResult* vdw_result,
                                        const elecstate::ElecState& elec,
                                        const ModulePW::PW_Basis* const rho_basis,
                                        ModuleSymmetry::Symmetry* p_symm,
@@ -87,18 +88,19 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
     // force due to core charge
     this->cal_force_scc(forcescc, rho_basis, elec.vnew, elec.vnew_exist, locpp->numeric, ucell);
 
-    ModuleBase::matrix stress_vdw_pw; //.create(3,3);
     ModuleBase::matrix force_vdw;
     force_vdw.create(nat, 3);
-    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp);
-    if (vdw_solver != nullptr)
+    if (vdw_result != nullptr)
     {
-        const std::vector<ModuleBase::Vector3<double>>& force_vdw_temp = vdw_solver->get_force();
+        if (!vdw_result->has_force || vdw_result->force.size() != static_cast<std::size_t>(this->nat))
+        {
+            ModuleBase::WARNING_QUIT("Forces::cal_force", "The cached vdW force is unavailable or has an invalid size.");
+        }
         for (int iat = 0; iat < this->nat; ++iat)
         {
-            force_vdw(iat, 0) = force_vdw_temp[iat].x;
-            force_vdw(iat, 1) = force_vdw_temp[iat].y;
-            force_vdw(iat, 2) = force_vdw_temp[iat].z;
+            force_vdw(iat, 0) = vdw_result->force[iat].x;
+            force_vdw(iat, 1) = vdw_result->force[iat].y;
+            force_vdw(iat, 2) = vdw_result->force[iat].z;
         }
         if (PARAM.inp.test_force)
         {
@@ -153,7 +155,7 @@ void Forces<FPTYPE, Device>::cal_force(UnitCell& ucell,
                 force(iat, ipol) = forcelc(iat, ipol) + forceion(iat, ipol) + forcenl(iat, ipol) + forcecc(iat, ipol)
                                    + forcescc(iat, ipol);
 
-                if (vdw_solver != nullptr) // linpz and jiyy added vdw force, modified by zhengdy
+                if (vdw_result != nullptr) // linpz and jiyy added vdw force, modified by zhengdy
                 {
                     force(iat, ipol) += force_vdw(iat, ipol);
                 }

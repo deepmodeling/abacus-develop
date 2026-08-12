@@ -29,7 +29,7 @@
 #include "source_estate/module_pot/H_TDDFT_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "module_operator_lcao/dftu_lcao.h"
 #include "module_operator_lcao/dspin_lcao.h"
@@ -225,9 +225,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
             {
                 plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
-															  this->hR, // no explicit call yet
-															  p_dftu, // mohan add 2025-11-07
-															  this->kv->isk);
+															  this->hR,
+															  p_dftu,
+															  this->kv->isk,
+															  PARAM.globalv.npol);
             }
             else
             {
@@ -381,9 +382,10 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
             {
                 plus_u = new OperatorDFTU<OperatorLCAO<TK, TR>>(this->hsk,
                                                               this->kv->kvec_d,
-															  this->hR, // no explicit call yet
-															  p_dftu, // mohan add 2025-11-07
-                                                              this->kv->isk);
+															  this->hR,
+															  p_dftu,
+                                                              this->kv->isk,
+                                                              PARAM.globalv.npol);
             }
             else
             {

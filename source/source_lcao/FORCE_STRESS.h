@@ -6,7 +6,7 @@
 #include "source_base/matrix.h"
 #include "source_pw/module_pwdft/forces.h"
 #include "source_pw/module_pwdft/stress_func.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_io/module_parameter/input_conv.h"
 #include "source_psi/psi.h"
 #ifdef __EXX
@@ -17,6 +17,11 @@
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251010
 #include "source_lcao/setup_dm.h" // mohan add 2025-11-03
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
+
+namespace vdw
+{
+struct VdwResult;
+}
 
 
 template <typename T>
@@ -32,6 +37,7 @@ class Force_Stress_LCAO
     ~Force_Stress_LCAO();
 
     void getForceStress(UnitCell& ucell,
+                        const vdw::VdwResult* vdw_result,
                         const bool isforce,
                         const bool isstress,
                         const bool istestf,

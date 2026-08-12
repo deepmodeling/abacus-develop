@@ -1,7 +1,5 @@
 // Refactored according to diago_scalapack
 // This code will be futher refactored to remove the dependency of psi and hamilt
-#include "source_io/module_parameter/parameter.h"
-
 #include "diago_lapack.h"
 
 #include "source_base/global_variable.h"
@@ -15,6 +13,24 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
+namespace
+{
+template <typename T>
+void check_lapack_layout(const hamilt::MatrixBlock<T>& h_mat,
+                         const hamilt::MatrixBlock<T>& s_mat,
+                         const std::size_t n)
+{
+    if (h_mat.row != n || h_mat.col != n || s_mat.row != n || s_mat.col != n)
+    {
+        ModuleBase::WARNING_QUIT(
+            "DiagoLapack",
+            "The LAPACK eigensolver requires replicated " + std::to_string(n) + " x "
+                + std::to_string(n) + " Hamiltonian and overlap matrices, but received "
+                + std::to_string(h_mat.row) + " x " + std::to_string(h_mat.col)
+                + " local blocks. Please use ScaLAPACK or ELPA for distributed matrices.");
+    }
+}
+} // namespace
 template <>
 void DiagoLapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
 {
@@ -24,14 +40,14 @@ void DiagoLapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>&
     phm_in->matrix(h_mat, s_mat);
 
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
+    check_lapack_layout(h_mat, s_mat, eigen.size());
 
     // Diag
     this->dsygvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     // Copy result
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 
 template <>
@@ -43,11 +59,11 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
     matcd h_mat, s_mat;
     phm_in->matrix(h_mat, s_mat);
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
+    check_lapack_layout(h_mat, s_mat, eigen.size());
     this->zhegvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 
 #ifdef __MPI
@@ -60,10 +76,11 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
 {
     ModuleBase::TITLE("DiagoLapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
+    check_lapack_layout(h_mat, s_mat, eigen.size());
     this->dsygvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
     template<>
     void DiagoLapack<std::complex<double>>::diag_pool(hamilt::MatrixBlock<std::complex<double>>& h_mat,
@@ -74,10 +91,11 @@ void DiagoLapack<std::complex<double>>::diag(hamilt::Hamilt<std::complex<double>
 {
     ModuleBase::TITLE("DiagoLapack", "diag_pool");
     assert(h_mat.col == s_mat.col && h_mat.row == s_mat.row && h_mat.desc == s_mat.desc);
-    std::vector<double> eigen(PARAM.globalv.nlocal, 0.0);
+    std::vector<double> eigen(this->nlocal, 0.0);
+    check_lapack_layout(h_mat, s_mat, eigen.size());
     this->zhegvx_diag(h_mat.col, h_mat.row, h_mat.p, s_mat.p, eigen.data(), psi);
     const int inc = 1;
-    BlasConnector::copy(PARAM.inp.nbands, eigen.data(), inc, eigenvalue_in, inc);
+    BlasConnector::copy(this->nbands, eigen.data(), inc, eigenvalue_in, inc);
 }
 #endif
 
@@ -95,20 +113,20 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::dsygvx_once(const int ncol,
     memcpy(s_tmp.c, s_mat, sizeof(double) * ncol * nrow);
 
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
+    const int itype = 1, il = 1, iu = this->nbands, one = 1;
     int M = 0, NZ = 0, lwork = -1, liwork = -1, info = 0;
     double vl = 0, vu = 0;
     const double abstol = LAPACK_ABSTOL, orfac = LAPACK_ORFAC;
     std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
-    std::vector<int> ifail(PARAM.globalv.nlocal, 0);
+    std::vector<int> ifail(this->nlocal, 0);
     std::vector<int> iclustr(2 * GlobalV::DSIZE);
     std::vector<double> gap(GlobalV::DSIZE);
 
     // LAPACK dsygvx signature:
     // (ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB, VL, VU, IL, IU,
     //  ABSTOL, M, W, Z, LDZ, WORK, LWORK, IWORK, IFAIL, INFO)
-    int n = PARAM.globalv.nlocal;
+    int n = this->nlocal;
     int lda = n, ldb = n, ldz = n;
     dsygvx_(&itype,
         &jobz,
@@ -204,7 +222,7 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
     memcpy(s_tmp.c, s_mat, sizeof(std::complex<double>) * ncol * nrow);
 
     const char jobz = 'V', range = 'I', uplo = 'U';
-    const int itype = 1, il = 1, iu = PARAM.inp.nbands, one = 1;
+    const int itype = 1, il = 1, iu = this->nbands, one = 1;
     int M = 0, NZ = 0, lwork = -1, lrwork = -1, liwork = -1, info = 0;
     const double abstol = LAPACK_ABSTOL, orfac = LAPACK_ORFAC;
     
@@ -212,14 +230,14 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
     std::vector<std::complex<double>> work(1, 0);
     std::vector<double> rwork(3, 0);
     std::vector<int> iwork(1, 0);
-    std::vector<int> ifail(PARAM.globalv.nlocal, 0);
+    std::vector<int> ifail(this->nlocal, 0);
     std::vector<int> iclustr(2 * GlobalV::DSIZE);
     std::vector<double> gap(GlobalV::DSIZE);
 
     // LAPACK zhegvx signature:
     // (ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB, VL, VU, IL, IU,
     //  ABSTOL, M, W, Z, LDZ, WORK, LWORK, RWORK, IWORK, IFAIL, INFO)
-    int n = PARAM.globalv.nlocal;
+    int n = this->nlocal;
     int lda = n, ldb = n, ldz = n;
     zhegvx_(&itype,
         &jobz,
@@ -396,8 +414,7 @@ void DiagoLapack<T>::post_processing(const int info, const std::vector<int>& vec
     {
         const std::string str_M = "M = " + ModuleBase::GlobalFunc::TO_STRING(vec[0]) + ".\n";
         const std::string str_NZ = "NZ = " + ModuleBase::GlobalFunc::TO_STRING(vec[1]) + ".\n";
-        const std::string str_NBANDS
-            = "PARAM.inp.nbands = " + ModuleBase::GlobalFunc::TO_STRING(PARAM.inp.nbands) + ".\n";
+        const std::string str_NBANDS = "nbands = " + ModuleBase::GlobalFunc::TO_STRING(this->nbands) + ".\n";
         throw std::runtime_error(str_info_FILE + str_M + str_NZ + str_NBANDS);
     }
     else if (info / 16 % 2)

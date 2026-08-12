@@ -6,15 +6,15 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_hs/write_HS.h"
 #include "source_io/module_hs/write_HS_R.h"
-#include "source_io/module_output/filename.h"
-#include "source_io/module_output/ucell_io.h"
+#include "source_base/module_out/filename.h"
+#include "source_cell/ucell_io.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_gint/gint_interface.h"
-#include "source_lcao/module_hcontainer/hcontainer_funcs.h"
-#include "source_lcao/module_hcontainer/output_hcontainer.h"
+#include "source_hamilt/module_gint/gint_interface.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
+#include "source_hamilt/module_hcontainer/output_hcontainer.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
-#include "source_lcao/module_operator_lcao/operator_force_stress_utils.h"
+#include "source_lcao/module_operator_lcao/operator_fs_utils.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_ri/Exx_LRI_interface.h"
@@ -78,7 +78,6 @@ static void gather_and_write(const std::string& prefix,
     const int nbasis = hR.get_nbasis();
 #ifdef __MPI
     Parallel_Orbitals serialV;
-    serialV.init(nbasis, nbasis, nbasis, pv.comm());
     serialV.set_serial(nbasis, nbasis);
     serialV.set_atomic_trace(iat2iwt, nat, nbasis);
     hamilt::HContainer<double> hr_serial(&serialV);
@@ -96,9 +95,9 @@ static void gather_and_write(const std::string& prefix,
             fname = PARAM.globalv.global_out_dir + hsr_gen_fname(prefix, ispin, append, istep);
         }
 #ifdef __MPI
-        write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, ispin, nspin, label);
+        write_hcontainer_csr(fname, &ucell, 8, &hr_serial, istep, ispin, nspin, label, "");
 #else
-        write_hcontainer_csr(fname, &ucell, 8, &hR, istep, ispin, nspin, label);
+        write_hcontainer_csr(fname, &ucell, 8, &hR, istep, ispin, nspin, label, "");
 #endif
     }
 }
@@ -411,6 +410,8 @@ void write_h_exx(WriteHParams& params)
     ModuleBase::TITLE("ModuleIO", "write_h_exx");
     ModuleBase::timer::start("ModuleIO", "write_h_exx");
 
+    // Multi-k out_mat_h_exx is rejected upstream at the call site (setup_exx_h_params in
+    // ctrl_scf_lcao.cpp); this function is only reached on the gamma-only path.
     const UnitCell& ucell = *params.ucell;
     const Parallel_Orbitals& pv = *params.pv;
     const K_Vectors& kv = *params.kv;

@@ -39,20 +39,13 @@ UnitCell::UnitCell()
 UnitCell::~UnitCell()
 {
 }
-Parallel_Grid::Parallel_Grid() {};
-Parallel_Grid::~Parallel_Grid() {};
 Magnetism::Magnetism()
 {
 }
 Magnetism::~Magnetism()
 {
 }
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
+
 SepPot::SepPot(){}
 SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}

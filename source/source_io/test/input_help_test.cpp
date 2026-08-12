@@ -226,7 +226,6 @@ TEST_F(ParameterHelpTest, FuzzyMatchingMultipleSuggestions) {
     auto results = ModuleIO::ParameterHelp::find_similar_parameters("relax_met", 5, 3);
     EXPECT_GT(results.size(), 1); // Should find multiple matches
     // Results should be sorted by distance (closest first)
-    // "relax_met" to "relax_new": distance 2 (m->n, t->w)
     // "relax_met" to "relax_method": distance 3 (insert h, o, d)
     // Note: Actual results depend on which parameters exist in the parameter database
 }

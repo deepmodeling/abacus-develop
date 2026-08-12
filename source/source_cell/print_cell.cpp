@@ -5,6 +5,7 @@
 #include "source_base/formatter.h"
 #include "source_base/tool_title.h"
 #include "source_base/global_variable.h"
+#include "source_base/output.h"
 
 namespace unitcell
 {
@@ -58,17 +59,17 @@ namespace unitcell
             << std::setw(19) << "vz"
             << std::endl;
  
-		for(int it = 0; it < ntype; it++)
-		{
-			for (int ia = 0; ia < atoms[it].na; ia++)
-			{
+        for(int it = 0; it < ntype; it++)
+        {
+            for (int ia = 0; ia < atoms[it].na; ia++)
+            {
                 ofs << std::setw(5) << atoms[it].label;
                 ofs << " " << std::setw(18) << atoms[it].vel[ia].x;
                 ofs << " " << std::setw(18) << atoms[it].vel[ia].y;
                 ofs << " " << std::setw(18) << atoms[it].vel[ia].z;
                 ofs << std::endl;
-			}
-		}
+            }
+        }
         ofs << std::endl;
         ofs << std::setprecision(6); // return to 6, as original
 
@@ -79,7 +80,8 @@ namespace unitcell
     void print_stru_file(const UnitCell& ucell,
                          const Atom*     atoms,
                          const ModuleBase::Matrix3& latvec,
-                         const std::string& fn, 
+                         const std::string& fn,
+                         const std::string& header,
                          const int& nspin,
                          const bool& direct,
                          const bool& vel,
@@ -89,17 +91,23 @@ namespace unitcell
                          const int& iproc)
     {
         ModuleBase::TITLE("UnitCell","print_stru_file");
-        if (iproc != 0) 
+        if (iproc != 0)
         {
             return; // old: if(GlobalV::MY_RANK != 0) return;
         }
+        // optional header comments
+        std::string str;
+        if (!header.empty())
+        {
+            str = header;
+        }
         // ATOMIC_SPECIES
-        std::string str = "ATOMIC_SPECIES\n";
+        str += "ATOMIC_SPECIES\n";
         for(int it=0; it<ucell.ntype; it++)
         { 
             str += FmtCore::format("%s %8.4f %s %s\n", 
-                                    ucell.atom_label[it], 
-                                    ucell.atom_mass[it], 
+                                    ucell.atoms[it].label, 
+                                    ucell.atoms[it].mass, 
                                     ucell.pseudo_fn[it], 
                                     ucell.pseudo_type[it]); 
         }
@@ -118,12 +126,12 @@ namespace unitcell
             str += "\nNUMERICAL_DESCRIPTOR\n" + ucell.descriptor_file + "\n"; 
         }
         // LATTICE_CONSTANT
-        str += "\nLATTICE_CONSTANT\n" + FmtCore::format("%-.10f\n", ucell.lat0);
+        str += "\nLATTICE_CONSTANT\n" + FmtCore::format("%-.10f", ucell.lat0) + "  # in Bohr\n";
         // LATTICE_VECTORS
-        str += "\nLATTICE_VECTORS\n";
-        str += FmtCore::format("%20.10f%20.10f%20.10f\n", latvec.e11, latvec.e12, latvec.e13);
-        str += FmtCore::format("%20.10f%20.10f%20.10f\n", latvec.e21, latvec.e22, latvec.e23);
-        str += FmtCore::format("%20.10f%20.10f%20.10f\n", latvec.e31, latvec.e32, latvec.e33);
+        str += "\nLATTICE_VECTORS  # in units of lat0\n";
+        str += FmtCore::format("%24.16f%24.16f%24.16f\n", latvec.e11, latvec.e12, latvec.e13);
+        str += FmtCore::format("%24.16f%24.16f%24.16f\n", latvec.e21, latvec.e22, latvec.e23);
+        str += FmtCore::format("%24.16f%24.16f%24.16f\n", latvec.e31, latvec.e32, latvec.e33);
         // ATOMIC_POSITIONS
         str += "\nATOMIC_POSITIONS\n";
         const std::string scale = direct? "Direct": "Cartesian";
@@ -164,6 +172,27 @@ namespace unitcell
         std::ofstream ofs(fn.c_str());
         ofs << str;
         ofs.close();
+        return;
+    }
+
+    void print_cell(const UnitCell& ucell, std::ofstream& ofs)
+    {
+        ModuleBase::GlobalFunc::OUT(ofs, "print_unitcell()");
+
+        ModuleBase::GlobalFunc::OUT(ofs, "latName", ucell.latName);
+        ModuleBase::GlobalFunc::OUT(ofs, "ntype", ucell.ntype);
+        ModuleBase::GlobalFunc::OUT(ofs, "nat", ucell.nat);
+        ModuleBase::GlobalFunc::OUT(ofs, "lat0", ucell.lat0);
+        ModuleBase::GlobalFunc::OUT(ofs, "lat0_angstrom", ucell.lat0_angstrom);
+        ModuleBase::GlobalFunc::OUT(ofs, "tpiba", ucell.tpiba);
+        ModuleBase::GlobalFunc::OUT(ofs, "omega", ucell.omega);
+
+        output::printM3(ofs, "Lattices Vector (R) : ", ucell.latvec);
+        output::printM3(ofs, "Supercell lattice vector : ", ucell.latvec_supercell);
+        output::printM3(ofs, "Reciprocal lattice Vector (G): ", ucell.G);
+        output::printM3(ofs, "GGT : ", ucell.GGT);
+
+        ofs << std::endl;
         return;
     }
 }

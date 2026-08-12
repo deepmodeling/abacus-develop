@@ -8,7 +8,7 @@ out_chg 1
 ```
 
 With this input parameter, the converged charge density will be output in the files such as `chgs1.cube`, `chgs2.cube`, etc.
-Then, one can use the same `STRU` file, pseudopotential files and atomic orbital files (and the local density matrix file onsite.dm if DFT+U is used) to do a non-self-consistent (NSCF) calculation. In this example, the potential is constructed from the ground-state charge density from the proceeding calculation. Now the INPUT file is like:
+Then, one can use the same `STRU` file, pseudopotential files and atomic orbital files (and the local density matrix file dm_onsite.txt if DFT+U is used) to do a non-self-consistent (NSCF) calculation. In this example, the potential is constructed from the ground-state charge density from the proceeding calculation. Now the INPUT file is like:
 
 ```
 INPUT_PARAMETERS

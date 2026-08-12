@@ -2,15 +2,15 @@
 using namespace ModuleSymmetry;
 
 bool Symmetry::checksym(const ModuleBase::Matrix3 &s, 
-		ModuleBase::Vector3<double>& gtrans,
-		double* pos, double* rotpos, int* index, 
-		const int ntype, const int itmin_type, const int itmin_start, 
-		int* istart, int* na)const
+        ModuleBase::Vector3<double>& gtrans,
+        double* pos, double* rotpos, int* index, 
+        const int ntype, const int itmin_type, const int itmin_start, 
+        int* istart, int* na)const
 {
-	//----------------------------------------------
+    //----------------------------------------------
     // checks whether a point group symmetry element 
-	// is a valid symmetry operation on a supercell
-	//----------------------------------------------
+    // is a valid symmetry operation on a supercell
+    //----------------------------------------------
     // the start atom index.
     bool no_diff = false;
     ModuleBase::Vector3<double> trans(2.0, 2.0, 2.0);
@@ -18,10 +18,10 @@ bool Symmetry::checksym(const ModuleBase::Matrix3 &s,
 
     for (int it = 0; it < ntype; it++)
     {
-		//------------------------------------
+        //------------------------------------
         // impose periodic boundary condition
-		// 0.5 -> -0.5
-		//------------------------------------
+        // 0.5 -> -0.5
+        //------------------------------------
         for (int j = istart[it]; j < istart[it] + na[it]; ++j)
         {
             this->check_boundary(pos[j*3+0]);
@@ -64,9 +64,9 @@ bool Symmetry::checksym(const ModuleBase::Matrix3 &s,
 
     ModuleBase::Vector3<double> diff;
 
-	//---------------------------------------------------------
+    //---------------------------------------------------------
     // itmin_start = the start atom positions of species itmin
-	//---------------------------------------------------------
+    //---------------------------------------------------------
     // (s)tart (p)osition of atom (t)ype which has (min)inal number.
     ModuleBase::Vector3<double> sptmin(rotpos[itmin_start * 3], rotpos[itmin_start * 3 + 1], rotpos[itmin_start * 3 + 2]);
 
@@ -117,7 +117,7 @@ bool Symmetry::checksym(const ModuleBase::Matrix3 &s,
                 diff.y = this->check_diff( pos[ia*3+1], rotpos[ia*3+1]);
                 diff.z = this->check_diff( pos[ia*3+2], rotpos[ia*3+2]);
                 //only if all "diff" are zero vectors, flag will remain "1"
-                if (	no_diff == false||
+                if (    no_diff == false||
                         !equal(diff.x,0.0)||
                         !equal(diff.y,0.0)||
                         !equal(diff.z,0.0)
@@ -127,7 +127,7 @@ bool Symmetry::checksym(const ModuleBase::Matrix3 &s,
                 }
             }
         }
-			
+            
         //the current test is successful
         if (no_diff == true)
         {

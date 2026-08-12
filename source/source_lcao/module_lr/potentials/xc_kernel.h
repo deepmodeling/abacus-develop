@@ -1,7 +1,7 @@
 #pragma once
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/unitcell.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_base/parallel_grid.h"
 #include "source_estate/module_charge/charge.h"
 #define CREF(x) const std::vector<double>& x = x##_;
 #define CREF3(x) const std::vector<ModuleBase::Vector3<double>>& x = x##_;
@@ -32,7 +32,7 @@ namespace LR
         CREF3(v2sigma2_drho_du_u); CREF3(v2sigma2_drho_du_d); CREF3(v2sigma2_drho_dd_u); CREF3(v2sigma2_drho_dd_d);
         const std::vector<std::vector<ModuleBase::Vector3<double>>>& drho_gs = drho_gs_;
     private:
-#ifdef USE_LIBXC
+#ifdef __LIBXC
         /// @brief Calculate the XC kernel using libxc.
         void f_xc_libxc(const int& nspin, const double& omega, const double& tpiba, const double* const* const rho_gs, const double* const rho_core = nullptr);
 #endif

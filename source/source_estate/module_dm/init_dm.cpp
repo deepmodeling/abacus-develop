@@ -1,7 +1,7 @@
 #include "source_estate/module_dm/init_dm.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/elecstate_tools.h"
-#include "source_estate/cal_ux.h"
+#include "source_cell/cal_ux.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 2025-11-12
 #include "source_lcao/module_rt/td_info.h"
 
@@ -35,7 +35,7 @@ void elecstate::init_dm(UnitCell& ucell,
         // mohan add 2025-11-12, use density matrix to calculate the charge density
         LCAO_domain::dm2rho(dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &chr);
 
-		elecstate::cal_ux(ucell);
+		unitcell::cal_ux(ucell, PARAM.inp.nspin);
 
 		//! update the potentials by using new electron charge density
 		pelec->pot->update_from_charge(&chr, &ucell);

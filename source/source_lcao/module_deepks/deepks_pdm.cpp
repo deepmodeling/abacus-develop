@@ -21,7 +21,7 @@
 #include "source_base/libm/libm.h"
 #include "source_base/module_external/blas_connector.h"
 #include "source_base/timer.h"
-#include "source_lcao/module_hcontainer/atom_pair.h"
+#include "source_hamilt/module_hcontainer/atom_pair.h"
 #ifdef __MPI
 #include "source_base/parallel_reduce.h"
 #endif

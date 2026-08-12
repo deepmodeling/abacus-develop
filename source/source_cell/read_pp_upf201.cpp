@@ -130,11 +130,11 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
     while (1)
     {
         pos = txt.find("=", pos);
-		if (pos == std::string::npos)
-		{
-			break;
-		}
-		pos++;
+        if (pos == std::string::npos)
+        {
+            break;
+        }
+        pos++;
         n++;
     }
 
@@ -147,10 +147,10 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
         pos2 = txt.find("=", pos);
         for (; pos2 > pos; --pos2) // There may be a space before "=";
         {
-			if (txt.substr(pos2 - 1, 1) != " ")
-			{
-				break;
-			}
+            if (txt.substr(pos2 - 1, 1) != " ")
+            {
+                break;
+            }
         }
         ll = pos2 - pos;
         name[i] = txt.substr(pos, ll);
@@ -166,12 +166,12 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
                 break;
             }
         }
-		if (!findmark)
-		{
-			ModuleBase::WARNING_QUIT(
-					"Pseudopot_upf::getnameval",
-					"The values are not in \' or \". Please improve the program in read_pp_upf201.cpp");
-		}
+        if (!findmark)
+        {
+            ModuleBase::WARNING_QUIT(
+                    "Pseudopot_upf::getnameval",
+                    "The values are not in \' or \". Please improve the program in read_pp_upf201.cpp");
+        }
         pos = pos2;
         pos2 = txt.find(mark, pos);
         ll = pos2 - pos;
@@ -180,15 +180,15 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
         val[i] = tmpval;
         pos = pos2 + 1;
         for (int j = 0; j < 100; ++j)
-		{
-			if (txt.substr(pos, 1) == " " || txt.substr(pos, 1) == ",")
-			{
-				pos++;
-			}
-			else
-			{
-				break;
-			}
+        {
+            if (txt.substr(pos, 1) == " " || txt.substr(pos, 1) == ",")
+            {
+                pos++;
+            }
+            else
+            {
+                break;
+            }
         }
         //std::cout<<name[i]<<"=\""<<val[i]<<"\""<<std::endl;
     }
@@ -197,10 +197,10 @@ void Pseudopot_upf::getnameval(std::ifstream& ifs, int& n, std::string* name, st
 
 void Pseudopot_upf::read_pseudo_upf201_header(std::ifstream& ifs, Atom_pseudo& pp)
 {
-	if (!ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_HEADER"))
-	{
-		ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header", "Found no PP_HEADER");
-	}
+    if (!ModuleBase::GlobalFunc::SCAN_BEGIN(ifs, "<PP_HEADER"))
+    {
+        ModuleBase::WARNING_QUIT("Pseudopot_upf::read_pseudo_upf201_header", "Found no PP_HEADER");
+    }
  
     const int max_n = 100;
     std::string name[max_n];

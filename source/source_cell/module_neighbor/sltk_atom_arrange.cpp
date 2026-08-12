@@ -1,7 +1,6 @@
 #include "sltk_atom_arrange.h"
 
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 #include "sltk_grid.h"
 #include "sltk_grid_driver.h"
 
@@ -54,7 +53,7 @@ double atom_arrange::set_sr_NL(std::ofstream& ofs_in,
         ModuleBase::GlobalFunc::OUT(ofs_in, "Orbital max radius cutoff (Bohr)", rcutmax_Phi);
         ModuleBase::GlobalFunc::OUT(ofs_in, "Nonlocal proj. max radius cutoff (Bohr)", rcutmax_Beta);
         ModuleBase::GlobalFunc::OUT(ofs_in, "Search radius (Bohr)", sr);
-	}
+    }
     return sr;
 }
 
@@ -94,7 +93,7 @@ void atom_arrange::search(const bool pbc_flag,
 
     grid_d.init(ofs_in, ucell, radius_lat0unit, pbc_flag);
 
-	// The screen output is very time-consuming. To avoid interfering with the timing, we will insert logging here earlier.
+    // The screen output is very time-consuming. To avoid interfering with the timing, we will insert logging here earlier.
     ModuleBase::timer::end("atom_arrange", "search");
 
     if (test_only)

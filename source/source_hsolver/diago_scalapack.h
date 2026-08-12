@@ -27,6 +27,10 @@ namespace hsolver
 private:
     using Real = typename GetTypeReal<T>::type;
   public:
+    /// @param nlocal_in global dimension of the NAO Hamiltonian
+    /// @param nbands_in number of lowest eigenpairs to compute
+    DiagoScalapack(const int nlocal_in, const int nbands_in) : nlocal(nlocal_in), nbands(nbands_in) {};
+
     void diag(hamilt::Hamilt<T>* phm_in, psi::Psi<T>& psi, Real* eigenvalue_in);
 #ifdef __MPI
     // diagnolization used in parallel-k case
@@ -67,6 +71,9 @@ private:
     int degeneracy_max = 12; // For reorthogonalized memory. 12 followes siesta.
 
     void post_processing(const int info, const std::vector<int> &vec);
+
+    const int nlocal;
+    const int nbands;
 };
 
 } // namespace hsolver

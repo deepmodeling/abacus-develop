@@ -18,12 +18,10 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/elecstate.h"
 #include "source_basis/module_pw/pw_basis_k.h"
-#include "source_cell/module_symmetry/symmetry.h"
-#include "source_psi/psi_initializer.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_psi/psi_base.h"
 #include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info_lip.h"
 
 #include <limits>
 #include <sys/stat.h>
@@ -85,13 +83,11 @@ void Exx_Lip<T, Device>::cal_exx()
 
 template <typename T, typename Device>
 Exx_Lip<T, Device>::Exx_Lip(const Exx_Info_Lip& info_in,
-                            const ModuleSymmetry::Symmetry& symm,
                             K_Vectors* kv_ptr_in,
                             psi::Psi<T, Device>* psi_local_in,
                             psi::Psi<T, Device>* kspw_psi_ptr_in,
                             const ModulePW::PW_Basis_K* wfc_basis_in,
                             const ModulePW::PW_Basis* rho_basis_in,
-                            const Structure_Factor& sf,
                             const UnitCell* ucell_ptr_in,
                             const elecstate::ElecState* pelec_in)
     : info(info_in)

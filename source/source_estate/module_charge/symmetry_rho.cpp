@@ -1,6 +1,7 @@
 #include "symmetry_rho.h"
 
 #include "source_hamilt/module_xc/xc_functional.h"
+#include "source_io/module_parameter/parameter.h"
 
 Symmetry_rho::Symmetry_rho()
 {
@@ -16,6 +17,15 @@ void Symmetry_rho::symmetrize_rho(const int nspin,
                                    ModuleSymmetry::Symmetry& symm)
 {
     Symmetry_rho srho;
+    if (nspin == 4)
+    {
+        // nspin=4 (non-collinear/SOC): rho[0] is the charge density rho^0 (scalar, symmetrized
+        // spatially like nspin=1); rho[1,2,3] are the spin density (rho^x, rho^y, rho^z) which
+        // must be symmetrized TOGETHER with the per-operation spin rotation W(g).
+        srho.begin(0, chr, pw, symm);
+        srho.begin_soc(chr, pw, symm);
+        return;
+    }
     for (int is = 0; is < nspin; is++)
     {
         srho.begin(is, chr, pw, symm);
@@ -110,6 +120,36 @@ void Symmetry_rho::begin(const int& spin_now,
     return;
 }
 
+void Symmetry_rho::begin_soc(const Charge& chr,
+                             const ModulePW::PW_Basis* rho_basis,
+                             ModuleSymmetry::Symmetry& symm) const
+{
+    if (ModuleSymmetry::Symmetry::symm_flag != 1)
+    {
+        return;
+    }
+
+    ModuleBase::TITLE("Symmetry_rho", "begin_soc");
+    ModuleBase::timer::start("Symmetry_rho", "begin_soc");
+
+    // the three spin components are coupled by the spin rotation, so they are transformed to
+    // reciprocal space and symmetrized together (rho[1]=rho^x, rho[2]=rho^y, rho[3]=rho^z).
+    for (int is = 1; is < 4; ++is)
+    {
+        rho_basis->real2recip(chr.rho[is], chr.rhog[is]);
+    }
+
+    psymmg_soc(chr.rhog[1], chr.rhog[2], chr.rhog[3], rho_basis, symm);
+
+    for (int is = 1; is < 4; ++is)
+    {
+        rho_basis->recip2real(chr.rhog[is], chr.rho[is]);
+    }
+
+    ModuleBase::timer::end("Symmetry_rho", "begin_soc");
+    return;
+}
+
 void Symmetry_rho::psymm(double* rho_part,
                          const ModulePW::PW_Basis* rho_basis,
                          Parallel_Grid& Pgrid,
@@ -154,7 +194,7 @@ void Symmetry_rho::psymm(double* rho_part,
 #ifdef __MPI
     }
 
-	Pgrid.bcast(rhotot.data(), rho_part, GlobalV::MY_RANK);
+	Pgrid.bcast(rhotot.data(), rho_part, GlobalV::MY_RANK, PARAM.inp.esolver_type == "sdft");
 #endif
 
     ModuleBase::timer::end("Symmetry_rho","psymm");

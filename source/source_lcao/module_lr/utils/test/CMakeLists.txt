@@ -1,9 +1,9 @@
-abacus_disable_feature_definitions(USE_LIBXC)
+abacus_disable_feature_definitions(__LIBXC)
 AddTest(
   TARGET MODULE_LR_lr_util_phys_test
   LIBS parameter base device container planewave #for FFT
   SOURCES lr_util_physics_test.cpp  ../lr_util.cpp
-  ../../../../source_io/module_output/orb_io.cpp
+  
 )
 
 AddTest(

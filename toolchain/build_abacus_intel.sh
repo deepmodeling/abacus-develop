@@ -22,7 +22,6 @@ BUILD_DIR=build_abacus_intel
 rm -rf $BUILD_DIR
 
 PREFIX=$ABACUS_DIR
-ELPA=${ELPA_ROOT}
 LIBRI=${LIBRI_ROOT}
 LIBCOMM=${LIBCOMM_ROOT}
 USE_CUDA=OFF  # set ON to enable gpu-abacus
@@ -61,7 +60,6 @@ cmake -B $BUILD_DIR -DCMAKE_INSTALL_PREFIX=$PREFIX \
         -DMPI_CXX_COMPILER=mpiicpx \
         -DMKLROOT=$MKLROOT \
         -DENABLE_FLOAT_FFTW=ON \
-        -DELPA_DIR=$ELPA \
         -DENABLE_LCAO=ON \
         -DENABLE_LIBXC=ON \
         -DENABLE_OPENMP=ON \

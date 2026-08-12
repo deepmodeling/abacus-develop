@@ -6,14 +6,8 @@
 #include "source_io/module_output/write_orb_info.h"
 #include "source_cell/unitcell.h"
 #include "prepare_unitcell.h"
-#include "source_estate/read_pseudo.h"
+#include "source_cell/read_pseudo.h"
 
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal(){}
-InfoNonlocal::~InfoNonlocal(){}
-LCAO_Orbitals::LCAO_Orbitals(){}
-LCAO_Orbitals::~LCAO_Orbitals(){}
-#endif
 Magnetism::Magnetism()
 {
 	this->tot_mag = 0.0;
@@ -42,15 +36,20 @@ TEST(OrbInfo,WriteOrbInfo)
     std::string pp_dir = "./support/";
     std::ofstream ofs;
     ofs.open("running.log");
-    PARAM.sys.global_out_dir = "./";
-	PARAM.input.pseudo_rcut = 15.0;
-    PARAM.input.lspinorb = false;
-	PARAM.input.nspin = 1;
-    PARAM.input.basis_type = "pw";
-    PARAM.input.dft_functional = "default";
-    PARAM.sys.nlocal = 18;
-    elecstate::read_cell_pseudopots(pp_dir,ofs,*ucell);
-    elecstate::cal_nwfc(ofs,*ucell,ucell->atoms);
+    const std::string global_out_dir = "./";
+    const std::string dft_functional = "default";
+    const bool lspinorb = false;
+    const double pseudo_rcut = 15.0;
+    const double soc_lambda = 0.0;
+    const int nspin = 1;
+    const int nlocal = 18;
+    const int npol = 1;
+    const std::string basis_type = "pw";
+    const std::string esolver_type = "ksdft";
+    const std::string init_wfc = "";
+    const int nbands = 6;
+    unitcell::read_cell_pseudopots(pp_dir, ofs, *ucell, global_out_dir, dft_functional, lspinorb, pseudo_rcut, soc_lambda);
+    unitcell::cal_nwfc(ofs,*ucell,ucell->atoms, nspin, nlocal, npol, basis_type, esolver_type, init_wfc, nbands);
     ModuleIO::write_orb_info(ucell);
     ofs.close();
     std::ifstream ifs("Orbital");

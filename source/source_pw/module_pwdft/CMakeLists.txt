@@ -16,7 +16,7 @@ list(APPEND objects
     setup_pwrho.cpp
     setup_pwwfc.cpp
     update_cell_pw.cpp
-    dftu_pw.cpp
+    setup_dftu_pw.cpp
     deltaspin_pw.cpp
     forces_nl.cpp
     forces_cc.cpp
@@ -39,10 +39,9 @@ list(APPEND objects
     vl_pw.cpp
     vnl_pw.cpp
     vnl_pw_grad.cpp
-    structure_factor.cpp
-    structure_factor_k.cpp
+    stru_fac.cpp
+    stru_fac_k.cpp
     soc.cpp
-    parallel_grid.cpp
     elecond.cpp
     fs_nonlocal_tools.cpp
     fs_kin_tools.cpp

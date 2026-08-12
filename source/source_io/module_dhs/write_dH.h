@@ -6,7 +6,7 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/LCAO_domain.h"
-#include "source_lcao/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer.h"
 
 #include <array>
 #include <complex>
@@ -54,8 +54,15 @@ struct WriteDHParams
     std::vector<const hamilt::HContainer<double>*> dmR;
     const Charge* chg = nullptr; // ground-state charge for XC Hellmann-Feynman (FDM)
 #ifdef __EXX
-    // gamma (TK==double) exx interfaces used by write_dH_exx; exactly one is set depending on
-    // GlobalC::exx_info.info_ri.real_number (exd: real Hexx, exc: complex Hexx).
+    // The gamma-only (TK==double) exx interfaces used by write_dH_exx. 
+    // Deliberately NOT templated on TK, for two reasons:
+    //   1. Physics: at multi-k the derivative would be taken with respect to every mirror
+    //      atom of the periodic images, which is not what this output is used for.
+    //   2. Cost: templating these pointers on TK would force WriteHParams, WriteDHParams and
+    //      every free function taking them to become templates as well -- a large, purely
+    //      mechanical change for a case nobody needs.
+    // Multi-k + EXX is therefore rejected up front (see write_dH_components)
+    // instead of silently producing output with the EXX term missing.
     Exx_LRI_Interface<double, double>* exd = nullptr;
     Exx_LRI_Interface<double, std::complex<double>>* exc = nullptr;
 #endif

@@ -11,10 +11,15 @@
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
-#include "structure_factor.h"
+#include "stru_fac.h"
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
 
 class pseudopot_cell_vnl;
+
+namespace vdw
+{
+struct VdwResult;
+}
 
 // forward declaration so that the dH module (out_mat_dh_vl) can reuse cal_force_loc
 namespace hamilt { template <class T> class Veff; }
@@ -42,6 +47,7 @@ class Forces
 
     void cal_force(UnitCell& ucell,
                    ModuleBase::matrix& force,
+                   const vdw::VdwResult* vdw_result,
                    const elecstate::ElecState& elec,
                    const ModulePW::PW_Basis* const rho_basis,
                    ModuleSymmetry::Symmetry* p_symm,

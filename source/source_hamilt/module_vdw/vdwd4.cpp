@@ -219,90 +219,74 @@ void Vdwd4::compute(double& energy_ha,
 #endif
 }
 
-void Vdwd4::cal_energy()
+void Vdwd4::set_force_from_gradient(const std::vector<double>& gradient_ha_bohr,
+                                      VdwResult& result) const
 {
-    ModuleBase::TITLE("Vdwd4", "cal_energy");
-    ModuleBase::timer::start("Vdwd4", "cal_energy");
-
-    double energy_ha = 0.0;
-    compute(energy_ha, nullptr, nullptr);
-
-    // DFT-D4 returns Hartree; ABACUS vdW energies are stored in Ry.
-    energy_ = 2.0 * energy_ha;
-
-    ModuleBase::timer::end("Vdwd4", "cal_energy");
-}
-
-void Vdwd4::set_force_from_gradient(const std::vector<double>& gradient_ha_bohr)
-{
-    force_.clear();
-    force_.resize(ucell_.nat);
+    result.force.resize(ucell_.nat);
 
     for (int iat = 0; iat < ucell_.nat; ++iat)
     {
         // DFT-D4 returns dE/dR in Ha/Bohr; ABACUS forces are -dE/dR in Ry/Bohr.
-        force_[iat].x = -2.0 * gradient_ha_bohr[3 * iat + 0];
-        force_[iat].y = -2.0 * gradient_ha_bohr[3 * iat + 1];
-        force_[iat].z = -2.0 * gradient_ha_bohr[3 * iat + 2];
+        result.force[iat].x = -2.0 * gradient_ha_bohr[3 * iat + 0];
+        result.force[iat].y = -2.0 * gradient_ha_bohr[3 * iat + 1];
+        result.force[iat].z = -2.0 * gradient_ha_bohr[3 * iat + 2];
     }
 
-    has_force_cache_ = true;
+    result.has_force = true;
 }
 
-void Vdwd4::set_stress_from_sigma(const std::array<double, 9>& sigma_ha)
+void Vdwd4::set_stress_from_sigma(const std::array<double, 9>& sigma_ha,
+                                  VdwResult& result) const
 {
     // Tentative mapping consistent with the current D3 convention.
     // Confirm sign, transposition and volume normalization by finite-strain tests.
-    stress_ = ModuleBase::Matrix3(2.0 * sigma_ha[0], 2.0 * sigma_ha[1], 2.0 * sigma_ha[2],
-                                  2.0 * sigma_ha[3], 2.0 * sigma_ha[4], 2.0 * sigma_ha[5],
-                                  2.0 * sigma_ha[6], 2.0 * sigma_ha[7], 2.0 * sigma_ha[8])
-              / ucell_.omega;
-
-    has_stress_cache_ = true;
+    result.stress = ModuleBase::Matrix3(2.0 * sigma_ha[0],
+                                        2.0 * sigma_ha[1],
+                                        2.0 * sigma_ha[2],
+                                        2.0 * sigma_ha[3],
+                                        2.0 * sigma_ha[4],
+                                        2.0 * sigma_ha[5],
+                                        2.0 * sigma_ha[6],
+                                        2.0 * sigma_ha[7],
+                                        2.0 * sigma_ha[8])
+                    / ucell_.omega;
+    result.has_stress = true;
 }
 
-void Vdwd4::cal_force()
+void Vdwd4::evaluate_impl(const VdwRequest& request, VdwResult& result)
 {
-    ModuleBase::TITLE("Vdwd4", "cal_force");
-    ModuleBase::timer::start("Vdwd4", "cal_force");
+    ModuleBase::TITLE("Vdwd4", "evaluate");
+    ModuleBase::timer::start("Vdwd4", "evaluate");
 
-    if (!has_force_cache_ || !has_stress_cache_)
+    double energy_ha = 0.0;
+    if (request.force || request.stress)
     {
-        double energy_ha = 0.0;
         std::vector<double> gradient(3 * ucell_.nat, 0.0);
         std::array<double, 9> sigma;
         sigma.fill(0.0);
 
-        // Request sigma together with the gradient.  The DFT-D4 C API computes
-        // sigma internally for gradient calculations anyway, so keep it and
-        // avoid a second expensive D4 call when ABACUS subsequently requests stress.
+        // The DFT-D4 C API evaluates energy, gradient and sigma together.
+        // Keep all requested quantities from this single call.
         compute(energy_ha, &gradient, &sigma);
-        set_force_from_gradient(gradient);
-        set_stress_from_sigma(sigma);
+
+        if (request.force)
+        {
+            set_force_from_gradient(gradient, result);
+        }
+        if (request.stress)
+        {
+            set_stress_from_sigma(sigma, result);
+        }
     }
-
-    ModuleBase::timer::end("Vdwd4", "cal_force");
-}
-
-void Vdwd4::cal_stress()
-{
-    ModuleBase::TITLE("Vdwd4", "cal_stress");
-    ModuleBase::timer::start("Vdwd4", "cal_stress");
-
-    if (!has_stress_cache_)
+    else
     {
-        double energy_ha = 0.0;
-        std::vector<double> gradient(3 * ucell_.nat, 0.0);
-        std::array<double, 9> sigma;
-        sigma.fill(0.0);
-
-        // DFT-D4 may require a valid gradient buffer when sigma is requested.
-        compute(energy_ha, &gradient, &sigma);
-        set_force_from_gradient(gradient);
-        set_stress_from_sigma(sigma);
+        compute(energy_ha, nullptr, nullptr);
     }
 
-    ModuleBase::timer::end("Vdwd4", "cal_stress");
+    // DFT-D4 returns Hartree; ABACUS vdW energies are stored in Ry.
+    result.energy = 2.0 * energy_ha;
+
+    ModuleBase::timer::end("Vdwd4", "evaluate");
 }
 
 } // namespace vdw

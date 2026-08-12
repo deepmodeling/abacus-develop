@@ -3,7 +3,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/module_symmetry/symmetry.h"
 #include "source_estate/module_charge/charge.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_base/parallel_grid.h"
 
 class Symmetry_rho
 {
@@ -40,6 +40,13 @@ class Symmetry_rho
                const ModulePW::PW_Basis* pw,
                ModuleSymmetry::Symmetry& symm) const;
 
+    /// @brief Symmetrize the nspin=4 spin density (rho^x, rho^y, rho^z = rho[1,2,3]) with the
+    ///        coupled spin rotation. The charge component rho^0 = rho[0] is handled separately
+    ///        by the ordinary scalar begin().
+    void begin_soc(const Charge& CHR,
+                   const ModulePW::PW_Basis* pw,
+                   ModuleSymmetry::Symmetry& symm) const;
+
   private:
     // in real space:
     void psymm(double* rho_part,
@@ -50,6 +57,12 @@ class Symmetry_rho
     void psymmg(std::complex<double>* rhog_part,
                 const ModulePW::PW_Basis* rho_basis,
                 ModuleSymmetry::Symmetry& symm) const;
+    // in reciprocal space, the three coupled spin components (rho^x, rho^y, rho^z) for nspin=4:
+    void psymmg_soc(std::complex<double>* rhog_x,
+                    std::complex<double>* rhog_y,
+                    std::complex<double>* rhog_z,
+                    const ModulePW::PW_Basis* rho_basis,
+                    ModuleSymmetry::Symmetry& symm) const;
 #ifdef __MPI
     void reduce_to_fullrhog(const ModulePW::PW_Basis* rho_basis,
                             std::complex<double>* rhogtot,

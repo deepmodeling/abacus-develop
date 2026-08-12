@@ -9,21 +9,13 @@
 #undef private
 #undef protected
 // mock functions for UnitCell
-#ifdef __LCAO
-InfoNonlocal::InfoNonlocal()
-{
-}
-InfoNonlocal::~InfoNonlocal()
-{
-}
-#endif
+
 Magnetism::Magnetism()
 {
 }
 Magnetism::~Magnetism()
 {
 }
-Parallel_Grid::~Parallel_Grid(){};
 
 
 // mock functions for Charge

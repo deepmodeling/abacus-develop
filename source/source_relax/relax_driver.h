@@ -94,13 +94,15 @@ class Relax_Driver
             const double etot, std::ofstream& ofs_running);
 
     /**
-     * @brief Output structure files after relaxation step.
+     * @brief Output structure files before relaxation move.
      *
      * @param istep Current iteration step.
      * @param ucell Reference to the unit cell.
      * @param inp Input parameters for the calculation.
+     * @param etot Total energy in Ry corresponding to this structure.
+     * @param stress Stress matrix (3x3) in Ry/Bohr^3 corresponding to this structure.
      */
-    void stru_out(const int istep, UnitCell& ucell, const Input_para& inp);
+    void stru_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress);
 
     /**
      * @brief Output JSON format results.
@@ -120,8 +122,10 @@ class Relax_Driver
      * @param istep Final iteration step.
      * @param ucell Reference to the unit cell.
      * @param inp Input parameters for the calculation.
+     * @param etot Total energy of the final step.
+     * @param stress Stress tensor of the final step.
      */
-    void final_out(const int istep, UnitCell& ucell, const Input_para& inp);
+    void final_out(const int istep, UnitCell& ucell, const Input_para& inp, const double etot, const ModuleBase::matrix& stress);
 };
 
 #endif

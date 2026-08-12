@@ -27,7 +27,7 @@ target_include_directories(_esolver_pack PRIVATE
     ${ESTATE_PATH}/module_dm
     ${ESTATE_PATH}/potentials
     ${LCAO_PATH}
-    ${LCAO_PATH}/module_hcontainer
+    ${HAMILT_PATH}/module_hcontainer
     ${HAMILT_PATH}
     ${CELL_PATH}
     ${PSI_PATH}

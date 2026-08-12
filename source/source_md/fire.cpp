@@ -19,11 +19,7 @@ FIRE::FIRE(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, uni
     n_min = 4;
     negative_count = 0;
     max = 0.0;
-
-    // BUGFIX:
-    // Do not override the force convergence threshold read from INPUT.
-    // force_thr is stored in internal force unit, Hartree/Bohr.
-    // force_thr = 1e-3;
+    force_thr = 1e-3;
 }
 
 FIRE::~FIRE()
@@ -131,12 +127,16 @@ void FIRE::restart(const std::string& global_readin_dir)
         if (ok)
         {
             file >> step_rst_ >> md_tfirst >> alpha >> negative_count >> dt_max >> md_dt;
+            if(!file)
+            {
+                ok = false;
+            }    
             file.close();
         }
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
 #endif
 
     if (!ok)
@@ -156,42 +156,20 @@ void FIRE::restart(const std::string& global_readin_dir)
     return;
 }
 
+
 void FIRE::check_force(void)
 {
-    max = 0.0;
-
-    int movable_dof = 0;
+    max = 0;
 
     for (int i = 0; i < ucell.nat; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            // Only movable degrees of freedom should be used
-            // in the FIRE convergence criterion.
-            //
-            // For example:
-            // m 1 1 1 -> x/y/z are included.
-            // m 1 0 1 -> y is excluded.
-            // m 0 0 0 -> this atom contributes no DOF to convergence.
-            if (!ionmbl[i][j])
-            {
-                continue;
-            }
-
-            ++movable_dof;
-
             if (max < std::abs(force[i][j]))
             {
                 max = std::abs(force[i][j]);
             }
         }
-    }
-
-    // If there are no movable degrees of freedom, there is nothing to optimize.
-    if (movable_dof == 0)
-    {
-        stop = true;
-        return;
     }
 
     if (2.0 * max < force_thr)
@@ -215,56 +193,25 @@ void FIRE::check_fire(void)
         dt_max = 2.5 * md_dt;
     }
 
-    int movable_dof = 0;
+    const int nat = ucell.nat;
 
-    // Compute P, |F| and |v| only on movable degrees of freedom.
-    // Fixed atoms/directions may have non-zero raw forces, but they should not
-    // affect the FIRE velocity projection or adaptive time-step control.
-    for (int i = 0; i < ucell.nat; ++i)
+#pragma omp parallel for reduction(+:P, sumforce, normvel) schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
+    {
+        P += vel[i].x * force[i].x + vel[i].y * force[i].y + vel[i].z * force[i].z;
+        sumforce += force[i].norm2();
+        normvel += vel[i].norm2();
+    }
+
+    sumforce = sqrt(sumforce);
+    normvel = sqrt(normvel);
+
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
         for (int j = 0; j < 3; ++j)
         {
-            if (!ionmbl[i][j])
-            {
-                // Keep frozen components clean.
-                vel[i][j] = 0.0;
-                continue;
-            }
-
-            ++movable_dof;
-
-            P += vel[i][j] * force[i][j];
-            sumforce += force[i][j] * force[i][j];
-            normvel += vel[i][j] * vel[i][j];
-        }
-    }
-
-    // No movable degrees of freedom: nothing to update.
-    if (movable_dof == 0)
-    {
-        return;
-    }
-
-    sumforce = std::sqrt(sumforce);
-    normvel = std::sqrt(normvel);
-
-    // If force or velocity norm is zero, the velocity projection is undefined.
-    // Avoid 0/0. In a truly converged case check_force() should stop the run.
-    if (sumforce > 0.0 && normvel > 0.0)
-    {
-        for (int i = 0; i < ucell.nat; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                if (!ionmbl[i][j])
-                {
-                    vel[i][j] = 0.0;
-                    continue;
-                }
-
-                vel[i][j] = (1.0 - alpha) * vel[i][j]
-                          + alpha * force[i][j] / sumforce * normvel;
-            }
+            vel[i][j] = (1.0 - alpha) * vel[i][j] + alpha * force[i][j] / sumforce * normvel;
         }
     }
 
@@ -282,7 +229,8 @@ void FIRE::check_fire(void)
         md_dt *= fdec;
         negative_count = 0;
 
-        for (int i = 0; i < ucell.nat; ++i)
+#pragma omp parallel for schedule(static) if (nat >= 256)
+        for (int i = 0; i < nat; ++i)
         {
             for (int j = 0; j < 3; ++j)
             {
@@ -292,6 +240,6 @@ void FIRE::check_fire(void)
 
         alpha = alpha_start;
     }
-
+    
     return;
 }

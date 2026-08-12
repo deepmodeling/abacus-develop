@@ -37,20 +37,20 @@ void create_Json(UnitCell* ucell, const Parameter& param)
 {
 #ifdef __RAPIDJSON
     gen_general_info(param);
-    gen_init(ucell);
-    // gen_stru(ucell);
+    gen_init(ucell, param.inp);
+    // gen_stru(ucell, param.inp);
 #endif
     json_output();
 }
 
-void gen_stru_wrapper(UnitCell* ucell)
+void gen_stru_wrapper(UnitCell* ucell, const Input_para& inp)
 {
 #ifdef __RAPIDJSON
 #ifdef __MPI
     if (GlobalV::MY_RANK == 0)
-        gen_stru(ucell);
+        gen_stru(ucell, inp);
 #else
-    gen_stru(ucell);
+    gen_stru(ucell, inp);
 #endif
 #endif
 }

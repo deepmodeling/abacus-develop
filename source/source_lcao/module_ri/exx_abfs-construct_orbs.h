@@ -6,7 +6,7 @@
 #include <limits>
 #include <algorithm>
 #include "source_cell/unitcell.h"
-#include "../../source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/ORB_atomic_lm.h"
 
 class LCAO_Orbitals;
 

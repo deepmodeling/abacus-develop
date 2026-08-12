@@ -1,3 +1,10 @@
+set(SNAP_PSIBETA_CUDA_TEST_SOURCES)
+if(USE_CUDA)
+  list(APPEND SNAP_PSIBETA_CUDA_TEST_SOURCES
+       ../kernels/cuda/snap_psibeta_kernel.cu
+       ../kernels/cuda/snap_psibeta_gpu.cu)
+endif()
+
 add_library(tddft_test_lib tddft_test.cpp)
 target_link_libraries(tddft_test_lib PRIVATE Threads::Threads GTest::gtest_main GTest::gmock_main)
 #target_include_directories(tddft_test_lib PUBLIC $<$<COMPILE_LANGUAGE:CXX>:${GTEST_INCLUDE_DIRS}>)
@@ -35,11 +42,11 @@ AddTest(
 AddTest(
   TARGET MODULE_LCAO_tddft_snap_psibeta_half_test
   LIBS parameter base device orb numerical_atomic_orbitals tddft_test_lib
-  SOURCES snap_psibeta_half_tddft_test.cpp ../snap_projector_half_tddft.cpp ../snap_psibeta_half_tddft.cpp
+  SOURCES snap_psibeta_half_tddft_test.cpp ../radial_interpolation.cpp ../snap_projector_half_tddft.cpp ../snap_psibeta_half_tddft.cpp
           ../../center2_orb.cpp
           ../../center2_orb-orb11.cpp
           ../../center2_orb-orb21.cpp
-          ../../../source_cell/setup_nonlocal.cpp
+          ../../setup_nonlocal.cpp
           ../../../source_cell/atom_spec.cpp
           ../../../source_cell/atom_pseudo.cpp
           ../../../source_cell/pseudo.cpp
@@ -53,4 +60,19 @@ AddTest(
           ../../../source_io/module_hs/single_R_io.cpp
           ../../../source_io/module_hs/rr_sparse_writer.cpp
           ../../../source_pw/module_pwdft/soc.cpp
+          ${SNAP_PSIBETA_CUDA_TEST_SOURCES}
 )
+
+AddTest(
+  TARGET MODULE_LCAO_tddft_radial_interpolation_test
+  LIBS base device
+  SOURCES radial_interpolation_test.cpp ../radial_interpolation.cpp
+)
+
+if(USE_CUDA)
+  AddTest(
+    TARGET MODULE_LCAO_tddft_radial_interpolation_cuda_test
+    LIBS base device
+    SOURCES radial_interpolation_cuda_test.cu ../radial_interpolation.cpp
+  )
+endif()

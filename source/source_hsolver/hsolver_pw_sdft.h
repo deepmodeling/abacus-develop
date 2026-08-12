@@ -25,7 +25,15 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                    const int scf_iter_in,
                    const int diag_iter_max_in,
                    const double diag_thr_in,
-                   const bool need_subspace_in)
+                   const bool need_subspace_in,
+                   const int nbands_in,
+                   const bool diago_smooth_ethr_in,
+                   const int pw_diag_ndim_in,
+                   const int diag_subspace_in,
+                   const int nb2d_in,
+                   const bool ks_run_in,
+                   const bool all_ks_run_in,
+                   const int bndpar_in)
         : HSolverPW<T, Device>(wfc_basis_in,
                                calculation_type_in,
                                basis_type_in,
@@ -35,7 +43,13 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
                                scf_iter_in,
                                diag_iter_max_in,
                                diag_thr_in,
-                               need_subspace_in)
+                               need_subspace_in,
+                               nbands_in,
+                               diago_smooth_ethr_in,
+                               pw_diag_ndim_in,
+                               diag_subspace_in,
+                               nb2d_in),
+          ks_run(ks_run_in), all_ks_run(all_ks_run_in), bndpar(bndpar_in)
     {
         stoiter.init(pkv, wfc_basis_in, stowf, stoche, p_hamilt_sto);
     }
@@ -54,6 +68,10 @@ class HSolverPW_SDFT : public HSolverPW<T, Device>
     Stochastic_Iter<T, Device> stoiter;
 
   protected:
+    const bool ks_run;     // true if the current process runs the KS part of the SDFT calculation
+    const bool all_ks_run; // true if every process runs the KS part
+    const int bndpar;      // number of band-parallel groups
+
     using setmem_complex_op = base_device::memory::set_memory_op<T, Device>;
     using setmem_var_op = base_device::memory::set_memory_op<Real, Device>;
     using syncmem_h2d_op = base_device::memory::synchronize_memory_op<T, Device, base_device::DEVICE_CPU>;

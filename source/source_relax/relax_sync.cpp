@@ -6,14 +6,16 @@
 #include "source_base/tool_title.h"
 #include "source_cell/update_cell.h"
 #include "source_cell/print_cell.h"
-#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_parameter/input_parameter.h"
 #include "source_relax/ions_move_basic.h"
 
 #include <cmath>
 
-void Relax::init_relax(const int nat_in)
+void Relax::init_relax(const int nat_in, const Input_para& inp)
 {
     ModuleBase::TITLE("Relax", "init_relax");
+
+    inp_ = &inp;
 
     // set some initial conditions / constants
     nat = nat_in;
@@ -25,9 +27,10 @@ void Relax::init_relax(const int nat_in)
     srp_srp = 100000;
     etot = 0;
     etot_p = 0;
+    omega_p = 0.0;
 
-    force_thr_eva = PARAM.inp.force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; // convert to eV/Angstrom
-    fac_force = PARAM.inp.relax_scale_force * 0.1;
+    force_thr_eva = inp_->force_thr * ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A; // convert to eV/Angstrom
+    fac_force = inp_->relax_scale_force * 0.1;
     fac_stress = fac_force / nat;
 
     // allocate some data structures
@@ -48,7 +51,7 @@ void Relax::init_relax(const int nat_in)
 
     // set if we are allowing lattice vectors to move
     if_cell_moves = false;
-    if (PARAM.inp.calculation == "cell-relax")
+    if (inp_->calculation == "cell-relax")
     {
         if_cell_moves = true;
     }
@@ -66,6 +69,7 @@ bool Relax::relax_step(UnitCell& ucell,
     if (istep == 0)
     {
         etot_p = etot;
+        omega_p = ucell.omega * pow(ModuleBase::BOHR_TO_A, 3);
     }
 
     bool relax_done = this->setup_gradient(ucell, force, stress, ofs_running);
@@ -100,7 +104,7 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
     ModuleBase::TITLE("Relax", "setup_gradient");
 
     // if not relax, then return converged
-    if (!(PARAM.inp.calculation == "relax" || PARAM.inp.calculation == "cell-relax"))
+    if (!(inp_->calculation == "relax" || inp_->calculation == "cell-relax"))
     {
         return true;
     }
@@ -156,8 +160,18 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
     {
         force_converged = false;
     }
-    if (PARAM.inp.out_level == "ie")
+    if (inp_->out_level == "ie")
     {
+        if (if_cell_moves)
+        {
+            const double omega_ang = ucell.omega * pow(ModuleBase::BOHR_TO_A, 3);
+            const double omega_diff = omega_ang - omega_p;
+            const double omega_ratio = (std::abs(omega_p) > 0.0) ? omega_diff / omega_p * 100.0 : 0.0;
+            std::cout << " CELL VOLUME (Angstroms^3)   : " << omega_ang << std::endl;
+            std::cout << " VOLUME DIFF (Angstroms^3)   : " << omega_diff << std::endl;
+            std::cout << " VOLUME RATIO (%)            : " << omega_ratio << std::endl;
+            omega_p = omega_ang;
+        }
         std::cout << " ETOT DIFF (eV)              : " << etot - etot_p << std::endl;
         std::cout << " LARGEST GRAD (eV/Angstrom)  : " << max_grad << std::endl;
         etot_p = etot;
@@ -165,7 +179,7 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
 
 
     ofs_running << "\n Largest force is " << max_grad << 
-             " eV/Angstrom while threshold is " << PARAM.inp.force_thr_ev << " eV/Angstrom" << std::endl;
+             " eV/Angstrom while threshold is " << inp_->force_thr_ev << " eV/Angstrom" << std::endl;
     //=========================================
     // set gradient for cell degrees of freedom
     //=========================================
@@ -175,7 +189,7 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
         grad_cell.zero_out();
         ModuleBase::matrix stress_ev = stress * (ucell.omega * ModuleBase::Ry_to_eV);
 
-        if (PARAM.inp.fixed_axes == "shape")
+        if (inp_->fixed_axes == "shape")
         {
             double pressure = (stress_ev(0, 0) + stress_ev(1, 1) + stress_ev(2, 2)) / 3.0;
             stress_ev.zero_out();
@@ -183,14 +197,14 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
             stress_ev(1, 1) = pressure;
             stress_ev(2, 2) = pressure;
         }
-        else if (PARAM.inp.fixed_axes == "volume")
+        else if (inp_->fixed_axes == "volume")
         {
             double pressure = (stress_ev(0, 0) + stress_ev(1, 1) + stress_ev(2, 2)) / 3.0;
             stress_ev(0, 0) -= pressure;
             stress_ev(1, 1) -= pressure;
             stress_ev(2, 2) -= pressure;
         }
-        else if (PARAM.inp.fixed_axes != "None")
+        else if (inp_->fixed_axes != "None")
         {
             // Note stress is given in the directions of lattice vectors
             // So we need to first convert to Cartesian and then apply the constraint
@@ -244,12 +258,12 @@ bool Relax::setup_gradient(const UnitCell& ucell, const ModuleBase::matrix& forc
         double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
         largest_grad = largest_grad * unit_transform;
 
-        if (largest_grad > PARAM.inp.stress_thr)
+        if (largest_grad > inp_->stress_thr)
         {
             force_converged = false;
         }
 
-        ofs_running << " Largest stress is " << largest_grad << " kbar while threshold is "                                                    << PARAM.inp.stress_thr << " kbar" << std::endl;
+        ofs_running << " Largest stress is " << largest_grad << " kbar while threshold is "                                                    << inp_->stress_thr << " kbar" << std::endl;
     }
 
     if (force_converged)
@@ -559,12 +573,12 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream
         }
         ucell.latvec += move_cell * (step_size * fac * fac_stress);
 
-        if (PARAM.inp.fixed_axes == "volume")
+        if (inp_->fixed_axes == "volume")
         {
             double omega_new = std::abs(ucell.latvec.Det()) * pow(ucell.lat0, 3);
             ucell.latvec *= pow(ucell.omega / omega_new, 1.0 / 3.0);
         }
-        if (PARAM.inp.fixed_ibrav)
+        if (inp_->fixed_ibrav)
         {
             unitcell::remake_cell(ucell.lat);
         }
@@ -675,7 +689,7 @@ void Relax::move_cell_ions(UnitCell& ucell, const bool is_new_dir, std::ofstream
     // I do not want to change it
     if (if_cell_moves)
     {
-        unitcell::setup_cell_after_vc(ucell, ofs_running);
+        unitcell::setup_cell_after_vc(ucell, ofs_running, inp_->nspin);
         ModuleBase::GlobalFunc::DONE(ofs_running, "SETUP UNITCELL");
     }
 }

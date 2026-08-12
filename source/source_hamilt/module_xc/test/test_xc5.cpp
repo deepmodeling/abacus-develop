@@ -5,6 +5,7 @@
 #include "../exx_info.h"
 #include "xc3_mock.h"
 #include "source_base/matrix.h"
+#include "source_cell/cal_ux.h"
 #include "../../../source_base/parallel_reduce.h"
 
 /************************************************
@@ -47,7 +48,7 @@ class XCTest_VXC : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            unitcell::cal_ux(ucell, 4);
             ucell.omega = 1;
 
             chr.rhopw = &(rhopw);
@@ -151,7 +152,7 @@ class XCTest_VXC_Libxc : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            unitcell::cal_ux(ucell, 4);
             ucell.omega = 1;
 
             chr.rhopw = &(rhopw);
@@ -253,7 +254,7 @@ class XCTest_VXC_meta : public XCTest
 
             ucell.tpiba = 1;
             ucell.magnet.lsign_ = true;
-            elecstate::cal_ux(ucell);
+            unitcell::cal_ux(ucell, 4);
             ucell.omega = 1;
 
             chr.rhopw = &(rhopw);

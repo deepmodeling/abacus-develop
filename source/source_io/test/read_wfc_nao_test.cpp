@@ -6,27 +6,7 @@
 #include "source_io/module_wf/read_wfc_nao.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_io/module_wf/write_wfc_nao.h"
-
-namespace ModuleIO
-{
-// mock filename_output
-std::string filename_output(
-            const std::string &directory,
-            const std::string &property,
-            const std::string &basis,
-            const int ik,
-            const std::vector<int> &ik2iktot,
-            const int nspin,
-            const int nkstot,
-            const int out_type,
-            const bool out_app_flag,
-            const bool gamma_only,
-            const int istep,
-            const int iter)
-{
-      return "./support/wfs1_nao.txt";
-}
-}
+#include "source_base/module_out/filename.h"
 
 /************************************************
  *  unit test of functions in read_wfc_nao.cpp
