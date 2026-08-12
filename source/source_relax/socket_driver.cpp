@@ -347,9 +347,9 @@ void set_positions_from_ipi_bohr(UnitCell& ucell, const std::vector<double>& pos
     ucell.cell_parameter_updated = false;
 }
 
-std::vector<double> flatten_forces_hartree_per_bohr(const ModuleBase::matrix& force)
+std::vector<double> flatten_forces_hartree_per_bohr(const ModuleBase::matrix& force, const int nat)
 {
-    if (force.nr < 0 || force.nc != 3)
+    if (nat < 0 || force.nr != nat || force.nc != 3)
     {
         throw std::runtime_error("force matrix must have nat rows and three columns");
     }
@@ -739,7 +739,7 @@ void Socket_Driver::socket_driver(ModuleESolver::ESolver* p_esolver,
                     std::string local_message;
                     try
                     {
-                        computed.forces_hartree_per_bohr = flatten_forces_hartree_per_bohr(force);
+                        computed.forces_hartree_per_bohr = flatten_forces_hartree_per_bohr(force, ucell.nat);
                     }
                     catch (const std::exception& exc)
                     {

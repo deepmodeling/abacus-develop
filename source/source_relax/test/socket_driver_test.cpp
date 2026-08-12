@@ -22,20 +22,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-namespace unitcell
-{
-void periodic_boundary_adjustment(Atom* atoms, const ModuleBase::Matrix3& latvec, const int ntype)
-{
-    for (int it = 0; it < ntype; ++it)
-    {
-        for (int ia = 0; ia < atoms[it].na; ++ia)
-        {
-            atoms[it].tau[ia] = atoms[it].taud[ia] * latvec;
-        }
-    }
-}
-} // namespace unitcell
-
 namespace
 {
 constexpr std::size_t IPI_HEADER_LEN = 12;
@@ -244,6 +230,9 @@ class FakeESolver : public ModuleESolver::ESolver
     void cal_stress(BaseCell&, ModuleBase::matrix& stress) override
     {
         stress.create(3, 3);
+        stress(0, 0) = 2.0;
+        stress(1, 1) = 2.0;
+        stress(2, 2) = 2.0;
     }
 
   private:
@@ -271,6 +260,7 @@ void initialize_one_atom_cell(UnitCell& ucell)
 {
     ucell.lat0 = 1.0;
     ucell.latvec.Identity();
+    ucell.omega = 1.0;
     ucell.ntype = 1;
     ucell.nat = 1;
     ucell.atoms[0].na = 1;
