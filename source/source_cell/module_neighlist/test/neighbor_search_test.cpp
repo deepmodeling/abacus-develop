@@ -7,8 +7,63 @@
 #include <cstddef>
 #include <vector>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace
 {
+class CountingAtomProvider : public AtomProvider
+{
+public:
+    explicit CountingAtomProvider(const UnitCellLite& ucell) : ucell_(ucell) {}
+
+    double get_lat0() const override
+    {
+        return ucell_.get_lat0();
+    }
+
+    double get_omega() const override
+    {
+        return ucell_.get_omega();
+    }
+
+    const ModuleBase::Matrix3& get_latvec() const override
+    {
+        return ucell_.get_latvec();
+    }
+
+    int get_natom() const override
+    {
+        return ucell_.get_natom();
+    }
+
+    int get_na(int type) const override
+    {
+        return ucell_.get_na(type);
+    }
+
+    int get_ntype() const override
+    {
+        return ucell_.get_ntype();
+    }
+
+    ModuleBase::Vector3<double> get_tau(int type, int index) const override
+    {
+        ++get_tau_calls_;
+        return ucell_.get_tau(type, index);
+    }
+
+    std::size_t get_tau_calls() const
+    {
+        return get_tau_calls_;
+    }
+
+private:
+    const UnitCellLite& ucell_;
+    mutable std::size_t get_tau_calls_ = 0;
+};
+
 UnitCellLite make_test_ucell(double lat0,
                              double omega,
                              const ModuleBase::Matrix3& latvec,
@@ -46,6 +101,25 @@ std::size_t count_pairs(const NeighborList& list)
     }
     return pairs;
 }
+
+#ifdef _OPENMP
+void expect_same_atoms(const std::vector<NeighborAtom>& lhs,
+                       const std::vector<NeighborAtom>& rhs)
+{
+    ASSERT_EQ(lhs.size(), rhs.size());
+    for (std::size_t i = 0; i < lhs.size(); ++i)
+    {
+        EXPECT_DOUBLE_EQ(lhs[i].position_x, rhs[i].position_x) << "atom " << i;
+        EXPECT_DOUBLE_EQ(lhs[i].position_y, rhs[i].position_y) << "atom " << i;
+        EXPECT_DOUBLE_EQ(lhs[i].position_z, rhs[i].position_z) << "atom " << i;
+        EXPECT_EQ(lhs[i].atom_type, rhs[i].atom_type) << "atom " << i;
+        EXPECT_EQ(lhs[i].atom_index, rhs[i].atom_index) << "atom " << i;
+        EXPECT_EQ(lhs[i].atom_id, rhs[i].atom_id) << "atom " << i;
+        EXPECT_EQ(lhs[i].global_id, rhs[i].global_id) << "atom " << i;
+        EXPECT_EQ(lhs[i].owner_rank, rhs[i].owner_rank) << "atom " << i;
+    }
+}
+#endif
 } // namespace
 
 TEST(NeighborSearchTest, TwoAtomsNeighbor)
@@ -109,6 +183,66 @@ TEST(NeighborSearchTest, SerialInitOwnsCentralAtomsAndBuildsImages)
                   ModuleNeighList::checked_local_atom_index(i, "test atom id"));
     }
 }
+
+TEST(NeighborSearchTest, SerialInitReadsEachPrimaryCoordinateOnce)
+{
+    UnitCellLite ucell = make_test_ucell(1.0,
+                                         1.0,
+                                         identity_lattice(),
+                                         1,
+                                         {2},
+                                         {{0.0, 0.0, 0.0}, {0.5, 0.0, 0.0}});
+    CountingAtomProvider provider(ucell);
+
+    NeighborSearch ns;
+    ns.init(provider, 1.0);
+
+    EXPECT_EQ(provider.get_tau_calls(), 2U);
+    EXPECT_EQ(ns.get_inside_atoms().size(), 2U);
+    EXPECT_EQ(ns.get_ghost_atoms().size(), 52U);
+    EXPECT_EQ(ns.get_all_atoms().size(), 54U);
+}
+
+#ifdef _OPENMP
+TEST(NeighborSearchTest, ParallelImageGenerationMatchesSerialOrder)
+{
+    const int atom_count = 4000;
+    std::vector<ModuleBase::Vector3<double>> positions;
+    positions.reserve(atom_count);
+    for (int atom = 0; atom < atom_count; ++atom)
+    {
+        positions.push_back(ModuleBase::Vector3<double>(0.0001 * atom,
+                                                        0.0002 * atom,
+                                                        0.0003 * atom));
+    }
+    UnitCellLite ucell = make_test_ucell(1.0,
+                                         1.0,
+                                         identity_lattice(),
+                                         1,
+                                         {atom_count},
+                                         positions);
+
+    const int previous_dynamic = omp_get_dynamic();
+    const int previous_max_threads = omp_get_max_threads();
+    omp_set_dynamic(0);
+    omp_set_num_threads(1);
+    NeighborSearch serial;
+    serial.init(ucell, 1.0);
+
+    omp_set_num_threads(4);
+    NeighborSearch parallel;
+    parallel.init(ucell, 1.0);
+
+    omp_set_num_threads(previous_max_threads);
+    omp_set_dynamic(previous_dynamic);
+
+    EXPECT_EQ(parallel.get_inside_atoms().size(), static_cast<std::size_t>(atom_count));
+    EXPECT_EQ(parallel.get_ghost_atoms().size(), 104000U);
+    expect_same_atoms(serial.get_inside_atoms(), parallel.get_inside_atoms());
+    expect_same_atoms(serial.get_ghost_atoms(), parallel.get_ghost_atoms());
+    expect_same_atoms(serial.get_all_atoms(), parallel.get_all_atoms());
+}
+#endif
 
 TEST(NeighborSearchTest, DistributedInputUsesOwnedCentersAndGhostNeighbors)
 {
