@@ -21,7 +21,11 @@ namespace ModuleESolver
 
 ESolver_KS::ESolver_KS()
 {
-    exx_info_ = &GlobalC::exx_info;
+    // ESolver owns its own Exx_Info object, copied from the global instance
+    // initialized by Input_Conv::Convert(). This breaks the dependency on
+    // GlobalC::exx_info from ESolver internals; the global will be removed
+    // in a follow-up commit.
+    exx_info_obj_ = GlobalC::exx_info;
 }
 
 

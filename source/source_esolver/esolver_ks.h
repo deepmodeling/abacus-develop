@@ -7,11 +7,9 @@
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 #include "source_hamilt/hamilt.h"                      // use Hamiltonian
 #include "source_hamilt/hamilt_base.h"                 // use Hamiltonian base class
+#include "source_hamilt/module_xc/exx_info.h"          // ESolver owns Exx_Info value
 #include "source_lcao/module_dftu/dftu.h"              // mohan add 20251107
 #include "source_pw/module_pwdft/vnl_pw.h"
-
-/// forward declaration for EXX info bridge
-struct Exx_Info;
 
 namespace ModuleESolver
 {
@@ -77,8 +75,12 @@ class ESolver_KS : public ESolver_FP
     bool oscillate_esolver = false; // whether esolver is oscillated
     bool scf_nmax_flag = false;     // whether scf has reached nmax, mohan add 20250921
 
-    /// EXX info bridge, points to GlobalC::exx_info for now
-    Exx_Info* exx_info_ = nullptr;
+    /// EXX info owned by ESolver, copied from GlobalC::exx_info during construction.
+    /// Will become the sole owner after GlobalC::exx_info is removed.
+    Exx_Info exx_info_obj_;
+
+    /// Pointer to the owned Exx_Info object, for uniform access pattern.
+    Exx_Info* exx_info_ = &exx_info_obj_;
 };
 } // namespace ModuleESolver
 #endif
