@@ -235,6 +235,14 @@ std::string IpiSocket::read_string(std::size_t nbytes)
     return value;
 }
 
+void IpiSocket::write_string(const std::string& value)
+{
+    if (!value.empty())
+    {
+        this->write_exact(value.data(), value.size());
+    }
+}
+
 void IpiSocket::read_exact(void* data, std::size_t nbytes)
 {
     char* cursor = static_cast<char*>(data);

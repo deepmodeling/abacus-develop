@@ -443,3 +443,32 @@ TEST(IpiSocketTest, ReadDoublesRejectsByteCountOverflow)
         FAIL() << "overflowing double payload size should throw std::overflow_error";
     }
 }
+
+TEST(IpiSocketTest, WriteStringSendsExactBytesWithoutTerminator)
+{
+    UnixSocketServer server;
+    const std::string expected = "{\"scf_converged\":false}";
+    std::vector<char> received(expected.size());
+    std::exception_ptr thread_error;
+    std::thread peer([&]() {
+        try
+        {
+            const int fd = server.accept_once();
+            recv_all(fd, received.data(), received.size());
+            ::close(fd);
+        }
+        catch (...)
+        {
+            thread_error = std::current_exception();
+        }
+    });
+
+    IpiSocket socket;
+    socket.connect(server.address());
+    socket.write_string(expected);
+    socket.close();
+
+    peer.join();
+    rethrow_thread_error(thread_error);
+    EXPECT_EQ(expected, std::string(received.begin(), received.end()));
+}

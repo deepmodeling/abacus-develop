@@ -37,6 +37,7 @@ class IpiSocket
     std::vector<double> read_doubles(std::size_t n);
     void write_doubles(const std::vector<double>& values);
     std::string read_string(std::size_t nbytes);
+    void write_string(const std::string& value);
 
   private:
     int fd_ = -1;
