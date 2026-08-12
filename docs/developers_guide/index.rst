@@ -11,3 +11,4 @@ This section provides guidelines and resources for developers working on the ABA
 
    basic_types_class.md
    agent_governance.md
+   elpa_2026_02_genelpa_issue.md
