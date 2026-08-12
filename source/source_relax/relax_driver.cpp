@@ -2,11 +2,11 @@
 #include "source_base/formatter.h"
 #include "source_base/global_file.h"
 #include "source_base/version.h"
-#include "source_io/module_output/cif_io.h"
+#include "source_cell/cif_io.h"
 #include "source_io/module_json/output_info.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
-#include "source_io/module_output/read_exit_file.h"
+#include "source_base/module_out/read_exit_file.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/print_cell.h"
 
@@ -71,11 +71,11 @@ void Relax_Driver::init_relax(const int nat, const Input_para& inp)
     {
         if (!inp.uses_simultaneous_relaxation())
         {
-            this->rl_old.init_relax(nat);
+            this->rl_old.init_relax(nat, inp);
         }
         else
         {
-            this->rl.init_relax(nat);
+            this->rl.init_relax(nat, inp);
         }
     }
 }

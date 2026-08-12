@@ -4,7 +4,7 @@
 #include "pot_base.h"
 #include "source_base/complexmatrix.h"
 #include "source_hamilt/module_surchem/surchem.h"
-#include "source_pw/module_pwdft/structure_factor.h"
+#include "source_pw/module_pwdft/stru_fac.h"
 #include "source_pw/module_pwdft/vsep_pw.h"
 
 #include <memory>

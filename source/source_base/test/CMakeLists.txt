@@ -225,6 +225,32 @@ AddTest(
   SOURCES test_lebedev_laikov.cpp ../ylm.cpp ../math_lebedev_laikov.cpp
 )
 
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+AddTest(
+  TARGET MODULE_BASE_binstream
+  LIBS parameter base device
+  SOURCES binstream_test.cpp
+)
+
+AddTest(
+  TARGET MODULE_BASE_sparse_matrix
+  LIBS parameter base device
+  SOURCES sparse_matrix_test.cpp
+)
+
+AddTest(
+  TARGET MODULE_BASE_file_reader
+  LIBS parameter base device
+  SOURCES file_reader_test.cpp
+)
+
+AddTest(
+  TARGET MODULE_BASE_csr_reader
+  LIBS parameter base device
+  SOURCES csr_reader_test.cpp
+)
+
 if(ENABLE_GOOGLEBENCH)
   AddTest(
     TARGET MODULE_BASE_perf_sphbes

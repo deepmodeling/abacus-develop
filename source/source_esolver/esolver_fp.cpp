@@ -99,8 +99,10 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
     //! 9) parallel of FFT grid
+    const int nprocgroup = (PARAM.inp.esolver_type == "sdft") ? GlobalV::NPROC_IN_BNDGROUP : GlobalV::NPROC;
     this->Pgrid.init(this->pw_rhod->nx, this->pw_rhod->ny, this->pw_rhod->nz,
-            this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz);
+            this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz,
+            nprocgroup);
 
     //! 10) calculate the structure factor
     this->sf.setup(&ucell, Pgrid, this->pw_rhod);

@@ -4,7 +4,7 @@
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_output/ucell_io.h"
+#include "source_cell/ucell_io.h"
 
 std::string ModuleIO::dmk_gen_fname(const bool gamma_only, const int ispin, const int nspin, const int ik, const int istep)
 {

@@ -1,6 +1,5 @@
 #ifndef PSI_INIT_ATOMIC_RANDOM_H
 #define PSI_INIT_ATOMIC_RANDOM_H
-#include "source_pw/module_pwdft/vnl_pw.h"
 #include "psi_init_atomic.h"
 
 /*
@@ -19,15 +18,6 @@ class psi_init_atomic_random : public psi_init_atomic<T>
         this->mixing_coef_ = 0.05;
     }
     ~psi_init_atomic_random(){};
-
-    /// @brief initialize the psi_initializer with external data and methods
-    virtual void initialize(const Structure_Factor*,             //< structure factor
-                            const ModulePW::PW_Basis_K*,         //< planewave basis
-                            const UnitCell*,                     //< unit cell
-                            const K_Vectors*,                    //< kpoints
-                            const int& = 1,                      //< random seed
-                            const pseudopot_cell_vnl* = nullptr, //< nonlocal pseudopotential
-                            const int& = 0) override;            //< MPI rank
 
     virtual void init_psig(T* psig, const int& ik) override;
 

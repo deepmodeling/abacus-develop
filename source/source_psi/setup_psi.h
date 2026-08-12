@@ -14,11 +14,11 @@ class Setup_Psi
     Setup_Psi();
     ~Setup_Psi();
 
-	static void allocate_psi(
-		psi::Psi<T>* &psi,
-		const K_Vectors &kv,
+    static void allocate_psi(
+        psi::Psi<T>* &psi,
+        const K_Vectors &kv,
         const Parallel_Orbitals &para_orb,
-		const Input_para &inp);
+        const Input_para &inp);
 
     static void deallocate_psi(psi::Psi<T>* &psi);
 

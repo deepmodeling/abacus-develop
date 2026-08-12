@@ -186,6 +186,70 @@ TEST(RhogSymmetrySoc, GroupInvariance)
     }
 }
 
+// ---------------------------------------------------------------------------
+// Coupling test (nonzero m_y): the spin-density rotation W used for the grid
+// symmetrization (spin_so3) MUST agree with the SU(2) rotation of the spinor
+// density block followed by the Pauli decomposition convention that the rest of
+// the code uses (func_xyz_to_updown, #7664):
+//     rho_0 = Re(uu+dd), rho_x = Re(ud+du),
+//     rho_y = -Im(ud) + Im(du),  rho_z = Re(uu-dd).
+// This is the check that the self-referential GroupInvariance test above cannot
+// make (it uses the same wspin as oracle). A y-channel handedness mismatch
+// between spin_so3 and this sigma_y=[[0,-i],[i,0]] convention shows up here.
+// ---------------------------------------------------------------------------
+namespace
+{
+using cd = std::complex<double>;
+// spinor block D = r0*I + m.sigma  (sigma_y = [[0,-i],[i,0]]); layout {uu,ud,du,dd}
+ModuleSymmetry::SpinRotation::Su2 block_from_pauli(double r0, double mx, double my, double mz)
+{
+    return {cd(r0 + mz, 0.0), cd(mx, -my), cd(mx, my), cd(r0 - mz, 0.0)};
+}
+// func_xyz_to_updown extraction (NEW / #7664 convention); factor of 2 vs. m is harmless.
+void pauli_from_block(const ModuleSymmetry::SpinRotation::Su2& D, double& rx, double& ry, double& rz)
+{
+    rx = (D[1] + D[2]).real();     // Re(ud+du)
+    ry = -D[1].imag() + D[2].imag(); // -Im(ud)+Im(du)
+    rz = (D[0] - D[3]).real();     // Re(uu-dd)
+}
+} // namespace
+
+TEST(RhogSymmetrySoc, SpinConventionCoupling)
+{
+    // representative magnetizations, all with a nonzero y-component
+    const double mtest[4][3] = {{0.4, 0.7, -0.5}, {0.0, 1.0, 0.0}, {-0.3, 0.6, 0.9}, {1.0, -0.8, 0.2}};
+
+    for (int g = 0; g < 8; ++g)
+    {
+        const ModuleBase::Matrix3 gc = gmatc_of(g);
+        const ModuleSymmetry::SpinRotation::Su2 U = ModuleSymmetry::SpinRotation::so3_to_su2(gc);
+        const ModuleBase::Matrix3 Wgrid = ModuleSymmetry::SpinRotation::spin_so3(gc);
+        const ModuleBase::Matrix3 Wpauli = ModuleSymmetry::SpinRotation::pauli_rotation_matrix(U);
+
+        // (1) the geometric grid rotation and the SU(2)-induced Pauli rotation must coincide
+        EXPECT_NEAR(Wgrid.e11, Wpauli.e11, TOL) << "g=" << g; EXPECT_NEAR(Wgrid.e12, Wpauli.e12, TOL) << "g=" << g;
+        EXPECT_NEAR(Wgrid.e13, Wpauli.e13, TOL) << "g=" << g; EXPECT_NEAR(Wgrid.e21, Wpauli.e21, TOL) << "g=" << g;
+        EXPECT_NEAR(Wgrid.e22, Wpauli.e22, TOL) << "g=" << g; EXPECT_NEAR(Wgrid.e23, Wpauli.e23, TOL) << "g=" << g;
+        EXPECT_NEAR(Wgrid.e31, Wpauli.e31, TOL) << "g=" << g; EXPECT_NEAR(Wgrid.e32, Wpauli.e32, TOL) << "g=" << g;
+        EXPECT_NEAR(Wgrid.e33, Wpauli.e33, TOL) << "g=" << g;
+
+        // (2) rotate the spinor block, extract Pauli comps (new convention), compare to Wgrid*m
+        for (const auto& m : mtest)
+        {
+            const ModuleSymmetry::SpinRotation::Su2 D = block_from_pauli(2.0, m[0], m[1], m[2]);
+            const ModuleSymmetry::SpinRotation::Su2 Dp = ModuleSymmetry::SpinRotation::rotate_spin_block(D, U);
+            double rx, ry, rz;
+            pauli_from_block(Dp, rx, ry, rz);
+            // Wgrid acts on the physical m; the block carries 2*m, so compare against 2*(Wgrid*m).
+            const ModuleBase::Vector3<double> mv(m[0], m[1], m[2]);
+            const ModuleBase::Vector3<double> mrot = Wgrid * mv;
+            EXPECT_NEAR(rx, 2.0 * mrot.x, TOL) << "g=" << g;
+            EXPECT_NEAR(ry, 2.0 * mrot.y, TOL) << "g=" << g << " (y-channel handedness)";
+            EXPECT_NEAR(rz, 2.0 * mrot.z, TOL) << "g=" << g;
+        }
+    }
+}
+
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
