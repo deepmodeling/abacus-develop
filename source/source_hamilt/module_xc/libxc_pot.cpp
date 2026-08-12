@@ -512,7 +512,6 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
     {
         const int ng = chr->rhopw->npw;
         const double tpiba2 = tpiba * tpiba;
-        std::vector<double> gg_fd = XC_Functional::compute_fd_gg(chr->rhopw);
         std::vector<std::complex<double>> lapl_tmp(chr->rhopw->nmaxgr);
         for(int is = 0; is < voflapl.nr; is++)
         {
@@ -523,7 +522,10 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
             chr->rhopw->real2recip(lapl_tmp.data(), lapl_tmp.data());
             for(int ig = 0; ig < ng; ig++)
             {
-                lapl_tmp[ig] *= -gg_fd[ig] * tpiba2;
+                double g2 = 0.0;
+                for(int i = 0; i < 3; i++)
+                    g2 += chr->rhopw->gcar[ig][i] * chr->rhopw->gcar[ig][i];
+                lapl_tmp[ig] *= -g2 * tpiba2;
             }
             chr->rhopw->recip2real(lapl_tmp.data(), lapl_tmp.data());
             for(int ir = 0; ir < nrxx; ir++)

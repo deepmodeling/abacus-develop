@@ -707,7 +707,6 @@ void XC_Functional::gradcorr(
             const int nrxx = rhopw->nrxx;
             const double tpiba2 = ucell->tpiba * ucell->tpiba;
             std::vector<std::complex<double>> vlapl_g(rhopw->nmaxgr);
-            std::vector<double> gg_fd = XC_Functional::compute_fd_gg(rhopw);
 
             for(int is = 0; is < nspin0; is++)
             {
@@ -719,7 +718,10 @@ void XC_Functional::gradcorr(
                 rhopw->real2recip(vlapl_g.data(), vlapl_g.data());
                 for(int ig = 0; ig < ng; ig++)
                 {
-                    vlapl_g[ig] *= -gg_fd[ig] * tpiba2;
+                    double g2 = 0.0;
+                    for(int i = 0; i < 3; i++)
+                        g2 += rhopw->gcar[ig][i] * rhopw->gcar[ig][i];
+                    vlapl_g[ig] *= -g2 * tpiba2;
                 }
                 rhopw->recip2real(vlapl_g.data(), vlapl_g.data());
                 for(int ir = 0; ir < nrxx; ir++)

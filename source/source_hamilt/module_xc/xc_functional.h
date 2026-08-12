@@ -269,9 +269,6 @@ class XC_Functional
         const ModulePW::PW_Basis* rho_basis,
         const double tpiba);
 
-    static std::vector<double> compute_fd_gg(
-        const ModulePW::PW_Basis* rho_basis);
-
     static void noncolin_rho(
         double* rhoout1,
         double* rhoout2,
