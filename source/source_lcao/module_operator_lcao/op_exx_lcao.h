@@ -45,6 +45,7 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
                                       const K_Vectors& kv_in,
                                       Exx_LRI_Interface<TK, double>* exd_in,
                                       Exx_LRI_Interface<TK, std::complex<double>>* exc_in,
+                                      const Exx_Info& exx_info,
                                       Add_Hexx_Type add_hexx_type_in = Add_Hexx_Type::R,
                                       const int istep_in = 0,
                                       const bool restart_in = false);
@@ -58,6 +59,7 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         const K_Vectors& kv_in,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in = nullptr,
         std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in = nullptr,
+        const Exx_Info* exx_info = nullptr,
         Add_Hexx_Type add_hexx_type_in = Add_Hexx_Type::R);
 
     virtual void contributeHk(int ik) override;
@@ -85,6 +87,9 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
 
     /// @brief if restart, read and save Hexx, and directly use it during the first outer loop.
     bool restart = false;
+
+    /// @brief EXX info, passed from ESolver
+    const Exx_Info* exx_info_ptr = nullptr;
 
     const int istep = 0; // the ion step
 

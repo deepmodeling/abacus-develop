@@ -7,6 +7,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h" // parallel orbitals
 #include "source_basis/module_ao/orb_read.h" // orb
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info
 
 // for EXX
 #ifdef __EXX
@@ -28,14 +29,15 @@ class Exx_NAO
     std::shared_ptr<Exx_LRI_Interface<TK, std::complex<double>>> exc = nullptr;
 #endif
 
-    void init(const UnitCell& ucell);
+    void init(const UnitCell& ucell, Exx_Info& exx_info);
 
 	void before_runner(
 			UnitCell& ucell, // unitcell
 			K_Vectors &kv, // k points
             const LCAO_Orbitals &orb, // orbital info
 			const Parallel_Orbitals &pv, // parallel orbitals
-			const Input_para& inp);
+			const Input_para& inp,
+			Exx_Info& exx_info);
 
 	void before_scf(
 			const UnitCell &ucell, // unitcell
@@ -43,7 +45,8 @@ class Exx_NAO
 			const LCAO_Orbitals &orb, // orbital info
 			Charge_Mixing* p_chgmix,
 			const int istep,
-			const Input_para& inp);
+			const Input_para& inp,
+			Exx_Info& exx_info);
 
 };
 
