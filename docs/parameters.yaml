@@ -48,6 +48,8 @@ parameters:
       * host:port, for example localhost:31415 or 127.0.0.1:31415, opens a TCP connection to that host and port. Use this when the i-PI server listens on a TCP port.
       * path:UNIX, for example /tmp/ipi_abacus_si:UNIX, opens a Unix-domain socket at the given filesystem path. The :UNIX suffix tells ABACUS that the preceding value is a local socket path rather than a TCP host name. This form only works on the same machine.
       When using the ASE AbacusSocketIO interface, this environment variable is set automatically from the port or unixsocket calculator argument.
+
+      Socket mode always computes energy. Force and stress extraction follows cal_force and cal_stress independently; disabled properties are sent as protocol padding and marked absent in the i-PI extras metadata, not reported as physical zero values. A non-converged SCF step is returned with scf_converged=false metadata so an external driver can choose its policy.
     default_value: "False"
     unit: ""
     availability: ""
@@ -106,6 +108,7 @@ parameters:
     type: Boolean
     description: |
       If set to True, calculate the force at the end of the electronic iteration.
+      In socket_driver mode, this flag controls whether the returned frame advertises forces; it is not forced on by the socket protocol.
     default_value: "False"
     unit: ""
     availability: ""
@@ -222,6 +225,7 @@ parameters:
     type: Boolean
     description: |
       If set to True, calculate the stress at the end of the electronic iteration.
+      In socket_driver mode, this flag independently controls whether the returned frame advertises stress/virial.
     default_value: "False"
     unit: ""
     availability: ""

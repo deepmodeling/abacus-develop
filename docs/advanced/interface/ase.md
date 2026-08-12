@@ -105,7 +105,7 @@ Please read the examples in `interfaces/ASE_interface/examples/` for more detail
 
 ### Socket I/O with ASE
 
-For socket-driven ASE workflows, use the `AbacusSocketIO` calculator. ASE runs the i-PI socket server, while ABACUS keeps `calculation=scf` and is launched with `socket_driver=1` as the client. The protocol is simple: ASE sends atomic positions and cell data to ABACUS; ABACUS evaluates one SCF step for that structure and returns energy, forces, and virial. See the [ASE socket I/O documentation](https://ase-lib.org/ase/calculators/socketio/socketio.html) and the i-PI reference paper, [Ceriotti et al., Comput. Phys. Commun. 185, 1019-1026 (2014)](https://doi.org/10.1016/j.cpc.2013.10.027), for the protocol background.
+For socket-driven ASE workflows, use the `AbacusSocketIO` calculator. ASE runs the i-PI socket server, while ABACUS keeps `calculation=scf` and is launched with `socket_driver=1` as the client. Energy, forces, and stress are independent properties controlled by `cal_force` and `cal_stress`; the fixed i-PI wire layout still contains padding fields, while extras metadata identifies which values were actually computed. See the [ASE socket I/O documentation](https://ase-lib.org/ase/calculators/socketio/socketio.html) and the i-PI reference paper, [Ceriotti et al., Comput. Phys. Commun. 185, 1019-1026 (2014)](https://doi.org/10.1016/j.cpc.2013.10.027), for the protocol background.
 
 Build ABACUS as usual before using this interface. PW-only builds work with `basis_type=pw`; LCAO socket calculations require an LCAO-enabled executable. No extra socket library is required.
 
@@ -157,14 +157,14 @@ with abacus as calc:
     BFGS(atoms).run(fmax=0.05)
 ```
 
-`AbacusSocketIO` sets `socket_driver=1` and `cal_force=1` automatically. It also selects the socket endpoint and passes it to ABACUS through `ABACUS_SOCKET_ADDRESS`, so users normally do not set this environment variable by hand when using abacuslite.
+`AbacusSocketIO` sets `socket_driver=1` automatically. Set `inp={'cal_force': 1}` and/or `inp={'cal_stress': 1}` when an external optimizer, MD integrator, UnitCellFilter/FrechetCellFilter, or other client needs those properties. Energy is always available. The interface selects the socket endpoint and passes it to ABACUS through `ABACUS_SOCKET_ADDRESS`, so users normally do not set this environment variable by hand when using abacuslite.
 
 There are two endpoint styles:
 
 - `unixsocket="abacus_si"` uses a local Unix-domain socket. ASE creates and listens on `/tmp/ipi_abacus_si`; abacuslite launches ABACUS with `ABACUS_SOCKET_ADDRESS=/tmp/ipi_abacus_si:UNIX`. The `:UNIX` suffix is part of ABACUS' address syntax and means that `/tmp/ipi_abacus_si` is a filesystem socket path, not a TCP host. This is usually the best choice when ASE and ABACUS run on the same node because it avoids TCP port conflicts.
 - `port=31415` uses a TCP socket. abacuslite launches ABACUS with `ABACUS_SOCKET_ADDRESS=localhost:31415`, meaning host `localhost` and TCP port `31415`. Use this style when the socket server should listen on a TCP port. If ABACUS is launched manually instead of through `AbacusSocketIO`, set `ABACUS_SOCKET_ADDRESS` yourself to the same `host:port` or `path:UNIX` endpoint.
 
-Calling `atoms.get_potential_energy()` is supported, but the ABACUS client still computes forces because the i-PI `GETFORCE` exchange returns energy, forces, and virial as one response.
+Calling `atoms.get_potential_energy()` does not force a force or stress calculation. If a requested property was disabled, ASE raises `PropertyNotImplementedError`; zero-filled i-PI padding is never treated as a physical result. When SCF does not converge, `AbacusSocketIO.last_scf_converged` is set to `False` and the caller decides whether to continue or stop.
 
 A socket calculator owns one ABACUS process initialized from one fixed `INPUT`/`STRU` setup. Reuse the same `AbacusSocketIO` instance only for position updates under the same electronic-structure settings and the same cell. Do not change `kpts`, `kspacing`, `nspin`, `basis_type`, `basissets`, pseudopotentials, species, atom count, cell, or other core `INPUT`/`STRU` parameters through an existing socket calculator; create a new `AbacusSocketIO` instance and a new ABACUS client process for those changes. `AbacusSocketIO` rejects cell changes before sending them to ABACUS, and the ABACUS socket driver also checks incoming POSDATA cells against the initial `STRU` cell and exits if they differ.
 
