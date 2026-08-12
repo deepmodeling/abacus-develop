@@ -143,10 +143,11 @@ def format_description(desc: str) -> str:
 
 def link_availability(availability: str, name_anchors: Dict[str, str]) -> str:
     """
-    Link parameter names wherever the grammar identifies them as parameters.
+    Link parameter names on the left side of a condition.
 
-    This deliberately recognizes condition boundaries instead of linking every
-    identifier: values such as ``pw`` and ``0`` are not parameter references.
+    This deliberately recognizes the condition boundary instead of linking
+    every identifier: a value such as ``pw`` may happen to have the same name
+    as another parameter, but it is not a parameter reference.
     """
     def replace(match):
         name = match.group(0)
@@ -158,9 +159,7 @@ def link_availability(availability: str, name_anchors: Dict[str, str]) -> str:
         r'\b[A-Za-z_][A-Za-z0-9_]*\b'
         r'(?=\s*(?:==|!=|>=|<=|>|<|\bin\b|\bcontains\b))'
     )
-    linked = re.sub(left_parameter, replace, availability)
-    right_parameter = r'(?<=\bin\s)\b[A-Za-z_][A-Za-z0-9_]*\b'
-    return re.sub(right_parameter, replace, linked)
+    return re.sub(left_parameter, replace, availability)
 
 def generate_parameter_markdown(param: Dict[str, str],
                                 name_anchors: Dict[str, str]) -> str:

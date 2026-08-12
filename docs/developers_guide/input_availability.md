@@ -30,7 +30,7 @@ and-expression := primary (("and" | ",") primary)*
 primary := condition | "(" expression ")"
 condition := parameter comparison value
            | parameter "in" "[" value "," value ("," value)* "]"
-           | value "in" parameter
+           | parameter "contains" value
 comparison := "==" | "!=" | ">" | ">=" | "<" | "<="
 value := token | '"' quoted-value '"'
 ```
@@ -38,9 +38,9 @@ value := token | '"' quoted-value '"'
 `and` binds more tightly than `or`. `==` compares one complete value; double
 quotes delimit a complete value containing whitespace, such as
 `relax_method=="cg 2"`. Two or more alternatives use `in [...]`, while
-`value in parameter` tests whether a vector contains one element, such as
-`0 in td_ttype`. `/` is an ordinary value character, not another spelling of
-membership. Ordered comparisons require a numeric scalar.
+`parameter contains value` tests whether a vector contains one element, such as
+`td_ttype contains 0`. `/` is an ordinary value character, not another spelling
+of membership. Ordered comparisons require a numeric scalar.
 
 A path that references a parameter must imply that parameter's availability.
 Every `and` operand is required, while satisfying either branch of an `or` is
@@ -53,7 +53,7 @@ Examples:
 ```cpp
 item.set_availability("basis_type==pw");
 item.set_availability("vdw_method in [d2, d3_0]");
-item.set_availability("2 in td_ttype");
+item.set_availability("td_ttype contains 2");
 item.set_availability("esolver_type==sdft and method_sto==2");
 ```
 

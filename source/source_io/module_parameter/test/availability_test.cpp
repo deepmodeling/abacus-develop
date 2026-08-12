@@ -40,11 +40,11 @@ TEST(AvailabilityParser, InListRoundTrip)
 
 TEST(AvailabilityParser, VectorContainmentSemantics)
 {
-    const AvailabilityExpr e = parse_availability("2 in td_ttype");
+    const AvailabilityExpr e = parse_availability("td_ttype contains 2");
     EXPECT_TRUE(e.is_leaf());
     EXPECT_EQ(e.condition.op, "contains");
     EXPECT_EQ(e.condition.values, (std::vector<std::string>{"2"}));
-    EXPECT_EQ(e.to_string(), "2 in td_ttype");
+    EXPECT_EQ(e.to_string(), "td_ttype contains 2");
 }
 
 TEST(AvailabilityParser, QuotedMultiTokenValueRoundTrip)
@@ -99,7 +99,7 @@ TEST(AvailabilityParser, InvalidExpressionsAreRejected)
         "relax_method in [cg 2, bfgs]",
         "relax_method in [\"cg 2\"]",
         "relax_method==\"cg 2",
-        "td_ttype contains 2",
+        "2 in td_ttype",
         "basis_type==pw)",
         "(basis_type==pw",
     };
@@ -133,9 +133,9 @@ TEST(AvailabilityValidator, AcceptsKnownTypedReferences)
         parse_availability("basis_type==pw and mixing_restart>0"),
         types));
     EXPECT_NO_THROW(validate_availability_expr(
-        "example", parse_availability("2 in td_ttype"), types));
+        "example", parse_availability("td_ttype contains 2"), types));
     EXPECT_THROW(validate_availability_expr(
-                     "example", parse_availability("two in td_ttype"), types),
+                     "example", parse_availability("td_ttype contains two"), types),
                  std::invalid_argument);
     EXPECT_NO_THROW(validate_availability_expr(
         "example", parse_availability("relax_method==\"cg 2\""), types));

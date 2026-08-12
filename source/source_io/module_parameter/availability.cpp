@@ -179,19 +179,6 @@ class AvailabilityParser
             fail("expected parameter identifier");
         }
 
-        if (!is_identifier_start(text_[pos_]))
-        {
-            const std::string value = parse_scalar_value();
-            if (!consume_keyword("in"))
-            {
-                fail("expected 'in' after vector element");
-            }
-            result.condition.param = parse_identifier();
-            result.condition.op = "contains";
-            result.condition.values.push_back(value);
-            return result;
-        }
-
         result.condition.param = parse_identifier();
         skip_space();
 
@@ -208,17 +195,15 @@ class AvailabilityParser
             }
         }
 
+        if (consume_keyword("contains"))
+        {
+            result.condition.op = "contains";
+            result.condition.values.push_back(parse_scalar_value());
+            return result;
+        }
+
         if (consume_keyword("in"))
         {
-            skip_space();
-            if (!at_end() && text_[pos_] != '[')
-            {
-                const std::string value = result.condition.param;
-                result.condition.param = parse_identifier();
-                result.condition.op = "contains";
-                result.condition.values.push_back(value);
-                return result;
-            }
             if (!consume_char('['))
             {
                 fail("expected '[' after 'in'");
@@ -324,7 +309,7 @@ std::string AvailabilityCondition::to_string() const
     }
     if (op == "contains")
     {
-        return format_value(values[0]) + " in " + param;
+        return param + " contains " + format_value(values[0]);
     }
     return param + op + format_value(values[0]);
 }
