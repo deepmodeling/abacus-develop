@@ -747,7 +747,9 @@ In the current implementation, the automatic bypass thresholds are fixed indepen
         item.type = "Boolean";
         item.description = R"(Whether to mix the kinetic energy density.
 * True: The kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
-* False: The kinetic energy density will not be mixed.)";
+* False: The kinetic energy density will not be mixed.
+
+This setting takes effect only when the selected exchange-correlation functional uses the kinetic energy density, such as a meta-GGA or hybrid meta-GGA functional.)";
         item.default_value = "False";
         item.unit = "";
         read_sync_bool(input.mixing_tau);

@@ -1395,6 +1395,8 @@
 - **Description**: Whether to mix the kinetic energy density.
   - True: The kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
   - False: The kinetic energy density will not be mixed.
+
+  This setting takes effect only when the selected exchange-correlation functional uses the kinetic energy density, such as a meta-GGA or hybrid meta-GGA functional.
 - **Default**: False
 
 ### mixing_dftu
@@ -4252,7 +4254,7 @@
 ### td_gauss_freq
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 0*
+- **Availability**: *0 in [`td_ttype`](#td_ttype)*
 - **Description**: Ordinary frequency $f$ in the Gaussian-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
 - **Default**: 22.13
 - **Unit**: 1/fs
@@ -4260,7 +4262,7 @@
 ### td_gauss_phase
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 0*
+- **Availability**: *0 in [`td_ttype`](#td_ttype)*
 - **Description**: Carrier phase $\varphi$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
@@ -4268,7 +4270,7 @@
 ### td_gauss_sigma
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 0*
+- **Availability**: *0 in [`td_ttype`](#td_ttype)*
 - **Description**: Nonzero standard deviation $\sigma$ of the Gaussian envelope. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
 - **Default**: 30.0
 - **Unit**: fs
@@ -4276,14 +4278,14 @@
 ### td_gauss_t0
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 0*
+- **Availability**: *0 in [`td_ttype`](#td_ttype)*
 - **Description**: Electronic-step position of the Gaussian center, which defines $t_0=\mathtt{td\_gauss\_t0}\Delta t$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
 - **Default**: 100
 
 ### td_gauss_amp
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 0*
+- **Availability**: *0 in [`td_ttype`](#td_ttype)*
 - **Description**: Electric-field scale $E_0$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.
 - **Default**: 0.25
 - **Unit**: V/Angstrom
@@ -4291,7 +4293,7 @@
 ### td_trape_freq
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
+- **Availability**: *1 in [`td_ttype`](#td_ttype)*
 - **Description**: Ordinary carrier frequency $f$ in the trapezoid-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 1.60
 - **Unit**: 1/fs
@@ -4299,7 +4301,7 @@
 ### td_trape_phase
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
+- **Availability**: *1 in [`td_ttype`](#td_ttype)*
 - **Description**: Carrier phase $\varphi$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
@@ -4307,28 +4309,28 @@
 ### td_trape_t1
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
+- **Availability**: *1 in [`td_ttype`](#td_ttype)*
 - **Description**: Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 1875
 
 ### td_trape_t2
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
+- **Availability**: *1 in [`td_ttype`](#td_ttype)*
 - **Description**: Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 5625
 
 ### td_trape_t3
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
+- **Availability**: *1 in [`td_ttype`](#td_ttype)*
 - **Description**: Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. Each field must satisfy td_trape_t1 &lt;= td_trape_t2 &lt;= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 7500
 
 ### td_trape_amp
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 1*
+- **Availability**: *1 in [`td_ttype`](#td_ttype)*
 - **Description**: Electric-field scale $E_0$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.
 - **Default**: 2.74
 - **Unit**: V/Angstrom
@@ -4336,7 +4338,7 @@
 ### td_trigo_freq1
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 2*
+- **Availability**: *2 in [`td_ttype`](#td_ttype)*
 - **Description**: First ordinary frequency $f_1$ in the trigonometric-pulse formula, with $\omega_1=2\pi f_1$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
 - **Default**: 1.164656
 - **Unit**: 1/fs
@@ -4344,7 +4346,7 @@
 ### td_trigo_freq2
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 2*
+- **Availability**: *2 in [`td_ttype`](#td_ttype)*
 - **Description**: Second ordinary frequency $f_2$ in the trigonometric-pulse formula, with $\omega_2=2\pi f_2$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
 - **Default**: 0.029116
 - **Unit**: 1/fs
@@ -4352,7 +4354,7 @@
 ### td_trigo_phase1
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 2*
+- **Availability**: *2 in [`td_ttype`](#td_ttype)*
 - **Description**: Carrier phase $\varphi_1$ in the cosine factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
@@ -4360,7 +4362,7 @@
 ### td_trigo_phase2
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 2*
+- **Availability**: *2 in [`td_ttype`](#td_ttype)*
 - **Description**: Envelope phase $\varphi_2$ in the sine-squared factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
@@ -4368,7 +4370,7 @@
 ### td_trigo_amp
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 2*
+- **Availability**: *2 in [`td_ttype`](#td_ttype)*
 - **Description**: Electric-field scale $E_0$ in the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.
 - **Default**: 2.74
 - **Unit**: V/Angstrom
@@ -4376,14 +4378,14 @@
 ### td_heavi_t0
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 3*
+- **Availability**: *3 in [`td_ttype`](#td_ttype)*
 - **Description**: Electronic switch step $n_0$ in the Heaviside-pulse definition. The field is $E_0$ for $n\lt n_0$ and zero for $n\geqslant n_0$. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.
 - **Default**: 100
 
 ### td_heavi_amp
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 3*
+- **Availability**: *3 in [`td_ttype`](#td_ttype)*
 - **Description**: Electric-field scale $E_0$ in the Heaviside-pulse definition. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.
 - **Default**: 1.0
 - **Unit**: V/Angstrom
@@ -4391,7 +4393,7 @@
 ### td_supsine_amp
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
+- **Availability**: *4 in [`td_ttype`](#td_ttype)*
 - **Description**: Carrier electric-field scale $E_0$ of each supersine pulse. This is not a normalization of the complete waveform maximum, because the envelope-derivative term also contributes. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
 - **Default**: 0.27
 - **Unit**: V/Angstrom
@@ -4399,7 +4401,7 @@
 ### td_supsine_freq
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
+- **Availability**: *4 in [`td_ttype`](#td_ttype)*
 - **Description**: Nonzero ordinary carrier frequency $f$ of each supersine pulse, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
 - **Default**: 0.18737028625
 - **Unit**: 1/fs
@@ -4407,7 +4409,7 @@
 ### td_supsine_phase
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
+- **Availability**: *4 in [`td_ttype`](#td_ttype)*
 - **Description**: Electric-field carrier phase $\varphi$ at the center of each supersine envelope. A value of 0 places a cosine carrier maximum at the envelope center. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
 - **Default**: 0.0
 - **Unit**: rad
@@ -4415,21 +4417,21 @@
 ### td_supsine_sigma
 
 - **Type**: Vector of Real
-- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
+- **Availability**: *4 in [`td_ttype`](#td_ttype)*
 - **Description**: Dimensionless shape parameter $\sigma$ of each supersine envelope. It must satisfy $0\lt\sigma\lt\pi/2$ so that the electric field approaches zero at the pulse boundaries. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.
 - **Default**: 0.75
 
 ### td_supsine_tstart
 
 - **Type**: Vector of String
-- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
+- **Availability**: *4 in [`td_ttype`](#td_ttype)*
 - **Description**: Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supsine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
 - **Default**: default
 
 ### td_supsine_tend
 
 - **Type**: Vector of String
-- **Availability**: *[`td_ttype`](#td_ttype) contains 4*
+- **Availability**: *4 in [`td_ttype`](#td_ttype)*
 - **Description**: Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.
 - **Default**: default
 

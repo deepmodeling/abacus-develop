@@ -105,7 +105,7 @@ void validate_condition(
     const AvailabilityValueKind kind = parameter->second;
     if (condition.op == "contains" && !is_vector(kind))
     {
-        fail(owner, "operator 'contains' requires a vector parameter, but '" + condition.param
+        fail(owner, "vector containment requires a vector parameter, but '" + condition.param
                         + "' is scalar");
     }
     if ((condition.op == ">" || condition.op == ">=" || condition.op == "<"

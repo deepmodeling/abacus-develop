@@ -12,7 +12,7 @@ namespace ModuleIO
 struct AvailabilityCondition
 {
     std::string param;                  ///< parameter identifier
-    std::string op;                     ///< ==, !=, >, >=, <, <=, "in" or "contains"
+    std::string op;                     ///< ==, !=, >, >=, <, <=, "in" or vector containment
     std::vector<std::string> values; ///< one value for comparisons, several for "in"
 
     std::string to_string() const;
