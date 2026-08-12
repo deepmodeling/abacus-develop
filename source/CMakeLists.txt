@@ -699,6 +699,9 @@ if(ENABLE_LCAO)
       numerical_atomic_orbitals
       lr
       rdmft)
+  if(ENABLE_LIBRI)
+    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE bse)
+  endif()
   if(ENABLE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
   endif()

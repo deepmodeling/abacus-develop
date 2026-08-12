@@ -4,7 +4,7 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_output/print_info.h"
 #include "source_hamilt/module_gint/gint.h"
-#include "source_lcao/module_lr/bse/hamilt_bse.h"
+#include "source_lcao/module_bse/hamilt_bse.h"
 #include "source_lcao/module_lr/lr_spectrum.h"
 #include "source_lcao/module_lr/utils/exciton_plotter.h"
 #include "source_lcao/module_lr/utils/lr_io.h"

@@ -1,5 +1,0 @@
-if(ENABLE_LCAO AND ENABLE_LIBRI)
-  if(BUILD_TESTING)
-    add_subdirectory(test)
-  endif()
-endif()

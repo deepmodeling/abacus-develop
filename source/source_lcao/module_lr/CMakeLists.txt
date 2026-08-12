@@ -4,10 +4,6 @@ if(ENABLE_LCAO)
   add_subdirectory(dm_trans)
   add_subdirectory(ri_benchmark)
 
-  if(ENABLE_LIBRI)
-    add_subdirectory(bse)
-  endif()
-
   list(APPEND objects
     utils/lr_util.cpp
     utils/lr_util_hcontainer.cpp
@@ -24,13 +20,6 @@ if(ENABLE_LCAO)
     lr_spectrum_velocity.cpp
     hamilt_casida.cpp
     potentials/xc_kernel.cpp)
-
-  if(ENABLE_LIBRI)
-    list(APPEND objects
-      bse/hamilt_bse.cpp
-      bse/hamilt_bse_solver.cpp
-      bse/bse_util.cpp)
-  endif()
 
 add_library(
     lr

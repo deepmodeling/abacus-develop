@@ -1479,7 +1479,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
     {
         Input_Item item("rpa_out_vel");
         item.annotation = "whether to output velocity matrix for librpa";
-        item.category = "Input files";
+        item.category = "Output information";
         item.type = "Boolean";
         item.description = " Velocity matrix in KS basis (in unit of eV *Angstrom). Loop layer: spin -> k -> direction -> KS_basis1 -> KS_basis2.";
         item.default_value = "False";
@@ -1491,7 +1491,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
     {
         Input_Item item("rpa_outdir");
         item.annotation = "output directory for librpa";
-        item.category = "Input files";
+        item.category = "Output information";
         item.type = "String";
         item.description = "The directory to save files for LibRPA.";
         item.default_value = "\"./OUT.librpa/\"";

@@ -202,8 +202,8 @@
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
     - [rpa](#rpa)
-    - [rpa_out_vel](#rpa_out_vel)
-    - [rpa_outdir](#rpa_outdir)
+    - [rpa\_out\_vel](#rpa_out_vel)
+    - [rpa\_outdir](#rpa_outdir)
     - [out\_pchg](#out_pchg)
     - [out\_wfc\_norm](#out_wfc_norm)
     - [out\_wfc\_re\_im](#out_wfc_re_im)
@@ -561,13 +561,6 @@
     - [out\_wfc\_lr](#out_wfc_lr)
     - [abs\_gauge](#abs_gauge)
     - [abs\_broadening](#abs_broadening)
-    - [bse\_tda](#bse_tda)
-    - [bse\_spin\_types](#bse_spin_types)
-    - [bse\_mem\_save](#bse_mem_save)
-    - [bse\_ri\_hartree](#bse_ri_hartree)
-    - [bse\_use\_fine\_kgrid](#bse_use_fine_kgrid)
-    - [out\_bse\_ab](#out_bse_ab)
-    - [bse\_continue](#bse_continue)
     - [plot\_istate](#plot_istate)
     - [exciton\_plot\_type](#exciton_plot_type)
     - [exciton\_plot\_format](#exciton_plot_format)
@@ -578,6 +571,16 @@
     - [exciton\_slice\_range](#exciton_slice_range)
     - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
     - [aims\_nbasis](#aims_nbasis)
+  - [Bethe-Salpeter Equation](#bethe-salpeter-equation)
+    - [bse\_tda](#bse_tda)
+    - [bse\_spin\_types](#bse_spin_types)
+    - [bse\_mem\_save](#bse_mem_save)
+    - [bse\_ri\_hartree](#bse_ri_hartree)
+    - [bse\_use\_fine\_kgrid](#bse_use_fine_kgrid)
+    - [bse\_q\_approx\_mode](#bse_q_approx_mode)
+    - [bse\_q\_approx\_threshold](#bse_q_approx_threshold)
+    - [out\_bse\_ab](#out_bse_ab)
+    - [bse\_continue](#bse_continue)
   - [Reduced Density Matrix Functional Theory](#reduced-density-matrix-functional-theory)
     - [rdmft](#rdmft)
     - [rdmft\_power\_alpha](#rdmft_power_alpha)
@@ -2344,7 +2347,8 @@
 ### rpa
 
 - **Type**: Boolean
-- **Description**: Generate output files used in rpa calculations for LibRPA package.
+- **Availability**: *Numerical atomic orbital basis*
+- **Description**: Generate output files used in rpa calculations.
 
   > Note: If symmetry is set to 1, additional files containing the necessary information for exploiting symmetry in the subsequent rpa calculation will be output: irreducible_sector.txt, symrot_k.txt and symrot_R.txt.
 - **Default**: False
@@ -2352,13 +2356,16 @@
 ### rpa_out_vel
 
 - **Type**: Boolean
-- **Description**: Whether to output velocity matrix for LibRPA package.
+- **Availability**: *Numerical atomic orbital basis*
+- **Description**: Velocity matrix in KS basis (in unit of eV *Angstrom). Loop layer: spin -&gt; k -&gt; direction -&gt; KS_basis1 -&gt; KS_basis2.
 - **Default**: False
+- **Unit**: eV * A
 
 ### rpa_outdir
 
 - **Type**: String
-- **Description**: Output directory for LibRPA package. Files include `band_out`、`coulomb_cut_{rank}.txt`、`coulomb_mat_{rank}.txt`、`coulomb_unshrinked_cut_{rank}.txt`、`Cs_data_{rank}.txt`、`Cs_shrinked_data_{rank}.txt`、`KS_eigenvector_{k_index}.dat`、`shrink_sinvS_{rank}.txt`、`velocity_matrix`、`vxc_out`、`stru_out`.
+- **Availability**: *Numerical atomic orbital basis*
+- **Description**: The directory to save files for LibRPA.
 - **Default**: "./OUT.librpa/"
 
 ### out_pchg
@@ -4902,13 +4909,10 @@
 
 ## Linear Response TDDFT
 
-These parameters are used to solve the excited states using. e.g. LR-TDDFT or Bethe-Salpeter Equation.
-
 ### xc_kernel
 
 - **Type**: String
-- **Description**: The exchange-correlation kernel used in the calculation. 
-Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`, `BSE`.
+- **Description**: The exchange-correlation kernel used in the calculation. Currently supported: RPA, LDA, PBE, HSE, HF.
 - **Default**: LDA
 
 ### lr_init_xc_kernel
@@ -4923,12 +4927,10 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`, `BSE`.
 ### lr_solver
 
 - **Type**: String
-- **Description**: The method to solve the Casida equation in LR-TDDFT.
-  - `dav`/`dav_subspace`/ `cg`: Construct and diagonalize the Hamiltonian matrix iteratively with Davidson/Non-ortho-Davidson/CG algorithm. Tamm-Dancoff approximation (TDA) only.
-  - `lapack`: Construct the matrix and directly diagonalize with LAPACK. TDA only.
-  - `elpa`: Construct the resonant (and anti-resonant) matrix and diagonalize with ELPA.
-  - `spectrum`: Calculate absorption spectrum only without solving Casida equation. The `OUT.${suffix}/` directory should contain the files for LR-TDDFT eigenstates and eigenvalues, i.e. `Excitation_Energy.dat` and `Excitation_Amplitude_${processor_rank}.dat` output by setting `out_wfc_lr` to true.
-  - `plot`: Plot the exciton wave function, should identify `plot_istate`.
+- **Description**: The method to solve the Casida equation in LR-TDDFT under Tamm-Dancoff approximation (TDA).
+  - dav/dav_subspace/cg: Construct and diagonalize the Hamiltonian matrix iteratively with Davidson/Non-ortho-Davidson/CG algorithm.
+  - lapack: Construct the full matrix and directly diagonalize with LAPACK.
+  - spectrum: Calculate absorption spectrum only without solving Casida equation.
 - **Default**: dav
 
 ### lr_thr
@@ -4980,7 +4982,7 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`, `BSE`.
 ### abs_gauge
 
 - **Type**: String
-- **Description**: Whether to use `velocity` or `length` formulation to calculate the absorption spectrum. `length` is only suitable for non-periodic system.
+- **Description**: Whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT.
 - **Default**: velocity
 
 ### abs_broadening
@@ -4989,147 +4991,136 @@ Currently supported: `RPA`, `LDA`, `PBE`, `HSE`, `HF`, `BSE`.
 - **Description**: The broadening factor for the absorption spectrum calculation.
 - **Default**: 0.01
 
-
-### bse_tda
-
-- **Type**: String
-- **Description**: Whether Tamm-Dancoff Approximation is used (can be 'tda', 'full' or 'both').
-- **Default**: tda
-
-### bse_spin_types
-
-- **Type**: Vector of String
-- **Description**: spin types for close-shell case to be calculated in one task (can be 'singlet', 'triplet', and for test 'rpa', 'ipa').
-- **Defalut**: \{singlet, triplet\}
-
-### bse_mem_save
-
-- **Type**: Boolean
-- **Description**: Whether to save memory by adding V and W to BSE matrix directly. This option is useful when out-of-memory occurs. If this option is on, `bse_ri_hartree` will be on and `bse_continue` will be off automatically.
-- **Default**: false
-
-### bse_ri_hartree
-
-- **Type**: Boolean
-- **Description**: Whether to use RI approximation for Hartree term in BSE.
-- **Default**: true
-
-### bse_use_fine_kgrid
-
-- **Type**: Boolean
-- **Description**: Whether to use a finer k-grid for BSE. If you want to turn it on, file `band_kpath_info`, `band_KS_eigenvector_k_{index}.txt`, `KS_band_spin_{index}.txt` and `GW_band_spin_{index}.txt` should be prepared.
-- **Default**: false
-
-### out_bse_ab
-
-- **Type**: Boolean
-- **Description**: Whether to output the AB matrix to file.
-- **Default**: false
-
-### bse_continue
-
-- **Type**: Integer
-- **Description**: Which step to continue from previous BSE calculation.
-  - 0: new;
-  - 1: continue from A_V;
-  - 2: continue from A_V and A_W;
-  - 3: continue from A_V, A_W and B_V;
-  - 4: continue from A_V, A_W, B_V and B_W
-- **Default**: 0
-
 ### plot_istate
 
 - **Type**: Integer
-- **Description**: The index of excited state to be plotted (starting from 0)
+- **Description**: The index of the excited state to plot, starting from 0.
 - **Default**: 0
 
 ### exciton_plot_type
 
 - **Type**: String
-- **Description**: The exciton density represented when `lr_solver` is `plot`.
-  - `average`: Integrate out the other particle coordinate and plot the average electron and hole densities.
-  - `conditional`: Fix one particle at the Cartesian position specified by `exciton_fixed_coordinate` and plot a two-dimensional slice of the other particle's density.
+- **Description**: Exciton density represented when lr_solver is 'plot': 'average' integrates out the other particle, while 'conditional' fixes one particle at exciton_fixed_coordinate and plots a slice of the other particle's density.
 - **Default**: average
 
 ### exciton_plot_format
 
 - **Type**: String
-- **Description**: The output format for exciton-density plotting.
-  - `cube`: Write three-dimensional density files in Gaussian cube format.
-  - `slice`: Write two-dimensional cross-section data files.
-  - `both`: Write both cube and slice files for average density.
-  - For `exciton_plot_type = average`, `cube`, `slice`, and `both` are supported.
-  - For `exciton_plot_type = conditional`, only `slice` is supported; `cube` and `both` are invalid.
+- **Availability**: *lr_solver = plot*
+- **Description**: The exciton-density output format. Average density supports cube, slice, and both; conditional density supports slice only.
 - **Default**: cube
 
 ### exciton_fixed_coordinate
 
 - **Type**: Vector of Real (6 values)
-- **Description**: Cartesian coordinates in Bohr used by `exciton_plot_type = conditional`, in the order `hole_x hole_y hole_z electron_x electron_y electron_z`.
+- **Description**: Cartesian coordinates in Bohr used by conditional exciton plotting, in the order hole_x hole_y hole_z electron_x electron_y electron_z.
 - **Default**: 0.0 0.0 0.0 0.0 0.0 0.0
-- **Unit**: Bohr
 
 ### exciton_slice_plane
 
 - **Type**: String
-- **Description**: Pair of lattice-vector directions spanning the cross section.
-  - `ab`: Plane spanned by lattice vectors **a** and **b**.
-  - `bc`: Plane spanned by lattice vectors **b** and **c**.
-  - `ca`: Plane spanned by lattice vectors **c** and **a**.
+- **Description**: Pair of lattice-vector directions spanning the cross section: 'ab', 'bc', or 'ca'.
 - **Default**: ab
 
 ### exciton_slice_pos
 
 - **Type**: Real
-- **Description**: Offset of the slice along the direction of the remaining lattice vector: **c** for `ab`, **a** for `bc`, and **b** for `ca`.
+- **Description**: Offset in Bohr along the remaining lattice-vector direction: c for an ab slice, a for bc, and b for ca.
 - **Default**: 0.0
-- **Unit**: Bohr
 
 ### exciton_slice_npoints
 
 - **Type**: Integer
-- **Description**: Target in-plane grid resolution. The final number of points is adjusted to use a uniform number of points per primitive cell over `exciton_slice_range` and includes both endpoints.
+- **Description**: Target in-plane grid resolution. The final grid uses a uniform number of points per primitive cell over `exciton_slice_range` and includes both endpoints.
 - **Default**: 200
 
 ### exciton_slice_range
 
 - **Type**: Vector of Integer (4 values)
-- **Description**: In-plane primitive-cell range written as `ustart uend vstart vend`. The end values are exclusive cell boundaries, while the generated grid includes both range endpoints. For example, `-1 2 -2 3` plots $u\in[-1,2]$ and $v\in[-2,3]$.
+- **Availability**: *lr_solver = plot and exciton_plot_format = slice or both*
+- **Description**: The in-plane primitive-cell range of an exciton slice: ustart uend vstart vend. The end values are exclusive cell boundaries, while grid data include both range endpoints.
 - **Default**: -1 2 -1 2
-- **Unit**: Primitive cells
+- **Unit**: primitive cells
 
 ### ri_hartree_benchmark
 
 - **Type**: String
-- **Description**: Whether to use the localized resolution-of-identity (LRI) approximation for the **Hartree** term of kernel in the $A$ matrix of LR-TDDFT for benchmark (with FHI-aims or another ABACUS calculation). 
-  - `aims`: The `read_file_dir` directory should contain the FHI-aims output files: RI-LVL tensors `Cs_data_0.txt` and `coulomb_mat_0.txt`, and KS eigenstates from FHI-aims: `band_out`and `KS_eigenvectors.out`. The Casida equation will be constructed under FHI-aims' KS eigenpairs.
-    - LRI tensor files (`Cs_data_0.txt` and `coulomb_mat_0.txt`)and Kohn-Sham eigenvalues (`bands_out`): run FHI-aims with periodic boundary conditions and with `total_energy_method rpa` and `output librpa`.
-    - Kohn-Sham eigenstates under aims NAOs (`KS_eigenvectors.out`): run FHI-aims with `output eigenvectors`.
-    - If the number of atomic orbitals of any atom type in FHI-aims is different from that in ABACUS, the `aims_nbasis` should be set.
-  - `abacus`: The `read_file_dir` directory should contain the RI-LVL tensors `Cs` and `Vs` (written by setting `out_ri_cv` to 1). The Casida equation will be constructed under ABACUS' KS eigenpairs, with the only difference that the Hartree term is constructed with RI approximation.
-  - `aims-librpa`: The current directory where you are running task should contain the the LRI tensors `Cs_data_${processor_rank}.txt`, `coulomb_mat${processor_rank}.txt`, and KS eigenstates `band_out`, `KS_eigenvector_${processor_rank}.dat`. All these files can get from FHI-aims task with periodic boundary conditions and with `total_energy_method rpa` and `output librpa`. The `aims_nbasis` should also 0be set.
-  - `abacus-librpa`: The current directory where you are running task should contain the the LRI tensors `Cs_data_${processor_rank}.txt`, `coulomb_mat_${processor_rank}.txt`, and KS eigenstates `band_out`, `KS_eigenvector_${kpoint}.dat`. All these files can get from ABACUS task with `RPA 1`.
-  - `none`: Construct the Hartree term by Poisson equation and grid integration as usual.
+- **Description**: Whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)
 - **Default**: none
 
 ### aims_nbasis
 
 - **Type**: A number(ntype) of Integers
-- **Availability**: `ri_hartree_benchmark` = `aims` or `aims-librpa`
-- **Description**: Atomic basis set size for each atom type (with the same order as in `STRU`) in FHI-aims.
+- **Availability**: *ri_hartree_benchmark = aims*
+- **Description**: Atomic basis set size for each atom type (with the same order as in STRU) in FHI-aims.
 - **Default**: {} (empty list, where ABACUS use its own basis set size)
+
+[back to top](#full-list-of-input-keywords)
+
+## Bethe-Salpeter Equation
+
+### bse_tda
+
+- **Type**: String
+- **Description**: Whether the Tamm-Dancoff approximation is used: 'tda', 'full', or 'both'.
+- **Default**: tda
+
+### bse_spin_types
+
+- **Type**: Vector of String (&gt;=1 values)
+- **Description**: Spin types for a closed-shell calculation in one task: 'singlet', 'triplet', and the test modes 'rpa' and 'ipa'.
+- **Default**: singlet triplet
+
+### bse_mem_save
+
+- **Type**: Boolean
+- **Description**: Whether to save memory by adding V and W directly to the BSE matrix. When enabled, bse_ri_hartree is enabled and bse_continue is reset to 0.
+- **Default**: false
+
+### bse_ri_hartree
+
+- **Type**: Boolean
+- **Description**: Whether to use the RI approximation for the Hartree term in BSE.
+- **Default**: true
+
+### bse_use_fine_kgrid
+
+- **Type**: Integer
+- **Description**: Fine k-grid mode for BSE: 0 uses the coarse k-grid, 1 uses a uniform fine k-grid, and 2 uses a non-uniform fine k-grid. Modes 1 and 2 require band_kpath_info, band_KS_eigenvector_k_{index}.txt, KS_band_spin_{index}.txt, and GW_band_spin_{index}.txt.
+- **Default**: 0
+
+### bse_q_approx_mode
+
+- **Type**: Integer
+- **Description**: q-to-k-pair mapping mode: 0 uses exact mapping, 1 uses the coarse q-grid approximation, and 2 uses exact for Γ-close q-points and coarse for other q-points.
+- **Default**: 0
+
+### bse_q_approx_threshold
+
+- **Type**: Real
+- **Description**: Threshold radius in Bohr^-1 for exact q-to-k-pair mapping when bse_q_approx_mode is 2.
+- **Default**: 0.1
+
+### out_bse_ab
+
+- **Type**: Boolean
+- **Description**: Whether to output the AB matrix to a file.
+- **Default**: false
+
+### bse_continue
+
+- **Type**: Integer
+- **Description**: Step from which to continue a previous BSE calculation: 0 starts a new calculation; 1 reads A_V; 2 reads A_V and A_W; 3 reads A_V, A_W, and B_V; 4 reads A_V, A_W, B_V, and B_W.
+- **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
 
 ## Reduced Density Matrix Functional Theory
 
-Ab-initio methods and the xc-functional parameters used in RDMFT.
-The physical quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM of the system in the ground state, etc.
-
 ### rdmft
 
 - **Type**: Boolean
-- **Description**: Whether to perform rdmft calculation (reduced density matrix funcional theory)
+- **Description**: Whether to perform rdmft calculation (reduced density matrix funcional theory). The physical quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM of the system in the ground state, etc.
 - **Default**: false
 
 ### rdmft_power_alpha
