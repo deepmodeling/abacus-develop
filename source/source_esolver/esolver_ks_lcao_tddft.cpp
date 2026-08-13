@@ -40,7 +40,7 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::ESolver_KS_LCAO_TDDFT()
     if (ct_device_type == ct::DeviceType::GpuDevice)
     {
         use_tensor = true;
-        if (this->inp_->ks_solver != "cusolvermp")
+        if (PARAM.inp.ks_solver != "cusolvermp")
         {
             use_lapack = true;
         }
