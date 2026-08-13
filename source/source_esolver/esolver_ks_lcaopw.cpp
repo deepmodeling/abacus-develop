@@ -77,6 +77,15 @@ namespace ModuleESolver
         basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
         UnitCell& ucell = static_cast<UnitCell&>(basecell);
         ESolver_KS_PW<T>::before_all_runners(basecell, inp);
+
+        // Initialize LIP-specific info_lip_ from general_exx_info_ and input
+        this->info_lip_.ccp_type = this->general_exx_info_.ccp_type;
+        this->info_lip_.hse_omega = this->general_exx_info_.hse_omega;
+        if (!inp.exx_fock_lambda.empty())
+        {
+            this->info_lip_.lambda = std::stod(inp.exx_fock_lambda[0]);
+        }
+
         auto* p_psi_init = static_cast<psi::PSIPrepare<T>*>(this->stp.p_psi_init);
         delete this->psi_local;
         this->psi_local = new psi::Psi<T>(this->stp.psi_cpu->get_nk(),
@@ -88,10 +97,10 @@ namespace ModuleESolver
         if (inp.calculation == "scf" || inp.calculation == "relax"
             || inp.calculation == "cell-relax"
             || inp.calculation == "md") {
-            if (this->exx_info_.info_global.cal_exx)
+            if (this->general_exx_info_.cal_exx)
             {
                 XC_Functional::set_xc_first_loop(ucell);
-                this->exx_lip = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(this->exx_info_.info_lip,
+                this->exx_lip = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(this->info_lip_,
                                                                            &this->kv,
                                                                            this->psi_local,
                                                                            this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
@@ -109,7 +118,7 @@ namespace ModuleESolver
     {
         ESolver_KS_PW<T>::iter_init(ucell, istep, iter);
 #ifdef __EXX
-        if (this->exx_info_.info_global.cal_exx && !this->exx_info_.info_global.separate_loop && this->two_level_step) {
+        if (this->general_exx_info_.cal_exx && !this->general_exx_info_.separate_loop && this->two_level_step) {
             this->exx_lip->cal_exx();
 }
 #endif
@@ -138,12 +147,12 @@ namespace ModuleESolver
                                                PARAM.inp.basis_type,
                                                PARAM.inp.calculation);
         hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec,
-          *this->psi_local, skip_charge,ucell.tpiba,ucell.nat, this->exx_info_.info_global);
+          *this->psi_local, skip_charge,ucell.tpiba,ucell.nat, this->general_exx_info_);
 
         // add exx
 #ifdef __EXX
-        bool cal_exx = this->exx_info_.info_global.cal_exx;
-        double hybrid_alpha = this->exx_info_.info_global.hybrid_alpha;
+        bool cal_exx = this->general_exx_info_.cal_exx;
+        double hybrid_alpha = this->general_exx_info_.hybrid_alpha;
         if (cal_exx)
         {
             this->pelec->set_exx(this->exx_lip->get_exx_energy(), cal_exx, hybrid_alpha); // Peize Lin add 2019-03-09
@@ -166,12 +175,12 @@ namespace ModuleESolver
         ESolver_KS_PW<T>::iter_finish(ucell, istep, iter, conv_esolver);
 
 #ifdef __EXX
-        if (this->exx_info_.info_global.cal_exx && conv_esolver)
+        if (this->general_exx_info_.cal_exx && conv_esolver)
         {
             // no separate_loop case
-            if (!this->exx_info_.info_global.separate_loop)
+            if (!this->general_exx_info_.separate_loop)
             {
-                this->exx_info_.info_global.hybrid_step = 1;
+                this->general_exx_info_.hybrid_step = 1;
 
                 // in no_separate_loop case, scf loop only did twice
                 // in first scf loop, exx updated once in beginning,
@@ -189,7 +198,7 @@ namespace ModuleESolver
             }
             // has separate_loop case
             // exx converged or get max exx steps
-            else if (this->two_level_step == this->exx_info_.info_global.hybrid_step
+            else if (this->two_level_step == this->general_exx_info_.hybrid_step
                      || (iter == 1 && this->two_level_step != 0))
             {
                 conv_esolver = true;
@@ -233,8 +242,8 @@ namespace ModuleESolver
         if (PARAM.inp.out_mat_xc)
         {
 #ifdef __EXX
-            bool cal_exx = this->exx_info_.info_global.cal_exx;
-            double hybrid_alpha = this->exx_info_.info_global.hybrid_alpha;
+            bool cal_exx = this->general_exx_info_.cal_exx;
+            double hybrid_alpha = this->general_exx_info_.hybrid_alpha;
 #else
             bool cal_exx = false;
             double hybrid_alpha = 0.0;

@@ -14,7 +14,7 @@
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
-#include "source_hamilt/module_xc/exx_info.h" // for init_exx_info and Exx_Info
+#include "source_hamilt/module_xc/general_exx_info.h" // for init_general_exx_info
 
 namespace ModuleESolver
 {
@@ -46,8 +46,8 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     //! 1) setup "before_all_runniers" in ESolver_FP
     ESolver_FP::before_all_runners(ucell, inp);
 
-    //! 2) initialize Exx_Info from input parameters
-    init_exx_info(exx_info_, inp);
+    //! 2) initialize General_Exx_Info from input parameters
+    init_general_exx_info(general_exx_info_, inp);
 
     //! 3) setup some parameters
     classname = "ESolver_KS";
