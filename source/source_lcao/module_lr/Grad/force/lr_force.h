@@ -3,7 +3,7 @@
 // free functions, usefull for both ground and excited state
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lri.h"
-#include <RI/physics/LR.h>
+#include "exx_force_two_dm.h"
 using TAC = std::pair<int, std::array<int, 3>>;
 #endif
 namespace LR

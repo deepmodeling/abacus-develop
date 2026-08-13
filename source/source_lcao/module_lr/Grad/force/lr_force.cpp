@@ -156,7 +156,7 @@ namespace LR
     {
         ModuleBase::matrix f_exx_gs_diff(this->ucell_.nat, 3);
         auto& exx_lri_kernel = this->exx_lri_.lock()->get();
-        RI::LR<int, int, 3, TK> lr_exx_kernel(std::move(exx_lri_kernel));
+        ExxForceTwoDM<int, int, 3, TK> lr_exx_kernel(std::move(exx_lri_kernel));
 
         auto add_force_from_kernel = [&]() {
             for (std::size_t idim = 0; idim < 3; ++idim)

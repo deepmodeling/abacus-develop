@@ -1028,7 +1028,6 @@ OBJS_TENSOR=tensor.o\
     dm_trans_parallel.o\
     dm_trans_serial.o\
     dm_band.o\
-    dmr_complex.o\
     operator_lr_hxc.o\
     operator_lr_exx.o\
     xc_kernel.o\
