@@ -64,7 +64,7 @@ pseudopot_cell_vnl::~pseudopot_cell_vnl()
 }
 
 #ifdef __LCAO
-#include "source_basis/module_ao/ORB_gaunt_table.h"
+#include "source_basis/module_ao/orb_gaunt_table.h"
 ORB_gaunt_table::ORB_gaunt_table() {}
 ORB_gaunt_table::~ORB_gaunt_table() {}
 #endif

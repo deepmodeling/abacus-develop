@@ -10,16 +10,16 @@
 
 // functions
 #include "../module_unk/berryphase.h"                          // use berryphase
-#include "../module_hs/cal_pLpR.h"                            // use AngularMomentumCalculator()
+#include "../module_hs/cal_plpr.h"                            // use AngularMomentumCalculator()
 #include "source_io/module_hs/output_mat_sparse.h"                   // use ModuleIO::output_mat_sparse()
 #include "source_io/module_ml/io_npz.h"                       // use ModuleIO::output_mat_npz()
-#include "source_io/module_dhs/write_dH.h"                    // use ModuleIO::write_dH_components()
-#include "source_io/module_hs/write_H_terms.h"         // use ModuleIO::write_h_*
-#include "../module_hs/write_HS_R.h"                          // use ModuleIO::write_hsr()
+#include "source_io/module_dhs/write_dh.h"                    // use ModuleIO::write_dH_components()
+#include "source_io/module_hs/write_h_terms.h"         // use ModuleIO::write_h_*
+#include "../module_hs/write_hs_r.h"                          // use ModuleIO::write_hsr()
 #include "../module_mulliken/cal_mag.h"                          // use cal_mag()
 #include "../module_wannier/to_wannier90_lcao.h"                   // use toWannier90_LCAO
-#include "../module_wannier/to_wannier90_lcao_in_pw.h"             // use toWannier90_LCAO_IN_PW
-#include "../module_hs/write_HS.h"                            // use ModuleIO::write_hsk()
+#include "../module_wannier/to_w90_lcao_pw.h"             // use toWannier90_LCAO_IN_PW
+#include "../module_hs/write_hs.h"                            // use ModuleIO::write_hsk()
 #include "../module_dm/write_dmk.h"                           // use ModuleIO::write_dmk()
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
 #include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
@@ -27,12 +27,12 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
 #include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_deepks/LCAO_deepks_interface.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h" // use EXX codes
-#include "source_lcao/module_ri/RPA_LRI.h"           // use RPA code
+#include "source_lcao/module_ri/exx_lri_interface.h" // use EXX codes
+#include "source_lcao/module_ri/rpa_lri.h"           // use RPA code
 #endif
 #include "../module_qo/to_qo.h"                // use toQO
 #include "source_lcao/module_rdmft/rdmft.h" // use RDMFT codes

@@ -3,7 +3,7 @@
 #include "hamilt_casida.h"
 #include "hamilt_ulr.hpp"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
-#include "source_lcao/LCAO_nonlocal_info.h"
+#include "source_lcao/lcao_nonlocal_info.h"
 #include "source_lcao/module_lr/hsolver_lrtd.hpp"
 #include "source_lcao/module_lr/lr_spectrum.h"
 #include "source_hamilt/module_gint/gint.h"
@@ -19,7 +19,7 @@
 #include "source_lcao/module_lr/ri_benchmark/ri_benchmark.h"
 #include "source_lcao/module_lr/operator_casida/operator_lr_diag.h" // for precondition
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
 
 #ifdef __EXX

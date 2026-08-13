@@ -2,7 +2,7 @@
 
 #include "source_base/global_variable.h"
 #include "source_base/memory_recorder.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_io/module_parameter/parameter.h"

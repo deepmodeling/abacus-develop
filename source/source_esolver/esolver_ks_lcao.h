@@ -5,7 +5,7 @@
 #include "source_lcao/record_adj.h" // adjacent atoms
 #include "source_basis/module_nao/two_center_bundle.h" // nao basis
 #include "source_hamilt/module_gint/gint_info.h"
-#include "source_estate/module_charge/gint_precision_controller.h"
+#include "source_estate/module_charge/gint_prec_ctrl.h"
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft

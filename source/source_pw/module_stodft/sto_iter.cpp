@@ -8,7 +8,7 @@
 #include "source_base/tool_title.h"
 #include "source_estate/kernels/elecstate_op.h"
 #include "source_estate/occupy.h"
-#include "source_hsolver/para_linear_transform.h"
+#include "source_hsolver/para_lin_tf.h"
 #include "source_io/module_parameter/parameter.h"
 
 template <typename T, typename Device>

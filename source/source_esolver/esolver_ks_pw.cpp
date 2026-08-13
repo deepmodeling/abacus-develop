@@ -1,12 +1,12 @@
 #include "esolver_ks_pw.h"
 
 #include "source_estate/elecstate_pw.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_hsolver/diago_params.h"
 #include "source_hsolver/hsolver_pw.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_pw/module_pwdft/forces.h"
+#include "source_pw/module_pwdft/force_pw.h"
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_pw/module_pwdft/stress_pw.h"
 

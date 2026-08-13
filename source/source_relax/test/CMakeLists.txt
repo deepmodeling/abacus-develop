@@ -29,9 +29,9 @@ list(APPEND cell_source_files
     ../../source_cell/print_cell.cpp
 )
 AddTest(
-  TARGET MODULE_RELAX_lattice_change_methods_test
+  TARGET MODULE_RELAX_lat_change_method_test
   LIBS parameter base device
-  SOURCES lattice_change_methods_test.cpp ../lattice_change_methods.cpp ../lattice_change_basic.cpp ../relax_data.cpp mock_remake_cell.cpp
+  SOURCES lat_change_method_test.cpp ../lat_change_method.cpp ../lattice_change_basic.cpp ../relax_data.cpp mock_remake_cell.cpp
 )
 
 AddTest(

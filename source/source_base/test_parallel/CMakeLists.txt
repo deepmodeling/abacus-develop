@@ -43,7 +43,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_math_chebyshev_mpi
   LIBS MPI::MPI_CXX parameter base device container
-  SOURCES math_chebyshev_mpi_test.cpp
+  SOURCES math_cheby_mpi_test.cpp
 )
 
 add_test(NAME MODULE_BASE_para_gemm_parallel

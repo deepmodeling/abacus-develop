@@ -11,7 +11,7 @@ AddTest(
     TARGET MODULE_PSI_init_test
     LIBS parameter base device psi psi_init planewave
     SOURCES
-        psi_init_test.cpp
+        psi_init_unit_test.cpp
         ../../source_pw/module_pwdft/soc.cpp
         ../../source_cell/atom_spec.cpp
         ../../source_cell/test/support/mock_unitcell.cpp
