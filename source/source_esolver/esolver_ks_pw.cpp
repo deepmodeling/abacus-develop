@@ -66,7 +66,7 @@ void ESolver_KS_PW<T, Device>::allocate_hamilt(const UnitCell& ucell)
                                                      &this->ppcell,
                                                      &this->dftu,
                                                      &ucell,
-                                                     &this->exx_info_);
+                                                     &this->exx_info_.info_global);
 }
 
 template <typename T, typename Device>
@@ -127,7 +127,7 @@ void ESolver_KS_PW<T, Device>::before_all_runners(BaseCell& basecell, const Inpu
     }
 
     //! Initialize exx pw
-    this->exx_helper->init(ucell, inp, this->pelec->wg, this->exx_info_);
+    this->exx_helper->init(ucell, inp, this->pelec->wg, this->exx_info_.info_global);
 }
 
 template <typename T, typename Device>
@@ -183,7 +183,7 @@ void ESolver_KS_PW<T, Device>::before_scf(UnitCell& ucell, const int istep)
     this->stp.init(this->p_hamilt);
 
     //! Setup EXX helper for Hamiltonian and psi
-    exx_helper->before_scf(this->p_hamilt, this->stp.template get_psi_t<T, Device>(), PARAM.inp, this->exx_info_);
+    exx_helper->before_scf(this->p_hamilt, this->stp.template get_psi_t<T, Device>(), PARAM.inp, this->exx_info_.info_global);
 
     ModuleBase::timer::end("ESolver_KS_PW", "before_scf");
 }
@@ -398,7 +398,7 @@ void ESolver_KS_PW<T, Device>::cal_stress(BaseCell& basecell, ModuleBase::matrix
                   &this->sf,
                   &this->kv,
                   this->pw_wfc,
-                  this->exx_info_,
+                  this->exx_info_.info_global,
                   this->stp.template get_psi_d<T, Device>());
 
     // external stress

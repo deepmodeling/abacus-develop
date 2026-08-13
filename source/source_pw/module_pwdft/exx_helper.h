@@ -20,9 +20,9 @@ struct Exx_Helper : public Exx_HelperBase
     virtual ~Exx_Helper() = default;
     OperatorEXX *op_exx = nullptr;
 
-    void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const Exx_Info& exx_info) override;
+    void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info) override;
 
-    void before_scf(void* p_hamilt, void* psi, const Input_para& inp, const Exx_Info& exx_info) override;
+    void before_scf(void* p_hamilt, void* psi, const Input_para& inp, const General_Exx_Info& exx_info) override;
 
     bool iter_finish(void* p_elec, Charge* p_charge, void* psi,
                      UnitCell& ucell, const Input_para& inp,

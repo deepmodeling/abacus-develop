@@ -1,6 +1,6 @@
 #include "exx_helper.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info type
+#include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
 #include "source_hamilt/module_xc/xc_functional.h" // use XC_Functional
 #include "source_pw/module_pwdft/hamilt_pw.h" // use HamiltPW
 #include "source_estate/update_pot.h" // use elecstate::update_pot
@@ -9,7 +9,7 @@
 #include <chrono> // for timing
 
 template <typename T, typename Device>
-void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const Exx_Info& exx_info)
+void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info)
 {
     if (inp.calculation != "scf" && inp.calculation != "relax"
         && inp.calculation != "cell-relax" && inp.calculation != "md")
@@ -17,12 +17,12 @@ void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, c
         return;
     }
 
-    if (!exx_info.info_global.cal_exx)
+    if (!exx_info.cal_exx)
     {
         return;
     }
 
-    if (exx_info.info_global.separate_loop)
+    if (exx_info.separate_loop)
     {
         XC_Functional::set_xc_first_loop(ucell);
         this->set_firstiter();
@@ -32,7 +32,7 @@ void Exx_Helper<T, Device>::init(const UnitCell& ucell, const Input_para& inp, c
 }
 
 template <typename T, typename Device>
-void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_para& inp, const Exx_Info& exx_info)
+void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_para& inp, const General_Exx_Info& exx_info)
 {
     /// Return if not a valid calculation type
     if (inp.calculation != "scf" && inp.calculation != "relax"
@@ -42,7 +42,7 @@ void Exx_Helper<T, Device>::before_scf(void* p_hamilt, void* psi, const Input_pa
     }
 
     /// Return if EXX is not enabled or not PW basis
-    if (!exx_info.info_global.cal_exx || inp.basis_type != "pw")
+    if (!exx_info.cal_exx || inp.basis_type != "pw")
     {
         return;
     }

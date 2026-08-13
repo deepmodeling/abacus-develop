@@ -10,8 +10,8 @@
 #include "source_pw/module_pwdft/exx_helper.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 
-/// Exx_Info forward declaration, full definition in exx_info.h
-struct Exx_Info;
+/// General_Exx_Info forward declaration, full definition in general_exx_info.h
+struct General_Exx_Info;
 
 namespace hamilt
 {
@@ -33,7 +33,7 @@ class HamiltPW : public Hamilt<T, Device>
              pseudopot_cell_vnl* nlpp,
              Plus_U* p_dftu, // mohan add 2025-11-06
              const UnitCell* ucell,
-             const Exx_Info* exx_info);
+             const General_Exx_Info* exx_info);
 
     ~HamiltPW();
 

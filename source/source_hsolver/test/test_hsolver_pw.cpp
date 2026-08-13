@@ -11,7 +11,7 @@
 #include "hsolver_pw_sup.h"
 #include "hsolver_supplementary_mock.h"
 #include "source_base/global_variable.h"
-#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info type
+#include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
 #include "source_hsolver/hsolver_pw.h"
 #undef private
 #undef protected
@@ -375,7 +375,7 @@ TEST_F(TestHSolverPW, SolveLcaoInPW) {
     elecstate_test.ekb.c[0] = 1.0;
     elecstate_test.ekb.c[1] = 2.0;
 
-    Exx_Info exx_info_local;
+    General_Exx_Info exx_info_local;
     hsolver::HSolverLIP<std::complex<float>> hs_f_lip
         = hsolver::HSolverLIP<std::complex<float>>(&pwbk,
                                                    PARAM.sys.use_uspp,

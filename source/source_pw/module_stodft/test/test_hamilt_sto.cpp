@@ -16,7 +16,7 @@ hamilt::HamiltPW<T, Device>::HamiltPW(
 		pseudopot_cell_vnl* ppcell,
         Plus_U* p_dftu, // mohan add 20251108
 		const UnitCell* ucell,
-        const Exx_Info* exx_info){}
+        const General_Exx_Info* exx_info){}
 
 template <typename T, typename Device>
 hamilt::HamiltPW<T, Device>::~HamiltPW(){

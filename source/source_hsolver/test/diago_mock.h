@@ -579,7 +579,7 @@ template<> hamilt::HamiltPW<double>::HamiltPW(
 		pseudopot_cell_vnl* ppcell,
 		Plus_U* p_dftu, // mohan add 20251108
 		const UnitCell* ucell,
-		const Exx_Info* exx_info)
+		const General_Exx_Info* exx_info)
 {
     this->ops = new OperatorMock<double>;
 }
@@ -601,7 +601,7 @@ template<> hamilt::HamiltPW<std::complex<double>>::HamiltPW(
 		pseudopot_cell_vnl* ppcell,
 		Plus_U* p_dftu, // mohan add 20251108
 		const UnitCell* ucell,
-		const Exx_Info* exx_info)
+		const General_Exx_Info* exx_info)
 {
     this->ops = new OperatorMock<std::complex<double>>;
 }
@@ -623,7 +623,7 @@ template<> hamilt::HamiltPW<std::complex<float>>::HamiltPW(
 		pseudopot_cell_vnl* ppcell,
 		Plus_U* p_dftu, // mohan add 20251108
 		const UnitCell* ucell,
-		const Exx_Info* exx_info)
+		const General_Exx_Info* exx_info)
 {
     this->ops = new OperatorMock<std::complex<float>>;
 }

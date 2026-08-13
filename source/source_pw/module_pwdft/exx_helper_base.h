@@ -6,7 +6,7 @@
 class Charge;
 class UnitCell;
 struct Input_para;
-struct Exx_Info;
+struct General_Exx_Info;
 
 class Exx_HelperBase
 {
@@ -14,9 +14,9 @@ class Exx_HelperBase
     Exx_HelperBase() = default;
     virtual ~Exx_HelperBase() = default;
 
-    virtual void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const Exx_Info& exx_info) = 0;
+    virtual void init(const UnitCell& ucell, const Input_para& inp, const ModuleBase::matrix& wg, const General_Exx_Info& exx_info) = 0;
 
-    virtual void before_scf(void* p_hamilt, void* psi, const Input_para& inp, const Exx_Info& exx_info) = 0;
+    virtual void before_scf(void* p_hamilt, void* psi, const Input_para& inp, const General_Exx_Info& exx_info) = 0;
 
     virtual bool iter_finish(void* p_elec, Charge* p_charge, void* psi,
                              UnitCell& ucell, const Input_para& inp,
