@@ -12,7 +12,7 @@ inline void print_force(const std::vector<ModuleBase::matrix>& force, Tstream& o
 {
     const int nstate = force.size();
     ofs << "Gradients of each excited state: (eV/Angstrom)" << std::endl;
-    ofs << std::setw(6) << "state" << std::setw(6) << "atom"
+    ofs << std::setprecision(4) << std::setw(6) << "state" << std::setw(6) << "atom"
         << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15) << "z" << std::endl;
     const double fac = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
     for (int i = 0;i < nstate;++i)
@@ -238,7 +238,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
             ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "HXC DMTRANS FORCE (eV/Angstrom)", force_hxc_dmtrans, false);
 
         const elecstate::DensityMatrix<T, double>& dm_gs = this->cal_dm_gs();
-        ModuleBase::matrix force_hamiltgs_relaxed_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(relaxed_diff_dm_real, dm_gs, /*with_ewald=*/false);
+        ModuleBase::matrix force_hamiltgs_relaxed_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(relaxed_diff_dm_real, dm_gs);
         if (PARAM.inp.test_force)
             ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "H_GS-(T+Z) FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_relaxed_diff, false);
 
@@ -254,7 +254,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
             LR_Util::get_DMR_real_imag_part(diff_dm, diff_dm_real, 'R');
 
             GlobalV::ofs_running << "========== [TEST H_GS-(T) force (Z=0), non-EXX part] ===========" << std::endl;
-            ModuleBase::matrix force_hamiltgs_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(diff_dm_real, dm_gs, /*with_ewald=*/false);
+            ModuleBase::matrix force_hamiltgs_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(diff_dm_real, dm_gs);
             ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "H_GS-T FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_diff, false);
             GlobalV::ofs_running << "========== [\\TEST H_GS-(T) force (Z=0), non-EXX part] ===========" << std::endl;
         }

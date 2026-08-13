@@ -32,7 +32,7 @@ namespace LR
     {
         const int& nspin = PARAM.inp.nspin;
         // local + Hartree + xc term, including Hellmann-Feynman and Pulay
-        ModuleBase::matrix f_gs_hf_pulay = cal_force_hamilt_gs_dm_relaxed_diff(dm_gs, dm_gs); // pw+vnl+t_dphi+vl_dphi
+        ModuleBase::matrix f_gs_hf_pulay = cal_force_hamilt_gs_dm_relaxed_diff(dm_gs, dm_gs, true); // pw(vl_dvl+ewald)+vnl+t_dphi+vl_dphi
         // edm term
         ModuleBase::matrix f_nonortho = cal_force_overlap_edm(edm_gs); // overlap
 #ifdef __EXX
@@ -42,8 +42,9 @@ namespace LR
             const auto& Ds_gs_2 = LR_Util::get_exx_Ds_gs(dm_gs, ucell_, kv, pv_);
             ModuleBase::matrix f_gs_exx(ucell_.nat, 3);
             // test the two function using the two spin channels respectively
-            f_gs_exx += cal_force_exx_gs_dm_relaxed_diff(Ds_gs.at(0), Ds_gs_2.at(0), alpha_, std::to_string(0));    // test passed， = 0.5 groud-state EXX force
-            f_gs_exx += cal_force_exx_dm_trans(Ds_gs.at(1), alpha_, std::to_string(1));
+            // 0.5 is from dE = 0.5 dTr[D(HD)]. No 0.5 in excited-state calculateion of dTr[(T+Z)(HD)]
+            f_gs_exx += cal_force_exx_gs_dm_relaxed_diff(Ds_gs.at(0), Ds_gs_2.at(0), alpha_, std::to_string(0)) * 0.5;    // test passed， = 0.5 groud-state EXX force
+            f_gs_exx += cal_force_exx_dm_trans(Ds_gs.at(1), alpha_, std::to_string(1)) * 0.5;
             if (PARAM.inp.test_force)
                 ModuleIO::print_force(GlobalV::ofs_running, ucell_, "EXX GS FORCE reproduce (eV/Angstrom)", f_gs_exx, false);
             f_gs_hf_pulay += f_gs_exx;

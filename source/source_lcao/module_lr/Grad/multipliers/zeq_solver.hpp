@@ -72,9 +72,25 @@ namespace LR
         const int n_global = hm.nk * hm.nocc[0] * hm.nvirt[0];
         std::vector<T> Z_full = std::vector<T>(n_global * nstates, T(0.0));
 
+        // `hessian_full` is replicated, so the right-hand side must be global too.
+        // `R` is distributed over pX[0] (length `ld` per state), so gather it first --
+        // the mirror image of the scatter of `Z_full` below. Reading `n_global` entries
+        // straight out of `R` would be an out-of-bounds read as soon as
+        // ld < n_global, and a plain segfault on a rank whose local size is 0.
+        std::vector<T> R_full(n_global * nstates, T(0.0));
+#ifdef __MPI
+        for (int istate = 0; istate < nstates; ++istate)
+        {
+            LR_Util::gather_2d_to_full(hm.pX[0], R + istate * ld, R_full.data() + istate * n_global,
+                false, hm.nvirt[0], hm.nocc[0]);
+        }
+#else
+        std::copy(R, R + n_global * nstates, R_full.begin());
+#endif
+
         // use lapack to solve the linear equation
         ModuleBase::timer::start("Z_vector", "lapack_solver");
-        LR_Util::lapack_linear_solver(hessian_full.data(), Z_full.data(), R, n_global, nstates);
+        LR_Util::lapack_linear_solver(hessian_full.data(), Z_full.data(), R_full.data(), n_global, nstates);
         ModuleBase::timer::end("Z_vector", "lapack_solver");
 
         // test: print full Z

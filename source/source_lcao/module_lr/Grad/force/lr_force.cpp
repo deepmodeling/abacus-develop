@@ -51,9 +51,9 @@ namespace LR
     template<typename TK>
     ModuleBase::matrix LR_Force<TK>::cal_force_hamilt_gs_dm_relaxed_diff(const elecstate::DensityMatrix<TK, double>& relax_diff_dm,
         const elecstate::DensityMatrix<TK, double>& dm_gs,
-        // const elecstate::Potential& pot_gs,
-        const bool with_ewald)
+        const bool reproduce_gs)
     {
+        const bool with_ewald = reproduce_gs;
         const Charge chr_diff_relaxed = dm_to_charge(relax_diff_dm);
 
         // 1. local pp (Hellmann-Feynman)(fvl_dvl) + ewald + core correction (+ self-consistent charge)
@@ -90,7 +90,7 @@ namespace LR
         // For ground-state DFT, Pulay term = Hellmann-Feynman term, F = 1/2(Pulay + H-F) = Pulay, so directly call it once gives correct result.
         PulayForceStress::cal_pulay_fs(relax_diff_dm.get_DMR_vector().size()/*nspin*/, fhxc_dphi, stress_tmp,
             relax_diff_dm, this->ucell_, &pot_hxc, true, false);
-        // fhxc_dphi *= 0.5; // avoid double count
+        if (reproduce_gs) {fhxc_dphi *= 0.5;} // avoid double count
 
         // 3.3 Hartree + xc (Hellmann-Feynman)
         ModuleBase::matrix fhxc_dvhxc(this->ucell_.nat, 3);
@@ -98,7 +98,7 @@ namespace LR
         //`cal_pulay_fs` calculates only one spin channel because `relax_diff_dm` has only one.
         PulayForceStress::cal_pulay_fs(1/*nspin*/, fhxc_dvhxc, stress_tmp,
             dm_gs, this->ucell_, &pot_hxc_relaxed_diff, true, false);
-        fhxc_dvhxc *= 2; // for the two channels of the ground-state dm. 
+        if(!reproduce_gs) {fhxc_dvhxc *= 2;} // for the two channels of the ground-state dm. 
 
         // 4. kinetic (Pulay)
         std::vector<hamilt::HContainer<double>> dT = cal_hs_grad('T', this->ucell_, this->pv_, this->gd_, this->two_center_bundle_);
