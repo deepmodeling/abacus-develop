@@ -17,6 +17,9 @@ jobs:
     name: Test on CUDA Build
     runs-on: gpu
     if: github.repository_owner == 'deepmodeling'
+    env:
+      CCACHE_BASEDIR: ${{ github.workspace }}
+      CCACHE_MAXSIZE: 5G
     container:
       image: ghcr.io/deepmodeling/abacus-cuda
       volumes:
@@ -29,10 +32,18 @@ jobs:
         with:
           submodules: recursive
 
+      - name: Report runner info
+        run: |
+          echo "runner_name=$RUNNER_NAME"
+          case "$RUNNER_NAME" in
+            gpu-runner-*) echo "runner_type=pod" ;;
+            *)            echo "runner_type=vm" ;;
+          esac
+
       - name: Install CI tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y ccache xz-utils ninja-build pkg-config
+          sudo apt-get install -y ccache xz-utils ninja-build pkg-config zstd
 
       - name: Install external tools from toolchain
         run: |
@@ -40,6 +51,28 @@ jobs:
           ./install_abacus_toolchain_new.sh --with-dftd4=install --dry-run -j8
           ./scripts/stage4/install_stage4.sh
           cd ..
+
+      - name: Restore ccache
+        id: ccache
+        uses: actions/cache/restore@v4
+        with:
+          path: /tmp/ccache.tar.zst
+          key: ccache-cuda-${{ github.sha }}
+          restore-keys: |
+            ccache-cuda-
+
+      - name: Unpack ccache
+        run: |
+          if [ -f /tmp/ccache.tar.zst ]; then
+            sudo mkdir -p /github/home/.ccache
+            sudo tar -I zstd -xf /tmp/ccache.tar.zst -C /github/home
+            sudo chown -R $(whoami) /github/home/.ccache
+          fi
+
+      - name: ccache stats (before build)
+        run: |
+          ccache --zero-stats || true
+          ccache -s
 
       - name: Configure & Build
         run: |
@@ -50,6 +83,21 @@ jobs:
             -DCMAKE_CUDA_ARCHITECTURES=70
           cmake --build build -j "$(nproc)"
           cmake --install build
+
+      - name: ccache stats (after build)
+        if: always()
+        run: ccache -s
+
+      - name: Pack ccache
+        if: always()
+        run: tar -I 'zstd -T0' -cf /tmp/ccache.tar.zst -C /github/home .ccache
+
+      - name: Save ccache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: /tmp/ccache.tar.zst
+          key: ccache-cuda-${{ github.sha }}
 
       - name: Module_LCAO CUDA Unittests
         env:
