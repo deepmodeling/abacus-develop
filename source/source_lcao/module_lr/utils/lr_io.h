@@ -5,7 +5,7 @@
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 #ifdef __EXX
-#include "source_lcao/module_ri/RI_Util.h" // for get_Born_von_Karmen_cells
+#include "source_lcao/module_ri/ri_util.h" // for get_Born_von_Karmen_cells
 #include <RI/global/Tensor.h>
 #endif
 #include <cmath>
