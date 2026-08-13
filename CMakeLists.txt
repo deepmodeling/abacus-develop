@@ -223,10 +223,10 @@ endif()
 #  set(_abacus_bin_device "kp")
 # endif()
 
-set(ABACUS_BIN_NAME "abacus_${_abacus_bin_level}_${_abacus_bin_para}")
-
 if(_abacus_bin_device)
-  string(APPEND ABACUS_BIN_NAME "_${_abacus_bin_device}")
+  set(ABACUS_BIN_NAME "abacus_${_abacus_bin_level}_${_abacus_bin_device}")
+else()
+  set(ABACUS_BIN_NAME "abacus_${_abacus_bin_level}_${_abacus_bin_para}")
 endif()
 
 # Use DSP hardware
