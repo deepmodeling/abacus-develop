@@ -39,16 +39,16 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../../source_cell/sep.cpp
     ../../../source_cell/sep_cell.cpp
     ../../../source_pw/module_pwdft/soc.cpp
-    ../../../source_cell/read_pseudo.cpp
+    ../../../source_cell/read_pp_ucell.cpp
     ../../../source_estate/param_update.cpp
     ../../../source_cell/cal_wfc.cpp
     ../../../source_cell/read_orb.cpp
     ../../../source_cell/cal_nelec_nband.cpp
     ../../../source_estate/module_dm/density_matrix.cpp
     ../../../source_estate/module_dm/density_matrix_io.cpp
-    ../../center2_orb.cpp
-    ../../center2_orb-orb11.cpp
-    ../../center2_orb-orb21.cpp
+    ../../center2orb.cpp
+    ../../center2orb_orb11.cpp
+    ../../center2orb_orb21.cpp
     ../../../source_hamilt/module_hcontainer/base_matrix.cpp
     ../../../source_hamilt/module_hcontainer/hcontainer.cpp
     ../../../source_hamilt/module_hcontainer/atom_pair.cpp
@@ -59,12 +59,12 @@ set(DEEPKS_UNIT_COMMON_SOURCES
     ../../module_operator_lcao/deepks_lcao.cpp
     ../../module_operator_lcao/operator_lcao.cpp
     ../../../source_hamilt/operator.cpp
-    ../../../source_io/module_hs/cal_r_overlap_R.cpp
-    ../../../source_io/module_hs/single_R_io.cpp
+    ../../../source_io/module_hs/cal_r_overlap_r.cpp
+    ../../../source_io/module_hs/single_r_io.cpp
     ../../../source_io/module_hs/rr_sparse_writer.cpp
     ../../module_rt/radial_interpolation.cpp
-    ../../module_rt/snap_projector_half_tddft.cpp
-    ../../module_rt/snap_phialpha_half_tddft.cpp
+    ../../module_rt/snap_proj_half_tddft.cpp
+    ../../module_rt/snap_pha_half_tddft.cpp
     ../../module_rt/td_folding.cpp
     mock_berryphase.cpp
     mock_tdinfo.cpp

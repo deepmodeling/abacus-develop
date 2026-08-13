@@ -566,7 +566,7 @@ list(APPEND device_srcs
   source_hamilt/module_xc/kernels/xc_functional_op.cpp
   source_pw/module_pwdft/kernels/cal_density_real_op.cpp
   source_pw/module_pwdft/kernels/mul_potential_op.cpp
-  source_pw/module_pwdft/kernels/vec_mul_vec_complex_op.cpp
+  source_pw/module_pwdft/kernels/vec_mul_cx_op.cpp
   source_pw/module_pwdft/kernels/exx_cal_energy_op.cpp)
 
 if(USE_CUDA)

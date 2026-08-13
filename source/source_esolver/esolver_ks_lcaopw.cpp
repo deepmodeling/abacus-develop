@@ -4,11 +4,11 @@
 #include <iostream>
 
 //--------------temporary----------------------------
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/occupy.h"
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
+#include "source_hamilt/module_ewald/h_ewald_pw.h"
 //-----force-------------------
-#include "source_pw/module_pwdft/forces.h"
+#include "source_pw/module_pwdft/force_pw.h"
 //-----stress------------------
 #include "source_pw/module_pwdft/stress_pw.h"
 //---------------------------------------------------

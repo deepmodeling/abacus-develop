@@ -11,7 +11,7 @@
 #include <algorithm>
 // #include <chrono>
 
-#include "LRI_CV_Tools.h"
+#include "lri_cv_tools.h"
 #include "source_base/global_variable.h"
 #include "source_base/math_ylmreal.h"
 #include "source_base/timer.h"

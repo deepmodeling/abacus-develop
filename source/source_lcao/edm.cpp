@@ -1,4 +1,4 @@
-#include "FORCE.h"
+#include "force_lcao.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_base/memory_recorder.h"

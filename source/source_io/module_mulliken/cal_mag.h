@@ -2,7 +2,7 @@
 #define CAL_MAG_H
 
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/orb_read.h"
 #include "source_basis/module_nao/two_center_bundle.h"
 #include "source_cell/cell_index.h"
 #include "source_cell/cell_tools.h"

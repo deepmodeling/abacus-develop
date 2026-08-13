@@ -1,5 +1,5 @@
 #include"../gram_schmidt_orth.h"
-#include"../gram_schmidt_orth-inl.h"
+#include"../gram_schmidt_orth_inl.h"
 #include"gtest/gtest.h"
 
 

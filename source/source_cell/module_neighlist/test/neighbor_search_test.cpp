@@ -13,6 +13,10 @@
 #include <string>
 #include <vector>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
 namespace
 {
 void ensure_mpi_initialized()
@@ -85,6 +89,25 @@ std::size_t count_pairs(const NeighborList& list)
     }
     return pairs;
 }
+
+#ifdef _OPENMP
+void expect_same_atoms(const std::vector<NeighborAtom>& lhs,
+                       const std::vector<NeighborAtom>& rhs)
+{
+    ASSERT_EQ(lhs.size(), rhs.size());
+    for (std::size_t i = 0; i < lhs.size(); ++i)
+    {
+        EXPECT_DOUBLE_EQ(lhs[i].position_x, rhs[i].position_x) << "atom " << i;
+        EXPECT_DOUBLE_EQ(lhs[i].position_y, rhs[i].position_y) << "atom " << i;
+        EXPECT_DOUBLE_EQ(lhs[i].position_z, rhs[i].position_z) << "atom " << i;
+        EXPECT_EQ(lhs[i].atom_type, rhs[i].atom_type) << "atom " << i;
+        EXPECT_EQ(lhs[i].atom_index, rhs[i].atom_index) << "atom " << i;
+        EXPECT_EQ(lhs[i].atom_id, rhs[i].atom_id) << "atom " << i;
+        EXPECT_EQ(lhs[i].global_id, rhs[i].global_id) << "atom " << i;
+        EXPECT_EQ(lhs[i].owner_rank, rhs[i].owner_rank) << "atom " << i;
+    }
+}
+#endif
 } // namespace
 
 TEST(NeighborSearchTest, MdCellTwoAtomsNeighbor)

@@ -10,7 +10,7 @@
 #include "source_pw/module_pwdft/stru_fac.h"
 #include "source_psi/psi.h"
 #ifdef __LCAO
-#include "source_basis/module_ao/ORB_gaunt_table.h"
+#include "source_basis/module_ao/orb_gaunt_table.h"
 #endif
 
 //==========================================================

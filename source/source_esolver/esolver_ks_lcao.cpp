@@ -4,11 +4,11 @@
 #include "source_estate/elecstate_tools.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_deltaspin/deltaspin_lcao.h"
-#include "source_lcao/dftu_lcao.h"
+#include "source_lcao/setup_dftu_lcao.h"
 #include "source_hamilt/hs_matrix_k.h"
-#include "source_estate/module_charge/symmetry_rho.h"
-#include "source_lcao/LCAO_domain.h" // need DeePKS_init
-#include "source_lcao/FORCE_STRESS.h"
+#include "source_estate/module_charge/symm_rho.h"
+#include "source_lcao/lcao_domain.h" // need DeePKS_init
+#include "source_lcao/force_stress_lcao.h"
 #include "source_hamilt/module_gint/gint.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_lcao/hamilt_lcao.h"
@@ -24,7 +24,7 @@
 #include "source_io/module_ctrl/ctrl_scf_lcao.h" // use ctrl_scf_lcao()
 #include "source_io/module_output/print_info.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 20251024
-#include "source_lcao/LCAO_set.h" // mohan add 20251111
+#include "source_lcao/lcao_set.h" // mohan add 20251111
 #include "source_psi/setup_psi.h" // use Setup_Psi for deallocate_psi
 
 namespace ModuleESolver

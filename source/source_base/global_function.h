@@ -2,7 +2,7 @@
 #define GLOBAL_FUNCTION_H
 
 #include "module_external/blas_connector.h"
-#include "global_function-func_each_2.h" // Peize Lin add 2016-09-07
+#include "glob_fn_each2.h" // Peize Lin add 2016-09-07
 #include "global_variable.h"
 #include "tool_check.h" // mohan add 2021-05-08
 #include "tool_quit.h"  // mohan add 2021-05-07

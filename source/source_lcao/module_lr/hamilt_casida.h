@@ -9,7 +9,7 @@
 #ifdef __EXX
 #include "source_lcao/module_lr/operator_casida/operator_lr_exx.h"
 #include "source_lcao/module_lr/ri_benchmark/operator_ri_hartree.h"
-#include "source_lcao/module_ri/LRI_CV_Tools.h"
+#include "source_lcao/module_ri/lri_cv_tools.h"
 #endif
 namespace LR
 {

@@ -453,6 +453,16 @@ if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
     fi
     python3 $COMPARE_SCRIPT sr_nao.csr.ref OUT.autotest/sr_nao.csr 8
     echo "CompareSR_pass $?" >>$1
+elif ! test -z "$has_hs2" && [ "$has_hs2" == 2 ]; then
+    HSR_BINARY_COMPARE="../../integrate/tools/compare_hsr_binary.py"
+    python3 $HSR_BINARY_COMPARE OUT.autotest/hrs1_nao.dat hrs1_nao.csr.ref real 4
+    echo "CompareHR_pass $?" >>$1
+    if ! test -z "$nspin" && [ "$nspin" -eq 2 ]; then
+        python3 $HSR_BINARY_COMPARE OUT.autotest/hrs2_nao.dat hrs2_nao.csr.ref real 4
+        echo "CompareHR2_pass $?" >>$1
+    fi
+    python3 $HSR_BINARY_COMPARE OUT.autotest/sr_nao.dat sr_nao.csr.ref real 4
+    echo "CompareSR_pass $?" >>$1
 fi
 
 #-----------------------------------

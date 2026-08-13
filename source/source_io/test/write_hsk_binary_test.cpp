@@ -1,4 +1,4 @@
-#include "source_io/module_hs/write_HS.h"
+#include "source_io/module_hs/write_hs.h"
 
 #include "gtest/gtest.h"
 

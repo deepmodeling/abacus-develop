@@ -8,7 +8,7 @@
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include <vector>
-#include "source_io/module_hs/cal_r_overlap_R.h"
+#include "source_io/module_hs/cal_r_overlap_r.h"
 
 namespace hamilt
 {
