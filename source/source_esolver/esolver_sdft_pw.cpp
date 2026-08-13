@@ -19,7 +19,6 @@ namespace ModuleESolver
 
 template <typename T, typename Device>
 ESolver_SDFT_PW<T, Device>::ESolver_SDFT_PW()
-    : stoche(this->inp_->nche_sto, this->inp_->method_sto, this->inp_->emax_sto, this->inp_->emin_sto)
 {
     this->classname = "ESolver_SDFT_PW";
     this->basisname = "PW";
@@ -42,6 +41,7 @@ void ESolver_SDFT_PW<T, Device>::before_all_runners(BaseCell& basecell, const In
     // 1) initialize parameters from int Input class
     this->nche_sto = inp.nche_sto;
     this->method_sto = inp.method_sto;
+    this->stoche.init(inp.nche_sto, inp.method_sto, inp.emax_sto, inp.emin_sto);
 
     // 2) run "before_all_runners" in ESolver_KS
     ESolver_KS_PW<T, Device>::before_all_runners(ucell, inp);
