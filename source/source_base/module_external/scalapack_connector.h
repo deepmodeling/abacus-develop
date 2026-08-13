@@ -42,11 +42,23 @@ extern "C"
     void pdtran_(const int* m, const int* n,
         const double* alpha, const double* a, const int* ia, const int* ja, const  int* desca,
         const double* beta, double* c, const int* ic, const int* jc, const int* descc);
-
 	void pztranu_(const int *m,const int*n,
         const std::complex<double>* alpha, const std::complex<double>* a, const int* ia, const int* ja, const int* desca,
-		const std::complex<double> *beta ,  std::complex<double> *c , const int *ic ,const int *jc ,const int *descc);
+		const std::complex<double> *beta , std::complex<double> *c, const int *ic, const int *jc, const int *descc);
+	void pztranc_(const int *m, const int *n,
+		const std::complex<double> *alpha, const std::complex<double> *a, const int *ia, const int *ja, const int *desca,
+		const std::complex<double> *beta, std::complex<double> *c, const int *ic, const int *jc, const int *descc);
 
+	double pdlange_(const char* norm,
+		const int* m, const int* n,
+		const double* a, const int* ia, const int* ja, const int* desca,
+		double* work);
+
+	double pzlange_(const char* norm,
+		const int* m, const int* n,
+		const std::complex<double>* a, const int* ia, const int* ja, const int* desca,
+		double* work);
+	
 	void pzgemv_(
 		const char *transa,
 		const int *M, const int *N,
@@ -144,13 +156,6 @@ extern "C"
                 		const std::complex<double> *beta,
 		const std::complex<double> *c, const int *ic, const int *jc, const int *descc);
 
-    void pztranc_(
-		const int *M, const int *N,
-		const std::complex<double> *alpha,
-		const std::complex<double> *A, const int *IA, const int *JA, const int *DESCA,
-		const std::complex<double> *beta,
-		std::complex<double> *C, const int *IC, const int *JC, const int *DESCC);
-	
     void pdgemr2d_(const int *M, const int *N,
 	    double *A, const int *IA, const int *JA, const int *DESCA, 
 		double *B, const int *IB, const int *JB, const int *DESCB,
@@ -394,11 +399,54 @@ public:
 	static inline
 	void tranu(
 		const int m, const int n,
-		const std::complex<double> alpha , std::complex<double> *a , const int ia , const int ja , const int *desca,
-		const std::complex<double> beta ,  std::complex<double> *c , const int ic , const int jc , const int *descc)
+		const double alpha, double *a, const int ia, const int ja, const int *desca,
+		const double beta, double *c, const int ic, const int jc, const int *descc)
+	{
+		pdtran_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
+	}
+	static inline
+	void tranu(
+		const int m, const int n,
+		const std::complex<double> alpha, std::complex<double> *a, const int ia, const int ja, const int *desca,
+		const std::complex<double> beta, std::complex<double> *c, const int ic, const int jc, const int *descc)
 	{
 		pztranu_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
 	}
+	static inline
+	void tranc(
+		const int m, const int n,
+		const double alpha, double *a, const int ia, const int ja, const int *desca,
+		const double beta, double *c, const int ic, const int jc, const int *descc)
+	{
+		pdtran_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
+	}
+	static inline
+	void tranc(
+		const int m, const int n,
+		const std::complex<double> alpha, std::complex<double> *a, const int ia, const int ja, const int *desca,
+		const std::complex<double> beta, std::complex<double> *c, const int ic, const int jc, const int *descc)
+	{
+		pztranc_(&m, &n, &alpha, a, &ia, &ja, desca, &beta, c, &ic, &jc, descc);
+	}
+
+    static inline
+    double lange(
+        const char norm,
+        const int m, const int n,
+        const double* a, const int ia, const int ja, const int* desca,
+        double* work)
+    {
+        return pdlange_(&norm, &m, &n, a, &ia, &ja, desca, work);
+    }
+    static inline
+    double lange(
+        const char norm,
+        const int m, const int n,
+        const std::complex<double>* a, const int ia, const int ja, const int* desca,
+        double* work)
+    {
+        return pzlange_(&norm, &m, &n, a, &ia, &ja, desca, work);
+    }
 
 	static inline
 	int potrf(char uplo, int na, double* U, int* desc)

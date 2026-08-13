@@ -19,11 +19,17 @@ if(ENABLE_LCAO)
   list(APPEND objects
       esolver_ks_lcao.cpp
       esolver_ks_lcao_tddft.cpp
+      esolver_lr_lcao_tddft.cpp
       esolver_gets.cpp
       lcao_others.cpp
       esolver_dm2rho.cpp
       esolver_double_xc.cpp
   )
+  if(ENABLE_LIBRI)
+    list(APPEND objects
+        esolver_lr_lcao_bse.cpp
+    )
+  endif()
 endif()
 
 add_library(
@@ -43,4 +49,3 @@ if(BUILD_TESTING)
     add_subdirectory(test)
   endif()
 endif()
-

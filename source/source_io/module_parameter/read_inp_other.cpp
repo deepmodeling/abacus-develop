@@ -863,7 +863,10 @@ When false (default), both the direction and magnitude of the magnetic moment ar
         item.annotation = "whether to perform rdmft calculation, default is false";
         item.category = "Reduced Density Matrix Functional Theory";
         item.type = "Boolean";
-        item.description = "Whether to perform rdmft calculation (reduced density matrix funcional theory)";
+        item.description
+            = "Whether to perform rdmft calculation (reduced density matrix funcional theory). The physical "
+              "quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM "
+              "of the system in the ground state, etc.";
         item.default_value = "false";
         item.unit = "";
         item.availability = "";

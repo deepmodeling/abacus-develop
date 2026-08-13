@@ -202,6 +202,8 @@
     - [out\_element\_info](#out_element_info)
     - [restart\_save](#restart_save)
     - [rpa](#rpa)
+    - [rpa\_out\_vel](#rpa_out_vel)
+    - [rpa\_outdir](#rpa_outdir)
     - [out\_pchg](#out_pchg)
     - [out\_wfc\_norm](#out_wfc_norm)
     - [out\_wfc\_re\_im](#out_wfc_re_im)
@@ -547,9 +549,6 @@
     - [pexsi\_elec\_thr](#pexsi_elec_thr)
     - [pexsi\_zero\_thr](#pexsi_zero_thr)
   - [Linear Response TDDFT](#linear-response-tddft)
-    - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
-    - [aims\_nbasis](#aims_nbasis)
-  - [Linear Response TDDFT (Under Development Feature)](#linear-response-tddft-under-development-feature)
     - [xc\_kernel](#xc_kernel)
     - [lr\_init\_xc\_kernel](#lr_init_xc_kernel)
     - [lr\_solver](#lr_solver)
@@ -562,6 +561,26 @@
     - [out\_wfc\_lr](#out_wfc_lr)
     - [abs\_gauge](#abs_gauge)
     - [abs\_broadening](#abs_broadening)
+    - [plot\_istate](#plot_istate)
+    - [exciton\_plot\_type](#exciton_plot_type)
+    - [exciton\_plot\_format](#exciton_plot_format)
+    - [exciton\_fixed\_coordinate](#exciton_fixed_coordinate)
+    - [exciton\_slice\_plane](#exciton_slice_plane)
+    - [exciton\_slice\_pos](#exciton_slice_pos)
+    - [exciton\_slice\_npoints](#exciton_slice_npoints)
+    - [exciton\_slice\_range](#exciton_slice_range)
+    - [ri\_hartree\_benchmark](#ri_hartree_benchmark)
+    - [aims\_nbasis](#aims_nbasis)
+  - [Bethe-Salpeter Equation](#bethe-salpeter-equation)
+    - [bse\_tda](#bse_tda)
+    - [bse\_spin\_types](#bse_spin_types)
+    - [bse\_mem\_save](#bse_mem_save)
+    - [bse\_ri\_hartree](#bse_ri_hartree)
+    - [bse\_use\_fine\_kgrid](#bse_use_fine_kgrid)
+    - [bse\_q\_approx\_mode](#bse_q_approx_mode)
+    - [bse\_q\_approx\_threshold](#bse_q_approx_threshold)
+    - [out\_bse\_ab](#out_bse_ab)
+    - [bse\_continue](#bse_continue)
   - [Reduced Density Matrix Functional Theory](#reduced-density-matrix-functional-theory)
     - [rdmft](#rdmft)
     - [rdmft\_power\_alpha](#rdmft_power_alpha)
@@ -2328,10 +2347,26 @@
 ### rpa
 
 - **Type**: Boolean
+- **Availability**: *Numerical atomic orbital basis*
 - **Description**: Generate output files used in rpa calculations.
 
   > Note: If symmetry is set to 1, additional files containing the necessary information for exploiting symmetry in the subsequent rpa calculation will be output: irreducible_sector.txt, symrot_k.txt and symrot_R.txt.
 - **Default**: False
+
+### rpa_out_vel
+
+- **Type**: Boolean
+- **Availability**: *Numerical atomic orbital basis*
+- **Description**: Velocity matrix in KS basis (in unit of eV *Angstrom). Loop layer: spin -&gt; k -&gt; direction -&gt; KS_basis1 -&gt; KS_basis2.
+- **Default**: False
+- **Unit**: eV * A
+
+### rpa_outdir
+
+- **Type**: String
+- **Availability**: *Numerical atomic orbital basis*
+- **Description**: The directory to save files for LibRPA.
+- **Default**: "./OUT.librpa/"
 
 ### out_pchg
 
@@ -4874,23 +4909,6 @@
 
 ## Linear Response TDDFT
 
-### ri_hartree_benchmark
-
-- **Type**: String
-- **Description**: Whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)
-- **Default**: none
-
-### aims_nbasis
-
-- **Type**: A number(ntype) of Integers
-- **Availability**: *ri_hartree_benchmark = aims*
-- **Description**: Atomic basis set size for each atom type (with the same order as in STRU) in FHI-aims.
-- **Default**: {} (empty list, where ABACUS use its own basis set size)
-
-[back to top](#full-list-of-input-keywords)
-
-## Linear Response TDDFT (Under Development Feature)
-
 ### xc_kernel
 
 - **Type**: String
@@ -4965,13 +4983,135 @@
 
 - **Type**: String
 - **Description**: Whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT.
-- **Default**: length
+- **Default**: velocity
 
 ### abs_broadening
 
 - **Type**: Real
 - **Description**: The broadening factor for the absorption spectrum calculation.
 - **Default**: 0.01
+
+### plot_istate
+
+- **Type**: Integer
+- **Description**: The index of the excited state to plot, starting from 0.
+- **Default**: 0
+
+### exciton_plot_type
+
+- **Type**: String
+- **Description**: Exciton density represented when lr_solver is 'plot': 'average' integrates out the other particle, while 'conditional' fixes one particle at exciton_fixed_coordinate and plots a slice of the other particle's density.
+- **Default**: average
+
+### exciton_plot_format
+
+- **Type**: String
+- **Availability**: *lr_solver = plot*
+- **Description**: The exciton-density output format. Average density supports cube, slice, and both; conditional density supports slice only.
+- **Default**: cube
+
+### exciton_fixed_coordinate
+
+- **Type**: Vector of Real (6 values)
+- **Description**: Cartesian coordinates in Bohr used by conditional exciton plotting, in the order hole_x hole_y hole_z electron_x electron_y electron_z.
+- **Default**: 0.0 0.0 0.0 0.0 0.0 0.0
+
+### exciton_slice_plane
+
+- **Type**: String
+- **Description**: Pair of lattice-vector directions spanning the cross section: 'ab', 'bc', or 'ca'.
+- **Default**: ab
+
+### exciton_slice_pos
+
+- **Type**: Real
+- **Description**: Offset in Bohr along the remaining lattice-vector direction: c for an ab slice, a for bc, and b for ca.
+- **Default**: 0.0
+
+### exciton_slice_npoints
+
+- **Type**: Integer
+- **Description**: Target in-plane grid resolution. The final grid uses a uniform number of points per primitive cell over `exciton_slice_range` and includes both endpoints.
+- **Default**: 200
+
+### exciton_slice_range
+
+- **Type**: Vector of Integer (4 values)
+- **Availability**: *lr_solver = plot and exciton_plot_format = slice or both*
+- **Description**: The in-plane primitive-cell range of an exciton slice: ustart uend vstart vend. The end values are exclusive cell boundaries, while grid data include both range endpoints.
+- **Default**: -1 2 -1 2
+- **Unit**: primitive cells
+
+### ri_hartree_benchmark
+
+- **Type**: String
+- **Description**: Whether to use the RI approximation for the Hartree term in LR-TDDFT for benchmark (with FHI-aims/ABACUS read-in style)
+- **Default**: none
+
+### aims_nbasis
+
+- **Type**: A number(ntype) of Integers
+- **Availability**: *ri_hartree_benchmark = aims*
+- **Description**: Atomic basis set size for each atom type (with the same order as in STRU) in FHI-aims.
+- **Default**: {} (empty list, where ABACUS use its own basis set size)
+
+[back to top](#full-list-of-input-keywords)
+
+## Bethe-Salpeter Equation
+
+### bse_tda
+
+- **Type**: String
+- **Description**: Whether the Tamm-Dancoff approximation is used: 'tda', 'full', or 'both'.
+- **Default**: tda
+
+### bse_spin_types
+
+- **Type**: Vector of String (&gt;=1 values)
+- **Description**: Spin types for a closed-shell calculation in one task: 'singlet', 'triplet', and the test modes 'rpa' and 'ipa'.
+- **Default**: singlet triplet
+
+### bse_mem_save
+
+- **Type**: Boolean
+- **Description**: Whether to save memory by adding V and W directly to the BSE matrix. When enabled, bse_ri_hartree is enabled and bse_continue is reset to 0.
+- **Default**: false
+
+### bse_ri_hartree
+
+- **Type**: Boolean
+- **Description**: Whether to use the RI approximation for the Hartree term in BSE.
+- **Default**: true
+
+### bse_use_fine_kgrid
+
+- **Type**: Integer
+- **Description**: Fine k-grid mode for BSE: 0 uses the coarse k-grid, 1 uses a uniform fine k-grid, and 2 uses a non-uniform fine k-grid. Modes 1 and 2 require band_kpath_info, band_KS_eigenvector_k_{index}.txt, KS_band_spin_{index}.txt, and GW_band_spin_{index}.txt.
+- **Default**: 0
+
+### bse_q_approx_mode
+
+- **Type**: Integer
+- **Description**: q-to-k-pair mapping mode: 0 uses exact mapping, 1 uses the coarse q-grid approximation, and 2 uses exact for Γ-close q-points and coarse for other q-points.
+- **Default**: 0
+
+### bse_q_approx_threshold
+
+- **Type**: Real
+- **Description**: Threshold radius in Bohr^-1 for exact q-to-k-pair mapping when bse_q_approx_mode is 2.
+- **Default**: 0.1
+
+### out_bse_ab
+
+- **Type**: Boolean
+- **Description**: Whether to output the AB matrix to a file.
+- **Default**: false
+
+### bse_continue
+
+- **Type**: Integer
+- **Description**: Step from which to continue a previous BSE calculation: 0 starts a new calculation; 1 reads A_V; 2 reads A_V and A_W; 3 reads A_V, A_W, and B_V; 4 reads A_V, A_W, B_V, and B_W.
+- **Default**: 0
 
 [back to top](#full-list-of-input-keywords)
 
@@ -4980,7 +5120,7 @@
 ### rdmft
 
 - **Type**: Boolean
-- **Description**: Whether to perform rdmft calculation (reduced density matrix funcional theory)
+- **Description**: Whether to perform rdmft calculation (reduced density matrix funcional theory). The physical quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM of the system in the ground state, etc.
 - **Default**: false
 
 ### rdmft_power_alpha
