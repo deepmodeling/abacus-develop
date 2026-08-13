@@ -13,7 +13,7 @@ void StoChe<REAL, Device>::init(const int& nche, const int& method, const REAL& 
 
     this->nche = nche;
     this->method_sto = method;
-    this->p_che = std::make_unique<ModuleBase::Chebyshev<REAL, Device>>(nche);
+    this->p_che.reset(new ModuleBase::Chebyshev<REAL, Device>(nche));
     if (method == 1)
     {
         REAL* spolyv_ptr = nullptr;
