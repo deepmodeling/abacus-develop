@@ -172,7 +172,6 @@ TEST_F(PrintInfoTest, PrintScreen)
 		}
 		else
 		{
-			PARAM.input.relax_new = false;
 			if(PARAM.input.calculation=="relax")
 			{
 				testing::internal::CaptureStdout();
@@ -186,8 +185,8 @@ TEST_F(PrintInfoTest, PrintScreen)
                 ModuleIO::print_screen(stress_step, force_step, istep);
                 output = testing::internal::GetCapturedStdout();
 				EXPECT_THAT(output,testing::HasSubstr("RELAX STEP"));
-				EXPECT_THAT(output,testing::HasSubstr("CELL_CHANGE#"));
-				EXPECT_THAT(output,testing::HasSubstr("IONS_CHANGE#"));
+			EXPECT_THAT(output,testing::HasSubstr("CELL#"));
+			EXPECT_THAT(output,testing::HasSubstr("IONS#"));
 			}
 		}
 	}

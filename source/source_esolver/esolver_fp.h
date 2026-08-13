@@ -12,6 +12,12 @@
 #include "source_pw/module_pwdft/vl_pw.h"             // local pseudopotential
 
 #include <fstream>
+#include <memory>
+
+namespace vdw
+{
+struct VdwResult;
+}
 
 //! The First-Principles (FP) Energy Solver Class
 /**
@@ -41,6 +47,11 @@ class ESolver_FP : public ESolver
     virtual void after_scf(UnitCell& ucell, const int istep, const bool conv_esolver);
 
     virtual void iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver);
+
+    const vdw::VdwResult* get_vdw_result() const { return this->vdw_result_.get(); }
+
+    //! vdW correction evaluated once for the current ionic configuration.
+    std::unique_ptr<const vdw::VdwResult> vdw_result_;
 
     //! These pointers will be deleted in the free_pointers() function every ion step.
     elecstate::ElecState* pelec = nullptr; ///< Electronic states

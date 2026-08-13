@@ -8,6 +8,7 @@
 #include "source_pw/module_pwdft/onsite_proj_print.h"
 #include "source_lcao/module_dftu/dftu.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_cell/cell_tools.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include "source_base/projgen.h"
@@ -580,7 +581,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
     Parallel_Reduce::reduce_double_allpool(npool, GlobalV::NPROC_IN_POOL, (double*)(&(occs[0])), occs.size()*2);
     // occ has been reduced and calculate mag
     // Print orbital charge analysis
-    auto atom_labels = this->ucell->get_atomLabels();
+    auto atom_labels = unitcell::get_atomLabels(this->ucell->atoms, this->ucell->ntype);
     print::print_orb_chg(this->ucell, occs, this->iat_nh, atom_labels);
     
     // print charge

@@ -129,6 +129,15 @@ namespace unitcell {
      */
     void cal_natomwfc(std::ofstream& log,int& natomwfc,const int ntype,const Atom* atoms,const int nspin);
 
+    /**
+     * @brief Check consistency between two atom labels from STRU and pseudo or
+     * orb file.
+     *
+     * @param label1 atom label from STRU [in]
+     * @param label2 atom label from pseudo or orbital file [in]
+     */
+    void compare_atom_labels(const std::string& label1, const std::string& label2);
+
 }
 
 #endif

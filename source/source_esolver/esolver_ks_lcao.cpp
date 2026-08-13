@@ -5,7 +5,7 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_deltaspin/deltaspin_lcao.h"
 #include "source_lcao/dftu_lcao.h"
-#include "source_lcao/hs_matrix_k.hpp" // there may be multiple definitions if using hpp
+#include "source_hamilt/hs_matrix_k.h"
 #include "source_estate/module_charge/symmetry_rho.h"
 #include "source_lcao/LCAO_domain.h" // need DeePKS_init
 #include "source_lcao/FORCE_STRESS.h"
@@ -248,7 +248,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
 
     deepks.dpks_out_type = "tot";  // for deepks method
 
-    fsl.getForceStress(ucell, PARAM.inp.cal_force, PARAM.inp.cal_stress, 
+    fsl.getForceStress(ucell, this->get_vdw_result(), PARAM.inp.cal_force, PARAM.inp.cal_stress,
                        PARAM.inp.test_force, PARAM.inp.test_stress,
                        this->gd, this->pv, this->pelec, this->dmat, this->psi,
                        two_center_bundle_, orb_, force, this->scs,

@@ -156,8 +156,12 @@ struct Input_para
     //  int		bessel_nao_lmax;		///< lmax used in descriptor
 
     // ==============   #Parameters (4.Relaxation) ===========================
-    std::vector<std::string> relax_method = {"cg", "1"}; ///< methods to move_ion: sd, bfgs, cg...
-    bool relax_new = true;
+    std::vector<std::string> relax_method = {"cg", "2"}; ///< relaxation algorithm and optional variant
+
+    bool uses_simultaneous_relaxation() const
+    {
+        return relax_method.size() == 2 && relax_method[0] == "cg" && relax_method[1] == "2";
+    }
     bool relax = false; ///< allow relaxation along the specific direction
     double relax_scale_force = 0.5;
     int relax_nmax = -1;       ///< number of max ionic iter
@@ -374,7 +378,8 @@ struct Input_para
     std::vector<int> aims_nbasis
         = {}; ///< the number of basis functions for each atom type used in FHI-aims (for benchmark)
     // ==============   #Parameters (11.Output) ===========================
-    bool out_stru = false;                ///< outut stru file each ion step
+    int out_stru = 1;                     ///< output stru file each ion step
+                                          ///< 0: no output, 1: STRU format, 2: CIF format
     int out_freq_elec = 0;                ///< the frequency of electronic iter to output charge and wavefunction
     int out_freq_ion = 0;                 ///< the frequency ( >= 0 ) of ionic step to output charge density;
                                           ///< 0: output only when ion steps are finished

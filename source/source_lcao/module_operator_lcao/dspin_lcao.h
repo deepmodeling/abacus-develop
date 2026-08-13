@@ -75,7 +75,7 @@ class DeltaSpin<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
      * spin switch. sc_hr_done must be reset here so each spin's HR is computed
      * independently.
      */
-    void set_current_spin(const int current_spin_in)
+    void set_current_spin(const int current_spin_in) override
     {
         if (this->current_spin != current_spin_in)
         {

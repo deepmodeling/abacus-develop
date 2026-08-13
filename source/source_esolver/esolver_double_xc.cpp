@@ -1,7 +1,6 @@
 #include "esolver_double_xc.h"
 
 #include "source_hamilt/module_ewald/H_Ewald_pw.h"
-#include "source_hamilt/module_vdw/vdw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #ifdef __MLALGO
 #include "source_lcao/module_deepks/LCAO_deepks.h"
@@ -121,13 +120,9 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     ESolver_KS_LCAO<TK, TR>::before_scf(ucell, istep);
 
     //----------------------------------------------------------
-    //! calculate D2 or D3 vdW
+    //! Reuse the vdW correction prepared by ESolver_FP::before_scf.
     //----------------------------------------------------------
-    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
-    if (vdw_solver != nullptr)
-    {
-        this->pelec_base->f_en.evdw = vdw_solver->get_energy();
-    }
+    this->pelec_base->f_en.evdw = this->pelec->f_en.evdw;
 
     //----------------------------------------------------------
     //! calculate ewald energy
@@ -398,6 +393,7 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
     this->deepks.dpks_out_type = "base"; // for deepks method
 
     fsl.getForceStress(ucell,
+                       this->get_vdw_result(),
                        PARAM.inp.cal_force,
                        PARAM.inp.cal_stress,
                        PARAM.inp.test_force,

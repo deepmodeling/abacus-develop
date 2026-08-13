@@ -4,4 +4,5 @@ Compare_mulliken_pass 0
 pointgroupref O_h
 spacegroupref O_h
 nksibzref 1
+magpointgroupref C_4h
 totaltimeref 4.42

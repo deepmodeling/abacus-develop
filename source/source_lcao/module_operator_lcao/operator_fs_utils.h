@@ -1,5 +1,5 @@
-#ifndef OPERATOR_FORCE_STRESS_UTILS_H
-#define OPERATOR_FORCE_STRESS_UTILS_H
+#ifndef OPERATOR_FS_UTILS_H
+#define OPERATOR_FS_UTILS_H
 
 #include "source_base/matrix.h"
 #include "source_cell/unitcell.h"
@@ -121,4 +121,4 @@ void finalize_force_stress(
 
 } // namespace OperatorForceStress
 
-#endif // OPERATOR_FORCE_STRESS_UTILS_H
+#endif // OPERATOR_FS_UTILS_H

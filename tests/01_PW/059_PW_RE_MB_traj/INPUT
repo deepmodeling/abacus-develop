@@ -17,7 +17,7 @@ scf_nmax          100
 relax_nmax        2
 cal_force         1
 force_thr_ev      0.01
-relax_method      bfgs
+relax_method      bfgs 1
 
 #Parameters (4.Basis)
 basis_type        pw
@@ -29,5 +29,3 @@ smearing_sigma    0.002
 #Parameters (6.Mixing)
 mixing_type       broyden
 mixing_beta       0.5
-
-relax_new         0

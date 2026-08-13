@@ -20,8 +20,6 @@ SepPot::~SepPot(){}
 Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
-void UnitCell::print_cell(std::ofstream& ofs) const {}
-
 void UnitCell::set_iat2itia() {}
 
 void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const double symmetry_prec, const int dfthalf_type, const std::string& pseudo_dir, const int nspin,
@@ -30,11 +28,7 @@ void UnitCell::setup_cell(const std::string& fn, std::ofstream& log, const doubl
     const bool fixed_atoms, const bool noncolin, const std::string& calculation, const std::string& esolver_type,
     const int symmetry) {}
 
-bool UnitCell::if_atoms_can_move() const { return true; }
-
-bool UnitCell::if_cell_can_change() const { return true; }
-
-void UnitCell::setup(const std::string& latname_in,
+void UnitCell::setup_from_input(const std::string& latname_in,
                      const int& ntype_in,
                      const int& lmaxmax_in,
                      const bool& init_vel_in,
@@ -43,5 +37,3 @@ void UnitCell::setup(const std::string& latname_in,
 namespace unitcell {
 void cal_nelec(const Atom* atoms, const int& ntype, double& nelec, const double nelec_delta) {}
 }
-
-void UnitCell::compare_atom_labels(const std::string &label1, const std::string &label2) const {}

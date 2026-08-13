@@ -97,9 +97,14 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
         ++i;
     }
    
-    // write eigenvalues and occupations
-    const int istep_in = -1;
-    ModuleIO::write_eig_file(ekb, wg, *kv, istep_in);
+    {
+        std::ofstream stale_file("eig_occ.txt");
+        stale_file << "stale calculation" << std::endl;
+    }
+
+    // A new calculation truncates stale output, then later ionic steps append.
+    ModuleIO::write_eig_file(ekb, wg, *kv, 0);
+    ModuleIO::write_eig_file(ekb, wg, *kv, 1);
 
     // check the output files
     std::ifstream ifs;
@@ -108,7 +113,11 @@ TEST_F(IstateInfoTest, OutIstateInfoS1)
     EXPECT_THAT(str, testing::HasSubstr("Electronic state energy (eV) and occupations"));
     EXPECT_THAT(str, testing::HasSubstr("spin=1 k-point=1/10 Cartesian=0.0000000 0.0000000 0.0000000 (299 plane wave)"));
     EXPECT_THAT(str, testing::HasSubstr("1 2.040854700000000 0.000000000000000"));
+    EXPECT_THAT(str, testing::Not(testing::HasSubstr("stale calculation")));
+    EXPECT_THAT(str, testing::HasSubstr("1     # ionic step"));
+    EXPECT_THAT(str, testing::HasSubstr("2     # ionic step"));
     ifs.close();
+
     remove("eig_occ.txt");
 }
 

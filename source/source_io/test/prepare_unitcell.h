@@ -71,13 +71,11 @@ public:
 		//basic info
 		this->ntype = this->elements.size();
 		UnitCell* ucell = new UnitCell;
-		ucell->setup(this->latname,
+		ucell->setup_from_input(this->latname,
 				this->ntype,
 				this->lmaxmax,
 				this->init_vel,
 				this->fixed_axes);
-		ucell->atom_label.resize(ucell->ntype);
-		ucell->atom_mass.resize(ucell->ntype);
 		ucell->pseudo_fn.resize(ucell->ntype);
 		ucell->pseudo_type.resize(ucell->ntype);
 		
@@ -87,8 +85,6 @@ public:
 		ucell->magnet.ux_[2] = 0.0;
 		for(int it=0;it<ucell->ntype;++it)
 		{
-			ucell->atom_label[it] = this->elements[it];
-			ucell->atom_mass[it] = this->atomic_mass[it];
 			ucell->pseudo_fn[it] = this->pp_files[it];
 			ucell->pseudo_type[it] = this->pp_types[it];
 			ucell->orbital_fn[it] = this->orb_files[it];
@@ -148,7 +144,7 @@ public:
 			ucell->atoms[it].angle2.resize(ucell->atoms[it].na);
 			ucell->atoms[it].m_loc_.resize(ucell->atoms[it].na);
 			ucell->atoms[it].mbl.resize(ucell->atoms[it].na);
-			ucell->atoms[it].mass = ucell->atom_mass[it]; // mass set here
+			ucell->atoms[it].mass = this->atomic_mass[it];
 			for(int ia=0; ia<ucell->atoms[it].na; ++ia)
 			{
 				if (ucell->Coordinate == "Direct")
