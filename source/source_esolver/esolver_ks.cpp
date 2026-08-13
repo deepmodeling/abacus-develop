@@ -47,7 +47,7 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     ESolver_FP::before_all_runners(ucell, inp);
 
     //! 2) initialize Exx_Info from input parameters
-    init_exx_info(exx_info_obj_, inp);
+    init_exx_info(exx_info_, inp);
 
     //! 3) setup some parameters
     classname = "ESolver_KS";

@@ -55,8 +55,8 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_all_runners");
 
-    // 0) init EXX - moved from constructor to ensure exx_info_->info_global is already set
-    this->exx_nao.init(ucell, *this->exx_info_);
+    // 0) init EXX - moved from constructor to ensure exx_info_.info_global is already set
+    this->exx_nao.init(ucell, this->exx_info_);
 
     // 1) before_all_runners in ESolver_KS
     ESolver_KS::before_all_runners(ucell, inp);
@@ -78,7 +78,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
     {
 #ifdef __EXX
         Exx_Opt_Orb exx_opt_orb;
-        exx_opt_orb.generate_matrix(exx_info_->info_opt_abfs, this->kv, ucell, this->orb_);
+        exx_opt_orb.generate_matrix(exx_info_.info_opt_abfs, this->kv, ucell, this->orb_);
 #else
         ModuleBase::WARNING_QUIT("ESolver_KS_LCAO::before_all_runners", "calculation=gen_opt_abfs must compile __EXX");
 #endif
@@ -90,7 +90,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
 
     LCAO_domain::set_pot<TK>(ucell, this->kv, this->sf, *this->pw_rho, *this->pw_rhod,
       this->pelec, this->orb_, this->pv, this->locpp, this->dftu,
-      this->solvent, this->exx_nao, this->deepks, inp, *this->exx_info_);
+      this->solvent, this->exx_nao, this->deepks, inp, this->exx_info_);
 
     //! if kpar is not divisible by nks, print a warning
     ModuleIO::print_kpar(this->kv.get_nks(), PARAM.globalv.kpar_lcao);
@@ -100,7 +100,7 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
     {
         rdmft_solver.init(this->pv, ucell,
           this->gd, this->kv, *(this->pelec), this->orb_,
-          two_center_bundle_, inp.dft_functional, inp.rdmft_power_alpha, *this->exx_info_);
+          two_center_bundle_, inp.dft_functional, inp.rdmft_power_alpha, this->exx_info_);
     }
 
     ModuleBase::timer::end("ESolver_KS_LCAO", "before_all_runners");
@@ -153,7 +153,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     {
         this->p_hamilt = new hamilt::HamiltLCAO<TK, TR>(
             ucell, this->gd, &this->pv, this->pelec->pot, this->kv,
-            two_center_bundle_, orb_, this->dmat.dm, &this->dftu, this->deepks, istep, exx_nao, *this->exx_info_);
+            two_center_bundle_, orb_, this->dmat.dm, &this->dftu, this->deepks, istep, exx_nao, this->exx_info_);
     }
 
     // 9) for each ionic step, the overlap <phi|alpha> must be rebuilt
@@ -170,7 +170,7 @@ void ESolver_KS_LCAO<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     init_deltaspin_lcao<TK>(ucell, PARAM.inp, &(this->pv), this->kv, this->p_hamilt, this->psi, this->dmat.dm, this->pelec);
 
     // 11) set xc type before the first cal of xc in pelec->init_scf, Peize Lin add 2016-12-03
-    this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, PARAM.inp, *this->exx_info_);
+    this->exx_nao.before_scf(ucell, this->kv, orb_, this->p_chgmix, istep, PARAM.inp, this->exx_info_);
 
     // 12) initalize DM(R), which has the same size with Hamiltonian(R)
     auto* hamilt_lcao = dynamic_cast<hamilt::HamiltLCAO<TK, TR>*>(this->p_hamilt);
@@ -254,7 +254,7 @@ void ESolver_KS_LCAO<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix& 
                        two_center_bundle_, orb_, force, this->scs,
                        this->locpp, this->sf, this->kv,
                        this->pw_rho, this->solvent, this->dftu, this->deepks,
-                       this->exx_nao, &ucell.symm, *this->exx_info_, PARAM.inp.td_stype,
+                       this->exx_nao, &ucell.symm, this->exx_info_, PARAM.inp.td_stype,
                        static_cast<hamilt::Hamilt<TK>*>(this->p_hamilt));
 
     // delete RA after cal_force
@@ -309,7 +309,7 @@ void ESolver_KS_LCAO<TK, TR>::after_all_runners(BaseCell& basecell)
 		    this->gd, this->psi, this->chr, hamilt_lcao,
 		    this->two_center_bundle_,
 		    this->orb_, this->pw_rho, this->pw_rhod,
-		    this->sf, this->locpp.vloc, this->exx_nao, *this->exx_info_, this->solvent);
+		    this->sf, this->locpp.vloc, this->exx_nao, this->exx_info_, this->solvent);
 
 
 #ifdef __MPI
@@ -358,11 +358,11 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
 	{
 		int exx_two_level_step = 0;
 #ifdef __EXX
-		if (exx_info_->info_global.cal_exx)
+		if (exx_info_.info_global.cal_exx)
 		{
 			// the following steps are only needed in the first outer exx loop
 			exx_two_level_step
-				= exx_info_->info_ri.real_number ? 
+				= exx_info_.info_ri.real_number ? 
                   this->exx_nao.exd->two_level_step : this->exx_nao.exc->two_level_step;
 		}
 #endif
@@ -373,7 +373,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_init(UnitCell& ucell, const int istep, const 
     // calculate exact-exchange
     if (PARAM.inp.calculation != "nscf")
     {
-        if (exx_info_->info_ri.real_number)
+        if (exx_info_.info_ri.real_number)
         {
             this->exx_nao.exd->exx_eachiterinit(istep, ucell, *this->dmat.dm, this->kv, iter);
         }
@@ -467,7 +467,7 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
 #ifdef __EXX
     if (PARAM.inp.calculation != "nscf")
     {
-        if (exx_info_->info_ri.real_number)
+        if (exx_info_.info_ri.real_number)
         {
             this->exx_nao.exd->exx_hamilt2rho(*this->pelec, this->pv, iter);
         }
@@ -537,7 +537,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
     ModuleIO::ctrl_iter_lcao<TK, TR>(ucell, PARAM.inp, this->kv, this->pelec, *this->dmat.dm,
       this->pv, this->gd, this->psi, this->chr, this->p_chgmix, 
       hamilt_lcao, this->orb_, this->deepks, 
-      this->exx_nao, *this->exx_info_, iter, istep, conv_esolver, this->scf_ene_thr);
+      this->exx_nao, this->exx_info_, iter, istep, conv_esolver, this->scf_ene_thr);
 }
 
 template <typename TK, typename TR>
@@ -567,7 +567,7 @@ void ESolver_KS_LCAO<TK, TR>::after_scf(UnitCell& ucell, const int istep, const 
             this->gd, this->psi, hamilt_lcao, this->dftu, this->two_center_bundle_,
             this->orb_, this->pw_wfc, this->pw_rho, this->pw_big, this->sf,
             this->pw_rhod, this->locpp.vloc, this->solvent,
-            this->rdmft_solver, this->deepks, this->exx_nao, *this->exx_info_,
+            this->rdmft_solver, this->deepks, this->exx_nao, this->exx_info_,
             this->conv_esolver, this->scf_nmax_flag, istep);
 
     //! 3) Clean up RA, which is used to serach for adjacent atoms

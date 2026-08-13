@@ -203,7 +203,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::runner(BaseCell& basecell, const int ist
         {
             this->CE.update_all_dis(ucell);
             this->CE.extrapolate_charge(&this->Pgrid, ucell, &this->chr, &this->sf, GlobalV::ofs_running, GlobalV::ofs_warning);
-            this->exx_nao.before_scf(ucell, this->kv, this->orb_, this->p_chgmix, totstep, PARAM.inp, *this->exx_info_);
+            this->exx_nao.before_scf(ucell, this->kv, this->orb_, this->p_chgmix, totstep, PARAM.inp, this->exx_info_);
             elecstate::init_scf(ucell,
                                 this->Pgrid,
                                 this->sf.strucFac,
@@ -378,7 +378,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::hamilt2rho_single(UnitCell& ucell, const
         Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rho, ucell.symm);
     }
 #ifdef __EXX
-    if (this->exx_info_->info_ri.real_number)
+    if (this->exx_info_.info_ri.real_number)
         this->exx_nao.exd->exx_hamilt2rho(*this->pelec, this->pv, iter);
     else
         this->exx_nao.exc->exx_hamilt2rho(*this->pelec, this->pv, iter);
@@ -581,7 +581,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::after_scf(UnitCell& ucell, const int ist
                                  this->RA,
                                  this->td_p,
                                  this->exx_nao,
-                                 *this->exx_info_);
+                                 this->exx_info_);
 
     ModuleBase::timer::end(this->classname, "after_scf");
 }
