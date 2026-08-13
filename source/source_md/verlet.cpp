@@ -136,7 +136,7 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
     }
 
     // Get degrees of freedom (3N - frozen)
-    std::int64_t ndeg = MD_func::global_dof(mdcell, frozen_freedom_);
+    std::int64_t ndeg = MD_func::global_dof(mdcell);
 
     // Calculate kinetic energies
     double kin_energy = current_temp * static_cast<double>(ndeg) * 0.5;  // in Hartree

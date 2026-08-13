@@ -104,7 +104,7 @@ Nose_Hoover::Nose_Hoover(const Parameter& param_in, MDCell& mdcell_in) : MD_base
     }
     pdim = pflag[0] + pflag[1] + pflag[2];
 
-    tdof = MD_func::global_dof(mdcell, frozen_freedom_);
+    tdof = MD_func::global_dof(mdcell);
 
     assert(mdp.md_tchain>0);
 

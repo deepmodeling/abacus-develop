@@ -411,6 +411,18 @@ TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
     remove("Restart_md.txt");
 }
 
+TEST_F(MD_func_test, global_dof_mdcell)
+{
+    MDCell mdcell(ucell, 0.0, 0.0, ModuleBase::world_communication_domain());
+    EXPECT_EQ(MD_func::global_dof(mdcell), 9);
+
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    {
+        atom.mbl.x = 0;
+    }
+    EXPECT_EQ(MD_func::global_dof(mdcell), 6);
+}
+
 TEST_F(MD_func_test, current_step_warning)
 {
     // Call the function and check that it outputs a warning and quits

@@ -84,6 +84,24 @@ TEST_F(LJ_pot_test, force)
     EXPECT_NEAR(atoms[3].force.z, 0.0, doublethreshold);
 }
 
+TEST_F(LJ_pot_test, mdcell_cal_force)
+{
+    ModuleESolver::ESolver_LJ p_esolver;
+    MDCell mdcell = Setcell::setup_mdcell(ucell, param);
+    p_esolver.before_all_runners(mdcell, param.inp);
+    p_esolver.runner(mdcell, 0);
+
+    ModuleBase::matrix force;
+    p_esolver.cal_force(mdcell, force);
+    for (int iat = 0; iat < mdcell.nlocal(); ++iat)
+    {
+        const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
+        EXPECT_DOUBLE_EQ(force(iat, 0), atom.force.x);
+        EXPECT_DOUBLE_EQ(force(iat, 1), atom.force.y);
+        EXPECT_DOUBLE_EQ(force(iat, 2), atom.force.z);
+    }
+}
+
 TEST_F(LJ_pot_test, stress)
 {
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();

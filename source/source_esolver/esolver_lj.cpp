@@ -37,7 +37,6 @@ void ESolver_LJ::before_all_runners(BaseCell& cell, const Input_para& inp)
     if (cell.kind() == BaseCell::Kind::md_cell)
     {
         MDCell& mdcell = static_cast<MDCell&>(cell);
-        lj_force.create(mdcell.nlocal(), 3);
         rcut_search_radius(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_rcut);
         set_c6_c12(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_rule, inp.mdp.lj_epsilon, inp.mdp.lj_sigma);
         cal_en_shift(static_cast<int>(mdcell.type_labels().size()), inp.mdp.lj_eshift);
@@ -61,12 +60,12 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
 
     NeighborSearch neighbor_search;
     lj_potential = 0.0;
-    lj_force.zero_out();
     lj_virial.zero_out();
 
     if (cell.kind() == BaseCell::Kind::unit_cell)
     {
         UnitCell& ucell = static_cast<UnitCell&>(cell);
+        lj_force.zero_out();
         neighbor_search.init(ucell, search_radius);
         neighbor_search.build_neighbors();
 
@@ -120,8 +119,6 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     }
 
     MDCell& mdcell = static_cast<MDCell&>(cell);
-    lj_force.create(mdcell.nlocal(), 3);
-    lj_force.zero_out();
 
     std::vector<LocalAtom>& owned_atoms = mdcell.mutable_owned_atoms();
     for (std::size_t i = 0; i < owned_atoms.size(); ++i)
@@ -157,9 +154,6 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
                                    - en_shift(center_atom.type, neighbor_atom.atom_type);
                 ModuleBase::Vector3<double> f_ij = LJ_force(dtau, center_atom.type, neighbor_atom.atom_type);
                 center_atom.force += f_ij;
-                lj_force(local_i, 0) = center_atom.force.x;
-                lj_force(local_i, 1) = center_atom.force.y;
-                lj_force(local_i, 2) = center_atom.force.z;
                 for (int i = 0; i < 3; ++i)
                 {
                     for (int j = 0; j < 3; ++j)

@@ -231,7 +231,7 @@ double current_temp(double& kinetic,
 double current_temp(double& kinetic,
                     const MDCell& mdcell,
                     const std::int64_t& frozen_freedom);
-std::int64_t global_dof(const MDCell& mdcell, const std::int64_t& frozen_freedom);
+std::int64_t global_dof(const MDCell& mdcell);
 
 /**
  * @brief get the temperature vectors

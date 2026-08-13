@@ -409,8 +409,6 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     {
         p_esolver->runner(static_cast<BaseCell&>(mdcell), istep);
         potential = 0.5 * p_esolver->cal_energy();
-        ModuleBase::matrix local_force;
-        p_esolver->cal_force(static_cast<BaseCell&>(mdcell), local_force);
         for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.force *= 0.5;
         if (md_out_force)
         {
@@ -713,10 +711,8 @@ double current_temp(double& kinetic,
     return 2.0 * kinetic / static_cast<double>(dof);
 }
 
-std::int64_t global_dof(const MDCell& mdcell, const std::int64_t& frozen_freedom)
+std::int64_t global_dof(const MDCell& mdcell)
 {
-    static_cast<void>(frozen_freedom);
-    std::int64_t natom = mdcell.nlocal();
     std::int64_t local_frozen[3] = {0, 0, 0};
     for (int i = 0; i < mdcell.nlocal(); ++i)
     {
@@ -727,14 +723,13 @@ std::int64_t global_dof(const MDCell& mdcell, const std::int64_t& frozen_freedom
     }
     std::int64_t global_frozen[3] = {local_frozen[0], local_frozen[1], local_frozen[2]};
 #ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, &natom, 1, MPI_INT64_T, MPI_SUM, mdcell.communicator());
     MPI_Allreduce(MPI_IN_PLACE, global_frozen, 3, MPI_INT64_T, MPI_SUM, mdcell.communicator());
 #endif
     std::int64_t total_frozen = global_frozen[0] + global_frozen[1] + global_frozen[2];
     if (global_frozen[0] == 0) ++total_frozen;
     if (global_frozen[1] == 0) ++total_frozen;
     if (global_frozen[2] == 0) ++total_frozen;
-    return 3 * natom - total_frozen;
+    return 3 * mdcell.nat() - total_frozen;
 }
 
 void temp_vector(const int& natom,

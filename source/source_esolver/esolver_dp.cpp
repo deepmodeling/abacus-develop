@@ -46,7 +46,6 @@ void ESolver_DP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     if (basecell.kind() == BaseCell::Kind::md_cell)
     {
         MDCell& mdcell = static_cast<MDCell&>(basecell);
-        dp_force.create(mdcell.nlocal(), 3);
 #ifdef __DPMD
         initialize_type_map_(mdcell.type_labels());
 #endif
@@ -184,14 +183,10 @@ void ESolver_DP::runner(BaseCell& basecell, const int istep)
         const double fact_f = rescaling / (ModuleBase::Ry_to_eV * ModuleBase::ANGSTROM_AU);
         const double fact_v = rescaling / (mdcell.omega() * ModuleBase::Ry_to_eV);
         dp_potential = local_energy * fact_e;
-        dp_force.create(nlocal, 3);
         for (int iat = 0; iat < nlocal; ++iat)
         {
             LocalAtom& atom = mutable_owned_atoms[static_cast<std::size_t>(iat)];
             atom.force *= fact_f;
-            dp_force(iat, 0) = atom.force.x;
-            dp_force(iat, 1) = atom.force.y;
-            dp_force(iat, 2) = atom.force.z;
         }
         for (int i = 0; i < 3; ++i)
             for (int j = 0; j < 3; ++j)
@@ -288,11 +283,20 @@ double ESolver_DP::mdcell_cutoff(const Input_para& inp) const
 
 void ESolver_DP::cal_force(BaseCell& basecell, ModuleBase::matrix& force)
 {
-    force = dp_force;
     if (basecell.kind() == BaseCell::Kind::md_cell)
     {
+        const MDCell& mdcell = static_cast<const MDCell&>(basecell);
+        force.create(mdcell.nlocal(), 3);
+        for (int iat = 0; iat < mdcell.nlocal(); ++iat)
+        {
+            const LocalAtom& atom = mdcell.owned_atoms()[static_cast<std::size_t>(iat)];
+            force(iat, 0) = atom.force.x;
+            force(iat, 1) = atom.force.y;
+            force(iat, 2) = atom.force.z;
+        }
         return;
     }
+    force = dp_force;
     ModuleIO::print_force(GlobalV::ofs_running,
                           static_cast<UnitCell&>(basecell),
                           "TOTAL-FORCE (eV/Angstrom)", force, false);
