@@ -19,7 +19,6 @@ md_nstep          6
 md_type           nvt
 md_dt             1
 md_tfirst         300
-replicate 50 50 50
 
 init_vel          1
 
