@@ -23,6 +23,9 @@ namespace vdw
 namespace
 {
 
+constexpr double d4_smooth_cutoff_width_2 = 0.05; // Bohr
+constexpr double d4_smooth_cutoff_width_3 = 0.05; // Bohr
+
 std::string to_lower(std::string value)
 {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
@@ -191,8 +194,14 @@ void Vdwd4::compute(double& energy_ha,
         ModuleBase::WARNING_QUIT("Vdwd4::compute", "Unsupported DFT-D4 model: " + model_name_);
     }
 
-    dftd4_set_model_realspace_cutoff(error, model, cutoff_disp2_, cutoff_disp3_, cutoff_cn_);
-    check_dftd4_error(error, "dftd4_set_model_realspace_cutoff");
+    dftd4_set_model_realspace_cutoff_smooth(error,
+                                            model,
+                                            cutoff_disp2_,
+                                            cutoff_disp3_,
+                                            cutoff_cn_,
+                                            d4_smooth_cutoff_width_2,
+                                            d4_smooth_cutoff_width_3);
+    check_dftd4_error(error, "dftd4_set_model_realspace_cutoff_smooth");
 
     std::vector<char> method(xc_name_.begin(), xc_name_.end());
     method.push_back('\0');
