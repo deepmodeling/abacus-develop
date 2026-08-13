@@ -1,0 +1,60 @@
+# CPU GitHub Actions Runner sample for ACK/ECI.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: docker-daemon-cpu-overlay2
+  namespace: actions-runner-system
+data:
+  daemon.json: |
+    {
+      "storage-driver": "overlay2",
+      "log-driver": "json-file",
+      "log-opts": {
+        "max-size": "10m",
+        "max-file": "3"
+      }
+    }
+---
+apiVersion: actions.summerwind.dev/v1alpha1
+kind: RunnerDeployment
+metadata:
+  name: cpu-runner
+  namespace: actions-runner-system
+spec:
+  template:
+    metadata:
+      annotations:
+        k8s.aliyun.com/eci-auto-imc: "true"
+        k8s.aliyun.com/imc-perfect-match: "true"
+        k8s.aliyun.com/eci-extra-ephemeral-storage: "120Gi"
+        k8s.aliyun.com/eci-schedule-strategy: VSwitchOrdered
+        k8s.aliyun.com/eci-use-specs: ecs.c6.2xlarge
+    spec:
+      organization: deepmodeling
+      labels:
+        - cpu
+        - self-hosted
+        - linux-x64
+      ephemeral: true
+      image: summerwind/actions-runner@sha256:ac52790f2737b2ef1be90a6708280cf2f0b2cf838f421ee7cce42d7511951976
+      imagePullPolicy: IfNotPresent
+      dockerEnabled: true
+      dockerVolumeMounts:
+        - name: docker-config
+          mountPath: /etc/docker/daemon.json
+          subPath: daemon.json
+        - name: docker-storage
+          mountPath: /var/lib/docker
+      volumes:
+        - name: docker-config
+          configMap:
+            name: docker-daemon-cpu-overlay2
+        - name: docker-storage
+          emptyDir: {}
+      nodeSelector:
+        type: virtual-kubelet
+      tolerations:
+        - key: virtual-kubelet.io/provider
+          operator: Equal
+          value: alibabacloud
+          effect: NoSchedule

@@ -1,0 +1,118 @@
+name: GPU Runner overlay2 smoke test
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: Container image used for the pull and GPU test
+        required: true
+        default: ghcr.io/deepmodeling/abacus-cuda:latest
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: gpu-runner-overlay2-smoke
+  cancel-in-progress: false
+
+jobs:
+  gpu-runner-smoke:
+    name: Validate overlay2, image pull, and GPU
+    runs-on:
+      - self-hosted
+      - gpu
+      - linux-x64
+    timeout-minutes: 30
+    env:
+      TEST_IMAGE: ${{ inputs.image }}
+
+    steps:
+      - name: Verify Docker storage driver
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          driver="$(docker info --format '{{.Driver}}')"
+          docker_root="$(docker info --format '{{.DockerRootDir}}')"
+          driver_status="$(docker info --format '{{json .DriverStatus}}')"
+
+          echo "Docker storage driver: ${driver}"
+          echo "Docker root: ${docker_root}"
+          echo "Driver status: ${driver_status}"
+
+          {
+            echo "## GPU Runner smoke test"
+            echo
+            echo "- Runner: \`${RUNNER_NAME}\`"
+            echo "- Docker driver: \`${driver}\`"
+            echo "- Docker root: \`${docker_root}\`"
+            echo "- Test image: \`${TEST_IMAGE}\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+          if [[ "${driver}" != "overlay2" ]]; then
+            echo "Expected Docker storage driver overlay2, got ${driver}." >&2
+            exit 1
+          fi
+
+      - name: Pull test image and measure cold-pull time
+        id: cold_pull
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          started_at="$(date +%s)"
+          docker pull "${TEST_IMAGE}"
+          finished_at="$(date +%s)"
+          pull_seconds="$((finished_at - started_at))"
+
+          image_size_bytes="$(docker image inspect "${TEST_IMAGE}" --format '{{.Size}}')"
+          image_size_gib="$(awk -v bytes="${image_size_bytes}" 'BEGIN { printf "%.2f", bytes / 1024 / 1024 / 1024 }')"
+
+          echo "seconds=${pull_seconds}" >> "${GITHUB_OUTPUT}"
+          echo "size_gib=${image_size_gib}" >> "${GITHUB_OUTPUT}"
+
+          {
+            echo "- Cold pull: \`${pull_seconds}s\`"
+            echo "- Image size: \`${image_size_gib} GiB\`"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Validate warm-cache pull
+        id: warm_pull
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          started_at="$(date +%s)"
+          docker pull "${TEST_IMAGE}"
+          finished_at="$(date +%s)"
+          pull_seconds="$((finished_at - started_at))"
+
+          echo "seconds=${pull_seconds}" >> "${GITHUB_OUTPUT}"
+          echo "- Warm pull: \`${pull_seconds}s\`" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Run GPU smoke test inside the image
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          docker run --rm --gpus all "${TEST_IMAGE}" nvidia-smi
+          echo "- GPU container test: **passed**" >> "${GITHUB_STEP_SUMMARY}"
+
+      - name: Report Docker disk usage
+        if: always()
+        shell: bash
+        run: |
+          docker system df || true
+          df -h /runner/_work || true
+
+          {
+            echo
+            echo "### Timings"
+            echo
+            echo "| Check | Result |"
+            echo "|---|---:|"
+            echo "| Cold pull | ${{ steps.cold_pull.outputs.seconds || 'failed' }}s |"
+            echo "| Warm pull | ${{ steps.warm_pull.outputs.seconds || 'failed' }}s |"
+            echo "| Image size | ${{ steps.cold_pull.outputs.size_gib || 'unknown' }} GiB |"
+          } >> "${GITHUB_STEP_SUMMARY}"
