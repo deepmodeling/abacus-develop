@@ -1,0 +1,5 @@
+# SCAN-L Laplacian is sensitive to the plane-wave cutoff, requiring
+# relaxed thresholds compared to the default (1e-7/1e-4/1e-3)
+threshold 0.0000003
+force_threshold 0.0005
+stress_threshold 0.02
