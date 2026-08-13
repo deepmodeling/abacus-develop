@@ -6,6 +6,7 @@
 #include <mpi.h>
 
 #include <cstdint>
+#include <mpi.h>
 #include <string>
 #include <vector>
 
@@ -71,6 +72,15 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
     ASSERT_EQ(mdcell.mpi_size(), size);
     if (size == 2)
     {
+        ASSERT_EQ(mdcell.nlocal(), 1);
+        mdcell.mutable_owned_atoms()[0].vel.x = static_cast<double>(rank + 1);
+        mdcell.mutable_owned_atoms()[0].force.y = static_cast<double>(rank + 3);
+        mdcell.migrate_owned_atoms();
+        ASSERT_EQ(mdcell.nlocal(), 1);
+        EXPECT_EQ(mdcell.owned_atoms()[0].owner_rank, rank);
+        EXPECT_EQ(mdcell.owned_atoms()[0].vel.x, static_cast<double>(rank + 1));
+        EXPECT_EQ(mdcell.owned_atoms()[0].force.y, static_cast<double>(rank + 3));
+
         if (rank == 0 && mdcell.nlocal() == 1)
         {
             mdcell.mutable_owned_atoms()[0].cart.x = 0.8;

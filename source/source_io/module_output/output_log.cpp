@@ -293,8 +293,10 @@ void print_force(std::ofstream& ofs, const MDCell& cell, const std::string& name
     };
 
 #ifdef __MPI
-    const int rank = cell.mpi_rank();
-    const int size = cell.mpi_size();
+    int rank = 0;
+    int size = 1;
+    MPI_Comm_rank(cell.communicator(), &rank);
+    MPI_Comm_size(cell.communicator(), &size);
     if (rank != 0)
     {
         const int nlocal = cell.nlocal();

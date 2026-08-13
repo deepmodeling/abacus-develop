@@ -3518,7 +3518,7 @@
 ### md_dumpfreq
 
 - **Type**: Integer
-- **Description**: The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.
+- **Description**: The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output; scalar MD progress remains printed to the terminal and running_md.log every step.
 - **Default**: 1
 
 ### md_out_force

@@ -86,11 +86,10 @@ void md_line(MDCell& mdcell,
                                                      mdrun->frozen_freedom_);
         }
 
+        mdrun->print_md(GlobalV::ofs_running, PARAM.inp.cal_stress);
         if (param_in.mdp.md_dumpfreq > 0
             && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
         {
-            mdrun->print_md(GlobalV::ofs_running, PARAM.inp.cal_stress);
-
             MD_func::dump_info(mdrun->step_ + mdrun->step_rst_,
                                PARAM.globalv.global_out_dir,
                                mdcell,

@@ -11,6 +11,7 @@
 #include <limits>
 #include <map>
 #include <stdexcept>
+#include <utility>
 
 DomainDecomposition::DomainDecomposition()
     : comm_(MPI_COMM_NULL),
@@ -675,66 +676,114 @@ void DomainDecomposition::accumulate_ghost_forces(std::vector<LocalAtom>& owned_
 
 void DomainDecomposition::migrate_owned_atoms(std::vector<LocalAtom>& owned_atoms) const
 {
-    std::vector<std::vector<PackedAtom> > send_atoms(static_cast<std::size_t>(size_));
-    for (std::size_t i = 0; i < owned_atoms.size(); ++i)
+    const int direction_count = 6;
+    const int axis[direction_count] = {0, 0, 1, 1, 2, 2};
+    const int step[direction_count] = {-1, 1, -1, 1, -1, 1};
+    std::array<int, direction_count> neighbors;
+    for (int idir = 0; idir < direction_count; ++idir)
     {
-        LocalAtom atom = owned_atoms[i];
-        atom.frac = wrapped_frac_from_cart(atom.cart);
-        atom.cart = atom.frac * latvec_;
-        atom.owner_rank = owner_rank_from_frac(atom.frac);
-        const std::array<int, 3> no_shift = {{0, 0, 0}};
-        send_atoms[static_cast<std::size_t>(atom.owner_rank)].push_back(pack_atom(atom, no_shift));
+        std::array<int, 3> neighbor_coords = coords_;
+        neighbor_coords[axis[idir]] = positive_mod(neighbor_coords[axis[idir]] + step[idir], dims_[axis[idir]]);
+        neighbors[idir] = rank_from_coords(neighbor_coords);
     }
 
-    std::vector<int> send_counts(static_cast<std::size_t>(size_), 0);
-    std::vector<int> recv_counts(static_cast<std::size_t>(size_), 0);
-    for (int irank = 0; irank < size_; ++irank)
-    {
-        send_counts[static_cast<std::size_t>(irank)]
-            = static_cast<int>(send_atoms[static_cast<std::size_t>(irank)].size() * sizeof(PackedAtom));
-    }
-    MPI_Alltoall(&send_counts[0], 1, MPI_INT, &recv_counts[0], 1, MPI_INT, comm_);
+    std::vector<LocalAtom> pending_atoms;
+    pending_atoms.swap(owned_atoms);
+    std::vector<LocalAtom> retained_atoms;
+    retained_atoms.reserve(pending_atoms.size());
+    const std::array<int, 3> no_shift = {{0, 0, 0}};
 
-    std::vector<int> send_displs(static_cast<std::size_t>(size_), 0);
-    std::vector<int> recv_displs(static_cast<std::size_t>(size_), 0);
-    int total_send_bytes = 0;
-    int total_recv_bytes = 0;
-    for (int irank = 0; irank < size_; ++irank)
+    long long global_outgoing = 0;
+    do
     {
-        send_displs[static_cast<std::size_t>(irank)] = total_send_bytes;
-        recv_displs[static_cast<std::size_t>(irank)] = total_recv_bytes;
-        total_send_bytes += send_counts[static_cast<std::size_t>(irank)];
-        total_recv_bytes += recv_counts[static_cast<std::size_t>(irank)];
-    }
-
-    std::vector<PackedAtom> send_buffer(static_cast<std::size_t>(total_send_bytes / static_cast<int>(sizeof(PackedAtom))));
-    int send_index = 0;
-    for (int irank = 0; irank < size_; ++irank)
-    {
-        const std::vector<PackedAtom>& atoms = send_atoms[static_cast<std::size_t>(irank)];
-        for (std::size_t i = 0; i < atoms.size(); ++i)
+        std::array<std::vector<PackedAtom>, direction_count> send_atoms;
+        for (std::size_t i = 0; i < pending_atoms.size(); ++i)
         {
-            send_buffer[static_cast<std::size_t>(send_index++)] = atoms[i];
+            LocalAtom atom = std::move(pending_atoms[i]);
+            atom.frac = wrapped_frac_from_cart(atom.cart);
+            atom.cart = atom.frac * latvec_;
+
+            std::array<int, 3> owner_coords;
+            const double frac[3] = {atom.frac.x, atom.frac.y, atom.frac.z};
+            for (int idim = 0; idim < 3; ++idim)
+            {
+                owner_coords[idim] = std::min(static_cast<int>(std::floor(frac[idim] * dims_[idim])), dims_[idim] - 1);
+            }
+            atom.owner_rank = rank_from_coords(owner_coords);
+            if (atom.owner_rank == rank_)
+            {
+                retained_atoms.push_back(std::move(atom));
+                continue;
+            }
+
+            int direction = -1;
+            for (int idim = 0; idim < 3 && direction < 0; ++idim)
+            {
+                int delta = owner_coords[idim] - coords_[idim];
+                if (delta > dims_[idim] / 2) delta -= dims_[idim];
+                if (delta < -dims_[idim] / 2) delta += dims_[idim];
+                if (delta != 0) direction = 2 * idim + (delta > 0 ? 1 : 0);
+            }
+            assert(direction >= 0);
+            send_atoms[direction].push_back(pack_atom(atom, no_shift));
         }
-    }
+        pending_atoms.clear();
 
-    std::vector<PackedAtom> recv_buffer(static_cast<std::size_t>(total_recv_bytes / static_cast<int>(sizeof(PackedAtom))));
-    MPI_Alltoallv(total_send_bytes > 0 ? reinterpret_cast<const char*>(&send_buffer[0]) : 0,
-                  &send_counts[0],
-                  &send_displs[0],
-                  MPI_BYTE,
-                  total_recv_bytes > 0 ? reinterpret_cast<char*>(&recv_buffer[0]) : 0,
-                  &recv_counts[0],
-                  &recv_displs[0],
-                  MPI_BYTE,
-                  comm_);
+        std::array<int, direction_count> send_counts;
+        std::array<int, direction_count> recv_counts;
+        long long local_outgoing = 0;
+        for (int idir = 0; idir < direction_count; ++idir)
+        {
+            const std::size_t bytes = send_atoms[idir].size() * sizeof(PackedAtom);
+            if (bytes > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+            {
+                throw std::overflow_error("DomainDecomposition migration send count exceeds int range.");
+            }
+            send_counts[idir] = static_cast<int>(bytes);
+            local_outgoing += static_cast<long long>(send_atoms[idir].size());
+        }
+        MPI_Allreduce(&local_outgoing, &global_outgoing, 1, MPI_LONG_LONG, MPI_SUM, comm_);
+        if (global_outgoing == 0) break;
 
-    owned_atoms.clear();
-    owned_atoms.reserve(recv_buffer.size());
-    for (std::size_t i = 0; i < recv_buffer.size(); ++i)
-    {
-        owned_atoms.push_back(unpack_owned_atom(recv_buffer[i]));
-    }
+        std::array<MPI_Request, 2 * direction_count> requests;
+        for (int idir = 0; idir < direction_count; ++idir)
+        {
+            const int opposite = idir ^ 1;
+            MPI_Irecv(&recv_counts[idir], 1, MPI_INT, neighbors[idir], 100 + opposite, comm_, &requests[idir]);
+            MPI_Isend(&send_counts[idir], 1, MPI_INT, neighbors[idir], 100 + idir, comm_, &requests[direction_count + idir]);
+        }
+        MPI_Waitall(2 * direction_count, &requests[0], MPI_STATUSES_IGNORE);
+
+        std::array<std::vector<PackedAtom>, direction_count> recv_atoms;
+        for (int idir = 0; idir < direction_count; ++idir)
+        {
+            if (recv_counts[idir] < 0 || recv_counts[idir] % static_cast<int>(sizeof(PackedAtom)) != 0)
+            {
+                throw std::runtime_error("Invalid DomainDecomposition migration receive count.");
+            }
+            recv_atoms[idir].resize(static_cast<std::size_t>(recv_counts[idir] / static_cast<int>(sizeof(PackedAtom))));
+        }
+
+        for (int idir = 0; idir < direction_count; ++idir)
+        {
+            const int opposite = idir ^ 1;
+            MPI_Irecv(recv_atoms[idir].empty() ? NULL : reinterpret_cast<char*>(&recv_atoms[idir][0]),
+                      recv_counts[idir], MPI_BYTE, neighbors[idir], 200 + opposite, comm_, &requests[idir]);
+            MPI_Isend(send_atoms[idir].empty() ? NULL : reinterpret_cast<const char*>(&send_atoms[idir][0]),
+                      send_counts[idir], MPI_BYTE, neighbors[idir], 200 + idir, comm_, &requests[direction_count + idir]);
+        }
+        MPI_Waitall(2 * direction_count, &requests[0], MPI_STATUSES_IGNORE);
+
+        for (int idir = 0; idir < direction_count; ++idir)
+        {
+            for (std::size_t i = 0; i < recv_atoms[idir].size(); ++i)
+            {
+                pending_atoms.push_back(unpack_owned_atom(recv_atoms[idir][i]));
+            }
+        }
+    } while (global_outgoing > 0);
+
+    owned_atoms.swap(retained_atoms);
 }
 
 #endif // __MPI

@@ -1465,7 +1465,7 @@ parameters:
     category: Molecular dynamics
     type: Integer
     description: |
-      The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.
+      The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output; scalar MD progress remains printed to the terminal and running_md.log every step.
     default_value: "1"
     unit: ""
     availability: ""
