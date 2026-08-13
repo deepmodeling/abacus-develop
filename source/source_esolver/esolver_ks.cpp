@@ -19,12 +19,7 @@
 namespace ModuleESolver
 {
 
-ESolver_KS::ESolver_KS()
-{
-    // ESolver owns its own Exx_Info object, initialized directly from input
-    // parameters. This breaks the dependency on any global Exx_Info instance.
-    init_exx_info(exx_info_obj_, PARAM.inp);
-}
+ESolver_KS::ESolver_KS() {}
 
 
 ESolver_KS::~ESolver_KS()
@@ -50,8 +45,11 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     //! 1) setup "before_all_runniers" in ESolver_FP
     ESolver_FP::before_all_runners(ucell, inp);
-    
-    //! 2) setup some parameters
+
+    //! 2) initialize Exx_Info from input parameters
+    init_exx_info(exx_info_obj_, inp);
+
+    //! 3) setup some parameters
     classname = "ESolver_KS";
     basisname = "";
 
