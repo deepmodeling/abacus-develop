@@ -48,7 +48,6 @@ public:
     int mpi_size() const;
     MPI_Comm communicator() const { return comm_; }
 
-    const DomainDecomposition& decomposition() const;
 #endif
 
     void exchange_ghost_atoms();
@@ -64,14 +63,10 @@ public:
     const std::vector<std::int64_t>& type_atom_counts() const { return type_atom_counts_; }
     std::vector<LocalAtom>& mutable_owned_atoms();
     std::vector<LocalAtom>& mutable_ghost_atoms();
-    void replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned_atoms);
 
     int nlocal() const { return static_cast<int>(owned_atoms_.size()); }
     int nghost() const { return static_cast<int>(ghost_atoms_.size()); }
-    bool init_vel() const;
-    void set_init_vel(bool init_vel);
     double cutoff() const;
-    double skin() const;
     bool has_backing_unitcell() const;
     UnitCell& backing_unitcell();
     const UnitCell& backing_unitcell() const;
@@ -108,7 +103,6 @@ private:
     std::vector<std::string> type_labels_;
     std::vector<double> type_masses_;
     std::vector<std::int64_t> type_atom_counts_;
-    bool init_vel_ = false;
     double cutoff_ = 0.0;
     double skin_ = 0.0;
     UnitCell* backing_unitcell_ = nullptr;

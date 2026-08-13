@@ -48,6 +48,7 @@ void init_vel(const UnitCell& unit_in,
               ModuleBase::Vector3<int>* ionmbl,
               ModuleBase::Vector3<double>* vel);
 void init_vel(MDCell& mdcell,
+              const bool& init_vel,
               const bool& restart,
               double& temperature,
               std::int64_t& frozen_freedom);

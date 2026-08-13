@@ -23,8 +23,6 @@ void md_line(MDCell& mdcell,
 {
     ModuleBase::TITLE("Run_MD", "md_line");
     ModuleBase::timer::start("Run_MD", "md_line");
-    mdcell.set_init_vel(param_in.inp.init_vel);
-
     /// determine the md_type
     MD_base* mdrun = nullptr;
     if (param_in.mdp.md_type == "fire")

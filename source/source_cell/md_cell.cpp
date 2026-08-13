@@ -93,7 +93,6 @@ void MDCell::initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutof
         type_masses_[static_cast<std::size_t>(it)] = ucell.atoms[it].mass;
         type_atom_counts_[static_cast<std::size_t>(it)] = ucell.atoms[it].na;
     }
-    init_vel_ = ucell.init_vel;
     comm_ = comm;
     cutoff_ = cutoff;
     skin_ = skin;
@@ -138,7 +137,6 @@ void MDCell::initialize_from_ucell_(UnitCell& ucell, double cutoff, double skin)
         type_masses_[static_cast<std::size_t>(it)] = ucell.atoms[it].mass;
         type_atom_counts_[static_cast<std::size_t>(it)] = ucell.atoms[it].na;
     }
-    init_vel_ = ucell.init_vel;
     cutoff_ = cutoff;
     skin_ = skin;
     owned_atoms_.clear();
@@ -156,8 +154,7 @@ void MDCell::initialize_from_ucell_(UnitCell& ucell, double cutoff, double skin)
                                              ucell.atoms[it].mass / ModuleBase::AU_to_MASS,
                                              it,
                                              ia,
-                                             0,
-                                             false));
+                                             0));
         }
     }
     exchange_ghost_atoms();
@@ -208,7 +205,6 @@ MDCell::MDCell(const ModuleBase::Matrix3& latvec,
     type_labels_ = type_labels;
     type_masses_ = type_masses;
     type_atom_counts_ = type_atom_counts;
-    init_vel_ = true;
 #ifdef __MPI
     initialize_from_owned_atoms_(communication_domain.communicator(), cutoff, skin);
 #else
@@ -228,10 +224,6 @@ int MDCell::mpi_size() const
     return size_;
 }
 
-const DomainDecomposition& MDCell::decomposition() const
-{
-    return decomp_;
-}
 #endif
 
 void MDCell::exchange_ghost_atoms()
@@ -291,7 +283,6 @@ void MDCell::exchange_ghost_atoms()
                                                                      image.frac.z + iz);
                     image.cart = shifted_frac * latvec_;
                     image.force.set(0.0, 0.0, 0.0);
-                    image.is_ghost = true;
                     ghost_atoms_.push_back(image);
                 }
             }
@@ -336,7 +327,6 @@ void MDCell::migrate_owned_atoms()
         atom.frac.z = wrap_fractional_(atom.frac.z);
         atom.cart = atom.frac * latvec_;
     }
-    sync_backing_unitcell_owned_atoms_();
     exchange_ghost_atoms();
 }
 
@@ -385,31 +375,9 @@ std::vector<LocalAtom>& MDCell::mutable_ghost_atoms()
     return ghost_atoms_;
 }
 
-void MDCell::replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned_atoms)
-{
-    owned_atoms_ = owned_atoms;
-    clear_forces_(owned_atoms_);
-    exchange_ghost_atoms();
-}
-
-bool MDCell::init_vel() const
-{
-    return init_vel_;
-}
-
-void MDCell::set_init_vel(bool init_vel)
-{
-    init_vel_ = init_vel;
-}
-
 double MDCell::cutoff() const
 {
     return cutoff_;
-}
-
-double MDCell::skin() const
-{
-    return skin_;
 }
 
 bool MDCell::has_backing_unitcell() const

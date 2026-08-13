@@ -323,8 +323,7 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
                                                              static_cast<int>(it),
                                                              ((static_cast<std::int64_t>(ix) * cell_replica[1] + iy)
                                                                   * cell_replica[2] + iz) * nat_type + ia,
-                                                             owner,
-                                                             false));
+                                                             owner));
                         }
                     }
                 }

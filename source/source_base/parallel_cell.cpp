@@ -12,7 +12,6 @@ CommunicationDomain::CommunicationDomain(MPI_Comm communicator) : communicator_(
     if (communicator_ != MPI_COMM_NULL)
     {
         MPI_Comm_rank(communicator_, &rank_);
-        MPI_Comm_size(communicator_, &size_);
     }
 }
 
@@ -25,11 +24,6 @@ MPI_Comm CommunicationDomain::communicator() const
 int CommunicationDomain::rank() const
 {
     return rank_;
-}
-
-int CommunicationDomain::size() const
-{
-    return size_;
 }
 
 CommunicationDomain world_communication_domain()

@@ -289,6 +289,7 @@ void init_vel(const UnitCell& unit_in,
 }
 
 void init_vel(MDCell& mdcell,
+              const bool& init_vel,
               const bool& restart,
               double& temperature,
               std::int64_t& frozen_freedom)
@@ -307,7 +308,7 @@ void init_vel(MDCell& mdcell,
     if (!frozen.x) ++frozen_freedom;
     if (!frozen.y) ++frozen_freedom;
     if (!frozen.z) ++frozen_freedom;
-    if (mdcell.init_vel())
+    if (init_vel)
     {
         double kinetic = 0.0;
         const double current = current_temp(kinetic, mdcell, frozen_freedom);

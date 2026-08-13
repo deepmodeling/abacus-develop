@@ -169,8 +169,7 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
                                         1.0,
                                         1,
                                         1,
-                                        rank,
-                                        false));
+                                        rank));
     }
     if (rank == 1)
     {
@@ -182,8 +181,7 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
                                         1.0,
                                         0,
                                         1,
-                                        rank,
-                                        false));
+                                        rank));
     }
     if (rank == 2)
     {
@@ -195,8 +193,7 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
                                         1.0,
                                         1,
                                         0,
-                                        rank,
-                                        false));
+                                        rank));
     }
     if (rank == 3)
     {
@@ -208,8 +205,7 @@ TEST(DistributedMDCellReaderTest, RestartStruPreservesAtomRecordsAcrossRanks)
                                         1.0,
                                         0,
                                         0,
-                                        rank,
-                                        false));
+                                        rank));
     }
 
     ModuleBase::Matrix3 lattice = make_lattice();

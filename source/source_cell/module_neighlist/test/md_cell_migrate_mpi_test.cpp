@@ -53,8 +53,7 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
                                         1.0,
                                         0,
                                         rank,
-                                        rank,
-                                        false));
+                                        rank));
     }
     MDCell mdcell(latvec,
                   latvec.Inverse(),

@@ -25,7 +25,6 @@ struct LocalAtom
     int type;
     std::int64_t type_index;
     int owner_rank;
-    bool is_ghost;
 
     LocalAtom()
         : cart(0.0, 0.0, 0.0),
@@ -36,8 +35,7 @@ struct LocalAtom
           mass(1.0),
           type(0),
           type_index(0),
-          owner_rank(0),
-          is_ghost(false)
+          owner_rank(0)
     {
     }
 
@@ -49,8 +47,7 @@ struct LocalAtom
               double mass_in,
               int type_in,
               std::int64_t type_index_in,
-              int owner_rank_in,
-              bool is_ghost_in)
+              int owner_rank_in)
         : cart(cart_in),
           frac(frac_in),
           vel(vel_in),
@@ -59,8 +56,7 @@ struct LocalAtom
           mass(mass_in),
           type(type_in),
           type_index(type_index_in),
-          owner_rank(owner_rank_in),
-          is_ghost(is_ghost_in)
+          owner_rank(owner_rank_in)
     {
     }
 };

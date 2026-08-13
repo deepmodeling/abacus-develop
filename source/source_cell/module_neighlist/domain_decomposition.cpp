@@ -279,8 +279,7 @@ void DomainDecomposition::split_owned_atoms_from_ucell(const UnitCell& ucell,
                                                     ucell.atoms[it].mass / ModuleBase::AU_to_MASS,
                                                     it,
                                                     ia,
-                                                    owner,
-                                                    false));
+                                                    owner));
                 }
         }
     }
@@ -409,8 +408,7 @@ LocalAtom DomainDecomposition::unpack_ghost_atom(const PackedAtom& packed) const
                      packed.mass,
                      packed.type,
                      packed.type_index,
-                     packed.owner_rank,
-                     true);
+                     packed.owner_rank);
 }
 
 LocalAtom DomainDecomposition::unpack_owned_atom(const PackedAtom& packed) const
@@ -428,8 +426,7 @@ LocalAtom DomainDecomposition::unpack_owned_atom(const PackedAtom& packed) const
                      packed.mass,
                      packed.type,
                      packed.type_index,
-                     packed.owner_rank,
-                     false);
+                     packed.owner_rank);
 }
 
 void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& owned_atoms,
@@ -685,7 +682,6 @@ void DomainDecomposition::migrate_owned_atoms(std::vector<LocalAtom>& owned_atom
         atom.frac = wrapped_frac_from_cart(atom.cart);
         atom.cart = atom.frac * latvec_;
         atom.owner_rank = owner_rank_from_frac(atom.frac);
-        atom.is_ghost = false;
         const std::array<int, 3> no_shift = {{0, 0, 0}};
         send_atoms[static_cast<std::size_t>(atom.owner_rank)].push_back(pack_atom(atom, no_shift));
     }

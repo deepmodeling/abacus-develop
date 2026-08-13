@@ -35,7 +35,7 @@ MD_base::MD_base(const Parameter& param_in, MDCell& mdcell_in)
     step_ = 0;
     step_rst_ = 0;
 
-    MD_func::init_vel(mdcell, mdp.md_restart, md_tfirst, frozen_freedom_);
+    MD_func::init_vel(mdcell, param_in.inp.init_vel, mdp.md_restart, md_tfirst, frozen_freedom_);
     t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 }
 
