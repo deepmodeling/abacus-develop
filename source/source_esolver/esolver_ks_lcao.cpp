@@ -55,13 +55,13 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
     ModuleBase::TITLE("ESolver_KS_LCAO", "before_all_runners");
     ModuleBase::timer::start("ESolver_KS_LCAO", "before_all_runners");
 
-    // 0) init EXX - moved from constructor to ensure exx_info_.info_global is already set
-    this->exx_nao.init(ucell, this->exx_info_);
-
-    // 1) before_all_runners in ESolver_KS
+    // 1) before_all_runners in ESolver_KS (includes init_exx_info)
     ESolver_KS::before_all_runners(ucell, inp);
 
-    // 2) autoset nbands in ElecState before init_basis (for Psi 2d division)
+    // 2) init EXX - must be after ESolver_KS::before_all_runners to ensure exx_info_ is initialized
+    this->exx_nao.init(ucell, this->exx_info_);
+
+    // 3) autoset nbands in ElecState before init_basis (for Psi 2d division)
     if (this->pelec == nullptr)
     {
         // TK stands for double and std::complex<double>?
@@ -69,11 +69,11 @@ void ESolver_KS_LCAO<TK, TR>::before_all_runners(BaseCell& basecell, const Input
           this->kv.get_nks(), this->pw_big);
     }
 
-    // 3) read LCAO orbitals/projectors and construct the interpolation tables.
+    // 4) read LCAO orbitals/projectors and construct the interpolation tables.
     LCAO_domain::init_basis_lcao(this->pv, inp.onsite_radius, inp.lcao_ecut,
       inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax, ucell, two_center_bundle_, orb_);
 
-    // 4) setup EXX calculations
+    // 5) setup EXX calculations
     if (inp.calculation == "gen_opt_abfs")
     {
 #ifdef __EXX
