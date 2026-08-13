@@ -68,23 +68,30 @@ ModuleBase::matrix cal_pulay_fs(
     ModuleBase::matrix force(ucell.nat, 3);
     ModuleBase::matrix stress_tmp(3, 3);
 
-    const int nspin = dm.get_DMR_vector().size();
+    // The LR kernel yields a single potential channel, so the grid integrals run with
+    // nspin=1 on the first density-matrix channel -- the same thing the old
+    // `Gint_inout(is=0, ...)` calls did. `dm` may still carry two channels (the
+    // `test_force` path feeds in the ground-state DM and doubles the result afterwards);
+    // ModuleGint reads only the leading `nspin` entries of `dm_vec`, but `vr_eff` is
+    // indexed up to `nspin`, so passing the DM's spin count here would read past
+    // `p_vr_hxc` and segfault.
+    constexpr int nspin_gint = 1;
 
     // 1. dm->rho
     double** rho;
     const int& nrxx = pot->nrxx;
-    LR_Util::_allocate_2order_nested_ptr(rho, nspin, nrxx);
+    LR_Util::_allocate_2order_nested_ptr(rho, nspin_gint, nrxx);
     ModuleBase::GlobalFunc::ZEROS(rho[0], nrxx);
-    ModuleGint::cal_gint_rho(dm.get_DMR_vector(), 1, rho, false);
+    ModuleGint::cal_gint_rho(dm.get_DMR_vector(), nspin_gint, rho, false);
 
     // 2. v_hxc = f_hxc * rho
     ModuleBase::matrix vr_hxc(1, nrxx);   //grid
     pot->cal_v_eff(rho, ucell, vr_hxc);
-    LR_Util::_deallocate_2order_nested_ptr(rho, 1);
+    LR_Util::_deallocate_2order_nested_ptr(rho, nspin_gint);
 
     // 3. v(r) -> force
-    const std::vector<const double*> p_vr_hxc(1, &vr_hxc(0, 0));
-    ModuleGint::cal_gint_fvl(nspin, p_vr_hxc, dm.get_DMR_vector(), /*isforce=*/true, /*isstress=*/false, &force, &stress_tmp);
+    const std::vector<const double*> p_vr_hxc(nspin_gint, &vr_hxc(0, 0));
+    ModuleGint::cal_gint_fvl(nspin_gint, p_vr_hxc, dm.get_DMR_vector(), /*isforce=*/true, /*isstress=*/false, &force, &stress_tmp);
     return force;
 }
 }
