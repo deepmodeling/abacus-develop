@@ -49,7 +49,7 @@ parameters:
       * path:UNIX, for example /tmp/ipi_abacus_si:UNIX, opens a Unix-domain socket at the given filesystem path. The :UNIX suffix tells ABACUS that the preceding value is a local socket path rather than a TCP host name. This form only works on the same machine.
       When using the ASE AbacusSocketIO interface, this environment variable is set automatically from the port or unixsocket calculator argument.
 
-      Socket mode always computes energy. Force and stress extraction follows cal_force and cal_stress independently; disabled properties are sent as protocol padding and marked absent in the i-PI extras metadata, not reported as physical zero values. A non-converged SCF step is returned with scf_converged=false metadata so an external driver can choose its policy.
+      Socket mode always computes energy. Force and stress extraction follows cal_force and cal_stress independently; disabled properties are sent as protocol padding and marked absent in the ABACUS i-PI extras metadata, not reported as physical zero values. This metadata extension is required for safe optional-property handling: a legacy response with empty extras is accepted only for energy-only use, while a generic client that ignores extras cannot distinguish padding from a computed zero. A non-converged SCF step is returned with scf_converged=false metadata so an external driver can choose its policy.
     default_value: "False"
     unit: ""
     availability: ""

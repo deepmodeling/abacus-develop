@@ -604,7 +604,7 @@
   - host:port, for example localhost:31415 or 127.0.0.1:31415, opens a TCP connection to that host and port. Use this when the i-PI server listens on a TCP port.
   - path:UNIX, for example /tmp/ipi_abacus_si:UNIX, opens a Unix-domain socket at the given filesystem path. The :UNIX suffix tells ABACUS that the preceding value is a local socket path rather than a TCP host name. This form only works on the same machine.
   When using the ASE AbacusSocketIO interface, this environment variable is set automatically from the port or unixsocket calculator argument.
-- Socket mode always computes energy. Force and stress extraction follow `cal_force` and `cal_stress` independently. A disabled property is sent only as fixed-protocol padding and is marked absent in i-PI extras metadata, so a client must not interpret that padding as a physical zero. If SCF does not converge, ABACUS returns the available frame with `scf_converged=false` metadata; the external optimizer or integrator decides whether to accept it.
+- Socket mode always computes energy. Force and stress extraction follow `cal_force` and `cal_stress` independently. A disabled property is sent only as fixed-protocol padding and is marked absent in the ABACUS i-PI extras metadata, so a client must not interpret that padding as a physical zero. The metadata extension is required for safe force/stress handling; a legacy empty-extras response is accepted only for energy-only use, and a generic client that ignores extras cannot distinguish padding from a computed zero. If SCF does not converge, ABACUS returns the available frame with `scf_converged=false` metadata; the external optimizer or integrator decides whether to accept it.
 - **Default**: False
 
 ### esolver_type

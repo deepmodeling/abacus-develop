@@ -226,6 +226,7 @@ class FakeESolver : public ModuleESolver::ESolver
     void cal_force(BaseCell& cell, ModuleBase::matrix& force) override
     {
         force.create(cell.nat(), 3);
+        force(0, 0) = 4.0;
     }
 
     void cal_stress(BaseCell&, ModuleBase::matrix& stress) override
@@ -533,7 +534,7 @@ TEST(SocketDriverTest, EnergyAndForceFrameAdvertisesOnlyForce)
     EXPECT_THAT(response.extra, testing::HasSubstr("\"present\":[\"energy\",\"forces\"]"));
     EXPECT_THAT(response.extra, testing::Not(testing::HasSubstr("\"stress\"")));
     EXPECT_THAT(response.forces_hartree_per_bohr,
-                testing::ElementsAre(0.0, 0.0, 0.0));
+                testing::ElementsAre(2.0, 0.0, 0.0));
     EXPECT_THAT(response.virial_wire_hartree,
                 testing::ElementsAre(0.0, 0.0, 0.0,
                                      0.0, 0.0, 0.0,
@@ -555,6 +556,7 @@ TEST(SocketDriverTest, EnergyForceAndStressFrameAdvertisesBothDerivatives)
     EXPECT_THAT(response.extra,
                 testing::HasSubstr("\"present\":[\"energy\",\"forces\",\"stress\"]"));
     EXPECT_EQ(3u, response.forces_hartree_per_bohr.size());
-    EXPECT_TRUE(std::isfinite(response.forces_hartree_per_bohr[0]));
+    EXPECT_THAT(response.forces_hartree_per_bohr,
+                testing::ElementsAre(2.0, 0.0, 0.0));
     EXPECT_NE(0.0, response.virial_wire_hartree[0]);
 }
