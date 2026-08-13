@@ -26,36 +26,36 @@
 namespace ModuleESolver
 {
 
-std::string determine_type()
+std::string determine_type(const Input_para& inp)
 {
     std::string esolver_type = "none";
-    if (PARAM.inp.basis_type == "pw")
+    if (inp.basis_type == "pw")
     {
-        if (PARAM.inp.esolver_type == "sdft")
+        if (inp.esolver_type == "sdft")
         {
             esolver_type = "sdft_pw";
         }
-        else if (PARAM.inp.esolver_type == "ofdft")
+        else if (inp.esolver_type == "ofdft")
         {
             esolver_type = "ofdft";
         }
-        else if (PARAM.inp.esolver_type == "tdofdft")
+        else if (inp.esolver_type == "tdofdft")
         {
             esolver_type = "tdofdft";
         }
-        else if (PARAM.inp.esolver_type == "ksdft")
+        else if (inp.esolver_type == "ksdft")
         {
             esolver_type = "ksdft_pw";
         }
     }
-    else if (PARAM.inp.basis_type == "lcao_in_pw")
+    else if (inp.basis_type == "lcao_in_pw")
     {
 #ifdef __LCAO
-        if (PARAM.inp.esolver_type == "sdft")
+        if (inp.esolver_type == "sdft")
         {
             esolver_type = "sdft_pw";
         }
-        else if (PARAM.inp.esolver_type == "ksdft")
+        else if (inp.esolver_type == "ksdft")
         {
             esolver_type = "ksdft_lip";
         }
@@ -63,22 +63,22 @@ std::string determine_type()
         ModuleBase::WARNING_QUIT("ESolver", "Calculation involving numerical orbitals must be compiled with __LCAO");
 #endif
     }
-    else if (PARAM.inp.basis_type == "lcao")
+    else if (inp.basis_type == "lcao")
     {
 #ifdef __LCAO
-        if (PARAM.inp.esolver_type == "tddft")
+        if (inp.esolver_type == "tddft")
         {
             esolver_type = "ksdft_lcao_tddft";
         }
-        else if (PARAM.inp.esolver_type == "ksdft")
+        else if (inp.esolver_type == "ksdft")
         {
             esolver_type = "ksdft_lcao";
         }
-        else if (PARAM.inp.esolver_type == "ks-lr")
+        else if (inp.esolver_type == "ks-lr")
         {
             esolver_type = "ksdft_lr_lcao";
         }
-        else if (PARAM.inp.esolver_type == "lr")
+        else if (inp.esolver_type == "lr")
         {
             esolver_type = "lr_lcao";
         }
@@ -87,15 +87,15 @@ std::string determine_type()
 #endif
     }
 
-    if (PARAM.inp.esolver_type == "lj")
+    if (inp.esolver_type == "lj")
     {
         esolver_type = "lj_pot";
     }
-    else if (PARAM.inp.esolver_type == "dp")
+    else if (inp.esolver_type == "dp")
     {
         esolver_type = "dp_pot";
     }
-    else if (PARAM.inp.esolver_type == "nep")
+    else if (inp.esolver_type == "nep")
     {
         esolver_type = "nep_pot";
     }
@@ -106,7 +106,7 @@ std::string determine_type()
 
     GlobalV::ofs_running << "\n #ENERGY SOLVER# " << esolver_type << std::endl;
 
-    auto device_info = PARAM.inp.device;
+    auto device_info = inp.device;
 
     for (char& c: device_info)
     {
@@ -115,8 +115,8 @@ std::string determine_type()
             c = std::toupper(c);
         }
     }
-    base_device::information::output_device_info(std::cout, PARAM.inp.device);
-    base_device::information::output_device_info(GlobalV::ofs_running, PARAM.inp.device);
+    base_device::information::output_device_info(std::cout, inp.device);
+    base_device::information::output_device_info(GlobalV::ofs_running, inp.device);
     /***auto end_time = std::chrono::high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::duration<double>>(end_time - start_time);
     std::cout << "hipGetDeviceInfo took " << duration.count() << " seconds" << std::endl;***/
@@ -127,15 +127,15 @@ std::string determine_type()
 ESolver* init_esolver(const Input_para& inp)
 {
     // determine type of esolver based on INPUT information
-    const std::string esolver_type = determine_type();
+    const std::string esolver_type = determine_type(inp);
 
     // initialize the corresponding Esolver child class
     if (esolver_type == "ksdft_pw")
     {
 #if ((defined __CUDA) || (defined __ROCM))
-        if (PARAM.inp.device == "gpu")
+        if (inp.device == "gpu")
         {
-            if (PARAM.inp.precision == "single")
+            if (inp.precision == "single")
             {
                 return new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_GPU>();
             }
@@ -145,7 +145,7 @@ ESolver* init_esolver(const Input_para& inp)
             }
         }
 #endif
-        if (PARAM.inp.precision == "single")
+        if (inp.precision == "single")
         {
             return new ESolver_KS_PW<std::complex<float>, base_device::DEVICE_CPU>();
         }
@@ -157,9 +157,9 @@ ESolver* init_esolver(const Input_para& inp)
     else if (esolver_type == "sdft_pw")
     {
 #if ((defined __CUDA) || (defined __ROCM))
-        if (PARAM.inp.device == "gpu")
+        if (inp.device == "gpu")
         {
-            // if (PARAM.inp.precision == "single")
+            // if (inp.precision == "single")
             // {
             //     return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_GPU>();
             // }
@@ -169,7 +169,7 @@ ESolver* init_esolver(const Input_para& inp)
             // }
         }
 #endif
-        // if (PARAM.inp.precision == "single")
+        // if (inp.precision == "single")
         // {
         // 	return new ESolver_SDFT_PW<std::complex<float>, base_device::DEVICE_CPU>();
         // }
@@ -181,7 +181,7 @@ ESolver* init_esolver(const Input_para& inp)
 #ifdef __LCAO
     else if (esolver_type == "ksdft_lip")
     {
-        if (PARAM.inp.precision == "single")
+        if (inp.precision == "single")
         {
             return new ESolver_KS_LIP<std::complex<float>>();
         }
@@ -192,7 +192,7 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "ksdft_lcao")
     {
-        if (PARAM.inp.calculation == "get_s")
+        if (inp.calculation == "get_s")
         {
             if (PARAM.globalv.gamma_only_local)
             {
@@ -203,13 +203,13 @@ ESolver* init_esolver(const Input_para& inp)
                 return new ESolver_GetS();
             }
         }
-        else if (PARAM.inp.deepks_out_base != "none")
+        else if (inp.deepks_out_base != "none")
         {
             if (PARAM.globalv.gamma_only_local)
             {
                 return new ESolver_DoubleXC<double, double>();
             }
-            else if (PARAM.inp.nspin < 4)
+            else if (inp.nspin < 4)
             {
                 return new ESolver_DoubleXC<std::complex<double>, double>();
             }
@@ -218,13 +218,13 @@ ESolver* init_esolver(const Input_para& inp)
                 return new ESolver_DoubleXC<std::complex<double>, std::complex<double>>();
             }
         }
-        else if (PARAM.inp.dm_to_rho)
+        else if (inp.dm_to_rho)
         {
             if (PARAM.globalv.gamma_only_local)
             {
                 ModuleBase::WARNING_QUIT("ESolver", "dm_to_rho is not implemented for gamma_only");
             }
-            else if (PARAM.inp.nspin < 4)
+            else if (inp.nspin < 4)
             {
                 return new ESolver_DM2rho<std::complex<double>, double>();
             }
@@ -239,7 +239,7 @@ ESolver* init_esolver(const Input_para& inp)
             {
                 return new ESolver_KS_LCAO<double, double>();
             }
-            else if (PARAM.inp.nspin < 4)
+            else if (inp.nspin < 4)
             {
                 return new ESolver_KS_LCAO<std::complex<double>, double>();
             }
@@ -251,10 +251,10 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "ksdft_lcao_tddft")
     {
-        if (PARAM.inp.nspin < 4)
+        if (inp.nspin < 4)
         {
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-            if (PARAM.inp.device == "gpu")
+            if (inp.device == "gpu")
             {
                 return new ESolver_KS_LCAO_TDDFT<double, base_device::DEVICE_GPU>();
             }
@@ -264,7 +264,7 @@ ESolver* init_esolver(const Input_para& inp)
         else
         {
 #if ((defined __CUDA) /* || (defined __ROCM) */)
-            if (PARAM.inp.device == "gpu")
+            if (inp.device == "gpu")
             {
                 return new ESolver_KS_LCAO_TDDFT<std::complex<double>, base_device::DEVICE_GPU>();
             }

@@ -139,13 +139,13 @@ namespace ModuleESolver
         hsolver::DiagoIterAssist<T>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
         hsolver::DiagoIterAssist<T>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T>::PW_DIAG_THR = ethr;
-        hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
-        bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
+        hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = this->inp_->pw_diag_nmax;
+        bool skip_charge = this->inp_->calculation == "nscf" ? true : false;
 
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc,
                                                PARAM.globalv.use_uspp,
-                                               PARAM.inp.basis_type,
-                                               PARAM.inp.calculation);
+                                               this->inp_->basis_type,
+                                               this->inp_->calculation);
         hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec,
           *this->psi_local, skip_charge,ucell.tpiba,ucell.nat, this->general_exx_info_);
 
@@ -159,7 +159,7 @@ namespace ModuleESolver
         }
 #endif
 
-        Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rhod, ucell.symm);
+        Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
 
         // deband is calculated from "output" charge density calculated
         // in sum_band
@@ -239,7 +239,7 @@ namespace ModuleESolver
         ESolver_KS_PW<T>::after_all_runners(basecell);
 
 #ifdef __LCAO
-        if (PARAM.inp.out_mat_xc)
+        if (this->inp_->out_mat_xc)
         {
 #ifdef __EXX
             bool cal_exx = this->general_exx_info_.cal_exx;
@@ -248,7 +248,7 @@ namespace ModuleESolver
             bool cal_exx = false;
             double hybrid_alpha = 0.0;
 #endif
-            ModuleIO::write_Vxc(PARAM.inp.nspin,
+            ModuleIO::write_Vxc(this->inp_->nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
                                 *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),

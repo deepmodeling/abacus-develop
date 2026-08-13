@@ -29,7 +29,7 @@ ESolver_OF::~ESolver_OF()
     delete psi_;
     delete[] this->pphi_;
 
-    for (int i = 0; i < PARAM.inp.nspin; ++i)
+    for (int i = 0; i < this->inp_->nspin; ++i)
     {
         delete[] this->pdirect_[i];
         delete[] this->pdLdphi_[i];
@@ -95,7 +95,7 @@ void ESolver_OF::before_all_runners(BaseCell& basecell, const Input_para& inp)
     // calculate the total local pseudopotential in real space
     const int istep=0;
     elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, 
-		    PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
+		    PARAM.globalv.global_out_dir, *this->inp_, this->pelec);
 
     // liuyu move here 2023-10-09
     // D in uspp need vloc, thus behind init_scf()
@@ -200,17 +200,17 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         this->init_elecstate(ucell);
 
         // Initialize KEDF
-        this->kedf_manager_->init(PARAM.inp, this->pw_rho, this->dV_, this->nelec_[0]);
+        this->kedf_manager_->init(*this->inp_, this->pw_rho, this->dV_, this->nelec_[0]);
 
         // Initialize optimization methods
         this->init_opt();
 
         // Refresh the arrays
         delete this->psi_;
-        this->psi_ = new psi::Psi<double>(1, PARAM.inp.nspin, 
+        this->psi_ = new psi::Psi<double>(1, this->inp_->nspin, 
                                           this->pw_rho->nrxx, this->pw_rho->nrxx, true);
 
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < this->inp_->nspin; ++is)
         {
             this->pphi_[is] = this->psi_->get_pointer(is);
         }
@@ -219,9 +219,9 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         this->ptemp_rho_ = new Charge();
 		this->ptemp_rho_->set_rhopw(this->pw_rho);
 		const bool kin_den = this->ptemp_rho_->kin_density(); // mohan add 20251202
-		this->ptemp_rho_->allocate(PARAM.inp.nspin, kin_den);
+		this->ptemp_rho_->allocate(this->inp_->nspin, kin_den);
 
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < this->inp_->nspin; ++is)
         {
             delete[] this->pdLdphi_[is];
             delete[] this->pdEdphi_[is];
@@ -234,10 +234,10 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
         }
     }
 
-    elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
+    elecstate::init_scf(ucell, Pgrid, sf.strucFac, locpp.numeric, istep, PARAM.globalv.global_out_dir, *this->inp_, this->pelec);
 
-    const int nspin = PARAM.inp.nspin;
-    if (PARAM.inp.init_chg == "file")
+    const int nspin = this->inp_->nspin;
+    if (this->inp_->init_chg == "file")
     {
         Symmetry_rho::symmetrize_rho(nspin, this->chr, this->pw_rho, ucell.symm);
         for (int is = 0; is < nspin; ++is)
@@ -288,14 +288,14 @@ void ESolver_OF::before_opt(const int istep, UnitCell& ucell)
 void ESolver_OF::update_potential(UnitCell& ucell)
 {
     // (1) get dL/dphi
-    unitcell::cal_ux(ucell, PARAM.inp.nspin);
+    unitcell::cal_ux(ucell, this->inp_->nspin);
 
     this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
     this->kedf_manager_->get_potential(this->chr.rho,
                                        this->pphi_,
                                        this->pw_rho,
                                        this->pelec->pot->get_eff_v()); // KEDF potential
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         const double* vr_eff = this->pelec->pot->get_eff_v(is);
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
@@ -317,12 +317,12 @@ void ESolver_OF::update_potential(UnitCell& ucell)
     // ===========================================================================
     this->normdLdphi_ = 0.;
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         this->normdLdphi_ += this->inner_product(this->pdLdphi_[is], this->pdLdphi_[is], this->pw_rho->nrxx, 1.0);
     }
     Parallel_Reduce::reduce_all(this->normdLdphi_);
-    this->normdLdphi_ = sqrt(this->normdLdphi_ / this->pw_rho->nxyz / PARAM.inp.nspin);
+    this->normdLdphi_ = sqrt(this->normdLdphi_ / this->pw_rho->nxyz / this->inp_->nspin);
 }
 
 /**
@@ -335,8 +335,8 @@ void ESolver_OF::optimize(UnitCell& ucell)
     // (1) get |d0> with optimization algorithm
     this->get_direction(ucell);
     // initialize temp_phi and temp_rho used in line search
-    double** ptemp_phi = new double*[PARAM.inp.nspin];
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    double** ptemp_phi = new double*[this->inp_->nspin];
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         ptemp_phi[is] = new double[this->pw_rho->nrxx];
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
@@ -350,8 +350,8 @@ void ESolver_OF::optimize(UnitCell& ucell)
     this->adjust_direction();
 
     // (3) make sure that dEdtheta<0 at theta = 0
-    double* dEdtheta = new double[PARAM.inp.nspin]; // dE/dtheta of tempPhi
-    ModuleBase::GlobalFunc::ZEROS(dEdtheta, PARAM.inp.nspin);
+    double* dEdtheta = new double[this->inp_->nspin]; // dE/dtheta of tempPhi
+    ModuleBase::GlobalFunc::ZEROS(dEdtheta, this->inp_->nspin);
 
     this->check_direction(dEdtheta, ptemp_phi, ucell);
     // this->test_direction(dEdtheta, ptemp_phi, ucell);
@@ -359,7 +359,7 @@ void ESolver_OF::optimize(UnitCell& ucell)
     // (4) call line search to find the best theta (step length)
     this->get_step_length(dEdtheta, ptemp_phi, ucell);
 
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         delete[] ptemp_phi[is];
     }
@@ -374,7 +374,7 @@ void ESolver_OF::optimize(UnitCell& ucell)
  */
 void ESolver_OF::update_rho()
 {
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
         {
@@ -387,7 +387,7 @@ void ESolver_OF::update_rho()
     // if (ModuleSymmetry::Symmetry::symm_flag == 1)
     // {
     //     Symmetry_rho srho;
-    //     for (int is = 0; is < PARAM.inp.nspin; is++)
+    //     for (int is = 0; is < this->inp_->nspin; is++)
     //     {
     //         srho.begin(is, *(this->chr), this->pw_rho, Pgrid, ucell.symm);
     //         for (int ibs = 0; ibs < this->pw_rho->nrxx; ++ibs)
@@ -468,7 +468,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     //------------------------------------------------------------------
     // 1) calculate kinetic energy density and ELF
     //------------------------------------------------------------------
-    if (PARAM.inp.out_elf[0] > 0)
+    if (this->inp_->out_elf[0] > 0)
     {
         this->kedf_manager_->get_energy_density(this->chr.rho, this->pphi_, this->pw_rho, this->chr.kin_r);
     }
@@ -488,7 +488,7 @@ void ESolver_OF::after_opt(const int istep, UnitCell& ucell, const bool conv_eso
     //------------------------------------------------------------------
     // Generate data if needed
     //------------------------------------------------------------------
-    if (PARAM.inp.of_ml_gene_data)
+    if (this->inp_->of_ml_gene_data)
     {
         this->pelec->pot->update_from_charge(&this->chr, &ucell); // Hartree + XC + external
         this->kedf_manager_->get_potential(this->chr.rho,
@@ -534,7 +534,7 @@ double ESolver_OF::cal_energy()
     this->pelec->cal_energies(2);
     double kinetic_energy = this->kedf_manager_->get_energy(); // kinetic energy
     double pseudopot_energy = 0.;                   // electron-ion interaction energy
-    for (int is = 0; is < PARAM.inp.nspin; ++is)
+    for (int is = 0; is < this->inp_->nspin; ++is)
     {
         pseudopot_energy += this->inner_product(this->pelec->pot->get_fixed_v(),
                                                 this->chr.rho[is],

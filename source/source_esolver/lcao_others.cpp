@@ -37,7 +37,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     ModuleBase::TITLE("ESolver_KS_LCAO", "others");
     ModuleBase::timer::start("ESolver_KS_LCAO", "others");
 
-    const std::string cal_type = PARAM.inp.calculation;
+    const std::string cal_type = this->inp_->calculation;
 
     if (cal_type == "test_memory")
     {
@@ -56,13 +56,13 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     {
         // test_search_neighbor();
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "testing neighbour");
-        double search_radius = PARAM.inp.search_radius;
+        double search_radius = this->inp_->search_radius;
         atom_arrange::search(PARAM.globalv.search_pbc,
                              GlobalV::ofs_running,
                              this->gd,
                              ucell,
                              search_radius,
-                             PARAM.inp.test_atom_input,
+                             this->inp_->test_atom_input,
                              true);
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "testing neighbour");
         return;
@@ -75,7 +75,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     // 1. prepare HS matrices, prepare grid integral
     // (1) Find adjacent atoms for each atom.
     double search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                                   PARAM.inp.out_level,
+                                                   this->inp_->out_level,
                                                    orb_.get_rcutmax_Phi(),
                                                    ucell.infoNL->get_rcutmax_Beta(),
                                                    PARAM.globalv.gamma_only_local);
@@ -85,7 +85,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                          this->gd,
                          ucell,
                          search_radius,
-                         PARAM.inp.test_atom_input);
+                         this->inp_->test_atom_input);
 
     // (3) Periodic condition search for each grid.
     gint_info_.reset(new ModuleGint::GintInfo(this->pw_big->nbx,
@@ -145,21 +145,21 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
 
     // for each ionic step, the overlap <phi|alpha> must be rebuilt
     // since it depends on ionic positions
-    this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), PARAM.inp);
+    this->deepks.build_overlap(ucell, orb_, pv, gd, *(two_center_bundle_.overlap_orb_alpha), *this->inp_);
 
-    if (PARAM.inp.sc_mag_switch)
+    if (this->inp_->sc_mag_switch)
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
-        sc.init_sc(PARAM.inp.sc_thr,
-                   PARAM.inp.nsc,
-                   PARAM.inp.nsc_min,
-                   PARAM.inp.alpha_trial,
-                   PARAM.inp.sccut,
-                   PARAM.inp.sc_drop_thr,
+        sc.init_sc(this->inp_->sc_thr,
+                   this->inp_->nsc,
+                   this->inp_->nsc_min,
+                   this->inp_->alpha_trial,
+                   this->inp_->sccut,
+                   this->inp_->sc_drop_thr,
                    ucell,
-                   PARAM.inp.sc_direction_only,
+                   this->inp_->sc_direction_only,
                    &(this->pv),
-                   PARAM.inp.nspin,
+                   this->inp_->nspin,
                    this->kv,
                    this->p_hamilt,
                    this->psi,
@@ -171,11 +171,11 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     // cal_ux should be called before init_scf because
     // the direction of ux is used in noncoline_rho
     //=========================================================
-    unitcell::cal_ux(ucell, PARAM.inp.nspin);
+    unitcell::cal_ux(ucell, this->inp_->nspin);
 
     // pelec should be initialized before these calculations
     elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, 
-		    istep, PARAM.globalv.global_out_dir, PARAM.inp, this->pelec);
+		    istep, PARAM.globalv.global_out_dir, *this->inp_, this->pelec);
 
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
@@ -188,10 +188,10 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                            this->pelec->wg,
                            this->pelec->eferm.get_all_ef(),
                            this->pw_rhod->nrxx,
-                           PARAM.inp.out_pchg,
-                           PARAM.inp.nbands,
-                           PARAM.inp.nelec,
-                           PARAM.inp.nspin,
+                           this->inp_->out_pchg,
+                           this->inp_->nbands,
+                           this->inp_->nelec,
+                           this->inp_->nspin,
                            &ucell,
                            this->Pgrid,
                            &this->gd,
@@ -207,17 +207,17 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                            this->pelec->eferm.get_all_ef(),
                            this->pw_rhod,
                            this->pw_rhod->nrxx,
-                           PARAM.inp.out_pchg,
-                           PARAM.inp.nbands,
-                           PARAM.inp.nelec,
-                           PARAM.inp.nspin,
+                           this->inp_->out_pchg,
+                           this->inp_->nbands,
+                           this->inp_->nelec,
+                           this->inp_->nspin,
                            &ucell,
                            this->Pgrid,
                            &this->gd,
                            this->kv,
                            PARAM.globalv.global_out_dir,
                            GlobalV::ofs_running,
-                           PARAM.inp.if_separate_k,
+                           this->inp_->if_separate_k,
                            this->chr.ngmc);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
@@ -233,13 +233,13 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                          this->pw_wfc,
                          this->Pgrid,
                          this->pv,
-                         PARAM.inp.out_wfc_pw,
+                         this->inp_->out_wfc_pw,
                          this->kv,
-                         PARAM.inp.nelec,
-                         PARAM.inp.out_wfc_norm,
-                         PARAM.inp.out_wfc_re_im,
-                         PARAM.inp.nbands,
-                         PARAM.inp.nspin,
+                         this->inp_->nelec,
+                         this->inp_->out_wfc_norm,
+                         this->inp_->out_wfc_re_im,
+                         this->inp_->nbands,
+                         this->inp_->nspin,
                          PARAM.globalv.nlocal,
                          PARAM.globalv.global_out_dir,
                          GlobalV::ofs_running);
@@ -251,13 +251,13 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                          this->pw_wfc,
                          this->Pgrid,
                          this->pv,
-                         PARAM.inp.out_wfc_pw,
+                         this->inp_->out_wfc_pw,
                          this->kv,
-                         PARAM.inp.nelec,
-                         PARAM.inp.out_wfc_norm,
-                         PARAM.inp.out_wfc_re_im,
-                         PARAM.inp.nbands,
-                         PARAM.inp.nspin,
+                         this->inp_->nelec,
+                         this->inp_->out_wfc_norm,
+                         this->inp_->out_wfc_re_im,
+                         this->inp_->nbands,
+                         this->inp_->nspin,
                          PARAM.globalv.nlocal,
                          PARAM.globalv.global_out_dir,
                          GlobalV::ofs_running);

@@ -49,6 +49,10 @@ class ESolver
     bool conv_esolver = true; // whether esolver is converged
 
     std::string classname;
+
+  protected:
+    /// Bound in before_all_runners; members use inp_->xxx instead of PARAM.inp.xxx
+    const Input_para* inp_ = nullptr;
 };
 
 } // namespace ModuleESolver

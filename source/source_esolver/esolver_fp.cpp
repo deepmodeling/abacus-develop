@@ -39,29 +39,31 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
+    this->inp_ = &inp;
+
     ModuleBase::TITLE("ESolver_FP", "before_all_runners");
 
     //! 1) read pseudopotentials
-    const std::string pseudo_dir = PARAM.inp.pseudo_dir;
+    const std::string pseudo_dir = this->inp_->pseudo_dir;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    const bool out_element_info = PARAM.inp.out_element_info;
-    const std::string dft_functional = PARAM.inp.dft_functional;
-    const bool lspinorb = PARAM.inp.lspinorb;
-    const double pseudo_rcut = PARAM.inp.pseudo_rcut;
-    const double soc_lambda = PARAM.inp.soc_lambda;
-    const int nspin = PARAM.inp.nspin;
+    const bool out_element_info = this->inp_->out_element_info;
+    const std::string dft_functional = this->inp_->dft_functional;
+    const bool lspinorb = this->inp_->lspinorb;
+    const double pseudo_rcut = this->inp_->pseudo_rcut;
+    const double soc_lambda = this->inp_->soc_lambda;
+    const int nspin = this->inp_->nspin;
     const int npol = PARAM.globalv.npol;
-    const std::string basis_type = PARAM.inp.basis_type;
-    const std::string esolver_type = PARAM.inp.esolver_type;
-    const std::string init_wfc = PARAM.inp.init_wfc;
-    const int nbands = PARAM.inp.nbands;
+    const std::string basis_type = this->inp_->basis_type;
+    const std::string esolver_type = this->inp_->esolver_type;
+    const std::string init_wfc = this->inp_->init_wfc;
+    const int nbands = this->inp_->nbands;
     const bool two_fermi = PARAM.globalv.two_fermi;
-    const double nelec_delta = PARAM.inp.nelec_delta;
-    const std::string smearing_method = PARAM.inp.smearing_method;
-    const std::string ks_solver = PARAM.inp.ks_solver;
-    const int bndpar = PARAM.inp.bndpar;
-    const double nelec = PARAM.inp.nelec;
-    const double nupdown = PARAM.inp.nupdown;
+    const double nelec_delta = this->inp_->nelec_delta;
+    const std::string smearing_method = this->inp_->smearing_method;
+    const std::string ks_solver = this->inp_->ks_solver;
+    const int bndpar = this->inp_->bndpar;
+    const double nelec = this->inp_->nelec;
+    const double nupdown = this->inp_->nupdown;
     auto atoms_info = unitcell::read_pseudo(GlobalV::ofs_running, ucell, pseudo_dir, global_out_dir, out_element_info, dft_functional, lspinorb, pseudo_rcut, soc_lambda, nspin, npol, basis_type, esolver_type, init_wfc, nbands, two_fermi, nelec_delta, smearing_method, ks_solver, bndpar, nelec, nupdown);
     elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
 
@@ -78,9 +80,9 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     //! 5) symmetry analysis should be performed every time the cell is changed
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        const int cal_symm_repr[2] = {PARAM.inp.cal_symm_repr[0], PARAM.inp.cal_symm_repr[1]};
+        const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
         ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
-                             PARAM.inp.symmetry_prec, inp.nspin, PARAM.inp.calculation, cal_symm_repr);
+                             this->inp_->symmetry_prec, inp.nspin, this->inp_->calculation, cal_symm_repr);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
 
@@ -89,9 +91,9 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     //! 7) setup k points in the Brillouin zone according to symmetry.
     const bool use_ibz = !inp.berry_phase && ModuleSymmetry::Symmetry::symm_flag != -1;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
-    const double kspacing[3] = {PARAM.inp.kspacing[0], PARAM.inp.kspacing[1], PARAM.inp.kspacing[2]};
-    const std::string kmesh_type = PARAM.inp.kmesh_type;
-    const double koffset[3] = {PARAM.inp.koffset[0], PARAM.inp.koffset[1], PARAM.inp.koffset[2]};
+    const double kspacing[3] = {this->inp_->kspacing[0], this->inp_->kspacing[1], this->inp_->kspacing[2]};
+    const std::string kmesh_type = this->inp_->kmesh_type;
+    const double koffset[3] = {this->inp_->koffset[0], this->inp_->koffset[1], this->inp_->koffset[2]};
     this->kv.set(ucell, ucell.symm, inp.kpoint_file, inp.nspin, ucell.G, ucell.latvec, GlobalV::ofs_running, use_ibz, global_out_dir, gamma_only_local, kspacing, kmesh_type, koffset);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
@@ -99,7 +101,7 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
     //! 9) parallel of FFT grid
-    const int nprocgroup = (PARAM.inp.esolver_type == "sdft") ? GlobalV::NPROC_IN_BNDGROUP : GlobalV::NPROC;
+    const int nprocgroup = (this->inp_->esolver_type == "sdft") ? GlobalV::NPROC_IN_BNDGROUP : GlobalV::NPROC;
     this->Pgrid.init(this->pw_rhod->nx, this->pw_rhod->ny, this->pw_rhod->nz,
             this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz,
             nprocgroup);
@@ -168,14 +170,14 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
         // perform symmetry analysis
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
-            const int cal_symm_repr[2] = {PARAM.inp.cal_symm_repr[0], PARAM.inp.cal_symm_repr[1]};
+            const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
             ucell.symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running,
-                                 PARAM.inp.symmetry_prec, PARAM.inp.nspin, PARAM.inp.calculation, cal_symm_repr);
+                                 this->inp_->symmetry_prec, this->inp_->nspin, this->inp_->calculation, cal_symm_repr);
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
         }
 
         // reset k-points
-        KVectorUtils::set_after_vc(kv, PARAM.inp.nspin, ucell.G);
+        KVectorUtils::set_after_vc(kv, this->inp_->nspin, ucell.G);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
     }
 
@@ -189,10 +191,10 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 
     //! Evaluate the vdW correction once for this ionic configuration.
     this->vdw_result_.reset();
-    auto vdw_solver = vdw::make_vdw(ucell, PARAM.inp, &(GlobalV::ofs_running));
+    auto vdw_solver = vdw::make_vdw(ucell, *this->inp_, &(GlobalV::ofs_running));
     if (vdw_solver != nullptr)
     {
-        const vdw::VdwRequest request(PARAM.inp.cal_force, PARAM.inp.cal_stress);
+        const vdw::VdwRequest request(this->inp_->cal_force, this->inp_->cal_stress);
         this->vdw_result_.reset(new vdw::VdwResult(vdw_solver->evaluate(request)));
         this->pelec->f_en.evdw = this->vdw_result_->energy;
     }
@@ -202,17 +204,17 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
     }
 
     //! calculate ewald energy
-    if (!PARAM.inp.test_skip_ewald)
+    if (!this->inp_->test_skip_ewald)
     {
         this->pelec->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
     }
 
     //! set direction of magnetism, used in non-collinear case 
-    unitcell::cal_ux(ucell, PARAM.inp.nspin);
+    unitcell::cal_ux(ucell, this->inp_->nspin);
 
     //! output the initial charge density
     ModuleIO::write_chg_init(ucell, this->Pgrid, this->chr, this->pelec->eferm, istep,
-                             PARAM.globalv.global_out_dir, PARAM.inp, PARAM.globalv.two_fermi);
+                             PARAM.globalv.global_out_dir, *this->inp_, PARAM.globalv.two_fermi);
 
     return;
 }
@@ -220,18 +222,18 @@ void ESolver_FP::before_scf(UnitCell& ucell, const int istep)
 void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& conv_esolver)
 {
     //! output charge density in G-space, or if available, kinetic energy density in G-space
-    if (PARAM.inp.out_chg[0] != -1)
+    if (this->inp_->out_chg[0] != -1)
     {
-        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+        if (iter % this->inp_->out_freq_elec == 0 || iter == this->inp_->scf_nmax || conv_esolver)
         {
-            for (int is = 0; is < PARAM.inp.nspin; is++)
+            for (int is = 0; is < this->inp_->nspin; is++)
             {
                 this->pw_rhod->real2recip(this->chr.rho_save[is], this->chr.rhog_save[is]);
             }
-            ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-CHARGE-DENSITY.restart",
+            ModuleIO::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-CHARGE-DENSITY.restart",
                                  PARAM.globalv.gamma_only_pw,
                                  this->pw_rhod,
-                                 PARAM.inp.nspin,
+                                 this->inp_->nspin,
                                  ucell.GT,
                                  this->chr.rhog_save,
                                  GlobalV::MY_POOL,
@@ -240,17 +242,17 @@ void ESolver_FP::iter_finish(UnitCell& ucell, const int istep, int& iter, bool& 
 
             if (XC_Functional::get_ked_flag())
             {
-                std::vector<std::complex<double>> kin_g_space(PARAM.inp.nspin * this->chr.ngmc, {0.0, 0.0});
+                std::vector<std::complex<double>> kin_g_space(this->inp_->nspin * this->chr.ngmc, {0.0, 0.0});
                 std::vector<std::complex<double>*> kin_g;
-                for (int is = 0; is < PARAM.inp.nspin; is++)
+                for (int is = 0; is < this->inp_->nspin; is++)
                 {
                     kin_g.push_back(kin_g_space.data() + is * this->chr.ngmc);
                     this->pw_rhod->real2recip(this->chr.kin_r_save[is], kin_g[is]);
                 }
-                ModuleIO::write_rhog(PARAM.globalv.global_out_dir + PARAM.inp.suffix + "-TAU-DENSITY.restart",
+                ModuleIO::write_rhog(PARAM.globalv.global_out_dir + this->inp_->suffix + "-TAU-DENSITY.restart",
                                      PARAM.globalv.gamma_only_pw,
                                      this->pw_rhod,
-                                     PARAM.inp.nspin,
+                                     this->inp_->nspin,
                                      ucell.GT,
                                      kin_g.data(),
                                      GlobalV::MY_POOL,

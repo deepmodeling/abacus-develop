@@ -13,12 +13,13 @@ class ESolver;
 /**
  * @brief Determine the ESolver type string from input parameters.
  *
- * The type is decided based on PARAM.inp.basis_type and PARAM.inp.esolver_type,
+ * The type is decided based on inp.basis_type and inp.esolver_type,
  * together with device/precision hints written to the running log.
  *
+ * @param [in] inp  Input parameters used to determine the ESolver type.
  * @return [out] std::string The type label consumed by init_esolver().
  */
-std::string determine_type();
+std::string determine_type(const Input_para& inp);
 
 /**
  * @brief Determine and initialize an ESolver based on input information.
