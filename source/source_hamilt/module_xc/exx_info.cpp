@@ -1,4 +1,5 @@
 #include "exx_info.h"
+#include "general_exx_info.h"
 
 #include "source_io/module_parameter/input_parameter.h"
 #include "source_base/global_function.h"
@@ -9,12 +10,12 @@
 #include <vector>
 
 //----------------------------------------------------------
-// Initialize Exx_Info from input parameters.
-// Extracted from Input_Conv::Convert() to allow ESolver to own
-// its own Exx_Info object without depending on the global instance.
+// Initialize General_Exx_Info from input parameters.
+// Extracted from init_exx_info to allow PW modules to use
+// a lightweight config without depending on Exx_Info.
 // Peize Lin add 2018-06-20, refactored 2026.
 //----------------------------------------------------------
-bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
+bool init_general_exx_info(General_Exx_Info& info, const Input_para& inp)
 {
     std::string dft_functional_lower = inp.dft_functional;
     std::transform(inp.dft_functional.begin(),
@@ -33,35 +34,35 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
     || dft_functional_lower == "lrc_wpbeh"
     || dft_functional_lower == "cam_pbeh")
     {
-        exx_info.info_global.cal_exx = true;
+        info.cal_exx = true;
 
-        exx_info.info_global.hybrid_alpha = 0;
+        info.hybrid_alpha = 0;
         std::vector<double> fock_alpha(inp.exx_fock_alpha.size());
         for(std::size_t i=0; i<fock_alpha.size(); ++i)
         {
             fock_alpha[i] = std::stod(inp.exx_fock_alpha[i]);
-            exx_info.info_global.hybrid_alpha = std::max(std::abs(fock_alpha[i]), exx_info.info_global.hybrid_alpha);
+            info.hybrid_alpha = std::max(std::abs(fock_alpha[i]), info.hybrid_alpha);
         }
         std::vector<double> erfc_alpha(inp.exx_erfc_alpha.size());
         for(std::size_t i=0; i<erfc_alpha.size(); ++i)
         {
             erfc_alpha[i] = std::stod(inp.exx_erfc_alpha[i]);
-            exx_info.info_global.hybrid_alpha = std::max(std::abs(erfc_alpha[i]), exx_info.info_global.hybrid_alpha);
+            info.hybrid_alpha = std::max(std::abs(erfc_alpha[i]), info.hybrid_alpha);
         }
-        assert(exx_info.info_global.hybrid_alpha>0);
+        assert(info.hybrid_alpha>0);
         for(std::size_t i=0; i<fock_alpha.size(); ++i)
-            { fock_alpha[i] /= exx_info.info_global.hybrid_alpha; }
+            { fock_alpha[i] /= info.hybrid_alpha; }
         for(std::size_t i=0; i<erfc_alpha.size(); ++i)
-            { erfc_alpha[i] /= exx_info.info_global.hybrid_alpha; }
+            { erfc_alpha[i] /= info.hybrid_alpha; }
 
         if(!fock_alpha.empty())
         {
             if(inp.basis_type == "lcao")
             {
-                exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
                 for(std::size_t i=0; i<fock_alpha.size(); ++i)
                 {
-                    exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
                         {"singularity_correction", inp.exx_singularity_correction} }};
                 }
@@ -69,20 +70,20 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
             else if(inp.basis_type == "lcao_in_pw")
             {
                 assert(fock_alpha.size() == inp.exx_fock_lambda.size());
-                exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
                 for(std::size_t i=0; i<fock_alpha.size(); ++i)
                 {
-                    exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])},
                         {"lambda", inp.exx_fock_lambda[i]} }};
                 }
             }
             else if(inp.basis_type == "pw")
             {
-                exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
+                info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock].resize(fock_alpha.size());
                 for(std::size_t i=0; i<fock_alpha.size(); ++i)
                 {
-                    exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(fock_alpha[i])} }};
                 }
             }
@@ -96,10 +97,10 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
             assert(erfc_alpha.size() == inp.exx_erfc_omega.size());
             if(inp.basis_type == "lcao")
             {
-                exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
+                info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
                 for(std::size_t i=0; i<erfc_alpha.size(); ++i)
                 {
-                    exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
                         {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])},
                         {"singularity_correction", inp.exx_singularity_correction} }};
@@ -107,10 +108,10 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
             }
             else if(inp.basis_type == "pw" || inp.basis_type == "lcao_in_pw")
             {
-                exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
+                info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc].resize(erfc_alpha.size());
                 for(std::size_t i=0; i<erfc_alpha.size(); ++i)
                 {
-                    exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
+                    info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Erfc] = {{
                         {"alpha", ModuleBase::GlobalFunc::TO_STRING(erfc_alpha[i])},
                         {"omega", ModuleBase::GlobalFunc::TO_STRING(inp.exx_erfc_omega[i])} }};
                 }
@@ -120,50 +121,50 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
 #ifdef __EXX
     else if (dft_functional_lower == "opt_orb")
     {
-        exx_info.info_global.cal_exx = false;
+        info.cal_exx = false;
         generate_opt_orb = true;
     }
 #endif
     else
     {
-        exx_info.info_global.cal_exx = false;
+        info.cal_exx = false;
     }
 
-    if (inp.rpa && exx_info.info_global.coulomb_param.empty())
+    if (inp.rpa && info.coulomb_param.empty())
     {
         if (inp.basis_type != "lcao")
         {
             throw std::invalid_argument("RPA currently expects basis_type=lcao when initializing RI Coulomb parameters.");
         }
-        exx_info.info_global.hybrid_alpha = 1.0;
-        exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
-        exx_info.info_global.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
+        info.hybrid_alpha = 1.0;
+        info.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+        info.coulomb_param[Conv_Coulomb_Pot_K::Coulomb_Type::Fock] = {{
             {"alpha", "1"},
             {"singularity_correction", inp.exx_singularity_correction}
         }};
     }
 
-    // info_global.ccp_type will be removed in the future. these codes for pw and lcao_in_pw temporarily
+    // ccp_type will be removed in the future. these codes for pw and lcao_in_pw temporarily
     if (dft_functional_lower == "hf"
      || dft_functional_lower == "pbe0" || dft_functional_lower == "b3lyp"
      || dft_functional_lower == "scan0"
      || dft_functional_lower == "muller" || dft_functional_lower == "power")
     {
-        exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+        info.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf;
     }
     // use the error function erf(w|r-r'|), exx just has the short-range part
     else if (dft_functional_lower == "hse"
           || dft_functional_lower == "cwp22")
     {
-        exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
+        info.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc;
     }
     // use the error function erf(w|r-r'|), exx just has the long-range part
     else if ( dft_functional_lower == "wp22" )
     {
-        exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf;
+        info.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erf;
     }
 
-    if (exx_info.info_global.cal_exx
+    if (info.cal_exx
 #ifdef __EXX
         || generate_opt_orb
         || inp.rpa
@@ -172,12 +173,34 @@ bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
     {
         // EXX case, convert all EXX related variables
         if(!inp.exx_erfc_omega.empty())
-            { exx_info.info_global.hse_omega = std::stod(inp.exx_erfc_omega[0]); }
+            { info.hse_omega = std::stod(inp.exx_erfc_omega[0]); }
+        info.separate_loop = inp.exx_separate_loop;
+        info.hybrid_step = inp.exx_hybrid_step;
+        info.mixing_beta_for_loop1 = inp.exx_mixing_beta;
+    }
+
+    return generate_opt_orb;
+}
+
+//----------------------------------------------------------
+// Initialize Exx_Info from input parameters.
+// Delegates general fields to init_general_exx_info, then
+// fills LCAO-specific sub-structures (info_ri, info_opt_abfs, info_lip).
+// Peize Lin add 2018-06-20, refactored 2026.
+//----------------------------------------------------------
+bool init_exx_info(Exx_Info& exx_info, const Input_para& inp)
+{
+    bool generate_opt_orb = init_general_exx_info(exx_info.info_global, inp);
+
+    if (exx_info.info_global.cal_exx
+#ifdef __EXX
+        || generate_opt_orb
+        || inp.rpa
+#endif
+        )
+    {
         if(!inp.exx_fock_lambda.empty())
             { exx_info.info_lip.lambda = std::stod(inp.exx_fock_lambda[0]); }
-        exx_info.info_global.separate_loop = inp.exx_separate_loop;
-        exx_info.info_global.hybrid_step = inp.exx_hybrid_step;
-        exx_info.info_global.mixing_beta_for_loop1 = inp.exx_mixing_beta;
 
         exx_info.info_ri.real_number = std::stoi(inp.exx_real_number);
         exx_info.info_ri.pca_threshold = inp.exx_pca_threshold;
