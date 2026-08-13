@@ -52,7 +52,6 @@ namespace ModuleESolver
         };
 
       protected:
-        const Input_para& input;
         const std::string in_dir;
         const std::string out_dir;
         const UnitCell* ucell_ = nullptr;
