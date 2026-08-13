@@ -157,6 +157,16 @@ void matrix::create( const int nrow, const int ncol, const bool flag_zero )
     }
 }
 
+/* Unary minus*/
+matrix operator-(const matrix& m1)
+{
+    matrix tm(m1);
+    const int size = m1.nr * m1.nc;
+    for (int i = 0; i < size; i++)
+        tm.c[i] = -tm.c[i];
+    return tm;
+}
+
 /* Adding matrices, as a friend */
 matrix operator+(const matrix &m1, const matrix &m2)
 {

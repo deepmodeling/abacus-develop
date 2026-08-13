@@ -1,12 +1,13 @@
 #pragma once
 #include "source_estate/module_pot/h_hartree_pw.h"
 #include "xc_kernel.h"
+#include "pot_lr_base.h"
 #include <unordered_map>
 #include <memory>
 
 namespace LR
 {
-    class PotHxcLR
+    class PotHxcLR : public PotLRBase
     {
     public:
         /// S1: K^Hartree + K^xc
@@ -21,12 +22,11 @@ namespace LR
             const UnitCell& ucell, const Charge& chg_gs/*ground state*/, const Parallel_Grid& pgrid,
             const SpinType& st = SpinType::S1, const std::vector<std::string>& lr_init_xc_kernel = { "default" });
         ~PotHxcLR() {}
-        void cal_v_eff(double** rho, const UnitCell& ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 });
-        const int& nrxx = nrxx_;
+        virtual void cal_v_eff(double** rho, const UnitCell& ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 })  const override;
+
+        // const references
+        const KernelXC& xc_kernel_components = xc_kernel_components_;
     private:
-        const ModulePW::PW_Basis& rho_basis_;
-        const int nspin_ = 1;
-        const int nrxx_ = 1;
         std::unique_ptr<elecstate::PotHartree> pot_hartree_;
         /// different components of local and semi-local xc kernels:
         /// LDA: v2rho2
@@ -34,7 +34,6 @@ namespace LR
         /// meta-GGA: v2rho2, v2rhosigma, v2sigma2, v2rholap, v2rhotau, v2sigmalap, v2sigmatau, v2laptau, v2lap2, v2tau2
         const KernelXC xc_kernel_components_;
         const std::string xc_kernel_;
-        const double& tpiba_;
         const SpinType spin_type_ = SpinType::S1;
         XCType xc_type_ = XCType::None;
 

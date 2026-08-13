@@ -16,7 +16,8 @@ namespace LR
         const int& nocc,
         const int& nvirt,
         T* const mat_mo,
-        const LR_Util::MO_TYPE type = LR_Util::VO);
+        const LR_Util::MO_TYPE type = LR_Util::VO,
+        const T factor = static_cast<T>(1.0));
     template<typename T>
     void ao_to_mo_blas(
         const std::vector<container::Tensor>& mat_ao,
@@ -25,7 +26,8 @@ namespace LR
         const int& nvirt,
         T* const mat_mo,
         const bool add_on = true,
-        const LR_Util::MO_TYPE type = LR_Util::VO);
+        const LR_Util::MO_TYPE type = LR_Util::VO,
+        const T factor = static_cast<T>(1.0));
 #ifdef __MPI
     template<typename T>
     void ao_to_mo_pblas(
@@ -39,6 +41,7 @@ namespace LR
         const Parallel_2D& pmat_mo,
         T* const mat_mo,
         const bool add_on = true,
-        const LR_Util::MO_TYPE type = LR_Util::VO);
+        const LR_Util::MO_TYPE type = LR_Util::VO,
+        const T factor = static_cast<T>(1.0));
 #endif
 }

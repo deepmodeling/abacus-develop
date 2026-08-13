@@ -761,6 +761,7 @@ if(ENABLE_LCAO)
       hcontainer
       numerical_atomic_orbitals
       lr
+      lr_grad
       rdmft)
   if(ENABLE_LIBRI)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE bse)

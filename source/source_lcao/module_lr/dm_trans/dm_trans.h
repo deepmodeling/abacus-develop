@@ -1,5 +1,4 @@
 #pragma once
-// use tensor or basematrix in the future
 #include <ATen/core/tensor.h>
 #include "source_psi/psi.h"
 #include "source_lcao/module_lr/utils/mo_type.h"

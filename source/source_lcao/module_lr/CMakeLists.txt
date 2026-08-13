@@ -3,16 +3,18 @@ if(ENABLE_LCAO)
   add_subdirectory(ao_to_mo_transformer)
   add_subdirectory(dm_trans)
   add_subdirectory(ri_benchmark)
+  add_subdirectory(Grad)
 
   list(APPEND objects
     utils/lr_util.cpp
-    utils/lr_util_hcontainer.cpp
     utils/lr_io.cpp
     utils/exciton_plotter.cpp
     ao_to_mo_transformer/ao_to_mo_parallel.cpp
     ao_to_mo_transformer/ao_to_mo_serial.cpp
     dm_trans/dm_trans_parallel.cpp
     dm_trans/dm_trans_serial.cpp
+    dm_trans/dmr_complex.cpp
+    dm_band/dm_band.cpp
     operator_casida/operator_lr_hxc.cpp
     operator_casida/operator_lr_exx.cpp
     potentials/pot_hxc_lrtd.cpp

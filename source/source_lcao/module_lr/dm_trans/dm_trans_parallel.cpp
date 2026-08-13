@@ -104,7 +104,7 @@ std::vector<container::Tensor> cal_dm_trans_pblas(const std::complex<double>* co
         // char transb = 'C';
         // // 1. [X*C_occ^\dagger]^\dagger=C_occ*X^\dagger
         // Parallel_2D pXc;
-        // LR_Util::setup_2d_division(pXc, px.get_block_size(), naos, nvirt, px.comm_2D, px.blacs_ctxt);
+        // LR_Util::setup_2d_division(pXc, px.get_block_size(), naos, nvirt,px.blacs_ctxt);
         // container::Tensor Xc(DAT::DT_COMPLEX_DOUBLE, DEV::CpuDevice, { pXc.get_col_size(), pXc.get_row_size()
         // });//row is "inside"(memory contiguity) for pblas Xc.zero(); const std::complex<double> alpha(1.0, 0.0);
         // const std::complex<double> beta(0.0, 0.0);

@@ -44,7 +44,7 @@ namespace PulayForceStress
 
     /// for grid-integration terms
     template<typename TK, typename TR>
-    void cal_pulay_fs(
+    void cal_pulay_fs(const int nspin,
         ModuleBase::matrix& f,  ///< [out] force
         ModuleBase::matrix& s,  ///< [out] stress
         const module_dm::DensityMatrix<TK, TR>& dm,  ///< [in] density matrix or energy density matrix

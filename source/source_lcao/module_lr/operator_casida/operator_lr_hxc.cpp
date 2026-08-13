@@ -9,6 +9,7 @@
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_lcao/module_lr/ao_to_mo_transformer/ao_to_mo.h"
 #include "source_hamilt/module_gint/gint_interface.h"
+#include "source_lcao/module_lr/Grad/CVCX/CVCX.h"
 
 inline double conj(double a) { return a; }
 inline std::complex<double> conj(std::complex<double> a) { return std::conj(a); }
@@ -25,7 +26,7 @@ namespace LR
         const auto psil_ks = LR_Util::get_psi_spin(psi_ks, sl, nk);
 
         this->DM_trans->cal_dmr(-1);  //DM_trans->get_dmr_vec() is 2d-block parallized
-        // LR_Util::print_DMR(*DM_trans, ucell.nat, "DMR");
+        LR_Util::swap_atompair_in_DMR(*this->DM_trans, ucell.nat);   // make D(R) consistent with the defination: D(R)[iat1][iat2] = \sum_k c1(k)c2^*(k)exp(-ik(R2-R1))
 
         // ========================= begin grid calculation=========================
         this->grid_calculation(nbands);   //DM(R) to H(R)
@@ -41,12 +42,46 @@ namespace LR
         // for (int ik = 0;ik < nk;++ik)
         //     LR_Util::print_tensor<T>(v_hxc_2d[ik], "4.V(k)[ik=" + std::to_string(ik) + "]", &this->pmat);
 
-        // 5. [AX]^{Hxc}_{ai}=\sum_{\mu,\nu}c^*_{a,\mu,}V^{Hxc}_{\mu,\nu}c_{\nu,i}
+        // 5. AO to MO transformation
+        switch (this->dm_pq_)
+        {
+        case MO_TO_AO_TYPE::CC_vo:  //[AX]^{Hxc}_{ai}=\sum_{\mu,\nu}c^*_{\mu,a}V^{Hxc}_{\mu,\nu}c_{\nu,i}
 #ifdef __MPI
-        ao_to_mo_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, naos, nocc[sl], nvirt[sl], this->pX[sl], hpsi);
+            ao_to_mo_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, this->naos, this->nocc[sl], this->nvirt[sl], this->pX[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::VO, this->factor_);
 #else
-        ao_to_mo_blas(v_hxc_2d, psil_ks, nocc[sl], nvirt[sl], hpsi);
+            ao_to_mo_blas(v_hxc_2d, psil_ks, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::VO, this->factor_);
 #endif
+            break;
+        case MO_TO_AO_TYPE::CC_oo:  //[AX]^{Hxc}_{ij}=\sum_{\mu,\nu}c^*_{\mu,i}V^{Hxc}_{\mu,\nu}c_{\nu,j}
+#ifdef __MPI
+            ao_to_mo_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, this->naos, this->nocc[sl], this->nvirt[sl], this->pX[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::OO, this->factor_);
+#else
+            ao_to_mo_blas(v_hxc_2d, psil_ks, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, LR_Util::MO_TYPE::OO, this->factor_);
+#endif
+            break;
+        case MO_TO_AO_TYPE::CXC:
+#ifdef __MPI
+            CVCX_virt_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
+                this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);
+            CVCX_occ_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
+                this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, -this->factor_);
+#else
+            CVCX_virt_blas(v_hxc_2d, *this->psi_ks, psi_in_bfirst, this->naos, this->nocc, this->nvirt, hpsi, /*add_on=*/true, this->factor_);
+            CVCX_occ_blas(v_hxc_2d, *this->psi_ks, psi_in_bfirst, this->naos, this->nocc, this->nvirt, hpsi, /*add_on=*/true, -this->factor_);
+#endif
+            break;
+        case MO_TO_AO_TYPE::CXC_o:
+#ifdef __MPI
+            CVCX_occ_pblas(v_hxc_2d, this->pmat, psil_ks, this->pc, psi_in, this->pX[sl],
+                this->naos, this->nocc[sl], this->nvirt[sl], hpsi, /*add_on=*/true, this->factor_);
+#else
+            CVCX_occ_blas(v_hxc_2d, *this->psi_ks, psi_in_bfirst, this->naos, this->nocc, this->nvirt, hpsi, /*add_on=*/true, this->factor_);
+#endif
+            break;
+        default:
+            throw std::runtime_error("Unknown DM_TYPE");
+            break;
+        }
         // for debug
         //std::cout << "After Hxc, hpsi: [nvirt= " << nvirt[sl] << " nocc= " << nocc[sl] << " nk= " << nk << " ]" << std::endl;
         //LR_Util::print_value(hpsi, nk, nocc[sl], nvirt[sl]);
@@ -92,7 +127,7 @@ namespace LR
 
         auto dmR_to_hR = [&, this](const char& type) -> void
             {
-                LR_Util::get_DMR_real_imag_part(*this->DM_trans, DM_trans_real_imag, ucell.nat, type);
+                LR_Util::get_DMR_real_imag_part(this->DM_trans, DM_trans_real_imag, type);
                 // if (this->first_print)LR_Util::print_DMR(DM_trans_real_imag, ucell.nat, "DMR(2d, real)");
 
 
@@ -116,7 +151,7 @@ namespace LR
                 HR_real_imag.set_zero();
                 ModuleGint::cal_gint_vl(vr_hxc.c, &HR_real_imag);
                 // LR_Util::print_HR(HR_real_imag, this->ucell.nat, "VR(real, 2d)");
-                LR_Util::set_HR_real_imag_part(HR_real_imag, *this->hR, ucell.nat, type);
+                LR_Util::set_HR_real_imag_part(HR_real_imag, *this->hR, type);
             };
         this->hR->set_zero();
         dmR_to_hR('R');   //real

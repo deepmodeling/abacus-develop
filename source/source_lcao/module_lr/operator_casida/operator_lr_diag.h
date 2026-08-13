@@ -55,9 +55,9 @@ namespace LR
     private:
         const Parallel_2D& pX;
         ModuleBase::matrix eig_ks_diff;
-        const int& nk;
-        const int& nocc;
-        const int& nvirt;
+        const int nk = 1;
+        const int nocc = 1;
+        const int nvirt = 1;
         Device* ctx = {};
     };
 }

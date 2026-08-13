@@ -128,6 +128,7 @@ ${OBJS_DELTASPIN}\
 ${OBJS_TENSOR}\
 ${OBJS_HSOLVER_PEXSI}\
 ${OBJS_LR}\
+${OBJS_LR_GRAD}\
 ${OBJS_RDMFT}
 
 OBJS_MAIN=main.o\
@@ -1020,13 +1021,14 @@ OBJS_TENSOR=tensor.o\
     refcount.o
 
     OBJS_LR=lr_util.o\
-    lr_util_hcontainer.o\
     utils/lr_io.o\
     utils/exciton_plotter.o\
     ao_to_mo_parallel.o\
     ao_to_mo_serial.o\
     dm_trans_parallel.o\
     dm_trans_serial.o\
+    dm_band.o\
+    dmr_complex.o\
     operator_lr_hxc.o\
     operator_lr_exx.o\
     xc_kernel.o\
@@ -1035,6 +1037,13 @@ OBJS_TENSOR=tensor.o\
     lr_spectrum_velocity.o\
     hamilt_casida.o\
     esolver_lr_lcao_tddft.o\
+
+OBJS_LR_GRAD=lr_force.o\
+    CVCX_serial.o\
+    CVCX_parallel.o\
+    cal_edm_from_multipliers.o\
+    pot_grad_xc.o\
+    esolver_lr_grad.o\
 
 OBJS_RDMFT=rdmft.o\
         rdmft_tools.o\
