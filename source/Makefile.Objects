@@ -270,7 +270,7 @@ OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       cal_dm_psi.o\
       cal_edm_tddft.o\
 
-OBJS_ESOLVER=esolver.o\
+OBJS_ESOLVER=esolver_factory.o\
     esolver_ks.o\
     esolver_fp.o\
     esolver_ks_pw.o\

@@ -1,5 +1,6 @@
-#include "esolver.h"
+#include "esolver_factory.h"
 
+#include "esolver.h"
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #include "source_base/module_device/device.h"
