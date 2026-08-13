@@ -110,6 +110,7 @@ class Setcell
         input.cal_stress = true;
 
         input.mdp.md_restart = false;
+        input.init_vel = true;
         input.mdp.md_dt = 1;
         input.mdp.md_tfirst = input.mdp.md_tlast = 300;
 
