@@ -187,10 +187,12 @@ endif()
 # Determine the ABACUS executable name.
 if(NOT ENABLE_LCAO)
   set(_abacus_bin_level "pw")
+# TODO: Not well-defined now.
 elseif(ENABLE_LIBRI AND ENABLE_MLALGO)
   set(_abacus_bin_level "max")
 elseif(ENABLE_LIBRI)
   set(_abacus_bin_level "std")
+# TODO: Not well-defined now.
 elseif(ENABLE_MLALGO)
   set(_abacus_bin_level "ml")
 else()
@@ -205,7 +207,9 @@ else()
   set(_abacus_bin_para "ser")
 endif()
 
-if(USE_CUDA OR USE_ROCM)
+if(USE_CUDA)
+  set(_abacus_bin_device "gpu")
+elseif(USE_ROCM)
   set(_abacus_bin_device "gpu")
 elseif(USE_CUDA_ON_DCU)
   set(_abacus_bin_device "dcu")
@@ -214,6 +218,10 @@ elseif(USE_DSP)
 elseif(USE_SW)
   set(_abacus_bin_device "sw")
 endif()
+
+# if(USE_KML)
+#  set(_abacus_bin_device "kp")
+# endif()
 
 set(ABACUS_BIN_NAME "abacus_${_abacus_bin_level}_${_abacus_bin_para}")
 
@@ -474,6 +482,9 @@ endif()
 # version. Use cmake with AMD-ROCm:
 # https://rocmdocs.amd.com/en/latest/Installation_Guide/Using-CMake-with-AMD-ROCm.html
 if(USE_ROCM)
+  message(
+    DEPRECATION
+    "Option USE_ROCM is deprecated and will be ignored in a future release. ")
   cmake_minimum_required(VERSION 3.18)
   if(NOT DEFINED ROCM_PATH)
     set(ROCM_PATH
