@@ -4,7 +4,6 @@
 
 #include <cmath>
 #include <algorithm>
-#include <cstdint>
 #include <limits>
 #include <cassert>
 #include <array>
@@ -111,7 +110,6 @@ void NeighborSearch::init_from_unitcell_(const UnitCell& ucell, double sr)
     {
         for (int j = 0; j < ucell.atoms[i].na; j++)
         {
-            const ModuleBase::Vector3<double> position = ucell.get_tau(i, j);
             const ModuleNeighList::LocalAtomIndex atom_count
                 = ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
                                                             "NeighborSearch atom id");
@@ -207,32 +205,7 @@ void NeighborSearch::set_member_variables(const UnitCell& ucell, int glayerX_min
     ModuleBase::Vector3<double> vec2(ucell.latvec.e21, ucell.latvec.e22, ucell.latvec.e23);
     ModuleBase::Vector3<double> vec3(ucell.latvec.e31, ucell.latvec.e32, ucell.latvec.e33);
 
-    const ModuleBase::Matrix3& lattice = ucell.get_latvec();
-    const ModuleBase::Vector3<double> vec1(lattice.e11, lattice.e12, lattice.e13);
-    const ModuleBase::Vector3<double> vec2(lattice.e21, lattice.e22, lattice.e23);
-    const ModuleBase::Vector3<double> vec3(lattice.e31, lattice.e32, lattice.e33);
-
-    const std::size_t image_count_x
-        = ModuleNeighList::checked_size_sum(static_cast<std::size_t>(glayerX_minus),
-                                            static_cast<std::size_t>(glayerX),
-                                            "NeighborSearch x image count");
-    const std::size_t image_count_y
-        = ModuleNeighList::checked_size_sum(static_cast<std::size_t>(glayerY_minus),
-                                            static_cast<std::size_t>(glayerY),
-                                            "NeighborSearch y image count");
-    const std::size_t image_count_z
-        = ModuleNeighList::checked_size_sum(static_cast<std::size_t>(glayerZ_minus),
-                                            static_cast<std::size_t>(glayerZ),
-                                            "NeighborSearch z image count");
-    const std::size_t image_count_yz
-        = ModuleNeighList::checked_size_product(image_count_y,
-                                                image_count_z,
-                                                "NeighborSearch yz image count");
-    const std::size_t image_count
-        = ModuleNeighList::checked_size_product(image_count_x,
-                                                image_count_yz,
-                                                "NeighborSearch periodic image count");
-    if (image_count == 0)
+    for (int ix = -glayerX_minus; ix < glayerX; ix++)
     {
         for (int iy = -glayerY_minus; iy < glayerY; iy++)
         {

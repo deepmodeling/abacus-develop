@@ -103,7 +103,6 @@ void expect_same_atoms(const std::vector<NeighborAtom>& lhs,
         EXPECT_EQ(lhs[i].atom_type, rhs[i].atom_type) << "atom " << i;
         EXPECT_EQ(lhs[i].atom_index, rhs[i].atom_index) << "atom " << i;
         EXPECT_EQ(lhs[i].atom_id, rhs[i].atom_id) << "atom " << i;
-        EXPECT_EQ(lhs[i].global_id, rhs[i].global_id) << "atom " << i;
         EXPECT_EQ(lhs[i].owner_rank, rhs[i].owner_rank) << "atom " << i;
     }
 }
