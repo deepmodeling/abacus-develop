@@ -166,6 +166,7 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
 
     // 7) after scf
     this->after_scf(ucell, istep, conv_esolver);
+    this->conv_esolver = conv_esolver;
 
     ModuleBase::timer::end(this->classname, "runner");
     return;

@@ -113,7 +113,9 @@ mistaken transpose cannot pass accidentally.
 
 After `runner()`:
 
-- reject a KS frame when SCF did not converge;
+- publish a finite KS frame even when SCF did not converge, and set
+  `scf_converged=false` in the i-PI extras metadata so the external optimizer
+  or integrator can apply its own acceptance policy;
 - require finite energy;
 - require force shape `nat x 3` and finite force entries;
 - when stress is enabled, require a finite `3 x 3` stress tensor, positive

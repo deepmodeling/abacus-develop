@@ -8,6 +8,7 @@
 #include "for_test.h"
 
 #include <cerrno>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
@@ -514,5 +515,46 @@ TEST(SocketDriverTest, EnergyAndStressFrameDoesNotAdvertiseForce)
     EXPECT_EQ(0, result.exit_code);
     EXPECT_THAT(response.extra, testing::HasSubstr("\"present\":[\"energy\",\"stress\"]"));
     EXPECT_THAT(response.extra, testing::Not(testing::HasSubstr("\"forces\"")));
+    EXPECT_NE(0.0, response.virial_wire_hartree[0]);
+}
+
+TEST(SocketDriverTest, EnergyAndForceFrameAdvertisesOnlyForce)
+{
+    ForceResponse response;
+    const DriverResult result = run_driver_frame(
+        true, true, false,
+        [&](const int fd) {
+            send_header(fd, "GETFORCE");
+            response = read_force_response(fd);
+        });
+
+    EXPECT_EQ("FORCEREADY", response.header);
+    EXPECT_EQ(0, result.exit_code);
+    EXPECT_THAT(response.extra, testing::HasSubstr("\"present\":[\"energy\",\"forces\"]"));
+    EXPECT_THAT(response.extra, testing::Not(testing::HasSubstr("\"stress\"")));
+    EXPECT_THAT(response.forces_hartree_per_bohr,
+                testing::ElementsAre(0.0, 0.0, 0.0));
+    EXPECT_THAT(response.virial_wire_hartree,
+                testing::ElementsAre(0.0, 0.0, 0.0,
+                                     0.0, 0.0, 0.0,
+                                     0.0, 0.0, 0.0));
+}
+
+TEST(SocketDriverTest, EnergyForceAndStressFrameAdvertisesBothDerivatives)
+{
+    ForceResponse response;
+    const DriverResult result = run_driver_frame(
+        true, true, true,
+        [&](const int fd) {
+            send_header(fd, "GETFORCE");
+            response = read_force_response(fd);
+        });
+
+    EXPECT_EQ("FORCEREADY", response.header);
+    EXPECT_EQ(0, result.exit_code);
+    EXPECT_THAT(response.extra,
+                testing::HasSubstr("\"present\":[\"energy\",\"forces\",\"stress\"]"));
+    EXPECT_EQ(3u, response.forces_hartree_per_bohr.size());
+    EXPECT_TRUE(std::isfinite(response.forces_hartree_per_bohr[0]));
     EXPECT_NE(0.0, response.virial_wire_hartree[0]);
 }

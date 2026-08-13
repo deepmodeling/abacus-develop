@@ -697,7 +697,11 @@ class AbacusSocketIO(SocketIOCalculator):
         metadata = self._decode_socket_metadata(results.pop('morebytes', None))
         self._last_socket_metadata = metadata
         if metadata is None:
-            present = set(self._active_properties)
+            if set(self._active_properties) != {'energy'}:
+                raise ValueError(
+                    'ABACUS socket response omitted property metadata; refusing '
+                    'to infer forces or stress from fixed-wire padding')
+            present = {'energy'}
             self.last_scf_converged = None
         else:
             present = set(metadata['present'])
@@ -991,6 +995,27 @@ class TestAbacusCalculator(unittest.TestCase):
             np.frombuffer(metadata, dtype=np.int8))
         self.assertEqual(decoded['present'], ('energy',))
         self.assertFalse(decoded['scf_converged'])
+
+    def test_socketio_legacy_response_cannot_infer_force_from_padding(self):
+        class LegacyServer:
+            def calculate(self, atoms):
+                return {
+                    'energy': 1.0,
+                    'forces': np.zeros((len(atoms), 3)),
+                    'virial': np.zeros((3, 3)),
+                    'morebytes': b'',
+                }
+
+        calc = object.__new__(AbacusSocketIO)
+        calc.variable_cell = False
+        calc._property_constraints = {}
+        calc._active_properties = ('energy', 'forces')
+        calc._reference_cell = None
+        calc.atoms = None
+        calc.server = LegacyServer()
+        atoms = Atoms('Si')
+        with self.assertRaisesRegex(ValueError, 'refusing to infer forces'):
+            calc.calculate(atoms=atoms, properties=('forces',), system_changes=())
 
     def test_socketio_requested_disabled_property_is_rejected(self):
         calc = object.__new__(AbacusSocketIO)
