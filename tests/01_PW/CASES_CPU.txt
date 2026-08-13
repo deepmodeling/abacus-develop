@@ -110,7 +110,7 @@ scf_out_chg_tau
 205_PW_SCAN
 206_PW_SCAN_S2
 207_PW_SCANL
-208_PW_skip
+207_PW_skip
 208_PW_CG_float
 209_PW_DFTHALF
 210_PW_kspace_shift
