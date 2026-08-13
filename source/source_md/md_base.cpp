@@ -57,7 +57,7 @@ void MD_base::setup(ModuleESolver::ESolver* p_esolver, const std::string& global
 
 	ModuleIO::print_screen(stress_step, force_step, istep_print);
 
-    MD_func::force_virial(p_esolver, step_, mdcell, potential, cal_stress, virial);
+    MD_func::force_virial(p_esolver, step_, mdcell, potential, cal_stress, virial, mdp.md_out_force);
     MD_func::compute_stress(mdcell, cal_stress, virial, stress);
     if (mdcell.has_backing_unitcell())
     {

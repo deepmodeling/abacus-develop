@@ -74,7 +74,8 @@ void md_line(MDCell& mdcell,
                                   mdcell,
                                   mdrun->potential,
                                   param_in.inp.cal_stress,
-                                  mdrun->virial);
+                                  mdrun->virial,
+                                  param_in.mdp.md_out_force);
 
             mdrun->second_half();
 
@@ -87,7 +88,8 @@ void md_line(MDCell& mdcell,
                                                      mdrun->frozen_freedom_);
         }
 
-        if ((mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
+        if (param_in.mdp.md_dumpfreq > 0
+            && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_dumpfreq == 0)
         {
             mdrun->print_md(GlobalV::ofs_running, PARAM.inp.cal_stress);
 
@@ -98,7 +100,8 @@ void md_line(MDCell& mdcell,
                                mdrun->virial);
         }
 
-        if ((mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)
+        if (param_in.mdp.md_restartfreq > 0
+            && (mdrun->step_ + mdrun->step_rst_) % param_in.mdp.md_restartfreq == 0)
         {
             if (mdcell.has_backing_unitcell())
             {

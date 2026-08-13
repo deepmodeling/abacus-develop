@@ -458,7 +458,8 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
                   MDCell& mdcell,
                   double& potential,
                   const bool& cal_stress,
-                  ModuleBase::matrix& virial)
+                  ModuleBase::matrix& virial,
+                  const bool& md_out_force)
 {
     ModuleBase::TITLE("MD_func", "force_virial");
     ModuleBase::timer::start("MD_func", "force_virial");
@@ -469,7 +470,10 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         ModuleBase::matrix local_force;
         p_esolver->cal_force(static_cast<BaseCell&>(mdcell), local_force);
         for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.force *= 0.5;
-        print_mdcell_force(mdcell);
+        if (md_out_force)
+        {
+            print_mdcell_force(mdcell);
+        }
         if (cal_stress) { p_esolver->cal_stress(static_cast<BaseCell&>(mdcell), virial); virial *= 0.5; }
     }
     else

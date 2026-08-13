@@ -20,6 +20,7 @@ struct MD_para
     double md_tlast = -1.0;            ///< Target temperature
     int md_dumpfreq = 1;               ///< The period to dump MD information
     int md_restartfreq = 5;            ///< The period to output MD restart information
+    bool md_out_force = true;          ///< output all atomic forces into running_md.log
     int md_seed = -1;                  ///< random seed for MD
     int md_prec_level = 0;             ///< precision level for vc-md
 

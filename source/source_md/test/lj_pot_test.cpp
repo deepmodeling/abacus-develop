@@ -46,7 +46,7 @@ TEST_F(LJ_pot_test, potential)
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
     MDCell mdcell = Setcell::setup_mdcell(ucell, param);
     p_esolver->before_all_runners(mdcell, param.inp);
-    MD_func::force_virial(p_esolver, 0, mdcell, potential, true, stress);
+    MD_func::force_virial(p_esolver, 0, mdcell, potential, true, stress, false);
     EXPECT_NEAR(potential, -0.011957818623534381, doublethreshold);
 }
 
@@ -68,7 +68,7 @@ TEST_F(LJ_pot_test, force)
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
     MDCell mdcell = Setcell::setup_mdcell(ucell, param);
     p_esolver->before_all_runners(mdcell, param.inp);
-    MD_func::force_virial(p_esolver, 0, mdcell, potential, true, stress);
+    MD_func::force_virial(p_esolver, 0, mdcell, potential, true, stress, false);
     const std::vector<LocalAtom>& atoms = mdcell.owned_atoms();
     EXPECT_NEAR(atoms[0].force.x, 0.00049817733089377704, doublethreshold);
     EXPECT_NEAR(atoms[0].force.y, 0.00082237246837022328, doublethreshold);
@@ -89,7 +89,7 @@ TEST_F(LJ_pot_test, stress)
     ModuleESolver::ESolver* p_esolver = new ModuleESolver::ESolver_LJ();
     MDCell mdcell = Setcell::setup_mdcell(ucell, param);
     p_esolver->before_all_runners(mdcell, param.inp);
-    MD_func::force_virial(p_esolver, 0, mdcell, potential, true, stress);
+    MD_func::force_virial(p_esolver, 0, mdcell, potential, true, stress, false);
     EXPECT_NEAR(stress(0, 0), 8.0360222227631859e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 1), 1.7207745586539077e-07, doublethreshold);
     EXPECT_NEAR(stress(0, 2), 0.0, doublethreshold);

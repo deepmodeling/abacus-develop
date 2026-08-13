@@ -1457,7 +1457,7 @@ parameters:
     category: Molecular dynamics
     type: Integer
     description: |
-      The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics calculations, see md_restart in detail.
+      The output frequency of OUT.{suffix}/STRU_MD_*, which are used to restart molecular dynamics calculations, see md_restart in detail. Set to 0 to disable MD restart output.
     default_value: "5"
     unit: ""
     availability: ""
@@ -1465,8 +1465,16 @@ parameters:
     category: Molecular dynamics
     type: Integer
     description: |
-      The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.
+      The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.
     default_value: "1"
+    unit: ""
+    availability: ""
+  - name: md_out_force
+    category: Molecular dynamics
+    type: Boolean
+    description: |
+      Whether to output the TOTAL-FORCE table in OUT.${suffix}/running_md.log for MDCell molecular dynamics. This does not affect force calculation or molecular dynamics integration.
+    default_value: "True"
     unit: ""
     availability: ""
   - name: dump_force
@@ -1498,8 +1506,8 @@ parameters:
     type: Integer
     description: |
       The random seed to initialize random numbers used in molecular dynamics calculations.
-      * < 0: No srand() function is called.
-      * >= 0: The function srand(md_seed) is called.
+      * < 0: Each MPI rank uses the default seed 1 plus its rank.
+      * >= 0: Each MPI rank uses md_seed plus its rank.
     default_value: "-1"
     unit: ""
     availability: ""

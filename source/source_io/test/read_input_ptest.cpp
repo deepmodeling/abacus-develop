@@ -411,6 +411,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_EQ(param.inp.mdp.md_pmode, "iso");
     EXPECT_EQ(param.inp.mdp.md_restart, 0);
     EXPECT_EQ(param.inp.mdp.md_restartfreq, 5);
+    EXPECT_FALSE(param.inp.mdp.md_out_force);
     EXPECT_EQ(param.inp.mdp.md_seed, -1);
     EXPECT_EQ(param.inp.mdp.md_prec_level, 0);
     EXPECT_DOUBLE_EQ(param.inp.ref_cell_factor, 1.2);

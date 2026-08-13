@@ -119,7 +119,8 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
                   MDCell& mdcell,
                   double& potential,
                   const bool& cal_stress,
-                  ModuleBase::matrix& virial);
+                  ModuleBase::matrix& virial,
+                  const bool& md_out_force);
 /**
  * @brief calculate the ionic kinetic energy
  *

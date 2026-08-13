@@ -169,7 +169,7 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "The period to output MD restart information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The output frequency of OUT.{suffix}/STRIU/, which are used to restart molecular dynamics calculations, see md_restart in detail.";
+        item.description = "The output frequency of OUT.{suffix}/STRU_MD_*, which are used to restart molecular dynamics calculations, see md_restart in detail. Set to 0 to disable MD restart output.";
         item.default_value = "5";
         item.unit = "";
         read_sync_int(input.mdp.md_restartfreq);
@@ -180,10 +180,22 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.annotation = "The period to dump MD information";
         item.category = "Molecular dynamics";
         item.type = "Integer";
-        item.description = "The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which including the information of lattices and atoms.";
+        item.description = "The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.";
         item.default_value = "1";
         item.unit = "";
         read_sync_int(input.mdp.md_dumpfreq);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("md_out_force");
+        item.annotation = "output all atomic forces into running_md.log or not";
+        item.category = "Molecular dynamics";
+        item.type = "Boolean";
+        item.description = "Whether to output the TOTAL-FORCE table in OUT.${suffix}/running_md.log for MDCell molecular dynamics. This does not affect force calculation or molecular dynamics integration.";
+        item.default_value = "True";
+        item.unit = "";
+        item.availability = "";
+        read_sync_bool(input.mdp.md_out_force);
         this->add_item(item);
     }
     {
@@ -225,8 +237,8 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.category = "Molecular dynamics";
         item.type = "Integer";
         item.description = R"(The random seed to initialize random numbers used in molecular dynamics calculations.
-* < 0: No srand() function is called.
-* >= 0: The function srand(md_seed) is called.)";
+* < 0: Each MPI rank uses the default seed 1 plus its rank.
+* >= 0: Each MPI rank uses md_seed plus its rank.)";
         item.default_value = "-1";
         item.unit = "";
         read_sync_int(input.mdp.md_seed);
