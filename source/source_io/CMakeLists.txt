@@ -102,6 +102,7 @@ add_library(
     module_parameter/read_inp_ofdft.cpp
     module_parameter/read_input_item_sdft.cpp
     module_parameter/read_inp_tddft.cpp
+    module_parameter/read_inp_bse.cpp
     module_parameter/read_inp_deepks.cpp
     module_parameter/read_inp_model.cpp
     module_parameter/read_inp_postproc.cpp  

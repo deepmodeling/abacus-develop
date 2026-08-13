@@ -4,6 +4,7 @@
 #include "read_input_tool.h"
 
 #include <algorithm>
+#include <cctype>
 #include <array>
 
 namespace ModuleIO
@@ -796,7 +797,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("xc_kernel");
         item.annotation = "exchange correlation (XC) kernel for LR-TDDFT";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "String";
         item.description = "The exchange-correlation kernel used in the calculation. Currently supported: RPA, LDA, PBE, HSE, HF.";
         item.default_value = "LDA";
@@ -807,7 +808,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("lr_init_xc_kernel");
         item.annotation = "The method to initalize the xc kernel";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "Vector of String (>=1 values)";
         item.description = R"(The method to initalize the xc kernel.
 * "default": Calculate xc kernel from the ground-state charge density.
@@ -829,7 +830,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("lr_solver");
         item.annotation = "the eigensolver for LR-TDDFT";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "String";
         item.description = R"(The method to solve the Casida equation in LR-TDDFT under Tamm-Dancoff approximation (TDA).
 * dav/dav_subspace/cg: Construct and diagonalize the Hamiltonian matrix iteratively with Davidson/Non-ortho-Davidson/CG algorithm.
@@ -843,7 +844,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("lr_thr");
         item.annotation = "convergence threshold of the LR-TDDFT eigensolver";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "Real";
         item.description = "The convergence threshold of iterative diagonalization solver for LR-TDDFT. It is a pure-math number with the same meaning as pw_diag_thr, but since the Casida equation is a one-shot eigenvalue problem, it is also the convergence threshold of LR-TDDFT.";
         item.default_value = "1e-2";
@@ -854,7 +855,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("nocc");
         item.annotation = "the number of occupied orbitals to form the 2-particle basis ( <= nelec/2)";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "Integer";
         item.description = R"(The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation.
 * Note: If the value is illegal ( > nelec/2 or <= 0), it will be autoset to nelec/2.)";
@@ -870,7 +871,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("nvirt");
         item.annotation = "the number of virtual orbitals to form the 2-particle basis (nocc + nvirt <= nbands)";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "Integer";
         item.description = "The number of virtual orbitals (starting from LUMO) used in the LR-TDDFT calculation.";
         item.default_value = "1";
@@ -882,7 +883,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("lr_nstates");
         item.annotation = "the number of 2-particle states to be solved";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "Integer";
         item.description = "The number of 2-particle states to be solved.";
         item.default_value = "0";
@@ -893,7 +894,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("lr_unrestricted");
         item.annotation = "Whether to use unrestricted construction for LR-TDDFT";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "Boolean";
         item.description = R"(Whether to use unrestricted construction for LR-TDDFT (the matrix size will be doubled).
 * True: Always use unrestricted LR-TDDFT.
@@ -906,7 +907,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("abs_wavelen_range");
         item.annotation = "the range of wavelength(nm) to output the absorption spectrum ";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "Real Real";
         item.description = "The range of the wavelength for the absorption spectrum calculation.";
         item.default_value = "0.0 0.0";
@@ -924,7 +925,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("out_wfc_lr");
         item.annotation = "whether to output the eigenvectors (excitation amplitudes) in the particle-hole basis";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "Boolean";
         item.description = "Whether to output the eigenstates (excitation energy) and eigenvectors (excitation amplitude) of the LR-TDDFT calculation. The output files are OUT.{suffix}/Excitation_Amplitude_${processor_rank}.dat.";
         item.default_value = "False";
@@ -935,10 +936,10 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("abs_gauge");
         item.annotation = "whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "String";
         item.description = "Whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT.";
-        item.default_value = "length";
+        item.default_value = "velocity";
         item.unit = "";
         read_sync_string(input.abs_gauge);
         this->add_item(item);
@@ -946,7 +947,7 @@ void ReadInput::item_lr_tddft()
     {
         Input_Item item("abs_broadening");
         item.annotation = "the broadening (eta) for LR-TDDFT absorption spectrum";
-        item.category = "Linear Response TDDFT (Under Development Feature)";
+        item.category = "Linear Response TDDFT";
         item.type = "Real";
         item.description = "The broadening factor for the absorption spectrum calculation.";
         item.default_value = "0.01";

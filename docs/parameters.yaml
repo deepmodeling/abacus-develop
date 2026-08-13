@@ -2770,7 +2770,7 @@ parameters:
     unit: ""
     availability: esolver_type==tdofdft
   - name: xc_kernel
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: String
     description: |
       The exchange-correlation kernel used in the calculation. Currently supported: RPA, LDA, PBE, HSE, HF.
@@ -2778,7 +2778,7 @@ parameters:
     unit: ""
     availability: ""
   - name: lr_init_xc_kernel
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: "Vector of String (>=1 values)"
     description: |
       The method to initalize the xc kernel.
@@ -2789,7 +2789,7 @@ parameters:
     unit: ""
     availability: ""
   - name: lr_solver
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: String
     description: |
       The method to solve the Casida equation in LR-TDDFT under Tamm-Dancoff approximation (TDA).
@@ -2800,7 +2800,7 @@ parameters:
     unit: ""
     availability: ""
   - name: lr_thr
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: Real
     description: |
       The convergence threshold of iterative diagonalization solver for LR-TDDFT. It is a pure-math number with the same meaning as pw_diag_thr, but since the Casida equation is a one-shot eigenvalue problem, it is also the convergence threshold of LR-TDDFT.
@@ -2808,7 +2808,7 @@ parameters:
     unit: ""
     availability: ""
   - name: nocc
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: Integer
     description: |
       The number of occupied orbitals (up to HOMO) used in the LR-TDDFT calculation.
@@ -2817,7 +2817,7 @@ parameters:
     unit: ""
     availability: ""
   - name: nvirt
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: Integer
     description: |
       The number of virtual orbitals (starting from LUMO) used in the LR-TDDFT calculation.
@@ -2825,7 +2825,7 @@ parameters:
     unit: ""
     availability: ""
   - name: lr_nstates
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: Integer
     description: |
       The number of 2-particle states to be solved.
@@ -2833,7 +2833,7 @@ parameters:
     unit: ""
     availability: ""
   - name: lr_unrestricted
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: Boolean
     description: |
       Whether to use unrestricted construction for LR-TDDFT (the matrix size will be doubled).
@@ -2843,7 +2843,7 @@ parameters:
     unit: ""
     availability: ""
   - name: abs_wavelen_range
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: Real Real
     description: |
       The range of the wavelength for the absorption spectrum calculation.
@@ -2851,7 +2851,7 @@ parameters:
     unit: nm
     availability: ""
   - name: out_wfc_lr
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: Boolean
     description: |
       Whether to output the eigenstates (excitation energy) and eigenvectors (excitation amplitude) of the LR-TDDFT calculation. The output files are OUT.{suffix}/Excitation_Amplitude_${processor_rank}.dat.
@@ -2859,21 +2859,157 @@ parameters:
     unit: ""
     availability: ""
   - name: abs_gauge
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: String
     description: |
       Whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT.
-    default_value: length
+    default_value: velocity
     unit: ""
     availability: ""
   - name: abs_broadening
-    category: Linear Response TDDFT (Under Development Feature)
+    category: Linear Response TDDFT
     type: Real
     description: |
       The broadening factor for the absorption spectrum calculation.
     default_value: "0.01"
     unit: ""
     availability: ""
+  - name: bse_tda
+    category: Bethe-Salpeter Equation
+    type: String
+    description: |
+      Whether the Tamm-Dancoff approximation is used: 'tda', 'full', or 'both'.
+    default_value: tda
+    unit: ""
+    availability: ""
+  - name: bse_spin_types
+    category: Bethe-Salpeter Equation
+    type: "Vector of String (>=1 values)"
+    description: |
+      Spin types for a closed-shell calculation in one task: 'singlet', 'triplet', and the test modes 'rpa' and 'ipa'.
+    default_value: singlet triplet
+    unit: ""
+    availability: ""
+  - name: bse_mem_save
+    category: Bethe-Salpeter Equation
+    type: Boolean
+    description: |
+      Whether to save memory by adding V and W directly to the BSE matrix. When enabled, bse_ri_hartree is enabled and bse_continue is reset to 0.
+    default_value: "false"
+    unit: ""
+    availability: ""
+  - name: bse_ri_hartree
+    category: Bethe-Salpeter Equation
+    type: Boolean
+    description: |
+      Whether to use the RI approximation for the Hartree term in BSE.
+    default_value: "true"
+    unit: ""
+    availability: ""
+  - name: bse_use_fine_kgrid
+    category: Bethe-Salpeter Equation
+    type: Integer
+    description: |
+      Fine k-grid mode for BSE: 0 uses the coarse k-grid, 1 uses a uniform fine k-grid, and 2 uses a non-uniform fine k-grid. Modes 1 and 2 require band_kpath_info, band_KS_eigenvector_k_{index}.txt, KS_band_spin_{index}.txt, and GW_band_spin_{index}.txt.
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: bse_q_approx_mode
+    category: Bethe-Salpeter Equation
+    type: Integer
+    description: |
+      q-to-k-pair mapping mode: 0 uses exact mapping, 1 uses the coarse q-grid approximation, and 2 uses exact for Γ-close q-points and coarse for other q-points.
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: bse_q_approx_threshold
+    category: Bethe-Salpeter Equation
+    type: Real
+    description: |
+      Threshold radius in Bohr^-1 for exact q-to-k-pair mapping when bse_q_approx_mode is 2.
+    default_value: "0.1"
+    unit: ""
+    availability: ""
+  - name: out_bse_ab
+    category: Bethe-Salpeter Equation
+    type: Boolean
+    description: |
+      Whether to output the AB matrix to a file.
+    default_value: "false"
+    unit: ""
+    availability: ""
+  - name: bse_continue
+    category: Bethe-Salpeter Equation
+    type: Integer
+    description: |
+      Step from which to continue a previous BSE calculation: 0 starts a new calculation; 1 reads A_V; 2 reads A_V and A_W; 3 reads A_V, A_W, and B_V; 4 reads A_V, A_W, B_V, and B_W.
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: plot_istate
+    category: Linear Response TDDFT
+    type: Integer
+    description: |
+      The index of the excited state to plot, starting from 0.
+    default_value: "0"
+    unit: ""
+    availability: ""
+  - name: exciton_plot_type
+    category: Linear Response TDDFT
+    type: String
+    description: |
+      Exciton density represented when lr_solver is 'plot': 'average' integrates out the other particle, while 'conditional' fixes one particle at exciton_fixed_coordinate and plots a slice of the other particle's density.
+    default_value: average
+    unit: ""
+    availability: ""
+  - name: exciton_plot_format
+    category: Linear Response TDDFT
+    type: String
+    description: |
+      The exciton-density output format. Average density supports cube, slice, and both; conditional density supports slice only.
+    default_value: cube
+    unit: ""
+    availability: lr_solver==plot
+  - name: exciton_fixed_coordinate
+    category: Linear Response TDDFT
+    type: Vector of Real (6 values)
+    description: |
+      Cartesian coordinates in Bohr used by conditional exciton plotting, in the order hole_x hole_y hole_z electron_x electron_y electron_z.
+    default_value: 0.0 0.0 0.0 0.0 0.0 0.0
+    unit: ""
+    availability: ""
+  - name: exciton_slice_plane
+    category: Linear Response TDDFT
+    type: String
+    description: |
+      Pair of lattice-vector directions spanning the cross section: 'ab', 'bc', or 'ca'.
+    default_value: "ab"
+    unit: ""
+    availability: ""
+  - name: exciton_slice_pos
+    category: Linear Response TDDFT
+    type: Real
+    description: |
+      Offset in Bohr along the remaining lattice-vector direction: c for an ab slice, a for bc, and b for ca.
+    default_value: "0.0"
+    unit: ""
+    availability: ""
+  - name: exciton_slice_npoints
+    category: Linear Response TDDFT
+    type: Integer
+    description: |
+      Target in-plane grid resolution. The final grid uses a uniform number of points per primitive cell over `exciton_slice_range` and includes both endpoints.
+    default_value: "200"
+    unit: ""
+    availability: ""
+  - name: exciton_slice_range
+    category: Linear Response TDDFT
+    type: Vector of Integer (4 values)
+    description: |
+      The in-plane primitive-cell range of an exciton slice: ustart uend vstart vend. The end values are exclusive cell boundaries, while grid data include both range endpoints.
+    default_value: "-1 2 -1 2"
+    unit: primitive cells
+    availability: "lr_solver==plot and exciton_plot_format in [slice, both]"
   - name: out_freq_ion
     category: Output information
     type: Integer
@@ -3467,7 +3603,23 @@ parameters:
       [NOTE] If symmetry is set to 1, additional files containing the necessary information for exploiting symmetry in the subsequent rpa calculation will be output: irreducible_sector.txt, symrot_k.txt and symrot_R.txt.
     default_value: "False"
     unit: ""
-    availability: ""
+    availability: basis_type==lcao
+  - name: rpa_out_vel
+    category: Output information
+    type: Boolean
+    description: |
+       Velocity matrix in KS basis (in unit of eV *Angstrom). Loop layer: spin -> k -> direction -> KS_basis1 -> KS_basis2.
+    default_value: "False"
+    unit: "eV * A"
+    availability: basis_type==lcao
+  - name: rpa_outdir
+    category: Output information
+    type: String
+    description: |
+      The directory to save files for LibRPA.
+    default_value: "\"./OUT.librpa/\""
+    unit: ""
+    availability: basis_type==lcao
   - name: out_pchg
     category: Output information
     type: String
@@ -4382,7 +4534,7 @@ parameters:
       * True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation
     default_value: "True"
     unit: ""
-    availability: "symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or rpa==true)"
+    availability: "symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or (basis_type==lcao and rpa==true))"
   - name: out_ri_cv
     category: Exact Exchange (LCAO)
     type: Boolean
@@ -4943,7 +5095,7 @@ parameters:
     category: Reduced Density Matrix Functional Theory
     type: Boolean
     description: |
-      Whether to perform rdmft calculation (reduced density matrix funcional theory)
+      Whether to perform rdmft calculation (reduced density matrix funcional theory). The physical quantities that RDMFT temporarily expects to output are the kinetic energy, total energy, and 1-RDM of the system in the ground state, etc.
     default_value: "false"
     unit: ""
     availability: ""

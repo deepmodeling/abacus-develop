@@ -125,10 +125,12 @@ class ReadInput
     void item_deepks();
     // items for real time tddft
     void item_rt_tddft();
-    // items for linear response tddft
-    void item_tdofdft();
     // items for td-ofdft
+    void item_tdofdft();
+    // items for linear response tddft
     void item_lr_tddft();
+    // items for BSE
+    void item_bse();
     // items for output
     void item_output();
     // items for postprocess

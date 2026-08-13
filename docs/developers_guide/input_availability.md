@@ -2,10 +2,11 @@
 
 ## Purpose
 
-`Input_Item::availability` describes when an INPUT parameter is applicable. It
-is metadata for documentation and tooling; it does not reject or alter a
-user's INPUT based on this condition. Runtime diagnostics, if added, must define
-how explicitly supplied parameters whose conditions are false are handled.
+Input item availability metadata describes when an INPUT parameter is
+applicable. It is used by documentation and tooling; it does not reject or
+alter a user's INPUT based on this condition. Runtime diagnostics, if added,
+must define how explicitly supplied parameters whose conditions are false are
+handled.
 
 ## Invariants
 

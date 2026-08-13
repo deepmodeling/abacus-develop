@@ -1459,7 +1459,35 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
                           "irreducible_sector.txt, symrot_k.txt and symrot_R.txt.";
         item.default_value = "False";
         item.unit = "";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.rpa);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_out_vel");
+        item.annotation = "whether to output velocity matrix for librpa";
+        item.category = "Output information";
+        item.type = "Boolean";
+        item.description = " Velocity matrix in KS basis (in unit of eV *Angstrom). Loop layer: spin -> k -> direction -> KS_basis1 -> KS_basis2.";
+        item.default_value = "False";
+        item.unit = "eV * A";
+        item.set_availability("basis_type==lcao");
+        read_sync_bool(input.rpa_out_vel);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_outdir");
+        item.annotation = "output directory for librpa";
+        item.category = "Output information";
+        item.type = "String";
+        item.description = "The directory to save files for LibRPA.";
+        item.default_value = "\"./OUT.librpa/\"";
+        item.unit = "";
+        item.set_availability("basis_type==lcao");
+        read_sync_string(input.rpa_outdir);
+        item.reset_value = [](const Input_Item& item, Parameter& para) {
+            para.input.rpa_outdir = to_dir(para.input.rpa_outdir);
+        };
         this->add_item(item);
     }
     {

@@ -8,13 +8,13 @@ abacus_disable_feature_definitions(__EXX)
 
 AddTest(
   TARGET MODULE_CELL_NEIGHBOR_neighbor_search
-  LIBS parameter base device
+  LIBS parameter base device cell symmetry
   SOURCES
     neighbor_search_test.cpp
   ../neighbor_search.cpp
+  ../domain_decomposition.cpp
   ../bin_manager.cpp
   ../page_allocator.cpp
-  ../unitcell_lite.cpp
 )
 
 AddTest(
@@ -35,31 +35,44 @@ AddTest(
 )
 
 if(ENABLE_MPI)
-  add_executable(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark
-    neighbor_search_mpi_benchmark.cpp
+  add_executable(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
+    md_cell_migrate_mpi_test.cpp
+    ../../md_cell.cpp
     ../domain_decomposition.cpp
-    ../neighbor_search.cpp
-    ../bin_manager.cpp
-    ../page_allocator.cpp
-    ../unitcell_lite.cpp
+  )
+  target_link_libraries(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
+    PRIVATE
+    parameter base device MPI::MPI_CXX GTest::gtest_main GTest::gmock_main abacus::linalg_libs
+  )
+  install(TARGETS MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi DESTINATION ${CMAKE_BINARY_DIR}/tests)
+  add_test(NAME MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
+    COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 2
+            $<TARGET_FILE:MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi>
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+  )
+
+  add_executable(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader
+    distributed_mdcell_reader_test.cpp
+    ../../distributed_mdcell_reader.cpp
+    ../../md_cell.cpp
+    ../domain_decomposition.cpp
+    ../../../source_base/global_variable.cpp
+    ../../../source_base/communication_domain.cpp
     ../../../source_base/matrix.cpp
     ../../../source_base/matrix3.cpp
     ../../../source_base/tool_quit.cpp
   )
-  target_include_directories(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE ${ABACUS_SOURCE_DIR})
-  target_compile_definitions(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE __NORMAL)
-  target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark
+  target_include_directories(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader PRIVATE ${ABACUS_SOURCE_DIR})
+  target_compile_definitions(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader PRIVATE __NORMAL)
+  target_link_libraries(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader
     PRIVATE
-    Threads::Threads MPI::MPI_CXX
+    Threads::Threads MPI::MPI_CXX GTest::gtest GTest::gmock
   )
-  if(ENABLE_OPENMP)
-    target_link_libraries(MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark PRIVATE OpenMP::OpenMP_CXX)
-  endif()
-  install(TARGETS MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark DESTINATION ${CMAKE_BINARY_DIR}/tests)
-  add_test(NAME MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark_np4
+  install(TARGETS MODULE_CELL_NEIGHBOR_distributed_mdcell_reader DESTINATION ${CMAKE_BINARY_DIR}/tests)
+  add_test(NAME MODULE_CELL_NEIGHBOR_distributed_mdcell_reader_np4
     COMMAND ${MPIEXEC_EXECUTABLE} ${MPIEXEC_NUMPROC_FLAG} 4
-            $<TARGET_FILE:MODULE_CELL_NEIGHBOR_neighbor_search_mpi_benchmark>
-            12 12 12 2 1.75 1.0 0.2 1
+            $<TARGET_FILE:MODULE_CELL_NEIGHBOR_distributed_mdcell_reader>
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
   )
+
 endif()

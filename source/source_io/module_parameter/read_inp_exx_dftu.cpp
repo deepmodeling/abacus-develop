@@ -528,7 +528,7 @@ void ReadInput::item_exx()
 * True: rotate both D(k) and Hexx(R) to accelerate both diagonalization and EXX calculation)";
         item.default_value = "True";
         item.unit = "";
-        item.set_availability("symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or rpa==true)");
+        item.set_availability("symmetry==1 and (dft_functional in [hse, hf, pbe0, scan0] or (basis_type==lcao and rpa==true))");
         read_sync_bool(input.exx_symmetry_realspace);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.symmetry != "1") { para.input.exx_symmetry_realspace = false; }
