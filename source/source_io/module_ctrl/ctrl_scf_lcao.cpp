@@ -269,13 +269,13 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     //! 7a) Output H(R) and S(R) matrices in CSR format
     //------------------------------------------------------------------
-    if (inp.out_hsr[0] == 1)
+    if (inp.out_hsr[0] == 1 || inp.out_hsr[0] == 2)
     {
         const int precision = inp.out_hsr[1];
         std::vector<hamilt::HContainer<TR>*> hr_vec = p_hamilt->getHR_vector();
         const hamilt::HContainer<TR>* sr = p_hamilt->getSR();
 
-        ModuleIO::write_hsr(hr_vec, sr, &ucell, precision, pv,
+        ModuleIO::write_hsr(hr_vec, sr, &ucell, inp.out_hsr[0], precision, pv,
                             out_app_flag, gamma_only, ucell.get_iat2iwt(), ucell.nat, istep);
     }
 

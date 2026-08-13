@@ -15,6 +15,7 @@
 #include "source_base/module_out/csr_reader.h"
 #include "source_hamilt/module_hcontainer/atom_pair.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 
 #include <complex>
 #include <cstdio>
@@ -130,6 +131,55 @@ T read_binary_value(std::ifstream& ifs)
     return value;
 }
 
+struct NativeDoubleRBlock
+{
+    int rx = 0;
+    int ry = 0;
+    int rz = 0;
+    std::vector<double> values;
+    std::vector<int> columns;
+    std::vector<long long> row_ptr;
+};
+
+struct NativeDoubleRecord
+{
+    int step = 0;
+    int nbasis = 0;
+    std::vector<NativeDoubleRBlock> blocks;
+};
+
+NativeDoubleRecord read_native_double_record(std::ifstream& ifs)
+{
+    NativeDoubleRecord record;
+    record.step = read_binary_value<int>(ifs);
+    record.nbasis = read_binary_value<int>(ifs);
+    const int nR = read_binary_value<int>(ifs);
+    record.blocks.resize(nR);
+    for (NativeDoubleRBlock& block: record.blocks)
+    {
+        block.rx = read_binary_value<int>(ifs);
+        block.ry = read_binary_value<int>(ifs);
+        block.rz = read_binary_value<int>(ifs);
+        const int nnz = read_binary_value<int>(ifs);
+        block.values.resize(nnz);
+        block.columns.resize(nnz);
+        block.row_ptr.resize(record.nbasis + 1);
+        for (double& value: block.values)
+        {
+            value = read_binary_value<double>(ifs);
+        }
+        for (int& column: block.columns)
+        {
+            column = read_binary_value<int>(ifs);
+        }
+        for (long long& pointer: block.row_ptr)
+        {
+            pointer = read_binary_value<long long>(ifs);
+        }
+    }
+    return record;
+}
+
 std::vector<std::string> read_lines(const std::string& filename)
 {
     std::ifstream ifs(filename.c_str());
@@ -191,6 +241,18 @@ void fill_matrix(hamilt::HContainer<double>& matrix, Parallel_Orbitals& pv, doub
     matrix.insert_pair(pair);
 }
 
+template <typename T>
+void fill_matrix_at_R(hamilt::HContainer<T>& matrix,
+                      Parallel_Orbitals& pv,
+                      const int rx,
+                      const int ry,
+                      const int rz,
+                      T* values)
+{
+    hamilt::AtomPair<T> pair(0, 0, rx, ry, rz, &pv, values);
+    matrix.insert_pair(pair);
+}
+
 void init_sparse_output_globals(const int nspin = 1)
 {
     GlobalV::DRANK = 0;
@@ -232,6 +294,10 @@ TEST(WriteHsRCompatibility, FileNameHelpersKeepCurrentContract)
     EXPECT_EQ(ModuleIO::sr_gen_fname(false, 0), "srg1_nao.csr");
     EXPECT_EQ(ModuleIO::sr_gen_fname(false, -1), "sr_nao.csr");
     EXPECT_EQ(ModuleIO::sr_gen_fname(true, 3), "sr_nao.csr");
+    EXPECT_EQ(ModuleIO::hsr_gen_fname("hrs", 0, true, -1, 2), "hrs1_nao.dat");
+    EXPECT_EQ(ModuleIO::hsr_gen_fname("hrs", 1, false, 3, 2), "hrs2g4_nao.dat");
+    EXPECT_EQ(ModuleIO::sr_gen_fname(false, 0, 2), "srg1_nao.dat");
+    EXPECT_EQ(ModuleIO::sr_gen_fname(true, 3, 2), "sr_nao.dat");
 
     EXPECT_EQ(ModuleIO::dhr_gen_fname("dhrx", 0, true, -1), "dhrxrs1_nao.csr");
     EXPECT_EQ(ModuleIO::dhr_gen_fname("dhrx", 0, false, 0), "dhrxrs1g1_nao.csr");
@@ -331,6 +397,204 @@ TEST(WriteHsRCompatibility, HContainerCsrAppendKeepsCurrentStepSections)
     EXPECT_EQ(count_substr(output, " # print S matrix in real space S(R)\n"), 2);
 
     std::remove(filename.c_str());
+}
+
+TEST(WriteHsRCompatibility, HContainerBinaryWritesSortedAndEmptyRBlocks)
+{
+    const std::string filename = "write_hs_r_native_binary_real.dat";
+    std::remove(filename.c_str());
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    hamilt::HContainer<double> matrix(&pv);
+    double empty_values[4] = {1e-12, 0.0, 0.0, -1e-12};
+    double values[4] = {1.0, 1e-12, 0.0, -2.0};
+    fill_matrix_at_R(matrix, pv, 1, 0, 0, empty_values);
+    fill_matrix_at_R(matrix, pv, -1, 0, 0, values);
+
+    ModuleIO::write_hcontainer_csr_binary(filename, &matrix, -1, false);
+
+    std::ifstream ifs(filename.c_str(), std::ios::binary);
+    ASSERT_TRUE(ifs.is_open());
+    const NativeDoubleRecord record = read_native_double_record(ifs);
+    EXPECT_EQ(record.step, 0);
+    EXPECT_EQ(record.nbasis, 2);
+    ASSERT_EQ(record.blocks.size(), 2);
+    EXPECT_EQ(record.blocks[0].rx, -1);
+    EXPECT_EQ(record.blocks[0].ry, 0);
+    EXPECT_EQ(record.blocks[0].rz, 0);
+    EXPECT_THAT(record.blocks[0].values, testing::ElementsAre(1.0, -2.0));
+    EXPECT_THAT(record.blocks[0].columns, testing::ElementsAre(0, 1));
+    EXPECT_THAT(record.blocks[0].row_ptr, testing::ElementsAre(0, 1, 2));
+    EXPECT_EQ(record.blocks[1].rx, 1);
+    EXPECT_EQ(record.blocks[1].ry, 0);
+    EXPECT_EQ(record.blocks[1].rz, 0);
+    EXPECT_TRUE(record.blocks[1].values.empty());
+    EXPECT_TRUE(record.blocks[1].columns.empty());
+    EXPECT_THAT(record.blocks[1].row_ptr, testing::ElementsAre(0, 0, 0));
+    EXPECT_EQ(ifs.peek(), std::ifstream::traits_type::eof());
+
+    std::remove(filename.c_str());
+}
+
+TEST(WriteHsRCompatibility, HContainerBinaryWritesComplexValuesAsDoublePairs)
+{
+    const std::string filename = "write_hs_r_native_binary_complex.dat";
+    std::remove(filename.c_str());
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    hamilt::HContainer<std::complex<double>> matrix(&pv);
+    std::complex<double> values[4] = {
+        std::complex<double>(1.0, 2.0),
+        std::complex<double>(0.0, 0.0),
+        std::complex<double>(0.0, 0.0),
+        std::complex<double>(-3.0, 4.0),
+    };
+    fill_matrix_at_R(matrix, pv, 0, 0, 0, values);
+
+    ModuleIO::write_hcontainer_csr_binary(filename, &matrix, 4, false);
+
+    std::ifstream ifs(filename.c_str(), std::ios::binary);
+    ASSERT_TRUE(ifs.is_open());
+    EXPECT_EQ(read_binary_value<int>(ifs), 4);
+    EXPECT_EQ(read_binary_value<int>(ifs), 2);
+    EXPECT_EQ(read_binary_value<int>(ifs), 1);
+    EXPECT_EQ(read_binary_value<int>(ifs), 0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 2);
+    EXPECT_DOUBLE_EQ(read_binary_value<double>(ifs), 1.0);
+    EXPECT_DOUBLE_EQ(read_binary_value<double>(ifs), 2.0);
+    EXPECT_DOUBLE_EQ(read_binary_value<double>(ifs), -3.0);
+    EXPECT_DOUBLE_EQ(read_binary_value<double>(ifs), 4.0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 0);
+    EXPECT_EQ(read_binary_value<int>(ifs), 1);
+    EXPECT_EQ(read_binary_value<long long>(ifs), 0);
+    EXPECT_EQ(read_binary_value<long long>(ifs), 1);
+    EXPECT_EQ(read_binary_value<long long>(ifs), 2);
+    EXPECT_EQ(ifs.peek(), std::ifstream::traits_type::eof());
+
+    std::remove(filename.c_str());
+}
+
+TEST(WriteHsRCompatibility, HContainerBinaryAppendsAndCanOverwrite)
+{
+    const std::string filename = "write_hs_r_native_binary_append.dat";
+    std::remove(filename.c_str());
+
+    Parallel_Orbitals pv;
+    init_serial_orbitals(pv);
+    hamilt::HContainer<double> matrix(&pv);
+    double values[4] = {1.0, 0.0, 0.0, 2.0};
+    fill_matrix(matrix, pv, values);
+
+    ModuleIO::write_hcontainer_csr_binary(filename, &matrix, 0, true);
+    ModuleIO::write_hcontainer_csr_binary(filename, &matrix, 1, true);
+
+    std::ifstream appended(filename.c_str(), std::ios::binary);
+    ASSERT_TRUE(appended.is_open());
+    EXPECT_EQ(read_native_double_record(appended).step, 0);
+    EXPECT_EQ(read_native_double_record(appended).step, 1);
+    EXPECT_EQ(appended.peek(), std::ifstream::traits_type::eof());
+    appended.close();
+
+    ModuleIO::write_hcontainer_csr_binary(filename, &matrix, 2, false);
+    std::ifstream replaced(filename.c_str(), std::ios::binary);
+    ASSERT_TRUE(replaced.is_open());
+    EXPECT_EQ(read_native_double_record(replaced).step, 2);
+    EXPECT_EQ(replaced.peek(), std::ifstream::traits_type::eof());
+
+    std::remove(filename.c_str());
+}
+
+TEST(WriteHsRCompatibility, HContainerBinaryMpiGatherWritesCompleteFiles)
+{
+#ifndef __MPI
+    GTEST_SKIP() << "MPI support is required.";
+#else
+    int mpi_size = 0;
+    int mpi_rank = 0;
+    MPI_Comm_size(MPI_COMM_WORLD, &mpi_size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+    if (mpi_size != 2)
+    {
+        GTEST_SKIP() << "This test requires exactly two MPI ranks.";
+    }
+
+    const std::string hr_filename = "hrs1_nao.dat";
+    const std::string sr_filename = "sr_nao.dat";
+    if (mpi_rank == 0)
+    {
+        std::remove(hr_filename.c_str());
+        std::remove(sr_filename.c_str());
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    UnitCell ucell;
+    ucell.ntype = 1;
+    ucell.nat = 1;
+    ucell.atoms = new Atom[1];
+    ucell.set_atom_flag = true;
+    ucell.atoms[0].na = 1;
+    ucell.atoms[0].nw = 2;
+    ucell.iat2it = new int[1];
+    ucell.iat2it[0] = 0;
+    ucell.set_iat2iwt(1);
+    const int* iat2iwt = ucell.get_iat2iwt();
+    Parallel_Orbitals serial_pv;
+    serial_pv.set_serial(2, 2);
+    serial_pv.set_atomic_trace(iat2iwt, 1, 2);
+    Parallel_Orbitals parallel_pv;
+    ASSERT_EQ(parallel_pv.init(2, 2, 1, MPI_COMM_WORLD), 0);
+    parallel_pv.set_atomic_trace(iat2iwt, 1, 2);
+
+    hamilt::HContainer<double> hr_serial(ucell, &serial_pv);
+    hamilt::HContainer<double> sr_serial(ucell, &serial_pv);
+    double hr_values[4] = {1.0, 0.5, 0.0, 2.0};
+    double sr_values[4] = {1.0, 0.0, 0.0, 1.0};
+    if (mpi_rank == 0)
+    {
+        std::copy(hr_values, hr_values + 4, hr_serial.get_atom_pair(0).get_pointer(0));
+        std::copy(sr_values, sr_values + 4, sr_serial.get_atom_pair(0).get_pointer(0));
+    }
+
+    hamilt::HContainer<double> hr_parallel(ucell, &parallel_pv);
+    hamilt::HContainer<double> sr_parallel(ucell, &parallel_pv);
+    hamilt::transferSerial2Parallels(hr_serial, &hr_parallel, 0);
+    hamilt::transferSerial2Parallels(sr_serial, &sr_parallel, 0);
+
+    init_sparse_output_globals();
+    std::vector<hamilt::HContainer<double>*> hr_vec(1, &hr_parallel);
+    ModuleIO::write_hsr(
+        hr_vec, &sr_parallel, &ucell, 2, 8, parallel_pv, true, true, iat2iwt, 1, 0);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    if (mpi_rank == 0)
+    {
+        std::ifstream hr_stream(hr_filename.c_str(), std::ios::binary);
+        ASSERT_TRUE(hr_stream.is_open());
+        const NativeDoubleRecord hr_record = read_native_double_record(hr_stream);
+        ASSERT_EQ(hr_record.blocks.size(), 1);
+        EXPECT_THAT(hr_record.blocks[0].values, testing::ElementsAre(1.0, 0.5, 2.0));
+        EXPECT_THAT(hr_record.blocks[0].columns, testing::ElementsAre(0, 1, 1));
+        EXPECT_THAT(hr_record.blocks[0].row_ptr, testing::ElementsAre(0, 2, 3));
+
+        std::ifstream sr_stream(sr_filename.c_str(), std::ios::binary);
+        ASSERT_TRUE(sr_stream.is_open());
+        const NativeDoubleRecord sr_record = read_native_double_record(sr_stream);
+        ASSERT_EQ(sr_record.blocks.size(), 1);
+        EXPECT_THAT(sr_record.blocks[0].values, testing::ElementsAre(1.0, 1.0));
+        EXPECT_THAT(sr_record.blocks[0].columns, testing::ElementsAre(0, 1));
+        EXPECT_THAT(sr_record.blocks[0].row_ptr, testing::ElementsAre(0, 1, 2));
+
+        std::remove(hr_filename.c_str());
+        std::remove(sr_filename.c_str());
+    }
+    delete[] ucell.atoms;
+    ucell.atoms = nullptr;
+    ucell.set_atom_flag = false;
+#endif
 }
 
 TEST(WriteHsRCompatibility, DmrCsrHeaderKeepsCurrentFormat)

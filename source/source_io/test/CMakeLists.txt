@@ -287,6 +287,13 @@ AddTest(
   ../../source_basis/module_ao/parallel_orbitals.cpp
   ../../source_hamilt/module_hcontainer/test/tmp_mocks.cpp
 )
+
+add_test(
+  NAME MODULE_IO_write_hsr_binary_test_parallel
+  COMMAND mpirun -np 2 ./MODULE_IO_write_hs_r_compat_test
+          --gtest_filter=WriteHsRCompatibility.HContainerBinaryMpiGatherWritesCompleteFiles
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 endif()
 
 if(ENABLE_LIBRI)
