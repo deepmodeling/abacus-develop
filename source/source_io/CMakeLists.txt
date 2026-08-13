@@ -1,4 +1,4 @@
-# Note: Help data is now embedded in Input_Item objects in read_input_item_*.cpp
+# Note: Help data is embedded in Input_Item registrations under module_parameter.
 # The old input_help_data.h generation has been removed.
 
 list(APPEND objects

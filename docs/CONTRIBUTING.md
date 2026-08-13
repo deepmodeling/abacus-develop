@@ -172,7 +172,7 @@ An practical example is class [LCAO_Deepks](https://github.com/deepmodeling/abac
 
 ## Documenting INPUT Parameters
 
-ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). Parameter metadata is defined inline in the C++ source files (`source/source_io/module_parameter/read_input_item_*.cpp`) using `Input_Item` registrations.
+ABACUS includes a built-in help system that allows users to query INPUT parameters directly from the command line (e.g., `abacus -h ecutwfc`). Parameter metadata is defined inline in the C++ source files under `source/source_io/module_parameter/` using `Input_Item` registrations.
 
 The C++ `Input_Item` registrations are the source of truth for parameter metadata. The checked-in `docs/parameters.yaml` and `docs/advanced/input_files/input-main.md` files are generated artifacts: do not edit either file manually. `parameters.yaml` is generated from the binary and is used by Sphinx to produce `input-main.md`.
 
