@@ -16,18 +16,24 @@ struct LocalAtom
 {
     ModuleBase::Vector3<double> cart;
     ModuleBase::Vector3<double> frac;
+    ModuleBase::Vector3<double> vel;
+    ModuleBase::Vector3<double> force;
+    ModuleBase::Vector3<int> mbl;
+    double mass;
     int type;
     int type_index;
-    ModuleNeighList::GlobalAtomId global_id;
     int owner_rank;
     bool is_ghost;
 
     LocalAtom()
         : cart(0.0, 0.0, 0.0),
           frac(0.0, 0.0, 0.0),
+          vel(0.0, 0.0, 0.0),
+          force(0.0, 0.0, 0.0),
+          mbl(1, 1, 1),
+          mass(1.0),
           type(0),
           type_index(0),
-          global_id(-1),
           owner_rank(0),
           is_ghost(false)
     {
@@ -35,16 +41,22 @@ struct LocalAtom
 
     LocalAtom(const ModuleBase::Vector3<double>& cart_in,
               const ModuleBase::Vector3<double>& frac_in,
+              const ModuleBase::Vector3<double>& vel_in,
+              const ModuleBase::Vector3<double>& force_in,
+              const ModuleBase::Vector3<int>& mbl_in,
+              double mass_in,
               int type_in,
               int type_index_in,
-              ModuleNeighList::GlobalAtomId global_id_in,
               int owner_rank_in,
               bool is_ghost_in)
         : cart(cart_in),
           frac(frac_in),
+          vel(vel_in),
+          force(force_in),
+          mbl(mbl_in),
+          mass(mass_in),
           type(type_in),
           type_index(type_index_in),
-          global_id(global_id_in),
           owner_rank(owner_rank_in),
           is_ghost(is_ghost_in)
     {

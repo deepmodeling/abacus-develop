@@ -6,48 +6,31 @@
 #include "source_cell/sep_cell.h"
 #include "source_cell/magnetism.h"
 #include "module_symmetry/symmetry.h"
-#include "source_cell/module_neighlist/atom_provider.h"
 #include "source_cell/base_cell.h"
 #include "source_cell/nonlocal_info_base.h"
 
 /**
  * @brief Provide the basic information about unitcell.
  */
-class UnitCell : public AtomProvider, public BaseCell {
+class UnitCell : public BaseCell {
   public:
     UnitCell();
     ~UnitCell();
 
-    /// @name BaseCell / AtomProvider interface overrides
-    /// @{
-    double get_lat0() const override {
+    double get_lat0() const override
+    {
         return lat0;
     }
 
-    double get_omega() const override {
+    double get_omega() const override
+    {
         return omega;
     }
 
-    const ModuleBase::Matrix3& get_latvec() const override {
+    const ModuleBase::Matrix3& get_latvec() const override
+    {
         return latvec;
     }
-
-    int get_natom() const override {
-        return nat;
-    }
-
-    int get_na(int i) const override {
-        return atoms[i].na;
-    }
-
-    int get_ntype() const override {
-        return ntype;
-    }
-
-    ModuleBase::Vector3<double> get_tau(int i, int j) const override {
-        return atoms[i].tau[j];
-    }
-    /// @}
 
     /// @brief Initialize basic cell parameters (latname, ntype, lmaxmax, init_vel)
     ///        from INPUT and parse fixed_axes into lat_axis_free flags.
