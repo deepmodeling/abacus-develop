@@ -34,17 +34,6 @@ ESolver_KS_LCAO_TDDFT<TR, Device>::ESolver_KS_LCAO_TDDFT()
 {
     this->classname = "ESolver_rtTDDFT";
     this->basisname = "LCAO";
-
-    // If the device is GPU, we must open use_tensor and use_lapack
-    ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
-    if (ct_device_type == ct::DeviceType::GpuDevice)
-    {
-        use_tensor = true;
-        if (PARAM.inp.ks_solver != "cusolvermp")
-        {
-            use_lapack = true;
-        }
-    }
 }
 
 template <typename TR, typename Device>
@@ -77,6 +66,17 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
 {
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
+
+    // If the device is GPU, we must open use_tensor and use_lapack
+    ct::DeviceType ct_device_type = ct::DeviceTypeToEnum<Device>::value;
+    if (ct_device_type == ct::DeviceType::GpuDevice)
+    {
+        use_tensor = true;
+        if (inp.ks_solver != "cusolvermp")
+        {
+            use_lapack = true;
+        }
+    }
 
     // Build the shared field state before the base ESolver registers potential
     // components. Both propagation gauges and the length-gauge potential must
