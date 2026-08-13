@@ -2,6 +2,8 @@
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/tool_title.h"
+#include "source_base/constants.h"
+#include <cmath>
 
 #ifdef __LIBXC
 #include "libxc_abacus.h"
@@ -14,6 +16,7 @@ XC_Functional::~XC_Functional(){}
 std::vector<int> XC_Functional::func_id(1);
 int XC_Functional::func_type = 0;
 bool XC_Functional::ked_flag = false;
+bool XC_Functional::need_laplacian = false;
 bool XC_Functional::use_libxc = true;
 double XC_Functional::hybrid_alpha = 0.25;
 double XC_Functional::hse_omega = 0.0;
@@ -169,6 +172,18 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
         func_type = 5;
         use_libxc = true;
     }
+    else if ( xc_func == "SCANL")
+    {
+        func_id.push_back(XC_MGGA_X_SCANL);
+        func_id.push_back(XC_MGGA_C_SCANL);
+        func_type = 3;
+        use_libxc = true;
+        std::cout << "\n WARNING: SCANL (SCAN-L) functional uses Laplacian of density (nabla^2 rho)."
+                  << "\n This may require a higher energy cutoff (ecutwfc) for numerical stability."
+                  << "\n For semiconductors: standard settings work well."
+                  << "\n For metals: k-grid >= 6x6x6, smearing_sigma <= 0.01 Ry, mixing_beta = 0.1-0.15"
+                  << std::endl;
+    }
     else if( xc_func == "LC_PBE")
     {
         func_id.push_back(XC_HYB_GGA_XC_LC_PBEOP);
@@ -301,6 +316,29 @@ void XC_Functional::set_xc_type(const std::string xc_func_in)
     {
         ked_flag = false;
     }
+
+#ifdef __LIBXC
+    if (use_libxc && ked_flag)
+    {
+        std::vector<xc_func_type> check_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
+        need_laplacian = false;
+        for (auto& f : check_funcs)
+        {
+            if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
+            {
+                need_laplacian = true;
+                break;
+            }
+        }
+        XC_Functional_Libxc::finish_func(check_funcs);
+    }
+    else
+    {
+        need_laplacian = false;
+    }
+#else
+    need_laplacian = false;
+#endif
 
     if (func_id[0] == XC_GGA_X_OPTX)
     {
