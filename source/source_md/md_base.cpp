@@ -17,10 +17,7 @@ MD_base::MD_base(const Parameter& param_in, MDCell& mdcell_in)
     my_rank = param_in.globalv.myrank;
 #endif
     cal_stress = param_in.inp.cal_stress;
-    if (mdp.md_seed >= 0)
-    {
-        srand(mdp.md_seed + my_rank * 104729);
-    }
+    srand((mdp.md_seed >= 0 ? mdp.md_seed : 1) + my_rank);
 
     stop = false;
 

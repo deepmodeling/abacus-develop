@@ -7,6 +7,7 @@
 #include <cerrno>
 #include <cstring>
 #include <fcntl.h>
+#include <iomanip>
 #include <unistd.h>
 
 
@@ -29,6 +30,66 @@ bool write_dump_at(const int file, const std::string& data, const MPI_Offset off
 }
 }
 #endif
+
+namespace
+{
+void print_mdcell_force(const MDCell& mdcell)
+{
+    const double output_acc = 1.0e-8;
+    const double force_unit = ModuleBase::Hartree_to_eV / ModuleBase::BOHR_TO_A;
+    const std::vector<LocalAtom>& owned_atoms = mdcell.owned_atoms();
+    const std::vector<std::string>& type_labels = mdcell.type_labels();
+
+    const auto print_atom = [&type_labels, output_acc, force_unit](const LocalAtom& atom) {
+        const std::string& label = type_labels[static_cast<std::size_t>(atom.type)];
+        const double fx = std::abs(atom.force.x) > output_acc ? atom.force.x * force_unit : 0.0;
+        const double fy = std::abs(atom.force.y) > output_acc ? atom.force.y * force_unit : 0.0;
+        const double fz = std::abs(atom.force.z) > output_acc ? atom.force.z * force_unit : 0.0;
+        GlobalV::ofs_running << std::setw(9) << label + std::to_string(atom.type_index + 1)
+                             << std::setw(20) << std::fixed << std::setprecision(10) << fx
+                             << std::setw(20) << fy << std::setw(20) << fz << std::endl;
+    };
+
+#ifdef __MPI
+    const int rank = mdcell.mpi_rank();
+    const int size = mdcell.mpi_size();
+    if (rank != 0)
+    {
+        const int nlocal = mdcell.nlocal();
+        MPI_Send(&nlocal, 1, MPI_INT, 0, 0, mdcell.communicator());
+        for (const LocalAtom& atom : owned_atoms)
+        {
+            MPI_Send(&atom.type, 1, MPI_INT, 0, 1, mdcell.communicator());
+            MPI_Send(&atom.type_index, 1, MPI_INT64_T, 0, 2, mdcell.communicator());
+            MPI_Send(&atom.force.x, 3, MPI_DOUBLE, 0, 3, mdcell.communicator());
+        }
+        return;
+    }
+#endif
+
+    GlobalV::ofs_running << "\n #TOTAL-FORCE (eV/Angstrom)#" << std::endl;
+    GlobalV::ofs_running << std::setw(9) << "Atoms" << std::setw(20) << "Force_x" << std::setw(20)
+                         << "Force_y" << std::setw(20) << "Force_z" << std::endl;
+    for (const LocalAtom& atom : owned_atoms) print_atom(atom);
+
+#ifdef __MPI
+    for (int source = 1; source < size; ++source)
+    {
+        int nlocal = 0;
+        MPI_Recv(&nlocal, 1, MPI_INT, source, 0, mdcell.communicator(), MPI_STATUS_IGNORE);
+        for (int iat = 0; iat < nlocal; ++iat)
+        {
+            LocalAtom atom;
+            MPI_Recv(&atom.type, 1, MPI_INT, source, 1, mdcell.communicator(), MPI_STATUS_IGNORE);
+            MPI_Recv(&atom.type_index, 1, MPI_INT64_T, source, 2, mdcell.communicator(), MPI_STATUS_IGNORE);
+            MPI_Recv(&atom.force.x, 3, MPI_DOUBLE, source, 3, mdcell.communicator(), MPI_STATUS_IGNORE);
+            print_atom(atom);
+        }
+    }
+#endif
+}
+}
+
 double gaussrand()
 {
     static double v1=0.0;
@@ -408,6 +469,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
         ModuleBase::matrix local_force;
         p_esolver->cal_force(static_cast<BaseCell&>(mdcell), local_force);
         for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.force *= 0.5;
+        print_mdcell_force(mdcell);
         if (cal_stress) { p_esolver->cal_stress(static_cast<BaseCell&>(mdcell), virial); virial *= 0.5; }
     }
     else
