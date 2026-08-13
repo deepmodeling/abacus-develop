@@ -243,8 +243,9 @@ void MSST::restart(const std::string& global_readin_dir)
 double MSST::vel_sum() const
 {
     double vsum = 0;
-
-    for (int i = 0; i < ucell.nat; ++i)
+    const int nat = ucell.nat;
+#pragma omp parallel for reduction(+:vsum) schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
         vsum += vel[i].norm2();
     }
@@ -266,7 +267,9 @@ void MSST::rescale(std::ofstream& ofs, const double& volume)
     unitcell::setup_cell_after_vc(ucell,ofs, PARAM.inp.nspin);
 
     /// rescale velocity
-    for (int i = 0; i < ucell.nat; ++i)
+    const int nat = ucell.nat;
+#pragma omp parallel for schedule(static) if (nat >= 256)
+    for (int i = 0; i < nat; ++i)
     {
         vel[i][sd] *= dilation[sd];
     }
@@ -280,8 +283,10 @@ void MSST::propagate_vel()
         const int sd = mdp.msst_direction;
         const double dthalf = 0.5 * md_dt;
         const double fac = msst_vis * pow(omega[sd], 2) / (vsum * ucell.omega);
+        const int nat = ucell.nat;
 
-        for (int i = 0; i < ucell.nat; ++i)
+#pragma omp parallel for schedule(static) if (nat >= 256)
+        for (int i = 0; i < nat; ++i)
         {
             ModuleBase::Vector3<double> const_C = force[i] / allmass[i];
             ModuleBase::Vector3<double> const_D;

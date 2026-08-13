@@ -2038,10 +2038,12 @@
 - **Description**: Output Hamiltonian and overlap matrices in real space, indexed by the Bravais lattice vector R, in the directory OUT.${suffix}. The first integer selects the format:
   - 0: disabled;
   - 1: text CSR output; the optional second integer controls precision and defaults to 8;
-  - 2: reserved for binary output, which is not implemented yet;
+  - 2: native binary CSR output using .dat files;
   - 3: NPZ output using hrs1_nao.npz, hrs2_nao.npz when needed, and sr_nao.npz.
 
   For multi-k calculations, the output contains the individual real-space blocks stored for the Bravais lattice vectors R. For gamma-only calculations, the internal real-space contributions are folded into a single R = (0, 0, 0) block. This folded result cannot recover the original R-resolved contributions or interpolate arbitrary k points. Terms added only while constructing H(k) are not guaranteed to be present.
+
+  For binary output, each file uses the same basename as text output with a .dat suffix. Every native record contains the zero-based ionic step, matrix dimension, and number of R blocks as ints. Each R block contains three int coordinates, an int nonzero count, native double values (real/imaginary double pairs for complex matrices), int column indices, and long long row pointers. Native integer representation and byte order are used. When out_app_flag is true, the first ionic step truncates the file and later steps append complete records.
 
   > Note: In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.
 - **Default**: 0 8

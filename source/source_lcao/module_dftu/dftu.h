@@ -6,7 +6,7 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_estate/module_charge/charge_mixing.h"
 #ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h"
+#include "source_basis/module_ao/orb_read.h"
 #include "source_hamilt/hamilt.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_estate/module_dm/density_matrix.h"

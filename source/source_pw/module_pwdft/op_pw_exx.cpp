@@ -15,7 +15,7 @@
 #include "source_pw/module_pwdft/kernels/cal_density_real_op.h"
 #include "source_pw/module_pwdft/kernels/exx_cal_energy_op.h"
 #include "source_pw/module_pwdft/kernels/mul_potential_op.h"
-#include "source_pw/module_pwdft/kernels/vec_mul_vec_complex_op.h"
+#include "source_pw/module_pwdft/kernels/vec_mul_cx_op.h"
 #include "source_io/module_parameter/parameter.h"
 
 #include <cmath>

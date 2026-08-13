@@ -36,9 +36,11 @@ add_library(
     qlist.cpp
     qlist.h
     cal_nelec_nband.cpp
-    read_pseudo.cpp
+    read_pp_ucell.cpp
     cal_wfc.cpp
     cal_ux.cpp
+    cif_io.cpp
+    ucell_io.cpp
 )
 
 if(ENABLE_COVERAGE)

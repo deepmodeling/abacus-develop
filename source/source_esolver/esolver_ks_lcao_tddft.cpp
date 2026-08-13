@@ -13,17 +13,17 @@
 #include "source_io/module_wf/read_wfc_nao.h"
 //------LCAO HSolver ElecState-------
 #include "source_estate/elecstate_tools.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/cal_edm_tddft.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_estate/module_pot/td_field_manager.h"
 #include "source_hsolver/hsolver_lcao.h"
 #include "source_lcao/module_rt/evolve_elec.h"
 #include "source_lcao/rho_tau_lcao.h"
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
 
 namespace ModuleESolver

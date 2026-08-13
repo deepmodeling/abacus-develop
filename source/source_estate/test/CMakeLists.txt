@@ -63,7 +63,7 @@ AddTest(
     ../elecstate_energy.cpp
     ../fp_energy.cpp
     ../makov_payne.cpp
-    ../module_pot/H_Hartree_pw.cpp
+    ../module_pot/h_hartree_pw.cpp
 )
 
 AddTest(
@@ -89,8 +89,8 @@ AddTest(
   TARGET MODULE_ESTATE_charge_mixing
   LIBS parameter base  psi  device planewave_serial cell_info
   SOURCES charge_mixing_test.cpp  
-  ../module_charge/charge_mixing.cpp ../module_charge/charge_mixing_dmr.cpp ../module_charge/charge_mixing_residual.cpp
-  ../module_charge/charge_mixing_preconditioner.cpp ../module_charge/charge_mixing_rho.cpp
+  ../module_charge/charge_mixing.cpp ../module_charge/charge_mixing_dmr.cpp ../module_charge/mix_resid.cpp
+  ../module_charge/mix_precond.cpp ../module_charge/charge_mixing_rho.cpp
   ../module_charge/charge_mixing_uspp.cpp
 )
 
@@ -102,10 +102,10 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_ESTATE_gint_precision_controller
+  TARGET MODULE_ESTATE_gint_prec_ctrl
   LIBS parameter base device
-  SOURCES gint_precision_controller_test.cpp
-    ../module_charge/gint_precision_controller.cpp
+  SOURCES gint_prec_ctrl_test.cpp
+    ../module_charge/gint_prec_ctrl.cpp
 )
 
 endif()

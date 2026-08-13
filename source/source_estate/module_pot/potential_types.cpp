@@ -1,4 +1,4 @@
-#include "H_Hartree_pw.h"
+#include "h_hartree_pw.h"
 #include "efield.h"
 #include "gatefield.h"
 #include "pot_local.h"
@@ -12,7 +12,7 @@
 #include "source_base/tool_quit.h"
 #include "source_base/tool_title.h"
 #include "source_io/module_parameter/parameter.h"
-#include "H_TDDFT_pw.h"
+#include "h_tddft_pw.h"
 #ifdef __MLALGO
 #include "pot_ml_exx.h"
 #endif

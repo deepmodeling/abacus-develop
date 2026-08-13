@@ -13,9 +13,9 @@ if(ENABLE_LCAO)
         td_info.cpp
         velocity_op.cpp
         radial_interpolation.cpp
-        snap_projector_half_tddft.cpp
-        snap_psibeta_half_tddft.cpp
-        snap_phialpha_half_tddft.cpp
+        snap_proj_half_tddft.cpp
+        snap_psb_half_tddft.cpp
+        snap_pha_half_tddft.cpp
         td_folding.cpp
         solve_propagation.cpp
         boundary_fix.cpp

@@ -10,7 +10,7 @@
 #include <RI/global/Tensor.h>
 #include <RI/ri/Cell_Nearest.h>
 
-// Forward declaration to avoid circular include (Exx_LRI_interface.hpp includes op_exx_lcao.h)
+// Forward declaration to avoid circular include (exx_lri_interface.hpp includes op_exx_lcao.h)
 template <typename T, typename Tdata>
 class Exx_LRI_Interface;
 

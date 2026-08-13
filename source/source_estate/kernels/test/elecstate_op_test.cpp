@@ -63,10 +63,11 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_op_cpu)
     double ** rho = new double* [1];
     rho[0] = rho_data.data();
     elecstate_cpu_op()(
-      this->cpu_ctx, 
+      this->cpu_ctx,
       this->spin, this->nrxx,
-      this->w1, 
-      rho, 
+      this->nrxx,
+      this->w1,
+      rho,
       this->wfcr.data());
     
     // check the result 
@@ -85,12 +86,13 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_cpu)
     rho[2] = rho_data.data() + this->nrxx * 2;
     rho[3] = rho_data.data() + this->nrxx * 3;
     elecstate_cpu_op()(
-      this->cpu_ctx, 
+      this->cpu_ctx,
       this->DOMAG,
       this->DOMAG_Z,
       this->nrxx,
-      this->w1, 
-      rho, 
+      this->nrxx,
+      this->w1,
+      rho,
       this->wfcr_2.data(),
       this->wfcr_another_spin_2.data());
     
@@ -114,10 +116,11 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_op_gpu)
     double ** rho = new double* [1];
     rho[0] = d_rho_data;
     elecstate_gpu_op()(
-      this->gpu_ctx, 
+      this->gpu_ctx,
       this->spin, this->nrxx,
+      this->nrxx,
       this->w1,
-      rho, 
+      rho,
       d_wfcr);
     
     syncmem_var_d2h_op()(rho_data.data(), d_rho_data, rho_data.size());
@@ -149,12 +152,13 @@ TEST_F(TestModuleElecstateMultiDevice, elecstate_pw_spin_op_gpu)
     rho[3] = d_rho_data_2 + this->nrxx * 3;
 
     elecstate_gpu_op()(
-      this->gpu_ctx, 
+      this->gpu_ctx,
       this->DOMAG,
       this->DOMAG_Z,
       this->nrxx,
-      this->w1, 
-      rho, 
+      this->nrxx,
+      this->w1,
+      rho,
       d_wfcr_2,
       d_wfcr_another_spin_2);
     

@@ -5,6 +5,15 @@
 #include <stdexcept>
 #include "bin_manager.h"
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
+
+namespace
+{
+constexpr int neighbor_build_openmp_threshold = 256;
+}
+
 // ========== Bin class implementation ==========
 
 const std::vector<ModuleNeighList::LocalAtomIndex>& Bin::get_atom_indices() const {
@@ -176,6 +185,63 @@ int BinManager::bin_index(int ix, int iy, int iz) const {
     return ix * nbiny_ * nbinz_ + iy * nbinz_ + iz;
 }
 
+template <typename Emit>
+void BinManager::visit_neighbors(const NeighborAtom& atom,
+                                 const std::vector<NeighborAtom>& binned_atoms,
+                                 double sradius2,
+                                 const Emit& emit) const
+{
+    const int ix = std::min(
+        std::max(int((atom.position_x - x_min_) / bin_sizex_), 0),
+        nbinx_ - 1
+    );
+
+    const int iy = std::min(
+        std::max(int((atom.position_y - y_min_) / bin_sizey_), 0),
+        nbiny_ - 1
+    );
+
+    const int iz = std::min(
+        std::max(int((atom.position_z - z_min_) / bin_sizez_), 0),
+        nbinz_ - 1
+    );
+
+    for (int dx = -1; dx <= 1; dx++)
+    {
+        for (int dy = -1; dy <= 1; dy++)
+        {
+            for (int dz = -1; dz <= 1; dz++)
+            {
+                const int jx = ix + dx;
+                const int jy = iy + dy;
+                const int jz = iz + dz;
+
+                if (jx < 0 || jx >= nbinx_ ||
+                    jy < 0 || jy >= nbiny_ ||
+                    jz < 0 || jz >= nbinz_)
+                {
+                    continue;
+                }
+
+                const int nidx = bin_index(jx, jy, jz);
+                for (const ModuleNeighList::LocalAtomIndex binned_atom_index : bins_[nidx].get_atom_indices())
+                {
+                    const NeighborAtom& natom = binned_atoms[static_cast<std::size_t>(binned_atom_index)];
+                    const double delta_x = atom.position_x - natom.position_x;
+                    const double delta_y = atom.position_y - natom.position_y;
+                    const double delta_z = atom.position_z - natom.position_z;
+                    const double dist2 = delta_x * delta_x + delta_y * delta_y + delta_z * delta_z;
+
+                    if (natom.atom_id != atom.atom_id && dist2 <= sradius2)
+                    {
+                        emit(natom.atom_id);
+                    }
+                }
+            }
+        }
+    }
+}
+
 void BinManager::build_atom_neighbors(
     NeighborList& neighbor_list,
     const std::vector<NeighborAtom>& atoms,
@@ -184,71 +250,63 @@ void BinManager::build_atom_neighbors(
 {
     assert(atoms.size() == static_cast<size_t>(neighbor_list.get_nlocal()));
 
-    double sradius2 = sradius_ * sradius_;
+    const double sradius2 = sradius_ * sradius_;
 
     neighbor_list.reset();
 
-    std::vector<int> neigh_tmp;
-
     const int nlocal = neighbor_list.get_nlocal();
+
+#ifdef _OPENMP
+    const bool use_parallel = nlocal >= neighbor_build_openmp_threshold && omp_get_max_threads() > 1;
+    if (use_parallel)
+    {
+        std::vector<std::size_t> neighbor_counts(static_cast<std::size_t>(nlocal), 0);
+
+#pragma omp parallel for schedule(static)
+        for (int i = 0; i < nlocal; i++)
+        {
+            std::size_t count = 0;
+            visit_neighbors(atoms[i], binned_atoms, sradius2,
+                            [&count](ModuleNeighList::LocalAtomIndex) { ++count; });
+            neighbor_counts[static_cast<std::size_t>(i)] = count;
+        }
+
+        for (int i = 0; i < nlocal; i++)
+        {
+            const int n = ModuleNeighList::checked_int_size(
+                neighbor_counts[static_cast<std::size_t>(i)],
+                "BinManager neighbor count"
+            );
+            neighbor_list.firstneigh_[i] = neighbor_list.allocator_.allocate(n);
+            neighbor_list.numneigh_[i] = n;
+        }
+
+#pragma omp parallel for schedule(static)
+        for (int i = 0; i < nlocal; i++)
+        {
+            int* ptr = neighbor_list.firstneigh_[i];
+            int k = 0;
+            visit_neighbors(atoms[i], binned_atoms, sradius2,
+                            [&](ModuleNeighList::LocalAtomIndex atom_id)
+                            {
+                                assert(ptr != nullptr);
+                                ptr[k++] = atom_id;
+                            });
+            assert(k == neighbor_list.numneigh_[i]);
+        }
+        return;
+    }
+#endif
+
+    std::vector<int> neigh_tmp;
     for (int i = 0; i < nlocal; i++)
     {
         neigh_tmp.clear();
-        const NeighborAtom& atom = atoms[i];
-
-        int ix = std::min(
-            std::max(int((atom.position_x - x_min_) / bin_sizex_), 0),
-            nbinx_ - 1
-        );
-
-        int iy = std::min(
-            std::max(int((atom.position_y - y_min_) / bin_sizey_), 0),
-            nbiny_ - 1
-        );
-
-        int iz = std::min(
-            std::max(int((atom.position_z - z_min_) / bin_sizez_), 0),
-            nbinz_ - 1
-        );
-
-        for (int dx = -1; dx <= 1; dx++)
-        {
-            for (int dy = -1; dy <= 1; dy++)
-            {
-                for (int dz = -1; dz <= 1; dz++)
-                {
-                    int jx = ix + dx;
-                    int jy = iy + dy;
-                    int jz = iz + dz;
-
-                    if (jx < 0 || jx >= nbinx_ ||
-                        jy < 0 || jy >= nbiny_ ||
-                        jz < 0 || jz >= nbinz_)
-                        continue;
-
-                    int nidx = bin_index(jx, jy, jz);
-
-                    for (const ModuleNeighList::LocalAtomIndex binned_atom_index : bins_[nidx].get_atom_indices())
-                    {
-                        const NeighborAtom& natom = binned_atoms[static_cast<std::size_t>(binned_atom_index)];
-                        double dx = atom.position_x - natom.position_x;
-                        double dy = atom.position_y - natom.position_y;
-                        double dz = atom.position_z - natom.position_z;
-
-                        double dist2 = dx * dx + dy * dy + dz * dz;
-
-                        if (natom.atom_id == atom.atom_id)
+        visit_neighbors(atoms[i], binned_atoms, sradius2,
+                        [&neigh_tmp](ModuleNeighList::LocalAtomIndex atom_id)
                         {
-                            continue;
-                        }
-                        if (dist2 <= sradius2)
-                        {
-                            neigh_tmp.push_back(natom.atom_id);
-                        }
-                    }
-                }
-            }
-        }
+                            neigh_tmp.push_back(atom_id);
+                        });
 
         const int n = ModuleNeighList::checked_int_size(neigh_tmp.size(), "BinManager neighbor count");
 

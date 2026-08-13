@@ -1,7 +1,7 @@
 #include "source_base/element_name.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_io/module_output/cube_io.h"
 #include "source_io/module_output/output_log.h"

@@ -1,6 +1,7 @@
 #include "source_cell/module_neighlist/neighbor_search.h"
 #include <cmath>
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <cassert>
 #include <array>
@@ -112,13 +113,14 @@ void NeighborSearch::init(const AtomProvider& ucell, double sr)
     {
         for (int j = 0; j < ucell.get_na(i); j++)
         {
+            const ModuleBase::Vector3<double> position = ucell.get_tau(i, j);
             const ModuleNeighList::LocalAtomIndex atom_count
                 = ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
                                                             "NeighborSearch atom id");
             NeighborAtom atom(
-                ucell.get_tau(i,j).x,
-                ucell.get_tau(i,j).y,
-                ucell.get_tau(i,j).z,
+                position.x,
+                position.y,
+                position.z,
                 i,
                 j,
                 atom_count
@@ -189,37 +191,111 @@ void NeighborSearch::check_expand_condition(const AtomProvider& ucell, int& glay
 
 void NeighborSearch::set_member_variables(const AtomProvider& ucell, int glayerX_minus, int glayerX, int glayerY_minus, int glayerY, int glayerZ_minus, int glayerZ)
 {
-    ModuleBase::Vector3<double> vec1(ucell.get_latvec().e11, ucell.get_latvec().e12, ucell.get_latvec().e13);
-    ModuleBase::Vector3<double> vec2(ucell.get_latvec().e21, ucell.get_latvec().e22, ucell.get_latvec().e23);
-    ModuleBase::Vector3<double> vec3(ucell.get_latvec().e31, ucell.get_latvec().e32, ucell.get_latvec().e33);
-
-    for (int ix = -glayerX_minus; ix < glayerX; ix++)
+    if (glayerX_minus < 0 || glayerX < 0 || glayerY_minus < 0 || glayerY < 0
+        || glayerZ_minus < 0 || glayerZ < 0)
     {
-        for (int iy = -glayerY_minus; iy < glayerY; iy++)
-        {
-            for (int iz = -glayerZ_minus; iz < glayerZ; iz++)
-            {
-                if(ix==0 && iy==0 && iz==0)
-                {
-                    continue;
-                }
-                for (int i = 0; i < ucell.get_ntype(); i++)
-                {
-                    for (int j = 0; j < ucell.get_na(i); j++)
-                    {
-                        double atom_x = ucell.get_tau(i,j).x + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz;
-                        double atom_y = ucell.get_tau(i,j).y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz;
-                        double atom_z = ucell.get_tau(i,j).z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz;
+        throw std::invalid_argument("NeighborSearch periodic image layers must be non-negative.");
+    }
 
-                        const ModuleNeighList::LocalAtomIndex atom_count
-                            = ModuleNeighList::checked_local_atom_index(all_atoms_.size(),
-                                                                        "NeighborSearch atom id");
-                        NeighborAtom atom(atom_x, atom_y, atom_z, i, j, atom_count);
-                        ghost_atoms_.push_back(atom);
-                        all_atoms_.push_back(atom);
-                    }
-                }
-            }
-        }
+    const ModuleBase::Matrix3& lattice = ucell.get_latvec();
+    const ModuleBase::Vector3<double> vec1(lattice.e11, lattice.e12, lattice.e13);
+    const ModuleBase::Vector3<double> vec2(lattice.e21, lattice.e22, lattice.e23);
+    const ModuleBase::Vector3<double> vec3(lattice.e31, lattice.e32, lattice.e33);
+
+    const std::size_t image_count_x
+        = ModuleNeighList::checked_size_sum(static_cast<std::size_t>(glayerX_minus),
+                                            static_cast<std::size_t>(glayerX),
+                                            "NeighborSearch x image count");
+    const std::size_t image_count_y
+        = ModuleNeighList::checked_size_sum(static_cast<std::size_t>(glayerY_minus),
+                                            static_cast<std::size_t>(glayerY),
+                                            "NeighborSearch y image count");
+    const std::size_t image_count_z
+        = ModuleNeighList::checked_size_sum(static_cast<std::size_t>(glayerZ_minus),
+                                            static_cast<std::size_t>(glayerZ),
+                                            "NeighborSearch z image count");
+    const std::size_t image_count_yz
+        = ModuleNeighList::checked_size_product(image_count_y,
+                                                image_count_z,
+                                                "NeighborSearch yz image count");
+    const std::size_t image_count
+        = ModuleNeighList::checked_size_product(image_count_x,
+                                                image_count_yz,
+                                                "NeighborSearch periodic image count");
+    if (image_count == 0)
+    {
+        throw std::invalid_argument("NeighborSearch periodic image range must contain the primary cell.");
+    }
+
+    const std::size_t origin_xy
+        = ModuleNeighList::checked_size_sum(
+            ModuleNeighList::checked_size_product(static_cast<std::size_t>(glayerX_minus),
+                                                  image_count_y,
+                                                  "NeighborSearch primary image index"),
+            static_cast<std::size_t>(glayerY_minus),
+            "NeighborSearch primary image index");
+    const std::size_t origin_image
+        = ModuleNeighList::checked_size_sum(
+            ModuleNeighList::checked_size_product(origin_xy,
+                                                  image_count_z,
+                                                  "NeighborSearch primary image index"),
+            static_cast<std::size_t>(glayerZ_minus),
+            "NeighborSearch primary image index");
+
+    const std::size_t base_atom_count = inside_atoms_.size();
+    const std::size_t ghost_image_count = image_count - 1;
+    const std::size_t generated_atom_count
+        = ModuleNeighList::checked_size_product(ghost_image_count,
+                                                base_atom_count,
+                                                "NeighborSearch generated atom count");
+    const std::size_t final_atom_count
+        = ModuleNeighList::checked_size_sum(base_atom_count,
+                                            generated_atom_count,
+                                            "NeighborSearch total atom count");
+    if (final_atom_count > static_cast<std::size_t>(std::numeric_limits<ModuleNeighList::LocalAtomIndex>::max()))
+    {
+        throw std::overflow_error("NeighborSearch total atom count exceeds local atom index range.");
+    }
+    if (generated_atom_count == 0)
+    {
+        return;
+    }
+
+    const NeighborAtom placeholder(0.0, 0.0, 0.0, 0, 0, 0);
+    all_atoms_.insert(all_atoms_.end(), generated_atom_count, placeholder);
+    ghost_atoms_.assign(generated_atom_count, placeholder);
+
+    // Thread creation costs more than it saves for small unit cells.
+    const std::size_t parallel_threshold = 100000;
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static) if(generated_atom_count >= parallel_threshold)
+#endif
+    for (std::int64_t generated_index = 0;
+         generated_index < static_cast<std::int64_t>(generated_atom_count);
+         ++generated_index)
+    {
+        const std::size_t output_index = static_cast<std::size_t>(generated_index);
+        const std::size_t ghost_image = output_index / base_atom_count;
+        const std::size_t base_atom = output_index % base_atom_count;
+        const std::size_t image = ghost_image < origin_image ? ghost_image : ghost_image + 1;
+        const std::size_t image_x = image / image_count_yz;
+        const std::size_t image_yz = image % image_count_yz;
+        const std::size_t image_y = image_yz / image_count_z;
+        const std::size_t image_z = image_yz % image_count_z;
+        const double ix = static_cast<double>(image_x) - static_cast<double>(glayerX_minus);
+        const double iy = static_cast<double>(image_y) - static_cast<double>(glayerY_minus);
+        const double iz = static_cast<double>(image_z) - static_cast<double>(glayerZ_minus);
+
+        const NeighborAtom& source = inside_atoms_[base_atom];
+        const ModuleNeighList::LocalAtomIndex atom_id
+            = static_cast<ModuleNeighList::LocalAtomIndex>(base_atom_count + output_index);
+        const NeighborAtom atom(source.position_x + vec1[0] * ix + vec2[0] * iy + vec3[0] * iz,
+                                source.position_y + vec1[1] * ix + vec2[1] * iy + vec3[1] * iz,
+                                source.position_z + vec1[2] * ix + vec2[2] * iy + vec3[2] * iz,
+                                source.atom_type,
+                                source.atom_index,
+                                atom_id);
+        ghost_atoms_[output_index] = atom;
+        all_atoms_[base_atom_count + output_index] = atom;
     }
 }

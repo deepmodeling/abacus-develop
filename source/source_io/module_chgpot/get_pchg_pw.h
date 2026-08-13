@@ -2,7 +2,7 @@
 #define GET_PCHG_PW_H
 
 #include "source_io/module_output/cube_io.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 
 namespace ModuleIO
 {

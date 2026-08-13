@@ -275,7 +275,8 @@ void ReadInput::create_directory(const Parameter& param)
     //----------------------------------------------------------
     bool out_dir = false;
     if (!param.input.out_app_flag
-        && (param.input.out_hsr[0] == 1 || param.input.out_mat_r[0] || param.input.out_mat_t[0]
+        && ((param.input.out_hsr[0] == 1 || param.input.out_hsr[0] == 2)
+            || param.input.out_mat_r[0] || param.input.out_mat_t[0]
             || param.input.out_mat_dh[0] || param.input.out_mat_ds[0]))
     {
         out_dir = true;

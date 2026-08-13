@@ -10,7 +10,7 @@
 #include "source_cell/module_symmetry/symmetry.h"
 
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI.h"
+#include "source_lcao/module_ri/exx_lri.h"
 #endif
 
 #include <iostream>

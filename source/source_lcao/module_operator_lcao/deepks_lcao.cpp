@@ -3,7 +3,7 @@
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
 #include "source_lcao/module_deepks/deepks_descriptor.h"
 #include "source_lcao/module_deepks/deepks_pdm.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"

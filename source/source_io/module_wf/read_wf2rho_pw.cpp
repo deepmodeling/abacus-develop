@@ -2,10 +2,10 @@
 
 #include "read_wfc_pw.h"
 #include "source_base/timer.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_estate/kernels/elecstate_op.h"
-#include "source_io/module_output/filename.h"
+#include "source_base/module_out/filename.h"
 
 void ModuleIO::read_wf2rho_pw(
 		const ModulePW::PW_Basis_K* pw_wfc,
@@ -139,6 +139,7 @@ void ModuleIO::read_wf2rho_pw(
                                                                                   PARAM.globalv.domag,
                                                                                   PARAM.globalv.domag_z,
                                                                                   nrxx,
+                                                                                  nrxx,
                                                                                   w1,
                                                                                   chg.rho,
                                                                                   rho_tmp.data(),
@@ -158,7 +159,7 @@ void ModuleIO::read_wf2rho_pw(
                 if (w1 != 0.0)
                 {
 					base_device::DEVICE_CPU* ctx = nullptr;
-					elecstate::elecstate_pw_op<double, base_device::DEVICE_CPU>()(ctx, is, nrxx, 
+					elecstate::elecstate_pw_op<double, base_device::DEVICE_CPU>()(ctx, is, nrxx, nrxx,
 							w1, chg.rho, rho_tmp.data());
                 }
             }

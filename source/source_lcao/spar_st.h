@@ -1,7 +1,7 @@
 #ifndef SPARSE_FORMAT_ST_H
 #define SPARSE_FORMAT_ST_H
 
-#include "source_lcao/LCAO_HS_arrays.hpp"
+#include "source_lcao/lcao_hs_arrays.hpp"
 #include "source_lcao/hamilt_lcao.h"
 
 namespace sparse_format

@@ -1,7 +1,7 @@
 list(APPEND objects
     elecstate.cpp
     init_scf.cpp
-    elecstate_energy_terms.cpp
+    estate_e_terms.cpp
     elecstate_energy.cpp
     elecstate_exx.cpp
     elecstate_print.cpp
@@ -12,8 +12,8 @@ list(APPEND objects
     makov_payne.cpp
     module_pot/gatefield.cpp
     module_pot/efield.cpp
-    module_pot/H_Hartree_pw.cpp
-    module_pot/H_TDDFT_pw.cpp
+    module_pot/h_hartree_pw.cpp
+    module_pot/h_tddft_pw.cpp
     module_pot/pot_xc.cpp
     module_pot/pot_local.cpp
     module_pot/potential_new.cpp
@@ -27,19 +27,19 @@ list(APPEND objects
     module_pot/td_field_profiles.cpp
     module_pot/td_field_manager.cpp
     module_charge/chgmixing.cpp
-    module_charge/gint_precision_controller.cpp
+    module_charge/gint_prec_ctrl.cpp
     module_charge/charge.cpp
     module_charge/charge_init.cpp
     module_charge/charge_mpi.cpp
     module_charge/charge_extra.cpp
     module_charge/charge_mixing.cpp
     module_charge/charge_mixing_dmr.cpp
-    module_charge/charge_mixing_residual.cpp
-    module_charge/charge_mixing_preconditioner.cpp
+    module_charge/mix_resid.cpp
+    module_charge/mix_precond.cpp
     module_charge/charge_mixing_rho.cpp
     module_charge/charge_mixing_uspp.cpp
-    module_charge/symmetry_rho.cpp
-    module_charge/symmetry_rhog.cpp
+    module_charge/symm_rho.cpp
+    module_charge/symm_rhog.cpp
     fp_energy.cpp
     occupy.cpp
     param_update.cpp

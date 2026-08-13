@@ -81,4 +81,4 @@ class ESolver_KS_LCAO_TDDFT : public ESolver_KS_LCAO<std::complex<double>, TR>
 };
 
 } // namespace ModuleESolver
-#endif // ESOLVER_KS_LCAO_TDDFT_H
+#endif // ESV_KS_LCAO_TDDFT_H

@@ -8,7 +8,7 @@
 #include "source_base/tool_title.h"
 #include "source_estate/kernels/elecstate_op.h"
 #include "source_estate/occupy.h"
-#include "source_hsolver/para_linear_transform.h"
+#include "source_hsolver/para_lin_tf.h"
 #include "source_io/module_parameter/parameter.h"
 
 template <typename T, typename Device>
@@ -645,7 +645,7 @@ void Stochastic_Iter<T, Device>::cal_storho(const UnitCell& ucell,
         {
             wfc_basis->recip_to_real(this->ctx, tmpout, porter, ik);
             const auto w1 = static_cast<Real>(this->pkv->wk[ik]);
-            elecstate::elecstate_pw_op<Real, Device>()(this->ctx, current_spin, nrxx, w1, pes->rho, porter);
+            elecstate::elecstate_pw_op<Real, Device>()(this->ctx, current_spin, nrxx, pes->charge->nrxx, w1, pes->rho, porter);
             // for (int ir = 0; ir < nrxx; ++ir)
             // {
             //     pes->charge->rho[0][ir] += norm(porter[ir]) * this->pkv->wk[ik];

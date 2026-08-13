@@ -77,7 +77,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_sph_bessel_recursive
   LIBS parameter
-  SOURCES sph_bessel_recursive_test.cpp ../sph_bessel_recursive-d1.cpp ../sph_bessel_recursive-d2.cpp ../memory_recorder.cpp ../global_variable.cpp
+  SOURCES sph_bessel_rec_test.cpp ../sph_bessel_rec_d1.cpp ../sph_bessel_rec_d2.cpp ../memory_recorder.cpp ../global_variable.cpp
 )
 AddTest(
   TARGET MODULE_BASE_ylmreal
@@ -127,7 +127,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_container
   LIBS parameter
-  SOURCES container_operator_test.cpp ../container_operator.h
+  SOURCES container_op_test.cpp ../container_operator.h
 )
 
 AddTest(
@@ -143,15 +143,15 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_BASE_opt_CG
+  TARGET MODULE_BASE_opt_cg
   LIBS parameter  base device
-  SOURCES opt_CG_test.cpp opt_test_tools.cpp
+  SOURCES opt_cg_test.cpp opt_test_tools.cpp
 )
 
 AddTest(
-  TARGET MODULE_BASE_opt_TN
+  TARGET MODULE_BASE_opt_tn
   LIBS parameter  base device
-  SOURCES opt_TN_test.cpp opt_test_tools.cpp
+  SOURCES opt_tn_test.cpp opt_test_tools.cpp
 )
 
 AddTest(
@@ -175,7 +175,7 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_element_basis_index
   LIBS parameter
-  SOURCES element_basis_index_test.cpp ../element_basis_index.cpp
+  SOURCES elem_basis_idx_test.cpp ../element_basis_index.cpp
 )
 
 AddTest(
@@ -185,8 +185,8 @@ AddTest(
 )
 
 AddTest(
-  TARGET MODULE_BASE_spherical_bessel_transformer
-  SOURCES spherical_bessel_transformer_test.cpp
+  TARGET MODULE_BASE_sph_bessel_tf
+  SOURCES sph_bessel_tf_test.cpp
   LIBS parameter  base device
 )
 
@@ -198,7 +198,7 @@ AddTest(
 
 AddTest(
   TARGET MODULE_BASE_clebsch_gordan_coeff_test
-  SOURCES clebsch_gordan_coeff_test.cpp
+  SOURCES cg_coeff_test.cpp
   LIBS parameter  base device
 )
 
@@ -223,6 +223,32 @@ AddTest(
 AddTest(
   TARGET MODULE_BASE_lebedev_laikov
   SOURCES test_lebedev_laikov.cpp ../ylm.cpp ../math_lebedev_laikov.cpp
+)
+
+file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+AddTest(
+  TARGET MODULE_BASE_binstream
+  LIBS parameter base device
+  SOURCES binstream_test.cpp
+)
+
+AddTest(
+  TARGET MODULE_BASE_sparse_matrix
+  LIBS parameter base device
+  SOURCES sparse_matrix_test.cpp
+)
+
+AddTest(
+  TARGET MODULE_BASE_file_reader
+  LIBS parameter base device
+  SOURCES file_reader_test.cpp
+)
+
+AddTest(
+  TARGET MODULE_BASE_csr_reader
+  LIBS parameter base device
+  SOURCES csr_reader_test.cpp
 )
 
 if(ENABLE_GOOGLEBENCH)
