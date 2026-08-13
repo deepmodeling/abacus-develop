@@ -644,6 +644,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     {
         RPA_LRI<TK, double> rpa_lri_double(exx_info.info_ri);
         rpa_lri_double.postSCF(ucell, MPI_COMM_WORLD, *dm, pelec, kv, orb, pv, *psi);
+        if (inp.rpa_out_vel)
+            rpa_lri_double.out_velocity(ucell, gd, two_center_bundle, pv, *psi, pelec);
     }
 #endif
 

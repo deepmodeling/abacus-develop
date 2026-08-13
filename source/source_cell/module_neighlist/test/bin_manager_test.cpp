@@ -2,30 +2,6 @@
 #include "source_cell/module_neighlist/bin_manager.h"
 #include "source_cell/module_neighlist/neighbor_list.h"
 
-#include <algorithm>
-
-#ifdef _OPENMP
-#include <omp.h>
-#endif
-
-namespace
-{
-std::vector<std::vector<int>> snapshot_neighbors(const NeighborList& list)
-{
-    std::vector<std::vector<int>> result(static_cast<std::size_t>(list.get_nlocal()));
-    for (int i = 0; i < list.get_nlocal(); ++i)
-    {
-        const int count = list.get_numneigh(i);
-        const int* first = list.get_firstneigh(i);
-        if (count > 0)
-        {
-            result[static_cast<std::size_t>(i)].assign(first, first + count);
-        }
-    }
-    return result;
-}
-} // namespace
-
 TEST(BinManagerUnit, InitAndBinning)
 {
     std::vector<NeighborAtom> inside;
@@ -177,7 +153,7 @@ TEST(BinManagerUnit, GhostAtomsAreCounted)
     std::vector<NeighborAtom> ghost;
 
     inside.emplace_back(0.0, 0.0, 0.0, 0, 0, 0);
-    ghost.emplace_back(0.4, 0.0, 0.0, 0, 1, 1, 3, 1);
+    ghost.emplace_back(0.4, 0.0, 0.0, 0, 1, 1, 1);
 
     BinManager bm;
     std::vector<NeighborAtom> all_atoms = inside;
@@ -245,93 +221,3 @@ TEST(BinManagerUnit, MultipleBinsNeighborSearch)
     int center_index = 13;
     EXPECT_EQ(nl.get_numneigh(center_index), 6);
 }
-
-#ifdef _OPENMP
-TEST(BinManagerUnit, ParallelBuildPreservesSerialNeighborOrder)
-{
-    std::vector<NeighborAtom> centers;
-    std::vector<NeighborAtom> binned_atoms;
-    centers.reserve(300);
-    binned_atoms.reserve(600);
-    for (int i = 0; i < 300; ++i)
-    {
-        const double x = 0.2 * static_cast<double>(i % 10);
-        const double y = 0.2 * static_cast<double>((i / 10) % 10);
-        const double z = 0.2 * static_cast<double>(i / 100);
-        centers.emplace_back(x, y, z, 0, i, i);
-        binned_atoms.push_back(centers.back());
-    }
-    for (int i = 0; i < 300; ++i)
-    {
-        const NeighborAtom& center = centers[static_cast<std::size_t>(i)];
-        binned_atoms.emplace_back(center.position_x + 0.05,
-                                  center.position_y,
-                                  center.position_z,
-                                  0,
-                                  i,
-                                  300 + i,
-                                  1000 + i,
-                                  1);
-    }
-
-    BinManager bm;
-    bm.init_bins(0.31, binned_atoms);
-    bm.do_binning(binned_atoms);
-
-    const int previous_dynamic = omp_get_dynamic();
-    const int previous_threads = omp_get_max_threads();
-    omp_set_dynamic(0);
-
-    NeighborList serial_list;
-    serial_list.initialize(centers.size(), centers.size() * 128);
-    omp_set_num_threads(1);
-    bm.build_atom_neighbors(serial_list, centers, binned_atoms);
-    const std::vector<std::vector<int>> serial = snapshot_neighbors(serial_list);
-
-    NeighborList parallel_list;
-    parallel_list.initialize(centers.size(), centers.size() * 128);
-    omp_set_num_threads(4);
-    bm.build_atom_neighbors(parallel_list, centers, binned_atoms);
-    const std::vector<std::vector<int>> parallel = snapshot_neighbors(parallel_list);
-
-    omp_set_num_threads(previous_threads);
-    omp_set_dynamic(previous_dynamic);
-
-    EXPECT_EQ(parallel, serial);
-    EXPECT_NE(std::find_if(serial[0].begin(), serial[0].end(),
-                           [](int atom_id) { return atom_id >= 300; }),
-              serial[0].end());
-}
-
-TEST(BinManagerUnit, ParallelBuildKeepsZeroNeighborPointersNull)
-{
-    std::vector<NeighborAtom> atoms;
-    atoms.reserve(256);
-    for (int i = 0; i < 256; ++i)
-    {
-        atoms.emplace_back(static_cast<double>(i), 0.0, 0.0, 0, i, i);
-    }
-
-    BinManager bm;
-    bm.init_bins(0.4, atoms);
-    bm.do_binning(atoms);
-
-    const int previous_dynamic = omp_get_dynamic();
-    const int previous_threads = omp_get_max_threads();
-    omp_set_dynamic(0);
-    omp_set_num_threads(4);
-
-    NeighborList list;
-    list.initialize(atoms.size(), 1024);
-    bm.build_atom_neighbors(list, atoms, atoms);
-
-    omp_set_num_threads(previous_threads);
-    omp_set_dynamic(previous_dynamic);
-
-    for (int i = 0; i < list.get_nlocal(); ++i)
-    {
-        EXPECT_EQ(list.get_numneigh(i), 0);
-        EXPECT_EQ(list.get_firstneigh(i), nullptr);
-    }
-}
-#endif

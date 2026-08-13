@@ -68,7 +68,12 @@ template <typename T, typename Tdata> class RPA_LRI
     void out_eigen_vector(const Parallel_Orbitals& parav, const psi::Psi<T>& psi);
     void out_struc(const UnitCell& ucell);
     void out_bands(const elecstate::ElecState *pelec);
-
+    void out_velocity(const UnitCell& ucell,
+        const Grid_Driver& gd,
+        const TwoCenterBundle& two_center_bundle,
+        const Parallel_Orbitals& parav,/*nbasis×nbasis*/
+        const psi::Psi<T>& psi,
+        const elecstate::ElecState* pelec);
     void output_cut_coulomb_cs(const UnitCell& ucell, Exx_LRI<double>* exx_lri_rpa);
     void out_Cs(const UnitCell& ucell, std::map<TA, std::map<TAC, RI::Tensor<Tdata>>>& Cs_in, std::string filename);
     void out_coulomb_k(const UnitCell& ucell,
@@ -83,6 +88,7 @@ template <typename T, typename Tdata> class RPA_LRI
     Tdata Erpa;
 
   private:
+    const std::string& outdir = PARAM.inp.rpa_outdir;
     Exx_Info_RI info;
     const K_Vectors *p_kv=nullptr;
     MPI_Comm mpi_comm;

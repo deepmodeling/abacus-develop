@@ -63,12 +63,11 @@ CATEGORY_ORDER = [
     "Quasiatomic Orbital (QO) analysis",
     "PEXSI",
     "Linear Response TDDFT",
-    "Linear Response TDDFT (Under Development Feature)",
+    "Bethe-Salpeter Equation",
     "Reduced Density Matrix Functional Theory",
     "Model",
     "Other",
 ]
-
 
 def normalize_type(type_text: str) -> str:
     """

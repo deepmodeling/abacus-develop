@@ -198,21 +198,6 @@ private:
      * @return Flat index in the bins_ array.
      */
     int bin_index(int ix, int iy, int iz) const;
-
-    /**
-     * @brief Visit neighbors of one atom in the existing deterministic bin order.
-     *
-     * @tparam Emit Callable accepting a rank-local neighbor atom ID.
-     * @param atom Atom used as the neighbor-list center.
-     * @param binned_atoms All atoms assigned to bins by do_binning().
-     * @param sradius2 Squared search radius.
-     * @param emit Callback invoked once for every accepted neighbor.
-     */
-    template <typename Emit>
-    void visit_neighbors(const NeighborAtom& atom,
-                         const std::vector<NeighborAtom>& binned_atoms,
-                         double sradius2,
-                         const Emit& emit) const;
 };
 
 #endif // BIN_MANAGER_H

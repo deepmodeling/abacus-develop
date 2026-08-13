@@ -3,6 +3,10 @@ add_subdirectory(module_deepks)
 add_subdirectory(module_dftu)
 add_subdirectory(module_deltaspin)
 
+if(ENABLE_LCAO AND ENABLE_LIBRI)
+    add_subdirectory(module_bse)
+endif()
+
 if(ENABLE_LCAO)
     add_subdirectory(module_operator_lcao)
     list(APPEND objects
@@ -79,5 +83,4 @@ if(ENABLE_LCAO)
     endif()
 
 endif()
-
 

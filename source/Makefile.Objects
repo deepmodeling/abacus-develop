@@ -217,6 +217,8 @@ OBJS_CELL=atom_pseudo.o\
     read_pp_ucell.o\
     cal_wfc.o\
     cal_ux.o\
+    distributed_mdcell_reader.o\
+    md_cell.o\
     cif_io.o\
     ucell_io.o\
 
@@ -437,7 +439,6 @@ OBJS_NEIGHBOR_SEARCH=neighbor_search.o\
     bin_manager.o\
     domain_decomposition.o\
     page_allocator.o\
-    unitcell_lite.o\
 
 
 OBJS_ORBITAL=orb_atomic.o\

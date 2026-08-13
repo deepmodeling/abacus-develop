@@ -31,9 +31,6 @@
 
 	namespace LR
 	{
-		template<typename T, typename TR>
-		class ESolver_LR;
-
 		template<typename T>
 		class OperatorLREXX;
 	}
@@ -145,8 +142,6 @@ private:
 	friend class RPA_LRI<std::complex<double>, Tdata>;
 	friend class Exx_LRI_Interface<double, Tdata>;
 	friend class Exx_LRI_Interface<std::complex<double>, Tdata>;
-	friend class LR::ESolver_LR<double, double>;
-	friend class LR::ESolver_LR<std::complex<double>, double>;
 	friend class LR::OperatorLREXX<double>;
 	friend class LR::OperatorLREXX<std::complex<double>>;
 };

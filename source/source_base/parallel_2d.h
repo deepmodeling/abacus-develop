@@ -1,6 +1,7 @@
 #ifndef _PARALLEL_2D_H_
 #define _PARALLEL_2D_H_
 
+#include <cstddef>
 #include <cstdint>
 #include <vector>
 
@@ -42,13 +43,13 @@ class Parallel_2D
     };
 
     /// get the local index of a global index (row)
-    int global2local_row(const int igr) const
+    int global2local_row(const std::size_t igr) const
     {
         return global2local_row_[igr];
     }
 
     /// get the local index of a global index (col)
-    int global2local_col(const int igc) const
+    int global2local_col(const std::size_t igc) const
     {
         return global2local_col_[igc];
     }
@@ -66,7 +67,10 @@ class Parallel_2D
     }
 
     /// check whether a global index is in this process
-    bool in_this_processor(const int iw1_all, const int iw2_all) const;
+    bool in_this_processor(const std::size_t iw1_all, const std::size_t iw2_all) const;
+
+    /// get the owner processor of a global index
+    int owner_processor(const std::size_t iw1_all, const std::size_t iw2_all) const;
 
     /// side length of 2d square block
     int get_block_size() const
