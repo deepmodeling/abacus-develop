@@ -395,6 +395,22 @@ TEST_F(MD_func_test, current_md_info)
     remove("Restart_md.txt");
 }
 
+TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
+{
+    std::ofstream file("Restart_md.txt");
+    file << 123;
+    file.close();
+
+    MDCell mdcell(ucell, 0.0, 0.0, ModuleBase::world_communication_domain());
+    int istep = -1;
+    double temperature = 0.0;
+    MD_func::current_md_info(mdcell, "./", istep, temperature);
+
+    EXPECT_EQ(istep, 123);
+    EXPECT_DOUBLE_EQ(temperature, 0.0);
+    remove("Restart_md.txt");
+}
+
 TEST_F(MD_func_test, current_step_warning)
 {
     // Call the function and check that it outputs a warning and quits

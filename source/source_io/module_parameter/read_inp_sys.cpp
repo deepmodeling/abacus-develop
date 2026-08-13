@@ -74,6 +74,36 @@ void ReadInput::item_system()
         this->add_item(item);
     }
     {
+        Input_Item item("cell_replica");
+        item.annotation = "replicate the input structure along the three lattice vectors";
+        item.category = "System variables";
+        item.type = "Three Integers";
+        item.description = "Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for "
+                           "distributed MDCell workflows. The default is 1 1 1, which preserves the input structure.";
+        item.default_value = "1 1 1";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            if (item.str_values.size() != 3)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "cell_replica requires exactly three integers.");
+            }
+            for (int i = 0; i < 3; ++i)
+            {
+                para.input.cell_replica[static_cast<std::size_t>(i)] = std::stoi(item.str_values[static_cast<std::size_t>(i)]);
+            }
+        };
+        item.check_value = [](const Input_Item&, const Parameter& para) {
+            for (int i = 0; i < 3; ++i)
+            {
+                if (para.input.cell_replica[static_cast<std::size_t>(i)] <= 0)
+                {
+                    ModuleBase::WARNING_QUIT("ReadInput", "cell_replica values must all be positive.");
+                }
+            }
+        };
+        sync_intvec(input.cell_replica, 3, 1);
+        this->add_item(item);
+    }
+    {
         Input_Item item("calculation");
         item.annotation = "scf; relax; md; cell-relax; nscf; get_s; get_wf; get_pchg; gen_bessel; gen_opt_abfs; test_memory; test_neighbour";
         item.category = "System variables";

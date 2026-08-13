@@ -8,6 +8,7 @@
 #include "source_cell/module_neighlist/local_atom.h"
 
 #include <array>
+#include <cstdint>
 #include <vector>
 
 #include <mpi.h>
@@ -63,7 +64,7 @@ private:
         double mass;
         int image_shift[3];
         int type;
-        int type_index;
+        std::int64_t type_index;
         int owner_rank;
     };
 
@@ -80,7 +81,7 @@ private:
     struct ForceRecord
     {
         int type;
-        int type_index;
+        std::int64_t type_index;
         double force[3];
     };
 

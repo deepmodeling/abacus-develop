@@ -9,6 +9,7 @@
 #endif
 
 #include <string>
+#include <cstdint>
 #include <vector>
 
 class UnitCell;
@@ -16,26 +17,28 @@ namespace ModuleBase
 {
 class CommunicationDomain;
 }
+
 class MDCell : public BaseCell
 {
 public:
-    MDCell(UnitCell& ucell,
-           double cutoff,
-           double skin,
-           const ModuleBase::CommunicationDomain& communication_domain);
     MDCell(const MDCell&) = delete;
     MDCell& operator=(const MDCell&) = delete;
     MDCell(MDCell&&) = default;
     MDCell& operator=(MDCell&&) = default;
 
+    MDCell(UnitCell& ucell,
+           double cutoff,
+           double skin,
+           const ModuleBase::CommunicationDomain& communication_domain);
     MDCell(const ModuleBase::Matrix3& latvec,
            const ModuleBase::Matrix3& gt,
            double lat0,
            double omega,
-           int nat,
+           std::int64_t nat,
            const std::vector<LocalAtom>& owned_atoms,
            const std::vector<std::string>& type_labels,
            const std::vector<double>& type_masses,
+           const std::vector<std::int64_t>& type_atom_counts,
            double cutoff,
            double skin,
            const ModuleBase::CommunicationDomain& communication_domain);
@@ -43,7 +46,7 @@ public:
 #ifdef __MPI
     int mpi_rank() const;
     int mpi_size() const;
-    MPI_Comm communicator() const;
+    MPI_Comm communicator() const { return comm_; }
 
     const DomainDecomposition& decomposition() const;
 #endif
@@ -54,15 +57,17 @@ public:
     void set_lattice_vectors(const ModuleBase::Matrix3& latvec);
     void refresh_cart_from_frac();
 
-    const std::vector<LocalAtom>& owned_atoms() const;
+    const std::vector<LocalAtom>& owned_atoms() const { return owned_atoms_; }
     const std::vector<LocalAtom>& ghost_atoms() const;
-    const std::vector<std::string>& type_labels() const;
-    const std::vector<double>& type_masses() const;
+    const std::vector<std::string>& type_labels() const { return type_labels_; }
+    const std::vector<double>& type_masses() const { return type_masses_; }
+    const std::vector<std::int64_t>& type_atom_counts() const { return type_atom_counts_; }
     std::vector<LocalAtom>& mutable_owned_atoms();
     std::vector<LocalAtom>& mutable_ghost_atoms();
+    void replace_owned_atoms_for_restart(const std::vector<LocalAtom>& owned_atoms);
 
-    int nlocal() const;
-    int nghost() const;
+    int nlocal() const { return static_cast<int>(owned_atoms_.size()); }
+    int nghost() const { return static_cast<int>(ghost_atoms_.size()); }
     bool init_vel() const;
     void set_init_vel(bool init_vel);
     double cutoff() const;
@@ -74,7 +79,7 @@ public:
 
 private:
     Kind get_kind() const override;
-    int get_nat() const override;
+    std::int64_t get_nat() const override;
     double get_lat0() const override;
     double get_omega() const override;
     const ModuleBase::Matrix3& get_latvec() const override;
@@ -82,19 +87,18 @@ private:
 
 #ifdef __MPI
     void initialize_from_ucell_(UnitCell& ucell, MPI_Comm comm, double cutoff, double skin);
+    void initialize_from_owned_atoms_(MPI_Comm comm, double cutoff, double skin);
+#else
+    void initialize_from_ucell_(UnitCell& ucell, double cutoff, double skin);
+    void initialize_from_owned_atoms_(double cutoff, double skin);
 #endif
-    void initialize_from_ucell_serial_(UnitCell& ucell, double cutoff, double skin);
+
     void sync_backing_unitcell_geometry_();
     void sync_backing_unitcell_owned_atoms_();
     void clear_forces_(std::vector<LocalAtom>& atoms);
     static double wrap_fractional_(double value);
-#ifdef __MPI
-    void initialize_from_owned_atoms_(MPI_Comm comm, double cutoff, double skin);
-#else
-    void initialize_from_owned_atoms_(double cutoff, double skin);
-#endif
 
-    int nat_ = 0;
+    std::int64_t nat_ = 0;
     double lat0_ = 0.0;
     double omega_ = 0.0;
     ModuleBase::Matrix3 latvec_;
@@ -103,6 +107,7 @@ private:
     std::vector<LocalAtom> ghost_atoms_;
     std::vector<std::string> type_labels_;
     std::vector<double> type_masses_;
+    std::vector<std::int64_t> type_atom_counts_;
     bool init_vel_ = false;
     double cutoff_ = 0.0;
     double skin_ = 0.0;

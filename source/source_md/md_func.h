@@ -1,8 +1,10 @@
 #ifndef MD_FUNC_H
 #define MD_FUNC_H
 
-#include "md_statistics.h"
+#include "source_cell/md_cell.h"
 #include "source_esolver/esolver.h"
+
+#include <cstdint>
 
 class Parameter;
 
@@ -45,6 +47,10 @@ void init_vel(const UnitCell& unit_in,
               int& frozen_freedom,
               ModuleBase::Vector3<int>* ionmbl,
               ModuleBase::Vector3<double>* vel);
+void init_vel(MDCell& mdcell,
+              const bool& restart,
+              double& temperature,
+              std::int64_t& frozen_freedom);
 
 /**
  * @brief read in atomic velocities from STRU
@@ -108,6 +114,12 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
                   ModuleBase::Vector3<double>* force,
                   const bool& cal_stress,
                   ModuleBase::matrix& virial);
+void force_virial(ModuleESolver::ESolver* p_esolver,
+                  const int& istep,
+                  MDCell& mdcell,
+                  double& potential,
+                  const bool& cal_stress,
+                  ModuleBase::matrix& virial);
 /**
  * @brief calculate the ionic kinetic energy
  *
@@ -117,14 +129,6 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
  * @return the ionic kinetic energy
  */
 double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, const double* allmass);
-
-/**
- * @brief calculate kinetic energy and temperature without writing caller-owned state
- */
-MDKineticState calc_kinetic_state(const int& natom,
-                                  const int& frozen_freedom,
-                                  const double* allmass,
-                                  const ModuleBase::Vector3<double>* vel);
 
 /**
  * @brief calculate the total stress tensor
@@ -142,15 +146,10 @@ void compute_stress(const UnitCell& unit_in,
                     const bool& cal_stress,
                     const ModuleBase::matrix& virial,
                     ModuleBase::matrix& stress);
-
-/**
- * @brief calculate stress and ionic temperature tensor without writing caller-owned state
- */
-MDStressState calc_stress_state(const int& natom,
-                                const double& omega,
-                                const ModuleBase::Vector3<double>* vel,
-                                const double* allmass,
-                                const ModuleBase::matrix& virial);
+void compute_stress(const MDCell& mdcell,
+                    const bool& cal_stress,
+                    const ModuleBase::matrix& virial,
+                    ModuleBase::matrix& stress);
 
 /**
  * @brief output the stress information
@@ -182,6 +181,11 @@ void dump_info(const int& step,
                const ModuleBase::matrix& virial,
                const ModuleBase::Vector3<double>* force,
                const ModuleBase::Vector3<double>* vel);
+void dump_info(const int& step,
+               const std::string& global_out_dir,
+               const MDCell& mdcell,
+               const Parameter& param_in,
+               const ModuleBase::matrix& virial);
 
 /**
  * @brief obtain the atomic mass and whether the freedom is fixed
@@ -222,6 +226,10 @@ double current_temp(double& kinetic,
                     const int& frozen_freedom,
                     const double* allmass,
                     const ModuleBase::Vector3<double>* vel);
+double current_temp(double& kinetic,
+                    const MDCell& mdcell,
+                    const std::int64_t& frozen_freedom);
+std::int64_t global_dof(const MDCell& mdcell, const std::int64_t& frozen_freedom);
 
 /**
  * @brief get the temperature vectors
@@ -247,6 +255,7 @@ void temp_vector(const int& natom,
  * @param temperature current temperature
  */
 void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature);
+void current_md_info(const MDCell& mdcell, const std::string& file_dir, int& md_step, double& temperature);
 
 } // namespace MD_func
 

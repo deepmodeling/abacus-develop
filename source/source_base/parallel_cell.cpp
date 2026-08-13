@@ -1,4 +1,4 @@
-#include "source_base/communication_domain.h"
+#include "source_base/parallel_cell.h"
 
 namespace ModuleBase
 {

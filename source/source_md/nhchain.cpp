@@ -5,8 +5,24 @@
 #include "mpi.h"
 #endif
 #include "source_base/timer.h"
-#include "source_cell/update_cell.h"
-Nose_Hoover::Nose_Hoover(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
+
+namespace
+{
+ModuleBase::matrix global_temp_tensor(const MDCell& mdcell)
+{
+    ModuleBase::matrix t_vector(3, 3);
+    for (const LocalAtom& atom : mdcell.owned_atoms())
+        for (int i = 0; i < 3; ++i)
+            for (int j = 0; j < 3; ++j)
+                t_vector(i, j) += atom.mass * atom.vel[i] * atom.vel[j];
+#ifdef __MPI
+    MPI_Allreduce(MPI_IN_PLACE, t_vector.c, t_vector.nr * t_vector.nc, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
+#endif
+    return t_vector;
+}
+}
+
+Nose_Hoover::Nose_Hoover(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
 
@@ -59,7 +75,8 @@ Nose_Hoover::Nose_Hoover(const Parameter& param_in, UnitCell& unit_in) : MD_base
          */
         else if (mdp.md_pmode == "tri")
         {
-            if (ucell.latvec.e12 || ucell.latvec.e13 || ucell.latvec.e23)
+            const ModuleBase::Matrix3& latvec = mdcell.latvec();
+            if (latvec.e12 || latvec.e13 || latvec.e23)
             {
                 ModuleBase::WARNING_QUIT("Nose_Hoover", "the lattice must be lower-triangular when md_pmode == tri!");
             }
@@ -87,7 +104,7 @@ Nose_Hoover::Nose_Hoover(const Parameter& param_in, UnitCell& unit_in) : MD_base
     }
     pdim = pflag[0] + pflag[1] + pflag[2];
 
-    tdof = 3 * ucell.nat - frozen_freedom_;
+    tdof = MD_func::global_dof(mdcell, frozen_freedom_);
 
     assert(mdp.md_tchain>0);
 
@@ -159,10 +176,6 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
     ModuleBase::timer::start("Nose_Hoover", "setup");
 
     MD_base::setup(p_esolver, global_readin_dir);
-    if (mdp.md_type == "npt")
-    {
-        ucell.cell_parameter_updated = true;
-    }
 
     /// determine target temperature
     t_target = MD_func::target_temp(step_ + step_rst_, mdp.md_nstep, md_tfirst, md_tlast);
@@ -185,7 +198,7 @@ void Nose_Hoover::setup(ModuleESolver::ESolver* p_esolver, const std::string& gl
         couple_stress();
 
         /// init barostat
-        double nkt = (ucell.nat + 1) * t_target;
+        double nkt = (static_cast<double>(mdcell.nat()) + 1.0) * t_target;
 
         for (int i = 0; i < 6; ++i)
         {
@@ -232,8 +245,8 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     if (npt_flag)
     {
         /// update temperature and stress due to velocity rescaling
-        t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
-        MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);
+        t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
+        MD_func::compute_stress(mdcell, cal_stress, virial, stress);
 
         /// couple stress component due to md_pcouple
         couple_stress();
@@ -249,7 +262,7 @@ void Nose_Hoover::first_half(std::ofstream& ofs)
     }
 
     /// perform half-step update of vel due to atomic force
-    MD_base::update_vel(force);
+    MD_base::update_vel();
 
     if (npt_flag)
     {
@@ -278,7 +291,7 @@ void Nose_Hoover::second_half()
     ModuleBase::timer::start("Nose_Hoover", "second_half");
 
     /// perform half-step update of vel due to atomic force
-    MD_base::update_vel(force);
+    MD_base::update_vel();
 
     if (npt_flag)
     {
@@ -287,12 +300,12 @@ void Nose_Hoover::second_half()
     }
 
     /// update temperature and kinetic energy due to velocity rescaling
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 
     if (npt_flag)
     {
         /// update stress due to velocity rescaling
-        MD_func::compute_stress(ucell, vel, allmass, cal_stress, virial, stress);
+        MD_func::compute_stress(mdcell, cal_stress, virial, stress);
 
         /// couple stress component due to md_pcouple
         couple_stress();
@@ -367,7 +380,7 @@ void Nose_Hoover::write_restart(const std::string& global_out_dir)
         file.close();
     }
 #ifdef __MPI
-    MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Barrier(mdcell.communicator());
 #endif
 }
 
@@ -442,9 +455,9 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
     }
 
 #ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&ok2, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&ok3, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, mdcell.communicator());
+    MPI_Bcast(&ok2, 1, MPI_C_BOOL, 0, mdcell.communicator());
+    MPI_Bcast(&ok3, 1, MPI_C_BOOL, 0, mdcell.communicator());
 #endif
 
     if (!ok)
@@ -461,15 +474,15 @@ void Nose_Hoover::restart(const std::string& global_readin_dir)
     }
 
 #ifdef __MPI
-    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&md_tfirst, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(eta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(v_eta, mdp.md_tchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&step_rst_, 1, MPI_INT, 0, mdcell.communicator());
+    MPI_Bcast(&md_tfirst, 1, MPI_DOUBLE, 0, mdcell.communicator());
+    MPI_Bcast(eta, mdp.md_tchain, MPI_DOUBLE, 0, mdcell.communicator());
+    MPI_Bcast(v_eta, mdp.md_tchain, MPI_DOUBLE, 0, mdcell.communicator());
     if (npt_flag)
     {
-        MPI_Bcast(v_omega, 6, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Bcast(peta, mdp.md_pchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-        MPI_Bcast(v_peta, mdp.md_pchain, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+        MPI_Bcast(v_omega, 6, MPI_DOUBLE, 0, mdcell.communicator());
+        MPI_Bcast(peta, mdp.md_pchain, MPI_DOUBLE, 0, mdcell.communicator());
+        MPI_Bcast(v_peta, mdp.md_pchain, MPI_DOUBLE, 0, mdcell.communicator());
     }
 #endif
 }
@@ -553,12 +566,7 @@ void Nose_Hoover::particle_thermo()
     }
 
     /// rescale velocity due to thermostats
-    const int nat = ucell.nat;
-#pragma omp parallel for schedule(static) if (nat >= 256)
-    for (int i = 0; i < nat; ++i)
-    {
-        vel[i] *= scale;
-    }
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel *= scale;
 }
 
 void Nose_Hoover::baro_thermo()
@@ -651,8 +659,7 @@ void Nose_Hoover::update_baro()
     }
     else
     {
-        ModuleBase::matrix t_vector;
-        MD_func::temp_vector(ucell.nat, vel, allmass, t_vector);
+        const ModuleBase::matrix t_vector = global_temp_tensor(mdcell);
 
         for (int i = 0; i < 3; ++i)
         {
@@ -662,7 +669,7 @@ void Nose_Hoover::update_baro()
             }
         }
     }
-    term_one /= pdim * ucell.nat;
+    term_one /= static_cast<double>(pdim) * mdcell.nat();
 
     double g_omega = 0.0;
     double term_two = 0;
@@ -670,18 +677,18 @@ void Nose_Hoover::update_baro()
     {
         if (pflag[i])
         {
-            g_omega = (p_current[i] - p_hydro) * ucell.omega / mass_omega[i] + term_one / mass_omega[i];
+            g_omega = (p_current[i] - p_hydro) * mdcell.omega() / mass_omega[i] + term_one / mass_omega[i];
             v_omega[i] += g_omega * md_dt / 2.0;
             term_two += v_omega[i];
         }
     }
-    term_two /= pdim * ucell.nat;
+    term_two /= static_cast<double>(pdim) * mdcell.nat();
 
     for (int i = 3; i < 6; ++i)
     {
         if (pflag[i])
         {
-            g_omega = p_current[i] * ucell.omega / mass_omega[i];
+            g_omega = p_current[i] * mdcell.omega() / mass_omega[i];
             v_omega[i] += g_omega * md_dt / 2.0;
         }
     }
@@ -697,28 +704,26 @@ void Nose_Hoover::vel_baro()
         factor[i] = exp(-(v_omega[i] + mtk_term) * md_dt / 4);
     }
 
-    const int nat = ucell.nat;
-#pragma omp parallel for schedule(static) if (nat >= 256)
-    for (int i = 0; i < nat; ++i)
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
     {
         for (int j = 0; j < 3; ++j)
         {
-            vel[i][j] *= factor[j];
+            atom.vel[j] *= factor[j];
         }
 
         /// Note: I am not sure whether fixed atoms should update here
-        if (ionmbl[i][0])
+        if (atom.mbl[0])
         {
-            vel[i][0] -= (vel[i][1] * v_omega[5] + vel[i][2] * v_omega[4]) * md_dt / 2;
+            atom.vel[0] -= (atom.vel[1] * v_omega[5] + atom.vel[2] * v_omega[4]) * md_dt / 2;
         }
-        if (ionmbl[i][1])
+        if (atom.mbl[1])
         {
-            vel[i][1] -= vel[i][2] * v_omega[3] * md_dt / 2;
+            atom.vel[1] -= atom.vel[2] * v_omega[3] * md_dt / 2;
         }
 
         for (int j = 0; j < 3; ++j)
         {
-            vel[i][j] *= factor[j];
+            atom.vel[j] *= factor[j];
         }
     }
 }
@@ -726,94 +731,96 @@ void Nose_Hoover::vel_baro()
 void Nose_Hoover::update_volume(std::ofstream& ofs)
 {
     double factor = 0.0;
+    ModuleBase::Matrix3 latvec = mdcell.latvec();
 
     /// tri mode, off-diagonal components, first half
     if (pflag[4])
     {
         factor = exp(v_omega[0] * md_dt / 16);
-        ucell.latvec.e31 *= factor;
-        ucell.latvec.e31 += (v_omega[5] * ucell.latvec.e32 + v_omega[4] * ucell.latvec.e33);
-        ucell.latvec.e31 *= factor;
+        latvec.e31 *= factor;
+        latvec.e31 += (v_omega[5] * latvec.e32 + v_omega[4] * latvec.e33);
+        latvec.e31 *= factor;
     }
 
     if (pflag[3])
     {
         factor = exp(v_omega[1] * md_dt / 8);
-        ucell.latvec.e32 *= factor;
-        ucell.latvec.e32 += (v_omega[3] * ucell.latvec.e33);
-        ucell.latvec.e32 *= factor;
+        latvec.e32 *= factor;
+        latvec.e32 += (v_omega[3] * latvec.e33);
+        latvec.e32 *= factor;
     }
 
     if (pflag[5])
     {
         factor = exp(v_omega[0] * md_dt / 8);
-        ucell.latvec.e21 *= factor;
-        ucell.latvec.e21 += (v_omega[5] * ucell.latvec.e22);
-        ucell.latvec.e21 *= factor;
+        latvec.e21 *= factor;
+        latvec.e21 += (v_omega[5] * latvec.e22);
+        latvec.e21 *= factor;
     }
 
     if (pflag[4])
     {
         factor = exp(v_omega[0] * md_dt / 16);
-        ucell.latvec.e31 *= factor;
-        ucell.latvec.e31 += (v_omega[5] * ucell.latvec.e32 + v_omega[4] * ucell.latvec.e33);
-        ucell.latvec.e31 *= factor;
+        latvec.e31 *= factor;
+        latvec.e31 += (v_omega[5] * latvec.e32 + v_omega[4] * latvec.e33);
+        latvec.e31 *= factor;
     }
 
     /// Diagonal components
     if (pflag[0])
     {
         factor = exp(v_omega[0] * md_dt / 2);
-        ucell.latvec.e11 *= factor;
+        latvec.e11 *= factor;
     }
 
     if (pflag[1])
     {
         factor = exp(v_omega[1] * md_dt / 2);
-        ucell.latvec.e22 *= factor;
+        latvec.e22 *= factor;
     }
 
     if (pflag[2])
     {
         factor = exp(v_omega[2] * md_dt / 2);
-        ucell.latvec.e33 *= factor;
+        latvec.e33 *= factor;
     }
 
     /// tri mode, off-diagonal components, second half
     if (pflag[4])
     {
         factor = exp(v_omega[0] * md_dt / 16);
-        ucell.latvec.e31 *= factor;
-        ucell.latvec.e31 += (v_omega[5] * ucell.latvec.e32 + v_omega[4] * ucell.latvec.e33);
-        ucell.latvec.e31 *= factor;
+        latvec.e31 *= factor;
+        latvec.e31 += (v_omega[5] * latvec.e32 + v_omega[4] * latvec.e33);
+        latvec.e31 *= factor;
     }
 
     if (pflag[3])
     {
         factor = exp(v_omega[1] * md_dt / 8);
-        ucell.latvec.e32 *= factor;
-        ucell.latvec.e32 += (v_omega[3] * ucell.latvec.e33);
-        ucell.latvec.e32 *= factor;
+        latvec.e32 *= factor;
+        latvec.e32 += (v_omega[3] * latvec.e33);
+        latvec.e32 *= factor;
     }
 
     if (pflag[5])
     {
         factor = exp(v_omega[0] * md_dt / 8);
-        ucell.latvec.e21 *= factor;
-        ucell.latvec.e21 += (v_omega[5] * ucell.latvec.e22);
-        ucell.latvec.e21 *= factor;
+        latvec.e21 *= factor;
+        latvec.e21 += (v_omega[5] * latvec.e22);
+        latvec.e21 *= factor;
     }
 
     if (pflag[4])
     {
         factor = exp(v_omega[0] * md_dt / 16);
-        ucell.latvec.e31 *= factor;
-        ucell.latvec.e31 += (v_omega[5] * ucell.latvec.e32 + v_omega[4] * ucell.latvec.e33);
-        ucell.latvec.e31 *= factor;
+        latvec.e31 *= factor;
+        latvec.e31 += (v_omega[5] * latvec.e32 + v_omega[4] * latvec.e33);
+        latvec.e31 *= factor;
     }
 
-    /// reset ucell and pos due to change of lattice
-    unitcell::setup_cell_after_vc(ucell,ofs, PARAM.inp.nspin);
+    mdcell.set_lattice_vectors(latvec);
+    mdcell.refresh_cart_from_frac();
+    static_cast<void>(ofs);
 }
 
 void Nose_Hoover::target_stress()

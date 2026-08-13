@@ -81,7 +81,6 @@ DomainDecomposition& DomainDecomposition::operator=(DomainDecomposition&& other)
         lat0_ = other.lat0_;
         cutoff_ = other.cutoff_;
         skin_ = other.skin_;
-
         other.comm_ = MPI_COMM_NULL;
         other.cart_comm_ = MPI_COMM_NULL;
         other.owns_cart_comm_ = false;
@@ -589,7 +588,7 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
 void DomainDecomposition::accumulate_ghost_forces(std::vector<LocalAtom>& owned_atoms,
                                                    std::vector<LocalAtom>& ghost_atoms) const
 {
-    std::map<std::pair<int, int>, std::size_t> owned_lookup;
+    std::map<std::pair<int, std::int64_t>, std::size_t> owned_lookup;
     for (std::size_t iat = 0; iat < owned_atoms.size(); ++iat)
     {
         const LocalAtom& atom = owned_atoms[iat];
@@ -602,7 +601,7 @@ void DomainDecomposition::accumulate_ghost_forces(std::vector<LocalAtom>& owned_
         LocalAtom& atom = ghost_atoms[iat];
         if (atom.owner_rank == rank_)
         {
-            const std::map<std::pair<int, int>, std::size_t>::const_iterator found
+            const std::map<std::pair<int, std::int64_t>, std::size_t>::const_iterator found
                 = owned_lookup.find(std::make_pair(atom.type, atom.type_index));
             if (found == owned_lookup.end())
             {
@@ -664,7 +663,7 @@ void DomainDecomposition::accumulate_ghost_forces(std::vector<LocalAtom>& owned_
     for (std::size_t irecord = 0; irecord < recv_records.size(); ++irecord)
     {
         const ForceRecord& record = recv_records[irecord];
-        const std::map<std::pair<int, int>, std::size_t>::const_iterator found
+        const std::map<std::pair<int, std::int64_t>, std::size_t>::const_iterator found
             = owned_lookup.find(std::make_pair(record.type, record.type_index));
         if (found == owned_lookup.end())
         {

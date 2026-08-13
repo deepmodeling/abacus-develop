@@ -8,6 +8,7 @@
   - [System variables](#system-variables)
     - [suffix](#suffix)
     - [ntype](#ntype)
+    - [cell\_replica](#cell_replica)
     - [calculation](#calculation)
     - [esolver\_type](#esolver_type)
     - [symmetry](#symmetry)
@@ -600,6 +601,12 @@
 - **Type**: Integer
 - **Description**: Number of different atom species in the calculation.
 - **Default**: 0
+
+### cell_replica
+
+- **Type**: Three Integers
+- **Description**: Replicate the input STRU by Na, Nb, and Nc along its lattice vectors for distributed MDCell workflows. The default is 1 1 1, which preserves the input structure.
+- **Default**: 1 1 1
 
 ### calculation
 

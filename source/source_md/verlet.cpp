@@ -3,7 +3,11 @@
 #include "md_func.h"
 #include "source_base/timer.h"
 
-Verlet::Verlet(const Parameter& param_in, UnitCell& unit_in) : MD_base(param_in, unit_in)
+#ifdef __MPI
+#include <mpi.h>
+#endif
+
+Verlet::Verlet(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
 {
 }
 
@@ -28,7 +32,7 @@ void Verlet::first_half(std::ofstream& ofs)
     ModuleBase::TITLE("Verlet", "first_half");
     ModuleBase::timer::start("Verlet", "first_half");
 
-    MD_base::update_vel(force);
+    MD_base::update_vel();
     MD_base::update_pos();
 
     ModuleBase::timer::end("Verlet", "first_half");
@@ -40,7 +44,7 @@ void Verlet::second_half()
     ModuleBase::TITLE("Verlet", "second_half");
     ModuleBase::timer::start("Verlet", "second_half");
 
-    MD_base::update_vel(force);
+    MD_base::update_vel();
     apply_thermostat();
 
     ModuleBase::timer::end("Verlet", "second_half");
@@ -50,7 +54,7 @@ void Verlet::second_half()
 void Verlet::apply_thermostat(void)
 {
     double t_target = 0.0;
-    t_current = MD_func::current_temp(kinetic, ucell.nat, frozen_freedom_, allmass, vel);
+    t_current = MD_func::current_temp(kinetic, mdcell, frozen_freedom_);
 
     if (mdp.md_type == "nve")
     {
@@ -73,27 +77,20 @@ void Verlet::apply_thermostat(void)
     }
     else if (mdp.md_thermostat == "anderson")
     {
-        if (my_rank == 0)
+        for (LocalAtom& atom : mdcell.mutable_owned_atoms())
         {
-            double deviation = 0.0;
-            for (int i = 0; i < ucell.nat; ++i)
+            if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
             {
-                if (static_cast<double>(std::rand()) / RAND_MAX <= 1.0 / mdp.md_nraise)
+                const double deviation = sqrt(md_tlast / atom.mass);
+                for (int k = 0; k < 3; ++k)
                 {
-                    deviation = sqrt(md_tlast / allmass[i]);
-                    for (int k = 0; k < 3; ++k)
+                    if (atom.mbl[k])
                     {
-                        if (ionmbl[i][k])
-                        {
-                            vel[i][k] = deviation * MD_func::gaussrand();
-                        }
+                        atom.vel[k] = deviation * MD_func::gaussrand();
                     }
                 }
             }
         }
-#ifdef __MPI
-        MPI_Bcast(vel, ucell.nat * 3, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif
     }
     else if (mdp.md_thermostat == "berendsen")
     {
@@ -124,12 +121,7 @@ void Verlet::thermalize(const int& nraise, const double& current_temp, const dou
         fac = sqrt(target_temp / current_temp);
     }
 
-    const int nat = ucell.nat;
-#pragma omp parallel for schedule(static) if (nat >= 256)
-    for (int i = 0; i < nat; ++i)
-    {
-        vel[i] *= fac;
-    }
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel *= fac;
 }
 
 
@@ -144,10 +136,10 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
     }
 
     // Get degrees of freedom (3N - frozen)
-    int ndeg = 3 * ucell.nat - frozen_freedom_;
+    std::int64_t ndeg = MD_func::global_dof(mdcell, frozen_freedom_);
 
     // Calculate kinetic energies
-    double kin_energy = current_temp * ndeg * 0.5;  // in Hartree
+    double kin_energy = current_temp * static_cast<double>(ndeg) * 0.5;  // in Hartree
     double kin_target = target_temp * ndeg * 0.5;   // in Hartree
 
     // Calculate tau parameter (characteristic time scale / dt)
@@ -160,34 +152,46 @@ void Verlet::apply_csvr(const double& current_temp, const double& target_temp)
         factor = exp(-1.0 / taut);
     }
 
-    // Generate Gaussian random numbers using MD_func
-    double rr = MD_func::gaussrand();
-
-    // Calculate sum of squared Gaussian random numbers (ndeg - 1)
-    double sumnoises = 0.0;
-    for (int i = 0; i < ndeg - 1; ++i)
+    double scale = 1.0;
+#ifdef __MPI
+    if (mdcell.mpi_size() > 1)
     {
-        double r = MD_func::gaussrand();
-        sumnoises += r * r;
+        if (mdcell.mpi_rank() == 0)
+        {
+            const double rr = MD_func::gaussrand();
+            double sumnoises = 0.0;
+            for (int i = 0; i < ndeg - 1; ++i)
+            {
+                const double random_value = MD_func::gaussrand();
+                sumnoises += random_value * random_value;
+            }
+            const double factor2 = (1.0 - factor) * kin_target / kin_energy / ndeg;
+            const double resample = std::max(0.0,
+                                             factor + factor2 * (rr * rr + sumnoises)
+                                                 + 2.0 * rr * sqrt(factor * factor2));
+            scale = sqrt(resample);
+        }
+        MPI_Bcast(&scale, 1, MPI_DOUBLE, 0, mdcell.communicator());
     }
-
-    // CSVR core formula (simplified)
-    double factor2 = (1.0 - factor) * kin_target / kin_energy / ndeg;
-    double resample = factor + factor2 * (rr * rr + sumnoises) + 2.0 * rr * sqrt(factor * factor2);
-
-    // Ensure non-negative
-    resample = std::max(0.0, resample);
-
-    // Calculate scaling factor
-    double scale = sqrt(resample);
+    else
+#endif
+    {
+        const double rr = MD_func::gaussrand();
+        double sumnoises = 0.0;
+        for (int i = 0; i < ndeg - 1; ++i)
+        {
+            const double random_value = MD_func::gaussrand();
+            sumnoises += random_value * random_value;
+        }
+        const double factor2 = (1.0 - factor) * kin_target / kin_energy / ndeg;
+        const double resample = std::max(0.0,
+                                         factor + factor2 * (rr * rr + sumnoises)
+                                             + 2.0 * rr * sqrt(factor * factor2));
+        scale = sqrt(resample);
+    }
 
     // Apply velocity scaling
-    const int nat = ucell.nat;
-#pragma omp parallel for schedule(static) if (nat >= 256)
-    for (int i = 0; i < nat; ++i)
-    {
-        vel[i] *= scale;
-    }
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.vel *= scale;
 }
 
 

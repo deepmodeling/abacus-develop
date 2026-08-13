@@ -1,8 +1,11 @@
 #ifndef MD_BASE_H
 #define MD_BASE_H
 
+#include "source_cell/md_cell.h"
 #include "source_esolver/esolver.h"
 #include "source_io/module_parameter/parameter.h"
+
+#include <cstdint>
 
 /**
  * @brief base class of md
@@ -15,7 +18,7 @@
 class MD_base
 {
   public:
-    MD_base(const Parameter& param_in, UnitCell& unit_in);
+    MD_base(const Parameter& param_in, MDCell& mdcell_in);
     virtual ~MD_base();
 
     /**
@@ -67,19 +70,14 @@ class MD_base
      * @brief perform half-step update of vel due to atomic force
      * @param force atomic forces
      */
-    virtual void update_vel(const ModuleBase::Vector3<double>* force);
+    virtual void update_vel();
 
   public:
     bool stop;                          ///< MD stop or not
     double t_current;                   ///< current temperature
     int step_;                          ///< the MD step finished in current calculation
     int step_rst_;                      ///< the MD step finished in previous calculations
-    int frozen_freedom_;                ///< the fixed freedom of the system
-    double* allmass = nullptr;                    ///< atom mass
-    ModuleBase::Vector3<double>* pos;   ///< atom displacements  liuyu modify 2023-03-22
-    ModuleBase::Vector3<double>* vel;   ///< atom velocity
-    ModuleBase::Vector3<int>* ionmbl;   ///< atom is frozen or not
-    ModuleBase::Vector3<double>* force; ///< force of each atom
+    std::int64_t frozen_freedom_;       ///< the fixed freedom of the system
     ModuleBase::matrix virial;          ///< virial for this lattice
     ModuleBase::matrix stress;          ///< stress for this lattice
     double potential=0.0;               ///< potential energy
@@ -87,7 +85,7 @@ class MD_base
 
   protected:
     const MD_para& mdp; ///< input parameters used in md
-    UnitCell& ucell;    ///< unitcell information
+    MDCell& mdcell;     ///< mdcell information
     double energy_=0.0; ///< total energy of the system
 
     bool cal_stress;  ///< whether calculate stress

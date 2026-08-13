@@ -1,5 +1,5 @@
-#ifndef COMMUNICATION_DOMAIN_H
-#define COMMUNICATION_DOMAIN_H
+#ifndef PARALLEL_CELL_H
+#define PARALLEL_CELL_H
 
 #ifdef __MPI
 #include <mpi.h>
