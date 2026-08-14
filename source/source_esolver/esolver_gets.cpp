@@ -36,49 +36,32 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     ModuleBase::timer::start("ESolver_GetS", "before_all_runners");
 
     // 1.1) read pseudopotentials
-    const std::string pseudo_dir = this->inp_->pseudo_dir;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    const bool out_element_info = this->inp_->out_element_info;
-    const std::string dft_functional = this->inp_->dft_functional;
-    const bool lspinorb = this->inp_->lspinorb;
-    const double pseudo_rcut = this->inp_->pseudo_rcut;
-    const double soc_lambda = this->inp_->soc_lambda;
-    const int nspin = this->inp_->nspin;
     const int npol = PARAM.globalv.npol;
-    const std::string basis_type = this->inp_->basis_type;
-    const std::string esolver_type = this->inp_->esolver_type;
-    const std::string init_wfc = this->inp_->init_wfc;
-    const int nbands = this->inp_->nbands;
     const bool two_fermi = PARAM.globalv.two_fermi;
-    const double nelec_delta = this->inp_->nelec_delta;
-    const std::string smearing_method = this->inp_->smearing_method;
-    const std::string ks_solver = this->inp_->ks_solver;
-    const int bndpar = this->inp_->bndpar;
-    const double nelec = this->inp_->nelec;
-    const double nupdown = this->inp_->nupdown;
     // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
     auto atoms_info = unitcell::read_pseudo(GlobalV::ofs_running,
                                             ucell,
-                                            pseudo_dir,
+                                            this->inp_->pseudo_dir,
                                             global_out_dir,
-                                            out_element_info,
-                                            dft_functional,
-                                            lspinorb,
-                                            pseudo_rcut,
-                                            soc_lambda,
-                                            nspin,
+                                            this->inp_->out_element_info,
+                                            this->inp_->dft_functional,
+                                            this->inp_->lspinorb,
+                                            this->inp_->pseudo_rcut,
+                                            this->inp_->soc_lambda,
+                                            this->inp_->nspin,
                                             npol,
-                                            basis_type,
-                                            esolver_type,
-                                            init_wfc,
-                                            nbands,
+                                            this->inp_->basis_type,
+                                            this->inp_->esolver_type,
+                                            this->inp_->init_wfc,
+                                            this->inp_->nbands,
                                             two_fermi,
-                                            nelec_delta,
-                                            smearing_method,
-                                            ks_solver,
-                                            bndpar,
-                                            nelec,
-                                            nupdown);
+                                            this->inp_->nelec_delta,
+                                            this->inp_->smearing_method,
+                                            this->inp_->ks_solver,
+                                            this->inp_->bndpar,
+                                            this->inp_->nelec,
+                                            this->inp_->nupdown);
     elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
 
     // 1.2) symmetrize things
@@ -100,7 +83,6 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     const bool use_ibz = !inp.berry_phase && ModuleSymmetry::Symmetry::symm_flag != -1;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
     const double kspacing[3] = {this->inp_->kspacing[0], this->inp_->kspacing[1], this->inp_->kspacing[2]};
-    const std::string kmesh_type = this->inp_->kmesh_type;
     const double koffset[3] = {this->inp_->koffset[0], this->inp_->koffset[1], this->inp_->koffset[2]};
     this->kv.set(ucell,
                  ucell.symm,
@@ -113,7 +95,7 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
                  global_out_dir,
                  gamma_only_local,
                  kspacing,
-                 kmesh_type,
+                 this->inp_->kmesh_type,
                  koffset);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 

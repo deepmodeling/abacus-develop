@@ -101,19 +101,6 @@ class ESolver_KS_LCAO : public ESolver_KS
     bool have_force = false;
     
     GintPrecisionController gint_precision_controller_;
-
-
-  public:
-    const Record_adj & get_RA() const { return RA; }
-    const Grid_Driver & get_gd() const { return gd; }
-    const Parallel_Orbitals & get_pv() const { return pv; }
-    const std::unique_ptr<ModuleGint::GintInfo> & get_gint_info() const { return gint_info_; }
-    const TwoCenterBundle & get_two_center_bundle() const { return two_center_bundle_; }
-    const rdmft::RDMFT<TK, TR> & get_rdmft_solver() const { return rdmft_solver; }
-    const LCAO_Orbitals & get_orb() const { return orb_; }
-    const ModuleBase::matrix & get_scs() const { return scs; }
-    const Setup_DeePKS<TK> & get_deepks() const { return deepks; }
-    const Exx_NAO<TK> & get_exx_nao() const { return exx_nao; }
 };
 } // namespace ModuleESolver
 #endif
