@@ -98,6 +98,12 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_CELL_little_group_test
+  LIBS base device symmetry
+  SOURCES little_group_test.cpp
+)
+
+AddTest(
   TARGET MODULE_CELL_klist_test_para1
   LIBS base device symmetry
   SOURCES klist_test_para.cpp ../klist.cpp ../parallel_kpoints.cpp ../k_vector_utils.cpp ../reciprocal_grid.cpp

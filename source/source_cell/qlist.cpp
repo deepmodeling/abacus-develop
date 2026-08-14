@@ -140,12 +140,22 @@ void QList::reduce_by_symmetry(const UnitCell& ucell,
 
 void QList::get_irreps(const UnitCell& ucell, const ModuleSymmetry::Symmetry& symm) {
     (void)ucell;
-    (void)symm;
 
-    // Placeholder: one fully-symmetric irrep (A1) per q-point. The real
-    // little-group decomposition (kgmatrix + gtrans) is added in Phase 3.
-    this->nirr_.assign(this->nkstot, 1);
-    this->irrep_modes_.assign(this->nkstot, std::vector<std::vector<int>>(1));
+    // Decompose each q-point via its little group (placeholder: one
+    // fully-symmetric A1 irrep per q-point; the LittleGroup projection-operator
+    // basis is filled in a later iteration).
+    this->nirr_.assign(this->nkstot, 0);
+    this->irrep_modes_.assign(this->nkstot, std::vector<std::vector<int>>());
+    for (int iq = 0; iq < this->nkstot; ++iq)
+    {
+        this->little_group_.set_q(this->kvec_d[iq], symm);
+        this->nirr_[iq] = this->little_group_.get_nirr();
+        this->irrep_modes_[iq].resize(this->nirr_[iq]);
+        for (int iirr = 0; iirr < this->nirr_[iq]; ++iirr)
+        {
+            this->irrep_modes_[iq][iirr] = this->little_group_.get_mode_basis(iirr);
+        }
+    }
 }
 
 } // namespace ModuleCell

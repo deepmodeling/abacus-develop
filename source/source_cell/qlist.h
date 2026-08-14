@@ -10,6 +10,7 @@
 #define QLIST_H
 
 #include "source_base/vector3.h"
+#include "module_symmetry/little_group.h"
 #include "module_symmetry/symmetry.h"
 #include "unitcell.h"
 #include "reciprocal_grid.h"
@@ -109,6 +110,7 @@ public:
 private:
     std::vector<int> nirr_; ///< number of irreps for each q-point
     std::vector<std::vector<std::vector<int>>> irrep_modes_; ///< irrep modes
+    ModuleSymmetry::LittleGroup little_group_; ///< little group of the current q-point
 
     /**
      * @brief Get irreps for each q-point.

@@ -13,6 +13,7 @@ add_library(
     symm_rho.cpp
     symmetry.cpp
     symm_rot_spin.cpp
+    little_group.cpp
 )
 
 if(ENABLE_COVERAGE)
