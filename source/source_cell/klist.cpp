@@ -201,12 +201,8 @@ void K_Vectors::set(const UnitCell& ucell,
 // 2.reserve space for nspin>2 (symmetry)
 void K_Vectors::renew(const int& kpoint_number)
 {
-    kvec_c.resize(kpoint_number);
-    kvec_d.resize(kpoint_number);
-    kvec_c_full.resize(kpoint_number);
-    wk.resize(kpoint_number);
+    ReciprocalGrid::renew(kpoint_number);
     isk.resize(kpoint_number);
-    ngk.resize(kpoint_number);
 
     return;
 }
@@ -503,66 +499,6 @@ void K_Vectors::interpolate_k_between(std::ifstream& ifk, std::vector<ModuleBase
     assert(kl_segids.size() == nkstot); /* ISSUE#3482: to distinguish different kline segments */
 }
 
-double K_Vectors::Monkhorst_Pack_formula(const int& k_type, const double& offset, const int& n, const int& dim)
-{
-    double coordinate = 0.0;
-    if (k_type == 1)
-    {
-        coordinate = (offset + 2.0 * (double)n - (double)dim - 1.0) / (2.0 * (double)dim);
-    }
-    else
-    {
-        coordinate = (offset + (double)n - 1.0) / (double)dim;
-    }
-    return coordinate;
-}
-
-// add by dwan
-void K_Vectors::Monkhorst_Pack(const int* nmp_in, const double* koffset_in, const int k_type)
-{
-    const int mpnx = nmp_in[0];
-    const int mpny = nmp_in[1];
-    const int mpnz = nmp_in[2];
-
-    this->nkstot = mpnx * mpny * mpnz;
-    // only can renew after nkstot is estimated.
-    this->renew(nkstot * nspin); // mohan fix bug 2009-09-01
-
-    for (int x = 1; x <= mpnx; x++)
-    {
-        double v1 = Monkhorst_Pack_formula(k_type, koffset_in[0], x, mpnx);
-        if (std::abs(v1) < 1.0e-10) {
-            v1 = 0.0; // mohan update 2012-06-10
-        }
-        for (int y = 1; y <= mpny; y++)
-        {
-            double v2 = Monkhorst_Pack_formula(k_type, koffset_in[1], y, mpny);
-            if (std::abs(v2) < 1.0e-10) {
-                v2 = 0.0;
-            }
-            for (int z = 1; z <= mpnz; z++)
-            {
-                double v3 = Monkhorst_Pack_formula(k_type, koffset_in[2], z, mpnz);
-                if (std::abs(v3) < 1.0e-10) {
-                    v3 = 0.0;
-                }
-                // index of nks kpoint
-                const int i = mpnx * mpny * (z - 1) + mpnx * (y - 1) + (x - 1);
-                kvec_d[i].set(v1, v2, v3);
-            }
-        }
-    }
-
-    const double weight = 1.0 / static_cast<double>(nkstot);
-    for (int ik = 0; ik < nkstot; ik++)
-    {
-        wk[ik] = weight;
-    }
-    this->kd_done = true;
-
-    return;
-}
-
 void K_Vectors::update_use_ibz(const int& nkstot_ibz,
                                const std::vector<ModuleBase::Vector3<double>>& kvec_d_ibz,
                                const std::vector<double>& wk_ibz)
@@ -590,44 +526,6 @@ void K_Vectors::update_use_ibz(const int& nkstot_ibz,
 
     this->kd_done = true;
     this->kc_done = false;
-    return;
-}
-
-void K_Vectors::normalize_wk(const int& degspin)
-{
-    if (GlobalV::MY_RANK != 0) {
-        return;
-    }
-    double sum = 0.0;
-
-    for (int ik = 0; ik < nkstot; ik++)
-    {
-        sum += this->wk[ik];
-    }
-
-    // If sum of weights is zero or very small, set equal weights
-    if (sum < 1e-10)
-    {
-        ModuleBase::WARNING("K_Vectors::normalize_wk",
-                            "Sum of k-point weights is zero or very small. "
-                            "Setting equal weights for all k-points.");
-        for (int ik = 0; ik < nkstot; ik++)
-        {
-            this->wk[ik] = 1.0 / double(nkstot);
-        }
-        sum = 1.0;
-    }
-
-    for (int ik = 0; ik < nkstot; ik++)
-    {
-        this->wk[ik] /= sum;
-    }
-
-    for (int ik = 0; ik < nkstot; ik++)
-    {
-        this->wk[ik] *= degspin;
-    }
-
     return;
 }
 
@@ -684,3 +582,349 @@ void K_Vectors::set_kup_and_kdw()
 
     return;
 } // end subroutine set_kup_and_kdw
+
+void K_Vectors::reduce_by_symmetry(const UnitCell& ucell,
+                                   const ModuleSymmetry::Symmetry& symm,
+                                   bool use_symm,
+                                   std::string& skpt,
+                                   bool& match)
+{
+    if (GlobalV::MY_RANK != 0)
+    {
+        return;
+    }
+    ModuleBase::TITLE("K_Vectors", "reduce_by_symmetry");
+
+    // k-lattice: "pricell" of reciprocal space
+    // CAUTION: should fit into all k-input method, not only MP  !!!
+    // the basis vector of reciprocal lattice: recip_vec1, recip_vec2, recip_vec3
+    ModuleBase::Vector3<double> recip_vec1(ucell.G.e11, ucell.G.e12, ucell.G.e13);
+    ModuleBase::Vector3<double> recip_vec2(ucell.G.e21, ucell.G.e22, ucell.G.e23);
+    ModuleBase::Vector3<double> recip_vec3(ucell.G.e31, ucell.G.e32, ucell.G.e33);
+    ModuleBase::Vector3<double> k_vec1, k_vec2, k_vec3;
+    ModuleBase::Matrix3 k_vec;
+    if (this->get_is_mp())
+    {
+        k_vec1 = ModuleBase::Vector3<double>(recip_vec1.x / this->nmp[0], recip_vec1.y / this->nmp[0], recip_vec1.z / this->nmp[0]);
+        k_vec2 = ModuleBase::Vector3<double>(recip_vec2.x / this->nmp[1], recip_vec2.y / this->nmp[1], recip_vec2.z / this->nmp[1]);
+        k_vec3 = ModuleBase::Vector3<double>(recip_vec3.x / this->nmp[2], recip_vec3.y / this->nmp[2], recip_vec3.z / this->nmp[2]);
+        k_vec = ModuleBase::Matrix3(k_vec1.x,
+                                    k_vec1.y,
+                                    k_vec1.z,
+                                    k_vec2.x,
+                                    k_vec2.y,
+                                    k_vec2.z,
+                                    k_vec3.x,
+                                    k_vec3.y,
+                                    k_vec3.z);
+    }
+
+    //===============================================
+    // search in all space group operations
+    // if the operations does not already included
+    // inverse operation, double it.
+    //===============================================
+    bool include_inv = false;
+    std::vector<ModuleBase::Matrix3> kgmatrix(48 * 2);
+    ModuleBase::Matrix3 inv(-1, 0, 0, 0, -1, 0, 0, 0, -1);
+    ModuleBase::Matrix3 ind(1, 0, 0, 0, 1, 0, 0, 0, 1);
+
+    int nrotkm = 0;
+    if (use_symm)
+    {
+        // bravais type of reciprocal lattice and k-lattice
+
+        double recip_vec_const[6];
+        double recip_vec0_const[6];
+        double k_vec_const[6];
+        double k_vec0_const[6];
+        int recip_brav_type = 15;
+        int k_brav_type = 15;
+        std::string recip_brav_name;
+        std::string k_brav_name;
+        ModuleBase::Vector3<double> k_vec01 = k_vec1, k_vec02 = k_vec2, k_vec03 = k_vec3;
+
+        // determine the Bravais type and related parameters of the lattice
+        symm.lattice_type(recip_vec1,
+                          recip_vec2,
+                          recip_vec3,
+                          recip_vec1,
+                          recip_vec2,
+                          recip_vec3,
+                          recip_vec_const,
+                          recip_vec0_const,
+                          recip_brav_type,
+                          recip_brav_name,
+                          ucell.atoms,
+                          false,
+                          nullptr,
+                          1e-6);
+        GlobalV::ofs_running << "\n For reciprocal-space lattice" << std::endl;
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice type", recip_brav_type);
+        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice name", recip_brav_name);
+
+        // the map of bravis lattice from real to reciprocal space
+        // for example, 3(fcc) in real space matches 2(bcc) in reciprocal space
+        std::vector<int> ibrav_a2b{1, 3, 2, 4, 5, 6, 7, 8, 10, 9, 11, 12, 13, 14};
+        // check if the reciprocal lattice is compatible with the real space lattice
+        auto ibrav_match = [&](int ibrav_b) -> bool {
+            const int& ibrav_a = symm.real_brav;
+            if (ibrav_a < 1 || ibrav_a > 14)
+            {
+                return false;
+            }
+            return (ibrav_b == ibrav_a2b[ibrav_a - 1]);
+        };
+        if (!ibrav_match(recip_brav_type)) // if not match, exit and return
+        {
+            GlobalV::ofs_running << "Error: Bravais lattice type of reciprocal lattice is not compatible with that of "
+                                    "real space lattice:"
+                                 << std::endl;
+            GlobalV::ofs_running << "ibrav of real space lattice: " << symm.ilattname << std::endl;
+            GlobalV::ofs_running << "ibrav of reciprocal lattice: " << recip_brav_name << std::endl;
+            GlobalV::ofs_running << "(which should be " << ibrav_a2b[symm.real_brav - 1] << ")." << std::endl;
+            match = false;
+            return;
+        }
+
+        // if match, continue
+        if (this->get_is_mp())
+        {
+            symm.lattice_type(k_vec1,
+                              k_vec2,
+                              k_vec3,
+                              k_vec01,
+                              k_vec02,
+                              k_vec03,
+                              k_vec_const,
+                              k_vec0_const,
+                              k_brav_type,
+                              k_brav_name,
+                              ucell.atoms,
+                              false,
+                              nullptr,
+                              1e-6);
+            GlobalV::ofs_running << "\n For k-vectors" << std::endl;
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice type", k_brav_type);
+            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice name", k_brav_name);
+        }
+        // point-group analysis of reciprocal lattice
+        ModuleBase::Matrix3 bsymop[48];
+        int bnop = 0;
+        // search again
+        symm.lattice_type(recip_vec1,
+                          recip_vec2,
+                          recip_vec3,
+                          recip_vec1,
+                          recip_vec2,
+                          recip_vec3,
+                          recip_vec_const,
+                          recip_vec0_const,
+                          recip_brav_type,
+                          recip_brav_name,
+                          ucell.atoms,
+                          false,
+                          nullptr,
+                          1e-6);
+        ModuleBase::Matrix3 b_optlat_new(recip_vec1.x, recip_vec1.y, recip_vec1.z,
+                                         recip_vec2.x, recip_vec2.y, recip_vec2.z,
+                                         recip_vec3.x, recip_vec3.y, recip_vec3.z);
+        // set the crystal point-group symmetry operation
+        const int cal_symm_repr[2] = {0, 6};
+        symm.setgroup(bsymop, bnop, recip_brav_type, cal_symm_repr);
+        // transform the above symmetric operation matrices between different coordinate
+        symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);
+
+        // check if all the kgmatrix are in bsymop
+        auto matequal = [&symm](ModuleBase::Matrix3 a, ModuleBase::Matrix3 b) {
+            return (symm.equal(a.e11, b.e11) && symm.equal(a.e12, b.e12) && symm.equal(a.e13, b.e13)
+                    && symm.equal(a.e21, b.e21) && symm.equal(a.e22, b.e22) && symm.equal(a.e23, b.e23)
+                    && symm.equal(a.e31, b.e31) && symm.equal(a.e32, b.e32) && symm.equal(a.e33, b.e33));
+        };
+        for (int i = 0; i < symm.nrotk; ++i)
+        {
+            match = false;
+            for (int j = 0; j < bnop; ++j)
+            {
+                if (matequal(symm.kgmatrix[i], bsymop[j]))
+                {
+                    match = true;
+                    break;
+                }
+            }
+            if (!match)
+            {
+                return;
+            }
+        }
+        nrotkm = symm.nrotk; // change if inv not included
+        for (int i = 0; i < nrotkm; ++i)
+        {
+            if (symm.kgmatrix[i] == inv)
+            {
+                include_inv = true;
+            }
+            kgmatrix[i] = symm.kgmatrix[i];
+        }
+
+        if (symm.magnetic_nspin4)
+        {
+            // (nspin=4, magnetic) Time reversal Theta reverses the magnetization, so Theta alone is
+            // NOT a symmetry and the blanket "-k is always equivalent" doubling below is invalid.
+            // Only the antiunitary elements Theta*g with g in the moment-reversing coset belong to
+            // the Shubnikov group; append exactly those, keeping the index convention
+            // j + nrotk  <->  Theta * gmatrix_anti[j]  (decoded the same way in restore_dm).
+            // (nspin=2 is unaffected: there the antiunitary operation is plain conjugation K, which
+            //  does not touch the spin, so D_s(-k)=D_s^*(k) holds even for a ferromagnet and the
+            //  generic branch below stays correct.)
+            for (int j = 0; j < symm.nrotk_anti; ++j)
+            {
+                kgmatrix[j + symm.nrotk] = inv * symm.kgmatrix_anti[j];
+            }
+            nrotkm = symm.nrotk + symm.nrotk_anti;
+        }
+        else if (!include_inv)
+        {
+            for (int i = 0; i < symm.nrotk; ++i)
+            {
+                kgmatrix[i + symm.nrotk] = inv * symm.kgmatrix[i];
+            }
+            nrotkm = 2 * symm.nrotk;
+        }
+    }
+    else if (this->get_is_mp()) // only include for Monkhorst-Pack grid
+    {
+        nrotkm = 2;
+        kgmatrix[0] = ind;
+        kgmatrix[1] = inv;
+    }
+    else
+    {
+        return;
+    }
+
+    // convert kgmatrix to k-lattice
+    ModuleBase::Matrix3* kkmatrix = new ModuleBase::Matrix3[nrotkm];
+    if (this->get_is_mp())
+    {
+        symm.gmatrix_convert(kgmatrix.data(), kkmatrix, nrotkm, ucell.G, k_vec);
+    }
+
+    // use operation : kgmatrix to find
+    // the new set kvec_d : ir_kpt
+    std::vector<ModuleBase::Vector3<double>> kvec_d_ibz;
+    std::vector<double> wk_ibz;
+    std::vector<int> ibz2bz;
+    this->reduce_ibz(kgmatrix.data(), nrotkm, ucell.G, k_vec, kkmatrix, symm.epsilon, kvec_d_ibz, wk_ibz, this->ibz_index, ibz2bz);
+    const int nkstot_ibz = kvec_d_ibz.size();
+
+    delete[] kkmatrix;
+
+    auto restrict_kpt = [&symm](ModuleBase::Vector3<double>& kvec) {
+        // in (-0.5, 0.5]
+        kvec.x = fmod(kvec.x + 100.5 - 0.5 * symm.epsilon, 1) - 0.5 + 0.5 * symm.epsilon;
+        kvec.y = fmod(kvec.y + 100.5 - 0.5 * symm.epsilon, 1) - 0.5 + 0.5 * symm.epsilon;
+        kvec.z = fmod(kvec.z + 100.5 - 0.5 * symm.epsilon, 1) - 0.5 + 0.5 * symm.epsilon;
+        if (std::abs(kvec.x) < symm.epsilon)
+        {
+            kvec.x = 0.0;
+        }
+        if (std::abs(kvec.y) < symm.epsilon)
+        {
+            kvec.y = 0.0;
+        }
+        if (std::abs(kvec.z) < symm.epsilon)
+        {
+            kvec.z = 0.0;
+        }
+        return;
+    };
+
+#ifdef __EXX
+    // setup kstars according to the final (max-norm) kvec_d_ibz
+    this->kstars.resize(nkstot_ibz);
+    if (ModuleSymmetry::Symmetry::symm_flag == 1)
+    {
+        ModuleBase::Vector3<double> kvec_rot;
+        for (int i = 0; i < this->nkstot; ++i)
+        {
+            int exist_number = -1;
+            int isym = 0;
+            for (int j = 0; j < nrotkm; ++j)
+            {
+                kvec_rot = this->kvec_d[i] * kgmatrix[j];
+                restrict_kpt(kvec_rot);
+                for (int k = 0; k < nkstot_ibz; ++k)
+                {
+                    if (symm.equal(kvec_rot.x, kvec_d_ibz[k].x) && symm.equal(kvec_rot.y, kvec_d_ibz[k].y)
+                        && symm.equal(kvec_rot.z, kvec_d_ibz[k].z))
+                    {
+                        isym = j;
+                        exist_number = k;
+                        break;
+                    }
+                }
+                if (exist_number != -1)
+                {
+                    break;
+                }
+            }
+            this->kstars[exist_number].insert(std::make_pair(isym, this->kvec_d[i]));
+        }
+    }
+#endif
+
+    // output in kpoints file
+    std::stringstream ss;
+    ss << " " << std::setw(40) << "nkstot"
+       << " = " << this->nkstot << std::setw(66) << "ibzkpt" << std::endl;
+    std::string table;
+    table += "K-POINTS REDUCTION ACCORDING TO SYMMETRY\n";
+    table += FmtCore::format("%8s%12s%12s%12s%8s%12s%12s%12s\n",
+                             "KPT",
+                             "DIRECT_X",
+                             "DIRECT_Y",
+                             "DIRECT_Z",
+                             "IBZ",
+                             "DIRECT_X",
+                             "DIRECT_Y",
+                             "DIRECT_Z");
+    for (int i = 0; i < this->nkstot; ++i)
+    {
+        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8d%12.8f%12.8f%12.8f\n",
+                                 i + 1,
+                                 this->kvec_d[i].x,
+                                 this->kvec_d[i].y,
+                                 this->kvec_d[i].z,
+                                 this->ibz_index[i] + 1,
+                                 kvec_d_ibz[this->ibz_index[i]].x,
+                                 kvec_d_ibz[this->ibz_index[i]].y,
+                                 kvec_d_ibz[this->ibz_index[i]].z);
+    }
+    ss << table << std::endl;
+    skpt = ss.str();
+    ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Number of irreducible k-points", nkstot_ibz);
+
+    table.clear();
+    table += "\n K-POINTS REDUCTION ACCORDING TO SYMMETRY\n";
+    table += FmtCore::format("%8s%12s%12s%12s%8s%8s\n", "IBZ", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT", "ibz2bz");
+    for (int ik = 0; ik < nkstot_ibz; ik++)
+    {
+        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8.4f%8d\n",
+                                 ik + 1,
+                                 kvec_d_ibz[ik].x,
+                                 kvec_d_ibz[ik].y,
+                                 kvec_d_ibz[ik].z,
+                                 wk_ibz[ik],
+                                 ibz2bz[ik]);
+    }
+    GlobalV::ofs_running << table << std::endl;
+
+    // resize the kpoint container according to nkstot_ibz
+    if (use_symm || this->get_is_mp())
+    {
+        this->update_use_ibz(nkstot_ibz, kvec_d_ibz, wk_ibz);
+    }
+
+    return;
+}
