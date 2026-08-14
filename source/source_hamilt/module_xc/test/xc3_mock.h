@@ -53,6 +53,22 @@ namespace ModulePW
                                        const double factor) const;
 
     template <typename FPTYPE>
+    void PW_Basis::recip2real(const std::complex<FPTYPE>* in,
+                              FPTYPE* out,
+                              const bool add,
+                              const FPTYPE factor) const
+    {
+        for (int i = 0; i < nrxx; i++)
+        {
+            out[i] = (-ModuleBase::IMAG_UNIT * in[i]).real();
+        }
+    }
+    template void PW_Basis::recip2real(const std::complex<double>* in,
+                                       double* out,
+                                       const bool add,
+                                       const double factor) const;
+
+    template <typename FPTYPE>
     void PW_Basis_K::recip2real(const std::complex<FPTYPE>* in,
                                 std::complex<FPTYPE>* out,
                                 const int ik,
