@@ -15,6 +15,13 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_DFPT_kq_basis_test
+  LIBS parameter base device symmetry planewave
+  SOURCES dfpt_kq_basis_test.cpp
+    ../dfpt_kq_basis.cpp
+)
+
+AddTest(
   TARGET MODULE_DFPT_pw_run_test
   LIBS parameter base device symmetry
   SOURCES dfpt_pw_run_test.cpp

@@ -107,8 +107,15 @@
 ## 进度
 
 - [x] 计划定稿（U0/C/B/A 序列、DFT+U 依赖轨道文件的 on/off 自洽设计）
-- [ ] U0 DFT+U 接口预留
-- [ ] C0 k+q 平面波基枚举
+- [x] U0 DFT+U 接口预留 `3599973fa`
+    - `Plus_U*` 经 `DFPT_PW::init`/`DFPT_PW_Data` 线程化（esolver 接线层决策，module_dfpt 不读全局输入）
+    - `with_u()`/`u_active()`（locale 未初始化即无轨道文件 → 安全退化）+ 每 q `docc_` 槽位
+    - 桩：`DFPT_Rho::cal_docc`、`DFPT_Pert::build_dv_u`、`DFPT_Phon::dftu_onsite`、Q0 `[r,V_U]` 注释
+    - 测试 5+3 全过；`dftu_test_support.cpp` shim（免 LCAO 侧链接闭包）；6 目标回归 + `abacus_pw_para` 链接通过
+- [x] C0 k+q 平面波基枚举
+    - `DFPT_KQ_Basis`：复用 GS 复杂 k 基的共享 G 网格，仅做 k+q 平移中心再过滤（`|G+k+q|^2<=gk_ecut`），无需新建 FFT 网格/重分发；前置条件 gamma_only=false + 网格截断覆盖 k+q 球（`gridecut_lat >= (sqrt(gk_ecut)+max|k|+max|q|)^2`，ecutrho>=4*ecutwfc 满足）
+    - `get_npwk/get_ig/get_ig2isz/get_gcar/get_gpluskq/get_gk2/get_kplusq` 访问器；gamma_only 守卫 WARNING_QUIT
+    - 测试 5 项全过（Γ q=0 全等复现、偏心非对称球、k+q 平移不变性、非零 q 与全网格穷举对照、null/gamma_only 拒绝）；7 目标回归
 - [ ] C1 DFPT_Pert
 - [ ] C2 DFPT_Stern
 - [ ] C3 DFPT_Rho

@@ -4,6 +4,7 @@ set(SOURCES
     dfpt_pw.cpp
     dfpt_pw_data.cpp
     dfpt_irrep_data.cpp
+    dfpt_kq_basis.cpp
     dfpt_pert.cpp
     dfpt_stern.cpp
     dfpt_rho.cpp
@@ -16,6 +17,7 @@ set(HEADERS
     dfpt_pw.h
     dfpt_pw_data.h
     dfpt_irrep_data.h
+    dfpt_kq_basis.h
     dfpt_pert.h
     dfpt_stern.h
     dfpt_rho.h
