@@ -681,7 +681,7 @@ For systems that are difficult to converge, one could try increasing the value o
         item.description = "At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.";
         item.default_value = "false";
         item.unit = "";
-        item.set_availability("mixing_restart>=0");
+        item.set_availability("mixing_restart>0");
         read_sync_bool(input.mixing_dmr);
         this->add_item(item);
     }

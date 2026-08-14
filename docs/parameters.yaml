@@ -760,7 +760,7 @@ parameters:
       At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
     default_value: "false"
     unit: ""
-    availability: "mixing_restart>=0"
+    availability: "mixing_restart>0"
   - name: mixing_gg0
     category: Electronic structure
     type: Real

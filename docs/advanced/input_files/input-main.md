@@ -1369,7 +1369,7 @@
 ### mixing_dmr
 
 - **Type**: Boolean
-- **Availability**: *[`mixing_restart`](#mixing_restart)>=0*
+- **Availability**: *[`mixing_restart`](#mixing_restart)>0*
 - **Description**: At n-th iteration which is calculated by drho&lt;mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.
 - **Default**: false
 
