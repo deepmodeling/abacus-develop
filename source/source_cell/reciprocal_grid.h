@@ -153,6 +153,31 @@ class ReciprocalGrid
   protected:
     /// @brief Spin-like multiplicity used by renew() (1 for q-points).
     virtual int spin_factor() const { return 1; }
+
+    /**
+     * @brief Build the reciprocal-space point-group operations for star reduction.
+     *
+     * Determines the Bravais lattice of the reciprocal lattice (and of the
+     * k-lattice for Monkhorst-Pack meshes), checks its compatibility with the
+     * real-space lattice, constructs the point-group operations, and verifies
+     * that every Symmetry::kgmatrix entry belongs to that group.
+     *
+     * @param ucell    unit cell
+     * @param symm     symmetry of the system
+     * @param use_symm whether symmetry reduction is enabled
+     * @param k_vec    output: k-lattice basis matrix (valid when is_mp)
+     * @param kgmatrix output: rotation operations (capacity at least 96)
+     * @param nrotkm   output: number of operations written into kgmatrix
+     *                 (0 means no reduction is possible)
+     * @return false if the reciprocal lattice is incompatible with the
+     *         real-space lattice (the caller should then set match to false)
+     */
+    bool build_star_ops(const UnitCell& ucell,
+                        const ModuleSymmetry::Symmetry& symm,
+                        bool use_symm,
+                        ModuleBase::Matrix3& k_vec,
+                        std::vector<ModuleBase::Matrix3>& kgmatrix,
+                        int& nrotkm) const;
 };
 
 } // namespace ModuleCell

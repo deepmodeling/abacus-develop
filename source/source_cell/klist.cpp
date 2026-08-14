@@ -595,30 +595,6 @@ void K_Vectors::reduce_by_symmetry(const UnitCell& ucell,
     }
     ModuleBase::TITLE("K_Vectors", "reduce_by_symmetry");
 
-    // k-lattice: "pricell" of reciprocal space
-    // CAUTION: should fit into all k-input method, not only MP  !!!
-    // the basis vector of reciprocal lattice: recip_vec1, recip_vec2, recip_vec3
-    ModuleBase::Vector3<double> recip_vec1(ucell.G.e11, ucell.G.e12, ucell.G.e13);
-    ModuleBase::Vector3<double> recip_vec2(ucell.G.e21, ucell.G.e22, ucell.G.e23);
-    ModuleBase::Vector3<double> recip_vec3(ucell.G.e31, ucell.G.e32, ucell.G.e33);
-    ModuleBase::Vector3<double> k_vec1, k_vec2, k_vec3;
-    ModuleBase::Matrix3 k_vec;
-    if (this->get_is_mp())
-    {
-        k_vec1 = ModuleBase::Vector3<double>(recip_vec1.x / this->nmp[0], recip_vec1.y / this->nmp[0], recip_vec1.z / this->nmp[0]);
-        k_vec2 = ModuleBase::Vector3<double>(recip_vec2.x / this->nmp[1], recip_vec2.y / this->nmp[1], recip_vec2.z / this->nmp[1]);
-        k_vec3 = ModuleBase::Vector3<double>(recip_vec3.x / this->nmp[2], recip_vec3.y / this->nmp[2], recip_vec3.z / this->nmp[2]);
-        k_vec = ModuleBase::Matrix3(k_vec1.x,
-                                    k_vec1.y,
-                                    k_vec1.z,
-                                    k_vec2.x,
-                                    k_vec2.y,
-                                    k_vec2.z,
-                                    k_vec3.x,
-                                    k_vec3.y,
-                                    k_vec3.z);
-    }
-
     //===============================================
     // search in all space group operations
     // if the operations does not already included
@@ -627,180 +603,51 @@ void K_Vectors::reduce_by_symmetry(const UnitCell& ucell,
     bool include_inv = false;
     std::vector<ModuleBase::Matrix3> kgmatrix(48 * 2);
     ModuleBase::Matrix3 inv(-1, 0, 0, 0, -1, 0, 0, 0, -1);
-    ModuleBase::Matrix3 ind(1, 0, 0, 0, 1, 0, 0, 0, 1);
 
+    ModuleBase::Matrix3 k_vec;
     int nrotkm = 0;
-    if (use_symm)
+    if (!this->build_star_ops(ucell, symm, use_symm, k_vec, kgmatrix, nrotkm))
     {
-        // bravais type of reciprocal lattice and k-lattice
-
-        double recip_vec_const[6];
-        double recip_vec0_const[6];
-        double k_vec_const[6];
-        double k_vec0_const[6];
-        int recip_brav_type = 15;
-        int k_brav_type = 15;
-        std::string recip_brav_name;
-        std::string k_brav_name;
-        ModuleBase::Vector3<double> k_vec01 = k_vec1, k_vec02 = k_vec2, k_vec03 = k_vec3;
-
-        // determine the Bravais type and related parameters of the lattice
-        symm.lattice_type(recip_vec1,
-                          recip_vec2,
-                          recip_vec3,
-                          recip_vec1,
-                          recip_vec2,
-                          recip_vec3,
-                          recip_vec_const,
-                          recip_vec0_const,
-                          recip_brav_type,
-                          recip_brav_name,
-                          ucell.atoms,
-                          false,
-                          nullptr,
-                          1e-6);
-        GlobalV::ofs_running << "\n For reciprocal-space lattice" << std::endl;
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice type", recip_brav_type);
-        ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice name", recip_brav_name);
-
-        // the map of bravis lattice from real to reciprocal space
-        // for example, 3(fcc) in real space matches 2(bcc) in reciprocal space
-        std::vector<int> ibrav_a2b{1, 3, 2, 4, 5, 6, 7, 8, 10, 9, 11, 12, 13, 14};
-        // check if the reciprocal lattice is compatible with the real space lattice
-        auto ibrav_match = [&](int ibrav_b) -> bool {
-            const int& ibrav_a = symm.real_brav;
-            if (ibrav_a < 1 || ibrav_a > 14)
-            {
-                return false;
-            }
-            return (ibrav_b == ibrav_a2b[ibrav_a - 1]);
-        };
-        if (!ibrav_match(recip_brav_type)) // if not match, exit and return
-        {
-            GlobalV::ofs_running << "Error: Bravais lattice type of reciprocal lattice is not compatible with that of "
-                                    "real space lattice:"
-                                 << std::endl;
-            GlobalV::ofs_running << "ibrav of real space lattice: " << symm.ilattname << std::endl;
-            GlobalV::ofs_running << "ibrav of reciprocal lattice: " << recip_brav_name << std::endl;
-            GlobalV::ofs_running << "(which should be " << ibrav_a2b[symm.real_brav - 1] << ")." << std::endl;
-            match = false;
-            return;
-        }
-
-        // if match, continue
-        if (this->get_is_mp())
-        {
-            symm.lattice_type(k_vec1,
-                              k_vec2,
-                              k_vec3,
-                              k_vec01,
-                              k_vec02,
-                              k_vec03,
-                              k_vec_const,
-                              k_vec0_const,
-                              k_brav_type,
-                              k_brav_name,
-                              ucell.atoms,
-                              false,
-                              nullptr,
-                              1e-6);
-            GlobalV::ofs_running << "\n For k-vectors" << std::endl;
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice type", k_brav_type);
-            ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "Bravais lattice name", k_brav_name);
-        }
-        // point-group analysis of reciprocal lattice
-        ModuleBase::Matrix3 bsymop[48];
-        int bnop = 0;
-        // search again
-        symm.lattice_type(recip_vec1,
-                          recip_vec2,
-                          recip_vec3,
-                          recip_vec1,
-                          recip_vec2,
-                          recip_vec3,
-                          recip_vec_const,
-                          recip_vec0_const,
-                          recip_brav_type,
-                          recip_brav_name,
-                          ucell.atoms,
-                          false,
-                          nullptr,
-                          1e-6);
-        ModuleBase::Matrix3 b_optlat_new(recip_vec1.x, recip_vec1.y, recip_vec1.z,
-                                         recip_vec2.x, recip_vec2.y, recip_vec2.z,
-                                         recip_vec3.x, recip_vec3.y, recip_vec3.z);
-        // set the crystal point-group symmetry operation
-        const int cal_symm_repr[2] = {0, 6};
-        symm.setgroup(bsymop, bnop, recip_brav_type, cal_symm_repr);
-        // transform the above symmetric operation matrices between different coordinate
-        symm.gmatrix_convert(bsymop, bsymop, bnop, b_optlat_new, ucell.G);
-
-        // check if all the kgmatrix are in bsymop
-        auto matequal = [&symm](ModuleBase::Matrix3 a, ModuleBase::Matrix3 b) {
-            return (symm.equal(a.e11, b.e11) && symm.equal(a.e12, b.e12) && symm.equal(a.e13, b.e13)
-                    && symm.equal(a.e21, b.e21) && symm.equal(a.e22, b.e22) && symm.equal(a.e23, b.e23)
-                    && symm.equal(a.e31, b.e31) && symm.equal(a.e32, b.e32) && symm.equal(a.e33, b.e33));
-        };
-        for (int i = 0; i < symm.nrotk; ++i)
-        {
-            match = false;
-            for (int j = 0; j < bnop; ++j)
-            {
-                if (matequal(symm.kgmatrix[i], bsymop[j]))
-                {
-                    match = true;
-                    break;
-                }
-            }
-            if (!match)
-            {
-                return;
-            }
-        }
-        nrotkm = symm.nrotk; // change if inv not included
-        for (int i = 0; i < nrotkm; ++i)
-        {
-            if (symm.kgmatrix[i] == inv)
-            {
-                include_inv = true;
-            }
-            kgmatrix[i] = symm.kgmatrix[i];
-        }
-
-        if (symm.magnetic_nspin4)
-        {
-            // (nspin=4, magnetic) Time reversal Theta reverses the magnetization, so Theta alone is
-            // NOT a symmetry and the blanket "-k is always equivalent" doubling below is invalid.
-            // Only the antiunitary elements Theta*g with g in the moment-reversing coset belong to
-            // the Shubnikov group; append exactly those, keeping the index convention
-            // j + nrotk  <->  Theta * gmatrix_anti[j]  (decoded the same way in restore_dm).
-            // (nspin=2 is unaffected: there the antiunitary operation is plain conjugation K, which
-            //  does not touch the spin, so D_s(-k)=D_s^*(k) holds even for a ferromagnet and the
-            //  generic branch below stays correct.)
-            for (int j = 0; j < symm.nrotk_anti; ++j)
-            {
-                kgmatrix[j + symm.nrotk] = inv * symm.kgmatrix_anti[j];
-            }
-            nrotkm = symm.nrotk + symm.nrotk_anti;
-        }
-        else if (!include_inv)
-        {
-            for (int i = 0; i < symm.nrotk; ++i)
-            {
-                kgmatrix[i + symm.nrotk] = inv * symm.kgmatrix[i];
-            }
-            nrotkm = 2 * symm.nrotk;
-        }
+        match = false;
+        return;
     }
-    else if (this->get_is_mp()) // only include for Monkhorst-Pack grid
-    {
-        nrotkm = 2;
-        kgmatrix[0] = ind;
-        kgmatrix[1] = inv;
-    }
-    else
+    if (nrotkm == 0)
     {
         return;
+    }
+
+    // check whether the inverse operation is already included
+    for (int i = 0; i < nrotkm; ++i)
+    {
+        if (kgmatrix[i] == inv)
+        {
+            include_inv = true;
+        }
+    }
+
+    if (symm.magnetic_nspin4)
+    {
+        // (nspin=4, magnetic) Time reversal Theta reverses the magnetization, so Theta alone is
+        // NOT a symmetry and the blanket "-k is always equivalent" doubling below is invalid.
+        // Only the antiunitary elements Theta*g with g in the moment-reversing coset belong to
+        // the Shubnikov group; append exactly those, keeping the index convention
+        // j + nrotk  <->  Theta * gmatrix_anti[j]  (decoded the same way in restore_dm).
+        // (nspin=2 is unaffected: there the antiunitary operation is plain conjugation K, which
+        //  does not touch the spin, so D_s(-k)=D_s^*(k) holds even for a ferromagnet and the
+        //  generic branch below stays correct.)
+        for (int j = 0; j < symm.nrotk_anti; ++j)
+        {
+            kgmatrix[j + symm.nrotk] = inv * symm.kgmatrix_anti[j];
+        }
+        nrotkm = symm.nrotk + symm.nrotk_anti;
+    }
+    else if (!include_inv)
+    {
+        for (int i = 0; i < symm.nrotk; ++i)
+        {
+            kgmatrix[i + symm.nrotk] = inv * symm.kgmatrix[i];
+        }
+        nrotkm = 2 * symm.nrotk;
     }
 
     // convert kgmatrix to k-lattice
