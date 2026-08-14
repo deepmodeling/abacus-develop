@@ -52,12 +52,24 @@ public:
                        const std::vector<int>& mp_grid, bool use_irreps);
 
     /**
-     * @brief Read q-points from file.
+     * @brief Read q-points from a q-points file.
+     *
+     * Supports the same formats as the K-points file: a Monkhorst-Pack
+     * mesh (nkstot == 0), an explicit Direct/Cartesian list, or a
+     * Line_Direct/Line_Cartesian path (interpolated). No symmetry
+     * reduction is performed here (the interface has no symmetry object);
+     * use generate_mesh for a symmetry-reduced mesh.
      *
      * @param filename filename
      * @param ucell unit cell
      */
     void read_from_file(const std::string& filename, UnitCell& ucell);
+
+    /**
+     * @brief Print the q-points in both Cartesian and direct coordinates.
+     * @param ofs output stream
+     */
+    void print_qlists(std::ofstream& ofs) const;
 
     /**
      * @brief Get the number of q-points.
@@ -75,9 +87,16 @@ public:
     /**
      * @brief Get the number of irreps at given q-point.
      * @param idx q-point index
-     * @return number of irreps
+     * @return number of irreps (0 if no irrep data was computed)
      */
-    int get_nirr(int idx) const { return nirr_[idx]; }
+    int get_nirr(int idx) const
+    {
+        if (idx < 0 || idx >= static_cast<int>(this->nirr_.size()))
+        {
+            return 0;
+        }
+        return nirr_[idx];
+    }
 
     /**
      * @brief Get irrep modes at given q-point and irrep index.
@@ -111,6 +130,14 @@ private:
     std::vector<int> nirr_; ///< number of irreps for each q-point
     std::vector<std::vector<std::vector<int>>> irrep_modes_; ///< irrep modes
     ModuleSymmetry::LittleGroup little_group_; ///< little group of the current q-point
+
+    /**
+     * @brief Interpolate q-points between successive special points.
+     *
+     * @param ifq input stream positioned at the special-point list
+     * @param qvec output q-point coordinates
+     */
+    void interpolate_q_between(std::ifstream& ifq, std::vector<ModuleBase::Vector3<double>>& qvec);
 
     /**
      * @brief Get irreps for each q-point.

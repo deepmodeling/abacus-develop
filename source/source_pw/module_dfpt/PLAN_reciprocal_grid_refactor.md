@@ -77,8 +77,15 @@ ModuleSymmetry::LittleGroup（新独立组件，放 module_symmetry/）
 ### Phase 2 — QList 接入基类
 - `class QList : public ModuleCell::ReciprocalGrid`。
 - `generate_mesh`：基类 `Monkhorst_Pack` 建 q 网格 → `reduce_by_symmetry()`
-  （恒加 `-q`，无磁群）→ 填充 `nirr_`/`irrep_modes_`（先全对称占位）。
+  （恒加 `-q`，无磁群）→ 归约后补 `kvec_c`（笛卡尔坐标）→ 权重归一化
+  → `use_irreps` 开关控制是否填充 `nirr_`/`irrep_modes_`。
 - 保持 `get_nq/get_q/get_nirr/get_irrep_modes` 接口不变；删除 design-phase 桩注释。
+- q 点补充功能（已完成）：
+  - `read_from_file`：读 q 点文件（Gamma/Monkhorst-Pack 网格、Direct/Cartesian
+    列表、Line_Direct/Line_Cartesian 插值路径），不做对称归约（接口无 symm）。
+  - `print_qlists`：打印 q 点笛卡尔/直接坐标表（`Q-POINTS` 标签）。
+  - `get_nirr/get_irrep_modes` 越界安全；`use_irreps=false` 时 irrep 数据为空。
+  - `nkstot_full` = 归约前网格规模；`wk` 求和 = 1（网格/列表）或逐点 1（路径）。
 
 ### Phase 3 — 不可约表示接口（module_symmetry，先留接口）
 - 新增 `source/source_cell/module_symmetry/little_group.h/.cpp`

@@ -6,7 +6,11 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_base/formatter.h"
 #include "source_base/tool_quit.h"
+#include <algorithm>
+#include <cassert>
+#include <iomanip>
 
 namespace ModuleCell {
 
@@ -16,8 +20,6 @@ QList::~QList() {}
 
 void QList::generate_mesh(UnitCell& ucell, ModuleSymmetry::Symmetry& symm,
                           const std::vector<int>& mp_grid, bool use_irreps) {
-    (void)use_irreps;
-
     if (mp_grid.size() != 3)
     {
         ModuleBase::WARNING_QUIT("QList::generate_mesh", "mp_grid must have three components.");
@@ -50,17 +52,261 @@ void QList::generate_mesh(UnitCell& ucell, ModuleSymmetry::Symmetry& symm,
     // weights sum to 1 (average over the full Brillouin zone)
     this->normalize_wk(1);
 
-    // little-group irreducible-representation data
-    this->get_irreps(ucell, symm);
+    // Cartesian coordinates of the reduced q-point list (from the direct ones).
+    // The reciprocal lattice is stored in ucell.G (columns are the reciprocal
+    // primitive vectors), so q_cart = q_direct * G.
+    this->kvec_d2c(ucell.G);
+    this->kc_done = true;
+
+    // little-group irreducible-representation data (opt-in)
+    if (use_irreps)
+    {
+        this->get_irreps(ucell, symm);
+    }
+    else
+    {
+        this->nirr_.clear();
+        this->irrep_modes_.clear();
+    }
 }
 
 void QList::read_from_file(const std::string& filename, UnitCell& ucell) {
-    (void)filename;
-    (void)ucell;
+    std::ifstream ifq(filename.c_str());
+    if (!ifq)
+    {
+        ModuleBase::WARNING("QList::read_from_file", "Can not find the q-points file.");
+        this->nkstot = this->nks = 0;
+        return;
+    }
+
+    ifq >> std::setiosflags(std::ios::uppercase);
+    ifq.clear();
+    ifq.seekg(0);
+
+    // find the "Q_POINTS" (or "QPOINTS" / "Q") header, mirroring read_kpoints
+    std::string word;
+    std::string qword;
+    int ierr = 0;
+    while (ifq.good())
+    {
+        ifq >> word;
+        ifq.ignore(150, '\n');
+        if (word == "Q_POINTS" || word == "QPOINTS" || word == "Q")
+        {
+            ierr = 1;
+            break;
+        }
+        ifq.rdstate();
+    }
+    if (ierr == 0)
+    {
+        ModuleBase::WARNING("QList::read_from_file", "symbol Q_POINTS not found.");
+        this->nkstot = this->nks = 0;
+        return;
+    }
+
+    ModuleBase::GlobalFunc::READ_VALUE(ifq, this->nkstot);
+    this->k_nkstot = this->nkstot;
+    ModuleBase::GlobalFunc::READ_VALUE(ifq, qword);
+    this->k_kword = qword;
+
+    const int max_qpoints = 100000;
+    if (this->nkstot > max_qpoints)
+    {
+        ModuleBase::WARNING("QList::read_from_file", "nkstot > MAX_QPOINTS");
+        this->nkstot = this->nks = 0;
+        return;
+    }
+
+    int q_type = 0;
+    if (this->nkstot == 0) // Monkhorst-Pack mesh
+    {
+        this->is_mp = true;
+        if (qword == "Gamma")
+        {
+            q_type = 0;
+        }
+        else if (qword == "Monkhorst-Pack" || qword == "MP" || qword == "mp")
+        {
+            q_type = 1;
+        }
+        else
+        {
+            ModuleBase::WARNING("QList::read_from_file", "neither Gamma nor Monkhorst-Pack.");
+            this->nkstot = this->nks = 0;
+            return;
+        }
+
+        ifq >> this->nmp[0] >> this->nmp[1] >> this->nmp[2];
+        double koffset[3] = {0.0, 0.0, 0.0};
+        if (!(ifq >> koffset[0] >> koffset[1] >> koffset[2]))
+        {
+            ModuleBase::WARNING("QList::read_from_file", "Missing q-point offsets in the q-points file.");
+        }
+        this->Monkhorst_Pack(this->nmp, koffset, q_type);
+    }
+    else // explicit list or line path
+    {
+        if (qword == "Cartesian" || qword == "C")
+        {
+            this->renew(this->nkstot);
+            for (int i = 0; i < this->nkstot; ++i)
+            {
+                ifq >> kvec_c[i].x >> kvec_c[i].y >> kvec_c[i].z;
+                ModuleBase::GlobalFunc::READ_VALUE(ifq, wk[i]);
+            }
+            this->kc_done = true;
+        }
+        else if (qword == "Direct" || qword == "D")
+        {
+            this->renew(this->nkstot);
+            for (int i = 0; i < this->nkstot; ++i)
+            {
+                ifq >> kvec_d[i].x >> kvec_d[i].y >> kvec_d[i].z;
+                ModuleBase::GlobalFunc::READ_VALUE(ifq, wk[i]);
+            }
+            this->kd_done = true;
+        }
+        else if (qword == "Line_Direct" || qword == "L" || qword == "Line")
+        {
+            interpolate_q_between(ifq, kvec_d);
+            std::for_each(wk.begin(), wk.end(), [](double& d) { d = 1.0; });
+            this->kd_done = true;
+        }
+        else if (qword == "Line_Cartesian")
+        {
+            interpolate_q_between(ifq, kvec_c);
+            std::for_each(wk.begin(), wk.end(), [](double& d) { d = 1.0; });
+            this->kc_done = true;
+        }
+        else
+        {
+            ModuleBase::WARNING("QList::read_from_file", "neither Cartesian nor Direct qpoint.");
+            this->nkstot = this->nks = 0;
+            return;
+        }
+    }
+
+    this->nkstot_full = this->nks = this->nkstot;
+
+    // complement the coordinates: fill the missing representation
+    if (!this->kc_done && this->kd_done)
+    {
+        this->kvec_d2c(ucell.G);
+        this->kc_done = true;
+    }
+    else if (this->kc_done && !this->kd_done)
+    {
+        this->kvec_c2d(ucell.latvec);
+        this->kd_done = true;
+    }
+
+    // weights: a mesh or explicit list is normalized to sum 1; a line path
+    // keeps its unnormalized weights (each point weight 1)
+    if (this->k_kword != "Line_Direct" && this->k_kword != "L" && this->k_kword != "Line"
+        && this->k_kword != "Line_Cartesian")
+    {
+        this->normalize_wk(1);
+    }
+
+    // no symmetry reduction (no symmetry object in this interface); therefore
+    // no irrep decomposition either -> clear any stale irrep data
+    this->nirr_.clear();
+    this->irrep_modes_.clear();
+}
+
+void QList::interpolate_q_between(std::ifstream& ifq, std::vector<ModuleBase::Vector3<double>>& qvec) {
+    const int nqs_special = this->nkstot;
+    std::vector<int> nql(nqs_special, 0);
+    std::vector<ModuleBase::Vector3<double>> qs(nqs_special);
+
+    // recalculate nkstot
+    this->nkstot = 0;
+    this->kl_segids.clear();
+    this->kl_segids.shrink_to_fit();
+    int qpt_segid = 0;
+    for (int iqs = 0; iqs < nqs_special; ++iqs)
+    {
+        ifq >> qs[iqs].x;
+        ifq >> qs[iqs].y;
+        ifq >> qs[iqs].z;
+        ModuleBase::GlobalFunc::READ_VALUE(ifq, nql[iqs]);
+        assert(nql[iqs] >= 0);
+        this->nkstot += nql[iqs];
+        if ((nql[iqs] == 1) && (iqs != (nqs_special - 1)))
+        {
+            ++qpt_segid;
+        }
+        this->kl_segids.push_back(qpt_segid);
+    }
+    assert(nql[nqs_special - 1] == 1);
+
+    this->renew(this->nkstot);
+
+    int count = 0;
+    for (int iqs = 1; iqs < nqs_special; ++iqs)
+    {
+        double dxs = (qs[iqs].x - qs[iqs - 1].x) / nql[iqs - 1];
+        double dys = (qs[iqs].y - qs[iqs - 1].y) / nql[iqs - 1];
+        double dzs = (qs[iqs].z - qs[iqs - 1].z) / nql[iqs - 1];
+        for (int is = 0; is < nql[iqs - 1]; ++is)
+        {
+            qvec[count].x = qs[iqs - 1].x + is * dxs;
+            qvec[count].y = qs[iqs - 1].y + is * dys;
+            qvec[count].z = qs[iqs - 1].z + is * dzs;
+            ++count;
+        }
+    }
+    qvec[count].x = qs[nqs_special - 1].x;
+    qvec[count].y = qs[nqs_special - 1].y;
+    qvec[count].z = qs[nqs_special - 1].z;
+    ++count;
+    assert(count == this->nkstot);
+}
+
+void QList::print_qlists(std::ofstream& ofs) const {
+    ModuleBase::TITLE("QList", "print_qlists");
+    const int nq = this->nks;
+    if (this->nkstot < nq)
+    {
+        ModuleBase::WARNING_QUIT("QList::print_qlists", "nkstot < nks");
+    }
+    std::string table;
+    table += " Q-POINTS CARTESIAN COORDINATES\n";
+    table += FmtCore::format("%8s%12s%12s%12s%8s\n", "QPOINTS", "CARTESIAN_X", "CARTESIAN_Y", "CARTESIAN_Z", "WEIGHT");
+    for (int i = 0; i < nq; i++)
+    {
+        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8.4f\n",
+                                 i + 1,
+                                 this->kvec_c[i].x,
+                                 this->kvec_c[i].y,
+                                 this->kvec_c[i].z,
+                                 this->wk[i]);
+    }
+    ofs << "\n" << table << std::endl;
+
+    table.clear();
+    table += " Q-POINTS DIRECT COORDINATES\n";
+    table += FmtCore::format("%8s%12s%12s%12s%8s\n", "QPOINTS", "DIRECT_X", "DIRECT_Y", "DIRECT_Z", "WEIGHT");
+    for (int i = 0; i < nq; i++)
+    {
+        table += FmtCore::format("%8d%12.8f%12.8f%12.8f%8.4f\n",
+                                 i + 1,
+                                 this->kvec_d[i].x,
+                                 this->kvec_d[i].y,
+                                 this->kvec_d[i].z,
+                                 this->wk[i]);
+    }
+    ofs << "\n" << table << std::endl;
+    return;
 }
 
 std::vector<int> QList::get_irrep_modes(int q_idx, int irrep_idx) const {
-    if (q_idx < 0 || q_idx >= this->nkstot || irrep_idx < 0 || irrep_idx >= (int)this->nirr_[q_idx])
+    if (q_idx < 0 || q_idx >= static_cast<int>(this->nirr_.size()))
+    {
+        return std::vector<int>();
+    }
+    if (irrep_idx < 0 || irrep_idx >= this->nirr_[q_idx])
     {
         return std::vector<int>();
     }
