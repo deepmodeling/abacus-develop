@@ -26,15 +26,23 @@ handled.
 
 ```text
 expression := or-expression
-or-expression := and-expression ("or" and-expression)*
-and-expression := primary (("and" | ",") primary)*
+or-expression := and-expression (" or " and-expression)*
+and-expression := primary (" and " primary)*
 primary := condition | "(" expression ")"
 condition := parameter comparison value
-           | parameter "in" "[" value "," value ("," value)* "]"
-           | parameter "contains" value
+           | parameter " in [" value ", " value (", " value)* "]"
+           | parameter " contains " value
 comparison := "==" | "!=" | ">" | ">=" | "<" | "<="
 value := token | '"' quoted-value '"'
 ```
+
+The spaces shown inside grammar literals are required: comparison operators
+have no surrounding spaces, `and`, `or`, `in`, and `contains` use one space on
+each side, and list commas are followed by one space. Leading or trailing
+whitespace is not allowed, and a comma is not an alternative spelling of
+`and`. The parser accepts only the spelling produced by the AST serializer, so
+forms such as `basis_type == pw`, `mode in [a,b]`, and
+`basis_type==pw,calculation==scf` are rejected.
 
 `and` binds more tightly than `or`. `==` compares one complete value; double
 quotes delimit a complete value containing whitespace, such as

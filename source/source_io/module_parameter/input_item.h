@@ -3,7 +3,6 @@
 #include <functional>
 #include <map>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <vector>
 
@@ -54,14 +53,7 @@ class Input_Item
     /// means that the item is always available.
     void set_availability(const std::string& value)
     {
-        const AvailabilityExpr parsed = parse_availability(value);
-        const std::string canonical = parsed.to_string();
-        if (value != canonical)
-        {
-            throw std::invalid_argument("Non-canonical availability expression '" + value
-                                        + "'; expected '" + canonical + "'");
-        }
-        availability_expr_ = parsed;
+        availability_expr_ = parse_availability(value);
     }
 
     std::string get_availability() const

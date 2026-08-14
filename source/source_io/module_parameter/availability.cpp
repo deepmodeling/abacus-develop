@@ -248,12 +248,8 @@ class AvailabilityParser
         AvailabilityExpr result = parse_primary();
         std::vector<AvailabilityExpr> children;
         children.push_back(result);
-        while (true)
+        while (consume_keyword("and"))
         {
-            if (!consume_keyword("and") && !consume_char(','))
-            {
-                break;
-            }
             children.push_back(parse_primary());
         }
         if (children.size() == 1)
@@ -342,7 +338,14 @@ std::string AvailabilityExpr::to_string() const
 
 AvailabilityExpr parse_availability(const std::string& raw)
 {
-    return AvailabilityParser(raw).parse();
+    AvailabilityExpr expression = AvailabilityParser(raw).parse();
+    const std::string canonical = expression.to_string();
+    if (raw != canonical)
+    {
+        throw std::invalid_argument("Non-canonical availability expression '" + raw
+                                    + "'; expected '" + canonical + "'");
+    }
+    return expression;
 }
 
 } // namespace ModuleIO

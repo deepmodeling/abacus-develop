@@ -109,7 +109,25 @@ TEST(AvailabilityParser, InvalidExpressionsAreRejected)
     }
 }
 
-TEST(AvailabilityParser, SetterRequiresCanonicalInputAndPreservesStateOnFailure)
+TEST(AvailabilityParser, NonCanonicalSpellingIsRejected)
+{
+    const char* noncanonical_expressions[] = {
+        "basis_type == pw",
+        "basis_type==pw ",
+        "(basis_type==pw)",
+        "basis_type==pw,calculation==scf",
+        "vdw_method in [d2,d3_0]",
+        "basis_type==pw and(calculation==scf)",
+        "basis_type==pw and calculation==scf or esolver_type==sdft",
+    };
+    for (const char* expression : noncanonical_expressions)
+    {
+        EXPECT_THROW(parse_availability(expression), std::invalid_argument)
+            << expression;
+    }
+}
+
+TEST(AvailabilityParser, SetterPreservesStateOnParseFailure)
 {
     Input_Item item("example");
     item.set_availability("basis_type==pw");

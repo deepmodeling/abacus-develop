@@ -34,13 +34,12 @@ struct AvailabilityExpr
     std::string to_string() const;
 };
 
-/// Parse an availability string into its boolean-expression tree.
+/// Parse a canonical availability string into its boolean-expression tree.
 ///
-/// Accepts the canonical grammar (`param==value`, `param in [a, b]`, the
-/// comparison operators ==, !=, >, >=, <, <=, `and`/`or`/`,` combinators and
-/// `(...)` grouping). An empty string yields an empty (always-available)
-/// expression. Non-empty input that is not consumed by this grammar throws
-/// std::invalid_argument.
+/// The input must exactly match the AST serialization (`param==value`,
+/// `param in [a, b]`, comparison operators, `and`/`or` combinators and `(...)`
+/// grouping). An empty string yields an empty (always-available) expression.
+/// Invalid or non-canonical input throws std::invalid_argument.
 AvailabilityExpr parse_availability(const std::string& raw);
 
 } // namespace ModuleIO
