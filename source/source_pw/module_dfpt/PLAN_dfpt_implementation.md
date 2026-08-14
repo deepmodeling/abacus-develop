@@ -51,9 +51,9 @@
 - 测试：dV 数值核对。提交。
 
 **C2 — DFPT_Stern Sternheimer 求解**
-- `apply_op` 复用 `ops->hPsi(hpsi_info)`（hsolver_pw.cpp:268-274 模式）。
-- 新写 `cg_solve`（现有 `DiagoCG` 是本征 CG，不可复用）；方程 `(H(k+q)−ε)|dψ⟩=−P_c dV|ψ⟩`。
-- 测试：一维谐振子/金刚石解析对照。提交。
+- 移位哈密顿作用经 `LinearOperator` 抽象注入（dimension/apply）：生产适配器复用 `ops->hPsi(hpsi_info)`（hsolver_pw.cpp:268-274 模式，C7 接线），单测注入解析算子。
+- 无状态 `solve(aop, occ_kq, b, max_iter, conv_thr, dpsi, residual)`：投影 CG（初始 x=0、r=P_c b，每步搜索方向重投影，收敛判据 `||P_c r||/||P_c b||`）；`apply_pv` 双扫 MGS 投影（alias-safe）；方程 `(H(k+q)−ε_n)P_c|dψ_n⟩=−P_c dV|ψ_n⟩`。
+- 测试：对角算子闭式解 + 稠密 Hermitian（U D U† 谱展开参考，eps 落占据带内验证投影）+ 正交性保持 + 退化 RHS。提交。
 
 **C3 — DFPT_Rho 密度响应**
 - `compute_drho`：一阶密度交叉核 `Re(ψ*·dψ)` + USPP `d(⟨β|ψ⟩⟨ψ|β⟩)`（照 `elecstate_op.h` 模式新写）。
@@ -124,7 +124,12 @@
     - 测试捕获并修复 3 处约定/实现错误：① 相位幅角 `tpiba·(w·τ)` → `TWO_PI·(w·τ)`（GS `stru_fac` 的 e^{i2π(g·τ)} 约定，tau 为 lat0 单位）；② 实空间布局 `ir=(ix·ny+iy)·nz+iz`（z 最快，冲击响应探针钉死；build_efield 原假设反向）；③ rho/wfc 棒表枚举不同 G 球 → isz 编码不可互换，`real_space_dv` 改经 FFT 胞 (ix,iy,iz) 三元组反查
     - 已知边界（C7 处理）：单 k 基时 k+q 球需 wfc G 列表含 `sqrt(gk_ecut)+|k+q|` 半径（k 网格覆盖或 inflate）；并行 pool 实空间布局
     - 8 目标回归全过（CELL 4 + DFPT 4）；`abacus_pw_para` 链接通过
-- [ ] C2 DFPT_Stern
+- [x] C2 DFPT_Stern
+    - 无状态投影 CG：`DFPT_Stern::solve`（x=0 起步，α=|r|²/(pᵀAp)、β=|r_new|²/|r_old|²，搜索方向每步 `P_c` 重投影；pAp≤0 时残差方向重启）；`apply_pv` 双扫 MGS（alias-safe）；收敛 `||P_c r||/||P_c b||`；末步解 hygiene 投影
+    - `LinearOperator` 注入（dimension/apply）：生产 hPsi 适配器留 C7；金属/dmu 分支留 C4
+    - 边界行为：b 全在占据子空间 / b=0 / 维数不匹配 → dpsi=0、residual=0、返回 0 次迭代
+    - 测试 5 项全过（MPI 侧 `MODULE_DFPT_stern_test`）：对角算子 vs 闭式补空间解、稠密 Hermitian（Givens+相位酉 U，eps=1.7 落占据带内）vs 谱展开参考、解对随机占据集正交性 <1e-9、占据子空间退化 RHS、零 RHS
+    - 9 目标回归全过（CELL 4 + DFPT 5）；`abacus_pw_para` 链接通过；治理仅既有两类豁免 WARNING（头文件值类型 include、设计期模块 docs-sync）
 - [ ] C3 DFPT_Rho
 - [ ] C4 DFPT_Metal（仅接口）
 - [ ] C5 DFPT_Phon

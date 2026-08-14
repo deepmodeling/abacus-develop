@@ -22,6 +22,13 @@ AddTest(
 )
 
 AddTest(
+  TARGET MODULE_DFPT_stern_test
+  LIBS parameter base device symmetry
+  SOURCES dfpt_stern_test.cpp
+  	../dfpt_stern.cpp
+)
+
+AddTest(
   TARGET MODULE_DFPT_pw_run_test
   LIBS parameter base device symmetry planewave
   SOURCES dfpt_pw_run_test.cpp
