@@ -436,6 +436,11 @@ void Get_pchg_lcao::idmatrix(const int& ib,
                                               this->psi_k->get_nbasis(),
                                               true);
         wg_wfc.set_all_psi(this->psi_k->get_pointer(), wg_wfc.size());
+        std::complex<double>* wg_wfc_ptr = wg_wfc.get_pointer();
+        for (int i = 0; i < wg_wfc.size(); ++i)
+        {
+            wg_wfc_ptr[i] = std::conj(wg_wfc_ptr[i]);
+        }
 
         for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
         {
