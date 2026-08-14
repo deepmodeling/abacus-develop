@@ -3,6 +3,7 @@ set(MODULE_NAME module_dfpt)
 set(SOURCES
     dfpt_pw.cpp
     dfpt_pw_data.cpp
+    dfpt_irrep_data.cpp
     dfpt_pert.cpp
     dfpt_stern.cpp
     dfpt_rho.cpp
@@ -14,6 +15,7 @@ set(SOURCES
 set(HEADERS
     dfpt_pw.h
     dfpt_pw_data.h
+    dfpt_irrep_data.h
     dfpt_pert.h
     dfpt_stern.h
     dfpt_rho.h
@@ -37,3 +39,9 @@ target_link_libraries(${MODULE_NAME}
         elecstate
         module_pwdft
 )
+
+if (BUILD_TESTING)
+    if(ENABLE_MPI)
+        add_subdirectory(test)
+    endif()
+endif()

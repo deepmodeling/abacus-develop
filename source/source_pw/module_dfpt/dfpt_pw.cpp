@@ -8,6 +8,7 @@
 
 #include "dfpt_pw.h"
 #include "dfpt_pw_data.h"
+#include "dfpt_irrep_data.h"
 #include "dfpt_pert.h"
 #include "dfpt_stern.h"
 #include "dfpt_rho.h"
@@ -66,22 +67,14 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
     int nspin = 1;
     int nat = ucell.nat;
     
+    pimpl_->phon_.init(ucell);
     pimpl_->data_.init(&pimpl_->qlist_, nk, nbands, npw_max, nrxx, nspin, nat);
 }
 
 void DFPT_PW::run() {
     int nq = pimpl_->qlist_.get_nq();
+    DFPT_IrrepData irrep_data(pimpl_->data_);
     for (int q_idx = 0; q_idx < nq; ++q_idx) {
-        // TODO: Implement self-consistent loop for each q-point
-        // According to the standard DFPT workflow, the SCF loop should include:
-        // 1. Compute the perturbation of the screening potential
-        //    - pimpl_->pert_.compute_screening_potential(q_idx, pimpl_->data_)
-        // 2. Solve the Sternheimer equation
-        //    - pimpl_->stern_.solve(q_idx, pimpl_->data_)
-        // 3. Calculate the first-order density
-        //    - pimpl_->rho_.compute_first_order(q_idx, pimpl_->data_)
-        // 4. Check convergence and iterate until self-consistency is achieved
-        
         // Special handling for q=0 (uniform electric field responses):
         // The standard position operator r is ill-defined in periodic systems.
         // Developers should NOT pass a conventional position matrix. Instead,
@@ -90,7 +83,32 @@ void DFPT_PW::run() {
         if (q_idx == 0) {
             pimpl_->q0_.compute_q0_response(pimpl_->data_);
         }
-        
+
+        // Per-irrep self-consistent loop: solve only the representative modes
+        // of each little-group irrep. The irrep decomposition is exposed
+        // through DFPT_IrrepData (option-2 signatures simulated by the interim
+        // wrapper); the screening-potential perturbation, the Sternheimer
+        // solver and the first-order density update are wired in subsequent
+        // iterations.
+        const int nirr = irrep_data.get_nirr(q_idx);
+        for (int irrep = 0; irrep < nirr; ++irrep) {
+            irrep_data.set_converged(q_idx, irrep, false);
+            irrep_data.set_current_iter(q_idx, irrep, 0);
+            while (!irrep_data.get_converged(q_idx, irrep)
+                   && irrep_data.get_current_iter(q_idx, irrep) < pimpl_->max_iter_) {
+                // 1. Compute the perturbation of the screening potential
+                //    pimpl_->pert_.build_dv(q_idx, irrep, pimpl_->data_)
+                // 2. Solve the Sternheimer equation for the representative
+                //    modes of this irrep
+                //    pimpl_->stern_.solve(q_idx, irrep, pimpl_->data_)
+                // 3. Calculate the first-order density
+                //    pimpl_->rho_.compute_drho(q_idx, irrep, pimpl_->data_)
+                // 4. Check convergence and iterate until self-consistency
+                irrep_data.add_residual(q_idx, irrep, 0.0);
+                irrep_data.set_converged(q_idx, irrep, true);
+            }
+        }
+
         pimpl_->phon_.assemble(q_idx, pimpl_->data_);
         pimpl_->phon_.diagonalize(q_idx, pimpl_->data_);
     }
