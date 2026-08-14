@@ -116,7 +116,14 @@
     - `DFPT_KQ_Basis`：复用 GS 复杂 k 基的共享 G 网格，仅做 k+q 平移中心再过滤（`|G+k+q|^2<=gk_ecut`），无需新建 FFT 网格/重分发；前置条件 gamma_only=false + 网格截断覆盖 k+q 球（`gridecut_lat >= (sqrt(gk_ecut)+max|k|+max|q|)^2`，ecutrho>=4*ecutwfc 满足）
     - `get_npwk/get_ig/get_ig2isz/get_gcar/get_gpluskq/get_gk2/get_kplusq` 访问器；gamma_only 守卫 WARNING_QUIT
     - 测试 5 项全过（Γ q=0 全等复现、偏心非对称球、k+q 平移不变性、非零 q 与全网格穷举对照、null/gamma_only 拒绝）；7 目标回归
-- [ ] C1 DFPT_Pert
+- [x] C1 DFPT_Pert
+    - `dVloc_dtau`：rho 网格系数 `i·tpiba·(Δ+q)_dir·Vloc(|Δ+q|)·e^{i2π(Δ+q)·τ}`（Δ+q=0 分量剔除）；`vloc_at_g` Coulomb 解析式（复刻 `vl_pw::vloc_coulomb`）+ numeric 径向 FT（复刻 `vloc_of_g` 含 erf 补偿）
+    - `dVnl_dtau`：NC 分离算符两项恒等式 `i·tpiba·(k+q+G'')_dir·(Vnl|ψ⟩ − Vnl[i·tpiba·(k+G')_dir|ψ⟩`；`build_vkb`（(−i)^l·Y_lm·(4π/√Ω)∫β j_l r dr·e^{i2π·gk·τ}，GS 约定对齐）+ `radial_vq`（Simpson）+ `real_ylm`（l≤2）；USPP/SOC WARNING_QUIT 守卫
+    - `build_dv`→`set_dv_recip_c`→recip2real→`set_dv_rc`；`apply_dv`（纯循环卷积，q 相位已并入系数）+ `build_efield`（−E·r）+ `build_dv_u`（u_active 守卫，C7 激活）
+    - 串行测试目录 `test_serial/`（`__MPI` 整体关闭 + `dfpt_planewave_serial` OBJECT 库，ABI 一致）8 项全过：rho_gvec≡gcar、dVloc 有限差分（含 q≠0/双方向）、apply_dv 卷积 vs 解析矩阵元、efield 斜坡闭式 FT、build_vkb 独立 Simpson+τ 纯相位、dVnl 两项恒等式 vs 算符有限差分、USPP 拒绝、with_u/u_active 安全退化
+    - 测试捕获并修复 3 处约定/实现错误：① 相位幅角 `tpiba·(w·τ)` → `TWO_PI·(w·τ)`（GS `stru_fac` 的 e^{i2π(g·τ)} 约定，tau 为 lat0 单位）；② 实空间布局 `ir=(ix·ny+iy)·nz+iz`（z 最快，冲击响应探针钉死；build_efield 原假设反向）；③ rho/wfc 棒表枚举不同 G 球 → isz 编码不可互换，`real_space_dv` 改经 FFT 胞 (ix,iy,iz) 三元组反查
+    - 已知边界（C7 处理）：单 k 基时 k+q 球需 wfc G 列表含 `sqrt(gk_ecut)+|k+q|` 半径（k 网格覆盖或 inflate）；并行 pool 实空间布局
+    - 8 目标回归全过（CELL 4 + DFPT 4）；`abacus_pw_para` 链接通过
 - [ ] C2 DFPT_Stern
 - [ ] C3 DFPT_Rho
 - [ ] C4 DFPT_Metal（仅接口）

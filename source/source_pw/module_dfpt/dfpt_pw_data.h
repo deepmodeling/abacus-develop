@@ -48,6 +48,18 @@ public:
     void set_dv_r(int q_idx, int spin, const std::vector<double>& v);
     std::vector<double> get_dv_r(int q_idx, int spin) const;
     
+    /// First-order perturbation potential dV stored as complex plane-wave
+    /// coefficients (indexed by the rho-grid ig) and as the corresponding
+    /// complex real-space array on the shared FFT grid (C1).
+    /// The reciprocal coefficients already carry the -i(Delta+q) prefactor
+    /// and the atomic phase exp(i(Delta+q).tau); the real-space array is
+    /// their inverse Fourier transform, so that dV.psi is a plain cyclic
+    /// convolution on the shared grid (apply_dv needs no extra q-phase).
+    void set_dv_recip_c(int q_idx, int spin, const std::vector<std::complex<double>>& v);
+    std::vector<std::complex<double>> get_dv_recip_c(int q_idx, int spin) const;
+    void set_dv_rc(int q_idx, int spin, const std::vector<std::complex<double>>& v);
+    std::vector<std::complex<double>> get_dv_rc(int q_idx, int spin) const;
+    
     void set_dynmat(int q_idx, const ModuleBase::matrix& dm);
     ModuleBase::matrix get_dynmat(int q_idx) const;
     void set_phon_freq(int q_idx, const std::vector<double>& freq);
@@ -62,6 +74,16 @@ public:
     bool get_compute_q0() const { return compute_q0_; }
     void set_loto(bool flag) { loto_ = flag; }
     bool get_loto() const { return loto_; }
+
+    /// The perturbation currently being solved: displacement of which linear
+    /// atom index (over all atoms) and along which cartesian direction.
+    /// Set by DFPT_Pert::build_dv and consumed by DFPT_Pert::apply_dv so the
+    /// Stern solver can keep applying the same perturbation per irrep without
+    /// re-passing (atom,dir) on every matrix-vector product.
+    void set_pert_atom(int atom_idx) { pert_atom_ = atom_idx; }
+    int get_pert_atom() const { return pert_atom_; }
+    void set_pert_dir(int dir) { pert_dir_ = dir; }
+    int get_pert_dir() const { return pert_dir_; }
     
     void set_is_metal(bool flag) { is_metal_ = flag; }
     bool get_is_metal() const { return is_metal_; }
@@ -107,18 +129,25 @@ private:
     int nspin_ = 1;
     int nat_ = 0;
     
-    std::vector<psi::Psi<std::complex<double>>> dpsi_;
+    /// first-order wavefunction response, indexed [q][k][band]; each entry is
+    /// the dpsi on the k+q basis for that band (a vector of complex coefficients).
+    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> dpsi_;
     
     std::vector<std::vector<std::vector<double>>> drho_r_;
     std::vector<std::vector<std::vector<std::complex<double>>>> drho_g_;
     
     std::vector<std::vector<std::vector<double>>> dv_r_;
     
+    std::vector<std::vector<std::vector<std::complex<double>>>> dv_recip_c_;
+    std::vector<std::vector<std::vector<std::complex<double>>>> dv_rc_;
+    
     std::vector<ModuleBase::matrix> dynmat_;
     std::vector<std::vector<double>> phon_freq_;
     
     bool compute_q0_ = false;
     bool loto_ = false;
+    int pert_atom_ = -1;
+    int pert_dir_ = -1;
     ModuleBase::matrix dielectric_;
     std::vector<ModuleBase::matrix> born_;
     

@@ -45,5 +45,8 @@ target_link_libraries(${MODULE_NAME}
 if (BUILD_TESTING)
     if(ENABLE_MPI)
         add_subdirectory(test)
+        # serial (__MPI-off) tests for the FFT-driving kernels; must be built
+        # inside ENABLE_MPI so the shared prebuilt test libs stay available
+        add_subdirectory(test_serial)
     endif()
 endif()
