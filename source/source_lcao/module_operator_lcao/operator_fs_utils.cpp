@@ -18,7 +18,10 @@ void finalize_force_stress(
 #ifdef __MPI
         Parallel_Reduce::reduce_all(force.c, force.nr * force.nc);
 #endif
-        // Apply factor of 2 for Hermitian matrix
+        // force_factor is 1.0 because the force loop iterates the full R set
+        // ((iat1,iat2,R) and (iat2,iat1,-R) are each visited once, see
+        // cal_force_stress_2center in operator_fs_utils.hpp). A half-set
+        // iteration would require force_factor = 2.
         for (int i = 0; i < force.nr * force.nc; i++)
         {
             force.c[i] *= force_factor;

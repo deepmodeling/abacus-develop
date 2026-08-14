@@ -9,6 +9,28 @@
 
 namespace elecstate
 {
+// ---------------------------------------------------------------------------
+// Density-matrix conventions (DMK/DMR), frozen by the DM/DMK/DMR chain.
+// See docs/dm_dmk_dmr_investigation.md and
+// docs/nao_lcao_force_stress_derivation.md for the full derivation.
+//
+// 1. DMK(μ,ν;k) = Σ_n f_nk C*_{μn}(k) C_{νn}(k) = (C f C†)^T = D_std^T.
+//    μ = row (bra) orbital, ν = column (ket) orbital. Stored as the transpose
+//    of the textbook D_std (cal_dm_psi.cpp); for Hermitian D this equals the
+//    conjugate. Consumers that read DMK elements explicitly by (μ,ν) must
+//    follow this convention.
+// 2. D(R) = Σ_k e^{-ikR} DMK(k), k·R in direct coordinates with 2π.
+//    k-point weights w_k are embedded in DMK (wg = w_k*occ), so cal_DMR must
+//    NOT multiply by 1/Nk again. The forward pair used by operators is
+//    O(k) = Σ_R e^{+ikR} O(R) (folding_HR).
+// 3. Closed-trace protection: a contraction Σ_{μνR} D(μ,ν;R)·O(μ,ν;R) equals
+//    Σ_k w_k·Re Tr(DMK(k)·O(k)) iff
+//    (a) the contraction is a closed Frobenius trace over all orbitals,
+//    (b) the paired operator is Hermitian per k (the HContainer stores
+//        (iat1,iat2,R) and (iat2,iat1,-R) with O(-R) = O(R)†),
+//    (c) only the real part is kept.
+// ---------------------------------------------------------------------------
+
 /**
  * @brief DensityMatrix Class
  * <TK,TR> = <double,double> for Gamma-only calculation
