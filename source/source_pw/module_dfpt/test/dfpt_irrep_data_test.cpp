@@ -230,9 +230,9 @@ TEST_F(DFPT_IrrepDataTest, SetterRoundTripViaWrapper)
 
     ModuleDFPT::DFPT_IrrepData irrep_data(data);
 
-    // dpsi / drho / dv are still design-phase no-op storage stubs: the
+    // dpsi / drho / dv storage went live with C1 (dv) and C3 (drho): the
     // wrapper must forward the irrep-indexed calls to the per-q storage
-    // slot without crashing, and reads must reflect the stub (empty)
+    // slot and reads must return what was written
     std::vector<std::complex<double>> psi(3, std::complex<double>(1.0, 2.0));
     irrep_data.set_dpsi(0, 0, 0, 0, psi);
     std::vector<double> rho(2, 3.0);
@@ -240,12 +240,10 @@ TEST_F(DFPT_IrrepDataTest, SetterRoundTripViaWrapper)
     irrep_data.set_drho_g(0, 0, 0, std::vector<std::complex<double>>(2, std::complex<double>(1.0, 0.0)));
     irrep_data.set_dv_r(0, 0, 0, rho);
 
-    // the wrapper reads the same slot the setter wrote through; slots that
-    // are now backed by real storage return non-empty, while design-phase
-    // stubs still return empty.
+    // the wrapper reads the same slot the setter wrote through
     EXPECT_FALSE(irrep_data.get_dpsi(0, 0, 0, 0).empty());
-    EXPECT_TRUE(irrep_data.get_drho_r(0, 0, 0).empty());
-    EXPECT_TRUE(irrep_data.get_drho_g(0, 0, 0).empty());
+    EXPECT_FALSE(irrep_data.get_drho_r(0, 0, 0).empty());
+    EXPECT_FALSE(irrep_data.get_drho_g(0, 0, 0).empty());
     EXPECT_FALSE(irrep_data.get_dv_r(0, 0, 0).empty());
 
     clear_qlist();

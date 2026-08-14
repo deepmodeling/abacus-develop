@@ -56,10 +56,10 @@
 - 测试：对角算子闭式解 + 稠密 Hermitian（U D U† 谱展开参考，eps 落占据带内验证投影）+ 正交性保持 + 退化 RHS。提交。
 
 **C3 — DFPT_Rho 密度响应**
-- `compute_drho`：一阶密度交叉核 `Re(ψ*·dψ)` + USPP `d(⟨β|ψ⟩⟨ψ|β⟩)`（照 `elecstate_op.h` 模式新写）。
-- `mix_drho` 直接复用 `Plain_Mixing::plain_mix`（`source_base/module_mixing/plain_mixing.h:90-105`），不套 `Charge::rho`。
-- **U0 实装点**：`cal_docc` 真实交叉项（dψ 就绪后）。
-- 测试：密度求和规则/对称性。提交。
+- `compute_drho`：交叉核 `A(r)=Σ_{kn occ} wg·u*·du`（K/rho 两条 FFT 路径同网格点乘，均无 k 相位 → Bloch 相位合并为单个 e^{iq·r}）；`drho_g` 为 rho 网格 q 移位系数 `A_Δ=Σ wg Σ_G c*_G d_{G+Δ}`；Δ=−q 落在倒格矢时投影为零（电荷守恒，q=Γ 必触发）；`drho_r=2Re[e^{iqr}A]` 由投影后系数重建。USPP 增广项与 nspin>1 留 WARNING_QUIT 守卫（设计期）。
+- `mix_drho` 直接复用 `Base_Mixing::Plain_Mixing::plain_mix`（q 移位复空间混合 + 残差 `||out−in||/||out||`，首步 in=0），不套 `Charge::rho`/`Charge_Mixing`（头依赖由 charge_mixing.h 降为前向声明 + matrix3.h 值成员）。
+- **U0 实装点**：`cal_docc` 交叉项需 k/k+q 双端 β 投影子（PW 侧 vkb 适配器），与 Plus_U 生产接线同落 C7/U1 窗口；纯 PW 路径 `u_active()` 恒 false，安全退化保持。
+- 测试：G 空间暴力双和对照 + 实空间直接求和对照 + Γ 电荷守恒（ig0 置零 + 网格和≈0）+ 混合两步组合与残差公式。提交。
 
 **C4 — DFPT_Metal（仅接口）**
 - 本期不实现：`compute_drho`/occupation 响应留接口与设计说明（`is_metal_`/`dmu_` 数据已备）。
@@ -131,6 +131,13 @@
     - 测试 5 项全过（MPI 侧 `MODULE_DFPT_stern_test`）：对角算子 vs 闭式补空间解、稠密 Hermitian（Givens+相位酉 U，eps=1.7 落占据带内）vs 谱展开参考、解对随机占据集正交性 <1e-9、占据子空间退化 RHS、零 RHS
     - 9 目标回归全过（CELL 4 + DFPT 5）；`abacus_pw_para` 链接通过；治理仅既有两类豁免 WARNING（头文件值类型 include、设计期模块 docs-sync）
 - [ ] C3 DFPT_Rho
+- [x] C3 DFPT_Rho
+    - `compute_drho`：每 (q,k) 经 `DFPT_KQ_Basis` 重建 k+q 基，dpsi 系数经 (ix,iy,iz) 反查散布到 rho 网格（C1 模式）；`u`=K 基 recip2real、`du`=rho 网格 recip2real，同网格共轭积累加 `A(r)`；real2recip → `drho_g`（q 移位系数）；Δ=−q（Miller 逆解 + 舍入判定）投影零；`drho_r` 从投影后系数重建（双存储一致）；占据门 `wg<1e-8` 跳过
+    - `mix_drho`：`Plain_Mixing::plain_mix` 复空间混合（首步 in=0 → mixed=β·out，残差=1），混合后重建 `drho_r`；`init` 增加 `recip_matrix`（G 矩阵，q_frac→cart），非 plain 混合 WARNING_QUIT；nspin≠1 WARNING_QUIT（自旋- k 排序未钉死，C7 定）
+    - 数据层 `set/get_drho_r/g` 由桩转正式存储；irrep 包装测试同步翻转（round-trip 非空）
+    - 测试捕获并修复测试侧 2 处参考错误（生产代码无 bug）：① `PW_Basis_K::gcar` 是逐 k 数组（`ik*npwk_max+igl`，pw_basis_k.cpp:261-286），按基球 ig 读是错的——参考列表改按 igl 直读；② 直接求和参考混用 cart G 与 frac r（相位差 lat0 倍）——改 `r_cart=frac·latvec` 后 `g·r_cart`
+    - 串行测试 5 项全过（`MODULE_DFPT_rho_serial`）：G 空间 vs 暴力双和（<1e-10）、实空间 vs 直接求和（5 采样点 <1e-9）、Γ 电荷守恒（ig0 置零 + Σdrho_r/|max|/N <1e-12）、混合首步=β·out 且残差=1、第二步组合公式 + 残差
+    - 10 目标回归全过（CELL 4 + DFPT 6）；`abacus_pw_para` 链接通过；治理仅既有豁免 WARNING（头文件净减 charge_mixing.h）
 - [ ] C4 DFPT_Metal（仅接口）
 - [ ] C5 DFPT_Phon
 - [ ] C6 DFPT_Q0

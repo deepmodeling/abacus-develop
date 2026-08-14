@@ -111,26 +111,44 @@ psi::Psi<std::complex<double>>& DFPT_PW_Data::get_dpsi_obj(int q_idx) {
 }
 
 void DFPT_PW_Data::set_drho_r(int q_idx, int spin, const std::vector<double>& rho) {
-    (void)q_idx;
-    (void)spin;
-    (void)rho;
+    if (q_idx < 0 || spin < 0) { return; }
+    if (q_idx >= static_cast<int>(drho_r_.size())) {
+        drho_r_.resize(q_idx + 1);
+    }
+    if (spin >= static_cast<int>(drho_r_[q_idx].size())) {
+        drho_r_[q_idx].resize(spin + 1);
+    }
+    drho_r_[q_idx][spin] = rho;
 }
 
 std::vector<double> DFPT_PW_Data::get_drho_r(int q_idx, int spin) const {
-    (void)q_idx;
-    (void)spin;
+    if (q_idx >= 0 && spin >= 0 &&
+        q_idx < static_cast<int>(drho_r_.size()) &&
+        spin < static_cast<int>(drho_r_[q_idx].size()))
+    {
+        return drho_r_[q_idx][spin];
+    }
     return std::vector<double>();
 }
 
 void DFPT_PW_Data::set_drho_g(int q_idx, int spin, const std::vector<std::complex<double>>& rho) {
-    (void)q_idx;
-    (void)spin;
-    (void)rho;
+    if (q_idx < 0 || spin < 0) { return; }
+    if (q_idx >= static_cast<int>(drho_g_.size())) {
+        drho_g_.resize(q_idx + 1);
+    }
+    if (spin >= static_cast<int>(drho_g_[q_idx].size())) {
+        drho_g_[q_idx].resize(spin + 1);
+    }
+    drho_g_[q_idx][spin] = rho;
 }
 
 std::vector<std::complex<double>> DFPT_PW_Data::get_drho_g(int q_idx, int spin) const {
-    (void)q_idx;
-    (void)spin;
+    if (q_idx >= 0 && spin >= 0 &&
+        q_idx < static_cast<int>(drho_g_.size()) &&
+        spin < static_cast<int>(drho_g_[q_idx].size()))
+    {
+        return drho_g_[q_idx][spin];
+    }
     return std::vector<std::complex<double>>();
 }
 
