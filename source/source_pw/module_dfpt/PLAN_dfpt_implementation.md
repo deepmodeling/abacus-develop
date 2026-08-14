@@ -1,0 +1,120 @@
+# ABACUS DFPT 完整实施计划
+
+> 本文件记录 DFPT（密度泛函微扰理论）落地计划。执行状态见末尾"进度"章节。
+
+## 总原则
+
+- 顺序：**U0（DFT+U 预留）→ C 物理主体（C0–C7）→ B 数据层收编 → A irrep 分解**。C4（Metal）仅留接口。
+- 每个子任务交付 = **代码 + 单元测试 + 物理对照**；阶段结束先 git 提交再继续。
+- 生产代码零新增 `GlobalV`/`PARAM` 依赖（module_dfpt 不读 PARAM，决策由 esolver 接线层做）；C++11、LF、新文件进 CMakeLists。
+- 验证体系：金刚石 `stru_lib[0]`（O_h，a=1，1 个 C 原子，Γ 网格）为主；沙箱 OpenMPI 不作为回归基准。
+- 构建：`cmake --build build --target <target> -j8`；ctest 回归过滤：`"MODULE_CELL_klist_test$|MODULE_CELL_reciprocal_grid_test|MODULE_CELL_qlist_test|MODULE_CELL_little_group_test|MODULE_DFPT"`。
+- 治理：`python3 tools/03_code_analysis/agent_governance_check.py --base upstream/develop --head HEAD --format text`。
+
+---
+
+## U0 — DFT+U 接口预留（数据+管线+桩+测试）
+
+前提（已核实）：PW DFT+U 存在且已接线（`esolver_ks_pw.cpp:203` iter_init_dftu_pw、`hamilt_pw.cpp:126` OnsiteProj 入链、`setup_pot.cpp:75` OnsiteProjector 初始化），**但依赖 LCAO 轨道文件**（纯 PW 无文件则 locale 未初始化、实际跑不了）。设计据此自洽 on/off。
+
+1. **`dfpt_pw_data.h/.cpp`**：
+   - 头内前向声明 `class Plus_U;`（保头文件依赖最小）。
+   - `init(..., int nat, const Plus_U* dftu)` 末位加参数；新增 `with_u()`（= 指针非空）、`u_active()`（= 非空 **且 `dftu_->is_locale_initialized()`**，覆盖无轨道文件退化）、`get_dftu()`、`set_docc/get_docc`（每 q complex 向量，惰性分配）。
+   - 更新调用点：`dfpt_pw.cpp:71`、`dfpt_irrep_data_test.cpp:172`。
+2. **`dfpt_pw.h/.cpp`**：`init(ucell, psi, nelec, ecutwfc, const Plus_U* dftu)`；头内前向声明、Impl 存指针；新增 `get_with_u()/get_u_active()`；更新测试调用点（传 nullptr）+ README 示例 + esolver 注释行。
+3. **`dfpt_rho.h/.cpp`**：新增 `cal_docc(psi, wg, q_idx, data)` 桩（`if(!data.with_u()) return;`，注明 C3 实装点）。
+4. **`dfpt_pert.h/.cpp`**：`build_dv` 末尾 `if(data.with_u()) build_dv_u(...)`；私有桩 `build_dv_u` 空实现（注明 C1 实装 frozen 项）。
+5. **`dfpt_phon.h/.cpp`**：新增 `dftu_onsite(q_idx, data)` 桩，`assemble` 中 when with_u 调用（C5 实装）。
+6. **`dfpt_q0.h/.cpp`**：仅加非局域 `[r,V_U]` commutator 预留注释（C6 延后）。
+7. **测试**：`dfpt_irrep_data_test` 更新 init + docc roundtrip + with_u=false 安全路径；`dfpt_pw_run_test` SOURCES 加 `../../../source_lcao/module_dftu/dftu.cpp`，新增 `Plus_U dftu;` 传非空 → `u_active()` 为 false（locale 未初始化）、`run()` 不崩、桩 safe（覆盖"无轨道文件"退化路径）。
+8. 验证：构建 2 测试目标 + 6 目标回归 + 治理。提交。
+
+**DFT+U 物理特殊处理清单（后续实装点）**：
+- 一阶占据矩阵 docc：交叉项 `becp(k+q,dψ)·becp(k,ψ)`（C3，依赖 dψ）+ 冻结项 `becp(k,ψ)·dbecp_f(k,ψ)`（GS k，复用 `cal_dbecp_f`）。
+- 一阶 U 势 dV_U（C1 frozen 实装）：占据响应 `|φ(k+q)⟩U(diag·δ−docc)⟨φ(k)|ψ⟩`（需 SCF 自洽）+ 冻结 `|∂φ(k+q)/∂τ⟩V_eff⟨φ(k)|ψ⟩` 等（`Onsite_Proj_tools` 用 DFPT 的 k+q 基初始化即复用，相因子自动正确）。
+- Stern 的 H(k+q) 含零级 V_U：复用含 OnsiteProj 的 ops 链即自动覆盖。
+- 动力学矩阵 U 项（C5 `dftu_onsite`）、Q0 非局域项（C6）。
+- 治理：DFPT 内层 SCF 绝不调 `cal_occ_pw`（防覆盖 GS locale）；零级 V_U 经 `get_eff_pot_pw_spin` 只读借用。
+
+---
+
+## C 阶段物理主体
+
+**C0 — k+q 平面波基枚举**
+- k+q 基枚举 helper：复用 `pw_basis_k.h` 的 `npwk/ig2ixyz_k/getgpluskcar`；生成每 (ik,q) 的 k+q 波矢 G 列表。
+- 单元测试（核对 G 集合与 Gamma 平移关系）。构建+测试后提交。
+
+**C1 — DFPT_Pert 扰动构建**
+- `dVloc_dtau`/`dVnl_dtau` 真实实现（q 相因子、USPP 投影子导数）。
+- `build_dv(q_idx, atom_idx, dir, data)` 组装 dV；`apply_dv`；`build_efield`。
+- **U0 实装点**：`build_dv_u` frozen 项（OnsiteProjector 已初始化时启用）。
+- 测试：dV 数值核对。提交。
+
+**C2 — DFPT_Stern Sternheimer 求解**
+- `apply_op` 复用 `ops->hPsi(hpsi_info)`（hsolver_pw.cpp:268-274 模式）。
+- 新写 `cg_solve`（现有 `DiagoCG` 是本征 CG，不可复用）；方程 `(H(k+q)−ε)|dψ⟩=−P_c dV|ψ⟩`。
+- 测试：一维谐振子/金刚石解析对照。提交。
+
+**C3 — DFPT_Rho 密度响应**
+- `compute_drho`：一阶密度交叉核 `Re(ψ*·dψ)` + USPP `d(⟨β|ψ⟩⟨ψ|β⟩)`（照 `elecstate_op.h` 模式新写）。
+- `mix_drho` 直接复用 `Plain_Mixing::plain_mix`（`source_base/module_mixing/plain_mixing.h:90-105`），不套 `Charge::rho`。
+- **U0 实装点**：`cal_docc` 真实交叉项（dψ 就绪后）。
+- 测试：密度求和规则/对称性。提交。
+
+**C4 — DFPT_Metal（仅接口）**
+- 本期不实现：`compute_drho`/occupation 响应留接口与设计说明（`is_metal_`/`dmu_` 数据已备）。
+
+**C5 — DFPT_Phon 动力学矩阵**
+- `assemble`：`ion_ion(q,dynmat)`（已真）+ `electron(q_idx,data,dynmat)`（已真，Ewald 复用 `force_pw.cpp:479 cal_force_ew` + `H_Ewald_pw::rgen`；相因子经 `symm.gtrans[48]`+`kgmatrix[48]`）。
+- **U0 实装点**：`dftu_onsite`/`dftu_lambda` 电子项。
+- `diagonalize` 换真实现（替换 `freq[i]=i` 伪值）；`add_loto`/`check_sum_rule` 实装或明示桩。
+- 测试：金刚石 Γ 声子频率对照。提交。
+
+**C6 — DFPT_Q0 介电/Born/LO-TO**
+- 新增 `v_hartree_q`：`|G+q|²` Poisson 因子、跳过 ig=−q（参考 `h_hartree_pw.cpp:16-97`）。
+- XC 一阶核：库中无 v_xc 一阶 API，用 LIBXC kernel 或有限差兜底。
+- 非局域 `[r,V_U]` commutator 项记录为 U 预留。
+- 测试：金刚石介电张量/Born 电荷对照。提交。
+
+**C7 — run() 接线 + ESolver/INPUT**
+- 修正签名不一致：注释中 `pert_.build_dv(q,irrep,...)` 与真实 `build_dv(int q_idx,int atom_idx,int dir,DFPT_PW_Data&)`；mode basis 为空时逐 irrep 先遍历 3N 方向，irrep 收敛为代表模。
+- `esolver_dfpt_pw.cpp`：解开 `init` 注释，实参 `*this->stp.psi_cpu` + `PARAM.inp.nelec` + `PARAM.inp.ecutwfc`；`dft_plus_u` 为真时传 `&this->dftu`（否则 nullptr）。
+- INPUT 行为若变则同步 `docs/parameters.yaml` + `input-main.md`。
+- 金刚石端到端对照：声子频率 + 介电；`./build/abacus --version` 记录身份。
+- 全量构建 + 回归 + 治理。提交。
+
+---
+
+## B — 数据层收编
+
+- `DFPT_IrrepData` 下沉为 `DFPT_PW_Data` 正式数据层（收敛台账、irrep 元数据并入），迁移现有 dfpt 测试。
+- 提交。
+
+## A — irrep 分解（最后）
+
+- `module_symmetry/little_group.{h,cpp}`：完整不可约表示表 + 投影算子 → 真实 `get_nirr`/`get_mode_basis`（替换占位 =1/空）。
+- 测试：金刚石/闪锌矿 Γ/X/L 点 irrep 分解与理论表核对。提交。
+
+---
+
+## 风险与注意事项
+
+- `Plus_U dftu` 是对象成员，指针永远非空 → `with_u` 由 esolver 在 `dft_plus_u` 时传非空指针决定，语义干净。
+- 无轨道文件 → `u_active()` 为 false 安全退化；测试显式覆盖该路径。
+- `dftu.cpp` 加入测试链接依赖 LCAO=OFF 配置；若 CI 在 LCAO=ON 下编译该测试需补 hamilt 依赖（记录在案）。
+- 沙箱 OpenMPI 警告（`opal_ifinit`）为环境产物，不作为失败判据。
+
+## 进度
+
+- [x] 计划定稿（U0/C/B/A 序列、DFT+U 依赖轨道文件的 on/off 自洽设计）
+- [ ] U0 DFT+U 接口预留
+- [ ] C0 k+q 平面波基枚举
+- [ ] C1 DFPT_Pert
+- [ ] C2 DFPT_Stern
+- [ ] C3 DFPT_Rho
+- [ ] C4 DFPT_Metal（仅接口）
+- [ ] C5 DFPT_Phon
+- [ ] C6 DFPT_Q0
+- [ ] C7 run() 接线 + ESolver/INPUT + 金刚石对照
+- [ ] B 数据层收编
+- [ ] A irrep 分解

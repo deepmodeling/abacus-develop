@@ -39,6 +39,23 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
     (void)data;
 }
 
+void DFPT_Rho::cal_docc(const psi::Psi<std::complex<double>>& psi, 
+                        const ModuleBase::matrix& wg, int q_idx, 
+                        DFPT_PW_Data& data) {
+    // Reserved first-order occupation matrix (docc) for DFT+U (U0).
+    // The physical implementation lands in C3 once dpsi is available:
+    //   cross term: Re(becp(k+q, dpsi) * becp(k, psi))      (response)
+    //   frozen term: becp(k, psi) * dbecp_f(k, psi)         (GS k, cal_dbecp_f)
+    // accumulated per (q, spin) into data.set_docc().
+    if (!data.with_u()) {
+        return;
+    }
+    (void)psi;
+    (void)wg;
+    (void)q_idx;
+    (void)data;
+}
+
 void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data) {
     (void)q_idx;
     (void)data;

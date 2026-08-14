@@ -34,6 +34,11 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi, DFPT_PW_Da
 }
 
 void DFPT_Q0::compute_q0_response(DFPT_PW_Data& data) {
+    // DFT+U reservation (U0): V_U is nonlocal (onsite projector), so the
+    // position operator does NOT commute with the DFT+U potential. When the
+    // q->0 (dielectric / Born / LO-TO) response is implemented in C6, the
+    // [r, V_U] commutator term must be handled separately in addition to the
+    // occupation-matrix response (docc); this is the hardest DFT+U piece.
     (void)data;
 }
 

@@ -39,6 +39,9 @@ private:
     
     void electron(int q_idx, DFPT_PW_Data& data, ModuleBase::matrix& dyn);
     
+    /// DFT+U contribution to the dynamical matrix (U0 reservation, C5 impl.)
+    void dftu_onsite(int q_idx, DFPT_PW_Data& data);
+    
     void ewald_sum(const ModuleBase::Vector3<double>& q, ModuleBase::matrix& dyn);
 };
 

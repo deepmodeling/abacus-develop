@@ -16,6 +16,8 @@
 #include <vector>
 #include <complex>
 
+class Plus_U;
+
 namespace ModuleDFPT {
 
 class DFPT_PW_Data {
@@ -24,7 +26,7 @@ public:
     ~DFPT_PW_Data();
     
     void init(ModuleCell::QList* qlist, int nk, int nbands, int npw_max, 
-              int nrxx, int nspin, int nat);
+              int nrxx, int nspin, int nat, const Plus_U* dftu);
     
     void clean();
     
@@ -78,6 +80,23 @@ public:
     void add_residual(double r) { residuals_.push_back(r); }
     std::vector<double> get_residuals() const { return residuals_; }
     
+    /// DFT+U interface reservation (U0):
+    /// the DFPT modules never read global input state directly; the esolver
+    /// layer decides whether DFT+U is active and passes a non-null Plus_U*
+    /// only then.
+    /// with_u(): a Plus_U provider is wired (dft_plus_u enabled upstream).
+    /// u_active(): the provider is additionally usable (locale initialized,
+    ///             which requires the LCAO orbital files; a pure-PW run
+    ///             without them must degrade to inactive safely).
+    bool with_u() const { return dftu_ != nullptr; }
+    bool u_active() const;
+    const Plus_U* get_dftu() const { return dftu_; }
+    
+    /// first-order occupation matrix (docc) storage, indexed by q.
+    /// lazy allocation: unset / out-of-range reads return an empty vector.
+    void set_docc(int q_idx, const std::vector<std::complex<double>>& occ);
+    std::vector<std::complex<double>> get_docc(int q_idx) const;
+    
 private:
     ModuleCell::QList* qlist_ = nullptr;
     
@@ -105,6 +124,10 @@ private:
     
     bool is_metal_ = false;
     double dmu_ = 0.0;
+    
+    /// DFT+U reservation state (U0)
+    const Plus_U* dftu_ = nullptr;
+    std::vector<std::vector<std::complex<double>>> docc_;
     
     int max_iter_ = 100;
     double conv_thr_ = 1e-8;

@@ -7,6 +7,7 @@
 // ============================================================
 
 #include "dfpt_pw_data.h"
+#include "source_lcao/module_dftu/dftu.h"
 
 namespace ModuleDFPT {
 
@@ -17,7 +18,7 @@ DFPT_PW_Data::~DFPT_PW_Data() {
 }
 
 void DFPT_PW_Data::init(ModuleCell::QList* qlist, int nk, int nbands, int npw_max, 
-                        int nrxx, int nspin, int nat) {
+                        int nrxx, int nspin, int nat, const Plus_U* dftu) {
     qlist_ = qlist;
     nk_ = nk;
     nbands_ = nbands;
@@ -25,6 +26,7 @@ void DFPT_PW_Data::init(ModuleCell::QList* qlist, int nk, int nbands, int npw_ma
     nrxx_ = nrxx;
     nspin_ = nspin;
     nat_ = nat;
+    dftu_ = dftu;
     
     allocate_memory();
     is_initialized_ = true;
@@ -33,6 +35,29 @@ void DFPT_PW_Data::init(ModuleCell::QList* qlist, int nk, int nbands, int npw_ma
 void DFPT_PW_Data::clean() {
     deallocate_memory();
     is_initialized_ = false;
+}
+
+bool DFPT_PW_Data::u_active() const {
+    // locale initialization requires the LCAO orbital files; a pure-PW run
+    // without them has dftu != nullptr (wired upstream) but is not usable.
+    return with_u() && dftu_->is_locale_initialized();
+}
+
+void DFPT_PW_Data::set_docc(int q_idx, const std::vector<std::complex<double>>& occ) {
+    if (q_idx < 0) {
+        return;
+    }
+    if (q_idx >= static_cast<int>(docc_.size())) {
+        docc_.resize(q_idx + 1);
+    }
+    docc_[q_idx] = occ;
+}
+
+std::vector<std::complex<double>> DFPT_PW_Data::get_docc(int q_idx) const {
+    if (q_idx >= 0 && q_idx < static_cast<int>(docc_.size())) {
+        return docc_[q_idx];
+    }
+    return std::vector<std::complex<double>>();
 }
 
 int DFPT_PW_Data::get_nq() const {
@@ -168,6 +193,7 @@ void DFPT_PW_Data::deallocate_memory() {
     dynmat_.clear();
     phon_freq_.clear();
     born_.clear();
+    docc_.clear();
     residuals_.clear();
 }
 

@@ -37,6 +37,7 @@ public:
     UnitCell* ucell_ = nullptr;
     double nelec_ = 0.0;
     double ecutwfc_ = 0.0;
+    const Plus_U* dftu_ = nullptr;
     
     int nqx_ = 1, nqy_ = 1, nqz_ = 1;
     double conv_thr_ = 1e-8;
@@ -50,11 +51,12 @@ DFPT_PW::~DFPT_PW() {
 }
 
 void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
-                   double nelec, double ecutwfc) {
+                   double nelec, double ecutwfc, const Plus_U* dftu) {
     pimpl_->ucell_ = &ucell;
     pimpl_->gs_psi_ = psi;
     pimpl_->nelec_ = nelec;
     pimpl_->ecutwfc_ = ecutwfc;
+    pimpl_->dftu_ = dftu;
     
     std::vector<int> mp_grid = {pimpl_->nqx_, pimpl_->nqy_, pimpl_->nqz_};
     pimpl_->qlist_.generate_mesh(ucell, ucell.symm, mp_grid, true);
@@ -68,7 +70,15 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
     int nat = ucell.nat;
     
     pimpl_->phon_.init(ucell);
-    pimpl_->data_.init(&pimpl_->qlist_, nk, nbands, npw_max, nrxx, nspin, nat);
+    pimpl_->data_.init(&pimpl_->qlist_, nk, nbands, npw_max, nrxx, nspin, nat, dftu);
+}
+
+bool DFPT_PW::get_with_u() const {
+    return pimpl_->data_.with_u();
+}
+
+bool DFPT_PW::get_u_active() const {
+    return pimpl_->data_.u_active();
 }
 
 void DFPT_PW::run() {

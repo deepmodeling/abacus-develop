@@ -39,6 +39,9 @@ private:
     ModulePW::PW_Basis_K* pw_wfc_ = nullptr;
     Structure_Factor* sf_ = nullptr;
     
+    /// first-order Hubbard potential dV_U (U0 reservation, C1/C3 impl.)
+    void build_dv_u(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data);
+    
     void dVloc_dtau(int atom_idx, int dir, const ModuleBase::Vector3<double>& q, 
                     std::vector<std::complex<double>>& dv);
     

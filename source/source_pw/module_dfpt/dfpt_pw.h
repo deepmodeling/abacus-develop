@@ -14,6 +14,8 @@
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 
+class Plus_U;
+
 namespace ModuleDFPT {
 
 class DFPT_PW {
@@ -22,9 +24,16 @@ public:
     ~DFPT_PW();
     
     void init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi, 
-              double nelec, double ecutwfc);
+              double nelec, double ecutwfc, const Plus_U* dftu);
     
     void run();
+    
+    /// DFT+U reservation accessors (U0): with_u() reports whether a DFT+U
+    /// provider is wired (dft_plus_u enabled upstream); u_active() further
+    /// requires the provider to be usable (locale initialized, i.e. the LCAO
+    /// orbital files are present).
+    bool get_with_u() const;
+    bool get_u_active() const;
     
     std::vector<double> get_phonon_freq(int q_idx) const;
     

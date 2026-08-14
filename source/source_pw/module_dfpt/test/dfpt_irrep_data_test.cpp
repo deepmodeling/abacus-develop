@@ -169,7 +169,7 @@ class DFPT_IrrepDataTest : public testing::Test
         const int cal_symm_repr[2] = {0, 6};
         symm.analy_sys(ucell.lat, ucell.st, ucell.atoms, GlobalV::ofs_running, 1e-6, 1, "scf", cal_symm_repr);
         qlist.generate_mesh(ucell, symm, {2, 2, 2}, true);
-        data.init(&qlist, 1, 2, 3, 0, 1, 1);
+        data.init(&qlist, 1, 2, 3, 0, 1, 1, nullptr);
     }
 
     void clear_qlist()
@@ -277,6 +277,32 @@ TEST_F(DFPT_IrrepDataTest, PerIrrepScfBookkeeping)
     {
         EXPECT_FALSE(irrep_data.get_converged(0, irrep));
     }
+
+    clear_qlist();
+}
+
+TEST_F(DFPT_IrrepDataTest, DftuReservationWithNullProvider)
+{
+    init_qlist();
+
+    // no Plus_U wired -> with_u()/u_active() must both be false and docc
+    // reads must return empty, so the no-DFT+U path is untouched (U0)
+    EXPECT_FALSE(data.with_u());
+    EXPECT_FALSE(data.u_active());
+    EXPECT_EQ(data.get_dftu(), nullptr);
+    EXPECT_TRUE(data.get_docc(0).empty());
+
+    // docc storage is independent of the provider: roundtrip works even
+    // with a null provider, out-of-range reads stay safe (U0)
+    std::vector<std::complex<double>> occ(4, std::complex<double>(0.5, 0.0));
+    data.set_docc(0, occ);
+    data.set_docc(2, occ);
+    ASSERT_EQ(data.get_docc(0).size(), 4);
+    EXPECT_DOUBLE_EQ(data.get_docc(0)[1].real(), 0.5);
+    EXPECT_DOUBLE_EQ(data.get_docc(0)[1].imag(), 0.0);
+    EXPECT_TRUE(data.get_docc(1).empty());
+    EXPECT_TRUE(data.get_docc(-1).empty());
+    EXPECT_TRUE(data.get_docc(7).empty());
 
     clear_qlist();
 }

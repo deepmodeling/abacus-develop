@@ -30,6 +30,11 @@ public:
                       const ModuleBase::matrix& wg, int q_idx, 
                       DFPT_PW_Data& data);
     
+    /// first-order occupation matrix (docc) for DFT+U (U0 reservation).
+    void cal_docc(const psi::Psi<std::complex<double>>& psi, 
+                  const ModuleBase::matrix& wg, int q_idx, 
+                  DFPT_PW_Data& data);
+    
     void mix_drho(int q_idx, DFPT_PW_Data& data);
     
     double get_residual(int q_idx, DFPT_PW_Data& data) const;

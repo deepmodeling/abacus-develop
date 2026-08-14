@@ -26,6 +26,23 @@ void DFPT_Pert::build_dv(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data) {
     (void)q_idx;
     (void)atom_idx;
     (void)dir;
+    // DFT+U perturbation reservation (U0): append the first-order Hubbard
+    // potential dV_U when a DFT+U provider is wired. Physical implementation
+    // lands in C1 (frozen projector term) and C3 (occupation response).
+    if (data.with_u()) {
+        build_dv_u(q_idx, atom_idx, dir, data);
+    }
+}
+
+void DFPT_Pert::build_dv_u(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data) {
+    // Reserved first-order Hubbard potential dV_U (U0).
+    //   occupation-response part: |phi(k+q)> U(diag*delta - docc) <phi(k)|psi>
+    //     (needs docc from DFPT_Rho::cal_docc, SCF self-consistent)
+    //   frozen part (C1): |dphi(k+q)/dtau> V_eff <phi(k)|psi> + adjoint,
+    //     reusing Onsite_Proj_tools initialized on the DFPT k+q basis.
+    (void)q_idx;
+    (void)atom_idx;
+    (void)dir;
     (void)data;
 }
 

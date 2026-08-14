@@ -82,7 +82,9 @@ DFPT_PW
 ```cpp
 // In ESolver
 ModuleDFPT::DFPT_PW dfpt;
-dfpt.init(ucell, psi, nelec, ecutwfc);
+// dftu is a const Plus_U* wired by the esolver layer ONLY when dft_plus_u
+// is enabled; pass nullptr otherwise (DFPT never reads PARAM itself).
+dfpt.init(ucell, psi, nelec, ecutwfc, dftu);
 dfpt.set_qmesh(4, 4, 4);
 dfpt.set_conv_thr(1e-8);
 dfpt.run();

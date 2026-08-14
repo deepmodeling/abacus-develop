@@ -14,6 +14,7 @@
 #include "source_base/parallel_global.h"
 #include "source_base/global_variable.h"
 #include "source_estate/module_charge/charge_mixing.h"
+#include "source_lcao/module_dftu/dftu.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 
 pseudo::pseudo()
@@ -181,7 +182,7 @@ TEST_F(DFPT_PWRunTest, RunsPerIrrepLoopForAllQ)
     dfpt.set_qmesh(2, 2, 2); // reduced to 4 irreducible q in O_h
     dfpt.set_max_iter(10);
     psi::Psi<std::complex<double>> psi;
-    dfpt.init(ucell, psi, 1.0, 15.0);
+    dfpt.init(ucell, psi, 1.0, 15.0, nullptr);
     dfpt.run();
 
     // each of the 4 irreducible q points must expose 3*nat phonon modes
@@ -196,7 +197,7 @@ TEST_F(DFPT_PWRunTest, DielectricAndBornAreExposed)
 {
     dfpt.set_qmesh(1, 1, 1); // Gamma-only q mesh
     psi::Psi<std::complex<double>> psi;
-    dfpt.init(ucell, psi, 1.0, 15.0);
+    dfpt.init(ucell, psi, 1.0, 15.0, nullptr);
     dfpt.run();
 
     // design-phase stubs return default-constructed matrices
@@ -206,4 +207,24 @@ TEST_F(DFPT_PWRunTest, DielectricAndBornAreExposed)
     EXPECT_EQ(eps.nc, 0);
     EXPECT_EQ(born.nr, 0);
     EXPECT_EQ(born.nc, 0);
+}
+
+TEST_F(DFPT_PWRunTest, DftuReservationWithProviderButUninitializedLocale)
+{
+    // DFT+U reservation (U0): a non-null Plus_U is wired (dft_plus_u enabled
+    // upstream) but its locale is NOT initialized here because the LCAO
+    // orbital files are absent. with_u() must be true, u_active() must be
+    // false (safe pure-PW degradation), and run() must complete without
+    // touching any DFT+U kernel (all U hooks are no-op stubs).
+    Plus_U dftu;
+    dfpt.set_qmesh(1, 1, 1);
+    psi::Psi<std::complex<double>> psi;
+    dfpt.init(ucell, psi, 1.0, 15.0, &dftu);
+    EXPECT_TRUE(dfpt.get_with_u());
+    EXPECT_FALSE(dfpt.get_u_active());
+    dfpt.run();
+
+    // still produces the expected number of phonon modes per q
+    const int expected_modes = 3 * ucell.nat;
+    EXPECT_EQ(dfpt.get_phonon_freq(0).size(), expected_modes);
 }

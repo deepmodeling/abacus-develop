@@ -30,4 +30,7 @@ AddTest(
   	../../../source_cell/qlist.cpp
   	../../../source_cell/reciprocal_grid.cpp
   	../../../source_psi/psi.cpp
+  	# Plus_U support shim: lets the test construct a Plus_U without pulling
+  	# the LCAO-side DFT+U link closure (see dftu_test_support.cpp).
+  	dftu_test_support.cpp
 )
