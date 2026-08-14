@@ -348,10 +348,10 @@ __global__ void cal_stress_nl(
             {
                 ps_qq = thrust::complex<FPTYPE>(- ekb_now * qq_nt[it * deeq_3 * deeq_4 + ip1 * deeq_4 + ip2], 0.0);
             }
-            const thrust::complex<FPTYPE> ps0 = deeq_nc[((iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
-            const thrust::complex<FPTYPE> ps1 = deeq_nc[((1 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
-            const thrust::complex<FPTYPE> ps2 = deeq_nc[((2 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2];
-            const thrust::complex<FPTYPE> ps3 = deeq_nc[((3 * deeq_2 + iat + ia) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
+            const thrust::complex<FPTYPE> ps0 = deeq_nc[((iat) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
+            const thrust::complex<FPTYPE> ps1 = deeq_nc[((1 * deeq_2 + iat) * deeq_3 + ip1) * deeq_4 + ip2];
+            const thrust::complex<FPTYPE> ps2 = deeq_nc[((2 * deeq_2 + iat) * deeq_3 + ip1) * deeq_4 + ip2];
+            const thrust::complex<FPTYPE> ps3 = deeq_nc[((3 * deeq_2 + iat) * deeq_3 + ip1) * deeq_4 + ip2] + ps_qq;
             const int inkb1 = sum + ip1;
             const int inkb2 = sum + ip2;
             //out<<"\n ps = "<<ps;
