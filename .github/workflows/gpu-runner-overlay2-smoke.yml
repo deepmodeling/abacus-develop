@@ -8,6 +8,9 @@ on:
         required: true
         default: ghcr.io/deepmodeling/abacus-cuda:latest
         type: string
+  pull_request:
+    paths:
+      - '.github/workflows/gpu-runner-overlay2-smoke.yml'
 
 permissions:
   contents: read
