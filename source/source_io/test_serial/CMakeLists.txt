@@ -22,6 +22,8 @@ add_library(
     ../module_parameter/read_inp_out.cpp
     ../module_parameter/read_input.cpp
     ../module_parameter/read_set_globalv.cpp
+    ../module_parameter/availability.cpp
+    ../module_parameter/availability_validator.cpp
 )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

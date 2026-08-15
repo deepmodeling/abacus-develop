@@ -156,7 +156,7 @@ void ReadInput::item_bse()
               "supports slice only.";
         item.default_value = "cube";
         item.unit = "";
-        item.availability = "lr_solver = plot";
+        item.set_availability("lr_solver==plot");
         read_sync_string(input.exciton_plot_format);
         item.check_value = [](const Input_Item&, const Parameter& para) {
             const auto lower = [](std::string value) {
@@ -249,7 +249,7 @@ void ReadInput::item_bse()
               "exclusive cell boundaries, while grid data include both range endpoints.";
         item.default_value = "-1 2 -1 2";
         item.unit = "primitive cells";
-        item.availability = "lr_solver = plot and exciton_plot_format = slice or both";
+        item.set_availability("lr_solver==plot and exciton_plot_format in [slice, both]");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.exciton_slice_range);
         };

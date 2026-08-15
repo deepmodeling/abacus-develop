@@ -462,32 +462,35 @@ std::tuple<double,double,ModuleBase::matrix,ModuleBase::matrix> XC_Functional_Li
                 voflapl(is,ir) += vlapl[ir*nspin+is] * sgn[ir*nspin+is];
             }
         }
-}
+    }
 
     // v_xc += nabla^2(vlapl) where vlapl = d(rho*eps_xc)/d(nabla^2 rho)
     if (need_laplacian)
     {
         const int ng = chr->rhopw->npw;
         const double tpiba2 = tpiba * tpiba;
-        std::vector<std::complex<double>> lapl_tmp(chr->rhopw->nmaxgr);
-        for(int is = 0; is < voflapl.nr; is++)
+        std::vector<double> lapl_r(nrxx);
+        std::vector<std::complex<double>> lapl_g(ng);
+        for (int is = 0; is < voflapl.nr; is++)
         {
-            for(int ir = 0; ir < nrxx; ir++)
-                lapl_tmp[ir] = std::complex<double>(voflapl(is, ir), 0.0);
-            for(int ig = ng; ig < chr->rhopw->nmaxgr; ig++)
-                lapl_tmp[ig] = std::complex<double>(0.0, 0.0);
-            chr->rhopw->real2recip(lapl_tmp.data(), lapl_tmp.data());
-            for(int ig = 0; ig < ng; ig++)
+            for (int ir = 0; ir < nrxx; ir++)
+            {
+                lapl_r[ir] = voflapl(is, ir);
+            }
+            chr->rhopw->real2recip(lapl_r.data(), lapl_g.data());
+            for (int ig = 0; ig < ng; ig++)
             {
                 double g2 = 0.0;
-                for(int i = 0; i < 3; i++)
+                for (int i = 0; i < 3; i++)
+                {
                     g2 += chr->rhopw->gcar[ig][i] * chr->rhopw->gcar[ig][i];
-                lapl_tmp[ig] *= -g2 * tpiba2;
+                }
+                lapl_g[ig] *= -g2 * tpiba2;
             }
-            chr->rhopw->recip2real(lapl_tmp.data(), lapl_tmp.data());
-            for(int ir = 0; ir < nrxx; ir++)
+            chr->rhopw->recip2real(lapl_g.data(), lapl_r.data());
+            for (int ir = 0; ir < nrxx; ir++)
             {
-                double vlapl_corr = ModuleBase::e2 * lapl_tmp[ir].real();
+                double vlapl_corr = ModuleBase::e2 * lapl_r[ir];
                 v(is, ir) += vlapl_corr;
                 vtxc += vlapl_corr * chr->rho[is][ir];
             }
