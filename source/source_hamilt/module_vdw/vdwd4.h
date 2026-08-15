@@ -23,6 +23,8 @@ class Vdwd4 : public Vdw
     double cutoff_disp2_ = 0.0; // Bohr, two-body dispersion cutoff
     double cutoff_disp3_ = 0.0; // Bohr, three-body ATM cutoff
     double cutoff_cn_ = 0.0;    // Bohr, coordination-number cutoff
+    double smooth_width_2b_ = 0.0; // Bohr, two-body cutoff smoothing width
+    double smooth_width_3b_ = 0.0; // Bohr, three-body cutoff smoothing width
     double total_charge_ = 0.0; // e, total system charge (sum zv*na - nelec)
 
     void evaluate_impl(const VdwRequest& request, VdwResult& result) override;

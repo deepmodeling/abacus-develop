@@ -4312,6 +4312,24 @@ parameters:
     default_value: Bohr
     unit: ""
     availability: vdw_cutoff_type==radius
+  - name: vdw_cutoff_smooth_width_2b
+    category: vdW correction
+    type: Real
+    description: |
+      Width of the smooth switching region for the two-body pairwise dispersion real-space cutoff.
+      A value of zero disables smoothing for the two-body contribution.
+    default_value: "0.05"
+    unit: Bohr
+    availability: vdw_method==d4
+  - name: vdw_cutoff_smooth_width_3b
+    category: vdW correction
+    type: Real
+    description: |
+      Width of the smooth switching region for the three-body Axilrod-Teller-Muto (ATM) dispersion real-space cutoff.
+      A value of zero disables smoothing for the three-body contribution.
+    default_value: "0.05"
+    unit: Bohr
+    availability: vdw_method==d4
   - name: vdw_cutoff_period
     category: vdW correction
     type: Integer Integer Integer

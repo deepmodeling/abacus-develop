@@ -573,6 +573,44 @@ Namely, each line contains the element name and the corresponding parameter.)";
         this->add_item(item);
     }
     {
+        Input_Item item("vdw_cutoff_smooth_width_2b");
+        item.annotation = "smooth cutoff width for two-body dispersion";
+        item.category = "vdW correction";
+        item.type = "Real";
+        item.description = R"(Width of the smooth switching region for the two-body pairwise dispersion real-space cutoff.
+A value of zero disables smoothing for the two-body contribution.)";
+        item.default_value = "0.05";
+        item.unit = "Bohr";
+        item.set_availability("vdw_method==d4");
+        read_sync_double(input.vdw_cutoff_smooth_width_2b);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.vdw_cutoff_smooth_width_2b < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_smooth_width_2b must be non-negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("vdw_cutoff_smooth_width_3b");
+        item.annotation = "smooth cutoff width for three-body dispersion";
+        item.category = "vdW correction";
+        item.type = "Real";
+        item.description = R"(Width of the smooth switching region for the three-body Axilrod-Teller-Muto (ATM) dispersion real-space cutoff.
+A value of zero disables smoothing for the three-body contribution.)";
+        item.default_value = "0.05";
+        item.unit = "Bohr";
+        item.set_availability("vdw_method==d4");
+        read_sync_double(input.vdw_cutoff_smooth_width_3b);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.vdw_cutoff_smooth_width_3b < 0.0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_smooth_width_3b must be non-negative");
+            }
+        };
+        this->add_item(item);
+    }
+    {
         Input_Item item("vdw_cutoff_period");
         item.annotation = "periods of periodic structure";
         item.category = "vdW correction";

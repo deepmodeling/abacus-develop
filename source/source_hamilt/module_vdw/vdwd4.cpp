@@ -23,9 +23,6 @@ namespace vdw
 namespace
 {
 
-constexpr double d4_smooth_cutoff_width_2 = 0.05; // Bohr
-constexpr double d4_smooth_cutoff_width_3 = 0.05; // Bohr
-
 std::string to_lower(std::string value)
 {
     std::transform(value.begin(), value.end(), value.begin(), [](unsigned char c) {
@@ -89,6 +86,8 @@ Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
     cutoff_disp2_ = cutoff_to_bohr(input.vdw_cutoff_radius, input.vdw_radius_unit);
     cutoff_disp3_ = std::min(40.0, cutoff_disp2_);
     cutoff_cn_ = length_to_bohr(input.vdw_cn_thr, input.vdw_cn_thr_unit);
+    smooth_width_2b_ = input.vdw_cutoff_smooth_width_2b;
+    smooth_width_3b_ = input.vdw_cutoff_smooth_width_3b;
 
     double valence_charge = 0.0;
     for (int it = 0; it < ucell_.ntype; ++it)
@@ -199,8 +198,8 @@ void Vdwd4::compute(double& energy_ha,
                                             cutoff_disp2_,
                                             cutoff_disp3_,
                                             cutoff_cn_,
-                                            d4_smooth_cutoff_width_2,
-                                            d4_smooth_cutoff_width_3);
+                                            smooth_width_2b_,
+                                            smooth_width_3b_);
     check_dftd4_error(error, "dftd4_set_model_realspace_cutoff_smooth");
 
     std::vector<char> method(xc_name_.begin(), xc_name_.end());
