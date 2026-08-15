@@ -171,7 +171,15 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
         // including |G|=0 term.
         double sum2 = 0.0;
 
-        sum2 += fac2 * (conj(rhog1[0][0] - rhog1[1][0]) * (rhog2[0][0] - rhog2[1][0])).real();
+        // The G=0 component is the ig_gge0-th element of the local G-list on the
+        // rank that owns it, not necessarily element 0: the local G-list is built
+        // by scanning (x,y) sticks in grid order, so element 0 is the first plane
+        // wave of the first owned stick. Using a hardcoded index 0 made the inner
+        // product partition-dependent for pools with more than one rank.
+        if (ig0 >= 0)
+        {
+            sum2 += fac2 * (conj(rhog1[0][ig0] - rhog1[1][ig0]) * (rhog2[0][ig0] - rhog2[1][ig0])).real();
+        }
 
         double mag = 0.0;
 #ifdef _OPENMP
@@ -179,6 +187,7 @@ double Charge_Mixing::inner_product_recip_rho(std::complex<double>* rho1, std::c
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ig++)
         {
+            if (ig == ig0) { continue; }
             mag += (conj(rhog1[0][ig] - rhog1[1][ig]) * (rhog2[0][ig] - rhog2[1][ig])).real();
         }
         mag *= fac2;
@@ -342,7 +351,13 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
         // including |G|=0 term.
         double sum2 = 0.0;
 
-        sum2 += fac2 * (conj(rhog1[0 + this->rhopw->npw]) * rhog2[0 + this->rhopw->npw]).real();
+        // Same G=0 indexing remark as in inner_product_recip_rho: use ig_gge0
+        // instead of a hardcoded index 0, otherwise the inner product (and hence
+        // the DIIS mixing coefficients) depends on how the pool is divided.
+        if (ig0 >= 0)
+        {
+            sum2 += fac2 * (conj(rhog1[ig0 + this->rhopw->npw]) * rhog2[ig0 + this->rhopw->npw]).real();
+        }
 
         double mag = 0.0;
 #ifdef _OPENMP
@@ -350,6 +365,7 @@ double Charge_Mixing::inner_product_recip_hartree(std::complex<double>* rhog1, s
 #endif
         for (int ig = 0; ig < this->rhopw->npw; ig++)
         {
+            if (ig == ig0) { continue; }
             mag += (conj(rhog1[ig + this->rhopw->npw]) * rhog2[ig + this->rhopw->npw]).real();
         }
         mag *= fac2;
