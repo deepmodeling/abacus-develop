@@ -89,6 +89,17 @@ Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
     smooth_width_2b_ = input.vdw_cutoff_smooth_width_2b;
     smooth_width_3b_ = input.vdw_cutoff_smooth_width_3b;
 
+    if (smooth_width_2b_ < 0.0 || smooth_width_2b_ > cutoff_disp2_)
+    {
+        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4",
+                                 "vdw_cutoff_smooth_width_2b must satisfy 0 <= width <= two-body cutoff");
+    }
+    if (smooth_width_3b_ < 0.0 || smooth_width_3b_ > cutoff_disp3_)
+    {
+        ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4",
+                                 "vdw_cutoff_smooth_width_3b must satisfy 0 <= width <= three-body cutoff");
+    }
+
     double valence_charge = 0.0;
     for (int it = 0; it < ucell_.ntype; ++it)
     {
