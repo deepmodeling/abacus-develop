@@ -117,6 +117,7 @@ TEST(AvailabilityParser, NonCanonicalSpellingIsRejected)
         "(basis_type==pw)",
         "basis_type==pw,calculation==scf",
         "vdw_method in [d2,d3_0]",
+        "basis_type==\"pw\"",
         "basis_type==pw and(calculation==scf)",
         "basis_type==pw and calculation==scf or esolver_type==sdft",
     };

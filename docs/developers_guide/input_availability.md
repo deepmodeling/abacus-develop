@@ -25,16 +25,25 @@ handled.
 ## Grammar and meaning
 
 ```text
-expression := or-expression
-or-expression := and-expression (" or " and-expression)*
-and-expression := primary (" and " primary)*
-primary := condition | "(" expression ")"
+expression := condition | compound
+compound := operand " and " operand (" and " operand)*
+          | operand " or " operand (" or " operand)*
+operand := condition | "(" compound ")"
 condition := parameter comparison value
            | parameter " in [" value ", " value (", " value)* "]"
            | parameter " contains " value
 comparison := "==" | "!=" | ">" | ">=" | "<" | "<="
-value := token | '"' quoted-value '"'
+value := bare-value | '"' quote-required-value '"'
 ```
+
+The grammar describes the canonical form of a non-empty expression. A compound
+expression contains only one kind of Boolean operator. When a compound
+expression is used as an operand of another compound expression, it must be
+parenthesized, even when operator precedence would make the grouping
+unambiguous. A single condition must not be parenthesized. For example,
+`(basis_type==pw and calculation==scf) or esolver_type==sdft` is canonical,
+while `basis_type==pw and calculation==scf or esolver_type==sdft` and
+`(basis_type==pw)` are not.
 
 Canonical formatting is required: comparison operators have no surrounding
 spaces; `and`, `or`, `in`, and `contains` have one space on each side; and list
@@ -45,12 +54,15 @@ of `and`. The parser accepts only the spelling produced by the AST serializer,
 so forms such as `basis_type == pw` and
 `basis_type==pw,calculation==scf` are also rejected.
 
-`and` binds more tightly than `or`. `==` compares one complete value; double
-quotes delimit a complete value containing whitespace, such as
-`relax_method=="cg 2"`. Two or more alternatives use `in [...]`, while
-`parameter contains value` tests whether a vector contains one element, such as
-`td_ttype contains 0`. `/` is an ordinary value character, not another spelling
-of membership. Ordered comparisons require a numeric scalar.
+`bare-value` is a non-empty value containing no whitespace or any of
+`()[],=<>!`. A value containing at least one of those characters must use the
+non-empty double-quoted form, and a value that does not require quotes must not
+use them. Thus `basis_type==pw` and `relax_method=="cg 2"` are canonical, while
+`basis_type=="pw"` is not. `==` compares one complete value. Two or more
+alternatives use `in [...]`, while `parameter contains value` tests whether a
+vector contains one element, such as `td_ttype contains 0`. `/` is an ordinary
+value character, not another spelling of membership. Ordered comparisons
+require a numeric scalar.
 
 A path that references a parameter must imply that parameter's availability.
 Every `and` operand is required, while satisfying either branch of an `or` is
