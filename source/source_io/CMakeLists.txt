@@ -1,4 +1,4 @@
-# Note: Help data is now embedded in Input_Item objects in read_input_item_*.cpp
+# Note: Help data is embedded in Input_Item registrations under module_parameter.
 # The old input_help_data.h generation has been removed.
 
 list(APPEND objects
@@ -109,6 +109,8 @@ add_library(
     module_parameter/read_inp_exx_dftu.cpp
     module_parameter/read_inp_other.cpp   
     module_parameter/read_inp_out.cpp  
+    module_parameter/availability.cpp
+    module_parameter/availability_validator.cpp
     module_parameter/read_input.cpp
     module_parameter/read_set_globalv.cpp
 )
@@ -137,6 +139,7 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
+  add_subdirectory(module_parameter/test)
   if(ENABLE_MPI)
     add_subdirectory(test)
     add_subdirectory(test_serial)

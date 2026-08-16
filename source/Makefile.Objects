@@ -603,6 +603,8 @@ OBJS_IO=module_parameter/input_conv.o\
     readin_info.o\
     output_info.o\
     parse_args.o\
+    module_parameter/availability.o\
+    module_parameter/availability_validator.o\
     module_parameter/read_input.o\
     module_parameter/read_inp_sys.o\
     module_parameter/read_inp_estruc.o\
@@ -611,6 +613,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_ofdft.o\
     module_parameter/read_input_item_sdft.o\
     module_parameter/read_inp_tddft.o\
+    module_parameter/read_inp_bse.o\
     module_parameter/read_inp_deepks.o\
     module_parameter/read_inp_model.o\
     module_parameter/read_inp_postproc.o\
