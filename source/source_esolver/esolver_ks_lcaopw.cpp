@@ -168,6 +168,8 @@ namespace ModuleESolver
 #ifdef __EXX
         if (GlobalC::exx_info.info_global.cal_exx && conv_esolver)
         {
+            const int two_level_step_before = this->two_level_step;
+
             // no separate_loop case
             if (!GlobalC::exx_info.info_global.separate_loop)
             {
@@ -217,6 +219,20 @@ namespace ModuleESolver
                                  + (double)(t_end.tv_usec - t_start.tv_usec) / 1000000.0
                           << std::defaultfloat << " (s)" << std::endl;
                 conv_esolver = false;
+            }
+
+            // On the 0->1 transition, exx_after_converge switches the XC functional (PBE->hybrid), 
+            // but v_eff was already set for this (converged) iteration under the OLD functional. 
+            // Without this refresh, the 1st iteration of the EXX loop builds H from the stale GGA v_eff 
+            // and then adds Hexx on top of it, double-counting exchange. 
+            // Usually only that one iteration is affected and the loop washes it out; 
+            // but when the 2nd loop converges immediately (density already exact, e.g. a minimal basis fixed by symmetry) 
+            // the polluted H is the final one -- it gets diagonalized and written out by out_mat_hs.
+            // cal_converged() is used rather than a bare update_from_charge() so that vnew (used
+            // by force_scc) and descf stay consistent with the refreshed v_eff.
+            if (!conv_esolver && two_level_step_before == 0 && this->two_level_step == 1)
+            {
+                this->pelec->cal_converged();
             }
         }
 #endif

@@ -326,6 +326,7 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
         }
         // mohan update 2025-11-04
         this->dm_last_step = dm;
+        const int two_level_step_before = this->two_level_step;
         conv_esolver = this->exx_after_converge(
             ucell,
             hamilt,
@@ -336,6 +337,20 @@ void Exx_LRI_Interface<T, Tdata>::exx_iter_finish(const K_Vectors& kv,
             istep,
             elec.f_en.etot,
             scf_ene_thr);
+
+        // On the 0->1 transition, exx_after_converge switches the XC functional (PBE->hybrid), 
+        // but v_eff was already set for this (converged) iteration under the OLD functional. 
+        // Without this refresh, the 1st iteration of the EXX loop builds H from the stale GGA v_eff 
+        // and then adds Hexx on top of it, double-counting exchange. 
+        // Usually only that one iteration is affected and the loop washes it out; 
+        // but when the 2nd loop converges immediately (density already exact, e.g. a minimal basis fixed by symmetry) 
+        // the polluted H is the final one -- it gets diagonalized and written out by out_mat_hs.
+        // cal_converged() is used rather than a bare update_from_charge() so that vnew (used
+        // by force_scc) and descf stay consistent with the refreshed v_eff.
+        if (!conv_esolver && two_level_step_before == 0 && this->two_level_step == 1)
+        {
+            elec.cal_converged();
+        }
     }
     //else if ( PARAM.inp.rdmft && two_level_step ) { conv_esolver = true; }    // for RDMFT in the future to quit after the first iter of the exx-loop
 }
