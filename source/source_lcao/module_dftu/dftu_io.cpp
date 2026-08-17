@@ -125,9 +125,9 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                         continue;
                     }
 
-                    ofs << "\n Atom=" << iat+1;
-                    ofs << " L=" << l;
-                    ofs << " ORBITAL=" << n << std::endl;
+                    ofs << "\n Atom= " << iat+1;
+                    ofs << " L= " << l;
+                    ofs << " ORBITAL= " << n << std::endl;
 
                     if (nspin == 1 || nspin == 2)
                     {
@@ -156,7 +156,7 @@ void Plus_U::write_occup_m(const UnitCell& ucell,
                                 ofs << std::endl;
                                 ofs << " sum is " << std::setw(12) << sum0[is] << std::endl;
                             }
-                            ofs << " spin=" << is+1 << std::endl;
+                            ofs << " spin= " << is+1 << std::endl;
                             ofs << std::setprecision(8) << std::fixed;
                             for (int m0 = 0; m0 < 2 * l + 1; m0++)
                             {
