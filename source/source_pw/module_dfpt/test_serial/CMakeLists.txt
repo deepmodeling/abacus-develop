@@ -46,12 +46,27 @@ AddTest(
   TARGET MODULE_DFPT_rho_serial
   LIBS parameter dfpt_planewave_serial device base symmetry
   SOURCES dfpt_rho_serial_test.cpp
-	../dfpt_rho.cpp
-	../dfpt_pw_data.cpp
-	../dfpt_kq_basis.cpp
-	../../../source_cell/qlist.cpp
-	../../../source_cell/reciprocal_grid.cpp
-	../../../source_psi/psi.cpp
-	# Plus_U test-support shim shared with the MPI-side dfpt tests.
-	../test/dftu_test_support.cpp
+  ../dfpt_rho.cpp
+  ../dfpt_pw_data.cpp
+  ../dfpt_kq_basis.cpp
+  ../../../source_cell/qlist.cpp
+  ../../../source_cell/reciprocal_grid.cpp
+  ../../../source_psi/psi.cpp
+  # Plus_U test-support shim shared with the MPI-side dfpt tests.
+  ../test/dftu_test_support.cpp
+)
+
+AddTest(
+  TARGET MODULE_DFPT_phon_serial
+  LIBS parameter dfpt_planewave_serial device base symmetry
+  SOURCES dfpt_phon_serial_test.cpp
+  ../dfpt_phon.cpp
+  ../dfpt_pert.cpp
+  ../dfpt_pw_data.cpp
+  ../dfpt_kq_basis.cpp
+  ../../../source_cell/qlist.cpp
+  ../../../source_cell/reciprocal_grid.cpp
+  ../../../source_psi/psi.cpp
+  # Plus_U test-support shim shared with the MPI-side dfpt tests.
+  ../test/dftu_test_support.cpp
 )

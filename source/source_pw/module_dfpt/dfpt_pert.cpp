@@ -503,6 +503,141 @@ void DFPT_Pert::build_dv_u(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data)
     // (|phi(k+q)> U(diag*delta - docc) <phi(k)|psi>) lands in C3 after docc.
 }
 
+void DFPT_Pert::d2vloc_r(int atom_idx, int da, int db,
+                         const ModuleBase::Vector3<double>& q_cart,
+                         std::vector<std::complex<double>>& dv2_r) const {
+    if (pw_rho_ == nullptr) {
+        return;
+    }
+    int it = 0;
+    int ia = 0;
+    atom_index(atom_idx, it, ia);
+    if (ia < 0) {
+        dv2_r.clear();
+        return;
+    }
+    const ModuleBase::Vector3<double>& tau = ucell_->atoms[it].tau[ia];
+    const int npw = pw_rho_->npw;
+    std::vector<std::complex<double>> dv2_recip(npw, std::complex<double>(0.0, 0.0));
+    ModuleBase::Vector3<double> gcar;
+    for (int ig = 0; ig < npw; ++ig) {
+        rho_gvec(ig, gcar);
+        const ModuleBase::Vector3<double> w = gcar + q_cart;
+        const double w2 = w * w;
+        if (w2 < 1.0e-12) {
+            continue;
+        }
+        const double vloc = vloc_at_g(it, w2 * ucell_->tpiba2);
+        const double arg = ModuleBase::TWO_PI * (w * tau);
+        const std::complex<double> phase(std::cos(arg), std::sin(arg));
+        // (i w_da)(i w_db) = -w_da w_db
+        dv2_recip[ig] = -(ucell_->tpiba * w[da]) * (ucell_->tpiba * w[db]) * vloc * phase;
+    }
+    dv2_r.assign(pw_rho_->nrxx, std::complex<double>(0.0, 0.0));
+    pw_rho_->recip2real(dv2_recip.data(), dv2_r.data());
+}
+
+void DFPT_Pert::apply_d2vnl(int atom_idx, int da, int db,
+                            const ModuleBase::Vector3<double>& q_cart,
+                            const psi::Psi<std::complex<double>>& psi, int k_idx,
+                            std::vector<std::vector<std::complex<double>>>& d2v_psi) const {
+    int it = 0;
+    int ia = 0;
+    atom_index(atom_idx, it, ia);
+    if (ia < 0) {
+        return;
+    }
+    const pseudo& ncpp = ucell_->atoms[it].ncpp;
+    if (ncpp.tvanp || ncpp.has_so) {
+        ModuleBase::WARNING_QUIT("DFPT_Pert::apply_d2vnl",
+                                 "DFPT second-order nonlocal potential is implemented "
+                                 "for normal-conserving separable pseudopotentials only.");
+    }
+    const int nh = ncpp.nh;
+    const int nbands = psi.get_nbands();
+
+    // projector -> (radial index, m channel) table, matching build_vkb
+    std::vector<int> mu_ib(nh, 0);
+    std::vector<int> mu_m(nh, 0);
+    int mu_idx = 0;
+    for (int ib = 0; ib < ncpp.nbeta; ++ib) {
+        const int l = ncpp.lll[ib];
+        for (int m = 0; m < 2 * l + 1; ++m) {
+            if (mu_idx < nh) {
+                mu_ib[mu_idx] = ib;
+                mu_m[mu_idx] = m;
+            }
+            ++mu_idx;
+        }
+    }
+
+    // incoming k basis and outgoing k+q basis projectors (same atom)
+    const int npwk = pw_wfc_->npwk[k_idx];
+    std::vector<ModuleBase::Vector3<double>> gk_in(npwk);
+    for (int ig = 0; ig < npwk; ++ig) {
+        gk_in[ig] = pw_wfc_->getgpluskcar(k_idx, ig);
+    }
+    std::vector<std::vector<std::complex<double>>> vkb_in;
+    build_vkb(it, ia, gk_in, vkb_in);
+    DFPT_KQ_Basis kq;
+    kq.init(pw_wfc_, q_cart, k_idx);
+    const int npwk_kq = kq.get_npwk();
+    std::vector<ModuleBase::Vector3<double>> gk_out(npwk_kq);
+    for (int igl = 0; igl < npwk_kq; ++igl) {
+        gk_out[igl] = kq.get_gpluskq(igl);
+    }
+    std::vector<std::vector<std::complex<double>>> vkb_out;
+    build_vkb(it, ia, gk_out, vkb_out);
+
+    d2v_psi.assign(nbands, std::vector<std::complex<double>>(npwk_kq, std::complex<double>(0.0, 0.0)));
+    for (int iband = 0; iband < nbands; ++iband) {
+        // becp and its (k+G')-weighted variants: becp_x = sum x(G') |beta><psi|
+        std::vector<std::complex<double>> becp(nh, std::complex<double>(0.0, 0.0));
+        std::vector<std::complex<double>> becp_a(nh, std::complex<double>(0.0, 0.0));
+        std::vector<std::complex<double>> becp_b(nh, std::complex<double>(0.0, 0.0));
+        std::vector<std::complex<double>> becp_ab(nh, std::complex<double>(0.0, 0.0));
+        for (int nu = 0; nu < nh; ++nu) {
+            for (int ig = 0; ig < npwk; ++ig) {
+                const std::complex<double> vc = std::conj(vkb_in[nu][ig]) * psi(k_idx, iband, ig);
+                const double kp_da = ucell_->tpiba * gk_in[ig][da];
+                const double kp_db = ucell_->tpiba * gk_in[ig][db];
+                becp[nu] += vc;
+                becp_a[nu] += kp_da * vc;
+                becp_b[nu] += kp_db * vc;
+                becp_ab[nu] += kp_da * kp_db * vc;
+            }
+        }
+        // D contraction with the same-m selection rule as dVnl_dtau
+        std::vector<std::complex<double>> d0(nh, std::complex<double>(0.0, 0.0));
+        std::vector<std::complex<double>> da_(nh, std::complex<double>(0.0, 0.0));
+        std::vector<std::complex<double>> db_(nh, std::complex<double>(0.0, 0.0));
+        std::vector<std::complex<double>> dab(nh, std::complex<double>(0.0, 0.0));
+        for (int mu = 0; mu < nh; ++mu) {
+            for (int nu = 0; nu < nh; ++nu) {
+                if (mu_m[mu] != mu_m[nu]) {
+                    continue;
+                }
+                const double dij = ncpp.dion(mu_ib[mu], mu_ib[nu]);
+                d0[mu] += dij * becp[nu];
+                da_[mu] += dij * becp_a[nu];
+                db_[mu] += dij * becp_b[nu];
+                dab[mu] += dij * becp_ab[nu];
+            }
+        }
+        // chi(G'') = sum_mu vkb_out,mu [ -kq_da kq_db d0 - dab + kq_da db_ + kq_db da_ ]_mu
+        for (int igl = 0; igl < npwk_kq; ++igl) {
+            const double kq_da = ucell_->tpiba * gk_out[igl][da];
+            const double kq_db = ucell_->tpiba * gk_out[igl][db];
+            std::complex<double> chi(0.0, 0.0);
+            for (int mu = 0; mu < nh; ++mu) {
+                chi += vkb_out[mu][igl]
+                       * (-kq_da * kq_db * d0[mu] - dab[mu] + kq_da * db_[mu] + kq_db * da_[mu]);
+            }
+            d2v_psi[iband][igl] = chi;
+        }
+    }
+}
+
 void DFPT_Pert::build_efield(const ModuleBase::Vector3<double>& field, DFPT_PW_Data& data) {
     // first-order electric-field potential: delta V(r) = - r . E (q=0 limit,
     // position operator in the periodic cell). Computed directly on the shared

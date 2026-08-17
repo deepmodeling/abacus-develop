@@ -65,22 +65,26 @@
 - 本期不实现：`compute_drho`/occupation 响应留接口与设计说明（`is_metal_`/`dmu_` 数据已备）。
 
 **C5 — DFPT_Phon 动力学矩阵**
-- `assemble`：`ion_ion(q,dynmat)`（已真）+ `electron(q_idx,data,dynmat)`（已真，Ewald 复用 `force_pw.cpp:479 cal_force_ew` + `H_Ewald_pw::rgen`；相因子经 `symm.gtrans[48]`+`kgmatrix[48]`）。
+- `assemble`：`ion_ion(q,dynmat)` + `electron(q_idx,data,dynmat)` 真实现（Ewald α 选取复用 `force_pw.cpp:479 cal_force_ew` 惯例：1.1 起步递降、upperbound<1e-6、跳 `ig_gge0`；仓库中 `H_Ewald_pw::rgen` 已不存在，以 `cal_force_ew` 为蓝本；相因子经 `symm.gtrans[48]`+`kgmatrix[48]`）。
+- `electron` 拆两步：`accumulate_electron(q,atom,dir,psi,wg,data)`（2n+1 形式 `D_ab=(2/Nk)Σ_kn wg·⟨dψ^b|dV^a_ext|ψ⟩` 复数逐 k 累积，虚部经 k-star 配对共轭相消/assemble Hermitian 对称化吸收；run() 每方向 SCF 收敛后即时调用，dpsi 存储不加方向维度，避免 B 前翻搅数据层）+ `assemble` 合并 ion_ion + 累积电子项。
 - **U0 实装点**：`dftu_onsite`/`dftu_lambda` 电子项。
-- `diagonalize` 换真实现（替换 `freq[i]=i` 伪值）；`add_loto`/`check_sum_rule` 实装或明示桩。
-- 测试：金刚石 Γ 声子频率对照。提交。
+- `diagonalize` 真实现（`LapackConnector::zheev`，`ω=sign(e)√|e|` 换算 cm⁻¹，质量因子 1/√(MM′)）；`add_loto` 非解析项 `(4π/Ω)(q·Z*_a)(q·Z*_b)/(q·ε∞·q)/√(MM′)`；`check_sum_rule` Γ 声学 3 零模 + 列和。
+- 测试：ion_ion vs 小胞朴素双和；Γ ASR；accumulate_electron vs 注入 dpsi 闭式收缩；zheev vs 已知矩阵；loto 各向同性解析极限。提交。
 
 **C6 — DFPT_Q0 介电/Born/LO-TO**
-- 新增 `v_hartree_q`：`|G+q|²` Poisson 因子、跳过 ig=−q（参考 `h_hartree_pw.cpp:16-97`）。
-- XC 一阶核：库中无 v_xc 一阶 API，用 LIBXC kernel 或有限差兜底。
+- 新增 `v_hartree_q`：`dV_H(G)=4π|G+q|²⁻¹·drho_g`，跳过 |G+q|=0（ig=−q），约定对齐 `source_estate/module_pot/h_hartree_pw.cpp:16`；实现为 `DFPT_Rho` 成员，**同时服务 C7 全 q 点 SCF 屏蔽势**。
+- **XC 一阶核（回调注入复用 `PotXC_FDM`）**：库里已有 `elecstate::PotXC_FDM`（`source_estate/module_pot/pot_xc_fdm.cpp:39`，`δV_xc=V_xc[ρ₀+δρ]−V_xc[ρ₀]`，LCAO 侧 `veff_dh.cpp:417 cal_dH_hf_xc` 已验证同构物理）。module_dfpt 内只定义回调契约 `XC_First_Order`（抽象类，镜像 `DFPT_Stern::LinearOperator` 惯例），esolver 接线层写 `PotXC_FDM_Adapter` 注入；module_dfpt 不 include `pot_xc_fdm.h`（头依赖最小）。复 δρ 拆 Re/Im 两次调用再重组（线性叠加合法，误差 O(δρ²)）。`LR::KernelXC`（LIBXC 解析核，module_lr）列为后续优化，本轮不动。
+- `pos_matrix`：不走病态位置算符，用 `[Ĥ_SCF,r]` 速度算符等价式 `⟨u_m|r|u_n⟩=(ε_m−ε_n)⁻¹⟨u_m|[V_nl,r]|u_n⟩`（m≠n）；`[V_nl,r]` 复用 C1 `build_vkb` 平移基列表求导。
 - 非局域 `[r,V_U]` commutator 项记录为 U 预留。
-- 测试：金刚石介电张量/Born 电荷对照。提交。
+- 测试：v_hartree_q 单 G 闭式；XC 回调 vs 解析 LDA 核 `(4/9)v_xc/ρ`；ε/Z* 金刚石对称性约束；loto 方向极限。提交。
 
 **C7 — run() 接线 + ESolver/INPUT**
-- 修正签名不一致：注释中 `pert_.build_dv(q,irrep,...)` 与真实 `build_dv(int q_idx,int atom_idx,int dir,DFPT_PW_Data&)`；mode basis 为空时逐 irrep 先遍历 3N 方向，irrep 收敛为代表模。
-- `esolver_dfpt_pw.cpp`：解开 `init` 注释，实参 `*this->stp.psi_cpu` + `PARAM.inp.nelec` + `PARAM.inp.ecutwfc`；`dft_plus_u` 为真时传 `&this->dftu`（否则 nullptr）。
-- INPUT 行为若变则同步 `docs/parameters.yaml` + `input-main.md`。
-- 金刚石端到端对照：声子频率 + 介电；`./build/abacus --version` 记录身份。
+- `DFPT_PW::init` 扩签名：`(..., pw_rho, pw_wfc, sf, wg, eig, const XC_First_Order* xc)`（规则 5：不加默认参，全调用点更新）；`nrxx=pw_rho->nrxx`；`pert_/rho_/q0_/phon_` 真 init。
+- Stern 生产适配器 `HamiltShiftAdapter : DFPT_Stern::LinearOperator` 包 `p_hamilt->ops->hPsi`（`hsolver_pw.cpp:271-273` hpsi_info 模式）；占据态 `occ_kq` 由 GS ψ 经 k+q 基投影（复用 `apply_pv` MGS）。
+- `run()` 实装：mode basis 为空（A 前置占位）→ 回退遍历 3N 方向；SCF 内环 `dv_sc=dv_ext+v_hartree_q+xc_->apply(drho_in)` → `stern_.solve` → `compute_drho` → `mix_drho`，残差<conv_thr 收敛 → `accumulate_electron`；全方向后 `assemble+diagonalize`（q=0 且 loto → `add_loto`）。单 k 基 k+q 球覆盖 WARNING_QUIT 守卫（C1 遗留边界，`ecutrho>=4*ecutwfc` 写入文档）。
+- `esolver_dfpt_pw.cpp`：解开 `init` 注释，实参 `*this->stp.psi_cpu` + `PARAM.inp.nelec` + `PARAM.inp.ecutwfc` + `this->pw_wfc`/`this->pw_rho`/`this->sf` + `dft_plus_u ? &this->dftu : nullptr`（`esolver_ks.h:63`）+ PotXC_FDM 适配器（持 GS `Charge`，复 δρ 拆 Re/Im）；内层 SCF 禁调 `cal_occ_pw`（U0 治理条目）；`esolver.cpp` 工厂加 `"dfpt"` 分支。
+- INPUT 行为若变则同步 `docs/parameters.yaml` + `input-main.md`；验证 `./build/abacus -h esolver_type` 与 `--check-input`。
+- 金刚石端到端对照：声学 3 零模（ASR）+ 光学支 LDA 文献区间 + 介电/Born；`./build/abacus --version` 记录身份。
 - 全量构建 + 回归 + 治理。提交。
 
 ---
@@ -130,7 +134,6 @@
     - 边界行为：b 全在占据子空间 / b=0 / 维数不匹配 → dpsi=0、residual=0、返回 0 次迭代
     - 测试 5 项全过（MPI 侧 `MODULE_DFPT_stern_test`）：对角算子 vs 闭式补空间解、稠密 Hermitian（Givens+相位酉 U，eps=1.7 落占据带内）vs 谱展开参考、解对随机占据集正交性 <1e-9、占据子空间退化 RHS、零 RHS
     - 9 目标回归全过（CELL 4 + DFPT 5）；`abacus_pw_para` 链接通过；治理仅既有两类豁免 WARNING（头文件值类型 include、设计期模块 docs-sync）
-- [ ] C3 DFPT_Rho
 - [x] C3 DFPT_Rho
     - `compute_drho`：每 (q,k) 经 `DFPT_KQ_Basis` 重建 k+q 基，dpsi 系数经 (ix,iy,iz) 反查散布到 rho 网格（C1 模式）；`u`=K 基 recip2real、`du`=rho 网格 recip2real，同网格共轭积累加 `A(r)`；real2recip → `drho_g`（q 移位系数）；Δ=−q（Miller 逆解 + 舍入判定）投影零；`drho_r` 从投影后系数重建（双存储一致）；占据门 `wg<1e-8` 跳过
     - `mix_drho`：`Plain_Mixing::plain_mix` 复空间混合（首步 in=0 → mixed=β·out，残差=1），混合后重建 `drho_r`；`init` 增加 `recip_matrix`（G 矩阵，q_frac→cart），非 plain 混合 WARNING_QUIT；nspin≠1 WARNING_QUIT（自旋- k 排序未钉死，C7 定）
@@ -138,8 +141,15 @@
     - 测试捕获并修复测试侧 2 处参考错误（生产代码无 bug）：① `PW_Basis_K::gcar` 是逐 k 数组（`ik*npwk_max+igl`，pw_basis_k.cpp:261-286），按基球 ig 读是错的——参考列表改按 igl 直读；② 直接求和参考混用 cart G 与 frac r（相位差 lat0 倍）——改 `r_cart=frac·latvec` 后 `g·r_cart`
     - 串行测试 5 项全过（`MODULE_DFPT_rho_serial`）：G 空间 vs 暴力双和（<1e-10）、实空间 vs 直接求和（5 采样点 <1e-9）、Γ 电荷守恒（ig0 置零 + Σdrho_r/|max|/N <1e-12）、混合首步=β·out 且残差=1、第二步组合公式 + 残差
     - 10 目标回归全过（CELL 4 + DFPT 6）；`abacus_pw_para` 链接通过；治理仅既有豁免 WARNING（头文件净减 charge_mixing.h）
-- [ ] C4 DFPT_Metal（仅接口）
-- [ ] C5 DFPT_Phon
+- [x] C4 DFPT_Metal（仅接口）
+    - `dfdeps`/`compute_dmu`/`compute_drho_metal` 加 WARNING_QUIT 守卫（"not supported in the design phase"），设计期金属分支显式拒绝而非静默错值；`sigma_`/`smearing_type_` 与数据层 `is_metal_`/`dmu_` 槽位保留
+- [x] C5 DFPT_Phon
+    - `ion_ion`：G 空间（Poisson 对偶恒等式，`w=G+q` 核 `w_a w_b/w²·e^{-w²/4α}`）+ 实空间（erfc Hessian 双循环，`r_c=6/√α`）+ 自项相位差；对角元 phase-free 交叉原子累积（`-√(Mb/Ma)` 系数）+ 自镜像 `(e^{i2πq·L}−1)` 项；α 选取复用 `cal_force_ew` 惯例（1.1×0.9^n，upperbound<1e-6）；Γ ASR 由构造精确成立
+    - `accumulate_electron`：2n+1 复数累积 `2Σwg⟨dψ^b|dV^a_ext|ψ⟩`（cross 项经 `apply_dv` 复用 C1 全部约定）+ 同原子非谐项 `Σwg⟨ψ|d²V_loc+d²V_nl|ψ⟩`（`d2vloc_r` rho 网格核 + `apply_d2vnl` 四项 β 恒等式，均已在 C1/C5 实现并测试）；dpsi 槽备份/恢复（apply_dv 复用槽位）
+    - `diagonalize`：`LapackConnector::zheev`，`ω=sgn(e)√|e|` 换算 cm⁻¹（独立 CODATA 常数交叉验证）；`add_loto` `(4πe²/Ω)(q̂Z*_a)(q̂Z*_b)/(q̂ε∞q̂)/√(MM′)`；`check_sum_rule` Γ 行和
+    - 测试捕获并修复 2 处错误：① 生产 cross 项 `dot.real()` 丢虚部——q≠0 时单 k 矩阵元复数（虚部 k-star 配对相消），assemble Hermitian 对称化依赖复数项，改复数累积；② 测试期望动量缺 `+q`（用 `gpluskq` 直接当动量）——dV 系数动量是 `Δ+q`（与 C1 pert 测试 `AnalyticDVloc(gpp+q_cart)` 一致），手算数值双向定位后修正为 `w=g+q_cart`，d2 期望同步补 `wg` 占据因子
+    - 串行测试 `MODULE_DFPT_phon_serial` 7 项全过：Γ ASR（双原子破对称胞）、Γ 声学 3 零模、非公度 q vs 朴素偶极 Hessian 双和、accumulate_electron vs 注入 dpsi 闭式收缩、zheev vs 已知矩阵、loto 各向同性解析极限、Γ 求和规则
+    - 11 目标回归全过（CELL 4 + DFPT 7）；`abacus_pw_para` 链接通过；治理仅既有两类豁免 WARNING
 - [ ] C6 DFPT_Q0
 - [ ] C7 run() 接线 + ESolver/INPUT + 金刚石对照
 - [ ] B 数据层收编

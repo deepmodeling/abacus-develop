@@ -69,7 +69,7 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
     int nspin = 1;
     int nat = ucell.nat;
     
-    pimpl_->phon_.init(ucell);
+    pimpl_->phon_.init(ucell, nullptr, nullptr);
     pimpl_->data_.init(&pimpl_->qlist_, nk, nbands, npw_max, nrxx, nspin, nat, dftu);
 }
 

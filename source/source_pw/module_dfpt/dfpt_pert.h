@@ -25,8 +25,12 @@ public:
     DFPT_Pert();
     ~DFPT_Pert();
     
-    void init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, 
+    void init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho,
               ModulePW::PW_Basis_K* pw_wfc, Structure_Factor& sf);
+
+    /// C5: read access to the ground-state wfc basis for the dynamical-matrix
+    /// contractions in DFPT_Phon::accumulate_electron.
+    ModulePW::PW_Basis_K* get_pw_wfc() const { return pw_wfc_; }
     
     void build_dv(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data);
     
@@ -34,6 +38,27 @@ public:
                   DFPT_PW_Data& data);
     
     void build_efield(const ModuleBase::Vector3<double>& field, DFPT_PW_Data& data);
+
+    /// C5: real-space kernel of the same-atom second-order LOCAL potential
+    /// d2V_loc(r) = d^2 V_loc / d tau_{da} d tau_{db} (both displacements on
+    /// the SAME atom; each derivative contributes i w_dir, w = Delta + q, so
+    /// the reciprocal kernel is -w_da w_db Vloc(|w|) exp(i w.tau)). Returned
+    /// on the shared real-space grid; its expectation value with |u(r)|^2
+    /// enters the electronic dynamical matrix (anharmonic term).
+    void d2vloc_r(int atom_idx, int da, int db,
+                  const ModuleBase::Vector3<double>& q_cart,
+                  std::vector<std::complex<double>>& dv2_r) const;
+
+    /// C5: same-atom second-order NONLOCAL potential acting on psi,
+    /// chi_n(G'') = (d^2 Vnl / d tau_{da} d tau_{db}) |psi_n> on the k+q
+    /// basis (normal-conserving separable case). The four terms come from the
+    /// phase derivatives of the out (k+q+G'') and in (k+G') projectors of the
+    /// SAME displaced atom; they reduce to zero for a uniform translation at
+    /// q=0 (acoustic consistency).
+    void apply_d2vnl(int atom_idx, int da, int db,
+                     const ModuleBase::Vector3<double>& q_cart,
+                     const psi::Psi<std::complex<double>>& psi, int k_idx,
+                     std::vector<std::vector<std::complex<double>>>& d2v_psi) const;
 
 private:
     UnitCell* ucell_ = nullptr;

@@ -215,18 +215,18 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_dv_rc(int q_idx, int spin) c
     return std::vector<std::complex<double>>();
 }
 
-void DFPT_PW_Data::set_dynmat(int q_idx, const ModuleBase::matrix& dm) {
+void DFPT_PW_Data::set_dynmat(int q_idx, const ModuleBase::ComplexMatrix& dm) {
     if (q_idx >= static_cast<int>(dynmat_.size())) {
         dynmat_.resize(q_idx + 1);
     }
     dynmat_[q_idx] = dm;
 }
 
-ModuleBase::matrix DFPT_PW_Data::get_dynmat(int q_idx) const {
+ModuleBase::ComplexMatrix DFPT_PW_Data::get_dynmat(int q_idx) const {
     if (q_idx < static_cast<int>(dynmat_.size())) {
         return dynmat_[q_idx];
     }
-    return ModuleBase::matrix();
+    return ModuleBase::ComplexMatrix();
 }
 
 void DFPT_PW_Data::set_phon_freq(int q_idx, const std::vector<double>& freq) {

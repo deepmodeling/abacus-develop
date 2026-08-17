@@ -10,6 +10,7 @@
 #define DFPT_PW_DATA_H
 
 #include "source_base/matrix.h"
+#include "source_base/complexmatrix.h"
 #include "source_base/vector3.h"
 #include "source_psi/psi.h"
 #include "source_cell/qlist.h"
@@ -60,8 +61,11 @@ public:
     void set_dv_rc(int q_idx, int spin, const std::vector<std::complex<double>>& v);
     std::vector<std::complex<double>> get_dv_rc(int q_idx, int spin) const;
     
-    void set_dynmat(int q_idx, const ModuleBase::matrix& dm);
-    ModuleBase::matrix get_dynmat(int q_idx) const;
+    /// The dynamical matrix at a generic q is complex Hermitian; stored as a
+    /// ModuleBase::ComplexMatrix (C5), consumed by DFPT_Phon::diagonalize
+    /// through the LapackConnector::zheev wrapper.
+    void set_dynmat(int q_idx, const ModuleBase::ComplexMatrix& dm);
+    ModuleBase::ComplexMatrix get_dynmat(int q_idx) const;
     void set_phon_freq(int q_idx, const std::vector<double>& freq);
     std::vector<double> get_phon_freq(int q_idx) const;
     
@@ -141,7 +145,7 @@ private:
     std::vector<std::vector<std::vector<std::complex<double>>>> dv_recip_c_;
     std::vector<std::vector<std::vector<std::complex<double>>>> dv_rc_;
     
-    std::vector<ModuleBase::matrix> dynmat_;
+    std::vector<ModuleBase::ComplexMatrix> dynmat_;
     std::vector<std::vector<double>> phon_freq_;
     
     bool compute_q0_ = false;
