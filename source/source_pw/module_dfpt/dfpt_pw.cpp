@@ -124,11 +124,13 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
 
     if (pw_rho != nullptr && pw_wfc != nullptr && sf != nullptr) {
         pimpl_->pert_.init(ucell, pw_rho, pw_wfc, *sf);
-        // plain-mixing coefficient: the converged Jacobian of the response
-        // problem can have mildly negative eigenvalues (LDA kernel), so the
-        // coefficient must stay below 2 / (1 + |lambda_min|); the env knob
-        // is a design-phase calibration aid
-        double mix_beta = 0.7;
+        // plain-mixing coefficient: the response Jacobian has strongly
+        // negative eigenvalues concentrated on the smallest-G shells (the
+        // Coulomb stiffness 4pi/G^2; measured lambda ~ -2.2 on {111}/{200}
+        // for the diamond smoke case), so the coefficient must stay below
+        // 2 / (1 + |lambda_min|); 0.4 keeps margin up to |lambda| ~ 5; the
+        // env knob is a design-phase calibration aid
+        double mix_beta = 0.4;
         if (const char* env_beta = getenv("DFPT_MIX_BETA")) {
             const double parsed = atof(env_beta);
             if (parsed > 0.0 && parsed <= 1.0) {
@@ -247,12 +249,43 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
 
     const int lin_max = data_.get_max_iter();
     const double lin_thr = data_.get_conv_thr();
+    // design-phase homogeneous probe: inject a pure A1 trial density on the
+    // {200}/{111} shells, drop the external perturbation from the rhs, run
+    // one iteration and dump the linear map output M * trial
+    const bool jprobe = (getenv("DFPT_JPROBE") != nullptr);
+    const bool jprobe_noxc = (getenv("DFPT_JPROBE_NOXC") != nullptr);
 
     bool converged = false;
     double residual = 0.0;
     const bool dbg = (getenv("DFPT_DEBUG") != nullptr);
     for (int iter = 0; iter < max_iter_ && !converged; ++iter) {
         data_.set_current_iter(iter);
+
+        if (jprobe && iter == 0) {
+            std::vector<std::complex<double>> trial(pw_rho_->npw,
+                                                    std::complex<double>(0.0, 0.0));
+            double nrm = 0.0;
+            for (int ig = 0; ig < pw_rho_->npw; ++ig) {
+                const ModuleBase::Vector3<double> gc = pw_rho_->gcar[ig];
+                const double g2 = gc * gc;
+                const int nax = (std::abs(gc.x) > 1.0e-6)
+                                + (std::abs(gc.y) > 1.0e-6)
+                                + (std::abs(gc.z) > 1.0e-6);
+                if (std::abs(g2 - 4.0) < 1.0e-9 && nax == 1) {
+                    trial[ig] = std::complex<double>(1.0, 0.0);
+                    nrm += 1.0;
+                } else if (std::abs(g2 - 3.0) < 1.0e-9 && nax == 3) {
+                    const double sgn = (gc.x * gc.y * gc.z > 0.0) ? 1.0 : -1.0;
+                    trial[ig] = std::complex<double>(0.6218, -0.6218 * sgn);
+                    nrm += 2.0 * 0.6218 * 0.6218;
+                }
+            }
+            const double inv = 1.0 / std::sqrt(nrm);
+            for (size_t i = 0; i < trial.size(); ++i) {
+                trial[i] *= inv;
+            }
+            data_.set_drho_g(q_idx, 0, trial);
+        }
 
         // ---- 1. screened response potential from the mixed input density:
         // q-shifted complex periodic amplitude on the shared grid, i.e. the
@@ -268,7 +301,7 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
             for (int ir = 0; ir < nrxx; ++ir) {
                 v_sc_r[ir] = vh_r[ir];
             }
-            if (xc_ != nullptr) {
+            if (xc_ != nullptr && !jprobe_noxc) {
                 std::vector<std::complex<double>> a_r(nrxx);
                 pw_rho_->recip2real(drho_in_g.data(), a_r.data());
                 std::vector<std::complex<double>> b_r;
@@ -276,6 +309,26 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                 if (static_cast<int>(b_r.size()) == nrxx) {
                     for (int ir = 0; ir < nrxx; ++ir) {
                         v_sc_r[ir] += b_r[ir];
+                    }
+                }
+                if (getenv("DFPT_MDBG") != nullptr) {
+                    static int vdbg_cnt = 0;
+                    std::ofstream vf("/tmp/opencode/drho_iters/vsc_"
+                                     + std::to_string(vdbg_cnt++) + ".bin",
+                                     std::ios::binary);
+                    for (int ir = 0; ir < nrxx; ++ir) {
+                        vf.write(reinterpret_cast<const char*>(&v_sc_r[ir]),
+                                 sizeof(std::complex<double>));
+                    }
+                    // channel split: rebuild each part for the same input
+                    std::vector<std::complex<double>> vh_only(nrxx);
+                    pw_rho_->recip2real(dv_ha_g.data(), vh_only.data());
+                    std::ofstream hf("/tmp/opencode/drho_iters/vha_"
+                                     + std::to_string(vdbg_cnt - 1) + ".bin",
+                                     std::ios::binary);
+                    for (int ir = 0; ir < nrxx; ++ir) {
+                        hf.write(reinterpret_cast<const char*>(&vh_only[ir]),
+                                 sizeof(std::complex<double>));
                     }
                 }
             }
@@ -298,6 +351,20 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                     for (int ig = 0; ig < pw_rho_->npw; ++ig) {
                         df.write(reinterpret_cast<const char*>(&drho_in_g[ig]),
                                  sizeof(std::complex<double>));
+                    }
+                    static bool dumped_g = false;
+                    if (!dumped_g) {
+                        dumped_g = true;
+                        std::ofstream gf("/tmp/opencode/drho_iters/gcar.bin",
+                                         std::ios::binary);
+                        for (int ig = 0; ig < pw_rho_->npw; ++ig) {
+                            const double gx = pw_rho_->gcar[ig].x;
+                            const double gy = pw_rho_->gcar[ig].y;
+                            const double gz = pw_rho_->gcar[ig].z;
+                            gf.write(reinterpret_cast<const char*>(&gx), sizeof(double));
+                            gf.write(reinterpret_cast<const char*>(&gy), sizeof(double));
+                            gf.write(reinterpret_cast<const char*>(&gz), sizeof(double));
+                        }
                     }
                 }
             }
@@ -363,9 +430,16 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                     }
                     continue;
                 }
-                // b = -(dV_ext + dV_sc)|psi_n>
-                for (size_t i = 0; i < rhs.size(); ++i) {
-                    rhs[i] = -(rhs[i] + dv_sc[ib][i]);
+                // b = -(dV_ext + dV_sc)|psi_n>; the homogeneous probe keeps
+                // only the screening part to isolate the linear map M
+                if (jprobe) {
+                    for (size_t i = 0; i < rhs.size(); ++i) {
+                        rhs[i] = -dv_sc[ib][i];
+                    }
+                } else {
+                    for (size_t i = 0; i < rhs.size(); ++i) {
+                        rhs[i] = -(rhs[i] + dv_sc[ib][i]);
+                    }
                 }
                 hamilt_->set_shift(eig_(ik, ib));
                 std::vector<std::complex<double>> dpsi_out;
@@ -390,9 +464,31 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
 
         // ---- 3. first-order density and mixing
         rho_.compute_drho(gs_psi_, wg_, q_idx, data_);
+        if (jprobe && iter == 0) {
+            const std::vector<std::complex<double>> probe_out = data_.get_drho_g(q_idx, 0);
+            std::ofstream pf("/tmp/opencode/jprobe_out.bin", std::ios::binary);
+            for (int ig = 0; ig < pw_rho_->npw; ++ig) {
+                pf.write(reinterpret_cast<const char*>(&probe_out[ig]),
+                         sizeof(std::complex<double>));
+            }
+            std::ofstream vf("/tmp/opencode/jprobe_vsc.bin", std::ios::binary);
+            for (int ir = 0; ir < nrxx; ++ir) {
+                vf.write(reinterpret_cast<const char*>(&v_sc_r[ir]),
+                         sizeof(std::complex<double>));
+            }
+            pf.close();
+            vf.close();
+            std::cout << "JPROBE dumped, exiting" << std::endl;
+            std::cout.flush();
+            std::exit(0);
+        }
         rho_.mix_drho(q_idx, data_);
         residual = rho_.get_residual(q_idx, data_);
         data_.add_residual(residual);
+        if (dbg) {
+            std::cout << "DBG iter=" << iter << " residual=" << residual
+                      << " conv_thr=" << conv_thr_ << std::endl;
+        }
         converged = (residual < conv_thr_);
     }
     data_.set_converged(converged);
@@ -514,8 +610,8 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                 std::vector<std::complex<double>> vh_r(pw_rho_->nrxx);
                 pw_rho_->recip2real(vha_g.data(), vh_r.data());
                 std::vector<std::complex<double>> vx_r;
-                if (xc_ != nullptr) {
-                    std::vector<std::complex<double>> ar(pw_rho_->nrxx);
+            if (xc_ != nullptr) {
+                std::vector<std::complex<double>> ar(pw_rho_->nrxx);
                     pw_rho_->recip2real(dg_in.data(), ar.data());
                     xc_->apply(ar, vx_r);
                 }
