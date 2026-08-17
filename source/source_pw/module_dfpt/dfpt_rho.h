@@ -25,6 +25,28 @@ class Plain_Mixing;
 namespace ModuleDFPT {
 
 /**
+ * @brief First-order exchange-correlation kernel contract (C6).
+ *
+ * Production adapters live at the esolver wiring layer (C7): the complex
+ * q-shifted density amplitude drho_r is split into Re/Im parts, fed
+ * through the real-space finite-difference kernel (elecstate::PotXC_FDM,
+ * delta V_xc = V_xc[rho0 + drho] - V_xc[rho0]) and recombined - linear
+ * superposition is exact up to O(|drho|^2). module_dfpt itself never
+ * includes pot_xc_fdm.h (minimal header dependencies), mirroring the
+ * DFPT_Stern::LinearOperator injection convention.
+ */
+class XC_First_Order {
+public:
+    virtual ~XC_First_Order() = default;
+
+    /// dvxc_r(r) = delta V_xc[drho_r](r), complex q-shifted amplitude on
+    /// the shared real-space grid. Implementations must not resize or
+    /// alias drho_r; dvxc_r is fully overwritten.
+    virtual void apply(const std::vector<std::complex<double>>& drho_r,
+                       std::vector<std::complex<double>>& dvxc_r) const = 0;
+};
+
+/**
  * @brief First-order density response (C3).
  *
  * compute_drho builds the q-shifted response density
@@ -63,6 +85,16 @@ public:
                   DFPT_PW_Data& data);
     
     void mix_drho(int q_idx, DFPT_PW_Data& data);
+    
+    /// C6: q-shifted first-order Hartree potential in reciprocal space,
+    ///   dV_H(G) = 4 pi e^2 / |G+q|^2 * drho_g,
+    /// with the convention aligned with elecstate::H_Hartree_pw::v_hartree
+    /// (fac = e2 * FOUR_PI / (tpiba2 * |G+q|^2)); the |G+q| = 0 component
+    /// (ig = -q) is skipped. Serves both the C6 q->0 response and the C7
+    /// screened potential at every q point.
+    void v_hartree_q(const ModuleBase::Vector3<double>& q_cart,
+                     const std::vector<std::complex<double>>& drho_g,
+                     std::vector<std::complex<double>>& dv_ha_g) const;
     
     double get_residual(int q_idx, DFPT_PW_Data& data) const;
 

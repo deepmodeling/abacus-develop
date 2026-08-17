@@ -150,7 +150,15 @@
     - 测试捕获并修复 2 处错误：① 生产 cross 项 `dot.real()` 丢虚部——q≠0 时单 k 矩阵元复数（虚部 k-star 配对相消），assemble Hermitian 对称化依赖复数项，改复数累积；② 测试期望动量缺 `+q`（用 `gpluskq` 直接当动量）——dV 系数动量是 `Δ+q`（与 C1 pert 测试 `AnalyticDVloc(gpp+q_cart)` 一致），手算数值双向定位后修正为 `w=g+q_cart`，d2 期望同步补 `wg` 占据因子
     - 串行测试 `MODULE_DFPT_phon_serial` 7 项全过：Γ ASR（双原子破对称胞）、Γ 声学 3 零模、非公度 q vs 朴素偶极 Hessian 双和、accumulate_electron vs 注入 dpsi 闭式收缩、zheev vs 已知矩阵、loto 各向同性解析极限、Γ 求和规则
     - 11 目标回归全过（CELL 4 + DFPT 7）；`abacus_pw_para` 链接通过；治理仅既有两类豁免 WARNING
-- [ ] C6 DFPT_Q0
+- [x] C6 DFPT_Q0
+    - `v_hartree_q`（DFPT_Rho 成员）：`dV_H(G)=e²·4π/(tpiba²·|G+q|²)·drho_g`（w=gcar+q_cart，1/lat0 单位），跳过 |G+q|=0（对齐 `h_hartree_pw.cpp` 跳 ig_gge0 惯例）；同函数服务 C7 全 q 屏蔽势
+    - `XC_First_Order` 抽象契约（`apply(drho_r, dvxc_r)`，module_dfpt 不 include pot_xc_fdm.h，镜像 Stern::LinearOperator 注入惯例）；PotXC_FDM 适配器（复 δρ 拆 Re/Im）落 C7 esolver 层，XC 核数值对照随 C7 适配器一并测试
+    - `build_vkb_dk`（C1 build_vkb 的 k 导数，转 public 供 Q0 复用）：三链解析导数——原子相位 `i2πτ_dir`、径向 `vq'(g)·tpiba·ghat_dir`（radial_vq 中心差分 dg=1e-4）、实谐函数方向链 `(e_dir−ghat·ghat_dir)/|G|`（l≤2 `grad_real_ylm`）；G=0 处 l≥1 行方向链奇异（测度为零，仅相位项，与 QE 同处理）
+    - `pos_matrix` 速度算符形式：`⟨u_m|r_d|u_n⟩=−i·⟨u_m|dH/dk_d|u_n⟩/(tpiba·(ε_m−ε_n))`（[H,r]=−i·dH/dk，k 取 2π/lat0 无量纲导数与 build_vkb_dk 一致，r 出 bohr）；dH/dk = 动能 `2tpiba²(k+G)_d` + 非局域 `|dvkb⟩D⟨vkb|+|vkb⟩D⟨dvkb|`（D=dion·m 选择规则，dVnl_dtau 布局）；V_loc 与 k 无关；严格简并对跳过（规范依赖）
+    - `compute_eps`：`ε_ab=δ_ab+(8π/Ω)Σ_k wg Re[r_a r_b]/(ε_c−ε_v)/Nk`（长度规范分母，与振子强度和规则一致；绝对值标定 C7 金刚石端到端）；`compute_born`：`Z*_{k,ab}=Z_k δ_ab−(4/Nk)Σ wg Re[⟨v|dV_b|m⟩⟨m|r_a|v⟩]/(ε_m−ε_v)`（m 跑全部带含占据；`⟨v|dV|m⟩=conj(dv_mv)`；经 C1 apply_dv@q=0 复用全部约定，dpsi 槽备份/恢复仿 phon 模式；离子 Z 只加 (a==b) 对角，每原子单次 set_born）
+    - 串行测试 `MODULE_DFPT_q0_serial` 5 项全过：build_vkb_dk vs build_vkb 中心差分（泛型 gk 列表，1e-5）、pos_matrix 动能项闭式（−i 因子/tpiba 标定/Hermitian/简对跳过）、非局域收缩 vs 算符有限差分（ψ(G=0) 列置零避开奇点）、compute_eps 二能级全系数链（复激发态敏感于 conj 位置）、compute_born vs 闭式 G 求和（含离子对角+dpsi 恢复）
+    - `MODULE_DFPT_rho_serial` 增 v_hartree_q 3 检查（单 G 闭式、|G+q|=0 跳过、尺寸守卫清空），6 项全过
+    - 12 目标回归全过（CELL 4 + DFPT 8）；`abacus_pw_para` 链接通过；治理仅既有豁免 WARNING（docs-sync）
 - [ ] C7 run() 接线 + ESolver/INPUT + 金刚石对照
 - [ ] B 数据层收编
 - [ ] A irrep 分解

@@ -60,6 +60,30 @@ public:
                      const psi::Psi<std::complex<double>>& psi, int k_idx,
                      std::vector<std::vector<std::complex<double>>>& d2v_psi) const;
 
+    /// Build the beta-projector array (in the ABACUS vkb convention) for a
+    /// single atom on an arbitrary k-shifted reciprocal vector list:
+    ///   vkb[mu][ielem] = (-i)^l * Ylm(Ghat) * (4pi/sqrt(Omega) *
+    ///                        integral beta(r) j_l(g r) r dr) * exp(i G.tau)
+    /// with G in 2*pi/lat0 units, g = |G| * tpiba (bohr^-1), tau in bohr.
+    /// Usable for both the incoming k basis (G = k+G') and the outgoing DFPT
+    /// k+q basis (G = k+q+G''), so the atomic phase is correct on either side.
+    /// Public since C6: DFPT_Q0 reuses it for the velocity operator.
+    void build_vkb(int it, int ia,
+                   const std::vector<ModuleBase::Vector3<double>>& gk,
+                   std::vector<std::vector<std::complex<double>>>& vkb) const;
+
+    /// C6: analytic derivative of the beta projector with respect to the
+    /// list shift k_dir (the same shift build_vkb is evaluated at), three
+    /// terms: the atomic phase (i 2pi tau_dir), the radial chain rule
+    /// (vq'(g) * tpiba * Ghat_dir, central finite difference of radial_vq)
+    /// and the real-harmonic direction derivative (grad_real_ylm chain
+    /// (e_dir - ghat ghat_dir)/|G|). Feeds the dV_nl/dk part of the
+    /// velocity operator in DFPT_Q0::pos_matrix.
+    void build_vkb_dk(int it, int ia, int dir,
+                      const std::vector<ModuleBase::Vector3<double>>& gk,
+                      std::vector<std::vector<std::complex<double>>>& vkb,
+                      std::vector<std::vector<std::complex<double>>>& dvkb) const;
+
 private:
     UnitCell* ucell_ = nullptr;
     ModulePW::PW_Basis* pw_rho_ = nullptr;
@@ -99,20 +123,14 @@ private:
                    const psi::Psi<std::complex<double>>& psi, int k_idx,
                    std::vector<std::vector<std::complex<double>>>& dv_psi);
 
-    /// Build the beta-projector array (in the ABACUS vkb convention) for a
-    /// single atom on an arbitrary k-shifted reciprocal vector list:
-    ///   vkb[mu][ielem] = (-i)^l * Ylm(Ghat) * (4pi/sqrt(Omega) *
-    ///                        integral beta(r) j_l(g r) r dr) * exp(i G.tau)
-    /// with G in 2*pi/lat0 units, g = |G| * tpiba (bohr^-1), tau in bohr.
-    /// Usable for both the incoming k basis (G = k+G') and the outgoing DFPT
-    /// k+q basis (G = k+q+G''), so the atomic phase is correct on either side.
-    void build_vkb(int it, int ia,
-                   const std::vector<ModuleBase::Vector3<double>>& gk,
-                   std::vector<std::vector<std::complex<double>>>& vkb) const;
     /// radial part (4pi/sqrt(Omega)) Integral beta(r) j_l(g r) r dr at g (bohr^-1)
     double radial_vq(int it, int ib, double g) const;
     /// real spherical harmonic Y_{l,m}(g_hat), orthonormal convention, l<=2.
     double real_ylm(int l, int m, const ModuleBase::Vector3<double>& ghat) const;
+    /// gradient of real_ylm with respect to the unit vector ghat, l<=2
+    /// (dY/dghat returned per cartesian component).
+    void grad_real_ylm(int l, int m, const ModuleBase::Vector3<double>& ghat,
+                       double grad[3]) const;
 
     /// General (nonlocal and local) part of apply_dv for the compartments that
     /// live in real space (local potential); the |psi> product requires the

@@ -258,4 +258,31 @@ double DFPT_Rho::get_residual(int q_idx, DFPT_PW_Data& data) const {
     return residual_[q_idx];
 }
 
+void DFPT_Rho::v_hartree_q(const ModuleBase::Vector3<double>& q_cart,
+                           const std::vector<std::complex<double>>& drho_g,
+                           std::vector<std::complex<double>>& dv_ha_g) const {
+    if (pw_rho_ == nullptr) {
+        dv_ha_g.clear();
+        return;
+    }
+    const int npw = pw_rho_->npw;
+    if (static_cast<int>(drho_g.size()) != npw) {
+        dv_ha_g.clear();
+        return;
+    }
+    dv_ha_g.assign(npw, std::complex<double>(0.0, 0.0));
+    for (int ig = 0; ig < npw; ++ig) {
+        const ModuleBase::Vector3<double> w = pw_rho_->gcar[ig] + q_cart;
+        const double w2_lat0 = w * w; // 1/lat0^2 units, like pw_rho_->gg
+        // skip |G+q| = 0 (ig = -q): the q-shifted G=0 harmonic of the
+        // Hartree kernel (v_hartree skips ig_gge0 the same way)
+        if (w2_lat0 < 1.0e-12) {
+            continue;
+        }
+        const double fac = ModuleBase::e2 * ModuleBase::FOUR_PI
+                           / (pw_rho_->tpiba2 * w2_lat0);
+        dv_ha_g[ig] = fac * drho_g[ig];
+    }
+}
+
 } // namespace ModuleDFPT

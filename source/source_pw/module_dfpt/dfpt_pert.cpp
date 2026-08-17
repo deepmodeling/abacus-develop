@@ -367,6 +367,108 @@ void DFPT_Pert::build_vkb(int it, int ia,
     }
 }
 
+void DFPT_Pert::grad_real_ylm(int l, int m, const ModuleBase::Vector3<double>& ghat,
+                              double grad[3]) const {
+    // analytic gradients of the real_ylm polynomials (l <= 2), consistent
+    // with the conventions documented above real_ylm
+    const double x = ghat.x;
+    const double y = ghat.y;
+    const double z = ghat.z;
+    const double c1 = 0.5 * std::sqrt(3.0 / ModuleBase::PI);
+    const double c2 = 0.5 * std::sqrt(15.0 / ModuleBase::PI);
+    const double c20 = 0.25 * std::sqrt(5.0 / ModuleBase::PI);
+    grad[0] = grad[1] = grad[2] = 0.0;
+    switch (l) {
+        case 0:
+            return;
+        case 1:
+            switch (m) {
+                case -1: grad[1] = -c1; return;
+                case 0: grad[2] = c1; return;
+                case 1: grad[0] = -c1; return;
+            }
+            break;
+        case 2:
+            switch (m) {
+                case -2: grad[0] = c2 * y; grad[1] = c2 * x; return;
+                case -1: grad[1] = -c2 * z; grad[2] = -c2 * y; return;
+                case 0: grad[2] = 6.0 * c20 * z; return;
+                case 1: grad[0] = -c2 * z; grad[2] = -c2 * x; return;
+                case 2: grad[0] = 2.0 * c20 * x; grad[1] = -2.0 * c20 * y; return;
+            }
+            break;
+        default:
+            ModuleBase::WARNING_QUIT("DFPT_Pert::grad_real_ylm",
+                                     "grad_real_ylm implemented for l<=2 only (DFPT NC path).");
+    }
+}
+
+void DFPT_Pert::build_vkb_dk(int it, int ia, int dir,
+                             const std::vector<ModuleBase::Vector3<double>>& gk,
+                             std::vector<std::vector<std::complex<double>>>& vkb,
+                             std::vector<std::vector<std::complex<double>>>& dvkb) const {
+    const pseudo& ncpp = ucell_->atoms[it].ncpp;
+    const int nh = ncpp.nh;
+    const int ngk = static_cast<int>(gk.size());
+    const ModuleBase::Vector3<double>& tau = ucell_->atoms[it].tau[ia];
+    if (static_cast<int>(vkb.size()) != nh
+        || static_cast<int>(vkb[0].size()) != ngk) {
+        ModuleBase::WARNING_QUIT("DFPT_Pert::build_vkb_dk",
+                                 "vkb must be built on the same gk list first.");
+    }
+    dvkb.assign(nh, std::vector<std::complex<double>>(ngk, std::complex<double>(0.0, 0.0)));
+    if (nh == 0) {
+        return;
+    }
+    const double dg = 1.0e-4; // bohr^-1, radial central-difference step
+    int mu = 0;
+    for (int ib = 0; ib < ncpp.nbeta; ++ib) {
+        const int l = ncpp.lll[ib];
+        const std::complex<double> pref =
+            std::pow(std::complex<double>(0.0, -1.0), l); // (-i)^l
+        for (int m = 0; m < 2 * l + 1; ++m) {
+            const int mr = (m == 0) ? 0 : ((m % 2 == 1) ? (m + 1) / 2 : -(m / 2));
+            for (int ig = 0; ig < ngk; ++ig) {
+                const ModuleBase::Vector3<double>& G = gk[ig];
+                const double gmag = std::sqrt(G * G); // 2*pi/lat0 units
+                const double gnorm = gmag * ucell_->tpiba; // bohr^-1
+                const double vq0 = radial_vq(it, ib, gnorm);
+                const double dvq = (radial_vq(it, ib, gnorm + dg)
+                                    - radial_vq(it, ib, std::max(0.0, gnorm - dg)))
+                                   / (dg * (gnorm > dg ? 2.0 : 1.0));
+                const double arg = ModuleBase::TWO_PI * (G * tau);
+                const std::complex<double> phase(std::cos(arg), std::sin(arg));
+                const std::complex<double> dphase =
+                    std::complex<double>(0.0, ModuleBase::TWO_PI * tau[dir]) * phase;
+                double dy[3] = {0.0, 0.0, 0.0};
+                double ylm = 0.0;
+                if (gmag > 1.0e-10) {
+                    const ModuleBase::Vector3<double> ghat = G * (1.0 / gmag);
+                    ylm = real_ylm(l, mr, ghat);
+                    grad_real_ylm(l, mr, ghat, dy);
+                    const double gdir[3] = {ghat.x, ghat.y, ghat.z};
+                    // chain rule dghat/dk_dir = (e_dir - ghat*ghat_dir)/|G|
+                    double dylm_dir = 0.0;
+                    for (int c = 0; c < 3; ++c) {
+                        dylm_dir += dy[c] * ((c == dir ? 1.0 : 0.0) - gdir[c] * gdir[dir]);
+                    }
+                    dylm_dir /= gmag;
+                    // radial chain: dg/dk_dir = tpiba * ghat_dir
+                    const double dradial = dvq * ucell_->tpiba * gdir[dir];
+                    dvkb[mu][ig] = pref * phase * (dylm_dir * vq0 + ylm * dradial)
+                                   + pref * ylm * vq0 * dphase;
+                } else {
+                    // degenerate |G| = 0: only the l = 0 channel survives
+                    // (real_ylm convention); keep only the phase term
+                    ylm = (l == 0) ? 0.5 * std::sqrt(1.0 / ModuleBase::PI) : 0.0;
+                    dvkb[mu][ig] = pref * ylm * vq0 * dphase;
+                }
+            }
+            ++mu;
+        }
+    }
+}
+
 void DFPT_Pert::dVnl_dtau(int atom_idx, int dir,
                           const ModuleBase::Vector3<double>& q_cart,
                           const psi::Psi<std::complex<double>>& psi, int k_idx,

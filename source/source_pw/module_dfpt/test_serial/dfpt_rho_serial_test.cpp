@@ -376,3 +376,53 @@ TEST_F(DFPTRhoSerialTest, MixDrhoSecondStepCombinesCorrectly)
     }
     EXPECT_NEAR(rho_.get_residual(0, data_), std::sqrt(dn2 / o2), 1.0e-12);
 }
+
+TEST_F(DFPTRhoSerialTest, VHartreeQClosedFormAndZeroMode)
+{
+    // single-G amplitude: dv_ha_g[ig] = e2 4 pi / (tpiba2 |G+q|^2) drho_g[ig]
+    const int ig_star = [this]()
+    {
+        for (int ig = 0; ig < pw_rho_.npw; ++ig)
+        {
+            if ((pw_rho_.gcar[ig] + q_cart_) * (pw_rho_.gcar[ig] + q_cart_) > 1.0e-4)
+            {
+                return ig;
+            }
+        }
+        return -1;
+    }();
+    ASSERT_GE(ig_star, 0);
+
+    std::vector<std::complex<double>> drho_g(pw_rho_.npw, std::complex<double>(0.0, 0.0));
+    drho_g[ig_star] = std::complex<double>(0.3, -0.7);
+    std::vector<std::complex<double>> dv;
+    rho_.v_hartree_q(q_cart_, drho_g, dv);
+    ASSERT_EQ(dv.size(), static_cast<size_t>(pw_rho_.npw));
+    const ModuleBase::Vector3<double> w = pw_rho_.gcar[ig_star] + q_cart_;
+    const std::complex<double> expect
+        = ModuleBase::e2 * ModuleBase::FOUR_PI / (pw_rho_.tpiba2 * (w * w))
+          * drho_g[ig_star];
+    for (int ig = 0; ig < pw_rho_.npw; ++ig)
+    {
+        if (ig == ig_star)
+        {
+            EXPECT_NEAR(dv[ig].real(), expect.real(), 1.0e-10);
+            EXPECT_NEAR(dv[ig].imag(), expect.imag(), 1.0e-10);
+        }
+        else
+        {
+            EXPECT_EQ(dv[ig], std::complex<double>(0.0, 0.0));
+        }
+    }
+
+    // |G+q| = 0 (ig = -q) is skipped like v_hartree skips ig_gge0
+    const ModuleBase::Vector3<double> q_minus = pw_rho_.gcar[ig_star] * (-1.0);
+    std::vector<std::complex<double>> dv0;
+    rho_.v_hartree_q(q_minus, drho_g, dv0);
+    EXPECT_EQ(dv0[ig_star], std::complex<double>(0.0, 0.0));
+
+    // a wrong-size drho clears the output instead of aliasing it
+    std::vector<std::complex<double>> short_input(3, std::complex<double>(1.0, 1.0));
+    rho_.v_hartree_q(q_cart_, short_input, dv0);
+    EXPECT_TRUE(dv0.empty());
+}
