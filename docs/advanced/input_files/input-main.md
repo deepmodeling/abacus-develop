@@ -632,6 +632,7 @@
   - nep: Neuroevolution Potential
   - ks-lr: Kohn-Sham density functional theory + LR-TDDFT (Under Development Feature)
   - lr: LR-TDDFT with given KS orbitals (Under Development Feature)
+  - dfpt: density functional perturbation theory (Under Development Feature)
 - **Default**: ksdft
 
 ### symmetry

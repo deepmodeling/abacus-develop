@@ -172,6 +172,30 @@ void DFPT_Pert::real_space_dv(int q_idx, int k_idx,
     if (dv_rc.empty() || dv_rc.size() != static_cast<size_t>(pw_rho_->nrxx)) {
         return;
     }
+    apply_vr_core(k_idx, dv_rc, psi, kq, dv_psi);
+}
+
+void DFPT_Pert::apply_vr(int q_idx, int k_idx,
+                         const std::vector<std::complex<double>>& v_rc,
+                         const psi::Psi<std::complex<double>>& psi,
+                         const ModuleBase::Vector3<double>& q_cart,
+                         std::vector<std::vector<std::complex<double>>>& dv_psi) const {
+    (void)q_idx;
+    if (pw_rho_ == nullptr || pw_wfc_ == nullptr
+        || v_rc.size() != static_cast<size_t>(pw_rho_->nrxx)) {
+        dv_psi.clear();
+        return;
+    }
+    DFPT_KQ_Basis kq;
+    kq.init(pw_wfc_, q_cart, k_idx);
+    apply_vr_core(k_idx, v_rc, psi, kq, dv_psi);
+}
+
+void DFPT_Pert::apply_vr_core(int k_idx,
+                              const std::vector<std::complex<double>>& v_rc,
+                              const psi::Psi<std::complex<double>>& psi,
+                              const DFPT_KQ_Basis& kq,
+                              std::vector<std::vector<std::complex<double>>>& dv_psi) const {
     // Invert both ig -> FFT-cell mappings through the (ix,iy,iz) triple: the
     // rho and wfc bases enumerate different G balls, so their isz encodings
     // (stick tables) are not interchangeable - only the FFT cell position of
@@ -191,10 +215,11 @@ void DFPT_Pert::real_space_dv(int q_idx, int k_idx,
     std::vector<std::complex<double>> u_r(pw_rho_->nrxx);
     std::vector<std::complex<double>> d_r(pw_rho_->nrxx);
     std::vector<std::complex<double>> d_recip(pw_rho_->npw);
+    dv_psi.assign(nbands, std::vector<std::complex<double>>(npwk_kq, std::complex<double>(0.0, 0.0)));
     for (int iband = 0; iband < nbands; ++iband) {
         pw_wfc_->recip2real(&psi(k_idx, iband, 0), u_r.data(), k_idx);
         for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
-            d_r[ir] = u_r[ir] * dv_rc[ir];
+            d_r[ir] = u_r[ir] * v_rc[ir];
         }
         pw_rho_->real2recip(d_r.data(), d_recip.data());
         std::vector<std::complex<double>> dpsi(npwk_kq, std::complex<double>(0.0, 0.0));

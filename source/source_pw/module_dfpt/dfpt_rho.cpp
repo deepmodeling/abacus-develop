@@ -194,6 +194,18 @@ void DFPT_Rho::cal_docc(const psi::Psi<std::complex<double>>& psi,
     (void)data;
 }
 
+void DFPT_Rho::reset_mixing(int q_idx) {
+    if (q_idx < 0) {
+        return;
+    }
+    if (q_idx < static_cast<int>(drho_in_.size())) {
+        drho_in_[q_idx].clear();
+    }
+    if (q_idx < static_cast<int>(residual_.size())) {
+        residual_[q_idx] = 0.0;
+    }
+}
+
 void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data) {
     if (mixer_ == nullptr || pw_rho_ == nullptr) {
         return;

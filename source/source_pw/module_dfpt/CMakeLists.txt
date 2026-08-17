@@ -11,6 +11,7 @@ set(SOURCES
     dfpt_phon.cpp
     dfpt_q0.cpp
     dfpt_metal.cpp
+    dfpt_hamilt_shift.cpp
 )
 
 set(HEADERS
@@ -24,6 +25,7 @@ set(HEADERS
     dfpt_phon.h
     dfpt_q0.h
     dfpt_metal.h
+    dfpt_hamilt_shift.h
 )
 
 add_library(${MODULE_NAME} ${SOURCES} ${HEADERS})

@@ -159,6 +159,21 @@
     - 串行测试 `MODULE_DFPT_q0_serial` 5 项全过：build_vkb_dk vs build_vkb 中心差分（泛型 gk 列表，1e-5）、pos_matrix 动能项闭式（−i 因子/tpiba 标定/Hermitian/简对跳过）、非局域收缩 vs 算符有限差分（ψ(G=0) 列置零避开奇点）、compute_eps 二能级全系数链（复激发态敏感于 conj 位置）、compute_born vs 闭式 G 求和（含离子对角+dpsi 恢复）
     - `MODULE_DFPT_rho_serial` 增 v_hartree_q 3 检查（单 G 闭式、|G+q|=0 跳过、尺寸守卫清空），6 项全过
     - 12 目标回归全过（CELL 4 + DFPT 8）；`abacus_pw_para` 链接通过；治理仅既有豁免 WARNING（docs-sync）
-- [ ] C7 run() 接线 + ESolver/INPUT + 金刚石对照
+- [x] C7 run() 接线 + ESolver/INPUT（模块层 + esolver 工厂接线完成；金刚石端到端数值对照随 B 前置验证补做）
+    - 模块层（C7a）：
+      - `DFPT_PW::init` 新签名 `(ucell, psi, pw_rho, pw_wfc, sf, veff_r, wg, eig, xc, nelec, ecutwfc, dftu)`（规则 5：不加默认参，全调用点更新，含 pw_run_test 骨架模式传空基）；Impl 持 GS 基/veff/wg/eig + `DFPT_HamiltShift* hamilt_` + `occ_kq_` 缓存
+      - `DFPT_HamiltShift : DFPT_Stern::LinearOperator`（新文件 `dfpt_hamilt_shift.{h,cpp}`）：H(k+q) 不复用 GS HamiltPW 链（ik 索引绑定 gk2/vkb，不可平移）→ 自组装三部分——动能 `tpiba²·kq.get_gk2(igl)` 对角 + veff_r FFT 卷积（kq2rho_ 经 FFT-cell triple 映射，C1 惯例）+ 缓存 k+q vkb 的分离非局域（dion m 选择规则同 dVnl_dtau 布局）；`set_context(q_idx,k_idx)` 缓存投影 / `set_shift(eps)` 每 solve 更新对角
+      - `DFPT_Pert::apply_vr`（public）：屏蔽响应势作用全带（v_sc_r 与 dv_rc 同约定：q 移位复周期振幅）；`real_space_dv` 重构为委托私有 `apply_vr_core`（FFT-cell triple 散射/收集核心共用）；`build_vkb/build_vkb_dk` 保持 public（Q0 复用）
+      - `DFPT_Rho::reset_mixing(q_idx)`：清 drho_in_/residual_，每位移重开 SCF
+      - `build_occ_kq(q_idx)`：k+q 折叠匹配 GS k 列表（`kq ≡ k' (mod G)` 容差 1e-8；不匹配 WARNING_QUIT，需 Monkhorst 网格）；占据态经共享 FFT-cell triple 从 ikq 的 G 球映射到 k+q 列表
+      - `solve_displacement(q_idx,iat,idir)` 完整位移级 SCF 内环：`v_hartree_q(drho_g) + xc_->apply(drho_r)` 组 v_sc_r → `apply_dv + apply_vr` 组 RHS → `set_shift + stern_.solve` 每占据带 → `compute_drho + mix_drho` 残差收敛判据
+      - `run()`：q=0 时 q0 响应（eps/Born/loto）；每 irrep 位移循环 + `accumulate_electron`；`assemble + diagonalize + add_loto`（loto 方向默认 (1,1,1)/√3，一般方向随 A 阶段 irrep 机制）；null 基保持骨架首迭代收敛退化（测试兼容）
+    - esolver 层（C7b）：
+      - `esolver_dfpt_pw.{h,cpp}` 重写：`before_all_runners` 只做静态配置 + 从 `inp` 捕获 nspin/nelec/ecutwfc/dft_plus_u（规则 1：显式传递，init_dfpt 不读全局记录）；`runner` 先 `run_gs`（复用 `ESolver_KS_PW::runner`）→ `init_dfpt` 真接线（GS 收敛后 veff/charge/psi 才存在）→ `dfpt_->run()`
+      - `init_dfpt` 实参：`*this->stp.psi_cpu`、`this->pw_rho/pw_wfc`、`&this->sf`、`get_veff_smooth()` 行 0 展开（`update_from_charge` 每迭代调 `interpolate_vrs`，收敛后即当前值）、`pelec->wg/ekb`、`XC_First_Order_FDM` 适配器（Re/Im 拆分过 `PotXC_FDM` 有限差分核，线性重组精确到 O(|δρ|²)；持 GS Charge + scratch Charge）、`dft_plus_u ? &this->dftu : nullptr`；守卫：nspin≠1 / charge 不在 rho 网格（USPP）/ veff_smooth 网格不匹配 → WARNING_QUIT
+      - `esolver.cpp` 工厂：`determine_type` pw 分支加 `"dfpt"→"dfpt_pw"` + `init_esolver` 分支（治理豁免：determine_type 既有 PARAM 读取惯例，1 行）
+      - `read_inp_sys.cpp`：esolver_types 合法值加 `"dfpt"` + 注释/description 更新；`docs/parameters.yaml` + `docs/advanced/input_files/input-main.md` 同步
+    - 验证：`cmake --build` esolver/abacus_pw_para/12 测试目标全绿；ctest 12/12（CELL 4 + DFPT 8）；`abacus_pw_para -h esolver_type` 显示 dfpt 条目；`--version` v3.11.0-beta8；治理仅 determine_type 工厂 1 处豁免 ERROR + 既有 header/docs WARNING
+    - 待办（随 B/前置验证）：金刚石端到端声子/ε∞/Z* 对照、`--check-input` 从有效算例目录验证
 - [ ] B 数据层收编
 - [ ] A irrep 分解

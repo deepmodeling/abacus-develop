@@ -182,7 +182,9 @@ TEST_F(DFPT_PWRunTest, RunsPerIrrepLoopForAllQ)
     dfpt.set_qmesh(2, 2, 2); // reduced to 4 irreducible q in O_h
     dfpt.set_max_iter(10);
     psi::Psi<std::complex<double>> psi;
-    dfpt.init(ucell, psi, 1.0, 15.0, nullptr);
+    // skeleton mode: no bases wired (design-phase fallback of the irrep loop)
+    dfpt.init(ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(),
+              ModuleBase::matrix(), ModuleBase::matrix(), nullptr, 1.0, 15.0, nullptr);
     dfpt.run();
 
     // each of the 4 irreducible q points must expose 3*nat phonon modes
@@ -197,7 +199,8 @@ TEST_F(DFPT_PWRunTest, DielectricAndBornAreExposed)
 {
     dfpt.set_qmesh(1, 1, 1); // Gamma-only q mesh
     psi::Psi<std::complex<double>> psi;
-    dfpt.init(ucell, psi, 1.0, 15.0, nullptr);
+    dfpt.init(ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(),
+              ModuleBase::matrix(), ModuleBase::matrix(), nullptr, 1.0, 15.0, nullptr);
     dfpt.run();
 
     // design-phase stubs return default-constructed matrices
@@ -219,7 +222,8 @@ TEST_F(DFPT_PWRunTest, DftuReservationWithProviderButUninitializedLocale)
     Plus_U dftu;
     dfpt.set_qmesh(1, 1, 1);
     psi::Psi<std::complex<double>> psi;
-    dfpt.init(ucell, psi, 1.0, 15.0, &dftu);
+    dfpt.init(ucell, psi, nullptr, nullptr, nullptr, std::vector<double>(),
+              ModuleBase::matrix(), ModuleBase::matrix(), nullptr, 1.0, 15.0, &dftu);
     EXPECT_TRUE(dfpt.get_with_u());
     EXPECT_FALSE(dfpt.get_u_active());
     dfpt.run();

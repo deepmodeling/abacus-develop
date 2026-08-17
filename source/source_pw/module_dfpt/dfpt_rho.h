@@ -85,6 +85,12 @@ public:
                   DFPT_PW_Data& data);
     
     void mix_drho(int q_idx, DFPT_PW_Data& data);
+
+    /// C7: drop the mixing state of q_idx so the next perturbation at the
+    /// same q restarts from a zero input density (the drho_in slot is
+    /// indexed by q only, while every (atom, direction) needs its own
+    /// self-consistent cycle).
+    void reset_mixing(int q_idx);
     
     /// C6: q-shifted first-order Hartree potential in reciprocal space,
     ///   dV_H(G) = 4 pi e^2 / |G+q|^2 * drho_g,

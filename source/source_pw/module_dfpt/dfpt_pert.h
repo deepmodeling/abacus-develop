@@ -84,6 +84,17 @@ public:
                       std::vector<std::vector<std::complex<double>>>& vkb,
                       std::vector<std::vector<std::complex<double>>>& dvkb) const;
 
+    /// C7: apply a complex real-space potential on the shared FFT grid to
+    /// every band of psi (k basis), delivering |v psi> on the k+q basis.
+    /// The potential is the q-shifted complex periodic amplitude (the same
+    /// convention as dv_rc); the DFPT self-consistent loop uses it for the
+    /// screened response potential (Hartree + XC) of the mixed density.
+    void apply_vr(int q_idx, int k_idx,
+                  const std::vector<std::complex<double>>& v_rc,
+                  const psi::Psi<std::complex<double>>& psi,
+                  const ModuleBase::Vector3<double>& q_cart,
+                  std::vector<std::vector<std::complex<double>>>& dv_psi) const;
+
 private:
     UnitCell* ucell_ = nullptr;
     ModulePW::PW_Basis* pw_rho_ = nullptr;
@@ -138,6 +149,15 @@ private:
     void real_space_dv(int q_idx, int k_idx,
                        const psi::Psi<std::complex<double>>& psi,
                        DFPT_PW_Data& data,
+                       const DFPT_KQ_Basis& kq,
+                       std::vector<std::vector<std::complex<double>>>& dv_psi) const;
+
+    /// shared core of real_space_dv / apply_vr: phase-free cyclic convolution
+    /// of v_rc with every band of psi, scattered/gathered between the k+q
+    /// list and the rho grid through the FFT-cell triple.
+    void apply_vr_core(int k_idx,
+                       const std::vector<std::complex<double>>& v_rc,
+                       const psi::Psi<std::complex<double>>& psi,
                        const DFPT_KQ_Basis& kq,
                        std::vector<std::vector<std::complex<double>>>& dv_psi) const;
 

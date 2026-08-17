@@ -42,6 +42,7 @@ AddTest(
 	../dfpt_phon.cpp
 	../dfpt_q0.cpp
 	../dfpt_metal.cpp
+	../dfpt_hamilt_shift.cpp
 	../../../source_cell/qlist.cpp
 	../../../source_cell/reciprocal_grid.cpp
 	../../../source_psi/psi.cpp
