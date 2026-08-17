@@ -19,6 +19,8 @@
 
 #include <cmath>
 #include <complex>
+#include <cstdlib>
+#include <iostream>
 #include <vector>
 
 namespace ModuleDFPT {
@@ -358,6 +360,7 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
             // relies on them.
             pert_->build_dv(q_idx, iat, idir, data);
             std::complex<double> cross(0.0, 0.0);
+            const bool dbg2 = (getenv("DFPT_DEBUG") != nullptr);
             for (int ik = 0; ik < nk; ++ik) {
                 pert_->apply_dv(q_idx, ik, psi, data);
                 for (int ib = 0; ib < nbands; ++ib) {
@@ -376,7 +379,13 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
                     cross += wg(ik, ib) * dot;
                 }
             }
-            dynmat_accum_(rowb, cola) += 2.0 * cross;
+            dynmat_accum_(rowb, cola) += 2.0 * cross
+                / std::sqrt(ucell_->atoms[ucell_->iat2it[atom_idx]].mass
+                            * ucell_->atoms[ucell_->iat2it[iat]].mass);
+            if (dbg2) {
+                std::cout << "DYNCHK term2 rowb=" << rowb << " cola=" << cola
+                          << " 2cross=" << 2.0 * cross.real() << std::endl;
+            }
 
             // ---- same-atom anharmonic term <psi | d2_ab V_ext | psi> ----
             if (iat == atom_idx && cola >= rowb) {
@@ -387,6 +396,8 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
                 }
                 std::vector<std::vector<std::complex<double>>> chi;
                 std::complex<double> d2sum(0.0, 0.0);
+                std::complex<double> d2sum_loc(0.0, 0.0);
+                std::complex<double> d2sum_nl(0.0, 0.0);
                 std::vector<std::complex<double>> u_r(pw_rho_->nrxx);
                 std::vector<std::complex<double>> x_r(pw_rho_->nrxx);
                 std::vector<std::complex<double>> x_recip(pw_rho_->npw, std::complex<double>(0.0, 0.0));
@@ -423,14 +434,27 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
                             std::fill(x_r.begin(), x_r.end(), std::complex<double>(0.0, 0.0));
                         }
                         std::complex<double> expect(0.0, 0.0);
+                        std::complex<double> expect_loc(0.0, 0.0);
+                        std::complex<double> expect_nl(0.0, 0.0);
                         for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
                             expect += std::conj(u_r[ir]) * u_r[ir] * dv2_r[ir]
                                       + std::conj(u_r[ir]) * x_r[ir];
+                            expect_loc += std::conj(u_r[ir]) * u_r[ir] * dv2_r[ir];
+                            expect_nl += std::conj(u_r[ir]) * x_r[ir];
                         }
                         d2sum += wg(ik, ib) * expect / static_cast<double>(pw_rho_->nxyz);
+                        d2sum_loc += wg(ik, ib) * expect_loc / static_cast<double>(pw_rho_->nxyz);
+                        d2sum_nl += wg(ik, ib) * expect_nl / static_cast<double>(pw_rho_->nxyz);
                     }
                 }
-                dynmat_accum_(rowb, cola) += d2sum;
+                dynmat_accum_(rowb, cola) += d2sum
+                    / ucell_->atoms[ucell_->iat2it[atom_idx]].mass;
+                if (dbg2) {
+                    std::cout << "DYNCHK d2    rowb=" << rowb << " cola=" << cola
+                              << " d2sum=" << d2sum.real()
+                              << " loc=" << d2sum_loc.real()
+                              << " nl=" << d2sum_nl.real() << std::endl;
+                }
             }
         }
     }
@@ -460,6 +484,24 @@ void DFPT_Phon::assemble(int q_idx, DFPT_PW_Data& data) {
         ion_ion(data.get_qvec(q_idx), dyn);
     }
     if (accum_q_ == q_idx && dynmat_accum_.nr == nat3) {
+        if (getenv("DFPT_DEBUG") != nullptr) {
+            std::cout << "DYNCHK ionic matrix (Ry/bohr^2/amu):" << std::endl;
+            for (int i = 0; i < nat3; ++i) {
+                std::cout << "DYNCHK ion row " << i << ":";
+                for (int j = 0; j < nat3; ++j) {
+                    std::cout << " " << dyn(i, j).real();
+                }
+                std::cout << std::endl;
+            }
+            std::cout << "DYNCHK electronic accum matrix:" << std::endl;
+            for (int i = 0; i < nat3; ++i) {
+                std::cout << "DYNCHK ele row " << i << ":";
+                for (int j = 0; j < nat3; ++j) {
+                    std::cout << " " << dynmat_accum_(i, j).real();
+                }
+                std::cout << std::endl;
+            }
+        }
         for (int i = 0; i < nat3; ++i) {
             for (int j = 0; j < nat3; ++j) {
                 dyn(i, j) += dynmat_accum_(i, j);

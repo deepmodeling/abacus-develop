@@ -41,7 +41,8 @@ public:
 
     /// dvxc_r(r) = delta V_xc[drho_r](r), complex q-shifted amplitude on
     /// the shared real-space grid. Implementations must not resize or
-    /// alias drho_r; dvxc_r is fully overwritten.
+    /// alias drho_r; dvxc_r is resized to drho_r.size() and fully
+    /// overwritten.
     virtual void apply(const std::vector<std::complex<double>>& drho_r,
                        std::vector<std::complex<double>>& dvxc_r) const = 0;
 };

@@ -11,12 +11,15 @@
 #include "source_estate/module_charge/charge.h"
 #include "source_estate/module_pot/pot_xc_fdm.h"
 #include "source_base/macros.h"
+#include "source_base/math_polyint.h"
 #include "source_base/tool_quit.h"
 #include "source_io/module_parameter/parameter.h"
+#include "source_pw/module_dfpt/dfpt_pert.h"
 #include "source_pw/module_dfpt/dfpt_pw.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
 
 #include <complex>
+#include <cstdlib>
 #include <vector>
 
 namespace {
@@ -54,27 +57,62 @@ class XC_First_Order_FDM : public ModuleDFPT::XC_First_Order
                std::vector<std::complex<double>>& dvxc_r) const override
     {
         const int nrxx = veff_1_.nc;
-        // real part: V_xc[rho0 + Re drho] - V_xc[rho0]
+        if (static_cast<int>(drho_r.size()) != nrxx)
+        {
+            ModuleBase::WARNING_QUIT("XC_First_Order_FDM", "drho_r is not on the rho grid");
+        }
+        if (dvxc_r.size() != drho_r.size())
+        {
+            dvxc_r.resize(drho_r.size());
+        }
+        // central difference with a small probe amplitude: a forward
+        // difference Vxc[rho0 + drho] - Vxc[rho0] carries the curvature
+        // term ~ Vxc'' * drho^2 / 2, which is quadratic in the T2 response
+        // and leaks a spurious A1 component into the screened potential
+        const double eta = 1.0e-6;
+        std::vector<double> v_plus(nrxx);
+        // real part: (Vxc[rho0 + eta Re drho] - Vxc[rho0 - eta Re drho]) / 2
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            chg1_->rho[0][ir] = drho_r[ir].real();
+            chg1_->rho[0][ir] = eta * drho_r[ir].real();
         }
         veff_1_.zero_out();
         fdm_->cal_v_eff(chg1_, ucell_, veff_1_);
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            dvxc_r[ir] = veff_1_(0, ir);
+            v_plus[ir] = veff_1_(0, ir);
         }
-        // imaginary part: V_xc[rho0 + Im drho] - V_xc[rho0]
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            chg1_->rho[0][ir] = drho_r[ir].imag();
+            chg1_->rho[0][ir] = -eta * drho_r[ir].real();
         }
         veff_1_.zero_out();
         fdm_->cal_v_eff(chg1_, ucell_, veff_1_);
         for (int ir = 0; ir < nrxx; ++ir)
         {
-            dvxc_r[ir] += std::complex<double>(0.0, 1.0) * veff_1_(0, ir);
+            dvxc_r[ir] = (v_plus[ir] - veff_1_(0, ir)) / (2.0 * eta);
+        }
+        // imaginary part: same central difference on Im drho
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            chg1_->rho[0][ir] = eta * drho_r[ir].imag();
+        }
+        veff_1_.zero_out();
+        fdm_->cal_v_eff(chg1_, ucell_, veff_1_);
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            v_plus[ir] = veff_1_(0, ir);
+        }
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            chg1_->rho[0][ir] = -eta * drho_r[ir].imag();
+        }
+        veff_1_.zero_out();
+        fdm_->cal_v_eff(chg1_, ucell_, veff_1_);
+        for (int ir = 0; ir < nrxx; ++ir)
+        {
+            dvxc_r[ir] += std::complex<double>(0.0, 1.0)
+                          * (v_plus[ir] - veff_1_(0, ir)) / (2.0 * eta);
         }
     }
 
@@ -217,6 +255,65 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
     // first-order XC kernel adapter around the converged ground-state density
     xc_adapter_ = new XC_First_Order_FDM(this->pw_rho, this->pelec->charge, &ucell);
 
+    if (getenv("DFPT_VKB") != nullptr)
+    {
+        // design-phase validation: elementwise comparison of the module's
+        // NC projectors against the ground-state ppcell vkb at the last k
+        const int ik = 0;
+        const int npw = this->pw_wfc->npwk[ik];
+        std::vector<ModuleBase::Vector3<double>> gk(npw);
+        for (int ig = 0; ig < npw; ++ig)
+        {
+            gk[ig] = this->pw_wfc->getgpluskcar(ik, ig);
+        }
+        ModuleDFPT::DFPT_Pert pert;
+        pert.init(ucell, this->pw_rho, this->pw_wfc, this->sf);
+        std::vector<std::vector<std::complex<double>>> vkb;
+        pert.build_vkb(0, 0, gk, vkb);
+        std::vector<std::vector<std::complex<double>>> vkb1;
+        pert.build_vkb(0, 1, gk, vkb1);
+        const int nh = ucell.atoms[0].ncpp.nh;
+        const std::complex<double>* gsvkb = this->ppcell.get_vkb_data<double>();
+        std::cout << "VKBCHK npw=" << npw << " nh=" << nh
+                  << " nkb=" << this->ppcell.nkb << std::endl;
+        for (int mu = 0; mu < nh; ++mu)
+        {
+            std::complex<double> dot(0.0, 0.0);
+            double nrm_mine = 0.0;
+            double nrm_gs = 0.0;
+            for (int ig = 0; ig < npw; ++ig)
+            {
+                const std::complex<double> gs = gsvkb[mu * this->pw_wfc->npwk_max + ig];
+                dot += std::conj(vkb[mu][ig]) * gs;
+                nrm_mine += std::norm(vkb[mu][ig]);
+                nrm_gs += std::norm(gs);
+            }
+            std::cout << "VKBCHK mu=" << mu << " <mine|gs>=" << dot
+                      << " |mine|^2=" << nrm_mine << " |gs|^2=" << nrm_gs << std::endl;
+        }
+        for (int mu = 0; mu < nh; ++mu)
+        {
+            std::complex<double> dot(0.0, 0.0);
+            double nrm_mine = 0.0;
+            double nrm_gs = 0.0;
+            for (int ig = 0; ig < npw; ++ig)
+            {
+                const std::complex<double> gs = gsvkb[(nh + mu) * this->pw_wfc->npwk_max + ig];
+                dot += std::conj(vkb1[mu][ig]) * gs;
+                nrm_mine += std::norm(vkb1[mu][ig]);
+                nrm_gs += std::norm(gs);
+            }
+            std::cout << "VKBCHK a1 mu=" << mu << " <mine|gs>=" << dot
+                      << " |mine|^2=" << nrm_mine << " |gs|^2=" << nrm_gs << std::endl;
+        }
+        for (int ig = 0; ig < 6; ++ig)
+        {
+            std::cout << "VKBEL a1 mu=0 ig=" << ig << " mine=" << vkb1[0][ig]
+                      << " gs=" << gsvkb[4 * this->pw_wfc->npwk_max + ig]
+                      << " gcar=" << gk[ig].x << "," << gk[ig].y << "," << gk[ig].z << std::endl;
+        }
+    }
+
     dfpt_->init(ucell, *this->stp.psi_cpu, this->pw_rho, this->pw_wfc, &this->sf, veff_r,
                 this->pelec->wg, this->pelec->ekb, xc_adapter_, nelec_, ecutwfc_,
                 dft_plus_u_ ? &this->dftu : nullptr);
@@ -225,6 +322,44 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
 void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
 {
     ModuleBase::TITLE("ESolver_DFPT_PW", "run_post_process");
+
+    if (dfpt_ == nullptr)
+    {
+        return;
+    }
+    // design-phase validation output (single-rank runs); the io layer
+    // integration lands with the data-layer consolidation stage
+    const std::vector<double> freqs = dfpt_->get_phonon_freq(0);
+    std::cout << " DFPT phonon frequencies at q #0 (cm^-1):" << std::endl;
+    for (size_t im = 0; im < freqs.size(); ++im)
+    {
+        std::cout << "   mode " << im << " : " << freqs[im] << " cm^-1" << std::endl;
+    }
+    const ModuleBase::matrix& eps = dfpt_->get_dielectric_tensor();
+    std::cout << " DFPT dielectric tensor (epsilon_inf):" << std::endl;
+    for (int a = 0; a < eps.nr; ++a)
+    {
+        std::cout << "   ";
+        for (int b = 0; b < eps.nc; ++b)
+        {
+            std::cout << eps(a, b) << " ";
+        }
+        std::cout << std::endl;
+    }
+    for (int iat = 0; iat < ucell.nat; ++iat)
+    {
+        const ModuleBase::matrix& zstar = dfpt_->get_born_charges(iat);
+        std::cout << " DFPT Born effective charge atom " << iat << ":" << std::endl;
+        for (int a = 0; a < zstar.nr; ++a)
+        {
+            std::cout << "   ";
+            for (int b = 0; b < zstar.nc; ++b)
+            {
+                std::cout << zstar(a, b) << " ";
+            }
+            std::cout << std::endl;
+        }
+    }
 }
 
 } // namespace ModuleESolver

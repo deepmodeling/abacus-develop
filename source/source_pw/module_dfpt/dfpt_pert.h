@@ -84,6 +84,9 @@ public:
                       std::vector<std::vector<std::complex<double>>>& vkb,
                       std::vector<std::vector<std::complex<double>>>& dvkb) const;
 
+    /// radial part (4pi/sqrt(Omega)) Integral beta(r) j_l(g r) r dr at g (bohr^-1)
+    double radial_vq(int it, int ib, double g) const;
+
     /// C7: apply a complex real-space potential on the shared FFT grid to
     /// every band of psi (k basis), delivering |v psi> on the k+q basis.
     /// The potential is the q-shifted complex periodic amplitude (the same
@@ -114,28 +117,26 @@ private:
 
     /// First-order asymmetric-part local potential on the rho grid:
     ///   dVloc_dtau(Delta) = -i (Delta+q).direction * Vloc(|Delta+q|)
-    ///                       * exp(i (Delta+q).tau_atom) * ...
-    /// The sign/coefficient convention is the exact derivative of the local
-    /// potential with respect to the atomic displacement (see source; the unit
-    /// test checks it against a finite difference of the full potential incl.
-    /// the atomic phase).
+    ///                       * exp(-i (Delta+q).tau_atom) * ...
+    /// (GS structure-factor convention exp(-2pi g.tau); the sign/coefficient
+    /// is the exact derivative of the local potential with respect to the
+    /// atomic displacement).
     void dVloc_dtau(int atom_idx, int dir, const ModuleBase::Vector3<double>& q, 
                     std::vector<std::complex<double>>& dv);
     
     /// C1: first-order NONLOCAL potential acting on psi (normal-conserving
     /// separable case), for one displaced atom in direction dir.
-    /// Uses the identity
-    ///   dVnl/dtau_a |psi> = i (k+q+G'')_a * (Vnl |psi>) - Vnl[ i (k+G')_a |psi> ]
+    /// Uses the identity (GS exp(-2pi gk.tau) projector convention)
+    ///   dVnl/dtau_a |psi> = -i (k+q+G'')_a * (Vnl |psi>)
+    ///                       + Vnl[ i (k+G')_a |psi> ]
     /// so only two applications of the ground-state nonlocal operator on the
     /// DFPT k+q outgoing basis are needed (dsVnl contribution per pair is
     /// i (q+G''-G')_a times the zero-order matrix element).
     /// USPP/ultrasoft and spin-orbit projectors are rejected for now.
     void dVnl_dtau(int atom_idx, int dir, const ModuleBase::Vector3<double>& q,
                    const psi::Psi<std::complex<double>>& psi, int k_idx,
-                   std::vector<std::vector<std::complex<double>>>& dv_psi);
+                    std::vector<std::vector<std::complex<double>>>& dv_psi);
 
-    /// radial part (4pi/sqrt(Omega)) Integral beta(r) j_l(g r) r dr at g (bohr^-1)
-    double radial_vq(int it, int ib, double g) const;
     /// real spherical harmonic Y_{l,m}(g_hat), orthonormal convention, l<=2.
     double real_ylm(int l, int m, const ModuleBase::Vector3<double>& ghat) const;
     /// gradient of real_ylm with respect to the unit vector ghat, l<=2

@@ -125,14 +125,15 @@ void DFPT_Pert::dVloc_dtau(int atom_idx, int dir,
         }
         const double g_bohr2 = w2 * ucell_->tpiba2;
         const double vloc = vloc_at_g(it, g_bohr2);
-        // GS phase convention (stru_fac.cpp / get_sk): exp(i 2pi (g.tau)),
-        // with g in 1/lat0 units and tau in lat0 units; 2pi/lat0 = tpiba
-        // only multiplies the magnitude (vl_pw.cpp: qnorm = |g| * tpiba).
-        const double arg = ModuleBase::TWO_PI * (w * tau);
+        // GS structure-factor convention (stru_fac.cpp: ci_tpi =
+        // NEG_IMAG_UNIT * 2pi): exp(-i 2pi (g.tau)), with g in 1/lat0 units
+        // and tau in lat0 units; 2pi/lat0 = tpiba only multiplies the
+        // magnitude (vl_pw.cpp: qnorm = |g| * tpiba).
+        const double arg = -ModuleBase::TWO_PI * (w * tau);
         const std::complex<double> phase(std::cos(arg), std::sin(arg));
-        // dV_loc / d tau_direction = i (Delta+q)_dir * Vloc * exp(i (Delta+q).tau)
+        // dV_loc / d tau_direction = -i g_dir * Vloc * exp(-i (Delta+q).tau)
         const std::complex<double> iw_dir =
-            std::complex<double>(0.0, 1.0) * (ucell_->tpiba * w[dir]);
+            std::complex<double>(0.0, -1.0) * (ucell_->tpiba * w[dir]);
         dv[ig] = iw_dir * vloc * phase;
     }
 }
@@ -258,6 +259,33 @@ void DFPT_Pert::apply_dv(int q_idx, int k_idx, const psi::Psi<std::complex<doubl
     // nonlocal contribution: dVnl/dtau |psi> (per displaced atom)
     std::vector<std::vector<std::complex<double>>> dv_psi_nl;
     dVnl_dtau(atom_idx, dir, q_cart, psi, k_idx, dv_psi_nl);
+    if (getenv("DFPT_MDBG") != nullptr && atom_idx < 2 && k_idx == 0) {
+        static int done[2] = {0, 0};
+        if (!done[atom_idx]) {
+            done[atom_idx] = 1;
+            const int npw_dbg = psi.get_nbasis();
+            const int nb_dbg = psi.get_nbands();
+            for (int ib = 0; ib < nb_dbg; ++ib) {
+                for (int m = 0; m < nb_dbg; ++m) {
+                    std::complex<double> dl(0.0, 0.0);
+                    std::complex<double> dn(0.0, 0.0);
+                    for (int ig = 0; ig < npw_dbg; ++ig) {
+                        if (static_cast<int>(dv_psi[ib].size()) == npw_dbg) {
+                            dl += std::conj(psi(k_idx, m, ig)) * dv_psi[ib][ig];
+                        }
+                        if (dv_psi_nl.size() == static_cast<size_t>(nb_dbg)
+                            && static_cast<int>(dv_psi_nl[ib].size()) == npw_dbg) {
+                            dn += std::conj(psi(k_idx, m, ig)) * dv_psi_nl[ib][ig];
+                        }
+                    }
+                    std::cout << "MDBG atom=" << atom_idx << " n=" << ib << " m=" << m
+                              << " loc=(" << dl.real() << "," << dl.imag() << ")"
+                              << " nl=(" << dn.real() << "," << dn.imag() << ")"
+                              << std::endl;
+                }
+            }
+        }
+    }
     if (dv_psi_nl.size() == static_cast<size_t>(nbands)) {
         for (int iband = 0; iband < nbands; ++iband) {
             if (dv_psi[iband].size() != dv_psi_nl[iband].size()) {
@@ -379,11 +407,14 @@ void DFPT_Pert::build_vkb(int it, int ia,
             for (int ig = 0; ig < ngk; ++ig) {
                 const ModuleBase::Vector3<double>& G = gk[ig]; // k(+q)+G, 2*pi/lat0
                 const double gnorm = std::sqrt(G * G) * ucell_->tpiba; // bohr^-1
-                const double gmag = gnorm / ucell_->tpiba;             // |G|, 2*pi/lat0
-                const double ylm = (gmag > 1.0e-10) ? real_ylm(l, mr, G * (1.0 / gmag)) : 0.0;
+                // real_ylm handles the |G|=0 point itself (Y_00 is
+                // direction-independent; l>0 channels vanish there together
+                // with vq), so the raw vector is passed directly.
+                const double ylm = real_ylm(l, mr, G);
                 const double vq = radial_vq(it, ib, gnorm);
-                // same GS phase convention as dVloc_dtau: exp(i 2pi (gk.tau))
-                const double arg = ModuleBase::TWO_PI * (G * tau);
+                // GS structure-factor convention (stru_fac.cpp get_sk /
+                // eigts, ci_tpi = -2pi i): exp(-i 2pi (gk.tau))
+                const double arg = -ModuleBase::TWO_PI * (G * tau);
                 const std::complex<double> phase(std::cos(arg), std::sin(arg));
                 vkb[mu][ig] = pref * ylm * vq * phase;
             }
@@ -461,10 +492,10 @@ void DFPT_Pert::build_vkb_dk(int it, int ia, int dir,
                 const double dvq = (radial_vq(it, ib, gnorm + dg)
                                     - radial_vq(it, ib, std::max(0.0, gnorm - dg)))
                                    / (dg * (gnorm > dg ? 2.0 : 1.0));
-                const double arg = ModuleBase::TWO_PI * (G * tau);
+                const double arg = -ModuleBase::TWO_PI * (G * tau);
                 const std::complex<double> phase(std::cos(arg), std::sin(arg));
                 const std::complex<double> dphase =
-                    std::complex<double>(0.0, ModuleBase::TWO_PI * tau[dir]) * phase;
+                    std::complex<double>(0.0, -ModuleBase::TWO_PI * tau[dir]) * phase;
                 double dy[3] = {0.0, 0.0, 0.0};
                 double ylm = 0.0;
                 if (gmag > 1.0e-10) {
@@ -607,7 +638,9 @@ void DFPT_Pert::dVnl_dtau(int atom_idx, int dir,
             term_b[igl] = vnl_dpsi;
         }
         for (int igl = 0; igl < npwk_kq; ++igl) {
-            dv_psi[iband][igl] = term_a[igl] - term_b[igl];
+            // GS exp(-2pi gk.tau) projector convention: dVnl/dtau_dir
+            // |psi> = -i (k+q+G'')_dir (Vnl|psi>) + Vnl[i (k+G')_dir |psi>]
+            dv_psi[iband][igl] = term_b[igl] - term_a[igl];
         }
     }
 }
@@ -655,9 +688,9 @@ void DFPT_Pert::d2vloc_r(int atom_idx, int da, int db,
             continue;
         }
         const double vloc = vloc_at_g(it, w2 * ucell_->tpiba2);
-        const double arg = ModuleBase::TWO_PI * (w * tau);
+        const double arg = -ModuleBase::TWO_PI * (w * tau);
         const std::complex<double> phase(std::cos(arg), std::sin(arg));
-        // (i w_da)(i w_db) = -w_da w_db
+        // (-i g_da)(-i g_db) = -g_da g_db
         dv2_recip[ig] = -(ucell_->tpiba * w[da]) * (ucell_->tpiba * w[db]) * vloc * phase;
     }
     dv2_r.assign(pw_rho_->nrxx, std::complex<double>(0.0, 0.0));

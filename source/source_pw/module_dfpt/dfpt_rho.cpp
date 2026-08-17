@@ -115,9 +115,30 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
                 }
             }
             pw_rho_->recip2real(d_recip.data(), d_r.data());
+            // same normalization as the GS density accumulation
+            // (elecstate_pw.cpp rhoBandK: w1 = wg / omega)
+            const double w1 = w / pw_rho_->omega;
             for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
-                a_r[ir] += w * std::conj(u_r[ir]) * d_r[ir];
+                a_r[ir] += w1 * std::conj(u_r[ir]) * d_r[ir];
             }
+        }
+    }
+
+    // Hermitian completion at q = 0: the band loop above stores only the
+    // u_n^* du_n piece; the physical (real) response density also contains
+    // the du_n u_n^* piece, whose coefficients are conj(a_{-G}). At q = 0
+    // both harmonics coincide: the response is Delta rho = 2 Re a(r), so
+    // symmetrize the real-space amplitude before the FFT. The resulting
+    // coefficients are exactly Hermitian on the sphere, including
+    // one-sided sticks whose -G falls outside it. Away from q = 0 the +q
+    // harmonic of the response is exactly the one-sided object and no
+    // completion applies.
+    const bool q_is_zero = (std::abs(q_frac.x) < 1.0e-10
+                            && std::abs(q_frac.y) < 1.0e-10
+                            && std::abs(q_frac.z) < 1.0e-10);
+    if (q_is_zero) {
+        for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
+            a_r[ir] = std::complex<double>(2.0 * a_r[ir].real(), 0.0);
         }
     }
 
@@ -147,21 +168,28 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
     }
     data.set_drho_g(q_idx, 0, drho_g);
 
-    // real-space manifest density 2 Re[e^{i q r} A(r)], rebuilt from the
-    // (conservation-projected) coefficients so both storages agree
+    // real-space manifest density: at q = 0 the completed coefficients are
+    // already the full (real) response; away from q = 0 the manifest is the
+    // real combination 2 Re[e^{i q r} A(r)] of the one-sided amplitude
     std::vector<std::complex<double>> a_clean(pw_rho_->nrxx);
     pw_rho_->recip2real(drho_g.data(), a_clean.data());
     std::vector<double> drho_r(pw_rho_->nrxx);
-    for (int ix = 0; ix < pw_rho_->nx; ++ix) {
-        for (int iy = 0; iy < pw_rho_->ny; ++iy) {
-            for (int iz = 0; iz < pw_rho_->nz; ++iz) {
-                const int ir = (ix * pw_rho_->ny + iy) * pw_rho_->nz + iz;
-                const double theta = ModuleBase::TWO_PI *
-                                     (q_frac.x * ix / pw_rho_->nx +
-                                      q_frac.y * iy / pw_rho_->ny +
-                                      q_frac.z * iz / pw_rho_->nz);
-                drho_r[ir] = 2.0 * (a_clean[ir].real() * std::cos(theta) -
-                                    a_clean[ir].imag() * std::sin(theta));
+    if (q_is_zero) {
+        for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
+            drho_r[ir] = a_clean[ir].real();
+        }
+    } else {
+        for (int ix = 0; ix < pw_rho_->nx; ++ix) {
+            for (int iy = 0; iy < pw_rho_->ny; ++iy) {
+                for (int iz = 0; iz < pw_rho_->nz; ++iz) {
+                    const int ir = (ix * pw_rho_->ny + iy) * pw_rho_->nz + iz;
+                    const double theta = ModuleBase::TWO_PI *
+                                         (q_frac.x * ix / pw_rho_->nx +
+                                          q_frac.y * iy / pw_rho_->ny +
+                                          q_frac.z * iz / pw_rho_->nz);
+                    drho_r[ir] = 2.0 * (a_clean[ir].real() * std::cos(theta) -
+                                        a_clean[ir].imag() * std::sin(theta));
+                }
             }
         }
     }
@@ -241,21 +269,32 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data) {
     drho_in_[q_idx][0] = mixed;
     data.set_drho_g(q_idx, 0, mixed);
 
-    // rebuild the real-space manifest from the mixed coefficients
+    // rebuild the real-space manifest from the mixed coefficients (q = 0:
+    // completed coefficients are the full real response; otherwise the
+    // one-sided 2 Re[e^{i q r} A(r)] manifest)
     const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
+    const bool q_is_zero = (std::abs(q_frac.x) < 1.0e-10
+                            && std::abs(q_frac.y) < 1.0e-10
+                            && std::abs(q_frac.z) < 1.0e-10);
     std::vector<std::complex<double>> a_clean(pw_rho_->nrxx);
     pw_rho_->recip2real(mixed.data(), a_clean.data());
     std::vector<double> drho_r(pw_rho_->nrxx);
-    for (int ix = 0; ix < pw_rho_->nx; ++ix) {
-        for (int iy = 0; iy < pw_rho_->ny; ++iy) {
-            for (int iz = 0; iz < pw_rho_->nz; ++iz) {
-                const int ir = (ix * pw_rho_->ny + iy) * pw_rho_->nz + iz;
-                const double theta = ModuleBase::TWO_PI *
-                                     (q_frac.x * ix / pw_rho_->nx +
-                                      q_frac.y * iy / pw_rho_->ny +
-                                      q_frac.z * iz / pw_rho_->nz);
-                drho_r[ir] = 2.0 * (a_clean[ir].real() * std::cos(theta) -
-                                    a_clean[ir].imag() * std::sin(theta));
+    if (q_is_zero) {
+        for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
+            drho_r[ir] = a_clean[ir].real();
+        }
+    } else {
+        for (int ix = 0; ix < pw_rho_->nx; ++ix) {
+            for (int iy = 0; iy < pw_rho_->ny; ++iy) {
+                for (int iz = 0; iz < pw_rho_->nz; ++iz) {
+                    const int ir = (ix * pw_rho_->ny + iy) * pw_rho_->nz + iz;
+                    const double theta = ModuleBase::TWO_PI *
+                                         (q_frac.x * ix / pw_rho_->nx +
+                                          q_frac.y * iy / pw_rho_->ny +
+                                          q_frac.z * iz / pw_rho_->nz);
+                    drho_r[ir] = 2.0 * (a_clean[ir].real() * std::cos(theta) -
+                                        a_clean[ir].imag() * std::sin(theta));
+                }
             }
         }
     }

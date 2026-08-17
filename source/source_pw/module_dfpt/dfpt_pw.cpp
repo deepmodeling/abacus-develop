@@ -18,12 +18,15 @@
 #include "dfpt_hamilt_shift.h"
 #include "dfpt_kq_basis.h"
 #include "source_base/constants.h"
+#include <fstream>
 #include "source_base/global_function.h"
 #include "source_cell/qlist.h"
 #include "source_pw/module_pwdft/stru_fac.h"
 
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
+#include <iostream>
 #include <complex>
 #include <vector>
 
@@ -66,6 +69,7 @@ public:
     ///< remembers the (q_idx, ik) the shifted operator was last cached at
     int last_q_ = -1;
     int last_ik_ = -1;
+    std::vector<int> ikq_of_k_;
 
     int nqx_ = 1, nqy_ = 1, nqz_ = 1;
     double conv_thr_ = 1e-8;
@@ -120,7 +124,18 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
 
     if (pw_rho != nullptr && pw_wfc != nullptr && sf != nullptr) {
         pimpl_->pert_.init(ucell, pw_rho, pw_wfc, *sf);
-        pimpl_->rho_.init(nspin, nrxx, pw_rho, pw_wfc, ucell.G, "plain", 0.7);
+        // plain-mixing coefficient: the converged Jacobian of the response
+        // problem can have mildly negative eigenvalues (LDA kernel), so the
+        // coefficient must stay below 2 / (1 + |lambda_min|); the env knob
+        // is a design-phase calibration aid
+        double mix_beta = 0.7;
+        if (const char* env_beta = getenv("DFPT_MIX_BETA")) {
+            const double parsed = atof(env_beta);
+            if (parsed > 0.0 && parsed <= 1.0) {
+                mix_beta = parsed;
+            }
+        }
+        pimpl_->rho_.init(nspin, nrxx, pw_rho, pw_wfc, ucell.G, "plain", mix_beta);
         pimpl_->phon_.init(ucell, pw_rho, &pimpl_->pert_);
         pimpl_->q0_.init(ucell, pw_rho, pw_wfc, &pimpl_->pert_);
         delete pimpl_->hamilt_;
@@ -142,6 +157,7 @@ bool DFPT_PW::get_u_active() const {
 void DFPT_PW::Impl::build_occ_kq(int q_idx) {
     const int nk = pw_wfc_->nks;
     occ_kq_.assign(nk, std::vector<std::vector<std::complex<double>>>());
+    ikq_of_k_.assign(nk, -1);
     const ModuleBase::Vector3<double> q_frac = data_.get_qvec(q_idx);
     const ModuleBase::Vector3<double> q_cart = q_frac * ucell_->G;
     for (int ik = 0; ik < nk; ++ik) {
@@ -167,6 +183,7 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx) {
                                      "the DFPT q mesh must be commensurate with the "
                                      "k mesh (and inside the first Brillouin zone).");
         }
+        ikq_of_k_[ik] = ikq;
 
         DFPT_KQ_Basis kq;
         kq.init(pw_wfc_, q_cart, ik);
@@ -222,12 +239,18 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
 
     pert_.build_dv(q_idx, iat, idir, data_);
     rho_.reset_mixing(q_idx);
+    // the previous perturbation's stored response must not leak into the
+    // first iteration of this one
+    data_.set_drho_g(q_idx, 0,
+                     std::vector<std::complex<double>>(pw_rho_->npw,
+                                                       std::complex<double>(0.0, 0.0)));
 
     const int lin_max = data_.get_max_iter();
     const double lin_thr = data_.get_conv_thr();
 
     bool converged = false;
     double residual = 0.0;
+    const bool dbg = (getenv("DFPT_DEBUG") != nullptr);
     for (int iter = 0; iter < max_iter_ && !converged; ++iter) {
         data_.set_current_iter(iter);
 
@@ -256,11 +279,34 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                     }
                 }
             }
+            if (dbg) {
+                double dh = 0.0;
+                double dv = 0.0;
+                for (int ig = 0; ig < pw_rho_->npw; ++ig) {
+                    dh += std::norm(drho_in_g[ig]);
+                }
+                for (int ir = 0; ir < nrxx; ++ir) {
+                    dv += std::norm(v_sc_r[ir]);
+                }
+                std::cout << "DBG iter=" << iter << " |drho_in_g|=" << std::sqrt(dh)
+                          << " |v_sc_r|=" << std::sqrt(dv) << std::endl;
+                if (getenv("DFPT_MDBG") != nullptr) {
+                    static int dump_cnt = 0;
+                    std::ofstream df("/tmp/opencode/drho_iters/it"
+                                     + std::to_string(dump_cnt++) + ".bin",
+                                     std::ios::binary);
+                    for (int ig = 0; ig < pw_rho_->npw; ++ig) {
+                        df.write(reinterpret_cast<const char*>(&drho_in_g[ig]),
+                                 sizeof(std::complex<double>));
+                    }
+                }
+            }
         }
 
         // ---- 2. Sternheimer solve of every occupied (k, band)
         for (int ik = 0; ik < nk; ++ik) {
             if (static_cast<int>(occ_kq_.size()) <= ik || occ_kq_[ik].empty()) {
+                if (dbg) { std::cout << "DBG skip ik=" << ik << " no occ_kq" << std::endl; }
                 continue; // no occupied states at k+q: nothing to solve
             }
             // dV_ext |psi_n> for all bands (dVloc convolution + dVnl_dtau)
@@ -271,6 +317,35 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
             if (ik != last_ik_ || last_q_ != q_idx) {
                 hamilt_->set_context(q_cart, ik);
                 last_ik_ = ik;
+                if (dbg) {
+                    std::cout << "DBG occ_kq nstates=" << occ_kq_[ik].size() << std::endl;
+                    for (size_t m = 0; m < occ_kq_[ik].size(); ++m) {
+                        double nrm = 0.0;
+                        for (size_t i = 0; i < occ_kq_[ik][m].size(); ++i) {
+                            nrm += std::norm(occ_kq_[ik][m][i]);
+                        }
+                        std::cout << "DBG   occ[" << m << "] |psi|^2=" << nrm << std::endl;
+                    }
+                    // kernel consistency: <psi_m|H(k+q)|psi_m> must equal
+                    // eig(ikq, m); the eigenvalue used by set_shift below is
+                    // the k-side one (equal only when H is assembled right)
+                    for (size_t m = 0; m < occ_kq_[ik].size(); ++m) {
+                        hamilt_->set_shift(0.0);
+                        std::vector<std::complex<double>> hp(occ_kq_[ik][m].size());
+                        hamilt_->apply(occ_kq_[ik][m].data(), hp.data());
+                        std::complex<double> dot(0.0, 0.0);
+                        for (size_t i = 0; i < hp.size(); ++i) {
+                            dot += std::conj(occ_kq_[ik][m][i]) * hp[i];
+                        }
+                        std::cout << "DBG   <psi_" << m << "|H|psi_" << m << "> = "
+                                  << dot.real() << " + i " << dot.imag()
+                                  << "  (GS eig " << eig_(ikq_of_k_[ik], static_cast<int>(m)) << ")" << std::endl;
+                        std::cout << "DBG   <psi_" << m << "|T+Vnl|psi_" << m << "> = "
+                                  << hamilt_->debug_t_vnl(occ_kq_[ik][m]) << std::endl;
+                        std::cout << "DBG   <psi_" << m << "|V(wfc-path)|psi_" << m << "> = "
+                                  << hamilt_->debug_v_wfc(occ_kq_[ik][m]) << std::endl;
+                    }
+                }
             }
             for (int ib = 0; ib < nbands; ++ib) {
                 if (wg_(ik, ib) < 1.0e-8) {
@@ -279,6 +354,13 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                 std::vector<std::complex<double>> rhs = data_.get_dpsi(q_idx, ik, ib);
                 if (rhs.empty() || static_cast<int>(dv_sc.size()) != nbands
                     || rhs.size() != dv_sc[ib].size()) {
+                    if (dbg) {
+                        std::cout << "DBG skip solve ik=" << ik << " ib=" << ib
+                                  << " rhs.size=" << rhs.size()
+                                  << " dv_sc.size=" << dv_sc.size()
+                                  << " dv_sc[ib].size=" << (dv_sc.size() > static_cast<size_t>(ib) ? dv_sc[ib].size() : 999999)
+                                  << std::endl;
+                    }
                     continue;
                 }
                 // b = -(dV_ext + dV_sc)|psi_n>
@@ -289,6 +371,19 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                 std::vector<std::complex<double>> dpsi_out;
                 double res = 0.0;
                 stern_.solve(*hamilt_, occ_kq_[ik], rhs, lin_max, lin_thr, dpsi_out, res);
+                if (dbg) {
+                    double nr = 0.0, nb2 = 0.0;
+                    for (size_t i = 0; i < dpsi_out.size(); ++i) {
+                        nr += std::norm(dpsi_out[i]);
+                        nb2 += std::norm(rhs[i]);
+                    }
+                    std::cout << "DBG solve ik=" << ik << " ib=" << ib
+                              << " eps=" << eig_(ik, ib)
+                              << " res=" << res << " |dpsi|=" << std::sqrt(nr)
+                              << " |rhs|=" << std::sqrt(nb2)
+                              << " finite=" << (std::isfinite(std::sqrt(nr)) ? 1 : 0)
+                              << std::endl;
+                }
                 data_.set_dpsi(q_idx, ik, ib, dpsi_out);
             }
         }
@@ -301,6 +396,159 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
         converged = (residual < conv_thr_);
     }
     data_.set_converged(converged);
+
+    // design-phase validation: dump converged self-consistent drho on the
+    // shared real-space grid for direct comparison with finite differences
+    if (dbg && q_idx == 0 && iat == 0 && idir == 0) {
+        const std::vector<std::complex<double>> dg = data_.get_drho_g(q_idx, 0);
+        std::vector<std::complex<double>> dr(pw_rho_->nrxx, std::complex<double>(0.0, 0.0));
+        if (static_cast<int>(dg.size()) == pw_rho_->npw) {
+            pw_rho_->recip2real(dg.data(), dr.data());
+        }
+        std::ofstream df("/tmp/opencode/drho_dfpt.dat");
+        df << pw_rho_->nx << " " << pw_rho_->ny << " " << pw_rho_->nz << "\n";
+        for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
+            df << dr[ir].real() << " " << dr[ir].imag() << "\n";
+        }
+    }
+    // design-phase validation: 8-band perturbation-theory term2 cross-check
+    // for the first displacement of the first atom (q = 0, ik = 0 only)
+    if (dbg && q_idx == 0 && iat == 0 && idir == 0 && nk > 0 && nbands > 4) {
+        // gauge check: <psi_k|dpsi_n> must vanish for occupied k (Sternheimer
+        // gauge); a nonzero admixture pollutes term2 via occ-occ dV elements
+        for (int n = 0; n < 4; ++n) {
+            const std::vector<std::complex<double>>& dps = data_.get_dpsi(q_idx, 0, n);
+            const int npwg = gs_psi_.get_nbasis();
+            if (static_cast<int>(dps.size()) != npwg) {
+                continue;
+            }
+            for (int k = 0; k < 4; ++k) {
+                std::complex<double> dot(0.0, 0.0);
+                for (int ig = 0; ig < npwg; ++ig) {
+                    dot += std::conj(gs_psi_(0, k, ig)) * dps[ig];
+                }
+                std::cout << "PTCHK gauge n=" << n << " k=" << k
+                          << " <psi_k|dpsi_n>=" << dot << std::endl;
+            }
+        }
+        // stash the solved dpsi (apply_dv below reuses the slots)
+        std::vector<std::vector<std::complex<double>>> solved(nbands);
+        for (int ib = 0; ib < nbands; ++ib) {
+            solved[ib] = data_.get_dpsi(q_idx, 0, ib);
+        }
+        const int npw = gs_psi_.get_nbasis();
+        // M[a][m][n] = <psi_m | dV_a | psi_n>
+        std::vector<std::vector<std::vector<std::complex<double>>>> mat(
+            2, std::vector<std::vector<std::complex<double>>>(
+                   nbands, std::vector<std::complex<double>>(nbands, std::complex<double>(0.0, 0.0))));
+        for (int a = 0; a < 2; ++a) {
+            pert_.build_dv(q_idx, a, idir, data_);
+            pert_.apply_dv(q_idx, 0, gs_psi_, data_);
+            for (int n = 0; n < nbands; ++n) {
+                const std::vector<std::complex<double>> dvpsi = data_.get_dpsi(q_idx, 0, n);
+                if (static_cast<int>(dvpsi.size()) != npw) {
+                    continue;
+                }
+                for (int m = 0; m < nbands; ++m) {
+                    std::complex<double> dot(0.0, 0.0);
+                    for (int ig = 0; ig < npw; ++ig) {
+                        dot += std::conj(gs_psi_(0, m, ig)) * dvpsi[ig];
+                    }
+                    mat[a][m][n] = dot;
+                }
+            }
+        }
+        // PT term2 with the 4 empty bands only, b = atom 0 (solved dir)
+        for (int a = 0; a < 2; ++a) {
+            std::complex<double> pt(0.0, 0.0);
+            for (int n = 0; n < 4; ++n) {
+                const double w = wg_(0, n);
+                if (w < 1.0e-8) {
+                    continue;
+                }
+                for (int m = 4; m < nbands; ++m) {
+                    pt += w * std::conj(mat[a][m][n]) * mat[0][m][n]
+                          / (eig_(0, n) - eig_(0, m));
+                }
+            }
+            std::cout << "PTCHK term2(a=" << a << ",b=0) PT-4empty=" << 2.0 * pt << std::endl;
+        }
+        // element dump: M[a][m][n] for m empty, n occupied
+        for (int a = 0; a < 2; ++a) {
+            for (int m = 4; m < nbands; ++m) {
+                for (int n = 0; n < 4; ++n) {
+                    std::cout << "PTCHK M a=" << a << " m=" << m << " n=" << n
+                              << " (" << mat[a][m][n].real() << "," << mat[a][m][n].imag() << ")"
+                              << std::endl;
+                }
+            }
+        }
+        // solved-dpsi band projections <psi_m|dpsi_n>
+        for (int n = 0; n < 4; ++n) {
+            for (int m = 0; m < nbands; ++m) {
+                std::complex<double> dot(0.0, 0.0);
+                for (int ig = 0; ig < npw; ++ig) {
+                    dot += std::conj(gs_psi_(0, m, ig)) * solved[n][ig];
+                }
+                std::cout << "PTCHK proj n=" << n << " m=" << m
+                          << " <psi_m|dpsi_n>=(" << dot.real() << "," << dot.imag() << ")"
+                          << std::endl;
+            }
+        }
+        // Hellmann-Feynman check targets: <psi_n|dV_a|psi_n> vs FD of eps_n
+        for (int a = 0; a < 2; ++a) {
+            for (int n = 0; n < 4; ++n) {
+                std::cout << "PTCHK HF a=" << a << " n=" << n
+                          << " <psi|dV|psi>=" << mat[a][n][n] << std::endl;
+            }
+        }
+        // design-phase validation: rebuild the converged screened potential
+        // and compare de_code(n) = <dV_ext> + <dv_sc> against FD eigenvalue
+        // derivatives (localizes response errors in the screening channel)
+        {
+            const std::vector<std::complex<double>> dg_in = data_.get_drho_g(q_idx, 0);
+            if (static_cast<int>(dg_in.size()) == pw_rho_->npw) {
+                std::vector<std::complex<double>> vha_g;
+                rho_.v_hartree_q(q_cart, dg_in, vha_g);
+                std::vector<std::complex<double>> v_sc_r2(pw_rho_->nrxx, std::complex<double>(0.0, 0.0));
+                std::vector<std::complex<double>> vh_r(pw_rho_->nrxx);
+                pw_rho_->recip2real(vha_g.data(), vh_r.data());
+                std::vector<std::complex<double>> vx_r;
+                if (xc_ != nullptr) {
+                    std::vector<std::complex<double>> ar(pw_rho_->nrxx);
+                    pw_rho_->recip2real(dg_in.data(), ar.data());
+                    xc_->apply(ar, vx_r);
+                }
+                for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
+                    v_sc_r2[ir] = vh_r[ir];
+                    if (static_cast<int>(vx_r.size()) == pw_rho_->nrxx) {
+                        v_sc_r2[ir] += vx_r[ir];
+                    }
+                }
+                std::vector<std::vector<std::complex<double>>> dvsc;
+                pert_.apply_vr(q_idx, 0, v_sc_r2, gs_psi_, q_cart, dvsc);
+                for (int n = 0; n < nbands; ++n) {
+                    const std::vector<std::complex<double>>& v = dvsc[n];
+                    if (static_cast<int>(v.size()) != npw) {
+                        continue;
+                    }
+                    std::complex<double> dot(0.0, 0.0);
+                    for (int ig = 0; ig < npw; ++ig) {
+                        dot += std::conj(gs_psi_(0, n, ig)) * v[ig];
+                    }
+                    std::cout << "PTCHK de n=" << n
+                              << " <psi|dv_sc|psi>=(" << dot.real() << "," << dot.imag() << ")"
+                              << " de_code=" << (mat[0][n][n] + dot).real() << std::endl;
+                }
+            }
+        }
+        // restore the solved dpsi
+        for (int ib = 0; ib < nbands; ++ib) {
+            if (!solved[ib].empty()) {
+                data_.set_dpsi(q_idx, 0, ib, solved[ib]);
+            }
+        }
+    }
     return residual;
 }
 

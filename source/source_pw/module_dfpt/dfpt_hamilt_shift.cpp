@@ -64,6 +64,7 @@ DFPT_HamiltShift::~DFPT_HamiltShift() {}
 
 void DFPT_HamiltShift::set_context(const ModuleBase::Vector3<double>& q_cart, int k_idx) {
     kq_.init(pw_wfc_, q_cart, k_idx);
+    ik_cache_ = k_idx;
     const int npw = kq_.get_npwk();
 
     // rho ig -> shared FFT-cell reverse map, then k+q -> rho through the
@@ -172,6 +173,59 @@ void DFPT_HamiltShift::apply(const std::complex<double>* x, std::complex<double>
             }
         }
     }
+}
+
+double DFPT_HamiltShift::debug_t_vnl(const std::vector<std::complex<double>>& x) const {
+    const int npw = kq_.get_npwk();
+    double ekin = 0.0;
+    for (int igl = 0; igl < npw; ++igl) {
+        ekin += tpiba2_ * kq_.get_gk2(igl) * std::norm(x[igl]);
+    }
+    double vnl = 0.0;
+    for (int iat = 0; iat < ucell_->nat; ++iat) {
+        const int it = ucell_->iat2it[iat];
+        const int nh = ucell_->atoms[it].ncpp.nh;
+        if (nh == 0) {
+            continue;
+        }
+        const std::vector<std::vector<std::complex<double>>>& vkb = vkb_cache_[iat];
+        becp_.assign(nh, std::complex<double>(0.0, 0.0));
+        for (int mu = 0; mu < nh; ++mu) {
+            for (int igl = 0; igl < npw; ++igl) {
+                becp_[mu] += std::conj(vkb[mu][igl]) * x[igl];
+            }
+        }
+        dbecp_.assign(nh, std::complex<double>(0.0, 0.0));
+        for (int mu = 0; mu < nh; ++mu) {
+            for (int nu = 0; nu < nh; ++nu) {
+                if (mu_m_[it][mu] != mu_m_[it][nu]) {
+                    continue;
+                }
+                dbecp_[mu] += ucell_->atoms[it].ncpp.dion(mu_ib_[it][mu], mu_ib_[it][nu]) * becp_[nu];
+            }
+        }
+        for (int mu = 0; mu < nh; ++mu) {
+            vnl += std::real(std::conj(becp_[mu]) * dbecp_[mu]);
+        }
+    }
+    return ekin + vnl;
+}
+
+double DFPT_HamiltShift::debug_v_wfc(const std::vector<std::complex<double>>& x) const {
+    const int npw = kq_.get_npwk();
+    std::vector<std::complex<double>> ur(nrxx_, std::complex<double>(0.0, 0.0));
+    pw_wfc_->recip2real(x.data(), ur.data(), ik_cache_);
+    for (int ir = 0; ir < nrxx_; ++ir) {
+        ur[ir] *= veff_r_[ir];
+    }
+    std::vector<std::complex<double>> xg(pw_wfc_->npwk[ik_cache_], std::complex<double>(0.0, 0.0));
+    pw_wfc_->real2recip(ur.data(), xg.data(), ik_cache_);
+    std::complex<double> dot(0.0, 0.0);
+    const int n = std::min(static_cast<int>(xg.size()), npw);
+    for (int igl = 0; igl < n; ++igl) {
+        dot += std::conj(x[igl]) * xg[igl];
+    }
+    return dot.real();
 }
 
 } // namespace ModuleDFPT

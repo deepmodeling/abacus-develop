@@ -60,9 +60,17 @@ public:
     /// eigenvalue shift (Ry) is set per solve through set_shift.
     void set_context(const ModuleBase::Vector3<double>& q_cart, int k_idx);
     void set_shift(double shift);
-
     int dimension() const override;
+
     void apply(const std::complex<double>* x, std::complex<double>* y) const override;
+
+    /// debug: <x|T + Vnl|x> without the veff convolution (design-phase
+    /// validation diagnostics)
+    double debug_t_vnl(const std::vector<std::complex<double>>& x) const;
+
+    /// debug: <x|V|x> through the ground-state wfc-basis k-indexed FFT
+    /// path (validation of the rho-grid scatter/gather convolution)
+    double debug_v_wfc(const std::vector<std::complex<double>>& x) const;
 
 private:
     const UnitCell* ucell_ = nullptr;
@@ -90,6 +98,8 @@ private:
     mutable std::vector<std::complex<double>> x_r_;
     mutable std::vector<std::complex<double>> becp_;
     mutable std::vector<std::complex<double>> dbecp_;
+
+    int ik_cache_ = 0;
 };
 
 } // namespace ModuleDFPT

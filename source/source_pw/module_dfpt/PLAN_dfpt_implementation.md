@@ -175,5 +175,12 @@
       - `read_inp_sys.cpp`：esolver_types 合法值加 `"dfpt"` + 注释/description 更新；`docs/parameters.yaml` + `docs/advanced/input_files/input-main.md` 同步
     - 验证：`cmake --build` esolver/abacus_pw_para/12 测试目标全绿；ctest 12/12（CELL 4 + DFPT 8）；`abacus_pw_para -h esolver_type` 显示 dfpt 条目；`--version` v3.11.0-beta8；治理仅 determine_type 工厂 1 处豁免 ERROR + 既有 header/docs WARNING
     - 待办（随 B/前置验证）：金刚石端到端声子/ε∞/Z* 对照、`--check-input` 从有效算例目录验证
+- [x] 校准：屏蔽通道三处修复（金刚石 2 原子 smoke，24³ rho 网格，NC PP，Γ 点）
+    - FD/Ewald 锁定基线：e11=+0.08056、e12=−0.08059 Ry/bohr²（预质量 0.0028685/−0.0028701），光学 ~742 cm⁻¹；GS 力 FD 交叉验证 dV 装配（F_x 偏差 0.02%）
+    - 修复 1（dfpt_rho.cpp compute_drho）：q=0 Hermitian 完成的 in-place `drho_g[ig] += conj(drho_g[gm])` 逐点双重处理 ±G 对（第二次访问读到已更新的第一项）→ 结果破坏 Hermitian 性，实空间重建混入 Re a(r) 寄生分量（均匀 ~1.25 过冲、对称违反被放大 1.3-1.8%、A1 投影 3.7%）；最终实现 = 实空间 `2 Re a(r)` 预对称化后再 real2recip（实数组 FFT 本征 Hermitian，单边 stick（−G 不在球内）亦获正确完成值，替代 G 空间逐点镜像）
+    - 修复 2（esolver_dfpt_pw.cpp XC_First_Order_FDM）：前向差分 `Vxc[ρ+δρ]−Vxc[ρ]` 的曲率项 ½Vxc″δρ²（T2⊗T2⊃A1）向 v_sc 泄漏寄生 A1（band0 ⟨dv_sc⟩=+0.0173 违反 A1⊗T2⊗A1 选择定则、占据三重态迹 +0.052）且二次非线性反馈使混合迭代 β=0.7 超指数暴走；改 η=1e-6 中心差分（Re/Im 各一对 cal_v_eff 探测）后泄漏 ~1e-11，默认 β=0.7 恢复收敛
+    - 修复 3（dfpt_pw.cpp solve_displacement）：`reset_mixing` 只清混合器内部态，data 层 `drho_g` 残留上一位移响应（含发散残渣）泄漏进新位移首迭代 v_sc；进入位移时同步清零
+    - 修复后（默认 β=0.7，~76 s）：光学 742.367×3（FD ~742）、声学 6.40×3（ASR：e11+e12=3.1e-6）、e11=0.00286804（目标 0.0028685）、e12=−0.00286494（目标 −0.0028701）、非 irrep 元 ~1e-11、收敛 drho 小群违反 0.000000/A1 投影 5e-6（对称性精确）；裸响应（β=0.001 dump）小群违反 ~0.1% 确认裸链（Sternheimer/dV/dψ）干净
+    - 遗留：迭代后期慢漂移（|drho| 稳定 0.0154 后缓慢爬至 0.043@iter99，不触发收敛旗标；力矩阵不受污染但 drho_r manifest 受污染——FD cmp 比率 3.98 为漂移伪影，修复前干净态比率 1.0285/cos 0.9976）；ε∞/Z* 打印为空（随 B 阶段）；调试插桩（PTCHK/DYNCHK/MDBG dump/VKBCHK/drho dump/DFPT_MIX_BETA env）收尾节点统一清理评审
 - [ ] B 数据层收编
 - [ ] A irrep 分解
