@@ -5450,6 +5450,12 @@ void run_sternheimer_abacus_chi0_output_impl(
             out << "transition_window_Ha unavailable_external_grid\n";
         }
         out << "sternheimer_frequency_mpi " << (use_frequency_mpi ? "yes" : "no") << '\n';
+        out << "sternheimer_channel_mpi " << (use_channel_mpi ? "yes" : "no") << '\n';
+        out << "sternheimer_mpi_layout " << mpi_layout << '\n';
+        out << "equation_owner_formula "
+            << (use_global_equation_mpi ? "occupied_frequency_channel_modulo" : "frequency_group_assignment")
+            << '\n';
+        out << "frequency_group_size " << frequency_group_size << '\n';
         out << "sternheimer_channel_threads " << channel_worker_plan.effective_workers << '\n';
         out << "mpi_ranks " << GlobalV::NPROC << '\n';
         out << "frequency_rank_shift " << frequency_rank_shift << '\n';
@@ -5472,7 +5478,16 @@ void run_sternheimer_abacus_chi0_output_impl(
         out << "ccp_rmesh_times " << ccp_rmesh_times << '\n';
         out << "solver_tolerance " << solver_tolerance << '\n';
         out << "sternheimer_zero_order_source " << (use_lcao_zero_order ? "lcao_ks" : "fd_grid") << '\n';
-        if (use_lcao_zero_order)
+        out << "sternheimer_lcao_virtual_source " << (use_lcao_zero_order ? "ks_bands" : "none") << '\n';
+        out << "sternheimer_lcao_unoccupied_bands_per_spin";
+        for (const SternheimerDeltaSubspace& delta_subspace: delta_subspaces)
+        {
+            out << ' ' << delta_subspace.virtual_states.size();
+        }
+        out << '\n';
+        out << "sternheimer_response_records " << response_count << '\n';
+        out << "sternheimer_response_spin_channels";
+        for (const SternheimerLCAOOccupiedKPoint* response_kpoint: response_kpoints)
         {
             out << "sternheimer_lcao_virtual_source "
                 << sternheimer_lcao_virtual_source_name(lcao_virtual_source) << '\n';
@@ -5534,6 +5549,22 @@ void run_sternheimer_abacus_chi0_output_impl(
             out << "memory_diagnostic STERNHEIMER_SIAB_MEMORY.dat\n";
             out << "target_file sternheimer_matrix.dat\n";
         }
+        out << "occupied_bands " << occupied_bands_total << '\n';
+        out << "occupied_bands_per_spin";
+        for (const auto& occupied: occupied_by_response)
+        {
+            out << ' ' << occupied.size();
+        }
+        out << '\n';
+        out << "occupied_projector_dimension " << occupied_projector_total << '\n';
+        out << "occupied_projector_dimensions_per_spin";
+        for (const auto& occupied_projector: occupied_projector_by_response)
+        {
+            out << ' ' << occupied_projector.size();
+        }
+        out << '\n';
+        out << "abfs_channels " << num_channels << '\n';
+        out << "abfs_source " << abfs_source << '\n';
         out << "sternheimer_delta " << (use_delta_sternheimer ? "yes" : "no") << '\n';
         out << "sternheimer_grid_diagnostics " << (write_grid_diagnostics ? "yes" : "no") << '\n';
         out << "sternheimer_fd_order " << PARAM.inp.sternheimer_fd_order << '\n';
