@@ -70,8 +70,13 @@ class SternheimerFDHamiltonian
     int index(int ix, int iy, int iz) const;
 
   private:
-    template <int Radius>
-    void apply_local(const Vector& psi, Vector& hpsi, int* threads_used) const;
+    static constexpr int max_stencil_radius_ = 4;
+
+    struct ShiftedGridPoint
+    {
+        int index = -1;
+        Complex phase{1.0, 0.0};
+    };
 
     static constexpr int max_stencil_radius_ = 4;
 

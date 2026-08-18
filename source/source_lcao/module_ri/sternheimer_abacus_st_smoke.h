@@ -1066,13 +1066,6 @@ inline void validate_sternheimer_lcao_occupied_kpoints(
                 }
             }
         }
-        for (const auto& band_coefficients: channel.unoccupied_coefficients)
-        {
-            if (band_coefficients.size() != static_cast<std::size_t>(basis_size))
-            {
-                throw std::invalid_argument("Sternheimer LCAO unoccupied coefficient basis size is inconsistent.");
-            }
-        }
     }
 }
 
