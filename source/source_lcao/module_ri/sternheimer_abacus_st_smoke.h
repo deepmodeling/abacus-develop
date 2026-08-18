@@ -4,6 +4,7 @@
 #include "source_lcao/module_ri/sternheimer_abfs_perturbation.h"
 #include "source_lcao/module_ri/sternheimer_abacus_fd_adapter.h"
 #include "source_lcao/module_ri/sternheimer_siab_memory.h"
+#include "source_lcao/module_ri/sternheimer_supercell_sector.h"
 
 #include <algorithm>
 #include <array>
@@ -43,7 +44,7 @@ inline constexpr double default_sternheimer_solver_tolerance() noexcept
     return 1.0e-6;
 }
 
-struct SternheimerLCAOOccupiedChannel
+struct SternheimerLCAOOccupiedKPoint
 {
     int local_k_index = -1;
     int global_k_index = -1;
