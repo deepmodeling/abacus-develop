@@ -347,7 +347,53 @@ std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
     return channels;
 }
 
-std::vector<std::vector<double>> sample_sternheimer_abf_grid_channel_transform(
+std::vector<SternheimerABFGridChannel> describe_sternheimer_abf_grid_channels(
+    const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
+    const std::vector<int>& atom_types,
+    const std::vector<ModuleBase::Vector3<double>>& atom_positions,
+    const int max_channels)
+{
+    if (atom_types.size() != atom_positions.size())
+    {
+        throw std::invalid_argument("Sternheimer ABFS perturbation atom type/position count mismatch.");
+    }
+
+    std::vector<SternheimerABFGridChannel> channels;
+    int channel_index = 0;
+    for (std::size_t iat = 0; iat != atom_types.size(); ++iat)
+    {
+        const int type = atom_types[iat];
+        if (type < 0 || type >= static_cast<int>(radials_by_type.size()))
+        {
+            throw std::invalid_argument("Sternheimer ABFS perturbation atom type is out of range.");
+        }
+        int atom_local_index = 0;
+        for (const SternheimerRadialPerturbation& radial: radials_by_type[static_cast<std::size_t>(type)])
+        {
+            validate_radial(radial);
+            for (int m_index = 0; m_index != 2 * radial.angular_momentum + 1; ++m_index)
+            {
+                if (max_channels > 0 && static_cast<int>(channels.size()) >= max_channels)
+                {
+                    return channels;
+                }
+                SternheimerABFGridChannel channel;
+                channel.channel_index = channel_index++;
+                channel.atom_index = static_cast<int>(iat);
+                channel.atom_local_index = atom_local_index++;
+                channel.type_index = type;
+                channel.angular_momentum = radial.angular_momentum;
+                channel.radial_index = radial.radial_index;
+                channel.magnetic_index = m_index;
+                channel.label = radial.label;
+                channels.push_back(std::move(channel));
+            }
+        }
+    }
+    return channels;
+}
+
+std::vector<SternheimerABFGridChannel> sample_sternheimer_abf_grid_channels(
     const std::vector<std::vector<SternheimerRadialPerturbation>>& radials_by_type,
     const std::vector<int>& atom_types,
     const std::vector<ModuleBase::Vector3<double>>& atom_positions,
