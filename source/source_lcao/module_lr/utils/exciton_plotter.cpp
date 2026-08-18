@@ -624,7 +624,7 @@ std::vector<std::vector<std::complex<double>>> ExcitonPlotter<T>::build_conditio
             {
                 const Complex fixed_wfc = std::conj(
                     this->orb_eval_
-                        .eval_wfc_bloch<T>(r_fix, ik, io, this->psi_ks_vec[0], this->ucell, this->kv.kvec_d[ik]));
+                        .template eval_wfc_bloch<T>(r_fix, ik, io, this->psi_ks_vec[0], this->ucell, this->kv.kvec_d[ik]));
                 for (int iv = 0; iv < nvirt; ++iv)
                 {
                     mixing[ik][iv] += this->X[offset_b + x_start + iv + io * nvirt] * fixed_wfc;
@@ -635,7 +635,7 @@ std::vector<std::vector<std::complex<double>>> ExcitonPlotter<T>::build_conditio
         {
             for (int iv = 0; iv < nvirt; ++iv)
             {
-                const Complex fixed_wfc = this->orb_eval_.eval_wfc_bloch<T>(r_fix,
+                const Complex fixed_wfc = this->orb_eval_.template eval_wfc_bloch<T>(r_fix,
                                                                             ik,
                                                                             nocc + iv,
                                                                             this->psi_ks_vec[0],

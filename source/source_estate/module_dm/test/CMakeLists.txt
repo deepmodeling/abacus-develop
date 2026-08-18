@@ -46,5 +46,6 @@ AddTest(
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/base_matrix.cpp
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/hcontainer.cpp
   ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/atom_pair.cpp
+  ${ABACUS_SOURCE_DIR}/source_hamilt/module_hcontainer/func_folding.cpp
   ${ABACUS_SOURCE_DIR}/source_basis/module_ao/parallel_orbitals.cpp
 )

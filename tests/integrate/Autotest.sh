@@ -115,8 +115,8 @@ check_out(){
     for key in $properties; do
     
         if [ $key == "totaltimeref" ]; then
-            # echo "time=$cal ref=$ref"
-            break
+            # totaltimeref is not compared (wall-clock dependent)
+            continue
         fi
 
         #--------------------------------------------------
@@ -294,6 +294,12 @@ for dir in $testdir; do
             if test -z $g
             then
                 bash -e ../../integrate/tools/catch_properties.sh result.out
+                # optional case-local extra checks: if check_extra.py exists,
+                # it is run as `python3 check_extra.py <abacus> <np> <case_dir>`
+                # and its stdout (key-value lines) is appended to result.out
+                if test -e check_extra.py; then
+                    python3 check_extra.py "$abacus" "$np" "$(pwd)" >> result.out
+                fi
                 if [ $? -ne 0 ]; then
                     echo -e "\e[0;31m [ERROR     ]  Fatal Error in catch_properties.sh \e[0m"
                     let fatal++
@@ -308,6 +314,9 @@ for dir in $testdir; do
                 fi
             else
                 bash -e ../../integrate/tools/catch_properties.sh result.ref
+                if test -e check_extra.py; then
+                    python3 check_extra.py "$abacus" "$np" "$(pwd)" >> result.ref
+                fi
             fi
         fi
 

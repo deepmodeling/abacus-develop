@@ -444,7 +444,7 @@ void Output_Mulliken<TK>::collect_MW(ModuleBase::matrix& MecMulP, const ModuleBa
                     const int ic = this->ParaV_->global2local_col(k2);
                     // note that mud is column major
                     MecMulP(1, j) += mud(ic, ir).real();
-                    // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
+                    // M_y = Re[i*(M_updown - M_downup)] = Im(M_downup) - Im(M_updown)
                     MecMulP(2, j) -= mud(ic, ir).imag();
                 }
                 if (this->ParaV_->in_this_processor(k2, k1))
@@ -452,7 +452,7 @@ void Output_Mulliken<TK>::collect_MW(ModuleBase::matrix& MecMulP, const ModuleBa
                     const int ir = this->ParaV_->global2local_row(k2);
                     const int ic = this->ParaV_->global2local_col(k1);
                     MecMulP(1, j) += mud(ic, ir).real();
-                    // M_y = i(M_{up,down} - M_{down,up}) = -(M_{up,down} - M_{down,up}).imag()
+                    // M_y = Re[i*(M_updown - M_downup)] = Im(M_downup) - Im(M_updown)
                     MecMulP(2, j) += mud(ic, ir).imag();
                 }
                 if (this->ParaV_->in_this_processor(k2, k2))

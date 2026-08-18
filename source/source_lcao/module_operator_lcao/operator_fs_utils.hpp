@@ -145,7 +145,11 @@ void cal_force_stress_2center(
                         // Calculate force contribution with compile-time sign
                         if (cal_force)
                         {
-                            // Factor of 2 for Hermitian matrix will be applied later
+                            // Full R-set summation: both (iat1,iat2,R) and
+                            // (iat2,iat1,-R) pairs are visited once, so the
+                            // finalize step uses factor=1.0 (no factor 2).
+                            // If a half-set iteration is introduced in the
+                            // future, restore factor=2 in finalize_force_stress.
                             for (int i = 0; i < 3; i++)
                             {
                                 force_tmp1[i] += ForceSign * dm_current * olm[i + 1];

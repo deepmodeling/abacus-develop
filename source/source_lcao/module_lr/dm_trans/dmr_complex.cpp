@@ -43,13 +43,14 @@ namespace elecstate
                         for (int ik = 0; ik < this->_nk; ++ik)
                         {
                             if (ik_in >= 0 && ik_in != ik) continue;
-                            // cal k_phase
-                            // if TK==std::complex<double>, kphase is e^{ikR}
+                            // Inverse Fourier transform: D(R) = sum_k D(k) * exp(-i*k*R)
+                            // Phase factor: exp(-i*k*R) = cos(k·R) - i*sin(k·R)
+                            // k-point weights are embedded in DMK, so there is no 1/Nk prefactor.
                             const ModuleBase::Vector3<double> dR(r_index[0], r_index[1], r_index[2]);
                             const double arg = (this->_kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                             double sinp = 0.0, cosp = 0.0;
                             ModuleBase::libm::sincos(arg, &sinp, &cosp);
-                            const std::complex<double> kphase = std::complex<double>(cosp, sinp);
+                            const std::complex<double> kphase = std::complex<double>(cosp, -sinp);
                             // set DMR element
                             std::complex<double>* tmp_DMR_pointer = tmp_matrix->get_pointer();
                             const std::complex<double>* tmp_DMK_pointer

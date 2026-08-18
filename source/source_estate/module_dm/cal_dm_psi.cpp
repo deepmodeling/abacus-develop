@@ -24,6 +24,9 @@ void cal_dm_psi(const Parallel_Orbitals* ParaV,
 
     // dm = wfc.T * wg * wfc.conj()
     // dm[is](iw1,iw2) = \sum_{ib} wfc[is](ib,iw1).T * wg(is,ib) * wfc[is](ib,iw2).conj()
+    // i.e. DMK(μ,ν) = \sum_ib wg_ib * C*_{μ,ib} * C_{ν,ib} = (C f C†)^T = D_std^T.
+    // Consumers that read DMK elements explicitly by (μ,ν) must follow this
+    // transposed convention, not treat DMK as C f C† itself.
 
     for (int ik = 0; ik < wfc.get_nk(); ++ik)
     {
