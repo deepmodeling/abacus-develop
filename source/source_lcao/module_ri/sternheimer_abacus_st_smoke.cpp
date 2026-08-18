@@ -2656,7 +2656,8 @@ void run_sternheimer_periodic_lcao_chi0_output(
                 return make_sternheimer_fd_hamiltonian_from_local_potential(target_grid_data,
                                                                              kpoint_parallel_full_potential,
                                                                              1.0,
-                                                                             std::move(nonlocal_projector));
+                                                                             std::move(nonlocal_projector),
+                                                                             PARAM.inp.sternheimer_fd_order);
             }
             return use_frequency_mpi
                        ? make_sternheimer_fd_full_hamiltonian(
@@ -2665,14 +2666,16 @@ void run_sternheimer_periodic_lcao_chi0_output(
                              ucell,
                              0,
                              1.0,
-                             sternheimer_lcao_grid_kpoint(target_record))
+                             sternheimer_lcao_grid_kpoint(target_record),
+                             PARAM.inp.sternheimer_fd_order)
                        : make_sternheimer_fd_hamiltonian(
                              potential,
                              pw_basis,
                              ucell,
                              0,
                              1.0,
-                             sternheimer_lcao_grid_kpoint(target_record));
+                             sternheimer_lcao_grid_kpoint(target_record),
+                             PARAM.inp.sternheimer_fd_order);
         }();
 
         std::vector<SternheimerFDHamiltonian::Vector> target_occupied_projector;
@@ -3661,7 +3664,7 @@ void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
 
         const SternheimerFDHamiltonian hamiltonian
             = make_sternheimer_fd_hamiltonian(
-                potential, pw_basis, ucell, 0, 1.0, PARAM.inp.sternheimer_fd_order);
+                potential, pw_basis, ucell, 0, 1.0, {0.0, 0.0, 0.0}, PARAM.inp.sternheimer_fd_order);
         const SternheimerFDZeroOrderStates states = solve_fd_zero_order_auto(hamiltonian,
                                                                              num_bands,
                                                                              result.grid_data.volume_element,
@@ -4234,6 +4237,239 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
             if (sampled_ao_functions.empty())
             {
                 throw std::runtime_error("Sternheimer LCAO zero-order input found no sampled AO functions.");
+            }
+        }
+
+        const std::size_t response_count = response_kpoints.size();
+        std::vector<SternheimerFDHamiltonian> hamiltonians;
+        std::vector<SternheimerFDZeroOrderStates> states_by_response(response_count);
+        std::vector<std::vector<SternheimerDeltaGridFunction>> lcao_projector_functions_by_response(response_count);
+        std::vector<std::vector<SternheimerFDHamiltonian::Vector>> occupied_by_response(response_count);
+        std::vector<std::vector<SternheimerFDHamiltonian::Vector>> occupied_projector_by_response(response_count);
+        std::vector<SternheimerDeltaSubspace> delta_subspaces(response_count);
+        hamiltonians.reserve(response_count);
+
+        for (std::size_t response_index = 0; response_index != response_count; ++response_index)
+        {
+            const SternheimerLCAOOccupiedKPoint* response_kpoint = response_kpoints[response_index];
+            const int response_k_index = response_kpoint == nullptr ? 0 : response_kpoint->local_k_index;
+            const int response_spin_index = response_kpoint == nullptr ? 0 : response_kpoint->spin_index;
+            const SternheimerReducedKPoint response_grid_kpoint
+                = response_kpoint == nullptr ? SternheimerReducedKPoint{0.0, 0.0, 0.0}
+                                              : sternheimer_lcao_grid_kpoint(*response_kpoint);
+            hamiltonians.push_back(
+                use_frequency_mpi
+                    ? make_sternheimer_fd_full_hamiltonian(
+                          potential,
+                          pw_basis,
+                          ucell,
+                          response_spin_index,
+                          1.0,
+                          response_grid_kpoint,
+                          PARAM.inp.sternheimer_fd_order)
+                    : make_sternheimer_fd_hamiltonian(
+                          potential,
+                          pw_basis,
+                          ucell,
+                          response_spin_index,
+                          1.0,
+                          response_grid_kpoint,
+                          PARAM.inp.sternheimer_fd_order));
+            append_chi0_progress_event("hamiltonian_ready",
+                                       0,
+                                       -1,
+                                       -1,
+                                       -1,
+                                       0,
+                                       nullptr,
+                                       -1.0,
+                                       elapsed_seconds_since(chi0_start_time),
+                                       "spin=" + std::to_string(response_spin_index + 1)
+                                           + " grid_size=" + std::to_string(grid_data.grid.size()));
+
+            SternheimerFDZeroOrderStates& states = states_by_response[response_index];
+            append_chi0_progress_event("zero_order_start",
+                                       0,
+                                       -1,
+                                       -1,
+                                       -1,
+                                       0,
+                                       nullptr,
+                                       -1.0,
+                                       elapsed_seconds_since(chi0_start_time),
+                                       std::string("spin=") + std::to_string(response_spin_index + 1) + " "
+                                           + (use_lcao_zero_order
+                                                  ? "lcao_sample"
+                                                  : (GlobalV::MY_RANK == 0 ? "fd_solve" : "wait")));
+            if (use_lcao_zero_order)
+            {
+                const int spin_occupied_count = static_cast<int>(response_kpoint->coefficients.size());
+                std::vector<SternheimerDeltaGridFunction> lcao_occupied_functions;
+                lcao_occupied_functions.reserve(static_cast<std::size_t>(spin_occupied_count));
+                states.eigenvalues.reserve(static_cast<std::size_t>(spin_occupied_count));
+                states.wavefunctions.reserve(static_cast<std::size_t>(spin_occupied_count));
+                states.residual_norms.reserve(static_cast<std::size_t>(spin_occupied_count));
+                for (int ib = 0; ib != spin_occupied_count; ++ib)
+                {
+                    const auto& coefficients
+                        = response_kpoint->coefficients[static_cast<std::size_t>(ib)];
+                    if (coefficients.size() != sampled_ao_functions.size())
+                    {
+                        throw std::runtime_error(
+                            "Sternheimer LCAO coefficient basis size does not match sampled AO functions.");
+                    }
+                    SternheimerDeltaGridFunction occupied_function
+                        = linear_combination_delta_sternheimer_grid_functions(sampled_ao_functions, coefficients);
+                    const double norm = sternheimer_fd_grid_norm(occupied_function.values, grid_data.volume_element);
+                    if (norm <= PARAM.inp.sternheimer_delta_norm_tol)
+                    {
+                        throw std::runtime_error("Sternheimer sampled LCAO occupied function has zero norm.");
+                    }
+                    const SternheimerFDHamiltonian::Complex inverse_norm(1.0 / norm, 0.0);
+                    for (auto& value: occupied_function.values)
+                    {
+                        value *= inverse_norm;
+                    }
+                    for (auto& gradient: occupied_function.gradients)
+                    {
+                        for (auto& value: gradient)
+                        {
+                            value *= inverse_norm;
+                        }
+                    }
+                    states.eigenvalues.push_back(response_kpoint->eigenvalues[static_cast<std::size_t>(ib)]);
+                    states.wavefunctions.push_back(occupied_function.values);
+                    states.residual_norms.push_back(0.0);
+                    lcao_occupied_functions.push_back(std::move(occupied_function));
+                }
+                lcao_projector_functions_by_response[response_index]
+                    = orthonormalize_delta_sternheimer_grid_functions(
+                        lcao_occupied_functions,
+                        grid_data.volume_element,
+                        PARAM.inp.sternheimer_delta_norm_tol);
+            }
+            else
+            {
+                if (!use_frequency_mpi || GlobalV::MY_RANK == 0)
+                {
+                    states = solve_fd_zero_order_auto(hamiltonians[response_index],
+                                                      num_bands,
+                                                      grid_data.volume_element,
+                                                      max_dense_size,
+                                                      lanczos_max_subspace_size);
+                }
+                broadcast_zero_order_states(states, grid_data.grid.size(), use_frequency_mpi);
+            }
+            append_chi0_progress_event("zero_order_ready",
+                                       0,
+                                       -1,
+                                       -1,
+                                       -1,
+                                       0,
+                                       nullptr,
+                                       -1.0,
+                                       elapsed_seconds_since(chi0_start_time),
+                                       "spin=" + std::to_string(response_spin_index + 1) + " source="
+                                           + (use_lcao_zero_order ? "lcao_ks" : "fd_grid")
+                                           + " nstates=" + std::to_string(states.wavefunctions.size()));
+            occupied_by_response[response_index]
+                = occupied_wavefunctions_from_states(states, elec_state, response_k_index);
+            if (occupied_by_response[response_index].empty())
+            {
+                throw std::runtime_error("No occupied zero-order states are available for Sternheimer chi0 output.");
+            }
+            occupied_projector_by_response[response_index] = occupied_by_response[response_index];
+            if (use_lcao_zero_order)
+            {
+                occupied_projector_by_response[response_index].clear();
+                occupied_projector_by_response[response_index].reserve(
+                    lcao_projector_functions_by_response[response_index].size());
+                for (const SternheimerDeltaGridFunction& function:
+                     lcao_projector_functions_by_response[response_index])
+                {
+                    occupied_projector_by_response[response_index].push_back(function.values);
+                }
+            }
+        }
+
+        const std::vector<std::vector<double>> potentials = collect_channel_potentials(channels);
+        // ABFS Coulomb potentials are in Ha units; the FD Hamiltonian and omega are in Ry.
+        // Keep Ha potentials for M=V chi0 V output, but use Ry perturbations in the linear equation.
+        const std::vector<std::vector<double>> perturbations_ry = scale_potentials(potentials, kHartreeToRydberg);
+
+        if (use_delta_sternheimer)
+        {
+            append_chi0_progress_event("delta_subspace_start",
+                                       0,
+                                       -1,
+                                       -1,
+                                       -1,
+                                       0,
+                                       nullptr,
+                                       -1.0,
+                                       elapsed_seconds_since(chi0_start_time),
+                                       "candidate_orbitals");
+            std::vector<SternheimerDeltaGridFunction> loaded_candidate_functions;
+            const std::vector<SternheimerDeltaGridFunction>* candidate_functions = &sampled_ao_functions;
+            if (candidate_functions->empty())
+            {
+                loaded_candidate_functions = build_lcao_candidate_grid_functions(ucell, grid_data.grid);
+                candidate_functions = &loaded_candidate_functions;
+            }
+            if (candidate_functions->empty())
+            {
+                throw std::runtime_error("Sternheimer delta mode found no sampled LCAO candidate orbitals.");
+            }
+
+            for (std::size_t response_index = 0; response_index != response_count; ++response_index)
+            {
+                const SternheimerLCAOOccupiedKPoint* response_kpoint = response_kpoints[response_index];
+                const int response_spin_index = response_kpoint == nullptr ? 0 : response_kpoint->spin_index;
+                std::vector<SternheimerDeltaGridFunction> fd_occupied_functions;
+                const std::vector<SternheimerDeltaGridFunction>* occupied_functions
+                    = &lcao_projector_functions_by_response[response_index];
+                if (occupied_functions->empty())
+                {
+                    fd_occupied_functions.reserve(occupied_by_response[response_index].size());
+                    for (const SternheimerFDHamiltonian::Vector& occupied_wavefunction:
+                         occupied_by_response[response_index])
+                    {
+                        fd_occupied_functions.push_back(make_delta_sternheimer_grid_function_with_fd_gradients(
+                            occupied_wavefunction, grid_data.grid));
+                    }
+                    occupied_functions = &fd_occupied_functions;
+                }
+
+                SternheimerDeltaSubspaceOptions delta_options;
+                delta_options.max_virtual_states = sternheimer_delta_virtual_state_limit(
+                    PARAM.inp.sternheimer_delta_max_states,
+                    static_cast<int>(candidate_functions->size()),
+                    static_cast<int>(occupied_functions->size()));
+                delta_options.norm_tolerance = PARAM.inp.sternheimer_delta_norm_tol;
+                delta_subspaces[response_index]
+                    = build_delta_sternheimer_subspace_by_mode(hamiltonians[response_index],
+                                                               *occupied_functions,
+                                                               *candidate_functions,
+                                                               grid_data.volume_element,
+                                                               delta_options,
+                                                               delta_a_block_mode);
+                if (delta_subspaces[response_index].virtual_states.empty())
+                {
+                    throw std::runtime_error("Sternheimer delta mode produced no fixed virtual states.");
+                }
+                append_chi0_progress_event(
+                    "delta_subspace_ready",
+                    0,
+                    -1,
+                    -1,
+                    -1,
+                    0,
+                    nullptr,
+                    -1.0,
+                    elapsed_seconds_since(chi0_start_time),
+                    "spin=" + std::to_string(response_spin_index + 1)
+                        + " nvirtual="
+                        + std::to_string(delta_subspaces[response_index].virtual_states.size()));
             }
         }
 
