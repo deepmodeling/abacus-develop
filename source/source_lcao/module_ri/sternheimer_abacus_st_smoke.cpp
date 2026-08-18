@@ -4353,7 +4353,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
                 if (!use_frequency_mpi || GlobalV::MY_RANK == 0)
                 {
                     states = solve_fd_zero_order_auto(hamiltonians[response_index],
-                                                      num_bands,
+                                                      fd_num_bands,
                                                       grid_data.volume_element,
                                                       max_dense_size,
                                                       lanczos_max_subspace_size);
