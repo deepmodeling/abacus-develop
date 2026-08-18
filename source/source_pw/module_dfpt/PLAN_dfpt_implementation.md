@@ -89,12 +89,47 @@
 
 ---
 
-## B — 数据层收编
+## B — 工程化收编（2026-08-18 修订：先全流程工程验证，对称性后移）
 
-- `DFPT_IrrepData` 下沉为 `DFPT_PW_Data` 正式数据层（收敛台账、irrep 元数据并入），迁移现有 dfpt 测试。
-- 提交。
+> 决策记录：INPUT 主文件参数（非 dfpt.in 子文件）；irrep 保留接口、优先全流程工程验证；
+> 调试插桩暂缓清理（A 阶段验证后统一收尾）。执行序：B1 → B0 → B2 → B3 → B4，每节点
+> 完成 = 代码 + 构建/回归/治理 + git 提交 + 本文档进度回写，再进入下一节点。
 
-## A — irrep 分解（最后）
+**B1 — INPUT 参数接线（解除硬编码/死代码）**
+- 新增 dfpt 前缀 INPUT 参数：`dfpt_qmesh`(3 int) / `dfpt_qfile`(str，走 `QList::read_from_file`)
+  / `dfpt_compute_q0`(bool) / `dfpt_loto`(bool) / `dfpt_conv_thr` / `dfpt_max_iter` / `dfpt_mix_beta`。
+- `esolver_dfpt_pw.cpp` 删除硬编码（set_qmesh(1,1,1)/conv_thr/max_iter/空桩 set_parameters），
+  改从 `inp` 显式传递（规则 1）；`set_compute_q0`/`set_loto` 死代码开关经此激活。
+- `docs/parameters.yaml` + `input-main.md` 同步；`-h dfpt_*` 与 `--check-input` 验证。
+
+**B0 — 全流程工程验证（数值验收基线）**
+- 真实金刚石 Γ 点（a≈3.567 Å、NC PP、收敛 k 网格；玩具胞 742 cm⁻¹ 仅为 FD 锁定基线）：
+  声子（ASR + 光学支 vs LDA 文献）、ε∞（各向同性 ≈5.3–5.7）、Z*、LO-TO 方向依赖。
+- 非 Γ q：`dfpt_qmesh` + 公度 k 网格（`build_occ_kq` 公度守卫已备）验证 q≠0 全流程。
+- MPI>1 rank 冒烟（当前打印注释自述 single-rank，未验证面）。
+- `--version`/`-h`/`--check-input` 记录；结论回写本文档。
+
+**B2 — ε∞/Z*/LO-TO 输出正式化**
+- esolver design-phase std::cout 转正式输出：多 q 布局、LO-TO 修正后频率（每方向）。
+- loto 方向经数据层传递，消除 run() 中 (1,1,1)/√3 硬编码。
+
+**B3 — Kerker 型预条件混合**
+- `DFPT_Rho` 内自实现 `|G+q|²/(|G+q|²+a²)` 预条件（不引 charge_mixing.h，module_base 无
+  现成 Kerker 已核实）；mix_type 支持 plain/kerker。
+- 验收：λ_A1≈−2.2 模型问题 β=0.7 收敛（β 上界 0.62 解除，JPROBE 复用为验收工具）；
+  金刚石频率与 β 无关（固定点正确性）；`dfpt_mix_beta` 默认回调并文档记录。
+
+**B4 — 数据层收编**
+- 收敛台账（converged_/residuals_/current_iter_ 按 (q,irrep)）并入 `DFPT_PW_Data`；
+  删除 `DFPT_IrrepData` 适配层与 `get_dpsi_obj` static dummy；测试迁移；
+  **保留 (q,irrep) 接口形状**（为 irrep 实装留插槽）；run() 外层 while 记账语义梳理。
+
+**暂缓项（接口保留，后续单独立项）**
+- A irrep 分解：LittleGroup 占位（nirr≡1/空 basis）与 run() 3N 回退保持现状。
+- 插桩清理（PTCHK/DYNCHK/MDBG/JPROBE/VKBCHK/DFPT_MIX_BETA）：B3 验收仍需 JPROBE。
+- KVectorUtils 薄封装删除：随 A 阶段收尾一并处理。
+
+## A — irrep 分解（最后，工程验证完成后立项）
 
 - `module_symmetry/little_group.{h,cpp}`：完整不可约表示表 + 投影算子 → 真实 `get_nirr`/`get_mode_basis`（替换占位 =1/空）。
 - 测试：金刚石/闪锌矿 Γ/X/L 点 irrep 分解与理论表核对。提交。
@@ -184,5 +219,18 @@
     - 后期漂移根因（本轮确诊）：残差降至 5e-5 后指数增长（1.27×/iter）、|in| 恒定而 out 偏离 → 垃圾方向与物理分量正交、混合映射本征值 μ=1.2765 恒定（纯本征模）；本征模身份 = {200} 壳 6 矢等幅实系数 + {111} 壳 8 矢 ±π/4 相位的 Hermitian 实 A1 呼吸模（seed ~1e-6 舍入级）；均匀探针实验（DFPT_JPROBE：注入纯 A1 模 + rhs 去 dV_ext 单迭代直测线性映射）给出 λ_A1 = −2.229（Hartree-only −3.180，XC 削减到 −2.23）——非符号 bug，是最小 G 壳的 Coulomb 刚性（4π/G² 硬核）：plain mixing 收敛条件 −2/β+1<λ 要求 β<0.62，物理 T2 模 λ=−1.42（小 G 头部含量少）在 β=0.7 恰好可收敛，故固定点正确而 A1 通道发散；β=0.4 时 μ_A1=−0.29 稳定
     - 修复：默认 mix_beta 0.7→0.4（注释记录测得的 |λ|~2.2 与 β 上界 2/(1+|λ_min|)，留裕量至 |λ|~5）；DFPT_MIX_BETA env 旋钮保留；β=0.4 时 6 位移全部经收敛旗标退出（平均 ~38 iter，总 228），频率/ele 矩阵与 β 无关逐位一致（固定点正确性再验证），收敛 drho manifest 干净（|FD| 比率 0.99994、cos 0.9993、逐点相对差 3.8%）；后续正解是 Kerker 型预条件混合（随 B 阶段排期）
     - ε∞/Z* 打印为空（随 B 阶段）；调试插桩（PTCHK/DYNCHK/MDBG/JPROBE dump/VKBCHK/drho dump/DFPT_MIX_BETA env）收尾节点统一清理评审
-- [ ] B 数据层收编
-- [ ] A irrep 分解
+- [ ] B 工程化收编（2026-08-18 修订：B1 INPUT 接线 → B0 全流程验证 → B2 输出正式化 → B3 Kerker → B4 数据层）
+    - 修订依据的差距盘点（代码 vs 计划交叉核对，2026-08-18）：
+      ① `set_compute_q0`/`set_loto` 全仓库无调用者（死代码，q0/loto 分支不可达）；
+      ② `set_parameters("dfpt.in")` 空桩 + esolver 硬编码 `set_qmesh(1,1,1)`/conv_thr/max_iter（非 Γ q 无法从输入驱动）；
+      ③ ε∞/Z* 打印为 design-phase 临时 std::cout（esolver_dfpt_pw.cpp:322，单 rank 假定）；
+      ④ 混合仍 plain β=0.4（Kerker 预条件排期 B3）；
+      ⑤ DFPT_IrrepData irrep 维度占位穿透、get_dpsi_obj 返回 static dummy；
+      ⑥ run() 外层 while 形式化（无条件 set_converged(true))、LO-TO 方向硬编码 (1,1,1)/√3；
+      ⑦ 真实晶格金刚石端到端/非 Γ q/MPI>1 rank 均未冒烟（C7 待办未做）。
+    - [ ] B1 INPUT 参数接线
+    - [ ] B0 全流程工程验证（真实金刚石 Γ / 非 Γ q / MPI 冒烟）
+    - [ ] B2 输出正式化
+    - [ ] B3 Kerker 预条件混合
+    - [ ] B4 数据层收编
+- [ ] A irrep 分解（保留接口，工程验证完成后立项）
