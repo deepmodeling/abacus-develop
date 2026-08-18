@@ -120,10 +120,18 @@ namespace LR
     template<typename TK>
     ModuleBase::matrix LR_Force<TK>::cal_force_hxc_dmtrans(const elecstate::DensityMatrix<TK, double>& dm_trans, const PotHxcLR& pot_hxc)
     {
-        // `dm_trans` (D^X) carries the singlet spin normalization (sqrt(2) per channel), 
-        // so D^X in pot_hxc and cal_pulay_fs together already contribute a factor 2.
-        // So cal_pulay_fs here returns 2*Pulay = Pulay + Hellmann-Feynman force. *2 is not needed here.
-        return PulayForceStress::cal_pulay_fs(dm_trans, this->ucell_, &pot_hxc);
+        // `dm_trans` (D^X) must be SYMMETRIZED before entering here: `cal_pulay_fs` builds v from
+        // rho[D^X] (which only sees the symmetric part) but contracts with D^X as passed, so an
+        // un-symmetrized D^X makes the two slots of the bilinear form Tr[D^X d(K_H)[D^X]] disagree.
+        //
+        // `cal_pulay_fs` returns 2 * sum_{mn} D_{mn} \int (d phi_m) v phi_n, where the factor 2 is
+        // `cal_gint_fvl`'s internal m<->n doubling, i.e. it is exactly the *bra-pair* derivative (Pulay).
+        // The *ket-pair* derivative (Hellmann-Feynman) is equal to it (both slots hold the same D^X), 
+        // so the total needs one more factor 2 (Pulay -> Pulay + Hellmann-Feynman).
+        // Verified on H2/SZ against the analytic 4-center derivative: 4*sum D^sym P = 16.8653548
+        // vs 2*d(ai|ia)/dz = 16.865355 eV/Ang (7 digits).
+        const double pulay_to_total_sym = 2.0;
+        return PulayForceStress::cal_pulay_fs(dm_trans, this->ucell_, &pot_hxc) * pulay_to_total_sym;
     }
 
 #ifdef __EXX

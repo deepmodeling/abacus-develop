@@ -149,14 +149,26 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         // The imag part will be cancelled in the force calculation, so we use double DM(R) to calculate force. 
         // But complex transition DM(R) is still used in energy density matrix calculation.
         const auto& dm_trans_k = cal_dm_trans_pblas(this->X[ispin].template data<T>() + offset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_);
-        auto dm_trans_real =   // D(X), double (FIXME: not enough for periodic system!)
-            LR_Util::build_dm_from_dmk<T, double>(dm_trans_k,
-                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_);
-        LR_Util::transpose_DMR(dm_trans_real, (*this->ucell_).nat); //D(X) is not symmetric, need to transpose for the left side of force calculation
+        // D(X) complex, for the EXX (LibRI) force. Built FIRST and left UN-symmetrized:
+        // the exchange kernel (mu kappa | nu lambda) puts the two indices of one D^X into
+        // different electron coordinates, so Tr[D^X D^X K_exx] = (aa|ii) requires the full
+        // non-symmetric D^X. Symmetrizing would give 1/2[(aa|ii)+(ai|ia)], which is wrong.
+        // (`cal_force_exx_dm_trans` feeds the same tensor to both slots, so it is consistent.)
         auto dm_trans =   // D(X) complex
             LR_Util::build_dm_from_dmk<T, T>(dm_trans_k,
                 this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_);
         LR_Util::transpose_DMR(dm_trans, (*this->ucell_).nat);
+        // D(X) real, for the grid Hxc force. The Coulomb kernel (mu nu | kappa lambda) is
+        // symmetric within each index pair, so it only ever sees the symmetric part of D^X.
+        // In `PulayForceStress::cal_pulay_fs`, `cal_gint_rho` (which builds v) symmetrizes
+        // implicitly, while `cal_gint_fvl`'s internal factor 2 assumes D_{mu nu} = D_{nu mu}.
+        // Passing an un-symmetrized D^X makes the two slots of the bilinear form disagree.
+        // NOTE: `build_dm_from_dmk` symmetrizes `dm_trans_k` IN PLACE, hence the ordering.
+        auto dm_trans_real =   // D(X), double (FIXME: not enough for periodic system!)
+            LR_Util::build_dm_from_dmk<T, double>(dm_trans_k,
+                this->paraMat_, this->nk, this->kv.kvec_d, (*this->ucell_), this->gd, this->orb_cutoff_,
+                /*symmetrize=*/true);
+        LR_Util::transpose_DMR(dm_trans_real, (*this->ucell_).nat);
         // LR_Util::print_DMR(dm_trans, "dm_trans of istate " + std::to_string(istate));
         // difference density matrix 
         std::vector<ct::Tensor> dm_diff_k = cal_dm_diff_pblas(this->X[ispin].template data<T>() + offset, this->paraX_[ispin], c, this->paraC_, this->nbasis, this->nocc[ispin], this->nvirt[ispin], this->paraMat_);
@@ -342,8 +354,9 @@ void ModuleESolver::ESolver_LR<T, TR>::test_force()
     ModuleBase::matrix f_hxc_potgs = lr_force.reproduce_force_gs_loc(dm_gs, *this->pot_gs_hartree);
     ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "GS Hartree force calculated by 'cal_pulay_fs' from potential (eV/Angstrom)", f_hxc_potgs, false);
     ModuleBase::matrix f_hxc_potlr = lr_force.cal_force_hxc_dmtrans(dm_gs, *this->pot[0]);
-    ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "2* GS Hxc force calculated by 'LR_Force' from kernel (eV/Angstrom)", f_hxc_potlr * 2, false);
-    // 2 for spin in f->v. Spin in v->f is already multiplied in the singlet Hartree factor 2.
+    ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "GS Hxc force calculated by 'LR_Force' from kernel (eV/Angstrom)", f_hxc_potlr, false);
+    // `cal_force_hxc_dmtrans` now includes the Pulay -> Pulay+Hellmann-Feynman factor 2 itself,
+    // so this must match the ground-state Hartree force directly (dm_gs is already symmetric).
     /// ======================================= END test 2 =========================================
     ///========================== test 3: H2 SZ 4-center gradients =========================
     if (this->nbasis == 2 && (*this->ucell_).nat == 2)
