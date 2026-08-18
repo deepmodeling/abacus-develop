@@ -8,10 +8,10 @@ Cross-checks the Mulliken per-atom populations/magnetizations
    (OUT.autotest/running_scf.log, "Total magnetism (Bohr mag/cell)"),
    both in magnitude and direction.
 
-This is the calibration called for in docs/dm_dmk_dmr_action_plan.md T6:
-for nspin=4 and multi-k the Mulliken m_y path uses S^T instead of S^dagger, so
-an anomalous m_y deviation (order ||Im S(k)||) would flag the B-class gemm
-change. Measured deviation on this case (Fe, 4x1x1, U=5 eV, converged):
+This calibration targets the nspin=4 multi-k Mulliken m_y path, which uses
+S^T instead of S^dagger: an anomalous m_y deviation (order ||Im S(k)||) would
+flag the B-class gemm change. Measured deviation on this case (Fe, 4x1x1,
+U=5 eV, converged):
   |sum Mulliken - rho_cell| = (0.042, 0.004, 0.044) uB on |m| ~ 5.5 uB/cell,
   i.e. the small components agree as well as the large ones, so no anomalous
   m_y deviation is present and the B-class change is NOT executed.

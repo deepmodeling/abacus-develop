@@ -8,8 +8,7 @@ in the channels individually: the two Fe sites must carry opposite-sign
 magnetizations of comparable magnitude, the O sites must stay (almost)
 non-magnetic, and the spin-channel charges must add up to the total charge.
 Checking the channels separately (rather than only the total charge/force)
-guards against an accidental cancellation of the two channel errors, as
-warned in docs/dm_dmk_dmr_action_plan.md section 8.
+guards against an accidental cancellation of the two channel errors.
 
 Each key is a pass/fail flag: 0.0 = pass, 1.0 = fail. Measured values are
 written to stderr for diagnostics.

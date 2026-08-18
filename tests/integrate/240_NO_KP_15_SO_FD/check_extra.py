@@ -20,9 +20,8 @@ would be machine-fragile, so the harness comparison uses the pass/fail flags.
 
 NOTE on sensitivity: this non-magnetic GaAs SOC case exercises the nonlocal
 SOC force path, but its force is (numerically) identical under the
-e^{-ikR}/e^{+ikR} DMR phase choice (closed-trace protection, see
-docs/dm_dmk_dmr_action_plan.md). The sentinel for the DMR Fourier sign itself
-is the unit test DMTest.T1_fourier_round_trip
+e^{-ikR}/e^{+ikR} DMR phase choice (closed-trace protection). The sentinel
+for the DMR Fourier sign itself is the unit test DMTest.T1_fourier_round_trip
 (source/source_estate/module_dm/test/test_cal_dm_R.cpp), which turns red when
 the sign is flipped. This case guards FD-consistency of the analytic force,
 including the SOC nonlocal contribution.

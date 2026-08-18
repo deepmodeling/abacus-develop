@@ -23,8 +23,8 @@ Checks
 
 NOTE on sensitivity: the current is a closed Frobenius trace with a full R sum,
 so it is protected against the e^{-ikR}/e^{+ikR} DMR phase choice (flipping the
-sign leaves all keys at roundoff; see docs/dm_dmk_dmr_action_plan.md). These
-checks guard against gross pairing/phase breakage (e.g. a mismatched
+sign leaves all keys at roundoff). These checks guard against gross
+pairing/phase breakage (e.g. a mismatched
 phase_hybrid in the hybrid gauge). The DMR sign sentinel is
 DMTest.T1_fourier_round_trip.
 
