@@ -27,6 +27,8 @@
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
+#include <map>
+#include <set>
 #include <complex>
 #include <vector>
 
@@ -202,38 +204,143 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx) {
         kq.init(pw_wfc_, q_cart, ik);
         const int npw_kq = kq.get_npwk();
 
-        // reverse map FFT cell -> per-k G index at ikq (the two k balls are
-        // enumerated per k, only the cell position identifies the G)
-        std::vector<int> jgl_of_cell(pw_wfc_->nxyz, -1);
+        // The congruence match above may fold k+q onto a *different label*
+        // of the same physical point (e.g. k lists holding both (1/2,0,0)
+        // and (-1/2,0,0), which differ by a reciprocal lattice vector).
+        // The two balls then enumerate different G labels: a state of the
+        // ikq ball with vector G' coincides physically with the k+q-ball
+        // vector G when G' + k(ijq) == G + k(ik) + q, i.e.
+        // G' = G + dn with dn = k_d(ik) + q - k_d(ikq) integer in
+        // reciprocal-basis coordinates. Coincident FFT cells identify the
+        // same G only for dn = 0, so match through the G vectors instead.
+        const ModuleBase::Vector3<double> dn = pw_wfc_->kvec_d[ik] + q_frac
+                                               - pw_wfc_->kvec_d[ikq];
+        const double dnr[3] = {std::round(dn.x), std::round(dn.y), std::round(dn.z)};
+        if (std::abs(dn.x - dnr[0]) > 1.0e-6 || std::abs(dn.y - dnr[1]) > 1.0e-6
+            || std::abs(dn.z - dnr[2]) > 1.0e-6) {
+            ModuleBase::WARNING_QUIT("DFPT_PW::build_occ_kq",
+                                     "k+q folds onto a k-list entry with a "
+                                     "non-integer reciprocal offset.");
+        }
+        const int dn_i[3] = {static_cast<int>(dnr[0]),
+                             static_cast<int>(dnr[1]),
+                             static_cast<int>(dnr[2])};
+        const ModuleBase::Matrix3 ginv = pw_wfc_->G.Inverse();
+        // reciprocal-basis integer triple -> per-k index of the ikq ball
+        // (pw_wfc_ is a PW_Basis_K whose gcar holds a per-k ball layout,
+        // not the parent-class global-ig layout: read it through getgcar)
+        std::map<std::vector<int>, int> jgl_of_n;
         for (int jgl = 0; jgl < pw_wfc_->npwk[ikq]; ++jgl) {
-            const int isz = pw_wfc_->getigl2isz(ikq, jgl);
-            const int iz = isz % pw_wfc_->nz;
-            const int is = isz / pw_wfc_->nz;
-            const int ixy = pw_wfc_->is2fftixy[is];
-            const int ix = ixy / pw_wfc_->fftny;
-            const int iy = ixy % pw_wfc_->fftny;
-            jgl_of_cell[(ix * pw_wfc_->ny + iy) * pw_wfc_->nz + iz] = jgl;
+            const ModuleBase::Vector3<double> gf
+                = pw_wfc_->getgcar(ikq, jgl) * ginv;
+            const std::vector<int> key = {static_cast<int>(std::round(gf.x)),
+                                          static_cast<int>(std::round(gf.y)),
+                                          static_cast<int>(std::round(gf.z))};
+            jgl_of_n[key] = jgl;
         }
 
         const int nbands = gs_psi_.get_nbands();
+        int dbg_miss = 0;
+        int dbg_tot = 0;
         for (int m = 0; m < nbands; ++m) {
-            if (wg_(ikq, m) < 1.0e-8) {
+            if (!dfpt_band_occupied(wg_, ikq, m)) {
                 continue; // empty at k+q: outside the P_c projector
             }
             std::vector<std::complex<double>> state(npw_kq, std::complex<double>(0.0, 0.0));
             for (int igl = 0; igl < npw_kq; ++igl) {
-                const int isz = kq.get_ig2isz(igl);
-                const int iz = isz % pw_wfc_->nz;
-                const int is = isz / pw_wfc_->nz;
-                const int ixy = pw_wfc_->is2fftixy[is];
-                const int ix = ixy / pw_wfc_->fftny;
-                const int iy = ixy % pw_wfc_->fftny;
-                const int jgl = jgl_of_cell[(ix * pw_wfc_->ny + iy) * pw_wfc_->nz + iz];
-                if (jgl >= 0) {
-                    state[igl] = gs_psi_(ikq, m, jgl);
+                const ModuleBase::Vector3<double> gf = kq.get_gcar(igl) * ginv;
+                const std::vector<int> key
+                    = {static_cast<int>(std::round(gf.x)) + dn_i[0],
+                       static_cast<int>(std::round(gf.y)) + dn_i[1],
+                       static_cast<int>(std::round(gf.z)) + dn_i[2]};
+                const auto it = jgl_of_n.find(key);
+                if (it != jgl_of_n.end()) {
+                    state[igl] = gs_psi_(ikq, m, it->second);
+                } else {
+                    ++dbg_miss;
                 }
+                ++dbg_tot;
             }
             occ_kq_[ik].push_back(std::move(state));
+        }
+        if (getenv("DFPT_DEBUG") != nullptr) {
+            std::cout << "OCCCHK ik=" << ik << " ikq=" << ikq
+                      << " dn=(" << dn_i[0] << "," << dn_i[1] << "," << dn_i[2] << ")"
+                      << " npw_kq=" << npw_kq
+                      << " npwk_ikq=" << pw_wfc_->npwk[ikq]
+                      << " miss=" << dbg_miss << "/" << dbg_tot << std::endl;
+            if (dbg_miss > 0 && npw_kq > 0) {
+                std::set<std::vector<int>> kq_labels;
+                for (int igl = 0; igl < npw_kq; ++igl) {
+                    const ModuleBase::Vector3<double> gf = kq.get_gcar(igl) * ginv;
+                    kq_labels.insert({static_cast<int>(std::round(gf.x)),
+                                      static_cast<int>(std::round(gf.y)),
+                                      static_cast<int>(std::round(gf.z))});
+                }
+                std::set<std::vector<int>> gs_labels;
+                std::set<int> gs_igs;
+                int ig_max = -1;
+                for (int jgl = 0; jgl < pw_wfc_->npwk[ikq]; ++jgl) {
+                    const int ig = pw_wfc_->getigl2ig(ikq, jgl);
+                    gs_igs.insert(ig);
+                    if (ig > ig_max) {
+                        ig_max = ig;
+                    }
+                    const ModuleBase::Vector3<double> gf
+                        = pw_wfc_->getgcar(ikq, jgl) * ginv;
+                    gs_labels.insert({static_cast<int>(std::round(gf.x)),
+                                      static_cast<int>(std::round(gf.y)),
+                                      static_cast<int>(std::round(gf.z))});
+                }
+                std::cout << "OCCCHK   gs_unique_ig=" << gs_igs.size()
+                          << "/" << pw_wfc_->npwk[ikq]
+                          << " ig_max=" << ig_max
+                          << " npw=" << pw_wfc_->npw
+                          << " npwk_max=" << pw_wfc_->npwk_max
+                          << std::endl;
+                int only_kq = 0;
+                std::cout << "OCCCHK   labels kq=" << kq_labels.size()
+                          << " gs=" << gs_labels.size();
+                for (const auto& k : kq_labels) {
+                    if (gs_labels.count(k) == 0) {
+                        ++only_kq;
+                    }
+                }
+                std::cout << " only_kq=" << only_kq << std::endl;
+                int shown = 0;
+                for (const auto& k : kq_labels) {
+                    if (gs_labels.count(k) == 0) {
+                        std::cout << "OCCCHK   kq-only (" << k[0] << "," << k[1] << ","
+                                  << k[2] << ")";
+                        if (++shown >= 6) {
+                            break;
+                        }
+                    }
+                }
+                if (shown > 0) {
+                    std::cout << std::endl;
+                }
+                shown = 0;
+                for (const auto& k : gs_labels) {
+                    if (kq_labels.count(k) == 0) {
+                        std::cout << "OCCCHK   gs-only (" << k[0] << "," << k[1] << ","
+                                  << k[2] << ")";
+                        if (++shown >= 6) {
+                            break;
+                        }
+                    }
+                }
+                if (shown > 0) {
+                    std::cout << std::endl;
+                }
+                const ModuleBase::Vector3<double> gf0 = kq.get_gcar(0) * ginv;
+                std::cout << "OCCCHK   kq key0 gf=(" << gf0.x << "," << gf0.y << ","
+                          << gf0.z << ")";
+                const ModuleBase::Vector3<double> gj0
+                    = pw_wfc_->getgcar(ikq, 0) * ginv;
+                std::cout << "  ikq gf0=(" << gj0.x << "," << gj0.y << "," << gj0.z << ")"
+                          << std::endl;
+            }
         }
     }
     last_q_ = q_idx;
@@ -269,6 +376,9 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
     bool converged = false;
     double residual = 0.0;
     const bool dbg = (getenv("DFPT_DEBUG") != nullptr);
+    // last screened response potential (hoisted out of the loop: the 2n+1
+    // accumulation below needs the converged v_sc of this displacement)
+    std::vector<std::complex<double>> v_sc_r_last;
     for (int iter = 0; iter < max_iter_ && !converged; ++iter) {
         data_.set_current_iter(iter);
 
@@ -380,6 +490,7 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                 }
             }
         }
+        v_sc_r_last = v_sc_r;
 
         // ---- 2. Sternheimer solve of every occupied (k, band)
         for (int ik = 0; ik < nk; ++ik) {
@@ -426,7 +537,7 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                 }
             }
             for (int ib = 0; ib < nbands; ++ib) {
-                if (wg_(ik, ib) < 1.0e-8) {
+                if (!dfpt_band_occupied(wg_, ik, ib)) {
                     continue; // unoccupied: no Sternheimer equation
                 }
                 std::vector<std::complex<double>> rhs = data_.get_dpsi(q_idx, ik, ib);
@@ -503,6 +614,20 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
         converged = (residual < conv_thr_);
     }
     data_.set_converged(converged);
+    // stash the converged screened potential and dpsi of this displacement
+    // for the two-pass 2n+1 accumulation (term2 cross section needs
+    // dV_ext^b + dV_sc^b and dpsi^b of every displacement)
+    data_.set_vsc_r(iat, idir, v_sc_r_last);
+    {
+        std::vector<std::vector<std::vector<std::complex<double>>>> disp(
+            nk, std::vector<std::vector<std::complex<double>>>(nbands));
+        for (int ik = 0; ik < nk; ++ik) {
+            for (int ib = 0; ib < nbands; ++ib) {
+                disp[ik][ib] = data_.get_dpsi(q_idx, ik, ib);
+            }
+        }
+        data_.set_dpsi_disp(iat, idir, disp);
+    }
 
     // design-phase validation: dump converged self-consistent drho on the
     // shared real-space grid for direct comparison with finite differences
@@ -523,19 +648,21 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
     if (dbg && q_idx == 0 && iat == 0 && idir == 0 && nk > 0 && nbands > 4) {
         // gauge check: <psi_k|dpsi_n> must vanish for occupied k (Sternheimer
         // gauge); a nonzero admixture pollutes term2 via occ-occ dV elements
-        for (int n = 0; n < 4; ++n) {
-            const std::vector<std::complex<double>>& dps = data_.get_dpsi(q_idx, 0, n);
-            const int npwg = gs_psi_.get_nbasis();
-            if (static_cast<int>(dps.size()) != npwg) {
-                continue;
-            }
-            for (int k = 0; k < 4; ++k) {
-                std::complex<double> dot(0.0, 0.0);
-                for (int ig = 0; ig < npwg; ++ig) {
-                    dot += std::conj(gs_psi_(0, k, ig)) * dps[ig];
+        for (int ikg = 0; ikg < nk; ++ikg) {
+            for (int n = 0; n < 4; ++n) {
+                const std::vector<std::complex<double>>& dps = data_.get_dpsi(q_idx, ikg, n);
+                const int npwg = gs_psi_.get_nbasis();
+                if (static_cast<int>(dps.size()) != npwg) {
+                    continue;
                 }
-                std::cout << "PTCHK gauge n=" << n << " k=" << k
-                          << " <psi_k|dpsi_n>=" << dot << std::endl;
+                for (int k = 0; k < 4; ++k) {
+                    std::complex<double> dot(0.0, 0.0);
+                    for (int ig = 0; ig < npwg; ++ig) {
+                        dot += std::conj(gs_psi_(ikg, k, ig)) * dps[ig];
+                    }
+                    std::cout << "PTCHK gauge ik=" << ikg << " n=" << n << " k=" << k
+                              << " <psi_k|dpsi_n>=" << dot << std::endl;
+                }
             }
         }
         // stash the solved dpsi (apply_dv below reuses the slots)
@@ -695,11 +822,20 @@ void DFPT_PW::run() {
                    && irrep_data.get_current_iter(q_idx, irrep) < pimpl_->max_iter_) {
                 if (pimpl_->wired()) {
                     const int nat = pimpl_->ucell_->nat;
+                    // two passes over the 3N displacement basis: first solve
+                    // every displacement to convergence (the 2n+1 accumulation
+                    // of displacement b needs the converged dpsi AND screened
+                    // potential of every column displacement a), then run the
+                    // 2n+1 accumulation for each
                     double worst = 0.0;
                     for (int iat = 0; iat < nat; ++iat) {
                         for (int idir = 0; idir < 3; ++idir) {
                             const double residual = pimpl_->solve_displacement(q_idx, iat, idir);
                             worst = std::max(worst, residual);
+                        }
+                    }
+                    for (int iat = 0; iat < nat; ++iat) {
+                        for (int idir = 0; idir < 3; ++idir) {
                             // 2n+1 accumulation of this converged displacement
                             pimpl_->phon_.accumulate_electron(q_idx, iat, idir,
                                                                pimpl_->gs_psi_,

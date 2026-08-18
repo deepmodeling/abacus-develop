@@ -98,7 +98,7 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
         }
         for (int ib = 0; ib < nbands; ++ib) {
             const double w = wg(ik, ib);
-            if (w < 1.0e-8) {
+            if (!dfpt_band_occupied(wg, ik, ib)) {
                 continue; // unoccupied band: no contribution to the density
             }
             // periodic part u_nk(r) on the shared grid (phase-free FFT)

@@ -193,11 +193,11 @@ void DFPT_Q0::compute_eps(const psi::Psi<std::complex<double>>& psi,
             double chi = 0.0;
             for (int ik = 0; ik < nk; ++ik) {
                 for (int v = 0; v < nbands; ++v) {
-                    if (wg(ik, v) < 1.0e-8) {
+                    if (!dfpt_band_occupied(wg, ik, v)) {
                         continue; // empty
                     }
                     for (int c = 0; c < nbands; ++c) {
-                        if (wg(ik, c) >= 1.0e-8) {
+                        if (dfpt_band_occupied(wg, ik, c)) {
                             continue; // occupied
                         }
                         const double de = eig(ik, c) - eig(ik, v);
@@ -247,7 +247,7 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
             for (int ik = 0; ik < nk; ++ik) {
                 pert_->apply_dv(0, ik, psi, data);
                 for (int v = 0; v < nbands; ++v) {
-                    if (wg(ik, v) < 1.0e-8) {
+                    if (!dfpt_band_occupied(wg, ik, v)) {
                         continue; // empty
                     }
                     const std::vector<std::complex<double>> rhs =

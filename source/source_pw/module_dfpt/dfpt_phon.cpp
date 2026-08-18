@@ -329,12 +329,18 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
     const int nk = psi.get_nk();
     const int nbands = psi.get_nbands();
 
-    // stash the converged dpsi of this displacement (apply_dv reuses the slot)
-    std::vector<std::vector<std::vector<std::complex<double>>>> dpsib(nk);
-    for (int ik = 0; ik < nk; ++ik) {
-        dpsib[ik].resize(nbands);
-        for (int ib = 0; ib < nbands; ++ib) {
-            dpsib[ik][ib] = data.get_dpsi(q_idx, ik, ib);
+    // stash the converged dpsi of this displacement (apply_dv reuses the slot):
+    // prefer the per-displacement store of the two-pass flow; fall back to
+    // the working slots for the legacy interleaved call order
+    std::vector<std::vector<std::vector<std::complex<double>>>> dpsib
+        = data.get_dpsi_disp(atom_idx, dir);
+    if (dpsib.empty() || static_cast<int>(dpsib.size()) < nk
+        || (nk > 0 && static_cast<int>(dpsib[0].size()) < nbands)) {
+        dpsib.assign(nk, std::vector<std::vector<std::complex<double>>>(nbands));
+        for (int ik = 0; ik < nk; ++ik) {
+            for (int ib = 0; ib < nbands; ++ib) {
+                dpsib[ik][ib] = data.get_dpsi(q_idx, ik, ib);
+            }
         }
     }
 
@@ -354,17 +360,23 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
         for (int idir = 0; idir < 3; ++idir) {
             const int cola = 3 * iat + idir;
             // ---- term 2 <dpsi^b | dV^a_ext | psi> over all k,n ----
-            // complex accumulation: at a generic q the single-k matrix
-            // elements are complex (the imaginary parts pair-conjugate over
-            // the k star), and the Hermitian symmetrization in assemble
-            // relies on them.
+            // Hermitian (2n+1) accumulation: the row element gets X_ba and
+            // the transposed element gets conj(X_ba); the self-consistent
+            // response of dpsi^b already contains the screening, and the
+            // Hartree-xc kernel quadratic term cancels the <dpsi|dV_sc|psi>
+            // cross terms by the variational identity, so only the bare
+            // external perturbation appears here
             pert_->build_dv(q_idx, iat, idir, data);
-            std::complex<double> cross(0.0, 0.0);
             const bool dbg2 = (getenv("DFPT_DEBUG") != nullptr);
+            const bool xbk = (getenv("DFPT_XB") != nullptr && rowb == 0
+                              && (cola == 0 || cola == 3 || cola == 1));
+            std::complex<double> cross(0.0, 0.0);
+            std::vector<std::complex<double>> cross_k;
             for (int ik = 0; ik < nk; ++ik) {
                 pert_->apply_dv(q_idx, ik, psi, data);
+                std::complex<double> cross_k_sum(0.0, 0.0);
                 for (int ib = 0; ib < nbands; ++ib) {
-                    if (wg(ik, ib) < 1.0e-8) {
+                    if (!dfpt_band_occupied(wg, ik, ib)) {
                         continue;
                     }
                     const std::vector<std::complex<double>> rhs = data.get_dpsi(q_idx, ik, ib);
@@ -373,18 +385,40 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
                         continue;
                     }
                     std::complex<double> dot(0.0, 0.0);
+                    double nsol = 0.0;
+                    double nrhs = 0.0;
                     for (size_t i = 0; i < sol.size(); ++i) {
                         dot += std::conj(sol[i]) * rhs[i];
+                        nsol += std::norm(sol[i]);
+                        nrhs += std::norm(rhs[i]);
                     }
                     cross += wg(ik, ib) * dot;
+                    cross_k_sum += wg(ik, ib) * dot;
+                    if (xbk) {
+                        std::cout << "XB rowb=" << rowb << " cola=" << cola
+                                  << " ik=" << ik << " ib=" << ib
+                                  << " w=" << wg(ik, ib)
+                                  << " dot=(" << dot.real() << "," << dot.imag() << ")"
+                                  << " |sol|=" << std::sqrt(nsol)
+                                  << " |rhs|=" << std::sqrt(nrhs)
+                                  << std::endl;
+                    }
                 }
+                cross_k.push_back(cross_k_sum);
             }
-            dynmat_accum_(rowb, cola) += 2.0 * cross
-                / std::sqrt(ucell_->atoms[ucell_->iat2it[atom_idx]].mass
+            const double mass_norm
+                = std::sqrt(ucell_->atoms[ucell_->iat2it[atom_idx]].mass
                             * ucell_->atoms[ucell_->iat2it[iat]].mass);
+            dynmat_accum_(rowb, cola) += cross / mass_norm;
+            dynmat_accum_(cola, rowb) += std::conj(cross) / mass_norm;
             if (dbg2) {
                 std::cout << "DYNCHK term2 rowb=" << rowb << " cola=" << cola
-                          << " 2cross=" << 2.0 * cross.real() << std::endl;
+                          << " cross=" << cross.real()
+                          << " imag=" << cross.imag();
+                for (size_t ikp = 0; ikp < cross_k.size(); ++ikp) {
+                    std::cout << " k" << ikp << "=" << cross_k[ikp].real();
+                }
+                std::cout << std::endl;
             }
 
             // ---- same-atom anharmonic term <psi | d2_ab V_ext | psi> ----
@@ -408,7 +442,7 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
                     kq.init(pert_->get_pw_wfc(), q_cart, ik);
                     const int npwk_kq = kq.get_npwk();
                     for (int ib = 0; ib < nbands; ++ib) {
-                        if (wg(ik, ib) < 1.0e-8) {
+                        if (!dfpt_band_occupied(wg, ik, ib)) {
                             continue;
                         }
                         pert_->get_pw_wfc()->recip2real(&psi(ik, ib, 0), u_r.data(), ik);
@@ -445,15 +479,24 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
                         d2sum += wg(ik, ib) * expect / static_cast<double>(pw_rho_->nxyz);
                         d2sum_loc += wg(ik, ib) * expect_loc / static_cast<double>(pw_rho_->nxyz);
                         d2sum_nl += wg(ik, ib) * expect_nl / static_cast<double>(pw_rho_->nxyz);
+                        if (dbg2 && ib == 0) {
+                            std::cout << "DYNCHK d2k   rowb=" << rowb << " cola=" << cola
+                                      << " ik=" << ik << " acc=" << d2sum.real() << std::endl;
+                        }
                     }
                 }
-                dynmat_accum_(rowb, cola) += d2sum
-                    / ucell_->atoms[ucell_->iat2it[atom_idx]].mass;
+                const double inv_m
+                    = 1.0 / ucell_->atoms[ucell_->iat2it[atom_idx]].mass;
+                dynmat_accum_(rowb, cola) += d2sum * inv_m;
+                if (cola != rowb) {
+                    dynmat_accum_(cola, rowb) += std::conj(d2sum) * inv_m;
+                }
                 if (dbg2) {
                     std::cout << "DYNCHK d2    rowb=" << rowb << " cola=" << cola
                               << " d2sum=" << d2sum.real()
                               << " loc=" << d2sum_loc.real()
-                              << " nl=" << d2sum_nl.real() << std::endl;
+                              << " nl=" << d2sum_nl.real()
+                              << " imag=" << d2sum.imag() << std::endl;
                 }
             }
         }
@@ -501,6 +544,14 @@ void DFPT_Phon::assemble(int q_idx, DFPT_PW_Data& data) {
                 }
                 std::cout << std::endl;
             }
+            std::cout << "DYNCHK electronic accum matrix (imag):" << std::endl;
+            for (int i = 0; i < nat3; ++i) {
+                std::cout << "DYNCHK elei row " << i << ":";
+                for (int j = 0; j < nat3; ++j) {
+                    std::cout << " " << dynmat_accum_(i, j).imag();
+                }
+                std::cout << std::endl;
+            }
         }
         for (int i = 0; i < nat3; ++i) {
             for (int j = 0; j < nat3; ++j) {
@@ -542,9 +593,50 @@ void DFPT_Phon::diagonalize(int q_idx, DFPT_PW_Data& data) {
     int info = 0;
     LapackConnector::zheev('N', 'U', nat3, dyn, nat3, w.data(), work.data(), -1,
                            rwork.data(), &info);
+    if (getenv("DFPT_DEBUG") != nullptr) {
+        std::vector<std::complex<double>> auxp(nat3 * nat3);
+        for (int i = 0; i < nat3; ++i) {
+            for (int j = 0; j < nat3; ++j) {
+                auxp[i * nat3 + j] = dyn(j, i);
+            }
+        }
+        std::cout << "DYNCHK4 pre-call dyn (logical rows):" << std::endl;
+        for (int i = 0; i < nat3; ++i) {
+            std::cout << "DYNCHK4 row " << i << ":";
+            for (int j = 0; j < nat3; ++j) {
+                std::cout << " " << dyn(i, j);
+            }
+            std::cout << std::endl;
+        }
+        std::vector<double> w2(nat3, 0.0);
+        std::vector<double> rwork2(std::max(1, 3 * nat3 - 2), 0.0);
+        std::vector<std::complex<double>> wq(1);
+        int infoq = 0;
+        zheev_("N", "U", &nat3, auxp.data(), &nat3, w2.data(), wq.data(),
+               new int(-1), rwork2.data(), &infoq);
+        const int lwork2 = static_cast<int>(wq[0].real());
+        std::cout << "DYNCHK4 query lwork=" << lwork2 << " infoq=" << infoq << std::endl;
+        std::vector<std::complex<double>> work2(std::max(1, lwork2));
+        int info2 = 0;
+        zheev_("N", "U", &nat3, auxp.data(), &nat3, w2.data(), work2.data(),
+               new int(std::max(1, lwork2)), rwork2.data(), &info2);
+        std::cout << "DYNCHK4 direct zheev_ info=" << info2 << " eig:";
+        for (int i = 0; i < nat3; ++i) {
+            std::cout << " " << w2[i];
+        }
+        std::cout << std::endl;
+    }
     work.resize(std::max(1, static_cast<int>(work[0].real())));
     LapackConnector::zheev('N', 'U', nat3, dyn, nat3, w.data(), work.data(),
-                           static_cast<int>(work.size()), rwork.data(), &info);
+                            static_cast<int>(work.size()), rwork.data(), &info);
+    if (getenv("DFPT_DEBUG") != nullptr) {
+        std::cout << "DYNCHK4 connector w info=" << info << " workopt=" << work.size()
+                  << " eig:";
+        for (int i = 0; i < nat3; ++i) {
+            std::cout << " " << w[i];
+        }
+        std::cout << std::endl;
+    }
 
     // signed frequencies: omega = sgn(e) sqrt(|e|), converted to cm^-1
     // sqrt(Ry/(bohr^2 amu)) in cm^-1 = sqrt(RYDBERG_SI/amu_kg)/(bohr*2pi*c)

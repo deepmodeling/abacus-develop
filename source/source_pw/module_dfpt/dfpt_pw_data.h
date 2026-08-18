@@ -21,6 +21,23 @@ class Plus_U;
 
 namespace ModuleDFPT {
 
+/// Occupied-band classifier shared by the projector build, the Sternheimer
+/// driver, the response-density accumulation and the 2n+1 assembly. A band
+/// counts as occupied iff its weight exceeds half of the per-k full
+/// reference (band 0 is always the deepest, fully occupied band). A fixed
+/// absolute threshold makes the Sternheimer projector jump between k
+/// samplings: a smeared Fermi-tail band with weight ~1e-6 lands on either
+/// side of 1e-8 depending on where the sampling's Fermi level sits, which
+/// opens or closes its empty-state channel in (H-eps)^-1 and changes the
+/// converged response at the percent level. The majority criterion keeps
+/// that channel open for tail bands (their occupied-type contribution is
+/// f-weighted and negligible), reproducing the insulator limit that
+/// finite-difference references follow.
+inline bool dfpt_band_occupied(const ModuleBase::matrix& wg, int ik, int ib)
+{
+    return wg(ik, ib) > 0.5 * wg(ik, 0);
+}
+
 class DFPT_PW_Data {
 public:
     DFPT_PW_Data();
@@ -122,6 +139,24 @@ public:
     /// lazy allocation: unset / out-of-range reads return an empty vector.
     void set_docc(int q_idx, const std::vector<std::complex<double>>& occ);
     std::vector<std::complex<double>> get_docc(int q_idx) const;
+
+    /// converged screened response potential of displacement (atom, dir):
+    /// the real-space q-shifted complex amplitude v_sc used by the last
+    /// Sternheimer iteration of that displacement. The 2n+1 accumulation
+    /// needs it to complete the term2 cross section
+    /// 2<dpsi^a|dV_ext^b + dV_sc^b|psi> (screening channel).
+    void set_vsc_r(int atom_idx, int dir,
+                   const std::vector<std::complex<double>>& v);
+    std::vector<std::complex<double>> get_vsc_r(int atom_idx, int dir) const;
+
+    /// converged dpsi of displacement (atom, dir), indexed [k][band]; the
+    /// two-pass 2n+1 accumulation reads it back after all displacements of
+    /// the basis have been solved (the working dpsi slots get overwritten by
+    /// later solves).
+    void set_dpsi_disp(int atom_idx, int dir,
+                       const std::vector<std::vector<std::vector<std::complex<double>>>>& d);
+    std::vector<std::vector<std::vector<std::complex<double>>>>
+    get_dpsi_disp(int atom_idx, int dir) const;
     
 private:
     ModuleCell::QList* qlist_ = nullptr;
@@ -161,6 +196,12 @@ private:
     /// DFT+U reservation state (U0)
     const Plus_U* dftu_ = nullptr;
     std::vector<std::vector<std::complex<double>>> docc_;
+
+    /// converged v_sc per displacement (atom, dir): [3*nat] entries
+    std::vector<std::vector<std::complex<double>>> vsc_r_;
+
+    /// converged dpsi per displacement (atom, dir): [3*nat][k][band] entries
+    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> dpsi_disp_;
     
     int max_iter_ = 100;
     double conv_thr_ = 1e-8;

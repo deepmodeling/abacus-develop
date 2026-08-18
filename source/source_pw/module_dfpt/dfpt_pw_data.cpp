@@ -53,6 +53,54 @@ void DFPT_PW_Data::set_docc(int q_idx, const std::vector<std::complex<double>>& 
     docc_[q_idx] = occ;
 }
 
+void DFPT_PW_Data::set_vsc_r(int atom_idx, int dir,
+                             const std::vector<std::complex<double>>& v) {
+    if (atom_idx < 0 || dir < 0 || dir >= 3) {
+        return;
+    }
+    const size_t slot = static_cast<size_t>(3 * atom_idx + dir);
+    if (slot >= vsc_r_.size()) {
+        vsc_r_.resize(slot + 1);
+    }
+    vsc_r_[slot] = v;
+}
+
+std::vector<std::complex<double>> DFPT_PW_Data::get_vsc_r(int atom_idx, int dir) const {
+    if (atom_idx < 0 || dir < 0 || dir >= 3) {
+        return std::vector<std::complex<double>>();
+    }
+    const size_t slot = static_cast<size_t>(3 * atom_idx + dir);
+    if (slot < vsc_r_.size()) {
+        return vsc_r_[slot];
+    }
+    return std::vector<std::complex<double>>();
+}
+
+void DFPT_PW_Data::set_dpsi_disp(
+    int atom_idx, int dir,
+    const std::vector<std::vector<std::vector<std::complex<double>>>>& d) {
+    if (atom_idx < 0 || dir < 0 || dir >= 3) {
+        return;
+    }
+    const size_t slot = static_cast<size_t>(3 * atom_idx + dir);
+    if (slot >= dpsi_disp_.size()) {
+        dpsi_disp_.resize(slot + 1);
+    }
+    dpsi_disp_[slot] = d;
+}
+
+std::vector<std::vector<std::vector<std::complex<double>>>>
+DFPT_PW_Data::get_dpsi_disp(int atom_idx, int dir) const {
+    if (atom_idx < 0 || dir < 0 || dir >= 3) {
+        return std::vector<std::vector<std::vector<std::complex<double>>>>();
+    }
+    const size_t slot = static_cast<size_t>(3 * atom_idx + dir);
+    if (slot < dpsi_disp_.size()) {
+        return dpsi_disp_[slot];
+    }
+    return std::vector<std::vector<std::vector<std::complex<double>>>>();
+}
+
 std::vector<std::complex<double>> DFPT_PW_Data::get_docc(int q_idx) const {
     if (q_idx >= 0 && q_idx < static_cast<int>(docc_.size())) {
         return docc_[q_idx];
