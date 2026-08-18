@@ -140,9 +140,9 @@ endif()
 
 if(BUILD_TESTING)
   add_subdirectory(module_parameter/test)
+  add_subdirectory(test_serial)
   if(ENABLE_MPI)
     add_subdirectory(test)
-    add_subdirectory(test_serial)
   endif()
 endif()
 
