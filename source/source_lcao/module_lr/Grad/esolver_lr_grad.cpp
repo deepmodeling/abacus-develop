@@ -12,7 +12,7 @@ inline void print_force(const std::vector<ModuleBase::matrix>& force, Tstream& o
 {
     const int nstate = force.size();
     ofs << "Gradients of each excited state: (eV/Angstrom)" << std::endl;
-    ofs << std::setprecision(4) << std::setw(6) << "state" << std::setw(6) << "atom"
+    ofs << std::setprecision(6) << std::setw(6) << "state" << std::setw(6) << "atom"
         << std::setw(15) << "x" << std::setw(15) << "y" << std::setw(15) << "z" << std::endl;
     const double fac = ModuleBase::Ry_to_eV / ModuleBase::BOHR_TO_A;
     for (int i = 0;i < nstate;++i)
@@ -216,7 +216,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
 #endif
                 pot_weak, pot_hxc_gs_weak,
                 this->kv, this->gd, this->paraX_, this->paraC_, this->paraMat_,
-                this->xc_kernel);
+                this->xc_kernel, this->spin_types[ispin]);
         if (PARAM.inp.test_force && nocc[0] == 1 && nvirt[0] == 1)
         {
             const std::vector<ct::Tensor>& dm_diff = cal_dm_diff_pblas(this->X[0].template data<T>() + offset, this->paraX_[0], c, this->paraC_, this->nbasis, this->nocc[0], this->nvirt[0], this->paraMat_);

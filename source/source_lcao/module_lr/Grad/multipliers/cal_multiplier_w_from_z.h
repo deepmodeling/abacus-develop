@@ -163,7 +163,9 @@ namespace LR
             op_ht_exx.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);
         // std::cout << "W (H[T+Z])) local +exx terms: " << std::endl;
         // LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
-        if (LR_Util::has_local_xc(xc_kernel))
+        // singlet only: $W^{c,T}$ has no $g^{xc}$ term
+        // (see LR-Grad-formulas/LR-Grad-Zvector-Singlet-Triplet.md, formula (1) for S and T).
+        if (LR_Util::has_local_xc(xc_kernel) && spin_type != "triplet")
             op_gxc.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);
 
         std::cout << "W (H[T+Z]) + W(gxc) terms: " << std::endl;

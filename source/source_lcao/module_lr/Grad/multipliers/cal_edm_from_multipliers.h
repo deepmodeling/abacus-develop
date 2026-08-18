@@ -155,7 +155,8 @@ namespace LR
         const std::vector<Parallel_2D>& px,
         const Parallel_2D& pc,
         const Parallel_Orbitals& pmat,
-        const std::string xc_kernel)
+        const std::string xc_kernel,
+        const std::string& spin_type = "singlet")
     {
         const int nk = kv.get_nks() / nspin;
         // 1. calculate W multiplier 
@@ -167,7 +168,7 @@ namespace LR
 #ifdef __EXX
             exx_lri, exx_alpha,
 #endif
-            pot_hxc_gs, kv, px, pc, p_occ_occ, pmat, xc_kernel);
+            pot_hxc_gs, kv, px, pc, p_occ_occ, pmat, xc_kernel, spin_type);
         std::cout << "W: " << std::endl;
         LR_Util::print_value(W.data(), nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
 
