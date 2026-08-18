@@ -241,6 +241,32 @@
           `-h dfpt_qmesh/dfpt_mix_beta` 验证；回归 14/14（CELL 4 + DFPT 8 + IO 2）；
           治理仅既有豁免 WARNING
     - [ ] B0 全流程工程验证（真实金刚石 Γ / 非 Γ q / MPI 冒烟）
+        - [x] 多 k（nk>1）数值错误根因与修复 `（本轮，6 文件 +374/−57）`
+            - 排除法完成：sym=0/1、v_sc 假设、LAPACK/BLAS、npw 不匹配、球大小不匹配（{L 392, X
+              388} 完全正确）、δρ-cube FD 路线（k 采样噪声地板 >> 位移信号，判死）、d2/计算
+              通道（d2 混合=孤立预测精确一致）
+            - **根因 1（标签折叠）**：build_occ_kq 假设 k+q 球与 k(ikq) 球共享同 FFT 胞 G 标签；
+              {L,−L} 时 −L 折叠到 L 标签（差 b1），标签错位 → 投影态垃圾 → 核检查失败+发散。
+              修复 = 倒格矢整数三元组匹配 f+dn=f'（dn=k(ik)+q−k(ikq)），ikq 侧标签经
+              `PW_Basis_K::getgcar` 读取——关键发现：`collect_local_pw(erf)` 把 gcar 重建为
+              per-k 球布局 [ik*npwk_max+igl]，父类全局 ig 布局已毁（nk=1 曾靠堆残留"幸运"通过）
+            - **根因 2（smearing 投影悬崖）**：wg<1e-8 绝对阈使投影器随 k 采样跳变——{Γ,L} 采样
+              的 E_f 使 L 带占据带尾 w=5e-6 跨过阈值，进入 P_c 投影 → 其空态通道在 (H−ε)⁻¹
+              中关闭 → 收敛响应差 ~10%（X03 +46%、ASR 行和违反 21%）。权重 1% Γ 实验证实损伤
+              与 w_Γ 无关（结构性）；β=0 单迭代实验证实同 rhs/本征值下 |dψ| 差 8%（纯投影效应）。
+              修复 = 共享 `dfpt_band_occupied()`：wg(ik,ib) > 0.5·wg(ik,0)（多数占据判据），
+              一致应用于投影器/求解驱动/drho/2n+1 装配/q0 v-c 划分
+            - FD 验证矩阵（sym=0 金刚石 2 原子，FD 模板 b0_si_k050_fd2/run_fd.py 派生）：
+              单 Γ D00 0.0208553 vs FD 0.020854；单 L 0.0129282 vs FD 0.012927（**新增 FD
+              基准** b0_si_kLL1_fd）；{L,−L} = 单 L 逐位一致（原发散）；{Γ,L} 0.0166416 vs
+              FD 0.016642（原 0.0182462，+9.6%）；{L,X}（两不等价非 Γ 点）与权重偏斜
+              {Γ,L} 变体全部自洽；ASR 行和全部 ~1e-6
+            - 调试方法学沉淀：XB per-(ik,ib) 分解仅 iter-1（v_sc=0）可比但受 GS 采样差异混淆；
+              ASR 行和 = 免 FD 的在跑检测器；跨采样对比仅 {L}vs{L,−L}（BZ 等价）合法
+            - 回归 14/14（CELL 4 + DFPT 8 + IO 2）；治理仅既有 header/docs WARNING
+            - 遗留：调试插桩（OCCCHK miss/集合计数、PTCHK/DYNCHK2/4/XB/MDBG/JPROBE）保留至
+              B0 收尾统一清理（用户决策）；真正的金属分数占据 DFPT（de Gironcoli 成对方程）
+              超出当前绝缘体范围，dfpt_metal 占位
     - [ ] B2 输出正式化
     - [ ] B3 Kerker 预条件混合
     - [ ] B4 数据层收编
