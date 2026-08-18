@@ -209,10 +209,12 @@ void QList::read_from_file(const std::string& filename, UnitCell& ucell) {
         this->normalize_wk(1);
     }
 
-    // no symmetry reduction (no symmetry object in this interface); therefore
-    // no irrep decomposition either -> clear any stale irrep data
-    this->nirr_.clear();
-    this->irrep_modes_.clear();
+    // no symmetry reduction (no symmetry object in this interface), so no
+    // little-group irrep decomposition either; the DFPT driver requires at
+    // least the fallback fully-symmetric placeholder (nirr = 1, empty mode
+    // basis -> solve the full 3N displacement basis)
+    this->nirr_.assign(this->nkstot, 1);
+    this->irrep_modes_.assign(this->nkstot, std::vector<std::vector<int>>(1));
 }
 
 void QList::interpolate_q_between(std::ifstream& ifq, std::vector<ModuleBase::Vector3<double>>& qvec) {

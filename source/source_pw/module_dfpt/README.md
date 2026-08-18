@@ -84,15 +84,21 @@ DFPT_PW
 ModuleDFPT::DFPT_PW dfpt;
 // dftu is a const Plus_U* wired by the esolver layer ONLY when dft_plus_u
 // is enabled; pass nullptr otherwise (DFPT never reads PARAM itself).
-dfpt.init(ucell, psi, nelec, ecutwfc, dftu);
+dfpt.init(ucell, psi, pw_rho, pw_wfc, sf, veff_r, wg, eig, xc, nelec, ecutwfc, dftu);
 dfpt.set_qmesh(4, 4, 4);
 dfpt.set_conv_thr(1e-8);
+dfpt.set_mix_beta(0.4);
+dfpt.set_compute_q0(true);
+dfpt.set_loto(true);
 dfpt.run();
 
 // Get results
 std::vector<double> freq = dfpt.get_phonon_freq(q_idx);
 ModuleBase::matrix eps = dfpt.get_dielectric_tensor();
 ```
+
+The production wiring is INPUT-driven (`esolver_type dfpt` + the `dfpt_*`
+parameters in INPUT); see `docs/advanced/input_files/input-main.md`.
 
 ## Development Status
 

@@ -169,13 +169,16 @@ void ESolver_DFPT_PW::before_all_runners(BaseCell& basecell, const Input_para& i
     ecutwfc_ = inp.ecutwfc;
     dft_plus_u_ = inp.dft_plus_u;
 
-    // static DFPT configuration; the ground-state data wiring happens in
-    // init_dfpt after the SCF has converged
+    // static DFPT configuration from INPUT (explicit passing, rule 1); the
+    // ground-state data wiring happens in init_dfpt after the SCF converges
     dfpt_ = new ModuleDFPT::DFPT_PW();
-    dfpt_->set_parameters("dfpt.in");
-    dfpt_->set_qmesh(1, 1, 1);
-    dfpt_->set_conv_thr(1e-8);
-    dfpt_->set_max_iter(100);
+    dfpt_->set_qmesh(inp.dfpt_qmesh[0], inp.dfpt_qmesh[1], inp.dfpt_qmesh[2]);
+    dfpt_->set_qfile(inp.dfpt_qfile);
+    dfpt_->set_conv_thr(inp.dfpt_conv_thr);
+    dfpt_->set_max_iter(inp.dfpt_max_iter);
+    dfpt_->set_mix_beta(inp.dfpt_mix_beta);
+    dfpt_->set_compute_q0(inp.dfpt_compute_q0);
+    dfpt_->set_loto(inp.dfpt_loto);
 }
 
 void ESolver_DFPT_PW::runner(BaseCell& basecell, const int istep)

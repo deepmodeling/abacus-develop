@@ -72,8 +72,10 @@ public:
     std::vector<int> ikq_of_k_;
 
     int nqx_ = 1, nqy_ = 1, nqz_ = 1;
+    std::string qfile_;
     double conv_thr_ = 1e-8;
     int max_iter_ = 100;
+    double mix_beta_ = 0.4;
 
     bool wired() const { return pw_rho_ != nullptr && pw_wfc_ != nullptr; }
 
@@ -111,8 +113,17 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
     pimpl_->ecutwfc_ = ecutwfc;
     pimpl_->dftu_ = dftu;
 
-    std::vector<int> mp_grid = {pimpl_->nqx_, pimpl_->nqy_, pimpl_->nqz_};
-    pimpl_->qlist_.generate_mesh(ucell, ucell.symm, mp_grid, true);
+    // q points: an explicit q list file overrides the Monkhorst-Pack mesh
+    if (!pimpl_->qfile_.empty()) {
+        pimpl_->qlist_.read_from_file(pimpl_->qfile_, ucell);
+        if (pimpl_->qlist_.get_nq() == 0) {
+            ModuleBase::WARNING_QUIT("DFPT_PW::init",
+                                     "failed to read the DFPT q-point file: " + pimpl_->qfile_);
+        }
+    } else {
+        std::vector<int> mp_grid = {pimpl_->nqx_, pimpl_->nqy_, pimpl_->nqz_};
+        pimpl_->qlist_.generate_mesh(ucell, ucell.symm, mp_grid, true);
+    }
 
     int nq = pimpl_->qlist_.get_nq();
     int nk = psi.get_nk();
@@ -128,9 +139,9 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
         // negative eigenvalues concentrated on the smallest-G shells (the
         // Coulomb stiffness 4pi/G^2; measured lambda ~ -2.2 on {111}/{200}
         // for the diamond smoke case), so the coefficient must stay below
-        // 2 / (1 + |lambda_min|); 0.4 keeps margin up to |lambda| ~ 5; the
-        // env knob is a design-phase calibration aid
-        double mix_beta = 0.4;
+        // 2 / (1 + |lambda_min|); the INPUT default 0.4 keeps margin up to
+        // |lambda| ~ 3; the env knob is a design-phase calibration aid
+        double mix_beta = pimpl_->mix_beta_;
         if (const char* env_beta = getenv("DFPT_MIX_BETA")) {
             const double parsed = atof(env_beta);
             if (parsed > 0.0 && parsed <= 1.0) {
@@ -729,8 +740,8 @@ ModuleBase::matrix DFPT_PW::get_born_charges(int atom_idx) const {
     return pimpl_->data_.get_born(atom_idx);
 }
 
-void DFPT_PW::set_parameters(const std::string& param_file) {
-    (void)param_file;
+void DFPT_PW::set_qfile(const std::string& filename) {
+    pimpl_->qfile_ = filename;
 }
 
 void DFPT_PW::set_qmesh(int nqx, int nqy, int nqz) {
@@ -747,6 +758,20 @@ void DFPT_PW::set_conv_thr(double thr) {
 void DFPT_PW::set_max_iter(int max_iter) {
     pimpl_->max_iter_ = max_iter;
     pimpl_->data_.set_max_iter(max_iter);
+}
+
+void DFPT_PW::set_mix_beta(double beta) {
+    if (beta > 0.0 && beta <= 1.0) {
+        pimpl_->mix_beta_ = beta;
+    }
+}
+
+void DFPT_PW::set_compute_q0(bool flag) {
+    pimpl_->data_.set_compute_q0(flag);
+}
+
+void DFPT_PW::set_loto(bool flag) {
+    pimpl_->data_.set_loto(flag);
 }
 
 } // namespace ModuleDFPT

@@ -71,13 +71,21 @@ public:
 
     ModuleBase::matrix get_born_charges(int atom_idx) const;
 
-    void set_parameters(const std::string& param_file);
+    /// q-point source: a q list file overrides the Monkhorst-Pack q mesh
+    void set_qfile(const std::string& filename);
 
     void set_qmesh(int nqx, int nqy, int nqz);
 
     void set_conv_thr(double thr);
 
     void set_max_iter(int max_iter);
+
+    void set_mix_beta(double beta);
+
+    /// q = 0 response switches (epsilon_inf / Born charges / LO-TO)
+    void set_compute_q0(bool flag);
+
+    void set_loto(bool flag);
 
 private:
     class Impl;

@@ -226,7 +226,7 @@
       ③ ε∞/Z* 打印为 design-phase 临时 std::cout（esolver_dfpt_pw.cpp:322，单 rank 假定）；
       ④ 混合仍 plain β=0.4（Kerker 预条件排期 B3）；
       ⑤ DFPT_IrrepData irrep 维度占位穿透、get_dpsi_obj 返回 static dummy；
-      ⑥ run() 外层 while 形式化（无条件 set_converged(true))、LO-TO 方向硬编码 (1,1,1)/√3；
+      ⑥ run() 外层 while 形式化（无条件 set_converged(true)、LO-TO 方向硬编码 (1,1,1)/√3；
       ⑦ 真实晶格金刚石端到端/非 Γ q/MPI>1 rank 均未冒烟（C7 待办未做）。
     - [ ] B1 INPUT 参数接线
     - [ ] B0 全流程工程验证（真实金刚石 Γ / 非 Γ q / MPI 冒烟）
