@@ -9,7 +9,7 @@
 #include "source_estate/module_dm/cal_dm_psi.h"
 
 #ifdef __EXX
-#include "source_lcao/module_ri/RI_2D_Comm.h"
+#include "source_lcao/module_ri/ri_2d_comm.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #endif
 #include "source_lcao/module_operator_lcao/ekinetic.h"

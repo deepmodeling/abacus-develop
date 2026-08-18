@@ -1,10 +1,10 @@
 #include "esolver_fp.h"
 
 #include "source_cell/cal_ux.h"
-#include "source_estate/module_charge/symmetry_rho.h"
-#include "source_cell/read_pseudo.h"
+#include "source_estate/module_charge/symm_rho.h"
+#include "source_cell/read_pp_ucell.h"
 #include "source_estate/param_update.h"
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
+#include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_output/print_info.h"
@@ -99,8 +99,10 @@ void ESolver_FP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
     //! 9) parallel of FFT grid
+    const int nprocgroup = (PARAM.inp.esolver_type == "sdft") ? GlobalV::NPROC_IN_BNDGROUP : GlobalV::NPROC;
     this->Pgrid.init(this->pw_rhod->nx, this->pw_rhod->ny, this->pw_rhod->nz,
-            this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz);
+            this->pw_rhod->nplane, this->pw_rhod->nrxx, pw_big->nbz, pw_big->bz,
+            nprocgroup);
 
     //! 10) calculate the structure factor
     this->sf.setup(&ucell, Pgrid, this->pw_rhod);

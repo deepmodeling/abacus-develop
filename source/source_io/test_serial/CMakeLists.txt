@@ -6,21 +6,24 @@ abacus_disable_feature_definitions(__MPI)
 add_library(
     io_input_serial
     OBJECT
-    ../module_parameter/read_input_item_system.cpp
-    ../module_parameter/read_input_item_elec_stru.cpp
-    ../module_parameter/read_input_item_relax.cpp
+    ../module_parameter/read_inp_sys.cpp
+    ../module_parameter/read_inp_estruc.cpp
+    ../module_parameter/read_inp_relax.cpp
     ../module_parameter/read_input_item_md.cpp
-    ../module_parameter/read_input_item_ofdft.cpp
+    ../module_parameter/read_inp_ofdft.cpp
     ../module_parameter/read_input_item_sdft.cpp
-    ../module_parameter/read_input_item_tddft.cpp
-    ../module_parameter/read_input_item_deepks.cpp
-    ../module_parameter/read_input_item_model.cpp
-    ../module_parameter/read_input_item_postprocess.cpp  
-    ../module_parameter/read_input_item_exx_dftu.cpp
-    ../module_parameter/read_input_item_other.cpp   
-    ../module_parameter/read_input_item_output.cpp
+    ../module_parameter/read_inp_tddft.cpp
+    ../module_parameter/read_inp_bse.cpp
+    ../module_parameter/read_inp_deepks.cpp
+    ../module_parameter/read_inp_model.cpp
+    ../module_parameter/read_inp_postproc.cpp  
+    ../module_parameter/read_inp_exx_dftu.cpp
+    ../module_parameter/read_inp_other.cpp   
+    ../module_parameter/read_inp_out.cpp
     ../module_parameter/read_input.cpp
     ../module_parameter/read_set_globalv.cpp
+    ../module_parameter/availability.cpp
+    ../module_parameter/availability_validator.cpp
 )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -59,5 +62,5 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_system_variable_test
   LIBS parameter base device io_input_serial
-  SOURCES io_system_variable_test.cpp
+  SOURCES io_sys_var_test.cpp
 )

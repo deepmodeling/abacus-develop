@@ -40,7 +40,7 @@ list(APPEND cell_simple_srcs
     ../read_pp_vwr.cpp
     ../read_pp_blps.cpp
     ../check_atomic_stru.cpp
-    ../read_pseudo.cpp
+    ../read_pp_ucell.cpp
     ../cal_wfc.cpp
     ../cal_nelec_nband.cpp
     ../read_orb.cpp
@@ -107,7 +107,7 @@ AddTest(
 AddTest(
   TARGET MODULE_CELL_read_atoms_helper_test
   LIBS base device
-  SOURCES read_atoms_helper_test.cpp
+  SOURCES read_atoms_hlp_test.cpp
     ../read_atoms.cpp
     ../read_atoms_helper.cpp
     ../cell_tools.cpp
@@ -210,4 +210,15 @@ AddTest(
   TARGET MODULE_CELL_magnetism
   LIBS base device
   SOURCES magnetism_test.cpp ../magnetism.cpp
+)
+
+AddTest(
+  TARGET MODULE_CELL_cif_io
+  LIBS parameter base device
+  SOURCES cif_io_test.cpp ../cif_io.cpp
+)
+
+add_test(NAME MODULE_CELL_cif_io_parallel
+      COMMAND mpirun -np 4 ./MODULE_CELL_cif_io
+      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )

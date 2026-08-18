@@ -2,7 +2,7 @@
 #include "source_base/formatter.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
-#include "source_estate/module_pot/H_Hartree_pw.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
 #include "source_hamilt/module_xc/xc_functional.h"

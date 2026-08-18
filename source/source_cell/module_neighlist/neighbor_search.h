@@ -4,8 +4,11 @@
 #include "source_cell/module_neighlist/neighbor_atom.h"
 #include "source_cell/module_neighlist/bin_manager.h"
 #include "source_cell/module_neighlist/neighbor_list.h"
-#include "source_cell/module_neighlist/atom_provider.h"
 #include "source_cell/module_neighlist/local_atom.h"
+#include "source_cell/base_cell.h"
+
+class MDCell;
+class UnitCell;
 
 /**
  * @brief Neighbor search algorithm for building atom neighbor lists.
@@ -43,23 +46,7 @@ public:
      * @param ucell Unit cell providing atom positions and lattice info.
      * @param sr Search radius (cutoff distance) in Bohr.
      */
-    void init(const AtomProvider& ucell, double sr);
-
-    /**
-     * @brief Initialize from rank-local owned atoms and exchanged ghost atoms.
-     *
-     * This distributed entry point does not inspect a global UnitCell. The
-     * caller is responsible for domain ownership and ghost exchange.
-     *
-     * @param owned_atoms Atoms owned by this rank and used as list centers.
-     * @param ghost_atoms Cutoff halo atoms received from neighboring ranks.
-     * @param sr Search radius (cutoff distance) in Bohr.
-     * @param lat0 Lattice constant in Bohr.
-     */
-    void init_distributed(const std::vector<LocalAtom>& owned_atoms,
-                          const std::vector<LocalAtom>& ghost_atoms,
-                          double sr,
-                          double lat0);
+    void init(BaseCell& cell, double sr);
 
     /**
      * @brief Build the neighbor list for all inside atoms.
@@ -121,7 +108,11 @@ private:
      *
      * @param ucell Unit cell providing lattice vectors.
      */
-    void check_expand_condition(const AtomProvider& ucell, int& glayerX_minus, int& glayerX, int& glayerY_minus, int& glayerY, int& glayerZ_minus, int& glayerZ);
+    void init_from_unitcell_(const UnitCell& ucell, double sr);
+
+    void init_from_mdcell_(const MDCell& cell, double sr);
+
+    void check_expand_condition(const UnitCell& ucell, int& glayerX_minus, int& glayerX, int& glayerY_minus, int& glayerY, int& glayerZ_minus, int& glayerZ);
 
     /**
      * @brief Set member variables by generating periodic images.
@@ -131,7 +122,7 @@ private:
      *
      * @param ucell Unit cell providing atom positions.
      */
-    void set_member_variables(const AtomProvider& ucell, int glayerX_minus, int glayerX, int glayerY_minus, int glayerY, int glayerZ_minus, int glayerZ);
+    void set_member_variables(const UnitCell& ucell, int glayerX_minus, int glayerX, int glayerY_minus, int glayerY, int glayerZ_minus, int glayerZ);
 
     // ========== Data members ==========
 

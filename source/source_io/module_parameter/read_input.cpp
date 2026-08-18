@@ -1,4 +1,5 @@
 #include "read_input.h"
+#include "availability_validator.h"
 
 
 #include <algorithm>
@@ -173,12 +174,33 @@ ReadInput::ReadInput(const int& rank)
     this->item_rt_tddft();
     this->item_tdofdft();
     this->item_lr_tddft();
+    this->item_bse();
     this->item_output();
     this->item_postprocess();
     this->item_model();
     this->item_exx();
     this->item_dftu();
     this->item_others();
+
+    if (!this->input_lists.empty())
+    {
+        std::map<std::string, AvailabilityValueKind> parameter_types;
+        std::map<std::string, AvailabilityExpr> expressions;
+        for (const auto& entry : this->input_lists)
+        {
+            parameter_types[entry.first] = availability_value_kind(entry.second.type);
+            expressions[entry.first] = entry.second.get_availability_expr();
+        }
+        for (const auto& entry : this->input_lists)
+        {
+            validate_availability_expr(entry.first,
+                                       entry.second.get_availability_expr(),
+                                       parameter_types);
+            validate_availability_self_contained(entry.first,
+                                                 entry.second.get_availability_expr(),
+                                                 expressions);
+        }
+    }
 }
 
 void ReadInput::read_parameters(Parameter& param, const std::string& filename_in)
@@ -254,7 +276,8 @@ void ReadInput::create_directory(const Parameter& param)
     //----------------------------------------------------------
     bool out_dir = false;
     if (!param.input.out_app_flag
-        && (param.input.out_hsr[0] == 1 || param.input.out_mat_r[0] || param.input.out_mat_t[0]
+        && ((param.input.out_hsr[0] == 1 || param.input.out_hsr[0] == 2)
+            || param.input.out_mat_r[0] || param.input.out_mat_t[0]
             || param.input.out_mat_dh[0] || param.input.out_mat_ds[0]))
     {
         out_dir = true;

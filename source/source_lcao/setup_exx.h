@@ -5,12 +5,12 @@
 #include "source_cell/klist.h" // k points
 #include "source_io/module_parameter/input_parameter.h" // Input_para
 #include "source_basis/module_ao/parallel_orbitals.h" // parallel orbitals
-#include "source_basis/module_ao/ORB_read.h" // orb
+#include "source_basis/module_ao/orb_read.h" // orb
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 
 // for EXX
 #ifdef __EXX
-// Exx_LRI_Interface forward declaration, full definition in Exx_LRI_interface.h (moved to .cpp)
+// Exx_LRI_Interface forward declaration, full definition in exx_lri_interface.h (moved to .cpp)
 // mohan add 20260605
 template <typename TK, typename TR> class Exx_LRI_Interface;
 #endif

@@ -67,6 +67,7 @@ set(_abacus_feature_definitions
   $<$<BOOL:${ENABLE_LIBRI}>:TEST_EXX_RADIAL=1>
   $<$<BOOL:${ENABLE_EXX_DEV}>:__EXX_DEV>
   $<$<BOOL:${ENABLE_LIBXC}>:__LIBXC>
+  $<$<BOOL:${ENABLE_DFTD4}>:__DFTD4>
   $<$<BOOL:${MATH_INFO}>:GATHER_INFO>)
 
 if(ABACUS_COMMIT_INFO_INCLUDE_DIR)
@@ -565,7 +566,7 @@ list(APPEND device_srcs
   source_hamilt/module_xc/kernels/xc_functional_op.cpp
   source_pw/module_pwdft/kernels/cal_density_real_op.cpp
   source_pw/module_pwdft/kernels/mul_potential_op.cpp
-  source_pw/module_pwdft/kernels/vec_mul_vec_complex_op.cpp
+  source_pw/module_pwdft/kernels/vec_mul_cx_op.cpp
   source_pw/module_pwdft/kernels/exx_cal_energy_op.cpp)
 
 if(USE_CUDA)
@@ -678,7 +679,7 @@ target_link_libraries(
     cell
     parameter
     psi_overall_init
-    psi_initializer
+    psi_init
     psi
     dftu
     deltaspin
@@ -698,6 +699,9 @@ if(ENABLE_LCAO)
       numerical_atomic_orbitals
       lr
       rdmft)
+  if(ENABLE_LIBRI)
+    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE bse)
+  endif()
   if(ENABLE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
   endif()

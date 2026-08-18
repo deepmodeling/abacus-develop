@@ -2,11 +2,14 @@
 
 #ifdef __MPI
 
+#include "source_cell/unitcell.h"
+
 #include <algorithm>
 #include <cassert>
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <map>
 #include <stdexcept>
 
 DomainDecomposition::DomainDecomposition()
@@ -35,6 +38,55 @@ DomainDecomposition::~DomainDecomposition()
     {
         MPI_Comm_free(&cart_comm_);
     }
+}
+
+DomainDecomposition::DomainDecomposition(DomainDecomposition&& other) noexcept
+    : comm_(other.comm_),
+      cart_comm_(other.cart_comm_),
+      owns_cart_comm_(other.owns_cart_comm_),
+      rank_(other.rank_),
+      size_(other.size_),
+      dims_(other.dims_),
+      coords_(other.coords_),
+      margin_(other.margin_),
+      latvec_(other.latvec_),
+      inv_latvec_(other.inv_latvec_),
+      lat0_(other.lat0_),
+      cutoff_(other.cutoff_),
+      skin_(other.skin_)
+{
+    other.comm_ = MPI_COMM_NULL;
+    other.cart_comm_ = MPI_COMM_NULL;
+    other.owns_cart_comm_ = false;
+}
+
+DomainDecomposition& DomainDecomposition::operator=(DomainDecomposition&& other) noexcept
+{
+    if (this != &other)
+    {
+        if (owns_cart_comm_ && cart_comm_ != MPI_COMM_NULL)
+        {
+            MPI_Comm_free(&cart_comm_);
+        }
+        comm_ = other.comm_;
+        cart_comm_ = other.cart_comm_;
+        owns_cart_comm_ = other.owns_cart_comm_;
+        rank_ = other.rank_;
+        size_ = other.size_;
+        dims_ = other.dims_;
+        coords_ = other.coords_;
+        margin_ = other.margin_;
+        latvec_ = other.latvec_;
+        inv_latvec_ = other.inv_latvec_;
+        lat0_ = other.lat0_;
+        cutoff_ = other.cutoff_;
+        skin_ = other.skin_;
+
+        other.comm_ = MPI_COMM_NULL;
+        other.cart_comm_ = MPI_COMM_NULL;
+        other.owns_cart_comm_ = false;
+    }
+    return *this;
 }
 
 double DomainDecomposition::wrap_fractional(double value)
@@ -204,26 +256,33 @@ int DomainDecomposition::owner_rank_from_frac(const ModuleBase::Vector3<double>&
     return rank_from_coords(owner_coords);
 }
 
-void DomainDecomposition::split_owned_atoms_from_ucell(const AtomProvider& ucell,
+void DomainDecomposition::split_owned_atoms_from_ucell(const UnitCell& ucell,
                                                        std::vector<LocalAtom>& owned_atoms) const
 {
     owned_atoms.clear();
-    owned_atoms.reserve(static_cast<size_t>(ucell.get_natom() / std::max(1, size_) + 1));
+    owned_atoms.reserve(static_cast<size_t>(ucell.nat / std::max(1, size_) + 1));
 
-    ModuleNeighList::GlobalAtomId global_id = 0;
-    for (int it = 0; it < ucell.get_ntype(); ++it)
+    for (int it = 0; it < ucell.ntype; ++it)
     {
-        for (int ia = 0; ia < ucell.get_na(it); ++ia)
+        for (int ia = 0; ia < ucell.atoms[it].na; ++ia)
         {
-            const ModuleBase::Vector3<double> original_cart = ucell.get_tau(it, ia);
-            const ModuleBase::Vector3<double> frac = wrapped_frac_from_cart(original_cart);
-            const int owner = owner_rank_from_frac(frac);
-            if (owner == rank_)
-            {
-                const ModuleBase::Vector3<double> wrapped_cart = frac * latvec_;
-                owned_atoms.push_back(LocalAtom(wrapped_cart, frac, it, ia, global_id, owner, false));
-            }
-            ++global_id;
+            const ModuleBase::Vector3<double> original_cart = ucell.atoms[it].tau[ia];
+                const ModuleBase::Vector3<double> frac = wrapped_frac_from_cart(original_cart);
+                const int owner = owner_rank_from_frac(frac);
+                if (owner == rank_)
+                {
+                    const ModuleBase::Vector3<double> wrapped_cart = frac * latvec_;
+                    owned_atoms.push_back(LocalAtom(wrapped_cart,
+                                                    frac,
+                                                    ucell.atoms[it].vel[ia],
+                                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                                    ucell.atoms[it].mbl[ia],
+                                                    ucell.atoms[it].mass / ModuleBase::AU_to_MASS,
+                                                    it,
+                                                    ia,
+                                                    owner,
+                                                    false));
+                }
         }
     }
 }
@@ -314,12 +373,21 @@ DomainDecomposition::PackedAtom DomainDecomposition::pack_atom(
     packed.frac[0] = atom.frac.x;
     packed.frac[1] = atom.frac.y;
     packed.frac[2] = atom.frac.z;
+    packed.vel[0] = atom.vel.x;
+    packed.vel[1] = atom.vel.y;
+    packed.vel[2] = atom.vel.z;
+    packed.force[0] = atom.force.x;
+    packed.force[1] = atom.force.y;
+    packed.force[2] = atom.force.z;
+    packed.mbl[0] = atom.mbl.x;
+    packed.mbl[1] = atom.mbl.y;
+    packed.mbl[2] = atom.mbl.z;
+    packed.mass = atom.mass;
     packed.image_shift[0] = image_shift[0];
     packed.image_shift[1] = image_shift[1];
     packed.image_shift[2] = image_shift[2];
     packed.type = atom.type;
     packed.type_index = atom.type_index;
-    packed.global_id = atom.global_id;
     packed.owner_rank = atom.owner_rank;
     return packed;
 }
@@ -331,13 +399,38 @@ LocalAtom DomainDecomposition::unpack_ghost_atom(const PackedAtom& packed) const
                                                  packed.frac[1] + packed.image_shift[1],
                                                  packed.frac[2] + packed.image_shift[2]);
     const ModuleBase::Vector3<double> cart = image_frac * latvec_;
+    const ModuleBase::Vector3<double> vel(packed.vel[0], packed.vel[1], packed.vel[2]);
+    const ModuleBase::Vector3<double> force(packed.force[0], packed.force[1], packed.force[2]);
+    const ModuleBase::Vector3<int> mbl(packed.mbl[0], packed.mbl[1], packed.mbl[2]);
     return LocalAtom(cart,
                      frac,
+                     vel,
+                     force,
+                     mbl,
+                     packed.mass,
                      packed.type,
                      packed.type_index,
-                     packed.global_id,
                      packed.owner_rank,
                      true);
+}
+
+LocalAtom DomainDecomposition::unpack_owned_atom(const PackedAtom& packed) const
+{
+    const ModuleBase::Vector3<double> frac(packed.frac[0], packed.frac[1], packed.frac[2]);
+    const ModuleBase::Vector3<double> cart = frac * latvec_;
+    const ModuleBase::Vector3<double> vel(packed.vel[0], packed.vel[1], packed.vel[2]);
+    const ModuleBase::Vector3<double> force(packed.force[0], packed.force[1], packed.force[2]);
+    const ModuleBase::Vector3<int> mbl(packed.mbl[0], packed.mbl[1], packed.mbl[2]);
+    return LocalAtom(cart,
+                     frac,
+                     vel,
+                     force,
+                     mbl,
+                     packed.mass,
+                     packed.type,
+                     packed.type_index,
+                     packed.owner_rank,
+                     false);
 }
 
 void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& owned_atoms,
@@ -352,6 +445,7 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
     const int span_y = 2 * nlayer[1] + 1;
     const int span_z = 2 * nlayer[2] + 1;
     const int lookup_size = (2 * nlayer[0] + 1) * span_y * span_z;
+    //assert(lookup_size==slots.size());
     std::vector<int> slot_lookup(static_cast<std::size_t>(lookup_size), -1);
     for (std::size_t islot = 0; islot < slots.size(); ++islot)
     {
@@ -489,6 +583,162 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
         {
             ghost_atoms.push_back(unpack_ghost_atom(recv_atoms[i]));
         }
+    }
+}
+
+void DomainDecomposition::accumulate_ghost_forces(std::vector<LocalAtom>& owned_atoms,
+                                                   std::vector<LocalAtom>& ghost_atoms) const
+{
+    std::map<std::pair<int, int>, std::size_t> owned_lookup;
+    for (std::size_t iat = 0; iat < owned_atoms.size(); ++iat)
+    {
+        const LocalAtom& atom = owned_atoms[iat];
+        owned_lookup[std::make_pair(atom.type, atom.type_index)] = iat;
+    }
+
+    std::vector<std::vector<ForceRecord> > send_buffers(static_cast<std::size_t>(size_));
+    for (std::size_t iat = 0; iat < ghost_atoms.size(); ++iat)
+    {
+        LocalAtom& atom = ghost_atoms[iat];
+        if (atom.owner_rank == rank_)
+        {
+            const std::map<std::pair<int, int>, std::size_t>::const_iterator found
+                = owned_lookup.find(std::make_pair(atom.type, atom.type_index));
+            if (found == owned_lookup.end())
+            {
+                throw std::runtime_error("Cannot match a local ghost force to an owned atom.");
+            }
+            owned_atoms[found->second].force += atom.force;
+        }
+        else
+        {
+            ForceRecord record;
+            record.type = atom.type;
+            record.type_index = atom.type_index;
+            record.force[0] = atom.force.x;
+            record.force[1] = atom.force.y;
+            record.force[2] = atom.force.z;
+            send_buffers[static_cast<std::size_t>(atom.owner_rank)].push_back(record);
+        }
+        atom.force.set(0.0, 0.0, 0.0);
+    }
+
+    std::vector<int> send_counts(static_cast<std::size_t>(size_), 0);
+    std::vector<int> recv_counts(static_cast<std::size_t>(size_), 0);
+    for (int irank = 0; irank < size_; ++irank)
+    {
+        const std::size_t bytes = send_buffers[static_cast<std::size_t>(irank)].size() * sizeof(ForceRecord);
+        if (bytes > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+        {
+            throw std::overflow_error("DomainDecomposition ghost force message exceeds MPI int range.");
+        }
+        send_counts[static_cast<std::size_t>(irank)] = static_cast<int>(bytes);
+    }
+    MPI_Alltoall(&send_counts[0], 1, MPI_INT, &recv_counts[0], 1, MPI_INT, comm_);
+
+    std::vector<int> send_displs(static_cast<std::size_t>(size_), 0);
+    std::vector<int> recv_displs(static_cast<std::size_t>(size_), 0);
+    int total_send_bytes = 0;
+    int total_recv_bytes = 0;
+    for (int irank = 0; irank < size_; ++irank)
+    {
+        send_displs[static_cast<std::size_t>(irank)] = total_send_bytes;
+        recv_displs[static_cast<std::size_t>(irank)] = total_recv_bytes;
+        total_send_bytes += send_counts[static_cast<std::size_t>(irank)];
+        total_recv_bytes += recv_counts[static_cast<std::size_t>(irank)];
+    }
+
+    std::vector<ForceRecord> send_records;
+    send_records.reserve(static_cast<std::size_t>(total_send_bytes / static_cast<int>(sizeof(ForceRecord))));
+    for (int irank = 0; irank < size_; ++irank)
+    {
+        const std::vector<ForceRecord>& records = send_buffers[static_cast<std::size_t>(irank)];
+        send_records.insert(send_records.end(), records.begin(), records.end());
+    }
+    std::vector<ForceRecord> recv_records(static_cast<std::size_t>(total_recv_bytes / static_cast<int>(sizeof(ForceRecord))));
+    MPI_Alltoallv(send_records.empty() ? NULL : reinterpret_cast<const char*>(&send_records[0]),
+                  &send_counts[0], &send_displs[0], MPI_BYTE,
+                  recv_records.empty() ? NULL : reinterpret_cast<char*>(&recv_records[0]),
+                  &recv_counts[0], &recv_displs[0], MPI_BYTE, comm_);
+
+    for (std::size_t irecord = 0; irecord < recv_records.size(); ++irecord)
+    {
+        const ForceRecord& record = recv_records[irecord];
+        const std::map<std::pair<int, int>, std::size_t>::const_iterator found
+            = owned_lookup.find(std::make_pair(record.type, record.type_index));
+        if (found == owned_lookup.end())
+        {
+            throw std::runtime_error("Cannot match a received ghost force to an owned atom.");
+        }
+        LocalAtom& atom = owned_atoms[found->second];
+        atom.force.x += record.force[0];
+        atom.force.y += record.force[1];
+        atom.force.z += record.force[2];
+    }
+}
+
+void DomainDecomposition::migrate_owned_atoms(std::vector<LocalAtom>& owned_atoms) const
+{
+    std::vector<std::vector<PackedAtom> > send_atoms(static_cast<std::size_t>(size_));
+    for (std::size_t i = 0; i < owned_atoms.size(); ++i)
+    {
+        LocalAtom atom = owned_atoms[i];
+        atom.frac = wrapped_frac_from_cart(atom.cart);
+        atom.cart = atom.frac * latvec_;
+        atom.owner_rank = owner_rank_from_frac(atom.frac);
+        atom.is_ghost = false;
+        const std::array<int, 3> no_shift = {{0, 0, 0}};
+        send_atoms[static_cast<std::size_t>(atom.owner_rank)].push_back(pack_atom(atom, no_shift));
+    }
+
+    std::vector<int> send_counts(static_cast<std::size_t>(size_), 0);
+    std::vector<int> recv_counts(static_cast<std::size_t>(size_), 0);
+    for (int irank = 0; irank < size_; ++irank)
+    {
+        send_counts[static_cast<std::size_t>(irank)]
+            = static_cast<int>(send_atoms[static_cast<std::size_t>(irank)].size() * sizeof(PackedAtom));
+    }
+    MPI_Alltoall(&send_counts[0], 1, MPI_INT, &recv_counts[0], 1, MPI_INT, comm_);
+
+    std::vector<int> send_displs(static_cast<std::size_t>(size_), 0);
+    std::vector<int> recv_displs(static_cast<std::size_t>(size_), 0);
+    int total_send_bytes = 0;
+    int total_recv_bytes = 0;
+    for (int irank = 0; irank < size_; ++irank)
+    {
+        send_displs[static_cast<std::size_t>(irank)] = total_send_bytes;
+        recv_displs[static_cast<std::size_t>(irank)] = total_recv_bytes;
+        total_send_bytes += send_counts[static_cast<std::size_t>(irank)];
+        total_recv_bytes += recv_counts[static_cast<std::size_t>(irank)];
+    }
+
+    std::vector<PackedAtom> send_buffer(static_cast<std::size_t>(total_send_bytes / static_cast<int>(sizeof(PackedAtom))));
+    int send_index = 0;
+    for (int irank = 0; irank < size_; ++irank)
+    {
+        const std::vector<PackedAtom>& atoms = send_atoms[static_cast<std::size_t>(irank)];
+        for (std::size_t i = 0; i < atoms.size(); ++i)
+        {
+            send_buffer[static_cast<std::size_t>(send_index++)] = atoms[i];
+        }
+    }
+
+    std::vector<PackedAtom> recv_buffer(static_cast<std::size_t>(total_recv_bytes / static_cast<int>(sizeof(PackedAtom))));
+    MPI_Alltoallv(total_send_bytes > 0 ? reinterpret_cast<const char*>(&send_buffer[0]) : 0,
+                  &send_counts[0],
+                  &send_displs[0],
+                  MPI_BYTE,
+                  total_recv_bytes > 0 ? reinterpret_cast<char*>(&recv_buffer[0]) : 0,
+                  &recv_counts[0],
+                  &recv_displs[0],
+                  MPI_BYTE,
+                  comm_);
+
+    owned_atoms.clear();
+    owned_atoms.reserve(recv_buffer.size());
+    for (std::size_t i = 0; i < recv_buffer.size(); ++i)
+    {
+        owned_atoms.push_back(unpack_owned_atom(recv_buffer[i]));
     }
 }
 

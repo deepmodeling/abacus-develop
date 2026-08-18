@@ -1,9 +1,11 @@
 #include "elpa_new.h"
 
+#include "elpa_runtime_check.h"
+
 #include "elpa_solver.h"
 extern "C"
 {
-#include "Cblacs.h"
+#include "cblacs.h"
 }
 #include "utils.h"
 #include <cfloat>
@@ -212,7 +214,10 @@ void ELPA_Solver::setKernel(bool isReal, int kernel)
     if (isReal)
         elpa_set(NEW_ELPA_HANDLE_POOL[handle_id], "real_kernel", kernel, &error);
     else
+    {
         elpa_set(NEW_ELPA_HANDLE_POOL[handle_id], "complex_kernel", kernel, &error);
+        validate_elpa_complex_kernel(kernel, error, comm);
+    }
 }
 
 void ELPA_Solver::setQR(int useQR)

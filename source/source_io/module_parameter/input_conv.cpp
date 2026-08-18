@@ -17,13 +17,13 @@
 #include <algorithm>
 
 #ifdef __EXX
-#include "source_lcao/module_ri/exx_abfs-jle.h"
+#include "source_lcao/module_ri/exx_abfs_jle.h"
 #endif
 
 #include "source_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
-#include "source_basis/module_ao/ORB_read.h"
-#include "source_lcao/FORCE_STRESS.h"
+#include "source_basis/module_ao/orb_read.h"
+#include "source_lcao/force_stress_lcao.h"
 #include "source_lcao/module_rt/td_info.h"
 #endif
 #ifdef __PEXSI
@@ -133,7 +133,8 @@ void Input_Conv::Convert()
     TD_info::out_current_k = PARAM.inp.out_current_k;
     TD_info::out_vecpot = PARAM.inp.out_vecpot;
     TD_info::init_vecpot_file = PARAM.inp.init_vecpot_file;
-    TD_info::out_mat_R = PARAM.inp.out_hsr[0] == 1 || PARAM.inp.out_hsr[0] == 3 || PARAM.inp.out_hsr_npz_compat;
+    const int out_hsr_format = PARAM.inp.out_hsr[0];
+    TD_info::out_mat_R = (out_hsr_format >= 1 && out_hsr_format <= 3) || PARAM.inp.out_hsr_npz_compat;
 #endif // __LCAO
 
 

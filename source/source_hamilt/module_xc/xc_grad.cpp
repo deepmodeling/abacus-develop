@@ -10,6 +10,7 @@
 
 #include "xc_functional.h"
 #include "source_base/timer.h"
+#include "source_base/constants.h"
 #include "source_basis/module_pw/pw_basis_k.h"
 #include "source_io/module_parameter/parameter.h"
 #include <ATen/core/tensor.h>
@@ -70,6 +71,9 @@ void XC_Functional::gradcorr(
     assert(nspin0>0);
     const double fac = 1.0/ nspin0;
 
+    // Use cached need_laplacian from set_xc_type
+    bool need_laplacian = XC_Functional::get_need_laplacian();
+
     if(is_stress)
     {
         stress_gga.resize(9);
@@ -100,6 +104,10 @@ void XC_Functional::gradcorr(
     double* neg = nullptr;
     double** vsave = nullptr;
     double** vgg = nullptr;
+    std::vector<double> lapl1;
+    std::vector<double> lapl2;
+    std::vector<double> vlapl_arr1;
+    std::vector<double> vlapl_arr2;
 
     // for spin unpolarized case,
     // calculate the gradient of (rho_core+rho) in reciprocal space.
@@ -127,6 +135,16 @@ void XC_Functional::gradcorr(
     }
 
     XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
+
+    if(need_laplacian)
+    {
+        lapl1.resize(rhopw->nrxx);
+        XC_Functional::laplacian_rho(rhogsum1, lapl1.data(), rhopw, ucell->tpiba);
+        if(use_libxc)
+        {
+            vlapl_arr1.resize(rhopw->nrxx, 0.0);
+        }
+    }
 
     // for spin polarized case;
     // calculate the gradient of (rho_core+rho) in reciprocal space.
@@ -156,6 +174,16 @@ void XC_Functional::gradcorr(
         }
 
         XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
+
+        if(need_laplacian)
+        {
+            lapl2.resize(rhopw->nrxx);
+            XC_Functional::laplacian_rho(rhogsum2, lapl2.data(), rhopw, ucell->tpiba);
+            if(use_libxc)
+            {
+                vlapl_arr2.resize(rhopw->nrxx, 0.0);
+            }
+        }
     }
 
     if(nspin == 4&&(domag||domag_z))
@@ -232,6 +260,19 @@ void XC_Functional::gradcorr(
 
         XC_Functional::grad_rho( rhogsum1 , gdr1, rhopw, ucell->tpiba);
         XC_Functional::grad_rho( rhogsum2 , gdr2, rhopw, ucell->tpiba);
+
+        if(need_laplacian)
+        {
+            lapl1.resize(rhopw->nrxx);
+            XC_Functional::laplacian_rho(rhogsum1, lapl1.data(), rhopw, ucell->tpiba);
+            lapl2.resize(rhopw->nrxx);
+            XC_Functional::laplacian_rho(rhogsum2, lapl2.data(), rhopw, ucell->tpiba);
+            if(use_libxc)
+            {
+                vlapl_arr1.resize(rhopw->nrxx, 0.0);
+                vlapl_arr2.resize(rhopw->nrxx, 0.0);
+            }
+        }
     }
 
     const double epsr = 1.0e-6;
@@ -302,8 +343,11 @@ void XC_Functional::gradcorr(
                         if(func_type == 3 || func_type == 5)
                         {
                             double v3xc = 0.0;
+                            double vlaplxc = 0.0;
                             double atau = chr->kin_r[0][ir]/2.0;
-                            XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, atau, sxc, v1xc, v2xc, v3xc, hybrid_alpha_in, hse_omega_in);
+                            double lapl_val = (!lapl1.empty()) ? lapl1[ir] : 0.0;
+                            XC_Functional_Libxc::tau_xc( func_id, arho, grho2a, lapl_val, atau, sxc, v1xc, v2xc, v3xc, vlaplxc, hybrid_alpha_in, hse_omega_in);
+                            if(!vlapl_arr1.empty()) vlapl_arr1[ir] = vlaplxc;
                         }
                         else
                         {
@@ -366,12 +410,18 @@ void XC_Functional::gradcorr(
                     {
                         double v3xcup = 0.0;
                         double v3xcdw = 0.0;
+                        double vlaplxcup = 0.0;
+                        double vlaplxcdw = 0.0;
                         double atau1 = chr->kin_r[0][ir]/2.0;
                         double atau2 = chr->kin_r[1][ir]/2.0;
+                        double laplup_val = (!lapl1.empty()) ? lapl1[ir] : 0.0;
+                        double lapldw_val = (!lapl2.empty()) ? lapl2[ir] : 0.0;
                         XC_Functional_Libxc::tau_xc_spin(
                             func_id,
                             rhotmp1[ir], rhotmp2[ir], gdr1[ir], gdr2[ir],
-                            atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw, hybrid_alpha_in, hse_omega_in);
+                            laplup_val, lapldw_val, atau1, atau2, sxc, v1xcup, v1xcdw, v2xcup, v2xcdw, v2xcud, v3xcup, v3xcdw, vlaplxcup, vlaplxcdw, hybrid_alpha_in, hse_omega_in);
+                        if(!vlapl_arr1.empty()) vlapl_arr1[ir] = vlaplxcup;
+                        if(!vlapl_arr2.empty()) vlapl_arr2[ir] = vlaplxcdw;
                     }
                     else
                     {
@@ -536,6 +586,46 @@ void XC_Functional::gradcorr(
 }
 #endif
 
+    // Add Laplacian stress contribution from meta-GGA functionals
+    if(is_stress && use_libxc && !vlapl_arr1.empty())
+    {
+        const int ng = rhopw->npw;
+        const int nrxx = rhopw->nrxx;
+        const double tpiba2 = ucell->tpiba * ucell->tpiba;
+        std::vector<std::complex<double>> vlapl_g(rhopw->nmaxgr);
+
+        for(int is = 0; is < nspin0; is++)
+        {
+            double* vlapl_ptr = (is == 0) ? vlapl_arr1.data() : vlapl_arr2.data();
+            double* rho_ptr = (is == 0) ? rhotmp1 : rhotmp2;
+            if(vlapl_ptr == nullptr || rho_ptr == nullptr) continue;
+
+            std::vector<std::complex<double>> rho_g(rhopw->nmaxgr);
+            for(int ir = 0; ir < nrxx; ir++)
+                rho_g[ir] = std::complex<double>(rho_ptr[ir], 0.0);
+            rhopw->real2recip(rho_g.data(), rho_g.data());
+
+            for(int ir = 0; ir < nrxx; ir++)
+                vlapl_g[ir] = std::complex<double>(vlapl_ptr[ir], 0.0);
+            rhopw->real2recip(vlapl_g.data(), vlapl_g.data());
+
+            for(int l = 0; l < 3; l++)
+            {
+                for(int m = 0; m <= l; m++)
+                {
+                    double sum = 0.0;
+                    for(int ig = 0; ig < ng; ig++)
+                    {
+                        double g_prod = rhopw->gcar[ig][l] * rhopw->gcar[ig][m] * tpiba2;
+                        sum += g_prod * (rho_g[ig].real() * vlapl_g[ig].real()
+                                       + rho_g[ig].imag() * vlapl_g[ig].imag());
+                    }
+                    stress_gga[l*3+m] -= 2.0 * static_cast<double>(rhopw->nxyz) * ModuleBase::e2 * sum;
+                }
+            }
+        }
+    }
+
     if(!is_stress)
     {
 #ifdef _OPENMP
@@ -608,6 +698,38 @@ void XC_Functional::gradcorr(
 
         vtxc += vtxcgc;
         etxc += etxcgc;
+
+        // Add Laplacian contribution from meta-GGA functionals
+        // v_xc += nabla^2(vlapl) where vlapl = d(rho*eps_xc)/d(nabla^2 rho)
+        if(use_libxc && !vlapl_arr1.empty())
+        {
+            const int ng = rhopw->npw;
+            const int nrxx = rhopw->nrxx;
+            const double tpiba2 = ucell->tpiba * ucell->tpiba;
+            std::vector<std::complex<double>> vlapl_g(rhopw->nmaxgr);
+
+            for(int is = 0; is < nspin0; is++)
+            {
+                double* vlapl_ptr = (is == 0) ? vlapl_arr1.data() : vlapl_arr2.data();
+                if(vlapl_ptr == nullptr) continue;
+
+                for(int ir = 0; ir < nrxx; ir++)
+                    vlapl_g[ir] = std::complex<double>(vlapl_ptr[ir], 0.0);
+                rhopw->real2recip(vlapl_g.data(), vlapl_g.data());
+                for(int ig = 0; ig < ng; ig++)
+                {
+                    double g2 = 0.0;
+                    for(int i = 0; i < 3; i++)
+                        g2 += rhopw->gcar[ig][i] * rhopw->gcar[ig][i];
+                    vlapl_g[ig] *= -g2 * tpiba2;
+                }
+                rhopw->recip2real(vlapl_g.data(), vlapl_g.data());
+                for(int ir = 0; ir < nrxx; ir++)
+                {
+                    v(is, ir) += ModuleBase::e2 * vlapl_g[ir].real();
+                }
+            }
+        }
 
         if(nspin == 4 && (domag||domag_z))
         {
@@ -822,6 +944,30 @@ void XC_Functional::grad_dot(
     delete[] aux;
     delete[] gaux;
     return;
+}
+
+void XC_Functional::laplacian_rho(
+    const std::complex<double>* rhog,
+    double* lapl,
+    const ModulePW::PW_Basis* rho_basis,
+    const double tpiba)
+{
+    std::vector<std::complex<double>> lapl_tmp(rho_basis->nmaxgr);
+
+    for(int ig=0; ig<rho_basis->npw; ig++)
+    {
+        double g2 = 0.0;
+        for(int i=0; i<3; i++)
+        {
+            g2 += rho_basis->gcar[ig][i] * rho_basis->gcar[ig][i];
+        }
+        lapl_tmp[ig] = -rhog[ig] * g2;
+    }
+    rho_basis->recip2real(lapl_tmp.data(), lapl_tmp.data());
+    for(int ir=0; ir<rho_basis->nrxx; ir++)
+    {
+        lapl[ir] = lapl_tmp[ir].real() * tpiba * tpiba;
+    }
 }
 
 void XC_Functional::noncolin_rho(

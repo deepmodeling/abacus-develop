@@ -13,13 +13,13 @@ add_library(
 )
 
 add_library(
-  psi_initializer
+  psi_init
   OBJECT
-  psi_initializer.cpp
+  psi_base.cpp
   psi_init_random.cpp
   psi_init_file.cpp
   psi_init_atomic.cpp
-  psi_init_atomic_random.cpp
+  psi_init_atom_rand.cpp
   psi_init_nao.cpp
   psi_init_nao_random.cpp
 )
@@ -27,7 +27,7 @@ add_library(
 
 if(ENABLE_COVERAGE)
   add_coverage(psi)
-  add_coverage(psi_initializer)
+  add_coverage(psi_init)
 endif()
 
 if (BUILD_TESTING)

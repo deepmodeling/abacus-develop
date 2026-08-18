@@ -2,12 +2,12 @@
 
 #include "source_base/global_variable.h" // use GlobalC
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_deepks/LCAO_deepks_interface.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks_iface.h"
 #endif
 #include "source_io/module_restart/restart.h"
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
 
 namespace ModuleIO

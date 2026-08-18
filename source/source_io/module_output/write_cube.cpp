@@ -1,6 +1,6 @@
 #include "source_base/element_name.h"
 #include "source_base/parallel_comm.h"
-#include "source_pw/module_pwdft/parallel_grid.h"
+#include "source_base/parallel_grid.h"
 #include "source_io/module_output/cube_io.h"
 
 #include <vector>
@@ -34,9 +34,9 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
     time_t end;
     std::stringstream ss;
 
-    const int& nx = pgrid.nx;
-    const int& ny = pgrid.ny;
-    const int& nz = pgrid.nz;
+    const int nx = pgrid.get_nx();
+    const int ny = pgrid.get_ny();
+    const int nz = pgrid.get_nz();
     const int& nxyz = nx * ny * nz;
 
     start = time(nullptr);

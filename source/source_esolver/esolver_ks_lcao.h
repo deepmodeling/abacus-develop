@@ -5,27 +5,23 @@
 #include "source_lcao/record_adj.h" // adjacent atoms
 #include "source_basis/module_nao/two_center_bundle.h" // nao basis
 #include "source_hamilt/module_gint/gint_info.h"
-#include "source_estate/module_charge/gint_precision_controller.h"
+#include "source_estate/module_charge/gint_prec_ctrl.h"
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251008
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/module_rdmft/rdmft.h" // rdmft
 #include "source_lcao/setup_dm.h" // mohan add 2025-10-30
 
 #include <memory>
-
-
-// for Linear Response
-namespace LR
-{
-template <typename T, typename TR>
-class ESolver_LR;
-}
+#include <complex>
 
 //-----------------------------------
 // ESolver for LCAO
 //-----------------------------------
 namespace ModuleESolver
 {
+//Forward declaration for the linear-response solver.
+template <typename T, typename TR>
+class ESolver_LR;
 
 template <typename TK, typename TR>
 class ESolver_KS_LCAO : public ESolver_KS
@@ -92,8 +88,8 @@ class ESolver_KS_LCAO : public ESolver_KS
     rdmft::RDMFT<TK, TR> rdmft_solver;
 
     //! For linear-response TDDFT
-    friend class LR::ESolver_LR<double, double>;
-    friend class LR::ESolver_LR<std::complex<double>, double>;
+    friend class ESolver_LR<double, double>;
+    friend class ESolver_LR<std::complex<double>, double>;
 
     // Temporarily store the stress to unify the interface with PW,
     // because it's hard to seperate force and stress calculation in LCAO.

@@ -13,12 +13,12 @@
 #include <vector>
 
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
 #include "module_operator_lcao/deepks_lcao.h"
 #endif
 
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/exx_lri_interface.h"
 #include "module_operator_lcao/op_exx_lcao.h"
 #endif
 
@@ -26,7 +26,7 @@
 #include "source_hsolver/diago_elpa.h"
 #endif
 
-#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"

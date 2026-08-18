@@ -13,7 +13,7 @@
  *  Verifies clear error messages when HR files missing.
  *  Tests the file-existence check logic used by
  *  LCAO_domain::init_hr_from_file without linking
- *  the full LCAO_set.cpp (which has heavy dependencies).
+ *  the full lcao_set.cpp (which has heavy dependencies).
  ***********************************************/
 
 TEST(InitChgHrErrorTest, MissingFileError)

@@ -1,25 +1,12 @@
 #include "psi_init_nao_random.h"
-
-#include "source_io/module_parameter/parameter.h"
-
-template <typename T>
-void psi_init_nao_random<T>::initialize(const Structure_Factor* sf,
-                                               const ModulePW::PW_Basis_K* pw_wfc,
-                                               const UnitCell* p_ucell,
-                                               const K_Vectors* p_kv_in,
-                                               const int& random_seed,
-                                               const pseudopot_cell_vnl* p_pspot_nl,
-                                               const int& rank)
-{
-    psi_init_nao<T>::initialize(sf, pw_wfc, p_ucell, p_kv_in, random_seed, p_pspot_nl, rank);
-}
+#include "source_basis/module_pw/pw_basis_k.h"
 
 template <typename T>
 void psi_init_nao_random<T>::init_psig(T* psig, const int& ik)
 {
     double rm = this->mixing_coef_;
     psi_init_nao<T>::init_psig(psig, ik);
-    const int npol = PARAM.globalv.npol;
+    const int npol = this->npol_;
     const int nbasis = this->pw_wfc_->npwk_max * npol;
     psi::Psi<T> psi_random(1, this->nbands_start_, nbasis, nbasis, true);
     psi_random.fix_k(0);

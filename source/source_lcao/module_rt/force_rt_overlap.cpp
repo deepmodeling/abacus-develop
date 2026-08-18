@@ -3,7 +3,7 @@
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_reduce.h"
-#include "source_estate/module_pot/H_TDDFT_pw.h"
+#include "source_estate/module_pot/h_tddft_pw.h"
 #include "source_io/module_parameter/parameter.h"
 #include "td_folding.h"
 #include "td_info.h"

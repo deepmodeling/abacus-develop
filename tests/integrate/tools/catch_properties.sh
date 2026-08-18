@@ -453,6 +453,16 @@ if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
     fi
     python3 $COMPARE_SCRIPT sr_nao.csr.ref OUT.autotest/sr_nao.csr 8
     echo "CompareSR_pass $?" >>$1
+elif ! test -z "$has_hs2" && [ "$has_hs2" == 2 ]; then
+    HSR_BINARY_COMPARE="../../integrate/tools/compare_hsr_binary.py"
+    python3 $HSR_BINARY_COMPARE OUT.autotest/hrs1_nao.dat hrs1_nao.csr.ref real 4
+    echo "CompareHR_pass $?" >>$1
+    if ! test -z "$nspin" && [ "$nspin" -eq 2 ]; then
+        python3 $HSR_BINARY_COMPARE OUT.autotest/hrs2_nao.dat hrs2_nao.csr.ref real 4
+        echo "CompareHR2_pass $?" >>$1
+    fi
+    python3 $HSR_BINARY_COMPARE OUT.autotest/sr_nao.dat sr_nao.csr.ref real 4
+    echo "CompareSR_pass $?" >>$1
 fi
 
 #-----------------------------------
@@ -737,14 +747,20 @@ fi
 if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
 	Etot_without_rpa=`grep Etot_without_rpa log.txt | awk 'BEGIN{FS=":"} {print $2}' `
 	echo "Etot_without_rpa $Etot_without_rpa" >> $1
+	rpa_outdir=$(get_input_key_value "rpa_outdir" "INPUT")
+	if [ -z "$rpa_outdir" ]; then
+		rpa_outdir="./OUT.librpa"
+	fi
+	rpa_outdir=${rpa_outdir%/}
 	shopt -s nullglob
 	rpa_ref_files=(refcoulomb_*.txt refCs_*.txt refshrink_sinvS_*.txt)
 	if [ ${#rpa_ref_files[@]} -gt 0 ]; then
 		IFS=$'\n' rpa_ref_files=($(printf '%s\n' "${rpa_ref_files[@]}" | LC_ALL=C sort))
 		unset IFS
 		for onref in "${rpa_ref_files[@]}"; do
-			oncal=${onref#ref}
-			compare_key="CompareRPA_$(sanitize_result_key "$oncal")_pass"
+			oncal_name=${onref#ref}
+			oncal="$rpa_outdir/$oncal_name"
+			compare_key="CompareRPA_$(sanitize_result_key "$oncal_name")_pass"
 			record_compare_result "$1" "$compare_key" "$onref" "$oncal" 8 1
 		done
 	fi
@@ -817,13 +833,13 @@ fi
 # Linear response function 
 #--------------------------------------------
 if [ $is_lr == 1 ]; then
-	lrns=$(get_input_key_value "lr_nstates" "INPUT")
-	lrns1=`echo "$lrns + 1" |bc`
-	grep -A$lrns1 "Excitation Energy" $running_path | awk 'NR > 2 && $2 ~ /^[0-9]+\.[0-9]+$/ {print $2}' > lr_eig.txt
-	lreig_tot=`sum_file lr_eig.txt`
-	echo "totexcitationenergyref $lreig_tot" >>$1
+	shopt -s nullglob
+	lr_files=(OUT.autotest/trans_analysis_*_tda.dat)
+	if [ ${#lr_files[@]} -gt 0 ]; then
+		cat "${lr_files[@]}" | awk '/Excitation Energy/{p=1; next} p && /^[[:space:]]*[0-9]+[[:space:]]/{printf "excitationenergyref%d %.6f\n", ++n, $2} /Occupied orbital/{p=0}' >>$1
+	fi
+	shopt -u nullglob
 fi
-
 #--------------------------------------------
 # Check RDMFT method 
 #--------------------------------------------

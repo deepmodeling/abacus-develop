@@ -4,11 +4,11 @@
 #include <iostream>
 
 //--------------temporary----------------------------
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/occupy.h"
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
+#include "source_hamilt/module_ewald/h_ewald_pw.h"
 //-----force-------------------
-#include "source_pw/module_pwdft/forces.h"
+#include "source_pw/module_pwdft/force_pw.h"
 //-----stress------------------
 #include "source_pw/module_pwdft/stress_pw.h"
 //---------------------------------------------------
@@ -92,13 +92,11 @@ namespace ModuleESolver
             {
                 XC_Functional::set_xc_first_loop(ucell);
                 this->exx_lip = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(GlobalC::exx_info.info_lip,
-                                                                           ucell.symm,
                                                                            &this->kv,
                                                                            this->psi_local,
                                                                            this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
                                                                            this->pw_wfc,
                                                                            this->pw_rho,
-                                                                           this->sf,
                                                                            &ucell,
                                                                            this->pelec));
             }

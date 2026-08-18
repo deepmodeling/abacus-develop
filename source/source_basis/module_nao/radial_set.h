@@ -6,10 +6,10 @@
 #include <string>
 #include <utility>
 
-#include "source_base/spherical_bessel_transformer.h"
+#include "source_base/sph_bessel_tf.h"
 #include "source_basis/module_nao/numerical_radial.h"
-#include "source_basis/module_ao/ORB_nonlocal.h"
-#include "source_basis/module_ao/ORB_atomic.h"
+#include "source_basis/module_ao/orb_nonlocal.h"
+#include "source_basis/module_ao/orb_atomic.h"
 
 /**
  * @brief An abstract class representing the set of all numerical radial
