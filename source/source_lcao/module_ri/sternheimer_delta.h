@@ -237,11 +237,13 @@ SternheimerDeltaFixedSubspace build_delta_sternheimer_fixed_subspace(
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
     const std::vector<SternheimerDeltaVirtualState>& virtual_states);
 
-SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
-    const SternheimerFDHamiltonian& hamiltonian,
-    const SternheimerDeltaFixedSubspace& fixed_subspace,
-    double reference_eigenvalue,
-    const SternheimerFDHamiltonian::Vector& rhs,
+SternheimerDeltaFixedSubspace build_delta_sternheimer_fixed_subspace(
+    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states);
+
+// Assemble the positive-frequency SOS branch from explicit orthonormal
+// virtual states. Energies and omega must use the same units.
+SternheimerFDHamiltonian::Vector build_delta_sternheimer_sos_wavefunction(
     const std::vector<SternheimerDeltaVirtualState>& virtual_states,
     const std::vector<SternheimerFDHamiltonian::Complex>& perturbation_matrix_elements,
     double omega,

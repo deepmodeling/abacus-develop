@@ -1320,6 +1320,15 @@ SternheimerDeltaFixedSubspace build_delta_sternheimer_fixed_subspace(
     return fixed_subspace;
 }
 
+SternheimerDeltaFixedSubspace build_delta_sternheimer_fixed_subspace(
+    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states)
+{
+    SternheimerDeltaFixedSubspace fixed_subspace;
+    fixed_subspace.functions = collect_fixed_subspace(occupied_wavefunctions, virtual_states);
+    return fixed_subspace;
+}
+
 SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     const SternheimerFDHamiltonian& hamiltonian,
     const SternheimerDeltaFixedSubspace& fixed_subspace,
@@ -1395,7 +1404,26 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
 
     SternheimerDeltaLinearResponse result;
     result.response.out_wavefunction.assign(static_cast<std::size_t>(grid_size), Complex(0.0, 0.0));
-    result.solver = SternheimerRPA::solve_gmres(problem, projected_rhs, result.response.out_wavefunction, options);
+    if (fixed_functions.size() >= static_cast<std::size_t>(grid_size))
+    {
+        const double projected_rhs_norm = sternheimer_fd_grid_norm(projected_rhs, volume_element);
+        const double rhs_norm = sternheimer_fd_grid_norm(rhs, volume_element);
+        const double zero_tolerance
+            = std::max(options.breakdown_tol, options.residual_tol) * std::max(1.0, rhs_norm);
+        if (projected_rhs_norm > zero_tolerance)
+        {
+            throw std::runtime_error(
+                "Sternheimer delta fixed subspace fills the grid but leaves a nonzero Q-space rhs.");
+        }
+        result.solver.converged = true;
+        result.solver.absolute_residual = projected_rhs_norm;
+        result.solver.relative_residual = projected_rhs_norm / std::max(1.0, rhs_norm);
+    }
+    else
+    {
+        result.solver
+            = SternheimerRPA::solve_gmres(problem, projected_rhs, result.response.out_wavefunction, options);
+    }
     SternheimerRPA::project_out_subspace(fixed_functions, dot, result.response.out_wavefunction);
 
     const SternheimerDeltaCoefficientComponents components
@@ -1426,7 +1454,7 @@ SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     }
 
     Vector q_rhs = rhs;
-    SternheimerRPA::project_out_subspace(fixed_subspace, dot, q_rhs);
+    SternheimerRPA::project_out_subspace(fixed_functions, dot, q_rhs);
 #pragma omp parallel for schedule(static)
     for (std::size_t ir = 0; ir != q_residual.size(); ++ir)
     {
