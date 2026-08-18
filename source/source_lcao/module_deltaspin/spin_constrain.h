@@ -60,6 +60,36 @@
 namespace spinconstrain
 {
 
+<<<<<<< HEAD
+=======
+/**
+ * @brief Convert spinor occupation matrix to magnetic moment vector using Pauli matrices.
+ *
+ * @details For a two-component spinor wavefunction, the spin density matrix is:
+ *   occ = |a|^2      conj(a)*b  |   = | (1+Mz)/2    (Mx+iMy)/2 |
+ *         |conj(b)*a  |b|^2      |     | (Mx-iMy)/2   (1-Mz)/2  |
+ * NOTE occ is built conj-first (occ[1]=conj(c_up)*c_dn), i.e. the complex conjugate of the physical
+ * spin-density matrix, so occ[1]=(Mx+iMy)/2 and the bare Im formula below recovers the physical My.
+ * The magnetic moment components are extracted via Pauli matrix traces:
+ *   Mx = Tr(rho * sigma_x) = occ[1] + occ[2]           (real part)
+ *   My = Tr(rho * sigma_y) = Im(occ[1] - occ[2])       (bare; occ is conj-first, see ref/MSG 2026-08 #7664)
+ *   Mz = Tr(rho * sigma_z) = occ[0] - occ[3]            (real part)
+ * where occ = {|a|^2, a*b, b*a, |b|^2} from becp coefficients.
+ *
+ * @param occ 4-element array of occupation matrix elements (complex)
+ * @param weight k-point weight for integration
+ * @return 3D magnetic moment vector (Mx, My, Mz) in Bohr magnetons
+ */
+inline ModuleBase::Vector3<double> pauli_to_moment(const std::complex<double> occ[4], double weight)
+{
+    return ModuleBase::Vector3<double>(
+        weight * (occ[1] + occ[2]).real(),
+        weight * (occ[1] - occ[2]).imag(),
+        weight * (occ[0] - occ[3]).real()
+    );
+}
+
+>>>>>>> 4c7881606 (fix(soc): reconcile DeltaSpin/tests with reverted nspin=4 m_y convention)
 struct ScAtomData;
 
 /**

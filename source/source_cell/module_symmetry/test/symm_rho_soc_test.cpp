@@ -188,24 +188,29 @@ TEST(RhogSymmetrySoc, GroupInvariance)
 
 // ---------------------------------------------------------------------------
 // Coupling test (nonzero m_y): the spin-density rotation W used for the grid
-// symmetrization (spin_so3) MUST agree with the SU(2) rotation of the spinor
-// density block followed by the Pauli decomposition convention that the rest of
-// the code uses (func_xyz_to_updown, #7664):
+// symmetrization (spin_so3) MUST agree with the SU(2) rotation of a spinor density
+// block followed by the standard sigma_y=[[0,-i],[i,0]] Pauli decomposition:
 //     rho_0 = Re(uu+dd), rho_x = Re(ud+du),
 //     rho_y = -Im(ud) + Im(du),  rho_z = Re(uu-dd).
-// This is the check that the self-referential GroupInvariance test above cannot
-// make (it uses the same wspin as oracle). A y-channel handedness mismatch
-// between spin_so3 and this sigma_y=[[0,-i],[i,0]] convention shows up here.
+// NOTE: this uses the PHYSICAL spin-density block (D_ud = mx - i*my), so the textbook
+// -Im(ud)+Im(du) is correct here. This is NOT the frame the runtime uses: the actual
+// stored DM is conj-first (DM=conj(P), cal_dm_psi), so func_xyz_to_updown / psymmg_soc
+// consume conj(P) and use the BARE +Im(ud)-Im(du) (see #7832 / the DM round-trip test in
+// source_estate/module_dm/test). This test is a spin_so3 sanity check in the physical
+// frame; it does NOT validate the DM-path sign and must not be read as pinning the #7664
+// convention. TODO: exercise the real func_xyz_to_updown/psymmg_soc instead of this local
+// re-implementation so the two conventions cannot drift apart silently.
 // ---------------------------------------------------------------------------
 namespace
 {
 using cd = std::complex<double>;
-// spinor block D = r0*I + m.sigma  (sigma_y = [[0,-i],[i,0]]); layout {uu,ud,du,dd}
+// PHYSICAL spinor block D = r0*I + m.sigma  (sigma_y = [[0,-i],[i,0]]); layout {uu,ud,du,dd}
 ModuleSymmetry::SpinRotation::Su2 block_from_pauli(double r0, double mx, double my, double mz)
 {
     return {cd(r0 + mz, 0.0), cd(mx, -my), cd(mx, my), cd(r0 - mz, 0.0)};
 }
-// func_xyz_to_updown extraction (NEW / #7664 convention); factor of 2 vs. m is harmless.
+// textbook Pauli extraction from the PHYSICAL block (distinct from func_xyz_to_updown, which
+// reads the conj-first stored DM); factor of 2 vs. m is harmless.
 void pauli_from_block(const ModuleSymmetry::SpinRotation::Su2& D, double& rx, double& ry, double& rz)
 {
     rx = (D[1] + D[2]).real();     // Re(ud+du)

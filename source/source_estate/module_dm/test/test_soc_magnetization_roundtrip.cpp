@@ -13,7 +13,7 @@
  *   encoded in the density matrix must be recovered, with the CORRECT SIGN
  *   in ALL THREE cartesian components, by func_xyz_to_updown().
  *
- * Why this test exists (see ref/MSG/2026-08-#7664-...):
+ * Why this test exists (regression for the #7664 nspin=4 m_y sign flip):
  *   ABACUS builds the k-space DM as  DM_{ab} = sum_n w_n conj(c_{n,a}) c_{n,b}
  *   (cal_dm_psi.cpp: the conj() is applied to the FIRST index a). Hence the
  *   stored DM block is the complex conjugate of the physical 1-RDM P:
@@ -103,6 +103,39 @@ TEST(SocMagnetizationRoundtrip, ExtractRecoversPhysicalMagnetization)
         EXPECT_NEAR(my, m_ref[1], 1e-10) << "m_y SIGN/VALUE wrong (transverse channel, #7664 regression) for dir ("
                                          << mhat[0] << "," << mhat[1] << "," << mhat[2] << ")";
         EXPECT_NEAR(mz, m_ref[2], 1e-10) << "m_z wrong for dir (" << mhat[0] << "," << mhat[1] << "," << mhat[2] << ")";
+    }
+}
+
+// Same invariant for the <complex> (multi-k) specialization, which is changed identically.
+// For a single occupied state the 2x2 block is Hermitian, so the extracted Pauli components come
+// out real and must equal the physical magnetization; the imaginary parts must vanish.
+TEST(SocMagnetizationRoundtrip, ComplexSpecializationRecoversPhysicalMagnetization)
+{
+    const double dirs[4][3] = {
+        {0.0, 1.0, 0.0}, {0.0, -1.0, 0.0}, {0.6, 0.8, 0.0}, {0.36, 0.48, -0.8},
+    };
+    const int col_size = 2;
+    const int step_trace[4] = {0, 1, col_size, col_size + 1};
+
+    for (const auto& mhat : dirs)
+    {
+        cd c[2];
+        spinor_from_direction(mhat, c);
+        double m_ref[3];
+        physical_m(c, m_ref);
+
+        cd tmp[4];
+        build_DM_block_as_cal_dm_psi(c, 1.0, tmp);
+
+        cd out[4] = {cd(0, 0), cd(0, 0), cd(0, 0), cd(0, 0)};
+        elecstate::DensityMatrix_Tools::func_xyz_to_updown<std::complex<double>>(tmp, 0, step_trace, out);
+
+        EXPECT_NEAR(out[step_trace[1]].real(), m_ref[0], 1e-10) << "m_x";
+        EXPECT_NEAR(out[step_trace[2]].real(), m_ref[1], 1e-10) << "m_y (complex specialization)";
+        EXPECT_NEAR(out[step_trace[3]].real(), m_ref[2], 1e-10) << "m_z";
+        EXPECT_NEAR(out[step_trace[1]].imag(), 0.0, 1e-10);
+        EXPECT_NEAR(out[step_trace[2]].imag(), 0.0, 1e-10);
+        EXPECT_NEAR(out[step_trace[3]].imag(), 0.0, 1e-10);
     }
 }
 
