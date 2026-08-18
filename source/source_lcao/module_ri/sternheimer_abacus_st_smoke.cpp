@@ -3930,6 +3930,14 @@ void run_sternheimer_periodic_lcao_chi0_output(
     out << "sternheimer_bands_per_k_limit " << max_bands << '\n';
     out << "sternheimer_bands_truncated " << (bands_are_truncated ? "yes" : "no") << '\n';
     out << "sternheimer_frequency_mpi " << (use_frequency_mpi ? "yes" : "no") << '\n';
+    out << "sternheimer_channel_mpi " << (PARAM.inp.sternheimer_channel_mpi ? "yes" : "no") << '\n';
+    out << "sternheimer_mpi_layout " << PARAM.inp.sternheimer_mpi_layout << '\n';
+    out << "equation_owner_formula "
+        << (PARAM.inp.sternheimer_mpi_layout == "global_equation"
+                ? "occupied_frequency_channel_modulo"
+                : "frequency_group_assignment")
+        << '\n';
+    out << "sternheimer_fd_order " << PARAM.inp.sternheimer_fd_order << '\n';
     out << "sternheimer_kpoint_mpi " << (use_kpoint_mpi ? "yes" : "no") << '\n';
     out << "sternheimer_nested_k_frequency_mpi " << (use_nested_response_mpi ? "yes" : "no") << '\n';
     out << "sternheimer_kpoint_groups " << (use_kpoint_mpi ? kpoint_groups : 1) << '\n';
