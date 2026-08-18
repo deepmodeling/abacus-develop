@@ -81,6 +81,11 @@ std::string sternheimer_abfs_perturbation_source(const std::vector<std::string>&
     return explicit_abfs_files.empty() ? "product_pca" : "explicit_abfs";
 }
 
+bool sternheimer_builds_product_pca_auxiliary_basis(const std::vector<std::string>& explicit_abfs_files)
+{
+    return explicit_abfs_files.empty();
+}
+
 constexpr const char* kSmokeEnv = "ABACUS_STERNHEIMER_FD_ST_SMOKE";
 constexpr const char* kOutputEnv = "ABACUS_STERNHEIMER_FD_ST_OUT";
 constexpr const char* kBandsEnv = "ABACUS_STERNHEIMER_FD_ST_BANDS";
