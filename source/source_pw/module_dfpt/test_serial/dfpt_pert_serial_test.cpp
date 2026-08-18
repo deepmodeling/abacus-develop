@@ -243,7 +243,9 @@ class DFPTPertSerialTest : public testing::Test
         return -ucell_.atoms[0].ncpp.zv * ModuleBase::e2 * ModuleBase::FOUR_PI / ucell_.omega / g2_bohr;
     }
 
-    // analytic dVloc/dtau_alpha coefficient at displacement vector w (1/lat0)
+    // analytic dVloc/dtau_alpha coefficient at displacement vector w (1/lat0);
+    // GS structure-factor convention (stru_fac.cpp): exp(-i 2pi (g.tau)) and
+    // dV/dtau = -i (Delta+q)_alpha tpiba Vloc exp(-i 2pi (Delta+q).tau)
     std::complex<double> AnalyticDVloc(int dir, const ModuleBase::Vector3<double>& w) const
     {
         const double w2 = w * w;
@@ -251,8 +253,8 @@ class DFPTPertSerialTest : public testing::Test
         {
             return std::complex<double>(0.0, 0.0);
         }
-        const double arg = ModuleBase::TWO_PI * (w * tau_);
-        return std::complex<double>(0.0, 1.0) * (ucell_.tpiba * w[dir]) * VlocCoulomb(w2 * ucell_.tpiba2)
+        const double arg = -ModuleBase::TWO_PI * (w * tau_);
+        return std::complex<double>(0.0, -1.0) * (ucell_.tpiba * w[dir]) * VlocCoulomb(w2 * ucell_.tpiba2)
                * std::complex<double>(std::cos(arg), std::sin(arg));
     }
 };
@@ -291,10 +293,10 @@ TEST_F(DFPTPertSerialTest, DVlocDtauMatchesFiniteDifference)
                     EXPECT_EQ(dv[ig], std::complex<double>(0.0, 0.0));
                     continue;
                 }
-                // finite difference of vloc(|Delta+q|) e^{i 2pi (Delta+q).tau}
-                // per bohr of displacement
-                const double ap = ModuleBase::TWO_PI * (w * (tau_ + eps * d));
-                const double am = ModuleBase::TWO_PI * (w * (tau_ - eps * d));
+                // finite difference of vloc(|Delta+q|) e^{-i 2pi (Delta+q).tau}
+                // per bohr of displacement (GS stru_fac phase convention)
+                const double ap = -ModuleBase::TWO_PI * (w * (tau_ + eps * d));
+                const double am = -ModuleBase::TWO_PI * (w * (tau_ - eps * d));
                 const std::complex<double> fd = VlocCoulomb((w * w) * ucell_.tpiba2)
                                                 * (std::polar(1.0, ap) - std::polar(1.0, am))
                                                 / (2.0 * eps * lat0_);
@@ -471,14 +473,14 @@ TEST_F(DFPTPertSerialTest, BuildVkbL0MatchesIndependentSimpson)
             return p.betar(0, i) * j0 * p.r[i];
         };
         const double vq = pref * simpson(f0, p.msh);
-        const double arg = ModuleBase::TWO_PI * (gk[ig] * tau_);
+        const double arg = -ModuleBase::TWO_PI * (gk[ig] * tau_);
         const std::complex<double> expect = 0.5 * std::sqrt(1.0 / ModuleBase::PI) * vq
                                             * std::complex<double>(std::cos(arg), std::sin(arg));
         EXPECT_NEAR(vkb[0][ig].real(), expect.real(), 1.0e-9 * std::max(1.0, std::abs(expect)));
         EXPECT_NEAR(vkb[0][ig].imag(), expect.imag(), 1.0e-9 * std::max(1.0, std::abs(expect)));
     }
 
-    // a tau shift changes every projector by the pure phase e^{i 2pi gk.dtau}
+    // a tau shift changes every projector by the pure phase e^{-i 2pi gk.dtau}
     const ModuleBase::Vector3<double> dtau(0.07, -0.11, 0.05);
     ucell_.atoms[0].tau[0] = tau_ + dtau;
     std::vector<std::vector<std::complex<double>>> vkb2;
@@ -492,7 +494,7 @@ TEST_F(DFPTPertSerialTest, BuildVkbL0MatchesIndependentSimpson)
             {
                 continue;
             }
-            const double arg = ModuleBase::TWO_PI * (gk[ig] * dtau);
+            const double arg = -ModuleBase::TWO_PI * (gk[ig] * dtau);
             const std::complex<double> expect(std::cos(arg), std::sin(arg));
             const std::complex<double> ratio = vkb2[mu][ig] / vkb[mu][ig];
             EXPECT_NEAR(ratio.real(), expect.real(), 1.0e-9);

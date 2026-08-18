@@ -170,7 +170,8 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoMatchesBruteForceGSpace)
         const int mz = (iz <= pw_rho_.nz / 2) ? iz : iz - pw_rho_.nz;
         const ModuleBase::Vector3<double> delta =
             ModuleBase::Vector3<double>(mx, my, mz) * G_;
-        // A_Delta = sum_G c*_G d_{G+Delta}, brute-forced over the two lists
+        // A_Delta = (w / omega) * sum_G c*_G d_{G+Delta} with the GS density
+        // normalization (elecstate rhoBandK w1), brute-forced over the lists
         std::complex<double> aref(0.0, 0.0);
         for (int jgl = 0; jgl < kq.get_npwk(); ++jgl)
         {
@@ -186,6 +187,7 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoMatchesBruteForceGSpace)
                 }
             }
         }
+        aref *= wg(0, 0) / pw_rho_.omega;
         err2 += std::norm(drho_g[ig] - aref);
         ref2 += std::norm(aref);
     }
@@ -251,7 +253,8 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoRealSpaceMatchesDirectSum)
         }
         const double phq = ModuleBase::TWO_PI * (q_d_.x * fx + q_d_.y * fy + q_d_.z * fz);
         const std::complex<double> eq(std::cos(phq), std::sin(phq));
-        const double ref = 2.0 * (std::conj(u) * du * eq).real();
+        // same GS normalization (w / omega) as the stored manifest density
+        const double ref = 2.0 * (wg(0, 0) / pw_rho_.omega) * (std::conj(u) * du * eq).real();
         const int ir = (ix * pw_rho_.ny + iy) * pw_rho_.nz + iz;
         EXPECT_NEAR(drho_r[ir], ref, 1.0e-9);
     }

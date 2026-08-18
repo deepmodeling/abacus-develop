@@ -468,8 +468,9 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
     // expected: row 1 (atom 0, dir 1). The RHS on the k+q basis vector igl
     // carries the momentum w = Delta + q (Delta = G'' since k + q = 0 makes
     // every k+q basis vector a pure reciprocal-lattice harmonic G''):
-    // RHS^a(G'') = i tpiba w_a Vloc(w^2) e^{i 2pi w.tau} (psi is a single
-    // G'=0 plane wave and the Coulomb potential has no nonlocal part).
+    // RHS^a(G'') = -i tpiba w_a Vloc(w^2) e^{-i 2pi w.tau} (psi is a single
+    // G'=0 plane wave and the Coulomb potential has no nonlocal part); the
+    // GS structure-factor phase convention is exp(-i 2pi g.tau).
     ModuleDFPT::DFPT_KQ_Basis kq;
     kq.init(&pw_wfc_, q_cart_, 0);
     for (int adir = 0; adir < 3; ++adir)
@@ -484,8 +485,8 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
             {
                 continue; // Delta + q = 0 component dropped by dVloc
             }
-            const double arg = ModuleBase::TWO_PI * (w * tau_);
-            const std::complex<double> rhs = std::complex<double>(0.0, 1.0)
+            const double arg = -ModuleBase::TWO_PI * (w * tau_);
+            const std::complex<double> rhs = std::complex<double>(0.0, -1.0)
                                              * (ucell_.tpiba * w[adir])
                                              * VlocCoulomb(w2 * ucell_.tpiba2)
                                              * std::complex<double>(std::cos(arg), std::sin(arg));
@@ -497,13 +498,15 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
             // |u|^2 = 1 keeps only Delta=0: w = q; the production path
             // accumulates the d2V expectation with the occupation weight
             const double w2 = q_cart_ * q_cart_;
-            const double arg = ModuleBase::TWO_PI * (q_cart_ * tau_);
+            const double arg = -ModuleBase::TWO_PI * (q_cart_ * tau_);
             expect_d2 = -(ucell_.tpiba * q_cart_[1]) * (ucell_.tpiba * q_cart_[adir])
                         * VlocCoulomb(w2 * ucell_.tpiba2)
                         * std::complex<double>(std::cos(arg), std::sin(arg))
                         * wg(0, 0);
         }
-        const std::complex<double> expect = 2.0 * wg(0, 0) * expect_cross + expect_d2;
+        // accumulate divides term2 by sqrt(m_a m_b) and d2V by m (m = 12 here)
+        const std::complex<double> expect
+            = (2.0 * wg(0, 0) * expect_cross + expect_d2) / ucell_.atoms[0].mass;
         // note: accumulate uses (da=adir for the column, db=1 for the row);
         // d2vloc_r multiplies w_da w_db symmetrically, so the closed form
         // above (dir1 x adir) matches either ordering

@@ -251,7 +251,8 @@ class DFPTQ0SerialTest : public testing::Test
                / g2_bohr;
     }
 
-    // analytic dVloc/dtau_dir coefficient at displacement vector w (1/lat0)
+    // analytic dVloc/dtau_dir coefficient at displacement vector w (1/lat0),
+    // GS structure-factor phase convention exp(-i 2pi w.tau)
     std::complex<double> AnalyticDVloc(int dir, const ModuleBase::Vector3<double>& w) const
     {
         const double w2 = w * w;
@@ -259,8 +260,8 @@ class DFPTQ0SerialTest : public testing::Test
         {
             return std::complex<double>(0.0, 0.0);
         }
-        const double arg = ModuleBase::TWO_PI * (w * tau_);
-        return std::complex<double>(0.0, 1.0) * (ucell_.tpiba * w[dir])
+        const double arg = -ModuleBase::TWO_PI * (w * tau_);
+        return std::complex<double>(0.0, -1.0) * (ucell_.tpiba * w[dir])
                * VlocCoulomb(w2 * ucell_.tpiba2)
                * std::complex<double>(std::cos(arg), std::sin(arg));
     }

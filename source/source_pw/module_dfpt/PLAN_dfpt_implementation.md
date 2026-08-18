@@ -228,7 +228,18 @@
       ⑤ DFPT_IrrepData irrep 维度占位穿透、get_dpsi_obj 返回 static dummy；
       ⑥ run() 外层 while 形式化（无条件 set_converged(true)、LO-TO 方向硬编码 (1,1,1)/√3；
       ⑦ 真实晶格金刚石端到端/非 Γ q/MPI>1 rank 均未冒烟（C7 待办未做）。
-    - [ ] B1 INPUT 参数接线
+    - [x] B1 INPUT 参数接线 `297a2b3a2`
+        - `read_inp_dfpt.cpp` 7 项（qmesh/qfile/compute_q0/loto/conv_thr/max_iter/mix_beta，
+          check_value：loto 需 compute_q0、qmesh≥1、mix_beta∈(0,1]）；CMake 两处接入
+        - esolver 删硬编码与 `dfpt.in` 空桩，`set_parameters` 移除，全走显式 setter（规则 1）；
+          `DFPT_PW` 新增 set_qfile/set_mix_beta/set_compute_q0/set_loto（q 文件优先于 MP 网格）
+        - `QList::read_from_file` 改填占位 A1 irrep（nirr=1）而非清空——q 文件路径下 run()
+          依赖 get_nirr≥1 才进 3N 回退求解
+        - 修复（测试捕获）：空默认串参数回写 INPUT 再读回时 `str_values[0]` 越界 → dfpt_qfile
+          采用 pseudo_dir 的 `get_size()==0` 守卫模式
+        - docs/parameters.yaml 新类目 + input-main.md 经 docs/generate_input_main.py 再生；
+          `-h dfpt_qmesh/dfpt_mix_beta` 验证；回归 14/14（CELL 4 + DFPT 8 + IO 2）；
+          治理仅既有豁免 WARNING
     - [ ] B0 全流程工程验证（真实金刚石 Γ / 非 Γ q / MPI 冒烟）
     - [ ] B2 输出正式化
     - [ ] B3 Kerker 预条件混合
