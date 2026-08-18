@@ -20,6 +20,7 @@
 #include "source_base/constants.h"
 #include <fstream>
 #include "source_base/global_function.h"
+#include <sstream>
 #include "source_cell/qlist.h"
 #include "source_pw/module_pwdft/stru_fac.h"
 
@@ -110,6 +111,32 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
     pimpl_->veff_r_ = veff_r;
     pimpl_->wg_ = wg;
     pimpl_->eig_ = eig;
+
+    // Metallic-sampling guard: the Sternheimer/projector flow treats every
+    // band as either fully occupied or empty and carries no d(mu)/dtau
+    // response, so a sampling whose smearing Fermi level cuts a band (wg
+    // strictly between 0 and the full reference) yields force constants
+    // wrong at the 100% level while still converging cleanly. Reject it
+    // explicitly (C4 defers metallic DFPT); negligible gauss tails
+    // (relative weight < 1e-3) are tolerated as the insulator limit.
+    for (int ik = 0; ik < wg.nr; ++ik) {
+        const double wref = wg(ik, 0);
+        if (wref <= 0.0) {
+            continue;
+        }
+        for (int ib = 0; ib < wg.nc; ++ib) {
+            const double rel = wg(ik, ib) / wref;
+            if (rel > 1.0e-3 && rel < 1.0 - 1.0e-3) {
+                std::stringstream msg;
+                msg << "fractional band occupation at (ik=" << ik
+                    << ", ib=" << ib << ", wg=" << wg(ik, ib)
+                    << "): metallic DFPT (smearing occupations crossing the"
+                       " Fermi level) is not supported; reduce smearing sigma"
+                       " or use an insulating k sampling.";
+                ModuleBase::WARNING_QUIT("DFPT_PW::init", msg.str());
+            }
+        }
+    }
     pimpl_->xc_ = xc;
     pimpl_->nelec_ = nelec;
     pimpl_->ecutwfc_ = ecutwfc;
