@@ -1,0 +1,12 @@
+T6: nspin=4 multi-k Mulliken magnetization calibration (LCAO, DFT+U, Fe).
+out_mul=1 produces OUT.autotest/mulliken.txt; check_extra.py validates the
+Mulliken per-atom populations/magnetizations against the internal charge sum
+rule and the rho-integrated cell magnetization (running_scf.log), in magnitude
+and direction. Keys: t6_converged_pass, t6_charge_sum_pass, t6_mul_rho_pass,
+t6_mul_rho_dir_pass, t6_mz_sign_pass (0.0 = pass, 1.0 = fail). Tolerance for
+the Mulliken-vs-rho cell magnetization is 0.1 uB per component; the measured
+deviation on this case is ~0.04 uB on |m|~5.5 uB/cell. No anomalous m_y
+deviation (R6) is present, so the B-class gemm change (S^T -> S^dagger) is
+not executed. DeltaSpin is disabled for LCAO in this repo
+(tests/17_DS_DFTU/CASES_CPU.txt); the Gamma-only control converges to a
+different magnetic minimum and is covered in the PR validation record.

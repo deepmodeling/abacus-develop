@@ -1,0 +1,8 @@
+T4: SOC nonlocal force finite-difference validation (GaAs, nspin=4, SOC,
+multi-k). check_extra.py compares the analytic force with a central FD of the
+total energy (delta=1e-3 Bohr) for every atom/direction, and the acoustic sum.
+Keys: fd_force_pass, acoustic_sum_pass (0.0 = pass, 1.0 = fail; physical
+threshold 1e-4 eV/Bohr; measured max_dev ~5.8e-5). The DMR Fourier sign
+sentinel is the unit test DMTest.T1_fourier_round_trip; this case guards
+FD-consistency of the analytic SOC force. ecutwfc=100 is required: with a
+coarse charge grid the egg-box noise dominates the FD.

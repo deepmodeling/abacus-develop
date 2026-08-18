@@ -1,0 +1,9 @@
+T7: nspin=2 collinear AFM spin-channel check (LCAO, DFT+U, FeO, uramping).
+out_mul=1 produces OUT.autotest/mulliken.txt; check_extra.py asserts the
+spin-channel sum rule (spin1+spin2 == total charge), the per-atom charge sum
+rule, opposite-sign and comparable-magnitude Fe site moments, small O moments,
+and consistency of the Mulliken cell sum with the rho cell magnetization.
+Keys: t7_converged_pass, t7_spin_sum_pass, t7_charge_sum_pass,
+t7_fe_opposite_sign_pass, t7_fe_mag_ratio_pass, t7_o_small_pass,
+t7_mul_rho_pass (0.0 = pass, 1.0 = fail). Checking the two spin channels
+separately guards against accidental cancellation of channel errors.

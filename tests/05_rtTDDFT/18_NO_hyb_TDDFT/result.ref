@@ -1,4 +1,7 @@
-etotref -202.3030324186811
-etotperatomref -101.1515162093
+etotref -202.3030324194245
+etotperatomref -101.1515162097
 CompareCurrent_pass 0
-totaltimeref 5.26
+totaltimeref 5.18
+current_path_max_dev 0.0
+zero_field_current_max 0.0
+current_pmk_cancel_max 0.0

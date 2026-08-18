@@ -1,0 +1,23 @@
+INPUT_PARAMETERS
+#Parameters (General)
+suffix              autotest
+pseudo_dir          ../../PP_ORB
+orbital_dir         ../../PP_ORB
+
+#Parameters (Electronic)
+calculation         scf
+basis_type          lcao
+gamma_only          0
+nspin               4
+lspinorb            1
+ecutwfc           100
+scf_thr             1e-8
+scf_nmax            100
+
+ks_solver           scalapack_gvx
+
+mixing_type         pulay
+mixing_beta         0.7
+
+cal_force           1
+cal_stress          0

@@ -1,0 +1,28 @@
+ATOMIC_SPECIES
+As 1   As_ONCV_PBE_FR-1.1.upf upf201
+Ga 1   Ga_ONCV_PBE_FR-1.0.upf.txt upf201
+
+LATTICE_CONSTANT
+1
+
+NUMERICAL_ORBITAL
+As_gga_8au_60Ry_2s2p1d.orb
+Ga_gga_9au_60Ry_2s2p2d.orb
+
+LATTICE_VECTORS
+5.34197 5.34197  0.0
+0.0  5.34197 5.34197
+5.34197  0.0  5.34197
+
+ATOMIC_POSITIONS
+Direct
+
+As
+0
+1
+0.2600000          0.2400000          0.245000000     0 0 0
+
+Ga
+0
+1
+0.0300000         -0.0200000          0.050000000     0 0 0
