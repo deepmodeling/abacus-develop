@@ -392,7 +392,6 @@ TEST_F(DMTest, cal_DMR_blas_complex)
 // folding_HR (e^{+ikR}). This is the test that locks the Fourier sign of the
 // inverse transform: with the k-phase flipped (density_matrix.cpp: -sinp ->
 // +sinp), D~(k) = DMK(-k) = DMK(k)† and the assertions below turn red.
-// See Sec. 3 of docs/nao_lcao_force_stress_derivation.md.
 TEST_F(DMTest, T1_fourier_round_trip)
 {
     // k-grid {0, 1/4, 1/2, 3/4} along x: contains non-Gamma k-points and k and
@@ -512,7 +511,6 @@ TEST_F(DMTest, T1_fourier_round_trip)
 // ((iat1,iat2,R) and (iat2,iat1,-R)), cal_DMR must satisfy
 //   D(iat2,iat1,-R) = D(iat1,iat2,R)^T   (real DMR, nspin<4)
 //   D(iat2,iat1,-R) = D(iat1,iat2,R)^\dagger (complex DMR, nspin=4)
-// See Sec. 5 of docs/nao_lcao_force_stress_derivation.md.
 TEST_F(DMTest, T2_dmr_hermiticity)
 {
     // two k-points, both non-Gamma, k and -k distinct
@@ -634,9 +632,8 @@ TEST_F(DMTest, T2_dmr_hermiticity)
 // T8: full-direction pairing storage guard. Every (iat1,iat2,R) block of the
 // DMR HContainer built by init_DMR must have a (iat2,iat1,-R) counterpart.
 // gint_rho and the force/stress paths rely on this pairing (closed-trace
-// protection, see Sec. 5 of docs/nao_lcao_force_stress_derivation.md).
-// A future half-set
-// storage optimization will turn this test red.
+// protection). A future half-set storage optimization will turn this test
+// red.
 TEST_F(DMTest, T8_full_direction_pairing_guard)
 {
     // multi-k DM (TK=complex) keeps the R structure of init_DMR(Record_adj);

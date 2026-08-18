@@ -11,7 +11,6 @@ namespace elecstate
 {
 // ---------------------------------------------------------------------------
 // Density-matrix conventions (DMK/DMR), frozen by the DM/DMK/DMR chain.
-// See docs/nao_lcao_force_stress_derivation.md for the full derivation.
 //
 // 1. DMK(μ,ν;k) = Σ_n f_nk C*_{μn}(k) C_{νn}(k) = (C f C†)^T = D_std^T.
 //    μ = row (bra) orbital, ν = column (ket) orbital. Stored as the transpose

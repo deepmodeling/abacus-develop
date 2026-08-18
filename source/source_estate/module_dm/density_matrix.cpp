@@ -112,7 +112,7 @@ void DensityMatrix_Tools::cal_DMR(
                     if(ik_in >= 0 && ik_in != ik) { continue; }
                     // Inverse Fourier transform: D(R) = sum_k D(k) * exp(-i*k*R)
                     // k-point weights are embedded in DMK, so there is no 1/Nk
-                    // prefactor. See Sec. 3 of nao_lcao_force_stress_derivation.md
+                    // prefactor.
                     const ModuleBase::Vector3<double> dR(R_index[0], R_index[1], R_index[2]);
                     const double arg = (dm._kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                     double sinp, cosp;
@@ -268,7 +268,7 @@ void DensityMatrix_Tools::cal_DMR_td(
                     if(ik_in >= 0 && ik_in != ik) { continue; }
                     // Inverse Fourier transform: D(R) = sum_k D(k) * exp(-i*k*R)
                     // k-point weights are embedded in DMK, so there is no 1/Nk
-                    // prefactor. See Sec. 3 of nao_lcao_force_stress_derivation.md
+                    // prefactor.
                     const ModuleBase::Vector3<double> dR(R_index[0], R_index[1], R_index[2]);
                     const double arg = (dm._kvec_d[ik] * dR) * ModuleBase::TWO_PI;
                     double sinp, cosp;

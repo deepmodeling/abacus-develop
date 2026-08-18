@@ -24,7 +24,6 @@
  * This holds even when O(R) is NOT symmetric within the same R (the key case
  * for overlap/kinetic derivative operators): the protection comes from the
  * closed trace + per-k Hermiticity of O(k), not from same-R symmetry.
- * See Sec. 5 of docs/nao_lcao_force_stress_derivation.md.
  ************************************************/
 
 namespace
