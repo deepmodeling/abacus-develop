@@ -535,6 +535,11 @@ void IState_Charge::idmatrix(const int& ib,
 
         this->psi_k->fix_k(ik);
         psi::Psi<std::complex<double>> wg_wfc(*this->psi_k, 1);
+        std::complex<double>* wg_wfc_ptr = wg_wfc.get_pointer();
+        for (int i = 0; i < wg_wfc.size(); ++i)
+        {
+            wg_wfc_ptr[i] = std::conj(wg_wfc_ptr[i]);
+        }
 
         for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
         {
