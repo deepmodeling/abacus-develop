@@ -1178,6 +1178,7 @@ Available options are:
 * 1: by GenELPA
 * 2: by ScaLAPACK)";
         item.default_value = "0";
+        item.set_availability("basis_type==pw and ks_solver==dav_subspace");
         read_sync_int(input.diag_subspace);
         this->add_item(item);
     }

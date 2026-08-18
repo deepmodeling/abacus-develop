@@ -428,7 +428,7 @@ parameters:
       * 2: by ScaLAPACK
     default_value: "0"
     unit: ""
-    availability: ""
+    availability: basis_type==pw and ks_solver==dav_subspace
   - name: erf_ecut
     category: Plane wave related variables
     type: Real

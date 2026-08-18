@@ -1990,6 +1990,10 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // diag_subspace
+        auto it = find_label("diag_subspace", readinput.input_lists);
+        EXPECT_EQ(it->second.get_availability(), "basis_type==pw and ks_solver==dav_subspace");
+    }
     { // md_nstep
         auto it = find_label("md_nstep", readinput.input_lists);
         param.input.mdp.md_nstep = 0;

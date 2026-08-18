@@ -1006,6 +1006,7 @@
 ### diag_subspace
 
 - **Type**: Integer
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver)==dav_subspace*
 - **Description**: The method to diagonalize subspace in dav_subspace method.
   - 0: by LAPACK
   - 1: by GenELPA
