@@ -1238,7 +1238,8 @@ void run_sternheimer_abacus_lcao_chi0_output(
     const UnitCell& ucell,
     const elecstate::ElecState& elec_state,
     const LCAO_Orbitals& orbitals,
-    const std::vector<SternheimerLCAOOccupiedChannel>& occupied_channels,
+    const std::vector<SternheimerLCAOOccupiedKPoint>& occupied_kpoints,
+    const std::array<int, 3>& kmesh,
     const ModulePW::PW_Basis_K* pw_wfc,
     const Structure_Factor* structure_factor,
     const std::string& output_dir);

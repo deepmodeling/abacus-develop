@@ -252,6 +252,17 @@ SternheimerFDHamiltonian::Vector build_delta_sternheimer_sos_wavefunction(
 
 SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
     const SternheimerFDHamiltonian& hamiltonian,
+    const SternheimerDeltaFixedSubspace& fixed_subspace,
+    double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Vector& rhs,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<SternheimerFDHamiltonian::Complex>& perturbation_matrix_elements,
+    double omega,
+    double volume_element,
+    const SternheimerRPA::SolverOptions& options = SternheimerRPA::SolverOptions());
+
+SternheimerDeltaLinearResponse solve_delta_sternheimer_linear_response(
+    const SternheimerFDHamiltonian& hamiltonian,
     const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
     double reference_eigenvalue,
     const SternheimerFDHamiltonian::Vector& rhs,

@@ -846,42 +846,18 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
         {
             ModuleBase::WARNING_QUIT("ctrl_scf_lcao", "Sternheimer LCAO output requires potential, grid, and KS states.");
         }
-        std::vector<std::array<double, 3>> reduced_kpoints;
-        reduced_kpoints.reserve(kv.kvec_d.size());
-        for (const auto& kpoint: kv.kvec_d)
-        {
-            reduced_kpoints.push_back({kpoint.x, kpoint.y, kpoint.z});
-        }
-        ModuleRI::validate_sternheimer_lcao_gamma_layout(PARAM.inp.nspin,
-                                                         kv.get_nks(),
-                                                         kv.get_nkstot(),
-                                                         reduced_kpoints);
-        if (ModuleRI::sternheimer_uses_lcao_zero_order(inp.sternheimer_delta))
-        {
-            if (inp.out_sternheimer_siab && pw_wfc == nullptr)
-            {
-                ModuleBase::WARNING_QUIT("ctrl_scf_lcao", "Sternheimer SIAB output requires the PW FFT basis.");
-            }
-            const auto occupied_channels
-                = gather_sternheimer_lcao_occupied_channels(*pelec, pv, *psi);
-            ModuleRI::run_sternheimer_abacus_lcao_chi0_output(*(pelec->pot),
-                                                              *pw_rho,
-                                                              ucell,
-                                                              *pelec,
-                                                              orb,
-                                                              occupied_channels,
-                                                              pw_wfc,
-                                                              &sf,
-                                                              global_out_dir);
-        }
-        else
-        {
-            ModuleRI::run_sternheimer_abacus_chi0_output(*(pelec->pot),
-                                                         *pw_rho,
-                                                         ucell,
-                                                         *pelec,
-                                                         global_out_dir);
-        }
+        const auto occupied_kpoints
+            = gather_sternheimer_lcao_occupied_kpoints(*pelec, kv, ucell, pv, *psi);
+        ModuleRI::run_sternheimer_abacus_lcao_chi0_output(*(pelec->pot),
+                                                          *pw_rho,
+                                                          ucell,
+                                                          *pelec,
+                                                          orb,
+                                                          occupied_kpoints,
+                                                          {kv.nmp[0], kv.nmp[1], kv.nmp[2]},
+                                                          pw_wfc,
+                                                          &sf,
+                                                          global_out_dir);
     }
 #endif
 
