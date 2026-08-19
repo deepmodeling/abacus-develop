@@ -768,10 +768,13 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
             castmem_d2s_h2d_op()(this->s_nhtol, this->nhtol.c, this->nhtol.nr * this->nhtol.nc);
             castmem_d2s_h2d_op()(this->s_nhtolm, this->nhtolm.c, this->nhtolm.nr * this->nhtolm.nc);
             castmem_d2s_h2d_op()(this->s_tab, this->tab.ptr, this->tab.getSize());
-            castmem_d2s_h2d_op()(this->s_qq_nt, this->qq_nt.ptr, this->qq_nt.getSize());
-            castmem_z2c_h2d_op()(this->c_qq_so, this->qq_so.ptr, this->qq_so.getSize());
+            if (this->nhm > 0)
+            {
+                castmem_d2s_h2d_op()(this->s_qq_nt, this->qq_nt.ptr, this->qq_nt.getSize());
+                castmem_z2c_h2d_op()(this->c_qq_so, this->qq_so.ptr, this->qq_so.getSize());
+            }
         }
-        if (PARAM.globalv.has_double_data)
+        if (PARAM.globalv.has_double_data && this->nhm > 0)
         {
             syncmem_z2z_h2d_op()(this->z_qq_so, this->qq_so.ptr, this->qq_so.getSize());
         }
@@ -782,7 +785,10 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
         syncmem_d2d_h2d_op()(this->d_nhtol, this->nhtol.c, this->nhtol.nr * this->nhtol.nc);
         syncmem_d2d_h2d_op()(this->d_nhtolm, this->nhtolm.c, this->nhtolm.nr * this->nhtolm.nc);
         syncmem_d2d_h2d_op()(this->d_tab, this->tab.ptr, this->tab.getSize());
-        syncmem_d2d_h2d_op()(this->d_qq_nt, this->qq_nt.ptr, this->qq_nt.getSize());
+        if (this->nhm > 0)
+        {
+            syncmem_d2d_h2d_op()(this->d_qq_nt, this->qq_nt.ptr, this->qq_nt.getSize());
+        }
     }
     else
     {
@@ -792,8 +798,11 @@ void pseudopot_cell_vnl::init_vnl(UnitCell& cell, const ModulePW::PW_Basis* rho_
             castmem_d2s_h2h_op()(this->s_nhtol, this->nhtol.c, this->nhtol.nr * this->nhtol.nc);
             castmem_d2s_h2h_op()(this->s_nhtolm, this->nhtolm.c, this->nhtolm.nr * this->nhtolm.nc);
             castmem_d2s_h2h_op()(this->s_tab, this->tab.ptr, this->tab.getSize());
-            castmem_d2s_h2h_op()(this->s_qq_nt, this->qq_nt.ptr, this->qq_nt.getSize());
-            castmem_z2c_h2h_op()(this->c_qq_so, this->qq_so.ptr, this->qq_so.getSize());
+            if (this->nhm > 0)
+            {
+                castmem_d2s_h2h_op()(this->s_qq_nt, this->qq_nt.ptr, this->qq_nt.getSize());
+                castmem_z2c_h2h_op()(this->c_qq_so, this->qq_so.ptr, this->qq_so.getSize());
+            }
         }
         // There's no need to synchronize double precision pointers while in a CPU environment.
     }

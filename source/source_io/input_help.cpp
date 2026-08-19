@@ -370,7 +370,7 @@ void ParameterHelp::build_registry() {
         meta.description = item.description;
         meta.default_value = item.default_value;
         meta.unit = item.unit;
-        meta.availability = item.availability;
+        meta.availability = item.get_availability();
 
         // Pre-compute lowercase name for fast fuzzy matching
         meta.name_lowercase = to_lowercase(item.label);
@@ -505,7 +505,7 @@ void ParameterHelp::generate_yaml(std::ostream& os) {
 
         os << "    default_value: " << yaml_quote_if_needed(item.default_value) << "\n";
         os << "    unit: " << yaml_quote_if_needed(item.unit) << "\n";
-        os << "    availability: " << yaml_quote_if_needed(item.availability) << "\n";
+        os << "    availability: " << yaml_quote_if_needed(item.get_availability()) << "\n";
     }
 }
 

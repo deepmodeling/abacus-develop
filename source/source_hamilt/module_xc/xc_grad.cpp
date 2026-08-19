@@ -52,8 +52,24 @@ void XC_Functional::gradcorr(
         return;
     }
 
+    // No (semi-)local functional at all. `set_xc_type("HF")` sets func_type = 4 but leaves func_id empty, 
+    // Without this block, it will read back whatever the previous functional left in the cleared-but-not-freed
+    // buffer (PBE, from set_xc_first_loop), producing a phantom XC energy and potential. (issue deepmodeling/abacus-develop#5404)
+    if(func_id.empty())
+    {
+        // `Stress_Func::stress_gga` only guards on func_type (0/1) and unconditionally reads
+        // stress_gga[0..8] afterwards, so hand back an explicit zero tensor rather than an
+        // untouched (empty) vector.
+        if(is_stress)
+        {
+            stress_gga.assign(9, 0.0);
+        }
+        return;
+    }
+
     bool igcc_is_lyp = false;
-    if( func_id[1] == XC_GGA_C_LYP)
+    // func_id may hold a single entry (e.g. PBE0 -> {XC_HYB_GGA_XC_PBEH}), so guard the index.
+    if( func_id.size() > 1 && func_id[1] == XC_GGA_C_LYP)
     {
         igcc_is_lyp = true;
     }

@@ -260,7 +260,7 @@ void ReadInput::item_system()
                           "* False: quit with an error message\n"
                           "* True: automatically set symmetry to 0 and continue running without symmetry analysis";
         item.default_value = "True";
-        item.availability = "symmetry==1";
+        item.set_availability("symmetry==1");
         read_sync_bool(input.symmetry_autoclose);
         this->add_item(item);
     }
@@ -547,7 +547,7 @@ Available options are:
 * 0: no memory saving techniques are used.
 * 1: a memory saving technique will be used for many k point calculations.)";
         item.default_value = "0";
-        item.availability = "Used only for nscf calculations with plane wave basis set.";
+        item.set_availability("calculation==nscf and basis_type==pw");
         read_sync_int(input.mem_saver);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mem_saver == 1)
@@ -593,7 +593,7 @@ Available options are:
         item.description = R"(* 0: it will be set to the number of MPI processes.
 * >0: it specifies the number of processes used for carrying out diagonalization. Must be less than or equal to total number of MPI processes.)";
         item.default_value = "0";
-        item.availability = "Used only for plane wave basis set.";
+        item.set_availability("basis_type==pw");
         read_sync_int(input.diago_proc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.diago_proc == 0)
@@ -773,7 +773,7 @@ Available options are:
 * single: single precision
 * double: double precision)";
         item.default_value = "double";
-        item.availability = "Used only for plane wave basis set.";
+        item.set_availability("basis_type==pw");
         read_sync_string(input.precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::vector<std::string> avail_list = {"single", "double"};
@@ -811,7 +811,7 @@ Available options are:
 * double: double precision
 * mix: mixed precision, starting from single precision and switching to double precision when the SCF residual becomes small enough)";
         item.default_value = "double";
-        item.availability = "Used only for LCAO basis set.";
+        item.set_availability("basis_type==lcao");
         read_sync_string(input.gint_precision);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             std::vector<std::string> avail_list = {"single", "double", "mix"};
@@ -1164,7 +1164,7 @@ Available options are:
         item.type = "Integer";
         item.description = "Specify the random seed to initialize wave functions. Only positive integers are available.";
         item.default_value = "0";
-        item.availability = "Only used for plane wave basis.";
+        item.set_availability("basis_type==pw");
         read_sync_int(input.pw_seed);
         this->add_item(item);
     }
@@ -1178,6 +1178,7 @@ Available options are:
 * 1: by GenELPA
 * 2: by ScaLAPACK)";
         item.default_value = "0";
+        item.set_availability("basis_type==pw and ks_solver==dav_subspace");
         read_sync_int(input.diag_subspace);
         this->add_item(item);
     }
@@ -1325,7 +1326,7 @@ Available options are:
         item.description = "If restart_save is set to true and an electronic iteration is finished, calculations can be "
                           "restarted from the charge density file, which are saved in the former calculation.";
         item.default_value = "False";
-        item.availability = "Used only when numerical atomic orbitals are employed as basis set.";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.restart_load);
         this->add_item(item);
     }

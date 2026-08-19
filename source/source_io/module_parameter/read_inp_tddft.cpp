@@ -163,7 +163,6 @@ void ReadInput::item_rt_tddft()
         item.description = "The number of electronic propagation steps between two ionic steps.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.estep_per_md);
         this->add_item(item);
     }
@@ -176,7 +175,6 @@ void ReadInput::item_rt_tddft()
         item.description = R"(The time step used for electronic propagation. If td_dt is not specified, it is set to md_dt / estep_per_md. If td_dt is specified explicitly, md_dt is reset to td_dt * estep_per_md.)";
         item.default_value = "md_dt / estep_per_md";
         item.unit = "fs";
-        item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.td_dt == -1.0)
             {
@@ -197,7 +195,6 @@ void ReadInput::item_rt_tddft()
 * 1: Use the ground-state eigenvalue-weighted expression $\mathrm{EDM}_{\mu\nu,\boldsymbol{k}}=\sum_i w_{i\boldsymbol{k}}\epsilon_{i\boldsymbol{k}}C_{\mu i,\boldsymbol{k}}C_{\nu i,\boldsymbol{k}}^*$. This expression is deprecated for RT-TDDFT and is generally not valid when the propagated wave functions are not Hamiltonian eigenstates.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.td_edm);
         this->add_item(item);
     }
@@ -211,7 +208,6 @@ void ReadInput::item_rt_tddft()
 * $\geqslant 0$: Print an element when either $\left|\operatorname{Re}E_{ij}\right|$ or $\left|\operatorname{Im}E_{ij}\right|$ is greater than or equal to td_print_eij.)";
         item.default_value = "-1";
         item.unit = "Ry";
-        item.availability = "";
         read_sync_double(input.td_print_eij);
         this->add_item(item);
     }
@@ -229,7 +225,6 @@ void ReadInput::item_rt_tddft()
 [NOTE] GPU execution currently supports only method 0 in both single-GPU and multi-GPU solver configurations. CPU execution supports methods 0 through 3.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.propagator);
         this->add_item(item);
     }
@@ -243,7 +238,6 @@ void ReadInput::item_rt_tddft()
 * False: No external electric field.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.td_vext);
         this->add_item(item);
     }
@@ -258,7 +252,6 @@ void ReadInput::item_rt_tddft()
 * 3: The external field direction is along the z-axis.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_vext_dire);
         };
@@ -276,7 +269,6 @@ void ReadInput::item_rt_tddft()
 * 2: Hybrid gauge. See J. Chem. Theory Comput. 2025, 21, 3335-3341 for more information.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.td_stype);
         this->add_item(item);
     }
@@ -297,7 +289,6 @@ The formulas below use Hartree atomic units. For every ordinary input frequency 
 In the velocity and hybrid gauges, ABACUS obtains the vector potential actually used in propagation by Simpson integration of the selected electric fields, including the supersine field, so a residual at the numerical-quadrature accuracy scale may remain.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_ttype);
         };
@@ -313,7 +304,6 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(First electronic step at which the time-dependent electric field is active. The interval from td_tstart through td_tend includes both endpoints. On each active step $n$, the velocity and hybrid gauges integrate the field over $[n\Delta t,(n+1)\Delta t]$, where $\Delta t=\mathtt{td\_dt}$.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.td_tstart);
         this->add_item(item);
     }
@@ -325,7 +315,6 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Last electronic step at which the time-dependent electric field is active. The interval from td_tstart through td_tend includes both endpoints. On each active step $n$, the velocity and hybrid gauges integrate the field over $[n\Delta t,(n+1)\Delta t]$, where $\Delta t=\mathtt{td\_dt}$.)";
         item.default_value = "1000";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.td_tend);
         this->add_item(item);
     }
@@ -337,7 +326,6 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Lower fractional-coordinate cutoff for the periodic spatial modulation used in the length gauge. Let $c_1=\mathtt{td\_lcut1}$, $c_2=\mathtt{td\_lcut2}$, $D=c_2-c_1$, and $G=c_1+1-c_2$. For a fractional coordinate $x$, the field factor is $\eta(x)=1$ when $c_1\leqslant x\lt c_2$ and $\eta(x)=-D/G$ elsewhere. The reversed outer interval makes the potential periodic and continuous and gives the field zero cell average.)";
         item.default_value = "0.05";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.td_lcut1);
         this->add_item(item);
     }
@@ -349,7 +337,6 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Upper fractional-coordinate cutoff for the periodic spatial modulation used in the length gauge. Let $c_1=\mathtt{td\_lcut1}$, $c_2=\mathtt{td\_lcut2}$, $D=c_2-c_1$, and $G=c_1+1-c_2$. For a fractional coordinate $x$, the field factor is $\eta(x)=1$ when $c_1\leqslant x\lt c_2$ and $\eta(x)=-D/G$ elsewhere. The reversed outer interval makes the potential periodic and continuous and gives the field zero cell average.)";
         item.default_value = "0.95";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.td_lcut2);
         this->add_item(item);
     }
@@ -361,7 +348,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Ordinary frequency $f$ in the Gaussian-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.)";
         item.default_value = "22.13";
         item.unit = "1/fs";
-        item.availability = "td_ttype contains 0";
+        item.set_availability("td_ttype contains 0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_gauss_freq);
         };
@@ -376,7 +363,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Carrier phase $\varphi$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.)";
         item.default_value = "0.0";
         item.unit = "rad";
-        item.availability = "td_ttype contains 0";
+        item.set_availability("td_ttype contains 0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_gauss_phase);
         };
@@ -391,7 +378,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Nonzero standard deviation $\sigma$ of the Gaussian envelope. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.)";
         item.default_value = "30.0";
         item.unit = "fs";
-        item.availability = "td_ttype contains 0";
+        item.set_availability("td_ttype contains 0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_gauss_sigma);
         };
@@ -406,7 +393,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Electronic-step position of the Gaussian center, which defines $t_0=\mathtt{td\_gauss\_t0}\Delta t$. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.)";
         item.default_value = "100";
         item.unit = "";
-        item.availability = "td_ttype contains 0";
+        item.set_availability("td_ttype contains 0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_gauss_t0);
         };
@@ -421,7 +408,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Electric-field scale $E_0$ in the Gaussian-pulse formula. Supply exactly one value for each td_ttype 0 occurrence, in occurrence order.)";
         item.default_value = "0.25";
         item.unit = "V/Angstrom";
-        item.availability = "td_ttype contains 0";
+        item.set_availability("td_ttype contains 0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_gauss_amp);
         };
@@ -436,7 +423,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Ordinary carrier frequency $f$ in the trapezoid-pulse formula, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "1.60";
         item.unit = "1/fs";
-        item.availability = "td_ttype contains 1";
+        item.set_availability("td_ttype contains 1");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trape_freq);
         };
@@ -451,7 +438,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Carrier phase $\varphi$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "0.0";
         item.unit = "rad";
-        item.availability = "td_ttype contains 1";
+        item.set_availability("td_ttype contains 1");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trape_phase);
         };
@@ -466,7 +453,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Electronic step defining the end of the linear rise, $t_1=\mathtt{td\_trape\_t1}\Delta t$. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "1875";
         item.unit = "";
-        item.availability = "td_ttype contains 1";
+        item.set_availability("td_ttype contains 1");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trape_t1);
         };
@@ -481,7 +468,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Electronic step defining the end of the plateau, $t_2=\mathtt{td\_trape\_t2}\Delta t$. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "5625";
         item.unit = "";
-        item.availability = "td_ttype contains 1";
+        item.set_availability("td_ttype contains 1");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trape_t2);
         };
@@ -496,7 +483,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Electronic step defining the end of the linear fall, $t_3=\mathtt{td\_trape\_t3}\Delta t$. Each field must satisfy td_trape_t1 <= td_trape_t2 <= td_trape_t3. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "7500";
         item.unit = "";
-        item.availability = "td_ttype contains 1";
+        item.set_availability("td_ttype contains 1");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trape_t3);
         };
@@ -511,7 +498,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Electric-field scale $E_0$ in the trapezoid-pulse formula. Supply exactly one value for each td_ttype 1 occurrence, in occurrence order.)";
         item.default_value = "2.74";
         item.unit = "V/Angstrom";
-        item.availability = "td_ttype contains 1";
+        item.set_availability("td_ttype contains 1");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trape_amp);
         };
@@ -526,7 +513,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(First ordinary frequency $f_1$ in the trigonometric-pulse formula, with $\omega_1=2\pi f_1$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.)";
         item.default_value = "1.164656";
         item.unit = "1/fs";
-        item.availability = "td_ttype contains 2";
+        item.set_availability("td_ttype contains 2");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trigo_freq1);
         };
@@ -541,7 +528,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Second ordinary frequency $f_2$ in the trigonometric-pulse formula, with $\omega_2=2\pi f_2$. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.)";
         item.default_value = "0.029116";
         item.unit = "1/fs";
-        item.availability = "td_ttype contains 2";
+        item.set_availability("td_ttype contains 2");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trigo_freq2);
         };
@@ -556,7 +543,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Carrier phase $\varphi_1$ in the cosine factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.)";
         item.default_value = "0.0";
         item.unit = "rad";
-        item.availability = "td_ttype contains 2";
+        item.set_availability("td_ttype contains 2");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trigo_phase1);
         };
@@ -571,7 +558,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Envelope phase $\varphi_2$ in the sine-squared factor of the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.)";
         item.default_value = "0.0";
         item.unit = "rad";
-        item.availability = "td_ttype contains 2";
+        item.set_availability("td_ttype contains 2");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trigo_phase2);
         };
@@ -586,7 +573,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Electric-field scale $E_0$ in the trigonometric-pulse formula. Supply exactly one value for each td_ttype 2 occurrence, in occurrence order.)";
         item.default_value = "2.74";
         item.unit = "V/Angstrom";
-        item.availability = "td_ttype contains 2";
+        item.set_availability("td_ttype contains 2");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_trigo_amp);
         };
@@ -601,7 +588,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Electronic switch step $n_0$ in the Heaviside-pulse definition. The field is $E_0$ for $n\lt n_0$ and zero for $n\geqslant n_0$. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.)";
         item.default_value = "100";
         item.unit = "";
-        item.availability = "td_ttype contains 3";
+        item.set_availability("td_ttype contains 3");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_heavi_t0);
         };
@@ -616,7 +603,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Electric-field scale $E_0$ in the Heaviside-pulse definition. Supply exactly one value for each td_ttype 3 occurrence, in occurrence order.)";
         item.default_value = "1.0";
         item.unit = "V/Angstrom";
-        item.availability = "td_ttype contains 3";
+        item.set_availability("td_ttype contains 3");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_heavi_amp);
         };
@@ -631,7 +618,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Carrier electric-field scale $E_0$ of each supersine pulse. This is not a normalization of the complete waveform maximum, because the envelope-derivative term also contributes. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.)";
         item.default_value = "0.27";
         item.unit = "V/Angstrom";
-        item.availability = "td_ttype contains 4";
+        item.set_availability("td_ttype contains 4");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_supsine_amp);
         };
@@ -646,7 +633,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Nonzero ordinary carrier frequency $f$ of each supersine pulse, with $\omega=2\pi f$. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.)";
         item.default_value = "0.18737028625";
         item.unit = "1/fs";
-        item.availability = "td_ttype contains 4";
+        item.set_availability("td_ttype contains 4");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_supsine_freq);
         };
@@ -661,7 +648,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Electric-field carrier phase $\varphi$ at the center of each supersine envelope. A value of 0 places a cosine carrier maximum at the envelope center. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.)";
         item.default_value = "0.0";
         item.unit = "rad";
-        item.availability = "td_ttype contains 4";
+        item.set_availability("td_ttype contains 4");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_supsine_phase);
         };
@@ -676,7 +663,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Dimensionless shape parameter $\sigma$ of each supersine envelope. It must satisfy $0\lt\sigma\lt\pi/2$ so that the electric field approaches zero at the pulse boundaries. Supply exactly one value for each td_ttype 4 occurrence, in occurrence order.)";
         item.default_value = "0.75";
         item.unit = "";
-        item.availability = "td_ttype contains 4";
+        item.set_availability("td_ttype contains 4");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.td_supsine_sigma);
         };
@@ -691,7 +678,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Integer electronic step at the left, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{s}}=\mathtt{td\_supsine\_tstart}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tstart. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.)";
         item.default_value = "default";
         item.unit = "";
-        item.availability = "td_ttype contains 4";
+        item.set_availability("td_ttype contains 4");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_supsine_tstart = parse_supersine_steps(item, para.input.td_tstart);
         };
@@ -709,7 +696,7 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.description = R"(Integer electronic step at the right, exactly zero boundary of each supersine pulse, defining $t_{\mathrm{e}}=\mathtt{td\_supsine\_tend}\Delta t$. Supply exactly one integer or default token for each td_ttype 4 occurrence, in occurrence order; each default token inherits td_tend. The complete pulse support must lie inside the inclusive global td_tstart to td_tend interval; hard truncation of a supersine pulse is rejected.)";
         item.default_value = "default";
         item.unit = "";
-        item.availability = "td_ttype contains 4";
+        item.set_availability("td_ttype contains 4");
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.td_supsine_tend = parse_supersine_steps(item, para.input.td_tend);
         };
@@ -729,7 +716,6 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
 * False: Obtain the vector potential by integrating the configured electric field.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.init_vecpot_file);
         this->add_item(item);
     }
@@ -743,7 +729,6 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
 * False: Keep the occupations determined by the initial SCF.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.ocp);
         this->add_item(item);
     }
@@ -758,7 +743,6 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
 * The sum of all weights must equal nelec; otherwise the calculation terminates with an error.)";
         item.default_value = "None";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.ocp_kb);
         };
@@ -788,7 +772,7 @@ void ReadInput::item_tdofdft()
 * False: Not added the CD potential.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "TDOFDFT";
+        item.set_availability("esolver_type==tdofdft");
         read_sync_bool(input.of_cd);
         this->add_item(item);
     }
@@ -800,7 +784,7 @@ void ReadInput::item_tdofdft()
         item.description = "The value of the parameter alpha in modified CD potential method. mCDPotential=alpha*CDPotential (proposed in paper PhysRevB.98.144302)";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "TDOFDFT";
+        item.set_availability("esolver_type==tdofdft");
         read_sync_double(input.of_mCD_alpha);
         this->add_item(item);
     }
@@ -818,7 +802,6 @@ void ReadInput::item_lr_tddft()
         item.description = "The exchange-correlation kernel used in the calculation. Currently supported: RPA, LDA, PBE, HSE, HF.";
         item.default_value = "LDA";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.xc_kernel);
         this->add_item(item);
     }
@@ -833,7 +816,6 @@ void ReadInput::item_lr_tddft()
 * "from_charge_file": Calculate fxc from the charge density read from the provided files. The following words should be the paths of ".cube" files, where the first nspin files will be read in.)";
         item.default_value = "\"default\"";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             auto& ifxc = para.input.lr_init_xc_kernel;
@@ -856,7 +838,6 @@ void ReadInput::item_lr_tddft()
 * spectrum: Calculate absorption spectrum only without solving Casida equation.)";
         item.default_value = "dav";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.lr_solver);
         this->add_item(item);
     }
@@ -868,7 +849,6 @@ void ReadInput::item_lr_tddft()
         item.description = "The convergence threshold of iterative diagonalization solver for LR-TDDFT. It is a pure-math number with the same meaning as pw_diag_thr, but since the Casida equation is a one-shot eigenvalue problem, it is also the convergence threshold of LR-TDDFT.";
         item.default_value = "1e-2";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.lr_thr);
         this->add_item(item);
     }
@@ -881,7 +861,6 @@ void ReadInput::item_lr_tddft()
 * Note: If the value is illegal ( > nelec/2 or <= 0), it will be autoset to nelec/2.)";
         item.default_value = "nband";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.nocc);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             const int nocc_default = std::max(static_cast<int>(para.input.nelec + 1) / 2, para.input.nbands);
@@ -897,7 +876,6 @@ void ReadInput::item_lr_tddft()
         item.description = "The number of virtual orbitals (starting from LUMO) used in the LR-TDDFT calculation.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.nvirt);
         this->add_item(item);
     }
@@ -910,7 +888,6 @@ void ReadInput::item_lr_tddft()
         item.description = "The number of 2-particle states to be solved.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.lr_nstates);
         this->add_item(item);
     }
@@ -924,7 +901,6 @@ void ReadInput::item_lr_tddft()
 * False: Use unrestricted LR-TDDFT only when the system is open-shell.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.lr_unrestricted);
         this->add_item(item);
     }
@@ -936,7 +912,6 @@ void ReadInput::item_lr_tddft()
         item.description = "The range of the wavelength for the absorption spectrum calculation.";
         item.default_value = "0.0 0.0";
         item.unit = "nm";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
@@ -955,7 +930,6 @@ void ReadInput::item_lr_tddft()
         item.description = "Whether to output the eigenstates (excitation energy) and eigenvectors (excitation amplitude) of the LR-TDDFT calculation. The output files are OUT.{suffix}/Excitation_Amplitude_${processor_rank}.dat.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_wfc_lr);
         this->add_item(item);
     }
@@ -967,7 +941,6 @@ void ReadInput::item_lr_tddft()
         item.description = "Whether to use length or velocity gauge to calculate the absorption spectrum in LR-TDDFT.";
         item.default_value = "velocity";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.abs_gauge);
         this->add_item(item);
     }
@@ -979,7 +952,6 @@ void ReadInput::item_lr_tddft()
         item.description = "The broadening factor for the absorption spectrum calculation.";
         item.default_value = "0.01";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.abs_broadening);
         this->add_item(item);
     }
