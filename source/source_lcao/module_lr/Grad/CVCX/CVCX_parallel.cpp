@@ -63,9 +63,9 @@ namespace LR
 
             //AX_istate=[cX^T]^T[c^TV]^T (nvirt major)
             pdgemm_(&trans, &trans, &nvirt, &nocc, &naos,
-                &one, cx.data<double>(), &i1, &i1, pcx.desc,
+                &factor, cx.data<double>(), &i1, &i1, pcx.desc,
                 cv.data<double>(), &i1, &i1, pcv.desc,
-                add_on ? &factor : &zero, AX_istate + start, &i1, &i1, px.desc);
+                add_on ? &one : &zero, AX_istate + start, &i1, &i1, px.desc);
         }
     }
 
@@ -127,9 +127,9 @@ namespace LR
 
             //AX_istate=[cX^T]^T[c^TV]^T (nvirt major)
             pzgemm_(&trans, &trans, &nvirt, &nocc, &naos,
-                &one, cx.data<std::complex<double>>(), &i1, &i1, pcx.desc,
+                &factor, cx.data<std::complex<double>>(), &i1, &i1, pcx.desc,
                 cv.data<std::complex<double>>(), &i1, &i1, pcv.desc,
-                add_on ? &factor : &zero, AX_istate + start, &i1, &i1, px.desc);
+                add_on ? &one : &zero, AX_istate + start, &i1, &i1, px.desc);
         }
     }
 
@@ -191,9 +191,9 @@ namespace LR
 
             //AX_istate=[VC]^T[X^TC^T]^T (nvirt major)
             pdgemm_(&trans, &trans, &nvirt, &nocc, &naos,
-                &one, cv.data<double>(), &i1, &i1, pcv.desc,
+                &factor, cv.data<double>(), &i1, &i1, pcv.desc,
                 cx.data<double>(), &i1, &i1, pcx.desc,
-                add_on ? &factor : &zero, AX_istate + start, &i1, &i1, px.desc);
+                add_on ? &one : &zero, AX_istate + start, &i1, &i1, px.desc);
         }
     }
 
@@ -255,9 +255,9 @@ namespace LR
 
             //AX_istate=[VC]^T[X^TC^T]^T (nvirt major)
             pzgemm_(&trans, &trans, &nvirt, &nocc, &naos,
-                &one, cv.data<std::complex<double>>(), &i1, &i1, pcv.desc,
+                &factor, cv.data<std::complex<double>>(), &i1, &i1, pcv.desc,
                 cx.data<std::complex<double>>(), &i1, &i1, pcx.desc,
-                add_on ? &factor : &zero, AX_istate + start, &i1, &i1, px.desc);
+                add_on ? &one : &zero, AX_istate + start, &i1, &i1, px.desc);
         }
     }
 }

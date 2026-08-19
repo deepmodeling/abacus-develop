@@ -103,14 +103,21 @@ namespace LR
         // 1. c * W * c
         const std::vector<ct::Tensor> cWc = cal_dm_trans_pblas(W, p_occ_occ, c, pc, naos, nocc, nvirt, pmat, (T)1., LR_Util::MO_TYPE::OO);
 
-        // 2. edm of Z : $\sum_i \sum_a c_a epsilon_i Z_{ai} c_i
-        std::vector<T> epsi_Z(px.get_local_size());
-        multiply_eig_onto_vec(Z, eig_ks, px, epsi_Z.data());
-        std::vector<ct::Tensor> cZc = cal_dm_trans_pblas(Z, px, c, pc, naos, nocc, nvirt, pmat);
+        // 2. edm of Z : $\sum_i \sum_a c_{\mu a} \epsilon_i Z_{ai} c_{\nu i}$
+        std::vector<T> epsi_Z(px.get_local_size() * c.get_nk());
+        for (int ik = 0;ik < c.get_nk();++ik)
+        {
+            multiply_eig_onto_vec(Z + ik * px.get_local_size(), eig_ks + ik * (nocc + nvirt),
+                px, epsi_Z.data() + ik * px.get_local_size());
+        }
+        std::vector<ct::Tensor> cZc = cal_dm_trans_pblas(epsi_Z.data(), px, c, pc, naos, nocc, nvirt, pmat);
         std::for_each(cZc.begin(), cZc.end(), [&](ct::Tensor& s) { LR_Util::matsym(s.data<T>(), naos, pmat); });
 
         //3. c * K_cvcx * c
-        std::vector<ct::Tensor> cKc = cal_dm_trans_pblas(K_cvcx, px, c, pc, naos, nocc, nvirt, pmat, (T)2.0);
+        // $\sum_{kl}K_{kl}[D^X](c_{\kappa k}X_{\lambda l}+X_{\kappa k}c_{\lambda l})$.
+        // `K_cvcx` already carries the factor 2 of $W^X_{ij}=2K_{ij}[D^X]$ (see `op_K_cvcx` above),
+        // `matsym` then supplies the 1/2 that turns $2\,X_\kappa K c_\lambda$ into the symmetric pair above. 
+        std::vector<ct::Tensor> cKc = cal_dm_trans_pblas(K_cvcx, px, c, pc, naos, nocc, nvirt, pmat, (T)1.0);
         std::for_each(cKc.begin(), cKc.end(), [&](ct::Tensor& s) { LR_Util::matsym(s.data<T>(), naos, pmat); });
 
         // 4. $\sum_i (\Omega + \epsilon_i) \sum_{ab} C_{\mu a} X_{ia} C_{\nu b} X_{ib}$

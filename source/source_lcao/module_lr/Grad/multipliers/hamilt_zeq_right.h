@@ -70,9 +70,11 @@ namespace LR
 #endif
             // 2. $H_{ia}[T]$, equals to $2K_{ab}[T]$ when $T$ is symmetrized
             // kernel: ground state
+            // Factor -4 (not -2), for the same reason as in `hamilt_zeq_left.h`:
+            // $K^S_\text{Hxc}=2$`pot_hxc_gs`, so $H^S=2K^S$ needs 4. 
             hamilt::Operator<T>* op_ht = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks,
                 *this->DM_diff, pot_hxc_gs, ucell, orb_cutoff, gd, kv, pX, pc, pmat,
-                { 0 }, T(-2.0), ATYPE::CC_vo, hamilt::calculation_type::lr_dmdiff_hxc);
+                { 0 }, T(-4.0), ATYPE::CC_vo, hamilt::calculation_type::lr_dmdiff_hxc);
             this->ops->add(op_ht);
 #ifdef __EXX
             if (exx_kernel_list().count(PARAM.inp.dft_functional))

@@ -50,10 +50,13 @@ namespace LR
             // Hessian (A+B) with GS XC kernel 
             // 1. diag term in A
             this->ops = new OperatorLRDiag<T>(eig_ks.c, pX[0], kv.get_nks() / nspin, nocc[0], nvirt[0]);
-            // 2. $H_{ia}[D^Z]$, equals to $2K_{ab}[D^Z]$ when $D^Z$ is symmetrized
+            // 2. $H_{ia}[D^Z]$, equals to $2K_{ab}[D^Z]$ when $D^Z$ is symmetrized.
+            // Factor 4 (not 2): the singlet kernel is $K^S_\text{Hxc}=2$`pot_hxc_gs` (not doubled), 
+            // while `pot` is the already-doubled singlet potential, so $H^S=2K^S$ here needs 4.
+            // The EXX line below is already $2\alpha$ and is consistent.
             hamilt::Operator<T>* op_hz = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks,
                 *this->DM_trans, pot_hxc_gs, ucell, orb_cutoff, gd, kv, pX, pc, pmat,
-                { 0 }, 2.0, ATYPE::CC_vo);
+                { 0 }, 4.0, ATYPE::CC_vo);
             this->ops->add(op_hz);
 #ifdef __EXX
             if (exx_kernel_list().count(PARAM.inp.dft_functional))

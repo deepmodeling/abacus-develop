@@ -99,8 +99,8 @@ namespace LR
                 cx.data<double>(), &naos);
 
             //AX_istate=[cX^T]^T[c^TV]^T (nvirt major)
-            dgemm_(&trans, &trans, &nvirt, &nocc, &naos, &one,
-                cx.data<double>(), &naos, cv.data<double>(), &nocc, add_on ? &factor : &zero,
+            dgemm_(&trans, &trans, &nvirt, &nocc, &naos, &factor,
+                cx.data<double>(), &naos, cv.data<double>(), &nocc, add_on ? &one : &zero,
                 AX_istate + start, &nvirt);
         }
     }
@@ -145,8 +145,8 @@ namespace LR
                 cx.data<std::complex<double>>(), &naos);
 
             //AX_istate=[cX^T]^T[c^TV]^T (nvirt major)
-            zgemm_(&trans, &trans, &nvirt, &nocc, &naos, &one,
-                cx.data<std::complex<double>>(), &naos, cv.data<std::complex<double>>(), &nocc, add_on ? &factor : &zero,
+            zgemm_(&trans, &trans, &nvirt, &nocc, &naos, &factor,
+                cx.data<std::complex<double>>(), &naos, cv.data<std::complex<double>>(), &nocc, add_on ? &one : &zero,
                 AX_istate + start, &nvirt);
         }
     }
@@ -247,8 +247,8 @@ namespace LR
                 cx.data<double>(), &nocc);
 
             //AX_istate=[VC]^T[X^TC^T]^T (nvirt major)
-            dgemm_(&trans, &trans, &nvirt, &nocc, &naos, &one,
-                cv.data<double>(), &naos, cx.data<double>(), &nocc, add_on ? &factor : &zero,
+            dgemm_(&trans, &trans, &nvirt, &nocc, &naos, &factor,
+                cv.data<double>(), &naos, cx.data<double>(), &nocc, add_on ? &one : &zero,
                 AX_istate + start, &nvirt);
         }
     }
@@ -293,8 +293,8 @@ namespace LR
                 cx.data<std::complex<double>>(), &nocc);
 
             //AX_istate=[VC]^T[X^TC^T]^T (nvirt major)
-            zgemm_(&trans, &trans, &nvirt, &nocc, &naos, &one,
-                cv.data<std::complex<double>>(), &naos, cx.data<std::complex<double>>(), &nocc, add_on ? &factor : &zero,
+            zgemm_(&trans, &trans, &nvirt, &nocc, &naos, &factor,
+                cv.data<std::complex<double>>(), &naos, cx.data<std::complex<double>>(), &nocc, add_on ? &one : &zero,
                 AX_istate+start, &nvirt);
         }
     }
