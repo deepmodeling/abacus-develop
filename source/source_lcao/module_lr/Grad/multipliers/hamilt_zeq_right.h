@@ -57,7 +57,7 @@ namespace LR
             // kernel: excited state
             this->ops = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks,
                 *this->DM_trans, pot, ucell, orb_cutoff, gd, kv, pX, pc, pmat,
-                { 0 }, -2.0, ATYPE::CXC);
+                { 0 }, T(-2.0), ATYPE::CXC);
 #ifdef __EXX
             if (exx_kernel_list().count(xc_kernel))
             {
@@ -105,15 +105,27 @@ namespace LR
             //     *this->DM_diff, pot_hxc_gs, ucell, orb_cutoff, gd, kv, pX, pc, pmat,
             //     { 0 }, T(-2.0), ATYPE::CC_vo);
 
+            // $D^X$ is fed to the CXC operators TRANSPOSED.
+            //
+            // The RHS needs $K^{S/T}_{ba}[D^X]$ -- the same kernel the Casida equation was solved
+            // with, which `HamiltLR` builds from the un-symmetrized $D^X$ (`tdm_sym = false`).
+            // `CVCX_virt`/`CVCX_occ` give the kernel matrix with its two MO indices in
+            // the opposite order to what this term needs, and since
+            //     $(K[D])^T = K[D^T]$,
+            // transposing the density matrix on the way in restores it.
             this->cal_dm_trans = [&, this](const int& is, const T* X)->void
                 {
                     const auto psi_ks_is = LR_Util::get_psi_spin(psi_ks, is, this->nk);
 #ifdef __MPI
                     std::vector<ct::Tensor> dm_trans_2d = cal_dm_trans_pblas(X, this->pX[is], psi_ks_is, pc, naos, nocc[is], nvirt[is], pmat);
-                    for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos, pmat);
+                    for (auto& t : dm_trans_2d) LR_Util::mattrans(t.data<T>(), naos, pmat);
 #else
                     std::vector<ct::Tensor> dm_trans_2d = cal_dm_trans_blas(X, psi_ks_is, nocc[is], nvirt[is]);
-                    for (auto& t : dm_trans_2d) LR_Util::matsym(t.data<T>(), naos);
+                    for (auto& t : dm_trans_2d)
+                    {
+                        T* d = t.data<T>();
+                        for (int u = 0;u < naos;++u) { for (int v = u + 1;v < naos;++v) { std::swap(d[u * naos + v], d[v * naos + u]); } }
+                    }
 #endif
                     for (int ik = 0;ik < this->nk;++ik) { this->DM_trans->set_DMK_pointer(ik, dm_trans_2d[ik].data<T>()); }
                 };
