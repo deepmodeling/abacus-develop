@@ -366,6 +366,37 @@
               dV@q=0 矩阵元；③ 黄金对照 = 小位移偶极 FD（或 Berry 极化）+
               O_h 对称性约束（对角 ~4.5、非对角模式）；④ 修复 +
               dfpt_q0_serial 增 m 求和结构回归用例
+            - **根因判定（完成，两个独立缺陷）**：
+              1. **星旋转缺失（已修复，本轮提交）**：sym=1 归约 k 表上直接
+                 求和无星平均 → 强各向异性（ε∞ 13.78/15.34/8.88、Z*
+                 16.72/17.76/12.27）。修复：dfpt_q0 新增 build_stars/
+                 rotate_tensor/星积分（成员=折叠去重的 kgmatrix 星点，
+                 cart=列形式旋转，atom_map=gmatrix+gtrans 的像原子，
+                 nrotk<=0 或映射失败回退恒等）；Z* 部分张量按像原子记账
+                 （反演伴星换原子，χ₀(−k)=χ₁(k) 已数值验证 2e-5）。
+                 **关键坑**：`Vector3*Matrix3` 行乘积 G⁻¹KG 是行约定算符，
+                 张量旋转要列形式 → rotate_tensor 直接用会得 P^T χ P；
+                 {P_m⁻¹k} 是右陪集代表系非左 → 星求和真被破坏（ε∞ 也错），
+                 必须存转置（dfpt_q0.cpp 构造处已注明）
+              2. **公式级缺陷（待修，下一步）**：独立粒子求和
+                 <v|dV/dτ|m><m|r|v>/(ε_m−ε_v) 缺屏蔽响应（Sternheimer
+                 2n+1 形式）。金刚石基准（nosym 全网格、星记账正确值）：
+                 ε∞=12.6661·δ ✓ 公式正确勿动；Z*=15.5799·δ（ASR 违背：
+                 电子部分 +11.58/atom vs 应 −4；O_h+反演下金刚石 Z*≡0）
+                 —— plan 早期"参考 ~4.5"来自陈旧日志，金刚石正确目标为 0
+            - 修复后验证（zstar_sym3，sym=1 4×4×4）：ε∞=12.6661·δ、
+              Z*=15.5799·δ，两者均与 nosym 全网格参照逐位一致（非对角
+              ~1e-14）→ 星旋转机械精确
+            - 新增回归用例 StarRotationCyclicGroup（dfpt_q0_serial）：sc 胞
+              C3 轨道 3 原子 + k=(¼,0,0)，钉死星大小 3、各向异性
+              trace-6 张量星平均=2δ、循环 atom_map 覆盖 {0,+1,+2} 位移、
+              nrotk=0 恒等回退；build_stars/rotate_tensor/stars_ 移至
+              public 供测试
+            - 探针：新增 DFPT_STARDBG（build_stars 转储 kgmatrix/gmatrix/
+              gtrans/成员 cart/amap），与 ZDBG 等同登记待清理
+            - 离线验证工具（/tmp/opencode，不入库）：star_check.py/
+              star_debug.py/star_compare.py（几何星 vs 代码星逐成员比对，
+              定位转置缺陷）；truth_check.py（nosym 重建基准）
         - [ ] P0-3 B0 收尾：8×8×8 过夜（ε∞/Z*/D 密网格收敛）；非 Γ q 物理级验证
           （密 k 色散 vs 超胞 FD）；sym1 星旋转各向异性处理或记录在案
         - [x] 非 Γ q 路径冒烟 `（本轮，b0_si_qL/qmL）`

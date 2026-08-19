@@ -30,6 +30,171 @@ void DFPT_Q0::init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho,
     pw_rho_ = pw_rho;
     pw_wfc_ = pw_wfc;
     pert_ = pert;
+    stars_.clear();
+}
+
+namespace {
+// element accessor for ModuleBase::Matrix3 (row i, column j); the public
+// interface only exposes the named e11..e33 members
+inline double me(const ModuleBase::Matrix3& m, int i, int j) {
+    switch (3 * i + j) {
+    case 0: return m.e11;
+    case 1: return m.e12;
+    case 2: return m.e13;
+    case 3: return m.e21;
+    case 4: return m.e22;
+    case 5: return m.e23;
+    case 6: return m.e31;
+    case 7: return m.e32;
+    default: return m.e33;
+    }
+}
+
+// folded fractional equality with the lattice periodicity absorbed
+inline bool folded_equal(double a, double b, double tol) {
+    const double d = std::abs(a - b);
+    return d < tol || std::abs(d - 1.0) < tol;
+}
+} // namespace
+
+void DFPT_Q0::build_stars(int nk) {
+    // every k starts with the identity member (also the permanent fallback)
+    stars_.assign(nk, std::vector<StarMember>(1, StarMember()));
+    if (ucell_ == nullptr || pw_wfc_ == nullptr || pw_wfc_->kvec_d == nullptr) {
+        return;
+    }
+    const ModuleSymmetry::Symmetry& symm = ucell_->symm;
+    if (symm.nrotk <= 0) {
+        // no point-group analysis (symmetry off / unreduced mesh): the
+        // stored list is already the full mesh, identity members only
+        return;
+    }
+    const bool stardbg = getenv("DFPT_STARDBG") != nullptr;
+    const int nat = ucell_->nat;
+    if (stardbg) {
+        std::cout << "STARDBG nrotk=" << symm.nrotk << " nat=" << nat << std::endl;
+        for (int j = 0; j < symm.nrotk; ++j) {
+            std::cout << "STARDBG j=" << j << " kg=[" << symm.kgmatrix[j].e11 << ","
+                      << symm.kgmatrix[j].e12 << "," << symm.kgmatrix[j].e13 << ";"
+                      << symm.kgmatrix[j].e21 << "," << symm.kgmatrix[j].e22 << ","
+                      << symm.kgmatrix[j].e23 << ";" << symm.kgmatrix[j].e31 << ","
+                      << symm.kgmatrix[j].e32 << "," << symm.kgmatrix[j].e33 << "] g=["
+                      << symm.gmatrix[j].e11 << "," << symm.gmatrix[j].e12 << ","
+                      << symm.gmatrix[j].e13 << ";" << symm.gmatrix[j].e21 << ","
+                      << symm.gmatrix[j].e22 << "," << symm.gmatrix[j].e23 << ";"
+                      << symm.gmatrix[j].e31 << "," << symm.gmatrix[j].e32 << ","
+                      << symm.gmatrix[j].e33 << "] gt=(" << symm.gtrans[j].x << ","
+                      << symm.gtrans[j].y << "," << symm.gtrans[j].z << ")" << std::endl;
+        }
+    }
+    std::vector<ModuleBase::Vector3<double>> kfolds;
+    for (int ik = 0; ik < nk; ++ik) {
+        kfolds.clear();
+        // the pre-filled identity member owns the folded k itself
+        ModuleBase::Vector3<double> k0 = pw_wfc_->kvec_d[ik];
+        k0.x -= std::round(k0.x);
+        k0.y -= std::round(k0.y);
+        k0.z -= std::round(k0.z);
+        kfolds.push_back(k0);
+        for (int j = 0; j < symm.nrotk; ++j) {
+            ModuleBase::Vector3<double> kp = pw_wfc_->kvec_d[ik] * symm.kgmatrix[j];
+            // fold to [-0.5, 0.5): star members are grid points, the
+            // folded coordinates identify the distinct mesh points
+            kp.x -= std::round(kp.x);
+            kp.y -= std::round(kp.y);
+            kp.z -= std::round(kp.z);
+            bool dup = false;
+            for (size_t im = 0; im < kfolds.size(); ++im) {
+                if (folded_equal(kp.x, kfolds[im].x, 1.0e-5)
+                    && folded_equal(kp.y, kfolds[im].y, 1.0e-5)
+                    && folded_equal(kp.z, kfolds[im].z, 1.0e-5)) {
+                    dup = true;
+                    break;
+                }
+            }
+            if (dup) {
+                continue;
+            }
+            kfolds.push_back(kp);
+            StarMember mem;
+            // cartesian form of the same operation: k_frac' = k_frac * K,
+            // k_cart = k_frac * G, hence k_cart' = k_cart * (G^-1 K G). That
+            // product is the row-convention operator; rotate_tensor applies
+            // the column form chi' = R chi R^T, so store the transpose
+            const ModuleBase::Matrix3 krow
+                = ucell_->G.Inverse() * symm.kgmatrix[j] * ucell_->G;
+            mem.cart = ModuleBase::Matrix3(krow.e11, krow.e21, krow.e31,
+                                           krow.e12, krow.e22, krow.e32,
+                                           krow.e13, krow.e23, krow.e33);
+            if (stardbg) {
+                std::cout << "STARDBG ik=" << ik << " j=" << j << " kp=(" << kp.x
+                          << "," << kp.y << "," << kp.z << ") cart=[" << mem.cart.e11
+                          << "," << mem.cart.e12 << "," << mem.cart.e13 << ";"
+                          << mem.cart.e21 << "," << mem.cart.e22 << "," << mem.cart.e23
+                          << ";" << mem.cart.e31 << "," << mem.cart.e32 << ","
+                          << mem.cart.e33 << "]" << std::endl;
+            }
+            // atom image under the paired direct-space operation
+            mem.atom_map.assign(nat, -1);
+            bool ok = true;
+            for (int iat = 0; iat < nat && ok; ++iat) {
+                const int it = ucell_->iat2it[iat];
+                const int ia = ucell_->iat2ia[iat];
+                ModuleBase::Vector3<double> tp
+                    = ucell_->atoms[it].taud[ia] * symm.gmatrix[j] + symm.gtrans[j];
+                tp.x -= std::floor(tp.x);
+                tp.y -= std::floor(tp.y);
+                tp.z -= std::floor(tp.z);
+                for (int jat = 0; jat < nat; ++jat) {
+                    if (ucell_->iat2it[jat] != it) {
+                        continue; // a species maps onto itself
+                    }
+                    const int ja = ucell_->iat2ia[jat];
+                    const ModuleBase::Vector3<double>& tq
+                        = ucell_->atoms[it].taud[ja];
+                    if (folded_equal(tp.x, tq.x, 1.0e-4)
+                        && folded_equal(tp.y, tq.y, 1.0e-4)
+                        && folded_equal(tp.z, tq.z, 1.0e-4)) {
+                        mem.atom_map[iat] = jat;
+                        break;
+                    }
+                }
+                if (mem.atom_map[iat] < 0) {
+                    ok = false;
+                }
+            }
+            if (!ok) {
+                // inconsistent operation set: fall back to identity-only
+                // stars for every k (the unreduced-sum behavior)
+                stars_.assign(nk, std::vector<StarMember>(1, StarMember()));
+                return;
+            }
+            if (stardbg) {
+                std::cout << "STARDBG ik=" << ik << " j=" << j << " amap=";
+                for (int iat2 = 0; iat2 < nat; ++iat2) {
+                    std::cout << mem.atom_map[iat2] << (iat2 + 1 < nat ? "," : "");
+                }
+                std::cout << std::endl;
+            }
+            stars_[ik].push_back(mem);
+        }
+    }
+}
+
+void DFPT_Q0::rotate_tensor(const ModuleBase::Matrix3& r,
+                            const ModuleBase::matrix& chi,
+                            double (&chi_rot)[9]) {
+    for (int a = 0; a < 3; ++a) {
+        for (int b = 0; b < 3; ++b) {
+            double s = 0.0;
+            for (int ap = 0; ap < 3; ++ap) {
+                for (int bp = 0; bp < 3; ++bp) {
+                    s += me(r, a, ap) * me(r, b, bp) * chi(ap, bp);
+                }
+            }
+            chi_rot[3 * a + b] = s;
+        }
+    }
 }
 
 void DFPT_Q0::pos_matrix(const psi::Psi<std::complex<double>>& psi,
@@ -209,33 +374,54 @@ void DFPT_Q0::compute_eps(const psi::Psi<std::complex<double>>& psi,
     pos_matrix(psi, eig, r_mat);
     const int nk = psi.get_nk();
     const int nbands = psi.get_nbands();
-    ModuleBase::matrix eps(3, 3, true);
-    for (int a = 0; a < 3; ++a) {
-        for (int b = 0; b < 3; ++b) {
-            double chi = 0.0;
-            for (int ik = 0; ik < nk; ++ik) {
-                for (int v = 0; v < nbands; ++v) {
-                    if (!dfpt_band_occupied(wg, ik, v)) {
-                        continue; // empty
-                    }
-                    for (int c = 0; c < nbands; ++c) {
-                        if (dfpt_band_occupied(wg, ik, c)) {
-                            continue; // occupied
-                        }
-                        const double de = eig(ik, c) - eig(ik, v);
-                        if (std::abs(de) < 1.0e-8) {
-                            continue;
-                        }
-                        chi += wg(ik, v)
+    build_stars(nk);
+    // wg-weighted partial susceptibility chi_k[ik](a, b) at every stored k
+    std::vector<ModuleBase::matrix> chi_k(nk, ModuleBase::matrix(3, 3, true));
+    for (int ik = 0; ik < nk; ++ik) {
+        for (int v = 0; v < nbands; ++v) {
+            if (!dfpt_band_occupied(wg, ik, v)) {
+                continue; // empty
+            }
+            for (int c = 0; c < nbands; ++c) {
+                if (dfpt_band_occupied(wg, ik, c)) {
+                    continue; // occupied
+                }
+                const double de = eig(ik, c) - eig(ik, v);
+                if (std::abs(de) < 1.0e-8) {
+                    continue;
+                }
+                for (int a = 0; a < 3; ++a) {
+                    for (int b = 0; b < 3; ++b) {
+                        chi_k[ik](a, b)
+                            += wg(ik, v)
                                * (r_mat[ik][v][c][a] * r_mat[ik][c][v][b]).real() / de;
                     }
                 }
             }
-            // wg already carries the full k weight (wk) times the spin
-            // factor 2, so the sum over the stored k list is the complete
-            // Brillouin-zone average: no extra 1/nk normalization.
-            eps(a, b) = ((a == b) ? 1.0 : 0.0)
-                        + 8.0 * ModuleBase::PI / ucell_->omega * chi;
+        }
+    }
+    ModuleBase::matrix eps(3, 3, true);
+    // wg carries the full k weight (star size included) times the spin
+    // factor 2, so the star-averaged partials sum to the complete
+    // Brillouin-zone average: no extra 1/nk normalization
+    for (int ik = 0; ik < nk; ++ik) {
+        const double inv_nstar = 1.0 / static_cast<double>(stars_[ik].size());
+        for (size_t im = 0; im < stars_[ik].size(); ++im) {
+            double rot[9];
+            rotate_tensor(stars_[ik][im].cart, chi_k[ik], rot);
+            for (int a = 0; a < 3; ++a) {
+                for (int b = 0; b < 3; ++b) {
+                    eps(a, b) += inv_nstar * rot[3 * a + b];
+                }
+            }
+        }
+    }
+    for (int a = 0; a < 3; ++a) {
+        for (int b = 0; b < 3; ++b) {
+            eps(a, b) *= 8.0 * ModuleBase::PI / ucell_->omega;
+            if (a == b) {
+                eps(a, b) += 1.0;
+            }
         }
     }
     data.set_dielectric(eps);
@@ -263,13 +449,18 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
         }
     }
 
+    build_stars(nk);
+    // star-rotated electronic partials, credited to the image atom under
+    // each star member: zacc[kappa](a, idir)
+    std::vector<ModuleBase::matrix> zacc(nat, ModuleBase::matrix(3, 3, true));
+
     for (int iat = 0; iat < nat; ++iat) {
-        ModuleBase::matrix zstar(3, 3, true);
+        // wg-weighted partial chi_k[ik](a, idir) of THIS atom at every k
+        std::vector<ModuleBase::matrix> chi_k(nk, ModuleBase::matrix(3, 3, true));
         for (int idir = 0; idir < 3; ++idir) {
             // dV matrix elements at q = 0 through the C1 path; apply_dv
             // delivers dV|u_v> on the k+q = k basis for every k.
             pert_->build_dv(0, iat, idir, data);
-            std::vector<double> acc(3, 0.0);
             for (int ik = 0; ik < nk; ++ik) {
                 pert_->apply_dv(0, ik, psi, data);
                 for (int v = 0; v < nbands; ++v) {
@@ -302,15 +493,39 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
                         // <u_v|dV|u_m> = conj(dv_mv), multiplied from the
                         // right by <u_m|r_a|u_v> (Gonze-Lee ordering)
                         for (int a = 0; a < 3; ++a) {
-                            acc[a] += wg(ik, v)
-                                      * (std::conj(dv_mv) * r_mat[ik][m][v][a]).real() / de;
+                            chi_k[ik](a, idir)
+                                += wg(ik, v)
+                                   * (std::conj(dv_mv) * r_mat[ik][m][v][a]).real() / de;
                         }
                     }
                 }
             }
-            for (int a = 0; a < 3; ++a) {
-                // wg carries the full k weight and spin factor; no extra 1/nk.
-                zstar(a, idir) = -4.0 * acc[a];
+        }
+        // star average: the partial at member Rk is R chi(k) R^T and is
+        // credited to the image atom R(iat); wg already carries the star
+        // size, so each member contributes with 1/n_star
+        for (int ik = 0; ik < nk; ++ik) {
+            const double inv_nstar
+                = 1.0 / static_cast<double>(stars_[ik].size());
+            for (size_t im = 0; im < stars_[ik].size(); ++im) {
+                const StarMember& mem = stars_[ik][im];
+                const int jat = (mem.atom_map.empty()) ? iat : mem.atom_map[iat];
+                double rot[9];
+                rotate_tensor(mem.cart, chi_k[ik], rot);
+                for (int a = 0; a < 3; ++a) {
+                    for (int d = 0; d < 3; ++d) {
+                        zacc[jat](a, d) += inv_nstar * rot[3 * a + d];
+                    }
+                }
+            }
+        }
+    }
+
+    for (int iat = 0; iat < nat; ++iat) {
+        ModuleBase::matrix zstar(3, 3, true);
+        for (int a = 0; a < 3; ++a) {
+            for (int d = 0; d < 3; ++d) {
+                zstar(a, d) = -4.0 * zacc[iat](a, d);
             }
         }
         // ionic rigid-ion charge on the diagonal (a == b directions)

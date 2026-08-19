@@ -716,3 +716,139 @@ TEST_F(DFPTQ0SerialTest, ComputeBornAnalyticCoulomb)
         EXPECT_DOUBLE_EQ(after[i].imag(), sentinel[i].imag());
     }
 }
+
+// ---------------------------------------------------------------------------
+// build_stars + rotate_tensor: C3 group on a simple-cubic 3-atom orbit cell.
+// Atoms sit on the orbit tau = (0.1,0.2,0.3) under the cyclic permutation
+// (x,y,z)->(z,x,y), so every group operation maps atom i -> i+1 (mod 3) and
+// the star of k = (1/4,0,0) has the three members
+// {(1/4,0,0),(0,1/4,0),(0,0,1/4)}. An anisotropic trace-6 tensor star-
+// averages to 2*delta_ab, and the members carry the cyclic atom map.
+// ---------------------------------------------------------------------------
+
+TEST_F(DFPTQ0SerialTest, StarRotationCyclicGroup)
+{
+    // rebuild the cell as 3 atoms on the C3 orbit of (0.1,0.2,0.3)
+    ucell_.nat = 3;
+    ucell_.atoms[0].na = 3;
+    ucell_.atoms[0].tau.resize(3);
+    ucell_.atoms[0].taud.resize(3);
+    const double t0[3] = {0.1, 0.2, 0.3};
+    for (int i = 0; i < 3; ++i)
+    {
+        ucell_.atoms[0].taud[i] = ModuleBase::Vector3<double>(t0[i], t0[(i + 1) % 3], t0[(i + 2) % 3]);
+        ucell_.atoms[0].tau[i] = ucell_.atoms[0].taud[i] * a_;
+    }
+    delete[] ucell_.iat2it;
+    delete[] ucell_.iat2ia;
+    ucell_.iat2it = new int[3];
+    ucell_.iat2ia = new int[3];
+    for (int i = 0; i < 3; ++i)
+    {
+        ucell_.iat2it[i] = 0;
+        ucell_.iat2ia[i] = i;
+    }
+
+    // C3 about (111): direct-space row-convention matrices g with tau' = tau*g
+    // (the cycle (x,y,z)->(y,z,x) sends atom i -> i+1 mod 3); g2 = g*g. In
+    // reciprocal space kgmatrix = G*g*G^-1 = g for a cubic cell.
+    const ModuleBase::Matrix3 g1(0.0, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0, 1.0, 0.0);
+    const ModuleBase::Matrix3 g2 = g1 * g1;
+    ucell_.symm.nrotk = 3;
+    ucell_.symm.gmatrix[0] = ModuleBase::Matrix3(1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, 1.0);
+    ucell_.symm.gmatrix[1] = g1;
+    ucell_.symm.gmatrix[2] = g2;
+    for (int j = 0; j < 3; ++j)
+    {
+        ucell_.symm.kgmatrix[j] = ucell_.symm.gmatrix[j];
+        ucell_.symm.gtrans[j] = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
+    }
+
+    // single reduced k point (1/4,0,0) on its own wfc basis
+    ModulePW::PW_Basis_K kwfc;
+    const ModuleBase::Vector3<double> klist[1]
+        = {ModuleBase::Vector3<double>(0.25, 0.0, 0.0)};
+    kwfc.initgrids(lat0_, latvec_, pw_rho_.nx, pw_rho_.ny, pw_rho_.nz);
+    kwfc.initparameters(false, ecutwfc_, 1, klist);
+    kwfc.fft_bundle.initfftmode(0);
+    kwfc.setuptransform();
+    kwfc.collect_local_pw();
+    q0_.init(ucell_, &pw_rho_, &kwfc, &pert_);
+
+    q0_.build_stars(1);
+    ASSERT_EQ(q0_.stars_[0].size(), (size_t)3);
+
+    // star-average an anisotropic trace-6 tensor over the members
+    ModuleBase::matrix chi(3, 3, true);
+    chi(0, 0) = 1.0;
+    chi(1, 1) = 2.0;
+    chi(2, 2) = 3.0;
+    double avg[9] = {0.0};
+    for (size_t im = 0; im < q0_.stars_[0].size(); ++im)
+    {
+        double rot[9];
+        q0_.rotate_tensor(q0_.stars_[0][im].cart, chi, rot);
+        for (int i = 0; i < 9; ++i)
+        {
+            avg[i] += rot[i] / 3.0;
+        }
+    }
+    for (int a = 0; a < 3; ++a)
+    {
+        for (int b = 0; b < 3; ++b)
+        {
+            EXPECT_NEAR(avg[3 * a + b], (a == b) ? 2.0 : 0.0, 1.0e-12) << "a=" << a << " b=" << b;
+        }
+    }
+
+    // every member carries a cyclic atom map: the identity member is the
+    // pre-filled one with an empty map, the two rotation members carry the
+    // g and g*g maps i -> (i+1)%3 and i -> (i+2)%3
+    int seen_shift[3] = {1, 0, 0}; // identity shift 0 already seen
+    for (size_t im = 0; im < q0_.stars_[0].size(); ++im)
+    {
+        const std::vector<int>& amap = q0_.stars_[0][im].atom_map;
+        if (amap.empty())
+        {
+            // identity member: rotation must be the identity
+            EXPECT_DOUBLE_EQ(q0_.stars_[0][im].cart.e11, 1.0);
+            EXPECT_DOUBLE_EQ(q0_.stars_[0][im].cart.e12, 0.0);
+            continue;
+        }
+        ASSERT_EQ(amap.size(), (size_t)3);
+        int shift = -1;
+        for (int s = 0; s < 3; ++s)
+        {
+            bool ok = true;
+            for (int i = 0; i < 3; ++i)
+            {
+                ok = ok && amap[i] == (i + s) % 3;
+            }
+            if (ok)
+            {
+                shift = s;
+                break;
+            }
+        }
+        ASSERT_GE(shift, 0);
+        seen_shift[shift] = 1;
+    }
+    for (int s = 0; s < 3; ++s)
+    {
+        EXPECT_EQ(seen_shift[s], 1) << "atom-map shift " << s << " missing";
+    }
+
+    // with the point group unavailable the stars degenerate to identity
+    ucell_.symm.nrotk = 0;
+    q0_.build_stars(1);
+    ASSERT_EQ(q0_.stars_[0].size(), (size_t)1);
+    double rot[9];
+    q0_.rotate_tensor(q0_.stars_[0][0].cart, chi, rot);
+    for (int a = 0; a < 3; ++a)
+    {
+        for (int b = 0; b < 3; ++b)
+        {
+            EXPECT_NEAR(rot[3 * a + b], chi(a, b), 1.0e-12);
+        }
+    }
+}
