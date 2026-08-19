@@ -40,23 +40,31 @@ public:
     void build_efield(const ModuleBase::Vector3<double>& field, DFPT_PW_Data& data);
 
     /// C5: real-space kernel of the same-atom second-order LOCAL potential
-    /// d2V_loc(r) = d^2 V_loc / d tau_{da} d tau_{db} (both displacements on
-    /// the SAME atom; each derivative contributes i w_dir, w = Delta + q, so
-    /// the reciprocal kernel is -w_da w_db Vloc(|w|) exp(i w.tau)). Returned
-    /// on the shared real-space grid; its expectation value with |u(r)|^2
-    /// enters the electronic dynamical matrix (anharmonic term).
+    /// d2V_loc(r) = d^2 V_loc / d tau_{da} d tau_{db} (both displacement
+    /// dressings e^{i q.R} multiply on the SAME atom, so the cell sum
+    /// collapses to G = 2q mod integers: the kernel is nonzero only when 2q
+    /// is reciprocal, in which case every integer G survives with its own
+    /// phase and the kernel equals the plain q=0 one,
+    /// -w_da w_db Vloc(|w|) exp(i w.tau)). The caller gates on 2q reciprocal
+    /// and skips otherwise. Returned on the shared real-space grid; its
+    /// expectation value with |u(r)|^2 enters the electronic dynamical
+    /// matrix (anharmonic term).
     void d2vloc_r(int atom_idx, int da, int db,
-                  const ModuleBase::Vector3<double>& q_cart,
                   std::vector<std::complex<double>>& dv2_r) const;
 
     /// C5: same-atom second-order NONLOCAL potential acting on psi,
-    /// chi_n(G'') = (d^2 Vnl / d tau_{da} d tau_{db}) |psi_n> on the k+q
-    /// basis (normal-conserving separable case). The four terms come from the
-    /// phase derivatives of the out (k+q+G'') and in (k+G') projectors of the
-    /// SAME displaced atom; they reduce to zero for a uniform translation at
-    /// q=0 (acoustic consistency).
+    /// chi_n(G'') = (d^2 Vnl / d tau_{da} d tau_{db}) |psi_n> on the
+    /// q_eff-shifted basis (q_eff = q when q is itself a reciprocal vector,
+    /// otherwise 2q: the second-order potential carries wavevector 2q, and
+    /// the |d beta><d beta| middle term additionally requires q to be
+    /// reciprocal, hence the include_middle switch; normal-conserving
+    /// separable case). The terms come from the phase derivatives of the out
+    /// (q_eff-shifted) and in (k+G') projectors of the SAME displaced atom;
+    /// they reduce to zero for a uniform translation at q=0 (acoustic
+    /// consistency).
     void apply_d2vnl(int atom_idx, int da, int db,
-                     const ModuleBase::Vector3<double>& q_cart,
+                     const ModuleBase::Vector3<double>& q_eff,
+                     bool include_middle,
                      const psi::Psi<std::complex<double>>& psi, int k_idx,
                      std::vector<std::vector<std::complex<double>>>& d2v_psi) const;
 

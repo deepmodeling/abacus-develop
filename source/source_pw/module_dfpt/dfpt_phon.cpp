@@ -84,10 +84,16 @@ void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac,
     // The on-site diagonal (both second derivatives act on tau_a in cell 0)
     // is phase-free: it is accumulated from Gamma-phase (G-only) pair terms
     // as -sqrt(Mb/Ma) times the pair element. sq/s0 accumulate the self-image
-    // phase difference of the same-atom images:
-    //   sum_{L!=0} h(L)(e^{i2pi q.L} - 1)
-    //     = [erfc piece in the R part] + (4pi/Omega)(sq - s0 - delta_ab/3),
-    // where the delta/3 is the G=0 limit (w_a w_b / w^2 -> delta_ab/3).
+    // phase difference of the same-atom images (validated element-wise
+    // against finite differences of the erfc-split Ewald energy in a
+    // q-commensurate supercell):
+    //   D_ii(q) - D_ii(0) = (Za^2 e2 / Ma) [ sum_{L!=0} h(L)(1 - cos(2pi q.L))
+    //     + (4pi/Omega)(sq - s0) ],
+    // where sq sums (G+q)(G+q)/|G+q|^2 exp(-|G+q|^2/4a) over all grid G
+    // (the G = 0 member contributes through w = q) and s0 the same kernel
+    // at q = 0. The alpha independence of this combination was verified
+    // numerically; at q = 0 both differences vanish and the acoustic sum
+    // rule holds exactly by construction.
     double sq[3][3] = {{0.0}};
     double s0[3][3] = {{0.0}};
     for (int ig = 0; ig < pw_rho_->npw; ++ig) {
@@ -96,10 +102,10 @@ void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac,
         const double w2 = w * w;
         const double g2 = gcart * gcart;
         if (w2 < 1.0e-12) {
-            // G + q = 0 (only possible at q = 0 with G = 0): isotropic limit
-            for (int d = 0; d < 3; ++d) {
-                sq[d][d] += 1.0 / 3.0;
-            }
+            // G + q = 0 (only possible at q = 0 with G = 0): excluded, as in
+            // the q = 0 G part below; its isotropic delta/3 limit belongs to
+            // the direction-averaged q -> 0 behavior, not the exact q = 0
+            // matrix
             continue;
         }
         const double w2_bohr = w2 * ucell_->tpiba2;
@@ -171,7 +177,7 @@ void DFPT_Phon::ion_ion(const ModuleBase::Vector3<double>& q_frac,
             for (int db = 0; db < 3; ++db) {
                 dyn(3 * ia + da, 3 * ia + db)
                     += f2 * ModuleBase::FOUR_PI / ucell_->omega
-                       * (sq[da][db] - s0[da][db] - (da == db ? 1.0 / 3.0 : 0.0));
+                       * (sq[da][db] - s0[da][db]);
             }
         }
     }
@@ -422,9 +428,25 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
             }
 
             // ---- same-atom anharmonic term <psi | d2_ab V_ext | psi> ----
-            if (iat == atom_idx && cola >= rowb) {
+            // both displacement dressings e^{i q.R} multiply on the SAME atom,
+            // so the second-order potential carries wavevector 2q; the same-k
+            // expectation value is nonzero only when 2q folds onto a
+            // reciprocal vector, in which case the operator is
+            // lattice-periodic and lives on the integer G set (out basis =
+            // k + q_eff ball with q_eff = fold(2q) = 0). The |d beta><d beta|
+            // middle projector term carries the same 2q (product of the two
+            // dressings) and survives whenever the gate passes.
+            const ModuleBase::Vector3<double> q2_frac = 2.0 * q_frac;
+            const ModuleBase::Vector3<double> q2_round(std::round(q2_frac.x),
+                                                       std::round(q2_frac.y),
+                                                       std::round(q2_frac.z));
+            const bool q2_is_recip = ((q2_frac - q2_round).norm() < 1.0e-8);
+            const ModuleBase::Vector3<double> q_eff_cart
+                = (q2_frac - q2_round) * ucell_->G;
+            const bool include_middle = true;
+            if (iat == atom_idx && cola >= rowb && q2_is_recip) {
                 std::vector<std::complex<double>> dv2_r;
-                pert_->d2vloc_r(atom_idx, idir, dir, q_cart, dv2_r);
+                pert_->d2vloc_r(atom_idx, idir, dir, dv2_r);
                 if (static_cast<int>(dv2_r.size()) != pw_rho_->nrxx) {
                     dv2_r.assign(pw_rho_->nrxx, std::complex<double>(0.0, 0.0));
                 }
@@ -436,10 +458,10 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
                 std::vector<std::complex<double>> x_r(pw_rho_->nrxx);
                 std::vector<std::complex<double>> x_recip(pw_rho_->npw, std::complex<double>(0.0, 0.0));
                 for (int ik = 0; ik < nk; ++ik) {
-                    pert_->apply_d2vnl(atom_idx, idir, dir, q_cart, psi, ik, chi);
-                    // k+q scatter map for this k
+                    pert_->apply_d2vnl(atom_idx, idir, dir, q_eff_cart, include_middle, psi, ik, chi);
+                    // k+q_eff scatter map for this k (must match apply_d2vnl)
                     DFPT_KQ_Basis kq;
-                    kq.init(pert_->get_pw_wfc(), q_cart, ik);
+                    kq.init(pert_->get_pw_wfc(), q_eff_cart, ik);
                     const int npwk_kq = kq.get_npwk();
                     for (int ib = 0; ib < nbands; ++ib) {
                         if (!dfpt_band_occupied(wg, ik, ib)) {

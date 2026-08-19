@@ -664,7 +664,6 @@ void DFPT_Pert::build_dv_u(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data)
 }
 
 void DFPT_Pert::d2vloc_r(int atom_idx, int da, int db,
-                         const ModuleBase::Vector3<double>& q_cart,
                          std::vector<std::complex<double>>& dv2_r) const {
     if (pw_rho_ == nullptr) {
         return;
@@ -682,7 +681,12 @@ void DFPT_Pert::d2vloc_r(int atom_idx, int da, int db,
     ModuleBase::Vector3<double> gcar;
     for (int ig = 0; ig < npw; ++ig) {
         rho_gvec(ig, gcar);
-        const ModuleBase::Vector3<double> w = gcar + q_cart;
+        // both displacement dressings e^{i q.R} multiply on the same atom, so
+        // the cell sum collapses to G = 2q (mod ints); when the caller's gate
+        // passes (2q reciprocal) every integer G survives with its own phase
+        // and the kernel is exactly the plain q=0 one. When the gate fails
+        // there is no integer solution and the whole term vanishes (skipped).
+        const ModuleBase::Vector3<double> w = gcar;
         const double w2 = w * w;
         if (w2 < 1.0e-12) {
             continue;
@@ -698,7 +702,8 @@ void DFPT_Pert::d2vloc_r(int atom_idx, int da, int db,
 }
 
 void DFPT_Pert::apply_d2vnl(int atom_idx, int da, int db,
-                            const ModuleBase::Vector3<double>& q_cart,
+                            const ModuleBase::Vector3<double>& q_eff,
+                            bool include_middle,
                             const psi::Psi<std::complex<double>>& psi, int k_idx,
                             std::vector<std::vector<std::complex<double>>>& d2v_psi) const {
     int it = 0;
@@ -740,7 +745,7 @@ void DFPT_Pert::apply_d2vnl(int atom_idx, int da, int db,
     std::vector<std::vector<std::complex<double>>> vkb_in;
     build_vkb(it, ia, gk_in, vkb_in);
     DFPT_KQ_Basis kq;
-    kq.init(pw_wfc_, q_cart, k_idx);
+    kq.init(pw_wfc_, q_eff, k_idx);
     const int npwk_kq = kq.get_npwk();
     std::vector<ModuleBase::Vector3<double>> gk_out(npwk_kq);
     for (int igl = 0; igl < npwk_kq; ++igl) {
@@ -784,14 +789,21 @@ void DFPT_Pert::apply_d2vnl(int atom_idx, int da, int db,
                 dab[mu] += dij * becp_ab[nu];
             }
         }
-        // chi(G'') = sum_mu vkb_out,mu [ -kq_da kq_db d0 - dab + kq_da db_ + kq_db da_ ]_mu
+        // chi(G'') = sum_mu vkb_out,mu [ -kq_da kq_db d0 - dab
+        //                              + (include_middle ? kq_da db_ + kq_db da_ : 0) ]_mu
+        // the |d beta><d beta| middle term carries q on BOTH projectors, so it
+        // conserves the same 2q total momentum only through its own q-shifted
+        // ball; it is momentum-forbidden (vanishes between equal-k states)
+        // unless q itself is a reciprocal vector
         for (int igl = 0; igl < npwk_kq; ++igl) {
             const double kq_da = ucell_->tpiba * gk_out[igl][da];
             const double kq_db = ucell_->tpiba * gk_out[igl][db];
             std::complex<double> chi(0.0, 0.0);
             for (int mu = 0; mu < nh; ++mu) {
-                chi += vkb_out[mu][igl]
-                       * (-kq_da * kq_db * d0[mu] - dab[mu] + kq_da * db_[mu] + kq_db * da_[mu]);
+                chi += vkb_out[mu][igl] * (-kq_da * kq_db * d0[mu] - dab[mu]);
+                if (include_middle) {
+                    chi += vkb_out[mu][igl] * (kq_da * db_[mu] + kq_db * da_[mu]);
+                }
             }
             d2v_psi[iband][igl] = chi;
         }
