@@ -8,6 +8,7 @@
 #include "source_lcao/module_lr/lr_spectrum.h"
 #include "source_lcao/module_lr/utils/exciton_plotter.h"
 #include "source_lcao/module_lr/utils/lr_io.h"
+#include "source_lcao/module_lr/utils/lr_util.hpp"
 
 namespace ModuleESolver
 {
@@ -28,11 +29,8 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
     ModuleESolver::ESolver_FP::before_all_runners(basecell, inp);
     this->pelec = new elecstate::ElecStateLCAO<T>();
 
-    this->kRlist = LR_IO::RI_kRlist(*this->ucell_,
-                                    &this->kv,
-                                    this->rpa_dir,
-                                    inp.bse_use_fine_kgrid,
-                                    this->out_dir);
+    this->kRlist = LR_IO::RI_kRlist(*this->ucell_, &this->kv, this->nspin,
+                                    this->rpa_dir, this->out_dir, inp.bse_use_fine_kgrid);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "Set K-POINTS and R-list for RI");
     ModuleIO::print_parameters(ucell, this->kv, inp);
 
@@ -609,6 +607,11 @@ void ESolver_BSE<T, TR>::lri_init()
             Vs_in = LR_IO::read_coulomb_mat_k<T, T>(this->rpa_dir, Cs_in, this->kRlist);
         }
         Ws_in = LR_IO::read_Ws<T, T>(Vs_in, this->kRlist.Rlist);
+        // if (GlobalV::MY_RANK == 0)
+        // {
+        //     LR_IO::write_lri_R_max_norm(Vs_in, *this->ucell_, this->out_dir + "V_R_max_norm.dat");
+        //     LR_IO::write_lri_R_max_norm(Ws_in, *this->ucell_, this->out_dir + "W_R_max_norm.dat");
+        // }
     // }
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);

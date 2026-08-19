@@ -3,9 +3,9 @@
 #include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
+#include "source_lcao/module_lr/utils/lr_io_krlist.h"
 #include "source_psi/psi.h"
 #ifdef __EXX
-#include "source_lcao/module_ri/ri_util.h" // for get_Born_von_Karmen_cells
 #include <RI/global/Tensor.h>
 #endif
 #include <cmath>
@@ -45,32 +45,6 @@ inline void set_zero_if_close(ModuleBase::Vector3<double>& vec, const double tol
 }
 
 void parse_band_out_file(const std::string& path, int& nbands_file, int& nk_file, int& nspin_file, int& nocc_file);
-
-#ifdef __EXX
-using TA = int;
-using TC = std::array<int, 3>;
-using TAC = std::pair<int, TC>;
-template <typename T>
-using TLRI = std::map<int, std::map<TAC, RI::Tensor<T>>>;
-
-class RI_kRlist
-{
-  public:
-    K_Vectors* klist = nullptr; // store fine kgrid if bse_use_fine_kgrid
-    K_Vectors klist_coarse;
-    TC period;
-    std::vector<TC> Rlist;
-    RI_kRlist() = default;
-    RI_kRlist(const UnitCell& ucell, K_Vectors* pkv,
-              const std::string& path, const int bse_use_fine_kgrid,
-              const std::string& out_dir);
-    ~RI_kRlist() = default;
-    void read_kpts_coarse(const std::string& file, const UnitCell& ucell,
-                          K_Vectors* const klist, const std::string& out_dir);
-    void read_kpts_fine(const std::string& file, const UnitCell& ucell,
-                        K_Vectors* const klist, const bool is_weighted,
-                        const std::string& out_dir);
-};
 
 /// @brief vector as {ik, iband, <occ, ks_ene, gw_ene>}
 /// @param ncore: as output, number of core orbitals parsed from file
@@ -113,6 +87,12 @@ void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
                                               const int nspin_file,
                                               const int my_rank,
                                               Parallel_Orbitals& pmat);
+#ifdef __EXX
+using TA = int;
+using TC = std::array<int, 3>;
+using TAC = std::pair<int, TC>;
+template <typename T>
+using TLRI = std::map<int, std::map<TAC, RI::Tensor<T>>>;
 
 /// only for blocking by atom pairs (abacus type)
 template <typename TCs, typename TR>
@@ -125,6 +105,12 @@ TLRI<TR> read_coulomb_mat_general_k(const std::string& path, const TLRI<TCs>& Cs
 /// @brief read Wxc(R) = Wc(R) + Vx(R) from file
 template <typename Tdata, typename TR>
 std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> read_Ws(const TLRI<TR>& Vs, const std::vector<TC>& Rlist);
+
+/// @brief Write the max-entry norm of every atom-pair real-space tensor.
+/// R is converted from lattice coordinates to Cartesian Bohr coordinates.
+template <typename T>
+void write_lri_R_max_norm(const TLRI<T>& tensors, const UnitCell& ucell, const std::string& filename);
+
 #endif
 
 } // namespace LR_IO

@@ -587,6 +587,7 @@ void ModuleESolver::ESolver_LR<T, TR>::runner(BaseCell& basecell, const int iste
                                 this->paraC_,
                                 this->paraMat_,
                                 spin_types[is],
+                                this->in_dir,
                                 this->out_dir,
                                 this->inp_->ri_hartree_benchmark,
                                 (this->inp_->ri_hartree_benchmark == "aims" ? this->inp_->aims_nbasis : std::vector<int>({})));
