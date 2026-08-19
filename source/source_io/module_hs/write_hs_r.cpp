@@ -14,6 +14,7 @@
 #include <complex>
 #include <fstream>
 #include <limits>
+#include <map>
 #include <tuple>
 #include <vector>
 
@@ -350,26 +351,49 @@ void write_native_value(std::ofstream& ofs, const std::complex<double>& value)
 }
 
 template <typename TR>
-ModuleIO::SparseMatrix<TR> make_sparse_R_block(hamilt::HContainer<TR>* mat_serial,
-                                               const int rx,
-                                               const int ry,
-                                               const int rz,
-                                               const double sparse_threshold)
+std::vector<std::vector<std::pair<int, int>>> index_atom_pair_R_blocks(
+    const hamilt::HContainer<TR>* mat_serial,
+    const std::vector<std::tuple<int, int, int>>& R_coordinates)
+{
+    std::vector<std::vector<std::pair<int, int>>> block_indices(R_coordinates.size());
+    std::map<std::tuple<int, int, int>, size_t> R_to_index;
+    for (size_t index = 0; index < R_coordinates.size(); ++index)
+    {
+        R_to_index[R_coordinates[index]] = index;
+    }
+
+    for (int iap = 0; iap < mat_serial->size_atom_pairs(); ++iap)
+    {
+        const auto& atom_pair = mat_serial->get_atom_pair(iap);
+        for (size_t ir = 0; ir < atom_pair.get_R_size(); ++ir)
+        {
+            const ModuleBase::Vector3<int> R = atom_pair.get_R_index(ir);
+            const std::tuple<int, int, int> coordinate = std::make_tuple(R.x, R.y, R.z);
+            const std::map<std::tuple<int, int, int>, size_t>::const_iterator target
+                = R_to_index.find(coordinate);
+            if (target == R_to_index.end())
+            {
+                continue;
+            }
+            block_indices[target->second].push_back(std::make_pair(iap, static_cast<int>(ir)));
+        }
+    }
+    return block_indices;
+}
+
+template <typename TR>
+ModuleIO::SparseMatrix<TR> make_sparse_R_block(
+    const hamilt::HContainer<TR>* mat_serial,
+    const std::vector<std::pair<int, int>>& block_indices,
+    const double sparse_threshold)
 {
     const int nbasis = mat_serial->get_nbasis();
     ModuleIO::SparseMatrix<TR> sparse_matrix(nbasis, nbasis);
     sparse_matrix.setSparseThreshold(sparse_threshold);
-    mat_serial->fix_R(rx, ry, rz);
-
-    for (int iap = 0; iap < mat_serial->size_atom_pairs(); ++iap)
+    for (const std::pair<int, int>& block_index: block_indices)
     {
-        const auto atom_pair = mat_serial->get_atom_pair(iap);
-        const int r_index = atom_pair.find_R(rx, ry, rz);
-        if (r_index < 0)
-        {
-            continue;
-        }
-        const auto matrix_info = atom_pair.get_matrix_values(r_index);
+        const auto& atom_pair = mat_serial->get_atom_pair(block_index.first);
+        const auto matrix_info = atom_pair.get_matrix_values(block_index.second);
         const int* index = std::get<0>(matrix_info).data();
         TR* data = std::get<1>(matrix_info);
         for (int irow = index[0]; irow < index[0] + index[1]; ++irow)
@@ -381,8 +405,6 @@ ModuleIO::SparseMatrix<TR> make_sparse_R_block(hamilt::HContainer<TR>* mat_seria
             }
         }
     }
-
-    mat_serial->unfix_R();
     return sparse_matrix;
 }
 } // namespace
@@ -424,6 +446,10 @@ void ModuleIO::write_hcontainer_csr_binary(const std::string& fname,
     }
     std::sort(R_coordinates.begin(), R_coordinates.end());
 
+    const double sparse_threshold = 1e-10;
+    const std::vector<std::vector<std::pair<int, int>>> block_indices
+        = index_atom_pair_R_blocks(mat_serial, R_coordinates);
+
     const int step = std::max(istep, 0);
     const int nbasis = mat_serial->get_nbasis();
     const int nR = static_cast<int>(R_coordinates.size());
@@ -431,14 +457,14 @@ void ModuleIO::write_hcontainer_csr_binary(const std::string& fname,
     write_native_value(ofs, nbasis);
     write_native_value(ofs, nR);
 
-    const double sparse_threshold = 1e-10;
-    for (const auto& R_coordinate: R_coordinates)
+    for (size_t R_index = 0; R_index < R_coordinates.size(); ++R_index)
     {
+        const auto& R_coordinate = R_coordinates[R_index];
         const int rx = std::get<0>(R_coordinate);
         const int ry = std::get<1>(R_coordinate);
         const int rz = std::get<2>(R_coordinate);
         const SparseMatrix<TR> sparse_matrix
-            = make_sparse_R_block(mat_serial, rx, ry, rz, sparse_threshold);
+            = make_sparse_R_block(mat_serial, block_indices[R_index], sparse_threshold);
         const auto& elements = sparse_matrix.getElements();
         if (elements.size() > static_cast<size_t>(std::numeric_limits<int>::max()))
         {

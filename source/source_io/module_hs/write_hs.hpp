@@ -7,6 +7,8 @@
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_base/module_out/filename.h" // use filename_output function
 
+#include <algorithm>
+#include <limits>
 
 template <typename T>
 void ModuleIO::write_hsk(
@@ -129,23 +131,34 @@ void ModuleIO::save_mat(const int istep,
             fwrite(&dim, sizeof(int), 1, out_matrix);
         }
 
-        int ir=0;
-        int ic=0;
-        for (int i = 0; i < dim; ++i)
+        const int batch_rows = std::max(1, std::min(64, std::numeric_limits<int>::max() / std::max(dim, 1)));
+        std::vector<T> lines;
+        std::vector<int> offsets(batch_rows + 1, 0);
+        for (int row_begin = 0; row_begin < dim; row_begin += batch_rows)
         {
-            T* line = new T[tri ? dim - i : dim];
-            ModuleBase::GlobalFunc::ZEROS(line, tri ? dim - i : dim);
-
-            ir = pv.global2local_row(i);
-            if (ir >= 0)
+            const int rows_in_batch = std::min(batch_rows, dim - row_begin);
+            offsets[0] = 0;
+            for (int local_batch_row = 0; local_batch_row < rows_in_batch; ++local_batch_row)
             {
-                // data collection
+                const int i = row_begin + local_batch_row;
+                offsets[local_batch_row + 1] = offsets[local_batch_row] + (tri ? dim - i : dim);
+            }
+            lines.assign(offsets[rows_in_batch], T());
+            for (int local_batch_row = 0; local_batch_row < rows_in_batch; ++local_batch_row)
+            {
+                const int i = row_begin + local_batch_row;
+                const int ir = pv.global2local_row(i);
+                if (ir < 0)
+                {
+                    continue;
+                }
+                T* line = lines.data() + offsets[local_batch_row];
                 for (int j = (tri ? i : 0); j < dim; ++j)
                 {
-                    ic = pv.global2local_col(j);
+                    const int ic = pv.global2local_col(j);
                     if (ic >= 0)
                     {
-                        int iic;
+                        int iic = 0;
                         if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(PARAM.inp.ks_solver))
                         {
                             iic = ir + ic * pv.nrow;
@@ -158,22 +171,22 @@ void ModuleIO::save_mat(const int istep,
                     }
                 }
             }
-
-            if (reduce) 
+            if (reduce)
             {
-                Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
+                Parallel_Reduce::reduce_all(lines.data(), offsets[rows_in_batch]);
             }
-
             if (drank == 0)
             {
-                for (int j = (tri ? i : 0); j < dim; ++j)
+                for (int local_batch_row = 0; local_batch_row < rows_in_batch; ++local_batch_row)
                 {
-                    fwrite(&line[tri ? j - i : j], sizeof(T), 1, out_matrix);
+                    const int i = row_begin + local_batch_row;
+                    const T* line = lines.data() + offsets[local_batch_row];
+                    for (int j = (tri ? i : 0); j < dim; ++j)
+                    {
+                        fwrite(&line[tri ? j - i : j], sizeof(T), 1, out_matrix);
+                    }
                 }
             }
-            delete[] line;
-
-            MPI_Barrier(DIAG_WORLD);
         }
 
         if (drank == 0) 
@@ -230,20 +243,31 @@ void ModuleIO::save_mat(const int istep,
 
         }
 
-        int ir=0;
-        int ic=0;
-        for (int i = 0; i < dim; i++)
+        const int batch_rows = std::max(1, std::min(64, std::numeric_limits<int>::max() / std::max(dim, 1)));
+        std::vector<T> lines;
+        std::vector<int> offsets(batch_rows + 1, 0);
+        for (int row_begin = 0; row_begin < dim; row_begin += batch_rows)
         {
-            T* line = new T[tri ? dim - i : dim];
-            ModuleBase::GlobalFunc::ZEROS(line, tri ? dim - i : dim);
-
-            ir = pv.global2local_row(i);
-            if (ir >= 0)
+            const int rows_in_batch = std::min(batch_rows, dim - row_begin);
+            offsets[0] = 0;
+            for (int local_batch_row = 0; local_batch_row < rows_in_batch; ++local_batch_row)
             {
-                // data collection
+                const int i = row_begin + local_batch_row;
+                offsets[local_batch_row + 1] = offsets[local_batch_row] + (tri ? dim - i : dim);
+            }
+            lines.assign(offsets[rows_in_batch], T());
+            for (int local_batch_row = 0; local_batch_row < rows_in_batch; ++local_batch_row)
+            {
+                const int i = row_begin + local_batch_row;
+                const int ir = pv.global2local_row(i);
+                if (ir < 0)
+                {
+                    continue;
+                }
+                T* line = lines.data() + offsets[local_batch_row];
                 for (int j = (tri ? i : 0); j < dim; ++j)
                 {
-                    ic = pv.global2local_col(j);
+                    const int ic = pv.global2local_col(j);
                     if (ic >= 0)
                     {
                         int iic=0;
@@ -259,31 +283,30 @@ void ModuleIO::save_mat(const int istep,
                     }
                 }
             }
-
-            if (reduce) 
+            if (reduce)
             {
-                Parallel_Reduce::reduce_all(line, tri ? dim - i : dim);
+                Parallel_Reduce::reduce_all(lines.data(), offsets[rows_in_batch]);
             }
-
             if (drank == 0)
             {
-                out_matrix << "Row " << i+1 << std::endl;
-                size_t count = 0;
-                for (int j = (tri ? i : 0); j < dim; j++) 
+                for (int local_batch_row = 0; local_batch_row < rows_in_batch; ++local_batch_row)
                 {
-                    out_matrix << " " << line[tri ? j - i : j];
-                    ++count;
-                    if(count%8==0)
+                    const int i = row_begin + local_batch_row;
+                    const T* line = lines.data() + offsets[local_batch_row];
+                    out_matrix << "Row " << i+1 << std::endl;
+                    size_t count = 0;
+                    for (int j = (tri ? i : 0); j < dim; j++)
                     {
-                        if(j!=dim-1)
+                        out_matrix << " " << line[tri ? j - i : j];
+                        ++count;
+                        if(count%8==0 && j!=dim-1)
                         {
                             out_matrix << std::endl;
                         }
                     }
+                    out_matrix << std::endl;
                 }
-                out_matrix << std::endl;
             }
-            delete[] line;
         }
 
         if (drank == 0) 

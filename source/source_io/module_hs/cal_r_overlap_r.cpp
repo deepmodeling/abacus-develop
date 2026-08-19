@@ -708,83 +708,76 @@ void cal_r_overlap_R::out_rR(const UnitCell& ucell, const Grid_Driver& gd, const
 
         ModuleBase::Vector3<double> R_car = ModuleBase::Vector3<double>(dRx, dRy, dRz) * ucell.latvec;
 
-        int ir, ic;
-        for (int iw1 = 0; iw1 < PARAM.globalv.nlocal; iw1++)
+        for (int ir = 0; ir < this->ParaV->get_row_size(); ++ir)
         {
-            ir = this->ParaV->global2local_row(iw1);
-            if (ir >= 0)
+            const int iw1 = this->ParaV->local2global_row(ir);
+            for (int ic = 0; ic < this->ParaV->get_col_size(); ++ic)
             {
-                for (int iw2 = 0; iw2 < PARAM.globalv.nlocal; iw2++)
+                const int iw2 = this->ParaV->local2global_col(ic);
+                int orb_index_row = iw1 / PARAM.globalv.npol;
+                int orb_index_col = iw2 / PARAM.globalv.npol;
+
+                // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
+                int new_index
+                    = iw1 - PARAM.globalv.npol * orb_index_row + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
+
+                if (new_index == 0 || new_index == 3)
                 {
-                    ic = this->ParaV->global2local_col(iw2);
-                    if (ic >= 0)
+                    int it1 = iw2it[orb_index_row];
+                    int ia1 = iw2ia[orb_index_row];
+                    int iN1 = iw2iN[orb_index_row];
+                    int iL1 = iw2iL[orb_index_row];
+                    int im1 = iw2im[orb_index_row];
+
+                    int it2 = iw2it[orb_index_col];
+                    int ia2 = iw2ia[orb_index_col];
+                    int iN2 = iw2iN[orb_index_col];
+                    int iL2 = iw2iL[orb_index_col];
+                    int im2 = iw2im[orb_index_col];
+
+                    ModuleBase::Vector3<double> r_distance
+                        = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
+
+                    double overlap_o
+                        = center2_orb11[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point, r_distance, im1, im2);
+
+                    double overlap_x = -1 * factor
+                                       * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                      r_distance,
+                                                                                                      im1,
+                                                                                                      1,
+                                                                                                      im2); // m =  1
+
+                    double overlap_y = -1 * factor
+                                       * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                      r_distance,
+                                                                                                      im1,
+                                                                                                      2,
+                                                                                                      im2); // m = -1
+
+                    double overlap_z = factor
+                                       * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                      r_distance,
+                                                                                                      im1,
+                                                                                                      0,
+                                                                                                      im2); // m =  0
+
+                    ModuleBase::Vector3<double> temp_prp = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z)
+                                                           + ucell.atoms[it1].tau[ia1] * ucell.lat0 * overlap_o;
+
+                    if (std::abs(temp_prp.x) > sparse_threshold)
                     {
-                        int orb_index_row = iw1 / PARAM.globalv.npol;
-                        int orb_index_col = iw2 / PARAM.globalv.npol;
+                        psi_r_psi_sparse[0][iw1][iw2] = temp_prp.x;
+                    }
 
-                        // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
-                        int new_index
-                            = iw1 - PARAM.globalv.npol * orb_index_row + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
+                    if (std::abs(temp_prp.y) > sparse_threshold)
+                    {
+                        psi_r_psi_sparse[1][iw1][iw2] = temp_prp.y;
+                    }
 
-                        if (new_index == 0 || new_index == 3)
-                        {
-                            int it1 = iw2it[orb_index_row];
-                            int ia1 = iw2ia[orb_index_row];
-                            int iN1 = iw2iN[orb_index_row];
-                            int iL1 = iw2iL[orb_index_row];
-                            int im1 = iw2im[orb_index_row];
-
-                            int it2 = iw2it[orb_index_col];
-                            int ia2 = iw2ia[orb_index_col];
-                            int iN2 = iw2iN[orb_index_col];
-                            int iL2 = iw2iL[orb_index_col];
-                            int im2 = iw2im[orb_index_col];
-
-                            ModuleBase::Vector3<double> r_distance
-                                = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
-
-                            double overlap_o
-                                = center2_orb11[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point, r_distance, im1, im2);
-
-                            double overlap_x = -1 * factor
-                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                              r_distance,
-                                                                                                              im1,
-                                                                                                              1,
-                                                                                                              im2); // m =  1
-
-                            double overlap_y = -1 * factor
-                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                              r_distance,
-                                                                                                              im1,
-                                                                                                              2,
-                                                                                                              im2); // m = -1
-
-                            double overlap_z = factor
-                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                              r_distance,
-                                                                                                              im1,
-                                                                                                              0,
-                                                                                                              im2); // m =  0
-
-                            ModuleBase::Vector3<double> temp_prp = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z)
-                                                                   + ucell.atoms[it1].tau[ia1] * ucell.lat0 * overlap_o;
-
-                            if (std::abs(temp_prp.x) > sparse_threshold)
-                            {
-                                psi_r_psi_sparse[0][iw1][iw2] = temp_prp.x;
-                            }
-
-                            if (std::abs(temp_prp.y) > sparse_threshold)
-                            {
-                                psi_r_psi_sparse[1][iw1][iw2] = temp_prp.y;
-                            }
-
-                            if (std::abs(temp_prp.z) > sparse_threshold)
-                            {
-                                psi_r_psi_sparse[2][iw1][iw2] = temp_prp.z;
-                            }
-                        }
+                    if (std::abs(temp_prp.z) > sparse_threshold)
+                    {
+                        psi_r_psi_sparse[2][iw1][iw2] = temp_prp.z;
                     }
                 }
             }
@@ -934,84 +927,76 @@ void cal_r_overlap_R::out_rR_other(const UnitCell& ucell,
 
         ModuleBase::Vector3<double> R_car = ModuleBase::Vector3<double>(dRx, dRy, dRz) * ucell.latvec;
 
-        int ir = 0;
-        int ic = 0;
-        for (int iw1 = 0; iw1 < PARAM.globalv.nlocal; iw1++)
+        for (int ir = 0; ir < this->ParaV->get_row_size(); ++ir)
         {
-            ir = this->ParaV->global2local_row(iw1);
-            if (ir >= 0)
+            const int iw1 = this->ParaV->local2global_row(ir);
+            for (int ic = 0; ic < this->ParaV->get_col_size(); ++ic)
             {
-                for (int iw2 = 0; iw2 < PARAM.globalv.nlocal; iw2++)
+                const int iw2 = this->ParaV->local2global_col(ic);
+                int orb_index_row = iw1 / PARAM.globalv.npol;
+                int orb_index_col = iw2 / PARAM.globalv.npol;
+
+                // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
+                int new_index
+                    = iw1 - PARAM.globalv.npol * orb_index_row + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
+
+                if (new_index == 0 || new_index == 3)
                 {
-                    ic = this->ParaV->global2local_col(iw2);
-                    if (ic >= 0)
+                    int it1 = iw2it[orb_index_row];
+                    int ia1 = iw2ia[orb_index_row];
+                    int iN1 = iw2iN[orb_index_row];
+                    int iL1 = iw2iL[orb_index_row];
+                    int im1 = iw2im[orb_index_row];
+
+                    int it2 = iw2it[orb_index_col];
+                    int ia2 = iw2ia[orb_index_col];
+                    int iN2 = iw2iN[orb_index_col];
+                    int iL2 = iw2iL[orb_index_col];
+                    int im2 = iw2im[orb_index_col];
+
+                    ModuleBase::Vector3<double> r_distance
+                        = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
+
+                    double overlap_o
+                        = center2_orb11[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point, r_distance, im1, im2);
+
+                    double overlap_x = -1 * factor
+                                       * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                      r_distance,
+                                                                                                      im1,
+                                                                                                      1,
+                                                                                                      im2); // m =  1
+
+                    double overlap_y = -1 * factor
+                                       * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                      r_distance,
+                                                                                                      im1,
+                                                                                                      2,
+                                                                                                      im2); // m = -1
+
+                    double overlap_z = factor
+                                       * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
+                                                                                                      r_distance,
+                                                                                                      im1,
+                                                                                                      0,
+                                                                                                      im2); // m =  0
+
+                    ModuleBase::Vector3<double> temp_prp = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z)
+                                                           + ucell.atoms[it1].tau[ia1] * ucell.lat0 * overlap_o;
+
+                    if (std::abs(temp_prp.x) > sparse_threshold)
                     {
-                        int orb_index_row = iw1 / PARAM.globalv.npol;
-                        int orb_index_col = iw2 / PARAM.globalv.npol;
+                        psi_r_psi_sparse[0][iw1][iw2] = temp_prp.x;
+                    }
 
-                        // The off-diagonal term in SOC calculaiton is zero, and the two diagonal terms are the same
-                        int new_index
-                            = iw1 - PARAM.globalv.npol * orb_index_row + (iw2 - PARAM.globalv.npol * orb_index_col) * PARAM.globalv.npol;
+                    if (std::abs(temp_prp.y) > sparse_threshold)
+                    {
+                        psi_r_psi_sparse[1][iw1][iw2] = temp_prp.y;
+                    }
 
-                        if (new_index == 0 || new_index == 3)
-                        {
-                            int it1 = iw2it[orb_index_row];
-                            int ia1 = iw2ia[orb_index_row];
-                            int iN1 = iw2iN[orb_index_row];
-                            int iL1 = iw2iL[orb_index_row];
-                            int im1 = iw2im[orb_index_row];
-
-                            int it2 = iw2it[orb_index_col];
-                            int ia2 = iw2ia[orb_index_col];
-                            int iN2 = iw2iN[orb_index_col];
-                            int iL2 = iw2iL[orb_index_col];
-                            int im2 = iw2im[orb_index_col];
-
-                            ModuleBase::Vector3<double> r_distance
-                                = (ucell.atoms[it2].tau[ia2] - ucell.atoms[it1].tau[ia1] + R_car) * ucell.lat0;
-
-                            double overlap_o
-                                = center2_orb11[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point, r_distance, im1, im2);
-
-                            double overlap_x = -1 * factor
-                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                              r_distance,
-                                                                                                              im1,
-                                                                                                              1,
-                                                                                                              im2); // m =  1
-
-                            double overlap_y = -1 * factor
-                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                              r_distance,
-                                                                                                              im1,
-                                                                                                              2,
-                                                                                                              im2); // m = -1
-
-                            double overlap_z = factor
-                                               * center2_orb21_r[it1][it2][iL1][iN1][iL2].at(iN2).cal_overlap(origin_point,
-                                                                                                              r_distance,
-                                                                                                              im1,
-                                                                                                              0,
-                                                                                                              im2); // m =  0
-
-                            ModuleBase::Vector3<double> temp_prp = ModuleBase::Vector3<double>(overlap_x, overlap_y, overlap_z)
-                                                                   + ucell.atoms[it1].tau[ia1] * ucell.lat0 * overlap_o;
-
-                            if (std::abs(temp_prp.x) > sparse_threshold)
-                            {
-                                psi_r_psi_sparse[0][iw1][iw2] = temp_prp.x;
-                            }
-
-                            if (std::abs(temp_prp.y) > sparse_threshold)
-                            {
-                                psi_r_psi_sparse[1][iw1][iw2] = temp_prp.y;
-                            }
-
-                            if (std::abs(temp_prp.z) > sparse_threshold)
-                            {
-                                psi_r_psi_sparse[2][iw1][iw2] = temp_prp.z;
-                            }
-                        }
+                    if (std::abs(temp_prp.z) > sparse_threshold)
+                    {
+                        psi_r_psi_sparse[2][iw1][iw2] = temp_prp.z;
                     }
                 }
             }

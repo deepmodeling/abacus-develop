@@ -97,6 +97,15 @@ AddTest(
   ../../source_base/tool_quit.cpp ../../source_base/global_file.cpp ../../source_base/global_function.cpp ../../source_base/memory_recorder.cpp ../../source_base/timer.cpp
 )
 
+if(ENABLE_GOOGLEBENCH)
+  AddTest(
+    TARGET PERF_MODULE_IO_single_R
+    LIBS parameter base device
+    SOURCES perf_single_r_io.cpp ../module_hs/single_r_io.cpp
+      ../../source_basis/module_ao/parallel_orbitals.cpp
+  )
+endif()
+
 AddTest(
   TARGET MODULE_IO_write_wfc_nao
   LIBS parameter  base psi device
