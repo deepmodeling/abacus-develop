@@ -247,6 +247,7 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
     if (ucell_ == nullptr || pert_ == nullptr) {
         return;
     }
+    const bool zdbg = getenv("DFPT_ZDBG") != nullptr;
     std::vector<std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>>> r_mat;
     pos_matrix(psi, eig, r_mat);
     const int nk = psi.get_nk();
@@ -288,6 +289,15 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
                         std::complex<double> dv_mv(0.0, 0.0);
                         for (size_t ig = 0; ig < rhs.size(); ++ig) {
                             dv_mv += std::conj(psi(ik, m, ig)) * rhs[ig];
+                        }
+                        if (zdbg) {
+                            const ModuleBase::Vector3<std::complex<double>>& ra
+                                = r_mat[ik][m][v];
+                            std::cout << "ZDBG iat=" << iat << " idir=" << idir
+                                      << " ik=" << ik << " v=" << v << " m=" << m
+                                      << " wg=" << wg(ik, v) << " de=" << de
+                                      << " dv=" << dv_mv << " r=" << ra
+                                      << std::endl;
                         }
                         // <u_v|dV|u_m> = conj(dv_mv), multiplied from the
                         // right by <u_m|r_a|u_v> (Gonze-Lee ordering)

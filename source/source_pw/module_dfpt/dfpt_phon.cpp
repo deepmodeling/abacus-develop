@@ -374,8 +374,10 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
             // external perturbation appears here
             pert_->build_dv(q_idx, iat, idir, data);
             const bool dbg2 = (getenv("DFPT_DEBUG") != nullptr);
-            const bool xbk = (getenv("DFPT_XB") != nullptr && rowb == 0
-                              && (cola == 0 || cola == 3 || cola == 1));
+            const bool xbk = (getenv("DFPT_XB") != nullptr
+                              && (rowb == 0 || rowb == 6)
+                              && (cola == 0 || cola == 3 || cola == 1
+                                  || cola == 6));
             std::complex<double> cross(0.0, 0.0);
             std::vector<std::complex<double>> cross_k;
             for (int ik = 0; ik < nk; ++ik) {
@@ -435,7 +437,8 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
             // lattice-periodic and lives on the integer G set (out basis =
             // k + q_eff ball with q_eff = fold(2q) = 0). The |d beta><d beta|
             // middle projector term carries the same 2q (product of the two
-            // dressings) and survives whenever the gate passes.
+            // dressings) and survives whenever the gate passes; env
+            // DFPT_D2MID=0 disables it for A/B debugging.
             const ModuleBase::Vector3<double> q2_frac = 2.0 * q_frac;
             const ModuleBase::Vector3<double> q2_round(std::round(q2_frac.x),
                                                        std::round(q2_frac.y),
@@ -443,7 +446,21 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
             const bool q2_is_recip = ((q2_frac - q2_round).norm() < 1.0e-8);
             const ModuleBase::Vector3<double> q_eff_cart
                 = (q2_frac - q2_round) * ucell_->G;
-            const bool include_middle = true;
+            const bool q_is_recip
+                = ((q_frac
+                    - ModuleBase::Vector3<double>(std::round(q_frac.x),
+                                                  std::round(q_frac.y),
+                                                  std::round(q_frac.z)))
+                       .norm()
+                   < 1.0e-8);
+            const char* d2mid_env = getenv("DFPT_D2MID");
+            const bool include_middle = !(d2mid_env != nullptr && d2mid_env[0] == '0');
+            if (dbg2 && iat == atom_idx && cola == rowb) {
+                std::cout << "DYNCHK d2gate rowb=" << rowb
+                          << " q2recip=" << (q2_is_recip ? 1 : 0)
+                          << " qrecip=" << (q_is_recip ? 1 : 0)
+                          << " mid=" << (include_middle ? 1 : 0) << std::endl;
+            }
             if (iat == atom_idx && cola >= rowb && q2_is_recip) {
                 std::vector<std::complex<double>> dv2_r;
                 pert_->d2vloc_r(atom_idx, idir, dir, dv2_r);

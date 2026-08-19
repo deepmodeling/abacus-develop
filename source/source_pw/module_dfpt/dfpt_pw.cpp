@@ -69,6 +69,9 @@ public:
     ///< occupied states at k+q on the k+q G list, [ik][occ m][igl];
     /// rebuilt per q (they depend on q and k only)
     std::vector<std::vector<std::vector<std::complex<double>>>> occ_kq_;
+    ///< BPT debug: empty states at k+q on the k+q G list + their eigenvalues
+    std::vector<std::vector<std::vector<std::complex<double>>>> empty_kq_;
+    std::vector<std::vector<double>> empty_kq_eig_;
     ///< remembers the (q_idx, ik) the shifted operator was last cached at
     int last_q_ = -1;
     int last_ik_ = -1;
@@ -199,6 +202,11 @@ bool DFPT_PW::get_u_active() const {
 void DFPT_PW::Impl::build_occ_kq(int q_idx) {
     const int nk = pw_wfc_->nks;
     occ_kq_.assign(nk, std::vector<std::vector<std::complex<double>>>());
+    // BPT debug companion: empty states at k+q on the same kq ball, for the
+    // independent perturbation-theory cross-check of the Sternheimer solve
+    // (DFPT_BPT); eig pairs are (eig_(ikq, m), eig_(ik, n))
+    empty_kq_.assign(nk, std::vector<std::vector<std::complex<double>>>());
+    empty_kq_eig_.assign(nk, std::vector<double>());
     ikq_of_k_.assign(nk, -1);
     const ModuleBase::Vector3<double> q_frac = data_.get_qvec(q_idx);
     const ModuleBase::Vector3<double> q_cart = q_frac * ucell_->G;
@@ -267,10 +275,12 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx) {
         }
 
         const int nbands = gs_psi_.get_nbands();
+        const bool want_empty = (getenv("DFPT_BPT") != nullptr);
         int dbg_miss = 0;
         int dbg_tot = 0;
         for (int m = 0; m < nbands; ++m) {
-            if (!dfpt_band_occupied(wg_, ikq, m)) {
+            const bool occ_m = dfpt_band_occupied(wg_, ikq, m);
+            if (!occ_m && !want_empty) {
                 continue; // empty at k+q: outside the P_c projector
             }
             std::vector<std::complex<double>> state(npw_kq, std::complex<double>(0.0, 0.0));
@@ -288,7 +298,12 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx) {
                 }
                 ++dbg_tot;
             }
-            occ_kq_[ik].push_back(std::move(state));
+            if (occ_m) {
+                occ_kq_[ik].push_back(std::move(state));
+            } else {
+                empty_kq_[ik].push_back(std::move(state));
+                empty_kq_eig_[ik].push_back(eig_(ikq, m));
+            }
         }
         if (getenv("DFPT_DEBUG") != nullptr) {
             std::cout << "OCCCHK ik=" << ik << " ikq=" << ikq
@@ -517,6 +532,11 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                 }
             }
         }
+        // DFPT_NOSC: zero the screened part to isolate the bare Sternheimer
+        // (design-phase A/B knob for term2 debugging)
+        if (getenv("DFPT_NOSC") != nullptr) {
+            std::fill(v_sc_r.begin(), v_sc_r.end(), std::complex<double>(0.0, 0.0));
+        }
         v_sc_r_last = v_sc_r;
 
         // ---- 2. Sternheimer solve of every occupied (k, band)
@@ -608,6 +628,48 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                               << std::endl;
                 }
                 data_.set_dpsi(q_idx, ik, ib, dpsi_out);
+                // BPT: independent PT cross-check of the solve for this band.
+                // Identity (exact on a complete empty manifold):
+                //   <dpsi_n|rhs_n> == sum_m |<psi_m(k+q)|rhs_n>|^2 / (e_m(k+q) - e_n(k))
+                // rhs here is the TOTAL (ext+sc) right-hand side with the
+                // Sternheimer sign (rhs = -(ext+sc)); both sides use the same
+                // object so the sign cancels on the diagonal-identity check.
+                if (getenv("DFPT_BPT") != nullptr
+                    && static_cast<int>(empty_kq_[ik].size()) > 0
+                    && dpsi_out.size() == rhs.size()) {
+                    std::complex<double> codedot(0.0, 0.0);
+                    double pt = 0.0;
+                    double wsum = 0.0;
+                    for (size_t i = 0; i < dpsi_out.size(); ++i) {
+                        codedot += std::conj(dpsi_out[i]) * rhs[i];
+                    }
+                    for (size_t im = 0; im < empty_kq_[ik].size(); ++im) {
+                        const std::vector<std::complex<double>>& psim
+                            = empty_kq_[ik][im];
+                        if (psim.size() != rhs.size()) {
+                            continue;
+                        }
+                        std::complex<double> mdot(0.0, 0.0);
+                        for (size_t i = 0; i < rhs.size(); ++i) {
+                            mdot += std::conj(psim[i]) * rhs[i];
+                        }
+                        const double denom = empty_kq_eig_[ik][im] - eig_(ik, ib);
+                        if (std::abs(denom) > 1.0e-10) {
+                            pt += std::norm(mdot) / denom;
+                        }
+                        wsum += std::norm(mdot);
+                    }
+                    double nrm2 = 0.0;
+                    for (size_t i = 0; i < rhs.size(); ++i) {
+                        nrm2 += std::norm(rhs[i]);
+                    }
+                    std::cout << "BPTCHK q=" << q_idx << " iat=" << iat
+                              << " idir=" << idir << " ik=" << ik << " ib=" << ib
+                              << " code=(" << codedot.real() << "," << codedot.imag() << ")"
+                              << " pt=" << pt
+                              << " |<m|rhs>|^2sum=" << wsum
+                              << " |rhs|^2=" << nrm2 << std::endl;
+                }
             }
         }
 
