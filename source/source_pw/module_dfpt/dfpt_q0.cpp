@@ -14,6 +14,8 @@
 
 #include <cmath>
 #include <complex>
+#include <cstdlib>
+#include <iostream>
 #include <vector>
 
 namespace ModuleDFPT {
@@ -174,6 +176,26 @@ void DFPT_Q0::pos_matrix(const psi::Psi<std::complex<double>>& psi,
                 }
             }
         }
+        if (getenv("DFPT_Q0DBG") != nullptr) {
+            std::cout << "Q0DBG ik=" << ik << " tpiba=" << tpiba
+                      << " npwk=" << npwk << std::endl;
+            for (int m = 0; m < nbands; ++m) {
+                for (int n = 0; n < nbands; ++n) {
+                    if (m == n) {
+                        continue;
+                    }
+                    const double de = eig(ik, m) - eig(ik, n);
+                    double p2 = 0.0;
+                    for (int d = 0; d < 3; ++d) {
+                        p2 += std::norm(p_mat[m][n][d]);
+                    }
+                    std::cout << "Q0DBG p m=" << m << " n=" << n
+                              << " de=" << de << " px=" << p_mat[m][n][0]
+                              << " py=" << p_mat[m][n][1]
+                              << " pz=" << p_mat[m][n][2] << std::endl;
+                }
+            }
+        }
     }
 }
 
@@ -209,8 +231,11 @@ void DFPT_Q0::compute_eps(const psi::Psi<std::complex<double>>& psi,
                     }
                 }
             }
+            // wg already carries the full k weight (wk) times the spin
+            // factor 2, so the sum over the stored k list is the complete
+            // Brillouin-zone average: no extra 1/nk normalization.
             eps(a, b) = ((a == b) ? 1.0 : 0.0)
-                        + 8.0 * ModuleBase::PI / ucell_->omega * chi / nk;
+                        + 8.0 * ModuleBase::PI / ucell_->omega * chi;
         }
     }
     data.set_dielectric(eps);
@@ -274,7 +299,8 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
                 }
             }
             for (int a = 0; a < 3; ++a) {
-                zstar(a, idir) = -4.0 / nk * acc[a];
+                // wg carries the full k weight and spin factor; no extra 1/nk.
+                zstar(a, idir) = -4.0 * acc[a];
             }
         }
         // ionic rigid-ion charge on the diagonal (a == b directions)
