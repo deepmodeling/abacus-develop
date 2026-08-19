@@ -852,7 +852,13 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
     {
         this->init_pot_groundstate(chg_gs);
         const std::string xc_kernel_gs = LR_Util::tolower(this->inp_->dft_functional);
-        this->pot_hxc_gs = std::make_shared<LR::PotHxcLR>(xc_kernel_gs, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, ST::S1, this->inp_->lr_init_xc_kernel);
+        // `ST::S1` is only correct when nspin=1. `PotHxcLR` builds its `KernelXC` with
+        // `PARAM.inp.nspin`, so at nspin=2 the kernel arrays carry 3 spin components per grid point
+        // while the S1 integrand indexes them as if there were 1 -- it does not even read a
+        // consistent spin combination. Use `ST::S2_gs` there, which is exactly half of S2_singlet,
+        // matching the `K_Hxc(singlet) = 2 * pot_hxc_gs` convention of the gradient operators.
+        const ST st_gs = (nspin == 1) ? ST::S1 : (openshell ? ST::S2_updown : ST::S2_gs);
+        this->pot_hxc_gs = std::make_shared<LR::PotHxcLR>(xc_kernel_gs, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, st_gs, this->inp_->lr_init_xc_kernel);
     }
 }
 

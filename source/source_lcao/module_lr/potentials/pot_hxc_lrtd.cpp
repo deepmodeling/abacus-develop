@@ -31,7 +31,7 @@ namespace LR
         // Hartree
         switch (this->spin_type_)
         {
-        case SpinType::S1: case SpinType::S2_updown:
+        case SpinType::S1: case SpinType::S2_updown: case SpinType::S2_gs:
             v_eff += elecstate::H_Hartree_pw::v_hartree(ucell, const_cast<ModulePW::PW_Basis*>(&this->rho_basis_), 1, rho);
             break;
         case SpinType::S2_singlet:
@@ -68,16 +68,21 @@ namespace LR
                     };
                 break;
             case SpinType::S2_singlet:
-                funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
+            case SpinType::S2_gs:
+            {
+                // S2_gs is exactly half of S2_singlet (see the SpinType doc in the header).
+                const double prefac = (s == SpinType::S2_gs) ? 0.5 : 1.0;
+                funcs[s] = [this, &fxc, prefac](FXC_PARA_TYPE)->void
                     {
                         for (int ir = 0;ir < nrxx;++ir)
                         {
                             const int irs0 = 3 * ir;
                             const int irs1 = irs0 + 1;
-                            v_eff(0, ir) += ModuleBase::e2 * (fxc.v2rho2.at(irs0) + fxc.v2rho2.at(irs1)) * rho[ir];
+                            v_eff(0, ir) += ModuleBase::e2 * prefac * (fxc.v2rho2.at(irs0) + fxc.v2rho2.at(irs1)) * rho[ir];
                         }
                     };
                 break;
+            }
             case SpinType::S2_triplet:
                 funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
                     {
@@ -147,7 +152,12 @@ namespace LR
                     };
                 break;
             case SpinType::S2_singlet:
-                funcs[s] = [this, &fxc](FXC_PARA_TYPE)-> void
+            case SpinType::S2_gs:
+            {
+                // S2_gs is exactly half of S2_singlet; the whole expression is linear in the
+                // kernel, so scaling the final axpy is enough.
+                const double prefac = (s == SpinType::S2_gs) ? 0.5 : 1.0;
+                funcs[s] = [this, &fxc, prefac](FXC_PARA_TYPE)-> void
                     {
                         std::vector<ModuleBase::Vector3<double>> drho(nrxx);    // transition density gradient
                         LR_Util::grad(rho, drho.data(), this->rho_basis_, this->tpiba_);
@@ -171,9 +181,10 @@ namespace LR
                             vxc_tmp[ir] += rho[ir] * (fxc.v2rho2.at(ir * 3) + fxc.v2rho2.at(ir * 3 + 1))
                                 + drho.at(ir) * fxc.v2rhosigma_drho_singlet.at(ir);
                         }
-                        BlasConnector::axpy(nrxx, ModuleBase::e2, vxc_tmp.data(), 1, v_eff.c, 1);
+                        BlasConnector::axpy(nrxx, ModuleBase::e2 * prefac, vxc_tmp.data(), 1, v_eff.c, 1);
                     };
                 break;
+            }
             case SpinType::S2_triplet:
                 funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
                     {

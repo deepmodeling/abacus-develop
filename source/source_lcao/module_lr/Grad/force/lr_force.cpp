@@ -51,7 +51,8 @@ namespace LR
     template<typename TK>
     ModuleBase::matrix LR_Force<TK>::cal_force_hamilt_gs_dm_relaxed_diff(const elecstate::DensityMatrix<TK, double>& relax_diff_dm,
         const elecstate::DensityMatrix<TK, double>& dm_gs,
-        const bool reproduce_gs)
+        const bool reproduce_gs,
+        const PotHxcLR* pot_hxc_gs)
     {
         const bool with_ewald = reproduce_gs;
         const Charge chr_diff_relaxed = dm_to_charge(relax_diff_dm);
@@ -94,10 +95,39 @@ namespace LR
 
         // 3.3 Hartree + xc (Hellmann-Feynman)
         ModuleBase::matrix fhxc_dvhxc(this->ucell_.nat, 3);
-        elecstate::Potential pot_hxc_relaxed_diff = this->dm_to_hxc_potential(relax_diff_dm);
-        //`cal_pulay_fs` calculates only one spin channel because `relax_diff_dm` has only one.
-        PulayForceStress::cal_pulay_fs(1/*nspin*/, fhxc_dvhxc, stress_tmp,
-            dm_gs, this->ucell_, &pot_hxc_relaxed_diff, true, false);
+        // The potential here must be the *linear response* of $V^\text{Hxc}$ to the difference
+        // density, i.e. $v_H[\rho^{T+Z}] + f_{xc}[\rho^\text{gs}]\,\rho^{T+Z}$ -- NOT
+        // $v_\text{Hxc}[\rho^{T+Z}]$. This term is
+        //     $\sum_{\kappa\lambda}(T{+}D^Z)_{\kappa\lambda}\int\phi_\kappa\phi_\lambda\,
+        //      f_{xc}\sum_{\alpha\beta}D^\text{gs}_{\alpha\beta}(\phi_\alpha\phi_\beta)^x$,
+        // the half of $\partial_x V^\text{Hxc}$ whose basis derivative falls on the *ground-state*
+        // pair. Hartree is linear in the density so feeding it $\rho^{T+Z}$ happens to be right;
+        // xc is not -- $\rho^{T+Z}$ is not even positive everywhere, while LDA has
+        // $v_{xc}\propto-\rho^{1/3}$.
+        //
+        // `pot_hxc_gs` supplies exactly this object (Hartree weight 1, xc = $(f_{uu}+f_{ud})/2$ at
+        // nspin=2), with no extra factor. Verified on H2/SZ TDRPA@LDA, where $K^T\equiv0$ makes the
+        // triplet gradient identical to $d(\varepsilon_a-\varepsilon_i)/dx$: analytic 28.5982 vs the
+        // KS-gap finite difference 28.598156. It used to be off by -3.5 eV/Ang.
+        //
+        // `reproduce_gs` is the exception: there `relax_diff_dm` *is* the ground-state density
+        // matrix and the term being checked is the true ground-state force, for which
+        // $v_\text{Hxc}[\rho^\text{gs}]$ is the correct potential.
+        if (reproduce_gs || pot_hxc_gs == nullptr)
+        {
+            elecstate::Potential pot_hxc_relaxed_diff = this->dm_to_hxc_potential(relax_diff_dm);
+            //`cal_pulay_fs` calculates only one spin channel because `relax_diff_dm` has only one.
+            PulayForceStress::cal_pulay_fs(1/*nspin*/, fhxc_dvhxc, stress_tmp,
+                dm_gs, this->ucell_, &pot_hxc_relaxed_diff, true, false);
+        }
+        else
+        {
+            ModuleBase::matrix v_lin(1, this->rhopw_.nrxx);   // zero-initialized
+            double* rho_in[1] = { const_cast<double*>(chr_diff_relaxed.rho[0]) };
+            pot_hxc_gs->cal_v_eff(rho_in, this->ucell_, v_lin);
+            std::vector<const double*> vr_eff = { v_lin.c };
+            ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_DMR_vector(), true, false, &fhxc_dvhxc, &stress_tmp);
+        }
         if(!reproduce_gs) {fhxc_dvhxc *= 2;} // for the two channels of the ground-state dm. 
 
         // 4. kinetic (Pulay)

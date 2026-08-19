@@ -250,7 +250,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
             ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "HXC DMTRANS FORCE (eV/Angstrom)", force_hxc_dmtrans, false);
 
         const elecstate::DensityMatrix<T, double>& dm_gs = this->cal_dm_gs();
-        ModuleBase::matrix force_hamiltgs_relaxed_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(relaxed_diff_dm_real, dm_gs);
+        ModuleBase::matrix force_hamiltgs_relaxed_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(relaxed_diff_dm_real, dm_gs, false, this->pot_hxc_gs.get());
         if (PARAM.inp.test_force)
             ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "H_GS-(T+Z) FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_relaxed_diff, false);
 
