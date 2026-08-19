@@ -133,6 +133,19 @@
 
 - `module_symmetry/little_group.{h,cpp}`：完整不可约表示表 + 投影算子 → 真实 `get_nirr`/`get_mode_basis`（替换占位 =1/空）。
 - 测试：金刚石/闪锌矿 Γ/X/L 点 irrep 分解与理论表核对。提交。
+- 收尾：LO-TO 一般方向经 irrep 机制；KVectorUtils 薄封装删除（reciprocal_grid
+  重构遗留，随本阶段一并处理）。
+
+---
+
+## 附注：重构计划（PLAN_reciprocal_grid_refactor.md）状态交叉核对（2026-08-19）
+
+- Phase 1–4 实质完成：ReciprocalGrid 基类 + K_Vectors/QList 继承 +
+  LittleGroup 接口占位（nirr≡1）+ DFPT INPUT 驱动接线。
+- 遗留：KVectorUtils 薄封装删除 → 随 A 阶段收尾；LittleGroup 完整 irrep 表
+  → 即本计划 A 阶段。
+- 环境注记：当前 build 树未注册 CELL 侧 klist/reciprocal_grid/qlist/
+  little_group 测试（需重新 cmake configure 才能跑全量回归）。
 
 ---
 
@@ -314,6 +327,35 @@
           需协调）
     - [ ] B0 残余：8×8×8 过夜验证（ε∞/Z* 与 D 的密网格收敛）；非 Γ q 的物理级验证
       （超胞 FD 或色散对照）；插桩清理评审
+        - [ ] P0-1 未提交修改收编（q≠0 同原子二阶项物理修复 + 调试探针，用户已确认保留路线）
+            - 背景：工作区 5 文件（dfpt_pert/dfpt_phon/dfpt_pw/dfpt_q0）含两类修改——
+              ① 物理修复：同原子 d²V 项两个位移 dressing e^{iq·R} 同乘一原子 → 二阶势
+              携波矢 2q，same-k 期望仅当 2q 折到倒格矢时非零（d2vloc_r 核 w=gcar、
+              apply_d2vnl q_eff=fold(2q) + include_middle 门控 |dβ⟩⟨dβ| 中间项、
+              accumulate_electron 2q 倒格矢门控）；ion_ion 自镜像项去 δ/3
+              （D_ii(q)−D_ii(0) 公式经 q 公度超胞 erfc 分裂能量 FD 元素级验证，
+              α 无关性数值核实）；② 调试探针：ZDBG（compute_born 逐 (m,v) 项）、
+              BPT（空态 PT 交叉验证 Sternheimer）、NOSC（屏蔽势置零 A/B）、
+              D2MID（中间项开关）
+            - 测试同步（dfpt_phon_serial_test）：AccumulateElectronClosedForm 的
+              expect_d2 改门控语义（fixture q=(0.13,0,0.07) 非倒格矢 → d2=0）；
+              新增 2q 倒格矢用例（q=(0.5,0,0) → d2 整数 G 核 + middle 项，
+              D2MID 语义经 include_middle 直测）；IonIonGenericQVsDirectSum
+              自镜像参考按新公式重核
+            - 顺手：d2vloc_r 已 (void)q_cart 的遗留参数移除（更新调用点，规则 5）
+            - 构建 + 14 目标回归 + 治理；**拆分两次提交**（物理修复+测试同步；
+              调试探针），回写本文件
+        - [ ] P0-2 Z* bug 根因与修复（B0 收尾前置，用户已确认优先）
+            - 现象：Z* 均值 15.6 vs 参考 ~4.5（金刚石）；eps 已达标（12.67）→
+              pos_matrix/r_mat 链路被选择定则背书，聚焦 compute_born 差异面
+            - 首选线索：15.6 ≈ zion(4) + (ε∞−1)·n 的量级 → 疑与 eps 共享因子
+              纠缠（Ω/8π/自旋因子泄漏进 −4 系数链）
+            - 步骤：① ZDBG 分解 occ-occ vs v→c 块贡献；② BPT 恒等式交叉验证
+              dV@q=0 矩阵元；③ 黄金对照 = 小位移偶极 FD（或 Berry 极化）+
+              O_h 对称性约束（对角 ~4.5、非对角模式）；④ 修复 +
+              dfpt_q0_serial 增 m 求和结构回归用例
+        - [ ] P0-3 B0 收尾：8×8×8 过夜（ε∞/Z*/D 密网格收敛）；非 Γ q 物理级验证
+          （密 k 色散 vs 超胞 FD）；sym1 星旋转各向异性处理或记录在案
         - [x] 非 Γ q 路径冒烟 `（本轮，b0_si_qL/qmL）`
             - dfpt_qfile + QList::read_from_file 端到端首次运行：q=(0.5,0,0)，k={Γ,L}，
               compute_q0=false/loto=false；6 位移全收敛、无 NaN、D Hermitian
@@ -325,6 +367,18 @@
               接近一致即内部自洽；4 个负本征值（虚频）为 2-k 超稀采样的性质，非 q 路径
               bug（±q 忠实重现）；物理级验证需密网格/超胞 FD
     - [ ] B2 输出正式化
+        - run_post_process design-phase std::cout → 正式输出：多 q 布局、LO-TO
+          修正后频率（每方向）；loto 方向经数据层传递，消除 run() 中
+          (1,1,1)/√3 硬编码；输出格式回归测试
     - [ ] B3 Kerker 预条件混合
+        - DFPT_Rho 内自实现 |G+q|²/(|G+q|²+a²) 预条件（不引 charge_mixing.h）；
+          mix_type 支持 plain/kerker；验收：λ_A1≈−2.2 模型问题 β=0.7 收敛
+          （JPROBE 复用）、金刚石频率与 β 无关、默认 β 回调并文档记录
     - [ ] B4 数据层收编
+        - 收敛台账（converged_/residuals_/current_iter_ 按 (q,irrep)）并入
+          DFPT_PW_Data；删除 DFPT_IrrepData 适配层与 get_dpsi_obj static dummy；
+          测试迁移；保留 (q,irrep) 接口形状；run() 外层 while 记账语义梳理
+    - [ ] 插桩清理评审（B0/B3 后统一）：PTCHK/DYNCHK(+2/4/XB)/MDBG/JPROBE/
+      VKBCHK/VKBEL/OCCCHK/XB/ZDBG/BPT/NOSC/D2MID/DFPT_MIX_BETA/drho dump
+      （JPROBE 留 B3 验收后删）
 - [ ] A irrep 分解（保留接口，工程验证完成后立项）
