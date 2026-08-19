@@ -57,10 +57,10 @@ class OperatorEXX<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
         hamilt::HContainer<TR>* hR_in,
         const UnitCell& ucell,
         const K_Vectors& kv_in,
-        std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in = nullptr,
-        std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in = nullptr,
-        const Exx_Info* exx_info = nullptr,
-        Add_Hexx_Type add_hexx_type_in = Add_Hexx_Type::R);
+        std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in,
+        std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in,
+        const Exx_Info* exx_info,
+        Add_Hexx_Type add_hexx_type_in);
 
     virtual void contributeHk(int ik) override;
     virtual void contributeHR() override;
