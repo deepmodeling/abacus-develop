@@ -327,7 +327,8 @@
           需协调）
     - [ ] B0 残余：8×8×8 过夜验证（ε∞/Z* 与 D 的密网格收敛）；非 Γ q 的物理级验证
       （超胞 FD 或色散对照）；插桩清理评审
-        - [ ] P0-1 未提交修改收编（q≠0 同原子二阶项物理修复 + 调试探针，用户已确认保留路线）
+        - [x] P0-1 未提交修改收编（q≠0 同原子二阶项物理修复 + 调试探针，用户已确认保留路线）
+            `（完成，commit 2da1a4e83 物理+测试 / 480137167 探针）`
             - 背景：工作区 5 文件（dfpt_pert/dfpt_phon/dfpt_pw/dfpt_q0）含两类修改——
               ① 物理修复：同原子 d²V 项两个位移 dressing e^{iq·R} 同乘一原子 → 二阶势
               携波矢 2q，same-k 期望仅当 2q 折到倒格矢时非零（d2vloc_r 核 w=gcar、
@@ -337,14 +338,25 @@
               α 无关性数值核实）；② 调试探针：ZDBG（compute_born 逐 (m,v) 项）、
               BPT（空态 PT 交叉验证 Sternheimer）、NOSC（屏蔽势置零 A/B）、
               D2MID（中间项开关）
-            - 测试同步（dfpt_phon_serial_test）：AccumulateElectronClosedForm 的
-              expect_d2 改门控语义（fixture q=(0.13,0,0.07) 非倒格矢 → d2=0）；
-              新增 2q 倒格矢用例（q=(0.5,0,0) → d2 整数 G 核 + middle 项，
-              D2MID 语义经 include_middle 直测）；IonIonGenericQVsDirectSum
-              自镜像参考按新公式重核
+            - 测试同步（dfpt_phon_serial_test）：AccumulateElectronAnalyticContraction 的
+              expect 同步 Hermitian 2n+1 累积约定（dc82fac9b）+ 门控语义
+              （fixture q=(0.13,0,0.07) 非倒格矢 → d2=0）；新增
+              AccumulateElectronD2GateOffGenericQ（行 0 纯 cross 锐探针）与
+              AccumulateElectronD2CommensurateQ（k=(−½,0,0), q=(½,0,0)，三分量 ψ
+              钉死 cross 与 d2 核 K_{ab}(G)=−tpiba²·G_a·G_1·Vloc·e^{−i2πG·τ}，
+              含 K(G_i−G_j) 负谐波约定：实空间 |u|² 收缩挑出核的负谐波，闭式须跑
+              K(G_i−G_j) 配 c_i* c_j）
+            - **顺序依赖缺陷根除**：psi::Psi 构造只 malloc 不清零（"no_record"），
+              测试未显式置零的分量读堆垃圾 → 单跑恰逢零页通过、全量套件被前面测试
+              脏堆污染而挂；三处构造后补 psi.zero_out()；pert/q0 套件复核已有
+              zero_out/全量填充，无同类问题；--gtest_shuffle ×3 稳定
             - 顺手：d2vloc_r 已 (void)q_cart 的遗留参数移除（更新调用点，规则 5）
-            - 构建 + 14 目标回归 + 治理；**拆分两次提交**（物理修复+测试同步；
-              调试探针），回写本文件
+            - 验证：cmake 重配置注册 CELL 测试后 12/12 通过
+              （klist/reciprocal_grid/qlist/little_group + DFPT 8 套件）；DFPT 串行
+              28/28（phon 9 + pert 8 + q0 5 + rho 6）；治理检查 HEAD~2..HEAD 零新增
+              ERROR、仅 1 条 docs-sync 警告（无 INPUT 行为变化，无需文档更新）
+            - **拆分两次提交**（物理修复+测试同步 2da1a4e83；调试探针 480137167），
+              本文件回写即本次提交
         - [ ] P0-2 Z* bug 根因与修复（B0 收尾前置，用户已确认优先）
             - 现象：Z* 均值 15.6 vs 参考 ~4.5（金刚石）；eps 已达标（12.67）→
               pos_matrix/r_mat 链路被选择定则背书，聚焦 compute_born 差异面
