@@ -25,6 +25,13 @@ add_test(
   COMMAND ./MODULE_RI_gaussian_abfs_cutoff_test
   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
+add_executable(MODULE_RI_gaussian_abfs_2d_integrals_test gaussian_abfs_2d_integrals_test.cpp)
+install(TARGETS MODULE_RI_gaussian_abfs_2d_integrals_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
+add_test(
+  NAME MODULE_RI_gaussian_abfs_2d_integrals_test
+  COMMAND ./MODULE_RI_gaussian_abfs_2d_integrals_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 add_executable(MODULE_RI_librpa_stru_units_test librpa_stru_units_test.cpp)
 install(TARGETS MODULE_RI_librpa_stru_units_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
 add_test(

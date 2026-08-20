@@ -7,6 +7,7 @@
 #define GAUSSIAN_ABFS_CPP
 
 #include "gaussian_abfs.h"
+#include "gaussian_abfs_2d_integrals.h"
 
 #include <algorithm>
 #include <cmath>
@@ -510,22 +511,7 @@ auto Gaussian_Abfs::get_lattice_sum_2d(const double& tpiba,
 
 double Gaussian_Abfs::I2_2d(const double& q_parallel_abs, const double& tau_z, const double& beta) const
 {
-    if (q_parallel_abs < 1e-12)
-    {
-        return 0.0;
-    }
-    if (std::abs(tau_z) < 1e-14)
-    {
-        const double x = std::sqrt(beta) * q_parallel_abs;
-        return ModuleBase::PI / q_parallel_abs * std::exp(x * x) * std::erfc(x);
-    }
-
-    const double a = std::abs(tau_z);
-    const double q = q_parallel_abs;
-    const double sqrt_beta = std::sqrt(beta);
-    const double term_plus = std::exp(q * a) * std::erfc(sqrt_beta * q + a / (2.0 * sqrt_beta));
-    const double term_minus = std::exp(-q * a) * std::erfc(sqrt_beta * q - a / (2.0 * sqrt_beta));
-    return ModuleBase::PI / (2.0 * q) * std::exp(beta * q * q) * (term_plus + term_minus);
+    return GaussianAbfs2D::i2(q_parallel_abs, tau_z, beta);
 }
 
 double Gaussian_Abfs::C_reg_2d(const double& tau_z, const double& beta) const
@@ -548,6 +534,14 @@ std::complex<double> Gaussian_Abfs::K_LM_2d(const int& L,
     if (L == 0 && M == 0 && std::abs(power + 2.0) < 1e-12)
     {
         return this->I2_2d(q_parallel_abs, tau_z, beta) / std::sqrt(ModuleBase::FOUR_PI);
+    }
+    if (L == 1 && std::abs(power + 2.0) < 1e-12)
+    {
+        return GaussianAbfs2D::coulomb_l1(M,
+                                          q_parallel_cart.x,
+                                          q_parallel_cart.y,
+                                          tau_z,
+                                          beta);
     }
 
     const int total_lm = (L + 1) * (L + 1);
