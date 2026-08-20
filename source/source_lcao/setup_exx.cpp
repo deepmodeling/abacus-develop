@@ -103,7 +103,7 @@ void Exx_NAO<TK>::before_scf(
 		Exx_Info& exx_info)
 {
 #ifdef __EXX
-    if (PARAM.inp.calculation != "nscf")
+    if (inp.calculation != "nscf")
     {
         if (exx_info.info_ri.real_number)
         {
