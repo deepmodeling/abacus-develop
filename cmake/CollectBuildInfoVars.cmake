@@ -126,13 +126,6 @@ else()
   set(ABACUS_LCAO_ENABLED "False")
 endif()
 
-# Core Math Libraries
-if(ENABLE_LCAO AND ENABLE_ELPA)
-    set(ABACUS_ELPA_VERSION "yes (v${ELPA_VERSION})")
-else()
-    set(ABACUS_ELPA_VERSION "no")
-endif()
-
 # BLAS and FFTW libraries
 if(MKL_FOUND)
   set(ABACUS_BLAS_VENDOR "MKL")
@@ -177,6 +170,13 @@ else()
       endif()
     endif()
   endif()
+endif()
+
+# ELPA eigensolver
+if(ENABLE_ELPA)
+    set(ABACUS_ELPA_VERSION "yes (v${ELPA_VERSION})")
+else()
+    set(ABACUS_ELPA_VERSION "no")
 endif()
 
 if(ENABLE_LIBXC AND Libxc_VERSION)
