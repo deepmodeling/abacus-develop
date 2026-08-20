@@ -93,9 +93,10 @@ Structure_Factor::~Structure_Factor()
  *     closed-form plane-wave-combination states; the nonlocal contraction
  *     against an operator finite difference of <u_m|V_nl(k)|u_n>; exactly
  *     degenerate pairs are skipped.
- *   - DFPT_Q0::compute_eps: the full prefactor chain (16 pi / Omega, wg,
- *     1/(eps_c - eps_v)) on a two-level toy system with a complex excited
- *     state.
+ *   - DFPT_Q0::compute_eps: the SCF contraction (16 pi / Omega, wg,
+ *     occupied-band sum) on synthetic pos_resp/dpsi_efield stashes;
+ *     the empty-band rows must be skipped and indices/conj pinned by
+ *     distinct per-direction complexes.
  *   - DFPT_Q0::compute_born: elementwise against the closed-form
  *     <u_v|dV/dtau_b|u_m><u_m|r_a|u_v> sums at q = 0 (Coulomb local part),
  *     the ionic Z delta_ab, and the dpsi-slot backup/restore.
@@ -565,65 +566,73 @@ TEST_F(DFPTQ0SerialTest, PosMatrixNonlocalMatchesOperatorFiniteDifference)
 }
 
 // ---------------------------------------------------------------------------
-// compute_eps on a two-level system with a complex excited state
+// compute_eps (SCF contraction) against synthetic response stashes:
+// eps(a,b) = delta_ab - (16 pi/Omega) sum_k wg sum_occ Re<Y^a_v|dpsi^E,b_v>
+// with distinct complexes per direction catching transposed indices and
+// conj placement; the empty-band rows stay unsolved and must be skipped
 // ---------------------------------------------------------------------------
 
-TEST_F(DFPTQ0SerialTest, ComputeEpsTwoLevelAnalytic)
+TEST_F(DFPTQ0SerialTest, ComputeEpsScfSyntheticStash)
 {
     const int npwk = pw_wfc_.npwk[0];
     const int ig0 = IgOf(0, 0, 0);
     const int igx = IgOf(1, 0, 0);
-    const int igy = IgOf(0, 1, 0);
     ASSERT_GE(ig0, 0);
     ASSERT_GE(igx, 0);
-    ASSERT_GE(igy, 0);
-
-    const double e1 = ucell_.tpiba2 * (gx_ * gx_);
-    // v = sqrt(0.6)|G0> + sqrt(0.4)|Gx>          (eps = 0.4 e1)
-    // c = sqrt(0.2)|G0> - sqrt(0.3)|Gx> + i sqrt(0.5)|Gy>  (eps = e1)
-    // (the relative i phase keeps the reference sensitive to conj placement)
-    psi::Psi<std::complex<double>> psi(1, 2, npwk, npwk, true);
-    psi.zero_out();
-    psi(0, 0, ig0) = std::sqrt(0.6);
-    psi(0, 0, igx) = std::sqrt(0.4);
-    psi(0, 1, ig0) = std::sqrt(0.2);
-    psi(0, 1, igx) = -std::sqrt(0.3);
-    psi(0, 1, igy) = std::complex<double>(0.0, std::sqrt(0.5));
 
     ModuleBase::matrix wg(1, 2);
     wg(0, 0) = 2.0;
     wg(0, 1) = 0.0;
-    ModuleBase::matrix eig(1, 2);
-    eig(0, 0) = 0.4 * e1;
-    eig(0, 1) = e1;
 
-    q0_.compute_eps(psi, wg, eig, data_);
+    // synthetic bare position legs Y^a_{0,0} = P_c x_a|psi_0>
+    const std::complex<double> gam[3] = {std::complex<double>(0.15, -0.3),
+                                         std::complex<double>(0.4, 0.05),
+                                         std::complex<double>(-0.35, 0.2)};
+    const std::complex<double> del[3] = {std::complex<double>(-0.25, 0.45),
+                                         std::complex<double>(0.1, -0.1),
+                                         std::complex<double>(0.3, 0.25)};
+    for (int a = 0; a < 3; ++a)
+    {
+        std::vector<std::vector<std::vector<std::complex<double>>>> y(
+            1, std::vector<std::vector<std::complex<double>>>(2));
+        y[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
+        y[0][0][ig0] = gam[a];
+        y[0][0][igx] = del[a];
+        data_.set_pos_resp(a, y);
+    }
+
+    // synthetic converged E-field responses dpsi^E,b_{0,0}
+    const std::complex<double> mue[3] = {std::complex<double>(0.3, 0.2),
+                                         std::complex<double>(-0.1, 0.4),
+                                         std::complex<double>(0.25, -0.15)};
+    const std::complex<double> nue[3] = {std::complex<double>(0.2, -0.35),
+                                         std::complex<double>(0.45, 0.1),
+                                         std::complex<double>(-0.2, -0.05)};
+    for (int b = 0; b < 3; ++b)
+    {
+        std::vector<std::vector<std::vector<std::complex<double>>>> e(
+            1, std::vector<std::vector<std::complex<double>>>(2));
+        e[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
+        e[0][0][ig0] = mue[b];
+        e[0][0][igx] = nue[b];
+        data_.set_dpsi_efield(b, e);
+    }
+
+    q0_.compute_eps(wg, data_);
     const ModuleBase::matrix eps = data_.get_dielectric();
 
-    // closed-form velocity elements between the two states (kinetic operator
-    // diagonal in G: G0 pairs G0 with G = 0, the Gy component of c pairs
-    // with the vanishing Gy component of v)
-    std::complex<double> p01[3];
-    for (int d = 0; d < 3; ++d)
-    {
-        p01[d] = 2.0 * ucell_.tpiba2
-                 * (std::sqrt(0.6) * std::sqrt(0.2) * 0.0
-                    + std::sqrt(0.4) * (-std::sqrt(0.3)) * gx_[d]);
-    }
-    const double de = eig(0, 1) - eig(0, 0);
     for (int a = 0; a < 3; ++a)
     {
         for (int b = 0; b < 3; ++b)
         {
-            const std::complex<double> r_vc
-                = std::complex<double>(0.0, -1.0) * p01[a] / (ucell_.tpiba * (eig(0, 0) - eig(0, 1)));
-            const std::complex<double> r_cv
-                = std::complex<double>(0.0, -1.0) * std::conj(p01[b])
-                      / (ucell_.tpiba * (eig(0, 1) - eig(0, 0)));
+            // <Y^a|dE^b> = conj(gam_a) mue_b + conj(del_a) nue_b over the
+            // shared G support, wg-weighted with the 16 pi/Omega prefactor
+            const std::complex<double> dot = std::conj(gam[a]) * mue[b]
+                                             + std::conj(del[a]) * nue[b];
             const double expect = ((a == b) ? 1.0 : 0.0)
-                                  + 16.0 * ModuleBase::PI / ucell_.omega * wg(0, 0)
-                                        * (r_vc * r_cv).real() / de;
-            EXPECT_NEAR(eps(a, b), expect, 1.0e-10) << "a=" << a << " b=" << b;
+                                  - 16.0 * ModuleBase::PI / ucell_.omega
+                                        * wg(0, 0) * dot.real();
+            EXPECT_NEAR(eps(a, b), expect, 1.0e-12) << "a=" << a << " b=" << b;
         }
     }
 }

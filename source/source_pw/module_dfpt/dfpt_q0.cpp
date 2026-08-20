@@ -364,38 +364,49 @@ void DFPT_Q0::pos_matrix(const psi::Psi<std::complex<double>>& psi,
     }
 }
 
-void DFPT_Q0::compute_eps(const psi::Psi<std::complex<double>>& psi,
-                          const ModuleBase::matrix& wg,
-                          const ModuleBase::matrix& eig, DFPT_PW_Data& data) {
+void DFPT_Q0::compute_eps(const ModuleBase::matrix& wg, DFPT_PW_Data& data) {
     if (ucell_ == nullptr) {
         return;
     }
-    std::vector<std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>>> r_mat;
-    pos_matrix(psi, eig, r_mat);
-    const int nk = psi.get_nk();
-    const int nbands = psi.get_nbands();
+    const int nk = wg.nr;
+    const int nbands = wg.nc;
+
+    // bare position legs Y^a and converged E-field responses dpsi^E,b of
+    // the q = 0 mesh (DFPT_PW::solve_pos_resp / solve_efield_resp)
+    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> yr(3);
+    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> de(3);
+    for (int a = 0; a < 3; ++a) {
+        yr[a] = data.get_pos_resp(a);
+        de[a] = data.get_dpsi_efield(a);
+        if (static_cast<int>(yr[a].size()) != nk
+            || static_cast<int>(de[a].size()) != nk) {
+            return; // responses not solved: nothing to accumulate
+        }
+    }
+
     build_stars(nk);
-    // wg-weighted partial susceptibility chi_k[ik](a, b) at every stored k
+    // wg-weighted partial chi_k[ik](a, b) = sum_occ Re<Y^a|dpsi^E,b> at
+    // every stored k (QE dielec.f90: eps -= 4*(4pi/Omega)*wk*Re<dvpsi|dpsi>)
     std::vector<ModuleBase::matrix> chi_k(nk, ModuleBase::matrix(3, 3, true));
     for (int ik = 0; ik < nk; ++ik) {
         for (int v = 0; v < nbands; ++v) {
             if (!dfpt_band_occupied(wg, ik, v)) {
                 continue; // empty
             }
-            for (int c = 0; c < nbands; ++c) {
-                if (dfpt_band_occupied(wg, ik, c)) {
-                    continue; // occupied
-                }
-                const double de = eig(ik, c) - eig(ik, v);
-                if (std::abs(de) < 1.0e-8) {
+            for (int a = 0; a < 3; ++a) {
+                const int npw = static_cast<int>(yr[a][ik][v].size());
+                if (npw <= 0) {
                     continue;
                 }
-                for (int a = 0; a < 3; ++a) {
-                    for (int b = 0; b < 3; ++b) {
-                        chi_k[ik](a, b)
-                            += wg(ik, v)
-                               * (r_mat[ik][v][c][a] * r_mat[ik][c][v][b]).real() / de;
+                for (int b = 0; b < 3; ++b) {
+                    if (static_cast<int>(de[b][ik][v].size()) != npw) {
+                        continue;
                     }
+                    std::complex<double> dot(0.0, 0.0);
+                    for (int ig = 0; ig < npw; ++ig) {
+                        dot += std::conj(yr[a][ik][v][ig]) * de[b][ik][v][ig];
+                    }
+                    chi_k[ik](a, b) += wg(ik, v) * dot.real();
                 }
             }
         }
@@ -419,10 +430,9 @@ void DFPT_Q0::compute_eps(const psi::Psi<std::complex<double>>& psi,
     for (int a = 0; a < 3; ++a) {
         for (int b = 0; b < 3; ++b) {
             // 16 pi / Omega: QE dielec.f90 form eps = 1 - 4*(4pi/Omega)*wk*
-            // Re<Y^a|dpsi^E,b>; the PT r-matrix form carries the same factor
-            // through <Y|m> = <m|x|v> and the Re pairing (validated against
-            // QE 7.2 Si to 0.05%: 23.68 here vs 23.67 QE)
-            eps(a, b) *= 16.0 * ModuleBase::PI / ucell_->omega;
+            // Re<Y^a|dpsi^E,b> (validated against QE 7.2 Si to 0.06%:
+            // 23.6825 here vs 23.6685 QE)
+            eps(a, b) *= -16.0 * ModuleBase::PI / ucell_->omega;
             if (a == b) {
                 eps(a, b) += 1.0;
             }

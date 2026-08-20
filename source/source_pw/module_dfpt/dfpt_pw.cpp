@@ -1110,7 +1110,8 @@ void DFPT_PW::Impl::solve_efield_resp(int q_idx) {
     // Y^a stashed by solve_pos_resp are the field rhs base and the fixed
     // point adds the screened response potential of the mixed drho^E
     // exactly like solve_displacement. The converged dpsi^E,a feeds the
-    // zstar_eu cross-check (DFPT_ALEG probe).
+    // SCF dielectric tensor (DFPT_Q0::compute_eps) and the zstar_eu
+    // cross-check probe (DFPT_ALEG).
     if (!wired() || hamilt_ == nullptr) {
         return;
     }
@@ -1190,8 +1191,11 @@ void DFPT_PW::Impl::solve_efield_resp(int q_idx) {
             rho_.mix_drho(q_idx, data_);
             const double residual = rho_.get_residual(q_idx, data_);
             converged = (residual < conv_thr_);
-            std::cout << "ALEG-E a=" << a << " iter=" << iter
-                      << " residual=" << residual << std::endl;
+            if (converged) {
+                std::cout << "DFPT efield dir=" << a
+                          << " converged, residual=" << residual
+                          << " (iter=" << iter << ")" << std::endl;
+            }
         }
         // stash dpsi^E,a before any later solve reuses the slots
         std::vector<std::vector<std::vector<std::complex<double>>>> de(
@@ -1214,7 +1218,8 @@ void DFPT_PW::Impl::aleg_crosscheck(int q_idx) {
     // rotation) zstar_ue form from the dpsi_disp stash and the stored
     // star-rotated Born charges, plus the SCF dielectric tensor
     //   eps = 1 - (16 pi / omega) sum_k wg Re <Y^a | dpsi^E,b>
-    // which reduces to compute_eps at zero screening. A == B incriminates
+    // which is the same contraction compute_eps produces in production.
+    // A == B incriminates
     // a shared operand; A clean incriminates the compute_born contraction.
     const int nat = ucell_->nat;
     const int nk = gs_psi_.get_nk();
@@ -1538,13 +1543,6 @@ void DFPT_PW::run() {
         // commutator [Ĥ_SCF, r̂]. This is implemented in DFPT_Q0 module.
             if (q_idx == 0 && pimpl_->data_.get_compute_q0()) {
                 pimpl_->q0_.compute_q0_response(pimpl_->data_);
-                if (pimpl_->wired()) {
-                    // the dielectric tensor of the C6 velocity form is a
-                    // ground-state quantity; the Born charges below need the
-                    // converged q = 0 Sternheimer solutions and run after the
-                    // two-pass displacement solves
-                    pimpl_->q0_.compute_eps(pimpl_->gs_psi_, pimpl_->wg_, pimpl_->eig_, pimpl_->data_);
-                }
             }
 
         // occupied states at k+q for every k of this q (projector of P_c);
@@ -1558,12 +1556,12 @@ void DFPT_PW::run() {
         // displacement solves below reuse the shifted-operator context
         if (q_idx == 0 && pimpl_->data_.get_compute_q0() && pimpl_->wired()) {
             pimpl_->solve_pos_resp(q_idx);
-            // E-field SCF responses for the zstar_eu cross-check probe:
-            // after the bare Y legs they consume, before the displacement
-            // solves reuse the slots (DFPT_ALEG only)
-            if (getenv("DFPT_ALEG") != nullptr) {
-                pimpl_->solve_efield_resp(q_idx);
-            }
+            // SCF E-field responses of the dielectric tensor: after the
+            // bare Y legs they consume, before the displacement solves
+            // reuse the slots; the epsilon contraction runs straight after
+            // (QE solve_e -> dielec.f90 order)
+            pimpl_->solve_efield_resp(q_idx);
+            pimpl_->q0_.compute_eps(pimpl_->wg_, pimpl_->data_);
         }
 
         // Per-irrep self-consistent loop: the little-group irrep
