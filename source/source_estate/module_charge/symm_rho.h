@@ -2,8 +2,9 @@
 #define SYMM_RHO_H
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/module_symmetry/symmetry.h"
-#include "source_estate/module_charge/charge.h"
 #include "source_base/parallel_grid.h"
+
+class Charge;
 
 class Symmetry_rho
 {
@@ -44,6 +45,19 @@ class Symmetry_rho
     ///        coupled spin rotation. The charge component rho^0 = rho[0] is handled separately
     ///        by the ordinary scalar begin().
     void begin_soc(const Charge& CHR,
+                   const ModulePW::PW_Basis* pw,
+                   ModuleSymmetry::Symmetry& symm) const;
+
+    /**
+     * @brief Symmetrize raw nspin=4 spin-density arrays with coupled spin rotations.
+     *
+     * @param rho Real-space density components ordered as rho0, mx, my, mz.
+     * @param rhog Reciprocal-space work arrays with the same component ordering.
+     * @param pw Plane-wave basis used for the Fourier transforms.
+     * @param symm Symmetry operations and spin rotations.
+     */
+    void begin_soc(double** rho,
+                   std::complex<double>** rhog,
                    const ModulePW::PW_Basis* pw,
                    ModuleSymmetry::Symmetry& symm) const;
 

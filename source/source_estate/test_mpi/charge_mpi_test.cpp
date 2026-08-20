@@ -1,27 +1,31 @@
-#include "gmock/gmock.h"
-#include "gtest/gtest.h"
-#define private public
 #include "source_base/matrix3.h"
 #include "source_base/parallel_global.h"
+#include "source_base/parallel_grid.h"
 #include "source_estate/module_charge/charge.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include "gmock/gmock.h"
+#include "gtest/gtest.h"
+
 bool XC_Functional::ked_flag = false;
+void XC_Functional::set_xc_type(const std::string xc_func_in)
+{
+    ked_flag = xc_func_in == "scan";
+}
 Charge::Charge()
 {
 }
 Charge::~Charge()
 {
-    delete[] rec;
-    delete[] dis;
 }
 
 auto sum_array = [](const double* v, const int& nv) {
     double sum = 0;
-    for (int i = 0; i < nv; ++i) {
+    for (int i = 0; i < nv; ++i)
+    {
         sum += v[i];
-}
+    }
     return sum;
 };
 /************************************************
@@ -44,9 +48,11 @@ class ChargeMpiTest : public ::testing::Test
     std::string output;
     double lat0 = 4;
     ModuleBase::Matrix3 latvec;
+    int world_size = 1;
     void SetUp() override
     {
         charge = new Charge;
+        MPI_Comm_size(MPI_COMM_WORLD, &world_size);
     }
     void TearDown() override
     {
@@ -60,20 +66,23 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
     {
         GlobalV::KPAR = 2;
         Parallel_Global::init_pools(GlobalV::NPROC,
-                                      GlobalV::MY_RANK,
-                                      PARAM.input.bndpar,
-                                      GlobalV::KPAR,
-                                      GlobalV::NPROC_IN_BNDGROUP,
-                                      GlobalV::RANK_IN_BPGROUP,
-                                      GlobalV::MY_BNDGROUP,
-                                      GlobalV::NPROC_IN_POOL,
-                                      GlobalV::RANK_IN_POOL,
-                                      GlobalV::MY_POOL);
+                                    GlobalV::MY_RANK,
+                                    PARAM.inp.bndpar,
+                                    GlobalV::KPAR,
+                                    GlobalV::NPROC_IN_BNDGROUP,
+                                    GlobalV::RANK_IN_BPGROUP,
+                                    GlobalV::MY_BNDGROUP,
+                                    GlobalV::NPROC_IN_POOL,
+                                    GlobalV::RANK_IN_POOL,
+                                    GlobalV::MY_POOL);
         ModulePW::PW_Basis* rhopw = new ModulePW::PW_Basis();
         rhopw->initmpi(GlobalV::NPROC_IN_POOL, GlobalV::RANK_IN_POOL, POOL_WORLD);
         rhopw->initgrids(lat0, latvec, 40);
         rhopw->initparameters(false, 10);
         rhopw->setuptransform();
+        Parallel_Grid pgrid;
+        pgrid.init(rhopw->nx, rhopw->ny, rhopw->nz, rhopw->nplane, rhopw->nrxx, rhopw->nz, 1, world_size);
+        charge->pgrid = &pgrid;
 
         int nz = rhopw->nz;
         const int nrxx = rhopw->nrxx;
@@ -90,7 +99,6 @@ TEST_F(ChargeMpiTest, reduce_diff_pools1)
         }
         double refsum = sum_array(array_rho, nrxx);
 
-        charge->init_chgmpi();
         charge->reduce_diff_pools(array_rho);
         double sum = sum_array(array_rho, nrxx);
         EXPECT_EQ(sum, refsum * GlobalV::KPAR);
@@ -107,7 +115,7 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
         GlobalV::KPAR = 3;
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
-                                      PARAM.input.bndpar,
+                                      PARAM.inp.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_BNDGROUP,
                                       GlobalV::RANK_IN_BPGROUP,
@@ -121,6 +129,9 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
         rhopw->initparameters(false, 10);
         rhopw->setuptransform();
         charge->rhopw = rhopw;
+        Parallel_Grid pgrid;
+        pgrid.init(rhopw->nx, rhopw->ny, rhopw->nz, rhopw->nplane, rhopw->nrxx, rhopw->nz, 1, world_size);
+        charge->pgrid = &pgrid;
 
         int nz = rhopw->nz;
         const int nrxx = rhopw->nrxx;
@@ -143,7 +154,6 @@ TEST_F(ChargeMpiTest, reduce_diff_pools2)
             }
         }
 
-        charge->init_chgmpi();
         charge->reduce_diff_pools(array_rho);
         double sum = sum_array(array_rho, nrxx);
         MPI_Allreduce(MPI_IN_PLACE, &sum, 1, MPI_DOUBLE, MPI_SUM, POOL_WORLD);
@@ -162,7 +172,7 @@ TEST_F(ChargeMpiTest, rho_mpi)
         GlobalV::KPAR = 2;
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
-                                      PARAM.input.bndpar,
+                                      PARAM.inp.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_BNDGROUP,
                                       GlobalV::RANK_IN_BPGROUP,
@@ -176,7 +186,10 @@ TEST_F(ChargeMpiTest, rho_mpi)
         rhopw->initparameters(false, 10);
         rhopw->setuptransform();
         charge->rhopw = rhopw;
-        PARAM.input.nspin = 1;
+        Parallel_Grid pgrid;
+        pgrid.init(rhopw->nx, rhopw->ny, rhopw->nz, rhopw->nplane, rhopw->nrxx, rhopw->nz, 1, world_size);
+        charge->pgrid = &pgrid;
+        ASSERT_EQ(PARAM.inp.nspin, 1);
         charge->rho = new double*[1];
         charge->kin_r = new double*[1];
 
@@ -187,7 +200,6 @@ TEST_F(ChargeMpiTest, rho_mpi)
         charge->nrxx = nrxx;
         charge->rho[0] = new double[nrxx];
         charge->kin_r[0] = new double[nrxx];
-        charge->init_chgmpi();
         charge->rho_mpi();
 
         delete[] charge->rho[0];
@@ -205,15 +217,14 @@ TEST_F(ChargeMpiTest, kin_r_mpi)
 {
     if (GlobalV::NPROC >= 2 && GlobalV::NPROC % 2 == 0)
     {
-        const bool ked_flag_old = XC_Functional::ked_flag;
-        XC_Functional::ked_flag = true;
-        PARAM.input.nspin = 1;
-        PARAM.input.bndpar = 1;
+        XC_Functional::set_xc_type("scan");
+        ASSERT_EQ(PARAM.inp.nspin, 1);
+        ASSERT_EQ(PARAM.inp.bndpar, 1);
         GlobalV::KPAR = 2;
 
         Parallel_Global::divide_pools(GlobalV::NPROC,
                                       GlobalV::MY_RANK,
-                                      PARAM.input.bndpar,
+                                      PARAM.inp.bndpar,
                                       GlobalV::KPAR,
                                       GlobalV::NPROC_IN_BNDGROUP,
                                       GlobalV::RANK_IN_BPGROUP,
@@ -227,6 +238,9 @@ TEST_F(ChargeMpiTest, kin_r_mpi)
         rhopw->initparameters(false, 10);
         rhopw->setuptransform();
         charge->rhopw = rhopw;
+        Parallel_Grid pgrid;
+        pgrid.init(rhopw->nx, rhopw->ny, rhopw->nz, rhopw->nplane, rhopw->nrxx, rhopw->nz, 1, world_size);
+        charge->pgrid = &pgrid;
 
         const int nz = rhopw->nz;
         const int nrxx = rhopw->nrxx;
@@ -240,13 +254,11 @@ TEST_F(ChargeMpiTest, kin_r_mpi)
         {
             for (int iz = 0; iz < nplane; ++iz)
             {
-                charge->kin_r[0][nplane * ir + iz]
-                    = (rhopw->startz_current + iz + ir * nz) / double(nxy * nz);
+                charge->kin_r[0][nplane * ir + iz] = (rhopw->startz_current + iz + ir * nz) / double(nxy * nz);
             }
         }
         const double refsum = sum_array(charge->kin_r[0], nrxx);
 
-        charge->init_chgmpi();
         charge->kin_r_mpi();
         const double sum = sum_array(charge->kin_r[0], nrxx);
         EXPECT_EQ(sum, refsum * GlobalV::KPAR);
@@ -254,7 +266,7 @@ TEST_F(ChargeMpiTest, kin_r_mpi)
         delete[] charge->kin_r[0];
         delete[] charge->kin_r;
         delete rhopw;
-        XC_Functional::ked_flag = ked_flag_old;
+        XC_Functional::set_xc_type("pbe");
     }
 }
 

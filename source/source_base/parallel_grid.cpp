@@ -1,9 +1,11 @@
 #include "parallel_grid.h"
+
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 
 #ifdef __MPI
 #include "source_base/parallel_comm.h" // use POOL_WORLD
+
 #include <mpi.h>
 #endif
 
@@ -165,6 +167,95 @@ void Parallel_Grid::z_distribution()
 
     delete[] startp;
     return;
+}
+
+void Parallel_Grid::reduce_across_pools(double* data) const
+{
+#ifdef __MPI
+    if (GlobalV::KPAR <= 1)
+    {
+        return;
+    }
+
+    assert(data != nullptr);
+    if (KP_WORLD != MPI_COMM_NULL)
+    {
+        // Equal-sized pools give corresponding ranks identical z-slab layouts,
+        // so their local buffers can be summed directly without redistribution.
+        MPI_Allreduce(MPI_IN_PLACE, data, this->nrxx, MPI_DOUBLE, MPI_SUM, KP_WORLD);
+        return;
+    }
+
+    // Uneven pool sizes have no KP_WORLD and may assign different z-slabs to
+    // corresponding ranks. Validate the local distribution before rebuilding
+    // a common global layout for the cross-pool reduction.
+    assert(!this->numz.empty());
+    assert(GlobalV::MY_POOL >= 0 && GlobalV::MY_POOL < static_cast<int>(this->numz.size()));
+    assert(GlobalV::RANK_IN_POOL >= 0 && GlobalV::RANK_IN_POOL < static_cast<int>(this->numz[GlobalV::MY_POOL].size()));
+    assert(this->nczp == this->numz[GlobalV::MY_POOL][GlobalV::RANK_IN_POOL]);
+    assert(this->nrxx == this->ncxy * this->nczp);
+
+    const int pool_size = this->nproc_in_pool[GlobalV::MY_POOL];
+    std::vector<int> receive_counts(pool_size);
+    std::vector<int> displacements(pool_size);
+    for (int ip = 0; ip < pool_size; ++ip)
+    {
+        receive_counts[ip] = this->numz[GlobalV::MY_POOL][ip] * this->ncxy;
+        displacements[ip] = this->startz[GlobalV::MY_POOL][ip] * this->ncxy;
+    }
+
+    std::vector<double> local_data(this->nrxx);
+    // The allgather below replicates one complete pool grid on every rank in
+    // that pool. INT_BGROUP then sums all of those replicas, so divide each
+    // local slab by the pool size to make each pool contribute exactly once.
+    const double pool_normalization = 1.0 / static_cast<double>(pool_size);
+    for (int ir = 0; ir < this->nrxx; ++ir)
+    {
+        local_data[ir] = data[ir] * pool_normalization;
+    }
+
+    std::vector<double> pool_data(this->ncxyz);
+    // Collect the rank-local [xy][local_z] slabs into rank-contiguous blocks.
+    MPI_Allgatherv(local_data.data(),
+                   this->nrxx,
+                   MPI_DOUBLE,
+                   pool_data.data(),
+                   receive_counts.data(),
+                   displacements.data(),
+                   MPI_DOUBLE,
+                   POOL_WORLD);
+
+    std::vector<double> global_layout(this->ncxyz);
+    // Convert the rank-contiguous allgather result to the canonical
+    // [xy][global_z] order required for element-wise reduction across pools.
+    for (int ip = 0; ip < pool_size; ++ip)
+    {
+        const int local_nz = this->numz[GlobalV::MY_POOL][ip];
+        const int global_z_start = this->startz[GlobalV::MY_POOL][ip];
+        const int gathered_start = global_z_start * this->ncxy;
+        for (int ixy = 0; ixy < this->ncxy; ++ixy)
+        {
+            for (int iz = 0; iz < local_nz; ++iz)
+            {
+                global_layout[ixy * this->ncz + global_z_start + iz] = pool_data[gathered_start + ixy * local_nz + iz];
+            }
+        }
+    }
+
+    MPI_Allreduce(MPI_IN_PLACE, global_layout.data(), this->ncxyz, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
+
+    // Return only the z-slab owned by this rank under its pool's distribution.
+    const int local_z_start = this->startz[GlobalV::MY_POOL][GlobalV::RANK_IN_POOL];
+    for (int ixy = 0; ixy < this->ncxy; ++ixy)
+    {
+        for (int iz = 0; iz < this->nczp; ++iz)
+        {
+            data[ixy * this->nczp + iz] = global_layout[ixy * this->ncz + local_z_start + iz];
+        }
+    }
+#else
+    (void)data;
+#endif
 }
 
 #ifdef __MPI
