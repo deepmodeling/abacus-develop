@@ -244,10 +244,15 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx) {
             }
         }
         if (ikq < 0) {
-            ModuleBase::WARNING_QUIT("DFPT_PW::build_occ_kq",
-                                     "k+q is not a point of the ground-state k list: "
-                                     "the DFPT q mesh must be commensurate with the "
-                                     "k mesh (and inside the first Brillouin zone).");
+            std::ostringstream oss;
+            oss << "k+q is not a point of the ground-state k list: the DFPT "
+                   "q mesh must be commensurate with the k mesh (and inside "
+                   "the first Brillouin zone). ik=" << ik
+                << " k_d=(" << pw_wfc_->kvec_d[ik].x << "," << pw_wfc_->kvec_d[ik].y
+                << "," << pw_wfc_->kvec_d[ik].z << ") q_d=(" << q_frac.x << ","
+                << q_frac.y << "," << q_frac.z << ") k+q=(" << target.x << ","
+                << target.y << "," << target.z << ") nk=" << nk;
+            ModuleBase::WARNING_QUIT("DFPT_PW::build_occ_kq", oss.str());
         }
         ikq_of_k_[ik] = ikq;
 

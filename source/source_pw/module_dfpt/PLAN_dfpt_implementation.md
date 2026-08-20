@@ -435,6 +435,38 @@
               （dfpt_pw_data）随 ALEG 保留
         - [ ] P0-3 B0 收尾：8×8×8 过夜（ε∞/Z*/D 密网格收敛）；非 Γ q 物理级验证
           （密 k 色散 vs 超胞 FD）；sym1 星旋转各向异性处理或记录在案
+            - **compute_eps SCF 化（完成，98c7f114c）**：solve_efield_resp
+              转正（QE solve_e 顺序：Y 腿后、位移 solve 前）；
+              compute_eps 改消耗 pos_resp+dpsi_efield 收缩
+              ε=δ−(16π/Ω)Σwg Σ_occ Re⟨Y^a|dψ^E,b⟩（dielec.f90 锚，星平均
+              保留）；PT r-matrix 路径退役（pos_matrix 保留为解析参照）；
+              ComputeEpsScfSyntheticStash 替换 PT 用例，串行 6/6；
+              端到端 sym 4×4×4 ε∞=23.35·δ（原 IPA 12.67），与 nosym
+              ALEG 23.68、QE 23.67 同源
+            - **[新缺陷登记] 非 Γ q 全链路错误（P0-3 阻塞项）**：
+              QE 7.2 本地参照（同 UPF/胞/ecut/4×4×4 网格）：
+              q=L(0.5,0,0) → 125.39×2/239.10/473.79×2/496.34 cm⁻¹；
+              q=Γ-L 1/4 → 102.75×2/144.31/494.62×2/502.63。我们：
+              L 点 2-k 显式 → −1170.9/−296.2×2/292.5/560.5×2（简并
+              结构 1+2+1+2 正确、幅度全错）；L 点 64k(sym−1) →
+              −948/−148×2/183/199×2；q=1/4 64k → −1474/−1038×2/
+              −957×2/−954（全虚频）。**早期 b0_si_qL"验证"结论作废**
+              （当时无外部参照，q↔−q 0.2-1% 一致本身即误差信号）
+            - 已排除：屏蔽装配（DFPT_NOSC 下 2-k bare 也错 −3291）；
+              H(k+q) 组装（DBG ⟨ψ|H(k+q)|ψ⟩=GS eig 到 2e-6）；
+              apply_vr_core 卷积约定（PW_Basis_K 实空间为周期 u_k，
+              纯 G 卷积 + e^{i(Δ+q)τ} 相位数学正确）；DFPT_KQ_Basis 球
+              选择（与 GS 同球一致）；d2ionq Ewald（有 FD 验证注释+用例）
+            - 存活嫌疑：dVloc_dtau(dVnl_dtau) 的 (Δ+q) 系数链在真实
+              case 的实现（C1 fixture 测试过的约定可能未覆盖全网格
+              dn≠0 标签折叠路径）；build_occ_kq 的 dn≠0 G 向量匹配
+              （2-k case dn=(1,0,0) 当时验证过，64k 大量 dn≠0 未验）；
+              term2 cross 的逐元素正确性（DFPT_XB 打印未对照）
+            - 下一步（调试战役）：① XB 逐元素 + 手算矩阵元对照
+              （2-k case 最小复现）；② 独立 python FD 实现 dV_loc(q)
+              系数在真实 gcar 网格上对照；③ 超胞 FD 声子端到端参照
+              （4×1×1 胞 Γ 点，q=1/4 对应）
+            - 8×8×8 nosym ALEG 验收运行中（~4h，q=0 不受本缺陷影响）
         - [x] 非 Γ q 路径冒烟 `（本轮，b0_si_qL/qmL）`
             - dfpt_qfile + QList::read_from_file 端到端首次运行：q=(0.5,0,0)，k={Γ,L}，
               compute_q0=false/loto=false；6 位移全收敛、无 NaN、D Hermitian
