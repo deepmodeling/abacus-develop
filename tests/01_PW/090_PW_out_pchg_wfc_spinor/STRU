@@ -1,5 +1,5 @@
 ATOMIC_SPECIES
-Fe 1.000 Fe_ONCV_PBE-1.0.upf
+Fe 1.000 Fe.upf
 
 NUMERICAL_ORBITAL
 Fe_gga_9au_100Ry_4s2p2d1f.orb
@@ -17,5 +17,5 @@ Direct
 Fe
 1.0
 2
-0.00 0.00 0.00 1 1 1 angle1 90 angle2 0
-0.51 0.52 0.53 1 1 1 angle1 90 angle2 0
+0.00 0.00 0.00 1 1 1 mag 1.0 1.0 1.0
+0.51 0.52 0.53 1 1 1 mag 1.0 1.0 1.0

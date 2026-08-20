@@ -8,6 +8,7 @@ device            gpu
 kpar              2
 noncolin          1
 nspin             4
+lspinorb          1
 symmetry          0
 cal_force         1
 cal_stress        1
@@ -16,7 +17,7 @@ ecutwfc           20
 ecutrho           160
 pw_seed           1
 scf_thr           1.0e-7
-scf_nmax          50
+scf_nmax          1
 out_chg           0
 out_pchg          1
 if_separate_k     1
@@ -31,6 +32,7 @@ mixing_beta       0.2
 mixing_ndim       10
 
 ks_solver         dav_subspace
+pw_diag_thr       1.0e-12
 diago_smooth_ethr true
 pw_diag_ndim      2
 
