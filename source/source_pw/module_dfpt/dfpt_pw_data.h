@@ -157,7 +157,26 @@ public:
                        const std::vector<std::vector<std::vector<std::complex<double>>>>& d);
     std::vector<std::vector<std::vector<std::complex<double>>>>
     get_dpsi_disp(int atom_idx, int dir) const;
-    
+
+    /// conduction-projected position operator P_c r_dir |u_(k,band)> of the
+    /// q = 0 mesh, solved exactly as a linear response ((H - eps_band) Y =
+    /// -(i/tpiba) dH/dk_dir |u>), indexed [dir][k][band]; the screened Born
+    /// charge contraction <dpsi^kappa|P_c r|u> avoids the empty-eigenvector
+    /// truncation of the explicit r-matrix sum
+    void set_pos_resp(int dir,
+                      const std::vector<std::vector<std::vector<std::complex<double>>>>& y);
+    std::vector<std::vector<std::vector<std::complex<double>>>>
+    get_pos_resp(int dir) const;
+
+    /// converged screened E-field response dpsi^E(dir) of the q = 0 mesh
+    /// (QE solve_e + dfpt_kernel fixed point on the rhs
+    /// -(Y^dir + dV_sc^E|psi>)), indexed [dir][k][band]
+    void set_dpsi_efield(
+        int dir,
+        const std::vector<std::vector<std::vector<std::complex<double>>>>& d);
+    std::vector<std::vector<std::vector<std::complex<double>>>>
+    get_dpsi_efield(int dir) const;
+
 private:
     ModuleCell::QList* qlist_ = nullptr;
     
@@ -202,6 +221,14 @@ private:
 
     /// converged dpsi per displacement (atom, dir): [3*nat][k][band] entries
     std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> dpsi_disp_;
+
+    /// conduction-projected position response P_c r_dir|u> per direction:
+    /// [3][k][band] entries
+    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> pos_resp_;
+
+    /// converged E-field response dpsi^E per direction: [3][k][band]
+    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>>
+    dpsi_efield_;
     
     int max_iter_ = 100;
     double conv_thr_ = 1e-8;

@@ -418,7 +418,11 @@ void DFPT_Q0::compute_eps(const psi::Psi<std::complex<double>>& psi,
     }
     for (int a = 0; a < 3; ++a) {
         for (int b = 0; b < 3; ++b) {
-            eps(a, b) *= 8.0 * ModuleBase::PI / ucell_->omega;
+            // 16 pi / Omega: QE dielec.f90 form eps = 1 - 4*(4pi/Omega)*wk*
+            // Re<Y^a|dpsi^E,b>; the PT r-matrix form carries the same factor
+            // through <Y|m> = <m|x|v> and the Re pairing (validated against
+            // QE 7.2 Si to 0.05%: 23.68 here vs 23.67 QE)
+            eps(a, b) *= 16.0 * ModuleBase::PI / ucell_->omega;
             if (a == b) {
                 eps(a, b) += 1.0;
             }
@@ -430,22 +434,22 @@ void DFPT_Q0::compute_eps(const psi::Psi<std::complex<double>>& psi,
 void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
                            const ModuleBase::matrix& wg,
                            const ModuleBase::matrix& eig, DFPT_PW_Data& data) {
-    if (ucell_ == nullptr || pert_ == nullptr) {
+    if (ucell_ == nullptr) {
         return;
     }
-    const bool zdbg = getenv("DFPT_ZDBG") != nullptr;
-    std::vector<std::vector<std::vector<ModuleBase::Vector3<std::complex<double>>>>> r_mat;
-    pos_matrix(psi, eig, r_mat);
     const int nk = psi.get_nk();
     const int nbands = psi.get_nbands();
     const int nat = ucell_->nat;
+    const int nbasis = psi.get_nbasis();
+    (void)eig;
 
-    // stash the q=0 dpsi slots (apply_dv reuses them, phon backup pattern)
-    std::vector<std::vector<std::vector<std::complex<double>>>> dpsib(nk);
-    for (int ik = 0; ik < nk; ++ik) {
-        dpsib[ik].resize(nbands);
-        for (int ib = 0; ib < nbands; ++ib) {
-            dpsib[ik][ib] = data.get_dpsi(0, ik, ib);
+    // solved position legs Y^a_{k,v} = P_c x_a|psi_v> of the q = 0 mesh
+    // (DFPT_PW::solve_pos_resp stashes them per direction)
+    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> yr(3);
+    for (int a = 0; a < 3; ++a) {
+        yr[a] = data.get_pos_resp(a);
+        if (static_cast<int>(yr[a].size()) != nk) {
+            return; // position responses not solved: nothing to accumulate
         }
     }
 
@@ -458,45 +462,32 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
         // wg-weighted partial chi_k[ik](a, idir) of THIS atom at every k
         std::vector<ModuleBase::matrix> chi_k(nk, ModuleBase::matrix(3, 3, true));
         for (int idir = 0; idir < 3; ++idir) {
-            // dV matrix elements at q = 0 through the C1 path; apply_dv
-            // delivers dV|u_v> on the k+q = k basis for every k.
-            pert_->build_dv(0, iat, idir, data);
+            // converged screened displacement response dpsi(scf)/du of this
+            // mode, stashed by solve_displacement before compute_born runs
+            const std::vector<std::vector<std::vector<std::complex<double>>>> disp
+                = data.get_dpsi_disp(iat, idir);
+            if (static_cast<int>(disp.size()) != nk) {
+                continue;
+            }
             for (int ik = 0; ik < nk; ++ik) {
-                pert_->apply_dv(0, ik, psi, data);
                 for (int v = 0; v < nbands; ++v) {
                     if (!dfpt_band_occupied(wg, ik, v)) {
                         continue; // empty
                     }
-                    const std::vector<std::complex<double>> rhs =
-                        data.get_dpsi(0, ik, v);
-                    if (rhs.empty()) {
-                        continue;
+                    const int npw = static_cast<int>(disp[ik][v].size());
+                    if (npw <= 0 || npw > nbasis) {
+                        continue; // unsolved slot or inconsistent basis
                     }
-                    for (int m = 0; m < nbands; ++m) {
-                        const double de = eig(ik, m) - eig(ik, v);
-                        if (std::abs(de) < 1.0e-8) {
-                            continue; // m == v or degenerate partner
+                    // <dpsi^kappa_idir(scf)|Y^a_v> per field direction
+                    for (int a = 0; a < 3; ++a) {
+                        if (static_cast<int>(yr[a][ik][v].size()) != npw) {
+                            continue;
                         }
-                        std::complex<double> dv_mv(0.0, 0.0);
-                        for (size_t ig = 0; ig < rhs.size(); ++ig) {
-                            dv_mv += std::conj(psi(ik, m, ig)) * rhs[ig];
+                        std::complex<double> dot(0.0, 0.0);
+                        for (int ig = 0; ig < npw; ++ig) {
+                            dot += std::conj(disp[ik][v][ig]) * yr[a][ik][v][ig];
                         }
-                        if (zdbg) {
-                            const ModuleBase::Vector3<std::complex<double>>& ra
-                                = r_mat[ik][m][v];
-                            std::cout << "ZDBG iat=" << iat << " idir=" << idir
-                                      << " ik=" << ik << " v=" << v << " m=" << m
-                                      << " wg=" << wg(ik, v) << " de=" << de
-                                      << " dv=" << dv_mv << " r=" << ra
-                                      << std::endl;
-                        }
-                        // <u_v|dV|u_m> = conj(dv_mv), multiplied from the
-                        // right by <u_m|r_a|u_v> (Gonze-Lee ordering)
-                        for (int a = 0; a < 3; ++a) {
-                            chi_k[ik](a, idir)
-                                += wg(ik, v)
-                                   * (std::conj(dv_mv) * r_mat[ik][m][v][a]).real() / de;
-                        }
+                        chi_k[ik](a, idir) += wg(ik, v) * dot.real();
                     }
                 }
             }
@@ -525,7 +516,7 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
         ModuleBase::matrix zstar(3, 3, true);
         for (int a = 0; a < 3; ++a) {
             for (int d = 0; d < 3; ++d) {
-                zstar(a, d) = -4.0 * zacc[iat](a, d);
+                zstar(a, d) = -2.0 * zacc[iat](a, d);
             }
         }
         // ionic rigid-ion charge on the diagonal (a == b directions)
@@ -535,15 +526,6 @@ void DFPT_Q0::compute_born(const psi::Psi<std::complex<double>>& psi,
             zstar(d, d) += zion;
         }
         data.set_born(iat, zstar);
-    }
-
-    // restore the stashed q=0 dpsi
-    for (int ik = 0; ik < nk; ++ik) {
-        for (int ib = 0; ib < nbands; ++ib) {
-            if (!dpsib[ik][ib].empty()) {
-                data.set_dpsi(0, ik, ib, dpsib[ik][ib]);
-            }
-        }
     }
 }
 

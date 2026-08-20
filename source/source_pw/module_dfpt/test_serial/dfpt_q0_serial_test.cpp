@@ -93,7 +93,7 @@ Structure_Factor::~Structure_Factor()
  *     closed-form plane-wave-combination states; the nonlocal contraction
  *     against an operator finite difference of <u_m|V_nl(k)|u_n>; exactly
  *     degenerate pairs are skipped.
- *   - DFPT_Q0::compute_eps: the full prefactor chain (8 pi / Omega, wg,
+ *   - DFPT_Q0::compute_eps: the full prefactor chain (16 pi / Omega, wg,
  *     1/(eps_c - eps_v)) on a two-level toy system with a complex excited
  *     state.
  *   - DFPT_Q0::compute_born: elementwise against the closed-form
@@ -621,7 +621,7 @@ TEST_F(DFPTQ0SerialTest, ComputeEpsTwoLevelAnalytic)
                 = std::complex<double>(0.0, -1.0) * std::conj(p01[b])
                       / (ucell_.tpiba * (eig(0, 1) - eig(0, 0)));
             const double expect = ((a == b) ? 1.0 : 0.0)
-                                  + 8.0 * ModuleBase::PI / ucell_.omega * wg(0, 0)
+                                  + 16.0 * ModuleBase::PI / ucell_.omega * wg(0, 0)
                                         * (r_vc * r_cv).real() / de;
             EXPECT_NEAR(eps(a, b), expect, 1.0e-10) << "a=" << a << " b=" << b;
         }
@@ -629,18 +629,18 @@ TEST_F(DFPTQ0SerialTest, ComputeEpsTwoLevelAnalytic)
 }
 
 // ---------------------------------------------------------------------------
-// compute_born against the closed-form q = 0 sums (Coulomb local dV)
+// compute_born against the closed-form screened-leg product (v4 QE anchor):
+// Z*(a,idir) = zion delta - 2 sum wg Re<dpsi^{idir}(scf)|Y^a> with synthetic
+// stashed displacement responses and position legs
 // ---------------------------------------------------------------------------
 
-TEST_F(DFPTQ0SerialTest, ComputeBornAnalyticCoulomb)
+TEST_F(DFPTQ0SerialTest, ComputeBornTwoLevelAnalytic)
 {
     const int npwk = pw_wfc_.npwk[0];
     const int ig0 = IgOf(0, 0, 0);
     const int igx = IgOf(1, 0, 0);
-    const int igy = IgOf(0, 1, 0);
     ASSERT_GE(ig0, 0);
     ASSERT_GE(igx, 0);
-    ASSERT_GE(igy, 0);
 
     const double e1 = ucell_.tpiba2 * (gx_ * gx_);
     psi::Psi<std::complex<double>> psi(1, 2, npwk, npwk, true);
@@ -648,8 +648,6 @@ TEST_F(DFPTQ0SerialTest, ComputeBornAnalyticCoulomb)
     psi(0, 0, ig0) = std::sqrt(0.6);
     psi(0, 0, igx) = std::sqrt(0.4);
     psi(0, 1, ig0) = std::sqrt(0.2);
-    psi(0, 1, igx) = -std::sqrt(0.3);
-    psi(0, 1, igy) = std::complex<double>(0.0, std::sqrt(0.5));
 
     ModuleBase::matrix wg(1, 2);
     wg(0, 0) = 2.0;
@@ -658,56 +656,66 @@ TEST_F(DFPTQ0SerialTest, ComputeBornAnalyticCoulomb)
     eig(0, 0) = 0.4 * e1;
     eig(0, 1) = e1;
 
-    // sentinel dpsi in the q = 0 slot: compute_born must restore it
+    // sentinel dpsi in the q = 0 slot: compute_born never touches the dpsi
+    // slots, the sentinel must survive verbatim
     const std::vector<std::complex<double>> sentinel(npwk, std::complex<double>(0.5, -0.25));
     data_.set_dpsi(0, 0, 0, sentinel);
+
+    // synthetic converged displacement responses dpsi(scf)/du_{0,idir} for
+    // the occupied band (G0/Gx components, distinct complexes per idir
+    // catch transposed indices); the empty-band row stays unsolved
+    const std::complex<double> alpha[3] = {std::complex<double>(0.3, 0.2),
+                                           std::complex<double>(-0.1, 0.4),
+                                           std::complex<double>(0.25, -0.15)};
+    const std::complex<double> beta[3] = {std::complex<double>(0.2, -0.35),
+                                          std::complex<double>(0.45, 0.1),
+                                          std::complex<double>(-0.2, -0.05)};
+    for (int idir = 0; idir < 3; ++idir)
+    {
+        std::vector<std::vector<std::vector<std::complex<double>>>> disp(
+            1, std::vector<std::vector<std::complex<double>>>(2));
+        disp[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
+        disp[0][0][ig0] = alpha[idir];
+        disp[0][0][igx] = beta[idir];
+        data_.set_dpsi_disp(0, idir, disp);
+    }
+
+    // synthetic solved position legs Y^a_{0,0} = P_c x_a|psi_0>
+    const std::complex<double> gam[3] = {std::complex<double>(0.15, -0.3),
+                                         std::complex<double>(0.4, 0.05),
+                                         std::complex<double>(-0.35, 0.2)};
+    const std::complex<double> del[3] = {std::complex<double>(-0.25, 0.45),
+                                         std::complex<double>(0.1, -0.1),
+                                         std::complex<double>(0.3, 0.25)};
+    for (int a = 0; a < 3; ++a)
+    {
+        std::vector<std::vector<std::vector<std::complex<double>>>> y(
+            1, std::vector<std::vector<std::complex<double>>>(2));
+        y[0][0].assign(npwk, std::complex<double>(0.0, 0.0));
+        y[0][0][ig0] = gam[a];
+        y[0][0][igx] = del[a];
+        data_.set_pos_resp(a, y);
+    }
 
     q0_.compute_born(psi, wg, eig, data_);
     const ModuleBase::matrix zstar = data_.get_born(0);
 
-    // closed-form dV matrix elements: supp(v) = {G0, Gx}, supp(m) = {G0, Gx, Gy}
-    const std::complex<double> cv[3] = {psi(0, 0, ig0), psi(0, 0, igx), std::complex<double>(0.0, 0.0)};
-    const ModuleBase::Vector3<double> gv[3] = {ModuleBase::Vector3<double>(0.0, 0.0, 0.0), gx_,
-                                               gy_};
-    const std::complex<double> cm[3] = {psi(0, 1, ig0), psi(0, 1, igx), psi(0, 1, igy)};
-    const double de = eig(0, 1) - eig(0, 0);
+    const double zion = ucell_.atoms[0].ncpp.zv;
     for (int idir = 0; idir < 3; ++idir)
     {
-        // dv_m0 = <u_m|dV/dtau_idir|u_v> = sum_{G'' in supp(m)} cc_m(G'')
-        //         sum_{G' in supp(v)} c_v(G') AnalyticDVloc(G'' - G')
-        std::complex<double> dv10(0.0, 0.0);
-        for (int im = 0; im < 3; ++im)
-        {
-            if (cm[im] == std::complex<double>(0.0, 0.0))
-            {
-                continue;
-            }
-            for (int iv = 0; iv < 2; ++iv)
-            {
-                dv10 += std::conj(cm[im]) * cv[iv] * AnalyticDVloc(idir, gv[im] - gv[iv]);
-            }
-        }
         for (int a = 0; a < 3; ++a)
         {
-            // p_01^a = 2 tpiba^2 <v|(k+G)_a|m>, kinetic operator diagonal in G:
-            // only shared components pair (G0 = 0 drops out, v has no Gy)
-            std::complex<double> p01_a(0.0, 0.0);
-            for (int g = 0; g < 3; ++g)
-            {
-                p01_a += 2.0 * ucell_.tpiba2 * std::conj(cv[g]) * gv[g][a] * cm[g];
-            }
-            const std::complex<double> r_10
-                = std::complex<double>(0.0, -1.0) * std::conj(p01_a)
-                      / (ucell_.tpiba * (eig(0, 1) - eig(0, 0)));
-            // ionic Z sits on the (a == idir) diagonal only
-            const double zion = (a == idir) ? ucell_.atoms[0].ncpp.zv : 0.0;
-            const double expect
-                = zion - 4.0 * wg(0, 0) * (std::conj(dv10) * r_10).real() / de;
-            EXPECT_NEAR(zstar(a, idir), expect, 1.0e-9) << "a=" << a << " idir=" << idir;
+            // <dpsi^{idir}|Y^a> = conj(alpha)gam + conj(beta)del over the
+            // shared G support, wg-weighted with the -2 spin prefactor
+            const std::complex<double> dot = std::conj(alpha[idir]) * gam[a]
+                                             + std::conj(beta[idir]) * del[a];
+            const double expect = ((a == idir) ? zion : 0.0)
+                                  - 2.0 * wg(0, 0) * dot.real();
+            EXPECT_NEAR(zstar(a, idir), expect, 1.0e-12) << "a=" << a << " idir=" << idir;
         }
     }
 
-    // the q = 0 dpsi slot is restored
+    // the q = 0 dpsi slot is untouched
     const std::vector<std::complex<double>> after = data_.get_dpsi(0, 0, 0);
     ASSERT_EQ(after.size(), sentinel.size());
     for (size_t i = 0; i < after.size(); ++i)

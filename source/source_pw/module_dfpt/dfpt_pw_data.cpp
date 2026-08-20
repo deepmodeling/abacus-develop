@@ -101,6 +101,44 @@ DFPT_PW_Data::get_dpsi_disp(int atom_idx, int dir) const {
     return std::vector<std::vector<std::vector<std::complex<double>>>>();
 }
 
+void DFPT_PW_Data::set_pos_resp(
+    int dir, const std::vector<std::vector<std::vector<std::complex<double>>>>& y) {
+    if (dir < 0 || dir >= 3) {
+        return;
+    }
+    if (pos_resp_.size() < 3) {
+        pos_resp_.resize(3);
+    }
+    pos_resp_[dir] = y;
+}
+
+std::vector<std::vector<std::vector<std::complex<double>>>>
+DFPT_PW_Data::get_pos_resp(int dir) const {
+    if (dir < 0 || dir >= 3 || dir >= static_cast<int>(pos_resp_.size())) {
+        return std::vector<std::vector<std::vector<std::complex<double>>>>();
+    }
+    return pos_resp_[dir];
+}
+
+void DFPT_PW_Data::set_dpsi_efield(
+    int dir, const std::vector<std::vector<std::vector<std::complex<double>>>>& d) {
+    if (dir < 0 || dir >= 3) {
+        return;
+    }
+    if (dpsi_efield_.size() < 3) {
+        dpsi_efield_.resize(3);
+    }
+    dpsi_efield_[dir] = d;
+}
+
+std::vector<std::vector<std::vector<std::complex<double>>>>
+DFPT_PW_Data::get_dpsi_efield(int dir) const {
+    if (dir < 0 || dir >= 3 || dir >= static_cast<int>(dpsi_efield_.size())) {
+        return std::vector<std::vector<std::vector<std::complex<double>>>>();
+    }
+    return dpsi_efield_[dir];
+}
+
 std::vector<std::complex<double>> DFPT_PW_Data::get_docc(int q_idx) const {
     if (q_idx >= 0 && q_idx < static_cast<int>(docc_.size())) {
         return docc_[q_idx];

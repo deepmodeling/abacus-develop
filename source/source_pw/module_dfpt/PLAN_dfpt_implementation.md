@@ -397,6 +397,42 @@
             - 离线验证工具（/tmp/opencode，不入库）：star_check.py/
               star_debug.py/star_compare.py（几何星 vs 代码星逐成员比对，
               定位转置缺陷）；truth_check.py（nosym 重建基准）
+            - **公式级缺陷 v4（完成）：Sternheimer 屏蔽 Z\* 全链落地**
+              - 实现：solve_pos_resp 解 Y^a=(H−ε_v)⁻¹P_c[H,x_a]|ψ⟩（rhs
+                −(i/tpiba)·dH/dk|ψ⟩，vel=2tpiba²·gk 即 tpiba·dH/dk，恰消
+                归一，QE commutator_Hx_psi 同构；非局域 dk 项 build_vkb_dk
+                经 DFPT_DKCHK 中心差分逐 μ 验证）；compute_born 收缩
+                Z*=zion·δ−2Σwg Re⟨dpsi^κ,scf|Y^a⟩（QE add_zstar_ue 锚定，
+                m-empty 完备性经 occ-occ pairwise 反对称对消+Sternheimer
+                平行输运规范证明）；dpsi_disp/pos_resp/set_vsc_r 三套 stash
+              - 验证矩阵（每项均独立排除一类缺陷）：DFPT_XCDBG（f_xc 核
+                中心差分自检，PZ 符号/量级正确）；DFPT_XCS 扫描（光滑线性
+                定点）；DFPT_ALEG zstar_eu 交叉腿 A==B 逐位一致（收缩/双
+                stash 豁免；E 场 SCF 定点与 κ 场自洽）；DFPT_PTCROSS 裸交
+                叉谱分解（M⁻¹ 对角+交叉 5 位一致、厄米精确、nb8→16 稳定）
+              - Berry FD 外锚（本仓 GS berry_phase，δ=0.05 bohr 三结构）：
+                P(u) 斜率 <1e-5 → Z*≡0 目标由独立机制确认
+            - **外部锚点战役（QE 7.2 本地串行构建，同 UPF/胞/ecut/网格）**：
+              GS 能量逐位一致（−215.426 eV）；Γ 声子 TO 517.63 vs 我们
+              517.5/517.606/517.722（0.03%）；Z*=−1.19765 vs 我们 −1.19928
+              （0.1%）；ε∞=23.668=2×我们的 11.341+1（0.05%）
+            - **唯一真 bug：ε∞ 缺因子 2（已修）**：QE dielec.f90 实锚
+              ε=δ−4·(4π/Ω)·wk·Re⟨Y^i|dpsi^E,j⟩=16π/Ω 形；compute_eps 与
+              ALEG 探针同步 8π→16π，ComputeEpsTwoLevelAnalytic 期望值同步，
+              串行 6/6
+            - **s=1.29982 之谜消解**：非代码缺陷。QE 判别实验（换赝势
+              ONCV@4×4×4 仍 23.49/−1.169；加密 pz-vbc@8×8×8 → 14.04/
+              −0.092→0）证明 Γ 中心 4×4×4 网格收敛误差为两代码共享的
+              物理量级；κκ 干净（s⁰）、κE ×s、EE ×s² 的通道指纹即
+              Y 族对网格收敛的敏感性分层
+            - **验收口径修订**：4×4×4 下验收值=QE 同网格参照
+              （Z*≈−1.20·δ、ε∞_scf≈23.68、TO 517.5±0.2、声学 |·|<20）；
+              Z*→0 对称性目标移交 P0-3 8×8×8 过夜（QE@8×8×8 已预示
+              −0.09→0）
+            - 探针登记（P0-3 清理评审）：DFPT_ALEG（solve_efield_resp+
+              aleg_crosscheck+PTCROSS，dfpt_pw.cpp）、DFPT_XCS/XCDBG/
+              DKCHK/NOXC/NOSC/YCHK/BPT/MDBG/JPROBE；dpsi_efield stash
+              （dfpt_pw_data）随 ALEG 保留
         - [ ] P0-3 B0 收尾：8×8×8 过夜（ε∞/Z*/D 密网格收敛）；非 Γ q 物理级验证
           （密 k 色散 vs 超胞 FD）；sym1 星旋转各向异性处理或记录在案
         - [x] 非 Γ q 路径冒烟 `（本轮，b0_si_qL/qmL）`

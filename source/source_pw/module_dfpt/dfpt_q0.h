@@ -38,18 +38,34 @@ class DFPT_Pert;
  * consistent with the oscillator-strength sum rule):
  *   eps_ab = delta_ab + (8 pi / Omega) sum_{k,v occ,c emp} wg
  *            * Re[<u_v|r_a|u_c><u_c|r_b|u_v>] / (eps_c - eps_v)
- * Born charges from dP/dtau (King-Smith/Resta Berry phases; the m sum runs
- * over ALL bands, occupied and empty, m != v):
- *   Z*_k,ab = Z_k delta_ab - 4 sum_{k,v occ,m!=v} wg
- *             * Re[<u_v|dV/dtau_{k,b}|u_m><u_m|r_a|u_v>] / (eps_m - eps_v)
+ * Born charges from dP/dtau, the screened displacement leg paired with the
+ * SOLVED conduction-projected position response (QE zstar_eu/add_zstar_ue
+ * anchoring; Gonze-Lee screened form). The position leg
+ *   Y^a_{k,v} = P_c x_a|psi_{k,v}>,  (H(k)-eps_v) Y = P_c [H,x_a]|psi_v>,
+   * with the commutator rhs [H,x_a]|psi> = -(i/tpiba) dH/dk_a|psi> (the
+   * same velocity operator as above), is solved exactly by Sternheimer
+   * solves in DFPT_PW (solve_pos_resp, stashed per direction in the shared
+   * data) and therefore carries the complete conduction-space response; the
+   * eigenvector-truncated r-matrix contraction of the du form is only its
+   * nbands-cut approximation. With dpsi^kappa(scf) the converged q = 0
+   * Sternheimer displacement responses:
+   *   Z*_k,ab = Z_k delta_ab - 2 sum_{k,v occ} wg
+   *             * Re <dpsi^{k,b}_scf,v | Y^a_v>
+   * (wg carries the spin degeneracy, so the prefactor is the -2*wk of
+   * add_zstar_ue). By the symmetry of the mixed second derivative of the
+   * total energy this equals the transposed leg
+   * -2*sum wg*Re<dpsi^E_a(scf)|dV_ext^{k,b}|psi_v> that QE's zstar_eu
+   * computes with the electric-field responses; only one leg is needed.
+   * The dpsi^kappa Sternheimer gauge (<psi_occ|dpsi> = 0) drops the
+   * occupied-occupied block of x exactly. The diamond C7 target
+   * (Z* -> 0 by inversion + ASR) requires the screened dpsi.
  * With a symmetry-reduced k list both sums run over the irreducible k and
  * each partial tensor chi(k) is star-averaged: the physical partial at a
  * rotated star member Rk is R chi(k) R^T, and atom-resolved (Born) partials
  * are credited to the image atom under R. With symmetry off the stored list
  * is the full mesh and the star machinery degenerates to the identity.
- * The bare displacement potential dV/dtau comes from DFPT_Pert (C1) at
- * q = 0; the absolute calibration of both expressions is pinned by the
- * diamond end-to-end test in C7 (structure/symmetry by the C6 tests).
+ * The absolute calibration of both expressions is pinned by the diamond
+ * end-to-end test in C7 (structure/symmetry by the C6 tests).
  */
 class DFPT_Q0 {
 public:

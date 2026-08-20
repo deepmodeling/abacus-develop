@@ -18,8 +18,10 @@
 #include "source_pw/module_dfpt/dfpt_pw.h"
 #include "source_pw/module_dfpt/dfpt_rho.h"
 
+#include <cmath>
 #include <complex>
 #include <cstdlib>
+#include <iostream>
 #include <vector>
 
 namespace {
@@ -91,6 +93,39 @@ class XC_First_Order_FDM : public ModuleDFPT::XC_First_Order
         for (int ir = 0; ir < nrxx; ++ir)
         {
             dvxc_r[ir] = (v_plus[ir] - veff_1_(0, ir)) / (2.0 * eta);
+        }
+        if (getenv("DFPT_XCDBG") != nullptr)
+        {
+            static int call = 0;
+            if (call < 4)
+            {
+                double dp_dv = 0.0;
+                double dp_dp = 0.0;
+                double dv_dv = 0.0;
+                for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    dp_dv += drho_r[ir].real() * dvxc_r[ir].real();
+                    dp_dp += drho_r[ir].real() * drho_r[ir].real();
+                    dv_dv += dvxc_r[ir].real() * dvxc_r[ir].real();
+                }
+                int imax = 0;
+                double dmax = 0.0;
+                for (int ir = 0; ir < nrxx; ++ir)
+                {
+                    if (std::abs(drho_r[ir].real()) > dmax)
+                    {
+                        dmax = std::abs(drho_r[ir].real());
+                        imax = ir;
+                    }
+                }
+                std::cout << "XCDBG call=" << call
+                          << " <drho|dvxc>/|drho|^2=" << (dp_dv / dp_dp)
+                          << " |dvxc|/|drho|=" << (std::sqrt(dv_dv) / std::sqrt(dp_dp))
+                          << " ratio@max=" << (dvxc_r[imax].real() / drho_r[imax].real())
+                          << " drho@max=" << drho_r[imax].real()
+                          << std::endl;
+            }
+            ++call;
         }
         // imaginary part: same central difference on Im drho
         for (int ir = 0; ir < nrxx; ++ir)
