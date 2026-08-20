@@ -109,10 +109,14 @@ namespace LR
         // `weak_ptr=shared_ptr` is automatically called in the constructor of OperatorLRHxc, so we don't need to do it manually
         // if `pot_grad` is passed into a function rather than a class, we need to write `weak_ptr=shared_ptr` explicitly
         std::shared_ptr<PotGradXCLR> pot_grad =
-            std::make_shared<PotGradXCLR>(pot_hxc_gs.lock()->xc_kernel_components, pot_hxc_gs.lock()->get_rho_basis(), ucell, pot_hxc_gs.lock()->nrxx);
+            std::make_shared<PotGradXCLR>(pot_hxc_gs.lock()->xc_kernel_components, pot_hxc_gs.lock()->get_rho_basis(), 
+            ucell, pot_hxc_gs.lock()->nrxx, spin_type == "triplet");
         OperatorLRHxc<T> op_gxc(nspin, naos, nocc, nvirt, psi_ks,
             DM_trans, pot_grad, ucell, orb_cutoff, gd, kv, p_occ_occ, pc, pmat,
-            { 0 }, T(-2.0), ATYPE::CC_oo);
+            // Factor 1.0 according to the $W^c$ formula (`pot_grad` carries $2*g^{xc}$: uu+ud or uu-ud).
+            // NOTE this factor is NOT shared with the Z-vector RHS `op_gxc` in `hamilt_zeq_right.h`:
+            // that one is a different object and its original -2.0 is correct, as the formula and H2-DZP scan confirms.
+            { 0 }, T(1.0), ATYPE::CC_oo);
 
         std::vector<ct::Tensor> dm_trans_2d, dm_diff_2d;
         auto cal_dm_trans = [&](const int is, const T* const x_ptr)->void //DX
@@ -163,9 +167,9 @@ namespace LR
             op_ht_exx.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);
         // std::cout << "W (H[T+Z])) local +exx terms: " << std::endl;
         // LR_Util::print_value(W, nk, p_occ_occ[0].get_col_size(), p_occ_occ[0].get_row_size());
-        // singlet only: $W^{c,T}$ has no $g^{xc}$ term
-        // (see LR-Grad-formulas/LR-Grad-Zvector-Singlet-Triplet.md, formula (1) for S and T).
-        if (LR_Util::has_local_xc(xc_kernel) && spin_type != "triplet")
+        // Not singlet-only: $K^T_{xc}=f_{uu}-f_{ud}\ne0$ for a local functional, so $W^{c,T}$ has a
+        // $g^{xc}$ term as well, built from the "-" spin combination (the `triplet` flag above).
+        if (LR_Util::has_local_xc(xc_kernel))
             op_gxc.act(/*nband=*/1, ld_oo, /*npol=*/1, X, W);
 
         std::cout << "W (H[T+Z]) + W(gxc) terms: " << std::endl;

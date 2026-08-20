@@ -1,5 +1,6 @@
 #include "force_funcs_lcao.h"
 #include "source_lcao/module_lr/potentials/pot_hxc_lrtd.h"
+#include "source_lcao/module_lr/Grad/xc/pot_grad_xc.h"
 // free functions, usefull for both ground and excited state
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lri.h"
@@ -46,6 +47,11 @@ namespace LR
 
         /// 3. $\sum_{mnkl}(mn|f_{Hxc}|kl)^x *D^X *D^X$
         ModuleBase::matrix cal_force_hxc_dmtrans(const elecstate::DensityMatrix<TK, double>& dm_trans, const PotHxcLR& pot_hxc);
+
+        /// 3b. the $g^{xc}$ half of $\partial_x K^{S/T}[D^X]D^X$:
+        ///     $\int v^{(2)}[\rho^X,\rho^X](r)\,\partial_x\rho^\text{gs}(r)|_\text{basis}$
+        ModuleBase::matrix cal_force_gxc_dmtrans(const elecstate::DensityMatrix<TK, double>& dm_trans,
+            const elecstate::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad);
 
 #ifdef __EXX
         // auto* lrexx_ptr = dynamic_cast<RI::LR<int, std::array<int, 3>, 3, TK>*>(&exx_lri_in.get());

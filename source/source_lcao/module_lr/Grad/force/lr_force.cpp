@@ -164,6 +164,38 @@ namespace LR
         return PulayForceStress::cal_pulay_fs(dm_trans, this->ucell_, &pot_hxc) * pulay_to_total_sym;
     }
 
+    template<typename TK>
+    ModuleBase::matrix LR_Force<TK>::cal_force_gxc_dmtrans(const elecstate::DensityMatrix<TK, double>& dm_trans,
+        const elecstate::DensityMatrix<TK, double>& dm_gs, const PotGradXCLR& pot_grad)
+    {
+        // The third source of position dependence in
+        //     $f^{xc}_{\kappa\lambda,\alpha\beta}
+        //        =\int\phi_\kappa\phi_\lambda\,f_{xc}[\rho^\text{gs}(r)]\,\phi_\alpha\phi_\beta$.
+        // `cal_force_hxc_dmtrans` above differentiates the two basis pairs of $D^X$, which for the
+        // Hartree kernel $(\kappa\lambda|\alpha\beta)$ is everything. The xc kernel additionally
+        // depends on the nuclear positions through $\rho^\text{gs}$ itself, and that derivative is
+        //     $\int\rho^X g^{xc}\rho^X\,\partial_x\rho^\text{gs}|_\text{basis}
+        //      =\int v^{(2)}[\rho^X,\rho^X]\,\partial_x\rho^\text{gs}|_\text{basis}$,
+        // i.e. the Pulay derivative of the *ground-state* density against the $g^{xc}$ potential.
+        //
+        // No spin factor: this is the sibling of `cal_force_hxc_dmtrans` above, which likewise has
+        // none, because `PotGradXCLR` (like `pot[ispin]` there) already carries the S2_singlet /
+        // S2_triplet spin combination. The superficially similar Hellmann-Feynman half of
+        // `cal_force_hamilt_gs_dm_relaxed_diff` DOES need a factor 2, but only because it is built
+        // from `pot_hxc_gs`, which is normalized as S2_gs = S2_singlet/2.
+        // Confirmed numerically on H2/SZ TDLDA (see `cal_multiplier_w_from_z.h`).
+        const Charge chr_x = dm_to_charge(dm_trans);
+        ModuleBase::matrix v2(1, this->rhopw_.nrxx);   // zero-initialized
+        double* rho_in[1] = { const_cast<double*>(chr_x.rho[0]) };
+        pot_grad.cal_v_eff(rho_in, this->ucell_, v2);
+
+        ModuleBase::matrix f(this->ucell_.nat, 3);
+        ModuleBase::matrix stress_tmp;
+        std::vector<const double*> vr_eff = { v2.c };
+        ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_DMR_vector(), true, false, &f, &stress_tmp);
+        return f;
+    }
+
 #ifdef __EXX
     template<typename TK>
     ModuleBase::matrix LR_Force<TK>::cal_force_exx_dm_trans(

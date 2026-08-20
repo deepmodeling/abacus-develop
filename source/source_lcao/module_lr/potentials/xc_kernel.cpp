@@ -160,8 +160,25 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
 
     for (xc_func_type& func : funcs)
     {
-        const double rho_threshold = 1E-6;
-        const double grho_threshold = 1E-10;
+        // These used to be 1E-6 / 1E-10, the values the ground-state SCF uses. That is far too
+        // aggressive for LR *gradients*: `cal_sgn` zeroes the kernel wherever rho < rho_threshold,
+        // and in a molecule-in-a-big-box most of the grid is below 1E-6, while the exact derivative
+        // the finite difference measures has no such truncation.
+        //
+        // Measured on H2/DZP TDRPA@LDA, where K^T = 0 makes the triplet gradient identical to
+        // d(eps_a - eps_i)/dx and the reference is therefore exact to ~13 digits:
+        //     thresholds 1E-6 /1E-10 : max |err| = 0.0159 eV/Ang over 9 states
+        //     thresholds 1E-14/1E-20 : max |err| = 0.0002 eV/Ang  (at the force printout precision)
+        // and on H2/DZP TDLDA over 18 states: 0.038 -> 0.00095 eV/Ang (the latter is the finite
+        // difference's own resolution). H2/SZ was insensitive either way -- its compact 1s-only
+        // basis puts no T+D^Z density in the truncated region, which is why the problem only shows
+        // up once diffuse/p functions enter.
+        //
+        // CAVEAT: only LDA has been checked at these thresholds. The 1E-6/1E-10 pair exists because
+        // GGA *correlation* can misbehave at very low density; if PBE turns out to need protection,
+        // the fix is a separate threshold for the gradient path, not a return to 1E-6 everywhere.
+        const double rho_threshold = 1E-14;
+        const double grho_threshold = 1E-20;
 
         xc_func_set_dens_threshold(&func, rho_threshold);
 
@@ -174,6 +191,17 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         std::vector<double> vsigma_tmp(this->vsigma_.size());
         std::vector<double> v2rhosigma_tmp(this->v2rhosigma_.size());
         std::vector<double> v2sigma2_tmp(this->v2sigma2_.size());
+        // The kxc arrays used to be handed to libxc directly. Since the libxc interfaces *overwrite*
+        // their output (that is why every other component already goes through a temporary), only the
+        // last functional of a composite survived -- e.g. for PBE = XC_GGA_X_PBE + XC_GGA_C_PBE the
+        // exchange part of the third derivative was silently dropped. They are accumulated now too.
+        // Note these are left uncut by `sgn`: for nspin=1 the cutoff is a no-op anyway (a single
+        // spin component), and for nspin=2 `cutoff_grid_data_spin2` does not match the component
+        // layout of the third derivatives.
+        std::vector<double> v3rho3_tmp(this->v3rho3_.size());
+        std::vector<double> v3rho2sigma_tmp(this->v3rho2sigma_.size());
+        std::vector<double> v3rhosigma2_tmp(this->v3rhosigma2_.size());
+        std::vector<double> v3sigma3_tmp(this->v3sigma3_.size());
         switch (func.info->family)
         {
         case XC_FAMILY_LDA:
@@ -181,7 +209,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             xc_lda_fxc(&func, nrxx, rho.data(), v2rho2_tmp.data());
             if (PARAM.inp.cal_force)
             {
-                xc_lda_kxc(&func, nrxx, rho.data(), this->v3rho3_.data());
+                xc_lda_kxc(&func, nrxx, rho.data(), v3rho3_tmp.data());
             }
             break;
         case XC_FAMILY_GGA:
@@ -200,10 +228,10 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             if (PARAM.inp.cal_force)
             {
                 xc_gga_kxc(&func, nrxx, rho.data(), sigma.data(),
-                    this->v3rho3_.data(),
-                    this->v3rho2sigma_.data(),
-                    this->v3rhosigma2_.data(),
-                    this->v3sigma3_.data());
+                    v3rho3_tmp.data(),
+                    v3rho2sigma_tmp.data(),
+                    v3rhosigma2_tmp.data(),
+                    v3sigma3_tmp.data());
             }
             break;
         }
@@ -219,6 +247,13 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         add_assign_op(vsigma_tmp, this->vsigma_);
         add_assign_op(v2rhosigma_tmp, this->v2rhosigma_);
         add_assign_op(v2sigma2_tmp, this->v2sigma2_);
+        if (PARAM.inp.cal_force)
+        {
+            add_assign_op(v3rho3_tmp, this->v3rho3_);
+            add_assign_op(v3rho2sigma_tmp, this->v3rho2sigma_);
+            add_assign_op(v3rhosigma2_tmp, this->v3rhosigma2_);
+            add_assign_op(v3sigma3_tmp, this->v3sigma3_);
+        }
         // auto end = std::chrono::high_resolution_clock::now();
         // auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
         // std::cout << "Time elapsed adding XC components: " << duration.count() << " ms\n";
@@ -255,6 +290,28 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             for (size_t i = 0; i < nrxx; ++i)
             {
                 this->v2sigma2_4drho_[i] = gradrho[0][i] * v2s2[i] * 4.;
+            }
+
+            // 3. the third-order kernels contracted with $\nabla\rho$, for the $g^{xc}$ term of
+            // the LR gradient. These are the first three of the four vectors under the divergence; 
+            // the fourth one is `v2sigma2_4drho_` computed just above.
+            if (PARAM.inp.cal_force)
+            {
+                const std::vector<double>& v3r2s = this->v3rho2sigma_;
+                const std::vector<double>& v3rs2 = this->v3rhosigma2_;
+                const std::vector<double>& v3s3 = this->v3sigma3_;
+                this->v3rho2sigma_2drho_.resize(nrxx);
+                this->v3rhosigma2_8drho_.resize(nrxx);
+                this->v3sigma3_8drho_.resize(nrxx);
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+                for (size_t i = 0; i < nrxx; ++i)
+                {
+                    this->v3rho2sigma_2drho_[i] = gradrho[0][i] * v3r2s[i] * 2.;
+                    this->v3rhosigma2_8drho_[i] = gradrho[0][i] * v3rs2[i] * 8.;
+                    this->v3sigma3_8drho_[i] = gradrho[0][i] * v3s3[i] * 8.;
+                }
             }
         }
         else if (2 == nspin)    //close-shell
@@ -317,8 +374,17 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             throw std::domain_error("nspin =" + std::to_string(nspin)
                 + " unfinished in " + std::string(__FILE__) + " line " + std::to_string(__LINE__));
         }
-        this->drho_gs_ = std::move(gradrho);
     }
+
+    // Build the $v^{(2)}$ coefficient sets. Must happen before `gradrho` is moved away below.
+    this->nspin_ = nspin;
+    if (PARAM.inp.cal_force && !openshell_)
+    {
+        const std::vector<ModuleBase::Vector3<double>> no_drho;
+        this->build_gxc_coef(this->gxc_s_, /*triplet=*/false, nspin, is_gga, is_gga ? gradrho[0] : no_drho);
+        if (nspin == 2) { this->build_gxc_coef(this->gxc_t_, /*triplet=*/true, nspin, is_gga, is_gga ? gradrho[0] : no_drho); }
+    }
+    if (is_gga) { this->drho_gs_ = std::move(gradrho); }
     ModuleBase::timer::end("XC_Functional", "f_xc_libxc");
 }
 
@@ -384,6 +450,153 @@ void LR::KernelXC::get_rho_drho_sigma(const int& nspin,
                 sigma[ir * 3 + 2] = gradrho[1][ir] * gradrho[1][ir];
             }
         }
+    }
+}
+
+
+// ---------------------------------------------------------------------------------------------
+// The spin algebra of $v^{(2)}$, for both the singlet and the triplet combination.
+//
+// Both combinations come from the SAME lambda-expansion; they differ only in five weight vectors,
+// which is why they share this one routine:
+//
+//   perturbation   singlet: rho_u += L*s, rho_d += L*s     triplet: rho_u += L*s, rho_d -= L*s
+//   eta_sigma      (+1, +1)                                (+1, -1)     d(rho_sigma)/dL / s
+//   mu_{ab}        (+1, +1, +1)                            (+1,  0, -1) d(sigma_ab)/dL / (2t)
+//   nu_{ab}        (+1, +1, +1)                            (+1, -1, +1) d2(sigma_ab)/dL2 / (2q)
+//   theta_{ab}     ( 2,  1,  0)                            ( 2,  1,  0) from 2*e_{s_uu}*grad rho_u
+//   theta~_{ab}    ( 2,  1,  0)                            ( 2, -1,  0)   + e_{s_ud}*grad rho_d
+//
+// theta~ differs from theta only for the triplet, and only because grad rho_d there carries
+// d(grad rho_d)/dL = -grad rho^1: W'' picks up 4u'_uu - 2u'_ud where W' picks up 2u'_uu + u'_ud.
+// In the singlet the two coincide, which is why the singlet formula looked tidier than it is.
+// Getting theta~ wrong is invisible in every singlet test.
+namespace
+{
+    // libxc component indices for nspin=2.
+    // sigma types: 0=uu, 1=ud, 2=dd. Unordered sigma pairs -> v2sigma2 / (per-rho block of) v3rhosigma2:
+    constexpr int p2[3][3] = { {0,1,2},{1,3,4},{2,4,5} };
+    // Unordered sigma triples -> v3sigma3: (000)(001)(002)(011)(012)(022)(111)(112)(122)(222)
+    constexpr int p3[3][3][3] = {
+        { {0,1,2},{1,3,4},{2,4,5} },
+        { {1,3,4},{3,6,7},{4,7,8} },
+        { {2,4,5},{4,7,8},{5,8,9} } };
+}
+
+void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& nspin, const bool& is_gga,
+    const std::vector<ModuleBase::Vector3<double>>& drho)
+{
+    const int& nrxx = rho_basis_.nrxx;
+    const double eta[2] = { 1., triplet ? -1. : 1. };
+    const double mu[3] = { 1., triplet ? 0. : 1., triplet ? -1. : 1. };
+    const double nu[3] = { 1., triplet ? -1. : 1., 1. };
+    const double th[3] = { 2., 1., 0. };
+    const double tht[3] = { 2., triplet ? -1. : 1., 0. };
+
+    dst.a_s2.resize(nrxx, 0.);
+    if (is_gga)
+    {
+        dst.a_st.resize(nrxx, 0.); dst.a_t2.resize(nrxx, 0.); dst.a_q.resize(nrxx, 0.);
+        dst.c_s.resize(nrxx, 0.); dst.c_t.resize(nrxx, 0.);
+        dst.e_s2.resize(nrxx); dst.e_st.resize(nrxx); dst.e_t2.resize(nrxx); dst.e_q.resize(nrxx);
+    }
+    const std::vector<double>& v2rs = this->v2rhosigma_;
+    const std::vector<double>& v2s2 = this->v2sigma2_;
+    const std::vector<double>& v3r3 = this->v3rho3_;
+    const std::vector<double>& v3r2s = this->v3rho2sigma_;
+    const std::vector<double>& v3rs2 = this->v3rhosigma2_;
+    const std::vector<double>& v3s3 = this->v3sigma3_;
+
+    if (nspin == 1)
+    {
+        // Single component everywhere; all the weight sums collapse to 1 (section 3).
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+        for (int i = 0;i < nrxx;++i)
+        {
+            dst.a_s2[i] = v3r3[i];
+            if (!is_gga) { continue; }
+            dst.a_st[i] = v3r2s[i] * 4.;
+            dst.a_t2[i] = v3rs2[i] * 4.;
+            dst.a_q[i] = v2rs[i] * 2.;
+            dst.c_s[i] = v2rs[i] * 4.;
+            dst.c_t[i] = v2s2[i] * 8.;
+            dst.e_s2[i] = drho[i] * (v3r2s[i] * 2.);
+            dst.e_st[i] = drho[i] * (v3rs2[i] * 8.);
+            dst.e_t2[i] = drho[i] * (v3s3[i] * 8.);
+            dst.e_q[i] = drho[i] * (v2s2[i] * 4.);
+        }
+        return;
+    }
+
+    // nspin=2, close shell. Every sum below runs over ORDERED spin indices, while libxc only
+    // stores the unique combinations -- that is where the multiplicities come from.
+#ifdef _OPENMP
+#pragma omp parallel for schedule(static, 4096)
+#endif
+    for (int i = 0;i < nrxx;++i)
+    {
+        const int o4 = i * 4, o6 = i * 6, o9 = i * 9, o10 = i * 10, o12 = i * 12;
+
+        // $a_{s^2}=\sum_{\sigma\sigma'}\eta_\sigma\eta_{\sigma'}g^{\rho_u\rho_\sigma\rho_{\sigma'}}$
+        // v3rho3 = (uuu, uud, udd, ddd); with the first index pinned to u the component index is
+        // just the number of d's among (sigma, sigma').
+        dst.a_s2[i] = eta[0] * eta[0] * v3r3[o4]
+            + 2. * eta[0] * eta[1] * v3r3[o4 + 1]
+            + eta[1] * eta[1] * v3r3[o4 + 2];
+        if (!is_gga) { continue; }
+
+        // ---- the local part $A$ ----
+        // $a_{st}=4\sum_\sigma\eta_\sigma\sum_{\alpha\beta}\mu_{\alpha\beta}g^{\rho_u\rho_\sigma\sigma_{\alpha\beta}}$
+        // v3rho2sigma = [rho-pair uu,ud,dd] x [sigma uu,ud,dd]; first rho index pinned to u means
+        // rho-pair block = (sigma==d).
+        double a_st = 0.;
+        for (int sg = 0;sg < 2;++sg) {
+            for (int b = 0;b < 3;++b) { a_st += eta[sg] * mu[b] * v3r2s[o9 + 3 * sg + b]; } }
+        dst.a_st[i] = a_st * 4.;
+
+        // $a_{t^2}=4\sum_{\alpha\beta,\gamma\delta}\mu\mu\,g^{\rho_u\sigma_{\alpha\beta}\sigma_{\gamma\delta}}$
+        double a_t2 = 0.;
+        for (int b = 0;b < 3;++b) {
+            for (int c = 0;c < 3;++c) { a_t2 += mu[b] * mu[c] * v3rs2[o12 + p2[b][c]]; } }
+        dst.a_t2[i] = a_t2 * 4.;
+
+        // $a_q=2F$, $F=\sum_{\alpha\beta}\nu_{\alpha\beta}f^{\rho_u\sigma_{\alpha\beta}}$
+        double F = 0.;
+        for (int b = 0;b < 3;++b) { F += nu[b] * v2rs[o6 + b]; }
+        dst.a_q[i] = F * 2.;
+
+        // ---- the divergence part $\boldsymbol{E}$ ----
+        // $P=\sum_{\alpha\beta}\theta_{\alpha\beta}\sum_{\sigma\sigma'}\eta\eta\,g^{\rho_\sigma\rho_{\sigma'}\sigma_{\alpha\beta}}$
+        // rho-pair block index = number of d's in (sigma, sigma'), with multiplicity 2 for ud.
+        double P = 0., Q = 0., R = 0., S = 0., T = 0., St = 0.;
+        for (int a = 0;a < 3;++a)
+        {
+            const double w = th[a], wt = tht[a];
+            if (w != 0.)
+            {
+                P += w * (eta[0] * eta[0] * v3r2s[o9 + 0 + a]
+                    + 2. * eta[0] * eta[1] * v3r2s[o9 + 3 + a]
+                    + eta[1] * eta[1] * v3r2s[o9 + 6 + a]);
+                for (int sg = 0;sg < 2;++sg) {
+                    for (int c = 0;c < 3;++c) { Q += w * eta[sg] * mu[c] * v3rs2[o12 + 6 * sg + p2[a][c]]; } }
+                for (int c = 0;c < 3;++c) {
+                    for (int d = 0;d < 3;++d) { R += w * mu[c] * mu[d] * v3s3[o10 + p3[a][c][d]]; } }
+                for (int c = 0;c < 3;++c) { S += w * nu[c] * v2s2[o6 + p2[a][c]]; }
+            }
+            if (wt != 0.)
+            {
+                for (int sg = 0;sg < 2;++sg) { T += wt * eta[sg] * v2rs[o6 + 3 * sg + a]; }
+                for (int c = 0;c < 3;++c) { St += wt * mu[c] * v2s2[o6 + p2[a][c]]; }
+            }
+        }
+        dst.c_s[i] = T * 2.;
+        dst.c_t[i] = St * 4.;
+        dst.e_s2[i] = drho[i] * P;
+        dst.e_st[i] = drho[i] * (Q * 4.);
+        dst.e_t2[i] = drho[i] * (R * 4.);
+        dst.e_q[i] = drho[i] * (S * 2.);
     }
 }
 

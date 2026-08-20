@@ -88,11 +88,14 @@ namespace LR
 #endif
 
             // 3. $2\sum_{jb,kc} g^{xc}_{ia, jb, kc}X_{jb}X_{kc}$
-            // singlet only: $K^T$ has no Hxc part, so the triplet Z-vector equation carries no
-            // $g^{xc}$ term (see LR-Grad-formulas/LR-Grad-Zvector-Singlet-Triplet.md, "Z-Vector方程与乘子").
-            if (LR_Util::has_local_xc(xc_kernel) && spin_type != "triplet")
-            {            // !!  op_gxc has some bug now
-                this->pot_grad = std::make_shared<PotGradXCLR>(pot.lock()->xc_kernel_components, pot.lock()->get_rho_basis(), ucell, pot.lock()->nrxx);
+            // NOT singlet-only for a local functional where the triplet kernel is
+            // $K^T_{xc}=f_{uu}-f_{ud}\ne0$ -- exactly what `PotHxcLR`'s `S2_triplet` branch
+            // evaluates -- so $\partial K^T$ carries a $g^{xc}$ term too, with the "-" spin
+            // combination. `PotGradXCLR` picks it via the `triplet` flag.
+            // (LR-Grad-formulas/GGA-kxc-to-v积分公式.md section 5.)
+            if (LR_Util::has_local_xc(xc_kernel))
+            {
+                this->pot_grad = std::make_shared<PotGradXCLR>(pot.lock()->xc_kernel_components, pot.lock()->get_rho_basis(), ucell, pot.lock()->nrxx, spin_type == "triplet");
                 hamilt::Operator<T>* op_gxc = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks,
                     *this->DM_trans, this->pot_grad, ucell, orb_cutoff, gd, kv, pX, pc, pmat,
                     { 0 }, T(-2.0), ATYPE::CC_vo, hamilt::calculation_type::lr_dmtrans_gxc);

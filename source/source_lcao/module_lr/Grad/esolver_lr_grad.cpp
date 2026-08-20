@@ -250,6 +250,18 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
             ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "HXC DMTRANS FORCE (eV/Angstrom)", force_hxc_dmtrans, false);
 
         const elecstate::DensityMatrix<T, double>& dm_gs = this->cal_dm_gs();
+
+        // the $g^{xc}$ half of $\partial_x K[D^X]D^X$, i.e. the derivative of the xc kernel through
+        // the ground-state density (see `cal_force_gxc_dmtrans`). Only for local kernels.
+        if (LR_Util::has_local_xc(this->xc_kernel))
+        {
+            PotGradXCLR pot_grad(this->pot_hxc_gs->xc_kernel_components, this->pot_hxc_gs->get_rho_basis(),
+                (*this->ucell_), this->pot_hxc_gs->nrxx, this->spin_types[ispin] == "triplet");
+            ModuleBase::matrix force_gxc_dmtrans = lr_force.cal_force_gxc_dmtrans(dm_trans_real, dm_gs, pot_grad);
+            if (PARAM.inp.test_force)
+                ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "GXC DMTRANS FORCE (eV/Angstrom)", force_gxc_dmtrans, false);
+            force_hxc_dmtrans += force_gxc_dmtrans;
+        }
         ModuleBase::matrix force_hamiltgs_relaxed_diff = lr_force.cal_force_hamilt_gs_dm_relaxed_diff(relaxed_diff_dm_real, dm_gs, false, this->pot_hxc_gs.get());
         if (PARAM.inp.test_force)
             ModuleIO::print_force(GlobalV::ofs_running, (*this->ucell_), "H_GS-(T+Z) FORCE (without EXX) (eV/Angstrom)", force_hamiltgs_relaxed_diff, false);
