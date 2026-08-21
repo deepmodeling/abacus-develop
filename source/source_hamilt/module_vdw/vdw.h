@@ -2,19 +2,18 @@
 #define VDW_H
 
 #include <memory>
+#include <fstream>
 #include <utility>
 #include <vector>
 
 #include "source_cell/unitcell.h"
-#include "vdw_parameters.h"
-#include "vdwd2_parameters.h"
-#include "vdwd3_parameters.h"
+#include "source_io/module_parameter/input_parameter.h"
 
 namespace vdw
 {
 
 template <typename T, typename... Args>
-std::unique_ptr<T> make_unique(Args&&... args)
+std::unique_ptr<T> make_unique_compat(Args&&... args)
 {
     return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
 }
