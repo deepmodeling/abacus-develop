@@ -249,6 +249,8 @@ TEST_F(ElecStateTest, FixedWeights)
     PARAM.input.nelec = 30;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
+    klist->set_nkstot(5);
+    klist->ik2iktot = {0, 1, 2, 3, 4};
     elecstate->klist = klist;
     elecstate->wg.create(klist->get_nks(), PARAM.input.nbands);
     std::vector<double> ocp_kb;
@@ -269,6 +271,8 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning1)
     PARAM.input.nelec = 30;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
+    klist->set_nkstot(5);
+    klist->ik2iktot = {0, 1, 2, 3, 4};
     elecstate->klist = klist;
     elecstate->wg.create(klist->get_nks(), PARAM.input.nbands);
     std::vector<double> ocp_kb;
@@ -291,6 +295,8 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning2)
     PARAM.input.nelec = 29;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
+    klist->set_nkstot(5);
+    klist->ik2iktot = {0, 1, 2, 3, 4};
     elecstate->klist = klist;
     elecstate->wg.create(klist->get_nks(), PARAM.input.nbands);
     std::vector<double> ocp_kb;

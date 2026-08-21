@@ -737,9 +737,9 @@ In the velocity and hybrid gauges, ABACUS obtains the vector potential actually 
         item.annotation = "set occupation";
         item.category = "RT-TDDFT: Real-Time Time-Dependent Density Functional Theory";
         item.type = "String";
-        item.description = R"(Fixed occupation weights used when ocp is true. Values are assigned band by band for each k-point, following k-point order. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
+        item.description = R"(Fixed occupation weights used when ocp is true. Values are assigned in band order for each k-point, following k-point order. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
 * Example: 1 10*1 0 1 expands to 13 values, with the 12th value equal to 0 and all other values equal to 1.
-* After expansion, the array length must equal nks * nbands.
+* After expansion, provide one block of nbands values for each k-point. If nspin is 2, provide all k-point blocks for spin up followed by all k-point blocks for spin down; otherwise, provide one block per k-point.
 * The sum of all weights must equal nelec; otherwise the calculation terminates with an error.)";
         item.default_value = "None";
         item.unit = "";

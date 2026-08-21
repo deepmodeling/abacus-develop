@@ -1,5 +1,6 @@
 #include "write_eig_occ.h"
 
+#include "band_parallel_output.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
@@ -16,6 +17,10 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
 	ModuleBase::timer::start("ModuleIO", "write_eig_iter");
 
 	GlobalV::ofs_running << "\n PRINT #EIGENVALUES# AND #OCCUPATIONS#" << std::endl;
+
+    // Taoni fix bndpar on 2026-08-21
+    const ModuleBase::matrix global_ekb = ModuleIO::gather_band_matrix(ekb, PARAM.inp.nbands);
+    const ModuleBase::matrix global_wg = ModuleIO::gather_band_matrix(wg, PARAM.inp.nbands);
 
     const int nspin = PARAM.inp.nspin;
     const int nks = kv.get_nks();
@@ -51,11 +56,11 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
                     << std::setw(18) << "Eigenvalues(eV)"
                     << std::setw(18) << "Occupations" << std::endl;
 
-                    for (int ib = 0; ib < ekb.nc; ib++)
+                    for (int ib = 0; ib < global_ekb.nc; ib++)
                     {
                         GlobalV::ofs_running << std::setw(8) << ib + 1 
-                                << std::setw(18) << ekb(ik, ib) * ModuleBase::Ry_to_eV
-                                << std::setw(18) << wg(ik, ib) << std::endl;
+                                << std::setw(18) << global_ekb(ik, ib) * ModuleBase::Ry_to_eV
+                                << std::setw(18) << global_wg(ik, ib) << std::endl;
                     }
                     GlobalV::ofs_running << std::endl;
                 }
@@ -118,7 +123,7 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
                     // for the current spin channel [is] and pool [ip] 
                     // MPI_Send the size of matrix, ik2iktot, ekb and wg to RANK=0
                     const int send_nks_np = nks_np;          
-                    const int send_nbands = ekb.nc;          
+                    const int send_nbands = global_ekb.nc;
                     const int is_offset = is * nks_np;     
                     int* send_ik2iktot = new int[send_nks_np];
                     for (int ik = 0; ik < send_nks_np; ++ik)
@@ -128,10 +133,10 @@ void ModuleIO::write_eig_iter(const ModuleBase::matrix &ekb,const ModuleBase::ma
                     MPI_Send(&send_nks_np, 1, MPI_INT, 0, 0, MPI_COMM_WORLD);    
                     MPI_Send(&send_nbands, 1, MPI_INT, 0, 1, MPI_COMM_WORLD);    
                     MPI_Send(send_ik2iktot, send_nks_np, MPI_INT, 0, 2, MPI_COMM_WORLD); 
-                    MPI_Send(ekb.c + is_offset * send_nbands,   
+                    MPI_Send(global_ekb.c + is_offset * send_nbands,
                             send_nks_np * send_nbands,           
                             MPI_DOUBLE, 0, 3, MPI_COMM_WORLD);   
-                    MPI_Send(wg.c + is_offset * send_nbands,    
+                    MPI_Send(global_wg.c + is_offset * send_nbands,
                             send_nks_np * send_nbands,
                             MPI_DOUBLE, 0, 4, MPI_COMM_WORLD);   
 
@@ -173,6 +178,9 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 */
 
     const int nspin = PARAM.inp.nspin;
+    // Taoni fix bndpar on 2026-08-21
+    const ModuleBase::matrix global_ekb = ModuleIO::gather_band_matrix(ekb, PARAM.inp.nbands);
+    const ModuleBase::matrix global_wg = ModuleIO::gather_band_matrix(wg, PARAM.inp.nbands);
     const int nks = kv.get_nks();
 	const int nkstot = kv.get_nkstot();
 
@@ -244,7 +252,7 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
             MPI_Barrier(MPI_COMM_WORLD);
 #endif
 
-            bool ip_flag = PARAM.inp.out_alllog || (GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_BNDGROUP == 0);
+            const bool ip_flag = GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_BNDGROUP == 0;
 
             if (GlobalV::MY_POOL == ip && ip_flag)
             {
@@ -263,14 +271,14 @@ void ModuleIO::write_eig_file(const ModuleBase::matrix &ekb,
 
                     ofs_eig << std::setprecision(16);
                     ofs_eig << std::setiosflags(std::ios::showpoint);
-                    for (int ib = 0; ib < ekb.nc; ib++)
+                    for (int ib = 0; ib < global_ekb.nc; ib++)
                     {
-                        double occupation = wg(ik, ib);
+                        double occupation = global_wg(ik, ib);
                         if (std::abs(occupation) < 1.0e-15)
                         {
                             occupation = 0.0;
                         }
-                        ofs_eig << " " << ib + 1 << " " << ekb(ik, ib) * ModuleBase::Ry_to_eV
+                        ofs_eig << " " << ib + 1 << " " << global_ekb(ik, ib) * ModuleBase::Ry_to_eV
                                 << " " << occupation << std::endl;
                     }
                     ofs_eig << std::endl;

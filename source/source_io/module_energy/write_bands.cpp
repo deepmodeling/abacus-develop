@@ -1,4 +1,5 @@
 #include "write_bands.h"
+#include "band_parallel_output.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
@@ -18,6 +19,8 @@ void ModuleIO::write_bands(const Input_para& inp,
     // write band information to band.txt
     if (inp.out_band[0])
     {
+        // Taoni fix out_band under bndpar on 2026-08-21
+        const ModuleBase::matrix global_ekb = ModuleIO::gather_band_matrix(ekb, inp.nbands);
         const int nspin0 = (inp.nspin == 2) ? 2 : 1;
         for (int is = 0; is < nspin0; is++)
         {
@@ -38,7 +41,7 @@ void ModuleIO::write_bands(const Input_para& inp,
             const double eshift = 0.0;
             nscf_bands(is, ss.str(), inp.nbands, eshift, 
                        inp.out_band[1], // precision
-                       ekb, kv);
+                       global_ekb, kv);
         }
     }
 }
@@ -113,7 +116,7 @@ void ModuleIO::nscf_bands(
             const int ik_now = ik - kv.para_k.startk_pool[GlobalV::MY_POOL];
             //! if present kpoint corresponds the spin of the present one
             assert( kv.isk[ik_now+is*nks_np] == is );
-            if ( GlobalV::RANK_IN_POOL == 0)
+            if (GlobalV::RANK_IN_POOL == 0 && GlobalV::MY_BNDGROUP == 0)
             {
                 std::ofstream ofs(eig_file.c_str(), std::ios::app);
                 ofs << FmtCore::format("%4d", ik+1);

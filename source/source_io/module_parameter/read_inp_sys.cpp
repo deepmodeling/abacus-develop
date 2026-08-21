@@ -300,9 +300,12 @@ void ReadInput::item_system()
                           "will be distributed among";
         item.category = "System variables";
         item.type = "Integer";
-        item.description = "Divide all processors into kpar groups, and k points will be distributed among each group. "
-                          "The value taken should be less than or equal to the number of k points as well as the number of MPI processes.";
+        item.description = R"(Controls k-point parallelism. The value must be positive and should not exceed either the number of k-points or the number of MPI processes.
+* For PW calculations, divide all MPI processes into persistent k-point pools. Each pool stores and processes a subset of the k-points.
+* For LCAO calculations with lapack, genelpa, elpa, or scalapack_gvx, divide the diagonalization work into temporary k-point pools. After diagonalization, the eigenvalues and distributed wavefunctions are restored for all k-points before occupations, density matrices, and output are evaluated.
+* Multi-process LCAO cusolver uses its own active-GPU distribution and does not use this value to define its k-point layout. Other LCAO eigensolvers do not use the temporary k-point-pool implementation.)";
         item.default_value = "1";
+        item.unit = "";
         read_sync_int(input.kpar);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
 #ifdef __LCAO
@@ -326,25 +329,24 @@ void ReadInput::item_system()
             }
 #endif
         };
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.basis_type == "lcao" && para.input.kpar > 1)
-            {
-                ModuleBase::WARNING("ReadInput", "kpar > 1 has not been supported for lcao calculation.");
-            }
-        };
         this->add_item(item);
         add_int_bcast(sys.kpar_lcao);
     }
     {
         Input_Item item("bndpar");
-        item.annotation = "devide all processors into bndpar groups and bands "
-                          "will be distributed among each group";
+        item.annotation = "divide each k-point pool into band-parallel groups";
         item.category = "System variables";
         item.type = "Integer";
-        item.description = "Divide all processors into bndpar groups for SDFT or the BPCG solver. bndpar must be "
-                           "positive, no greater than the number of MPI processes, and kpar * bndpar must divide "
-                           "the number of MPI processes exactly.";
+        item.description = R"(Controls band-group parallelism for PW SDFT and PW KSDFT calculations using the BPCG eigensolver.
+* Within each k-point pool, divide the MPI processes into bndpar band groups. Each group contains NPROC / (kpar * bndpar) processes when bndpar is greater than 1.
+* With BPCG, distribute contiguous ranges of global Kohn-Sham bands among the band groups. nbands does not need to be divisible by bndpar; groups with lower indices receive one additional band when necessary.
+* In SDFT, distribute stochastic orbitals among the band groups. When the deterministic Kohn-Sham eigensolver is not BPCG, band group 0 calculates the deterministic orbitals and broadcasts them to the other groups.
+* bndpar must be positive and no greater than the number of MPI processes. When bndpar is greater than 1, kpar * bndpar must divide the number of MPI processes exactly.
+[NOTE] For PW calculations on GPU, if the input kpar * bndpar differs from the number of MPI processes, ABACUS automatically sets the effective kpar to NPROC / bndpar.)";
         item.default_value = "1";
+        item.unit = "";
+        item.set_availability("(basis_type==pw and esolver_type==sdft) or "
+                              "(basis_type==pw and esolver_type==ksdft and ks_solver==bpcg)");
         read_sync_int(input.bndpar);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.bndpar <= 0)

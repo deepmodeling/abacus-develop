@@ -5,6 +5,7 @@
 #include "parallel_kpoints.h"
 
 #include "source_base/parallel_common.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_global.h"
 
 /// @note the kpoints here are reduced after symmetry applied.
@@ -118,11 +119,13 @@ void Parallel_Kpoints::set_startpro_pool()
 void Parallel_Kpoints::gatherkvec(const std::vector<ModuleBase::Vector3<double>>& vec_local,
                                   std::vector<ModuleBase::Vector3<double>>& vec_global) const
 {
+    // Taoni fix bndpar on 2026-08-21
+    int band_rank = 0;
+    MPI_Comm_rank(BP_WORLD, &band_rank);
     vec_global.resize(this->nkstot_np, ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
     for (int i = 0; i < this->nks_np; ++i)
     {
-
-        if (this->rank_in_pool == 0)
+        if (this->rank_in_pool == 0 && band_rank == 0)
         {
             vec_global[i + startk_pool[this->my_pool]] = vec_local[i];
         }

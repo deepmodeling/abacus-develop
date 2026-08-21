@@ -673,13 +673,22 @@
 ### kpar
 
 - **Type**: Integer
-- **Description**: Divide all processors into kpar groups, and k points will be distributed among each group. The value taken should be less than or equal to the number of k points as well as the number of MPI processes.
+- **Description**: Controls k-point parallelism. The value must be positive and should not exceed either the number of k-points or the number of MPI processes.
+  - For PW calculations, divide all MPI processes into persistent k-point pools. Each pool stores and processes a subset of the k-points.
+  - For LCAO calculations with lapack, genelpa, elpa, or scalapack_gvx, divide the diagonalization work into temporary k-point pools. After diagonalization, the eigenvalues and distributed wavefunctions are restored for all k-points before occupations, density matrices, and output are evaluated.
+  - Multi-process LCAO cusolver uses its own active-GPU distribution and does not use this value to define its k-point layout. Other LCAO eigensolvers do not use the temporary k-point-pool implementation.
 - **Default**: 1
 
 ### bndpar
 
 - **Type**: Integer
-- **Description**: Divide all processors into bndpar groups for SDFT or the BPCG solver. bndpar must be positive, no greater than the number of MPI processes, and kpar * bndpar must divide the number of MPI processes exactly.
+- **Availability**: *([`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==sdft) or ([`basis_type`](#basis_type)==pw and [`esolver_type`](#esolver_type)==ksdft and [`ks_solver`](#ks_solver)==bpcg)*
+- **Description**: Controls band-group parallelism for PW SDFT and PW KSDFT calculations using the BPCG eigensolver.
+  - Within each k-point pool, divide the MPI processes into bndpar band groups. Each group contains NPROC / (kpar * bndpar) processes when bndpar is greater than 1.
+  - With BPCG, distribute contiguous ranges of global Kohn-Sham bands among the band groups. nbands does not need to be divisible by bndpar; groups with lower indices receive one additional band when necessary.
+  - In SDFT, distribute stochastic orbitals among the band groups. When the deterministic Kohn-Sham eigensolver is not BPCG, band group 0 calculates the deterministic orbitals and broadcasts them to the other groups.
+  - bndpar must be positive and no greater than the number of MPI processes. When bndpar is greater than 1, kpar * bndpar must divide the number of MPI processes exactly.
+  > Note: For PW calculations on GPU, if the input kpar * bndpar differs from the number of MPI processes, ABACUS automatically sets the effective kpar to NPROC / bndpar.
 - **Default**: 1
 
 ### latname
@@ -4514,9 +4523,9 @@
 ### ocp_set
 
 - **Type**: String
-- **Description**: Fixed occupation weights used when ocp is true. Values are assigned band by band for each k-point, following k-point order. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
+- **Description**: Fixed occupation weights used when ocp is true. Values are assigned in band order for each k-point, following k-point order. In LCAO RT-TDDFT, the initial ground-state SCF uses its normally determined occupations, and this array is applied only during subsequent real-time propagation steps. The repetition syntax N*x expands to N copies of x.
   - Example: 1 10*1 0 1 expands to 13 values, with the 12th value equal to 0 and all other values equal to 1.
-  - After expansion, the array length must equal nks * nbands.
+  - After expansion, provide one block of nbands values for each k-point. If nspin is 2, provide all k-point blocks for spin up followed by all k-point blocks for spin down; otherwise, provide one block per k-point.
   - The sum of all weights must equal nelec; otherwise the calculation terminates with an error.
 - **Default**: None
 

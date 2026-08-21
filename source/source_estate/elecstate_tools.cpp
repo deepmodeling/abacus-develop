@@ -1,6 +1,20 @@
 #include "elecstate_tools.h"
 #include "occupy.h"
+#include "source_base/parallel_comm.h"
 #include "source_base/parallel_reduce.h"
+
+namespace
+{
+int get_band_offset(const int local_nbands)
+{
+    int band_end = local_nbands;
+#ifdef __MPI
+    MPI_Scan(&local_nbands, &band_end, 1, MPI_INT, MPI_SUM, BP_WORLD);
+#endif
+    return band_end - local_nbands;
+}
+} // namespace
+
 namespace elecstate
 {
     void calEBand(const ModuleBase::matrix& ekb,const ModuleBase::matrix& wg,fenergy& f_en)
@@ -42,11 +56,14 @@ namespace elecstate
         const int nks = ekb.nr;
         if (!(Occupy::use_gaussian_broadening || Occupy::fixed_occupations))
         {
+            // Taoni fix smearing_method=fixed for BPCG on 2026-08-21
+            const int band_offset = get_band_offset(nbands);
             if (PARAM.globalv.two_fermi)
             {
                 Occupy::iweights(nks,
                                 klist->wk,
                                 nbands,
+                                band_offset,
                                 nelec_spin[0],
                                 ekb,
                                 eferm.ef_up,
@@ -56,6 +73,7 @@ namespace elecstate
                 Occupy::iweights(nks,
                                 klist->wk,
                                 nbands,
+                                band_offset,
                                 nelec_spin[1],
                                 ekb,
                                 eferm.ef_dw,
@@ -70,6 +88,7 @@ namespace elecstate
                 Occupy::iweights(nks,
                                 klist->wk,
                                 nbands,
+                                band_offset,
                                 PARAM.inp.nelec,
                                 ekb,
                                 eferm.ef,
@@ -151,15 +170,15 @@ namespace elecstate
 
         const double ne_thr = 1.0e-5;
 
-        const int num = klist->get_nks() * nbands;
-        if (num != ocp_kb.size())
+        const std::size_t expected_size = static_cast<std::size_t>(klist->get_nkstot()) * static_cast<std::size_t>(nbands);
+        if (expected_size != ocp_kb.size())
         {
             ModuleBase::WARNING_QUIT("ElecState::fixed_weights",
                                     "size of occupation array is wrong , please check ocp_set");
         }
 
         double num_elec = 0.0;
-        for (int i = 0; i < ocp_kb.size(); ++i)
+        for (std::size_t i = 0; i < ocp_kb.size(); ++i)
         {
             num_elec += ocp_kb[i];
         }
@@ -170,11 +189,28 @@ namespace elecstate
                                     "total number of occupations is wrong , please check ocp_set");
         }
 
+        const int band_offset = get_band_offset(wg.nc);
+        if (klist->ik2iktot.size() < static_cast<std::size_t>(wg.nr)
+            || band_offset < 0
+            || band_offset + wg.nc > nbands)
+        {
+            ModuleBase::WARNING_QUIT("ElecState::fixed_weights", "invalid distributed occupation layout");
+        }
+
         for (int ik = 0; ik < wg.nr; ++ik)
         {
+            const int global_k = klist->ik2iktot[ik];
+            if (global_k < 0 || global_k >= klist->get_nkstot())
+            {
+                ModuleBase::WARNING_QUIT("ElecState::fixed_weights", "invalid global k-point index");
+            }
             for (int ib = 0; ib < wg.nc; ++ib)
             {
-                wg(ik, ib) = ocp_kb[ik * wg.nc + ib];
+                // Taoni fix ocp_set under kpar and bndpar on 2026-08-21
+                const int global_band = band_offset + ib;
+                const std::size_t occupation_index
+                    = static_cast<std::size_t>(global_k) * static_cast<std::size_t>(nbands) + static_cast<std::size_t>(global_band);
+                wg(ik, ib) = ocp_kb[occupation_index];
             }
         }
         skip_weights = true;
