@@ -2,6 +2,7 @@
 #define ESOLVER_KS_LIP_H
 #include "source_esolver/esolver_ks_pw.h"
 #include "source_hsolver/hsolver_lcaopw.h"
+#include "source_hamilt/module_xc/exx_info_lip.h"
 
 #ifdef __EXX
 #include "source_lcao/module_ri/exx_lip.h"
@@ -35,6 +36,9 @@ class ESolver_KS_LIP : public ESolver_KS_PW<T, base_device::DEVICE_CPU>
     virtual void allocate_hamilt(const UnitCell& ucell) override;
 
     psi::Psi<T, base_device::DEVICE_CPU>* psi_local = nullptr; ///< psi for all local NAOs
+
+    /// LIP-specific EXX info (lambda, ccp_type, hse_omega)
+    Exx_Info_Lip info_lip_;
 
 #ifdef __EXX
     std::unique_ptr<Exx_Lip<T>> exx_lip;

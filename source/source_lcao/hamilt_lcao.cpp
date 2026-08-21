@@ -84,8 +84,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 							   elecstate::DensityMatrix<TK, double>* DM_in,
 							   Plus_U* p_dftu, // mohan add 2025-11-05
 							   Setup_DeePKS<TK> &deepks,
-							   const int istep, 
-							   Exx_NAO<TK> &exx_nao)
+							   const int istep,
+							   Exx_NAO<TK> &exx_nao,
+							   const Exx_Info& exx_info)
 {
     this->classname = "HamiltLCAO";
 
@@ -416,7 +417,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     }
 
 #ifdef __EXX
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (exx_info.info_global.cal_exx)
     {
         // Peize Lin add 2016-12-03
         // set xc type before the first cal of xc in pelec->init_scf
@@ -430,6 +431,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                         *this->kv,
                                                         exx_nao.exd.get(),
                                                         exx_nao.exc.get(),
+                                                        exx_info,
                                                         Add_Hexx_Type::k,
                                                         istep,
                                                         !GlobalC::restart.info_load.restart_exx
@@ -443,6 +445,7 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
                                                         *kv,
                                                         exx_nao.exd.get(),
                                                         exx_nao.exc.get(),
+                                                        exx_info,
                                                         Add_Hexx_Type::R,
                                                         istep,
                                                         !GlobalC::restart.info_load.restart_exx

@@ -7,6 +7,7 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/lcao_domain.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_xc/exx_info.h"
 
 #include <array>
 #include <complex>
@@ -92,7 +93,7 @@ void write_dh_perI(WriteDHParams& params,
     std::array<std::vector<hamilt::HContainer<double>*>, 3>& g,
     const std::vector<int>& atom_filter = {});
 
-void write_dH_components(WriteDHParams& params);
+void write_dH_components(WriteDHParams& params, const Exx_Info& exx_info);
 
 bool write_dH_t(WriteDHParams& params);
 
@@ -108,10 +109,10 @@ bool write_dH_vxc(WriteDHParams& params);
 
 bool write_dH_vxc_pulay(WriteDHParams& params);
 
-bool write_dH_sum(WriteDHParams& params);
+bool write_dH_sum(WriteDHParams& params, const Exx_Info& exx_info);
 
 #ifdef __EXX
-bool write_dH_exx(WriteDHParams& params);
+bool write_dH_exx(WriteDHParams& params, const Exx_Info& exx_info);
 #endif
 
 } // namespace ModuleIO

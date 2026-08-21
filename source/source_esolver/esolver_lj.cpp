@@ -26,6 +26,9 @@ void ESolver_LJ::before_all_runners(BaseCell& cell, const Input_para& inp)
 {
     cell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(cell);
+
+    this->inp_ = &inp;
+
     lj_potential = 0;
     lj_force.create(ucell.nat, 3);
     lj_virial.create(3, 3);
@@ -235,7 +238,7 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
 
         // external stress
         double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-        double external_stress[3] = {PARAM.inp.press1, PARAM.inp.press2, PARAM.inp.press3};
+        double external_stress[3] = {this->inp_->press1, this->inp_->press2, this->inp_->press3};
         for (int i = 0; i < 3; i++)
         {
             stress(i, i) -= external_stress[i] / unit_transform;

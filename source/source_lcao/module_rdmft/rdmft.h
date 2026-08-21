@@ -27,6 +27,7 @@ template <typename TR> class Exx_LRI;
 
 #include "source_estate/elecstate.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h" // use Grid_Driver
+#include "source_hamilt/module_xc/exx_info.h"
 
 #include <iostream>
 #include <type_traits>
@@ -88,7 +89,8 @@ class RDMFT
               LCAO_Orbitals& orb_in,
               TwoCenterBundle& two_center_bundle_in,
               std::string XC_func_rdmft_in,
-              double alpha_power_in);
+              double alpha_power_in,
+              const Exx_Info& exx_info);
 
     //! update in ion-step and get V_TV
     void update_ion(UnitCell& ucell_in, ModulePW::PW_Basis& rho_basis_in,
@@ -180,6 +182,7 @@ class RDMFT
     Exx_LRI<std::complex<double>>* Vxc_fromRI_c = nullptr;
     ModuleSymmetry::Symmetry_rotation symrot_exx;
     bool exx_spacegroup_symmetry = false;
+    const Exx_Info* exx_info_ = nullptr;
 #endif
 
     double etxc = 0.0;

@@ -9,6 +9,7 @@
 #include "source_estate/module_pot/potential_new.h"
 #include "source_lcao/lcao_domain.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_hamilt/module_xc/exx_info.h"
 
 #include <complex>
 #include <vector>
@@ -62,7 +63,7 @@ void write_h_vxc(WriteHParams& params);
 #ifdef __EXX
 // Build V^EXX(R) into a real HContainer via add_HexxR (from exd/exc->get_Hexxs()) and write it.
 // exd (real Hexx) and exc (complex Hexx) are mutually exclusive; picked by info_ri.real_number.
-void write_h_exx(WriteHParams& params);
+void write_h_exx(WriteHParams& params, const Exx_Info& exx_info);
 #endif
 
 } // namespace ModuleIO

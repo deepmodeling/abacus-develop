@@ -90,6 +90,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           Setup_DeePKS<T>& deepks,
                                           Exx_NAO<T> &exx_nao,
                                           ModuleSymmetry::Symmetry* symm,
+                                          const Exx_Info& exx_info,
                                           const int td_stype,
                                           hamilt::Hamilt<T>* p_hamilt)
 {
@@ -488,9 +489,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     // }
 
 #ifdef __EXX
-    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-    bool real_number = GlobalC::exx_info.info_ri.real_number;
-    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    bool cal_exx = exx_info.info_global.cal_exx;
+    bool real_number = exx_info.info_ri.real_number;
+    double hybrid_alpha = exx_info.info_global.hybrid_alpha;
 
     ModuleBase::matrix force_exx;
     ModuleBase::matrix stress_exx;
@@ -557,7 +558,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 }
 #ifdef __EXX
                 // Force contribution from exx
-                if (GlobalC::exx_info.info_global.cal_exx)
+                if (exx_info.info_global.cal_exx)
                 {
                     fcs(iat, i) += force_exx(iat, i);
                 }
@@ -771,7 +772,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 }
 #ifdef __EXX
                 // Stress contribution from exx
-                if (GlobalC::exx_info.info_global.cal_exx)
+                if (exx_info.info_global.cal_exx)
                 {
                     scs(i, j) += stress_exx(i, j);
                 }

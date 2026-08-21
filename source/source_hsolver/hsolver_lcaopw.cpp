@@ -8,7 +8,7 @@
 #include "source_pw/module_pwdft/hamilt_pw.h"
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_estate/elecstate_tools.h"
-#include "source_hamilt/module_xc/exx_info.h"
+#include "source_hamilt/module_xc/general_exx_info.h"
 
 
 #ifdef __EXX
@@ -28,7 +28,8 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
                           psi::Psi<T>& transform,
                           const bool skip_charge,
                           const double tpiba,
-                          const int nat)
+                          const int nat,
+                          const General_Exx_Info& exx_info)
 {
     ModuleBase::TITLE("HSolverLIP", "solve");
     ModuleBase::timer::start("HSolverLIP", "solve");
@@ -43,8 +44,8 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
 
 #ifdef __EXX
         auto& exx_lip = dynamic_cast<hamilt::HamiltLIP<T>*>(pHamilt)->exx_lip;
-        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        bool cal_exx = exx_info.cal_exx;
+        double hybrid_alpha = exx_info.hybrid_alpha;
         auto add_exx_to_subspace_hamilt = [&ik, &exx_lip, cal_exx, hybrid_alpha](T* hcc, const int naos) -> void {
             if (cal_exx)
             {

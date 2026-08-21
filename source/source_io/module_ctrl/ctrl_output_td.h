@@ -12,6 +12,7 @@
 #include "source_psi/psi.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/setup_exx.h"
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info
 #ifdef __EXX
 #include <RI/global/Tensor.h>
 #endif
@@ -35,7 +36,8 @@ void ctrl_output_td(const UnitCell& ucell,
                     hamilt::HamiltLCAO<std::complex<double>, TR>* p_hamilt,
                     Record_adj& RA,
                     TD_info* td_p,
-                    const Exx_NAO<std::complex<double>>& exx_nao
+                    const Exx_NAO<std::complex<double>>& exx_nao,
+                    const Exx_Info& exx_info
                     );
 
 } // namespace ModuleIO

@@ -44,7 +44,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
     this->two_center_bundle_.to_LCAO_Orbitals(this->orb_, inp.lcao_ecut, inp.lcao_dk, inp.lcao_dr, inp.lcao_rmax,
                                               inp.out_element_info, inp.cal_force);
     this->orb_cutoff_ = this->orb_.cutoffs();
-    if (LR_Util::tolower(this->input.abs_gauge) == "velocity")
+    if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
     {
         this->setup_2center_table(this->two_center_bundle_, this->orb_, ucell);
     }
@@ -127,7 +127,7 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
             ModuleGint::Gint::set_gint_info(this->gint_info_.get());
 
     this->pot.resize(this->nspin, nullptr);
-    if (this->input.lr_solver != "spectrum" && this->input.lr_solver != "plot")
+    if (this->inp_->lr_solver != "spectrum" && this->inp_->lr_solver != "plot")
     {
         this->mo_lri = LR_Util::make_unique<BSE::MolecularLRI<T>>(*this->ucell_,
             this->nk,
@@ -135,14 +135,14 @@ void ESolver_BSE<T, TR>::before_all_runners(BaseCell& basecell, const Input_para
             this->nocc[0],
             this->nvirt[0],
             *this->psi_ks_global,
-            this->input.bse_q_approx_mode,
-            this->input.bse_q_approx_threshold,
-            this->input.out_ri_cv,
+            this->inp_->bse_q_approx_mode,
+            this->inp_->bse_q_approx_threshold,
+            this->inp_->out_ri_cv,
             this->out_dir,
             GlobalV::MY_RANK,
             GlobalV::NPROC);
 
-        if (!this->input.bse_ri_hartree && this->input.ri_hartree_benchmark == "none")
+        if (!this->inp_->bse_ri_hartree && this->inp_->ri_hartree_benchmark == "none")
         {
             Charge chg_gs;
             this->read_ks_chg(chg_gs);
@@ -172,9 +172,9 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
     auto vfile_in = [&](const std::string& label)->std::string {
         return this->in_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
 
-    if (this->input.lr_solver == "elpa")
+    if (this->inp_->lr_solver == "elpa")
     {
-        if (this->input.bse_spin_types == std::vector<std::string>{"ipa"})
+        if (this->inp_->bse_spin_types == std::vector<std::string>{"ipa"})
         {
             this->ipa_solver();
         }
@@ -187,17 +187,17 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
                                     this->orb_cutoff_, this->gd, *this->psi_ks, *this->psi_ks_global, this->eig_gw,
                                     *this->mo_lri,
                                     this->pot[0], this->kv, this->paraX_, this->paraC_, this->paraMat_,
-                                    this->input.bse_spin_types,
-                                    this->input.bse_tda,
-                                    this->input.bse_ri_hartree,
-                                    this->input.bse_mem_save,
-                                    this->input.bse_continue,
-                                    this->input.out_bse_ab,
+                                    this->inp_->bse_spin_types,
+                                    this->inp_->bse_tda,
+                                    this->inp_->bse_ri_hartree,
+                                    this->inp_->bse_mem_save,
+                                    this->inp_->bse_continue,
+                                    this->inp_->out_bse_ab,
                                     this->out_dir,
                                     this->in_dir,
                                     GlobalV::MY_RANK,
                                     GlobalV::NPROC,
-                                    this->input.ri_hartree_benchmark);
+                                    this->inp_->ri_hartree_benchmark);
 
             auto write_tda_states = [&](const std::string& label,
                                         const Real<T>* e,
@@ -228,9 +228,9 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
                 ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "write full states " + label);
             };
 
-            if ((this->input.bse_tda == "both" || this->input.bse_tda == "tda"))
+            if ((this->inp_->bse_tda == "both" || this->inp_->bse_tda == "tda"))
             {
-                for (int is = 0; is < this->input.bse_spin_types.size(); ++is)
+                for (int is = 0; is < this->inp_->bse_spin_types.size(); ++is)
                 {
                     bse_matrix.tda_solver(is,
                                           this->nstates,
@@ -249,9 +249,9 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
                     std::cout << "Excition binding energies (eV):"
                               << (direct_gap - tda_ene[is * this->nstates]) * ModuleBase::Ry_to_eV << std::endl;
 
-                    if (this->input.out_wfc_lr)
+                    if (this->inp_->out_wfc_lr)
                     {
-                        write_tda_states(this->input.bse_spin_types[is],
+                        write_tda_states(this->inp_->bse_spin_types[is],
                                          &this->tda_ene[is * this->nstates],
                                          this->X[is].template data<T>(),
                                          this->nloc_per_state,
@@ -260,9 +260,9 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
                     malloc_trim(0);
                 }
             }
-            if ((this->input.bse_tda == "both" || this->input.bse_tda == "full"))
+            if ((this->inp_->bse_tda == "both" || this->inp_->bse_tda == "full"))
             {
-                for (int is = 0; is < this->input.bse_spin_types.size(); ++is)
+                for (int is = 0; is < this->inp_->bse_spin_types.size(); ++is)
                 {
                     bse_matrix.full_solver(is,
                                            this->nstates,
@@ -281,9 +281,9 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
                     std::cout << "Excition binding energies (eV):"
                               << (direct_gap - full_ene[is * this->nstates]) * ModuleBase::Ry_to_eV << std::endl;
 
-                    if (this->input.out_wfc_lr)
+                    if (this->inp_->out_wfc_lr)
                     {
-                        write_full_states(this->input.bse_spin_types[is],
+                        write_full_states(this->inp_->bse_spin_types[is],
                                           &this->full_ene[is * this->nstates],
                                           this->full_X[is].template data<T>(),
                                           this->full_Y[is].template data<T>(),
@@ -295,7 +295,7 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
             }
         }
     }
-    else if (this->input.lr_solver == "spectrum" || this->input.lr_solver == "plot")
+    else if (this->inp_->lr_solver == "spectrum" || this->inp_->lr_solver == "plot")
     {
         std::cout << "Reading BSE excitation states from file." << std::endl;
         auto read_tda_states = [&](const std::string& label, Real<T>* e, T* v, const int& dim, const int& nst)->void
@@ -325,22 +325,22 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
             ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "finish reading " + vfile_in("full_Y_"+label));
         };
 
-        if (this->input.bse_tda == "both" || this->input.bse_tda == "tda")
+        if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "tda")
         {
-            for (int is = 0; is < this->input.bse_spin_types.size(); ++is)
+            for (int is = 0; is < this->inp_->bse_spin_types.size(); ++is)
             {
-                read_tda_states(this->input.bse_spin_types[is],
+                read_tda_states(this->inp_->bse_spin_types[is],
                                 &this->tda_ene[is * this->nstates],
                                 this->X[is].template data<T>(),
                                 this->nloc_per_state,
                                 this->nstates);
             }
         }
-        if (this->input.bse_tda == "both" || this->input.bse_tda == "full")
+        if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "full")
         {
-            for (int is = 0; is < this->input.bse_spin_types.size(); ++is)
+            for (int is = 0; is < this->inp_->bse_spin_types.size(); ++is)
             {
-                read_full_states(this->input.bse_spin_types[is],
+                read_full_states(this->inp_->bse_spin_types[is],
                                  &this->full_ene[is * this->nstates],
                                  this->full_X[is].template data<T>(),
                                  this->full_Y[is].template data<T>(),
@@ -381,25 +381,25 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
     ModuleBase::timer::start("ESolver_BSE", "after_all_runners");
     const std::string& output_dir = this->out_dir;
     const std::set<std::string> benchmarks = {"abacus-librpa", "abacus", "none" };
-    if (benchmarks.find(this->input.ri_hartree_benchmark) == benchmarks.end())
+    if (benchmarks.find(this->inp_->ri_hartree_benchmark) == benchmarks.end())
     {
         return;
     } // no need to calculate the spectrum
 
-    if (this->input.lr_solver == "plot")
+    if (this->inp_->lr_solver == "plot")
     {
         for (int is = 0; is < this->X.size(); ++is)
         {
-            std::cout << "plot BSE exciton wavefunction for state: " << this->input.plot_istate
-                << ", spin type: " << this->input.bse_spin_types[is] << std::endl;
+            std::cout << "plot BSE exciton wavefunction for state: " << this->inp_->plot_istate
+                << ", spin type: " << this->inp_->bse_spin_types[is] << std::endl;
             LR_Util::ExcitonPlotter<T> eplot(this->nspin, this->nbasis, this->nocc, this->nvirt, *this->psi_ks,
                                             *this->ucell_, this->kv, this->gd, this->orb_cutoff_, this->Pgrid, *this->pw_rho,
                                             this->paraX_, this->paraC_, this->paraMat_,
                                             output_dir,
                                             &this->tda_ene[is * this->nstates], this->X[is].template data<T>(),
                                             false/*openshell*/, &this->orb_);
-            const std::string plot_type = LR_Util::tolower(this->input.exciton_plot_type);
-            const std::string plot_format = LR_Util::tolower(this->input.exciton_plot_format);
+            const std::string plot_type = LR_Util::tolower(this->inp_->exciton_plot_type);
+            const std::string plot_format = LR_Util::tolower(this->inp_->exciton_plot_format);
             const bool write_slice = (plot_format == "slice" || plot_format == "both");
             const bool write_cube = (plot_format == "cube" || plot_format == "both");
 
@@ -416,50 +416,50 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                         "ESolver_BSE",
                         "conditional exciton density only supports exciton_plot_format = slice");
                 }
-                if (this->input.exciton_fixed_coordinate.size() != 6)
+                if (this->inp_->exciton_fixed_coordinate.size() != 6)
                 {
                     ModuleBase::WARNING_QUIT(
                         "ESolver_BSE",
                         "exciton_fixed_coordinate must contain six values: hole x y z followed by electron x y z");
                 }
-                const std::array<double, 3> r_h_fix = {this->input.exciton_fixed_coordinate[0],
-                                                       this->input.exciton_fixed_coordinate[1],
-                                                       this->input.exciton_fixed_coordinate[2]};
-                const std::array<double, 3> r_e_fix = {this->input.exciton_fixed_coordinate[3],
-                                                       this->input.exciton_fixed_coordinate[4],
-                                                       this->input.exciton_fixed_coordinate[5]};
-                eplot.plot_cond_slice(this->input.plot_istate, r_h_fix,
-                    this->input.exciton_slice_plane,
-                    this->input.exciton_slice_pos,
-                    this->input.exciton_slice_npoints,
-                    this->input.exciton_slice_range, "elec");
-                eplot.plot_cond_slice(this->input.plot_istate, r_e_fix,
-                    this->input.exciton_slice_plane,
-                    this->input.exciton_slice_pos,
-                    this->input.exciton_slice_npoints,
-                    this->input.exciton_slice_range, "hole");
+                const std::array<double, 3> r_h_fix = {this->inp_->exciton_fixed_coordinate[0],
+                                                       this->inp_->exciton_fixed_coordinate[1],
+                                                       this->inp_->exciton_fixed_coordinate[2]};
+                const std::array<double, 3> r_e_fix = {this->inp_->exciton_fixed_coordinate[3],
+                                                       this->inp_->exciton_fixed_coordinate[4],
+                                                       this->inp_->exciton_fixed_coordinate[5]};
+                eplot.plot_cond_slice(this->inp_->plot_istate, r_h_fix,
+                    this->inp_->exciton_slice_plane,
+                    this->inp_->exciton_slice_pos,
+                    this->inp_->exciton_slice_npoints,
+                    this->inp_->exciton_slice_range, "elec");
+                eplot.plot_cond_slice(this->inp_->plot_istate, r_e_fix,
+                    this->inp_->exciton_slice_plane,
+                    this->inp_->exciton_slice_pos,
+                    this->inp_->exciton_slice_npoints,
+                    this->inp_->exciton_slice_range, "hole");
             }
             else if (plot_type == "average")
             {
                 if (write_cube)
                 {
                     // Average hole density: integrates out the electron coordinate
-                    eplot.plot_average_density(this->input.plot_istate, "hole");
+                    eplot.plot_average_density(this->inp_->plot_istate, "hole");
                     // Average electron density: integrates out the hole coordinate
-                    eplot.plot_average_density(this->input.plot_istate, "elec");
+                    eplot.plot_average_density(this->inp_->plot_istate, "elec");
                 }
                 if (write_slice)
                 {
-                    eplot.plot_average_slice(this->input.plot_istate, "hole",
-                        this->input.exciton_slice_plane,
-                        this->input.exciton_slice_pos,
-                        this->input.exciton_slice_npoints,
-                        this->input.exciton_slice_range);
-                    eplot.plot_average_slice(this->input.plot_istate, "elec",
-                        this->input.exciton_slice_plane,
-                        this->input.exciton_slice_pos,
-                        this->input.exciton_slice_npoints,
-                        this->input.exciton_slice_range);
+                    eplot.plot_average_slice(this->inp_->plot_istate, "hole",
+                        this->inp_->exciton_slice_plane,
+                        this->inp_->exciton_slice_pos,
+                        this->inp_->exciton_slice_npoints,
+                        this->inp_->exciton_slice_range);
+                    eplot.plot_average_slice(this->inp_->plot_istate, "elec",
+                        this->inp_->exciton_slice_plane,
+                        this->inp_->exciton_slice_pos,
+                        this->inp_->exciton_slice_npoints,
+                        this->inp_->exciton_slice_range);
                 }
             }
             else
@@ -468,17 +468,17 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
             }
         }
     }
-    if (this->input.lr_solver == "spectrum" || this->input.lr_solver == "elpa")
+    if (this->inp_->lr_solver == "spectrum" || this->inp_->lr_solver == "elpa")
     {
         std::cout << "Calculating BSE optical absorption spectrum." << std::endl;
-        if (LR_Util::tolower(this->input.abs_gauge) == "velocity" )
+        if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity" )
         {
-            const int nspin_tmp = this->input.nspin == 2 ? 2 : 1;
+            const int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
             this->velocity_mo = LR_Util::cal_velocity_mo(*this->ucell_, this->gd, this->two_center_bundle_, 
                                                         this->paraMat_, this->paraC_, this->kv, *this->psi_ks, 
                                                         this->nk, nspin_tmp, this->nbasis, this->nocc, this->nvirt);
         }
-        if (this->input.bse_tda == "both" || this->input.bse_tda == "tda")
+        if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "tda")
         {
             for (int is = 0; is < this->X.size(); ++is)
             {
@@ -487,19 +487,19 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                                             this->paraX_, this->paraC_, this->paraMat_,
                                             &this->tda_ene[is * this->nstates], this->eig_ks.c,
                                             this->X[is].template data<T>(), this->nstates, false/*openshell*/,
-                                            LR_Util::tolower(this->input.abs_gauge), GlobalV::MY_RANK, output_dir);
-                if (LR_Util::tolower(this->input.abs_gauge) == "velocity")
+                                            LR_Util::tolower(this->inp_->abs_gauge), GlobalV::MY_RANK, output_dir);
+                if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
                 {
                     spectrum.set_vmo(this->velocity_mo.data());
                 }
                 spectrum.cal_spectrum();
-                spectrum.transition_analysis(this->input.bse_spin_types[is]+"_tda");              
-                if (this->input.bse_spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
+                spectrum.transition_analysis(this->inp_->bse_spin_types[is]+"_tda");              
+                if (this->inp_->bse_spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
                 {
                     spectrum.write_transition_dipole(output_dir +
-                        "trans_dipole_" + this->input.bse_spin_types[is] + "_tda.dat");
+                        "trans_dipole_" + this->inp_->bse_spin_types[is] + "_tda.dat");
                     // ============================== for test ==============================
-                    if (LR_Util::tolower(this->input.abs_gauge) == "velocity")
+                    if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
                     {   //// TEST the formula v/omega rather than v/(e_a-e_i)
                         // spectrum.test_transition_dipoles_velocity_omega();
                         // spectrum.write_transition_dipole(out_dir + 
@@ -509,7 +509,7 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                 }
             }        
         }
-        if (this->input.bse_tda == "both" || this->input.bse_tda == "full")
+        if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "full")
         {
             for (int is = 0;is < this->full_X.size();++is)
             {
@@ -518,19 +518,19 @@ void ESolver_BSE<T, TR>::after_all_runners(BaseCell& basecell)
                                             this->paraX_, this->paraC_, this->paraMat_,
                                             &this->full_ene[is * this->nstates], this->eig_ks.c,
                                             this->full_X[is].template data<T>(), this->nstates, false/*openshell*/,
-                                            LR_Util::tolower(this->input.abs_gauge), GlobalV::MY_RANK, output_dir);
-                if (LR_Util::tolower(this->input.abs_gauge) == "velocity")
+                                            LR_Util::tolower(this->inp_->abs_gauge), GlobalV::MY_RANK, output_dir);
+                if (LR_Util::tolower(this->inp_->abs_gauge) == "velocity")
                 {
                     spectrum.set_vmo(this->velocity_mo.data());
                 }
                 spectrum.set_Y(this->full_Y[is].template data<T>());
                 spectrum.set_full(true);
                 spectrum.cal_spectrum();
-                spectrum.transition_analysis(this->input.bse_spin_types[is]+"_full");
-                if (this->input.bse_spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
+                spectrum.transition_analysis(this->inp_->bse_spin_types[is]+"_full");
+                if (this->inp_->bse_spin_types[is] != "triplet")        // triplets has no transition dipole and no contribution to the spectrum
                 {
                     spectrum.write_transition_dipole(output_dir +
-                        "trans_dipole_" + this->input.bse_spin_types[is] + "_full.dat");
+                        "trans_dipole_" + this->inp_->bse_spin_types[is] + "_full.dat");
                 }
             }
         }
@@ -545,7 +545,7 @@ void ESolver_BSE<T, TR>::ipa_solver()
     ModuleBase::TITLE("ESolver_BSE", "ipa_solver");
     ModuleBase::timer::start("ESolver_BSE", "ipa_solver");
     std::cout << "Independent particle approximation is used, assign X as identity matrix directly." << std::endl;
-    assert(this->input.bse_tda == "tda");
+    assert(this->inp_->bse_tda == "tda");
     std::vector<double> ev(this->nk * this->nocc[0] * this->nvirt[0], 0.0);
     for (int ik = 0; ik < this->nk; ++ik)
     {
@@ -600,11 +600,11 @@ void ESolver_BSE<T, TR>::lri_init()
     // if (GlobalV::MY_RANK == 0) // comment to read from all processes to avoid communication
     // {
         Cs_in = LRI_CV_Tools::read_Cs_ao_all<T>(this->rpa_dir);
-        if (this->input.ri_hartree_benchmark == "aims-librpa" )
+        if (this->inp_->ri_hartree_benchmark == "aims-librpa" )
         {
             Vs_in = LR_IO::read_coulomb_mat_general_k<T, T>(this->rpa_dir, Cs_in, this->kRlist);
         }
-        else if (this->input.ri_hartree_benchmark == "none" || this->input.ri_hartree_benchmark == "abacus-librpa" )
+        else if (this->inp_->ri_hartree_benchmark == "none" || this->inp_->ri_hartree_benchmark == "abacus-librpa" )
         {
             Vs_in = LR_IO::read_coulomb_mat_k<T, T>(this->rpa_dir, Cs_in, this->kRlist);
         }
@@ -613,7 +613,7 @@ void ESolver_BSE<T, TR>::lri_init()
 #ifdef __MPI
     MPI_Barrier(MPI_COMM_WORLD);
 #endif
-    this->mo_lri->init(Cs_in, Vs_in, Ws_in, GlobalC::exx_info.info_ri);
+    this->mo_lri->init(Cs_in, Vs_in, Ws_in, this->exx_info.info_ri);
     malloc_trim(0);
     ModuleBase::TITLE("ESolver_BSE", "Finish LRI init");
 }
@@ -631,14 +631,14 @@ void ESolver_BSE<T, TR>::read_ks_wfc()
     int nk_file = 0;
     int nspin_file = 0;
     int nocc_file = 0;
-    int nspin_tmp = this->input.nspin == 2 ? 2 : 1;
+    int nspin_tmp = this->inp_->nspin == 2 ? 2 : 1;
     LR_IO::parse_band_out_file(this->rpa_dir, nbands_file, nk_file, nspin_file, nocc_file);
     if (nk_file != this->nk) {
         ModuleBase::WARNING_QUIT("ESolver_BSE", "Inconsistence: The nk in `band_out` is " + std::to_string(nk_file)
              + ", while BSE::nk is " + std::to_string(this->nk));
     }
     std::vector<double> eig_gw_info;
-    if (this->input.bse_use_fine_kgrid)
+    if (this->inp_->bse_use_fine_kgrid)
     {
         eig_gw_info = LR_IO::read_energy_qp_from_band_files(this->kv, this->nocc[0], this->nvirt[0], ncore,
                                         this->rpa_dir, this->nk, nspin_tmp, nspin_file);
@@ -705,11 +705,11 @@ void ESolver_BSE<T, TR>::init_pot(const Charge& chg_gs)
         using ST = LR::PotHxcLR::SpinType;
     case 1: case 2:
         this->pot[0] = std::make_shared<LR::PotHxcLR>(this->xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, this->Pgrid,
-            ST::S1, this->input.lr_init_xc_kernel);
+            ST::S1, this->inp_->lr_init_xc_kernel);
         break;
     // case 2:
-    //     this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, input.lr_init_xc_kernel);
-    //     this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, input.lr_init_xc_kernel);
+    //     this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, this->inp_->lr_init_xc_kernel);
+    //     this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, ucell, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, this->inp_->lr_init_xc_kernel);
     //     break;
     default:
         throw std::invalid_argument("ESolver_BSE: nspin must be 1 or 2");
@@ -735,8 +735,8 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
                            * (this->openshell ? this->paraX_[0].get_local_size() + this->paraX_[1].get_local_size()
                                               : this->paraX_[0].get_local_size());
 
-    int n_spin_types = this->input.bse_spin_types.size();
-    if (this->input.bse_tda == "both" || this->input.bse_tda == "tda") {
+    int n_spin_types = this->inp_->bse_spin_types.size();
+    if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "tda") {
         BSE_Util::print_mem_estimate("TDA BSE eigen states",
                                      n_spin_types * static_cast<std::size_t>(this->nstates)
                                          * (1 + this->nloc_per_state),
@@ -745,7 +745,7 @@ void ESolver_BSE<T, TR>::allocate_eigen_infos()
         this->X.resize(n_spin_types, LR_Util::newTensor<T>({ this->nstates, this->nloc_per_state }));
         for (auto& x : this->X) { x.zero(); }
     }
-    if (this->input.bse_tda == "both" || this->input.bse_tda == "full") {
+    if (this->inp_->bse_tda == "both" || this->inp_->bse_tda == "full") {
         BSE_Util::print_mem_estimate("full BSE eigen states",
                                      n_spin_types * static_cast<std::size_t>(this->nstates)
                                          * (1 + 2 * this->nloc_per_state),

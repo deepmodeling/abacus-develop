@@ -136,9 +136,10 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(
     const K_Vectors& kv_in,
     std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>* Hexxd_in,
     std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>* Hexxc_in,
+    const Exx_Info* exx_info,
     Add_Hexx_Type add_hexx_type_in)
     : OperatorLCAO<TK, TR>(hsk_in, kv_in.kvec_d, hR_in), ucell(ucell), kv(kv_in), Hexxd(Hexxd_in), Hexxc(Hexxc_in),
-      add_hexx_type(add_hexx_type_in)
+      add_hexx_type(add_hexx_type_in), exx_info_ptr(exx_info)
 {
     this->cal_type = calculation_type::lcao_exx;
     // This one-shot constructor never builds cell_nearest, so cal_dH() must not use it:
@@ -154,6 +155,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                                                const K_Vectors& kv_in,
                                                Exx_LRI_Interface<TK, double>* exd_in,
                                                Exx_LRI_Interface<TK, std::complex<double>>* exc_in,
+                                               const Exx_Info& exx_info,
                                                Add_Hexx_Type add_hexx_type_in,
                                                const int istep_in,
                                                const bool restart_in)
@@ -163,6 +165,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                                         kv_in,
                                         exd_in ? &exd_in->get_Hexxs() : nullptr,
                                         exc_in ? &exc_in->get_Hexxs() : nullptr,
+                                        &exx_info,
                                         add_hexx_type_in)
 {
     this->exd = exd_in;
@@ -172,7 +175,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
     ModuleBase::TITLE("OperatorEXX", "OperatorEXX");
     const Parallel_Orbitals* const pv = hR_in->get_paraV();
 
-    if (PARAM.inp.calculation == "nscf" && GlobalC::exx_info.info_global.cal_exx)
+    if (PARAM.inp.calculation == "nscf" && exx_info_ptr->info_global.cal_exx)
     { // for nscf, calculate HexxR from the read-in DM, or read HexxR in
         auto file_name_list_csr = []() -> std::vector<std::string> {
             std::vector<std::string> file_name_list;
@@ -209,7 +212,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
         if (PARAM.inp.init_chg == "dm" || PARAM.inp.init_chg == "dm_no_renormalize")
         {
             // 1. cal Cs, Vs
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (exx_info_ptr->info_ri.real_number)
             {
                 this->exd->cal_exx_ions(ucell, PARAM.inp.out_ri_cv);
             }
@@ -232,7 +235,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
 
             // 3. DM->Ds->Hexx (do not use symmetry for nscf)
             XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (exx_info_ptr->info_ri.real_number)
             {
                 const auto& Ds = RI_2D_Comm::dm_container_to_Ds<double, double>(dmR_vec, ucell, *pv, PARAM.inp.nspin);
                 this->exd->cal_exx_elec(Ds, ucell, *pv);
@@ -257,7 +260,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 const std::string file_name_exx_csr
                     = PARAM.globalv.global_readin_dir + "HexxR" + std::to_string(PARAM.globalv.myrank);
                 // Read HexxR in CSR format
-                if (GlobalC::exx_info.info_ri.real_number)
+                if (exx_info_ptr->info_ri.real_number)
                 {
                     ModuleIO::read_Hexxs_csr(file_name_exx_csr, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
                 }
@@ -276,7 +279,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 {
                     ModuleBase::WARNING_QUIT("OperatorEXX", "Can't open EXX file < " + file_name_exx_cereal + " >.");
                 }
-                if (GlobalC::exx_info.info_ri.real_number)
+                if (exx_info_ptr->info_ri.real_number)
                 {
                     ModuleIO::read_Hexxs_cereal(file_name_exx_cereal, *Hexxd);
                 }
@@ -293,7 +296,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
         // reallocate hR according to Hexx(R)
         if (this->add_hexx_type == Add_Hexx_Type::R)
         {
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (exx_info_ptr->info_ri.real_number)
             {
                 reallocate_hcontainer(*this->Hexxd, this->hR);
             }
@@ -392,7 +395,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                 if (all_exist)
                 {
                     // Read HexxR in CSR format
-                    if (GlobalC::exx_info.info_ri.real_number)
+                    if (exx_info_ptr->info_ri.real_number)
                     {
                         ModuleIO::read_Hexxs_csr(restart_HR_path, ucell, PARAM.inp.nspin, PARAM.globalv.nlocal, *Hexxd);
                     }
@@ -418,7 +421,7 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
                     }
                     else
                     {
-                        if (GlobalC::exx_info.info_ri.real_number)
+                        if (exx_info_ptr->info_ri.real_number)
                         {
                             ModuleIO::read_Hexxs_cereal(restart_HR_path_cereal, *Hexxd);
                         }
@@ -455,7 +458,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
     else if (this->istep == 0)
     {
         const int two_level_step
-            = GlobalC::exx_info.info_ri.real_number ? this->exd->get_two_level_step() : this->exc->get_two_level_step();
+            = exx_info_ptr->info_ri.real_number ? this->exd->get_two_level_step() : this->exc->get_two_level_step();
 
         // Check if we are in the pre-convergence stage of the two-level SCF (i.e., the pure GGA loop)
         bool in_gga_pre_loop = (two_level_step == 0);
@@ -479,10 +482,10 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
     if (XC_Functional::get_func_type() == 4 || XC_Functional::get_func_type() == 5)
     {
         // add H(R) normally
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (exx_info_ptr->info_ri.real_number)
         {
             RI_2D_Comm::add_HexxR(this->current_spin,
-                                  GlobalC::exx_info.info_global.hybrid_alpha,
+                                  exx_info_ptr->info_global.hybrid_alpha,
                                   *this->Hexxd,
                                   *this->hR->get_paraV(),
                                   PARAM.globalv.npol,
@@ -492,7 +495,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHR()
         else
         {
             RI_2D_Comm::add_HexxR(this->current_spin,
-                                  GlobalC::exx_info.info_global.hybrid_alpha,
+                                  exx_info_ptr->info_global.hybrid_alpha,
                                   *this->Hexxc,
                                   *this->hR->get_paraV(),
                                   PARAM.globalv.npol,
@@ -510,12 +513,12 @@ template <typename TK, typename TR>
 void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
 {
     ModuleBase::TITLE("OperatorEXX", "constributeHk");
-    const bool has_workflow = GlobalC::exx_info.info_ri.real_number ? (this->exd != nullptr) : (this->exc != nullptr);
+    const bool has_workflow = exx_info_ptr->info_ri.real_number ? (this->exd != nullptr) : (this->exc != nullptr);
     int two_level_step = 0;
     if (has_workflow)
     {
         two_level_step
-            = GlobalC::exx_info.info_ri.real_number ? this->exd->get_two_level_step() : this->exc->get_two_level_step();
+            = exx_info_ptr->info_ri.real_number ? this->exd->get_two_level_step() : this->exc->get_two_level_step();
     }
 
     // Peize Lin add 2016-12-03
@@ -587,7 +590,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
             RI_2D_Comm::add_Hexx_td(ucell,
                                     this->kv,
                                     ik,
-                                    GlobalC::exx_info.info_global.hybrid_alpha,
+                                    exx_info_ptr->info_global.hybrid_alpha,
                                     *this->Hexxc,
                                     *this->hR->get_paraV(),
                                     TD_info::td_vel_op->cart_At,
@@ -596,12 +599,12 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
         }
         else
         {
-            if (GlobalC::exx_info.info_ri.real_number)
+            if (exx_info_ptr->info_ri.real_number)
             {
                 RI_2D_Comm::add_Hexx(ucell,
                                      this->kv,
                                      ik,
-                                     GlobalC::exx_info.info_global.hybrid_alpha,
+                                     exx_info_ptr->info_global.hybrid_alpha,
                                      *this->Hexxd,
                                      *this->hR->get_paraV(),
                                      this->hsk->get_hk());
@@ -611,7 +614,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::contributeHk(int ik)
                 RI_2D_Comm::add_Hexx(ucell,
                                      this->kv,
                                      ik,
-                                     GlobalC::exx_info.info_global.hybrid_alpha,
+                                     exx_info_ptr->info_global.hybrid_alpha,
                                      *this->Hexxc,
                                      *this->hR->get_paraV(),
                                      this->hsk->get_hk());
@@ -639,7 +642,7 @@ void OperatorEXX<OperatorLCAO<TK, TR>>::cal_dH(
             // structure of this per-I container from the exx-form data (same cell mapping).
             reallocate_hcontainer(dHexxs[idir][iat], dhR[idir][iat], cell_nearest);
             RI_2D_Comm::add_HexxR(ispin,
-                GlobalC::exx_info.info_global.hybrid_alpha,
+                exx_info_ptr->info_global.hybrid_alpha,
                 dHexxs[idir][iat],
                 *paraV,
                 PARAM.globalv.npol,
@@ -654,30 +657,36 @@ template OperatorEXX<OperatorLCAO<double, double>>::OperatorEXX(
     HS_Matrix_K<double>*, HContainer<double>*, const UnitCell&, const K_Vectors&,
     std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>*,
     std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>*,
+    const Exx_Info*,
     Add_Hexx_Type);
 template OperatorEXX<OperatorLCAO<std::complex<double>, double>>::OperatorEXX(
     HS_Matrix_K<std::complex<double>>*, HContainer<double>*, const UnitCell&, const K_Vectors&,
     std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>*,
     std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>*,
+    const Exx_Info*,
     Add_Hexx_Type);
 template OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::OperatorEXX(
     HS_Matrix_K<std::complex<double>>*, HContainer<std::complex<double>>*, const UnitCell&, const K_Vectors&,
     std::vector<std::map<int, std::map<TAC, RI::Tensor<double>>>>*,
     std::vector<std::map<int, std::map<TAC, RI::Tensor<std::complex<double>>>>>*,
+    const Exx_Info*,
     Add_Hexx_Type);
 
 // explicit member function instantiations for second constructor
 template OperatorEXX<OperatorLCAO<double, double>>::OperatorEXX(
     HS_Matrix_K<double>*, HContainer<double>*, const UnitCell&, const K_Vectors&,
     Exx_LRI_Interface<double, double>*, Exx_LRI_Interface<double, std::complex<double>>*,
+    const Exx_Info&,
     Add_Hexx_Type, const int, const bool);
 template OperatorEXX<OperatorLCAO<std::complex<double>, double>>::OperatorEXX(
     HS_Matrix_K<std::complex<double>>*, HContainer<double>*, const UnitCell&, const K_Vectors&,
     Exx_LRI_Interface<std::complex<double>, double>*, Exx_LRI_Interface<std::complex<double>, std::complex<double>>*,
+    const Exx_Info&,
     Add_Hexx_Type, const int, const bool);
 template OperatorEXX<OperatorLCAO<std::complex<double>, std::complex<double>>>::OperatorEXX(
     HS_Matrix_K<std::complex<double>>*, HContainer<std::complex<double>>*, const UnitCell&, const K_Vectors&,
     Exx_LRI_Interface<std::complex<double>, double>*, Exx_LRI_Interface<std::complex<double>, std::complex<double>>*,
+    const Exx_Info&,
     Add_Hexx_Type, const int, const bool);
 
 // explicit member function instantiations for contributeHR

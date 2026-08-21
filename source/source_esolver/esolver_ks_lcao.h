@@ -2,6 +2,7 @@
 #define ESOLVER_KS_LCAO_H
 
 #include "esolver_ks.h"
+#include "source_hamilt/module_xc/exx_info.h" // LCAO owns full Exx_Info
 #include "source_lcao/record_adj.h" // adjacent atoms
 #include "source_basis/module_nao/two_center_bundle.h" // nao basis
 #include "source_hamilt/module_gint/gint_info.h"
@@ -81,6 +82,9 @@ class ESolver_KS_LCAO : public ESolver_KS
     // For deepks method, mohan add 2025-10-08
     Setup_DeePKS<TK> deepks;
 
+    /// Full EXX info for LCAO (includes info_ri, info_opt_abfs, info_lip)
+    Exx_Info exx_info_;
+
     // For exact-exchange energy, mohan add 2025-10-08
     Exx_NAO<TK> exx_nao;
 
@@ -97,19 +101,6 @@ class ESolver_KS_LCAO : public ESolver_KS
     bool have_force = false;
     
     GintPrecisionController gint_precision_controller_;
-
-
-  public:
-    const Record_adj & get_RA() const { return RA; }
-    const Grid_Driver & get_gd() const { return gd; }
-    const Parallel_Orbitals & get_pv() const { return pv; }
-    const std::unique_ptr<ModuleGint::GintInfo> & get_gint_info() const { return gint_info_; }
-    const TwoCenterBundle & get_two_center_bundle() const { return two_center_bundle_; }
-    const rdmft::RDMFT<TK, TR> & get_rdmft_solver() const { return rdmft_solver; }
-    const LCAO_Orbitals & get_orb() const { return orb_; }
-    const ModuleBase::matrix & get_scs() const { return scs; }
-    const Setup_DeePKS<TK> & get_deepks() const { return deepks; }
-    const Exx_NAO<TK> & get_exx_nao() const { return exx_nao; }
 };
 } // namespace ModuleESolver
 #endif

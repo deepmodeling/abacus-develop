@@ -49,26 +49,11 @@ class ESolver
     bool conv_esolver = true; // whether esolver is converged
 
     std::string classname;
+
+  protected:
+    /// Bound in before_all_runners; members use inp_->xxx instead of PARAM.inp.xxx
+    const Input_para* inp_ = nullptr;
 };
-
-/**
- * @brief A subrutine called in init_esolver()
- *        This function returns type of ESolver
- *        Based on PARAM.inp.basis_type and PARAM.inp.esolver_type
- * @return [out] std::string The type of ESolver
- */
-std::string determine_type();
-
-/**
- * @brief Determine and initialize an ESolver based on input information.
- *
- * This function determines the type of ESolver to create based on input information and initializes
- * the corresponding ESolver child class. It supports various ESolver types including ksdft_pw,
- * ksdft_lcao, ksdft_lcao_tddft, sdft_pw, ofdft, lj_pot, and dp_pot.
- *
- * @return [out] A pointer to an ESolver object that will be initialized.
- */
-ESolver* init_esolver(const Input_para& inp);
 
 } // namespace ModuleESolver
 

@@ -30,9 +30,9 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in,
     HR_TV->set_zero();
     this->cal_V_TV();
 #ifdef __EXX
-    if( GlobalC::exx_info.info_global.cal_exx )
+    if( this->exx_info_->info_global.cal_exx )
     {
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (this->exx_info_->info_ri.real_number)
         {
             Vxc_fromRI_d->cal_exx_ions(ucell_in);
         }

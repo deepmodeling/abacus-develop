@@ -190,7 +190,8 @@ void ModuleIO::sum_HR(const UnitCell& ucell,
                       const K_Vectors& kv,
                       const hamilt::HContainer<TR>* hR,
                       hamilt::HContainer<std::complex<double>>* full_hR,
-                      const Exx_NAO<std::complex<double>>& exx_nao)
+                      const Exx_NAO<std::complex<double>>& exx_nao,
+                      const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "sum_HR");
     ModuleBase::timer::start("ModuleIO", "sum_HR");
@@ -205,7 +206,7 @@ void ModuleIO::sum_HR(const UnitCell& ucell,
                                    < 1e-10);
     RI::Cell_Nearest<int, int, 3, double, 3> cell_nearest;
     // reallocate full_hR for BvK used in EXX
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (exx_info.info_global.cal_exx)
     {
         const std::array<int, 3> Rs_period = {kv.nmp[0], kv.nmp[1], kv.nmp[2]};
         if (use_cell_nearest)
@@ -241,14 +242,14 @@ void ModuleIO::sum_HR(const UnitCell& ucell,
     }
 #ifdef __EXX
     // add HexxR to complex full_hR
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (exx_info.info_global.cal_exx)
     {
         for (size_t is = 0; is != PARAM.inp.nspin; ++is)
         {
             if (use_cell_nearest)
             {
                 RI_2D_Comm::add_HexxR(is,
-                                      GlobalC::exx_info.info_global.hybrid_alpha,
+                                      exx_info.info_global.hybrid_alpha,
                                       exx_nao.exc->get_Hexxs(),
                                       pv,
                                       PARAM.globalv.npol,
@@ -258,7 +259,7 @@ void ModuleIO::sum_HR(const UnitCell& ucell,
             else
             {
                 RI_2D_Comm::add_HexxR(is,
-                                      GlobalC::exx_info.info_global.hybrid_alpha,
+                                      exx_info.info_global.hybrid_alpha,
                                       exx_nao.exc->get_Hexxs(),
                                       pv,
                                       PARAM.globalv.npol,
@@ -752,7 +753,8 @@ void ModuleIO::write_current(const UnitCell& ucell,
                              TD_info* td_p,
                              const hamilt::HContainer<TR>* sR,
                              const hamilt::HContainer<TR>* hR,
-                             const Exx_NAO<std::complex<double>>& exx_nao)
+                             const Exx_NAO<std::complex<double>>& exx_nao,
+                             const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
@@ -762,7 +764,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
     hamilt::HContainer<std::complex<double>>* full_hR;
     full_hR = new hamilt::HContainer<std::complex<double>>(pv);
     current_k.resize(kv.get_nks());
-    sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao);
+    sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao, exx_info);
     cal_current_comm_k(ucell, GridD, orb, pv, kv, td_p, *sR, *full_hR, psi, pelec, current_k);
     delete full_hR;
 
@@ -828,7 +830,8 @@ template void ModuleIO::write_current<double>(const UnitCell& ucell,
                                               TD_info* td_p,
                                               const hamilt::HContainer<double>* sR,
                                               const hamilt::HContainer<double>* hR,
-                                              const Exx_NAO<std::complex<double>>& exx_nao);
+                                              const Exx_NAO<std::complex<double>>& exx_nao,
+                                              const Exx_Info& exx_info);
 
 template void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucell,
                                                             const Grid_Driver& GridD,
@@ -841,5 +844,6 @@ template void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucel
                                                             TD_info* td_p,
                                                             const hamilt::HContainer<std::complex<double>>* sR,
                                                             const hamilt::HContainer<std::complex<double>>* hR,
-                                                            const Exx_NAO<std::complex<double>>& exx_nao);
+                                                            const Exx_NAO<std::complex<double>>& exx_nao,
+                                                            const Exx_Info& exx_info);
 #endif //__LCAO

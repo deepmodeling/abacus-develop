@@ -19,6 +19,7 @@
 #ifdef __EXX
 // #include <RI/physics/Exx.h>
 #include "source_lcao/module_ri/exx_lri.h"
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info value member
 #endif
 namespace ModuleESolver
 {
@@ -51,7 +52,6 @@ namespace ModuleESolver
         };
 
       protected:
-        const Input_para& input;
         const std::string in_dir;
         const std::string out_dir;
         const UnitCell* ucell_ = nullptr;
@@ -140,7 +140,7 @@ namespace ModuleESolver
         std::shared_ptr<Exx_LRI<T>> exx_lri = nullptr;
         void move_exx_lri(std::shared_ptr<Exx_LRI<double>>&);
         void move_exx_lri(std::shared_ptr<Exx_LRI<std::complex<double>>>&);
-        Exx_Info& exx_info;
+        Exx_Info exx_info;
 #endif
     };
 }
