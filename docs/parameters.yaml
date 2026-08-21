@@ -4312,7 +4312,7 @@ parameters:
     default_value: Bohr
     unit: ""
     availability: vdw_cutoff_type==radius
-  - name: vdw_cutoff_smooth_width_2b
+  - name: vdw_cutoff_width2
     category: vdW correction
     type: Real
     description: |
@@ -4321,7 +4321,7 @@ parameters:
     default_value: "0.05"
     unit: Bohr
     availability: vdw_method==d4
-  - name: vdw_cutoff_smooth_width_3b
+  - name: vdw_cutoff_width3
     category: vdW correction
     type: Real
     description: |

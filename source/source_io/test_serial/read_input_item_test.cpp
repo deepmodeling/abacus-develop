@@ -1440,17 +1440,17 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // vdw_cutoff_smooth_width_2b
-        auto it = find_label("vdw_cutoff_smooth_width_2b", readinput.input_lists);
-        param.input.vdw_cutoff_smooth_width_2b = -1.0;
+    { // vdw_cutoff_width2
+        auto it = find_label("vdw_cutoff_width2", readinput.input_lists);
+        param.input.vdw_cutoff_width2 = -1.0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
-    { // vdw_cutoff_smooth_width_3b
-        auto it = find_label("vdw_cutoff_smooth_width_3b", readinput.input_lists);
-        param.input.vdw_cutoff_smooth_width_3b = -1.0;
+    { // vdw_cutoff_width3
+        auto it = find_label("vdw_cutoff_width3", readinput.input_lists);
+        param.input.vdw_cutoff_width3 = -1.0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();

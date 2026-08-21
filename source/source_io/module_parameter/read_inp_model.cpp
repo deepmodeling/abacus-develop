@@ -573,7 +573,7 @@ Namely, each line contains the element name and the corresponding parameter.)";
         this->add_item(item);
     }
     {
-        Input_Item item("vdw_cutoff_smooth_width_2b");
+        Input_Item item("vdw_cutoff_width2");
         item.annotation = "smooth cutoff width for two-body dispersion";
         item.category = "vdW correction";
         item.type = "Real";
@@ -582,17 +582,17 @@ A value of zero disables smoothing for the two-body contribution.)";
         item.default_value = "0.05";
         item.unit = "Bohr";
         item.set_availability("vdw_method==d4");
-        read_sync_double(input.vdw_cutoff_smooth_width_2b);
+        read_sync_double(input.vdw_cutoff_width2);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.vdw_cutoff_smooth_width_2b < 0.0)
+            if (para.input.vdw_cutoff_width2 < 0.0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_smooth_width_2b must be non-negative");
+                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_width2 must be non-negative");
             }
         };
         this->add_item(item);
     }
     {
-        Input_Item item("vdw_cutoff_smooth_width_3b");
+        Input_Item item("vdw_cutoff_width3");
         item.annotation = "smooth cutoff width for three-body dispersion";
         item.category = "vdW correction";
         item.type = "Real";
@@ -601,11 +601,11 @@ A value of zero disables smoothing for the three-body contribution.)";
         item.default_value = "0.05";
         item.unit = "Bohr";
         item.set_availability("vdw_method==d4");
-        read_sync_double(input.vdw_cutoff_smooth_width_3b);
+        read_sync_double(input.vdw_cutoff_width3);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.vdw_cutoff_smooth_width_3b < 0.0)
+            if (para.input.vdw_cutoff_width3 < 0.0)
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_smooth_width_3b must be non-negative");
+                ModuleBase::WARNING_QUIT("ReadInput", "vdw_cutoff_width3 must be non-negative");
             }
         };
         this->add_item(item);

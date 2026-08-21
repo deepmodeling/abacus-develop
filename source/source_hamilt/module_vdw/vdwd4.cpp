@@ -86,18 +86,18 @@ Vdwd4::Vdwd4(const UnitCell& unit_in, const std::string& xc_name, const Input_pa
     cutoff_disp2_ = cutoff_to_bohr(input.vdw_cutoff_radius, input.vdw_radius_unit);
     cutoff_disp3_ = std::min(40.0, cutoff_disp2_);
     cutoff_cn_ = length_to_bohr(input.vdw_cn_thr, input.vdw_cn_thr_unit);
-    smooth_width_2b_ = input.vdw_cutoff_smooth_width_2b;
-    smooth_width_3b_ = input.vdw_cutoff_smooth_width_3b;
+    smooth_width_2b_ = input.vdw_cutoff_width2;
+    smooth_width_3b_ = input.vdw_cutoff_width3;
 
     if (smooth_width_2b_ < 0.0 || smooth_width_2b_ > cutoff_disp2_)
     {
         ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4",
-                                 "vdw_cutoff_smooth_width_2b must satisfy 0 <= width <= two-body cutoff");
+                                 "vdw_cutoff_width2 must satisfy 0 <= width <= two-body cutoff");
     }
     if (smooth_width_3b_ < 0.0 || smooth_width_3b_ > cutoff_disp3_)
     {
         ModuleBase::WARNING_QUIT("Vdwd4::Vdwd4",
-                                 "vdw_cutoff_smooth_width_3b must satisfy 0 <= width <= three-body cutoff");
+                                 "vdw_cutoff_width3 must satisfy 0 <= width <= three-body cutoff");
     }
 
     double valence_charge = 0.0;

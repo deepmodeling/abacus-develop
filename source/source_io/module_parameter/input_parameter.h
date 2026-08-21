@@ -569,8 +569,8 @@ struct Input_para
                                                             ///< structure, radius or period
     std::string vdw_cutoff_radius = "default";              ///< radius cutoff for periodic structure
     std::string vdw_radius_unit = "Bohr";                   ///< unit of radius cutoff for periodic structure
-    double vdw_cutoff_smooth_width_2b = 0.05;               ///< smooth cutoff width for two-body dispersion, Bohr
-    double vdw_cutoff_smooth_width_3b = 0.05;               ///< smooth cutoff width for three-body dispersion, Bohr
+    double vdw_cutoff_width2 = 0.05;               ///< smooth cutoff width for two-body dispersion, Bohr
+    double vdw_cutoff_width3 = 0.05;               ///< smooth cutoff width for three-body dispersion, Bohr
     double vdw_cn_thr = 40.0;                               ///< radius cutoff for cn
     std::string vdw_cn_thr_unit = "Bohr";                   ///< unit of cn_thr, Bohr or Angstrom
     std::string vdw_d4_xc = "default";                      ///< functional name passed to DFT-D4
