@@ -271,8 +271,9 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
 	//----------------------------------------------------------
 	if (inp.out_ldos[0])
 	{
+		stp.update_psi_d();
 		ModuleIO::cal_ldos_pw(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(pelec),
-			    stp.psi_cpu[0], para_grid, ucell);
+			    *stp.template get_psi_d<T, Device>(), ctx, para_grid, ucell);
 	}
 
     //----------------------------------------------------------
