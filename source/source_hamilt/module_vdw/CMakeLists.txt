@@ -1,11 +1,11 @@
 set(vdw_sources
+    vdw_xcname.cpp
     vdwd2_parameters.cpp
-    vdwd3_parameters_tab.cpp
-    vdwd3_parameters.cpp
     vdwd2.cpp
+    vdwd3_data.cpp
+    vdwd3_parameters.cpp
+    vdwd3_evaluator.cpp
     vdwd3.cpp
-    vdwd3_autoset_xcname.cpp
-    vdwd3_auto_xcpar.cpp
     vdw.cpp
 )
 
