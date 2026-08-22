@@ -260,7 +260,6 @@ int main(int argc, char** argv)
     setupmpi(argc, argv, nproc, myrank);
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
     MPI_Comm_split(MPI_COMM_WORLD, myrank, 0, &BP_WORLD);
-    GlobalV::NPROC_IN_POOL = nproc;
 
     struct Case { int n; int nband; int sparsity; };
     const std::vector<Case> cases = {
