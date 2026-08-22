@@ -63,14 +63,16 @@ void ModuleIO::read_wf2rho_pw_impl(
     ModuleBase::ComplexMatrix wfc_tmp(nbands, ng_npol);
     std::vector<std::complex<double>> rho_tmp(nrxx);
 
-    // Allocate device memory
+    // Allocate device memory.
+    // Each spinor component of a band contains at most npwk_max coefficients,
+    // so ng_npol (npwk_max * npol) is larger than necessary for one component.
     std::complex<double>* wfc_ib_dev = nullptr;
     std::complex<double>* wfc_ib2_dev = nullptr;
     std::complex<double>* rho_tmp_dev = nullptr;
     if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
     {
-        base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfc_ib_dev, ng_npol);
-        base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfc_ib2_dev, ng_npol);
+        base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfc_ib_dev, pw_wfc->npwk_max);
+        base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfc_ib2_dev, pw_wfc->npwk_max);
         base_device::memory::resize_memory_op<std::complex<double>, Device>()(rho_tmp_dev, nrxx);
     }
 
@@ -118,6 +120,7 @@ void ModuleIO::read_wf2rho_pw_impl(
             is = isk[ik];
         }
         const int ikstot = ik2iktot[ik];
+        const int npwk = pw_wfc->npwk[ik];
 
         // mohan add 2025-05-17
         // .dat file
@@ -151,10 +154,10 @@ void ModuleIO::read_wf2rho_pw_impl(
                 {
                     base_device::memory::synchronize_memory_op<std::complex<double>,
                                                                Device,
-                                                               base_device::DEVICE_CPU>()(wfc_ib_dev, wfc_ib, ng_npol);
+                                                               base_device::DEVICE_CPU>()(wfc_ib_dev, wfc_ib, npwk);
                     base_device::memory::synchronize_memory_op<std::complex<double>,
                                                                Device,
-                                                               base_device::DEVICE_CPU>()(wfc_ib2_dev, wfc_ib2, ng_npol);
+                                                               base_device::DEVICE_CPU>()(wfc_ib2_dev, wfc_ib2, npwk);
                     pw_wfc->recip_to_real(ctx, wfc_ib_dev, rho_tmp_dev, ik);
                     base_device::memory::synchronize_memory_op<std::complex<double>,
                                                                base_device::DEVICE_CPU,
@@ -194,7 +197,7 @@ void ModuleIO::read_wf2rho_pw_impl(
                 {
                     base_device::memory::synchronize_memory_op<std::complex<double>,
                                                                Device,
-                                                               base_device::DEVICE_CPU>()(wfc_ib_dev, wfc_ib, ng_npol);
+                                                               base_device::DEVICE_CPU>()(wfc_ib_dev, wfc_ib, npwk);
                     pw_wfc->recip_to_real(ctx, wfc_ib_dev, rho_tmp_dev, ik);
                     base_device::memory::synchronize_memory_op<std::complex<double>,
                                                                base_device::DEVICE_CPU,
