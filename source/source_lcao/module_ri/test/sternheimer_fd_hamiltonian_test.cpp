@@ -41,6 +41,55 @@ void ExpectOrderEightDenseMatrixIsHermitian(const bool periodic)
     }
 }
 
+double PlaneWaveKineticMaxError(const Hamiltonian& hamiltonian, const std::array<int, 3>& modes)
+{
+    const auto& grid = hamiltonian.grid();
+    constexpr double two_pi = 6.283185307179586476925286766559005768;
+    const std::array<double, 3> reduced_wavevector{modes[0] + grid.kpoint[0],
+                                                   modes[1] + grid.kpoint[1],
+                                                   modes[2] + grid.kpoint[2]};
+    const auto dual = ModuleRI::sternheimer_fd_grid_dual_vectors(grid);
+    std::array<double, 3> cartesian_wavevector{};
+    for (int direction = 0; direction != 3; ++direction)
+    {
+        for (int component = 0; component != 3; ++component)
+        {
+            cartesian_wavevector[component] += two_pi * reduced_wavevector[direction] * dual[direction][component];
+        }
+    }
+    double kinetic_energy = 0.0;
+    for (const double component: cartesian_wavevector)
+    {
+        kinetic_energy += component * component;
+    }
+    kinetic_energy *= hamiltonian.kinetic_prefactor();
+
+    Vector psi(static_cast<std::size_t>(grid.size()));
+    for (int ix = 0; ix != grid.nx; ++ix)
+    {
+        for (int iy = 0; iy != grid.ny; ++iy)
+        {
+            for (int iz = 0; iz != grid.nz; ++iz)
+            {
+                const double phase = two_pi
+                                     * (reduced_wavevector[0] * ix / grid.nx + reduced_wavevector[1] * iy / grid.ny
+                                        + reduced_wavevector[2] * iz / grid.nz);
+                psi[static_cast<std::size_t>(hamiltonian.index(ix, iy, iz))]
+                    = Complex(std::cos(phase), std::sin(phase));
+            }
+        }
+    }
+
+    Vector kinetic_psi;
+    hamiltonian.apply_kinetic(psi, kinetic_psi);
+    double max_error = 0.0;
+    for (std::size_t ir = 0; ir != psi.size(); ++ir)
+    {
+        max_error = std::max(max_error, std::abs(kinetic_psi[ir] - kinetic_energy * psi[ir]));
+    }
+    return max_error;
+}
+
 } // namespace
 
 TEST(SternheimerFDHamiltonian, ConstantFunctionHasOnlyLocalPotential)
@@ -219,6 +268,46 @@ TEST(SternheimerFDHamiltonian, TwistedBoundaryDenseMatrixIsHermitian)
     }
 }
 
+TEST(SternheimerFDHamiltonian, OrderEightImprovesNonorthogonalTwistedPlaneWaveKineticEnergy)
+{
+    Hamiltonian::Grid grid{18, 17, 16, 1.0, 1.0, 1.0, true};
+    grid.kpoint = {0.125, -0.2, 0.3};
+    grid.lattice_vectors = {{{0.0, 5.1, 5.1}, {5.1, 0.0, 5.1}, {5.1, 5.1, 0.0}}};
+    const std::vector<double> potential(static_cast<std::size_t>(grid.size()), 0.0);
+    const Hamiltonian order_two(grid, potential, 1.0, nullptr, 2);
+    const Hamiltonian order_eight(grid, potential, 1.0, nullptr, 8);
+
+    const double order_two_error = PlaneWaveKineticMaxError(order_two, {1, -1, 2});
+    const double order_eight_error = PlaneWaveKineticMaxError(order_eight, {1, -1, 2});
+
+    EXPECT_GT(order_two_error, 1.0e-4);
+    EXPECT_LT(order_eight_error, 0.02 * order_two_error);
+}
+
+TEST(SternheimerFDHamiltonian, OrderEightNonorthogonalTwistedDenseMatrixIsHermitian)
+{
+    Hamiltonian::Grid grid{5, 5, 5, 1.0, 1.0, 1.0, true};
+    grid.kpoint = {0.25, -0.125, 0.375};
+    grid.lattice_vectors = {{{0.0, 2.3, 2.1}, {2.2, 0.0, 2.4}, {2.0, 2.5, 0.0}}};
+    std::vector<double> potential(static_cast<std::size_t>(grid.size()), 0.0);
+    for (std::size_t ir = 0; ir != potential.size(); ++ir)
+    {
+        potential[ir] = 0.03 * static_cast<double>(ir % 13);
+    }
+    const Hamiltonian hamiltonian(grid, potential, 1.0, nullptr, 8);
+
+    const auto matrix = hamiltonian.dense_matrix();
+    for (std::size_t row = 0; row != matrix.size(); ++row)
+    {
+        for (std::size_t col = 0; col != matrix.size(); ++col)
+        {
+            const Complex difference = matrix[row][col] - std::conj(matrix[col][row]);
+            EXPECT_NEAR(difference.real(), 0.0, 1.0e-11);
+            EXPECT_NEAR(difference.imag(), 0.0, 1.0e-11);
+        }
+    }
+}
+
 TEST(SternheimerFDHamiltonian, RejectsInvalidTwistedBoundary)
 {
     Hamiltonian::Grid grid{3, 1, 1, 1.0, 1.0, 1.0, false};
@@ -286,16 +375,14 @@ TEST(SternheimerFDHamiltonian, OperatorComponentsSumToFullHamiltonian)
     Hamiltonian::Grid grid{4, 1, 1, 0.5, 1.0, 1.0, true};
     grid.kpoint = {0.25, 0.0, 0.0};
     ModuleRI::SternheimerFDNonlocalProjector::ProjectorBlock block;
-    block.projectors = {{Complex(1.0, 0.0), Complex(0.0, 0.0),
-                         Complex(0.5, -0.25), Complex(0.0, 0.0)}};
+    block.projectors = {{Complex(1.0, 0.0), Complex(0.0, 0.0), Complex(0.5, -0.25), Complex(0.0, 0.0)}};
     block.d_matrix = {{Complex(1.5, 0.0)}};
     auto nonlocal_projector = std::make_shared<ModuleRI::SternheimerFDNonlocalProjector>(
         grid.size(),
         0.5,
         std::vector<ModuleRI::SternheimerFDNonlocalProjector::ProjectorBlock>{block});
     Hamiltonian hamiltonian(grid, {0.1, -0.2, 0.3, -0.4}, 1.0, nonlocal_projector);
-    const Vector psi = {Complex(0.2, -0.1), Complex(-0.4, 0.3),
-                        Complex(0.7, 0.2), Complex(-0.1, -0.5)};
+    const Vector psi = {Complex(0.2, -0.1), Complex(-0.4, 0.3), Complex(0.7, 0.2), Complex(-0.1, -0.5)};
 
     Vector full;
     Vector kinetic;
@@ -395,14 +482,37 @@ TEST(SternheimerFDHamiltonian, KineticPrefactorScalesFiniteDifferenceLaplacian)
 
 TEST(SternheimerFDHamiltonian, FourthOrderPeriodicLaplacianReducesPlaneWaveError)
 {
-    constexpr int nx = 32;
-    constexpr int mode = 3;
-    const double length = 2.0 * std::acos(-1.0);
-    const double spacing = length / nx;
-    Hamiltonian::Grid grid{nx, 1, 1, spacing, 1.0, 1.0, true};
-    const std::vector<double> potential(grid.size(), 0.0);
-    Hamiltonian second_order(grid, potential, 1.0, nullptr, 2);
-    Hamiltonian fourth_order(grid, potential, 1.0, nullptr, 4);
+    Hamiltonian::Grid grid{15, 15, 15, 0.0, 0.0, 0.0, true};
+    constexpr double half_lattice = 5.102262569990759;
+    grid.lattice_vectors
+        = {{{0.0, half_lattice, half_lattice}, {half_lattice, 0.0, half_lattice}, {half_lattice, half_lattice, 0.0}}};
+    using Rotation = ModuleRI::SternheimerFDReducedRotation;
+    const std::vector<Rotation> rotations = {
+        {{{1, 0, 0}, {0, 1, 0}, {0, 0, 1}}},    {{{0, -1, 0}, {1, -1, 0}, {0, -1, 1}}},
+        {{{-1, 1, 0}, {-1, 0, 0}, {-1, 0, 1}}}, {{{-1, 0, 1}, {-1, 0, 0}, {-1, 1, 0}}},
+        {{{1, 0, 0}, {0, 0, 1}, {0, 1, 0}}},    {{{0, 0, -1}, {1, 0, -1}, {0, 1, -1}}},
+        {{{0, 1, -1}, {1, 0, -1}, {0, 0, -1}}}, {{{-1, 0, 1}, {-1, 1, 0}, {-1, 0, 0}}},
+        {{{1, -1, 0}, {0, -1, 1}, {0, -1, 0}}}, {{{0, -1, 0}, {0, -1, 1}, {1, -1, 0}}},
+        {{{0, 1, -1}, {0, 0, -1}, {1, 0, -1}}}, {{{0, 0, 1}, {0, 1, 0}, {1, 0, 0}}},
+        {{{1, 0, -1}, {0, 0, -1}, {0, 1, -1}}}, {{{0, 0, 1}, {1, 0, 0}, {0, 1, 0}}},
+        {{{-1, 0, 0}, {-1, 0, 1}, {-1, 1, 0}}}, {{{-1, 1, 0}, {-1, 0, 1}, {-1, 0, 0}}},
+        {{{1, 0, -1}, {0, 1, -1}, {0, 0, -1}}}, {{{0, -1, 1}, {1, -1, 0}, {0, -1, 0}}},
+        {{{0, 0, -1}, {0, 1, -1}, {1, 0, -1}}}, {{{0, -1, 1}, {0, -1, 0}, {1, -1, 0}}},
+        {{{0, 1, 0}, {0, 0, 1}, {1, 0, 0}}},    {{{-1, 0, 0}, {-1, 1, 0}, {-1, 0, 1}}},
+        {{{0, 1, 0}, {1, 0, 0}, {0, 0, 1}}},    {{{1, -1, 0}, {0, -1, 0}, {0, -1, 1}}},
+        {{{-1, 0, 0}, {0, -1, 0}, {0, 0, -1}}}, {{{0, 1, 0}, {-1, 1, 0}, {0, 1, -1}}},
+        {{{1, -1, 0}, {1, 0, 0}, {1, 0, -1}}},  {{{1, 0, -1}, {1, 0, 0}, {1, -1, 0}}},
+        {{{-1, 0, 0}, {0, 0, -1}, {0, -1, 0}}}, {{{0, 0, 1}, {-1, 0, 1}, {0, -1, 1}}},
+        {{{0, -1, 1}, {-1, 0, 1}, {0, 0, 1}}},  {{{1, 0, -1}, {1, -1, 0}, {1, 0, 0}}},
+        {{{-1, 1, 0}, {0, 1, -1}, {0, 1, 0}}},  {{{0, 1, 0}, {0, 1, -1}, {-1, 1, 0}}},
+        {{{0, -1, 1}, {0, 0, 1}, {-1, 0, 1}}},  {{{0, 0, -1}, {0, -1, 0}, {-1, 0, 0}}},
+        {{{-1, 0, 1}, {0, 0, 1}, {0, -1, 1}}},  {{{0, 0, -1}, {-1, 0, 0}, {0, -1, 0}}},
+        {{{1, 0, 0}, {1, 0, -1}, {1, -1, 0}}},  {{{1, -1, 0}, {1, 0, -1}, {1, 0, 0}}},
+        {{{-1, 0, 1}, {0, -1, 1}, {0, 0, 1}}},  {{{0, 1, -1}, {-1, 1, 0}, {0, 1, 0}}},
+        {{{0, 0, 1}, {0, -1, 1}, {-1, 0, 1}}},  {{{0, 1, -1}, {0, 1, 0}, {-1, 1, 0}}},
+        {{{0, -1, 0}, {0, 0, -1}, {-1, 0, 0}}}, {{{1, 0, 0}, {1, -1, 0}, {1, 0, -1}}},
+        {{{0, -1, 0}, {-1, 0, 0}, {0, 0, -1}}}, {{{-1, 1, 0}, {0, 1, 0}, {0, 1, -1}}},
+    };
 
     Hamiltonian::Vector plane_wave(grid.size());
     for (int ix = 0; ix != nx; ++ix)

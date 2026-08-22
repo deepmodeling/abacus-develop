@@ -4,7 +4,9 @@
 #include "source_lcao/module_ri/sternheimer_fd_nonlocal_projector.h"
 #include "source_lcao/module_ri/sternheimer_kq.h"
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <complex>
 #include <map>
 #include <memory>
@@ -71,37 +73,26 @@ class SternheimerFDHamiltonian
     int index(int ix, int iy, int iz) const;
 
   private:
-    template <int Radius>
-    void apply_local(const Vector& psi, Vector& hpsi, int* threads_used) const;
-
-    static constexpr int max_stencil_radius_ = 4;
-
     struct ShiftedGridPoint
     {
         int index = -1;
         Complex phase{1.0, 0.0};
     };
 
-    static constexpr int max_stencil_radius_ = 4;
+    ShiftedGridPoint shifted_grid_point(int ix, int iy, int iz) const;
+    void apply_grid_terms(const Vector& psi, Vector& output, bool include_local_potential, int* threads_used) const;
 
     Grid grid_;
     std::vector<double> local_potential_;
     double kinetic_prefactor_ = 0.5;
     int finite_difference_order_ = 2;
     std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector_;
-    std::array<std::vector<int>, max_stencil_radius_> x_positive_coordinates_;
-    std::array<std::vector<int>, max_stencil_radius_> x_negative_coordinates_;
-    std::array<std::vector<int>, max_stencil_radius_> y_positive_coordinates_;
-    std::array<std::vector<int>, max_stencil_radius_> y_negative_coordinates_;
-    std::array<std::vector<int>, max_stencil_radius_> z_positive_coordinates_;
-    std::array<std::vector<int>, max_stencil_radius_> z_negative_coordinates_;
 };
 
 using SternheimerFDLatticeVectors = std::array<std::array<double, 3>, 3>;
 using SternheimerFDReducedRotation = std::array<std::array<double, 3>, 3>;
 
-inline SternheimerFDLatticeVectors sternheimer_fd_grid_lattice_vectors(
-    const SternheimerFDHamiltonian::Grid& grid)
+inline SternheimerFDLatticeVectors sternheimer_fd_grid_lattice_vectors(const SternheimerFDHamiltonian::Grid& grid)
 {
     bool has_explicit_lattice = false;
     for (const auto& vector: grid.lattice_vectors)
@@ -115,13 +106,10 @@ inline SternheimerFDLatticeVectors sternheimer_fd_grid_lattice_vectors(
     {
         return grid.lattice_vectors;
     }
-    return {{{grid.nx * grid.hx, 0.0, 0.0},
-             {0.0, grid.ny * grid.hy, 0.0},
-             {0.0, 0.0, grid.nz * grid.hz}}};
+    return {{{grid.nx * grid.hx, 0.0, 0.0}, {0.0, grid.ny * grid.hy, 0.0}, {0.0, 0.0, grid.nz * grid.hz}}};
 }
 
-inline SternheimerFDLatticeVectors sternheimer_fd_grid_dual_vectors(
-    const SternheimerFDHamiltonian::Grid& grid)
+inline SternheimerFDLatticeVectors sternheimer_fd_grid_dual_vectors(const SternheimerFDHamiltonian::Grid& grid)
 {
     const SternheimerFDLatticeVectors lattice = sternheimer_fd_grid_lattice_vectors(grid);
     const auto cross = [](const std::array<double, 3>& lhs, const std::array<double, 3>& rhs) {
@@ -132,9 +120,8 @@ inline SternheimerFDLatticeVectors sternheimer_fd_grid_dual_vectors(
     const auto dot = [](const std::array<double, 3>& lhs, const std::array<double, 3>& rhs) {
         return lhs[0] * rhs[0] + lhs[1] * rhs[1] + lhs[2] * rhs[2];
     };
-    SternheimerFDLatticeVectors dual{{cross(lattice[1], lattice[2]),
-                                      cross(lattice[2], lattice[0]),
-                                      cross(lattice[0], lattice[1])}};
+    SternheimerFDLatticeVectors dual{
+        {cross(lattice[1], lattice[2]), cross(lattice[2], lattice[0]), cross(lattice[0], lattice[1])}};
     const double determinant = dot(lattice[0], dual[0]);
     for (auto& vector: dual)
     {
@@ -159,8 +146,9 @@ inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
     using Offset = std::array<int, 3>;
     std::map<Offset, double> stencil;
     const SternheimerFDLatticeVectors dual = sternheimer_fd_grid_dual_vectors(grid);
-    const std::array<double, 3> dimensions{
-        static_cast<double>(grid.nx), static_cast<double>(grid.ny), static_cast<double>(grid.nz)};
+    const std::array<double, 3> dimensions{static_cast<double>(grid.nx),
+                                           static_cast<double>(grid.ny),
+                                           static_cast<double>(grid.nz)};
     std::array<std::array<double, 3>, 3> coefficients{};
     for (int left = 0; left != 3; ++left)
     {
@@ -169,14 +157,11 @@ inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
             for (int component = 0; component != 3; ++component)
             {
                 coefficients[left][right]
-                    += dual[left][component] * dual[right][component]
-                       * dimensions[left] * dimensions[right];
+                    += dual[left][component] * dual[right][component] * dimensions[left] * dimensions[right];
             }
         }
     }
-    const auto add = [&stencil](const Offset& offset, const double weight) {
-        stencil[offset] += weight;
-    };
+    const auto add = [&stencil](const Offset& offset, const double weight) { stencil[offset] += weight; };
     for (int direction = 0; direction != 3; ++direction)
     {
         Offset positive{0, 0, 0};
@@ -197,9 +182,7 @@ inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
                     Offset offset{0, 0, 0};
                     offset[left] = left_sign;
                     offset[right] = right_sign;
-                    add(offset,
-                        0.5 * coefficients[left][right]
-                            * static_cast<double>(left_sign * right_sign));
+                    add(offset, 0.5 * coefficients[left][right] * static_cast<double>(left_sign * right_sign));
                 }
             }
         }
@@ -237,10 +220,8 @@ inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
                 double mapped_index = 0.0;
                 for (int source = 0; source != 3; ++source)
                 {
-                    mapped_index += static_cast<double>(offset[source])
-                                    / dimensions[source]
-                                    * rotations[isym][source][target]
-                                    * dimensions[target];
+                    mapped_index += static_cast<double>(offset[source]) / dimensions[source]
+                                    * rotations[isym][source][target] * dimensions[target];
                 }
                 mapped[target] = static_cast<int>(std::llround(mapped_index));
                 if (std::abs(mapped_index - static_cast<double>(mapped[target])) > tolerance)
@@ -258,8 +239,7 @@ inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
                 || std::abs(mapped_iter->second - weight)
                        > tolerance
                              * std::max(std::max(1.0, weight_scale),
-                                        std::max(std::abs(weight),
-                                                 std::abs(mapped_iter->second)))
+                                        std::max(std::abs(weight), std::abs(mapped_iter->second)))
                 || !mapped_offsets.insert(mapped).second)
             {
                 valid = false;
@@ -274,11 +254,10 @@ inline std::vector<int> sternheimer_fd_second_order_stencil_symmetry_indices(
     return preserving;
 }
 
-inline std::array<double, 3> sternheimer_fd_grid_cartesian_position(
-    const SternheimerFDHamiltonian::Grid& grid,
-    const int ix,
-    const int iy,
-    const int iz)
+inline std::array<double, 3> sternheimer_fd_grid_cartesian_position(const SternheimerFDHamiltonian::Grid& grid,
+                                                                    const int ix,
+                                                                    const int iy,
+                                                                    const int iz)
 {
     const SternheimerFDLatticeVectors lattice = sternheimer_fd_grid_lattice_vectors(grid);
     const std::array<double, 3> reduced{static_cast<double>(ix) / grid.nx,
@@ -295,9 +274,8 @@ inline std::array<double, 3> sternheimer_fd_grid_cartesian_position(
     return cartesian;
 }
 
-inline std::array<double, 3> sternheimer_fd_grid_lattice_translation(
-    const SternheimerFDHamiltonian::Grid& grid,
-    const std::array<int, 3>& translation)
+inline std::array<double, 3> sternheimer_fd_grid_lattice_translation(const SternheimerFDHamiltonian::Grid& grid,
+                                                                     const std::array<int, 3>& translation)
 {
     const SternheimerFDLatticeVectors lattice = sternheimer_fd_grid_lattice_vectors(grid);
     std::array<double, 3> cartesian{};
