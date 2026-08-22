@@ -21,6 +21,22 @@ const double ppcg_preconditioner_threshold = 1.0e-12;
 const double ppcg_numerical_threshold = 1.0e-30;
 const double ppcg_scaling_threshold = 1.0e-15;
 
+// Increasing diagonal shifts used to regularize an ill-conditioned Gram matrix
+// when a Cholesky factorization or a small projected generalized eigenproblem
+// fails numerically. The ladder is tried from no shift up to a unit shift.
+const double ppcg_cholesky_shifts[] = {0.0,   1.0e-12, 1.0e-10, 1.0e-8, 1.0e-6,
+                                       1.0e-4, 1.0e-3,  1.0e-2,  1.0e-1, 1.0};
+// Subset of the shift ladder used by the small projected eigensolve fallback.
+const double ppcg_subspace_shifts[] = {0.0, 1.0e-10, 1.0e-8, 1.0e-6};
+
+// Orthogonality check tolerance expressed as a multiple of machine epsilon.
+const double ppcg_orthogonality_tolerance_factor = 10.0;
+// Line-search root-selection tolerance expressed as a multiple of machine epsilon.
+const double ppcg_line_search_tolerance_factor = 100.0;
+// Quadratic-formula coefficients in the line-search root solve (b^2 - 4ac and 2a).
+const double ppcg_quadratic_discriminant_coefficient = 4.0;
+const double ppcg_quadratic_root_denominator_coefficient = 2.0;
+
 } // namespace
 } // namespace hsolver
 
@@ -38,7 +54,9 @@ void reduce_pool_if_mpi_ready(Value& value)
     MPI_Initialized(&initialized);
     MPI_Finalized(&finalized);
     if (initialized && !finalized)
+    {
         Parallel_Reduce::reduce_pool(value);
+    }
 #endif
 }
 
@@ -51,7 +69,9 @@ void reduce_pool_if_mpi_ready(Value* value, const int n)
     MPI_Initialized(&initialized);
     MPI_Finalized(&finalized);
     if (initialized && !finalized)
+    {
         Parallel_Reduce::reduce_pool(value, n);
+    }
 #endif
 }
 
@@ -95,7 +115,9 @@ inline void set_zero(std::vector<T>& x)
 #pragma omp parallel for schedule(static) if (n > ppcg_openmp_work_threshold)
 #endif
     for (int i = 0; i < n; ++i)
+    {
         x[i] = T(0);
+    }
 }
 
 } // anonymous namespace
@@ -124,18 +146,20 @@ struct HermitianLapack
     {
         Real diag_max = 0;
         for (int i = 0; i < n; ++i)
+        {
             diag_max = std::max(diag_max, std::abs(a[i + i * n]));
+        }
         std::vector<Scalar> a0(a, a + n * n);
 
-        for (const Real shift : {Real(0), Real(1e-12), Real(1e-10), Real(1e-8),
-                                 Real(1e-6), Real(1e-4), Real(1e-3), Real(1e-2),
-                                 Real(1e-1), Real(1)})
+        for (const double shift : ppcg_cholesky_shifts)
         {
             std::copy(a0.begin(), a0.end(), a);
-            if (shift > 0)
+            if (shift > 0.0)
             {
                 for (int i = 0; i < n; ++i)
-                    a[i + i * n] += Scalar(shift * std::max(diag_max, Real(1)), 0);
+                {
+                    a[i + i * n] += Scalar(Real(shift) * std::max(diag_max, Real(1.0)), 0.0);
+                }
             }
             try
             {
@@ -167,13 +191,17 @@ namespace {
 inline bool ppcg_contiguous_cols(const std::vector<int>& cols, int& first)
 {
     if (cols.empty())
+    {
         return false;
+    }
 
     first = cols.front();
     for (int j = 0; j < static_cast<int>(cols.size()); ++j)
     {
         if (cols[j] != first + j)
+        {
             return false;
+        }
     }
     return true;
 }
@@ -211,23 +239,43 @@ void DiagoPPCG<T, Device>::validate_input(
     const Real* prec) const
 {
     if (!hpsi_func)
+    {
         throw std::invalid_argument("PPCG: H operator is empty.");
+    }
     if (psi_in == nullptr || eigenvalue_in == nullptr)
+    {
         throw std::invalid_argument("PPCG: psi/eigenvalue pointer is null.");
+    }
     if (prec == nullptr)
+    {
         throw std::invalid_argument("PPCG: preconditioner pointer is null.");
+    }
     if (ld_psi_ <= 0 || n_band_ <= 0 || n_dim_ <= 0)
+    {
         throw std::invalid_argument("PPCG: invalid dimensions.");
+    }
     if (n_dim_ > ld_psi_)
+    {
         throw std::invalid_argument("PPCG: dim must not exceed ld_psi.");
+    }
     if (ethr_band.size() < static_cast<size_t>(n_band_))
+    {
         throw std::invalid_argument("PPCG: ethr_band size is smaller than nband.");
+    }
     for (int i = 0; i < n_band_; ++i)
+    {
         if (!std::isfinite(ethr_band[i]))
+        {
             throw std::invalid_argument("PPCG: ethr_band contains non-finite value.");
+        }
+    }
     for (int i = 0; i < n_dim_; ++i)
+    {
         if (!std::isfinite(prec[i]))
+        {
             throw std::invalid_argument("PPCG: preconditioner contains non-finite value.");
+        }
+    }
 }
 
 // =============================================================================
@@ -237,9 +285,13 @@ template <typename T, typename Device>
 void DiagoPPCG<T, Device>::force_g0_real(T* x, int ncol) const
 {
     if (!gamma_g0_real_ || n_dim_ <= 0)
+    {
         return;
+    }
     for (int j = 0; j < ncol; ++j)
+    {
         x[idx(0, j, ld_psi_)] = T(std::real(x[idx(0, j, ld_psi_)]), 0.0);
+    }
 }
 
 // =============================================================================
@@ -259,14 +311,20 @@ void DiagoPPCG<T, Device>::apply_s(const SPsiFunc& spsi_func,
                                     int ncol) const
 {
     if (spsi_func)
+    {
         spsi_func(psi_in, spsi_out, ld_psi_, ncol);
+    }
     else
+    {
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (ld_psi_ * ncol > ppcg_openmp_work_threshold)
 #endif
         for (int j = 0; j < ncol; ++j)
+        {
             std::copy(psi_in + j * ld_psi_, psi_in + (j + 1) * ld_psi_,
                       spsi_out + j * ld_psi_);
+        }
+    }
 }
 
 template <typename T, typename Device>
@@ -293,7 +351,9 @@ T DiagoPPCG<T, Device>::complex_dot(const T* x, const T* y) const
 {
     T acc = T(0);
     for (int i = 0; i < n_dim_; ++i)
+    {
         acc += std::conj(x[i]) * y[i];
+    }
     reduce_pool_if_mpi_ready(&acc, 1);
     return acc;
 }
@@ -302,7 +362,7 @@ T DiagoPPCG<T, Device>::complex_dot(const T* x, const T* y) const
 // Gram matrix: out[i, j] = <a_i | b_j>
 // =============================================================================
 template <typename T, typename Device>
-void DiagoPPCG<T, Device>::gram(const T* a, const T* b,
+void DiagoPPCG<T, Device>::gram(const T* mat_a, const T* mat_b,
                                  int ncol_a, int ncol_b,
                                  std::vector<T>& out,
                                  int ld_out) const
@@ -316,9 +376,9 @@ void DiagoPPCG<T, Device>::gram(const T* a, const T* b,
                                      ncol_b,
                                      n_dim_,
                                      &one,
-                                     a,
+                                     mat_a,
                                      ld_psi_,
-                                     b,
+                                     mat_b,
                                      ld_psi_,
                                      &zero,
                                      out.data(),
@@ -337,7 +397,9 @@ void DiagoPPCG<T, Device>::copy_cols(const T* src,
     const int ncols = static_cast<int>(cols.size());
     dst.resize(ld_psi_ * ncols);
     if (ncols == 0)
+    {
         return;
+    }
 
     int first = 0;
     if (ppcg_contiguous_cols(cols, first))
@@ -370,7 +432,9 @@ void DiagoPPCG<T, Device>::scatter_cols(
 {
     const int ncols = static_cast<int>(cols.size());
     if (ncols == 0)
+    {
         return;
+    }
 
     int first = 0;
     if (ppcg_contiguous_cols(cols, first))
@@ -404,7 +468,9 @@ void DiagoPPCG<T, Device>::project_against(
     const std::vector<int>& x_cols) const
 {
     if (basis_cols.empty() || x_cols.empty())
+    {
         return;
+    }
 
     const int nbasis = static_cast<int>(basis_cols.size());
     const int nx = static_cast<int>(x_cols.size());
@@ -500,8 +566,10 @@ void DiagoPPCG<T, Device>::divide_by_preconditioner(
     {
         const int c = active_cols[j];
         for (int ig = 0; ig < n_dim_; ++ig)
+        {
             x[idx(ig, c, ld_psi_)] /=
                 std::max(prec[ig], Real(ppcg_preconditioner_threshold));
+        }
     }
 }
 
@@ -533,17 +601,21 @@ void DiagoPPCG<T, Device>::lock_epairs(
     {
         double nrm2 = 0.0;
         for (int ig = 0; ig < n_dim_; ++ig)
+        {
             nrm2 += static_cast<double>(std::norm(residual[idx(ig, j, ld_psi_)]));
+        }
         nrm2_all[j] = nrm2;
     }
     reduce_pool_if_mpi_ready(nrm2_all.data(), n_band_);
     for (int j = 0; j < n_band_; ++j)
     {
         const Real rnrm = std::sqrt(std::max(static_cast<Real>(nrm2_all[j]),
-                                             static_cast<Real>(0)));
+                                             Real(0)));
         const Real thr = std::max(static_cast<Real>(ethr_band[j]), diag_thr_);
         if (rnrm > thr)
+        {
             active_cols.push_back(j);
+        }
     }
 }
 
@@ -590,8 +662,10 @@ void DiagoPPCG<T, Device>::build_small_subspace(
         for (int j = 0; j < lcols; ++j) {
             double sn2 = 0.0;
             for (int ig = 0; ig < n_dim_; ++ig)
+            {
                 sn2 += static_cast<double>(std::real(std::conj(x[idx(ig, j, ld_psi_)])
                                                      * sx[idx(ig, j, ld_psi_)]));
+            }
             sn_scale_all[j] = sn2;
         }
         reduce_pool_if_mpi_ready(sn_scale_all.data(), lcols);
@@ -601,7 +675,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
             // Only scale if the norm is non-negligible; a near-zero
             // column is a converged band whose contribution is harmless.
             sn_scale_all[j] = (sn > Real(ppcg_scaling_threshold))
-                            ? static_cast<double>(static_cast<Real>(1) / sn)
+                            ? static_cast<double>(Real(1) / sn)
                             : 1.0;
         }
 #ifdef _OPENMP
@@ -629,9 +703,11 @@ void DiagoPPCG<T, Device>::build_small_subspace(
 #pragma omp parallel for schedule(static) if (ld_psi_ * l > ppcg_openmp_work_threshold)
 #endif
         for (int j = 0; j < l; ++j)
+        {
             std::copy(src.begin() + j * ld_psi_,
                       src.begin() + (j + 1) * ld_psi_,
                       dst.begin() + (col0 + j) * ld_psi_);
+        }
     };
 
     auto hermitize = [&](std::vector<T>& mat)
@@ -642,7 +718,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
             for (int i = j + 1; i < dim; ++i)
             {
                 const T avg = (mat[i + j * dim] + std::conj(mat[j + i * dim]))
-                            * static_cast<Real>(0.5);
+                            * Real(0.5);
                 mat[i + j * dim] = avg;
                 mat[j + i * dim] = std::conj(avg);
             }
@@ -678,16 +754,18 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
     // fail.
     const std::vector<T> k0 = subspace.k;
     const std::vector<T> m0 = subspace.m;
-    const Real shifts[] = {static_cast<Real>(0),
-                           static_cast<Real>(1e-10),
-                           static_cast<Real>(1e-8),
-                           static_cast<Real>(1e-6)};
+    const Real shifts[] = {static_cast<Real>(ppcg_subspace_shifts[0]),
+                           static_cast<Real>(ppcg_subspace_shifts[1]),
+                           static_cast<Real>(ppcg_subspace_shifts[2]),
+                           static_cast<Real>(ppcg_subspace_shifts[3])};
     for (const Real shift : shifts)
     {
         subspace.k = k0;
         subspace.m = m0;
         for (int i = 0; i < dim; ++i)
+        {
             subspace.m[i + i * dim] += T(shift);
+        }
 
         try
         {
@@ -807,7 +885,7 @@ template <typename T, typename Device>
 bool DiagoPPCG<T, Device>::is_s_orthonormal(
     const T* psi, const T* spsi, int ncol) const
 {
-    const Real orth_tol = static_cast<Real>(10)
+    const Real orth_tol = Real(ppcg_orthogonality_tolerance_factor)
                         * std::sqrt(std::numeric_limits<Real>::epsilon());
     std::vector<T> gram_s;
     gram(psi, spsi, ncol, ncol, gram_s, ncol);
@@ -818,7 +896,9 @@ bool DiagoPPCG<T, Device>::is_s_orthonormal(
             const T sij = gram_s[i + j * ncol];
             const T target = (i == j) ? T(1) : T(0);
             if (std::abs(sij - target) > orth_tol)
+            {
                 return false;
+            }
         }
     }
     return true;
@@ -855,7 +935,7 @@ void DiagoPPCG<T, Device>::s_gram_schmidt(
         Real nrm = std::sqrt(std::max(
             gamma_dot(psi + j * ld_psi_, spsi + j * ld_psi_),
             Real(ppcg_numerical_threshold)));
-        Real inv_nrm = static_cast<Real>(1) / nrm;
+        Real inv_nrm = Real(1) / nrm;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n_dim_ > ppcg_openmp_work_threshold)
 #endif
@@ -894,10 +974,12 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
         gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
         gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
         for (int ii = 0; ii < n_band_; ++ii)
+        {
             rr_eval_[ii] = static_cast<Real>(std::real(rr_hsub_[ii + ii * n_band_]))
                      / std::max(static_cast<Real>(
                                     std::real(rr_ssub_[ii + ii * n_band_])),
                                 Real(ppcg_numerical_threshold));
+        }
     }
 
     if (sygvd_ok)
@@ -962,7 +1044,9 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
     {
         // No rotation: just update eigenvalues with Rayleigh quotients.
         for (int j = 0; j < n_band_; ++j)
+        {
             eigenvalue[j] = rr_eval_[j];
+        }
     }
 
     // Compute residual: w_i = H|psi_i> - eps_i * S|psi_i>
@@ -971,9 +1055,13 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
 #pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
 #endif
     for (int j = 0; j < n_band_; ++j)
+    {
         for (int ig = 0; ig < n_dim_; ++ig)
+        {
             w_[idx(ig, j, ld_psi_)] = hpsi_[idx(ig, j, ld_psi_)]
                                     - spsi_[idx(ig, j, ld_psi_)] * eigenvalue[j];
+        }
+    }
 
     lock_epairs(w_, ethr_band, active_cols);
 }
@@ -1262,15 +1350,19 @@ void DiagoPPCG<T, Device>::line_minimize(
         Real alpha_linear = (std::abs(matrix_b) > Real(ppcg_numerical_threshold))
                           ? -matrix_c / matrix_b : Real(0);
 
-        const Real tolerance = std::numeric_limits<Real>::epsilon() * Real(100);
+        const Real tolerance = std::numeric_limits<Real>::epsilon()
+                             * Real(ppcg_line_search_tolerance_factor);
         if (std::abs(matrix_a) > tolerance * std::max(Real(1), std::abs(matrix_b)))
         {
-            const Real discriminant = matrix_b * matrix_b - Real(4) * matrix_a * matrix_c;
+            const Real discriminant = matrix_b * matrix_b
+                                    - Real(ppcg_quadratic_discriminant_coefficient)
+                                          * matrix_a * matrix_c;
             if (discriminant >= Real(0))
             {
                 const Real sqrt_discriminant = std::sqrt(discriminant);
-                const Real alpha_first = (-matrix_b + sqrt_discriminant) / (Real(2) * matrix_a);
-                const Real alpha_second = (-matrix_b - sqrt_discriminant) / (Real(2) * matrix_a);
+                const Real root_denom = Real(ppcg_quadratic_root_denominator_coefficient) * matrix_a;
+                const Real alpha_first = (-matrix_b + sqrt_discriminant) / root_denom;
+                const Real alpha_second = (-matrix_b - sqrt_discriminant) / root_denom;
 
                 const Real quotient_first = ray_quot(alpha_first);
                 const Real quotient_second = ray_quot(alpha_second);
@@ -1459,11 +1551,15 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // Optional debug trace for plotting PPCG convergence curves.
         residual_trace.open(path);
         if (residual_trace)
+        {
             residual_trace << "iteration,stage,max_residual\n";
+        }
     }
     auto record_residual = [&](int iteration, const char* stage) {
         if (!residual_trace)
+        {
             return;
+        }
         residual_trace
             << iteration << ','
             << stage << ','
@@ -1645,7 +1741,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 gram(psi_in, hpsi_.data(), ncol, ncol, h_sub, ncol);
                 gram(psi_in, spsi_.data(), ncol, ncol, s_sub, ncol);
 
-                std::vector<Real> eval_cg(ncol, static_cast<Real>(0));
+                std::vector<Real> eval_cg(ncol, Real(0));
                 try
                 {
                     HermitianLapack<T>::sygvd(ncol, h_sub.data(),
@@ -1659,14 +1755,18 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                     gram(psi_in, hpsi_.data(), ncol, ncol, h_sub, ncol);
                     gram(psi_in, spsi_.data(), ncol, ncol, s_sub, ncol);
                     for (int ii = 0; ii < ncol; ++ii)
+                    {
                         eval_cg[ii] =
                             static_cast<Real>(std::real(h_sub[ii + ii * ncol]))
                             / std::max(static_cast<Real>(
                                            std::real(s_sub[ii + ii * ncol])),
-                                       static_cast<Real>(1e-30));
+                                       Real(ppcg_numerical_threshold));
+                    }
                 }
                 for (int ii = 0; ii < ncol; ++ii)
+                {
                     eigenvalue_in[ii] = eval_cg[ii];
+                }
                 record_residual(iter, "cg_step");
             }
 
@@ -1688,8 +1788,10 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             {
                 double nrm2 = 0.0;
                 for (int ig = 0; ig < n_dim_; ++ig)
+                {
                     nrm2 += static_cast<double>(
                         std::norm(grad[idx(ig, i, ld_psi_)]));
+                }
                 grad_nrm2[i] = nrm2;
             }
             reduce_pool_if_mpi_ready(grad_nrm2.data(), ncol);
@@ -1703,7 +1805,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 }
             }
             if (all_converged)
+            {
                 break;
+            }
 
             ++iter;
         }

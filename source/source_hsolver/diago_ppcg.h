@@ -128,7 +128,7 @@ private:
     T complex_dot(const T* x, const T* y) const;
 
     // Gram matrix: out[i, j] = <a_i | b_j>.
-    void gram(const T* a, const T* b,
+    void gram(const T* mat_a, const T* mat_b,
               int ncol_a, int ncol_b,
               std::vector<T>& out, int ld_out) const;
 
