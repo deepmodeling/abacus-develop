@@ -132,7 +132,7 @@ if (ENABLE_MPI)
 AddTest(
   TARGET MODULE_HSOLVER_compare
   LIBS parameter base psi device container
-  SOURCES diago_compare_test.cpp ../diago_cg.cpp ../diago_bpcg.cpp ../diago_david.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_linear_transform.cpp ../../source_basis/module_pw/test/test_tool.cpp
+  SOURCES diago_compare_test.cpp ../diago_cg.cpp ../diago_bpcg.cpp ../diago_david.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_lin_tf.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 endif()
 
