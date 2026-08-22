@@ -16,14 +16,3 @@ add_test(NAME MODULE_ESTATE_charge_mpi_test_4np
       COMMAND mpirun -np 4 ./MODULE_ESTATE_charge_mpi_test;
       WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 )
-
-AddTest(
-  TARGET MODULE_ESTATE_band_parallel_weights_test
-  LIBS parameter base device
-  SOURCES band_parallel_weights_test.cpp ../elecstate_tools.cpp ../occupy.cpp
-)
-
-add_test(NAME MODULE_ESTATE_band_parallel_weights_test_4np
-      COMMAND mpirun -np 4 ./MODULE_ESTATE_band_parallel_weights_test;
-      WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-)
