@@ -128,6 +128,14 @@ AddTest(
   SOURCES diago_ppcg_test.cpp ../diago_ppcg.cpp
 )
 
+if (ENABLE_MPI)
+AddTest(
+  TARGET MODULE_HSOLVER_compare
+  LIBS parameter base psi device container
+  SOURCES diago_compare_test.cpp ../diago_cg.cpp ../diago_bpcg.cpp ../diago_david.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_linear_transform.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+endif()
+
 install(FILES H-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES S-KPoints-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
