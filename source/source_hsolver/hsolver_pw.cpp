@@ -206,6 +206,7 @@ void HSolverPW<T, Device>::solve(hamilt::Hamilt<T, Device>* pHamilt,
                                  _pes_pw->eferm,
                                  _pes_pw->f_en,
                                  _pes_pw->nelec_spin,
+                                 this->nbands,
                                  _pes_pw->skip_weights);
 
     elecstate::calEBand(_pes_pw->ekb,_pes_pw->wg,_pes_pw->f_en);

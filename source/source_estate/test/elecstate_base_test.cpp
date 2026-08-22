@@ -342,6 +342,7 @@ TEST_F(ElecStateTest, CalculateWeightsSkipWeights)
                                                  elecstate->eferm,
                                                  elecstate->f_en,
                                                  elecstate->nelec_spin,
+                                                 PARAM.input.nbands,
                                                  elecstate->skip_weights));
 }
 
@@ -355,6 +356,7 @@ TEST_F(ElecStateDeathTest, CalculateWeightsFixedOccupations)
                                              elecstate->eferm,
                                              elecstate->f_en,
                                              elecstate->nelec_spin,
+                                             PARAM.input.nbands,
                                              elecstate->skip_weights),
                 ::testing::ExitedWithCode(1),
                 "");
@@ -396,6 +398,7 @@ TEST_F(ElecStateTest, CalculateWeightsIWeights)
                                  elecstate->eferm,
                                  elecstate->f_en,
                                  elecstate->nelec_spin,
+                                 PARAM.input.nbands,
                                  elecstate->skip_weights);
     EXPECT_DOUBLE_EQ(elecstate->wg(0, 0), 2.0);
     EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.input.nelec / 2 - 1), 2.0);
@@ -466,6 +469,7 @@ TEST_F(ElecStateTest, CalculateWeightsIWeightsTwoFermi)
                                  elecstate->eferm,
                                  elecstate->f_en,
                                  elecstate->nelec_spin,
+                                 PARAM.input.nbands,
                                  elecstate->skip_weights);
     EXPECT_DOUBLE_EQ(elecstate->wg(0, 0), 1.1);
     EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.input.nelec / 2 - 1), 1.0);
@@ -509,6 +513,7 @@ TEST_F(ElecStateTest, CalculateWeightsGWeights)
                                  elecstate->eferm,
                                  elecstate->f_en,
                                  elecstate->nelec_spin,
+                                 PARAM.input.nbands,
                                  elecstate->skip_weights);
     // PARAM.input.nelec = 10;
     // PARAM.input.nbands = 6;
@@ -585,6 +590,7 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
                                  elecstate->eferm,
                                  elecstate->f_en,
                                  elecstate->nelec_spin,
+                                 PARAM.input.nbands,
                                  elecstate->skip_weights);
     // PARAM.input.nelec = 10;
     // PARAM.input.nbands = 6;

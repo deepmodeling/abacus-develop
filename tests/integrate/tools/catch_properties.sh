@@ -544,8 +544,7 @@ fi
 #---------------------------------------
 #echo $out_chg
 if ! test -z "$out_chg"  && [  $out_chg -ge 1 ]; then
-	python3 $COMPARE_SCRIPT chg.cube.ref OUT.autotest/chg.cube 8
-	echo "chg.cube_pass $?" >>$1
+	record_compare_result "$1" "chg.cube_pass" "chg.cube.ref" "OUT.autotest/chg.cube" 6
 fi
 
 
@@ -700,7 +699,7 @@ shopt -s nullglob
 for pchg_ref in pchgi*.cube.ref; do
     pchg_cube=${pchg_ref%.ref}
     pchg_key=$(sanitize_result_key "${pchg_cube}_compare")
-    record_compare_result "$1" "$pchg_key" "$pchg_ref" "OUT.autotest/$pchg_cube" 8
+    record_compare_result "$1" "$pchg_key" "$pchg_ref" "OUT.autotest/$pchg_cube" 6
 done
 shopt -u nullglob
 
