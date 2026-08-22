@@ -63,7 +63,7 @@ add_test(
 AddTest(
   TARGET MODULE_IO_write_eig_occ_test
   LIBS parameter  base device symmetry
-  SOURCES write_eig_occ_test.cpp ../module_energy/band_parallel_output.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
+  SOURCES write_eig_occ_test.cpp ../module_output/band_parallel_output.cpp ../module_energy/write_eig_occ.cpp ../../source_cell/parallel_kpoints.cpp ../../source_cell/klist.cpp ../../source_cell/k_vector_utils.cpp
 		../../source_cell/cif_io.cpp
 )
 

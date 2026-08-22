@@ -1,5 +1,5 @@
 #include "write_bands.h"
-#include "band_parallel_output.h"
+#include "source_io/module_output/band_parallel_output.h"
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"

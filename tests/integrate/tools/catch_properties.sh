@@ -696,6 +696,14 @@ fi
 # 1. get_wf/get_pchg calculation tag (LCAO)
 # 2. out_wfc_norm/out_wfc_re_im/out_pchg (PW)
 #--------------------------------------------
+shopt -s nullglob
+for pchg_ref in pchgi*.cube.ref; do
+    pchg_cube=${pchg_ref%.ref}
+    pchg_key=$(sanitize_result_key "${pchg_cube}_compare")
+    record_compare_result "$1" "$pchg_key" "$pchg_ref" "OUT.autotest/$pchg_cube" 8
+done
+shopt -u nullglob
+
 need_process_cube=false
 # Check if this is a LCAO calculation with get_wf/get_pchg
 if [ $calculation == "get_wf" ] || [ $calculation == "get_pchg" ]; then

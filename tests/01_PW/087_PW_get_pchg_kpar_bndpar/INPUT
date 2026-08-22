@@ -4,8 +4,8 @@ suffix            autotest
 calculation       scf
 init_wfc          random
 
-nbands            6
-symmetry          1
+nbands            5
+symmetry          0
 pseudo_dir        ../../PP_ORB
 
 #Parameters (2.Iteration)
@@ -18,6 +18,8 @@ basis_type        pw
 
 out_pchg          4*1
 
+ks_solver         bpcg
 kpar              2
+bndpar            2
 
 pw_seed           1
