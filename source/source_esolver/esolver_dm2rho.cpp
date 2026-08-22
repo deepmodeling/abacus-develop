@@ -2,11 +2,11 @@
 
 #include "source_base/timer.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
-#include "source_cell/read_pseudo.h"
+#include "source_cell/read_pp_ucell.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_ml/io_npz.h"
 #include "source_io/module_output/cube_io.h"
-#include "source_lcao/LCAO_domain.h"
+#include "source_lcao/lcao_domain.h"
 #include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 #include "source_lcao/rho_tau_lcao.h" // mohan add 2025-10-24
@@ -58,7 +58,7 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
     ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_DMR_pointer(1)));
 
     // if nspin=2, need extra reading
-    if (PARAM.inp.nspin == 2)
+    if (this->inp_->nspin == 2)
     {
         zipname = "output_DM1.npz";
         ModuleIO::read_mat_npz(&(this->pv), ucell, zipname, *(this->dmat.dm->get_DMR_pointer(2)));
@@ -66,9 +66,9 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
 
     // it's dangerous to design psiToRho function like this, mohan note 20251024
     // this->pelec->psiToRho(*this->psi);
-    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), PARAM.inp.nspin, &this->chr);
+    LCAO_domain::dm2rho(this->dmat.dm->get_DMR_vector(), this->inp_->nspin, &this->chr);
 
-    int nspin0 = PARAM.inp.nspin == 2 ? 2 : 1;
+    int nspin0 = this->inp_->nspin == 2 ? 2 : 1;
 
     for (int is = 0; is < nspin0; is++)
     {
@@ -78,7 +78,7 @@ void ESolver_DM2rho<TK, TR>::runner(BaseCell& basecell, const int istep)
         ModuleIO::write_vdata_palgrid(this->Pgrid,
                                       this->chr.rho[is],
                                       is,
-                                      PARAM.inp.nspin,
+                                      this->inp_->nspin,
                                       istep,
                                       fn,
                                       this->pelec->eferm.get_efval(is),

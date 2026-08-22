@@ -7,7 +7,7 @@
 #include "source_lcao/module_rdmft/rdmft_tools.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "source_estate/module_charge/symmetry_rho.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_hamilt/module_gint/gint_interface.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 
@@ -30,9 +30,9 @@ void RDMFT<TK, TR>::update_ion(UnitCell& ucell_in,
     HR_TV->set_zero();
     this->cal_V_TV();
 #ifdef __EXX
-    if( GlobalC::exx_info.info_global.cal_exx )
+    if( this->exx_info_->info_global.cal_exx )
     {
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (this->exx_info_->info_ri.real_number)
         {
             Vxc_fromRI_d->cal_exx_ions(ucell_in);
         }

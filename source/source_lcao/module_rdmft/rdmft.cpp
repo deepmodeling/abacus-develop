@@ -10,7 +10,7 @@
 #include "source_cell/module_symmetry/symmetry.h"
 
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI.h"
+#include "source_lcao/module_ri/exx_lri.h"
 #endif
 
 #include <iostream>
@@ -65,7 +65,8 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
                          LCAO_Orbitals& orb_in,
                          TwoCenterBundle& two_center_bundle_in,
                          std::string XC_func_rdmft_in,
-                         double alpha_power_in)
+                         double alpha_power_in,
+                         const Exx_Info& exx_info)
 {
     ParaV = &ParaV_in;
     ucell = &ucell_in;
@@ -148,7 +149,8 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
     // HR_local->set_zero();
 
 #ifdef __EXX
-    if( GlobalC::exx_info.info_global.cal_exx )
+    this->exx_info_ = &exx_info;
+    if( this->exx_info_->info_global.cal_exx )
     {
         // if the irreducible k-points can change with symmetry during cell-relax, it should be moved back to update_ion()
         exx_spacegroup_symmetry = (PARAM.inp.nspin < 4 && ModuleSymmetry::Symmetry::symm_flag == 1);
@@ -160,14 +162,14 @@ void RDMFT<TK, TR>::init(Parallel_Orbitals& ParaV_in,
             this->symrot_exx.cal_Ms(*kv, *ucell, *ParaV);
         }
 
-        if (GlobalC::exx_info.info_ri.real_number)
+        if (this->exx_info_->info_ri.real_number)
         {
-            Vxc_fromRI_d = new Exx_LRI<double>(GlobalC::exx_info.info_ri);
+            Vxc_fromRI_d = new Exx_LRI<double>(this->exx_info_->info_ri);
             Vxc_fromRI_d->init(MPI_COMM_WORLD, ucell_in,*kv, *orb);
         }
         else
         {
-            Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(GlobalC::exx_info.info_ri);
+            Vxc_fromRI_c = new Exx_LRI<std::complex<double>>(this->exx_info_->info_ri);
             Vxc_fromRI_c->init(MPI_COMM_WORLD, ucell_in,*kv, *orb);
         }
     }
@@ -216,7 +218,7 @@ void RDMFT<TK, TR>::cal_Hk_Hpsi()
         _diagonal_in_serial( para_Eij, Eij_hartree, &(wfcHwfc_hartree(ik, 0)) );
 
 #ifdef __EXX
-        if(GlobalC::exx_info.info_global.cal_exx)
+        if(this->exx_info_->info_global.cal_exx)
         {
             hsk_exx_XC->set_zero_hk();
 
@@ -318,7 +320,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
         // for Exc
         E_RDMFT[2] = 0.0;
 #ifdef __EXX
-        if( GlobalC::exx_info.info_global.cal_exx )
+        if( this->exx_info_->info_global.cal_exx )
         {
             ModuleBase::matrix Exc_n_k(wg.nr, wg.nc, true);
             // because we have got wk_fun_occNum, we can use symbol=1 realize it
@@ -370,7 +372,7 @@ void RDMFT<TK, TR>::cal_Energy(const int cal_type)
     {
         GlobalV::ofs_running << "\n\nfrom class RDMFT: \nXC_fun: " << XC_func_rdmft << std::endl;
 #ifdef __EXX
-        if( GlobalC::exx_info.info_global.cal_exx ) { GlobalV::ofs_running << "alpha_power: " << alpha_power << std::endl;
+        if( this->exx_info_->info_global.cal_exx ) { GlobalV::ofs_running << "alpha_power: " << alpha_power << std::endl;
 }
 #endif
         // GlobalV::ofs_running << std::setprecision(12);

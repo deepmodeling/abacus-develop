@@ -7,15 +7,15 @@ AddTest(
           ../../../source_base/module_external/blas_connector_base.cpp ../../../source_base/module_external/blas_connector_vector.cpp ../../../source_base/module_external/blas_connector_matrix.cpp   
           ../../../source_base/libm/branred.cpp ../../../source_base/libm/sincos.cpp 
           ../../../source_base/module_device/memory_op.cpp
-          depend_mock.cpp pw_test.cpp test1-1-1.cpp test1-1-2.cpp test1-2.cpp test1-3.cpp test1-4.cpp  test1-5.cpp
-          test2-1-1.cpp test2-1-2.cpp test2-2.cpp test2-3.cpp 
-          test3-1.cpp test3-2.cpp test3-3.cpp test3-3-2.cpp 
-          test4-1.cpp test4-2.cpp test4-3.cpp test4-4.cpp  test4-5.cpp
-          test5-1-1.cpp test5-1-2.cpp test5-2-1.cpp test5-2-2.cpp test5-3-1.cpp test5-4-1.cpp test5-4-2.cpp 
-          test6-1-1.cpp test6-1-2.cpp test6-2-1.cpp test6-2-2.cpp test6-3-1.cpp test6-4-1.cpp test6-4-2.cpp 
-          test7-1.cpp test6-2-1.cpp test7-3-1.cpp test7-3-2.cpp
-          test8-1.cpp test8-2-1.cpp test8-3-1.cpp test8-3-2.cpp
-          test_tool.cpp test-big.cpp test-other.cpp test_sup.cpp
+          depend_mock.cpp pw_test.cpp test1_1_1.cpp test1_1_2.cpp test1_2.cpp test1_3.cpp test1_4.cpp  test1_5.cpp
+          test2_1_1.cpp test2_1_2.cpp test2_2.cpp test2_3.cpp
+          test3_1.cpp test3_2.cpp test3_3.cpp test3_3_2.cpp
+          test4_1.cpp test4_2.cpp test4_3.cpp test4_4.cpp  test4_5.cpp
+          test5_1_1.cpp test5_1_2.cpp test5_2_1.cpp test5_2_2.cpp test5_3_1.cpp test5_4_1.cpp test5_4_2.cpp
+          test6_1_1.cpp test6_1_2.cpp test6_2_1.cpp test6_2_2.cpp test6_3_1.cpp test6_4_1.cpp test6_4_2.cpp
+          test7_1.cpp test6_2_1.cpp test7_3_1.cpp test7_3_2.cpp
+          test8_1.cpp test8_2_1.cpp test8_3_1.cpp test8_3_2.cpp
+          test_tool.cpp test_big.cpp test_other.cpp test_sup.cpp
 )
 
 add_test(NAME MODULE_PW_pw_test_parallel

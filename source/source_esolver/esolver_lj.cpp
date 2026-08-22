@@ -5,10 +5,11 @@
 #include "source_io/module_output/output_log.h"
 #include "source_cell/module_neighlist/neighbor_types.h"
 #include "source_cell/module_neighlist/neighbor_search.h"
+#include "source_cell/md_cell.h"
+#include "source_base/communication_domain.h"
 #include "source_base/global_variable.h"
 #include "source_base/timer.h"
 #ifdef __MPI
-#include "source_cell/module_neighlist/domain_decomposition.h"
 #include "source_base/parallel_reduce.h"
 #endif
 
@@ -21,31 +22,13 @@
 namespace ModuleESolver
 {
 
-    UnitCellLite ESolver_LJ::change_from_ucell_to_ucell_lite(const UnitCell& ucell)
-    {
-        UnitCellLite ucell_lite;
-
-        // Set lattice parameters
-        ucell_lite.set_lattice(ucell.lat0, ucell.omega, ucell.latvec);
-
-        // Build atom information
-        std::vector<int> na;
-        std::vector<ModuleBase::Vector3<double>> tau;
-        for (int i = 0; i < ucell.ntype; i++) {
-            na.push_back(ucell.atoms[i].na);
-            for (int j = 0; j < ucell.atoms[i].na; j++) {
-                tau.push_back(ucell.atoms[i].tau[j]);
-            }
-        }
-        ucell_lite.set_atoms(ucell.ntype, na, tau);
-
-        return ucell_lite;
-    }
-
 void ESolver_LJ::before_all_runners(BaseCell& cell, const Input_para& inp)
 {
     cell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(cell);
+
+    this->inp_ = &inp;
+
     lj_potential = 0;
     lj_force.create(ucell.nat, 3);
     lj_virial.create(3, 3);
@@ -65,7 +48,6 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     static_cast<void>(istep);
     cell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(cell);
-    UnitCellLite ucell_lite = change_from_ucell_to_ucell_lite(ucell);
     NeighborSearch neighbor_search;
 
     // Important! potential, force, virial must be zero per step
@@ -80,13 +62,9 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     {
         ModuleBase::timer::start("ESolverLJ", "mpi_total");
         ModuleBase::timer::start("ESolverLJ", "neigh_init");
-        DomainDecomposition decomp;
-        decomp.init(MPI_COMM_WORLD, ucell_lite.get_latvec(), ucell_lite.get_lat0(), search_radius, 0.0);
-        std::vector<LocalAtom> owned_atoms;
-        std::vector<LocalAtom> ghost_atoms;
-        decomp.split_owned_atoms_from_ucell(ucell_lite, owned_atoms);
-        decomp.exchange_ghost_atoms(owned_atoms, ghost_atoms);
-        neighbor_search.init_distributed(owned_atoms, ghost_atoms, search_radius, ucell_lite.get_lat0());
+        const ModuleBase::CommunicationDomain communication_domain = ModuleBase::world_communication_domain();
+        MDCell mdcell(ucell, search_radius, 0.0, communication_domain);
+        neighbor_search.init(mdcell, search_radius);
         ModuleBase::timer::end("ESolverLJ", "neigh_init");
         ModuleBase::timer::start("ESolverLJ", "neigh_bld");
         neighbor_search.build_neighbors();
@@ -181,7 +159,7 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     {
         ModuleBase::timer::start("ESolverLJ", "serial_tot");
         ModuleBase::timer::start("ESolverLJ", "ser_neigh");
-        neighbor_search.init(ucell_lite, search_radius);
+        neighbor_search.init(ucell, search_radius);
         neighbor_search.build_neighbors();
         ModuleBase::timer::end("ESolverLJ", "ser_neigh");
 
@@ -260,7 +238,7 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
 
         // external stress
         double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-        double external_stress[3] = {PARAM.inp.press1, PARAM.inp.press2, PARAM.inp.press3};
+        double external_stress[3] = {this->inp_->press1, this->inp_->press2, this->inp_->press3};
         for (int i = 0; i < 3; i++)
         {
             stress(i, i) -= external_stress[i] / unit_transform;

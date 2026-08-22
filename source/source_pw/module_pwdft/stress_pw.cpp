@@ -6,13 +6,13 @@
 #include "source_hamilt/module_vdw/vdw.h"
 #include "source_io/module_output/output_log.h"
 #include "source_hamilt/module_xc/xc_functional.h"
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type
 
 template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
                                            const vdw::VdwResult* vdw_result,
-                                           Plus_U &dftu, // mhan add 2025-11-07 
+                                           Plus_U &dftu, // mhan add 2025-11-07
                                            const pseudopot_cell_vl& locpp,
                                            const pseudopot_cell_vnl& nlpp,
                                            ModulePW::PW_Basis* rho_basis,
@@ -20,6 +20,7 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            Structure_Factor* p_sf,
                                            K_Vectors* p_kv,
                                            ModulePW::PW_Basis_K* wfc_basis,
+                                           const General_Exx_Info& exx_info,
                                            const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in)
 {
     ModuleBase::TITLE("Stress_PW", "cal_stress");
@@ -135,9 +136,9 @@ void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
     }
 
     // EXX PW stress
-    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-    auto coulomb_param = GlobalC::exx_info.info_global.coulomb_param;
+    bool cal_exx = exx_info.cal_exx;
+    double hybrid_alpha = exx_info.hybrid_alpha;
+    auto coulomb_param = exx_info.coulomb_param;
     if (cal_exx)
     {
         this->stress_exx(sigmaexx, this->pelec->wg, rho_basis, wfc_basis, p_kv, d_psi_in, ucell, hybrid_alpha, coulomb_param);

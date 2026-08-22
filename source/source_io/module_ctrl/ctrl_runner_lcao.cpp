@@ -10,7 +10,7 @@
 #include "../module_hs/write_vxc.hpp"
 #include "../module_hs/write_vxc_r.hpp"
 #ifdef __EXX
-#include "source_lcao/module_ri/Exx_LRI_interface.h"
+#include "source_lcao/module_ri/exx_lri_interface.h"
 #endif
 
 namespace ModuleIO
@@ -35,6 +35,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
 		Exx_NAO<TK> &exx_nao,
+        const Exx_Info& exx_info,
         surchem &solvent)             // solvent model
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_lcao");
@@ -56,7 +57,7 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
     // 3) print out exchange-correlation potential
     if (inp.out_mat_xc)
     {
-        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
+        bool cal_exx = exx_info.info_global.cal_exx;
         ModuleIO::write_Vxc<TK, TR>(inp.nspin,
                                     PARAM.globalv.nlocal,
                                     GlobalV::DRANK,
@@ -73,7 +74,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                     orb.cutoffs(),
                                     pelec->wg,
                                     gd,
-                                    cal_exx
+                                    cal_exx,
+                                    exx_info
 #ifdef __EXX
                                     ,
                                     exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
@@ -84,9 +86,9 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
 
     if (inp.out_mat_xc2[0])
     {
-        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
-        bool real_number = GlobalC::exx_info.info_ri.real_number;
+        bool cal_exx = exx_info.info_global.cal_exx;
+        double hybrid_alpha = exx_info.info_global.hybrid_alpha;
+        bool real_number = exx_info.info_ri.real_number;
         ModuleIO::write_Vxc_R<TK, TR>(inp.nspin,
                                       &pv,
                                       ucell,
@@ -130,7 +132,8 @@ void ctrl_runner_lcao(UnitCell& ucell,      // unitcell
                                             pelec->wg,
                                             gd,
                                             orb.cutoffs(),
-                                            two_center_bundle
+                                            two_center_bundle,
+                                            exx_info
 #ifdef __EXX
                                             ,
                                             exx_nao.exd ? &exx_nao.exd->get_Hexxs() : nullptr,
@@ -164,6 +167,7 @@ template void ctrl_runner_lcao<double, double>(UnitCell& ucell,      // unitcell
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<double> &exx_nao,
+        const Exx_Info& exx_info,
         surchem &solvent);             // solvent model
 
 // TK: complex<double>  TR: double 
@@ -185,6 +189,7 @@ template void ctrl_runner_lcao<std::complex<double>, double>(UnitCell& ucell,   
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<std::complex<double>> &exx_nao,
+        const Exx_Info& exx_info,
         surchem &solvent);             // solvent model
 
 // TK: complex<double>  TR: complex<double>
@@ -206,6 +211,7 @@ template void ctrl_runner_lcao<std::complex<double>, std::complex<double>>(UnitC
 		Structure_Factor &sf,         // structure factor
         ModuleBase::matrix &vloc,     // local pseudopotential 
         Exx_NAO<std::complex<double>> &exx_nao,
+        const Exx_Info& exx_info,
         surchem &solvent);             // solvent model
 
 } // end namespace

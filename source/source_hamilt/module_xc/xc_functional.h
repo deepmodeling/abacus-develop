@@ -19,6 +19,7 @@
 #include "source_cell/unitcell.h"
 
 #include <map> // added by jghan, 2024-10-10
+#include <vector>
 
 class XC_Functional
 {
@@ -94,6 +95,11 @@ class XC_Functional
         return ked_flag;
     };
 
+    static bool get_need_laplacian()
+    {
+        return need_laplacian;
+    };
+
     /// Usually in exx caculation, the first SCF loop should be converged with PBE
     static void set_xc_first_loop(const UnitCell& ucell);
 
@@ -104,8 +110,8 @@ class XC_Functional
     static std::vector<int> func_id; // libxc id of functional
     static int func_type; //0:none, 1:lda, 2:gga, 3:mgga, 4:hybrid lda/gga, 5:hybrid mgga
     static bool ked_flag; // whether the functional has kinetic energy density
+    static bool need_laplacian; // whether any functional needs Laplacian of density
     static bool use_libxc;
-
     // exx_hybrid_alpha for mixing exx in hybrid functional:
     static double hybrid_alpha;
 
@@ -247,6 +253,12 @@ class XC_Functional
     static void grad_dot(
         const ModuleBase::Vector3<double>* h,
         double* dh,
+        const ModulePW::PW_Basis* rho_basis,
+        const double tpiba);
+
+    static void laplacian_rho(
+        const std::complex<double>* rhog,
+        double* lapl,
         const ModulePW::PW_Basis* rho_basis,
         const double tpiba);
 

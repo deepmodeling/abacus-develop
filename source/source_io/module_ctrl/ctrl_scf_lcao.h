@@ -44,6 +44,7 @@ void ctrl_scf_lcao(UnitCell& ucell,
                    rdmft::RDMFT<TK, TR>& rdmft_solver,   // for RDMFT
                    Setup_DeePKS<TK>& deepks,
                    Exx_NAO<TK>& exx_nao,
+                   const Exx_Info& exx_info,
                    const bool conv_esolver,
                    const bool scf_nmax_flag,
                    const int istep);

@@ -11,7 +11,7 @@
 #include "source_hsolver/diago_iter_assist.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_psi/psi_init_atomic.h"
-#include "source_psi/psi_init_atomic_random.h"
+#include "source_psi/psi_init_atom_rand.h"
 #include "source_psi/psi_init_file.h"
 #include "source_psi/psi_init_nao.h"
 #include "source_psi/psi_init_nao_random.h"

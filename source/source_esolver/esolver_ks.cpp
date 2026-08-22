@@ -14,6 +14,7 @@
 #include "source_io/module_output/output_log.h" // use write_head
 #include "source_estate/elecstate_print.h" // print_etot
 #include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
+#include "source_hamilt/module_xc/general_exx_info.h" // for init_general_exx_info
 
 namespace ModuleESolver
 {
@@ -44,8 +45,11 @@ void ESolver_KS::before_all_runners(BaseCell& basecell, const Input_para& inp)
 
     //! 1) setup "before_all_runniers" in ESolver_FP
     ESolver_FP::before_all_runners(ucell, inp);
-    
-    //! 2) setup some parameters
+
+    //! 2) initialize General_Exx_Info from input parameters
+    init_general_exx_info(general_exx_info_, inp);
+
+    //! 3) setup some parameters
     classname = "ESolver_KS";
     basisname = "";
 
@@ -93,27 +97,27 @@ void ESolver_KS::hamilt2rho(UnitCell& ucell, const int istep, const int iter, co
     // example wavefunctions uses 20 processors while density uses 10.
     if (PARAM.globalv.ks_run)
     {
-        drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
+        drho = p_chgmix->get_drho(&this->chr, this->inp_->nelec);
         hsolver_error = 0.0;
-        if (iter == 1 && PARAM.inp.calculation != "nscf")
+        if (iter == 1 && this->inp_->calculation != "nscf")
         {
             hsolver_error
-                = hsolver::cal_hsolve_error(PARAM.inp.basis_type, PARAM.inp.esolver_type, diag_ethr, PARAM.inp.nelec);
+                = hsolver::cal_hsolve_error(this->inp_->basis_type, this->inp_->esolver_type, diag_ethr, this->inp_->nelec);
 
             // The error of HSolver is larger than drho,
             // so a more precise HSolver should be executed.
             if (hsolver_error > drho)
             {
-                diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running, PARAM.inp.basis_type,
-                            PARAM.inp.esolver_type, PARAM.inp.precision, hsolver_error,
-                            drho, diag_ethr, PARAM.inp.nelec);
+                diag_ethr = hsolver::reset_diag_ethr(GlobalV::ofs_running, this->inp_->basis_type,
+                            this->inp_->esolver_type, this->inp_->precision, hsolver_error,
+                            drho, diag_ethr, this->inp_->nelec);
 
                 this->hamilt2rho_single(ucell, istep, iter, diag_ethr);
 
-                drho = p_chgmix->get_drho(&this->chr, PARAM.inp.nelec);
+                drho = p_chgmix->get_drho(&this->chr, this->inp_->nelec);
 
-                hsolver_error = hsolver::cal_hsolve_error(PARAM.inp.basis_type,
-                                PARAM.inp.esolver_type, diag_ethr, PARAM.inp.nelec);
+                hsolver_error = hsolver::cal_hsolve_error(this->inp_->basis_type,
+                                this->inp_->esolver_type, diag_ethr, this->inp_->nelec);
             }
         }
     }
@@ -134,7 +138,7 @@ void ESolver_KS::runner(BaseCell& basecell, const int istep)
     // 2) SCF iterations
     bool conv_esolver = false;
     this->niter = this->maxniter;
-    this->diag_ethr = PARAM.inp.pw_diag_thr;
+    this->diag_ethr = this->inp_->pw_diag_thr;
     this->scf_nmax_flag = false; // mohan add 2025-09-21
     for (int iter = 1; iter <= this->maxniter; ++iter)
     {
@@ -179,25 +183,25 @@ void ESolver_KS::before_scf(UnitCell& ucell, const int istep)
 
 void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
 {
-    if(PARAM.inp.esolver_type != "tddft")
+    if(this->inp_->esolver_type != "tddft")
     {
         ModuleIO::write_head(GlobalV::ofs_running, istep, iter, this->basisname);
     }
 
     iter_time = ModuleBase::get_time();
 
-    if (PARAM.inp.esolver_type == "ksdft")
+    if (this->inp_->esolver_type == "ksdft")
     {
-        diag_ethr = hsolver::set_diagethr_ks(PARAM.inp.basis_type, PARAM.inp.esolver_type,
-          PARAM.inp.calculation, PARAM.inp.init_chg, PARAM.inp.precision, istep, iter,
-          drho, PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nelec, PARAM.inp.scf_thr);
+        diag_ethr = hsolver::set_diagethr_ks(this->inp_->basis_type, this->inp_->esolver_type,
+          this->inp_->calculation, this->inp_->init_chg, this->inp_->precision, istep, iter,
+          drho, this->inp_->pw_diag_thr, diag_ethr, this->inp_->nelec, this->inp_->scf_thr);
     }
-    else if (PARAM.inp.esolver_type == "sdft")
+    else if (this->inp_->esolver_type == "sdft")
     {
-        diag_ethr = hsolver::set_diagethr_sdft(PARAM.inp.basis_type, PARAM.inp.esolver_type,
-          PARAM.inp.calculation, PARAM.inp.init_chg, istep, iter, drho,
-          PARAM.inp.pw_diag_thr, diag_ethr, PARAM.inp.nbands, esolver_KS_ne,
-          PARAM.inp.nelec, PARAM.inp.scf_thr);
+        diag_ethr = hsolver::set_diagethr_sdft(this->inp_->basis_type, this->inp_->esolver_type,
+          this->inp_->calculation, this->inp_->init_chg, istep, iter, drho,
+          this->inp_->pw_diag_thr, diag_ethr, this->inp_->nbands, esolver_KS_ne,
+          this->inp_->nelec, this->inp_->scf_thr);
     }
 
     // save input charge density (rho)
@@ -218,9 +222,9 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     }
 
     // 1.2) print out eigenvalues and occupations
-    if (PARAM.inp.out_band[0])
+    if (this->inp_->out_band[0])
     {
-        if (iter % PARAM.inp.out_freq_elec == 0 || iter == PARAM.inp.scf_nmax || conv_esolver)
+        if (iter % this->inp_->out_freq_elec == 0 || iter == this->inp_->scf_nmax || conv_esolver)
         {
             ModuleIO::write_eig_iter(this->pelec->ekb,this->pelec->wg,*this->pelec->klist);
         }
@@ -228,7 +232,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     // 2.1) compute magnetization, only for spin==2
     ucell.magnet.compute_mag(ucell.omega, this->chr.nrxx, this->chr.nxyz, this->chr.rho,
-                                       PARAM.inp.nspin, PARAM.globalv.two_fermi, PARAM.inp.nelec,
+                                       this->inp_->nspin, PARAM.globalv.two_fermi, this->inp_->nelec,
                                        this->pelec->nelec_spin.data());
 
     // 2.2) charge mixing
@@ -236,7 +240,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     bool converged_u = true;
     // to avoid unnecessary dependence on dft+u, refactor is needed
 #ifdef __LCAO
-    if (PARAM.inp.dft_plus_u)
+    if (this->inp_->dft_plus_u)
     {
         converged_u = this->dftu.u_converged();
     }
@@ -244,7 +248,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
 
     module_charge::chgmixing_ks(iter, ucell, this->pelec, this->chr, this->p_chgmix, 
       this->pw_rhod->nrxx, this->drho, this->oscillate_esolver, conv_esolver, hsolver_error, 
-      this->scf_thr, this->scf_ene_thr, converged_u, PARAM.inp);
+      this->scf_thr, this->scf_ene_thr, converged_u, *this->inp_);
 
     // 2.3) Update potentials (should be done every SF iter)
     elecstate::update_pot(ucell, this->pelec, this->chr, conv_esolver);
@@ -264,7 +268,7 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     double dkin = 0.0; // for meta-GGA
     if (XC_Functional::get_ked_flag())
     {
-        dkin = p_chgmix->get_dkin(&this->chr, PARAM.inp.nelec);
+        dkin = p_chgmix->get_dkin(&this->chr, this->inp_->nelec);
     }
 
     // Iter finish 
@@ -296,7 +300,7 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     
 /*
     // 1) calculate the kinetic energy density tau
-    if (PARAM.inp.out_elf[0] > 0)
+    if (this->inp_->out_elf[0] > 0)
     {
         assert(this->psi != nullptr);
         this->pelec->cal_tau(*(this->psi));
@@ -310,7 +314,7 @@ void ESolver_KS::after_scf(UnitCell& ucell, const int istep, const bool conv_eso
     ModuleIO::write_eig_file(this->pelec->ekb, this->pelec->wg, this->kv, istep);
 
     // 4) write band information to band.txt
-    ModuleIO::write_bands(PARAM.inp, this->pelec->ekb, this->kv);
+    ModuleIO::write_bands(*this->inp_, this->pelec->ekb, this->kv);
 
 }
 

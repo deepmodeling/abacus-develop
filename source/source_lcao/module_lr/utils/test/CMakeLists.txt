@@ -9,5 +9,5 @@ AddTest(
 AddTest(
   TARGET MODULE_LR_lr_util_algo_test
   LIBS parameter base device psi container planewave #for FFT
-  SOURCES lr_util_algorithms_test.cpp ../lr_util.cpp 
+  SOURCES lr_util_algo_test.cpp ../lr_util.cpp 
 )

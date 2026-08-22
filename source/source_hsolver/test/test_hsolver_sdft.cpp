@@ -81,16 +81,6 @@ void elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>::init
 {
 }
 
-template <typename REAL, typename Device>
-StoChe<REAL, Device>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
-{
-    this->nche = nche;
-}
-template <typename REAL, typename Device>
-StoChe<REAL, Device>::~StoChe()
-{
-}
-
 template class StoChe<double>;
 
 template <typename T, typename Device>
@@ -262,8 +252,10 @@ namespace ModulePW {
 class TestHSolverPW_SDFT : public ::testing::Test
 {
   public:
-    TestHSolverPW_SDFT() : stoche(8, 1, 0, 0), elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
+    TestHSolverPW_SDFT() : elecstate_test(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr)
     {
+        stoche.nche = 8;
+        stoche.method_sto = 1;
     }
     ModulePW::PW_Basis_K pwbk;
     Stochastic_WF<std::complex<double>> stowf;

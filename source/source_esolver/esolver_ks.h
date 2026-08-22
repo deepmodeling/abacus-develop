@@ -7,6 +7,7 @@
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 #include "source_hamilt/hamilt.h"                      // use Hamiltonian
 #include "source_hamilt/hamilt_base.h"                 // use Hamiltonian base class
+#include "source_hamilt/module_xc/general_exx_info.h"  // ESolver owns General_Exx_Info value
 #include "source_lcao/module_dftu/dftu.h"              // mohan add 20251107
 #include "source_pw/module_pwdft/vnl_pw.h"
 
@@ -73,6 +74,9 @@ class ESolver_KS : public ESolver_FP
     int niter;                      //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated
     bool scf_nmax_flag = false;     // whether scf has reached nmax, mohan add 20250921
+
+    /// General EXX info owned by ESolver, initialized from input parameters.
+    General_Exx_Info general_exx_info_;
 };
 } // namespace ModuleESolver
 #endif

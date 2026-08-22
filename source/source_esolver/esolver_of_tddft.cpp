@@ -3,11 +3,11 @@
 #include "source_io/module_parameter/parameter.h"
 //-----------temporary-------------------------
 #include "source_base/global_function.h"
-#include "source_estate/module_charge/symmetry_rho.h"
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
+#include "source_estate/module_charge/symm_rho.h"
+#include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_cell/cal_ux.h"
 //-----force-------------------
-#include "source_pw/module_pwdft/forces.h"
+#include "source_pw/module_pwdft/force_pw.h"
 //-----stress------------------
 #include "source_pw/module_ofdft/of_stress_pw.h"
 
@@ -43,11 +43,11 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
 
     if (this->phi_td.empty())
     {
-        const int size = PARAM.inp.nspin * this->pw_rho->nrxx;
+        const int size = this->inp_->nspin * this->pw_rho->nrxx;
         this->phi_td.resize(size, std::complex<double>(0.0, 0.0));
     }
 
-    if ((istep==0) && PARAM.inp.init_chg != "file")
+    if ((istep==0) && this->inp_->init_chg != "file")
     {
         while (true)
         {
@@ -80,7 +80,7 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < this->inp_->nspin; ++is)
         {
             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
@@ -88,12 +88,12 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
             }
         }
     }
-    else if ((istep==0) && PARAM.inp.init_chg == "file")
+    else if ((istep==0) && this->inp_->init_chg == "file")
     {
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < this->inp_->nspin; ++is)
         {
             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {
@@ -108,7 +108,7 @@ void ESolver_OF_TDDFT::runner(BaseCell& basecell, const int istep)
 #ifdef _OPENMP
 #pragma omp parallel for collapse(2)
 #endif
-        for (int is = 0; is < PARAM.inp.nspin; ++is)
+        for (int is = 0; is < this->inp_->nspin; ++is)
         {
             for (int ir = 0; ir < this->pw_rho->nrxx; ++ir)
             {

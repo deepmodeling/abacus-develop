@@ -7,7 +7,7 @@
 #include "source_base/constants.h"
 #include "source_base/matrix.h"
 #include "source_base/math_ylmreal.h"
-#include "source_base/spherical_bessel_transformer.h"
+#include "source_base/sph_bessel_tf.h"
 #include "source_base/timer.h"
 
 void RadialProjection::RadialProjector::_build_backward_map(const std::vector<std::vector<int>>& it2iproj,
@@ -98,7 +98,7 @@ void RadialProjection::RadialProjector::_build_sbt_tab(const int nr,
 
     std::vector<double> _temp(nq);
     // the SphericalBesselTransformer's result is multiplied by one extra factor sqrt(2/pi), should remove it
-    // see source_base/spherical_bessel_transformer.h and source_base/spherical_bessel_transformer.cpp:328
+    // see source_base/sph_bessel_tf.h and source_base/sph_bessel_tf.cpp:328
     const double pref = std::sqrt(2.0/std::acos(-1.0)); 
     for(int i = 0; i < nrad; i++)
     {

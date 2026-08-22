@@ -1,7 +1,7 @@
 #pragma once
 #include "source_cell/unitcell.h"
-#include "source_lcao/module_ri/RI_Util.h"
-#include "source_lcao/module_ri/abfs-vector3_order.h"
+#include "source_lcao/module_ri/ri_util.h"
+#include "source_lcao/module_ri/abfs_vector3_order.h"
 
 #include <RI/global/Tensor.h>
 #include <map>

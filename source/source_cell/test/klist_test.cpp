@@ -97,7 +97,7 @@ Magnetism::~Magnetism()
  *       and Monkhorst-Pack case
  */
 
-// abbriviated from module_symmetry/test/symmetry_test.cpp
+// abbriviated from module_symmetry/test/symm_test.cpp
 struct atomtype_
 {
     std::string atomname;

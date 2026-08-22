@@ -566,7 +566,7 @@ list(APPEND device_srcs
   source_hamilt/module_xc/kernels/xc_functional_op.cpp
   source_pw/module_pwdft/kernels/cal_density_real_op.cpp
   source_pw/module_pwdft/kernels/mul_potential_op.cpp
-  source_pw/module_pwdft/kernels/vec_mul_vec_complex_op.cpp
+  source_pw/module_pwdft/kernels/vec_mul_cx_op.cpp
   source_pw/module_pwdft/kernels/exx_cal_energy_op.cpp)
 
 if(USE_CUDA)
@@ -699,6 +699,9 @@ if(ENABLE_LCAO)
       numerical_atomic_orbitals
       lr
       rdmft)
+  if(ENABLE_LIBRI)
+    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE bse)
+  endif()
   if(ENABLE_ELPA)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
   endif()

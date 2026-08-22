@@ -9,7 +9,8 @@
 #ifdef __EXX
 #include "source_lcao/module_lr/operator_casida/operator_lr_exx.h"
 #include "source_lcao/module_lr/ri_benchmark/operator_ri_hartree.h"
-#include "source_lcao/module_ri/LRI_CV_Tools.h"
+#include "source_lcao/module_ri/lri_cv_tools.h"
+#include "source_lcao/module_lr/utils/lr_io.h"
 #endif
 namespace LR
 {
@@ -37,20 +38,21 @@ namespace LR
                const Parallel_2D& pc_in,
                const Parallel_Orbitals& pmat_in,
                const std::string& spin_type,
+               const std::string& out_dir,
                const std::string& ri_hartree_benchmark = "none",
                const std::vector<int>& aims_nbasis = {})
           : nspin(nspin), nocc(nocc), nvirt(nvirt), pX(pX_in), nk(kv_in.get_nks() / nspin)
         {
             ModuleBase::TITLE("HamiltLR", "HamiltLR");
-            if (ri_hartree_benchmark != "aims") { assert(aims_nbasis.empty()); }
+            if (ri_hartree_benchmark != "aims" && ri_hartree_benchmark !="aims-librpa") { assert(aims_nbasis.empty()); }
             // always use nspin=1 for transition density matrix
             this->DM_trans = LR_Util::make_unique<elecstate::DensityMatrix<T, T>>(&pmat_in, 1, kv_in.kvec_d, nk);
             if (ri_hartree_benchmark == "none") { LR_Util::initialize_DMR(*this->DM_trans, pmat_in, ucell_in, gd_in, orb_cutoff); }
             // this->DM_trans->init_DMR(&gd_in, &ucell_in); // too large due to not restricted by orb_cutoff
 
-            // add the diag operator  (the first one)
+            // 1.add the diag operator  (the first one)
             this->ops = new OperatorLRDiag<T>(eig_ks.c, pX[0], nk, nocc[0], nvirt[0]);
-            //add Hxc operator
+            // 2.add Hxc operator
 #ifdef __EXX
             using TAC = std::pair<int, std::array<int, 3>>;
             using TLRI = std::map<int, std::map<TAC, RI::Tensor<T>>>;
@@ -68,23 +70,42 @@ namespace LR
 #ifdef __EXX
                 if (spin_type == "singlet")
                 {
-                    if (ri_hartree_benchmark == "aims") 
-                    { 
-                        Cs_read = LRI_CV_Tools::read_Cs_ao<T>(dir + "Cs_data_0.txt");
-                        Vs_read = RI_Benchmark::read_coulomb_mat_general<T>(dir + "coulomb_mat_0.txt", Cs_read); 
+                    int use_fine_kgrid = 0;
+                    if (ri_hartree_benchmark == "aims" || ri_hartree_benchmark == "aims-librpa")
+                    {
+                        LR_IO::RI_kRlist kRlist (ucell_in,
+                                                const_cast<K_Vectors*>(&kv_in),
+                                                dir,
+                                                use_fine_kgrid,
+                                                out_dir);
+                        // though C and V are real, here still use <T> to multiply with psi
+                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(dir);
+                        Vs_read = LR_IO::read_coulomb_mat_general_k<T,T>(dir, Cs_read, kRlist);
                     }
                     else if (ri_hartree_benchmark == "abacus")
                     {
                         Cs_read = LRI_CV_Tools::read_Cs_ao<T>(dir + "Cs");
                         Vs_read = LRI_CV_Tools::read_Vs_abf<T>(dir + "Vs");
                     }
-                    if (!std::set<std::string>({ "rpa", "hf" }).count(xc_kernel)) { throw std::runtime_error("ri_hartree_benchmark is only supported for xc_kernel rpa and hf"); }
+                    else if (ri_hartree_benchmark == "abacus-librpa")
+                    {
+                        LR_IO::RI_kRlist kRlist (ucell_in,
+                                                const_cast<K_Vectors*>(&kv_in),
+                                                dir,
+                                                use_fine_kgrid,
+                                                out_dir);
+                        Cs_read = LRI_CV_Tools::read_Cs_ao_all<T>(dir);
+                        Vs_read = LR_IO::read_coulomb_mat_k<T,T>(dir, Cs_read, kRlist);
+                    }
+                    if (!std::set<std::string>({ "rpa", "hf"}).count(xc_kernel)) {
+                        throw std::runtime_error("ri_hartree_benchmark is only supported for xc_kernel = rpa, hf");
+                    }
                     RI_Benchmark::OperatorRIHartree<T>* ri_hartree_op
                         = new RI_Benchmark::OperatorRIHartree<T>(ucell_in, naos, nocc[0], nvirt[0], psi_ks_in,
-                            Cs_read, Vs_read, ri_hartree_benchmark == "aims", aims_nbasis);
+                            Cs_read, Vs_read);
                     this->ops->add(ri_hartree_op);
                 }
-                else if (spin_type == "triplet") { std::cout << "f_Hxc based on grid integral is not needed." << std::endl; }
+                else if (spin_type == "triplet") { std::cout << "Hatree term is not needed for S2:triplet." << std::endl; }
 #else
                 ModuleBase::WARNING_QUIT("ESolver_LR", "RI benchmark is only supported when compile with LibRI.");
 #endif
@@ -96,9 +117,9 @@ namespace LR
                     this->DM_trans, pot_in, ucell_in, orb_cutoff, gd_in, kv_in, pX_in, pc_in, pmat_in);
                 this->ops->add(lr_hxc);
             }
-#ifdef __EXX
+#ifdef __EXX// 3.add Exx operator
             if (xc_kernel == "hf" || xc_kernel == "hse")
-            {   //add Exx operator
+            {
                 if (ri_hartree_benchmark != "none" && spin_type == "singlet")
                 {
                     exx_lri_in.lock()->reset_Cs(Cs_read);
@@ -107,8 +128,7 @@ namespace LR
                 // std::cout << "exx_alpha=" << exx_alpha << std::endl; // the default value of exx_alpha is 0.25 when dft_functional is pbe or hse
                 hamilt::Operator<T>* lr_exx = new OperatorLREXX<T>(nspin, naos, nocc[0], nvirt[0], ucell_in, psi_ks_in,
                     this->DM_trans, exx_lri_in, kv_in, pX_in[0], pc_in, pmat_in,
-                    xc_kernel == "hf" ? 1.0 : exx_alpha, //alpha
-                    aims_nbasis);
+                    (xc_kernel == "hf") ? 1.0 : exx_alpha);
                 this->ops->add(lr_exx);
             }
 #endif
@@ -148,29 +168,29 @@ namespace LR
             }
         }
 
-        void global2local(T* lvec, const T* gvec, const int& nband) const
-        {
-            const int npairs = nocc[0] * nvirt[0];
-            for (int ib = 0;ib < nband;++ib)
-            {
-                const int loffset_b = ib * nk * pX[0].get_local_size();
-                const int goffset_b = ib * nk * npairs;
-                for (int ik = 0;ik < nk;++ik)
-                {
-                    const int loffset = loffset_b + ik * pX[0].get_local_size();
-                    const int goffset = goffset_b + ik * npairs;
-                    for (int lo = 0;lo < pX[0].get_col_size();++lo)
-                    {
-                        const int go = pX[0].local2global_col(lo);
-                        for (int lv = 0;lv < pX[0].get_row_size();++lv)
-                        {
-                            const int gv = pX[0].local2global_row(lv);
-                            lvec[loffset + lo * pX[0].get_row_size() + lv] = gvec[goffset + go * nvirt[0] + gv];
-                        }
-                    }
-                }
-            }
-        }
+        // void global2local(T* lvec, const T* gvec, const int& nband) const
+        // {
+        //     const int npairs = nocc[0] * nvirt[0];
+        //     for (int ib = 0;ib < nband;++ib)
+        //     {
+        //         const int loffset_b = ib * nk * pX[0].get_local_size();
+        //         const int goffset_b = ib * nk * npairs;
+        //         for (int ik = 0;ik < nk;++ik)
+        //         {
+        //             const int loffset = loffset_b + ik * pX[0].get_local_size();
+        //             const int goffset = goffset_b + ik * npairs;
+        //             for (int lo = 0;lo < pX[0].get_col_size();++lo)
+        //             {
+        //                 const int go = pX[0].local2global_col(lo);
+        //                 for (int lv = 0;lv < pX[0].get_row_size();++lv)
+        //                 {
+        //                     const int gv = pX[0].local2global_row(lv);
+        //                     lvec[loffset + lo * pX[0].get_row_size() + lv] = gvec[goffset + go * nvirt[0] + gv];
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
 
     private:
         const std::vector<int>& nocc;

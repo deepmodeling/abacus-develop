@@ -1,13 +1,13 @@
 #ifndef __WRITE_VXC_R_H_
 #define __WRITE_VXC_R_H_
 #include "source_io/module_parameter/parameter.h"
-#include "source_io/module_hs/write_HS_sparse.h"
+#include "source_io/module_hs/write_hs_sparse.h"
 #include "source_lcao/module_operator_lcao/op_dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
 #include "source_lcao/spar_hsr.h"
 #ifdef __EXX
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
-#include "source_lcao/module_ri/RI_2D_Comm.h"
+#include "source_lcao/module_ri/ri_2d_comm.h"
 #endif
 
 namespace ModuleIO

@@ -6,7 +6,7 @@
 #include "source_base/formatter.h"
 
 #ifdef __EXX
-#include "source_hamilt/module_xc/exx_info.h" // use GlobalC::exx_info
+#include "source_hamilt/module_xc/exx_info.h" // for Exx_Info type
 #endif
 
 #include <xc.h>
@@ -17,21 +17,10 @@
 
 bool not_supported_xc_with_laplacian(const std::string& xc_func_in)
 {
-    // see Pyscf: https://github.com/pyscf/pyscf/blob/master/pyscf/dft/libxc.py#L1062
-    // ABACUS issue: https://github.com/deepmodeling/abacus-develop/issues/5372
-    const std::vector<std::string> not_supported = {
-        "MGGA_XC_CC06",
-        "MGGA_C_CS",
-        "MGGA_X_BR89",
-        "MGGA_X_MK00"
-    };
-    for (const std::string& s : not_supported)
-    {
-        if (xc_func_in.find(s) != std::string::npos)
-        {
-            return true;
-        }
-    }
+    // Laplacian of density is now supported for meta-GGA functionals.
+    // The following functionals were previously blocked but are now supported:
+    //   MGGA_XC_CC06, MGGA_C_CS, MGGA_X_BR89, MGGA_X_MK00
+    // Ensure PW stress path handles vlapl contribution correctly if using PW basis.
     return false;
 }
 
@@ -177,6 +166,23 @@ XC_Functional_Libxc::set_xc_type_libxc(const std::string& xc_func_in)
                               " Please explicitly set dft_functional in INPUT,\n"
                               " or verify the functional name is supported.";
         ModuleBase::WARNING_QUIT("XC_Functional::set_xc_type_libxc", message);
+    }
+
+    // warn if any functional needs Laplacian of density
+    {
+        std::vector<xc_func_type> tmp_funcs = XC_Functional_Libxc::init_func(func_id, XC_UNPOLARIZED, 0.0, 0.0);
+        for (auto& f : tmp_funcs)
+        {
+            if (f.info->flags & XC_FLAGS_NEEDS_LAPLACIAN)
+            {
+                std::cout << " WARNING: XC functional \"" << f.info->name
+                          << "\" requires Laplacian of density (nabla^2 rho)."
+                          << " This may require a higher energy cutoff for numerical stability."
+                          << std::endl;
+                break;
+            }
+        }
+        XC_Functional_Libxc::finish_func(tmp_funcs);
     }
 
     // return

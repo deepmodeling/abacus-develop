@@ -86,7 +86,7 @@ void ESolver_DFPT_PW::init_dfpt(UnitCell& ucell)
 
     dfpt_ = new ModuleDFPT::DFPT_PW();
 
-    //    dfpt_->init(ucell, *this->stp.psi, this->pelec->nelec, PARAM.inp.ecutwfc);
+    //    dfpt_->init(ucell, *this->stp.psi, this->pelec->nelec, this->inp_->ecutwfc);
 
     dfpt_->set_parameters("dfpt.in");
 

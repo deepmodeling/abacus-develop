@@ -1,13 +1,13 @@
 #include "esolver_double_xc.h"
 
-#include "source_hamilt/module_ewald/H_Ewald_pw.h"
+#include "source_hamilt/module_ewald/h_ewald_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #ifdef __MLALGO
-#include "source_lcao/module_deepks/LCAO_deepks.h"
-#include "source_lcao/module_deepks/LCAO_deepks_interface.h"
-#include "source_lcao/module_deepks/LCAO_deepks_io.h"
+#include "source_lcao/module_deepks/lcao_deepks.h"
+#include "source_lcao/module_deepks/lcao_deepks_iface.h"
+#include "source_lcao/module_deepks/lcao_deepks_io.h"
 #endif
-#include "source_lcao/FORCE_STRESS.h"
+#include "source_lcao/force_stress_lcao.h"
 
 //-----HSolver ElecState Hamilt--------
 #include "source_estate/elecstate_lcao.h"
@@ -64,11 +64,11 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Inpu
         int ncol = 0;
         if (PARAM.globalv.gamma_only_local)
         {
-            nsk = PARAM.inp.nspin;
+            nsk = this->inp_->nspin;
             ncol = this->pv.ncol_bands;
-            if (PARAM.inp.ks_solver == "genelpa" || PARAM.inp.ks_solver == "elpa" || PARAM.inp.ks_solver == "lapack"
-                || PARAM.inp.ks_solver == "pexsi" || PARAM.inp.ks_solver == "cusolver"
-                || PARAM.inp.ks_solver == "cusolvermp")
+            if (this->inp_->ks_solver == "genelpa" || this->inp_->ks_solver == "elpa" || this->inp_->ks_solver == "lapack"
+                || this->inp_->ks_solver == "pexsi" || this->inp_->ks_solver == "cusolver"
+                || this->inp_->ks_solver == "cusolvermp")
             {
                 ncol = this->pv.ncol;
             }
@@ -79,19 +79,19 @@ void ESolver_DoubleXC<TK, TR>::before_all_runners(BaseCell& basecell, const Inpu
 #ifdef __MPI
             ncol = this->pv.ncol_bands;
 #else
-            ncol = PARAM.inp.nbands;
+            ncol = this->inp_->nbands;
 #endif
         }
         this->psi_base = new psi::Psi<TK>(nsk, ncol, this->pv.nrow, this->kv.ngk, true);
     }
 
     // 6) initialize the density matrix
-    this->dmat_base.allocate_dm(&this->kv, &this->pv, PARAM.inp.nspin);
+    this->dmat_base.allocate_dm(&this->kv, &this->pv, this->inp_->nspin);
 
     // 10) inititlize the charge density
     this->chr_base.set_rhopw(this->pw_rhod);           // mohan add 20251130
     const bool kin_den = this->chr_base.kin_density(); // mohan add 20251202
-    this->chr_base.allocate(PARAM.inp.nspin, kin_den);
+    this->chr_base.allocate(this->inp_->nspin, kin_den);
     this->chr_base.init_rho(ucell, this->Pgrid, this->sf.strucFac, ucell.symm, &this->kv);
     this->chr_base.check_rho();
 
@@ -127,7 +127,7 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
     //----------------------------------------------------------
     //! calculate ewald energy
     //----------------------------------------------------------
-    if (!PARAM.inp.test_skip_ewald)
+    if (!this->inp_->test_skip_ewald)
     {
         // this->pelec_base->f_en.ewald_energy = H_Ewald_pw::compute_ewald(ucell, this->pw_rhod, this->sf.strucFac);
         this->pelec_base->f_en.ewald_energy = this->pelec->f_en.ewald_energy;
@@ -151,17 +151,18 @@ void ESolver_DoubleXC<TK, TR>::before_scf(UnitCell& ucell, const int istep)
                                                              &this->dftu,
                                                              this->deepks,
                                                              istep,
-                                                             this->exx_nao);
+                                                             this->exx_nao,
+                                                             this->exx_info_);
     }
 
-    XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
+    XC_Functional::set_xc_type(this->inp_->deepks_out_base);
     elecstate::init_scf(ucell,
                         this->Pgrid,
                         this->sf.strucFac,
                         this->locpp.numeric,
                         istep,
                         PARAM.globalv.global_out_dir,
-                        PARAM.inp,
+                        *this->inp_,
                         this->pelec_base);
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
 
@@ -183,13 +184,13 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
     ModuleBase::TITLE("ESolver_DoubleXC", "iter_finish");
     ModuleBase::timer::start("ESolver_DoubleXC", "iter_finish");
 
-    bool output_iter = PARAM.inp.deepks_out_labels > 0 && PARAM.inp.deepks_out_freq_elec
-                       && (iter % PARAM.inp.deepks_out_freq_elec == 0);
+    bool output_iter = this->inp_->deepks_out_labels > 0 && this->inp_->deepks_out_freq_elec
+                       && (iter % this->inp_->deepks_out_freq_elec == 0);
 
     if (output_iter)
     {
         // save output charge density (density after diagnonalization)
-        for (int is = 0; is < PARAM.inp.nspin; is++)
+        for (int is = 0; is < this->inp_->nspin; is++)
         {
             ModuleBase::GlobalFunc::DCOPY(this->chr.rho[is], this->chr_base.rho[is], this->chr.rhopw->nrxx);
             if (XC_Functional::get_ked_flag())
@@ -220,7 +221,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         // This will change the result of out_hsk
         // The original result of out_hsk is H of input density, but this change H to that of output density
         // When converged, these two should be close
-        if (PARAM.inp.deepks_v_delta > 0 && PARAM.inp.vl_in_h)
+        if (this->inp_->deepks_v_delta > 0 && this->inp_->vl_in_h)
         {
             // update real space Hamiltonian
             this->p_hamilt->refresh();
@@ -255,7 +256,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
 
         // ---------- prepare for base ----------
         // set as base functional Temporarily
-        XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
+        XC_Functional::set_xc_type(this->inp_->deepks_out_base);
 
         // update pot of pelec_base according to chr_base
         if (!conv_esolver)
@@ -281,14 +282,14 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         // std::endl;
 
 #ifdef __MLALGO
-        const std::string file_ebase = deepks_interface.get_filename("ebase", PARAM.inp.deepks_out_labels, iter);
+        const std::string file_ebase = deepks_interface.get_filename("ebase", this->inp_->deepks_out_labels, iter);
         LCAO_deepks_io::save_npy_e(pelec_base->f_en.etot, file_ebase, GlobalV::MY_RANK);
 #endif
 
         // ---------- h_base ----------
-        if (PARAM.inp.deepks_v_delta > 0)
+        if (this->inp_->deepks_v_delta > 0)
         {
-            if (PARAM.inp.vl_in_h)
+            if (this->inp_->vl_in_h)
             {
                 // update real space Hamiltonian
                 this->p_hamilt_base->refresh();
@@ -307,13 +308,13 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
             std::vector<TH> h_tot(nks);
             DeePKS_domain::get_h_tot<TK, TH, TR>(this->pv, p_ham_deepks_base, h_tot, PARAM.globalv.nlocal, nks, 'H');
 
-            const std::string file_htot = deepks_interface.get_filename("hbase", PARAM.inp.deepks_out_labels, iter);
+            const std::string file_htot = deepks_interface.get_filename("hbase", this->inp_->deepks_out_labels, iter);
             LCAO_deepks_io::save_npy_h<TK, TH>(h_tot, file_htot, PARAM.globalv.nlocal, nks, GlobalV::MY_RANK);
 #endif
         }
 
         // ---------- o_base ----------
-        if (PARAM.inp.deepks_bandgap > 0)
+        if (this->inp_->deepks_bandgap > 0)
         {
             // obase isn't implemented yet
             // don't need to solve p_hamilt_base
@@ -324,17 +325,17 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
     }
     // ---------- prepare for f_base ----------
-    else if (PARAM.inp.cal_force && conv_esolver)
+    else if (this->inp_->cal_force && conv_esolver)
     {
         // vnew must be updated for force_scc() even if not output_iter
         // set as base functional Temporarily
-        XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
+        XC_Functional::set_xc_type(this->inp_->deepks_out_base);
         this->pelec_base->cal_converged();
         // restore to original xc
         XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);
     }
 
-    if (PARAM.inp.cal_force)
+    if (this->inp_->cal_force)
     {
         if (!conv_esolver)
         {
@@ -344,7 +345,7 @@ void ESolver_DoubleXC<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int
         else
         {
             // copy charge
-            for (int is = 0; is < PARAM.inp.nspin; is++)
+            for (int is = 0; is < this->inp_->nspin; is++)
             {
                 ModuleBase::GlobalFunc::DCOPY(this->chr.rho[is], this->chr_base.rho[is], this->chr.rhopw->nrxx);
                 if (XC_Functional::get_ked_flag())
@@ -388,16 +389,16 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
     Force_Stress_LCAO<TK> fsl(this->RA, ucell.nat);
 
     // set as base functional Temporarily
-    XC_Functional::set_xc_type(PARAM.inp.deepks_out_base);
+    XC_Functional::set_xc_type(this->inp_->deepks_out_base);
 
     this->deepks.dpks_out_type = "base"; // for deepks method
 
     fsl.getForceStress(ucell,
                        this->get_vdw_result(),
-                       PARAM.inp.cal_force,
-                       PARAM.inp.cal_stress,
-                       PARAM.inp.test_force,
-                       PARAM.inp.test_stress,
+                       this->inp_->cal_force,
+                       this->inp_->cal_stress,
+                       this->inp_->test_force,
+                       this->inp_->test_stress,
                        this->gd,
                        this->pv,
                        this->pelec_base,
@@ -415,7 +416,8 @@ void ESolver_DoubleXC<TK, TR>::cal_force(BaseCell& basecell, ModuleBase::matrix&
                        this->dftu,
                        this->deepks,
                        this->exx_nao,
-                       &ucell.symm);
+                       &ucell.symm,
+                       this->exx_info_);
 
     // restore to original xc
     XC_Functional::set_xc_type(ucell.atoms[0].ncpp.xc_func);

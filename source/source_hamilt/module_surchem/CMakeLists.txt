@@ -2,7 +2,7 @@ add_library(
     surchem
     OBJECT
     surchem.cpp
-    H_correction_pw.cpp
+    h_corr_pw.cpp
     cal_epsilon.cpp
     cal_pseudo.cpp
     cal_totn.cpp

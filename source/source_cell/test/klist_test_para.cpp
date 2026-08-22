@@ -75,7 +75,7 @@ Magnetism::~Magnetism()
  *       than nkstot in set_both_kvec_after_vc
  */
 
-// abbriviated from module_symmetry/test/symmetry_test.cpp
+// abbriviated from module_symmetry/test/symm_test.cpp
 struct atomtype_
 {
     std::string atomname;

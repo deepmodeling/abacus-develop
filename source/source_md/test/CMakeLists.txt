@@ -4,6 +4,7 @@ abacus_add_local_feature_definitions(__NORMAL)
 list(APPEND depend_files
   ../md_func.cpp
   ../../source_cell/base_cell.cpp
+  ../../source_cell/md_cell.cpp
   ../../source_cell/unitcell.cpp
   ../../source_cell/update_cell.cpp
   ../../source_cell/bcast_cell.cpp
@@ -50,7 +51,6 @@ list(APPEND depend_files
   ../../source_cell/module_neighlist/neighbor_search.cpp
   ../../source_cell/module_neighlist/bin_manager.cpp
   ../../source_cell/module_neighlist/page_allocator.cpp
-  ../../source_cell/module_neighlist/unitcell_lite.cpp
   ../../source_base/output.cpp
   ../../source_io/module_output/output_log.cpp
   ../../source_io/module_output/print_info.cpp
@@ -59,7 +59,7 @@ list(APPEND depend_files
   ../../source_base/parallel_reduce.cpp
   ../../source_base/parallel_global.cpp
   ../../source_base/parallel_comm.cpp
-  ../../source_cell/read_pseudo.cpp
+  ../../source_cell/read_pp_ucell.cpp
   ../../source_cell/cal_wfc.cpp
   ../../source_cell/cal_nelec_nband.cpp
   ../../source_cell/read_orb.cpp

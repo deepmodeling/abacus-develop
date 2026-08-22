@@ -40,7 +40,7 @@ list(APPEND cell_simple_srcs
     ../read_pp_vwr.cpp
     ../read_pp_blps.cpp
     ../check_atomic_stru.cpp
-    ../read_pseudo.cpp
+    ../read_pp_ucell.cpp
     ../cal_wfc.cpp
     ../cal_nelec_nband.cpp
     ../read_orb.cpp
@@ -50,6 +50,10 @@ list(APPEND cell_simple_srcs
 )
 
 add_library(cell_info OBJECT ${cell_simple_srcs})
+
+if(NOT ENABLE_MPI)
+  return()
+endif()
 
 AddTest(
   TARGET MODULE_CELL_read_pp
@@ -107,7 +111,7 @@ AddTest(
 AddTest(
   TARGET MODULE_CELL_read_atoms_helper_test
   LIBS base device
-  SOURCES read_atoms_helper_test.cpp
+  SOURCES read_atoms_hlp_test.cpp
     ../read_atoms.cpp
     ../read_atoms_helper.cpp
     ../cell_tools.cpp

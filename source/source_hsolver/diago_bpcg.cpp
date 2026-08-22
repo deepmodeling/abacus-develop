@@ -5,7 +5,7 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_base/parallel_comm.h" // different MPI worlds
 #include "source_hsolver/kernels/bpcg_kernel_op.h"
-#include "para_linear_transform.h"
+#include "para_lin_tf.h"
 
 #include <ATen/kernels/blas.h>
 #include <ATen/kernels/lapack.h>

@@ -15,6 +15,8 @@ add_library(
     read_pp_upf201.cpp
     read_pp_blps.cpp
     read_pp_vwr.cpp
+    distributed_mdcell_reader.cpp
+    md_cell.cpp
     unitcell.cpp
     read_atoms.cpp
     read_atoms_helper.cpp
@@ -36,7 +38,7 @@ add_library(
     qlist.cpp
     qlist.h
     cal_nelec_nband.cpp
-    read_pseudo.cpp
+    read_pp_ucell.cpp
     cal_wfc.cpp
     cal_ux.cpp
     cif_io.cpp
@@ -48,8 +50,8 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
+  add_subdirectory(test)
   if(ENABLE_MPI)
-    add_subdirectory(test)
     add_subdirectory(test_pw)
   endif()
 endif()

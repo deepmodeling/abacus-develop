@@ -4,7 +4,7 @@
 # this compare script is used in different integrate tests
 COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
 #COMPARE_SCRIPT="../../integrate/tools/compare_file.py"
-SUM_CUBE_EXE="python3 ../../integrate/tools/sum_cube.py"
+CUBE_TOOL="../../integrate/tools/cube_tool.py"
 COLLECT_NPY_MEANS="../../integrate/tools/collect_npy_means.py"
 
 
@@ -453,6 +453,16 @@ if ! test -z "$has_hs2"  && [  $has_hs2 == 1 ]; then
     fi
     python3 $COMPARE_SCRIPT sr_nao.csr.ref OUT.autotest/sr_nao.csr 8
     echo "CompareSR_pass $?" >>$1
+elif ! test -z "$has_hs2" && [ "$has_hs2" == 2 ]; then
+    HSR_BINARY_COMPARE="../../integrate/tools/compare_hsr_binary.py"
+    python3 $HSR_BINARY_COMPARE OUT.autotest/hrs1_nao.dat hrs1_nao.csr.ref real 4
+    echo "CompareHR_pass $?" >>$1
+    if ! test -z "$nspin" && [ "$nspin" -eq 2 ]; then
+        python3 $HSR_BINARY_COMPARE OUT.autotest/hrs2_nao.dat hrs2_nao.csr.ref real 4
+        echo "CompareHR2_pass $?" >>$1
+    fi
+    python3 $HSR_BINARY_COMPARE OUT.autotest/sr_nao.dat sr_nao.csr.ref real 4
+    echo "CompareSR_pass $?" >>$1
 fi
 
 #-----------------------------------
@@ -701,15 +711,70 @@ fi
 # Process .cube files if needed
 if [ "$need_process_cube" = true ]; then
     cubefiles=$(ls OUT.autotest/ | grep -E '.cube$')
-    
+    wavefunction_re_files=()
+
     if [ -z "$cubefiles" ]; then
         echo "Error: No .cube files found in OUT.autotest/"
         exit 1
     else
         for cube in $cubefiles; do
-            total_chg=$($SUM_CUBE_EXE OUT.autotest/$cube)
+            if [[ "$cube" =~ ^wfi[0-9]+s[0-9]+(k[0-9]+)?re[.]cube$ ]]; then
+                wavefunction_re_files+=("$cube")
+                continue
+            fi
+            if [[ "$cube" =~ ^wfi[0-9]+s[0-9]+(k[0-9]+)?im[.]cube$ ]]; then
+                continue
+            fi
+            total_chg=$(python3 "$CUBE_TOOL" integrate "OUT.autotest/$cube")
             echo "$cube $total_chg" >> $1
         done
+    fi
+
+    for cube in "${wavefunction_re_files[@]}"; do
+        if [[ "$cube" =~ ^wfi([0-9]+)s([0-9]+)(k[0-9]+)?re[.]cube$ ]]; then
+            band=${BASH_REMATCH[1]}
+            spin=${BASH_REMATCH[2]}
+            kpoint=${BASH_REMATCH[3]}
+            state_prefix=${cube%re.cube}
+            fingerprint_args=(
+                "OUT.autotest/$cube"
+                "OUT.autotest/${state_prefix}im.cube"
+            )
+            if [ "$nspin" = "4" ]; then
+                if [ "$spin" != "1" ]; then
+                    continue
+                fi
+                lower_prefix="wfi${band}s2${kpoint}"
+                fingerprint_args+=(
+                    "OUT.autotest/${lower_prefix}re.cube"
+                    "OUT.autotest/${lower_prefix}im.cube"
+                )
+                result_prefix="wfi${band}${kpoint}_spinor_wfc_fp"
+            else
+                result_prefix="${state_prefix}_wfc_fp"
+            fi
+
+            if fingerprint=$(python3 "$CUBE_TOOL" fingerprint-wfc "${fingerprint_args[@]}"); then
+                while read -r metric value; do
+                    echo "${result_prefix}_${metric} $value" >> "$1"
+                done <<< "$fingerprint"
+            else
+                echo "Error: Failed to generate wavefunction fingerprint for $state_prefix"
+                exit 1
+            fi
+        fi
+    done
+fi
+
+# Check the pointwise Pauli identities when all PW nspin=4 spinor outputs are available.
+nspin=$(get_input_key_value "nspin" "INPUT")
+if_separate_k=$(get_input_key_value "if_separate_k" "INPUT")
+if [ "$nspin" = "4" ] && { [ "$if_separate_k" = "1" ] || [ "$if_separate_k" = "true" ]; } \
+    && [ -n "$out_wfc_norm" ] && [ -n "$out_wfc_re_im" ] && [ -n "$out_pchg" ]; then
+    if python3 "$CUBE_TOOL" check-spinor OUT.autotest; then
+        echo "pw_spinor_cube_identity 0" >> "$1"
+    else
+        echo "pw_spinor_cube_identity 1" >> "$1"
     fi
 fi
 
@@ -737,14 +802,20 @@ fi
 if ! test -z "$run_rpa" && [ $run_rpa == 1 ]; then
 	Etot_without_rpa=`grep Etot_without_rpa log.txt | awk 'BEGIN{FS=":"} {print $2}' `
 	echo "Etot_without_rpa $Etot_without_rpa" >> $1
+	rpa_outdir=$(get_input_key_value "rpa_outdir" "INPUT")
+	if [ -z "$rpa_outdir" ]; then
+		rpa_outdir="./OUT.librpa"
+	fi
+	rpa_outdir=${rpa_outdir%/}
 	shopt -s nullglob
 	rpa_ref_files=(refcoulomb_*.txt refCs_*.txt refshrink_sinvS_*.txt)
 	if [ ${#rpa_ref_files[@]} -gt 0 ]; then
 		IFS=$'\n' rpa_ref_files=($(printf '%s\n' "${rpa_ref_files[@]}" | LC_ALL=C sort))
 		unset IFS
 		for onref in "${rpa_ref_files[@]}"; do
-			oncal=${onref#ref}
-			compare_key="CompareRPA_$(sanitize_result_key "$oncal")_pass"
+			oncal_name=${onref#ref}
+			oncal="$rpa_outdir/$oncal_name"
+			compare_key="CompareRPA_$(sanitize_result_key "$oncal_name")_pass"
 			record_compare_result "$1" "$compare_key" "$onref" "$oncal" 8 1
 		done
 	fi
@@ -817,13 +888,13 @@ fi
 # Linear response function 
 #--------------------------------------------
 if [ $is_lr == 1 ]; then
-	lrns=$(get_input_key_value "lr_nstates" "INPUT")
-	lrns1=`echo "$lrns + 1" |bc`
-	grep -A$lrns1 "Excitation Energy" $running_path | awk 'NR > 2 && $2 ~ /^[0-9]+\.[0-9]+$/ {print $2}' > lr_eig.txt
-	lreig_tot=`sum_file lr_eig.txt`
-	echo "totexcitationenergyref $lreig_tot" >>$1
+	shopt -s nullglob
+	lr_files=(OUT.autotest/trans_analysis_*_tda.dat)
+	if [ ${#lr_files[@]} -gt 0 ]; then
+		cat "${lr_files[@]}" | awk '/Excitation Energy/{p=1; next} p && /^[[:space:]]*[0-9]+[[:space:]]/{printf "excitationenergyref%d %.6f\n", ++n, $2} /Occupied orbital/{p=0}' >>$1
+	fi
+	shopt -u nullglob
 fi
-
 #--------------------------------------------
 # Check RDMFT method 
 #--------------------------------------------

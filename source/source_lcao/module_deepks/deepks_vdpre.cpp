@@ -8,7 +8,7 @@
 
 #include "deepks_vdpre.h"
 
-#include "LCAO_deepks_io.h" // mohan add 2024-07-22
+#include "lcao_deepks_io.h" // mohan add 2024-07-22
 #include "deepks_iterate.h"
 #include "source_base/constants.h"
 #include "source_base/libm/libm.h"

@@ -17,7 +17,7 @@ add_library(
     ions_move_methods.cpp
     lattice_change_basic.cpp
     lattice_change_cg.cpp
-    lattice_change_methods.cpp
+    lat_change_method.cpp
     matrix_methods.cpp
 )
 

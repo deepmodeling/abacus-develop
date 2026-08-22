@@ -1052,11 +1052,17 @@ TEST_F(InputTest, Item_test)
         EXPECT_EQ(param.input.out_hsr[0], 1);
         EXPECT_EQ(param.input.out_hsr[1], 10);
 
-        param.input.out_hsr[0] = 2;
+        it->second.str_values = {"2", "12"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.out_hsr[0], 2);
+        EXPECT_EQ(param.input.out_hsr[1], 12);
+        it->second.check_value(it->second, param);
+
+        param.input.out_hsr[0] = 4;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("reserved but not implemented"));
+        EXPECT_THAT(output, testing::HasSubstr("format must be 0, 1, 2, or 3"));
 
 #ifndef __CNPY
         param.input.out_hsr[0] = 3;
@@ -1434,6 +1440,22 @@ TEST_F(InputTest, Item_test2)
     { // vdw_radius_unit
         auto it = find_label("vdw_radius_unit", readinput.input_lists);
         param.input.vdw_radius_unit = "test";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // vdw_cutoff_width2
+        auto it = find_label("vdw_cutoff_width2", readinput.input_lists);
+        param.input.vdw_cutoff_width2 = -1.0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // vdw_cutoff_width3
+        auto it = find_label("vdw_cutoff_width3", readinput.input_lists);
+        param.input.vdw_cutoff_width3 = -1.0;
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
@@ -1988,6 +2010,10 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // diag_subspace
+        auto it = find_label("diag_subspace", readinput.input_lists);
+        EXPECT_EQ(it->second.get_availability(), "basis_type==pw and ks_solver==dav_subspace");
     }
     { // md_nstep
         auto it = find_label("md_nstep", readinput.input_lists);

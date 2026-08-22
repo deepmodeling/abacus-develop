@@ -25,8 +25,8 @@ list(APPEND objects
     pw_basis_k.cpp
     pw_basis_sup.cpp
     pw_distributeg.cpp
-    pw_distributeg_method1.cpp
-    pw_distributeg_method2.cpp
+    pw_distg_method1.cpp
+    pw_distg_method2.cpp
     pw_distributer.cpp
     pw_init.cpp
     pw_transform.cpp
@@ -54,9 +54,9 @@ if(ENABLE_COVERAGE)
 endif()
 
 if(BUILD_TESTING)
+  add_subdirectory(test_serial)
   if(ENABLE_MPI)
     add_subdirectory(test)
-    add_subdirectory(test_serial)
     add_subdirectory(kernels/test)
     add_subdirectory(test_gpu)
   endif()

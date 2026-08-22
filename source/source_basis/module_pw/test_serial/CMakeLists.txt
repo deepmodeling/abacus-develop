@@ -15,8 +15,8 @@ add_library(
     ../pw_basis_k.cpp
     ../pw_basis_sup.cpp
     ../pw_distributeg.cpp
-    ../pw_distributeg_method1.cpp
-    ../pw_distributeg_method2.cpp
+    ../pw_distg_method1.cpp
+    ../pw_distg_method2.cpp
     ../pw_distributer.cpp
     ../pw_init.cpp
     ../pw_transform.cpp

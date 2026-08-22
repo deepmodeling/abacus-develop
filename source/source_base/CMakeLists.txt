@@ -22,7 +22,7 @@ add_library(
     gather_math_lib_info.cpp
     global_file.cpp
     global_function.cpp
-    global_function_ddotreal.cpp
+    glob_fn_ddotreal.cpp
     global_variable.cpp
     intarray.cpp
     math_integral.cpp
@@ -38,25 +38,26 @@ add_library(
     matrix3.cpp
     memory_recorder.cpp
     mymath.cpp
-    opt_CG.cpp
-    opt_DCsrch.cpp
+    opt_cg.cpp
+    opt_dcsrch.cpp
     output.cpp
     para_gemm.cpp
     realarray.cpp
-    sph_bessel_recursive-d1.cpp
-    sph_bessel_recursive-d2.cpp
+    sph_bessel_rec_d1.cpp
+    sph_bessel_rec_d2.cpp
     timer.cpp
     tool_check.cpp
     tool_quit.cpp
     tool_title.cpp
     ylm.cpp
     parallel_common.cpp
+    communication_domain.cpp
     parallel_global.cpp
     parallel_comm.cpp
     parallel_reduce.cpp
     parallel_device.cpp
     parallel_grid.cpp
-    spherical_bessel_transformer.cpp
+    sph_bessel_tf.cpp
     cubic_spline.cpp
     parallel_2d.cpp
     projgen.cpp
