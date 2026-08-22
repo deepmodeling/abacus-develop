@@ -1075,7 +1075,7 @@
 ### pw_diag_ndim
 
 - **Type**: Integer
-- **Availability**: *basis_type==pw, ks_solver==dav/dav_subspace/ppcg*
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver) in [dav, dav_subspace, ppcg]*
 - **Description**: Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the PPCG block size/Rayleigh-Ritz interval for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
 - **Default**: 4
 

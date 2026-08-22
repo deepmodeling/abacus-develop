@@ -1004,7 +1004,7 @@ parameters:
       Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the PPCG block size/Rayleigh-Ritz interval for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.
     default_value: "4"
     unit: ""
-    availability: "basis_type==pw, ks_solver==dav/dav_subspace/ppcg"
+    availability: "basis_type==pw and ks_solver in [dav, dav_subspace, ppcg]"
   - name: diago_cg_prec
     category: Plane wave related variables
     type: Integer
