@@ -608,6 +608,32 @@ void DiagoPPCG<T, Device>::lock_epairs(
 }
 
 // ---------------------------------------------------------------------------
+// Compute the residual w_i = H|psi_i> - eps_i * S|psi_i> from the current
+// (already updated) hpsi_/spsi_ and lock converged eigenpairs.  Used on the
+// block-update iterations where a full Rayleigh-Ritz rotation is skipped.
+// ---------------------------------------------------------------------------
+template <typename T, typename Device>
+void DiagoPPCG<T, Device>::compute_residual_and_lock(
+    Real* eigenvalue,
+    std::vector<int>& active_cols,
+    const std::vector<double>& ethr_band)
+{
+    set_zero(w_);
+#ifdef _OPENMP
+#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
+#endif
+    for (int j = 0; j < n_band_; ++j)
+    {
+        for (int ig = 0; ig < n_dim_; ++ig)
+        {
+            w_[idx(ig, j, ld_psi_)] = hpsi_[idx(ig, j, ld_psi_)]
+                                    - spsi_[idx(ig, j, ld_psi_)] * eigenvalue[j];
+        }
+    }
+    lock_epairs(eval_prev_.data(), eigenvalue, ethr_band, active_cols);
+}
+
+// ---------------------------------------------------------------------------
 // Build K = V^H H V and M = V^H S V where V = [psi, w]
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
@@ -943,13 +969,9 @@ template <typename T, typename Device>
 void DiagoPPCG<T, Device>::rayleigh_ritz(
     T* psi, Real* eigenvalue,
     std::vector<int>& active_cols,
-    const std::vector<double>& ethr_band)
+    const std::vector<double>& ethr_band,
+    bool rotate)
 {
-    // Remember the eigenvalues of the previous step; convergence is measured
-    // as the eigenvalue change between successive Rayleigh-Ritz steps.
-    eval_prev_.resize(n_band_);
-    std::copy(eigenvalue, eigenvalue + n_band_, eval_prev_.begin());
-
     gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
     gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
 
@@ -977,56 +999,59 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
 
     if (sygvd_ok)
     {
-        const int sz = ld_psi_ * n_band_;
-        std::copy(psi, psi + sz, rr_psi_.begin());
-        std::copy(spsi_.begin(), spsi_.end(), rr_spsi_.begin());
-        std::copy(hpsi_.begin(), hpsi_.end(), rr_hpsi_.begin());
+        if (rotate)
+        {
+            const int sz = ld_psi_ * n_band_;
+            std::copy(psi, psi + sz, rr_psi_.begin());
+            std::copy(spsi_.begin(), spsi_.end(), rr_spsi_.begin());
+            std::copy(hpsi_.begin(), hpsi_.end(), rr_hpsi_.begin());
 
-        std::fill(psi, psi + ld_psi_ * n_band_, T(0));
-        set_zero(spsi_);
-        set_zero(hpsi_);
+            std::fill(psi, psi + ld_psi_ * n_band_, T(0));
+            set_zero(spsi_);
+            set_zero(hpsi_);
 
-        const T one = T(1);
-        const T zero = T(0);
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         n_band_,
-                                         n_band_,
-                                         &one,
-                                         rr_psi_.data(),
-                                         ld_psi_,
-                                         rr_hsub_.data(),
-                                         n_band_,
-                                         &zero,
-                                         psi,
-                                         ld_psi_);
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         n_band_,
-                                         n_band_,
-                                         &one,
-                                         rr_spsi_.data(),
-                                         ld_psi_,
-                                         rr_hsub_.data(),
-                                         n_band_,
-                                         &zero,
-                                         spsi_.data(),
-                                         ld_psi_);
-        ModuleBase::gemm_op<T, Device>()('N',
-                                         'N',
-                                         n_dim_,
-                                         n_band_,
-                                         n_band_,
-                                         &one,
-                                         rr_hpsi_.data(),
-                                         ld_psi_,
-                                         rr_hsub_.data(),
-                                         n_band_,
-                                         &zero,
-                                         hpsi_.data(),
-                                         ld_psi_);
+            const T one = T(1);
+            const T zero = T(0);
+            ModuleBase::gemm_op<T, Device>()('N',
+                                             'N',
+                                             n_dim_,
+                                             n_band_,
+                                             n_band_,
+                                             &one,
+                                             rr_psi_.data(),
+                                             ld_psi_,
+                                             rr_hsub_.data(),
+                                             n_band_,
+                                             &zero,
+                                             psi,
+                                             ld_psi_);
+            ModuleBase::gemm_op<T, Device>()('N',
+                                             'N',
+                                             n_dim_,
+                                             n_band_,
+                                             n_band_,
+                                             &one,
+                                             rr_spsi_.data(),
+                                             ld_psi_,
+                                             rr_hsub_.data(),
+                                             n_band_,
+                                             &zero,
+                                             spsi_.data(),
+                                             ld_psi_);
+            ModuleBase::gemm_op<T, Device>()('N',
+                                             'N',
+                                             n_dim_,
+                                             n_band_,
+                                             n_band_,
+                                             &one,
+                                             rr_hpsi_.data(),
+                                             ld_psi_,
+                                             rr_hsub_.data(),
+                                             n_band_,
+                                             &zero,
+                                             hpsi_.data(),
+                                             ld_psi_);
+        }
 
         for (int j = 0; j < n_band_; ++j)
         {
@@ -1043,20 +1068,7 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
     }
 
     // Compute residual: w_i = H|psi_i> - eps_i * S|psi_i>
-    set_zero(w_);
-#ifdef _OPENMP
-#pragma omp parallel for collapse(2) schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
-#endif
-    for (int j = 0; j < n_band_; ++j)
-    {
-        for (int ig = 0; ig < n_dim_; ++ig)
-        {
-            w_[idx(ig, j, ld_psi_)] = hpsi_[idx(ig, j, ld_psi_)]
-                                    - spsi_[idx(ig, j, ld_psi_)] * eigenvalue[j];
-        }
-    }
-
-    lock_epairs(eval_prev_.data(), eigenvalue, ethr_band, active_cols);
+    compute_residual_and_lock(eigenvalue, active_cols, ethr_band);
 }
 
 } // namespace hsolver
@@ -1525,6 +1537,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     rr_hsub_.resize(ncol * ncol);
     rr_ssub_.resize(ncol * ncol);
     rr_eval_.resize(ncol);
+    eval_prev_.resize(ncol);
+    std::copy(eigenvalue_in, eigenvalue_in + ncol, eval_prev_.begin());
 
     std::vector<int> all_cols(ncol);
     std::iota(all_cols.begin(), all_cols.end(), 0);
@@ -1571,7 +1585,9 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
     if (strategy_ == PpcgStrategy::BLOCK_SUBSPACE)
     {
         // Initialize with Rayleigh-Ritz.
-        rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+        eval_prev_.resize(ncol);
+        std::copy(eigenvalue_in, eigenvalue_in + ncol, eval_prev_.begin());
+        rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band, true);
         // Recompute to keep hpsi/spi consistent with rotated psi.
         apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
         apply_s_current(psi_in, spsi_.data(), ncol);
@@ -1591,6 +1607,11 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         {
             const int nact = static_cast<int>(active_cols.size());
             const int nsb = std::max(1, (nact + sbsize_ - 1) / sbsize_);
+
+            // Save the previous eigenvalues so that the convergence check can
+            // compare the eigenvalue change between successive iterations.
+            eval_prev_.resize(ncol);
+            std::copy(eigenvalue_in, eigenvalue_in + ncol, eval_prev_.begin());
 
             // Precondition the residual.
             divide_by_preconditioner(active_cols, prec, w_);
@@ -1631,14 +1652,19 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 update_one_block(psi_in, cols, l, subspace);
             }
 
-            // Rayleigh-Ritz after each block update keeps the global subspace
-            // synchronized with the updated active vectors.  The block update
-            // can otherwise drift into an ill-conditioned basis before the next
-            // Ritz rotation.
-            rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
-            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-            apply_s_current(psi_in, spsi_.data(), ncol);
-            record_residual(iter, "rayleigh_ritz");
+            // Convergence check.  The Ritz values are computed from a full
+            // subspace diagonalization every iteration; the Ritz rotation (and
+            // the H/S re-application it requires) is only done every rr_step_
+            // iterations to keep the basis numerically clean, because the block
+            // update already maintains a consistent H|psi>/S|psi>.
+            const bool do_rr = (iter % rr_step_) == 0;
+            rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band, do_rr);
+            if (do_rr)
+            {
+                apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+                apply_s_current(psi_in, spsi_.data(), ncol);
+            }
+            record_residual(iter, do_rr ? "rayleigh_ritz" : "block_update");
 
             ++iter;
         }
@@ -1654,7 +1680,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
         // Diagonal Rayleigh quotients are poor approximations for random
         // initial guesses; starting the CG loop with them produces wrong
         // gradients that drive the search toward high-energy bands.
-        rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
+        rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band, true);
         apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
         apply_s_current(psi_in, spsi_.data(), ncol);
         record_residual(0, "initial_rr");
@@ -1699,7 +1725,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 apply_s_current(psi_in, spsi_.data(), ncol);
 
                 std::vector<int> dummy_active;
-                rayleigh_ritz(psi_in, eigenvalue_in, dummy_active, ethr_band);
+                rayleigh_ritz(psi_in, eigenvalue_in, dummy_active, ethr_band, true);
 
                 // Sync hpsi/spi to the rotated wavefunctions.
                 apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
