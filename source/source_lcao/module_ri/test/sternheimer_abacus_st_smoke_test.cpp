@@ -393,7 +393,19 @@ TEST(SternheimerABACUSSTSmoke, SelectsExplicitABFSForPerturbationChannels)
     EXPECT_FALSE(ModuleRI::sternheimer_builds_product_pca_auxiliary_basis({"H-fixed.abfs"}));
 }
 
-TEST(SternheimerABACUSSTSmoke, EstimatesSIABDenseMemoryWithoutRawGridChannels)
+TEST(SternheimerABACUSSTSmoke, SelectsOnlyOccupiedGammaSpinRecordsForOpenShellResponse)
+{
+    auto occupied_spin = make_occupied_kpoint(1, 1, 1, {0.0, 0.0, 0.0}, 1.0);
+
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints(
+        {occupied_spin}, 2, 2, 2, 3, -1, false));
+    const auto selected = ModuleRI::select_sternheimer_gamma_spin_records({occupied_spin}, 2);
+
+    ASSERT_EQ(selected.size(), 1U);
+    EXPECT_EQ(selected.front()->spin_index, 1);
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsDuplicateOrIncompleteGlobalKRecords)
 {
     const auto estimate = ModuleRI::estimate_sternheimer_siab_dense_memory(100, 4, 3, 5, 7, 2, 6);
     EXPECT_EQ(estimate.coulomb_metric_bytes, 4U * 4U * sizeof(double));

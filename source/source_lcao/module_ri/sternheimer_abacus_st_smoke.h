@@ -959,14 +959,17 @@ inline void validate_sternheimer_lcao_occupied_kpoints(
     const int global_kpoint_count,
     const int spin_channel_count,
     const int basis_size,
-    const int zero_order_kpoint_count = -1)
+    const int zero_order_kpoint_count = -1,
+    const bool require_complete_records = true)
 {
     if (local_kpoint_count <= 0 || global_kpoint_count <= 0 || spin_channel_count <= 0 || basis_size <= 0)
     {
         throw std::invalid_argument("Sternheimer LCAO k-point dimensions must be positive.");
     }
-    if (records.size() != static_cast<std::size_t>(global_kpoint_count)
-        || local_kpoint_count != global_kpoint_count)
+    if (local_kpoint_count != global_kpoint_count
+        || records.size() > static_cast<std::size_t>(global_kpoint_count)
+        || (require_complete_records
+            && records.size() != static_cast<std::size_t>(global_kpoint_count)))
     {
         throw std::invalid_argument(
             "Sternheimer LCAO occupied k-point records are incomplete; the first solid implementation requires "
@@ -1125,7 +1128,198 @@ inline std::vector<int> sternheimer_lcao_unoccupied_bands_per_spin(
     {
         counts.push_back(static_cast<int>(channel.unoccupied_coefficients.size()));
     }
-    return counts;
+    if (primitive_cell_count <= 0)
+    {
+        throw std::invalid_argument("Full supercell response requires a positive primitive-cell count.");
+    }
+    return static_cast<double>(primitive_cell_count);
+}
+
+struct SternheimerLCAOSamplingPlan
+{
+    bool sample_source_unoccupied = false;
+    bool sample_target_unoccupied = false;
+    bool build_target_ao_candidates = false;
+};
+
+inline SternheimerLCAOSamplingPlan sternheimer_lcao_sampling_plan(
+    const bool use_delta_sternheimer,
+    const bool write_lcao_sos,
+    const bool target_has_unoccupied_states)
+{
+    if (write_lcao_sos && !target_has_unoccupied_states)
+    {
+        throw std::invalid_argument(
+            "Periodic direct LCAO-SOS diagnostic requires gathered unoccupied LCAO states.");
+    }
+    SternheimerLCAOSamplingPlan plan;
+    plan.sample_target_unoccupied
+        = target_has_unoccupied_states && (use_delta_sternheimer || write_lcao_sos);
+    plan.build_target_ao_candidates = use_delta_sternheimer && !target_has_unoccupied_states;
+    return plan;
+}
+
+inline void validate_sternheimer_supercell_sector_occupations(
+    const std::vector<double>& occupations,
+    const int expected_occupied_count,
+    const double tolerance = 1.0e-10)
+{
+    if (expected_occupied_count <= 0
+        || occupations.size() != static_cast<std::size_t>(expected_occupied_count)
+        || !std::isfinite(tolerance) || tolerance < 0.0)
+    {
+        throw std::invalid_argument("Supercell translation-sector occupations are inconsistent.");
+    }
+    for (const double occupation: occupations)
+    {
+        if (!std::isfinite(occupation) || std::abs(occupation - 1.0) > tolerance)
+        {
+            throw std::invalid_argument(
+                "Supercell translation-sector recovery requires uniformly occupied insulating bands.");
+        }
+    }
+}
+
+inline std::vector<SternheimerLCAOOccupiedKPoint>
+build_sternheimer_supercell_full_kpoint_records(
+    const SternheimerLCAOOccupiedKPoint& gamma_record,
+    const std::vector<SternheimerSupercellKPointSector>& sectors)
+{
+    const int cell_count = static_cast<int>(sectors.size());
+    const int full_state_count = static_cast<int>(gamma_record.coefficients.size()
+                                                  + gamma_record.unoccupied_coefficients.size());
+    if (cell_count <= 0 || full_state_count <= 0 || full_state_count % cell_count != 0
+        || gamma_record.coefficients.empty()
+        || gamma_record.coefficients.size() % static_cast<std::size_t>(cell_count) != 0
+        || gamma_record.eigenvalues.size() != gamma_record.coefficients.size()
+        || gamma_record.unoccupied_eigenvalues.size()
+               != gamma_record.unoccupied_coefficients.size())
+    {
+        throw std::invalid_argument("Cannot expand an incomplete supercell Gamma eigensystem.");
+    }
+    validate_sternheimer_supercell_sector_occupations(
+        gamma_record.occupations, static_cast<int>(gamma_record.coefficients.size()));
+    const int occupied_count
+        = static_cast<int>(gamma_record.coefficients.size()) / cell_count;
+    const int sector_dimension = full_state_count / cell_count;
+    if (occupied_count <= 0 || occupied_count >= sector_dimension)
+    {
+        throw std::invalid_argument("Supercell Gamma eigensystem has an invalid primitive occupied dimension.");
+    }
+
+    std::vector<SternheimerLCAOOccupiedKPoint> records;
+    records.reserve(sectors.size());
+    for (std::size_t ik = 0; ik != sectors.size(); ++ik)
+    {
+        const SternheimerSupercellKPointSector& sector_record = sectors[ik];
+        const SternheimerSupercellSector& sector = sector_record.sector;
+        if (sector.eigenvalues.size() != static_cast<std::size_t>(sector_dimension)
+            || sector.coefficients.size() != static_cast<std::size_t>(sector_dimension))
+        {
+            throw std::invalid_argument("A recovered supercell translation sector has an invalid dimension.");
+        }
+        for (const auto& coefficients: sector.coefficients)
+        {
+            if (coefficients.size() != static_cast<std::size_t>(full_state_count))
+            {
+                throw std::invalid_argument(
+                    "A recovered supercell translation-sector vector has an invalid AO dimension.");
+            }
+        }
+
+        SternheimerLCAOOccupiedKPoint record = gamma_record;
+        record.local_k_index = static_cast<int>(ik);
+        record.global_k_index = static_cast<int>(ik);
+        record.zero_order_k_index = static_cast<int>(ik);
+        record.symmetry_spatial_isym = 0;
+        record.symmetry_time_reversal = false;
+        record.kpoint = sector_record.kpoint;
+        record.has_grid_kpoint_override = true;
+        record.grid_kpoint = {0.0, 0.0, 0.0};
+        record.kweight = sternheimer_supercell_sector_kweight(gamma_record.kweight,
+                                                               cell_count);
+        record.eigenvalues.assign(sector.eigenvalues.begin(),
+                                  sector.eigenvalues.begin() + occupied_count);
+        record.occupations.assign(static_cast<std::size_t>(occupied_count),
+                                  gamma_record.occupations.front());
+        record.coefficients.assign(sector.coefficients.begin(),
+                                   sector.coefficients.begin() + occupied_count);
+        record.unoccupied_eigenvalues.assign(sector.eigenvalues.begin() + occupied_count,
+                                             sector.eigenvalues.end());
+        record.unoccupied_coefficients.assign(sector.coefficients.begin() + occupied_count,
+                                              sector.coefficients.end());
+        records.push_back(std::move(record));
+    }
+    return records;
+}
+
+inline int sternheimer_find_kpoint_one_based(
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const SternheimerReducedKPoint& target,
+    const double tolerance = 1.0e-10)
+{
+    int found = -1;
+    for (const auto& record: records)
+    {
+        bool matches = true;
+        for (int direction = 0; direction != 3; ++direction)
+        {
+            double difference = record.kpoint[static_cast<std::size_t>(direction)]
+                                - target[static_cast<std::size_t>(direction)];
+            difference -= std::round(difference);
+            matches = matches && std::abs(difference) <= tolerance;
+        }
+        if (!matches)
+        {
+            continue;
+        }
+        if (found >= 0)
+        {
+            throw std::invalid_argument("A primitive supercell q point matches multiple k records.");
+        }
+        found = record.global_k_index + 1;
+    }
+    if (found <= 0)
+    {
+        throw std::invalid_argument("The primitive supercell q point is absent from the recovered k mesh.");
+    }
+    return found;
+}
+
+inline std::vector<const SternheimerLCAOOccupiedKPoint*> select_sternheimer_gamma_spin_records(
+    const std::vector<SternheimerLCAOOccupiedKPoint>& records,
+    const int spin_channel_count,
+    const double tolerance = 1.0e-12)
+{
+    if (spin_channel_count <= 0 || records.empty()
+        || records.size() > static_cast<std::size_t>(spin_channel_count))
+    {
+        throw std::invalid_argument(
+            "Gamma Sternheimer response requires at least one occupied LCAO spin record.");
+    }
+    std::vector<const SternheimerLCAOOccupiedKPoint*> selected(
+        static_cast<std::size_t>(spin_channel_count), nullptr);
+    for (const SternheimerLCAOOccupiedKPoint& record: records)
+    {
+        if (record.spin_index < 0 || record.spin_index >= spin_channel_count)
+        {
+            throw std::invalid_argument("Gamma Sternheimer response spin index is out of range.");
+        }
+        if (std::any_of(record.kpoint.begin(), record.kpoint.end(), [tolerance](const double coordinate) {
+                return std::abs(coordinate) > tolerance;
+            }))
+        {
+            throw std::invalid_argument("Gamma Sternheimer response received a non-Gamma LCAO record.");
+        }
+        const std::size_t spin_index = static_cast<std::size_t>(record.spin_index);
+        if (selected[spin_index] != nullptr)
+        {
+            throw std::invalid_argument("Gamma Sternheimer response has duplicate spin records.");
+        }
+        selected[spin_index] = &record;
+    }
+    selected.erase(std::remove(selected.begin(), selected.end(), nullptr), selected.end());
+    return selected;
 }
 
 struct SternheimerABACUSSTChannelResult

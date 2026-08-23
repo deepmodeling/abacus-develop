@@ -4261,27 +4261,16 @@ void run_sternheimer_abacus_chi0_output_impl(
         std::vector<int> response_spin_indices;
         if (use_lcao_zero_order)
         {
-            const int physical_spin_channel_count
-                = sternheimer_lcao_physical_spin_channel_count(PARAM.inp.nspin);
-            if (elec_state.ekb.nr != physical_spin_channel_count
-                || elec_state.wg.nr != physical_spin_channel_count)
-            {
-                throw std::runtime_error(
-                    "Sternheimer LCAO response requires one Gamma-point eigenvalue/occupation row per physical spin "
-                    "channel.");
-            }
-            validate_sternheimer_lcao_occupied_channels(*lcao_occupied_channels,
-                                                        physical_spin_channel_count,
-                                                        PARAM.globalv.nlocal);
-            if (lcao_occupied_channels->empty())
-            {
-                throw std::runtime_error("Sternheimer LCAO output found no occupied spin channels.");
-            }
-            response_spin_indices = sternheimer_lcao_spin_indices(*lcao_occupied_channels);
-        }
-        else
-        {
-            response_spin_indices.push_back(0);
+            validate_sternheimer_lcao_occupied_kpoints(
+                *lcao_occupied_kpoints,
+                elec_state.wg.nr,
+                elec_state.wg.nr,
+                PARAM.inp.nspin,
+                PARAM.globalv.nlocal,
+                -1,
+                false);
+            response_kpoints
+                = select_sternheimer_gamma_spin_records(*lcao_occupied_kpoints, PARAM.inp.nspin);
         }
 
         std::vector<int> occupied_band_counts;

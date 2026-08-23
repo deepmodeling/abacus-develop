@@ -99,8 +99,13 @@ std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> gather_sternheimer_lcao_occ
         }
         channels.push_back(std::move(channel));
     }
-    ModuleRI::validate_sternheimer_lcao_occupied_kpoints(
-        records, kv.get_nks(), kv.get_nkstot(), kv.get_nspin(), PARAM.globalv.nlocal);
+    ModuleRI::validate_sternheimer_lcao_occupied_kpoints(records,
+                                                         kv.get_nks(),
+                                                         kv.get_nkstot(),
+                                                         kv.get_nspin(),
+                                                         PARAM.globalv.nlocal,
+                                                         -1,
+                                                         PARAM.inp.sternheimer_q_index > 0);
 
     const int ibz_kpoint_count = kv.get_nkstot();
     const int full_kpoint_count = kv.get_nkstot_full();
