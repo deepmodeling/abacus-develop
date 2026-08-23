@@ -38,16 +38,15 @@
 using T    = std::complex<double>;
 using Real = double;
 
+extern "C" void zgemm_(const char* transa, const char* transb, const int* m, const int* n, const int* k,
+                       const T* alpha, const T* a, const int* lda,
+                       const T* b, const int* ldb, const T* beta, T* c, const int* ldc);
+
 static void dense_h_multiply(const T* H, int n, const T* in, T* out, int ld, int ncol)
 {
-    for (int j = 0; j < ncol; ++j) {
-        for (int i = 0; i < n; ++i) {
-            T sum = 0;
-            for (int k = 0; k < n; ++k)
-                sum += H[i + k * n] * in[k + j * ld];
-            out[i + j * ld] = sum;
-        }
-    }
+    const T one(1.0, 0.0);
+    const T zero(0.0, 0.0);
+    zgemm_("N", "N", &n, &ncol, &n, &one, H, &n, in, &ld, &zero, out, &ld);
 }
 
 static void identity_s(const T* in, T* out, int ld, int ncol)
