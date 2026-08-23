@@ -31,12 +31,22 @@
 #include <cmath>
 #include <complex>
 #include <cstdio>
+#include <malloc.h>
 #include <random>
 #include <string>
 #include <vector>
 
 using T = std::complex<double>;
 using Real = double;
+
+// Total heap memory currently allocated (bytes).  Used to compare the peak
+// working memory of the solvers: PPCG keeps a bounded subspace, while
+// Davidson grows its basis with the number of iterations.
+static long heap_bytes()
+{
+    struct mallinfo2 mi = mallinfo2();
+    return static_cast<long>(mi.uordblks) + static_cast<long>(mi.hblkhd);
+}
 
 extern "C" void zgemm_(const char* transa, const char* transb, const int* m, const int* n, const int* k, const T* alpha,
                        const T* a, const int* lda, const T* b, const int* ldb, const T* beta, T* c, const int* ldc);
@@ -195,6 +205,7 @@ struct Result
     double wall_s = 0.0;
     double avg_iter = -1.0; // -1 when the solver does not report it
     double max_err = 0.0;   // max |eval_i - ref_i| over the requested bands
+    long mem_bytes = 0;     // peak heap memory allocated by the solver
     bool ok = false;
 };
 
@@ -204,6 +215,7 @@ static Result run_ppcg(const std::vector<T>& H, int n, int nband, const std::vec
     Result r;
     std::vector<T> psi = psi0;
     std::vector<Real> eval(nband, 0.0);
+    long mem0 = heap_bytes();
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, nband, std::min(nband, 4), false,
                                                                    hsolver::PpcgStrategy::BLOCK_SUBSPACE);
     auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
@@ -212,6 +224,7 @@ static Result run_ppcg(const std::vector<T>& H, int n, int nband, const std::vec
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.avg_iter = avg;
+    r.mem_bytes = heap_bytes() - mem0;
     for (int i = 0; i < nband; ++i)
     {
         r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
@@ -229,6 +242,7 @@ static Result run_cg(const std::vector<T>& H, int n, int nband, const std::vecto
     auto subspace_func = [&H, n](T* psi_in, T* psi_out, int ld, int nband, bool) {
         rr_subspace(H.data(), n, psi_in, psi_out, ld, nband);
     };
+    long mem0 = heap_bytes();
     hsolver::DiagoCG<T, hsolver::base_device::DEVICE_CPU> cg("pw", "scf", true, subspace_func, 1e-8, 500, 1);
     auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
     auto s_op = [](T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); };
@@ -237,6 +251,7 @@ static Result run_cg(const std::vector<T>& H, int n, int nband, const std::vecto
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.avg_iter = avg;
+    r.mem_bytes = heap_bytes() - mem0;
     for (int i = 0; i < nband; ++i)
     {
         r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
@@ -251,6 +266,7 @@ static Result run_bpcg(const std::vector<T>& H, int n, int nband, const std::vec
     Result r;
     std::vector<T> psi = psi0;
     std::vector<Real> eval(nband, 0.0);
+    long mem0 = heap_bytes();
     hsolver::DiagoBPCG<T, hsolver::base_device::DEVICE_CPU> bpcg(prec.data());
     bpcg.init_iter(nband, nband, n, n);
     auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
@@ -273,6 +289,7 @@ static Result run_bpcg(const std::vector<T>& H, int n, int nband, const std::vec
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.avg_iter = it;
+    r.mem_bytes = heap_bytes() - mem0;
     for (int i = 0; i < nband; ++i)
     {
         r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
@@ -288,6 +305,7 @@ static Result run_dav(const std::vector<T>& H, int n, int nband, const std::vect
     std::vector<T> psi = psi0;
     std::vector<Real> eval(nband, 0.0);
     hsolver::diag_comm_info comm(MPI_COMM_WORLD, 0, 1);
+    long mem0 = heap_bytes();
     hsolver::DiagoDavid<T, hsolver::base_device::DEVICE_CPU> dav(prec.data(), nband, n, 4, comm);
     auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
     auto s_op = [](T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); };
@@ -296,6 +314,7 @@ static Result run_dav(const std::vector<T>& H, int n, int nband, const std::vect
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.avg_iter = it;
+    r.mem_bytes = heap_bytes() - mem0;
     for (int i = 0; i < nband; ++i)
     {
         r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
@@ -323,9 +342,9 @@ int main(int argc, char** argv)
     };
 
     std::printf("\n=== Solver comparison (identical H, psi0, ethr) ===\n");
-    std::printf("%-5s %-5s %-6s %-10s %-14s %-12s %-10s\n", "n", "nband", "spars", "solver", "wall_time(s)", "avg_iter",
-                "max_err");
-    std::printf("---------------------------------------------------------------\n");
+    std::printf("%-5s %-5s %-6s %-10s %-14s %-12s %-10s %-12s\n", "n", "nband", "spars", "solver", "wall_time(s)", "avg_iter",
+                "max_err", "mem(MB)");
+    std::printf("---------------------------------------------------------------------------\n");
 
     for (const auto& c : cases)
     {
@@ -343,15 +362,15 @@ int main(int argc, char** argv)
         Result r_bpcg = run_bpcg(H, c.n, c.nband, prec, psi0, ethr, ref.data());
         Result r_dav = run_dav(H, c.n, c.nband, prec, psi0, ethr, ref.data());
 
-        std::printf("%-5d %-5d %-6d %-10s %-14.5f %-12.1f %-10.2e\n", c.n, c.nband, c.sparsity, "PPCG", r_ppcg.wall_s,
-                    r_ppcg.avg_iter, r_ppcg.max_err);
-        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e\n", "", "", "", "CG", r_cg.wall_s, r_cg.avg_iter,
-                    r_cg.max_err);
-        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e\n", "", "", "", "BPCG", r_bpcg.wall_s,
-                    r_bpcg.avg_iter, r_bpcg.max_err);
-        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e\n", "", "", "", "Davidson", r_dav.wall_s,
-                    r_dav.avg_iter, r_dav.max_err);
-        std::printf("---------------------------------------------------------------\n");
+        std::printf("%-5d %-5d %-6d %-10s %-14.5f %-12.1f %-10.2e %-12.2f\n", c.n, c.nband, c.sparsity, "PPCG", r_ppcg.wall_s,
+                    r_ppcg.avg_iter, r_ppcg.max_err, r_ppcg.mem_bytes / 1048576.0);
+        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e %-12.2f\n", "", "", "", "CG", r_cg.wall_s, r_cg.avg_iter,
+                    r_cg.max_err, r_cg.mem_bytes / 1048576.0);
+        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e %-12.2f\n", "", "", "", "BPCG", r_bpcg.wall_s,
+                    r_bpcg.avg_iter, r_bpcg.max_err, r_bpcg.mem_bytes / 1048576.0);
+        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e %-12.2f\n", "", "", "", "Davidson", r_dav.wall_s,
+                    r_dav.avg_iter, r_dav.max_err, r_dav.mem_bytes / 1048576.0);
+        std::printf("---------------------------------------------------------------------------\n");
     }
 
     MPI_Finalize();
