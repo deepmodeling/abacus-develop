@@ -303,3 +303,225 @@ TEST(TestSrcPWStressMultiDevice, cal_stress_nl_op_gpu)
     delmem_int_op()(gpu_ctx, d_atom_na);
 }
 #endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+// Non-collinear (nspin=4) cal_stress_nl test with deeq_nc.
+// Uses ntype = 1 and atom_na = {2} so that the second atom of the same
+// element type is indexed: this catches the GPU bug where iat was both
+// incremented inside the atom loop and added to ia (double counting).
+namespace
+{
+// Naive reference implementation of the non-collinear non-local stress
+// for a single element type starting at atom index 0.
+double ref_stress_nl_nc(const int nbands_occ,
+                        const int nkb,
+                        const int natom,
+                        const int nproj,
+                        const int deeq_2,
+                        const int deeq_3,
+                        const int deeq_4,
+                        const std::vector<double>& d_wg,
+                        const std::vector<std::complex<double>>& deeq_nc,
+                        const std::vector<std::complex<double>>& becp,
+                        const std::vector<std::complex<double>>& dbecp)
+{
+    double ref = 0.0;
+    for (int ib = 0; ib < nbands_occ; ib++)
+    {
+        const double fac = d_wg[ib];
+        const int ib2 = ib * 2;
+        for (int ia = 0; ia < natom; ia++)
+        {
+            for (int ip1 = 0; ip1 < nproj; ip1++)
+            {
+                for (int ip2 = 0; ip2 < nproj; ip2++)
+                {
+                    const std::complex<double> ps0 = deeq_nc[((0 * deeq_2 + ia) * deeq_3 + ip1) * deeq_4 + ip2];
+                    const std::complex<double> ps1 = deeq_nc[((1 * deeq_2 + ia) * deeq_3 + ip1) * deeq_4 + ip2];
+                    const std::complex<double> ps2 = deeq_nc[((2 * deeq_2 + ia) * deeq_3 + ip1) * deeq_4 + ip2];
+                    const std::complex<double> ps3 = deeq_nc[((3 * deeq_2 + ia) * deeq_3 + ip1) * deeq_4 + ip2];
+                    const int inkb1 = ia * nproj + ip1;
+                    const int inkb2 = ia * nproj + ip2;
+                    const std::complex<double> dbb0 = std::conj(dbecp[ib2 * nkb + inkb1]) * becp[ib2 * nkb + inkb2];
+                    const std::complex<double> dbb1 = std::conj(dbecp[ib2 * nkb + inkb1]) * becp[(ib2 + 1) * nkb + inkb2];
+                    const std::complex<double> dbb2 = std::conj(dbecp[(ib2 + 1) * nkb + inkb1]) * becp[ib2 * nkb + inkb2];
+                    const std::complex<double> dbb3
+                        = std::conj(dbecp[(ib2 + 1) * nkb + inkb1]) * becp[(ib2 + 1) * nkb + inkb2];
+                    ref -= fac * (ps0 * dbb0 + ps1 * dbb1 + ps2 * dbb2 + ps3 * dbb3).real();
+                }
+            }
+        }
+    }
+    return ref;
+}
+
+// Deterministic, non-symmetric input data so that any wrong atom or
+// spin-block index gives a different result.
+void init_nc_inputs(std::vector<std::complex<double>>& deeq_nc,
+                    std::vector<std::complex<double>>& becp,
+                    std::vector<std::complex<double>>& dbecp)
+{
+    for (size_t i = 0; i < deeq_nc.size(); i++)
+    {
+        deeq_nc[i] = std::complex<double>(0.11 * i + 0.03, -0.07 * i + 0.02);
+    }
+    for (size_t i = 0; i < becp.size(); i++)
+    {
+        becp[i] = std::complex<double>(0.05 * i - 0.31, 0.11 * i + 0.13);
+    }
+    for (size_t i = 0; i < dbecp.size(); i++)
+    {
+        dbecp[i] = std::complex<double>(-0.06 * i + 0.21, 0.04 * i - 0.52);
+    }
+}
+} // namespace
+
+TEST(TestSrcPWStressMultiDevice, cal_stress_nl_nc_op_cpu)
+{
+    const int ipol = 0, jpol = 1;
+    const int nkb = 4, nbands_occ = 2, ntype = 1;
+    const int natom = 2, nproj = 2;
+    const int deeq_2 = natom, deeq_3 = nproj, deeq_4 = nproj;
+
+    std::vector<int> atom_na{natom};
+    std::vector<int> atom_nh{nproj};
+
+    std::vector<double> d_wg{0.71, 1.33};
+    std::vector<double> qq_nt(1, 0.0); // unused: d_ekb is nullptr
+
+    std::vector<std::complex<double>> deeq_nc(4 * deeq_2 * deeq_3 * deeq_4);
+    std::vector<std::complex<double>> becp(nbands_occ * 2 * nkb);
+    std::vector<std::complex<double>> dbecp(nbands_occ * 2 * nkb);
+    init_nc_inputs(deeq_nc, becp, dbecp);
+
+    const double expected = ref_stress_nl_nc(nbands_occ,
+                                             nkb,
+                                             natom,
+                                             nproj,
+                                             deeq_2,
+                                             deeq_3,
+                                             deeq_4,
+                                             d_wg,
+                                             deeq_nc,
+                                             becp,
+                                             dbecp);
+
+    std::vector<double> stress(9, 0.0);
+    hamilt::cal_stress_nl_op<double, base_device::DEVICE_CPU>()(cpu_ctx,
+                                                                ipol,
+                                                                jpol,
+                                                                nkb,
+                                                                nbands_occ,
+                                                                ntype,
+                                                                deeq_2,
+                                                                deeq_3,
+                                                                deeq_4,
+                                                                atom_nh.data(),
+                                                                atom_na.data(),
+                                                                d_wg.data(),
+                                                                true,
+                                                                nullptr,
+                                                                qq_nt.data(),
+                                                                deeq_nc.data(),
+                                                                becp.data(),
+                                                                dbecp.data(),
+                                                                stress.data());
+
+    EXPECT_LT(fabs(stress[ipol * 3 + jpol] - expected), 1e-12);
+}
+
+#if __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
+TEST(TestSrcPWStressMultiDevice, cal_stress_nl_nc_op_gpu)
+{
+    const int ipol = 0, jpol = 1;
+    const int nkb = 4, nbands_occ = 2, ntype = 1;
+    const int natom = 2, nproj = 2;
+    const int deeq_2 = natom, deeq_3 = nproj, deeq_4 = nproj;
+
+    std::vector<int> atom_na{natom};
+    std::vector<int> atom_nh{nproj};
+
+    std::vector<double> d_wg{0.71, 1.33};
+    std::vector<double> qq_nt(1, 0.0); // unused: d_ekb is nullptr
+
+    std::vector<std::complex<double>> deeq_nc(4 * deeq_2 * deeq_3 * deeq_4);
+    std::vector<std::complex<double>> becp(nbands_occ * 2 * nkb);
+    std::vector<std::complex<double>> dbecp(nbands_occ * 2 * nkb);
+    init_nc_inputs(deeq_nc, becp, dbecp);
+
+    const double expected = ref_stress_nl_nc(nbands_occ,
+                                             nkb,
+                                             natom,
+                                             nproj,
+                                             deeq_2,
+                                             deeq_3,
+                                             deeq_4,
+                                             d_wg,
+                                             deeq_nc,
+                                             becp,
+                                             dbecp);
+
+    std::vector<double> stress(9, 0.0);
+
+    using delmem_int_op = base_device::memory::delete_memory_op<int, base_device::DEVICE_GPU>;
+    using resmem_int_op = base_device::memory::resize_memory_op<int, base_device::DEVICE_GPU>;
+    using syncmem_int_h2d_op
+        = base_device::memory::synchronize_memory_op<int, base_device::DEVICE_GPU, base_device::DEVICE_CPU>;
+
+    std::complex<double> *d_deeq_nc = nullptr, *d_becp = nullptr, *d_dbecp = nullptr;
+    double *dev_wg = nullptr, *d_qq_nt = nullptr, *d_stress = nullptr;
+    int *d_atom_nh = nullptr, *d_atom_na = nullptr;
+
+    resmem_zd_op()(gpu_ctx, d_deeq_nc, deeq_nc.size());
+    resmem_zd_op()(gpu_ctx, d_becp, becp.size());
+    resmem_zd_op()(gpu_ctx, d_dbecp, dbecp.size());
+    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_deeq_nc, deeq_nc.data(), deeq_nc.size());
+    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_becp, becp.data(), becp.size());
+    syncmem_z2z_h2d_op()(gpu_ctx, cpu_ctx, d_dbecp, dbecp.data(), dbecp.size());
+
+    resmem_dd_op()(gpu_ctx, dev_wg, d_wg.size());
+    resmem_dd_op()(gpu_ctx, d_qq_nt, qq_nt.size());
+    resmem_dd_op()(gpu_ctx, d_stress, stress.size());
+    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, dev_wg, d_wg.data(), d_wg.size());
+    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_qq_nt, qq_nt.data(), qq_nt.size());
+    syncmem_d2d_h2d_op()(gpu_ctx, cpu_ctx, d_stress, stress.data(), stress.size());
+
+    resmem_int_op()(gpu_ctx, d_atom_nh, atom_nh.size());
+    resmem_int_op()(gpu_ctx, d_atom_na, atom_na.size());
+    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, d_atom_nh, atom_nh.data(), atom_nh.size());
+    syncmem_int_h2d_op()(gpu_ctx, cpu_ctx, d_atom_na, atom_na.data(), atom_na.size());
+
+    hamilt::cal_stress_nl_op<double, base_device::DEVICE_GPU>()(gpu_ctx,
+                                                                ipol,
+                                                                jpol,
+                                                                nkb,
+                                                                nbands_occ,
+                                                                ntype,
+                                                                deeq_2,
+                                                                deeq_3,
+                                                                deeq_4,
+                                                                d_atom_nh,
+                                                                d_atom_na,
+                                                                dev_wg,
+                                                                true,
+                                                                nullptr,
+                                                                d_qq_nt,
+                                                                d_deeq_nc,
+                                                                d_becp,
+                                                                d_dbecp,
+                                                                d_stress);
+
+    syncmem_d2d_d2h_op()(cpu_ctx, gpu_ctx, stress.data(), d_stress, stress.size());
+
+    EXPECT_LT(fabs(stress[ipol * 3 + jpol] - expected), 1e-12);
+
+    delmem_zd_op()(gpu_ctx, d_deeq_nc);
+    delmem_zd_op()(gpu_ctx, d_becp);
+    delmem_zd_op()(gpu_ctx, d_dbecp);
+
+    delmem_dd_op()(gpu_ctx, dev_wg);
+    delmem_dd_op()(gpu_ctx, d_qq_nt);
+    delmem_dd_op()(gpu_ctx, d_stress);
+
+    delmem_int_op()(gpu_ctx, d_atom_nh);
+    delmem_int_op()(gpu_ctx, d_atom_na);
+}
+#endif // __CUDA || __UT_USE_CUDA || __ROCM || __UT_USE_ROCM
