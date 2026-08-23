@@ -583,36 +583,24 @@ namespace hsolver {
 //==============================================================================
 
 // ---------------------------------------------------------------------------
-// Lock converged eigenpairs: columns with residual below threshold
+// Lock converged eigenpairs: bands whose eigenvalue stops changing between
+// successive Rayleigh-Ritz steps are considered converged.  This matches the
+// convergence criterion used by CG and Davidson (eigenvalue change < ethr).
 // ---------------------------------------------------------------------------
 template <typename T, typename Device>
 void DiagoPPCG<T, Device>::lock_epairs(
-    const std::vector<T>& residual,
+    const Real* eigenvalue_prev,
+    const Real* eigenvalue,
     const std::vector<double>& ethr_band,
     std::vector<int>& active_cols) const
 {
     active_cols.clear();
     active_cols.reserve(n_band_);
-    std::vector<double> nrm2_all(n_band_, 0.0);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static) if (n_dim_ * n_band_ > ppcg_openmp_work_threshold)
-#endif
     for (int j = 0; j < n_band_; ++j)
     {
-        double nrm2 = 0.0;
-        for (int ig = 0; ig < n_dim_; ++ig)
-        {
-            nrm2 += static_cast<double>(std::norm(residual[idx(ig, j, ld_psi_)]));
-        }
-        nrm2_all[j] = nrm2;
-    }
-    reduce_pool_if_mpi_ready(nrm2_all.data(), n_band_);
-    for (int j = 0; j < n_band_; ++j)
-    {
-        const Real rnrm = std::sqrt(std::max(static_cast<Real>(nrm2_all[j]),
-                                             Real(0)));
         const Real thr = std::max(static_cast<Real>(ethr_band[j]), diag_thr_);
-        if (rnrm > thr)
+        const Real delta = std::abs(eigenvalue[j] - eigenvalue_prev[j]);
+        if (delta > thr)
         {
             active_cols.push_back(j);
         }
@@ -957,6 +945,11 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
     std::vector<int>& active_cols,
     const std::vector<double>& ethr_band)
 {
+    // Remember the eigenvalues of the previous step; convergence is measured
+    // as the eigenvalue change between successive Rayleigh-Ritz steps.
+    eval_prev_.resize(n_band_);
+    std::copy(eigenvalue, eigenvalue + n_band_, eval_prev_.begin());
+
     gram(psi, hpsi_.data(), n_band_, n_band_, rr_hsub_, n_band_);
     gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
 
@@ -1063,7 +1056,7 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
         }
     }
 
-    lock_epairs(w_, ethr_band, active_cols);
+    lock_epairs(eval_prev_.data(), eigenvalue, ethr_band, active_cols);
 }
 
 } // namespace hsolver

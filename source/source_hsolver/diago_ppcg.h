@@ -96,6 +96,7 @@ private:
     std::vector<T> rr_hsub_;
     std::vector<T> rr_ssub_;
     std::vector<Real> rr_eval_;
+    std::vector<Real> eval_prev_;  // eigenvalues of the previous Rayleigh-Ritz step
 
     // Polak-Ribiere state (CONJUGATE_GRADIENT strategy)
     std::vector<T> z_old_;      // previous preconditioned residual
@@ -172,7 +173,8 @@ private:
         std::vector<T> hpsi_new;
     };
 
-    void lock_epairs(const std::vector<T>& residual,
+    void lock_epairs(const Real* eigenvalue_prev,
+                     const Real* eigenvalue,
                      const std::vector<double>& ethr_band,
                      std::vector<int>& active_cols) const;
 

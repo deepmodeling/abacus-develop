@@ -1366,7 +1366,9 @@ TEST_F(DiagoPPCGEigenvectorTest, BlockSubspace)
             << "Eigenvec BLOCK: eigenvalue[" << i << "] mismatch";
     }
 
-    // --- Residual check: ||Hψ_i - ε_i ψ_i|| < 1e-6 ---
+    // --- Residual check: ||Hψ_i - ε_i ψ_i|| < sqrt(ethr) ---
+    // The eigenvalue-change convergence criterion targets eigenvalue error ~ethr,
+    // so the eigenvector residual is naturally ~sqrt(ethr) = 1e-4 for ethr=1e-8.
     std::vector<T> hpsi(n_dim), res(n_dim);
     for (int i = 0; i < nband; ++i) {
         dense_h_multiply(H_mat.data(), n_dim,
@@ -1374,7 +1376,7 @@ TEST_F(DiagoPPCGEigenvectorTest, BlockSubspace)
         for (int j = 0; j < n_dim; ++j)
             res[j] = hpsi[j] - eval[i] * psi_run[j + i * ld];
         Real res_nrm = column_norm(res.data(), n_dim);
-        EXPECT_LT(res_nrm, 1e-6)
+        EXPECT_LT(res_nrm, 1e-4)
             << "Eigenvec BLOCK: residual[" << i << "] too large: " << res_nrm;
     }
 
