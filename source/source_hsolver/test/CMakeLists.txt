@@ -127,12 +127,22 @@ AddTest(
   LIBS ${math_libs} base device container
   SOURCES diago_ppcg_test.cpp ../diago_ppcg.cpp
 )
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg_float
+  LIBS ${math_libs} base device container
+  SOURCES diago_ppcg_float_test.cpp ../diago_ppcg.cpp
+)
 
 if (ENABLE_MPI)
 AddTest(
   TARGET MODULE_HSOLVER_compare
   LIBS parameter base psi device container
   SOURCES diago_compare_test.cpp ../diago_cg.cpp ../diago_bpcg.cpp ../diago_david.cpp ../diago_ppcg.cpp ../diago_iter_assist.cpp ../diag_const_nums.cpp ../para_lin_tf.cpp ../../source_basis/module_pw/test/test_tool.cpp
+)
+AddTest(
+  TARGET MODULE_HSOLVER_ppcg_parallel
+  LIBS parameter base psi device container
+  SOURCES diago_ppcg_parallel_test.cpp ../diago_ppcg.cpp ../../source_basis/module_pw/test/test_tool.cpp
 )
 endif()
 
@@ -153,6 +163,7 @@ install(FILES KPoints-Si64-Solution.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_cg_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_david_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES diago_lcao_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+install(FILES diago_ppcg_parallel_test.sh DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 install(FILES PEXSI-H-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 install(FILES PEXSI-S-GammaOnly-Si2.dat DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -212,6 +223,10 @@ if (ENABLE_MPI)
         COMMAND ${BASH} diago_david_parallel_test.sh
         WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
       ) 
+  add_test(NAME MODULE_HSOLVER_ppcg_parallel_test
+        COMMAND ${BASH} diago_ppcg_parallel_test.sh
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+      )
   if(ENABLE_LCAO)
     add_test(NAME MODULE_HSOLVER_LCAO_parallel
           COMMAND ${BASH} diago_lcao_parallel_test.sh
