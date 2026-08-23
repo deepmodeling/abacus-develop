@@ -46,7 +46,7 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
     const int rr_step = std::max(1, pw_diag_ndim);
 
-    DiagoPPCG<T, Device> ppcg(static_cast<Real>(diag_thr),
+    DiagoPPCG<T, Device> ppcg(Real(diag_thr),
                               diag_iter_max,
                               sbsize,
                               rr_step,
@@ -125,7 +125,7 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
             spsi_out, out_dev.ptr, count);
     };
 
-    DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(static_cast<Real>(diag_thr),
+    DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(Real(diag_thr),
                                                diag_iter_max,
                                                sbsize,
                                                rr_step,

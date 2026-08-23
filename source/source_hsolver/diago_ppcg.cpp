@@ -95,14 +95,14 @@ Real max_generalized_residual(
         for (int ig = 0; ig < n_dim; ++ig)
         {
             const T r = hpsi[ig + j * ld] - T(eigenvalue[j]) * spsi[ig + j * ld];
-            nrm2 += static_cast<double>(std::norm(r));
+            nrm2 += double(std::norm(r));
         }
         nrm2_all[j] = nrm2;
     }
     reduce_pool_if_mpi_ready(nrm2_all.data(), ncol);
     for (int j = 0; j < ncol; ++j)
     {
-        max_res = std::max(max_res, std::sqrt(static_cast<Real>(nrm2_all[j])));
+        max_res = std::max(max_res, std::sqrt(Real(nrm2_all[j])));
     }
     return max_res;
 }
@@ -110,7 +110,7 @@ Real max_generalized_residual(
 template <typename T>
 inline void set_zero(std::vector<T>& x)
 {
-    const int n = static_cast<int>(x.size());
+    const int n = int(x.size());
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n > ppcg_openmp_work_threshold)
 #endif
@@ -196,7 +196,7 @@ inline bool ppcg_contiguous_cols(const std::vector<int>& cols, int& first)
     }
 
     first = cols.front();
-    for (int j = 0; j < static_cast<int>(cols.size()); ++j)
+    for (int j = 0; j < int(cols.size()); ++j)
     {
         if (cols[j] != first + j)
         {
@@ -258,7 +258,7 @@ void DiagoPPCG<T, Device>::validate_input(
     {
         throw std::invalid_argument("PPCG: dim must not exceed ld_psi.");
     }
-    if (ethr_band.size() < static_cast<size_t>(n_band_))
+    if (ethr_band.size() < size_t(n_band_))
     {
         throw std::invalid_argument("PPCG: ethr_band size is smaller than nband.");
     }
@@ -394,7 +394,7 @@ void DiagoPPCG<T, Device>::copy_cols(const T* src,
                                       const std::vector<int>& cols,
                                       std::vector<T>& dst) const
 {
-    const int ncols = static_cast<int>(cols.size());
+    const int ncols = int(cols.size());
     dst.resize(ld_psi_ * ncols);
     if (ncols == 0)
     {
@@ -430,7 +430,7 @@ void DiagoPPCG<T, Device>::scatter_cols(
     const std::vector<int>& cols,
     const std::vector<T>& src) const
 {
-    const int ncols = static_cast<int>(cols.size());
+    const int ncols = int(cols.size());
     if (ncols == 0)
     {
         return;
@@ -472,8 +472,8 @@ void DiagoPPCG<T, Device>::project_against(
         return;
     }
 
-    const int nbasis = static_cast<int>(basis_cols.size());
-    const int nx = static_cast<int>(x_cols.size());
+    const int nbasis = int(basis_cols.size());
+    const int nx = int(x_cols.size());
 
     int x_first = 0;
     const bool contiguous_x = ppcg_contiguous_cols(x_cols, x_first);
@@ -558,7 +558,7 @@ void DiagoPPCG<T, Device>::divide_by_preconditioner(
     const Real* prec,
     std::vector<T>& x) const
 {
-    const int ncols = static_cast<int>(active_cols.size());
+    const int ncols = int(active_cols.size());
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static) if (n_dim_ * ncols > ppcg_openmp_work_threshold)
 #endif
@@ -598,7 +598,7 @@ void DiagoPPCG<T, Device>::lock_epairs(
     active_cols.reserve(n_band_);
     for (int j = 0; j < n_band_; ++j)
     {
-        const Real thr = std::max(static_cast<Real>(ethr_band[j]), diag_thr_);
+        const Real thr = std::max(Real(ethr_band[j]), diag_thr_);
         const Real delta = std::abs(eigenvalue[j] - eigenvalue_prev[j]);
         if (delta > thr)
         {
@@ -616,7 +616,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
     const std::vector<int>& cols,
     SmallSubspace& subspace) const
 {
-    const int l = static_cast<int>(cols.size());
+    const int l = int(cols.size());
     const int dim = 2 * l;
     subspace.k.resize(dim * dim);
     subspace.m.resize(dim * dim);
@@ -651,7 +651,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
             double sn2 = 0.0;
             for (int ig = 0; ig < n_dim_; ++ig)
             {
-                sn2 += static_cast<double>(std::real(std::conj(x[idx(ig, j, ld_psi_)])
+                sn2 += double(std::real(std::conj(x[idx(ig, j, ld_psi_)])
                                                      * sx[idx(ig, j, ld_psi_)]));
             }
             sn_scale_all[j] = sn2;
@@ -663,7 +663,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
             // Only scale if the norm is non-negligible; a near-zero
             // column is a converged band whose contribution is harmless.
             sn_scale_all[j] = (sn > Real(ppcg_scaling_threshold))
-                            ? static_cast<double>(Real(1) / sn)
+                            ? double(Real(1) / sn)
                             : 1.0;
         }
 #ifdef _OPENMP
@@ -671,7 +671,7 @@ void DiagoPPCG<T, Device>::build_small_subspace(
 #endif
         for (int j = 0; j < lcols; ++j) {
             for (int ig = 0; ig < n_dim_; ++ig) {
-                const Real scale = static_cast<Real>(sn_scale_all[j]);
+                const Real scale = Real(sn_scale_all[j]);
                 x[ idx(ig, j, ld_psi_)] *= scale;
                 sx[idx(ig, j, ld_psi_)] *= scale;
                 hx[idx(ig, j, ld_psi_)] *= scale;
@@ -742,10 +742,10 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
     // fail.
     const std::vector<T> k0 = subspace.k;
     const std::vector<T> m0 = subspace.m;
-    const Real shifts[] = {static_cast<Real>(ppcg_subspace_shifts[0]),
-                           static_cast<Real>(ppcg_subspace_shifts[1]),
-                           static_cast<Real>(ppcg_subspace_shifts[2]),
-                           static_cast<Real>(ppcg_subspace_shifts[3])};
+    const Real shifts[] = {Real(ppcg_subspace_shifts[0]),
+                           Real(ppcg_subspace_shifts[1]),
+                           Real(ppcg_subspace_shifts[2]),
+                           Real(ppcg_subspace_shifts[3])};
     for (const Real shift : shifts)
     {
         subspace.k = k0;
@@ -772,8 +772,8 @@ void DiagoPPCG<T, Device>::solve_small_generalized(
     for (int i = 0; i < dim; ++i)
     {
         subspace.k[i + i * dim] = T(1);
-        subspace.eval[i] = static_cast<Real>(std::real(k0[i + i * dim]))
-                         / std::max(static_cast<Real>(std::real(m0[i + i * dim])),
+        subspace.eval[i] = Real(std::real(k0[i + i * dim]))
+                         / std::max(Real(std::real(m0[i + i * dim])),
                                     Real(ppcg_numerical_threshold));
     }
 }
@@ -968,8 +968,8 @@ void DiagoPPCG<T, Device>::rayleigh_ritz(
         gram(psi, spsi_.data(), n_band_, n_band_, rr_ssub_, n_band_);
         for (int ii = 0; ii < n_band_; ++ii)
         {
-            rr_eval_[ii] = static_cast<Real>(std::real(rr_hsub_[ii + ii * n_band_]))
-                     / std::max(static_cast<Real>(
+            rr_eval_[ii] = Real(std::real(rr_hsub_[ii + ii * n_band_]))
+                     / std::max(Real(
                                     std::real(rr_ssub_[ii + ii * n_band_])),
                                 Real(ppcg_numerical_threshold));
         }
@@ -1589,7 +1589,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
 
         while (!active_cols.empty() && iter <= maxiter_)
         {
-            const int nact = static_cast<int>(active_cols.size());
+            const int nact = int(active_cols.size());
             const int nsb = std::max(1, (nact + sbsize_ - 1) / sbsize_);
 
             // Precondition the residual.
@@ -1611,7 +1611,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             scatter_cols(hw_.data(), active_cols, hw_active);
             scatter_cols(sw_.data(), active_cols, sw_active);
 
-            avg_iter += static_cast<double>(nact) / static_cast<double>(ncol);
+            avg_iter += double(nact) / double(ncol);
 
             // Use the stable 2-block [psi, w] projected subspace.  The
             // preconditioned residual w is normalized to unit S-norm before
@@ -1750,8 +1750,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                     for (int ii = 0; ii < ncol; ++ii)
                     {
                         eval_cg[ii] =
-                            static_cast<Real>(std::real(h_sub[ii + ii * ncol]))
-                            / std::max(static_cast<Real>(
+                            Real(std::real(h_sub[ii + ii * ncol]))
+                            / std::max(Real(
                                            std::real(s_sub[ii + ii * ncol])),
                                        Real(ppcg_numerical_threshold));
                     }
@@ -1782,7 +1782,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
                 double nrm2 = 0.0;
                 for (int ig = 0; ig < n_dim_; ++ig)
                 {
-                    nrm2 += static_cast<double>(
+                    nrm2 += double(
                         std::norm(grad[idx(ig, i, ld_psi_)]));
                 }
                 grad_nrm2[i] = nrm2;
@@ -1790,8 +1790,8 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             reduce_pool_if_mpi_ready(grad_nrm2.data(), ncol);
             for (int i = 0; i < ncol; ++i)
             {
-                if (std::sqrt(static_cast<Real>(grad_nrm2[i]))
-                    > std::max(static_cast<Real>(ethr_band[i]), diag_thr_))
+                if (std::sqrt(Real(grad_nrm2[i]))
+                    > std::max(Real(ethr_band[i]), diag_thr_))
                 {
                     all_converged = false;
                     break;
@@ -1805,7 +1805,7 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             ++iter;
         }
 
-        avg_iter = static_cast<double>(iter);
+        avg_iter = double(iter);
     }
 
     return avg_iter;

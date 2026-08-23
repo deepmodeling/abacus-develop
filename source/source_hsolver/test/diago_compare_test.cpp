@@ -72,7 +72,7 @@ static void ref_eigen(const T* H, int n, Real* e)
 static void make_H(int n, int sparsity_pct, std::vector<T>& H, std::vector<Real>& prec)
 {
     H.assign(n * n, T(0));
-    std::mt19937 rng(static_cast<unsigned>(n * 100 + sparsity_pct));
+    std::mt19937 rng(unsigned(n * 100 + sparsity_pct));
     std::uniform_real_distribution<Real> dist(-1.0, 1.0);
     for (int i = 0; i < n; ++i) {
         for (int j = i; j < n; ++j) {
@@ -113,7 +113,7 @@ static void make_psi(int n, int nband, std::vector<T>& psi)
 // Rayleigh-Ritz subspace diagonalization used as CG's subspace_func.
 static void rr_subspace(const T* H, int n, T* psi_in, T* psi_out, int ld, int nband)
 {
-    std::vector<T> hpsi(static_cast<size_t>(n) * nband, T(0));
+    std::vector<T> hpsi(size_t(n) * nband, T(0));
     dense_h_multiply(H, n, psi_in, hpsi.data(), n, nband);
 
     // S_sub = Psi^H Psi (S = I), H_sub = Psi^H H Psi
