@@ -1636,8 +1636,15 @@ double DiagoPPCG<T, Device>::diag(const HPsiFunc& hpsi_func,
             // can otherwise drift into an ill-conditioned basis before the next
             // Ritz rotation.
             rayleigh_ritz(psi_in, eigenvalue_in, active_cols, ethr_band);
-            apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
-            apply_s_current(psi_in, spsi_.data(), ncol);
+            // The Rayleigh-Ritz rotation already keeps hpsi_/spsi_ consistent
+            // with the rotated psi up to rounding; re-applying H/S exactly is
+            // only needed every rr_step_ iterations to reset the accumulated
+            // rounding drift.
+            if ((iter % rr_step_) == 0)
+            {
+                apply_h(hpsi_func, psi_in, hpsi_.data(), ncol);
+                apply_s_current(psi_in, spsi_.data(), ncol);
+            }
             record_residual(iter, "rayleigh_ritz");
 
             ++iter;
