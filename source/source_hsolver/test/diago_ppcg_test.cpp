@@ -87,7 +87,7 @@ class DiagoPPCGTridiagTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
 
         // Convergence thresholds
@@ -164,7 +164,7 @@ TEST_F(DiagoPPCGTridiagTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Tridiag BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(100)) << "Tridiag BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(100)) << "Tridiag BLOCK: too many iterations";
 }
 
 TEST_F(DiagoPPCGTridiagTest, ResidualTraceWritesCsv)
@@ -229,14 +229,14 @@ class DiagoPPCGDiagonalTest : public ::testing::Test
         H_mat.assign(n_dim * n_dim, T(0));
         for (int i = 0; i < n_dim; ++i)
         {
-            H_mat[i + i * n_dim] = T(static_cast<Real>(i + 1), 0);
+            H_mat[i + i * n_dim] = T(Real(i + 1), 0);
         }
 
         // Preconditioner — diagonal of H
         prec.resize(n_dim);
         for (int i = 0; i < n_dim; ++i)
         {
-            prec[i] = static_cast<Real>(i + 1);
+            prec[i] = Real(i + 1);
         }
 
         // Lowest 3 eigenvalues: 1, 2, 3
@@ -316,7 +316,7 @@ TEST_F(DiagoPPCGDiagonalTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Diagonal BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(50)) << "Diagonal BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(50)) << "Diagonal BLOCK: too many iterations";
 }
 
 TEST_F(DiagoPPCGDiagonalTest, ConjugateGradientFallback)
@@ -341,7 +341,7 @@ TEST_F(DiagoPPCGDiagonalTest, ConjugateGradientFallback)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Diagonal CG fallback: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(80)) << "Diagonal CG fallback: too many iterations";
+    EXPECT_LE(avg_iter, double(80)) << "Diagonal CG fallback: too many iterations";
 }
 
 TEST_F(DiagoPPCGDiagonalTest, EmptyHOperatorThrows)
@@ -397,13 +397,13 @@ TEST(DiagoPPCGLeadingDimensionTest, BlockSubspaceWithPadding)
     std::vector<T> H_mat(n_dim * n_dim, T(0));
     for (int i = 0; i < n_dim; ++i)
     {
-        H_mat[i + i * n_dim] = T(static_cast<Real>(i + 1), 0);
+        H_mat[i + i * n_dim] = T(Real(i + 1), 0);
     }
 
     std::vector<Real> prec(n_dim);
     for (int i = 0; i < n_dim; ++i)
     {
-        prec[i] = static_cast<Real>(i + 1);
+        prec[i] = Real(i + 1);
     }
 
     std::vector<T> psi(ld * nband, T(17.0, -3.0));
@@ -463,7 +463,7 @@ TEST(DiagoPPCGLeadingDimensionTest, BlockSubspaceWithPadding)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Padded ld BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(80)) << "Padded ld BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(80)) << "Padded ld BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -563,7 +563,7 @@ TEST_F(DiagoPPCG2x2Test, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "2x2 BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(50)) << "2x2 BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(50)) << "2x2 BLOCK: too many iterations";
 }
 
 TEST(DiagoPPCGComplexHermitianTest, DefaultKeepsImaginaryProjection)
@@ -756,7 +756,7 @@ TEST_F(DiagoPPCGDegenerateTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Degenerate BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(100)) << "Degenerate BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(100)) << "Degenerate BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -791,7 +791,7 @@ class DiagoPPCGLargeTridiagTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
 
         ethr.assign(nband, 1e-10);
@@ -865,7 +865,7 @@ TEST_F(DiagoPPCGLargeTridiagTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Large Tridiag BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(150)) << "Large Tridiag BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(150)) << "Large Tridiag BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -887,10 +887,10 @@ class DiagoPPCGDenseTest : public ::testing::Test
         ld = n_dim;
 
         // Start with diagonal matrix
-        std::vector<Real> dense(n_dim * n_dim, static_cast<Real>(0));
+        std::vector<Real> dense(n_dim * n_dim, Real(0));
         for (int i = 0; i < n_dim; ++i)
         {
-            dense[i + i * n_dim] = static_cast<Real>(i + 1);
+            dense[i + i * n_dim] = Real(i + 1);
         }
 
         // Apply several Givens rotations to make it dense while preserving
@@ -919,7 +919,7 @@ class DiagoPPCGDenseTest : public ::testing::Test
         // Several rotations with different angles to create a genuinely
         // dense matrix (all off-diagonals become non-zero)
         std::mt19937 rng_dense(111);
-        std::uniform_real_distribution<Real> angle_dist(static_cast<Real>(0.2), static_cast<Real>(1.3));
+        std::uniform_real_distribution<Real> angle_dist(Real(0.2), Real(1.3));
         for (int k = 0; k < 20; ++k)
         {
             int p = k % (n_dim - 1);
@@ -1023,7 +1023,7 @@ TEST_F(DiagoPPCGDenseTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Dense BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(200)) << "Dense BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(200)) << "Dense BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1193,7 +1193,7 @@ TEST_F(DiagoPPCGWithSTest, BlockSubspace)
             << "WithS BLOCK: residual[" << i << "] too large, r=" << res_nrm;
     }
 
-    EXPECT_LE(avg_iter, static_cast<double>(100)) << "WithS BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(100)) << "WithS BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1229,7 +1229,7 @@ class DiagoPPCGGammaG0Test : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
 
         ethr.assign(nband, 1e-10);
@@ -1313,7 +1313,7 @@ TEST_F(DiagoPPCGGammaG0Test, BlockSubspace)
     }
     EXPECT_LT(max_imag, 1e-12) << "GammaG0 BLOCK: G=0 band has non-zero imaginary part: " << max_imag;
 
-    EXPECT_LE(avg_iter, static_cast<double>(100)) << "GammaG0 BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(100)) << "GammaG0 BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1399,7 +1399,7 @@ TEST_F(DiagoPPCGSingleBandTest, BlockSubspace)
     double avg_iter = solver.diag(h_op, nullptr, ld, nband, n_dim, psi_run.data(), eval.data(), ethr, prec.data());
 
     EXPECT_NEAR(eval[0], exact[0], 1e-8) << "SingleBand BLOCK: eigenvalue mismatch";
-    EXPECT_LE(avg_iter, static_cast<double>(50)) << "SingleBand BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(50)) << "SingleBand BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1436,7 +1436,7 @@ class DiagoPPCGEigenvectorTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
 
         ethr.assign(nband, 1e-8);
@@ -1550,7 +1550,7 @@ TEST_F(DiagoPPCGEigenvectorTest, BlockSubspace)
         }
     }
 
-    EXPECT_LE(avg_iter, static_cast<double>(100)) << "Eigenvec BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(100)) << "Eigenvec BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1586,7 +1586,7 @@ class DiagoPPCGAllBandsTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
 
         ethr.assign(nband, 1e-10);
@@ -1660,7 +1660,7 @@ TEST_F(DiagoPPCGAllBandsTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "AllBands BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(100)) << "AllBands BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(100)) << "AllBands BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1695,7 +1695,7 @@ class DiagoPPCGMediumTridiagTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
 
         ethr.assign(nband, 1e-10);
@@ -1769,7 +1769,7 @@ TEST_F(DiagoPPCGMediumTridiagTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Medium Tridiag BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(120)) << "Medium Tridiag BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(120)) << "Medium Tridiag BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1805,7 +1805,7 @@ class DiagoPPCGGammaG0SmallTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
 
         ethr.assign(nband, 1e-10);
@@ -1891,7 +1891,7 @@ TEST_F(DiagoPPCGGammaG0SmallTest, BlockSubspace)
         EXPECT_LT(max_imag, 1e-12) << "GammaG0Small BLOCK: band[" << j << "] has non-zero imaginary part: " << max_imag;
     }
 
-    EXPECT_LE(avg_iter, static_cast<double>(100)) << "GammaG0Small BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(100)) << "GammaG0Small BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -1941,9 +1941,9 @@ class DiagoPPCGPentaTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            Real theta = static_cast<Real>(k + 1) * M_PI / static_cast<Real>(2 * (n_dim + 1));
+            Real theta = Real(k + 1) * M_PI / Real(2 * (n_dim + 1));
             Real s = std::sin(theta);
-            exact[k] = static_cast<Real>(16) * s * s * s * s;
+            exact[k] = Real(16) * s * s * s * s;
         }
 
         ethr.assign(nband, 1e-10);
@@ -2017,7 +2017,7 @@ TEST_F(DiagoPPCGPentaTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Penta BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(150)) << "Penta BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(150)) << "Penta BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -2116,7 +2116,7 @@ TEST_F(DiagoPCGGappedSpectrumTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "Gapped BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(100)) << "Gapped BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(100)) << "Gapped BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -2154,7 +2154,7 @@ class DiagoPPCGBadPrecTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
 
         ethr.assign(nband, 1e-10);
@@ -2228,7 +2228,7 @@ TEST_F(DiagoPPCGBadPrecTest, BlockSubspace)
     {
         EXPECT_NEAR(eval[i], exact[i], 1e-8) << "BadPrec BLOCK: eigenvalue[" << i << "] mismatch";
     }
-    EXPECT_LE(avg_iter, static_cast<double>(200)) << "BadPrec BLOCK: too many iterations";
+    EXPECT_LE(avg_iter, double(200)) << "BadPrec BLOCK: too many iterations";
 }
 
 // =============================================================================
@@ -2298,7 +2298,7 @@ class DiagoPPCGScaledTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 100.0 * (2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1)));
+            exact[k] = 100.0 * (2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1)));
         }
         ethr.assign(nband, 1e-8);
         init_psi(808);
@@ -2393,7 +2393,7 @@ class DiagoPPCGManyBandsTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
         ethr.assign(nband, 1e-10);
         init_psi(909);
@@ -2488,7 +2488,7 @@ class DiagoPPCGRrStep1Test : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
         ethr.assign(nband, 1e-10);
         init_psi(111);
@@ -2586,7 +2586,7 @@ class DiagoPPCGNeumannTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k) * M_PI / static_cast<Real>(n_dim));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k) * M_PI / Real(n_dim));
         }
         ethr.assign(nband, 1e-10);
         init_psi(222);
@@ -2681,7 +2681,7 @@ class DiagoPPCGTightEthrTest : public ::testing::Test
         exact.resize(nband);
         for (int k = 0; k < nband; ++k)
         {
-            exact[k] = 2.0 - 2.0 * std::cos(static_cast<Real>(k + 1) * M_PI / static_cast<Real>(n_dim + 1));
+            exact[k] = 2.0 - 2.0 * std::cos(Real(k + 1) * M_PI / Real(n_dim + 1));
         }
         ethr.assign(nband, 1e-14);
         init_psi(333);
@@ -2933,7 +2933,7 @@ class DiagoPPCGBenchmarkTest : public ::testing::Test
     static void make_random_hamilt(int n, int sparsity_pct, std::vector<T>& H, std::vector<Real>& prec)
     {
         H.assign(n * n, T(0));
-        std::mt19937 rng(static_cast<unsigned>(n * 100 + sparsity_pct));
+        std::mt19937 rng(unsigned(n * 100 + sparsity_pct));
         std::uniform_real_distribution<Real> dist(-1.0, 1.0);
         int nnz = 0;
         for (int i = 0; i < n; ++i)
