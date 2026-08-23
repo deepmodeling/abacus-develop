@@ -1481,7 +1481,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.category = "Output information";
         item.type = "String";
         item.description = "The directory to save files for LibRPA.";
-        item.default_value = "\"./OUT.librpa/\"";
+        item.default_value = "\"OUT.librpa\"";
         item.unit = "";
         item.set_availability("basis_type==lcao");
         read_sync_string(input.rpa_outdir);

@@ -142,13 +142,13 @@ HamiltBSE<T>::HamiltBSE(const int& nspin,
 
 template <typename T>
 void HamiltBSE<T>::cal_V_for_A(){
-    ModuleBase::TITLE("HamiltBSE", "cal_V_for_A");
-    ModuleBase::timer::start("HamiltBSE", "cal_V_for_A");
-    std::cout<<"in cal_V_for_A"<<std::endl;
     if (!this->VA_local.empty()) {
         std::cout<< "V for A has been calculated, skip." <<std::endl;
         return;
     }
+    ModuleBase::TITLE("HamiltBSE", "cal_V_for_A");
+    ModuleBase::timer::start("HamiltBSE", "cal_V_for_A");
+    std::cout<<"in cal_V_for_A"<<std::endl;
     BSE_Util::print_mem_estimate("V matrix of A", this->pA.get_local_size(), sizeof(T));
     this->VA_local.resize(this->pA.get_local_size(), 0.0);
     if (this->ri_hartree_benchmark == "aims" || this->ri_hartree_benchmark == "abacus") {
@@ -171,13 +171,13 @@ void HamiltBSE<T>::cal_V_for_A(){
 
 template <typename T>
 void HamiltBSE<T>::cal_V_for_B(){
-    ModuleBase::TITLE("HamiltBSE", "cal_V_for_B");
-    ModuleBase::timer::start("HamiltBSE", "cal_V_for_B");
-    std::cout<<"in cal_V_for_B"<<std::endl;
     if (!this->VB_local.empty()) {
         std::cout<< "V for B has been calculated, skip." <<std::endl;
         return;
     }
+    ModuleBase::TITLE("HamiltBSE", "cal_V_for_B");
+    ModuleBase::timer::start("HamiltBSE", "cal_V_for_B");
+    std::cout<<"in cal_V_for_B"<<std::endl;
     BSE_Util::print_mem_estimate("V matrix of B", this->pA.get_local_size(), sizeof(T));
     this->VB_local.resize(this->pA.get_local_size(), 0.0);
     if (this->ri_hartree_benchmark == "aims" || this->ri_hartree_benchmark == "abacus") {
@@ -200,13 +200,13 @@ void HamiltBSE<T>::cal_V_for_B(){
 
 template <typename T>
 void HamiltBSE<T>::cal_W_for_A(){
-    ModuleBase::TITLE("HamiltBSE", "cal_W_for_A");
-    ModuleBase::timer::start("HamiltBSE", "cal_W_for_A");
-    std::cout<<"in cal_W_for_A"<<std::endl;
     if (!this->WA_local.empty()) {
         std::cout<< "W for A has been calculated, skip." <<std::endl;
         return;
     }
+    ModuleBase::TITLE("HamiltBSE", "cal_W_for_A");
+    ModuleBase::timer::start("HamiltBSE", "cal_W_for_A");
+    std::cout<<"in cal_W_for_A"<<std::endl;
     BSE_Util::print_mem_estimate("W matrix of A", this->pA.get_local_size(), sizeof(T));
     this->WA_local.resize(this->pA.get_local_size(), 0.0);
     this->mo_lri.cal_W_for_A(this->WA_local, this->pA);    
@@ -219,13 +219,13 @@ void HamiltBSE<T>::cal_W_for_A(){
 
 template <typename T>
 void HamiltBSE<T>::cal_W_for_B(){
-    ModuleBase::TITLE("HamiltBSE", "cal_W_for_B");
-    ModuleBase::timer::start("HamiltBSE", "cal_W_for_B");
-    std::cout<<"in cal_W_for_B"<<std::endl;
     if (!this->WB_local.empty()) {
         std::cout<< "W for B has been calculated, skip." <<std::endl;
         return;
     }
+    ModuleBase::TITLE("HamiltBSE", "cal_W_for_B");
+    ModuleBase::timer::start("HamiltBSE", "cal_W_for_B");
+    std::cout<<"in cal_W_for_B"<<std::endl;
     BSE_Util::print_mem_estimate("W matrix of B", this->pA.get_local_size(), sizeof(T));
     this->WB_local.resize(this->pA.get_local_size(), 0.0);
     this->mo_lri.cal_W_for_B(this->WB_local, this->pA);
@@ -336,7 +336,7 @@ void HamiltBSE<T>::init_bse_matrix(const bool is_full, const int & st_index){
     }
     if (this->out_bse_ab)
     {
-        this->write_AB_matrix("A_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->BSE_A_local.data(), this->ndim, this->ndim);
+        this->write_AB_matrix(this->out_dir+"A_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->BSE_A_local.data(), this->ndim, this->ndim);
     }
 
     if (is_full)
@@ -351,7 +351,7 @@ void HamiltBSE<T>::init_bse_matrix(const bool is_full, const int & st_index){
         }
         if (this->out_bse_ab)
         {
-            this->write_AB_matrix("B_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->BSE_B_local.data(), this->ndim, this->ndim);
+            this->write_AB_matrix(this->out_dir+"B_matrix_"+std::to_string(this->my_rank)+".dat", 6, this->BSE_B_local.data(), this->ndim, this->ndim);
         }
     }
 

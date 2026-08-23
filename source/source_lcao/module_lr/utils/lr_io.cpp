@@ -323,7 +323,7 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
                     wfc_ks.get_pointer(), 1, 1, const_cast<int*>(pmat.desc_wfc)/*nbasis×nbands*/,
                     pv_glb.blacs_ctxt);
 #else
-        BlasConnector::copy(nbands*nlocal, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
+        BlasConnector::copy(nbands*nbasis, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
 #endif
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read librpa eigenvectors.");
@@ -423,7 +423,7 @@ void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
                     wfc_ks.get_pointer(), 1, 1, const_cast<int*>(pmat.desc_wfc)/*nbasis×nbands*/,
                     pv_glb.blacs_ctxt);
 #else
-        BlasConnector::copy(nbands*nlocal, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
+        BlasConnector::copy(nbands*nbasis, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
 #endif
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read librpa eigenvectors.");

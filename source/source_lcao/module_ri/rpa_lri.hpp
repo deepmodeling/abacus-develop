@@ -1213,10 +1213,9 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
         return;
     }
     ModuleBase::TITLE("DFT_RPA_interface", "out_struc");
-    double TWOPI_Bohr2A = ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
     const int nks_tot = PARAM.inp.nspin == 2 ? (int)p_kv->get_nks() / 2 : p_kv->get_nks();
-    ModuleBase::Matrix3 lat = ucell.latvec / ModuleBase::BOHR_TO_A;
-    ModuleBase::Matrix3 G_RPA = ucell.G * TWOPI_Bohr2A;
+    const ModuleBase::Matrix3 lat = ucell.latvec * ucell.lat0; // in unit of Bohr
+    const ModuleBase::Matrix3 G_RPA = ucell.G * (ModuleBase::TWO_PI / ucell.lat0); // in unit of 1/Bohr
     std::stringstream ss;
     ss << "stru_out";
     std::ofstream ofs;
@@ -1231,22 +1230,13 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
     ofs << G_RPA.e31 << std::setw(15) << G_RPA.e32 << std::setw(15) << G_RPA.e33 << std::endl;
 
     ofs << ucell.nat << std::endl;
-    std::string& Coordinate = ucell.Coordinate;
-    bool direct = (Coordinate == "Direct");
-    // Only consider Direct or Cartesian
     for (int it = 0; it < ucell.ntype; it++)
     {
-        Atom* atom = &ucell.atoms[it];
         for (int ia = 0; ia < ucell.atoms[it].na; ia++)
         {
-            const double& x = direct ? ucell.atoms[it].tau[ia].x * ucell.lat0
-                                     : ucell.atoms[it].tau[ia].x;
-            const double& y = direct ? ucell.atoms[it].tau[ia].y * ucell.lat0
-                                     : ucell.atoms[it].tau[ia].y;
-            const double& z = direct ? ucell.atoms[it].tau[ia].z * ucell.lat0
-                                     : ucell.atoms[it].tau[ia].z;
-            ofs << std::setw(15) << x << std::setw(15) << y << std::setw(15) << z
-                << std::setw(15) << it + 1 << std::endl;
+            const ModuleBase::Vector3<double> position = ucell.atoms[it].tau[ia] * ucell.lat0; // in unit of Bohr
+            ofs << std::setw(15) << position.x << std::setw(15) << position.y
+                << std::setw(15) << position.z << std::setw(15) << it + 1 << std::endl;
         }
     }
 
@@ -1254,9 +1244,10 @@ void RPA_LRI<T, Tdata>::out_struc(const UnitCell& ucell)
 
     for (int ik = 0; ik != nks_tot; ik++)
     {
-        ofs << std::setw(15) << p_kv->kvec_c[ik].x * TWOPI_Bohr2A << std::setw(15)
-            << p_kv->kvec_c[ik].y * TWOPI_Bohr2A << std::setw(15)
-            << p_kv->kvec_c[ik].z * TWOPI_Bohr2A << std::endl;
+        const ModuleBase::Vector3<double> kpoint =
+            p_kv->kvec_c[ik] * (ModuleBase::TWO_PI / ucell.lat0); // in unit of 1/Bohr
+        ofs << std::setw(15) << kpoint.x << std::setw(15) << kpoint.y
+            << std::setw(15) << kpoint.z << std::endl;
     }
     // added for BZ to IBZ (actually LibRPA interface only support BZ by 2025/03/30)
     if (PARAM.inp.symmetry == "-1")

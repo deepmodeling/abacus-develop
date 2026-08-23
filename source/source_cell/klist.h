@@ -14,9 +14,9 @@
 class K_Vectors
 {
 public:
-    std::vector<ModuleBase::Vector3<double>> kvec_c; ///< Cartesian coordinates of k points
+    std::vector<ModuleBase::Vector3<double>> kvec_c; ///< Cartesian coordinates of k points, in unit of 2*pi/lat0
     std::vector<ModuleBase::Vector3<double>> kvec_d; ///< Direct coordinates of k points
-    std::vector<ModuleBase::Vector3<double>> kvec_c_full; ///< Cartesian coordinates of full k mesh match with nkstot_full
+    std::vector<ModuleBase::Vector3<double>> kvec_c_full; ///< Cartesian coordinates of full k mesh match with nkstot_full, in unit of 2*pi/lat0
 
     std::vector<double> wk; ///< wk, weight of k points
 
