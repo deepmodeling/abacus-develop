@@ -4,6 +4,7 @@
 #include "../module_output/cube_io.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_hamilt/module_gint/gint_interface.h"
+#include "source_base/module_device/memory_op.h"
 
 #include <type_traits>
 
@@ -105,23 +106,27 @@ template class Cal_ldos<double>;               // Gamma_only case
 template class Cal_ldos<std::complex<double>>; // multi-k case
 
 // pw case
+template <typename Device>
 void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
+                 const psi::Psi<std::complex<double>, Device>& psi,
+                 const Device* ctx,
                  const Parallel_Grid& pgrid,
                  const UnitCell& ucell)
 {
     if (PARAM.inp.out_ldos[0] == 1 || PARAM.inp.out_ldos[0] == 3)
     {
-        ModuleIO::stm_mode_pw(pelec, psi, pgrid, ucell);
+        ModuleIO::stm_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell);
     }
     if (PARAM.inp.out_ldos[0] == 2 || PARAM.inp.out_ldos[0] == 3)
     {
-        ModuleIO::ldos_mode_pw(pelec, psi, pgrid, ucell);
+        ModuleIO::ldos_mode_pw<Device>(pelec, psi, ctx, pgrid, ucell);
     }
 }
 
+template <typename Device>
 void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
+                 const psi::Psi<std::complex<double>, Device>& psi,
+                 const Device* ctx,
                  const Parallel_Grid& pgrid,
                  const UnitCell& ucell)
 {
@@ -135,6 +140,13 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
         std::vector<double> ldos(pelec->charge->nrxx);
         std::vector<std::complex<double>> wfcr(pelec->basis->nrxx);
 
+        // Allocate device memory
+        std::complex<double>* wfcr_dev = nullptr;
+        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+        {
+            base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfcr_dev, pelec->basis->nrxx);
+        }
+
         for (int ik = 0; ik < pelec->klist->get_nks(); ++ik)
         {
             psi.fix_k(ik);
@@ -143,7 +155,18 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
             for (int ib = 0; ib < nbands; ib++)
             {
-                pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+                // FFT on device and copy result back to host
+                if (std::is_same<Device, base_device::DEVICE_CPU>::value)
+                {
+                    pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+                }
+                else
+                {
+                    pelec->basis->recip_to_real(ctx, &psi(ib, 0), wfcr_dev, ik);
+
+                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>()(
+                        wfcr.data(), wfcr_dev, pelec->basis->nrxx);
+                }
 
                 const double eigenval = (pelec->ekb(ik, ib) - efermi) * ModuleBase::Ry_to_eV;
                 double weight = en > 0 ? pelec->klist->wk[ik] - pelec->wg(ik, ib) : pelec->wg(ik, ib);
@@ -159,6 +182,12 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
             }
         }
 
+        // Free device memory
+        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+        {
+            base_device::memory::delete_memory_op<std::complex<double>, Device>()(wfcr_dev);
+        }
+
         std::stringstream fn;
         fn << PARAM.globalv.global_out_dir << "LDOS_" << en << "eV"
            << ".cube";
@@ -168,8 +197,10 @@ void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
     }
 }
 
+template <typename Device>
 void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                  const psi::Psi<std::complex<double>>& psi,
+                  const psi::Psi<std::complex<double>, Device>& psi,
+                  const Device* ctx,
                   const Parallel_Grid& pgrid,
                   const UnitCell& ucell)
 {
@@ -205,6 +236,14 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
     // calculate ldos
     std::vector<double> tmp(pelec->charge->nrxx);
     std::vector<std::complex<double>> wfcr(pelec->basis->nrxx);
+
+    // Allocate device memory
+    std::complex<double>* wfcr_dev = nullptr;
+    if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+    {
+        base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfcr_dev, pelec->basis->nrxx);
+    }
+
     for (int ik = 0; ik < pelec->klist->get_nks(); ++ik)
     {
         psi.fix_k(ik);
@@ -213,7 +252,18 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
 
         for (int ib = 0; ib < nbands; ib++)
         {
-            pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+            // FFT on device and copy result back to host
+            if (std::is_same<Device, base_device::DEVICE_CPU>::value)
+            {
+                pelec->basis->recip2real(&psi(ib, 0), wfcr.data(), ik);
+            }
+            else
+            {
+                pelec->basis->recip_to_real(ctx, &psi(ib, 0), wfcr_dev, ik);
+
+                base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>()(
+                    wfcr.data(), wfcr_dev, pelec->basis->nrxx);
+            }
             const double weight = pelec->klist->wk[ik] / ucell.omega;
 
             for (int ir = 0; ir < pelec->basis->nrxx; ir++)
@@ -238,6 +288,12 @@ void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
                 }
             }
         }
+    }
+
+    // Free device memory
+    if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+    {
+        base_device::memory::delete_memory_op<std::complex<double>, Device>()(wfcr_dev);
     }
 
     std::ofstream ofs_ldos;
@@ -367,5 +423,18 @@ void trilinear_interpolate(const std::vector<std::vector<int>>& points,
     MPI_Bcast(results.data(), npoints, MPI_DOUBLE, 0, MPI_COMM_WORLD);
 #endif
 }
+
+template void cal_ldos_pw<base_device::DEVICE_CPU>(const elecstate::ElecStatePW<std::complex<double>>* pelec,
+                                                   const psi::Psi<std::complex<double>, base_device::DEVICE_CPU>& psi,
+                                                   const base_device::DEVICE_CPU* ctx,
+                                                   const Parallel_Grid& pgrid,
+                                                   const UnitCell& ucell);
+#if defined(__CUDA) || defined(__ROCM)
+template void cal_ldos_pw<base_device::DEVICE_GPU>(const elecstate::ElecStatePW<std::complex<double>>* pelec,
+                                                   const psi::Psi<std::complex<double>, base_device::DEVICE_GPU>& psi,
+                                                   const base_device::DEVICE_GPU* ctx,
+                                                   const Parallel_Grid& pgrid,
+                                                   const UnitCell& ucell);
+#endif
 
 } // namespace ModuleIO

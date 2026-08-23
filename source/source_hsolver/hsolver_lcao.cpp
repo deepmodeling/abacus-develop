@@ -91,6 +91,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
                                      pes->eferm,
                                      pes->f_en,
                                      pes->nelec_spin,
+                                     this->nbands,
                                      pes->skip_weights);
 
         elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);

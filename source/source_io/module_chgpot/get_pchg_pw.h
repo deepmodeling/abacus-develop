@@ -2,7 +2,9 @@
 #define GET_PCHG_PW_H
 
 #include "source_base/module_container/ATen/core/tensor.h"
+#include "source_base/parallel_comm.h"
 #include "source_estate/module_charge/symm_rho.h"
+#include "source_io/module_output/band_parallel_output.h"
 #include "source_io/module_output/cube_io.h"
 
 namespace ModuleIO
@@ -18,6 +20,7 @@ namespace ModuleIO
 template <typename Device>
 void get_pchg_pw(const std::vector<int>& out_pchg,
                  const int nspin,
+                 const int global_nbands,
                  UnitCell* ucell,
                  const psi::Psi<std::complex<double>, Device>* kspw_psi,
                  const ModulePW::PW_Basis* pw_rho,
@@ -31,7 +34,9 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
 {
     const int nks = kv.get_nks();       // current process pool k-point count
     const int nkstot = kv.get_nkstot(); // total k-point count
-    const int nbands = kspw_psi->get_nbands();
+    // INPUT selectors and file labels use global bands, while BPCG Psi storage uses a
+    // contiguous local shard. Constructing the layout collectively reconciles both views.
+    const BandParallelLayout band_layout(kspw_psi->get_nbands(), global_nbands);
 
     const int nks_without_spin = nspin == 2 ? nkstot / 2 : nkstot;
     const int smooth_nrxx = pw_wfc->nrxx;
@@ -40,8 +45,8 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
     const bool needs_interpolation = pw_rhod != pw_rho;
 
     // Expand the INPUT selection into a fixed-size mask indexed directly by band.
-    std::vector<int> bands_picked(nbands, 0);
-    if (static_cast<int>(out_pchg.size()) > nbands)
+    std::vector<int> bands_picked(global_nbands, 0);
+    if (static_cast<int>(out_pchg.size()) > global_nbands)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::get_pchg_pw",
                                  "The number of bands specified by `out_pchg` in the "
@@ -56,7 +61,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                                      "Invalid values found!");
         }
     }
-    const int length = std::min(static_cast<int>(out_pchg.size()), nbands);
+    const int length = std::min(static_cast<int>(out_pchg.size()), global_nbands);
     for (int i = 0; i < length; ++i)
     {
         bands_picked[i] = static_cast<int>(out_pchg[i]);
@@ -117,6 +122,35 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
         return dense_host.data<std::complex<double>>();
     };
 
+    // Each buffer stores one rank-local dense-grid slab. It is global with respect to
+    // band ownership, not spatial decomposition: POOL_WORLD still distributes the grid.
+    std::vector<std::complex<double>> wfcr_up_global(dense_nrxx);
+    std::vector<std::complex<double>> wfcr_down_global(is_spinor ? dense_nrxx : 0);
+    // Only the owning band group may index the local Psi shard. After its FFT, BP_WORLD
+    // broadcasts the slab to the corresponding plane-wave rank in every band group.
+    // Every group must call this lambda in the same band/k-point/component order.
+    auto transform_global_band = [&](const int global_band,
+                                     const int basis_offset,
+                                     const int ik,
+                                     ct::Tensor& smooth,
+                                     ct::Tensor& smooth_host,
+                                     ct::Tensor& dense_host,
+                                     std::vector<std::complex<double>>& global_wfcr) -> const std::complex<double>* {
+        const int owner = band_layout.owner_group(global_band);
+        if (band_layout.band_group() == owner)
+        {
+            const int local_band = band_layout.local_index(global_band);
+            kspw_psi->fix_k(ik);
+            const std::complex<double>* owner_wfcr
+                = transform_wfc(&kspw_psi[0](local_band, basis_offset), ik, smooth, smooth_host, dense_host);
+            std::copy(owner_wfcr, owner_wfcr + dense_nrxx, global_wfcr.begin());
+        }
+#ifdef __MPI
+        MPI_Bcast(global_wfcr.data(), dense_nrxx, MPI_DOUBLE_COMPLEX, owner, BP_WORLD);
+#endif
+        return global_wfcr.data();
+    };
+
     std::vector<std::vector<double>> rho_band(nspin, std::vector<double>(dense_nrxx));
     // Convert a two-component spinor into the Pauli-basis fields (rho, m_x, m_y, m_z).
     // Per-k output overwrites the fields, whereas k-summed output accumulates weighted fields.
@@ -147,7 +181,9 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
               }
           };
 
-    for (int ib = 0; ib < nbands; ++ib)
+    // Traverse global bands on every rank so that owner broadcasts remain collective-safe
+    // even when the selected band belongs to a nonzero band group.
+    for (int ib = 0; ib < global_nbands; ++ib)
     {
         if (!bands_picked[ib])
         {
@@ -162,6 +198,7 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
         if (if_separate_k)
         {
             // Preserve each Bloch state's contribution; no Brillouin-zone weight is applied here.
+            // Each KPAR pool writes only the global k-points it owns.
             for (int ik = 0; ik < nks; ++ik)
             {
                 const int ikstot = kv.ik2iktot[ik];
@@ -169,16 +206,18 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
                 // In collinear calculations the two spin channels share the same k-point numbering.
                 const int k_number = ikstot % nks_without_spin + 1;
 
-                kspw_psi->fix_k(ik);
-                const std::complex<double>* wfcr_up
-                    = transform_wfc(&kspw_psi[0](ib, 0), ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host);
-                const std::complex<double>* wfcr_up_host_data = wfcr_up;
+                const std::complex<double>* wfcr_up_host_data
+                    = transform_global_band(ib, 0, ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host, wfcr_up_global);
                 const std::complex<double>* wfcr_down_host_data = nullptr;
                 if (is_spinor)
                 {
-                    const std::complex<double>* wfcr_down
-                        = transform_wfc(&kspw_psi[0](ib, npwx), ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host);
-                    wfcr_down_host_data = wfcr_down;
+                    wfcr_down_host_data = transform_global_band(ib,
+                                                                npwx,
+                                                                ik,
+                                                                wfcr_down_smooth,
+                                                                wfcr_down_smooth_host,
+                                                                wfcr_down_dense_host,
+                                                                wfcr_down_global);
                 }
 
                 const double spin_degeneracy = nspin == 1 ? 2.0 : 1.0;
@@ -218,21 +257,24 @@ void get_pchg_pw(const std::vector<int>& out_pchg,
         }
         else
         {
-            // Form a Brillouin-zone weighted partial density for the selected band.
+            // Form the pool-local part of the Brillouin-zone weighted density. Owner
+            // broadcasts make this contribution identical across band groups.
             for (int ik = 0; ik < nks; ++ik)
             {
                 const int spin_index = kv.isk[ik];
 
-                kspw_psi->fix_k(ik);
-                const std::complex<double>* wfcr_up
-                    = transform_wfc(&kspw_psi[0](ib, 0), ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host);
-                const std::complex<double>* wfcr_up_host_data = wfcr_up;
+                const std::complex<double>* wfcr_up_host_data
+                    = transform_global_band(ib, 0, ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host, wfcr_up_global);
                 const std::complex<double>* wfcr_down_host_data = nullptr;
                 if (is_spinor)
                 {
-                    const std::complex<double>* wfcr_down
-                        = transform_wfc(&kspw_psi[0](ib, npwx), ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host);
-                    wfcr_down_host_data = wfcr_down;
+                    wfcr_down_host_data = transform_global_band(ib,
+                                                                npwx,
+                                                                ik,
+                                                                wfcr_down_smooth,
+                                                                wfcr_down_smooth_host,
+                                                                wfcr_down_dense_host,
+                                                                wfcr_down_global);
                 }
 
                 const double weight = static_cast<double>(kv.wk[ik] / ucell->omega);

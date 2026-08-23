@@ -145,7 +145,8 @@ namespace ModuleESolver
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc,
                                                PARAM.globalv.use_uspp,
                                                this->inp_->basis_type,
-                                               this->inp_->calculation);
+                                               this->inp_->calculation,
+                                               this->inp_->nbands);
         hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec,
           *this->psi_local, skip_charge,ucell.tpiba,ucell.nat, this->general_exx_info_);
 

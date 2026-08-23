@@ -40,11 +40,12 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
     const int& nxyz = nx * ny * nz;
 
     start = time(nullptr);
+    const bool is_primary_band_group = GlobalV::MY_BNDGROUP == 0;
 
     // reduce
     std::vector<double> data_xyz_full(nxyz); // data to be written
 #ifdef __MPI                                 // reduce to rank 0
-    if (GlobalV::MY_BNDGROUP == 0)
+    if (is_primary_band_group)
     {
         pgrid.reduce(data_xyz_full.data(), data, reduce_all_pool);
     }
@@ -60,15 +61,18 @@ void ModuleIO::write_vdata_palgrid(const Parallel_Grid& pgrid,
     std::memcpy(data_xyz_full.data(), data, nxyz * sizeof(double));
 #endif
 
-    // build the info structure
-    if ((!reduce_all_pool && my_rank == 0) || (reduce_all_pool && rank_in_pool == 0))
+    // Globally reduced data has one writer across MPI_COMM_WORLD.
+    const bool is_world_root = my_rank == 0;
+    // Pool-local data is written only by band group 0 to avoid competing writes.
+    const bool is_primary_band_group_pool_root = is_primary_band_group && rank_in_pool == 0;
+    const bool should_write_cube = reduce_all_pool ? is_primary_band_group_pool_root : is_world_root;
+    if (should_write_cube)
     {
         /// output header for cube file
         ss << std::fixed;
         ss << std::setprecision(6);
 
-        ss << "Ionic_Step " << istep+1 
-		<< "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
+        ss << "Ionic_Step " << istep + 1 << "  Cubefile created from ABACUS. Inner loop is z, followed by y and x" << std::endl;
 
         ss << nspin << " # number of spin directions ";
         if (out_fermi == 1)

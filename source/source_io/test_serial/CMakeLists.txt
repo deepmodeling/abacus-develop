@@ -56,7 +56,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_bands
   LIBS parameter base device
-  SOURCES write_bands_test.cpp ../module_energy/write_bands.cpp
+  SOURCES write_bands_test.cpp ../module_output/band_parallel_output.cpp ../module_energy/write_bands.cpp
 )
 
 AddTest(

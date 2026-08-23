@@ -363,6 +363,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_cp
                                      this->pelec->eferm,
                                      this->pelec->f_en,
                                      this->pelec->nelec_spin,
+                                     PARAM.inp.nbands,
                                      this->pelec->skip_weights);
         elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
         reinterpret_cast<elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_CPU>*>(this->pelec)->psiToRho(*psi_t);
@@ -474,6 +475,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::update_psi_charge_pw_gp
                                      this->pelec->eferm,
                                      this->pelec->f_en,
                                      this->pelec->nelec_spin,
+                                     PARAM.inp.nbands,
                                      this->pelec->skip_weights);
         elecstate::calEBand(this->pelec->ekb, this->pelec->wg, this->pelec->f_en);
         reinterpret_cast<elecstate::ElecStatePW<std::complex<double>, base_device::DEVICE_GPU>*>(this->pelec)->psiToRho(*psi_t);
@@ -547,6 +549,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                                      this->pelec->eferm,
                                      this->pelec->f_en,
                                      this->pelec->nelec_spin,
+                                     PARAM.inp.nbands,
                                      this->pelec->skip_weights);
         elecstate::calEBand(this->pelec->ekb,this->pelec->wg,this->pelec->f_en);
 
@@ -696,6 +699,7 @@ void spinconstrain::SpinConstrain<std::complex<double>>::cal_mw_from_lambda(
                                          this->pelec->eferm,
                                          this->pelec->f_en,
                                          this->pelec->nelec_spin,
+                                         PARAM.inp.nbands,
                                          this->pelec->skip_weights);
             // Calculate Mi from becp coefficients for each k-point
             for (int ik = 0; ik < nk; ik++)

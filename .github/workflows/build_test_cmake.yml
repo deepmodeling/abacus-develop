@@ -41,7 +41,7 @@ jobs:
             name: "Build without LCAO"
           - tag: gnu
             external_toolchain_args: ""
-            build_args: "-DUSE_ELPA=OFF "
+            build_args: "-DENABLE_ELPA=OFF "
             name: "Build without ELPA"
           - tag: gnu
             external_toolchain_args: ""

@@ -552,6 +552,7 @@ OBJS_IO=module_parameter/input_conv.o\
     cal_test.o\
     module_dos/write_dos_pw.o\
     nscf_fermi_surf.o\
+    band_parallel_output.o\
     write_bands.o\
     module_dos/cal_dos.o\
     module_dos/cal_pdos_gamma.o\

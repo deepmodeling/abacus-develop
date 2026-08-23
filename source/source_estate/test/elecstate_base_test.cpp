@@ -95,6 +95,11 @@ void Charge::check_rho()
  *  unit test of elecstate.cpp
  ***********************************************/
 
+namespace
+{
+constexpr int GLOBAL_NBANDS = 6;
+}
+
 /**
  * - Tested Functions:
  *   - InitNelecSpin: elecstate::ElecState::init_nelec_spin()
@@ -129,7 +134,7 @@ class MockElecState : public ElecState
         PARAM.input.nelec = 10.0;
         PARAM.input.nupdown = 0.0;
         PARAM.sys.two_fermi = false;
-        PARAM.input.nbands = 6;
+        PARAM.input.nbands = GLOBAL_NBANDS;
         PARAM.sys.nbands_l = 6;
         PARAM.sys.nlocal = 6;
         PARAM.input.esolver_type = "ksdft";
@@ -249,6 +254,8 @@ TEST_F(ElecStateTest, FixedWeights)
     PARAM.input.nelec = 30;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
+    klist->set_nkstot(5);
+    klist->ik2iktot = {0, 1, 2, 3, 4};
     elecstate->klist = klist;
     elecstate->wg.create(klist->get_nks(), PARAM.input.nbands);
     std::vector<double> ocp_kb;
@@ -269,6 +276,8 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning1)
     PARAM.input.nelec = 30;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
+    klist->set_nkstot(5);
+    klist->ik2iktot = {0, 1, 2, 3, 4};
     elecstate->klist = klist;
     elecstate->wg.create(klist->get_nks(), PARAM.input.nbands);
     std::vector<double> ocp_kb;
@@ -291,6 +300,8 @@ TEST_F(ElecStateDeathTest, FixedWeightsWarning2)
     PARAM.input.nelec = 29;
     K_Vectors* klist = new K_Vectors;
     klist->set_nks(5);
+    klist->set_nkstot(5);
+    klist->ik2iktot = {0, 1, 2, 3, 4};
     elecstate->klist = klist;
     elecstate->wg.create(klist->get_nks(), PARAM.input.nbands);
     std::vector<double> ocp_kb;
@@ -336,6 +347,7 @@ TEST_F(ElecStateTest, CalculateWeightsSkipWeights)
                                                  elecstate->eferm,
                                                  elecstate->f_en,
                                                  elecstate->nelec_spin,
+                                                 GLOBAL_NBANDS,
                                                  elecstate->skip_weights));
 }
 
@@ -349,6 +361,7 @@ TEST_F(ElecStateDeathTest, CalculateWeightsFixedOccupations)
                                              elecstate->eferm,
                                              elecstate->f_en,
                                              elecstate->nelec_spin,
+                                             GLOBAL_NBANDS,
                                              elecstate->skip_weights),
                 ::testing::ExitedWithCode(1),
                 "");
@@ -390,6 +403,7 @@ TEST_F(ElecStateTest, CalculateWeightsIWeights)
                                  elecstate->eferm,
                                  elecstate->f_en,
                                  elecstate->nelec_spin,
+                                 GLOBAL_NBANDS,
                                  elecstate->skip_weights);
     EXPECT_DOUBLE_EQ(elecstate->wg(0, 0), 2.0);
     EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.input.nelec / 2 - 1), 2.0);
@@ -460,6 +474,7 @@ TEST_F(ElecStateTest, CalculateWeightsIWeightsTwoFermi)
                                  elecstate->eferm,
                                  elecstate->f_en,
                                  elecstate->nelec_spin,
+                                 GLOBAL_NBANDS,
                                  elecstate->skip_weights);
     EXPECT_DOUBLE_EQ(elecstate->wg(0, 0), 1.1);
     EXPECT_DOUBLE_EQ(elecstate->wg(nks - 1, PARAM.input.nelec / 2 - 1), 1.0);
@@ -503,6 +518,7 @@ TEST_F(ElecStateTest, CalculateWeightsGWeights)
                                  elecstate->eferm,
                                  elecstate->f_en,
                                  elecstate->nelec_spin,
+                                 GLOBAL_NBANDS,
                                  elecstate->skip_weights);
     // PARAM.input.nelec = 10;
     // PARAM.input.nbands = 6;
@@ -579,6 +595,7 @@ TEST_F(ElecStateTest, CalculateWeightsGWeightsTwoFermi)
                                  elecstate->eferm,
                                  elecstate->f_en,
                                  elecstate->nelec_spin,
+                                 GLOBAL_NBANDS,
                                  elecstate->skip_weights);
     // PARAM.input.nelec = 10;
     // PARAM.input.nbands = 6;

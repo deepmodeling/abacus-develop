@@ -2,6 +2,8 @@
 #define GET_WF_PW_H
 
 #include "source_base/module_container/ATen/core/tensor.h"
+#include "source_base/parallel_comm.h"
+#include "source_io/module_output/band_parallel_output.h"
 
 namespace ModuleIO
 {
@@ -16,6 +18,7 @@ template <typename Device>
 void get_wf_pw(const std::vector<int>& out_wfc_norm,
                const std::vector<int>& out_wfc_re_im,
                const int nspin,
+               const int global_nbands,
                UnitCell* ucell,
                const psi::Psi<std::complex<double>, Device>* kspw_psi,
                const ModulePW::PW_Basis_K* pw_wfc,
@@ -27,7 +30,9 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
 {
     const int nks = kv.get_nks();       // current process pool k-point count
     const int nkstot = kv.get_nkstot(); // total k-point count
-    const int nbands = kspw_psi->get_nbands();
+    // The output masks address global bands, but BPCG stores only the current band group's
+    // contiguous shard in Psi. The collective layout supplies the required mapping.
+    const BandParallelLayout band_layout(kspw_psi->get_nbands(), global_nbands);
 
     const int nks_without_spin = nspin == 2 ? nkstot / 2 : nkstot;
     const int smooth_nrxx = pw_wfc->nrxx;
@@ -36,10 +41,10 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
     const bool needs_interpolation = pw_rhod != pw_rho;
 
     // The two INPUT vectors are independent band masks for norm and Re/Im output.
-    std::vector<int> bands_picked_norm(nbands, 0);
-    std::vector<int> bands_picked_re_im(nbands, 0);
+    std::vector<int> bands_picked_norm(global_nbands, 0);
+    std::vector<int> bands_picked_re_im(global_nbands, 0);
 
-    if (static_cast<int>(out_wfc_norm.size()) > nbands || static_cast<int>(out_wfc_re_im.size()) > nbands)
+    if (static_cast<int>(out_wfc_norm.size()) > global_nbands || static_cast<int>(out_wfc_re_im.size()) > global_nbands)
     {
         ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
                                  "The number of bands specified by `out_wfc_norm` or `out_wfc_re_im` in the "
@@ -65,12 +70,12 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
         }
     }
 
-    int length = std::min(static_cast<int>(out_wfc_norm.size()), nbands);
+    int length = std::min(static_cast<int>(out_wfc_norm.size()), global_nbands);
     for (int i = 0; i < length; ++i)
     {
         bands_picked_norm[i] = static_cast<int>(out_wfc_norm[i]);
     }
-    length = std::min(static_cast<int>(out_wfc_re_im.size()), nbands);
+    length = std::min(static_cast<int>(out_wfc_re_im.size()), global_nbands);
     for (int i = 0; i < length; ++i)
     {
         bands_picked_re_im[i] = static_cast<int>(out_wfc_re_im[i]);
@@ -131,9 +136,39 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
         return dense_host.data<std::complex<double>>();
     };
 
+    // These buffers hold one rank-local dense-grid slab after resolving band ownership;
+    // the real-space grid itself remains distributed over POOL_WORLD.
+    std::vector<std::complex<double>> wfcr_up_global(dense_nrxx);
+    std::vector<std::complex<double>> wfcr_down_global(is_spinor ? dense_nrxx : 0);
+    // The owner alone indexes local Psi and performs the FFT. BP_WORLD then gives every
+    // band group the same slab without gathering the complete plane-wave wavefunction.
+    // Callers on all ranks must preserve an identical collective order.
+    auto transform_global_band = [&](const int global_band,
+                                     const int basis_offset,
+                                     const int ik,
+                                     ct::Tensor& smooth,
+                                     ct::Tensor& smooth_host,
+                                     ct::Tensor& dense_host,
+                                     std::vector<std::complex<double>>& global_wfcr) -> const std::complex<double>* {
+        const int owner = band_layout.owner_group(global_band);
+        if (band_layout.band_group() == owner)
+        {
+            const int local_band = band_layout.local_index(global_band);
+            kspw_psi->fix_k(ik);
+            const std::complex<double>* owner_wfcr
+                = transform_wfc(&kspw_psi[0](local_band, basis_offset), ik, smooth, smooth_host, dense_host);
+            std::copy(owner_wfcr, owner_wfcr + dense_nrxx, global_wfcr.begin());
+        }
+#ifdef __MPI
+        MPI_Bcast(global_wfcr.data(), dense_nrxx, MPI_DOUBLE_COMPLEX, owner, BP_WORLD);
+#endif
+        return global_wfcr.data();
+    };
+
     // Norm cubes are phase invariant; for spinors they contain sqrt(|up|^2 + |down|^2).
+    // Iterating global bands on all groups keeps owner broadcasts synchronized.
     std::vector<std::vector<double>> rho_band_norm(nspin, std::vector<double>(dense_nrxx));
-    for (int ib = 0; ib < nbands; ++ib)
+    for (int ib = 0; ib < global_nbands; ++ib)
     {
         if (!bands_picked_norm[ib])
         {
@@ -151,16 +186,13 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
             // In collinear calculations the two spin channels share the same k-point numbering.
             const int k_number = ikstot % nks_without_spin + 1;
 
-            kspw_psi->fix_k(ik);
-            const std::complex<double>* wfcr_up
-                = transform_wfc(&kspw_psi[0](ib, 0), ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host);
-            const std::complex<double>* wfcr_up_host_data = wfcr_up;
+            const std::complex<double>* wfcr_up_host_data
+                = transform_global_band(ib, 0, ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host, wfcr_up_global);
             const std::complex<double>* wfcr_down_host_data = nullptr;
             if (is_spinor)
             {
-                const std::complex<double>* wfcr_down
-                    = transform_wfc(&kspw_psi[0](ib, npwx), ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host);
-                wfcr_down_host_data = wfcr_down;
+                wfcr_down_host_data
+                    = transform_global_band(ib, npwx, ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host, wfcr_down_global);
             }
 
             const double spin_degeneracy = nspin == 1 ? 2.0 : 1.0;
@@ -190,9 +222,10 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
     }
 
     // Re/Im cubes retain phase information and therefore write both spinor components separately.
+    // This path deliberately reuses the same ownership rule as the norm path.
     std::vector<std::vector<double>> rho_band_re(nspin, std::vector<double>(dense_nrxx));
     std::vector<std::vector<double>> rho_band_im(nspin, std::vector<double>(dense_nrxx));
-    for (int ib = 0; ib < nbands; ++ib)
+    for (int ib = 0; ib < global_nbands; ++ib)
     {
         if (!bands_picked_re_im[ib])
         {
@@ -210,16 +243,13 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
             const int spin_index = kv.isk[ik];
             const int k_number = ikstot % nks_without_spin + 1;
 
-            kspw_psi->fix_k(ik);
-            const std::complex<double>* wfcr_up
-                = transform_wfc(&kspw_psi[0](ib, 0), ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host);
-            const std::complex<double>* wfcr_up_host_data = wfcr_up;
+            const std::complex<double>* wfcr_up_host_data
+                = transform_global_band(ib, 0, ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host, wfcr_up_global);
             const std::complex<double>* wfcr_down_host_data = nullptr;
             if (is_spinor)
             {
-                const std::complex<double>* wfcr_down
-                    = transform_wfc(&kspw_psi[0](ib, npwx), ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host);
-                wfcr_down_host_data = wfcr_down;
+                wfcr_down_host_data
+                    = transform_global_band(ib, npwx, ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host, wfcr_down_global);
             }
 
             const double spin_degeneracy = nspin == 1 ? 2.0 : 1.0;

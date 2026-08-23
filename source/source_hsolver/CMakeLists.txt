@@ -81,7 +81,7 @@ if(ENABLE_COVERAGE)
   add_coverage(hsolver)
 endif()
 
-if(ENABLE_LCAO AND ENABLE_ELPA)
+if(ENABLE_ELPA)
   add_subdirectory(module_genelpa)
 endif()
 

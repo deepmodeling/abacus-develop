@@ -37,6 +37,25 @@ void read_wf2rho_pw(
 		const std::vector<int> &isk,
 		std::ofstream &ofs_running);
 
+template <typename Device>
+void read_wf2rho_pw_impl(
+		const ModulePW::PW_Basis_K* pw_wfc,
+		ModuleSymmetry::Symmetry& symm,
+		Charge& chg,
+        const std::string &readin_dir,
+		const int kpar,
+		const int my_pool,
+		const int my_rank,
+        const int nproc_in_pool,
+        const int rank_in_pool,
+		const int nbands,
+		const int nspin,
+		const int npol,
+		const int nkstot,
+		const std::vector<int> &ik2iktot,
+		const std::vector<int> &isk,
+		std::ofstream &ofs_running);
+
 } // namespace ModuleIO
 
 #endif

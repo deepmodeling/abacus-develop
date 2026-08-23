@@ -104,6 +104,7 @@ void HSolverLIP<T>::solve(hamilt::Hamilt<T>* pHamilt, // ESolver_KS_PW::p_hamilt
                                  pes->eferm,
                                  pes->f_en,
                                  pes->nelec_spin,
+                                 this->global_nbands,
                                  pes->skip_weights);
     elecstate::calEBand(pes->ekb,pes->wg,pes->f_en);
     if (skip_charge)

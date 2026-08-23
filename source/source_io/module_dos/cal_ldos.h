@@ -32,18 +32,24 @@ class Cal_ldos
 
 }; // namespace Cal_ldos
 
+template <typename Device>
 void cal_ldos_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
+                 const psi::Psi<std::complex<double>, Device>& psi,
+                 const Device* ctx,
                  const Parallel_Grid& pgrid,
                  const UnitCell& ucell);
 
+template <typename Device>
 void stm_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                 const psi::Psi<std::complex<double>>& psi,
+                 const psi::Psi<std::complex<double>, Device>& psi,
+                 const Device* ctx,
                  const Parallel_Grid& pgrid,
                  const UnitCell& ucell);
 
+template <typename Device>
 void ldos_mode_pw(const elecstate::ElecStatePW<std::complex<double>>* pelec,
-                  const psi::Psi<std::complex<double>>& psi,
+                  const psi::Psi<std::complex<double>, Device>& psi,
+                  const Device* ctx,
                   const Parallel_Grid& pgrid,
                   const UnitCell& ucell);
 
