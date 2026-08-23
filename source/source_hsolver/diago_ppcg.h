@@ -178,10 +178,6 @@ private:
                      const std::vector<double>& ethr_band,
                      std::vector<int>& active_cols) const;
 
-    void compute_residual_and_lock(Real* eigenvalue,
-                                   std::vector<int>& active_cols,
-                                   const std::vector<double>& ethr_band);
-
     void build_small_subspace(const T* psi,
                               const std::vector<int>& cols,
                               SmallSubspace& subspace) const;
@@ -199,8 +195,7 @@ private:
 
     void rayleigh_ritz(T* psi, Real* eigenvalue,
                        std::vector<int>& active_cols,
-                       const std::vector<double>& ethr_band,
-                       bool rotate);
+                       const std::vector<double>& ethr_band);
 
     // -------------------------------------------------------------------------
     // Conjugate-gradient strategy helpers (File 2 style)
