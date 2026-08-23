@@ -169,11 +169,11 @@ void ESolver_BSE<T, TR>::runner(BaseCell& basecell, const int istep)
     auto efile_out = [&](const std::string& label)->std::string {
         return this->out_dir + "Excitation_Energy_" + label + ".dat";};
     auto vfile_out = [&](const std::string& label)->std::string {
-        return this->out_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
+        return this->out_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK+1) + ".dat";};
     auto efile_in = [&](const std::string& label)->std::string {
         return this->in_dir + "Excitation_Energy_" + label + ".dat";};
     auto vfile_in = [&](const std::string& label)->std::string {
-        return this->in_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK) + ".dat";};
+        return this->in_dir + "Excitation_Amplitude_" + label + "_" + std::to_string(GlobalV::MY_RANK+1) + ".dat";};
 
     if (this->inp_->lr_solver == "elpa")
     {

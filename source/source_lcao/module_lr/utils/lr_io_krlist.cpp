@@ -1,6 +1,7 @@
 #include "lr_io_krlist.h"
 #include "lr_io.h"
 #include "source_lcao/module_ri/ri_util.h"
+#include "source_base/constants.h"
 #include <cassert>
 #include <fstream>
 #include <iomanip>
@@ -12,7 +13,7 @@ namespace LR_IO
 
 namespace
 {
-const std::string FILE_COARSE = "stru_out";
+const std::string FILE_COARSE = "stru_out.txt";
 const std::string FILE_FINE_UNIFORM = "band_kpath_info";
 const std::string FILE_FINE_NONUNIFORM = "KPT_bse";
 }
@@ -58,7 +59,7 @@ void RI_kRlist::read_kpts_coarse(const std::string& file, const UnitCell& ucell,
     for (int ik = 0; ik < nk; ++ik)
     {
         ifs >> klist->kvec_c[ik].x >> klist->kvec_c[ik].y >> klist->kvec_c[ik].z;
-        klist->kvec_c[ik] /= ModuleBase::TWO_PI * ModuleBase::BOHR_TO_A;
+        klist->kvec_c[ik] *= (ucell.lat0 / ModuleBase::TWO_PI); // in unit of 2*pi/lat0
         klist->kvec_d[ik] = klist->kvec_c[ik] * ucell.latvec.Transpose();
         set_zero_if_close(klist->kvec_d[ik]);
         klist->wk[ik] = 1.0 / double(nk);

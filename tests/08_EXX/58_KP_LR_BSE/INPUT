@@ -1,0 +1,21 @@
+INPUT_PARAMETERS
+suffix            autotest
+pseudo_dir        ../../PP_ORB
+orbital_dir       ../../PP_ORB
+calculation       nscf
+ntype             1
+nbands            2
+basis_type        lcao
+rpa_outdir        librpa.d
+
+esolver_type      lr
+xc_kernel         bse
+lr_solver         elpa
+lr_nstates        -1
+nocc              1
+nvirt             1
+out_wfc_lr        0
+
+bse_spin_types    singlet triplet
+bse_tda           tda
+bse_use_fine_kgrid 0

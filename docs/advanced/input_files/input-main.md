@@ -2431,7 +2431,7 @@
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==lcao*
 - **Description**: The directory to save files for LibRPA.
-- **Default**: "./OUT.librpa/"
+- **Default**: "OUT.librpa"
 
 ### out_pchg
 

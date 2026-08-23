@@ -41,7 +41,7 @@ void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const
     }
 
     int proc_ntasks = this->LR_lri.list_I.size() * this->LR_lri.list_J.size() * this->LR_lri.k1_indices.size() * this->LR_lri.k2_indices.size();
-    GlobalV::ofs_running << "Molecular LRI init: Process " << GlobalV::MY_RANK
+    GlobalV::ofs_running << "Molecular LRI init: Process " << this->my_rank
         << " handles " << proc_ntasks << " tasks." << std::endl;
     print_a(GlobalV::ofs_running, this->LR_lri.list_I, "list_I");
     print_a(GlobalV::ofs_running, this->LR_lri.list_J, "list_J");
@@ -89,11 +89,11 @@ void MolecularLRI<T>::init(TLRI<T>& Cs_in, TLRI<T>& Vs_in, TLRI<T>& Ws_in, const
     if (this->out_ri_cv)
     {        
         TLRI<T>& Cs_LRI = this->LR_lri.lrik.data_pool.at("Cs_").Ds_ab;// see LRI::set_tensor_map2
-        LRI_CV_Tools::write_Cs_ao(Cs_LRI, this->out_dir + "Cs_lrik_test_" + std::to_string(GlobalV::MY_RANK));
+        LRI_CV_Tools::write_Cs_ao(Cs_LRI, this->out_dir + "Cs_lrik_test_" + std::to_string(this->my_rank+1));
         TLRI<T>& Vs_LRI = this->LR_lri.lrik.data_pool.at("Vs_").Ds_ab;
-        LRI_CV_Tools::write_Vs_abf(Vs_LRI, this->out_dir + "Vs_lrik_test_" + std::to_string(GlobalV::MY_RANK));
+        LRI_CV_Tools::write_Vs_abf(Vs_LRI, this->out_dir + "Vs_lrik_test_" + std::to_string(this->my_rank+1));
         TLRI<T>& Ws_LRI = this->LR_lri.lrik.data_pool.at("Ws_").Ds_ab;
-        LRI_CV_Tools::write_Vs_abf(Ws_LRI, this->out_dir + "Ws_lrik_test_" + std::to_string(GlobalV::MY_RANK));
+        LRI_CV_Tools::write_Vs_abf(Ws_LRI, this->out_dir + "Ws_lrik_test_" + std::to_string(this->my_rank+1));
     }
     // 5. prepare mo-type tensors  
     this->LR_lri.map_psi = this->transform_psi_k(this->psi_ks, this->LR_lri.k_indices);
@@ -212,7 +212,7 @@ void MolecularLRI<T>::build_q_to_kpair_map(int mode, double threshold)
     // Print q_list with both direct and Cartesian coordinates
     GlobalV::ofs_running << "q_list: size = " << this->LR_lri.q_list.size() << std::endl;
     GlobalV::ofs_running << "detailed q_list see 'qlist_{rank}.dat'" << std::endl;
-    std::ofstream ofs_qlist(this->out_dir + "qlist_" + std::to_string(GlobalV::MY_RANK) + ".dat");
+    std::ofstream ofs_qlist(this->out_dir + "qlist_" + std::to_string(this->my_rank+1) + ".dat");
     ofs_qlist << "q_list: size = " << this->LR_lri.q_list.size() << std::endl;
     ofs_qlist << "(direct coords)       | (Cartesian, Bohr^-1)" << std::endl;
     ofs_qlist << std::fixed << std::setprecision(4);

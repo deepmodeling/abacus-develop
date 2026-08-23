@@ -20,7 +20,7 @@ namespace LR_IO {
 
 void parse_band_out_file(const std::string& in_dir, int& nbands_file, int& nk_file, int& nspin_file, int& nocc_file)
 {
-    std::string file = in_dir + "band_out";
+    std::string file = in_dir + "band_out.txt";
     std::ifstream ifs(file);
     if (!ifs) throw std::runtime_error(file + " not found");
     std::string tmp, line;
@@ -68,7 +68,7 @@ std::vector<double> read_energy_qp(const int nocc,
                                    const int nspin_tmp,
                                    const int nspin_file)
 {
-    const std::string file = in_dir + "energy_qp";
+    const std::string file = in_dir + "energy_qp.txt";
     std::cout << "in read_energy_qp, nbands(nocc+nvir): " << (nocc+nvirt) << std::endl;
     std::vector<double> eig_info( nspin_tmp * nk * (nocc + nvirt) * 3 ); // occ, eig_ks, eig_gw
     std::ifstream ifs_gw (file);
@@ -144,8 +144,8 @@ std::vector<double> read_energy_qp_from_band_files(const K_Vectors& kv,
     std::vector<double> eig_info( nspin_tmp * nk * (nocc + nvirt) * 3 ); // occ, eig_ks, eig_gw
     for (int is =0; is < nspin_file; ++is)
     {
-        std::string ks_file = ks_prefix + std::to_string(is + 1) + ".dat";
-        std::string gw_file = gw_prefix + std::to_string(is + 1) + ".dat";
+        std::string ks_file = ks_prefix + std::to_string(is + 1) + ".txt";
+        std::string gw_file = gw_prefix + std::to_string(is + 1) + ".txt";
         std::ifstream ifs_ks (ks_file);
         if (!ifs_ks) throw std::runtime_error(ks_file + " not found");
         std::ifstream ifs_gw (gw_file);
@@ -323,7 +323,7 @@ void read_librpa_eigenvectors(psi::Psi<TK>& wfc_ks,
                     wfc_ks.get_pointer(), 1, 1, const_cast<int*>(pmat.desc_wfc)/*nbasis×nbands*/,
                     pv_glb.blacs_ctxt);
 #else
-        BlasConnector::copy(nbands*nlocal, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
+        BlasConnector::copy(nbands*nbasis, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
 #endif
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read librpa eigenvectors.");
@@ -423,7 +423,7 @@ void read_librpa_eigenvectors_from_band_files(psi::Psi<TK>& wfc_ks,
                     wfc_ks.get_pointer(), 1, 1, const_cast<int*>(pmat.desc_wfc)/*nbasis×nbands*/,
                     pv_glb.blacs_ctxt);
 #else
-        BlasConnector::copy(nbands*nlocal, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
+        BlasConnector::copy(nbands*nbasis, wfc_ks_global.get_pointer(), 1, wfc_ks.get_pointer(), 1);
 #endif
     }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read librpa eigenvectors.");
@@ -728,59 +728,115 @@ TLRI<Tdata> read_Ws(const TLRI<TVs>& Vs, const std::vector<TC>& Rlist)
     std::map<TA,std::map<TAC,RI::Tensor<Tdata>>> Ws;
     
     const int nat = Vs.size();
-    std::string temp;
-    int nk, istart, iend, jstart, jend, ik;
-    size_t nabfmu, nabfnu, non_zero, mu, nu; //I.nab, J.nab
-    size_t nR = Rlist.size();
-    for(int iat = 0; iat != nat; ++iat)//loop atom I
+    std::size_t nrow, ncol, non_zero, irow, icol;
+    const std::size_t nR = Rlist.size();
+    std::vector<std::size_t> abf_start_index(nat + 1, 0);
+    for(int iat = 0; iat != nat; ++iat)
     {
-        for(int jat = 0; jat != nat; ++jat)//loop atom J
+        const std::size_t nabf = Vs.at(iat).at({0,{0,0,0}}).shape[0];
+        abf_start_index[iat + 1] = abf_start_index[iat] + nabf;
+    }
+    const std::size_t nabf_total = abf_start_index[nat];
+    std::vector<int> belong_atom(nabf_total, -1);
+    for(int iat = 0; iat != nat ; ++iat)
+    {
+        std::fill(belong_atom.begin() + abf_start_index[iat],
+            belong_atom.begin() + abf_start_index[iat + 1], iat);
+    }
+    std::vector<bool> R_is_read(nR, false);
+    for(std::size_t iR = 0; iR < nR; ++iR)
+    {
+        const std::string filename = "librpa.d/Wc_iR_" + std::to_string(iR) + "_ifreq_0.mtx";
+        std::ifstream infileW(filename);
+        if(!infileW) throw std::runtime_error(filename + " not found!");
+        if(GlobalV::MY_RANK == 0) std::cout << "reading Wc file: " << filename << std::endl;
+
+        TC R{}; // iR of Wc file is not equal to iR in Rlist !!!
+        bool R_is_found = false;
+        bool dimensions_are_found = false;
+        std::string line;
+        std::getline(infileW, line); // skip line 1: %%MatrixMarket...
+        while(std::getline(infileW, line))
         {
-            for(int iR = 0; iR < nR; ++iR)
+            const std::size_t first = line.find_first_not_of(" \t\r");
+            if(first == std::string::npos) continue;
+            if(line[first] == '%')
             {
-                std::ifstream infileW;
-                std::string filename = "librpa.d/Wc_Mu_"+std::to_string(iat)+"_Nu_"+std::to_string(jat)+"_iR_"+std::to_string(iR)+"_ifreq_0.mtx";
-                infileW.open(filename);
-                if(!infileW) throw std::runtime_error( filename + " not found!");
-                // else std::cout << "reading Wc file: " << filename ;
-                int nabf1 = Vs.at(iat).at({jat,{0,0,0}}).shape[0];
-                int nabf2 = Vs.at(iat).at({jat,{0,0,0}}).shape[1];
-
-                TC R; // iR of Wc file is not equal to iR in Rlist !!!
-                infileW.ignore(2048, '\n'); // skip line 1: %%MatrixMarket...
-                std::getline(infileW, temp); // read line 2: "%"
-                std::getline(infileW, temp); // read line 3: "% Wc at iR N ( Rx Ry Rz ) ..."
-                size_t lparen = temp.find('(');
-                size_t rparen = temp.find(')', lparen);
-                if (lparen == std::string::npos || rparen == std::string::npos)
-                    throw std::runtime_error("Failed to parse R coordinates in " + filename);
-                std::istringstream riss(temp.substr(lparen + 1, rparen - lparen - 1));
-                riss >> R[0] >> R[1] >> R[2];
-                while(infileW.peek() == '%') infileW.ignore(2048, '\n');	//skip comments
-
-                infileW >> nabfmu >> nabfnu >> non_zero;
-                assert(nabfmu == nabf1);
-                assert(nabfnu == nabf2);
-                RI::Tensor<Tdata> tensor_W({ nabfmu, nabfnu });
-                for (int index = 0; index < non_zero; ++index)
+                if(line.find("Wc at iR", first) != std::string::npos)
                 {
-                    infileW >> mu >> nu ;
-                    LR_IO::read_one_data(infileW, tensor_W(mu-1, nu-1));
+                    const std::size_t lparen = line.find('(', first);
+                    const std::size_t rparen = line.find(')', lparen);
+                    if(lparen == std::string::npos || rparen == std::string::npos)
+                    {
+                        throw std::runtime_error("Failed to parse R coordinates in " + filename);
+                    }
+                    std::istringstream riss(line.substr(lparen + 1, rparen - lparen - 1));
+                    if(!(riss >> R[0] >> R[1] >> R[2]))
+                    {
+                        throw std::runtime_error("Failed to parse R coordinates in " + filename);
+                    }
+                    R_is_found = true;
                 }
-                infileW.close();
-                tensor_W += Vs.at(iat).at({jat, R});
-                // for(int i = 0; i != nabf1; ++i)
-                //     for(int j = 0; j != nabf2; ++j)
-                //     {
-                //         tensor_W(i, j) += Vs.at(iat).at({jat, R})(i,j);
-                //         std::cout << "Wxc: " << i << " " << j << " " << tensor_W(i,j) << std::endl; //check
-                //     }
-                Ws[iat][{jat, R}] = std::move(tensor_W);
-                // std::cout << " Finished. R: " << "( " << R[0] << " " << R[1] << " " << R[2] << " )" << std::endl;
+                continue;
+            }
+            std::istringstream dimensions(line);
+            if(!(dimensions >> nrow >> ncol >> non_zero))
+            {
+                throw std::runtime_error("Failed to parse matrix dimensions in " + filename);
+            }
+            dimensions_are_found = true;
+            break;
+        }
+        if(!R_is_found || !dimensions_are_found)
+        {
+            throw std::runtime_error("Incomplete MatrixMarket header in " + filename);
+        }
+        if(nrow != nabf_total || ncol != nabf_total)
+        {
+            throw std::runtime_error("Matrix dimensions in " + filename
+                                     + " do not match the auxiliary basis size");
+        }
+
+        const auto R_iter = std::find(Rlist.begin(), Rlist.end(), R);
+        if(R_iter == Rlist.end())
+        {
+            throw std::runtime_error("R coordinates in " + filename + " are not in Rlist");
+        }
+        const std::size_t R_index = std::distance(Rlist.begin(), R_iter);
+        if(R_is_read[R_index])
+        {
+            throw std::runtime_error("Duplicate R coordinates found in " + filename);
+        }
+        R_is_read[R_index] = true;
+
+        for(int iat = 0; iat != nat; ++iat)//loop atom I
+        {
+            for(int jat = 0; jat != nat; ++jat)//loop atom J
+            {
+                Ws[iat][{jat, R}] = Vs.at(iat).at({jat, R}).copy();
             }
         }
+        Tdata temp_data;
+        for (std::size_t index = 0; index < non_zero; ++index)
+        {
+            if(!(infileW >> irow >> icol))
+            {
+                throw std::runtime_error("Failed to read matrix index in " + filename);
+            }
+            if(irow == 0 || irow > nabf_total || icol == 0 || icol > nabf_total)
+            {
+                throw std::runtime_error("Matrix index out of range in " + filename);
+            }
+            int iat = belong_atom[irow - 1];
+            int jat = belong_atom[icol - 1];
+            LR_IO::read_one_data(infileW, temp_data);
+            Ws[iat][{jat, R}](irow-1-abf_start_index[iat], icol-1-abf_start_index[jat]) += temp_data;
+        }
     }
-    ModuleBase::TITLE("LR_IO", "read_Ws done.");
+    if(std::find(R_is_read.begin(), R_is_read.end(), false) != R_is_read.end())
+    {
+        throw std::runtime_error("Not all R coordinates in Rlist were read from Wc files");
+    }
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "read WR files.");
     return Ws;
 }
