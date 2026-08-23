@@ -431,6 +431,8 @@
     - [vdw\_cutoff\_type](#vdw_cutoff_type)
     - [vdw\_cutoff\_radius](#vdw_cutoff_radius)
     - [vdw\_radius\_unit](#vdw_radius_unit)
+    - [vdw\_cutoff\_width2](#vdw_cutoff_width2)
+    - [vdw\_cutoff\_width3](#vdw_cutoff_width3)
     - [vdw\_cutoff\_period](#vdw_cutoff_period)
     - [vdw\_cn\_thr](#vdw_cn_thr)
     - [vdw\_cn\_thr\_unit](#vdw_cn_thr_unit)
@@ -2374,28 +2376,30 @@
 
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_pchg)*
-- **Description**: Specifies the electronic states to calculate the charge densities with state index for, using a space-separated string of 0s and 1s. Each digit in the string corresponds to a state, starting from the first state. A 1 indicates that the charge density should be calculated for that state, while a 0 means the state will be ignored. The parameter allows a compact and flexible notation (similar to ocp_set), for example the syntax 1 4*0 5*1 0 is used to denote the selection of states: 1 means calculate for the first state, 4*0 skips the next four states, 5*1 means calculate for the following five states, and the final 0 skips the next state. It's essential that the total count of states does not exceed the total number of states (nbands); otherwise, it results in an error, and the process exits. The input string must contain only numbers and the asterisk (*) for repetition, ensuring correct format and intention of state selection. The outputs comprise multiple .cube files following the naming convention pchgi[state]s[spin]k[kpoint].cube.
+- **Description**: Selects electronic states for partial (band-decomposed) charge-density output using a space-separated string of `0`s and `1`s, where `1` selects a state and `0` skips it. Repetition follows the `ocp_set` syntax, for example `1 4*0 5*1 0`; the expanded list must not exceed `nbands`. Each output represents a complete one-particle state rather than its SCF occupation. The spin degeneracy is 2 for `nspin=1` and 1 for `nspin=2` or `nspin=4`. For `nspin=1`, `s1` contains the charge density. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down charge densities, respectively. For `nspin=4`, `s1`, `s2`, `s3`, and `s4` respectively contain $\rho_0$, $m_x$, $m_y$, and $m_z$. With `if_separate_k=true`, files are named `pchgi[state]s[component]k[kpoint].cube`; otherwise, the weighted k-point sum is named `pchgi[state]s[component].cube`.
+
+  > Note: Enabling symmetry may produce unintended partial charge densities because of reduced k-point weights and real-space symmetry operations. If the desired symmetry treatment is uncertain, set `symmetry = -1`. Use the same symmetry setting as in the SCF calculation.
 - **Default**: none
 
 ### out_wfc_norm
 
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_wf)*
-- **Description**: Specifies the electronic states to calculate the real-space wave function modulus (norm, or known as the envelope function) with state index. The syntax and state selection rules are identical to out_pchg, but the output is the norm of the wave function. The outputs comprise multiple .cube files following the naming convention wfi[state]s[spin]k[kpoint].cube.
+- **Description**: Selects electronic states for real-space wavefunction-modulus output using the selection syntax and complete-state normalization of `out_pchg`. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.
 - **Default**: none
 
 ### out_wfc_re_im
 
 - **Type**: String
 - **Availability**: *[`basis_type`](#basis_type)==pw or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_wf)*
-- **Description**: Specifies the electronic states to calculate the real and imaginary parts of the wave function with state index. The syntax and state selection rules are identical to out_pchg, but the output contains both the real and imaginary components of the wave function. The outputs comprise multiple .cube files following the naming convention wfi[state]s[spin]k[kpoint][re/im].cube.
+- **Description**: Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax and complete-state normalization of `out_pchg`. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.
 - **Default**: none
 
 ### if_separate_k
 
 - **Type**: Boolean
 - **Availability**: *([`basis_type`](#basis_type)==pw and [`out_pchg`](#out_pchg)!=none) or ([`basis_type`](#basis_type)==lcao and [`calculation`](#calculation)==get_pchg and [`gamma_only`](#gamma_only)==0)*
-- **Description**: Specifies whether to write the partial charge densities for all k-points to individual files or merge them. Warning: Enabling symmetry may produce unwanted results due to reduced k-point weights and symmetry operations in real space. Therefore when calculating partial charge densities, if you are not sure what you want exactly, it is strongly recommended to set symmetry = -1. It is noteworthy that your symmetry setting should remain the same as that in the SCF procedure.
+- **Description**: Specifies whether to write partial charge densities for individual k-points or merge them.
 - **Default**: false
 
 ### out_elf
@@ -4062,6 +4066,24 @@
   - A(Angstrom)
   - Bohr
 - **Default**: Bohr
+
+### vdw_cutoff_width2
+
+- **Type**: Real
+- **Availability**: *[`vdw_method`](#vdw_method)==d4*
+- **Description**: Width of the smooth switching region for the two-body pairwise dispersion real-space cutoff.
+  A value of zero disables smoothing for the two-body contribution.
+- **Default**: 0.05
+- **Unit**: Bohr
+
+### vdw_cutoff_width3
+
+- **Type**: Real
+- **Availability**: *[`vdw_method`](#vdw_method)==d4*
+- **Description**: Width of the smooth switching region for the three-body Axilrod-Teller-Muto (ATM) dispersion real-space cutoff.
+  A value of zero disables smoothing for the three-body contribution.
+- **Default**: 0.05
+- **Unit**: Bohr
 
 ### vdw_cutoff_period
 

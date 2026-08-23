@@ -536,8 +536,6 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         ModuleBase::Vector3<double> net_force = {0.0, 0.0, 0.0};
         for (int i = 0; i < 3; i++)
         {
-            double sum = 0.0;
-
             for (int iat = 0; iat < nat; iat++)
             {
                 fcs(iat, i) += foverlap(iat, i) + ftvnl_dphi(iat, i) + fvnl_dbeta(iat, i) + fvl_dphi(iat, i)
@@ -595,16 +593,6 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     fcs(iat, i) += fvnl_dalpha(iat, i);
                 }
 #endif
-                // sum total force for correction
-                sum += fcs(iat, i);
-            }
-            net_force[i]=sum;
-            if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
-            {
-                for (int iat = 0; iat < nat; ++iat)
-                {
-                    fcs(iat, i) -= sum / nat;
-                }
             }
         }
 
@@ -617,6 +605,30 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
             this->forceSymmetry(ucell, fcs, symm);
+        }
+
+        // The net force should be evaluated AFTER the symmetrization.
+        // With symmetry switched on, the forces assembled above are built from IBZ-reduced
+        // quantities and only become physical after the symmetrization, forceSymmetry(). 
+        // Force symmetrization is linear, so it commutes with the removal of a
+        // uniform shift: the resulting fcs is identical to the previous ordering.
+        for (int i = 0; i < 3; i++)
+        {
+            double sum = 0.0;
+
+            for (int iat = 0; iat < nat; iat++)
+            {
+                // sum total force for correction
+                sum += fcs(iat, i);
+            }
+            net_force[i]=sum;
+            if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
+            {
+                for (int iat = 0; iat < nat; ++iat)
+                {
+                    fcs(iat, i) -= sum / nat;
+                }
+            }
         }
 
         // compute forces using the DeePKS model

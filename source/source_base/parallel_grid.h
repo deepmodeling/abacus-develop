@@ -21,6 +21,16 @@ class Parallel_Grid
         const int &nczp, const int &nrxx, const int &nbz, const int &bz,
         const int nprocgroup);
 
+    /**
+     * @brief Sum a distributed real-space grid across k-point pools.
+     *
+     * Uses a direct local-slab reduction for equal-sized pools. For uneven
+     * pools, reconstructs a common global layout before the cross-pool sum.
+     *
+     * @param data Local real-space grid data ordered as [x][y][z].
+     */
+    void reduce_across_pools(double* data) const;
+
 #ifdef __MPI
     /// @brief  Broadcast data from root to all processors. The index order is [x][y][z].
     void bcast(const double* const data_global, double* data_local, const int& rank, const bool is_sdft) const;

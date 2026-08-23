@@ -1,274 +1,270 @@
 #ifndef GET_WF_PW_H
 #define GET_WF_PW_H
 
+#include "source_base/module_container/ATen/core/tensor.h"
+
 namespace ModuleIO
 {
+/**
+ * @brief Write real-space norms and complex components of selected PW states.
+ *
+ * Every selected band and k-point is written independently. Scalar or collinear
+ * states produce one component, while an nspin=4 spinor produces a combined norm
+ * cube and separate real/imaginary cubes for its up and down components.
+ */
 template <typename Device>
 void get_wf_pw(const std::vector<int>& out_wfc_norm,
                const std::vector<int>& out_wfc_re_im,
-               const int nbands,
                const int nspin,
-               const int nxyz,
                UnitCell* ucell,
                const psi::Psi<std::complex<double>, Device>* kspw_psi,
                const ModulePW::PW_Basis_K* pw_wfc,
-               const Device* ctx,
+               const ModulePW::PW_Basis* pw_rho,
+               const ModulePW::PW_Basis* pw_rhod,
                const Parallel_Grid& pgrid,
                const std::string& global_out_dir,
-               const K_Vectors& kv,
-               const int kpar,
-               const int my_pool)
+               const K_Vectors& kv)
 {
-    // Get necessary parameters from kv
     const int nks = kv.get_nks();       // current process pool k-point count
     const int nkstot = kv.get_nkstot(); // total k-point count
+    const int nbands = kspw_psi->get_nbands();
 
-    // Loop over k-parallelism
-    for (int ip = 0; ip < kpar; ++ip)
+    const int nks_without_spin = nspin == 2 ? nkstot / 2 : nkstot;
+    const int smooth_nrxx = pw_wfc->nrxx;
+    const int dense_nrxx = pw_rhod->nrxx;
+    // Avoid an extra forward and backward FFT unless a distinct dense grid is in use.
+    const bool needs_interpolation = pw_rhod != pw_rho;
+
+    // The two INPUT vectors are independent band masks for norm and Re/Im output.
+    std::vector<int> bands_picked_norm(nbands, 0);
+    std::vector<int> bands_picked_re_im(nbands, 0);
+
+    if (static_cast<int>(out_wfc_norm.size()) > nbands || static_cast<int>(out_wfc_re_im.size()) > nbands)
     {
-        if (my_pool != ip)
+        ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
+                                 "The number of bands specified by `out_wfc_norm` or `out_wfc_re_im` in the "
+                                 "INPUT file exceeds `nbands`!");
+    }
+
+    for (int value: out_wfc_norm)
+    {
+        if (value != 0 && value != 1)
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
+                                     "The elements of `out_wfc_norm` must be either 0 or 1. "
+                                     "Invalid values found!");
+        }
+    }
+    for (int value: out_wfc_re_im)
+    {
+        if (value != 0 && value != 1)
+        {
+            ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
+                                     "The elements of `out_wfc_re_im` must be either 0 or 1. "
+                                     "Invalid values found!");
+        }
+    }
+
+    int length = std::min(static_cast<int>(out_wfc_norm.size()), nbands);
+    for (int i = 0; i < length; ++i)
+    {
+        bands_picked_norm[i] = static_cast<int>(out_wfc_norm[i]);
+    }
+    length = std::min(static_cast<int>(out_wfc_re_im.size()), nbands);
+    for (int i = 0; i < length; ++i)
+    {
+        bands_picked_re_im[i] = static_cast<int>(out_wfc_re_im[i]);
+    }
+
+    // Map the wavefunction backend type to the tensor library's device type.
+    using ContainerDevice = typename ct::PsiToContainer<Device>::type;
+    const ct::DeviceType device_type = ct::DeviceTypeToEnum<ContainerDevice>::value;
+    const bool is_cpu = device_type == ct::DeviceType::CpuDevice;
+    const bool is_spinor = nspin == 4;
+    // Spinor coefficients store the up and down blocks consecutively.
+    const int npwx = kspw_psi->get_nbasis() / (is_spinor ? 2 : 1);
+
+    // Zero-length tensors avoid allocating buffers that a given backend or spin mode never uses.
+    ct::Tensor wfcr_up_smooth(ct::DataType::DT_COMPLEX_DOUBLE, device_type, ct::TensorShape({smooth_nrxx}));
+    ct::Tensor wfcr_down_smooth(ct::DataType::DT_COMPLEX_DOUBLE, device_type, ct::TensorShape({is_spinor ? smooth_nrxx : 0}));
+    ct::Tensor wfcr_up_smooth_host(ct::DataType::DT_COMPLEX_DOUBLE, ct::DeviceType::CpuDevice, ct::TensorShape({is_cpu ? 0 : smooth_nrxx}));
+    ct::Tensor wfcr_down_smooth_host(ct::DataType::DT_COMPLEX_DOUBLE,
+                                     ct::DeviceType::CpuDevice,
+                                     ct::TensorShape({!is_cpu && is_spinor ? smooth_nrxx : 0}));
+    ct::Tensor wfcr_up_dense_host(ct::DataType::DT_COMPLEX_DOUBLE,
+                                  ct::DeviceType::CpuDevice,
+                                  ct::TensorShape({needs_interpolation ? dense_nrxx : 0}));
+    ct::Tensor wfcr_down_dense_host(ct::DataType::DT_COMPLEX_DOUBLE,
+                                    ct::DeviceType::CpuDevice,
+                                    ct::TensorShape({needs_interpolation && is_spinor ? dense_nrxx : 0}));
+    ct::Tensor reciprocal_buffer_host(ct::DataType::DT_COMPLEX_DOUBLE,
+                                      ct::DeviceType::CpuDevice,
+                                      ct::TensorShape({needs_interpolation ? pw_rhod->npw : 0}));
+
+    // Capture the shared bases and scratch buffers by reference. The returned pointer is owned by
+    // one of the tensor arguments and remains valid until that tensor is reused or destroyed.
+    auto transform_wfc = [&](const std::complex<double>* coefficients,
+                             const int ik,
+                             ct::Tensor& smooth,
+                             ct::Tensor& smooth_host,
+                             ct::Tensor& dense_host) -> const std::complex<double>* {
+        // Perform the wavefunction FFT on its native device, then expose host data for cube output.
+        pw_wfc->template recip_to_real<std::complex<double>, Device>(coefficients, smooth.data<std::complex<double>>(), ik);
+        const std::complex<double>* smooth_data = smooth.data<std::complex<double>>();
+        if (!is_cpu)
+        {
+            ct::kernels::synchronize_memory<std::complex<double>, ct::DEVICE_CPU, ContainerDevice>()(
+                smooth_host.data<std::complex<double>>(),
+                smooth_data,
+                smooth_nrxx);
+            smooth_data = smooth_host.data<std::complex<double>>();
+        }
+        if (!needs_interpolation)
+        {
+            return smooth_data;
+        }
+
+        // Zero padding in reciprocal space transfers the smooth-grid field to the dense rho grid.
+        reciprocal_buffer_host.zero();
+        pw_rho->real2recip(smooth_data, reciprocal_buffer_host.data<std::complex<double>>());
+        pw_rhod->recip2real(reciprocal_buffer_host.data<std::complex<double>>(), dense_host.data<std::complex<double>>());
+        return dense_host.data<std::complex<double>>();
+    };
+
+    // Norm cubes are phase invariant; for spinors they contain sqrt(|up|^2 + |down|^2).
+    std::vector<std::vector<double>> rho_band_norm(nspin, std::vector<double>(dense_nrxx));
+    for (int ib = 0; ib < nbands; ++ib)
+    {
+        if (!bands_picked_norm[ib])
         {
             continue;
         }
 
-        // bands_picked is a vector of 0s and 1s, where 1 means the band is picked to output
-        std::vector<int> bands_picked_norm(nbands, 0);
-        std::vector<int> bands_picked_re_im(nbands, 0);
-
-        // Check if length of out_wfc_norm and out_wfc_re_im is valid
-        if (static_cast<int>(out_wfc_norm.size()) > nbands || static_cast<int>(out_wfc_re_im.size()) > nbands)
+        for (int is = 0; is < nspin; ++is)
         {
-            ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
-                                     "The number of bands specified by `out_wfc_norm` or `out_wfc_re_im` in the "
-                                     "INPUT file exceeds `nbands`!");
+            std::fill(rho_band_norm[is].begin(), rho_band_norm[is].end(), 0.0);
         }
-
-        // Check if all elements in bands_picked are 0 or 1
-        for (int value: out_wfc_norm)
+        for (int ik = 0; ik < nks; ++ik)
         {
-            if (value != 0 && value != 1)
+            const int ikstot = kv.ik2iktot[ik];
+            const int spin_index = kv.isk[ik];
+            // In collinear calculations the two spin channels share the same k-point numbering.
+            const int k_number = ikstot % nks_without_spin + 1;
+
+            kspw_psi->fix_k(ik);
+            const std::complex<double>* wfcr_up
+                = transform_wfc(&kspw_psi[0](ib, 0), ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host);
+            const std::complex<double>* wfcr_up_host_data = wfcr_up;
+            const std::complex<double>* wfcr_down_host_data = nullptr;
+            if (is_spinor)
             {
-                ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
-                                         "The elements of `out_wfc_norm` must be either 0 or 1. "
-                                         "Invalid values found!");
-            }
-        }
-        for (int value: out_wfc_re_im)
-        {
-            if (value != 0 && value != 1)
-            {
-                ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
-                                         "The elements of `out_wfc_re_im` must be either 0 or 1. "
-                                         "Invalid values found!");
-            }
-        }
-
-        // Fill bands_picked with values from out_wfc_norm
-        // Remaining bands are already set to 0
-        int length = std::min(static_cast<int>(out_wfc_norm.size()), nbands);
-        for (int i = 0; i < length; ++i)
-        {
-            // out_wfc_norm rely on function parse_expression
-            bands_picked_norm[i] = static_cast<int>(out_wfc_norm[i]);
-        }
-        length = std::min(static_cast<int>(out_wfc_re_im.size()), nbands);
-        for (int i = 0; i < length; ++i)
-        {
-            bands_picked_re_im[i] = static_cast<int>(out_wfc_re_im[i]);
-        }
-
-        // Allocate host memory
-        std::vector<std::complex<double>> wfcr_norm(nxyz);
-        std::vector<std::vector<double>> rho_band_norm(nspin, std::vector<double>(nxyz));
-
-        // Allocate device memory
-        std::complex<double>* wfcr_norm_device = nullptr;
-        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
-        {
-            base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfcr_norm_device, nxyz);
-        }
-
-        for (int ib = 0; ib < nbands; ++ib)
-        {
-            // Skip the loop iteration if bands_picked[ib] is 0
-            if (!bands_picked_norm[ib])
-            {
-                continue;
+                const std::complex<double>* wfcr_down
+                    = transform_wfc(&kspw_psi[0](ib, npwx), ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host);
+                wfcr_down_host_data = wfcr_down;
             }
 
-            for (int is = 0; is < nspin; ++is)
+            const double spin_degeneracy = nspin == 1 ? 2.0 : 1.0;
+            const double scale = std::sqrt(spin_degeneracy / ucell->omega);
+            for (int ir = 0; ir < dense_nrxx; ++ir)
             {
-                std::fill(rho_band_norm[is].begin(), rho_band_norm[is].end(), 0.0);
+                const double norm = is_spinor ? std::sqrt(std::norm(wfcr_up_host_data[ir]) + std::norm(wfcr_down_host_data[ir]))
+                                              : std::abs(wfcr_up_host_data[ir]);
+                rho_band_norm[spin_index][ir] = norm * scale;
             }
-            for (int ik = 0; ik < nks; ++ik)
-            {
-                const int ikstot = kv.ik2iktot[ik];                 // global k-point index
-                const int spin_index = kv.isk[ik];                  // spin index
-                const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
 
-                kspw_psi->fix_k(ik);
+            std::stringstream ss_file;
+            ss_file << global_out_dir << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << ".cube";
+            ModuleIO::write_vdata_palgrid(pgrid,
+                                          rho_band_norm[spin_index].data(),
+                                          spin_index,
+                                          nspin,
+                                          0,
+                                          ss_file.str(),
+                                          0.0,
+                                          ucell,
+                                          11,
+                                          0,
+                                          false,
+                                          true);
+        }
+    }
 
-                // FFT on device and copy result back to host
-                if (std::is_same<Device, base_device::DEVICE_CPU>::value)
-                {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_norm.data(), ik);
-                }
-                else
-                {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfcr_norm_device, ik);
-
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>()(
-                        wfcr_norm.data(),
-                        wfcr_norm_device,
-                        nxyz);
-                }
-
-                // To ensure the normalization of charge density in multi-k calculation
-                double wg_sum_k = 0.0;
-                if (nspin == 1)
-                {
-                    wg_sum_k = 2.0;
-                }
-                else if (nspin == 2)
-                {
-                    wg_sum_k = 1.0;
-                }
-                else
-                {
-                    ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
-                                             "Real space wavefunction output currently do not support noncollinear "
-                                             "polarized calculation (nspin = 4)!");
-                }
-
-                double w1 = static_cast<double>(wg_sum_k / ucell->omega);
-
-                for (int i = 0; i < nxyz; ++i)
-                {
-                    rho_band_norm[spin_index][i] = std::abs(wfcr_norm[i]) * std::sqrt(w1);
-                }
-
-                std::stringstream ss_file;
-                ss_file << global_out_dir << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << ".cube";
-
-                ModuleIO::write_vdata_palgrid(pgrid,
-                                              rho_band_norm[spin_index].data(),
-                                              spin_index,
-                                              nspin,
-                                              0,
-                                              ss_file.str(),
-                                              0.0,
-                                              ucell,
-                                              11,
-                                              1,
-                                              PARAM.globalv.two_fermi,
-                                              true); // reduce_all_pool is true
-            }
+    // Re/Im cubes retain phase information and therefore write both spinor components separately.
+    std::vector<std::vector<double>> rho_band_re(nspin, std::vector<double>(dense_nrxx));
+    std::vector<std::vector<double>> rho_band_im(nspin, std::vector<double>(dense_nrxx));
+    for (int ib = 0; ib < nbands; ++ib)
+    {
+        if (!bands_picked_re_im[ib])
+        {
+            continue;
         }
 
-        // Allocate host memory
-        std::vector<std::complex<double>> wfc_re_im(nxyz);
-        std::vector<std::vector<double>> rho_band_re(nspin, std::vector<double>(nxyz));
-        std::vector<std::vector<double>> rho_band_im(nspin, std::vector<double>(nxyz));
-
-        // Allocate device memory
-        std::complex<double>* wfc_re_im_device = nullptr;
-        if (!std::is_same<Device, base_device::DEVICE_CPU>::value)
+        for (int is = 0; is < nspin; ++is)
         {
-            base_device::memory::resize_memory_op<std::complex<double>, Device>()(wfc_re_im_device, nxyz);
+            std::fill(rho_band_re[is].begin(), rho_band_re[is].end(), 0.0);
+            std::fill(rho_band_im[is].begin(), rho_band_im[is].end(), 0.0);
         }
-
-        for (int ib = 0; ib < nbands; ++ib)
+        for (int ik = 0; ik < nks; ++ik)
         {
-            // Skip the loop iteration if bands_picked[ib] is 0
-            if (!bands_picked_re_im[ib])
+            const int ikstot = kv.ik2iktot[ik];
+            const int spin_index = kv.isk[ik];
+            const int k_number = ikstot % nks_without_spin + 1;
+
+            kspw_psi->fix_k(ik);
+            const std::complex<double>* wfcr_up
+                = transform_wfc(&kspw_psi[0](ib, 0), ik, wfcr_up_smooth, wfcr_up_smooth_host, wfcr_up_dense_host);
+            const std::complex<double>* wfcr_up_host_data = wfcr_up;
+            const std::complex<double>* wfcr_down_host_data = nullptr;
+            if (is_spinor)
             {
-                continue;
+                const std::complex<double>* wfcr_down
+                    = transform_wfc(&kspw_psi[0](ib, npwx), ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host);
+                wfcr_down_host_data = wfcr_down;
             }
 
-            for (int is = 0; is < nspin; ++is)
+            const double spin_degeneracy = nspin == 1 ? 2.0 : 1.0;
+            const double scale = std::sqrt(spin_degeneracy / ucell->omega);
+            // For scalar/collinear states, select kv.isk[ik]; for spinors, emit both up and down.
+            const int component_begin = is_spinor ? 0 : spin_index;
+            const int component_end = is_spinor ? 2 : spin_index + 1;
+            for (int component = component_begin; component < component_end; ++component)
             {
-                std::fill(rho_band_re[is].begin(), rho_band_re[is].end(), 0.0);
-                std::fill(rho_band_im[is].begin(), rho_band_im[is].end(), 0.0);
-            }
-            for (int ik = 0; ik < nks; ++ik)
-            {
-                const int ikstot = kv.ik2iktot[ik];                 // global k-point index
-                const int spin_index = kv.isk[ik];                  // spin index
-                const int k_number = ikstot % (nkstot / nspin) + 1; // k-point number, starting from 1
-
-                kspw_psi->fix_k(ik);
-
-                // FFT on device and copy result back to host
-                if (std::is_same<Device, base_device::DEVICE_CPU>::value)
+                const std::complex<double>* component_data = is_spinor && component == 1 ? wfcr_down_host_data : wfcr_up_host_data;
+                for (int ir = 0; ir < dense_nrxx; ++ir)
                 {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfc_re_im.data(), ik);
-                }
-                else
-                {
-                    pw_wfc->recip_to_real(ctx, &kspw_psi[0](ib, 0), wfc_re_im_device, ik);
-
-                    base_device::memory::synchronize_memory_op<std::complex<double>, base_device::DEVICE_CPU, Device>()(
-                        wfc_re_im.data(),
-                        wfc_re_im_device,
-                        nxyz);
-                }
-
-                // To ensure the normalization of charge density in multi-k calculation
-                double wg_sum_k = 0.0;
-                if (nspin == 1)
-                {
-                    wg_sum_k = 2.0;
-                }
-                else if (nspin == 2)
-                {
-                    wg_sum_k = 1.0;
-                }
-                else
-                {
-                    ModuleBase::WARNING_QUIT("ModuleIO::get_wf_pw",
-                                             "Real space wavefunction output currently do not support noncollinear "
-                                             "polarized calculation (nspin = 4)!");
-                }
-
-                double w1 = static_cast<double>(wg_sum_k / ucell->omega);
-
-                for (int i = 0; i < nxyz; ++i)
-                {
-                    rho_band_re[spin_index][i] = std::real(wfc_re_im[i]) * std::sqrt(w1);
-                    rho_band_im[spin_index][i] = std::imag(wfc_re_im[i]) * std::sqrt(w1);
+                    rho_band_re[component][ir] = std::real(component_data[ir]) * scale;
+                    rho_band_im[component][ir] = std::imag(component_data[ir]) * scale;
                 }
 
                 std::stringstream ss_real;
-                ss_real << global_out_dir << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << "re.cube";
-
+                ss_real << global_out_dir << "wfi" << ib + 1 << "s" << component + 1 << "k" << k_number << "re.cube";
                 ModuleIO::write_vdata_palgrid(pgrid,
-                                              rho_band_re[spin_index].data(),
-                                              spin_index,
+                                              rho_band_re[component].data(),
+                                              component,
                                               nspin,
                                               0,
                                               ss_real.str(),
                                               0.0,
                                               ucell,
                                               11,
-                                              1,
-                                              PARAM.globalv.two_fermi,
-                                              true); // reduce_all_pool is true
+                                              0,
+                                              false,
+                                              true);
 
                 std::stringstream ss_imag;
-                ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << "im.cube";
-
+                ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << component + 1 << "k" << k_number << "im.cube";
                 ModuleIO::write_vdata_palgrid(pgrid,
-                                              rho_band_im[spin_index].data(),
-                                              spin_index,
+                                              rho_band_im[component].data(),
+                                              component,
                                               nspin,
                                               0,
                                               ss_imag.str(),
                                               0.0,
                                               ucell,
                                               11,
-                                              1,
-                                              PARAM.globalv.two_fermi,
-                                              true); // reduce_all_pool is true
+                                              0,
+                                              false,
+                                              true);
             }
         }
     }

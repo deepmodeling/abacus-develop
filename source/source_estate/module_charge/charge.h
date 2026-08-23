@@ -125,11 +125,6 @@ class Charge
 
 	public:
     /**
-     * @brief init some arrays for mpi_inter_pools, rho_mpi
-     */
-    void init_chgmpi();
-
-    /**
      * @brief Sum rho at different pools (k-point parallelism).
      *        Only used when GlobalV::KPAR > 1
      */
@@ -169,12 +164,6 @@ class Charge
     bool allocate_rho;
 
     bool allocate_rho_final_scf; // LiuXh add 20180606
-
-#ifdef __MPI
-    int *rec = nullptr; //The number of elements each process should receive into the receive buffer.
-    int *dis = nullptr; //The displacement (relative to recvbuf) for each process in the receive buffer.
-#endif
-    
 };
 
 #endif // charge
