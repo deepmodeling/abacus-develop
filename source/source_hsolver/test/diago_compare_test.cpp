@@ -35,12 +35,11 @@
 #include <string>
 #include <vector>
 
-using T    = std::complex<double>;
+using T = std::complex<double>;
 using Real = double;
 
-extern "C" void zgemm_(const char* transa, const char* transb, const int* m, const int* n, const int* k,
-                       const T* alpha, const T* a, const int* lda,
-                       const T* b, const int* ldb, const T* beta, T* c, const int* ldc);
+extern "C" void zgemm_(const char* transa, const char* transb, const int* m, const int* n, const int* k, const T* alpha,
+                       const T* a, const int* lda, const T* b, const int* ldb, const T* beta, T* c, const int* ldc);
 
 static void dense_h_multiply(const T* H, int n, const T* in, T* out, int ld, int ncol)
 {
@@ -52,8 +51,12 @@ static void dense_h_multiply(const T* H, int n, const T* in, T* out, int ld, int
 static void identity_s(const T* in, T* out, int ld, int ncol)
 {
     for (int j = 0; j < ncol; ++j)
+    {
         for (int i = 0; i < ld; ++i)
+        {
             out[i + j * ld] = in[i + j * ld];
+        }
+    }
 }
 
 // Reference eigenvalues via LAPACK zheev (H is Hermitian, S = I).
@@ -74,17 +77,27 @@ static void make_H(int n, int sparsity_pct, std::vector<T>& H, std::vector<Real>
     H.assign(n * n, T(0));
     std::mt19937 rng(unsigned(n * 100 + sparsity_pct));
     std::uniform_real_distribution<Real> dist(-1.0, 1.0);
-    for (int i = 0; i < n; ++i) {
-        for (int j = i; j < n; ++j) {
-            if (i != j && (rng() % 100) < sparsity_pct) continue;
+    for (int i = 0; i < n; ++i)
+    {
+        for (int j = i; j < n; ++j)
+        {
+            if (i != j && (rng() % 100) < sparsity_pct)
+            {
+                continue;
+            }
             Real val = (i == j) ? std::abs(dist(rng)) * n + 1.0 : dist(rng) * 0.5;
             H[i + j * n] = T(val, 0);
-            if (i != j) H[j + i * n] = T(val, 0);
+            if (i != j)
+            {
+                H[j + i * n] = T(val, 0);
+            }
         }
     }
     prec.resize(n);
     for (int i = 0; i < n; ++i)
+    {
         prec[i] = std::max(std::real(H[i + i * n]), 1e-6);
+    }
 }
 
 // Random orthonormalized initial guess (identical for every solver).
@@ -95,18 +108,36 @@ static void make_psi(int n, int nband, std::vector<T>& psi)
     std::mt19937 rng(42);
     std::uniform_real_distribution<Real> dist(-1.0, 1.0);
     for (int j = 0; j < nband; ++j)
+    {
         for (int i = 0; i < n; ++i)
+        {
             psi[i + j * ld] = T(dist(rng), 0.0);
-    for (int j = 0; j < nband; ++j) {
-        for (int k = 0; k < j; ++k) {
+        }
+    }
+    for (int j = 0; j < nband; ++j)
+    {
+        for (int k = 0; k < j; ++k)
+        {
             T d = 0;
-            for (int i = 0; i < n; ++i) d += std::conj(psi[i + k * ld]) * psi[i + j * ld];
-            for (int i = 0; i < n; ++i) psi[i + j * ld] -= d * psi[i + k * ld];
+            for (int i = 0; i < n; ++i)
+            {
+                d += std::conj(psi[i + k * ld]) * psi[i + j * ld];
+            }
+            for (int i = 0; i < n; ++i)
+            {
+                psi[i + j * ld] -= d * psi[i + k * ld];
+            }
         }
         Real nr = 0;
-        for (int i = 0; i < n; ++i) nr += std::norm(psi[i + j * ld]);
+        for (int i = 0; i < n; ++i)
+        {
+            nr += std::norm(psi[i + j * ld]);
+        }
         nr = std::sqrt(nr);
-        for (int i = 0; i < n; ++i) psi[i + j * ld] /= nr;
+        for (int i = 0; i < n; ++i)
+        {
+            psi[i + j * ld] /= nr;
+        }
     }
 }
 
@@ -118,10 +149,13 @@ static void rr_subspace(const T* H, int n, T* psi_in, T* psi_out, int ld, int nb
 
     // S_sub = Psi^H Psi (S = I), H_sub = Psi^H H Psi
     std::vector<T> s_sub(nband * nband, T(0)), h_sub(nband * nband, T(0));
-    for (int i = 0; i < nband; ++i) {
-        for (int j = 0; j < nband; ++j) {
+    for (int i = 0; i < nband; ++i)
+    {
+        for (int j = 0; j < nband; ++j)
+        {
             T s = 0, h = 0;
-            for (int k = 0; k < n; ++k) {
+            for (int k = 0; k < n; ++k)
+            {
                 T pk = psi_in[k + i * ld];
                 s += std::conj(pk) * psi_in[k + j * ld];
                 h += std::conj(pk) * hpsi[k + j * n];
@@ -138,15 +172,19 @@ static void rr_subspace(const T* H, int n, T* psi_in, T* psi_out, int ld, int nb
     std::vector<Real> w(nband);
     int info = 0, itype = 1, nn = nband;
     char jobz = 'V', uplo = 'U';
-    zhegv_(&itype, &jobz, &uplo, &nn, h_sub.data(), &nn, s_sub.data(), &nn, w.data(),
-           work.data(), &lwork, rwork.data(), &info);
+    zhegv_(&itype, &jobz, &uplo, &nn, h_sub.data(), &nn, s_sub.data(), &nn, w.data(), work.data(), &lwork, rwork.data(),
+           &info);
 
     // psi_out = psi_in * C  (C now holds the eigenvectors in h_sub)
-    for (int j = 0; j < nband; ++j) {
-        for (int i = 0; i < n; ++i) {
+    for (int j = 0; j < nband; ++j)
+    {
+        for (int i = 0; i < n; ++i)
+        {
             T acc = 0;
             for (int c = 0; c < nband; ++c)
+            {
                 acc += psi_in[i + c * ld] * h_sub[c + j * nband];
+            }
             psi_out[i + j * ld] = acc;
         }
     }
@@ -155,34 +193,35 @@ static void rr_subspace(const T* H, int n, T* psi_in, T* psi_out, int ld, int nb
 struct Result
 {
     double wall_s = 0.0;
-    double avg_iter = -1.0;   // -1 when the solver does not report it
-    double max_err = 0.0;     // max |eval_i - ref_i| over the requested bands
+    double avg_iter = -1.0; // -1 when the solver does not report it
+    double max_err = 0.0;   // max |eval_i - ref_i| over the requested bands
     bool ok = false;
 };
 
-static Result run_ppcg(const std::vector<T>& H, int n, int nband,
-                       const std::vector<Real>& prec, const std::vector<T>& psi0,
-                       const std::vector<double>& ethr, const Real* ref)
+static Result run_ppcg(const std::vector<T>& H, int n, int nband, const std::vector<Real>& prec,
+                       const std::vector<T>& psi0, const std::vector<double>& ethr, const Real* ref)
 {
     Result r;
     std::vector<T> psi = psi0;
     std::vector<Real> eval(nband, 0.0);
-    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(
-        1e-8, 500, nband, std::min(nband, 4), false, hsolver::PpcgStrategy::BLOCK_SUBSPACE);
+    hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, nband, std::min(nband, 4), false,
+                                                                   hsolver::PpcgStrategy::BLOCK_SUBSPACE);
     auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
     auto t0 = std::chrono::high_resolution_clock::now();
     double avg = solver.diag(h_op, nullptr, n, nband, n, psi.data(), eval.data(), ethr, prec.data());
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.avg_iter = avg;
-    for (int i = 0; i < nband; ++i) r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
+    for (int i = 0; i < nband; ++i)
+    {
+        r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
+    }
     r.ok = true;
     return r;
 }
 
-static Result run_cg(const std::vector<T>& H, int n, int nband,
-                     const std::vector<Real>& prec, const std::vector<T>& psi0,
-                     const std::vector<double>& ethr, const Real* ref)
+static Result run_cg(const std::vector<T>& H, int n, int nband, const std::vector<Real>& prec,
+                     const std::vector<T>& psi0, const std::vector<double>& ethr, const Real* ref)
 {
     Result r;
     std::vector<T> psi = psi0;
@@ -190,8 +229,7 @@ static Result run_cg(const std::vector<T>& H, int n, int nband,
     auto subspace_func = [&H, n](T* psi_in, T* psi_out, int ld, int nband, bool) {
         rr_subspace(H.data(), n, psi_in, psi_out, ld, nband);
     };
-    hsolver::DiagoCG<T, hsolver::base_device::DEVICE_CPU> cg(
-        "pw", "scf", true, subspace_func, 1e-8, 500, 1);
+    hsolver::DiagoCG<T, hsolver::base_device::DEVICE_CPU> cg("pw", "scf", true, subspace_func, 1e-8, 500, 1);
     auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
     auto s_op = [](T* in, T* out, int ld, int nc) { identity_s(in, out, ld, nc); };
     auto t0 = std::chrono::high_resolution_clock::now();
@@ -199,14 +237,16 @@ static Result run_cg(const std::vector<T>& H, int n, int nband,
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.avg_iter = avg;
-    for (int i = 0; i < nband; ++i) r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
+    for (int i = 0; i < nband; ++i)
+    {
+        r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
+    }
     r.ok = true;
     return r;
 }
 
-static Result run_bpcg(const std::vector<T>& H, int n, int nband,
-                       const std::vector<Real>& prec, const std::vector<T>& psi0,
-                       const std::vector<double>& ethr, const Real* ref)
+static Result run_bpcg(const std::vector<T>& H, int n, int nband, const std::vector<Real>& prec,
+                       const std::vector<T>& psi0, const std::vector<double>& ethr, const Real* ref)
 {
     Result r;
     std::vector<T> psi = psi0;
@@ -217,23 +257,32 @@ static Result run_bpcg(const std::vector<T>& H, int n, int nband,
     // BPCG::diag() is a single block-CG sweep; iterate until convergence.
     int it = 0;
     auto t0 = std::chrono::high_resolution_clock::now();
-    for (; it < 200; ++it) {
+    for (; it < 200; ++it)
+    {
         bpcg.diag(h_op, psi.data(), eval.data(), ethr);
         double err = 0.0;
-        for (int i = 0; i < nband; ++i) err = std::max(err, std::abs(eval[i] - ref[i]));
-        if (err < ethr[0]) break;
+        for (int i = 0; i < nband; ++i)
+        {
+            err = std::max(err, std::abs(eval[i] - ref[i]));
+        }
+        if (err < ethr[0])
+        {
+            break;
+        }
     }
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.avg_iter = it;
-    for (int i = 0; i < nband; ++i) r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
+    for (int i = 0; i < nband; ++i)
+    {
+        r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
+    }
     r.ok = true;
     return r;
 }
 
-static Result run_dav(const std::vector<T>& H, int n, int nband,
-                      const std::vector<Real>& prec, const std::vector<T>& psi0,
-                      const std::vector<double>& ethr, const Real* ref)
+static Result run_dav(const std::vector<T>& H, int n, int nband, const std::vector<Real>& prec,
+                      const std::vector<T>& psi0, const std::vector<double>& ethr, const Real* ref)
 {
     Result r;
     std::vector<T> psi = psi0;
@@ -247,7 +296,10 @@ static Result run_dav(const std::vector<T>& H, int n, int nband,
     auto t1 = std::chrono::high_resolution_clock::now();
     r.wall_s = std::chrono::duration<double>(t1 - t0).count();
     r.avg_iter = it;
-    for (int i = 0; i < nband; ++i) r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
+    for (int i = 0; i < nband; ++i)
+    {
+        r.max_err = std::max(r.max_err, std::abs(eval[i] - ref[i]));
+    }
     r.ok = true;
     return r;
 }
@@ -260,21 +312,23 @@ int main(int argc, char** argv)
     divide_pools(nproc, myrank, nproc_in_pool, kpar, mypool, rank_in_pool);
     MPI_Comm_split(MPI_COMM_WORLD, myrank, 0, &BP_WORLD);
 
-    struct Case { int n; int nband; int sparsity; };
+    struct Case
+    {
+        int n;
+        int nband;
+        int sparsity;
+    };
     const std::vector<Case> cases = {
-        { 50,  10,  0},
-        { 50,  10, 60},
-        {100,  10, 60},
-        {200,  10, 80},
-        {500,  10, 80},
+        {50, 10, 0}, {50, 10, 60}, {100, 10, 60}, {200, 10, 80}, {500, 10, 80},
     };
 
     std::printf("\n=== Solver comparison (identical H, psi0, ethr) ===\n");
-    std::printf("%-5s %-5s %-6s %-10s %-14s %-12s %-10s\n",
-                "n", "nband", "spars", "solver", "wall_time(s)", "avg_iter", "max_err");
+    std::printf("%-5s %-5s %-6s %-10s %-14s %-12s %-10s\n", "n", "nband", "spars", "solver", "wall_time(s)", "avg_iter",
+                "max_err");
     std::printf("---------------------------------------------------------------\n");
 
-    for (const auto& c : cases) {
+    for (const auto& c : cases)
+    {
         std::vector<T> H;
         std::vector<Real> prec;
         make_H(c.n, c.sparsity, H, prec);
@@ -285,18 +339,18 @@ int main(int argc, char** argv)
         std::vector<double> ethr(c.nband, 1e-6);
 
         Result r_ppcg = run_ppcg(H, c.n, c.nband, prec, psi0, ethr, ref.data());
-        Result r_cg   = run_cg(H, c.n, c.nband, prec, psi0, ethr, ref.data());
+        Result r_cg = run_cg(H, c.n, c.nband, prec, psi0, ethr, ref.data());
         Result r_bpcg = run_bpcg(H, c.n, c.nband, prec, psi0, ethr, ref.data());
-        Result r_dav  = run_dav(H, c.n, c.nband, prec, psi0, ethr, ref.data());
+        Result r_dav = run_dav(H, c.n, c.nband, prec, psi0, ethr, ref.data());
 
-        std::printf("%-5d %-5d %-6d %-10s %-14.5f %-12.1f %-10.2e\n",
-                    c.n, c.nband, c.sparsity, "PPCG", r_ppcg.wall_s, r_ppcg.avg_iter, r_ppcg.max_err);
-        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e\n",
-                    "", "", "", "CG", r_cg.wall_s, r_cg.avg_iter, r_cg.max_err);
-        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e\n",
-                    "", "", "", "BPCG", r_bpcg.wall_s, r_bpcg.avg_iter, r_bpcg.max_err);
-        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e\n",
-                    "", "", "", "Davidson", r_dav.wall_s, r_dav.avg_iter, r_dav.max_err);
+        std::printf("%-5d %-5d %-6d %-10s %-14.5f %-12.1f %-10.2e\n", c.n, c.nband, c.sparsity, "PPCG", r_ppcg.wall_s,
+                    r_ppcg.avg_iter, r_ppcg.max_err);
+        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e\n", "", "", "", "CG", r_cg.wall_s, r_cg.avg_iter,
+                    r_cg.max_err);
+        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e\n", "", "", "", "BPCG", r_bpcg.wall_s,
+                    r_bpcg.avg_iter, r_bpcg.max_err);
+        std::printf("%-5s %-5s %-6s %-10s %-14.5f %-12.1f %-10.2e\n", "", "", "", "Davidson", r_dav.wall_s,
+                    r_dav.avg_iter, r_dav.max_err);
         std::printf("---------------------------------------------------------------\n");
     }
 
