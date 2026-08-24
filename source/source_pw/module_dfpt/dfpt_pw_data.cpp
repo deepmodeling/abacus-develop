@@ -192,10 +192,31 @@ std::vector<std::complex<double>> DFPT_PW_Data::get_dpsi(int q_idx, int k_idx, i
     return std::vector<std::complex<double>>();
 }
 
-psi::Psi<std::complex<double>>& DFPT_PW_Data::get_dpsi_obj(int q_idx) {
-    static psi::Psi<std::complex<double>> dummy;
-    (void)q_idx;
-    return dummy;
+void DFPT_PW_Data::set_converged(int q_idx, int irrep, bool flag) {
+    converged_[std::make_pair(q_idx, irrep)] = flag;
+}
+
+bool DFPT_PW_Data::get_converged(int q_idx, int irrep) const {
+    const auto it = converged_.find(std::make_pair(q_idx, irrep));
+    return it != converged_.end() ? it->second : false;
+}
+
+void DFPT_PW_Data::add_residual(int q_idx, int irrep, double r) {
+    residuals_[std::make_pair(q_idx, irrep)].push_back(r);
+}
+
+std::vector<double> DFPT_PW_Data::get_residuals(int q_idx, int irrep) const {
+    const auto it = residuals_.find(std::make_pair(q_idx, irrep));
+    return it != residuals_.end() ? it->second : std::vector<double>();
+}
+
+void DFPT_PW_Data::set_current_iter(int q_idx, int irrep, int iter) {
+    current_iter_[std::make_pair(q_idx, irrep)] = iter;
+}
+
+int DFPT_PW_Data::get_current_iter(int q_idx, int irrep) const {
+    const auto it = current_iter_.find(std::make_pair(q_idx, irrep));
+    return it != current_iter_.end() ? it->second : 0;
 }
 
 void DFPT_PW_Data::set_drho_r(int q_idx, int spin, const std::vector<double>& rho) {
@@ -376,7 +397,9 @@ void DFPT_PW_Data::deallocate_memory() {
     dv_recip_c_.clear();
     dv_rc_.clear();
     dpsi_.clear();
+    converged_.clear();
     residuals_.clear();
+    current_iter_.clear();
 }
 
 } // namespace ModuleDFPT

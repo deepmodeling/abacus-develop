@@ -8,7 +8,6 @@
 
 #include "dfpt_pw.h"
 #include "dfpt_pw_data.h"
-#include "dfpt_irrep_data.h"
 #include "dfpt_pert.h"
 #include "dfpt_stern.h"
 #include "dfpt_rho.h"
@@ -460,7 +459,10 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
     // accumulation below needs the converged v_sc of this displacement)
     std::vector<std::complex<double>> v_sc_r_last;
     for (int iter = 0; iter < max_iter_ && !converged; ++iter) {
-        data_.set_current_iter(iter);
+        // the per-displacement SCF state (iter / residual / converged) is
+        // local to this solve: the DFPT_PW_Data ledger is the per-(q,irrep)
+        // outer-pass record kept by run(), and the final residual is
+        // returned to the caller for that aggregation (B4)
 
         if (jprobe && iter == 0) {
             std::vector<std::complex<double>> trial(pw_rho_->npw,
@@ -738,14 +740,12 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
         }
         rho_.mix_drho(q_idx, data_);
         residual = rho_.get_residual(q_idx, data_);
-        data_.add_residual(residual);
         if (dbg) {
             std::cout << "DBG iter=" << iter << " residual=" << residual
                       << " conv_thr=" << conv_thr_ << std::endl;
         }
         converged = (residual < conv_thr_);
     }
-    data_.set_converged(converged);
     // stash the converged screened potential and dpsi of this displacement
     // for the two-pass 2n+1 accumulation (term2 cross section needs
     // dV_ext^b + dV_sc^b and dpsi^b of every displacement)
@@ -1156,7 +1156,6 @@ void DFPT_PW::Impl::solve_efield_resp(int q_idx) {
                                                            std::complex<double>(0.0, 0.0)));
         bool converged = false;
         for (int iter = 0; iter < max_iter_ && !converged; ++iter) {
-            data_.set_current_iter(iter);
             // screened response potential of the mixed input density
             // (identical assembly to solve_displacement)
             std::vector<std::complex<double>> v_sc_r(nrxx, std::complex<double>(0.0, 0.0));
@@ -1556,7 +1555,6 @@ void DFPT_PW::Impl::aleg_crosscheck(int q_idx) {
 
 void DFPT_PW::run() {
     const int nq = pimpl_->qlist_.get_nq();
-    DFPT_IrrepData irrep_data(pimpl_->data_);
     for (int q_idx = 0; q_idx < nq; ++q_idx) {
         // Special handling for q=0 (uniform electric field responses):
         // The standard position operator r is ill-defined in periodic systems.
@@ -1589,12 +1587,20 @@ void DFPT_PW::run() {
         // Per-irrep self-consistent loop: the little-group irrep
         // decomposition is a placeholder until stage A, so the single
         // available irrep falls back to the full 3N displacement basis.
-        const int nirr = irrep_data.get_nirr(q_idx);
+        // Ledger semantics (B4): one outer pass solves every displacement
+        // to its own convergence (solve_displacement restarts each from a
+        // zero input density), and the pass residual is the worst final
+        // displacement residual; the pass converges when that worst is
+        // below conv_thr. An unconverged pass therefore re-runs the full
+        // solve, bounded by max_iter_ outer passes, and the residual
+        // history keeps an honest record instead of the former
+        // unconditional single-pass convergence.
+        const int nirr = pimpl_->data_.get_nirr(q_idx);
         for (int irrep = 0; irrep < nirr; ++irrep) {
-            irrep_data.set_converged(q_idx, irrep, false);
-            irrep_data.set_current_iter(q_idx, irrep, 0);
-            while (!irrep_data.get_converged(q_idx, irrep)
-                   && irrep_data.get_current_iter(q_idx, irrep) < pimpl_->max_iter_) {
+            pimpl_->data_.set_converged(q_idx, irrep, false);
+            pimpl_->data_.set_current_iter(q_idx, irrep, 0);
+            while (!pimpl_->data_.get_converged(q_idx, irrep)
+                   && pimpl_->data_.get_current_iter(q_idx, irrep) < pimpl_->max_iter_) {
                 if (pimpl_->wired()) {
                     const int nat = pimpl_->ucell_->nat;
                     // two passes over the 3N displacement basis: first solve
@@ -1618,12 +1624,16 @@ void DFPT_PW::run() {
                                                                pimpl_->data_);
                         }
                     }
-                    irrep_data.add_residual(q_idx, irrep, worst);
+                    pimpl_->data_.add_residual(q_idx, irrep, worst);
+                    pimpl_->data_.set_converged(q_idx, irrep,
+                                                worst < pimpl_->data_.get_conv_thr());
                 } else {
                     // design-phase skeleton: no bases wired, converge at once
-                    irrep_data.add_residual(q_idx, irrep, 0.0);
+                    pimpl_->data_.add_residual(q_idx, irrep, 0.0);
+                    pimpl_->data_.set_converged(q_idx, irrep, true);
                 }
-                irrep_data.set_converged(q_idx, irrep, true);
+                pimpl_->data_.set_current_iter(
+                    q_idx, irrep, pimpl_->data_.get_current_iter(q_idx, irrep) + 1);
             }
         }
 

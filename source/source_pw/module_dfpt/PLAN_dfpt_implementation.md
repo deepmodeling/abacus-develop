@@ -232,7 +232,7 @@
     - 后期漂移根因（本轮确诊）：残差降至 5e-5 后指数增长（1.27×/iter）、|in| 恒定而 out 偏离 → 垃圾方向与物理分量正交、混合映射本征值 μ=1.2765 恒定（纯本征模）；本征模身份 = {200} 壳 6 矢等幅实系数 + {111} 壳 8 矢 ±π/4 相位的 Hermitian 实 A1 呼吸模（seed ~1e-6 舍入级）；均匀探针实验（DFPT_JPROBE：注入纯 A1 模 + rhs 去 dV_ext 单迭代直测线性映射）给出 λ_A1 = −2.229（Hartree-only −3.180，XC 削减到 −2.23）——非符号 bug，是最小 G 壳的 Coulomb 刚性（4π/G² 硬核）：plain mixing 收敛条件 −2/β+1<λ 要求 β<0.62，物理 T2 模 λ=−1.42（小 G 头部含量少）在 β=0.7 恰好可收敛，故固定点正确而 A1 通道发散；β=0.4 时 μ_A1=−0.29 稳定
     - 修复：默认 mix_beta 0.7→0.4（注释记录测得的 |λ|~2.2 与 β 上界 2/(1+|λ_min|)，留裕量至 |λ|~5）；DFPT_MIX_BETA env 旋钮保留；β=0.4 时 6 位移全部经收敛旗标退出（平均 ~38 iter，总 228），频率/ele 矩阵与 β 无关逐位一致（固定点正确性再验证），收敛 drho manifest 干净（|FD| 比率 0.99994、cos 0.9993、逐点相对差 3.8%）；后续正解是 Kerker 型预条件混合（随 B 阶段排期）
     - ε∞/Z* 打印为空（随 B 阶段）；调试插桩（PTCHK/DYNCHK/MDBG/JPROBE dump/VKBCHK/drho dump/DFPT_MIX_BETA env）收尾节点统一清理评审
-- [ ] B 工程化收编（2026-08-18 修订：B1 INPUT 接线 → B0 全流程验证 → B2 输出正式化 → B3 Kerker → B4 数据层）
+- [x] B 工程化收编（2026-08-18 修订：B1 INPUT 接线 → B0 全流程验证 → B2 输出正式化 → B3 Kerker → B4 数据层；2026-08-24 全部完成）
     - 修订依据的差距盘点（代码 vs 计划交叉核对，2026-08-18）：
       ① `set_compute_q0`/`set_loto` 全仓库无调用者（死代码，q0/loto 分支不可达）；
       ② `set_parameters("dfpt.in")` 空桩 + esolver 硬编码 `set_qmesh(1,1,1)`/conv_thr/max_iter（非 Γ q 无法从输入驱动）；
@@ -552,10 +552,32 @@
           kq0.init 未跟进 4 参签名、brute-force 参考缺自旋因子 2 ——
           四个串行二进制全部重建后 pert 8/phon 12/q0 6/rho 8 通过，
           ctest 12/12
-    - [ ] B4 数据层收编
+    - [x] B4 数据层收编（2026-08-24 完成）
         - 收敛台账（converged_/residuals_/current_iter_ 按 (q,irrep)）并入
           DFPT_PW_Data；删除 DFPT_IrrepData 适配层与 get_dpsi_obj static dummy；
           测试迁移；保留 (q,irrep) 接口形状；run() 外层 while 记账语义梳理
+        - 台账：DFPT_PW_Data 单槽（set_current_iter(int) 等，生产代码只写
+          不读）替换为 (q,irrep) 键控六访问器（map 值成员，缺键读
+          false/空/0，clean() 清空）；solve_displacement /
+          solve_efield_resp 内层只写语句删除——位移级状态回归函数局部量，
+          末残差经返回值交 run() 聚合
+        - 适配层：dfpt_irrep_data.{h,cpp} 删除（git rm）；其 irrep==0 转发
+          的 dpsi/drho/dv 访问本就是数据层既有 API；get_dpsi_obj 无调用者
+          纯删
+        - run() 记账语义：外层 while 每遍 current_iter+1（原先不递增、
+          无条件置 converged 的退化单遍改为诚实台账）——一遍 = 3N 位移各自
+          完整收敛 + 2n+1 累积，遍残差取各位移末残差最坏值，worst<
+          conv_thr 才置收敛；未收敛遍会重启全量求解（solve_displacement
+          从零输入起），max_iter_ 界内诚实重试，残差史留痕。收敛工况下
+          行为与旧版逐位一致
+        - 测试迁移：dfpt_irrep_data_test.cpp → dfpt_pw_data_test.cpp
+          （目标 MODULE_DFPT_pw_data_test，5 用例：QList 委托、边界安全
+          （(q,spin) 二参签名）、roundtrip、键控台账独立性+clean() 复位、
+          U0 预留）；两处 CMakeLists 同步（含 pw_run_test 源列表去
+          irrep_data）
+        - 验证：ctest 12/12（pw_data_test 顶替 irrep_data_test 槽位）；
+          4 串行套件 pert 8/phon 12/q0 6/rho 8；端到端 L 点默认配置
+          冒烟逐位复现参考频率（见提交）
     - [ ] 插桩清理评审（B0/B3 后统一）：PTCHK/DYNCHK(+2/4/XB)/MDBG/JPROBE/
       VKBCHK/VKBEL/OCCCHK/XB/ZDBG/BPT/NOSC/D2MID/DFPT_MIX_BETA/drho dump
       （JPROBE 留 B3 验收后删）

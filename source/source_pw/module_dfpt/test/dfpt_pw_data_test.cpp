@@ -13,7 +13,6 @@
 #include "source_base/mathzone.h"
 #include "source_base/parallel_global.h"
 #include "source_base/global_variable.h"
-#include "source_pw/module_dfpt/dfpt_irrep_data.h"
 #include "source_pw/module_dfpt/dfpt_pw_data.h"
 
 pseudo::pseudo()
@@ -52,18 +51,19 @@ Sep_Cell::Sep_Cell() noexcept {}
 Sep_Cell::~Sep_Cell() noexcept {}
 
 /************************************************
- *  unit test of DFPT_IrrepData (Phase 4 wiring)
+ *  unit test of DFPT_PW_Data (Phase 4 wiring; B4
+ *  absorbed the retired DFPT_IrrepData adapter)
  ***********************************************/
 
 /**
  * - Tested Functions:
- *   - DFPT_IrrepData::get_nq() / get_nirr() / get_irrep_modes()
- *     - delegates to the underlying QList irrep data
- *   - DFPT_IrrepData::set/get_dpsi, drho_r, drho_g, dv_r
- *     - irrep-indexed accessors forward to the per-q DFPT_PW_Data
- *   - DFPT_IrrepData::set/get_converged, add/get_residuals,
+ *   - DFPT_PW_Data::get_nq() / get_nirr() / get_irrep_modes()
+ *     - delegates to the QList irrep data
+ *   - DFPT_PW_Data::set/get_dpsi, drho_r, drho_g, dv_r
+ *     - per-q storage round trip and out-of-range safety
+ *   - DFPT_PW_Data::set/get_converged, add/get_residuals,
  *     set/get_current_iter
- *     - per-(q, irrep) SCF bookkeeping
+ *     - per-(q, irrep) SCF ledger (B4: sunk from DFPT_IrrepData)
  */
 
 // abbreviated from module_symmetry/test/symm_test.cpp and klist_test.cpp
@@ -93,7 +93,7 @@ std::vector<stru_> stru_lib{stru_{1,
                                                                        {0., 0., 0.},
                                                                    }}}}};
 
-class DFPT_IrrepDataTest : public testing::Test
+class DFPT_PW_DataTest : public testing::Test
 {
   protected:
     ModuleCell::QList qlist;
@@ -131,7 +131,7 @@ class DFPT_IrrepDataTest : public testing::Test
             ucell.atoms[i].na = coord[i].coordinate.size();
             ucell.atoms[i].tau.resize(ucell.atoms[i].na);
             ucell.atoms[i].taud.resize(ucell.atoms[i].na);
-            for (int j = 0; j < ucell.atoms[i].na; j++)
+            for (int j = 0; j < ucell.atoms[i].na; ++j)
             {
                 std::vector<double> this_atom = coord[i].coordinate[j];
                 ucell.atoms[i].tau[j] = ModuleBase::Vector3<double>(this_atom[0], this_atom[1], this_atom[2]);
@@ -181,18 +181,16 @@ class DFPT_IrrepDataTest : public testing::Test
     }
 };
 
-TEST_F(DFPT_IrrepDataTest, DelegatesToQList)
+TEST_F(DFPT_PW_DataTest, DelegatesToQList)
 {
     init_qlist();
 
-    ModuleDFPT::DFPT_IrrepData irrep_data(data);
-
-    EXPECT_EQ(irrep_data.get_nq(), qlist.get_nq());
-    EXPECT_EQ(irrep_data.get_nq(), 4);
-    for (int q_idx = 0; q_idx < irrep_data.get_nq(); ++q_idx)
+    EXPECT_EQ(data.get_nq(), qlist.get_nq());
+    EXPECT_EQ(data.get_nq(), 4);
+    for (int q_idx = 0; q_idx < data.get_nq(); ++q_idx)
     {
-        EXPECT_EQ(irrep_data.get_nirr(q_idx), 1);
-        EXPECT_TRUE(irrep_data.get_irrep_modes(q_idx, 0).empty());
+        EXPECT_EQ(data.get_nirr(q_idx), 1);
+        EXPECT_TRUE(data.get_irrep_modes(q_idx, 0).empty());
     }
 
     // the first irreducible q-point must be Gamma
@@ -203,85 +201,80 @@ TEST_F(DFPT_IrrepDataTest, DelegatesToQList)
     clear_qlist();
 }
 
-TEST_F(DFPT_IrrepDataTest, IrrepIndexedAccessorsAreBoundSafe)
+TEST_F(DFPT_PW_DataTest, AccessorsAreBoundSafe)
 {
     init_qlist();
 
-    ModuleDFPT::DFPT_IrrepData irrep_data(data);
-    const int nq = irrep_data.get_nq();
-    const int nirr = irrep_data.get_nirr(0);
+    const int nq = data.get_nq();
 
     // out-of-range access must be safe and return empty containers
-    EXPECT_TRUE(irrep_data.get_irrep_modes(-1, 0).empty());
-    EXPECT_TRUE(irrep_data.get_irrep_modes(nq, 0).empty());
-    EXPECT_TRUE(irrep_data.get_dpsi(-1, 0, 0, 0).empty());
-    EXPECT_TRUE(irrep_data.get_drho_r(0, 5, 0).empty());
-    EXPECT_TRUE(irrep_data.get_drho_g(0, 5, 0).empty());
-    EXPECT_TRUE(irrep_data.get_dv_r(0, 5, 0).empty());
-
-    (void)nirr;
+    EXPECT_TRUE(data.get_irrep_modes(-1, 0).empty());
+    EXPECT_TRUE(data.get_irrep_modes(nq, 0).empty());
+    EXPECT_TRUE(data.get_dpsi(-1, 0, 0).empty());
+    EXPECT_TRUE(data.get_drho_r(0, 5).empty());
+    EXPECT_TRUE(data.get_drho_g(0, 5).empty());
+    EXPECT_TRUE(data.get_dv_r(0, 5).empty());
 
     clear_qlist();
 }
 
-TEST_F(DFPT_IrrepDataTest, SetterRoundTripViaWrapper)
+TEST_F(DFPT_PW_DataTest, SetterRoundTrip)
 {
     init_qlist();
 
-    ModuleDFPT::DFPT_IrrepData irrep_data(data);
-
-    // dpsi / drho / dv storage went live with C1 (dv) and C3 (drho): the
-    // wrapper must forward the irrep-indexed calls to the per-q storage
-    // slot and reads must return what was written
+    // dpsi / drho / dv storage went live with C1 (dv) and C3 (drho):
+    // reads must return what was written through the per-q slots
     std::vector<std::complex<double>> psi(3, std::complex<double>(1.0, 2.0));
-    irrep_data.set_dpsi(0, 0, 0, 0, psi);
+    data.set_dpsi(0, 0, 0, psi);
     std::vector<double> rho(2, 3.0);
-    irrep_data.set_drho_r(0, 0, 0, rho);
-    irrep_data.set_drho_g(0, 0, 0, std::vector<std::complex<double>>(2, std::complex<double>(1.0, 0.0)));
-    irrep_data.set_dv_r(0, 0, 0, rho);
+    data.set_drho_r(0, 0, rho);
+    data.set_drho_g(0, 0, std::vector<std::complex<double>>(2, std::complex<double>(1.0, 0.0)));
+    data.set_dv_r(0, 0, rho);
 
-    // the wrapper reads the same slot the setter wrote through
-    EXPECT_FALSE(irrep_data.get_dpsi(0, 0, 0, 0).empty());
-    EXPECT_FALSE(irrep_data.get_drho_r(0, 0, 0).empty());
-    EXPECT_FALSE(irrep_data.get_drho_g(0, 0, 0).empty());
-    EXPECT_FALSE(irrep_data.get_dv_r(0, 0, 0).empty());
+    EXPECT_FALSE(data.get_dpsi(0, 0, 0).empty());
+    EXPECT_FALSE(data.get_drho_r(0, 0).empty());
+    EXPECT_FALSE(data.get_drho_g(0, 0).empty());
+    EXPECT_FALSE(data.get_dv_r(0, 0).empty());
 
     clear_qlist();
 }
 
-TEST_F(DFPT_IrrepDataTest, PerIrrepScfBookkeeping)
+TEST_F(DFPT_PW_DataTest, PerIrrepScfLedger)
 {
     init_qlist();
 
-    ModuleDFPT::DFPT_IrrepData irrep_data(data);
-    const int nirr = irrep_data.get_nirr(0);
+    // the ledger must be independent per (q_idx, irrep) — the shape DFPT_PW
+    // ::run drives and the stage-A irrep implementation will fill (B4:
+    // absorbed from the retired DFPT_IrrepData adapter)
+    data.set_converged(0, 0, false);
+    data.set_converged(1, 0, true);
+    EXPECT_FALSE(data.get_converged(0, 0));
+    EXPECT_TRUE(data.get_converged(1, 0));
 
-    // bookkeeping must be independent per (q_idx, irrep)
-    irrep_data.set_converged(0, 0, false);
-    irrep_data.set_converged(1, 0, true);
-    EXPECT_FALSE(irrep_data.get_converged(0, 0));
-    EXPECT_TRUE(irrep_data.get_converged(1, 0));
+    data.add_residual(0, 0, 1e-3);
+    data.add_residual(0, 0, 2e-4);
+    data.add_residual(1, 0, 9e-5);
+    EXPECT_EQ(data.get_residuals(0, 0).size(), 2);
+    EXPECT_EQ(data.get_residuals(1, 0).size(), 1);
+    EXPECT_NEAR(data.get_residuals(0, 0)[1], 2e-4, 1e-12);
 
-    irrep_data.add_residual(0, 0, 1e-3);
-    irrep_data.add_residual(0, 0, 2e-4);
-    irrep_data.add_residual(1, 0, 9e-5);
-    EXPECT_EQ(irrep_data.get_residuals(0, 0).size(), 2);
-    EXPECT_EQ(irrep_data.get_residuals(1, 0).size(), 1);
-    EXPECT_NEAR(irrep_data.get_residuals(0, 0)[1], 2e-4, 1e-12);
+    data.set_current_iter(0, 0, 3);
+    EXPECT_EQ(data.get_current_iter(0, 0), 3);
+    EXPECT_EQ(data.get_current_iter(1, 0), 0); // untouched key defaults to 0
+    EXPECT_FALSE(data.get_converged(2, 0));    // untouched key defaults to false
+    EXPECT_TRUE(data.get_residuals(2, 0).empty());
 
-    irrep_data.set_current_iter(0, 0, 3);
-    EXPECT_EQ(irrep_data.get_current_iter(0, 0), 3);
-    EXPECT_EQ(irrep_data.get_current_iter(1, 0), 0); // untouched key defaults to 0
-
-    for (int irrep = 0; irrep < nirr; ++irrep)
-    {
-        EXPECT_FALSE(irrep_data.get_converged(0, irrep));
-    }
+    // clean() drops the whole ledger
+    data.clean();
+    data.init(&qlist, 1, 2, 3, 0, 1, 1, nullptr);
+    EXPECT_TRUE(data.get_residuals(0, 0).empty());
+    EXPECT_EQ(data.get_current_iter(0, 0), 0);
+    EXPECT_FALSE(data.get_converged(1, 0));
 
     clear_qlist();
 }
 
-TEST_F(DFPT_IrrepDataTest, DftuReservationWithNullProvider)
+TEST_F(DFPT_PW_DataTest, DftuReservationWithNullProvider)
 {
     init_qlist();
 

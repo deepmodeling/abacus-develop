@@ -14,6 +14,8 @@
 #include "source_base/vector3.h"
 #include "source_psi/psi.h"
 #include "source_cell/qlist.h"
+#include <map>
+#include <utility>
 #include <vector>
 #include <complex>
 
@@ -53,10 +55,9 @@ public:
     int get_nirr(int q_idx) const;
     std::vector<int> get_irrep_modes(int q_idx, int irrep) const;
     
-    void set_dpsi(int q_idx, int k_idx, int band_idx, 
+    void set_dpsi(int q_idx, int k_idx, int band_idx,
                   const std::vector<std::complex<double>>& psi);
     std::vector<std::complex<double>> get_dpsi(int q_idx, int k_idx, int band_idx) const;
-    psi::Psi<std::complex<double>>& get_dpsi_obj(int q_idx);
     
     void set_drho_r(int q_idx, int spin, const std::vector<double>& rho);
     std::vector<double> get_drho_r(int q_idx, int spin) const;
@@ -127,13 +128,19 @@ public:
     int get_max_iter() const { return max_iter_; }
     void set_conv_thr(double thr) { conv_thr_ = thr; }
     double get_conv_thr() const { return conv_thr_; }
-    void set_current_iter(int iter) { current_iter_ = iter; }
-    int get_current_iter() const { return current_iter_; }
-    void set_converged(bool flag) { converged_ = flag; }
-    bool get_converged() const { return converged_; }
-    
-    void add_residual(double r) { residuals_.push_back(r); }
-    std::vector<double> get_residuals() const { return residuals_; }
+
+    /// Per-(q, irrep) SCF convergence ledger (B4: sunk from the retired
+    /// DFPT_IrrepData adapter). The irrep dimension is a stage-A slot:
+    /// today the single fallback irrep 0 carries the full 3N displacement
+    /// basis, and DFPT_PW::run records one ledger entry per outer SCF pass
+    /// (worst displacement residual of the pass); missing keys read as
+    /// not-converged / empty history / iteration 0.
+    void set_converged(int q_idx, int irrep, bool flag);
+    bool get_converged(int q_idx, int irrep) const;
+    void add_residual(int q_idx, int irrep, double r);
+    std::vector<double> get_residuals(int q_idx, int irrep) const;
+    void set_current_iter(int q_idx, int irrep, int iter);
+    int get_current_iter(int q_idx, int irrep) const;
     
     /// DFT+U interface reservation (U0):
     /// the DFPT modules never read global input state directly; the esolver
@@ -248,9 +255,11 @@ private:
     
     int max_iter_ = 100;
     double conv_thr_ = 1e-8;
-    int current_iter_ = 0;
-    bool converged_ = false;
-    std::vector<double> residuals_;
+
+    ///< per-(q, irrep) SCF ledger (B4: absorbed from DFPT_IrrepData)
+    std::map<std::pair<int, int>, bool> converged_;
+    std::map<std::pair<int, int>, std::vector<double>> residuals_;
+    std::map<std::pair<int, int>, int> current_iter_;
     
     bool is_initialized_ = false;
     

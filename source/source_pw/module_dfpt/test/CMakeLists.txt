@@ -4,10 +4,9 @@ abacus_disable_feature_definitions(__ROCM)
 abacus_disable_feature_definitions(__EXX)
 
 AddTest(
-  TARGET MODULE_DFPT_irrep_data_test
+  TARGET MODULE_DFPT_pw_data_test
   LIBS parameter base device symmetry
-  SOURCES dfpt_irrep_data_test.cpp
-  	../dfpt_irrep_data.cpp
+  SOURCES dfpt_pw_data_test.cpp
   	../dfpt_pw_data.cpp
   	../../../source_cell/qlist.cpp
   	../../../source_cell/reciprocal_grid.cpp
@@ -34,7 +33,6 @@ AddTest(
   SOURCES dfpt_pw_run_test.cpp
 	../dfpt_pw.cpp
 	../dfpt_pw_data.cpp
-	../dfpt_irrep_data.cpp
 	../dfpt_pert.cpp
 	../dfpt_kq_basis.cpp
 	../dfpt_stern.cpp
