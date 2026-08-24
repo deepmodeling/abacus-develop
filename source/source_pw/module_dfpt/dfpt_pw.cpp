@@ -1625,17 +1625,41 @@ void DFPT_PW::run() {
         pimpl_->phon_.assemble(q_idx, pimpl_->data_);
         pimpl_->phon_.diagonalize(q_idx, pimpl_->data_);
         if (q_idx == 0 && pimpl_->data_.get_loto()) {
-            // non-analytic LO-TO correction along a documented default
-            // direction (isotropic for cubic crystals; a general q->0
-            // direction control arrives with the irrep machinery of stage A)
-            const double inv = 1.0 / std::sqrt(3.0);
-            pimpl_->phon_.add_loto(ModuleBase::Vector3<double>(inv, inv, inv), pimpl_->data_);
+            // non-analytic LO-TO correction along the data-layer direction
+            // (default isotropic (1,1,1)/sqrt(3) for cubic crystals;
+            // set_loto_dir overrides, e.g. per irrep direction in stage A)
+            pimpl_->phon_.add_loto(pimpl_->data_.get_loto_dir(), pimpl_->data_);
+            pimpl_->phon_.diagonalize_loto(pimpl_->data_);
         }
     }
 }
 
+int DFPT_PW::get_nq() const {
+    return pimpl_->qlist_.get_nq();
+}
+
+ModuleBase::Vector3<double> DFPT_PW::get_qvec(int q_idx) const {
+    return pimpl_->data_.get_qvec(q_idx);
+}
+
 std::vector<double> DFPT_PW::get_phonon_freq(int q_idx) const {
     return pimpl_->data_.get_phon_freq(q_idx);
+}
+
+std::vector<double> DFPT_PW::get_phon_freq_loto() const {
+    return pimpl_->data_.get_phon_freq_loto();
+}
+
+ModuleBase::Vector3<double> DFPT_PW::get_loto_dir() const {
+    return pimpl_->data_.get_loto_dir();
+}
+
+std::string DFPT_PW::format_q_report(int q_idx) const {
+    return pimpl_->phon_.format_q_report(q_idx, pimpl_->data_);
+}
+
+std::string DFPT_PW::format_loto_report() const {
+    return pimpl_->phon_.format_loto_report(pimpl_->data_);
 }
 
 ModuleBase::matrix DFPT_PW::get_dielectric_tensor() const {
@@ -1678,6 +1702,10 @@ void DFPT_PW::set_compute_q0(bool flag) {
 
 void DFPT_PW::set_loto(bool flag) {
     pimpl_->data_.set_loto(flag);
+}
+
+void DFPT_PW::set_loto_dir(const ModuleBase::Vector3<double>& dir) {
+    pimpl_->data_.set_loto_dir(dir);
 }
 
 } // namespace ModuleDFPT

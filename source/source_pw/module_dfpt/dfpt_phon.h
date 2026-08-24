@@ -13,6 +13,8 @@
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 
+#include <string>
+
 namespace ModulePW {
 class PW_Basis;
 }
@@ -58,6 +60,23 @@ public:
                              const ModuleBase::matrix& wg, DFPT_PW_Data& data);
     
     void diagonalize(int q_idx, DFPT_PW_Data& data);
+
+    /// Diagonalize the LO-TO corrected Gamma dynamical matrix (after
+    /// add_loto has merged the non-analytic term into data.dynmat(0)) and
+    /// store the signed frequencies (cm^-1) into data.phon_freq_loto; the
+    /// uncorrected data.phon_freq(0) of the plain diagonalize stays intact.
+    void diagonalize_loto(DFPT_PW_Data& data);
+
+    /// Human-readable per-q frequency report: a header carrying the q index
+    /// and the direct q coordinates plus one signed-frequency line per mode.
+    /// Deterministic fixed-precision formatting; consumed by the esolver
+    /// post-processing output and pinned by the format regression test.
+    std::string format_q_report(int q_idx, const DFPT_PW_Data& data) const;
+
+    /// Report of the LO-TO corrected Gamma frequencies along
+    /// data.loto_dir(); returns an empty string unless the corrected
+    /// frequencies have been computed (add_loto + diagonalize_loto).
+    std::string format_loto_report(const DFPT_PW_Data& data) const;
     
     /// Non-analytic (LO-TO) term along the q->0 direction qhat (unit vector,
     /// Cartesian): D_NAC = (4 pi e^2/Omega) (qhat Z*_a)(qhat Z*_b) /

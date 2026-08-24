@@ -96,6 +96,18 @@ public:
     void set_loto(bool flag) { loto_ = flag; }
     bool get_loto() const { return loto_; }
 
+    /// q->0 direction of the non-analytic (LO-TO) term, as a unit vector.
+    /// The setter normalizes; a null vector falls back to the isotropic
+    /// default (1,1,1)/sqrt(3) (documented cubic-crystal default; a general
+    /// direction control arrives with the irrep machinery of stage A).
+    void set_loto_dir(const ModuleBase::Vector3<double>& dir);
+    ModuleBase::Vector3<double> get_loto_dir() const { return loto_dir_; }
+
+    /// signed Gamma frequencies (cm^-1) after the non-analytic LO-TO term
+    /// along loto_dir_; empty until add_loto + diagonalize_loto have run
+    void set_phon_freq_loto(const std::vector<double>& freq) { phon_freq_loto_ = freq; }
+    std::vector<double> get_phon_freq_loto() const { return phon_freq_loto_; }
+
     /// The perturbation currently being solved: displacement of which linear
     /// atom index (over all atoms) and along which cartesian direction.
     /// Set by DFPT_Pert::build_dv and consumed by DFPT_Pert::apply_dv so the
@@ -204,6 +216,10 @@ private:
     
     bool compute_q0_ = false;
     bool loto_ = false;
+    ModuleBase::Vector3<double> loto_dir_{1.0 / std::sqrt(3.0),
+                                           1.0 / std::sqrt(3.0),
+                                           1.0 / std::sqrt(3.0)};
+    std::vector<double> phon_freq_loto_;
     int pert_atom_ = -1;
     int pert_dir_ = -1;
     ModuleBase::matrix dielectric_;

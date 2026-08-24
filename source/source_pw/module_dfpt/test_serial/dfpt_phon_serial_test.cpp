@@ -869,3 +869,115 @@ TEST_F(DFPTPhonSerialTest, CheckSumRuleAtGamma)
     data_.set_dynmat(0, dyn);
     EXPECT_FALSE(phon_.check_sum_rule(0, data_));
 }
+
+// ---------------------------------------------------------------------------
+// B2: LO-TO direction via the data layer, corrected-frequency
+// diagonalization, and the output format regression
+// ---------------------------------------------------------------------------
+
+TEST_F(DFPTPhonSerialTest, LotoDirNormalization)
+{
+    // default is the isotropic (1,1,1)/sqrt(3)
+    const ModuleBase::Vector3<double> def = data_.get_loto_dir();
+    const double inv = 1.0 / std::sqrt(3.0);
+    EXPECT_NEAR(def.x, inv, 1.0e-12);
+    EXPECT_NEAR(def.y, inv, 1.0e-12);
+    EXPECT_NEAR(def.z, inv, 1.0e-12);
+    // any non-null vector is normalized to a unit direction
+    data_.set_loto_dir(ModuleBase::Vector3<double>(2.0, 0.0, 0.0));
+    const ModuleBase::Vector3<double> x = data_.get_loto_dir();
+    EXPECT_NEAR(x.x, 1.0, 1.0e-12);
+    EXPECT_NEAR(x.y, 0.0, 1.0e-12);
+    EXPECT_NEAR(x.z, 0.0, 1.0e-12);
+    EXPECT_NEAR(std::sqrt(x * x), 1.0, 1.0e-12);
+    // a null vector keeps the previous direction
+    data_.set_loto_dir(ModuleBase::Vector3<double>(0.0, 0.0, 0.0));
+    EXPECT_NEAR(data_.get_loto_dir().x, 1.0, 1.0e-12);
+}
+
+TEST_F(DFPTPhonSerialTest, DiagonalizeLotoClosedForm)
+{
+    // same isotropic fixture as AddLotoIsotropicClosedForm: zero dynamical
+    // matrix + eps = 3I, Z*_1 = 1, Z*_2 = 2, masses 12/4, qhat = x.
+    // add_loto fills BOTH the diagonal and cross xx elements with
+    // pref = 4pi e2/Omega/3: (0x,0x) = pref/12, (3x,3x) = pref,
+    // (0x,3x) = pref*2/sqrt(48); the 2x2 block
+    // [[1/12, 2/sqrt48], [2/sqrt48, 1]]*pref has eigenvalues
+    // {0, 13/12 * pref} (determinant 1/12 - 4/48 = 0), the yy/zz blocks
+    // stay zero, so the spectrum is {13/12*pref, 0 x 5} in Ry/bohr^2/amu
+    ModuleBase::ComplexMatrix dyn0(6, 6, true);
+    data_.set_dynmat(0, dyn0);
+    ModuleBase::matrix eps(3, 3, true);
+    for (int d = 0; d < 3; ++d)
+    {
+        eps(d, d) = 3.0;
+    }
+    data_.set_dielectric(eps);
+    ModuleBase::matrix z1(3, 3, true);
+    ModuleBase::matrix z2(3, 3, true);
+    z1(0, 0) = z1(1, 1) = z1(2, 2) = 1.0;
+    z2(0, 0) = z2(1, 1) = z2(2, 2) = 2.0;
+    data_.set_born(0, z1);
+    data_.set_born(1, z2);
+    // temporarily make the cell two-atom for the mass lookup
+    ucell_.ntype = 2;
+    ucell_.nat = 2;
+    delete[] ucell_.atoms;
+    ucell_.atoms = new Atom[2];
+    ucell_.atoms[0].na = 1;
+    ucell_.atoms[1].na = 1;
+    ucell_.atoms[0].mass = 12.0;
+    ucell_.atoms[1].mass = 4.0;
+    delete[] ucell_.iat2it;
+    delete[] ucell_.iat2ia;
+    ucell_.iat2it = new int[2];
+    ucell_.iat2ia = new int[2];
+    ucell_.iat2it[0] = 0;
+    ucell_.iat2ia[0] = 0;
+    ucell_.iat2it[1] = 1;
+    ucell_.iat2ia[1] = 0;
+
+    phon_.add_loto(ModuleBase::Vector3<double>(1.0, 0.0, 0.0), data_);
+    phon_.diagonalize_loto(data_);
+
+    const double pref = ModuleBase::FOUR_PI * ModuleBase::e2 / ucell_.omega / 3.0;
+    const double expect = std::sqrt(13.0 / 12.0 * pref) * RyBohr2AmuToCm1();
+    const std::vector<double> freq = data_.get_phon_freq_loto();
+    ASSERT_EQ(freq.size(), static_cast<size_t>(6));
+    // signed spectrum: one +expect, five zeros (sorted); the zeros carry
+    // zheev roundoff of order sqrt(eps_mach * lambda_max) in frequency
+    std::vector<double> sorted = freq;
+    std::sort(sorted.begin(), sorted.end());
+    EXPECT_NEAR(sorted.back(), expect, 1.0e-6 * std::abs(expect));
+    for (int i = 0; i < 5; ++i)
+    {
+        EXPECT_NEAR(sorted[i], 0.0, 1.0e-5);
+    }
+}
+
+TEST_F(DFPTPhonSerialTest, FormatReportsRegression)
+{
+    // fixture q = (0.13, 0, 0.07) direct; three crafted frequencies
+    data_.set_phon_freq(0, std::vector<double>{-7.32457, 517.491, 0.0});
+    const std::string qrep = phon_.format_q_report(0, data_);
+    const std::string expect_q
+        = " DFPT phonon frequencies at q #0 = (0.130000 0.000000 0.070000) "
+          "(direct) in cm^-1:\n"
+          "   mode   0 : -7.324570 cm^-1\n"
+          "   mode   1 : 517.491000 cm^-1\n"
+          "   mode   2 : 0.000000 cm^-1\n";
+    EXPECT_EQ(qrep, expect_q);
+
+    // LO-TO report: empty before the corrected frequencies exist
+    EXPECT_TRUE(phon_.format_loto_report(data_).empty());
+    data_.set_loto_dir(ModuleBase::Vector3<double>(0.0, 3.0, 0.0));
+    data_.set_phon_freq_loto(std::vector<double>{0.0, 520.123456, 520.123457});
+    const std::string lrep = phon_.format_loto_report(data_);
+    const std::string expect_l
+        = " DFPT LO-TO corrected frequencies at q #0 along q->0 direction "
+          "(0.000000 1.000000 0.000000) in cm^-1:\n"
+          "   mode   0 : 0.000000 cm^-1\n"
+          "   mode   1 : 520.123456 cm^-1\n"
+          "   mode   2 : 520.123457 cm^-1\n";
+    EXPECT_EQ(lrep, expect_l);
+}

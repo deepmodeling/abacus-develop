@@ -365,28 +365,40 @@ void ESolver_DFPT_PW::run_post_process(UnitCell& ucell)
     {
         return;
     }
-    // design-phase validation output (single-rank runs); the io layer
-    // integration lands with the data-layer consolidation stage
-    const std::vector<double> freqs = dfpt_->get_phonon_freq(0);
-    std::cout << " DFPT phonon frequencies at q #0 (cm^-1):" << std::endl;
-    for (size_t im = 0; im < freqs.size(); ++im)
+    // multi-q frequency report (one block per q of the list, plus the LO-TO
+    // corrected Gamma block along the data-layer direction when enabled);
+    // the tensor blocks below stay design-phase std::cout until the io
+    // layer integration of the data-layer consolidation stage
+    const int nq = dfpt_->get_nq();
+    for (int q_idx = 0; q_idx < nq; ++q_idx)
     {
-        std::cout << "   mode " << im << " : " << freqs[im] << " cm^-1" << std::endl;
+        std::cout << dfpt_->format_q_report(q_idx);
+        if (q_idx == 0)
+        {
+            std::cout << dfpt_->format_loto_report();
+        }
     }
     const ModuleBase::matrix& eps = dfpt_->get_dielectric_tensor();
-    std::cout << " DFPT dielectric tensor (epsilon_inf):" << std::endl;
-    for (int a = 0; a < eps.nr; ++a)
+    if (eps.nr == 3 && eps.nc == 3)
     {
-        std::cout << "   ";
-        for (int b = 0; b < eps.nc; ++b)
+        std::cout << " DFPT dielectric tensor (epsilon_inf):" << std::endl;
+        for (int a = 0; a < eps.nr; ++a)
         {
-            std::cout << eps(a, b) << " ";
+            std::cout << "   ";
+            for (int b = 0; b < eps.nc; ++b)
+            {
+                std::cout << eps(a, b) << " ";
+            }
+            std::cout << std::endl;
         }
-        std::cout << std::endl;
     }
     for (int iat = 0; iat < ucell.nat; ++iat)
     {
         const ModuleBase::matrix& zstar = dfpt_->get_born_charges(iat);
+        if (zstar.nr != 3 || zstar.nc != 3)
+        {
+            continue;
+        }
         std::cout << " DFPT Born effective charge atom " << iat << ":" << std::endl;
         for (int a = 0; a < zstar.nr; ++a)
         {

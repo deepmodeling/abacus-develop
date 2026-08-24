@@ -10,6 +10,7 @@
 #define DFPT_PW_H
 
 #include "source_base/matrix.h"
+#include "source_base/vector3.h"
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 
@@ -86,6 +87,31 @@ public:
     void set_compute_q0(bool flag);
 
     void set_loto(bool flag);
+
+    /// q->0 direction of the non-analytic (LO-TO) term: any non-null vector
+    /// is normalized to a unit direction by the data layer; the default is
+    /// the isotropic (1,1,1)/sqrt(3). Consumed by run() so no direction is
+    /// hardcoded in the driver anymore.
+    void set_loto_dir(const ModuleBase::Vector3<double>& dir);
+
+    /// number of q points of the current list (q file or q mesh)
+    int get_nq() const;
+
+    /// direct (reciprocal-lattice fractional) coordinates of q_idx
+    ModuleBase::Vector3<double> get_qvec(int q_idx) const;
+
+    ModuleBase::Vector3<double> get_loto_dir() const;
+
+    /// signed Gamma frequencies (cm^-1) after the LO-TO correction; empty
+    /// when loto is off or the correction has not run
+    std::vector<double> get_phon_freq_loto() const;
+
+    /// formatted per-q frequency report (deterministic layout, pinned by
+    /// the serial format regression test); the LO-TO variant is empty when
+    /// no corrected frequencies are available
+    std::string format_q_report(int q_idx) const;
+
+    std::string format_loto_report() const;
 
 private:
     class Impl;

@@ -9,6 +9,8 @@
 #include "dfpt_pw_data.h"
 #include "source_lcao/module_dftu/dftu.h"
 
+#include <cmath>
+
 namespace ModuleDFPT {
 
 DFPT_PW_Data::DFPT_PW_Data() {}
@@ -327,6 +329,14 @@ std::vector<double> DFPT_PW_Data::get_phon_freq(int q_idx) const {
         return phon_freq_[q_idx];
     }
     return std::vector<double>();
+}
+
+void DFPT_PW_Data::set_loto_dir(const ModuleBase::Vector3<double>& dir) {
+    const double norm = std::sqrt(dir * dir);
+    if (norm < 1.0e-10) {
+        return; // keep the current direction on a null input
+    }
+    loto_dir_ = dir / norm;
 }
 
 void DFPT_PW_Data::set_dielectric(const ModuleBase::matrix& eps) {

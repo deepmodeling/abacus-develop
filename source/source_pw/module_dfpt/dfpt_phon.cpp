@@ -20,7 +20,9 @@
 #include <cmath>
 #include <complex>
 #include <cstdlib>
+#include <iomanip>
 #include <iostream>
+#include <sstream>
 #include <vector>
 
 namespace ModuleDFPT {
@@ -28,6 +30,25 @@ namespace ModuleDFPT {
 DFPT_Phon::DFPT_Phon() {}
 
 DFPT_Phon::~DFPT_Phon() {}
+
+namespace {
+
+// signed frequencies: omega = sgn(e) sqrt(|e|), converted to cm^-1
+// sqrt(Ry/(bohr^2 amu)) in cm^-1 = sqrt(RYDBERG_SI/amu_kg)/(bohr*2pi*c)
+std::vector<double> signed_freqs_cm1(const std::vector<double>& eigs) {
+    const double amu_kg = 1.0e-3 / ModuleBase::NA;
+    const double ry_bohr2_amu_to_cm1 = std::sqrt(ModuleBase::RYDBERG_SI / amu_kg)
+                                       / (ModuleBase::BOHR_RADIUS_SI * ModuleBase::TWO_PI
+                                          * 2.99792458e10);
+    std::vector<double> freq(eigs.size(), 0.0);
+    for (size_t i = 0; i < eigs.size(); ++i) {
+        freq[i] = ((eigs[i] >= 0.0) ? 1.0 : -1.0) * std::sqrt(std::abs(eigs[i]))
+                  * ry_bohr2_amu_to_cm1;
+    }
+    return freq;
+}
+
+} // namespace
 
 void DFPT_Phon::init(UnitCell& ucell, ModulePW::PW_Basis* pw_rho, DFPT_Pert* pert) {
     ucell_ = &ucell;
@@ -696,6 +717,60 @@ void DFPT_Phon::add_loto(const ModuleBase::Vector3<double>& qhat, DFPT_PW_Data& 
         }
     }
     data.set_dynmat(0, dyn);
+}
+
+void DFPT_Phon::diagonalize_loto(DFPT_PW_Data& data) {
+    const int nat3 = 3 * ucell_->nat;
+    // the stored Gamma matrix already carries the non-analytic term added
+    // by add_loto; the copy below is destroyed by the solver, the stored
+    // one stays available for the plain report
+    ModuleBase::ComplexMatrix dyn = data.get_dynmat(0);
+    if (dyn.nr != nat3) {
+        return;
+    }
+    std::vector<double> w(nat3, 0.0);
+    std::vector<double> rwork(std::max(1, 3 * nat3 - 2), 0.0);
+    std::vector<std::complex<double>> work(1);
+    int info = 0;
+    LapackConnector::zheev('N', 'U', nat3, dyn, nat3, w.data(), work.data(), -1,
+                           rwork.data(), &info);
+    work.resize(std::max(1, static_cast<int>(work[0].real())));
+    LapackConnector::zheev('N', 'U', nat3, dyn, nat3, w.data(), work.data(),
+                           static_cast<int>(work.size()), rwork.data(), &info);
+    data.set_phon_freq_loto(signed_freqs_cm1(w));
+}
+
+std::string DFPT_Phon::format_q_report(int q_idx, const DFPT_PW_Data& data) const {
+    const ModuleBase::Vector3<double> qd = data.get_qvec(q_idx);
+    const std::vector<double> freq = data.get_phon_freq(q_idx);
+    std::ostringstream os;
+    os << " DFPT phonon frequencies at q #" << q_idx << " = ("
+       << std::fixed << std::setprecision(6)
+       << qd.x << " " << qd.y << " " << qd.z
+       << ") (direct) in cm^-1:" << "\n";
+    for (size_t im = 0; im < freq.size(); ++im) {
+        os << "   mode " << std::setw(3) << im << " : "
+           << std::fixed << std::setprecision(6) << freq[im] << " cm^-1" << "\n";
+    }
+    return os.str();
+}
+
+std::string DFPT_Phon::format_loto_report(const DFPT_PW_Data& data) const {
+    const std::vector<double> freq = data.get_phon_freq_loto();
+    if (freq.empty()) {
+        return std::string();
+    }
+    const ModuleBase::Vector3<double> dir = data.get_loto_dir();
+    std::ostringstream os;
+    os << " DFPT LO-TO corrected frequencies at q #0 along q->0 direction ("
+       << std::fixed << std::setprecision(6)
+       << dir.x << " " << dir.y << " " << dir.z
+       << ") in cm^-1:" << "\n";
+    for (size_t im = 0; im < freq.size(); ++im) {
+        os << "   mode " << std::setw(3) << im << " : "
+           << std::fixed << std::setprecision(6) << freq[im] << " cm^-1" << "\n";
+    }
+    return os.str();
 }
 
 bool DFPT_Phon::check_sum_rule(int q_idx, DFPT_PW_Data& data) const {

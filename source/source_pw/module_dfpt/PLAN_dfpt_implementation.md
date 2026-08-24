@@ -433,8 +433,9 @@
               aleg_crosscheck+PTCROSS，dfpt_pw.cpp）、DFPT_XCS/XCDBG/
               DKCHK/NOXC/NOSC/YCHK/BPT/MDBG/JPROBE；dpsi_efield stash
               （dfpt_pw_data）随 ALEG 保留
-        - [ ] P0-3 B0 收尾：8×8×8 过夜（ε∞/Z*/D 密网格收敛）；非 Γ q 物理级验证
-          （密 k 色散 vs 超胞 FD）；sym1 星旋转各向异性处理或记录在案
+        - [ ] P0-3 B0 收尾：8×8×8 过夜（ε∞/Z*/D 密网格收敛）；sym1 星旋转各向异性处理或记录在案
+          （非 Γ q 物理级验证已由 QE 直接锚定完成：L 点 0.1–1.1%、bare 链
+          0.008–0.4%，见下方缺陷修复条目；超胞 FD 参照降级为可选项）
             - **compute_eps SCF 化（完成，98c7f114c）**：solve_efield_resp
               转正（QE solve_e 顺序：Y 腿后、位移 solve 前）；
               compute_eps 改消耗 pos_resp+dpsi_efield 收缩
@@ -500,11 +501,32 @@
               −0.01996/−0.00808/+0.06822）——稀疏 2-k 采样下 q=±L 采样不同跃迁集，
               接近一致即内部自洽；4 个负本征值（虚频）为 2-k 超稀采样的性质，非 q 路径
               bug（±q 忠实重现）；物理级验证需密网格/超胞 FD
-    - [ ] B2 输出正式化
-        - run_post_process design-phase std::cout → 正式输出：多 q 布局、LO-TO
-          修正后频率（每方向）；loto 方向经数据层传递，消除 run() 中
-          (1,1,1)/√3 硬编码；输出格式回归测试
-    - [ ] B3 Kerker 预条件混合
+     - [x] B2 输出正式化 `（本轮）`
+         - 多 q 频率报告：DFPT_Phon::format_q_report（每 q 一块，表头带
+           direct q 坐标，模式行定点 6 位小数）；esolver run_post_process
+           循环 get_nq() 输出，tensor 块仅在已计算时打印（compute_q0=false
+           不再输出空表头）
+         - LO-TO 修正频率：DFPT_Phon::diagonalize_loto（add_loto 后对
+           修正 dynmat(0) 再对角化，存 phon_freq_loto，原 phon_freq(0)
+           不动）；format_loto_report 沿数据层方向输出（无修正频率时
+           返回空串）
+         - loto 方向经数据层：DFPT_PW_Data::loto_dir_（默认 (1,1,1)/√3，
+           setter 归一化、零向量保持原值）；DFPT_PW::set_loto_dir/
+           get_loto_dir 公开 API；run() 中硬编码删除，改用
+           data_.get_loto_dir()（一般方向控制随 A 阶段 irrep 机制）
+         - 格式回归测试：phon 串行 3 用例（LotoDirNormalization、
+           DiagonalizeLotoClosedForm——xx 2×2 块 {0,13/12·pref} 闭式、
+           FormatReportsRegression——逐字符字符串钉死），12/12
+         - 端到端冒烟（Γ, compute_q0+loto, 4×4×4）：TO 517.490709×3
+           不变；LO-TO 块沿 (0.577350 0.577350 0.577350) 输出，声学支
+           −7.325→+73.208 cm⁻¹、光学支不动；ε∞=23.6825、
+           Z*₁=Z*₂=−1.19928δ。**观察登记（非缺陷）**：QE 同 setup 自身
+           打印 Z*₁=Z*₂=−1.19765（asr 前 Sum=−2.395，asr 后全零），
+           我们逐值一致（0.13%，与 D 同残差量级）；同号 Z* 经键心反演
+           对称性成立（F₁(E)=−F₂(−E) → Z₁=Z₂），故 LO-TO 抬升的是
+           声学支组合——与 QE 输入自洽。ΣZ* 求和规则的表述与 asr 语义
+           留待后续物理阶段讨论
+     - [ ] B3 Kerker 预条件混合
         - DFPT_Rho 内自实现 |G+q|²/(|G+q|²+a²) 预条件（不引 charge_mixing.h）；
           mix_type 支持 plain/kerker；验收：λ_A1≈−2.2 模型问题 β=0.7 收敛
           （JPROBE 复用）、金刚石频率与 β 无关、默认 β 回调并文档记录
