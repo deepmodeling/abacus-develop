@@ -31,6 +31,7 @@
 #include <cmath>
 #include <complex>
 #include <cstdio>
+#include <cstdlib>
 #include <malloc.h>
 #include <random>
 #include <string>
@@ -337,9 +338,19 @@ int main(int argc, char** argv)
         int nband;
         int sparsity;
     };
-    const std::vector<Case> cases = {
-        {50, 10, 0}, {50, 10, 60}, {100, 10, 60}, {200, 10, 80}, {500, 10, 80},
-    };
+    // Without arguments a small default grid is used.  To benchmark a single
+    // (possibly large) problem, pass:  <n> <nband> <sparsity_pct>
+    std::vector<Case> cases;
+    if (argc >= 4)
+    {
+        cases.push_back({std::atoi(argv[1]), std::atoi(argv[2]), std::atoi(argv[3])});
+    }
+    else
+    {
+        cases = {
+            {50, 10, 0}, {50, 10, 60}, {100, 10, 60}, {200, 10, 80}, {500, 10, 80},
+        };
+    }
 
     std::printf("\n=== Solver comparison (identical H, psi0, ethr) ===\n");
     std::printf("%-5s %-5s %-6s %-10s %-14s %-12s %-10s %-12s\n", "n", "nband", "spars", "solver", "wall_time(s)", "avg_iter",
