@@ -443,7 +443,34 @@
               ComputeEpsScfSyntheticStash 替换 PT 用例，串行 6/6；
               端到端 sym 4×4×4 ε∞=23.35·δ（原 IPA 12.67），与 nosym
               ALEG 23.68、QE 23.67 同源
-            - **[新缺陷登记] 非 Γ q 全链路错误（P0-3 阻塞项）**：
+            - **[缺陷已修复] 非 Γ q 全链路错误 → 根因=drho 缺自旋因子 2
+              （a915352cd）**：
+              - 根因：compute_drho 用 w/Ω 且仅在 Γ 的 Hermitian 补全里补
+                2Re；QE incdrhoscf 在一切 q 用 wgt=2·w/Ω（自旋简并因子，
+                非 Hermitian 补全）。q≠Γ 屏蔽强度减半 → L 点频率塌到
+                −948/−148×2/183/199×2。修复后 w1=2w/Ω 恒定、Γ 补全只取 Re
+                （Γ 代数等价不变）
+              - 修复后验证（Si NC pz-vbc，4×4×4，24³ 网格）：q=L(−0.5,0.5,0.5)
+                2π/a → 100.49×2/380.41/402.11/485.93×2 vs QE
+                101.61×2/380.54/402.24/486.28×2（0.1–1.1%）；Γ 保持
+                517.491（QE 517.633）；bare（NOSC vs QE niter_ph=1）
+                −2281.83/−578.00×2/−528.59/−278.82×2 vs −2282.01/
+                −577.16×2/−527.51/−277.69×2（0.008–0.4%）→ 裸链
+                （dV/dψ/term2/term3/Ewald）整体正确
+              - 排除过程存档：dVnl 链逐位复现（becp/dcbecp/term_a/term_b
+                vs dvqpsi_us_only.f90，relmax≤2.3e-15）；vkb/Simpson/radial_vq
+                复现（≤4.4e-16）；CG 残差直接证明 P(H−εS)P·dψ=P_c·rhs
+                （~6e-9）；QE D(L) 从 matdyn 本征集重建（U 全实 → D 实对称，
+                逐元素 diff 定位 ele 全错、ion 正确）；NOSC 对照 QE bare
+                把嫌疑压缩到屏蔽链 → drho 归一化
+              - 遗留：0.1–1.1% 残差呈均匀绝对 D 误差（最小 ω 相对误差最大）
+                —待查（k 权重/FFT 细节）；QE fildrho 记录与我们的 drho 逐
+                元素对照通道未打通（模式→笛卡尔重建后 G 键匹配失败，
+                疑记录顺序/约定，未继续）；DFPT_RHSDUMP/NLDUMP/MDBG 探针
+                已从 dfpt_pert.cpp 清除（DFPT_DPDUMP/DRHODIR 亦然），
+                dfpt_pw.cpp 的预存探针（NOSC/JPROBE/BPT/XCS/NOXC/YCHK/
+                PTCROSS/DKCHK/ALEG/MIX_BETA/MDBG）未动
+            - **[旧缺陷登记归档] 非 Γ q 全链路错误（修复前记录，见上）**：
               QE 7.2 本地参照（同 UPF/胞/ecut/4×4×4 网格）：
               q=L(0.5,0,0) → 125.39×2/239.10/473.79×2/496.34 cm⁻¹；
               q=Γ-L 1/4 → 102.75×2/144.31/494.62×2/502.63。我们：
@@ -462,10 +489,6 @@
               dn≠0 标签折叠路径）；build_occ_kq 的 dn≠0 G 向量匹配
               （2-k case dn=(1,0,0) 当时验证过，64k 大量 dn≠0 未验）；
               term2 cross 的逐元素正确性（DFPT_XB 打印未对照）
-            - 下一步（调试战役）：① XB 逐元素 + 手算矩阵元对照
-              （2-k case 最小复现）；② 独立 python FD 实现 dV_loc(q)
-              系数在真实 gcar 网格上对照；③ 超胞 FD 声子端到端参照
-              （4×1×1 胞 Γ 点，q=1/4 对应）
             - 8×8×8 nosym ALEG 验收运行中（~4h，q=0 不受本缺陷影响）
         - [x] 非 Γ q 路径冒烟 `（本轮，b0_si_qL/qmL）`
             - dfpt_qfile + QList::read_from_file 端到端首次运行：q=(0.5,0,0)，k={Γ,L}，
