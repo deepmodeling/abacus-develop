@@ -11,9 +11,9 @@
 #include "source_estate/elecstate_lcao.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_io/module_chgpot/get_pchg_lcao.h"
-#include "source_io/module_wf/get_wf_lcao.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_io/module_hs/write_hs_r.h"
+#include "source_io/module_parameter/parameter.h"
+#include "source_io/module_wf/get_wf_lcao.h"
 #include "source_lcao/lcao_domain.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
@@ -82,12 +82,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
                                                    ucell.infoNL->get_rcutmax_Beta(),
                                                    gamma_only_local);
 
-    atom_arrange::search(PARAM.globalv.search_pbc,
-                         GlobalV::ofs_running,
-                         this->gd,
-                         ucell,
-                         search_radius,
-                         this->inp_->test_atom_input);
+    atom_arrange::search(PARAM.globalv.search_pbc, GlobalV::ofs_running, this->gd, ucell, search_radius, this->inp_->test_atom_input);
 
     // (3) Periodic condition search for each grid.
     gint_info_.reset(new ModuleGint::GintInfo(this->pw_big->nbx,
@@ -176,8 +171,14 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     unitcell::cal_ux(ucell, this->inp_->nspin);
 
     // pelec should be initialized before these calculations
-    elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, 
-		    istep, global_out_dir, *this->inp_, this->pelec);
+    elecstate::init_scf(ucell,
+                        this->Pgrid,
+                        this->sf.strucFac,
+                        this->locpp.numeric,
+                        istep,
+                        global_out_dir,
+                        *this->inp_,
+                        this->pelec);
 
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
@@ -188,7 +189,6 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         {
             get_pchg.begin(this->chr.rho,
                            this->pelec->wg,
-                           this->pelec->eferm.get_all_ef(),
                            this->pw_rhod->nrxx,
                            this->inp_->out_pchg,
                            this->inp_->nbands,
@@ -206,7 +206,6 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
             get_pchg.begin(this->chr.rho,
                            this->chr.rhog,
                            this->pelec->wg,
-                           this->pelec->eferm.get_all_ef(),
                            this->pw_rhod,
                            this->pw_rhod->nrxx,
                            this->inp_->out_pchg,

@@ -1,18 +1,15 @@
 #include "get_pchg_lcao.h"
 
-#include "source_io/module_output/cube_io.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
 #include "source_hamilt/module_gint/gint_interface.h"
+#include "source_io/module_output/cube_io.h"
 
-Get_pchg_lcao::Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in)
-    : psi_gamma(psi_gamma_in), ParaV(ParaV_in)
+Get_pchg_lcao::Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in) : psi_gamma(psi_gamma_in), ParaV(ParaV_in)
 {
 }
 
-Get_pchg_lcao::Get_pchg_lcao(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in)
-    : psi_k(psi_k_in), ParaV(ParaV_in)
+Get_pchg_lcao::Get_pchg_lcao(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in) : psi_k(psi_k_in), ParaV(ParaV_in)
 {
 }
 
@@ -23,7 +20,6 @@ Get_pchg_lcao::~Get_pchg_lcao()
 // For gamma_only
 void Get_pchg_lcao::begin(double** rho,
                           const ModuleBase::matrix& wg,
-                          const std::vector<double>& ef_all_spin,
                           const int rhopw_nrxx,
                           const std::vector<int>& out_pchg,
                           const int nbands,
@@ -90,13 +86,19 @@ void Get_pchg_lcao::begin(double** rho,
 
                 ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
-                // Use a const vector to store efermi for all spins, replace the original implementation:
-                // const double ef_tmp = pelec->eferm.get_efval(is);
-		const int precision = 6;
-                double ef_spin = ef_all_spin[is];
-                ModuleIO::write_vdata_palgrid(pgrid, 
-				rho_save[is].data(), is, nspin, 0, 
-				ssc.str(), ef_spin, ucell_in, precision, 1, PARAM.globalv.two_fermi, false);
+                const int precision = 6;
+                ModuleIO::write_vdata_palgrid(pgrid,
+                                              rho_save[is].data(),
+                                              is,
+                                              nspin,
+                                              0,
+                                              ssc.str(),
+                                              0.0,
+                                              ucell_in,
+                                              precision,
+                                              0,
+                                              false,
+                                              false);
             }
         }
     }
@@ -108,7 +110,6 @@ void Get_pchg_lcao::begin(double** rho,
 void Get_pchg_lcao::begin(double** rho,
                           std::complex<double>** rhog,
                           const ModuleBase::matrix& wg,
-                          const std::vector<double>& ef_all_spin,
                           const ModulePW::PW_Basis* rho_pw,
                           const int rhopw_nrxx,
                           const std::vector<int>& out_pchg,
@@ -141,10 +142,7 @@ void Get_pchg_lcao::begin(double** rho,
         {
             // Using new density matrix inplementation (multi-k)
             const int nspin_dm = std::map<int, int>({{1, 1}, {2, 2}, {4, 1}})[nspin];
-            elecstate::DensityMatrix<std::complex<double>, double> DM(this->ParaV,
-                                                                      nspin_dm,
-                                                                      kv.kvec_d,
-                                                                      kv.get_nks() / nspin_dm);
+            elecstate::DensityMatrix<std::complex<double>, double> DM(this->ParaV, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
 
 #ifdef __MPI
             this->idmatrix(ib, nspin, nelec, wg, DM, kv, if_separate_k);
@@ -165,7 +163,6 @@ void Get_pchg_lcao::begin(double** rho,
                     DM.init_DMR(GridD_in, ucell_in);
                     DM.cal_DMR(ik);
                     ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin, rho);
-                
 
                     // Using std::vector to replace the original double** rho_save
                     std::vector<std::vector<double>> rho_save(nspin, std::vector<double>(rhopw_nrxx));
@@ -183,17 +180,19 @@ void Get_pchg_lcao::begin(double** rho,
 
                         ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
-                        double ef_spin = ef_all_spin[is];
-			const int precision = 6;
+                        const int precision = 6;
                         ModuleIO::write_vdata_palgrid(pgrid,
                                                       rho_save[is].data(),
                                                       is,
                                                       nspin,
                                                       0,
                                                       ssc.str(),
-                                                      ef_spin,
-                                                      ucell_in, 
-						      precision, 1, PARAM.globalv.two_fermi, false);
+                                                      0.0,
+                                                      ucell_in,
+                                                      precision,
+                                                      0,
+                                                      false,
+                                                      false);
                     }
                 }
             }
@@ -235,17 +234,19 @@ void Get_pchg_lcao::begin(double** rho,
 
                     ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
-                    double ef_spin = ef_all_spin[is];
-		    const int precision = 6;
+                    const int precision = 6;
                     ModuleIO::write_vdata_palgrid(pgrid,
                                                   rho_save[is].data(),
                                                   is,
                                                   nspin,
                                                   0,
                                                   ssc.str(),
-                                                  ef_spin,
-                                                  ucell_in, 
-						  precision, 1, PARAM.globalv.two_fermi, false);
+                                                  0.0,
+                                                  ucell_in,
+                                                  precision,
+                                                  0,
+                                                  false,
+                                                  false);
                 }
             }
         }
@@ -363,11 +364,7 @@ void Get_pchg_lcao::idmatrix(const int& ib,
         this->psi_gamma->fix_k(is);
 
         // psi::Psi<double> wg_wfc(*this->psi_gamma, 1, this->psi_gamma->get_nbands());
-        psi::Psi<double> wg_wfc(1,
-                                this->psi_gamma->get_nbands(),
-                                this->psi_gamma->get_nbasis(),
-                                this->psi_gamma->get_nbasis(),
-                                true);
+        psi::Psi<double> wg_wfc(1, this->psi_gamma->get_nbands(), this->psi_gamma->get_nbasis(), this->psi_gamma->get_nbasis(), true);
         wg_wfc.set_all_psi(this->psi_gamma->get_pointer(), wg_wfc.size());
 
         for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
@@ -375,11 +372,7 @@ void Get_pchg_lcao::idmatrix(const int& ib,
             BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
         }
 
-        elecstate::psiMulPsiMpi(wg_wfc,
-                                *(this->psi_gamma),
-                                DM.get_DMK_pointer(is),
-                                this->ParaV->desc_wfc,
-                                this->ParaV->desc);
+        elecstate::psiMulPsiMpi(wg_wfc, *(this->psi_gamma), DM.get_DMK_pointer(is), this->ParaV->desc_wfc, this->ParaV->desc);
     }
 }
 
@@ -408,8 +401,8 @@ void Get_pchg_lcao::idmatrix(const int& ib,
 
     for (int ik = 0; ik < kv.get_nks(); ++ik)
     {
-        std::cout << " Calculating density matrix for band " << ib + 1 << ", k-point "
-                  << ik % (kv.get_nks() / nspin) + 1 << ", spin " << kv.isk[ik] + 1 << std::endl;
+        std::cout << " Calculating density matrix for band " << ib + 1 << ", k-point " << ik % (kv.get_nks() / nspin) + 1 << ", spin "
+                  << kv.isk[ik] + 1 << std::endl;
 
         std::vector<double> wg_local(this->ParaV->ncol, 0.0);
         const int ib_local = this->ParaV->global2local_col(ib);
@@ -430,11 +423,7 @@ void Get_pchg_lcao::idmatrix(const int& ib,
 
         this->psi_k->fix_k(ik);
 
-        psi::Psi<std::complex<double>> wg_wfc(1,
-                                              this->psi_k->get_nbands(),
-                                              this->psi_k->get_nbasis(),
-                                              this->psi_k->get_nbasis(),
-                                              true);
+        psi::Psi<std::complex<double>> wg_wfc(1, this->psi_k->get_nbands(), this->psi_k->get_nbasis(), this->psi_k->get_nbasis(), true);
         wg_wfc.set_all_psi(this->psi_k->get_pointer(), wg_wfc.size());
         std::complex<double>* wg_wfc_ptr = wg_wfc.get_pointer();
         for (int i = 0; i < wg_wfc.size(); ++i)
@@ -447,11 +436,7 @@ void Get_pchg_lcao::idmatrix(const int& ib,
             BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
         }
 
-        elecstate::psiMulPsiMpi(wg_wfc,
-                                *(this->psi_k),
-                                DM.get_DMK_pointer(ik),
-                                this->ParaV->desc_wfc,
-                                this->ParaV->desc);
+        elecstate::psiMulPsiMpi(wg_wfc, *(this->psi_k), DM.get_DMK_pointer(ik), this->ParaV->desc_wfc, this->ParaV->desc);
     }
 }
 #endif // __MPI

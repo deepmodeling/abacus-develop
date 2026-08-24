@@ -1,8 +1,8 @@
 #ifndef GET_WF_LCAO_H
 #define GET_WF_LCAO_H
 
-#include "source_estate/elecstate.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_estate/elecstate.h"
 
 class Get_wf_lcao
 {

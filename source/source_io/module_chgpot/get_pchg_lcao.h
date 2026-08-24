@@ -1,10 +1,10 @@
 #ifndef GET_PCHG_LCAO_H
 #define GET_PCHG_LCAO_H
 
-#include "source_cell/klist.h"
-#include "source_estate/module_dm/density_matrix.h"
 #include "source_base/parallel_grid.h"
 #include "source_basis/module_pw/pw_basis.h"
+#include "source_cell/klist.h"
+#include "source_estate/module_dm/density_matrix.h"
 #include "source_psi/psi.h"
 
 /**
@@ -25,7 +25,6 @@ class Get_pchg_lcao
     // For gamma_only
     void begin(double** rho,
                const ModuleBase::matrix& wg,
-               const std::vector<double>& ef_all_spin,
                const int rhopw_nrxx,
                const std::vector<int>& out_pchg,
                const int nbands,
@@ -42,7 +41,6 @@ class Get_pchg_lcao
     void begin(double** rho,
                std::complex<double>** rhog,
                const ModuleBase::matrix& wg,
-               const std::vector<double>& ef_all_spin,
                const ModulePW::PW_Basis* rho_pw,
                const int rhopw_nrxx,
                const std::vector<int>& out_pchg,

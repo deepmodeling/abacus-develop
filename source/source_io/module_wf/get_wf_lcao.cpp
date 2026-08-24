@@ -1,11 +1,10 @@
 #include "get_wf_lcao.h"
 
 #include "source_base/module_external/blacs_connector.h"
-#include "source_io/module_output/cube_io.h"
-#include "source_io/module_wf/write_wfc_pw.h"
-
 #include "source_hamilt/module_gint/gint_env_gamma.h"
 #include "source_hamilt/module_gint/gint_env_k.h"
+#include "source_io/module_output/cube_io.h"
+#include "source_io/module_wf/write_wfc_pw.h"
 
 Get_wf_lcao::Get_wf_lcao(const elecstate::ElecState* pes)
 {
@@ -75,18 +74,17 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
                 ModuleBase::GlobalFunc::OUT(ofs_running, ss_info.str(), ss_file.str());
 
-                const double ef_tmp = this->pes_->eferm.get_efval(is);
                 ModuleIO::write_vdata_palgrid(pgrid,
                                               pes_->charge->rho_save[is],
                                               is,
                                               nspin,
                                               0,
                                               ss_out.str(),
-                                              ef_tmp,
+                                              0.0,
                                               &(ucell),
                                               11, // default precision
-                                              1, // default out_fermi
-                                              PARAM.globalv.two_fermi,
+                                              0,
+                                              false,
                                               false);
             }
         }
@@ -106,8 +104,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
             {
                 gint_env.cal_env_band(ib);
                 pes_->charge->save_rho_before_sum_band();
-
-                const double ef_tmp = this->pes_->eferm.get_efval(is);
 
                 // only for gamma_only now
                 psi_g.fix_k(is);
@@ -130,20 +126,21 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 // Output real part
                 std::stringstream ss_real;
                 ss_real << global_out_dir << "wfi" << ib + 1 << "s" << is + 1 << "re.cube";
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), is, nspin, 0, ss_real.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi, false);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), is, nspin, 0, ss_real.str(), 0.0, &(ucell), 11, 0, false, false);
 
                 // Output imaginary part
                 std::stringstream ss_imag;
                 ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << is + 1 << "im.cube";
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), is, nspin, 0, ss_imag.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi, false);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), is, nspin, 0, ss_imag.str(), 0.0, &(ucell), 11, 0, false, false);
             }
         }
     }
 
-
     const int istep = -1; // -1 means ionic iteration number will not appear in file name
-    const int iter = -1; // -1 means electronic iteration number will not appear in file name
-    ModuleIO::write_wfc_pw(istep, iter, GlobalV::KPAR,
+    const int iter = -1;  // -1 means electronic iteration number will not appear in file name
+    ModuleIO::write_wfc_pw(istep,
+                           iter,
+                           GlobalV::KPAR,
                            GlobalV::MY_POOL,
                            GlobalV::MY_RANK,
                            nbands,
@@ -198,7 +195,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     // Set this->bands_picked_
     this->select_bands(out_wfc_norm, nbands, fermi_band);
 
-   // Calculate out_wfc_norm
+    // Calculate out_wfc_norm
     const int nspin0 = (nspin == 2) ? 2 : 1;
     for (int ik = 0; ik < nks; ++ik) // the loop of nspin0 is included
     {
@@ -206,9 +203,17 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         //  2d-to-grid conversion is unified into `wfc_2d_to_grid`.
         psi->fix_k(ik);
 
-        ModuleGint::Gint_env_k gint_env(psi->get_pointer(), &para_orb, kv.kvec_c, kv.kvec_d,
-                                        nbands, nlocal, ik, PARAM.inp.nspin, PARAM.globalv.npol, pes_->charge->rho[ispin]);
-        
+        ModuleGint::Gint_env_k gint_env(psi->get_pointer(),
+                                        &para_orb,
+                                        kv.kvec_c,
+                                        kv.kvec_d,
+                                        nbands,
+                                        nlocal,
+                                        ik,
+                                        PARAM.inp.nspin,
+                                        PARAM.globalv.npol,
+                                        pes_->charge->rho[ispin]);
+
         for (int ib = 0; ib < nbands; ++ib)
         {
             if (bands_picked_[ib])
@@ -238,19 +243,17 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
 
                 ModuleBase::GlobalFunc::OUT(ofs_running, ss_info.str(), ss_file.str());
 
-                const double ef_tmp = this->pes_->eferm.get_efval(ispin);
-
                 ModuleIO::write_vdata_palgrid(pgrid,
                                               pes_->charge->rho[ispin],
                                               ispin,
                                               nspin,
                                               0,
                                               ss_out.str(),
-                                              ef_tmp,
+                                              0.0,
                                               &(ucell),
                                               3,
-                                              1,
-                                              PARAM.globalv.two_fermi,
+                                              0,
+                                              false,
                                               false);
 
                 // if (out_wfc_pw || out_wf_r)
@@ -261,8 +264,10 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     }
 
     const int istep = -1; // -1 means ionic iteration number will not appear in file name
-    const int iter = -1; // -1 means electronic iteration number will not appear in file name
-    ModuleIO::write_wfc_pw(istep, iter, GlobalV::KPAR,
+    const int iter = -1;  // -1 means electronic iteration number will not appear in file name
+    ModuleIO::write_wfc_pw(istep,
+                           iter,
+                           GlobalV::KPAR,
                            GlobalV::MY_POOL,
                            GlobalV::MY_RANK,
                            nbands,
@@ -321,13 +326,12 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                 std::stringstream ss_real;
                 ss_real << global_out_dir << "wfi" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "re.cube";
 
-                const double ef_tmp = this->pes_->eferm.get_efval(ispin);
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), ispin, nspin, 0, ss_real.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi, false);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), ispin, nspin, 0, ss_real.str(), 0.0, &(ucell), 11, 0, false, false);
 
                 // Output imaginary part
                 std::stringstream ss_imag;
                 ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "im.cube";
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), ispin, nspin, 0, ss_imag.str(), ef_tmp, &(ucell), 11, 1, PARAM.globalv.two_fermi, false);
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), ispin, nspin, 0, ss_imag.str(), 0.0, &(ucell), 11, 0, false, false);
             }
         }
     }
@@ -354,9 +358,8 @@ void Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb, const int nba
     {
         if (value != 0 && value != 1)
         {
-            ModuleBase::WARNING_QUIT(
-                "Get_wf_lcao::select_bands",
-                "The elements of `out_wfc_norm` or `out_wfc_re_im` must be either 0 or 1. Invalid values found!");
+            ModuleBase::WARNING_QUIT("Get_wf_lcao::select_bands",
+                                     "The elements of `out_wfc_norm` or `out_wfc_re_im` must be either 0 or 1. Invalid values found!");
         }
     }
     // Fill bands_picked_ with values from out_wfc_kb
@@ -498,10 +501,7 @@ template int Get_wf_lcao::set_wfc_grid(const int naroc[2],
                                        const std::vector<int>& trace_lo);
 
 template <typename T>
-void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
-                                 const Parallel_Orbitals& pv,
-                                 T** lowf_grid,
-                                 const std::vector<int>& trace_lo)
+void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d, const Parallel_Orbitals& pv, T** lowf_grid, const std::vector<int>& trace_lo)
 {
     ModuleBase::TITLE("Get_wf_lcao", "wfc_2d_to_grid");
     ModuleBase::timer::start("Get_wf_lcao", "wfc_2d_to_grid");
@@ -551,15 +551,7 @@ void Get_wf_lcao::wfc_2d_to_grid(const T* lowf_2d,
             }
 
             // then use it to set the wfc_grid.
-            mpi_info = this->set_wfc_grid(naroc,
-                                          pv.nb,
-                                          pv.dim0,
-                                          pv.dim1,
-                                          iprow,
-                                          ipcol,
-                                          lowf_block.data(),
-                                          lowf_grid,
-                                          trace_lo);
+            mpi_info = this->set_wfc_grid(naroc, pv.nb, pv.dim0, pv.dim1, iprow, ipcol, lowf_block.data(), lowf_grid, trace_lo);
             // this operation will let all processors have the same wfc_grid
         }
     }
