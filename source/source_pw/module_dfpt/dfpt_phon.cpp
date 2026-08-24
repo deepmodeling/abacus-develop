@@ -330,8 +330,6 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
         accum_q_ = q_idx;
     }
     const int rowb = 3 * atom_idx + dir;
-    const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
-    const ModuleBase::Vector3<double> q_cart = q_frac * ucell_->G;
     const int nk = psi.get_nk();
     const int nbands = psi.get_nbands();
 
@@ -348,18 +346,6 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
                 dpsib[ik][ib] = data.get_dpsi(q_idx, ik, ib);
             }
         }
-    }
-
-    // rho ig -> shared FFT-cell reverse map (C1/C3 pattern)
-    std::vector<int> ig_of_cell(pw_rho_->nxyz, -1);
-    for (int ig = 0; ig < pw_rho_->npw; ++ig) {
-        const int isz = pw_rho_->ig2isz[ig];
-        const int iz = isz % pw_rho_->nz;
-        const int is = isz / pw_rho_->nz;
-        const int ixy = pw_rho_->is2fftixy[is];
-        const int ix = ixy / pw_rho_->fftny;
-        const int iy = ixy % pw_rho_->fftny;
-        ig_of_cell[(ix * pw_rho_->ny + iy) * pw_rho_->nz + iz] = ig;
     }
 
     for (int iat = 0; iat < nat; ++iat) {
@@ -430,38 +416,26 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
             }
 
             // ---- same-atom anharmonic term <psi | d2_ab V_ext | psi> ----
-            // both displacement dressings e^{i q.R} multiply on the SAME atom,
-            // so the second-order potential carries wavevector 2q; the same-k
-            // expectation value is nonzero only when 2q folds onto a
-            // reciprocal vector, in which case the operator is
-            // lattice-periodic and lives on the integer G set (out basis =
-            // k + q_eff ball with q_eff = fold(2q) = 0). The |d beta><d beta|
-            // middle projector term carries the same 2q (product of the two
-            // dressings) and survives whenever the gate passes; env
-            // DFPT_D2MID=0 disables it for A/B debugging.
-            const ModuleBase::Vector3<double> q2_frac = 2.0 * q_frac;
-            const ModuleBase::Vector3<double> q2_round(std::round(q2_frac.x),
-                                                       std::round(q2_frac.y),
-                                                       std::round(q2_frac.z));
-            const bool q2_is_recip = ((q2_frac - q2_round).norm() < 1.0e-8);
-            const ModuleBase::Vector3<double> q_eff_cart
-                = (q2_frac - q2_round) * ucell_->G;
-            const bool q_is_recip
-                = ((q_frac
-                    - ModuleBase::Vector3<double>(std::round(q_frac.x),
-                                                  std::round(q_frac.y),
-                                                  std::round(q_frac.z)))
-                       .norm()
-                   < 1.0e-8);
+            // QE ground truth (dynmat_us.f90 + phq_init.f90): the mixed
+            // (+q, -q) second-order potential of the local part is
+            // -Omega tpiba^2 G_a G_b vloc(|G|) Re[rho(G) e^{-iG tau_s}]
+            // (integer G, no q), and the KB nonlocal part is the same-atom
+            // block deff[gammap*becp1 + becp1*gammap + alphap_a*alphap_b +
+            // alphap_b*alphap_a] with becp1/alphap/gammap all built from
+            // vkb_k and (k+G) factors (integer G, no q). The (+q,-q)
+            // dressings collapse to an integer-G carrier for every q, so
+            // this term is q-independent and must never be gated on 2q
+            // commensurability (the old gate silently dropped it for
+            // 2q not reciprocal, e.g. q=(0.25,0,0), and produced
+            // imaginary phonon branches).
+            const ModuleBase::Vector3<double> q_eff_cart(0.0, 0.0, 0.0);
             const char* d2mid_env = getenv("DFPT_D2MID");
             const bool include_middle = !(d2mid_env != nullptr && d2mid_env[0] == '0');
             if (dbg2 && iat == atom_idx && cola == rowb) {
                 std::cout << "DYNCHK d2gate rowb=" << rowb
-                          << " q2recip=" << (q2_is_recip ? 1 : 0)
-                          << " qrecip=" << (q_is_recip ? 1 : 0)
                           << " mid=" << (include_middle ? 1 : 0) << std::endl;
             }
-            if (iat == atom_idx && cola >= rowb && q2_is_recip) {
+            if (iat == atom_idx && cola >= rowb) {
                 std::vector<std::complex<double>> dv2_r;
                 pert_->d2vloc_r(atom_idx, idir, dir, dv2_r);
                 if (static_cast<int>(dv2_r.size()) != pw_rho_->nrxx) {
@@ -478,7 +452,7 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
                     pert_->apply_d2vnl(atom_idx, idir, dir, q_eff_cart, include_middle, psi, ik, chi);
                     // k+q_eff scatter map for this k (must match apply_d2vnl)
                     DFPT_KQ_Basis kq;
-                    kq.init(pert_->get_pw_wfc(), q_eff_cart, ik);
+                    kq.init(pert_->get_pw_wfc(), pert_->get_pw_rho(), q_eff_cart, ik);
                     const int npwk_kq = kq.get_npwk();
                     for (int ib = 0; ib < nbands; ++ib) {
                         if (!dfpt_band_occupied(wg, ik, ib)) {
@@ -489,14 +463,7 @@ void DFPT_Phon::accumulate_electron(int q_idx, int atom_idx, int dir,
                             && static_cast<int>(chi[ib].size()) == npwk_kq) {
                             std::fill(x_recip.begin(), x_recip.end(), std::complex<double>(0.0, 0.0));
                             for (int igl = 0; igl < npwk_kq; ++igl) {
-                                const int isz = kq.get_ig2isz(igl);
-                                const int iz = isz % pert_->get_pw_wfc()->nz;
-                                const int is = isz / pert_->get_pw_wfc()->nz;
-                                const int ixy = pert_->get_pw_wfc()->is2fftixy[is];
-                                const int ix = ixy / pert_->get_pw_wfc()->fftny;
-                                const int iy = ixy % pert_->get_pw_wfc()->fftny;
-                                const int ig_rho =
-                                    ig_of_cell[(ix * pw_rho_->ny + iy) * pw_rho_->nz + iz];
+                                const int ig_rho = kq.get_ig_rho(igl);
                                 if (ig_rho >= 0) {
                                     x_recip[ig_rho] = chi[ib][igl];
                                 }

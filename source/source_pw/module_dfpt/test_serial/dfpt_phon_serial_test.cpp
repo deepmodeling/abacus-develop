@@ -464,7 +464,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
     const int npwk_kq = [&]()
     {
         ModuleDFPT::DFPT_KQ_Basis kq;
-        kq.init(&pw_wfc_, q_cart_, 0);
+        kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
         return kq.get_npwk();
     }();
     std::vector<std::complex<double>> dpsi_inj(npwk_kq, std::complex<double>(0.0, 0.0));
@@ -484,7 +484,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronAnalyticContraction)
     // G'=0 plane wave and the Coulomb potential has no nonlocal part); the
     // GS structure-factor phase convention is exp(-i 2pi g.tau).
     ModuleDFPT::DFPT_KQ_Basis kq;
-    kq.init(&pw_wfc_, q_cart_, 0);
+    kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
     for (int adir = 0; adir < 3; ++adir)
     {
         std::complex<double> expect_cross(0.0, 0.0);
@@ -563,7 +563,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2GateOffGenericQ)
     wg(0, 1) = 0.0;
 
     ModuleDFPT::DFPT_KQ_Basis kq;
-    kq.init(&pw_wfc_, q_cart_, 0);
+    kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
     std::vector<std::complex<double>> dpsi_inj(kq.get_npwk(),
                                                std::complex<double>(0.0, 0.0));
     dpsi_inj[0] = std::complex<double>(0.25, -0.15);
@@ -668,7 +668,7 @@ TEST_F(DFPTPhonSerialTest, AccumulateElectronD2CommensurateQ)
 
     // injected dpsi on the k+q = 0 ball (arbitrary coefficients)
     ModuleDFPT::DFPT_KQ_Basis kq;
-    kq.init(&pw_wfc_, q_cart_, 0);
+    kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
     const int npwk_kq = kq.get_npwk();
     std::vector<std::complex<double>> dpsi_inj(npwk_kq, std::complex<double>(0.0, 0.0));
     dpsi_inj[0] = std::complex<double>(0.3, 0.1);

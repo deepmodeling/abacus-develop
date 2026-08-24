@@ -31,6 +31,7 @@ public:
     /// C5: read access to the ground-state wfc basis for the dynamical-matrix
     /// contractions in DFPT_Phon::accumulate_electron.
     ModulePW::PW_Basis_K* get_pw_wfc() const { return pw_wfc_; }
+    ModulePW::PW_Basis* get_pw_rho() const { return pw_rho_; }
     
     void build_dv(int q_idx, int atom_idx, int dir, DFPT_PW_Data& data);
     

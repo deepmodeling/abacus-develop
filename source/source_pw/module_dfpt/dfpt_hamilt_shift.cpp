@@ -63,31 +63,14 @@ DFPT_HamiltShift::DFPT_HamiltShift(const UnitCell& ucell,
 DFPT_HamiltShift::~DFPT_HamiltShift() {}
 
 void DFPT_HamiltShift::set_context(const ModuleBase::Vector3<double>& q_cart, int k_idx) {
-    kq_.init(pw_wfc_, q_cart, k_idx);
+    kq_.init(pw_wfc_, pw_rho_, q_cart, k_idx);
     ik_cache_ = k_idx;
     const int npw = kq_.get_npwk();
 
-    // rho ig -> shared FFT-cell reverse map, then k+q -> rho through the
-    // (ix,iy,iz) triple (the stick encodings of the two bases differ)
-    std::vector<int> ig_of_cell(pw_rho_->nxyz, -1);
-    for (int ig = 0; ig < pw_rho_->npw; ++ig) {
-        const int isz = pw_rho_->ig2isz[ig];
-        const int iz = isz % pw_rho_->nz;
-        const int is = isz / pw_rho_->nz;
-        const int ixy = pw_rho_->is2fftixy[is];
-        const int ix = ixy / pw_rho_->fftny;
-        const int iy = ixy % pw_rho_->fftny;
-        ig_of_cell[(ix * pw_rho_->ny + iy) * pw_rho_->nz + iz] = ig;
-    }
+    // k+q G index -> charge-grid G index (both bases share the FFT cell)
     kq2rho_.assign(npw, -1);
     for (int igl = 0; igl < npw; ++igl) {
-        const int isz = kq_.get_ig2isz(igl);
-        const int iz = isz % pw_wfc_->nz;
-        const int is = isz / pw_wfc_->nz;
-        const int ixy = pw_wfc_->is2fftixy[is];
-        const int ix = ixy / pw_wfc_->fftny;
-        const int iy = ixy % pw_wfc_->fftny;
-        kq2rho_[igl] = ig_of_cell[(ix * pw_rho_->ny + iy) * pw_rho_->nz + iz];
+        kq2rho_[igl] = kq_.get_ig_rho(igl);
     }
 
     // cache the beta projectors of every atom on the k+q list

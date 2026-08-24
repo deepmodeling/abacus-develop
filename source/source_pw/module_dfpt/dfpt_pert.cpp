@@ -18,6 +18,9 @@
 #include "source_pw/module_pwdft/stru_fac.h"
 
 #include <cmath>
+#include <cstdlib>
+#include <fstream>
+#include <string>
 
 namespace ModuleDFPT {
 
@@ -188,7 +191,7 @@ void DFPT_Pert::apply_vr(int q_idx, int k_idx,
         return;
     }
     DFPT_KQ_Basis kq;
-    kq.init(pw_wfc_, q_cart, k_idx);
+    kq.init(pw_wfc_, pw_rho_, q_cart, k_idx);
     apply_vr_core(k_idx, v_rc, psi, kq, dv_psi);
 }
 
@@ -197,20 +200,6 @@ void DFPT_Pert::apply_vr_core(int k_idx,
                               const psi::Psi<std::complex<double>>& psi,
                               const DFPT_KQ_Basis& kq,
                               std::vector<std::vector<std::complex<double>>>& dv_psi) const {
-    // Invert both ig -> FFT-cell mappings through the (ix,iy,iz) triple: the
-    // rho and wfc bases enumerate different G balls, so their isz encodings
-    // (stick tables) are not interchangeable - only the FFT cell position of
-    // a plane wave is shared between the two bases.
-    std::vector<int> ig_of_cell(pw_rho_->nxyz, -1);
-    for (int ig = 0; ig < pw_rho_->npw; ++ig) {
-        const int isz = pw_rho_->ig2isz[ig];
-        const int iz = isz % pw_rho_->nz;
-        const int is = isz / pw_rho_->nz;
-        const int ixy = pw_rho_->is2fftixy[is];
-        const int ix = ixy / pw_rho_->fftny;
-        const int iy = ixy % pw_rho_->fftny;
-        ig_of_cell[(ix * pw_rho_->ny + iy) * pw_rho_->nz + iz] = ig;
-    }
     const int nbands = psi.get_nbands();
     const int npwk_kq = kq.get_npwk();
     std::vector<std::complex<double>> u_r(pw_rho_->nrxx);
@@ -225,20 +214,13 @@ void DFPT_Pert::apply_vr_core(int k_idx,
         pw_rho_->real2recip(d_r.data(), d_recip.data());
         std::vector<std::complex<double>> dpsi(npwk_kq, std::complex<double>(0.0, 0.0));
         for (int igl = 0; igl < npwk_kq; ++igl) {
-            // kq isz uses the wfc stick tables
-            const int isz = kq.get_ig2isz(igl);
-            const int iz = isz % pw_wfc_->nz;
-            const int is = isz / pw_wfc_->nz;
-            const int ixy = pw_wfc_->is2fftixy[is];
-            const int ix = ixy / pw_wfc_->fftny;
-            const int iy = ixy % pw_wfc_->fftny;
-            const int ig_rho = ig_of_cell[(ix * pw_rho_->ny + iy) * pw_rho_->nz + iz];
+            const int ig_rho = kq.get_ig_rho(igl);
             if (ig_rho >= 0) {
                 dpsi[igl] = d_recip[ig_rho];
             }
         }
-        dv_psi[iband] = dpsi;
-    }
+         dv_psi[iband] = dpsi;
+     }
 }
 
 void DFPT_Pert::apply_dv(int q_idx, int k_idx, const psi::Psi<std::complex<double>>& psi, 
@@ -248,7 +230,7 @@ void DFPT_Pert::apply_dv(int q_idx, int k_idx, const psi::Psi<std::complex<doubl
     const ModuleBase::Vector3<double> q_cart = data.get_qvec(q_idx) * ucell_->G;
 
     DFPT_KQ_Basis kq;
-    kq.init(pw_wfc_, q_cart, k_idx);
+    kq.init(pw_wfc_, pw_rho_, q_cart, k_idx);
 
     const int nbands = psi.get_nbands();
     std::vector<std::vector<std::complex<double>>> dv_psi(nbands);
@@ -259,33 +241,6 @@ void DFPT_Pert::apply_dv(int q_idx, int k_idx, const psi::Psi<std::complex<doubl
     // nonlocal contribution: dVnl/dtau |psi> (per displaced atom)
     std::vector<std::vector<std::complex<double>>> dv_psi_nl;
     dVnl_dtau(atom_idx, dir, q_cart, psi, k_idx, dv_psi_nl);
-    if (getenv("DFPT_MDBG") != nullptr && atom_idx < 2 && k_idx == 0) {
-        static int done[2] = {0, 0};
-        if (!done[atom_idx]) {
-            done[atom_idx] = 1;
-            const int npw_dbg = psi.get_nbasis();
-            const int nb_dbg = psi.get_nbands();
-            for (int ib = 0; ib < nb_dbg; ++ib) {
-                for (int m = 0; m < nb_dbg; ++m) {
-                    std::complex<double> dl(0.0, 0.0);
-                    std::complex<double> dn(0.0, 0.0);
-                    for (int ig = 0; ig < npw_dbg; ++ig) {
-                        if (static_cast<int>(dv_psi[ib].size()) == npw_dbg) {
-                            dl += std::conj(psi(k_idx, m, ig)) * dv_psi[ib][ig];
-                        }
-                        if (dv_psi_nl.size() == static_cast<size_t>(nb_dbg)
-                            && static_cast<int>(dv_psi_nl[ib].size()) == npw_dbg) {
-                            dn += std::conj(psi(k_idx, m, ig)) * dv_psi_nl[ib][ig];
-                        }
-                    }
-                    std::cout << "MDBG atom=" << atom_idx << " n=" << ib << " m=" << m
-                              << " loc=(" << dl.real() << "," << dl.imag() << ")"
-                              << " nl=(" << dn.real() << "," << dn.imag() << ")"
-                              << std::endl;
-                }
-            }
-        }
-    }
     if (dv_psi_nl.size() == static_cast<size_t>(nbands)) {
         for (int iband = 0; iband < nbands; ++iband) {
             if (dv_psi[iband].size() != dv_psi_nl[iband].size()) {
@@ -572,7 +527,7 @@ void DFPT_Pert::dVnl_dtau(int atom_idx, int dir,
 
     // outgoing k+q basis
     DFPT_KQ_Basis kq;
-    kq.init(pw_wfc_, q_cart, k_idx);
+    kq.init(pw_wfc_, pw_rho_, q_cart, k_idx);
     const int npwk_kq = kq.get_npwk();
     std::vector<ModuleBase::Vector3<double>> gk_out(npwk_kq);
     for (int igl = 0; igl < npwk_kq; ++igl) {
@@ -681,11 +636,11 @@ void DFPT_Pert::d2vloc_r(int atom_idx, int da, int db,
     ModuleBase::Vector3<double> gcar;
     for (int ig = 0; ig < npw; ++ig) {
         rho_gvec(ig, gcar);
-        // both displacement dressings e^{i q.R} multiply on the same atom, so
-        // the cell sum collapses to G = 2q (mod ints); when the caller's gate
-        // passes (2q reciprocal) every integer G survives with its own phase
-        // and the kernel is exactly the plain q=0 one. When the gate fails
-        // there is no integer solution and the whole term vanishes (skipped).
+        // QE ground truth (dynmat_us.f90): the mixed (+q,-q) second-order
+        // local potential is the integer-G, q-independent kernel
+        // -tpiba^2 G_da G_db vloc(|G|) exp(-i G.tau); the (+q,-q) dressings
+        // collapse the carrier to 0 for every q, not only when 2q is
+        // reciprocal.
         const ModuleBase::Vector3<double> w = gcar;
         const double w2 = w * w;
         if (w2 < 1.0e-12) {
@@ -745,7 +700,7 @@ void DFPT_Pert::apply_d2vnl(int atom_idx, int da, int db,
     std::vector<std::vector<std::complex<double>>> vkb_in;
     build_vkb(it, ia, gk_in, vkb_in);
     DFPT_KQ_Basis kq;
-    kq.init(pw_wfc_, q_eff, k_idx);
+    kq.init(pw_wfc_, pw_rho_, q_eff, k_idx);
     const int npwk_kq = kq.get_npwk();
     std::vector<ModuleBase::Vector3<double>> gk_out(npwk_kq);
     for (int igl = 0; igl < npwk_kq; ++igl) {
@@ -791,10 +746,12 @@ void DFPT_Pert::apply_d2vnl(int atom_idx, int da, int db,
         }
         // chi(G'') = sum_mu vkb_out,mu [ -kq_da kq_db d0 - dab
         //                              + (include_middle ? kq_da db_ + kq_db da_ : 0) ]_mu
-        // the |d beta><d beta| middle term carries q on BOTH projectors, so it
-        // conserves the same 2q total momentum only through its own q-shifted
-        // ball; it is momentum-forbidden (vanishes between equal-k states)
-        // unless q itself is a reciprocal vector
+        // QE ground truth (dynmat_us.f90 + phq_init.f90): the KB second-order
+        // term pairs gammap (integer-G (k+G)_da(k+G)_db derivative of beta)
+        // with becp1 = <beta_k|psi_k> and the same-atom alphap_a* alphap_b
+        // middle product; everything is built at k with integer-G momentum
+        // factors, so the caller passes q_eff = 0 and the kernel is
+        // q-independent for every q.
         for (int igl = 0; igl < npwk_kq; ++igl) {
             const double kq_da = ucell_->tpiba * gk_out[igl][da];
             const double kq_db = ucell_->tpiba * gk_out[igl][db];

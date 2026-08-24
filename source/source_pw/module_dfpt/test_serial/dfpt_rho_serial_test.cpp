@@ -109,7 +109,7 @@ class DFPTRhoSerialTest : public testing::Test
     {
         psi::Psi<std::complex<double>> p(1, nbands_, pw_wfc_.npwk_max, pw_wfc_.npwk[0], true);
         ModuleDFPT::DFPT_KQ_Basis kq;
-        kq.init(&pw_wfc_, q_cart_, 0);
+        kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
         dpsi.assign(1, std::vector<std::vector<std::complex<double>>>(nbands_));
         for (int ib = 0; ib < nbands_; ++ib)
         {
@@ -151,7 +151,7 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoMatchesBruteForceGSpace)
         clist.push_back(psi(0, 0, igl));
     }
     ModuleDFPT::DFPT_KQ_Basis kq;
-    kq.init(&pw_wfc_, q_cart_, 0);
+    kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
     const std::vector<std::complex<double>> dvec = data_.get_dpsi(0, 0, 0);
 
     double err2 = 0.0;
@@ -218,7 +218,7 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoRealSpaceMatchesDirectSum)
         clist.push_back(psi(0, 0, igl));
     }
     ModuleDFPT::DFPT_KQ_Basis kq;
-    kq.init(&pw_wfc_, q_cart_, 0);
+    kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
     std::vector<ModuleBase::Vector3<double>> dgl;
     std::vector<std::complex<double>> dcl;
     for (int jgl = 0; jgl < kq.get_npwk(); ++jgl)

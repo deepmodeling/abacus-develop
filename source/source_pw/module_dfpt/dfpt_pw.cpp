@@ -257,7 +257,7 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx) {
         ikq_of_k_[ik] = ikq;
 
         DFPT_KQ_Basis kq;
-        kq.init(pw_wfc_, q_cart, ik);
+        kq.init(pw_wfc_, pw_rho_, q_cart, ik);
         const int npw_kq = kq.get_npwk();
 
         // The congruence match above may fold k+q onto a *different label*

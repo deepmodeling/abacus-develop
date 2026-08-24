@@ -64,37 +64,18 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
     const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
     const ModuleBase::Vector3<double> q_cart = q_frac * recip_matrix_;
 
-    // rho-ig -> FFT-cell reverse map through the shared (ix,iy,iz) triple
-    // (the rho/wfc stick encodings are not interchangeable, C1 finding)
-    std::vector<int> ig_of_cell(pw_rho_->nxyz, -1);
-    for (int ig = 0; ig < pw_rho_->npw; ++ig) {
-        const int isz = pw_rho_->ig2isz[ig];
-        const int iz = isz % pw_rho_->nz;
-        const int is = isz / pw_rho_->nz;
-        const int ixy = pw_rho_->is2fftixy[is];
-        const int ix = ixy / pw_rho_->fftny;
-        const int iy = ixy % pw_rho_->fftny;
-        ig_of_cell[(ix * pw_rho_->ny + iy) * pw_rho_->nz + iz] = ig;
-    }
-
     std::vector<std::complex<double>> a_r(pw_rho_->nrxx, std::complex<double>(0.0, 0.0));
     std::vector<std::complex<double>> u_r(pw_rho_->nrxx);
     std::vector<std::complex<double>> d_r(pw_rho_->nrxx);
     std::vector<std::complex<double>> d_recip(pw_rho_->npw, std::complex<double>(0.0, 0.0));
     DFPT_KQ_Basis kq;
     for (int ik = 0; ik < nk; ++ik) {
-        kq.init(pw_wfc_, q_cart, ik);
+        kq.init(pw_wfc_, pw_rho_, q_cart, ik);
         const int npw_kq = kq.get_npwk();
-        // k+q stick index -> rho-grid ig through the shared FFT cell
+        // k+q G index -> rho-grid ig (both bases share the FFT cell)
         std::vector<int> kq2rho(npw_kq, -1);
         for (int igl = 0; igl < npw_kq; ++igl) {
-            const int isz = kq.get_ig2isz(igl);
-            const int iz = isz % pw_wfc_->nz;
-            const int is = isz / pw_wfc_->nz;
-            const int ixy = pw_wfc_->is2fftixy[is];
-            const int ix = ixy / pw_wfc_->fftny;
-            const int iy = ixy % pw_wfc_->fftny;
-            kq2rho[igl] = ig_of_cell[(ix * pw_rho_->ny + iy) * pw_rho_->nz + iz];
+            kq2rho[igl] = kq.get_ig_rho(igl);
         }
         for (int ib = 0; ib < nbands; ++ib) {
             const double w = wg(ik, ib);
@@ -116,8 +97,11 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
             }
             pw_rho_->recip2real(d_recip.data(), d_r.data());
             // same normalization as the GS density accumulation
-            // (elecstate_pw.cpp rhoBandK: w1 = wg / omega)
-            const double w1 = w / pw_rho_->omega;
+            // (elecstate_pw.cpp rhoBandK: w1 = wg / omega), including the
+            // spin factor 2: QE incdrhoscf uses wgt = 2 * weight / omega
+            // at every q (the factor 2 is the spin degeneracy, not a
+            // Hermitian completion)
+            const double w1 = 2.0 * w / pw_rho_->omega;
             for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
                 a_r[ir] += w1 * std::conj(u_r[ir]) * d_r[ir];
             }
@@ -125,10 +109,10 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
     }
 
     // Hermitian completion at q = 0: the band loop above stores only the
-    // u_n^* du_n piece; the physical (real) response density also contains
-    // the du_n u_n^* piece, whose coefficients are conj(a_{-G}). At q = 0
-    // both harmonics coincide: the response is Delta rho = 2 Re a(r), so
-    // symmetrize the real-space amplitude before the FFT. The resulting
+    // u_n^* du_n piece (spin factor 2 already included in w1); the physical
+    // (real) response density at q = 0 also contains the du_n u_n^* piece,
+    // which coincides with the conjugate of the stored one, so keep only
+    // the real part of the amplitude before the FFT. The resulting
     // coefficients are exactly Hermitian on the sphere, including
     // one-sided sticks whose -G falls outside it. Away from q = 0 the +q
     // harmonic of the response is exactly the one-sided object and no
@@ -138,7 +122,7 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
                             && std::abs(q_frac.z) < 1.0e-10);
     if (q_is_zero) {
         for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
-            a_r[ir] = std::complex<double>(2.0 * a_r[ir].real(), 0.0);
+            a_r[ir] = std::complex<double>(a_r[ir].real(), 0.0);
         }
     }
 
@@ -157,10 +141,23 @@ void DFPT_Rho::compute_drho(const psi::Psi<std::complex<double>>& psi,
             std::abs(mfrac.y - mr[1]) < 1.0e-6 &&
             std::abs(mfrac.z - mr[2]) < 1.0e-6)
         {
-            const int ix = (static_cast<int>(mr[0]) % pw_rho_->nx + pw_rho_->nx) % pw_rho_->nx;
-            const int iy = (static_cast<int>(mr[1]) % pw_rho_->ny + pw_rho_->ny) % pw_rho_->ny;
-            const int iz = (static_cast<int>(mr[2]) % pw_rho_->nz + pw_rho_->nz) % pw_rho_->nz;
-            const int ig0 = ig_of_cell[(ix * pw_rho_->ny + iy) * pw_rho_->nz + iz];
+            // locate the rho-grid G equal to -q through its FFT cell
+            const int cix = (static_cast<int>(mr[0]) % pw_rho_->nx + pw_rho_->nx) % pw_rho_->nx;
+            const int ciy = (static_cast<int>(mr[1]) % pw_rho_->ny + pw_rho_->ny) % pw_rho_->ny;
+            const int ciz = (static_cast<int>(mr[2]) % pw_rho_->nz + pw_rho_->nz) % pw_rho_->nz;
+            int ig0 = -1;
+            for (int ig = 0; ig < pw_rho_->npw; ++ig) {
+                const int isz = pw_rho_->ig2isz[ig];
+                const int iz = isz % pw_rho_->nz;
+                const int is = isz / pw_rho_->nz;
+                const int ixy = pw_rho_->is2fftixy[is];
+                const int ix = ixy / pw_rho_->fftny;
+                const int iy = ixy % pw_rho_->fftny;
+                if (ix == cix && iy == ciy && iz == ciz) {
+                    ig0 = ig;
+                    break;
+                }
+            }
             if (ig0 >= 0) {
                 drho_g[ig0] = std::complex<double>(0.0, 0.0);
             }

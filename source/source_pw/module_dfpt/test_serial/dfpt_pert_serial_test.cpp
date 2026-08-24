@@ -357,7 +357,7 @@ TEST_F(DFPTPertSerialTest, ApplyDvConvolutionMatchesAnalyticMatrixElement)
 
     // expected: dpsi(G'') = sum_G' psi(G') c(G''-G'), c = analytic dVloc
     ModuleDFPT::DFPT_KQ_Basis kq;
-    kq.init(&pw_wfc_, q_cart_, 0);
+    kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
     const ModuleBase::Vector3<double> g1(0.1, 0.0, 0.0), g2(0.0, 0.1, 0.0);
     const std::vector<std::complex<double>> d0 = data_.get_dpsi(0, 0, 0);
     const std::vector<std::complex<double>> d1 = data_.get_dpsi(0, 0, 1);
@@ -508,7 +508,7 @@ TEST_F(DFPTPertSerialTest, DVnlDtauMatchesOperatorFiniteDifference)
     MakeNCAtom();
     const int npwk = pw_wfc_.npwk[0];
     ModuleDFPT::DFPT_KQ_Basis kq;
-    kq.init(&pw_wfc_, q_cart_, 0);
+    kq.init(&pw_wfc_, &pw_rho_, q_cart_, 0);
     const int npwkq = kq.get_npwk();
     std::vector<ModuleBase::Vector3<double>> gk_in(npwk), gk_out(npwkq);
     for (int ig = 0; ig < npwk; ++ig)
