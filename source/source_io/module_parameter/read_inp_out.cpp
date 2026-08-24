@@ -1517,7 +1517,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "specify the bands to be calculated for the norm of wavefunctions";
         item.category = "Output information";
         item.type = "String";
-        item.description = R"(Selects electronic states for real-space wavefunction-modulus output using the selection syntax and complete-state normalization of `out_pchg`. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.)";
+        item.description = R"(Selects electronic states for real-space wavefunction-modulus output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.)";
         item.default_value = "none";
         item.unit = "";
         item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");
@@ -1538,7 +1538,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "specify the bands to be calculated for the real and imaginary parts of wavefunctions";
         item.category = "Output information";
         item.type = "String";
-        item.description = R"(Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax and complete-state normalization of `out_pchg`. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.)";
+        item.description = R"(Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.)";
         item.default_value = "none";
         item.unit = "";
         item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");

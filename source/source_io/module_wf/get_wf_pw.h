@@ -195,8 +195,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                     = transform_global_band(ib, npwx, ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host, wfcr_down_global);
             }
 
-            const double spin_degeneracy = nspin == 1 ? 2.0 : 1.0;
-            const double scale = std::sqrt(spin_degeneracy / ucell->omega);
+            const double scale = std::sqrt(1.0 / ucell->omega);
             for (int ir = 0; ir < dense_nrxx; ++ir)
             {
                 const double norm = is_spinor ? std::sqrt(std::norm(wfcr_up_host_data[ir]) + std::norm(wfcr_down_host_data[ir]))
@@ -252,8 +251,7 @@ void get_wf_pw(const std::vector<int>& out_wfc_norm,
                     = transform_global_band(ib, npwx, ik, wfcr_down_smooth, wfcr_down_smooth_host, wfcr_down_dense_host, wfcr_down_global);
             }
 
-            const double spin_degeneracy = nspin == 1 ? 2.0 : 1.0;
-            const double scale = std::sqrt(spin_degeneracy / ucell->omega);
+            const double scale = std::sqrt(1.0 / ucell->omega);
             // For scalar/collinear states, select kv.isk[ik]; for spinors, emit both up and down.
             const int component_begin = is_spinor ? 0 : spin_index;
             const int component_end = is_spinor ? 2 : spin_index + 1;
