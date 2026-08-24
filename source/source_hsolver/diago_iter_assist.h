@@ -22,6 +22,7 @@ class DiagoIterAssist
     static Real PW_DIAG_THR;
     static int PW_DIAG_NMAX;
     static int PW_DIAG_NDIM;
+    static int PW_DIAG_RR_STEP;
 
     static Real LCAO_DIAG_THR;
     static int LCAO_DIAG_NMAX;
@@ -160,6 +161,9 @@ int DiagoIterAssist<T, Device>::PW_DIAG_NMAX = 30;
 
 template <typename T, typename Device>
 int DiagoIterAssist<T, Device>::PW_DIAG_NDIM = 4;
+
+template <typename T, typename Device>
+int DiagoIterAssist<T, Device>::PW_DIAG_RR_STEP = 16;
 
 template <typename T, typename Device>
 typename DiagoIterAssist<T, Device>::Real DiagoIterAssist<T, Device>::PW_DIAG_THR = 1.0e-2;

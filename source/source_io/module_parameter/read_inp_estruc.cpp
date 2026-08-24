@@ -1104,11 +1104,23 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.annotation = "dimension of workspace for iterative PW diagonalization";
         item.category = "Plane wave related variables";
         item.type = "Integer";
-        item.description = "Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the PPCG block size/Rayleigh-Ritz interval for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
+        item.description = "Only useful when you use ks_solver = dav, dav_subspace, or ppcg. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method, and the block size for the PPCG method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
         item.default_value = "4";
         item.unit = "";
         item.set_availability("basis_type==pw and ks_solver in [dav, dav_subspace, ppcg]");
         read_sync_int(input.pw_diag_ndim);
+        this->add_item(item);
+    }
+    {
+        Input_Item item("pw_diag_rr_step");
+        item.annotation = "Rayleigh-Ritz re-application interval for PPCG";
+        item.category = "Plane wave related variables";
+        item.type = "Integer";
+        item.description = "Only useful when you use ks_solver = ppcg. It controls how often (in subspace iterations) H and S are re-applied to reset the accumulated rounding drift after the Rayleigh-Ritz rotation. A larger value reduces the number of H/S applications and thus the wall time without changing the iteration count in well-conditioned cases; a smaller value is more robust against rounding drift in ill-conditioned problems.";
+        item.default_value = "16";
+        item.unit = "";
+        item.set_availability("basis_type==pw and ks_solver==ppcg");
+        read_sync_int(input.pw_diag_rr_step);
         this->add_item(item);
     }
     {

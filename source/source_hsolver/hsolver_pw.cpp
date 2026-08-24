@@ -40,16 +40,17 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
                    const double diag_thr,
                    const int diag_iter_max,
                    const int pw_diag_ndim,
+                   const int rr_step,
                    const bool gamma_only,
                    std::true_type)
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
-    const int rr_step = std::max(1, pw_diag_ndim);
+    const int rr_step_safe = std::max(1, rr_step);
 
     DiagoPPCG<T, Device> ppcg(Real(diag_thr),
                               diag_iter_max,
                               sbsize,
-                              rr_step,
+                              rr_step_safe,
                               gamma_only,
                               PpcgStrategy::BLOCK_SUBSPACE);
 
@@ -77,11 +78,12 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
                    const double diag_thr,
                    const int diag_iter_max,
                    const int pw_diag_ndim,
+                   const int rr_step,
                    const bool gamma_only,
                    std::false_type)
 {
     const int sbsize = std::max(1, std::min(nband, pw_diag_ndim));
-    const int rr_step = std::max(1, pw_diag_ndim);
+    const int rr_step_safe = std::max(1, rr_step);
     const int nelem = ld_psi * nband;
 
     // Transitional GPU path: keep PPCG's control logic and small dense solves
@@ -128,7 +130,7 @@ double run_ppcg_pw(const HPsiFunc& hpsi_func,
     DiagoPPCG<T, base_device::DEVICE_CPU> ppcg(Real(diag_thr),
                                                diag_iter_max,
                                                sbsize,
-                                               rr_step,
+                                               rr_step_safe,
                                                gamma_only,
                                                PpcgStrategy::BLOCK_SUBSPACE);
     const double avg_iter = ppcg.diag(bridge_hpsi,
@@ -518,6 +520,7 @@ void HSolverPW<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T, Device>* hm,
             this->diag_thr,
             this->diag_iter_max,
             DiagoIterAssist<T, Device>::PW_DIAG_NDIM,
+            DiagoIterAssist<T, Device>::PW_DIAG_RR_STEP,
             this->wfc_basis->gamma_only,
             std::is_same<Device, base_device::DEVICE_CPU>());
     }
