@@ -1020,7 +1020,7 @@ parameters:
       Only useful when you use ks_solver = ppcg. It controls how often (in subspace iterations) H and S are re-applied to reset the accumulated rounding drift after the Rayleigh-Ritz rotation. A larger value reduces the number of H/S applications and thus the wall time without changing the iteration count in well-conditioned cases; a smaller value is more robust against rounding drift in ill-conditioned problems.
     default_value: "16"
     unit: ""
-    availability: "basis_type==pw and ks_solver==ppcg"
+    availability: basis_type==pw and ks_solver==ppcg
   - name: diago_cg_prec
     category: Plane wave related variables
     type: Integer
