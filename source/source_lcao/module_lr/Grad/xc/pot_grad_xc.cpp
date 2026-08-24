@@ -54,16 +54,20 @@ namespace LR
             std::vector<double> v_tmp(nrxx_, 0.0);
 
             // 1. the vector under the divergence, accumulated negated so that `grad_dot` yields
-            //    $-\nabla\cdot\boldsymbol{E}$.
+            //    $-\nabla\cdot\boldsymbol{E}$. The four $e$ coefficients share the same
+            //    $\nabla\rho^{gs}$ direction (see `KernelXC::GxcCoef`), so it is pulled out of
+            //    their sum -- exact, and it keeps this bandwidth-bound loop reading 4 doubles per
+            //    point instead of 12.
             std::vector<ModuleBase::Vector3<double>> gdot_terms(nrxx_);
             for (int ir = 0;ir < nrxx_;++ir)
             {
+                const ModuleBase::Vector3<double>& drho = kxc.drho_gs.at(0).at(ir);  // $\nabla\rho$
                 const double s = rho[0][ir];                                // $\rho^1$
-                const double t = kxc.drho_gs.at(0).at(ir) * drho1.at(ir);   // $\nabla\rho\cdot\nabla\rho^1$
+                const double t = drho * drho1.at(ir);                       // $\nabla\rho\cdot\nabla\rho^1$
                 const double q = drho1.at(ir) * drho1.at(ir);               // $\nabla\rho^1\cdot\nabla\rho^1$
-                gdot_terms[ir] = -(g.e_s2.at(ir) * (s * s) + g.e_st.at(ir) * (s * t)
-                    + g.e_t2.at(ir) * (t * t) + g.e_q.at(ir) * q
-                    + drho1.at(ir) * (g.c_s.at(ir) * s + g.c_t.at(ir) * t));
+                const double e = g.e_s2.at(ir) * (s * s) + g.e_st.at(ir) * (s * t)
+                    + g.e_t2.at(ir) * (t * t) + g.e_q.at(ir) * q;
+                gdot_terms[ir] = -(drho * e + drho1.at(ir) * (g.c_s.at(ir) * s + g.c_t.at(ir) * t));
             }
             XC_Functional::grad_dot(gdot_terms.data(), v_tmp.data(), &this->rho_basis_, this->tpiba_);
 

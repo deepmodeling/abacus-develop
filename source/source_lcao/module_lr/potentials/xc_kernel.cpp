@@ -296,27 +296,8 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
                 this->v2sigma2_4drho_[i] = gradrho[0][i] * v2s2[i] * 4.;
             }
 
-            // 3. the third-order kernels contracted with $\nabla\rho$, for the $g^{xc}$ term of
-            // the LR gradient. These are the first three of the four vectors under the divergence; 
-            // the fourth one is `v2sigma2_4drho_` computed just above.
-            if (need_kxc)
-            {
-                const std::vector<double>& v3r2s = this->v3rho2sigma_;
-                const std::vector<double>& v3rs2 = this->v3rhosigma2_;
-                const std::vector<double>& v3s3 = this->v3sigma3_;
-                this->v3rho2sigma_2drho_.resize(nrxx);
-                this->v3rhosigma2_8drho_.resize(nrxx);
-                this->v3sigma3_8drho_.resize(nrxx);
-#ifdef _OPENMP
-#pragma omp parallel for schedule(static, 4096)
-#endif
-                for (size_t i = 0; i < nrxx; ++i)
-                {
-                    this->v3rho2sigma_2drho_[i] = gradrho[0][i] * v3r2s[i] * 2.;
-                    this->v3rhosigma2_8drho_[i] = gradrho[0][i] * v3rs2[i] * 8.;
-                    this->v3sigma3_8drho_[i] = gradrho[0][i] * v3s3[i] * 8.;
-                }
-            }
+            // The third-order kernels contracted with $\nabla\rho$ used to be pre-built here;
+            // they are now folded into `GxcCoef::e_*` (with $\nabla\rho$ factored back out)
         }
         else if (2 == nspin)    //close-shell
         {
@@ -381,21 +362,21 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
     }
 
     // Build the $v^{(2)}$ coefficient sets. Must happen before `gradrho` is moved away below.
-    // Only the combinations the caller asked for: at nspin=2 each set costs 18 doubles per grid
-    // point for a GGA, so building an unused one is as expensive as the whole third-order kernel.
+    // Only the combinations the caller asked for: at nspin=2 each set costs 10 doubles per grid
+    // point for a GGA, so building an unused one is a third of the whole third-order kernel.
     this->nspin_ = nspin;
     if (!openshell_ && this->gxc_spin_ != GxcSpin::NoGxc)
     {
-        const std::vector<ModuleBase::Vector3<double>> no_drho;
-        const std::vector<ModuleBase::Vector3<double>>& drho = is_gga ? gradrho[0] : no_drho;
+        // No `gradrho` here: the divergence coefficients are stored with $\nabla\rho$ factored
+        // out (see `GxcCoef`), so the spin algebra below is purely local.
         // nspin=1 has no triplet: `gxc()` returns `gxc_s_` whatever is asked, so build it for any request.
         if (nspin == 1 || (this->gxc_spin_ & GxcSpin::Singlet)) // Singlet or Bothspin
         {
-            this->build_gxc_coef(this->gxc_s_, /*triplet=*/false, nspin, is_gga, drho);
+            this->build_gxc_coef(this->gxc_s_, /*triplet=*/false, nspin, is_gga);
         }
         if (nspin == 2 && (this->gxc_spin_ & GxcSpin::Triplet)) // Triplet or Bothspin
         {
-            this->build_gxc_coef(this->gxc_t_, /*triplet=*/true, nspin, is_gga, drho);
+            this->build_gxc_coef(this->gxc_t_, /*triplet=*/true, nspin, is_gga);
         }
     }
     if (is_gga) { this->drho_gs_ = std::move(gradrho); }
@@ -497,8 +478,7 @@ namespace
         { {2,4,5},{4,7,8},{5,8,9} } };
 }
 
-void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& nspin, const bool& is_gga,
-    const std::vector<ModuleBase::Vector3<double>>& drho)
+void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& nspin, const bool& is_gga)
 {
     const int& nrxx = rho_basis_.nrxx;
     const double eta[2] = { 1., triplet ? -1. : 1. };
@@ -536,10 +516,10 @@ void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& n
             dst.a_q[i] = v2rs[i] * 2.;
             dst.c_s[i] = v2rs[i] * 4.;
             dst.c_t[i] = v2s2[i] * 8.;
-            dst.e_s2[i] = drho[i] * (v3r2s[i] * 2.);
-            dst.e_st[i] = drho[i] * (v3rs2[i] * 8.);
-            dst.e_t2[i] = drho[i] * (v3s3[i] * 8.);
-            dst.e_q[i] = drho[i] * (v2s2[i] * 4.);
+            dst.e_s2[i] = v3r2s[i] * 2.;
+            dst.e_st[i] = v3rs2[i] * 8.;
+            dst.e_t2[i] = v3s3[i] * 8.;
+            dst.e_q[i] = v2s2[i] * 4.;
         }
         return;
     }
@@ -607,10 +587,10 @@ void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& n
         }
         dst.c_s[i] = T * 2.;
         dst.c_t[i] = St * 4.;
-        dst.e_s2[i] = drho[i] * P;
-        dst.e_st[i] = drho[i] * (Q * 4.);
-        dst.e_t2[i] = drho[i] * (R * 4.);
-        dst.e_q[i] = drho[i] * (S * 2.);
+        dst.e_s2[i] = P;
+        dst.e_st[i] = Q * 4.;
+        dst.e_t2[i] = R * 4.;
+        dst.e_q[i] = S * 2.;
     }
 }
 

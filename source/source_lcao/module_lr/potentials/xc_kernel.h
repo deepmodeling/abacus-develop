@@ -39,20 +39,23 @@ namespace LR
         ///     $v^{(2)}(r)=\iint dr'dr''\,g^{xc}(r,r',r'')\rho^1(r')\rho^1(r'')$
         /// for ONE spin combination, stored exactly as they appear in the final formula:
         ///     $v^{(2)} = a_{s^2}s^2 + a_{st}\,s\,t + a_{t^2}t^2 + a_q\,q
-        ///        - \nabla\cdot[\,\boldsymbol{e}_{s^2}s^2 + \boldsymbol{e}_{st}\,s\,t
-        ///          + \boldsymbol{e}_{t^2}t^2 + \boldsymbol{e}_q\,q
+        ///        - \nabla\cdot[\,(e_{s^2}s^2 + e_{st}\,s\,t + e_{t^2}t^2 + e_q\,q)\,\nabla\rho
         ///          + (c_s\,s + c_t\,t)\,\nabla\rho^1\,]$
         /// with $s=\rho^1$, $t=\nabla\rho\cdot\nabla\rho^1$, $q=\nabla\rho^1\cdot\nabla\rho^1$.
         ///
         /// Every numeric factor and every spin sum is folded in here, so `PotGradXCLR::cal_v_eff`
         /// is a literal transcription of the formula with no arithmetic of its own, and nspin=1,
         /// singlet and triplet all run through the same code. For LDA only `a_s2` is filled.
-        /// $v^{(2)} = A - \nabla\cdot E$ 
+        /// $v^{(2)} = A - \nabla\cdot E$
+        ///
+        /// NOTE the four $e$ are *scalars*, with the common $\nabla\rho^{gs}$ factored out of the sum. 
+        /// Should an open-shell version ever need $\nabla\rho_u\ne\nabla\rho_d$ under the same
+        /// divergence, this factorization no longer holds and they must go back to `Vector3`.
         struct GxcCoef
         {
             std::vector<double> a_s2, a_st, a_t2, a_q;  ///< the local part $A$
             std::vector<double> c_s, c_t;               ///< the two $\nabla\rho^1$-weighted scalars
-            std::vector<ModuleBase::Vector3<double>> e_s2, e_st, e_t2, e_q;  ///< under the divergence
+            std::vector<double> e_s2, e_st, e_t2, e_q;  ///< under the divergence, all times $\nabla\rho^{gs}$
         };
         /// nspin=1 has no singlet/triplet distinction, so it always returns the one set that is built.
         /// Throws instead of handing back an empty set when the requested combination was not
@@ -68,7 +71,6 @@ namespace LR
             return ret;
         }
 
-        CREF3(v3rho2sigma_2drho); CREF3(v3rhosigma2_8drho); CREF3(v3sigma3_8drho);
         const bool& openshell = openshell_;
         const std::vector<std::vector<ModuleBase::Vector3<double>>>& drho_gs = drho_gs_;
     private:
@@ -125,14 +127,6 @@ namespace LR
         Tvec v3rho2sigma_;
         Tvec v3rhosigma2_;
         Tvec v3sigma3_;
-        // for nspin=1, gga: the third-order kernels already contracted with $\nabla\rho$, as they
-        // appear in the divergence term of $v^{(2)}$ (LR-Grad-formulas/GGA-kxc-to-v积分公式.md, sec. 3).
-        // The numeric coefficient is baked into the name so the potential code reads off the formula.
-        // The fourth vector the formula needs, $4f^{\sigma\sigma}\nabla\rho$, is `v2sigma2_4drho_`
-        // above -- it is shared with the $f\to v$ path.
-        Tvec3 v3rho2sigma_2drho_;   ///< $2g^{\rho\rho\sigma}\nabla\rho$
-        Tvec3 v3rhosigma2_8drho_;   ///< $8g^{\rho\sigma\sigma}\nabla\rho$
-        Tvec3 v3sigma3_8drho_;      ///< $8g^{\sigma\sigma\sigma}\nabla\rho$
 
         // The two spin combinations of $v^{(2)}$'s coefficients (see `GxcCoef` above).
         // `gxc_t_` stays empty for nspin=1, where there is no triplet.
@@ -140,8 +134,7 @@ namespace LR
         GxcCoef gxc_t_;
         /// @brief Fill `dst` for one spin combination. All the spin algebralives here, driven by the weight
         /// vectors that distinguish singlet from triplet -- the two differ only in those weights.
-        void build_gxc_coef(GxcCoef& dst, const bool triplet, const int& nspin, const bool& is_gga,
-            const std::vector<ModuleBase::Vector3<double>>& drho);
+        void build_gxc_coef(GxcCoef& dst, const bool triplet, const int& nspin, const bool& is_gga);
         int nspin_ = 1;
         const int gxc_spin_ = GxcSpin::NoGxc;   ///< which `GxcCoef` sets to build, see `GxcSpin`
         // ================================== XC kernel Gradiants ====================================
