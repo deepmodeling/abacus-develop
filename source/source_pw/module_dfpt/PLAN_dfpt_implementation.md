@@ -526,10 +526,32 @@
            对称性成立（F₁(E)=−F₂(−E) → Z₁=Z₂），故 LO-TO 抬升的是
            声学支组合——与 QE 输入自洽。ΣZ* 求和规则的表述与 asr 语义
            留待后续物理阶段讨论
-     - [ ] B3 Kerker 预条件混合
+     - [x] B3 Kerker 预条件混合（2026-08-24 完成）
         - DFPT_Rho 内自实现 |G+q|²/(|G+q|²+a²) 预条件（不引 charge_mixing.h）；
           mix_type 支持 plain/kerker；验收：λ_A1≈−2.2 模型问题 β=0.7 收敛
           （JPROBE 复用）、金刚石频率与 β 无关、默认 β 回调并文档记录
+        - 实现：`DFPT_Rho::init` 增 `mix_type`("plain"/"kerker") 与 `kerker_a2`
+          （1/lat0² 单位，与 |G+q|² 同纲）；筛选 f_g=|G+q|²/(|G+q|²+a²) 用
+          v_hartree_q 同一约定（gcar+q_frac·G）；"screen 双方→plain_mix→补回
+          被筛部分"得 mixed=rin+βf(out−rin)（QE 语义：存量密度保持物理量，
+          非筛选缩放），|G+q|=0 谐波冻结（与 compute_drho 丢弃一致）。接线层
+          env `DFPT_MIX_TYPE`/`DFPT_KERKER_A2`（设计期校准旋钮，镜像
+          DFPT_MIX_BETA 先例；默认 plain → 行为逐字节不变，默认 β=0.4 回调
+          见 dfpt_pw.cpp init 注释与 dfpt_rho.h 类注释）
+        - 串行验收（新增 2 用例，rho serial 6→8）：解析首步
+          mixed=β·f·out；模型问题 out=D·in+s（最小 |G+q| 壳 D=λ_A1=−2.2，
+          其余 0.3）β=0.7：plain 残差>1 发散、kerker(a²=9w2_min) <1e-8
+          收敛到 target —— 无需 JPROBE（DFPT_DEBUG 残差轨迹即可作证），
+          JPROBE 可进入清理队列
+        - 端到端（L 点, 4×4×4）：plain β=0.7 残差振荡 >1、|drho|→1e20
+          爆发散；kerker β=0.7 收敛（1393 s，138 SCF 迭代/6 位移，反快于
+          plain β=0.4 的 2332 s）；频率与 (mix_type, β) 无关——三配置
+          100.487828²/380.41384/402.10912/485.93199² 一致至 8–9 位
+          （参考 plain β=0.4：100.488/380.414/402.109/485.932）
+        - 附带修复（陈旧二进制掩盖的 a915352cd 遗留）：rho serial 测试
+          kq0.init 未跟进 4 参签名、brute-force 参考缺自旋因子 2 ——
+          四个串行二进制全部重建后 pert 8/phon 12/q0 6/rho 8 通过，
+          ctest 12/12
     - [ ] B4 数据层收编
         - 收敛台账（converged_/residuals_/current_iter_ 按 (q,irrep)）并入
           DFPT_PW_Data；删除 DFPT_IrrepData 适配层与 get_dpsi_obj static dummy；

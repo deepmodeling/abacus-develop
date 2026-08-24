@@ -188,7 +188,10 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
         // Coulomb stiffness 4pi/G^2; measured lambda ~ -2.2 on {111}/{200}
         // for the diamond smoke case), so the coefficient must stay below
         // 2 / (1 + |lambda_min|); the INPUT default 0.4 keeps margin up to
-        // |lambda| ~ 3; the env knob is a design-phase calibration aid
+        // |lambda| ~ 3; the alternative is mix_type = "kerker", the screen
+        // f_g = |G+q|^2 / (|G+q|^2 + a^2) in 1/lat0^2 units (a^2 via
+        // DFPT_KERKER_A2), which stabilizes those shells at beta up to 1;
+        // the env knobs are design-phase calibration aids
         double mix_beta = pimpl_->mix_beta_;
         if (const char* env_beta = getenv("DFPT_MIX_BETA")) {
             const double parsed = atof(env_beta);
@@ -196,7 +199,21 @@ void DFPT_PW::init(UnitCell& ucell, const psi::Psi<std::complex<double>>& psi,
                 mix_beta = parsed;
             }
         }
-        pimpl_->rho_.init(nspin, nrxx, pw_rho, pw_wfc, ucell.G, "plain", mix_beta);
+        std::string mix_type = "plain";
+        if (const char* env_type = getenv("DFPT_MIX_TYPE")) {
+            const std::string parsed = env_type;
+            if (parsed == "plain" || parsed == "kerker") {
+                mix_type = parsed;
+            }
+        }
+        double kerker_a2 = 1.0;
+        if (const char* env_a2 = getenv("DFPT_KERKER_A2")) {
+            const double parsed = atof(env_a2);
+            if (parsed > 0.0) {
+                kerker_a2 = parsed;
+            }
+        }
+        pimpl_->rho_.init(nspin, nrxx, pw_rho, pw_wfc, ucell.G, mix_type, mix_beta, kerker_a2);
         pimpl_->phon_.init(ucell, pw_rho, &pimpl_->pert_);
         pimpl_->q0_.init(ucell, pw_rho, pw_wfc, &pimpl_->pert_);
         delete pimpl_->hamilt_;

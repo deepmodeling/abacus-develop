@@ -101,7 +101,7 @@ class DFPTRhoSerialTest : public testing::Test
         q_cart_ = q_d_ * G_;
 
         data_.init(&qlist_, 1, nbands_, pw_wfc_.npwk_max, pw_rho_.nrxx, 1, 1, nullptr);
-        rho_.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, "plain", 0.4);
+        rho_.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, "plain", 0.4, 0.0);
     }
 
     void FillRandomStates(psi::Psi<std::complex<double>>& psi,
@@ -170,8 +170,9 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoMatchesBruteForceGSpace)
         const int mz = (iz <= pw_rho_.nz / 2) ? iz : iz - pw_rho_.nz;
         const ModuleBase::Vector3<double> delta =
             ModuleBase::Vector3<double>(mx, my, mz) * G_;
-        // A_Delta = (w / omega) * sum_G c*_G d_{G+Delta} with the GS density
-        // normalization (elecstate rhoBandK w1), brute-forced over the lists
+        // A_Delta = (2 w / omega) * sum_G c*_G d_{G+Delta}: the spin factor
+        // 2 sits in the band weight w1 = 2 w / omega (the QE incdrhoscf
+        // convention, a915352cd), brute-forced over the lists
         std::complex<double> aref(0.0, 0.0);
         for (int jgl = 0; jgl < kq.get_npwk(); ++jgl)
         {
@@ -187,7 +188,7 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoMatchesBruteForceGSpace)
                 }
             }
         }
-        aref *= wg(0, 0) / pw_rho_.omega;
+        aref *= 2.0 * wg(0, 0) / pw_rho_.omega;
         err2 += std::norm(drho_g[ig] - aref);
         ref2 += std::norm(aref);
     }
@@ -253,8 +254,10 @@ TEST_F(DFPTRhoSerialTest, ComputeDrhoRealSpaceMatchesDirectSum)
         }
         const double phq = ModuleBase::TWO_PI * (q_d_.x * fx + q_d_.y * fy + q_d_.z * fz);
         const std::complex<double> eq(std::cos(phq), std::sin(phq));
-        // same GS normalization (w / omega) as the stored manifest density
-        const double ref = 2.0 * (wg(0, 0) / pw_rho_.omega) * (std::conj(u) * du * eq).real();
+        // manifest density 2 Re[e^{iqr} A(r)] with A carrying the band
+        // weight w1 = 2 w / omega (spin factor 2, a915352cd): the outer 2
+        // Re and the inner 2 w / omega combine to 4 w / omega
+        const double ref = 4.0 * (wg(0, 0) / pw_rho_.omega) * (std::conj(u) * du * eq).real();
         const int ir = (ix * pw_rho_.ny + iy) * pw_rho_.nz + iz;
         EXPECT_NEAR(drho_r[ir], ref, 1.0e-9);
     }
@@ -278,11 +281,11 @@ TEST_F(DFPTRhoSerialTest, ChargeConservationAtGamma)
     ModuleDFPT::DFPT_PW_Data data0;
     data0.init(&qlist0, 1, nbands_, pw_wfc0.npwk_max, pw_rho_.nrxx, 1, 1, nullptr);
     ModuleDFPT::DFPT_Rho rho0;
-    rho0.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc0, G_, "plain", 0.4);
+    rho0.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc0, G_, "plain", 0.4, 0.0);
 
     psi::Psi<std::complex<double>> psi(1, nbands_, pw_wfc0.npwk_max, pw_wfc0.npwk[0], true);
     ModuleDFPT::DFPT_KQ_Basis kq0;
-    kq0.init(&pw_wfc0, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 0);
+    kq0.init(&pw_wfc0, &pw_rho_, ModuleBase::Vector3<double>(0.0, 0.0, 0.0), 0);
     for (int ib = 0; ib < nbands_; ++ib)
     {
         for (int igl = 0; igl < pw_wfc0.npwk[0]; ++igl)
@@ -428,4 +431,143 @@ TEST_F(DFPTRhoSerialTest, VHartreeQClosedFormAndZeroMode)
     std::vector<std::complex<double>> short_input(3, std::complex<double>(1.0, 1.0));
     rho_.v_hartree_q(q_cart_, short_input, dv0);
     EXPECT_TRUE(dv0.empty());
+}
+
+TEST_F(DFPTRhoSerialTest, MixDrhoKerkerFirstStepIsPreconditionedScaledOutput)
+{
+    // first step from the zero input: mixed[ig] = beta * f[ig] * out[ig]
+    // with the Kerker screen f[ig] = |G+q|^2 / (|G+q|^2 + a^2) built from
+    // gcar + q_frac * G (1/lat0^2 units), the v_hartree_q convention
+    ModuleDFPT::DFPT_Rho rho_k;
+    double w2_min = 0.0;
+    for (int ig = 0; ig < pw_rho_.npw; ++ig)
+    {
+        const ModuleBase::Vector3<double> w = pw_rho_.gcar[ig] + q_cart_;
+        const double w2 = w * w;
+        if (w2 > 1.0e-12 && (w2_min == 0.0 || w2 < w2_min))
+        {
+            w2_min = w2;
+        }
+    }
+    ASSERT_GT(w2_min, 0.0);
+    const double a2 = 4.0 * w2_min;
+    rho_k.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, "kerker", 0.7, a2);
+
+    std::vector<std::complex<double>> out(pw_rho_.npw);
+    int n_small = 0;
+    int n_large = 0;
+    for (int ig = 0; ig < pw_rho_.npw; ++ig)
+    {
+        out[ig] = 0.01 * std::complex<double>(std::cos(0.7 * ig), std::sin(0.5 * ig));
+        const ModuleBase::Vector3<double> w = pw_rho_.gcar[ig] + q_cart_;
+        const double w2 = w * w;
+        if (w2 < a2)
+        {
+            ++n_small;
+        }
+        if (w2 > 100.0 * a2)
+        {
+            ++n_large;
+        }
+    }
+    // sanity: the screen actually varies across the basis
+    ASSERT_GT(n_small, 0);
+    ASSERT_GT(n_large, 0);
+
+    data_.set_drho_g(0, 0, out);
+    rho_k.mix_drho(0, data_);
+    const std::vector<std::complex<double>> mixed = data_.get_drho_g(0, 0);
+    ASSERT_EQ(mixed.size(), out.size());
+    for (int ig = 0; ig < pw_rho_.npw; ++ig)
+    {
+        const ModuleBase::Vector3<double> w = pw_rho_.gcar[ig] + q_cart_;
+        const double w2 = w * w;
+        const double f = (w2 < 1.0e-12) ? 0.0 : w2 / (w2 + a2);
+        const std::complex<double> ref = 0.7 * f * out[ig];
+        EXPECT_NEAR(mixed[ig].real(), ref.real(), 1.0e-12);
+        EXPECT_NEAR(mixed[ig].imag(), ref.imag(), 1.0e-12);
+    }
+    EXPECT_NEAR(rho_k.get_residual(0, data_), 1.0, 1.0e-12);
+}
+
+TEST_F(DFPTRhoSerialTest, MixDrhoKerkerStabilizesStiffModelProblem)
+{
+    // model SCF problem: out(g) = D(g) in(g) + s(g) with the measured
+    // diamond-smoke Coulomb-stiffness eigenvalue D = lambda ~ -2.2 on the
+    // smallest |G+q| shell and D = 0.3 elsewhere; the fixed point is a
+    // fixed target pattern t(g), s = (1 - D) t. Plain mixing must satisfy
+    // beta < 2 / (1 + |lambda|) = 0.625, so beta = 0.7 diverges
+    // (amplification |1 - beta (1 - D)| = 1.24), while the Kerker screen
+    // damps the stiff shell amplification below 1 and converges.
+    const int npw = pw_rho_.npw;
+
+    double w2_min = 0.0;
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        const ModuleBase::Vector3<double> w = pw_rho_.gcar[ig] + q_cart_;
+        const double w2 = w * w;
+        if (w2 > 1.0e-12 && (w2_min == 0.0 || w2 < w2_min))
+        {
+            w2_min = w2;
+        }
+    }
+    ASSERT_GT(w2_min, 0.0);
+
+    std::vector<double> stiff(npw, 0.3);
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        const ModuleBase::Vector3<double> w = pw_rho_.gcar[ig] + q_cart_;
+        const double w2 = w * w;
+        if (w2 > 1.0e-12 && w2 < 1.5 * w2_min)
+        {
+            stiff[ig] = -2.2;
+        }
+    }
+
+    std::vector<std::complex<double>> target(npw);
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        target[ig] = 0.01 * std::complex<double>(std::cos(0.3 * ig), std::sin(0.9 * ig));
+    }
+
+    auto model_out = [&](const std::vector<std::complex<double>>& in)
+    {
+        std::vector<std::complex<double>> o(npw);
+        for (int ig = 0; ig < npw; ++ig)
+        {
+            o[ig] = stiff[ig] * in[ig] + (1.0 - stiff[ig]) * target[ig];
+        }
+        return o;
+    };
+
+    // plain beta = 0.7 on the stiff model diverges
+    ModuleDFPT::DFPT_Rho rho_p;
+    rho_p.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, "plain", 0.7, 0.0);
+    data_.set_drho_g(0, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
+    for (int it = 0; it < 40; ++it)
+    {
+        data_.set_drho_g(0, 0, model_out(data_.get_drho_g(0, 0)));
+        rho_p.mix_drho(0, data_);
+    }
+    const double residual_plain = rho_p.get_residual(0, data_);
+    EXPECT_GT(residual_plain, 1.0);
+
+    // kerker beta = 0.7 with a^2 = 9 w2_min (f ~ 0.1 on the stiff shell)
+    // converges to the target
+    ModuleDFPT::DFPT_Rho rho_k;
+    rho_k.init(1, pw_rho_.nrxx, &pw_rho_, &pw_wfc_, G_, "kerker", 0.7, 9.0 * w2_min);
+    data_.set_drho_g(0, 0, std::vector<std::complex<double>>(npw, std::complex<double>(0.0, 0.0)));
+    for (int it = 0; it < 300; ++it)
+    {
+        data_.set_drho_g(0, 0, model_out(data_.get_drho_g(0, 0)));
+        rho_k.mix_drho(0, data_);
+    }
+    const double residual_kerker = rho_k.get_residual(0, data_);
+    EXPECT_LT(residual_kerker, 1.0e-8);
+    const std::vector<std::complex<double>> final_in = data_.get_drho_g(0, 0);
+    for (int ig = 0; ig < npw; ++ig)
+    {
+        EXPECT_NEAR(final_in[ig].real(), target[ig].real(), 1.0e-10);
+        EXPECT_NEAR(final_in[ig].imag(), target[ig].imag(), 1.0e-10);
+    }
 }

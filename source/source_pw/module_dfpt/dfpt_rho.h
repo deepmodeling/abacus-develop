@@ -62,9 +62,21 @@ public:
  * harmonic is dropped when -q falls on a reciprocal-lattice vector (charge
  * conservation, notably at q = Gamma).
  *
- * mix_drho applies plain mixing on the q-shifted coefficients:
- *   drho_in <- drho_in + beta (drho_out - drho_in)
+ * mix_drho mixes the q-shifted coefficients:
+ *   drho_in <- drho_in + beta_g (drho_out - drho_in)
  * through Base_Mixing::Plain_Mixing (no Charge_Mixing / Charge dependency).
+ * With mix_type = "plain" beta_g = beta on every shell; with mix_type =
+ * "kerker" beta_g = beta * f_g, the Kerker screen
+ *   f_g = |G+q|^2 / (|G+q|^2 + a^2),
+ * evaluated with the same q_shifted |G+q| = |gcar + q_cart * recip| (in
+ * 1/lat0^2 units) convention as v_hartree_q, so the Coulomb-stiffness
+ * eigenvalues concentrated on the smallest shells (lambda ~ -2.2 on
+ * {111}/{200} for the diamond smoke case, where plain mixing needs
+ * beta < 2 / (1 + |lambda|)) become stabilizable at beta up to 1. The
+ * screen is applied to both drho_in and drho_out before the plain mix and
+ * the screened-out part is added back, i.e. the stored mixed density is
+ * rin + beta_g (out - in) (physical, not screen-scaled); the |G+q| = 0
+ * harmonic (f = 0) is frozen, consistent with its drop in compute_drho.
  */
 class DFPT_Rho {
 public:
@@ -74,7 +86,8 @@ public:
     void init(int nspin, int nrxx, ModulePW::PW_Basis* pw_rho,
               ModulePW::PW_Basis_K* pw_wfc,
               const ModuleBase::Matrix3& recip_matrix,
-              const std::string& mix_type, double mix_beta);
+              const std::string& mix_type, double mix_beta,
+              double kerker_a2);
     
     void compute_drho(const psi::Psi<std::complex<double>>& psi, 
                       const ModuleBase::matrix& wg, int q_idx, 
@@ -113,6 +126,10 @@ private:
     ///< reciprocal lattice matrix in 1/lat0 (UnitCell::G convention)
     ModuleBase::Matrix3 recip_matrix_;
     double mix_beta_ = 0.7;
+    ///< mixing algorithm: "plain" (beta only) or "kerker" (Kerker screen)
+    std::string mix_type_;
+    ///< Kerker screening parameter a^2 in 1/lat0^2 (same units as |G+q|^2)
+    double kerker_a2_ = 0.0;
     
     Base_Mixing::Plain_Mixing* mixer_ = nullptr;
     

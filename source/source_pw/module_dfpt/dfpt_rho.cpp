@@ -32,17 +32,20 @@ DFPT_Rho::~DFPT_Rho() {
 void DFPT_Rho::init(int nspin, int nrxx, ModulePW::PW_Basis* pw_rho,
                     ModulePW::PW_Basis_K* pw_wfc,
                     const ModuleBase::Matrix3& recip_matrix,
-                    const std::string& mix_type, double mix_beta) {
+                    const std::string& mix_type, double mix_beta,
+                    double kerker_a2) {
     nspin_ = nspin;
     nrxx_ = nrxx;
     pw_rho_ = pw_rho;
     pw_wfc_ = pw_wfc;
     recip_matrix_ = recip_matrix;
     mix_beta_ = mix_beta;
-    if (mix_type != "plain")
+    mix_type_ = mix_type;
+    kerker_a2_ = kerker_a2;
+    if (mix_type != "plain" && mix_type != "kerker")
     {
         ModuleBase::WARNING_QUIT("DFPT_Rho",
-                                 "only plain mixing is supported in the design phase");
+                                 "unsupported mix_type, expected plain or kerker");
     }
     delete mixer_;
     mixer_ = new Base_Mixing::Plain_Mixing(mix_beta_);
@@ -250,11 +253,42 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data) {
     }
     const std::vector<std::complex<double>>& rin = drho_in_[q_idx][0];
     std::vector<std::complex<double>> mixed(npw);
-    mixer_->plain_mix(mixed.data(),
-                      rin.data(),
-                      out.data(),
-                      npw,
-                      std::function<void(std::complex<double>*)>());
+    // the fractional q is needed both by the Kerker screen and by the
+    // real-space manifest below; the q-shifted |G+q| convention matches
+    // v_hartree_q (gcar + q_frac * recip, 1/lat0^2 units)
+    const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
+    if (mix_type_ == "kerker") {
+        const ModuleBase::Vector3<double> q_cart = q_frac * recip_matrix_;
+        std::vector<std::complex<double>> rin_s(npw);
+        std::vector<std::complex<double>> out_s(npw);
+        std::vector<std::complex<double>> mixed_s(npw);
+        for (int ig = 0; ig < npw; ++ig) {
+            const ModuleBase::Vector3<double> w = pw_rho_->gcar[ig] + q_cart;
+            const double w2 = w * w;
+            // |G+q| = 0 harmonic: f = 0, frozen at rin (that harmonic is
+            // dropped by compute_drho, so both inputs are zero there)
+            const double f = (w2 < 1.0e-12) ? 0.0 : w2 / (w2 + kerker_a2_);
+            rin_s[ig] = f * rin[ig];
+            out_s[ig] = f * out[ig];
+        }
+        mixer_->plain_mix(mixed_s.data(),
+                          rin_s.data(),
+                          out_s.data(),
+                          npw,
+                          std::function<void(std::complex<double>*)>());
+        // add back the screened-out part: mixed = rin + beta f (out - rin),
+        // i.e. a plain mix with the per-shell coefficient beta f_g while
+        // the stored density stays physical (not screen-scaled)
+        for (int ig = 0; ig < npw; ++ig) {
+            mixed[ig] = rin[ig] + (mixed_s[ig] - rin_s[ig]);
+        }
+    } else {
+        mixer_->plain_mix(mixed.data(),
+                          rin.data(),
+                          out.data(),
+                          npw,
+                          std::function<void(std::complex<double>*)>());
+    }
     // relative residual ||out - in|| / ||out||
     double dn2 = 0.0;
     double o2 = 0.0;
@@ -269,7 +303,6 @@ void DFPT_Rho::mix_drho(int q_idx, DFPT_PW_Data& data) {
     // rebuild the real-space manifest from the mixed coefficients (q = 0:
     // completed coefficients are the full real response; otherwise the
     // one-sided 2 Re[e^{i q r} A(r)] manifest)
-    const ModuleBase::Vector3<double> q_frac = data.get_qvec(q_idx);
     const bool q_is_zero = (std::abs(q_frac.x) < 1.0e-10
                             && std::abs(q_frac.y) < 1.0e-10
                             && std::abs(q_frac.z) < 1.0e-10);
