@@ -28,22 +28,38 @@ namespace LR
         enum SpinType { S1 = 0, S2_singlet = 1, S2_triplet = 2, S2_updown = 3, S2_gs = 4 };
         /// XCType here is to determin the method of integration from kernel to potential, not the way calculating the kernel
         enum XCType { None = 0, LDA = 1, GGA = 2, HYB_GGA = 4 };
-        /// constructor for exchange-correlation kernel
+        /// constructor building exchange-correlation kernel
         PotHxcLR(const std::string& xc_kernel, const ModulePW::PW_Basis& rho_basis,
             const UnitCell& ucell, const Charge& chg_gs/*ground state*/, const Parallel_Grid& pgrid,
-            const SpinType& st = SpinType::S1, const std::vector<std::string>& lr_init_xc_kernel = { "default" });
+            const SpinType& st = SpinType::S1, const std::vector<std::string>& lr_init_xc_kernel = { "default" },
+            const int gxc_spin = KernelXC::GxcSpin::NoGxc);
+        /// Constructor taking an already-built kernel. Several `PotHxcLR` can share the same* $f^{xc}$ arrays.
+        /// The caller is responsible for the ordering: `KernelXC` calls `XC_Functional::set_xc_type`,
+        /// and this constructor reads the resulting global `get_func_type()`, so build the kernel
+        /// immediately before the potentials that use it.
+        PotHxcLR(std::shared_ptr<const KernelXC> kernel, const std::string& xc_kernel,
+            const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const int nrxx,
+            const SpinType& st = SpinType::S1);
         ~PotHxcLR() {}
         virtual void cal_v_eff(double** rho, const UnitCell& ucell, ModuleBase::matrix& v_eff, const std::vector<int>& ispin_op = { 0,0 })  const override;
 
-        // const references
-        const KernelXC& xc_kernel_components = xc_kernel_components_;
+        /// Build a kernel that can be shared by several `PotHxcLR` (see the constructor above).
+        /// `openshell` must match what every sharing potential would have passed, i.e.
+        /// `st == SpinType::S2_updown`; `gxc_spin` must cover every combination they will ask for.
+        static std::shared_ptr<const KernelXC> make_kernel(const std::string& xc_kernel,
+            const ModulePW::PW_Basis& rho_basis, const UnitCell& ucell, const Charge& chg_gs,
+            const Parallel_Grid& pgrid, const bool openshell, const int gxc_spin,
+            const std::vector<std::string>& lr_init_xc_kernel = { "default" });
+
+        const KernelXC& xc_kernel_components() const { return *xc_kernel_components_; }
     private:
         std::unique_ptr<elecstate::PotHartree> pot_hartree_;
         /// different components of local and semi-local xc kernels:
         /// LDA: v2rho2
         /// GGA: v2rho2, v2rhosigma, v2sigma2
         /// meta-GGA: v2rho2, v2rhosigma, v2sigma2, v2rholap, v2rhotau, v2sigmalap, v2sigmatau, v2laptau, v2lap2, v2tau2
-        const KernelXC xc_kernel_components_;
+        /// To allow different potential objects sharing the same kernel.
+        const std::shared_ptr<const KernelXC> xc_kernel_components_;
         const std::string xc_kernel_;
         const SpinType spin_type_ = SpinType::S1;
         XCType xc_type_ = XCType::None;

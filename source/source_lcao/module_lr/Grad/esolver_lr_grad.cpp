@@ -255,7 +255,7 @@ std::vector<ModuleBase::matrix> ModuleESolver::ESolver_LR<T, TR>::cal_force(cons
         // the ground-state density (see `cal_force_gxc_dmtrans`). Only for local kernels.
         if (LR_Util::has_local_xc(this->xc_kernel))
         {
-            PotGradXCLR pot_grad(this->pot_hxc_gs->xc_kernel_components, this->pot_hxc_gs->get_rho_basis(),
+            PotGradXCLR pot_grad(this->pot_hxc_gs->xc_kernel_components(), this->pot_hxc_gs->get_rho_basis(),
                 (*this->ucell_), this->pot_hxc_gs->nrxx, this->spin_types[ispin] == "triplet");
             ModuleBase::matrix force_gxc_dmtrans = lr_force.cal_force_gxc_dmtrans(dm_trans_real, dm_gs, pot_grad);
             if (PARAM.inp.test_force)

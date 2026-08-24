@@ -22,7 +22,8 @@ LR::KernelXC::KernelXC(const ModulePW::PW_Basis& rho_basis,
     const int& nspin,
     const std::string& kernel_name,
     const std::vector<std::string>& lr_init_xc_kernel,
-    const bool openshell) :rho_basis_(rho_basis), openshell_(openshell)
+    const bool openshell,
+    const int gxc_spin) :rho_basis_(rho_basis), openshell_(openshell), gxc_spin_(gxc_spin)
 {
     if (!LR_Util::has_local_xc(kernel_name)) { return; }
     XC_Functional::set_xc_type(kernel_name);    // for hse, (1-alpha) and omega are set here
@@ -129,6 +130,9 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         hse_omega);
     const int& nrxx = rho_basis_.nrxx;
     const bool is_gga = std::any_of(funcs.begin(), funcs.end(), [](const xc_func_type& f) { return f.info->family == XC_FAMILY_GGA || f.info->family == XC_FAMILY_HYB_GGA; });
+    // The third-order kernel exists for exactly one purpose: building the $g^{xc}$ coefficients
+    // below. If none were requested, skip it. Openshell waits for future implementation.
+    const bool need_kxc = (this->gxc_spin_ != GxcSpin::NoGxc) && !this->openshell_;
 
     std::vector<double> rho(nspin * nrxx);    // r major / spin contigous
     // for GGA
@@ -140,7 +144,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
     //==================== XC Kernels (f_xc)=============================
     this->vrho_.resize(nspin * nrxx, 0.);
     this->v2rho2_.resize(((1 == nspin) ? 1 : 3) * nrxx, 0.);//(nrxx* ((1 == nspin) ? 1 : 3)): 00, 01, 11
-    if (PARAM.inp.cal_force)
+    if (need_kxc)
     {
         this->v3rho3_.resize(((1 == nspin) ? 1 : 4) * nrxx, 0.);//(nrxx* ((1 == nspin) ? 1 : 4)): 000, 001, 011, 111
     }
@@ -149,7 +153,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         this->vsigma_.resize(((1 == nspin) ? 1 : 3) * nrxx, 0.);//(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
         this->v2rhosigma_.resize(((1 == nspin) ? 1 : 6) * nrxx, 0.); //(nrxx*): 2 for rho * 3 for sigma: 00, 01, 02, 10, 11, 12
         this->v2sigma2_.resize(((1 == nspin) ? 1 : 6) * nrxx, 0.);   //(nrxx* ((1 == nspin) ? 1 : 6)): 00, 01, 02, 11, 12, 22
-        if (PARAM.inp.cal_force)
+        if (need_kxc)
         {
             this->v3rho2sigma_.resize(((1 == nspin) ? 1 : 9) * nrxx, 0.); //000, 001, 002, 010, 011, 012, 110, 111, 112
             this->v3rhosigma2_.resize(((1 == nspin) ? 1 : 12) * nrxx, 0.);   //000, 001, 002, 011, 012, 022, 100, 101, 102, 111, 112, 122
@@ -207,7 +211,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         case XC_FAMILY_LDA:
             xc_lda_vxc(&func, nrxx, rho.data(), vrho_tmp.data());
             xc_lda_fxc(&func, nrxx, rho.data(), v2rho2_tmp.data());
-            if (PARAM.inp.cal_force)
+            if (need_kxc)
             {
                 xc_lda_kxc(&func, nrxx, rho.data(), v3rho3_tmp.data());
             }
@@ -225,7 +229,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             cutoff_grid_data_spin2(v2rho2_tmp, sgn);
             cutoff_grid_data_spin2(v2rhosigma_tmp, sgn);
             cutoff_grid_data_spin2(v2sigma2_tmp, sgn);
-            if (PARAM.inp.cal_force)
+            if (need_kxc)
             {
                 xc_gga_kxc(&func, nrxx, rho.data(), sigma.data(),
                     v3rho3_tmp.data(),
@@ -247,7 +251,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
         add_assign_op(vsigma_tmp, this->vsigma_);
         add_assign_op(v2rhosigma_tmp, this->v2rhosigma_);
         add_assign_op(v2sigma2_tmp, this->v2sigma2_);
-        if (PARAM.inp.cal_force)
+        if (need_kxc)
         {
             add_assign_op(v3rho3_tmp, this->v3rho3_);
             add_assign_op(v3rho2sigma_tmp, this->v3rho2sigma_);
@@ -295,7 +299,7 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             // 3. the third-order kernels contracted with $\nabla\rho$, for the $g^{xc}$ term of
             // the LR gradient. These are the first three of the four vectors under the divergence; 
             // the fourth one is `v2sigma2_4drho_` computed just above.
-            if (PARAM.inp.cal_force)
+            if (need_kxc)
             {
                 const std::vector<double>& v3r2s = this->v3rho2sigma_;
                 const std::vector<double>& v3rs2 = this->v3rhosigma2_;
@@ -377,12 +381,22 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
     }
 
     // Build the $v^{(2)}$ coefficient sets. Must happen before `gradrho` is moved away below.
+    // Only the combinations the caller asked for: at nspin=2 each set costs 18 doubles per grid
+    // point for a GGA, so building an unused one is as expensive as the whole third-order kernel.
     this->nspin_ = nspin;
-    if (PARAM.inp.cal_force && !openshell_)
+    if (!openshell_ && this->gxc_spin_ != GxcSpin::NoGxc)
     {
         const std::vector<ModuleBase::Vector3<double>> no_drho;
-        this->build_gxc_coef(this->gxc_s_, /*triplet=*/false, nspin, is_gga, is_gga ? gradrho[0] : no_drho);
-        if (nspin == 2) { this->build_gxc_coef(this->gxc_t_, /*triplet=*/true, nspin, is_gga, is_gga ? gradrho[0] : no_drho); }
+        const std::vector<ModuleBase::Vector3<double>>& drho = is_gga ? gradrho[0] : no_drho;
+        // nspin=1 has no triplet: `gxc()` returns `gxc_s_` whatever is asked, so build it for any request.
+        if (nspin == 1 || (this->gxc_spin_ & GxcSpin::Singlet)) // Singlet or Bothspin
+        {
+            this->build_gxc_coef(this->gxc_s_, /*triplet=*/false, nspin, is_gga, drho);
+        }
+        if (nspin == 2 && (this->gxc_spin_ & GxcSpin::Triplet)) // Triplet or Bothspin
+        {
+            this->build_gxc_coef(this->gxc_t_, /*triplet=*/true, nspin, is_gga, drho);
+        }
     }
     if (is_gga) { this->drho_gs_ = std::move(gradrho); }
     ModuleBase::timer::end("XC_Functional", "f_xc_libxc");

@@ -109,7 +109,7 @@ namespace LR
         // `weak_ptr=shared_ptr` is automatically called in the constructor of OperatorLRHxc, so we don't need to do it manually
         // if `pot_grad` is passed into a function rather than a class, we need to write `weak_ptr=shared_ptr` explicitly
         std::shared_ptr<PotGradXCLR> pot_grad =
-            std::make_shared<PotGradXCLR>(pot_hxc_gs.lock()->xc_kernel_components, pot_hxc_gs.lock()->get_rho_basis(), 
+            std::make_shared<PotGradXCLR>(pot_hxc_gs.lock()->xc_kernel_components(), pot_hxc_gs.lock()->get_rho_basis(), 
             ucell, pot_hxc_gs.lock()->nrxx, spin_type == "triplet");
         OperatorLRHxc<T> op_gxc(nspin, naos, nocc, nvirt, psi_ks,
             DM_trans, pot_grad, ucell, orb_cutoff, gd, kv, p_occ_occ, pc, pmat,

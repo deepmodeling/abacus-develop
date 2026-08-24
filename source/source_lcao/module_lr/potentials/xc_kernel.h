@@ -3,6 +3,7 @@
 #include "source_cell/unitcell.h"
 #include "source_base/parallel_grid.h"
 #include "source_estate/module_charge/charge.h"
+#include <stdexcept>
 #define CREF(x) const std::vector<double>& x = x##_
 #define CREF3(x) const std::vector<ModuleBase::Vector3<double>>& x = x##_
 namespace LR
@@ -13,6 +14,8 @@ namespace LR
         using Tvec = std::vector<double>;
         using Tvec3 = std::vector<ModuleBase::Vector3<double>>;
     public:
+        /// Which spin combinations of the $g^{xc}$ coefficient set (`GxcCoef`) to build.
+        enum GxcSpin { NoGxc = 0, Singlet = 1, Triplet = 2, BothSpins = 3 };
         KernelXC(const ModulePW::PW_Basis& rho_basis,
             const UnitCell& ucell,
             const Charge& chg_gs,
@@ -20,7 +23,8 @@ namespace LR
             const int& nspin,
             const std::string& kernel_name,
             const std::vector<std::string>& lr_init_xc_kernel,
-            const bool openshell = false);
+            const bool openshell = false,
+            const int gxc_spin = GxcSpin::NoGxc);
         ~KernelXC() {}
 
         // const references
@@ -51,7 +55,18 @@ namespace LR
             std::vector<ModuleBase::Vector3<double>> e_s2, e_st, e_t2, e_q;  ///< under the divergence
         };
         /// nspin=1 has no singlet/triplet distinction, so it always returns the one set that is built.
-        const GxcCoef& gxc(const bool triplet) const { return (nspin_ == 1 || !triplet) ? gxc_s_ : gxc_t_; }
+        /// Throws instead of handing back an empty set when the requested combination was not
+        /// requested at construction -- silently returning zeros would look like a physics bug.
+        const GxcCoef& gxc(const bool triplet) const
+        {
+            const GxcCoef& ret = (nspin_ == 1 || !triplet) ? gxc_s_ : gxc_t_;
+            if (ret.a_s2.empty())
+            {
+                throw std::runtime_error("KernelXC: the " + std::string(triplet ? "triplet" : "singlet")
+                    + " g^xc coefficients were not built; pass the matching `GxcSpin` flag to the constructor.");
+            }
+            return ret;
+        }
 
         CREF3(v3rho2sigma_2drho); CREF3(v3rhosigma2_8drho); CREF3(v3sigma3_8drho);
         const bool& openshell = openshell_;
@@ -128,6 +143,7 @@ namespace LR
         void build_gxc_coef(GxcCoef& dst, const bool triplet, const int& nspin, const bool& is_gga,
             const std::vector<ModuleBase::Vector3<double>>& drho);
         int nspin_ = 1;
+        const int gxc_spin_ = GxcSpin::NoGxc;   ///< which `GxcCoef` sets to build, see `GxcSpin`
         // ================================== XC kernel Gradiants ====================================
         const ModulePW::PW_Basis& rho_basis_;
         const bool openshell_ = false;

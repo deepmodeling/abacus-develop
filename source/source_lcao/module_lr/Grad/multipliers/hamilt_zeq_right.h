@@ -95,7 +95,7 @@ namespace LR
             // (LR-Grad-formulas/GGA-kxc-to-v积分公式.md section 5.)
             if (LR_Util::has_local_xc(xc_kernel))
             {
-                this->pot_grad = std::make_shared<PotGradXCLR>(pot.lock()->xc_kernel_components, pot.lock()->get_rho_basis(), ucell, pot.lock()->nrxx, spin_type == "triplet");
+                this->pot_grad = std::make_shared<PotGradXCLR>(pot.lock()->xc_kernel_components(), pot.lock()->get_rho_basis(), ucell, pot.lock()->nrxx, spin_type == "triplet");
                 hamilt::Operator<T>* op_gxc = new OperatorLRHxc<T>(nspin, naos, nocc, nvirt, psi_ks,
                     *this->DM_trans, this->pot_grad, ucell, orb_cutoff, gd, kv, pX, pc, pmat,
                     { 0 }, T(-2.0), ATYPE::CC_vo, hamilt::calculation_type::lr_dmtrans_gxc);

@@ -833,16 +833,27 @@ template<typename T, typename TR>
 void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
 {
     using ST = PotHxcLR::SpinType;
+    using GX = LR::KernelXC::GxcSpin;
     this->pot.resize(nspin, nullptr);
     if (this->inp_->ri_hartree_benchmark != "none") { return; } //no need to initialize potential for Hxc kernel in the RI-benchmark routine
+
+    // The singlet and triplet potentials evaluate the *same* kernel arrays and differ only in which
+    // spin combination of them they read, so they share one `KernelXC` to save memory.
+    const bool oshell = (nspin == 2) && openshell;
+    // $g^{xc}$ (third-order) is only ever needed by the LR gradient, and only for the spin
+    // combinations that are actually going to be requested.
+    const int gxc_lr = (!PARAM.inp.cal_force || !LR_Util::has_local_xc(xc_kernel)) ? GX::NoGxc
+        : ((nspin == 1) ? GX::Singlet : GX::BothSpins);
+    std::shared_ptr<const LR::KernelXC> kernel_lr = PotHxcLR::make_kernel(
+        xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, oshell, gxc_lr, this->inp_->lr_init_xc_kernel);
     switch (nspin)
     {
     case 1:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, ST::S1, this->inp_->lr_init_xc_kernel);
+        this->pot[0] = std::make_shared<PotHxcLR>(kernel_lr, xc_kernel, *this->pw_rho, *this->ucell_, chg_gs.nrxx, ST::S1);
         break;
     case 2:
-        this->pot[0] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_singlet, this->inp_->lr_init_xc_kernel);
-        this->pot[1] = std::make_shared<PotHxcLR>(xc_kernel, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, openshell ? ST::S2_updown : ST::S2_triplet, this->inp_->lr_init_xc_kernel);
+        this->pot[0] = std::make_shared<PotHxcLR>(kernel_lr, xc_kernel, *this->pw_rho, *this->ucell_, chg_gs.nrxx, oshell ? ST::S2_updown : ST::S2_singlet);
+        this->pot[1] = std::make_shared<PotHxcLR>(kernel_lr, xc_kernel, *this->pw_rho, *this->ucell_, chg_gs.nrxx, oshell ? ST::S2_updown : ST::S2_triplet);
         break;
     default:
         throw std::invalid_argument("ESolver_LR: nspin must be 1 or 2");
@@ -857,8 +868,18 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
         // while the S1 integrand indexes them as if there were 1 -- it does not even read a
         // consistent spin combination. Use `ST::S2_gs` there, which is exactly half of S2_singlet,
         // matching the `K_Hxc(singlet) = 2 * pot_hxc_gs` convention of the gradient operators.
-        const ST st_gs = (nspin == 1) ? ST::S1 : (openshell ? ST::S2_updown : ST::S2_gs);
-        this->pot_hxc_gs = std::make_shared<LR::PotHxcLR>(xc_kernel_gs, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, st_gs, this->inp_->lr_init_xc_kernel);
+        const ST st_gs = (nspin == 1) ? ST::S1 : (oshell ? ST::S2_updown : ST::S2_gs);
+        // `pot_hxc_gs` supplies the $g^{xc}$ of both $W^c$ and the force term, for either spin.
+        // Those two call sites are guarded by `has_local_xc(xc_kernel)` -- the *LR* kernel name --
+        // so an `xc_kernel rpa` run never touches them however local `dft_functional` is.
+        const int gxc_gs = (!LR_Util::has_local_xc(xc_kernel) || !LR_Util::has_local_xc(xc_kernel_gs)) ? GX::NoGxc
+            : ((nspin == 1) ? GX::Singlet : GX::BothSpins);
+        // When the LR kernel *is* the ground-state functional -- the usual TDDFT case -- the two
+        // `KernelXC` are bit-for-bit identical, so reuse the one just built.
+        const bool share_lr = (xc_kernel_gs == xc_kernel) && ((gxc_lr & gxc_gs) == gxc_gs);
+        std::shared_ptr<const LR::KernelXC> kernel_gs = share_lr ? kernel_lr
+            : PotHxcLR::make_kernel(xc_kernel_gs, *this->pw_rho, *this->ucell_, chg_gs, Pgrid, oshell, gxc_gs, this->inp_->lr_init_xc_kernel);
+        this->pot_hxc_gs = std::make_shared<LR::PotHxcLR>(kernel_gs, xc_kernel_gs, *this->pw_rho, *this->ucell_, chg_gs.nrxx, st_gs);
     }
 }
 
