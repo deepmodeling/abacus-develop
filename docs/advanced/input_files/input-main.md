@@ -1092,7 +1092,8 @@
 ### pw_diag_rr_step
 
 - **Type**: Integer
-- **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver) == ppcg*- **Description**: Only useful when you use ks_solver = ppcg. It controls how often (in subspace iterations) H and S are re-applied to reset the accumulated rounding drift after the Rayleigh-Ritz rotation. A larger value reduces the number of H/S applications and thus the wall time without changing the iteration count in well-conditioned cases; a smaller value is more robust against rounding drift in ill-conditioned problems.
+- **Availability**: *[`basis_type`](#basis_type)==pw and [`ks_solver`](#ks_solver)==ppcg*
+- **Description**: Only useful when you use ks_solver = ppcg. It controls how often (in subspace iterations) H and S are re-applied to reset the accumulated rounding drift after the Rayleigh-Ritz rotation. A larger value reduces the number of H/S applications and thus the wall time without changing the iteration count in well-conditioned cases; a smaller value is more robust against rounding drift in ill-conditioned problems.
 - **Default**: 16
 
 ### diago_cg_prec
