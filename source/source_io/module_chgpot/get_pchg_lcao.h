@@ -17,56 +17,49 @@
 class Get_pchg_lcao
 {
   public:
-    Get_pchg_lcao(psi::Psi<double>* psi_gamma_in, const Parallel_Orbitals* ParaV_in);
-    Get_pchg_lcao(psi::Psi<std::complex<double>>* psi_k_in, const Parallel_Orbitals* ParaV_in);
-
-    ~Get_pchg_lcao();
+    Get_pchg_lcao(const psi::Psi<double>& psi, const Parallel_Orbitals& para_orb, int nspin, double nelec);
+    Get_pchg_lcao(const psi::Psi<std::complex<double>>& psi, const Parallel_Orbitals& para_orb, int nspin, double nelec);
 
     // For gamma_only
-    void begin(double** rho,
-               const ModuleBase::matrix& wg,
-               const int rhopw_nrxx,
-               const std::vector<int>& out_pchg,
-               const int nbands,
-               const double nelec,
-               const int nspin,
-               const UnitCell* ucell_in,
-               const Parallel_Grid& pgrid,
-               const Grid_Driver* GridD_in,
-               const K_Vectors& kv,
-               const std::string& global_out_dir,
-               std::ofstream& ofs_running);
+    void begin_gamma(double* const* rho,
+                     const ModuleBase::matrix& wg,
+                     const UnitCell& ucell,
+                     const Parallel_Grid& pgrid,
+                     const Grid_Driver& grid_driver,
+                     const std::vector<int>& out_pchg,
+                     const std::string& global_out_dir,
+                     std::ofstream& ofs_running);
 
     // For multi-k
-    void begin(double** rho,
-               std::complex<double>** rhog,
-               const ModuleBase::matrix& wg,
-               const ModulePW::PW_Basis* rho_pw,
-               const int rhopw_nrxx,
-               const std::vector<int>& out_pchg,
-               const int nbands,
-               const double nelec,
-               const int nspin,
-               UnitCell* ucell_in,
-               const Parallel_Grid& pgrid,
-               const Grid_Driver* GridD_in,
-               const K_Vectors& kv,
-               const std::string& global_out_dir,
-               std::ofstream& ofs_running,
-               const bool if_separate_k,
-               const int chr_ngmc);
+    void begin_k(double* const* rho,
+                 std::complex<double>* const* rhog,
+                 const ModuleBase::matrix& wg,
+                 const ModulePW::PW_Basis& rho_pw,
+                 UnitCell& ucell,
+                 const Parallel_Grid& pgrid,
+                 const Grid_Driver& grid_driver,
+                 const K_Vectors& kv,
+                 const std::vector<int>& out_pchg,
+                 bool if_separate_k,
+                 const std::string& global_out_dir,
+                 std::ofstream& ofs_running);
 
   private:
+    const psi::Psi<double>* const psi_gamma_;
+    const psi::Psi<std::complex<double>>* const psi_k_;
+    const Parallel_Orbitals& para_orb_;
+    const int nspin_;
+    const int nbands_;
+    const int fermi_band_;
+
     void prepare_get_pchg(std::ofstream& ofs_running);
 
     /**
-     * @brief Set this->bands_picked_ according to the mode, and process an error if the mode is not recognized.
+     * @brief Build the selected-band mask and reject invalid selectors.
      *
      * @param out_pchg INPUT parameter out_pchg, vector.
-     * @param nbands INPUT parameter nbands.
-     * @param fermi_band Calculated Fermi band.
      */
-    void select_bands(const std::vector<int>& out_pchg, const int nbands, const int fermi_band);
+    std::vector<int> select_bands(const std::vector<int>& out_pchg) const;
 
 #ifdef __MPI
     /**
@@ -76,32 +69,18 @@ class Get_pchg_lcao
      * It performs a matrix multiplication to produce the density matrix.
      *
      * @param ib Band index.
-     * @param nspin Number of spin channels.
-     * @param nelec Total number of electrons.
      * @param wg Weight matrix for bands and spins (k-points).
      * @param DM Density matrix to be calculated.
-     * @param kv K-vectors.
      */
-    void idmatrix(const int& ib,
-                  const int nspin,
-                  const double& nelec,
-                  const ModuleBase::matrix& wg,
-                  elecstate::DensityMatrix<double, double>& DM,
-                  const K_Vectors& kv);
+    void idmatrix(const int& ib, const ModuleBase::matrix& wg, elecstate::DensityMatrix<double, double>& DM);
 
     // For multi-k
     void idmatrix(const int& ib,
-                  const int nspin,
-                  const double& nelec,
                   const ModuleBase::matrix& wg,
                   elecstate::DensityMatrix<std::complex<double>, double>& DM,
                   const K_Vectors& kv,
-                  const bool if_separate_k);
+                  bool if_separate_k);
 
 #endif
-    std::vector<int> bands_picked_;
-    psi::Psi<double>* psi_gamma = nullptr;
-    psi::Psi<std::complex<double>>* psi_k = nullptr;
-    const Parallel_Orbitals* ParaV = nullptr;
 };
 #endif // GET_PCHG_LCAO_H

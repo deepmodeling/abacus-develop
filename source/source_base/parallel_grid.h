@@ -41,6 +41,7 @@ class Parallel_Grid
     int get_nx() const { return ncx; }
     int get_ny() const { return ncy; }
     int get_nz() const { return ncz; }
+    int get_nrxx() const { return nrxx; }
 
     private:
 

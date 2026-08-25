@@ -184,82 +184,59 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     if (cal_type == "get_pchg")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
-        Get_pchg_lcao get_pchg(this->psi, &(this->pv));
+        Get_pchg_lcao get_pchg(*this->psi, this->pv, this->inp_->nspin, this->inp_->nelec);
         if (gamma_only_local)
         {
-            get_pchg.begin(this->chr.rho,
-                           this->pelec->wg,
-                           this->pw_rhod->nrxx,
-                           this->inp_->out_pchg,
-                           this->inp_->nbands,
-                           this->inp_->nelec,
-                           this->inp_->nspin,
-                           &ucell,
-                           this->Pgrid,
-                           &this->gd,
-                           this->kv,
-                           global_out_dir,
-                           GlobalV::ofs_running);
+            get_pchg.begin_gamma(this->chr.rho,
+                                 this->pelec->wg,
+                                 ucell,
+                                 this->Pgrid,
+                                 this->gd,
+                                 this->inp_->out_pchg,
+                                 global_out_dir,
+                                 GlobalV::ofs_running);
         }
         else
         {
-            get_pchg.begin(this->chr.rho,
-                           this->chr.rhog,
-                           this->pelec->wg,
-                           this->pw_rhod,
-                           this->pw_rhod->nrxx,
-                           this->inp_->out_pchg,
-                           this->inp_->nbands,
-                           this->inp_->nelec,
-                           this->inp_->nspin,
-                           &ucell,
-                           this->Pgrid,
-                           &this->gd,
-                           this->kv,
-                           global_out_dir,
-                           GlobalV::ofs_running,
-                           this->inp_->if_separate_k,
-                           this->chr.ngmc);
+            get_pchg.begin_k(this->chr.rho,
+                             this->chr.rhog,
+                             this->pelec->wg,
+                             *this->pw_rhod,
+                             ucell,
+                             this->Pgrid,
+                             this->gd,
+                             this->kv,
+                             this->inp_->out_pchg,
+                             this->inp_->if_separate_k,
+                             global_out_dir,
+                             GlobalV::ofs_running);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting partial charge");
     }
     else if (cal_type == "get_wf")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
-        Get_wf_lcao get_wf(this->pelec);
+        Get_wf_lcao get_wf(*this->psi, this->pv, this->inp_->nspin, this->inp_->nelec);
         if (gamma_only_local)
         {
-            get_wf.begin(ucell,
-                         this->psi,
-                         this->pw_wfc,
-                         this->Pgrid,
-                         this->pv,
-                         this->kv,
-                         this->inp_->nelec,
-                         this->inp_->out_wfc_norm,
-                         this->inp_->out_wfc_re_im,
-                         this->inp_->nbands,
-                         this->inp_->nspin,
-                         PARAM.globalv.nlocal,
-                         global_out_dir,
-                         GlobalV::ofs_running);
+            get_wf.begin_gamma(ucell,
+                               this->Pgrid,
+                               this->inp_->out_wfc_norm,
+                               this->inp_->out_wfc_re_im,
+                               global_out_dir,
+                               GlobalV::ofs_running);
         }
         else
         {
-            get_wf.begin(ucell,
-                         this->psi,
-                         this->pw_wfc,
-                         this->Pgrid,
-                         this->pv,
-                         this->kv,
-                         this->inp_->nelec,
-                         this->inp_->out_wfc_norm,
-                         this->inp_->out_wfc_re_im,
-                         this->inp_->nbands,
-                         this->inp_->nspin,
-                         PARAM.globalv.nlocal,
-                         global_out_dir,
-                         GlobalV::ofs_running);
+            get_wf.begin_k(this->chr.rho,
+                           *this->pw_wfc,
+                           ucell,
+                           this->Pgrid,
+                           this->kv,
+                           this->inp_->out_wfc_norm,
+                           this->inp_->out_wfc_re_im,
+                           global_out_dir,
+                           GlobalV::ofs_running);
         }
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "getting wave function");
     }
