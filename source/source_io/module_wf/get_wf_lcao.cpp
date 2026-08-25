@@ -4,7 +4,6 @@
 #include "source_hamilt/module_gint/gint_env_gamma.h"
 #include "source_hamilt/module_gint/gint_env_k.h"
 #include "source_io/module_output/cube_io.h"
-#include "source_io/module_wf/write_wfc_pw.h"
 
 Get_wf_lcao::Get_wf_lcao(const elecstate::ElecState* pes)
 {
@@ -21,7 +20,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                         const ModulePW::PW_Basis_K* pw_wfc,
                         const Parallel_Grid& pgrid,
                         const Parallel_Orbitals& para_orb,
-                        const int& out_wfc_pw,
                         const K_Vectors& kv,
                         const double nelec,
                         const std::vector<int>& out_wfc_norm,
@@ -44,7 +42,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
 
-    // if (out_wfc_pw || out_wfc_r)
+    // Reciprocal-space storage used by the current real/imaginary Cube path.
     psi_g.resize(nspin, nbands, kv.ngk[0]);
 
     // Set this->bands_picked_
@@ -136,26 +134,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
         }
     }
 
-    const int istep = -1; // -1 means ionic iteration number will not appear in file name
-    const int iter = -1;  // -1 means electronic iteration number will not appear in file name
-    ModuleIO::write_wfc_pw(istep,
-                           iter,
-                           GlobalV::KPAR,
-                           GlobalV::MY_POOL,
-                           GlobalV::MY_RANK,
-                           nbands,
-                           nspin,
-                           PARAM.globalv.npol,
-                           GlobalV::RANK_IN_POOL,
-                           GlobalV::NPROC_IN_POOL,
-                           out_wfc_pw,
-                           PARAM.inp.ecutwfc,
-                           global_out_dir,
-                           psi_g,
-                           kv,
-                           pw_wfc,
-                           ofs_running);
-
     return;
 }
 
@@ -165,7 +143,6 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                         const ModulePW::PW_Basis_K* pw_wfc,
                         const Parallel_Grid& pgrid,
                         const Parallel_Orbitals& para_orb,
-                        const int& out_wfc_pw,
                         const K_Vectors& kv,
                         const double nelec,
                         const std::vector<int>& out_wfc_norm,
@@ -189,7 +166,7 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
     // for pw_wfc in G space
     psi::Psi<std::complex<double>> psi_g;
 
-    // if (out_wfc_pw || out_wf_r)
+    // Reciprocal-space storage used by the current real/imaginary Cube path.
     psi_g.resize(nks, nbands, pw_wfc->npwk_max);
 
     // Set this->bands_picked_
@@ -256,32 +233,12 @@ void Get_wf_lcao::begin(const UnitCell& ucell,
                                               false,
                                               false);
 
-                // if (out_wfc_pw || out_wf_r)
+                // Prepare the reciprocal-space buffer for real/imaginary Cube output.
                 psi_g.fix_k(ik);
                 this->set_pw_wfc(pw_wfc, ik, ib, nspin, pes_->charge->rho, psi_g);
             }
         }
     }
-
-    const int istep = -1; // -1 means ionic iteration number will not appear in file name
-    const int iter = -1;  // -1 means electronic iteration number will not appear in file name
-    ModuleIO::write_wfc_pw(istep,
-                           iter,
-                           GlobalV::KPAR,
-                           GlobalV::MY_POOL,
-                           GlobalV::MY_RANK,
-                           nbands,
-                           nspin,
-                           PARAM.globalv.npol,
-                           GlobalV::RANK_IN_POOL,
-                           GlobalV::NPROC_IN_POOL,
-                           out_wfc_pw,
-                           PARAM.inp.ecutwfc,
-                           global_out_dir,
-                           psi_g,
-                           kv,
-                           pw_wfc,
-                           ofs_running);
 
     // Set this->bands_picked_
     this->select_bands(out_wfc_re_im, nbands, fermi_band);
