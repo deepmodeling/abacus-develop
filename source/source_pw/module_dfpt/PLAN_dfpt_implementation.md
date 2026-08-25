@@ -578,7 +578,22 @@
         - 验证：ctest 12/12（pw_data_test 顶替 irrep_data_test 槽位）；
           4 串行套件 pert 8/phon 12/q0 6/rho 8；端到端 L 点默认配置
           冒烟逐位复现参考频率（见提交）
-    - [ ] 插桩清理评审（B0/B3 后统一）：PTCHK/DYNCHK(+2/4/XB)/MDBG/JPROBE/
-      VKBCHK/VKBEL/OCCCHK/XB/ZDBG/BPT/NOSC/D2MID/DFPT_MIX_BETA/drho dump
-      （JPROBE 留 B3 验收后删）
+    - [x] 插桩清理评审（B0/B3 后统一，2026-08-25 完成）
+        - 已删（验收全毕的设计期仪器）：PTCHK（规范检查 + 8 带 term2 交叉 +
+          HF/de_code 通道定位）、DYNCHK 全家（term2/d2gate/d2k/d2/ion/ele/
+          elei/DYNCHK4 双 zheev 对照）、MDBG（drho_iters 二进制倾倒 ×2）、
+          JPROBE+JPROBE_NOXC（B3 验收后按计划删）、OCCCHK（含 dbg_miss 标签
+          分析与 empty_kq_/empty_kq_eig_ 伴生存储）、XB、BPT（含 want_empty
+          投影子扩张）、NOSC、XCS/NOXC（v_sc 组装简化为无旋钮路径）、DKCHK、
+          YCHK、D2MID（include_middle 收编为字面 true，q 无关性已定案）、
+          ALEG+PTCROSS（aleg_crosscheck 方法整体删除）、STARDBG、Q0DBG、
+          drho_dfpt.dat dump；连带清理死累加器（d2sum_loc/nl、cross_k）与
+          失用途头文件（pw.cpp 的 <fstream>/<set>）
+        - 保留：DFPT_DEBUG（solve 循环残差轨迹 + posresp 追踪，B3/B4 验收
+          仪器，日常收敛诊断）；DFPT_MIX_BETA/DFPT_MIX_TYPE/DFPT_KERKER_A2
+          （B3 设计期校准旋钮，init 注释已文档化）
+        - 验证：ctest 12/12、串行 pert 8/phon 12/q0 6/rho 8；默认路径行为
+          不变（删除项全部 env 门控默认关；include_middle/want_empty 默认值
+          与收编值一致）——端到端 L 点默认配置冒烟逐位复现参考频率
+          （100.487828/100.487829/380.413847/402.109158/485.931988×2）
 - [ ] A irrep 分解（保留接口，工程验证完成后立项）

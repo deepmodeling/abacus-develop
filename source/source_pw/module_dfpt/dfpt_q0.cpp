@@ -69,24 +69,7 @@ void DFPT_Q0::build_stars(int nk) {
         // stored list is already the full mesh, identity members only
         return;
     }
-    const bool stardbg = getenv("DFPT_STARDBG") != nullptr;
     const int nat = ucell_->nat;
-    if (stardbg) {
-        std::cout << "STARDBG nrotk=" << symm.nrotk << " nat=" << nat << std::endl;
-        for (int j = 0; j < symm.nrotk; ++j) {
-            std::cout << "STARDBG j=" << j << " kg=[" << symm.kgmatrix[j].e11 << ","
-                      << symm.kgmatrix[j].e12 << "," << symm.kgmatrix[j].e13 << ";"
-                      << symm.kgmatrix[j].e21 << "," << symm.kgmatrix[j].e22 << ","
-                      << symm.kgmatrix[j].e23 << ";" << symm.kgmatrix[j].e31 << ","
-                      << symm.kgmatrix[j].e32 << "," << symm.kgmatrix[j].e33 << "] g=["
-                      << symm.gmatrix[j].e11 << "," << symm.gmatrix[j].e12 << ","
-                      << symm.gmatrix[j].e13 << ";" << symm.gmatrix[j].e21 << ","
-                      << symm.gmatrix[j].e22 << "," << symm.gmatrix[j].e23 << ";"
-                      << symm.gmatrix[j].e31 << "," << symm.gmatrix[j].e32 << ","
-                      << symm.gmatrix[j].e33 << "] gt=(" << symm.gtrans[j].x << ","
-                      << symm.gtrans[j].y << "," << symm.gtrans[j].z << ")" << std::endl;
-        }
-    }
     std::vector<ModuleBase::Vector3<double>> kfolds;
     for (int ik = 0; ik < nk; ++ik) {
         kfolds.clear();
@@ -126,14 +109,6 @@ void DFPT_Q0::build_stars(int nk) {
             mem.cart = ModuleBase::Matrix3(krow.e11, krow.e21, krow.e31,
                                            krow.e12, krow.e22, krow.e32,
                                            krow.e13, krow.e23, krow.e33);
-            if (stardbg) {
-                std::cout << "STARDBG ik=" << ik << " j=" << j << " kp=(" << kp.x
-                          << "," << kp.y << "," << kp.z << ") cart=[" << mem.cart.e11
-                          << "," << mem.cart.e12 << "," << mem.cart.e13 << ";"
-                          << mem.cart.e21 << "," << mem.cart.e22 << "," << mem.cart.e23
-                          << ";" << mem.cart.e31 << "," << mem.cart.e32 << ","
-                          << mem.cart.e33 << "]" << std::endl;
-            }
             // atom image under the paired direct-space operation
             mem.atom_map.assign(nat, -1);
             bool ok = true;
@@ -168,13 +143,6 @@ void DFPT_Q0::build_stars(int nk) {
                 // stars for every k (the unreduced-sum behavior)
                 stars_.assign(nk, std::vector<StarMember>(1, StarMember()));
                 return;
-            }
-            if (stardbg) {
-                std::cout << "STARDBG ik=" << ik << " j=" << j << " amap=";
-                for (int iat2 = 0; iat2 < nat; ++iat2) {
-                    std::cout << mem.atom_map[iat2] << (iat2 + 1 < nat ? "," : "");
-                }
-                std::cout << std::endl;
             }
             stars_[ik].push_back(mem);
         }
@@ -338,26 +306,6 @@ void DFPT_Q0::pos_matrix(const psi::Psi<std::complex<double>>& psi,
                 for (int d = 0; d < 3; ++d) {
                     r_mat[ik][m][n][d] = std::complex<double>(0.0, -1.0) * p_mat[m][n][d]
                                           / (tpiba * de);
-                }
-            }
-        }
-        if (getenv("DFPT_Q0DBG") != nullptr) {
-            std::cout << "Q0DBG ik=" << ik << " tpiba=" << tpiba
-                      << " npwk=" << npwk << std::endl;
-            for (int m = 0; m < nbands; ++m) {
-                for (int n = 0; n < nbands; ++n) {
-                    if (m == n) {
-                        continue;
-                    }
-                    const double de = eig(ik, m) - eig(ik, n);
-                    double p2 = 0.0;
-                    for (int d = 0; d < 3; ++d) {
-                        p2 += std::norm(p_mat[m][n][d]);
-                    }
-                    std::cout << "Q0DBG p m=" << m << " n=" << n
-                              << " de=" << de << " px=" << p_mat[m][n][0]
-                              << " py=" << p_mat[m][n][1]
-                              << " pz=" << p_mat[m][n][2] << std::endl;
                 }
             }
         }

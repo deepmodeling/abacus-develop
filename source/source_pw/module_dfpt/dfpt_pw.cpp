@@ -17,7 +17,6 @@
 #include "dfpt_hamilt_shift.h"
 #include "dfpt_kq_basis.h"
 #include "source_base/constants.h"
-#include <fstream>
 #include "source_base/global_function.h"
 #include <sstream>
 #include "source_cell/qlist.h"
@@ -28,7 +27,6 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
-#include <set>
 #include <complex>
 #include <vector>
 
@@ -68,9 +66,6 @@ public:
     ///< occupied states at k+q on the k+q G list, [ik][occ m][igl];
     /// rebuilt per q (they depend on q and k only)
     std::vector<std::vector<std::vector<std::complex<double>>>> occ_kq_;
-    ///< BPT debug: empty states at k+q on the k+q G list + their eigenvalues
-    std::vector<std::vector<std::vector<std::complex<double>>>> empty_kq_;
-    std::vector<std::vector<double>> empty_kq_eig_;
     ///< remembers the (q_idx, ik) the shifted operator was last cached at
     int last_q_ = -1;
     int last_ik_ = -1;
@@ -99,14 +94,8 @@ public:
 
     /// E-field SCF response dpsi^E,a of the q = 0 mesh (QE solve_e +
     /// dfpt_kernel form: fixed point on the rhs -(Y^a + dV_sc^E,a|psi>)
-    /// with the screening assembly of solve_displacement); design-phase
-    /// probe behind DFPT_ALEG for the zstar_eu cross-check
+    /// with the screening assembly of solve_displacement)
     void solve_efield_resp(int q_idx);
-
-    /// zstar_eu cross-check of the screened Born charges (dpsi^E,scf
-    /// contracted with the bare dV^kappa|psi> legs) against the zstar_ue
-    /// form compute_born produced (DFPT_ALEG probe)
-    void aleg_crosscheck(int q_idx);
 };
 
 DFPT_PW::DFPT_PW() : pimpl_(new Impl()) {}
@@ -234,11 +223,6 @@ bool DFPT_PW::get_u_active() const {
 void DFPT_PW::Impl::build_occ_kq(int q_idx) {
     const int nk = pw_wfc_->nks;
     occ_kq_.assign(nk, std::vector<std::vector<std::complex<double>>>());
-    // BPT debug companion: empty states at k+q on the same kq ball, for the
-    // independent perturbation-theory cross-check of the Sternheimer solve
-    // (DFPT_BPT); eig pairs are (eig_(ikq, m), eig_(ik, n))
-    empty_kq_.assign(nk, std::vector<std::vector<std::complex<double>>>());
-    empty_kq_eig_.assign(nk, std::vector<double>());
     ikq_of_k_.assign(nk, -1);
     const ModuleBase::Vector3<double> q_frac = data_.get_qvec(q_idx);
     const ModuleBase::Vector3<double> q_cart = q_frac * ucell_->G;
@@ -312,12 +296,8 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx) {
         }
 
         const int nbands = gs_psi_.get_nbands();
-        const bool want_empty = (getenv("DFPT_BPT") != nullptr);
-        int dbg_miss = 0;
-        int dbg_tot = 0;
         for (int m = 0; m < nbands; ++m) {
-            const bool occ_m = dfpt_band_occupied(wg_, ikq, m);
-            if (!occ_m && !want_empty) {
+            if (!dfpt_band_occupied(wg_, ikq, m)) {
                 continue; // empty at k+q: outside the P_c projector
             }
             std::vector<std::complex<double>> state(npw_kq, std::complex<double>(0.0, 0.0));
@@ -330,96 +310,9 @@ void DFPT_PW::Impl::build_occ_kq(int q_idx) {
                 const auto it = jgl_of_n.find(key);
                 if (it != jgl_of_n.end()) {
                     state[igl] = gs_psi_(ikq, m, it->second);
-                } else {
-                    ++dbg_miss;
                 }
-                ++dbg_tot;
             }
-            if (occ_m) {
-                occ_kq_[ik].push_back(std::move(state));
-            } else {
-                empty_kq_[ik].push_back(std::move(state));
-                empty_kq_eig_[ik].push_back(eig_(ikq, m));
-            }
-        }
-        if (getenv("DFPT_DEBUG") != nullptr) {
-            std::cout << "OCCCHK ik=" << ik << " ikq=" << ikq
-                      << " dn=(" << dn_i[0] << "," << dn_i[1] << "," << dn_i[2] << ")"
-                      << " npw_kq=" << npw_kq
-                      << " npwk_ikq=" << pw_wfc_->npwk[ikq]
-                      << " miss=" << dbg_miss << "/" << dbg_tot << std::endl;
-            if (dbg_miss > 0 && npw_kq > 0) {
-                std::set<std::vector<int>> kq_labels;
-                for (int igl = 0; igl < npw_kq; ++igl) {
-                    const ModuleBase::Vector3<double> gf = kq.get_gcar(igl) * ginv;
-                    kq_labels.insert({static_cast<int>(std::round(gf.x)),
-                                      static_cast<int>(std::round(gf.y)),
-                                      static_cast<int>(std::round(gf.z))});
-                }
-                std::set<std::vector<int>> gs_labels;
-                std::set<int> gs_igs;
-                int ig_max = -1;
-                for (int jgl = 0; jgl < pw_wfc_->npwk[ikq]; ++jgl) {
-                    const int ig = pw_wfc_->getigl2ig(ikq, jgl);
-                    gs_igs.insert(ig);
-                    if (ig > ig_max) {
-                        ig_max = ig;
-                    }
-                    const ModuleBase::Vector3<double> gf
-                        = pw_wfc_->getgcar(ikq, jgl) * ginv;
-                    gs_labels.insert({static_cast<int>(std::round(gf.x)),
-                                      static_cast<int>(std::round(gf.y)),
-                                      static_cast<int>(std::round(gf.z))});
-                }
-                std::cout << "OCCCHK   gs_unique_ig=" << gs_igs.size()
-                          << "/" << pw_wfc_->npwk[ikq]
-                          << " ig_max=" << ig_max
-                          << " npw=" << pw_wfc_->npw
-                          << " npwk_max=" << pw_wfc_->npwk_max
-                          << std::endl;
-                int only_kq = 0;
-                std::cout << "OCCCHK   labels kq=" << kq_labels.size()
-                          << " gs=" << gs_labels.size();
-                for (const auto& k : kq_labels) {
-                    if (gs_labels.count(k) == 0) {
-                        ++only_kq;
-                    }
-                }
-                std::cout << " only_kq=" << only_kq << std::endl;
-                int shown = 0;
-                for (const auto& k : kq_labels) {
-                    if (gs_labels.count(k) == 0) {
-                        std::cout << "OCCCHK   kq-only (" << k[0] << "," << k[1] << ","
-                                  << k[2] << ")";
-                        if (++shown >= 6) {
-                            break;
-                        }
-                    }
-                }
-                if (shown > 0) {
-                    std::cout << std::endl;
-                }
-                shown = 0;
-                for (const auto& k : gs_labels) {
-                    if (kq_labels.count(k) == 0) {
-                        std::cout << "OCCCHK   gs-only (" << k[0] << "," << k[1] << ","
-                                  << k[2] << ")";
-                        if (++shown >= 6) {
-                            break;
-                        }
-                    }
-                }
-                if (shown > 0) {
-                    std::cout << std::endl;
-                }
-                const ModuleBase::Vector3<double> gf0 = kq.get_gcar(0) * ginv;
-                std::cout << "OCCCHK   kq key0 gf=(" << gf0.x << "," << gf0.y << ","
-                          << gf0.z << ")";
-                const ModuleBase::Vector3<double> gj0
-                    = pw_wfc_->getgcar(ikq, 0) * ginv;
-                std::cout << "  ikq gf0=(" << gj0.x << "," << gj0.y << "," << gj0.z << ")"
-                          << std::endl;
-            }
+            occ_kq_[ik].push_back(std::move(state));
         }
     }
     last_q_ = q_idx;
@@ -446,11 +339,6 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
 
     const int lin_max = data_.get_max_iter();
     const double lin_thr = data_.get_conv_thr();
-    // design-phase homogeneous probe: inject a pure A1 trial density on the
-    // {200}/{111} shells, drop the external perturbation from the rhs, run
-    // one iteration and dump the linear map output M * trial
-    const bool jprobe = (getenv("DFPT_JPROBE") != nullptr);
-    const bool jprobe_noxc = (getenv("DFPT_JPROBE_NOXC") != nullptr);
 
     bool converged = false;
     double residual = 0.0;
@@ -463,32 +351,6 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
         // local to this solve: the DFPT_PW_Data ledger is the per-(q,irrep)
         // outer-pass record kept by run(), and the final residual is
         // returned to the caller for that aggregation (B4)
-
-        if (jprobe && iter == 0) {
-            std::vector<std::complex<double>> trial(pw_rho_->npw,
-                                                    std::complex<double>(0.0, 0.0));
-            double nrm = 0.0;
-            for (int ig = 0; ig < pw_rho_->npw; ++ig) {
-                const ModuleBase::Vector3<double> gc = pw_rho_->gcar[ig];
-                const double g2 = gc * gc;
-                const int nax = (std::abs(gc.x) > 1.0e-6)
-                                + (std::abs(gc.y) > 1.0e-6)
-                                + (std::abs(gc.z) > 1.0e-6);
-                if (std::abs(g2 - 4.0) < 1.0e-9 && nax == 1) {
-                    trial[ig] = std::complex<double>(1.0, 0.0);
-                    nrm += 1.0;
-                } else if (std::abs(g2 - 3.0) < 1.0e-9 && nax == 3) {
-                    const double sgn = (gc.x * gc.y * gc.z > 0.0) ? 1.0 : -1.0;
-                    trial[ig] = std::complex<double>(0.6218, -0.6218 * sgn);
-                    nrm += 2.0 * 0.6218 * 0.6218;
-                }
-            }
-            const double inv = 1.0 / std::sqrt(nrm);
-            for (size_t i = 0; i < trial.size(); ++i) {
-                trial[i] *= inv;
-            }
-            data_.set_drho_g(q_idx, 0, trial);
-        }
 
         // ---- 1. screened response potential from the mixed input density:
         // q-shifted complex periodic amplitude on the shared grid, i.e. the
@@ -504,39 +366,14 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
             for (int ir = 0; ir < nrxx; ++ir) {
                 v_sc_r[ir] = vh_r[ir];
             }
-            const bool noxc = (getenv("DFPT_NOXC") != nullptr);
-            double xcs = 1.0;
-            if (getenv("DFPT_XCS") != nullptr) {
-                xcs = std::atof(getenv("DFPT_XCS"));
-            }
-            if (xc_ != nullptr && !jprobe_noxc && !noxc) {
+            if (xc_ != nullptr) {
                 std::vector<std::complex<double>> a_r(nrxx);
                 pw_rho_->recip2real(drho_in_g.data(), a_r.data());
                 std::vector<std::complex<double>> b_r;
                 xc_->apply(a_r, b_r);
                 if (static_cast<int>(b_r.size()) == nrxx) {
                     for (int ir = 0; ir < nrxx; ++ir) {
-                        v_sc_r[ir] += xcs * b_r[ir];
-                    }
-                }
-                if (getenv("DFPT_MDBG") != nullptr) {
-                    static int vdbg_cnt = 0;
-                    std::ofstream vf("/tmp/opencode/drho_iters/vsc_"
-                                     + std::to_string(vdbg_cnt++) + ".bin",
-                                     std::ios::binary);
-                    for (int ir = 0; ir < nrxx; ++ir) {
-                        vf.write(reinterpret_cast<const char*>(&v_sc_r[ir]),
-                                 sizeof(std::complex<double>));
-                    }
-                    // channel split: rebuild each part for the same input
-                    std::vector<std::complex<double>> vh_only(nrxx);
-                    pw_rho_->recip2real(dv_ha_g.data(), vh_only.data());
-                    std::ofstream hf("/tmp/opencode/drho_iters/vha_"
-                                     + std::to_string(vdbg_cnt - 1) + ".bin",
-                                     std::ios::binary);
-                    for (int ir = 0; ir < nrxx; ++ir) {
-                        hf.write(reinterpret_cast<const char*>(&vh_only[ir]),
-                                 sizeof(std::complex<double>));
+                        v_sc_r[ir] += b_r[ir];
                     }
                 }
             }
@@ -551,36 +388,7 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                 }
                 std::cout << "DBG iter=" << iter << " |drho_in_g|=" << std::sqrt(dh)
                           << " |v_sc_r|=" << std::sqrt(dv) << std::endl;
-                if (getenv("DFPT_MDBG") != nullptr) {
-                    static int dump_cnt = 0;
-                    std::ofstream df("/tmp/opencode/drho_iters/it"
-                                     + std::to_string(dump_cnt++) + ".bin",
-                                     std::ios::binary);
-                    for (int ig = 0; ig < pw_rho_->npw; ++ig) {
-                        df.write(reinterpret_cast<const char*>(&drho_in_g[ig]),
-                                 sizeof(std::complex<double>));
-                    }
-                    static bool dumped_g = false;
-                    if (!dumped_g) {
-                        dumped_g = true;
-                        std::ofstream gf("/tmp/opencode/drho_iters/gcar.bin",
-                                         std::ios::binary);
-                        for (int ig = 0; ig < pw_rho_->npw; ++ig) {
-                            const double gx = pw_rho_->gcar[ig].x;
-                            const double gy = pw_rho_->gcar[ig].y;
-                            const double gz = pw_rho_->gcar[ig].z;
-                            gf.write(reinterpret_cast<const char*>(&gx), sizeof(double));
-                            gf.write(reinterpret_cast<const char*>(&gy), sizeof(double));
-                            gf.write(reinterpret_cast<const char*>(&gz), sizeof(double));
-                        }
-                    }
-                }
             }
-        }
-        // DFPT_NOSC: zero the screened part to isolate the bare Sternheimer
-        // (design-phase A/B knob for term2 debugging)
-        if (getenv("DFPT_NOSC") != nullptr) {
-            std::fill(v_sc_r.begin(), v_sc_r.end(), std::complex<double>(0.0, 0.0));
         }
         v_sc_r_last = v_sc_r;
 
@@ -644,16 +452,9 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                     }
                     continue;
                 }
-                // b = -(dV_ext + dV_sc)|psi_n>; the homogeneous probe keeps
-                // only the screening part to isolate the linear map M
-                if (jprobe) {
-                    for (size_t i = 0; i < rhs.size(); ++i) {
-                        rhs[i] = -dv_sc[ib][i];
-                    }
-                } else {
-                    for (size_t i = 0; i < rhs.size(); ++i) {
-                        rhs[i] = -(rhs[i] + dv_sc[ib][i]);
-                    }
+                // b = -(dV_ext + dV_sc)|psi_n>
+                for (size_t i = 0; i < rhs.size(); ++i) {
+                    rhs[i] = -(rhs[i] + dv_sc[ib][i]);
                 }
                 hamilt_->set_shift(eig_(ik, ib));
                 std::vector<std::complex<double>> dpsi_out;
@@ -673,71 +474,11 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
                               << std::endl;
                 }
                 data_.set_dpsi(q_idx, ik, ib, dpsi_out);
-                // BPT: independent PT cross-check of the solve for this band.
-                // Identity (exact on a complete empty manifold):
-                //   <dpsi_n|rhs_n> == sum_m |<psi_m(k+q)|rhs_n>|^2 / (e_m(k+q) - e_n(k))
-                // rhs here is the TOTAL (ext+sc) right-hand side with the
-                // Sternheimer sign (rhs = -(ext+sc)); both sides use the same
-                // object so the sign cancels on the diagonal-identity check.
-                if (getenv("DFPT_BPT") != nullptr
-                    && static_cast<int>(empty_kq_[ik].size()) > 0
-                    && dpsi_out.size() == rhs.size()) {
-                    std::complex<double> codedot(0.0, 0.0);
-                    double pt = 0.0;
-                    double wsum = 0.0;
-                    for (size_t i = 0; i < dpsi_out.size(); ++i) {
-                        codedot += std::conj(dpsi_out[i]) * rhs[i];
-                    }
-                    for (size_t im = 0; im < empty_kq_[ik].size(); ++im) {
-                        const std::vector<std::complex<double>>& psim
-                            = empty_kq_[ik][im];
-                        if (psim.size() != rhs.size()) {
-                            continue;
-                        }
-                        std::complex<double> mdot(0.0, 0.0);
-                        for (size_t i = 0; i < rhs.size(); ++i) {
-                            mdot += std::conj(psim[i]) * rhs[i];
-                        }
-                        const double denom = empty_kq_eig_[ik][im] - eig_(ik, ib);
-                        if (std::abs(denom) > 1.0e-10) {
-                            pt += std::norm(mdot) / denom;
-                        }
-                        wsum += std::norm(mdot);
-                    }
-                    double nrm2 = 0.0;
-                    for (size_t i = 0; i < rhs.size(); ++i) {
-                        nrm2 += std::norm(rhs[i]);
-                    }
-                    std::cout << "BPTCHK q=" << q_idx << " iat=" << iat
-                              << " idir=" << idir << " ik=" << ik << " ib=" << ib
-                              << " code=(" << codedot.real() << "," << codedot.imag() << ")"
-                              << " pt=" << pt
-                              << " |<m|rhs>|^2sum=" << wsum
-                              << " |rhs|^2=" << nrm2 << std::endl;
-                }
             }
         }
 
         // ---- 3. first-order density and mixing
         rho_.compute_drho(gs_psi_, wg_, q_idx, data_);
-        if (jprobe && iter == 0) {
-            const std::vector<std::complex<double>> probe_out = data_.get_drho_g(q_idx, 0);
-            std::ofstream pf("/tmp/opencode/jprobe_out.bin", std::ios::binary);
-            for (int ig = 0; ig < pw_rho_->npw; ++ig) {
-                pf.write(reinterpret_cast<const char*>(&probe_out[ig]),
-                         sizeof(std::complex<double>));
-            }
-            std::ofstream vf("/tmp/opencode/jprobe_vsc.bin", std::ios::binary);
-            for (int ir = 0; ir < nrxx; ++ir) {
-                vf.write(reinterpret_cast<const char*>(&v_sc_r[ir]),
-                         sizeof(std::complex<double>));
-            }
-            pf.close();
-            vf.close();
-            std::cout << "JPROBE dumped, exiting" << std::endl;
-            std::cout.flush();
-            std::exit(0);
-        }
         rho_.mix_drho(q_idx, data_);
         residual = rho_.get_residual(q_idx, data_);
         if (dbg) {
@@ -761,160 +502,6 @@ double DFPT_PW::Impl::solve_displacement(int q_idx, int iat, int idir) {
         data_.set_dpsi_disp(iat, idir, disp);
     }
 
-    // design-phase validation: dump converged self-consistent drho on the
-    // shared real-space grid for direct comparison with finite differences
-    if (dbg && q_idx == 0 && iat == 0 && idir == 0) {
-        const std::vector<std::complex<double>> dg = data_.get_drho_g(q_idx, 0);
-        std::vector<std::complex<double>> dr(pw_rho_->nrxx, std::complex<double>(0.0, 0.0));
-        if (static_cast<int>(dg.size()) == pw_rho_->npw) {
-            pw_rho_->recip2real(dg.data(), dr.data());
-        }
-        std::ofstream df("/tmp/opencode/drho_dfpt.dat");
-        df << pw_rho_->nx << " " << pw_rho_->ny << " " << pw_rho_->nz << "\n";
-        for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
-            df << dr[ir].real() << " " << dr[ir].imag() << "\n";
-        }
-    }
-    // design-phase validation: 8-band perturbation-theory term2 cross-check
-    // for the first displacement of the first atom (q = 0, ik = 0 only)
-    if (dbg && q_idx == 0 && iat == 0 && idir == 0 && nk > 0 && nbands > 4) {
-        // gauge check: <psi_k|dpsi_n> must vanish for occupied k (Sternheimer
-        // gauge); a nonzero admixture pollutes term2 via occ-occ dV elements
-        for (int ikg = 0; ikg < nk; ++ikg) {
-            for (int n = 0; n < 4; ++n) {
-                const std::vector<std::complex<double>>& dps = data_.get_dpsi(q_idx, ikg, n);
-                const int npwg = gs_psi_.get_nbasis();
-                if (static_cast<int>(dps.size()) != npwg) {
-                    continue;
-                }
-                for (int k = 0; k < 4; ++k) {
-                    std::complex<double> dot(0.0, 0.0);
-                    for (int ig = 0; ig < npwg; ++ig) {
-                        dot += std::conj(gs_psi_(ikg, k, ig)) * dps[ig];
-                    }
-                    std::cout << "PTCHK gauge ik=" << ikg << " n=" << n << " k=" << k
-                              << " <psi_k|dpsi_n>=" << dot << std::endl;
-                }
-            }
-        }
-        // stash the solved dpsi (apply_dv below reuses the slots)
-        std::vector<std::vector<std::complex<double>>> solved(nbands);
-        for (int ib = 0; ib < nbands; ++ib) {
-            solved[ib] = data_.get_dpsi(q_idx, 0, ib);
-        }
-        const int npw = gs_psi_.get_nbasis();
-        // M[a][m][n] = <psi_m | dV_a | psi_n>
-        std::vector<std::vector<std::vector<std::complex<double>>>> mat(
-            2, std::vector<std::vector<std::complex<double>>>(
-                   nbands, std::vector<std::complex<double>>(nbands, std::complex<double>(0.0, 0.0))));
-        for (int a = 0; a < 2; ++a) {
-            pert_.build_dv(q_idx, a, idir, data_);
-            pert_.apply_dv(q_idx, 0, gs_psi_, data_);
-            for (int n = 0; n < nbands; ++n) {
-                const std::vector<std::complex<double>> dvpsi = data_.get_dpsi(q_idx, 0, n);
-                if (static_cast<int>(dvpsi.size()) != npw) {
-                    continue;
-                }
-                for (int m = 0; m < nbands; ++m) {
-                    std::complex<double> dot(0.0, 0.0);
-                    for (int ig = 0; ig < npw; ++ig) {
-                        dot += std::conj(gs_psi_(0, m, ig)) * dvpsi[ig];
-                    }
-                    mat[a][m][n] = dot;
-                }
-            }
-        }
-        // PT term2 with the 4 empty bands only, b = atom 0 (solved dir)
-        for (int a = 0; a < 2; ++a) {
-            std::complex<double> pt(0.0, 0.0);
-            for (int n = 0; n < 4; ++n) {
-                const double w = wg_(0, n);
-                if (w < 1.0e-8) {
-                    continue;
-                }
-                for (int m = 4; m < nbands; ++m) {
-                    pt += w * std::conj(mat[a][m][n]) * mat[0][m][n]
-                          / (eig_(0, n) - eig_(0, m));
-                }
-            }
-            std::cout << "PTCHK term2(a=" << a << ",b=0) PT-4empty=" << 2.0 * pt << std::endl;
-        }
-        // element dump: M[a][m][n] for m empty, n occupied
-        for (int a = 0; a < 2; ++a) {
-            for (int m = 4; m < nbands; ++m) {
-                for (int n = 0; n < 4; ++n) {
-                    std::cout << "PTCHK M a=" << a << " m=" << m << " n=" << n
-                              << " (" << mat[a][m][n].real() << "," << mat[a][m][n].imag() << ")"
-                              << std::endl;
-                }
-            }
-        }
-        // solved-dpsi band projections <psi_m|dpsi_n>
-        for (int n = 0; n < 4; ++n) {
-            for (int m = 0; m < nbands; ++m) {
-                std::complex<double> dot(0.0, 0.0);
-                for (int ig = 0; ig < npw; ++ig) {
-                    dot += std::conj(gs_psi_(0, m, ig)) * solved[n][ig];
-                }
-                std::cout << "PTCHK proj n=" << n << " m=" << m
-                          << " <psi_m|dpsi_n>=(" << dot.real() << "," << dot.imag() << ")"
-                          << std::endl;
-            }
-        }
-        // Hellmann-Feynman check targets: <psi_n|dV_a|psi_n> vs FD of eps_n
-        for (int a = 0; a < 2; ++a) {
-            for (int n = 0; n < 4; ++n) {
-                std::cout << "PTCHK HF a=" << a << " n=" << n
-                          << " <psi|dV|psi>=" << mat[a][n][n] << std::endl;
-            }
-        }
-        // design-phase validation: rebuild the converged screened potential
-        // and compare de_code(n) = <dV_ext> + <dv_sc> against FD eigenvalue
-        // derivatives (localizes response errors in the screening channel)
-        {
-            const std::vector<std::complex<double>> dg_in = data_.get_drho_g(q_idx, 0);
-            if (static_cast<int>(dg_in.size()) == pw_rho_->npw) {
-                std::vector<std::complex<double>> vha_g;
-                rho_.v_hartree_q(q_cart, dg_in, vha_g);
-                std::vector<std::complex<double>> v_sc_r2(pw_rho_->nrxx, std::complex<double>(0.0, 0.0));
-                std::vector<std::complex<double>> vh_r(pw_rho_->nrxx);
-                pw_rho_->recip2real(vha_g.data(), vh_r.data());
-                std::vector<std::complex<double>> vx_r;
-            if (xc_ != nullptr) {
-                std::vector<std::complex<double>> ar(pw_rho_->nrxx);
-                    pw_rho_->recip2real(dg_in.data(), ar.data());
-                    xc_->apply(ar, vx_r);
-                }
-                for (int ir = 0; ir < pw_rho_->nrxx; ++ir) {
-                    v_sc_r2[ir] = vh_r[ir];
-                    if (static_cast<int>(vx_r.size()) == pw_rho_->nrxx) {
-                        v_sc_r2[ir] += vx_r[ir];
-                    }
-                }
-                std::vector<std::vector<std::complex<double>>> dvsc;
-                pert_.apply_vr(q_idx, 0, v_sc_r2, gs_psi_, q_cart, dvsc);
-                for (int n = 0; n < nbands; ++n) {
-                    const std::vector<std::complex<double>>& v = dvsc[n];
-                    if (static_cast<int>(v.size()) != npw) {
-                        continue;
-                    }
-                    std::complex<double> dot(0.0, 0.0);
-                    for (int ig = 0; ig < npw; ++ig) {
-                        dot += std::conj(gs_psi_(0, n, ig)) * v[ig];
-                    }
-                    std::cout << "PTCHK de n=" << n
-                              << " <psi|dv_sc|psi>=(" << dot.real() << "," << dot.imag() << ")"
-                              << " de_code=" << (mat[0][n][n] + dot).real() << std::endl;
-                }
-            }
-        }
-        // restore the solved dpsi
-        for (int ib = 0; ib < nbands; ++ib) {
-            if (!solved[ib].empty()) {
-                data_.set_dpsi(q_idx, 0, ib, solved[ib]);
-            }
-        }
-    }
     return residual;
 }
 
@@ -1003,40 +590,6 @@ void DFPT_PW::Impl::solve_pos_resp(int q_idx) {
                     }
                     std::vector<std::vector<std::complex<double>>> dvkb;
                     pert_.build_vkb_dk(it, ia, a, gk, vkb, dvkb);
-                    // DKCHK: analytic dk-derivative vs central difference of
-                    // the GS-validated build_vkb (first atom with nh > 0 only)
-                    if (getenv("DFPT_DKCHK") != nullptr && ia == 0 && ik == 0) {
-                        const double dd = 1.0e-5;
-                        std::vector<ModuleBase::Vector3<double>> gk_p(npwk);
-                        std::vector<ModuleBase::Vector3<double>> gk_m(npwk);
-                        for (int ig = 0; ig < npwk; ++ig) {
-                            gk_p[ig] = gk[ig];
-                            gk_m[ig] = gk[ig];
-                            gk_p[ig][a] += dd;
-                            gk_m[ig][a] -= dd;
-                        }
-                        std::vector<std::vector<std::complex<double>>> vkb_p;
-                        std::vector<std::vector<std::complex<double>>> vkb_m;
-                        pert_.build_vkb(it, ia, gk_p, vkb_p);
-                        pert_.build_vkb(it, ia, gk_m, vkb_m);
-                        for (int mu = 0; mu < nh; ++mu) {
-                            std::complex<double> ddot(0.0, 0.0);
-                            double ndk = 0.0;
-                            double nnum = 0.0;
-                            for (int ig = 0; ig < npwk; ++ig) {
-                                const std::complex<double> num
-                                    = (vkb_p[mu][ig] - vkb_m[mu][ig]) / (2.0 * dd);
-                                ddot += std::conj(dvkb[mu][ig]) * num;
-                                ndk += std::norm(dvkb[mu][ig]);
-                                nnum += std::norm(num);
-                            }
-                            std::cout << "DKCHK it=" << it << " a=" << a
-                                      << " mu=" << mu
-                                      << " <dk|num>=" << ddot
-                                      << " |dk|^2=" << ndk
-                                      << " |num|^2=" << nnum << std::endl;
-                        }
-                    }
                     // dbecp_b[mu] = <dvkb_mu|psi_b>
                     std::vector<std::vector<std::complex<double>>> dbecp(nbands);
                     for (int b = 0; b < nbands; ++b) {
@@ -1069,7 +622,6 @@ void DFPT_PW::Impl::solve_pos_resp(int q_idx) {
                 }
             }
             // solve (H - eps_v) Y = -(i/tpiba) vel for every occupied band
-            const bool ychk = (getenv("DFPT_YCHK") != nullptr);
             for (int ib = 0; ib < nbands; ++ib) {
                 if (!dfpt_band_occupied(wg_, ik, ib)) {
                     continue;
@@ -1088,38 +640,6 @@ void DFPT_PW::Impl::solve_pos_resp(int q_idx) {
                     std::cout << "DBG posresp a=" << a << " ik=" << ik
                               << " ib=" << ib << " eps=" << eig_(ik, ib)
                               << " res=" << res << std::endl;
-                }
-                if (ychk && npwk > 0) {
-                    // eigen-projection identity: <u_m|Y_v> must equal the
-                    // velocity-form matrix element -i<u_m|dH/dk_a|v> /
-                    // (tpiba (eps_m - eps_v)) for every nondegenerate
-                    // conduction m (pos_matrix cross-check)
-                    for (int m = 0; m < nbands; ++m) {
-                        if (dfpt_band_occupied(wg_, ik, m)) {
-                            continue;
-                        }
-                        const double de = eig_(ik, m) - eig_(ik, ib);
-                        if (std::abs(de) < 1.0e-8) {
-                            continue;
-                        }
-                        std::complex<double> pdot(0.0, 0.0);
-                        std::complex<double> ydot(0.0, 0.0);
-                        for (int ig = 0; ig < npwk; ++ig) {
-                            pdot += std::conj(gs_psi_(ik, m, ig)) * vel[ib][ig];
-                            if (ig < static_cast<int>(yvec[ik][ib].size())) {
-                                ydot += std::conj(gs_psi_(ik, m, ig))
-                                        * yvec[ik][ib][ig];
-                            }
-                        }
-                        const std::complex<double> expect
-                            = std::complex<double>(0.0, -1.0) * pdot
-                              / (tpiba * de);
-                        std::cout << "YCHK a=" << a << " ik=" << ik
-                                  << " v=" << ib << " m=" << m
-                                  << " <m|Y>=(" << ydot.real() << "," << ydot.imag() << ")"
-                                  << " X_mv=(" << expect.real() << "," << expect.imag() << ")"
-                                  << " res=" << res << std::endl;
-                    }
                 }
             }
         }
@@ -1230,329 +750,6 @@ void DFPT_PW::Impl::solve_efield_resp(int q_idx) {
     }
 }
 
-void DFPT_PW::Impl::aleg_crosscheck(int q_idx) {
-    // zstar_eu cross-check (QE zstar_eu.f90):
-    //   Z*(E,Us)_iat(a, d) = zion delta_ad
-    //     - 2 sum_k w_k Re sum_v <dpsi^E,a(scf) | dV^kappa(iat,d)_bare | psi_v>
-    // with the bare kappa leg from the same build_dv/apply_dv pair the
-    // displacement solves consumed. Printed against the plain (no star
-    // rotation) zstar_ue form from the dpsi_disp stash and the stored
-    // star-rotated Born charges, plus the SCF dielectric tensor
-    //   eps = 1 - (16 pi / omega) sum_k wg Re <Y^a | dpsi^E,b>
-    // which is the same contraction compute_eps produces in production.
-    // A == B incriminates
-    // a shared operand; A clean incriminates the compute_born contraction.
-    const int nat = ucell_->nat;
-    const int nk = gs_psi_.get_nk();
-    const int nbands = gs_psi_.get_nbands();
-    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> de(3);
-    std::vector<std::vector<std::vector<std::vector<std::complex<double>>>>> yr(3);
-    for (int a = 0; a < 3; ++a) {
-        de[a] = data_.get_dpsi_efield(a);
-        yr[a] = data_.get_pos_resp(a);
-        if (static_cast<int>(de[a].size()) != nk
-            || static_cast<int>(yr[a].size()) != nk) {
-            std::cout << "ALEG: missing E/position response stashes" << std::endl;
-            return;
-        }
-    }
-    // A-leg: plain k sum with the full wg weight (QE form). Complex
-    // accumulation: a spurious relative phase between the E and kappa legs
-    // cancels in the EE and kappa-kappa channels but rotates this cross
-    // channel, so Im(z) vs Re(z) is the phase detector (ASR: |z| = zion/2)
-    std::vector<ModuleBase::matrix> za(nat, ModuleBase::matrix(3, 3, true));
-    std::vector<std::vector<std::complex<double>>> za_c(
-        nat, std::vector<std::complex<double>>(9, std::complex<double>(0.0, 0.0)));
-    for (int iat = 0; iat < nat; ++iat) {
-        for (int idir = 0; idir < 3; ++idir) {
-            pert_.build_dv(q_idx, iat, idir, data_);
-            for (int ik = 0; ik < nk; ++ik) {
-                if (static_cast<int>(occ_kq_.size()) <= ik || occ_kq_[ik].empty()) {
-                    continue;
-                }
-                pert_.apply_dv(q_idx, ik, gs_psi_, data_);
-                for (int v = 0; v < nbands; ++v) {
-                    if (!dfpt_band_occupied(wg_, ik, v)) {
-                        continue;
-                    }
-                    const std::vector<std::complex<double>> b
-                        = data_.get_dpsi(q_idx, ik, v);
-                    const int npw = static_cast<int>(b.size());
-                    if (npw <= 0) {
-                        continue;
-                    }
-                    for (int a = 0; a < 3; ++a) {
-                        if (static_cast<int>(de[a][ik][v].size()) != npw) {
-                            continue;
-                        }
-                        std::complex<double> dot(0.0, 0.0);
-                        for (int ig = 0; ig < npw; ++ig) {
-                            dot += std::conj(de[a][ik][v][ig]) * b[ig];
-                        }
-                        za[iat](a, idir) += wg_(ik, v) * dot.real();
-                        za_c[iat][3 * a + idir] += wg_(ik, v) * dot;
-                        if (a == 0 && idir == 0 && ik < 3) {
-                            std::cout << "ALEG-K A ik=" << ik << " v=" << v
-                                      << " z=(" << dot.real() << "," << dot.imag() << ")"
-                                      << " wg=" << wg_(ik, v) << std::endl;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // plain B-leg from the displacement stashes (same sum, no stars)
-    std::vector<ModuleBase::matrix> zb(nat, ModuleBase::matrix(3, 3, true));
-    for (int iat = 0; iat < nat; ++iat) {
-        for (int idir = 0; idir < 3; ++idir) {
-            const std::vector<std::vector<std::vector<std::complex<double>>>> disp
-                = data_.get_dpsi_disp(iat, idir);
-            if (static_cast<int>(disp.size()) != nk) {
-                continue;
-            }
-            for (int ik = 0; ik < nk; ++ik) {
-                for (int v = 0; v < nbands; ++v) {
-                    if (!dfpt_band_occupied(wg_, ik, v)) {
-                        continue;
-                    }
-                    const int npw = static_cast<int>(disp[ik][v].size());
-                    if (npw <= 0) {
-                        continue;
-                    }
-                    for (int a = 0; a < 3; ++a) {
-                        if (static_cast<int>(yr[a][ik][v].size()) != npw) {
-                            continue;
-                        }
-                        std::complex<double> dot(0.0, 0.0);
-                        for (int ig = 0; ig < npw; ++ig) {
-                            dot += std::conj(disp[ik][v][ig]) * yr[a][ik][v][ig];
-                        }
-                        zb[iat](a, idir) += wg_(ik, v) * dot.real();
-                        if (a == 0 && idir == 0 && ik < 3) {
-                            std::cout << "ALEG-K B ik=" << ik << " v=" << v
-                                      << " z=(" << dot.real() << "," << dot.imag() << ")"
-                                      << " wg=" << wg_(ik, v) << std::endl;
-                        }
-                    }
-                }
-            }
-        }
-    }
-    // SCF dielectric tensor (complex accumulation: Im(chi) = phase detector)
-    ModuleBase::matrix eps(3, 3, true);
-    std::vector<std::complex<double>> eps_c(9, std::complex<double>(0.0, 0.0));
-    for (int ik = 0; ik < nk; ++ik) {
-        for (int v = 0; v < nbands; ++v) {
-            if (!dfpt_band_occupied(wg_, ik, v)) {
-                continue;
-            }
-            for (int a = 0; a < 3; ++a) {
-                const int npw = static_cast<int>(yr[a][ik][v].size());
-                if (npw <= 0) {
-                    continue;
-                }
-                for (int b = 0; b < 3; ++b) {
-                    if (static_cast<int>(de[b][ik][v].size()) != npw) {
-                        continue;
-                    }
-                    std::complex<double> dot(0.0, 0.0);
-                    for (int ig = 0; ig < npw; ++ig) {
-                        dot += std::conj(yr[a][ik][v][ig]) * de[b][ik][v][ig];
-                    }
-                    eps(a, b) += wg_(ik, v) * dot.real();
-                    eps_c[3 * a + b] += wg_(ik, v) * dot;
-                }
-            }
-        }
-    }
-    // PTCROSS: bare cross-form operator diagnostic. A fresh bare E-leg
-    // solve x = M^-1(-Y^0) (rhs fully known, no screening) is contracted
-    // with the bare kappa leg b^kappa: <x|b> must equal the spectral sum
-    // over the available empty bands -<Y|m><m|b>/(eps_m-eps_v); the
-    // mismatch beyond that band space measures what the truncated
-    // manifold misses in the cross channel that diagonal norm checks
-    // cannot see. The kappa-side solve x^kappa = M^-1(-b) gives the
-    // hermiticity mirror <x^kappa|Y> = conj(<x|Y^0-weighted b>).
-    if (getenv("DFPT_PTCROSS") != nullptr) {
-        const ModuleBase::Vector3<double> q_cart_p
-            = data_.get_qvec(q_idx) * ucell_->G;
-        const int ikmax = std::min(nk, 3);
-        for (int idir = 0; idir < 3; ++idir) {
-            pert_.build_dv(q_idx, 0, idir, data_);
-            for (int ik = 0; ik < ikmax; ++ik) {
-                if (static_cast<int>(occ_kq_.size()) <= ik || occ_kq_[ik].empty()) {
-                    continue;
-                }
-                pert_.apply_dv(q_idx, ik, gs_psi_, data_);
-                if (last_q_ != q_idx || last_ik_ != ik) {
-                    hamilt_->set_context(q_cart_p, ik);
-                    last_q_ = q_idx;
-                    last_ik_ = ik;
-                }
-                for (int v = 0; v < nbands; ++v) {
-                    if (!dfpt_band_occupied(wg_, ik, v)) {
-                        continue;
-                    }
-                    const int npw = static_cast<int>(yr[0][ik][v].size());
-                    if (npw <= 0) {
-                        continue;
-                    }
-                    const std::vector<std::complex<double>> b
-                        = data_.get_dpsi(q_idx, ik, v);
-                    if (static_cast<int>(b.size()) != npw) {
-                        continue;
-                    }
-                    // empty-band overlaps at this k
-                    std::vector<std::complex<double>> myv;
-                    std::vector<std::complex<double>> mbv;
-                    std::vector<double> dev;
-                    double wsum = 0.0;
-                    for (int m = 0; m < nbands; ++m) {
-                        if (dfpt_band_occupied(wg_, ik, m)) {
-                            continue;
-                        }
-                        const double de = eig_(ik, m) - eig_(ik, v);
-                        if (std::abs(de) < 1.0e-8) {
-                            continue;
-                        }
-                        std::complex<double> my(0.0, 0.0);
-                        std::complex<double> mb(0.0, 0.0);
-                        for (int i = 0; i < npw; ++i) {
-                            my += std::conj(gs_psi_(ik, m, i)) * yr[0][ik][v][i];
-                            mb += std::conj(gs_psi_(ik, m, i)) * b[i];
-                        }
-                        myv.push_back(my);
-                        mbv.push_back(mb);
-                        dev.push_back(de);
-                        wsum += std::norm(my);
-                    }
-                    // E-side solve: (H - eps_v) x = -Y^0_v
-                    std::vector<std::complex<double>> rhsE(npw);
-                    for (int i = 0; i < npw; ++i) {
-                        rhsE[i] = -yr[0][ik][v][i];
-                    }
-                    hamilt_->set_shift(eig_(ik, v));
-                    std::vector<std::complex<double>> xE;
-                    double resE = 0.0;
-                    stern_.solve(*hamilt_, occ_kq_[ik], rhsE,
-                                 data_.get_max_iter(), data_.get_conv_thr(),
-                                 xE, resE);
-                    // kappa-side solve: (H - eps_v) xk = -b
-                    std::vector<std::complex<double>> rhsK(npw);
-                    for (int i = 0; i < npw; ++i) {
-                        rhsK[i] = -b[i];
-                    }
-                    hamilt_->set_shift(eig_(ik, v));
-                    std::vector<std::complex<double>> xK;
-                    double resK = 0.0;
-                    stern_.solve(*hamilt_, occ_kq_[ik], rhsK,
-                                 data_.get_max_iter(), data_.get_conv_thr(),
-                                 xK, resK);
-                    std::complex<double> crossE(0.0, 0.0);
-                    std::complex<double> crossK(0.0, 0.0);
-                    std::complex<double> diagE(0.0, 0.0);
-                    double pt_cross = 0.0;
-                    double pt_diagE = 0.0;
-                    double pt_diagK = 0.0;
-                    for (int i = 0; i < npw; ++i) {
-                        if (static_cast<int>(xE.size()) == npw) {
-                            crossE += std::conj(xE[i]) * b[i];
-                            diagE += std::conj(xE[i]) * yr[0][ik][v][i];
-                        }
-                        if (static_cast<int>(xK.size()) == npw) {
-                            crossK += std::conj(xK[i]) * yr[0][ik][v][i];
-                        }
-                    }
-                    for (size_t im = 0; im < myv.size(); ++im) {
-                        pt_cross += (-std::conj(myv[im]) * mbv[im]
-                                     / dev[im]).real();
-                        pt_diagE += -std::norm(myv[im]) / dev[im];
-                        pt_diagK += -std::norm(mbv[im]) / dev[im];
-                    }
-                    std::cout << "PTCROSS d=" << idir << " ik=" << ik
-                              << " v=" << v
-                              << " crossE=(" << crossE.real() << ","
-                              << crossE.imag() << ")"
-                              << " crossK=(" << crossK.real() << ","
-                              << crossK.imag() << ")"
-                              << " pt=" << pt_cross
-                              << " rE=" << (pt_cross != 0.0
-                                                    ? crossE.real() / pt_cross
-                                                    : 0.0)
-                              << " diagE=(" << diagE.real() << ","
-                              << diagE.imag() << ") ptDiagE=" << pt_diagE
-                              << " ptDiagK=" << pt_diagK
-                              << " wsumY=" << wsum
-                              << " resE=" << resE << " resK=" << resK
-                              << std::endl;
-                }
-            }
-        }
-    }
-    for (int a = 0; a < 3; ++a) {
-        for (int b = 0; b < 3; ++b) {
-            eps(a, b) *= -16.0 * ModuleBase::PI / ucell_->omega;
-            if (a == b) {
-                eps(a, b) += 1.0;
-            }
-        }
-    }
-    std::cout << "ALEG eps_scf:" << std::endl;
-    for (int a = 0; a < 3; ++a) {
-        std::cout << "  " << eps(a, 0) << " " << eps(a, 1) << " " << eps(a, 2)
-                  << std::endl;
-    }
-    std::cout << "ALEG chi_scf complex diag: (16pi/omega)*z per component"
-              << std::endl;
-    for (int a = 0; a < 3; ++a) {
-        const std::complex<double> z = eps_c[4 * a] * (-16.0 * ModuleBase::PI
-                                                       / ucell_->omega);
-        std::cout << "  a=" << a << " z=(" << z.real() << "," << z.imag()
-                  << ") |z|=" << std::abs(z) << std::endl;
-    }
-    const ModuleBase::matrix eps_ipa = data_.get_dielectric();
-    std::cout << "ALEG eps_ipa(stored):" << std::endl;
-    for (int a = 0; a < 3; ++a) {
-        std::cout << "  " << eps_ipa(a, 0) << " " << eps_ipa(a, 1) << " "
-                  << eps_ipa(a, 2) << std::endl;
-    }
-    for (int iat = 0; iat < nat; ++iat) {
-        const int it = ucell_->iat2it[iat];
-        const double zion = ucell_->atoms[it].ncpp.zv;
-        std::cout << "ALEG atom " << iat << " zion=" << zion << std::endl;
-        std::cout << "  A(eu plain):" << std::endl;
-        for (int a = 0; a < 3; ++a) {
-            std::cout << "    ";
-            for (int d = 0; d < 3; ++d) {
-                std::cout << ((a == d) ? zion : 0.0) - 2.0 * za[iat](a, d) << " ";
-            }
-            std::cout << std::endl;
-        }
-        std::cout << "  A complex diag: z00..z22 (sum wg<de|b>)" << std::endl;
-        for (int a = 0; a < 3; ++a) {
-            const std::complex<double> z = za_c[iat][4 * a];
-            std::cout << "    z" << a << a << " = (" << z.real() << ","
-                      << z.imag() << ") |z|=" << std::abs(z)
-                      << " |z|/(zion/2)=" << std::abs(z) / (0.5 * zion)
-                      << std::endl;
-        }
-        std::cout << "  B(ue plain):" << std::endl;
-        for (int a = 0; a < 3; ++a) {
-            std::cout << "    ";
-            for (int d = 0; d < 3; ++d) {
-                std::cout << ((a == d) ? zion : 0.0) - 2.0 * zb[iat](a, d) << " ";
-            }
-            std::cout << std::endl;
-        }
-        const ModuleBase::matrix zstar = data_.get_born(iat);
-        std::cout << "  B(ue star-rot stored):" << std::endl;
-        for (int a = 0; a < 3; ++a) {
-            std::cout << "    " << zstar(a, 0) << " " << zstar(a, 1) << " "
-                      << zstar(a, 2) << std::endl;
-        }
-    }
-}
-
 void DFPT_PW::run() {
     const int nq = pimpl_->qlist_.get_nq();
     for (int q_idx = 0; q_idx < nq; ++q_idx) {
@@ -1644,9 +841,6 @@ void DFPT_PW::run() {
         if (q_idx == 0 && pimpl_->data_.get_compute_q0() && pimpl_->wired()) {
             pimpl_->q0_.compute_born(pimpl_->gs_psi_, pimpl_->wg_,
                                      pimpl_->eig_, pimpl_->data_);
-            if (getenv("DFPT_ALEG") != nullptr) {
-                pimpl_->aleg_crosscheck(q_idx);
-            }
         }
 
         pimpl_->phon_.assemble(q_idx, pimpl_->data_);
