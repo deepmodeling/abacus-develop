@@ -23,29 +23,6 @@
 
 #include <RI/global/Global_Func-1.h>
 
-namespace
-{
-constexpr int GH_N32 = 32;
-constexpr double GH_X32[GH_N32] = {
-    -7.125813909830727, -6.409498149269660, -5.812225949515914, -5.275550986515880,
-    -4.777164503502596, -4.305547953351198, -3.853755485471445, -3.417167492818570,
-    -2.992490825002374, -2.577249537732317, -2.169499183606112, -1.767654109463202,
-    -1.370376410952871, -0.976500463589683, -0.584978765435932, -0.194840741569399,
-     0.194840741569399,  0.584978765435932,  0.976500463589683,  1.370376410952871,
-     1.767654109463202,  2.169499183606112,  2.577249537732317,  2.992490825002374,
-     3.417167492818570,  3.853755485471445,  4.305547953351198,  4.777164503502596,
-     5.275550986515880,  5.812225949515914,  6.409498149269660,  7.125813909830727};
-constexpr double GH_W32[GH_N32] = {
-    7.310676427384163e-23, 9.231736536518292e-19, 1.197344017092849e-15, 4.215010211326448e-13,
-    5.933291463396639e-11, 4.098832164770897e-09, 1.574167792545595e-07, 3.650585129562376e-06,
-    5.416584061819986e-05, 5.362683655279965e-04, 3.654890326654428e-03, 1.755342883157974e-02,
-    6.045813095591261e-02, 1.511269427958280e-01, 2.774581423025293e-01, 3.752383525928023e-01,
-    3.752383525928023e-01, 2.774581423025293e-01, 1.511269427958280e-01, 6.045813095591261e-02,
-    1.755342883157974e-02, 3.654890326654428e-03, 5.362683655279965e-04, 5.416584061819986e-05,
-    3.650585129562376e-06, 1.574167792545595e-07, 4.098832164770897e-09, 5.933291463396639e-11,
-    4.215010211326448e-13, 1.197344017092849e-15, 9.231736536518292e-19, 7.310676427384163e-23};
-}
-
 void Gaussian_Abfs::init(const UnitCell& ucell,
                          const int& Lmax,
                          const std::vector<ModuleBase::Vector3<double>>& kvec_c,
@@ -544,29 +521,13 @@ std::complex<double> Gaussian_Abfs::K_LM_2d(const int& L,
                                           beta);
     }
 
-    const int total_lm = (L + 1) * (L + 1);
-    const int lm = L * L + M;
-    const double sqrt_beta = std::sqrt(beta);
-    const double inv_sqrt_beta = 1.0 / sqrt_beta;
-    std::complex<double> sum = 0.0;
-
-    for (int i = 0; i != GH_N32; ++i)
-    {
-        const double kz = GH_X32[i] * inv_sqrt_beta;
-        const double norm_sq = q_parallel_abs * q_parallel_abs + kz * kz;
-        if (norm_sq < 1e-24 && power < 0.0)
-        {
-            continue;
-        }
-        ModuleBase::Vector3<double> q3(q_parallel_cart.x, q_parallel_cart.y, kz);
-        ModuleBase::matrix ylm_here(total_lm, 1);
-        ModuleBase::YlmReal::Ylm_Real(total_lm, 1, &q3, ylm_here);
-        const double radial = std::pow(norm_sq, 0.5 * (power + L));
-        const std::complex<double> phase = std::exp(ModuleBase::IMAG_UNIT * kz * tau_z);
-        sum += GH_W32[i] * radial * ylm_here(lm, 0) * phase;
-    }
-
-    return inv_sqrt_beta * sum;
+    return GaussianAbfs2D::integral_lm(L,
+                                       M,
+                                       power,
+                                       q_parallel_cart.x,
+                                       q_parallel_cart.y,
+                                       tau_z,
+                                       beta);
 }
 
 auto Gaussian_Abfs::get_d_lattice_sum(
