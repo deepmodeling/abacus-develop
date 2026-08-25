@@ -21,15 +21,17 @@ int main()
 {
     for (const double lambda: {0.5, 1.0, 2.0})
     {
-        const double expected = std::sqrt(35.0 / lambda);
-        require(std::abs(Gaussian_Abfs::radial_cutoff(lambda) - expected) < 1e-14,
-                "Gaussian radial cutoff must match sqrt(35/lambda)");
+        const double l0_cutoff = Gaussian_Abfs::radial_cutoff(lambda, 0);
+        const double l8_cutoff = Gaussian_Abfs::radial_cutoff(lambda, 8);
+        require(l0_cutoff > std::sqrt(35.0 / lambda),
+                "Gaussian radial cutoff must control the complete l=0 multipole tail");
+        require(l8_cutoff > l0_cutoff, "high angular momentum must enlarge the Gaussian radial cutoff");
     }
 
     bool rejected = false;
     try
     {
-        (void)Gaussian_Abfs::radial_cutoff(0.0);
+        (void)Gaussian_Abfs::radial_cutoff(0.0, 8);
     }
     catch (const std::invalid_argument&)
     {

@@ -92,7 +92,7 @@ void Gaussian_Abfs::init(const UnitCell& ucell,
     for (size_t ik = 0; ik != nks0; ++ik)
     {
         ModuleBase::Vector3<double> qvec = this->kvec_c[ik];
-        const double Gmax = std::sqrt(radial_decay_cutoff_exponent * this->lambda) + qvec.norm() * this->tpiba;
+        const double Gmax = EwaldGaussianCutoff::reciprocal_radius(this->lambda, Lmax) + qvec.norm() * this->tpiba;
         std::vector<int> n_supercells = get_n_supercells(this->lat0, G, Gmax);
         int total_cells = std::accumulate(n_supercells.begin(), n_supercells.end(), 1, [](int a, int b) {
             return a * (2 * b + 1);
@@ -376,7 +376,7 @@ Numerical_Orbital_Lm Gaussian_Abfs::Gauss(const Numerical_Orbital_Lm& orb, const
 {
     Numerical_Orbital_Lm gaussian;
     const int angular_momentum_l = orb.getL();
-    const double rcut = radial_cutoff(lambda);
+    const double rcut = radial_cutoff(lambda, angular_momentum_l);
     const double dr = orb.get_rab().back();
     int Nr = std::ceil(rcut / dr);
     if (Nr % 2 == 0)

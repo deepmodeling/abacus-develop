@@ -6,7 +6,10 @@
 #ifndef GAUSSIAN_ABFS_H
 #define GAUSSIAN_ABFS_H
 
-#include "source_basis/module_ao/orb_atomic_lm.h"
+#include "conv_coulomb_pot_k.h"
+#include "ewald_gaussian_cutoff.h"
+#include "source_basis/module_ao/ORB_atomic_lm.h"
+#include "source_basis/module_ao/ORB_gaunt_table.h"
 //#include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 
@@ -39,11 +42,9 @@ class Gaussian_Abfs
   C^{LM}_{lm,l'm'}： Gaunt coefficient
 */
   public:
-    static constexpr double radial_decay_cutoff_exponent = 35.0;
-    static double radial_cutoff(const double lambda)
+    static double radial_cutoff(const double lambda, const int angular_momentum)
     {
-        if (lambda <= 0.0) throw std::invalid_argument("Ewald Gaussian lambda must be positive");
-        return std::sqrt(radial_decay_cutoff_exponent / lambda);
+        return EwaldGaussianCutoff::real_space_radius(lambda, angular_momentum);
     }
 
     void init(const UnitCell& ucell,
