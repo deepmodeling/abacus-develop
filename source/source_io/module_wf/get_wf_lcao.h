@@ -3,7 +3,6 @@
 
 #include "source_base/parallel_grid.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_basis/module_pw/pw_basis_k.h"
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
@@ -23,9 +22,7 @@ class Get_wf_lcao
                      std::ofstream& ofs_running);
 
     /// For multi-k
-    void begin_k(double* const* rho,
-                 const ModulePW::PW_Basis_K& pw_wfc,
-                 const UnitCell& ucell,
+    void begin_k(const UnitCell& ucell,
                  const Parallel_Grid& pgrid,
                  const K_Vectors& kv,
                  const std::vector<int>& out_wfc_norm,
@@ -44,11 +41,5 @@ class Get_wf_lcao
     void prepare_get_wf(std::ofstream& ofs_running);
 
     std::vector<int> select_bands(const std::vector<int>& out_wfc_kb) const;
-
-    void set_pw_wfc(const ModulePW::PW_Basis_K& pw_wfc,
-                    int ik,
-                    int ib,
-                    const double* const* const rho,
-                    psi::Psi<std::complex<double>>& wfc_g);
 };
 #endif // GET_WF_LCAO_H

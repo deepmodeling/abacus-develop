@@ -114,9 +114,7 @@ void Get_wf_lcao::begin_gamma(const UnitCell& ucell,
 }
 
 // For multi-k
-void Get_wf_lcao::begin_k(double* const* rho,
-                          const ModulePW::PW_Basis_K& pw_wfc,
-                          const UnitCell& ucell,
+void Get_wf_lcao::begin_k(const UnitCell& ucell,
                           const Parallel_Grid& pgrid,
                           const K_Vectors& kv,
                           const std::vector<int>& out_wfc_norm,
@@ -129,115 +127,112 @@ void Get_wf_lcao::begin_k(double* const* rho,
     prepare_get_wf(ofs_running);
 
     assert(psi_k_ != nullptr);
-    assert(rho != nullptr);
-    assert(pgrid.get_nrxx() == pw_wfc.nrxx);
 
     const int nks = kv.get_nks();
+    const int nrxx = pgrid.get_nrxx();
     const int nlocal = para_orb_.get_wfc_global_nbasis();
     const int npol = (nspin_ == 4) ? 2 : 1;
+    const int nks_without_spin = (nspin_ == 2) ? kv.get_nkstot() / 2 : kv.get_nkstot();
+    const std::vector<int> norm_bands_picked = this->select_bands(out_wfc_norm);
+    const std::vector<int> re_im_bands_picked = this->select_bands(out_wfc_re_im);
 
-    // for pw_wfc in G space
-    psi::Psi<std::complex<double>> psi_g;
+    std::vector<std::complex<double>> wfc_k(npol * nrxx);
+    std::vector<double> wfc_norm(nrxx);
+    std::vector<double> wfc_real(nrxx);
+    std::vector<double> wfc_imag(nrxx);
 
-    // Reciprocal-space storage used by the current real/imaginary Cube path.
-    psi_g.resize(nks, nbands_, pw_wfc.npwk_max);
-
-    const std::vector<int> bands_picked = this->select_bands(out_wfc_norm);
-
-    // Calculate out_wfc_norm
     for (int ik = 0; ik < nks; ++ik)
     {
-        const int ispin = kv.isk[ik];
+        const int spin_index = kv.isk[ik];
+        const int k_number = kv.ik2iktot[ik] % nks_without_spin + 1;
         psi_k_->fix_k(ik);
 
-        ModuleGint::Gint_env_k
-            gint_env(psi_k_->get_pointer(), &para_orb_, kv.kvec_c, kv.kvec_d, nbands_, nlocal, ik, nspin_, npol, rho[ispin]);
+        ModuleGint::Gint_env_k gint_env(psi_k_->get_pointer(), &para_orb_, kv.kvec_d, nbands_, nlocal, ik, npol, wfc_k.data());
 
         for (int ib = 0; ib < nbands_; ++ib)
         {
-            if (bands_picked[ib])
+            if (!norm_bands_picked[ib] && !re_im_bands_picked[ib])
             {
-                gint_env.cal_env_band(ib);
+                continue;
+            }
 
-                // ik0 is the real k-point index, starting from 0
-                int ik0 = kv.ik2iktot[ik];
-                if (nspin_ == 2)
+            gint_env.cal_env_band(ib);
+
+            if (norm_bands_picked[ib])
+            {
+                for (int ir = 0; ir < nrxx; ++ir)
                 {
-                    const int half_k = kv.get_nkstot() / 2;
-                    if (ik0 >= half_k)
-                    {
-                        ik0 -= half_k;
-                    }
+                    wfc_norm[ir] = (npol == 2) ? std::sqrt(std::norm(wfc_k[ir]) + std::norm(wfc_k[nrxx + ir])) : std::abs(wfc_k[ir]);
                 }
 
-                // pint out information
                 std::stringstream ss_file;
-                ss_file << "wfi" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << ".cube";
+                ss_file << "wfi" << ib + 1 << "s" << spin_index + 1 << "k" << k_number << ".cube";
 
                 std::stringstream ss_out;
                 ss_out << global_out_dir << ss_file.str();
 
                 std::stringstream ss_info;
-                ss_info << "Wave func. " << ib + 1 << " spin " << ispin + 1 << " k-point " << ik0 + 1 << " saved in";
+                ss_info << "Wave func. " << ib + 1 << " spin " << spin_index + 1 << " k-point " << k_number << " saved in";
 
                 ModuleBase::GlobalFunc::OUT(ofs_running, ss_info.str(), ss_file.str());
 
-                ModuleIO::write_vdata_palgrid(pgrid, rho[ispin], ispin, nspin_, 0, ss_out.str(), 0.0, &(ucell), 3, 0, false, false);
-
-                // Prepare the reciprocal-space buffer for real/imaginary Cube output.
-                psi_g.fix_k(ik);
-                this->set_pw_wfc(pw_wfc, ik, ib, rho, psi_g);
+                ModuleIO::write_vdata_palgrid(pgrid,
+                                              wfc_norm.data(),
+                                              spin_index,
+                                              nspin_,
+                                              0,
+                                              ss_out.str(),
+                                              0.0,
+                                              &(ucell),
+                                              11,
+                                              0,
+                                              false,
+                                              true);
             }
-        }
-    }
 
-    const std::vector<int> re_im_bands_picked = this->select_bands(out_wfc_re_im);
-
-    // Calculate out_wfc_re_im
-    for (int ib = 0; ib < nbands_; ++ib)
-    {
-        if (re_im_bands_picked[ib])
-        {
-            for (int ik = 0; ik < nks; ++ik)
+            if (re_im_bands_picked[ib])
             {
-                const int ispin = kv.isk[ik];
-
-                psi_g.fix_k(ik);
-
-                // Calculate real-space wave functions
-                std::vector<std::complex<double>> wfc_r(pw_wfc.nrxx);
-                pw_wfc.recip2real(&psi_g(ib, 0), wfc_r.data(), ik);
-
-                // Extract real and imaginary parts
-                std::vector<double> wfc_real(pw_wfc.nrxx);
-                std::vector<double> wfc_imag(pw_wfc.nrxx);
-                for (int ir = 0; ir < pw_wfc.nrxx; ++ir)
+                for (int ipol = 0; ipol < npol; ++ipol)
                 {
-                    wfc_real[ir] = wfc_r[ir].real();
-                    wfc_imag[ir] = wfc_r[ir].imag();
-                }
-
-                // ik0 is the real k-point index, starting from 0
-                int ik0 = kv.ik2iktot[ik];
-                if (nspin_ == 2)
-                {
-                    const int half_k = kv.get_nkstot() / 2;
-                    if (ik0 >= half_k)
+                    const int component_index = (nspin_ == 4) ? ipol : spin_index;
+                    const std::complex<double>* component_wfc = wfc_k.data() + ipol * nrxx;
+                    for (int ir = 0; ir < nrxx; ++ir)
                     {
-                        ik0 -= half_k;
+                        wfc_real[ir] = component_wfc[ir].real();
+                        wfc_imag[ir] = component_wfc[ir].imag();
                     }
+
+                    std::stringstream ss_real;
+                    ss_real << global_out_dir << "wfi" << ib + 1 << "s" << component_index + 1 << "k" << k_number << "re.cube";
+
+                    ModuleIO::write_vdata_palgrid(pgrid,
+                                                  wfc_real.data(),
+                                                  component_index,
+                                                  nspin_,
+                                                  0,
+                                                  ss_real.str(),
+                                                  0.0,
+                                                  &(ucell),
+                                                  11,
+                                                  0,
+                                                  false,
+                                                  true);
+
+                    std::stringstream ss_imag;
+                    ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << component_index + 1 << "k" << k_number << "im.cube";
+                    ModuleIO::write_vdata_palgrid(pgrid,
+                                                  wfc_imag.data(),
+                                                  component_index,
+                                                  nspin_,
+                                                  0,
+                                                  ss_imag.str(),
+                                                  0.0,
+                                                  &(ucell),
+                                                  11,
+                                                  0,
+                                                  false,
+                                                  true);
                 }
-
-                // Output real part
-                std::stringstream ss_real;
-                ss_real << global_out_dir << "wfi" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "re.cube";
-
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_real.data(), ispin, nspin_, 0, ss_real.str(), 0.0, &(ucell), 11, 0, false, false);
-
-                // Output imaginary part
-                std::stringstream ss_imag;
-                ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << ispin + 1 << "k" << ik0 + 1 << "im.cube";
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), ispin, nspin_, 0, ss_imag.str(), 0.0, &(ucell), 11, 0, false, false);
             }
         }
     }
@@ -319,34 +314,6 @@ std::vector<int> Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb) c
     }
 
     return bands_picked;
-}
-
-// for each band
-void Get_wf_lcao::set_pw_wfc(const ModulePW::PW_Basis_K& pw_wfc,
-                             const int ik,
-                             const int ib,
-                             const double* const* const rho,
-                             psi::Psi<std::complex<double>>& wfc_g)
-{
-    if (ib == 0)
-    {
-        // once is enough
-        ModuleBase::TITLE("Get_wf_lcao", "set_pw_wfc");
-    }
-
-    std::vector<std::complex<double>> Porter(pw_wfc.nrxx);
-    // here I refer to v_hartree, but I don't know how to deal with NSPIN=4
-    const int nspin0 = (nspin_ == 2) ? 2 : 1;
-    for (int is = 0; is < nspin0; ++is)
-    {
-        for (int ir = 0; ir < pw_wfc.nrxx; ++ir)
-        {
-            Porter[ir] += std::complex<double>(rho[is][ir], 0.0);
-        }
-    }
-
-    // call FFT
-    pw_wfc.real2recip(Porter.data(), &wfc_g(ib, 0), ik);
 }
 
 void Get_wf_lcao::prepare_get_wf(std::ofstream& ofs_running)

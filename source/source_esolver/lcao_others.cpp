@@ -228,9 +228,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         }
         else
         {
-            get_wf.begin_k(this->chr.rho,
-                           *this->pw_wfc,
-                           ucell,
+            get_wf.begin_k(ucell,
                            this->Pgrid,
                            this->kv,
                            this->inp_->out_wfc_norm,
