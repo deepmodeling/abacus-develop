@@ -41,10 +41,12 @@ using T = std::complex<double>;
 using Real = double;
 
 // Optional PPCG parameter overrides (set from argv) for exploring the block
-// size (sbsize) and Rayleigh-Ritz frequency (rr_step).  A negative value keeps
-// the default used by the comparison benchmark (sbsize = nband, rr_step = 16).
+// size (sbsize), Rayleigh-Ritz frequency (rr_step) and strategy.  A negative
+// value keeps the default used by the comparison benchmark (sbsize = nband,
+// rr_step = 16, strategy = BLOCK_SUBSPACE).
 static int g_sbsize = -1;
 static int g_rr_step = -1;
+static int g_strategy = -1; // 0 = BLOCK_SUBSPACE, 1 = CONJUGATE_GRADIENT
 
 // Total heap memory currently allocated (bytes).  Used to compare the peak
 // working memory of the solvers: PPCG keeps a bounded subspace, while
@@ -224,8 +226,10 @@ static Result run_ppcg(const std::vector<T>& H, int n, int nband, const std::vec
     long mem0 = heap_bytes();
     const int sbsize = (g_sbsize > 0) ? g_sbsize : nband;
     const int rr_step = (g_rr_step > 0) ? g_rr_step : 16;
+    const hsolver::PpcgStrategy strategy =
+        (g_strategy == 1) ? hsolver::PpcgStrategy::CONJUGATE_GRADIENT : hsolver::PpcgStrategy::BLOCK_SUBSPACE;
     hsolver::DiagoPPCG<T, hsolver::base_device::DEVICE_CPU> solver(1e-8, 500, sbsize, rr_step, false,
-                                                                   hsolver::PpcgStrategy::BLOCK_SUBSPACE);
+                                                                   strategy);
     auto h_op = [&H, n](T* in, T* out, int ld, int nc) { dense_h_multiply(H.data(), n, in, out, ld, nc); };
     auto t0 = std::chrono::high_resolution_clock::now();
     solver.diag(h_op, nullptr, n, nband, n, psi.data(), eval.data(), ethr, prec.data());
@@ -342,7 +346,8 @@ int main(int argc, char** argv)
         int sparsity;
     };
     // Without arguments a small default grid is used.  To benchmark a single
-    // (possibly large) problem, pass:  <n> <nband> <sparsity_pct> [sbsize] [rr_step]
+    // (possibly large) problem, pass:  <n> <nband> <sparsity_pct> [sbsize] [rr_step] [strategy]
+    // where strategy: 0 = BLOCK_SUBSPACE (default), 1 = CONJUGATE_GRADIENT.
     std::vector<Case> cases;
     if (argc >= 4)
     {
@@ -361,6 +366,10 @@ int main(int argc, char** argv)
     if (argc >= 6)
     {
         g_rr_step = std::atoi(argv[5]);
+    }
+    if (argc >= 7)
+    {
+        g_strategy = std::atoi(argv[6]);
     }
 
     std::printf("\n=== Solver comparison (identical H, psi0, ethr) ===\n");
