@@ -373,6 +373,28 @@ TEST_F(InputTest, Item_test)
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.init_wfc, "nao");
     }
+    { // read_wfc_lcao
+        auto it = find_label("read_wfc_lcao", readinput.input_lists);
+        EXPECT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(param.input.read_wfc_lcao, 1);
+        EXPECT_EQ(it->second.get_availability(), "basis_type==lcao");
+
+        it->second.str_values = {"2"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.read_wfc_lcao, 2);
+
+        param.input.read_wfc_lcao = 0;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+
+        param.input.read_wfc_lcao = 3;
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
     { // init_chg
         auto it = find_label("init_chg", readinput.input_lists);
         param.input.init_chg = "get_pchg";

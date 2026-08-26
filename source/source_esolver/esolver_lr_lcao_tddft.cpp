@@ -805,6 +805,7 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_wfc()
 				this->kv.ik2iktot,
 				this->kv.get_nkstot(),
                 this->inp_->nspin,
+				this->inp_->read_wfc_lcao,
 				/*skip_bands=*/this->nocc_max - this->nocc_in)) {
         ModuleBase::WARNING_QUIT("ESolver_LR", "read ground-state wavefunction failed.");
     }

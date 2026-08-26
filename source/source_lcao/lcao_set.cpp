@@ -27,7 +27,7 @@ void LCAO_domain::set_psi_occ_dm_chg(
     {
         if (!ModuleIO::read_wfc_nao(PARAM.globalv.global_readin_dir,
              pv, *psi, pelec->ekb, pelec->wg, kv.ik2iktot,
-             kv.get_nkstot(), inp.nspin))
+             kv.get_nkstot(), inp.nspin, inp.read_wfc_lcao))
         {
             ModuleBase::WARNING_QUIT("set_psi_occ_dm_chg", "read electronic wave functions failed");
         }

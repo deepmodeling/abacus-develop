@@ -242,7 +242,7 @@ add_test(
 AddTest(
   TARGET MODULE_IO_read_wfc_nao_test
   LIBS parameter base device
-  SOURCES read_wfc_nao_test.cpp ../module_wf/read_wfc_nao.cpp ../../source_psi/psi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
+  SOURCES read_wfc_nao_test.cpp ../module_wf/read_wfc_nao.cpp ../module_wf/write_wfc_nao.cpp ../../source_psi/psi.cpp ../../source_basis/module_ao/parallel_orbitals.cpp
 )
 
 add_test(

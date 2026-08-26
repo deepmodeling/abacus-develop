@@ -114,6 +114,7 @@ void ESolver_KS_LCAO_TDDFT<TR, Device>::before_all_runners(BaseCell& basecell, c
                                     this->kv.ik2iktot,
                                     this->kv.get_nkstot(),
                                     this->inp_->nspin,
+                                    this->inp_->read_wfc_lcao,
                                     0,
                                     TD_info::estep_shift))
         {
