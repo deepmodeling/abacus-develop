@@ -4,6 +4,7 @@
 #include "esolver_ks_pw.h"
 #include "esolver_sdft_pw.h"
 #include "source_base/module_device/device.h"
+#include "source_hamilt/module_xc/general_exx_info.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO
 #include "esolver_dm2rho.h"
@@ -254,7 +255,13 @@ ESolver* init_esolver(const Input_para& inp)
     }
     else if (esolver_type == "ksdft_lcao_tddft")
     {
-        if (inp.nspin < 4)
+        // Hybrid RT-TDDFT stores the complete Hamiltonian in complex H(R),
+        // even for collinear spin. The final operator-chain fold then applies
+        // the same TD gauge phase to local, non-local, and EXX terms.
+        General_Exx_Info exx_info;
+        init_general_exx_info(exx_info, inp);
+        const bool use_complex_hr = inp.nspin >= 4 || exx_info.cal_exx;
+        if (!use_complex_hr)
         {
 #if ((defined __CUDA) /* || (defined __ROCM) */)
             if (inp.device == "gpu")
