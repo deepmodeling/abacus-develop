@@ -70,6 +70,9 @@ class ESolver_KS : public ESolver_FP
     double scf_ene_thr;             //! scf energy threshold
     double drho;                    //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
     double hsolver_error;           //! the error of HSolver
+    /// DeltaSpin RMS from the most recent lambda optimization loop; -1.0 means no DeltaSpin.
+    /// Set by ESolver_KS_LCAO after run_lambda_loop, read by ESolver_KS::iter_finish when calling print_etot.
+    double ds_rms_ = -1.0;
     int maxniter;                   //! maximum iter steps for scf
     int niter;                      //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated

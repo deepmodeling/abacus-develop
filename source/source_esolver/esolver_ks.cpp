@@ -190,6 +190,10 @@ void ESolver_KS::iter_init(UnitCell& ucell, const int istep, const int iter)
 
     iter_time = ModuleBase::get_time();
 
+    // Reset DeltaSpin RMS for this SCF iteration. If DeltaSpin is enabled, use 0
+    // (meaning "lambda loop not yet run this iteration"); otherwise -1 (no RMS column).
+    this->ds_rms_ = this->inp_->sc_mag_switch ? 0.0 : -1.0;
+
     if (this->inp_->esolver_type == "ksdft")
     {
         diag_ethr = hsolver::set_diagethr_ks(this->inp_->basis_type, this->inp_->esolver_type,
@@ -279,8 +283,8 @@ void ESolver_KS::iter_finish(UnitCell& ucell, const int istep, int& iter, bool &
     double duration = ModuleBase::get_duration(iter_time, ModuleBase::get_time());
 
     // print energies
-    elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho, 
-    dkin, duration, diag_ethr);
+    elecstate::print_etot(ucell.magnet, *pelec, conv_esolver, iter, drho,
+    dkin, duration, diag_ethr, 0, true, this->ds_rms_);
 
 
 #ifdef __RAPIDJSON

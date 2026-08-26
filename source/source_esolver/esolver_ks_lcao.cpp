@@ -430,18 +430,20 @@ void ESolver_KS_LCAO<TK, TR>::hamilt2rho_single(UnitCell& ucell, int istep, int 
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         if (this->inp_->sc_lambda_strategy == "linear_scan")
         {
-            sc.run_lambda_linear_scan(iter - 1);
+            sc.run_lambda_linear_scan(iter - 1, GlobalV::ofs_running);
             skip_solve = true;
         }
         else if (!sc.mag_converged() && this->drho > 0 && this->drho < this->inp_->sc_scf_thr)
         {
-            sc.run_lambda_loop(iter - 1);
+            sc.run_lambda_loop(iter - 1, true, GlobalV::ofs_running);
+            this->ds_rms_ = sc.get_last_rms_error();
             sc.set_mag_converged(true);
             skip_solve = true;
         }
         else if (sc.mag_converged())
         {
-            sc.run_lambda_loop(iter - 1);
+            sc.run_lambda_loop(iter - 1, true, GlobalV::ofs_running);
+            this->ds_rms_ = sc.get_last_rms_error();
             skip_solve = true;
         }
     }
