@@ -127,3 +127,5 @@ scf_out_elf
 812_PW_LT_sm
 813_PW_LT_bacm
 814_PW_LT_triclinic
+815_PW_DFTU_S2_Z
+816_PW_DFTU_S4_XY
