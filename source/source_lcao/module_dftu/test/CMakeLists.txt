@@ -22,7 +22,7 @@ if(ENABLE_LCAO AND ENABLE_MPI)
 AddTest(
   TARGET dftu_lcao_test
   LIBS parameter psi base device container
-  SOURCES dftu_lcao_test.cpp ../dftu_lcao.cpp ../dftu_fs.cpp
+  SOURCES dftu_lcao_test.cpp ../dftu_lcao_op.cpp ../dftu_fs.cpp
   ../../../source_pw/module_pwdft/dftu_base.cpp
   ../../../source_hamilt/module_hcontainer/func_folding.cpp
   ../../../source_hamilt/module_hcontainer/base_matrix.cpp

@@ -2,7 +2,7 @@
 #include "source_cell/cal_ux.h"
 #include "source_estate/module_charge/symm_rho.h"
 #include "source_lcao/hamilt_lcao.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_dftu/dftu_lcao.h"
 #include "source_hamilt/module_gint/gint.h"
 #include "source_base/formatter.h"
 #include "source_base/timer.h"

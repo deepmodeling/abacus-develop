@@ -1,5 +1,5 @@
 #ifdef __LCAO
-#include "dftu.h"
+#include "dftu_lcao.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
@@ -298,7 +298,7 @@ void Plus_U::folding_matrix_k_new(const int ik,
     }
     else
     {
-        if(Plus_U::nspin != 4)
+        if(this->nspin != 4)
         {
             dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
                         ->updateSk(ik, hk_type);

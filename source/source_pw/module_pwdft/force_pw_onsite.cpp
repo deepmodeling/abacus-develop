@@ -5,7 +5,7 @@
 #include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_pw/module_pwdft/kernels/force_op.h"
 #include "source_io/module_parameter/parameter.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 
 template <typename FPTYPE, typename Device>
@@ -13,7 +13,7 @@ void Forces<FPTYPE, Device>::cal_force_onsite(ModuleBase::matrix& force_onsite,
                                           const ModuleBase::matrix& wg,
                                           const ModulePW::PW_Basis_K* wfc_basis,
 										  const UnitCell& ucell_in,
-										  const Plus_U &dftu,
+										  const Plus_U_Base& dftu,
 										  const psi::Psi <std::complex<FPTYPE>, Device>* psi_in)
 {
     ModuleBase::TITLE("Forces", "cal_force_onsite");

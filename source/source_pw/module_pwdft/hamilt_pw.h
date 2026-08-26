@@ -6,7 +6,7 @@
 #include "source_cell/klist.h"
 #include "source_estate/module_pot/potential_new.h"
 #include "source_hamilt/hamilt.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_pw/module_pwdft/exx_helper.h"
 #include "source_pw/module_pwdft/vnl_pw.h"
 
@@ -31,7 +31,7 @@ class HamiltPW : public Hamilt<T, Device>
              ModulePW::PW_Basis_K* wfc_basis,
              K_Vectors* p_kv,
              pseudopot_cell_vnl* nlpp,
-             Plus_U* p_dftu, // mohan add 2025-11-06
+             Plus_U_Base* p_dftu,
              const UnitCell* ucell,
              const General_Exx_Info* exx_info);
 

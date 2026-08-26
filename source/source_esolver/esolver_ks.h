@@ -8,7 +8,7 @@
 #include "source_hamilt/hamilt.h"                      // use Hamiltonian
 #include "source_hamilt/hamilt_base.h"                 // use Hamiltonian base class
 #include "source_hamilt/module_xc/general_exx_info.h"  // ESolver owns General_Exx_Info value
-#include "source_lcao/module_dftu/dftu.h"              // mohan add 20251107
+#include "source_lcao/module_dftu/dftu_lcao.h"              // mohan add 20251107
 #include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace ModuleESolver

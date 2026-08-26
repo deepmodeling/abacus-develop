@@ -4,7 +4,6 @@
 #include "source_estate/elecstate.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "stress_func.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
 #include "source_hamilt/module_xc/coulomb_config.h"
 
 namespace vdw
@@ -25,7 +24,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     void cal_stress(ModuleBase::matrix& smearing_sigmatot,
 			UnitCell& ucell,
             const vdw::VdwResult* vdw_result,
-			Plus_U &dftu, // mhan add 2025-11-07
+			Plus_U_Base& dftu,
 			const pseudopot_cell_vl& locpp,
 			const pseudopot_cell_vnl& nlpp,
 			ModulePW::PW_Basis* rho_basis,

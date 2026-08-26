@@ -1,7 +1,7 @@
 #include "force_stress_lcao.h"
 
 #include "source_base/parallel_reduce.h"
-#include "source_lcao/module_dftu/dftu.h" //Quxin add for DFT+U on 20201029
+#include "source_lcao/module_dftu/dftu_lcao.h" //Quxin add for DFT+U on 20201029
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 // new
@@ -20,7 +20,7 @@
 #include "source_lcao/module_deepks/lcao_deepks_io.h" // mohan add 2024-07-22
 #include "source_lcao/module_deepks/deepks_force.h"
 #endif
-#include "source_lcao/module_dftu/dftu_lcao.h"
+#include "source_lcao/module_dftu/dftu_lcao_op.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
@@ -426,7 +426,32 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         }
         if (PARAM.inp.dft_plus_u == 2)
         {
-            // Old DFT+U implementation (dft_plus_u==2) still needs ForceStressArrays
+            // The legacy dft_plus_u==2 force/stress path is currently broken.
+            //
+            // Background: Plus_U::force_stress relies on ForceStressArrays
+            // members DSloc_x/y/z (gamma_only) or DSloc_Rx/Ry/Rz (multik)
+            // and DH_r being pre-allocated and filled with dS/dR data by the
+            // main force flow (formerly ForceLcaoGamma::ftable). The DFT+U
+            // step 2 refactor (commit 70c54c9d5a, 2026-01-23) removed the
+            // main-flow ForceStressArrays because the operator-based force
+            // calculation no longer needs it, but the legacy dft_plus_u==2
+            // path still depends on it. The local fsr_dftu below is declared
+            // without allocating those arrays, so any call into
+            // cal_force_gamma / cal_stress_gamma / folding_matrix_k would
+            // pass nullptr to pdgemm_ and crash with SIGSEGV.
+            //
+            // Until the legacy path is restored or re-implemented, we
+            // explicitly reject dft_plus_u==2 with cal_force or cal_stress
+            // enabled. SCF-only runs (no force/stress) are unaffected
+            // because the energy is computed in cal_energy_correction,
+            // which does not touch DSloc arrays. Use dft_plus_u=1 for
+            // force/stress calculations.
+            if (isforce || isstress)
+            {
+                ModuleBase::WARNING_QUIT("Force_Stress_LCAO::getForceStress",
+                    "dft_plus_u==2 with cal_force or cal_stress is currently broken; "
+                    "please use dft_plus_u=1 instead. See notes in source/source_lcao/force_stress_lcao.cpp.");
+            }
             ForceStressArrays fsr_dftu;
             std::vector<std::vector<double>>* dmk_d = nullptr;
             std::vector<std::vector<std::complex<double>>>* dmk_c = nullptr;

@@ -1,7 +1,7 @@
 #include "source_io/module_parameter/parameter.h"
 
 #ifdef __LCAO
-#include "dftu.h"
+#include "dftu_lcao.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
 #include "source_base/inverse_matrix.h"
@@ -35,6 +35,52 @@ void Plus_U::force_stress(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Plus_U", "force_stress");
     ModuleBase::timer::start("Plus_U", "force_stress");
+
+    // Defensive null check: the legacy dft_plus_u==2 force/stress path
+    // requires fsr.DSloc_x/y/z (gamma_only) or fsr.DSloc_Rx/Ry/Rz (multik)
+    // and fsr.DH_r to be allocated and filled by the caller. If the caller
+    // forgot to allocate them (as in force_stress_lcao.cpp where the local
+    // fsr_dftu is created without allocation), we fail early with a clear
+    // message instead of letting pdgemm_ dereference nullptr and crash.
+    // See force_stress_lcao.cpp for the historical background.
+    if (this->gamma_only_local)
+    {
+        if (this->cal_force
+            && (fsr.DSloc_x == nullptr || fsr.DSloc_y == nullptr || fsr.DSloc_z == nullptr))
+        {
+            ModuleBase::WARNING_QUIT("Plus_U::force_stress",
+                "fsr.DSloc_x/y/z are nullptr in gamma_only path; the caller must allocate and fill them. "
+                "See notes in source/source_lcao/force_stress_lcao.cpp.");
+        }
+        if (this->cal_stress
+            && (fsr.DSloc_x == nullptr || fsr.DSloc_y == nullptr || fsr.DSloc_z == nullptr
+                || fsr.DH_r == nullptr))
+        {
+            ModuleBase::WARNING_QUIT("Plus_U::force_stress",
+                "fsr.DSloc_x/y/z or fsr.DH_r is nullptr in gamma_only path; "
+                "the caller must allocate and fill them. "
+                "See notes in source/source_lcao/force_stress_lcao.cpp.");
+        }
+    }
+    else
+    {
+        if (this->cal_force
+            && (fsr.DSloc_Rx == nullptr || fsr.DSloc_Ry == nullptr || fsr.DSloc_Rz == nullptr))
+        {
+            ModuleBase::WARNING_QUIT("Plus_U::force_stress",
+                "fsr.DSloc_Rx/Ry/Rz are nullptr in multik path; the caller must allocate and fill them. "
+                "See notes in source/source_lcao/force_stress_lcao.cpp.");
+        }
+        if (this->cal_stress
+            && (fsr.DSloc_Rx == nullptr || fsr.DSloc_Ry == nullptr || fsr.DSloc_Rz == nullptr
+                || fsr.DH_r == nullptr))
+        {
+            ModuleBase::WARNING_QUIT("Plus_U::force_stress",
+                "fsr.DSloc_Rx/Ry/Rz or fsr.DH_r is nullptr in multik path; "
+                "the caller must allocate and fill them. "
+                "See notes in source/source_lcao/force_stress_lcao.cpp.");
+        }
+    }
 
     const int nlocal = this->nlocal;
 

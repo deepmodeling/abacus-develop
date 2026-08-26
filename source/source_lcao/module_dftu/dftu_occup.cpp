@@ -1,4 +1,4 @@
-#include "dftu.h"
+#include "dftu_lcao.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 #ifdef __LCAO
@@ -41,7 +41,7 @@ void Plus_U::cal_occup_m_k(const int iter,
 
         std::complex<double>* s_k_pointer = nullptr;
 
-        if(Plus_U::nspin != 4)
+        if(this->nspin != 4)
         {
             s_k_pointer = dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)->getSk();
         }
@@ -180,7 +180,7 @@ void Plus_U::cal_occup_m_k(const int iter,
 					// set the local occupation mumber matrix of spin up and down zeros
 
 #ifdef __MPI
-                    if (Plus_U::nspin == 1 || Plus_U::nspin == 4)
+                    if (this->nspin == 1 || this->nspin == 4)
                     {
                         ModuleBase::matrix temp(occ_mat[iat][l][n][0]);
                         MPI_Allreduce(&temp(0, 0),
@@ -190,7 +190,7 @@ void Plus_U::cal_occup_m_k(const int iter,
                                       MPI_SUM,
                                       MPI_COMM_WORLD);
                     }
-                    else if (Plus_U::nspin == 2)
+                    else if (this->nspin == 2)
                     {
                         ModuleBase::matrix temp0(occ_mat[iat][l][n][0]);
                         MPI_Allreduce(&temp0(0, 0),
@@ -210,7 +210,7 @@ void Plus_U::cal_occup_m_k(const int iter,
                     }
 #endif
 
-                    switch (Plus_U::nspin)
+                    switch (this->nspin)
                     {
                     case 1:
                         occ_mat[iat][l][n][0] += transpose(occ_mat[iat][l][n][0]);
@@ -219,7 +219,7 @@ void Plus_U::cal_occup_m_k(const int iter,
                         break;
 
                     case 2:
-                        for (int is = 0; is < Plus_U::nspin; is++)
+                        for (int is = 0; is < this->nspin; is++)
                             occ_mat[iat][l][n][is] += transpose(occ_mat[iat][l][n][is]);
                         break;
 
@@ -264,7 +264,7 @@ void Plus_U::cal_occup_m_gamma(const int iter,
     const double alpha = 1.0, beta = 0.0;
 
     std::vector<double> srho(this->paraV->nloc);
-    for (int is = 0; is < Plus_U::nspin; is++)
+    for (int is = 0; is < this->nspin; is++)
     {
         double* s_gamma_pointer = dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)->getSk();
 
@@ -370,7 +370,7 @@ void Plus_U::cal_occup_m_gamma(const int iter,
 #endif
 
                         // for the case spin independent calculation
-                        switch (Plus_U::nspin)
+                        switch (this->nspin)
                         {
                         case 1:
                             occ_mat[iat][l][n][0] += transpose(occ_mat[iat][l][n][0]);

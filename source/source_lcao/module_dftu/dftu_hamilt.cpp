@@ -1,4 +1,4 @@
-#include "dftu.h"
+#include "dftu_lcao.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/timer.h"

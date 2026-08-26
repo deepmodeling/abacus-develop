@@ -1,4 +1,4 @@
-#include "dftu_lcao.h"
+#include "dftu_lcao_op.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
 
@@ -141,7 +141,7 @@ void DFTU<OperatorLCAO<TK, TR>>::cal_force_stress(const bool cal_force,
         this->dftu->get_occ_mat_flat(iat0, target_L, occ);
 
         // calculate VU
-        const double u_value = this->dftu->U[T0];
+        const double u_value = this->dftu->u_current[T0];
         std::vector<double> VU(occ.size());
         double eu_tmp = 0;
         this->cal_v_of_u(occ, tlp1, u_value, &VU[0], eu_tmp);

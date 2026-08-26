@@ -94,6 +94,10 @@ void LCAO_domain::set_pot(
                   inp.cal_stress,
                   inp.device,
                   inp.kpar,
+                  PARAM.globalv.hubbard_u,
+                  PARAM.globalv.uramping,
+                  inp.occ_mat_ctrl,
+                  inp.mixing_dftu,
                   &orb);
     }
 

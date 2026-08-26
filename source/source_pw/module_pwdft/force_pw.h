@@ -12,7 +12,7 @@
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
 #include "stru_fac.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
+#include "source_pw/module_pwdft/dftu_base.h"
 
 class pseudopot_cell_vnl;
 
@@ -53,7 +53,7 @@ class Forces
                    ModuleSymmetry::Symmetry* p_symm,
                    Structure_Factor* p_sf,
 				   surchem& solvent,
-				   const Plus_U *p_dftu, //mohan add 2025-11-06
+				   const Plus_U_Base* p_dftu,
 				   const pseudopot_cell_vl* locpp,
                    const pseudopot_cell_vnl* nlpp = nullptr,
                    K_Vectors* pkv = nullptr,
@@ -107,7 +107,7 @@ class Forces
                       const ModuleBase::matrix& wg,
                       const ModulePW::PW_Basis_K* wfc_basis,
                       const UnitCell& ucell_in,
-					  const Plus_U &dftu, // mohan add 2025-11-06
+					  const Plus_U_Base& dftu,
 					  const psi::Psi <std::complex<FPTYPE>, Device>* psi_in = nullptr);
 
     void cal_force_scc(ModuleBase::matrix& forcescc,

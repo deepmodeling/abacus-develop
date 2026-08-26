@@ -3,7 +3,6 @@
 #include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
 
 namespace elecstate
 {
@@ -35,7 +34,7 @@ double ElecState::get_solvent_model_Acav()
 
 double ElecState::get_dftu_energy()
 {
-    return Plus_U::get_energy();
+    return dftu_energy_;
 }
 
 double ElecState::get_local_pp_energy()

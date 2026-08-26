@@ -210,6 +210,12 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
                           ucell,
                           this->p_chgmix,
                           this->kv.isk.data());
+
+    // mohan add 2025-11: push DFT+U energy from Plus_U instance to ElecState
+    if (this->inp_->dft_plus_u)
+    {
+        this->pelec->set_dftu_energy(this->dftu.get_energy());
+    }
 }
 
 // Temporary, it should be replaced by hsolver later.

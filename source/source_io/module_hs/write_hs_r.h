@@ -6,7 +6,7 @@
 #include "source_cell/klist.h"
 #include "source_hamilt/hamilt.h"
 #include "source_lcao/lcao_hs_arrays.hpp"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
+#include "source_lcao/module_dftu/dftu_lcao.h" // mohan add 20251107
 
 #ifdef __EXX
 #include "RI/global/Tensor.h" // for RI::Tensor

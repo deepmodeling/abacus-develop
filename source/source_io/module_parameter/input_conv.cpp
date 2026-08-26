@@ -20,7 +20,6 @@
 #include "source_lcao/module_ri/exx_abfs_jle.h"
 #endif
 
-#include "source_lcao/module_dftu/dftu.h"
 #ifdef __LCAO
 #include "source_basis/module_ao/orb_read.h"
 #include "source_lcao/force_stress_lcao.h"
@@ -93,19 +92,9 @@ void Input_Conv::Convert()
     // iteration (1/3)
     //----------------------------------------------------------
 
-    if (PARAM.inp.dft_plus_u)
-    {
-        Plus_U::omc = PARAM.inp.omc;
-        Plus_U::orbital_corr = PARAM.inp.orbital_corr;
-        Plus_U::uramping = PARAM.globalv.uramping;
-        Plus_U::mixing_dftu = PARAM.inp.mixing_dftu;
-        Plus_U::U = PARAM.globalv.hubbard_u;
-        Plus_U::U0 = PARAM.globalv.hubbard_u;
-        if (PARAM.globalv.uramping > 0.01)
-        {
-            ModuleBase::GlobalFunc::ZEROS(Plus_U::U.data(), PARAM.inp.ntype);
-        }
-    }
+    // Note: DFT+U static members (u_current, u_target, occ_mat_ctrl, etc.)
+    // are now initialized inside Plus_U_Base::init_base() which is called
+    // from setup_pot.cpp (PW) and lcao_set.cpp (LCAO). Mohan refactor 2025-11.
 
     //----------------------------------------------------------
     // Yu Liu add 2022-05-18

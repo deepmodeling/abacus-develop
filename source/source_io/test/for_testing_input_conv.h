@@ -13,7 +13,7 @@
 #include "source_io/module_restart/restart.h"
 #include "source_io/module_unk/berryphase.h"
 #include "source_lcao/force_stress_lcao.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_dftu/dftu_lcao.h"
 #include "source_md/md_func.h"
 #include "source_pw/module_pwdft/stru_fac.h"
 #include "source_pw/module_pwdft/vnl_pw.h"

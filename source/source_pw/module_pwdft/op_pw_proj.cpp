@@ -4,7 +4,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/tool_quit.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_pw/module_pwdft/kernels/onsite_op.h"
 
@@ -14,7 +14,7 @@ namespace hamilt {
 template<typename T, typename Device>
 OnsiteProj<OperatorPW<T, Device>>::OnsiteProj(const int* isk_in,
 		const UnitCell* ucell_in,
-		Plus_U *p_dftu, // mohan add 2025-11-06 
+		Plus_U_Base* p_dftu,
 		const bool cal_delta_spin,
 		const bool cal_dftu)
 {
