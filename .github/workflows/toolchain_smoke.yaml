@@ -11,7 +11,7 @@ jobs:
   smoke-build-gnu:
     runs-on: X64
     container:
-      image: ghcr.io/deepmodeling/abacus-gnu-lts
+      image: ghcr.io/deepmodeling/abacus-gnu
     defaults:
       run:
         shell: bash

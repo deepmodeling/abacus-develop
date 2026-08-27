@@ -13,7 +13,7 @@ jobs:
           build_args: "CXX=mpiicpc ELPA_LIB_DIR=/usr/local/lib ELPA_INCLUDE_DIR=/usr/local/include CEREAL_DIR=/usr/include/cereal OPENMP=ON"
           name: "Build with Makefile & Intel compilers"
     name: ${{ matrix.name }}
-    container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}-lts
+    container: ghcr.io/deepmodeling/abacus-${{ matrix.tag }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4

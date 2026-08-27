@@ -10,7 +10,7 @@ jobs:
     name: Dynamic analysis
     runs-on: X64
     if: github.repository_owner == 'deepmodeling'
-    container: ghcr.io/deepmodeling/abacus-gnu-lts
+    container: ghcr.io/deepmodeling/abacus-gnu
     steps:
       - name: Checkout
         uses: actions/checkout@v4
