@@ -2,9 +2,11 @@
 #define GET_PCHG_LCAO_H
 
 #include "source_base/parallel_grid.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_cell/klist.h"
-#include "source_estate/module_dm/density_matrix.h"
+#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_cell/unitcell.h"
 #include "source_psi/psi.h"
 
 /**
@@ -17,12 +19,11 @@
 class Get_pchg_lcao
 {
   public:
-    Get_pchg_lcao(const psi::Psi<double>& psi, const Parallel_Orbitals& para_orb, int nspin, double nelec);
-    Get_pchg_lcao(const psi::Psi<std::complex<double>>& psi, const Parallel_Orbitals& para_orb, int nspin, double nelec);
+    Get_pchg_lcao(const psi::Psi<double>& psi, const Parallel_Orbitals& para_orb, int nspin);
+    Get_pchg_lcao(const psi::Psi<std::complex<double>>& psi, const Parallel_Orbitals& para_orb, int nspin);
 
     // For gamma_only
     void begin_gamma(double* const* rho,
-                     const ModuleBase::matrix& wg,
                      const UnitCell& ucell,
                      const Parallel_Grid& pgrid,
                      const Grid_Driver& grid_driver,
@@ -33,7 +34,6 @@ class Get_pchg_lcao
     // For multi-k
     void begin_k(double* const* rho,
                  std::complex<double>* const* rhog,
-                 const ModuleBase::matrix& wg,
                  const ModulePW::PW_Basis& rho_pw,
                  UnitCell& ucell,
                  const Parallel_Grid& pgrid,
@@ -50,7 +50,6 @@ class Get_pchg_lcao
     const Parallel_Orbitals& para_orb_;
     const int nspin_;
     const int nbands_;
-    const int fermi_band_;
 
     void prepare_get_pchg(std::ofstream& ofs_running);
 
@@ -60,27 +59,5 @@ class Get_pchg_lcao
      * @param out_pchg INPUT parameter out_pchg, vector.
      */
     std::vector<int> select_bands(const std::vector<int>& out_pchg) const;
-
-#ifdef __MPI
-    /**
-     * @brief Calculates the density matrix for a given band.
-     *
-     * This method calculates the density matrix for a given band using the wave function coefficients.
-     * It performs a matrix multiplication to produce the density matrix.
-     *
-     * @param ib Band index.
-     * @param wg Weight matrix for bands and spins (k-points).
-     * @param DM Density matrix to be calculated.
-     */
-    void idmatrix(const int& ib, const ModuleBase::matrix& wg, elecstate::DensityMatrix<double, double>& DM);
-
-    // For multi-k
-    void idmatrix(const int& ib,
-                  const ModuleBase::matrix& wg,
-                  elecstate::DensityMatrix<std::complex<double>, double>& DM,
-                  const K_Vectors& kv,
-                  bool if_separate_k);
-
-#endif
 };
 #endif // GET_PCHG_LCAO_H

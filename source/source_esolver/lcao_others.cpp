@@ -1,21 +1,21 @@
-#include "source_esolver/esolver_ks_lcao.h"
-#include "source_cell/cal_ux.h"
-#include "source_estate/module_charge/symm_rho.h"
-#include "source_lcao/hamilt_lcao.h"
-#include "source_lcao/module_dftu/dftu_lcao.h"
-#include "source_hamilt/module_gint/gint.h"
 #include "source_base/formatter.h"
 #include "source_base/timer.h"
+#include "source_cell/cal_ux.h"
 #include "source_cell/module_neighbor/sltk_atom_arrange.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
+#include "source_esolver/esolver_ks_lcao.h"
 #include "source_estate/elecstate_lcao.h"
+#include "source_estate/module_charge/symm_rho.h"
 #include "source_estate/module_dm/cal_dm_psi.h"
+#include "source_hamilt/module_gint/gint.h"
 #include "source_io/module_chgpot/get_pchg_lcao.h"
 #include "source_io/module_hs/write_hs_r.h"
 #include "source_io/module_parameter/parameter.h"
 #include "source_io/module_wf/get_wf_lcao.h"
+#include "source_lcao/hamilt_lcao.h"
 #include "source_lcao/lcao_domain.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
+#include "source_lcao/module_dftu/dftu_lcao.h"
 #include "source_lcao/module_operator_lcao/op_exx_lcao.h"
 #include "source_lcao/module_operator_lcao/operator_lcao.h"
 
@@ -171,36 +171,21 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     unitcell::cal_ux(ucell, this->inp_->nspin);
 
     // pelec should be initialized before these calculations
-    elecstate::init_scf(ucell,
-                        this->Pgrid,
-                        this->sf.strucFac,
-                        this->locpp.numeric,
-                        istep,
-                        global_out_dir,
-                        *this->inp_,
-                        this->pelec);
+    elecstate::init_scf(ucell, this->Pgrid, this->sf.strucFac, this->locpp.numeric, istep, global_out_dir, *this->inp_, this->pelec);
 
     // self consistent calculations for electronic ground state
     if (cal_type == "get_pchg")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting partial charge");
-        Get_pchg_lcao get_pchg(*this->psi, this->pv, this->inp_->nspin, this->inp_->nelec);
+        Get_pchg_lcao get_pchg(*this->psi, this->pv, this->inp_->nspin);
         if (gamma_only_local)
         {
-            get_pchg.begin_gamma(this->chr.rho,
-                                 this->pelec->wg,
-                                 ucell,
-                                 this->Pgrid,
-                                 this->gd,
-                                 this->inp_->out_pchg,
-                                 global_out_dir,
-                                 GlobalV::ofs_running);
+            get_pchg.begin_gamma(this->chr.rho, ucell, this->Pgrid, this->gd, this->inp_->out_pchg, global_out_dir, GlobalV::ofs_running);
         }
         else
         {
             get_pchg.begin_k(this->chr.rho,
                              this->chr.rhog,
-                             this->pelec->wg,
                              *this->pw_rhod,
                              ucell,
                              this->Pgrid,
@@ -219,12 +204,8 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         Get_wf_lcao get_wf(*this->psi, this->pv, this->inp_->nspin, this->inp_->nelec);
         if (gamma_only_local)
         {
-            get_wf.begin_gamma(ucell,
-                               this->Pgrid,
-                               this->inp_->out_wfc_norm,
-                               this->inp_->out_wfc_re_im,
-                               global_out_dir,
-                               GlobalV::ofs_running);
+            get_wf
+                .begin_gamma(ucell, this->Pgrid, this->inp_->out_wfc_norm, this->inp_->out_wfc_re_im, global_out_dir, GlobalV::ofs_running);
         }
         else
         {

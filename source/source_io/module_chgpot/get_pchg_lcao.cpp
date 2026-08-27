@@ -7,26 +7,19 @@
 
 #include <algorithm>
 #include <cassert>
-#include <map>
 
-Get_pchg_lcao::Get_pchg_lcao(const psi::Psi<double>& psi, const Parallel_Orbitals& para_orb, const int nspin, const double nelec)
-    : psi_gamma_(&psi), psi_k_(nullptr), para_orb_(para_orb), nspin_(nspin), nbands_(para_orb.get_wfc_global_nbands()),
-      fermi_band_(static_cast<int>((nelec + 1) / 2 + 1.0e-8))
+Get_pchg_lcao::Get_pchg_lcao(const psi::Psi<double>& psi, const Parallel_Orbitals& para_orb, const int nspin)
+    : psi_gamma_(&psi), psi_k_(nullptr), para_orb_(para_orb), nspin_(nspin), nbands_(para_orb.get_wfc_global_nbands())
 {
 }
 
-Get_pchg_lcao::Get_pchg_lcao(const psi::Psi<std::complex<double>>& psi,
-                             const Parallel_Orbitals& para_orb,
-                             const int nspin,
-                             const double nelec)
-    : psi_gamma_(nullptr), psi_k_(&psi), para_orb_(para_orb), nspin_(nspin), nbands_(para_orb.get_wfc_global_nbands()),
-      fermi_band_(static_cast<int>((nelec + 1) / 2 + 1.0e-8))
+Get_pchg_lcao::Get_pchg_lcao(const psi::Psi<std::complex<double>>& psi, const Parallel_Orbitals& para_orb, const int nspin)
+    : psi_gamma_(nullptr), psi_k_(&psi), para_orb_(para_orb), nspin_(nspin), nbands_(para_orb.get_wfc_global_nbands())
 {
 }
 
 // For gamma_only
 void Get_pchg_lcao::begin_gamma(double* const* rho,
-                                const ModuleBase::matrix& wg,
                                 const UnitCell& ucell,
                                 const Parallel_Grid& pgrid,
                                 const Grid_Driver& grid_driver,
@@ -50,14 +43,15 @@ void Get_pchg_lcao::begin_gamma(double* const* rho,
     {
         if (bands_picked[ib])
         {
-            // Using new density matrix inplementation (gamma only)
-            elecstate::DensityMatrix<double, double> DM(&para_orb_, nspin_);
+            ModuleBase::matrix state_weights(nspin_, nbands_);
+            const double spin_degeneracy = nspin_ == 1 ? 2.0 : 1.0;
+            for (int is = 0; is < nspin_; ++is)
+            {
+                state_weights(is, ib) = spin_degeneracy;
+            }
 
-#ifdef __MPI
-            this->idmatrix(ib, wg, DM);
-#else
-            ModuleBase::WARNING_QUIT("Get_pchg_lcao::begin", "The `pchg` calculation is only available for MPI now!");
-#endif
+            elecstate::DensityMatrix<double, double> DM(&para_orb_, nspin_);
+            elecstate::cal_dm_psi(&para_orb_, state_weights, *psi_gamma_, DM);
 
             for (int is = 0; is < nspin_; ++is)
             {
@@ -109,7 +103,6 @@ void Get_pchg_lcao::begin_gamma(double* const* rho,
 // For multi-k
 void Get_pchg_lcao::begin_k(double* const* rho,
                             std::complex<double>* const* rhog,
-                            const ModuleBase::matrix& wg,
                             const ModulePW::PW_Basis& rho_pw,
                             UnitCell& ucell,
                             const Parallel_Grid& pgrid,
@@ -139,20 +132,23 @@ void Get_pchg_lcao::begin_k(double* const* rho,
     {
         if (bands_picked[ib])
         {
-            // Using new density matrix inplementation (multi-k)
-            const int nspin_dm = std::map<int, int>({{1, 1}, {2, 2}, {4, 1}})[nspin_];
-            elecstate::DensityMatrix<std::complex<double>, double> DM(&para_orb_, nspin_dm, kv.kvec_d, kv.get_nks() / nspin_dm);
+            ModuleBase::matrix state_weights(kv.get_nks(), nbands_);
+            const double spin_degeneracy = nspin_ == 1 ? 2.0 : 1.0;
+            for (int ik = 0; ik < kv.get_nks(); ++ik)
+            {
+                state_weights(ik, ib) = if_separate_k ? spin_degeneracy : kv.wk[ik];
+            }
 
-#ifdef __MPI
-            this->idmatrix(ib, wg, DM, kv, if_separate_k);
-#else
-            ModuleBase::WARNING_QUIT("Get_pchg_lcao::begin", "The `pchg` calculation is only available for MPI now!");
-#endif
+            const int nspin_dm = nspin_ == 2 ? 2 : 1;
+            const int nk_output = kv.get_nks() / nspin_dm;
+            elecstate::DensityMatrix<std::complex<double>, double> DM(&para_orb_, nspin_dm, kv.kvec_d, nk_output);
+            elecstate::cal_dm_psi(&para_orb_, state_weights, *psi_k_, DM);
+
             // If contribution from different k-points need to be output separately
             if (if_separate_k)
             {
                 // For multi-k, loop over all real k-points
-                for (int ik = 0; ik < kv.get_nks() / nspin_; ++ik)
+                for (int ik = 0; ik < nk_output; ++ik)
                 {
                     for (int is = 0; is < nspin_; ++is)
                     {
@@ -281,151 +277,8 @@ std::vector<int> Get_pchg_lcao::select_bands(const std::vector<int>& out_pchg) c
     const int length = std::min(static_cast<int>(out_pchg.size()), nbands_);
     std::copy(out_pchg.begin(), out_pchg.begin() + length, bands_picked.begin());
 
-    // Check if there are selected bands below the Fermi surface
-    bool has_below = false;
-    for (int i = 0; i + 1 <= fermi_band_; ++i)
-    {
-        if (bands_picked[i] == 1)
-        {
-            has_below = true;
-            break;
-        }
-    }
-    if (has_below)
-    {
-        std::cout << " Plot band-decomposed charge densities below the Fermi surface: band ";
-        for (int i = 0; i + 1 <= fermi_band_; ++i)
-        {
-            if (bands_picked[i] == 1)
-            {
-                std::cout << i + 1 << " ";
-            }
-        }
-        std::cout << std::endl;
-    }
-
-    // Check if there are selected bands above the Fermi surface
-    bool has_above = false;
-    for (int i = fermi_band_; i < nbands_; ++i)
-    {
-        if (bands_picked[i] == 1)
-        {
-            has_above = true;
-            break;
-        }
-    }
-    if (has_above)
-    {
-        std::cout << " Plot band-decomposed charge densities above the Fermi surface: band ";
-        for (int i = fermi_band_; i < nbands_; ++i)
-        {
-            if (bands_picked[i] == 1)
-            {
-                std::cout << i + 1 << " ";
-            }
-        }
-        std::cout << std::endl;
-    }
-
     return bands_picked;
 }
-
-#ifdef __MPI
-// For gamma_only
-void Get_pchg_lcao::idmatrix(const int& ib, const ModuleBase::matrix& wg, elecstate::DensityMatrix<double, double>& DM)
-{
-    ModuleBase::TITLE("Get_pchg_lcao", "idmatrix");
-    assert(wg.nr == nspin_);
-
-    for (int is = 0; is < nspin_; ++is)
-    {
-        std::cout << " Calculating density matrix for band " << ib + 1 << ", spin " << is + 1 << std::endl;
-
-        std::vector<double> wg_local(para_orb_.ncol, 0.0);
-        const int ib_local = para_orb_.global2local_col(ib);
-
-        if (ib_local >= 0)
-        {
-            // For unoccupied bands, use occupation of HOMO
-            wg_local[ib_local] = (ib < fermi_band_) ? wg(is, ib) : wg(is, fermi_band_ - 1);
-        }
-
-        // wg_wfc(ib,iw) = wg[ib] * wfc(ib,iw);
-        psi_gamma_->fix_k(is);
-
-        // psi::Psi<double> wg_wfc(*psi_gamma_, 1, psi_gamma_->get_nbands());
-        psi::Psi<double> wg_wfc(1, psi_gamma_->get_nbands(), psi_gamma_->get_nbasis(), psi_gamma_->get_nbasis(), true);
-        wg_wfc.set_all_psi(psi_gamma_->get_pointer(), wg_wfc.size());
-
-        for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
-        {
-            BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
-        }
-
-        elecstate::psiMulPsiMpi(wg_wfc, *psi_gamma_, DM.get_DMK_pointer(is), para_orb_.desc_wfc, para_orb_.desc);
-    }
-}
-
-// For multi-k
-void Get_pchg_lcao::idmatrix(const int& ib,
-                             const ModuleBase::matrix& wg,
-                             elecstate::DensityMatrix<std::complex<double>, double>& DM,
-                             const K_Vectors& kv,
-                             const bool if_separate_k)
-{
-    ModuleBase::TITLE("Get_pchg_lcao", "idmatrix");
-    assert(wg.nr == kv.get_nks());
-
-    // To ensure the normalization of charge density in multi-k calculation (if if_separate_k is true)
-    double wg_sum_k = 0;
-    double wg_sum_k_homo = 0;
-    for (int ik = 0; ik < kv.get_nks() / nspin_; ++ik)
-    {
-        wg_sum_k += wg(ik, ib);
-        wg_sum_k_homo += wg(ik, fermi_band_ - 1);
-    }
-
-    for (int ik = 0; ik < kv.get_nks(); ++ik)
-    {
-        std::cout << " Calculating density matrix for band " << ib + 1 << ", k-point " << ik % (kv.get_nks() / nspin_) + 1 << ", spin "
-                  << kv.isk[ik] + 1 << std::endl;
-
-        std::vector<double> wg_local(para_orb_.ncol, 0.0);
-        const int ib_local = para_orb_.global2local_col(ib);
-
-        if (ib_local >= 0)
-        {
-            double wg_value = 0.0;
-            if (if_separate_k)
-            {
-                wg_value = (ib < fermi_band_) ? wg_sum_k : wg_sum_k_homo;
-            }
-            else
-            {
-                wg_value = (ib < fermi_band_) ? wg(ik, ib) : wg(ik, fermi_band_ - 1);
-            }
-            wg_local[ib_local] = wg_value;
-        }
-
-        psi_k_->fix_k(ik);
-
-        psi::Psi<std::complex<double>> wg_wfc(1, psi_k_->get_nbands(), psi_k_->get_nbasis(), psi_k_->get_nbasis(), true);
-        wg_wfc.set_all_psi(psi_k_->get_pointer(), wg_wfc.size());
-        std::complex<double>* wg_wfc_ptr = wg_wfc.get_pointer();
-        for (int i = 0; i < wg_wfc.size(); ++i)
-        {
-            wg_wfc_ptr[i] = std::conj(wg_wfc_ptr[i]);
-        }
-
-        for (int ir = 0; ir < wg_wfc.get_nbands(); ++ir)
-        {
-            BlasConnector::scal(wg_wfc.get_nbasis(), wg_local[ir], wg_wfc.get_pointer() + ir * wg_wfc.get_nbasis(), 1);
-        }
-
-        elecstate::psiMulPsiMpi(wg_wfc, *psi_k_, DM.get_DMK_pointer(ik), para_orb_.desc_wfc, para_orb_.desc);
-    }
-}
-#endif // __MPI
 
 void Get_pchg_lcao::prepare_get_pchg(std::ofstream& ofs_running)
 {
