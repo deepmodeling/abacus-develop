@@ -15,6 +15,7 @@ jobs:
     runs-on: X64
     if: github.repository_owner == 'deepmodeling'
     strategy:
+      fail-fast: false
       matrix:
         dockerfile: ["gnu","intel","cuda"]
     steps:
