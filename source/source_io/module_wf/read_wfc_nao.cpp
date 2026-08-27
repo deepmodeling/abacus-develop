@@ -71,6 +71,11 @@ bool ModuleIO::read_wfc_nao(
         nbands_local = ParaV.ncol;
     }
     psid.resize(nk, nbands_local, nlocal_local);
+    if (gamma_only)
+    {
+        // Gamma diagonalizers may reserve more band slots than the wavefunction file provides.
+        psid.zero_out();
+    }
 
 #ifdef __MPI
     MPI_Comm_rank(ParaV.comm(), &myrank);
