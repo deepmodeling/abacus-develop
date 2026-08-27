@@ -311,11 +311,15 @@ OperatorEXX<OperatorLCAO<TK, TR>>::OperatorEXX(HS_Matrix_K<TK>* hsk_in,
         if (this->add_hexx_type == Add_Hexx_Type::R)
         {
             // if k points has no shift, use cell_nearest to reduce the memory cost
-            this->use_cell_nearest = (ModuleBase::Vector3<double>(std::fmod(this->kv.get_koffset(0), 1.0),
-                                                                  std::fmod(this->kv.get_koffset(1), 1.0),
-                                                                  std::fmod(this->kv.get_koffset(2), 1.0))
-                                          .norm()
-                                      < 1e-10);
+            // In the hybrid gauge, BvK-equivalent cells can carry different
+            // finite-field phases, so preserve the original cell indices.
+            const bool hybrid_gauge_rt = PARAM.inp.esolver_type == "tddft" && PARAM.inp.td_stype == 2;
+            this->use_cell_nearest = !hybrid_gauge_rt
+                                     && (ModuleBase::Vector3<double>(std::fmod(this->kv.get_koffset(0), 1.0),
+                                                                     std::fmod(this->kv.get_koffset(1), 1.0),
+                                                                     std::fmod(this->kv.get_koffset(2), 1.0))
+                                             .norm()
+                                         < 1e-10);
 
             const std::array<int, 3> Rs_period = {this->kv.nmp[0], this->kv.nmp[1], this->kv.nmp[2]};
             if (this->use_cell_nearest)
