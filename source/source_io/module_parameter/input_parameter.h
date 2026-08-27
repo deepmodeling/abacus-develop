@@ -389,8 +389,8 @@ struct Input_para
     bool bse_mem_save = false;    ///< whether to save memory by adding V and W to BSE matrix directly
     bool bse_ri_hartree = true; ///< whether to use RI approximation for Hartree term in BSE
     int bse_use_fine_kgrid = 0; ///< 0: coarse k-grid; 1: uniform fine k-grid; 2: non-uniform fine k-grid
-    int bse_q_approx_mode = 0;   ///< q→kpair mapping mode: 0=exact, 1=coarse q grid, 2=mixed
-    double bse_q_approx_threshold = 0.1; ///< threshold radius (Bohr^-1) for exact q in mode 2
+    int bse_q_approx_mode = 0;   ///< q→kpair mapping mode: 0=exact, 1=coarse q grid, 2=mixed, 3=truncate
+    double bse_q_approx_threshold = 0.1; ///< threshold radius (in unit of 2*pi/lat0) for exact q in mode 2, or |q| truncation in mode 3
     bool out_bse_ab = false;    ///< whether to output the AB matrix to file
     int bse_continue = 0; ///< which step to continue from previous BSE calculation
                           ///< 0: new; 1: continue from A_V; 2: A_V and A_W; 3: A_V, A_W and B_V; 4: A_V, A_W, B_V and B_W

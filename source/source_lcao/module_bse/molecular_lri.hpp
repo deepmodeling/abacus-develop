@@ -156,6 +156,33 @@ void MolecularLRI<T>::build_q_to_kpair_map(int mode, double threshold)
             }
         this->LR_lri.q2kpair.insert(std::make_move_iterator(q2kpair_tmp.begin()), std::make_move_iterator(q2kpair_tmp.end()));
     }
+    else if (mode == 3)
+    {
+        // keep only (k1,k2) pairs with |q| <= threshold (in unit of 2*pi/lat0, minimum image);
+        // dropped pairs never enter q2kpair -> cal_cvc_mo_k_onthefly skips them
+        // entirely, so their W matrix elements are never computed (and are zero).
+        // NOTE: build into an eps-fuzzy local map (as mode 0 does) and then move
+        // into LR_lri.q2kpair. Inserting directly into q2kpair (exact std::less
+        // comparison) fragments float-identical q keys (i/7 - j/7 != (i-j)/7 in
+        // doubles) into ~1-ulp duplicates, inflating the key count (e.g. 15625 vs
+        // 343) and slowing cal_cvc_mo_k_onthefly's q-loop by ~40x.
+        std::map<Tk, std::vector<std::pair<int, int>>, kComparator> q2kpair_tmp;
+        for (int k1 : this->LR_lri.k1_indices)
+            for (int k2 : this->LR_lri.k2_indices)
+            {
+                const Tk q_diff = this->LR_lri.kindex_map[k2] - this->LR_lri.kindex_map[k1];
+                Tk q_frac = q_diff;
+                for (int i = 0; i < 3; ++i) { q_frac[i] -= std::round(q_frac[i]); }
+                Tk q_cart = frac_to_cart(q_frac);
+                double q_norm = std::sqrt(q_cart[0] * q_cart[0] + q_cart[1] * q_cart[1] + q_cart[2] * q_cart[2]);
+                if (q_norm <= threshold)
+                {
+                    Tk q_key = q_diff % k_unit;
+                    q2kpair_tmp[q_key].emplace_back(k1, k2);
+                }
+            }
+        this->LR_lri.q2kpair.insert(std::make_move_iterator(q2kpair_tmp.begin()), std::make_move_iterator(q2kpair_tmp.end()));
+    }
     else
     {
         std::set<Tk, kComparator> q_coarse_set;
@@ -214,7 +241,7 @@ void MolecularLRI<T>::build_q_to_kpair_map(int mode, double threshold)
     GlobalV::ofs_running << "detailed q_list see 'qlist_{rank}.dat'" << std::endl;
     std::ofstream ofs_qlist(this->out_dir + "qlist_" + std::to_string(this->my_rank+1) + ".dat");
     ofs_qlist << "q_list: size = " << this->LR_lri.q_list.size() << std::endl;
-    ofs_qlist << "(direct coords)       | (Cartesian, Bohr^-1)" << std::endl;
+    ofs_qlist << "(direct coords)       | (Cartesian, 2*pi/lat0)" << std::endl;
     ofs_qlist << std::fixed << std::setprecision(4);
     for (const Tk& q : this->LR_lri.q_list)
     {
