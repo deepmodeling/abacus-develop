@@ -7,6 +7,9 @@
 // #include "source_lcao/module_lr/utils/lr_util_hcontainer.h"
 namespace LR
 {
+    /// `dm_gs` carries the ground-state occupations, at nspin=1 they are 2 for fully occupied bands.
+    inline double gs_dm_channel_factor() { return (PARAM.inp.nspin == 1) ? 0.5 : 1.0; }
+
     template<typename TK>
     Charge LR_Force<TK>::dm_to_charge(const elecstate::DensityMatrix<TK, double>& dm)
     {
@@ -128,7 +131,8 @@ namespace LR
             std::vector<const double*> vr_eff = { v_lin.c };
             ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_DMR_vector(), true, false, &fhxc_dvhxc, &stress_tmp);
         }
-        if(!reproduce_gs) {fhxc_dvhxc *= 2;} // for the two channels of the ground-state dm. 
+        if(!reproduce_gs) {fhxc_dvhxc *= 2;} // for the two channels of the ground-state dm.
+        fhxc_dvhxc *= gs_dm_channel_factor();
 
         // 4. kinetic (Pulay)
         std::vector<hamilt::HContainer<double>> dT = cal_hs_grad('T', this->ucell_, this->pv_, this->gd_, this->two_center_bundle_);
@@ -193,6 +197,7 @@ namespace LR
         ModuleBase::matrix stress_tmp;
         std::vector<const double*> vr_eff = { v2.c };
         ModuleGint::cal_gint_fvl(1, vr_eff, dm_gs.get_DMR_vector(), true, false, &f, &stress_tmp);
+        f *= gs_dm_channel_factor();
         return f;
     }
 

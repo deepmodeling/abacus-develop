@@ -59,10 +59,10 @@ namespace LR
         // Hartree
         switch (this->spin_type_)
         {
-        case SpinType::S1: case SpinType::S2_updown: case SpinType::S2_gs:
+        case SpinType::S1_gs: case SpinType::S2_updown: case SpinType::S2_gs:
             v_eff += elecstate::H_Hartree_pw::v_hartree(ucell, const_cast<ModulePW::PW_Basis*>(&this->rho_basis_), 1, rho);
             break;
-        case SpinType::S2_singlet:
+        case SpinType::S1: case SpinType::S2_singlet:
             v_eff += 2 * elecstate::H_Hartree_pw::v_hartree(ucell, const_cast<ModulePW::PW_Basis*>(&this->rho_basis_), 1, rho);
             break;
         default:
@@ -90,11 +90,16 @@ namespace LR
             switch (s)
             {
             case SpinType::S1:
-                funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
+            case SpinType::S1_gs:
+            {
+                // S1_gs is exactly half of S1 (see the SpinType doc in the header).
+                const double prefac = (s == SpinType::S1_gs) ? 1.0 : 2.0;
+                funcs[s] = [this, &fxc, prefac](FXC_PARA_TYPE)->void
                     {
-                        for (int ir = 0;ir < nrxx;++ir) { v_eff(0, ir) += ModuleBase::e2 * fxc.v2rho2.at(ir) * rho[ir]; }
+                        for (int ir = 0;ir < nrxx;++ir) { v_eff(0, ir) += ModuleBase::e2 * prefac * fxc.v2rho2.at(ir) * rho[ir]; }
                     };
                 break;
+            }
             case SpinType::S2_singlet:
             case SpinType::S2_gs:
             {
@@ -140,7 +145,10 @@ namespace LR
             switch (s)
             {
             case SpinType::S1:
-                funcs[s] = [this, &fxc](FXC_PARA_TYPE)->void
+            case SpinType::S1_gs:
+            {
+                const double prefac = (s == SpinType::S1_gs) ? 1.0 : 2.0;   // S1_gs is exactly half of S1.
+                funcs[s] = [this, &fxc, prefac](FXC_PARA_TYPE)->void
                     {
                         // test: output drho
                         // double thr = 1e-1;
@@ -176,9 +184,10 @@ namespace LR
                             vxc_tmp[ir] += (fxc.v2rho2.at(ir) * rho[ir]
                                 + fxc.v2rhosigma_2drho.at(ir) * drho.at(ir));
                         }
-                        BlasConnector::axpy(nrxx, ModuleBase::e2, vxc_tmp.data(), 1, v_eff.c, 1);
+                        BlasConnector::axpy(nrxx, ModuleBase::e2 * prefac, vxc_tmp.data(), 1, v_eff.c, 1);
                     };
                 break;
+            }
             case SpinType::S2_singlet:
             case SpinType::S2_gs:
             {

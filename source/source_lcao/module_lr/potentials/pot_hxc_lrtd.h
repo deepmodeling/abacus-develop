@@ -10,22 +10,22 @@ namespace LR
     class PotHxcLR : public PotLRBase
     {
     public:
-        /// S1: K^Hartree + K^xc
+        /// S1: the nspin=1 singlet LR kernel, 2*K^Hartree + 2*K^xc.
+        ///     The factor 2 on *both* terms is what makes it equal to S2_singlet. 
+        /// S1_gs: the nspin=1 counterpart of S2_gs, i.e. the *ground-state* Hxc kernel
+        ///     K^Hartree + K^xc = S1 / 2. This is what `pot_hxc_gs` needs at nspin=1.
         /// S2_singlet: 2*K^Hartree + K^xc_{upup} + K^xc_{updown}
         /// S2_triplet: K^xc_{upup} - K^xc_{updown}
         /// S2_updown: K^Hartree + (K^xc_{upup}, K^xc_{updown},  K^xc_{downup} or K^xc_{downdown}), according to `ispin_op` (for spin-polarized systems)
-        /// S2_gs: the nspin=2 counterpart of S1, i.e. the *ground-state* Hxc kernel
-        ///     K^Hartree + (K^xc_{upup} + K^xc_{updown})/2 = S2_singlet / 2.
-        ///     Used for `pot_hxc_gs` in LR gradients, where the convention is
-        ///     `K_Hxc(singlet) = 2 * pot_hxc_gs` (see `cal_multiplier_w_from_z.h`).
+        /// S2_gs: the nspin=2 *ground-state* Hxc kernel K^Hartree + (K^xc_{upup} + K^xc_{updown})/2 = S2_singlet / 2.
+        ///     Used for `pot_hxc_gs` in LR gradients, where the convention is `K_Hxc(singlet) = 2 * pot_hxc_gs`.
         ///     The 1/2 on the xc part is not a convention but the chain rule: the derivative is
         ///     taken w.r.t. the *total* density matrix, and $\partial v_u/\partial\rho =
-        ///     (f_{uu}+f_{ud})/2$ because $\rho_u=\rho_d=\rho/2$. The Hartree part needs no
-        ///     halving, which is exactly why S1 and S2_gs share the same Hartree weight.
+        ///     (f_{uu}+f_{ud})/2$ because $\rho_u=\rho_d=\rho/2$. The Hartree part needs no halving.
         ///     Do NOT use S1 here when nspin=2: `KernelXC` is built with `PARAM.inp.nspin`, so the
         ///     kernel arrays carry 3 spin components per grid point while the S1 integrand indexes
         ///     them as if there were 1.
-        enum SpinType { S1 = 0, S2_singlet = 1, S2_triplet = 2, S2_updown = 3, S2_gs = 4 };
+        enum SpinType { S1 = 0, S2_singlet = 1, S2_triplet = 2, S2_updown = 3, S2_gs = 4, S1_gs = 5 };
         /// XCType here is to determin the method of integration from kernel to potential, not the way calculating the kernel
         enum XCType { None = 0, LDA = 1, GGA = 2, HYB_GGA = 4 };
         /// constructor building exchange-correlation kernel

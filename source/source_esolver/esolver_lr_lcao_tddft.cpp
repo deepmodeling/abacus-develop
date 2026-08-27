@@ -868,7 +868,7 @@ void ModuleESolver::ESolver_LR<T, TR>::init_pot(const Charge& chg_gs)
         // while the S1 integrand indexes them as if there were 1 -- it does not even read a
         // consistent spin combination. Use `ST::S2_gs` there, which is exactly half of S2_singlet,
         // matching the `K_Hxc(singlet) = 2 * pot_hxc_gs` convention of the gradient operators.
-        const ST st_gs = (nspin == 1) ? ST::S1 : (oshell ? ST::S2_updown : ST::S2_gs);
+        const ST st_gs = (nspin == 1) ? ST::S1_gs : (oshell ? ST::S2_updown : ST::S2_gs);
         // `pot_hxc_gs` supplies the $g^{xc}$ of both $W^c$ and the force term, for either spin.
         // Those two call sites are guarded by `has_local_xc(xc_kernel)` -- the *LR* kernel name --
         // so an `xc_kernel rpa` run never touches them however local `dft_functional` is.
@@ -943,7 +943,8 @@ void ModuleESolver::ESolver_LR<T, TR>::read_ks_chg(Charge& chg_gs)
     for (int is = 0; is < this->nspin; ++is)
     {
         std::stringstream ssc;
-        ssc << this->in_dir << "chgs" << is + 1 << ".cube";
+        if (this->nspin == 1) { ssc << this->in_dir << "chg.cube"; }
+        else { ssc << this->in_dir << "chgs" << is + 1 << ".cube"; }
         GlobalV::ofs_running << ssc.str() << std::endl;
         ModuleIO::read_vdata_palgrid(Pgrid,
             GlobalV::MY_RANK,

@@ -223,12 +223,17 @@ void LR::KernelXC::f_xc_libxc(const int& nspin, const double& omega, const doubl
             xc_gga_fxc(&func, nrxx, rho.data(), sigma.data(), v2rho2_tmp.data(), v2rhosigma_tmp.data(), v2sigma2_tmp.data());
             // std::cout << "max element of v2sigma2_tmp: " << *std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) << std::endl;
             // std::cout << "rho corresponding to max element of v2sigma2_tmp: " << rho[(std::max_element(v2sigma2_tmp.begin(), v2sigma2_tmp.end()) - v2sigma2_tmp.begin()) / 6] << std::endl;
-            // cut off by sgn
-            cutoff_grid_data_spin2(vrho_tmp, sgn);
-            cutoff_grid_data_spin2(vsigma_tmp, sgn);
-            cutoff_grid_data_spin2(v2rho2_tmp, sgn);
-            cutoff_grid_data_spin2(v2rhosigma_tmp, sgn);
-            cutoff_grid_data_spin2(v2sigma2_tmp, sgn);
+            // cut off by sgn. nspin=2 only: `cutoff_grid_data_spin2` assumes >1 component per
+            // grid point (it asserts on it), and at nspin=1 there is exactly one, for which both
+            // of its `for_each` ranges are empty -- the cutoff is a no-op anyway. 
+            if (nspin == 2)
+            {
+                cutoff_grid_data_spin2(vrho_tmp, sgn);
+                cutoff_grid_data_spin2(vsigma_tmp, sgn);
+                cutoff_grid_data_spin2(v2rho2_tmp, sgn);
+                cutoff_grid_data_spin2(v2rhosigma_tmp, sgn);
+                cutoff_grid_data_spin2(v2sigma2_tmp, sgn);
+            }
             if (need_kxc)
             {
                 xc_gga_kxc(&func, nrxx, rho.data(), sigma.data(),
@@ -503,23 +508,36 @@ void LR::KernelXC::build_gxc_coef(GxcCoef& dst, const bool triplet, const int& n
 
     if (nspin == 1)
     {
-        // Single component everywhere; all the weight sums collapse to 1 (section 3).
+        // Single component everywhere; all the weight sums collapse to 1.
+        //
+        // ... and then the whole set is scaled by 4 to reach the *singlet* normalization, the same
+        // one `nspin=2` produces below and the only one the rest of the gradient code knows about.
+        // libxc's unpolarized derivatives are taken w.r.t. the TOTAL density, so for a closed shell
+        // (rho_u = rho_d = rho/2) an n-th derivative is 2^(n-1) smaller than the singlet spin
+        // combination: d^2E/drho^2 = (f_uu+f_ud)/2 -- which is why `SpinType::S1` carries a 2 --
+        // and d^3E/drho^3 = (g_uuu + 3g_uud)/4, while the nspin=2 branch below builds
+        // a_s2 = g_uuu + 2g_uud + g_udd = g_uuu + 3g_uud. Hence 4 here, 2 there.
+        //
+        // Measured on H2/SZ/LDA: without it the GXC DMTRANS force was 0.08549 eV/Ang against the
+        // nspin=2 singlet's 0.17097 -- a factor 2, being 1/4 from this and 2 from the `dm_gs`
+        // channel convention (`gs_dm_channel_factor` in `lr_force.cpp`).
+        constexpr double to_singlet = 4.;
 #ifdef _OPENMP
 #pragma omp parallel for schedule(static, 4096)
 #endif
         for (int i = 0;i < nrxx;++i)
         {
-            dst.a_s2[i] = v3r3[i];
+            dst.a_s2[i] = to_singlet * v3r3[i];
             if (!is_gga) { continue; }
-            dst.a_st[i] = v3r2s[i] * 4.;
-            dst.a_t2[i] = v3rs2[i] * 4.;
-            dst.a_q[i] = v2rs[i] * 2.;
-            dst.c_s[i] = v2rs[i] * 4.;
-            dst.c_t[i] = v2s2[i] * 8.;
-            dst.e_s2[i] = v3r2s[i] * 2.;
-            dst.e_st[i] = v3rs2[i] * 8.;
-            dst.e_t2[i] = v3s3[i] * 8.;
-            dst.e_q[i] = v2s2[i] * 4.;
+            dst.a_st[i] = to_singlet * v3r2s[i] * 4.;
+            dst.a_t2[i] = to_singlet * v3rs2[i] * 4.;
+            dst.a_q[i] = to_singlet * v2rs[i] * 2.;
+            dst.c_s[i] = to_singlet * v2rs[i] * 4.;
+            dst.c_t[i] = to_singlet * v2s2[i] * 8.;
+            dst.e_s2[i] = to_singlet * v3r2s[i] * 2.;
+            dst.e_st[i] = to_singlet * v3rs2[i] * 8.;
+            dst.e_t2[i] = to_singlet * v3s3[i] * 8.;
+            dst.e_q[i] = to_singlet * v2s2[i] * 4.;
         }
         return;
     }
