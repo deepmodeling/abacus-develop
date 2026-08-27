@@ -180,13 +180,11 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         Get_pchg_lcao get_pchg(*this->psi, this->pv, this->inp_->nspin);
         if (gamma_only_local)
         {
-            get_pchg.begin_gamma(this->chr.rho, ucell, this->Pgrid, this->gd, this->inp_->out_pchg, global_out_dir, GlobalV::ofs_running);
+            get_pchg.begin_gamma(ucell, this->Pgrid, this->gd, this->inp_->out_pchg, global_out_dir, GlobalV::ofs_running);
         }
         else
         {
-            get_pchg.begin_k(this->chr.rho,
-                             this->chr.rhog,
-                             *this->pw_rhod,
+            get_pchg.begin_k(*this->pw_rhod,
                              ucell,
                              this->Pgrid,
                              this->gd,
@@ -204,8 +202,7 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         Get_wf_lcao get_wf(*this->psi, this->pv, this->inp_->nspin, this->inp_->nelec);
         if (gamma_only_local)
         {
-            get_wf
-                .begin_gamma(ucell, this->Pgrid, this->inp_->out_wfc_norm, this->inp_->out_wfc_re_im, global_out_dir, GlobalV::ofs_running);
+            get_wf.begin_gamma(ucell, this->Pgrid, this->inp_->out_wfc_norm, this->inp_->out_wfc_re_im, global_out_dir, GlobalV::ofs_running);
         }
         else
         {

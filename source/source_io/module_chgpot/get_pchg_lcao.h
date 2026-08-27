@@ -23,8 +23,7 @@ class Get_pchg_lcao
     Get_pchg_lcao(const psi::Psi<std::complex<double>>& psi, const Parallel_Orbitals& para_orb, int nspin);
 
     // For gamma_only
-    void begin_gamma(double* const* rho,
-                     const UnitCell& ucell,
+    void begin_gamma(const UnitCell& ucell,
                      const Parallel_Grid& pgrid,
                      const Grid_Driver& grid_driver,
                      const std::vector<int>& out_pchg,
@@ -32,9 +31,7 @@ class Get_pchg_lcao
                      std::ofstream& ofs_running);
 
     // For multi-k
-    void begin_k(double* const* rho,
-                 std::complex<double>* const* rhog,
-                 const ModulePW::PW_Basis& rho_pw,
+    void begin_k(const ModulePW::PW_Basis& rho_pw,
                  UnitCell& ucell,
                  const Parallel_Grid& pgrid,
                  const Grid_Driver& grid_driver,

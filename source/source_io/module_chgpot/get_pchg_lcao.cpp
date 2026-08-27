@@ -19,8 +19,7 @@ Get_pchg_lcao::Get_pchg_lcao(const psi::Psi<std::complex<double>>& psi, const Pa
 }
 
 // For gamma_only
-void Get_pchg_lcao::begin_gamma(double* const* rho,
-                                const UnitCell& ucell,
+void Get_pchg_lcao::begin_gamma(const UnitCell& ucell,
                                 const Parallel_Grid& pgrid,
                                 const Grid_Driver& grid_driver,
                                 const std::vector<int>& out_pchg,
@@ -34,9 +33,14 @@ void Get_pchg_lcao::begin_gamma(double* const* rho,
     prepare_get_pchg(ofs_running);
 
     assert(psi_gamma_ != nullptr);
-    assert(rho != nullptr);
     const int nrxx = pgrid.get_nrxx();
-    std::vector<double*> rho_pointers(rho, rho + nspin_);
+    const int precision = 11;
+    std::vector<std::vector<double>> rho(nspin_, std::vector<double>(nrxx));
+    std::vector<double*> rho_pointers(nspin_);
+    for (int is = 0; is < nspin_; ++is)
+    {
+        rho_pointers[is] = rho[is].data();
+    }
     const std::vector<int> bands_picked = select_bands(out_pchg);
 
     for (int ib = 0; ib < nbands_; ++ib)
@@ -55,22 +59,12 @@ void Get_pchg_lcao::begin_gamma(double* const* rho,
 
             for (int is = 0; is < nspin_; ++is)
             {
-                ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx);
+                std::fill(rho[is].begin(), rho[is].end(), 0.0);
             }
 
             DM.init_DMR(&grid_driver, &ucell);
             DM.cal_DMR();
             ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
-
-            // A solution to replace the original implementation of the following code:
-            // pelec->charge->save_rho_before_sum_band();
-            // Using std::vector to replace the original double** rho_save
-            std::vector<std::vector<double>> rho_save(nspin_, std::vector<double>(nrxx));
-
-            for (int is = 0; is < nspin_; ++is)
-            {
-                ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), nrxx); // Copy data
-            }
 
             for (int is = 0; is < nspin_; ++is)
             {
@@ -80,19 +74,7 @@ void Get_pchg_lcao::begin_gamma(double* const* rho,
 
                 ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
-                const int precision = 6;
-                ModuleIO::write_vdata_palgrid(pgrid,
-                                              rho_save[is].data(),
-                                              is,
-                                              nspin_,
-                                              0,
-                                              ssc.str(),
-                                              0.0,
-                                              &ucell,
-                                              precision,
-                                              0,
-                                              false,
-                                              false);
+                ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false);
             }
         }
     }
@@ -101,9 +83,7 @@ void Get_pchg_lcao::begin_gamma(double* const* rho,
 }
 
 // For multi-k
-void Get_pchg_lcao::begin_k(double* const* rho,
-                            std::complex<double>* const* rhog,
-                            const ModulePW::PW_Basis& rho_pw,
+void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
                             UnitCell& ucell,
                             const Parallel_Grid& pgrid,
                             const Grid_Driver& grid_driver,
@@ -120,12 +100,28 @@ void Get_pchg_lcao::begin_k(double* const* rho,
     prepare_get_pchg(ofs_running);
 
     assert(psi_k_ != nullptr);
-    assert(rho != nullptr);
-    assert(rhog != nullptr);
     assert(pgrid.get_nrxx() == rho_pw.nrxx);
     const int nrxx = pgrid.get_nrxx();
-    std::vector<double*> rho_pointers(rho, rho + nspin_);
-    std::vector<std::complex<double>*> rhog_pointers(rhog, rhog + nspin_);
+    const int precision = 11;
+    std::vector<std::vector<double>> rho(nspin_, std::vector<double>(nrxx));
+    std::vector<double*> rho_pointers(nspin_);
+    for (int is = 0; is < nspin_; ++is)
+    {
+        rho_pointers[is] = rho[is].data();
+    }
+
+    const bool needs_symmetry = !if_separate_k && ModuleSymmetry::Symmetry::symm_flag == 1;
+    std::vector<std::vector<std::complex<double>>> rhog;
+    std::vector<std::complex<double>*> rhog_pointers;
+    if (needs_symmetry)
+    {
+        rhog.resize(nspin_, std::vector<std::complex<double>>(rho_pw.npw));
+        rhog_pointers.resize(nspin_);
+        for (int is = 0; is < nspin_; ++is)
+        {
+            rhog_pointers[is] = rhog[is].data();
+        }
+    }
     const std::vector<int> bands_picked = select_bands(out_pchg);
 
     for (int ib = 0; ib < nbands_; ++ib)
@@ -152,20 +148,12 @@ void Get_pchg_lcao::begin_k(double* const* rho,
                 {
                     for (int is = 0; is < nspin_; ++is)
                     {
-                        ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx);
+                        std::fill(rho[is].begin(), rho[is].end(), 0.0);
                     }
 
                     DM.init_DMR(&grid_driver, &ucell);
                     DM.cal_DMR(ik);
                     ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
-
-                    // Using std::vector to replace the original double** rho_save
-                    std::vector<std::vector<double>> rho_save(nspin_, std::vector<double>(nrxx));
-
-                    for (int is = 0; is < nspin_; ++is)
-                    {
-                        ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), nrxx); // Copy data
-                    }
 
                     for (int is = 0; is < nspin_; ++is)
                     {
@@ -175,9 +163,8 @@ void Get_pchg_lcao::begin_k(double* const* rho,
 
                         ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
-                        const int precision = 6;
                         ModuleIO::write_vdata_palgrid(pgrid,
-                                                      rho_save[is].data(),
+                                                      rho[is].data(),
                                                       is,
                                                       nspin_,
                                                       0,
@@ -195,30 +182,29 @@ void Get_pchg_lcao::begin_k(double* const* rho,
             {
                 for (int is = 0; is < nspin_; ++is)
                 {
-                    ModuleBase::GlobalFunc::ZEROS(rho[is], nrxx);
+                    std::fill(rho[is].begin(), rho[is].end(), 0.0);
                 }
 
                 DM.init_DMR(&grid_driver, &ucell);
                 DM.cal_DMR();
                 ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
-                // Using std::vector to replace the original double** rho_save
-                std::vector<std::vector<double>> rho_save(nspin_, std::vector<double>(nrxx));
-
-                for (int is = 0; is < nspin_; ++is)
-                {
-                    ModuleBase::GlobalFunc::DCOPY(rho[is], rho_save[is].data(), nrxx); // Copy data
-                }
 
                 // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
-                Symmetry_rho srho;
-                for (int is = 0; is < nspin_; ++is)
+                if (needs_symmetry)
                 {
-                    std::vector<double*> rho_save_pointers(nspin_);
-                    for (int i = 0; i < nspin_; ++i)
+                    Symmetry_rho srho;
+                    if (nspin_ == 4)
                     {
-                        rho_save_pointers[i] = rho_save[i].data();
+                        srho.begin(0, rho_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
+                        srho.begin_soc(rho_pointers.data(), rhog_pointers.data(), &rho_pw, ucell.symm);
                     }
-                    srho.begin(is, rho_save_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
+                    else
+                    {
+                        for (int is = 0; is < nspin_; ++is)
+                        {
+                            srho.begin(is, rho_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
+                        }
+                    }
                 }
 
                 for (int is = 0; is < nspin_; ++is)
@@ -229,19 +215,7 @@ void Get_pchg_lcao::begin_k(double* const* rho,
 
                     ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
-                    const int precision = 6;
-                    ModuleIO::write_vdata_palgrid(pgrid,
-                                                  rho_save[is].data(),
-                                                  is,
-                                                  nspin_,
-                                                  0,
-                                                  ssc.str(),
-                                                  0.0,
-                                                  &ucell,
-                                                  precision,
-                                                  0,
-                                                  false,
-                                                  false);
+                    ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false);
                 }
             }
         }
