@@ -32,7 +32,7 @@ void pw::setup_pot(const int istep,
     //! 0) DFT-1/2 calculations, sep potential need to generate
     // before effective potential calculation
     //----------------------------------------------------------
-    if (PARAM.inp.dfthalf_type > 0)
+    if (inp.dfthalf_type > 0)
     {
         vsep_cell->generate_vsep_r(pw_rhod[0], sf.strucFac, ucell.sep_cell);
     }
@@ -70,16 +70,16 @@ void pw::setup_pot(const int istep,
     //----------------------------------------------------------
     //! 4) Onsite projectors
     //----------------------------------------------------------
-    if (PARAM.inp.onsite_radius > 0)
+    if (inp.onsite_radius > 0)
     {
         auto* onsite_p = projectors::OnsiteProjector<double, Device>::get_instance();
-        onsite_p->init(PARAM.inp.orbital_dir,
+        onsite_p->init(inp.orbital_dir,
                 &ucell,
                 *(kspw_psi),
                 kv,
                 *(pw_wfc),
                 sf,
-                PARAM.inp.onsite_radius,
+                inp.onsite_radius,
                 PARAM.globalv.nqx,
                 PARAM.globalv.dq,
                 pelec->wg,
@@ -89,20 +89,20 @@ void pw::setup_pot(const int istep,
     //----------------------------------------------------------
     //! 5) Spin-constrained algorithms
     //----------------------------------------------------------
-    if (PARAM.inp.sc_mag_switch)
+    if (inp.sc_mag_switch)
     {
         spinconstrain::SpinConstrain<std::complex<double>>& sc
             = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
-        sc.init_sc(PARAM.inp.sc_thr,
-                   PARAM.inp.nsc,
-                   PARAM.inp.nsc_min,
-                   PARAM.inp.alpha_trial,
-                   PARAM.inp.sccut,
-                   PARAM.inp.sc_drop_thr,
+        sc.init_sc(inp.sc_thr,
+                   inp.nsc,
+                   inp.nsc_min,
+                   inp.alpha_trial,
+                   inp.sccut,
+                   inp.sc_drop_thr,
                    ucell,
-                   PARAM.inp.sc_direction_only,
+                   inp.sc_direction_only,
                    nullptr, // parallel orbitals
-                   PARAM.inp.nspin,
+                   inp.nspin,
                    kv,
                    p_hamilt,
                    kspw_psi,
@@ -119,22 +119,20 @@ void pw::setup_pot(const int istep,
     // called in before_all_runners (esolver), which should 
     // be improved later. Mohan note 2025-11-06
     //----------------------------------------------------------
-    if (PARAM.inp.dft_plus_u)
+    if (inp.dft_plus_u)
     {
-        const int nlocal_dftu = 0;
         dftu.init_base(ucell,
                   PARAM.globalv.npol,
-                  PARAM.inp.nspin, PARAM.inp.orbital_corr, PARAM.inp.yukawa_potential, PARAM.inp.yukawa_lambda,
+                  inp.nspin, inp.orbital_corr, inp.yukawa_potential,
                   PARAM.globalv.global_readin_dir,
                   PARAM.globalv.global_out_dir,
-                  PARAM.inp.init_chg,
-                  nlocal_dftu,
-                  PARAM.globalv.gamma_only_local,
-                  PARAM.inp.ks_solver,
-                  PARAM.inp.cal_force,
-                  PARAM.inp.cal_stress,
-                  PARAM.inp.device,
-                  PARAM.inp.kpar);
+                  inp.init_chg,
+                  inp.device,
+                  inp.kpar,
+                  PARAM.globalv.hubbard_u,
+                  PARAM.globalv.uramping,
+                  inp.occ_mat_ctrl,
+                  inp.mixing_dftu);
     }
 
     return;

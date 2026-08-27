@@ -17,24 +17,7 @@
 // local inline helpers for eigenvalue calculation (JacobiRotate, CalculateEigenvalues)
 // have been migrated to dftu_output.cpp, where they are used by dftu_io::write_occup_m.
 // mohan refactored 2025-11-08
-
-// static member definitions (mohan add 2025-11-06)
-double Plus_U_Base::energy_u = 0.0;
-
-std::vector<double> Plus_U_Base::U = {};
-
-std::vector<double> Plus_U_Base::U0 = {};
-
-std::vector<int> Plus_U_Base::orbital_corr = {};
-
-double Plus_U_Base::uramping = 0.0;
-
-int Plus_U_Base::omc = 0;
-
-int Plus_U_Base::mixing_dftu = 0;
-int Plus_U_Base::nspin = 0;
-
-bool Plus_U_Base::Yukawa = false;
+// All members are now non-static; default values are in the header.
 
 
 Plus_U_Base::Plus_U_Base()
@@ -52,17 +35,15 @@ void Plus_U_Base::init_base(UnitCell& cell,
                              const int nspin,
                              const std::vector<int>& orbital_corr,
                              const bool yukawa_potential,
-                             const double yukawa_lambda,
                              const std::string& global_readin_dir,
                              const std::string& global_out_dir,
                              const std::string& init_chg,
-                             const int nlocal,
-                             const bool gamma_only_local,
-                             const std::string& ks_solver,
-                             const bool cal_force,
-                             const bool cal_stress,
                              const std::string& device,
-                             const int kpar)
+                             const int kpar,
+                             const std::vector<double>& hubbard_u,
+                             const double uramping,
+                             const int occ_mat_ctrl,
+                             const int mixing_dftu)
 {
     ModuleBase::TITLE("Plus_U_Base", "init_base");
 
@@ -71,25 +52,24 @@ void Plus_U_Base::init_base(UnitCell& cell,
     exit(0);
 #endif
 
-    Plus_U_Base::nspin = nspin;
-    Plus_U_Base::orbital_corr = orbital_corr;
-    Plus_U_Base::Yukawa = yukawa_potential;
-    this->yukawa_lambda = yukawa_lambda;
-
-    this->global_readin_dir = global_readin_dir;
-    this->global_out_dir = global_out_dir;
-    this->init_chg = init_chg;
-    this->npol = npol;
-
-    this->nlocal = nlocal;
-    this->gamma_only_local = gamma_only_local;
-    this->ks_solver = ks_solver;
-    this->cal_force = cal_force;
-    this->cal_stress = cal_stress;
+    this->nspin = nspin;
+    this->orbital_corr = orbital_corr;
+    this->use_yukawa = yukawa_potential;
+    this->uramping = uramping;
+    this->occ_mat_ctrl = occ_mat_ctrl;
+    this->mixing_dftu = mixing_dftu;
+    this->u_target = hubbard_u;
+    this->u_current = hubbard_u;
+    if (uramping > 0.01)
+    {
+        std::fill(this->u_current.begin(),
+                  this->u_current.end(),
+                  0.0);
+    }
     this->device = device;
     this->kpar = kpar;
 
-    Plus_U_Base::energy_u = 0.0;
+    this->energy_u = 0.0;
 
     this->occ_mat.resize(cell.nat);
     this->occ_mat_save.resize(cell.nat);
@@ -198,7 +178,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
     this->uom_array.resize(pot_index, 0.0);
     this->uom_save.resize(pot_index, 0.0);
 
-    if (Yukawa)
+    if (use_yukawa)
     {
         this->Fk.resize(cell.ntype);
 
@@ -229,11 +209,11 @@ void Plus_U_Base::init_base(UnitCell& cell,
         }
     }
 
-    if (omc != 0)
+    if (occ_mat_ctrl != 0)
     {
         std::stringstream sst;
-        sst << this->global_readin_dir << "dm_onsite_ini.txt";
-        this->read_occup_m(cell, sst.str(), this->init_chg, nspin, npol);
+        sst << global_readin_dir << "dm_onsite_ini.txt";
+        this->read_occup_m(cell, sst.str(), init_chg, nspin, npol);
 #ifdef __MPI
         this->local_occup_bcast(cell, nspin, npol);
 #endif
@@ -243,11 +223,11 @@ void Plus_U_Base::init_base(UnitCell& cell,
     }
     else
     {
-        if (this->init_chg == "file")
+        if (init_chg == "file")
         {
             std::stringstream sst;
-            sst << this->global_readin_dir << "dm_onsite.txt";
-            this->read_occup_m(cell, sst.str(), this->init_chg, nspin, npol);
+            sst << global_readin_dir << "dm_onsite.txt";
+            this->read_occup_m(cell, sst.str(), init_chg, nspin, npol);
 #ifdef __MPI
             this->local_occup_bcast(cell, nspin, npol);
 #endif
@@ -267,7 +247,7 @@ void Plus_U_Base::init_base(UnitCell& cell,
 void Plus_U_Base::uramping_update()
 {
     // Yukawa calculates U directly every iteration, no need for ramping
-    if (Yukawa) {
+    if (use_yukawa) {
         return;
     }
     // if uramping < 0.1, use the original U
@@ -275,15 +255,15 @@ void Plus_U_Base::uramping_update()
         return;
     }
     // loop to change U
-    for (int i = 0; i < static_cast<int>(this->U0.size()); i++)
+    for (int i = 0; i < static_cast<int>(this->u_target.size()); i++)
     {
-        if (this->U[i] + this->uramping < this->U0[i])
+        if (this->u_current[i] + this->uramping < this->u_target[i])
         {
-            this->U[i] += this->uramping;
+            this->u_current[i] += this->uramping;
         }
         else
         {
-            this->U[i] = this->U0[i];
+            this->u_current[i] = this->u_target[i];
         }
     }
 }
@@ -292,12 +272,12 @@ void Plus_U_Base::uramping_update()
 bool Plus_U_Base::u_converged()
 {
     // Yukawa calculates U directly every iteration, always considered converged
-    if (Yukawa) {
+    if (use_yukawa) {
         return true;
     }
-    for (int i = 0; i < static_cast<int>(this->U0.size()); i++)
+    for (int i = 0; i < static_cast<int>(this->u_target.size()); i++)
     {
-        if (this->U[i] != this->U0[i])
+        if (this->u_current[i] != this->u_target[i])
         {
             return false;
         }
@@ -322,7 +302,7 @@ void Plus_U_Base::copy_occ_mat(const UnitCell& ucell)
         {
             const int iat = ucell.itia2iat(T, I);
 
-            if (Plus_U_Base::nspin == 4)
+            if (this->nspin == 4)
             {
                 occ_mat_save[iat][target_l][0][0] = occ_mat[iat][target_l][0][0];
                 if(this->uom_save.size() != 0)
@@ -334,7 +314,7 @@ void Plus_U_Base::copy_occ_mat(const UnitCell& ucell)
                     }
                 }
             }
-            else if (Plus_U_Base::nspin == 1 || Plus_U_Base::nspin == 2)
+            else if (this->nspin == 1 || this->nspin == 2)
             {
                 occ_mat_save[iat][target_l][0][0] = occ_mat[iat][target_l][0][0];
                 occ_mat_save[iat][target_l][0][1] = occ_mat[iat][target_l][0][1];
@@ -377,11 +357,11 @@ void Plus_U_Base::zero_occ_mat(const UnitCell& ucell)
 
                 for (int n = 0; n < N; n++)
                 {
-                    if (Plus_U_Base::nspin == 4)
+                    if (this->nspin == 4)
                     {
                         occ_mat[iat][l][n][0].zero_out();
                     }
-                    else if (Plus_U_Base::nspin == 1 || Plus_U_Base::nspin == 2)
+                    else if (this->nspin == 1 || this->nspin == 2)
                     {
                         occ_mat[iat][l][n][0].zero_out();
                         occ_mat[iat][l][n][1].zero_out();
@@ -412,7 +392,7 @@ void Plus_U_Base::mix_occ_mat(const UnitCell& ucell,
         {
             const int iat = ucell.itia2iat(T, I);
 
-            if (Plus_U_Base::nspin == 4)
+            if (this->nspin == 4)
             {
                 const int size = occ_mat[iat][target_l][0][0].nr * occ_mat[iat][target_l][0][0].nc;
                 for (int mm = 0; mm < size; mm++)
@@ -427,7 +407,7 @@ void Plus_U_Base::mix_occ_mat(const UnitCell& ucell,
                     }
                 }
             }
-            else if (Plus_U_Base::nspin == 1 || Plus_U_Base::nspin == 2)
+            else if (this->nspin == 1 || this->nspin == 2)
             {
                 const int size = occ_mat[iat][target_l][0][0].nr * occ_mat[iat][target_l][0][0].nc;
                 const int half_size = this->uom_save.size() / 2;
@@ -463,18 +443,18 @@ void Plus_U_Base::set_occ_mat(const UnitCell& ucell)
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
             const int iat = ucell.itia2iat(T, I);
-            if (Plus_U_Base::nspin == 4)
+            if (this->nspin == 4)
             {
                 for(int mm = 0; mm < occ_mat[iat][l][0][0].nr * occ_mat[iat][l][0][0].nc; mm++)
                     occ_mat[iat][l][0][0].c[mm] = this->uom_array[eff_pot_pw_index[iat] + mm];
             }
-            else if (Plus_U_Base::nspin == 1 || Plus_U_Base::nspin == 2)
+            else if (this->nspin == 1 || this->nspin == 2)
             {
                 const int half_size = this->uom_array.size() / 2;
                 for(int mm = 0; mm < occ_mat[iat][l][0][0].nr * occ_mat[iat][l][0][0].nc; mm++)
                 {
                     occ_mat[iat][l][0][0].c[mm] = this->uom_array[eff_pot_pw_index[iat] + mm];
-                    if (Plus_U_Base::nspin == 2)
+                    if (this->nspin == 2)
                     {
                         occ_mat[iat][l][0][1].c[mm] = this->uom_array[half_size + eff_pot_pw_index[iat] + mm];
                     }
@@ -538,7 +518,7 @@ void Plus_U_Base::read_occup_m(const UnitCell& ucell,
 
     if (!ifdftu)
     {
-        if (omc > 0)
+        if (occ_mat_ctrl > 0)
         {
             ModuleBase::WARNING_QUIT("Plus_U_Base::read_occup_m", "Can not find the file dm_onsite_ini.txt. Please check your dm_onsite_ini.txt");
         }

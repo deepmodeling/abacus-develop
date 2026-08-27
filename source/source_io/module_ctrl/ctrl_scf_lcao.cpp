@@ -25,6 +25,7 @@
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
 #include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
 #include "../module_wf/write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
+#include "source_lcao/module_deltaspin/lambda_loop_helper.h"   // print_Mi / print_Mag_Force free functions
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
 #include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
 #ifdef __MLALGO
@@ -554,8 +555,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.cal_mi_lcao(istep);
-        sc.print_Mi(GlobalV::ofs_running);
-        sc.print_Mag_Force(GlobalV::ofs_running);
+        spinconstrain::print_Mi(sc, GlobalV::ofs_running);
+        spinconstrain::print_Mag_Force(sc, GlobalV::ofs_running);
     }
 
     //------------------------------------------------------------------

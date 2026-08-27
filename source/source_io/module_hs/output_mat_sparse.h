@@ -6,7 +6,7 @@
 #include "source_cell/klist.h"
 #include "source_hamilt/hamilt.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 20251107
+#include "source_lcao/module_dftu/dftu_lcao.h" // mohan add 20251107
 
 namespace ModuleIO
 {

@@ -358,7 +358,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.yukawa_potential);
     EXPECT_DOUBLE_EQ(param.inp.yukawa_lambda, -1.0);
     EXPECT_EQ(param.inp.onsite_radius, 0.0);
-    EXPECT_EQ(param.inp.omc, 0);
+    EXPECT_EQ(param.inp.occ_mat_ctrl, 0);
     EXPECT_FALSE(param.inp.dft_plus_dmft);
     EXPECT_FALSE(param.inp.rpa);
     EXPECT_FALSE(param.inp.rpa_out_vel);

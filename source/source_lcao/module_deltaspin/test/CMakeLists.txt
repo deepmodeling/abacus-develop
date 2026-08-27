@@ -23,6 +23,8 @@ AddTest(
   SOURCES template_helpers_test.cpp
     ../spin_constrain.cpp
     ../template_helpers.cpp
+    ../lambda_loop_helper.cpp
+    ../basic_funcs.cpp
 )
 
 AddTest(

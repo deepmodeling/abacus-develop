@@ -1,142 +1,280 @@
-#ifndef DFTPLUSU_H
-#define DFTPLUSU_H
-#include "dftu.hpp"
-#include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_basis/module_nao/two_center_integrator.h"
-#include "source_cell/module_neighbor/sltk_grid_driver.h"
+#ifndef DFTU_H
+#define DFTU_H
+
+#include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
-#include "source_estate/module_dm/density_matrix.h"
-#include "source_lcao/module_operator_lcao/operator_lcao.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_basis/module_ao/parallel_orbitals.h"
+#include "source_estate/module_charge/charge_mixing.h"
+#include "source_pw/module_pwdft/dftu_base.h"
+#ifdef __LCAO
+#include "source_basis/module_ao/orb_read.h"
+#include "source_hamilt/hamilt.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
+#include "source_estate/module_dm/density_matrix.h"
+#include "source_lcao/force_stress_arrays.h" // mohan add 2024-06-15
+#endif
 
-#include <unordered_map>
+#include <string>
+#include <vector>
 
-namespace hamilt
+
+class Plus_U : public Plus_U_Base
 {
 
-/// DFTU class template specialization for OperatorLCAO<TK> base class
-/// It is used to calculate the non-local pseudopotential matrix in real space and fold it to k-space
-/// HR = <psi_{mu, 0}|beta_p1>D_{p1, p2}<beta_p2|psi_{nu, R}>
-/// HK = <psi_{mu, k}|beta_p1>D_{p1, p2}<beta_p2|psi_{nu, k}> = \sum_{R} e^{ikR} HR
-/// Template parameters:
-/// - TK: data type of k-space Hamiltonian
-/// - TR: data type of real space Hamiltonian
-template <typename TK, typename TR>
-class DFTU<OperatorLCAO<TK, TR>> : public OperatorLCAO<TK, TR>
-{
   public:
-    DFTU<OperatorLCAO<TK, TR>>(HS_Matrix_K<TK>* hsk_in,
-                               const std::vector<ModuleBase::Vector3<double>>& kvec_d_in,
-                               hamilt::HContainer<TR>* hR_in,
-                               const UnitCell& ucell_in,
-                               const Grid_Driver* gridD_in,
-                               const TwoCenterIntegrator* intor,
-                               const std::vector<double>& orb_cutoff,
-                               Plus_U* p_dftu);
-    ~DFTU<OperatorLCAO<TK, TR>>();
+    Plus_U();
+    ~Plus_U();
+
+  public:
+    // allocate relevant data strcutures
+    void init(UnitCell& cell,
+                const Parallel_Orbitals* pv,
+                const int npol,
+                const int nspin,
+                const std::vector<int>& orbital_corr,
+                const bool yukawa_potential,
+                const double yukawa_lambda,
+                const std::string& global_readin_dir,
+                const std::string& global_out_dir,
+                const std::string& init_chg,
+                const int nlocal,
+                const bool gamma_only_local,
+                const std::string& ks_solver,
+                const bool cal_force,
+                const bool cal_stress,
+                const std::string& device,
+                const int kpar,
+                const std::vector<double>& hubbard_u,
+                const double uramping,
+                const int occ_mat_ctrl,
+                const int mixing_dftu
+#ifdef __LCAO
+                , const LCAO_Orbitals* orb = nullptr
+#endif
+                );
+
+    // calculate the energy correction
+    void cal_energy_correction(const UnitCell& ucell, const int istep);
+
+  private:
+
+    const Parallel_Orbitals* paraV = nullptr;
+
+    double yukawa_lambda = 0.0;
+    int npol = 1;
+    int nlocal = 0;
+    bool gamma_only_local = false;
+    std::string ks_solver;
+    bool cal_force = false;
+    bool cal_stress = false;
+
+#ifdef __LCAO
+    const LCAO_Orbitals* ptr_orb_ = nullptr;
+    std::vector<double> orb_cutoff_;
+#endif
+
+#ifdef __LCAO
+    //=============================================================
+    // In dftu_hamilt.cpp
+    // For calculating contribution to Hamiltonian matrices
+    //=============================================================
+  public:
+	void cal_eff_pot_mat_complex(const int ik,
+			std::complex<double>* eff_pot,
+			const std::vector<int>& isk,
+			const std::complex<double>* sk,
+			const int npol);
+
+	void cal_eff_pot_mat_real(const int ik,
+			double* eff_pot,
+			const std::vector<int>& isk,
+			const double* sk,
+			const int npol);
+
+    void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR, const int npol);
+
+	void cal_eff_pot_mat_R_complex_double(const int ispin,
+			std::complex<double>* SR,
+			std::complex<double>* HR,
+			const int npol);
+#endif
+
+#ifdef __LCAO
+    // calculate the local occupation number matrix
+    void cal_occup_m_k(const int iter,
+                       const UnitCell& ucell,
+                       const std::vector<std::vector<std::complex<double>>>& dm_k,
+                       const K_Vectors& kv,
+                       const double& mixing_beta,
+                       hamilt::Hamilt<std::complex<double>>* p_ham);
+
+    void cal_occup_m_gamma(const int iter,
+                           const UnitCell& ucell,
+                           const std::vector<std::vector<double>>& dm_gamma,
+                           const double& mixing_beta,
+                           hamilt::Hamilt<double>* p_ham);
+#endif
+
+#ifdef __LCAO
+private:
+    //=============================================================
+    // In dftu_tools.cpp
+    // For calculating onsite potential, which is used
+    // for both Hamiltonian and force/stress
+    //=============================================================
+
+    void cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU, const int npol);
+    void cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU, const int npol);
+
+    double get_onebody_eff_pot(const int T,
+                               const int iat,
+                               const int L,
+                               const int N,
+                               const int spin,
+                               const int m0,
+                               const int m1,
+                               const bool newlocale);
+
+    //=============================================================
+    // In dftu_folding.cpp
+    // Subroutines for folding S and dS matrix
+    //=============================================================
+
+    void fold_dSR_gamma(const UnitCell& ucell,
+                        const Parallel_Orbitals& pv,
+                        const Grid_Driver* gd,
+                        double* dsloc_x,
+                        double* dsloc_y,
+                        double* dsloc_z,
+                        double* dh_r,
+                        const int dim1,
+                        const int dim2,
+                        double* dSR_gamma);
+
+    // dim = 0 : S, for Hamiltonian
+    // dim = 1-3 : dS, for force
+    // dim = 4-6 : dS * dR, for stress
+
+    void folding_matrix_k(const UnitCell& ucell,
+                          const Grid_Driver& gd,
+                          ForceStressArrays& fsr,
+                          const Parallel_Orbitals& pv,
+                          const int ik,
+                          const int dim1,
+                          const int dim2,
+                          std::complex<double>* mat_k,
+                          const ModuleBase::Vector3<double>& kvec_d);
 
     /**
-     * @brief contributeHR() is used to calculate the HR matrix
-     * <phi_{\mu, 0}|beta_p1>D_{p1, p2}<beta_p2|phi_{\nu, R}>
-     */
-    virtual void contributeHR() override;
+     * @brief new function of folding_S_matrix
+     * only for Hamiltonian now, for force and stress will be developed later
+     * use HContainer as input and output in mat_k
+    */
+	void folding_matrix_k_new(const int ik,
+			hamilt::Hamilt<std::complex<double>>* p_ham);
 
-    /// calculate force and stress for DFT+U
-    void cal_force_stress(const bool cal_force,
-                          const bool cal_stress,
-                          ModuleBase::matrix& force,
-                          ModuleBase::matrix& stress);
+    //=============================================================
+    // In dftu_force.cpp
+    // For calculating force and stress fomr DFT+U
+    //=============================================================
+ public:
+   void force_stress(const UnitCell& ucell,
+                     const Grid_Driver& gd,
+					 std::vector<std::vector<double>>* dmk_d,
+					 std::vector<std::vector<std::complex<double>>>* dmk_c,
+					 const Parallel_Orbitals& pv,
+                     ForceStressArrays& fsr,
+                     ModuleBase::matrix& force_dftu,
+                     ModuleBase::matrix& stress_dftu,
+                     const K_Vectors& kv,
+                     const int npol);
+
+ private:
+   void cal_force_k(const UnitCell& ucell,
+                    const Grid_Driver& gd,
+                    ForceStressArrays& fsr,
+                    const Parallel_Orbitals& pv,
+                    const int ik,
+                    const std::complex<double>* rho_VU,
+                    ModuleBase::matrix& force_dftu,
+                    const ModuleBase::Vector3<double>& kvec_d);
+
+   void cal_stress_k(const UnitCell& ucell,
+                     const Grid_Driver& gd,
+                     ForceStressArrays& fsr,
+                     const Parallel_Orbitals& pv,
+                     const int ik,
+                     const std::complex<double>* rho_VU,
+                     ModuleBase::matrix& stress_dftu,
+                     const ModuleBase::Vector3<double>& kvec_d);
+
+   void cal_force_gamma(const UnitCell& ucell,
+                        const double* rho_VU,
+                        const Parallel_Orbitals& pv,
+                        double* dsloc_x,
+                        double* dsloc_y,
+                        double* dsloc_z,
+                        ModuleBase::matrix& force_dftu);
+
+   void cal_stress_gamma(const UnitCell& ucell,
+                         const Parallel_Orbitals& pv,
+                         const Grid_Driver* gd,
+                         double* dsloc_x,
+                         double* dsloc_y,
+                         double* dsloc_z,
+                         double* dh_r,
+                         const double* rho_VU,
+                         ModuleBase::matrix& stress_dftu);
+#endif
+
+    //=============================================================
+    // In dftu_yukawa.cpp
+    // Relevant for calculating U using Yukawa potential
+    //=============================================================
+
+  public:
+    void cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx);
+
+  private:
+    void cal_slater_Fk(const UnitCell& ucell,const int L, const int T); // L:angular momnet, T:atom type
+    void cal_yukawa_lambda(double** rho, const int& nrxx);
+
+    double spherical_Bessel(const int k, const double r, const double lambda);
+    double spherical_Hankel(const int k, const double r, const double lambda);
+
+#ifdef __LCAO
+  public:
+    /**
+     * @brief get the density matrix of target spin
+     * nspin = 1 and 4 : ispin should be 0
+     * nspin = 2 : ispin should be 0/1
+    */
+    const hamilt::HContainer<double>* get_dmr(int ispin) const;
+    /**
+     * @brief set the density matrix for DFT+U calculation
+     * if the density matrix is not set or set to nullptr, the DFT+U calculation will not be performed
+    */
+    void set_dmr(const elecstate::DensityMatrix<double, double>* dm_in_dftu_d);
+    void set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd);
 
   private:
     const UnitCell* ucell = nullptr;
-
-    Plus_U* dftu = nullptr;
-
-    hamilt::HContainer<TR>* HR = nullptr;
-
-    const TwoCenterIntegrator* intor_ = nullptr;
-
-    std::vector<double> orb_cutoff_;
-
-    /// @brief the number of spin components, 1 for no-spin, 2 for collinear spin case and 4 for non-collinear spin case
-    int nspin = 0;
-
-    /**
-     * @brief search the nearest neighbor atoms and save them into this->adjs_all
-     * the size of HR will not change in DFTU,
-     * because I don't want to expand HR larger than Nonlocal operator caused by DFTU
-     */
-    void initialize_HR(const Grid_Driver* gridD_in);
-
-    /**
-     * @brief calculate the <phi|alpha^I> overlap values and save them in this->nlm_tot
-     * it will be reused in the calculation of calculate_HR()
-     */
-    void cal_nlm_all(const Parallel_Orbitals* paraV);
-
-    /**
-     * @brief calculate the occ_mm' = \sum_R DMR*<phi_0|alpha^I_m'><alpha^I_m'|phi_R> matrix for each atom to add U
-     */
-    void cal_occ(const int& iat1,
-                 const int& iat2,
-                 const Parallel_Orbitals* paraV,
-                 const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                 const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                 const double* data_pointer,
-                 std::vector<double>& occupations);
-
-    /// transfer VU format from pauli matrix to normal for non-collinear spin case
-    void transfer_vu(std::vector<double>& vu_tmp, std::vector<TR>& vu);
-    /// VU_{m, m'} = sum_{m,m'} (1/2*delta_{m, m'} - occ_{m, m'}) * U
-    /// EU = sum_{m,m'} 1/2 * U * occ_{m, m'} * occ_{m', m}
-    void cal_v_of_u(const std::vector<double>& occ, const int m_size, const double u_value, double* vu, double& eu);
-
-    /**
-     * @brief calculate the HR local matrix of <I,J,R> atom pair
-     */
-    void cal_HR_IJR(const int& iat1,
-                    const int& iat2,
-                    const Parallel_Orbitals* paraV,
-                    const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                    const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                    const std::vector<TR>& vu_in,
-                    TR* data_pointer);
-
-    /**
-     * @brief calculate the atomic Force of <I,J,R> atom pair
-     */
-    void cal_force_IJR(const int& iat1,
-                       const int& iat2,
-                       const Parallel_Orbitals* paraV,
-                       const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                       const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                       const std::vector<double>& vu_in,
-                       const hamilt::BaseMatrix<double>** dmR_pointer,
-                       const int nspin,
-                       double* force1,
-                       double* force2);
-    /**
-     * @brief calculate the Stress of <I,J,R> atom pair
-     */
-    void cal_stress_IJR(const int& iat1,
-                        const int& iat2,
-                        const Parallel_Orbitals* paraV,
-                        const std::unordered_map<int, std::vector<double>>& nlm1_all,
-                        const std::unordered_map<int, std::vector<double>>& nlm2_all,
-                        const std::vector<double>& vu_in,
-                        const hamilt::BaseMatrix<double>** dmR_pointer,
-                        const int nspin,
-                        const ModuleBase::Vector3<double>& dis1,
-                        const ModuleBase::Vector3<double>& dis2,
-                        double* stress);
-
-    std::vector<AdjacentAtomInfo> adjs_all;
-    /// @brief if the nlm_tot is calculated
-    bool precal_nlm_done = false;
-    /// @brief the overlap values for all [atoms][nerghbors][orb_index(iw) in NAOs][m of target_l in Projectors]
-    std::vector<std::vector<std::unordered_map<int, std::vector<double>>>> nlm_tot;
+    const elecstate::DensityMatrix<double, double>* dm_in_dftu_d = nullptr;
+    const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd = nullptr;
+#endif
 };
 
-} // namespace hamilt
+
+#ifdef __LCAO
+template <typename T>
+void dftu_cal_occup_m(const int iter,
+                      const UnitCell& ucell,
+                      const std::vector<std::vector<T>>& dm,
+                      const K_Vectors& kv,
+                      const double& mixing_beta,
+                      hamilt::Hamilt<T>* p_ham,
+                      Plus_U &dftu);
+#endif
+
+
 #endif

@@ -14,7 +14,7 @@
 #include "source_pw/module_pwdft/stru_fac.h"
 #include "source_base/kernels/math_kernel_op.h"
 #include "source_psi/psi.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
+#include "source_pw/module_pwdft/dftu_base.h"
 
 //-------------------------------------------------------------------
 // mohan reconstruction note: 2021-02-07
@@ -179,7 +179,7 @@ class Stress_Func
                        const ModuleBase::matrix& wg,
                        const ModulePW::PW_Basis_K* wfc_basis,
 		               const UnitCell& ucell_in,
-		               const Plus_U &dftu, // mohan add 2025-11-06
+		               const Plus_U_Base& dftu,
 		               const void* psi_in,
                        ModuleSymmetry::Symmetry* p_symm); // nonlocal part in PW basis
 

@@ -12,7 +12,7 @@ template <typename FPTYPE, typename Device>
 void Stress_PW<FPTYPE, Device>::cal_stress(ModuleBase::matrix& sigmatot,
                                            UnitCell& ucell,
                                            const vdw::VdwResult* vdw_result,
-                                           Plus_U &dftu, // mhan add 2025-11-07
+                                           Plus_U_Base& dftu,
                                            const pseudopot_cell_vl& locpp,
                                            const pseudopot_cell_vnl& nlpp,
                                            ModulePW::PW_Basis* rho_basis,

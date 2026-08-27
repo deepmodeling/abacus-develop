@@ -106,17 +106,17 @@ void output(const Plus_U_Base& dftu,
         {
             const int N = ucell.atoms[T].l_nchi[L];
 
-            if (L >= Plus_U_Base::get_orbital_corr(T) && Plus_U_Base::has_correlated_orbital(T))
+            if (L >= dftu.get_orbital_corr(T) && dftu.has_correlated_orbital(T))
             {
-                if (L != Plus_U_Base::get_orbital_corr(T))
+                if (L != dftu.get_orbital_corr(T))
                 {
                     continue;
                 }
 
-                if (!Plus_U_Base::Yukawa)
+                if (!dftu.use_yukawa)
                 {
                     GlobalV::ofs_running << " Type=" << T+1 << " L=" << L << " ORBITAL=" << 0
-                                         << " U=" << dftu.get_hubbard_u(T) * ModuleBase::Ry_to_eV << " eV" << std::endl;
+                                         << " U=" << dftu.get_u_current(T) * ModuleBase::Ry_to_eV << " eV" << std::endl;
                 }
                 else
                 {
@@ -177,12 +177,12 @@ void write_occup_m(const Plus_U_Base& dftu,
 
     for (int T = 0; T < ucell.ntype; T++)
     {
-        if (!Plus_U_Base::has_correlated_orbital(T))
+        if (!dftu.has_correlated_orbital(T))
         {
             continue;
         }
         const int NL = ucell.atoms[T].nwl + 1;
-        const int LC = Plus_U_Base::get_orbital_corr(T);
+        const int LC = dftu.get_orbital_corr(T);
 
         for (int I = 0; I < ucell.atoms[T].na; I++)
         {
@@ -190,7 +190,7 @@ void write_occup_m(const Plus_U_Base& dftu,
 
             for (int l = 0; l < NL; l++)
             {
-                if (l != Plus_U_Base::get_orbital_corr(T))
+                if (l != dftu.get_orbital_corr(T))
                 {
                     continue;
                 }

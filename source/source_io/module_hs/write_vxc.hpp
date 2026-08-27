@@ -4,7 +4,7 @@
 #include "source_base/parallel_reduce.h"
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_base/module_external/scalapack_connector.h"
-#include "source_lcao/module_dftu/op_dftu_lcao.h"
+#include "source_lcao/module_dftu/dftu_lcao_op_legacy.h"
 #include "source_lcao/module_operator_lcao/veff_lcao.h"
 #include "source_hamilt/module_xc/exx_info.h"
 #ifdef __EXX

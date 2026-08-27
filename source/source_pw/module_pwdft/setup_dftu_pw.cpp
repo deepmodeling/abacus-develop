@@ -25,7 +25,7 @@ void iter_init_dftu_pw(const int iter,
         return;
     }
 
-    if (dftu.omc != 2)
+    if (dftu.occ_mat_ctrl != 2)
     {
         dftu.cal_occ_pw(iter, psi, wg, ucell, p_chgmix, isk);
     }

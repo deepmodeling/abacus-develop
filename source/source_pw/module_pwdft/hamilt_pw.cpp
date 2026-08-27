@@ -20,7 +20,7 @@ HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
                               ModulePW::PW_Basis_K* wfc_basis,
                               K_Vectors* pkv,
                               pseudopot_cell_vnl* nlpp,
-                              Plus_U* p_dftu, // mohan add 2025-11-06
+                              Plus_U_Base* p_dftu,
                               const UnitCell* ucell,
                               const General_Exx_Info* exx_info)
     : ucell(ucell)

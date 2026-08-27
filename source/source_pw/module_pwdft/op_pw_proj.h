@@ -5,7 +5,7 @@
 
 #include "source_cell/unitcell.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 20251106
+#include "source_pw/module_pwdft/dftu_base.h"
 
 namespace hamilt {
 
@@ -27,7 +27,7 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
   public:
     OnsiteProj(const int* isk_in,
              const UnitCell* ucell_in,
-             Plus_U *p_dftu, // mohan add 2025-11-06 
+             Plus_U_Base* p_dftu,
              const bool cal_delta_spin,
              const bool cal_dftu);
 
@@ -65,7 +65,7 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     const UnitCell* ucell = nullptr;
 
-    Plus_U *dftu = nullptr; // mohan add 2025-11-06
+    Plus_U_Base* dftu = nullptr;
 
     mutable int* ip_iat = nullptr;
     mutable T* lambda_coeff = nullptr;

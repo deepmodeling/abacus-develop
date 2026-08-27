@@ -1,4 +1,5 @@
 #include "../sto_tool.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "mpi.h"
 
 #include <gtest/gtest.h>
@@ -12,7 +13,7 @@ hamilt::HamiltPW<T, Device>::HamiltPW(elecstate::Potential* pot_in,
 		ModulePW::PW_Basis_K* wfc_basis,
 		K_Vectors* p_kv,
 		pseudopot_cell_vnl*,
-        Plus_U* p_dftu, // mohan add 20251108
+        Plus_U_Base* p_dftu,
 		const UnitCell*,
         const General_Exx_Info*){}
 

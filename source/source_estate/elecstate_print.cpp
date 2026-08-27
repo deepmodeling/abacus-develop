@@ -44,7 +44,8 @@ void print_scf_iterinfo(const std::string& ks_solver,
                         const std::vector<double>& drho,
                         const int& wrho,
                         const double& time,
-                        const int& wtime)
+                        const int& wtime,
+                        const double& ds_rms)
 {
     std::map<std::string, std::string> iter_header_dict
         = {{"cg", "CG"},
@@ -91,6 +92,12 @@ void print_scf_iterinfo(const std::string& ks_solver,
     {
         td_fmt.emplace_back(" %" + std::to_string(wrho) + ".4e");
     }
+    // DeltaSpin RMS column (optional, same width/format as DRHO/DKIN)
+    if (ds_rms >= 0)
+    {
+        th_fmt.emplace_back(" %" + std::to_string(wrho) + "s");
+        td_fmt.emplace_back(" %" + std::to_string(wrho) + ".4e");
+    }
     // time column, trivial
     th_fmt.emplace_back(" %" + std::to_string(wtime) + "s\n");
     td_fmt.emplace_back(" %" + std::to_string(wtime) + ".2f\n");
@@ -132,6 +139,13 @@ void print_scf_iterinfo(const std::string& ks_solver,
         titles.push_back(FmtCore::center("DKIN", wrho));
         values.push_back(drho[1]);
     }
+    // DeltaSpin RMS column: shown only when a valid RMS value is provided (>= 0).
+    // Placed after DKIN (if any) and before TIME.
+    if (ds_rms >= 0)
+    {
+        titles.push_back(FmtCore::center("RMS", wrho));
+        values.push_back(ds_rms);
+    }
     titles.push_back(FmtCore::center("TIME/s", wtime));
     values.push_back(time);
     std::string buf;
@@ -168,7 +182,8 @@ void print_etot(const Magnetism& magnet,
                 const double& duration,
                 const double& pw_diag_thr,
                 const double& avg_iter,
-                const bool print)
+                const bool print,
+                const double& ds_rms)
 {
     ModuleBase::TITLE("energy", "print_etot");
     const int iter = iter_in;
@@ -395,7 +410,8 @@ void print_etot(const Magnetism& magnet,
                                       drho,
                                       12,
                                       duration,
-                                      6);
+                                      6,
+                                      ds_rms);
     }
     return;
 }

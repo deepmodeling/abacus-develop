@@ -19,6 +19,7 @@
 #include "source_hamilt/module_xc/general_exx_info.h" // for General_Exx_Info type used via general_exx_info_
 #include "source_io/module_ctrl/ctrl_output_pw.h"  // mohan add 20250927
 #include "source_pw/module_pwdft/deltaspin_pw.h"   // mohan add 20250309
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/setup_pot.h"      // mohan add 20250929
 #include "source_pw/module_pwdft/update_cell_pw.h" // mohan add 20250309
 #include "source_pw/module_pwdft/setup_dftu_pw.h"  // mohan add 20250309
@@ -209,6 +210,12 @@ void ESolver_KS_PW<T, Device>::iter_init(UnitCell& ucell, const int istep, const
                           ucell,
                           this->p_chgmix,
                           this->kv.isk.data());
+
+    // mohan add 2025-11: push DFT+U energy from Plus_U instance to ElecState
+    if (this->inp_->dft_plus_u)
+    {
+        this->pelec->set_dftu_energy(this->dftu.get_energy());
+    }
 }
 
 // Temporary, it should be replaced by hsolver later.
@@ -227,7 +234,14 @@ void ESolver_KS_PW<T, Device>::hamilt2rho_single(UnitCell& ucell, const int iste
     bool skip_charge = this->inp_->calculation == "nscf" ? true : false;
 
     // run the inner lambda loop to contrain atomic moments with the DeltaSpin method
-    bool skip_solve = pw::run_deltaspin_lambda_loop(iter - 1, this->drho, *this->inp_);
+    bool skip_solve = pw::run_deltaspin_lambda_loop(iter - 1, this->drho, *this->inp_, GlobalV::ofs_running);
+    if (skip_solve)
+    {
+        // Fetch the most recent DeltaSpin RMS for display in the SCF iteration table.
+        spinconstrain::SpinConstrain<std::complex<double>>& sc
+            = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        this->ds_rms_ = sc.get_last_rms_error();
+    }
 
     if (!skip_solve)
     {

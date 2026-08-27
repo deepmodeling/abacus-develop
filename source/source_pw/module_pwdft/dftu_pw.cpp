@@ -37,7 +37,7 @@ void Plus_U_Base::cal_occ_pw(const int iter,
         const int npol = psi_p->get_npol();
         for(int ik = 0; ik < psi_p->get_nk(); ik++)
         {
-            int is = (Plus_U_Base::nspin == 2) ? isk[ik] : 0;
+            int is = (this->nspin == 2) ? isk[ik] : 0;
             psi_p->fix_k(ik);
             onsite_p->tabulate_atomic(ik);
 
@@ -59,7 +59,7 @@ void Plus_U_Base::cal_occ_pw(const int iter,
                 const int m_begin = target_l * target_l;
                 const int tlp1 = 2 * target_l + 1;
                 const int tlp1_2 = tlp1 * tlp1;
-                if(Plus_U_Base::nspin == 4)
+                if(this->nspin == 4)
                 {
                     for(int ib = 0;ib<nbands;ib++)
                     {
@@ -117,7 +117,7 @@ void Plus_U_Base::cal_occ_pw(const int iter,
         const int npol = psi_p->get_npol();
         for(int ik = 0; ik < psi_p->get_nk(); ik++)
         {
-            int is = (Plus_U_Base::nspin == 2) ? isk[ik] : 0;
+            int is = (this->nspin == 2) ? isk[ik] : 0;
             psi_p->fix_k(ik);
             onsite_p->tabulate_atomic(ik);
 
@@ -138,7 +138,7 @@ void Plus_U_Base::cal_occ_pw(const int iter,
                 const int m_begin = target_l * target_l;
                 const int tlp1 = 2 * target_l + 1;
                 const int tlp1_2 = tlp1 * tlp1;
-                if(Plus_U_Base::nspin == 4)
+                if(this->nspin == 4)
                 {
                     for(int ib = 0;ib<nbands;ib++)
                     {
@@ -199,13 +199,13 @@ void Plus_U_Base::cal_occ_pw(const int iter,
         }
         const int size = (2 * target_l + 1) * (2 * target_l + 1);
 
-        if(Plus_U_Base::nspin != 4)
+        if(this->nspin != 4)
         {
             Parallel_Reduce::reduce_double_allpool(this->kpar,
                     GlobalV::NPROC_IN_POOL,
                     this->occ_mat[iat][target_l][0][0].c,
                     size);
-            if(Plus_U_Base::nspin == 2)
+            if(this->nspin == 2)
             {
                 Parallel_Reduce::reduce_double_allpool(this->kpar,
                         GlobalV::NPROC_IN_POOL,
@@ -228,7 +228,7 @@ void Plus_U_Base::cal_occ_pw(const int iter,
             {
                 this->uom_array[eff_pot_pw_index[iat]+mm] = this->occ_mat[iat][target_l][0][0].c[mm];
             }
-            if(Plus_U_Base::nspin == 2)
+            if(this->nspin == 2)
             {
                 const int half_size = this->uom_array.size() / 2;
                 for(int mm=0;mm<size;mm++)
@@ -246,9 +246,9 @@ void Plus_U_Base::cal_occ_pw(const int iter,
         this->set_occ_mat(cell);
     }
 
-    Plus_U_Base::energy_u = 0.0;
-    const double weight_eu = (Plus_U_Base::nspin == 1) ? 1.0 : (Plus_U_Base::nspin == 2) ? 0.5 : 0.25;
-    const double diag_coeff = (Plus_U_Base::nspin == 4) ? 1.0 : 0.5;
+    this->energy_u = 0.0;
+    const double weight_eu = (this->nspin == 1) ? 1.0 : (this->nspin == 2) ? 0.5 : 0.25;
+    const double diag_coeff = (this->nspin == 4) ? 1.0 : 0.5;
     // calculate VU and energy (occ_mat already reduced above)
     for(int iat = 0; iat < cell.nat; iat++)
     {
@@ -261,11 +261,11 @@ void Plus_U_Base::cal_occ_pw(const int iter,
         const int size = (2 * target_l + 1) * (2 * target_l + 1);
 
         //update effective potential
-        const double u_value = this->U[it];
+        const double u_value = this->u_current[it];
         std::complex<double>* vu_iat = &(this->eff_pot_pw[this->eff_pot_pw_index[iat]]);
         const int m_size = 2 * target_l + 1;
 
-        if(Plus_U_Base::nspin == 4)
+        if(this->nspin == 4)
         {
             for (int m1 = 0; m1 < m_size; m1++)
             {
@@ -273,7 +273,7 @@ void Plus_U_Base::cal_occ_pw(const int iter,
                 {
                     vu_iat[m1 * m_size + m2] = u_value *
                       (diag_coeff * (m1 == m2) - this->occ_mat[iat][target_l][0][0].c[m2 * m_size + m1]);
-                    Plus_U_Base::energy_u += u_value * weight_eu * this->occ_mat[iat][target_l][0][0].c[m2 * m_size + m1]
+                    this->energy_u += u_value * weight_eu * this->occ_mat[iat][target_l][0][0].c[m2 * m_size + m1]
                              * this->occ_mat[iat][target_l][0][0].c[m1 * m_size + m2];
                 }
             }
@@ -286,7 +286,7 @@ void Plus_U_Base::cal_occ_pw(const int iter,
                     {
                         vu_iat[start + m1 * m_size + m2] = u_value *
                           (0 - this->occ_mat[iat][target_l][0][0].c[start + m2 * m_size + m1]);
-                        Plus_U_Base::energy_u += u_value * weight_eu
+                        this->energy_u += u_value * weight_eu
                                  * this->occ_mat[iat][target_l][0][0].c[start + m2 * m_size + m1]
                                  * this->occ_mat[iat][target_l][0][0].c[start + m1 * m_size + m2];
                     }
@@ -323,12 +323,12 @@ void Plus_U_Base::cal_occ_pw(const int iter,
                 {
                     vu_iat[m1 * m_size + m2] = u_value *
                       (diag_coeff * (m1 == m2) - this->occ_mat[iat][target_l][0][0].c[m2 * m_size + m1]);
-                    Plus_U_Base::energy_u += u_value * weight_eu * this->occ_mat[iat][target_l][0][0].c[m2 * m_size + m1]
+                    this->energy_u += u_value * weight_eu * this->occ_mat[iat][target_l][0][0].c[m2 * m_size + m1]
                              * this->occ_mat[iat][target_l][0][0].c[m1 * m_size + m2];
                 }
             }
             // spin-down channel for nspin=2
-            if(Plus_U_Base::nspin == 2)
+            if(this->nspin == 2)
             {
                 std::complex<double>* vu_iat1 = &(this->eff_pot_pw[this->eff_pot_pw.size()/2 + this->eff_pot_pw_index[iat]]);
                 for (int m1 = 0; m1 < m_size; m1++)
@@ -337,7 +337,7 @@ void Plus_U_Base::cal_occ_pw(const int iter,
                     {
                         vu_iat1[m1 * m_size + m2] = u_value *
                           (diag_coeff * (m1 == m2) - this->occ_mat[iat][target_l][0][1].c[m2 * m_size + m1]);
-                        Plus_U_Base::energy_u += u_value * weight_eu * this->occ_mat[iat][target_l][0][1].c[m2 * m_size + m1]
+                        this->energy_u += u_value * weight_eu * this->occ_mat[iat][target_l][0][1].c[m2 * m_size + m1]
                                  * this->occ_mat[iat][target_l][0][1].c[m1 * m_size + m2];
                     }
                 }

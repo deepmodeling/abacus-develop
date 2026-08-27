@@ -1,4 +1,4 @@
-#include "dftu.h"
+#include "dftu_lcao.h"
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -10,7 +10,7 @@ void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool new_occ_mat, std:
 
     for (int it = 0; it < this->ucell->ntype; ++it)
     {
-        if (Plus_U::orbital_corr[it] == -1) 
+        if (this->orbital_corr[it] == -1) 
         {
             continue;
         }
@@ -19,7 +19,7 @@ void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool new_occ_mat, std:
             const int iat = this->ucell->itia2iat(it, ia);
             for (int L = 0; L <= this->ucell->atoms[it].nwl; L++)
             {
-                if (L != Plus_U::orbital_corr[it]) 
+                if (L != this->orbital_corr[it]) 
                 {
                     continue;
                 }
@@ -74,7 +74,7 @@ void Plus_U::cal_VU_pot_mat_real(const int spin, const bool new_occ_mat, double*
 
     for (int it = 0; it < this->ucell->ntype; ++it)
     {
-        if (Plus_U::orbital_corr[it] == -1) 
+        if (this->orbital_corr[it] == -1) 
         {
             continue;
         }
@@ -83,7 +83,7 @@ void Plus_U::cal_VU_pot_mat_real(const int spin, const bool new_occ_mat, double*
             const int iat = this->ucell->itia2iat(it, ia);
             for (int L = 0; L <= this->ucell->atoms[it].nwl; L++)
             {
-                if (L != Plus_U::orbital_corr[it]) 
+                if (L != this->orbital_corr[it]) 
                 {
                     continue;
                 }
@@ -158,7 +158,7 @@ double Plus_U::get_onebody_eff_pot(const int T,
     case 3: // simplified formalism and FLL double counting
         if (new_occ_mat)
         {
-            if (Yukawa)
+            if (use_yukawa)
             {
                 if (m0 == m1) 
                 {
@@ -171,15 +171,15 @@ double Plus_U::get_onebody_eff_pot(const int T,
             else
             {
                 if (m0 == m1) {
-                    VU = (this->U[T]) * (0.5 - this->occ_mat[iat][L][N][spin](m0, m1));
+                    VU = (this->u_current[T]) * (0.5 - this->occ_mat[iat][L][N][spin](m0, m1));
                 } else {
-                    VU = -(this->U[T]) * this->occ_mat[iat][L][N][spin](m0, m1);
+                    VU = -(this->u_current[T]) * this->occ_mat[iat][L][N][spin](m0, m1);
                 }
             }
         }
         else
         {
-            if (Yukawa)
+            if (use_yukawa)
             {
                 if (m0 == m1) {
                     VU = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
@@ -192,9 +192,9 @@ double Plus_U::get_onebody_eff_pot(const int T,
             else
             {
                 if (m0 == m1) {
-                    VU = (this->U[T]) * (0.5 - this->occ_mat_save[iat][L][N][spin](m0, m1));
+                    VU = (this->u_current[T]) * (0.5 - this->occ_mat_save[iat][L][N][spin](m0, m1));
                 } else {
-                    VU = -(this->U[T]) * this->occ_mat_save[iat][L][N][spin](m0, m1);
+                    VU = -(this->u_current[T]) * this->occ_mat_save[iat][L][N][spin](m0, m1);
                 }
             }
         }

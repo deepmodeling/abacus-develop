@@ -6,7 +6,7 @@
 #include <tuple>
 #include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_pw/module_pwdft/onsite_proj_print.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_cell/cell_tools.h"
 #include "source_io/module_parameter/parameter.h"
@@ -590,7 +590,7 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
 
 template <typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::cal_force_onsite_dftu(int ik, int npm, T* force,
-                                                        const Plus_U& dftu, int nks,
+                                                        const Plus_U_Base& dftu, int nks,
                                                         const double* wg_ik) const
 {
     const int isk_val = this->isk_ ? this->isk_[ik] : 0;
@@ -602,7 +602,7 @@ void projectors::OnsiteProjector<T, Device>::cal_force_onsite_dftu(int ik, int n
 
 template <typename T, typename Device>
 double projectors::OnsiteProjector<T, Device>::cal_stress_onsite_dftu(int ik, int npm,
-                                                           const Plus_U& dftu, int nks,
+                                                           const Plus_U_Base& dftu, int nks,
                                                            const double* wg_ik) const
 {
     const int isk_val = this->isk_ ? this->isk_[ik] : 0;

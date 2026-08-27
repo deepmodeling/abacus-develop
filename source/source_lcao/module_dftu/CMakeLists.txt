@@ -1,5 +1,5 @@
 list(APPEND objects
-      dftu.cpp
+      dftu_lcao.cpp
       dftu_force.cpp
       dftu_yukawa.cpp
       dftu_folding.cpp
@@ -10,9 +10,9 @@ list(APPEND objects
 
 if(ENABLE_LCAO)
   list(APPEND objects
-        dftu_lcao.cpp
+        dftu_lcao_op.cpp
         dftu_fs.cpp
-        op_dftu_lcao.cpp
+        dftu_lcao_op_legacy.cpp
   )
 endif()
 
