@@ -13,7 +13,7 @@ jobs:
     if: contains(inputs.variants || 'gnu,intel,cuda', 'gnu')
     runs-on: X64
     container:
-      image: ghcr.io/deepmodeling/abacus-gnu
+      image: ghcr.io/deepmodeling/abacus-gnu-lts
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -52,7 +52,7 @@ jobs:
     if: contains(inputs.variants || 'gnu,intel,cuda', 'intel')
     runs-on: X64
     container:
-      image: ghcr.io/deepmodeling/abacus-intel
+      image: ghcr.io/deepmodeling/abacus-intel-lts
     steps:
       - name: Checkout
         uses: actions/checkout@v6

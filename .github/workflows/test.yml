@@ -13,7 +13,7 @@ jobs:
     runs-on: X64
     if: github.repository_owner == 'deepmodeling'
     container:
-      image: ghcr.io/deepmodeling/abacus-gnu
+      image: ghcr.io/deepmodeling/abacus-gnu-lts
       volumes:
         - /tmp/ccache:/github/home/.ccache
     steps:
