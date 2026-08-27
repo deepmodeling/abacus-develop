@@ -10,8 +10,8 @@
 class Get_wf_lcao
 {
   public:
-    Get_wf_lcao(const psi::Psi<double>& psi, const Parallel_Orbitals& para_orb, int nspin, double nelec);
-    Get_wf_lcao(const psi::Psi<std::complex<double>>& psi, const Parallel_Orbitals& para_orb, int nspin, double nelec);
+    Get_wf_lcao(const psi::Psi<double>& psi, const Parallel_Orbitals& para_orb, int nspin);
+    Get_wf_lcao(const psi::Psi<std::complex<double>>& psi, const Parallel_Orbitals& para_orb, int nspin);
 
     /// For gamma_only
     void begin_gamma(const UnitCell& ucell,
@@ -36,7 +36,6 @@ class Get_wf_lcao
     const Parallel_Orbitals& para_orb_;
     const int nspin_;
     const int nbands_;
-    const int fermi_band_;
 
     void prepare_get_wf(std::ofstream& ofs_running);
 

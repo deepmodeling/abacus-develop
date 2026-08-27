@@ -35,51 +35,54 @@ void Get_pchg_lcao::begin_gamma(const UnitCell& ucell,
     assert(psi_gamma_ != nullptr);
     const int nrxx = pgrid.get_nrxx();
     const int precision = 11;
+    const std::vector<int> bands_picked = select_bands(out_pchg);
+
+    // LCAO output uses one global process pool after diagonalization.
+    // Each spin component is accumulated independently on the distributed real-space grid.
     std::vector<std::vector<double>> rho(nspin_, std::vector<double>(nrxx));
     std::vector<double*> rho_pointers(nspin_);
     for (int is = 0; is < nspin_; ++is)
     {
         rho_pointers[is] = rho[is].data();
     }
-    const std::vector<int> bands_picked = select_bands(out_pchg);
-
     for (int ib = 0; ib < nbands_; ++ib)
     {
-        if (bands_picked[ib])
+        if (!bands_picked[ib])
         {
-            ModuleBase::matrix state_weights(nspin_, nbands_);
-            const double spin_degeneracy = nspin_ == 1 ? 2.0 : 1.0;
-            for (int is = 0; is < nspin_; ++is)
-            {
-                state_weights(is, ib) = spin_degeneracy;
-            }
+            continue;
+        }
 
-            elecstate::DensityMatrix<double, double> DM(&para_orb_, nspin_);
-            elecstate::cal_dm_psi(&para_orb_, state_weights, *psi_gamma_, DM);
+        // Build a complete one-particle state instead of reusing its SCF occupation.
+        ModuleBase::matrix state_weights(nspin_, nbands_);
+        const double spin_degeneracy = nspin_ == 1 ? 2.0 : 1.0;
+        for (int is = 0; is < nspin_; ++is)
+        {
+            state_weights(is, ib) = spin_degeneracy;
+        }
 
-            for (int is = 0; is < nspin_; ++is)
-            {
-                std::fill(rho[is].begin(), rho[is].end(), 0.0);
-            }
+        // Construct a band-resolved density matrix before evaluating its density on the grid.
+        elecstate::DensityMatrix<double, double> DM(&para_orb_, nspin_);
+        elecstate::cal_dm_psi(&para_orb_, state_weights, *psi_gamma_, DM);
 
-            DM.init_DMR(&grid_driver, &ucell);
-            DM.cal_DMR();
-            ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
+        for (int is = 0; is < nspin_; ++is)
+        {
+            std::fill(rho[is].begin(), rho[is].end(), 0.0);
+        }
 
-            for (int is = 0; is < nspin_; ++is)
-            {
-                // ssc should be inside the inner loop to reset the string stream each time
-                std::stringstream ssc;
-                ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
+        DM.init_DMR(&grid_driver, &ucell);
+        DM.cal_DMR();
+        ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
 
-                ofs_running << " Writing cube file " << ssc.str() << std::endl;
+        for (int is = 0; is < nspin_; ++is)
+        {
+            std::stringstream ssc;
+            ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
 
-                ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false);
-            }
+            ofs_running << " Writing cube file " << ssc.str() << std::endl;
+
+            ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false);
         }
     }
-
-    return;
 }
 
 // For multi-k
@@ -103,6 +106,9 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
     assert(pgrid.get_nrxx() == rho_pw.nrxx);
     const int nrxx = pgrid.get_nrxx();
     const int precision = 11;
+    const std::vector<int> bands_picked = select_bands(out_pchg);
+
+    // LCAO k-point parallelism is temporary; output uses the restored global layout.
     std::vector<std::vector<double>> rho(nspin_, std::vector<double>(nrxx));
     std::vector<double*> rho_pointers(nspin_);
     for (int is = 0; is < nspin_; ++is)
@@ -110,6 +116,7 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
         rho_pointers[is] = rho[is].data();
     }
 
+    // A single-k density is not generally invariant under the full crystal symmetry group.
     const bool needs_symmetry = !if_separate_k && ModuleSymmetry::Symmetry::symm_flag == 1;
     std::vector<std::vector<std::complex<double>>> rhog;
     std::vector<std::complex<double>*> rhog_pointers;
@@ -122,63 +129,31 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
             rhog_pointers[is] = rhog[is].data();
         }
     }
-    const std::vector<int> bands_picked = select_bands(out_pchg);
-
     for (int ib = 0; ib < nbands_; ++ib)
     {
-        if (bands_picked[ib])
+        if (!bands_picked[ib])
         {
-            ModuleBase::matrix state_weights(kv.get_nks(), nbands_);
-            const double spin_degeneracy = nspin_ == 1 ? 2.0 : 1.0;
-            for (int ik = 0; ik < kv.get_nks(); ++ik)
-            {
-                state_weights(ik, ib) = if_separate_k ? spin_degeneracy : kv.wk[ik];
-            }
+            continue;
+        }
 
-            const int nspin_dm = nspin_ == 2 ? 2 : 1;
-            const int nk_output = kv.get_nks() / nspin_dm;
-            elecstate::DensityMatrix<std::complex<double>, double> DM(&para_orb_, nspin_dm, kv.kvec_d, nk_output);
-            elecstate::cal_dm_psi(&para_orb_, state_weights, *psi_k_, DM);
+        // Separate-k output uses a full state, while merged output retains Brillouin-zone weights.
+        ModuleBase::matrix state_weights(kv.get_nks(), nbands_);
+        const double spin_degeneracy = nspin_ == 1 ? 2.0 : 1.0;
+        for (int ik = 0; ik < kv.get_nks(); ++ik)
+        {
+            state_weights(ik, ib) = if_separate_k ? spin_degeneracy : kv.wk[ik];
+        }
 
-            // If contribution from different k-points need to be output separately
-            if (if_separate_k)
-            {
-                // For multi-k, loop over all real k-points
-                for (int ik = 0; ik < nk_output; ++ik)
-                {
-                    for (int is = 0; is < nspin_; ++is)
-                    {
-                        std::fill(rho[is].begin(), rho[is].end(), 0.0);
-                    }
+        // Collinear spin channels are stored as two k blocks; spinors use one block per k point.
+        const int nspin_dm = nspin_ == 2 ? 2 : 1;
+        const int nk_output = kv.get_nks() / nspin_dm;
+        elecstate::DensityMatrix<std::complex<double>, double> DM(&para_orb_, nspin_dm, kv.kvec_d, nk_output);
+        elecstate::cal_dm_psi(&para_orb_, state_weights, *psi_k_, DM);
 
-                    DM.init_DMR(&grid_driver, &ucell);
-                    DM.cal_DMR(ik);
-                    ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
-
-                    for (int is = 0; is < nspin_; ++is)
-                    {
-                        // ssc should be inside the inner loop to reset the string stream each time
-                        std::stringstream ssc;
-                        ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << "k" << ik + 1 << ".cube";
-
-                        ofs_running << " Writing cube file " << ssc.str() << std::endl;
-
-                        ModuleIO::write_vdata_palgrid(pgrid,
-                                                      rho[is].data(),
-                                                      is,
-                                                      nspin_,
-                                                      0,
-                                                      ssc.str(),
-                                                      0.0,
-                                                      &ucell,
-                                                      precision,
-                                                      0,
-                                                      false,
-                                                      false);
-                    }
-                }
-            }
-            else
+        if (if_separate_k)
+        {
+            // Write each physical k point separately.
+            for (int ik = 0; ik < nk_output; ++ik)
             {
                 for (int is = 0; is < nspin_; ++is)
                 {
@@ -186,32 +161,14 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
                 }
 
                 DM.init_DMR(&grid_driver, &ucell);
-                DM.cal_DMR();
+                // Transform only the requested real k point to avoid summing different k contributions.
+                DM.cal_DMR(ik);
                 ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
-
-                // Symmetrize the charge density, otherwise the results are incorrect if the symmetry is on
-                if (needs_symmetry)
-                {
-                    Symmetry_rho srho;
-                    if (nspin_ == 4)
-                    {
-                        srho.begin(0, rho_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
-                        srho.begin_soc(rho_pointers.data(), rhog_pointers.data(), &rho_pw, ucell.symm);
-                    }
-                    else
-                    {
-                        for (int is = 0; is < nspin_; ++is)
-                        {
-                            srho.begin(is, rho_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
-                        }
-                    }
-                }
 
                 for (int is = 0; is < nspin_; ++is)
                 {
-                    // ssc should be inside the inner loop to reset the string stream each time
                     std::stringstream ssc;
-                    ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
+                    ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << "k" << ik + 1 << ".cube";
 
                     ofs_running << " Writing cube file " << ssc.str() << std::endl;
 
@@ -219,9 +176,47 @@ void Get_pchg_lcao::begin_k(const ModulePW::PW_Basis& rho_pw,
                 }
             }
         }
-    }
+        else
+        {
+            for (int is = 0; is < nspin_; ++is)
+            {
+                std::fill(rho[is].begin(), rho[is].end(), 0.0);
+            }
 
-    return;
+            DM.init_DMR(&grid_driver, &ucell);
+            // The no-argument transform sums all local k-point contributions into one density.
+            DM.cal_DMR();
+            ModuleGint::cal_gint_rho(DM.get_DMR_vector(), nspin_, rho_pointers.data());
+
+            // Symmetrize only the merged density, using coupled spin rotations for nspin=4.
+            if (needs_symmetry)
+            {
+                Symmetry_rho srho;
+                if (nspin_ == 4)
+                {
+                    srho.begin(0, rho_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
+                    srho.begin_soc(rho_pointers.data(), rhog_pointers.data(), &rho_pw, ucell.symm);
+                }
+                else
+                {
+                    for (int is = 0; is < nspin_; ++is)
+                    {
+                        srho.begin(is, rho_pointers.data(), rhog_pointers.data(), rho_pw.npw, nullptr, &rho_pw, ucell.symm);
+                    }
+                }
+            }
+
+            for (int is = 0; is < nspin_; ++is)
+            {
+                std::stringstream ssc;
+                ssc << global_out_dir << "pchgi" << ib + 1 << "s" << is + 1 << ".cube";
+
+                ofs_running << " Writing cube file " << ssc.str() << std::endl;
+
+                ModuleIO::write_vdata_palgrid(pgrid, rho[is].data(), is, nspin_, 0, ssc.str(), 0.0, &ucell, precision, 0, false, false);
+            }
+        }
+    }
 }
 
 std::vector<int> Get_pchg_lcao::select_bands(const std::vector<int>& out_pchg) const

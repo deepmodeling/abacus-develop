@@ -8,15 +8,13 @@
 #include <cassert>
 #include <cmath>
 
-Get_wf_lcao::Get_wf_lcao(const psi::Psi<double>& psi, const Parallel_Orbitals& para_orb, const int nspin, const double nelec)
-    : psi_gamma_(&psi), psi_k_(nullptr), para_orb_(para_orb), nspin_(nspin), nbands_(para_orb.get_wfc_global_nbands()),
-      fermi_band_(static_cast<int>((nelec + 1) / 2 + 1.0e-8))
+Get_wf_lcao::Get_wf_lcao(const psi::Psi<double>& psi, const Parallel_Orbitals& para_orb, const int nspin)
+    : psi_gamma_(&psi), psi_k_(nullptr), para_orb_(para_orb), nspin_(nspin), nbands_(para_orb.get_wfc_global_nbands())
 {
 }
 
-Get_wf_lcao::Get_wf_lcao(const psi::Psi<std::complex<double>>& psi, const Parallel_Orbitals& para_orb, const int nspin, const double nelec)
-    : psi_gamma_(nullptr), psi_k_(&psi), para_orb_(para_orb), nspin_(nspin), nbands_(para_orb.get_wfc_global_nbands()),
-      fermi_band_(static_cast<int>((nelec + 1) / 2 + 1.0e-8))
+Get_wf_lcao::Get_wf_lcao(const psi::Psi<std::complex<double>>& psi, const Parallel_Orbitals& para_orb, const int nspin)
+    : psi_gamma_(nullptr), psi_k_(&psi), para_orb_(para_orb), nspin_(nspin), nbands_(para_orb.get_wfc_global_nbands())
 {
 }
 
@@ -35,27 +33,37 @@ void Get_wf_lcao::begin_gamma(const UnitCell& ucell,
     assert(psi_gamma_ != nullptr);
     const int nrxx = pgrid.get_nrxx();
     const int nlocal = para_orb_.get_wfc_global_nbasis();
+    const int precision = 11;
+    const std::vector<int> norm_bands_picked = select_bands(out_wfc_norm);
+    const std::vector<int> re_im_bands_picked = select_bands(out_wfc_re_im);
+
+    // LCAO output uses one global process pool after diagonalization.
+    // Gamma-only LCAO coefficients and basis functions are real.
     std::vector<double> wfc_gamma(nrxx);
-
-    const std::vector<int> bands_picked = this->select_bands(out_wfc_norm);
-
-    // Calculate out_wfc_norm
     std::vector<double> wfc_norm(nrxx);
+    const std::vector<double> wfc_imag(nrxx, 0.0);
+
     for (int is = 0; is < nspin_; ++is)
     {
         psi_gamma_->fix_k(is);
         ModuleGint::Gint_env_gamma gint_env(psi_gamma_->get_pointer(), &para_orb_, nbands_, nlocal, wfc_gamma.data());
         for (int ib = 0; ib < nbands_; ++ib)
         {
-            if (bands_picked[ib])
+            // Reconstruct a band only once when both output forms request it.
+            if (!norm_bands_picked[ib] && !re_im_bands_picked[ib])
             {
-                gint_env.cal_env_band(ib);
+                continue;
+            }
+
+            gint_env.cal_env_band(ib);
+
+            if (norm_bands_picked[ib])
+            {
                 for (int ir = 0; ir < nrxx; ++ir)
                 {
                     wfc_norm[ir] = std::abs(wfc_gamma[ir]);
                 }
 
-                // pint out information
                 std::stringstream ss_file;
                 ss_file << "wfi" << ib + 1 << "s" << is + 1 << "k1.cube";
 
@@ -67,50 +75,43 @@ void Get_wf_lcao::begin_gamma(const UnitCell& ucell,
 
                 ModuleBase::GlobalFunc::OUT(ofs_running, ss_info.str(), ss_file.str());
 
+                ModuleIO::write_vdata_palgrid(pgrid, wfc_norm.data(), is, nspin_, 0, ss_out.str(), 0.0, &ucell, precision, 0, false, false);
+            }
+
+            if (re_im_bands_picked[ib])
+            {
+                std::stringstream ss_real;
+                ss_real << global_out_dir << "wfi" << ib + 1 << "s" << is + 1 << "k1re.cube";
                 ModuleIO::write_vdata_palgrid(pgrid,
-                                              wfc_norm.data(),
+                                              wfc_gamma.data(),
                                               is,
                                               nspin_,
                                               0,
-                                              ss_out.str(),
+                                              ss_real.str(),
                                               0.0,
-                                              &(ucell),
-                                              11, // default precision
+                                              &ucell,
+                                              precision,
+                                              0,
+                                              false,
+                                              false);
+
+                std::stringstream ss_imag;
+                ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << is + 1 << "k1im.cube";
+                ModuleIO::write_vdata_palgrid(pgrid,
+                                              wfc_imag.data(),
+                                              is,
+                                              nspin_,
+                                              0,
+                                              ss_imag.str(),
+                                              0.0,
+                                              &ucell,
+                                              precision,
                                               0,
                                               false,
                                               false);
             }
         }
     }
-
-    const std::vector<int> re_im_bands_picked = this->select_bands(out_wfc_re_im);
-
-    // Calculate out_wfc_re_im
-    const std::vector<double> wfc_imag(nrxx, 0.0);
-    for (int is = 0; is < nspin_; ++is)
-    {
-        psi_gamma_->fix_k(is);
-        ModuleGint::Gint_env_gamma gint_env(psi_gamma_->get_pointer(), &para_orb_, nbands_, nlocal, wfc_gamma.data());
-        for (int ib = 0; ib < nbands_; ++ib)
-        {
-            if (re_im_bands_picked[ib])
-            {
-                gint_env.cal_env_band(ib);
-
-                // Output real part
-                std::stringstream ss_real;
-                ss_real << global_out_dir << "wfi" << ib + 1 << "s" << is + 1 << "k1re.cube";
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_gamma.data(), is, nspin_, 0, ss_real.str(), 0.0, &(ucell), 11, 0, false, false);
-
-                // Output imaginary part
-                std::stringstream ss_imag;
-                ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << is + 1 << "k1im.cube";
-                ModuleIO::write_vdata_palgrid(pgrid, wfc_imag.data(), is, nspin_, 0, ss_imag.str(), 0.0, &(ucell), 11, 0, false, false);
-            }
-        }
-    }
-
-    return;
 }
 
 // For multi-k
@@ -131,11 +132,15 @@ void Get_wf_lcao::begin_k(const UnitCell& ucell,
     const int nks = kv.get_nks();
     const int nrxx = pgrid.get_nrxx();
     const int nlocal = para_orb_.get_wfc_global_nbasis();
+    // Noncollinear wavefunctions contain two spinor components per spatial grid point.
     const int npol = (nspin_ == 4) ? 2 : 1;
+    // Collinear spin channels reuse the same physical k-point numbering.
     const int nks_without_spin = (nspin_ == 2) ? kv.get_nkstot() / 2 : kv.get_nkstot();
-    const std::vector<int> norm_bands_picked = this->select_bands(out_wfc_norm);
-    const std::vector<int> re_im_bands_picked = this->select_bands(out_wfc_re_im);
+    const int precision = 11;
+    const std::vector<int> norm_bands_picked = select_bands(out_wfc_norm);
+    const std::vector<int> re_im_bands_picked = select_bands(out_wfc_re_im);
 
+    // LCAO k-point parallelism is temporary; output uses the restored global layout.
     std::vector<std::complex<double>> wfc_k(npol * nrxx);
     std::vector<double> wfc_norm(nrxx);
     std::vector<double> wfc_real(nrxx);
@@ -144,6 +149,7 @@ void Get_wf_lcao::begin_k(const UnitCell& ucell,
     for (int ik = 0; ik < nks; ++ik)
     {
         const int spin_index = kv.isk[ik];
+        // Map the local spin-k index to the one-based physical k-point index used in filenames.
         const int k_number = kv.ik2iktot[ik] % nks_without_spin + 1;
         psi_k_->fix_k(ik);
 
@@ -151,6 +157,7 @@ void Get_wf_lcao::begin_k(const UnitCell& ucell,
 
         for (int ib = 0; ib < nbands_; ++ib)
         {
+            // Reconstruct a band only once when both output forms request it.
             if (!norm_bands_picked[ib] && !re_im_bands_picked[ib])
             {
                 continue;
@@ -160,6 +167,7 @@ void Get_wf_lcao::begin_k(const UnitCell& ucell,
 
             if (norm_bands_picked[ib])
             {
+                // The spinor modulus combines both components into one scalar field.
                 for (int ir = 0; ir < nrxx; ++ir)
                 {
                     wfc_norm[ir] = (npol == 2) ? std::sqrt(std::norm(wfc_k[ir]) + std::norm(wfc_k[nrxx + ir])) : std::abs(wfc_k[ir]);
@@ -183,17 +191,18 @@ void Get_wf_lcao::begin_k(const UnitCell& ucell,
                                               0,
                                               ss_out.str(),
                                               0.0,
-                                              &(ucell),
-                                              11,
+                                              &ucell,
+                                              precision,
                                               0,
                                               false,
-                                              true);
+                                              false);
             }
 
             if (re_im_bands_picked[ib])
             {
                 for (int ipol = 0; ipol < npol; ++ipol)
                 {
+                    // Spinors write their two components separately; collinear states use the spin channel.
                     const int component_index = (nspin_ == 4) ? ipol : spin_index;
                     const std::complex<double>* component_wfc = wfc_k.data() + ipol * nrxx;
                     for (int ir = 0; ir < nrxx; ++ir)
@@ -212,11 +221,11 @@ void Get_wf_lcao::begin_k(const UnitCell& ucell,
                                                   0,
                                                   ss_real.str(),
                                                   0.0,
-                                                  &(ucell),
-                                                  11,
+                                                  &ucell,
+                                                  precision,
                                                   0,
                                                   false,
-                                                  true);
+                                                  false);
 
                     std::stringstream ss_imag;
                     ss_imag << global_out_dir << "wfi" << ib + 1 << "s" << component_index + 1 << "k" << k_number << "im.cube";
@@ -227,16 +236,15 @@ void Get_wf_lcao::begin_k(const UnitCell& ucell,
                                                   0,
                                                   ss_imag.str(),
                                                   0.0,
-                                                  &(ucell),
-                                                  11,
+                                                  &ucell,
+                                                  precision,
                                                   0,
                                                   false,
-                                                  true);
+                                                  false);
                 }
             }
         }
     }
-    return;
 }
 
 std::vector<int> Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb) const
@@ -266,52 +274,6 @@ std::vector<int> Get_wf_lcao::select_bands(const std::vector<int>& out_wfc_kb) c
     // Remaining bands are already set to 0
     const int length = std::min(static_cast<int>(out_wfc_kb.size()), nbands_);
     std::copy(out_wfc_kb.begin(), out_wfc_kb.begin() + length, bands_picked.begin());
-
-    // Check if there are selected bands below the Fermi surface
-    bool has_below = false;
-    for (int i = 0; i + 1 <= fermi_band_; ++i)
-    {
-        if (bands_picked[i] == 1)
-        {
-            has_below = true;
-            break;
-        }
-    }
-    if (has_below)
-    {
-        std::cout << " Plot wave functions below the Fermi surface: band ";
-        for (int i = 0; i + 1 <= fermi_band_; ++i)
-        {
-            if (bands_picked[i] == 1)
-            {
-                std::cout << i + 1 << " ";
-            }
-        }
-        std::cout << std::endl;
-    }
-
-    // Check if there are selected bands above the Fermi surface
-    bool has_above = false;
-    for (int i = fermi_band_; i < nbands_; ++i)
-    {
-        if (bands_picked[i] == 1)
-        {
-            has_above = true;
-            break;
-        }
-    }
-    if (has_above)
-    {
-        std::cout << " Plot wave functions above the Fermi surface: band ";
-        for (int i = fermi_band_; i < nbands_; ++i)
-        {
-            if (bands_picked[i] == 1)
-            {
-                std::cout << i + 1 << " ";
-            }
-        }
-        std::cout << std::endl;
-    }
 
     return bands_picked;
 }

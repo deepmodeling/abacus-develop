@@ -180,7 +180,12 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
         Get_pchg_lcao get_pchg(*this->psi, this->pv, this->inp_->nspin);
         if (gamma_only_local)
         {
-            get_pchg.begin_gamma(ucell, this->Pgrid, this->gd, this->inp_->out_pchg, global_out_dir, GlobalV::ofs_running);
+            get_pchg.begin_gamma(ucell,
+                                 this->Pgrid,
+                                 this->gd,
+                                 this->inp_->out_pchg,
+                                 global_out_dir,
+                                 GlobalV::ofs_running);
         }
         else
         {
@@ -199,10 +204,15 @@ void ESolver_KS_LCAO<TK, TR>::others(BaseCell& basecell, const int istep)
     else if (cal_type == "get_wf")
     {
         std::cout << FmtCore::format("\n * * * * * *\n << Start %s.\n", "getting wave function");
-        Get_wf_lcao get_wf(*this->psi, this->pv, this->inp_->nspin, this->inp_->nelec);
+        Get_wf_lcao get_wf(*this->psi, this->pv, this->inp_->nspin);
         if (gamma_only_local)
         {
-            get_wf.begin_gamma(ucell, this->Pgrid, this->inp_->out_wfc_norm, this->inp_->out_wfc_re_im, global_out_dir, GlobalV::ofs_running);
+            get_wf.begin_gamma(ucell,
+                               this->Pgrid,
+                               this->inp_->out_wfc_norm,
+                               this->inp_->out_wfc_re_im,
+                               global_out_dir,
+                               GlobalV::ofs_running);
         }
         else
         {
