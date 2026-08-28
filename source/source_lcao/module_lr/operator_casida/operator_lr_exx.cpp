@@ -49,8 +49,9 @@ namespace LR
         }
         case MO_TO_AO_TYPE::CC_oo:
         {
+            // Cv -> CoX^T, i.e. C_o [C_oX^T]
             DMBand<double>(ucell, pmat, this->kv.kvec_c, this->BvK_cells, this->psi_ks_full, this->psi_ks_full)
-                .cal_dm_band(io, io, ik, this->Ds_onebase, 1.0, this->aims_nbasis, this->aims_nbasis);
+                .cal_dm_band(io, iv, ik, this->Ds_onebase, 1.0);
             break;
         }
         case MO_TO_AO_TYPE::CXC_o:

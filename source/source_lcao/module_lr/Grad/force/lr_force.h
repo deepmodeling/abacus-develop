@@ -9,6 +9,11 @@ using TAC = std::pair<int, std::array<int, 3>>;
 #endif
 namespace LR
 {
+    /// `dm_gs` carries the ground-state occupations, at nspin=1 they are 2 for fully occupied
+    /// bands, so any term that contracts against ONE channel of `dm_gs` needs this factor.
+    /// Closed-shell bookkeeping only: the open-shell path sums the two channels explicitly and
+    /// must not apply it.
+    inline double gs_dm_channel_factor() { return (PARAM.inp.nspin == 1) ? 0.5 : 1.0; }
 
     template<typename TK>
     class LR_Force

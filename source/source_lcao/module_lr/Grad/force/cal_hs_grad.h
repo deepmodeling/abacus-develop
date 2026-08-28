@@ -1,4 +1,5 @@
 #pragma once
+#include <cassert>
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
@@ -55,14 +56,7 @@ hamilt::HContainer<TR> build_hcontainer_local_op(const UnitCell& ucell, const Gr
     return hcontainer;
 }
 
-// ModuleBase::Vector3<double> operator*(const ModuleBase::Vector3<double>& row_vec, ModuleBase::Matrix3& mat3)
-// {
-//     return ModuleBase::Vector3<double>(row_vec.x * mat3.e11 + row_vec.y * mat3.e21 + row_vec.z * mat3.e31,
-//                                        row_vec.x * mat3.e12 + row_vec.y * mat3.e22 + row_vec.z * mat3.e32,
-//                                        row_vec.x * mat3.e13 + row_vec.y * mat3.e23 + row_vec.z * mat3.e33);
-// }
-
-
+/// @brief  Calculate <dPhi|phi> or <dPhi|T|phi> by 2-center integration
 inline std::vector<hamilt::HContainer<double>> cal_hs_grad(const char job,
     const UnitCell& ucell,
     const Parallel_Orbitals& pv,
@@ -107,9 +101,17 @@ inline std::vector<hamilt::HContainer<double>> cal_hs_grad(const char job,
 
             for (int iR = 0;iR < nR;++iR)
             {
-                ModuleBase::Vector3<double> R(*it++, *it++, *it++); // int to double
+                // Read the three components in separate statements. The order in which function
+                // arguments are evaluated is UNSPECIFIED in C++, so `Vector3<double>(*it++, *it++, *it++)`
+                // may store the R triple permuted and silently corrupt periodic systems.
+                const int Rx = *it++;
+                const int Ry = *it++;
+                const int Rz = *it++;
+                const ModuleBase::Vector3<double> R(Rx, Ry, Rz);    // int to double
                 ModuleBase::Vector3<double> relative_position = (tau1 - tau0 + R * ucell.latvec) * ucell.lat0;
                 hamilt::BaseMatrix<double>* dHS_block = dHS[ixyz].find_matrix(iat0, iat1, R.x, R.y, R.z);
+                // `ijr_info` came from this very container, so a miss means the indices are wrong.
+                assert(dHS_block != nullptr);
 
                 // OMP can be used here
                 for (int lw0 = 0;lw0 < row_indexes.size();lw0 += npol)    // spin 1-3 of dHS is not needed at nspin=4

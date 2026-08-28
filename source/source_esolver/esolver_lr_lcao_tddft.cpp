@@ -33,6 +33,42 @@
 #include "source_lcao/module_lr/Grad/multipliers/zeq_solver.h"
 
 #ifdef __EXX
+namespace
+{
+    /// Screening of the Coulomb operator that `Exx_LRI` is built with: `hse` is erfc-screened,
+    /// `hf` and `pbe0` are bare.
+    ///
+    /// One `Exx_LRI` carries ONE screening, and it may be needed for two different reasons: the
+    /// LR kernel (when `xc_kernel` is a hybrid) and the ground-state force (when
+    /// `dft_functional` is a hybrid). Keying the choice off `xc_kernel` alone -- which is what
+    /// this used to do -- silently produced *unscreened* exchange whenever the object existed
+    /// only for the force, e.g. `dft_functional hse` with `xc_kernel lda` or `rpa`.
+    Conv_Coulomb_Pot_K::Ccp_Type exx_ccp_type(const std::string& name)
+    {
+        return (name == "hse") ? Conv_Coulomb_Pot_K::Ccp_Type::Erfc
+                               : Conv_Coulomb_Pot_K::Ccp_Type::Hf;
+    }
+
+    /// Which functional the single `Exx_LRI` must follow. Prefer the LR kernel, since that one
+    /// enters the eigenproblem; fall back to the ground-state functional, which is the only
+    /// reason the object exists when the kernel is local.
+    std::string exx_source(const std::string& xc_kernel, const std::string& dft_functional)
+    {
+        const bool k = LR::exx_kernel_list().count(xc_kernel) > 0;
+        const bool g = LR::exx_kernel_list().count(dft_functional) > 0;
+        if (k && g && xc_kernel != dft_functional)
+        {
+            GlobalV::ofs_running << " WARNING: xc_kernel (" << xc_kernel << ") and dft_functional ("
+                << dft_functional << ") are two DIFFERENT hybrids. A single Exx_LRI carries one"
+                " screening, so only " << xc_kernel << "'s is used; the ground-state EXX force"
+                " will be inconsistent." << std::endl;
+        }
+        return k ? xc_kernel : dft_functional;
+    }
+}
+#endif
+
+#ifdef __EXX
 template<>
 void ModuleESolver::ESolver_LR<double>::move_exx_lri(std::shared_ptr<Exx_LRI<double>>& exx_ks)
 {
@@ -358,9 +394,7 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_ks_(ModuleESolver::ESolve
             this->move_exx_lri(ks_sol.exx_nao.exc->exx_ptr);
         } else    // construct C, V from scratch
         {
-            // set ccp_type according to the xc_kernel
-            if (xc_kernel == "hf" || xc_kernel == "pbe0") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; }
-            else if (xc_kernel == "hse") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; }
+            exx_info.info_global.ccp_type = exx_ccp_type(exx_source(xc_kernel, dft_functional));
             exx_info.sync_from_global();
             // populate ABFs/JLE file lists from UnitCell; keep in sync with Exx_NAO::init
             exx_info.info_ri.files_abfs = ucell.abfs_orbital_files;
@@ -512,9 +546,8 @@ void ModuleESolver::ESolver_LR<T, TR>::initialize_from_unitcell_(UnitCell& ucell
     if (((exx_kernel_list().count(xc_kernel)) && this->inp_->lr_solver != "spectrum")
         || (this->inp_->cal_force && (exx_kernel_list().count(this->inp_->dft_functional))))
     {
-        // set ccp_type according to the xc_kernel
-        if (xc_kernel == "hf") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Hf; }
-        else if (xc_kernel == "hse") { exx_info.info_global.ccp_type = Conv_Coulomb_Pot_K::Ccp_Type::Erfc; }
+        exx_info.info_global.ccp_type =
+            exx_ccp_type(exx_source(xc_kernel, LR_Util::tolower(this->inp_->dft_functional)));
         exx_info.sync_from_global();
         // populate ABFs/JLE file lists from UnitCell; keep in sync with Exx_NAO::init
         exx_info.info_ri.files_abfs = ucell.abfs_orbital_files;

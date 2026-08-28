@@ -40,11 +40,14 @@ namespace LR
         {
             const auto& Ds_gs = LR_Util::get_exx_Ds_gs(dm_gs, ucell_, kv, pv_);
             const auto& Ds_gs_2 = LR_Util::get_exx_Ds_gs(dm_gs, ucell_, kv, pv_);
+            // at nspin=1 there is only one channel, and `get_exx_Ds_gs` already returns 0.5*D
+            // (= D_up), so both halves below reuse channel 0.
+            const int is_2nd = (Ds_gs.size() > 1) ? 1 : 0;
             ModuleBase::matrix f_gs_exx(ucell_.nat, 3);
             // test the two function using the two spin channels respectively
             // 0.5 is from dE = 0.5 dTr[D(HD)]. No 0.5 in excited-state calculateion of dTr[(T+Z)(HD)]
             f_gs_exx += cal_force_exx_gs_dm_relaxed_diff(Ds_gs.at(0), Ds_gs_2.at(0), alpha_, std::to_string(0)) * 0.5;    // test passed， = 0.5 groud-state EXX force
-            f_gs_exx += cal_force_exx_dm_trans(Ds_gs.at(1), alpha_, std::to_string(1)) * 0.5;
+            f_gs_exx += cal_force_exx_dm_trans(Ds_gs.at(is_2nd), alpha_, std::to_string(is_2nd)) * 0.5;
             if (PARAM.inp.test_force)
                 ModuleIO::print_force(GlobalV::ofs_running, ucell_, "EXX GS FORCE reproduce (eV/Angstrom)", f_gs_exx, false);
             f_gs_hf_pulay += f_gs_exx;
