@@ -1,9 +1,9 @@
 #ifndef GLOBAL_FUNCTION_H
 #define GLOBAL_FUNCTION_H
 
-#include "module_external/blas_connector.h"
 #include "glob_fn_each2.h" // Peize Lin add 2016-09-07
 #include "global_variable.h"
+#include "module_external/blas_connector.h"
 #include "tool_check.h" // mohan add 2021-05-08
 #include "tool_quit.h"  // mohan add 2021-05-07
 #include "tool_title.h" // mohan add 2021-05-05
@@ -146,37 +146,34 @@ static void READ_VALUE(std::ifstream& ifs, T& v)
 }
 
 //-------------------------------------------------------------
-//! The `SCAN_BEGIN` function efficiently searches 
-//! text files for specified keywords 
+//! The `SCAN_BEGIN` function efficiently searches
+//! text files for specified keywords
 //-------------------------------------------------------------
-bool SCAN_BEGIN(std::ifstream& ifs, 
-                const std::string& TargetName, 
-                const bool restart = true, 
-                const bool ifwarn = true);
+bool SCAN_BEGIN(std::ifstream& ifs, const std::string& TargetName, const bool restart = true, const bool ifwarn = true);
 
 //-------------------------------------------------------------
-// The `SCAN_LINE_BEGIN` function efficiently searches 
+// The `SCAN_LINE_BEGIN` function efficiently searches
 // text files for specified keywords while ignoring comment
-// lines and whitespace. It skips any line starting with '#' 
+// lines and whitespace. It skips any line starting with '#'
 //-------------------------------------------------------------
-bool SCAN_LINE_BEGIN(std::ifstream& ifs, 
-                const std::string& TargetName, 
-                const bool restart = true, 
-                const bool ifwarn = true);
+bool SCAN_LINE_BEGIN(std::ifstream& ifs, const std::string& TargetName, const bool restart = true, const bool ifwarn = true);
 
 void SCAN_END(std::ifstream& ifs, const std::string& TargetName, const bool ifwarn = true);
 
 template <class T>
 static inline void DCOPY(const T& a, T& b, const int& dim)
 {
-    for (int i = 0; i < dim; ++i) {
+    for (int i = 0; i < dim; ++i)
+    {
         b[i] = a[i];
     }
 }
 
 template <typename T>
-inline void DCOPY(const T* a, T* b, const int& dim) {
-    for (int i = 0; i < dim; ++i) {
+inline void DCOPY(const T* a, T* b, const int& dim)
+{
+    for (int i = 0; i < dim; ++i)
+    {
         b[i] = a[i];
     }
 }
@@ -236,7 +233,7 @@ static inline const T* VECTOR_TO_PTR(const std::valarray<T>& v)
 // Peize Lin add 2016-07-18
 //==========================================================
 template <typename T>
-std::string TO_STRING(const T& t, const int n=20)		// n=20 since LDBL_EPSILON is 1E-16 or 1E-19
+std::string TO_STRING(const T& t, const int n = 20) // n=20 since LDBL_EPSILON is 1E-16 or 1E-19
 {
     std::stringstream newstr;
     newstr << std::setprecision(n) << t;
@@ -255,7 +252,8 @@ template <typename T_map, typename T_key1>
 inline void* MAP_EXIST(T_map& ms, const T_key1& key1)
 {
     auto ms1 = ms.find(key1);
-    if (ms1 == ms.end()) {
+    if (ms1 == ms.end())
+    {
         return nullptr;
     }
     return static_cast<void*>(&ms1->second);
@@ -265,7 +263,8 @@ template <typename T_map, typename T_key1, typename... T_key_tail>
 inline void* MAP_EXIST(T_map& ms, const T_key1& key1, const T_key_tail&... key_tail)
 {
     auto ms1 = ms.find(key1);
-    if (ms1 == ms.end()) {
+    if (ms1 == ms.end())
+    {
         return nullptr;
     }
     return MAP_EXIST(ms1->second, key_tail...);
@@ -275,7 +274,8 @@ template <typename T_map, typename T_key1>
 inline const void* MAP_EXIST(const T_map& ms, const T_key1& key1)
 {
     auto ms1 = ms.find(key1);
-    if (ms1 == ms.end()) {
+    if (ms1 == ms.end())
+    {
         return nullptr;
     }
     return static_cast<const void*>(&ms1->second);
@@ -285,7 +285,8 @@ template <typename T_map, typename T_key1, typename... T_key_tail>
 inline const void* MAP_EXIST(const T_map& ms, const T_key1& key1, const T_key_tail&... key_tail)
 {
     auto ms1 = ms.find(key1);
-    if (ms1 == ms.end()) {
+    if (ms1 == ms.end())
+    {
         return nullptr;
     }
     return MAP_EXIST(ms1->second, key_tail...);
@@ -323,7 +324,8 @@ static inline void DELETE_MUL_PTR(T_element* v)
 template <typename T_element, typename T_N_first, typename... T_N_tail>
 static inline void DELETE_MUL_PTR(T_element* v, const T_N_first N_first, const T_N_tail... N_tail)
 {
-    for (T_N_first i = 0; i < N_first; ++i) {
+    for (T_N_first i = 0; i < N_first; ++i)
+    {
         DELETE_MUL_PTR(v[i], N_tail...);
     }
     delete[] v;
@@ -353,7 +355,8 @@ static inline void FREE_MUL_PTR(T_element* v)
 template <typename T_element, typename T_N_first, typename... T_N_tail>
 static inline void FREE_MUL_PTR(T_element* v, const T_N_first N_first, const T_N_tail... N_tail)
 {
-    for (T_N_first i = 0; i < N_first; ++i) {
+    for (T_N_first i = 0; i < N_first; ++i)
+    {
         FREE_MUL_PTR(v[i], N_tail...);
     }
     free(v);
@@ -371,7 +374,7 @@ T ddot_real(const int& dim, const std::complex<T>* psi_L, const std::complex<T>*
 static inline bool IS_COLUMN_MAJOR_KS_SOLVER(std::string ks_solver)
 {
     return ks_solver == "genelpa" || ks_solver == "elpa" || ks_solver == "scalapack_gvx" || ks_solver == "cusolver"
-           || ks_solver == "cusolvermp" || ks_solver == "cg_in_lcao" || ks_solver == "pexsi" || ks_solver == "lapack";
+           || ks_solver == "cusolvermp" || ks_solver == "pexsi" || ks_solver == "lapack";
 }
 
 } // namespace GlobalFunc

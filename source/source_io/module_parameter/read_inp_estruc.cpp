@@ -138,7 +138,6 @@ Then the user has to correct the input file and restart the calculation.)";
                 "cusolver",
                 "cusolvermp",
                 "pexsi",
-                "cg_in_lcao",
             };
 
             if (para.input.basis_type == "pw")
@@ -156,11 +155,7 @@ Then the user has to correct the input file and restart the calculation.)";
                     const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
                 }
-                if (ks_solver == "cg_in_lcao")
-                {
-                    GlobalV::ofs_warning << "cg_in_lcao is under testing" << std::endl;
-                }
-                else if (ks_solver == "genelpa")
+                if (ks_solver == "genelpa")
                 {
                     if (para.input.device == "gpu")
                     {
