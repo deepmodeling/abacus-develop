@@ -22,6 +22,7 @@ void Cal_ldos<T>::cal_ldos_lcao(
         const ModuleBase::matrix &wg, // mohan add 2025-11-02
 		const psi::Psi<T>& psi,
 		const Parallel_Grid& pgrid,
+		const Grid_Driver& grid_driver,
 		const UnitCell& ucell)
 {
     for (int ie = 0; ie < PARAM.inp.stm_bias[2]; ie++)
@@ -55,7 +56,7 @@ void Cal_ldos<T>::cal_ldos_lcao(
                                                     kv.get_nks() / nspin_dm);
 
         elecstate::cal_dm_psi(dmat.dm->get_paraV_pointer(), weight, psi, dm_ldos);
-        dm_ldos.init_DMR(*(dmat.dm->get_DMR_pointer(1)));
+        dm_ldos.init_DMR(&grid_driver, &ucell);
         dm_ldos.cal_DMR();
 
         // allocate ldos space
