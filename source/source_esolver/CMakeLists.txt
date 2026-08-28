@@ -1,5 +1,5 @@
 list(APPEND objects
-    esolver.cpp
+    esolver_factory.cpp
     esolver_ks.cpp
     esolver_fp.cpp
     esolver_ks_pw.cpp

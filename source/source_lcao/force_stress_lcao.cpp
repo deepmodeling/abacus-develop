@@ -1,7 +1,8 @@
 #include "force_stress_lcao.h"
 
 #include "source_base/parallel_reduce.h"
-#include "source_lcao/module_dftu/dftu.h" //Quxin add for DFT+U on 20201029
+#include "source_lcao/module_dftu/dftu_lcao.h" //Quxin add for DFT+U on 20201029
+#include "source_lcao/module_dftu/dftu_force.h"
 #include "source_io/module_output/output_log.h"
 #include "source_io/module_parameter/parameter.h"
 // new
@@ -20,7 +21,7 @@
 #include "source_lcao/module_deepks/lcao_deepks_io.h" // mohan add 2024-07-22
 #include "source_lcao/module_deepks/deepks_force.h"
 #endif
-#include "source_lcao/module_operator_lcao/dftu_lcao.h"
+#include "source_lcao/module_dftu/dftu_lcao_op.h"
 #include "source_lcao/module_operator_lcao/dspin_lcao.h"
 #include "source_lcao/module_operator_lcao/nonlocal.h"
 #include "source_lcao/module_operator_lcao/ekinetic.h"
@@ -90,6 +91,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                                           Setup_DeePKS<T>& deepks,
                                           Exx_NAO<T> &exx_nao,
                                           ModuleSymmetry::Symmetry* symm,
+                                          const Exx_Info& exx_info,
                                           const int td_stype,
                                           hamilt::Hamilt<T>* p_hamilt)
 {
@@ -425,12 +427,37 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         }
         if (PARAM.inp.dft_plus_u == 2)
         {
-            // Old DFT+U implementation (dft_plus_u==2) still needs ForceStressArrays
+            // The legacy dft_plus_u==2 force/stress path is currently broken.
+            //
+            // Background: Plus_U::force_stress relies on ForceStressArrays
+            // members DSloc_x/y/z (gamma_only) or DSloc_Rx/Ry/Rz (multik)
+            // and DH_r being pre-allocated and filled with dS/dR data by the
+            // main force flow (formerly ForceLcaoGamma::ftable). The DFT+U
+            // step 2 refactor (commit 70c54c9d5a, 2026-01-23) removed the
+            // main-flow ForceStressArrays because the operator-based force
+            // calculation no longer needs it, but the legacy dft_plus_u==2
+            // path still depends on it. The local fsr_dftu below is declared
+            // without allocating those arrays, so any call into
+            // cal_force_gamma / cal_stress_gamma / folding_matrix_k would
+            // pass nullptr to pdgemm_ and crash with SIGSEGV.
+            //
+            // Until the legacy path is restored or re-implemented, we
+            // explicitly reject dft_plus_u==2 with cal_force or cal_stress
+            // enabled. SCF-only runs (no force/stress) are unaffected
+            // because the energy is computed in cal_energy_correction,
+            // which does not touch DSloc arrays. Use dft_plus_u=1 for
+            // force/stress calculations.
+            if (isforce || isstress)
+            {
+                ModuleBase::WARNING_QUIT("Force_Stress_LCAO::getForceStress",
+                    "dft_plus_u==2 with cal_force or cal_stress is currently broken; "
+                    "please use dft_plus_u=1 instead. See notes in source/source_lcao/force_stress_lcao.cpp.");
+            }
             ForceStressArrays fsr_dftu;
             std::vector<std::vector<double>>* dmk_d = nullptr;
             std::vector<std::vector<std::complex<double>>>* dmk_c = nullptr;
             assign_dmk_ptr<T>(dmat.dm, dmk_d, dmk_c, PARAM.globalv.gamma_only_local);
-            dftu.force_stress(ucell, gd, dmk_d, dmk_c, pv, fsr_dftu, force_u, stress_u, kv, PARAM.globalv.npol);
+            DFTU_LCAO::force_stress(dftu, ucell, gd, dmk_d, dmk_c, pv, fsr_dftu, force_u, stress_u, kv, PARAM.globalv.npol);
         }
         else
         {
@@ -488,9 +515,9 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
     // }
 
 #ifdef __EXX
-    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-    bool real_number = GlobalC::exx_info.info_ri.real_number;
-    double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+    bool cal_exx = exx_info.info_global.cal_exx;
+    bool real_number = exx_info.info_ri.real_number;
+    double hybrid_alpha = exx_info.info_global.hybrid_alpha;
 
     ModuleBase::matrix force_exx;
     ModuleBase::matrix stress_exx;
@@ -535,8 +562,6 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         ModuleBase::Vector3<double> net_force = {0.0, 0.0, 0.0};
         for (int i = 0; i < 3; i++)
         {
-            double sum = 0.0;
-
             for (int iat = 0; iat < nat; iat++)
             {
                 fcs(iat, i) += foverlap(iat, i) + ftvnl_dphi(iat, i) + fvnl_dbeta(iat, i) + fvl_dphi(iat, i)
@@ -557,7 +582,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 }
 #ifdef __EXX
                 // Force contribution from exx
-                if (GlobalC::exx_info.info_global.cal_exx)
+                if (exx_info.info_global.cal_exx)
                 {
                     fcs(iat, i) += force_exx(iat, i);
                 }
@@ -594,16 +619,6 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                     fcs(iat, i) += fvnl_dalpha(iat, i);
                 }
 #endif
-                // sum total force for correction
-                sum += fcs(iat, i);
-            }
-            net_force[i]=sum;
-            if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
-            {
-                for (int iat = 0; iat < nat; ++iat)
-                {
-                    fcs(iat, i) -= sum / nat;
-                }
             }
         }
 
@@ -616,6 +631,30 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
         if (ModuleSymmetry::Symmetry::symm_flag == 1)
         {
             this->forceSymmetry(ucell, fcs, symm);
+        }
+
+        // The net force should be evaluated AFTER the symmetrization.
+        // With symmetry switched on, the forces assembled above are built from IBZ-reduced
+        // quantities and only become physical after the symmetrization, forceSymmetry(). 
+        // Force symmetrization is linear, so it commutes with the removal of a
+        // uniform shift: the resulting fcs is identical to the previous ordering.
+        for (int i = 0; i < 3; i++)
+        {
+            double sum = 0.0;
+
+            for (int iat = 0; iat < nat; iat++)
+            {
+                // sum total force for correction
+                sum += fcs(iat, i);
+            }
+            net_force[i]=sum;
+            if (!(PARAM.inp.gate_flag || PARAM.inp.efield_flag))
+            {
+                for (int iat = 0; iat < nat; ++iat)
+                {
+                    fcs(iat, i) -= sum / nat;
+                }
+            }
         }
 
         // compute forces using the DeePKS model
@@ -771,7 +810,7 @@ void Force_Stress_LCAO<T>::getForceStress(UnitCell& ucell,
                 }
 #ifdef __EXX
                 // Stress contribution from exx
-                if (GlobalC::exx_info.info_global.cal_exx)
+                if (exx_info.info_global.cal_exx)
                 {
                     scs(i, j) += stress_exx(i, j);
                 }

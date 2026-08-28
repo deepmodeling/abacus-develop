@@ -120,7 +120,8 @@ void Occupy::decision(const std::string& name, const std::string& smearing_metho
  *
  * @param nks number of k points.
  * @param wk weight of each k point (consider symmetry).
- * @param nbands number of bands.
+ * @param nbands number of locally owned bands.
+ * @param band_offset global index of the first locally owned band.
  * @param nelec number of electrons for this spin direction.
  * @param ekb the array save the band energy.
  * @param ef output: the highest occupied Kohn-Sham level.
@@ -132,6 +133,7 @@ void Occupy::iweights(
     const int nks,
     const std::vector<double>& wk,
     const int nbands,
+    const int band_offset,
     const double& nelec,
     const ModuleBase::matrix& ekb,
     double& ef,
@@ -168,7 +170,8 @@ void Occupy::iweights(
 
         for (int ib = 0; ib < nbands; ++ib)
         {
-            if (ib < ib_min)
+            const int global_band = band_offset + ib;
+            if (global_band < ib_min)
             {
                 wg(ik, ib) = wk[ik];
                 ef = std::max(ef, ekb(ik, ib));

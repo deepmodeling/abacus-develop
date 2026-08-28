@@ -4,13 +4,15 @@
 #include "source_estate/elecstate.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "stress_func.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
-#include "source_lcao/module_ri/conv_coulomb_pot_k.h"
+#include "source_hamilt/module_xc/coulomb_config.h"
 
 namespace vdw
 {
 struct VdwResult;
 }
+
+/// General_Exx_Info forward declaration, full definition in general_exx_info.h
+struct General_Exx_Info;
 
 template <typename FPTYPE, typename Device = base_device::DEVICE_CPU>
 class Stress_PW : public Stress_Func<FPTYPE, Device>
@@ -22,7 +24,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
     void cal_stress(ModuleBase::matrix& smearing_sigmatot,
 			UnitCell& ucell,
             const vdw::VdwResult* vdw_result,
-			Plus_U &dftu, // mhan add 2025-11-07 
+			Plus_U_Base& dftu,
 			const pseudopot_cell_vl& locpp,
 			const pseudopot_cell_vnl& nlpp,
 			ModulePW::PW_Basis* rho_basis,
@@ -30,6 +32,7 @@ class Stress_PW : public Stress_Func<FPTYPE, Device>
 			Structure_Factor* p_sf,
 			K_Vectors* p_kv,
 			ModulePW::PW_Basis_K* wfc_basis,
+			const General_Exx_Info& exx_info,
 			const psi::Psi <std::complex<FPTYPE>, Device>* d_psi_in = nullptr);
 
   protected:

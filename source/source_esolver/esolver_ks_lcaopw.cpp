@@ -77,6 +77,15 @@ namespace ModuleESolver
         basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
         UnitCell& ucell = static_cast<UnitCell&>(basecell);
         ESolver_KS_PW<T>::before_all_runners(basecell, inp);
+
+        // Initialize LIP-specific info_lip_ from general_exx_info_ and input
+        this->info_lip_.ccp_type = this->general_exx_info_.ccp_type;
+        this->info_lip_.hse_omega = this->general_exx_info_.hse_omega;
+        if (!inp.exx_fock_lambda.empty())
+        {
+            this->info_lip_.lambda = std::stod(inp.exx_fock_lambda[0]);
+        }
+
         auto* p_psi_init = static_cast<psi::PSIPrepare<T>*>(this->stp.p_psi_init);
         delete this->psi_local;
         this->psi_local = new psi::Psi<T>(this->stp.psi_cpu->get_nk(),
@@ -88,10 +97,10 @@ namespace ModuleESolver
         if (inp.calculation == "scf" || inp.calculation == "relax"
             || inp.calculation == "cell-relax"
             || inp.calculation == "md") {
-            if (GlobalC::exx_info.info_global.cal_exx)
+            if (this->general_exx_info_.cal_exx)
             {
                 XC_Functional::set_xc_first_loop(ucell);
-                this->exx_lip = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(GlobalC::exx_info.info_lip,
+                this->exx_lip = std::unique_ptr<Exx_Lip<T>>(new Exx_Lip<T>(this->info_lip_,
                                                                            &this->kv,
                                                                            this->psi_local,
                                                                            this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),
@@ -109,7 +118,7 @@ namespace ModuleESolver
     {
         ESolver_KS_PW<T>::iter_init(ucell, istep, iter);
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx && !GlobalC::exx_info.info_global.separate_loop && this->two_level_step) {
+        if (this->general_exx_info_.cal_exx && !this->general_exx_info_.separate_loop && this->two_level_step) {
             this->exx_lip->cal_exx();
 }
 #endif
@@ -130,27 +139,28 @@ namespace ModuleESolver
         hsolver::DiagoIterAssist<T>::need_subspace = ((istep == 0 || istep == 1) && iter == 1) ? false : true;
         hsolver::DiagoIterAssist<T>::SCF_ITER = iter;
         hsolver::DiagoIterAssist<T>::PW_DIAG_THR = ethr;
-        hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = PARAM.inp.pw_diag_nmax;
-        bool skip_charge = PARAM.inp.calculation == "nscf" ? true : false;
+        hsolver::DiagoIterAssist<T>::PW_DIAG_NMAX = this->inp_->pw_diag_nmax;
+        bool skip_charge = this->inp_->calculation == "nscf" ? true : false;
 
         hsolver::HSolverLIP<T> hsolver_lip_obj(this->pw_wfc,
                                                PARAM.globalv.use_uspp,
-                                               PARAM.inp.basis_type,
-                                               PARAM.inp.calculation);
-        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec, 
-          *this->psi_local, skip_charge,ucell.tpiba,ucell.nat);
+                                               this->inp_->basis_type,
+                                               this->inp_->calculation,
+                                               this->inp_->nbands);
+        hsolver_lip_obj.solve(static_cast<hamilt::Hamilt<T>*>(this->p_hamilt), *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(), this->pelec,
+          *this->psi_local, skip_charge,ucell.tpiba,ucell.nat, this->general_exx_info_);
 
         // add exx
 #ifdef __EXX
-        bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-        double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+        bool cal_exx = this->general_exx_info_.cal_exx;
+        double hybrid_alpha = this->general_exx_info_.hybrid_alpha;
         if (cal_exx)
         {
             this->pelec->set_exx(this->exx_lip->get_exx_energy(), cal_exx, hybrid_alpha); // Peize Lin add 2019-03-09
         }
 #endif
 
-        Symmetry_rho::symmetrize_rho(PARAM.inp.nspin, this->chr, this->pw_rhod, ucell.symm);
+        Symmetry_rho::symmetrize_rho(this->inp_->nspin, this->chr, this->pw_rhod, ucell.symm);
 
         // deband is calculated from "output" charge density calculated
         // in sum_band
@@ -166,12 +176,14 @@ namespace ModuleESolver
         ESolver_KS_PW<T>::iter_finish(ucell, istep, iter, conv_esolver);
 
 #ifdef __EXX
-        if (GlobalC::exx_info.info_global.cal_exx && conv_esolver)
+        if (this->general_exx_info_.cal_exx && conv_esolver)
         {
+            const int two_level_step_before = this->two_level_step;
+
             // no separate_loop case
-            if (!GlobalC::exx_info.info_global.separate_loop)
+            if (!this->general_exx_info_.separate_loop)
             {
-                GlobalC::exx_info.info_global.hybrid_step = 1;
+                this->general_exx_info_.hybrid_step = 1;
 
                 // in no_separate_loop case, scf loop only did twice
                 // in first scf loop, exx updated once in beginning,
@@ -189,7 +201,7 @@ namespace ModuleESolver
             }
             // has separate_loop case
             // exx converged or get max exx steps
-            else if (this->two_level_step == GlobalC::exx_info.info_global.hybrid_step
+            else if (this->two_level_step == this->general_exx_info_.hybrid_step
                      || (iter == 1 && this->two_level_step != 0))
             {
                 conv_esolver = true;
@@ -218,6 +230,20 @@ namespace ModuleESolver
                           << std::defaultfloat << " (s)" << std::endl;
                 conv_esolver = false;
             }
+
+            // On the 0->1 transition, exx_after_converge switches the XC functional (PBE->hybrid), 
+            // but v_eff was already set for this (converged) iteration under the OLD functional. 
+            // Without this refresh, the 1st iteration of the EXX loop builds H from the stale GGA v_eff 
+            // and then adds Hexx on top of it, double-counting exchange. 
+            // Usually only that one iteration is affected and the loop washes it out; 
+            // but when the 2nd loop converges immediately (density already exact, e.g. a minimal basis fixed by symmetry) 
+            // the polluted H is the final one -- it gets diagonalized and written out by out_mat_hs.
+            // cal_converged() is used rather than a bare update_from_charge() so that vnew (used
+            // by force_scc) and descf stay consistent with the refreshed v_eff.
+            if (!conv_esolver && two_level_step_before == 0 && this->two_level_step == 1)
+            {
+                this->pelec->cal_converged();
+            }
         }
 #endif
     }
@@ -230,16 +256,16 @@ namespace ModuleESolver
         ESolver_KS_PW<T>::after_all_runners(basecell);
 
 #ifdef __LCAO
-        if (PARAM.inp.out_mat_xc)
+        if (this->inp_->out_mat_xc)
         {
 #ifdef __EXX
-            bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-            double hybrid_alpha = GlobalC::exx_info.info_global.hybrid_alpha;
+            bool cal_exx = this->general_exx_info_.cal_exx;
+            double hybrid_alpha = this->general_exx_info_.hybrid_alpha;
 #else
             bool cal_exx = false;
             double hybrid_alpha = 0.0;
 #endif
-            ModuleIO::write_Vxc(PARAM.inp.nspin,
+            ModuleIO::write_Vxc(this->inp_->nspin,
                                 PARAM.globalv.nlocal,
                                 GlobalV::DRANK,
                                 *this->stp.template get_psi_t<T, base_device::DEVICE_CPU>(),

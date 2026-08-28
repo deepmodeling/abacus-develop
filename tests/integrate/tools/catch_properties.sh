@@ -4,7 +4,7 @@
 # this compare script is used in different integrate tests
 COMPARE_SCRIPT="../../integrate/tools/CompareFile.py"
 #COMPARE_SCRIPT="../../integrate/tools/compare_file.py"
-SUM_CUBE_EXE="python3 ../../integrate/tools/sum_cube.py"
+CUBE_TOOL="../../integrate/tools/cube_tool.py"
 COLLECT_NPY_MEANS="../../integrate/tools/collect_npy_means.py"
 
 
@@ -544,8 +544,7 @@ fi
 #---------------------------------------
 #echo $out_chg
 if ! test -z "$out_chg"  && [  $out_chg -ge 1 ]; then
-	python3 $COMPARE_SCRIPT chg.cube.ref OUT.autotest/chg.cube 8
-	echo "chg.cube_pass $?" >>$1
+	record_compare_result "$1" "chg.cube_pass" "chg.cube.ref" "OUT.autotest/chg.cube" 6
 fi
 
 
@@ -696,6 +695,14 @@ fi
 # 1. get_wf/get_pchg calculation tag (LCAO)
 # 2. out_wfc_norm/out_wfc_re_im/out_pchg (PW)
 #--------------------------------------------
+shopt -s nullglob
+for pchg_ref in pchgi*.cube.ref; do
+    pchg_cube=${pchg_ref%.ref}
+    pchg_key=$(sanitize_result_key "${pchg_cube}_compare")
+    record_compare_result "$1" "$pchg_key" "$pchg_ref" "OUT.autotest/$pchg_cube" 6
+done
+shopt -u nullglob
+
 need_process_cube=false
 # Check if this is a LCAO calculation with get_wf/get_pchg
 if [ $calculation == "get_wf" ] || [ $calculation == "get_pchg" ]; then
@@ -711,15 +718,70 @@ fi
 # Process .cube files if needed
 if [ "$need_process_cube" = true ]; then
     cubefiles=$(ls OUT.autotest/ | grep -E '.cube$')
-    
+    wavefunction_re_files=()
+
     if [ -z "$cubefiles" ]; then
         echo "Error: No .cube files found in OUT.autotest/"
         exit 1
     else
         for cube in $cubefiles; do
-            total_chg=$($SUM_CUBE_EXE OUT.autotest/$cube)
+            if [[ "$cube" =~ ^wfi[0-9]+s[0-9]+(k[0-9]+)?re[.]cube$ ]]; then
+                wavefunction_re_files+=("$cube")
+                continue
+            fi
+            if [[ "$cube" =~ ^wfi[0-9]+s[0-9]+(k[0-9]+)?im[.]cube$ ]]; then
+                continue
+            fi
+            total_chg=$(python3 "$CUBE_TOOL" integrate "OUT.autotest/$cube")
             echo "$cube $total_chg" >> $1
         done
+    fi
+
+    for cube in "${wavefunction_re_files[@]}"; do
+        if [[ "$cube" =~ ^wfi([0-9]+)s([0-9]+)(k[0-9]+)?re[.]cube$ ]]; then
+            band=${BASH_REMATCH[1]}
+            spin=${BASH_REMATCH[2]}
+            kpoint=${BASH_REMATCH[3]}
+            state_prefix=${cube%re.cube}
+            fingerprint_args=(
+                "OUT.autotest/$cube"
+                "OUT.autotest/${state_prefix}im.cube"
+            )
+            if [ "$nspin" = "4" ]; then
+                if [ "$spin" != "1" ]; then
+                    continue
+                fi
+                lower_prefix="wfi${band}s2${kpoint}"
+                fingerprint_args+=(
+                    "OUT.autotest/${lower_prefix}re.cube"
+                    "OUT.autotest/${lower_prefix}im.cube"
+                )
+                result_prefix="wfi${band}${kpoint}_spinor_wfc_fp"
+            else
+                result_prefix="${state_prefix}_wfc_fp"
+            fi
+
+            if fingerprint=$(python3 "$CUBE_TOOL" fingerprint-wfc "${fingerprint_args[@]}"); then
+                while read -r metric value; do
+                    echo "${result_prefix}_${metric} $value" >> "$1"
+                done <<< "$fingerprint"
+            else
+                echo "Error: Failed to generate wavefunction fingerprint for $state_prefix"
+                exit 1
+            fi
+        fi
+    done
+fi
+
+# Check the pointwise Pauli identities when all PW nspin=4 spinor outputs are available.
+nspin=$(get_input_key_value "nspin" "INPUT")
+if_separate_k=$(get_input_key_value "if_separate_k" "INPUT")
+if [ "$nspin" = "4" ] && { [ "$if_separate_k" = "1" ] || [ "$if_separate_k" = "true" ]; } \
+    && [ -n "$out_wfc_norm" ] && [ -n "$out_wfc_re_im" ] && [ -n "$out_pchg" ]; then
+    if python3 "$CUBE_TOOL" check-spinor OUT.autotest; then
+        echo "pw_spinor_cube_identity 0" >> "$1"
+    else
+        echo "pw_spinor_cube_identity 1" >> "$1"
     fi
 fi
 

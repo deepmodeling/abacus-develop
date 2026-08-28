@@ -23,6 +23,8 @@ add_library(
     ../module_parameter/read_inp_out.cpp
     ../module_parameter/read_input.cpp
     ../module_parameter/read_set_globalv.cpp
+    ../module_parameter/availability.cpp
+    ../module_parameter/availability_validator.cpp
 )
 
 file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/support DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
@@ -55,7 +57,7 @@ AddTest(
 AddTest(
   TARGET MODULE_IO_write_bands
   LIBS parameter base device
-  SOURCES write_bands_test.cpp ../module_energy/write_bands.cpp
+  SOURCES write_bands_test.cpp ../module_output/band_parallel_output.cpp ../module_energy/write_bands.cpp
 )
 
 AddTest(

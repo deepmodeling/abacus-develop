@@ -12,6 +12,7 @@
 
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
+#include "source_base/module_external/blacs_connector.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_hamilt/matrixblock.h"
 
@@ -20,6 +21,18 @@ typedef hamilt::MatrixBlock<std::complex<double>> matcd;
 
 namespace hsolver
 {
+namespace
+{
+/// Number of processes in the BLACS process grid that `desc` lives on.
+/// p?sygvx requires iclustr(2*NPROW*NPCOL) and gap(NPROW*NPCOL).
+int blacs_grid_size(const int* const desc)
+{
+    int nprow = 0, npcol = 0, myprow = 0, mypcol = 0;
+    Cblacs_gridinfo(desc[1], &nprow, &npcol, &myprow, &mypcol);
+    return nprow * npcol;
+}
+} // namespace
+
     template<>
     void DiagoScalapack<double>::diag(hamilt::Hamilt<double>* phm_in, psi::Psi<double>& psi, Real* eigenvalue_in)
 {
@@ -98,8 +111,9 @@ namespace hsolver
     std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
     std::vector<int> ifail(this->nlocal, 0);
-    std::vector<int> iclustr(2 * GlobalV::DSIZE);
-    std::vector<double> gap(GlobalV::DSIZE);
+    const int ngrid = blacs_grid_size(desc);
+    std::vector<int> iclustr(2 * ngrid);
+    std::vector<double> gap(ngrid);
 
     pdsygvx_(&itype,
              &jobz,
@@ -227,8 +241,9 @@ namespace hsolver
     std::vector<double> rwork(3, 0);
     std::vector<int> iwork(1, 0);
     std::vector<int> ifail(this->nlocal, 0);
-    std::vector<int> iclustr(2 * GlobalV::DSIZE);
-    std::vector<double> gap(GlobalV::DSIZE);
+    const int ngrid = blacs_grid_size(desc);
+    std::vector<int> iclustr(2 * ngrid);
+    std::vector<double> gap(ngrid);
 
     pzhegvx_(&itype,
              &jobz,
@@ -408,7 +423,8 @@ namespace hsolver
     else if (info / 2 % 2)
     {
         int degeneracy_need = 0;
-        for (int irank = 0; irank < GlobalV::DSIZE; ++irank) {
+        // `vec` is iclustr, sized 2*NPROW*NPCOL by the caller
+        for (std::size_t irank = 0; 2 * irank + 1 < vec.size(); ++irank) {
             degeneracy_need = std::max(degeneracy_need, vec[2 * irank + 1] - vec[2 * irank]);
 }
         const std::string str_need = "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n";

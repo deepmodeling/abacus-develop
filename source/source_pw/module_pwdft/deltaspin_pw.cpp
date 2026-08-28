@@ -8,7 +8,8 @@ namespace pw
 
 bool run_deltaspin_lambda_loop(const int iter,
                                const double drho,
-                               const Input_para& inp)
+                               const Input_para& inp,
+                               std::ostream& ofs_running)
 {
     /// Return false if DeltaSpin is not enabled
     if (!inp.sc_mag_switch)
@@ -25,7 +26,7 @@ bool run_deltaspin_lambda_loop(const int iter,
     /// only records Mi vs lambda to lambda_scan_results.dat.
     if (inp.sc_lambda_strategy == "linear_scan")
     {
-        sc.run_lambda_linear_scan(iter);
+        sc.run_lambda_linear_scan(iter, ofs_running);
         return true;
     }
 
@@ -34,7 +35,7 @@ bool run_deltaspin_lambda_loop(const int iter,
     if (!sc.mag_converged() && drho > 0 && drho < inp.sc_scf_thr)
     {
         /// Optimize lambda to get target magnetic moments
-        sc.run_lambda_loop(iter - 1);
+        sc.run_lambda_loop(iter - 1, true, ofs_running);
         sc.set_mag_converged(true);
         return true;
     }
@@ -42,7 +43,7 @@ bool run_deltaspin_lambda_loop(const int iter,
     /// Re-run the lambda loop to update psi and charge density with current lambda.
     else if (sc.mag_converged())
     {
-        sc.run_lambda_loop(iter - 1);
+        sc.run_lambda_loop(iter - 1, true, ofs_running);
         return true;
     }
 

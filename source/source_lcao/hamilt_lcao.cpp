@@ -3,7 +3,7 @@
 #include "source_base/global_variable.h"
 #include "source_base/memory_recorder.h"
 #include "source_base/timer.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_dftu/dftu_lcao.h"
 #include "source_lcao/setup_exx.h"
 #include "source_lcao/setup_deepks.h"
 #include "source_estate/module_dm/density_matrix.h"
@@ -31,12 +31,12 @@
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 #include "source_hsolver/hsolver_lcao.h"
-#include "module_operator_lcao/dftu_lcao.h"
+#include "module_dftu/dftu_lcao_op.h"
 #include "module_operator_lcao/dspin_lcao.h"
 #include "module_operator_lcao/ekinetic.h"
 #include "module_operator_lcao/meta_lcao.h"
 #include "module_operator_lcao/nonlocal.h"
-#include "module_operator_lcao/op_dftu_lcao.h"
+#include "module_dftu/dftu_lcao_op_legacy.h"
 #include "module_operator_lcao/op_exx_lcao.h"
 #include "module_operator_lcao/overlap.h"
 #include "module_operator_lcao/td_ekinetic_lcao.h"
@@ -84,8 +84,9 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
 							   elecstate::DensityMatrix<TK, double>* DM_in,
 							   Plus_U* p_dftu, // mohan add 2025-11-05
 							   Setup_DeePKS<TK> &deepks,
-							   const int istep, 
-							   Exx_NAO<TK> &exx_nao)
+							   const int istep,
+							   Exx_NAO<TK> &exx_nao,
+							   const Exx_Info& exx_info)
 {
     this->classname = "HamiltLCAO";
 
@@ -416,38 +417,25 @@ HamiltLCAO<TK, TR>::HamiltLCAO(const UnitCell& ucell,
     }
 
 #ifdef __EXX
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (exx_info.info_global.cal_exx)
     {
         // Peize Lin add 2016-12-03
         // set xc type before the first cal of xc in pelec->init_scf
         // and calculate Cs, Vs
-        Operator<TK>* exx;
-        if (PARAM.inp.esolver_type == "tddft")
-        {
-            exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
-                                                        this->hR,
-                                                        ucell,
-                                                        *this->kv,
-                                                        exx_nao.exd.get(),
-                                                        exx_nao.exc.get(),
-                                                        Add_Hexx_Type::k,
-                                                        istep,
-                                                        !GlobalC::restart.info_load.restart_exx
-                                                            && GlobalC::restart.info_load.load_H);
-        }
-        else
-        {
-            exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
-                                                        this->hR,
-                                                        ucell,
-                                                        *kv,
-                                                        exx_nao.exd.get(),
-                                                        exx_nao.exc.get(),
-                                                        Add_Hexx_Type::R,
-                                                        istep,
-                                                        !GlobalC::restart.info_load.restart_exx
-                                                            && GlobalC::restart.info_load.load_H);
-        }
+        // Keep exact exchange in H(R) for every workflow. For RT-TDDFT the
+        // factory selects complex H(R) when EXX is active, so the operator
+        // chain folds the complete Hamiltonian with one common TD phase.
+        Operator<TK>* exx = new OperatorEXX<OperatorLCAO<TK, TR>>(this->hsk,
+                                                                  this->hR,
+                                                                  ucell,
+                                                                  *this->kv,
+                                                                  exx_nao.exd.get(),
+                                                                  exx_nao.exc.get(),
+                                                                  exx_info,
+                                                                  Add_Hexx_Type::R,
+                                                                  istep,
+                                                                  !GlobalC::restart.info_load.restart_exx
+                                                                      && GlobalC::restart.info_load.load_H);
         this->getOperator()->add(exx);
     }
 #endif

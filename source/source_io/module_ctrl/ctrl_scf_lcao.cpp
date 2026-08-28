@@ -1,4 +1,5 @@
 #include "ctrl_scf_lcao.h" // use ctrl_scf_lcao()
+#include "source_hamilt/module_xc/exx_info.h"
 
 #include "source_base/formatter.h"
 #include "source_base/tool_quit.h" // use ModuleBase::WARNING_QUIT
@@ -24,6 +25,7 @@
 #include "../module_dm/write_dmr.h"                           // use ModuleIO::write_dmr()
 #include "../module_dos/write_dos_lcao.h"                      // use ModuleIO::write_dos_lcao()
 #include "../module_wf/write_wfc_nao.h"                       // use ModuleIO::write_wfc_nao()
+#include "source_lcao/module_deltaspin/lambda_loop_helper.h"   // print_Mi / print_Mag_Force free functions
 #include "source_lcao/module_deltaspin/spin_constrain.h"   // use spinconstrain::SpinConstrain<TK>
 #include "source_lcao/module_operator_lcao/ekinetic.h" // use hamilt::EKinetic
 #ifdef __MLALGO
@@ -41,13 +43,13 @@
 
 #ifdef __EXX
 template <typename TK>
-void setup_exx_dh_params(ModuleIO::WriteDHParams& dh_params, Exx_NAO<TK>& exx_nao)
+void setup_exx_dh_params(ModuleIO::WriteDHParams& dh_params, Exx_NAO<TK>& exx_nao, const Exx_Info& exx_info)
 {}
 
 template <>
-void setup_exx_dh_params<double>(ModuleIO::WriteDHParams& dh_params, Exx_NAO<double>& exx_nao)
+void setup_exx_dh_params<double>(ModuleIO::WriteDHParams& dh_params, Exx_NAO<double>& exx_nao, const Exx_Info& exx_info)
 {
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (exx_info.info_global.cal_exx)
     {
         if (exx_nao.exd) { dh_params.exd = exx_nao.exd.get(); }
         if (exx_nao.exc) { dh_params.exc = exx_nao.exc.get(); }
@@ -55,7 +57,7 @@ void setup_exx_dh_params<double>(ModuleIO::WriteDHParams& dh_params, Exx_NAO<dou
 }
 
 template <typename TK>
-void setup_exx_h_params(ModuleIO::WriteHParams& h_params, Exx_NAO<TK>& exx_nao)
+void setup_exx_h_params(ModuleIO::WriteHParams& h_params, Exx_NAO<TK>& exx_nao, const Exx_Info& exx_info)
 {
     // Only the gamma-only (TK==double) specialization below actually writes V^EXX(R).
     // This generic body is instantiated for the multi-k (TK==std::complex) path, where the
@@ -67,13 +69,13 @@ void setup_exx_h_params(ModuleIO::WriteHParams& h_params, Exx_NAO<TK>& exx_nao)
 }
 
 template <>
-void setup_exx_h_params<double>(ModuleIO::WriteHParams& h_params, Exx_NAO<double>& exx_nao)
+void setup_exx_h_params<double>(ModuleIO::WriteHParams& h_params, Exx_NAO<double>& exx_nao, const Exx_Info& exx_info)
 {
-    if (GlobalC::exx_info.info_global.cal_exx)
+    if (exx_info.info_global.cal_exx)
     {
         if (exx_nao.exd) { h_params.exd = exx_nao.exd.get(); }
         if (exx_nao.exc) { h_params.exc = exx_nao.exc.get(); }
-        ModuleIO::write_h_exx(h_params);
+        ModuleIO::write_h_exx(h_params, exx_info);
     }
 }
 #endif
@@ -101,6 +103,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
                              rdmft::RDMFT<TK, TR>& rdmft_solver,   // for RDMFT
                              Setup_DeePKS<TK>& deepks,
                              Exx_NAO<TK>& exx_nao,
+                             const Exx_Info& exx_info,
                              const bool conv_esolver,
                              const bool scf_nmax_flag,
                              const int istep)
@@ -404,9 +407,9 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
 #ifdef __EXX
         // dV^EXX/dR output is wired for the gamma (TK==double) exx interfaces. exd/exc are
         // mutually exclusive (real vs complex Hexx); write_dH_exx picks by info_ri.real_number.
-        setup_exx_dh_params(dh_params, exx_nao);
+        setup_exx_dh_params(dh_params, exx_nao, exx_info);
 #endif
-        ModuleIO::write_dH_components(dh_params);
+        ModuleIO::write_dH_components(dh_params, exx_info);
         delete pot_vl;
         delete pot_vh;
         delete pot_vxc;
@@ -454,10 +457,10 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
             ModuleIO::write_h_vxc(h_params);
         }
 #ifdef __EXX
-        if (inp.out_mat_h_exx[0] && GlobalC::exx_info.info_global.cal_exx)
+        if (inp.out_mat_h_exx[0] && exx_info.info_global.cal_exx)
         {
             // V^EXX(R) output is wired for the gamma (TK==double) exx interfaces.
-            setup_exx_h_params(h_params, exx_nao);
+            setup_exx_h_params(h_params, exx_nao, exx_info);
         }
 #endif
     }
@@ -552,8 +555,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     {
         spinconstrain::SpinConstrain<TK>& sc = spinconstrain::SpinConstrain<TK>::getScInstance();
         sc.cal_mi_lcao(istep);
-        sc.print_Mi(GlobalV::ofs_running);
-        sc.print_Mag_Force(GlobalV::ofs_running);
+        spinconstrain::print_Mi(sc, GlobalV::ofs_running);
+        spinconstrain::print_Mag_Force(sc, GlobalV::ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -616,8 +619,8 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //! 15) Output Hexx matrix in LCAO basis
     // (see `out_chg` in docs/advanced/input_files/input-main.md)
     //------------------------------------------------------------------
-    bool cal_exx = GlobalC::exx_info.info_global.cal_exx;
-    bool real_number = GlobalC::exx_info.info_ri.real_number;
+    bool cal_exx = exx_info.info_global.cal_exx;
+    bool real_number = exx_info.info_ri.real_number;
 
     if (inp.out_chg[0])
     {
@@ -640,7 +643,7 @@ void ModuleIO::ctrl_scf_lcao(UnitCell& ucell,
     //------------------------------------------------------------------
     if (inp.rpa)
     {
-        RPA_LRI<TK, double> rpa_lri_double(GlobalC::exx_info.info_ri);
+        RPA_LRI<TK, double> rpa_lri_double(exx_info.info_ri);
         rpa_lri_double.postSCF(ucell, MPI_COMM_WORLD, *dm, pelec, kv, orb, pv, *psi);
         if (inp.rpa_out_vel)
             rpa_lri_double.out_velocity(ucell, gd, two_center_bundle, pv, *psi, pelec);
@@ -752,6 +755,7 @@ template void ModuleIO::ctrl_scf_lcao<double, double>(
     rdmft::RDMFT<double, double>& rdmft_solver, // for RDMFT
     Setup_DeePKS<double>& deepks,
     Exx_NAO<double>& exx_nao,
+    const Exx_Info& exx_info,
     const bool conv_esolver,
     const bool scf_nmax_flag,
     const int istep);
@@ -780,6 +784,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, double>(
     rdmft::RDMFT<std::complex<double>, double>& rdmft_solver, // for RDMFT
     Setup_DeePKS<std::complex<double>>& deepks,
     Exx_NAO<std::complex<double>>& exx_nao,
+    const Exx_Info& exx_info,
     const bool conv_esolver,
     const bool scf_nmax_flag,
     const int istep);
@@ -807,6 +812,7 @@ template void ModuleIO::ctrl_scf_lcao<std::complex<double>, std::complex<double>
     rdmft::RDMFT<std::complex<double>, std::complex<double>>& rdmft_solver, // for RDMFT
     Setup_DeePKS<std::complex<double>>& deepks,
     Exx_NAO<std::complex<double>>& exx_nao,
+    const Exx_Info& exx_info,
     const bool conv_esolver,
     const bool scf_nmax_flag,
     const int istep);

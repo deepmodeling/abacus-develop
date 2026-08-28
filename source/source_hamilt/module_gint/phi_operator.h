@@ -114,12 +114,10 @@ class PhiOperator
         const std::complex<double>* wfc,
         const vector<int>& trace_lo,
         const int ik,
-        const int nspin,
         const int npol,
-        const int lgd,
-        const std::vector<Vec3d>& kvec_c,
         const std::vector<Vec3d>& kvec_d,
-        double* rho) const;
+        const int grid_size,
+        std::complex<double>* wfc_r) const;
 
     private:
     void init_atom_pair_idx_();

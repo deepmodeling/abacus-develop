@@ -18,6 +18,7 @@ kpar              2
 bndpar            2
 cal_force         1
 cal_stress        1
+out_band          1
 
 #Parameters (2.Iteration)
 ecutwfc           20

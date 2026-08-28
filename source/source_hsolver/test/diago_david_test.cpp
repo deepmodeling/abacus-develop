@@ -87,7 +87,7 @@ public:
 		//do Diago_David::diag()
 		double* en = new double[npw];		
 		hamilt::Hamilt<std::complex<double>> *phm;
-		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
+		phm = new hamilt::HamiltPW<std::complex<double>>(nullptr, nullptr, nullptr, nullptr, nullptr, nullptr, nullptr);
 
 #ifdef __MPI 
         const hsolver::diag_comm_info comm_info = {POOL_WORLD, mypnum, nprocs};

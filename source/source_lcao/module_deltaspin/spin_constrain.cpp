@@ -130,89 +130,6 @@ int SpinConstrain<TK>::get_spin_sign(int ik) const
     return (this->pelec->klist->isk[ik] == 0) ? 1 : -1;
 }
 
-/**
- * @brief Accumulate magnetic moments from projector coefficients (becp) for one k-point.
- *
- * @par Algorithm (npol=2, non-collinear):
- * For each atom, compute the 2x2 occupation matrix from becp coefficients:
- *   occ[0] = sum_ih becp_up^*(ih) * becp_up(ih)   = <psi_up|P_at|psi_up>
- *   occ[1] = sum_ih becp_up^*(ih) * becp_dn(ih)   = <psi_up|P_at|psi_dn>
- *   occ[2] = sum_ih becp_dn^*(ih) * becp_up(ih)   = <psi_dn|P_at|psi_up>
- *   occ[3] = sum_ih becp_dn^*(ih) * becp_dn(ih)   = <psi_dn|P_at|psi_dn>
- * where P_at = sum_{l,m} |alpha_{l,m}><alpha_{l,m}| is the atomic projector.
- *
- * The magnetic moment is extracted via Pauli matrix traces:
- *   Mx = Re(occ[1] + occ[2]), My = -Im(occ[1] - occ[2]), Mz = Re(occ[0] - occ[3])
- *
- * @par Algorithm (npol=1, collinear):
- * Only the z-component (spin projection) is computed:
- *   occ = sum_ih |becp(ih)|^2 = <psi|P_at|psi>
- *   Mz += weight * occ * spin_sign
- * where spin_sign = +1 for spin-up, -1 for spin-down.
- *
- * @param becp Projector coefficients, layout: [ib * npol * nkb + spin * nkb + ih]
- * @param nkb Total number of projectors across all atoms
- * @param nbands Number of bands (occupied + unoccupied in the subspace)
- * @param npol Number of spinor components (1 for collinear, 2 for non-collinear)
- * @param ik K-point index (used for spin_sign lookup in collinear mode)
- * @param wg_ik Band occupation weights for this k-point (from Fermi-Dirac)
- * @param nh_iat Array of projector counts per atom: nh_iat[iat] = nproj for atom iat
- */
-template <typename TK>
-void SpinConstrain<TK>::accumulate_Mi_from_becp(const std::complex<double>* becp,
-                                                  int nkb,
-                                                  int nbands,
-                                                  int npol,
-                                                  int ik,
-                                                  const double* wg_ik,
-                                                  const int* nh_iat)
-{
-    if (npol == 2)
-    {
-        for (int ib = 0; ib < nbands; ib++)
-        {
-            const double weight = wg_ik[ib];
-            int begin_ih = 0;
-            for (int iat = 0; iat < static_cast<int>(this->Mi_.size()); iat++)
-            {
-                std::complex<double> occ[4] = {ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO, ModuleBase::ZERO};
-                const int nh = nh_iat[iat];
-                for (int ih = 0; ih < nh; ih++)
-                {
-                    const int index = ib * 2 * nkb + begin_ih + ih;
-                    occ[0] += conj(becp[index]) * becp[index];
-                    occ[1] += conj(becp[index]) * becp[index + nkb];
-                    occ[2] += conj(becp[index + nkb]) * becp[index];
-                    occ[3] += conj(becp[index + nkb]) * becp[index + nkb];
-                }
-                this->Mi_[iat] += pauli_to_moment(occ, weight);
-                begin_ih += nh;
-            }
-        }
-    }
-    else // npol == 1
-    {
-        const int sign = this->get_spin_sign(ik);
-        for (int ib = 0; ib < nbands; ib++)
-        {
-            const double weight = wg_ik[ib];
-            int begin_ih = 0;
-            for (int iat = 0; iat < static_cast<int>(this->Mi_.size()); iat++)
-            {
-                double occ = 0.0;
-                const int nh = nh_iat[iat];
-                for (int ih = 0; ih < nh; ih++)
-                {
-                    const int index = ib * nkb + begin_ih + ih;
-                    occ += (conj(becp[index]) * becp[index]).real();
-                }
-                this->Mi_[iat].z += weight * occ * sign;
-                begin_ih += nh;
-            }
-        }
-    }
-}
-
 template <typename TK>
 int SpinConstrain<TK>::get_nw() const
 {
@@ -257,10 +174,10 @@ int SpinConstrain<TK>::get_iwt(int itype, int iat, int orbital_index) const
 
 /// @brief Get total number of atoms across all element types
 template <typename TK>
-int SpinConstrain<TK>::get_nat()
+int SpinConstrain<TK>::get_nat() const
 {
     int nat = 0;
-    for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it)
+    for (std::map<int, int>::const_iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it)
     {
         nat += it->second;
     }
@@ -269,7 +186,7 @@ int SpinConstrain<TK>::get_nat()
 
 /// @brief Get number of element types
 template <typename TK>
-int SpinConstrain<TK>::get_ntype()
+int SpinConstrain<TK>::get_ntype() const
 {
     return this->atomCounts.size();
 }
@@ -287,7 +204,7 @@ int SpinConstrain<TK>::get_ntype()
  * - "number of atoms <= 0": some element type has no atoms
  */
 template <typename TK>
-void SpinConstrain<TK>::check_atomCounts()
+void SpinConstrain<TK>::check_atomCounts() const
 {
     if (!this->atomCounts.size())
     {
@@ -297,7 +214,7 @@ void SpinConstrain<TK>::check_atomCounts()
     {
         ModuleBase::WARNING_QUIT("SpinConstrain::check_atomCounts", "nat <= 0");
     }
-    for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it)
+    for (std::map<int, int>::const_iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it)
     {
         int itype = it->first;
         if (itype < 0 || itype >= this->get_ntype())
@@ -342,7 +259,7 @@ int SpinConstrain<TK>::get_iat(int itype, int atom_index)
         ModuleBase::WARNING_QUIT("SpinConstrain::get_iat", "atom index out of range [0, nat)");
     }
     int iat = 0;
-    for (std::map<int, int>::iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it)
+    for (std::map<int, int>::const_iterator it = this->atomCounts.begin(); it != this->atomCounts.end(); ++it)
     {
         if (it->first == itype)
         {
@@ -618,9 +535,10 @@ void SpinConstrain<TK>::zero_Mi()
 /// this function can only be called by the root process because only
 /// root process reads the ScDecayGrad from json file
 template <typename TK>
-double SpinConstrain<TK>::get_decay_grad(int itype)
+double SpinConstrain<TK>::get_decay_grad(int itype) const
 {
-    return this->ScDecayGrad[itype];
+    std::map<int, double>::const_iterator it = this->ScDecayGrad.find(itype);
+    return it != this->ScDecayGrad.end() ? it->second : 0.0;
 }
 
 /// set grad_decy
@@ -638,7 +556,7 @@ void SpinConstrain<TK>::set_decay_grad()
 
 /// get decay_grad
 template <typename TK>
-const std::vector<double>& SpinConstrain<TK>::get_decay_grad()
+const std::vector<double>& SpinConstrain<TK>::get_decay_grad() const
 {
     return this->decay_grad_;
 }
@@ -682,6 +600,27 @@ template <typename TK>
 double SpinConstrain<TK>::get_sc_thr() const
 {
     return this->sc_thr_;
+}
+
+/// get current adaptive sc threshold
+template <typename TK>
+double SpinConstrain<TK>::get_current_sc_thr() const
+{
+    return this->current_sc_thr_;
+}
+
+/// get computed magnetic moments Mi per atom
+template <typename TK>
+const std::vector<ModuleBase::Vector3<double>>& SpinConstrain<TK>::get_Mi() const
+{
+    return this->Mi_;
+}
+
+/// get human-readable atom labels for table printing
+template <typename TK>
+const std::vector<std::string>& SpinConstrain<TK>::get_atomLabels() const
+{
+    return this->atomLabels_;
 }
 
 /// get nsc
@@ -747,127 +686,6 @@ void SpinConstrain<TK>::set_ParaV(Parallel_Orbitals* ParaV_in)
     if (nloc <= 0)
     {
         ModuleBase::WARNING_QUIT("SpinConstrain::set_ParaV", "nloc <= 0");
-    }
-}
-
-/**
- * @brief Print magnetic moments per atom in formatted table.
- *
- * @par Output format
- * - nspin=2: "ATOM   1    2.0000000000" (z-component only)
- * - nspin=4: "ATOM   1    0.0010000000    0.0020000000    1.9990000000" (x, y, z)
- *
- * @par Interpretation
- * - Positive Mi.z: spin aligned with z-axis (spin-up character)
- * - Negative Mi.z: spin anti-aligned with z-axis (spin-down character)
- * - Non-zero Mi.x/Mi.y: non-collinear spin components
- * - Mi close to target_mag: constraint is well-satisfied
- * - Mi far from target_mag: constraint is not yet converged
- */
-template <typename TK>
-void SpinConstrain<TK>::print_Mi(std::ofstream& ofs_running)
-{
-    this->check_atomCounts();
-    int nat = this->get_nat();
-    std::vector<double> mag_x(nat, 0.0);
-    std::vector<double> mag_y(nat, 0.0);
-    std::vector<double> mag_z(nat, 0.0);
-    if (this->nspin_ == 2)
-    {
-        const std::vector<std::string> title = {"Total Magnetism (uB)", ""};
-        const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
-        FmtTable table(/*titles=*/title, 
-                       /*nrows=*/nat, 
-                       /*formats=*/fmts, 
-                       /*indent=*/0,
-                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
-        for (int iat = 0; iat < nat; ++iat)
-        {
-            mag_z[iat] = Mi_[iat].z;
-        }
-        table << this->atomLabels_ << mag_z;
-        ofs_running << table.str() << std::endl;
-    }
-    else if (this->nspin_ == 4)
-    {
-        const std::vector<std::string> title = {"Total Magnetism (uB)", "", "", ""};
-        const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
-        FmtTable table(/*titles=*/title, 
-                       /*nrows=*/nat, 
-                       /*formats=*/fmts, 
-                       /*indent=*/0,
-                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
-        for (int iat = 0; iat < nat; ++iat)
-        {
-            mag_x[iat] = Mi_[iat].x;
-            mag_y[iat] = Mi_[iat].y;
-            mag_z[iat] = Mi_[iat].z;
-        }
-        table << this->atomLabels_ << mag_x << mag_y << mag_z;
-        ofs_running << table.str() << std::endl;
-    }
-}
-
-/**
- * @brief Print the magnetic force (-lambda) per atom in eV/uB.
- *
- * @par Physical meaning
- * The "magnetic force" is the derivative of the constrained Lagrangian
- * with respect to the magnetic moment: dL/dMi = -lambda_i.
- * It represents how much energy would change if the constraint were relaxed.
- *
- * @par Interpretation
- * - Large |lambda|: The system strongly resists the target moment constraint
- * - lambda ≈ 0: The system naturally has the target moment (no constraint needed)
- * - Positive lambda.z: The constraint pushes the moment in the +z direction
- * - Negative lambda.z: The constraint pushes the moment in the -z direction
- *
- * @par Typical values
- * - Well-converged SCF: lambda ~ 0.01-1 eV/uB
- * - Strongly constrained: lambda ~ 1-10 eV/uB
- * - Diverging SCF: lambda growing without bound (check target_mag合理性)
- */
-template <typename TK>
-void SpinConstrain<TK>::print_Mag_Force(std::ofstream& ofs_running)
-{
-    this->check_atomCounts();
-    int nat = this->get_nat();
-    std::vector<double> mag_force_x(nat, 0.0);
-    std::vector<double> mag_force_y(nat, 0.0);
-    std::vector<double> mag_force_z(nat, 0.0);
-    if (this->nspin_ == 2)
-    {
-        const std::vector<std::string> title = {"Magnetic force (eV/uB)", ""};
-        const std::vector<std::string> fmts = {"%-26s", "%20.10f"};
-        FmtTable table(/*titles=*/title, 
-                       /*nrows=*/nat, 
-                       /*formats=*/fmts, 
-                       /*indent=*/0,
-                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
-        for (int iat = 0; iat < nat; ++iat)
-        {
-            mag_force_z[iat] = lambda_[iat].z * ModuleBase::Ry_to_eV;
-        }
-        table << this->atomLabels_ << mag_force_z;
-        ofs_running << table.str() << std::endl;
-    }
-    else if (this->nspin_ == 4)
-    {
-        const std::vector<std::string> title = {"Magnetic force (eV/uB)", "", "", ""};
-        const std::vector<std::string> fmts = {"%-26s", "%20.10f", "%20.10f", "%20.10f"};
-        FmtTable table(/*titles=*/title, 
-                       /*nrows=*/nat, 
-                       /*formats=*/fmts, 
-                       /*indent=*/0,
-                       /*align=*/{/*value*/FmtTable::Align::RIGHT, /*title*/FmtTable::Align::LEFT});
-        for (int iat = 0; iat < nat; ++iat)
-        {
-            mag_force_x[iat] = lambda_[iat].x * ModuleBase::Ry_to_eV;
-            mag_force_y[iat] = lambda_[iat].y * ModuleBase::Ry_to_eV;
-            mag_force_z[iat] = lambda_[iat].z * ModuleBase::Ry_to_eV;
-        }
-        table << this->atomLabels_ << mag_force_x << mag_force_y << mag_force_z;
-        ofs_running << table.str() << std::endl;
     }
 }
 

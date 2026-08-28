@@ -249,9 +249,6 @@ void Charge::init_rho(const UnitCell& ucell,
         GlobalC::restart.info_load.load_charge_finish = true;
     }
 
-#ifdef __MPI
-    this->init_chgmpi();
-#endif
     if (PARAM.inp.init_chg == "wfc")
     {
         if (wfcpw == nullptr)

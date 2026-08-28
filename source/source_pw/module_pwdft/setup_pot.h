@@ -7,7 +7,7 @@
 #include "source_estate/elecstate.h"
 #include "source_pw/module_pwdft/vl_pw.h"
 #include "source_hamilt/hamilt.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-06
+#include "source_pw/module_pwdft/dftu_base.h" // mohan add 2025-11-06
 
 class pseudopot_cell_vnl;
 
@@ -15,8 +15,8 @@ namespace pw
 {
 
 template <typename T, typename Device>
-void setup_pot(const int istep, 
-        UnitCell& ucell, // unitcell 
+void setup_pot(const int istep,
+        UnitCell& ucell, // unitcell
         const K_Vectors &kv, // kpoints
         Structure_Factor &sf, // structure factors
         elecstate::ElecState *pelec, // pointer of electrons
@@ -24,7 +24,7 @@ void setup_pot(const int istep,
         const Charge &chr, // charge density
         pseudopot_cell_vl &locpp, // local pseudopotentials
         pseudopot_cell_vnl &ppcell, // non-local pseudopotentials
-        Plus_U &dftu, // mohan add 2025-11-06
+        Plus_U_Base &dftu, // mohan add 2025-11-06
         VSep* vsep_cell, // U-1/2 method
         psi::Psi<T, Device>* kspw_psi, // electronic wave functions
         hamilt::HamiltBase* p_hamilt, // hamiltonian

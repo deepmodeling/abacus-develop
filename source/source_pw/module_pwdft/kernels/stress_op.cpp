@@ -255,7 +255,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                     const int* atom_nh,
                     const int* atom_na,
                     const FPTYPE* d_wg,
-                    const std::complex<FPTYPE>* vu,
+                    const std::complex<FPTYPE>* pot_onsite,
                     const int* orbital_corr,
                     const std::complex<FPTYPE>* becp,
                     const std::complex<FPTYPE>* dbecp,
@@ -294,7 +294,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                             {
                                 const int m2 = ip2 - ip_begin;
                                 const int inkb2 = ib2 * nkb + sum + ia * nproj + ip2;
-                                local_stress -= fac * (vu[m1 * tlp1 + m2] * (conj(dbecp[inkb1]) * becp[inkb2])).real();
+                                local_stress -= fac * (pot_onsite[m1 * tlp1 + m2] * (conj(dbecp[inkb1]) * becp[inkb2])).real();
                             }
                         } // end ip
                         break;
@@ -309,7 +309,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                                 std::complex<FPTYPE> ps[4];
                                 for(int i = 0; i < 4; i++)
                                 {
-                                    ps[i] = vu[(i * tlp1_2 + m1 * tlp1 + m2)];
+                                    ps[i] = pot_onsite[(i * tlp1_2 + m1 * tlp1 + m2)];
                                 }
                                 const int inkb2 = ib2 * nkb + sum + ia * nproj + ip2;
 
@@ -325,7 +325,7 @@ struct cal_stress_nl_op<FPTYPE, base_device::DEVICE_CPU>
                         break;
                     }
                 }// ib
-                vu += npol * npol * tlp1_2;// step for vu
+                pot_onsite += npol * npol * tlp1_2;// step for pot_onsite
             }// ia
             sum += atom_na[it] * nproj;
         } // end it

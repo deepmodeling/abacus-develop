@@ -7,7 +7,7 @@
 #include "source_pw/module_pwdft/radial_proj.h"
 #include "source_psi/psi.h"
 #include "source_pw/module_pwdft/onsite_proj_tools.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 
 #include <string>
 #include <vector>
@@ -90,12 +90,12 @@ namespace projectors
 
         /// high-level: compute DFT+U force contribution for one k-point
         void cal_force_onsite_dftu(int ik, int npm, T* force,
-                                   const Plus_U& dftu, int nks,
+                                   const Plus_U_Base& dftu, int nks,
                                    const double* wg_ik) const;
 
         /// high-level: compute DFT+U stress contribution for one k-point
         double cal_stress_onsite_dftu(int ik, int npm,
-                                      const Plus_U& dftu, int nks,
+                                      const Plus_U_Base& dftu, int nks,
                                       const double* wg_ik) const;
 
         /// high-level: compute DeltaSpin force contribution for one k-point

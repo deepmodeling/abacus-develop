@@ -6,7 +6,7 @@
 #include <tuple>
 #include "source_pw/module_pwdft/onsite_proj.h"
 #include "source_pw/module_pwdft/onsite_proj_print.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_pw/module_pwdft/dftu_base.h"
 #include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_cell/cell_tools.h"
 #include "source_io/module_parameter/parameter.h"
@@ -590,26 +590,26 @@ void projectors::OnsiteProjector<T, Device>::cal_occupations(
 
 template <typename T, typename Device>
 void projectors::OnsiteProjector<T, Device>::cal_force_onsite_dftu(int ik, int npm, T* force,
-                                                        const Plus_U& dftu, int nks,
+                                                        const Plus_U_Base& dftu, int nks,
                                                         const double* wg_ik) const
 {
     const int isk_val = this->isk_ ? this->isk_[ik] : 0;
-    const std::complex<double>* vu_ptr = dftu.get_eff_pot_pw_spin(isk_val);
-    const int vu_size = dftu.get_size_eff_pot_pw_spin();
+    const std::complex<double>* pot_onsite_ptr = dftu.get_pot_uterm_pw_spin(isk_val);
+    const int pot_onsite_size = dftu.get_size_pot_uterm_pw_spin();
     this->fs_tools->cal_force_dftu(ik, npm, force,
-        dftu.get_orbital_corr_data(), vu_ptr, vu_size, wg_ik);
+        dftu.get_orbital_corr_data(), pot_onsite_ptr, pot_onsite_size, wg_ik);
 }
 
 template <typename T, typename Device>
 double projectors::OnsiteProjector<T, Device>::cal_stress_onsite_dftu(int ik, int npm,
-                                                           const Plus_U& dftu, int nks,
+                                                           const Plus_U_Base& dftu, int nks,
                                                            const double* wg_ik) const
 {
     const int isk_val = this->isk_ ? this->isk_[ik] : 0;
-    const std::complex<double>* vu_ptr = dftu.get_eff_pot_pw_spin(isk_val);
-    const int vu_size = dftu.get_size_eff_pot_pw_spin();
+    const std::complex<double>* pot_onsite_ptr = dftu.get_pot_uterm_pw_spin(isk_val);
+    const int pot_onsite_size = dftu.get_size_pot_uterm_pw_spin();
     return this->fs_tools->cal_stress_dftu(ik, npm,
-        dftu.get_orbital_corr_data(), vu_ptr, vu_size, wg_ik);
+        dftu.get_orbital_corr_data(), pot_onsite_ptr, pot_onsite_size, wg_ik);
 }
 
 template <typename T, typename Device>

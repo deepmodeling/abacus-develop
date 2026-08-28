@@ -687,6 +687,10 @@ target_link_libraries(
     device
     base)
 
+if(ENABLE_ELPA)
+  target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
+endif()
+
 if(ENABLE_LCAO)
   target_link_libraries(
     ${ABACUS_BIN_NAME}
@@ -701,9 +705,6 @@ if(ENABLE_LCAO)
       rdmft)
   if(ENABLE_LIBRI)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE bse)
-  endif()
-  if(ENABLE_ELPA)
-    target_link_libraries(${ABACUS_BIN_NAME} PRIVATE genelpa)
   endif()
   if(ENABLE_PEXSI)
     target_link_libraries(${ABACUS_BIN_NAME} PRIVATE pexsi)

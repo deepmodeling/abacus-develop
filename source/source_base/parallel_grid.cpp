@@ -1,9 +1,11 @@
 #include "parallel_grid.h"
+
 #include "source_base/global_function.h"
 #include "source_base/global_variable.h"
 
 #ifdef __MPI
 #include "source_base/parallel_comm.h" // use POOL_WORLD
+
 #include <mpi.h>
 #endif
 
@@ -165,6 +167,95 @@ void Parallel_Grid::z_distribution()
 
     delete[] startp;
     return;
+}
+
+void Parallel_Grid::reduce_across_pools(double* data) const
+{
+#ifdef __MPI
+    if (GlobalV::KPAR <= 1)
+    {
+        return;
+    }
+
+    assert(data != nullptr);
+    if (KP_WORLD != MPI_COMM_NULL)
+    {
+        // Equal-sized pools give corresponding ranks identical z-slab layouts,
+        // so their local buffers can be summed directly without redistribution.
+        MPI_Allreduce(MPI_IN_PLACE, data, this->nrxx, MPI_DOUBLE, MPI_SUM, KP_WORLD);
+        return;
+    }
+
+    // Uneven pool sizes have no KP_WORLD and may assign different z-slabs to
+    // corresponding ranks. Validate the local distribution before rebuilding
+    // a common global layout for the cross-pool reduction.
+    assert(!this->numz.empty());
+    assert(GlobalV::MY_POOL >= 0 && GlobalV::MY_POOL < static_cast<int>(this->numz.size()));
+    assert(GlobalV::RANK_IN_POOL >= 0 && GlobalV::RANK_IN_POOL < static_cast<int>(this->numz[GlobalV::MY_POOL].size()));
+    assert(this->nczp == this->numz[GlobalV::MY_POOL][GlobalV::RANK_IN_POOL]);
+    assert(this->nrxx == this->ncxy * this->nczp);
+
+    const int pool_size = this->nproc_in_pool[GlobalV::MY_POOL];
+    std::vector<int> receive_counts(pool_size);
+    std::vector<int> displacements(pool_size);
+    for (int ip = 0; ip < pool_size; ++ip)
+    {
+        receive_counts[ip] = this->numz[GlobalV::MY_POOL][ip] * this->ncxy;
+        displacements[ip] = this->startz[GlobalV::MY_POOL][ip] * this->ncxy;
+    }
+
+    std::vector<double> local_data(this->nrxx);
+    // The allgather below replicates one complete pool grid on every rank in
+    // that pool. INT_BGROUP then sums all of those replicas, so divide each
+    // local slab by the pool size to make each pool contribute exactly once.
+    const double pool_normalization = 1.0 / static_cast<double>(pool_size);
+    for (int ir = 0; ir < this->nrxx; ++ir)
+    {
+        local_data[ir] = data[ir] * pool_normalization;
+    }
+
+    std::vector<double> pool_data(this->ncxyz);
+    // Collect the rank-local [xy][local_z] slabs into rank-contiguous blocks.
+    MPI_Allgatherv(local_data.data(),
+                   this->nrxx,
+                   MPI_DOUBLE,
+                   pool_data.data(),
+                   receive_counts.data(),
+                   displacements.data(),
+                   MPI_DOUBLE,
+                   POOL_WORLD);
+
+    std::vector<double> global_layout(this->ncxyz);
+    // Convert the rank-contiguous allgather result to the canonical
+    // [xy][global_z] order required for element-wise reduction across pools.
+    for (int ip = 0; ip < pool_size; ++ip)
+    {
+        const int local_nz = this->numz[GlobalV::MY_POOL][ip];
+        const int global_z_start = this->startz[GlobalV::MY_POOL][ip];
+        const int gathered_start = global_z_start * this->ncxy;
+        for (int ixy = 0; ixy < this->ncxy; ++ixy)
+        {
+            for (int iz = 0; iz < local_nz; ++iz)
+            {
+                global_layout[ixy * this->ncz + global_z_start + iz] = pool_data[gathered_start + ixy * local_nz + iz];
+            }
+        }
+    }
+
+    MPI_Allreduce(MPI_IN_PLACE, global_layout.data(), this->ncxyz, MPI_DOUBLE, MPI_SUM, INT_BGROUP);
+
+    // Return only the z-slab owned by this rank under its pool's distribution.
+    const int local_z_start = this->startz[GlobalV::MY_POOL][GlobalV::RANK_IN_POOL];
+    for (int ixy = 0; ixy < this->ncxy; ++ixy)
+    {
+        for (int iz = 0; iz < this->nczp; ++iz)
+        {
+            data[ixy * this->nczp + iz] = global_layout[ixy * this->ncz + local_z_start + iz];
+        }
+    }
+#else
+    (void)data;
+#endif
 }
 
 #ifdef __MPI
@@ -331,60 +422,81 @@ void Parallel_Grid::zpiece_to_stogroup(double* zpiece, const int& iz, double* rh
     // ofs_running << "\n iz = " << iz << " Done.";
     return;
 }
+
+// Taoni modified on 2026-08-21, fixed BPCG out_chg MPI_ERR_RANK
 void Parallel_Grid::reduce(double* rhotot, const double* const rhoin, const bool reduce_all_pool) const
 {
-    // ModuleBase::TITLE("Parallel_Grid","reduce");
-
-    // if not the first pool, wait here until processpr 0
-    // send the Barrier command.
+    // POOL_WORLD communicators are disjoint, so inactive pools may return
+    // without skipping a collective required by an active pool.
     if (!reduce_all_pool && GlobalV::MY_POOL != 0)
     {
         return;
     }
 
-    double* zpiece = new double[this->ncxy];
+    assert(rhoin != nullptr);
+    assert(this->nrxx == this->ncxy * this->nczp);
 
-    for (int iz = 0; iz < this->ncz; iz++)
+    int pool_size = 0;
+    MPI_Comm_size(POOL_WORLD, &pool_size);
+
+    // Derive slab ownership from the communicator used below. Precomputed
+    // source ranks may belong to a larger BPCG layout and are not necessarily
+    // valid ranks in the current POOL_WORLD.
+    std::vector<int> local_z_counts(pool_size);
+    MPI_Allgather(&this->nczp, 1, MPI_INT, local_z_counts.data(), 1, MPI_INT, POOL_WORLD);
+
+    // MPI_Gatherv concatenates complete [xy][local_z] buffers by rank.
+    // These displacements therefore address rank blocks, not global z coordinates.
+    std::vector<int> receive_counts(pool_size);
+    std::vector<int> displacements(pool_size, 0);
+    int total_z = 0;
+    for (int rank = 0; rank < pool_size; ++rank)
     {
-        const int znow = iz - this->startz[GlobalV::MY_POOL][GlobalV::RANK_IN_POOL];
-        const int proc = this->whichpro[GlobalV::MY_POOL][iz];
-        const int proc_loc = this->whichpro_loc[GlobalV::MY_POOL][iz]; // Obtain the local processor index in the pool
-        ModuleBase::GlobalFunc::ZEROS(zpiece, this->ncxy);
-        int tag = iz;
-        MPI_Status ierror;
-
-        // Local processor 0 collects data from all other processors in the pool
-        // proc = proc_loc if GlobalV::MY_POOL == 0
-        if (proc_loc == GlobalV::RANK_IN_POOL)
+        receive_counts[rank] = local_z_counts[rank] * this->ncxy;
+        if (rank > 0)
         {
-            for (int ir = 0; ir < ncxy; ir++)
-            {
-                zpiece[ir] = rhoin[ir * this->nczp + znow];
-            }
-            // Send data to the root of the pool
-            if (GlobalV::RANK_IN_POOL != 0)
-            {
-                MPI_Send(zpiece, ncxy, MPI_DOUBLE, 0, tag, POOL_WORLD);
-            }
+            displacements[rank] = displacements[rank - 1] + receive_counts[rank - 1];
         }
+        total_z += local_z_counts[rank];
+    }
+    assert(total_z == this->ncz);
 
-        // The root of the pool receives data from other processors
-        if (GlobalV::RANK_IN_POOL == 0 && proc_loc != GlobalV::RANK_IN_POOL)
-        {
-            MPI_Recv(zpiece, ncxy, MPI_DOUBLE, proc_loc, tag, POOL_WORLD, &ierror);
-        }
+    // Only the pool root needs storage for the gathered global grid.
+    // MPI ignores the receive buffer on all non-root ranks.
+    std::vector<double> gathered_data;
+    if (GlobalV::RANK_IN_POOL == 0)
+    {
+        assert(rhotot != nullptr);
+        gathered_data.resize(this->ncxyz);
+    }
+    MPI_Gatherv(rhoin,
+                this->nrxx,
+                MPI_DOUBLE,
+                gathered_data.data(),
+                receive_counts.data(),
+                displacements.data(),
+                MPI_DOUBLE,
+                0,
+                POOL_WORLD);
 
-        if (GlobalV::RANK_IN_POOL == 0)
+    if (GlobalV::RANK_IN_POOL == 0)
+    {
+        // Rank blocks cannot be copied directly to rhotot: each block stores
+        // [xy][local_z], whereas Cube output expects [xy][global_z].
+        // The slab decomposition is contiguous and ordered by POOL_WORLD rank.
+        int global_z_start = 0;
+        for (int rank = 0; rank < pool_size; ++rank)
         {
+            const int local_z = local_z_counts[rank];
             for (int ixy = 0; ixy < this->ncxy; ++ixy)
             {
-                rhotot[ixy * ncz + iz] = zpiece[ixy];
+                for (int iz = 0; iz < local_z; ++iz)
+                {
+                    rhotot[ixy * this->ncz + global_z_start + iz] = gathered_data[displacements[rank] + ixy * local_z + iz];
+                }
             }
+            global_z_start += local_z;
         }
     }
-
-    delete[] zpiece;
-
-    return;
 }
 #endif

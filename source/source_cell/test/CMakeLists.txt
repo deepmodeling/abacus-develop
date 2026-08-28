@@ -51,6 +51,10 @@ list(APPEND cell_simple_srcs
 
 add_library(cell_info OBJECT ${cell_simple_srcs})
 
+if(NOT ENABLE_MPI)
+  return()
+endif()
+
 AddTest(
   TARGET MODULE_CELL_read_pp
   LIBS base device

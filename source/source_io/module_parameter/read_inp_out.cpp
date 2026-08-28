@@ -19,7 +19,6 @@ void ReadInput::item_output()
                           "\n\n[NOTE] In RT-TDDFT calculations, this parameter is inactive; output frequency is instead controlled by out_freq_td.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.out_freq_ion <= 0)
             {
@@ -38,7 +37,6 @@ void ReadInput::item_output()
                           "\n\n[NOTE] This parameter is only active in RT-TDDFT mode (esolver_type = tddft). It has no effect in ground-state calculations.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.out_freq_td <= 0)
             {
@@ -56,7 +54,6 @@ void ReadInput::item_output()
         item.description = "Output the charge density (only binary format, controlled by out_chg), wavefunction (controlled by out_wfc_pw) per out_freq_elec electronic iterations. Note that they are always output when converged or reach the maximum iterations scf_nmax.";
         item.default_value = "scf_nmax";
         item.unit = "";
-        item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.out_freq_elec <= 0)
             {
@@ -102,7 +99,6 @@ In molecular dynamics simulations, the output frequency is controlled by out_fre
 [NOTE] In the 3.10-LTS version, the file names are SPIN1_CHG.cube and SPIN1_CHG_INI.cube, etc.)";
         item.default_value = "0 3";
         item.unit = "";
-        item.availability = "";
 			item.read_value = [](const Input_Item& item, Parameter& para) {
 				const size_t count = item.get_size();
 				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_chg needs at least 1 value");
@@ -151,7 +147,6 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
 [NOTE] In the 3.10-LTS version, the file names are SPIN1_POT.cube and SPIN1_POT_INI.cube, etc.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
                     const size_t count = item.get_size();
                     if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_pot needs at least 1 value");
@@ -191,7 +186,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
     * In 3.10-LTS, the corresponding keyword is out_dm, and the output files are SPIN1_DM and SPIN2_DM, etc.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
 			item.read_value = [](const Input_Item& item, Parameter& para) {
 				const size_t count = item.get_size();
 				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmk needs at least 1 value");
@@ -222,7 +217,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
 [NOTE] In the 3.10-LTS version, the parameter is named out_dm1, and the file names are data-DMR-sparse_SPIN0.csr and data-DMR-sparse_SPIN1.csr, etc.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Numerical atomic orbital basis (multi-k points)";
+        item.set_availability("basis_type==lcao and gamma_only==0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
 		    const size_t count = item.get_size();
 		    if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_dmr needs at least 1 value");
@@ -253,22 +248,34 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output wave functions";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = R"(Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}. Here, the s index refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and s4 refers to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. For scf or nscf calculations, g index will not appear, but the g index appears for geometry relaxation and molecular dynamics, where one can use the out_freq_ion command to control. To print out the electroinc wave functions every few SCF iterations, use the out_freq_elec command and the e index will appear in the file name.
-* 0: no output
-* 1: (txt format)
- * non-gamma-only with nspin=1: wfk1_pw.txt, wfk2_pw.txt, ...;
- * non-gamma-only with nspin=2: wfk1s1_pw.txt, wfk1s2_pw.txt, wfk2s1_pw.txt, wfk2s2_pw.txt, ...;
- * non-gamma-only with nspin=4: wfk1s4_pw.txt, wfk2s4_pw.txt, ...;
-* 2: (binary format)
- * non-gamma-only with nspin=1: wfk1_pw.dat, wfk2_pw.dat, ...;
- * non-gamma-only with nspin=2: wfk1s1_pw.dat, wfk1s2_pw.dat, wfk2s1_pw.dat, wfk2s2_pw.dat, ...;
- * non-gamma-only with nspin=4: wfk1s4_pw.dat, wfk2s4_pw.dat, ...;
+        item.description = R"(Controls whether plane-wave Kohn-Sham wavefunction coefficients are written to `OUT.${suffix}/`.
 
-[NOTE] In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc.)";
+Available values are:
+* `0`: Do not write wavefunction coefficients.
+* `1`: Write text files with the `.txt` suffix.
+* `2`: Write binary files with the `.dat` suffix.
+
+The file-name pattern is `wfk{k}[s{spin}][g{geometry step}][e{electronic iteration}]_pw.txt` for `out_wfc_pw=1` and `wfk{k}[s{spin}][g{geometry step}][e{electronic iteration}]_pw.dat` for `out_wfc_pw=2`. All PW output files include a `k*` label, including Gamma-only calculations. Without geometry-step or electronic-iteration indices, representative names are `wfk1_pw.txt` or `wfk1_pw.dat` for `nspin=1`, `wfk1s1_pw.txt` and `wfk1s2_pw.txt` or their `.dat` equivalents for `nspin=2`, and `wfk1s4_pw.txt` or `wfk1s4_pw.dat` for `nspin=4`.
+
+With `out_freq_ion=0`, files are written only when the electronic calculation converges or reaches `scf_nmax`; no `g*` or `e*` index is added. During structural relaxation or molecular dynamics, later ionic steps overwrite the same unindexed files. With `out_freq_ion` > 0, output is restricted to the ionic steps selected by `out_freq_ion` and is written when the electronic iteration is a multiple of `out_freq_elec`, when the calculation converges, or when it reaches `scf_nmax`. Both `g*` and `e*` indices are then added, including for a static `calculation=scf` or `calculation=nscf` run.
+
+For `init_wfc=file`, ABACUS automatically reads only unindexed binary `wf*_pw.dat` files from `read_file_dir`. Such directly reusable files are normally generated with `out_wfc_pw=2` and `out_freq_ion=0`. Text `wf*_pw.txt` files and files containing `g*` or `e*` indices are not matched automatically.
+
+[NOTE] In the 3.10-LTS version, the binary files are named `WAVEFUNC1.dat`, `WAVEFUNC2.dat`, etc.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "Output electronic wave functions in plane wave basis, or transform the real-space electronic wave function into plane wave basis (see get_wf option in calculation with NAO basis)";
+        item.set_availability("basis_type==pw and esolver_type==ksdft");
         read_sync_int(input.out_wfc_pw);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_wfc_pw < 0 || para.input.out_wfc_pw > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_pw should be 0, 1, or 2");
+            }
+            if (para.input.basis_type != "pw" && para.input.out_wfc_pw != 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_pw is only available for basis_type = pw");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -292,7 +299,7 @@ Also controled by out_freq_ion and out_app_flag.
 [NOTE] In the 3.10-LTS version, the file names are WFC_NAO_GAMMA1_ION1.txt and WFC_NAO_K1_ION1.txt, etc.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         read_sync_int(input.out_wfc_lcao);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.qo_switch)
@@ -326,7 +333,6 @@ Also controled by out_freq_ion and out_app_flag.
 * 3: output the Fermi surface file (fermi.bxsf) in BXSF format that can be visualized by XCrySDen)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.out_dos);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
@@ -362,7 +368,6 @@ Also controled by out_freq_ion and out_app_flag.
 * 3: output both two LDOS modes above.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count != 1 && count != 2)
@@ -392,7 +397,6 @@ Also controled by out_freq_ion and out_app_flag.
  * For more information, refer to the band.md)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count != 1 && count != 2)
@@ -419,7 +423,6 @@ Also controled by out_freq_ion and out_app_flag.
         item.description = "Whether to output the projected band structure. For more information, refer to the band.md";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_proj_band);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_wf" || para.input.calculation == "get_pchg")
@@ -447,7 +450,6 @@ Also controled by out_freq_ion and out_app_flag.
                           "[NOTE] For backward compatibility, true/false (case insensitive) are accepted and converted to 1/0.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const std::string val = FmtCore::lower(item.str_values[0]);
             if (val == "true" || val == "t" || val == "yes" || val == "y" || val == "on" || val == ".true.")
@@ -511,7 +513,6 @@ Also controled by out_freq_ion and out_app_flag.
 * m: molecular dynamics level, which does not print some information for simplicity.)";
         item.default_value = "ie";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_level = strvalue;
             para.sys.out_md_control = true;
@@ -551,7 +552,7 @@ When out_app_flag is false, g followed by the one-based ionic-step index is inse
 [NOTE] In the 3.10-LTS version, the file names are data-0-H and data-0-S, etc.)";
         item.default_value = "0 8";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1 || count > 2)
@@ -594,7 +595,7 @@ When out_app_flag is false, g followed by the one-based ionic-step index is inse
         item.description = "Legacy alias for out_hsk 1, which outputs Hamiltonian and overlap matrices in reciprocal space for each k-point. The optional second integer controls text precision. If both out_hsk and out_mat_hs are present, out_hsk takes precedence.";
         item.default_value = "False 8";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs needs at least 1 value");
@@ -624,7 +625,7 @@ For binary output, each file uses the same basename as text output with a .dat s
 [NOTE] In the 3.10-LTS version, the file names are data-HR-sparse_SPIN0.csr and data-SR-sparse_SPIN0.csr, etc.)";
         item.default_value = "0 8";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1 || count > 2)
@@ -672,7 +673,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.description = "Legacy alias for out_hsr 1, which outputs Hamiltonian and overlap matrices in real space indexed by the Bravais lattice vector R. The optional second integer controls text precision. If both out_hsr and out_mat_hs2 are present, out_hsr takes precedence.";
         item.default_value = "False 8";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_hs2 needs at least 1 value");
@@ -693,7 +694,7 @@ For binary output, each file uses the same basename as text output with a .dat s
                           "\n\n[NOTE] In the 3.10-LTS version, the file names are data-TR-sparse_SPIN0.csr, etc.";
         item.default_value = "False [8]";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
 			item.read_value = [](const Input_Item& item, Parameter& para) {
 				const size_t count = item.get_size();
 				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_tk needs at least 1 value");
@@ -715,7 +716,7 @@ For binary output, each file uses the same basename as text output with a .dat s
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-rR-sparse.csr.";
         item.default_value = "False 8";
         item.unit = "Bohr";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        item.set_availability("basis_type==lcao and gamma_only==0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_r needs at least 1 value");
@@ -754,7 +755,7 @@ For binary output, each file uses the same basename as text output with a .dat s
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-TR-sparse_SPIN0.csr.";
         item.default_value = "False 8";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        item.set_availability("basis_type==lcao and gamma_only==0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_t needs at least 1 value");
@@ -783,7 +784,7 @@ For binary output, each file uses the same basename as text output with a .dat s
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dHRx-sparse_SPIN0.csr and so on.";
         item.default_value = "0 8";
         item.unit = "Ry/Bohr";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        item.set_availability("basis_type==lcao and gamma_only==0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_dh needs at least 1 value");
@@ -1182,7 +1183,7 @@ For binary output, each file uses the same basename as text output with a .dat s
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is data-dSRx-sparse_SPIN0.csr and so on.";
         item.default_value = "False 8";
         item.unit = "Ry/Bohr";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        item.set_availability("basis_type==lcao and gamma_only==0");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_ds needs at least 1 value");
@@ -1216,7 +1217,7 @@ For binary output, each file uses the same basename as text output with a .dat s
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is k-$k-Vxc and so on.";
         item.default_value = "False";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital (NAO) and NAO-in-PW basis";
+        item.set_availability("basis_type in [lcao, lcao_in_pw]");
         read_sync_bool(input.out_mat_xc);
         this->add_item(item);
     }
@@ -1229,7 +1230,7 @@ For binary output, each file uses the same basename as text output with a .dat s
                           "\n\n[NOTE] In the 3.10-LTS version, the file name is Vxc_R_spin$s and so on.";
         item.default_value = "False 8";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital (NAO) basis";
+        item.set_availability("basis_type==lcao");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_xc2 needs at least 1 value");
@@ -1256,7 +1257,7 @@ For binary output, each file uses the same basename as text output with a .dat s
         item.description = "Whether to print the expectation value of the angular momentum operator , , and in the basis of the localized atomic orbitals. The files are named OUT.{suffix}_Lx.dat, OUT.{suffix}_Ly.dat, and OUT.{suffix}_Lz.dat. The second integer controls the precision of the output.";
         item.default_value = "False 8";
         item.unit = "";
-        item.availability = "Numerical atomic orbital (NAO) basis";
+        item.set_availability("basis_type==lcao");
 			item.read_value = [](const Input_Item& item, Parameter& para) {
 				const size_t count = item.get_size();
 				if (count < 1) ModuleBase::WARNING_QUIT("ReadInput", "out_mat_l needs at least 1 value");
@@ -1286,7 +1287,6 @@ The second integer controls the precision of the charge density output, if not g
 The circle order of the charge density on real space grids is: x is the outer loop, then y and finally z (z is moving fastest).)";
         item.default_value = "-1 3";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count >= 1)
@@ -1318,7 +1318,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Whether to print the band energy terms separately in the file OUT.{term}_out.dat. The terms include the kinetic, pseudopotential (local + nonlocal), Hartree and exchange-correlation (including exact exchange if calculated).";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.out_eband_terms);
         this->add_item(item);
     }
@@ -1330,7 +1330,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Whether to print Hamiltonian matrices H(R) in NPZ format as hrs1_nao.npz and, for nspin = 2, hrs2_nao.npz. This feature does not work for gamma-only calculations.";
         item.default_value = "False";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        item.set_availability("basis_type==lcao and gamma_only==0");
         read_sync_bool(input.out_hr_npz);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_hr_npz)
@@ -1352,7 +1352,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Legacy alias for out_hsr 3, writing hrs1_nao.npz, hrs2_nao.npz when needed, and sr_nao.npz. If both out_hsr and out_hsr_npz are present, out_hsr takes precedence. Gamma-only calculations write the folded R = (0, 0, 0) representation.";
         item.default_value = "False";
         item.unit = "Ry";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.out_hsr_npz = assume_as_boolean(item.str_values[0]);
         };
@@ -1376,7 +1376,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Whether to print density matrices DM(R) in npz format. This feature does not work for gamma-only calculations.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        item.set_availability("basis_type==lcao and gamma_only==0");
         read_sync_bool(input.out_dm_npz);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.out_dm_npz)
@@ -1398,7 +1398,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Whether to print the Mulliken population analysis result into OUT.${suffix}/mulliken.txt. In molecular dynamics calculations, the output frequency is controlled by out_freq_ion.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.out_mul);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.basis_type == "pw" && para.input.out_mul)
@@ -1417,7 +1417,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Whether to output r(R), H(R), S(R), T(R), dH(R), dS(R), and wfc matrices in an append manner during molecular dynamics calculations. Check input parameters out_mat_r, out_hsr, out_mat_t, out_mat_dh, out_hsk and out_wfc_lcao for more information.";
         item.default_value = "true";
         item.unit = "";
-        item.availability = "Numerical atomic orbital basis (not gamma-only algorithm)";
+        item.set_availability("basis_type==lcao and gamma_only==0");
         read_sync_bool(input.out_app_flag);
         this->add_item(item);
     }
@@ -1429,7 +1429,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Controls the length of decimal part of output data, such as charge density, Hamiltonian matrix, Overlap matrix and so on.";
         item.default_value = "8";
         item.unit = "";
-        item.availability = "out_hsk 1 case presently.";
+        item.set_availability("basis_type==lcao and out_hsk==1");
         read_sync_int(input.out_ndigits);
         this->add_item(item);
     }
@@ -1441,7 +1441,6 @@ The circle order of the charge density on real space grids is: x is the outer lo
         item.description = "Whether to print element information into files in the directory OUT.{element_label}, including pseudopotential and orbital information of the element (in atomic Ryberg units).";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_element_info);
         this->add_item(item);
     }
@@ -1456,7 +1455,7 @@ The circle order of the charge density on real space grids is: x is the outer lo
 If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or rpa==True), the Hexx(R) files for each processor will also be saved in the above folder, which can be read in EXX calculation with restart_load==True.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.restart_save);
         this->add_item(item);
     }
@@ -1472,7 +1471,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
                           "irreducible_sector.txt, symrot_k.txt and symrot_R.txt.";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.rpa);
         this->add_item(item);
     }
@@ -1484,7 +1483,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.description = " Velocity matrix in KS basis (in unit of eV *Angstrom). Loop layer: spin -> k -> direction -> KS_basis1 -> KS_basis2.";
         item.default_value = "False";
         item.unit = "eV * A";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.rpa_out_vel);
         this->add_item(item);
     }
@@ -1496,7 +1495,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.description = "The directory to save files for LibRPA.";
         item.default_value = "\"./OUT.librpa/\"";
         item.unit = "";
-        item.availability = "Numerical atomic orbital basis";
+        item.set_availability("basis_type==lcao");
         read_sync_string(input.rpa_outdir);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             para.input.rpa_outdir = to_dir(para.input.rpa_outdir);
@@ -1508,10 +1507,12 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "specify the bands to be calculated for the partial (band-decomposed) charge densities";
         item.category = "Output information";
         item.type = "String";
-        item.description = R"(Specifies the electronic states to calculate the charge densities with state index for, using a space-separated string of 0s and 1s. Each digit in the string corresponds to a state, starting from the first state. A 1 indicates that the charge density should be calculated for that state, while a 0 means the state will be ignored. The parameter allows a compact and flexible notation (similar to ocp_set), for example the syntax 1 4*0 5*1 0 is used to denote the selection of states: 1 means calculate for the first state, 4*0 skips the next four states, 5*1 means calculate for the following five states, and the final 0 skips the next state. It's essential that the total count of states does not exceed the total number of states (nbands); otherwise, it results in an error, and the process exits. The input string must contain only numbers and the asterisk (*) for repetition, ensuring correct format and intention of state selection. The outputs comprise multiple .cube files following the naming convention pchgi[state]s[spin]k[kpoint].cube.)";
+        item.description = R"(Selects electronic states for partial (band-decomposed) charge-density output using a space-separated string of `0`s and `1`s, where `1` selects a state and `0` skips it. Repetition follows the `ocp_set` syntax, for example `1 4*0 5*1 0`; the expanded list must not exceed `nbands`. Each output represents a complete one-particle state rather than its SCF occupation. The spin degeneracy is 2 for `nspin=1` and 1 for `nspin=2` or `nspin=4`. For `nspin=1`, `s1` contains the charge density. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down charge densities, respectively. For `nspin=4`, `s1`, `s2`, `s3`, and `s4` respectively contain $\rho_0$, $m_x$, $m_y$, and $m_z$. With `if_separate_k=true`, files are named `pchgi[state]s[component]k[kpoint].cube`; otherwise, the weighted k-point sum is named `pchgi[state]s[component].cube`.
+
+[NOTE] Enabling symmetry may produce unintended partial charge densities because of reduced k-point weights and real-space symmetry operations. If the desired symmetry treatment is uncertain, set `symmetry = -1`. Use the same symmetry setting as in the SCF calculation.)";
         item.default_value = "none";
         item.unit = "";
-        item.availability = "For both PW and LCAO. When basis_type = lcao, used when calculation = get_pchg.";
+        item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_pchg)");
         item.read_value
             = [](const Input_Item& item, Parameter& para) { parse_expression(item.str_values, para.input.out_pchg); };
         item.get_final_value = [](Input_Item& item, const Parameter& para) {
@@ -1528,10 +1529,10 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "specify the bands to be calculated for the norm of wavefunctions";
         item.category = "Output information";
         item.type = "String";
-        item.description = "Specifies the electronic states to calculate the real-space wave function modulus (norm, or known as the envelope function) with state index. The syntax and state selection rules are identical to out_pchg, but the output is the norm of the wave function. The outputs comprise multiple .cube files following the naming convention wfi[state]s[spin]k[kpoint].cube.";
+        item.description = R"(Selects electronic states for real-space wavefunction-modulus output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.)";
         item.default_value = "none";
         item.unit = "";
-        item.availability = "For both PW and LCAO. When basis_type = lcao, used when calculation = get_wf.";
+        item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.out_wfc_norm);
         };
@@ -1549,10 +1550,10 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "specify the bands to be calculated for the real and imaginary parts of wavefunctions";
         item.category = "Output information";
         item.type = "String";
-        item.description = "Specifies the electronic states to calculate the real and imaginary parts of the wave function with state index. The syntax and state selection rules are identical to out_pchg, but the output contains both the real and imaginary components of the wave function. The outputs comprise multiple .cube files following the naming convention wfi[state]s[spin]k[kpoint][re/im].cube.";
+        item.description = R"(Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.)";
         item.default_value = "none";
         item.unit = "";
-        item.availability = "For both PW and LCAO. When basis_type = lcao, used when calculation = get_wf.";
+        item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             parse_expression(item.str_values, para.input.out_wfc_re_im);
         };
@@ -1571,10 +1572,11 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
                           "or merge them";
         item.category = "Output information";
         item.type = "Boolean";
-        item.description = "Specifies whether to write the partial charge densities for all k-points to individual files or merge them. Warning: Enabling symmetry may produce unwanted results due to reduced k-point weights and symmetry operations in real space. Therefore when calculating partial charge densities, if you are not sure what you want exactly, it is strongly recommended to set symmetry = -1. It is noteworthy that your symmetry setting should remain the same as that in the SCF procedure.";
+        item.description
+            = "Specifies whether to write partial charge densities for individual k-points or merge them.";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "For both PW and LCAO. When basis_type = pw, used if out_pchg is set. When basis_type = lcao, used only when calculation = get_pchg and gamma_only = 0.";
+        item.set_availability("(basis_type==pw and out_pchg!=none) or (basis_type==lcao and calculation==get_pchg and gamma_only==0)");
         read_sync_bool(input.if_separate_k);
         this->add_item(item);
     }
@@ -1600,7 +1602,7 @@ The second integer controls the precision of the kinetic energy density output, 
 In molecular dynamics calculations, the output frequency is controlled by out_freq_ion.)";
         item.default_value = "0 3";
         item.unit = "";
-        item.availability = "Only for Kohn-Sham DFT and Orbital Free DFT.";
+        item.set_availability("esolver_type in [ksdft, ofdft]");
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count >= 1)
@@ -1630,7 +1632,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.description = "This output is only intentively needed by the ABACUS numerical atomic orbital generation workflow. This parameter is used to control whether to output the overlap integrals between truncated spherical Bessel functions (TSBFs) and plane-wave basis expanded wavefunctions (named as OVERLAP_Q), and between TSBFs (named as OVERLAP_Sq), also their first order derivatives. The output files are named starting with orb_matrix. A value of 2 would enable the output.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "Only for Kohn-Sham DFT with plane-wave basis.";
+        item.set_availability("esolver_type==ksdft and basis_type==pw");
         read_sync_int(input.out_spillage);
         this->add_item(item);
     }
@@ -1644,7 +1646,6 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
 * False: Do not output the electric dipole information.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.out_dipole);
         this->add_item(item);
     }
@@ -1659,7 +1660,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
 * 2: Use the full Hamiltonian to construct the generalized velocity matrix in a nonorthogonal NAO basis, $\widetilde{v}_{\alpha}=\partial_{\alpha}H+\mathrm{i}HS^{-1}\mathcal{R}_{\alpha}-\mathrm{i}\mathcal{R}_{\alpha}S^{-1}H-HS^{-1}\partial_{\alpha}S$. This includes all contributions available in the real-space Hamiltonian matrix when enabled. This method is more general but more expensive. The total current is written to OUT.{suffix}/current_tot_comm.txt.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "basis_type==lcao and esolver_type==tddft";
+        item.set_availability("basis_type==lcao and esolver_type==tddft");
         read_sync_int(input.out_current);
         this->add_item(item);
     }
@@ -1673,7 +1674,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
 * False: Output only current_tot.txt for out_current=1 or current_tot_comm.txt for out_current=2.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "basis_type==lcao and esolver_type==tddft and out_current>0";
+        item.set_availability("basis_type==lcao and esolver_type==tddft and out_current>0");
         read_sync_bool(input.out_current_k);
         this->add_item(item);
     }
@@ -1687,7 +1688,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
 * False: Do not output electric-field values.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "esolver_type==tddft and td_vext==true";
+        item.set_availability("esolver_type==tddft and td_vext==true");
         read_sync_bool(input.out_efield);
         this->add_item(item);
     }
@@ -1701,7 +1702,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
 * False: Do not output the vector potential.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "basis_type==lcao and esolver_type==tddft";
+        item.set_availability("basis_type==lcao and esolver_type==tddft");
         read_sync_bool(input.out_vecpot);
         this->add_item(item);
     }
@@ -1717,7 +1718,6 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.description = "Whether to print the matrix representation of symmetry operation to running log file. If the first value is given as 1, then all matrix representations will be printed. The second optional parameter controls the precision (number of digits) to print, default is 3, which is enough for a quick check.";
         item.default_value = "1 3";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             const size_t count = item.get_size();
             if (count >= 1)
@@ -1747,7 +1747,7 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.description = "The directory to save the spillage files.";
         item.default_value = "\"./\"";
         item.unit = "";
-        item.availability = "Used only for plane wave basis set.";
+        item.set_availability("basis_type==pw");
         read_sync_string(input.spillage_outdir);
         this->add_item(item);
     }

@@ -1,17 +1,9 @@
 #ifdef __LCAO
-#include "source_io/module_parameter/parameter.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
-#include "dftu.h"
+#include "dftu_lcao.h"
 
 #include <cmath>
-#include <complex>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <cstdio>
-#include <cstring>
 
 
 void Plus_U::cal_yukawa_lambda(double** rho, const int& nrxx)
@@ -26,9 +18,9 @@ void Plus_U::cal_yukawa_lambda(double** rho, const int& nrxx)
 
     double sum_rho = 0.0;
     double sum_rho_lambda = 0.0;
-    for (int is = 0; is < Plus_U::nspin; is++)
+    for (int is = 0; is < this->nspin; is++)
     {
-        if(Plus_U::nspin == 4 && is > 0) 
+        if(this->nspin == 4 && is > 0) 
 		{ 
 			continue;// for non-collinear spin case, first spin contains the charge density
 		}
@@ -64,7 +56,7 @@ void Plus_U::cal_slater_Fk(const UnitCell& ucell,
 {
     ModuleBase::TITLE("Plus_U", "cal_slater_Fk");
 
-    if (Yukawa)
+    if (use_yukawa_)
     {
         for (int chi = 0; chi < ucell.atoms[T].l_nchi[L]; chi++)
         {
@@ -111,7 +103,7 @@ void Plus_U::cal_slater_Fk(const UnitCell& ucell,
 void Plus_U::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
 {
     ModuleBase::TITLE("Plus_U", "cal_slater_UJ");
-    if (!Yukawa) 
+    if (!use_yukawa_)
 	{
 		return;
 	}
@@ -140,9 +132,9 @@ void Plus_U::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
         {
             const int N = ucell.atoms[T].l_nchi[L];
 
-            if (L >= Plus_U::get_orbital_corr(T) && Plus_U::get_orbital_corr(T) != -1)
+            if (L >= this->get_orbital_corr(T) && this->get_orbital_corr(T) != -1)
             {
-                if (L != Plus_U::get_orbital_corr(T)) 
+                if (L != this->get_orbital_corr(T))
 				{
 					continue;
 				}
@@ -171,7 +163,7 @@ void Plus_U::cal_slater_UJ(const UnitCell& ucell, double** rho, const int& nrxx)
                 this->U_Yukawa[T][L][0] *= 2.0;
                 this->J_Yukawa[T][L][0] *= 2.0;
                 // update current U with calculated U-J from Slater integrals
-                this->U[T] = this->U_Yukawa[T][L][0] - this->J_Yukawa[T][L][0];
+                this->u_current[T] = this->U_Yukawa[T][L][0] - this->J_Yukawa[T][L][0];
             } // end if
         } // end L
     } // end T

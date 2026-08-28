@@ -184,9 +184,9 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
             exx_spacegroup_symmetry);
     
     // reserve exx_ccp_rmesh_times to calculate full Coulomb
-    // Note: ccp_type=Hf and hybrid_alpha=1 were previously set on GlobalC::exx_info.info_global
+    // Note: ccp_type=Hf and hybrid_alpha=1 were previously set on the global Exx_Info
     // and sync_from_global() was called, but this->info (value copy) already has the correct
-    // coulomb_param from construction time, so the global writes are redundant and removed.
+    // coulomb_param from construction time, so those writes are redundant and removed.
     this->ccp_rmesh_times_ewald = this->info.ccp_rmesh_times;
     // Using rpa_ccp_rmesh_times to calculate cut Coulomb this->Vs_period
     Exx_Info_RI local_info = this->info;
@@ -1517,7 +1517,7 @@ void RPA_LRI<T, Tdata>::out_velocity(const UnitCell &ucell,
 // 			list_As_Vs.first, list_As_Vs.second[0],
 // 			{{"writable_Vws",true}});
 
-// 	// Vs[iat0][{iat1,cell1}]	按 (iat0,iat1) 分进程，每个进程有所有 cell1
+// 	// Vs[iat0][{iat1,cell1}]	distributed across processes by (iat0,iat1); each process holds all cell1
 // 	Vqs = FFT(Vs);
 // 	out_Vs(Vqs);
 

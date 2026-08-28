@@ -34,6 +34,8 @@ void ESolver_DP::before_all_runners(BaseCell& basecell, const Input_para& inp)
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
+    this->inp_ = &inp;
+
     dp_potential = 0;
     dp_force.create(ucell.nat, 3);
     dp_virial.create(3, 3);
@@ -163,7 +165,7 @@ void ESolver_DP::cal_stress(BaseCell& basecell, ModuleBase::matrix& stress)
 
     // external stress
     double unit_transform = ModuleBase::RYDBERG_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
-    double external_stress[3] = {PARAM.inp.press1, PARAM.inp.press2, PARAM.inp.press3};
+    double external_stress[3] = {this->inp_->press1, this->inp_->press2, this->inp_->press3};
     for (int i = 0; i < 3; i++)
     {
         stress(i, i) -= external_stress[i] / unit_transform;

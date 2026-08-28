@@ -37,8 +37,8 @@
 namespace hsolver
 {
 
-template <typename TK, typename Device>
-void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
+template <typename TK>
+void HSolverLCAO<TK>::solve(hamilt::Hamilt<TK>* pHamilt,
                                    psi::Psi<TK>& psi,
 								   elecstate::ElecState* pes,
 								   elecstate::DensityMatrix<TK, double>& dm, // mohan add 2025-11-03
@@ -91,6 +91,7 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
                                      pes->eferm,
                                      pes->f_en,
                                      pes->nelec_spin,
+                                     this->nbands,
                                      pes->skip_weights);
 
         elecstate::calEBand(pes->ekb, pes->wg, pes->f_en);
@@ -132,8 +133,8 @@ void HSolverLCAO<TK, Device>::solve(hamilt::Hamilt<TK>* pHamilt,
     return;
 }
 
-template <typename T, typename Device>
-void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue)
+template <typename T>
+void HSolverLCAO<T>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>& psi, double* eigenvalue)
 {
     ModuleBase::TITLE("HSolverLCAO", "hamiltSolvePsiK");
     ModuleBase::timer::start("HSolverLCAO", "hamiltSolvePsiK");
@@ -187,8 +188,8 @@ void HSolverLCAO<T, Device>::hamiltSolvePsiK(hamilt::Hamilt<T>* hm, psi::Psi<T>&
     ModuleBase::timer::end("HSolverLCAO", "hamiltSolvePsiK");
 }
 
-template <typename T, typename Device>
-void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
+template <typename T>
+void HSolverLCAO<T>::parakSolve(hamilt::Hamilt<T>* pHamilt,
                                         psi::Psi<T>& psi,
                                         elecstate::ElecState* pes,
                                         const int kpar,
@@ -313,8 +314,8 @@ void HSolverLCAO<T, Device>::parakSolve(hamilt::Hamilt<T>* pHamilt,
 }
 
 #if defined (__MPI) && defined (__CUDA)
-template <typename T, typename Device>
-void HSolverLCAO<T, Device>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
+template <typename T>
+void HSolverLCAO<T>::parakSolve_cusolver(hamilt::Hamilt<T>* pHamilt,
                                             psi::Psi<T>& psi,
                                             elecstate::ElecState* pes)
 {

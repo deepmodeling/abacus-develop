@@ -14,8 +14,6 @@ namespace ModulePW { class PW_Basis_K; }
 class Structure_Factor;
 class UnitCell;
 
-using namespace std;
-
 /*
 Psi (planewave based wavefunction) base class
 Auther: Kirk0830

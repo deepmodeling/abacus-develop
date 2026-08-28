@@ -1,30 +1,31 @@
 #include "ctrl_output_pw.h"
 
-#include "../module_wf/write_wfc_pw.h" // use write_wfc_pw
-#include "../module_dos/write_dos_pw.h" // use write_dos_pw
-#include "../module_wannier/to_wannier90_pw.h" // wannier90 interface
-#include "source_pw/module_pwdft/onsite_proj.h" // use projector
 #include "../module_bessel/numerical_basis.h"
 #include "../module_bessel/numerical_descriptor.h"
-#include "../module_dos/cal_ldos.h"
-#include "../module_unk/berryphase.h"
-#include "source_lcao/module_deltaspin/spin_constrain.h"
-#include "source_base/formatter.h"
 #include "../module_chgpot/get_pchg_pw.h"
+#include "../module_dos/cal_ldos.h"
+#include "../module_dos/write_dos_pw.h" // use write_dos_pw
+#include "../module_unk/berryphase.h"
+#include "../module_wannier/to_wannier90_pw.h" // wannier90 interface
 #include "../module_wf/get_wf_pw.h"
+#include "../module_wf/write_wfc_pw.h" // use write_wfc_pw
+#include "source_base/formatter.h"
+#include "source_lcao/module_deltaspin/lambda_loop_helper.h"
+#include "source_lcao/module_deltaspin/spin_constrain.h"
 #include "source_pw/module_pwdft/elecond.h"
+#include "source_pw/module_pwdft/onsite_proj.h" // use projector
 
 #ifdef __MLALGO
 #include "../module_ml/write_mlkedf_desc.h"
 #endif
 
-void ModuleIO::ctrl_iter_pw(const int istep, 
-		const int iter, 
-		const double &conv_esolver,
-		psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
-		const K_Vectors &kv,
-		const ModulePW::PW_Basis_K *pw_wfc,
-        const Input_para& inp)
+void ModuleIO::ctrl_iter_pw(const int istep,
+                            const int iter,
+                            const double& conv_esolver,
+                            psi::Psi<std::complex<double>, base_device::DEVICE_CPU>* psi,
+                            const K_Vectors& kv,
+                            const ModulePW::PW_Basis_K* pw_wfc,
+                            const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_iter_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_iter_pw");
@@ -38,11 +39,11 @@ void ModuleIO::ctrl_iter_pw(const int istep,
     int istep_in = -1;
     int iter_in = -1;
     bool out_wfc_flag = false;
-    if (inp.out_freq_ion>0) // default value of out_freq_ion is 0
+    if (inp.out_freq_ion > 0) // default value of out_freq_ion is 0
     {
         if (istep % inp.out_freq_ion == 0)
         {
-            if(iter % inp.out_freq_elec == 0 || iter == inp.scf_nmax || conv_esolver)
+            if (iter % inp.out_freq_elec == 0 || iter == inp.scf_nmax || conv_esolver)
             {
                 istep_in = istep;
                 iter_in = iter;
@@ -50,55 +51,52 @@ void ModuleIO::ctrl_iter_pw(const int istep,
             }
         }
     }
-    else if(iter == inp.scf_nmax || conv_esolver)
+    else if (iter == inp.scf_nmax || conv_esolver)
     {
         out_wfc_flag = true;
     }
 
     if (out_wfc_flag)
     {
-        ModuleIO::write_wfc_pw(istep_in, iter_in,
-                GlobalV::KPAR,
-                GlobalV::MY_POOL,
-                GlobalV::MY_RANK,
-                inp.nbands,
-                inp.nspin,
-                PARAM.globalv.npol,
-                GlobalV::RANK_IN_POOL,
-                GlobalV::NPROC_IN_POOL,
-                inp.out_wfc_pw,
-                inp.ecutwfc,
-                PARAM.globalv.global_out_dir,
-                psi[0],
-                kv,
-                pw_wfc,
-                GlobalV::ofs_running);
+        ModuleIO::write_wfc_pw(istep_in,
+                               iter_in,
+                               GlobalV::KPAR,
+                               GlobalV::MY_POOL,
+                               GlobalV::MY_RANK,
+                               inp.nbands,
+                               inp.nspin,
+                               PARAM.globalv.npol,
+                               GlobalV::RANK_IN_POOL,
+                               GlobalV::NPROC_IN_POOL,
+                               inp.out_wfc_pw,
+                               inp.ecutwfc,
+                               PARAM.globalv.global_out_dir,
+                               psi[0],
+                               kv,
+                               pw_wfc,
+                               GlobalV::ofs_running);
     }
 
-	ModuleBase::timer::end("ModuleIO", "ctrl_iter_pw");
-	return;
+    ModuleBase::timer::end("ModuleIO", "ctrl_iter_pw");
+    return;
 }
-
 
 template <typename T, typename Device>
 void ModuleIO::ctrl_scf_pw(const int istep,
-        UnitCell& ucell,
-        elecstate::ElecState* pelec,
-        const Charge &chr,
-		const K_Vectors &kv,
-		const ModulePW::PW_Basis_K *pw_wfc,
-		const ModulePW::PW_Basis *pw_rho,
-		const ModulePW::PW_Basis *pw_rhod,
-		const ModulePW::PW_Basis_Big *pw_big,
-        Setup_Psi_pw &stp,
-        const Parallel_Grid &para_grid,
-        const Input_para& inp)
+                           UnitCell& ucell,
+                           elecstate::ElecState* pelec,
+                           const Charge& chr,
+                           const K_Vectors& kv,
+                           const ModulePW::PW_Basis_K* pw_wfc,
+                           const ModulePW::PW_Basis* pw_rho,
+                           const ModulePW::PW_Basis* pw_rhod,
+                           const ModulePW::PW_Basis_Big* pw_big,
+                           Setup_Psi_pw& stp,
+                           const Parallel_Grid& para_grid,
+                           const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_scf_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_scf_pw");
-
-    // Create local ctx for device type deduction
-    Device* ctx = nullptr;
 
     // Transfer data from device (GPU) to host (CPU) in pw basis
     stp.copy_d2h();
@@ -113,16 +111,16 @@ void ModuleIO::ctrl_scf_pw(const int istep,
         int istep_in = -1;
 
         // default value of out_freq_ion is 0
-        if(inp.out_freq_ion==0)
+        if (inp.out_freq_ion == 0)
         {
             out_dos_tmp = true;
         }
-        else if (inp.out_freq_ion>0)
+        else if (inp.out_freq_ion > 0)
         {
             if (istep % inp.out_freq_ion == 0)
             {
                 out_dos_tmp = true;
-                istep_in=istep;
+                istep_in = istep;
             }
             else
             {
@@ -141,22 +139,21 @@ void ModuleIO::ctrl_scf_pw(const int istep,
             out_dos_tmp = false;
         }
 
-        if(out_dos_tmp)
+        if (out_dos_tmp)
         {
             ModuleIO::write_dos_pw(ucell,
-                    pelec->ekb,
-                    pelec->wg,
-                    kv,
-                    inp.nbands,
-                    istep_in,
-                    pelec->eferm,
-                    inp.dos_edelta_ev,
-                    inp.dos_scale,
-                    inp.dos_sigma,
-                    GlobalV::ofs_running);
+                                   pelec->ekb,
+                                   pelec->wg,
+                                   kv,
+                                   inp.nbands,
+                                   istep_in,
+                                   pelec->eferm,
+                                   inp.dos_edelta_ev,
+                                   inp.dos_scale,
+                                   inp.dos_sigma,
+                                   GlobalV::ofs_running);
         }
     }
-
 
     //------------------------------------------------------------------
     // 5) calculate band-decomposed (partial) charge density in pw basis
@@ -166,28 +163,20 @@ void ModuleIO::ctrl_scf_pw(const int istep,
         // update psi_d
         stp.update_psi_d();
 
-        const int nbands = stp.get_nbands();
-        const int ngmc = chr.ngmc;
-
         ModuleIO::get_pchg_pw(inp.out_pchg,
-                              nbands,
                               inp.nspin,
-                              pw_rhod->nxyz,
-                              ngmc,
+                              inp.nbands,
                               &ucell,
                               stp.template get_psi_d<T, Device>(),
+                              pw_rho,
                               pw_rhod,
                               pw_wfc,
-                              ctx,
                               para_grid,
                               PARAM.globalv.global_out_dir,
                               inp.if_separate_k,
-                              kv,
-                              GlobalV::KPAR,
-                              GlobalV::MY_POOL,
-                              &chr);
+                              inp.noncolin,
+                              kv);
     }
-
 
     //------------------------------------------------------------------
     //! 6) calculate Wannier functions in pw basis
@@ -207,7 +196,6 @@ void ModuleIO::ctrl_scf_pw(const int istep,
         std::cout << FmtCore::format(" >> Finish %s.\n * * * * * *\n", "Wannier functions calculation");
     }
 
-
     //------------------------------------------------------------------
     //! 7) calculate Berry phase polarization in pw basis
     //------------------------------------------------------------------
@@ -225,10 +213,9 @@ void ModuleIO::ctrl_scf_pw(const int istep,
     //------------------------------------------------------------------
     if (inp.sc_mag_switch)
     {
-        spinconstrain::SpinConstrain<std::complex<double>>& sc
-            = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
+        spinconstrain::SpinConstrain<std::complex<double>>& sc = spinconstrain::SpinConstrain<std::complex<double>>::getScInstance();
         sc.cal_mi_pw();
-        sc.print_Mag_Force(GlobalV::ofs_running);
+        spinconstrain::print_Mag_Force(sc, GlobalV::ofs_running);
     }
 
     //------------------------------------------------------------------
@@ -246,19 +233,19 @@ void ModuleIO::ctrl_scf_pw(const int istep,
 }
 
 template <typename T, typename Device>
-void ModuleIO::ctrl_runner_pw(UnitCell& ucell, 
-		elecstate::ElecState* pelec,	
-        ModulePW::PW_Basis_K* pw_wfc,
-        ModulePW::PW_Basis* pw_rho,
-        ModulePW::PW_Basis* pw_rhod,
-		Charge &chr,
-        K_Vectors &kv,
-        Setup_Psi_pw &stp,
-        Structure_Factor &sf,
-        pseudopot_cell_vnl &ppcell,
-		surchem &solvent,
-        Parallel_Grid &para_grid,
-        const Input_para& inp)
+void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
+                              elecstate::ElecState* pelec,
+                              ModulePW::PW_Basis_K* pw_wfc,
+                              ModulePW::PW_Basis* pw_rho,
+                              ModulePW::PW_Basis* pw_rhod,
+                              Charge& chr,
+                              K_Vectors& kv,
+                              Setup_Psi_pw& stp,
+                              Structure_Factor& sf,
+                              pseudopot_cell_vnl& ppcell,
+                              surchem& solvent,
+                              Parallel_Grid& para_grid,
+                              const Input_para& inp)
 {
     ModuleBase::TITLE("ModuleIO", "ctrl_runner_pw");
     ModuleBase::timer::start("ModuleIO", "ctrl_runner_pw");
@@ -266,14 +253,14 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     // Create local ctx for device type deduction
     Device* ctx = nullptr;
 
-	//----------------------------------------------------------
-	//! 1) Compute LDOS
-	//----------------------------------------------------------
-	if (inp.out_ldos[0])
-	{
-		ModuleIO::cal_ldos_pw(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(pelec),
-			    stp.psi_cpu[0], para_grid, ucell);
-	}
+    //----------------------------------------------------------
+    //! 1) Compute LDOS
+    //----------------------------------------------------------
+    if (inp.out_ldos[0])
+    {
+        stp.update_psi_d();
+        ModuleIO::cal_ldos_pw(reinterpret_cast<elecstate::ElecStatePW<std::complex<double>>*>(pelec), *stp.template get_psi_d<T, Device>(), ctx, para_grid, ucell);
+    }
 
     //----------------------------------------------------------
     //! 2) Calculate the spillage value,
@@ -288,8 +275,7 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
             {
                 if (GlobalV::MY_RANK == 0)
                 {
-                    std::cout << "update value: bessel_nao_rcut <- " << std::fixed << inp.bessel_nao_rcuts[i]
-                              << " a.u." << std::endl;
+                    std::cout << "update value: bessel_nao_rcut <- " << std::fixed << inp.bessel_nao_rcuts[i] << " a.u." << std::endl;
                 }
                 Numerical_Basis numerical_basis;
                 numerical_basis.output_overlap(stp.psi_cpu[0], sf, kv, pw_wfc, ucell, i);
@@ -307,18 +293,16 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
 
         ModuleIO::get_wf_pw(inp.out_wfc_norm,
                             inp.out_wfc_re_im,
-                            stp.get_nbands(),
                             inp.nspin,
-                            pw_rhod->nxyz,
+                            inp.nbands,
                             &ucell,
                             stp.template get_psi_d<T, Device>(),
                             pw_wfc,
-                            ctx,
+                            pw_rho,
+                            pw_rhod,
                             para_grid,
                             PARAM.globalv.global_out_dir,
-                            kv,
-                            GlobalV::KPAR,
-                            GlobalV::MY_POOL);
+                            kv);
     }
 
     //----------------------------------------------------------
@@ -328,14 +312,8 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
     {
         using Real = typename GetTypeReal<T>::type;
         EleCond<Real, Device> elec_cond(&ucell, &kv, pelec, pw_wfc, stp.template get_psi_t<T, Device>(), &ppcell);
-        elec_cond.KG(inp.cond_smear,
-                     inp.cond_fwhm,
-                     inp.cond_wcut,
-                     inp.cond_dw,
-                     inp.cond_dt,
-                     inp.cond_nonlocal,
-                     inp.cond_mgga_vel,
-                     pelec->wg);
+        elec_cond
+            .KG(inp.cond_smear, inp.cond_fwhm, inp.cond_wcut, inp.cond_dw, inp.cond_dt, inp.cond_nonlocal, inp.cond_mgga_vel, pelec->wg);
     }
 
 #ifdef __MLALGO
@@ -380,129 +358,121 @@ void ModuleIO::ctrl_runner_pw(UnitCell& ucell,
 }
 
 // complex<float> + CPU
-template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU>(
-    const int nstep,
-	UnitCell& ucell,
-    elecstate::ElecState* pelec,
-    const Charge &chr,
-    const K_Vectors &kv,
-    const ModulePW::PW_Basis_K *pw_wfc,
-    const ModulePW::PW_Basis *pw_rho,
-    const ModulePW::PW_Basis *pw_rhod,
-    const ModulePW::PW_Basis_Big *pw_big,
-    Setup_Psi_pw &stp,
-    const Parallel_Grid &para_grid,
-    const Input_para& inp);
+template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_CPU>(const int nstep,
+                                                                                  UnitCell& ucell,
+                                                                                  elecstate::ElecState* pelec,
+                                                                                  const Charge& chr,
+                                                                                  const K_Vectors& kv,
+                                                                                  const ModulePW::PW_Basis_K* pw_wfc,
+                                                                                  const ModulePW::PW_Basis* pw_rho,
+                                                                                  const ModulePW::PW_Basis* pw_rhod,
+                                                                                  const ModulePW::PW_Basis_Big* pw_big,
+                                                                                  Setup_Psi_pw& stp,
+                                                                                  const Parallel_Grid& para_grid,
+                                                                                  const Input_para& inp);
 
 // complex<double> + CPU
-template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CPU>(
-    const int nstep,
-    UnitCell& ucell,
-    elecstate::ElecState* pelec,
-    const Charge &chr,
-    const K_Vectors &kv,
-    const ModulePW::PW_Basis_K *pw_wfc,
-    const ModulePW::PW_Basis *pw_rho,
-    const ModulePW::PW_Basis *pw_rhod,
-    const ModulePW::PW_Basis_Big *pw_big,
-    Setup_Psi_pw &stp,
-    const Parallel_Grid &para_grid,
-    const Input_para& inp);
+template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_CPU>(const int nstep,
+                                                                                   UnitCell& ucell,
+                                                                                   elecstate::ElecState* pelec,
+                                                                                   const Charge& chr,
+                                                                                   const K_Vectors& kv,
+                                                                                   const ModulePW::PW_Basis_K* pw_wfc,
+                                                                                   const ModulePW::PW_Basis* pw_rho,
+                                                                                   const ModulePW::PW_Basis* pw_rhod,
+                                                                                   const ModulePW::PW_Basis_Big* pw_big,
+                                                                                   Setup_Psi_pw& stp,
+                                                                                   const Parallel_Grid& para_grid,
+                                                                                   const Input_para& inp);
 
 #if ((defined __CUDA) || (defined __ROCM))
 // complex<float> + GPU
-template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU>(
-    const int nstep,
-	UnitCell& ucell,
-    elecstate::ElecState* pelec,
-    const Charge &chr,
-    const K_Vectors &kv,
-    const ModulePW::PW_Basis_K *pw_wfc,
-    const ModulePW::PW_Basis *pw_rho,
-    const ModulePW::PW_Basis *pw_rhod,
-    const ModulePW::PW_Basis_Big *pw_big,
-    Setup_Psi_pw &stp,
-    const Parallel_Grid &para_grid,
-    const Input_para& inp);
+template void ModuleIO::ctrl_scf_pw<std::complex<float>, base_device::DEVICE_GPU>(const int nstep,
+                                                                                  UnitCell& ucell,
+                                                                                  elecstate::ElecState* pelec,
+                                                                                  const Charge& chr,
+                                                                                  const K_Vectors& kv,
+                                                                                  const ModulePW::PW_Basis_K* pw_wfc,
+                                                                                  const ModulePW::PW_Basis* pw_rho,
+                                                                                  const ModulePW::PW_Basis* pw_rhod,
+                                                                                  const ModulePW::PW_Basis_Big* pw_big,
+                                                                                  Setup_Psi_pw& stp,
+                                                                                  const Parallel_Grid& para_grid,
+                                                                                  const Input_para& inp);
 
 // complex<double> + GPU
-template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GPU>(
-    const int nstep,
-	UnitCell& ucell,
-    elecstate::ElecState* pelec,
-    const Charge &chr,
-    const K_Vectors &kv,
-    const ModulePW::PW_Basis_K *pw_wfc,
-    const ModulePW::PW_Basis *pw_rho,
-    const ModulePW::PW_Basis *pw_rhod,
-    const ModulePW::PW_Basis_Big *pw_big,
-    Setup_Psi_pw &stp,
-    const Parallel_Grid &para_grid,
-    const Input_para& inp);
+template void ModuleIO::ctrl_scf_pw<std::complex<double>, base_device::DEVICE_GPU>(const int nstep,
+                                                                                   UnitCell& ucell,
+                                                                                   elecstate::ElecState* pelec,
+                                                                                   const Charge& chr,
+                                                                                   const K_Vectors& kv,
+                                                                                   const ModulePW::PW_Basis_K* pw_wfc,
+                                                                                   const ModulePW::PW_Basis* pw_rho,
+                                                                                   const ModulePW::PW_Basis* pw_rhod,
+                                                                                   const ModulePW::PW_Basis_Big* pw_big,
+                                                                                   Setup_Psi_pw& stp,
+                                                                                   const Parallel_Grid& para_grid,
+                                                                                   const Input_para& inp);
 #endif
 
 // complex<float> + CPU
-template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_CPU>(
-	UnitCell& ucell, 
-	elecstate::ElecState* pelec,	
-    ModulePW::PW_Basis_K* pw_wfc,
-    ModulePW::PW_Basis* pw_rho,
-    ModulePW::PW_Basis* pw_rhod,
-	Charge &chr,
-    K_Vectors &kv,
-    Setup_Psi_pw &stp,
-    Structure_Factor &sf,
-    pseudopot_cell_vnl &ppcell,
-	surchem &solvent,
-    Parallel_Grid &para_grid,
-    const Input_para& inp);
+template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_CPU>(UnitCell& ucell,
+                                                                                     elecstate::ElecState* pelec,
+                                                                                     ModulePW::PW_Basis_K* pw_wfc,
+                                                                                     ModulePW::PW_Basis* pw_rho,
+                                                                                     ModulePW::PW_Basis* pw_rhod,
+                                                                                     Charge& chr,
+                                                                                     K_Vectors& kv,
+                                                                                     Setup_Psi_pw& stp,
+                                                                                     Structure_Factor& sf,
+                                                                                     pseudopot_cell_vnl& ppcell,
+                                                                                     surchem& solvent,
+                                                                                     Parallel_Grid& para_grid,
+                                                                                     const Input_para& inp);
 
 // complex<double> + CPU
-template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE_CPU>(
-	UnitCell& ucell, 
-	elecstate::ElecState* pelec,	
-    ModulePW::PW_Basis_K* pw_wfc,
-    ModulePW::PW_Basis* pw_rho,
-    ModulePW::PW_Basis* pw_rhod,
-	Charge &chr,
-    K_Vectors &kv,
-    Setup_Psi_pw &stp,
-    Structure_Factor &sf,
-    pseudopot_cell_vnl &ppcell,
-	surchem &solvent,
-    Parallel_Grid &para_grid,
-    const Input_para& inp);
+template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE_CPU>(UnitCell& ucell,
+                                                                                      elecstate::ElecState* pelec,
+                                                                                      ModulePW::PW_Basis_K* pw_wfc,
+                                                                                      ModulePW::PW_Basis* pw_rho,
+                                                                                      ModulePW::PW_Basis* pw_rhod,
+                                                                                      Charge& chr,
+                                                                                      K_Vectors& kv,
+                                                                                      Setup_Psi_pw& stp,
+                                                                                      Structure_Factor& sf,
+                                                                                      pseudopot_cell_vnl& ppcell,
+                                                                                      surchem& solvent,
+                                                                                      Parallel_Grid& para_grid,
+                                                                                      const Input_para& inp);
 
 #if ((defined __CUDA) || (defined __ROCM))
 // complex<float> + GPU
-template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_GPU>(
-	UnitCell& ucell, 
-	elecstate::ElecState* pelec,	
-    ModulePW::PW_Basis_K* pw_wfc,
-    ModulePW::PW_Basis* pw_rho,
-    ModulePW::PW_Basis* pw_rhod,
-	Charge &chr,
-    K_Vectors &kv,
-    Setup_Psi_pw &stp,
-    Structure_Factor &sf,
-    pseudopot_cell_vnl &ppcell,
-	surchem &solvent,
-    Parallel_Grid &para_grid,
-    const Input_para& inp);
+template void ModuleIO::ctrl_runner_pw<std::complex<float>, base_device::DEVICE_GPU>(UnitCell& ucell,
+                                                                                     elecstate::ElecState* pelec,
+                                                                                     ModulePW::PW_Basis_K* pw_wfc,
+                                                                                     ModulePW::PW_Basis* pw_rho,
+                                                                                     ModulePW::PW_Basis* pw_rhod,
+                                                                                     Charge& chr,
+                                                                                     K_Vectors& kv,
+                                                                                     Setup_Psi_pw& stp,
+                                                                                     Structure_Factor& sf,
+                                                                                     pseudopot_cell_vnl& ppcell,
+                                                                                     surchem& solvent,
+                                                                                     Parallel_Grid& para_grid,
+                                                                                     const Input_para& inp);
 
 // complex<double> + GPU
-template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE_GPU>(
-	UnitCell& ucell, 
-	elecstate::ElecState* pelec,	
-    ModulePW::PW_Basis_K* pw_wfc,
-    ModulePW::PW_Basis* pw_rho,
-    ModulePW::PW_Basis* pw_rhod,
-	Charge &chr,
-    K_Vectors &kv,
-    Setup_Psi_pw &stp,
-    Structure_Factor &sf,
-    pseudopot_cell_vnl &ppcell,
-	surchem &solvent,
-    Parallel_Grid &para_grid,
-    const Input_para& inp);
+template void ModuleIO::ctrl_runner_pw<std::complex<double>, base_device::DEVICE_GPU>(UnitCell& ucell,
+                                                                                      elecstate::ElecState* pelec,
+                                                                                      ModulePW::PW_Basis_K* pw_wfc,
+                                                                                      ModulePW::PW_Basis* pw_rho,
+                                                                                      ModulePW::PW_Basis* pw_rhod,
+                                                                                      Charge& chr,
+                                                                                      K_Vectors& kv,
+                                                                                      Setup_Psi_pw& stp,
+                                                                                      Structure_Factor& sf,
+                                                                                      pseudopot_cell_vnl& ppcell,
+                                                                                      surchem& solvent,
+                                                                                      Parallel_Grid& para_grid,
+                                                                                      const Input_para& inp);
 #endif

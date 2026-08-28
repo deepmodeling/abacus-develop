@@ -30,66 +30,51 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     basecell.require_kind(BaseCell::Kind::unit_cell, __FUNCTION__);
     UnitCell& ucell = static_cast<UnitCell&>(basecell);
 
+    this->inp_ = &inp;
+
     ModuleBase::TITLE("ESolver_GetS", "before_all_runners");
     ModuleBase::timer::start("ESolver_GetS", "before_all_runners");
 
     // 1.1) read pseudopotentials
-    const std::string pseudo_dir = PARAM.inp.pseudo_dir;
     const std::string global_out_dir = PARAM.globalv.global_out_dir;
-    const bool out_element_info = PARAM.inp.out_element_info;
-    const std::string dft_functional = PARAM.inp.dft_functional;
-    const bool lspinorb = PARAM.inp.lspinorb;
-    const double pseudo_rcut = PARAM.inp.pseudo_rcut;
-    const double soc_lambda = PARAM.inp.soc_lambda;
-    const int nspin = PARAM.inp.nspin;
     const int npol = PARAM.globalv.npol;
-    const std::string basis_type = PARAM.inp.basis_type;
-    const std::string esolver_type = PARAM.inp.esolver_type;
-    const std::string init_wfc = PARAM.inp.init_wfc;
-    const int nbands = PARAM.inp.nbands;
     const bool two_fermi = PARAM.globalv.two_fermi;
-    const double nelec_delta = PARAM.inp.nelec_delta;
-    const std::string smearing_method = PARAM.inp.smearing_method;
-    const std::string ks_solver = PARAM.inp.ks_solver;
-    const int bndpar = PARAM.inp.bndpar;
-    const double nelec = PARAM.inp.nelec;
-    const double nupdown = PARAM.inp.nupdown;
     // nlocal is calculated inside read_pseudo() via CalAtomsInfo::cal_atoms_info()
     auto atoms_info = unitcell::read_pseudo(GlobalV::ofs_running,
                                             ucell,
-                                            pseudo_dir,
+                                            this->inp_->pseudo_dir,
                                             global_out_dir,
-                                            out_element_info,
-                                            dft_functional,
-                                            lspinorb,
-                                            pseudo_rcut,
-                                            soc_lambda,
-                                            nspin,
+                                            this->inp_->out_element_info,
+                                            this->inp_->dft_functional,
+                                            this->inp_->lspinorb,
+                                            this->inp_->pseudo_rcut,
+                                            this->inp_->soc_lambda,
+                                            this->inp_->nspin,
                                             npol,
-                                            basis_type,
-                                            esolver_type,
-                                            init_wfc,
-                                            nbands,
+                                            this->inp_->basis_type,
+                                            this->inp_->esolver_type,
+                                            this->inp_->init_wfc,
+                                            this->inp_->nbands,
                                             two_fermi,
-                                            nelec_delta,
-                                            smearing_method,
-                                            ks_solver,
-                                            bndpar,
-                                            nelec,
-                                            nupdown);
+                                            this->inp_->nelec_delta,
+                                            this->inp_->smearing_method,
+                                            this->inp_->ks_solver,
+                                            this->inp_->bndpar,
+                                            this->inp_->nelec,
+                                            this->inp_->nupdown);
     elecstate::ParamUpdater::update_from_atoms_info(atoms_info);
 
     // 1.2) symmetrize things
     if (ModuleSymmetry::Symmetry::symm_flag == 1)
     {
-        const int cal_symm_repr[2] = {PARAM.inp.cal_symm_repr[0], PARAM.inp.cal_symm_repr[1]};
+        const int cal_symm_repr[2] = {this->inp_->cal_symm_repr[0], this->inp_->cal_symm_repr[1]};
         ucell.symm.analy_sys(ucell.lat,
                              ucell.st,
                              ucell.atoms,
                              GlobalV::ofs_running,
-                             PARAM.inp.symmetry_prec,
+                             this->inp_->symmetry_prec,
                              inp.nspin,
-                             PARAM.inp.calculation,
+                             this->inp_->calculation,
                              cal_symm_repr);
         ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "SYMMETRY");
     }
@@ -97,9 +82,8 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
     // 1.3) Setup k-points according to symmetry.
     const bool use_ibz = !inp.berry_phase && ModuleSymmetry::Symmetry::symm_flag != -1;
     const bool gamma_only_local = PARAM.globalv.gamma_only_local;
-    const double kspacing[3] = {PARAM.inp.kspacing[0], PARAM.inp.kspacing[1], PARAM.inp.kspacing[2]};
-    const std::string kmesh_type = PARAM.inp.kmesh_type;
-    const double koffset[3] = {PARAM.inp.koffset[0], PARAM.inp.koffset[1], PARAM.inp.koffset[2]};
+    const double kspacing[3] = {this->inp_->kspacing[0], this->inp_->kspacing[1], this->inp_->kspacing[2]};
+    const double koffset[3] = {this->inp_->koffset[0], this->inp_->koffset[1], this->inp_->koffset[2]};
     this->kv.set(ucell,
                  ucell.symm,
                  inp.kpoint_file,
@@ -111,7 +95,7 @@ void ESolver_GetS::before_all_runners(BaseCell& basecell, const Input_para& inp)
                  global_out_dir,
                  gamma_only_local,
                  kspacing,
-                 kmesh_type,
+                 this->inp_->kmesh_type,
                  koffset);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "INIT K-POINTS");
 
@@ -155,7 +139,7 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
     // (1) Find adjacent atoms for each atom.
     double search_radius = -1.0;
     search_radius = atom_arrange::set_sr_NL(GlobalV::ofs_running,
-                                            PARAM.inp.out_level,
+                                            this->inp_->out_level,
                                             orb_.get_rcutmax_Phi(),
                                             ucell.infoNL->get_rcutmax_Beta(),
                                             PARAM.globalv.gamma_only_local);
@@ -167,14 +151,14 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                          gd,
                          ucell,
                          search_radius,
-                         PARAM.inp.test_atom_input);
+                         this->inp_->test_atom_input);
 
     Record_adj RA;
     RA.for_2d(ucell, gd, this->pv, PARAM.globalv.gamma_only_local, orb_.cutoffs());
 
     if (this->p_hamilt == nullptr)
     {
-        if (PARAM.inp.nspin == 4)
+        if (this->inp_->nspin == 4)
         {
             this->p_hamilt
                 = new hamilt::HamiltLCAO<std::complex<double>, std::complex<double>>(ucell,
@@ -207,14 +191,14 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
     auto* hamilt_ptr = static_cast<hamilt::Hamilt<std::complex<double>>*>(this->p_hamilt);
     ModuleIO::output_SR(pv, gd, hamilt_ptr, fn);
 
-    if (PARAM.inp.out_mat_r[0])
+    if (this->inp_->out_mat_r[0])
     {
         cal_r_overlap_R r_matrix;
         r_matrix.init(ucell, pv, orb_);
-        r_matrix.out_rR(ucell, gd, istep, PARAM.inp.out_mat_r[1]);
+        r_matrix.out_rR(ucell, gd, istep, this->inp_->out_mat_r[1]);
     }
 
-    if (PARAM.inp.out_mat_ds[0])
+    if (this->inp_->out_mat_ds[0])
     {
         LCAO_HS_Arrays HS_Arrays; // store sparse arrays
         //! Print out sparse matrix
@@ -228,7 +212,7 @@ void ESolver_GetS::runner(BaseCell& basecell, const int istep)
                              kv,
                              false,
                              1e-10,
-                             PARAM.inp.out_mat_ds[1]);
+                             this->inp_->out_mat_ds[1]);
     }
 
     ModuleBase::timer::end("ESolver_GetS", "runner");

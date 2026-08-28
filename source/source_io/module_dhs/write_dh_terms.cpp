@@ -208,7 +208,7 @@ bool write_dH_veff_term(WriteDHParams& params,
 // (it builds dHexxs for all spins at once). Templated on the Hexx tensor data type (double for
 // the real interface exd, std::complex<double> for the complex interface exc).
 template <typename Tdata>
-void fill_dH_exx(WriteDHParams& params, Exx_LRI_Interface<double, Tdata>* ex, int ispin, PerIContainers& c)
+void fill_dH_exx(WriteDHParams& params, Exx_LRI_Interface<double, Tdata>* ex, int ispin, PerIContainers& c, const Exx_Info& exx_info)
 {
     const UnitCell& ucell = *params.ucell;
     const Parallel_Orbitals& pv = *params.pv;
@@ -216,7 +216,15 @@ void fill_dH_exx(WriteDHParams& params, Exx_LRI_Interface<double, Tdata>* ex, in
     // OperatorEXX dereferences hR_in in its constructor and reallocates it, so pass a
     // throwaway container (its cell_nearest is built from kv and reused for dhR below).
     hamilt::HContainer<double> hR_dummy(const_cast<Parallel_Orbitals*>(&pv));
-    hamilt::OperatorEXX<hamilt::OperatorLCAO<double, double>> op_exx(nullptr, &hR_dummy, ucell, *params.kv);
+    hamilt::OperatorEXX<hamilt::OperatorLCAO<double, double>> op_exx(
+        nullptr,
+        &hR_dummy,
+        ucell,
+        *params.kv,
+        nullptr,
+        nullptr,
+        &exx_info,
+        hamilt::Add_Hexx_Type::R);
 
     op_exx.cal_dH(ispin, c.g, ex->get_dHexxs());
 }
@@ -224,7 +232,7 @@ void fill_dH_exx(WriteDHParams& params, Exx_LRI_Interface<double, Tdata>* ex, in
 // Shared driver for the EXX dH term. The per-atom-I dH is always written into real
 // HContainer<double> (add_HexxR converts Tdata -> double).
 template <typename Tdata>
-void write_dH_exx_impl(WriteDHParams& params, Exx_LRI_Interface<double, Tdata>* ex)
+void write_dH_exx_impl(WriteDHParams& params, Exx_LRI_Interface<double, Tdata>* ex, const Exx_Info& exx_info)
 {
     const UnitCell& ucell = *params.ucell;
     const Parallel_Orbitals& pv = *params.pv;
@@ -240,7 +248,7 @@ void write_dH_exx_impl(WriteDHParams& params, Exx_LRI_Interface<double, Tdata>* 
     {
         PerIContainers c(pv, nat);
 
-        fill_dH_exx(params, ex, ispin, c);
+        fill_dH_exx(params, ex, ispin, c, exx_info);
 
         ModuleIO::write_dh_perI(params, ispin, "dvexxr", "dvexxk", "dV^EXX", c.g, af);
     }
@@ -359,18 +367,18 @@ bool write_dH_vxc_pulay(WriteDHParams& params)
 }
 
 #ifdef __EXX
-bool write_dH_exx(WriteDHParams& params)
+bool write_dH_exx(WriteDHParams& params, const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "write_dH_exx");
     ModuleBase::timer::start("ModuleIO", "write_dH_exx");
 
     bool ok = false;
     // exd (real Hexx) and exc (complex Hexx) are mutually exclusive; pick by real_number.
-    if (GlobalC::exx_info.info_ri.real_number)
+    if (exx_info.info_ri.real_number)
     {
         if (params.exd != nullptr)
         {
-            write_dH_exx_impl(params, params.exd);
+            write_dH_exx_impl(params, params.exd, exx_info);
             ok = true;
         }
     }
@@ -378,7 +386,7 @@ bool write_dH_exx(WriteDHParams& params)
     {
         if (params.exc != nullptr)
         {
-            write_dH_exx_impl(params, params.exc);
+            write_dH_exx_impl(params, params.exc, exx_info);
             ok = true;
         }
     }
@@ -393,7 +401,7 @@ bool write_dH_exx(WriteDHParams& params)
 // full sum. Each term is built into its own per-atom-I containers (via the same fillers the
 // per-term writers use) and accumulated with HContainer::add_value_union, which unions the
 // (generally different) sparsities and sums values. Each term already carries its own sign.
-bool write_dH_sum(WriteDHParams& params)
+bool write_dH_sum(WriteDHParams& params, const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "write_dH_sum");
     ModuleBase::timer::start("ModuleIO", "write_dH_sum");
@@ -407,9 +415,9 @@ bool write_dH_sum(WriteDHParams& params)
     const bool do_exx = (params.exd != nullptr || params.exc != nullptr);
     if (do_exx)
     {
-        if (GlobalC::exx_info.info_ri.real_number && params.exd != nullptr)
+        if (exx_info.info_ri.real_number && params.exd != nullptr)
             params.exd->cal_exx_dHs(*params.ucell, pv, nspin);
-        else if (!GlobalC::exx_info.info_ri.real_number && params.exc != nullptr)
+        else if (!exx_info.info_ri.real_number && params.exc != nullptr)
             params.exc->cal_exx_dHs(*params.ucell, pv, nspin);
     }
 #endif
@@ -459,10 +467,10 @@ bool write_dH_sum(WriteDHParams& params)
         if (do_exx)
         {
             PerIContainers c(pv, nat);
-            if (GlobalC::exx_info.info_ri.real_number && params.exd != nullptr)
-                fill_dH_exx(params, params.exd, ispin, c);
+            if (exx_info.info_ri.real_number && params.exd != nullptr)
+                fill_dH_exx(params, params.exd, ispin, c, exx_info);
             else if (params.exc != nullptr)
-                fill_dH_exx(params, params.exc, ispin, c);
+                fill_dH_exx(params, params.exc, ispin, c, exx_info);
             accumulate(c);
         }
 #endif

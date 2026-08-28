@@ -7,7 +7,8 @@
 #include "source_estate/module_charge/charge_mixing.h" // use charge mixing
 #include "source_hamilt/hamilt.h"                      // use Hamiltonian
 #include "source_hamilt/hamilt_base.h"                 // use Hamiltonian base class
-#include "source_lcao/module_dftu/dftu.h"              // mohan add 20251107
+#include "source_hamilt/module_xc/general_exx_info.h"  // ESolver owns General_Exx_Info value
+#include "source_lcao/module_dftu/dftu_lcao.h"              // mohan add 20251107
 #include "source_pw/module_pwdft/vnl_pw.h"
 
 namespace ModuleESolver
@@ -69,10 +70,16 @@ class ESolver_KS : public ESolver_FP
     double scf_ene_thr;             //! scf energy threshold
     double drho;                    //! the difference between rho_in (before HSolver) and rho_out (After HSolver)
     double hsolver_error;           //! the error of HSolver
+    /// DeltaSpin RMS from the most recent lambda optimization loop; -1.0 means no DeltaSpin.
+    /// Set by ESolver_KS_LCAO after run_lambda_loop, read by ESolver_KS::iter_finish when calling print_etot.
+    double ds_rms_ = -1.0;
     int maxniter;                   //! maximum iter steps for scf
     int niter;                      //! iter steps actually used in scf
     bool oscillate_esolver = false; // whether esolver is oscillated
     bool scf_nmax_flag = false;     // whether scf has reached nmax, mohan add 20250921
+
+    /// General EXX info owned by ESolver, initialized from input parameters.
+    General_Exx_Info general_exx_info_;
 };
 } // namespace ModuleESolver
 #endif

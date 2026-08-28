@@ -1,13 +1,13 @@
 #include "elecstate.h"
+#include "occupy.h"
 #include "source_base/formatter.h"
 #include "source_base/global_variable.h"
 #include "source_base/parallel_common.h"
-#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_estate/module_pot/efield.h"
 #include "source_estate/module_pot/gatefield.h"
+#include "source_estate/module_pot/h_hartree_pw.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
-#include "occupy.h"
 namespace elecstate
 {
 /**
@@ -44,11 +44,11 @@ void print_scf_iterinfo(const std::string& ks_solver,
                         const std::vector<double>& drho,
                         const int& wrho,
                         const double& time,
-                        const int& wtime)
+                        const int& wtime,
+                        const double& ds_rms)
 {
     std::map<std::string, std::string> iter_header_dict
         = {{"cg", "CG"},
-           {"cg_in_lcao", "CG"},
            {"lapack", "LA"},
            {"genelpa", "GE"},
            {"elpa", "EL"},
@@ -91,6 +91,12 @@ void print_scf_iterinfo(const std::string& ks_solver,
     {
         td_fmt.emplace_back(" %" + std::to_string(wrho) + ".4e");
     }
+    // DeltaSpin RMS column (optional, same width/format as DRHO/DKIN)
+    if (ds_rms >= 0)
+    {
+        th_fmt.emplace_back(" %" + std::to_string(wrho) + "s");
+        td_fmt.emplace_back(" %" + std::to_string(wrho) + ".4e");
+    }
     // time column, trivial
     th_fmt.emplace_back(" %" + std::to_string(wtime) + "s\n");
     td_fmt.emplace_back(" %" + std::to_string(wtime) + ".2f\n");
@@ -120,10 +126,7 @@ void print_scf_iterinfo(const std::string& ks_solver,
         values = {double(istep), mag[0], mag[1], mag[2], mag[3], etot, ediff, drho[0]};
         break;
     default:
-        titles = {"ITER",
-                  FmtCore::center("ETOT/eV", wener),
-                  FmtCore::center("EDIFF/eV", wener),
-                  FmtCore::center("DRHO", wrho)};
+        titles = {"ITER", FmtCore::center("ETOT/eV", wener), FmtCore::center("EDIFF/eV", wener), FmtCore::center("DRHO", wrho)};
         values = {double(istep), etot, ediff, drho[0]};
         break;
     }
@@ -131,6 +134,13 @@ void print_scf_iterinfo(const std::string& ks_solver,
     {
         titles.push_back(FmtCore::center("DKIN", wrho));
         values.push_back(drho[1]);
+    }
+    // DeltaSpin RMS column: shown only when a valid RMS value is provided (>= 0).
+    // Placed after DKIN (if any) and before TIME.
+    if (ds_rms >= 0)
+    {
+        titles.push_back(FmtCore::center("RMS", wrho));
+        values.push_back(ds_rms);
     }
     titles.push_back(FmtCore::center("TIME/s", wtime));
     values.push_back(time);
@@ -148,7 +158,6 @@ void print_scf_iterinfo(const std::string& ks_solver,
     }
     std::cout << buf << std::flush;
 }
-
 
 /// @brief print total free energy and other energies
 /// @param ucell: unit cell
@@ -168,7 +177,8 @@ void print_etot(const Magnetism& magnet,
                 const double& duration,
                 const double& pw_diag_thr,
                 const double& avg_iter,
-                const bool print)
+                const bool print,
+                const double& ds_rms)
 {
     ModuleBase::TITLE("energy", "print_etot");
     const int iter = iter_in;
@@ -189,10 +199,10 @@ void print_etot(const Magnetism& magnet,
     std::vector<double> energies_Ry;
     std::vector<double> energies_eV;
 
-	if( (iter % PARAM.inp.out_freq_elec == 0) || converged || iter == PARAM.inp.scf_nmax )
-	{
+    if ((iter % PARAM.inp.out_freq_elec == 0) || converged || iter == PARAM.inp.scf_nmax)
+    {
         int n_order = std::max(0, Occupy::gaussian_type);
-      
+
         //! Kohn-Sham functional energy
         titles.push_back("E_KohnSham");
         energies_Ry.push_back(elec.f_en.etot);
@@ -256,11 +266,11 @@ void print_etot(const Magnetism& magnet,
         }
 
         // mohan add 20251108
-		if (PARAM.inp.dft_plus_u)
-		{
+        if (PARAM.inp.dft_plus_u)
+        {
             titles.push_back("E_plusU");
             energies_Ry.push_back(elec.f_en.edftu);
-		}
+        }
 
         //! hybrid functional energy
         titles.push_back("E_exx");
@@ -281,7 +291,7 @@ void print_etot(const Magnetism& magnet,
             titles.push_back("E_efield");
             energies_Ry.push_back(elecstate::Efield::etotefield);
         }
- 
+
         //! gate energy
         if (PARAM.inp.gate_flag)
         {
@@ -339,23 +349,19 @@ void print_etot(const Magnetism& magnet,
         energies_Ry.push_back(elec.bandgap_dw);
     }
     energies_eV.resize(energies_Ry.size());
-    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) {
-        return ener * ModuleBase::Ry_to_eV;
-    });
+    std::transform(energies_Ry.begin(), energies_Ry.end(), energies_eV.begin(), [](double ener) { return ener * ModuleBase::Ry_to_eV; });
 
     // for each SCF step, we print out energy
     FmtTable table(/*titles=*/{"Energy", "Rydberg", "eV"},
                    /*nrows=*/titles.size(),
-                   /*formats=*/{"%-14s", "%20.10f", "%20.10f"}, 
+                   /*formats=*/{"%-14s", "%20.10f", "%20.10f"},
                    /*indents=*/1,
-                   /*align=*/{/*value*/FmtTable::Align::LEFT, /*title*/FmtTable::Align::CENTER});
+                   /*align=*/{/*value*/ FmtTable::Align::LEFT, /*title*/ FmtTable::Align::CENTER});
     // print out the titles
     table << titles << energies_Ry << energies_eV;
 
     GlobalV::ofs_running << table.str() << std::endl;
 
-
-    
     if (PARAM.inp.out_level == "ie" || PARAM.inp.out_level == "m")
     {
         std::vector<double> mag;
@@ -365,10 +371,7 @@ void print_etot(const Magnetism& magnet,
             mag = {magnet.tot_mag, magnet.abs_mag};
             break;
         case 4:
-            mag = {magnet.tot_mag_nc[0],
-                   magnet.tot_mag_nc[1],
-                   magnet.tot_mag_nc[2],
-                   magnet.abs_mag};
+            mag = {magnet.tot_mag_nc[0], magnet.tot_mag_nc[1], magnet.tot_mag_nc[2], magnet.abs_mag};
             break;
         default:
             mag = {};
@@ -381,9 +384,7 @@ void print_etot(const Magnetism& magnet,
         }
         // Pure SDFT (nbands=0) uses Chebyshev trace (CT) since no H diagonalization is performed.
         // Mixed SDFT (nbands>0) still diagonalizes KS orbitals, so use the actual ks_solver label.
-        const std::string iter_label = (PARAM.inp.esolver_type == "sdft" && PARAM.inp.nbands == 0)
-                                           ? "sdft"
-                                           : PARAM.inp.ks_solver;
+        const std::string iter_label = (PARAM.inp.esolver_type == "sdft" && PARAM.inp.nbands == 0) ? "sdft" : PARAM.inp.ks_solver;
         elecstate::print_scf_iterinfo(iter_label,
                                       iter,
                                       4,
@@ -395,7 +396,8 @@ void print_etot(const Magnetism& magnet,
                                       drho,
                                       12,
                                       duration,
-                                      6);
+                                      6,
+                                      ds_rms);
     }
     return;
 }
@@ -406,8 +408,7 @@ void print_etot(const Magnetism& magnet,
 void print_format(const std::string& name, const double& value)
 {
     GlobalV::ofs_running << std::setiosflags(std::ios::showpos);
-    GlobalV::ofs_running << " " << std::setw(16) << name << std::setw(30) << value << std::setw(30)
-                         << value * ModuleBase::Ry_to_eV << std::endl;
+    GlobalV::ofs_running << " " << std::setw(16) << name << std::setw(30) << value << std::setw(30) << value * ModuleBase::Ry_to_eV << std::endl;
     GlobalV::ofs_running << std::resetiosflags(std::ios::showpos);
     return;
 }

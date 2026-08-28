@@ -4,27 +4,28 @@
 #include "source_base/module_container/ATen/kernels/blas.h"
 
 template <typename REAL, typename Device>
-StoChe<REAL, Device>::~StoChe()
+void StoChe<REAL, Device>::init(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
 {
-    delete p_che;
-    delete[] spolyv_cpu;
-    delmem_var_op()(spolyv);
-}
+    // release old resources first (safe for default-constructed state too)
+    this->p_che.reset();
+    this->spolyv.reset();
+    this->spolyv_cpu.clear();
 
-template <typename REAL, typename Device>
-StoChe<REAL, Device>::StoChe(const int& nche, const int& method, const REAL& emax_sto, const REAL& emin_sto)
-{
     this->nche = nche;
     this->method_sto = method;
-    p_che = new ModuleBase::Chebyshev<REAL, Device>(nche);
+    this->p_che.reset(new ModuleBase::Chebyshev<REAL, Device>(nche));
     if (method == 1)
     {
-        resmem_var_op()(spolyv, nche);
-        spolyv_cpu = new REAL[nche];
+        REAL* spolyv_ptr = nullptr;
+        resmem_var_op()(spolyv_ptr, nche);
+        this->spolyv.reset(spolyv_ptr);
+        this->spolyv_cpu.resize(nche);
     }
     else
     {
-        resmem_var_op()(spolyv, nche * nche);
+        REAL* spolyv_ptr = nullptr;
+        resmem_var_op()(spolyv_ptr, nche * nche);
+        this->spolyv.reset(spolyv_ptr);
     }
 
     this->emax_sto = emax_sto;

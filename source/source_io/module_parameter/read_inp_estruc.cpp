@@ -21,7 +21,6 @@ void ReadInput::item_elec_stru()
 * lcao_in_pw: Expand the localized atomic set in plane-wave basis, non-self-consistent field calculation not tested.)";
         item.default_value = "pw";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.basis_type);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.towannier90)
@@ -79,7 +78,6 @@ Then the user has to correct the input file and restart the calculation.)";
         - scalapack_gvx (if compiling option `ENABLE_ELPA` has not been set and compiling option `ENABLE_MPI` has been set)
         - cusolver (if compiling option `USE_CUDA` has been set))";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.ks_solver);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.ks_solver == "default")
@@ -140,7 +138,6 @@ Then the user has to correct the input file and restart the calculation.)";
                 "cusolver",
                 "cusolvermp",
                 "pexsi",
-                "cg_in_lcao",
             };
 
             if (para.input.basis_type == "pw")
@@ -158,11 +155,7 @@ Then the user has to correct the input file and restart the calculation.)";
                     const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
                 }
-                if (ks_solver == "cg_in_lcao")
-                {
-                    GlobalV::ofs_warning << "cg_in_lcao is under testing" << std::endl;
-                }
-                else if (ks_solver == "genelpa")
+                if (ks_solver == "genelpa")
                 {
                     if (para.input.device == "gpu")
                     {
@@ -246,7 +239,6 @@ Then the user has to correct the input file and restart the calculation.)";
         item.description = "The number of Kohn-Sham orbitals to calculate. It is recommended to setup this value, especially when smearing techniques are utilized, more bands should be included.";
         item.default_value = "";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.nbands);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nbands < 0)
@@ -265,7 +257,6 @@ Then the user has to correct the input file and restart the calculation.)";
 * >0.0: this denotes the total number of electrons in the system. Must be less than 2*nbands.)";
         item.default_value = "0.0";
         item.unit = "";
-        item.availability = "";
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nelec < 0)
             {
@@ -287,7 +278,6 @@ Then the user has to correct the input file and restart the calculation.)";
         item.description = "The total number of electrons will be calculated by nelec+nelec_delta.";
         item.default_value = "0.0";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.nelec_delta);
         this->add_item(item);
     }
@@ -301,7 +291,6 @@ Then the user has to correct the input file and restart the calculation.)";
 * >0.0: The different number of electrons between spin-up and spin-down channels. The range of value must be in [-nelec ~ nelec]. It is one type of constrainted DFT method, two Fermi energies will be calculated.)";
         item.default_value = "0.0";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.nupdown = doublevalue;
             para.sys.two_fermi = (doublevalue != 0.0);
@@ -343,7 +332,6 @@ Then the user has to correct the input file and restart the calculation.)";
 The other way is only available when compiling with LIBXC, and it allows for supplying exchange-correlation functionals as combinations of LIBXC keywords for functional components, joined by a plus sign, for example, dft_functional='LDA_X_1D_EXPONENTIAL+LDA_C_1D_CSC'.)";
         item.default_value = "Used the same as DFT functional as specified in the pseudopotential files.";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.dft_functional);
         this->add_item(item);
     }
@@ -355,7 +343,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.description = "Specifies temperature when using temperature-dependent XC functionals (KSDT and so on).";
         item.default_value = "0.0";
         item.unit = "Ry";
-        item.availability = "";
         read_sync_double(input.xc_temperature);
         this->add_item(item);
     }
@@ -370,7 +357,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                           "Presently this feature can only support parameterization on one exchange functional.";
         item.default_value = "";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.xc_exch_ext.resize(item.get_size());
             std::transform(item.str_values.begin(), item.str_values.end(),
@@ -418,7 +404,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
                           "Presently this feature can only support parameterization on one correlation functional.";
         item.default_value = "";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             para.input.xc_corr_ext.resize(item.get_size());
             std::transform(item.str_values.begin(), item.str_values.end(),
@@ -463,7 +448,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.description = "Cut-off of radial integration for pseudopotentials.";
         item.default_value = "15";
         item.unit = "Bohr";
-        item.availability = "";
         read_sync_double(input.pseudo_rcut);
         this->add_item(item);
     }
@@ -477,7 +461,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 * 1: Use the mesh that is consistent with quantum espresso)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.pseudo_mesh);
         this->add_item(item);
     }
@@ -492,7 +475,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 * 4: Noncollinear or spin-orbit calculations. Set nspin to 4 explicitly when noncolin or lspinorb is enabled.)";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.nspin);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nspin != 1 && para.input.nspin != 2 && para.input.nspin != 4)
@@ -520,7 +502,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 * fd: Fermi-Dirac smearing method: and smearing_sigma below is the temperature (in Ry).)";
         item.default_value = "gauss";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.smearing_method);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             const std::vector<std::string> methods = {"gauss", "gaussian",
@@ -544,7 +525,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.description = "Energy range for smearing.";
         item.default_value = "0.015";
         item.unit = "Ry";
-        item.availability = "";
         read_sync_double(input.smearing_sigma);
         this->add_item(item);
     }
@@ -558,7 +538,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
         item.description = "Energy range for smearing, smearing_sigma = 1/2 kB smearing_sigma_temp.";
         item.default_value = "2 * smearing_sigma / kB.";
         item.unit = "K";
-        item.availability = "";
         item.read_value
             = [](const Input_Item& item, Parameter& para) { para.input.smearing_sigma = 3.166815e-6 * doublevalue; };
         // only to set smearing_sigma, so no need to write to output INPUT file
@@ -578,7 +557,6 @@ The other way is only available when compiling with LIBXC, and it allows for sup
 In general, the convergence of the Broyden method is slightly faster than that of the Pulay method.)";
         item.default_value = "broyden";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.mixing_mode);
         this->add_item(item);
     }
@@ -599,7 +577,6 @@ Note: For low-dimensional large systems, the setup of mixing_beta=0.1, mixing_nd
 For spin-polarized calculations (nspin=2 or nspin=4) that are difficult to converge, try reducing both mixing_beta and mixing_beta_mag simultaneously, e.g., mixing_beta=0.1 and mixing_beta_mag=0.1 or lower.)";
         item.default_value = "0.8 for nspin=1, 0.4 for nspin=2 and nspin=4.";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.mixing_beta);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mixing_beta < 0.0)
@@ -635,7 +612,6 @@ If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try
 
         item.default_value = "4*mixing_beta, but the maximum value is 1.6.";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.mixing_beta_mag);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.mixing_beta_mag < 0.0)
@@ -665,7 +641,6 @@ If SCF convergence is difficult with spin polarization (nspin=2 or nspin=4), try
 For systems that are difficult to converge, one could try increasing the value of 'mixing_ndim' to enhance the stability of the self-consistent field (SCF) calculation.)";
         item.default_value = "8";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.mixing_ndim);
         this->add_item(item);
     }
@@ -677,7 +652,6 @@ For systems that are difficult to converge, one could try increasing the value o
         item.description = "If the density difference between input and output drho is smaller than mixing_restart, SCF will restart at next step which means SCF will restart by using output charge density from perivos iteration as input charge density directly, and start a new mixing. Notice that mixing_restart will only take effect once in one SCF.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.mixing_restart);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.sc_mag_switch == 1)
@@ -702,7 +676,7 @@ For systems that are difficult to converge, one could try increasing the value o
         item.description = "At n-th iteration which is calculated by drho<mixing_restart, SCF will start a mixing for real-space density matrix by using the same coefficiences as the mixing of charge density.";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "Only for mixing_restart >= 0.0";
+        item.set_availability("mixing_restart>0");
         read_sync_bool(input.mixing_dmr);
         this->add_item(item);
     }
@@ -718,7 +692,6 @@ For systems that are difficult to converge, one could try increasing the value o
 For systems that are difficult to converge, particularly metallic systems, enabling Kerker scaling may aid in achieving convergence.)";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.mixing_gg0);
         this->add_item(item);
     }
@@ -732,7 +705,6 @@ For systems that are difficult to converge, particularly metallic systems, enabl
 The magnetic-density Kerker preconditioner is bypassed when mixing_beta_mag <= 0.1, so mixing_gg0_mag has no effect in that regime. It is also unavailable when the charge-density Kerker preconditioner itself is bypassed.)";
         item.default_value = "0.0";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.mixing_gg0_mag);
         this->add_item(item);
     }
@@ -746,7 +718,6 @@ The magnetic-density Kerker preconditioner is bypassed when mixing_beta_mag <= 0
 In the current implementation, the automatic bypass thresholds are fixed independently of mixing_gg0_min: charge-density Kerker is bypassed when mixing_beta <= 0.1, and magnetic-density Kerker is bypassed when mixing_beta_mag <= 0.1. Changing mixing_gg0_min does not change these thresholds or re-enable Kerker.)";
         item.default_value = "0.1";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.mixing_gg0_min);
         this->add_item(item);
     }
@@ -760,7 +731,7 @@ In the current implementation, the automatic bypass thresholds are fixed indepen
 * >0: Angle mixing for the modulus with mixing_angle=1.0)";
         item.default_value = "-10.0";
         item.unit = "";
-        item.availability = "Only relevant for non-colinear calculations nspin=4.";
+        item.set_availability("nspin==4");
         read_sync_double(input.mixing_angle);
         this->add_item(item);
     }
@@ -771,16 +742,17 @@ In the current implementation, the automatic bypass thresholds are fixed indepen
         item.type = "Boolean";
         item.description = R"(Whether to mix the kinetic energy density.
 * True: The kinetic energy density will also be mixed. It seems for general cases, SCF converges fine even without this mixing. However, if there is difficulty in converging SCF for meta-GGA, it might be helpful to turn this on.
-* False: The kinetic energy density will not be mixed.)";
+* False: The kinetic energy density will not be mixed.
+
+This setting takes effect only when the selected exchange-correlation functional uses the kinetic energy density, such as a meta-GGA or hybrid meta-GGA functional.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Only relevant for meta-GGA calculations.";
         read_sync_bool(input.mixing_tau);
         this->add_item(item);
     }
     {
         Input_Item item("mixing_dftu");
-        item.annotation = "whether to mix locale in DFT+U calculation";
+        item.annotation = "whether to mix occ_mat in DFT+U calculation";
         item.category = "Electronic structure";
         item.type = "Boolean";
         item.description = R"(Whether to mix the occupation matrices.
@@ -788,7 +760,7 @@ In the current implementation, the automatic bypass thresholds are fixed indepen
 * False: The occupation matrices will not be mixed.)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "Only relevant for DFT+U calculations.";
+        item.set_availability("dft_plus_u==1");
         read_sync_bool(input.mixing_dftu);
         this->add_item(item);
     }
@@ -805,7 +777,7 @@ In the current implementation, the automatic bypass thresholds are fixed indepen
 Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure to turn off gamma_only for multi-k calculations.)";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "Only used in localized orbitals set";
+        item.set_availability("basis_type==lcao");
         read_sync_bool(input.gamma_only);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.basis_type == "pw" && para.input.gamma_only)
@@ -841,7 +813,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.description = "This variable indicates the maximal iteration number for electronic iterations.";
         item.default_value = "100";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.scf_nmax);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "nscf")
@@ -859,7 +830,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.description = "It's the density threshold for electronic iteration. It represents the charge density error between two sequential densities from electronic iterations. Usually for local orbitals, usually 1e-6 may be accurate enough.";
         item.default_value = "1.0e-9 (plane-wave basis), or 1.0e-7 (localized atomic orbital basis).";
         item.unit = "Ry if scf_thr_type=1, dimensionless if scf_thr_type=2";
-        item.availability = "";
         read_sync_double(input.scf_thr);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.scf_thr == -1.0)
@@ -893,7 +863,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.description = "It's the energy threshold for electronic iteration. It represents the total energy error between two sequential densities from electronic iterations.";
         item.default_value = "-1.0. If the user does not set this parameter, it will not take effect.";
         item.unit = "eV";
-        item.availability = "";
         read_sync_double(input.scf_ene_thr);
         this->add_item(item);
     }
@@ -908,7 +877,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
 * 2: the criterion is defined in real space, where is the number of electron, which is used in SCF of LCAO with unit dimensionless.)";
         item.default_value = "1 (plane-wave basis), or 2 (localized atomic orbital basis).";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.scf_thr_type);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.scf_thr_type == -1)
@@ -936,7 +904,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
 * 1: If the calculated slope is larger than scf_os_thr, stop the SCF.)";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.scf_os_stop);
         this->add_item(item);
     }
@@ -948,7 +915,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.description = "The slope threshold to determine if the SCF is stuck in a charge density oscillation. If the calculated slope is larger than scf_os_thr, stop the SCF.";
         item.default_value = "-0.01";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.scf_os_thr);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.scf_os_thr >= 0)
@@ -966,7 +932,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.description = "To determine the number of old iterations' drho used in slope calculations.";
         item.default_value = "mixing_ndim";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.scf_os_ndim);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.scf_os_ndim <= 0) // default value
@@ -984,7 +949,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
         item.description = "To determine the number of old iterations to judge oscillation, it occured, more accurate lambda with DeltaSpin method would be calculated, only for PW base.";
         item.default_value = "5";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.sc_os_ndim);
         this->add_item(item);
     }
@@ -1002,7 +966,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
 * Common Error: "no soc upf used for lspinorb calculation" - ensure you are using full-relativistic pseudopotentials)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.lspinorb);
         this->add_item(item);
     }
@@ -1025,7 +988,6 @@ Note: If gamma_only is set to 1, the KPT file will be overwritten. So make sure 
   * noncolin=1, lspinorb=1: Both non-collinear magnetism and SOC)";
         item.default_value = "False";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.noncolin);
         this->add_item(item);
     }
@@ -1044,7 +1006,7 @@ soc_lambda, which has value range [0.0, 1.0], is used to modulate SOC effect:
 Use case: When experimental or high-level theoretical results suggest that the SOC effect is weaker or stronger than what full-relativistic pseudopotentials predict, you can adjust this parameter to match the target behavior.)";
         item.default_value = "1.0";
         item.unit = "";
-        item.availability = "Only works when lspinorb=true";
+        item.set_availability("lspinorb==true");
         read_sync_double(input.soc_lambda);
         this->add_item(item);
     }
@@ -1056,7 +1018,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "DFT-1/2 type:\n* 0: DFT-1/2 is off.\n* 1: Shell DFT-1/2 method is used.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.dfthalf_type);
         this->add_item(item);
     }
@@ -1068,7 +1029,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Only used when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the threshold for the first electronic iteration, from the second iteration the pw_diag_thr will be updated automatically. For nscf calculations with planewave basis set, pw_diag_thr should be <= 1e-3.";
         item.default_value = "0.01";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.pw_diag_thr);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.calculation == "get_s" && para.input.basis_type == "pw")
@@ -1089,7 +1049,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "If TRUE, the smooth threshold strategy, which applies a larger threshold (10e-5) for the empty states, will be implemented in the diagonalization methods. (This strategy should not affect total energy, forces, and other ground-state properties, but computational efficiency will be improved.) If FALSE, the smooth threshold strategy will not be applied.";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.diago_smooth_ethr);
         this->add_item(item);
     }
@@ -1101,7 +1060,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "If TRUE, the wavefunctions at k-point will be initialized from the converged wavefunctions at the nearest k-point, which can speed up the SCF convergence. Only works for PW basis.";
         item.default_value = "false";
         item.unit = "";
-        item.availability = "Used only for plane wave basis set.";
+        item.set_availability("basis_type==pw");
         read_sync_bool(input.use_k_continuity);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.use_k_continuity && para.input.basis_type != "pw") {
@@ -1130,7 +1089,7 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Only useful when you use ks_solver = cg/dav/dav_subspace/bpcg. It indicates the maximal iteration number for cg/david/dav_subspace/bpcg method.";
         item.default_value = "50";
         item.unit = "";
-        item.availability = "basis_type==pw, ks_solver==cg/dav/dav_subspace/bpcg";
+        item.set_availability("basis_type==pw and ks_solver in [cg, dav, dav_subspace, bpcg]");
         read_sync_int(input.pw_diag_nmax);
         this->add_item(item);
     }
@@ -1142,7 +1101,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Only useful when you use ks_solver = dav or ks_solver = dav_subspace. It indicates dimension of workspace(number of wavefunction packets, at least 2 needed) for the Davidson method. A larger value may yield a smaller number of iterations in the algorithm but uses more memory and more CPU time in subspace diagonalization.";
         item.default_value = "4";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.pw_diag_ndim);
         this->add_item(item);
     }
@@ -1154,7 +1112,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Preconditioner type for conjugate gradient diagonalization method.";
         item.default_value = "1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.diago_cg_prec);
         this->add_item(item);
     }
@@ -1168,7 +1125,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "In LCAO calculations, the Hamiltonian and overlap matrices are distributed across 2D processor grid. This parameter controls the 2D block size for distribution.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.nb2d);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.nb2d < 0)
@@ -1186,7 +1142,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "If not equals to 2, then the maximum l channels on LCAO is set to lmaxmax. If 2, then the number of l channels will be read from the LCAO data sets. Normally no input should be supplied for this variable so that it is kept as its default.";
         item.default_value = "2.";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.lmaxmax);
         this->add_item(item);
     }
@@ -1198,7 +1153,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Energy cutoff (in Ry) for two-center integrals in LCAO. The two-center integration table are obtained via a k space integral whose upper limit is about sqrt(lcao_ecut).";
         item.default_value = "ecutwfc";
         item.unit = "";
-        item.availability = "";
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.lcao_ecut == 0 && para.input.basis_type == "lcao")
             {
@@ -1217,7 +1171,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "the interval of k points for two-center integrals. The two-center integration table are obtained via a k space integral on a uniform grid with spacing lcao_dk.";
         item.default_value = "0.01";
         item.unit = "Bohr";
-        item.availability = "";
         read_sync_double(input.lcao_dk);
         this->add_item(item);
     }
@@ -1229,7 +1182,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "r spacing of the integration table of two-center integrals.";
         item.default_value = "0.01";
         item.unit = "Bohr";
-        item.availability = "";
         read_sync_double(input.lcao_dr);
         this->add_item(item);
     }
@@ -1241,7 +1193,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Maximum distance for the two-center integration table.";
         item.default_value = "30";
         item.unit = "Bohr";
-        item.availability = "";
         read_sync_double(input.lcao_rmax);
         this->add_item(item);
     }
@@ -1253,7 +1204,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Searching radius in finding the neighbouring atoms. By default the radius will be automatically determined by the cutoffs of orbitals and nonlocal beta projectors.";
         item.default_value = "-1";
         item.unit = "Bohr";
-        item.availability = "";
         read_sync_double(input.search_radius);
         this->add_item(item);
     }
@@ -1265,7 +1215,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed. The default is 0, which means abacus will automatically calculate these values.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.bx);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.bx > 10)
@@ -1292,7 +1241,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed. The default is 0, which means abacus will automatically calculate these values.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.by);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.by > 10)
@@ -1310,7 +1258,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "In the matrix operation of grid integral, bx/by/bz grids (in x, y, z directions) are treated as a whole as a matrix element. A different value will affect the calculation speed. The default is 0, which means abacus will automatically calculate these values.";
         item.default_value = "0";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.bz);
         item.check_value = [](const Input_Item& item, const Parameter& para) {
             if (para.input.bz > 10)
@@ -1328,7 +1275,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Number of threads used in one elpa calculation.\n\nIf the number is below 0 or 0 or beyond the max number of threads, all elpa calculation will be using all mpi threads";
         item.default_value = "-1";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.elpa_num_thread);
         this->add_item(item);
     }
@@ -1340,7 +1286,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "The number of CUDA streams used in LCAO calculations with GPU acceleration.";
         item.default_value = "4";
         item.unit = "";
-        item.availability = "";
         read_sync_int(input.nstream);
         this->add_item(item);
     }
@@ -1352,7 +1297,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "\"Energy cutoff\" (in Ry) of spherical Bessel functions. The number of spherical Bessel functions that constitute the radial parts of NAOs is determined by sqrt(bessel_nao_ecut)*bessel_nao_rcut/.";
         item.default_value = "ecutwfc";
         item.unit = "";
-        item.availability = "";
         read_sync_string(input.bessel_nao_ecut);
         item.reset_value = [](const Input_Item& item, Parameter& para) {
             if (para.input.bessel_nao_ecut == "default")
@@ -1376,7 +1320,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Tolerance when searching for the zeros of spherical Bessel functions.";
         item.default_value = "1.0e-12";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.bessel_nao_tolerence);
         this->add_item(item);
     }
@@ -1388,7 +1331,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Cutoff radius (in Bohr) and the common node of spherical Bessel functions used to construct the NAOs.";
         item.default_value = "6.0";
         item.unit = "";
-        item.availability = "";
         item.read_value = [](const Input_Item& item, Parameter& para) {
             size_t count = item.get_size();
             for (int i = 0; i < count; i++)
@@ -1416,7 +1358,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "If True, NAOs will be smoothed near the cutoff radius. See bessel_nao_rcut and bessel_nao_sigma for parameters.";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "";
         read_sync_bool(input.bessel_nao_smooth);
         this->add_item(item);
     }
@@ -1428,7 +1369,6 @@ Use case: When experimental or high-level theoretical results suggest that the S
         item.description = "Smoothing range (in Bohr). See also bessel_nao_smooth.";
         item.default_value = "0.1";
         item.unit = "";
-        item.availability = "";
         read_sync_double(input.bessel_nao_sigma);
         this->add_item(item);
     }

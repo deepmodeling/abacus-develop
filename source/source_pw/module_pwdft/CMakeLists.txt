@@ -12,12 +12,17 @@ list(APPEND objects
     op_pw_exx.cpp
     op_pw_exx_ace.cpp
     op_pw_exx_pot.cpp
+    dftu_base.cpp
+    dftu_output.cpp
+    dftu_tools_pw.cpp
+    dftu_cal_occ_pw.cpp
     setup_pot.cpp
     setup_pwrho.cpp
     setup_pwwfc.cpp
     update_cell_pw.cpp
     setup_dftu_pw.cpp
     deltaspin_pw.cpp
+    deltaspin_pw_impl.cpp
     force_pw_nl.cpp
     force_pw_cc.cpp
     force_pw_scc.cpp

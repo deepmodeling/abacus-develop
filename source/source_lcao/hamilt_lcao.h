@@ -22,13 +22,16 @@ namespace elecstate { template <typename TK, typename TR> class DensityMatrix; }
 // Setup_DeePKS forward declaration, full definition in setup_deepks.h (moved to .cpp)
 // mohan add 20260605
 template <typename TK> class Setup_DeePKS;
-// Plus_U forward declaration, full definition in module_dftu/dftu.h (moved to .cpp)
+// Plus_U forward declaration, full definition in module_dftu/dftu_lcao.h (moved to .cpp)
 // mohan add 20260605
 class Plus_U;
 
 // Exx_NAO forward declaration, full definition in setup_exx.h (moved to .cpp)
 // mohan add 20260605
-template <typename TK> class Exx_NAO; 
+template <typename TK> class Exx_NAO;
+
+/// Exx_Info forward declaration, full definition in exx_info.h
+struct Exx_Info;
 
 namespace hamilt
 {
@@ -60,8 +63,9 @@ class HamiltLCAO : public Hamilt<TK>
                elecstate::DensityMatrix<TK, double>* DM_in,
                Plus_U* p_dftu, // mohan add 2025-11-05
                Setup_DeePKS<TK> &deepks,
-               const int istep, 
-               Exx_NAO<TK> &exx_nao);
+               const int istep,
+               Exx_NAO<TK> &exx_nao,
+               const Exx_Info& exx_info);
 
     /**
      * @brief Constructor of vacuum Operators, only HR and SR will be initialed as empty HContainer

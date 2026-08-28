@@ -190,44 +190,16 @@ void ModuleIO::sum_HR(const UnitCell& ucell,
                       const K_Vectors& kv,
                       const hamilt::HContainer<TR>* hR,
                       hamilt::HContainer<std::complex<double>>* full_hR,
-                      const Exx_NAO<std::complex<double>>& exx_nao)
+                      const Exx_NAO<std::complex<double>>& exx_nao,
+                      const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "sum_HR");
     ModuleBase::timer::start("ModuleIO", "sum_HR");
 
     // init complex full_hR
     init_from_hR(hR, full_hR);
-#ifdef __EXX
-    const bool use_cell_nearest = (ModuleBase::Vector3<double>(std::fmod(kv.get_koffset(0), 1.0),
-                                                               std::fmod(kv.get_koffset(1), 1.0),
-                                                               std::fmod(kv.get_koffset(2), 1.0))
-                                       .norm()
-                                   < 1e-10);
-    RI::Cell_Nearest<int, int, 3, double, 3> cell_nearest;
-    // reallocate full_hR for BvK used in EXX
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        const std::array<int, 3> Rs_period = {kv.nmp[0], kv.nmp[1], kv.nmp[2]};
-        if (use_cell_nearest)
-        {
-            // set cell_nearest
-            std::map<int, std::array<double, 3>> atoms_pos;
-            for (int iat = 0; iat < ucell.nat; ++iat)
-            {
-                atoms_pos[iat] = RI_Util::Vector3_to_array3(ucell.atoms[ucell.iat2it[iat]].tau[ucell.iat2ia[iat]]);
-            }
-            const std::array<std::array<double, 3>, 3> latvec
-                = {RI_Util::Vector3_to_array3(ucell.a1), RI_Util::Vector3_to_array3(ucell.a2), RI_Util::Vector3_to_array3(ucell.a3)};
-            cell_nearest.init(atoms_pos, latvec, Rs_period);
-            hamilt::reallocate_hcontainer(ucell.nat, full_hR, Rs_period, &cell_nearest);
-        }
-        else
-        {
-            hamilt::reallocate_hcontainer(ucell.nat, full_hR, Rs_period);
-        }
-    }
-#endif
-    // add other hR
+    // The complete H(R) already contains exact exchange. Copy it once into
+    // full_hR; rebuilding BvK cells and adding HexxR here would double count.
     add_HR(hR, full_hR);
     // add velocity complex hR
     if (PARAM.inp.td_stype == 1)
@@ -239,36 +211,6 @@ void ModuleIO::sum_HR(const UnitCell& ucell,
         const hamilt::HContainer<std::complex<double>>* velocity_hR = TD_info::td_vel_op->get_velocity_HR_pointer();
         add_HR(velocity_hR, full_hR);
     }
-#ifdef __EXX
-    // add HexxR to complex full_hR
-    if (GlobalC::exx_info.info_global.cal_exx)
-    {
-        for (size_t is = 0; is != PARAM.inp.nspin; ++is)
-        {
-            if (use_cell_nearest)
-            {
-                RI_2D_Comm::add_HexxR(is,
-                                      GlobalC::exx_info.info_global.hybrid_alpha,
-                                      exx_nao.exc->get_Hexxs(),
-                                      pv,
-                                      PARAM.globalv.npol,
-                                      *full_hR,
-                                      &cell_nearest);
-            }
-            else
-            {
-                RI_2D_Comm::add_HexxR(is,
-                                      GlobalC::exx_info.info_global.hybrid_alpha,
-                                      exx_nao.exc->get_Hexxs(),
-                                      pv,
-                                      PARAM.globalv.npol,
-                                      *full_hR,
-                                      nullptr);
-            }
-        }
-    }
-#endif
-
     ModuleBase::timer::end("ModuleIO", "sum_HR");
 }
 
@@ -752,7 +694,8 @@ void ModuleIO::write_current(const UnitCell& ucell,
                              TD_info* td_p,
                              const hamilt::HContainer<TR>* sR,
                              const hamilt::HContainer<TR>* hR,
-                             const Exx_NAO<std::complex<double>>& exx_nao)
+                             const Exx_NAO<std::complex<double>>& exx_nao,
+                             const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "write_current");
     ModuleBase::timer::start("ModuleIO", "write_current");
@@ -762,7 +705,7 @@ void ModuleIO::write_current(const UnitCell& ucell,
     hamilt::HContainer<std::complex<double>>* full_hR;
     full_hR = new hamilt::HContainer<std::complex<double>>(pv);
     current_k.resize(kv.get_nks());
-    sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao);
+    sum_HR(ucell, *pv, kv, hR, full_hR, exx_nao, exx_info);
     cal_current_comm_k(ucell, GridD, orb, pv, kv, td_p, *sR, *full_hR, psi, pelec, current_k);
     delete full_hR;
 
@@ -828,7 +771,8 @@ template void ModuleIO::write_current<double>(const UnitCell& ucell,
                                               TD_info* td_p,
                                               const hamilt::HContainer<double>* sR,
                                               const hamilt::HContainer<double>* hR,
-                                              const Exx_NAO<std::complex<double>>& exx_nao);
+                                              const Exx_NAO<std::complex<double>>& exx_nao,
+                                              const Exx_Info& exx_info);
 
 template void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucell,
                                                             const Grid_Driver& GridD,
@@ -841,5 +785,6 @@ template void ModuleIO::write_current<std::complex<double>>(const UnitCell& ucel
                                                             TD_info* td_p,
                                                             const hamilt::HContainer<std::complex<double>>* sR,
                                                             const hamilt::HContainer<std::complex<double>>* hR,
-                                                            const Exx_NAO<std::complex<double>>& exx_nao);
+                                                            const Exx_NAO<std::complex<double>>& exx_nao,
+                                                            const Exx_Info& exx_info);
 #endif //__LCAO

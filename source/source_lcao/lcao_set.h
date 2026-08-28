@@ -12,7 +12,7 @@
 #include "source_basis/module_pw/pw_basis.h"
 #include "source_hamilt/module_surchem/surchem.h"
 #include "source_pw/module_pwdft/vl_pw.h"
-#include "source_lcao/module_dftu/dftu.h"
+#include "source_lcao/module_dftu/dftu_lcao.h"
 #include "source_lcao/setup_exx.h"
 #include "source_lcao/setup_deepks.h"
 
@@ -40,19 +40,20 @@ void set_psi_occ_dm_chg(
 template <typename TK>
 void set_pot(
         UnitCell &ucell,
-		K_Vectors &kv, 
-	    Structure_Factor& sf,	
-		const ModulePW::PW_Basis &pw_rho, 
-		const ModulePW::PW_Basis &pw_rhod, 
+		K_Vectors &kv,
+	    Structure_Factor& sf,
+		const ModulePW::PW_Basis &pw_rho,
+		const ModulePW::PW_Basis &pw_rhod,
 		elecstate::ElecState* pelec,
 		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv, 
-		pseudopot_cell_vl &locpp, 
+		Parallel_Orbitals &pv,
+		pseudopot_cell_vl &locpp,
         Plus_U &dftu,
         surchem& solvent,
         Exx_NAO<TK> &exx_nao,
         Setup_DeePKS<TK> &deepks,
-        const Input_para &inp);
+        const Input_para &inp,
+        Exx_Info& exx_info);
 
 /**
  * @brief read in DMR from file, and save it into dmat

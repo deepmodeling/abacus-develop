@@ -52,19 +52,20 @@ void LCAO_domain::set_psi_occ_dm_chg(
 template <typename TK>
 void LCAO_domain::set_pot(
         UnitCell &ucell, // not const because of dftu
-		K_Vectors &kv, // not const due to exx 
-	    Structure_Factor& sf, // will be modified in potential	
-		const ModulePW::PW_Basis &pw_rho, 
-		const ModulePW::PW_Basis &pw_rhod, 
+		K_Vectors &kv, // not const due to exx
+	    Structure_Factor& sf, // will be modified in potential
+		const ModulePW::PW_Basis &pw_rho,
+		const ModulePW::PW_Basis &pw_rhod,
 		elecstate::ElecState* pelec,
 		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv, // not const due to deepks 
-		pseudopot_cell_vl &locpp, 
+		Parallel_Orbitals &pv, // not const due to deepks
+		pseudopot_cell_vl &locpp,
         Plus_U &dftu,
         surchem& solvent,
         Exx_NAO<TK> &exx_nao,
         Setup_DeePKS<TK> &deepks,
-        const Input_para &inp)
+        const Input_para &inp,
+        Exx_Info& exx_info)
 {
     //! 1) init local pseudopotentials
     locpp.init_vloc(ucell, &pw_rho);
@@ -93,11 +94,15 @@ void LCAO_domain::set_pot(
                   inp.cal_stress,
                   inp.device,
                   inp.kpar,
+                  PARAM.globalv.hubbard_u,
+                  PARAM.globalv.uramping,
+                  inp.occ_mat_ctrl,
+                  inp.mixing_dftu,
                   &orb);
     }
 
     //! 4) init exact exchange calculations
-    exx_nao.before_runner(ucell, kv, orb, pv, inp);
+    exx_nao.before_runner(ucell, kv, orb, pv, inp, exx_info);
 
     //! 5) init deepks
     deepks.before_runner(ucell, kv.get_nks(), orb, pv, inp);
@@ -262,35 +267,37 @@ template void LCAO_domain::set_psi_occ_dm_chg<std::complex<double>>(
 
 template void LCAO_domain::set_pot<double>(
         UnitCell &ucell,
-		K_Vectors &kv, 
-	    Structure_Factor& sf,	
-		const ModulePW::PW_Basis &pw_rho, 
-		const ModulePW::PW_Basis &pw_rhod, 
+		K_Vectors &kv,
+	    Structure_Factor& sf,
+		const ModulePW::PW_Basis &pw_rho,
+		const ModulePW::PW_Basis &pw_rhod,
 		elecstate::ElecState* pelec,
 		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv, 
-		pseudopot_cell_vl &locpp, 
+		Parallel_Orbitals &pv,
+		pseudopot_cell_vl &locpp,
         Plus_U &dftu,
         surchem& solvent,
         Exx_NAO<double> &exx_nao,
         Setup_DeePKS<double> &deepks,
-        const Input_para &inp);
+        const Input_para &inp,
+        Exx_Info& exx_info);
 
 template void LCAO_domain::set_pot<std::complex<double>>(
         UnitCell &ucell,
-	    K_Vectors &kv, 
-	    Structure_Factor& sf,	
-		const ModulePW::PW_Basis &pw_rho, 
-		const ModulePW::PW_Basis &pw_rhod, 
+	    K_Vectors &kv,
+	    Structure_Factor& sf,
+		const ModulePW::PW_Basis &pw_rho,
+		const ModulePW::PW_Basis &pw_rhod,
 		elecstate::ElecState* pelec,
 		const LCAO_Orbitals& orb,
-		Parallel_Orbitals &pv, 
-		pseudopot_cell_vl &locpp, 
+		Parallel_Orbitals &pv,
+		pseudopot_cell_vl &locpp,
         Plus_U &dftu,
         surchem& solvent,
         Exx_NAO<std::complex<double>> &exx_nao,
         Setup_DeePKS<std::complex<double>> &deepks,
-        const Input_para &inp);
+        const Input_para &inp,
+        Exx_Info& exx_info);
 
 template void LCAO_domain::init_dm_from_file<double>(
     const std::string& readin_dir,

@@ -128,13 +128,13 @@ void write_dh_perI(WriteDHParams& params,
     }
 }
 
-void write_dH_components(WriteDHParams& params)
+void write_dH_components(WriteDHParams& params, const Exx_Info& exx_info)
 {
     ModuleBase::TITLE("ModuleIO", "write_dH_components");
     ModuleBase::timer::start("ModuleIO", "write_dH_components");
 
     // nspin=4 (noncollinear) is not supported: needs complex spinor blocks (HContainer<std::complex<double>>)
-    // plus noncollinear Gint kernels that do not exist for the dvlocal/drho paths. 
+    // plus noncollinear Gint kernels that do not exist for the dvlocal/drho paths.
     if (PARAM.inp.nspin == 4)
     {
         ModuleBase::WARNING_QUIT("write_dH_components",
@@ -146,7 +146,7 @@ void write_dH_components(WriteDHParams& params)
     // The EXX interfaces carried by WriteDHParams are gamma-only (see write_dh.h): at multi-k
     // dH^EXX would be the derivative with respect to every mirror atom, which this output is
     // not meant for. Quit instead of writing a dH sum that silently omits the EXX term.
-    if (GlobalC::exx_info.info_global.cal_exx && !PARAM.globalv.gamma_only_local
+    if (exx_info.info_global.cal_exx && !PARAM.globalv.gamma_only_local
         && (PARAM.inp.out_mat_dh[0] || PARAM.inp.out_mat_dh_exx[0]))
     {
         ModuleBase::WARNING_QUIT("write_dH_components",
@@ -164,7 +164,7 @@ void write_dH_components(WriteDHParams& params)
 
     if (PARAM.inp.out_mat_dh[0])
     {
-        write_dH_sum(params);
+        write_dH_sum(params, exx_info);
     }
 
     if (PARAM.inp.out_mat_dh_t[0])
@@ -197,7 +197,7 @@ void write_dH_components(WriteDHParams& params)
 #ifdef __EXX
     if (PARAM.inp.out_mat_dh_exx[0])
     {
-        write_dH_exx(params);
+        write_dH_exx(params, exx_info);
     }
 #endif
 

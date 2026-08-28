@@ -272,7 +272,7 @@ OBJS_ELECSTAT_LCAO=elecstate_lcao.o\
       cal_dm_psi.o\
       cal_edm_tddft.o\
 
-OBJS_ESOLVER=esolver.o\
+OBJS_ESOLVER=esolver_factory.o\
     esolver_ks.o\
     esolver_fp.o\
     esolver_ks_pw.o\
@@ -470,7 +470,7 @@ OBJS_PSI_INITIALIZER=psi_base.o\
                      psi_init_atomic.o\
                      psi_init_atom_rand.o\
                      psi_init_nao.o\
-                     psi_init_nao_random.o\
+                     psi_init_nao_random.o
 
 OBJS_PW=fft_bundle.o\
     fft_cpu.o\
@@ -552,6 +552,7 @@ OBJS_IO=module_parameter/input_conv.o\
     cal_test.o\
     module_dos/write_dos_pw.o\
     nscf_fermi_surf.o\
+    band_parallel_output.o\
     write_bands.o\
     module_dos/cal_dos.o\
     module_dos/cal_pdos_gamma.o\
@@ -603,6 +604,8 @@ OBJS_IO=module_parameter/input_conv.o\
     readin_info.o\
     output_info.o\
     parse_args.o\
+    module_parameter/availability.o\
+    module_parameter/availability_validator.o\
     module_parameter/read_input.o\
     module_parameter/read_inp_sys.o\
     module_parameter/read_inp_estruc.o\
@@ -611,6 +614,7 @@ OBJS_IO=module_parameter/input_conv.o\
     module_parameter/read_inp_ofdft.o\
     module_parameter/read_input_item_sdft.o\
     module_parameter/read_inp_tddft.o\
+    module_parameter/read_inp_bse.o\
     module_parameter/read_inp_deepks.o\
     module_parameter/read_inp_model.o\
     module_parameter/read_inp_postproc.o\
@@ -687,7 +691,6 @@ OBJS_LCAO=evolve_elec.o\
       center2orb_orb21.o\
       center2orb_orb22.o\
       record_adj.o\
-      wavefunc_in_pw.o\
 
 OBJS_MODULE_RI=conv_coulomb_pot_k.o\
       exx_abfs-abfs_index.o\
@@ -737,6 +740,10 @@ OBJS_SRCPW=h_ewald_pw.o\
     setup_pwrho.o\
     setup_pwwfc.o\
     update_cell_pw.o\
+    dftu_base.o\
+    dftu_output.o\
+    dftu_tools_pw.o\
+    dftu_cal_occ_pw.o\
     setup_dftu_pw.o\
     deltaspin_pw.o\
     force_pw.o\
@@ -805,7 +812,6 @@ OBJS_DFTU=dftu.o\
       dftu_force.o\
       dftu_yukawa.o\
       dftu_folding.o\
-      dftu_io.o\
       dftu_tools.o\
       dftu_occup.o\
       dftu_hamilt.o\

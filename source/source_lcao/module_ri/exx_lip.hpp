@@ -12,7 +12,6 @@
 #include "source_base/global_function.h"
 #include "source_base/vector3.h"
 #include "source_cell/klist.h"
-#include "source_lcao/wavefunc_in_pw.h"
 #include "source_base/module_external/lapack_connector.h"
 #include "source_base/parallel_global.h"
 #include "source_io/module_parameter/parameter.h"
@@ -325,14 +324,14 @@ void Exx_Lip<T, Device>::qkg2_exp(const int ik, const int iq)
             else
                 { this->recip_qkg2[ig] = 1.0 / qkg2; }
             this->sum2_factor += this->recip_qkg2[ig] * std::exp(-info.lambda * qkg2);
-            this->recip_qkg2[ig] = sqrt(this->recip_qkg2[ig]);
+            this->recip_qkg2[ig] = std::sqrt(this->recip_qkg2[ig]);
         }
         else if (Conv_Coulomb_Pot_K::Ccp_Type::Erfc == info.ccp_type)
         {
             if (std::abs(qkg2) < 1e-10)
                 { this->recip_qkg2[ig] = 1.0 / (2 * info.hse_omega); }
             else
-                { this->recip_qkg2[ig] = sqrt((1 - std::exp(-qkg2 / (4 * info.hse_omega * info.hse_omega))) / qkg2); }
+                { this->recip_qkg2[ig] = std::sqrt((1 - std::exp(-qkg2 / (4 * info.hse_omega * info.hse_omega))) / qkg2); }
         }
         else
         {
@@ -348,13 +347,13 @@ void Exx_Lip<T, Device>::b_cal(const int ik, const int iq, const int ib)
     ModuleBase::timer::start("Exx_Lip", "b_cal");
     const ModuleBase::Vector3<double> q_minus_k = this->q_pack->kv_ptr->kvec_d[iq] - this->k_pack->kv_ptr->kvec_d[ik];
     std::vector<T > mul_tmp(this->rho_basis->nrxx);
-    for( size_t ir=0,ix=0; ix<this->rho_basis->nx; ++ix)
+    for( std::size_t ir=0,ix=0; ix<this->rho_basis->nx; ++ix)
     {
         const Treal phase_x = q_minus_k.x * ix / this->rho_basis->nx;
-        for( size_t iy=0; iy<this->rho_basis->ny; ++iy)
+        for( std::size_t iy=0; iy<this->rho_basis->ny; ++iy)
         {
             const Treal phase_xy = phase_x + q_minus_k.y * iy / this->rho_basis->ny;
-            for( size_t iz=this->rho_basis->startz_current; iz<this->rho_basis->startz_current+this->rho_basis->nplane; ++iz)
+            for( std::size_t iz=this->rho_basis->startz_current; iz<this->rho_basis->startz_current+this->rho_basis->nplane; ++iz)
             {
                 const Treal phase_xyz = phase_xy + q_minus_k.z * iz / this->rho_basis->nz;
                 mul_tmp[ir] = std::exp(-phase_xyz * this->two_pi_i);
@@ -365,12 +364,12 @@ void Exx_Lip<T, Device>::b_cal(const int ik, const int iq, const int ib)
     }
 
     std::vector<T> porter (this->rho_basis->nrxx);
-    for(size_t iw=0; iw< PARAM.globalv.nlocal; ++iw)
+    for(std::size_t iw=0; iw< PARAM.globalv.nlocal; ++iw)
     {
         auto& phi_w = this->phi[iw];
-        for( size_t ir=0; ir<this->rho_basis->nrxx; ++ir)
+        for( std::size_t ir=0; ir<this->rho_basis->nrxx; ++ir)
         {
-            porter[ir] = conj(phi_w[ir]) * mul_tmp[ir] ;
+            porter[ir] = std::conj(phi_w[ir]) * mul_tmp[ir] ;
             // porter[ir] = phi_w[ir] * psi_q_b[ir] *exp_tmp[ir] ;
         }
         T* const b_w = &this->b[iw * this->rho_basis->npw];
@@ -380,7 +379,7 @@ void Exx_Lip<T, Device>::b_cal(const int ik, const int iq, const int ib)
                 this->b0[iw] = b_w[this->rho_basis->ig_gge0];
         } }
 
-        for (size_t ig = 0; ig < this->rho_basis->npw; ++ig)
+        for (std::size_t ig = 0; ig < this->rho_basis->npw; ++ig)
             { b_w[ig] *= this->recip_qkg2[ig]; }
     }
     ModuleBase::timer::end("Exx_Lip", "b_cal");
@@ -393,7 +392,7 @@ void  Exx_Lip<T, Device>::sum3_cal(const int iq, const int ib)
     if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL) {
         for (int iw_l = 0; iw_l < PARAM.globalv.nlocal; ++iw_l) {
             for (int iw_r = 0; iw_r < PARAM.globalv.nlocal; ++iw_r) {
-                this->sum3[iw_l][iw_r] += this->b0[iw_l] * conj(this->b0[iw_r]) * (Treal)this->q_pack->wf_wg(iq, ib);
+                this->sum3[iw_l][iw_r] += this->b0[iw_l] * std::conj(this->b0[iw_r]) * (Treal)this->q_pack->wf_wg(iq, ib);
     } } }
     ModuleBase::timer::end("Exx_Lip", "sum3_cal");
 }
@@ -426,9 +425,9 @@ void Exx_Lip<T, Device>::sum_all(const int ik)
     if (Conv_Coulomb_Pot_K::Ccp_Type::Ccp == info.ccp_type || Conv_Coulomb_Pot_K::Ccp_Type::Hf == info.ccp_type)
         { MPI_Reduce(&this->sum2_factor, &sum2_factor_g, 1, MPI_DOUBLE, MPI_SUM, gzero_rank_in_pool, POOL_WORLD); }
   #endif
-    for (size_t iw_l = 1; iw_l < PARAM.globalv.nlocal; ++iw_l) {
-        for (size_t iw_r = 0; iw_r < iw_l; ++iw_r) {
-            this->sum1[iw_l * PARAM.globalv.nlocal + iw_r] = conj(this->sum1[iw_r * PARAM.globalv.nlocal + iw_l]);		// Peize Lin add conj 2019-04-14
+    for (std::size_t iw_l = 1; iw_l < PARAM.globalv.nlocal; ++iw_l) {
+        for (std::size_t iw_r = 0; iw_r < iw_l; ++iw_r) {
+            this->sum1[iw_l * PARAM.globalv.nlocal + iw_r] = std::conj(this->sum1[iw_r * PARAM.globalv.nlocal + iw_l]);		// Peize Lin add conj 2019-04-14
     } }
 
     for (int iw_l = 0; iw_l < PARAM.globalv.nlocal; ++iw_l)
@@ -441,7 +440,7 @@ void Exx_Lip<T, Device>::sum_all(const int ik)
                 if (gzero_rank_in_pool == GlobalV::RANK_IN_POOL)
                 {
                     this->exx_matrix[ik][iw_l][iw_r] += spin_fac * (fourpi_div_omega * this->sum3[iw_l][iw_r] * sum2_factor_g);
-                    this->exx_matrix[ik][iw_l][iw_r] += spin_fac * (-1 / (Treal)sqrt(info.lambda * ModuleBase::PI) * (Treal)(this->q_pack->kv_ptr->get_nks() / PARAM.inp.nspin) * this->sum3[iw_l][iw_r]);
+                    this->exx_matrix[ik][iw_l][iw_r] += spin_fac * (-1 / (Treal)std::sqrt(info.lambda * ModuleBase::PI) * (Treal)(this->q_pack->kv_ptr->get_nks() / PARAM.inp.nspin) * this->sum3[iw_l][iw_r]);
                 }
             }
         }
@@ -461,7 +460,7 @@ void Exx_Lip<T, Device>::exx_energy_cal()
         for( int iw_l=0; iw_l<PARAM.globalv.nlocal; ++iw_l) {
             for( int iw_r=0; iw_r<PARAM.globalv.nlocal; ++iw_r) {
                 for( int ib=0; ib<PARAM.inp.nbands; ++ib) {
-                    exx_energy_tmp += (this->exx_matrix[ik][iw_l][iw_r] * conj((*this->k_pack->hvec_array)(ik, ib, iw_l)) * (*this->k_pack->hvec_array)(ik, ib, iw_r)).real() * this->k_pack->wf_wg(ik, ib);
+                    exx_energy_tmp += (this->exx_matrix[ik][iw_l][iw_r] * std::conj((*this->k_pack->hvec_array)(ik, ib, iw_l)) * (*this->k_pack->hvec_array)(ik, ib, iw_r)).real() * this->k_pack->wf_wg(ik, ib);
     } } } }
   #ifdef __MPI
     MPI_Allreduce( &exx_energy_tmp, &this->exx_energy, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);				// !!! k_point parallel incompleted. different pools have different kv.set_nks(>) deadlock

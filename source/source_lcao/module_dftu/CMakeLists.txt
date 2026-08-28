@@ -1,14 +1,20 @@
 list(APPEND objects
-      dftu.cpp
+      dftu_lcao.cpp
       dftu_force.cpp
       dftu_yukawa.cpp
       dftu_folding.cpp
-      dftu_io.cpp
       dftu_tools.cpp
       dftu_occup.cpp
       dftu_hamilt.cpp
-      dftu_pw.cpp
 )
+
+if(ENABLE_LCAO)
+  list(APPEND objects
+        dftu_lcao_op.cpp
+        dftu_fs.cpp
+        dftu_lcao_op_legacy.cpp
+  )
+endif()
 
 add_library(
     dftu

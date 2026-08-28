@@ -1,16 +1,14 @@
-#include "dftu.h"
-#include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
+#include "dftu_lcao.h"
 
 #ifdef __LCAO
-void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU, const int npol)
+void Plus_U::pot_onsite_complex(const int spin, const bool new_occ_mat, std::complex<double>* pot_onsite, const int npol)
 {
-    ModuleBase::TITLE("Plus_U", "cal_VU_pot_mat_complex");
-    ModuleBase::GlobalFunc::ZEROS(VU, this->paraV->nloc);
+    ModuleBase::TITLE("Plus_U", "pot_onsite_complex");
+    ModuleBase::GlobalFunc::ZEROS(pot_onsite, this->paraV->nloc);
 
     for (int it = 0; it < this->ucell->ntype; ++it)
     {
-        if (Plus_U::orbital_corr[it] == -1) 
+        if (this->orbital_corr[it] == -1) 
         {
             continue;
         }
@@ -19,7 +17,7 @@ void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::c
             const int iat = this->ucell->itia2iat(it, ia);
             for (int L = 0; L <= this->ucell->atoms[it].nwl; L++)
             {
-                if (L != Plus_U::orbital_corr[it]) 
+                if (L != this->orbital_corr[it]) 
                 {
                     continue;
                 }
@@ -53,8 +51,8 @@ void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::c
                                     }
                                     int m1_all = m1 + (2 * L + 1) * ipol1;
                                     int m2_all = m2 + (2 * L + 1) * ipol2;
-                                    double val = get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, newlocale);
-                                    VU[nu * this->paraV->nrow + mu] = std::complex<double>(val, 0.0);
+                                    double val = get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, new_occ_mat);
+                                    pot_onsite[nu * this->paraV->nrow + mu] = std::complex<double>(val, 0.0);
                                 } // ipol2
                             } // m2
                         } // ipol1
@@ -67,14 +65,14 @@ void Plus_U::cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::c
     return;
 }
 
-void Plus_U::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU, const int npol)
+void Plus_U::pot_onsite_real(const int spin, const bool new_occ_mat, double* pot_onsite, const int npol)
 {
-    ModuleBase::TITLE("Plus_U", "cal_VU_pot_mat_real");
-    ModuleBase::GlobalFunc::ZEROS(VU, this->paraV->nloc);
+    ModuleBase::TITLE("Plus_U", "pot_onsite_real");
+    ModuleBase::GlobalFunc::ZEROS(pot_onsite, this->paraV->nloc);
 
     for (int it = 0; it < this->ucell->ntype; ++it)
     {
-        if (Plus_U::orbital_corr[it] == -1) 
+        if (this->orbital_corr[it] == -1) 
         {
             continue;
         }
@@ -83,7 +81,7 @@ void Plus_U::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* V
             const int iat = this->ucell->itia2iat(it, ia);
             for (int L = 0; L <= this->ucell->atoms[it].nwl; L++)
             {
-                if (L != Plus_U::orbital_corr[it]) 
+                if (L != this->orbital_corr[it]) 
                 {
                     continue;
                 }
@@ -117,8 +115,8 @@ void Plus_U::cal_VU_pot_mat_real(const int spin, const bool newlocale, double* V
                                     int m1_all = m1 + (2 * L + 1) * ipol1;
                                     int m2_all = m2 + (2 * L + 1) * ipol2;
 
-                                    VU[nu * this->paraV->nrow + mu]
-                                        = this->get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, newlocale);
+                                    pot_onsite[nu * this->paraV->nrow + mu]
+                                        = this->get_onebody_eff_pot(it, iat, L, n, spin, m1_all, m2_all, new_occ_mat);
 
                                 } // ipol2
                             } // m2
@@ -139,11 +137,11 @@ double Plus_U::get_onebody_eff_pot(const int T,
                                  const int spin,
                                  const int m0,
                                  const int m1,
-                                 const bool newlocale)
+                                 const bool new_occ_mat)
 {
     ModuleBase::TITLE("Plus_U", "get_onebody_eff_pot");
 
-    double VU = 0.0;
+    double pot_onsite = 0.0;
 
     switch (cal_type)
     {
@@ -156,45 +154,45 @@ double Plus_U::get_onebody_eff_pot(const int T,
         break;
 
     case 3: // simplified formalism and FLL double counting
-        if (newlocale)
+        if (new_occ_mat)
         {
-            if (Yukawa)
+            if (use_yukawa_)
             {
                 if (m0 == m1) 
                 {
-                    VU = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
-                         * (0.5 - this->locale[iat][L][N][spin](m0, m1));
+                    pot_onsite = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
+                         * (0.5 - this->occ_mat[iat][L][N][spin](m0, m1));
                 } else {
-                    VU = -(this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N]) * this->locale[iat][L][N][spin](m0, m1);
+                    pot_onsite = -(this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N]) * this->occ_mat[iat][L][N][spin](m0, m1);
                 }
             }
             else
             {
                 if (m0 == m1) {
-                    VU = (this->U[T]) * (0.5 - this->locale[iat][L][N][spin](m0, m1));
+                    pot_onsite = (this->u_current[T]) * (0.5 - this->occ_mat[iat][L][N][spin](m0, m1));
                 } else {
-                    VU = -(this->U[T]) * this->locale[iat][L][N][spin](m0, m1);
+                    pot_onsite = -(this->u_current[T]) * this->occ_mat[iat][L][N][spin](m0, m1);
                 }
             }
         }
         else
         {
-            if (Yukawa)
+            if (use_yukawa_)
             {
                 if (m0 == m1) {
-                    VU = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
-                         * (0.5 - this->locale_save[iat][L][N][spin](m0, m1));
+                    pot_onsite = (this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
+                         * (0.5 - this->occ_mat_save[iat][L][N][spin](m0, m1));
                 } else {
-                    VU = -(this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
-                         * this->locale_save[iat][L][N][spin](m0, m1);
+                    pot_onsite = -(this->U_Yukawa[T][L][N] - this->J_Yukawa[T][L][N])
+                         * this->occ_mat_save[iat][L][N][spin](m0, m1);
                 }
             }
             else
             {
                 if (m0 == m1) {
-                    VU = (this->U[T]) * (0.5 - this->locale_save[iat][L][N][spin](m0, m1));
+                    pot_onsite = (this->u_current[T]) * (0.5 - this->occ_mat_save[iat][L][N][spin](m0, m1));
                 } else {
-                    VU = -(this->U[T]) * this->locale_save[iat][L][N][spin](m0, m1);
+                    pot_onsite = -(this->u_current[T]) * this->occ_mat_save[iat][L][N][spin](m0, m1);
                 }
             }
         }
@@ -206,6 +204,6 @@ double Plus_U::get_onebody_eff_pot(const int T,
         break;
     }
 
-    return VU;
+    return pot_onsite;
 }
 #endif

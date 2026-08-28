@@ -5,7 +5,7 @@
 
 #include "source_cell/unitcell.h"
 #include "source_base/kernels/math_kernel_op.h"
-#include "source_lcao/module_dftu/dftu.h" // mohan add 20251106
+#include "source_pw/module_pwdft/dftu_base.h"
 
 namespace hamilt {
 
@@ -27,7 +27,7 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
   public:
     OnsiteProj(const int* isk_in,
              const UnitCell* ucell_in,
-             Plus_U *p_dftu, // mohan add 2025-11-06 
+             Plus_U_Base* p_dftu,
              const bool cal_delta_spin,
              const bool cal_dftu);
 
@@ -54,7 +54,7 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     void cal_ps_dftu(const int npol, const int m) const;
 
-    /// one-time setup of DFT+U PW index arrays (orb_l_iat, ip_iat, ip_m, vu_begin_iat)
+    /// one-time setup of DFT+U PW index arrays (orb_l_iat, ip_iat, ip_m, pot_onsite_begin_iat)
     void setup_pw_dftu_indices() const;
 
     void update_becp(const T* psi_in, const int npol, const int m, const int npwx) const;
@@ -65,14 +65,14 @@ class OnsiteProj<OperatorPW<T, Device>> : public OperatorPW<T, Device>
 
     const UnitCell* ucell = nullptr;
 
-    Plus_U *dftu = nullptr; // mohan add 2025-11-06
+    Plus_U_Base* dftu = nullptr;
 
     mutable int* ip_iat = nullptr;
     mutable T* lambda_coeff = nullptr;
     mutable int* orb_l_iat = nullptr;
     mutable int* ip_m = nullptr;
-    mutable int* vu_begin_iat = nullptr;
-    mutable T* vu_device = nullptr;
+    mutable int* pot_onsite_begin_iat = nullptr;
+    mutable T* pot_onsite_device = nullptr;
 
     mutable int nkb_m = 0;
 

@@ -573,12 +573,13 @@ template<> void hamilt::HamiltPW<double>::updateHk(const int ik)
 }
 
 template<> hamilt::HamiltPW<double>::HamiltPW(
-		elecstate::Potential* pot_in, 
-		ModulePW::PW_Basis_K* wfc_basis, 
-		K_Vectors* pkv, 
+		elecstate::Potential* pot_in,
+		ModulePW::PW_Basis_K* wfc_basis,
+		K_Vectors* pkv,
 		pseudopot_cell_vnl* ppcell,
-		Plus_U* p_dftu, // mohan add 20251108
-		const UnitCell* ucell)
+		Plus_U_Base* p_dftu,
+		const UnitCell* ucell,
+		const General_Exx_Info* exx_info)
 {
     this->ops = new OperatorMock<double>;
 }
@@ -594,12 +595,13 @@ template<> void hamilt::HamiltPW<std::complex<double>>::updateHk(const int ik)
 }
 
 template<> hamilt::HamiltPW<std::complex<double>>::HamiltPW(
-		elecstate::Potential* pot_in, 
-		ModulePW::PW_Basis_K* wfc_basis, 
-		K_Vectors* pkv, 
+		elecstate::Potential* pot_in,
+		ModulePW::PW_Basis_K* wfc_basis,
+		K_Vectors* pkv,
 		pseudopot_cell_vnl* ppcell,
-		Plus_U* p_dftu, // mohan add 20251108
-		const UnitCell* ucell)
+		Plus_U_Base* p_dftu,
+		const UnitCell* ucell,
+		const General_Exx_Info* exx_info)
 {
     this->ops = new OperatorMock<std::complex<double>>;
 }
@@ -615,12 +617,13 @@ template<> void hamilt::HamiltPW<std::complex<float>>::updateHk(const int ik)
 }
 
 template<> hamilt::HamiltPW<std::complex<float>>::HamiltPW(
-		elecstate::Potential* pot_in, 
-		ModulePW::PW_Basis_K* wfc_basis, 
-		K_Vectors* pkv, 
+		elecstate::Potential* pot_in,
+		ModulePW::PW_Basis_K* wfc_basis,
+		K_Vectors* pkv,
 		pseudopot_cell_vnl* ppcell,
-		Plus_U* p_dftu, // mohan add 20251108
-		const UnitCell* ucell)
+		Plus_U_Base* p_dftu,
+		const UnitCell* ucell,
+		const General_Exx_Info* exx_info)
 {
     this->ops = new OperatorMock<std::complex<float>>;
 }

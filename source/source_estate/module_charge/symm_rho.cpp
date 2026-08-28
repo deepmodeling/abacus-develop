@@ -1,5 +1,6 @@
 #include "symm_rho.h"
 
+#include "source_estate/module_charge/charge.h"
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_io/module_parameter/parameter.h"
 
@@ -106,7 +107,7 @@ void Symmetry_rho::begin(const int& spin_now,
         psymmg(rhog[spin_now], rho_basis, symm);
         rho_basis->recip2real(rhog[spin_now], rho[spin_now]);
 
-        if (XC_Functional::get_ked_flag())
+        if (XC_Functional::get_ked_flag() && kin_r != nullptr)
         {
             // Use std::vector to manage kin_g instead of raw pointer
             std::vector<std::complex<double>> kin_g(ngmc);
@@ -124,6 +125,14 @@ void Symmetry_rho::begin_soc(const Charge& chr,
                              const ModulePW::PW_Basis* rho_basis,
                              ModuleSymmetry::Symmetry& symm) const
 {
+    this->begin_soc(chr.rho, chr.rhog, rho_basis, symm);
+}
+
+void Symmetry_rho::begin_soc(double** rho,
+                             std::complex<double>** rhog,
+                             const ModulePW::PW_Basis* rho_basis,
+                             ModuleSymmetry::Symmetry& symm) const
+{
     if (ModuleSymmetry::Symmetry::symm_flag != 1)
     {
         return;
@@ -136,14 +145,14 @@ void Symmetry_rho::begin_soc(const Charge& chr,
     // reciprocal space and symmetrized together (rho[1]=rho^x, rho[2]=rho^y, rho[3]=rho^z).
     for (int is = 1; is < 4; ++is)
     {
-        rho_basis->real2recip(chr.rho[is], chr.rhog[is]);
+        rho_basis->real2recip(rho[is], rhog[is]);
     }
 
-    psymmg_soc(chr.rhog[1], chr.rhog[2], chr.rhog[3], rho_basis, symm);
+    psymmg_soc(rhog[1], rhog[2], rhog[3], rho_basis, symm);
 
     for (int is = 1; is < 4; ++is)
     {
-        rho_basis->recip2real(chr.rhog[is], chr.rho[is]);
+        rho_basis->recip2real(rhog[is], rho[is]);
     }
 
     ModuleBase::timer::end("Symmetry_rho", "begin_soc");

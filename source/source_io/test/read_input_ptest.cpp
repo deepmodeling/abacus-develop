@@ -274,6 +274,8 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.vdw_abc);
     EXPECT_EQ(std::stod(param.inp.vdw_cutoff_radius), 56.6918);
     EXPECT_EQ(param.inp.vdw_radius_unit, "Bohr");
+    EXPECT_DOUBLE_EQ(param.inp.vdw_cutoff_width2, 0.05);
+    EXPECT_DOUBLE_EQ(param.inp.vdw_cutoff_width3, 0.05);
     EXPECT_DOUBLE_EQ(param.inp.vdw_cn_thr, 40.0);
     EXPECT_EQ(param.inp.vdw_cn_thr_unit, "Bohr");
     EXPECT_EQ(param.inp.vdw_C6_file, "default");
@@ -356,7 +358,7 @@ TEST_F(InputParaTest, ParaRead)
     EXPECT_FALSE(param.inp.yukawa_potential);
     EXPECT_DOUBLE_EQ(param.inp.yukawa_lambda, -1.0);
     EXPECT_EQ(param.inp.onsite_radius, 0.0);
-    EXPECT_EQ(param.inp.omc, 0);
+    EXPECT_EQ(param.inp.occ_mat_ctrl, 0);
     EXPECT_FALSE(param.inp.dft_plus_dmft);
     EXPECT_FALSE(param.inp.rpa);
     EXPECT_FALSE(param.inp.rpa_out_vel);

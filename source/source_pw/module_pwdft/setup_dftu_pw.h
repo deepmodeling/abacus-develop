@@ -6,14 +6,14 @@
 #include "source_estate/module_charge/charge_mixing.h"
 
 struct Input_para;
-class Plus_U;
+class Plus_U_Base; // mohan add 2025-11-06
 
 namespace pw
 {
 
 void iter_init_dftu_pw(const int iter,
                        const int istep,
-                       Plus_U& dftu,
+                       Plus_U_Base& dftu, // mohan add 2025-11-06
                        const void* psi,
                        const ModuleBase::matrix& wg,
                        const UnitCell& ucell,

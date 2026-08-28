@@ -15,7 +15,6 @@ if(ENABLE_LCAO)
         module_operator_lcao/veff_lcao.cpp
         module_operator_lcao/veff_dh.cpp
         module_operator_lcao/meta_lcao.cpp
-        module_operator_lcao/op_dftu_lcao.cpp
         module_operator_lcao/deepks_lcao.cpp
         module_operator_lcao/op_exx_lcao.cpp
         module_operator_lcao/overlap.cpp
@@ -32,8 +31,6 @@ if(ENABLE_LCAO)
         module_operator_lcao/td_pot_hybrid_fs.cpp
         module_operator_lcao/dspin_lcao.cpp
         module_operator_lcao/dspin_fs.cpp
-        module_operator_lcao/dftu_lcao.cpp
-        module_operator_lcao/dftu_fs.cpp
         module_operator_lcao/operator_fs_utils.cpp
         setup_dftu_lcao.cpp
         pulay_fs_center2.cpp
@@ -65,7 +62,6 @@ if(ENABLE_LCAO)
         center2orb_orb11.cpp
         center2orb_orb21.cpp
         center2orb_orb22.cpp
-        wavefunc_in_pw.cpp
     )
 
     add_library(

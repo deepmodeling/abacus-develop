@@ -152,6 +152,141 @@ TEST_F(XCTest_GRADCORR, set_xc_type)
     }
 }
 
+// Regression test for an out-of-bounds read in gradcorr.
+// `set_xc_type("HF")` sets func_type = 4 (hybrid) but leaves func_id EMPTY, because pure
+// Hartree-Fock has no (semi-)local functional. gradcorr used to index func_id[0]/func_id[1]
+// unconditionally (see also the commented-out loop in XC_Functional::gcx_spin), reading back
+// whatever the previously selected functional had left in the cleared-but-not-deallocated
+// buffer. In the two-level EXX loop that predecessor is PBE (set_xc_first_loop), so a pure-HF
+// run silently picked up a PBE gradient correction (issue deepmodeling/abacus-develop#5404)
+//
+// Setting PBE *before* HF is therefore an essential part of this test: it is what leaves the
+// stale ids in the buffer, and without it the regression does not reproduce.
+class XCTest_GRADCORR_HF : public XCTest
+{
+    protected:
+
+        double et1 = 0, vt1 = 0;
+        ModuleBase::matrix v1;
+        std::vector<double> stress1;
+
+        double et2 = 0, vt2 = 0;
+        ModuleBase::matrix v2;
+        std::vector<double> stress2;
+
+        double et4 = 0, vt4 = 0;
+        ModuleBase::matrix v4;
+        std::vector<double> stress4;
+
+        void SetUp()
+        {
+            const int nspin1 = 1;
+            const int nspin2 = 2;
+            const int nspin4 = 4;
+            const bool domag = false;
+            const bool domag_z = false;
+            const bool domag_true = true;
+
+            ModulePW::PW_Basis rhopw;
+            UnitCell ucell;
+            Charge chr;
+
+            rhopw.nrxx = 5;
+            rhopw.npw = 5;
+            rhopw.nmaxgr = 5;
+            rhopw.gcar = new ModuleBase::Vector3<double> [5];
+
+            ucell.tpiba = 1;
+            ucell.magnet.lsign_ = true;
+            unitcell::cal_ux(ucell, 4);
+
+            chr.rho = new double*[4];
+            chr.rho[0] = new double[5];
+            chr.rho[1] = new double[5];
+            chr.rho[2] = new double[5];
+            chr.rho[3] = new double[5];
+            chr.rhog = new std::complex<double>*[2];
+            chr.rhog[0] = new std::complex<double>[5];
+            chr.rhog[1] = new std::complex<double>[5];
+
+            chr.rho_core = new double[5];
+            chr.rhog_core = new std::complex<double>[5];
+
+            for(int i=0;i<5;i++)
+            {
+                chr.rho[0][i] = double(i);
+                chr.rho[1][i] = 0.1*double(i);
+                chr.rho[2][i] = chr.rho[0][i];
+                chr.rho[3][i] = chr.rho[1][i];
+                chr.rhog[0][i] = chr.rho[0][i];
+                chr.rhog[1][i] = chr.rho[1][i];
+                chr.rho_core[i] = 0;
+                chr.rhog_core[i] = 0;
+                rhopw.gcar[i]= 1;
+            }
+
+            v1.create(1,5);
+            v1.zero_out();
+            v2.create(2,5);
+            v2.zero_out();
+            v4.create(4,5);
+            v4.zero_out();
+
+            // leave PBE ids in func_id's buffer, then switch to pure HF
+            XC_Functional::set_xc_type("PBE");
+            XC_Functional::set_xc_type("HF");
+
+            const double hybrid_alpha = 1.0;
+            const double hse_omega = 0.0;
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,false,nspin1,domag,domag_z, hybrid_alpha, hse_omega);
+            XC_Functional::gradcorr(et1,vt1,v1,&chr,&rhopw,&ucell,stress1,true, nspin1,domag,domag_z, hybrid_alpha, hse_omega);
+
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,false,nspin2,domag,domag_z, hybrid_alpha, hse_omega);
+            XC_Functional::gradcorr(et2,vt2,v2,&chr,&rhopw,&ucell,stress2,true, nspin2,domag,domag_z, hybrid_alpha, hse_omega);
+
+            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,false,nspin4,domag_true,domag_z, hybrid_alpha, hse_omega);
+            XC_Functional::gradcorr(et4,vt4,v4,&chr,&rhopw,&ucell,stress4,true, nspin4,domag_true,domag_z, hybrid_alpha, hse_omega);
+        }
+};
+
+TEST_F(XCTest_GRADCORR_HF, no_local_functional)
+{
+    // the state the fixture ran under: hybrid, but with no (semi-)local functional
+    EXPECT_EQ(XC_Functional::get_func_type(), 4);
+    EXPECT_TRUE(XC_Functional::get_func_id().empty());
+
+    // pure HF must contribute exactly nothing through the gradient correction
+    EXPECT_DOUBLE_EQ(et1, 0.0);
+    EXPECT_DOUBLE_EQ(vt1, 0.0);
+    EXPECT_DOUBLE_EQ(et2, 0.0);
+    EXPECT_DOUBLE_EQ(vt2, 0.0);
+    EXPECT_DOUBLE_EQ(et4, 0.0);
+    EXPECT_DOUBLE_EQ(vt4, 0.0);
+
+    for(int i=0;i<5;i++)
+    {
+        EXPECT_DOUBLE_EQ(v1(0,i), 0.0);
+        EXPECT_DOUBLE_EQ(v2(0,i), 0.0);
+        EXPECT_DOUBLE_EQ(v2(1,i), 0.0);
+        for(int is=0;is<4;is++)
+        {
+            EXPECT_DOUBLE_EQ(v4(is,i), 0.0);
+        }
+    }
+
+    // `Stress_Func::stress_gga` guards only on func_type, so it reaches this path for HF and
+    // then reads stress_gga[0..8]: the tensor must come back sized and zeroed, not empty.
+    ASSERT_EQ(stress1.size(), 9);
+    ASSERT_EQ(stress2.size(), 9);
+    ASSERT_EQ(stress4.size(), 9);
+    for(int i=0;i<9;i++)
+    {
+        EXPECT_DOUBLE_EQ(stress1[i], 0.0);
+        EXPECT_DOUBLE_EQ(stress2[i], 0.0);
+        EXPECT_DOUBLE_EQ(stress4[i], 0.0);
+    }
+}
+
 class XCTest_GRADWFC : public XCTest
 {
     protected:

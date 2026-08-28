@@ -112,7 +112,7 @@ struct Input_para
     double mixing_gg0_min = 0.1;
     double mixing_angle = -10.0;
     bool mixing_tau = false;  ///< whether to mix tau in mgga
-    bool mixing_dftu = false; ///< whether to mix locale in DFT+U
+    bool mixing_dftu = false; ///< whether to mix occ_mat in DFT+U
     bool mixing_dmr = false;  ///< whether to mix real space density matrix
 
     bool gamma_only = false;   ///< for plane wave.
@@ -578,6 +578,8 @@ struct Input_para
                                                             ///< structure, radius or period
     std::string vdw_cutoff_radius = "default";              ///< radius cutoff for periodic structure
     std::string vdw_radius_unit = "Bohr";                   ///< unit of radius cutoff for periodic structure
+    double vdw_cutoff_width2 = 0.05;               ///< smooth cutoff width for two-body dispersion, Bohr
+    double vdw_cutoff_width3 = 0.05;               ///< smooth cutoff width for three-body dispersion, Bohr
     double vdw_cn_thr = 40.0;                               ///< radius cutoff for cn
     std::string vdw_cn_thr_unit = "Bohr";                   ///< unit of cn_thr, Bohr or Angstrom
     std::string vdw_d4_xc = "default";                      ///< functional name passed to DFT-D4
@@ -633,7 +635,7 @@ struct Input_para
     bool yukawa_potential = false;         ///< default: false
     double yukawa_lambda = -1.0;           ///< default: -1.0, which means we calculate lambda
     double uramping_eV = -1.0;             ///< U-Ramping method (eV)
-    int omc = 0;                           ///< the mode of occupation matrix control
+    int occ_mat_ctrl = 0;                  ///< the mode of occupation matrix control
     double onsite_radius = 0.0;            ///< radius of the sphere for onsite projection (Bohr)
     std::vector<double> hubbard_u_eV = {}; ///< Hubbard Coulomb interaction parameter U(ev)
     std::vector<int> orbital_corr = {};    ///< which correlated orbitals need corrected ; d:2 ,f:3, do not

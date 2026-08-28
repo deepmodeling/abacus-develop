@@ -16,7 +16,8 @@
 #include "source_lcao/setup_exx.h" // for exx, mohan add 20251008
 #include "source_lcao/setup_deepks.h" // for deepks, mohan add 20251010
 #include "source_lcao/setup_dm.h" // mohan add 2025-11-03
-#include "source_lcao/module_dftu/dftu.h" // mohan add 2025-11-07
+#include "source_lcao/module_dftu/dftu_lcao.h" // mohan add 2025-11-07
+#include "source_hamilt/module_xc/exx_info.h"
 
 namespace vdw
 {
@@ -60,6 +61,7 @@ class Force_Stress_LCAO
                         Setup_DeePKS<T> &deepks,
                         Exx_NAO<T> &exx_nao,
                         ModuleSymmetry::Symmetry* symm,
+                        const Exx_Info& exx_info,
                         const int td_stype = 0,
                         hamilt::Hamilt<T>* p_hamilt = nullptr);
 

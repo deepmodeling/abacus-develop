@@ -1,53 +1,104 @@
-#include "source_io/module_parameter/parameter.h"
-
 #ifdef __LCAO
-#include "dftu.h"
-#include "source_base/constants.h"
+#include "dftu_force.h"
+#include "dftu_folding.h"
+#include "dftu_lcao.h"
 #include "source_base/global_function.h"
-#include "source_base/inverse_matrix.h"
 #include "source_base/module_external/scalapack_connector.h"
 #include "source_base/parallel_reduce.h"
 #include "source_base/timer.h"
-#include "source_estate/elecstate_lcao.h"
-#include "source_cell/magnetism.h"
-#include "source_estate/module_charge/charge.h"
 
-#include <cmath>
 #include <complex>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
-#include <stdio.h>
-#include <string.h>
+#include <string>
 
 
-void Plus_U::force_stress(const UnitCell& ucell,
-                        const Grid_Driver& gd,
-                        std::vector<std::vector<double>>* dmk_d,
-                        std::vector<std::vector<std::complex<double>>>* dmk_c,
-                        const Parallel_Orbitals& pv,
-                        ForceStressArrays& fsr,
-                        ModuleBase::matrix& force_dftu,
-                        ModuleBase::matrix& stress_dftu,
-                        const K_Vectors& kv,
-                        const int npol)
+namespace DFTU_LCAO {
+
+void force_stress(Plus_U& dftu,
+                  const UnitCell& ucell,
+                  const Grid_Driver& gd,
+                  std::vector<std::vector<double>>* dmk_d,
+                  std::vector<std::vector<std::complex<double>>>* dmk_c,
+                  const Parallel_Orbitals& pv,
+                  ForceStressArrays& fsr,
+                  ModuleBase::matrix& force_dftu,
+                  ModuleBase::matrix& stress_dftu,
+                  const K_Vectors& kv,
+                  const int npol)
 {
-    ModuleBase::TITLE("Plus_U", "force_stress");
-    ModuleBase::timer::start("Plus_U", "force_stress");
+    ModuleBase::TITLE("DFTU_LCAO", "force_stress");
+    ModuleBase::timer::start("DFTU_LCAO", "force_stress");
 
-    const int nlocal = this->nlocal;
+    // Defensive null check: the legacy dft_plus_u==2 force/stress path
+    // requires fsr.DSloc_x/y/z (gamma_only) or fsr.DSloc_Rx/Ry/Rz (multik)
+    // and fsr.DH_r to be allocated and filled by the caller. If the caller
+    // forgot to allocate them (as in force_stress_lcao.cpp where the local
+    // fsr_dftu is created without allocation), we fail early with a clear
+    // message instead of letting pdgemm_ dereference nullptr and crash.
+    // See force_stress_lcao.cpp for the historical background.
+    if (dftu.is_gamma_only_local())
+    {
+        if (dftu.is_cal_force()
+            && (fsr.DSloc_x == nullptr || fsr.DSloc_y == nullptr || fsr.DSloc_z == nullptr))
+        {
+            ModuleBase::WARNING_QUIT("DFTU_LCAO::force_stress",
+                "fsr.DSloc_x/y/z are nullptr in gamma_only path; the caller must allocate and fill them. "
+                "See notes in source/source_lcao/force_stress_lcao.cpp.");
+        }
+        if (dftu.is_cal_stress()
+            && (fsr.DSloc_x == nullptr || fsr.DSloc_y == nullptr || fsr.DSloc_z == nullptr
+                || fsr.DH_r == nullptr))
+        {
+            ModuleBase::WARNING_QUIT("DFTU_LCAO::force_stress",
+                "fsr.DSloc_x/y/z or fsr.DH_r is nullptr in gamma_only path; "
+                "the caller must allocate and fill them. "
+                "See notes in source/source_lcao/force_stress_lcao.cpp.");
+        }
+    }
+    else
+    {
+        if (dftu.is_cal_force()
+            && (fsr.DSloc_Rx == nullptr || fsr.DSloc_Ry == nullptr || fsr.DSloc_Rz == nullptr))
+        {
+            ModuleBase::WARNING_QUIT("DFTU_LCAO::force_stress",
+                "fsr.DSloc_Rx/Ry/Rz are nullptr in multik path; the caller must allocate and fill them. "
+                "See notes in source/source_lcao/force_stress_lcao.cpp.");
+        }
+        if (dftu.is_cal_stress()
+            && (fsr.DSloc_Rx == nullptr || fsr.DSloc_Ry == nullptr || fsr.DSloc_Rz == nullptr
+                || fsr.DH_r == nullptr))
+        {
+            ModuleBase::WARNING_QUIT("DFTU_LCAO::force_stress",
+                "fsr.DSloc_Rx/Ry/Rz or fsr.DH_r is nullptr in multik path; "
+                "the caller must allocate and fill them. "
+                "See notes in source/source_lcao/force_stress_lcao.cpp.");
+        }
+    }
 
-    if (this->cal_force)
+    // Layout invariant: the folded dSR/mat buffers are consumed by ScaLAPACK
+    // GEMM through pv.desc (local column-major storage) and read back with
+    // explicit ic * pv.nrow + ir indices. All ks_solvers accepted by INPUT
+    // validation are column-major today; abort loudly instead of silently
+    // producing wrong forces/stresses if that assumption ever changes.
+    if ((dftu.is_cal_force() || dftu.is_cal_stress())
+        && !ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(dftu.get_ks_solver()))
+    {
+        ModuleBase::WARNING_QUIT("DFTU_LCAO::force_stress",
+            "non column-major ks_solver is not supported for DFT+U force/stress; "
+            "the folded matrix layout assumption would be violated");
+    }
+
+    const int nlocal = dftu.get_nlocal();
+
+    if (dftu.is_cal_force())
     {
         force_dftu.zero_out();
     }
-    if (this->cal_stress)
+    if (dftu.is_cal_stress())
     {
         stress_dftu.zero_out();
     }
 
-    if (this->gamma_only_local)
+    if (dftu.is_gamma_only_local())
     {
         const char transN = 'N';
         const char transT = 'T';
@@ -55,43 +106,42 @@ void Plus_U::force_stress(const UnitCell& ucell,
         const double alpha = 1.0;
         const double beta = 0.0;
 
-        std::vector<double> rho_VU(pv.nloc);
+        std::vector<double> rho_pot_onsite(pv.nloc);
 
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
 
             const int spin = kv.isk[ik];
 
-            double* VU = new double[pv.nloc];
+            double* pot_onsite = new double[pv.nloc];
 
-            this->cal_VU_pot_mat_real(spin, false, VU, npol);
+            dftu.pot_onsite_real(spin, false, pot_onsite, npol);
 
 #ifdef __MPI
             ScalapackConnector::gemm(transT, transN, nlocal, nlocal, nlocal,
                     alpha, (*dmk_d)[spin].data(), 1, 1,
-                    pv.desc, VU, 1, 1,
-                    pv.desc, beta, &rho_VU[0],
+                    pv.desc, pot_onsite, 1, 1,
+                    pv.desc, beta, &rho_pot_onsite[0],
                     1, 1, pv.desc);
 #endif
 
-            delete[] VU;
+            delete[] pot_onsite;
 
-            if (this->cal_force)
+            if (dftu.is_cal_force())
             {
-                this->cal_force_gamma(ucell,&rho_VU[0], pv, fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z, force_dftu);
+                cal_force_gamma(dftu.get_nlocal(), dftu.get_npol(),
+                                dftu.get_orbital_corr_vec(), dftu.get_iatlnmipol2iwt(),
+                                ucell, &rho_pot_onsite[0], pv,
+                                fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z, force_dftu);
             }
 
-            if (this->cal_stress)
+            if (dftu.is_cal_stress())
             {
-                this->cal_stress_gamma(ucell,
-                                       pv,
-                                       &gd,
-                                       fsr.DSloc_x,
-                                       fsr.DSloc_y,
-                                       fsr.DSloc_z,
-                                       fsr.DH_r,
-                                       &rho_VU[0],
-                                       stress_dftu);
+                cal_stress_gamma(dftu.get_nlocal(), dftu.get_npol(),
+                                 dftu.get_ks_solver(), dftu.get_orb_cutoff(),
+                                 ucell, pv, &gd,
+                                 fsr.DSloc_x, fsr.DSloc_y, fsr.DSloc_z, fsr.DH_r,
+                                 &rho_pot_onsite[0], stress_dftu);
             }
         } // ik
     }
@@ -103,43 +153,48 @@ void Plus_U::force_stress(const UnitCell& ucell,
         const std::complex<double> alpha(1.0, 0.0);
         const std::complex<double> beta(0.0, 0.0);
 
-        std::vector<std::complex<double>> rho_VU(pv.nloc);
+        std::vector<std::complex<double>> rho_pot_onsite(pv.nloc);
 
         for (int ik = 0; ik < kv.get_nks(); ik++)
         {
             const int spin = kv.isk[ik];
 
-            std::complex<double>* VU = new std::complex<double>[pv.nloc];
+            std::complex<double>* pot_onsite = new std::complex<double>[pv.nloc];
 
-            this->cal_VU_pot_mat_complex(spin, false, VU, npol);
+            dftu.pot_onsite_complex(spin, false, pot_onsite, npol);
 
 
 #ifdef __MPI
             ScalapackConnector::gemm(transT, transN, nlocal, nlocal, nlocal,
                     alpha, (*dmk_c)[ik].data(), one_int, one_int,
-                    pv.desc, VU, one_int, one_int, pv.desc, beta,
-                    &rho_VU[0], one_int, one_int, pv.desc);
+                    pv.desc, pot_onsite, one_int, one_int, pv.desc, beta,
+                    &rho_pot_onsite[0], one_int, one_int, pv.desc);
 #endif
 
-            delete[] VU;
+            delete[] pot_onsite;
 
-            if (this->cal_force)
+            if (dftu.is_cal_force())
             {
-                cal_force_k(ucell, gd, fsr, pv, ik, &rho_VU[0], force_dftu, kv.kvec_d[ik]);
+                cal_force_k(dftu.get_nlocal(), dftu.get_npol(),
+                            dftu.get_ks_solver(), dftu.get_orb_cutoff(),
+                            dftu.get_orbital_corr_vec(), dftu.get_iatlnmipol2iwt(),
+                            ucell, gd, fsr, pv, ik, &rho_pot_onsite[0], force_dftu, kv.kvec_d[ik]);
             }
-            if (this->cal_stress)
+            if (dftu.is_cal_stress())
             {
-                cal_stress_k(ucell, gd, fsr, pv, ik, &rho_VU[0], stress_dftu, kv.kvec_d[ik]);
+                cal_stress_k(dftu.get_nlocal(), dftu.get_npol(),
+                             dftu.get_ks_solver(), dftu.get_orb_cutoff(),
+                             ucell, gd, fsr, pv, ik, &rho_pot_onsite[0], stress_dftu, kv.kvec_d[ik]);
             }
         } // ik
     }
 
-    if (this->cal_force)
+    if (dftu.is_cal_force())
     {
         Parallel_Reduce::reduce_pool(force_dftu.c, force_dftu.nr * force_dftu.nc);
     }
 
-    if (this->cal_stress)
+    if (dftu.is_cal_stress())
     {
         Parallel_Reduce::reduce_pool(stress_dftu.c, stress_dftu.nr * stress_dftu.nc);
 
@@ -160,22 +215,28 @@ void Plus_U::force_stress(const UnitCell& ucell,
             }
         }
     }
-    ModuleBase::timer::end("Plus_U", "force_stress");
+    ModuleBase::timer::end("DFTU_LCAO", "force_stress");
 
     return;
 }
 
-void Plus_U::cal_force_k(const UnitCell& ucell,
-                       const Grid_Driver& gd,
-                       ForceStressArrays& fsr,
-                       const Parallel_Orbitals& pv,
-                       const int ik,
-                       const std::complex<double>* rho_VU,
-                       ModuleBase::matrix& force_dftu,
-                       const ModuleBase::Vector3<double>& kvec_d)
+void cal_force_k(const int nlocal,
+                 const int npol,
+                 const std::string& ks_solver,
+                 const std::vector<double>& orb_cutoff,
+                 const std::vector<int>& orbital_corr,
+                 const std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& iatlnmipol2iwt,
+                 const UnitCell& ucell,
+                 const Grid_Driver& gd,
+                 ForceStressArrays& fsr,
+                 const Parallel_Orbitals& pv,
+                 const int ik,
+                 const std::complex<double>* rho_pot_onsite,
+                 ModuleBase::matrix& force_dftu,
+                 const ModuleBase::Vector3<double>& kvec_d)
 {
-    ModuleBase::TITLE("Plus_U", "cal_force_k");
-    ModuleBase::timer::start("Plus_U", "cal_force_k");
+    ModuleBase::TITLE("DFTU_LCAO", "cal_force_k");
+    ModuleBase::timer::start("DFTU_LCAO", "cal_force_k");
 
     const char transN = 'N';
     const char transC = 'C';
@@ -183,15 +244,15 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
     const std::complex<double> zero(0.0, 0.0);
     const std::complex<double> one(1.0, 0.0);
 
-    const int nlocal = this->nlocal;
     assert(nlocal>0);
 
-    std::vector<std::complex<double>> dm_VU_dSm(pv.nloc);
+    std::vector<std::complex<double>> dm_pot_onsite_dSm(pv.nloc);
     std::vector<std::complex<double>> dSm_k(pv.nloc);
 
     for (int dim = 0; dim < 3; dim++)
     {
-        this->folding_matrix_k(ucell, gd, fsr, pv, ik, dim + 1, 0, &dSm_k[0], kvec_d);
+        DFTU_LCAO::folding_matrix_k(npol, ks_solver, orb_cutoff,
+                                        ucell, gd, fsr, pv, ik, dim + 1, 0, &dSm_k[0], kvec_d);
 
 #ifdef __MPI
         ScalapackConnector::gemm(transN,
@@ -204,12 +265,12 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
                 one_int,
                 one_int,
                 pv.desc,
-                rho_VU,
+                rho_pot_onsite,
                 one_int,
                 one_int,
                 pv.desc,
                 zero,
-                &dm_VU_dSm[0],
+                &dm_pot_onsite_dSm[0],
                 one_int,
                 one_int,
                 pv.desc);
@@ -226,7 +287,7 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
                 const int irc = ic * pv.nrow + ir;
 
                 if (iwt1 == iwt2)
-                    force_dftu(iat1, dim) += dm_VU_dSm[irc].real();
+                    force_dftu(iat1, dim) += dm_pot_onsite_dSm[irc].real();
 
             } // end ic
         }     // end ir
@@ -242,12 +303,12 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
                 one_int,
                 one_int,
                 pv.desc,
-                rho_VU,
+                rho_pot_onsite,
                 one_int,
                 one_int,
                 pv.desc,
                 zero,
-                &dm_VU_dSm[0],
+                &dm_pot_onsite_dSm[0],
                 one_int,
                 one_int,
                 pv.desc);
@@ -256,7 +317,7 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
         for (int it = 0; it < ucell.ntype; it++)
         {
             const int NL = ucell.atoms[it].nwl + 1;
-            const int LC = get_orbital_corr(it);
+            const int LC = orbital_corr[it];
 
             if (LC == -1)
                 continue;
@@ -266,7 +327,7 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
 
                 for (int l = 0; l < NL; l++)
                 {
-                    if (l != get_orbital_corr(it))
+                    if (l != orbital_corr[it])
                         continue;
                     const int N = ucell.atoms[it].l_nchi[l];
 
@@ -277,15 +338,15 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
 
                         for (int m = 0; m < 2 * l + 1; m++)
                         {
-                            for (int ipol = 0; ipol < this->npol; ipol++)
+                            for (int ipol = 0; ipol < npol; ipol++)
                             {
-                                const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
+                                const int iwt = iatlnmipol2iwt[iat][l][n][m][ipol];
                                 const int mu = pv.global2local_row(iwt);
                                 const int nu = pv.global2local_col(iwt);
                                 if (mu < 0 || nu < 0)
                                     continue;
 
-                                force_dftu(iat, dim) += dm_VU_dSm[nu * pv.nrow + mu].real();
+                                force_dftu(iat, dim) += dm_pot_onsite_dSm[nu * pv.nrow + mu].real();
                             }
                         } //
                     }     // n
@@ -293,24 +354,26 @@ void Plus_U::cal_force_k(const UnitCell& ucell,
             }             // ia
         }                 // it
     }                     // end dim
-    ModuleBase::timer::end("Plus_U", "cal_force_k");
+    ModuleBase::timer::end("DFTU_LCAO", "cal_force_k");
 
     return;
 }
 
-void Plus_U::cal_stress_k(const UnitCell& ucell,
-                        const Grid_Driver& gd,
-                        ForceStressArrays& fsr,
-                        const Parallel_Orbitals& pv,
-                        const int ik,
-                        const std::complex<double>* rho_VU,
-                        ModuleBase::matrix& stress_dftu,
-                        const ModuleBase::Vector3<double>& kvec_d)
+void cal_stress_k(const int nlocal,
+                  const int npol,
+                  const std::string& ks_solver,
+                  const std::vector<double>& orb_cutoff,
+                  const UnitCell& ucell,
+                  const Grid_Driver& gd,
+                  ForceStressArrays& fsr,
+                  const Parallel_Orbitals& pv,
+                  const int ik,
+                  const std::complex<double>* rho_pot_onsite,
+                  ModuleBase::matrix& stress_dftu,
+                  const ModuleBase::Vector3<double>& kvec_d)
 {
-    ModuleBase::TITLE("Plus_U", "cal_stress_k");
-    ModuleBase::timer::start("Plus_U", "cal_stress_k");
-
-    const int nlocal = this->nlocal;
+    ModuleBase::TITLE("DFTU_LCAO", "cal_stress_k");
+    ModuleBase::timer::start("DFTU_LCAO", "cal_stress_k");
 
     const char transN = 'N';
     const int one_int = 1;
@@ -318,14 +381,15 @@ void Plus_U::cal_stress_k(const UnitCell& ucell,
     const std::complex<double> zero(0.0, 0.0);
     const std::complex<double> one(1.0, 0.0);
 
-    std::vector<std::complex<double>> dm_VU_sover(pv.nloc);
+    std::vector<std::complex<double>> dm_pot_onsite_sover(pv.nloc);
     std::vector<std::complex<double>> dSR_k(pv.nloc);
 
     for (int dim1 = 0; dim1 < 3; dim1++)
     {
         for (int dim2 = dim1; dim2 < 3; dim2++)
         {
-            this->folding_matrix_k(ucell, gd, fsr, pv, ik, dim1 + 4, dim2, &dSR_k[0], kvec_d);
+            DFTU_LCAO::folding_matrix_k(npol, ks_solver, orb_cutoff,
+                                            ucell, gd, fsr, pv, ik, dim1 + 4, dim2, &dSR_k[0], kvec_d);
 
 #ifdef __MPI
             ScalapackConnector::gemm(transN,
@@ -334,7 +398,7 @@ void Plus_U::cal_stress_k(const UnitCell& ucell,
                     nlocal,
                     nlocal,
                     minus_half,
-                    rho_VU,
+                    rho_pot_onsite,
                     one_int,
                     one_int,
                     pv.desc,
@@ -343,7 +407,7 @@ void Plus_U::cal_stress_k(const UnitCell& ucell,
                     one_int,
                     pv.desc,
                     zero,
-                    &dm_VU_sover[0],
+                    &dm_pot_onsite_sover[0],
                     one_int,
                     one_int,
                     pv.desc);
@@ -358,37 +422,40 @@ void Plus_U::cal_stress_k(const UnitCell& ucell,
                     const int irc = ic * pv.nrow + ir;
 
                     if (iwt1 == iwt2)
-                        stress_dftu(dim1, dim2) += 2.0 * dm_VU_sover[irc].real();
+                        stress_dftu(dim1, dim2) += 2.0 * dm_pot_onsite_sover[irc].real();
                 } // end ic
             }     // end ir
 
         } // end dim2
     }     // end dim1
-    ModuleBase::timer::end("Plus_U", "cal_stress_k");
+    ModuleBase::timer::end("DFTU_LCAO", "cal_stress_k");
 
     return;
 }
 
-void Plus_U::cal_force_gamma(const UnitCell& ucell,
-                           const double* rho_VU,
-                           const Parallel_Orbitals& pv,
-                           double* dsloc_x,
-                           double* dsloc_y,
-                           double* dsloc_z,
-                           ModuleBase::matrix& force_dftu)
+void cal_force_gamma(const int nlocal,
+                     const int npol,
+                     const std::vector<int>& orbital_corr,
+                     const std::vector<std::vector<std::vector<std::vector<std::vector<int>>>>>& iatlnmipol2iwt,
+                     const UnitCell& ucell,
+                     const double* rho_pot_onsite,
+                     const Parallel_Orbitals& pv,
+                     double* dsloc_x,
+                     double* dsloc_y,
+                     double* dsloc_z,
+                     ModuleBase::matrix& force_dftu)
 {
-    ModuleBase::TITLE("Plus_U", "cal_force_gamma");
-    ModuleBase::timer::start("Plus_U", "cal_force_gamma");
+    ModuleBase::TITLE("DFTU_LCAO", "cal_force_gamma");
+    ModuleBase::timer::start("DFTU_LCAO", "cal_force_gamma");
     const char transN = 'N';
     const char transT = 'T';
     const int one_int = 1;
     const double one = 1.0;
     const double zero = 0.0;
     const double minus_one = -1.0;
-    const int nlocal = this->nlocal;
     assert(nlocal>0);
 
-    std::vector<double> dm_VU_dSm(pv.nloc);
+    std::vector<double> dm_pot_onsite_dSm(pv.nloc);
 
     for (int dim = 0; dim < 3; dim++)
     {
@@ -417,12 +484,12 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
                 1,
                 1,
                 pv.desc,
-                rho_VU,
+                rho_pot_onsite,
                 1,
                 1,
                 pv.desc,
                 zero,
-                &dm_VU_dSm[0],
+                &dm_pot_onsite_dSm[0],
                 1,
                 1,
                 pv.desc);
@@ -439,7 +506,7 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
                 const int irc = ic * pv.nrow + ir;
 
                 if (iwt1 == iwt2)
-                    force_dftu(iat1, dim) += dm_VU_dSm[irc];
+                    force_dftu(iat1, dim) += dm_pot_onsite_dSm[irc];
 
             } // end ic
         }     // end ir
@@ -455,12 +522,12 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
                 1,
                 1,
                 pv.desc,
-                rho_VU,
+                rho_pot_onsite,
                 1,
                 1,
                 pv.desc,
                 zero,
-                &dm_VU_dSm[0],
+                &dm_pot_onsite_dSm[0],
                 1,
                 1,
                 pv.desc);
@@ -492,15 +559,15 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
                         // Calculate the local occupation number matrix
                         for (int m = 0; m < 2 * l + 1; m++)
                         {
-                            for (int ipol = 0; ipol < this->npol; ipol++)
+                            for (int ipol = 0; ipol < npol; ipol++)
                             {
-                                const int iwt = this->iatlnmipol2iwt[iat][l][n][m][ipol];
+                                const int iwt = iatlnmipol2iwt[iat][l][n][m][ipol];
                                 const int mu = pv.global2local_row(iwt);
                                 const int nu = pv.global2local_col(iwt);
                                 if (mu < 0 || nu < 0)
                                     continue;
 
-                                force_dftu(iat, dim) += dm_VU_dSm[nu * pv.nrow + mu];
+                                force_dftu(iat, dim) += dm_pot_onsite_dSm[nu * pv.nrow + mu];
                             }
                         } //
                     }     // n
@@ -509,23 +576,27 @@ void Plus_U::cal_force_gamma(const UnitCell& ucell,
         }                 // it
 
     } // end dim
-    ModuleBase::timer::end("Plus_U", "cal_force_gamma");
+    ModuleBase::timer::end("DFTU_LCAO", "cal_force_gamma");
 
     return;
 }
 
-void Plus_U::cal_stress_gamma(const UnitCell& ucell,
-                            const Parallel_Orbitals& pv,
-                            const Grid_Driver* gd,
-                            double* dsloc_x,
-                            double* dsloc_y,
-                            double* dsloc_z,
-                            double* dh_r,
-                            const double* rho_VU,
-                            ModuleBase::matrix& stress_dftu)
+void cal_stress_gamma(const int nlocal,
+                      const int npol,
+                      const std::string& ks_solver,
+                      const std::vector<double>& orb_cutoff,
+                      const UnitCell& ucell,
+                      const Parallel_Orbitals& pv,
+                      const Grid_Driver* gd,
+                      double* dsloc_x,
+                      double* dsloc_y,
+                      double* dsloc_z,
+                      double* dh_r,
+                      const double* rho_pot_onsite,
+                      ModuleBase::matrix& stress_dftu)
 {
-    ModuleBase::TITLE("Plus_U", "cal_stress_gamma");
-    ModuleBase::timer::start("Plus_U", "cal_stress_gamma");
+    ModuleBase::TITLE("DFTU_LCAO", "cal_stress_gamma");
+    ModuleBase::timer::start("DFTU_LCAO", "cal_stress_gamma");
 
     const char transN = 'N';
     const int one_int = 1;
@@ -534,15 +605,14 @@ void Plus_U::cal_stress_gamma(const UnitCell& ucell,
     const double one = 1.0;
 
     std::vector<double> dSR_gamma(pv.nloc);
-    std::vector<double> dm_VU_sover(pv.nloc);
-
-    const int nlocal = this->nlocal;
+    std::vector<double> dm_pot_onsite_sover(pv.nloc);
 
     for (int dim1 = 0; dim1 < 3; dim1++)
     {
         for (int dim2 = dim1; dim2 < 3; dim2++)
         {
-            this->fold_dSR_gamma(ucell, pv, gd, dsloc_x, dsloc_y, dsloc_z, dh_r, dim1, dim2, &dSR_gamma[0]);
+            DFTU_LCAO::fold_dSR_gamma(npol, ks_solver, orb_cutoff,
+                                         ucell, pv, gd, dsloc_x, dsloc_y, dsloc_z, dh_r, dim1, dim2, &dSR_gamma[0]);
 
 #ifdef __MPI
             ScalapackConnector::gemm(transN,
@@ -551,7 +621,7 @@ void Plus_U::cal_stress_gamma(const UnitCell& ucell,
                     nlocal,
                     nlocal,
                     minus_half,
-                    rho_VU,
+                    rho_pot_onsite,
                     1,
                     1,
                     pv.desc,
@@ -560,29 +630,32 @@ void Plus_U::cal_stress_gamma(const UnitCell& ucell,
                     1,
                     pv.desc,
                     zero,
-                    &dm_VU_sover[0],
+                    &dm_pot_onsite_sover[0],
                     1,
                     1,
                     pv.desc);
 #endif
 
-            for (int ir = 0; ir < this->paraV->nrow; ir++)
+            for (int ir = 0; ir < pv.nrow; ir++)
             {
-                const int iwt1 = this->paraV->local2global_row(ir);
+                const int iwt1 = pv.local2global_row(ir);
 
-                for (int ic = 0; ic < this->paraV->ncol; ic++)
+                for (int ic = 0; ic < pv.ncol; ic++)
                 {
-                    const int iwt2 = this->paraV->local2global_col(ic);
-                    const int irc = ic * this->paraV->nrow + ir;
+                    const int iwt2 = pv.local2global_col(ic);
+                    const int irc = ic * pv.nrow + ir;
 
                     if (iwt1 == iwt2)
-                        stress_dftu(dim1, dim2) += 2.0 * dm_VU_sover[irc];
+                        stress_dftu(dim1, dim2) += 2.0 * dm_pot_onsite_sover[irc];
                 } // end ic
             }     // end ir
 
         } // end dim2
     }     // end dim1
-    ModuleBase::timer::end("Plus_U", "cal_stress_gamma");
+    ModuleBase::timer::end("DFTU_LCAO", "cal_stress_gamma");
     return;
 }
+
+} // namespace DFTU_LCAO
+
 #endif
