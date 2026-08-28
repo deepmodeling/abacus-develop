@@ -357,8 +357,8 @@ inline TailBlockPlan plan_tail_block(const bool has_bare,
                                      const double bare_support,
                                      const double gaussian_support)
 {
-    const bool use_bare_multipole = !has_bare && distance >= bare_support;
-    const bool use_gaussian_multipole = !has_gaussian && distance >= gaussian_support;
+    const bool use_bare_multipole = distance >= bare_support;
+    const bool use_gaussian_multipole = distance >= gaussian_support;
     if ((!has_bare && !use_bare_multipole) || (!has_gaussian && !use_gaussian_multipole))
     {
         return TailBlockPlan{};

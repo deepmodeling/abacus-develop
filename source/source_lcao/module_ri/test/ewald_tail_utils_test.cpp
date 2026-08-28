@@ -165,6 +165,16 @@ void test_missing_block_classification()
                 && !both_far.use_gaussian_multipole,
             "two absent far-field blocks must cancel without constructing a shared multipole tensor");
 
+    const auto evaluated_but_far = EwaldVqDetail::plan_tail_block(true, true, 34.1, 24.0, 20.9);
+    require(evaluated_but_far.coverage == TailBlockCoverage::AnalyticCancellation,
+            "available numerical blocks beyond both source supports must use exact multipole cancellation");
+
+    const auto gaussian_far_only = EwaldVqDetail::plan_tail_block(true, true, 22.0, 24.0, 20.9);
+    require(gaussian_far_only.coverage == TailBlockCoverage::Common
+                && !gaussian_far_only.use_bare_multipole
+                && gaussian_far_only.use_gaussian_multipole,
+            "a Gaussian block beyond its source support must use its exact multipole even when evaluated");
+
     require(EwaldVqDetail::plan_tail_block(true, false, 6.0, 10.0, 7.0).coverage
                 == TailBlockCoverage::Incomplete,
             "a missing Gaussian block inside its compact support must remain an error");

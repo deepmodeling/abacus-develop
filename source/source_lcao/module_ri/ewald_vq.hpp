@@ -113,6 +113,7 @@ void Ewald_Vq<Tdata>::init(const UnitCell& ucell,
     this->lcaos_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(lcaos_in);
     this->abfs_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(abfs_in);
     this->g_lcaos_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->g_lcaos);
+    this->g_abfs_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->g_abfs);
     this->g_abfs_ccp_rcut = Exx_Abfs::Construct_Orbs::get_Rcut(this->g_abfs_ccp);
 
     const ModuleBase::Element_Basis_Index::Range range_abfs = ModuleBase::Element_Basis_Index::construct_range(abfs_in);
@@ -538,8 +539,7 @@ auto Ewald_Vq<Tdata>::set_Vs_minus_gauss_common_candidates(
             const auto delta = -tau0 + tau1 + (RI_Util::array3_to_Vector3(jr.second) * ucell.latvec);
             const double distance = delta.norm() * ucell.lat0;
             const double bare_support = this->abfs_rcut[it0] + this->abfs_rcut[it1];
-            const double gaussian_support
-                = std::min(this->cal_V_Rcut(it0, it1), this->cal_V_Rcut(it1, it0));
+            const double gaussian_support = this->g_abfs_rcut[it0] + this->g_abfs_rcut[it1];
             const auto plan = EwaldVqDetail::plan_tail_block(find_tensor(Vs_in, key) != nullptr,
                                                              find_tensor(projected_gaussian, key) != nullptr,
                                                              distance,
@@ -601,8 +601,7 @@ auto Ewald_Vq<Tdata>::set_Vs_minus_gauss_common_candidates(
             const auto delta = -tau0 + tau1 + (RI_Util::array3_to_Vector3(jr.second) * ucell.latvec);
             const double distance = delta.norm() * ucell.lat0;
             const double bare_support = this->abfs_rcut[it0] + this->abfs_rcut[it1];
-            const double gaussian_support
-                = std::min(this->cal_V_Rcut(it0, it1), this->cal_V_Rcut(it1, it0));
+            const double gaussian_support = this->g_abfs_rcut[it0] + this->g_abfs_rcut[it1];
             const RI::Tensor<Tdata>* bare = find_tensor(Vs_in, key);
             const RI::Tensor<Tdata>* gaussian = find_tensor(projected_gaussian, key);
             const auto plan = EwaldVqDetail::plan_tail_block(bare != nullptr,
@@ -1441,8 +1440,7 @@ auto Ewald_Vq<Tdata>::cal_short_range_tail_stats(
         const auto delta = -tau0 + tau1 + (RI_Util::array3_to_Vector3(key.cell) * ucell.latvec);
         const double distance = delta.norm() * ucell.lat0;
         const double bare_support = this->abfs_rcut[it0] + this->abfs_rcut[it1];
-        const double gaussian_support
-            = std::min(this->cal_V_Rcut(it0, it1), this->cal_V_Rcut(it1, it0));
+        const double gaussian_support = this->g_abfs_rcut[it0] + this->g_abfs_rcut[it1];
 
         const RI::Tensor<Tdata>* bare = find_tensor(Vs_bare, key);
         const RI::Tensor<Tdata>* gaussian = find_tensor(projected_gaussian, key);

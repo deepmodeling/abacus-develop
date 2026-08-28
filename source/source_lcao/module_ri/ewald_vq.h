@@ -142,6 +142,7 @@ class Ewald_Vq
     std::vector<double> lcaos_rcut;
     std::vector<double> abfs_rcut;
     std::vector<double> g_lcaos_rcut;
+    std::vector<double> g_abfs_rcut;
     std::vector<double> g_abfs_ccp_rcut;
 
     std::map<Conv_Coulomb_Pot_K::Coulomb_Type, std::vector<std::map<std::string,std::string>>> coulomb_param;
