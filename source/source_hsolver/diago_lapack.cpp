@@ -120,8 +120,10 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::dsygvx_once(const int ncol,
     std::vector<double> work(3, 0);
     std::vector<int> iwork(1, 0);
     std::vector<int> ifail(this->nlocal, 0);
-    std::vector<int> iclustr(2 * GlobalV::DSIZE);
-    std::vector<double> gap(GlobalV::DSIZE);
+    // iclustr/gap are ScaLAPACK-only outputs; the serial LAPACK call below never
+    // writes them, so gap is dropped and iclustr is kept merely as a zero-filled
+    // single-process placeholder for the info & 2 branch of post_processing().
+    std::vector<int> iclustr(2, 0);
 
     // LAPACK dsygvx signature:
     // (ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB, VL, VU, IL, IU,
@@ -231,8 +233,10 @@ std::pair<int, std::vector<int>> DiagoLapack<T>::zhegvx_once(const int ncol,
     std::vector<double> rwork(3, 0);
     std::vector<int> iwork(1, 0);
     std::vector<int> ifail(this->nlocal, 0);
-    std::vector<int> iclustr(2 * GlobalV::DSIZE);
-    std::vector<double> gap(GlobalV::DSIZE);
+    // iclustr/gap are ScaLAPACK-only outputs; the serial LAPACK call below never
+    // writes them, so gap is dropped and iclustr is kept merely as a zero-filled
+    // single-process placeholder for the info & 2 branch of post_processing().
+    std::vector<int> iclustr(2, 0);
 
     // LAPACK zhegvx signature:
     // (ITYPE, JOBZ, RANGE, UPLO, N, A, LDA, B, LDB, VL, VU, IL, IU,
@@ -393,7 +397,8 @@ void DiagoLapack<T>::post_processing(const int info, const std::vector<int>& vec
     else if (info / 2 % 2)
     {
         int degeneracy_need = 0;
-        for (int irank = 0; irank < GlobalV::DSIZE; ++irank) {
+        // `vec` is iclustr, holding one [begin, end] pair per process
+        for (std::size_t irank = 0; 2 * irank + 1 < vec.size(); ++irank) {
             degeneracy_need = std::max(degeneracy_need, vec[2 * irank + 1] - vec[2 * irank]);
         }
         const std::string str_need = "degeneracy_need = " + ModuleBase::GlobalFunc::TO_STRING(degeneracy_need) + ".\n";

@@ -1,44 +1,92 @@
 #ifdef __LCAO
+#include "dftu_folding.h"
 #include "dftu_lcao.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 #include "source_cell/module_neighbor/sltk_grid_driver.h"
 #include "source_lcao/hamilt_lcao.h"
-#include "source_hamilt/module_hcontainer/hcontainer.h"
-#include "source_hamilt/module_hcontainer/hcontainer_funcs.h"
 
-void Plus_U::fold_dSR_gamma(const UnitCell& ucell,
-                          const Parallel_Orbitals& pv,
-                          const Grid_Driver* gd,
-                          double* dsloc_x,
-                          double* dsloc_y,
-                          double* dsloc_z,
-                          double* dh_r,
-                          const int dim1,
-                          const int dim2,
-                          double* dSR_gamma)
+namespace DFTU_LCAO {
+
+bool is_adjacent_pair(const std::vector<double>& orb_cutoff,
+                      const UnitCell& ucell,
+                      const Grid_Driver& gd,
+                      const int T1,
+                      const int T2,
+                      const ModuleBase::Vector3<double>& tau1,
+                      const ModuleBase::Vector3<double>& tau2)
+{
+    const ModuleBase::Vector3<double> dtau = tau2 - tau1;
+    const double distance = dtau.norm() * ucell.lat0;
+    const double rcut = orb_cutoff[T1] + orb_cutoff[T2];
+    if (distance < rcut)
+    {
+        return true;
+    }
+    // Three-body bridging: pair is not directly adjacent but shares a
+    // common nonlocal projector center T0 that overlaps both orbitals.
+    for (int ad0 = 0; ad0 < gd.getAdjacentNum() + 1; ++ad0)
+    {
+        const int T0 = gd.getType(ad0);
+        const int I0 = gd.getNatom(ad0);
+        const ModuleBase::Vector3<double> tau0 = gd.getAdjacentTau(ad0);
+        const double distance1 = (tau0 - tau1).norm() * ucell.lat0;
+        const double distance2 = (tau0 - tau2).norm() * ucell.lat0;
+        const double rcut1 = orb_cutoff[T1] + ucell.infoNL->get_rcut_max(T0);
+        const double rcut2 = orb_cutoff[T2] + ucell.infoNL->get_rcut_max(T0);
+        if (distance1 < rcut1 && distance2 < rcut2)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+int get_linear_index(const std::string& ks_solver,
+                    const int mu,
+                    const int nu,
+                    const Parallel_Orbitals& pv)
+{
+    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
+    {
+        return mu + nu * pv.nrow;
+    }
+    return mu * pv.ncol + nu;
+}
+
+void fold_dSR_gamma(int npol,
+                    const std::string& ks_solver,
+                    const std::vector<double>& orb_cutoff,
+                    const UnitCell& ucell,
+                    const Parallel_Orbitals& pv,
+                    const Grid_Driver* gd,
+                    double* dsloc_x,
+                    double* dsloc_y,
+                    double* dsloc_z,
+                    double* dh_r,
+                    const int dim1,
+                    const int dim2,
+                    double* dSR_gamma)
 {
     ModuleBase::TITLE("Plus_U", "fold_dSR_gamma");
 
     ModuleBase::GlobalFunc::ZEROS(dSR_gamma, pv.nloc);
 
     double* dS_ptr = nullptr;
-	if(dim1 == 0) 
-	{
-		dS_ptr = dsloc_x;
-	}
-	else if(dim1 == 1) 
-	{
-		dS_ptr = dsloc_y;
-	}
-	else if (dim1 == 2) 
-	{
-		dS_ptr = dsloc_z;
-	}
+    if (dim1 == 0)
+    {
+        dS_ptr = dsloc_x;
+    }
+    else if (dim1 == 1)
+    {
+        dS_ptr = dsloc_y;
+    }
+    else if (dim1 == 2)
+    {
+        dS_ptr = dsloc_z;
+    }
 
     int nnr = 0;
-    ModuleBase::Vector3<double> tau1, tau2, dtau;
-    ModuleBase::Vector3<double> dtau1, dtau2, tau0;
+    ModuleBase::Vector3<double> tau1, tau2;
 
     for (int T1 = 0; T1 < ucell.ntype; ++T1)
     {
@@ -52,68 +100,41 @@ void Plus_U::fold_dSR_gamma(const UnitCell& ucell,
             {
                 const int T2 = gd->getType(ad);
                 const int I2 = gd->getNatom(ad);
-                const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
                 Atom* atom2 = &ucell.atoms[T2];
                 tau2 = gd->getAdjacentTau(ad);
-                dtau = tau2 - tau1;
-                double distance = dtau.norm() * ucell.lat0;
-                double rcut = orb_cutoff_[T1] + orb_cutoff_[T2];
-                bool adj = false;
-				if (distance < rcut)
-				{
-					adj = true;
-				}
-                else if (distance >= rcut)
+
+                if (!is_adjacent_pair(orb_cutoff, ucell, *gd, T1, T2, tau1, tau2))
                 {
-                    for (int ad0 = 0; ad0 < gd->getAdjacentNum() + 1; ++ad0)
-                    {
-                        const int T0 = gd->getType(ad0);
-                        const int I0 = gd->getNatom(ad0);
-                        const int iat0 = ucell.itia2iat(T0, I0);
-                        const int start0 = ucell.itiaiw2iwt(T0, I0, 0);
-                        tau0 = gd->getAdjacentTau(ad0);
-                        dtau1 = tau0 - tau1;
-                        dtau2 = tau0 - tau2;
-                        double distance1 = dtau1.norm() * ucell.lat0;
-                        double distance2 = dtau2.norm() * ucell.lat0;
-                        double rcut1 = orb_cutoff_[T1] + ucell.infoNL->get_rcut_max(T0);
-                        double rcut2 = orb_cutoff_[T2] + ucell.infoNL->get_rcut_max(T0);
-                        if (distance1 < rcut1 && distance2 < rcut2)
-                        {
-                            adj = true;
-                            break;
-                        }
-                    }
+                    continue;
                 }
 
-                if (adj)
+                const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
+                for (int jj = 0; jj < atom1->nw * npol; ++jj)
                 {
-                    for (int jj = 0; jj < atom1->nw * this->npol; ++jj)
+                    const int jj0 = jj / npol;
+                    const int iw1_all = start1 + jj0;
+                    const int mu = pv.global2local_row(iw1_all);
+                    if (mu < 0)
                     {
-                        const int jj0 = jj / this->npol;
-                        const int iw1_all = start1 + jj0;
-                        const int mu = pv.global2local_row(iw1_all);
-						if (mu < 0) 
-						{
-							continue;
-						}
+                        continue;
+                    }
 
-                        for (int kk = 0; kk < atom2->nw * this->npol; ++kk)
+                    for (int kk = 0; kk < atom2->nw * npol; ++kk)
+                    {
+                        const int kk0 = kk / npol;
+                        const int iw2_all = start2 + kk0;
+                        const int nu = pv.global2local_col(iw2_all);
+                        if (nu < 0)
                         {
-                            const int kk0 = kk / this->npol;
-                            const int iw2_all = start2 + kk0;
-                            const int nu = pv.global2local_col(iw2_all);
-							if (nu < 0) 
-							{
-								continue;
-							}
+                            continue;
+                        }
 
-                            dSR_gamma[nu * pv.nrow + mu] += dS_ptr[nnr] * dh_r[nnr * 3 + dim2];
+                        const int iic = get_linear_index(ks_solver, mu, nu, pv);
+                        dSR_gamma[iic] += dS_ptr[nnr] * dh_r[nnr * 3 + dim2];
 
-                            ++nnr;
-                        } // kk
-                    } // jj
-                } // adj
+                        ++nnr;
+                    } // kk
+                } // jj
             } // ad
         } // I1
     } // T1
@@ -121,15 +142,18 @@ void Plus_U::fold_dSR_gamma(const UnitCell& ucell,
     return;
 }
 
-void Plus_U::folding_matrix_k(const UnitCell& ucell,
-                            const Grid_Driver& gd,
-                            ForceStressArrays& fsr,
-                            const Parallel_Orbitals& pv,
-                            const int ik,
-                            const int dim1,
-                            const int dim2,
-                            std::complex<double>* mat_k,
-                            const ModuleBase::Vector3<double>& kvec_d)
+void folding_matrix_k(int npol,
+                      const std::string& ks_solver,
+                      const std::vector<double>& orb_cutoff,
+                      const UnitCell& ucell,
+                      const Grid_Driver& gd,
+                      ForceStressArrays& fsr,
+                      const Parallel_Orbitals& pv,
+                      const int ik,
+                      const int dim1,
+                      const int dim2,
+                      std::complex<double>* mat_k,
+                      const ModuleBase::Vector3<double>& kvec_d)
 {
     ModuleBase::TITLE("Plus_U", "folding_matrix_k");
     ModuleBase::timer::start("Plus_U", "folding_matrix_k");
@@ -150,13 +174,8 @@ void Plus_U::folding_matrix_k(const UnitCell& ucell,
     }
 
     int nnr = 0;
-    ModuleBase::Vector3<double> dtau;
     ModuleBase::Vector3<double> tau1;
     ModuleBase::Vector3<double> tau2;
-
-    ModuleBase::Vector3<double> dtau1;
-    ModuleBase::Vector3<double> dtau2;
-    ModuleBase::Vector3<double> tau0;
 
     for (int T1 = 0; T1 < ucell.ntype; ++T1)
     {
@@ -165,7 +184,6 @@ void Plus_U::folding_matrix_k(const UnitCell& ucell,
         {
             tau1 = atom1->tau[I1];
             gd.Find_atom(ucell, tau1, T1, I1);
-            Atom* atom1 = &ucell.atoms[T1];
             const int start1 = ucell.itiaiw2iwt(T1, I1, 0);
 
             // (2) search among all adjacent atoms.
@@ -176,100 +194,59 @@ void Plus_U::folding_matrix_k(const UnitCell& ucell,
                 Atom* atom2 = &ucell.atoms[T2];
 
                 tau2 = gd.getAdjacentTau(ad);
-                dtau = tau2 - tau1;
-                double distance = dtau.norm() * ucell.lat0;
-                double rcut = orb_cutoff_[T1] + orb_cutoff_[T2];
 
-                bool adj = false;
-
-                if (distance < rcut)
+                if (!is_adjacent_pair(orb_cutoff, ucell, gd, T1, T2, tau1, tau2))
                 {
-                    adj = true;
+                    continue;
                 }
-                else if (distance >= rcut)
+
+                // (3) calculate the nu of atom (T2, I2)
+                const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
+                //------------------------------------------------
+                // exp(k dot dR)
+                // dR is the index of box in Crystal coordinates
+                //------------------------------------------------
+                ModuleBase::Vector3<double> dR(gd.getBox(ad).x, gd.getBox(ad).y, gd.getBox(ad).z);
+                const double arg = (kvec_d * dR) * ModuleBase::TWO_PI;
+                const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
+
+                //--------------------------------------------------
+                // calculate how many matrix elements are in
+                // this processor.
+                //--------------------------------------------------
+                for (int ii = 0; ii < atom1->nw * npol; ii++)
                 {
-                    for (int ad0 = 0; ad0 < gd.getAdjacentNum() + 1; ++ad0)
+                    // the index of orbitals in this processor
+                    const int iw1_all = start1 + ii;
+                    const int mu = pv.global2local_row(iw1_all);
+                    if (mu < 0)
                     {
-                        const int T0 = gd.getType(ad0);
-                        const int I0 = gd.getNatom(ad0);
-
-                        tau0 = gd.getAdjacentTau(ad0);
-                        dtau1 = tau0 - tau1;
-                        dtau2 = tau0 - tau2;
-
-                        double distance1 = dtau1.norm() * ucell.lat0;
-                        double distance2 = dtau2.norm() * ucell.lat0;
-
-                        double rcut1 = orb_cutoff_[T1] + ucell.infoNL->get_rcut_max(T0);
-                        double rcut2 = orb_cutoff_[T2] + ucell.infoNL->get_rcut_max(T0);
-
-                        if (distance1 < rcut1 && distance2 < rcut2)
-                        {
-                            adj = true;
-                            break;
-                        }
+                        continue;
                     }
-                }
 
-                if (adj)
-                {
-                    // (3) calculate the nu of atom (T2, I2)
-                    const int start2 = ucell.itiaiw2iwt(T2, I2, 0);
-                    //------------------------------------------------
-                    // exp(k dot dR)
-                    // dR is the index of box in Crystal coordinates
-                    //------------------------------------------------
-                    ModuleBase::Vector3<double> dR(gd.getBox(ad).x, gd.getBox(ad).y, gd.getBox(ad).z);
-                    const double arg = (kvec_d * dR) * ModuleBase::TWO_PI;
-                    const std::complex<double> kphase = std::complex<double>(cos(arg), sin(arg));
-
-                    //--------------------------------------------------
-                    // calculate how many matrix elements are in
-                    // this processor.
-                    //--------------------------------------------------
-                    for (int ii = 0; ii < atom1->nw * this->npol; ii++)
+                    for (int jj = 0; jj < atom2->nw * npol; jj++)
                     {
-                        // the index of orbitals in this processor
-                        const int iw1_all = start1 + ii;
-                        const int mu = pv.global2local_row(iw1_all);
-						if (mu < 0) 
-						{
-							continue;
-						}
-
-                        for (int jj = 0; jj < atom2->nw * this->npol; jj++)
+                        int iw2_all = start2 + jj;
+                        const int nu = pv.global2local_col(iw2_all);
+                        if (nu < 0)
                         {
-                            int iw2_all = start2 + jj;
-                            const int nu = pv.global2local_col(iw2_all);
-							if (nu < 0) 
-							{ 
-								continue;
-							}
+                            continue;
+                        }
 
-                            int iic = 0;
-                            if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(this->ks_solver))
-                            {
-                                iic = mu + nu * pv.nrow;
-                            }
-                            else
-                            {
-                                iic = mu * pv.ncol + nu;
-                            }
+                        const int iic = get_linear_index(ks_solver, mu, nu, pv);
 
-                            if (dim1 <= 3)
-                            {
-                                mat_k[iic] += mat_ptr[nnr] * kphase;
-                            }
-                            else
-                            {
-                                mat_k[iic] += mat_ptr[nnr] * fsr.DH_r[nnr * 3 + dim2] * kphase;
-                            }
+                        if (dim1 <= 3)
+                        {
+                            mat_k[iic] += mat_ptr[nnr] * kphase;
+                        }
+                        else
+                        {
+                            mat_k[iic] += mat_ptr[nnr] * fsr.DH_r[nnr * 3 + dim2] * kphase;
+                        }
 
-                            ++nnr;
-                        } // kk
+                        ++nnr;
                     } // jj
-                } // adj
-
+                } // ii
             } // ad
         } // I1
     } // T1
@@ -278,27 +255,30 @@ void Plus_U::folding_matrix_k(const UnitCell& ucell,
     return;
 }
 
-void Plus_U::folding_matrix_k_new(const int ik,
-    hamilt::Hamilt<std::complex<double>>* p_ham)
+void folding_matrix_k_new(const std::string& ks_solver,
+                          bool gamma_only_local,
+                          int nspin,
+                          const int ik,
+                          hamilt::Hamilt<std::complex<double>>* p_ham)
 {
     ModuleBase::TITLE("Plus_U", "folding_matrix_k_new");
     ModuleBase::timer::start("Plus_U", "folding_matrix_k_new");
 
     int hk_type = 0;
-    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(this->ks_solver))
+    if (ModuleBase::GlobalFunc::IS_COLUMN_MAJOR_KS_SOLVER(ks_solver))
     {
         hk_type = 1;
     }
 
     // get SR and fold to mat_k
-    if(this->gamma_only_local)
+    if (gamma_only_local)
     {
         dynamic_cast<hamilt::HamiltLCAO<double, double>*>(p_ham)
                     ->updateSk(ik, hk_type);
     }
     else
     {
-        if(this->nspin != 4)
+        if (nspin != 4)
         {
             dynamic_cast<hamilt::HamiltLCAO<std::complex<double>, double>*>(p_ham)
                         ->updateSk(ik, hk_type);
@@ -312,5 +292,7 @@ void Plus_U::folding_matrix_k_new(const int ik,
 
     ModuleBase::timer::end("Plus_U", "folding_matrix_k_new");
 }
+
+} // namespace DFTU_LCAO
 
 #endif // __LCAO

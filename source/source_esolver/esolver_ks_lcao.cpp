@@ -510,7 +510,7 @@ void ESolver_KS_LCAO<TK, TR>::iter_finish(UnitCell& ucell, const int istep, int&
 
     // mohan add 2025-11: push DFT+U energy from Plus_U instance to ElecState.
     // Covers both dft_plus_u==1 (new method, energy accumulated by DFTU::contributeHR
-    // via cal_v_of_u) and dft_plus_u==2 (old method, energy from cal_energy_correction).
+    // via cal_pot_onsite) and dft_plus_u==2 (old method, energy from cal_energy_correction).
     if (this->inp_->dft_plus_u)
     {
         this->pelec->set_dftu_energy(this->dftu.get_energy());

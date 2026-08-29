@@ -742,7 +742,8 @@ OBJS_SRCPW=h_ewald_pw.o\
     update_cell_pw.o\
     dftu_base.o\
     dftu_output.o\
-    dftu_pw.o\
+    dftu_tools_pw.o\
+    dftu_cal_occ_pw.o\
     setup_dftu_pw.o\
     deltaspin_pw.o\
     force_pw.o\

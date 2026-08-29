@@ -1,28 +1,13 @@
 #include "dftu_lcao.h"
+#include "dftu_occup.h"
 
-#include "source_io/module_parameter/parameter.h"
-#include "source_base/constants.h"
-#include "source_base/global_function.h"
-#include "source_base/inverse_matrix.h"
-#include "source_base/memory_recorder.h"
+#include "source_base/matrix.h"  // occ_mat uses ModuleBase::matrix::operator()
+#include "source_base/tool_quit.h"
+#include "source_base/tool_title.h"
 #include "source_base/timer.h"
-#include "source_cell/magnetism.h"
-#include "source_estate/module_charge/charge.h"
 
-#include <cstdint>
-#include <cmath>
 #include <complex>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
 #include <vector>
-
- // mohan add 2025-11-06
-// Static member definitions moved to dftu_base.cpp (Plus_U_Base::)
-// Plus_U inherits these from Plus_U_Base.
 
 Plus_U::Plus_U()
 {}
@@ -175,7 +160,7 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                                                  * this->occ_mat[iat][l][n][spin](m1, m0);
                                 }
                             }
-                            if (use_yukawa)
+                            if (use_yukawa_)
                             {
                                 this->energy_u += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n])
                                             * (nm_trace - nm2_trace);
@@ -210,7 +195,7 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                                 }
                             }
                         }
-                        if (use_yukawa)
+                        if (use_yukawa_)
                         {
                             this->energy_u += 0.5 * (this->U_Yukawa[T][l][n] - this->J_Yukawa[T][l][n]) 
                               * (nm_trace - nm2_trace);
@@ -236,16 +221,16 @@ void Plus_U::cal_energy_correction(const UnitCell& ucell,
                                     {
                                         for (int is = 0; is < 2; is++)
                                         {
-                                            double VU = 0.0;
-                                            VU = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, false);
-                                            energy_dc += VU * this->occ_mat[iat][l][n][is](m1_all, m2_all);
+                                            double pot_onsite = 0.0;
+                                            pot_onsite = get_onebody_eff_pot(T, iat, l, n, is, m1_all, m2_all, false);
+                                            energy_dc += pot_onsite * this->occ_mat[iat][l][n][is](m1_all, m2_all);
                                         }
                                     }
                                     else if (this->nspin == 4)
                                     {
-                                        double VU = 0.0;
-                                        VU = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, false);
-                                        energy_dc += VU * this->occ_mat[iat][l][n][0](m1_all, m2_all);
+                                        double pot_onsite = 0.0;
+                                        pot_onsite = get_onebody_eff_pot(T, iat, l, n, 0, m1_all, m2_all, false);
+                                        energy_dc += pot_onsite * this->occ_mat[iat][l][n][0](m1_all, m2_all);
                                     }
                                 }
                             }
@@ -298,30 +283,34 @@ const hamilt::HContainer<double>* Plus_U::get_dmr(int ispin) const
     }
 }
 
+namespace DFTU_LCAO {
+
 //! dftu occupation matrix for gamma only using dm(double)
 template <>
-void dftu_cal_occup_m(const int iter,
-                      const UnitCell& ucell,
-                      const std::vector<std::vector<double>>& dm,
-                      const K_Vectors& kv,
-                      const double& mixing_beta,
-                      hamilt::Hamilt<double>* p_ham,
-                      Plus_U &dftu)
+void cal_occ_mat(const int iter,
+                 const UnitCell& ucell,
+                 const std::vector<std::vector<double>>& dm,
+                 const K_Vectors& kv,
+                 const double& mixing_beta,
+                 hamilt::Hamilt<double>* p_ham,
+                 Plus_U& dftu)
 {
-    dftu.cal_occup_m_gamma(iter, ucell ,dm, mixing_beta, p_ham);
+    dftu.cal_occ_mat_gamma(iter, ucell, dm, mixing_beta, p_ham);
 }
 
 //! dftu occupation matrix for multiple k-points using dm(complex)
 template <>
-void dftu_cal_occup_m(const int iter,
-                      const UnitCell& ucell,
-                      const std::vector<std::vector<std::complex<double>>>& dm,
-                      const K_Vectors& kv,
-                      const double& mixing_beta,
-                      hamilt::Hamilt<std::complex<double>>* p_ham,
-                      Plus_U &dftu)
+void cal_occ_mat(const int iter,
+                 const UnitCell& ucell,
+                 const std::vector<std::vector<std::complex<double>>>& dm,
+                 const K_Vectors& kv,
+                 const double& mixing_beta,
+                 hamilt::Hamilt<std::complex<double>>* p_ham,
+                 Plus_U& dftu)
 {
-    dftu.cal_occup_m_k(iter,ucell, dm, kv, mixing_beta, p_ham);
+    dftu.cal_occ_mat_k(iter, ucell, dm, kv, mixing_beta, p_ham);
 }
+
+} // namespace DFTU_LCAO
 
 #endif

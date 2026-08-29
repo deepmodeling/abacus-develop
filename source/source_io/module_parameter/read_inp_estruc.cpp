@@ -138,7 +138,6 @@ Then the user has to correct the input file and restart the calculation.)";
                 "cusolver",
                 "cusolvermp",
                 "pexsi",
-                "cg_in_lcao",
             };
 
             if (para.input.basis_type == "pw")
@@ -156,11 +155,7 @@ Then the user has to correct the input file and restart the calculation.)";
                     const std::string warningstr = "For LCAO basis: " + nofound_str(lcao_solvers, "ks_solver");
                     ModuleBase::WARNING_QUIT("ReadInput", warningstr);
                 }
-                if (ks_solver == "cg_in_lcao")
-                {
-                    GlobalV::ofs_warning << "cg_in_lcao is under testing" << std::endl;
-                }
-                else if (ks_solver == "genelpa")
+                if (ks_solver == "genelpa")
                 {
                     if (para.input.device == "gpu")
                     {
@@ -757,7 +752,7 @@ This setting takes effect only when the selected exchange-correlation functional
     }
     {
         Input_Item item("mixing_dftu");
-        item.annotation = "whether to mix locale in DFT+U calculation";
+        item.annotation = "whether to mix occ_mat in DFT+U calculation";
         item.category = "Electronic structure";
         item.type = "Boolean";
         item.description = R"(Whether to mix the occupation matrices.

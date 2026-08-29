@@ -684,7 +684,6 @@ namespace hsolver
 {
 template class DiagoCG<std::complex<float>, base_device::DEVICE_CPU>;
 template class DiagoCG<std::complex<double>, base_device::DEVICE_CPU>;
-// template class DiagoCG<double, base_device::DEVICE_CPU>;
 #if ((defined __CUDA) || (defined __ROCM))
 template class DiagoCG<std::complex<float>, base_device::DEVICE_GPU>;
 template class DiagoCG<std::complex<double>, base_device::DEVICE_GPU>;

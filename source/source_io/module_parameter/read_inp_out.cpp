@@ -248,22 +248,34 @@ In molecular dynamics calculations, the output frequency is controlled by out_fr
         item.annotation = "output wave functions";
         item.category = "Output information";
         item.type = "Integer";
-        item.description = R"(Whether to output the electronic wavefunction coefficients into files and store them in the folder OUT.${suffix}. The files are named as wf{k}{k-point index}{s}{spin index}{g}{geometry index}{e}{electronic iteration index}{_pw} + {".txt"/".dat"}. Here, the s index refers to spin but the label will not show up for non-spin-polarized calculations, where s1 means spin up channel while s2 means spin down channel, and s4 refers to spinor wave functions that contains both spin channels with spin-orbital coupling or noncollinear calculations enabled. For scf or nscf calculations, g index will not appear, but the g index appears for geometry relaxation and molecular dynamics, where one can use the out_freq_ion command to control. To print out the electroinc wave functions every few SCF iterations, use the out_freq_elec command and the e index will appear in the file name.
-* 0: no output
-* 1: (txt format)
- * non-gamma-only with nspin=1: wfk1_pw.txt, wfk2_pw.txt, ...;
- * non-gamma-only with nspin=2: wfk1s1_pw.txt, wfk1s2_pw.txt, wfk2s1_pw.txt, wfk2s2_pw.txt, ...;
- * non-gamma-only with nspin=4: wfk1s4_pw.txt, wfk2s4_pw.txt, ...;
-* 2: (binary format)
- * non-gamma-only with nspin=1: wfk1_pw.dat, wfk2_pw.dat, ...;
- * non-gamma-only with nspin=2: wfk1s1_pw.dat, wfk1s2_pw.dat, wfk2s1_pw.dat, wfk2s2_pw.dat, ...;
- * non-gamma-only with nspin=4: wfk1s4_pw.dat, wfk2s4_pw.dat, ...;
+        item.description = R"(Controls whether plane-wave Kohn-Sham wavefunction coefficients are written to `OUT.${suffix}/`.
 
-[NOTE] In the 3.10-LTS version, the file names are WAVEFUNC1.dat, WAVEFUNC2.dat, etc.)";
+Available values are:
+* `0`: Do not write wavefunction coefficients.
+* `1`: Write text files with the `.txt` suffix.
+* `2`: Write binary files with the `.dat` suffix.
+
+The file-name pattern is `wfk{k}[s{spin}][g{geometry step}][e{electronic iteration}]_pw.txt` for `out_wfc_pw=1` and `wfk{k}[s{spin}][g{geometry step}][e{electronic iteration}]_pw.dat` for `out_wfc_pw=2`. All PW output files include a `k*` label, including Gamma-only calculations. Without geometry-step or electronic-iteration indices, representative names are `wfk1_pw.txt` or `wfk1_pw.dat` for `nspin=1`, `wfk1s1_pw.txt` and `wfk1s2_pw.txt` or their `.dat` equivalents for `nspin=2`, and `wfk1s4_pw.txt` or `wfk1s4_pw.dat` for `nspin=4`.
+
+With `out_freq_ion=0`, files are written only when the electronic calculation converges or reaches `scf_nmax`; no `g*` or `e*` index is added. During structural relaxation or molecular dynamics, later ionic steps overwrite the same unindexed files. With `out_freq_ion` > 0, output is restricted to the ionic steps selected by `out_freq_ion` and is written when the electronic iteration is a multiple of `out_freq_elec`, when the calculation converges, or when it reaches `scf_nmax`. Both `g*` and `e*` indices are then added, including for a static `calculation=scf` or `calculation=nscf` run.
+
+For `init_wfc=file`, ABACUS automatically reads only unindexed binary `wf*_pw.dat` files from `read_file_dir`. Such directly reusable files are normally generated with `out_wfc_pw=2` and `out_freq_ion=0`. Text `wf*_pw.txt` files and files containing `g*` or `e*` indices are not matched automatically.
+
+[NOTE] In the 3.10-LTS version, the binary files are named `WAVEFUNC1.dat`, `WAVEFUNC2.dat`, etc.)";
         item.default_value = "0";
         item.unit = "";
-        item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");
+        item.set_availability("basis_type==pw and esolver_type==ksdft");
         read_sync_int(input.out_wfc_pw);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.out_wfc_pw < 0 || para.input.out_wfc_pw > 2)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_pw should be 0, 1, or 2");
+            }
+            if (para.input.basis_type != "pw" && para.input.out_wfc_pw != 0)
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "out_wfc_pw is only available for basis_type = pw");
+            }
+        };
         this->add_item(item);
     }
     {
@@ -1517,7 +1529,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "specify the bands to be calculated for the norm of wavefunctions";
         item.category = "Output information";
         item.type = "String";
-        item.description = R"(Selects electronic states for real-space wavefunction-modulus output using the selection syntax and complete-state normalization of `out_pchg`. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.)";
+        item.description = R"(Selects electronic states for real-space wavefunction-modulus output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction modulus. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunction moduli, respectively. For `nspin=4`, `s1` contains the total spinor modulus. Files are named `wfi[state]s[spin]k[kpoint].cube`.)";
         item.default_value = "none";
         item.unit = "";
         item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");
@@ -1538,7 +1550,7 @@ If EXX(exact exchange) is calculated (i.e. dft_fuctional==hse/hf/pbe0/scan0 or r
         item.annotation = "specify the bands to be calculated for the real and imaginary parts of wavefunctions";
         item.category = "Output information";
         item.type = "String";
-        item.description = R"(Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax and complete-state normalization of `out_pchg`. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.)";
+        item.description = R"(Selects electronic states for real-space wavefunction real- and imaginary-part output using the selection syntax of `out_pchg`. Each wavefunction is normalized as a single-particle state and does not include SCF occupations or spin-degeneracy factors. For `nspin=1`, `s1` contains the wavefunction. For `nspin=2`, `s1` and `s2` contain the spin-up and spin-down wavefunctions, respectively. For `nspin=4`, `s1` and `s2` contain the upper and lower spinor components, respectively. Files are named `wfi[state]s[spin]k[kpoint][re/im].cube`.)";
         item.default_value = "none";
         item.unit = "";
         item.set_availability("basis_type==pw or (basis_type==lcao and calculation==get_wf)");

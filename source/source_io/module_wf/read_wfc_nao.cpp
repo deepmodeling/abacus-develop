@@ -158,6 +158,11 @@ bool ModuleIO::read_wfc_nao(
         nbands_local = ParaV.ncol;
     }
     psid.resize(nk, nbands_local, nlocal_local);
+    if (gamma_only)
+    {
+        // Gamma diagonalizers may reserve more band slots than the wavefunction file provides.
+        psid.zero_out();
+    }
 
     // lambda function to read one file
 	auto read_one_file = [&](const std::string& ss, 

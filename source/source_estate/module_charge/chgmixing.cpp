@@ -133,7 +133,7 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
             // enable mixing_dftu for DFT+U occupation mixing
             dftu.enable_mixing();
             // allocate memory for uom_mdata
-            p_chgmix->allocate_mixing_uom(dftu.get_size_eff_pot_pw());
+            p_chgmix->allocate_mixing_uom(dftu.get_size_pot_uterm_pw());
         }
     }
 
@@ -145,11 +145,11 @@ void module_charge::chgmixing_ks_pw(const int iter, // scf iteration number
 
         if (inp.dft_plus_u)
         {
-            if (dftu.uramping > 0.01 && !dftu.u_converged())
+            if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
             {
                 p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
             }
-            if (dftu.uramping > 0.01)
+            if (dftu.get_uramping() > 0.01)
             {
                 bool do_uramping = true;
                 if (inp.sc_mag_switch)
@@ -197,7 +197,7 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
             dftu.enable_mixing();
         }
         // this output will be removed once the feeature is stable
-        if (dftu.uramping > 0.01)
+        if (dftu.get_uramping() > 0.01)
         {
             std::cout << " U-Ramping! Current U = ";
             for (int i = 0; i < dftu.get_num_u_types(); i++)
@@ -216,7 +216,7 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
         if (inp.dft_plus_u)
         {
             dftu.uramping_update(); // update U by uramping if uramping > 0.01
-            if (dftu.uramping > 0.01)
+            if (dftu.get_uramping() > 0.01)
             {
                 std::cout << " U-Ramping! Current U = ";
                 for (int i = 0; i < dftu.get_num_u_types(); i++)
@@ -225,7 +225,7 @@ void module_charge::chgmixing_ks_lcao(const int iter, // scf iteration number
                 }
                 std::cout << " eV " << std::endl;
             }
-            if (dftu.uramping > 0.01 && !dftu.u_converged())
+            if (dftu.get_uramping() > 0.01 && !dftu.u_converged())
             {
                 p_chgmix->mixing_restart_step = inp.scf_nmax + 1;
             }

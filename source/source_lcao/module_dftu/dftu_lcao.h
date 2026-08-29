@@ -1,17 +1,15 @@
-#ifndef DFTU_H
-#define DFTU_H
+#ifndef DFTU_LCAO_H
+#define DFTU_LCAO_H
 
 #include "source_cell/klist.h"
 #include "source_cell/unitcell.h"
 #include "source_basis/module_ao/parallel_orbitals.h"
-#include "source_estate/module_charge/charge_mixing.h"
 #include "source_pw/module_pwdft/dftu_base.h"
 #ifdef __LCAO
 #include "source_basis/module_ao/orb_read.h"
 #include "source_hamilt/hamilt.h"
 #include "source_hamilt/module_hcontainer/hcontainer.h"
 #include "source_estate/module_dm/density_matrix.h"
-#include "source_lcao/force_stress_arrays.h" // mohan add 2024-06-15
 #endif
 
 #include <string>
@@ -79,18 +77,6 @@ class Plus_U : public Plus_U_Base
     // For calculating contribution to Hamiltonian matrices
     //=============================================================
   public:
-	void cal_eff_pot_mat_complex(const int ik,
-			std::complex<double>* eff_pot,
-			const std::vector<int>& isk,
-			const std::complex<double>* sk,
-			const int npol);
-
-	void cal_eff_pot_mat_real(const int ik,
-			double* eff_pot,
-			const std::vector<int>& isk,
-			const double* sk,
-			const int npol);
-
     void cal_eff_pot_mat_R_double(const int ispin, double* SR, double* HR, const int npol);
 
 	void cal_eff_pot_mat_R_complex_double(const int ispin,
@@ -101,14 +87,14 @@ class Plus_U : public Plus_U_Base
 
 #ifdef __LCAO
     // calculate the local occupation number matrix
-    void cal_occup_m_k(const int iter,
+    void cal_occ_mat_k(const int iter,
                        const UnitCell& ucell,
                        const std::vector<std::vector<std::complex<double>>>& dm_k,
                        const K_Vectors& kv,
                        const double& mixing_beta,
                        hamilt::Hamilt<std::complex<double>>* p_ham);
 
-    void cal_occup_m_gamma(const int iter,
+    void cal_occ_mat_gamma(const int iter,
                            const UnitCell& ucell,
                            const std::vector<std::vector<double>>& dm_gamma,
                            const double& mixing_beta,
@@ -116,16 +102,16 @@ class Plus_U : public Plus_U_Base
 #endif
 
 #ifdef __LCAO
-private:
     //=============================================================
     // In dftu_tools.cpp
     // For calculating onsite potential, which is used
     // for both Hamiltonian and force/stress
     //=============================================================
+  public:
+    void pot_onsite_complex(const int spin, const bool newlocale, std::complex<double>* pot_onsite, const int npol);
+    void pot_onsite_real(const int spin, const bool newlocale, double* pot_onsite, const int npol);
 
-    void cal_VU_pot_mat_complex(const int spin, const bool newlocale, std::complex<double>* VU, const int npol);
-    void cal_VU_pot_mat_real(const int spin, const bool newlocale, double* VU, const int npol);
-
+  private:
     double get_onebody_eff_pot(const int T,
                                const int iat,
                                const int L,
@@ -135,96 +121,6 @@ private:
                                const int m1,
                                const bool newlocale);
 
-    //=============================================================
-    // In dftu_folding.cpp
-    // Subroutines for folding S and dS matrix
-    //=============================================================
-
-    void fold_dSR_gamma(const UnitCell& ucell,
-                        const Parallel_Orbitals& pv,
-                        const Grid_Driver* gd,
-                        double* dsloc_x,
-                        double* dsloc_y,
-                        double* dsloc_z,
-                        double* dh_r,
-                        const int dim1,
-                        const int dim2,
-                        double* dSR_gamma);
-
-    // dim = 0 : S, for Hamiltonian
-    // dim = 1-3 : dS, for force
-    // dim = 4-6 : dS * dR, for stress
-
-    void folding_matrix_k(const UnitCell& ucell,
-                          const Grid_Driver& gd,
-                          ForceStressArrays& fsr,
-                          const Parallel_Orbitals& pv,
-                          const int ik,
-                          const int dim1,
-                          const int dim2,
-                          std::complex<double>* mat_k,
-                          const ModuleBase::Vector3<double>& kvec_d);
-
-    /**
-     * @brief new function of folding_S_matrix
-     * only for Hamiltonian now, for force and stress will be developed later
-     * use HContainer as input and output in mat_k
-    */
-	void folding_matrix_k_new(const int ik,
-			hamilt::Hamilt<std::complex<double>>* p_ham);
-
-    //=============================================================
-    // In dftu_force.cpp
-    // For calculating force and stress fomr DFT+U
-    //=============================================================
- public:
-   void force_stress(const UnitCell& ucell,
-                     const Grid_Driver& gd,
-					 std::vector<std::vector<double>>* dmk_d,
-					 std::vector<std::vector<std::complex<double>>>* dmk_c,
-					 const Parallel_Orbitals& pv,
-                     ForceStressArrays& fsr,
-                     ModuleBase::matrix& force_dftu,
-                     ModuleBase::matrix& stress_dftu,
-                     const K_Vectors& kv,
-                     const int npol);
-
- private:
-   void cal_force_k(const UnitCell& ucell,
-                    const Grid_Driver& gd,
-                    ForceStressArrays& fsr,
-                    const Parallel_Orbitals& pv,
-                    const int ik,
-                    const std::complex<double>* rho_VU,
-                    ModuleBase::matrix& force_dftu,
-                    const ModuleBase::Vector3<double>& kvec_d);
-
-   void cal_stress_k(const UnitCell& ucell,
-                     const Grid_Driver& gd,
-                     ForceStressArrays& fsr,
-                     const Parallel_Orbitals& pv,
-                     const int ik,
-                     const std::complex<double>* rho_VU,
-                     ModuleBase::matrix& stress_dftu,
-                     const ModuleBase::Vector3<double>& kvec_d);
-
-   void cal_force_gamma(const UnitCell& ucell,
-                        const double* rho_VU,
-                        const Parallel_Orbitals& pv,
-                        double* dsloc_x,
-                        double* dsloc_y,
-                        double* dsloc_z,
-                        ModuleBase::matrix& force_dftu);
-
-   void cal_stress_gamma(const UnitCell& ucell,
-                         const Parallel_Orbitals& pv,
-                         const Grid_Driver* gd,
-                         double* dsloc_x,
-                         double* dsloc_y,
-                         double* dsloc_z,
-                         double* dh_r,
-                         const double* rho_VU,
-                         ModuleBase::matrix& stress_dftu);
 #endif
 
     //=============================================================
@@ -257,24 +153,22 @@ private:
     void set_dmr(const elecstate::DensityMatrix<double, double>* dm_in_dftu_d);
     void set_dmr(const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd);
 
+    /// read-only accessors for state needed by DFTU_LCAO free functions
+    const Parallel_Orbitals* get_paraV() const { return paraV; }
+    int get_npol() const { return npol; }
+    int get_nlocal() const { return nlocal; }
+    const std::string& get_ks_solver() const { return ks_solver; }
+    const std::vector<double>& get_orb_cutoff() const { return orb_cutoff_; }
+    bool is_gamma_only_local() const { return gamma_only_local; }
+    bool is_cal_force() const { return cal_force; }
+    bool is_cal_stress() const { return cal_stress; }
+
   private:
     const UnitCell* ucell = nullptr;
     const elecstate::DensityMatrix<double, double>* dm_in_dftu_d = nullptr;
     const elecstate::DensityMatrix<std::complex<double>, double>* dm_in_dftu_cd = nullptr;
 #endif
 };
-
-
-#ifdef __LCAO
-template <typename T>
-void dftu_cal_occup_m(const int iter,
-                      const UnitCell& ucell,
-                      const std::vector<std::vector<T>>& dm,
-                      const K_Vectors& kv,
-                      const double& mixing_beta,
-                      hamilt::Hamilt<T>* p_ham,
-                      Plus_U &dftu);
-#endif
 
 
 #endif

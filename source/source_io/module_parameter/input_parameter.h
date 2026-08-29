@@ -113,7 +113,7 @@ struct Input_para
     double mixing_gg0_min = 0.1;
     double mixing_angle = -10.0;
     bool mixing_tau = false;  ///< whether to mix tau in mgga
-    bool mixing_dftu = false; ///< whether to mix locale in DFT+U
+    bool mixing_dftu = false; ///< whether to mix occ_mat in DFT+U
     bool mixing_dmr = false;  ///< whether to mix real space density matrix
 
     bool gamma_only = false;   ///< for plane wave.

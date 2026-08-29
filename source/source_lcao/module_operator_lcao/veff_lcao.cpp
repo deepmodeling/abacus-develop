@@ -5,8 +5,51 @@
 #include "source_hamilt/module_xc/xc_functional.h"
 #include "source_cell/unitcell.h"
 #include "source_hamilt/module_gint/gint_interface.h"
+#include <cassert>
 namespace hamilt
 {
+
+namespace
+{
+HContainer<double> make_real_hcontainer(const HContainer<std::complex<double>>& complex_hr)
+{
+    HContainer<double> real_hr(complex_hr.get_paraV());
+    for (int iap = 0; iap < complex_hr.size_atom_pairs(); ++iap)
+    {
+        const AtomPair<std::complex<double>>& complex_ap = complex_hr.get_atom_pair(iap);
+        for (int ir = 0; ir < complex_ap.get_R_size(); ++ir)
+        {
+            const ModuleBase::Vector3<int> r_index = complex_ap.get_R_index(ir);
+            real_hr.insert_pair(AtomPair<double>(complex_ap.get_atom_i(), complex_ap.get_atom_j(), r_index,
+                                                 complex_hr.get_paraV()));
+        }
+    }
+    real_hr.allocate(nullptr, true);
+    return real_hr;
+}
+
+void add_real_hcontainer(const HContainer<double>& real_hr, HContainer<std::complex<double>>& complex_hr)
+{
+    for (int iap = 0; iap < real_hr.size_atom_pairs(); ++iap)
+    {
+        const AtomPair<double>& real_ap = real_hr.get_atom_pair(iap);
+        AtomPair<std::complex<double>>* complex_ap
+            = complex_hr.find_pair(real_ap.get_atom_i(), real_ap.get_atom_j());
+        assert(complex_ap != nullptr);
+        for (int ir = 0; ir < real_ap.get_R_size(); ++ir)
+        {
+            const ModuleBase::Vector3<int> r_index = real_ap.get_R_index(ir);
+            const BaseMatrix<double>& real_matrix = real_ap.get_HR_values(ir);
+            BaseMatrix<std::complex<double>>* complex_matrix = complex_ap->find_matrix(r_index);
+            assert(complex_matrix != nullptr);
+            for (int index = 0; index < real_ap.get_size(); ++index)
+            {
+                complex_matrix->get_pointer()[index] += real_matrix.get_pointer()[index];
+            }
+        }
+    }
+}
+} // namespace
 
 
 // initialize_HR()
@@ -122,23 +165,45 @@ void Veff<OperatorLCAO<std::complex<double>, std::complex<double>>>::contributeH
     ModuleBase::TITLE("Veff", "contributeHR");
     ModuleBase::timer::start("Veff", "contributeHR");
 
-    std::vector<const double*> vr_eff(4, nullptr);
-    std::vector<const double*> vofk_eff(4, nullptr);
-    for (int is = 0; is < 4; is++)
+    if (this->nspin < 4)
     {
-        vr_eff[is] = this->pot->get_eff_v(is);
-        if(XC_Functional::get_ked_flag())
+        HContainer<double> real_hr = make_real_hcontainer(*this->hR);
+        double* vr_eff = this->pot->get_eff_v(this->current_spin);
+        double* vofk_eff = this->pot->get_eff_vofk(this->current_spin);
+        if (XC_Functional::get_ked_flag())
         {
-            vofk_eff[is] = this->pot->get_eff_vofk(is);
+            ModuleGint::cal_gint_vl_metagga(vr_eff, vofk_eff, &real_hr);
+        }
+        else
+        {
+            ModuleGint::cal_gint_vl(vr_eff, &real_hr);
+        }
+        add_real_hcontainer(real_hr, *this->hR);
+        if (this->nspin == 2)
+        {
+            this->current_spin = 1 - this->current_spin;
         }
     }
-    if(XC_Functional::get_ked_flag())
-    {
-        ModuleGint::cal_gint_vl_metagga(vr_eff, vofk_eff, this->hR);
-    } 
     else
     {
-        ModuleGint::cal_gint_vl(vr_eff, this->hR);
+        std::vector<const double*> vr_eff(4, nullptr);
+        std::vector<const double*> vofk_eff(4, nullptr);
+        for (int is = 0; is < 4; is++)
+        {
+            vr_eff[is] = this->pot->get_eff_v(is);
+            if(XC_Functional::get_ked_flag())
+            {
+                vofk_eff[is] = this->pot->get_eff_vofk(is);
+            }
+        }
+        if(XC_Functional::get_ked_flag())
+        {
+            ModuleGint::cal_gint_vl_metagga(vr_eff, vofk_eff, this->hR);
+        }
+        else
+        {
+            ModuleGint::cal_gint_vl(vr_eff, this->hR);
+        }
     }
 
     ModuleBase::timer::end("Veff", "contributeHR");

@@ -3,14 +3,12 @@
 #include "source_pw/module_pwdft/dftu_base.h"
 #include "source_base/constants.h"
 #include "source_base/global_function.h"
+#include "source_base/global_variable.h"
 #include "source_base/timer.h"
-#include "source_io/module_parameter/parameter.h"
 
 #include <cmath>
-#include <cstring>
 #include <fstream>
 #include <iomanip>
-#include <sstream>
 #include <vector>
 
 // local inline helpers for eigenvalue calculation
@@ -113,7 +111,7 @@ void output(const Plus_U_Base& dftu,
                     continue;
                 }
 
-                if (!dftu.use_yukawa)
+                if (!dftu.use_yukawa())
                 {
                     GlobalV::ofs_running << " Type=" << T+1 << " L=" << L << " ORBITAL=" << 0
                                          << " U=" << dftu.get_u_current(T) * ModuleBase::Ry_to_eV << " eV" << std::endl;

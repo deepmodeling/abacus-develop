@@ -1,5 +1,6 @@
 #include "setup_dftu_lcao.h"
 #include "source_lcao/module_dftu/dftu_lcao.h"
+#include "source_lcao/module_dftu/dftu_occup.h"
 #include "source_pw/module_pwdft/dftu_output.h" // mohan add 2025-11-08
 #include "source_estate/module_dm/density_matrix.h"
 #include "source_lcao/hamilt_lcao.h"
@@ -61,10 +62,10 @@ void finish_dftu_lcao(const int iter,
     /// new DFT+U method calculates energy in Hamiltonian
     if (dft_plus_u == 2)
     {
-        if (dftu_ptr->occ_mat_ctrl != 2)
+        if (dftu_ptr->get_occ_mat_ctrl() != 2)
         {
-            dftu_cal_occup_m(iter, ucell, dm_vec, kv, mixing_beta, 
-                             static_cast<hamilt::Hamilt<TK>*>(hamilt_lcao_ptr), *dftu_ptr);
+            DFTU_LCAO::cal_occ_mat(iter, ucell, dm_vec, kv, mixing_beta,
+                                   static_cast<hamilt::Hamilt<TK>*>(hamilt_lcao_ptr), *dftu_ptr);
         }
         dftu_ptr->cal_energy_correction(ucell, iter);
     }
