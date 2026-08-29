@@ -42,6 +42,14 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(int num_channels,
                                                               int user_cap,
                                                               const SternheimerMemorySnapshot& memory);
 
+SternheimerChannelWorkerPlan plan_sternheimer_owned_channel_workers(
+    int global_num_channels,
+    int owned_num_channels,
+    int omp_threads,
+    std::size_t grid_size,
+    int user_cap,
+    const SternheimerMemorySnapshot& memory);
+
 SternheimerMemorySnapshot detect_sternheimer_memory_snapshot();
 
 std::string sternheimer_memory_accounting_mode_name(SternheimerMemoryAccountingMode mode);

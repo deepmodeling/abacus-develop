@@ -4940,25 +4940,8 @@ void run_sternheimer_abacus_chi0_output_impl(
         }
         std::vector<siab::ReferenceRow> local_siab_rows;
         const SternheimerMemorySnapshot channel_memory = detect_sternheimer_memory_snapshot();
-        const SternheimerChannelWorkerPlan channel_worker_plan
-            = plan_sternheimer_channel_workers(num_channels,
-                                               sternheimer_channel_openmp_threads(),
-                                               grid_data.grid.size(),
-                                               channel_worker_user_cap,
-                                               channel_memory);
-        append_chi0_progress_event("channel_workers_ready",
-                                   0,
-                                   -1,
-                                   -1,
-                                   -1,
-                                   solved_equations,
-                                   nullptr,
-                                   -1.0,
-                                   elapsed_seconds_since(chi0_start_time),
-                                   format_sternheimer_channel_worker_diagnostic(channel_memory,
-                                                                                channel_worker_plan,
-                                                                                grid_data.grid.size(),
-                                                                                channel_worker_user_cap));
+        SternheimerChannelWorkerPlan channel_worker_plan;
+        bool channel_worker_plan_reported = false;
 
         for (int ifrequency = 0; ifrequency != nfreq; ++ifrequency)
         {
@@ -5046,6 +5029,39 @@ void run_sternheimer_abacus_chi0_output_impl(
                         }
                         owned_channels.push_back(ichannel);
                         equation_owner_ranks.push_back(equation_owner_rank);
+                    }
+
+                    if (owned_channels.empty())
+                    {
+                        continue;
+                    }
+                    const SternheimerChannelWorkerPlan local_channel_worker_plan
+                        = plan_sternheimer_owned_channel_workers(num_channels,
+                                                                static_cast<int>(owned_channels.size()),
+                                                                sternheimer_channel_openmp_threads(),
+                                                                grid_data.grid.size(),
+                                                                channel_worker_user_cap,
+                                                                channel_memory);
+                    if (!channel_worker_plan_reported)
+                    {
+                        channel_worker_plan = local_channel_worker_plan;
+                        channel_worker_plan_reported = true;
+                        append_chi0_progress_event(
+                            "channel_workers_ready",
+                            0,
+                            -1,
+                            -1,
+                            -1,
+                            solved_equations,
+                            nullptr,
+                            -1.0,
+                            elapsed_seconds_since(chi0_start_time),
+                            "global_channels=" + std::to_string(num_channels)
+                                + " local_channels=" + std::to_string(owned_channels.size()) + " "
+                                + format_sternheimer_channel_worker_diagnostic(channel_memory,
+                                                                               local_channel_worker_plan,
+                                                                               grid_data.grid.size(),
+                                                                               channel_worker_user_cap));
                     }
 
                     std::vector<ChannelEquationResult> channel_results
@@ -5161,7 +5177,7 @@ void run_sternheimer_abacus_chi0_output_impl(
                                 }
                                 return result;
                             },
-                            channel_worker_plan.effective_workers);
+                            local_channel_worker_plan.effective_workers);
 
                     for (ChannelEquationResult& result: channel_results)
                     {

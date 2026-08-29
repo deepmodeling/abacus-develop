@@ -157,6 +157,17 @@ AddTest(
   LIBS ${math_libs}
   SOURCES sternheimer_abacus_st_smoke_test.cpp ../sternheimer_siab_memory.cpp
 )
+add_executable(
+  MODULE_RI_sternheimer_owned_channel_workers_test
+  sternheimer_owned_channel_workers_test.cpp
+  ../sternheimer_channel_resources.cpp
+)
+install(TARGETS MODULE_RI_sternheimer_owned_channel_workers_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
+add_test(
+  NAME MODULE_RI_sternheimer_owned_channel_workers_test
+  COMMAND ./MODULE_RI_sternheimer_owned_channel_workers_test
+  WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 AddTest(
   TARGET MODULE_RI_sternheimer_coulomb_whitening_test
   LIBS ${math_libs}

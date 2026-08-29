@@ -294,6 +294,30 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
     return plan;
 }
 
+SternheimerChannelWorkerPlan plan_sternheimer_owned_channel_workers(
+    const int global_num_channels,
+    const int owned_num_channels,
+    const int omp_threads,
+    const std::size_t grid_size,
+    const int user_cap,
+    const SternheimerMemorySnapshot& memory)
+{
+    if (global_num_channels <= 0)
+    {
+        throw std::invalid_argument("Sternheimer owned-channel planning requires a positive global channel count.");
+    }
+    if (owned_num_channels <= 0 || owned_num_channels > global_num_channels)
+    {
+        throw std::invalid_argument(
+            "Sternheimer owned-channel planning requires a positive local count no larger than the global count.");
+    }
+    return plan_sternheimer_channel_workers(owned_num_channels,
+                                            omp_threads,
+                                            grid_size,
+                                            user_cap,
+                                            memory);
+}
+
 std::string sternheimer_memory_accounting_mode_name(const SternheimerMemoryAccountingMode mode)
 {
     switch (mode)
