@@ -180,6 +180,30 @@ struct SternheimerFDSpectralPreconditioner::Impl
             throw std::runtime_error("Failed to initialize the Sternheimer spectral preconditioner FFT.");
         }
 
+        has_bloch_phase = grid.periodic
+                          && (grid.kpoint[0] != 0.0 || grid.kpoint[1] != 0.0 || grid.kpoint[2] != 0.0);
+        if (has_bloch_phase)
+        {
+            bloch_phase.resize(static_cast<std::size_t>(grid.size()));
+            for (int ix = 0; ix != grid.nx; ++ix)
+            {
+                for (int iy = 0; iy != grid.ny; ++iy)
+                {
+                    for (int iz = 0; iz != grid.nz; ++iz)
+                    {
+                        const int index = (ix * grid.ny + iy) * grid.nz + iz;
+                        const double phase_angle
+                            = ModuleBase::TWO_PI
+                              * (grid.kpoint[0] * static_cast<double>(ix) / grid.nx
+                                 + grid.kpoint[1] * static_cast<double>(iy) / grid.ny
+                                 + grid.kpoint[2] * static_cast<double>(iz) / grid.nz);
+                        bloch_phase[static_cast<std::size_t>(index)]
+                            = std::exp(std::complex<double>(0.0, phase_angle));
+                    }
+                }
+            }
+        }
+
         const KineticSymbolData symbol_data = make_kinetic_symbol_data(hamiltonian);
         const double normalization = 1.0 / static_cast<double>(grid.size());
         for (int ix = 0; ix != grid.nx; ++ix)
@@ -239,6 +263,8 @@ struct SternheimerFDSpectralPreconditioner::Impl
     double reference_eigenvalue = 0.0;
     double omega = 0.0;
     double regularization = 0.0;
+    bool has_bloch_phase = false;
+    std::vector<std::complex<double>> bloch_phase;
     fftw_complex* buffer = nullptr;
     fftw_plan forward = nullptr;
     fftw_plan backward = nullptr;
@@ -271,15 +297,11 @@ void SternheimerFDSpectralPreconditioner::apply(const SternheimerFDHamiltonian::
             for (int iz = 0; iz != impl_->grid.nz; ++iz)
             {
                 const int index = (ix * impl_->grid.ny + iy) * impl_->grid.nz + iz;
-                const double phase_angle
-                    = impl_->grid.periodic ? -ModuleBase::TWO_PI
-                      * (impl_->grid.kpoint[0] * static_cast<double>(ix) / impl_->grid.nx
-                         + impl_->grid.kpoint[1] * static_cast<double>(iy) / impl_->grid.ny
-                         + impl_->grid.kpoint[2] * static_cast<double>(iz) / impl_->grid.nz)
-                                           : 0.0;
-                const std::complex<double> value
-                    = std::exp(std::complex<double>(0.0, phase_angle))
-                      * input[static_cast<std::size_t>(index)];
+                std::complex<double> value = input[static_cast<std::size_t>(index)];
+                if (impl_->has_bloch_phase)
+                {
+                    value *= std::conj(impl_->bloch_phase[static_cast<std::size_t>(index)]);
+                }
                 impl_->buffer[index][0] = value.real();
                 impl_->buffer[index][1] = value.imag();
             }
@@ -304,15 +326,11 @@ void SternheimerFDSpectralPreconditioner::apply(const SternheimerFDHamiltonian::
             for (int iz = 0; iz != impl_->grid.nz; ++iz)
             {
                 const int index = (ix * impl_->grid.ny + iy) * impl_->grid.nz + iz;
-                const double phase_angle
-                    = impl_->grid.periodic ? ModuleBase::TWO_PI
-                      * (impl_->grid.kpoint[0] * static_cast<double>(ix) / impl_->grid.nx
-                         + impl_->grid.kpoint[1] * static_cast<double>(iy) / impl_->grid.ny
-                         + impl_->grid.kpoint[2] * static_cast<double>(iz) / impl_->grid.nz)
-                                           : 0.0;
                 const std::complex<double> value(impl_->buffer[index][0], impl_->buffer[index][1]);
                 output[static_cast<std::size_t>(index)]
-                    = std::exp(std::complex<double>(0.0, phase_angle)) * value;
+                    = impl_->has_bloch_phase
+                          ? impl_->bloch_phase[static_cast<std::size_t>(index)] * value
+                          : value;
             }
         }
     }
