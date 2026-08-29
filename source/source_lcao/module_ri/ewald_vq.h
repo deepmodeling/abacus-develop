@@ -7,6 +7,7 @@
 #define EWALD_VQ_H
 
 #include "LRI_CV.h"
+#include "direct_2d_coulomb.h"
 #include "ewald_tail_utils.h"
 #include "gaussian_abfs.h"
 #include "source_base/element_basis_index.h"
@@ -70,6 +71,11 @@ class Ewald_Vq
     inline double get_exact_ccp_rmesh_times() const { return this->exact_ccp_rmesh_times; }
 
     double get_singular_chi(const UnitCell& ucell, const std::vector<std::map<std::string,std::string>>& param_list, const double& qdiv);
+
+    void output_direct_2d_coulomb(const UnitCell& ucell,
+                                  double ecut_ry,
+                                  int kz_order,
+                                  int gamma_order);
 
     inline std::map<TA, std::map<TAK, RI::Tensor<std::complex<double>>>> cal_Vq(
         const UnitCell& ucell,

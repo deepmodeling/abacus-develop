@@ -146,6 +146,17 @@ int main()
         metadata.naux = 807;
         metadata.source_revision = "test-revision";
         const std::string formatted = Direct2dCoulomb::format_method_metadata(metadata);
+        const std::string expected_metadata =
+            "# ABACUS reader-v1 strict 2D Coulomb method\n"
+            "version = 1\n"
+            "method = direct_mixed_fourier\n"
+            "ecut_ry = 110\n"
+            "kz_order = 64\n"
+            "gamma_order = 8\n"
+            "nq = 144\n"
+            "naux = 807\n"
+            "source_revision = test-revision\n";
+        require(formatted == expected_metadata, "method metadata is not deterministic");
         require(formatted.find("method = direct_mixed_fourier") != std::string::npos,
                 "metadata omits method");
         require(formatted.find("ecut_ry = 110") != std::string::npos,

@@ -755,6 +755,95 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs_shrink);
     else
         exx_full_coulomb->init(mpi_comm, ucell, kv, orb, this->abfs);
+
+    const auto write_strict_2d_coulomb_head_sidecar = [&]() {
+        if (GlobalC::exx_info.info_ri.ewald_dimension != 2 || GlobalV::MY_RANK != 0)
+        {
+            return;
+        }
+        const auto multipoles = Exx_Abfs::Construct_Orbs::get_multipole(exx_full_coulomb->abfs);
+        std::vector<std::vector<double>> s_multipoles_by_type(
+            static_cast<std::size_t>(ucell.ntype));
+        std::vector<int> atoms_per_type(static_cast<std::size_t>(ucell.ntype), 0);
+        for (int it = 0; it != ucell.ntype; ++it)
+        {
+            if (static_cast<std::size_t>(it) < multipoles.size()
+                && !multipoles[static_cast<std::size_t>(it)].empty())
+            {
+                s_multipoles_by_type[static_cast<std::size_t>(it)]
+                    = multipoles[static_cast<std::size_t>(it)][0];
+            }
+            atoms_per_type[static_cast<std::size_t>(it)] = ucell.atoms[it].na;
+        }
+        const ModuleBase::Vector3<double> a1_bohr = ucell.a1 * ucell.lat0;
+        const ModuleBase::Vector3<double> a2_bohr = ucell.a2 * ucell.lat0;
+        const auto normalization = RpaLriDetail::strict_2d_coulomb_head_normalization(
+            (a1_bohr ^ a2_bohr).norm(), s_multipoles_by_type, atoms_per_type);
+
+        const std::string filename = "librpa_2d_coulomb_head.dat";
+        std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
+        if (!ofs.good())
+        {
+            throw std::runtime_error("Failed to open " + filename);
+        }
+        ofs << RpaLriDetail::format_strict_2d_coulomb_head_sidecar(normalization);
+        if (!ofs.good())
+        {
+            throw std::runtime_error("Failed to write " + filename);
+        }
+        std::cout << "Wrote strict 2D Coulomb head normalization to " << filename
+                  << ": A_lambda=" << std::setprecision(17)
+                  << normalization.raw_head_coefficient
+                  << ", sheet_to_raw_scale=" << normalization.sheet_to_raw_scale
+                  << std::endl;
+    };
+
+    const bool use_direct_2d_coulomb
+        = PARAM.inp.out_librpa_2d_coulomb_method == "direct_mixed_fourier";
+    if (use_direct_2d_coulomb)
+    {
+        if (PARAM.inp.out_librpa_reader_version != 1)
+        {
+            throw std::invalid_argument(
+                "Direct mixed-Fourier Coulomb requires out_librpa_reader_version=1.");
+        }
+        if (GlobalC::exx_info.info_ri.ewald_dimension != 2)
+        {
+            throw std::invalid_argument(
+                "Direct mixed-Fourier Coulomb requires exx_ewald_dimension=2.");
+        }
+        if (RpaLriDetail::debug_dump_ewald_split_enabled()
+            || RpaLriDetail::ewald_component_output_enabled())
+        {
+            throw std::invalid_argument(
+                "Direct mixed-Fourier Coulomb is incompatible with legacy Ewald split diagnostics.");
+        }
+
+        const bool use_shrink = GlobalC::exx_info.info_ri.shrink_abfs_pca_thr >= 0.0;
+        this->out_librpa_basis_v1(ucell,
+                                  exx_full_coulomb.get(),
+                                  use_shrink ? "basis_aux_shrink_out" : "basis_aux_out",
+                                  use_shrink ? "basis_out_shrink" : "basis_out");
+        const auto ewald_object
+            = exx_full_coulomb->exx_objs.find(Conv_Coulomb_Pot_K::Coulomb_Method::Ewald);
+        if (ewald_object == exx_full_coulomb->exx_objs.end())
+        {
+            throw std::runtime_error(
+                "Direct mixed-Fourier Coulomb could not find the Ewald auxiliary object.");
+        }
+        ewald_object->second.evq.output_direct_2d_coulomb(
+            ucell,
+            PARAM.inp.out_librpa_2d_direct_ecut,
+            PARAM.inp.out_librpa_2d_direct_kz_order,
+            PARAM.inp.out_librpa_2d_direct_gamma_order);
+        write_strict_2d_coulomb_head_sidecar();
+
+        exx_full_coulomb.reset();
+        RpaLriDetail::trim_malloc_cache();
+        ModuleBase::timer::tick("RPA_LRI", "output_ewald_coulomb");
+        return;
+    }
+
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Vs_full_IJR;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> Cs;
     std::map<TA, std::map<TAC, RI::Tensor<Tdata>>> tmp;
@@ -833,6 +922,7 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
                                   use_shrink ? "basis_aux_shrink_out" : "basis_aux_out",
                                   use_shrink ? "basis_out_shrink" : "basis_out");
         this->out_coulomb_k_v1(ucell, this->Vs_period, "v1_coulomb_full_iq_", exx_full_coulomb.get());
+        write_strict_2d_coulomb_head_sidecar();
         if (output_ewald_components)
         {
             auto bare_periodic = gather_periodic(ewald_components.bare_periodic);
@@ -847,37 +937,6 @@ void RPA_LRI<T, Tdata>::output_ewald_coulomb(const UnitCell& ucell, const K_Vect
                 ucell, short_range, "v1_coulomb_ewald_short_iq_", exx_full_coulomb.get());
             this->out_coulomb_k_v1(
                 ucell, long_range, "v1_coulomb_ewald_long_iq_", exx_full_coulomb.get());
-        }
-        if (GlobalC::exx_info.info_ri.ewald_dimension == 2 && GlobalV::MY_RANK == 0)
-        {
-            const auto multipoles = Exx_Abfs::Construct_Orbs::get_multipole(exx_full_coulomb->abfs);
-            std::vector<std::vector<double>> s_multipoles_by_type(static_cast<std::size_t>(ucell.ntype));
-            std::vector<int> atoms_per_type(static_cast<std::size_t>(ucell.ntype), 0);
-            for (int it = 0; it != ucell.ntype; ++it)
-            {
-                if (static_cast<std::size_t>(it) < multipoles.size()
-                    && !multipoles[static_cast<std::size_t>(it)].empty())
-                {
-                    s_multipoles_by_type[static_cast<std::size_t>(it)] =
-                        multipoles[static_cast<std::size_t>(it)][0];
-                }
-                atoms_per_type[static_cast<std::size_t>(it)] = ucell.atoms[it].na;
-            }
-            const ModuleBase::Vector3<double> a1_bohr = ucell.a1 * ucell.lat0;
-            const ModuleBase::Vector3<double> a2_bohr = ucell.a2 * ucell.lat0;
-            const auto normalization = RpaLriDetail::strict_2d_coulomb_head_normalization(
-                (a1_bohr ^ a2_bohr).norm(), s_multipoles_by_type, atoms_per_type);
-            const std::string filename = "librpa_2d_coulomb_head.dat";
-            std::ofstream ofs(filename, std::ios::out | std::ios::trunc);
-            if (!ofs.good())
-            {
-                throw std::runtime_error("Failed to open " + filename);
-            }
-            ofs << RpaLriDetail::format_strict_2d_coulomb_head_sidecar(normalization);
-            if (!ofs.good())
-            {
-                throw std::runtime_error("Failed to write " + filename);
-            }
         }
     }
     else

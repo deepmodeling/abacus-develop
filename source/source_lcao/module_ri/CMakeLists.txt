@@ -13,6 +13,7 @@ if (ENABLE_LIBRI)
         Mix_DMk_2D.cpp
         Mix_Matrix.cpp
         rpa_abfs_preorthogonalization.cpp
+        direct_2d_coulomb.cpp
         sternheimer_abacus_dft_zero_order.cpp
         sternheimer_abacus_dft_reference.cpp
         sternheimer_abfs_perturbation.cpp

@@ -49,6 +49,8 @@ inline RI::Tensor<std::complex<double>> tensor_adjoint(const RI::Tensor<std::com
 }
 } // namespace EwaldVqDetail
 
+#include "direct_2d_coulomb_ewald.hpp"
+
 template<typename Tdata>
 Ewald_Vq<Tdata>::Ewald_Vq(){}
 

@@ -982,22 +982,23 @@ void write_metadata(const Result& result, const Metadata& metadata, const std::s
 std::string format_method_metadata(const MethodMetadata& metadata)
 {
     if (metadata.method.empty() || !std::isfinite(metadata.ecut_ry)
-        || metadata.kz_order < 0 || metadata.gamma_order <= 0
-        || metadata.nq < 0)
+        || metadata.ecut_ry <= 0.0 || metadata.kz_order <= 0
+        || metadata.gamma_order <= 0 || metadata.gamma_order % 2 != 0
+        || metadata.nq <= 0 || metadata.naux == 0 || metadata.source_revision.empty())
     {
         throw std::invalid_argument("invalid direct strict-2D Coulomb method metadata");
     }
     std::ostringstream output;
-    output << "# ABACUS reader-v1 strict 2D Coulomb method\\n"
-           << "version = 1\\n"
-           << "method = " << metadata.method << '\\n'
+    output << "# ABACUS reader-v1 strict 2D Coulomb method\n"
+           << "version = 1\n"
+           << "method = " << metadata.method << '\n'
            << std::setprecision(17)
-           << "ecut_ry = " << metadata.ecut_ry << '\\n'
-           << "kz_order = " << metadata.kz_order << '\\n'
-           << "gamma_order = " << metadata.gamma_order << '\\n'
-           << "nq = " << metadata.nq << '\\n'
-           << "naux = " << metadata.naux << '\\n'
-           << "source_revision = " << metadata.source_revision << '\\n';
+           << "ecut_ry = " << metadata.ecut_ry << '\n'
+           << "kz_order = " << metadata.kz_order << '\n'
+           << "gamma_order = " << metadata.gamma_order << '\n'
+           << "nq = " << metadata.nq << '\n'
+           << "naux = " << metadata.naux << '\n'
+           << "source_revision = " << metadata.source_revision << '\n';
     return output.str();
 }
 
