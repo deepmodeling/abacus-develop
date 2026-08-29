@@ -26,6 +26,7 @@ if (ENABLE_LIBRI)
         sternheimer_delta.cpp
         sternheimer_grid_diagnostics.cpp
         sternheimer_fd_hamiltonian.cpp
+        sternheimer_fd_preconditioner.cpp
         sternheimer_fd_nonlocal_projector.cpp
         sternheimer_fd_projector_sampler.cpp
         sternheimer_fd_solver.cpp

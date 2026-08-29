@@ -21,6 +21,8 @@ class SternheimerRPA
         int max_iter = 300;
         double residual_tol = 1.0e-10;
         double breakdown_tol = 1.0e-14;
+        bool use_fd_spectral_preconditioner = false;
+        double fd_spectral_preconditioner_regularization = 0.2;
     };
 
     struct SolverResult

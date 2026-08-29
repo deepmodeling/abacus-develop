@@ -137,6 +137,73 @@ TEST(SternheimerPeriodicSolver, StandardModeMatchesCompleteSameGridSOSWavefuncti
     }
 }
 
+TEST(SternheimerPeriodicSolver, SpectralPreconditionerPreservesResponseAndReducesIterations)
+{
+    using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+    using Complex = Hamiltonian::Complex;
+    using Vector = Hamiltonian::Vector;
+
+    Hamiltonian::Grid grid{48, 1, 1, 0.35, 1.0, 1.0, true};
+    const double pi = std::acos(-1.0);
+    std::vector<double> potential(static_cast<std::size_t>(grid.size()));
+    for (int ix = 0; ix != grid.nx; ++ix)
+    {
+        potential[static_cast<std::size_t>(ix)]
+            = 0.18 * std::cos(2.0 * pi * ix / grid.nx)
+              + 0.07 * std::sin(6.0 * pi * ix / grid.nx);
+    }
+    constexpr double volume_element = 0.35;
+    Hamiltonian hamiltonian(grid, potential, 1.0, nullptr, 8);
+    const auto states = ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 48, volume_element);
+    const std::vector<Vector> occupied = {states.wavefunctions[0]};
+    Vector rhs(static_cast<std::size_t>(grid.size()));
+    for (int ix = 0; ix != grid.nx; ++ix)
+    {
+        rhs[static_cast<std::size_t>(ix)]
+            = Complex(std::cos(10.0 * pi * ix / grid.nx),
+                      0.3 * std::sin(14.0 * pi * ix / grid.nx));
+    }
+
+    ModuleRI::SternheimerRPA::SolverOptions identity_options;
+    identity_options.max_iter = 150;
+    identity_options.residual_tol = 1.0e-11;
+    const auto identity = ModuleRI::solve_sternheimer_periodic_linear_response(false,
+                                                                                hamiltonian,
+                                                                                occupied,
+                                                                                states.eigenvalues[0],
+                                                                                rhs,
+                                                                                {},
+                                                                                {},
+                                                                                0.08,
+                                                                                volume_element,
+                                                                                identity_options);
+
+    ModuleRI::SternheimerRPA::SolverOptions preconditioned_options = identity_options;
+    preconditioned_options.use_fd_spectral_preconditioner = true;
+    preconditioned_options.fd_spectral_preconditioner_regularization = 0.2;
+    const auto preconditioned = ModuleRI::solve_sternheimer_periodic_linear_response(false,
+                                                                                      hamiltonian,
+                                                                                      occupied,
+                                                                                      states.eigenvalues[0],
+                                                                                      rhs,
+                                                                                      {},
+                                                                                      {},
+                                                                                      0.08,
+                                                                                      volume_element,
+                                                                                      preconditioned_options);
+
+    ASSERT_TRUE(identity.solver.converged);
+    ASSERT_TRUE(preconditioned.solver.converged);
+    EXPECT_LT(preconditioned.solver.iterations, identity.solver.iterations);
+    EXPECT_LT(preconditioned.residual_norm, 1.0e-9);
+    ASSERT_EQ(preconditioned.wavefunction.size(), identity.wavefunction.size());
+    for (std::size_t ir = 0; ir != identity.wavefunction.size(); ++ir)
+    {
+        EXPECT_NEAR(preconditioned.wavefunction[ir].real(), identity.wavefunction[ir].real(), 1.0e-8);
+        EXPECT_NEAR(preconditioned.wavefunction[ir].imag(), identity.wavefunction[ir].imag(), 1.0e-8);
+    }
+}
+
 TEST(SternheimerPeriodicSolver, DeltaModeReportsHybridAndFullGridResidualsSeparately)
 {
     using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;

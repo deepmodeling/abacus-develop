@@ -1,4 +1,5 @@
 #include "source_lcao/module_ri/sternheimer_fd_solver.h"
+#include "source_lcao/module_ri/sternheimer_fd_preconditioner.h"
 
 #include "source_base/module_external/lapack_connector.h"
 
@@ -491,6 +492,21 @@ SternheimerFDLinearResponse solve_sternheimer_fd_linear_response(
         }
         SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, output);
     };
+    std::shared_ptr<SternheimerFDSpectralPreconditioner> spectral_preconditioner;
+    if (options.use_fd_spectral_preconditioner)
+    {
+        spectral_preconditioner = get_thread_local_sternheimer_fd_spectral_preconditioner(
+            hamiltonian,
+            reference_eigenvalue,
+            omega,
+            options.fd_spectral_preconditioner_regularization);
+        problem.precondition = [spectral_preconditioner, &occupied_wavefunctions, dot](
+                                   const SternheimerFDHamiltonian::Vector& input,
+                                   SternheimerFDHamiltonian::Vector& output) {
+            spectral_preconditioner->apply(input, output);
+            SternheimerRPA::project_out_subspace(occupied_wavefunctions, dot, output);
+        };
+    }
 
     SternheimerFDLinearResponse response;
     response.delta_wavefunction.assign(grid_size, SternheimerFDHamiltonian::Complex(0.0, 0.0));

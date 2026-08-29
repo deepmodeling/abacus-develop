@@ -97,6 +97,9 @@ constexpr const char* kLanczosSubspaceEnv = "ABACUS_STERNHEIMER_FD_ST_LANCZOS_SU
 constexpr const char* kOmegaEnv = "ABACUS_STERNHEIMER_FD_ST_OMEGA";
 constexpr const char* kSolverToleranceEnv = "ABACUS_STERNHEIMER_FD_ST_SOLVER_TOL";
 constexpr const char* kSolverMaxIterEnv = "ABACUS_STERNHEIMER_FD_ST_MAX_ITER";
+constexpr const char* kSpectralPreconditionerEnv = "ABACUS_STERNHEIMER_FD_ST_SPECTRAL_PRECONDITIONER";
+constexpr const char* kSpectralPreconditionerRegularizationEnv
+    = "ABACUS_STERNHEIMER_FD_ST_SPECTRAL_PRECONDITIONER_REGULARIZATION";
 constexpr const char* kPCAThresholdEnv = "ABACUS_STERNHEIMER_FD_ST_PCA_THRESHOLD";
 constexpr const char* kCCPRmeshTimesEnv = "ABACUS_STERNHEIMER_FD_ST_CCP_RMESH_TIMES";
 constexpr const char* kOrbitalDirEnv = "ABACUS_STERNHEIMER_FD_ST_ORBITAL_DIR";
@@ -2794,6 +2797,9 @@ void run_sternheimer_periodic_lcao_chi0_output(
     SternheimerRPA::SolverOptions solver_options;
     solver_options.max_iter = solver_max_iter;
     solver_options.residual_tol = solver_tolerance;
+    solver_options.use_fd_spectral_preconditioner = env_is_true(kSpectralPreconditionerEnv);
+    solver_options.fd_spectral_preconditioner_regularization
+        = nonnegative_double_from_env(kSpectralPreconditionerRegularizationEnv, 0.2);
     SternheimerDeltaSubspaceOptions delta_options;
     delta_options.max_virtual_states = PARAM.inp.sternheimer_delta_max_states;
     delta_options.norm_tolerance = PARAM.inp.sternheimer_delta_norm_tol;
@@ -3938,6 +3944,10 @@ void run_sternheimer_periodic_lcao_chi0_output(
                 : "frequency_group_assignment")
         << '\n';
     out << "sternheimer_fd_order " << PARAM.inp.sternheimer_fd_order << '\n';
+    out << "sternheimer_preconditioner "
+        << (solver_options.use_fd_spectral_preconditioner ? "fd_spectral" : "none") << '\n';
+    out << "sternheimer_preconditioner_regularization_Ry "
+        << solver_options.fd_spectral_preconditioner_regularization << '\n';
     out << "sternheimer_kpoint_mpi " << (use_kpoint_mpi ? "yes" : "no") << '\n';
     out << "sternheimer_nested_k_frequency_mpi " << (use_nested_response_mpi ? "yes" : "no") << '\n';
     out << "sternheimer_kpoint_groups " << (use_kpoint_mpi ? kpoint_groups : 1) << '\n';
@@ -4050,6 +4060,9 @@ void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
         SternheimerRPA::SolverOptions solver_options;
         solver_options.max_iter = solver_max_iter;
         solver_options.residual_tol = solver_tolerance;
+        solver_options.use_fd_spectral_preconditioner = env_is_true(kSpectralPreconditionerEnv);
+        solver_options.fd_spectral_preconditioner_regularization
+            = nonnegative_double_from_env(kSpectralPreconditionerRegularizationEnv, 0.2);
 
         for (int ib = 0; ib != static_cast<int>(states.wavefunctions.size()); ++ib)
         {
@@ -4868,6 +4881,9 @@ void run_sternheimer_abacus_chi0_output_impl(
         SternheimerRPA::SolverOptions solver_options;
         solver_options.max_iter = solver_max_iter;
         solver_options.residual_tol = solver_tolerance;
+        solver_options.use_fd_spectral_preconditioner = env_is_true(kSpectralPreconditionerEnv);
+        solver_options.fd_spectral_preconditioner_regularization
+            = nonnegative_double_from_env(kSpectralPreconditionerRegularizationEnv, 0.2);
 
         bool all_converged = true;
         int solved_equations = 0;
@@ -5581,6 +5597,10 @@ void run_sternheimer_abacus_chi0_output_impl(
         out << "sternheimer_delta " << (use_delta_sternheimer ? "yes" : "no") << '\n';
         out << "sternheimer_grid_diagnostics " << (write_grid_diagnostics ? "yes" : "no") << '\n';
         out << "sternheimer_fd_order " << PARAM.inp.sternheimer_fd_order << '\n';
+        out << "sternheimer_preconditioner "
+            << (solver_options.use_fd_spectral_preconditioner ? "fd_spectral" : "none") << '\n';
+        out << "sternheimer_preconditioner_regularization_Ry "
+            << solver_options.fd_spectral_preconditioner_regularization << '\n';
         if (write_grid_diagnostics)
         {
             out << "sternheimer_component_reconstruction_error_max " << max_component_reconstruction_error << '\n';
