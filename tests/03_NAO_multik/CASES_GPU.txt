@@ -33,7 +33,7 @@ scf_out_hsk
 scf_out_hsk_binary
 scf_out_hsr
 scf_out_hsr_binary_spin2
-#scf_out_hsr_spin4
+scf_out_hsr_spin4
 scf_out_dh_t
 scf_out_dos_spin4
 scf_out_mul
@@ -46,7 +46,7 @@ nscf_out_dos
 nscf_out_band_pband
 nscf_out_pot1
 nscf_out_mul
-#nscf_out_hsr_tr_rr
+nscf_out_hsr_tr_rr
 relax_bfgs2
 relax_old_cg
 relax_cell
