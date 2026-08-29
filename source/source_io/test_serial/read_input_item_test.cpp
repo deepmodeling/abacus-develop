@@ -1857,6 +1857,64 @@ TEST_F(InputTest, Item_test2)
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
     }
+    { // out_librpa_2d_coulomb_method and direct quadrature controls
+        auto method = find_label("out_librpa_2d_coulomb_method", readinput.input_lists);
+        auto ecut = find_label("out_librpa_2d_direct_ecut", readinput.input_lists);
+        auto kz_order = find_label("out_librpa_2d_direct_kz_order", readinput.input_lists);
+        auto gamma_order = find_label("out_librpa_2d_direct_gamma_order", readinput.input_lists);
+        ASSERT_NE(method, readinput.input_lists.end());
+        ASSERT_NE(ecut, readinput.input_lists.end());
+        ASSERT_NE(kz_order, readinput.input_lists.end());
+        ASSERT_NE(gamma_order, readinput.input_lists.end());
+        EXPECT_EQ(param.input.out_librpa_2d_coulomb_method, "ewald");
+        EXPECT_DOUBLE_EQ(param.input.out_librpa_2d_direct_ecut, 0.0);
+        EXPECT_EQ(param.input.out_librpa_2d_direct_kz_order, 0);
+        EXPECT_EQ(param.input.out_librpa_2d_direct_gamma_order, 8);
+
+        method->second.str_values = {"direct_mixed_fourier"};
+        method->second.read_value(method->second, param);
+        ecut->second.str_values = {"110"};
+        ecut->second.read_value(ecut->second, param);
+        kz_order->second.str_values = {"64"};
+        kz_order->second.read_value(kz_order->second, param);
+        gamma_order->second.str_values = {"8"};
+        gamma_order->second.read_value(gamma_order->second, param);
+        param.input.rpa = true;
+        param.input.out_librpa_reader_version = 1;
+        param.input.exx_ewald_dimension = 2;
+        method->second.check_value(method->second, param);
+        EXPECT_EQ(param.input.out_librpa_2d_coulomb_method, "direct_mixed_fourier");
+        EXPECT_DOUBLE_EQ(param.input.out_librpa_2d_direct_ecut, 110.0);
+        EXPECT_EQ(param.input.out_librpa_2d_direct_kz_order, 64);
+        EXPECT_EQ(param.input.out_librpa_2d_direct_gamma_order, 8);
+
+        const auto expect_direct_failure = [&]() {
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(method->second.check_value(method->second, param), ::testing::ExitedWithCode(1), "");
+            output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        };
+        param.input.out_librpa_2d_coulomb_method = "unknown";
+        expect_direct_failure();
+        param.input.out_librpa_2d_coulomb_method = "direct_mixed_fourier";
+        param.input.out_librpa_2d_direct_ecut = 0.0;
+        expect_direct_failure();
+        param.input.out_librpa_2d_direct_ecut = 110.0;
+        param.input.out_librpa_2d_direct_kz_order = 0;
+        expect_direct_failure();
+        param.input.out_librpa_2d_direct_kz_order = 64;
+        param.input.out_librpa_2d_direct_gamma_order = 7;
+        expect_direct_failure();
+        param.input.out_librpa_2d_direct_gamma_order = 8;
+        param.input.exx_ewald_dimension = 3;
+        expect_direct_failure();
+        param.input.exx_ewald_dimension = 2;
+        param.input.out_librpa_reader_version = 0;
+        expect_direct_failure();
+        param.input.out_librpa_reader_version = 1;
+        param.input.rpa = false;
+        expect_direct_failure();
+    }
     { // sternheimer_nfreq
         auto it = find_label("sternheimer_nfreq", readinput.input_lists);
         ASSERT_NE(it, readinput.input_lists.end());
