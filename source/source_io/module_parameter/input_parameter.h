@@ -659,6 +659,10 @@ struct Input_para
     bool out_ri_cv = false; ///< Whether to output the coefficient tensor C and ABFs-representation Coulomb matrix V
     bool out_unshrinked_v = false; ///< whether to output the large Vq matrix in unshrinked auxiliary basis
     int out_librpa_reader_version = 0; ///< 0: legacy ABACUS LibRPA text files; 1: LibRPA reader-v1 binary files
+    std::string out_librpa_2d_coulomb_method = "ewald"; ///< ewald or direct_mixed_fourier for reader-v1 full V
+    double out_librpa_2d_direct_ecut = 0.0; ///< reciprocal cutoff in Ry for direct mixed-Fourier 2D Coulomb
+    int out_librpa_2d_direct_kz_order = 0; ///< positive kz quadrature order for direct mixed-Fourier 2D Coulomb
+    int out_librpa_2d_direct_gamma_order = 8; ///< positive even Gamma-plane quadrature order
     bool out_sternheimer_librpa = false; ///< whether to output Sternheimer chi0 files for LibRPA
     bool out_sternheimer_siab = false; ///< whether to output Sternheimer first-order-wavefunction targets for SIAB
     int sternheimer_siab_lmax = -1; ///< maximum angular momentum of SIAB target primitives; -1 uses orbital lmax
