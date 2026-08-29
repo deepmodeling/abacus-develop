@@ -183,6 +183,15 @@ ABACUS uses a layered review model:
 - `Agent Governance` is the deterministic GitHub Actions check for low-noise
   diff rules. Repository maintainers may make this workflow a required check in
   branch protection.
+- `Agent Governance` is split across two workflow files. The `pull_request`
+  half runs the checker with a read-only token and uploads the summary as an
+  artifact. The `Agent Governance Comment` half is triggered by `workflow_run`,
+  so it runs from the base branch with the base repository's permissions and
+  can publish the warning comment on pull requests from forks, which the
+  `pull_request` half cannot do. The comment half never checks out pull request
+  code and reads only the uploaded text artifact. `workflow_run` workflows are
+  always taken from the default branch, so changes to the comment half take
+  effect only after they are merged.
 - CodeRabbit is a PR-triggered AI reviewer for semantic review hints. Its
   repository configuration lives in `.coderabbit.yaml` and uses this document
   plus `AGENTS.md` as review guidelines.

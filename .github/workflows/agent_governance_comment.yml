@@ -1,0 +1,100 @@
+name: Agent Governance Comment
+
+# Privileged half of the governance check. `Agent Governance` runs on
+# `pull_request`, where forked pull requests only ever get a read-only token, so
+# it cannot comment on the very pull requests that need the feedback most. This
+# workflow is triggered by `workflow_run`, which always runs from the base
+# branch with the base repository's permissions.
+#
+# Safety contract for this file:
+# - It never checks out pull request code and never runs anything from the head.
+# - Its only inputs are the text artifact uploaded by the analysis run.
+# - Pull request supplied text reaches the API through files and `jq -Rs`, never
+#   through shell interpolation.
+on:
+  workflow_run:
+    workflows: ["Agent Governance"]
+    types: [completed]
+
+permissions:
+  actions: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  comment:
+    name: Publish governance warnings
+    if: github.event.workflow_run.event == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download comment payload
+        id: payload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -eu
+          mkdir -p agent_governance_payload
+          if ! gh run download "$RUN_ID" \
+            --repo "$GITHUB_REPOSITORY" \
+            --name agent-governance-payload \
+            --dir agent_governance_payload; then
+            echo "No governance payload for run ${RUN_ID}; nothing to publish."
+            echo "found=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "found=true" >> "$GITHUB_OUTPUT"
+
+      - name: Comment governance warnings
+        if: steps.payload.outputs.found == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -eu
+          summary_file=agent_governance_payload/agent_governance_summary.md
+          pr_file=agent_governance_payload/pr_number.txt
+          if [ ! -s "$summary_file" ] || [ ! -s "$pr_file" ]; then
+            echo "Incomplete governance payload; nothing to publish."
+            exit 0
+          fi
+
+          pr_number="$(tr -dc '0-9' < "$pr_file")"
+          if [ -z "$pr_number" ]; then
+            echo "Payload does not carry a pull request number; nothing to publish."
+            exit 0
+          fi
+
+          if ! grep -qi '^| warning |' "$summary_file"; then
+            exit 0
+          fi
+
+          # GitHub rejects comment bodies over 65536 characters.
+          body_limit=60000
+          marker='<!-- agent-governance-warning -->'
+          body_file="$(mktemp)"
+          json_file="$(mktemp)"
+          {
+            echo "$marker"
+            echo
+            head -c "$body_limit" "$summary_file"
+            if [ "$(wc -c < "$summary_file")" -gt "$body_limit" ]; then
+              echo
+              echo "_Summary truncated. See the \`Agent Governance\` run summary for the full report._"
+            fi
+          } > "$body_file"
+          jq -Rs '{body: .}' < "$body_file" > "$json_file"
+
+          existing_comment_id="$(gh api --paginate \
+            "repos/${GITHUB_REPOSITORY}/issues/${pr_number}/comments" \
+            --jq ".[] | select(.body | contains(\"${marker}\")) | .id" \
+            | head -n 1)"
+
+          if [ -n "$existing_comment_id" ]; then
+            gh api --method PATCH \
+              "repos/${GITHUB_REPOSITORY}/issues/comments/${existing_comment_id}" \
+              --input "$json_file"
+          else
+            gh api --method POST \
+              "repos/${GITHUB_REPOSITORY}/issues/${pr_number}/comments" \
+              --input "$json_file"
+          fi

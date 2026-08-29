@@ -4,10 +4,12 @@ on:
   pull_request:
     types: [opened, synchronize, reopened, edited, ready_for_review]
 
+# This workflow runs with the pull request head in scope, so it stays read-only.
+# Publishing the warning comment needs write access that forked pull requests
+# never get here; that half lives in agent_governance_comment.yml, which is
+# triggered by workflow_run and never checks out pull request code.
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
 
 jobs:
   governance:
@@ -55,39 +57,29 @@ jobs:
         run: |
           cat agent_governance_summary.md >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Comment governance warnings
-        if: >-
-          always() &&
-          github.event.pull_request.head.repo.full_name == github.repository
+      - name: Collect comment payload
+        if: always()
         env:
-          GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          if ! grep -qi '^| warning |' agent_governance_summary.md; then
-            exit 0
-          fi
-
-          marker='<!-- agent-governance-warning -->'
-          body_file="$(mktemp)"
-          json_file="$(mktemp)"
-          {
-            echo "$marker"
-            echo
-            cat agent_governance_summary.md
-          } > "$body_file"
-          jq -Rs '{body: .}' < "$body_file" > "$json_file"
-
-          existing_comment_id="$(gh api --paginate \
-            "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
-            --jq ".[] | select(.body | contains(\"${marker}\")) | .id" \
-            | head -n 1)"
-
-          if [ -n "$existing_comment_id" ]; then
-            gh api --method PATCH \
-              "repos/${GITHUB_REPOSITORY}/issues/comments/${existing_comment_id}" \
-              --input "$json_file"
+          set -eu
+          mkdir -p agent_governance_payload
+          if [ -s agent_governance_summary.md ]; then
+            cp agent_governance_summary.md agent_governance_payload/
           else
-            gh api --method POST \
-              "repos/${GITHUB_REPOSITORY}/issues/${PR_NUMBER}/comments" \
-              --input "$json_file"
+            {
+              echo "## Agent Governance Check"
+              echo
+              echo "Checker did not run."
+            } > agent_governance_payload/agent_governance_summary.md
           fi
+          printf '%s\n' "$PR_NUMBER" > agent_governance_payload/pr_number.txt
+
+      - name: Upload comment payload
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: agent-governance-payload
+          path: agent_governance_payload/
+          retention-days: 1
+          if-no-files-found: error
