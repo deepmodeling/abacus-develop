@@ -109,7 +109,7 @@ bool ModuleIO::read_wfc_nao(
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int read_type,
+    const bool binary,
     const int skip_band,
     const int istep)
 {
@@ -119,22 +119,11 @@ bool ModuleIO::read_wfc_nao(
     const int nk = ekb.nr;
 
     const bool gamma_only = std::is_same<T, double>::value || std::is_same<T, float>::value;
-    const bool binary = (read_type == 2);
     bool read_success = true;
     int myrank = 0;
 #ifdef __MPI
     MPI_Comm_rank(ParaV.comm(), &myrank);
 #endif
-    if (read_type != 1 && read_type != 2)
-    {
-        if (myrank == 0)
-        {
-            std::cout << " Error in reading wave function files!\n"
-                      << " read_wfc_lcao should be 1 or 2, but got " << read_type << std::endl;
-        }
-        ModuleBase::timer::end("ModuleIO", "read_wfc_nao");
-        return false;
-    }
     if (skip_band < 0)
     {
         if (myrank == 0)
@@ -314,6 +303,7 @@ bool ModuleIO::read_wfc_nao(
             {
                 readin_dir = readin_dir + "WFC/";
             }
+            const int read_type = binary ? 2 : 1;
             std::string ss = ModuleIO::filename_output(readin_dir,"wf","nao",
                     ik,ik2iktot,nspin,nkstot,read_type,out_app_flag,gamma_only,istep);
 
@@ -366,7 +356,7 @@ template bool ModuleIO::read_wfc_nao<double>(const std::string& global_readin_di
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int read_type,
+    const bool binary,
     const int skip_band,
     const int istep);
 
@@ -379,7 +369,7 @@ template bool ModuleIO::read_wfc_nao<float>(const std::string& global_readin_dir
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int read_type,
+    const bool binary,
     const int skip_band,
     const int istep);
 
@@ -391,7 +381,7 @@ template bool ModuleIO::read_wfc_nao<std::complex<double>>(const std::string& gl
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int read_type,
+    const bool binary,
 	const int skip_band,
     const int istep);
 
@@ -404,6 +394,6 @@ template bool ModuleIO::read_wfc_nao<std::complex<float>>(const std::string& glo
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int read_type,
+    const bool binary,
 	const int skip_band,
     const int istep);

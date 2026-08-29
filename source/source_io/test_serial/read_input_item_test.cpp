@@ -363,37 +363,105 @@ TEST_F(InputTest, Item_test)
     }
     { // init_wfc
         auto it = find_label("init_wfc", readinput.input_lists);
-        param.input.init_wfc = "atomic";
-        param.input.calculation = "get_pchg";
+        ASSERT_NE(it, readinput.input_lists.end());
+        EXPECT_EQ(it->second.type, "Vector of string");
+        EXPECT_EQ(param.input.init_wfc, "atomic");
+        EXPECT_TRUE(param.input.init_wfc_file_format.empty());
+
+        param.input.basis_type = "lcao";
+        param.input.calculation = "scf";
+        it->second.str_values = {"file", "txt"};
+        it->second.read_value(it->second, param);
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.init_wfc, "file");
+        EXPECT_EQ(param.input.init_wfc_file_format, "txt");
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
 
-        param.input.init_wfc = "atomic";
+        it->second.str_values = {"file", "binary"};
+        it->second.read_value(it->second, param);
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.init_wfc, "file");
+        EXPECT_EQ(param.input.init_wfc_file_format, "binary");
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+
+        it->second.str_values = {"file"};
+        it->second.read_value(it->second, param);
+        EXPECT_TRUE(param.input.init_wfc_file_format.empty());
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.init_wfc_file_format, "txt");
+        it->second.final_value.str("");
+        it->second.final_value.clear();
+        it->second.get_final_value(it->second, param);
+        EXPECT_EQ(it->second.final_value.str(), "file txt");
+
+        param.input.basis_type = "pw";
+        it->second.str_values = {"file"};
+        it->second.read_value(it->second, param);
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.init_wfc_file_format, "binary");
+        it->second.final_value.str("");
+        it->second.final_value.clear();
+        it->second.get_final_value(it->second, param);
+        EXPECT_EQ(it->second.final_value.str(), "file binary");
+
+        it->second.str_values = {"atomic"};
+        it->second.read_value(it->second, param);
+        param.input.calculation = "get_pchg";
+        param.input.basis_type = "lcao";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.init_wfc, "file");
+        EXPECT_EQ(param.input.init_wfc_file_format, "txt");
+
+        it->second.str_values = {"atomic"};
+        it->second.read_value(it->second, param);
+        param.input.calculation = "get_wf";
+        param.input.basis_type = "pw";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.init_wfc, "file");
+        EXPECT_EQ(param.input.init_wfc_file_format, "binary");
+
+        it->second.str_values = {"file", "binary"};
+        it->second.read_value(it->second, param);
+        param.input.calculation = "get_wf";
+        param.input.basis_type = "lcao";
+        it->second.reset_value(it->second, param);
+        EXPECT_EQ(param.input.init_wfc_file_format, "binary");
+
+        it->second.str_values = {"file", "binary"};
+        it->second.read_value(it->second, param);
+        param.input.calculation = "scf";
         param.input.basis_type = "lcao_in_pw";
         it->second.reset_value(it->second, param);
         EXPECT_EQ(param.input.init_wfc, "nao");
-    }
-    { // read_wfc_lcao
-        auto it = find_label("read_wfc_lcao", readinput.input_lists);
-        EXPECT_NE(it, readinput.input_lists.end());
-        EXPECT_EQ(param.input.read_wfc_lcao, 1);
-        EXPECT_EQ(it->second.get_availability(), "basis_type==lcao");
+        EXPECT_TRUE(param.input.init_wfc_file_format.empty());
 
-        it->second.str_values = {"2"};
+        for (const std::vector<std::string>& invalid : {
+                 std::vector<std::string>{},
+                 std::vector<std::string>{"file", "txt", "extra"},
+                 std::vector<std::string>{"file", "json"},
+                 std::vector<std::string>{"atomic", "txt"},
+                 std::vector<std::string>{"invalid"}})
+        {
+            it->second.str_values = invalid;
+            EXPECT_EXIT(it->second.read_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        }
+
+        param.input.basis_type = "pw";
+        it->second.str_values = {"file", "txt"};
         it->second.read_value(it->second, param);
-        EXPECT_EQ(param.input.read_wfc_lcao, 2);
-
-        param.input.read_wfc_lcao = 0;
+        it->second.reset_value(it->second, param);
         testing::internal::CaptureStdout();
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        EXPECT_THAT(output, testing::HasSubstr("not supported for basis_type=pw"));
 
-        param.input.read_wfc_lcao = 3;
-        testing::internal::CaptureStdout();
-        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
-        output = testing::internal::GetCapturedStdout();
-        EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+        it->second.str_values = {"file", "binary"};
+        it->second.read_value(it->second, param);
+        it->second.reset_value(it->second, param);
+        EXPECT_NO_THROW(it->second.check_value(it->second, param));
+
+        EXPECT_EQ(find_label("read_wfc_lcao", readinput.input_lists), readinput.input_lists.end());
+        param.input.calculation = "get_wf";
     }
     { // init_chg
         auto it = find_label("init_chg", readinput.input_lists);

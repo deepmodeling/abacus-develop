@@ -34,7 +34,7 @@ void read_wfc_nao_one_data(std::ifstream& ifs, std::complex<double>& data);
  * @param ParaV The parallel orbitals object.
  * @param psid The Psi object to store the wavefunction coefficients.
  * @param pelec Pointer to the ElecState object.
- * @param read_type The input file type: 1 for text and 2 for binary.
+ * @param binary Whether to read the binary format instead of the text format.
  * @param skip_band From which band to start reading.
  * @return True if the wavefunction coefficients are successfully read, false otherwise.
  */
@@ -48,7 +48,7 @@ bool read_wfc_nao(
 	const std::vector<int> &ik2iktot,
 	const int nkstot,
 	const int nspin,
-    const int read_type,
+    const bool binary,
     const int skip_band = 0,
     const int istep = -1);
 

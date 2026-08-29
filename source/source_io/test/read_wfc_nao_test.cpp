@@ -110,7 +110,7 @@ TEST_F(ReadWfcNaoTest,ReadWfcNao)
 
       // Act
 	  ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, 
-			  ekb, wg, ik2iktot, nkstot, nspin, 1);
+			  ekb, wg, ik2iktot, nkstot, nspin, false);
       // Assert
       EXPECT_NEAR(ekb(0,1),0.31482195194888534794941393,1e-5);
       EXPECT_NEAR(wg(0,1),0.0,1e-5);
@@ -156,7 +156,7 @@ TEST_F(ReadWfcNaoTest, ReadWfcNaoPart)
 
 	// Act
 	ModuleIO::read_wfc_nao(PARAM.sys.global_readin_dir, ParaV, psid, 
-			ekb, wg, ik2iktot, nkstot, nspin, 1, skip_band, nstep);
+			ekb, wg, ik2iktot, nkstot, nspin, false, skip_band, nstep);
 
     // Assert
     EXPECT_NEAR(ekb(0, 1), 7.4141254894954844445464914e-01, 1e-5);
@@ -207,7 +207,7 @@ TEST_F(ReadWfcNaoTest, ReadBinaryGamma)
                                        ik2iktot,
                                        1,
                                        1,
-                                       2));
+                                       true));
     EXPECT_DOUBLE_EQ(ekb(0, 0), ekb_source(0, 0));
     EXPECT_DOUBLE_EQ(ekb(0, 1), ekb_source(0, 1));
     EXPECT_DOUBLE_EQ(wg(0, 0), wg_source(0, 0));
@@ -259,7 +259,7 @@ TEST_F(ReadWfcNaoTest, ReadBinaryGammaFloat)
                                        ik2iktot,
                                        1,
                                        1,
-                                       2));
+                                       true));
     EXPECT_DOUBLE_EQ(ekb(0, 0), ekb_source(0, 0));
     EXPECT_DOUBLE_EQ(ekb(0, 1), ekb_source(0, 1));
     EXPECT_DOUBLE_EQ(wg(0, 0), wg_source(0, 0));
@@ -313,7 +313,7 @@ TEST_F(ReadWfcNaoTest, ReadBinaryComplex)
                                        ik2iktot,
                                        1,
                                        1,
-                                       2));
+                                       true));
     EXPECT_DOUBLE_EQ(ekb(0, 0), ekb_source(0, 0));
     EXPECT_DOUBLE_EQ(ekb(0, 1), ekb_source(0, 1));
     EXPECT_DOUBLE_EQ(wg(0, 0), wg_source(0, 0));
@@ -370,7 +370,7 @@ TEST_F(ReadWfcNaoTest, ReadBinaryPart)
                                        ik2iktot,
                                        1,
                                        1,
-                                       2,
+                                       true,
                                        skip_band));
     EXPECT_DOUBLE_EQ(ekb(0, 0), ekb_source(0, 1));
     EXPECT_DOUBLE_EQ(ekb(0, 1), ekb_source(0, 2));
@@ -419,7 +419,7 @@ TEST_F(ReadWfcNaoTest, BinaryDoesNotFallBackToText)
                                         ik2iktot,
                                         1,
                                         1,
-                                        2));
+                                        true));
 }
 
 TEST_F(ReadWfcNaoTest, RejectTruncatedBinary)
@@ -451,7 +451,7 @@ TEST_F(ReadWfcNaoTest, RejectTruncatedBinary)
                                         ik2iktot,
                                         1,
                                         1,
-                                        2));
+                                        true));
 }
 
 

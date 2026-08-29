@@ -9,6 +9,44 @@
 
 namespace ModuleIO
 {
+namespace
+{
+void parse_init_wfc(const std::vector<std::string>& values, Input_para& input)
+{
+    if (values.empty() || values.size() > 2)
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", "init_wfc accepts one or two values");
+    }
+
+    const std::vector<std::string> valid_methods
+        = {"atomic", "atomic+random", "random", "nao", "nao+random", "file"};
+    if (std::find(valid_methods.begin(), valid_methods.end(), values[0]) == valid_methods.end())
+    {
+        ModuleBase::WARNING_QUIT("ReadInput", nofound_str(valid_methods, "init_wfc"));
+    }
+
+    input.init_wfc = values[0];
+    input.init_wfc_file_format.clear();
+    if (input.init_wfc != "file")
+    {
+        if (values.size() == 2)
+        {
+            ModuleBase::WARNING_QUIT("ReadInput", "only init_wfc file accepts a second value");
+        }
+        return;
+    }
+
+    if (values.size() == 2)
+    {
+        if (values[1] != "txt" && values[1] != "binary")
+        {
+            ModuleBase::WARNING_QUIT("ReadInput", "the init_wfc file format must be txt or binary");
+        }
+        input.init_wfc_file_format = values[1];
+    }
+}
+} // namespace
+
 // There are some examples:
 // Generallly:
 // {
@@ -439,10 +477,9 @@ Theory: G. Makov and M. C. Payne, Phys. Rev. B 51, 4014 (1995).)";
     }
     {
         Input_Item item("init_wfc");
-        item.annotation = "start wave functions are from 'atomic', "
-                          "'atomic+random', 'random' or";
+        item.annotation = "atomic; atomic+random; random; nao; nao+random; file txt; file binary";
         item.category = "System variables";
-        item.type = "String";
+        item.type = "Vector of string";
         item.description = R"(The method used to initialize wavefunction coefficients. The available options and behavior depend on `basis_type`.
 
 For `basis_type=pw`, the available options are:
@@ -451,19 +488,28 @@ For `basis_type=pw`, the available options are:
 * `random`: Initialize all bands with random coefficients.
 * `nao`: Use numerical atomic orbitals. If the number of NAO states is smaller than `nbands`, the remaining bands are initialized randomly.
 * `nao+random`: Apply an approximately 5% multiplicative random perturbation to the NAO initialization; any bands not covered by NAO states are first initialized randomly.
-* `file`: Read binary `wf*_pw.dat` files generated with `out_wfc_pw=2` from `read_file_dir`. The files must match the current k points, `nbands`, plane-wave layout, and lattice.
+* `file binary`: Read binary `wf*_pw.dat` files generated with `out_wfc_pw=2` from `read_file_dir`. The files must match the current k points, `nbands`, plane-wave layout, and lattice. The `txt` format is not supported for PW wavefunctions.
 
-For `basis_type=lcao`, only `file` triggers reading existing wavefunctions. Set `read_wfc_lcao=1` to read text `wf*_nao.txt` files generated with `out_wfc_lcao=1`, or set `read_wfc_lcao=2` to read binary `wf*_nao.dat` files generated with `out_wfc_lcao=2`, from `read_file_dir`. The selected format is required; ABACUS does not automatically detect or fall back to the other format. The files must use a compatible NAO basis, match the current k-point and spin setup, and contain enough bands. Normal `init_wfc=file` reading matches independent files without geometry-step indices. Files accumulated with `out_app_flag` or files under `WFC/` with a `g*` geometry-step index are not supported.
+For `basis_type=lcao`, the file options are:
+* `file txt`: Read text `wf*_nao.txt` files generated with `out_wfc_lcao=1` from `read_file_dir`.
+* `file binary`: Read binary `wf*_nao.dat` files generated with `out_wfc_lcao=2` from `read_file_dir`.
+
+The selected format is required; ABACUS does not automatically detect or fall back to the other format. The files must use a compatible NAO basis, match the current k-point and spin setup, and contain enough bands. File initialization matches independent files without geometry-step indices. Files accumulated with `out_app_flag` or files under `WFC/` with a `g*` geometry-step index are not supported.
 
 For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
 
-[NOTE] For `calculation=get_wf` or `calculation=get_pchg`, `init_wfc` is automatically set to `file`. If `basis_type=lcao_in_pw` is also used, the final value is `nao`.)";
+[NOTE] For `calculation=get_wf` or `calculation=get_pchg`, non-file initialization choices are automatically changed to the file option appropriate for the selected basis. An explicitly selected file format is preserved. If `basis_type=lcao_in_pw` is also used, the final value is `nao`.)";
         item.default_value = "atomic";
         item.unit = "";
+        item.read_value = [](const Input_Item& item, Parameter& para) {
+            parse_init_wfc(item.str_values, para.input);
+        };
         item.reset_value = [](const Input_Item& item, Parameter& para) {
-            if (para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+            if ((para.input.calculation == "get_pchg" || para.input.calculation == "get_wf")
+                && para.input.init_wfc != "file")
             {
                 para.input.init_wfc = "file";
+                para.input.init_wfc_file_format.clear();
             }
             if (para.input.basis_type == "lcao_in_pw")
             {
@@ -474,31 +520,39 @@ For `basis_type=lcao_in_pw`, `init_wfc` is automatically set to `nao`.
                                             "basis_type is lcao_in_pw"
                                          << std::endl;
                 }
+                para.input.init_wfc_file_format.clear();
+            }
+            else if (para.input.init_wfc == "file" && para.input.init_wfc_file_format.empty())
+            {
+                para.input.init_wfc_file_format = para.input.basis_type == "lcao" ? "txt" : "binary";
             }
         };
-        read_sync_string(input.init_wfc);
-        this->add_item(item);
-    }
-    {
-        Input_Item item("read_wfc_lcao");
-        item.annotation = "LCAO wave function input format: 1 text, 2 binary";
-        item.category = "System variables";
-        item.type = "Integer";
-        item.description = R"(The file format used when reading LCAO wave function coefficients.
-
-Available options are:
-* 1: text files (`.txt`) generated by setting `out_wfc_lcao` to 1.
-* 2: binary files (`.dat`) generated by setting `out_wfc_lcao` to 2.
-
-The selected format is used directly; ABACUS does not automatically detect or fall back to the other format. Only independent wave function files are supported, not files accumulated with `out_app_flag`.)";
-        item.default_value = "1";
-        item.unit = "";
-        item.set_availability("basis_type==lcao");
-        read_sync_int(input.read_wfc_lcao);
-        item.check_value = [](const Input_Item& item, const Parameter& para) {
-            if (para.input.read_wfc_lcao != 1 && para.input.read_wfc_lcao != 2)
+        item.get_final_value = [](Input_Item& item, const Parameter& para) {
+            item.final_value << para.input.init_wfc;
+            if (para.input.init_wfc == "file")
             {
-                ModuleBase::WARNING_QUIT("ReadInput", "read_wfc_lcao should be 1 or 2");
+                item.final_value << " " << para.input.init_wfc_file_format;
+            }
+        };
+        add_string_bcast(input.init_wfc);
+        add_string_bcast(input.init_wfc_file_format);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            const std::vector<std::string> valid_methods
+                = {"atomic", "atomic+random", "random", "nao", "nao+random", "file"};
+            if (std::find(valid_methods.begin(), valid_methods.end(), para.input.init_wfc) == valid_methods.end())
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", nofound_str(valid_methods, "init_wfc"));
+            }
+            if (para.input.init_wfc == "file"
+                && para.input.init_wfc_file_format != "txt"
+                && para.input.init_wfc_file_format != "binary")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "the init_wfc file format must be txt or binary");
+            }
+            if (para.input.init_wfc == "file" && para.input.basis_type == "pw"
+                && para.input.init_wfc_file_format == "txt")
+            {
+                ModuleBase::WARNING_QUIT("ReadInput", "init_wfc file txt is not supported for basis_type=pw");
             }
         };
         this->add_item(item);
