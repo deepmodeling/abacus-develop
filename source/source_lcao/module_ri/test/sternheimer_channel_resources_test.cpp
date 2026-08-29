@@ -21,7 +21,7 @@ TEST(SternheimerChannelResources, PlansFromNodeAggregateMemory)
         "cgroup_v2"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(40, 30, 1, 0, memory);
     EXPECT_EQ(plan.automatic_workers, 11);
-    EXPECT_EQ(plan.effective_workers, 1);
+    EXPECT_EQ(plan.effective_workers, 11);
 }
 
 TEST(SternheimerChannelResources, PartialOuterTeamFallsBackToNestedGridParallelism)
