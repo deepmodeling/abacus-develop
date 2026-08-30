@@ -105,12 +105,12 @@ TEST_F(MD_func_test, RescaleVel)
 TEST_F(MD_func_test, compute_stress)
 {
     const ModuleBase::Vector3<double> test_velocity(0.1, 0.2, 0.3);
-    for (int i = 0; i < natom; ++i)
+    MDCell mdcell(ucell, 0.0, 0.0, ModuleBase::world_communication_domain());
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
     {
-        allmass[i] = 39.948 / ModuleBase::AU_to_MASS;
-        vel[i] = test_velocity;
+        atom.vel = test_velocity;
     }
-    MD_func::compute_stress(ucell, vel, allmass, true, virial, stress);
+    MD_func::compute_stress(mdcell, true, virial, stress);
     EXPECT_DOUBLE_EQ(stress(0, 0), 2.9128300667662788);
     EXPECT_DOUBLE_EQ(stress(0, 1), 5.8256601335325575);
     EXPECT_DOUBLE_EQ(stress(0, 2), 8.7384902002988341);
@@ -124,7 +124,12 @@ TEST_F(MD_func_test, compute_stress)
 
 TEST_F(MD_func_test, dump_info)
 {
-    MD_func::dump_info(0, PARAM.sys.global_out_dir, ucell, param_in, virial, force, vel);
+    MDCell mdcell(ucell, 0.0, 0.0, ModuleBase::world_communication_domain());
+    for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+    {
+        atom.vel = ModuleBase::Vector3<double>(0.0, 0.0, 0.0);
+    }
+    MD_func::dump_info(0, PARAM.sys.global_out_dir, mdcell, param_in, virial);
     std::ifstream ifs("MD_dump");
     std::string output_str;
     getline(ifs, output_str);
@@ -170,7 +175,7 @@ TEST_F(MD_func_test, dump_info)
     ifs.close();
 
     // append
-    MD_func::dump_info(1, PARAM.sys.global_out_dir, ucell, param_in, virial, force, vel);
+    MD_func::dump_info(1, PARAM.sys.global_out_dir, mdcell, param_in, virial);
     std::ifstream ifs2("MD_dump");
     getline(ifs2, output_str);
     EXPECT_THAT(output_str, testing::HasSubstr("MDSTEP:  0"));
@@ -298,23 +303,6 @@ TEST_F(MD_func_test, print_stress)
     remove("running.log");
 }
 
-TEST_F(MD_func_test, current_md_info)
-{
-    // Set up the file directory and create the Restart_md.txt file
-    std::string file_dir = "./";
-    std::ofstream file(file_dir + "Restart_md.txt");
-    file << 123;
-    file.close();
-    int istep = -1;
-    double temperature = 0.0;
-    MD_func::current_md_info(0, file_dir, istep, temperature);
-
-    // Call the function with the correct file path and check the result
-    EXPECT_EQ(istep, 123);
-    EXPECT_DOUBLE_EQ(temperature, 0.0);
-    remove("Restart_md.txt");
-}
-
 TEST_F(MD_func_test, current_md_info_mdcell_accepts_step_only_restart)
 {
     std::ofstream file("Restart_md.txt");
@@ -345,9 +333,8 @@ TEST_F(MD_func_test, global_dof_mdcell)
 
 TEST_F(MD_func_test, current_step_warning)
 {
-    // Call the function and check that it outputs a warning and quits
-    std::string file_dir = "./";
+    MDCell mdcell(ucell, 0.0, 0.0, ModuleBase::world_communication_domain());
     int istep = 0;
     double temperature = 0.0;
-    EXPECT_EXIT(MD_func::current_md_info(0, file_dir, istep, temperature), ::testing::ExitedWithCode(1), "");
+    EXPECT_EXIT(MD_func::current_md_info(mdcell, "./", istep, temperature), ::testing::ExitedWithCode(1), "");
 }

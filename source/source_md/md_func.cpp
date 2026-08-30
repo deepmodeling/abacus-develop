@@ -76,29 +76,6 @@ double kinetic_energy(const int& natom, const ModuleBase::Vector3<double>* vel, 
     return ke;
 }
 
-void compute_stress(const UnitCell& unit_in,
-                    const ModuleBase::Vector3<double>* vel,
-                    const double* allmass,
-                    const bool& cal_stress,
-                    const ModuleBase::matrix& virial,
-                    ModuleBase::matrix& stress)
-{
-    if (cal_stress)
-    {
-        ModuleBase::matrix temperature_tensor(3, 3);
-        temp_vector(unit_in.nat, vel, allmass, temperature_tensor);
-        for (int i = 0; i < 3; ++i)
-        {
-            for (int j = 0; j < 3; ++j)
-            {
-                stress(i, j) = virial(i, j) + temperature_tensor(i, j) / unit_in.omega;
-            }
-        }
-    }
-
-    return;
-}
-
 void compute_stress(const MDCell& mdcell,
                     const bool& cal_stress,
                     const ModuleBase::matrix& virial,
@@ -344,50 +321,6 @@ void init_vel(MDCell& mdcell,
         const double factor = sqrt(temperature / current);
         for (LocalAtom& atom : atoms) atom.vel *= factor;
     }
-    static_cast<void>(restart);
-}
-
-void force_virial(ModuleESolver::ESolver* p_esolver,
-                  const int& istep,
-                  UnitCell& unit_in,
-                  double& potential,
-                  ModuleBase::Vector3<double>* force,
-                  const bool& cal_stress,
-                  ModuleBase::matrix& virial)
-{
-    ModuleBase::TITLE("MD_func", "force_virial");
-    ModuleBase::timer::start("MD_func", "force_virial");
-
-    p_esolver->runner(unit_in, istep);
-
-    potential = p_esolver->cal_energy();
-
-    ModuleBase::matrix force_temp(unit_in.nat, 3);
-    p_esolver->cal_force(unit_in, force_temp);
-
-    if (cal_stress)
-    {
-        p_esolver->cal_stress(unit_in, virial);
-    }
-
-    /// convert Rydberg to Hartree
-    potential *= 0.5;
-    force_temp *= 0.5;
-    virial *= 0.5;
-
-    const int natom = unit_in.nat;
-#pragma omp parallel for schedule(static) if (natom >= 256)
-    for (int i = 0; i < natom; ++i)
-    {
-        for (int j = 0; j < 3; ++j)
-        {
-            force[i][j] = force_temp(i, j);
-        }
-    }
-
-    ModuleBase::timer::end("MD_func", "force_virial");
-
-    return;
 }
 
 void force_virial(ModuleESolver::ESolver* p_esolver,
@@ -475,98 +408,6 @@ void print_stress(std::ofstream& ofs, const ModuleBase::matrix& virial, const Mo
 
 void dump_info(const int& step,
                const std::string& global_out_dir,
-               const UnitCell& unit_in,
-               const Parameter& param_in,
-               const ModuleBase::matrix& virial,
-               const ModuleBase::Vector3<double>* force,
-               const ModuleBase::Vector3<double>* vel)
-{
-    if (param_in.globalv.myrank)
-    {
-        return;
-    }
-
-    std::stringstream file;
-    file << global_out_dir << "MD_dump";
-    std::ofstream ofs;
-    if (step == 0)
-    {
-        ofs.open(file.str(), std::ios::trunc);
-    }
-    else
-    {
-        ofs.open(file.str(), std::ios::app);
-    }
-
-    const double unit_pos = unit_in.lat0 / ModuleBase::ANGSTROM_AU;                                  ///< Angstrom
-    const double unit_vel = 1.0 / ModuleBase::ANGSTROM_AU / ModuleBase::AU_to_FS;                    ///< Angstrom/fs
-    const double unit_virial = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8; ///< kBar
-    const double unit_force = ModuleBase::Hartree_to_eV * ModuleBase::ANGSTROM_AU;                   ///< eV/Angstrom
-
-    ofs << "MDSTEP:  " << step << std::endl;
-    ofs << std::setprecision(12) << std::setiosflags(std::ios::fixed);
-
-    ofs << "LATTICE_CONSTANT: " << unit_in.lat0_angstrom << " Angstrom" << std::endl;
-
-    ofs << "LATTICE_VECTORS" << std::endl;
-    ofs << "  " << unit_in.latvec.e11 << "  " << unit_in.latvec.e12 << "  " << unit_in.latvec.e13 << std::endl;
-    ofs << "  " << unit_in.latvec.e21 << "  " << unit_in.latvec.e22 << "  " << unit_in.latvec.e23 << std::endl;
-    ofs << "  " << unit_in.latvec.e31 << "  " << unit_in.latvec.e32 << "  " << unit_in.latvec.e33 << std::endl;
-
-    if (param_in.inp.cal_stress && param_in.mdp.dump_virial)
-    {
-        ofs << "VIRIAL (kbar)" << std::endl;
-        for (int i = 0; i < 3; ++i)
-        {
-            ofs << "  " << virial(i, 0) * unit_virial << "  " << virial(i, 1) * unit_virial << "  "
-                << virial(i, 2) * unit_virial << std::endl;
-        }
-    }
-
-    ofs << "INDEX    LABEL    POSITION (Angstrom)";
-    if (param_in.mdp.dump_force)
-    {
-        ofs << "    FORCE (eV/Angstrom)";
-    }
-    if (param_in.mdp.dump_vel)
-    {
-        ofs << "    VELOCITY (Angstrom/fs)";
-    }
-    ofs << std::endl;
-
-    int index = 0;
-    for (int it = 0; it < unit_in.ntype; ++it)
-    {
-        for (int ia = 0; ia < unit_in.atoms[it].na; ++ia)
-        {
-            ofs << "  " << index << "  " << unit_in.atoms[it].label << "  " << unit_in.atoms[it].tau[ia].x * unit_pos
-                << "  " << unit_in.atoms[it].tau[ia].y * unit_pos << "  " << unit_in.atoms[it].tau[ia].z * unit_pos;
-
-            if (param_in.mdp.dump_force)
-            {
-                ofs << "  " << force[index].x * unit_force << "  " << force[index].y * unit_force << "  "
-                    << force[index].z * unit_force;
-            }
-
-            if (param_in.mdp.dump_vel)
-            {
-                ofs << "  " << vel[index].x * unit_vel << "  " << vel[index].y * unit_vel << "  "
-                    << vel[index].z * unit_vel;
-            }
-            ofs << std::endl;
-            index++;
-        }
-    }
-
-    ofs << std::endl;
-    ofs << std::endl;
-    ofs.close();
-
-    return;
-}
-
-void dump_info(const int& step,
-               const std::string& global_out_dir,
                const MDCell& mdcell,
                const Parameter& param_in,
                const ModuleBase::matrix& virial)
@@ -612,6 +453,7 @@ void dump_info(const int& step,
             local << "  " << atom.vel.x * unit_vel << "  " << atom.vel.y * unit_vel << "  " << atom.vel.z * unit_vel;
         local << "\n";
     }
+    local << "\n\n";
 #ifdef __MPI
     const MPI_Comm comm = mdcell.communicator();
     int rank = 0; MPI_Comm_rank(comm, &rank);
@@ -726,95 +568,6 @@ std::int64_t global_dof(const MDCell& mdcell)
     if (global_frozen[1] == 0) ++total_frozen;
     if (global_frozen[2] == 0) ++total_frozen;
     return 3 * mdcell.nat() - total_frozen;
-}
-
-void temp_vector(const int& natom,
-                 const ModuleBase::Vector3<double>* vel,
-                 const double* allmass,
-                 ModuleBase::matrix& t_vector)
-{
-    t_vector.create(3, 3);
-
-    double t00 = 0.0;
-    double t01 = 0.0;
-    double t02 = 0.0;
-    double t10 = 0.0;
-    double t11 = 0.0;
-    double t12 = 0.0;
-    double t20 = 0.0;
-    double t21 = 0.0;
-    double t22 = 0.0;
-
-#pragma omp parallel for reduction(+:t00, t01, t02, t10, t11, t12, t20, t21, t22) schedule(static) if (natom >= 256)
-    for (int ion = 0; ion < natom; ++ion)
-    {
-        const double mass = allmass[ion];
-        const double vx = vel[ion].x;
-        const double vy = vel[ion].y;
-        const double vz = vel[ion].z;
-
-        t00 += mass * vx * vx;
-        t01 += mass * vx * vy;
-        t02 += mass * vx * vz;
-        t10 += mass * vy * vx;
-        t11 += mass * vy * vy;
-        t12 += mass * vy * vz;
-        t20 += mass * vz * vx;
-        t21 += mass * vz * vy;
-        t22 += mass * vz * vz;
-    }
-
-    t_vector(0, 0) = t00;
-    t_vector(0, 1) = t01;
-    t_vector(0, 2) = t02;
-    t_vector(1, 0) = t10;
-    t_vector(1, 1) = t11;
-    t_vector(1, 2) = t12;
-    t_vector(2, 0) = t20;
-    t_vector(2, 1) = t21;
-    t_vector(2, 2) = t22;
-
-    return;
-}
-
-
-void current_md_info(const int& my_rank, const std::string& file_dir, int& md_step, double& temperature)
-{
-    bool ok = true;
-
-    if (my_rank == 0)
-    {
-        std::stringstream ssc;
-        ssc << file_dir << "Restart_md.txt";
-        std::ifstream file(ssc.str().c_str());
-
-        if (!file)
-        {
-            ok = false;
-        }
-
-        if (ok)
-        {
-            file >> md_step >> temperature;
-            file.close();
-        }
-    }
-
-#ifdef __MPI
-    MPI_Bcast(&ok, 1, MPI_C_BOOL, 0, MPI_COMM_WORLD);
-#endif
-
-    if (!ok)
-    {
-        ModuleBase::WARNING_QUIT("current_md_info", "no Restart_md.txt!");
-    }
-
-#ifdef __MPI
-    MPI_Bcast(&md_step, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&temperature, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-#endif
-
-    return;
 }
 
 void current_md_info(const MDCell& mdcell, const std::string& file_dir, int& md_step, double& temperature)
