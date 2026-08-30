@@ -284,6 +284,25 @@ TEST(SternheimerFDHamiltonian, OrderEightImprovesNonorthogonalTwistedPlaneWaveKi
     EXPECT_LT(order_eight_error, 0.02 * order_two_error);
 }
 
+TEST(SternheimerFDHamiltonian, SkipsZeroMixedDerivativesOnOrthogonalGrid)
+{
+    Hamiltonian::Grid grid{8, 7, 6, 0.4, 0.5, 0.6, true};
+    const Hamiltonian hamiltonian(grid, std::vector<double>(grid.size(), 0.0), 1.0, nullptr, 8);
+
+    EXPECT_EQ(hamiltonian.active_mixed_derivative_pair_count(), 0);
+    EXPECT_EQ(hamiltonian.cached_first_derivative_directions(), (std::array<bool, 3>{false, false, false}));
+}
+
+TEST(SternheimerFDHamiltonian, CachesOnlyDirectionsNeededByActiveMixedDerivatives)
+{
+    Hamiltonian::Grid grid{8, 7, 6, 1.0, 1.0, 1.0, true};
+    grid.lattice_vectors = {{{2.0, 0.0, 0.0}, {1.0, 2.0, 0.0}, {0.0, 0.0, 2.0}}};
+    const Hamiltonian hamiltonian(grid, std::vector<double>(grid.size(), 0.0), 1.0, nullptr, 8);
+
+    EXPECT_EQ(hamiltonian.active_mixed_derivative_pair_count(), 1);
+    EXPECT_EQ(hamiltonian.cached_first_derivative_directions(), (std::array<bool, 3>{false, true, false}));
+}
+
 TEST(SternheimerFDHamiltonian, OrderEightNonorthogonalTwistedDenseMatrixIsHermitian)
 {
     Hamiltonian::Grid grid{5, 5, 5, 1.0, 1.0, 1.0, true};

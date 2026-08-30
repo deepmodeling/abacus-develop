@@ -99,6 +99,58 @@ SternheimerFDHamiltonian::SternheimerFDHamiltonian(
     {
         throw std::invalid_argument("SternheimerFDHamiltonian nonlocal projector size does not match the grid.");
     }
+    initialize_operator_cache();
+}
+
+void SternheimerFDHamiltonian::initialize_operator_cache()
+{
+    const FiniteDifferenceWeights weights = finite_difference_weights(finite_difference_order_);
+    fd_radius_ = weights.radius;
+    fd_second_weights_ = weights.second;
+    fd_first_weights_ = weights.first;
+
+    const SternheimerFDLatticeVectors dual = sternheimer_fd_grid_dual_vectors(grid_);
+    const std::array<double, 3> dimensions{static_cast<double>(grid_.nx),
+                                           static_cast<double>(grid_.ny),
+                                           static_cast<double>(grid_.nz)};
+    for (int left = 0; left != 3; ++left)
+    {
+        for (int right = 0; right != 3; ++right)
+        {
+            for (int component = 0; component != 3; ++component)
+            {
+                laplacian_coefficients_[left][right]
+                    += dual[left][component] * dual[right][component] * dimensions[left] * dimensions[right];
+            }
+        }
+    }
+    laplacian_center_coefficient_
+        = fd_second_weights_[0]
+          * (laplacian_coefficients_[0][0] + laplacian_coefficients_[1][1]
+             + laplacian_coefficients_[2][2]);
+
+    for (int left = 0; left != 3; ++left)
+    {
+        for (int right = left + 1; right != 3; ++right)
+        {
+            if (laplacian_coefficients_[left][right] == 0.0)
+            {
+                continue;
+            }
+            active_mixed_derivative_pairs_[static_cast<std::size_t>(active_mixed_derivative_pair_count_)]
+                = {left, right};
+            ++active_mixed_derivative_pair_count_;
+            if (grid_.periodic && fd_radius_ > 1)
+            {
+                cached_first_derivative_directions_[right] = true;
+            }
+        }
+    }
+
+    for (const double coordinate: grid_.kpoint)
+    {
+        has_zero_bloch_twist_ = has_zero_bloch_twist_ && coordinate == 0.0;
+    }
 }
 
 const SternheimerFDHamiltonian::Grid& SternheimerFDHamiltonian::grid() const
@@ -131,6 +183,16 @@ const SternheimerFDNonlocalProjector* SternheimerFDHamiltonian::nonlocal_project
     return nonlocal_projector_.get();
 }
 
+int SternheimerFDHamiltonian::active_mixed_derivative_pair_count() const
+{
+    return active_mixed_derivative_pair_count_;
+}
+
+const std::array<bool, 3>& SternheimerFDHamiltonian::cached_first_derivative_directions() const
+{
+    return cached_first_derivative_directions_;
+}
+
 int SternheimerFDHamiltonian::index(const int ix, const int iy, const int iz) const
 {
     return (ix * grid_.ny + iy) * grid_.nz + iz;
@@ -140,6 +202,10 @@ SternheimerFDHamiltonian::ShiftedGridPoint SternheimerFDHamiltonian::shifted_gri
 {
     if (grid_.periodic)
     {
+        if (ix >= 0 && ix < grid_.nx && iy >= 0 && iy < grid_.ny && iz >= 0 && iz < grid_.nz)
+        {
+            return {index(ix, iy, iz), Complex(1.0, 0.0)};
+        }
         const std::array<int, 3> dimensions{grid_.nx, grid_.ny, grid_.nz};
         std::array<int, 3> coordinates{ix, iy, iz};
         std::array<int, 3> lattice_translation{};
@@ -150,8 +216,9 @@ SternheimerFDHamiltonian::ShiftedGridPoint SternheimerFDHamiltonian::shifted_gri
             lattice_translation[direction] = (coordinates[direction] - wrapped) / dimension;
             coordinates[direction] = wrapped;
         }
-        return {index(coordinates[0], coordinates[1], coordinates[2]),
-                sternheimer_bloch_phase(grid_.kpoint, lattice_translation)};
+        const Complex phase = has_zero_bloch_twist_ ? Complex(1.0, 0.0)
+                                                    : sternheimer_bloch_phase(grid_.kpoint, lattice_translation);
+        return {index(coordinates[0], coordinates[1], coordinates[2]), phase};
     }
 
     if (ix < 0 || ix >= grid_.nx || iy < 0 || iy >= grid_.ny || iz < 0 || iz >= grid_.nz)
@@ -201,37 +268,16 @@ void SternheimerFDHamiltonian::apply_grid_terms(const Vector& psi,
     }
 
     output.assign(psi.size(), Complex(0.0, 0.0));
-    const FiniteDifferenceWeights weights = finite_difference_weights(finite_difference_order_);
-    const SternheimerFDLatticeVectors dual = sternheimer_fd_grid_dual_vectors(grid_);
-    const std::array<double, 3> dimensions{static_cast<double>(grid_.nx),
-                                           static_cast<double>(grid_.ny),
-                                           static_cast<double>(grid_.nz)};
-    std::array<std::array<double, 3>, 3> laplacian_coefficients{};
-    for (int left = 0; left != 3; ++left)
-    {
-    case 2:
-        apply_local<1>(psi, hpsi, threads_used);
-        break;
-    case 4:
-        apply_local<2>(psi, hpsi, threads_used);
-        break;
-    case 6:
-        apply_local<3>(psi, hpsi, threads_used);
-        break;
-    case 8:
-        apply_local<4>(psi, hpsi, threads_used);
-        break;
-    default:
-        throw std::logic_error("Unsupported Sternheimer finite-difference order.");
-    }
-
-    const bool use_separable_mixed_derivatives = grid_.periodic && weights.radius > 1;
+    const bool use_separable_mixed_derivatives = grid_.periodic && fd_radius_ > 1;
     std::array<Vector, 3> first_derivatives;
     if (use_separable_mixed_derivatives)
     {
-        // Mixed pairs are evaluated as D_left(D_right psi), so only right=1,2 are cached.
-        for (int direction = 1; direction != 3; ++direction)
+        for (int direction = 0; direction != 3; ++direction)
         {
+            if (!cached_first_derivative_directions_[direction])
+            {
+                continue;
+            }
             Vector& derivative = first_derivatives[direction];
             derivative.assign(psi.size(), Complex(0.0, 0.0));
 #ifdef _OPENMP
@@ -244,7 +290,7 @@ void SternheimerFDHamiltonian::apply_grid_terms(const Vector& psi,
                     for (int iz = 0; iz != grid_.nz; ++iz)
                     {
                         Complex value(0.0, 0.0);
-                        for (int offset = 1; offset <= weights.radius; ++offset)
+                        for (int offset = 1; offset <= fd_radius_; ++offset)
                         {
                             std::array<int, 3> shift{};
                             shift[direction] = offset;
@@ -252,7 +298,7 @@ void SternheimerFDHamiltonian::apply_grid_terms(const Vector& psi,
                                 = shifted_grid_point(ix + shift[0], iy + shift[1], iz + shift[2]);
                             const ShiftedGridPoint negative
                                 = shifted_grid_point(ix - shift[0], iy - shift[1], iz - shift[2]);
-                            const double coefficient = weights.first[static_cast<std::size_t>(offset - 1)];
+                            const double coefficient = fd_first_weights_[static_cast<std::size_t>(offset - 1)];
                             if (positive.index >= 0)
                             {
                                 value += coefficient * positive.phase * psi[positive.index];
@@ -291,10 +337,7 @@ void SternheimerFDHamiltonian::apply_grid_terms(const Vector& psi,
                     const int center = index(ix, iy, iz);
                     const Complex psi_center = psi[center];
 
-                    Complex laplacian
-                        = weights.second[0]
-                          * (laplacian_coefficients[0][0] + laplacian_coefficients[1][1] + laplacian_coefficients[2][2])
-                          * psi_center;
+                    Complex laplacian = laplacian_center_coefficient_ * psi_center;
                     const auto add_shift = [&](const int dx, const int dy, const int dz, const double coefficient) {
                         const ShiftedGridPoint shifted = shifted_grid_point(ix + dx, iy + dy, iz + dz);
                         if (shifted.index >= 0)
@@ -304,68 +347,67 @@ void SternheimerFDHamiltonian::apply_grid_terms(const Vector& psi,
                     };
                     for (int direction = 0; direction != 3; ++direction)
                     {
-                        for (int offset = 1; offset <= weights.radius; ++offset)
+                        for (int offset = 1; offset <= fd_radius_; ++offset)
                         {
                             std::array<int, 3> shift{};
                             shift[direction] = offset;
-                            const double coefficient = weights.second[static_cast<std::size_t>(offset)]
-                                                       * laplacian_coefficients[direction][direction];
+                            const double coefficient = fd_second_weights_[static_cast<std::size_t>(offset)]
+                                                       * laplacian_coefficients_[direction][direction];
                             add_shift(shift[0], shift[1], shift[2], coefficient);
                             add_shift(-shift[0], -shift[1], -shift[2], coefficient);
                         }
                     }
 
-                    for (int left = 0; left != 3; ++left)
+                    for (int pair_index = 0; pair_index != active_mixed_derivative_pair_count_; ++pair_index)
                     {
-                        for (int right = left + 1; right != 3; ++right)
+                        const int left = active_mixed_derivative_pairs_[static_cast<std::size_t>(pair_index)][0];
+                        const int right = active_mixed_derivative_pairs_[static_cast<std::size_t>(pair_index)][1];
+                        if (use_separable_mixed_derivatives)
                         {
-                            if (use_separable_mixed_derivatives)
+                            Complex mixed_derivative(0.0, 0.0);
+                            for (int offset = 1; offset <= fd_radius_; ++offset)
                             {
-                                Complex mixed_derivative(0.0, 0.0);
-                                for (int offset = 1; offset <= weights.radius; ++offset)
+                                std::array<int, 3> shift{};
+                                shift[left] = offset;
+                                const ShiftedGridPoint positive
+                                    = shifted_grid_point(ix + shift[0], iy + shift[1], iz + shift[2]);
+                                const ShiftedGridPoint negative
+                                    = shifted_grid_point(ix - shift[0], iy - shift[1], iz - shift[2]);
+                                const double coefficient = fd_first_weights_[static_cast<std::size_t>(offset - 1)];
+                                if (positive.index >= 0)
                                 {
-                                    std::array<int, 3> shift{};
-                                    shift[left] = offset;
-                                    const ShiftedGridPoint positive
-                                        = shifted_grid_point(ix + shift[0], iy + shift[1], iz + shift[2]);
-                                    const ShiftedGridPoint negative
-                                        = shifted_grid_point(ix - shift[0], iy - shift[1], iz - shift[2]);
-                                    const double coefficient = weights.first[static_cast<std::size_t>(offset - 1)];
-                                    if (positive.index >= 0)
-                                    {
-                                        mixed_derivative
-                                            += coefficient * positive.phase * first_derivatives[right][positive.index];
-                                    }
-                                    if (negative.index >= 0)
-                                    {
-                                        mixed_derivative
-                                            -= coefficient * negative.phase * first_derivatives[right][negative.index];
-                                    }
+                                    mixed_derivative
+                                        += coefficient * positive.phase * first_derivatives[right][positive.index];
                                 }
-                                laplacian += 2.0 * laplacian_coefficients[left][right] * mixed_derivative;
-                            }
-                            else
-                            {
-                                for (int left_offset = 1; left_offset <= weights.radius; ++left_offset)
+                                if (negative.index >= 0)
                                 {
-                                    for (int right_offset = 1; right_offset <= weights.radius; ++right_offset)
+                                    mixed_derivative
+                                        -= coefficient * negative.phase * first_derivatives[right][negative.index];
+                                }
+                            }
+                            laplacian += 2.0 * laplacian_coefficients_[left][right] * mixed_derivative;
+                        }
+                        else
+                        {
+                            for (int left_offset = 1; left_offset <= fd_radius_; ++left_offset)
+                            {
+                                for (int right_offset = 1; right_offset <= fd_radius_; ++right_offset)
+                                {
+                                    const double coefficient
+                                        = 2.0 * laplacian_coefficients_[left][right]
+                                          * fd_first_weights_[static_cast<std::size_t>(left_offset - 1)]
+                                          * fd_first_weights_[static_cast<std::size_t>(right_offset - 1)];
+                                    for (const int left_sign: {-1, 1})
                                     {
-                                        const double coefficient
-                                            = 2.0 * laplacian_coefficients[left][right]
-                                              * weights.first[static_cast<std::size_t>(left_offset - 1)]
-                                              * weights.first[static_cast<std::size_t>(right_offset - 1)];
-                                        for (const int left_sign: {-1, 1})
+                                        for (const int right_sign: {-1, 1})
                                         {
-                                            for (const int right_sign: {-1, 1})
-                                            {
-                                                std::array<int, 3> shift{};
-                                                shift[left] = left_sign * left_offset;
-                                                shift[right] = right_sign * right_offset;
-                                                add_shift(shift[0],
-                                                          shift[1],
-                                                          shift[2],
-                                                          coefficient * left_sign * right_sign);
-                                            }
+                                            std::array<int, 3> shift{};
+                                            shift[left] = left_sign * left_offset;
+                                            shift[right] = right_sign * right_offset;
+                                            add_shift(shift[0],
+                                                      shift[1],
+                                                      shift[2],
+                                                      coefficient * left_sign * right_sign);
                                         }
                                     }
                                 }

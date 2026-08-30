@@ -59,6 +59,8 @@ class SternheimerFDHamiltonian
     int finite_difference_order() const;
     const SternheimerReducedKPoint& kpoint() const;
     const SternheimerFDNonlocalProjector* nonlocal_projector() const;
+    int active_mixed_derivative_pair_count() const;
+    const std::array<bool, 3>& cached_first_derivative_directions() const;
 
     void apply(const Vector& psi, Vector& hpsi) const;
     void apply(const Vector& psi, Vector& hpsi, int* threads_used) const;
@@ -79,6 +81,7 @@ class SternheimerFDHamiltonian
         Complex phase{1.0, 0.0};
     };
 
+    void initialize_operator_cache();
     ShiftedGridPoint shifted_grid_point(int ix, int iy, int iz) const;
     void apply_grid_terms(const Vector& psi, Vector& output, bool include_local_potential, int* threads_used) const;
 
@@ -87,6 +90,15 @@ class SternheimerFDHamiltonian
     double kinetic_prefactor_ = 0.5;
     int finite_difference_order_ = 2;
     std::shared_ptr<const SternheimerFDNonlocalProjector> nonlocal_projector_;
+    int fd_radius_ = 0;
+    std::array<double, 5> fd_second_weights_{};
+    std::array<double, 4> fd_first_weights_{};
+    std::array<std::array<double, 3>, 3> laplacian_coefficients_{};
+    double laplacian_center_coefficient_ = 0.0;
+    std::array<std::array<int, 2>, 3> active_mixed_derivative_pairs_{};
+    int active_mixed_derivative_pair_count_ = 0;
+    std::array<bool, 3> cached_first_derivative_directions_{};
+    bool has_zero_bloch_twist_ = true;
 };
 
 using SternheimerFDLatticeVectors = std::array<std::array<double, 3>, 3>;
