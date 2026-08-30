@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Batch four independent auxiliary-channel right-hand sides through shared Delta-Sternheimer operator traversals while preserving one scalar GMRES history and convergence decision per column.
+**Goal:** Batch a small number of independent auxiliary-channel right-hand sides through shared Delta-Sternheimer operator traversals while preserving one scalar GMRES history and convergence decision per column.
 
-**Architecture:** Add column-equivalent batch methods to the FD Hamiltonian, nonlocal projector, fixed-subspace projector, and spectral preconditioner.  Build an independent lockstep batch GMRES and a shared-operator Delta-ST batch entry point, then group stable `owned_channels` into memory-accounted batches in the ABACUS producer.
+**Architecture:** Add column-equivalent batch methods to the FD Hamiltonian, nonlocal projector, fixed-subspace projector, and spectral preconditioner.  Build an independent lockstep batch GMRES and a shared-operator Delta-ST batch entry point, then group stable `owned_channels` into memory-accounted batches in the ABACUS producer.  Final physical A/B/C selected width two as the production default; width one remains the rollback path.
 
 **Tech Stack:** C++17, GoogleTest, CMake, OpenMP, FFTW, Slurm on df_dcu, ABACUS Delta-Sternheimer, LibRPA.
 
@@ -69,7 +69,7 @@
 - Modify: `source/source_lcao/module_ri/test/sternheimer_runtime_options_test.cpp`
 - Modify: `source/source_lcao/module_ri/test/sternheimer_abacus_st_smoke_test.cpp`
 
-- [ ] Add failing tests for default width four, rollback width one, invalid widths, stable channel grouping, and a batch-worker plan whose total estimated storage never exceeds the scalar plan.
+- [ ] Add failing tests for the selected default width, rollback width one, invalid widths, stable channel grouping, and a batch-worker plan whose total estimated storage stays within the rank memory limit.
 - [ ] Build the focused targets and verify the expected missing-API failures.
 - [ ] Implement strict diagnostic width parsing, batch grouping, batch-aware worker planning, stable result flattening, and output provenance.
 - [ ] Route width-one through the existing scalar implementation and widths above one through the batch solve.
@@ -94,7 +94,7 @@
 
 - [ ] Archive the exact feature commit and stage it under a new immutable `/work1/ghj/sternheimer-performance-20260830` directory without overwriting prior artifacts.
 - [ ] Build one RelWithDebInfo artifact on the df_dcu `normal` partition and run the full affected test set.
-- [ ] Reuse the accepted Si single-frequency inputs for width-one and width-four A/B jobs with identical MPI/OMP resources and physical parameters.
+- [ ] Reuse the accepted Si single-frequency inputs for width-one, width-two, and width-four A/B/C jobs with identical MPI/OMP resources and physical parameters.
 - [ ] Require complete responses, `all_converged=yes`, residual and matrix gates, then compare process wall time and node-hours excluding queue time.
 - [ ] Run the complete accepted Si canonical-q workload only when the single-frequency A/B is both accurate and faster.
 
@@ -106,6 +106,6 @@
 - Modify: `/Users/ghj/.codex/skills/abacus-delta-st-efficient-production/SKILL.md`
 
 - [ ] Record commits, executable hashes, test results, response differences, residuals, wall times, resources, node-hours, and speedups.
-- [ ] If width four passes accuracy but not performance, keep production default at width one and document the measured result.
-- [ ] If width four passes both gates, set it as the no-configuration default, retain width one only for rollback, and merge the attributed commits into `master_ghj`.
+- [ ] Select the smallest tested width with reproducible total-wall improvement and acceptable memory growth; do not infer the default from response-stage timing alone.
+- [ ] Set accepted width two as the no-configuration default, retain width one only for rollback, and merge the attributed commits into `master_ghj`.
 - [ ] Rebuild the development-note PDF with XeLaTeX, render the changed pages, and verify the final PDF hash and page count.

@@ -10,7 +10,7 @@ remain unchanged.
 
 ## Selected Approach
 
-Use a default micro-batch width of four for channels that share one response
+Use a default micro-batch width of two for channels that share one response
 k point, occupied state, frequency, Hamiltonian, fixed subspace, and spectral
 preconditioner.  Each column retains its own Krylov basis, Hessenberg matrix,
 least-squares solve, residual, iteration count, and convergence decision.  The
@@ -56,20 +56,19 @@ out-of-subspace response components remains column-local and uses the existing
 scalar formulas.
 
 The ABACUS producer groups the existing `owned_channels` in stable channel
-order.  Complete groups of four use the batch solve; a final short group uses
+order.  Complete groups of two use the batch solve; a final short group uses
 its actual width.  `ABACUS_STERNHEIMER_CHANNEL_BATCH_WIDTH=1` is retained only
 as a rollback and controlled A/B route.  Missing configuration selects width
-four, and output provenance records the effective width.
+two, and output provenance records the effective width.
 
 ## Parallelism and Memory
 
 One batch worker owns approximately `batch_width` times the scalar Krylov
-storage.  The channel-worker plan therefore divides the accepted scalar worker
-budget by the batch width, never increasing the estimated concurrent memory.
-The number of simultaneous equations stays approximately constant while each
-worker obtains operator-data reuse.  If memory detection permits fewer than
-one full batch, or fewer than two channels are locally owned, the scalar route
-is used.
+storage.  The channel-worker plan keeps the accepted outer OpenMP worker budget
+instead of dividing it by batch width; batch columns are not independent outer
+workers.  A separate per-rank memory estimate limits the effective width and
+worker count.  If memory detection permits fewer than one full batch, or fewer
+than two channels are locally owned, the scalar route is used.
 
 This design does not add MPI communication, change q/frequency ownership, or
 alter response-file ordering.
@@ -91,8 +90,8 @@ requires:
 - all directly affected Sternheimer tests pass.
 
 Remote physical calculations run only on df_dcu `/work1` with immutable
-artifacts.  The accepted Si one-frequency case is run with batch widths one and
-four using identical inputs and layout.  Acceptance requires
+artifacts.  The accepted Si one-frequency case is run with batch widths one,
+two, and four using identical inputs and layout.  Acceptance requires
 `all_converged=yes`, complete response/provenance artifacts, relative response
 Frobenius difference no greater than `1e-8`, no residual regression, and
 measured response-wall improvement.  Only then is the complete accepted Si
@@ -101,9 +100,11 @@ energy difference no greater than `1e-8 Ha`.
 
 ## Integration Decision
 
-Batch width four becomes the no-configuration production default only when
-both numerical and performance gates pass.  A numerically correct result with
-no reproducible wall-time improvement remains available for further profiling
-but is not merged into `master_ghj`.  Accepted implementation, executable
+The same-artifact Si A/B/C selected width two as the no-configuration
+production default.  It reduced total wall and node-hours by 4.13% relative to
+width one, with direct response-matrix relative Frobenius difference
+`7.59e-13` and 24.8% higher per-rank MaxRSS.  Width four was numerically
+equivalent but improved total wall by only 0.99% while increasing MaxRSS by
+about 74%, so it is not the default.  Accepted implementation, executable
 hashes, A/B differences, wall time, node-hours, and remaining bottlenecks are
 recorded in the development test document and production skill.
