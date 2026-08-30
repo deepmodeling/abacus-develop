@@ -269,11 +269,11 @@ Expected: one default definition, three production default-on assignments, exact
 - Create: `server_jobs/sternheimer_performance_20260830/benchmark_si_q7_operator_acceleration_dfdcu.slurm`
 - Create: `server_jobs/sternheimer_performance_20260830/compare_sternheimer_v1_matrices.py`
 
-- [ ] **Step 1: Package the exact feature commit and stage immutable inputs**
+- [x] **Step 1: Package the exact feature commit and stage immutable inputs**
 
 Create a git archive, SHA256 manifest, and scripts under local `server_jobs/sternheimer_performance_20260830`. Transfer them through the existing df_dcu ControlMaster connection to `/work1/ghj/sternheimer-performance-20260830`.
 
-- [ ] **Step 2: Submit one normal-partition build**
+- [x] **Step 2: Submit one normal-partition build**
 
 Use one node, one MPI task, 30 build threads, `RelWithDebInfo`, LibRI/LibComm, GreenX, and `BUILD_TESTING=ON`. Run the eight tests from Task 4, build `abacus_3p`, and create one immutable artifact with source, executable, dependency, test, and SHA provenance.
 
@@ -283,7 +283,7 @@ Reuse `/work1/ghj/sternheimer_abacus_tests/molecular_convergence_20260818/respon
 
 - [ ] **Step 4: Run Si q=7 precision and timing regression**
 
-Reuse `/work1/ghj/si-solid-grid-fd8-final-20260823/materials/si/solid`, grid `30^3`, q index 7, accepted frequency 4, one occupied-band timing limit, four nodes, one MPI rank and 30 OpenMP threads per node, FD8, tolerance `1e-8`, and no explicit preconditioner environment variable. Compare with the accepted preconditioned matrix at threshold `1e-8`.
+Reuse `/work1/ghj/si-solid-grid-fd8-final-20260823/materials/si/solid`, grid `30^3`, q index 7, and accepted physical frequency 4. Map that frequency to candidate frequency 1, retain all four occupied bands and 334 response channels, use eight nodes with one MPI rank and 30 OpenMP threads per node, FD8, tolerance `1e-8`, and no explicit preconditioner environment variable. Compare all 64 per-k partial response matrices with the accepted response at relative Frobenius threshold `1e-8`; a reduced one-band timing sample is not a physics gate.
 
 - [ ] **Step 5: Record incremental speedups**
 
