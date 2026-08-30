@@ -30,6 +30,18 @@ SternheimerPeriodicLinearResponse solve_sternheimer_periodic_linear_response(
     double volume_element,
     const SternheimerRPA::SolverOptions& options = SternheimerRPA::SolverOptions());
 
+std::vector<SternheimerPeriodicLinearResponse> solve_sternheimer_periodic_linear_response_batch(
+    bool use_delta_sternheimer,
+    const SternheimerFDHamiltonian& hamiltonian,
+    const std::vector<SternheimerFDHamiltonian::Vector>& occupied_wavefunctions,
+    double reference_eigenvalue,
+    const SternheimerFDHamiltonian::Matrix& rhs,
+    const std::vector<SternheimerDeltaVirtualState>& virtual_states,
+    const std::vector<std::vector<SternheimerFDHamiltonian::Complex>>& perturbation_matrix_elements,
+    double omega,
+    double volume_element,
+    const SternheimerRPA::SolverOptions& options = SternheimerRPA::SolverOptions());
+
 } // namespace ModuleRI
 
 #endif

@@ -248,3 +248,93 @@ TEST(SternheimerPeriodicSolver, DeltaModeReportsHybridAndFullGridResidualsSepara
     EXPECT_LT(response.residual_norm, 1.0e-10);
     EXPECT_GT(response.full_grid_equation_residual_norm, 1.0e-2);
 }
+
+TEST(SternheimerPeriodicSolver, DeltaBatchMatchesIndependentChannels)
+{
+    using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
+    using Complex = Hamiltonian::Complex;
+    using Vector = Hamiltonian::Vector;
+
+    Hamiltonian::Grid grid{6, 1, 1, 0.45, 1.0, 1.0, true};
+    grid.kpoint = {0.13, 0.0, 0.0};
+    constexpr double volume_element = 0.45;
+    Hamiltonian hamiltonian(grid, {0.11, -0.05, 0.16, -0.09, 0.03, 0.14}, 1.0, nullptr, 8);
+    const auto states = ModuleRI::solve_sternheimer_fd_zero_order_dense(hamiltonian, 6, volume_element);
+    const std::vector<Vector> occupied = {states.wavefunctions[0]};
+    std::vector<ModuleRI::SternheimerDeltaVirtualState> virtual_states;
+    for (int index = 1; index != 3; ++index)
+    {
+        ModuleRI::SternheimerDeltaVirtualState state;
+        state.orbital = states.wavefunctions[static_cast<std::size_t>(index)];
+        state.residual = states.wavefunctions[4];
+        for (Complex& value: state.residual)
+        {
+            value *= Complex(0.01 * index, -0.005 * index);
+        }
+        state.eigenvalue = states.eigenvalues[static_cast<std::size_t>(index)] + 0.02 * index;
+        virtual_states.push_back(std::move(state));
+    }
+    const Hamiltonian::Matrix rhs = {
+        states.wavefunctions[3],
+        states.wavefunctions[5]};
+    std::vector<std::vector<Complex>> perturbation_matrix_elements(rhs.size());
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        for (const auto& state: virtual_states)
+        {
+            perturbation_matrix_elements[column].push_back(
+                ModuleRI::sternheimer_fd_grid_dot(state.orbital, rhs[column], volume_element));
+        }
+    }
+    ModuleRI::SternheimerRPA::SolverOptions options;
+    options.max_iter = 100;
+    options.residual_tol = 1.0e-12;
+    options.use_fd_spectral_preconditioner = true;
+    constexpr double omega = 0.57;
+
+    std::vector<ModuleRI::SternheimerPeriodicLinearResponse> scalar;
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        scalar.push_back(ModuleRI::solve_sternheimer_periodic_linear_response(true,
+                                                                               hamiltonian,
+                                                                               occupied,
+                                                                               states.eigenvalues[0],
+                                                                               rhs[column],
+                                                                               virtual_states,
+                                                                               perturbation_matrix_elements[column],
+                                                                               omega,
+                                                                               volume_element,
+                                                                               options));
+    }
+    const auto batch = ModuleRI::solve_sternheimer_periodic_linear_response_batch(
+        true,
+        hamiltonian,
+        occupied,
+        states.eigenvalues[0],
+        rhs,
+        virtual_states,
+        perturbation_matrix_elements,
+        omega,
+        volume_element,
+        options);
+
+    ASSERT_EQ(batch.size(), scalar.size());
+    for (std::size_t column = 0; column != scalar.size(); ++column)
+    {
+        EXPECT_EQ(batch[column].solver.converged, scalar[column].solver.converged);
+        EXPECT_EQ(batch[column].solver.iterations, scalar[column].solver.iterations);
+        EXPECT_NEAR(batch[column].solver.relative_residual, scalar[column].solver.relative_residual, 1.0e-12);
+        EXPECT_NEAR(batch[column].residual_norm, scalar[column].residual_norm, 1.0e-11);
+        EXPECT_NEAR(batch[column].full_grid_equation_residual_norm,
+                    scalar[column].full_grid_equation_residual_norm,
+                    1.0e-11);
+        ASSERT_EQ(batch[column].wavefunction.size(), scalar[column].wavefunction.size());
+        for (std::size_t ir = 0; ir != scalar[column].wavefunction.size(); ++ir)
+        {
+            EXPECT_NEAR(batch[column].projected_rhs[ir].real(), scalar[column].projected_rhs[ir].real(), 1.0e-12);
+            EXPECT_NEAR(batch[column].projected_rhs[ir].imag(), scalar[column].projected_rhs[ir].imag(), 1.0e-12);
+            EXPECT_NEAR(batch[column].wavefunction[ir].real(), scalar[column].wavefunction[ir].real(), 1.0e-11);
+            EXPECT_NEAR(batch[column].wavefunction[ir].imag(), scalar[column].wavefunction[ir].imag(), 1.0e-11);
+        }
+    }
+}
