@@ -1,6 +1,7 @@
 #include "charge_mixing.h"
 
 #include <functional>
+#include <limits>
 
 #include "source_io/module_parameter/parameter.h"
 #include "source_base/module_mixing/broyden_mixing.h"
@@ -361,7 +362,11 @@ void Charge_Mixing::mix_uom(std::vector<double>& uom_in, std::vector<double>& uo
 #ifdef __MPI
     // Synchronize mixed uom across all ranks to prevent divergence
     // after multiple mixing steps.
-    Parallel_Common::bcast_double(uom_in.data(), uom_in.size());
+    if (uom_in.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
+    {
+        ModuleBase::WARNING_QUIT("Charge_Mixing::mix_uom", "UOM buffer is too large for MPI broadcast count");
+    }
+    Parallel_Common::bcast_double(uom_in.data(), static_cast<int>(uom_in.size()));
 #endif
     return;
 }

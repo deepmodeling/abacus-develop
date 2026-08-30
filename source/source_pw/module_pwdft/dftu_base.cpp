@@ -6,10 +6,11 @@
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
-#include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <limits>
 #include <sstream>
+#include <stdexcept>
 #include <vector>
 
 // local inline helpers for eigenvalue calculation (JacobiRotate, CalculateEigenvalues)
@@ -553,7 +554,32 @@ void Plus_U_Base::read_occup_m(const UnitCell& ucell,
         }
         else
         {
-            value = std::atoi(token.c_str() + tag.size());
+            const std::string number = token.substr(tag.size());
+            if (number.empty())
+            {
+                return false;
+            }
+
+            std::size_t consumed = 0;
+            try
+            {
+                const long parsed = std::stol(number, &consumed, 10);
+                if (consumed != number.size()
+                    || parsed < static_cast<long>(std::numeric_limits<int>::min())
+                    || parsed > static_cast<long>(std::numeric_limits<int>::max()))
+                {
+                    return false;
+                }
+                value = static_cast<int>(parsed);
+            }
+            catch (const std::invalid_argument&)
+            {
+                return false;
+            }
+            catch (const std::out_of_range&)
+            {
+                return false;
+            }
         }
         return static_cast<bool>(ifdftu);
     };
@@ -574,8 +600,12 @@ void Plus_U_Base::read_occup_m(const UnitCell& ucell,
             break;
         }
 
-        if (read_tagged_int(word, "Atom=", iat))
+        if (word.compare(0, 5, "Atom=") == 0)
         {
+            if (!read_tagged_int(word, "Atom=", iat) || iat < 1 || iat > ucell.nat)
+            {
+                ModuleBase::WARNING_QUIT("Plus_U_Base::read_occup_m", "WRONG ATOM INDEX IN LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
+            }
             iat -= 1;
             ifdftu >> word;
 
