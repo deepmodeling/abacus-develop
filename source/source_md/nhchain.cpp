@@ -6,22 +6,6 @@
 #endif
 #include "source_base/timer.h"
 
-namespace
-{
-ModuleBase::matrix global_temp_tensor(const MDCell& mdcell)
-{
-    ModuleBase::matrix t_vector(3, 3);
-    for (const LocalAtom& atom : mdcell.owned_atoms())
-        for (int i = 0; i < 3; ++i)
-            for (int j = 0; j < 3; ++j)
-                t_vector(i, j) += atom.mass * atom.vel[i] * atom.vel[j];
-#ifdef __MPI
-    MPI_Allreduce(MPI_IN_PLACE, t_vector.c, t_vector.nr * t_vector.nc, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
-#endif
-    return t_vector;
-}
-}
-
 Nose_Hoover::Nose_Hoover(const Parameter& param_in, MDCell& mdcell_in) : MD_base(param_in, mdcell_in)
 {
     const double unit_transform = ModuleBase::HARTREE_SI / pow(ModuleBase::BOHR_RADIUS_SI, 3) * 1.0e-8;
@@ -659,7 +643,14 @@ void Nose_Hoover::update_baro()
     }
     else
     {
-        const ModuleBase::matrix t_vector = global_temp_tensor(mdcell);
+        ModuleBase::matrix t_vector(3, 3);
+        for (const LocalAtom& atom : mdcell.owned_atoms())
+            for (int i = 0; i < 3; ++i)
+                for (int j = 0; j < 3; ++j)
+                    t_vector(i, j) += atom.mass * atom.vel[i] * atom.vel[j];
+#ifdef __MPI
+        MPI_Allreduce(MPI_IN_PLACE, t_vector.c, t_vector.nr * t_vector.nc, MPI_DOUBLE, MPI_SUM, mdcell.communicator());
+#endif
 
         for (int i = 0; i < 3; ++i)
         {

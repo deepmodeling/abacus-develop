@@ -252,23 +252,21 @@ std::string mdcell_type_header(const MDCell& cell, const MdStruFileMetadata& met
     return output.str();
 }
 
-std::string mdcell_atom_line(const LocalAtom& atom)
-{
-    std::ostringstream output;
-    output << std::fixed << std::setprecision(10)
-           << atom.cart.x << " " << atom.cart.y << " " << atom.cart.z
-           << " m " << atom.mbl.x << " " << atom.mbl.y << " " << atom.mbl.z
-           << " v " << atom.vel.x << " " << atom.vel.y << " " << atom.vel.z << "\n";
-    return output.str();
-}
-
 std::string local_mdcell_atoms(const MDCell& cell, const std::size_t type)
 {
     std::string output;
     for (std::size_t iat = 0; iat < cell.owned_atoms().size(); ++iat)
     {
         const LocalAtom& atom = cell.owned_atoms()[iat];
-        if (atom.type == static_cast<int>(type)) output += mdcell_atom_line(atom);
+        if (atom.type == static_cast<int>(type))
+        {
+            std::ostringstream atom_output;
+            atom_output << std::fixed << std::setprecision(10)
+                        << atom.cart.x << " " << atom.cart.y << " " << atom.cart.z
+                        << " m " << atom.mbl.x << " " << atom.mbl.y << " " << atom.mbl.z
+                        << " v " << atom.vel.x << " " << atom.vel.y << " " << atom.vel.z << "\n";
+            output += atom_output.str();
+        }
     }
     return output;
 }

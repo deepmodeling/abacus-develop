@@ -33,37 +33,27 @@ struct StruMetadata
     MdStruFileMetadata stru_file_metadata;
 };
 
-std::string trim_copy(const std::string& value)
-{
-    std::size_t begin = 0;
-    while (begin < value.size() && std::isspace(static_cast<unsigned char>(value[begin])))
-    {
-        ++begin;
-    }
-    std::size_t end = value.size();
-    while (end > begin && std::isspace(static_cast<unsigned char>(value[end - 1])))
-    {
-        --end;
-    }
-    return value.substr(begin, end - begin);
-}
-
-std::string strip_comment(const std::string& line)
-{
-    const std::size_t pos = line.find('#');
-    return trim_copy(pos == std::string::npos ? line : line.substr(0, pos));
-}
-
 std::string next_data_line(std::ifstream& ifs, const char* context)
 {
     std::string line;
     while (std::getline(ifs, line))
     {
-        line = strip_comment(line);
-        if (!line.empty())
+        const std::size_t comment = line.find('#');
+        if (comment != std::string::npos)
         {
-            return line;
+            line.erase(comment);
         }
+        std::size_t begin = 0;
+        while (begin < line.size() && std::isspace(static_cast<unsigned char>(line[begin])))
+        {
+            ++begin;
+        }
+        std::size_t end = line.size();
+        while (end > begin && std::isspace(static_cast<unsigned char>(line[end - 1])))
+        {
+            --end;
+        }
+        if (begin != end) return line.substr(begin, end - begin);
     }
     throw std::runtime_error(std::string("Unexpected EOF while reading ") + context + ".");
 }
@@ -258,17 +248,13 @@ std::vector<LocalAtom> read_owned_atoms(std::ifstream& ifs,
             }
 
             ModuleBase::Vector3<double> frac;
-            ModuleBase::Vector3<double> cart;
             if (is_cartesian)
             {
-                cart.set(c1, c2, c3);
-                frac = wrap_fractional(cart * primitive_gt);
-                cart = frac * primitive_latvec;
+                frac = wrap_fractional(ModuleBase::Vector3<double>(c1, c2, c3) * primitive_gt);
             }
             else
             {
                 frac = wrap_fractional(ModuleBase::Vector3<double>(c1, c2, c3));
-                cart = frac * primitive_latvec;
             }
 
             ModuleBase::Vector3<int> mbl(1, 1, 1);
