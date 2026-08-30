@@ -21,7 +21,7 @@
 - Modify: `source/source_lcao/module_ri/sternheimer_rpa.h`
 - Modify: `source/source_lcao/module_ri/sternheimer_abacus_st_smoke.cpp`
 
-- [ ] **Step 1: Write failing runtime-option tests**
+- [x] **Step 1: Write failing runtime-option tests**
 
 Add tests that unset a unique environment variable and expect the caller-supplied default, accept `true/1/on/yes` and `false/0/off/no` case-insensitively, and reject empty or unknown nonempty values. Add a solver-options test expecting the spectral preconditioner to default to enabled with zero regularization.
 
@@ -49,7 +49,7 @@ TEST(SternheimerRPA, SpectralPreconditionerIsDefault)
 }
 ```
 
-- [ ] **Step 2: Build the two focused tests and verify RED**
+- [x] **Step 2: Build the two focused tests and verify RED**
 
 Run:
 
@@ -59,7 +59,7 @@ cmake --build build --target MODULE_RI_sternheimer_runtime_options_test MODULE_R
 
 Expected: compilation fails because `sternheimer_environment_flag` does not exist and the solver-options default assertions fail after the parser test is made buildable.
 
-- [ ] **Step 3: Implement strict default-on behavior**
+- [x] **Step 3: Implement strict default-on behavior**
 
 Declare and define:
 
@@ -76,7 +76,7 @@ solver_options.fd_spectral_preconditioner_regularization
     = nonnegative_double_from_env(kSpectralPreconditionerRegularizationEnv, 0.0);
 ```
 
-- [ ] **Step 4: Verify GREEN and neighboring tests**
+- [x] **Step 4: Verify GREEN and neighboring tests**
 
 Run:
 
@@ -86,7 +86,7 @@ ctest --test-dir build -R '^(MODULE_RI_sternheimer_runtime_options_test|MODULE_R
 
 Expected: all selected tests pass.
 
-- [ ] **Step 5: Commit Task 1**
+- [x] **Step 5: Commit Task 1**
 
 ```bash
 git add source/source_lcao/module_ri
@@ -102,7 +102,7 @@ git commit -m 'perf(sternheimer): enable spectral preconditioner by default'
 - Modify: `source/source_lcao/module_ri/sternheimer_fd_hamiltonian.cpp`
 - Modify: `source/source_lcao/module_ri/test/sternheimer_fd_hamiltonian_test.cpp`
 
-- [ ] **Step 1: Write failing stencil-plan tests**
+- [x] **Step 1: Write failing stencil-plan tests**
 
 Add public read-only diagnostic accessors and tests proving that an explicit orthogonal cell has zero active mixed pairs and zero cached first-derivative directions, while a skew cell retains its nonzero pairs. Also compare FD8 kinetic output against the existing manual/reference stencil for periodic Gamma, periodic twisted, and nonperiodic grids.
 
@@ -112,7 +112,7 @@ EXPECT_EQ(orthogonal.cached_first_derivative_direction_count(), 0);
 EXPECT_GT(skew.active_mixed_derivative_pair_count(), 0);
 ```
 
-- [ ] **Step 2: Build and verify RED**
+- [x] **Step 2: Build and verify RED**
 
 Run:
 
@@ -122,7 +122,7 @@ cmake --build build --target MODULE_RI_sternheimer_fd_hamiltonian_test -j8
 
 Expected: compilation fails because the cache diagnostics do not exist.
 
-- [ ] **Step 3: Implement immutable constructor cache**
+- [x] **Step 3: Implement immutable constructor cache**
 
 Store FD radius/weights, Laplacian coefficients, center coefficient, active `(left,right)` pairs, required right-derivative directions, and a Gamma flag in the Hamiltonian. Initialize the cache after constructor validation. Define an active pair only by exact comparison:
 
@@ -136,11 +136,11 @@ if (laplacian_coefficients_[left][right] != 0.0)
 
 Use the cache in `apply_grid_terms`. Iterate only active pairs and allocate first-derivative buffers only for required directions. Preserve the existing arithmetic order for each retained term.
 
-- [ ] **Step 4: Add exact phase shortcuts**
+- [x] **Step 4: Add exact phase shortcuts**
 
 In `shifted_grid_point`, return `1+0i` when the lattice translation is zero or when the cached k point is Gamma. Continue calling `sternheimer_bloch_phase` for non-Gamma boundary translations.
 
-- [ ] **Step 5: Verify GREEN and the FD solver neighborhood**
+- [x] **Step 5: Verify GREEN and the FD solver neighborhood**
 
 Run:
 
@@ -150,7 +150,7 @@ ctest --test-dir build -R '^(MODULE_RI_sternheimer_fd_hamiltonian_test|MODULE_RI
 
 Expected: all selected tests pass with numerical tolerances unchanged.
 
-- [ ] **Step 6: Commit Task 2**
+- [x] **Step 6: Commit Task 2**
 
 ```bash
 git add source/source_lcao/module_ri/sternheimer_fd_hamiltonian.* \
@@ -169,7 +169,7 @@ git commit -m 'perf(sternheimer): cache finite-difference operator geometry'
 - Modify: `source/source_lcao/module_ri/test/sternheimer_rpa_test.cpp`
 - Modify: `source/source_lcao/module_ri/test/sternheimer_delta_test.cpp`
 
-- [ ] **Step 1: Write a failing dot-count test**
+- [x] **Step 1: Write a failing dot-count test**
 
 Construct `SternheimerSubspaceProjector` with two non-unit vectors and a dot callback that increments a counter. Verify two norm dots occur at construction and exactly one dot per basis vector occurs for each later projection. Verify zero-norm vectors are skipped and cached projection matches `project_out_subspace` to `1e-13`.
 
@@ -185,7 +185,7 @@ projector.project(vec);
 EXPECT_EQ(dot_calls, 4);
 ```
 
-- [ ] **Step 2: Build and verify RED**
+- [x] **Step 2: Build and verify RED**
 
 Run:
 
@@ -195,15 +195,15 @@ cmake --build build --target MODULE_RI_sternheimer_rpa_test -j8
 
 Expected: compilation fails because `SternheimerSubspaceProjector` does not exist.
 
-- [ ] **Step 3: Implement the cached projector**
+- [x] **Step 3: Implement the cached projector**
 
 Add a class storing a reference to the immutable subspace, the dot callback, and precomputed norms. Keep sequential projection and the current OpenMP `axpy` loop. Make `SternheimerRPA::project_out_subspace` construct a temporary projector for compatibility.
 
-- [ ] **Step 4: Use one cached projector per Delta linear solve**
+- [x] **Step 4: Use one cached projector per Delta linear solve**
 
 Create `std::shared_ptr<const SternheimerSubspaceProjector>` after the fixed subspace and dot callback are available. Use it for projected RHS, operator input/output, preconditioner output, and final response projection. Do not alter virtual-residual low-rank correction order.
 
-- [ ] **Step 5: Verify GREEN and solver tests**
+- [x] **Step 5: Verify GREEN and solver tests**
 
 Run:
 
@@ -213,7 +213,7 @@ ctest --test-dir build -R '^(MODULE_RI_sternheimer_rpa_test|MODULE_RI_sternheime
 
 Expected: all selected tests pass.
 
-- [ ] **Step 6: Commit Task 3**
+- [x] **Step 6: Commit Task 3**
 
 ```bash
 git add source/source_lcao/module_ri/sternheimer_rpa.* \
@@ -230,7 +230,7 @@ git commit -m 'perf(sternheimer): cache fixed-subspace projection norms'
 **Files:**
 - Modify only if a test exposes a defect in Tasks 1-3.
 
-- [ ] **Step 1: Build all directly affected targets**
+- [x] **Step 1: Build all directly affected targets**
 
 ```bash
 cmake --build build --target \
@@ -244,7 +244,7 @@ cmake --build build --target \
   MODULE_RI_sternheimer_abacus_st_smoke_test -j8
 ```
 
-- [ ] **Step 2: Run all directly affected tests**
+- [x] **Step 2: Run all directly affected tests**
 
 ```bash
 ctest --test-dir build -R '^MODULE_RI_sternheimer_(runtime_options|rpa|fd_hamiltonian|fd_preconditioner|fd_solver|delta|periodic_solver|abacus_st_smoke)_test$' --output-on-failure
@@ -252,7 +252,7 @@ ctest --test-dir build -R '^MODULE_RI_sternheimer_(runtime_options|rpa|fd_hamilt
 
 Expected: eight tests pass.
 
-- [ ] **Step 3: Audit defaults and exact-zero semantics**
+- [x] **Step 3: Audit defaults and exact-zero semantics**
 
 ```bash
 rg -n 'use_fd_spectral_preconditioner = true|regularization = 0.0|!= 0.0|sternheimer_environment_flag' source/source_lcao/module_ri
@@ -277,15 +277,15 @@ Create a git archive, SHA256 manifest, and scripts under local `server_jobs/ster
 
 Use one node, one MPI task, 30 build threads, `RelWithDebInfo`, LibRI/LibComm, GreenX, and `BUILD_TESTING=ON`. Run the eight tests from Task 4, build `abacus_3p`, and create one immutable artifact with source, executable, dependency, test, and SHA provenance.
 
-- [ ] **Step 3: Run HF precision and timing regression**
+- [x] **Step 3: Run HF precision and timing regression**
 
 Reuse `/work1/ghj/sternheimer_abacus_tests/molecular_convergence_20260818/response_frequency/job21654986/hf_mol_90`, four nodes, one MPI rank and 30 OpenMP threads per node, one accepted frequency, FD8, tolerance `1e-6`, and no explicit preconditioner environment variable. Compare against the accepted response matrix with threshold `1e-8`.
 
-- [ ] **Step 4: Run Si q=7 precision and timing regression**
+- [x] **Step 4: Run Si q=7 precision and timing regression**
 
 Reuse `/work1/ghj/si-solid-grid-fd8-final-20260823/materials/si/solid`, grid `30^3`, q index 7, and accepted physical frequency 4. Map that frequency to candidate frequency 1, retain all four occupied bands and 334 response channels, use eight nodes with one MPI rank and 30 OpenMP threads per node, FD8, tolerance `1e-8`, and no explicit preconditioner environment variable. Compare all 64 per-k partial response matrices with the accepted response at relative Frobenius threshold `1e-8`; a reduced one-band timing sample is not a physics gate.
 
-- [ ] **Step 5: Record incremental speedups**
+- [x] **Step 5: Record incremental speedups**
 
 For HF and Si record application status, convergence, equations, iterations, response differences, maximum residuals, total process wall, maximum RSS, nodes, ranks, threads, and node-hours. Compare against the accepted `4bee9e3b1` spectral-preconditioner timings.
 
@@ -296,7 +296,7 @@ For HF and Si record application status, convergence, equations, iterations, res
 - Modify: `/Users/ghj/同步空间/AITP_project/delta_st_rpa_project/development_notes/sections/sternheimer_fd_spectral_preconditioner.tex`
 - Modify: `/Users/ghj/.codex/skills/abacus-delta-st-efficient-production/SKILL.md`
 
-- [ ] **Step 1: Record exact implementation and A/B evidence**
+- [x] **Step 1: Record exact implementation and A/B evidence**
 
 Document the mathematical equivalence, test results, feature commit, executable hash, HF/Si matrix differences, residual gates, timing, resources, and limits of the benchmark.
 
