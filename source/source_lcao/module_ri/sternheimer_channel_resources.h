@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 namespace ModuleRI
 {
@@ -32,7 +33,17 @@ struct SternheimerChannelWorkerPlan
     std::uint64_t target_bytes = 0;
     std::uint64_t increment_bytes_per_rank = 0;
     std::uint64_t memory_per_worker_bytes = 0;
+    int channel_batch_width = 1;
+    int batch_tasks = 1;
 };
+
+struct SternheimerChannelBatch
+{
+    int begin = 0;
+    int size = 0;
+};
+
+std::vector<SternheimerChannelBatch> make_sternheimer_channel_batches(int num_channels, int batch_width);
 
 std::uint64_t estimate_sternheimer_channel_worker_bytes(std::size_t grid_size);
 
@@ -40,15 +51,16 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(int num_channels,
                                                               int omp_threads,
                                                               std::size_t grid_size,
                                                               int user_cap,
-                                                              const SternheimerMemorySnapshot& memory);
+                                                              const SternheimerMemorySnapshot& memory,
+                                                              int channel_batch_width = 1);
 
-SternheimerChannelWorkerPlan plan_sternheimer_owned_channel_workers(
-    int global_num_channels,
-    int owned_num_channels,
-    int omp_threads,
-    std::size_t grid_size,
-    int user_cap,
-    const SternheimerMemorySnapshot& memory);
+SternheimerChannelWorkerPlan plan_sternheimer_owned_channel_workers(int global_num_channels,
+                                                                    int owned_num_channels,
+                                                                    int omp_threads,
+                                                                    std::size_t grid_size,
+                                                                    int user_cap,
+                                                                    const SternheimerMemorySnapshot& memory,
+                                                                    int channel_batch_width = 1);
 
 SternheimerMemorySnapshot detect_sternheimer_memory_snapshot();
 
@@ -67,7 +79,9 @@ class SternheimerOptionalValue
 {
   public:
     SternheimerOptionalValue() = default;
-    SternheimerOptionalValue(const T& value) : has_value_(true), value_(value) {}
+    SternheimerOptionalValue(const T& value) : has_value_(true), value_(value)
+    {
+    }
 
     SternheimerOptionalValue& operator=(const T& value)
     {
@@ -138,15 +152,14 @@ SternheimerOptionalValue<std::uint64_t> parse_sternheimer_memory_bytes(const std
 
 SternheimerOptionalValue<std::uint64_t> parse_sternheimer_slurm_mem_per_node(const std::string& text);
 
-SternheimerOptionalValue<std::uint64_t> parse_sternheimer_kib_field(const std::string& text,
-                                                                    const std::string& key);
+SternheimerOptionalValue<std::uint64_t> parse_sternheimer_kib_field(const std::string& text, const std::string& key);
 
 SternheimerOptionalValue<std::string> parse_sternheimer_cgroup_v2_path(const std::string& text);
 
 SternheimerOptionalValue<std::string> parse_sternheimer_cgroup_v1_memory_path(const std::string& text);
 
 SternheimerMemorySnapshot select_sternheimer_memory_snapshot(const SternheimerMemoryCandidates& candidates,
-                                                              int local_mpi_ranks);
+                                                             int local_mpi_ranks);
 
 } // namespace detail
 

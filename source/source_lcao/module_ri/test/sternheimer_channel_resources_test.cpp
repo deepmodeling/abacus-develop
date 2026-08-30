@@ -11,14 +11,50 @@ TEST(SternheimerChannelResources, EstimatesOneHundredTwentyComplexGridVectors)
               120ULL * 1000ULL * sizeof(std::complex<double>));
 }
 
+TEST(SternheimerChannelResources, GroupsChannelsIntoStableMicroBatches)
+{
+    const auto batches = ModuleRI::make_sternheimer_channel_batches(10, 4);
+    ASSERT_EQ(batches.size(), 3U);
+    EXPECT_EQ(batches[0].begin, 0);
+    EXPECT_EQ(batches[0].size, 4);
+    EXPECT_EQ(batches[1].begin, 4);
+    EXPECT_EQ(batches[1].size, 4);
+    EXPECT_EQ(batches[2].begin, 8);
+    EXPECT_EQ(batches[2].size, 2);
+
+    const auto scalar = ModuleRI::make_sternheimer_channel_batches(3, 1);
+    ASSERT_EQ(scalar.size(), 3U);
+    EXPECT_EQ(scalar[0].begin, 0);
+    EXPECT_EQ(scalar[1].begin, 1);
+    EXPECT_EQ(scalar[2].begin, 2);
+    EXPECT_THROW(ModuleRI::make_sternheimer_channel_batches(-1, 4), std::invalid_argument);
+    EXPECT_THROW(ModuleRI::make_sternheimer_channel_batches(4, 0), std::invalid_argument);
+}
+
+TEST(SternheimerChannelResources, BatchWorkerPlanAccountsForEveryColumn)
+{
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::available,
+                                                     100000000,
+                                                     0,
+                                                     1,
+                                                     "test"};
+    const auto scalar = ModuleRI::plan_sternheimer_owned_channel_workers(100, 100, 30, 100, 0, memory, 1);
+    const auto batch = ModuleRI::plan_sternheimer_owned_channel_workers(100, 100, 30, 100, 0, memory, 4);
+
+    EXPECT_EQ(batch.channel_batch_width, 4);
+    EXPECT_EQ(batch.batch_tasks, 25);
+    EXPECT_EQ(batch.memory_per_worker_bytes, 4 * scalar.memory_per_worker_bytes);
+    EXPECT_LE(static_cast<std::uint64_t>(batch.automatic_workers) * batch.memory_per_worker_bytes,
+              static_cast<std::uint64_t>(scalar.automatic_workers) * scalar.memory_per_worker_bytes);
+}
+
 TEST(SternheimerChannelResources, PlansFromNodeAggregateMemory)
 {
-    const ModuleRI::SternheimerMemorySnapshot memory{
-        ModuleRI::SternheimerMemoryAccountingMode::node_aggregate,
-        100000,
-        32000,
-        2,
-        "cgroup_v2"};
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::node_aggregate,
+                                                     100000,
+                                                     32000,
+                                                     2,
+                                                     "cgroup_v2"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(40, 30, 1, 0, memory);
     EXPECT_EQ(plan.automatic_workers, 11);
     EXPECT_EQ(plan.effective_workers, 11);
@@ -26,12 +62,11 @@ TEST(SternheimerChannelResources, PlansFromNodeAggregateMemory)
 
 TEST(SternheimerChannelResources, PartialOuterTeamFallsBackToNestedGridParallelism)
 {
-    const ModuleRI::SternheimerMemorySnapshot memory{
-        ModuleRI::SternheimerMemoryAccountingMode::available,
-        100000,
-        0,
-        1,
-        "proc_meminfo"};
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::available,
+                                                     100000,
+                                                     0,
+                                                     1,
+                                                     "proc_meminfo"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(32, 30, 1, 4, memory);
     EXPECT_EQ(plan.automatic_workers, 30);
     EXPECT_EQ(plan.effective_workers, 1);
@@ -39,12 +74,11 @@ TEST(SternheimerChannelResources, PartialOuterTeamFallsBackToNestedGridParalleli
 
 TEST(SternheimerChannelResources, KeepsOuterParallelismWhenMostThreadsCanWork)
 {
-    const ModuleRI::SternheimerMemorySnapshot memory{
-        ModuleRI::SternheimerMemoryAccountingMode::available,
-        56320,
-        0,
-        1,
-        "proc_meminfo"};
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::available,
+                                                     56320,
+                                                     0,
+                                                     1,
+                                                     "proc_meminfo"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(40, 30, 1, 0, memory);
     EXPECT_EQ(plan.automatic_workers, 22);
     EXPECT_EQ(plan.effective_workers, 22);
@@ -52,76 +86,71 @@ TEST(SternheimerChannelResources, KeepsOuterParallelismWhenMostThreadsCanWork)
 
 TEST(SternheimerChannelResources, ClampsToChannelsAndOpenMPThreads)
 {
-    const ModuleRI::SternheimerMemorySnapshot memory{
-        ModuleRI::SternheimerMemoryAccountingMode::available,
-        100000,
-        0,
-        1,
-        "proc_meminfo"};
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::available,
+                                                     100000,
+                                                     0,
+                                                     1,
+                                                     "proc_meminfo"};
     EXPECT_EQ(ModuleRI::plan_sternheimer_channel_workers(3, 30, 1, 0, memory).effective_workers, 1);
     EXPECT_EQ(ModuleRI::plan_sternheimer_channel_workers(40, 5, 1, 0, memory).effective_workers, 5);
 }
 
 TEST(SternheimerChannelResources, DividesPerRankLimitBeforeSubtractingRss)
 {
-    const ModuleRI::SternheimerMemorySnapshot memory{
-        ModuleRI::SternheimerMemoryAccountingMode::per_rank,
-        100000,
-        10000,
-        2,
-        "slurm+proc_status"};
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::per_rank,
+                                                     100000,
+                                                     10000,
+                                                     2,
+                                                     "slurm+proc_status"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(40, 30, 1, 0, memory);
     EXPECT_EQ(plan.automatic_workers, 14);
 }
 
 TEST(SternheimerChannelResources, DividesAvailableMemoryAcrossLocalRanks)
 {
-    const ModuleRI::SternheimerMemorySnapshot memory{
-        ModuleRI::SternheimerMemoryAccountingMode::available,
-        100000,
-        0,
-        2,
-        "proc_meminfo"};
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::available,
+                                                     100000,
+                                                     0,
+                                                     2,
+                                                     "proc_meminfo"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(40, 30, 1, 0, memory);
     EXPECT_EQ(plan.automatic_workers, 19);
 }
 
 TEST(SternheimerChannelResources, ZeroCapUsesAutomaticCount)
 {
-    const ModuleRI::SternheimerMemorySnapshot memory{
-        ModuleRI::SternheimerMemoryAccountingMode::available,
-        100000,
-        0,
-        1,
-        "proc_meminfo"};
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::available,
+                                                     100000,
+                                                     0,
+                                                     1,
+                                                     "proc_meminfo"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(32, 30, 1, 0, memory);
     EXPECT_EQ(plan.effective_workers, plan.automatic_workers);
 }
 
 TEST(SternheimerChannelResources, FormatsWorkerDecisionDiagnostic)
 {
-    const ModuleRI::SternheimerMemorySnapshot memory{
-        ModuleRI::SternheimerMemoryAccountingMode::node_aggregate,
-        100000,
-        32000,
-        2,
-        "cgroup_v2"};
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::node_aggregate,
+                                                     100000,
+                                                     32000,
+                                                     2,
+                                                     "cgroup_v2"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(40, 30, 1, 4, memory);
     EXPECT_EQ(ModuleRI::format_sternheimer_channel_worker_diagnostic(memory, plan, 1, 4),
               "resource_source=cgroup_v2 accounting_mode=node_aggregate "
               "node_memory_limit_bytes=100000 memory_current_bytes=32000 "
               "memory_target_bytes=75000 local_mpi_ranks=2 grid_size=1 "
-              "memory_per_worker_bytes=1920 automatic_workers=11 user_cap=4 effective_workers=1");
+              "memory_per_worker_bytes=1920 channel_batch_width=1 batch_tasks=40 "
+              "automatic_workers=11 user_cap=4 effective_workers=1");
 }
 
 TEST(SternheimerChannelResources, RejectsDetectedBudgetBelowOneWorker)
 {
-    const ModuleRI::SternheimerMemorySnapshot memory{
-        ModuleRI::SternheimerMemoryAccountingMode::node_aggregate,
-        1000,
-        0,
-        1,
-        "cgroup_v2"};
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::node_aggregate,
+                                                     1000,
+                                                     0,
+                                                     1,
+                                                     "cgroup_v2"};
     EXPECT_THROW(ModuleRI::plan_sternheimer_channel_workers(4, 4, 1, 0, memory), std::runtime_error);
 }
 
@@ -154,21 +183,18 @@ TEST(SternheimerChannelResources, ParsesCgroupSlurmAndProcMemoryUnits)
     EXPECT_EQ(parse_sternheimer_slurm_mem_per_node("110610"), 110610ULL * 1024ULL * 1024ULL);
     EXPECT_FALSE(parse_sternheimer_memory_bytes("max").has_value());
     EXPECT_FALSE(parse_sternheimer_memory_bytes("12MB").has_value());
-    EXPECT_EQ(parse_sternheimer_kib_field("MemTotal: 4096 kB\nMemAvailable: 2048 kB\n",
-                                         "MemAvailable"),
+    EXPECT_EQ(parse_sternheimer_kib_field("MemTotal: 4096 kB\nMemAvailable: 2048 kB\n", "MemAvailable"),
               2048ULL * 1024ULL);
-    EXPECT_EQ(parse_sternheimer_kib_field("VmPeak:\t2048 kB\nVmRSS:\t1024 kB\n", "VmRSS"),
-              1024ULL * 1024ULL);
+    EXPECT_EQ(parse_sternheimer_kib_field("VmPeak:\t2048 kB\nVmRSS:\t1024 kB\n", "VmRSS"), 1024ULL * 1024ULL);
     EXPECT_FALSE(parse_sternheimer_kib_field("VmRSS: invalid kB\n", "VmRSS").has_value());
 }
 
 TEST(SternheimerChannelResources, ParsesCgroupMembershipPaths)
 {
-    EXPECT_EQ(ModuleRI::detail::parse_sternheimer_cgroup_v2_path("0::/slurm/job_7/step_0\n"),
-              "/slurm/job_7/step_0");
-    EXPECT_EQ(ModuleRI::detail::parse_sternheimer_cgroup_v1_memory_path(
-                  "4:cpu:/slurm/job_7\n5:memory:/slurm/job_7/step_0\n"),
-              "/slurm/job_7/step_0");
+    EXPECT_EQ(ModuleRI::detail::parse_sternheimer_cgroup_v2_path("0::/slurm/job_7/step_0\n"), "/slurm/job_7/step_0");
+    EXPECT_EQ(
+        ModuleRI::detail::parse_sternheimer_cgroup_v1_memory_path("4:cpu:/slurm/job_7\n5:memory:/slurm/job_7/step_0\n"),
+        "/slurm/job_7/step_0");
     EXPECT_FALSE(ModuleRI::detail::parse_sternheimer_cgroup_v2_path("5:memory:/job\n").has_value());
 }
 

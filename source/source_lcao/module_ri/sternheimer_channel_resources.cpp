@@ -67,7 +67,7 @@ detail::SternheimerOptionalValue<std::uint64_t> parse_unsigned_decimal(const std
         return {};
     }
     std::uint64_t value = 0;
-    for (const char character : text)
+    for (const char character: text)
     {
         if (!std::isdigit(static_cast<unsigned char>(character)))
         {
@@ -214,11 +214,30 @@ std::uint64_t estimate_sternheimer_channel_worker_bytes(const std::size_t grid_s
                             sizeof(std::complex<double>));
 }
 
+std::vector<SternheimerChannelBatch> make_sternheimer_channel_batches(const int num_channels, const int batch_width)
+{
+    if (num_channels < 0)
+    {
+        throw std::invalid_argument("Sternheimer channel batching requires a non-negative channel count.");
+    }
+    if (batch_width <= 0)
+    {
+        throw std::invalid_argument("Sternheimer channel batching requires a positive batch width.");
+    }
+    std::vector<SternheimerChannelBatch> batches;
+    for (int begin = 0; begin < num_channels; begin += batch_width)
+    {
+        batches.push_back({begin, std::min(batch_width, num_channels - begin)});
+    }
+    return batches;
+}
+
 SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_channels,
                                                               const int omp_threads,
                                                               const std::size_t grid_size,
                                                               const int user_cap,
-                                                              const SternheimerMemorySnapshot& memory)
+                                                              const SternheimerMemorySnapshot& memory,
+                                                              const int channel_batch_width)
 {
     if (num_channels <= 0)
     {
@@ -240,9 +259,16 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
     {
         throw std::invalid_argument("Sternheimer channel worker planning requires a positive local MPI rank count.");
     }
+    if (channel_batch_width <= 0)
+    {
+        throw std::invalid_argument("Sternheimer channel worker planning requires a positive batch width.");
+    }
 
     SternheimerChannelWorkerPlan plan;
-    plan.memory_per_worker_bytes = estimate_sternheimer_channel_worker_bytes(grid_size);
+    plan.channel_batch_width = channel_batch_width;
+    plan.batch_tasks = (num_channels + channel_batch_width - 1) / channel_batch_width;
+    plan.memory_per_worker_bytes = checked_multiply(estimate_sternheimer_channel_worker_bytes(grid_size),
+                                                    static_cast<std::uint64_t>(channel_batch_width));
     if (memory.mode == SternheimerMemoryAccountingMode::fallback_one)
     {
         return plan;
@@ -254,27 +280,23 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
 
     switch (memory.mode)
     {
-        case SternheimerMemoryAccountingMode::node_aggregate:
-            plan.target_bytes = three_quarters(memory.limit_bytes);
-            plan.increment_bytes_per_rank
-                = checked_remaining(plan.target_bytes, memory.current_bytes)
-                  / static_cast<std::uint64_t>(memory.local_mpi_ranks);
-            break;
-        case SternheimerMemoryAccountingMode::per_rank:
-        {
-            const std::uint64_t rank_limit
-                = memory.limit_bytes / static_cast<std::uint64_t>(memory.local_mpi_ranks);
-            plan.target_bytes = three_quarters(rank_limit);
-            plan.increment_bytes_per_rank = checked_remaining(plan.target_bytes, memory.current_bytes);
-            break;
-        }
-        case SternheimerMemoryAccountingMode::available:
-            plan.target_bytes = three_quarters(memory.limit_bytes);
-            plan.increment_bytes_per_rank
-                = plan.target_bytes / static_cast<std::uint64_t>(memory.local_mpi_ranks);
-            break;
-        case SternheimerMemoryAccountingMode::fallback_one:
-            break;
+    case SternheimerMemoryAccountingMode::node_aggregate:
+        plan.target_bytes = three_quarters(memory.limit_bytes);
+        plan.increment_bytes_per_rank = checked_remaining(plan.target_bytes, memory.current_bytes)
+                                        / static_cast<std::uint64_t>(memory.local_mpi_ranks);
+        break;
+    case SternheimerMemoryAccountingMode::per_rank: {
+        const std::uint64_t rank_limit = memory.limit_bytes / static_cast<std::uint64_t>(memory.local_mpi_ranks);
+        plan.target_bytes = three_quarters(rank_limit);
+        plan.increment_bytes_per_rank = checked_remaining(plan.target_bytes, memory.current_bytes);
+        break;
+    }
+    case SternheimerMemoryAccountingMode::available:
+        plan.target_bytes = three_quarters(memory.limit_bytes);
+        plan.increment_bytes_per_rank = plan.target_bytes / static_cast<std::uint64_t>(memory.local_mpi_ranks);
+        break;
+    case SternheimerMemoryAccountingMode::fallback_one:
+        break;
     }
 
     const std::uint64_t memory_worker_count = plan.increment_bytes_per_rank / plan.memory_per_worker_bytes;
@@ -285,25 +307,25 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
     }
     const std::uint64_t bounded_memory_workers
         = std::min(memory_worker_count, static_cast<std::uint64_t>(std::numeric_limits<int>::max()));
+    const int thread_batch_workers = std::max(1, omp_threads / channel_batch_width);
     plan.automatic_workers
-        = std::min({num_channels, omp_threads, static_cast<int>(bounded_memory_workers)});
-    const int capped_workers
-        = user_cap > 0 ? std::min(plan.automatic_workers, user_cap) : plan.automatic_workers;
+        = std::min({plan.batch_tasks, thread_batch_workers, static_cast<int>(bounded_memory_workers)});
+    const int capped_workers = user_cap > 0 ? std::min(plan.automatic_workers, user_cap) : plan.automatic_workers;
     // Use inner grid OpenMP only when independent channel tasks fill less than
     // one quarter of the available thread team.  Above that point the FD
     // stencil is memory-bandwidth bound and channel parallelism is preferable.
     const int minimum_channel_workers = (omp_threads + 3) / 4;
-    plan.effective_workers = capped_workers >= minimum_channel_workers ? capped_workers : 1;
+    plan.effective_workers = capped_workers * channel_batch_width >= minimum_channel_workers ? capped_workers : 1;
     return plan;
 }
 
-SternheimerChannelWorkerPlan plan_sternheimer_owned_channel_workers(
-    const int global_num_channels,
-    const int owned_num_channels,
-    const int omp_threads,
-    const std::size_t grid_size,
-    const int user_cap,
-    const SternheimerMemorySnapshot& memory)
+SternheimerChannelWorkerPlan plan_sternheimer_owned_channel_workers(const int global_num_channels,
+                                                                    const int owned_num_channels,
+                                                                    const int omp_threads,
+                                                                    const std::size_t grid_size,
+                                                                    const int user_cap,
+                                                                    const SternheimerMemorySnapshot& memory,
+                                                                    const int channel_batch_width)
 {
     if (global_num_channels <= 0)
     {
@@ -318,21 +340,22 @@ SternheimerChannelWorkerPlan plan_sternheimer_owned_channel_workers(
                                             omp_threads,
                                             grid_size,
                                             user_cap,
-                                            memory);
+                                            memory,
+                                            channel_batch_width);
 }
 
 std::string sternheimer_memory_accounting_mode_name(const SternheimerMemoryAccountingMode mode)
 {
     switch (mode)
     {
-        case SternheimerMemoryAccountingMode::node_aggregate:
-            return "node_aggregate";
-        case SternheimerMemoryAccountingMode::per_rank:
-            return "per_rank";
-        case SternheimerMemoryAccountingMode::available:
-            return "available";
-        case SternheimerMemoryAccountingMode::fallback_one:
-            return "fallback_one";
+    case SternheimerMemoryAccountingMode::node_aggregate:
+        return "node_aggregate";
+    case SternheimerMemoryAccountingMode::per_rank:
+        return "per_rank";
+    case SternheimerMemoryAccountingMode::available:
+        return "available";
+    case SternheimerMemoryAccountingMode::fallback_one:
+        return "fallback_one";
     }
     throw std::invalid_argument("Unknown Sternheimer memory accounting mode.");
 }
@@ -345,14 +368,11 @@ std::string format_sternheimer_channel_worker_diagnostic(const SternheimerMemory
     std::ostringstream diagnostic;
     diagnostic << "resource_source=" << memory.source
                << " accounting_mode=" << sternheimer_memory_accounting_mode_name(memory.mode)
-               << " node_memory_limit_bytes=" << memory.limit_bytes
-               << " memory_current_bytes=" << memory.current_bytes
-               << " memory_target_bytes=" << plan.target_bytes
-               << " local_mpi_ranks=" << memory.local_mpi_ranks
-               << " grid_size=" << grid_size
-               << " memory_per_worker_bytes=" << plan.memory_per_worker_bytes
-               << " automatic_workers=" << plan.automatic_workers
-               << " user_cap=" << user_cap
+               << " node_memory_limit_bytes=" << memory.limit_bytes << " memory_current_bytes=" << memory.current_bytes
+               << " memory_target_bytes=" << plan.target_bytes << " local_mpi_ranks=" << memory.local_mpi_ranks
+               << " grid_size=" << grid_size << " memory_per_worker_bytes=" << plan.memory_per_worker_bytes
+               << " channel_batch_width=" << plan.channel_batch_width << " batch_tasks=" << plan.batch_tasks
+               << " automatic_workers=" << plan.automatic_workers << " user_cap=" << user_cap
                << " effective_workers=" << plan.effective_workers;
     return diagnostic.str();
 }
@@ -397,17 +417,17 @@ SternheimerOptionalValue<std::uint64_t> parse_sternheimer_memory_bytes(const std
     {
         switch (static_cast<char>(std::toupper(static_cast<unsigned char>(suffix))))
         {
-            case 'K':
-                multiplier = 1024ULL;
-                break;
-            case 'M':
-                multiplier = 1024ULL * 1024ULL;
-                break;
-            case 'G':
-                multiplier = 1024ULL * 1024ULL * 1024ULL;
-                break;
-            default:
-                return {};
+        case 'K':
+            multiplier = 1024ULL;
+            break;
+        case 'M':
+            multiplier = 1024ULL * 1024ULL;
+            break;
+        case 'G':
+            multiplier = 1024ULL * 1024ULL * 1024ULL;
+            break;
+        default:
+            return {};
         }
         text.pop_back();
     }
@@ -443,15 +463,13 @@ SternheimerOptionalValue<std::uint64_t> parse_sternheimer_slurm_mem_per_node(con
     }
 }
 
-SternheimerOptionalValue<std::uint64_t> parse_sternheimer_kib_field(const std::string& text,
-                                                                    const std::string& key)
+SternheimerOptionalValue<std::uint64_t> parse_sternheimer_kib_field(const std::string& text, const std::string& key)
 {
     std::size_t first = 0;
     while (first <= text.size())
     {
         const std::size_t end = text.find('\n', first);
-        const std::string line
-            = text.substr(first, end == std::string::npos ? text.size() - first : end - first);
+        const std::string line = text.substr(first, end == std::string::npos ? text.size() - first : end - first);
         const std::size_t colon = line.find(':');
         if (colon != std::string::npos && trim_copy(line.substr(0, colon)) == key)
         {
@@ -492,8 +510,7 @@ SternheimerOptionalValue<std::string> parse_sternheimer_cgroup_v2_path(const std
     while (first <= text.size())
     {
         const std::size_t end = text.find('\n', first);
-        const std::string line
-            = text.substr(first, end == std::string::npos ? text.size() - first : end - first);
+        const std::string line = text.substr(first, end == std::string::npos ? text.size() - first : end - first);
         if (line.compare(0, 3, "0::") == 0 && line.size() > 3)
         {
             return std::string(line.substr(3));
@@ -513,8 +530,7 @@ SternheimerOptionalValue<std::string> parse_sternheimer_cgroup_v1_memory_path(co
     while (first <= text.size())
     {
         const std::size_t end = text.find('\n', first);
-        const std::string line
-            = text.substr(first, end == std::string::npos ? text.size() - first : end - first);
+        const std::string line = text.substr(first, end == std::string::npos ? text.size() - first : end - first);
         const std::size_t first_colon = line.find(':');
         const std::size_t second_colon
             = first_colon == std::string::npos ? std::string::npos : line.find(':', first_colon + 1);
@@ -525,10 +541,9 @@ SternheimerOptionalValue<std::string> parse_sternheimer_cgroup_v1_memory_path(co
             while (controller_first <= controllers.size())
             {
                 const std::size_t comma = controllers.find(',', controller_first);
-                const std::string controller
-                    = controllers.substr(controller_first,
-                                         comma == std::string::npos ? controllers.size() - controller_first
-                                                                    : comma - controller_first);
+                const std::string controller = controllers.substr(
+                    controller_first,
+                    comma == std::string::npos ? controllers.size() - controller_first : comma - controller_first);
                 if (controller == "memory" && second_colon + 1 < line.size())
                 {
                     return std::string(line.substr(second_colon + 1));
@@ -550,7 +565,7 @@ SternheimerOptionalValue<std::string> parse_sternheimer_cgroup_v1_memory_path(co
 }
 
 SternheimerMemorySnapshot select_sternheimer_memory_snapshot(const SternheimerMemoryCandidates& candidates,
-                                                              const int local_mpi_ranks)
+                                                             const int local_mpi_ranks)
 {
     if (local_mpi_ranks <= 0)
     {
@@ -561,9 +576,8 @@ SternheimerMemorySnapshot select_sternheimer_memory_snapshot(const SternheimerMe
     if (cgroup_limit)
     {
         const bool huge_without_physical = !candidates.physical_memory_bytes && *cgroup_limit >= (1ULL << 60);
-        const bool huge_relative_to_physical
-            = candidates.physical_memory_bytes && *candidates.physical_memory_bytes > 0
-              && *cgroup_limit / *candidates.physical_memory_bytes >= 16;
+        const bool huge_relative_to_physical = candidates.physical_memory_bytes && *candidates.physical_memory_bytes > 0
+                                               && *cgroup_limit / *candidates.physical_memory_bytes >= 16;
         if (huge_without_physical || huge_relative_to_physical)
         {
             cgroup_limit.reset();
@@ -577,8 +591,8 @@ SternheimerMemorySnapshot select_sternheimer_memory_snapshot(const SternheimerMe
     }
     if (candidates.slurm_limit_bytes)
     {
-        enforced_limit = enforced_limit ? std::min(*enforced_limit, *candidates.slurm_limit_bytes)
-                                        : *candidates.slurm_limit_bytes;
+        enforced_limit
+            = enforced_limit ? std::min(*enforced_limit, *candidates.slurm_limit_bytes) : *candidates.slurm_limit_bytes;
     }
 
     SternheimerMemorySnapshot snapshot;

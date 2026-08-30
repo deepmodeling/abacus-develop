@@ -9,6 +9,7 @@ namespace
 {
 
 constexpr const char* kTestFlag = "ABACUS_STERNHEIMER_TEST_FLAG";
+constexpr const char* kBatchWidth = "ABACUS_STERNHEIMER_CHANNEL_BATCH_WIDTH";
 
 class SternheimerRuntimeOptionsTest : public ::testing::Test
 {
@@ -16,6 +17,7 @@ class SternheimerRuntimeOptionsTest : public ::testing::Test
     void TearDown() override
     {
         unsetenv(kTestFlag);
+        unsetenv(kBatchWidth);
     }
 };
 
@@ -27,6 +29,26 @@ TEST_F(SternheimerRuntimeOptionsTest, UsesDefaultWhenEnvironmentIsMissing)
 
     EXPECT_TRUE(ModuleRI::sternheimer_environment_flag(kTestFlag, true));
     EXPECT_FALSE(ModuleRI::sternheimer_environment_flag(kTestFlag, false));
+}
+
+TEST_F(SternheimerRuntimeOptionsTest, UsesFourChannelBatchesByDefaultAndOneForRollback)
+{
+    unsetenv(kBatchWidth);
+    EXPECT_EQ(ModuleRI::sternheimer_channel_batch_width(), 4);
+
+    setenv(kBatchWidth, "1", 1);
+    EXPECT_EQ(ModuleRI::sternheimer_channel_batch_width(), 1);
+    setenv(kBatchWidth, "8", 1);
+    EXPECT_EQ(ModuleRI::sternheimer_channel_batch_width(), 8);
+}
+
+TEST_F(SternheimerRuntimeOptionsTest, RejectsInvalidChannelBatchWidths)
+{
+    for (const char* value: {"", "0", "-1", "four", "65"})
+    {
+        setenv(kBatchWidth, value, 1);
+        EXPECT_THROW(ModuleRI::sternheimer_channel_batch_width(), std::invalid_argument) << value;
+    }
 }
 
 TEST_F(SternheimerRuntimeOptionsTest, ParsesRecognizedBooleanTextCaseInsensitively)

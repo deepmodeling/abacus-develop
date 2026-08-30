@@ -167,11 +167,19 @@ AddTest(
   LIBS ${math_libs}
   SOURCES sternheimer_abacus_st_smoke_test.cpp ../sternheimer_siab_memory.cpp
 )
+AddTest(
+  TARGET MODULE_RI_sternheimer_channel_resources_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_channel_resources_test.cpp ../sternheimer_channel_resources.cpp
+)
 add_executable(
   MODULE_RI_sternheimer_owned_channel_workers_test
   sternheimer_owned_channel_workers_test.cpp
   ../sternheimer_channel_resources.cpp
 )
+if(ENABLE_MPI)
+  target_link_libraries(MODULE_RI_sternheimer_owned_channel_workers_test MPI::MPI_CXX)
+endif()
 install(TARGETS MODULE_RI_sternheimer_owned_channel_workers_test DESTINATION ${CMAKE_BINARY_DIR}/tests)
 add_test(
   NAME MODULE_RI_sternheimer_owned_channel_workers_test

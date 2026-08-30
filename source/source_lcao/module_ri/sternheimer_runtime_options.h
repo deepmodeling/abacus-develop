@@ -5,6 +5,7 @@ namespace ModuleRI
 {
 
 bool sternheimer_environment_flag(const char* name, bool default_value);
+int sternheimer_channel_batch_width();
 
 } // namespace ModuleRI
 
