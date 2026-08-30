@@ -294,6 +294,62 @@ void init_vel(MDCell& mdcell,
               double& temperature,
               std::int64_t& frozen_freedom)
 {
+    if (mdcell.has_backing_unitcell())
+    {
+        const UnitCell& unit = mdcell.backing_unitcell();
+        std::vector<double> masses(static_cast<std::size_t>(unit.nat), 0.0);
+        std::vector<ModuleBase::Vector3<int> > mobile(static_cast<std::size_t>(unit.nat));
+        std::vector<ModuleBase::Vector3<double> > velocities(static_cast<std::size_t>(unit.nat));
+        ModuleBase::Vector3<int> frozen;
+        get_mass_mbl(unit, masses.data(), frozen, mobile.data());
+        frozen_freedom = frozen.x + frozen.y + frozen.z;
+        if (frozen.x == 0) ++frozen_freedom;
+        if (frozen.y == 0) ++frozen_freedom;
+        if (frozen.z == 0) ++frozen_freedom;
+
+        if (init_vel)
+        {
+            read_vel(unit, velocities.data());
+            double kinetic = 0.0;
+            const double current = current_temp(kinetic, unit.nat, frozen_freedom, masses.data(), velocities.data());
+            if (!restart && temperature >= 0.0 && current > 0.0)
+            {
+                rescale_vel(unit.nat, temperature, masses.data(), frozen_freedom, velocities.data());
+            }
+            else if (!restart && temperature < 0.0)
+            {
+                temperature = current;
+            }
+        }
+        else
+        {
+#ifdef __MPI
+            const int rank = mdcell.mpi_rank();
+#else
+            const int rank = 0;
+#endif
+            rand_vel(unit.nat,
+                     temperature,
+                     masses.data(),
+                     static_cast<int>(frozen_freedom),
+                     frozen,
+                     mobile.data(),
+                     rank,
+                     velocities.data());
+        }
+
+        std::vector<int> offsets(static_cast<std::size_t>(unit.ntype + 1), 0);
+        for (int it = 0; it < unit.ntype; ++it)
+        {
+            offsets[static_cast<std::size_t>(it + 1)] = offsets[static_cast<std::size_t>(it)] + unit.atoms[it].na;
+        }
+        for (LocalAtom& atom : mdcell.mutable_owned_atoms())
+        {
+            atom.vel = velocities[static_cast<std::size_t>(offsets[static_cast<std::size_t>(atom.type)] + atom.type_index)];
+        }
+        return;
+    }
+
     std::vector<LocalAtom>& atoms = mdcell.mutable_owned_atoms();
     ModuleBase::Vector3<std::int64_t> frozen(0, 0, 0);
     for (std::size_t i = 0; i < atoms.size(); ++i)
