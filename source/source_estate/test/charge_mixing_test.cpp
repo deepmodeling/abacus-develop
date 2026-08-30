@@ -285,6 +285,36 @@ TEST_F(ChargeMixingTest, InitMixingTest)
     EXPECT_EQ(CMtest.rho_mdata.length, 2 * pw_basis.nrxx);
 }
 
+TEST_F(ChargeMixingTest, DftuOccupationMatrixUsesIndependentMixer)
+{
+    Charge_Mixing CMtest;
+    CMtest.set_rhopw(&pw_basis, &pw_basis);
+    CMtest.set_mixing("broyden",
+                      0.8,
+                      3,
+                      0.0,
+                      false,
+                      0.0,
+                      0.0,
+                      0.1,
+                      0.0,
+                      false,
+                      ucell.omega,
+                      ucell.tpiba);
+    CMtest.init_mixing();
+    CMtest.init_mixing_uom();
+
+    EXPECT_NE(CMtest.mixing, CMtest.mixing_uom);
+    CMtest.allocate_mixing_uom(2);
+    std::vector<double> uom = {1.0, 2.0};
+    std::vector<double> uom_save = {0.0, 0.0};
+    CMtest.mix_uom(uom, uom_save);
+
+    // UOM uses 0.5 * mixing_beta, independently of the charge mixer.
+    EXPECT_DOUBLE_EQ(uom[0], 0.4);
+    EXPECT_DOUBLE_EQ(uom[1], 0.8);
+}
+
 TEST_F(ChargeMixingTest, InnerDotRealTest)
 {
     Charge_Mixing CMtest;

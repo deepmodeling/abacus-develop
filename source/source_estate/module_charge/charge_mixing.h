@@ -58,6 +58,11 @@ class Charge_Mixing
     void init_mixing();
 
     /**
+     * @brief initialize the independent DFT+U occupation-matrix mixer
+     */
+    void init_mixing_uom();
+
+    /**
      * @brief allocate memory of dmr_mdata
      * @param nnr size of real-space density matrix
      */
@@ -128,6 +133,7 @@ class Charge_Mixing
   
     // mixing_data
     Base_Mixing::Mixing* mixing = nullptr; ///< Mixing object to mix charge density, kinetic energy density and compensation density
+    Base_Mixing::Mixing* mixing_uom = nullptr; ///< Independent mixer for the DFT+U occupation matrix
     Base_Mixing::Mixing_Data rho_mdata;    ///< Mixing data for charge density
     Base_Mixing::Mixing_Data tau_mdata;    ///< Mixing data for kinetic energy density
     Base_Mixing::Mixing_Data nhat_mdata;   ///< Mixing data for compensation density

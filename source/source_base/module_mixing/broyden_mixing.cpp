@@ -4,6 +4,9 @@
 #include "source_base/module_container/base/third_party/blas.h"
 #include "source_base/timer.h"
 #include "source_base/tool_title.h"
+
+#include <algorithm>
+
 namespace Base_Mixing
 {
 template void Broyden_Mixing::tem_push_data(Mixing_Data& mdata,
@@ -170,16 +173,29 @@ void Broyden_Mixing::tem_cal_coef(const Mixing_Data& mdata, std::function<double
 
 		if (info != 0)
 		{
-			ModuleBase::WARNING_QUIT("Charge_Mixing", "Error when DSYSV.");
+			// A rank-deficient history can occur when successive SCF residuals
+			// become linearly dependent.  Aborting loses a perfectly usable
+			// latest fixed-point step; fall back to that step and let the next
+			// iteration rebuild the history.
+			ModuleBase::WARNING("Broyden_Mixing",
+			                    "DSYSV failed in Broyden mixing; using the latest linear step.");
+			std::fill(coef.begin(), coef.end(), 0.0);
+			coef[mdata.start] = 1.0;
+			// Discard the singular secant history before the next iteration.
+			ndim_cal_dF = 0;
+			start_dF = -1;
 		}
+		else
+		{
 
-        // after solving, gamma store the coeficients for mixing
-        coef[mdata.start] = 1 + gamma[dFindex_move(0)];
-        for (int i = 1; i < ndim_cal_dF; ++i)
-        {
-            coef[mdata.index_move(-i)] = gamma[dFindex_move(-i)] - gamma[dFindex_move(-i + 1)];
+            // after solving, gamma store the coeficients for mixing
+            coef[mdata.start] = 1 + gamma[dFindex_move(0)];
+            for (int i = 1; i < ndim_cal_dF; ++i)
+            {
+                coef[mdata.index_move(-i)] = gamma[dFindex_move(-i)] - gamma[dFindex_move(-i + 1)];
+            }
+            coef[mdata.index_move(-ndim_cal_dF)] = -gamma[dFindex_move(-ndim_cal_dF + 1)];
         }
-        coef[mdata.index_move(-ndim_cal_dF)] = -gamma[dFindex_move(-ndim_cal_dF + 1)];
 
         delete[] work;
         delete[] iwork;

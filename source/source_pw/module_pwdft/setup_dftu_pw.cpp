@@ -20,12 +20,15 @@ void iter_init_dftu_pw(const int iter,
         return;
     }
 
-    if (iter == 1 && istep == 0)
+    // With occupation-matrix control 2 the matrix is intentionally frozen.
+    // It still defines a DFT+U potential, so rebuild that potential before
+    // the first Hamiltonian construction of every SCF step.  The ordinary
+    // occupation-update path keeps its historical first-step guard.
+    if (dftu.get_occ_mat_ctrl() == 2)
     {
-        return;
+        dftu.update_eff_pot_pw(ucell);
     }
-
-    if (dftu.get_occ_mat_ctrl() != 2)
+    else if (!(iter == 1 && istep == 0))
     {
         dftu.cal_occ_pw(psi, wg, ucell, p_chgmix, isk);
     }

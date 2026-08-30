@@ -6,6 +6,7 @@
 #include "source_base/timer.h"
 #include "source_io/module_parameter/parameter.h"
 
+#include <cstdlib>
 #include <cstring>
 #include <fstream>
 #include <sstream>
@@ -532,7 +533,30 @@ void Plus_U_Base::read_occup_m(const UnitCell& ucell,
     ifdftu.clear();
     ifdftu.seekg(0);
 
-    char word[20];
+    std::string word;
+
+    // Accept both the traditional whitespace-separated form
+    //   Atom= 6 L= 3 ORBITAL= 0
+    // and the compact form emitted by some DFT+U workflows
+    //   Atom=6 L=3 ORBITAL=0
+    // without changing the matrix body parser below.
+    auto read_tagged_int = [&ifdftu](const std::string& token,
+                                     const std::string& tag,
+                                     int& value) -> bool {
+        if (token.compare(0, tag.size(), tag) != 0)
+        {
+            return false;
+        }
+        if (token.size() == tag.size())
+        {
+            ifdftu >> value;
+        }
+        else
+        {
+            value = std::atoi(token.c_str() + tag.size());
+        }
+        return static_cast<bool>(ifdftu);
+    };
 
     int T = 0;
     int iat = 0;
@@ -550,24 +574,21 @@ void Plus_U_Base::read_occup_m(const UnitCell& ucell,
             break;
         }
 
-        if (strcmp("Atom=", word) == 0)
+        if (read_tagged_int(word, "Atom=", iat))
         {
-            ifdftu >> iat;
             iat -= 1;
             ifdftu >> word;
 
-            if (strcmp("L=", word) != 0)
+            if (!read_tagged_int(word, "L=", L))
             {
                 ModuleBase::WARNING_QUIT("Plus_U_Base::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
             }
-            ifdftu >> L;
             ifdftu >> word;
 
-            if (strcmp("ORBITAL=", word) != 0)
+            if (!read_tagged_int(word, "ORBITAL=", zeta))
             {
                 ModuleBase::WARNING_QUIT("Plus_U_Base::read_occup_m", "WRONG IN READING LOCAL OCCUPATION NUMBER MATRIX FROM Plus_U FILE");
             }
-            ifdftu >> zeta;
             ifdftu.ignore(150, '\n');
 
             T = ucell.iat2it[iat];
@@ -586,9 +607,8 @@ void Plus_U_Base::read_occup_m(const UnitCell& ucell,
                     for (int is = 0; is < 2; is++)
                     {
                         ifdftu >> word;
-                        if (strcmp("spin=", word) == 0)
+                        if (read_tagged_int(word, "spin=", spin))
                         {
-                            ifdftu >> spin;
                             spin -= 1;
                             ifdftu.ignore(150, '\n');
 
