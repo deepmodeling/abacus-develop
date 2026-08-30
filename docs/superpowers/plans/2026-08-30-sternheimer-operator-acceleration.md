@@ -300,15 +300,15 @@ For HF and Si record application status, convergence, equations, iterations, res
 
 Document the mathematical equivalence, test results, feature commit, executable hash, HF/Si matrix differences, residual gates, timing, resources, and limits of the benchmark.
 
-- [ ] **Step 2: Review and merge the feature branch**
+- [x] **Step 2: Review and merge the feature branch**
 
 Run final spec and code-quality review, verify commit attribution, merge the feature branch into local `master_ghj` with a merge commit using Codex author and AroundPeking committer, and push `master_ghj` only after confirming the remote head has not moved unexpectedly.
 
-- [ ] **Step 3: Rebuild the merged commit if its tree differs**
+- [x] **Step 3: Rebuild the merged commit if its tree differs**
 
 If the merge commit tree differs from the validated feature artifact, build and rerun focused tests. Otherwise record tree identity and retain the accepted executable artifact.
 
-- [ ] **Step 4: Update and verify documentation**
+- [x] **Step 4: Update and verify documentation**
 
 Update the development TeX note and production skill. Run `latexmk -xelatex`, render the changed pages, inspect them, and record the final PDF page count and SHA256.
 
@@ -319,18 +319,18 @@ Update the development TeX note and production skill. Run `latexmk -xelatex`, re
 - Append: `server_jobs/sternheimer_performance_20260830/STERNHEIMER_OPERATOR_ACCELERATION_BENCHMARK_20260830.md`
 - Append: `/Users/ghj/同步空间/AITP_project/delta_st_rpa_project/development_notes/sections/sternheimer_fd_spectral_preconditioner.tex`
 
-- [ ] **Step 1: Audit the accepted Si FD8 baseline**
+- [x] **Step 1: Audit the accepted Si FD8 baseline**
 
 Confirm the accepted grid, all canonical q indices, 4x4x4 k/q mesh, 12 frequencies, PCA `1e-6`, full Coulomb, analytic q-average head/wing with body start 1, PP/NAO/ABFS hashes, and prior response/LibRPA success. Do not rerun any baseline physics solely for timing.
 
-- [ ] **Step 2: Submit a duplicate-safe optimized response array**
+- [x] **Step 2: Submit a duplicate-safe optimized response array**
 
 Use only the final validated merged executable, `normal` partition, `/work1`, the accepted one-rank-per-node and 30-thread layout, and a wall limit below 24 hours. Each array task gets a unique case directory and checks for an existing success marker before submission.
 
-- [ ] **Step 3: Validate every q and run LibRPA head/wing postprocessing**
+- [x] **Step 3: Validate every q and run LibRPA head/wing postprocessing**
 
 Require scheduler success, application `status success`, `all_converged yes`, complete frequency/response counts, partial and symmetry manifests, matching provenance, and finite output. Reuse the validated LibRPA head/wing artifact; do not rerun ABACUS for postprocessing failures.
 
-- [ ] **Step 4: Report final end-to-end acceleration**
+- [x] **Step 4: Report final end-to-end acceleration**
 
 Report solid total energy and comparison with the accepted value, producer wall time by q and aggregate, LibRPA wall time, critical-path time, node-hours, peak RSS, node/rank/thread layout, and speedup against the same-input accepted baseline. Distinguish first-order solver speedup from full ABACUS and complete ABACUS-plus-LibRPA speedup.
