@@ -167,6 +167,7 @@ TEST(SternheimerPeriodicSolver, SpectralPreconditionerPreservesResponseAndReduce
     ModuleRI::SternheimerRPA::SolverOptions identity_options;
     identity_options.max_iter = 150;
     identity_options.residual_tol = 1.0e-11;
+    identity_options.use_fd_spectral_preconditioner = false;
     const auto identity = ModuleRI::solve_sternheimer_periodic_linear_response(false,
                                                                                 hamiltonian,
                                                                                 occupied,

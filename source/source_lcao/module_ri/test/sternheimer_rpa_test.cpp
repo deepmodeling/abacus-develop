@@ -316,7 +316,7 @@ TEST(SternheimerRPA, CachedSubspaceProjectorReusesBasisNorms)
 
 TEST(SternheimerRPA, SpectralPreconditionerIsDefault)
 {
-    const ModuleRI::SternheimerRPA::SolverOptions options;
+    const ModuleRI::SternheimerRPA::SolverOptions options{};
 
     EXPECT_TRUE(options.use_fd_spectral_preconditioner);
     EXPECT_DOUBLE_EQ(options.fd_spectral_preconditioner_regularization, 0.0);
