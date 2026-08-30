@@ -159,6 +159,52 @@ TEST(MdCellMigrateMpiTest, GhostForcesReturnToOwners)
     EXPECT_DOUBLE_EQ(mdcell.owned_atoms()[0].force.z, 3.0 * expected);
 }
 
+TEST(MdCellMigrateMpiTest, SkinUpdatesFixedGhostLayoutBeforeRebuild)
+{
+    int rank = 0;
+    int size = 1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    ASSERT_EQ(size, 2);
+
+    const ModuleBase::Matrix3 latvec = make_lattice();
+    const ModuleBase::Vector3<double> frac(rank == 0 ? 0.20 : 0.70, 0.20, 0.20);
+    std::vector<LocalAtom> owned_atoms(1, LocalAtom(frac,
+                                                     frac,
+                                                     ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                                     ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                                     ModuleBase::Vector3<int>(1, 1, 1),
+                                                     1.0,
+                                                     0,
+                                                     rank,
+                                                     rank));
+    MDCell mdcell(latvec,
+                  latvec.Inverse(),
+                  1.0,
+                  1.0,
+                  2,
+                  owned_atoms,
+                  std::vector<std::string>(1, "X"),
+                  std::vector<double>(1, 1.0),
+                  std::vector<std::int64_t>(1, 2),
+                  0.1,
+                  0.2,
+                  ModuleBase::world_communication_domain());
+
+    mdcell.prepare_neighbors();
+    mdcell.mutable_owned_atoms()[0].frac.x += rank == 0 ? 0.05 : -0.05;
+    mdcell.mutable_owned_atoms()[0].cart = mdcell.mutable_owned_atoms()[0].frac * latvec;
+    mdcell.prepare_neighbors();
+
+    ASSERT_EQ(mdcell.nlocal(), 1);
+    for (std::size_t i = 0; i < mdcell.ghost_atoms().size(); ++i)
+    {
+        const LocalAtom& ghost = mdcell.ghost_atoms()[i];
+        const double expected_frac = ghost.owner_rank == 0 ? 0.25 : 0.65;
+        EXPECT_DOUBLE_EQ(ghost.frac.x, expected_frac);
+    }
+}
+
 int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);

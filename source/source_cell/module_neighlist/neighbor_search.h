@@ -56,6 +56,10 @@ public:
      */
     void build_neighbors();
 
+    /// Refresh positions and derive the physical-cutoff list from a cached
+    /// cutoff-plus-skin candidate list for an MDCell.
+    void refresh_mdcell(const MDCell& cell, double cutoff);
+
 
     // ========== Getter methods ==========
     /**
@@ -140,9 +144,12 @@ private:
 
     /// The constructed neighbor list
     NeighborList neighbor_list_;
+    NeighborList candidate_neighbor_list_;
 
     /// Bin manager for efficient neighbor search
     BinManager bin_manager_;
+
+    void filter_candidate_neighbors_(double cutoff, double lat0);
 
     // ========== Compile-time constants ==========
 

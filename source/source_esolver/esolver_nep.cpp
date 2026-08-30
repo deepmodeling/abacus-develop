@@ -76,6 +76,10 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
 #else
         static_cast<void>(istep);
         MDCell& mdcell = static_cast<MDCell&>(basecell);
+        if (!mdcell.has_neighbor_search())
+        {
+            mdcell.prepare_neighbors();
+        }
         const int nlocal = mdcell.nlocal();
         const int nghost = mdcell.nghost();
         const int natom = nlocal + nghost;
@@ -108,10 +112,7 @@ void ESolver_NEP::runner(BaseCell& basecell, const int istep)
             force_ptrs[static_cast<std::size_t>(iat)] = force[static_cast<std::size_t>(iat)].data();
         }
 
-        NeighborSearch neighbor_search;
-        neighbor_search.init(mdcell, mdcell.cutoff());
-        neighbor_search.build_neighbors();
-        const NeighborList& neighbor_list = neighbor_search.get_neighbor_list();
+        const NeighborList& neighbor_list = mdcell.neighbor_search().get_neighbor_list();
         std::vector<int> ilist(static_cast<std::size_t>(nlocal), 0);
         std::vector<int> numneigh(static_cast<std::size_t>(natom), 0);
         std::vector<int*> firstneigh(static_cast<std::size_t>(natom), NULL);

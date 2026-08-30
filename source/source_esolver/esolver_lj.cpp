@@ -58,12 +58,12 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
 {
     static_cast<void>(istep);
 
-    NeighborSearch neighbor_search;
     lj_potential = 0.0;
     lj_virial.zero_out();
 
     if (cell.kind() == BaseCell::Kind::unit_cell)
     {
+        NeighborSearch neighbor_search;
         UnitCell& ucell = static_cast<UnitCell&>(cell);
         lj_force.zero_out();
         neighbor_search.init(ucell, search_radius);
@@ -119,6 +119,10 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
     }
 
     MDCell& mdcell = static_cast<MDCell&>(cell);
+    if (!mdcell.has_neighbor_search())
+    {
+        mdcell.prepare_neighbors();
+    }
 
     std::vector<LocalAtom>& owned_atoms = mdcell.mutable_owned_atoms();
     for (std::size_t i = 0; i < owned_atoms.size(); ++i)
@@ -126,11 +130,8 @@ void ESolver_LJ::runner(BaseCell& cell, const int istep)
         owned_atoms[i].force.set(0.0, 0.0, 0.0);
     }
 
-    neighbor_search.init(mdcell, search_radius);
-    neighbor_search.build_neighbors();
-
+    const NeighborSearch& neighbor_search = mdcell.neighbor_search();
     const NeighborList& neighbor_list = neighbor_search.get_neighbor_list();
-    const std::vector<NeighborAtom>& inside_atoms = neighbor_search.get_inside_atoms();
     const std::vector<NeighborAtom>& all_atoms = neighbor_search.get_all_atoms();
 
     double local_potential = 0.0;

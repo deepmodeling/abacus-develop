@@ -105,26 +105,27 @@ void Driver::driver_run()
         const ModuleBase::CommunicationDomain communication_domain = ModuleBase::world_communication_domain();
         if (p_esolver->supports_mdcell())
         {
-            const double cutoff = p_esolver->mdcell_cutoff(PARAM.inp);
+            const Input_para& input = PARAM.inp;
+            const double cutoff = p_esolver->mdcell_cutoff(input);
             if (cutoff <= 0.0)
             {
                 ModuleBase::WARNING_QUIT("Driver::driver_run",
                                          "An ESolver supporting MDCell must provide a positive cutoff.");
             }
-            const std::vector<int> effective_replicate = PARAM.inp.mdp.md_restart
+            const std::vector<int> effective_replicate = input.mdp.md_restart
                                                               ? std::vector<int>{1, 1, 1}
-                                                              : PARAM.inp.cell_replica;
+                                                              : input.cell_replica;
             MdStruFileMetadata stru_metadata;
             MDCell mdcell = DistributedMDCellReader::read_stru(PARAM.globalv.global_in_stru,
                                                                  effective_replicate,
                                                                  cutoff,
-                                                                 0.0,
+                                                                 input.mdp.md_neighbor_skin / ModuleBase::BOHR_TO_A,
                                                                  stru_metadata,
                                                                  communication_domain);
             GlobalV::ofs_running << std::endl;
             ModuleBase::GlobalFunc::OUT(GlobalV::ofs_running, "TOTAL ATOM NUMBER", mdcell.nat());
             GlobalV::ofs_running << std::endl;
-            p_esolver->before_all_runners(mdcell, PARAM.inp);
+            p_esolver->before_all_runners(mdcell, input);
             Run_MD::md_line(mdcell, p_esolver, PARAM, stru_metadata);
             p_esolver->after_all_runners(mdcell);
         }

@@ -2,9 +2,15 @@
 
 #include "source_base/parallel_cell.h"
 #include "source_cell/unitcell.h"
+#include "source_cell/module_neighlist/neighbor_search.h"
 
+#include <algorithm>
 #include <cmath>
 #include <stdexcept>
+
+MDCell::~MDCell() = default;
+MDCell::MDCell(MDCell&&) = default;
+MDCell& MDCell::operator=(MDCell&&) = default;
 
 double MDCell::wrap_fractional_(double value)
 {
@@ -316,6 +322,7 @@ void MDCell::migrate_owned_atoms()
 #ifdef __MPI
     decomp_.migrate_owned_atoms(owned_atoms_);
     exchange_ghost_atoms();
+    neighbor_layout_valid_ = false;
     return;
 #endif
     for (std::size_t i = 0; i < owned_atoms_.size(); ++i)
@@ -328,6 +335,68 @@ void MDCell::migrate_owned_atoms()
         atom.cart = atom.frac * latvec_;
     }
     exchange_ghost_atoms();
+    neighbor_layout_valid_ = false;
+}
+
+void MDCell::prepare_neighbors()
+{
+    bool rebuild = !neighbor_layout_valid_ || neighbor_reference_frac_.size() != owned_atoms_.size();
+    double local_max_displacement = 0.0;
+    if (!rebuild)
+    {
+        for (std::size_t i = 0; i < owned_atoms_.size(); ++i)
+        {
+            ModuleBase::Vector3<double> delta = owned_atoms_[i].frac - neighbor_reference_frac_[i];
+            delta.x -= std::nearbyint(delta.x);
+            delta.y -= std::nearbyint(delta.y);
+            delta.z -= std::nearbyint(delta.z);
+            local_max_displacement = std::max(local_max_displacement, (delta * latvec_).norm() * lat0_);
+        }
+#ifdef __MPI
+        if (comm_ != MPI_COMM_NULL)
+        {
+            MPI_Allreduce(MPI_IN_PLACE, &local_max_displacement, 1, MPI_DOUBLE, MPI_MAX, comm_);
+        }
+#endif
+        rebuild = local_max_displacement >= skin_ * 0.5;
+    }
+
+    if (rebuild)
+    {
+        migrate_owned_atoms();
+        neighbor_search_.reset(new NeighborSearch);
+        neighbor_search_->init(*this, cutoff_ + skin_);
+        neighbor_search_->build_neighbors();
+        neighbor_search_->refresh_mdcell(*this, cutoff_);
+        neighbor_reference_frac_.resize(owned_atoms_.size());
+        for (std::size_t i = 0; i < owned_atoms_.size(); ++i)
+        {
+            neighbor_reference_frac_[i] = owned_atoms_[i].frac;
+        }
+        neighbor_layout_valid_ = true;
+        return;
+    }
+
+#ifdef __MPI
+    decomp_.update_ghost_atom_positions(owned_atoms_, ghost_atoms_);
+#else
+    exchange_ghost_atoms();
+#endif
+    neighbor_search_->refresh_mdcell(*this, cutoff_);
+}
+
+const NeighborSearch& MDCell::neighbor_search() const
+{
+    if (!neighbor_search_)
+    {
+        throw std::runtime_error("MDCell neighbor list has not been prepared.");
+    }
+    return *neighbor_search_;
+}
+
+bool MDCell::has_neighbor_search() const
+{
+    return neighbor_layout_valid_ && neighbor_search_ != NULL;
 }
 
 void MDCell::set_lattice_vectors(const ModuleBase::Matrix3& latvec)
@@ -335,6 +404,7 @@ void MDCell::set_lattice_vectors(const ModuleBase::Matrix3& latvec)
     latvec_ = latvec;
     gt_ = latvec_.Inverse();
     omega_ = std::abs(latvec_.Det()) * lat0_ * lat0_ * lat0_;
+    neighbor_layout_valid_ = false;
 #ifdef __MPI
     if (comm_ != MPI_COMM_NULL)
     {
@@ -357,7 +427,7 @@ void MDCell::refresh_cart_from_frac()
         owned_atoms_[i].frac.z = wrap_fractional_(owned_atoms_[i].frac.z);
         owned_atoms_[i].cart = owned_atoms_[i].frac * latvec_;
     }
-    exchange_ghost_atoms();
+    neighbor_layout_valid_ = false;
 }
 
 const std::vector<LocalAtom>& MDCell::ghost_atoms() const

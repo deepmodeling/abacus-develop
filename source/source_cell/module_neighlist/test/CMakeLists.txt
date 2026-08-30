@@ -39,6 +39,9 @@ if(ENABLE_MPI)
     md_cell_migrate_mpi_test.cpp
     ../../md_cell.cpp
     ../domain_decomposition.cpp
+    ../neighbor_search.cpp
+    ../bin_manager.cpp
+    ../page_allocator.cpp
   )
   target_link_libraries(MODULE_CELL_NEIGHBOR_mdcell_migrate_mpi
     PRIVATE
@@ -57,6 +60,9 @@ if(ENABLE_MPI)
     ../../md_cell.cpp
     ../../print_cell.cpp
     ../domain_decomposition.cpp
+    ../neighbor_search.cpp
+    ../bin_manager.cpp
+    ../page_allocator.cpp
   )
   target_include_directories(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader PRIVATE ${ABACUS_SOURCE_DIR})
   target_compile_definitions(MODULE_CELL_NEIGHBOR_distributed_mdcell_reader PRIVATE __NORMAL)

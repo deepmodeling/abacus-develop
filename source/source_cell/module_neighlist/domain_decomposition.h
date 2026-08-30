@@ -45,6 +45,8 @@ public:
 
     void exchange_ghost_atoms(const std::vector<LocalAtom>& owned_atoms,
                               std::vector<LocalAtom>& ghost_atoms) const;
+    void update_ghost_atom_positions(const std::vector<LocalAtom>& owned_atoms,
+                                     std::vector<LocalAtom>& ghost_atoms) const;
     void accumulate_ghost_forces(std::vector<LocalAtom>& owned_atoms,
                                  std::vector<LocalAtom>& ghost_atoms) const;
     void migrate_owned_atoms(std::vector<LocalAtom>& owned_atoms) const;
@@ -76,6 +78,9 @@ private:
         std::array<int, 3> recv_image_shift;
         int send_rank;
         int recv_rank;
+        std::vector<int> send_atom_indices;
+        std::size_t ghost_begin;
+        int ghost_count;
     };
 
     struct ForceRecord
@@ -98,6 +103,8 @@ private:
     double lat0_;
     double cutoff_;
     double skin_;
+    mutable std::vector<GhostExchangeSlot> ghost_slots_;
+    mutable bool ghost_layout_valid_ = false;
 
     static double wrap_fractional(double value);
     static int floor_div(int value, int divisor);

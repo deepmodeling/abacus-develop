@@ -54,11 +54,14 @@ DomainDecomposition::DomainDecomposition(DomainDecomposition&& other) noexcept
       inv_latvec_(other.inv_latvec_),
       lat0_(other.lat0_),
       cutoff_(other.cutoff_),
-      skin_(other.skin_)
+      skin_(other.skin_),
+      ghost_slots_(std::move(other.ghost_slots_)),
+      ghost_layout_valid_(other.ghost_layout_valid_)
 {
     other.comm_ = MPI_COMM_NULL;
     other.cart_comm_ = MPI_COMM_NULL;
     other.owns_cart_comm_ = false;
+    other.ghost_layout_valid_ = false;
 }
 
 DomainDecomposition& DomainDecomposition::operator=(DomainDecomposition&& other) noexcept
@@ -82,9 +85,12 @@ DomainDecomposition& DomainDecomposition::operator=(DomainDecomposition&& other)
         lat0_ = other.lat0_;
         cutoff_ = other.cutoff_;
         skin_ = other.skin_;
+        ghost_slots_ = std::move(other.ghost_slots_);
+        ghost_layout_valid_ = other.ghost_layout_valid_;
         other.comm_ = MPI_COMM_NULL;
         other.cart_comm_ = MPI_COMM_NULL;
         other.owns_cart_comm_ = false;
+        other.ghost_layout_valid_ = false;
     }
     return *this;
 }
@@ -159,6 +165,8 @@ void DomainDecomposition::init(MPI_Comm comm,
     lat0_ = lat0;
     cutoff_ = cutoff;
     skin_ = skin;
+    ghost_slots_.clear();
+    ghost_layout_valid_ = false;
 
     int dims[3] = {0, 0, 0};
     MPI_Dims_create(size_, 3, dims);
@@ -435,8 +443,10 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
 {
     ghost_atoms.clear();
 
-    std::vector<GhostExchangeSlot> slots;
-    build_ghost_exchange_slots(slots);
+    ghost_layout_valid_ = false;
+    ghost_slots_.clear();
+    build_ghost_exchange_slots(ghost_slots_);
+    std::vector<GhostExchangeSlot>& slots = ghost_slots_;
 
     const int nlayer[3] = {neighbor_layer(0), neighbor_layer(1), neighbor_layer(2)};
     const int span_y = 2 * nlayer[1] + 1;
@@ -513,6 +523,7 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
                     assert(slot_index >= 0);
                     const GhostExchangeSlot& slot = slots[static_cast<std::size_t>(slot_index)];
                     send_buffers[static_cast<std::size_t>(slot_index)].push_back(pack_atom(atom, slot.image_shift));
+                    slots[static_cast<std::size_t>(slot_index)].send_atom_indices.push_back(static_cast<int>(iat));
                 }
             }
         }
@@ -520,8 +531,9 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
 
     for (std::size_t islot = 0; islot < slots.size(); ++islot)
     {
-        const GhostExchangeSlot& slot = slots[islot];
+        GhostExchangeSlot& slot = slots[islot];
         const std::vector<PackedAtom>& send_atoms = send_buffers[islot];
+        slot.ghost_begin = ghost_atoms.size();
 
         if (send_atoms.size() > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         {
@@ -534,6 +546,7 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
             {
                 ghost_atoms.push_back(unpack_ghost_atom(send_atoms[i]));
             }
+            slot.ghost_count = static_cast<int>(send_atoms.size());
             continue;
         }
 
@@ -579,6 +592,57 @@ void DomainDecomposition::exchange_ghost_atoms(const std::vector<LocalAtom>& own
         for (size_t i = 0; i < recv_atoms.size(); ++i)
         {
             ghost_atoms.push_back(unpack_ghost_atom(recv_atoms[i]));
+        }
+        slot.ghost_count = recv_count;
+    }
+    ghost_layout_valid_ = true;
+}
+
+void DomainDecomposition::update_ghost_atom_positions(const std::vector<LocalAtom>& owned_atoms,
+                                                       std::vector<LocalAtom>& ghost_atoms) const
+{
+    if (!ghost_layout_valid_)
+    {
+        exchange_ghost_atoms(owned_atoms, ghost_atoms);
+        return;
+    }
+
+    for (std::size_t islot = 0; islot < ghost_slots_.size(); ++islot)
+    {
+        const GhostExchangeSlot& slot = ghost_slots_[islot];
+        std::vector<double> send_frac(3 * slot.send_atom_indices.size(), 0.0);
+        for (std::size_t i = 0; i < slot.send_atom_indices.size(); ++i)
+        {
+            const LocalAtom& atom = owned_atoms[static_cast<std::size_t>(slot.send_atom_indices[i])];
+            send_frac[3 * i] = atom.frac.x;
+            send_frac[3 * i + 1] = atom.frac.y;
+            send_frac[3 * i + 2] = atom.frac.z;
+        }
+        std::vector<double> recv_frac(3 * static_cast<std::size_t>(slot.ghost_count), 0.0);
+        if (slot.send_rank == rank_ && slot.recv_rank == rank_)
+        {
+            recv_frac = send_frac;
+        }
+        else
+        {
+            MPI_Sendrecv(send_frac.empty() ? NULL : send_frac.data(),
+                         static_cast<int>(send_frac.size()), MPI_DOUBLE, slot.send_rank, 9110,
+                         recv_frac.empty() ? NULL : recv_frac.data(),
+                         static_cast<int>(recv_frac.size()), MPI_DOUBLE, slot.recv_rank, 9110,
+                         cart_comm_, MPI_STATUS_IGNORE);
+        }
+        for (int i = 0; i < slot.ghost_count; ++i)
+        {
+            LocalAtom& ghost = ghost_atoms[slot.ghost_begin + static_cast<std::size_t>(i)];
+            ghost.frac.set(recv_frac[3 * i], recv_frac[3 * i + 1], recv_frac[3 * i + 2]);
+            const std::array<int, 3>& image_shift = slot.send_rank == rank_ && slot.recv_rank == rank_
+                                                         ? slot.image_shift
+                                                         : slot.recv_image_shift;
+            const ModuleBase::Vector3<double> image_frac(ghost.frac.x + image_shift[0],
+                                                          ghost.frac.y + image_shift[1],
+                                                          ghost.frac.z + image_shift[2]);
+            ghost.cart = image_frac * latvec_;
+            ghost.force.set(0.0, 0.0, 0.0);
         }
     }
 }

@@ -357,6 +357,7 @@
     - [md\_restart](#md_restart)
     - [md\_restartfreq](#md_restartfreq)
     - [md\_dumpfreq](#md_dumpfreq)
+    - [md\_neighbor\_skin](#md_neighbor_skin)
     - [md\_out\_force](#md_out_force)
     - [dump\_force](#dump_force)
     - [dump\_vel](#dump_vel)
@@ -3520,6 +3521,13 @@
 - **Type**: Integer
 - **Description**: The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.
 - **Default**: 1
+
+### md_neighbor_skin
+
+- **Type**: Real
+- **Description**: The extra neighbor-list radius in Angstrom for MDCell molecular dynamics. A positive value reuses the cutoff-plus-skin candidate list until an atom has moved by half this distance; 0 rebuilds the list every force evaluation.
+- **Default**: 0.0
+- **Unit**: Angstrom
 
 ### md_out_force
 

@@ -407,6 +407,7 @@ void force_virial(ModuleESolver::ESolver* p_esolver,
     ModuleBase::timer::start("MD_func", "force_virial");
     if (p_esolver->supports_mdcell())
     {
+        mdcell.prepare_neighbors();
         p_esolver->runner(static_cast<BaseCell&>(mdcell), istep);
         potential = 0.5 * p_esolver->cal_energy();
         for (LocalAtom& atom : mdcell.mutable_owned_atoms()) atom.force *= 0.5;

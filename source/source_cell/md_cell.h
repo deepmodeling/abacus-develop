@@ -10,9 +10,11 @@
 
 #include <string>
 #include <cstdint>
+#include <memory>
 #include <vector>
 
 class UnitCell;
+class NeighborSearch;
 namespace ModuleBase
 {
 class CommunicationDomain;
@@ -21,10 +23,11 @@ class CommunicationDomain;
 class MDCell : public BaseCell
 {
 public:
+    ~MDCell();
     MDCell(const MDCell&) = delete;
     MDCell& operator=(const MDCell&) = delete;
-    MDCell(MDCell&&) = default;
-    MDCell& operator=(MDCell&&) = default;
+    MDCell(MDCell&&);
+    MDCell& operator=(MDCell&&);
 
     MDCell(UnitCell& ucell,
            double cutoff,
@@ -53,6 +56,9 @@ public:
     void exchange_ghost_atoms();
     void accumulate_ghost_forces();
     void migrate_owned_atoms();
+    void prepare_neighbors();
+    bool has_neighbor_search() const;
+    const NeighborSearch& neighbor_search() const;
     void set_lattice_vectors(const ModuleBase::Matrix3& latvec);
     void refresh_cart_from_frac();
 
@@ -105,6 +111,9 @@ private:
     std::vector<std::int64_t> type_atom_counts_;
     double cutoff_ = 0.0;
     double skin_ = 0.0;
+    std::unique_ptr<NeighborSearch> neighbor_search_;
+    std::vector<ModuleBase::Vector3<double> > neighbor_reference_frac_;
+    bool neighbor_layout_valid_ = false;
     UnitCell* backing_unitcell_ = nullptr;
 
 #ifdef __MPI

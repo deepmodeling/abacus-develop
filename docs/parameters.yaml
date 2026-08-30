@@ -1469,6 +1469,14 @@ parameters:
     default_value: "1"
     unit: ""
     availability: ""
+  - name: md_neighbor_skin
+    category: Molecular dynamics
+    type: Real
+    description: |
+      The extra neighbor-list radius in Angstrom for MDCell molecular dynamics. A positive value reuses the cutoff-plus-skin candidate list until an atom has moved by half this distance; 0 rebuilds the list every force evaluation.
+    default_value: "0.0"
+    unit: Angstrom
+    availability: ""
   - name: md_out_force
     category: Molecular dynamics
     type: Boolean
