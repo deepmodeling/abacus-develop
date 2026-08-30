@@ -1580,8 +1580,8 @@ SternheimerPeriodicABFGridData build_supercell_translation_full_response_abfs_fr
                                                       -1);
     if (max_channels_per_atom > 0)
     {
-        supercell_densities = limit_sternheimer_abf_channels_per_atom(
-            supercell_densities, max_channels_per_atom);
+        supercell_densities
+            = limit_sternheimer_abf_channels_per_atom(std::move(supercell_densities), max_channels_per_atom);
     }
 
     SternheimerPeriodicABFGridData result;
@@ -4379,6 +4379,7 @@ void run_sternheimer_abacus_chi0_output_impl(const elecstate::Potential& potenti
     const bool use_nested_response_mpi = use_frequency_mpi && use_kpoint_mpi;
     const bool use_parallel_response_mpi = use_frequency_mpi || use_kpoint_mpi;
     const bool use_distributed_mpi = use_parallel_response_mpi || use_channel_mpi;
+    initialize_sternheimer_memory_detection();
     if (!use_distributed_mpi && GlobalV::MY_RANK != 0)
     {
         return;

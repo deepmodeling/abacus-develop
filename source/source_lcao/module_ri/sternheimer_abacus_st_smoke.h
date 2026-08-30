@@ -698,7 +698,7 @@ inline std::string format_sternheimer_full_kpoint_manifest(
 }
 
 inline std::vector<SternheimerABFBlochGridChannel> limit_sternheimer_abf_channels_per_atom(
-    const std::vector<SternheimerABFBlochGridChannel>& channels,
+    std::vector<SternheimerABFBlochGridChannel> channels,
     const int max_channels_per_atom)
 {
     if (max_channels_per_atom <= 0)
@@ -719,14 +719,14 @@ inline std::vector<SternheimerABFBlochGridChannel> limit_sternheimer_abf_channel
     std::vector<int> selected_per_atom(static_cast<std::size_t>(max_atom_index + 1), 0);
     std::vector<SternheimerABFBlochGridChannel> limited;
     limited.reserve(channels.size());
-    for (const SternheimerABFBlochGridChannel& channel: channels)
+    for (SternheimerABFBlochGridChannel& channel: channels)
     {
         int& atom_count = selected_per_atom[static_cast<std::size_t>(channel.atom_index)];
         if (atom_count >= max_channels_per_atom)
         {
             continue;
         }
-        SternheimerABFBlochGridChannel selected = channel;
+        SternheimerABFBlochGridChannel selected = std::move(channel);
         selected.channel_index = static_cast<int>(limited.size());
         selected.atom_local_index = atom_count;
         ++atom_count;

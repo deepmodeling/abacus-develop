@@ -282,6 +282,18 @@ TEST(SternheimerABACUSSTSmoke, LimitsDiagnosticChannelsPerAtomWithoutEmptyBlocks
     EXPECT_EQ(limited[1].channel_index, 1);
 }
 
+TEST(SternheimerABACUSSTSmoke, UnlimitedDiagnosticChannelsReuseRvalueStorage)
+{
+    std::vector<ModuleRI::SternheimerABFBlochGridChannel> channels(1);
+    channels[0].potential_r.resize(8, std::complex<double>(1.0, -0.5));
+    const auto* original_storage = channels[0].potential_r.data();
+
+    const auto unlimited = ModuleRI::limit_sternheimer_abf_channels_per_atom(std::move(channels), -1);
+
+    ASSERT_EQ(unlimited.size(), 1);
+    EXPECT_EQ(unlimited[0].potential_r.data(), original_storage);
+}
+
 TEST(SternheimerABACUSSTSmoke, DistinguishesTwoKPointsFromTwoSpinChannels)
 {
     const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.5);

@@ -64,6 +64,8 @@ SternheimerChannelWorkerPlan plan_sternheimer_owned_channel_workers(int global_n
 
 SternheimerMemorySnapshot detect_sternheimer_memory_snapshot();
 
+void initialize_sternheimer_memory_detection();
+
 std::string sternheimer_memory_accounting_mode_name(SternheimerMemoryAccountingMode mode);
 
 std::string format_sternheimer_channel_worker_diagnostic(const SternheimerMemorySnapshot& memory,

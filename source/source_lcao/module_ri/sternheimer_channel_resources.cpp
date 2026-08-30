@@ -21,6 +21,20 @@ namespace
 
 constexpr std::uint64_t kComplexVectorsPerWorker = 120;
 
+#ifdef __MPI
+MPI_Comm sternheimer_local_communicator()
+{
+    static MPI_Comm local_communicator = MPI_COMM_NULL;
+    if (local_communicator == MPI_COMM_NULL)
+    {
+        MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &local_communicator);
+    }
+    // Keep the communicator alive until MPI_Finalize so late memory probes do not
+    // repeat topology discovery after the large response grids are allocated.
+    return local_communicator;
+}
+#endif
+
 std::uint64_t checked_multiply(const std::uint64_t lhs, const std::uint64_t rhs)
 {
     if (lhs != 0 && rhs > std::numeric_limits<std::uint64_t>::max() / lhs)
@@ -381,8 +395,7 @@ SternheimerMemorySnapshot detect_sternheimer_memory_snapshot()
     detail::SternheimerMemoryCandidates candidates;
     int local_mpi_ranks = 1;
 #ifdef __MPI
-    MPI_Comm local_communicator = MPI_COMM_NULL;
-    MPI_Comm_split_type(MPI_COMM_WORLD, MPI_COMM_TYPE_SHARED, 0, MPI_INFO_NULL, &local_communicator);
+    const MPI_Comm local_communicator = sternheimer_local_communicator();
     MPI_Comm_size(local_communicator, &local_mpi_ranks);
     MPI_Barrier(local_communicator);
     read_live_memory_candidates(candidates);
@@ -392,11 +405,17 @@ SternheimerMemorySnapshot detect_sternheimer_memory_snapshot()
     candidates.mem_available_bytes = allreduce_optional_min(candidates.mem_available_bytes, local_communicator);
     candidates.process_rss_bytes = allreduce_optional_max(candidates.process_rss_bytes, local_communicator);
     candidates.physical_memory_bytes = allreduce_optional_min(candidates.physical_memory_bytes, local_communicator);
-    MPI_Comm_free(&local_communicator);
 #else
     read_live_memory_candidates(candidates);
 #endif
     return detail::select_sternheimer_memory_snapshot(candidates, local_mpi_ranks);
+}
+
+void initialize_sternheimer_memory_detection()
+{
+#ifdef __MPI
+    (void)sternheimer_local_communicator();
+#endif
 }
 
 namespace detail
