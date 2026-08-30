@@ -3125,14 +3125,20 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                    "source_k=" + std::to_string(pair.source_index + 1)
                                        + ",target_k=" + std::to_string(pair.target_index + 1));
 
-        const SternheimerSampledLCAOKPoint source
-            = sample_sternheimer_lcao_kpoint(ucell,
-                                             grid_data.grid,
-                                             orbitals,
-                                             source_record,
-                                             sampling_plan.sample_source_unoccupied,
-                                             grid_data.volume_element,
-                                             PARAM.inp.sternheimer_delta_norm_tol);
+        const bool reuse_target_sampling
+            = can_reuse_sternheimer_target_lcao_sampling(source_record_pointer == target_record_pointer, sampling_plan);
+        std::unique_ptr<SternheimerSampledLCAOKPoint> sampled_source;
+        if (!reuse_target_sampling)
+        {
+            sampled_source = std::make_unique<SternheimerSampledLCAOKPoint>(
+                sample_sternheimer_lcao_kpoint(ucell,
+                                               grid_data.grid,
+                                               orbitals,
+                                               source_record,
+                                               sampling_plan.sample_source_unoccupied,
+                                               grid_data.volume_element,
+                                               PARAM.inp.sternheimer_delta_norm_tol));
+        }
         const SternheimerSampledLCAOKPoint target
             = sample_sternheimer_lcao_kpoint(ucell,
                                              grid_data.grid,
@@ -3141,6 +3147,17 @@ void run_sternheimer_periodic_lcao_chi0_output(const elecstate::Potential& poten
                                              sampling_plan.sample_target_unoccupied,
                                              grid_data.volume_element,
                                              PARAM.inp.sternheimer_delta_norm_tol);
+        const SternheimerSampledLCAOKPoint& source = reuse_target_sampling ? target : *sampled_source;
+        append_chi0_progress_event("lcao_sampling_ready",
+                                   0,
+                                   -1,
+                                   -1,
+                                   -1,
+                                   solved_equations,
+                                   nullptr,
+                                   -1.0,
+                                   elapsed_seconds_since(chi0_start_time),
+                                   std::string("source_reused=") + (reuse_target_sampling ? "yes" : "no"));
         const SternheimerFDHamiltonian hamiltonian = [&]() {
             if (use_kpoint_mpi)
             {

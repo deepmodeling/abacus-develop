@@ -419,18 +419,535 @@ TEST(SternheimerABACUSSTSmoke, SelectsOnlyOccupiedGammaSpinRecordsForOpenShellRe
 
 TEST(SternheimerABACUSSTSmoke, RejectsDuplicateOrIncompleteGlobalKRecords)
 {
-    const auto estimate = ModuleRI::estimate_sternheimer_siab_dense_memory(100, 4, 3, 5, 7, 2, 6);
-    EXPECT_EQ(estimate.coulomb_metric_bytes, 4U * 4U * sizeof(double));
-    EXPECT_EQ(estimate.transformed_potential_bytes, 100U * 3U * sizeof(double));
-    EXPECT_EQ(estimate.channel_transform_workspace_bytes,
-              1024U * (4U + 3U) * sizeof(double) + 1024U * sizeof(std::size_t));
-    EXPECT_EQ(estimate.reciprocal_primitive_bytes, 5U * 7U * sizeof(std::complex<double>));
-    EXPECT_EQ(estimate.primitive_overlap_bytes, 5U * 5U * sizeof(std::complex<double>));
-    const std::uint64_t row_bytes = 7U * sizeof(double) + 5U * sizeof(std::complex<double>);
-    EXPECT_EQ(estimate.gathered_reference_row_bytes, 3U * 2U * 3U * 6U * row_bytes);
-    EXPECT_EQ(estimate.total_bytes,
-              estimate.coulomb_metric_bytes + estimate.transformed_potential_bytes
-                  + estimate.channel_transform_workspace_bytes
-                  + estimate.reciprocal_primitive_bytes + estimate.primitive_overlap_bytes
-                  + estimate.gathered_reference_row_bytes);
+    const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.5);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 0.5);
+
+    auto duplicate = k1;
+    duplicate.global_k_index = 0;
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({k0, duplicate}, 2, 2, 1, 3),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({k0}, 2, 2, 1, 3),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, GammaRecordPreservesLegacyWeightedOccupation)
+{
+    const auto gamma = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({gamma}, 1, 1, 1, 3));
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_lcao_weighted_occupation(gamma, 0), 2.0);
+}
+
+TEST(SternheimerABACUSSTSmoke, DividesSupercellKWeightAcrossPrimitiveTranslationSectors)
+{
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_supercell_sector_kweight(2.0, 64), 0.03125);
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_supercell_sector_kweight(0.5, 8), 1.0 / 16.0);
+    EXPECT_THROW(ModuleRI::sternheimer_supercell_sector_kweight(1.0, 0), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, RestoresPrimitiveNormalizationForFullSupercellResponseMatrix)
+{
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_supercell_response_matrix_scale(false, 64), 1.0);
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_supercell_response_matrix_scale(true, 8), 8.0);
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_supercell_response_matrix_scale(true, 64), 64.0);
+    EXPECT_THROW(ModuleRI::sternheimer_supercell_response_matrix_scale(true, 0),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, PlansVirtualSamplingWithoutMakingTheOptionalSOSDiagnosticMandatory)
+{
+    const auto standard = ModuleRI::sternheimer_lcao_sampling_plan(false, false, false);
+    EXPECT_FALSE(standard.sample_source_unoccupied);
+    EXPECT_FALSE(standard.sample_target_unoccupied);
+    EXPECT_FALSE(standard.build_target_ao_candidates);
+
+    const auto delta_fallback = ModuleRI::sternheimer_lcao_sampling_plan(true, false, false);
+    EXPECT_FALSE(delta_fallback.sample_source_unoccupied);
+    EXPECT_FALSE(delta_fallback.sample_target_unoccupied);
+    EXPECT_TRUE(delta_fallback.build_target_ao_candidates);
+
+    const auto delta_virtuals = ModuleRI::sternheimer_lcao_sampling_plan(true, false, true);
+    EXPECT_FALSE(delta_virtuals.sample_source_unoccupied);
+    EXPECT_TRUE(delta_virtuals.sample_target_unoccupied);
+    EXPECT_FALSE(delta_virtuals.build_target_ao_candidates);
+
+    EXPECT_THROW(ModuleRI::sternheimer_lcao_sampling_plan(false, true, false), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, ReusesTargetSamplingWhenItContainsTheSameSourceRecord)
+{
+    const auto occupied_only = ModuleRI::sternheimer_lcao_sampling_plan(false, false, false);
+    const auto target_virtuals = ModuleRI::sternheimer_lcao_sampling_plan(true, false, true);
+    ModuleRI::SternheimerLCAOSamplingPlan missing_source_virtuals;
+    missing_source_virtuals.sample_source_unoccupied = true;
+
+    EXPECT_TRUE(ModuleRI::can_reuse_sternheimer_target_lcao_sampling(true, occupied_only));
+    EXPECT_TRUE(ModuleRI::can_reuse_sternheimer_target_lcao_sampling(true, target_virtuals));
+    EXPECT_FALSE(ModuleRI::can_reuse_sternheimer_target_lcao_sampling(false, target_virtuals));
+    EXPECT_FALSE(ModuleRI::can_reuse_sternheimer_target_lcao_sampling(true, missing_source_virtuals));
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsNonInsulatingSupercellSectorOccupations)
+{
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_supercell_sector_occupations({1.0, 1.0}, 2));
+    EXPECT_THROW(ModuleRI::validate_sternheimer_supercell_sector_occupations({1.0}, 2),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_supercell_sector_occupations({1.0, 0.5}, 2),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, ValidatesOptionalUnoccupiedLCAOStates)
+{
+    auto record = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+    record.unoccupied_eigenvalues = {0.5};
+    record.unoccupied_coefficients = {{std::complex<double>(0.0, 0.0),
+                                       std::complex<double>(1.0, 0.0),
+                                       std::complex<double>(0.0, 0.0)}};
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({record}, 1, 1, 1, 3));
+
+    record.unoccupied_coefficients[0].pop_back();
+    EXPECT_THROW(ModuleRI::validate_sternheimer_lcao_occupied_kpoints({record}, 1, 1, 1, 3),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, BuildsTwoKPointNonzeroQResponsePlan)
+{
+    const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 1.0);
+
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan({k1, k0}, 2);
+
+    EXPECT_EQ(plan.iq, 2);
+    EXPECT_EQ(plan.qpoint, (ModuleRI::SternheimerReducedKPoint{0.5, 0.0, 0.0}));
+    EXPECT_EQ(plan.record_index_by_global_k, (std::vector<int>{1, 0}));
+    ASSERT_EQ(plan.kq_pairs.size(), 2);
+    EXPECT_EQ(plan.kq_pairs[0].source_index, 0);
+    EXPECT_EQ(plan.kq_pairs[0].target_index, 1);
+    EXPECT_EQ(plan.kq_pairs[1].source_index, 1);
+    EXPECT_EQ(plan.kq_pairs[1].target_index, 0);
+    EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
+}
+
+TEST(SternheimerABACUSSTSmoke, BuildsPeriodicGammaResponsePlanBySelfMappingKPoints)
+{
+    auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 1.0);
+
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan({k0, k1}, 1);
+
+    EXPECT_EQ(plan.iq, 1);
+    EXPECT_EQ(plan.qpoint, (ModuleRI::SternheimerReducedKPoint{0.0, 0.0, 0.0}));
+    ASSERT_EQ(plan.kq_pairs.size(), 2);
+    EXPECT_EQ(plan.kq_pairs[0].source_index, 0);
+    EXPECT_EQ(plan.kq_pairs[0].target_index, 0);
+    EXPECT_EQ(plan.kq_pairs[1].source_index, 1);
+    EXPECT_EQ(plan.kq_pairs[1].target_index, 1);
+}
+
+TEST(SternheimerABACUSSTSmoke, BuildsDisjointFixedQKOrbitsFromLittleGroupPermutations)
+{
+    const std::vector<int> identity = {0, 1, 2, 3, 4, 5, 6, 7};
+    const std::vector<int> inversion = {0, 7, 6, 5, 4, 3, 2, 1};
+
+    const auto orbits
+        = ModuleRI::build_sternheimer_fixed_q_k_orbits_from_permutations(8, {identity, inversion});
+
+    ASSERT_EQ(orbits.size(), 5U);
+    EXPECT_EQ(orbits[0].representative_ik_full, 0);
+    EXPECT_EQ(orbits[0].members, (std::vector<int>{0}));
+    EXPECT_EQ(orbits[1].representative_ik_full, 1);
+    EXPECT_EQ(orbits[1].members, (std::vector<int>{1, 7}));
+    EXPECT_EQ(orbits[2].members, (std::vector<int>{2, 6}));
+    EXPECT_EQ(orbits[3].members, (std::vector<int>{3, 5}));
+    EXPECT_EQ(orbits[4].members, (std::vector<int>{4}));
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsNonBijectiveFixedQOperation)
+{
+    EXPECT_THROW(ModuleRI::build_sternheimer_fixed_q_k_orbits_from_permutations(
+                     4, {{0, 1, 2, 3}, {0, 0, 2, 3}}),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, FormatsExplicitInverseRoutesForLibRPA)
+{
+    const std::vector<ModuleRI::SternheimerFixedQKRoute> routes = {
+        {1, 3, 6, 2, true, {0, -1, 0}},
+        {1, 0, 0, 0, false, {0, 0, 0}},
+    };
+
+    EXPECT_EQ(ModuleRI::format_sternheimer_fixed_q_routes(routes),
+              "version 1\n"
+              "# iq representative_ik member_ik spatial_isym time_reversal fold_Gx fold_Gy fold_Gz\n"
+              "1 0 0 0 0 0 0 0\n"
+              "1 3 6 2 1 0 -1 0\n");
+    EXPECT_THROW(ModuleRI::format_sternheimer_fixed_q_routes({routes[0], routes[0]}),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, BuildsDiscreteQStarRoutesFromAllowedGridPermutations)
+{
+    ModuleRI::SternheimerQStarPermutation identity;
+    identity.spatial_isym = 0;
+    identity.time_reversal = false;
+    identity.mapped_index_by_full_q = {0, 1, 2, 3};
+    identity.fold_G_by_full_q = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
+
+    ModuleRI::SternheimerQStarPermutation swap;
+    swap.spatial_isym = 4;
+    swap.time_reversal = false;
+    swap.mapped_index_by_full_q = {0, 2, 1, 3};
+    swap.fold_G_by_full_q = {{0, 0, 0}, {-1, 0, 0}, {1, 0, 0}, {0, 0, 0}};
+
+    const auto routes = ModuleRI::build_sternheimer_qstar_routes_from_permutations(
+        4, {identity, swap});
+
+    ASSERT_EQ(routes.size(), 4U);
+    EXPECT_EQ(routes[0].representative_iq, 1);
+    EXPECT_EQ(routes[0].member_iq, 1);
+    EXPECT_EQ(routes[1].representative_iq, 2);
+    EXPECT_EQ(routes[1].member_iq, 2);
+    EXPECT_EQ(routes[2].representative_iq, 2);
+    EXPECT_EQ(routes[2].member_iq, 3);
+    EXPECT_EQ(routes[2].spatial_isym, 4);
+    EXPECT_EQ(routes[2].fold_G, (std::array<int, 3>{1, 0, 0}));
+    EXPECT_EQ(routes[3].representative_iq, 4);
+    EXPECT_EQ(routes[3].member_iq, 4);
+
+    EXPECT_EQ(ModuleRI::format_sternheimer_qstar_routes(routes),
+              "version 1\n"
+              "# representative_iq member_iq spatial_isym time_reversal fold_Gx fold_Gy fold_Gz\n"
+              "1 1 0 0 0 0 0\n"
+              "2 2 0 0 0 0 0\n"
+              "2 3 4 0 1 0 0\n"
+              "4 4 0 0 0 0 0\n");
+}
+
+TEST(SternheimerABACUSSTSmoke, HermitianizesEachPartialResponseBeforeOutput)
+{
+    using Complex = std::complex<double>;
+    const std::vector<Complex> branch{{-1.0, 0.2}, {2.0, 3.0}, {4.0, -5.0}, {-6.0, 0.5}};
+
+    const auto record = ModuleRI::make_sternheimer_partial_response_record(2, 3, 4, branch, 2);
+
+    EXPECT_EQ(record.iq, 2);
+    EXPECT_EQ(record.ik_full, 3);
+    EXPECT_EQ(record.ifrequency, 4);
+    EXPECT_EQ(record.filename, "v1_sternheimer_chi0_iq_2_ik_3_ifreq_4.dat");
+    EXPECT_EQ(record.matrix,
+              (std::vector<Complex>{{-2.0, 0.0}, {6.0, 8.0}, {6.0, -8.0}, {-12.0, 0.0}}));
+}
+
+TEST(SternheimerABACUSSTSmoke, SumOfPartialResponsesEqualsLegacyAggregateResponse)
+{
+    using Complex = std::complex<double>;
+    const std::vector<Complex> branch_a{{-1.0, 0.2}, {2.0, 3.0}, {4.0, -5.0}, {-6.0, 0.5}};
+    const std::vector<Complex> branch_b{{0.5, -0.2}, {-1.0, 1.0}, {2.0, 0.5}, {3.0, -0.5}};
+    const auto partial_a
+        = ModuleRI::make_sternheimer_partial_response_record(1, 0, 1, branch_a, 2);
+    const auto partial_b
+        = ModuleRI::make_sternheimer_partial_response_record(1, 1, 1, branch_b, 2);
+
+    std::vector<Complex> partial_sum(partial_a.matrix.size(), Complex(0.0, 0.0));
+    std::vector<Complex> aggregate_branch(branch_a.size(), Complex(0.0, 0.0));
+    for (std::size_t index = 0; index != branch_a.size(); ++index)
+    {
+        partial_sum[index] = partial_a.matrix[index] + partial_b.matrix[index];
+        aggregate_branch[index] = branch_a[index] + branch_b[index];
+    }
+    std::vector<Complex> expected(aggregate_branch.size(), Complex(0.0, 0.0));
+    for (int row = 0; row != 2; ++row)
+    {
+        for (int column = 0; column != 2; ++column)
+        {
+            const std::size_t index = static_cast<std::size_t>(row * 2 + column);
+            const std::size_t transpose = static_cast<std::size_t>(column * 2 + row);
+            expected[index] = aggregate_branch[index] + std::conj(aggregate_branch[transpose]);
+        }
+    }
+    EXPECT_EQ(partial_sum, expected);
+}
+
+TEST(SternheimerABACUSSTSmoke, FormatsPartialManifestInDeterministicKeyOrder)
+{
+    ModuleRI::SternheimerPartialResponseRecord later;
+    later.iq = 2;
+    later.ik_full = 7;
+    later.ifrequency = 3;
+    later.filename = "later.dat";
+    ModuleRI::SternheimerPartialResponseRecord earlier;
+    earlier.iq = 1;
+    earlier.ik_full = 0;
+    earlier.ifrequency = 1;
+    earlier.filename = "earlier.dat";
+
+    EXPECT_EQ(ModuleRI::format_sternheimer_partial_manifest({later, earlier}),
+              "# iq ik_full ifreq response_file\n"
+              "1 0 1 earlier.dat\n"
+              "2 7 3 later.dat\n");
+    EXPECT_THROW(ModuleRI::format_sternheimer_partial_manifest({earlier, earlier}),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, FormatsFullKPointManifestInGlobalIndexOrder)
+{
+    const auto k2 = make_occupied_kpoint(2, 2, 0, {0.0, 0.5, 0.0}, 0.25);
+    const auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 0.25);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 0.25);
+
+    EXPECT_EQ(ModuleRI::format_sternheimer_full_kpoint_manifest({k2, k0, k1}),
+              "# ik_full kx ky kz\n"
+              "0 0 0 0\n"
+              "1 0.5 0 0\n"
+              "2 0 0.5 0\n");
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsFractionalOccupationForPeriodicResponse)
+{
+    auto k0 = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 1.0);
+    const auto k1 = make_occupied_kpoint(1, 1, 0, {0.5, 0.0, 0.0}, 1.0);
+
+    k0.occupations[0] = 0.5;
+    EXPECT_THROW(ModuleRI::build_sternheimer_periodic_response_plan({k0, k1}, 2), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, ZeroQIndexPreservesSingleGammaPlan)
+{
+    const auto gamma = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan({gamma}, 0);
+
+    EXPECT_EQ(plan.iq, 1);
+    EXPECT_EQ(plan.qpoint, (ModuleRI::SternheimerReducedKPoint{0.0, 0.0, 0.0}));
+    ASSERT_EQ(plan.kq_pairs.size(), 1);
+    EXPECT_EQ(plan.kq_pairs[0].source_index, 0);
+    EXPECT_EQ(plan.kq_pairs[0].target_index, 0);
+    EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
+}
+
+TEST(SternheimerABACUSSTSmoke, BuildsSingleGammaSupercellTranslationPlanWithPositiveOutputIndex)
+{
+    const auto gamma = make_occupied_kpoint(0, 0, 0, {0.0, 0.0, 0.0}, 2.0);
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan({gamma}, 1, true);
+
+    EXPECT_EQ(plan.iq, 1);
+    EXPECT_EQ(plan.qpoint, (ModuleRI::SternheimerReducedKPoint{0.0, 0.0, 0.0}));
+    ASSERT_EQ(plan.kq_pairs.size(), 1);
+    EXPECT_EQ(plan.kq_pairs[0].source_index, 0);
+    EXPECT_EQ(plan.kq_pairs[0].target_index, 0);
+    EXPECT_DOUBLE_EQ(plan.kweight_sum, 2.0);
+}
+
+TEST(SternheimerABACUSSTSmoke, ExpandsGammaSupercellIntoPrimitiveKRecordsWithGammaGridBoundary)
+{
+    ModuleRI::SternheimerLCAOOccupiedKPoint gamma;
+    gamma.local_k_index = 0;
+    gamma.global_k_index = 0;
+    gamma.zero_order_k_index = 0;
+    gamma.spin_index = 0;
+    gamma.kpoint = {0.0, 0.0, 0.0};
+    gamma.kweight = 2.0;
+    gamma.eigenvalues = {-2.0, -1.0};
+    gamma.occupations = {1.0, 1.0};
+    gamma.coefficients = {
+        {1.0, 0.0, 0.0, 0.0},
+        {0.0, 1.0, 0.0, 0.0},
+    };
+    gamma.unoccupied_eigenvalues = {1.0, 2.0};
+    gamma.unoccupied_coefficients = {
+        {0.0, 0.0, 1.0, 0.0},
+        {0.0, 0.0, 0.0, 1.0},
+    };
+
+    std::vector<ModuleRI::SternheimerSupercellKPointSector> sectors(2);
+    sectors[0].kpoint = {0.0, 0.0, 0.0};
+    sectors[0].sector.eigenvalues = {-2.0, 1.0};
+    sectors[0].sector.coefficients = {gamma.coefficients[0], gamma.unoccupied_coefficients[0]};
+    sectors[1].kpoint = {0.5, 0.0, 0.0};
+    sectors[1].sector.eigenvalues = {-1.0, 2.0};
+    sectors[1].sector.coefficients = {gamma.coefficients[1], gamma.unoccupied_coefficients[1]};
+
+    const auto records
+        = ModuleRI::build_sternheimer_supercell_full_kpoint_records(gamma, sectors);
+
+    ASSERT_EQ(records.size(), 2U);
+    for (std::size_t ik = 0; ik != records.size(); ++ik)
+    {
+        EXPECT_EQ(records[ik].local_k_index, static_cast<int>(ik));
+        EXPECT_EQ(records[ik].global_k_index, static_cast<int>(ik));
+        EXPECT_EQ(records[ik].zero_order_k_index, static_cast<int>(ik));
+        EXPECT_DOUBLE_EQ(records[ik].kweight, 1.0);
+        EXPECT_EQ(records[ik].kpoint, sectors[ik].kpoint);
+        EXPECT_EQ(ModuleRI::sternheimer_lcao_grid_kpoint(records[ik]),
+                  (ModuleRI::SternheimerReducedKPoint{0.0, 0.0, 0.0}));
+        ASSERT_EQ(records[ik].eigenvalues.size(), 1U);
+        ASSERT_EQ(records[ik].unoccupied_eigenvalues.size(), 1U);
+        EXPECT_DOUBLE_EQ(records[ik].occupations[0], 1.0);
+    }
+    EXPECT_DOUBLE_EQ(records[0].eigenvalues[0], -2.0);
+    EXPECT_DOUBLE_EQ(records[1].eigenvalues[0], -1.0);
+}
+
+TEST(SternheimerABACUSSTSmoke, LimitsPeriodicOccupiedBandsOnlyWhenRequested)
+{
+    EXPECT_EQ(ModuleRI::sternheimer_periodic_band_count(8, -1), 8);
+    EXPECT_EQ(ModuleRI::sternheimer_periodic_band_count(8, 1), 1);
+    EXPECT_EQ(ModuleRI::sternheimer_periodic_band_count(8, 20), 8);
+    EXPECT_THROW(ModuleRI::sternheimer_periodic_band_count(0, 1), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, TreatsSupercellTranslationResponseAsDiagnosticOnly)
+{
+    EXPECT_TRUE(ModuleRI::sternheimer_write_periodic_v1(false, false));
+    EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(true, false));
+    EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(false, true));
+    EXPECT_TRUE(ModuleRI::sternheimer_write_periodic_v1(true, false, true));
+    EXPECT_FALSE(ModuleRI::sternheimer_write_periodic_v1(true, true, true));
+
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_output_mode(true, true));
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_output_mode(false, false));
+    EXPECT_THROW(ModuleRI::validate_sternheimer_periodic_output_mode(false, true),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, SelectsMassiddaFactorOnlyForPeriodicGamma)
+{
+    constexpr double massidda_chi = 1.25;
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_periodic_gamma_inverse_k2(
+                         {0.0, 0.0, 0.0}, "massidda", massidda_chi),
+                     massidda_chi);
+    EXPECT_DOUBLE_EQ(ModuleRI::sternheimer_periodic_gamma_inverse_k2(
+                         {0.25, 0.0, 0.0}, "massidda", massidda_chi),
+                     0.0);
+    EXPECT_THROW(ModuleRI::sternheimer_periodic_gamma_inverse_k2(
+                     {0.0, 0.0, 0.0}, "limits", massidda_chi),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_periodic_gamma_inverse_k2(
+                     {0.0, 0.0, 0.0}, "massidda", 0.0),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, ValidatesPeriodicMonkhorstPackDimensions)
+{
+    EXPECT_NO_THROW(ModuleRI::validate_sternheimer_periodic_kmesh({4, 4, 4}, 64));
+    EXPECT_THROW(ModuleRI::validate_sternheimer_periodic_kmesh({4, 4, 4}, 63),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::validate_sternheimer_periodic_kmesh({4, 0, 4}, 64),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, AssignsContiguousKPointOwners)
+{
+    const int global_kpoint_count = 10;
+    const int kpoint_groups = 4;
+    const std::vector<int> expected_owners = {0, 0, 0, 1, 1, 1, 2, 2, 3, 3};
+
+    for (int ik = 0; ik != global_kpoint_count; ++ik)
+    {
+        EXPECT_EQ(ModuleRI::sternheimer_kpoint_owner_group(ik, global_kpoint_count, kpoint_groups),
+                  expected_owners[static_cast<std::size_t>(ik)]);
+    }
+    EXPECT_THROW(ModuleRI::sternheimer_kpoint_owner_group(-1, global_kpoint_count, kpoint_groups),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_kpoint_owner_group(0, global_kpoint_count, 0),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_kpoint_owner_group(0, 3, 4), std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, SelectsIndependentSupercellKPointGroups)
+{
+    EXPECT_EQ(ModuleRI::sternheimer_response_kpoint_group_count(false, 1, 4, 64), 4);
+    EXPECT_EQ(ModuleRI::sternheimer_response_kpoint_group_count(true, 8, 1, 64), 8);
+    EXPECT_EQ(ModuleRI::sternheimer_response_kpoint_group_count(true, 64, 1, 64), 64);
+    EXPECT_THROW(ModuleRI::sternheimer_response_kpoint_group_count(true, 0, 1, 64),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_response_kpoint_group_count(true, 65, 1, 64),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, AssignsEachNestedKFrequencyTaskExactlyOnce)
+{
+    constexpr int global_kpoint_count = 5;
+    constexpr int kpoint_groups = 2;
+    constexpr int frequency_count = 2;
+    constexpr int mpi_ranks = kpoint_groups * frequency_count;
+    std::vector<int> tasks_by_rank(mpi_ranks, 0);
+
+    for (int ik = 0; ik != global_kpoint_count; ++ik)
+    {
+        for (int ifrequency = 0; ifrequency != frequency_count; ++ifrequency)
+        {
+            const auto assignment = ModuleRI::sternheimer_nested_mpi_assignment(ik,
+                                                                                global_kpoint_count,
+                                                                                ifrequency,
+                                                                                frequency_count,
+                                                                                kpoint_groups,
+                                                                                mpi_ranks,
+                                                                                0);
+            EXPECT_EQ(assignment.kpoint_group,
+                      ModuleRI::sternheimer_kpoint_owner_group(ik,
+                                                               global_kpoint_count,
+                                                               kpoint_groups));
+            EXPECT_EQ(assignment.frequency_slot, ifrequency);
+            ASSERT_GE(assignment.owner_rank, 0);
+            ASSERT_LT(assignment.owner_rank, mpi_ranks);
+            ++tasks_by_rank[static_cast<std::size_t>(assignment.owner_rank)];
+        }
+    }
+
+    EXPECT_EQ(tasks_by_rank, (std::vector<int>{3, 3, 2, 2}));
+}
+
+TEST(SternheimerABACUSSTSmoke, WrapsNestedFrequencyRankShiftWithinEachKGroup)
+{
+    const auto positive = ModuleRI::sternheimer_nested_mpi_assignment(3, 5, 1, 3, 2, 6, 1);
+    EXPECT_EQ(positive.kpoint_group, 1);
+    EXPECT_EQ(positive.frequency_slot, 2);
+    EXPECT_EQ(positive.owner_rank, 5);
+
+    const auto negative = ModuleRI::sternheimer_nested_mpi_assignment(0, 5, 0, 3, 2, 6, -1);
+    EXPECT_EQ(negative.kpoint_group, 0);
+    EXPECT_EQ(negative.frequency_slot, 2);
+    EXPECT_EQ(negative.owner_rank, 2);
+}
+
+TEST(SternheimerABACUSSTSmoke, RejectsInvalidNestedMPIContracts)
+{
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_assignment(0, 4, 0, 2, 2, 3),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_assignment(-1, 4, 0, 2, 2, 4),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_assignment(0, 4, -1, 2, 2, 4),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_assignment(0, 4, 2, 2, 2, 4),
+                 std::invalid_argument);
+    EXPECT_THROW(ModuleRI::sternheimer_nested_mpi_assignment(0, 2, 0, 2, 3, 6),
+                 std::invalid_argument);
+}
+
+TEST(SternheimerABACUSSTSmoke, PartitionsResponsePairsBySourceKWithoutOverlap)
+{
+    std::vector<ModuleRI::SternheimerLCAOOccupiedKPoint> records;
+    for (int ik = 0; ik != 8; ++ik)
+    {
+        records.push_back(make_occupied_kpoint(ik,
+                                               ik,
+                                               0,
+                                               {static_cast<double>(ik) / 8.0, 0.0, 0.0},
+                                               0.25));
+    }
+    const auto plan = ModuleRI::build_sternheimer_periodic_response_plan(records, 2);
+
+    std::vector<int> seen(plan.kq_pairs.size(), 0);
+    for (int group = 0; group != 4; ++group)
+    {
+        const auto owned = ModuleRI::sternheimer_owned_kq_pair_indices(plan, group, 4);
+        ASSERT_EQ(owned.size(), 2);
+        for (const std::size_t pair_index: owned)
+        {
+            ASSERT_LT(pair_index, plan.kq_pairs.size());
+            ++seen[pair_index];
+            EXPECT_EQ(ModuleRI::sternheimer_kpoint_owner_group(plan.kq_pairs[pair_index].source_index, 8, 4),
+                      group);
+        }
+    }
+    EXPECT_EQ(seen, std::vector<int>(plan.kq_pairs.size(), 1));
 }

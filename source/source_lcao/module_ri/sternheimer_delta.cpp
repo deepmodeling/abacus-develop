@@ -510,6 +510,7 @@ void accumulate_delta_sternheimer_lcao_state_samples(
     }
 
     const Complex image_phase = sternheimer_bloch_phase(kpoint, lattice_translation);
+#pragma omp parallel for schedule(static)
     for (std::size_t sample = 0; sample != sample_size; ++sample)
     {
         const std::size_t grid_index = grid_begin + sample;

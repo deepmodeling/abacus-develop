@@ -1159,6 +1159,11 @@ inline SternheimerLCAOSamplingPlan sternheimer_lcao_sampling_plan(
     return plan;
 }
 
+inline bool can_reuse_sternheimer_target_lcao_sampling(const bool same_record, const SternheimerLCAOSamplingPlan& plan)
+{
+    return same_record && (!plan.sample_source_unoccupied || plan.sample_target_unoccupied);
+}
+
 inline void validate_sternheimer_supercell_sector_occupations(
     const std::vector<double>& occupations,
     const int expected_occupied_count,
