@@ -123,16 +123,16 @@ TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
 {
     ModuleESolver::ESolver_LJ p_esolver;
     MDCell mdcell = Setcell::setup_mdcell(ucell, param);
-    p_esolver.before_all_runners(mdcell, param.inp);
+    Input_para input = param.inp;
+    p_esolver.before_all_runners(mdcell, input);
     p_esolver.runner(mdcell, 0);
 
-    Input_para& global_input = const_cast<Input_para&>(PARAM.inp);
-    const double saved_press1 = global_input.press1;
-    const double saved_press2 = global_input.press2;
-    const double saved_press3 = global_input.press3;
-    global_input.press1 = 1.0;
-    global_input.press2 = 2.0;
-    global_input.press3 = 3.0;
+    const double saved_press1 = input.press1;
+    const double saved_press2 = input.press2;
+    const double saved_press3 = input.press3;
+    input.press1 = 1.0;
+    input.press2 = 2.0;
+    input.press3 = 3.0;
 
     p_esolver.cal_stress(mdcell, stress);
 
@@ -141,9 +141,9 @@ TEST_F(LJ_pot_test, mdcell_stress_includes_external_pressure)
     EXPECT_NEAR(stress(1, 1), p_esolver.lj_virial(1, 1) - 2.0 / unit_transform, doublethreshold);
     EXPECT_NEAR(stress(2, 2), p_esolver.lj_virial(2, 2) - 3.0 / unit_transform, doublethreshold);
 
-    global_input.press1 = saved_press1;
-    global_input.press2 = saved_press2;
-    global_input.press3 = saved_press3;
+    input.press1 = saved_press1;
+    input.press2 = saved_press2;
+    input.press3 = saved_press3;
 }
 
 TEST_F(LJ_pot_test, RcutSearchRadius)

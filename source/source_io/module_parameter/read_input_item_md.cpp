@@ -194,7 +194,7 @@ Note that md_tlast is only used in NVT/NPT simulations. If md_tlast is unset or 
         item.description = "Whether to output the TOTAL-FORCE table in OUT.${suffix}/running_md.log for MDCell molecular dynamics. This does not affect force calculation or molecular dynamics integration.";
         item.default_value = "True";
         item.unit = "";
-        item.availability = "";
+        item.set_availability("");
         read_sync_bool(input.mdp.md_out_force);
         this->add_item(item);
     }
