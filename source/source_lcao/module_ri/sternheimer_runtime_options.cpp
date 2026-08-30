@@ -43,7 +43,7 @@ bool sternheimer_environment_flag(const char* name, const bool default_value)
 int sternheimer_channel_batch_width()
 {
     constexpr const char* name = "ABACUS_STERNHEIMER_CHANNEL_BATCH_WIDTH";
-    constexpr int default_width = 4;
+    constexpr int default_width = 2;
     constexpr int maximum_width = 64;
     const char* raw = std::getenv(name);
     if (raw == nullptr)

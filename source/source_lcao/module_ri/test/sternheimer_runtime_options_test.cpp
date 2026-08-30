@@ -31,10 +31,10 @@ TEST_F(SternheimerRuntimeOptionsTest, UsesDefaultWhenEnvironmentIsMissing)
     EXPECT_FALSE(ModuleRI::sternheimer_environment_flag(kTestFlag, false));
 }
 
-TEST_F(SternheimerRuntimeOptionsTest, UsesFourChannelBatchesByDefaultAndOneForRollback)
+TEST_F(SternheimerRuntimeOptionsTest, UsesTwoChannelBatchesByDefaultAndOneForRollback)
 {
     unsetenv(kBatchWidth);
-    EXPECT_EQ(ModuleRI::sternheimer_channel_batch_width(), 4);
+    EXPECT_EQ(ModuleRI::sternheimer_channel_batch_width(), 2);
 
     setenv(kBatchWidth, "1", 1);
     EXPECT_EQ(ModuleRI::sternheimer_channel_batch_width(), 1);
