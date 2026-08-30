@@ -307,15 +307,14 @@ SternheimerChannelWorkerPlan plan_sternheimer_channel_workers(const int num_chan
     }
     const std::uint64_t bounded_memory_workers
         = std::min(memory_worker_count, static_cast<std::uint64_t>(std::numeric_limits<int>::max()));
-    const int thread_batch_workers = std::max(1, omp_threads / channel_batch_width);
     plan.automatic_workers
-        = std::min({plan.batch_tasks, thread_batch_workers, static_cast<int>(bounded_memory_workers)});
+        = std::min({plan.batch_tasks, omp_threads, static_cast<int>(bounded_memory_workers)});
     const int capped_workers = user_cap > 0 ? std::min(plan.automatic_workers, user_cap) : plan.automatic_workers;
     // Use inner grid OpenMP only when independent channel tasks fill less than
     // one quarter of the available thread team.  Above that point the FD
     // stencil is memory-bandwidth bound and channel parallelism is preferable.
     const int minimum_channel_workers = (omp_threads + 3) / 4;
-    plan.effective_workers = capped_workers * channel_batch_width >= minimum_channel_workers ? capped_workers : 1;
+    plan.effective_workers = capped_workers >= minimum_channel_workers ? capped_workers : 1;
     return plan;
 }
 

@@ -31,7 +31,7 @@ TEST(SternheimerChannelResources, GroupsChannelsIntoStableMicroBatches)
     EXPECT_THROW(ModuleRI::make_sternheimer_channel_batches(4, 0), std::invalid_argument);
 }
 
-TEST(SternheimerChannelResources, BatchWorkerPlanAccountsForEveryColumn)
+TEST(SternheimerChannelResources, BatchWorkerPlanUsesEveryAvailableOuterThread)
 {
     const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::available,
                                                      100000000,
@@ -44,8 +44,11 @@ TEST(SternheimerChannelResources, BatchWorkerPlanAccountsForEveryColumn)
     EXPECT_EQ(batch.channel_batch_width, 4);
     EXPECT_EQ(batch.batch_tasks, 25);
     EXPECT_EQ(batch.memory_per_worker_bytes, 4 * scalar.memory_per_worker_bytes);
+    EXPECT_EQ(scalar.automatic_workers, 30);
+    EXPECT_EQ(batch.automatic_workers, 25);
+    EXPECT_EQ(batch.effective_workers, 25);
     EXPECT_LE(static_cast<std::uint64_t>(batch.automatic_workers) * batch.memory_per_worker_bytes,
-              static_cast<std::uint64_t>(scalar.automatic_workers) * scalar.memory_per_worker_bytes);
+              batch.increment_bytes_per_rank);
 }
 
 TEST(SternheimerChannelResources, PlansFromNodeAggregateMemory)
@@ -69,6 +72,18 @@ TEST(SternheimerChannelResources, PartialOuterTeamFallsBackToNestedGridParalleli
                                                      "proc_meminfo"};
     const auto plan = ModuleRI::plan_sternheimer_channel_workers(32, 30, 1, 4, memory);
     EXPECT_EQ(plan.automatic_workers, 30);
+    EXPECT_EQ(plan.effective_workers, 1);
+}
+
+TEST(SternheimerChannelResources, BatchColumnsDoNotCountAsOuterWorkerThreads)
+{
+    const ModuleRI::SternheimerMemorySnapshot memory{ModuleRI::SternheimerMemoryAccountingMode::available,
+                                                     100000000,
+                                                     0,
+                                                     1,
+                                                     "proc_meminfo"};
+    const auto plan = ModuleRI::plan_sternheimer_channel_workers(8, 30, 100, 0, memory, 4);
+    EXPECT_EQ(plan.automatic_workers, 2);
     EXPECT_EQ(plan.effective_workers, 1);
 }
 
