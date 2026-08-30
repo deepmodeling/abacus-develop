@@ -69,6 +69,11 @@ if(TARGET abacus_greenx_minimax)
   list(APPEND STERNHEIMER_RPA_TEST_LIBS abacus_greenx_minimax)
 endif()
 AddTest(
+  TARGET MODULE_RI_sternheimer_runtime_options_test
+  LIBS ${math_libs}
+  SOURCES sternheimer_runtime_options_test.cpp ../sternheimer_runtime_options.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_rpa_test
   LIBS ${STERNHEIMER_RPA_TEST_LIBS}
   SOURCES sternheimer_rpa_test.cpp ../sternheimer_rpa.cpp

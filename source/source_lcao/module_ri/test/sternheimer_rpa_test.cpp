@@ -290,6 +290,14 @@ TEST(SternheimerRPA, ProjectOutSubspace)
     EXPECT_NEAR(std::abs(dot(occupied[1], vec)), 0.0, 1.0e-14);
 }
 
+TEST(SternheimerRPA, SpectralPreconditionerIsDefault)
+{
+    const ModuleRI::SternheimerRPA::SolverOptions options;
+
+    EXPECT_TRUE(options.use_fd_spectral_preconditioner);
+    EXPECT_DOUBLE_EQ(options.fd_spectral_preconditioner_regularization, 0.0);
+}
+
 TEST(SternheimerRPA, ApplyKineticPreconditioner)
 {
     const std::vector<double> kinetic = {1.0, 3.0};

@@ -27,6 +27,7 @@
 #include "source_lcao/module_ri/sternheimer_grid_diagnostics.h"
 #include "source_lcao/module_ri/sternheimer_periodic_solver.h"
 #include "source_lcao/module_ri/sternheimer_rpa.h"
+#include "source_lcao/module_ri/sternheimer_runtime_options.h"
 #include "source_lcao/module_ri/sternheimer_siab_mpi.h"
 #include "source_lcao/module_ri/sternheimer_siab_overlap.h"
 #include "source_lcao/module_ri/sternheimer_siab_provenance.h"
@@ -2797,9 +2798,10 @@ void run_sternheimer_periodic_lcao_chi0_output(
     SternheimerRPA::SolverOptions solver_options;
     solver_options.max_iter = solver_max_iter;
     solver_options.residual_tol = solver_tolerance;
-    solver_options.use_fd_spectral_preconditioner = env_is_true(kSpectralPreconditionerEnv);
+    solver_options.use_fd_spectral_preconditioner
+        = sternheimer_environment_flag(kSpectralPreconditionerEnv, true);
     solver_options.fd_spectral_preconditioner_regularization
-        = nonnegative_double_from_env(kSpectralPreconditionerRegularizationEnv, 0.2);
+        = nonnegative_double_from_env(kSpectralPreconditionerRegularizationEnv, 0.0);
     SternheimerDeltaSubspaceOptions delta_options;
     delta_options.max_virtual_states = PARAM.inp.sternheimer_delta_max_states;
     delta_options.norm_tolerance = PARAM.inp.sternheimer_delta_norm_tol;
@@ -4060,9 +4062,10 @@ void run_sternheimer_abacus_st_smoke(const elecstate::Potential& potential,
         SternheimerRPA::SolverOptions solver_options;
         solver_options.max_iter = solver_max_iter;
         solver_options.residual_tol = solver_tolerance;
-        solver_options.use_fd_spectral_preconditioner = env_is_true(kSpectralPreconditionerEnv);
+        solver_options.use_fd_spectral_preconditioner
+            = sternheimer_environment_flag(kSpectralPreconditionerEnv, true);
         solver_options.fd_spectral_preconditioner_regularization
-            = nonnegative_double_from_env(kSpectralPreconditionerRegularizationEnv, 0.2);
+            = nonnegative_double_from_env(kSpectralPreconditionerRegularizationEnv, 0.0);
 
         for (int ib = 0; ib != static_cast<int>(states.wavefunctions.size()); ++ib)
         {
@@ -4881,9 +4884,10 @@ void run_sternheimer_abacus_chi0_output_impl(
         SternheimerRPA::SolverOptions solver_options;
         solver_options.max_iter = solver_max_iter;
         solver_options.residual_tol = solver_tolerance;
-        solver_options.use_fd_spectral_preconditioner = env_is_true(kSpectralPreconditionerEnv);
+        solver_options.use_fd_spectral_preconditioner
+            = sternheimer_environment_flag(kSpectralPreconditionerEnv, true);
         solver_options.fd_spectral_preconditioner_regularization
-            = nonnegative_double_from_env(kSpectralPreconditionerRegularizationEnv, 0.2);
+            = nonnegative_double_from_env(kSpectralPreconditionerRegularizationEnv, 0.0);
 
         bool all_converged = true;
         int solved_equations = 0;
