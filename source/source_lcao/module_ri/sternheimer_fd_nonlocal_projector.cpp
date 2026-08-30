@@ -123,4 +123,97 @@ void SternheimerFDNonlocalProjector::add_to(const Vector& psi, Vector& hpsi) con
     }
 }
 
+void SternheimerFDNonlocalProjector::apply_batch(const Matrix& psi, Matrix& vpsi) const
+{
+    if (psi.empty())
+    {
+        vpsi.clear();
+        return;
+    }
+    for (const Vector& column: psi)
+    {
+        if (static_cast<int>(column.size()) != grid_size_)
+        {
+            throw std::invalid_argument(
+                "SternheimerFDNonlocalProjector::apply_batch input size does not match the grid.");
+        }
+    }
+
+    vpsi.assign(psi.size(), Vector(static_cast<std::size_t>(grid_size_), Complex(0.0, 0.0)));
+    add_to_batch(psi, vpsi);
+}
+
+void SternheimerFDNonlocalProjector::add_to_batch(const Matrix& psi, Matrix& hpsi) const
+{
+    if (psi.size() != hpsi.size())
+    {
+        throw std::invalid_argument(
+            "SternheimerFDNonlocalProjector::add_to_batch column counts do not match.");
+    }
+    for (std::size_t column = 0; column != psi.size(); ++column)
+    {
+        if (static_cast<int>(psi[column].size()) != grid_size_
+            || static_cast<int>(hpsi[column].size()) != grid_size_)
+        {
+            throw std::invalid_argument(
+                "SternheimerFDNonlocalProjector::add_to_batch vector sizes do not match the grid.");
+        }
+    }
+
+    const std::size_t batch_size = psi.size();
+    for (const ProjectorBlock& block: blocks_)
+    {
+        const int num_projectors = static_cast<int>(block.projectors.size());
+        Matrix coefficients(batch_size, Vector(static_cast<std::size_t>(num_projectors), Complex(0.0, 0.0)));
+#pragma omp parallel for schedule(static)
+        for (int ip = 0; ip != num_projectors; ++ip)
+        {
+            const Vector& beta = block.projectors[static_cast<std::size_t>(ip)];
+            std::vector<Complex> column_coefficients(batch_size, Complex(0.0, 0.0));
+            for (int ir = 0; ir != grid_size_; ++ir)
+            {
+                const Complex weighted_beta = volume_element_ * std::conj(beta[static_cast<std::size_t>(ir)]);
+                for (std::size_t column = 0; column != batch_size; ++column)
+                {
+                    column_coefficients[column] += weighted_beta * psi[column][static_cast<std::size_t>(ir)];
+                }
+            }
+            for (std::size_t column = 0; column != batch_size; ++column)
+            {
+                coefficients[column][static_cast<std::size_t>(ip)] = column_coefficients[column];
+            }
+        }
+
+        Matrix weighted_coefficients(batch_size,
+                                     Vector(static_cast<std::size_t>(num_projectors), Complex(0.0, 0.0)));
+        for (std::size_t column = 0; column != batch_size; ++column)
+        {
+            for (int ip = 0; ip != num_projectors; ++ip)
+            {
+                for (int jp = 0; jp != num_projectors; ++jp)
+                {
+                    weighted_coefficients[column][static_cast<std::size_t>(ip)]
+                        += block.d_matrix[static_cast<std::size_t>(ip)][static_cast<std::size_t>(jp)]
+                           * coefficients[column][static_cast<std::size_t>(jp)];
+                }
+            }
+        }
+
+#pragma omp parallel for schedule(static)
+        for (int ir = 0; ir != grid_size_; ++ir)
+        {
+            for (std::size_t column = 0; column != batch_size; ++column)
+            {
+                Complex contribution(0.0, 0.0);
+                for (int ip = 0; ip != num_projectors; ++ip)
+                {
+                    contribution += block.projectors[static_cast<std::size_t>(ip)][static_cast<std::size_t>(ir)]
+                                    * weighted_coefficients[column][static_cast<std::size_t>(ip)];
+                }
+                hpsi[column][static_cast<std::size_t>(ir)] += contribution;
+            }
+        }
+    }
+}
+
 } // namespace ModuleRI

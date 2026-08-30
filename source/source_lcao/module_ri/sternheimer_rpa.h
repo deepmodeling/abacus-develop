@@ -15,11 +15,13 @@ class SternheimerSubspaceProjector
   public:
     using Complex = std::complex<double>;
     using Vector = std::vector<Complex>;
+    using Matrix = std::vector<Vector>;
     using Dot = std::function<Complex(const Vector&, const Vector&)>;
 
     SternheimerSubspaceProjector(const std::vector<Vector>& subspace, Dot dot);
 
     void project(Vector& vec) const;
+    void project_batch(std::vector<Vector>& vectors) const;
 
   private:
     const std::vector<Vector>* subspace_ = nullptr;
@@ -32,6 +34,7 @@ class SternheimerRPA
   public:
     using Complex = std::complex<double>;
     using Vector = std::vector<Complex>;
+    using Matrix = std::vector<Vector>;
 
     struct SolverOptions
     {
@@ -105,6 +108,18 @@ class SternheimerRPA
         std::function<Complex(const Vector&, const Vector&)> dot;
     };
 
+    struct BatchLinearProblem
+    {
+        // Applies the same linear operator to independent active columns.
+        std::function<void(const Matrix&, Matrix&)> apply;
+
+        // Applies the same right preconditioner to independent active columns.
+        std::function<void(const Matrix&, Matrix&)> precondition;
+
+        // Per-column global inner product, including MPI reduction when needed.
+        std::function<Complex(const Vector&, const Vector&)> dot;
+    };
+
     static SolverResult solve_bicgstab(const LinearProblem& problem, const Vector& rhs, Vector& solution);
 
     static SolverResult solve_bicgstab(const LinearProblem& problem,
@@ -117,6 +132,12 @@ class SternheimerRPA
                                     Vector& solution,
                                     const SolverOptions& options,
                                     int restart_dimension = 50);
+
+    static std::vector<SolverResult> solve_gmres_batch(const BatchLinearProblem& problem,
+                                                       const Matrix& rhs,
+                                                       Matrix& solution,
+                                                       const SolverOptions& options,
+                                                       int restart_dimension = 50);
 
     static void build_rhs_from_hartree_perturbation(const std::vector<double>& hartree_potential_r,
                                                     const Vector& psi_r,

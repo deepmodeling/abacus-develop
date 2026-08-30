@@ -742,6 +742,272 @@ SternheimerRPA::SolverResult SternheimerRPA::solve_gmres(const LinearProblem& pr
     return result;
 }
 
+std::vector<SternheimerRPA::SolverResult> SternheimerRPA::solve_gmres_batch(
+    const BatchLinearProblem& problem,
+    const Matrix& rhs,
+    Matrix& solution,
+    const SolverOptions& options,
+    const int restart_dimension)
+{
+    if (!problem.apply)
+    {
+        throw std::invalid_argument("SternheimerRPA::solve_gmres_batch requires an apply callback.");
+    }
+    if (!problem.dot)
+    {
+        throw std::invalid_argument("SternheimerRPA::solve_gmres_batch requires a dot callback.");
+    }
+    if (restart_dimension <= 0)
+    {
+        throw std::invalid_argument(
+            "SternheimerRPA::solve_gmres_batch requires a positive restart dimension.");
+    }
+    if (rhs.empty())
+    {
+        solution.clear();
+        return {};
+    }
+
+    const std::size_t vector_size = rhs.front().size();
+    for (const Vector& column: rhs)
+    {
+        if (column.size() != vector_size)
+        {
+            throw std::invalid_argument(
+                "SternheimerRPA::solve_gmres_batch right-hand-side vector sizes differ.");
+        }
+    }
+    if (solution.empty())
+    {
+        solution.assign(rhs.size(), Vector(vector_size, Complex(0.0, 0.0)));
+    }
+    if (solution.size() != rhs.size())
+    {
+        throw std::invalid_argument(
+            "SternheimerRPA::solve_gmres_batch solution column count does not match the right-hand side.");
+    }
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        if (solution[column].empty())
+        {
+            solution[column].assign(vector_size, Complex(0.0, 0.0));
+        }
+        assert_same_size(rhs[column], solution[column], "SternheimerRPA::solve_gmres_batch");
+    }
+
+    const auto validate_batch_output = [](const Matrix& input, const Matrix& output, const char* context) {
+        if (output.size() != input.size())
+        {
+            throw std::invalid_argument(std::string(context) + " output column count differs.");
+        }
+        for (std::size_t column = 0; column != input.size(); ++column)
+        {
+            assert_same_size(input[column], output[column], context);
+        }
+    };
+    const auto norm = [&problem](const Vector& vector) {
+        const Complex norm2 = problem.dot(vector, vector);
+        return std::sqrt(std::max(0.0, norm2.real()));
+    };
+
+    struct ColumnState
+    {
+        SolverResult result;
+        Vector residual;
+        double norm_floor = 1.0;
+        double beta = 0.0;
+        bool active = true;
+        int max_inner = 0;
+        std::vector<Vector> basis;
+        std::vector<Vector> preconditioned_basis;
+        std::vector<std::vector<Complex>> hessenberg;
+        LeastSquaresSolution least_squares;
+    };
+
+    std::vector<ColumnState> states(rhs.size());
+    Matrix ax;
+    problem.apply(solution, ax);
+    validate_batch_output(solution, ax, "SternheimerRPA::solve_gmres_batch apply");
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        ColumnState& state = states[column];
+        state.residual.resize(vector_size);
+#pragma omp parallel for schedule(static)
+        for (std::size_t i = 0; i != vector_size; ++i)
+        {
+            state.residual[i] = rhs[column][i] - ax[column][i];
+        }
+        const double rhs_norm = norm(rhs[column]);
+        state.norm_floor = rhs_norm > 0.0 ? rhs_norm : 1.0;
+        state.beta = norm(state.residual);
+        state.result.absolute_residual = state.beta;
+        state.result.relative_residual = state.beta / state.norm_floor;
+        if (state.result.relative_residual <= options.residual_tol)
+        {
+            state.result.converged = true;
+            state.active = false;
+        }
+    }
+
+    while (true)
+    {
+        std::vector<std::size_t> active_columns;
+        for (std::size_t column = 0; column != states.size(); ++column)
+        {
+            ColumnState& state = states[column];
+            if (!state.active || state.result.iterations >= options.max_iter)
+            {
+                state.active = false;
+                continue;
+            }
+            active_columns.push_back(column);
+            state.max_inner = std::min(restart_dimension, options.max_iter - state.result.iterations);
+            state.basis.assign(static_cast<std::size_t>(state.max_inner + 1),
+                               Vector(vector_size, Complex(0.0, 0.0)));
+            state.preconditioned_basis.assign(static_cast<std::size_t>(state.max_inner),
+                                              Vector(vector_size, Complex(0.0, 0.0)));
+            state.hessenberg.assign(static_cast<std::size_t>(state.max_inner + 1),
+                                    std::vector<Complex>(static_cast<std::size_t>(state.max_inner),
+                                                         Complex(0.0, 0.0)));
+            state.basis[0] = state.residual;
+            scale(Complex(1.0 / state.beta, 0.0), state.basis[0]);
+        }
+        if (active_columns.empty())
+        {
+            break;
+        }
+
+        for (int inner = 0; inner != restart_dimension; ++inner)
+        {
+            std::vector<std::size_t> inner_columns;
+            Matrix precondition_input;
+            for (const std::size_t column: active_columns)
+            {
+                ColumnState& state = states[column];
+                if (state.active && inner < state.max_inner)
+                {
+                    inner_columns.push_back(column);
+                    precondition_input.push_back(state.basis[static_cast<std::size_t>(inner)]);
+                }
+            }
+            if (inner_columns.empty())
+            {
+                break;
+            }
+
+            Matrix preconditioned;
+            if (problem.precondition)
+            {
+                problem.precondition(precondition_input, preconditioned);
+                validate_batch_output(precondition_input,
+                                      preconditioned,
+                                      "SternheimerRPA::solve_gmres_batch precondition");
+            }
+            else
+            {
+                preconditioned = precondition_input;
+            }
+            for (std::size_t active_index = 0; active_index != inner_columns.size(); ++active_index)
+            {
+                states[inner_columns[active_index]].preconditioned_basis[static_cast<std::size_t>(inner)]
+                    = preconditioned[active_index];
+            }
+
+            Matrix work;
+            problem.apply(preconditioned, work);
+            validate_batch_output(preconditioned, work, "SternheimerRPA::solve_gmres_batch apply");
+            for (std::size_t active_index = 0; active_index != inner_columns.size(); ++active_index)
+            {
+                const std::size_t column = inner_columns[active_index];
+                ColumnState& state = states[column];
+                Vector& column_work = work[active_index];
+                for (int basis_index = 0; basis_index <= inner; ++basis_index)
+                {
+                    state.hessenberg[static_cast<std::size_t>(basis_index)][static_cast<std::size_t>(inner)]
+                        = problem.dot(state.basis[static_cast<std::size_t>(basis_index)], column_work);
+                    axpy(-state.hessenberg[static_cast<std::size_t>(basis_index)][static_cast<std::size_t>(inner)],
+                         state.basis[static_cast<std::size_t>(basis_index)],
+                         column_work);
+                }
+
+                const double next_norm = norm(column_work);
+                state.hessenberg[static_cast<std::size_t>(inner + 1)][static_cast<std::size_t>(inner)]
+                    = Complex(next_norm, 0.0);
+                if (next_norm > options.breakdown_tol)
+                {
+                    state.basis[static_cast<std::size_t>(inner + 1)] = column_work;
+                    scale(Complex(1.0 / next_norm, 0.0), state.basis[static_cast<std::size_t>(inner + 1)]);
+                }
+
+                const int used_inner = inner + 1;
+                state.least_squares
+                    = solve_gmres_least_squares(state.hessenberg, used_inner + 1, used_inner, state.beta);
+                state.result.absolute_residual = state.least_squares.residual_norm;
+                state.result.relative_residual = state.result.absolute_residual / state.norm_floor;
+                state.result.iterations += 1;
+                if (state.result.relative_residual <= options.residual_tol
+                    || next_norm <= options.breakdown_tol)
+                {
+                    add_krylov_update(state.preconditioned_basis,
+                                      state.least_squares.coefficients,
+                                      solution[column]);
+                    state.result.converged = state.result.relative_residual <= options.residual_tol;
+                    state.active = false;
+                }
+            }
+        }
+
+        std::vector<std::size_t> restart_columns;
+        Matrix restart_solutions;
+        for (const std::size_t column: active_columns)
+        {
+            ColumnState& state = states[column];
+            if (!state.active)
+            {
+                continue;
+            }
+            add_krylov_update(state.preconditioned_basis, state.least_squares.coefficients, solution[column]);
+            restart_columns.push_back(column);
+            restart_solutions.push_back(solution[column]);
+        }
+        if (restart_columns.empty())
+        {
+            continue;
+        }
+
+        Matrix restart_ax;
+        problem.apply(restart_solutions, restart_ax);
+        validate_batch_output(restart_solutions,
+                              restart_ax,
+                              "SternheimerRPA::solve_gmres_batch restart apply");
+        for (std::size_t active_index = 0; active_index != restart_columns.size(); ++active_index)
+        {
+            ColumnState& state = states[restart_columns[active_index]];
+#pragma omp parallel for schedule(static)
+            for (std::size_t i = 0; i != vector_size; ++i)
+            {
+                state.residual[i] = rhs[restart_columns[active_index]][i] - restart_ax[active_index][i];
+            }
+            state.beta = norm(state.residual);
+            state.result.absolute_residual = state.beta;
+            state.result.relative_residual = state.beta / state.norm_floor;
+            if (state.result.relative_residual <= options.residual_tol)
+            {
+                state.result.converged = true;
+                state.active = false;
+            }
+        }
+    }
+
+    std::vector<SolverResult> results;
+    results.reserve(states.size());
+    for (const ColumnState& state: states)
+    {
+        results.push_back(state.result);
+    }
+    return results;
+}
+
 void SternheimerRPA::build_rhs_from_hartree_perturbation(const std::vector<double>& hartree_potential_r,
                                                          const Vector& psi_r,
                                                          Vector& rhs_r)
@@ -1425,6 +1691,40 @@ void SternheimerSubspaceProjector::project(Vector& vec) const
         for (std::size_t i = 0; i != vec.size(); ++i)
         {
             vec[i] -= coeff * basis_vec[i];
+        }
+    }
+}
+
+void SternheimerSubspaceProjector::project_batch(std::vector<Vector>& vectors) const
+{
+    if (vectors.empty())
+    {
+        return;
+    }
+    for (std::size_t index = 0; index != subspace_->size(); ++index)
+    {
+        const Vector& basis_vec = (*subspace_)[index];
+        const Complex norm = basis_norms_[index];
+        std::vector<Complex> coefficients(vectors.size(), Complex(0.0, 0.0));
+        for (std::size_t column = 0; column != vectors.size(); ++column)
+        {
+            assert_same_size(basis_vec, vectors[column], "SternheimerSubspaceProjector::project_batch");
+            if (std::abs(norm) != 0.0)
+            {
+                coefficients[column] = dot_(basis_vec, vectors[column]) / norm;
+            }
+        }
+        if (std::abs(norm) == 0.0)
+        {
+            continue;
+        }
+#pragma omp parallel for schedule(static)
+        for (std::size_t i = 0; i != basis_vec.size(); ++i)
+        {
+            for (std::size_t column = 0; column != vectors.size(); ++column)
+            {
+                vectors[column][i] -= coefficients[column] * basis_vec[i];
+            }
         }
     }
 }

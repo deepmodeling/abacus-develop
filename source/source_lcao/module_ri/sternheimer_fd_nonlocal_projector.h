@@ -28,6 +28,8 @@ class SternheimerFDNonlocalProjector
 
     void apply(const Vector& psi, Vector& vpsi) const;
     void add_to(const Vector& psi, Vector& hpsi) const;
+    void apply_batch(const Matrix& psi, Matrix& vpsi) const;
+    void add_to_batch(const Matrix& psi, Matrix& hpsi) const;
 
   private:
     void validate_block(const ProjectorBlock& block) const;

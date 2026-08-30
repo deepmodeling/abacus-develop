@@ -18,6 +18,7 @@ namespace
 using Complex = std::complex<double>;
 using Hamiltonian = ModuleRI::SternheimerFDHamiltonian;
 using Vector = Hamiltonian::Vector;
+using Matrix = Hamiltonian::Matrix;
 
 void ExpectOrderEightDenseMatrixIsHermitian(const bool periodic)
 {
@@ -419,6 +420,75 @@ TEST(SternheimerFDHamiltonian, OperatorComponentsSumToFullHamiltonian)
         EXPECT_NEAR(full[ir].real(), decomposed.real(), 1.0e-13);
         EXPECT_NEAR(full[ir].imag(), decomposed.imag(), 1.0e-13);
     }
+}
+
+TEST(SternheimerFDHamiltonian, ApplyBatchMatchesScalarFD8TwistedSkewNonlocal)
+{
+    Hamiltonian::Grid grid{5, 4, 3, 0.4, 0.5, 0.6, true};
+    grid.kpoint = {0.25, -0.125, 0.375};
+    grid.lattice_vectors = {{{0.2, 2.1, 1.8}, {2.3, 0.1, 2.0}, {1.9, 2.4, -0.1}}};
+
+    std::vector<double> potential(static_cast<std::size_t>(grid.size()));
+    ModuleRI::SternheimerFDNonlocalProjector::ProjectorBlock block;
+    block.projectors.assign(2, Vector(static_cast<std::size_t>(grid.size())));
+    for (int ir = 0; ir != grid.size(); ++ir)
+    {
+        potential[static_cast<std::size_t>(ir)] = 0.03 * (ir % 11) - 0.02 * (ir % 7);
+        block.projectors[0][static_cast<std::size_t>(ir)]
+            = Complex(0.01 * (ir % 13), -0.02 * (ir % 5));
+        block.projectors[1][static_cast<std::size_t>(ir)]
+            = Complex(-0.015 * (ir % 9), 0.0125 * (ir % 17));
+    }
+    block.d_matrix = {{Complex(0.8, 0.0), Complex(0.1, 0.2)},
+                      {Complex(0.1, -0.2), Complex(-0.3, 0.0)}};
+    const auto nonlocal_projector = std::make_shared<ModuleRI::SternheimerFDNonlocalProjector>(
+        grid.size(),
+        0.125,
+        std::vector<ModuleRI::SternheimerFDNonlocalProjector::ProjectorBlock>{block});
+    const Hamiltonian hamiltonian(grid, potential, 1.0, nonlocal_projector, 8);
+
+    Matrix inputs(4, Vector(static_cast<std::size_t>(grid.size())));
+    for (std::size_t column = 0; column != inputs.size(); ++column)
+    {
+        for (int ir = 0; ir != grid.size(); ++ir)
+        {
+            inputs[column][static_cast<std::size_t>(ir)]
+                = Complex(0.01 * static_cast<double>((ir + 3 * column) % 19),
+                          -0.0075 * static_cast<double>((2 * ir + column) % 23));
+        }
+    }
+
+    Matrix expected(inputs.size());
+    for (std::size_t column = 0; column != inputs.size(); ++column)
+    {
+        hamiltonian.apply(inputs[column], expected[column]);
+    }
+    Matrix actual;
+    hamiltonian.apply_batch(inputs, actual);
+
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t column = 0; column != expected.size(); ++column)
+    {
+        ASSERT_EQ(actual[column].size(), expected[column].size());
+        for (std::size_t ir = 0; ir != expected[column].size(); ++ir)
+        {
+            EXPECT_NEAR(actual[column][ir].real(), expected[column][ir].real(), 1.0e-13);
+            EXPECT_NEAR(actual[column][ir].imag(), expected[column][ir].imag(), 1.0e-13);
+        }
+    }
+
+    Matrix empty_output{{Complex(1.0, 0.0)}};
+    hamiltonian.apply_batch({}, empty_output);
+    EXPECT_TRUE(empty_output.empty());
+
+    Matrix one_output;
+    hamiltonian.apply_batch(Matrix{inputs.front()}, one_output);
+    ASSERT_EQ(one_output.size(), 1U);
+    EXPECT_EQ(one_output.front(), expected.front());
+
+    Matrix invalid_inputs = inputs;
+    invalid_inputs[2].pop_back();
+    EXPECT_THROW(hamiltonian.apply_batch(invalid_inputs, actual), std::invalid_argument);
 }
 
 TEST(SternheimerFDHamiltonian, DenseMatrixIsHermitianForLocalRealPotential)

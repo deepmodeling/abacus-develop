@@ -247,6 +247,20 @@ void SternheimerFDHamiltonian::apply(const Vector& psi, Vector& hpsi, int* threa
     }
 }
 
+void SternheimerFDHamiltonian::apply_batch(const Matrix& psi, Matrix& hpsi) const
+{
+    apply_batch(psi, hpsi, nullptr);
+}
+
+void SternheimerFDHamiltonian::apply_batch(const Matrix& psi, Matrix& hpsi, int* threads_used) const
+{
+    apply_grid_terms_batch(psi, hpsi, true, threads_used);
+    if (nonlocal_projector_ != nullptr && !psi.empty())
+    {
+        nonlocal_projector_->add_to_batch(psi, hpsi);
+    }
+}
+
 void SternheimerFDHamiltonian::apply_kinetic(const Vector& psi, Vector& kinetic_psi) const
 {
     apply_kinetic(psi, kinetic_psi, nullptr);
@@ -426,6 +440,237 @@ void SternheimerFDHamiltonian::apply_grid_terms(const Vector& psi,
 #ifdef _OPENMP
     }
 #else
+    if (threads_used != nullptr)
+    {
+        *threads_used = 1;
+    }
+#endif
+}
+
+void SternheimerFDHamiltonian::apply_grid_terms_batch(const Matrix& psi,
+                                                      Matrix& output,
+                                                      const bool include_local_potential,
+                                                      int* threads_used) const
+{
+    if (psi.empty())
+    {
+        output.clear();
+        if (threads_used != nullptr)
+        {
+            *threads_used = 1;
+        }
+        return;
+    }
+    for (const Vector& column: psi)
+    {
+        if (static_cast<int>(column.size()) != grid_.size())
+        {
+            throw std::invalid_argument(
+                "SternheimerFDHamiltonian::apply_grid_terms_batch input size does not match the grid.");
+        }
+    }
+
+    const std::size_t batch_size = psi.size();
+    const std::size_t grid_size = static_cast<std::size_t>(grid_.size());
+    output.assign(batch_size, Vector(grid_size, Complex(0.0, 0.0)));
+    const bool use_separable_mixed_derivatives = grid_.periodic && fd_radius_ > 1;
+    std::array<Matrix, 3> first_derivatives;
+    if (use_separable_mixed_derivatives)
+    {
+        for (int direction = 0; direction != 3; ++direction)
+        {
+            if (!cached_first_derivative_directions_[direction])
+            {
+                continue;
+            }
+            Matrix& derivatives = first_derivatives[direction];
+            derivatives.assign(batch_size, Vector(grid_size, Complex(0.0, 0.0)));
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+            {
+                std::vector<Complex> values(batch_size, Complex(0.0, 0.0));
+#ifdef _OPENMP
+#pragma omp for collapse(2) schedule(static)
+#endif
+                for (int ix = 0; ix != grid_.nx; ++ix)
+                {
+                    for (int iy = 0; iy != grid_.ny; ++iy)
+                    {
+                        for (int iz = 0; iz != grid_.nz; ++iz)
+                        {
+                            std::fill(values.begin(), values.end(), Complex(0.0, 0.0));
+                            for (int offset = 1; offset <= fd_radius_; ++offset)
+                            {
+                                std::array<int, 3> shift{};
+                                shift[direction] = offset;
+                                const ShiftedGridPoint positive
+                                    = shifted_grid_point(ix + shift[0], iy + shift[1], iz + shift[2]);
+                                const ShiftedGridPoint negative
+                                    = shifted_grid_point(ix - shift[0], iy - shift[1], iz - shift[2]);
+                                const double coefficient
+                                    = fd_first_weights_[static_cast<std::size_t>(offset - 1)];
+                                for (std::size_t column = 0; column != batch_size; ++column)
+                                {
+                                    if (positive.index >= 0)
+                                    {
+                                        values[column]
+                                            += coefficient * positive.phase * psi[column][positive.index];
+                                    }
+                                    if (negative.index >= 0)
+                                    {
+                                        values[column]
+                                            -= coefficient * negative.phase * psi[column][negative.index];
+                                    }
+                                }
+                            }
+                            const std::size_t center = static_cast<std::size_t>(index(ix, iy, iz));
+                            for (std::size_t column = 0; column != batch_size; ++column)
+                            {
+                                derivatives[column][center] = values[column];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+#ifdef _OPENMP
+#pragma omp parallel
+#endif
+    {
+        std::vector<Complex> laplacians(batch_size, Complex(0.0, 0.0));
+        std::vector<Complex> mixed_derivatives(batch_size, Complex(0.0, 0.0));
+#ifdef _OPENMP
+#pragma omp single
+        {
+            if (threads_used != nullptr)
+            {
+                *threads_used = omp_get_num_threads();
+            }
+        }
+#pragma omp for collapse(2) schedule(static)
+#endif
+        for (int ix = 0; ix != grid_.nx; ++ix)
+        {
+            for (int iy = 0; iy != grid_.ny; ++iy)
+            {
+                for (int iz = 0; iz != grid_.nz; ++iz)
+                {
+                    const int center = index(ix, iy, iz);
+                    for (std::size_t column = 0; column != batch_size; ++column)
+                    {
+                        laplacians[column] = laplacian_center_coefficient_ * psi[column][center];
+                    }
+
+                    const auto add_shift
+                        = [&](const int dx, const int dy, const int dz, const double coefficient) {
+                              const ShiftedGridPoint shifted = shifted_grid_point(ix + dx, iy + dy, iz + dz);
+                              if (shifted.index >= 0)
+                              {
+                                  for (std::size_t column = 0; column != batch_size; ++column)
+                                  {
+                                      laplacians[column]
+                                          += coefficient * shifted.phase * psi[column][shifted.index];
+                                  }
+                              }
+                          };
+                    for (int direction = 0; direction != 3; ++direction)
+                    {
+                        for (int offset = 1; offset <= fd_radius_; ++offset)
+                        {
+                            std::array<int, 3> shift{};
+                            shift[direction] = offset;
+                            const double coefficient = fd_second_weights_[static_cast<std::size_t>(offset)]
+                                                       * laplacian_coefficients_[direction][direction];
+                            add_shift(shift[0], shift[1], shift[2], coefficient);
+                            add_shift(-shift[0], -shift[1], -shift[2], coefficient);
+                        }
+                    }
+
+                    for (int pair_index = 0; pair_index != active_mixed_derivative_pair_count_; ++pair_index)
+                    {
+                        const int left
+                            = active_mixed_derivative_pairs_[static_cast<std::size_t>(pair_index)][0];
+                        const int right
+                            = active_mixed_derivative_pairs_[static_cast<std::size_t>(pair_index)][1];
+                        if (use_separable_mixed_derivatives)
+                        {
+                            std::fill(mixed_derivatives.begin(), mixed_derivatives.end(), Complex(0.0, 0.0));
+                            for (int offset = 1; offset <= fd_radius_; ++offset)
+                            {
+                                std::array<int, 3> shift{};
+                                shift[left] = offset;
+                                const ShiftedGridPoint positive
+                                    = shifted_grid_point(ix + shift[0], iy + shift[1], iz + shift[2]);
+                                const ShiftedGridPoint negative
+                                    = shifted_grid_point(ix - shift[0], iy - shift[1], iz - shift[2]);
+                                const double coefficient
+                                    = fd_first_weights_[static_cast<std::size_t>(offset - 1)];
+                                for (std::size_t column = 0; column != batch_size; ++column)
+                                {
+                                    if (positive.index >= 0)
+                                    {
+                                        mixed_derivatives[column]
+                                            += coefficient * positive.phase
+                                               * first_derivatives[right][column][positive.index];
+                                    }
+                                    if (negative.index >= 0)
+                                    {
+                                        mixed_derivatives[column]
+                                            -= coefficient * negative.phase
+                                               * first_derivatives[right][column][negative.index];
+                                    }
+                                }
+                            }
+                            for (std::size_t column = 0; column != batch_size; ++column)
+                            {
+                                laplacians[column] += 2.0 * laplacian_coefficients_[left][right]
+                                                      * mixed_derivatives[column];
+                            }
+                        }
+                        else
+                        {
+                            for (int left_offset = 1; left_offset <= fd_radius_; ++left_offset)
+                            {
+                                for (int right_offset = 1; right_offset <= fd_radius_; ++right_offset)
+                                {
+                                    const double coefficient
+                                        = 2.0 * laplacian_coefficients_[left][right]
+                                          * fd_first_weights_[static_cast<std::size_t>(left_offset - 1)]
+                                          * fd_first_weights_[static_cast<std::size_t>(right_offset - 1)];
+                                    for (const int left_sign: {-1, 1})
+                                    {
+                                        for (const int right_sign: {-1, 1})
+                                        {
+                                            std::array<int, 3> shift{};
+                                            shift[left] = left_sign * left_offset;
+                                            shift[right] = right_sign * right_offset;
+                                            add_shift(shift[0],
+                                                      shift[1],
+                                                      shift[2],
+                                                      coefficient * left_sign * right_sign);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    for (std::size_t column = 0; column != batch_size; ++column)
+                    {
+                        output[column][center] = -kinetic_prefactor_ * laplacians[column];
+                        if (include_local_potential)
+                        {
+                            output[column][center] += local_potential_[center] * psi[column][center];
+                        }
+                    }
+                }
+            }
+        }
+    }
+#ifndef _OPENMP
     if (threads_used != nullptr)
     {
         *threads_used = 1;

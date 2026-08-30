@@ -1,5 +1,6 @@
 #include "source_lcao/module_ri/sternheimer_rpa.h"
 
+#include <algorithm>
 #include <complex>
 #include <cstdint>
 #include <cstdio>
@@ -312,6 +313,49 @@ TEST(SternheimerRPA, CachedSubspaceProjectorReusesBasisNorms)
     EXPECT_NEAR(std::abs(dot(occupied[1], first)), 0.0, 1.0e-14);
     EXPECT_NEAR(std::abs(dot(occupied[0], second)), 0.0, 1.0e-14);
     EXPECT_NEAR(std::abs(dot(occupied[1], second)), 0.0, 1.0e-14);
+}
+
+TEST(SternheimerRPA, CachedSubspaceProjectorBatchMatchesScalar)
+{
+    const std::vector<Vector> occupied
+        = {{Complex(2.0, 0.0), Complex(0.0, 0.0), Complex(1.0, -0.5)},
+           {Complex(0.0, 0.0), Complex(0.0, 3.0), Complex(-0.25, 0.75)}};
+    const ModuleRI::SternheimerSubspaceProjector projector(occupied, dot);
+    std::vector<Vector> expected
+        = {{Complex(2.0, 1.0), Complex(3.0, -4.0), Complex(0.5, 0.25)},
+           {Complex(-1.0, 2.0), Complex(0.5, 0.25), Complex(3.0, -0.75)},
+           {Complex(0.1, -0.2), Complex(-0.3, 0.4), Complex(0.5, -0.6)},
+           {Complex(-0.7, 0.8), Complex(0.9, -1.0), Complex(-1.1, 1.2)}};
+    std::vector<Vector> actual = expected;
+    for (Vector& column: expected)
+    {
+        projector.project(column);
+    }
+
+    projector.project_batch(actual);
+
+    ASSERT_EQ(actual.size(), expected.size());
+    for (std::size_t column = 0; column != expected.size(); ++column)
+    {
+        ASSERT_EQ(actual[column].size(), expected[column].size());
+        for (std::size_t ir = 0; ir != expected[column].size(); ++ir)
+        {
+            EXPECT_NEAR(actual[column][ir].real(), expected[column][ir].real(), 1.0e-13);
+            EXPECT_NEAR(actual[column][ir].imag(), expected[column][ir].imag(), 1.0e-13);
+        }
+    }
+
+    std::vector<Vector> empty;
+    projector.project_batch(empty);
+    EXPECT_TRUE(empty.empty());
+
+    std::vector<Vector> one{{Complex(2.0, 1.0), Complex(3.0, -4.0), Complex(0.5, 0.25)}};
+    projector.project_batch(one);
+    ASSERT_EQ(one.size(), 1U);
+    EXPECT_EQ(one.front(), expected.front());
+
+    std::vector<Vector> invalid{{Complex(1.0, 0.0)}};
+    EXPECT_THROW(projector.project_batch(invalid), std::invalid_argument);
 }
 
 TEST(SternheimerRPA, SpectralPreconditionerIsDefault)
@@ -705,5 +749,89 @@ TEST(SternheimerRPA, SolveGMRESDiagonalComplexSystem)
     {
         EXPECT_NEAR(solution[i].real(), exact[i].real(), 1.0e-10);
         EXPECT_NEAR(solution[i].imag(), exact[i].imag(), 1.0e-10);
+    }
+}
+
+TEST(SternheimerRPA, SolveGMRESBatchMatchesIndependentScalarHistories)
+{
+    using Matrix = std::vector<Vector>;
+    const Vector diagonal
+        = {Complex(1.5, 0.2), Complex(2.5, -0.3), Complex(4.0, 0.7), Complex(7.0, -0.4)};
+    const Matrix exact
+        = {{Complex(0.5, -0.25), Complex(-1.0, 0.75), Complex(0.2, 0.4), Complex(-0.3, 0.1)},
+           {Complex(1.25, -0.5), Complex(0.0, 0.0), Complex(0.0, 0.0), Complex(0.0, 0.0)},
+           {Complex(-0.75, 0.2), Complex(0.6, -0.9), Complex(1.1, 0.3), Complex(-0.4, 0.8)}};
+    Matrix rhs = exact;
+    for (Vector& column: rhs)
+    {
+        for (std::size_t i = 0; i != column.size(); ++i)
+        {
+            column[i] *= diagonal[i];
+        }
+    }
+
+    std::vector<std::size_t> batch_apply_widths;
+    ModuleRI::SternheimerRPA::BatchLinearProblem batch_problem;
+    batch_problem.apply = [&diagonal, &batch_apply_widths](const Matrix& input, Matrix& output) {
+        batch_apply_widths.push_back(input.size());
+        output = input;
+        for (Vector& column: output)
+        {
+            for (std::size_t i = 0; i != column.size(); ++i)
+            {
+                column[i] *= diagonal[i];
+            }
+        }
+    };
+    batch_problem.dot = dot;
+
+    ModuleRI::SternheimerRPA::LinearProblem scalar_problem;
+    scalar_problem.apply = [&diagonal](const Vector& input, Vector& output) {
+        output = input;
+        for (std::size_t i = 0; i != output.size(); ++i)
+        {
+            output[i] *= diagonal[i];
+        }
+    };
+    scalar_problem.dot = dot;
+
+    ModuleRI::SternheimerRPA::SolverOptions options;
+    options.max_iter = 30;
+    options.residual_tol = 1.0e-11;
+    Matrix scalar_solutions
+        = {exact[0], Vector(diagonal.size(), Complex(0.0, 0.0)), Vector(diagonal.size(), Complex(0.0, 0.0))};
+    Matrix batch_solutions = scalar_solutions;
+    std::vector<ModuleRI::SternheimerRPA::SolverResult> scalar_results;
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        scalar_results.push_back(ModuleRI::SternheimerRPA::solve_gmres(
+            scalar_problem, rhs[column], scalar_solutions[column], options, 2));
+    }
+
+    const auto batch_results
+        = ModuleRI::SternheimerRPA::solve_gmres_batch(batch_problem, rhs, batch_solutions, options, 2);
+
+    ASSERT_EQ(batch_results.size(), scalar_results.size());
+    ASSERT_EQ(batch_solutions.size(), scalar_solutions.size());
+    ASSERT_FALSE(batch_apply_widths.empty());
+    EXPECT_EQ(batch_apply_widths.front(), 3U);
+    EXPECT_NE(std::find(batch_apply_widths.begin(), batch_apply_widths.end(), 2U), batch_apply_widths.end());
+    EXPECT_NE(std::find(batch_apply_widths.begin(), batch_apply_widths.end(), 1U), batch_apply_widths.end());
+    for (std::size_t column = 0; column != rhs.size(); ++column)
+    {
+        EXPECT_EQ(batch_results[column].converged, scalar_results[column].converged);
+        EXPECT_EQ(batch_results[column].iterations, scalar_results[column].iterations);
+        EXPECT_NEAR(batch_results[column].absolute_residual,
+                    scalar_results[column].absolute_residual,
+                    1.0e-13);
+        EXPECT_NEAR(batch_results[column].relative_residual,
+                    scalar_results[column].relative_residual,
+                    1.0e-13);
+        ASSERT_EQ(batch_solutions[column].size(), scalar_solutions[column].size());
+        for (std::size_t i = 0; i != scalar_solutions[column].size(); ++i)
+        {
+            EXPECT_NEAR(batch_solutions[column][i].real(), scalar_solutions[column][i].real(), 1.0e-12);
+            EXPECT_NEAR(batch_solutions[column][i].imag(), scalar_solutions[column][i].imag(), 1.0e-12);
+        }
     }
 }
