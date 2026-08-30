@@ -593,7 +593,26 @@ void DomainDecomposition::accumulate_ghost_forces(std::vector<LocalAtom>& owned_
         owned_lookup[std::make_pair(atom.type, atom.type_index)] = iat;
     }
 
-    std::vector<std::vector<ForceRecord> > send_buffers(static_cast<std::size_t>(size_));
+    std::vector<GhostExchangeSlot> slots;
+    build_ghost_exchange_slots(slots);
+
+    std::vector<int> peer_ranks;
+    peer_ranks.reserve(slots.size() * 2);
+    for (std::size_t islot = 0; islot < slots.size(); ++islot)
+    {
+        if (slots[islot].send_rank != rank_)
+        {
+            peer_ranks.push_back(slots[islot].send_rank);
+        }
+        if (slots[islot].recv_rank != rank_)
+        {
+            peer_ranks.push_back(slots[islot].recv_rank);
+        }
+    }
+    std::sort(peer_ranks.begin(), peer_ranks.end());
+    peer_ranks.erase(std::unique(peer_ranks.begin(), peer_ranks.end()), peer_ranks.end());
+
+    std::vector<std::vector<ForceRecord> > send_buffers(peer_ranks.size());
     for (std::size_t iat = 0; iat < ghost_atoms.size(); ++iat)
     {
         LocalAtom& atom = ghost_atoms[iat];
@@ -615,62 +634,59 @@ void DomainDecomposition::accumulate_ghost_forces(std::vector<LocalAtom>& owned_
             record.force[0] = atom.force.x;
             record.force[1] = atom.force.y;
             record.force[2] = atom.force.z;
-            send_buffers[static_cast<std::size_t>(atom.owner_rank)].push_back(record);
+            const std::vector<int>::const_iterator peer = std::lower_bound(peer_ranks.begin(),
+                                                                             peer_ranks.end(),
+                                                                             atom.owner_rank);
+            if (peer == peer_ranks.end() || *peer != atom.owner_rank)
+            {
+                throw std::runtime_error("Ghost force owner is outside the ghost communication stencil.");
+            }
+            send_buffers[static_cast<std::size_t>(peer - peer_ranks.begin())].push_back(record);
         }
         atom.force.set(0.0, 0.0, 0.0);
     }
 
-    std::vector<int> send_counts(static_cast<std::size_t>(size_), 0);
-    std::vector<int> recv_counts(static_cast<std::size_t>(size_), 0);
-    for (int irank = 0; irank < size_; ++irank)
+    for (std::size_t ipeer = 0; ipeer < peer_ranks.size(); ++ipeer)
     {
-        const std::size_t bytes = send_buffers[static_cast<std::size_t>(irank)].size() * sizeof(ForceRecord);
+        const std::vector<ForceRecord>& send_records = send_buffers[ipeer];
+        const std::size_t bytes = send_records.size() * sizeof(ForceRecord);
         if (bytes > static_cast<std::size_t>(std::numeric_limits<int>::max()))
         {
             throw std::overflow_error("DomainDecomposition ghost force message exceeds MPI int range.");
         }
-        send_counts[static_cast<std::size_t>(irank)] = static_cast<int>(bytes);
-    }
-    MPI_Alltoall(&send_counts[0], 1, MPI_INT, &recv_counts[0], 1, MPI_INT, comm_);
-
-    std::vector<int> send_displs(static_cast<std::size_t>(size_), 0);
-    std::vector<int> recv_displs(static_cast<std::size_t>(size_), 0);
-    int total_send_bytes = 0;
-    int total_recv_bytes = 0;
-    for (int irank = 0; irank < size_; ++irank)
-    {
-        send_displs[static_cast<std::size_t>(irank)] = total_send_bytes;
-        recv_displs[static_cast<std::size_t>(irank)] = total_recv_bytes;
-        total_send_bytes += send_counts[static_cast<std::size_t>(irank)];
-        total_recv_bytes += recv_counts[static_cast<std::size_t>(irank)];
-    }
-
-    std::vector<ForceRecord> send_records;
-    send_records.reserve(static_cast<std::size_t>(total_send_bytes / static_cast<int>(sizeof(ForceRecord))));
-    for (int irank = 0; irank < size_; ++irank)
-    {
-        const std::vector<ForceRecord>& records = send_buffers[static_cast<std::size_t>(irank)];
-        send_records.insert(send_records.end(), records.begin(), records.end());
-    }
-    std::vector<ForceRecord> recv_records(static_cast<std::size_t>(total_recv_bytes / static_cast<int>(sizeof(ForceRecord))));
-    MPI_Alltoallv(send_records.empty() ? NULL : reinterpret_cast<const char*>(&send_records[0]),
-                  &send_counts[0], &send_displs[0], MPI_BYTE,
-                  recv_records.empty() ? NULL : reinterpret_cast<char*>(&recv_records[0]),
-                  &recv_counts[0], &recv_displs[0], MPI_BYTE, comm_);
-
-    for (std::size_t irecord = 0; irecord < recv_records.size(); ++irecord)
-    {
-        const ForceRecord& record = recv_records[irecord];
-        const std::map<std::pair<int, std::int64_t>, std::size_t>::const_iterator found
-            = owned_lookup.find(std::make_pair(record.type, record.type_index));
-        if (found == owned_lookup.end())
+        const int send_bytes = static_cast<int>(bytes);
+        int recv_bytes = 0;
+        const int peer_rank = peer_ranks[ipeer];
+        MPI_Sendrecv(&send_bytes, 1, MPI_INT, peer_rank, 9200,
+                     &recv_bytes, 1, MPI_INT, peer_rank, 9200,
+                     cart_comm_, MPI_STATUS_IGNORE);
+        if (recv_bytes < 0 || recv_bytes % static_cast<int>(sizeof(ForceRecord)) != 0)
         {
-            throw std::runtime_error("Cannot match a received ghost force to an owned atom.");
+            throw std::runtime_error("Invalid ghost force message size.");
         }
-        LocalAtom& atom = owned_atoms[found->second];
-        atom.force.x += record.force[0];
-        atom.force.y += record.force[1];
-        atom.force.z += record.force[2];
+
+        std::vector<ForceRecord> recv_records(
+            static_cast<std::size_t>(recv_bytes / static_cast<int>(sizeof(ForceRecord))));
+        MPI_Sendrecv(send_records.empty() ? NULL : reinterpret_cast<const char*>(&send_records[0]),
+                     send_bytes, MPI_BYTE, peer_rank, 9201,
+                     recv_records.empty() ? NULL : reinterpret_cast<char*>(&recv_records[0]),
+                     recv_bytes, MPI_BYTE, peer_rank, 9201,
+                     cart_comm_, MPI_STATUS_IGNORE);
+
+        for (std::size_t irecord = 0; irecord < recv_records.size(); ++irecord)
+        {
+            const ForceRecord& record = recv_records[irecord];
+            const std::map<std::pair<int, std::int64_t>, std::size_t>::const_iterator found
+                = owned_lookup.find(std::make_pair(record.type, record.type_index));
+            if (found == owned_lookup.end())
+            {
+                throw std::runtime_error("Cannot match a received ghost force to an owned atom.");
+            }
+            LocalAtom& atom = owned_atoms[found->second];
+            atom.force.x += record.force[0];
+            atom.force.y += record.force[1];
+            atom.force.z += record.force[2];
+        }
     }
 }
 

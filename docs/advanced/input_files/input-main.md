@@ -3518,7 +3518,7 @@
 ### md_dumpfreq
 
 - **Type**: Integer
-- **Description**: The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output; scalar MD progress remains printed to the terminal and running_md.log every step.
+- **Description**: The output frequency of OUT.${suffix}/MD_dump in molecular dynamics calculations, which includes lattice and atomic information. Set to 0 to disable MD_dump output.
 - **Default**: 1
 
 ### md_out_force
@@ -3549,8 +3549,8 @@
 
 - **Type**: Integer
 - **Description**: The random seed to initialize random numbers used in molecular dynamics calculations.
-- &lt; 0: Each MPI rank uses the default seed 1 plus its rank.
-- &gt;= 0: Each MPI rank uses md_seed plus its rank.
+  - &lt; 0: Each MPI rank uses the default seed 1 plus its rank.
+  - &gt;= 0: Each MPI rank uses md_seed plus its rank.
 - **Default**: -1
 
 ### md_tfreq

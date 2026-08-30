@@ -103,6 +103,62 @@ TEST(MdCellMigrateMpiTest, AtomCrossingDomainMigratesToNewOwner)
     }
 }
 
+TEST(MdCellMigrateMpiTest, GhostForcesReturnToOwners)
+{
+    int rank = 0;
+    int size = 1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    ASSERT_EQ(size, 2);
+
+    const ModuleBase::Matrix3 latvec = make_lattice();
+    std::vector<LocalAtom> owned_atoms;
+    const ModuleBase::Vector3<double> frac(rank == 0 ? 0.2 : 0.7, 0.2, 0.2);
+    owned_atoms.push_back(LocalAtom(frac,
+                                    frac,
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<double>(0.0, 0.0, 0.0),
+                                    ModuleBase::Vector3<int>(1, 1, 1),
+                                    1.0,
+                                    0,
+                                    rank,
+                                    rank));
+    MDCell mdcell(latvec,
+                  latvec.Inverse(),
+                  1.0,
+                  1.0,
+                  2,
+                  owned_atoms,
+                  std::vector<std::string>(1, "X"),
+                  std::vector<double>(1, 1.0),
+                  std::vector<std::int64_t>(1, 2),
+                  0.6,
+                  0.0,
+                  ModuleBase::world_communication_domain());
+
+    long long local_copies[2] = {0, 0};
+    for (std::size_t iat = 0; iat < mdcell.ghost_atoms().size(); ++iat)
+    {
+        ++local_copies[mdcell.ghost_atoms()[iat].owner_rank];
+    }
+    long long global_copies[2] = {0, 0};
+    MPI_Allreduce(local_copies, global_copies, 2, MPI_LONG_LONG, MPI_SUM, MPI_COMM_WORLD);
+
+    for (std::size_t iat = 0; iat < mdcell.mutable_ghost_atoms().size(); ++iat)
+    {
+        LocalAtom& ghost = mdcell.mutable_ghost_atoms()[iat];
+        const double value = static_cast<double>(ghost.owner_rank + 1);
+        ghost.force.set(value, 2.0 * value, 3.0 * value);
+    }
+    mdcell.accumulate_ghost_forces();
+
+    ASSERT_EQ(mdcell.nlocal(), 1);
+    const double expected = static_cast<double>(global_copies[rank] * (rank + 1));
+    EXPECT_DOUBLE_EQ(mdcell.owned_atoms()[0].force.x, expected);
+    EXPECT_DOUBLE_EQ(mdcell.owned_atoms()[0].force.y, 2.0 * expected);
+    EXPECT_DOUBLE_EQ(mdcell.owned_atoms()[0].force.z, 3.0 * expected);
+}
+
 int main(int argc, char** argv)
 {
     MPI_Init(&argc, &argv);
