@@ -24,6 +24,7 @@
 #include "RPA_LRI.h"
 #include "librpa_2d_coulomb_head.h"
 #include "librpa_stru_units.h"
+#include "rpa_abfs_preorthogonalization.h"
 #include "source_basis/module_ao/element_basis_index-ORB.h"
 #include "source_estate/elecstate_lcao.h"
 #include "source_io/module_parameter/parameter.h"
@@ -563,6 +564,13 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
         this->abfs_shrink = ExxLriDetail::prepare_abfs(
             ucell, orb, this->lcaos, this->info, this->info.shrink_abfs_pca_thr, this->info.files_shrink_abfs);
+        const ModuleRI::RpaAbfsPreorthReport preorth_report
+            = ModuleRI::finalize_rpa_abfs_from_input(
+                this->abfs_shrink, PARAM.inp, PARAM.inp.cal_force);
+        if (GlobalV::MY_RANK == 0)
+        {
+            GlobalV::ofs_running << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
+        }
         exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, abfs_shrink);
     }
     else
@@ -571,6 +579,13 @@ void RPA_LRI<T, Tdata>::cal_postSCF_exx(const elecstate::DensityMatrix<T, Tdata>
         Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
         this->abfs = ExxLriDetail::prepare_abfs(
             ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
+        const ModuleRI::RpaAbfsPreorthReport preorth_report
+            = ModuleRI::finalize_rpa_abfs_from_input(
+                this->abfs, PARAM.inp, PARAM.inp.cal_force);
+        if (GlobalV::MY_RANK == 0)
+        {
+            GlobalV::ofs_running << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
+        }
         exx_cut_coulomb->init_spencer(mpi_comm_in, ucell, kv, orb, this->abfs);
     }
 
@@ -879,6 +894,13 @@ void RPA_LRI<T, Tdata>::cal_large_Cs(const UnitCell& ucell, const LCAO_Orbitals&
     Exx_Abfs::Construct_Orbs::filter_empty_orbs(this->lcaos);
     this->abfs = ExxLriDetail::prepare_abfs(
         ucell, orb, this->lcaos, this->info, this->info.pca_threshold, this->info.files_abfs);
+    const ModuleRI::RpaAbfsPreorthReport preorth_report
+        = ModuleRI::finalize_rpa_abfs_from_input(
+            this->abfs, PARAM.inp, PARAM.inp.cal_force);
+    if (GlobalV::MY_RANK == 0)
+    {
+        GlobalV::ofs_running << ModuleRI::format_rpa_abfs_preorth_report(preorth_report);
+    }
     exx_cut_coulomb->init_spencer(this->mpi_comm, ucell, kv, orb, this->abfs);
     ModuleBase::GlobalFunc::DONE(GlobalV::ofs_running, "exx_cut_coulomb->init");
     this->MGT = exx_cut_coulomb->MGT;

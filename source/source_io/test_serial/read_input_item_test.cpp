@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <fstream>
+#include <limits>
 #include <string>
 #include <vector>
 
@@ -1811,6 +1812,35 @@ TEST_F(InputTest, Item_test2)
         EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
         output = testing::internal::GetCapturedStdout();
         EXPECT_THAT(output, testing::HasSubstr("NOTICE"));
+    }
+    { // rpa_abfs_preorth
+        EXPECT_EQ(param.input.rpa_abfs_preorth, "none");
+        auto it = find_label("rpa_abfs_preorth", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        it->second.str_values = {"onsite_coulomb"};
+        it->second.read_value(it->second, param);
+        EXPECT_EQ(param.input.rpa_abfs_preorth, "onsite_coulomb");
+
+        param.input.rpa_abfs_preorth = "invalid";
+        testing::internal::CaptureStdout();
+        EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+        output = testing::internal::GetCapturedStdout();
+        EXPECT_THAT(output, testing::HasSubstr("rpa_abfs_preorth"));
+        param.input.rpa_abfs_preorth = "none";
+    }
+    { // rpa_abfs_preorth_threshold
+        EXPECT_DOUBLE_EQ(param.input.rpa_abfs_preorth_threshold, 1.0e-2);
+        auto it = find_label("rpa_abfs_preorth_threshold", readinput.input_lists);
+        ASSERT_NE(it, readinput.input_lists.end());
+        for (const double invalid : {0.0, 1.0, -1.0, std::numeric_limits<double>::infinity()})
+        {
+            param.input.rpa_abfs_preorth_threshold = invalid;
+            testing::internal::CaptureStdout();
+            EXPECT_EXIT(it->second.check_value(it->second, param), ::testing::ExitedWithCode(1), "");
+            output = testing::internal::GetCapturedStdout();
+            EXPECT_THAT(output, testing::HasSubstr("rpa_abfs_preorth_threshold"));
+        }
+        param.input.rpa_abfs_preorth_threshold = 1.0e-2;
     }
     { // out_librpa_reader_version
         auto it = find_label("out_librpa_reader_version", readinput.input_lists);

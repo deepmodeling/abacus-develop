@@ -438,4 +438,3 @@ Every implementation commit must show author `Codex <codex@openai.com>` and comm
 - [ ] **Step 6: Rebase safely and push only after all gates pass**
 
 Fetch `origin/master_ghj`, rebase the feature branch if the remote moved, rerun the focused tests after conflict resolution, then push the verified branch head to `refs/heads/master_ghj`. Confirm `git ls-remote origin refs/heads/master_ghj` equals local `HEAD`. If SSH port 22 fails, use the configured GitHub key through `ssh.github.com:443`; do not weaken host verification or overwrite an unexpected remote head.
-

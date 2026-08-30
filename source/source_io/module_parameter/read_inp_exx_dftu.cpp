@@ -2,6 +2,8 @@
 #include "source_base/tool_quit.h"
 #include "read_input.h"
 #include "read_input_tool.h"
+
+#include <cmath>
 namespace ModuleIO
 {
 void ReadInput::item_exx()
@@ -717,6 +719,49 @@ void ReadInput::item_exx()
             if (para.input.rpa_ccp_rmesh_times < 1)
             {
                 ModuleBase::WARNING_QUIT("ReadInput", "rpa_ccp_rmesh_times must >= 1");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_abfs_preorth");
+        item.annotation = "on-site Coulomb-metric preorthogonalization for RPA auxiliary bases";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "String";
+        item.description = "Select none for the legacy RPA auxiliary basis or onsite_coulomb to Coulomb-orthonormalize each atom-type and angular-momentum radial channel before RPA producer and Sternheimer output.";
+        item.default_value = "none";
+        item.unit = "";
+        item.availability = "rpa=True or out_sternheimer_librpa=True";
+        read_sync_string(input.rpa_abfs_preorth);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (para.input.rpa_abfs_preorth != "none"
+                && para.input.rpa_abfs_preorth != "onsite_coulomb")
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "rpa_abfs_preorth must be none or onsite_coulomb");
+            }
+        };
+        this->add_item(item);
+    }
+    {
+        Input_Item item("rpa_abfs_preorth_threshold");
+        item.annotation = "residual Coulomb-norm threshold for RPA auxiliary preorthogonalization";
+        item.category = "Exact Exchange (LCAO)";
+        item.type = "Real";
+        item.description = "Reject a radial auxiliary candidate when its squared residual on-site Coulomb norm is no larger than this value.";
+        item.default_value = "1e-2";
+        item.unit = "";
+        item.availability = "rpa_abfs_preorth==onsite_coulomb";
+        read_sync_double(input.rpa_abfs_preorth_threshold);
+        item.check_value = [](const Input_Item& item, const Parameter& para) {
+            if (!std::isfinite(para.input.rpa_abfs_preorth_threshold)
+                || para.input.rpa_abfs_preorth_threshold <= 0.0
+                || para.input.rpa_abfs_preorth_threshold >= 1.0)
+            {
+                ModuleBase::WARNING_QUIT(
+                    "ReadInput",
+                    "rpa_abfs_preorth_threshold must be finite and strictly between 0 and 1");
             }
         };
         this->add_item(item);

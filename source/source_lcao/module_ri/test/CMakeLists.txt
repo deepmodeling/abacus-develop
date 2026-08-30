@@ -74,6 +74,13 @@ AddTest(
   SOURCES sternheimer_runtime_options_test.cpp ../sternheimer_runtime_options.cpp
 )
 AddTest(
+  TARGET MODULE_RI_rpa_abfs_preorthogonalization_test
+  LIBS parameter base ${math_libs} device
+  SOURCES rpa_abfs_preorthogonalization_test.cpp
+          ../rpa_abfs_preorthogonalization.cpp
+          ../../../source_basis/module_ao/ORB_atomic_lm.cpp
+)
+AddTest(
   TARGET MODULE_RI_sternheimer_rpa_test
   LIBS ${STERNHEIMER_RPA_TEST_LIBS}
   SOURCES sternheimer_rpa_test.cpp ../sternheimer_rpa.cpp

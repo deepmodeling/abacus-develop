@@ -339,6 +339,8 @@
     - [exx\_real\_number](#exx_real_number)
     - [exx\_singularity\_correction](#exx_singularity_correction)
     - [rpa\_ccp\_rmesh\_times](#rpa_ccp_rmesh_times)
+    - [rpa\_abfs\_preorth](#rpa_abfs_preorth)
+    - [rpa\_abfs\_preorth\_threshold](#rpa_abfs_preorth_threshold)
     - [exx\_symmetry\_realspace](#exx_symmetry_realspace)
     - [out\_ri\_cv](#out_ri_cv)
   - [Exact Exchange (PW)](#exact-exchange-pw)
@@ -3423,6 +3425,22 @@
 - **Type**: Real
 - **Description**: How many times larger the radial mesh required is to that of atomic orbitals in the postprocess calculation of the bare Coulomb matrix for RPA, GW, etc.
 - **Default**: 10
+
+### rpa_abfs_preorth
+
+- **Type**: String
+- **Description**: Controls on-site Coulomb-metric preorthogonalization of the auxiliary basis used by RPA producer and Sternheimer response output.
+  - `none`: preserve the legacy auxiliary basis exactly.
+  - `onsite_coulomb`: process every atom type and angular-momentum radial channel independently, reject near-dependent radial functions, and retain complete `(2l+1)` multiplets in an on-site Coulomb-orthonormal basis.
+
+  This option does not change ordinary EXX, GW, SCF, force, or stress auxiliary-basis construction. The producer and Sternheimer response must use the same value. Molecular production workflows validated with this option use a separate LibRPA global Coulomb hard threshold of `1e-4`; ABACUS does not set that LibRPA threshold automatically.
+- **Default**: none
+
+### rpa_abfs_preorth_threshold
+
+- **Type**: Real
+- **Description**: Squared residual on-site Coulomb norm at or below which a radial auxiliary function is rejected when `rpa_abfs_preorth=onsite_coulomb`. The value must be finite and strictly inside `(0,1)`. The validated molecular starting value is `1e-2`.
+- **Default**: 1e-2
 
 ### exx_symmetry_realspace
 
